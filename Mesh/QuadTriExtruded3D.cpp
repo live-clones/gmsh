@@ -1,16 +1,16 @@
-/************************************************************************************************** 
+/**************************************************************************************************
 QuadTriExtruded3D.cpp
 
 The code in this file was written by Dr. Trevor S. Strickler.
-email: <trevor.strickler@gmail.com> 
+email: <trevor.strickler@gmail.com>
 
 This file is part of the QuadTri contribution to Gmsh. QuadTri allows the conformal interface
-of quadrangle faces to triangle faces using pyramids and other mesh elements. 
+of quadrangle faces to triangle faces using pyramids and other mesh elements.
 
 See READMEQUADTRI.txt for more information. The license information is in LICENSE.txt.
 
-Trevor S. Strickler hereby transfers copyright of QuadTri files to 
-Christophe Geuzaine and J.-F. Remacle with the understanding that 
+Trevor S. Strickler hereby transfers copyright of QuadTri files to
+Christophe Geuzaine and J.-F. Remacle with the understanding that
 his contribution shall be cited appropriately.
 
 All reused or original Gmsh code is Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
@@ -21,8 +21,8 @@ Gmsh bugs and problems to <gmsh@geuz.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License, Version 2,
-as published by the Free Software Foundation, or (at your option) 
-any later version, with or without the exception given in the 
+as published by the Free Software Foundation, or (at your option)
+any later version, with or without the exception given in the
 LICENSE.txt file supplied with this code and with Gmsh.
 
 This program is distributed in the hope that it will be useful,
@@ -35,7 +35,7 @@ GNU General Public License for more details.
 #include "QuadTriExtruded3D.h"
 
 // By Geuzaine, Remacle...
-static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, 
+static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
                            GRegion *to, MElement* source)
 {
   MTetrahedron* newElem = new MTetrahedron(v1, v2, v3, v4);
@@ -69,7 +69,7 @@ static void addHexahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
 
 
 // Does the pair of MVertex pointers v1 and v2 exist in the set 'edges'?
-static int edgeExists(MVertex *v1, MVertex *v2, 
+static int edgeExists(MVertex *v1, MVertex *v2,
                       std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
@@ -78,7 +78,7 @@ static int edgeExists(MVertex *v1, MVertex *v2,
 
 
 // Create the pair of MVertex pointers v1 and v2 exist in the set 'edges.'
-static void createEdge(MVertex *v1, MVertex *v2, 
+static void createEdge(MVertex *v1, MVertex *v2,
                        std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
@@ -88,7 +88,7 @@ static void createEdge(MVertex *v1, MVertex *v2,
 
 // Create the entry for a forbidden edge in forbidden_edges (note that all four verts are
 // forbidden, but only store two, using lowest vertex pointer diagonal).
-static void createForbidden(std::vector<MVertex*> v, 
+static void createForbidden(std::vector<MVertex*> v,
                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges)
 {
   if( v.size() != 4 ){
@@ -126,7 +126,7 @@ static int forbiddenExists(std::vector<MVertex*> v,
 
 
 // delete a pair of vertex pointers v1 and v2 from 'edges.'
-static void deleteEdge(MVertex *v1, MVertex *v2, 
+static void deleteEdge(MVertex *v1, MVertex *v2,
                        std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
@@ -160,12 +160,12 @@ static std::vector<MVertex*> getExtrudedLateralVertices( MVertex *v0, MVertex *v
     if(itp == pos.end()){
       Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in geometrical entity %d",
                   tmp.x(), tmp.y(), tmp.z(), entity->tag());
-      
+
       verts.clear();
       return verts;
     }
     verts.push_back(*itp);
-  }  
+  }
 
   return verts;
 
@@ -200,12 +200,12 @@ static int get2DExtrudedVertices( MElement *elem, ExtrudeParams *ep, unsigned in
     if(itp == pos.end()){
       Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g).",
                   tmp.x(), tmp.y(), tmp.z() );
-      
+
       verts.clear();
       return verts.size();
     }
     verts.push_back(*itp);
-  }  
+  }
 
   return verts.size();
 
@@ -215,7 +215,7 @@ static int get2DExtrudedVertices( MElement *elem, ExtrudeParams *ep, unsigned in
 // Copied from meshGRegionExtruded.cpp, By Geuzaine, Remacle...
 // Extrudes a set of source vertices in 3D
 // added 2010-01-18
-static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k, 
+static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
                                std::set<MVertex*, MVertexLessThanLexicographic> &pos,
                                std::vector<MVertex*> &verts)
 {
@@ -249,13 +249,13 @@ static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
 }
 
 
-// Determines whether the region is a valid QuadToTri region.  Performs some 
+// Determines whether the region is a valid QuadToTri region.  Performs some
 // basic checks, including whether there is a valid top, valid source,
-// and that the surfaces serving as laterals are structured 
+// and that the surfaces serving as laterals are structured
 // Added 2010-12-30
 bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
 {
-  ExtrudeParams *ep = region->meshAttributes.extrude; 
+  ExtrudeParams *ep = region->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh )
     return false;
@@ -266,37 +266,37 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
   GFace *reg_source = model->getFaceByTag( std::abs( ep->geo.Source ) );
   if( !reg_source ){
     Msg::Error("In IsValidQuadToTriRegion(), could not find source face "
-               "%d for region %d.", std::abs( ep->geo.Source ), 
+               "%d for region %d.", std::abs( ep->geo.Source ),
                region->tag() );
     return false;
   }
-  
+
   // Find a source surface. Then find a COPIED_ENTITY that is the top surface.
   // Then determine if all the laterals are either all quad or all triangle.
-  // If shared laterals are all static (quad or non subdivide triangles), 
+  // If shared laterals are all static (quad or non subdivide triangles),
   // set the allNonGlobalSharedLaterals argument to true.
   // If any lateral is unstructured, error.
 
-  bool foundTop = false, foundSource = false, 
+  bool foundTop = false, foundSource = false,
                   foundNoStruct = false;
 
   std::list<GFace *> faces = region->faces();
   std::list<GFace *>::iterator it = faces.begin();
-  
+
   (*allNonGlobalSharedLaterals) = true;
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
-    if( (*it) == reg_source ) 
+    if( (*it) == reg_source )
       foundSource = true;
-    else if( face_tmp_ep && face_tmp_ep->geo.Mode == 
+    else if( face_tmp_ep && face_tmp_ep->geo.Mode ==
         COPIED_ENTITY ){
-      GFace *top_source_tmp = model->getFaceByTag( 
+      GFace *top_source_tmp = model->getFaceByTag(
                               std::abs( face_tmp_ep->geo.Source ) );
       if( !top_source_tmp ){
         Msg::Error("In IsValidQuadToTriRegion(), could not find source face "
-                   "%d for copied surface %d of region %d.", 
-                   std::abs( face_tmp_ep->geo.Source ), 
+                   "%d for copied surface %d of region %d.",
+                   std::abs( face_tmp_ep->geo.Source ),
                    (*it)->tag(), region->tag() );
         return false;
       }
@@ -307,7 +307,7 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
     // This is a check to see if there are lateral surface triangles that need to be edged globally in subdivide operation
     else if( IsSurfaceALateralForRegion(region, *it) ){
       std::vector<GRegion *> neighbors;
-      if( (*allNonGlobalSharedLaterals) && (*it)->triangles.size() && !(*it)->quadrangles.size()&& 
+      if( (*allNonGlobalSharedLaterals) && (*it)->triangles.size() && !(*it)->quadrangles.size()&&
           GetNeighborRegionsOfFace(*it, neighbors) > 1 ){
         GRegion *other_region = neighbors[0] != region ? neighbors[0] : neighbors[1];
         ExtrudeParams *oth_ep = other_region->meshAttributes.extrude;
@@ -318,11 +318,11 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
       }
     }
     else
-      foundNoStruct = true;  
+      foundNoStruct = true;
   }
 
-   
-  // test for errors 
+
+  // test for errors
   bool detectConflict = false;
   if( !foundTop ){
     Msg::Error("In IsValidQuadToTriRegion(), could not find top face "
@@ -331,7 +331,7 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
   }
   if( !foundSource ){
     Msg::Error("In IsValidQuadToTriRegion(), source "
-               "face %d of region %d was not found in region.", 
+               "face %d of region %d was not found in region.",
                 region->tag() );
     detectConflict = true;
   }
@@ -340,7 +340,7 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
                "lateral in QuadToTri region %d.", region->tag() );
     detectConflict = true;
   }
-  
+
   if( detectConflict )
     return false;
 
@@ -349,39 +349,39 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
 }
 
 
-// This function returns a vector of integer values, each of which are codes for the 
+// This function returns a vector of integer values, each of which are codes for the
 // status of each face of an undivided prism or hexahedron (including degenerate versions):
-// 0 = degenerate line, 1 = single triangle, 2 = recombined quad, 
-// 3 = fixed diagonal, 4 = adjustable diagonal, 5 = totally free to diagonalize or not. 
+// 0 = degenerate line, 1 = single triangle, 2 = recombined quad,
+// 3 = fixed diagonal, 4 = adjustable diagonal, 5 = totally free to diagonalize or not.
 // Ordering of faces starts with the lateral face containing verts[0] and verts[1], then goes in order
 // of increasing vertex index around element. Finally, the bottom, then the top.
 // Added 2010-01-21
 static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MElement *elem, int j, int k,
-                                     std::vector<MVertex *> &verts, 
+                                     std::vector<MVertex *> &verts,
                                      std::set<MVertex*, MVertexLessThanLexicographic> &pos_src_edge,
-                                     std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
-                                     std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges, 
+                                     std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
+                                     std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                      std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
-                                     std::vector<bool> &vert_bnd, std::vector<int> &nfix1, 
+                                     std::vector<bool> &vert_bnd, std::vector<int> &nfix1,
                                      std::vector<int> &nfix2, std::vector<int> &nadj1,
                                      std::vector<int> &nadj2, std::vector<int> &free_flag )
 {
   std::map<std::string, std::vector<int> > face_types;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In getFaceTypes(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
                gr->tag() );
     return face_types;
   }
-  
+
   // get the starting indices of the top quadToTri layer
-  unsigned int j_top_start = 0, k_top_start = 0;
+  int j_top_start = 0, k_top_start = 0;
   j_top_start = ep->mesh.NbLayer-1;
   k_top_start = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1;
 
-  
+
 
   // check nature of each face
   int n_lat_tmp = 0;
@@ -394,7 +394,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
                gr->tag() );
     return face_types;
   }
-   
+
   const int n_lat = n_lat_tmp;
 
   // set defaults for the nfix, nadj vectors that store the nodes for each fixed or adjustable diagonal
@@ -416,7 +416,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
   std::vector<int> touch_bnd(n_lat);
 
   fill_touch_bnd(&touch_bnd[0], vert_bnd, n_lat);
-   
+
   // Classify the laterals of each little mesh volume:
 
   for( int p = 0; p < n_lat; p++ ){
@@ -429,20 +429,20 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
     // is the face a degenerate line:
     if( verts[p] == verts[n_lat+p] &&
         verts[p2] == verts[n_lat+p2] ){
-      face_types["degen"].push_back(p); 
+      face_types["degen"].push_back(p);
     }
     // is face a single triangle?
     else if( verts[p] == verts[n_lat+p] &&
              verts[p2] != verts[n_lat+p2] ||
              verts[p] != verts[n_lat+p] &&
              verts[p2] == verts[n_lat+p2] ){
-      face_types["single_tri"].push_back(p); 
+      face_types["single_tri"].push_back(p);
     }
     // is face a recombined quad?
     else if( forbiddenExists( v_face, forbidden_edges ) )
-      face_types["recomb"].push_back(p); 
+      face_types["recomb"].push_back(p);
 
-    // Does face contain a fixed diagonal edge? 
+    // Does face contain a fixed diagonal edge?
     else if( edgeExists( verts[p], verts[p2+n_lat], quadToTri_edges ) ){
       nfix1[p] = p; nfix2[p] = p2+n_lat;
       face_types["fixed_diag"].push_back(p);
@@ -453,7 +453,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
     }
 
     // Does the face have an adjustable but required diagonal?
-    // ( this else if requires that the previous one about fixed diagonals 
+    // ( this else if requires that the previous one about fixed diagonals
     //  comes FIRST )
     else if( edgeExists( verts[p], verts[p2+n_lat], lat_tri_diags ) ){
       nadj1[p] = p; nadj2[p] = p2+n_lat;
@@ -464,11 +464,11 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       face_types["adj_diag"].push_back(p);
     }
 
-    // If no previous option was true, then this face is an internal face. 
+    // If no previous option was true, then this face is an internal face.
 
-    // If this face has NO vertices on a lateral surface, and is a triangle or 
+    // If this face has NO vertices on a lateral surface, and is a triangle or
     //  not in the top quadToTri layer:
-    // then the face is a recombined quad (QuadToTri only used in recombined extrusions).  
+    // then the face is a recombined quad (QuadToTri only used in recombined extrusions).
     else if( !touch_bnd[p] &&
              ( j < j_top_start || j == j_top_start && k < k_top_start ) )
       face_types["recomb"].push_back(p);
@@ -480,12 +480,12 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       free_flag[p] = 1;
     }
   }
-  
+
 
   // set the bottom:
   if( n_lat == 3 )
     face_types["single_tri"].push_back(3);
- 
+
   else{
     std::vector<MVertex *> v_bot;
     v_bot.assign(4, (MVertex*)(0));
@@ -499,11 +499,11 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       face_types["fixed_diag"].push_back(4);
     }
     else if( edgeExists( verts[1], verts[3], quadToTri_edges ) ){
-      nfix1[4] = 1; nfix2[4] = 3;         
+      nfix1[4] = 1; nfix2[4] = 3;
       face_types["fixed_diag"].push_back(4);
     }
     // Does the face have an adjustable but required diagonal?
-    // ( this else if requires that the previous one about fixed diagonals 
+    // ( this else if requires that the previous one about fixed diagonals
     //  comes FIRST )
     // NOTE: THIS SITUATION SHOULD NEVER HAPPEN ON THIS FACE
     else if( edgeExists( verts[0], verts[2], lat_tri_diags ) ){
@@ -525,7 +525,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       face_types["single_tri"].push_back(4);
   // if a hexahedron:
   else{
-    std::vector<MVertex *> v_top; 
+    std::vector<MVertex *> v_top;
     v_top.assign(4, (MVertex*)(0));
     v_top[0] = verts[4]; v_top[1] = verts[5];
     v_top[2] = verts[6]; v_top[3] = verts[7];
@@ -538,11 +538,11 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       face_types["fixed_diag"].push_back(5);
     }
     else if( edgeExists( verts[5], verts[7], quadToTri_edges ) ){
-      nfix1[5] = 5; nfix2[5] = 7;         
+      nfix1[5] = 5; nfix2[5] = 7;
       face_types["fixed_diag"].push_back(5);
     }
     // Does the face have an adjustable but required diagonal?
-    // ( this else if requires that the previous one about fixed diagonals 
+    // ( this else if requires that the previous one about fixed diagonals
     //  comes FIRST )
     // NOTE: THIS SITUATION SHOULD NEVER HAPPEN ON THIS FACE
     else if( edgeExists( verts[4], verts[6], lat_tri_diags ) ){
@@ -567,24 +567,24 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
 
 // Generate face diagonals used to subdivide prisms by BRUTE FORCE...NOT RECOMMENDED for general use, but it
 // is required for some elements which have all vertices on an external region boundary.
-// Added 2010-01-29     
-static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem, 
+// Added 2010-01-29
+static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
                                       int j, int k, std::vector<MVertex *> verts,
                                       std::map<std::string, std::vector<int> > &face_types,
-                                      std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
+                                      std::set<std::pair<MVertex*, MVertex*> > &edges_new,
                                       std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                       std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
-                                      std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new, 
+                                      std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
-                                      std::vector<int> nfix1, std::vector<int> nfix2, 
+                                      std::vector<int> nfix1, std::vector<int> nfix2,
                                       std::vector<int> nadj1, std::vector<int> nadj2,
                                       std::vector<int> free_flag )
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-    
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In bruteForceEdgeQuadToTriPrism(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -595,7 +595,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In bruteForceEdgeQuadToTriPrism(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return;
   }
 
@@ -607,7 +607,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
                "%d.", gr->tag() );
     return;
   }
-  
+
   // verify number of vertices
   int n_lat;
   if( verts.size() != 6 ){
@@ -668,16 +668,16 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
     return;
   }
 
- 
+
   // A PRISM IS MORE DIFFICULT:
-  
+
   // First case, if exactly two laterals are forbidden to diagonalize:
-  if( num_recomb == 2 ){ 
+  if( num_recomb == 2 ){
     if( num_free ){
       for( int p = 0; p < num_free; p++){
         int ind = face_types["free"][p];
         std::vector<MVertex*> v;
-        v.push_back(verts[ind]); v.push_back(verts[(ind+1)%3]); 
+        v.push_back(verts[ind]); v.push_back(verts[(ind+1)%3]);
         v.push_back(verts[(ind+1)%3+3]); v.push_back(verts[ind+3]);
         createForbidden(v, forbidden_new );
         createForbidden(v, forbidden_edges );
@@ -694,7 +694,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
       problems_new[elem].insert(jkpair);
     }
     return;
-  }   
+  }
 
   // If 1 lateral is forbidden to diagonalize and two free, diagonalize to lowest point vector on free edge:
   if( num_recomb == 1 && num_free == 2 ){
@@ -711,29 +711,29 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
     return;
   }
 
-    
+
   // If all faces are free, then diagonalize TWO faces based on smallest vertex pointer
   if( num_free >= 3 ){
-    int ind_low, ind2;
+    int ind_low;
     ind_low = 0;
     for( int p = 1; p < 6; p++ ){
-      if( verts[ind_low] > verts[p] ) 
+      if( verts[ind_low] > verts[p] )
         ind_low = p;
     }
-    
+
     int add = ind_low < 3 ? 0 : 3;
- 
+
     createEdge( verts[ind_low], verts[(ind_low-add+1)%3+3-add], quadToTri_edges );
     createEdge( verts[ind_low], verts[(ind_low-add+1)%3+3-add], edges_new );
     createEdge( verts[ind_low], verts[(ind_low-add+2)%3+3-add], quadToTri_edges );
     createEdge( verts[ind_low], verts[(ind_low-add+2)%3+3-add], edges_new );
 
     return;
-  } 
+  }
 
 
   // If reach this point, then go through the loop of progressively permitting more face types
-  // to be considered for diagonalization.  This loop could be slow, that's why previous special cases were 
+  // to be considered for diagonalization.  This loop could be slow, that's why previous special cases were
   // tried first.
   // t=0, fixed and preferred diagonals only.
   // t=1, allow preferred diagonals to be meshed with lowest vertex pointer in diagonal
@@ -752,7 +752,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
     // set default values of the n variables
     // to unique negative numbers; bool to false.
     for( int p = 0; p < 3; p++ ){
-      n1[p] = -p*p-p-1; 
+      n1[p] = -p*p-p-1;
       n2[p] = -p*p-p-2;
       face_is_free[p] = false;
     }
@@ -763,16 +763,16 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
         n1[p] = nfix1[p]; n2[p] = nfix2[p];
       }
       // preferred adjustable diagonals
-      else if( !t && nadj1[p] >= 0 ){ 
-        n1[p] = nadj1[p]; n2[p] = nadj2[p]; 
+      else if( !t && nadj1[p] >= 0 ){
+        n1[p] = nadj1[p]; n2[p] = nadj2[p];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
       else if( t >= 1 && t < 3 && nadj1[p] >= 0 ||
                t == 2 && free_flag[p] ){
-        if( verts[p] < verts[(p+1)%3] && 
+        if( verts[p] < verts[(p+1)%3] &&
              verts[p] < verts[p+3] ||
-            verts[(p+1)%3+3] < verts[(p+1)%3] && 
-             verts[(p+1)%3+3] < verts[p+3] ){ 
+            verts[(p+1)%3+3] < verts[(p+1)%3] &&
+             verts[(p+1)%3+3] < verts[p+3] ){
           n1[p] = p; n2[p] = (p+1)%3+3;
         }
         else{
@@ -781,7 +781,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
       }
       else if( t==3 && (nadj1[p] >= 0 || free_flag[p]) )
         face_is_free[p] = true;
-    }    
+    }
 
     // search for two faces that have diagonals which meet at a vertex
     for( int p = 0; p < 3; p++ ){
@@ -789,11 +789,11 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
       if( face_is_free[p] && face_is_free[(p+1)%3] ){
         face_is_free[p] = false;
         if( verts[(p+1)%3] < verts[(p+1)%3+3] ){
-          n1[p] = p+3; 
+          n1[p] = p+3;
           n2[p] = (p+1)%3;
         }
         else{
-          n1[p] = p; 
+          n1[p] = p;
           n2[p] = (p+1)%3+3;
         }
       }
@@ -803,9 +803,9 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
         face_done[0] = p;
         face_done[1] = (p+1)%3;
         if( n1[(p+1)%3] == (p+1)%3 || n2[(p+1)%3] == (p+1)%3 ){
-          n1[p] = p+3; 
+          n1[p] = p+3;
           n2[p] = (p+1)%3;
-        } 
+        }
         else{
           n1[p] = p;
           n2[p] = (p+1)%3+3;
@@ -817,9 +817,9 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
         face_done[0] = p;
         face_done[1] = (p+1)%3;
         if( n2[p] == (p+1)%3 || n1[p] == (p+1)%3 ){
-          n1[(p+1)%3] = (p+1)%3; 
+          n1[(p+1)%3] = (p+1)%3;
           n2[(p+1)%3] = (p+2)%3+3;
-        } 
+        }
         else{
           n1[(p+1)%3] = (p+1)%3+3;
           n2[(p+1)%3] = (p+2)%3;
@@ -832,7 +832,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
         face_done[0] = p;
         face_done[1] = (p+1)%3;
       }
-      
+
       if( valid_division ){
         createEdge( verts[n1[p]], verts[n2[p]], quadToTri_edges );
         createEdge( verts[n1[p]], verts[n2[p]], edges_new );
@@ -842,12 +842,12 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
       }
     }
 
-    // At this point, can break out if valid_division... OR if there is NO valid division AND 
+    // At this point, can break out if valid_division... OR if there is NO valid division AND
     // if num_fixed_diag == 3, or 2 and a recomb
     // break out of loop. This will need an internal vertex.
     if( valid_division || !valid_division && num_fixed_diag + num_recomb == 3 )
       break;
-    
+
   } // end of outer t-loop
 
   // create adjustable but required diagonals that weren't yet added
@@ -860,30 +860,30 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
   }
 
   if( !valid_division ){
-    std::pair<unsigned int, unsigned int> jk_pair(j,k); 
+    std::pair<unsigned int, unsigned int> jk_pair(j,k);
     problems[elem].insert(jk_pair);
     problems_new[elem].insert(jk_pair);
   }
 
   return;
 
-}  // end of bruteForceEdgeQuadToTriPrism()  
+}  // end of bruteForceEdgeQuadToTriPrism()
 
 
 
 // Divide hexahedron degenerated at two points (degenerate face is a line) by brute force
-static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep, 
+static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep,
                                                int j, int k, std::vector<MVertex *> verts,
-                                               std::map<std::string, std::vector<int> > &face_types, 
-                                               std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
+                                               std::map<std::string, std::vector<int> > &face_types,
+                                               std::set<std::pair<MVertex*, MVertex*> > &edges_new,
                                                std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                                std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                                std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                                std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-                                               std::vector<int> nfix1, std::vector<int> nfix2, 
+                                               std::vector<int> nfix1, std::vector<int> nfix2,
                                                std::vector<int> nadj1, std::vector<int> nadj2,
                                                std::vector<int> free_flag )
 {
@@ -892,11 +892,11 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     return;
 
   // numbers of each type of face
-  int num_degen = face_types["degen"].size();
-  int num_single_tri = face_types["single_tri"].size();
-  int num_recomb = face_types["recomb"].size();
-  int num_fixed_diag = face_types["fixed_diag"].size();
-  int num_adj_diag = face_types["adj_diag"].size();
+  // int num_degen = face_types["degen"].size();
+  // int num_single_tri = face_types["single_tri"].size();
+  // int num_recomb = face_types["recomb"].size();
+  // int num_fixed_diag = face_types["fixed_diag"].size();
+  // int num_adj_diag = face_types["adj_diag"].size();
   int num_free = face_types["free"].size();
 
   int degen_face = face_types["degen"][0];
@@ -906,7 +906,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     int ind_low;
     ind_low = 0;
     for( int p = 1; p < 8; p++ ){
-      if( verts[ind_low] > verts[p] ) 
+      if( verts[ind_low] > verts[p] )
         ind_low = p;
     }
 
@@ -928,19 +928,19 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         ind2 = (ind_low-add+1)%4+4-add;
       createEdge( verts[ind_low], verts[ind2], quadToTri_edges );
       createEdge( verts[ind_low], verts[ind2], edges_new );
-    }      
+    }
 
     return;
   }
 
   // If faces of prism not all free, look for a way to diagonalize and subdivide.
   // t = 0, fixed and preferred adjustable diagonals
-  // t >= 1 < 3, lowest pointer on adjustables 
+  // t >= 1 < 3, lowest pointer on adjustables
   // t = 2, include free faces, lowest vertex pointer diagonal on adjustable and free
   // t = 3, not lowest vertex pointer diagonal on adjustable and free
 
   int face_done[2];
-  face_done[0] = -1; 
+  face_done[0] = -1;
   face_done[1] = -2;
 
   // valid_division tells whether a valid division was found
@@ -981,17 +981,17 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         *n1_tmp = nfix1[p_tmp]; *n2_tmp = nfix2[p_tmp];
       }
       // preferred adjustable diagonals
-      else if( !t && nadj1[p_tmp] >= 0 ){ 
-        *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp]; 
+      else if( !t && nadj1[p_tmp] >= 0 ){
+        *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp];
       }
       // choose lowest vertex for t < 3, non-lowest vertex for t == 3
       else if( t >= 1 && t < 3 && nadj1[p_tmp] >= 0 ||
                t == 2 && free_flag[p_tmp] ){
         if( p_tmp < 4 ){
-          if( verts[p_tmp] < verts[(p_tmp+1)%4] && 
+          if( verts[p_tmp] < verts[(p_tmp+1)%4] &&
               verts[p_tmp] < verts[p_tmp+4] ||
-              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] && 
-              verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){ 
+              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
+              verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){
             *n1_tmp = p_tmp; *n2_tmp = (p_tmp+1)%4+4;
           }
           else{
@@ -1027,7 +1027,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         else{
           n1_top = 5; n2_top = 7;
         }
-        n1_bot = n1_top-4; 
+        n1_bot = n1_top-4;
         n2_bot = n2_top-4;
       }
       else if( n1_top >= 0 && p_bot_is_free ){
@@ -1043,7 +1043,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
           verts[n2_top] == verts[n1_bot] ||
           verts[n2_top] == verts[n2_bot] ){
         valid_division = true;
-        face_done[0] = p_top; 
+        face_done[0] = p_top;
         face_done[1] = p_bot;
         createEdge( verts[n1_top], verts[n2_top], quadToTri_edges );
         createEdge( verts[n1_top], verts[n2_top], edges_new );
@@ -1053,7 +1053,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     }
 
     // Top surface and lateral surface
-    if( !valid_division && 
+    if( !valid_division &&
         ( n1_top >= 0 || p_top_is_free ) &&
         ( n1_lat >= 0 || p_lat_is_free ) ){
 
@@ -1067,7 +1067,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         if( n1_top == (degen_face+2)%4+4 ||
             n2_top == (degen_face+2)%4+4 ){
-          n1_lat = (degen_face+2)%4+4; 
+          n1_lat = (degen_face+2)%4+4;
           n2_lat = (n1_lat-4+1)%4;
         }
         else{
@@ -1078,7 +1078,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
       else if( n1_top >= 0 && p_lat_is_free ){
         if( n1_top == (degen_face+2)%4+4 ||
             n2_top == (degen_face+2)%4+4 ){
-          n1_lat = (degen_face+2)%4+4; 
+          n1_lat = (degen_face+2)%4+4;
           n2_lat = (n1_lat-4+1)%4;
         }
         else{
@@ -1089,7 +1089,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
       else if( n1_lat >= 0 && p_top_is_free ){
         if( n1_lat == (degen_face+2)%4+4 ||
             n2_lat == (degen_face+2)%4+4 ){
-          n1_top = (degen_face+2)%4+4; 
+          n1_top = (degen_face+2)%4+4;
           n2_top = (n1_top-4+2)%4+4;
         }
         else{
@@ -1102,7 +1102,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
           verts[n2_top] == verts[n1_lat] ||
           verts[n2_top] == verts[n2_lat] ){
         valid_division = true;
-        face_done[0] = p_top; 
+        face_done[0] = p_top;
         face_done[1] = p_lat;
         createEdge( verts[n1_top], verts[n2_top], quadToTri_edges );
         createEdge( verts[n1_top], verts[n2_top], edges_new );
@@ -1112,7 +1112,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     }
 
     // Bottom surface and lateral surface
-    if( !valid_division && 
+    if( !valid_division &&
         ( n1_bot >= 0 || p_bot_is_free ) &&
         ( n1_lat >= 0 || p_lat_is_free ) ){
 
@@ -1126,7 +1126,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         if( n1_bot == (degen_face+2)%4 ||
             n2_bot == (degen_face+2)%4 ){
-          n1_lat = (degen_face+2)%4; 
+          n1_lat = (degen_face+2)%4;
           n2_lat = (n1_lat+1)%4+4;
         }
         else{
@@ -1137,7 +1137,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
       else if( n1_bot >= 0 && p_lat_is_free ){
         if( n1_bot == (degen_face+2)%4 ||
             n2_bot == (degen_face+2)%4 ){
-          n1_lat = (degen_face+2)%4; 
+          n1_lat = (degen_face+2)%4;
           n2_lat = (n1_lat+1)%4+4;
         }
         else{
@@ -1148,7 +1148,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
       else if( n1_lat >= 0 && p_bot_is_free ){
         if( n1_lat == (degen_face+2)%4 ||
             n2_lat == (degen_face+2)%4 ){
-          n1_bot = (degen_face+2)%4; 
+          n1_bot = (degen_face+2)%4;
           n2_bot = (n1_bot+2)%4;
         }
         else{
@@ -1161,7 +1161,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
           verts[n2_bot] == verts[n1_lat] ||
           verts[n2_bot] == verts[n2_lat] ){
         valid_division = true;
-        face_done[0] = p_bot; 
+        face_done[0] = p_bot;
         face_done[1] = p_lat;
         createEdge( verts[n1_bot], verts[n2_bot], quadToTri_edges );
         createEdge( verts[n1_bot], verts[n2_bot], edges_new );
@@ -1173,10 +1173,10 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     if( valid_division )
       break;
 
-  }  // end of t-loop (outer loop) 
+  }  // end of t-loop (outer loop)
 
   // take care of any adjustable but required diagonals not yet added
-  for( int s = 0; s < face_types["adj_diag"].size(); s++ ){
+  for(unsigned int s = 0; s < face_types["adj_diag"].size(); s++ ){
     int ind = face_types["adj_diag"][s];
     if( ind != face_done[0] && ind != face_done[1] ){
       createEdge( verts[nadj1[ind]], verts[nadj2[ind]], quadToTri_edges  );
@@ -1184,7 +1184,7 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     }
   }
 
-  // if no division top found, need internal vertex. 
+  // if no division top found, need internal vertex.
   if( !valid_division ){
     std::pair<unsigned int, unsigned int> jkpair(j,k);
     problems[elem].insert(jkpair);
@@ -1197,18 +1197,18 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
 
 
 // Divide a hexahedron degenerate at one point (one degenerate corner) by brute force.
-static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep, 
+static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep,
                                                int j, int k, std::vector<MVertex *> verts,
-                                               std::map<std::string, std::vector<int> > &face_types, 
-                                               std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
+                                               std::map<std::string, std::vector<int> > &face_types,
+                                               std::set<std::pair<MVertex*, MVertex*> > &edges_new,
                                                std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                                std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                                std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                                std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-                                               std::vector<int> nfix1, std::vector<int> nfix2, 
+                                               std::vector<int> nfix1, std::vector<int> nfix2,
                                                std::vector<int> nadj1, std::vector<int> nadj2,
                                                std::vector<int> free_flag )
 {
@@ -1217,16 +1217,16 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     return;
 
   // numbers of each type of face
-  int num_degen = face_types["degen"].size();
-  int num_single_tri = face_types["single_tri"].size();
-  int num_recomb = face_types["recomb"].size();
-  int num_fixed_diag = face_types["fixed_diag"].size();
-  int num_adj_diag = face_types["adj_diag"].size();
+  // int num_degen = face_types["degen"].size();
+  // int num_single_tri = face_types["single_tri"].size();
+  // int num_recomb = face_types["recomb"].size();
+  // int num_fixed_diag = face_types["fixed_diag"].size();
+  // int num_adj_diag = face_types["adj_diag"].size();
   int num_free = face_types["free"].size();
 
   // index of the degenerate corner
-  int degen_ind = verts[face_types["single_tri"][0]] 
-                  == verts[face_types["single_tri"][0]+4] 
+  int degen_ind = verts[face_types["single_tri"][0]]
+                  == verts[face_types["single_tri"][0]+4]
                   ? face_types["single_tri"][0] : face_types["single_tri"][1];
 
   // If all faces are free, slice from degen corner top and bottom. done.
@@ -1238,10 +1238,10 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     return;
   }
 
-  // If faces of degenerated hexahedron are not all free, 
+  // If faces of degenerated hexahedron are not all free,
   // look for a way to diagonalize and subdivide.
   // t = 0, fixed and preferred adjustable diagonals
-  // t >= 1 < 3, lowest pointer on adjustables 
+  // t >= 1 < 3, lowest pointer on adjustables
   // t = 2, include free faces, lowest vertex pointer diagonal on adjustable and free
   // t = 3, not lowest vertex pointer diagonal on adjustable and free
   int face_done[3];
@@ -1250,7 +1250,7 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
   face_done[2] = -3;
   bool valid_division = false;
   for( int t = 0; t < 4; t++ ){
-    // first test for top bottom parallel diagonals (g=0), then pyramid with 
+    // first test for top bottom parallel diagonals (g=0), then pyramid with
     // top on corner opposite degen corner (g=1), then pyramid with top on a corner
     // NOT opposite to the degenerate corner (g=2), then test for non-adjoining
     // lateral face diagonals (g=3).
@@ -1296,18 +1296,17 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         *n1_tmp = nfix1[p_tmp]; *n2_tmp = nfix2[p_tmp];
       }
       // preferred adjustable diagonals
-      else if( !t && nadj1[p_tmp] >= 0 ){ 
-        *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp]; 
+      else if( !t && nadj1[p_tmp] >= 0 ){
+        *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
       else if( t >= 1 && t < 3 && nadj1[p_tmp] >= 0 ||
                t == 2 && free_flag[p_tmp] ){
-        int ind_low = -1;
         if( p_tmp < 4 ){
-          if( verts[p_tmp] < verts[(p_tmp+1)%4] && 
+          if( verts[p_tmp] < verts[(p_tmp+1)%4] &&
                verts[p_tmp] < verts[p_tmp+4] ||
-              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] && 
-               verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){ 
+              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
+               verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){
             *n1_tmp = p_tmp; *n2_tmp = (p_tmp+1)%4+4;
           }
           else{
@@ -1378,8 +1377,8 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         if( p_lat2_is_free ){
           n1_lat2 = (degen_ind+2)%4+4; n2_lat2 = (degen_ind+3)%4;
-        } 
-        face_done[0] = 5; 
+        }
+        face_done[0] = 5;
         face_done[1] = (degen_ind+1)%4;
         face_done[2] = (degen_ind+2)%4;
         createEdge( verts[n1_top], verts[n2_top], quadToTri_edges );
@@ -1398,8 +1397,8 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         if( p_lat2_is_free ){
           n1_lat2 = (degen_ind+2)%4; n2_lat2 = (degen_ind+3)%4+4;
-        } 
-        face_done[0] = 4; 
+        }
+        face_done[0] = 4;
         face_done[1] = (degen_ind+1)%4;
         face_done[2] = (degen_ind+2)%4;
         createEdge( verts[n1_bot], verts[n2_bot], quadToTri_edges );
@@ -1419,7 +1418,7 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     if( !valid_division ){
       // pyramid top on top face
       if( n1_top >= 0 && n1_top != (degen_ind+2)%4+4 && n2_top != (degen_ind+2)%4+4 ||
-          p_top_is_free ){ 
+          p_top_is_free ){
         if( n1_lat1 == (degen_ind+1)%4+4 || p_lat1_is_free ){
           valid_division = true;
           face_done[0] = (degen_ind+1)%4;
@@ -1439,18 +1438,18 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
           createEdge( verts[n1_lat2], verts[n2_lat2], edges_new );
         }
         if( valid_division ){
-          face_done[1] = 5;              
+          face_done[1] = 5;
           if( p_top_is_free ){
             n1_top = (degen_ind+1)%4+4; n2_top = (degen_ind+3)%4+4;
           }
           createEdge( verts[n1_top], verts[n2_top], quadToTri_edges );
           createEdge( verts[n1_top], verts[n2_top], edges_new );
         }
-      }             
+      }
       // pyramid top on bottom face
-      if( !valid_division && n1_bot >= 0 && 
+      if( !valid_division && n1_bot >= 0 &&
           n1_bot != (degen_ind+2)%4 && n2_bot != (degen_ind+2)%4 ||
-          p_bot_is_free ){ 
+          p_bot_is_free ){
         if( n1_lat1 == (degen_ind+1)%4 || p_lat1_is_free ){
           valid_division = true;
           face_done[0] = (degen_ind+1)%4;
@@ -1470,14 +1469,14 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
           createEdge( verts[n1_lat2], verts[n2_lat2], edges_new );
         }
         if( valid_division ){
-          face_done[1] = 4;              
+          face_done[1] = 4;
           if( p_bot_is_free ){
             n1_bot = (degen_ind+1)%4; n2_bot = (degen_ind+3)%4;
           }
           createEdge( verts[n1_bot], verts[n2_bot], quadToTri_edges );
           createEdge( verts[n1_bot], verts[n2_bot], edges_new );
         }
-      }             
+      }
     }
     // see if the lateral diagonals have non-adjoining diagonals
     if( !valid_division ){
@@ -1509,11 +1508,11 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
 
     if( valid_division )
       break;
-  }  
+  }
 
 
   // if no subdivisiion, still take care of any adjustable but required diagonals not yet added
-  for( int s = 0; s < face_types["adj_diag"].size(); s++ ){
+  for(unsigned int s = 0; s < face_types["adj_diag"].size(); s++ ){
     int ind = face_types["adj_diag"][s];
     if( ind != face_done[0] && ind != face_done[1] && ind != face_done[2] ){
       createEdge( verts[nadj1[ind]], verts[nadj2[ind]], quadToTri_edges  );
@@ -1521,7 +1520,7 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     }
   }
 
-  // if no division top found, need internal vertex. 
+  // if no division top found, need internal vertex.
   if( !valid_division ){
     std::pair<unsigned int, unsigned int> jkpair(j,k);
     problems[elem].insert(jkpair);
@@ -1533,18 +1532,18 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
 
 
 // Divide a fully non-degenerate hexahedron by brute force.
-static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep, 
+static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudeParams *ep,
                                          int j, int k, std::vector<MVertex *> verts,
-                                         std::map<std::string, std::vector<int> > &face_types, 
-                                         std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
+                                         std::map<std::string, std::vector<int> > &face_types,
+                                         std::set<std::pair<MVertex*, MVertex*> > &edges_new,
                                          std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                         std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                         std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                          std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                          std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                          std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                          std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                          std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-                                         std::vector<int> nfix1, std::vector<int> nfix2, 
+                                         std::vector<int> nfix1, std::vector<int> nfix2,
                                          std::vector<int> nadj1, std::vector<int> nadj2,
                                          std::vector<int> free_flag )
 {
@@ -1557,11 +1556,11 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
 
   if( !ep )
     return;
- 
+
   // numbers of each type of face
-  int num_degen = face_types["degen"].size();
-  int num_single_tri = face_types["single_tri"].size();
-  int num_recomb = face_types["recomb"].size();
+  // int num_degen = face_types["degen"].size();
+  // int num_single_tri = face_types["single_tri"].size();
+  // int num_recomb = face_types["recomb"].size();
   int num_fixed_diag = face_types["fixed_diag"].size();
   int num_adj_diag = face_types["adj_diag"].size();
   int num_free = face_types["free"].size();
@@ -1595,10 +1594,10 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
   for(int p = 0; p < 4; p++ )
     face_done[p] = -1-p;
 
-  // if find just two diagonals that could slice a prism with no other diags, remember ('hold') those diagonals until 
-  // end of loop in the following 'hold' variables.  
+  // if find just two diagonals that could slice a prism with no other diags, remember ('hold') those diagonals until
+  // end of loop in the following 'hold' variables.
   // Might have to resort to forbidding free surfaces and cutting two prisms only.
-  // don't really want to forbid surfaces, though...that's why two prisms are not immediately 
+  // don't really want to forbid surfaces, though...that's why two prisms are not immediately
   // cut when found.
   int p1_hold = -1, p2_hold = -2;  // if found two opposite diags that could work alone
   int n1_hold[2], n2_hold[2];      // hold diag nodes for p1_hold, p2_hold.
@@ -1615,7 +1614,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
     // set default values of the n variables
     // to unique negative numbers; bool to false.
     for( int p = 0; p < 6; p++ ){
-      n1[p] = -p*p-p-1; 
+      n1[p] = -p*p-p-1;
       n2[p] = -p*p-p-2;
       face_is_free[p] = false;
     }
@@ -1626,17 +1625,17 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         n1[p] = nfix1[p]; n2[p] = nfix2[p];
       }
       // preferred adjustable diagonals
-      else if( !t && nadj1[p] >= 0 ){ 
-        n1[p] = nadj1[p]; n2[p] = nadj2[p]; 
+      else if( !t && nadj1[p] >= 0 ){
+        n1[p] = nadj1[p]; n2[p] = nadj2[p];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
       else if( t >= 1 && t < 3 && nadj1[p] >= 0 ||
                t == 2 && free_flag[p] ){
         if( p < 4 ){
-          if( verts[p] < verts[(p+1)%4] && 
+          if( verts[p] < verts[(p+1)%4] &&
                verts[p] < verts[p+4] ||
-              verts[(p+1)%4+4] < verts[(p+1)%4] && 
-               verts[(p+1)%4+4] < verts[p+4] ){ 
+              verts[(p+1)%4+4] < verts[(p+1)%4] &&
+               verts[(p+1)%4+4] < verts[p+4] ){
             n1[p] = p; n2[p] = (p+1)%4+4;
           }
           else{
@@ -1656,12 +1655,12 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
       }
       else if( t==3 && (nadj1[p] >= 0 || free_flag[p]) )
         face_is_free[p] = true;
-    }    
+    }
 
     // Now perform the tests to find the valid subdivision
 
     // first, do the test to find opposite aligned diagonals for "prism slice through"
-    // Not verified, but I believe this gives better quality elements than 3-diag corners  
+    // Not verified, but I believe this gives better quality elements than 3-diag corners
     if( !valid_division ){
       for( int p = 0; p < 3; p++ ){
         int p1 = -1, p2 = -2;
@@ -1671,22 +1670,22 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         }
         else{
           p1 = p; p2 = (p+2)%4;
-        }  
+        }
 
         // if these two faces do not work for opposite aligned diagonals, continue
         if( n1[p1] < 0 && !face_is_free[p1] ||
             n1[p2] < 0 && !face_is_free[p2] )
           continue;
-        if( n1[p1] >= 0 && n1[p2] >= 0 ){ 
+        if( n1[p1] >= 0 && n1[p2] >= 0 ){
           if( p1 < 4 ){
-            if( ( n1[p1] == p1 || n2[p1] == p1 ) &&  
+            if( ( n1[p1] == p1 || n2[p1] == p1 ) &&
                   n1[p2] != p2+4 && n2[p2] != p2+4 ||
-                ( n1[p1] == p1+4 || n2[p1] == p1+4 ) &&  
+                ( n1[p1] == p1+4 || n2[p1] == p1+4 ) &&
                   n1[p2] != p2 && n2[p2] != p2 )
               continue;
           }
           else{
-            int add = p1==4 ? 4 : -4; 
+            int add = p1==4 ? 4 : -4;
             if( n1[p1]+add != n1[p2] && n2[p1]+add !=  n1[p2] )
               continue;
           }
@@ -1697,13 +1696,13 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           face_is_free[p1] = false;
           if( p1 < 4 ){
             if( verts[p1] < verts[p1+4] && verts[p1] < verts[(p1+1)%4] ||
-                verts[(p1+1)%4+4] < verts[p1+4] && 
+                verts[(p1+1)%4+4] < verts[p1+4] &&
                  verts[(p1+1)%4+4] < verts[(p1+1)%4] ){
-              n1[p1] = p1; 
+              n1[p1] = p1;
               n2[p1] = (p1+1)%4+4;
             }
             else{
-              n1[p1] = (p1+4); 
+              n1[p1] = (p1+4);
               n2[p1] = (p1+1)%4;
             }
           }
@@ -1728,7 +1727,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
               n1[p2] = p2+4;
               n2[p2] = (p2+1)%4;
             }
-            else{ 
+            else{
               n1[p2] = p2;
               n2[p2] = (p2+1)%4+4;
             }
@@ -1746,7 +1745,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
               n1[p1] = p1+4;
               n2[p1] = (p1+1)%4;
             }
-            else{ 
+            else{
               n1[p1] = p1;
               n2[p1] = (p1+1)%4+4;
             }
@@ -1759,13 +1758,13 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           face_is_free[p1] = false;
         }
 
-        // In case the whole loop finishes and 
+        // In case the whole loop finishes and
         // cannot make further diagonalizations on any faces to make the prism slice work,
         // AND if there are no oter required diagonals other than among these two diagonals,
-        // then it will be possible to come back to these two opposing diagonals to make a 
-        // simple two-prism slice.  So, if there are no other diags, hold these two valid opposing 
-        // diagonals in case we want to come back to them later to just have two 
-        // opposing diagonals with the other faces forbidden. 
+        // then it will be possible to come back to these two opposing diagonals to make a
+        // simple two-prism slice.  So, if there are no other diags, hold these two valid opposing
+        // diagonals in case we want to come back to them later to just have two
+        // opposing diagonals with the other faces forbidden.
         if( p1_hold < 0 || p2_hold < 0 ){
           int required_diag_count = 0;
           if( nfix1[p1] >= 0 || nadj1[p1] >= 0 )
@@ -1773,7 +1772,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           if( nfix1[p2] >= 0 || nadj1[p2] >= 0 )
             required_diag_count++;
           if( p1_hold < 0 && num_fixed_diag + num_adj_diag <= required_diag_count ){
-            p1_hold = p1; 
+            p1_hold = p1;
             p2_hold = p2;
             n1_hold[0] = n1[p1];
             n2_hold[0] = n2[p1];
@@ -1781,7 +1780,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             n2_hold[1] = n2[p2];
           }
         }
-        
+
         // Two tests to see if this prism slice-through will work:
         // 1: if there is another set of opposing faces with aligned diagonals.
         // 2: if two diagonals on one of the remaining 4 faces meet, valid.
@@ -1797,21 +1796,21 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           }
           else{
             s1 = s; s2 = (s+2)%4;
-          }  
+          }
           // if these two faces do not work for opposite aligned diagonals, continue
           if( n1[s1] < 0 && !face_is_free[s1] ||
               n1[s2] < 0 && !face_is_free[s2] )
             continue;
-          if( n1[s1] >= 0 && n1[s2] >= 0 ){ 
+          if( n1[s1] >= 0 && n1[s2] >= 0 ){
             if( s1 < 4 ){
-              if( ( n1[s1] == s1 || n2[s1] == s1 ) &&  
+              if( ( n1[s1] == s1 || n2[s1] == s1 ) &&
                     n1[s2] != s2+4 && n2[s2] != s2+4 ||
-                  ( n1[s1] == s1+4 || n2[s1] == s1+4 ) &&  
+                  ( n1[s1] == s1+4 || n2[s1] == s1+4 ) &&
                     n1[s2] != s2 && n2[s2] != s2 )
                 continue;
             }
             else{
-              int add = s1==4 ? 4 : -4; 
+              int add = s1==4 ? 4 : -4;
               if( n1[s1]+add != n1[s2] && n2[s1]+add !=  n1[s2] )
                 continue;
             }
@@ -1828,13 +1827,13 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             face_is_free[s1] = false;
             if( s1 < 4 ){
               if( verts[s1] < verts[s1+4] && verts[s1] < verts[(s1+1)%4] ||
-                  verts[(s1+1)%4+4] < verts[s1+4] && 
+                  verts[(s1+1)%4+4] < verts[s1+4] &&
                    verts[(s1+1)%4+4] < verts[(s1+1)%4] ){
-                n1[s1] = s1; 
+                n1[s1] = s1;
                 n2[s1] = (s1+1)%4+4;
               }
               else{
-                n1[s1] = (s1+4); 
+                n1[s1] = (s1+4);
                 n2[s1] = (s1+1)%4;
               }
             }
@@ -1859,7 +1858,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
                 n1[s2] = s2+4;
                 n2[s2] = (s2+1)%4;
               }
-              else{ 
+              else{
                 n1[s2] = s2;
                 n2[s2] = (s2+1)%4+4;
               }
@@ -1877,7 +1876,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
                 n1[s1] = s1+4;
                 n2[s1] = (s1+1)%4;
               }
-              else{ 
+              else{
                 n1[s1] = s1;
                 n2[s1] = (s1+1)%4+4;
               }
@@ -1892,8 +1891,8 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
 
           if( valid_division )
            break;
-        }           
-        
+        }
+
 
         // Test 2: any vertex has two diagonals meeting at it, NOT including the diagonals on
         // p1, p2;
@@ -1904,21 +1903,21 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             faces.assign(2,-1);
             int third_face = s<4 ? 4 : 5;
             int count_diags = 0;
-            if( s-add != p1 && s-add != p2 && 
+            if( s-add != p1 && s-add != p2 &&
                 (  n1[(s-add)] == s || n2[(s-add)] == s || face_is_free[(s-add)] ) ){
-              faces[count_diags] = s-add; 
+              faces[count_diags] = s-add;
               count_diags++;
             }
             if( (s-add+3)%4 != p1 && (s-add+3)%4 != p2 &&
                 ( n1[(s-add+3)%4] == s || n2[(s-add+3)%4] == s || face_is_free[(s-add+3)%4] ) ){
-              faces[count_diags] = (s-add+3)%4; 
+              faces[count_diags] = (s-add+3)%4;
               count_diags++;
             }
             if( count_diags < 2 && third_face != p1 && third_face != p2 &&
                 ( n1[third_face] == s || n2[third_face] == s || face_is_free[third_face] ) ){
               faces[count_diags] = third_face;
               count_diags++;
-            } 
+            }
 
             // if valid subdivision NOT found
             if( count_diags < 2 )
@@ -1936,21 +1935,21 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             if( face_is_free[s-add] ){
               n1[s-add] = s;
               n2[s-add] = (s-add+1)%4+4-add;
-            }     
+            }
             if( face_is_free[(s-add+3)%4] ){
               n1[(s-add+3)%4] = s;
               n2[(s-add+3)%4] = (s-add+3)%4+4-add;
-            }     
+            }
             if( face_is_free[third_face] ){
               n1[third_face] = s;
               n2[third_face] = (s-add+2)%4+add;
-            }     
+            }
 
             if( valid_division )
               break;
           }
         }  // end of test 2
-        
+
         if( valid_division ){
           createEdge( verts[n1[face_done[0]]], verts[n2[face_done[0]]], quadToTri_edges );
           createEdge( verts[n1[face_done[0]]], verts[n2[face_done[0]]], edges_new );
@@ -1972,20 +1971,20 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         int third_face = p<4 ? 4 : 5;
         if( ( n1[(p-add)] == p || n2[(p-add)] == p || face_is_free[(p-add)] ) &&
             ( n1[(p-add+3)%4] == p || n2[(p-add+3)%4] == p || face_is_free[(p-add+3)%4] ) &&
-            ( n1[third_face]  == p || n2[third_face] == p || face_is_free[third_face] ) ){ 
+            ( n1[third_face]  == p || n2[third_face] == p || face_is_free[third_face] ) ){
           valid_division = true;
           if( face_is_free[p-add] ){
             n1[p-add] = p;
             n2[p-add] = (p-add+1)%4+4-add;
-          }     
+          }
           if( face_is_free[(p-add+3)%4] ){
             n1[(p-add+3)%4] = p;
             n2[(p-add+3)%4] = (p-add+3)%4+4-add;
-          }     
+          }
           if( face_is_free[third_face] ){
             n1[third_face] = p;
             n2[third_face] = (p-add+2)%4+add;
-          }     
+          }
 
           face_done[0] = (p-add);
           face_done[1] = (p-add+3)%4;
@@ -2001,7 +2000,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         }
       }
     }
-    
+
     if( valid_division )
       break;
 
@@ -2009,7 +2008,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
 
   // If no valid division yet but yet there were two opposite faces once
   // ( if this won't work, should be the case that p1_hold < 0 here )
-  if( !valid_division && p1_hold >= 0 ){    
+  if( !valid_division && p1_hold >= 0 ){
     valid_division = true;
     face_done[0] = p1_hold;
     face_done[1] = p2_hold;
@@ -2019,18 +2018,18 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
     createEdge( verts[n1_hold[1]], verts[n2_hold[1]], edges_new );
 
     // create forbidden faces
-    for( int s = 0; s < face_types["free"].size(); s++ ){
+    for(unsigned int s = 0; s < face_types["free"].size(); s++ ){
       int s_tmp = face_types["free"][s];
       std::vector<MVertex*> v_free;
       if( s_tmp == p1_hold || s_tmp == p2_hold )
         continue;
       if( s_tmp < 4 ){
-        v_free.push_back(verts[s_tmp]); v_free.push_back(verts[(s_tmp+1)%4]);  
+        v_free.push_back(verts[s_tmp]); v_free.push_back(verts[(s_tmp+1)%4]);
         v_free.push_back(verts[(s_tmp+1)%4+4]); v_free.push_back(verts[s_tmp+4]);
       }
       else{
         int add = s_tmp==4 ? 0 : 4;
-        v_free.push_back(verts[add]); v_free.push_back(verts[add+1]);  
+        v_free.push_back(verts[add]); v_free.push_back(verts[add+1]);
         v_free.push_back(verts[add+2]); v_free.push_back(verts[add+3]);
       }
       createForbidden( v_free, forbidden_edges );
@@ -2039,7 +2038,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
   }
 
   // take care of any adjustable but required diagonals not yet added
-  for( int s = 0; s < face_types["adj_diag"].size(); s++ ){
+  for(unsigned int s = 0; s < face_types["adj_diag"].size(); s++ ){
     int ind = face_types["adj_diag"][s];
     if( ind == face_done[0] || ind == face_done[1] || ind == face_done[2] || ind == face_done[3] )
       continue;
@@ -2047,7 +2046,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
     createEdge( verts[nadj1[ind]], verts[nadj2[ind]], edges_new  );
   }
 
-  // if no valid division found, problematic. 
+  // if no valid division found, problematic.
   if( !valid_division ){
     std::pair<unsigned int, unsigned int> jkpair(j,k);
     problems[elem].insert(jkpair);
@@ -2059,25 +2058,25 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
 
 // Generate face diagonals to subdivide hexahedra by BRUTE FORCE.  Not recommended for general use, but it
 // is required for some elements which have all vertices on an external region boundary.
-// Added 2010-01-29     
-static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem, 
+// Added 2010-01-29
+static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
                                      int j, int k, std::vector<MVertex *> verts,
-                                      std::map<std::string, std::vector<int> > &face_types, 
-                                      std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
+                                      std::map<std::string, std::vector<int> > &face_types,
+                                      std::set<std::pair<MVertex*, MVertex*> > &edges_new,
                                       std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
-                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                       std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-                                      std::vector<int> nfix1, std::vector<int> nfix2, 
+                                      std::vector<int> nfix1, std::vector<int> nfix2,
                                       std::vector<int> nadj1, std::vector<int> nadj2,
                                       std::vector<int> free_flag )
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In bruteForceEdgeQuadToTriHexa(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -2088,7 +2087,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In bruteForceEdgeQuadToTriHexa(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return;
   }
 
@@ -2100,7 +2099,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
                "%d.", gr->tag() );
     return;
   }
-  
+
   // verify number of vertices
   int n_lat;
   if( verts.size() != 8 ){
@@ -2111,12 +2110,12 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
     n_lat = 4;
 
   // numbers of each type of face
-  int num_degen = face_types["degen"].size();
-  int num_single_tri = face_types["single_tri"].size();
+  //int num_degen = face_types["degen"].size();
+  //int num_single_tri = face_types["single_tri"].size();
   int num_recomb = face_types["recomb"].size();
-  int num_fixed_diag = face_types["fixed_diag"].size();
+  //int num_fixed_diag = face_types["fixed_diag"].size();
   int num_adj_diag = face_types["adj_diag"].size();
-  int num_free = face_types["free"].size();
+  //int num_free = face_types["free"].size();
 
 
   // Make sure all faces marked forbidden in face_types have all diagonals in forbidden_edges;
@@ -2138,7 +2137,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
   }
 
 
-  // If this element is marked problematic, make all the adjustable diags (none should exist if it's already 
+  // If this element is marked problematic, make all the adjustable diags (none should exist if it's already
   // marked as a problem, but just make sure) and return.
   std::pair<unsigned int, unsigned int> jkpair(j,k);
   if( problems.find(elem) != problems.end() && problems[elem].count(jkpair) ){
@@ -2166,7 +2165,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
     }
     return;
   }
-  
+
   // if there are not enough diagonals:
   if( 6 - face_types["single_tri"].size() - face_types["recomb"].size() < 2 ){
     // Can't be meshed without internal vertex
@@ -2174,7 +2173,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
       std::pair<unsigned int, unsigned int> jkpair(j,k);
       problems[elem].insert(jkpair);
       problems_new[elem].insert(jkpair);
-      for( int s = 0; s < face_types["adj_diag"].size(); s++ ){
+      for(unsigned int s = 0; s < face_types["adj_diag"].size(); s++ ){
         int ind = face_types["adj_diag"][s];
         createEdge( verts[nadj1[ind]], verts[nadj2[ind]], quadToTri_edges  );
         createEdge( verts[nadj1[ind]], verts[nadj2[ind]], edges_new  );
@@ -2185,15 +2184,15 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
       int p_tmp = face_types["free"][0];
       std::vector<MVertex*> v_free;
       if( p_tmp < 4 ){
-        v_free.push_back(verts[p_tmp]); 
-        v_free.push_back(verts[(p_tmp+1)%4]);  
+        v_free.push_back(verts[p_tmp]);
+        v_free.push_back(verts[(p_tmp+1)%4]);
         v_free.push_back(verts[(p_tmp+1)%4+4]);
         v_free.push_back(verts[p_tmp+4]);
       }
       else{
         int add = p_tmp==4 ? 0 : 4;
-        v_free.push_back(verts[add]); 
-        v_free.push_back(verts[add+1]);  
+        v_free.push_back(verts[add]);
+        v_free.push_back(verts[add+1]);
         v_free.push_back(verts[add+2]);
         v_free.push_back(verts[add+3]);
       }
@@ -2203,12 +2202,12 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
     return;
   }
 
-                     
+
   // Start looking at the different shape possibilities:
- 
+
 
   // First shape: A PRISM
-  // Only two possibilities.  Either the bottom can be divided along same diagonal as the top, 
+  // Only two possibilities.  Either the bottom can be divided along same diagonal as the top,
   // or the one quad side can be divided joining the top diagonal. Otherwise, problem.
   if( face_types["degen"].size() ){
     addEdgesForQuadToTriTwoPtDegenHexa( gr, elem, ep, j, k, verts, face_types, edges_new, forbidden_new,
@@ -2218,7 +2217,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
   }
 
   // Second shape type: DEGENERATED HEXAHEDRON
-  // Since this shape can be divided to create legitimate tets and/or pyramids, 
+  // Since this shape can be divided to create legitimate tets and/or pyramids,
   // let us try it.
   if( !face_types["degen"].size() && face_types["single_tri"].size() == 2 ){
     addEdgesForQuadToTriOnePtDegenHexa( gr, elem, ep, j, k, verts, face_types, edges_new, forbidden_new,
@@ -2240,7 +2239,7 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
                                   problems, pos, nfix1, nfix2, nadj1, nadj2, free_flag );
     return;
   }
-     
+
 } // end of bruteForceEdgeQuadToTriHexa()
 
 
@@ -2250,9 +2249,9 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
 static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_start,
                                     unsigned int k_start, unsigned int j_top, unsigned int k_top,
                                     MElement *elem, ExtrudeParams *loop_ep,
-                                    std::set<std::pair<MVertex*, MVertex*> > &edges_new, 
-                                    std::set<std::pair<MVertex*, MVertex*> > &forbidden_new, 
-                                    std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges, 
+                                    std::set<std::pair<MVertex*, MVertex*> > &edges_new,
+                                    std::set<std::pair<MVertex*, MVertex*> > &forbidden_new,
+                                    std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                     std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
@@ -2269,7 +2268,7 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In ExtrudeDiags(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -2295,7 +2294,7 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
       v1 = (*it).first; v2 = (*it).second;
       // find indices in v vector
       int ind1 = -1, ind2 = -1;
-      for( int p = 0; p < v.size(); p++){
+      for(unsigned int p = 0; p < v.size(); p++){
         if( v[p] == v1 )
           ind1 = p;
         if( v[p] == v2 )
@@ -2303,16 +2302,16 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
       }
       if( ind1 < 0 || ind2 < 0 ){
         Msg::Error("Error in ExtrudeDiags(): could not find vertex indices.");
-        return 0; 
+        return 0;
       }
       // source verts:
       MVertex *sv1 = (ind1 < elem_size ) ? elem->getVertex(ind1) : elem->getVertex(ind1-elem_size);
       MVertex *sv2 = (ind2 < elem_size ) ? elem->getVertex(ind2) : elem->getVertex(ind2-elem_size);
       // extrude these two verts
       for( unsigned int j = j_start; j <= j_top; j++ ){
-        int k_start_tmp = (j == j_start ) ? k_start+1 : 0; 
+        int k_start_tmp = (j == j_start ) ? k_start+1 : 0;
         int k_stop = ( j == j_top ) ? k_top : loop_ep->mesh.NbElmLayer[j];
-        for( unsigned int k = k_start_tmp; k < k_stop; k++ ){
+        for(int k = k_start_tmp; k < k_stop; k++ ){
           std::vector<MVertex*> v_extr = getExtrudedLateralVertices(sv1, sv2, gr, j, k, loop_ep, pos);
           if( v_extr.size() != 4 )
             return 0;
@@ -2330,7 +2329,7 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
       }
     }
   }
-   
+
   // add problem elements
   std::pair<unsigned int, unsigned int> jk_start (j_start, k_start);
   std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > >::iterator itprob;
@@ -2338,69 +2337,69 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
   if( problems_new.size() ){
     for( itprob = problems_new.begin(); itprob != problems_new.end(); itprob++ ){
       for( unsigned int j = j_start; j <= j_top; j++ ){
-        int k_start_tmp = (j == j_start ) ? k_start+1 : 0; 
+        int k_start_tmp = (j == j_start ) ? k_start+1 : 0;
         int k_stop = ( j == j_top ) ? k_top : loop_ep->mesh.NbElmLayer[j];
-        for( unsigned int k = k_start_tmp; k < k_stop; k++ ){
+        for(int k = k_start_tmp; k < k_stop; k++ ){
           std::pair<unsigned int, unsigned int> pair_tmp (j, k);
           problems[(*itprob).first].insert(pair_tmp);
         }
       }
     }
   }
-    
+
   return 1;
 }
 
 
-// Get set of locally fixed edges, forbidden edges, and all lateral surface diagonals. 
+// Get set of locally fixed edges, forbidden edges, and all lateral surface diagonals.
 // Fixed edges include top surface diagonals and any lateral surface diagonals that cannot be swapped.
 // Added 2010-01-24
-static bool QuadToTriGetRegionDiags(GRegion *gr, 
+static bool QuadToTriGetRegionDiags(GRegion *gr,
                            std::set<std::pair<MVertex*,MVertex*> > &quadToTri_edges,
                            std::set<std::pair<MVertex*,MVertex*> > &forbidden_edges,
-                           std::set<std::pair<MVertex*,MVertex*> > &lat_tri_diags, 
+                           std::set<std::pair<MVertex*,MVertex*> > &lat_tri_diags,
                            std::set<MVertex *, MVertexLessThanLexicographic>  &pos)
 {
-  
-  ExtrudeParams *ep = gr->meshAttributes.extrude; 
+
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh )
     return false;
- 
+
   GModel *model = gr->model();
 
   // find source face
   GFace *reg_source = model->getFaceByTag( std::abs( ep->geo.Source ) );
   if( !reg_source ){
     Msg::Error("In QuadToTriGetRegionDiags(), could not find source face "
-               "%d for region %d.", std::abs( ep->geo.Source ), 
+               "%d for region %d.", std::abs( ep->geo.Source ),
                gr->tag() );
     return false;
   }
-  
+
   // Find a source surface, find a COPIED_ENTITY that is the top surface,
 
   bool foundSource = false, foundTop = false;
   GFace *reg_top = NULL;
   std::list<GFace *> faces = gr->faces();
   std::list<GFace *>::iterator it = faces.begin();
-  
+
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
-    if( (*it) == reg_source ) 
+    if( (*it) == reg_source )
       foundSource = true;
-    else if( face_tmp_ep && face_tmp_ep->geo.Mode == 
+    else if( face_tmp_ep && face_tmp_ep->geo.Mode ==
         COPIED_ENTITY ){
-      GFace *top_source_tmp = model->getFaceByTag( 
+      GFace *top_source_tmp = model->getFaceByTag(
                               std::abs( face_tmp_ep->geo.Source ) );
       if( !top_source_tmp ){
         Msg::Error("In QuadToTriGetRegionDiags(), could not find source face "
-                   "%d for copied surface %d of region %d.", 
-                   std::abs( face_tmp_ep->geo.Source ), 
+                   "%d for copied surface %d of region %d.",
+                   std::abs( face_tmp_ep->geo.Source ),
                    (*it)->tag(), gr->tag() );
       }
       else if( top_source_tmp == reg_source ){
-        foundTop = true; 
+        foundTop = true;
         reg_top = (*it);
       }
     }
@@ -2408,16 +2407,16 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
 
   if( !foundTop )
     Msg::Warning("In QuadToTriGetRegionDiags(), could not find top face "
-               "for region %d.", gr->tag() );  
+               "for region %d.", gr->tag() );
 
 
   if( !foundSource ){
     Msg::Error("In QuadToTriGetRegionDiags(), source face "
-               "for region %d is not found in region face list.", gr->tag() );  
+               "for region %d is not found in region face list.", gr->tag() );
     return false;
   }
-  
-  
+
+
   // Get Fixed and adjustable lateral diagonal element edges
   int counter = 0;
   for( it = faces.begin(); it != faces.end(); it++ ){
@@ -2433,8 +2432,8 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
         (*it)->quadrangles[i]->getVertices(v);
         createForbidden(v, forbidden_edges );
       }
-      
-      // at this point, if there are no triangles or if there are quads, continue 
+
+      // at this point, if there are no triangles or if there are quads, continue
       if( !(*it)->triangles.size() || (*it)->quadrangles.size() )
         continue;
 
@@ -2464,12 +2463,12 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
         is_fixed = true;
       }
       // see if the diagonals are fixed for other reasons
-      if( !( face_ep_tmp && face_ep_tmp->mesh.ExtrudeMesh && 
+      if( !( face_ep_tmp && face_ep_tmp->mesh.ExtrudeMesh &&
              face_ep_tmp->geo.Mode == EXTRUDED_ENTITY ) ||
           other_region && oth_ep && oth_ep->mesh.ExtrudeMesh &&
             (*it) == model->getFaceByTag( std::abs( oth_ep->geo.Source ) ) ||
           other_region && other_region->meshAttributes.Method == MESH_TRANSFINITE ){
-        is_fixed = true; 
+        is_fixed = true;
       }
 
       // Now extrude all vertices and find diagonal edges.
@@ -2495,7 +2494,7 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
 
       // now find face source edge, if it exists:
       GEdge *face_source = NULL;
-      if( face_ep && face_ep->mesh.ExtrudeMesh && 
+      if( face_ep && face_ep->mesh.ExtrudeMesh &&
            face_ep->geo.Mode == EXTRUDED_ENTITY ){
         face_source = model->getEdgeByTag( std::abs( face_ep->geo.Source ) );
         if( !face_source ){
@@ -2503,8 +2502,8 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
                      "has invalid source.", (*it)->tag() );
         }
       }
-      // set up vertex finding loops according to whether this surface 
-      // is extruded or not (alternative to extruded is unrecombined transfinite surf with vertices 
+      // set up vertex finding loops according to whether this surface
+      // is extruded or not (alternative to extruded is unrecombined transfinite surf with vertices
       // coincidentally in the right place).
       unsigned int num_lines = 0;
       std::vector<MLine *> *source_lines = NULL;
@@ -2518,7 +2517,7 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
         num_lines = common->lines.size();
         source_lines = &common->lines;
         loop_ep = ep;
-      }       
+      }
       unsigned int index_guess = 0;
 
       for( unsigned int i = 0; i < num_lines; i++ ){
@@ -2537,9 +2536,9 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
           for(int k = 0; k < loop_ep->mesh.NbElmLayer[j]; k++) {
             verts.clear();
             verts = getExtrudedLateralVertices(v0, v1, (*it), j, k, loop_ep, pos);
-                                        
+
             // Find diagonal:
-           
+
             std::pair<int,int> diag (0,0);
             diag = FindDiagonalEdgeIndices( verts, (*it), true, index_guess );
             if( diag.first || diag.second ){
@@ -2555,8 +2554,8 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
             }
             else
               Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal on unrecombined lateral surface %d.", (*it)->tag() );
-   
-            index_guess += 2;              
+
+            index_guess += 2;
              /*
 
               std::vector<MVertex*> vface;
@@ -2588,7 +2587,7 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
         }
       }
     }
-      
+
   }
   // Insert diagonals of the COPIED top surface into quadToTri_edges;
   unsigned int index_guess = reg_source->triangles.size();
@@ -2602,40 +2601,40 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
     int j_top = ep->mesh.NbLayer-1;
     int k_top = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1];
 
-    MElement *elem = reg_source->quadrangles[i]; 
+    MElement *elem = reg_source->quadrangles[i];
     std::vector<MVertex *> verts;
-    int vert_num = get2DExtrudedVertices( elem, ep, j_top, k_top, pos, verts );
+    get2DExtrudedVertices( elem, ep, j_top, k_top, pos, verts );
     if( verts.size() != 4 ) break;
 
     // Find diagonal:
     std::pair<int,int> diag(0,0);
     diag = FindDiagonalEdgeIndices( verts, reg_top, false, index_guess );
     if( diag.first || diag.second )
-      createEdge( verts[diag.first], verts[diag.second], quadToTri_edges ); 
+      createEdge( verts[diag.first], verts[diag.second], quadToTri_edges );
     else
       Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal on top surface %d.", reg_top->tag() );
 
     index_guess += 2;
-  }  
-
+  }
+  return true;
 }
 
 
 // For use in QuadToTriEdgeGenerator:  Controls BRUTE FORCE edging of elements with ALL vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl, 
-                                               CategorizedSourceElements &cat_src_elems, 
+static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
+                                               CategorizedSourceElements &cat_src_elems,
                                                std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                                std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
-                                               std::map<MElement*, std::set<std::pair<unsigned int, 
+                                               std::map<MElement*, std::set<std::pair<unsigned int,
                                                         unsigned int> > > &problems,
                                                std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-   
+
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In makeEdgesForElemsWithAllVertsOnBnd(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -2646,7 +2645,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In makeEdgesForElemsWithAllVertsOnBnd(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -2678,7 +2677,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
     quad_tmp = cat_src_elems.four_bnd_pt_quad;
 
   while( tri_tmp.size() || quad_tmp.size() ){
-    std::set<unsigned int>::iterator it; 
+    std::set<unsigned int>::iterator it;
     std::vector<unsigned int> done;
     // 3 bnd point triangle and 4 bnd point quad loop
     // s = 0 for triangles, s = 1 for quads
@@ -2694,19 +2693,19 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
         if( !s ) elem = reg_source->triangles[(*it)];
         else     elem = reg_source->quadrangles[(*it)];
 
-        int elem_size = elem->getNumVertices(); 
- 
+        // int elem_size = elem->getNumVertices();
+
         std::vector<bool> vert_bnd;
-        if( !s ) vert_bnd.insert( vert_bnd.begin(), cat_src_elems.tri_bool.begin()+(4*(*it)+1), 
+        if( !s ) vert_bnd.insert( vert_bnd.begin(), cat_src_elems.tri_bool.begin()+(4*(*it)+1),
                                   cat_src_elems.tri_bool.begin()+(4*(*it)+4) );
-        else     vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1),  
+        else     vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1),
                                   cat_src_elems.quad_bool.begin()+(5*(*it)+5) );
         int j_start, k_start;
-     
-        // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to 
+
+        // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to
         // get rid of degenerate hexahedra...they are invalid mesh volumes.
         if( lat_tri_diags.size() || ( reg_source->quadrangles.size() && (
-            ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){  
+            ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){
           j_start = 0;
           k_start = 0;
         }
@@ -2717,11 +2716,11 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
 
         int num_levels = 0;
         if( lat_tri_diags.size() || ( reg_source->quadrangles.size() && (
-            ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){  
+            ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){
           for( int p = 0; p < ep->mesh.NbLayer; p++ )
             num_levels += ep->mesh.NbElmLayer[p];
         }
-        else 
+        else
           num_levels = 1;
 
         int num_edged = 0;
@@ -2731,8 +2730,8 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
         // (will need this below)
         std::vector<MVertex *> verts_top;
         int ntop1 = -1, ntop2 = -2;
-        int vert_num_top = getExtrudedVertices( elem, ep, ep->mesh.NbLayer-1, 
-                                                ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1, pos, verts_top);
+        getExtrudedVertices( elem, ep, ep->mesh.NbLayer-1,
+                             ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1, pos, verts_top);
         if( edgeExists( verts_top[4], verts_top[6], quadToTri_edges ) ){
           ntop1 = 4; ntop2 = 6;
         }
@@ -2755,7 +2754,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
             int vert_num = getExtrudedVertices(elem, ep, j, k, pos, verts);
             // if just starting and there is no diagonal on the bottom edge,
             // forbid it (this prevents some conflicts)
-            if( vert_num == 8 && j==j_start && k==k_start && 
+            if( vert_num == 8 && j==j_start && k==k_start &&
                 !edgeExists(verts[0], verts[2], quadToTri_edges) &&
                 !edgeExists(verts[1], verts[3], quadToTri_edges) ){
               std::vector<MVertex *> v_bot;
@@ -2765,23 +2764,23 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
               createForbidden(v_bot, forbidden_edges);
               createForbidden(v_bot, forbidden_new);
             }
-                
+
             if( !s ){
-              face_types = getFaceTypes( gr, elem, j, k, verts, pos_src_edge, quadToTri_edges, 
-                                         forbidden_edges, lat_tri_diags, vert_bnd, nfix1, nfix2,  
+              face_types = getFaceTypes( gr, elem, j, k, verts, pos_src_edge, quadToTri_edges,
+                                         forbidden_edges, lat_tri_diags, vert_bnd, nfix1, nfix2,
                                          nadj1, nadj2, free_flag);
-                
+
               if( finish_all_tri || face_types["free"].size() + face_types["adj_diag"].size() < 2 ){
-                bruteForceEdgeQuadToTriPrism( gr, elem, j, k, verts, face_types, edges_new, 
+                bruteForceEdgeQuadToTriPrism( gr, elem, j, k, verts, face_types, edges_new,
                                           forbidden_new, quadToTri_edges, forbidden_edges,
                                           lat_tri_diags, problems_new, problems, nfix1, nfix2,
                                           nadj1, nadj2, free_flag);
                 //IMPORTANT
                 num_edged++;
-              }    
+              }
             }
             else if( s ){
-              // a loop to try to force the top diagonal to align with the diagonal in the region's 
+              // a loop to try to force the top diagonal to align with the diagonal in the region's
               // top surface above this element.
               bool changed_diag = false;
               for( int g=0; g < 2; g++ ){
@@ -2794,36 +2793,36 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
                   v_top[0] = verts[4]; v_top[1] = verts[5];
                   v_top[2] = verts[6]; v_top[3] = verts[7];
                   if( !forbiddenExists( v_top, forbidden_edges ) ){
-                    changed_diag = true; 
-                    createEdge( verts[ntop1], verts[ntop2], quadToTri_edges ); 
+                    changed_diag = true;
+                    createEdge( verts[ntop1], verts[ntop2], quadToTri_edges );
                   }
                 }
                 // on second step, see if a problem was created from inserting aligned diagonal
                 // if so, remove it and try again.
                 std::pair<unsigned int, unsigned int> jk_pair(j,k);
-                if( g==1 && changed_diag && 
+                if( g==1 && changed_diag &&
                     problems[elem].find( jk_pair ) != problems[elem].end() ){
                   problems[elem].erase( jk_pair );
                   if( !problems[elem].size() )
                     problems.erase( elem );
                   deleteEdge( verts[ntop1], verts[ntop2], quadToTri_edges );
-                }  
+                }
                 else if( g==1 ){
                   if( !problems[elem].size() )
                     problems.erase( elem );
                   break;
                 }
-                face_types = getFaceTypes( gr, elem, j, k, verts, pos_src_edge, quadToTri_edges, 
-                                           forbidden_edges, lat_tri_diags, vert_bnd, nfix1, nfix2,  
+                face_types = getFaceTypes( gr, elem, j, k, verts, pos_src_edge, quadToTri_edges,
+                                           forbidden_edges, lat_tri_diags, vert_bnd, nfix1, nfix2,
                                            nadj1, nadj2, free_flag);
-                  
-                bruteForceEdgeQuadToTriHexa( gr, elem, j, k, verts, face_types, edges_new, 
+
+                bruteForceEdgeQuadToTriHexa( gr, elem, j, k, verts, face_types, edges_new,
                                              forbidden_new, quadToTri_edges, forbidden_edges,
-                                             lat_tri_diags, problems_new, problems, pos, nfix1, nfix2, 
+                                             lat_tri_diags, problems_new, problems, pos, nfix1, nfix2,
                                              nadj1, nadj2, free_flag);
               }
               //IMPORTANT
-              num_edged++;    
+              num_edged++;
             }
           }
         }
@@ -2832,7 +2831,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
         if( num_edged == num_levels )
           done.push_back((*it));
 
-        // If quads, break ( only do quads one at a time so can keep 3 bnd point triangles from 
+        // If quads, break ( only do quads one at a time so can keep 3 bnd point triangles from
         // being trapped so that they can't be meshed without an internal vertex)
         if( s )
           break;
@@ -2841,7 +2840,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
 
       // remove elements that are done from list
       if( done.size() ){
-        for( int i = 0; i < done.size(); i++ )
+        for(unsigned int i = 0; i < done.size(); i++ )
           set_elems->erase( done[i] );
         done.clear();
       }
@@ -2849,7 +2848,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
       // skip over quads on this iteration if some modifications were made to triangle extrusion elements
       // ( need to make sure no triangles left with only one adjustable or free face or else
       //   meshing a quad might trap them so they can't be meshed without internal vertex ).
-      if( !s && ( edges_new.size() || problems_new.size() ) ) 
+      if( !s && ( edges_new.size() || problems_new.size() ) )
         s = -1;
 
       // if quads are done, finish all triangles
@@ -2870,17 +2869,17 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
 // For use in QuadToTriEdgeGenerator:  Does the edging of prisms with some but not all vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems, 
+static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
-                                       std::map<MElement*, std::set<std::pair<unsigned int, 
+                                       std::map<MElement*, std::set<std::pair<unsigned int,
                                                 unsigned int> > > &problems,
                                        std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-   
+
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In makeEdgesForOtherBndPrisms(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -2891,7 +2890,7 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In makeEdgesForOtherBndPrisms(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -2908,34 +2907,34 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
     return 0;
   }
 
-  std::set<unsigned int >::iterator it; 
+  std::set<unsigned int >::iterator it;
 
   // skip the whole thing if this is true...NO reason to divide!!
   if( !lat_tri_diags.size() && !reg_source->quadrangles.size() )
     return 1;
 
 
-  // edge other_bnd triangles loop 
+  // edge other_bnd triangles loop
   // (draw from boundaries up toward interior)
-  for( it = cat_src_elems.other_bnd_tri.begin(); 
+  for( it = cat_src_elems.other_bnd_tri.begin();
        it != cat_src_elems.other_bnd_tri.end(); it++ ){
 
 
     std::set<std::pair<MVertex*,MVertex*> > edges_new, forbidden_new;
     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > problems_new;
     std::vector<MVertex*> verts;
-    std::vector<bool> vert_bnd;      
+    std::vector<bool> vert_bnd;
     MElement *elem = reg_source->triangles[(*it)];
-    int elem_size = elem->getNumVertices(); 
+    int elem_size = elem->getNumVertices();
 
-    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.tri_bool.begin()+(4*(*it)+1), 
+    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.tri_bool.begin()+(4*(*it)+1),
                      cat_src_elems.tri_bool.begin()+(4*(*it)+4) );
 
     int j_start, k_start;
-    // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to 
+    // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to
     // get rid of degenerate hexahedra...they are invalid mesh volumes.
     if( lat_tri_diags.size() || ( reg_source->quadrangles.size() && (
-        ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){  
+        ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){
       j_start = 0;
       k_start = 0;
     }
@@ -2954,7 +2953,7 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
       k_stop = ep->mesh.NbElmLayer[j];
       for( int k = k_start_tmp; k < k_stop; k++ ){
         std::vector<MVertex *> verts;
-        int vert_num = getExtrudedVertices(elem, ep, j, k, pos, verts);
+        getExtrudedVertices(elem, ep, j, k, pos, verts);
         // NOTE: bnd_face might not really be a bnd_face, but the code takes that into account below.
         for( int p = 0; p < elem_size; p++ ){
           if( vert_bnd[p] ){
@@ -2984,7 +2983,7 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
           }
         }
       }
-    }    
+    }
 
   }  // end of boundary triangles loop
 
@@ -2997,18 +2996,18 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
 // For use in QuadToTriEdgeGenerator:  Does the edging of hexahedra with some but not all vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems, 
+static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                      std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                      std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
-                                     std::map<MElement*, std::set<std::pair<unsigned int, 
+                                     std::map<MElement*, std::set<std::pair<unsigned int,
                                               unsigned int> > > &problems,
                                      std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-   
+
   // Edge creation for extruded quadrangles with some but not all vertices on a boundary.
   // (draw from boundaries up toward interior)
-  // If no lat_tri_diags, just do the top layer. 
+  // If no lat_tri_diags, just do the top layer.
   // Follow these instructions:
   // For 2 pts on boundary:
   //  Below top level, draw top diags only if there are lat_tri_diags touching elemnt or if
@@ -3020,23 +3019,23 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   //   d. otherwise, don't draw top diagonal.
   //  In any case, draw the lateral edges up from bottom boundary vertices toward interior.
   //  At top level, top diagonals should already be done in 2D mesh step.
-  // For 3 pts on boundary: 
+  // For 3 pts on boundary:
   //  Draw the top diag from corner inward.  Draw laterals up from bottom  boundary vertices.
   // For 1 point on boundary:
   //  Draw lateral diagonals up from bottom boundary verts, draw top diagonal completely off the boundary.
   //  Draw diagonals toward the "pivot vertex", which is the vertex in the top element face
-  //  diametrically opposite to the top face vertex on the boundary. Actually, this is only 
-  //  done in the first two extrusion layers, if those layers are not in the top layer.  
+  //  diametrically opposite to the top face vertex on the boundary. Actually, this is only
+  //  done in the first two extrusion layers, if those layers are not in the top layer.
   //  In first layer, draw diags to the top vertex diametrically opposite bnd vert, in the second
-  //  layer, draw them down to the bottom such vertex.  Same vertex for both layers.  This is 
+  //  layer, draw them down to the bottom such vertex.  Same vertex for both layers.  This is
   //  done to ensure that a one pt boundary quad in an unstructured surface can be divided without
   //  dividing the entire bottom layer. If two pivot vertices share an edge and these rules would conflict,
-  //  just give precedence to the first pivot vertex encountered in the edging loop (this works, yes).  
+  //  just give precedence to the first pivot vertex encountered in the edging loop (this works, yes).
   //  Also, the internal elements touching this pivot vertex should
   //  have diagonals drawn to pivot vertex as well (done in different function, with same precedence).
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In makeEdgesForOtherBndHexa(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -3047,7 +3046,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In makeEdgesForOtherBndHexa(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -3066,14 +3065,14 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 
   std::set<unsigned int>::iterator it;
 
-  for( it = cat_src_elems.other_bnd_quad.begin(); 
+  for( it = cat_src_elems.other_bnd_quad.begin();
        it != cat_src_elems.other_bnd_quad.end(); it++ ){
 
     MElement *elem = reg_source->quadrangles[(*it)];
-    const int elem_size = elem->getNumVertices(); 
+    const int elem_size = elem->getNumVertices();
 
-    std::vector<bool> vert_bnd;      
-    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1), 
+    std::vector<bool> vert_bnd;
+    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1),
                      cat_src_elems.quad_bool.begin()+(5*(*it)+5) );
 
     // these locally hold each added edge/problem element temporarily
@@ -3081,23 +3080,23 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
     std::set< std::pair<MVertex *, MVertex *> > forbidden_new;
     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > problems_new;
 
-    // Get a count of bnd verts. If one point, that index will be in one_point_ind.  
+    // Get a count of bnd verts. If one point, that index will be in one_point_ind.
     // For 3 bnd vert quads  record the empty spot in 'skip.'
     int bnd_count = 0, skip, one_point_ind;
     for( int s = 0; s < elem_size; s++ ){
-      if( vert_bnd[s] ){ 
+      if( vert_bnd[s] ){
         bnd_count++;
         one_point_ind = s;
       }
       else skip = s;
-    }      
-     
-    unsigned int j_start, k_start;
+    }
 
-    // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to 
+    int j_start, k_start;
+
+    // if has lat_tri_diags or is a rotation with quads (may have to do the one point bnd quads to
     // get rid of degenerate hexahedra...they are invalid mesh volumes.
     if( lat_tri_diags.size() || ( reg_source->quadrangles.size() && (
-        ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){  
+        ep->geo.Type == ROTATE || ep->geo.Type == TRANSLATE_ROTATE ) ) ){
       j_start = 0;
       k_start = 0;
     }
@@ -3118,12 +3117,12 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
       if( j == j_start )
         k_start_tmp = k_start;
       else
-        k_start_tmp = 0; 
+        k_start_tmp = 0;
       k_stop = ep->mesh.NbElmLayer[j];
       for( int k = k_start_tmp; k < k_stop; k++ ){
         std::vector<MVertex *> verts;
-        int vert_num = getExtrudedVertices(elem, ep, j, k, pos, verts);
-        int bnd_face = -1;
+        getExtrudedVertices(elem, ep, j, k, pos, verts);
+        // int bnd_face = -1;
         // NOTE: bnd_face might not really be a bnd_face, but don't worry--it won't be diagonalized if not
         for( int p = 0; p < elem_size; p++ ){
           int p2 = (p+1)%elem_size;
@@ -3145,7 +3144,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
             else if( edgeExists( verts[p+elem_size], verts[p2], lat_tri_diags ) &&
                       !edgeExists( verts[p], verts[p2+elem_size], quadToTri_edges ) )
               createEdge( verts[p+elem_size], verts[p2], quadToTri_edges );
-          }  
+          }
           // if face not on boundary and in top layer...make an internal lateral
           else if( j == j_top_start && k == k_top_start && !vert_bnd[p2] ){
             int ind_low, ind2;
@@ -3167,22 +3166,22 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 
     // Add top diags for 2-bnd point quads, below top layer
     // If there is a lateral diagonal, connect to it.  If this is a two boundary point quad
-    // that is not adjacent to a boundary (it is possible), draw diagonal completely off boundary. 
-    // If neither of the above, don't make the top diagonal.  
-    // IF degenerate, be careful. 
+    // that is not adjacent to a boundary (it is possible), draw diagonal completely off boundary.
+    // If neither of the above, don't make the top diagonal.
+    // IF degenerate, be careful.
     if( bnd_count == 2 ){
       for( int j = j_start; j < ep->mesh.NbLayer; j++ ){
         int k_start_tmp, k_stop;
         if( j == j_start )
           k_start_tmp = k_start;
         else
-          k_start_tmp = 0; 
+          k_start_tmp = 0;
         k_stop = ep->mesh.NbElmLayer[j];
         if( j == ep->mesh.NbLayer-1 )
           k_stop--;  // dont go to top elements
         for( int k = k_start_tmp; k < k_stop; k++ ){
           std::vector<MVertex *> verts;
-          int vert_num = getExtrudedVertices(elem, ep, j, k, pos, verts);
+          getExtrudedVertices(elem, ep, j, k, pos, verts);
           int p1 = -1, p2 = -1;
           for( int p = 0; p < elem_size; p++ ){
             if( vert_bnd[p] ){
@@ -3197,7 +3196,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
               }
               break;
             }
-          } 
+          }
           if( p2 < 0 && p1 < 0 ){
             Msg::Error("In makeEdgesForOtherBndHexa(), error finding boundary points on "
                        "2-boundary point quadrangle.");
@@ -3206,7 +3205,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 
           // First, if bottom diagonal exists, align top diagonal to it, OTHERWISE:
           //   if bnd verts oppose each other, draw top diagonal off boundary
-          //   otherwise, connect to any existing lateral diagonal either totally ON boundary or totally OFF, 
+          //   otherwise, connect to any existing lateral diagonal either totally ON boundary or totally OFF,
           //   but ONLY draw top diag if such a lateral exists
           // NOTE: since laterals were added first, any lat_tri_diag here is in quadToTri_edges already
           if( edgeExists( verts[0], verts[2], quadToTri_edges ) )
@@ -3214,7 +3213,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
           else if( edgeExists( verts[1], verts[3], quadToTri_edges ) )
             createEdge( verts[5], verts[7], quadToTri_edges );
           else if( p2 < 0 && p1 >= 0 )
-            createEdge( verts[(p1+1)%elem_size+elem_size], 
+            createEdge( verts[(p1+1)%elem_size+elem_size],
                         verts[(p1+elem_size-1)%elem_size+elem_size], quadToTri_edges );
           else if( p1 >= 0 && edgeExists( verts[p1], verts[p2+elem_size], quadToTri_edges ) )
             createEdge( verts[p2+elem_size], verts[(p2+2)%elem_size+elem_size], quadToTri_edges );
@@ -3226,24 +3225,24 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 
 
     // top diags on corner quad  ( I *think* this always works for non-degen stuff, even for free wall spanning cases )
-    else if( bnd_count == 3 && ( j_start < j_top_start || k_start < k_top_start ) ){  
+    else if( bnd_count == 3 && ( j_start < j_top_start || k_start < k_top_start ) ){
       std::vector<MVertex *> verts;
-      int vert_num = getExtrudedVertices(elem, ep, j_start, k_start, pos, verts);
+      getExtrudedVertices(elem, ep, j_start, k_start, pos, verts);
       problems_new.clear();
       forbidden_new.clear();
       edges_new.clear();
       createEdge( verts[skip+elem_size], verts[(skip+2)%elem_size+elem_size], quadToTri_edges );
       createEdge( verts[skip+elem_size], verts[(skip+2)%elem_size+elem_size], edges_new );
       // copies the diags in edges_new on up the extrusion but NOT on the top surface
-      ExtrudeDiags( gr, verts, j_start, k_start, j_top_start, k_top_start, 
-                    elem, ep, edges_new, forbidden_new, 
+      ExtrudeDiags( gr, verts, j_start, k_start, j_top_start, k_top_start,
+                    elem, ep, edges_new, forbidden_new,
                     quadToTri_edges, forbidden_edges, problems_new, problems, pos);
     }
 
     // finally, top diagonal and other two laterals for 1 bnd point quad
     else if( bnd_count == 1 && ( j_start < j_top_start || k_start < k_top_start ) ){
       std::vector<MVertex*> verts;
-      int vert_num = getExtrudedVertices(elem, ep, j_start, k_start, pos, verts);        
+      getExtrudedVertices(elem, ep, j_start, k_start, pos, verts);
       int p = one_point_ind;
 
       // to determine if there is a second level above the start but not in top layer
@@ -3254,8 +3253,8 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         j_next = 0;
         k_next = 1;
       }
-      else{ 
-        j_next = std::min(ep->mesh.NbLayer-1, 1); 
+      else{
+        j_next = std::min(ep->mesh.NbLayer-1, 1);
         k_next = 0;
       }
       if( j_next < j_top_start || k_next < k_top_start ){
@@ -3279,22 +3278,22 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         createEdge( verts[p2], verts[p3+elem_size], quadToTri_edges );
       if( !edgeExists( verts[p4+elem_size], verts[p3], quadToTri_edges ) )
         createEdge( verts[p4], verts[p3+elem_size], quadToTri_edges );
-  
-      // if there is a second extrusion level not on the top layer, add the 'reverse' of the 
+
+      // if there is a second extrusion level not on the top layer, add the 'reverse' of the
       // previous two diagonals
       if( divide_next && !edgeExists( verts_next[p2], verts_next[p3+elem_size], quadToTri_edges ) )
         createEdge( verts_next[p2+elem_size], verts_next[p3], quadToTri_edges );
       if( divide_next && !edgeExists( verts_next[p4], verts_next[p3+elem_size], quadToTri_edges ) )
         createEdge( verts_next[p4+elem_size], verts_next[p3], quadToTri_edges );
 
-      // If this quad has degenerate vertex on boundary and the pivot laterals run to the 
+      // If this quad has degenerate vertex on boundary and the pivot laterals run to the
       // top pivot vertex and there is no pre-existing
-      // top diagonal on other two vertices, draw diagonal out to 
-      // the pivot_vertex. Otherwise, draw it on the other two verts 
+      // top diagonal on other two vertices, draw diagonal out to
+      // the pivot_vertex. Otherwise, draw it on the other two verts
       if( verts[p] == verts[p+elem_size] &&
-          ( edgeExists( verts[p2], verts[p3+elem_size], quadToTri_edges ) || 
+          ( edgeExists( verts[p2], verts[p3+elem_size], quadToTri_edges ) ||
             verts[p2] == verts[p2+elem_size] ) &&
-          ( edgeExists( verts[p4], verts[p3+elem_size], quadToTri_edges ) || 
+          ( edgeExists( verts[p4], verts[p3+elem_size], quadToTri_edges ) ||
             verts[p4] == verts[p4+elem_size] ) &&
           !edgeExists( verts[p2+elem_size], verts[p4+elem_size], quadToTri_edges ) ){
         createEdge( verts[p+elem_size], verts[p3+elem_size], quadToTri_edges );
@@ -3305,13 +3304,13 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         createEdge( verts[p2+elem_size], verts[p4+elem_size], edges_new );
       }
       // copies the top diag in edges_new up the extrusion but NOT to the top surface of region.
-      ExtrudeDiags( gr, verts, 0, 0, j_top_start, k_top_start, 
-                    elem, ep, edges_new, forbidden_new, 
+      ExtrudeDiags( gr, verts, 0, 0, j_top_start, k_top_start,
+                    elem, ep, edges_new, forbidden_new,
                     quadToTri_edges, forbidden_edges, problems_new, problems, pos);
     }
 
   }  // end of boundary quadrangles loop
-  
+
   return 1;
 
 } // end of makeEdgesForOtherBndHexa()
@@ -3321,28 +3320,28 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 // a pivot vertex of a hexahedral element that has ONE SOURCE vertex on a lateral boundary surface.
 // See inside function for a definition of the "pivot vertex."
 // Added 04/08/2011
- static int makeEdgesForElemsTouchPivotVert( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems, 
+ static int makeEdgesForElemsTouchPivotVert( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
                                        std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-   
+
   //  Draw diagonals toward the "pivot vertex" of a hexahedron whose source quad has only one
-  //  vertex on a lateral boundary. Actually, this is only 
+  //  vertex on a lateral boundary. Actually, this is only
   //  done in the first two extrusion layers, if those layers are not in the top layer. The pivot
   //  vertex is the vertex in the top face of the element that is diametrically opposite the top vertex
-  //  on the lateral boundary of the region. 
+  //  on the lateral boundary of the region.
   //  In first layer, draw diags up from bottom to the pivot vertex, in the second
-  //  layer, draw them down to pivot vertex.  Same vertex for both layers.  This is 
+  //  layer, draw them down to pivot vertex.  Same vertex for both layers.  This is
   //  done to ensure that a one pt boundary quad in an unstructured surface can be divided without
-  //  dividing the entire bottom layer. 
+  //  dividing the entire bottom layer.
   //  If two pivot vertices share an edge and these rules would conflict,
-  //  just give precedence to the first pivot vertex encountered in the edging loop (this works, yes).  
+  //  just give precedence to the first pivot vertex encountered in the edging loop (this works, yes).
 
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In makeEdgesForElemsTouchPivotVert(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -3353,7 +3352,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In makeEdgesForElemsTouchPivotVert(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -3371,7 +3370,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   }
 
   // no need to do this if there are no lateral surface diagonals and if not a rotation with quadrangles.
-  if( !lat_tri_diags.size() && ( !reg_source->quadrangles.size() || 
+  if( !lat_tri_diags.size() && ( !reg_source->quadrangles.size() ||
       ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE ) )
     return 1;
 
@@ -3379,7 +3378,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   j_top_start = ep->mesh.NbLayer-1;
   k_top_start = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1;
 
-  // s = 0 for triangles; s = 1 for quadrangles 
+  // s = 0 for triangles; s = 1 for quadrangles
   // These diags are all repeated identically up the extrusion.
   for( int s = 0; s < 2; s++ ){
 
@@ -3387,16 +3386,16 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
     std::set<unsigned int> *set_elems;
     std::set<unsigned int>::iterator it;
 
-    if( !s ) 
+    if( !s )
       set_elems = &cat_src_elems.internal_tri_touch_one_bnd_pt_quad;
     else
       set_elems = &cat_src_elems.internal_quad_touch_one_bnd_pt_quad;
-    
+
     for( it = set_elems->begin(); it != set_elems->end(); it++ ){
       MElement *elem;
-      if( !s ) 
+      if( !s )
         elem = reg_source->triangles[(*it)];
-      else 
+      else
         elem = reg_source->quadrangles[(*it)];
 
       int elem_size = elem->getNumVertices();
@@ -3409,7 +3408,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
           v_index = p; v_index_found = true; break;
         }
         else if( s && cat_src_elems.quad_bool[5*(*it)+1+p] ){
-          v_index = p; v_index_found = true; break;      
+          v_index = p; v_index_found = true; break;
         }
       }
       if( !v_index_found ){
@@ -3419,10 +3418,10 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
       }
 
       std::vector<MVertex*> verts;
-      int vert_num = getExtrudedVertices(elem, ep, 0, 0, pos, verts);
-      
+      getExtrudedVertices(elem, ep, 0, 0, pos, verts);
+
       // determine the j, k for the next layer above 0,0 so that the elements directly above
-      // the base elements can divided AND higher layers may be closed off 
+      // the base elements can divided AND higher layers may be closed off
       // (no need to divide the elements all the way up)
       int j_next, k_next;
       bool divide_next = false;
@@ -3431,8 +3430,8 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         j_next = 0;
         k_next = 1;
       }
-      else{ 
-        j_next = std::min(ep->mesh.NbLayer-1, 1); 
+      else{
+        j_next = std::min(ep->mesh.NbLayer-1, 1);
         k_next = 0;
       }
       if( j_next < j_top_start || k_next < k_top_start ){
@@ -3454,38 +3453,38 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         if( divide_next )
           createEdge( verts_next[v_index], verts_next[p3+elem_size], quadToTri_edges );
       }
-      // make top diagonals for quads -- note: can't just draw to the preferred pivot because 
+      // make top diagonals for quads -- note: can't just draw to the preferred pivot because
       // it can touch two and the other might have laterals drawn to it already.  have to find
       // the one with two lateral diagonals drawn to it.
-      if( s==1 && verts[v_index+elem_size] != verts[v_index] && 
+      if( s==1 && verts[v_index+elem_size] != verts[v_index] &&
           !edgeExists( verts[p2+elem_size], verts[p3+elem_size], quadToTri_edges ) )
         createEdge( verts[v_index+elem_size], verts[(v_index+2)%elem_size+elem_size], quadToTri_edges );
-      
+
     }
-  }   
+  }
 
 
-  // Now revisit the boundary quads that touched a one boundary point quad pivot.  These MAY have had 
+  // Now revisit the boundary quads that touched a one boundary point quad pivot.  These MAY have had
   // edges added and now need a top diagonal
   std::set<unsigned int>::iterator it;
-  for( it = cat_src_elems.two_bnd_pt_quad_touch_one_bnd_pt_quad.begin(); 
+  for( it = cat_src_elems.two_bnd_pt_quad_touch_one_bnd_pt_quad.begin();
        it !=  cat_src_elems.two_bnd_pt_quad_touch_one_bnd_pt_quad.end(); it++ ){
     MElement *elem = reg_source->quadrangles[(*it)];
     int elem_size = elem->getNumVertices();
-    std::vector<bool> vert_bnd;      
-    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1), 
+    std::vector<bool> vert_bnd;
+    vert_bnd.insert( vert_bnd.begin(), cat_src_elems.quad_bool.begin()+(5*(*it)+1),
                      cat_src_elems.quad_bool.begin()+(5*(*it)+5) );
-    // find num boundary points 
+    // find num boundary points
     int bnd_count = 0;
     for( int s = 0; s < elem_size; s++ ){
-      if( vert_bnd[s] ) 
+      if( vert_bnd[s] )
         bnd_count++;
-    }      
+    }
     if( bnd_count != 2 )
       continue;
 
     std::vector<MVertex*> verts;
-    int vert_num = getExtrudedVertices(elem, ep, 0, 0, pos, verts);
+    getExtrudedVertices(elem, ep, 0, 0, pos, verts);
     int p1 = -1, p2 = -1;
     for( int p = 0; p < elem_size; p++ ){
       if( vert_bnd[p] ){
@@ -3500,13 +3499,13 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
         }
         break;
       }
-    } 
+    }
     if( p2 < 0 && p1 < 0 ){
       Msg::Error("In makeEdgesForElemsTouchPivotVert(), error finding boundary points on "
                  "2-boundary point quadrangle.");
       break;
     }
-    
+
     // find lateral boundary or internal lateral diagonals. If found, add top diagonal
     std::set< std::pair<MVertex*, MVertex*> > edges_new;
     std::set< std::pair<MVertex*, MVertex*> > forbidden_new;
@@ -3523,14 +3522,14 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
       createEdge( verts[p1+elem_size], verts[(p1+2)%elem_size+elem_size], quadToTri_edges );
       createEdge( verts[p1+elem_size], verts[(p1+2)%elem_size+elem_size], edges_new );
     }
-  
+
     if( edges_new.size() ){
-      ExtrudeDiags( gr, verts, 0, 0, j_top_start, k_top_start, 
-                    elem, ep, edges_new, forbidden_new, 
+      ExtrudeDiags( gr, verts, 0, 0, j_top_start, k_top_start,
+                    elem, ep, edges_new, forbidden_new,
                     quadToTri_edges, forbidden_edges, problems_new, problems, pos);
     }
   }
-    
+
   return 1;
 
 }  // end of makeEdgesForElemsTouchPivotVert()
@@ -3539,13 +3538,13 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 // For use in QuadToTriEdgeGenerator:  Does the lateral edging of internal elements in the top extrusion
 // layer by lowest vertex pointer value in TOP FACE.
 // Added 04/08/2011
-static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems, 
+static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
                                       std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In makeEdgesInternalTopLayer(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -3556,7 +3555,7 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In makeEdgesInternalTopLayer(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -3573,9 +3572,9 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
     return 0;
   }
 
-  // s = 0 for triangles; s = 1 for quadrangles 
+  // s = 0 for triangles; s = 1 for quadrangles
   for( int s = 0; s < 2; s++ ){
-  
+
     // no need to do this if there are no quads!!!
     if( !reg_source->quadrangles.size() )
       break;
@@ -3583,15 +3582,15 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
     std::set<unsigned int> *set_elems;
     std::set<unsigned int>::iterator it;
 
-    if( !s ) 
+    if( !s )
       set_elems = &cat_src_elems.internal_tri;
     else
-      set_elems = &cat_src_elems.internal_quad;    
+      set_elems = &cat_src_elems.internal_quad;
 
     for( it = set_elems->begin(); it != set_elems->end(); it++ ){
-        
+
       MElement *elem;
-      if( !s ) 
+      if( !s )
         elem = reg_source->triangles[(*it)];
       else
         elem = reg_source->quadrangles[(*it)];
@@ -3600,8 +3599,8 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
       int j = ep->mesh.NbLayer-1;
       int k = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1;
 
-      int vert_num = getExtrudedVertices(elem, ep, j, k, pos, verts);
-    
+      getExtrudedVertices(elem, ep, j, k, pos, verts);
+
       // do this by lowest pointer value IN THE TOP SURFACE
       for( int p = 0; p < elem_size; p++ ){
         int ind_low = p+elem_size;
@@ -3616,12 +3615,12 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
   }
 
   return 1;
- 
+
 } // End of makeEdgesInternalTopLayer()
 
 
 // Generate the set of QuadToTri diagonal edges to subdivide elements,
-// and records problematic elements that need to be subvided with an internal vertex. 
+// and records problematic elements that need to be subvided with an internal vertex.
 // Added 2010-01-19
 int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elems,
                            std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
@@ -3631,7 +3630,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 {
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  
+
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
     Msg::Error("In QuadToTriEdgeGenerator(), invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
@@ -3642,7 +3641,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
   GModel *model = gr->model();
   if( !model ){
     Msg::Error("In QuadToTriEdgeGenerator(), invalid model for region "
-               "%d.", gr->tag() ); 
+               "%d.", gr->tag() );
     return 0;
   }
 
@@ -3656,7 +3655,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
   if( num_layers >= 2 && ( ep->mesh.QuadToTri == QUADTRI_DBL_1 || ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB ) )
     is_dbl = true;
 
- 
+
   // now find and verify the source and the top of region
 
   GFace *reg_source = model->getFaceByTag( std::abs( ep->geo.Source ) );
@@ -3668,7 +3667,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 
   std::list<GFace *> reg_faces = gr->faces();
   std::list<GFace *>::iterator itf = reg_faces.begin();
-  
+
   // find top surface of extrusion
   GFace *reg_top = NULL;
   for( itf = reg_faces.begin(); itf != reg_faces.end(); itf++ ){
@@ -3680,13 +3679,12 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     }
   }
 
-  ExtrudeParams *top_ep = NULL;
   if( !reg_top ){
     Msg::Error("In QuadToTriEdgeGenerator(), invalid top surface for region "
                "%d.", gr->tag() );
     return 0;
   }
-  
+
   // list of forbidden edges and boundary verts that are in triangles
   std::set<std::pair<MVertex*, MVertex*> > forbidden_edges;
 
@@ -3717,7 +3715,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
         std::vector<MVertex *> v_face;
         v_face.assign(4, (MVertex*)(NULL) );
         v_face[0] = verts[p]; v_face[1] = verts[(p+1)%elem_size];
-        v_face[2] = verts[(p+1)%elem_size+elem_size]; 
+        v_face[2] = verts[(p+1)%elem_size+elem_size];
         v_face[3] = verts[p+elem_size];
          createForbidden(v_face, forbidden_edges);
       }
@@ -3741,31 +3739,31 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
         Msg::Error("Failed in finding all combos...state = %d.", state);
     }
   }*/
-  
+
   // if this is a double layer extrusion, don't need adjustable lateral edges, so
   // put all lat_tri_diags into quadToTri_edges
-  if( is_dbl)  
+  if( is_dbl)
     quadToTri_edges.insert(lat_tri_diags.begin(), lat_tri_diags.end());
 
   // If there are no lat_tri_diags and no quads, there is nothing  left to do
   if( !lat_tri_diags.size() && !reg_source->quadrangles.size() )
     return 1;
 
-  
+
   // can return now if this is a double layer extrusion...nothing left to do
   if( is_dbl )
     return 1;
 
 
   // BRUTE FORCE diagonalization of elements with all vertices on a lateral boundary of region:
-  // This has to be done for all cases with such elements if 
+  // This has to be done for all cases with such elements if
   if( !makeEdgesForElemsWithAllVertsOnBnd( gr, is_dbl, cat_src_elems, quadToTri_edges,
                                            lat_tri_diags, forbidden_edges, problems, pos ) ){
      Msg::Error("In QuadToTriEdgeGenerator(), failed to make edges for the elements in region %d "
                 "with all vertices on a lateral boundary", gr->tag() );
      return 0;
   }
-  
+
   // now do the "elegant" diagonalization of all the rest of the surface elements....
 
 
@@ -3793,7 +3791,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     return 0;
   }
 
- 
+
   // Find diagonals for elements touching a "pivot vertex" of a hexa element that has
   // a source quad with only one vertex on a lateral boundary (see inside makeEdgesForOtherBndHexa() and
   // makeEdgesForElemsTouchingPivotVert() for details of "pivot vertex".
@@ -3812,10 +3810,10 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
                "in top extrusion layer of region %d.", gr->tag() );
     return 0;
   }
-       
+
   return 1;
 
-}  // End of QuadToTriEdgeGenerator() 
+}  // End of QuadToTriEdgeGenerator()
 
 
 // Remesh the lateral 2D faces of QuadToTri regions using edges in quadToTri_edges as contraints
@@ -3823,47 +3821,47 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVertex*> > &quadToTri_edges )
 {
 
-  ExtrudeParams *ep = gr->meshAttributes.extrude; 
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh )
     return false;
- 
+
   GModel *model = gr->model();
 
   // find source face
   GFace *reg_source = model->getFaceByTag( std::abs( ep->geo.Source ) );
   if( !reg_source ){
     Msg::Error("In QuadToTriLateralRemesh(), could not find source face "
-               "%d for region %d.", std::abs( ep->geo.Source ), 
+               "%d for region %d.", std::abs( ep->geo.Source ),
                gr->tag() );
     return false;
   }
-  
+
 
   // Find a source surface, find a COPIED_ENTITY that is the top surface,
-  // If shared laterals are all static (quad or non subdivide triangles), 
+  // If shared laterals are all static (quad or non subdivide triangles),
   // set the allStaticSharedLaterals argument to true.
   // If any lateral is unstructured, error.
 
-  bool foundSource = false, foundTop = false;
+  bool foundTop = false;
   GFace *reg_top = NULL;
   std::list<GFace *> faces = gr->faces();
   std::list<GFace *>::iterator it = faces.begin();
-  
+
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
-    if( face_tmp_ep && face_tmp_ep->geo.Mode == 
+    if( face_tmp_ep && face_tmp_ep->geo.Mode ==
         COPIED_ENTITY ){
-      GFace *top_source_tmp = model->getFaceByTag( 
+      GFace *top_source_tmp = model->getFaceByTag(
                               std::abs( face_tmp_ep->geo.Source ) );
       if( !top_source_tmp ){
         Msg::Error("In QuadToTriLateralRemesh(), could not find source face "
-                   "%d for copied surface %d of region %d.", 
-                   std::abs( face_tmp_ep->geo.Source ), 
+                   "%d for copied surface %d of region %d.",
+                   std::abs( face_tmp_ep->geo.Source ),
                    (*it)->tag(), gr->tag() );
       }
       else if( top_source_tmp == reg_source ){
-        foundTop = true; 
+        foundTop = true;
         reg_top = (*it);
       }
     }
@@ -3871,39 +3869,37 @@ static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVe
 
   if( !foundTop )
     Msg::Warning("In QuadToTriLateralRemesh(), could not find top face "
-                 "for region %d.", gr->tag() );  
-    
+                 "for region %d.", gr->tag() );
+
   Msg::Info("Remeshing lateral surfaces for QuadToTri region %d.", gr->tag() );
-  
+
   // now loop through faces again, remeshing all laterals that need it.
   for( it = faces.begin(); it != faces.end(); it++ ){
     if( (*it) != reg_top && (*it) != reg_source &&
-        IsSurfaceALateralForRegion(gr, *it)     
+        IsSurfaceALateralForRegion(gr, *it)
         &&
         (*it)->triangles.size() && !(*it)->quadrangles.size() ){
 
-      ExtrudeParams *face_ep_tmp = (*it)->meshAttributes.extrude;
-
       // *** JUST REMESH EVERY TRIANGLE SURFACE AGAIN TO BE SURE ***
 
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++) 
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         delete (*it)->triangles[i];
       (*it)->triangles.clear();
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++) 
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
         delete (*it)->quadrangles[i];
       (*it)->quadrangles.clear();
-      MeshExtrudedSurface((*it), &quadToTri_edges);  
+      MeshExtrudedSurface((*it), &quadToTri_edges);
     }
-  }     
-
-} 
+  }
+  return foundTop;
+}
 
 
 // Adds the face- or body-center vertices needed for some QuadToTri elements
-static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElements &c, 
+static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElements &c,
                                            std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                            std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
-                                           bool is_dbl, unsigned int lat_tri_diags_size, 
+                                           bool is_dbl, unsigned int lat_tri_diags_size,
                                            std::set<MVertex *, MVertexLessThanLexicographic> &pos )
 {
 
@@ -3934,8 +3930,6 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
 
   // If !is_dbl, make the body centered internal vertices for all "problem" elements
   // If is_dbl, make face-centered verts where needed
-  unsigned int num_tri = from->triangles.size();
-  unsigned int num_quad = from->quadrangles.size();
 
   // create reserve capacity for the temp vector of new vertices:
   unsigned int cap_add = 0;
@@ -3946,23 +3940,23 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
     to->mesh_vertices.reserve(to->mesh_vertices.size()+cap_add);
   }
   else{
-    unsigned int NbBndElems = c.four_bnd_pt_quad.size() + c.three_bnd_pt_tri.size() + 
+    unsigned int NbBndElems = c.four_bnd_pt_quad.size() + c.three_bnd_pt_tri.size() +
                               c.other_bnd_quad.size()   + c.other_bnd_tri.size();
     unsigned int NbSourceElems = from->triangles.size() + from->quadrangles.size();
     cap_add = NbSourceElems + NbBndElems * ( num_layer-2 > 0 ? num_layer-2 : 0 );
   }
-     
+
   // first the !is_dbl case
   if( problems.size() && !is_dbl ){
     std::map<MElement *, std::set< std::pair<unsigned int, unsigned int> > >::iterator itmap;
     for( itmap = problems.begin(); itmap != problems.end(); itmap++ ){
-      MElement *elem = itmap->first;     
+      MElement *elem = itmap->first;
       std::set< std::pair<unsigned int, unsigned int> >::iterator itpairs;
       for( itpairs = itmap->second.begin(); itpairs != itmap->second.end(); itpairs++ ){
         std::vector<MVertex *> verts;
         int j = (*itpairs).first;
         int k = (*itpairs).second;
-        getExtrudedVertices(elem, ep, j, k, pos, verts);     
+        getExtrudedVertices(elem, ep, j, k, pos, verts);
         QtMakeCentroidVertex(verts, &(to->mesh_vertices), to, pos);
       }
     }
@@ -4007,17 +4001,17 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
         getExtrudedVertices( elem, ep, 0, 0, pos, verts3D);
         for( int p = 0; p < elem_size; p++ ){
           // always look for degen hex
-          if( t && verts3D[p] == verts3D[p+elem_size] && 
+          if( t && verts3D[p] == verts3D[p+elem_size] &&
               verts3D[(p+1)%elem_size] != verts3D[(p+1)%elem_size+elem_size] &&
               verts3D[(p+elem_size-1)%elem_size] != verts3D[(p+elem_size-1)%elem_size+elem_size] ){
-            degen_hex = true; 
+            degen_hex = true;
             break;
           }
           // skip the rest if no lat_tri_diags or if not on lateral boundary
           if( !lat_tri_diags_size || s >= 2 )
             continue;
           // if a triangle face, skip it
-          if( verts3D[p] == verts3D[p+elem_size] || 
+          if( verts3D[p] == verts3D[p+elem_size] ||
                    verts3D[(p+1)%elem_size] == verts3D[(p+1)%elem_size+elem_size] )
             continue;
           else if( edgeExists( verts3D[p], verts3D[(p+1)%elem_size+elem_size], quadToTri_edges ) )
@@ -4031,17 +4025,17 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
 
         int j_start, k_start;
         if( s < 2 && found_diags || degen_hex ){
-          j_start = 0; 
+          j_start = 0;
           k_start = 0;
         }
         else{  // only non quads not extruded into degen hexa should execute this
-          j_start = j_second_from_top; 
+          j_start = j_second_from_top;
           k_start = k_second_from_top;
         }
         std::vector<MVertex*> v_face;
         for( int j = j_start; j < ep->mesh.NbLayer; j++ ){
           int k_start_tmp = (j == j_start) ? k_start : 0;
-          int k_stop = (j == ep->mesh.NbLayer-1) 
+          int k_stop = (j == ep->mesh.NbLayer-1)
                        ? ep->mesh.NbElmLayer[j]-1 : ep->mesh.NbElmLayer[j];
           for( int k = k_start_tmp; k < k_stop; k++ ){
             v_face.resize(0);
@@ -4054,21 +4048,21 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
   }
   // Don't forget to add v_tmp to to->mesh_vertices!!!
   to->mesh_vertices.reserve( to->mesh_vertices.size() + v_tmp.size() );
-  for( int p = 0; p < v_tmp.size(); p++ )
+  for(unsigned int p = 0; p < v_tmp.size(); p++ )
     to->mesh_vertices.push_back(v_tmp[p]);
   return 1;
- 
+
 }
 
 
 
-// Meshes either a prism or a hexahedral set of mesh vertices with an internal vertex 
+// Meshes either a prism or a hexahedral set of mesh vertices with an internal vertex
 // created here in the function.
 // Added 2010-03-30
 static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<MVertex *> v, std::vector<int> n1,
                                     std::vector<int> n2, std::set<MVertex *, MVertexLessThanLexicographic> &pos )
 {
-    
+
   int v_size = v.size();
   int n_lat_tmp;
   if( v_size == 6 )
@@ -4091,8 +4085,8 @@ static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<M
   std::vector<double> centroid = QtFindVertsCentroid(v);
   MVertex tmp(centroid[0], centroid[1], centroid[2], 0, -1);
 
-  // it's too dangerous to use the 'new' command in here even with face-centered vertices. 
-    
+  // it's too dangerous to use the 'new' command in here even with face-centered vertices.
+
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   itp = pos.find(&tmp);
   if(itp == pos.end()){ // FIXME: workaround
@@ -4107,55 +4101,55 @@ static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<M
   }
 
   MVertex *v_int = (*itp);
-   
+
   // build all pyramids/tetra
   for( int p = 0; p < n_lat; p++ ){
-    int p2 = (p+1)%n_lat; 
+    int p2 = (p+1)%n_lat;
     if( v[p] == v[p+n_lat] && v[p2] == v[p2+n_lat] )
       continue;
     else if( v[p] == v[p+n_lat] || v[p2] == v[p2+n_lat] ){
       MVertex *v_dup = (v[p] == v[p+n_lat]) ? v[p] : v[p2];
       MVertex *v_non_dup = (v_dup == v[p]) ? v[p2] : v[p];
-      MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat]; 
-      addTetrahedron( v_dup, v_non_dup, v_non_dup2, v_int, to, source );  
+      MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat];
+      addTetrahedron( v_dup, v_non_dup, v_non_dup2, v_int, to, source );
     }
     else if( n1[p] == p || n2[p] == p ){
-      addTetrahedron( v[p], v[p2], v[p2+n_lat], v_int, to, source );  
-      addTetrahedron( v[p], v[p2+n_lat], v[p+n_lat], v_int, to, source );  
+      addTetrahedron( v[p], v[p2], v[p2+n_lat], v_int, to, source );
+      addTetrahedron( v[p], v[p2+n_lat], v[p+n_lat], v_int, to, source );
     }
-    else if( n1[p] == p+n_lat || n2[p] == p+n_lat ){  
-      addTetrahedron( v[p], v[p2], v[p+n_lat], v_int, to, source );  
-      addTetrahedron( v[p2], v[p2+n_lat], v[p+n_lat], v_int, to, source );  
-    }  
+    else if( n1[p] == p+n_lat || n2[p] == p+n_lat ){
+      addTetrahedron( v[p], v[p2], v[p+n_lat], v_int, to, source );
+      addTetrahedron( v[p2], v[p2+n_lat], v[p+n_lat], v_int, to, source );
+    }
     else
       addPyramid( v[p], v[p2], v[p2+n_lat], v[p+n_lat], v_int, to, source );
   }
 
   if( n_lat == 3){
     // bottom and top
-    addTetrahedron( v[0], v[1], v[2], v_int, to, source);   
+    addTetrahedron( v[0], v[1], v[2], v_int, to, source);
     addTetrahedron( v[3], v[5], v[4], v_int, to, source);
   }
   else if( n_lat == 4 ){
     for( int p = 4; p < 6; p++ ){
       int add = (p == 4) ? 0 : 4;
       if( n1[p] == 0+add || n2[p] == 0+add  ){
-        addTetrahedron( v[add], v[1+add], v[2+add], v_int, to, source );  
-        addTetrahedron( v[add], v[2+add], v[3+add], v_int, to, source );  
+        addTetrahedron( v[add], v[1+add], v[2+add], v_int, to, source );
+        addTetrahedron( v[add], v[2+add], v[3+add], v_int, to, source );
       }
-      else if( n1[p] == 1+add || n2[p] == 1+add ){  
-        addTetrahedron( v[1+add], v[2+add], v[3+add], v_int, to, source );  
-        addTetrahedron( v[1+add], v[3+add], v[add], v_int, to, source );  
-      }  
+      else if( n1[p] == 1+add || n2[p] == 1+add ){
+        addTetrahedron( v[1+add], v[2+add], v[3+add], v_int, to, source );
+        addTetrahedron( v[1+add], v[3+add], v[add], v_int, to, source );
+      }
       else
         addPyramid( v[add], v[1+add], v[2+add], v[3+add], v_int, to, source );
     }
-  } 
+  }
 
 }
 
 // Meshes either a prism or a hexahedral set of mesh vertices with face centered vertices
-// Can pick top or bottom faces to have the vertex, or both, based on the top_flag and bottom_flag args. 
+// Can pick top or bottom faces to have the vertex, or both, based on the top_flag and bottom_flag args.
 // created here in the code
 // Added 2010-04-05
 static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vector<MVertex *> v, std::vector<int> n1,
@@ -4200,8 +4194,8 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
     std::vector<double> centroid = QtFindVertsCentroid(v_face);
     MVertex tmp(centroid[0], centroid[1], centroid[2], 0, -1);
 
-    // it's too dangerous to use the 'new' command in here on face-centered vertices. 
-    
+    // it's too dangerous to use the 'new' command in here on face-centered vertices.
+
     std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
     itp = pos.find(&tmp);
     if(itp == pos.end()){ // FIXME: workaround
@@ -4214,14 +4208,14 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
       Msg::Error("MeshWithFaceCenteredVertex() failed to find face-centered vertex.");
       return;
     }
- 
+
     face_vertices.push_back(*itp);
 
   }
 
   // If just one face-centered vertex, make a pyramid/tetra (or base-divided pyramid )
   // with the face-centered vertex as the apex. Fill in
-  // pyramids/tetra aroud it laterally.    
+  // pyramids/tetra aroud it laterally.
   if( face_vertices.size() == 1 ){
     int base, add;
     if( top_flag ){
@@ -4248,8 +4242,8 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
       else if( v[p] == v[p+n_lat] || v[p2] == v[p2+n_lat] ){
         MVertex *v_dup = (v[p] == v[p+n_lat]) ? v[p] : v[p2];
         MVertex *v_non_dup = (v_dup == v[p]) ? v[p2] : v[p];
-        MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat]; 
-        addTetrahedron( v_dup, v_non_dup, v_non_dup2, face_vertices[0], to, source );  
+        MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat];
+        addTetrahedron( v_dup, v_non_dup, v_non_dup2, face_vertices[0], to, source );
       }
       else if( n1[p] >= 0 ){
         int add_2 = n1[p] < n_lat ? n_lat : -n_lat;
@@ -4274,12 +4268,12 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
       else if( v[p] == v[p+n_lat] || v[p2] == v[p2+n_lat] ){
         MVertex *v_dup = (v[p] == v[p+n_lat]) ? v[p] : v[p2];
         MVertex *v_non_dup = (v_dup == v[p]) ? v[p2] : v[p];
-        MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat]; 
-        addTetrahedron( v_non_dup, v_non_dup2, face_vertices[1], v_dup, to, source );  
-        addTetrahedron( v_non_dup, face_vertices[0], face_vertices[1], v_dup, to, source );  
+        MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p+n_lat] : v[p2+n_lat];
+        addTetrahedron( v_non_dup, v_non_dup2, face_vertices[1], v_dup, to, source );
+        addTetrahedron( v_non_dup, face_vertices[0], face_vertices[1], v_dup, to, source );
       }
       else{
-        addTetrahedron( v[p], v[(p+1)%n_lat], face_vertices[1], face_vertices[0], to, source );      
+        addTetrahedron( v[p], v[(p+1)%n_lat], face_vertices[1], face_vertices[0], to, source );
         if( n1[p] >= 0 ){
           int add_2 = n1[p] < n_lat ? n_lat : -n_lat;
           addTetrahedron( v[n1[p]], v[n2[p]], v[n1[p]+add_2], face_vertices[1], to, source );
@@ -4290,22 +4284,22 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
       }
     }
     return;
-  }    
+  }
 
   // If execute to here, send error message
   Msg::Error("MeshWithFaceCenteredVertex() failed. on region %d", to->tag() );
 
 }
- 
+
 
 // Construct the elements that subdivide a prism (or degenerated prism)  in a QuadToTri interface;
 // Added 2010-01-24
-static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int j, 
+static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int j,
                               int k, MElement* source,
                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool diag_search, 
+                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool diag_search,
                               std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
   int dup[3];
@@ -4331,7 +4325,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
   }
 
 
-  bool is_problem = false; 
+  bool is_problem = false;
   if( !is_dbl ){
     std::pair<unsigned int, unsigned int> jk_pair (j,k);
     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > >::iterator itprob;
@@ -4367,7 +4361,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
       else if( edgeExists( v[p], v[(p+1)%3+3], quadToTri_edges ) ){
         n1[p] = p; n2[p] = (p+1)%3+3;
         found_diags = true;
-      } 
+      }
       else if( edgeExists( v[p+3], v[(p+1)%3], quadToTri_edges ) ){
         n1[p] = p+3; n2[p] = (p+1)%3;
         found_diags = true;
@@ -4402,8 +4396,8 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
     // determine if the pyramid is sliced into two tetrahedra
     if( n1[p] >= 0 ){
       int add = n1[p] < 3 ? 3 : -3;
-      addTetrahedron(v[n1[p]], v[n2[p]], v[n1[p]+add], v[dup[0]], to, source);     
-      addTetrahedron(v[n1[p]], v[n2[p]-add], v[n2[p]], v[dup[0]], to, source);     
+      addTetrahedron(v[n1[p]], v[n2[p]], v[n1[p]+add], v[dup[0]], to, source);
+      addTetrahedron(v[n1[p]], v[n2[p]-add], v[n2[p]], v[dup[0]], to, source);
     }
     else // pyramid
       addPyramid( v[p], v[p+3], v[(p+1)%3+3], v[(p+1)%3], v[dup[0]], to, source);
@@ -4432,7 +4426,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
             addTetrahedron( v[n1[base]], v[n2[base]], v[n2[base]-add_2], v[pyr_top], to, source );
           }
           else
-            addPyramid( v[base], v[base+3], v[(base+1)%3+3], v[(base+1)%3], v[pyr_top], to, source );     
+            addPyramid( v[base], v[base+3], v[(base+1)%3+3], v[(base+1)%3], v[pyr_top], to, source );
           return;
         }
       }
@@ -4464,9 +4458,9 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
 
 
 // Construct the elements that subdivde a two-point degenerated hexahedron (prism).
-static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j, 
+static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j,
                                       int k, int dup[], MElement* source, std::vector<int> n1, std::vector<int> n2,
-                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,                             
+                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                                       unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
@@ -4481,7 +4475,7 @@ static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *
 
   // if no diags found, make a prism and return
   if( !found_diags ){
-    addPrism( v[degen_face], v[(degen_face+3)%4], v[(degen_face+3)%4+4], 
+    addPrism( v[degen_face], v[(degen_face+3)%4], v[(degen_face+3)%4+4],
               v[(degen_face+1)%4], v[(degen_face+2)%4], v[(degen_face+2)%4+4], to, source );
     return 1;
   }
@@ -4490,7 +4484,7 @@ static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *
   int pyr_top = -2;
 
   // if faces 4 and 5 can make a slice
-  if( n1[4] >= 0 &&  
+  if( n1[4] >= 0 &&
       ( n1[4]+4 == n1[5] || n2[4]+4 == n1[5] ) ){
     if( n1[4] == degen_face || n2[4] == degen_face ){
       pyr_top = degen_face;
@@ -4552,22 +4546,22 @@ static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *
     else
       addPyramid( v[0], v[1], v[2], v[3], v[pyr_top], to, source );
 
-    return 1;     
-  }    
+    return 1;
+  }
 
   return 0;
 
 }  // end of createTwoPtDegenHexElems()
 
-  
+
 
 // Construct the elements that subdivide a one-point degenerated hexahedron extrusion
-static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j, 
+static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j,
                                       int k, int dup[], MElement* source, std::vector<int> n1, std::vector<int> n2,
-                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,                             
+                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags, 
+                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
@@ -4581,7 +4575,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
     return 1;
   }
   // test for top and bottom diagonals parallel and incident on degen vertex
-  else if( ( n1[4] == dup[0] || n2[4] == dup[0] ) && 
+  else if( ( n1[4] == dup[0] || n2[4] == dup[0] ) &&
       ( n1[5] == dup[0]+4 || n2[5] == dup[0]+4 ) ){
     // first pyramid / tet set
     if( n1[(dup[0]+1)%4] >= 0 ){
@@ -4616,10 +4610,10 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
     else
       addPyramid( v[(dup[0]+2)%4], v[(dup[0]+2)%4+4], v[(dup[0]+3)%4+4], v[(dup[0]+3)%4], v[dup[0]], to, source );
     return 1;
-  }   
+  }
 
   // test for top and bottom diagonals parallel and NOT on degen vertex
-  else if( ( n1[4] == (dup[0]+1)%4 || n2[4] == (dup[0]+1)%4 ) && 
+  else if( ( n1[4] == (dup[0]+1)%4 || n2[4] == (dup[0]+1)%4 ) &&
            ( n1[5] == (dup[0]+1)%4+4 || n2[5] == (dup[0]+1)%4+4 ) ){
     // See if the prism section has to be divided and if it requires the inner surface to be cut
 
@@ -4648,7 +4642,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
       if( n_inner[0] < 0 )
         addPyramid( v[(dup[0]+1)%4], v[(dup[0]+1)%4+4], v[(dup[0]+3)%4+4], v[(dup[0]+3)%4], v[tet_top], to, source );
       else{
-        int base = tet_top-4+add == (dup[0]+1)%4 ? (dup[0]+2)%4 : (dup[0]+1)%4; 
+        int base = tet_top-4+add == (dup[0]+1)%4 ? (dup[0]+2)%4 : (dup[0]+1)%4;
         if( n1[base] < 0 )
           addPyramid( v[base], v[base+4], v[(base+1)%4+4], v[(base+1)%4], v[tet_top], to, source );
         else{
@@ -4656,8 +4650,8 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
           addTetrahedron( v[n1[base]], v[n1[base]+add_2], v[n2[base]], v[tet_top], to, source );
           addTetrahedron( v[n1[base]], v[n2[base]], v[n2[base]-add_2], v[tet_top], to, source );
         }
-      }   
-    } 
+      }
+    }
     else
       addPrism( v[(dup[0]+1)%4], v[(dup[0]+2)%4], v[(dup[0]+3)%4], v[(dup[0]+1)%4+4], v[(dup[0]+2)%4+4],
                 v[(dup[0]+3)%4+4], to, source );
@@ -4670,7 +4664,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
       addTetrahedron( v[n_inner[0]], v[n_inner[1]], v[n_inner[1]-add], v[dup[0]], to, source );
     }
     return 1;
-  } 
+  }
 
   // see if there is a way to divide non-parallel top and bottom verts
   else if( n1[(dup[0]+1)%4] >= 0 || n1[(dup[0]+2)%4] >= 0 ){
@@ -4678,35 +4672,35 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
     int base = -1, top = -2;
     // if corner opposite degen corner has two diagonals meeting on it:
     if( n2[(dup[0]+1)%4] >= 0 && n1[(dup[0]+2)%4] == n2[(dup[0]+1)%4] ){
-      if( n1[4] == n1[(dup[0]+2)%4] || n2[4] == n1[(dup[0]+2)%4] ){ 
+      if( n1[4] == n1[(dup[0]+2)%4] || n2[4] == n1[(dup[0]+2)%4] ){
         top = n1[(dup[0]+2)%4];
-        base = 5; 
+        base = 5;
       }
       else if( n1[5] == n1[(dup[0]+2)%4] || n2[5] == n1[(dup[0]+2)%4] ){
         top = n1[(dup[0]+2)%4];
-        base = 4; 
+        base = 4;
       }
     }
     // if a side corner not opposite the degenerate vertex has two diagonals meeting
     if( base < 0 && n2[(dup[0]+2)%4] >= 0 ){
-      if( n2[(dup[0]+2)%4] == (dup[0]+3)%4+4 && 
+      if( n2[(dup[0]+2)%4] == (dup[0]+3)%4+4 &&
           ( n1[5] == (dup[0]+3)%4+4 || n2[5] == (dup[0]+3)%4+4 ) ){
         top = (dup[0]+3)%4+4;
         base = 4;
       }
-      else if( n2[(dup[0]+2)%4] == (dup[0]+3)%4 && 
+      else if( n2[(dup[0]+2)%4] == (dup[0]+3)%4 &&
                ( n1[4] == (dup[0]+3)%4 || n2[4] == (dup[0]+3)%4 ) ){
         top = (dup[0]+3)%4;
         base = 5;
       }
     }
     if( base < 0 && n1[(dup[0]+1)%4] >= 0 ){
-      if( n1[(dup[0]+1)%4] == (dup[0]+1)%4+4 && 
+      if( n1[(dup[0]+1)%4] == (dup[0]+1)%4+4 &&
           ( n1[5] == (dup[0]+1)%4+4 || n2[5] == (dup[0]+1)%4+4 ) ){
         top = (dup[0]+1)%4+4;
         base = 4;
       }
-      else if( n1[(dup[0]+1)%4] == (dup[0]+1)%4 && 
+      else if( n1[(dup[0]+1)%4] == (dup[0]+1)%4 &&
                ( n1[4] == (dup[0]+1)%4 || n2[4] == (dup[0]+1)%4 ) ){
         top = (dup[0]+1)%4;
         base = 5;
@@ -4734,7 +4728,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
           addTetrahedron( v[n1[base]], v[n2[base]],
                           v[(n1[base]-add+3)%4+add], v[top], to, source );
         }
-        int base2 = -1;      
+        int base2 = -1;
         if( base==4 && ( n1[5] == top || n2[5] == top ) ){
           base2 = top==(dup[0]+1)%4+4 ? (dup[0]+2)%4 : (dup[0]+1)%4;
         }
@@ -4753,7 +4747,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
           }
           else
             addPyramid( v[base2], v[(base2+4)], v[(base2+1)%4+4], v[(base2+1)%4], v[top], to, source );
-        }       
+        }
         else{
           int top2 = (top-4+add+2)%4+add;
           if( n1[base2] >= 0 ){
@@ -4769,7 +4763,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
             addTetrahedron( v[n1[tet_base]], v[n2[tet_base]], v[n2[tet_base]+add_tet_base], v[top], to, source );
           }
           else{
-            int add_tet_base = n1[tet_base] > 3 ? -4 : 4; 
+            int add_tet_base = n1[tet_base] > 3 ? -4 : 4;
             addTetrahedron( v[n1[tet_base]], v[n2[tet_base]], v[n1[tet_base]+add_tet_base], v[top], to, source );
           }
         }
@@ -4790,35 +4784,35 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
         addTetrahedron( v[dup[0]], v[(dup[0]+3)%4], v[(dup[0]+3)%4+4], v[top], to, source );
         return 1;
       }
-      else   
+      else
         Msg::Error("3: In createOnePtDegenHexElems(), badly subdivided degenerate hexahedron. Mesh for region %d has errors.",
                    to->tag() );
     }
 
-  } 
+  }
 
   return 0;
 
-}  // end of createOnePtDegenHexElems() 
+}  // end of createOnePtDegenHexElems()
 
 
 // Construct the elements that subdivide a full hexahedron extrusion.
-static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j, 
-                                int k, int dup[], MElement* source, std::vector<int> n1, std::vector<int> n2, 
-                                std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,                             
+static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, ExtrudeParams *ep, int j,
+                                int k, int dup[], MElement* source, std::vector<int> n1, std::vector<int> n2,
+                                std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                 std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                 std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags, 
+                                unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
                                 std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
   if( !ep )
     return 0 ;
 
-    
+
   // First: does this hexa have ANY dividing diagonals? If no, return
   if( !found_diags ){
-     addHexahedron( v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], to, source ); 
+     addHexahedron( v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], to, source );
      return 1;
   }
 
@@ -4828,9 +4822,9 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
   int pyramid_top = -1, base_face_1 = -1;
 
   // variables to hold pyramid base corners and diagonal node indices:
-  int b1[4], b2[4], b3[4], b1_diag[2], b2_diag[2], b3_diag[2]; 
+  int b1_diag[2], b2_diag[2], b3_diag[2];
   for( int p = 0; p < 2; p++ ){
-    b1_diag[p] = -1-p; b2_diag[p] = -2-p; b3_diag[p] = -3-p; 
+    b1_diag[p] = -1-p; b2_diag[p] = -2-p; b3_diag[p] = -3-p;
   }
 
 
@@ -4843,8 +4837,8 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       if( n1[p1] >=0 && n1[p2] >= 0 &&
           ( n1[p] == n1[p1] || n1[p] == n2[p1] ) &&
           ( n1[p] == n1[p2] || n1[p] == n2[p2] ) ){
-        pyramid_top = n1[p]; 
-        base_face_1 = !s ? 5 : 4; 
+        pyramid_top = n1[p];
+        base_face_1 = !s ? 5 : 4;
         break;
       }
       p1 = n2[p]-add;
@@ -4852,8 +4846,8 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       if( n1[p1] >=0 && n1[p2] >= 0 &&
           ( n2[p] == n1[p1] || n2[p] == n2[p1] ) &&
           ( n2[p] == n1[p2] || n2[p] == n2[p2] ) ){
-        pyramid_top = n2[p]; 
-        base_face_1 = !s ? 5 : 4; 
+        pyramid_top = n2[p];
+        base_face_1 = !s ? 5 : 4;
         break;
       }
     }
@@ -4871,23 +4865,23 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
     for( int p = 0; p < 3; p++ ){
       int b[4], bn1, bn2;
       if( !p ){
-        int add = base_face_1==4 ? 0 : 4; 
+        int add = base_face_1==4 ? 0 : 4;
         b[0] = 0+add; b[1] = 1+add; b[2] = 2+add; b[3] = 3+add;
         bn1 = n1[base_face_1]; bn2 = n2[base_face_1];
       }
       else if( p==1 ){
-        b[0] = base_face_2; b[1] = b[0]+4; 
+        b[0] = base_face_2; b[1] = b[0]+4;
         b[2] = (b[0]+1)%4+4; b[3] = (b[0]+1)%4;
         bn1 = n1[base_face_2]; bn2 = n2[base_face_3];
       }
       else{
-        b[0] = base_face_3; b[1] = b[0]+4; 
+        b[0] = base_face_3; b[1] = b[0]+4;
         b[2] = (b[0]+1)%4+4; b[3] = (b[0]+1)%4;
         bn1 = n1[base_face_3]; bn2 = n2[base_face_3];
       }
 
       if( bn1 < 0 )
-        addPyramid( v[b[0]], v[b[1]], v[b[2]], v[b[3]], v[pyramid_top], to, source ); 
+        addPyramid( v[b[0]], v[b[1]], v[b[2]], v[b[3]], v[pyramid_top], to, source );
       else{
         if( bn1 == b[0] || bn2 == b[0] ){
           addTetrahedron( v[b[0]], v[b[1]], v[b[2]], v[pyramid_top], to, source );
@@ -4896,7 +4890,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
         else{
           addTetrahedron( v[b[0]], v[b[1]], v[b[3]], v[pyramid_top], to, source );
           addTetrahedron( v[b[1]], v[b[2]], v[b[3]], v[pyramid_top], to, source );
-        } 
+        }
       }
     }
     // return if successful
@@ -4916,7 +4910,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
         |   \/______|___\
         |  / |      |   /|p2
      p3 |/___|___p4_| /  |
-         \   |      /\   | prism 1, 
+         \   |      /\   | prism 1,
           \  |    /   \  | external face 2 (side)
            \ |  /      \ |
             \|/_________\|
@@ -4924,13 +4918,13 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
                   prism 1,
                   external face 1 (bottom)
 
-         NOTE: for Prism 2, the prism coords MIRROR the coords for 
+         NOTE: for Prism 2, the prism coords MIRROR the coords for
                prism 1 about the internal shared face.
     */
 
 
   // prism_v holds prism-centric indices of vertices--new coords!!!
-  int prism_v[2][6], prism_face[2][2];  
+  int prism_v[2][6], prism_face[2][2];
   // t_prism arrays for tet verts...p_prism arrays for pyramid verts (if any)
   int t_prism[2][3][4], p_prism[2][5];
   for( int s = 0; s < 2; s++ ){
@@ -4951,25 +4945,25 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
 
     prism_slice_valid = false;
 
-    // n_div1, n_div2 are indices of the vertice in the first diagonal 
-    int n_div1 = -1, n_div2 = -2;  
+    // n_div1, n_div2 are indices of the vertice in the first diagonal
+    int n_div1 = -1, n_div2 = -2;
     if( p < 4 ){
-      if( ( n1[p] == p || n2[p] == p ) && 
+      if( ( n1[p] == p || n2[p] == p ) &&
           ( n1[(p+2)%4] == (p+2)%4+4 || n2[(p+2)%4] == (p+2)%4+4 ) ){
-        n_div1 = p; n_div2 = (p+1)%4+4; 
+        n_div1 = p; n_div2 = (p+1)%4+4;
       }
-      if( ( n1[p] == p+4 || n2[p] == p+4 ) && 
+      if( ( n1[p] == p+4 || n2[p] == p+4 ) &&
           ( n1[(p+2)%4] == (p+2)%4 || n2[(p+2)%4] == (p+2)%4 ) ){
         n_div1 = p+4; n_div2 = (p+1)%4;
       }
     }
     else{
       if( ( n1[4] == 0 || n2[4] == 0 ) &&
-          ( n1[5] == 4 || n2[5] == 4 ) ){ 
+          ( n1[5] == 4 || n2[5] == 4 ) ){
         n_div1 = 0; n_div2 = 2;
       }
       if( ( n1[4] == 1 || n2[4] == 1 ) &&
-          ( n1[5] == 5 || n2[5] == 5 ) ){ 
+          ( n1[5] == 5 || n2[5] == 5 ) ){
         n_div1 = 1; n_div2 = 3;
       }
     }
@@ -4978,7 +4972,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       continue;
 
     // There are two prisms.  Find the vertices of any external and internal prism
-    //  face diagonals.  
+    //  face diagonals.
     int ext_diag[2][2][2], intern_diag[2];
     for( int s = 0; s < 2; s++ ){
       intern_diag[s] = -5-s*s-s;
@@ -4990,7 +4984,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
     // Create arrays of verts of both prisms in prism-centric coords (see ascii diagram above)
     // to keep sanity.
     // p0 always refereces a vertex position on a slicing diagonal (see ascii diagram above again.
-    int p0;  
+    int p0;
     if( n_div1 > 3 && n_div2 < 4 || n_div1 < 4 && n_div2 > 3 ){
       p0 = n_div1 < 4 ? p : (p+2)%4;
       prism_v[0][0] = p0; prism_v[0][1] = (p0+1)%4; prism_v[0][2] = (p0+1)%4+4;
@@ -5000,7 +4994,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       prism_face[0][0] = 4;
       prism_face[0][1] = (p0+1)%4;
       prism_face[1][0] = (p0+3)%4;
-      prism_face[1][1] = 5;       
+      prism_face[1][1] = 5;
     }
     else{
       p0 = n_div1;
@@ -5041,49 +5035,49 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
 
     // if first prism needs the internal diagonal
     if( ext_diag[0][0][0] >= 0 && ext_diag[0][1][0] != ext_diag[0][0][0] ){
-      intern_diag[0] = ext_diag[0][0][1]; 
+      intern_diag[0] = ext_diag[0][0][1];
       if( ext_diag[0][0][1] == 0 )
         intern_diag[1] = 5;
       else
         intern_diag[1] = 2;
     }
     else if( ext_diag[0][1][0] >= 0 && ext_diag[0][0][0] != ext_diag[0][1][0] ){
-      intern_diag[0] = ext_diag[0][1][1]; 
+      intern_diag[0] = ext_diag[0][1][1];
       if( ext_diag[0][1][1] == 2 )
         intern_diag[1] = 3;
       else
         intern_diag[1] = 0;
-    }  
+    }
 
     // if 2nd prism needs the internal diagonal to work, check to see if the internal
     // diagonal exists and, if so, if it is consistent.  If it doesn't exist, make it
     if( ( ext_diag[1][0][0] != ext_diag[1][1][0] || ext_diag[1][0][0] < 0 &&
-          ext_diag[1][1][0] < 0 ) && 
-        intern_diag[0] >= 0 && intern_diag[0] != ext_diag[1][0][1] && 
-        intern_diag[0] != ext_diag[1][1][1] && intern_diag[1] != ext_diag[1][0][1] && 
-        intern_diag[1] != ext_diag[1][1][1] ) { 
+          ext_diag[1][1][0] < 0 ) &&
+        intern_diag[0] >= 0 && intern_diag[0] != ext_diag[1][0][1] &&
+        intern_diag[0] != ext_diag[1][1][1] && intern_diag[1] != ext_diag[1][0][1] &&
+        intern_diag[1] != ext_diag[1][1][1] ) {
       continue;
     }
     // add internal diagonal if needed
-    else if( intern_diag[0] < 0 && ext_diag[1][0][0] >= 0 && 
+    else if( intern_diag[0] < 0 && ext_diag[1][0][0] >= 0 &&
              ext_diag[1][1][0] != ext_diag[1][0][0] ){
-      intern_diag[0] = ext_diag[1][0][1]; 
+      intern_diag[0] = ext_diag[1][0][1];
       if( ext_diag[1][0][1] == 0 )
         intern_diag[1] = 5;
       else
         intern_diag[1] = 2;
     }
-    else if( intern_diag[0] < 0 && ext_diag[1][1][0] >= 0 && 
+    else if( intern_diag[0] < 0 && ext_diag[1][1][0] >= 0 &&
              ext_diag[1][0][0] != ext_diag[1][1][0] ){
-      intern_diag[0] = ext_diag[1][1][1]; 
+      intern_diag[0] = ext_diag[1][1][1];
       if( ext_diag[1][1][1] == 2 )
         intern_diag[1] = 3;
       else
         intern_diag[1] = 0;
-    }  
+    }
 
     // this check sees if the internal shared prism face is diagonalized, but one prism has no other diags
-    if( intern_diag[0] >= 0 && 
+    if( intern_diag[0] >= 0 &&
         ( ext_diag[0][0][0] < 0 && ext_diag[0][1][0] < 0 ||
           ext_diag[1][0][0] < 0 && ext_diag[1][1][0] < 0 ) ){
       continue;
@@ -5099,7 +5093,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
           continue;
         else if( ext_diag[s][0][0] >= 0 && ext_diag[s][0][0] == ext_diag[s][1][0] ){
           int add = (ext_diag[s][0][0] < 3) ? 3 : -3;
-          t_prism[s][0][0] = ext_diag[s][0][0]; t_prism[s][0][1] = ext_diag[s][0][1]; 
+          t_prism[s][0][0] = ext_diag[s][0][0]; t_prism[s][0][1] = ext_diag[s][0][1];
           t_prism[s][0][2] = ext_diag[s][1][1]; t_prism[s][0][3] = ext_diag[s][0][0]+add;
           if( intern_diag[0] < 0 ){
             p_prism[s][0] = 0; p_prism[s][1] = 2;
@@ -5107,26 +5101,26 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
             p_prism[s][4] = ext_diag[s][0][0];
           }
           else{
-            int v_tmp1 = (intern_diag[0] == 0 || intern_diag[1] == 0) ? 2 : 0;  
-            int v_tmp2 = (intern_diag[0] == 0 || intern_diag[1] == 0) ? 3 : 5;  
+            int v_tmp1 = (intern_diag[0] == 0 || intern_diag[1] == 0) ? 2 : 0;
+            int v_tmp2 = (intern_diag[0] == 0 || intern_diag[1] == 0) ? 3 : 5;
 
-            t_prism[s][1][0] = intern_diag[0]; t_prism[s][1][1] = intern_diag[1]; 
+            t_prism[s][1][0] = intern_diag[0]; t_prism[s][1][1] = intern_diag[1];
             t_prism[s][1][2] = v_tmp1;        t_prism[s][1][3] = ext_diag[s][0][0];
-            t_prism[s][2][0] = intern_diag[0]; t_prism[s][2][1] = intern_diag[1]; 
+            t_prism[s][2][0] = intern_diag[0]; t_prism[s][2][1] = intern_diag[1];
             t_prism[s][2][2] = v_tmp2;        t_prism[s][2][3] = ext_diag[s][0][0];
           }
         }
         else if( intern_diag[0] >= 0 ){
-          int p_tet_start = (ext_diag[s][0][0] >= 0) ? ext_diag[s][0][0] : ext_diag[s][1][0]; 
-          int p_pyr_top = (p_tet_start == ext_diag[s][0][0]) 
-                          ? ext_diag[s][0][1] : ext_diag[s][1][1]; 
+          int p_tet_start = (ext_diag[s][0][0] >= 0) ? ext_diag[s][0][0] : ext_diag[s][1][0];
+          int p_pyr_top = (p_tet_start == ext_diag[s][0][0])
+                          ? ext_diag[s][0][1] : ext_diag[s][1][1];
           int p_tet_top;
           if( p_tet_start == ext_diag[s][0][0] )
-            p_tet_top = (ext_diag[s][0][1] == 3) ? 0 : 3;   
+            p_tet_top = (ext_diag[s][0][1] == 3) ? 0 : 3;
           else
-            p_tet_top = (ext_diag[s][1][1] == 5) ? 2 : 5;   
+            p_tet_top = (ext_diag[s][1][1] == 5) ? 2 : 5;
 
-          t_prism[s][0][0] = p_tet_start; t_prism[s][0][1] = intern_diag[0]; 
+          t_prism[s][0][0] = p_tet_start; t_prism[s][0][1] = intern_diag[0];
           t_prism[s][0][2] = intern_diag[1]; t_prism[s][0][3] = p_tet_top;
 
           if( p_tet_start == ext_diag[s][0][0] ){
@@ -5136,11 +5130,11 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
               p_prism[s][4] = p_pyr_top;
             }
             else{
-              t_prism[s][1][0] = ext_diag[s][1][0]; t_prism[s][1][1] = ext_diag[s][1][1]; 
-              t_prism[s][1][2] = (ext_diag[s][1][0]==4) ? 1 : 4; 
+              t_prism[s][1][0] = ext_diag[s][1][0]; t_prism[s][1][1] = ext_diag[s][1][1];
+              t_prism[s][1][2] = (ext_diag[s][1][0]==4) ? 1 : 4;
               t_prism[s][1][3] = p_pyr_top;
-              t_prism[s][2][0] = ext_diag[s][1][0]; t_prism[s][2][1] = ext_diag[s][1][1]; 
-              t_prism[s][2][2] = (ext_diag[s][1][0]==4) ? 5 : 2; 
+              t_prism[s][2][0] = ext_diag[s][1][0]; t_prism[s][2][1] = ext_diag[s][1][1];
+              t_prism[s][2][2] = (ext_diag[s][1][0]==4) ? 5 : 2;
               t_prism[s][2][3] = p_pyr_top;
             }
           }
@@ -5151,23 +5145,23 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
               p_prism[s][4] = p_pyr_top;
             }
             else{
-              t_prism[s][1][0] = ext_diag[s][0][0]; t_prism[s][1][1] = ext_diag[s][0][1]; 
-              t_prism[s][1][2] = (ext_diag[s][0][0]==4) ? 3 : 4; 
+              t_prism[s][1][0] = ext_diag[s][0][0]; t_prism[s][1][1] = ext_diag[s][0][1];
+              t_prism[s][1][2] = (ext_diag[s][0][0]==4) ? 3 : 4;
               t_prism[s][1][3] = p_pyr_top;
-              t_prism[s][2][0] = ext_diag[s][0][0]; t_prism[s][2][1] = ext_diag[s][0][1]; 
-              t_prism[s][2][2] = (ext_diag[s][0][0]==4) ? 1 : 0; 
+              t_prism[s][2][0] = ext_diag[s][0][0]; t_prism[s][2][1] = ext_diag[s][0][1];
+              t_prism[s][2][2] = (ext_diag[s][0][0]==4) ? 1 : 0;
               t_prism[s][2][3] = p_pyr_top;
             }
-          }  
+          }
         }
         // translate arrays to 'real' vertex coordinates
         for( int t = 0; t < 3; t++ ){
           for( int w = 0; w < 4; w++ )
-            t_prism[s][t][w] = (t_prism[s][t][w] >= 0) 
+            t_prism[s][t][w] = (t_prism[s][t][w] >= 0)
                                ? prism_v[s][t_prism[s][t][w]] : t_prism[s][t][w];
         }
         for( int t = 0; t < 5; t++ )
-            p_prism[s][t] = (p_prism[s][t] >= 0) 
+            p_prism[s][t] = (p_prism[s][t] >= 0)
                             ? prism_v[s][p_prism[s][t]] : p_prism[s][t];
       }
 
@@ -5175,7 +5169,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       for( int s = 0; s < 2; s++ ){
         if( t_prism[s][0][0] < 0 && p_prism[s][0] < 0 ){
           addPrism( v[prism_v[s][0]], v[prism_v[s][1]], v[prism_v[s][2]], v[prism_v[s][3]],
-                    v[prism_v[s][4]], v[prism_v[s][5]], to, source); 
+                    v[prism_v[s][4]], v[prism_v[s][5]], to, source);
         }
         else{
           for( int t = 0; t < 3; t++ ){
@@ -5191,25 +5185,23 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
       // return now
       return 1;
 
-    }  // end of "if prism_slice_valid" statement     
+    }  // end of "if prism_slice_valid" statement
   }    // end of p_ind loop over opposite pairs of diagonals
 
   return 0;  // if exhaust possibilities, default to this
-         
-}  // end of createFullHexElems()   
+
+}  // end of createFullHexElems()
 
 
 // Overall function that creates the elements that subdivide any whole element extruded from a quadrangle.
-static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j, 
+static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
                               int k, MElement* source,
-                              std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,                             
+                              std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
                               unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool diag_search,
                               std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-
-  int num_v = v.size();
 
   int dup[4];
   int m = 0;
@@ -5217,7 +5209,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
     if(v[i] == v[i + 4])
       dup[m++] = i;
 
-  bool is_problem = false; 
+  bool is_problem = false;
 
   // is element marked as needing internal vertex?
   if( !is_dbl ){
@@ -5226,14 +5218,14 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
     itprob = problems.find(source);
     if( itprob != problems.end() ){
       if( (*itprob).second.find(jk_pair) != (*itprob).second.end() )
-        is_problem = true;  
+        is_problem = true;
     }
   }
 
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
   // need these for double layer extrusion purposes
-  unsigned int j_second_from_top = 0, k_second_from_top = 0;
+  int j_second_from_top = 0, k_second_from_top = 0;
   if( ep ){
     if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
       j_second_from_top = ep->mesh.NbLayer-1;
@@ -5251,7 +5243,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
   std::vector<int> n1, n2;
   n1.assign(6, -3);
   n2.assign(6, -4);
-  if( diag_search ){   
+  if( diag_search ){
     for( int p = 0; p < 6; p++ ){
       n1[p] = -p*p-p-1; n2[p] = -p*p-p-2;  //unique negative numbers
       if( p < 4 ){
@@ -5267,12 +5259,12 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
       else{
         int add = (p == 4) ? 0 : 4;
         if( edgeExists( v[0+add], v[2+add], quadToTri_edges ) ){
-          n1[p] = 0 + add; 
+          n1[p] = 0 + add;
           n2[p] = 2 + add;
           found_diags = true;
         }
         else if( edgeExists( v[1+add], v[3+add], quadToTri_edges ) ){
-          n1[p] = 1 + add; 
+          n1[p] = 1 + add;
           n2[p] = 3 + add;
           found_diags = true;
         }
@@ -5280,14 +5272,14 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
     }
   }
 
-  
+
   // BAD SHAPE
   if( m > 2 || m < 0 ){
     Msg::Error("In QuadToTriHexPri(), bad number of degenerate corners.");
     return;
   }
-  
- 
+
+
   // Divide by double layer extrusion method?
   if( is_dbl && ( found_diags || j > j_second_from_top || j==j_second_from_top && k >= k_second_from_top || m==1 ) ){
     if( j==0 && k==0 || j==j_second_from_top && k==k_second_from_top && ( !bnd_elem || !found_diags ) && m != 1 )
@@ -5298,7 +5290,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
       MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 1, pos );
     return;
   }
-    
+
 
   // The of the possibilites are for a single layer extrusion
 
@@ -5314,10 +5306,10 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
     if( createOnePtDegenHexElems( v, to, ep, j, k, dup, source, n1, n2, quadToTri_edges, problems,
                                   problems_new, lat_tri_diags_size, bnd_elem, is_dbl, found_diags, pos ) )
       return;
-  } 
+  }
 
-  
-  // FULL HEXAHEDRON 
+
+  // FULL HEXAHEDRON
   else if( !is_problem ){
     if( createFullHexElems( v, to, ep, j, k, dup, source, n1, n2, quadToTri_edges, problems,
                             problems_new, lat_tri_diags_size, bnd_elem, is_dbl, found_diags, pos ) )
@@ -5345,11 +5337,12 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
 }  // end of QuadToTriPriPyrTet()
 
 // reserves approximately the right amount of memory for quadToTri extrusions
-// in the element vectors in the region 'to' 
+// in the element vectors in the region 'to'
 // *** STILL EXPERIMENTAL -- It *kind* of works to limit memory footprint of vectors.
-static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool is_dbl, unsigned int num_layers, 
-                                              unsigned int lat_tri_diags_size, CategorizedSourceElements *c, 
-                                              std::map<MElement*, std::set<std::pair<unsigned int, 
+/*
+static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool is_dbl, unsigned int num_layers,
+                                              unsigned int lat_tri_diags_size, CategorizedSourceElements *c,
+                                              std::map<MElement*, std::set<std::pair<unsigned int,
                                                        unsigned int> > > *problems )
 {
 
@@ -5365,15 +5358,15 @@ static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool i
     else
       num_prob_quad += itprob->second.size();
   }
-  unsigned int num_bnd_tri = c->three_bnd_pt_tri.size() + c->other_bnd_tri.size();
-  unsigned int num_bnd_quad = c->four_bnd_pt_quad.size() + c->other_bnd_quad.size();
-  unsigned int num_int_tri = c->internal_tri.size();
-  unsigned int num_int_quad = c->internal_quad.size();
+  // unsigned int num_bnd_tri = c->three_bnd_pt_tri.size() + c->other_bnd_tri.size();
+  // unsigned int num_bnd_quad = c->four_bnd_pt_quad.size() + c->other_bnd_quad.size();
+  // unsigned int num_int_tri = c->internal_tri.size();
+  // unsigned int num_int_quad = c->internal_quad.size();
   unsigned int num_tri = from->triangles.size();
   unsigned int num_quad = from->quadrangles.size();
   // in case !ep->Recombine is ever allowed...
-  if( !ep->mesh.Recombine ) 
-    to->tetrahedra.reserve( num_layers*(3*num_tri + 6*num_quad + 8*num_prob_tri + 12*num_prob_quad) );  
+  if( !ep->mesh.Recombine )
+    to->tetrahedra.reserve( num_layers*(3*num_tri + 6*num_quad + 8*num_prob_tri + 12*num_prob_quad) );
   else if( !is_dbl ){
     //to->tetrahedra.reserve( (6*num_quad + 3*num_tri +2*lat_tri_diags_size + 8*num_prob_tri + 12*num_prob_quad) );
     to->prisms.reserve( num_tri*num_layers );
@@ -5385,17 +5378,17 @@ static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool i
     to->prisms.reserve( num_tri*num_layers );
     to->pyramids.reserve( num_prob_quad + num_prob_tri + extra_verts*4 + num_quad );
     to->tetrahedra.reserve( num_prob_quad + num_prob_tri + extra_verts );
-  }      
+  }
 
 }
-
+*/
 
 // displays for the user a list of the body centered vertices created for problem elements.
-static void listBodyCenteredVertices( GRegion *to, bool is_dbl, 
+static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
                                       std::map<MElement *, std::set<std::pair<unsigned int,unsigned int> > > *problems,
                                       std::map<MElement *, std::set<std::pair<unsigned int,unsigned int> > > *problems_new,
                                       std::set<MVertex*, MVertexLessThanLexicographic> *pos )
-{             
+{
 
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -5425,29 +5418,29 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
     unsigned int int_verts_count = 0;
     for( itmap = it_begin; itmap != it_end; itmap++ ){
       if( itmap->second.size() )
-        int_verts_count += itmap->second.size();  
+        int_verts_count += itmap->second.size();
     }
 
     if( int_verts_count ){
       if( int_verts_count == 1 )
         Msg::Error("QuadToTri meshed %d element in region %d "
-                   "with a body-centered internal vertex.", 
+                   "with a body-centered internal vertex.",
                    int_verts_count, to->tag() );
       else
         Msg::Error("QuadToTri meshed %d elements in region %d "
-                   "with body-centered internal vertices.", 
+                   "with body-centered internal vertices.",
                    int_verts_count, to->tag() );
       Msg::Error("( Mesh *should* still conformal, but the user should be aware of these internal vertices. )" );
 
       unsigned int int_verts_count2 = 0;
-      
+
       for( itmap = it_begin; itmap != it_end; itmap++ ){
         if( itmap->second.size() ){
           std::set<std::pair<unsigned int, unsigned int> >::iterator itset;
           for( itset = itmap->second.begin(); itset != itmap->second.end(); itset++ ){
             std::vector<MVertex *> verts;
-            int v_num = getExtrudedVertices( itmap->first, ep, (*itset).first, 
-                                             (*itset).second, (*pos), verts);                    
+            getExtrudedVertices( itmap->first, ep, (*itset).first,
+                                 (*itset).second, (*pos), verts);
             // find centroid
             std::vector<double> centroid = QtFindVertsCentroid(verts);
             int_verts_count2++;
@@ -5455,7 +5448,7 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
                        centroid[0], centroid[1], centroid[2] );
           }
         }
-      }               
+      }
     }
   }
 
@@ -5464,13 +5457,13 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
 
 // Function that makes all the elements in a QuadToTri region, both
 // the divided elements and the whole elements, using already-created subdivision edges.
-bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_elems, 
+bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_elems,
                             std::set<std::pair<MVertex*,MVertex*> > &quadToTri_edges,
                             std::set<std::pair<MVertex*,MVertex*> > &lat_tri_diags,
                             std::map<MElement*, std::set<std::pair<unsigned int,unsigned int> > > &problems,
                             std::set<MVertex *, MVertexLessThanLexicographic>  &pos)
 {
-  
+
   ExtrudeParams *ep = to->meshAttributes.extrude;
   if( !ep || !ep->mesh.ExtrudeMesh || !ep->mesh.QuadToTri )
     return false;
@@ -5512,7 +5505,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   }
 
   // for one point bd quads
-  int j_second_from_bottom = ep->mesh.NbLayer-1, 
+  int j_second_from_bottom = ep->mesh.NbLayer-1,
       k_second_from_bottom = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1;
   if( ep->mesh.NbElmLayer[0] > 1 ){
     j_second_from_bottom = 0;
@@ -5529,14 +5522,14 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
 
 
   // Make the extra vertices needed for Some QuadToTri elements
-  if( !addFaceOrBodyCenteredVertices( to, cat_src_elems, quadToTri_edges, problems, is_dbl, 
+  if( !addFaceOrBodyCenteredVertices( to, cat_src_elems, quadToTri_edges, problems, is_dbl,
                                       lat_tri_diags_size, pos ) ){
     Msg::Error("QuadToTriCreateElements() could not add face or body vertices for QuadToTri region %d.", to->tag() );
     return false;
   }
-  
+
   // reserve enough capacity for all possible elements, try to find combination of simplicity and memory efficiency.
-  //  *** EXPERIMENTAL ***  
+  //  *** EXPERIMENTAL ***
   //reserveQuadToTriCapacityForRegion( to, from, is_dbl, num_layers, lat_tri_diags_size, &cat_src_elems, &problems );
 
   // create elements:
@@ -5571,9 +5564,9 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
           verts.resize(0);
           if( getExtrudedVertices(elem, ep, j, k, pos, verts) == 6 ){
             QuadToTriPriPyrTet( verts, to, j, k, elem, quadToTri_edges,
-                               problems, problems_new, lat_tri_diags_size, 
+                               problems, problems_new, lat_tri_diags_size,
                                bnd_elem, is_dbl, 1, pos );
-          } 
+          }
         }
       }
       /*// *** SPEED IMPROVEMENT ***
@@ -5601,7 +5594,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
       else            set_elems = &cat_src_elems.internal_quad;
 
       for( itset = set_elems->begin(); itset != set_elems->end(); itset++ ){
-        /*// *** SPEED IMPROVEMENT *** 
+        /*// *** SPEED IMPROVEMENT ***
         unsigned int hex, pyr, pri, tet;
         hex = to->hexahedra.size();
         pyr = to->pyramids.size();
@@ -5618,7 +5611,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
             verts.resize(0);
             if(getExtrudedVertices(elem, ep, j, k, pos, verts) == 8 ){
               QuadToTriHexPri(verts, to, j, k, elem, quadToTri_edges,
-                              problems, problems_new, lat_tri_diags_size, 
+                              problems, problems_new, lat_tri_diags_size,
                               bnd_elem, is_dbl, 1, pos);
             }
           }
@@ -5637,13 +5630,13 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   listBodyCenteredVertices( to, is_dbl, &problems, &problems_new, &pos );
 
 
-  // Now revert any elements that have positive  volume. 
+  // Now revert any elements that have positive  volume.
   // Does this even need to be done?
  // *** KEEP THIS COMMENTED OUT UNLESS IT IS NEEDED ***
   /*for( int i = 0; i < to->tetrahedra.size(); i++ ){
     if( to->tetrahedra[i]->getVolumeSign() > 0 )
       to->tetrahedra[i]->revert();
-    
+
   }
   for( int i = 0; i < to->prisms.size(); i++ ){
     if( to->prisms[i]->getVolumeSign() > 0 )
@@ -5665,7 +5658,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
     }
     for( rit = model->firstRegion(); rit != model->lastRegion(); rit++ ){
       unsigned int num_nonconformal = TestRegionConformality( (*rit) );
-      //      if( num_nonconformal ) 
+      //      if( num_nonconformal )
         Msg::Error( "Region %3d Noncomformal faces = %d.", (*rit)->tag(), num_nonconformal );
     }
 
@@ -5680,16 +5673,16 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
 // Added 04/08/2011:
 int meshQuadToTriRegion( GRegion *gr, std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
-  // Perform some checks to see if this is a valid QuadToTri region. 
+  // Perform some checks to see if this is a valid QuadToTri region.
   // If so, a decision has to be made: if this surface is NOT laterally adjacent to
   // any subdivided extrusion, then it may be meshed here without worrying
   // about a global subdivide operation.
   // If the region has a lateral shared with a subdivide region, then it should be part
   // of the subdivide operation later...so just let the default
-  // methods here create the vertices and quit. 
-  // Otherwise, engage in the meshing here. 
+  // methods here create the vertices and quit.
+  // Otherwise, engage in the meshing here.
 
-  ExtrudeParams *ep = gr->meshAttributes.extrude; 
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.ExtrudeMesh || !ep->mesh.QuadToTri || !ep->mesh.Recombine )
     return 0;
@@ -5700,7 +5693,7 @@ int meshQuadToTriRegion( GRegion *gr, std::set<MVertex*, MVertexLessThanLexicogr
   // should not have it's lateral diags changed, IsValidQuadToTriRegion will set following to 'false.'
   bool allNonGlobalSharedLaterals = true; // IsValidQuadToTriRegion will set this properly regardless of initial value
   validQuadToTriReg = IsValidQuadToTriRegion(gr, &allNonGlobalSharedLaterals);
-           
+
   if( !validQuadToTriReg && ep->mesh.QuadToTri )
     Msg::Error("Mesh of QuadToTri region %d likely has errors.", gr->tag() );
 
@@ -5716,8 +5709,8 @@ int meshQuadToTriRegion( GRegion *gr, std::set<MVertex*, MVertexLessThanLexicogr
     std::set<std::pair<MVertex*, MVertex*> > lat_tri_diags;
     std::map<MElement*, std::set<std::pair<unsigned int,unsigned int> > > problems;
 
-    // data structure for boundary status-categorized source elements, 
-    // (member data containers defined in .h file) 
+    // data structure for boundary status-categorized source elements,
+    // (member data containers defined in .h file)
     CategorizedSourceElements cat_src_elems( gr );
     if( !cat_src_elems.valid ){
       Msg::Error("In meshQuadToTriRegion(), failed to classify QuadToTri region %d's source face elements "
@@ -5725,21 +5718,20 @@ int meshQuadToTriRegion( GRegion *gr, std::set<MVertex*, MVertexLessThanLexicogr
       return 0;
     }
 
-    bool fail = false;
-    if( !QuadToTriEdgeGenerator( gr, cat_src_elems, quadToTri_edges, 
+    if( !QuadToTriEdgeGenerator( gr, cat_src_elems, quadToTri_edges,
                                  lat_tri_diags, problems, pos) ){
       Msg::Error("In meshQuadToTriRegion(), failed to create edges for QuadToTri "
-                 "region %d.", gr->tag() ); 
+                 "region %d.", gr->tag() );
       return 0;
     }
-    if( !QuadToTriCreateElements( gr, cat_src_elems, quadToTri_edges, 
+    if( !QuadToTriCreateElements( gr, cat_src_elems, quadToTri_edges,
                                   lat_tri_diags, problems, pos) ){
       Msg::Error("In meshQuadToTriRegion, failed to create elements for QuadToTri "
-                 "region %d.", gr->tag() ); 
+                 "region %d.", gr->tag() );
       return 0;
     }
 
-    QuadToTriLateralRemesh(gr, quadToTri_edges); 
+    QuadToTriLateralRemesh(gr, quadToTri_edges);
 
     return 1;
   }
@@ -5756,7 +5748,7 @@ int meshQuadToTriRegionAfterGlobalSubdivide( GRegion *gr, std::set<std::pair<MVe
                                             std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
-  ExtrudeParams *ep = gr->meshAttributes.extrude; 
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
 
   if( !ep || !ep->mesh.ExtrudeMesh || !ep->mesh.QuadToTri || !ep->mesh.Recombine )
     return 0;
@@ -5767,7 +5759,7 @@ int meshQuadToTriRegionAfterGlobalSubdivide( GRegion *gr, std::set<std::pair<MVe
   // should not have its lateral diags swapped, IsValidQuadToTriRegion() will set following to 'false.'
   bool allNonGlobalSharedLaterals = true; // IsValidQuadToTriRegion will set this properly regardless of initial value
   validQuadToTriReg = IsValidQuadToTriRegion(gr, &allNonGlobalSharedLaterals);
-           
+
   if( !validQuadToTriReg && ep->mesh.QuadToTri )
     Msg::Error("Mesh of QuadToTri region %d likely has errors.", gr->tag() );
 
@@ -5776,17 +5768,17 @@ int meshQuadToTriRegionAfterGlobalSubdivide( GRegion *gr, std::set<std::pair<MVe
     return 0;
 
   Msg::Info("Meshing Region %d (extruded).", gr->tag() );
-  
+
   GFace *gr_src_face = gr->model()->getFaceByTag( std::abs(ep->geo.Source) );
   if( !gr_src_face ){
     Msg::Error("In meshQuadToTriRegionAfterGlobalSubdivide(), no source face for QuadToTri region %d.", gr->tag());
     return 0;
   }
 
-  for(unsigned int i = 0; i < gr->hexahedra.size(); i++) 
+  for(unsigned int i = 0; i < gr->hexahedra.size(); i++)
     delete gr->hexahedra[i];
   gr->hexahedra.clear();
-  for(unsigned int i = 0; i < gr->prisms.size(); i++) 
+  for(unsigned int i = 0; i < gr->prisms.size(); i++)
     delete gr->prisms[i];
   gr->prisms.clear();
   for(unsigned int i = 0; i < gr->pyramids.size(); i++)
@@ -5814,20 +5806,20 @@ int meshQuadToTriRegionAfterGlobalSubdivide( GRegion *gr, std::set<std::pair<MVe
   }
 
   // Mesh quadToTri
-  if( !QuadToTriEdgeGenerator( gr, cat_src_elems, quadToTri_edges, 
+  if( !QuadToTriEdgeGenerator( gr, cat_src_elems, quadToTri_edges,
                               lat_tri_diags, problems, pos ) ){
     Msg::Error("In meshQuadToTriRegionAfterGlobalSubdivide(), edge generation failed for QuadToTri "
-               "region %d.", gr->tag() ); 
+               "region %d.", gr->tag() );
     return 0;
   }
   if( !QuadToTriCreateElements( gr, cat_src_elems, quadToTri_edges,
                                lat_tri_diags, problems, pos ) ){
     Msg::Error("In meshQuadToTriRegionAfterGlobalSubdivide(), element creation failed for QuadToTri "
-               "region %d.", gr->tag() ); 
+               "region %d.", gr->tag() );
     return 0;
   }
 
-  QuadToTriLateralRemesh(gr, quadToTri_edges); 
+  QuadToTriLateralRemesh(gr, quadToTri_edges);
 
   return 1;
 
