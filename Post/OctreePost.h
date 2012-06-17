@@ -16,7 +16,7 @@ class PViewDataGModel;
 class OctreePost
 {
  private:
-  Octree *_SP, *_VP, *_TP;
+  Octree *_SPP, *_VPP, *_TPP; // _SP & co reserved by win32
   Octree *_SL, *_VL, *_TL;
   Octree *_ST, *_VT, *_TT;
   Octree *_SQ, *_VQ, *_TQ;
