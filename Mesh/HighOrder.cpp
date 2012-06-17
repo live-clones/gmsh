@@ -1337,19 +1337,17 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
 
   int counter = 1;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    Msg::StatusBar(2, true, "Meshing curves order %d (%i/%i)...",
-                   order, counter, m->getNumEdges());
+    Msg::Info("Meshing curves order %d (%i/%i)...", order, counter, m->getNumEdges());
     counter++;
-    if (onlyVisible && !(*it)->getVisibility())continue;
+    if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, edgeVertices, linear, nPts);
   }
 
   counter = 1;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    Msg::StatusBar(2, true, "Meshing surfaces order %d (%i/%i)...",
-                   order, counter, m->getNumFaces());
+    Msg::Info("Meshing surfaces order %d (%i/%i)...", order, counter, m->getNumFaces());
     counter++;
-    if (onlyVisible && !(*it)->getVisibility())continue;
+    if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
 
@@ -1365,8 +1363,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
 
   counter = 1;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    Msg::StatusBar(2, true, "Meshing volumes order %d (%i/%i)...",
-                   order, counter, m->getNumRegions());
+    Msg::Info("Meshing volumes order %d (%i/%i)...", order, counter, m->getNumRegions());
     counter++;
     if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
