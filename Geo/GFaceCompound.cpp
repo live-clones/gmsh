@@ -1285,7 +1285,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
       int iEdge;
 
       // getParameter Point
-      v->getParameter(0,tGlob);
+      v->getParameter(0, tGlob);
 
       //find compound Edge
       GEdgeCompound *gec = dynamic_cast<GEdgeCompound*>(v->onWhat());
@@ -1313,6 +1313,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	bool found = false;
 	while(j < (int)ge->mesh_vertices.size()){
 	  vR = ge->mesh_vertices[j];
+          if(vR->getPolynomialOrder() > 1){ j++; continue; }
 	  vR->getParameter(0,tR);
 	  if(!vR->getParameter(0,tR)) {
 	    Msg::Error("vertex vr %p not MedgeVertex", vR);
