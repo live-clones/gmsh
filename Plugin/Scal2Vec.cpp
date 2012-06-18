@@ -63,7 +63,7 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
   std::string nameNewView = Scal2VecOptions_String[0].def;
   
   PView *vRef = 0, *vX = 0, *vY = 0, *vZ = 0;
-  PViewData *dataRef, *dataX, *dataY, *dataZ;
+  PViewData *dataRef = 0, *dataX = 0, *dataY = 0, *dataZ = 0;
   
   // Load data
   if(iViewX >= 0){

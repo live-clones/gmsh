@@ -1272,7 +1272,7 @@ void Curvature::computeCurvature_RBF()
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     std::map<int,int>::iterator vertexIterator;
-    int V0;
+    int V0 = 0;
     vertexIterator = _VertexToInt.find( v->getNum() );
     if ( vertexIterator != _VertexToInt.end() )  V0 = (*vertexIterator).second;
     _VertexCurve[V0] = curvRBF[v];

@@ -343,7 +343,7 @@ MVertex* QtMakeCentroidVertex( std::vector<MVertex*> v, std::vector<MVertex*> *t
 
   // find the centroid of vertices
   std::vector<double> centroid = QtFindVertsCentroid(v);
-  double x, y, z;
+  double x = 0., y = 0., z = 0.;
   if( centroid.size() ){
     x = centroid[0];
     y = centroid[1];

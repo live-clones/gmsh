@@ -71,6 +71,8 @@ class Cell {
   Cell(MElement* element, int domain);
   Cell(Cell* parent, int i);
 
+  virtual ~Cell(){}
+
   int getDomain() const { return _domain; }
   void setDomain(int domain) { _domain = domain; }
   int getNum() const { return _num; }

@@ -89,7 +89,7 @@ GeomMeshMatcher::matchVertices(GModel* m1, GModel *m2, bool& ok)
     // FIXME: need a *much* better way to fix the tolerance...
     double tol = 10e-8;
 
-    discreteVertex* best_candidate;
+    discreteVertex* best_candidate = 0;
     GEntity* best_candidate_ge = 0;
     double best_score = DBL_MAX;
 

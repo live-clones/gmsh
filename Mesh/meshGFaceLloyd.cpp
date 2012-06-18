@@ -1071,7 +1071,7 @@ void lpcvt::step5(DocRecord& triangulator,GFace* gf){
   int k;
   int num;
   int start;
-  int opposite;
+  int opposite = 0;
   bool flag;
   SPoint2 p1,p2,p3,p4,reference,val;
   SVector3 n;

@@ -15,6 +15,7 @@ class linearSystemBase {
   protected:
   std::map<std::string, std::string> _parameters;
   public :
+  virtual ~linearSystemBase(){}
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
   virtual void clear() = 0;

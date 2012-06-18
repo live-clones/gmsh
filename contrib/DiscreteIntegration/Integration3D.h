@@ -47,6 +47,7 @@ class DI_Point
   DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
+  virtual ~DI_Point(){}
   virtual const polynomialBasis* getFunctionSpace(int o) const
   { return polynomialBases::find(MSH_PNT);  }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)

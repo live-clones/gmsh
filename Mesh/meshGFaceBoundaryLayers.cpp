@@ -310,7 +310,7 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
       //      printf("start with point %g %g (%g %g)\n",current->x(),current->y(),p.x(),p.y());
       AttractorField *catt = 0;
       SPoint3 _close;
-      double _current_distance;
+      double _current_distance = 0.;
       while(1){
 
 	SMetric3 m;

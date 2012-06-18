@@ -740,7 +740,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
   // t=2, allow free faces to be meshed with lowest vertex pointer in diagonal
   // t=3, allow any diagonal that works
   bool valid_division = false;
-  int face_done[2];  // holds the face numbers for the two faces that are done
+  int face_done[2]={0,0};  // holds the face numbers for the two faces that are done
   for( int t = 0; t < 4; t++ ){
 
     // variables that hold the face diagonal nodes.
@@ -955,8 +955,8 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     int p_lat = (degen_face+2)%4, n1_lat = -10, n2_lat = -11;
     bool p_lat_is_free = false;
     for( int s = 0; s < 3; s++ ){
-      int p_tmp, *n1_tmp, *n2_tmp;
-      bool *p_is_free_tmp;
+      int p_tmp=0, *n1_tmp=0, *n2_tmp=0;
+      bool *p_is_free_tmp=0;
       if( !s ){
         p_tmp = p_bot;
         n1_tmp = &n1_bot;
@@ -1600,7 +1600,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
   // don't really want to forbid surfaces, though...that's why two prisms are not immediately
   // cut when found.
   int p1_hold = -1, p2_hold = -2;  // if found two opposite diags that could work alone
-  int n1_hold[2], n2_hold[2];      // hold diag nodes for p1_hold, p2_hold.
+  int n1_hold[2]={0,0}, n2_hold[2]={0,0};      // hold diag nodes for p1_hold, p2_hold.
   bool valid_division = false;
 
   for( int t = 0; t < 4; t++ ){
@@ -3082,7 +3082,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 
     // Get a count of bnd verts. If one point, that index will be in one_point_ind.
     // For 3 bnd vert quads  record the empty spot in 'skip.'
-    int bnd_count = 0, skip, one_point_ind;
+    int bnd_count = 0, skip = 0, one_point_ind = 0;
     for( int s = 0; s < elem_size; s++ ){
       if( vert_bnd[s] ){
         bnd_count++;

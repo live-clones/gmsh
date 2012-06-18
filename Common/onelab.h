@@ -67,6 +67,7 @@ namespace onelab{
               const std::string &help="")
       : _name(name), _label(label), _help(help), _changed(true),
         _visible(true), _readOnly(false) {}
+    virtual ~parameter(){}
     void setName(const std::string &name){ _name = name; }
     void setLabel(const std::string &label){ _label = label; }
     void setHelp(const std::string &help){ _help = help; }

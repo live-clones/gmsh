@@ -2186,7 +2186,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 						    p.x(),
 						    p.y());
 	  gf->mesh_vertices.push_back(newVertex);
-	  int start1,start2;
+	  int start1 = 0,start2 = 0;
 	  int orientation1=1, orientation2=1;
 	  for (int k=0;k<3;k++){
 	    if (t1->getVertex(k) == it->first){
@@ -2851,7 +2851,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 		break;
 	      }
 	    }
-	    int start;
+	    int start = 0;
 	    for(int i = 0; i < 3; i++) {
 	      if (t2->getVertex(0) != t1->getVertex(i) &&
 		  t2->getVertex(1) != t1->getVertex(i) &&

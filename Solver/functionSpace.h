@@ -66,6 +66,7 @@ template<> struct TensorialTraits<STensor3>
 class FunctionSpaceBase
 {
  public:
+  virtual ~FunctionSpaceBase(){}
   virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
 };

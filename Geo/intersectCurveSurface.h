@@ -17,12 +17,14 @@
 class surfaceFunctor 
 {
 public :
+  virtual ~surfaceFunctor(){}
   virtual SPoint3 operator () (double u, double v) const = 0;
 };
 
 class curveFunctor 
 {
 public :
+  virtual ~curveFunctor(){}
   virtual SPoint3 operator () (double t) const = 0;
 };
 

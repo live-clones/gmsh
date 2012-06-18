@@ -327,9 +327,9 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   double tMax = std::max(interval.high(), interval.low());
 
   double DMIN = 1.e22;
-  double topt;
-  const double DT = (tMax-tMin)/(nbSamples-1) ;
-  for (int i=0;i<nbSamples;i++){
+  double topt = tMin;
+  const double DT = (tMax - tMin) / (nbSamples - 1.) ;
+  for (int i = 0; i < nbSamples; i++){
     t = tMin + i * DT;
     const SVector3 dp = q - position(t);
     const double D = dp.norm();

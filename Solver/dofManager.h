@@ -148,6 +148,7 @@ class dofManager : public dofManagerBase{
     _linearSystems.insert(std::make_pair("A", l1));
     _linearSystems.insert(std::make_pair("B", l2));
   }
+  virtual ~dofManager(){}
   virtual inline void fixDof(Dof key, const dataVec &value)
   {
     if(unknown.find(key) != unknown.end())

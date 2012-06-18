@@ -311,22 +311,23 @@ static bool closedCavity(MVertex *v, std::vector<MElement*> &vTri)
   return vs.empty();
 }
 
-static MVertex* findVertexInTri(v2t_cont &adjv, MVertex*v0, MVertex*v1,
+static MVertex* findVertexInTri(v2t_cont &adjv, MVertex *v0, MVertex *v1,
 				std::map<MVertex*, SPoint3> &vCoord, double nTot,
 				bool &inverted)
 {
-  MVertex *v2;
+  MVertex *v2 = 0;
   v2t_cont :: iterator it0 = adjv.find(v0);
   std::vector<MElement*> vTri0 = it0->second;
-  MElement *myTri;
+  MElement *myTri = 0;
   for (unsigned int j = 0; j < vTri0.size(); j++){
     MVertex *vt0  = vTri0[j]->getVertex(0);
     MVertex *vt1  = vTri0[j]->getVertex(1);
     MVertex *vt2  = vTri0[j]->getVertex(2);
     bool found0 = (vt0==v0 || vt1 ==v0 || vt2 ==v0) ? true: false;
     bool found1 = (vt0==v1 || vt1 ==v1 || vt2 ==v1) ? true: false;
-    if (found0 && found1) { myTri = vTri0[j];	break; }
+    if (found0 && found1) { myTri = vTri0[j]; break; }
   }
+  if(!myTri) return 0;
   for (unsigned int j = 0; j < 3; j++){
     MVertex *vj = myTri->getVertex(j);
     if (vj!=v0 && vj!=v1) { v2 = vj; break;}

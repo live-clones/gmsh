@@ -32,7 +32,7 @@ template <class Type>
 class PosetCat
 {
 public:
-
+  virtual ~PosetCat(){}
   /// instantiated in derived classes
   virtual bool lessThan(const Type& t2) const = 0;
 
@@ -70,6 +70,8 @@ template <class V, class S>
 class VectorSpaceCat
 {
 public:
+
+  virtual ~VectorSpaceCat(){}
 
   /// instantiated in derived classes
   virtual V& operator+=(const V& v) = 0;

@@ -159,6 +159,7 @@ template<class Assembler> void FixDofs(Assembler &assembler, std::vector<Dof> &d
 class FilterDof
 {
  public:
+  virtual ~FilterDof(){}
   virtual bool operator()(Dof key) = 0;
 };
 

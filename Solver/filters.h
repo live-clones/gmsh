@@ -27,6 +27,7 @@ class FilterNodeEnriched
       _TagEnrichedVertex = TagEnrichedVertex;
       _EnrichComp = EnrichComp;
     }
+    virtual ~FilterNodeEnriched(){}
 
     virtual bool operator() (Dof &key) const{
       std::set<int>::iterator it1;
@@ -81,7 +82,7 @@ class FilterElementsCutByLevelSet
       }
     }
   }
-
+  virtual ~FilterElementsCutByLevelSet(){}
   virtual bool operator () (Dof & key) const{
     std::set<int>::const_iterator it1;
     std::set<int>::const_iterator it2;
