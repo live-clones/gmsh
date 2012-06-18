@@ -60,7 +60,7 @@ public:
         return false;
       point[2] = 0;
       ipoint++;
-      if(fscanf(fp, "%le %le", &point[0], &point[1]) != 2) 
+      if(fscanf(fp, "%le %le", &point[0], &point[1]) != 2)
         Msg::Error("gshhs:  Error reading loops2 file.");
       return true;
     }
@@ -96,11 +96,11 @@ public:
      *                    For use with version 1.6 of GSHHS which now has WDBII
      *                    borders and rivers.
      */
-#define GSHHS_DATA_VERSION 6    // For v1.5 data set 
+#define GSHHS_DATA_VERSION 6    // For v1.5 data set
     //define GSHHS_PROG_VERSION "1.9"
-#define GSHHS_SCL 1.0e-6        // COnvert micro-degrees to degrees 
+#define GSHHS_SCL 1.0e-6        // COnvert micro-degrees to degrees
     inline unsigned int swabi4(unsigned int i4)
-    { // For byte swapping on little-endian systems (GSHHS is defined to be bigendian) 
+    { // For byte swapping on little-endian systems (GSHHS is defined to be bigendian)
       return (((i4) >> 24) + (((i4) >> 8) & 65280) + (((i4) & 65280) << 8) + (((i4) & 255) << 24));
     }
     class POINT {       /* Each lon, lat pair is stored in micro-degrees in 4-byte integer format */
@@ -187,7 +187,7 @@ public:
         return false;
       if (fread ((void *)&p, (size_t)sizeof(POINT), (size_t)1, fp) != 1) {
         Msg::Error("gshhs:  Error reading gshhs file.");
-        exit(1);
+        return false;
       }
       if (flip) {
         p.x = swabi4 ((unsigned int)p.x);
@@ -248,7 +248,7 @@ public:
     }
   };
 
-  // ************** UTM ************** 
+  // ************** UTM **************
   class coordinate_utm : public coordinate_system{
     int zone;
     coordinate_lonlat ll_conv;
@@ -265,7 +265,7 @@ public:
       return Ap * lat + Bp * sin(2 * lat) + Cp * sin(4 * lat) +
         Dp * sin(6 * lat) + Ep;
     }
-    void from_cartesian(const SPoint3 xyz,SPoint3 &utm) 
+    void from_cartesian(const SPoint3 xyz,SPoint3 &utm)
     {
       ll_conv.from_cartesian(xyz,ll);
       double S = meridionalarc(ll.x(),ll.y());
@@ -281,10 +281,10 @@ public:
       double p2 = p * p;
       double p3 = p * p2;
       double p4 = p2 * p2;
-      utm.setPosition(k0 * nu * clat * p + (k0 * nu * clat3 / 6) 
+      utm.setPosition(k0 * nu * clat * p + (k0 * nu * clat3 / 6)
                       * (1 - tlat2 + ep2 * clat2) * p3 + 5e5,
-                      S * k0 + k0 * nu * slat * clat / 2 * p2 
-                      + k0 * nu * slat * clat3 / 24 
+                      S * k0 + k0 * nu * slat * clat / 2 * p2
+                      + k0 * nu * slat * clat3 / 24
                       * (5 - tlat2 + 9 * ep2 * clat2 + 4 * ep4 * clat4) * p4,
                       0);
     }
@@ -315,8 +315,8 @@ public:
                                                        (5 - 2 * c1 + 28 * t1 - 3 * c12 +
                                                         8 * ep2 +
                                                         24 * t12) * d5 / 120) / cfp,
-                     fp - n1 * sfp / cfp / r1 
-                     * (d2 / 2 - (5 + 3 * t1 + 10 * c1 - 4 * c12 - 9 * ep2) * d4 / 24 
+                     fp - n1 * sfp / cfp / r1
+                     * (d2 / 2 - (5 + 3 * t1 + 10 * c1 - 4 * c12 - 9 * ep2) * d4 / 24
                         + (61 + 90 * t1 + 298 * c1 + 45 * t12 - 3 * c12 - 252 * ep2) * d6 / 720),
                      0);
       ll_conv.to_cartesian(ll,xyz);
@@ -788,7 +788,7 @@ public:
     {
       first_point_in_attractor = ip;
     }
-    void new_surface() 
+    void new_surface()
     {
       surface_buff.str("");
       surface_buff << "Plane Surface( IS + " << is++ << " ) = { ";
@@ -840,7 +840,7 @@ public:
       loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
         x() << ", " << stereo.y() << ", " << 0 << " };\n";
     }
-    void end_loop(bool closed) 
+    void end_loop(bool closed)
     {
       if(ip - first_point_in_loop > 3) {
         loop_buff<<"LoopStart"<<il<<" = IP + "<< first_point_in_loop<<";\n";
@@ -897,7 +897,7 @@ public:
   PView *execute(PView *);
 };
 
-// ************** MAIN PLUGIN ************** 
+// ************** MAIN PLUGIN **************
 StringXNumber GSHHSOptions_Number[] = {
   {GMSH_FULLRC, "iField", NULL, -1.},
   {GMSH_FULLRC, "UTMZone", NULL, 0},
@@ -924,7 +924,7 @@ extern "C"
 
 std::string GMSH_GSHHSPlugin::getHelp() const
 {
-  return 
+  return
     "Plugin(GSHHS) read different kind of contour lines data "
     "and write a .geo file on the surface of a sphere (the Earth).\n\n"
     "The principal application is to load GSHHS data\n (see "
@@ -1076,7 +1076,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
     for(loops::iterator il=ll.begin();il!=ll.end();il++){
       box b(point(-radius,-radius,-radius,0.),point(radius,radius,radius,0.));
       loop_fill_box(&*il,b);
-      while(false 
+      while(false
             || loop_check_small_angles(&*il)
             || loop_check_close_points_self(&*il,b)
             || loop_check_intersections(&*il,b)

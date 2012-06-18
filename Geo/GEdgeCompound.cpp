@@ -14,11 +14,11 @@
 #include "Numeric.h"
 #include "Curvature.h"
 
-GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound, 
+GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
                              std::vector<int> &orientation)
   : GEdge(m, tag, 0, 0), _compound(compound), _orientation(orientation)
 {
- 
+
   int N = _compound.size();
   v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
   v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
@@ -30,8 +30,8 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
 
   for(std::vector<GEdge*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
-      Msg::Error("Incorrect edge in compound edge %d\n", tag);
-      Msg::Exit(1);
+      Msg::Error("Incorrect edge in compound edge %d", tag);
+      return;
     }
   }
 
@@ -56,8 +56,8 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
 
 void GEdgeCompound::orderEdges()
 {
-  std::vector<GEdge*> _c ;  
-  std::list<GEdge*> edges ;  
+  std::vector<GEdge*> _c ;
+  std::list<GEdge*> edges ;
 
   for (unsigned int i = 0; i < _compound.size(); i++){
     edges.push_back(_compound[i]);
@@ -89,7 +89,7 @@ void GEdgeCompound::orderEdges()
         edges.erase(it);
         break;
       }
-    }    
+    }
   }
   else if (tempv.size() == 0){ // periodic
     firstEdge = *(edges.begin());
@@ -101,11 +101,11 @@ void GEdgeCompound::orderEdges()
   }
 
   // loop over all segments to order segments and store it in the list _c
-  _c.push_back(firstEdge); 
+  _c.push_back(firstEdge);
   _orientation.push_back(1);
   GVertex *first = _c[0]->getBeginVertex();
-  GVertex *last = _c[0]->getEndVertex();  
-  
+  GVertex *last = _c[0]->getEndVertex();
+
   while (first != last){
     if (edges.empty())break;
     bool found = false;
@@ -113,7 +113,7 @@ void GEdgeCompound::orderEdges()
       GEdge *e = *it;
       std::list<GEdge*>::iterator itp;
      if (e->getBeginVertex() == last){
-        _c.push_back(e); 
+        _c.push_back(e);
         itp = it;
         it++;
         edges.erase(itp);
@@ -123,7 +123,7 @@ void GEdgeCompound::orderEdges()
         break;
       }
       else if (e->getEndVertex() == last){
-        _c.push_back(e); 
+        _c.push_back(e);
         itp = it;
         it++;
         edges.erase(itp);
@@ -145,15 +145,15 @@ void GEdgeCompound::orderEdges()
         return;
       }
     }
-  }  
+  }
 
   //edges is now a list of ordered GEdges
   _compound = _c;
 
-  //special case reverse orientation 
+  //special case reverse orientation
   if (_compound.size() < 2)return;
-  if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex() 
-      && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){  
+  if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex()
+      && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){
     for (unsigned int i = 0; i < _compound.size(); i++){
       _orientation[i] = !_orientation[i] ;
     }
@@ -163,7 +163,7 @@ void GEdgeCompound::orderEdges()
 int GEdgeCompound::minimumMeshSegments() const
 {
   // int N = 0;
-  // for (unsigned int i = 0; i < _compound.size(); i++) 
+  // for (unsigned int i = 0; i < _compound.size(); i++)
   //   N +=_compound[i]->minimumMeshSegments();
   return 3;
 }
@@ -181,8 +181,8 @@ GEdgeCompound::~GEdgeCompound()
 }
 
 Range<double> GEdgeCompound::parBounds(int i) const
-{ 
-  return Range<double>(0, _pars[_compound.size()]); 
+{
+  return Range<double>(0, _pars[_compound.size()]);
 }
 
 /*
@@ -198,7 +198,7 @@ void GEdgeCompound::getLocalParameter(const double &t,
   for (iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
     double tmin = _pars[iEdge];
     double tmax = _pars[iEdge+1];
-    if (t >= tmin && t <= tmax){      
+    if (t >= tmin && t <= tmax){
       Range<double> b = _compound[iEdge]->parBounds(0);
       tLoc = _orientation[iEdge] ?
         b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
@@ -217,7 +217,7 @@ void GEdgeCompound::getCompoundParameter(GEdge *ge,
       double tmin = _pars[iEdge];
       double tmax = _pars[iEdge+1];
       Range<double> b = _compound[iEdge]->parBounds(0);
-      t = _orientation[iEdge] ? 
+      t = _orientation[iEdge] ?
         tmin + (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin):
         tmax - (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin);
       return;
@@ -225,13 +225,13 @@ void GEdgeCompound::getCompoundParameter(GEdge *ge,
   }
 }
 
-void GEdgeCompound::parametrize() 
+void GEdgeCompound::parametrize()
 {
   _pars.push_back(0.0);
   for (unsigned int i = 0; i < _compound.size(); i++){
     Range<double> b = _compound[i]->parBounds(0);
     _pars.push_back(_pars[_pars.size()-1]+(b.high() - b.low()));
-  }   
+  }
 }
 
 double GEdgeCompound::curvature(double par) const
@@ -302,7 +302,7 @@ SVector3 GEdgeCompound::firstDer(double par) const
   int iEdge;
   getLocalParameter(par,iEdge,tLoc);
   return _compound[iEdge]->firstDer(tLoc);
-} 
+}
 
 void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
 {
@@ -314,7 +314,7 @@ void replaceMeshCompound(GFace *gf, std::list<GEdge*> &edges)
     if((*it)->getCompound()){
       mySet.insert((*it)->getCompound());
     }
-    else{ 
+    else{
       mySet.insert(*it);
     }
     ++it;

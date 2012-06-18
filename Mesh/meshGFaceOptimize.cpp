@@ -849,10 +849,13 @@ void createRegularMesh (GFace *gf,
       // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
       // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
       // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
-      if (p12.x() && p12.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
-      if (p23.x() && p23.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
-      if (p34.x() && p34.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
-      if (p41.x() && p41.y() == -1.0) {printf("wrong param -1 \n"); exit(1);}
+      if ((p12.x() && p12.y() == -1.0) ||
+          (p23.x() && p23.y() == -1.0) ||
+          (p34.x() && p34.y() == -1.0) ||
+          (p41.x() && p41.y() == -1.0)) {
+        Msg::Error("Wrong param -1");
+        return;
+      }
 
       MVertex *vnew = createNewVertex (gf, SPoint2(Up,Vp));
       tab[j+1][i+1] = vnew;
@@ -1977,7 +1980,6 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	}
 	if (rot1 != rot2){
 	  Msg::Error("Quads are not oriented the same (in edgeSwapQuads opti)");
-	  //exit(1);
 	  return 0;
 	}
 

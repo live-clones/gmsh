@@ -39,7 +39,7 @@ double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3)
   SVector3 c = crossprod(a, b);
   double sinA = c.norm();
   double cosA = dot(a, b);
-  return atan2 (sinA, cosA);  
+  return atan2 (sinA, cosA);
 }
 
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
@@ -59,10 +59,10 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
 }
 
 void MVertex::forceNum(int num)
-{ 
+{
 #pragma omp critical
   {
-    _num = num; 
+    _num = num;
     _globalNum = std::max(_globalNum, _num);
   }
 }
@@ -74,7 +74,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
   int myDim = 0, myTag = 0;
   if(saveParametric){
     if(onWhat()){
-      myDim = onWhat()->dim(); 
+      myDim = onWhat()->dim();
       myTag = onWhat()->tag();
     }
     else
@@ -83,10 +83,10 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
 
   if(!binary){
     if(!saveParametric)
-      fprintf(fp, "%d %.16g %.16g %.16g\n", _index, x() * scalingFactor, 
-              y() * scalingFactor, z() * scalingFactor);      
+      fprintf(fp, "%d %.16g %.16g %.16g\n", _index, x() * scalingFactor,
+              y() * scalingFactor, z() * scalingFactor);
     else
-      fprintf(fp, "%d %.16g %.16g %.16g %d %d", _index, x() * scalingFactor, 
+      fprintf(fp, "%d %.16g %.16g %.16g %d %d", _index, x() * scalingFactor,
               y() * scalingFactor, z() * scalingFactor, myDim, myTag);
   }
   else{
@@ -104,7 +104,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
       double _u;
       getParameter(0, _u);
       if(!binary)
-        fprintf(fp, " %.16g\n", _u);        
+        fprintf(fp, " %.16g\n", _u);
       else
         fwrite(&_u, sizeof(double), 1, fp);
     }
@@ -121,7 +121,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
     }
     else
       if(!binary)
-        fprintf(fp, "\n");          
+        fprintf(fp, "\n");
   }
 }
 
@@ -150,7 +150,7 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   fprintf(fp, "%10d%10d%10d%10d\n", _index, coord_sys, displacement_coord_sys, color);
   // hack to print the numbers with "D+XX" exponents
   char tmp[128];
-  sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor, 
+  sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
   for(unsigned int i = 0; i < strlen(tmp); i++) if(tmp[i] == 'E') tmp[i] = 'D';
   fprintf(fp, "%s", tmp);
@@ -176,8 +176,8 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n", 
-          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 
+  fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n",
+          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor,
           _ge ? _ge->tag() : 0);
 }
 
@@ -222,12 +222,12 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
     double_to_char8(x1, xs); double_to_char8(y1, ys); double_to_char8(z1, zs);
     fprintf(fp, "GRID,%d,%d,%s,%s,%s\n", _index, 0, xs, ys, zs);
   }
-  else if(format == 1){ 
+  else if(format == 1){
     // small field format (8 char par field, 10 per line)
     double_to_char8(x1, xs); double_to_char8(y1, ys); double_to_char8(z1, zs);
     fprintf(fp, "GRID    %-8d%-8d%-8s%-8s%-8s\n", _index, 0, xs, ys, zs);
   }
-  else{ 
+  else{
     // large field format (8 char first/last field, 16 char middle, 6 per line)
     fprintf(fp, "GRID*   %-16d%-16d%-16.9G%-16.9G*N%-6d\n", _index, 0, x1, y1, _index);
     fprintf(fp, "*N%-6d%-16.9G\n", _index, z1);
@@ -250,7 +250,7 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
           _index, x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
-std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+std::set<MVertex*, MVertexLessThanLexicographic>::iterator
 MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
@@ -311,7 +311,7 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
   }
 }
 
-bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
+bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
                            SPoint2 &param1, SPoint2 &param2)
 {
   std::vector<SPoint2> p1, p2;
@@ -323,33 +323,33 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
     return true;
   }
   else if (p1.size() == 1 && p2.size() == 2){
-    double d1 = 
+    double d1 =
       (p1[0].x() - p2[0].x()) * (p1[0].x() - p2[0].x()) +
       (p1[0].y() - p2[0].y()) * (p1[0].y() - p2[0].y());
-    double d2 = 
+    double d2 =
       (p1[0].x() - p2[1].x()) * (p1[0].x() - p2[1].x()) +
       (p1[0].y() - p2[1].y()) * (p1[0].y() - p2[1].y());
     param1 = p1[0];
     param2 = d2 < d1 ? p2[1] : p2[0];
     return true;
-  }  
+  }
   else if (p2.size() == 1 && p1.size() == 2){
-    double d1 = 
+    double d1 =
       (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
       (p2[0].y() - p1[0].y()) * (p2[0].y() - p1[0].y());
-    double d2 = 
+    double d2 =
       (p2[0].x() - p1[1].x()) * (p2[0].x() - p1[1].x()) +
       (p2[0].y() - p1[1].y()) * (p2[0].y() - p1[1].y());
     param1 = d2 < d1 ? p1[1] : p1[0];
     param2 = p2[0];
     return true;
-  }  
+  }
   else if(p1.size() > 1 && p2.size() > 1){
     param1 = p1[0];
     param2 = p2[0];
 
     printf("NO WAY : TWO VERTICES ON THE SEAM, CANNOT CHOOSE\n");
-    
+
     // shout, both vertices are on seams
     return false;
   }
@@ -373,8 +373,8 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
     return true;
   }
 
-  if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||        
-     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){  
+  if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
+     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){
      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     return true;
   }
@@ -397,9 +397,9 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
     if(!v->getParameter(0,t)) {
-      Msg::Error("vertex v %p not MedgeVertex", v);
-      Msg::Exit(1);
-      //param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);  
+      Msg::Error("Vertex %p not MEdgeVertex", v);
+      return false;
+      //param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     }
 
     // shout, we are on a seam
@@ -433,7 +433,7 @@ bool reparamMeshVertexOnEdge( MVertex *v, const GEdge *ge, double &param)
 
   if(!ok || param == 1.e6)
     param = ge->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-  
+
   if(param < 1.e6) return true;
   return false;
 }

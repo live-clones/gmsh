@@ -108,7 +108,10 @@ static void orderMLines(std::vector<MLine*> &lines, MVertex *vB, MVertex *vE)
     else{
       MVertex *v = (boundv.rbegin())->first;
       if (v == vB) firstLine = (boundv.rbegin())->second;
-      else{ Msg::Error("begin vertex not found for branch"); exit(1);}
+      else{
+        Msg::Error("begin vertex not found for branch");
+        return;
+      }
     }
     for (std::list<MLine*>::iterator it = segments.begin();
          it != segments.end(); ++it){
@@ -371,7 +374,7 @@ void Centerline::importFile(std::string fileName)
 
   if(triangles.empty()){
     Msg::Error("Current GModel has no triangles ...");
-    exit(1);
+    return;
   }
 
   mod = new GModel();

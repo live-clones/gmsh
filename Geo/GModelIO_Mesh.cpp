@@ -641,59 +641,33 @@ int GModel::readMSH(const std::string &name)
 	  elements[i].clear();
 
 	std::map<int, MElement* >::iterator ite;
-	for (ite = elems.begin(); ite != elems.end(); ite++)
-	{
-	    int num = ite->first;
-	    MElement *e = ite->second;
-	    if (parents.find(num) == parents.end())
-	    {
-		  int reg;
-
-		  if (CTX::instance()->mesh.switchElementTags) {
-		      reg = elemphy[num];
-		  }
-		  else
-		  {
-		      reg = elemreg[num];
-		  }
-
-		  switch (e->getType())
-		  {
-		  case TYPE_PNT :
-		      elements[0][reg].push_back(e);
-		      break;
-		  case TYPE_LIN :
-		      elements[1][reg].push_back(e);
-		      break;
-		  case TYPE_TRI :
-		      elements[2][reg].push_back(e);
-		      break;
-		  case TYPE_QUA :
-		      elements[3][reg].push_back(e);
-		      break;
-		  case TYPE_TET :
-		      elements[4][reg].push_back(e);
-		      break;
-		  case TYPE_HEX :
-		      elements[5][reg].push_back(e);
-		      break;
-		  case TYPE_PRI :
-		      elements[6][reg].push_back(e);
-		      break;
-		  case TYPE_PYR :
-		      elements[7][reg].push_back(e);
-		      break;
-		  case TYPE_POLYG :
-		      elements[8][reg].push_back(e);
-		      break;
-		  case TYPE_POLYH :
-		      elements[9][reg].push_back(e);
-		      break;
-		  default :
-		      Msg::Error("Wrong type of element");
-		      exit(1);
-		  }
-             }
+	for (ite = elems.begin(); ite != elems.end(); ite++){
+          int num = ite->first;
+          MElement *e = ite->second;
+          if (parents.find(num) == parents.end()){
+            int reg;
+            if (CTX::instance()->mesh.switchElementTags) {
+              reg = elemphy[num];
+            }
+            else{
+              reg = elemreg[num];
+            }
+            switch (e->getType()){
+            case TYPE_PNT : elements[0][reg].push_back(e); break;
+            case TYPE_LIN : elements[1][reg].push_back(e); break;
+            case TYPE_TRI : elements[2][reg].push_back(e); break;
+            case TYPE_QUA : elements[3][reg].push_back(e); break;
+            case TYPE_TET : elements[4][reg].push_back(e); break;
+            case TYPE_HEX : elements[5][reg].push_back(e); break;
+            case TYPE_PRI : elements[6][reg].push_back(e); break;
+            case TYPE_PYR : elements[7][reg].push_back(e); break;
+            case TYPE_POLYG : elements[8][reg].push_back(e); break;
+            case TYPE_POLYH : elements[9][reg].push_back(e); break;
+            default :
+              Msg::Error("Wrong type of element");
+              return false;
+            }
+          }
 	}
 #endif
     }

@@ -369,7 +369,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
 
     if (genus < 0) {
       Msg::Error("Genus partition is negative G=%d!", genus);
-      exit(1);
+      return;
     }
 
     if (genus != 0 ){

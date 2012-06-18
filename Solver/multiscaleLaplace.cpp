@@ -1074,9 +1074,9 @@ void multiscaleLaplace::cutElems(std::vector<MElement *> &elements)
 
    connected_left_right(left, right);
    if (left.size() == 0 || right.size() == 0) {
-     printf("KO size left=%d, right=%d  not good (zero elems)\n",
-            (int) left.size(), (int) right.size() );
-     exit(1);
+     Msg::Error("KO size left=%d, right=%d  not good (zero elems)",
+                (int) left.size(), (int) right.size() );
+     return;
    }
 
    elements.clear();
@@ -1086,7 +1086,6 @@ void multiscaleLaplace::cutElems(std::vector<MElement *> &elements)
    printLevel ("Rootcut-left.msh",left,0,2.2);
    printLevel ("Rootcut-right.msh",right,0,2.2);
    printLevel ("Rootcut-all.msh",elements, 0,2.2);
-   //exit(1);
 }
 
 void multiscaleLaplace::splitElems(std::vector<MElement *> &elements)
@@ -1115,7 +1114,7 @@ void multiscaleLaplace::splitElems(std::vector<MElement *> &elements)
   if ( elements.size() != left.size()+right.size()) {
     Msg::Error("Cutting laplace wrong nb elements (%d) != left + right (%d)",
                elements.size(), left.size()+right.size());
-    exit(1);
+    return;
   }
 
   elements.clear();

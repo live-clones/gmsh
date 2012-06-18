@@ -286,12 +286,14 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
   return faces;
 }
 
-std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayer, int dir, int view)
+std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
+                                                       int nbLayers, double hLayer,
+                                                       int dir, int view)
 {
 
   ExtrudeParams *ep = new  ExtrudeParams;
   ep->mesh.BoundaryLayerIndex = dir;
-  ep->mesh.ViewIndex = view;//view -5 for centerline based extrude
+  ep->mesh.ViewIndex = view; //view -5 for centerline based extrude
   ep->mesh.NbLayer = 1; //this may be more general for defining different layers
   ep->mesh.hLayer.clear();
   ep->mesh.hLayer.push_back(hLayer);
@@ -309,6 +311,8 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
   double T0=0., T1=0., T2=0.;
   double A0=0., A1=0., A2=0.;
   double X0=0., X1=0., X2=0.,alpha=0.;
+
+  std::vector<GEntity*> extrudedEntities;
 
   //extrude shape dans geo.cpp
   Shape shape;
@@ -329,8 +333,8 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
     ((GFace*)e)->meshAttributes.extrude = ep;
     Surface *s = FindSurface(e->tag());
     if(!s) {
-      printf("surface %d NOT found \n", e->tag());
-      exit(1);
+      Msg::Error("Surface %d not found", e->tag());
+      return extrudedEntities;
     }
     shape.Num = s->Num;
     shape.Type = s->Typ;
@@ -352,8 +356,6 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e, i
 
   //return the new created entity
   int nbout = List_Nbr(list_out);
-  std::vector<GEntity*> extrudedEntities;
-  //GEntity *newEnt =0;
   if(e->dim()==1){
     Shape e;
     Shape s;

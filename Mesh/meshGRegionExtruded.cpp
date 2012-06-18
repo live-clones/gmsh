@@ -18,7 +18,7 @@
 #include "GmshMessage.h"
 #include "QuadTriExtruded3D.h"
 
-static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, 
+static void addTetrahedron(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
                            GRegion *to)
 {
   to->tetrahedra.push_back(new MTetrahedron(v1, v2, v3, v4));
@@ -80,7 +80,7 @@ static void createHexPri(std::vector<MVertex*> &v, GRegion *to, MElement* source
   for(int i = 0; i < 4; i++)
     if(v[i] == v[i + 4])
       dup[j++] = i;
-  
+
   if(j == 2) {
     if(dup[0] == 0 && dup[1] == 1)
       addPrism(v[0], v[3], v[7], v[1], v[2], v[6], to);
@@ -106,7 +106,7 @@ static void createTet(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, GRegio
     addTetrahedron(v1, v2, v3, v4, to);
 }
 
-static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k, 
+static int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
                                std::set<MVertex*, MVertexLessThanLexicographic> &pos,
                                std::vector<MVertex*> &verts)
 {
@@ -195,7 +195,7 @@ static void extrudeMesh(GFace *from, GRegion *to,
   }
 }
 
-static void insertAllVertices(GRegion *gr, 
+static void insertAllVertices(GRegion *gr,
                               std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   pos.insert(gr->mesh_vertices.begin(), gr->mesh_vertices.end());
@@ -217,8 +217,8 @@ static void insertAllVertices(GRegion *gr,
   }
 }
 
-void meshGRegionExtruded::operator() (GRegion *gr) 
-{  
+void meshGRegionExtruded::operator() (GRegion *gr)
+{
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
@@ -234,7 +234,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   dem(gr);
 
   // build a set with all the vertices on the boundary of gr
-  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  double old_tol = MVertexLessThanLexicographic::tolerance;
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   insertAllVertices(gr, pos);
@@ -243,7 +243,6 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
   if(!from){
     Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
-    exit(1);
     return;
   }
 
@@ -256,25 +255,25 @@ void meshGRegionExtruded::operator() (GRegion *gr)
     for(it = ep->mesh.Holes.begin(); it != ep->mesh.Holes.end(); it++)
       carveHole(gr, it->first, it->second.first, it->second.second);
   }
-  
-  MVertexLessThanLexicographic::tolerance = old_tol; 
+
+  MVertexLessThanLexicographic::tolerance = old_tol;
 }
 
-static int edgeExists(MVertex *v1, MVertex *v2, 
+static int edgeExists(MVertex *v1, MVertex *v2,
                       std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
   return edges.count(p);
 }
 
-static void createEdge(MVertex *v1, MVertex *v2, 
+static void createEdge(MVertex *v1, MVertex *v2,
                        std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
   edges.insert(p);
 }
 
-static void deleteEdge(MVertex *v1, MVertex *v2, 
+static void deleteEdge(MVertex *v1, MVertex *v2,
                        std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
@@ -333,7 +332,7 @@ static void phase2(GRegion *gr,
         std::vector<MVertex*> v;
         if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
           if(edgeExists(v[3], v[1], edges) &&
-             edgeExists(v[4], v[2], edges) && 
+             edgeExists(v[4], v[2], edges) &&
              edgeExists(v[0], v[5], edges)) {
             swap++;
             if(!edgeExists(v[3], v[1], edges_swap)) {
@@ -383,7 +382,7 @@ static void phase2(GRegion *gr,
     }
   }
 }
- 
+
 // create tets
 static void phase3(GRegion *gr,
                    std::set<MVertex*, MVertexLessThanLexicographic> &pos,
@@ -453,12 +452,12 @@ int SubdivideExtrudedMesh(GModel *m)
   // create a vector of quadToTri regions that have NOT been meshed
   // yet
   std::vector<GRegion*> regions, regions_quadToTri;
-  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  double old_tol = MVertexLessThanLexicographic::tolerance;
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     ExtrudeParams *ep = (*it)->meshAttributes.extrude;
-    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
        !ep->mesh.Recombine){
       regions.push_back(*it);
       insertAllVertices(*it, pos);
@@ -498,13 +497,13 @@ int SubdivideExtrudedMesh(GModel *m)
   for(unsigned int i = 0; i < regions.size(); i++){
     GRegion *gr = regions[i];
 
-    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) 
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
       delete gr->tetrahedra[i];
     gr->tetrahedra.clear();
-    for(unsigned int i = 0; i < gr->hexahedra.size(); i++) 
+    for(unsigned int i = 0; i < gr->hexahedra.size(); i++)
       delete gr->hexahedra[i];
     gr->hexahedra.clear();
-    for(unsigned int i = 0; i < gr->prisms.size(); i++) 
+    for(unsigned int i = 0; i < gr->prisms.size(); i++)
       delete gr->prisms[i];
     gr->prisms.clear();
     for(unsigned int i = 0; i < gr->pyramids.size(); i++)
@@ -516,21 +515,21 @@ int SubdivideExtrudedMesh(GModel *m)
     std::list<GFace*> faces = gr->faces();
     for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       ExtrudeParams *ep = (*it)->meshAttributes.extrude;
-      if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+      if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
         !ep->mesh.Recombine){
         GFace *gf = *it;
         Msg::Info("Remeshing surface %d", gf->tag());
-        for(unsigned int i = 0; i < gf->triangles.size(); i++) 
+        for(unsigned int i = 0; i < gf->triangles.size(); i++)
           delete gf->triangles[i];
         gf->triangles.clear();
-        for(unsigned int i = 0; i < gf->quadrangles.size(); i++) 
+        for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
           delete gf->quadrangles[i];
         gf->quadrangles.clear();
         MeshExtrudedSurface(gf, &edges);
       }
     }
   }
-  
+
   // now mesh the QuadToTri regions. Everything can be done locally
   // for each quadToTri region, but still use edge set from above just
   // to make sure laterals get remeshed properly (
@@ -566,6 +565,6 @@ int SubdivideExtrudedMesh(GModel *m)
     }
   }
 
-  MVertexLessThanLexicographic::tolerance = old_tol;   
+  MVertexLessThanLexicographic::tolerance = old_tol;
   return 1;
 }

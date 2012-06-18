@@ -15,11 +15,11 @@
 GRegionCompound::GRegionCompound(GModel *m, int tag, std::vector<GRegion*> &compound)
   : GRegion(m, tag), _compound(compound)
 {
-  
+
   for (unsigned int i = 0; i < _compound.size(); i++){
     if(!_compound[i]){
-      Msg::Error("Incorrect region in compound region %d\n", tag);
-      Msg::Exit(1);
+      Msg::Error("Incorrect region in compound region %d", tag);
+      return;
     }
   }
   for (unsigned int i = 0; i < _compound.size(); i++)
@@ -42,18 +42,18 @@ void GRegionCompound::getBoundingFaces()
     for ( ; ite != ed.end(); ++ite){
       _touched.insert(*ite);
     }
-  } 
+  }
   it = _compound.begin();
   for ( ; it != _compound.end(); ++it){
     std::list<GFace*> ed = (*it)->faces();
     std::list<GFace*> :: iterator ite = ed.begin();
     for ( ; ite != ed.end() ; ++ite){
-      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {        
+      if (!(*ite)->degenerate(0) && _touched.count(*ite) == 1) {
         _unique.insert(*ite);
       }
-    }    
-  }    
-  
+    }
+  }
+
   std::set<GFace*>::iterator itf = _unique.begin();
   for ( ; itf != _unique.end(); ++itf){
     printf("Compound Volume %d face %d \n", tag(), (*itf)->tag());
@@ -85,4 +85,4 @@ SVector3 GRegionCompound::firstDer(double par) const
 {
   Msg::Error("Cannot evaluate firstDeriv on GRegionCompound");
   return SVector3();
-} 
+}

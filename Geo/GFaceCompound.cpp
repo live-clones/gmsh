@@ -861,7 +861,10 @@ bool GFaceCompound::parametrize() const
 
   if (_type != SQUARE){
     bool success = orderVertices(_U0, _ordered, _coords);
-    if(!success) {Msg::Error("Could not order vertices on boundary");exit(1);}
+    if(!success) {
+      Msg::Error("Could not order vertices on boundary");
+      return false;
+    }
   }
 
   fillNeumannBCS_Plane();
@@ -1153,7 +1156,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
       Msg::Error("Incorrect face in compound surface %d\n", tag);
-      Msg::Exit(1);
+      return;
     }
   }
 
@@ -1204,7 +1207,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   for(std::list<GFace*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
       Msg::Error("Incorrect face in compound surface %d\n", tag);
-      Msg::Exit(1);
+      return;
     }
   }
 
@@ -1316,15 +1319,15 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
           if(vR->getPolynomialOrder() > 1){ j++; continue; }
 	  vR->getParameter(0,tR);
 	  if(!vR->getParameter(0,tR)) {
-	    Msg::Error("vertex vr %p not MedgeVertex", vR);
-	    Msg::Exit(1);
+	    Msg::Error("Vertex vr %p not an MEdgeVertex", vR);
+	    return SPoint2();
 	  }
 	  if(tLoc > tL && tLoc < tR){
 	    found = true;
 	    itR = coordinates.find(vR);
 	    if(itR == coordinates.end()){
-	      Msg::Error("vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
-	      Msg::Exit(1);
+	      Msg::Error("Vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
+              return SPoint2(0,0);
 	    }
 	    break;
 	  }
@@ -2021,8 +2024,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       //printf("found closest point (UV=%g %g) %g %g %g \n",pnew.x(), pnew.y(), gp.y(), gp.z());
     }
     else{
-      printf("point not found in kdtree \n");
-      exit(1);
+      Msg::Error("Point not found in kdtree");
       gp.setNoSuccess();
     }
 #else
@@ -2031,8 +2033,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 
     if (gp.succeeded()) return gp;
     else{
-      printf("NOT found point with ANN %g %g \n", par1, par2);
-      exit(1);
+      Msg::Error("NOT found point with ANN %g %g", par1, par2);
       GPoint gp (30,30,30,this);
       gp.setNoSuccess();
       return gp;
@@ -2882,7 +2883,7 @@ GPoint GFaceCompound::intersectionWithCircle(const SVector3 &n1, const SVector3 
   }
   GPoint pp(0);
   pp.setNoSuccess();
-  Msg::Debug("ARGG no success intersection circle"); //exit(1);
+  Msg::Debug("ARGG no success intersection circle");
   return pp;
 }
 

@@ -262,7 +262,6 @@ int MeshExtrudedSurface(GFace *gf,
     GFace *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
     if(!from){
       Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
-      exit(1);
       return 0;
     }
     else if(from->geomType() != GEntity::DiscreteSurface &&
