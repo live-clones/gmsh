@@ -12,12 +12,15 @@
 #include "Polynomial.h"
 #include "Basis.h"
 #include "Element.h"
+#include "Jacobian.h"
 #include "LocalFunctionSpaceVector.h"
 
 class LocalFunctionSpace1Form: public LocalFunctionSpaceVector{
  private:
   const std::vector<std::vector<Polynomial> >* basis;
-  
+  Jacobian* jac;
+  const std::vector<int>* orient;
+
  public:
   //! Instantiate a new LocalFunctionSpace1Form
   //! @param basis The Basis used to build 

@@ -13,15 +13,11 @@
    with an Element.
  */
 
-#include "Jacobian.h"
-
 class LocalFunctionSpace{
  protected:
   bool      scalar;
   int       size;
   int       type;
-
-  Jacobian* jac;
 
  public:
   //! Deletes this LocalFunctionSpace

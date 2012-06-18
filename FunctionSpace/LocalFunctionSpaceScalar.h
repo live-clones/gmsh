@@ -1,6 +1,8 @@
 #ifndef _LOCALFUNCTIONSPACESCALAR_H_
 #define _LOCALFUNCTIONSPACESCALAR_H_
 
+#include <vector>
+#include "Polynomial.h"
 #include "LocalFunctionSpace.h"
 
 /**
