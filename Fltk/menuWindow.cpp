@@ -2371,7 +2371,6 @@ static Fl_Menu_Item bar_table[] = {
     {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&High Order Tools", FL_CTRL+FL_SHIFT+'h', (Fl_Callback *)highordertools_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
 #if defined(HAVE_ONELAB)
@@ -2440,7 +2439,6 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&High Order Tools", FL_META+FL_SHIFT+'h', (Fl_Callback *)highordertools_cb, 0},
     {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
 #if defined(HAVE_ONELAB)
@@ -2701,6 +2699,7 @@ contextItem menu_mesh[] = {
     {"3",  (Fl_Callback *)mesh_degree_cb, (void*)3},
     {"4",  (Fl_Callback *)mesh_degree_cb, (void*)4},
     {"5",  (Fl_Callback *)mesh_degree_cb, (void*)5},
+    {"Optimize",  (Fl_Callback *)highordertools_cb},
     {""}
   };
 
