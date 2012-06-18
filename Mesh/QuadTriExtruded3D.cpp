@@ -311,9 +311,9 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
           GetNeighborRegionsOfFace(*it, neighbors) > 1 ){
         GRegion *other_region = neighbors[0] != region ? neighbors[0] : neighbors[1];
         ExtrudeParams *oth_ep = other_region->meshAttributes.extrude;
-        if( ep && ep->mesh.ExtrudeMesh && !ep->mesh.Recombine ||
-            oth_ep && oth_ep->mesh.ExtrudeMesh && !oth_ep->mesh.Recombine &&
-             IsSurfaceALateralForRegion(other_region, *it) )
+        if( (ep && ep->mesh.ExtrudeMesh && !ep->mesh.Recombine) ||
+            (oth_ep && oth_ep->mesh.ExtrudeMesh && !oth_ep->mesh.Recombine &&
+             IsSurfaceALateralForRegion(other_region, *it)) )
           (*allNonGlobalSharedLaterals) = false;
       }
     }
@@ -432,10 +432,10 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
       face_types["degen"].push_back(p);
     }
     // is face a single triangle?
-    else if( verts[p] == verts[n_lat+p] &&
-             verts[p2] != verts[n_lat+p2] ||
-             verts[p] != verts[n_lat+p] &&
-             verts[p2] == verts[n_lat+p2] ){
+    else if( (verts[p] == verts[n_lat+p] &&
+              verts[p2] != verts[n_lat+p2]) ||
+             (verts[p] != verts[n_lat+p] &&
+              verts[p2] == verts[n_lat+p2]) ){
       face_types["single_tri"].push_back(p);
     }
     // is face a recombined quad?
@@ -470,7 +470,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
     //  not in the top quadToTri layer:
     // then the face is a recombined quad (QuadToTri only used in recombined extrusions).
     else if( !touch_bnd[p] &&
-             ( j < j_top_start || j == j_top_start && k < k_top_start ) )
+             ( j < j_top_start || (j == j_top_start && k < k_top_start) ) )
       face_types["recomb"].push_back(p);
 
     // Face is possibly free...will need to do tests after this loop is complete to
@@ -492,7 +492,7 @@ static std::map<std::string, std::vector<int> > getFaceTypes(GRegion *gr, MEleme
     v_bot[0] = verts[0]; v_bot[1] = verts[1];
     v_bot[2] = verts[2]; v_bot[3] = verts[3];
     // is forbidden?
-    if ( j == 0 && k == 0 || forbiddenExists( v_bot, forbidden_edges ) )
+    if ( (j == 0 && k == 0) || forbiddenExists( v_bot, forbidden_edges ) )
       face_types["recomb"].push_back(4);
     else if( edgeExists( verts[0], verts[2], quadToTri_edges ) ){
       nfix1[4] = 0; nfix2[4] = 2;
@@ -767,8 +767,8 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
         n1[p] = nadj1[p]; n2[p] = nadj2[p];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
-      else if( t >= 1 && t < 3 && nadj1[p] >= 0 ||
-               t == 2 && free_flag[p] ){
+      else if( (t >= 1 && t < 3 && nadj1[p] >= 0) ||
+               (t == 2 && free_flag[p]) ){
         if( verts[p] < verts[(p+1)%3] &&
              verts[p] < verts[p+3] ||
             verts[(p+1)%3+3] < verts[(p+1)%3] &&
@@ -779,7 +779,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
           n1[p] = p+3; n2[p] = (p+1)%3;
         }
       }
-      else if( t==3 && (nadj1[p] >= 0 || free_flag[p]) )
+      else if( (t==3 && (nadj1[p] >= 0) || free_flag[p]) )
         face_is_free[p] = true;
     }
 
@@ -845,7 +845,7 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
     // At this point, can break out if valid_division... OR if there is NO valid division AND
     // if num_fixed_diag == 3, or 2 and a recomb
     // break out of loop. This will need an internal vertex.
-    if( valid_division || !valid_division && num_fixed_diag + num_recomb == 3 )
+    if( valid_division || (!valid_division && num_fixed_diag + num_recomb == 3) )
       break;
 
   } // end of outer t-loop
@@ -985,13 +985,13 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp];
       }
       // choose lowest vertex for t < 3, non-lowest vertex for t == 3
-      else if( t >= 1 && t < 3 && nadj1[p_tmp] >= 0 ||
-               t == 2 && free_flag[p_tmp] ){
+      else if( (t >= 1 && t < 3 && nadj1[p_tmp] >= 0) ||
+               (t == 2 && free_flag[p_tmp]) ){
         if( p_tmp < 4 ){
-          if( verts[p_tmp] < verts[(p_tmp+1)%4] &&
-              verts[p_tmp] < verts[p_tmp+4] ||
-              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
-              verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){
+          if( (verts[p_tmp] < verts[(p_tmp+1)%4] &&
+               verts[p_tmp] < verts[p_tmp+4]) ||
+              (verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
+               verts[(p_tmp+1)%4+4] < verts[p_tmp+4]) ){
             *n1_tmp = p_tmp; *n2_tmp = (p_tmp+1)%4+4;
           }
           else{
@@ -1000,8 +1000,8 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         else{
           int add = p_tmp==4 ? 0 : 4;
-          if( verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add] ||
-              verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add] ){
+          if( (verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add]) ||
+              (verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add]) ){
             *n1_tmp = 0+add; *n2_tmp = 2+add;
           }
           else{
@@ -1020,8 +1020,8 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
     if( ( n1_top >= 0 || p_top_is_free ) &&
         ( n1_bot >= 0 || p_bot_is_free ) ){
       if( p_top_is_free && p_bot_is_free ){
-        if( verts[4] < verts[5] && verts[4] < verts[7] ||
-            verts[6] < verts[5] && verts[6] < verts[7] ){
+        if( (verts[4] < verts[5] && verts[4] < verts[7]) ||
+            (verts[6] < verts[5] && verts[6] < verts[7]) ){
           n1_top = 4; n2_top = 6;
         }
         else{
@@ -1058,8 +1058,8 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         ( n1_lat >= 0 || p_lat_is_free ) ){
 
       if( p_top_is_free && p_lat_is_free ){
-        if( verts[4] < verts[5] && verts[4] < verts[7] ||
-            verts[6] < verts[5] && verts[6] < verts[7] ){
+        if( (verts[4] < verts[5] && verts[4] < verts[7]) ||
+            (verts[6] < verts[5] && verts[6] < verts[7]) ){
           n1_top = 4; n2_top = 6;
         }
         else{
@@ -1117,8 +1117,8 @@ static void addEdgesForQuadToTriTwoPtDegenHexa( GRegion *gr, MElement *elem, Ext
         ( n1_lat >= 0 || p_lat_is_free ) ){
 
       if( p_bot_is_free && p_lat_is_free ){
-        if( verts[0] < verts[1] && verts[0] < verts[3] ||
-            verts[2] < verts[1] && verts[2] < verts[3] ){
+        if( (verts[0] < verts[1] && verts[0] < verts[3]) ||
+            (verts[2] < verts[1] && verts[2] < verts[3]) ){
           n1_bot = 0; n2_bot = 2;
         }
         else{
@@ -1300,13 +1300,13 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         *n1_tmp = nadj1[p_tmp]; *n2_tmp = nadj2[p_tmp];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
-      else if( t >= 1 && t < 3 && nadj1[p_tmp] >= 0 ||
-               t == 2 && free_flag[p_tmp] ){
+      else if( (t >= 1 && t < 3 && nadj1[p_tmp] >= 0) ||
+               (t == 2 && free_flag[p_tmp]) ){
         if( p_tmp < 4 ){
-          if( verts[p_tmp] < verts[(p_tmp+1)%4] &&
-               verts[p_tmp] < verts[p_tmp+4] ||
-              verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
-               verts[(p_tmp+1)%4+4] < verts[p_tmp+4] ){
+          if( (verts[p_tmp] < verts[(p_tmp+1)%4] &&
+               verts[p_tmp] < verts[p_tmp+4]) ||
+              (verts[(p_tmp+1)%4+4] < verts[(p_tmp+1)%4] &&
+               verts[(p_tmp+1)%4+4] < verts[p_tmp+4]) ){
             *n1_tmp = p_tmp; *n2_tmp = (p_tmp+1)%4+4;
           }
           else{
@@ -1315,8 +1315,8 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
         else{
           int add = p_tmp==4 ? 0 : 4;
-          if( verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add] ||
-              verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add] ){
+          if( (verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add]) ||
+              (verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add]) ){
             *n1_tmp = 0+add; *n2_tmp = 2+add;
           }
           else{
@@ -1334,8 +1334,8 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     if( !valid_division ){
       // assign diagonals to the 'free' faces from above
       if( p_top_is_free && p_bot_is_free ){
-        if( verts[0] < verts[1] && verts[0] < verts[3] ||
-            verts[2] < verts[1] && verts[2] < verts[3] ){
+        if( (verts[0] < verts[1] && verts[0] < verts[3]) ||
+            (verts[2] < verts[1] && verts[2] < verts[3]) ){
           n1_bot = 0; n2_bot = 2;
         }
         else{
@@ -1417,7 +1417,7 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
     // Pyramid top on corner NOT opposite to degenerate corner
     if( !valid_division ){
       // pyramid top on top face
-      if( n1_top >= 0 && n1_top != (degen_ind+2)%4+4 && n2_top != (degen_ind+2)%4+4 ||
+      if( (n1_top >= 0 && n1_top != (degen_ind+2)%4+4 && n2_top != (degen_ind+2)%4+4) ||
           p_top_is_free ){
         if( n1_lat1 == (degen_ind+1)%4+4 || p_lat1_is_free ){
           valid_division = true;
@@ -1447,8 +1447,8 @@ static void addEdgesForQuadToTriOnePtDegenHexa( GRegion *gr, MElement *elem, Ext
         }
       }
       // pyramid top on bottom face
-      if( !valid_division && n1_bot >= 0 &&
-          n1_bot != (degen_ind+2)%4 && n2_bot != (degen_ind+2)%4 ||
+      if( (!valid_division && n1_bot >= 0 &&
+           n1_bot != (degen_ind+2)%4 && n2_bot != (degen_ind+2)%4) ||
           p_bot_is_free ){
         if( n1_lat1 == (degen_ind+1)%4 || p_lat1_is_free ){
           valid_division = true;
@@ -1629,13 +1629,13 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         n1[p] = nadj1[p]; n2[p] = nadj2[p];
       }
       // choose lowest vertex for t < 3, any vertex for t == 3
-      else if( t >= 1 && t < 3 && nadj1[p] >= 0 ||
-               t == 2 && free_flag[p] ){
+      else if( (t >= 1 && t < 3 && nadj1[p] >= 0) ||
+               (t == 2 && free_flag[p]) ){
         if( p < 4 ){
-          if( verts[p] < verts[(p+1)%4] &&
-               verts[p] < verts[p+4] ||
-              verts[(p+1)%4+4] < verts[(p+1)%4] &&
-               verts[(p+1)%4+4] < verts[p+4] ){
+          if( (verts[p] < verts[(p+1)%4] &&
+               verts[p] < verts[p+4]) ||
+              (verts[(p+1)%4+4] < verts[(p+1)%4] &&
+               verts[(p+1)%4+4] < verts[p+4]) ){
             n1[p] = p; n2[p] = (p+1)%4+4;
           }
           else{
@@ -1644,8 +1644,8 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         }
         else{
           int add = p==4 ? 0 : 4;
-          if( verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add] ||
-              verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add] ){
+          if( (verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add]) ||
+              (verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add]) ){
             n1[p] = 0+add; n2[p] = 2+add;
           }
           else{
@@ -1695,9 +1695,9 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         if( face_is_free[p1] && face_is_free[p2] ){
           face_is_free[p1] = false;
           if( p1 < 4 ){
-            if( verts[p1] < verts[p1+4] && verts[p1] < verts[(p1+1)%4] ||
-                verts[(p1+1)%4+4] < verts[p1+4] &&
-                 verts[(p1+1)%4+4] < verts[(p1+1)%4] ){
+            if( (verts[p1] < verts[p1+4] && verts[p1] < verts[(p1+1)%4]) ||
+                (verts[(p1+1)%4+4] < verts[p1+4] &&
+                 verts[(p1+1)%4+4] < verts[(p1+1)%4]) ){
               n1[p1] = p1;
               n2[p1] = (p1+1)%4+4;
             }
@@ -1708,8 +1708,8 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           }
           else{
             int add = p1==4 ? 0 : 4;
-            if( verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add] ||
-                verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add] ){
+            if( (verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add]) ||
+                (verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add]) ){
               n1[p1] = 0+add;
               n2[p1] = 2+add;
             }
@@ -1788,7 +1788,7 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
 
         // Test 1: Another set of opposite, aligned diagonals.
         for( int s = 0; s < 3; s++ ){
-          if( s == p1 || s>1 && (p1==4 || p1==5) )
+          if( s == p1 || (s>1 && (p1==4 || p1==5)) )
             continue;
           int s1, s2;
           if( s > 1){
@@ -1798,15 +1798,15 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             s1 = s; s2 = (s+2)%4;
           }
           // if these two faces do not work for opposite aligned diagonals, continue
-          if( n1[s1] < 0 && !face_is_free[s1] ||
-              n1[s2] < 0 && !face_is_free[s2] )
+          if( (n1[s1] < 0 && !face_is_free[s1]) ||
+              (n1[s2] < 0 && !face_is_free[s2]) )
             continue;
           if( n1[s1] >= 0 && n1[s2] >= 0 ){
             if( s1 < 4 ){
-              if( ( n1[s1] == s1 || n2[s1] == s1 ) &&
-                    n1[s2] != s2+4 && n2[s2] != s2+4 ||
-                  ( n1[s1] == s1+4 || n2[s1] == s1+4 ) &&
-                    n1[s2] != s2 && n2[s2] != s2 )
+              if( ( ( n1[s1] == s1 || n2[s1] == s1 ) &&
+                    n1[s2] != s2+4 && n2[s2] != s2+4 ) ||
+                  ( ( n1[s1] == s1+4 || n2[s1] == s1+4 ) &&
+                    n1[s2] != s2 && n2[s2] != s2 ) )
                 continue;
             }
             else{
@@ -1826,9 +1826,9 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
           if( face_is_free[s1] && face_is_free[s2] ){
             face_is_free[s1] = false;
             if( s1 < 4 ){
-              if( verts[s1] < verts[s1+4] && verts[s1] < verts[(s1+1)%4] ||
-                  verts[(s1+1)%4+4] < verts[s1+4] &&
-                   verts[(s1+1)%4+4] < verts[(s1+1)%4] ){
+              if( (verts[s1] < verts[s1+4] && verts[s1] < verts[(s1+1)%4]) ||
+                  (verts[(s1+1)%4+4] < verts[s1+4] &&
+                   verts[(s1+1)%4+4] < verts[(s1+1)%4]) ){
                 n1[s1] = s1;
                 n2[s1] = (s1+1)%4+4;
               }
@@ -1839,8 +1839,8 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
             }
             else{
               int add = s1==4 ? 0 : 4;
-              if( verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add] ||
-                  verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add] ){
+              if( (verts[0+add] < verts[1+add] && verts[0+add] < verts[3+add]) ||
+                  (verts[2+add] < verts[1+add] && verts[2+add] < verts[3+add]) ){
                 n1[s1] = 0+add;
                 n2[s1] = 2+add;
               }
@@ -2150,8 +2150,8 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
   }
 
   // test for right number of triangles with degenerate edges
-  if( face_types["single_tri"].size() != 0 && face_types["single_tri"].size() != 2 ||
-      face_types["degen"].size() && face_types["single_tri"].size() != 2 ){
+  if( (face_types["single_tri"].size() != 0 && face_types["single_tri"].size() != 2) ||
+      (face_types["degen"].size() && face_types["single_tri"].size() != 2) ){
     Msg::Error("In bruteForceEdgeQuadToTriHexa(), bad degenerated extrusion encountered.");
     std::pair<unsigned int, unsigned int> jkpair(j,k);
     problems[elem].insert(jkpair);
@@ -2273,8 +2273,8 @@ static int ExtrudeDiags( GRegion *gr, std::vector<MVertex*> v, unsigned int j_st
   }
 
   int elem_size = elem->getNumVertices();
-  if( !( v.size() == 6 && elem_size == 3 ||
-         v.size() == 8 && elem_size == 4 ) ){
+  if( !( (v.size() == 6 && elem_size == 3) ||
+         (v.size() == 8 && elem_size == 4) ) ){
     Msg::Error("In ExtrudeDiags(), vertex number mismatch "
                "between 2D source element and extruded volume.");
     return 0;
@@ -2465,9 +2465,9 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
       // see if the diagonals are fixed for other reasons
       if( !( face_ep_tmp && face_ep_tmp->mesh.ExtrudeMesh &&
              face_ep_tmp->geo.Mode == EXTRUDED_ENTITY ) ||
-          other_region && oth_ep && oth_ep->mesh.ExtrudeMesh &&
-            (*it) == model->getFaceByTag( std::abs( oth_ep->geo.Source ) ) ||
-          other_region && other_region->meshAttributes.Method == MESH_TRANSFINITE ){
+          (other_region && oth_ep && oth_ep->mesh.ExtrudeMesh &&
+           (*it) == model->getFaceByTag( std::abs( oth_ep->geo.Source ) ) ) ||
+          (other_region && other_region->meshAttributes.Method == MESH_TRANSFINITE) ){
         is_fixed = true;
       }
 
@@ -3369,9 +3369,11 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
     return 0;
   }
 
-  // no need to do this if there are no lateral surface diagonals and if not a rotation with quadrangles.
-  if( !lat_tri_diags.size() && ( !reg_source->quadrangles.size() ||
-      ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE ) )
+  // no need to do this if there are no lateral surface diagonals and if not a
+  // rotation with quadrangles.
+  if( !lat_tri_diags.size() &&
+      ( !reg_source->quadrangles.size() ||
+        (ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE) ) )
     return 1;
 
   int j_top_start, k_top_start;
@@ -4019,12 +4021,13 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
           else if( edgeExists( verts3D[p+elem_size], verts3D[(p+1)%elem_size], quadToTri_edges ) )
             found_diags = true;
         }
-        // triangle extrusions don't need face centered verts if NO diags found or if not on lateral boundary
+        // triangle extrusions don't need face centered verts if NO diags found
+        // or if not on lateral boundary
         if( !t && ( !found_diags || s==2 ) )
           continue;
 
         int j_start, k_start;
-        if( s < 2 && found_diags || degen_hex ){
+        if( (s < 2 && found_diags) || degen_hex ){
           j_start = 0;
           k_start = 0;
         }
@@ -4076,7 +4079,7 @@ static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<M
 
   const int n_lat = n_lat_tmp;
 
-  if( n_lat == 3 && n1.size() != 3 || n_lat == 4 && n2.size() != 6 ){
+  if( (n_lat == 3 && n1.size() != 3) || (n_lat == 4 && n2.size() != 6) ){
     Msg::Error("In MeshWithInternalVertex(), size of diagonal node vectors is not does not equal 3 or 6.");
     return;
   }
@@ -4175,7 +4178,7 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
     return;
   }
 
-  if( n_lat == 3 && n1.size() != 3 || n_lat == 4 && n2.size() != 6 ){
+  if( (n_lat == 3 && n1.size() != 3) || (n_lat == 4 && n2.size() != 6) ){
     Msg::Error("In MeshWithFaceCenteredVertex(), size of diagonal node vectors is not does not equal 3 or 6.");
     return;
   }
@@ -4183,7 +4186,7 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
   std::vector<MVertex *> face_vertices;
   // create the face-centered vertices
   for( int s = 0; s < 2; s++ ){
-    if( !s && !bottom_flag || s && !top_flag )
+    if( (!s && !bottom_flag) || (s && !top_flag) )
       continue;
     std::vector<MVertex *> v_face;
     v_face.assign(n_lat, (MVertex*)(NULL) );
@@ -4985,7 +4988,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
     // to keep sanity.
     // p0 always refereces a vertex position on a slicing diagonal (see ascii diagram above again.
     int p0;
-    if( n_div1 > 3 && n_div2 < 4 || n_div1 < 4 && n_div2 > 3 ){
+    if( (n_div1 > 3 && n_div2 < 4) || (n_div1 < 4 && n_div2 > 3) ){
       p0 = n_div1 < 4 ? p : (p+2)%4;
       prism_v[0][0] = p0; prism_v[0][1] = (p0+1)%4; prism_v[0][2] = (p0+1)%4+4;
       prism_v[0][3] = (p0+3)%4; prism_v[0][4] = (p0+2)%4; prism_v[0][5] = (p0+2)%4+4;
@@ -5051,8 +5054,8 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
 
     // if 2nd prism needs the internal diagonal to work, check to see if the internal
     // diagonal exists and, if so, if it is consistent.  If it doesn't exist, make it
-    if( ( ext_diag[1][0][0] != ext_diag[1][1][0] || ext_diag[1][0][0] < 0 &&
-          ext_diag[1][1][0] < 0 ) &&
+    if( ( ext_diag[1][0][0] != ext_diag[1][1][0] || (ext_diag[1][0][0] < 0 &&
+                                                     ext_diag[1][1][0] < 0) ) &&
         intern_diag[0] >= 0 && intern_diag[0] != ext_diag[1][0][1] &&
         intern_diag[0] != ext_diag[1][1][1] && intern_diag[1] != ext_diag[1][0][1] &&
         intern_diag[1] != ext_diag[1][1][1] ) {
@@ -5076,10 +5079,11 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
         intern_diag[1] = 0;
     }
 
-    // this check sees if the internal shared prism face is diagonalized, but one prism has no other diags
+    // this check sees if the internal shared prism face is diagonalized, but
+    // one prism has no other diags
     if( intern_diag[0] >= 0 &&
-        ( ext_diag[0][0][0] < 0 && ext_diag[0][1][0] < 0 ||
-          ext_diag[1][0][0] < 0 && ext_diag[1][1][0] < 0 ) ){
+        ( (ext_diag[0][0][0] < 0 && ext_diag[0][1][0] < 0) ||
+          (ext_diag[1][0][0] < 0 && ext_diag[1][1][0] < 0) ) ){
       continue;
     }
 

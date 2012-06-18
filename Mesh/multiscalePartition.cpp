@@ -374,20 +374,23 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
 
     if (genus != 0 ){
       int nbParts = std::max(genus+2,2);
-      Msg::Info("Mesh partition: level (%d-%d)  is %d-GENUS (AR=%d) ---> MULTILEVEL partition %d parts",
+      Msg::Info("Mesh partition: level (%d-%d)  is %d-GENUS (AR=%d) "
+                "---> MULTILEVEL partition %d parts",
                 nextLevel->recur,nextLevel->region, genus, AR, nbParts);
       partition(*nextLevel, nbParts, MULTILEVEL);
     }
-    else if (genus == 0  &&  AR > AR_MAX || genus == 0  &&  NB > 1){
+    else if ((genus == 0  &&  AR > AR_MAX) || (genus == 0  &&  NB > 1)){
       int nbParts = 2;
       if(!onlyMultilevel){
-	Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> LAPLACIAN partition %d parts",
+	Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) "
+                  "---> LAPLACIAN partition %d parts",
 		  nextLevel->recur,nextLevel->region, AR, NB, nbParts);
 	partition(*nextLevel, nbParts, LAPLACIAN);
       }
       else {
-      Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) ---> MULTILEVEL partition %d parts",
-                nextLevel->recur,nextLevel->region, AR, NB, nbParts);
+        Msg::Info("Mesh partition: level (%d-%d)  is ZERO-GENUS (AR=%d NB=%d) "
+                  "---> MULTILEVEL partition %d parts",
+                  nextLevel->recur,nextLevel->region, AR, NB, nbParts);
         partition(*nextLevel, nbParts, MULTILEVEL);
       }
     }

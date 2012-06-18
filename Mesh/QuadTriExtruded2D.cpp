@@ -172,18 +172,18 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
     }
     // if both neighbors are structured but none of the previous apply:
     else if( adj_ep && adj_ep->mesh.ExtrudeMesh ){
-      if( adj_ep && !adj_ep->mesh.QuadToTri && adj_ep->mesh.Recombine ||
-              ep && !ep->mesh.QuadToTri && ep->mesh.Recombine )
+      if( (adj_ep && !adj_ep->mesh.QuadToTri && adj_ep->mesh.Recombine) ||
+          (ep && !ep->mesh.QuadToTri && ep->mesh.Recombine) )
         (*tri_quad_flag) = 1;
-      else if( adj_ep && !adj_ep->mesh.QuadToTri && !adj_ep->mesh.Recombine ||
-                   ep && !ep->mesh.QuadToTri && !ep->mesh.Recombine )
+      else if( (adj_ep && !adj_ep->mesh.QuadToTri && !adj_ep->mesh.Recombine) ||
+               (ep && !ep->mesh.QuadToTri && !ep->mesh.Recombine) )
         (*tri_quad_flag) = 2;
       // if both are quadToTri and either are quadToTri recomblaterals, recombine
       else if( ep->mesh.QuadToTri == QUADTRI_SNGL_1_RECOMB ||
-               adj_ep && adj_ep->mesh.QuadToTri == QUADTRI_SNGL_1_RECOMB )
+               (adj_ep && adj_ep->mesh.QuadToTri == QUADTRI_SNGL_1_RECOMB) )
         (*tri_quad_flag) = 1;
       else if( ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB ||
-               adj_ep && adj_ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB )
+               (adj_ep && adj_ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB) )
         (*tri_quad_flag) = 1;
       else
         (*tri_quad_flag) = 2;

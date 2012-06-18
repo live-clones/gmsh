@@ -14,13 +14,13 @@
 #include "QuadTriExtruded2D.h"
 
 static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
-                        GFace *to) 
+                        GFace *to)
 {
   to->triangles.push_back(new MTriangle(v1, v2, v3));
 }
 
 static void addQuadrangle(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
-                          GFace *to) 
+                          GFace *to)
 {
   to->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
 }
@@ -38,7 +38,7 @@ static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
     Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
   else{
     // Trevor Strickler added the tri_quad_flag stuff here.
-    if(ep->mesh.Recombine && tri_quad_flag != 2 || tri_quad_flag == 1){
+    if((ep->mesh.Recombine && tri_quad_flag != 2) || tri_quad_flag == 1){
       addQuadrangle(v[0], v[1], v[3], v[2], to);
     }
     else if(!constrainedEdges){
@@ -146,7 +146,7 @@ static void copyMesh(GFace *from, GFace *to,
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     MVertex *v = from->mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
-    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
+    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
     MVertex *newv = new MVertex(x, y, z, to);
     to->mesh_vertices.push_back(newv);
@@ -192,7 +192,7 @@ static void copyMesh(GFace *from, GFace *to,
       Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
                  "surface %d failed.", to->tag() );
     return;
-  } 
+  }
 
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
     std::vector<MVertex*> verts;
@@ -207,7 +207,7 @@ static void copyMesh(GFace *from, GFace *to,
         itp = tmp.linearSearch(pos);
       }
       if(itp == pos.end()) {
-        Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
+        Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
             tmp.x(), tmp.y(), tmp.z(), to->tag());
         return;
       }
@@ -217,7 +217,7 @@ static void copyMesh(GFace *from, GFace *to,
   }
 }
 
-int MeshExtrudedSurface(GFace *gf, 
+int MeshExtrudedSurface(GFace *gf,
                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = gf->meshAttributes.extrude;
@@ -228,7 +228,7 @@ int MeshExtrudedSurface(GFace *gf,
   Msg::Info("Meshing surface %d (extruded)", gf->tag());
 
   // build a set with all the vertices on the boundary of the face gf
-  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  double old_tol = MVertexLessThanLexicographic::tolerance;
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
 
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
@@ -247,7 +247,7 @@ int MeshExtrudedSurface(GFace *gf,
   // exist on the face--so we add them to the set
   if(constrainedEdges)
     pos.insert(gf->mesh_vertices.begin(), gf->mesh_vertices.end());
-  
+
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
     GEdge *from = gf->model()->getEdgeByTag(std::abs(ep->geo.Source));
@@ -260,7 +260,7 @@ int MeshExtrudedSurface(GFace *gf,
   else {
     // surface is a copy of another surface (the "top" of the extrusion)
     GFace *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
-    if(!from){ 
+    if(!from){
       Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
       exit(1);
       return 0;
@@ -274,7 +274,7 @@ int MeshExtrudedSurface(GFace *gf,
     copyMesh(from, gf, pos);
   }
 
-  MVertexLessThanLexicographic::tolerance = old_tol; 
+  MVertexLessThanLexicographic::tolerance = old_tol;
 
   gf->meshStatistics.status = GFace::DONE;
   return 1;

@@ -200,7 +200,7 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
       else if( bnd_count == 1 || bnd_count == 2 ||
               (bnd_count == 3 && t) )
         (!t) ? other_bnd_tri.insert(i) : other_bnd_quad.insert(i);
-      else if( bnd_count == 3 && !t || bnd_count == 4 ){
+      else if( (bnd_count == 3 && !t) || bnd_count == 4 ){
         (!t) ? three_bnd_pt_tri.insert(i) : four_bnd_pt_quad.insert(i);
       }
 

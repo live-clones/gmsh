@@ -677,14 +677,14 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
     }
     fwrite << minB/avgJ << " " << minB/maxB << "\r";
 
-    if (data)
-    if (1-minB <= _tol * minJ && maxB-1 <= _tol * maxB)
-      (*data)[el[k]->getNum()].push_back(1.);
-    else if (1-minB/avgJ <= 1e-8)
-      (*data)[el[k]->getNum()].push_back(1.);
-    else
-      (*data)[el[k]->getNum()].push_back(minB/avgJ);
-
+    if (data){
+      if (1-minB <= _tol * minJ && maxB-1 <= _tol * maxB)
+        (*data)[el[k]->getNum()].push_back(1.);
+      else if (1-minB/avgJ <= 1e-8)
+        (*data)[el[k]->getNum()].push_back(1.);
+      else
+        (*data)[el[k]->getNum()].push_back(minB/avgJ);
+    }
     _min_pJmin = std::min(_min_pJmin, minB/avgJ);
     _avg_pJmin += minB/avgJ;
     _min_ratioJ = std::min(_min_ratioJ, minB/maxB);
