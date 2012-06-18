@@ -769,17 +769,17 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
       // choose lowest vertex for t < 3, any vertex for t == 3
       else if( (t >= 1 && t < 3 && nadj1[p] >= 0) ||
                (t == 2 && free_flag[p]) ){
-        if( verts[p] < verts[(p+1)%3] &&
-             verts[p] < verts[p+3] ||
-            verts[(p+1)%3+3] < verts[(p+1)%3] &&
-             verts[(p+1)%3+3] < verts[p+3] ){
+        if( (verts[p] < verts[(p+1)%3] &&
+             verts[p] < verts[p+3]) ||
+            (verts[(p+1)%3+3] < verts[(p+1)%3] &&
+             verts[(p+1)%3+3] < verts[p+3]) ){
           n1[p] = p; n2[p] = (p+1)%3+3;
         }
         else{
           n1[p] = p+3; n2[p] = (p+1)%3;
         }
       }
-      else if( (t==3 && (nadj1[p] >= 0) || free_flag[p]) )
+      else if( (t==3 && (nadj1[p] >= 0)) || free_flag[p] )
         face_is_free[p] = true;
     }
 
@@ -1673,15 +1673,15 @@ static void addEdgesForQuadToTriFullHexa( GRegion *gr, MElement *elem, ExtrudePa
         }
 
         // if these two faces do not work for opposite aligned diagonals, continue
-        if( n1[p1] < 0 && !face_is_free[p1] ||
-            n1[p2] < 0 && !face_is_free[p2] )
+        if( (n1[p1] < 0 && !face_is_free[p1]) ||
+            (n1[p2] < 0 && !face_is_free[p2]) )
           continue;
         if( n1[p1] >= 0 && n1[p2] >= 0 ){
           if( p1 < 4 ){
-            if( ( n1[p1] == p1 || n2[p1] == p1 ) &&
-                  n1[p2] != p2+4 && n2[p2] != p2+4 ||
-                ( n1[p1] == p1+4 || n2[p1] == p1+4 ) &&
-                  n1[p2] != p2 && n2[p2] != p2 )
+            if( ( ( n1[p1] == p1 || n2[p1] == p1 ) &&
+                  n1[p2] != p2+4 && n2[p2] != p2+4 ) ||
+                ( ( n1[p1] == p1+4 || n2[p1] == p1+4 ) &&
+                  n1[p2] != p2 && n2[p2] != p2 ) )
               continue;
           }
           else{
@@ -5285,8 +5285,10 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
 
 
   // Divide by double layer extrusion method?
-  if( is_dbl && ( found_diags || j > j_second_from_top || j==j_second_from_top && k >= k_second_from_top || m==1 ) ){
-    if( j==0 && k==0 || j==j_second_from_top && k==k_second_from_top && ( !bnd_elem || !found_diags ) && m != 1 )
+  if( is_dbl && ( found_diags || j > j_second_from_top ||
+                  (j==j_second_from_top && k >= k_second_from_top) || m==1 ) ){
+    if( (j==0 && k==0) ||
+        (j==j_second_from_top && k==k_second_from_top && ( !bnd_elem || !found_diags ) && m != 1) )
       MeshWithFaceCenteredVertex( to, source, v, n1, n2, 0, 1, pos );
     else if( j == ep->mesh.NbLayer-1 && k == ep->mesh.NbElmLayer[j]-1 )
       MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 0, pos );

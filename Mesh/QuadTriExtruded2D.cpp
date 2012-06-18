@@ -555,7 +555,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
   ExtrudeParams *ep_src = root_source->meshAttributes.extrude;
   bool struct_root = false;
   if( root_source &&
-      ( ep_src && ep_src->mesh.ExtrudeMesh && ep_src->geo.Mode == EXTRUDED_ENTITY ||
+      ( (ep_src && ep_src->mesh.ExtrudeMesh && ep_src->geo.Mode == EXTRUDED_ENTITY) ||
         root_source->meshAttributes.Method == MESH_TRANSFINITE ) )
     struct_root = true;
 
