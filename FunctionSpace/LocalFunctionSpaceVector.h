@@ -1,9 +1,6 @@
 #ifndef _LOCALFUNCTIONSPACEVECTOR_H_
 #define _LOCALFUNCTIONSPACEVECTOR_H_
 
-#include <vector>
-#include "Polynomial.h"
-#include "Basis.h"
 #include "fullMatrix.h"
 #include "LocalFunctionSpace.h"
 
@@ -14,16 +11,8 @@
    A Local Function Space build on a @em Vectorial Basis.
  */
 
-class LocalFunctionSpaceVector: LocalFunctionSpace{
- protected:
-  const std::vector<std::vector<Polynomial> >* basis;
-
+class LocalFunctionSpaceVector: public LocalFunctionSpace{
  public:
-  //! Instantiate a new LocalFunctionSpaceVector
-  //! @param basis The Basis used to build 
-  //! this Function Space
-  LocalFunctionSpaceVector(const Basis& basis);
-
   //! Deletes this LocalFunctionSpaceVector
   //!
   virtual ~LocalFunctionSpaceVector(void);
@@ -33,8 +22,13 @@ class LocalFunctionSpaceVector: LocalFunctionSpace{
   //! Interpolation
   //! @param x,y,z The coordinate of the Interpolation 
   //! @return Returns the value of the Interpolation
-  fullVector<double> interpolate(const fullVector<double>& coef, 
-				 double x, double y, double z) const;
+  virtual fullVector<double> interpolate(const fullVector<double>& coef, 
+					 double x, double y, double z) const = 0;
+
+ protected:
+  //! Instantiate a new LocalFunctionSpacaeVector 
+  //! @warning Users can't instantiate a LocalFunctionSpaceVector
+  LocalFunctionSpaceVector(void);
 };
 
 #endif

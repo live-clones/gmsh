@@ -171,7 +171,7 @@ class Polynomial{
    @return Returns the @em evaluation of this
    Polynomial at (@c x, @c y, @c z)
 
-   @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, const double, const double y, const double z)
+   @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, const double, const double, const double)
    @param P A vector of Polynomial%s
    @param x A value
    @param y A value
