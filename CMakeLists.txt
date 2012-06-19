@@ -69,8 +69,8 @@ option(ENABLE_WRAP_JAVA "Build Java wrappers" OFF)
 option(ENABLE_WRAP_PYTHON "Build Python wrappers" ${DEFAULT})
 
 set(GMSH_MAJOR_VERSION 2)
-set(GMSH_MINOR_VERSION 5)
-set(GMSH_PATCH_VERSION 1)
+set(GMSH_MINOR_VERSION 6)
+set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -1256,7 +1256,7 @@ set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
     "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
-    "/projects/")
+    "/projects/" "/FunctionSpace/")
 
 if(UNIX)
   # make sure we remove previous installs before doing the next one

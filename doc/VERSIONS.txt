@@ -3,9 +3,9 @@ module based on ONELAB project (requires FLTK 1.3); new tensor field
 visualization modes (eigenvectors, ellipsoid, etc.); added support for
 interpolation schemes in .msh file; added support for MED3 format; rescale
 viewport around visible entities (shift+1:1 in GUI); unified post-processing
-field export; new experimental stereo+camera visualization mode; experimental
-BAMG & MMG3D support for anisotropic mesh generation; new OCC cut&merge
-algorithm imported from Salome; new ability to connect extruded meshes to
+field export; new experimental stereo+camera visualization mode; added
+experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC cut &
+merge algorithm imported from Salome; new ability to connect extruded meshes to
 tetrahedral grids using pyramids; new homology solver; Abaqus (INP) mesh export;
 bug fixes and small improvements all over the place.
 
