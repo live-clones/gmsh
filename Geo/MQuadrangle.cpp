@@ -112,7 +112,7 @@ double MQuadrangle::getVolume()
 static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {
-  n[0] = n[1] = n[2] = n[3] = q->getFace(0).normal();
+  n[0] = n[1] = q->getFace(0).normal();
   int ie = num/numSubEdges;
   int isub = num%numSubEdges;
   double xi1 = -1. + (2.*isub)/numSubEdges;
