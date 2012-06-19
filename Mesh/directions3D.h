@@ -1,11 +1,11 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GFace.h"
 #include "MElementOctree.h"
-#if defined(HAVE_ANN) 
+#if defined(HAVE_ANN)
 #include <ANN/ANN.h>
 #endif
 
@@ -23,14 +23,14 @@ class Matrix{
   void set_m32(double);
   void set_m13(double);
   void set_m23(double);
-  void set_m33(double);	
+  void set_m33(double);
   double get_m11();
   double get_m21();
   double get_m31();
-  double get_m12();	
+  double get_m12();
   double get_m22();
   double get_m32();
-  double get_m13();	
+  double get_m13();
   double get_m23();
   double get_m33();
 };

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -45,16 +45,16 @@ typedef std::vector<setTriUnion> vectSetTriUnion;
 class list_actions {
   private :
     vectSetTriUnion _cont;
-    
+
   public :
     list_actions(int h) {_cont.reserve(h);}
-    
+
     class iterator {
       private :
         int pos;
         list_actions *la;
         setTriUnion::iterator it;
-      
+
       public :
         void print() {
           Msg::Info("iterator(pos %d, la %d, tu %d)", pos, la, *it);
@@ -119,7 +119,7 @@ class list_actions {
           iterator t = *this;
           int p = pos;
           ++it;
-          while (it == la->_end(p) && ++p != la->_size()) {  
+          while (it == la->_end(p) && ++p != la->_size()) {
             ++pos;
             it = la->_begin(pos);
           }
@@ -127,7 +127,7 @@ class list_actions {
         }
         inline int getPos() {return pos;}
     };
-    
+
     int add(setTriUnion &s) {
       setTriUnion::iterator it = s.begin();
       while (it != s.end()) {
@@ -159,12 +159,12 @@ class list_actions {
       return iterator(this, 0, _begin());
     }
     iterator end() {
-      return iterator(this, _cont.size() - 1, _end()); 
+      return iterator(this, _cont.size() - 1, _end());
     }
     void pop_back() {
-      _cont.pop_back(); 
+      _cont.pop_back();
     }
-    
+
     void sizes(){
       switch (_cont.size()) {
         case 3 :
@@ -183,7 +183,7 @@ class list_actions {
       //for (int i = 0; i < _cont.size(); ++i)
       //  Msg::Info("[%d] %d", i+1, _cont[i].size());
     }
-  
+
   private :
     setTriUnion::iterator _end(int pos = -1) {
       if (_cont.size() == 0) {
@@ -204,7 +204,7 @@ class list_actions {
       return _cont[pos].begin();
     }
     inline int _size() {return _cont.size();}
-    
+
 };
 
 
@@ -220,23 +220,23 @@ class Recombine2D {
     std::set<MElement*> _isolated;
     std::vector<MQuadrangle*> _quads;
     static int ra;
-    
+
     template <class E>
     void _buildEdgeToElement(std::vector<E*> &, e2t_cont &);
     void _recombine();
     Set_Recomb::iterator _bestNextRecombination();
     void _removeImpossible(Set_Recomb::iterator);
     void _rmRT(RecombTriangle *, MElement *e = NULL);
-    
+
   public :
     Recombine2D(GFace*, int horizon);
     Recombine2D(GFace*);
     ~Recombine2D();
-    
+
     int apply();
     inline double getBenef() const {return _benef;}
     inline int numTriangle() const {return _isolated.size();}
-    
+
   private :
     //std::set<TrianglesUnion*, lessTriUnion> _setQuads;
     std::list<TrianglesUnion*> _setQuads;
@@ -245,7 +245,7 @@ class Recombine2D {
     mapTriUnion _lessActions;
     void _removeImpossible(TrianglesUnion*);
     void _recombine(bool);
-    
+
     void _lookAhead(std::list<TrianglesUnion*> &, int horiz);
     void _lookAhead2(std::list<TrianglesUnion*> &, int horiz);
     void _getIncompatibles(const TrianglesUnion*, setTriUnion &);
@@ -274,16 +274,16 @@ class RecombTriangle {
     double _benefit;
     bool _formingQuad;
     int _sign;
-    
+
   public :
     RecombTriangle(const MEdge &, MElement *, MElement *);
     RecombTriangle(MElement *, double);
-    
+
     double touch();
-    
+
     MQuadrangle *createQuad() const;
     bool operator<(const RecombTriangle &other) const;
-    
+
     inline void triangles(std::vector<MElement *> &v) const {v = _t;}
     inline int numTriangles() const {return (int) _t.size();}
     MElement *triangle(int i) const {
@@ -293,27 +293,27 @@ class RecombTriangle {
     }
     inline bool isQuad() const {return _formingQuad;}
     inline double getBenef() const {return _benefit;}
-    
+
     double compute_alignment(const MEdge&, MElement*, MElement*);
 };
 
 class Recomb2D_Node {
-  private :  
+  private :
     double _benef, _totBenef;
     int _nskip, _depth;
     Set_Recomb::iterator _recomb;
     Map_Tri_Node *_touch;
     std::vector<Map_Tri_Node::iterator> _vit;
     std::set<int> _blocking;
-  
+
   public :
     //Node(){}
     //Recomb2D_Node(Set_Recomb::iterator, Map_Tri_Node &, int, double ben = .0);
-    
+
     Recomb2D_Node(Set_Recomb::iterator, int nskip, int depth, Map_Tri_Node &);
     Recomb2D_Node(Set_Recomb::iterator, int nskip, Recomb2D_Node *);
     ~Recomb2D_Node();
-    
+
     void erase();
     void blocking(const Map_Tri_Node::iterator &);
     inline bool isBetter() {return _blocking.size() < 2;}
@@ -333,17 +333,17 @@ class Rec2d_vertex {
     // GEntity : virtual Range<double> parBounds(int i)
     static double **_Vvalues;
     static double **_Vbenefs;
-  
+
   public :
     Rec2d_vertex(MVertex *, std::list<MTriangle*> &,
                  std::map<MVertex*, std::set<GEdge*> > &, bool);
-    
+
     inline void changeNumEl(int c) {_numEl += c;}
     double getReward();
     double getReward(int);
     //int onwhat() {return _onWhat;}
     //int numel() {return _numEl;}
-    
+
   private :
     void _initStaticTable();
     double _computeAngle(MVertex *, std::list<MTriangle*> &, std::set<GEdge*> &);
@@ -356,17 +356,17 @@ class TrianglesUnion {
     Rec2d_vertex **_vertices;
     MTriangle **_triangles;
     static int _RECOMPUTE; //incremented when a recombination is executed
-    
+
     public:
     static int _NumEdge, _NumVert;
     static double _ValEdge, _ValVert;
     private:
-    
+
   public :
     TrianglesUnion(GFace *, std::list<MTriangle*> &, std::list<MEdge> &,
                    std::list<Rec2d_vertex*> &, std::map<MVertex*,double> &,
                    std::map<MEdge, std::list<MTriangle*>, Less_Edge>&);
-    
+
     bool operator<(TrianglesUnion &other);
     void addTri(std::set<MTriangle*>&) const;
     void removeTri(std::set<MTriangle*>&) const;
@@ -406,11 +406,11 @@ class TrianglesUnion {
     inline static double getActualReturn() {
       return _ValEdge/_NumEdge * _ValVert/_NumVert * _ValVert/_NumVert;
     }
-  
+
     static void clear() {_NumEdge = 0; _NumVert = 0;
       _ValEdge = .0, _ValVert = .0;}
 
-  private:  
+  private:
     double _computeEdgeLength(GFace*, MVertex**, double *u, double *v,
                               int numIntermedPoint= 1);
     double _computeAlignment(const MEdge&, std::list<MTriangle*>&,

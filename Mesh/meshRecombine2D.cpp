@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
@@ -25,27 +25,27 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
 : _horizon(horizon), _gf(gf), _benef(.0), _applied(true)
 {
   if (_horizon < 1) _horizon = 1;
-  
+
   //return;
-  
+
   //laplaceSmoothing(gf,100);
   //gf->model()->writeMSH("befSquare.msh");
-  
+
   Msg::Info("Branching with horizon %d", _horizon = HORIZ);
-  
+
   _haveParam = gf->geomType() != GEntity::DiscreteSurface || gf->getCompound();
   if(!_haveParam) {
     Msg::Warning("Surfaces must have prametrization in order to recombine triangles");
     //return;
     _haveParam=true;
   }
-  
+
   e2t_cont adj;
   _buildEdgeToElement(gf->triangles, adj);
-  
+
   std::map<MElement*, int> boundaryTriangle;
   std::pair<Set_Recomb::iterator, bool> ret;
-  
+
   for (e2t_cont::iterator it = adj.begin(); it != adj.end(); ++it) {
     if (it->second.second) {
       RecombTriangle *rt = new RecombTriangle(it->first, it->second.first, it->second.second);
@@ -64,16 +64,16 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
         boundaryTriangle[it->second.first] = 2;
     }
   }
-  
+
   /*std::map<MElement*, int>::iterator itt;
-  
+
   for (itt = boundaryTriangle.begin(); itt != boundaryTriangle.end(); ++itt) {
     RecombTriangle *rt;
     if (itt->second == 1)
       rt = new RecombTriangle(itt->first, -100);
     else
       rt = new RecombTriangle(itt->first, -200);
-    
+
     ret = _pairs.insert(rt);
     while (!ret.second) {
       rt->touch();
@@ -81,13 +81,13 @@ Recombine2D::Recombine2D(GFace *gf, int horizon)
     }
     _possibleRecomb[itt->first].insert(rt);
   }*/
-  
+
   Msg::Info("poss %d", _possibleRecomb.size());
   Msg::Info("pairs %d", _pairs.size());
   Msg::Info("tri %d", gf->triangles.size());
-  
+
   _recombine();
-  
+
   Msg::Info("new %d ", NEW_NODE);
   Msg::Info("del %d ", DEL_NODE);
   _applied = false;
@@ -121,18 +121,18 @@ void Recombine2D::_buildEdgeToElement(std::vector<E*> &elements, e2t_cont &adj)
 void Recombine2D::_recombine()
 {
   //SetBoundingBox();
-  
+
   /*Map_Tri_Recomb::iterator itt;
-  
+
   for (itt = _possibleRecomb.begin(); itt != _possibleRecomb.end(); ++itt) {
     if
   }*/
-  
+
   int i = 0;
   while ((!_pairs.empty() || !_lastRecomb.empty()) && i < 1000) {
     Msg::Info("%d",i);
     Set_Recomb::iterator it = _bestNextRecombination();
-    
+
     /*if (it != _pairs.begin()) {
       std::set<MElement*> isolatedCP(_isolated);
       _isolated.clear();
@@ -158,21 +158,21 @@ void Recombine2D::_recombine()
         Msg::Info("I continue anyway :p");
       _isolated = isolatedCP;
     }*/
-    
+
     _benef += (*it)->getBenef();
     if ((*it)->isQuad())
       _quads.push_back((*it)->createQuad());
     else
     for (int i = 0; i < (*it)->numTriangles(); i++)
       _isolated.insert((*it)->triangle(i));
-    
+
     /*Set_Recomb::iterator itmp = _pairs.begin();
     while (itmp != it) {
       _rmRT(*itmp);
       itmp = _pairs.begin();
     }*/
     _removeImpossible(it);
-    
+
     i++;
   }
   Msg::Info("Done %d (%d)", i, _pairs.size());
@@ -182,23 +182,23 @@ Set_Recomb::iterator Recombine2D::_bestNextRecombination()
 {
   if (!_lastRecomb.empty())
     return _lastRecomb.begin();
-  
-  
+
+
   Map_Tri_Node touched;
   std::vector<Recomb2D_Node*> nodes(_horizon);
   Set_Recomb::iterator it = _pairs.begin(), itmax = _pairs.begin();
-  
+
   int h = 0, nSkip = 0;
   double maxBenef = _horizon * -200.;
   bool haveOptimal = false;
   int maxH = 0;
-  
+
   int numb = 0;
   while (!haveOptimal) {
     numb++;
     while (h < _horizon && it != _pairs.end()) {
       bool possible = true;
-      
+
       Map_Tri_Node::iterator itm;
       for (int i = 0; i < (*it)->numTriangles(); i++) {
         itm = touched.find((*it)->triangle(i));
@@ -207,7 +207,7 @@ Set_Recomb::iterator Recombine2D::_bestNextRecombination()
           possible = false;
         }
       }
-        
+
       if (possible) {
         if (h == 0) nodes[h] = new Recomb2D_Node(it, nSkip, _horizon, touched);
         else        nodes[h] = new Recomb2D_Node(it, nSkip, nodes[h-1]);
@@ -217,23 +217,23 @@ NEW_NODE++;
         if (h >= _horizon || nodes[h - 1]->getBound() < maxBenef)
           break;
       }
-      
+
       it++;
     }
-    
+
     if (--h < 0) haveOptimal = true;
-    
+
     if (nodes[h]->getTotBenef() > maxBenef && h >= maxH) {
       maxBenef = nodes[h]->getTotBenef();
       itmax = nodes[0]->getItRecomb();
       maxH = h;
     }
-    
+
     /*nSkip = 0;
     while (h >= 0 && nSkip < 2) {
       nodes[h]->erase();
       nSkip += nodes[h--]->getnSkip();
-    
+
     if (h == _horizon - 2 && nodes[h]->getnSkip() >= 3) nodes[h--]->erase(); //probleme si h=-1
     while (h >= 0 &&
            nodes[h]->beSkipped() &&
@@ -245,7 +245,7 @@ NEW_NODE++;
 DEL_NODE++;
       delete nodes[h--];
     }
-    
+
     if (h < 0) haveOptimal = true;
     else {
       it = ++nodes[h]->getItRecomb();
@@ -254,9 +254,9 @@ DEL_NODE++;
 DEL_NODE++;
     }
   }
-  
+
   Msg::Info("num test %d", numb);
-    
+
   return itmax;
 }
 
@@ -264,10 +264,10 @@ void Recombine2D::_removeImpossible(Set_Recomb::iterator it)
 {
   std::vector<MElement *> t;
   (*it)->triangles(t);
-  
+
   Map_Tri_Recomb::iterator itm;
   std::set<RecombTriangle*>::iterator itrt;
-  
+
   for (int i = 0; i < t.size(); i++) // loop over touched triangles
   if ((itm = _possibleRecomb.find(t[i])) != _possibleRecomb.end()) {
     itrt = itm->second.begin();
@@ -278,7 +278,7 @@ void Recombine2D::_removeImpossible(Set_Recomb::iterator it)
     }
     _possibleRecomb.erase(itm);
   }
-  
+
   RecombTriangle *rt = *it;
   if (!_lastRecomb.erase(*it))
     _pairs.erase(it);
@@ -289,7 +289,7 @@ void Recombine2D::_rmRT(RecombTriangle *rt, MElement *el)
 {
   MElement *tri;
   Map_Tri_Recomb::iterator itmtri;
-  
+
   for (int i = 0; i < rt->numTriangles(); i++)
   if ((tri = rt->triangle(i)) != el &&
       (itmtri = _possibleRecomb.find(tri)) != _possibleRecomb.end()) {
@@ -305,7 +305,7 @@ void Recombine2D::_rmRT(RecombTriangle *rt, MElement *el)
       default :;
     }
   }
-  
+
   _pairs.erase(rt);
   _lastRecomb.erase(rt);
   delete rt;
@@ -314,7 +314,7 @@ void Recombine2D::_rmRT(RecombTriangle *rt, MElement *el)
 int Recombine2D::apply()
 {
   if (!_haveParam || _applied) return 0;
-  
+
   std::vector<MTriangle*> triangles2;
   for (int i = 0; i < _gf->triangles.size(); i++) {
     if (_isolated.find(_gf->triangles[i]) == _isolated.end())
@@ -324,7 +324,7 @@ int Recombine2D::apply()
   }
   _gf->triangles = triangles2;
   _gf->quadrangles = _quads;
-  
+
   _applied = true;
   //_gf->model()->writeMSH("recSquare.msh");
   laplaceSmoothing(_gf,10);
@@ -356,10 +356,10 @@ RecombTriangle::RecombTriangle(const MEdge &me, MElement *t1, MElement *t2)
   _angle = std::max(fabs(90. - a2), _angle);
   _angle = std::max(fabs(90. - a3), _angle);
   _angle = std::max(fabs(90. - a4), _angle);
-  
+
   _benefit = std::max(1. - _angle/90., .0);
   //_benefit = compute_alignment(me,t1,t2);
-      
+
       //cost_alignment = Temporary::compute_alignment(me,_t1,_t2); //addition for class Temporary
       //total_cost = Temporary::compute_total_cost(cost_quality,cost_alignment); //addition for class Temporary
       //total_cost = 100.0*cost_quality; //addition for class Temporary
