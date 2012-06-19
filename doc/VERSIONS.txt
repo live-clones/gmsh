@@ -1,7 +1,7 @@
-2.6.0 (): new quadrilateral meshing algorithms (Blossom and DelQuad); new solver
-module based on ONELAB project (requires FLTK 1.3); new tensor field
-visualization modes (eigenvectors, ellipsoid, etc.); added support for
-interpolation schemes in .msh file; added support for MED3 format; rescale
+2.6.0 (Jun 19, 2012): new quadrilateral meshing algorithms (Blossom and
+DelQuad); new solver module based on ONELAB project (requires FLTK 1.3); new
+tensor field visualization modes (eigenvectors, ellipsoid, etc.); added support
+for interpolation schemes in .msh file; added support for MED3 format; rescale
 viewport around visible entities (shift+1:1 in GUI); unified post-processing
 field export; new experimental stereo+camera visualization mode; added
 experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC cut &
