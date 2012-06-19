@@ -31,14 +31,23 @@ fullVector<double> LocalFunctionSpace1Form::
 interpolate(const fullVector<double>& coef, 
 	    double x, double y, double z) const{
 
-  //double res = 0;
+  fullVector<double> res(3);
+  res(0) = 0;
+  res(1) = 0;
+  res(2) = 0;
+  
+  fullVector<double> uv = jac->invMap(x, y);
   
   for(int i = 0; i < size; i++){
-    //fullVector<double> uv = jac->invMap(x, y);
-
-    //res += (*basis)[i].at(uv(0), uv(1), 0.0);
+    res(0) += (*basis)[i][0].at(uv(0), uv(1), 0.0) * (*orient)[i];
+    res(1) += (*basis)[i][1].at(uv(0), uv(1), 0.0) * (*orient)[i];
   }
 
-  //return res;
+  fullVector<double> gradRes = jac->grad(res(0), res(1));
+  
+  res(0) = gradRes(0);
+  res(1) = gradRes(1);
+
+  return res;
 
 }

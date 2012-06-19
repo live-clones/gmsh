@@ -29,11 +29,11 @@ double LocalFunctionSpace0Form::interpolate(const fullVector<double>& coef,
 					    double x, double y, double z) const{
   double res = 0;
 
-  for(int i = 0; i < size; i++){
-    fullVector<double> uv = jac->invMap(x, y);
+  fullVector<double> uv = jac->invMap(x, y);
 
+  for(int i = 0; i < size; i++)
     res += (*basis)[i].at(uv(0), uv(1), 0.0);
-  }
+  
 
   return res;
 }
