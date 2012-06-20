@@ -21,6 +21,8 @@ set(SRC
   LocalFunctionSpaceVector.cpp
   LocalFunctionSpace0Form.cpp
   LocalFunctionSpace1Form.cpp
+
+  FunctionSpace.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
