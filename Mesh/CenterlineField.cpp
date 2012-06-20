@@ -1215,7 +1215,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double rho = radMax;
    double hwall_n = thickness/20.;
    double hwall_t = 2*M_PI*rho/nbPoints;
-   double hfar =  radMax/5.;
+   double hfar =  radMax/8.;
    double lc_a = 3.*hwall_t;
 
    //dir_a = direction along the centerline
@@ -1246,12 +1246,15 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
                                           beta, lc_n, lc_t, hwall_t);
    }
    else if (ds > thickness && onInOutlets){
-     curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
+     metr = buildMetricTangentToCurve(dir_n,lc_n,lc_t); 
    }
-   else if (ds > thickness && !onInOutlets){
-     curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_a);
-     metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n), 1./(lc_t*lc_t), dir_a, dir_n, dir_cross);
-     metr = intersection_conserveM1(metr,curvMetric);
+   else if (ds > thickness && onInOutlets){
+     //curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, radMax, beta, lc_n, lc_t, hwall_t);
+     curvMetric = buildMetricTangentToCurve(dir_n,lc_n,lc_n); //lc_t
+     //metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n),1./(lc_n*lc_n), dir_a, dir_a1, dir_a2);
+     metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n), 1./(lc_n*lc_n), dir_a, dir_n, dir_cross); 
+     metr = intersection_conserveM1(metr,curvMetric);  
+     //metr = intersection(metr,curvMetric); 
    }
 
    return;

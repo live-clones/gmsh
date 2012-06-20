@@ -412,6 +412,13 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
       _addElement(np, numEdges, numComp, xp, yp, zp, valp, out, step == stepmin);
 
     }
+
+    if(vstep < 0){
+      for(int i = stepmin; i < stepmax; i++) {
+	out->Time.push_back(vdata->getTime(i));
+      }
+    }
+
   }
 }
 
@@ -499,7 +506,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       out->finalize();
     }
   }
-  
+
   return 0;
 }
 
