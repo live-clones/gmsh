@@ -22,5 +22,13 @@ cd ${GMSH}/bin &&\
 cd ${GMSH}/bin && make html >> ${LOG} 2>&1
 cd ${GMSH}/bin && make package -j 4 >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
-scp -C ${GMSH}/bin/gmsh-*.dmg ${WEB_BIN}/gmsh-nightly-MacOSX.dmg
+
+FILE=`ls ${GMSH}/bin/gmsh-*.dmg`
+if [ -f ${FILE} ]; then
+  if [ ${EXTRA_VERSION} == "-svn" ]; then
+    scp -C ${FILE} ${WEB_BIN}/gmsh-nightly-MacOSX.dmg
+  else
+    scp -C ${FILE} ${WEB_BIN}/${FILE}
+  fi
+fi
 scp -C ${LOG} ${WEB_BIN}/

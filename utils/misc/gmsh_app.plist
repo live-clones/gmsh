@@ -9,7 +9,7 @@
     <key>CFBundleShortVersionString</key><string>GMSH_VERSION</string>
     <key>CFBundleIconFile</key><string>Gmsh.icns</string>
     <key>CFBundleSignature</key><string>GMSH</string>
-    <key>CFBundleGetInfoString</key><string>Gmsh GMSH_VERSION, Copyright 1997-2011 C. Geuzaine and J.-F. Remacle</string>
+    <key>CFBundleGetInfoString</key><string>Gmsh GMSH_VERSION, Copyright 1997-2012 C. Geuzaine and J.-F. Remacle</string>
     <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>
     <key>CFBundleDocumentTypes</key>
     <array>

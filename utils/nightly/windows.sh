@@ -25,5 +25,13 @@ cd ${GMSH}/bin && \
 cd ${GMSH}/bin && make html >> ${LOG} 2>&1
 cd ${GMSH}/bin && make package >> ${LOG} 2>&1
 echo "BUILD END: `date`" >> ${LOG}
-scp -C ${GMSH}/bin/gmsh-*.zip ${WEB_BIN}/gmsh-nightly-Windows.zip
+
+FILE=`ls ${GMSH}/bin/gmsh-*.zip`
+if [ -f ${FILE} ]; then
+  if [ ${EXTRA_VERSION} == "-svn" ]; then
+    scp -C ${FILE} ${WEB_BIN}/gmsh-nightly-Windows.zip
+  else
+    scp -C ${FILE} ${WEB_BIN}/${FILE}
+  fi
+fi
 scp -C ${LOG} ${WEB_BIN}/
