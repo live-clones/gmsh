@@ -131,16 +131,40 @@ HexNodeBasis::HexNodeBasis(const int order){
   int face3[6] = {2, 6, 5, 4, 7, 3};
   int face4[6] = {3, 2, 1, 5, 4, 0};
 
+  // 'Xi' Function
+  Polynomial*  xi    = new Polynomial[6];
+  for(int f = 0; f < 6; f++)
+    xi[f]  = lifting[face1[f]] - lifting[face2[f]];
+
+  // 'Eta' Function
+  Polynomial* eta    = new Polynomial[6];
+  for(int f = 0; f < 6; f++)
+    eta[f] = lifting[face1[f]] - lifting[face4[f]];
+
+
+  // 'Lambda' Function
+  Polynomial* lambda = new Polynomial[6];
+  for(int f = 0; f < 6; f++)
+    lambda[f] = 
+      (*basis)[face1[f]] +
+      (*basis)[face2[f]] +
+      (*basis)[face3[f]] +
+      (*basis)[face4[f]];
+
+
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
       for(int f = 0; f < 6; f++){	
-	(*basis)[i] = Polynomial(42, 0, 0, 0);
-
+	(*basis)[i] = 
+	  legendre[l1].compose(xi[f])  *
+	  legendre[l2].compose(eta[f]) *
+	  lambda[f];
+	  
 	i++;
       }
     }
   }
-  
+ 
   
   // Cell Based //
   Polynomial px = Polynomial(2, 1, 0, 0);
@@ -154,9 +178,10 @@ HexNodeBasis::HexNodeBasis(const int order){
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
       for(int l3 = 1; l3 < order; l3++){
-	(*basis)[i] = legendre[l1].compose(px) * 
-	              legendre[l2].compose(py) *
-	              legendre[l3].compose(pz);
+	(*basis)[i] = 
+	  legendre[l1].compose(px) * 
+	  legendre[l2].compose(py) *
+	  legendre[l3].compose(pz);
 	
 	i++;
       }
@@ -167,13 +192,17 @@ HexNodeBasis::HexNodeBasis(const int order){
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] lifting;
+
+  delete[] xi;
+  delete[] eta;
+  delete[] lambda;
 }
 
 HexNodeBasis::~HexNodeBasis(void){
   delete basis;
 }
 
-/*
+
 #include <cstdio>
 int main(void){
 
@@ -244,4 +273,4 @@ int main(void){
   */  
   return 0;
 }
-*/
+
