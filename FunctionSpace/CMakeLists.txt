@@ -15,6 +15,7 @@ set(SRC
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
+  HexNodeBasis.cpp
 
   LocalFunctionSpace.cpp
   LocalFunctionSpaceScalar.cpp
