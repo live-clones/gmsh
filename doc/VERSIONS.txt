@@ -7,7 +7,8 @@ field export; new experimental stereo+camera visualization mode; added
 experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC cut &
 merge algorithm imported from Salome; new ability to connect extruded meshes to
 tetrahedral grids using pyramids; new homology solver; Abaqus (INP) mesh export;
-bug fixes and small improvements all over the place.
+new Python and Java wrappers; bug fixes and small improvements all over the
+place.
 
 2.5.0 (Oct 15, 2010): new compound geometrical entities (for remeshing and/or
 trans-patch meshing); improved mesh reclassification tool; new client/server

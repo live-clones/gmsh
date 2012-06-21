@@ -708,7 +708,8 @@ static void runGmshClient(const std::string &action)
       // changed
       modelName = GModel::current()->getName();
       geometry_reload_cb(0, 0);
-      if(FlGui::instance()->onelab->meshAuto()){
+      if(!GModel::current()->empty() &&
+         FlGui::instance()->onelab->meshAuto()){
         mesh_3d_cb(0, 0);
         CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
       }
