@@ -685,10 +685,9 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
   if(fopt.count("ReadOnly")) {
     ps[0].setReadOnly(fopt["ReadOnly"][0] ? true : false);
-    // If the parameter is set "read-only" here,
-    // the local value is used instead of that from the server
-    if(ps[0].getReadOnly())
-      ps[0].setValue(val[0]); 
+    // If the parameter is set "read-only" here, the local value is used instead
+    // of that from the server
+    if(ps[0].getReadOnly()) ps[0].setValue(val[0]);
   }
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
   if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);
