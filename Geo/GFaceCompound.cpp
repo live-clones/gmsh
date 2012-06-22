@@ -902,10 +902,9 @@ bool GFaceCompound::parametrize() const
       Msg::Info("Parametrizing surface %d with 'FE conformal map'", tag());
       parametrize_conformal(0, NULL, NULL);
     }
-    printStuff(55);
-    oriented = false; //checkOrientation(0);
-    if (!oriented)  oriented = checkOrientation(0, true);
-    printStuff(77);
+    //printStuff(55);
+    oriented = checkOrientation(0, true);
+    //printStuff(77);
     if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
       parametrize_conformal(0, NULL, NULL);

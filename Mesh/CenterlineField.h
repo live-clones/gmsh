@@ -113,8 +113,6 @@ class Centerline : public Field{
 " using the following script:\n\n"
 "vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
   }
-  
-  void cleanMesh();
 
   //isotropic operator for mesh size field function of distance to centerline
   double operator() (double x, double y, double z, GEntity *ge=0);
@@ -186,8 +184,6 @@ class Centerline : public Field{
 " using the following script:\n\n"
 "vmtk vmtkcenterlines -seedselector openprofiles -ifile mysurface.stl -ofile centerlines.vtp --pipe vmtksurfacewriter -ifile centerlines.vtp -ofile centerlines.vtk\n";
   }
-  
-  void cleanMesh();
 
   //isotropic operator for mesh size field function of distance to centerline
   double operator() (double x, double y, double z, GEntity *ge=0);

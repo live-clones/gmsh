@@ -24,6 +24,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "CenterlineField.h"
 #include "Context.h"
 #include "GPoint.h"
 #include "GmshMessage.h"
@@ -1420,6 +1421,32 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
   return true;
 }
+static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
+{
+
+#if defined(HAVE_ANN)
+  Centerline *center = 0;
+  FieldManager *fields = GModel::current()->getFields();
+  if (fields->getBackgroundField() > 0 ){
+    Field *myField = fields->get(fields->getBackgroundField());
+    center = dynamic_cast<Centerline*> (myField);
+  }
+  
+  bool recombine =  (CTX::instance()->mesh.recombineAll);
+  int nbBoundaries = gf->edges().size(); 
+  //printf(" nbBounds = %d  (face %d) \n", nbBoundaries, gf->tag());
+
+  if (center && recombine && nbBoundaries == 2) {
+    printf("need for elliptic grid generator \n");
+    //createRegularParamGrid();
+    //solveElliptic();
+    return true;
+  }
+  else return false;
+
+#endif
+
+}
 
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
@@ -1857,6 +1884,11 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
+
+  if(meshGeneratorElliptic(gf)){
+    printf("elliptic grid generator for face %d  \n", gf->tag());
+  }
+  //else if
   if ((gf->getNativeType() != GEntity::AcisModel ||
        (!gf->periodic(0) && !gf->periodic(1))) &&
       (noSeam(gf) || gf->getNativeType() == GEntity::GmshModel ||
