@@ -963,7 +963,7 @@ class elementFactory{
     case 1: return new line(x, y, z, copy ? numNodes : 0);
     case 2:
       if(numNodes == 4) return new quadrangle(x, y, z, copy ? numNodes : 0);
-      else return new triangle(x, y, z, copy);
+      else return new triangle(x, y, z, copy ? numNodes : 0);
     case 3:
       if(numNodes == 8) return new hexahedron(x, y, z, copy ? numNodes : 0);
       else if(numNodes == 6) return new prism(x, y, z, copy ? numNodes : 0);
