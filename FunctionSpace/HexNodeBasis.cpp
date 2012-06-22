@@ -206,7 +206,7 @@ HexNodeBasis::~HexNodeBasis(void){
 #include <cstdio>
 int main(void){
 
-  const int P = 2;
+  const int P = 3;
   const double d = 0.05;
 
   HexNodeBasis b(P);
@@ -236,7 +236,7 @@ int main(void){
   printf("r = p(i, 1);\n");
   printf("end\n");
   printf("\n");
-  /*  
+  
   printf("d = %f;\nx = [0:d:1];\ny = x;\nz = x;\n\nlx = length(x);\nly = length(y);\nlz = length(z);\n\n", d);
   
   for(int i = 0; i < b.getSize(); i++)
@@ -251,7 +251,7 @@ int main(void){
   for(int i = 0; i < b.getSize(); i++)
     printf("p%d(j, i, k) = p(%d, x(i), y(j), z(k));\n", i + 1, i + 1);
   
-  printf("end\n");
+  printf("\nend\n");
   printf("end\n");
   printf("end\n");
 
@@ -262,15 +262,52 @@ int main(void){
   printf("\n");
   for(int i = b.getSize(); i > 0; i--){
     printf("figure;\n");
-    printf("hold on;\n");
-    printf("for k = 1:lz\n");
-    printf("surf(x, y, p%d(:, :, k) + z(k));\n", i);
-    printf("end\n");
-    printf("hold off;\n");
-  }
+
+    printf("subplot(3, 2, 1);\n");
+    printf("contourf(x, y, squeeze(p%d(:, :, 1)));\n", i);
+    printf("colorbar;\n");
+    printf("title('z = 0');\n");
+    printf("ylabel('x');\n");
+    printf("xlabel('y');\n\n");
+
+    printf("subplot(3, 2, 2);\n");
+    printf("contourf(x, y, squeeze(p%d(:, :, end)));\n", i);
+    printf("colorbar;\n");
+    printf("title('z = 1');\n");
+    printf("ylabel('x');\n");
+    printf("xlabel('y');\n\n");
+
+    printf("subplot(3, 2, 3);\n");
+    printf("contourf(x, z, squeeze(p%d(:, 1, :)));\n", i);
+    printf("colorbar;\n");
+    printf("title('y = 0');\n");
+    printf("ylabel('x');\n");
+    printf("xlabel('z');\n\n");
+
+    printf("subplot(3, 2, 4);\n");
+    printf("contourf(x, z, squeeze(p%d(:, end, :)));\n", i);
+    printf("colorbar;\n");
+    printf("title('y = 1');\n");
+    printf("ylabel('x');\n");
+    printf("xlabel('z');\n\n");
+
+    printf("subplot(3, 2, 5);\n");
+    printf("contourf(y, z, squeeze(p%d(1, :, :)));\n", i);
+    printf("colorbar;\n");
+    printf("title('x = 0');\n");
+    printf("ylabel('y');\n");
+    printf("xlabel('z');\n\n");
+
+    printf("subplot(3, 2, 6);\n");
+    printf("contourf(y, z, squeeze(p%d(end, :, :)));\n", i);
+    printf("colorbar;\n");
+    printf("title('x = 1');\n");  
+    printf("ylabel('y');\n");
+    printf("xlabel('z');\n\n\n");
+}
   
   printf("\n");
-  */  
+    
   return 0;
 }
 */
