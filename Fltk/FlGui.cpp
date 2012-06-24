@@ -383,10 +383,10 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   // FIXME TEST
-  else if(Fl::test_shortcut('4') || Fl::test_shortcut(FL_F + 4)) {
-    RecombineMesh(GModel::current());
-    status = 2;
-  }
+  //else if(Fl::test_shortcut('4') || Fl::test_shortcut(FL_F + 4)) {
+  //  RecombineMesh(GModel::current());
+  //  status = 2;
+  //}
   else if(Fl::test_shortcut(FL_CTRL + 'q') || Fl::test_shortcut(FL_META + 'q')){
     // only necessary when using the system menu bar, but hey, it
     // cannot hurt...
