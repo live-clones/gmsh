@@ -27,7 +27,7 @@ std::string GMSH_IntegratePlugin::getHelp() const
     "as the circulation/flux of vector fields over "
     "line/surface elements.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Integrate) creates one new view.";
+    "Plugin(Integrate) creates one new view."
     "If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.\n\n"
     "Plugin(Integrate) creates one new view.";
 }
@@ -46,15 +46,15 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 {
   int iView = (int)IntegrateOptions_Number[0].def;
   int overTime = (int)IntegrateOptions_Number[1].def;
-  
+
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-  
+
   PViewData *data1 = getPossiblyAdaptiveData(v1);
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  
-  if (overTime == -1) {   
+
+  if (overTime == -1) {
     double x = data1->getBoundingBox().center().x();
     double y = data1->getBoundingBox().center().y();
     double z = data1->getBoundingBox().center().z();
@@ -83,7 +83,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	  if(numNodes == 1){
 	    simpleSum = true;
 	    res += val[0];
-	    for(int comp = 0; comp < numComp; comp++)          
+	    for(int comp = 0; comp < numComp; comp++)
 	      resv[comp] += val[comp];
 	  }
 	  else{
@@ -101,8 +101,8 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	}
       }
       if(simpleSum)
-	Msg::Info("Step %d: sum = %g %g %g %g %g %g %g %g %g", step, resv[0], 
-		  resv[1], resv[2], resv[3], resv[4], resv[5], resv[6], resv[7], 
+	Msg::Info("Step %d: sum = %g %g %g %g %g %g %g %g %g", step, resv[0],
+		  resv[1], resv[2], resv[3], resv[4], resv[5], resv[6], resv[7],
 		  resv[8]);
       else
 	Msg::Info("Step %d: integral = %.16g", step, res);
@@ -110,7 +110,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
     }
     data2->NbSP = 1;
     v2->getOptions()->intervalsType = PViewOptions::Numeric;
-  
+
     for(int i = 0; i < data1->getNumTimeSteps(); i++){
       double time = data1->getTime(i);
       data2->Time.push_back(time);
@@ -136,12 +136,11 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
 	for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
 	for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
-	
+
 	double time = 0.0;
 	std::vector<double> timeIntegral(numNodes, 0.);
 	for(int step = timeBeg; step < timeEnd; step++){
 	  if(!data1->hasTimeStep(step)) continue;
-          double val;
 	  double newTime  = data1->getTime(step);
 	  double dt = newTime - time;
 	  time = newTime;
@@ -160,6 +159,6 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   data2->setName(data1->getName() + "_Integrate");
   data2->setFileName(data1->getName() + "_Integrate.pos");
   data2->finalize();
-  
+
   return v2;
 }

@@ -2,18 +2,27 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Ruth Sabariego
+//
 
+#include <complex>
 #include "NearToFarField.h"
 
 StringXNumber NearToFarFieldOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber",     NULL, 1.},
-  {GMSH_FULLRC, "FarDistance",    NULL, 1.},
-  {GMSH_FULLRC, "NumPointsPhi",   NULL, 120},
-  {GMSH_FULLRC, "NumPointsTheta", NULL,  60},
-  {GMSH_FULLRC, "EView", NULL, 0},
-  {GMSH_FULLRC, "HView", NULL, 1},
-  {GMSH_FULLRC, "Normalize", NULL, 1},
-  {GMSH_FULLRC, "dB", NULL, 1},
+  {GMSH_FULLRC, "Wavenumber",       NULL, 1.},
+  {GMSH_FULLRC, "PhiStart",         NULL, 0.},
+  {GMSH_FULLRC, "PhiEnd",           NULL, 2. * M_PI},
+  {GMSH_FULLRC, "NumPointsPhi",     NULL, 60},
+  {GMSH_FULLRC, "ThetaStart",       NULL, 0.},
+  {GMSH_FULLRC, "ThetaEnd",         NULL, M_PI},
+  {GMSH_FULLRC, "NumPointsTheta",   NULL, 30},
+  {GMSH_FULLRC, "EView",            NULL, 0},
+  {GMSH_FULLRC, "HView",            NULL, 1},
+  {GMSH_FULLRC, "Normalize",        NULL, 1},
+  {GMSH_FULLRC, "dB",               NULL, 1},
+  {GMSH_FULLRC, "NegativeTime",     NULL, 0.},
 };
 
 extern "C"
@@ -27,12 +36,16 @@ extern "C"
 std::string GMSH_NearToFarFieldPlugin::getHelp() const
 {
   return "Plugin(NearToFarField) computes the far field pattern "
-    "from the near electric and magnetic fields on a surface "
+    "from the near electric E and magnetic H fields on a surface "
     "enclosing the radiating device (antenna).\n\n"
-    "Parameters: the wavenumber, the far field distance (radius) and "
-    "angular discretisation, i.e. the number of divisions for "
-    "phi in [0, 2*Pi] and theta in [0, Pi].\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
+    "Parameters: the wavenumber, the "
+    "angular discretisation (phi in [0, 2*Pi] and theta in [0, Pi]) "
+    "of the far field sphere and the indices of the views containing the "
+    "complex-valued E and H fields. If `Normalize' is set, the far field "
+    "is normalized to 1. If `dB' is set, the far field is computed in dB. "
+    "If `NegativeTime' is set, E and H are assumed to have exp(-iwt) time "
+    "dependency; otherwise they are assume to have exp(+iwt) time "
+    "dependency.\n\n"
     "Plugin(NearToFarField) creates one new view.";
 }
 
@@ -46,11 +59,14 @@ StringXNumber *GMSH_NearToFarFieldPlugin::getOption(int iopt)
   return &NearToFarFieldOptions_Number[iopt];
 }
 
-double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
-                                              std::vector<std::vector<double> > js,
-                                              std::vector<std::vector<double> > ms,
-                                              double k0, double r_far, double theta,
-                                              double phi)
+// Compute field using e^{j\omega t} time dependency, following Jin in "Finite
+// Element Analysis of Antennas and Arrays", p. 176. This is not the usual `far
+// field', as it still contains the e^{ikr}/r factor.
+double GMSH_NearToFarFieldPlugin::getFarFieldJin(std::vector<element*> &allElems,
+                                                 std::vector<std::vector<double> > &js,
+                                                 std::vector<std::vector<double> > &ms,
+                                                 double k0, double rFar, double theta,
+                                                 double phi)
 {
   // theta in [0, pi] (elevation/polar angle)
   // phi in [0, 2*pi] (azimuthal angle)
@@ -70,8 +86,8 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
   N.resize(numSteps); Ns.resize(numSteps);
   L.resize(numSteps); Ls.resize(numSteps);
   for (int step = 0; step < numSteps; step++){
-    N[step].resize(numComps); Ns[step].resize(numComps);
-    L[step].resize(numComps); Ls[step].resize(numComps);
+    N[step].resize(numComps, 0.); Ns[step].resize(numComps);
+    L[step].resize(numComps, 0.); Ls[step].resize(numComps);
   }
 
   int i = 0 ;
@@ -123,9 +139,9 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
   // E_r radial component is negligible in far field
   double E_theta[2] ;
   double E_phi[2] ;
-  double k0_over_4pir = k0/(4*M_PI*r_far) ;
-  double cos_k0r = cos(k0*r_far) ;
-  double sin_k0r = sin(k0*r_far) ;
+  double k0_over_4pir = k0/(4*M_PI*rFar) ;
+  double cos_k0r = cos(k0*rFar) ;
+  double sin_k0r = sin(k0*rFar) ;
 
   // Elevation component
   E_theta[0] = -k0_over_4pir * ( (Ls[0][2] + Z0 * Ns[0][1]) * sin_k0r -
@@ -144,16 +160,77 @@ double GMSH_NearToFarFieldPlugin::getFarField(std::vector<element*> allElems,
   return farF ;
 }
 
+// Compute far field using e^{-i\omega t} time dependency, following Monk in
+// "Finite Element Methods for Maxwell's equations", p. 233
+double GMSH_NearToFarFieldPlugin::getFarFieldMonk(std::vector<element*> &allElems,
+                                                  std::vector<std::vector<double> > &js,
+                                                  std::vector<std::vector<double> > &ms,
+                                                  double k0, double theta, double phi)
+{
+  double sTheta = sin(theta) ; double cTheta = cos(theta) ;
+  double sPhi = sin(phi) ; double cPhi = cos(phi) ;
+  double xHat[3] = {sTheta * cPhi, sTheta * sPhi, cTheta};
+  std::complex<double> I(0., 1.);
+  double Z0 = 120 * M_PI ; // free-space impedance
+
+  double integral_r[3] = {0., 0., 0.}, integral_i[3] = {0., 0., 0.};
+  int i = 0 ;
+  for(unsigned int ele = 0; ele < allElems.size(); ele++){
+    element* e = allElems[ele] ;
+    int numNodes = e->getNumNodes() ;
+    std::vector<double> integrand_r(numNodes * 3), integrand_i(numNodes * 3);
+    for(int nod = 0; nod < numNodes; nod++){
+      double y[3], xHat_dot_y;
+      e->getXYZ(nod, y[0], y[1], y[2]) ;
+      prosca(xHat, y, &xHat_dot_y) ;
+      double n_x_e_r[3] = {-ms[0][i], -ms[0][i + 1], -ms[0][i + 2]};
+      double n_x_e_i[3] = {-ms[1][i], -ms[1][i + 1], -ms[1][i + 2]};
+      double n_x_h_r[3] = {js[0][i], js[0][i + 1], js[0][i + 2]};
+      double n_x_h_i[3] = {js[1][i], js[1][i + 1], js[1][i + 2]};
+      double n_x_h_x_xHat_r[3], n_x_h_x_xHat_i[3];
+      prodve(n_x_h_r, xHat, n_x_h_x_xHat_r);
+      prodve(n_x_h_i, xHat, n_x_h_x_xHat_i);
+      for(int comp = 0; comp < 3; comp++){
+        std::complex<double> n_x_e(n_x_e_r[comp], n_x_e_i[comp]);
+        std::complex<double> n_x_h_x_xHat(n_x_h_x_xHat_r[comp], n_x_h_x_xHat_i[comp]);
+        // Warning: Z0 == 1 in Monk
+        std::complex<double> integrand = (n_x_e + Z0 * n_x_h_x_xHat) *
+          (cos(-k0 * xHat_dot_y) + I * sin(-k0 * xHat_dot_y));
+        integrand_r[3 * nod + comp] = integrand.real();
+        integrand_i[3 * nod + comp] = integrand.imag();
+      }
+      i += 3;
+    }
+    for(int comp = 0; comp < 3; comp++){
+      integral_r[comp] += e->integrate(&integrand_r[comp], 3);
+      integral_i[comp] += e->integrate(&integrand_i[comp], 3);
+    }
+  }
+
+  double xHat_x_integral_r[3], xHat_x_integral_i[3];
+  prodve(xHat, integral_r, xHat_x_integral_r);
+  prodve(xHat, integral_i, xHat_x_integral_i);
+  std::complex<double> coef = I * k0 / 4. / M_PI;
+  std::complex<double> einf[3] = {coef * (xHat_x_integral_r[0] + I * xHat_x_integral_i[0]),
+                                  coef * (xHat_x_integral_r[1] + I * xHat_x_integral_i[1]),
+                                  coef * (xHat_x_integral_r[2] + I * xHat_x_integral_i[2])};
+  return (norm(einf[0]) + norm(einf[1]) + norm(einf[2]));
+}
+
 PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
 {
   double _k0 = (double)NearToFarFieldOptions_Number[0].def;
-  double _r_far = (double)NearToFarFieldOptions_Number[1].def;
-  int _NbPhi = (int)NearToFarFieldOptions_Number[2].def;
-  int _NbThe = (int)NearToFarFieldOptions_Number[3].def;
-  int _eView = (int)NearToFarFieldOptions_Number[4].def;
-  int _hView = (int)NearToFarFieldOptions_Number[5].def;
-  bool _normalize = (bool)NearToFarFieldOptions_Number[6].def;
-  bool _dB = (bool)NearToFarFieldOptions_Number[7].def;
+  double _phiStart = (double)NearToFarFieldOptions_Number[1].def;
+  double _phiEnd = (double)NearToFarFieldOptions_Number[2].def;
+  int _NbPhi = (int)NearToFarFieldOptions_Number[3].def;
+  double _thetaStart = (double)NearToFarFieldOptions_Number[4].def;
+  double _thetaEnd = (double)NearToFarFieldOptions_Number[5].def;
+  int _NbThe = (int)NearToFarFieldOptions_Number[6].def;
+  int _eView = (int)NearToFarFieldOptions_Number[7].def;
+  int _hView = (int)NearToFarFieldOptions_Number[8].def;
+  bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
+  bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
+  int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
 
   PView *ve = getView(_eView, v);
   if(!ve){
@@ -171,34 +248,33 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   if(eData->getNumEntities() != hData->getNumEntities() ||
      eData->getNumElements() != hData->getNumElements() ||
      eData->getNumTimeSteps()!= hData->getNumTimeSteps()){
-    Msg::Error("Incompatible views for e-field and h-field");
+    Msg::Error("Incompatible views for E field and H field");
     return v;
   }
 
   if(eData->getNumTimeSteps() != 2 || hData->getNumTimeSteps() != 2){
-    Msg::Error("Invalid number of steps for EView or HView, fields must be complex");
+    Msg::Error("Invalid number of steps for E or H fields (must be complex)");
     return v;
   }
 
   // center of the Far Field sphere
-  double x0 = eData->getBoundingBox().center().x();
-  double y0 = eData->getBoundingBox().center().y();
-  double z0 = eData->getBoundingBox().center().z();
+  SBoundingBox3d bbox = eData->getBoundingBox();
+  double x0 = bbox.center().x();
+  double y0 = bbox.center().y();
+  double z0 = bbox.center().z();
+  double lc = norm(SVector3(bbox.max(), bbox.min()));
+
   if(x0 != hData->getBoundingBox().center().x() ||
      y0 != hData->getBoundingBox().center().y() ||
      z0 != hData->getBoundingBox().center().z()){
-    Msg::Error("EView %i and HView %i must be given on the same grid", _eView, _hView);
+    Msg::Error("E and H fields must be given on the same grid");
     return v;
   }
 
   // compute surface currents on all input elements
   std::vector<element*> allElems  ;
-  std::vector<std::vector<double> > js ;
-  std::vector<std::vector<double> > ms ;
-
-  int numSteps = eData->getNumTimeSteps() ;
-  js.resize(numSteps);
-  ms.resize(numSteps);
+  std::vector<std::vector<double> > js(2) ;
+  std::vector<std::vector<double> > ms(2) ;
 
   for(int ent = 0; ent < eData->getNumEntities(0); ent++){
     for(int ele = 0; ele < eData->getNumElements(0, ent); ele++){
@@ -222,7 +298,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
       else
         normal2points(x[0], y[0], z[0], x[1], y[1], z[1], n);
 
-      for(int step = 0; step < numSteps; step++){
+      for(int step = 0; step < 2; step++){
         for(int nod = 0; nod < numNodes; nod++){
           double h[3], e[3];
           for(int comp = 0; comp < numComp; comp++){
@@ -249,50 +325,49 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   PView *vf = new PView();
   PViewDataList *dataFar = getDataList(vf);
 
-  double phi,   dPhi   = 2*M_PI/_NbPhi ;
-  double theta, dTheta =   M_PI/_NbThe ;
-  double ffmax = 0.0 ;
-
-  std::vector<std::vector<double> > allPhi ;
-  std::vector<std::vector<double> > allThe ;
-  std::vector<std::vector<double> > farF ;
-
-  allPhi.resize(_NbPhi+1);
-  allThe.resize(_NbPhi+1);
-  farF.resize(_NbPhi+1);
-  for (int i = 0; i<=_NbPhi; i++){
-    allPhi[i].resize(_NbThe+1);
-    allThe[i].resize(_NbThe+1);
-    farF[i].resize(_NbThe+1);
+  std::vector<std::vector<double> > allPhi(_NbPhi + 1);
+  std::vector<std::vector<double> > allThe(_NbPhi + 1);
+  std::vector<std::vector<double> > farF(_NbPhi + 1);
+  for (int i = 0; i <= _NbPhi; i++){
+    allPhi[i].resize(_NbThe + 1);
+    allThe[i].resize(_NbThe + 1);
+    farF[i].resize(_NbThe + 1);
   }
 
+  double dPhi   = (_phiEnd - _phiStart) / _NbPhi ;
+  double dTheta = (_thetaEnd - _thetaStart) / _NbThe ;
+  double ffmax = 0.0 ;
+  Msg::ResetProgressMeter();
   for (int i = 0; i <= _NbPhi; i++){
-    phi = i*dPhi ;
+    double phi = _phiStart + i * dPhi ;
     for (int j = 0; j <= _NbThe; j++){
-      theta = j * dTheta ;
+      double theta = _thetaStart + j * dTheta ;
       allPhi[i][j] = phi ;
       allThe[i][j] = theta ;
-      farF[i][j] = getFarField(allElems, js, ms, _k0, _r_far, theta, phi) ;
+      if(_negativeTime)
+        farF[i][j] = getFarFieldMonk(allElems, js, ms, _k0, theta, phi);
+      else
+        farF[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc, theta, phi);
       ffmax = (ffmax < farF[i][j]) ? farF[i][j] : ffmax ;
     }
+    Msg::ProgressMeter(i, _NbPhi, "Computing far field");
   }
 
   if(_normalize){
     for (int i = 0; i <= _NbPhi; i++)
       for (int j = 0; j <= _NbThe; j++)
-        if(ffmax!=0.0)
+        if(ffmax != 0.0)
           farF[i][j] /= ffmax ;
         else
           Msg::Warning("Far field pattern not normalized, max value = %g", ffmax);
   }
 
+  for(unsigned int i = 0; i < allElems.size(); i++)
+    delete allElems[i];
+
   // construct sphere for visualization, centered at center of bb and with
   // radius relative to the bb size
-  double r_bb[3] = {eData->getBoundingBox().max().x()-eData->getBoundingBox().min().x(),
-                    eData->getBoundingBox().max().y()-eData->getBoundingBox().min().y(),
-                    eData->getBoundingBox().max().z()-eData->getBoundingBox().min().z()};
-  double r_sph = norm3(r_bb) ;
-  r_sph = (r_sph) ? r_sph/2 : 1./2. ; // radious of sphere for visu
+  double r_sph = lc ? lc / 2. : 1; // radius of sphere for visu
 
   for (int i = 0; i < _NbPhi; i++){
     for (int j = 0; j < _NbThe; j++){

@@ -28,13 +28,20 @@ class GMSH_NearToFarFieldPlugin : public GMSH_PostPlugin
     return "Compute Far Field pattern from Near Field on a surface";
   }
   std::string getHelp() const;
+  virtual std::string getAuthor() const { return "R. Sabariego, C. Geuzaine"; }
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);
   PView *execute(PView *);
 
-  static double getFarField(std::vector<element*> allElems,
-                            std::vector<std::vector<double> >js, std::vector<std::vector<double> >ms,
-                            double k0, double r_far, double theta, double phi);
- };
+  double getFarFieldJin(std::vector<element*> &allElems,
+                        std::vector<std::vector<double> > &js,
+                        std::vector<std::vector<double> > &ms,
+                        double k0, double r_far, double theta, double phi);
+
+  double getFarFieldMonk(std::vector<element*> &allElems,
+                         std::vector<std::vector<double> > &js,
+                         std::vector<std::vector<double> > &ms,
+                         double k0, double theta, double phi);
+};
 
 #endif
