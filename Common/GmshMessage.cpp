@@ -408,7 +408,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     if(strlen(fmt)) strcat(str, " ");
 
     char str2[1024];
-    sprintf(str2, "%s(%d %%)", _progressMeterCurrent);
+    sprintf(str2, "%s(%d %%)", str, _progressMeterCurrent);
 
     if(_client) _client->Progress(str2);
 
