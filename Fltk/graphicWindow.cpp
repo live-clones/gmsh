@@ -632,11 +632,12 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   int wleft = (width - x) / 3 - 1;
   int wright = (width - x) - (width - x) / 3 - 1;
 
-  label[0] = new Fl_Box(x, glheight + mheight + 2, wleft, sht);
-  label[1] = new Fl_Box(x + (width - x) / 3, glheight + mheight + 2, wright, sht);
+  label[0] = new Fl_Progress(x, glheight + mheight + 2, wleft, sht);
+  label[1] = new Fl_Progress(x + (width - x) / 3, glheight + mheight + 2, wright, sht);
   for(int i = 0; i < 2; i++) {
     label[i]->box(FL_THIN_DOWN_BOX);
     label[i]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    label[i]->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
   }
 
   // dummy resizable box

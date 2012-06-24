@@ -14,6 +14,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Browser.H>
+#include <FL/Fl_Progress.H>
 #include "openglWindow.h"
 
 class graphicWindow{
@@ -28,7 +29,7 @@ class graphicWindow{
   Fl_Browser *browser;
   Fl_Box *bottom;
   Fl_Button *butt[14];
-  Fl_Box *label[2];
+  Fl_Progress *label[2];
   int minWidth, minHeight;
  public:
   graphicWindow(bool main=true, int numTiles=1);

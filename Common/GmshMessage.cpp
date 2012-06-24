@@ -408,20 +408,19 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     if(strlen(fmt)) strcat(str, " ");
 
     char str2[1024];
-    sprintf(str2, "(%d %%)", _progressMeterCurrent);
-    strcat(str, str2);
+    sprintf(str2, "%s(%d %%)", _progressMeterCurrent);
 
-    if(_client) _client->Progress(str);
+    if(_client) _client->Progress(str2);
 
 #if defined(HAVE_FLTK)
-    if(FlGui::available()){
-      if(_verbosity > 4) FlGui::instance()->setStatus(str, 1);
+    if(FlGui::available() && _verbosity > 4){
       FlGui::instance()->check();
+      FlGui::instance()->setProgress(str, n, N);
     }
 #endif
 
     if(CTX::instance()->terminal){
-      fprintf(stdout, "%s                     \r", str);
+      fprintf(stdout, "%s                     \r", str2);
       fflush(stdout);
     }
 
@@ -433,8 +432,9 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     if(_client) _client->Progress("Done!");
 
 #if defined(HAVE_FLTK)
-    if(FlGui::available()){
-      if(_verbosity > 4) FlGui::instance()->setStatus("", 1);
+    if(FlGui::available() && _verbosity > 4){
+      FlGui::instance()->check();
+      FlGui::instance()->setProgress("", 0, N);
     }
 #endif
 

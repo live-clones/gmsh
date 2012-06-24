@@ -277,6 +277,8 @@ bool onelab::localNetworkClient::run()
         }
         else if(type == "number"){
           onelab::number p; p.fromChar(message); set(p);
+          if(p.getName() == getName() + "/Progress")
+            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(), p.getMax());
         }
         else if(type == "string"){
           onelab::string p; p.fromChar(message); set(p);

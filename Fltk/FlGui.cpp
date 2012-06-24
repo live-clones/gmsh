@@ -810,6 +810,19 @@ void FlGui::setStatus(const char *msg, int num)
   }
 }
 
+void FlGui::setProgress(const char *msg, int n, int N)
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+    if(FlGui::instance()->graph[i]->label[1]->minimum() != 0)
+      FlGui::instance()->graph[i]->label[1]->minimum(0);
+    if(FlGui::instance()->graph[i]->label[1]->maximum() != N)
+      FlGui::instance()->graph[i]->label[1]->maximum(N);
+    if(FlGui::instance()->graph[i]->label[1]->value() != n)
+      FlGui::instance()->graph[i]->label[1]->value(n);
+  }
+  setStatus(msg, 1);
+}
+
 void FlGui::storeCurrentWindowsInfo()
 {
   CTX::instance()->menuPosition[0] = menu->win->x();
