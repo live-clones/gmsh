@@ -810,15 +810,15 @@ void FlGui::setStatus(const char *msg, int num)
   }
 }
 
-void FlGui::setProgress(const char *msg, int n, int N)
+void FlGui::setProgress(const char *msg, double val, double min, double max)
 {
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
-    if(FlGui::instance()->graph[i]->label[1]->minimum() != 0)
-      FlGui::instance()->graph[i]->label[1]->minimum(0);
-    if(FlGui::instance()->graph[i]->label[1]->maximum() != N)
-      FlGui::instance()->graph[i]->label[1]->maximum(N);
-    if(FlGui::instance()->graph[i]->label[1]->value() != n)
-      FlGui::instance()->graph[i]->label[1]->value(n);
+    if(FlGui::instance()->graph[i]->label[1]->value() != val)
+      FlGui::instance()->graph[i]->label[1]->value(val);
+    if(FlGui::instance()->graph[i]->label[1]->minimum() != min)
+      FlGui::instance()->graph[i]->label[1]->minimum(min);
+    if(FlGui::instance()->graph[i]->label[1]->maximum() != max)
+      FlGui::instance()->graph[i]->label[1]->maximum(max);
   }
   setStatus(msg, 1);
 }

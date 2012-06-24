@@ -415,7 +415,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
       FlGui::instance()->check();
-      FlGui::instance()->setProgress(str, n, N);
+      FlGui::instance()->setProgress(str, n, 0, N);
     }
 #endif
 
@@ -434,7 +434,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
       FlGui::instance()->check();
-      FlGui::instance()->setProgress("", 0, N);
+      FlGui::instance()->setProgress("", 0, 0, N);
     }
 #endif
 
