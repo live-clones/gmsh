@@ -1012,6 +1012,7 @@ void GFaceCompound::getBoundingEdges()
       l_edges.push_back(*itf);
       (*itf)->addFace(this);
     }
+
     std::list<GEdge*> loop;
     computeALoop(_unique,loop);
     while(!_unique.empty())  computeALoop(_unique, loop);

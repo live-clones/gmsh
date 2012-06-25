@@ -796,7 +796,8 @@ static std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, in
 
 */
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
-   (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
+    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
+
 
 void createRegularMesh (GFace *gf,
 			 MVertex *v1, SPoint2 &c1,

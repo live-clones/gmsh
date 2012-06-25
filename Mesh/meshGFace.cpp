@@ -44,6 +44,8 @@
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
 
+
+
 static void copyMesh(GFace *source, GFace *target)
 {
   std::map<MVertex*, MVertex*> vs2vt;
@@ -1421,6 +1423,125 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
   return true;
 }
+static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2)
+{
+
+  std::vector<SPoint2> p1,p2;
+  for (int i = 0; i< vert1.size(); i++){
+    SPoint2 pi;
+    reparamMeshVertexOnFace(vert1[i], gf, pi);
+    p1.push_back(pi);
+  }
+  for (int j = 0; j< vert2.size(); j++){
+    SPoint2 pj;
+    reparamMeshVertexOnFace(vert2[j], gf, pj);
+    p2.push_back(pj);
+  }
+
+  char name[234];
+  sprintf(name,"paramGrid_%d.pos", gf->tag());
+  FILE *f = fopen(name,"w");
+  fprintf(f,"View \"%s\" {\n",name);
+  
+  for (unsigned int i = 0; i < p1.size(); i++)
+    fprintf(f,"SP(%g,%g,%g) {%d};\n", p1[i].x(), p1[i].y(), 0.0, i);
+  
+  for (unsigned int j = 0; j < p2.size(); j++)
+    fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, j);
+  
+  fprintf(f,"};\n");
+  fclose(f);
+
+  return;
+  
+}
+static void createRegularTwoCircleGrid (GFace *gf)
+{
+
+  int nbBoundaries = gf->edges().size(); 
+  printf("nb boundaries =%d  \n", nbBoundaries );
+  
+  std::list<GEdge*> bedges = gf->edges();
+  std::list<GEdge*>::iterator itb = bedges.begin();
+  std::list<GEdge*>::iterator ite = bedges.end(); ite--;
+  GEdge *ge1 =  (*itb)->getCompound();
+  GEdge *ge2 =  (*ite)->getCompound();
+  int N1 = ge1->mesh_vertices.size() + 1;
+  int N2 = ge2->mesh_vertices.size() + 1;
+  printf("nb mesh vertices N1 N2 =%d  %d \n",N1, N2);
+  if (N1 != N2 || N1%2 != 0){
+    Msg::Error("You should have a pair number of points specified in centerline field \n");
+  }
+
+  std::vector<MVertex*> vert1;
+  vert1.push_back(ge1->getBeginVertex()->mesh_vertices[0]);
+  for(unsigned int i = 0; i < N1-1; i++) vert1.push_back(ge1->mesh_vertices[i]);
+
+  std::vector<MVertex*> vert2;
+  vert2.push_back(ge2->getBeginVertex()->mesh_vertices[0]);
+  for(unsigned int i = 0; i < N1-1; i++) vert2.push_back(ge2->mesh_vertices[i]);
+
+  printf("vert 1 =%d %d \n", vert1.size(), vert2.size());
+
+  printParamGrid(gf, vert1, vert2);
+
+  // std::vector<std::vector<MVertex*> > tab(M+2);
+  // for(int i = 0; i <= M+1; i++) tab[i].resize(N+2);
+
+  // tab[0][0] = v1;
+  // tab[0][N+1] = v2;
+  // tab[M+1][N+1] = v3;
+  // tab[M+1][0] = v4;
+  // for (int i=0;i<N;i++){
+  //   tab[0][i+1]   = sign12 > 0 ? e12 [i] : e12 [N-i-1];
+  //   tab[M+1][i+1] = sign34 < 0 ? e34 [i] : e34 [N-i-1];
+  // }
+  // for (int i=0;i<M;i++){
+  //   tab[i+1][N+1] = sign23 > 0 ? e23 [i] : e23 [M-i-1];
+  //   tab[i+1][0]   = sign41 < 0 ? e41 [i] : e41 [M-i-1];
+  // }
+
+  // for (int i=0;i<N;i++){
+  //   for (int j=0;j<M;j++){
+  //     double u = (double) (i+1)/ ((double)(N+1));
+  //     double v = (double) (j+1)/ ((double)(M+1));
+  //     MVertex *v12 = (sign12 >0) ? e12[i] : e12 [N-1-i];
+  //     MVertex *v23 = (sign23 >0) ? e23[j] : e23 [M-1-j];
+  //     MVertex *v34 = (sign34 <0) ? e34[i] : e34 [N-1-i];
+  //     MVertex *v41 = (sign41 <0) ? e41[j] : e41 [M-1-j];
+  //     SPoint2 p12; reparamMeshVertexOnFace(v12, gf, p12);
+  //     SPoint2 p23; reparamMeshVertexOnFace(v23, gf, p23);
+  //     SPoint2 p34; reparamMeshVertexOnFace(v34, gf, p34);
+  //     SPoint2 p41; reparamMeshVertexOnFace(v41, gf, p41);
+  //     double Up = TRAN_QUA(p12.x(), p23.x(), p34.x(), p41.x(),
+  // 			   c1.x(),c2.x(),c3.x(),c4.x(),u,v);
+  //     double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
+  // 			   c1.y(),c2.y(),c3.y(),c4.y(),u,v);
+  //     // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
+  //     // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
+  //     // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
+  //     if ((p12.x() && p12.y() == -1.0) ||
+  //         (p23.x() && p23.y() == -1.0) ||
+  //         (p34.x() && p34.y() == -1.0) ||
+  //         (p41.x() && p41.y() == -1.0)) {
+  //       Msg::Error("Wrong param -1");
+  //       return;
+  //     }
+
+  //     MVertex *vnew = createNewVertex (gf, SPoint2(Up,Vp));
+  //     tab[j+1][i+1] = vnew;
+  //   }
+  // }
+  // // create quads
+  // for (int i=0;i<=N;i++){
+  //   for (int j=0;j<=M;j++){
+  //     MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j][i+1],tab[j+1][i+1],tab[j+1][i]);
+  //     q.push_back(qnew);
+  //   }
+  // }
+
+}
+
 static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 {
 
@@ -1438,7 +1559,7 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
   if (center && recombine && nbBoundaries == 2) {
     printf("need for elliptic grid generator \n");
-    //createRegularParamGrid();
+    createRegularTwoCircleGrid(gf);
     //solveElliptic();
     return true;
   }
