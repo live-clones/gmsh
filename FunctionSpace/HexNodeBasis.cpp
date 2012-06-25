@@ -14,6 +14,10 @@ HexNodeBasis::HexNodeBasis(const int order){
   Polynomial* legendre = new Polynomial[order];
   Polynomial* lifting  = new Polynomial[8];
 
+  Polynomial* xi       = new Polynomial[6];
+  Polynomial* eta      = new Polynomial[6];
+  Polynomial* lambda   = new Polynomial[6];
+
   // Legendre Polynomial //
   Legendre::integrated(legendre, order);
   
@@ -124,26 +128,22 @@ HexNodeBasis::HexNodeBasis(const int order){
   }
 
   
-  // Face Based //
+  // Face Based (Preliminary) //
   // Points definig Faces
   int face1[6] = {0, 3, 2, 1, 5, 4};
   int face2[6] = {1, 7, 6, 0, 6, 7};
   int face3[6] = {2, 6, 5, 4, 7, 3};
   int face4[6] = {3, 2, 1, 5, 4, 0};
 
-  // 'Xi' Function
-  Polynomial*  xi    = new Polynomial[6];
+  // 'Xi' Functions
   for(int f = 0; f < 6; f++)
     xi[f]  = lifting[face1[f]] - lifting[face2[f]];
 
-  // 'Eta' Function
-  Polynomial* eta    = new Polynomial[6];
+  // 'Eta' Functions
   for(int f = 0; f < 6; f++)
     eta[f] = lifting[face1[f]] - lifting[face4[f]];
 
-
-  // 'Lambda' Function
-  Polynomial* lambda = new Polynomial[6];
+  // 'Lambda' Functions
   for(int f = 0; f < 6; f++)
     lambda[f] = 
       (*basis)[face1[f]] +
@@ -152,6 +152,7 @@ HexNodeBasis::HexNodeBasis(const int order){
       (*basis)[face4[f]];
 
 
+  // Face Based //
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
       for(int f = 0; f < 6; f++){	
