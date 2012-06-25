@@ -43,7 +43,9 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
-
+#if defined(HAVE_ANN)
+#include <ANN/ANN.h>
+#endif
 
 
 static void copyMesh(GFace *source, GFace *target)
@@ -1447,7 +1449,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
     fprintf(f,"SP(%g,%g,%g) {%d};\n", p1[i].x(), p1[i].y(), 0.0, i);
   
   for (unsigned int j = 0; j < p2.size(); j++)
-    fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, j);
+    fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, 100+j);
   
   fprintf(f,"};\n");
   fclose(f);
@@ -1455,7 +1457,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   return;
   
 }
-static void createRegularTwoCircleGrid (GFace *gf)
+static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 {
 
   int nbBoundaries = gf->edges().size(); 
@@ -1468,20 +1470,45 @@ static void createRegularTwoCircleGrid (GFace *gf)
   GEdge *ge2 =  (*ite)->getCompound();
   int N1 = ge1->mesh_vertices.size() + 1;
   int N2 = ge2->mesh_vertices.size() + 1;
-  printf("nb mesh vertices N1 N2 =%d  %d \n",N1, N2);
+  printf("nb mesh vertices N =  %d \n",N1 );
   if (N1 != N2 || N1%2 != 0){
     Msg::Error("You should have a pair number of points specified in centerline field \n");
   }
 
-  std::vector<MVertex*> vert1;
+  std::vector<MVertex*> vert1, vert2;
   vert1.push_back(ge1->getBeginVertex()->mesh_vertices[0]);
-  for(unsigned int i = 0; i < N1-1; i++) vert1.push_back(ge1->mesh_vertices[i]);
-
-  std::vector<MVertex*> vert2;
   vert2.push_back(ge2->getBeginVertex()->mesh_vertices[0]);
-  for(unsigned int i = 0; i < N1-1; i++) vert2.push_back(ge2->mesh_vertices[i]);
+  for(unsigned int i = 0; i < N1-1; i++) {
+    vert1.push_back(ge1->mesh_vertices[i]);
+    vert2.push_back(ge2->mesh_vertices[i]);
+  }
 
-  printf("vert 1 =%d %d \n", vert1.size(), vert2.size());
+#if defined(HAVE_ANN)
+  ANNpointArray nodes = annAllocPts(N1, 3);
+  ANNidxArray index  = new ANNidx[1];
+  ANNdistArray dist = new ANNdist[1];
+  for (int ind = 0; ind < N1; ind++){
+    nodes[ind][0] =  vert2[ind]->x();
+    nodes[ind][1] =  vert2[ind]->y();
+    nodes[ind][2] =  vert2[ind]->z();
+  }
+  ANNkd_tree *kdtree = new ANNkd_tree(nodes, N1, 3);
+  double xyz[3] = {vert1[0]->x(),vert1[0]->y(),vert1[0]->z()};
+  kdtree->annkSearch(xyz, 1, index, dist);
+  int close_ind = index[0];
+  double length = sqrt(dist[0]);
+
+  double rad = center->operator()(vert1[0]->x(), vert1[0]->y(), vert1[0]->z());
+  double lc =  2*M_PI*rad/N1;
+  int M = length/lc;
+
+  printf("dist =%g ind =%d \n", length, close_ind);
+
+  delete kdtree;
+  delete[]index;
+  delete[]dist;
+  annDeallocPts(nodes);
+#endif;
 
   printParamGrid(gf, vert1, vert2);
 
@@ -1559,7 +1586,7 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
   if (center && recombine && nbBoundaries == 2) {
     printf("need for elliptic grid generator \n");
-    createRegularTwoCircleGrid(gf);
+    createRegularTwoCircleGrid(center, gf);
     //solveElliptic();
     return true;
   }
