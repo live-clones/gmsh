@@ -1425,7 +1425,11 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
   return true;
 }
-static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2)
+static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2, 
+			   std::vector<MVertex*> e01, std::vector<MVertex*> e10, 
+			   std::vector<MVertex*> e23, std::vector<MVertex*> e32, 
+			   std::vector<MVertex*> e02, std::vector<MVertex*> e13, 
+			   std::vector<MQuadrangle*> quads)
 {
 
   std::vector<SPoint2> p1,p2;
@@ -1439,6 +1443,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
     reparamMeshVertexOnFace(vert2[j], gf, pj);
     p2.push_back(pj);
   }
+
 
   char name[234];
   sprintf(name,"paramGrid_%d.pos", gf->tag());
@@ -1454,6 +1459,55 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   fprintf(f,"};\n");
   fclose(f);
 
+  char name2[234];
+  sprintf(name2,"paramEdges_%d.pos", gf->tag());
+  FILE *f2 = fopen(name2,"w");
+  fprintf(f2,"View \"%s\" {\n",name2);
+  
+  for (unsigned int i = 0; i < e01.size(); i++){
+     SPoint2 pi; reparamMeshVertexOnFace(e01[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 1);
+  }
+
+  for (unsigned int i = 0; i < e10.size(); i++){
+    SPoint2 pi; reparamMeshVertexOnFace(e10[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 10);
+  }
+
+  for (unsigned int i = 0; i < e23.size(); i++){
+    SPoint2 pi; reparamMeshVertexOnFace(e23[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 23);
+  }
+
+  for (unsigned int i = 0; i < e32.size(); i++){
+    SPoint2 pi; reparamMeshVertexOnFace(e32[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 32);
+  }
+
+  for (unsigned int i = 0; i < e02.size(); i++){
+    SPoint2 pi; reparamMeshVertexOnFace(e02[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 2);
+  }
+
+  for (unsigned int i = 0; i < e13.size(); i++){
+    SPoint2 pi; reparamMeshVertexOnFace(e13[i], gf, pi);
+    fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 13);
+  }
+  fprintf(f2,"};\n");
+  fclose(f2);
+
+
+  char name3[234];
+  sprintf(name3,"quad_%d.pos", gf->tag());
+  FILE *f3 = fopen(name3,"w");
+  fprintf(f3,"View \"%s\" {\n",name3);
+  for (unsigned int i = 0; i < quads.size(); i++){
+    quads[i]->writePOS(f3,true,false,false,false,false,false);
+  }
+  fprintf(f3,"};\n");
+  fclose(f3);
+
+ 
   return;
   
 }
@@ -1461,48 +1515,79 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 {
 
   int nbBoundaries = gf->edges().size(); 
-  printf("nb boundaries =%d  \n", nbBoundaries );
-  
+   
   std::list<GEdge*> bedges = gf->edges();
   std::list<GEdge*>::iterator itb = bedges.begin();
   std::list<GEdge*>::iterator ite = bedges.end(); ite--;
   GEdge *ge1 =  (*itb)->getCompound();
   GEdge *ge2 =  (*ite)->getCompound();
-  int N1 = ge1->mesh_vertices.size() + 1;
+  int N = ge1->mesh_vertices.size() + 1;
   int N2 = ge2->mesh_vertices.size() + 1;
-  printf("nb mesh vertices N =  %d \n",N1 );
-  if (N1 != N2 || N1%2 != 0){
+  if (N != N2 || N%2 != 0){
     Msg::Error("You should have a pair number of points specified in centerline field \n");
   }
 
-  std::vector<MVertex*> vert1, vert2;
+  //vert1 is the outer circle 
+  //vert2 is the inner circle
+  //         - - - -
+  //       -         -
+  //     -      -      -
+  //   v0-  v2-   -v3   -v1
+  //     -      -      -
+  //      -          -
+  //         - - - -
+
+  std::vector<MVertex*> vert1, vert2, vert_temp;
   vert1.push_back(ge1->getBeginVertex()->mesh_vertices[0]);
   vert2.push_back(ge2->getBeginVertex()->mesh_vertices[0]);
-  for(unsigned int i = 0; i < N1-1; i++) {
+  for(unsigned int i = 0; i < N-1; i++) {
     vert1.push_back(ge1->mesh_vertices[i]);
     vert2.push_back(ge2->mesh_vertices[i]);
   }
+  SPoint2 pv1; reparamMeshVertexOnFace(vert1[0], gf, pv1);
+  SPoint2 pv2; reparamMeshVertexOnFace(vert2[0], gf, pv2);
+  SPoint2 pv1b; reparamMeshVertexOnFace(vert1[1], gf, pv1b);
+  SPoint2 pv2b; reparamMeshVertexOnFace(vert2[1], gf, pv2b);
+  SPoint2 pv1c; reparamMeshVertexOnFace(vert1[2], gf, pv1c);
+  SPoint2 pv2c; reparamMeshVertexOnFace(vert2[2], gf, pv2c);
+  SVector3 vec1(pv1b.x()-pv1.x(),pv1b.y()-pv1.y() , 0.0);
+  SVector3 vec1b(pv1c.x()-pv1b.x(),pv1c.y()-pv1b.y() ,0.0);
+  SVector3 vec2(pv2b.x()-pv2.x(),pv2b.y()-pv2.y() ,0.0);
+  SVector3 vec2b(pv2c.x()-pv2b.x(),pv2c.y()-pv2b.y() , 0.0);
+  int sign2 =  (dot(crossprod(vec1,vec1b),crossprod(vec2,vec2b)) < 0)  ?   -1 : +1 ;
+  double n1 = sqrt(pv1.x()*pv1.x()+pv1.y()*pv1.y());
+  double n2 = sqrt(pv2.x()*pv2.x()+pv2.y()*pv2.y());
+  if (n2 > n1) {
+    vert_temp = vert1;
+    vert1.clear(); 
+    vert1 = vert2;
+    vert2.clear();
+    vert2 = vert_temp;
+  }
 
 #if defined(HAVE_ANN)
-  ANNpointArray nodes = annAllocPts(N1, 3);
+  ANNpointArray nodes = annAllocPts(N, 3);
   ANNidxArray index  = new ANNidx[1];
   ANNdistArray dist = new ANNdist[1];
-  for (int ind = 0; ind < N1; ind++){
-    nodes[ind][0] =  vert2[ind]->x();
-    nodes[ind][1] =  vert2[ind]->y();
-    nodes[ind][2] =  vert2[ind]->z();
+  for (int ind = 0; ind < N; ind++){
+    SPoint2 pp2; reparamMeshVertexOnFace(vert2[ind], gf, pp2);
+    nodes[ind][0] =  pp2.x();
+    nodes[ind][1] =  pp2.y();
+    nodes[ind][2] =  0.0;
   }
-  ANNkd_tree *kdtree = new ANNkd_tree(nodes, N1, 3);
-  double xyz[3] = {vert1[0]->x(),vert1[0]->y(),vert1[0]->z()};
+  ANNkd_tree *kdtree = new ANNkd_tree(nodes, N, 3);
+  SPoint2 pp1; reparamMeshVertexOnFace(vert1[0], gf, pp1);
+  double xyz[3] = {pp1.x(), pp1.y(),0.0};
   kdtree->annkSearch(xyz, 1, index, dist);
   int close_ind = index[0];
-  double length = sqrt(dist[0]);
+  double length = sqrt((vert1[0]->x()-vert2[close_ind]->x())*(vert1[0]->x()-vert2[close_ind]->x())+
+		       (vert1[0]->y()-vert2[close_ind]->y())*(vert1[0]->y()-vert2[close_ind]->y())+
+		       (vert1[0]->z()-vert2[close_ind]->z())*(vert1[0]->z()-vert2[close_ind]->z()));
 
   double rad = center->operator()(vert1[0]->x(), vert1[0]->y(), vert1[0]->z());
-  double lc =  2*M_PI*rad/N1;
+  double lc =  2*M_PI*rad/N;
   int M = length/lc;
-
-  printf("dist =%g ind =%d \n", length, close_ind);
+  printf("length =%g  arc=%g  \n", length,  2*M_PI*rad);
 
   delete kdtree;
   delete[]index;
@@ -1510,62 +1595,53 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   annDeallocPts(nodes);
 #endif;
 
-  printParamGrid(gf, vert1, vert2);
+  MVertex *v0 = vert1[0]; SPoint2 p0; reparamMeshVertexOnFace(v0, gf, p0);
+  MVertex *v1 = vert1[N/2]; SPoint2 p1; reparamMeshVertexOnFace(v1, gf, p1);
+  MVertex *v2 = vert2[close_ind]; SPoint2 p2; reparamMeshVertexOnFace(v2, gf, p2);
+  MVertex *v3 = vert2[(close_ind+N/2)%N]; SPoint2 p3; reparamMeshVertexOnFace(v3, gf, p3);
 
-  // std::vector<std::vector<MVertex*> > tab(M+2);
-  // for(int i = 0; i <= M+1; i++) tab[i].resize(N+2);
+  printf("grid N = %d M = %d\n", N , M);
+  printf("v2 =%d v3=%d \n", close_ind, (close_ind+N/2)%N);
+  std::vector<MVertex*> e01,e10,e23,e32;
+  for (int i=0;i<N/2;i++) e01.push_back(vert1[i]);
+  for (int i=N/2;i<N;i++) e10.push_back(vert1[i]);
+  for (int i=0;i<N/2;i++) e23.push_back(vert2[(close_ind+i)%N]);
+  for (int i=N/2;i<N;i++) e32.push_back(vert2[(close_ind+i)%N]);
+  
+  std::vector<MVertex*> e02 = saturateEdge (gf,p0,p2,M);
+  std::vector<MVertex*> e13 = saturateEdge (gf,p1,p3,M);
 
-  // tab[0][0] = v1;
-  // tab[0][N+1] = v2;
-  // tab[M+1][N+1] = v3;
-  // tab[M+1][0] = v4;
-  // for (int i=0;i<N;i++){
-  //   tab[0][i+1]   = sign12 > 0 ? e12 [i] : e12 [N-i-1];
-  //   tab[M+1][i+1] = sign34 < 0 ? e34 [i] : e34 [N-i-1];
-  // }
-  // for (int i=0;i<M;i++){
-  //   tab[i+1][N+1] = sign23 > 0 ? e23 [i] : e23 [M-i-1];
-  //   tab[i+1][0]   = sign41 < 0 ? e41 [i] : e41 [M-i-1];
-  // }
+  std::vector<MQuadrangle*> q;
+  std::vector<MVertex*> e_inner1 = e23;
+  std::vector<MVertex*> e_inner2 = e32;
+  if (sign2 <0){
+    e_inner1 = e32;
+    e_inner2 = e23;
+  }
+ 
+  createRegularMesh (gf,
+  		     v0, p0,
+  		     e01, +1,
+  		     v1,p1,
+  		     e13, +1,
+  		     v3,p3,
+		     e_inner1, -sign2,
+  		     v2,p2,
+  		     e02, -1,
+  		     q);
+  
+  createRegularMesh (gf,
+  		     v0,p0,
+  		     e02, +1,
+  		     v2,p2,
+  		     e_inner2, -sign2,
+  		     v3,p3,
+  		     e13, -1,
+  		     v1,p1,
+  		     e10, +1,
+  		     q);
 
-  // for (int i=0;i<N;i++){
-  //   for (int j=0;j<M;j++){
-  //     double u = (double) (i+1)/ ((double)(N+1));
-  //     double v = (double) (j+1)/ ((double)(M+1));
-  //     MVertex *v12 = (sign12 >0) ? e12[i] : e12 [N-1-i];
-  //     MVertex *v23 = (sign23 >0) ? e23[j] : e23 [M-1-j];
-  //     MVertex *v34 = (sign34 <0) ? e34[i] : e34 [N-1-i];
-  //     MVertex *v41 = (sign41 <0) ? e41[j] : e41 [M-1-j];
-  //     SPoint2 p12; reparamMeshVertexOnFace(v12, gf, p12);
-  //     SPoint2 p23; reparamMeshVertexOnFace(v23, gf, p23);
-  //     SPoint2 p34; reparamMeshVertexOnFace(v34, gf, p34);
-  //     SPoint2 p41; reparamMeshVertexOnFace(v41, gf, p41);
-  //     double Up = TRAN_QUA(p12.x(), p23.x(), p34.x(), p41.x(),
-  // 			   c1.x(),c2.x(),c3.x(),c4.x(),u,v);
-  //     double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
-  // 			   c1.y(),c2.y(),c3.y(),c4.y(),u,v);
-  //     // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
-  //     // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
-  //     // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
-  //     if ((p12.x() && p12.y() == -1.0) ||
-  //         (p23.x() && p23.y() == -1.0) ||
-  //         (p34.x() && p34.y() == -1.0) ||
-  //         (p41.x() && p41.y() == -1.0)) {
-  //       Msg::Error("Wrong param -1");
-  //       return;
-  //     }
-
-  //     MVertex *vnew = createNewVertex (gf, SPoint2(Up,Vp));
-  //     tab[j+1][i+1] = vnew;
-  //   }
-  // }
-  // // create quads
-  // for (int i=0;i<=N;i++){
-  //   for (int j=0;j<=M;j++){
-  //     MQuadrangle *qnew = new MQuadrangle (tab[j][i],tab[j][i+1],tab[j+1][i+1],tab[j+1][i]);
-  //     q.push_back(qnew);
-  //   }
-  // }
+  printParamGrid(gf, vert1, vert2, e01,e10,e23,e32,e02,e13, q);
 
 }
 

@@ -765,12 +765,12 @@ static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
 static MVertex * createNewVertex (GFace *gf, SPoint2 p){
   GPoint gp = gf->point(p);
   if (!gp.succeeded()) {
-    //printf("**** ARRG new vertex not created \n");
+    printf("******* ARRG new vertex not created p=%g %g \n", p.x(), p.y());
     return NULL;
   }
   return new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 }
-static std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, int n){
+std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, int n){
   std::vector<MVertex*> pts;
   for (int i=1;i<n;i++){
     SPoint2 p = p1 + (p2-p1)*((double)i/((double)(n)));
