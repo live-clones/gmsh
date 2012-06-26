@@ -1425,6 +1425,8 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
   return true;
 }
+
+
 static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2, 
 			   std::vector<MVertex*> e01, std::vector<MVertex*> e10, 
 			   std::vector<MVertex*> e23, std::vector<MVertex*> e32, 
@@ -1433,12 +1435,12 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 {
 
   std::vector<SPoint2> p1,p2;
-  for (int i = 0; i< vert1.size(); i++){
+  for (unsigned int i = 0; i< vert1.size(); i++){
     SPoint2 pi;
     reparamMeshVertexOnFace(vert1[i], gf, pi);
     p1.push_back(pi);
   }
-  for (int j = 0; j< vert2.size(); j++){
+  for (unsigned int j = 0; j< vert2.size(); j++){
     SPoint2 pj;
     reparamMeshVertexOnFace(vert2[j], gf, pj);
     p2.push_back(pj);
@@ -1514,8 +1516,6 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 {
 
-  int nbBoundaries = gf->edges().size(); 
-   
   std::list<GEdge*> bedges = gf->edges();
   std::list<GEdge*>::iterator itb = bedges.begin();
   std::list<GEdge*>::iterator ite = bedges.end(); ite--;
@@ -1540,7 +1540,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   std::vector<MVertex*> vert1, vert2, vert_temp;
   vert1.push_back(ge1->getBeginVertex()->mesh_vertices[0]);
   vert2.push_back(ge2->getBeginVertex()->mesh_vertices[0]);
-  for(unsigned int i = 0; i < N-1; i++) {
+  for(int i = 0; i < N-1; i++) {
     vert1.push_back(ge1->mesh_vertices[i]);
     vert2.push_back(ge2->mesh_vertices[i]);
   }
@@ -1602,11 +1602,11 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 
   printf("grid N = %d M = %d\n", N , M);
   printf("v2 =%d v3=%d \n", close_ind, (close_ind+N/2)%N);
-  std::vector<MVertex*> e01,e10,e23,e32;
-  for (int i=0;i<N/2;i++) e01.push_back(vert1[i]);
-  for (int i=N/2;i<N;i++) e10.push_back(vert1[i]);
-  for (int i=0;i<N/2;i++) e23.push_back(vert2[(close_ind+i)%N]);
-  for (int i=N/2;i<N;i++) e32.push_back(vert2[(close_ind+i)%N]);
+  std::vector<MVertex*> e01,e10,e23,e32;//edges without first and last vertex
+  for (int i=1;i<N/2-1;i++) e01.push_back(vert1[i]);
+  for (int i=N/2+1;i<N-1;i++) e10.push_back(vert1[i]);
+  for (int i=1;i<N/2-1;i++) e23.push_back(vert2[(close_ind+i)%N]);
+  for (int i=N/2+1;i<N-1;i++) e32.push_back(vert2[(close_ind+i)%N]);
   
   std::vector<MVertex*> e02 = saturateEdge (gf,p0,p2,M);
   std::vector<MVertex*> e13 = saturateEdge (gf,p1,p3,M);
