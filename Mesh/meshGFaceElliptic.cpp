@@ -158,7 +158,7 @@ static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,  std::vector<M
   for (int i = 0; i < MM; i++){
     for (int j = 0; j < NN; j++){
       GPoint gp = gf->point(uv(i,j));
-      if (!gp.succeeded()) printf("** AH new vertex not created p=%g %g \n", uv(i,j).x(), uv(i,j).y());
+      if (!gp.succeeded()) printf("** QUADS FROM UV new vertex not created p=%g %g \n", uv(i,j).x(), uv(i,j).y());
       MVertex *vnew = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
       tab[i][j] = vnew;
       if (i != 0 && j != 0 && i != uv.size1()-1 && j != uv.size2()-1)
@@ -194,7 +194,7 @@ static std::vector<MVertex*> saturateEdgeRegular (GFace *gf, SPoint2 p1, SPoint2
     pe.push_back(p);
 
     GPoint gp = gf->point(p);
-    if (!gp.succeeded()) printf("** AH new vertex not created p=%g %g \n", p.x(), p.y());
+    if (!gp.succeeded()) printf("** SATURATE EDGE new vertex not created p=%g %g \n", p.x(), p.y());
     MVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 
     if (!v){ pts.clear(); pts.resize(0); return pts;}
@@ -269,12 +269,12 @@ static void createRegularGrid (GFace *gf,
 			       std::vector<MVertex*> &newv,
 			       fullMatrix<SPoint2> &uv)
 {
-  int N = e12.size();
+ 
   int M = e23.size();
+  int N = e12.size();
 
   uv.resize(M+2,N+2);
-  printf("uv =%d %d \n", uv.size1(), uv.size2());
-
+ 
   char name3[234];
   sprintf(name3,"quadParam_%d.pos", gf->tag());
   FILE *f3 = fopen(name3,"w");
@@ -331,7 +331,7 @@ static void createRegularGrid (GFace *gf,
       SPoint2 pij(Up,Vp);
 
       GPoint gp = gf->point(pij);
-      if (!gp.succeeded()) printf("** AH new vertex not created p=%g %g \n", Up, Vp);
+      if (!gp.succeeded()) printf("** INITIAL GRID new vertex not created p=%g %g \n", Up, Vp);
       MVertex *vnew = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
       newv.push_back(vnew);
 
@@ -444,7 +444,7 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   double arc = 2*M_PI*rad;
   double lc =  arc/N;
   int M = length/lc;
-  printf("length =%g  arc=%g  \n", length,  arc);
+  //printf("length =%g  arc=%g  \n", length,  arc);
 
   delete kdtree;
   delete[]index;
@@ -457,7 +457,6 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   MVertex *v3 = vert2[(close_ind+N/2)%N]; SPoint2 p3; reparamMeshVertexOnFace(v3, gf, p3);
 
   printf("grid N = %d M = %d\n", N , M);
-  //printf("v2 =%d v3=%d \n", close_ind, (close_ind+N/2)%N);
   std::vector<MVertex*> e01,e10,e23,e32;//edges without first and last vertex
   for (int i=1;i<N/2;i++) e01.push_back(vert1[i]);
   for (int i=N/2+1;i<N;i++) e10.push_back(vert1[i]);
@@ -479,9 +478,6 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   std::vector<SPoint2> pe02, pe13;
   std::vector<MVertex*> e02 = saturateEdgeRegular (gf,p0,p2,length, arc, M+1, pe02);
   std::vector<MVertex*> e13 = saturateEdgeRegular (gf,p1,p3,length, arc, M+1, pe13);
-
-  printf("N/2 edges size =%d %d \n", pe01.size(), pe10.size());
-  printf("M edges size =%d %d \n", pe02.size(), pe13.size());
 
   std::vector<MVertex*> e_inner1 = e23;
   std::vector<MVertex*> e_inner2 = e32;
