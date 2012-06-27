@@ -496,8 +496,8 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
     pe_inner2 = pe23;
   }
 
-  std::vector<MQuadrangle*> quads, smoothQuad;
-  std::vector<MVertex*> newv, smoothv;
+  std::vector<MQuadrangle*> quads, quadS1, quadS2;
+  std::vector<MVertex*> newv, newv1, newv2;
   fullMatrix<SPoint2> uv1, uv2;
   createRegularGrid (gf,
   		     v0, p0,
@@ -510,8 +510,9 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   		     e02, pe02, -1,
   		     quads, newv, uv1);
 
-  printQuads(gf, uv1, quads, 0);
-  ellipticSmoother(uv1, gf, smoothQuad, smoothv);
+  //updateFaceQuads(gf, quads, newv);
+  //printQuads(gf, uv1, quads, 0);
+  ellipticSmoother(uv1, gf, quadS1, newv1);
   
   createRegularGrid (gf,
   		     v0,p0,
@@ -523,11 +524,14 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   		     v1,p1,
   		     e10, pe10, +1,
   		     quads, newv, uv2);
+  
+  ellipticSmoother(uv2, gf, quadS2, newv2);
 
-  //updateFaceQuads(gf, quads, newv);
-  //ellipticSmoother
-
+  quads.clear();
+  for (int i= 0; i< quadS1.size(); i++) quads.push_back(quadS1[i]);
+  for (int i= 0; i< quadS2.size(); i++) quads.push_back(quadS2[i]);
   printParamGrid(gf, vert1, vert2, e01,e10,e23,e32,e02,e13, quads);
+
   return true;
 
 }
