@@ -791,9 +791,7 @@ std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, int n){
   |       |      |    |      |
   +--------------------------+
  c1                          c2
-
              N
-
 */
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
     (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
@@ -812,6 +810,11 @@ void createRegularMesh (GFace *gf,
 {
   int N = e12.size();
   int M = e23.size();
+
+ char name3[234];
+  sprintf(name3,"quadParam_%d.pos", gf->tag());
+  FILE *f3 = fopen(name3,"w");
+  fprintf(f3,"View \"%s\" {\n",name3);
 
   //create points using transfinite interpolation
 
@@ -847,6 +850,8 @@ void createRegularMesh (GFace *gf,
 			   c1.x(),c2.x(),c3.x(),c4.x(),u,v);
       double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
 			   c1.y(),c2.y(),c3.y(),c4.y(),u,v);
+      fprintf(f3,"SP(%g,%g,%g) {%d};\n", Up, Vp, 0.0, 1.);
+ 
       // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
       // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
       // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
@@ -869,6 +874,10 @@ void createRegularMesh (GFace *gf,
       q.push_back(qnew);
     }
   }
+
+  fprintf(f3,"};\n");
+  fclose(f3);
+
 }
 
 void updateQuadCavity (GFace *gf,
@@ -1845,8 +1854,8 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
 }
 #endif
 
-static void _relocateVertex(GFace *gf, MVertex *ver,
-                            const std::vector<MElement*> &lt)
+void _relocateVertex(GFace *gf, MVertex *ver,
+		     const std::vector<MElement*> &lt)
 {
   double R;
   SPoint3 c;

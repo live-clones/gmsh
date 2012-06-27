@@ -8,6 +8,7 @@ set(SRC
     meshGEdge.cpp 
       meshGEdgeExtruded.cpp
     meshGFace.cpp 
+    meshGFaceElliptic.cpp
       meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
       meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp 
       meshGFaceLloyd.cpp meshGFaceOptimize.cpp 

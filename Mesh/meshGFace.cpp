@@ -25,6 +25,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "CenterlineField.h"
+#include "meshGFaceElliptic.h"
 #include "Context.h"
 #include "GPoint.h"
 #include "GmshMessage.h"
@@ -43,10 +44,6 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
-#if defined(HAVE_ANN)
-#include <ANN/ANN.h>
-#endif
-
 
 static void copyMesh(GFace *source, GFace *target)
 {
@@ -1643,6 +1640,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 #endif;
 }
 
+>>>>>>> .r12521
 static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 {
 #if defined(HAVE_ANN)
@@ -1658,10 +1656,10 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
   //printf(" nbBounds = %d  (face %d) \n", nbBoundaries, gf->tag());
 
   if (center && recombine && nbBoundaries == 2) {
-    printf("need for elliptic grid generator \n");
-    createRegularTwoCircleGrid(center, gf);
+    printf("--> need for elliptic grid generator \n");
+    bool success  = createRegularTwoCircleGrid(center, gf);
     //solveElliptic();
-    return true;
+    return success;
   }
   else return false;
 
@@ -2108,9 +2106,10 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Generating the mesh");
 
   if(meshGeneratorElliptic(gf)){
-    printf("elliptic grid generator for face %d  \n", gf->tag());
+    printf("--> elliptic grid generator for face %d done \n", gf->tag());
+    //return;
   }
-  //else if
+
   if ((gf->getNativeType() != GEntity::AcisModel ||
        (!gf->periodic(0) && !gf->periodic(1))) &&
       (noSeam(gf) || gf->getNativeType() == GEntity::GmshModel ||

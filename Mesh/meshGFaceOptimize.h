@@ -58,17 +58,8 @@ void buildEdgeToElements(std::vector<MElement*> &tris, e2t_cont &adj);
 
 void laplaceSmoothing(GFace *gf, int niter=1);
 
-void createRegularMesh (GFace *gf,
-			 MVertex *v1, SPoint2 &c1,
-			 std::vector<MVertex*> &e12, int sign12,
-			 MVertex *v2, SPoint2 &c2,
-			 std::vector<MVertex*> &e23, int sign23,
-			 MVertex *v3, SPoint2 &c3,
-			 std::vector<MVertex*> &e34, int sign34,
-			 MVertex *v4, SPoint2 &c4,
-			 std::vector<MVertex*> &e41, int sign41,
-			std::vector<MQuadrangle*> &q);
-std::vector<MVertex*> saturateEdge (GFace *gf, SPoint2 p1, SPoint2 p2, int n);
+void _relocateVertex(GFace *gf, MVertex *ver,
+		     const std::vector<MElement*> &lt);
 
 /*
 void edgeSwappingLawson(GFace *gf);
