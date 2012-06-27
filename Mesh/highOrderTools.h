@@ -31,7 +31,7 @@ class highOrderTools
   // contains the position of vertices in a straight sided mesh
   std::map<MVertex*,SVector3> _straightSidedLocation;
   // contains the position of vertices in the best curvilinear mesh
-  // available 
+  // available
   std::map<MVertex*,SVector3> _targetLocation;
   int _dim;
   void _clean()
@@ -39,13 +39,13 @@ class highOrderTools
     _straightSidedLocation.clear();
     _targetLocation.clear();
   }
-  double smooth_metric_(std::vector<MElement*>  & v, 
-			GFace *gf, 
+  double smooth_metric_(std::vector<MElement*>  & v,
+			GFace *gf,
 			dofManager<double> &myAssembler,
 			std::set<MVertex*> &verticesToMove,
 			elasticityTerm &El);
-  void computeMetricInfo(GFace *gf, 
-			 MElement *e, 
+  void computeMetricInfo(GFace *gf,
+			 MElement *e,
 			 fullMatrix<double> &J,
 			 fullMatrix<double> &JT,
 			 fullVector<double> &D);
@@ -57,7 +57,7 @@ class highOrderTools
 					 std::vector<MElement*> & disto);
   void moveToStraightSidedLocation(MElement *) const;
   void computeStraightSidedPositions ();
- public:  
+ public:
   highOrderTools(GModel *gm);
   highOrderTools(GModel *gm, GModel *mesh, int order);
   //  void applyGlobalSmoothing ();
@@ -93,6 +93,9 @@ class highOrderTools
   }
   void applyGlobalSmoothing (){}
   void ensureMinimumDistorsion (double threshold){}
+  double applySmoothingTo (GFace *gf, double tres = 0.1, bool mixed = false){ return 0.; }
+  void applySmoothingTo(std::vector<MElement*> & all, GFace *gf){}
+  double applySmoothingTo (std::vector<MElement*> &all,  double threshold, bool mixed){ return 0.; }
 };
 
 #endif

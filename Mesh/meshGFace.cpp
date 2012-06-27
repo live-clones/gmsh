@@ -1427,10 +1427,10 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 }
 
 
-static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2, 
-			   std::vector<MVertex*> e01, std::vector<MVertex*> e10, 
-			   std::vector<MVertex*> e23, std::vector<MVertex*> e32, 
-			   std::vector<MVertex*> e02, std::vector<MVertex*> e13, 
+static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2,
+			   std::vector<MVertex*> e01, std::vector<MVertex*> e10,
+			   std::vector<MVertex*> e23, std::vector<MVertex*> e32,
+			   std::vector<MVertex*> e02, std::vector<MVertex*> e13,
 			   std::vector<MQuadrangle*> quads)
 {
 
@@ -1451,13 +1451,13 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   sprintf(name,"paramGrid_%d.pos", gf->tag());
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"%s\" {\n",name);
-  
+
   for (unsigned int i = 0; i < p1.size(); i++)
     fprintf(f,"SP(%g,%g,%g) {%d};\n", p1[i].x(), p1[i].y(), 0.0, i);
-  
+
   for (unsigned int j = 0; j < p2.size(); j++)
     fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, 100+j);
-  
+
   fprintf(f,"};\n");
   fclose(f);
 
@@ -1465,7 +1465,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   sprintf(name2,"paramEdges_%d.pos", gf->tag());
   FILE *f2 = fopen(name2,"w");
   fprintf(f2,"View \"%s\" {\n",name2);
-  
+
   for (unsigned int i = 0; i < e01.size(); i++){
      SPoint2 pi; reparamMeshVertexOnFace(e01[i], gf, pi);
     fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 1);
@@ -1509,13 +1509,13 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   fprintf(f3,"};\n");
   fclose(f3);
 
- 
+
   return;
-  
+
 }
 static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 {
-
+#if defined(HAVE_ANN)
   std::list<GEdge*> bedges = gf->edges();
   std::list<GEdge*>::iterator itb = bedges.begin();
   std::list<GEdge*>::iterator ite = bedges.end(); ite--;
@@ -1527,7 +1527,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
     Msg::Error("You should have a pair number of points specified in centerline field \n");
   }
 
-  //vert1 is the outer circle 
+  //vert1 is the outer circle
   //vert2 is the inner circle
   //         - - - -
   //       -         -
@@ -1559,13 +1559,12 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   double n2 = sqrt(pv2.x()*pv2.x()+pv2.y()*pv2.y());
   if (n2 > n1) {
     vert_temp = vert1;
-    vert1.clear(); 
+    vert1.clear();
     vert1 = vert2;
     vert2.clear();
     vert2 = vert_temp;
   }
 
-#if defined(HAVE_ANN)
   ANNpointArray nodes = annAllocPts(N, 3);
   ANNidxArray index  = new ANNidx[1];
   ANNdistArray dist = new ANNdist[1];
@@ -1593,7 +1592,6 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   delete[]index;
   delete[]dist;
   annDeallocPts(nodes);
-#endif;
 
   MVertex *v0 = vert1[0]; SPoint2 p0; reparamMeshVertexOnFace(v0, gf, p0);
   MVertex *v1 = vert1[N/2]; SPoint2 p1; reparamMeshVertexOnFace(v1, gf, p1);
@@ -1607,7 +1605,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   for (int i=N/2+1;i<N-1;i++) e10.push_back(vert1[i]);
   for (int i=1;i<N/2-1;i++) e23.push_back(vert2[(close_ind+i)%N]);
   for (int i=N/2+1;i<N-1;i++) e32.push_back(vert2[(close_ind+i)%N]);
-  
+
   std::vector<MVertex*> e02 = saturateEdge (gf,p0,p2,M);
   std::vector<MVertex*> e13 = saturateEdge (gf,p1,p3,M);
 
@@ -1618,7 +1616,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
     e_inner1 = e32;
     e_inner2 = e23;
   }
- 
+
   createRegularMesh (gf,
   		     v0, p0,
   		     e01, +1,
@@ -1629,7 +1627,7 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   		     v2,p2,
   		     e02, -1,
   		     q);
-  
+
   createRegularMesh (gf,
   		     v0,p0,
   		     e02, +1,
@@ -1642,12 +1640,11 @@ static void createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   		     q);
 
   printParamGrid(gf, vert1, vert2, e01,e10,e23,e32,e02,e13, q);
-
+#endif;
 }
 
 static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 {
-
 #if defined(HAVE_ANN)
   Centerline *center = 0;
   FieldManager *fields = GModel::current()->getFields();
@@ -1655,9 +1652,9 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
     Field *myField = fields->get(fields->getBackgroundField());
     center = dynamic_cast<Centerline*> (myField);
   }
-  
+
   bool recombine =  (CTX::instance()->mesh.recombineAll);
-  int nbBoundaries = gf->edges().size(); 
+  int nbBoundaries = gf->edges().size();
   //printf(" nbBounds = %d  (face %d) \n", nbBoundaries, gf->tag());
 
   if (center && recombine && nbBoundaries == 2) {
@@ -1668,8 +1665,9 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
   }
   else return false;
 
+#else
+  return false;
 #endif
-
 }
 
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
