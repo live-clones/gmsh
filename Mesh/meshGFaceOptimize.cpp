@@ -850,8 +850,8 @@ void createRegularMesh (GFace *gf,
 			   c1.x(),c2.x(),c3.x(),c4.x(),u,v);
       double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
 			   c1.y(),c2.y(),c3.y(),c4.y(),u,v);
-      fprintf(f3,"SP(%g,%g,%g) {%d};\n", Up, Vp, 0.0, 1.);
- 
+      fprintf(f3,"SP(%g,%g,%g) {%d};\n", Up, Vp, 0.0, 1);
+
       // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
       // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
       // printf("p1=%g %g, p2=%g %g, p3=%g %g, p4=%g,%g \n", p12.x(),p12.x(),p23.x(),p23.y(),p34.x(),p34.y(),p41.x(),p41.y());
