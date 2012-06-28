@@ -96,6 +96,9 @@ GModel::~GModel()
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
+
+  if(_factory) 
+    delete _factory;
 }
 
 GModel *GModel::current(int index)
