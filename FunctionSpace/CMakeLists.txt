@@ -18,12 +18,6 @@ set(SRC
   HexNodeBasis.cpp
   HexEdgeBasis.cpp
 
-  LocalFunctionSpace.cpp
-  LocalFunctionSpaceScalar.cpp
-  LocalFunctionSpaceVector.cpp
-  LocalFunctionSpace0Form.cpp
-  LocalFunctionSpace1Form.cpp
-
   FunctionSpace.cpp
 )
 
