@@ -19,6 +19,7 @@ class Centerline;
 
 
 bool createRegularTwoCircleGrid (Centerline *center, GFace *gf);
+bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf);
 
 
 #endif

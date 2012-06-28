@@ -1435,12 +1435,11 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
   bool recombine =  (CTX::instance()->mesh.recombineAll);
   int nbBoundaries = gf->edges().size();
-  //printf(" nbBounds = %d  (face %d) \n", nbBoundaries, gf->tag());
 
   if (center && recombine && nbBoundaries == 2) {
     printf("--> need for elliptic grid generator \n");
-    bool success  = createRegularTwoCircleGrid(center, gf);
-    //solveElliptic();
+    //bool success  = createRegularTwoCircleGrid(center, gf);
+    bool success  = createRegularTwoCircleGridPeriodic(center, gf);
     return success;
   }
   else return false;
@@ -1889,6 +1888,7 @@ void meshGFace::operator() (GFace *gf, bool print)
 
   if(meshGeneratorElliptic(gf)){
     printf("--> elliptic grid generator for face %d done \n", gf->tag());
+    //gf->meshStatistics.status = GFace::DONE;
     //return;
   }
 
