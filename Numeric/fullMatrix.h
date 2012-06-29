@@ -31,6 +31,13 @@ class fullVector
     _data = new scalar[_r];
     setAll(scalar(0.));
   }
+  
+  fullVector(scalar *original, int r)
+  {
+    _r = r;
+    _own_data = false;
+    _data = original;
+  }
   fullVector(const fullVector<scalar> &other) : _r(other._r),_own_data(1)
   {
     _data = new scalar[_r];
