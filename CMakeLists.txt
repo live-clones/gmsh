@@ -97,7 +97,7 @@ set(GMSH_API
     Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
     Geo/Homology.h Geo/Chain.h Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
-  Mesh/MeshGFaceElliptic.h Mesh/meshPartition.h
+  Mesh/meshGFaceElliptic.h Mesh/meshPartition.h
     Mesh/meshGFaceDelaunayInsertion.h Mesh/simple3D.h Mesh/meshPartitionOptions.h 
     Mesh/directions3D.h Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h
   Numeric/mathEvaluator.h
