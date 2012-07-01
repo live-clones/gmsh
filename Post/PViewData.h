@@ -225,6 +225,9 @@ class PViewData {
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }
 
+  // is the view a list-based dataset
+  virtual bool isListBased(){ return false; }
+
   // get GModel (if view supports it)
   virtual GModel *getModel(int step);
 

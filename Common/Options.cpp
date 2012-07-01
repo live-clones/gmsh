@@ -1920,6 +1920,34 @@ double opt_general_field_size1(OPT_ARGS_NUM)
   return CTX::instance()->fieldSize[1];
 }
 
+double opt_general_extra_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->extraPosition[0] = (int)val;
+  return CTX::instance()->extraPosition[0];
+}
+
+double opt_general_extra_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->extraPosition[1] = (int)val;
+  return CTX::instance()->extraPosition[1];
+}
+
+double opt_general_extra_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->extraSize[0] = (int)val;
+  return CTX::instance()->extraSize[0];
+}
+
+double opt_general_extra_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->extraSize[1] = (int)val;
+  return CTX::instance()->extraSize[1];
+}
+
 double opt_general_statistics_position0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

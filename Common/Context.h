@@ -105,7 +105,7 @@ class CTX {
   int optPosition[2], visPosition[2], hotPosition[2], clipPosition[2], manipPosition[2];
   int statPosition[2], ctxPosition[2], solverPosition[2], solverSize[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];
-  int fileChooserPosition[2];
+  int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write

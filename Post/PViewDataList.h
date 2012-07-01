@@ -115,6 +115,7 @@ class PViewDataList : public PViewData {
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
   void setXY(std::vector<double> &x, std::vector<double> &y);
+  bool isListBased(){ return true; }
 
   // specific to list-based data sets
   void setOrder2(int type);

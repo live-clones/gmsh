@@ -360,6 +360,14 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ExpertMode" , opt_general_expert_mode, 0. ,
     "Enable expert mode (to disable all the messages meant for inexperienced "
     "users)" },
+  { F|S, "ExtraPositionX" , opt_general_extra_position0 , 650. ,
+    "Horizontal position (in pixels) of the upper left corner of the generic extra window" },
+  { F|S, "ExtraPositionY" , opt_general_extra_position1 , 350. ,
+    "Vertical position (in pixels) of the upper left corner of the generic extra window" },
+  { F|S, "ExtraHeight" , opt_general_extra_size1 , 100. ,
+    "Height (in pixels) of the generic extra window" },
+  { F|S, "ExtraWidth" , opt_general_extra_size0 , 100. ,
+    "Width (in pixels) of the generic extra window" },
 
  { F|O, "FastRedraw" , opt_general_fast_redraw, 0. ,
     "Draw simplified model while rotating, panning and zooming" },

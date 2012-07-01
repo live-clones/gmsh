@@ -49,6 +49,9 @@ typedef unsigned long intptr_t;
 #include "StringUtils.h"
 #include "Generator.h"
 #include "gl2ps.h"
+#if defined(HAVE_3M)
+#include "3M.h"
+#endif
 
 // check (now!) if there are any pending events, and process them
 void FlGui::check(){ Fl::check(); }
@@ -860,6 +863,10 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->solverSize[0] = onelab->w();
   CTX::instance()->solverSize[1] = onelab->h();
 #endif
+#if defined(HAVE_3M)
+  storeWindowPosition3M();
+#endif
+
   fileChooserGetPosition(&CTX::instance()->fileChooserPosition[0],
                          &CTX::instance()->fileChooserPosition[1]);
 }
