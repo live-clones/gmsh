@@ -80,6 +80,19 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   bool space = (opt->type == PViewOptions::Plot2D ||
                 opt->type == PViewOptions::Plot2DSpace);
 
+  int which2d = 0;
+  if(opt->type == PViewOptions::Plot2D){
+    SBoundingBox3d bbox = p->getData()->getBoundingBox();
+    SPoint3 min = bbox.min();
+    SPoint3 max = bbox.max();
+    if(fabs(max.y() - min.y()) > fabs(max.x() - min.x()) &&
+       fabs(max.y() - min.y()) > fabs(max.z() - min.z()))
+      which2d = 1;
+    else if(fabs(max.z() - min.z()) > fabs(max.x() - min.x()) &&
+            fabs(max.z() - min.z()) > fabs(max.y() - min.y()))
+      which2d = 2;
+  }
+
   SPoint3 p0(0., 0., 0.);
 
   numy = 0;
@@ -113,7 +126,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
           double vy = ComputeScalarRep(numComp, val);
 
           if(opt->type == PViewOptions::Plot2D){
-            x.push_back(xyz[0]);
+            x.push_back(xyz[which2d]);
             y[0].push_back(vy);
           }
           else if(opt->type == PViewOptions::Plot2DSpace){
