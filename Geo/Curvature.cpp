@@ -1261,11 +1261,11 @@ void Curvature::computeCurvature_RBF()
   std::vector<MVertex*> _ordered;
   std::map<MVertex*, double> curvRBF;
   //GLOBAL
-  GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered); 
-  _rbf->computeCurvature(_rbf->getXYZ(),curvRBF);
+  //GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered); 
+  //_rbf->computeCurvature(_rbf->getXYZ(),curvRBF);
   //LOCAL FD
-  //GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered, true); 
-  //_rbf->computeLocalCurvature(_rbf->getXYZ(),curvRBF);
+  GRbf *_rbf = new GRbf(sizeBox, 0, 1, _normals, allNodes, _ordered, true); 
+  _rbf->computeLocalCurvature(_rbf->getXYZ(),curvRBF);
 
   //fill vertex curve
   _VertexCurve.resize( _VertexToInt.size() );

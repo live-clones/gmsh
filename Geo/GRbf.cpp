@@ -148,7 +148,9 @@ GRbf::GRbf(double sizeBox, int variableEps, int rbfFun,
     index++;
   }
 
-  delta = 0.33*dist_min;//0.33
+  delta = dist_min/10.0;//0.33
+
+  //radius = 1.0/15.0 //curvature setting
   radius= 1.0/6.0; //size 1 is non dim size
 
   Msg::Info("*****************************************");
@@ -236,6 +238,8 @@ void GRbf::buildOctree(double radius)
 void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
 			fullMatrix<double> &curvature)
 {
+	
+	
   fullMatrix<double> extX, surf, sx,sy,sz, sxx,syy,szz, sxy,sxz,syz,sLap;
   setup_level_set(cntrs,normals,extX, surf);
 
@@ -249,17 +253,36 @@ void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
     double curv = -sLap(i,0)/norm_grad_s;
     curvature(i,0) = 0.5*fabs(curv)/sBox;
   }
+	
+	
+	
 }
 
 void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
 			    std::map<MVertex*, double> &rbf_curv)
 {
-  fullMatrix<double> curvature(cntrs.size1(), 1);
-  curvatureRBF(cntrs, curvature);
+  fullMatrix<double> extX, surf, sx,sy,sz, allsx,allsy,allsz;
+  setup_level_set(cntrs,normals,extX, surf);
+  // Find derivatives of the surface interpolant
+  evalRbfDer(1,extX,extX,surf,sx);
+  evalRbfDer(2,extX,extX,surf,sy);
+  evalRbfDer(3,extX,extX,surf,sz);
+  
+  for (int i = 0; i < extX.size1(); i++) {
+    double norm_grad_s = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
+    sx(i,0) = sx(i,0)/norm_grad_s;
+    sy(i,0) = sy(i,0)/norm_grad_s;
+    sz(i,0) = sz(i,0)/norm_grad_s;
+  }
 
-  //interpolate
   fullMatrix<double> curvatureAll(allCenters.size1(), 1);
-  evalRbfDer(0,cntrs,allCenters,curvature,curvatureAll);
+  evalRbfDer(1,extX,allCenters,sx,allsx);
+  evalRbfDer(2,extX,allCenters,sy,allsy);
+  evalRbfDer(3,extX,allCenters,sz,allsz);
+
+  for (int i = 0; i < allCenters.size1(); i++) {
+    curvatureAll(i,0) = 0.5*(allsx(i,0)+allsy(i,0)+allsz(i,0))/sBox;
+  }
 
   //fill rbf_curv
   std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
@@ -273,28 +296,85 @@ void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
 void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
 				 std::map<MVertex*, double> &rbf_curv)
 {
+  fullMatrix<double> extX, surf;  
   int numNodes = cntrs.size1();
+  int numExtNodes = 3*numNodes;
+  setup_level_set(cntrs,normals,extX, surf);
 
   if(nodesInSphere.size() == 0) buildOctree(radius);
   fullMatrix<double> curvature(cntrs.size1(), 1);
-
+  fullMatrix<double> Dx(numExtNodes,numExtNodes),Dy(numExtNodes,numExtNodes),Dz(numExtNodes,numExtNodes),tempX,tempY,tempZ,sx(numExtNodes,1),sy(numExtNodes,1),sz(numExtNodes,1);
+  fullMatrix<double> cluster_center(3,3);
   for (int i = 0; i < numNodes; ++i) {
     std::vector<int> &pts = nodesInSphere[i];
+    int cluster_size = pts.size();
+    fullMatrix<double> nodes_in_sph(3*cluster_size,3);
+    
+    cluster_center(0,0) = extX(i,0);
+    cluster_center(0,1) = extX(i,1);
+    cluster_center(0,2) = extX(i,2);
 
-    fullMatrix<double> nodes_in_sph(pts.size(),3);
-    fullMatrix<double> LocalOper;
+    cluster_center(1,0) = extX(i+numNodes,0);
+    cluster_center(1,1) = extX(i+numNodes,1);
+    cluster_center(1,2) = extX(i+numNodes,2);
 
-    for (unsigned int k = 0; k < pts.size(); k++){
-      nodes_in_sph(k,0) = cntrs(pts[k],0);
-      nodes_in_sph(k,1) = cntrs(pts[k],1);
-      nodes_in_sph(k,2) = cntrs(pts[k],2);
+    cluster_center(2,0) = extX(i+2*numNodes,0);
+    cluster_center(2,1) = extX(i+2*numNodes,1);
+    cluster_center(2,2) = extX(i+2*numNodes,2);
+
+    for (int k=0; k< cluster_size; k++){
+      nodes_in_sph(k,0) = extX(pts[k],0);
+      nodes_in_sph(k,1) = extX(pts[k],1);
+      nodes_in_sph(k,2) = extX(pts[k],2);
+
+      nodes_in_sph(k+cluster_size,0) = extX(pts[k]+numNodes,0);
+      nodes_in_sph(k+cluster_size,1) = extX(pts[k]+numNodes,1);
+      nodes_in_sph(k+cluster_size,2) = extX(pts[k]+numNodes,2);
+
+      nodes_in_sph(k+2*cluster_size,0) = extX(pts[k]+2*numNodes,0);
+      nodes_in_sph(k+2*cluster_size,1) = extX(pts[k]+2*numNodes,1);
+      nodes_in_sph(k+2*cluster_size,2) = extX(pts[k]+2*numNodes,2);
     }
 
-    fullMatrix<double> curv(pts.size(), 1);
-    curvatureRBF(nodes_in_sph,curv);
-    curvature(i,0) = curv(0,0);
+    RbfOp(1,nodes_in_sph,cluster_center,tempX);
+    RbfOp(2,nodes_in_sph,cluster_center,tempY);
+    RbfOp(3,nodes_in_sph,cluster_center,tempZ);
+
+    for (int k=0; k< cluster_size; k++){
+      for (int j=0; j< 3; j++){
+	Dx(i+j*numNodes,pts[k]) = tempX(j,k);
+	Dy(i+j*numNodes,pts[k]) = tempY(j,k);
+	Dz(i+j*numNodes,pts[k]) = tempZ(j,k);
+	
+	Dx(i+j*numNodes,pts[k]+numNodes) = tempX(j,k+cluster_size);
+	Dy(i+j*numNodes,pts[k]+numNodes) = tempY(j,k+cluster_size);
+	Dz(i+j*numNodes,pts[k]+numNodes) = tempZ(j,k+cluster_size);
+	
+	Dx(i+j*numNodes,pts[k]+2*numNodes) = tempX(j,k+2*cluster_size);
+	Dy(i+j*numNodes,pts[k]+2*numNodes) = tempY(j,k+2*cluster_size);
+	Dz(i+j*numNodes,pts[k]+2*numNodes) = tempZ(j,k+2*cluster_size);
+      }
+    }
   }
 
+    sx.gemm(Dx,surf, 1.0, 0.0);
+    sy.gemm(Dy,surf, 1.0, 0.0);
+    sz.gemm(Dz,surf, 1.0, 0.0);
+
+    for (int i = 0; i < numExtNodes; i++) {
+      double norm_grad_s = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
+      sx(i,0) = sx(i,0)/norm_grad_s;
+      sy(i,0) = sy(i,0)/norm_grad_s;
+      sz(i,0) = sz(i,0)/norm_grad_s;
+    }
+    sx.gemm(Dx,sx, 1.0, 0.0);
+    sy.gemm(Dy,sy, 1.0, 0.0);
+    sz.gemm(Dz,sz, 1.0, 0.0); 
+
+    printf("sBox = %g ",sBox);
+    for (int i = 0; i < numNodes; i++) {
+      curvature(i,0) = 0.5*(sx(i,0)+sy(i,0)+sz(i,0))/sBox;
+    }
   std::map<MVertex*, int>::iterator itm = _mapAllV.begin();
   for (; itm != _mapAllV.end(); itm++) {
     int index = itm->second;
@@ -309,30 +389,30 @@ double GRbf::evalRadialFnDer (int p, double dx, double dy, double dz, double ep)
   case 0 : // GA
     switch (p) {
     case 0: return exp(-ep*ep*r2);
-    case 1: return -2*ep*ep*dx*exp(-ep*ep*r2); // _x
-    case 2: return -2*ep*ep*dy*exp(-ep*ep*r2); // _y
-    case 3: return -2*ep*ep*dz*exp(-ep*ep*r2); // _z
-    case 11: return -2*ep*ep*(1-2*ep*ep*dx*dx)*exp(-ep*ep*r2); // _xx
-    case 12: return 4*ep*ep*ep*ep*dx*dy*exp(-ep*ep*r2); // _xy
-    case 13: return 4*ep*ep*ep*ep*dx*dz*exp(-ep*ep*r2); // ...
-    case 22: return -2*ep*ep*(1-2*ep*ep*dy*dy)*exp(-ep*ep*r2);
-    case 23: return 4*ep*ep*ep*ep*dy*dz*exp(-ep*ep*r2);
-    case 33: return -2*ep*ep*(1-2*ep*ep*dz*dz)*exp(-ep*ep*r2);
-    case 222: return -2*ep*ep*(3-2*ep*ep*r2)*exp(-ep*ep*r2); //Laplacian
+    case 1: return -2.0*ep*ep*dx*exp(-ep*ep*r2); // _x
+    case 2: return -2.0*ep*ep*dy*exp(-ep*ep*r2); // _y
+    case 3: return -2.0*ep*ep*dz*exp(-ep*ep*r2); // _z
+    case 11: return -2.0*ep*ep*(1.0-2.0*ep*ep*dx*dx)*exp(-ep*ep*r2); // _xx
+    case 12: return 4.0*ep*ep*ep*ep*dx*dy*exp(-ep*ep*r2); // _xy
+    case 13: return 4.0*ep*ep*ep*ep*dx*dz*exp(-ep*ep*r2); // ...
+    case 22: return -2.0*ep*ep*(1.0-2.0*ep*ep*dy*dy)*exp(-ep*ep*r2);
+    case 23: return 4.0*ep*ep*ep*ep*dy*dz*exp(-ep*ep*r2);
+    case 33: return -2.0*ep*ep*(1.0-2.0*ep*ep*dz*dz)*exp(-ep*ep*r2);
+    case 222: return -2.0*ep*ep*(3.0-2.0*ep*ep*r2)*exp(-ep*ep*r2); //Laplacian
     }
   case 1 : //MQ
     switch (p) {
-    case 0: return sqrt(1+ep*ep*r2);
-    case 1: return ep*ep*dx/sqrt(1+ep*ep*r2);
-    case 2: return ep*ep*dy/sqrt(1+ep*ep*r2);
-    case 3: return ep*ep*dz/sqrt(1+ep*ep*r2);
-    case 11: return ep*ep*((1-ep*ep*r2)-ep*ep*dx*dx)/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2)); // _xx
-    case 12: return -ep*ep*ep*ep*dx*dy/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2)); // _xy
-    case 13: return -ep*ep*ep*ep*dx*dz/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2)); // ...
-    case 22: return ep*ep*((1-ep*ep*r2)-ep*ep*dy*dy)/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2));
-    case 23: return -ep*ep*ep*ep*dy*dz/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2));
-    case 33: return ep*ep*((1-ep*ep*r2)-ep*ep*dz*dz)/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2));
-    case 222: return ep*ep*(3+ep*ep*2*r2)/sqrt((1+ep*ep*r2)*(1+ep*ep*r2)*(1+ep*ep*r2));
+    case 0: return sqrt(1.0+ep*ep*r2);
+    case 1: return ep*ep*dx/sqrt(1.0+ep*ep*r2);
+    case 2: return ep*ep*dy/sqrt(1.0+ep*ep*r2);
+    case 3: return ep*ep*dz/sqrt(1.0+ep*ep*r2);
+    case 11: return ep*ep*(1.0+ep*ep*dy*dy+ep*ep*dz*dz)/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2)); // _xx
+    case 12: return -ep*ep*ep*ep*dx*dy/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2)); // _xy
+    case 13: return -ep*ep*ep*ep*dx*dz/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2)); // ...
+    case 22: return ep*ep*(1.0+ep*ep*dx*dx+ep*ep*dz*dz)/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2));
+    case 23: return -ep*ep*ep*ep*dy*dz/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2));
+    case 33: return ep*ep*(1.0+ep*ep*dx*dx+ep*ep*dy*dy)/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2));
+    case 222: return ep*ep*(3.0+ep*ep*2.0*r2)/sqrt((1.0+ep*ep*r2)*(1.0+ep*ep*r2)*(1.0+ep*ep*r2));
     }
   }
   return 0.;
@@ -346,7 +426,11 @@ fullMatrix<double> GRbf::generateRbfMat(int p,
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
-  double eps = 0.5/delta; //0.0677*(nbNodes^0.28)/min_dist; //0.5
+  //curvature setting double eps = 0.1/delta;
+  double eps = 1.0/(delta*10);//2*sqrt(n/radius);////0.5/delta; //0.0677*(nbNodes^0.28)/min_dist; //0.5
+  //printf("Shape parameter = %g   ", eps);
+  //printf("delta = %g    ", delta);
+
   if (_inUV) eps = 0.4/deltaUV;
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
@@ -383,8 +467,7 @@ void GRbf::RbfOp(int p,
        rbfInvA = generateRbfMat(0,cntrs,cntrs);
        rbfInvA.invertInPlace();
      }
- }
-
+   }
   rbfMatB = generateRbfMat(p,cntrs,nodes);
   D.gemm(rbfMatB, rbfInvA, 1.0, 0.0);
 }
@@ -416,31 +499,39 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
   fullMatrix<double> sz(numNodes,1),norms(numNodes,3), cntrsPlus(numNodes+1,3);
 
   //Computes the normal vectors to the surface at each node
-  for (int i = 0; i < numNodes; ++i){
+  //Specifies the function values on the level set : 0 at all nodes (but add
+  //a node to make the problem non sigular)
+  for (int i=0;i<numNodes ; ++i){
     ONES(i,0) = 0.0;
     cntrsPlus(i,0) = cntrs(i,0);
     cntrsPlus(i,1) = cntrs(i,1);
     cntrsPlus(i,2) = cntrs(i,2);
-  }
+  }	
+  //Specifies the additional node position and its function value
   ONES(numNodes,0) = 1.0;
   cntrsPlus(numNodes,0) = cntrs(0,0)+10.*sBox;
   cntrsPlus(numNodes,1) = cntrs(0,1)+10.*sBox;
   cntrsPlus(numNodes,2) = cntrs(0,2)+10.*sBox;
 
+  //printf("%g,%g,%g,%g;\n",sBox, cntrs(0,0), cntrs(0,1), cntrs(0,2));
+	
   evalRbfDer(1,cntrsPlus,cntrs,ONES,sx);
   evalRbfDer(2,cntrsPlus,cntrs,ONES,sy);
   evalRbfDer(3,cntrsPlus,cntrs,ONES,sz);
-  for (int i = 0; i < numNodes; ++i){
-    //GMSH NORMALS
-    //sx(i,0) = normals(i,0);
-    //sy(i,0) = normals(i,1);
-    //sz(i,0) = normals(i,2);
-    //END GMSH NORMALS
+
+  for (int i=0;i<numNodes ; ++i){
+
     normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     sx(i,0) = sx(i,0)/normFactor;
     sy(i,0) = sy(i,0)/normFactor;
     sz(i,0) = sz(i,0)/normFactor;
     norms(i,0) = sx(i,0);norms(i,1) = sy(i,0);norms(i,2) = sz(i,0);
+
+    //GMSH NORMALS
+    // norms(i,0) = normals(i,0);
+    // norms(i,1) = normals(i,1);
+    // norms(i,2) = normals(i,2);
+    //END GMSH NORMALS
   }
 
   for (int i = 0; i < numNodes; ++i){
@@ -454,9 +545,12 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
     level_set_funvals(i+2*numNodes,0) = 1;
   }
 
-  matAInv_nn.resize(nTot, nTot);
-  matAInv_nn = generateRbfMat(0,level_set_nodes,level_set_nodes);
-  matAInv_nn.invertInPlace();
+  if (!isLocal)
+    {
+      matAInv_nn.resize(nTot, nTot);
+      matAInv_nn = generateRbfMat(0,level_set_nodes,level_set_nodes);
+      matAInv_nn.invertInPlace();
+    }
 }
 
 void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
@@ -493,7 +587,63 @@ void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
   }
 }
 
-void GRbf::RbfLapSurface_global_projection(const fullMatrix<double> &cntrs,
+void GRbf::RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
+										const fullMatrix<double> &normals,
+										fullMatrix<double> &Oper) {
+	
+	int numNodes = cntrs.size1();
+	int nnTot = 3*numNodes;
+	Oper.resize(numNodes,numNodes);
+	
+	fullMatrix<double> Dx(numNodes,numNodes),Dy(numNodes,numNodes),Dz(numNodes,numNodes),
+    PDx(numNodes,numNodes),PDy(numNodes,numNodes),PDz(numNodes,numNodes),
+    PDxx(numNodes,numNodes),PDyy(numNodes,numNodes),PDzz(numNodes,numNodes);
+	
+	fullMatrix<double> sx(nnTot,1),sy(nnTot,1),sz(nnTot,1); 
+	fullMatrix<double> extX(nnTot,3), surf(nnTot,1);
+	
+	//Stage 1 : The Arbitrary surface
+	setup_level_set(cntrs,normals,extX,surf);
+	if (!isLocal) extendedX = extX;
+	if (!isLocal) surfInterp = surf;
+	
+	//Computes the normal vectors to the surface at each node
+	evalRbfDer(1,extX,extX,surf,sx);
+	evalRbfDer(2,extX,extX,surf,sy);
+	evalRbfDer(3,extX,extX,surf,sz);
+	for (int i=0;i<nnTot ; ++i){
+		double normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
+		sx(i,0) = sx(i,0)/normFactor;
+		sy(i,0) = sy(i,0)/normFactor;
+		sz(i,0) = sz(i,0)/normFactor;
+	}
+	// Finds differentiation matrices
+	RbfOp(1,cntrs,cntrs,Dx);
+	RbfOp(2,cntrs,cntrs,Dy);
+	RbfOp(3,cntrs,cntrs,Dz);
+	
+	// Fills up the operator matrix
+	for (int i=0;i<numNodes ; ++i){
+		for (int j=0;j<numNodes ; ++j){
+			PDx(i,j) = (1-sx(i,0)*sx(i,0))*Dx(i,j)-sx(i,0)*sy(i,0)*Dy(i,j)-sx(i,0)*sz(i,0)*Dz(i,j);
+			PDy(i,j) = -sx(i,0)*sy(i,0)*Dx(i,j)+(1-sy(i,0)*sy(i,0))*Dy(i,j)-sy(i,0)*sz(i,0)*Dz(i,j);
+			PDz(i,j) =  -sx(i,0)*sz(i,0)*Dx(i,j)-sy(i,0)*sz(i,0)*Dy(i,j)+(1-sz(i,0)*sz(i,0))*Dz(i,j);
+		}
+	}
+	PDx.mult(PDx,PDxx);
+	PDy.mult(PDy,PDyy);
+	PDz.mult(PDz,PDzz);
+	for (int i=0;i<numNodes ; ++i){
+		for (int j=0;j<numNodes ; ++j){
+			Oper(i,j) = PDxx(i,j)+PDyy(i,j)+PDzz(i,j);
+		}
+	}
+	
+	
+}
+
+
+void GRbf::RbfLapSurface_global_projection( const fullMatrix<double> &cntrs,
 					   const fullMatrix<double> &normals,
 					   fullMatrix<double> &Oper)
 {
@@ -573,7 +723,7 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
     LocalOper.setAll(0.0);
     if (isLow) RbfLapSurface_global_CPM_low(nodes_in_sph,local_normals,LocalOper);
     else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
-
+	  
     for (int j = 0; j < nbp; j++){
       Oper(i,pts[j])=LocalOper(0,j);
       Oper(i,pts[j]+numNodes)=LocalOper(0,j+nbp);
@@ -608,7 +758,7 @@ void GRbf::RbfLapSurface_local_CPM_sparse(std::vector<MVertex*> &bndVertices, bo
   sys.allocate(3 * numNodes);
 
   buildOctree(radius);
-  setup_level_set(cntrs,normals,extendedX,surfInterp);
+  //setup_level_set(cntrs,normals,extendedX,surfInterp);
 
   for (int i = 0; i < numNodes; ++i) {
     std::vector<int> &pts = nodesInSphere[i];
@@ -643,6 +793,7 @@ void GRbf::RbfLapSurface_local_CPM_sparse(std::vector<MVertex*> &bndVertices, bo
     }
 
     LocalOper.setAll(0.0);
+
     if (isLow) RbfLapSurface_global_CPM_low(nodes_in_sph,local_normals,LocalOper);
     else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
 
@@ -674,7 +825,7 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
 					   const fullMatrix<double> &normals,
 					   fullMatrix<double> &Oper)
 {
-  Msg::Debug("*** RBF ... building Laplacian operator");
+  Msg::Info("***Building Laplacian operator");
   int numNodes = cntrs.size1();
   int nnTot = 3*numNodes;
   Oper.resize(nnTot,nnTot);
@@ -722,7 +873,7 @@ void GRbf::RbfLapSurface_global_CPM_high_2(const fullMatrix<double> &cntrs,
   A.invertInPlace();
   Oper.gemm(AOper, A, 1.0, 0.0);
 
-  Msg::Debug("*** RBF builded Laplacian operator");
+  Msg::Info("*** RBF built Laplacian operator");
 }
 
 //NEW METHOD #2 CPM GLOBAL HIGH
@@ -783,8 +934,7 @@ void GRbf::RbfLapSurface_global_CPM_high(const fullMatrix<double> &cntrs,
       Oper(i,j) = Temp(i,j);
     }
   }
-
-  Msg::Debug("*** RBF builded Laplacian operator");
+  Msg::Info("*** RBF built Laplacian operator");
 }
 
 void GRbf::RbfLapSurface_global_CPM_low(const fullMatrix<double> &cntrs,
@@ -849,6 +999,7 @@ void GRbf::solveHarmonicMap_sparse(linearSystem<double> &sys, int numNodes,
 {
 #if defined(HAVE_SOLVER)
   Msg::Info("*** RBF ... solving map");
+	printf("system = %p\n", &sys);
   int nb = numNodes * 3;
   UV.resize(nb,2);
   for (int j = 0; j < 2; ++j) {
@@ -864,7 +1015,7 @@ void GRbf::solveHarmonicMap_sparse(linearSystem<double> &sys, int numNodes,
       }
     }
     sys.systemSolve();
-    for (int i = 0; i < nbNodes; ++i) {
+	for (int i = 0; i < nbNodes; ++i) {
       sys.getFromSolution(i, UV(i, j));
     }
   }

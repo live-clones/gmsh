@@ -119,6 +119,11 @@ class GRbf {
 				      fullMatrix<double> &Oper);
 
   // Finds global surface differentiation matrix using the projection method
+  void RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
+		const fullMatrix<double> &normals,
+		fullMatrix<double> &Oper);
+	
+  // Finds global surface differentiation matrix using the projection method
   void RbfLapSurface_global_projection(const fullMatrix<double> &cntrs,
 				       const fullMatrix<double> &normals,
 				       fullMatrix<double> &Oper);
