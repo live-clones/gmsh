@@ -163,15 +163,15 @@ class dofManager : public dofManagerBase{
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
-  inline bool isFixed(Dof key) const
+  virtual inline bool isFixed(Dof key) const
   {
     if(fixed.find(key) != fixed.end()){
       return true;
     }
     return false;
   }
-  
-  inline bool isAnUnknown(Dof key) const
+
+  virtual inline bool isAnUnknown(Dof key) const
   {
     if(ghostValue.find(key) == ghostValue.end())
     {
@@ -189,13 +189,13 @@ class dofManager : public dofManagerBase{
   {
     return isFixed(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
-  inline void numberGhostDof (Dof key, int procId) {
+  virtual inline void numberGhostDof (Dof key, int procId) {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
     if (ghostByDof.find(key) != ghostByDof.end()) return;
     ghostByDof[key] = std::make_pair(procId, 0);
   }
-  inline void numberDof(Dof key)
+  virtual inline void numberDof(Dof key)
   {
     if (fixed.find(key) != fixed.end()) return;
     if (constraints.find(key) != constraints.end()) return;
@@ -206,6 +206,11 @@ class dofManager : public dofManagerBase{
       unsigned int size = unknown.size();
       unknown[key] = size;
     }
+  }
+  virtual inline void numberDof(std::vector<Dof> &R)
+  {
+    for(unsigned int i=0;i<R.size();i++)
+      this->numberDof(R[i]);
   }
   inline void numberDof(long int ent, int type)
   {
@@ -222,8 +227,8 @@ class dofManager : public dofManagerBase{
     Vals.resize(originalSize + ndofs);
     for (int i = 0; i < ndofs; ++i) getDofValue(keys[i], Vals[originalSize+i]);
   }
-  
-  inline bool getAnUnknown(Dof key,  dataVec &val) const
+
+  virtual inline bool getAnUnknown(Dof key,  dataVec &val) const
   {
     if(ghostValue.find(key) == ghostValue.end())
     {
@@ -236,7 +241,7 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
-  
+
   virtual inline void getDofValue(Dof key,  dataVec &val) const
   {
     {
@@ -286,7 +291,7 @@ class dofManager : public dofManagerBase{
     getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
 
-  inline void insertInSparsityPatternLinConst(const Dof &R, const Dof &C)
+  virtual inline void insertInSparsityPatternLinConst(const Dof &R, const Dof &C)
   {
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end())
@@ -310,7 +315,7 @@ class dofManager : public dofManagerBase{
     }
   }
 
-  inline void insertInSparsityPattern(const Dof &R, const Dof &C)
+  virtual inline void insertInSparsityPattern(const Dof &R, const Dof &C)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
     if (!_current->isAllocated()) _current->allocate (sizeOfR());
@@ -333,7 +338,7 @@ class dofManager : public dofManagerBase{
     }
   }
 
-  inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
+  virtual inline void assemble(const Dof &R, const Dof &C, const dataMat &value)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
     if (!_current->isAllocated()) _current->allocate (sizeOfR());
@@ -359,7 +364,7 @@ class dofManager : public dofManagerBase{
       assembleLinConst(R, C, value);
     }
   }
-  inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C,
+  virtual inline void assemble(std::vector<Dof> &R, std::vector<Dof> &C,
                        const fullMatrix<dataMat> &m)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
@@ -476,7 +481,7 @@ class dofManager : public dofManagerBase{
              vC->getNum(), Dof::createTypeWithTwoInts(iCompC, iFieldC),
              value);
   }
-  inline void assemble(const Dof &R, const dataMat &value)
+  virtual inline void assemble(const Dof &R, const dataMat &value)
   {
     if (_isParallel && !_parallelFinalized) _parallelFinalize();
     if(!_current->isAllocated()) _current->allocate(sizeOfR());
@@ -505,15 +510,15 @@ class dofManager : public dofManagerBase{
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);
   }
-  int sizeOfR() const { return _isParallel ? _localSize : unknown.size(); }
-  int sizeOfF() const { return fixed.size(); }
+  virtual int sizeOfR() const { return _isParallel ? _localSize : unknown.size(); }
+  virtual int sizeOfF() const { return fixed.size(); }
   virtual void systemSolve(){ _current->systemSolve(); }
-  void systemClear()
+  virtual void systemClear()
   {
     _current->zeroMatrix();
     _current->zeroRightHandSide();
   }
-  inline void setCurrentMatrix(std::string name)
+  virtual inline void setCurrentMatrix(std::string name)
   {
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =
       _linearSystems.find(name);
@@ -524,7 +529,7 @@ class dofManager : public dofManagerBase{
       throw;
     }
   }
-  linearSystem<dataMat> *getLinearSystem(std::string &name)
+  virtual linearSystem<dataMat> *getLinearSystem(std::string &name)
   {
     typename std::map<const std::string, linearSystem<dataMat>*>::iterator it =
       _linearSystems.find(name);
@@ -533,12 +538,12 @@ class dofManager : public dofManagerBase{
     else
       return 0;
   }
-  inline void setLinearConstraint (Dof key, DofAffineConstraint<dataVec> &affineconstraint)
+  virtual inline void setLinearConstraint (Dof key, DofAffineConstraint<dataVec> &affineconstraint)
   {
     constraints[key] = affineconstraint;
     // constraints.insert(std::make_pair(key, affineconstraint));
   }
-  inline void assembleLinConst(const Dof &R, const Dof &C, const dataMat &value)
+  virtual inline void assembleLinConst(const Dof &R, const Dof &C, const dataMat &value)
   {
     std::map<Dof, int>::iterator itR = unknown.find(R);
     if (itR != unknown.end())
@@ -568,7 +573,7 @@ class dofManager : public dofManagerBase{
       }
     }
   }
-  void getFixedDof(std::vector<Dof> &R)
+  virtual void getFixedDof(std::vector<Dof> &R)
   {
     R.clear();
     R.reserve(fixed.size());
@@ -578,7 +583,7 @@ class dofManager : public dofManagerBase{
     }
   }
 
-  int getDofNumber(const Dof& key){
+  virtual int getDofNumber(const Dof& key){
 		std::map<Dof,int>::iterator it = unknown.find(key);
 		if (it == unknown.end()) {
 			return -1;
