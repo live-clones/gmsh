@@ -24,6 +24,7 @@
   #include "Levy3D.h"
   #include "periodical.h"
   #include "directions3D.h"
+  #include "yamakawa.h"
 #endif
 %}
 
@@ -54,4 +55,5 @@ namespace std {
 %include "Levy3D.h"
 %include "periodical.h"
 %include "directions3D.h"
+%include "yamakawa.h"
 #endif

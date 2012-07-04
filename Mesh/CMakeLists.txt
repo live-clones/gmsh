@@ -35,7 +35,8 @@ set(SRC
     Levy3D.cpp
     periodical.cpp
     directions3D.cpp
-  Field.cpp
+    yamakawa.cpp
+    Field.cpp
     CenterlineField.cpp
 )
 
