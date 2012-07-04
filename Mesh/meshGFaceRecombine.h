@@ -12,7 +12,7 @@
 
 #define REC2D_EDGE_BASE 2
 #define REC2D_EDGE_QUAD 1
-#define REC2D_NUMB_VERT 2
+#define REC2D_NUMB_VERT 1
 #define REC2D_ALIGNMENT .5
 #define REC2D_NUMB_SONS 6
 
@@ -65,10 +65,12 @@ class Recombine2D {
     bool developTree();
     int getNumTri() const;
     static void nextTreeActions(std::vector<Rec2DAction*>&,
-                                const std::vector<Rec2DElement*> &neighbours);
+                                const std::vector<Rec2DElement*> &neighbours,
+                                Rec2DElement*&                               );
     
     inline void setStrategy(int s) {_strategy = s;}
     void drawState(double shiftx, double shifty) const;
+    static void drawStateCur(double dx, double dy) {_cur->drawState(dx, dy);}
     void printState() const;
     static void drawStateOrigin();
     
@@ -96,8 +98,7 @@ class Rec2DData {
         Action(const Rec2DAction *ra, unsigned int pos)
           : action((Rec2DAction*)ra), position((int)pos) {}
     };
-    template<class T>
-    friend void std::swap(T&, T&);
+    template<class T> friend void std::swap(T&, T&);
     struct gterAction {
       bool operator()(Action*, Action*) const;
     };
@@ -138,7 +139,6 @@ class Rec2DData {
     std::vector<MQuadrangle*> _quad;
 #endif
     static inline int getNumTri() {return _cur->_remainingTri;}
-    static inline void setNumTri(int n) {_cur->_remainingTri = n;}
     
     static inline int getNumEndNode() {return _cur->_endNodes.size();}
     static inline int getNumElement() {return _cur->_elements.size();}
@@ -196,10 +196,9 @@ class Rec2DData {
     static void rmv(const Rec2DVertex*);
     static void rmv(const Rec2DElement*);
     static void rmv(const Rec2DAction*);
+    static bool has(const Rec2DAction*);
     
-    static inline void addEndNode(const Rec2DNode *rn) {
-      _cur->_endNodes.push_back((Rec2DNode*)rn);
-    }
+    static void addEndNode(const Rec2DNode*);
     static void sortEndNode();
     static inline void drawEndNode(int num);
     
@@ -303,11 +302,13 @@ class Rec2DAction {
     void *_dataAction; // Rec2DData::Action*
     friend void Rec2DData::add(const Rec2DAction*);
     friend void Rec2DData::rmv(const Rec2DAction*);
+    template<class T> friend void std::swap(T&, T&);
     
   public :
     Rec2DAction();
-    virtual ~Rec2DAction() {Msg::Error("deleting %d", this);}
+    virtual ~Rec2DAction() {}
     virtual void hide() = 0;
+    static void hide(Rec2DAction*);
     virtual void reveal() = 0;
     virtual bool checkCoherence() const = 0;
     
@@ -321,8 +322,10 @@ class Rec2DAction {
     virtual Rec2DVertex* getVertex(int) const = 0;
     virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) const = 0;
-    virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const = 0;
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const = 0;
+    virtual void getNeighbourElements(std::vector<Rec2DElement*>&,
+                                      Rec2DElement*               ) const = 0;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&,
+                                          Rec2DElement*               ) const = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() const = 0;
     //virtual void print() = 0;
@@ -354,7 +357,8 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
-    ~Rec2DTwoTri2Quad() {Msg::Error("deleting %d", this);if (_col) Msg::Error("[Rec2DTwoTri2Quad] have collapse");hide();}
+    ~Rec2DTwoTri2Quad() {}
+    void operator delete(void*);
     virtual void hide();
     virtual void reveal();
     virtual bool checkCoherence() const;
@@ -368,8 +372,10 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual inline Rec2DVertex* getVertex(int i) const {return _vertices[i];} //-
     virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&) const;
-    virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const;
+    virtual void getNeighbourElements(std::vector<Rec2DElement*>&,
+                                      Rec2DElement*               ) const;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&,
+                                          Rec2DElement*               ) const;
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement() const;
     //virtual void print();
@@ -396,7 +402,8 @@ class Rec2DCollapse : public Rec2DAction {
     
   public :
     Rec2DCollapse(Rec2DTwoTri2Quad*);
-    ~Rec2DCollapse() {Msg::Error("deleting %d", this);_rec->_col = NULL; hide();}
+    ~Rec2DCollapse() {}
+    void operator delete(void*);
     virtual void hide();
     virtual void reveal();
     virtual bool checkCoherence() const {return _rec->checkCoherence();}
@@ -417,12 +424,10 @@ class Rec2DCollapse : public Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*> &vec) const {
       _rec->getElements(vec);
     }
-    virtual void getNeighbourElements(std::vector<Rec2DElement*> &vec) const {
-      _rec->getNeighbourElements(vec);
-    }
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &vec) const {
-      _rec->getNeighbElemWithActions(vec);
-    }
+    virtual void getNeighbourElements(std::vector<Rec2DElement*> &,
+                                      Rec2DElement*                ) const;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &vec,
+                                          Rec2DElement *rel               ) const;
     virtual int getNum(double shiftx, double shifty) {
       return -1;
     }
@@ -456,7 +461,7 @@ class Rec2DEdge {
     
   public :
     Rec2DEdge(Rec2DVertex*, Rec2DVertex*);
-    ~Rec2DEdge() {hide();}
+    ~Rec2DEdge() {if (_pos > -1) hide();}
     void hide();
     void reveal();
     bool checkCoherence() const;
@@ -518,7 +523,7 @@ class Rec2DVertex {
   public :
     Rec2DVertex(MVertex*);
     Rec2DVertex(Rec2DVertex*, double angle);
-    ~Rec2DVertex() {hide();}
+    ~Rec2DVertex() {if (_pos > -1) hide();}
     void hide();
     void reveal();
     bool checkCoherence() const;
@@ -583,7 +588,18 @@ class Rec2DVertex {
     bool _recursiveBoundParity(const Rec2DVertex *prev, int p0, int p1);
     void _updateQualAngle();
     inline double _angle2Qual(double ang) const {
-      return 1. - fabs(ang*2./M_PI - 1.);
+      static int a = -1;
+      if (++a < 1) Msg::Warning("regarder angle 2 qual");
+      static const double angMin = M_PI/200;
+      static const double angMax = M_PI - angMin;
+      static const double min = std::log(4/M_PI*angMin) / std::log(2);
+      static const double log2 = std::log(2);
+      
+      if (ang < angMin || ang > angMax) return min;
+      if (ang < M_PI/2)
+        return std::log(4/M_PI * ang) / log2;
+      else
+        return std::log(4 - 4/M_PI * ang) / log2;
     }
 };
 
@@ -593,7 +609,7 @@ class Rec2DElement {
     int _numEdge;
     Rec2DEdge *_edges[4];
     Rec2DElement *_elements[4];  // NULL if no neighbour
-    std::vector<Rec2DAction*> _actions;
+    std::vector<Rec2DAction*> _actions;;
     
     int _pos;
     friend void Rec2DData::add(const Rec2DElement*);
@@ -602,12 +618,13 @@ class Rec2DElement {
   public :
     Rec2DElement(MTriangle*, const Rec2DEdge**, Rec2DVertex **rv = NULL);
     Rec2DElement(MQuadrangle*, const Rec2DEdge**, Rec2DVertex **rv = NULL);
-    ~Rec2DElement() {hide();}
+    ~Rec2DElement() {if (_pos > -1) hide();}
     void hide();
     void reveal(Rec2DVertex **rv = NULL);
     bool checkCoherence() const;
     bool has(const Rec2DVertex*) const;
     bool has(const Rec2DElement*) const;
+    void print() const;
     
     bool inline isTri() const {return _numEdge == 3;}
     bool inline isQuad() const {return _numEdge == 4;}
@@ -671,21 +688,56 @@ class Rec2DNode {
     Rec2DNode *_son[REC2D_NUMB_SONS];
     Rec2DAction *_ra;
     double _globalQuality, _bestEndGlobQual;
-    int _remainingTri;
     std::vector<Rec2DAction*> *_createdActions;
-    
     Rec2DDataChange *_dataChange;
+    int _remainingTri;
+    const int _d;
+    Rec2DElement *_elementOrigin;
     
   public :
     Rec2DNode(Rec2DNode *father, Rec2DAction*,
               double &bestEndGlobQual, int depth = -1);
     ~Rec2DNode();
+    bool canBeDeleted();
     
     Rec2DNode* selectBestNode();
     void recoverSequence();
-    void rmvSon(Rec2DNode*);
+    //void rmvSon(Rec2DNode*);
     void develop(int depth, double &bestEndGlobQual);
     inline bool hasSon() const {return _son[0];}
+    void rmvFather(Rec2DNode *n) {
+      if (_father != n) {
+        Msg::Error("have not this father");
+        return;
+      }
+      _father = NULL;
+    }
+    bool rmvSon(Rec2DNode *n) {
+      int indexSon = -1, i = -1;
+      while (++i < REC2D_NUMB_SONS && _son[i]) {
+        if (_son[i] == n) indexSon = i;
+      }
+      if (indexSon == -1) {
+        Msg::Info("im %d", this);
+        for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
+          Msg::Info("son%d %d", i, _son[i]);
+        }
+        Msg::Error("son %d not found", n);
+        return false;
+      }
+      else {
+        if (indexSon != --i)
+          _son[indexSon] = _son[i];
+        _son[i] = NULL;
+      }
+      return true;
+    }
+    bool hasSon(Rec2DNode *n) {
+      if (!n) return false;
+      int i = -1;
+      while (++i < REC2D_NUMB_SONS && _son[i] != n);
+      return i < REC2D_NUMB_SONS;
+    }
     bool makeChanges();
     bool revertChanges();
     
@@ -694,6 +746,29 @@ class Rec2DNode {
     inline Rec2DAction* getAction() const {return _ra;}
     inline double getGlobQual() const {return _globalQuality;}
     inline int getNumTri() const {return _remainingTri;}
+    
+    void draw(double dx, double dy) {
+      if (_father)
+        _father->_mkChgSinceBeginning();
+      if (_dataChange) Msg::Error("_Ber_");
+      _dataChange = Rec2DData::getNewDataChange();
+      _ra->apply(_dataChange, _createdActions);
+      _dataChange = NULL;
+      Recombine2D::drawStateCur(dx, dy);
+    }
+    
+  private :
+    void _mkChgSinceBeginning() {
+      if (_father)
+        _father->_mkChgSinceBeginning();
+      else if (!_ra) return;
+      if (_dataChange) Msg::Error("_Ber_");
+      _dataChange = Rec2DData::getNewDataChange();
+      _ra->apply(_dataChange, _createdActions);
+      _dataChange = NULL;
+      static int a = -1;
+      if (++a < 1) Msg::Warning("FIXME pas propre du tout");
+    }
 };
 #endif
 
