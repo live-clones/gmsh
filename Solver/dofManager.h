@@ -207,7 +207,7 @@ class dofManager : public dofManagerBase{
       unknown[key] = size;
     }
   }
-  virtual inline void numberDof(std::vector<Dof> &R)
+  virtual inline void numberDof(const std::vector<Dof> &R)
   {
     for(unsigned int i=0;i<R.size();i++)
       this->numberDof(R[i]);
