@@ -127,7 +127,7 @@ void Recombinator::execute(GRegion* gr){
 }
 
 void Recombinator::init_markings(GRegion* gr){
-  int i;
+  size_t i;
   MElement* element;
 	
   markings.clear();	
@@ -139,7 +139,7 @@ void Recombinator::init_markings(GRegion* gr){
 }
 
 void Recombinator::patern1(GRegion* gr){
-  int i;
+  size_t i;
   int index;
   double quality;
   MElement* element;
@@ -224,7 +224,7 @@ void Recombinator::patern1(GRegion* gr){
 }
 
 void Recombinator::patern2(GRegion* gr){
-  int i;
+  size_t i;
   int index1,index2,index3,index4;
   double quality;
   MElement* element;
@@ -272,7 +272,7 @@ void Recombinator::patern2(GRegion* gr){
 }
 
 void Recombinator::patern3(GRegion* gr){
-  int i;
+  size_t i;
   int index1,index2,index3,index4;
   bool c1,c2,c3,c4,c5;
   bool c6,c7,c8,c9,c10;
@@ -393,7 +393,7 @@ void Recombinator::patern3(GRegion* gr){
 }
 
 void Recombinator::merge(GRegion* gr){
-  int i;
+  size_t i;
   int count;
   bool flag;
   double threshold;
@@ -453,7 +453,7 @@ void Recombinator::merge(GRegion* gr){
 	}
 	  
 	if(flag){
-	  printf("%d - %d/%d - %f\n",count,i,potential.size(),hex.get_quality());
+	  printf("%d - %zu/%zu - %f\n",count,i,potential.size(),hex.get_quality());
 	  quality = quality + hex.get_quality();
 	  for(it=parts.begin();it!=parts.end();it++){
 	    element = *it;
@@ -481,7 +481,7 @@ void Recombinator::merge(GRegion* gr){
 }
 
 void Recombinator::rearrange(GRegion* gr){
-  int i;
+  size_t i;
   MElement* element;
 	
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -491,7 +491,7 @@ void Recombinator::rearrange(GRegion* gr){
 }
 
 void Recombinator::statistics(GRegion* gr){
-  int i;
+  size_t i;
   int all_nbr,hex_nbr;
   double all_volume,hex_volume,volume;
   MElement* element;
@@ -904,7 +904,7 @@ MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already
 
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,
 								const std::vector<MVertex*>& already,std::set<MVertex*>& final){
-  int i;
+  size_t i;
   bool ok;
   std::set<MVertex*> temp;
   std::set<MVertex*>::iterator it;
@@ -929,7 +929,7 @@ void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MV
 
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,const std::set<MVertex*>& bin3,
 								const std::vector<MVertex*>& already,std::set<MVertex*>& final){
-  int i;
+  size_t i;
   bool ok;
   std::set<MVertex*> temp;
   std::set<MVertex*> temp2;
@@ -1019,7 +1019,8 @@ bool Recombinator::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set<
 }
 
 void Recombinator::build_vertex_to_vertices(GRegion* gr){
-  int i,j;
+  size_t i;
+  int j;
   MElement* element;
   MVertex *a,*b,*c,*d;
   std::set<MVertex*> bin;
@@ -1053,7 +1054,8 @@ void Recombinator::build_vertex_to_vertices(GRegion* gr){
 }
 
 void Recombinator::build_vertex_to_elements(GRegion* gr){
-  int i,j;
+  size_t i;
+  int j;
   MElement* element;
   MVertex* vertex;
   std::set<MElement*> bin;
@@ -1080,7 +1082,8 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
 }
 
 void Recombinator::print_vertex_to_vertices(GRegion* gr){
-  int i,j;
+  size_t i;
+  int j;
   SPoint3 p1,p2;
   MElement* element;
   MVertex* vertex;
@@ -1106,7 +1109,8 @@ void Recombinator::print_vertex_to_vertices(GRegion* gr){
 }
 
 void Recombinator::print_vertex_to_elements(GRegion* gr){
-  int i,j;
+  size_t i;
+  int j;
   MElement* element;
   MVertex* vertex;
   std::map<MVertex*,std::set<MElement*> >::iterator it;	
@@ -1118,7 +1122,7 @@ void Recombinator::print_vertex_to_elements(GRegion* gr){
 	  vertex = element->getVertex(j);
 	  it = vertex_to_elements.find(vertex);
 	  it2 = vertex_to_vertices.find(vertex);
-	  printf("%d %d\n",(it->second).size(),(it2->second).size());
+	  printf("%zu %zu\n",(it->second).size(),(it2->second).size());
 	}
   }	
 }
