@@ -741,8 +741,6 @@ template <class T, class F> void FilteredFunctionSpace<T, F>::getKeys(MElement *
   std::vector<Dof> bufk;
   bufk.reserve(normalk);
   _spacebase->getKeys(elep, bufk);
-  int normaldofs = bufk.size();
-  int nbdofs = 0;
 
   for (int i = 0; i < bufk.size(); i++){
     if ((*_filter)(bufk[i]))

@@ -635,7 +635,7 @@ bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
 
 #else
   return false;
-#endif;
+#endif
 
 }
 
@@ -739,7 +739,7 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
 
 #else
   return false;
-#endif;
+#endif
 
 }
 

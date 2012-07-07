@@ -102,33 +102,6 @@ inline double computeEdgeLinearLength_new(BDS_Point *p1, BDS_Point *p2,  GFace *
   return l;
 }
 
-inline double computeEdgeMiddleCoord_new(BDS_Point *p1, BDS_Point *p2, GFace *f,
-                                         double SCALINGU, double SCALINGV)
-{
-  const int nbSb = 3;
-  double L = computeEdgeLinearLength(p1,p2);
-  GPoint GP[nbSb];
-  for (int i = 1; i < nbSb; i++){
-    double xi = (double)i / nbSb;
-    GP[i-1] = f->point(SPoint2(((1-xi) * p1->u + xi * p2->u) * SCALINGU,
-                               ((1-xi) * p1->v + xi * p2->v) * SCALINGV));
-    if (!GP[i-1].succeeded())
-      return 0.5;
-    const double dx1 = p1->X - GP[i-1].x();
-    const double dy1 = p1->Y - GP[i-1].y();
-    const double dz1 = p1->Z - GP[i-1].z();
-    double LPLUS = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
-    if (LPLUS > L*.5){
-      double XIMINUS, LPLUS, LMINUS;
-      if (i==1){
-        XIMINUS=0;
-      }
-      return  XIMINUS +  (LPLUS - L*.5)/(LPLUS-LMINUS)/(nbSb-1);
-    }
-  }
-  return 0.5;
-}
-
 inline double computeEdgeMiddleCoord(BDS_Point *p1, BDS_Point *p2, GFace *f,
                                      double SCALINGU, double SCALINGV)
 {

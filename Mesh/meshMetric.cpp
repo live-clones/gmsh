@@ -166,8 +166,8 @@ void meshMetric::exportInfo(const char * fileendname)
       SVector3 gradudx = dgrads[0][ver];
       SVector3 gradudy = dgrads[1][ver];
       SVector3 gradudz = dgrads[2][ver];
-      out_hess << (gradudx(0)+gradudy(1)+gradudz(2));
-      if ((i==(e->getNumVertices()-1))){
+      out_hess << (gradudx(0) + gradudy(1) + gradudz(2));
+      if (i == (e->getNumVertices() - 1)){
 	out_ls << "};" << std::endl;
 	out_hess << "};" << std::endl;
       }
@@ -177,11 +177,11 @@ void meshMetric::exportInfo(const char * fileendname)
       }
       for (int k=0;k<3;k++){
         out_grad << grads[ver](k);
-        if ((k==2)&&(i==(e->getNumVertices()-1)))  out_grad << "};" << std::endl;
+        if ((k == 2) && (i == (e->getNumVertices() - 1))) out_grad << "};" << std::endl;
         else out_grad << ",";
         for (int l=0;l<3;l++){
           out_metric << _nodalMetrics[ver](k,l);
-          if ((k==2)&&(l==2)&&(i==(e->getNumVertices()-1))) out_metric << "};" << std::endl;
+          if ((k == 2) && (l == 2) && (i == (e->getNumVertices() - 1))) out_metric << "};" << std::endl;
           else out_metric << ",";
         }
       }

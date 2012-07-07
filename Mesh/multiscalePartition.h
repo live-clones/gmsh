@@ -16,7 +16,7 @@
 #include "meshPartition.h"
 
 class MElement;
-struct meshPartitionOptions;
+class meshPartitionOptions;
 
 struct partitionLevel {
   int recur;
