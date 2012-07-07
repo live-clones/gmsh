@@ -292,7 +292,7 @@ namespace gmm {
 		      abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
 		vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
-    size_type nr = mat_nrows(ps);
+    //size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);

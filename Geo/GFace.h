@@ -133,7 +133,7 @@ class GFace : public GEntity
   // by default, genus is ZERO
   int poincareMesh();
   int genusMesh() { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
-  virtual int genusGeom();
+  virtual int genusGeom() const;
   virtual bool checkTopology() const { return true; }
 
   // return the point on the face corresponding to the given parameter

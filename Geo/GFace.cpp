@@ -1217,11 +1217,11 @@ int GFace::poincareMesh()
   return vs.size() - es.size() + getNumMeshElements();
 }
 
-int GFace::genusGeom()
+int GFace::genusGeom() const
 {
   int nSeams = 0;
   std::set<GEdge*> single_seams;
-  for (std::list<GEdge*>::iterator it = l_edges.begin();
+  for (std::list<GEdge*>::const_iterator it = l_edges.begin();
        it!=l_edges.end();++it){
     if ((*it)->isSeam(this)){
       nSeams++;

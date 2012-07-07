@@ -33,7 +33,7 @@ class gmshVertex : public GVertex {
     v->lc = meshSize;
   }
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
-  virtual void writeGEO(FILE *fp);
+  virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 };
 
 #endif

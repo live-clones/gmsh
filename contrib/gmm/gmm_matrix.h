@@ -858,8 +858,8 @@ namespace gmm
   };
 
   template <typename MAT> void block_matrix<MAT>::do_clear(void) { 
-    for (size_type j = 0, l = 0; j < ncolblocks_; ++j)
-      for (size_type i = 0, k = 0; i < nrowblocks_; ++i)
+    for (size_type j = 0; j < ncolblocks_; ++j)
+      for (size_type i = 0; i < nrowblocks_; ++i)
 	clear(block(i,j));
   }
 

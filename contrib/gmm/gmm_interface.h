@@ -831,8 +831,8 @@ namespace gmm {
     }
     
     void fill(T a, T b = T(0)) { 
-      std::fill(begin_, end+nbc*nbl, b);
-      iterator p = begin_, e = end+nbc*nbl;
+      std::fill(begin_, end()+nbc*nbl, b);
+      iterator p = begin_, e = end()+nbc*nbl;
       while (p < e) { *p = a; p += nbl+1; }
     }
     inline size_type nrows(void) const { return nbl; }
@@ -957,8 +957,8 @@ namespace gmm {
     }
     
     void fill(T a, T b = T(0)) { 
-      std::fill(begin_, end+nbc*nbl, b);
-      iterator p = begin_, e = end+nbc*nbl;
+      std::fill(begin_, end()+nbc*nbl, b);
+      iterator p = begin_, e = end()+nbc*nbl;
       while (p < e) { *p = a; p += nbc+1; }
     }
     inline size_type nrows(void) const { return nbl; }
