@@ -295,7 +295,7 @@ void meshMetric::computeHessian()
       d2udxy = coeffs(1); d2udxz = coeffs(2); d2udyz = coeffs(4);
       dudx = d2udx2*x+d2udxy*y+d2udxz*z+coeffs(6);
       dudy = d2udxy*x+d2udy2*y+d2udyz*z+coeffs(7);
-      dudz = d2udxz*z+d2udyz*z+d2udz2*z+coeffs(8);
+      dudz = d2udxz*x+d2udyz*y+d2udz2*z+coeffs(8);
     }
     double duNorm = sqrt(dudx*dudx+dudy*dudy+dudz*dudz);
     if (duNorm == 0. || _technique == meshMetric::HESSIAN) duNorm = 1.;
