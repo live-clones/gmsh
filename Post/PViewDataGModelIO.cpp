@@ -45,7 +45,7 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
   return true;
 }
 
-bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
+bool PViewDataGModel::readMSH(const std::string &fileName, int fileIndex, FILE *fp,
                               bool binary, bool swap, int step, double time,
                               int partition, int numComp, int numEnt,
                               const std::string &interpolationScheme)
@@ -127,7 +127,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
   return true;
 }
 
-bool PViewDataGModel::writeMSH(std::string fileName, bool binary, bool savemesh)
+bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool savemesh)
 {
   if(_steps.empty()) return true;
 
@@ -301,7 +301,7 @@ extern "C" {
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
 
-bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
+bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
   if(fid < 0){
@@ -610,7 +610,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   return true;
 }
 
-bool PViewDataGModel::writeMED(std::string fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName)
 {
   if(_steps.empty()) return true;
 
@@ -731,14 +731,14 @@ bool PViewDataGModel::writeMED(std::string fileName)
 
 #else
 
-bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
+bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 {
   Msg::Error("Gmsh must be compiled with MED support to read '%s'",
              fileName.c_str());
   return false;
 }
 
-bool PViewDataGModel::writeMED(std::string fileName)
+bool PViewDataGModel::writeMED(const std::string &fileName)
 {
   Msg::Error("Gmsh must be compiled with MED support to write '%s'",
              fileName.c_str());

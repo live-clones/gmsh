@@ -46,7 +46,7 @@ class stepData{
   // a set of all "partitions" encountered in the data
   std::set<int> _partitions;
  public:
-  stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1,
+  stepData(GModel *model, int numComp, const std::string &fileName="", int fileIndex=-1,
            double time=0., double min=VAL_INF, double max=-VAL_INF)
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
       _min(min), _max(max), _numComp(numComp), _data(0)
@@ -93,7 +93,7 @@ class stepData{
     return _mult[index];
   }
   std::string getFileName(){ return _fileName; }
-  void setFileName(std::string name){ _fileName = name; }
+  void setFileName(const std::string &name){ _fileName = name; }
   int getFileIndex(){ return _fileIndex; }
   void setFileIndex(int index){ _fileIndex = index; }
   double getTime(){ return _time; }
@@ -235,12 +235,12 @@ class PViewDataGModel : public PViewData {
                int step, double time, int partition, int numComp);
 
   // I/O routines
-  bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary,
+  bool readMSH(const std::string &fileName, int fileIndex, FILE *fp, bool binary,
                bool swap, int step, double time, int partition,
                int numComp, int numNodes, const std::string &interpolationScheme);
-  bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
-  bool readMED(std::string fileName, int fileIndex);
-  bool writeMED(std::string fileName);
+  bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
+  bool readMED(const std::string &fileName, int fileIndex);
+  bool writeMED(const std::string &fileName);
 };
 
 #endif

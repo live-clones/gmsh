@@ -123,9 +123,9 @@ class PViewDataList : public PViewData {
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);
-  bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
+  bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
                 bool append=false);
-  virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
+  virtual bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
 };
 
 #endif

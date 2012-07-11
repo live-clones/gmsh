@@ -11,7 +11,7 @@
 #include "PViewData.h"
 #include "adaptiveData.h"
 
-bool PViewData::writeSTL(std::string fileName)
+bool PViewData::writeSTL(const std::string &fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
@@ -70,7 +70,7 @@ bool PViewData::writeSTL(std::string fileName)
   return true;
 }
 
-bool PViewData::writeTXT(std::string fileName)
+bool PViewData::writeTXT(const std::string &fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
@@ -102,7 +102,8 @@ bool PViewData::writeTXT(std::string fileName)
   return true;
 }
 
-bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool append)
+bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
+                         bool append)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -175,13 +176,13 @@ bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool ap
   return true;
 }
 
-bool PViewData::writeMSH(std::string fileName, bool binary, bool savemesh)
+bool PViewData::writeMSH(const std::string &fileName, bool binary, bool savemesh)
 {
   Msg::Error("MSH export not implemented for this view type");
   return false;
 }
 
-bool PViewData::writeMED(std::string fileName)
+bool PViewData::writeMED(const std::string &fileName)
 {
   Msg::Error("MED export onnly available for mesh-based post-processing views");
   return false;

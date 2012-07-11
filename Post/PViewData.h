@@ -59,11 +59,11 @@ class PViewData {
 
   // get/set name
   virtual std::string getName(){ return _name; }
-  virtual void setName(std::string val){ _name = val; }
+  virtual void setName(const std::string &val){ _name = val; }
 
   // get/set (the main) filename containing the data
   virtual std::string getFileName(int step=-1){ return _fileName; }
-  virtual void setFileName(std::string val){ _fileName = val; }
+  virtual void setFileName(const std::string &val){ _fileName = val; }
 
   // get/set index of view data in file
   virtual int getFileIndex(){ return _fileIndex; }
@@ -252,12 +252,12 @@ class PViewData {
                     int step=-1, double *size=0);
 
   // I/O routines
-  virtual bool writeSTL(std::string fileName);
-  virtual bool writeTXT(std::string fileName);
-  virtual bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
+  virtual bool writeSTL(const std::string &fileName);
+  virtual bool writeTXT(const std::string &fileName);
+  virtual bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
                         bool append=false);
-  virtual bool writeMSH(std::string fileName, bool binary=false, bool savemesh=true);
-  virtual bool writeMED(std::string fileName);
+  virtual bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
+  virtual bool writeMED(const std::string &fileName);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);
 };

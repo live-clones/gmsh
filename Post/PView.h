@@ -51,7 +51,7 @@ class PView{
   PView(const std::string &xname, const std::string &yname,
         std::vector<double> &x, std::vector<double> &y);
   // construct a new mesh-based view from a bunch of data
-  PView(std::string name, std::string type, GModel *model,
+  PView(const std::string &name, const std::string &type, GModel *model,
         std::map<int, std::vector<double> > &data, double time=0.,
         int numComp = -1);
   // add a new time step to a given mesh-based view
@@ -99,18 +99,20 @@ class PView{
   // find view by name or by number (if timeStep >= 0, return view
   // only if it does *not* contain that timestep; if partition >= 0,
   // return view only if it does *not* contain that partition)
-  static PView *getViewByName(std::string name, int timeStep=-1,
+  static PView *getViewByName(const std::string &name, int timeStep=-1,
                               int partition=-1);
+  static int getViewIndexByName(const std::string &name, int timeStep=-1,
+                                int partition=-1);
   static PView *getViewByNum(int num, int timeStep=-1, int partition=-1);
 
   // IO read routines (these are global: they can create multiple
   // views)
-  static bool readPOS(std::string fileName, int fileIndex=-1);
-  static bool readMSH(std::string fileName, int fileIndex=-1);
-  static bool readMED(std::string fileName, int fileIndex=-1);
+  static bool readPOS(const std::string &fileName, int fileIndex=-1);
+  static bool readMSH(const std::string &fileName, int fileIndex=-1);
+  static bool readMED(const std::string &fileName, int fileIndex=-1);
 
   // IO write routine
-  bool write(std::string fileName, int format, bool append=false);
+  bool write(const std::string &fileName, int format, bool append=false);
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;

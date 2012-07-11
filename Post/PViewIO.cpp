@@ -11,7 +11,7 @@
 #include "StringUtils.h"
 #include "Context.h"
 
-bool PView::readPOS(std::string fileName, int fileIndex)
+bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
@@ -81,7 +81,7 @@ bool PView::readPOS(std::string fileName, int fileIndex)
   return true;
 }
 
-bool PView::readMSH(std::string fileName, int fileIndex)
+bool PView::readMSH(const std::string &fileName, int fileIndex)
 {
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
@@ -241,7 +241,7 @@ extern "C" {
 #include <med.h>
 }
 
-bool PView::readMED(std::string fileName, int fileIndex)
+bool PView::readMED(const std::string &fileName, int fileIndex)
 {
 #if (MED_MAJOR_NUM == 3)
   med_idt fid = MEDfileOpen(fileName.c_str(), MED_ACC_RDONLY);
@@ -289,7 +289,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 #else
 
-bool PView::readMED(std::string fileName, int fileIndex)
+bool PView::readMED(const std::string &fileName, int fileIndex)
 {
   Msg::Error("Gmsh must be compiled with MED support to read '%s'",
              fileName.c_str());
@@ -298,7 +298,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 #endif
 
-bool PView::write(std::string fileName, int format, bool append)
+bool PView::write(const std::string &fileName, int format, bool append)
 {
   Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
 

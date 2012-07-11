@@ -96,7 +96,7 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->axesLabel[0] = xname;
 }
 
-PView::PView(std::string name, std::string type,
+PView::PView(const std::string &name, const std::string &type,
              GModel *model, std::map<int, std::vector<double> > &data,
              double time, int numComp)
 {
@@ -276,7 +276,7 @@ void PView::combine(bool time, int how, bool remove)
       delete *it;
 }
 
-PView *PView::getViewByName(std::string name, int timeStep, int partition)
+PView *PView::getViewByName(const std::string &name, int timeStep, int partition)
 {
   // search views from most recently to least recently added
   for(int i = list.size() - 1; i >= 0; i--){
@@ -286,6 +286,13 @@ PView *PView::getViewByName(std::string name, int timeStep, int partition)
       return list[i];
   }
   return 0;
+}
+
+int PView::getViewIndexByName(const std::string &name, int timeStep, int partition)
+{
+  PView *view = getViewByName(name, timeStep, partition);
+  if(view) return view->getIndex();
+  return -1;
 }
 
 PView *PView::getViewByNum(int num, int timeStep, int partition)

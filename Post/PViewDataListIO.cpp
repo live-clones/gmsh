@@ -341,7 +341,8 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, std::vector<double> &TD,
   }
 }
 
-bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, bool append)
+bool PViewDataList::writePOS(const std::string &fileName, bool binary, bool parsed,
+                             bool append)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -434,7 +435,7 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
   return true;
 }
 
-static void createVertices(std::vector<double> &list, int nbelm, int nbnod, 
+static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
                            std::vector<MVertex*> &nodes)
 {
   if(!nbelm) return;
@@ -445,10 +446,10 @@ static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
     double *z = &list[i + 2 * nbnod];
     for(int j = 0; j < nbnod; j++)
       nodes.push_back(new MVertex(x[j], y[j], z[j]));
-  }    
+  }
 }
 
-static void createElements(std::vector<double> &list, int nbelm, int nbnod, 
+static void createElements(std::vector<double> &list, int nbelm, int nbnod,
                            MVertexPositionSet &pos, std::vector<MElement*> &elements,
                            double eps, int type)
 {
@@ -473,7 +474,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
     break;
   case TYPE_QUA :
     switch(nbnod){
-    case 4: t = MSH_QUA_4; break; 
+    case 4: t = MSH_QUA_4; break;
     case 8: t = MSH_QUA_8; break;
     case 9: t = MSH_QUA_9; break;
     }
@@ -524,7 +525,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
   }
 }
 
-bool PViewDataList::writeMSH(std::string fileName, bool binary, bool savemesh)
+bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool savemesh)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -562,7 +563,7 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary, bool savemesh)
 
   int num = 0;
   for(unsigned int i = 0; i < vertices.size(); i++)
-    if(vertices[i]->getIndex() < 0) 
+    if(vertices[i]->getIndex() < 0)
       vertices[i]->setIndex(++num);
 
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
