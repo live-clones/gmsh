@@ -15,6 +15,7 @@
 #include <string>
 #include <string.h>
 #include <sstream>
+#include <algorithm>
 
 #if defined(HAVE_POST)
 class PView;
