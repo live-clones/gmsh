@@ -213,7 +213,8 @@ class MTetrahedron10 : public MTetrahedron {
     for(int i = 0; i < 6; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MTetrahedron10(){}
-  virtual double distoShapeMeasure();
+  virtual double distoShapeMeasure() {double jmin,jmax; scaledJacRange(jmin,jmax); return jmin;}
+  virtual void scaledJacRange(double &jmin, double &jmax);
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }

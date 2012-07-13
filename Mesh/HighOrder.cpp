@@ -1157,30 +1157,28 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
 {
   bad.clear();
   minJGlob = 1.0;
-  double minGGlob = 1.0;
   double avg = 0.0;
   int count = 0, nbfair=0;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++){
       MTetrahedron *t = (*it)->tetrahedra[i];
-      double disto_ = t->distoShapeMeasure();
-      double gamma_ = t->gammaShapeMeasure();
-      double disto = disto_;
-      minJGlob = std::min(minJGlob, disto);
-      minGGlob = std::min(minGGlob, gamma_);
-      avg += disto; count++;
-      if (disto < 0) bad.push_back(t);
-      else if (disto < 0.2) nbfair++;
+      double jmin,jmax; t->scaledJacRange(jmin,jmax);
+      double disto_ = jmin;
+      minJGlob = std::min(minJGlob, disto_);
+      avg += disto_; count++;
+      if (disto_ < 0) bad.push_back(t);
+      else if (disto_ < 0.2) nbfair++;
     }
   }
   if(!count) return;
   if (minJGlob < 0)
-    Msg::Warning("%s : Worst Tetrahedron Smoothness %g Gamma %g NbFair = %d NbBad = %d",
-              cc, minJGlob, minGGlob, nbfair, bad.size());
+    Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
+                 "Avg Smoothness %g", cc, minJGlob, bad.size(),
+                 avg / (count ? count : 1));
   else
     Msg::Info("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
-                 "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
-                 minGGlob, avg / (count ? count : 1));
+                 "Avg Smoothness %g", cc, minJGlob, bad.size(),
+                 avg / (count ? count : 1));
 }
 
 extern double mesh_functional_distorsion(MElement *t, double u, double v);
@@ -1386,7 +1384,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     //    hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final surface mesh", m, bad, worst);
   }
-
+  checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
   // m->writeMSH("CORRECTED.msh");
 
   Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);

@@ -406,7 +406,10 @@ class GModel
   // In this first attempt, only the highest dimensional mesh is adapted, which is ok if
   // we assume that boundaries are already adapted.
   // This should be fixed.
-  int adaptMesh(std::vector<int> technique, std::vector<simpleFunction<double>*> f, std::vector<std::vector<double> > parameters, int niter, bool meshAll=false);
+  int adaptMesh(std::vector<int> technique, 
+		std::vector<simpleFunction<double>*> f, 
+		std::vector<std::vector<double> > parameters, 
+		int niter, bool meshAll=false);
 
   // make the mesh a high order mesh at order N
   // linear is 1 if the high order points are not placed on the geometry of the model

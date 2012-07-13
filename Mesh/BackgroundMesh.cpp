@@ -35,6 +35,8 @@
 // CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
+static int _NBANN = 2;
+
 SMetric3 buildMetricTangentToCurve(SVector3 &t, double l_t, double l_n)
 {
   if (l_t == 0.0) return SMetric3(1.e-22);
@@ -476,14 +478,28 @@ void backgroundMesh::set(GFace *gf)
   _current = new backgroundMesh(gf);
 }
 
+void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
+{
+  if (_current) delete _current;
+  _current = new backgroundMesh(gf, true);
+}
+
 void backgroundMesh::unset()
 {
   if (_current) delete _current;
   _current = 0;
 }
 
-backgroundMesh::backgroundMesh(GFace *_gf)
+backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : 
+  _octree(0), uv_kdtree(0), angle_kdtree(0), nodes(0), angle_nodes(0)
 {
+
+  if (cfd){
+    Msg::Info("Building A Cross Field Using Closest Distance");
+    propagateCrossFieldByDistance(_gf);
+    return;
+  }
+
   // create a bunch of triangles on the parametric space
   // those triangles are local to the backgroundMesh so that
   // they do not depend on the actual mesh that can be deleted
@@ -529,7 +545,7 @@ backgroundMesh::backgroundMesh(GFace *_gf)
     uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
 #endif
 
-  // build a search structure
+  // build a search structure    
   _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
@@ -555,10 +571,12 @@ backgroundMesh::~backgroundMesh()
 {
   for (unsigned int i = 0; i < _vertices.size(); i++) delete _vertices[i];
   for (unsigned int i = 0; i < _triangles.size(); i++) delete _triangles[i];
-  delete _octree;
+  if (_octree)delete _octree;
 #if defined(HAVE_ANN)
   if(uv_kdtree) delete uv_kdtree;
+  if(angle_kdtree) delete angle_kdtree;
   if(nodes) annDeallocPts(nodes);
+  if(angle_nodes) annDeallocPts(angle_nodes);
   delete[]index;
   delete[]dist;
 #endif
@@ -689,6 +707,64 @@ crossField2d::crossField2d(MVertex* v, GEdge* ge)
   t.normalize();
   _angle = atan2 (t.y(),t.x());
   crossField2d::normalizeAngle (_angle);
+}
+
+void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
+{
+  std::list<GEdge*> e;
+  replaceMeshCompound(_gf, e);
+
+  std::list<GEdge*>::const_iterator it = e.begin();
+  std::map<MVertex*,double> _cosines4,_sines4;
+  std::map<MVertex*,SPoint2> _param;
+
+  for( ; it != e.end(); ++it ){
+    if (!(*it)->isSeam(_gf)){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
+        MVertex *v[2];
+        v[0] = (*it)->lines[i]->getVertex(0);
+        v[1] = (*it)->lines[i]->getVertex(1);
+        SPoint2 p1,p2;
+        reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
+        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
+        crossField2d::normalizeAngle (angle);
+        for (int i=0;i<2;i++){
+          std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
+          std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
+          if (itc != _cosines4.end()){
+            itc->second  = 0.5*(itc->second + cos(4*angle));
+            its->second  = 0.5*(its->second + sin(4*angle));
+          }
+          else {
+	    _param[v[i]] = (i==0) ? p1 : p2;
+            _cosines4[v[i]] = cos(4*angle);
+            _sines4[v[i]] = sin(4*angle);
+          }
+        }
+      }
+    }
+  }
+
+  index = new ANNidx[_NBANN];
+  dist  = new ANNdist[_NBANN];
+  angle_nodes = annAllocPts(_cosines4.size(), 3);
+  std::map<MVertex*,double>::iterator itp = _cosines4.begin();
+  int ind = 0;
+  _sin.clear();
+  _cos.clear();
+  while (itp !=  _cosines4.end()){
+    MVertex *v = itp->first;
+    double c = itp->second;    
+    SPoint2 pt = _param[v];
+    double s = _sines4[v];
+    angle_nodes[ind][0] = pt.x();
+    angle_nodes[ind][1] = pt.y();
+    angle_nodes[ind][2] = 0.0;
+    _cos.push_back(c);
+    _sin.push_back(s);
+    itp++;ind++;
+  }
+  angle_kdtree = new ANNkd_tree(angle_nodes, _cosines4.size(), 3);  
 }
 
 void backgroundMesh::propagatecrossField(GFace *_gf)
@@ -851,6 +927,25 @@ double backgroundMesh::operator() (double u, double v, double w) const
 
 double backgroundMesh::getAngle(double u, double v, double w) const
 {
+  // JFR : 
+  // we can use closest point for computing
+  // cross field angles : this allow NOT to
+  // generate a spurious mesh and solve a PDE
+  if (!_octree){
+#if defined(HAVE_ANN)
+    double pt[3] = {u,v,0.0};
+    angle_kdtree->annkSearch(pt, _NBANN, index, dist);
+    double SINE = 0.0 , COSINE = 0.0;
+    for (int i=0;i<_NBANN;i++){
+      SINE += _sin[index[i]];
+      COSINE += _cos[index[i]];
+      //      printf("%2d %2d %12.5E %12.5E\n",i,index[i],_sin[index[i]],_cos[index[i]]);
+    }
+    double angle = atan2(SINE,COSINE)/4.0;
+    crossField2d::normalizeAngle (angle);
+    return angle;    
+#endif
+  }
 
   // HACK FOR LEWIS
   // h = 1+30(y-x^2)^2  + (1-x)^2

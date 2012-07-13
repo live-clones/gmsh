@@ -50,20 +50,25 @@ class backgroundMesh : public simpleFunction<double>
   std::map<MVertex*,double> _distance;  
   std::map<MVertex*,double> _angles;  
   static backgroundMesh * _current;
-  backgroundMesh(GFace *);
+  backgroundMesh(GFace *, bool dist = false);
   ~backgroundMesh();
 #if defined(HAVE_ANN)
    mutable ANNkd_tree *uv_kdtree;
    mutable ANNpointArray nodes;
    ANNidxArray index;
    ANNdistArray dist;
+   mutable ANNpointArray angle_nodes;
+   mutable ANNkd_tree *angle_kdtree;
+   std::vector<double> _cos,_sin;
 #endif
  public:
   static void set(GFace *);
+  static void setCrossFieldsByDistance(GFace *);
   static void unset();
   static backgroundMesh *current () { return _current; }
   void propagate1dMesh(GFace *);
   void propagatecrossField(GFace *);
+  void propagateCrossFieldByDistance(GFace *);
   void updateSizes(GFace *);
   double operator () (double u, double v, double w) const; // returns mesh size
   double getAngle(double u, double v, double w) const ; 

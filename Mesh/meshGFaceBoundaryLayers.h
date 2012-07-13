@@ -14,6 +14,8 @@
 
 class Field;
 class GFace;
+class GRegion;
+class MTriangle;
 
 struct BoundaryLayerData
 {
@@ -49,6 +51,7 @@ public:
   typedef std::multimap<MVertex*,BoundaryLayerData>::iterator iter;
   typedef std::map<MVertex*, BoundaryLayerFan>::iterator iterf;
   std::multimap<MVertex*, MVertex*> _non_manifold_edges;
+  std::multimap<MVertex*,MTriangle*> _non_manifold_faces;
   std::multimap<MEdge, SVector3, Less_Edge> _normals;
   iter begin() { return _data.begin(); }
   iter end() { return _data.end(); }
@@ -172,7 +175,8 @@ public:
   void filterPoints();
 };
 
-BoundaryLayerColumns * buidAdditionalPoints2D (GFace *gf) ;
+BoundaryLayerColumns * buildAdditionalPoints2D (GFace *gf) ;
+BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) ;
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
 
 #endif

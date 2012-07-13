@@ -10,6 +10,7 @@
   #include "PView.h"
   #include "PViewFactory.h"
   #include "PViewData.h"
+  #include "PViewAsSimpleFunction.h"
 #endif
 %}
 

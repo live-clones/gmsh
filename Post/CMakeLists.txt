@@ -10,6 +10,7 @@ set(SRC
       PViewDataGModel.cpp PViewDataGModelIO.cpp
     PViewOptions.cpp
     PViewFactory.cpp
+    PViewAsSimpleFunction.cpp
   adaptiveData.cpp shapeFunctions.cpp
   OctreePost.cpp
   ColorTable.cpp

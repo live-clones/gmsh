@@ -90,8 +90,9 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
   metric[2] = res[1][1];
 }
 
-BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
+BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
 {
+  //  return 0;
 #if !defined(HAVE_ANN)
   return 0;
 #else
@@ -392,7 +393,3 @@ BoundaryLayerColumns* buidAdditionalPoints2D (GFace *gf)
 #endif
 }
 
-void BoundaryLayerColumns::filterPoints()
-{
-  std::map<MVertex*,MVertex*> tooclose;
-}

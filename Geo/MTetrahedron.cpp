@@ -42,7 +42,7 @@ double MTetrahedron::getCircumRadius()
 #endif
 }
 
-double MTetrahedron10::distoShapeMeasure () {  
+void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
 
   // the fastest available algo for computing scaled jacobians for 
   // quadratic tetrahedron 
@@ -105,7 +105,8 @@ double MTetrahedron10::distoShapeMeasure () {
   static fullVector<double> Bi( nbBezT );
   jac_basis->matrixLag2Bez.mult(Ji,Bi);
   //  printf("%22.15E\n",*std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size()));
-  return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmin= *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmax= *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 
 double MTetrahedron::distoShapeMeasure()

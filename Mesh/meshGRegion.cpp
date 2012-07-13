@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshGRegion.h"
+#include "meshGFaceBoundaryLayers.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -488,6 +489,12 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 }
 #endif
 
+static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
+{
+  BoundaryLayerColumns *_columns = buildAdditionalPoints3D (gr);
+}
+
+
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
@@ -588,6 +595,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     printVoronoi(gr, candidates);
     skeletonFromVoronoi(gr, candidates);
   }
+
+  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);  
 
   // now do insertion of points
  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)

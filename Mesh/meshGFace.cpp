@@ -482,7 +482,7 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
 
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
-  BoundaryLayerColumns *_columns = buidAdditionalPoints2D (gf);
+  BoundaryLayerColumns *_columns = buildAdditionalPoints2D (gf);
 
   if (!_columns)return;
 
@@ -1121,7 +1121,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // BOUNDARY LAYER
   if (!onlyInitialMesh) {
-    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) buildBackGroundMesh (gf);
+    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) 
+      buildBackGroundMesh (gf);
+      //      backgroundMesh::setCrossFieldsByDistance(gf);
     modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
   }
 
