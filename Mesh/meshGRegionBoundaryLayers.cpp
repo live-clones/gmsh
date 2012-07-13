@@ -12,20 +12,22 @@
 #include "Field.h"
 
 
-//
-//               ^  ni
-//               |
-//               |
-//      +-----------------+
-//               bi      /
-//                 bj  /
-//                   /\
-//                 /    \   nj
-//               /        Z
-//             +
+/*
+               ^  ni
+               |
+               |
+      +-----------------+
+               bi      /
+                 bj  /
+                   /\
+                 /    \   nj
+               /        Z
+             +
+*/
 
 static double solidAngle (SVector3 &ni, SVector3 &nj,
-			  SPoint3  &bi, SPoint3  &bj) {
+			  SPoint3  &bi, SPoint3  &bj)
+{
   double cosa = dot (ni, nj);
   SVector3 bibj = bj - bi;
   SVector3 sina = crossprod ( ni , nj );
@@ -34,10 +36,10 @@ static double solidAngle (SVector3 &ni, SVector3 &nj,
   return sign > 0 ? fabs (a) : -fabs(a);
 }
 
-BoundaryLayerColumns* buildAdditionalPoints3D_CAD_BASED (GRegion *gr) {
+BoundaryLayerColumns* buildAdditionalPoints3D_CAD_BASED (GRegion *gr)
+{
+  return 0;
 }
-
-
 
 BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 {
@@ -65,7 +67,8 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
   // filter vertices : belong to BL and are classified on FACES
   while(itf != faces.end()){
     if (blf->isFaceBL((*itf)->tag())){
-      printf("FACE %d is a boundary layer face %d triangles\n",(*itf)->tag(),(*itf)->triangles.size());
+      printf("FACE %d is a boundary layer face %d triangles\n",(*itf)->tag(),
+             (int)(*itf)->triangles.size());
       for(unsigned int i = 0; i< (*itf)->triangles.size(); i++)
 	for(unsigned int j = 0; j< 3; j++){
 	  if ((*itf)->triangles[i]->getVertex(j)->onWhat()->dim() != 3){
@@ -77,7 +80,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
     }
     ++itf;
   }
-  printf("%d vertices \n",_vertices.size());
+  printf("%d vertices \n", (int)_vertices.size());
 
   // assume that the initial mesh has been created i.e. that there exist
   // tetrahedra inside the domain. Tetrahedra are used to define

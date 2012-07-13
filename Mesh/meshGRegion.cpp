@@ -491,7 +491,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
-  BoundaryLayerColumns *_columns = buildAdditionalPoints3D (gr);
+  buildAdditionalPoints3D (gr);
 }
 
 
@@ -596,7 +596,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     skeletonFromVoronoi(gr, candidates);
   }
 
-  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);  
+  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
 
   // now do insertion of points
  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
