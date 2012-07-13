@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "meshGFaceBoundaryLayers.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -9,7 +14,7 @@
 
 //
 //               ^  ni
-//               |   
+//               |
 //               |
 //      +-----------------+
 //               bi      /
@@ -27,7 +32,7 @@ static double solidAngle (SVector3 &ni, SVector3 &nj,
   double a = atan2(sina.norm(),cosa);
   double sign = dot (nj, bibj);
   return sign > 0 ? fabs (a) : -fabs(a);
-} 
+}
 
 BoundaryLayerColumns* buildAdditionalPoints3D_CAD_BASED (GRegion *gr) {
 }
@@ -61,7 +66,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
   while(itf != faces.end()){
     if (blf->isFaceBL((*itf)->tag())){
       printf("FACE %d is a boundary layer face %d triangles\n",(*itf)->tag(),(*itf)->triangles.size());
-      for(unsigned int i = 0; i< (*itf)->triangles.size(); i++)      
+      for(unsigned int i = 0; i< (*itf)->triangles.size(); i++)
 	for(unsigned int j = 0; j< 3; j++){
 	  if ((*itf)->triangles[i]->getVertex(j)->onWhat()->dim() != 3){
 	    _columns->_non_manifold_faces.insert(std::make_pair((*itf)->triangles[i]->getVertex(j),(*itf)->triangles[i]));
@@ -73,7 +78,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
     ++itf;
   }
   printf("%d vertices \n",_vertices.size());
-  
+
   // assume that the initial mesh has been created i.e. that there exist
   // tetrahedra inside the domain. Tetrahedra are used to define
   // exterior normals
@@ -87,8 +92,8 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 	MVertex *v2 = f.getVertex(2);
 	MVertex *v3 = 0;
 	for (int k=0;k<4;k++){
-	  if (gr->tetrahedra[i]->getVertex(k) != v0 && 
-	      gr->tetrahedra[i]->getVertex(k) != v1 && 
+	  if (gr->tetrahedra[i]->getVertex(k) != v0 &&
+	      gr->tetrahedra[i]->getVertex(k) != v1 &&
 	      gr->tetrahedra[i]->getVertex(k) != v2 ){
 	    v3 = gr->tetrahedra[i]->getVertex(k);
 	  }
@@ -102,9 +107,9 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 	if (sign > 0)it->second = n;
 	else it->second = n*(-1.0);
       }
-    }    
+    }
   }
-  
+
   // for all boundry points
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
     std::vector<MTriangle*> _connections;
@@ -115,7 +120,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
       _connections.push_back (itm->second);
       _allDirs.push_back (_normals[itm->second->getFace(0)]);
     }
-    
+
     // a list of normals is associated to a given vertex
     SPoint3 p ((*it)->x(),(*it)->y(),(*it)->z());
     std::vector<std::vector<int> > groupsOfDirections;
@@ -129,7 +134,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 	  SPoint3 bj = _connections[iDir]->barycenter();
 	  SVector3 nj = _allDirs[iDir];
 	  double angle = solidAngle (ni,nj,bi,bj);
-	  // those two directions are 
+	  // those two directions are
 	  if (angle < _treshold){
 	    found = true;
 	    groupsOfDirections[j].push_back(i);
@@ -144,8 +149,8 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 	groupsOfDirections.push_back(newDir);
       }
     }
-    
-    
+
+
     std::vector<SVector3> shoot;
     for (unsigned int j=0;j<groupsOfDirections.size();j++){
       SVector3 n;
@@ -156,7 +161,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
       n.normalize();
       shoot.push_back(n);
     }
-    
+
     // now create the BL points
     for (unsigned int DIR=0;DIR<shoot.size();DIR++){
       SVector3 n = shoot[DIR];
