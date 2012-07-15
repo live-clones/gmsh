@@ -490,8 +490,8 @@ void backgroundMesh::unset()
   _current = 0;
 }
 
-backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) : 
-  _octree(0), uv_kdtree(0), angle_kdtree(0), nodes(0), angle_nodes(0)
+backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) :
+  _octree(0), uv_kdtree(0), nodes(0), angle_nodes(0), angle_kdtree(0)
 {
 
   if (cfd){
@@ -545,7 +545,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) :
     uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
 #endif
 
-  // build a search structure    
+  // build a search structure
   _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
@@ -754,7 +754,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
   _cos.clear();
   while (itp !=  _cosines4.end()){
     MVertex *v = itp->first;
-    double c = itp->second;    
+    double c = itp->second;
     SPoint2 pt = _param[v];
     double s = _sines4[v];
     angle_nodes[ind][0] = pt.x();
@@ -764,7 +764,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
     _sin.push_back(s);
     itp++;ind++;
   }
-  angle_kdtree = new ANNkd_tree(angle_nodes, _cosines4.size(), 3);  
+  angle_kdtree = new ANNkd_tree(angle_nodes, _cosines4.size(), 3);
 }
 
 void backgroundMesh::propagatecrossField(GFace *_gf)
@@ -927,7 +927,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
 
 double backgroundMesh::getAngle(double u, double v, double w) const
 {
-  // JFR : 
+  // JFR :
   // we can use closest point for computing
   // cross field angles : this allow NOT to
   // generate a spurious mesh and solve a PDE
@@ -943,7 +943,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     }
     double angle = atan2(SINE,COSINE)/4.0;
     crossField2d::normalizeAngle (angle);
-    return angle;    
+    return angle;
 #endif
   }
 
