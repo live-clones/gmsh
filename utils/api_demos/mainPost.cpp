@@ -27,13 +27,13 @@ int main(int argc, char **argv)
   }
   PView *p = new PView("f(x,y,z) = x", "NodeData", m, d);
   p->getData()->writeMSH("f.msh");
-  
+
   // use a plugin on the dataset
-  PluginManager::instance()->setPluginOption("CutPlane", "A", 0.); 
-  PluginManager::instance()->setPluginOption("CutPlane", "B", 1.); 
-  PluginManager::instance()->setPluginOption("CutPlane", "C", 0.); 
-  PluginManager::instance()->setPluginOption("CutPlane", "D", -0.05); 
-  PluginManager::instance()->setPluginOption("CutPlane", "iView", 0.); 
+  PluginManager::instance()->setPluginOption("CutPlane", "A", 0.);
+  PluginManager::instance()->setPluginOption("CutPlane", "B", 1.);
+  PluginManager::instance()->setPluginOption("CutPlane", "C", 0.);
+  PluginManager::instance()->setPluginOption("CutPlane", "D", -0.05);
+  PluginManager::instance()->setPluginOption("CutPlane", "View", 0.);
   PluginManager::instance()->action("CutPlane", "Run", 0);
   PView::list.back()->getData()->writeMSH("fcut.msh");
 
