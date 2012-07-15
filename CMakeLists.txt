@@ -1257,7 +1257,8 @@ set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$"
     "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
     "/projects/" 
-    "/FunctionSpace/" "/Mesh/meshRecombine*" "/utils/solvers/legacy/")
+    "/FunctionSpace/" "/Mesh/meshRecombine*" "/utils/solvers/legacy/"
+    "/contrib/3M/")
 
 if(UNIX)
   # make sure we remove previous installs before doing the next one
