@@ -26,10 +26,10 @@ echo "BUILD END: `date`" >> ${LOG}
 
 FILE=`ls ${GMSH}/bin/gmsh-*.tar.gz`
 if [ -f ${FILE} ]; then
-  if [ ${EXTRA_VERSION} == "-svn" ]; then
-    scp -C ${FILE} ${WEB_BIN}/gmsh-nightly-Linux.tgz
+  if [[ ${EXTRA_VERSION} == "-svn" ]]; then
+    scp -C ${FILE} ${WEB_BIN}/gmsh-svn-Linux.tgz
   else
-    scp -C ${FILE} ${WEB_BIN}/${FILE/tar.gz/tgz}
+    scp -C ${FILE} ${WEB_BIN}/
   fi
 fi
 scp -C ${LOG} ${WEB_BIN}/

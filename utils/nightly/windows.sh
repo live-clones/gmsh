@@ -28,10 +28,10 @@ echo "BUILD END: `date`" >> ${LOG}
 
 FILE=`ls ${GMSH}/bin/gmsh-*.zip`
 if [ -f ${FILE} ]; then
-  if [ ${EXTRA_VERSION} == "-svn" ]; then
-    scp -C ${FILE} ${WEB_BIN}/gmsh-nightly-Windows.zip
+  if [[ ${EXTRA_VERSION} == "-svn" ]]; then
+    scp -C ${FILE} ${WEB_BIN}/gmsh-svn-Windows.zip
   else
-    scp -C ${FILE} ${WEB_BIN}/${FILE}
+    scp -C ${FILE} ${WEB_BIN}/
   fi
 fi
 scp -C ${LOG} ${WEB_BIN}/
