@@ -29,7 +29,8 @@ if [ -f ${FILE} ]; then
   if [[ ${EXTRA_VERSION} == "-svn" ]]; then
     scp -C ${FILE} ${WEB_BIN}/gmsh-svn-Linux.tgz
   else
-    scp -C ${FILE} ${WEB_BIN}/
+    NAME=`basename ${FILE} .tar.gz`
+    scp -C ${FILE} ${WEB_BIN}/${NAME}.tgz
   fi
 fi
 scp -C ${LOG} ${WEB_BIN}/
