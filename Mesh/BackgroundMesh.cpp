@@ -35,7 +35,9 @@
 // CTX::instance()->mesh.minCircPoints tells the minimum number of points per
 // radius of curvature
 
+#if defined(HAVE_ANN)
 static int _NBANN = 2;
+#endif
 
 SMetric3 buildMetricTangentToCurve(SVector3 &t, double l_t, double l_n)
 {
@@ -490,8 +492,10 @@ void backgroundMesh::unset()
   _current = 0;
 }
 
-backgroundMesh::backgroundMesh(GFace *_gf, bool cfd) :
-  _octree(0), uv_kdtree(0), nodes(0), angle_nodes(0), angle_kdtree(0)
+backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
+#if defined(HAVE_ANN)
+  : _octree(0), uv_kdtree(0), nodes(0), angle_nodes(0), angle_kdtree(0)
+#endif
 {
 
   if (cfd){
@@ -745,6 +749,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
     }
   }
 
+#if defined(HAVE_ANN)
   index = new ANNidx[_NBANN];
   dist  = new ANNdist[_NBANN];
   angle_nodes = annAllocPts(_cosines4.size(), 3);
@@ -765,6 +770,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
     itp++;ind++;
   }
   angle_kdtree = new ANNkd_tree(angle_nodes, _cosines4.size(), 3);
+#endif
 }
 
 void backgroundMesh::propagatecrossField(GFace *_gf)
