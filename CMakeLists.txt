@@ -89,7 +89,7 @@ set(GMSH_API
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
     Geo/MVertexBoundaryLayerData.h Geo/MEdge.h 
-    Geo/MFace.h Geo/MElement.h Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h 
+    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h 
     Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h 
     Geo/MPyramid.h Geo/MElementCut.h Geo/MElementOctree.h Geo/discreteVertex.h 
     Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h Geo/SPoint3.h
