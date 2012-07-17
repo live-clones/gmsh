@@ -56,6 +56,7 @@
 #include "DiscretizationError.h"
 #include "Scal2Vec.h"
 #include "CutMesh.h"
+#include "NewView.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -239,7 +240,8 @@ void PluginManager::registerDefaultPlugins()
                       ("DiscretizationError", GMSH_RegisterDiscretizationErrorPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
-
+   allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("NewView", GMSH_RegisterNewViewPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
