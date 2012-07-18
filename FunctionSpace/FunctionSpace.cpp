@@ -3,7 +3,7 @@
 using namespace std;
 
 FunctionSpace::FunctionSpace(void){
-  ebLookUp = new map<Element*, Basis*, ElementComparator>;
+  ebLookUp = new map<MElement*, Basis*, ElementComparator>;
 }
 
 FunctionSpace::~FunctionSpace(void){

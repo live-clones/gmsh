@@ -2,7 +2,7 @@
 #define _FUNCTIONSPACE_H_
 
 #include <map>
-#include "Element.h"
+#include "MElement.h"
 #include "Jacobian.h"
 #include "Basis.h"
 
@@ -21,39 +21,39 @@
 
 class FunctionSpace{
  private:
-
+  
   class ElementComparator{
   public:
-    bool operator()(const Element* a, const Element* b) const;
+    bool operator()(const MElement* a, const MElement* b) const;
   };
-
-  std::map<Element*, Basis*, ElementComparator>* ebLookUp; // Element to Basis Lookup
+  
+  std::map<MElement*, Basis*, ElementComparator>* ebLookUp; // Element to Basis Lookup
 
  public:
    FunctionSpace(void);
   ~FunctionSpace(void);
 
-  void associate(Element& element, Basis& basis);
+  void associate(MElement& element, Basis& basis);
   void associate(int physical, Basis& basis);
   
-  Basis& getBasis(Element& element) const;
+  Basis& getBasis(MElement& element) const;
 };
 
 //////////////////////
 // Inline Functions //
 //////////////////////
 
-inline void FunctionSpace::associate(Element& element, Basis& basis){
-  ebLookUp->insert(std::pair<Element*, Basis*>(&element, &basis));
+inline void FunctionSpace::associate(MElement& element, Basis& basis){
+  ebLookUp->insert(std::pair<MElement*, Basis*>(&element, &basis));
 }
 
-inline Basis& FunctionSpace::getBasis(Element& element) const{
+inline Basis& FunctionSpace::getBasis(MElement& element) const{
   return *(ebLookUp->find(&element)->second);
 }
 
 inline bool FunctionSpace::ElementComparator::operator()
-(const Element* a, const Element* b) const{
-  return a->getId() < b->getId();
+(const MElement* a, const MElement* b) const{
+  return a->getNum() < b->getNum();
 }
 
 #endif
