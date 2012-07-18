@@ -31,12 +31,31 @@ class Hex{
   bool operator<(const Hex&) const;
 };
 
+class Facet{
+ private:
+  MVertex *a,*b,*c;
+  unsigned long long hash;
+ public:
+  Facet();
+  Facet(MVertex*,MVertex*,MVertex*);
+  ~Facet();
+  MVertex* get_a();
+  MVertex* get_b();
+  MVertex* get_c();
+  void set_vertices(MVertex*,MVertex*,MVertex*);
+  bool same_vertices(Facet);
+  void compute_hash();
+  unsigned long long get_hash() const;
+  bool operator<(const Facet&) const;
+};
+
 class Recombinator{
  private:
   std::vector<Hex> potential;
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MVertex*> > vertex_to_vertices;
   std::map<MVertex*,std::set<MElement*> > vertex_to_elements;
+  std::multiset<Facet> hash_table;
  public:
   Recombinator();
   ~Recombinator();
@@ -76,11 +95,20 @@ class Recombinator{
   bool inclusion(MVertex*,Hex);
   bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
+  bool inclusion(Facet);
   
+  bool conformity(Hex);
+  bool conformity(MVertex*,MVertex*,MVertex*,MVertex*);
+	
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_elements(GRegion*);
+  void build_hash_table(Hex);
+  void build_hash_table(MVertex*,MVertex*,MVertex*,MVertex*);
+  void build_hash_table(Facet);
+  
   void print_vertex_to_vertices(GRegion*);
   void print_vertex_to_elements(GRegion*);
+  void print_hash_table();
   void print_segment(SPoint3,SPoint3,std::ofstream&);
 	
   double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
