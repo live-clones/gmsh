@@ -10,6 +10,11 @@ TriNodeBasis::TriNodeBasis(const int order){
   nodeNbr = 3;
   dim     = 2;
 
+  nVertex = 3;
+  nEdge   = 3 * (order - 1);
+  nFace   = 0;
+  nCell   =     (order - 1) * (order - 2) / 2;
+
   // Alloc Temporary Space //
   Polynomial* legendre    = new Polynomial[order];
   Polynomial* intLegendre = new Polynomial[order];
@@ -86,10 +91,15 @@ TriNodeBasis::~TriNodeBasis(void){
 /*
 #include <cstdio>
 int main(void){
-  const int P = 5;
+  const int P = 8;
   const double d = 0.01;
 
   TriNodeBasis b(P);
+
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
   
   const std::vector<Polynomial>& basis = b.getBasis();
   
@@ -128,7 +138,7 @@ int main(void){
   printf("\n");
 
   for(int i = 0; i < b.getSize(); i++)
-    printf("p%d(j, i) = p(%d, x(i), y(j));\n", i + 1, i + 1, i + 1);
+    printf("p%d(j, i) = p(%d, x(i), y(j));\n", i + 1, i + 1);
   
   printf("end\n");
   printf("end\n");
@@ -139,7 +149,7 @@ int main(void){
 
   printf("\n");
   for(int i = 0; i < b.getSize(); i++)
-    printf("figure;\ncontourf(x, y, p%d);\ncolorbar;\n", i + 1, i + 1);
+    printf("figure;\ncontourf(x, y, p%d);\ncolorbar;\n", i + 1);
   
   printf("\n");
   

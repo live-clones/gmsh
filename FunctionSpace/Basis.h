@@ -21,10 +21,28 @@ class Basis{
   int nodeNbr;
   int dim;
 
+  int nVertex;
+  int nEdge;
+  int nFace;
+  int nCell;
+
  public:
   //! Deletes this Basis
   //!
   virtual ~Basis(void);
+
+  //! @return Returns:
+  //! @li @c true, if this is a 
+  //! @em scalar Basis (BasisScalar)
+  //! @li @c false, if this is a
+  //! @em vectorial Basis (BasisVector)
+  //!
+  //! @note
+  //! Scalar basis are sets of 
+  //! Polynomial%s@n
+  //! Vectorial basis are sets of 
+  //! Vector%s of Polynomial%s  
+  bool isScalar(void) const;
 
   //! @return Returns the @em polynomial @em order of the Basis
   int getOrder(void) const;
@@ -49,18 +67,21 @@ class Basis{
   //! (1D, 2D or 3D) of the Basis
   int getDim(void) const;
 
-  //! @return Returns:
-  //! @li @c true, if this is a 
-  //! @em scalar Basis (BasisScalar)
-  //! @li @c false, if this is a
-  //! @em vectorial Basis (BasisVector)
-  //!
-  //! @note
-  //! Scalar basis are sets of 
-  //! Polynomial%s@n
-  //! Vectorial basis are sets of 
-  //! Vector%s of Polynomial%s  
-  bool isScalar(void) const;
+  //! @return Returns the number of @em Vertex
+  //! @em Based functions of this Basis
+  int getNVertex(void) const;
+
+  //! @return Returns the number of @em Edge
+  //! @em Based functions of this Basis
+  int getNEdge(void) const;
+
+  //! @return Returns the number of @em Face
+  //! @em Based functions of this Basis
+  int getNFace(void) const;
+
+  //! @return Returns the number of @em Cell
+  //! @em Based functions of this Basis
+  int getNCell(void) const;
 
  protected:
   //! Instantiate a new Basis
@@ -71,6 +92,10 @@ class Basis{
 //////////////////////
 // Inline Functions //
 //////////////////////
+
+inline bool Basis::isScalar(void) const{
+  return scalar;
+}
 
 inline int Basis::getOrder(void) const{
   return order;
@@ -92,8 +117,20 @@ inline int Basis::getDim(void) const{
   return dim;
 }
 
-inline bool Basis::isScalar(void) const{
-  return scalar;
+inline int Basis::getNVertex(void) const{
+  return nVertex;
+}
+
+inline int Basis::getNEdge(void) const{
+  return nEdge;
+}
+
+inline int Basis::getNFace(void) const{
+  return nFace;
+}
+
+inline int Basis::getNCell(void) const{
+  return nCell;
 }
 
 #endif

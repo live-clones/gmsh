@@ -13,6 +13,10 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   nodeNbr = 8;
   dim     = 3;
 
+  nVertex =  0                              ;
+  nEdge   = 12                 * (order + 1);
+  nFace   = 12         * order * (order + 1);
+  nCell   =  3 * order * order * (order + 1);
 
   // Alloc Temporary Space //
   const int  orderPlus      = order + 1;
@@ -448,6 +452,11 @@ int main(void){
   const char x[3] = {'X', 'Y', 'Z'};
 
   HexEdgeBasis b(P);
+
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
   
   const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
   
@@ -515,3 +524,4 @@ int main(void){
   return 0;
 }
 */
+

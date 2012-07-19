@@ -8,6 +8,11 @@ TriNedelecBasis::TriNedelecBasis(void){
   nodeNbr = 3;
   dim     = 2;
 
+  nVertex = 0;
+  nEdge   = 3;
+  nFace   = 0;
+  nCell   = 0;
+
   // Lagrange //
   Polynomial* lagrange    = new Polynomial[3];
 
@@ -54,11 +59,15 @@ TriNedelecBasis::~TriNedelecBasis(void){
 /*
 #include <cstdio>
 int main(void){
-  const int P = 1;
   const double d = 0.05;
   const char x[2] = {'X', 'Y'};
 
   TriNedelecBasis b;
+
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
   
   const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
   

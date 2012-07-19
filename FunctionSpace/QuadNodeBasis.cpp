@@ -10,6 +10,11 @@ QuadNodeBasis::QuadNodeBasis(const int order){
   nodeNbr = 4;
   dim     = 2;
 
+  nVertex = 4                            ;
+  nEdge   = 4 * (order - 1)              ;
+  nFace   = 0                            ;
+  nCell   =     (order - 1) * (order - 1);
+
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];
   Polynomial* lifting  = new Polynomial[4];
@@ -95,10 +100,15 @@ QuadNodeBasis::~QuadNodeBasis(void){
 /*
 #include <cstdio>
 int main(void){
-  const int P = 4;
+  const int P = 8;
   const double d = 0.05;
 
   QuadNodeBasis b(P);
+
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
   
   const std::vector<Polynomial>& basis = b.getBasis();
   
@@ -137,7 +147,7 @@ int main(void){
   printf("\n");
 
   for(int i = 0; i < b.getSize(); i++)
-    printf("p%d(j, i) = p(%d, x(i), y(j));\n", i + 1, i + 1, i + 1);
+    printf("p%d(j, i) = p(%d, x(i), y(j));\n", i + 1, i + 1);
   
   printf("end\n");
   printf("end\n");
@@ -148,7 +158,7 @@ int main(void){
 
   printf("\n");
   for(int i = b.getSize(); i > 0; i--)
-    printf("figure;\ncontourf(x, y, p%d);\ncolorbar;\n", i, i);
+    printf("figure;\ncontourf(x, y, p%d);\ncolorbar;\n", i);
   
   printf("\n");
 

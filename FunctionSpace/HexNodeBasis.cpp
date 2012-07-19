@@ -10,6 +10,11 @@ HexNodeBasis::HexNodeBasis(const int order){
   nodeNbr = 8;
   dim     = 3;
 
+  nVertex =  8;
+  nEdge   = 12 * (order - 1);
+  nFace   =  6 * (order - 1) * (order - 1);
+  nCell   =      (order - 1) * (order - 1) * (order - 1);
+
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];
   Polynomial* lifting  = new Polynomial[8];
@@ -207,11 +212,16 @@ HexNodeBasis::~HexNodeBasis(void){
 #include <cstdio>
 int main(void){
 
-  const int P = 3;
+  const int P = 8;
   const double d = 0.05;
 
   HexNodeBasis b(P);
   
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
+
   const std::vector<Polynomial>& basis = b.getBasis();
   
   printf("\n");

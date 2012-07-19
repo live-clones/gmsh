@@ -10,6 +10,11 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   nodeNbr = 3;
   dim     = 2;
 
+  nVertex = 0;
+  nEdge   = 3 * (order + 1);
+  nFace   = 0;
+  nCell   = ((order - 1) * order + order - 1);
+
   // Alloc Temporary Space //
   const int orderPlus     = order + 1;
   const int orderMinus    = order - 1;
@@ -167,11 +172,16 @@ TriEdgeBasis::~TriEdgeBasis(void){
 /*
 #include <cstdio>
 int main(void){
-  const int P = 6;
+  const int P = 8;
   const double d = 0.05;
   const char x[2] = {'X', 'Y'};
 
   TriEdgeBasis b(P);
+
+  printf("%d = %d + %d + %d + %d = %d\n",
+	 b.getSize(), 
+	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
+	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
   
   const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
   
