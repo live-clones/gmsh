@@ -7,7 +7,7 @@
 //   Amaury Johnen (a.johnen@ulg.ac.be)
 //
 
-#define REC2D_WAIT_TIME .02
+#define REC2D_WAIT_TIME .5
 #define REC2D_NUM_ACTIO 1000
 
 // #define REC2D_SMOOTH
@@ -356,7 +356,7 @@ double Recombine2D::recombine(int depth)
   while (currentNode) {
     //_data->checkQuality();
     FlGui::instance()->check();
-#if 0//def REC2D_DRAW // draw state at origin
+#ifdef REC2D_DRAW // draw state at origin
     drawStateOrigin();
     while (Cpu()-time < REC2D_WAIT_TIME)
       FlGui::instance()->check();
@@ -3124,6 +3124,7 @@ double Rec2DVertex::getQualDegree(int numEl) const
     return _qualVSnum[_onWhat][nEl];
   if (nEl == 0) {
     Msg::Error("[Rec2DVertex] I don't want this anymore !");
+    crash();
     return -10.;
   }
   return std::max(1. - fabs(2./M_PI * _angle/(double)nEl - 1.), .0);
@@ -3156,9 +3157,13 @@ double Rec2DVertex::getQual(int numAngl, double valAngl,
 
 void Rec2DVertex::addEdgeQual(double val, int num)
 {
-  double oldQual = getQual();
+  double oldQual = .0;
+  if (_elements.size())
+    oldQual = getQual();
   _sumQualEdge += val;
   _sumEdge += num;
+  if (_sumEdge < 0 || _sumQualEdge < -1e12)
+    Msg::Error("[Rec2DVertex] Negative sum edge");
   if (_elements.size())
     Rec2DData::addVertQual(getQual()-oldQual);
   _lastUpdate = Recombine2D::getNumChange();
@@ -3352,7 +3357,9 @@ void Rec2DVertex::add(const Rec2DEdge *re)
     }
   }
 #ifdef REC2D_VERT_ONLY
-  double oldQual = getQual();
+  double oldQual = .0;
+  if (_elements.size())
+    oldQual = getQual();
 #endif
   _edges.push_back((Rec2DEdge*)re);
 #ifdef REC2D_VERT_ONLY
@@ -3379,13 +3386,17 @@ void Rec2DVertex::rmv(const Rec2DEdge *re)
   while (i < _edges.size()) {
     if (_edges[i] == re) {
 #ifdef REC2D_VERT_ONLY
-      double oldQual = getQual();
+      double oldQual = .0;
+      if (_elements.size())
+        oldQual = getQual();
 #endif
       _edges[i] = _edges.back();
       _edges.pop_back();
 #ifdef REC2D_VERT_ONLY
       _sumQualEdge -= re->getWeightedQual();
       _sumEdge -= re->getWeight();
+      if (_sumEdge < 0 || _sumQualEdge < -1e12)
+        Msg::Error("[Rec2DVertex] Negative sum edge");
       if (_elements.size())
         Rec2DData::addVertQual(getQual()-oldQual);
       _lastUpdate = Recombine2D::getNumChange();
@@ -4118,6 +4129,7 @@ Rec2DNode* Rec2DNode::selectBestNode()
     static int a = -1;
     if (++a < 1) Msg::Warning("FIXME !!!");
     if (_son[i]) _son[i]->rmvFather(this);
+    if (_son[i]) _son[i]->_ra->printTypeRew();
     delete _son[i];
     _son[i] = NULL;
   }
@@ -4205,11 +4217,13 @@ bool Rec2DNode::makeChanges()
   if (_dataChange || !_ra)
     return false;
   _dataChange = Rec2DData::getNewDataChange();
-#if 0//def REC2D_DRAW // draw state at origin
+#ifdef REC2D_DRAW // draw state at origin
   double time = Cpu();
-  //_ra->color(0, 0, 200);
+  _ra->color(0, 0, 200);
+  _ra->printTypeRew();
+  Msg::Info(" ");
   Recombine2D::drawStateOrigin();
-  while (Cpu()-time < REC2D_WAIT_TIME)
+  while (Cpu()-time < REC2D_WAIT_TIME*2)
     FlGui::instance()->check();
 #endif
   _ra->apply(_dataChange, _createdActions);

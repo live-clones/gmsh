@@ -342,6 +342,7 @@ class Rec2DAction {
     virtual void swap(Rec2DEdge*, Rec2DEdge*) = 0;
     virtual void printAdress() = 0;
     virtual void printReward() const = 0;
+    virtual void printTypeRew() const = 0;
     virtual void printVertices() const = 0;
     inline void addPointing() {++_numPointing;}
     inline void rmvPointing() {--_numPointing;}
@@ -392,6 +393,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void swap(Rec2DEdge*, Rec2DEdge*);
     virtual void printAdress() {Msg::Info(" %d", this);}
     virtual void printReward() const;
+    virtual void printTypeRew() const {Msg::Info("Recombine %g", _globQualIfExecuted);}
     virtual void printVertices() const;
     virtual void printIdentity() const;
     
@@ -445,6 +447,7 @@ class Rec2DCollapse : public Rec2DAction {
     inline virtual void swap(Rec2DEdge *re0, Rec2DEdge *re1) {_rec->swap(re0, re1);}
     virtual void printAdress() {_rec->printAdress();}
     virtual void printReward() const;
+    virtual void printTypeRew() const {Msg::Info("Collapse %g", _globQualIfExecuted);}
     virtual void printVertices() const {_rec->printVertices();}
     virtual void printIdentity() const;
     
