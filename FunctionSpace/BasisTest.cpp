@@ -15,7 +15,7 @@
 #include "PlotBasis.h"
 
 using namespace std;
-
+/*
 int main(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
@@ -34,4 +34,4 @@ int main(int argc, char** argv){
   
   return 0;
 }
-
+*/
