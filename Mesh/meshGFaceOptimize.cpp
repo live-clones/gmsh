@@ -3039,6 +3039,8 @@ void recombineIntoQuads(GFace *gf,
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
+    quadsToTriangles(gf, 0.01);
+    //    if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
     return;
   }
 

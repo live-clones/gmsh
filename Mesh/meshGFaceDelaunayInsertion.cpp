@@ -574,19 +574,16 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
     MTri3 *t4;
     t4 = new MTri3(t, LL,0,&Us,&Vs,gf);
 
-    double d1 = sqrt((it->v[0]->x() - v->x()) * (it->v[0]->x() - v->x()) +
-                     (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
-                     (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
-    double d2 = sqrt((it->v[1]->x() - v->x()) * (it->v[1]->x() - v->x()) +
-                     (it->v[1]->y() - v->y()) * (it->v[1]->y() - v->y()) +
-                     (it->v[1]->z() - v->z()) * (it->v[1]->z() - v->z()));
-    const double MID[3] = {0.5*(it->v[0]->x()+it->v[1]->x()),
-                           0.5*(it->v[0]->y()+it->v[1]->y()),
-                           0.5*(it->v[0]->z()+it->v[1]->z())};
-    double d3 = sqrt((MID[0] - v->x()) * (MID[0] - v->x()) +
-                     (MID[1] - v->y()) * (MID[1] - v->y()) +
-                     (MID[2] - v->z()) * (MID[2] - v->z()));
-    if ((d1 < LL * .25 || d2 < LL * .25 || d3 < LL * .25) && !force) {
+    //    double din = t->getInnerRadius();
+
+    double d1 = distance(it->v[0],v);
+    double d2 = distance(it->v[1],v);
+    double d3 = distance(it->v[0],it->v[1]);
+
+    // avoid angles that are too obtuse
+    double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
+
+    if ((d1 < LL * .25 || d2 < LL * .25 || cosv < -0.5) && !force) {
       onePointIsTooClose = true;
     }
 
@@ -746,35 +743,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   MTri3 *ptin = 0;
   bool inside = false;
   double uv[2];
-  // FIXME !!! ----> FIXED (JFR)
-  if (0 && MTri3::radiusNorm == 2){
-    inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
-    if (inside)ptin = worst;
-    if (!inside && worst->getNeigh(0)){
-      inside |= invMapUV(worst->getNeigh(0)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (inside)ptin = worst->getNeigh(0);
-    }
-    if (!inside && worst->getNeigh(1)){
-      inside |= invMapUV(worst->getNeigh(1)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (inside)ptin = worst->getNeigh(1);
-    }
-    if (!inside && worst->getNeigh(2)){
-      inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (inside)ptin = worst->getNeigh(2);
-    }
-    if (!inside){
-      ptin =  search4Triangle (worst, center, Us, Vs, AllTris,uv);
-      if (ptin)inside = true;
-    }
-  }
-  else {
-    ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv);
-    // if (!ptin){
-    //   printf("strange : %g %g seems to be out of the domain for face %d\n",
-    //          center[0],center[1],gf->tag());
-    // }
-    if (ptin) inside = true;
-  }
+  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv);
+  if (ptin) inside = true;
 
   if (inside) {
     // we use here local coordinates as real coordinates
@@ -1025,24 +995,6 @@ double optimalPointFrontal (GFace *gf,
 			    2 * dir[1] * dir[0] * metric[1] +
 			    dir[1] * dir[1] * metric[2]);
 
-  //  const double p = 0.5 * lengthMetric(P, Q, metric); // / RATIO;
-  /*
-  const double rhoM1 = 0.5 *
-    (vSizes[base->getVertex(ip1)->getIndex()] +
-     vSizes[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
-  const double rhoM2 = 0.5 *
-    (vSizesBGM[base->getVertex(ip1)->getIndex()] +
-     vSizesBGM[base->getVertex(ip2)->getIndex()] ) / sqrt(3.);// * RATIO;
-  const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
-  */
-
-  //  const double rhoM_hat = std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
-  //  double d = (rhoM_hat + sqrt (rhoM_hat * rhoM_hat - p * p)) / RATIO;
-
-  //const double d = 100./RATIO;
-  //  printf("(%g %g) (%g %g) %g %g %g %g %g %g\n",
-  //          P[0],P[1],Q[0],Q[1],RATIO,p,q,rhoM,rhoM_hat,d);
-  //  printf("size %12.5E\n",vSizesBGM[base->getVertex(ip1)->getIndex()]);
   const double rhoM1 = 0.5*
     (vSizes[base->getVertex(ip1)->getIndex()] +
      vSizes[base->getVertex(ip2)->getIndex()] ) ;// * RATIO;
@@ -1053,17 +1005,22 @@ double optimalPointFrontal (GFace *gf,
   const double rhoM_hat = rhoM;
 
   const double q = lengthMetric(center, midpoint, metric);
-
   const double d = rhoM_hat * sqrt(3.)*0.5;
+
+  // d is corrected in a way that the mesh size is computed at point newPoint
+  
 
   //  printf("%12.5E %12.5E\n",d,RATIO);
 
   //  const double L = d ;
   // avoid to go toooooo far
   const double L = d > q ? q : d;
+  
 
   newPoint[0] = midpoint[0] + L * dir[0]/RATIO;
   newPoint[1] = midpoint[1] + L * dir[1]/RATIO;
+
+
   return L;// > q ? d : q;
 }
 

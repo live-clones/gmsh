@@ -170,4 +170,11 @@ bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
 double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3);
 
+inline double distance (MVertex *v1, MVertex *v2){
+  const double dx = v1->x() - v2->x();
+  const double dy = v1->y() - v2->y();
+  const double dz = v1->z() - v2->z();
+  return sqrt(dx*dx+dy*dy+dz*dz);
+}
+
 #endif

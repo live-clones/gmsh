@@ -39,7 +39,6 @@ namespace std {
   %template(DoubleVector) std::vector<double, std::allocator<double> >;
   %template(DoubleVectorVector) std::vector<std::vector<double, std::allocator<double> > >;
   %template(StringVector) std::vector<std::string, std::allocator<std::string> >;
-  %template(IntDoubleMap) std::map < int , double >;
 }
 %pointer_functions(double,doublep)
 %pointer_functions(int,intp)

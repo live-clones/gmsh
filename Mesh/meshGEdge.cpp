@@ -384,14 +384,15 @@ void meshGEdge::operator() (GEdge *ge)
     a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
-
+  
   // force odd number of points for if blossom is used for recombination
   if(ge->meshAttributes.Method != MESH_TRANSFINITE &&
-     CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
-    if(CTX::instance()->mesh.recombineAll){
+     (CTX::instance()->mesh.algoRecombine == 1 || CTX::instance()->mesh.recombineAll) && N % 2 == 0){
+    //    if(CTX::instance()->mesh.recombineAll){
       N++;
-    }
-    else{
+      //    }
+  }
+  /*    else{
       std::list<GFace*> faces = ge->faces();
       for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
         if((*it)->meshAttributes.recombine){
@@ -401,6 +402,7 @@ void meshGEdge::operator() (GEdge *ge)
       }
     }
   }
+  */
 
   // printFandPrimitive(ge->tag(),Points);
 
