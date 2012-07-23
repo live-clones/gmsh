@@ -51,8 +51,6 @@ class stepData{
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time),
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
-    _model->getEntities(_entities);
-    _bbox = _model->bounds();
   }
   stepData(stepData<real> &other) : _data(0)
   {
@@ -82,6 +80,8 @@ class stepData{
     _partitions = other._partitions;
   }
   ~stepData(){ destroyData(); }
+  void fillEntities(){ _model->getEntities(_entities); }
+  void computeBoundingBox(){ _bbox = _model->bounds(); }
   GModel *getModel(){ return _model; }
   SBoundingBox3d getBoundingBox(){ return _bbox; }
   int getNumEntities(){ return _entities.size(); }
@@ -235,9 +235,10 @@ class PViewDataGModel : public PViewData {
                int step, double time, int partition, int numComp);
 
   // I/O routines
-  bool readMSH(const std::string &fileName, int fileIndex, FILE *fp, bool binary,
-               bool swap, int step, double time, int partition,
-               int numComp, int numNodes, const std::string &interpolationScheme);
+  bool readMSH(const std::string &viewName, const std::string &fileName,
+               int fileIndex, FILE *fp, bool binary, bool swap, int step,
+               double time, int partition, int numComp, int numNodes,
+               const std::string &interpolationScheme);
   bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);

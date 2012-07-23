@@ -210,7 +210,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
         if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
         bool create = d ? false : true;
         if(create) d = new PViewDataGModel(type);
-        if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep,
+        if(!d->readMSH(viewName, fileName, fileIndex, fp, binary, swap, timeStep,
                        time, partition, numComp, numEnt, interpolationScheme)){
           Msg::Error("Could not read data in msh file");
           if(create) delete d;

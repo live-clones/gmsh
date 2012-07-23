@@ -25,7 +25,8 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(model, numComp));
-
+  _steps[step]->fillEntities();
+  _steps[step]->computeBoundingBox();
   _steps[step]->setTime(time);
 
   int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
@@ -45,21 +46,18 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
   return true;
 }
 
-bool PViewDataGModel::readMSH(const std::string &fileName, int fileIndex, FILE *fp,
-                              bool binary, bool swap, int step, double time,
-                              int partition, int numComp, int numEnt,
-                              const std::string &interpolationScheme)
+bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fileName,
+                              int fileIndex, FILE *fp, bool binary, bool swap,
+                              int step, double time, int partition, int numComp,
+                              int numEnt, const std::string &interpolationScheme)
 {
-  Msg::Info("Reading step %d (time %g) partition %d: %d records",
-            step, time, partition, numEnt);
+  Msg::Info("Reading view `%s' step %d (time %g) partition %d: %d records",
+            viewName.c_str(), step, time, partition, numEnt);
 
-  while(step >= (int)_steps.size()){
-    if(_steps.empty() || _steps.back()->getNumData())
-      _steps.push_back(new stepData<double>(GModel::current(), numComp));
-    else // faster since we avoid computing model bounds
-      _steps.push_back(new stepData<double>(*_steps.back()));
-  }
-
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(GModel::current(), numComp));
+  _steps[step]->fillEntities();
+  _steps[step]->computeBoundingBox();
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
   _steps[step]->setTime(time);
@@ -423,6 +421,8 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         }
         while(step >= (int)_steps.size())
           _steps.push_back(new stepData<double>(m, numCompMsh));
+        _steps[step]->fillEntities();
+        _steps[step]->computeBoundingBox();
         _steps[step]->setFileName(fileName);
         _steps[step]->setFileIndex(fileIndex);
         _steps[step]->setTime(dt);
