@@ -1,9 +1,10 @@
-Mesh.Algorithm = 7; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
+Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
 Mesh.Algorithm3D = 7;
 
 Mesh.LcIntegrationPrecision = 1.e-2;
 
-//Mesh.RecombineAll = 1;
+Mesh.RecombineAll = 1;
+Mesh.Bunin = 130;
 
 Merge "carotid.stl";
 

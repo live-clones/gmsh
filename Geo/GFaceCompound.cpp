@@ -74,6 +74,33 @@ static void printBound(std::vector<MVertex*> &l, int tag)
 }
 */
 
+static std::vector<MVertex*> getBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t_cont &adj)
+{
+
+  std::vector<MVertex*> vv(1,it->first), bvv = vv;                                                      // Vector of vertices in blob and in boundary of blob
+  do {
+    std::set<MVertex*> nbvv;                                                                            // Set of vertices in new boundary
+    for (std::vector<MVertex*>::iterator itBV = bvv.begin(); itBV != bvv.end(); itBV++) {               // For each boundary vertex...
+      std::vector<MElement*> &adjBV = adj[*itBV];
+      for (std::vector<MElement*>::iterator itBVEl = adjBV.begin(); itBVEl != adjBV.end(); itBVEl++) {
+        for (int iV=0; iV<(*itBVEl)->getNumVertices(); iV++){                                           // ... look for adjacent vertices...
+          MVertex *v = (*itBVEl)->getVertex(iV);
+          if (find(vv.begin(),vv.end(),v) == vv.end()) nbvv.insert(v);                                  // ... and add them in the new boundary if they are not already in the blob
+        }
+      }
+    }
+    if (nbvv.empty()) bvv.clear();
+    else {
+      bvv.assign(nbvv.begin(),nbvv.end());
+      vv.insert(vv.end(),nbvv.begin(),nbvv.end());
+    }
+//  } while (!bvv.empty());
+  } while (vv.size() < minNbPt);                                                                        // Repeat until min. number of points is reached
+
+  return vv;
+
+}
+
 static bool orderVertices(const std::list<GEdge*> &e, std::vector<MVertex*> &l,
                           std::vector<double> &coord)
 {
@@ -2173,11 +2200,81 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 void GFaceCompound::secondDer(const SPoint2 &param,
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
+#if defined(HAVE_MESH)
+
   if(!oct) parametrize();
-  //leave debug here (since outputScalarField calls curvatureDiv)
-  Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
+
+  if(adjv.size() == 0){
+    std::vector<MTriangle*> allTri;
+    std::list<GFace*>::const_iterator it = _compound.begin();
+    for( ; it != _compound.end(); ++it){
+      allTri.insert(allTri.end(), (*it)->triangles.begin(), (*it)->triangles.end() );
+    }
+    buildVertexToTriangle(allTri, adjv);
+  }
+
+  if (xuu.size() == 0) computeHessianMapping();
+
+  double U, V;
+  GFaceCompoundTriangle *lt;
+  getTriangle(param.x(), param.y(), &lt, U,V);
+  if(!lt) return;
+
+  MVertex* v0 = lt->tri->getVertex(0);
+  MVertex* v1 = lt->tri->getVertex(1);
+  MVertex* v2 = lt->tri->getVertex(2);
+
+  *dudu = (1-U-V)*xuu[v0] + U*xuu[v1] + V*xuu[v2];
+  *dvdv = (1-U-V)*xvv[v0] + U*xvv[v1] + V*xvv[v2];
+  *dudv = (1-U-V)*xuv[v0] + U*xuv[v1] + V*xuv[v2];
+
+#endif
+  //Msg::Debug("Computation of the second derivatives is not implemented for compound faces");
 }
 
+void GFaceCompound::computeHessianMapping() const
+{
+
+#if defined(HAVE_MESH)
+  unsigned int sysDim = 6; //for 2D
+  unsigned int minNbPtBlob = 3*sysDim;
+  for (v2t_cont::iterator it = adjv.begin(); it != adjv.end(); it++) {
+    MVertex *ver = it->first;
+    std::vector<MVertex*> vv = getBlob(minNbPtBlob, it, adjv);
+    fullMatrix<double> A(vv.size(),sysDim), ATAx(sysDim,sysDim), ATAy(sysDim,sysDim), ATAz(sysDim,sysDim);
+    fullVector<double> bx(vv.size()), ATbx(sysDim), coeffsx(sysDim);
+    fullVector<double> by(vv.size()), ATby(sysDim), coeffsy(sysDim);
+    fullVector<double> bz(vv.size()), ATbz(sysDim), coeffsz(sysDim);
+    for(unsigned int i=0; i<vv.size(); i++) {
+      SPoint3 uv = coordinates[vv[i]];
+      A(i,0) = uv.x()*uv.x(); A(i,1) = uv.x()*uv.y(); A(i,2) = uv.y()*uv.y();
+      A(i,3) = uv.x(); A(i,4) = uv.y(); A(i,5) = 1.;
+      bx(i) = vv[i]->x();   
+      by(i) = vv[i]->y();
+      bz(i) = vv[i]->z();
+    }
+    ATAx.gemmWithAtranspose(A,A,1.,0.);
+    ATAy = ATAx; ATAz = ATAx;
+    A.multWithATranspose(bx,1.,0.,ATbx); 
+    A.multWithATranspose(by,1.,0.,ATby); 
+    A.multWithATranspose(bz,1.,0.,ATbz); 
+    ATAx.luSolve(ATbx,coeffsx);
+    ATAy.luSolve(ATby,coeffsy);
+    ATAz.luSolve(ATbz,coeffsz);
+    SPoint3 uv = coordinates[ver];
+    xuu[ver] = SVector3(2.*coeffsx(0),2.*coeffsy(0),2.*coeffsz(0)) ;
+    xvv[ver] = SVector3(2.*coeffsx(2),2.*coeffsy(2),2.*coeffsz(2)) ;
+    xuv[ver] = SVector3(coeffsx(1), coeffsy(1),coeffsz(1)); 
+    xu[ver]  = SVector3(2.*coeffsx(0)*uv.x()+coeffsx(1)*uv.y()+coeffsx(3), 
+			2.*coeffsy(0)*uv.x()+coeffsy(1)*uv.y()+coeffsy(3), 
+			2.*coeffsz(0)*uv.x()+coeffsz(1)*uv.y()+coeffsz(3));
+    xv[ver] = SVector3(coeffsx(1)*uv.x()+2.*coeffsx(2)*uv.y()+coeffsx(4), 
+		       coeffsy(1)*uv.x()+2.*coeffsy(2)*uv.y()+coeffsy(4),
+		       coeffsz(1)*uv.x()+2.*coeffsz(2)*uv.y()+coeffsz(4));
+  }
+ 
+#endif
+}
 static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;

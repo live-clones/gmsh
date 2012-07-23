@@ -4,7 +4,7 @@ Mesh.Algorithm3D = 7; //(1=tetgen, 4=netgen, 5=FrontalDel, 6=FrontalHex, 7=MMG3D
 Mesh.LcIntegrationPrecision = 1.e-2;
 
 Mesh.RecombineAll = 1;
-//Mesh.Bunin = 150;
+Mesh.Bunin = 150;
 
 Merge "aorta2.stl";
 

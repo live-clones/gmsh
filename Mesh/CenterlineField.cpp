@@ -625,7 +625,9 @@ void Centerline::createSplitCompounds()
     int num_gec = NE+i+1;
     Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
-    current->addCompoundEdge(e_compound,num_gec);
+    GEdge *gec = current->addCompoundEdge(e_compound,num_gec);
+    //gec->meshAttributes.Method = MESH_TRANSFINITE;
+    //gec->meshAttributes.nbPointsTransfinite = nbPoints;
   }
 
   // Parametrize Compound surfaces

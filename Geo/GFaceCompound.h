@@ -86,6 +86,11 @@ class GFaceCompound : public GFace {
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
   mutable std::map<MVertex*, SPoint3> coordinates;
+  mutable std::map<MVertex*, SVector3> xuu;
+  mutable std::map<MVertex*, SVector3> xvv;
+  mutable std::map<MVertex*, SVector3> xuv;
+  mutable std::map<MVertex*, SVector3> xu;
+  mutable std::map<MVertex*, SVector3> xv;
   mutable std::map<SPoint3,SPoint3 > _coordPoints;
   mutable std::map<MVertex*, SVector3> _normals;
   mutable std::list<MTriangle*> fillTris;
@@ -133,6 +138,7 @@ class GFaceCompound : public GFace {
   double getSizeBB(const std::list<GEdge* > &elist) const;
   bool trivial() const;
   void printStuff(int iNewton=0) const;
+  void computeHessianMapping() const;
 
  public:
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,

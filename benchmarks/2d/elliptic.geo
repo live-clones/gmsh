@@ -13,7 +13,7 @@ Line Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 
 Transfinite Line{2,4} = 30 ;
-Transfinite Line{1,3} = 30 Using Progression 1.08;
+Transfinite Line{1,3} = 30 Using Progression 1.0;
 Transfinite Surface{6} = {1,2,3,4};
 Recombine Surface{6};
 
@@ -22,7 +22,7 @@ Translate {0.2,0.0,0.0} {
 }
 
 Transfinite Line{8,10} = 30 ;
-Transfinite Line{9,11} = 30 Using Progression 1.08;
+Transfinite Line{9,11} = 30 Using Progression 1.;
 
 Transfinite Surface{7} = {6,10,14,5};
 Recombine Surface{7};

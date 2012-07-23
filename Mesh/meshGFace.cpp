@@ -1439,7 +1439,7 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
   int nbBoundaries = gf->edges().size();
 
   if (center && recombine && nbBoundaries == 2) {
-    printf("--> need for elliptic grid generator \n");
+    printf("--> regular periodic grid generator (elliptic smooth) \n");
     //bool success  = createRegularTwoCircleGrid(center, gf);
     bool success  = createRegularTwoCircleGridPeriodic(center, gf);
     return success;
@@ -1889,9 +1889,9 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Generating the mesh");
 
   if(meshGeneratorElliptic(gf)){
-    printf("--> elliptic grid generator for face %d done \n", gf->tag());
-    //gf->meshStatistics.status = GFace::DONE;
-    //return;
+    //printf("--> elliptic grid generator for face %d done \n", gf->tag());
+    gf->meshStatistics.status = GFace::DONE;
+    return;
   }
 
   if ((gf->getNativeType() != GEntity::AcisModel ||
