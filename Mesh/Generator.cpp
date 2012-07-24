@@ -385,6 +385,7 @@ static void Mesh1D(GModel *m)
 
 static void PrintMesh2dStatistics(GModel *m)
 {
+
   FILE *statreport = 0;
   if(CTX::instance()->createAppendMeshStatReport == 1)
     statreport = fopen(CTX::instance()->meshStatReportFileName.c_str(), "w");

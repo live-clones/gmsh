@@ -58,11 +58,12 @@ class convexCombinationTerm : public femTerm<double> {
 	  tan = sin(angle*0.5)/cos(angle*0.5); 
 	}
 	double length  = vj->distance(vk);
-	m(j, k) = -tan/length;
-	//m(j, k) = -1; 
+	m(j, k) = -tan/length; // mean value convex map
+	//m(j, k) = -1; //convex map of Tutte
       }
+      //m(j,j) = (nbSF - 1);// convex map of Tutte
       for (int k = 0; k < nbSF; k++){
-	if (k != j) diag += (-m(j,k));
+      	if (k != j) diag += (-m(j,k));
       }
       m(j, j) = diag;
     }

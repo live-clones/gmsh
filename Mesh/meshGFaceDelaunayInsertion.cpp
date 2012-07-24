@@ -884,7 +884,7 @@ void bowyerWatson(GFace *gf, int MAXPNT)
 */
 
 double lengthInfniteNorm(const double p[2], const double q[2],
-				const double quadAngle){
+			 const double quadAngle){
   double xp =  p[0] * cos(quadAngle) + p[1] * sin(quadAngle);
   double yp = -p[0] * sin(quadAngle) + p[1] * cos(quadAngle);
   double xq =  q[0] * cos(quadAngle) + q[1] * sin(quadAngle);
@@ -1437,7 +1437,6 @@ void buildBackGroundMesh (GFace *gf)
     gf->triangles = TR;
     //    gf->quadrangles = QR;
   }
-  //  printf("end build bak mesh\n");
 
 }
 

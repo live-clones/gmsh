@@ -1092,29 +1092,21 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
-    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-    //      printf("coucou here !!!\n");
-    //      backgroundMesh::unset();
-    //      buildBackGroundMesh (gf);
-    //    }
+       // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+       //   printf("coucou here !!!\n");
+       //   backgroundMesh::unset();
+       //   buildBackGroundMesh (gf);
+       // }
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
                 &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
-    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-    //      backgroundMesh::unset();
-    //    }
+       // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+       //   backgroundMesh::unset();
+       // }
   }
-  /*
-  computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
-                               gf->meshStatistics.longest_edge_length,
-                               gf->meshStatistics.smallest_edge_length,
-                               gf->meshStatistics.nbEdge,
-                               gf->meshStatistics.nbGoodLength);
-  */
-  gf->meshStatistics.status = GFace::DONE;
 
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
@@ -1155,6 +1147,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->mesh.remove4triangles)
     removeFourTrianglesNodes(gf,false);
+
+  //Emi print efficiency index
+  gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
+				   gf->meshStatistics.longest_edge_length,
+				   gf->meshStatistics.smallest_edge_length,
+				   gf->meshStatistics.nbEdge,
+				   gf->meshStatistics.nbGoodLength);
+  printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
+  gf->meshStatistics.status = GFace::DONE;
 
   // delete the mesh
   delete m;

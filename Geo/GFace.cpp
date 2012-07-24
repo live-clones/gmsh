@@ -19,6 +19,7 @@
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceLloyd.h"
+#include "BackgroundMesh.h"
 
 #if defined(HAVE_BFGS)
 #include "stdafx.h"
@@ -586,6 +587,47 @@ void GFace::getMeanPlaneData(double plan[3][3]) const
   for(int i = 0; i < 3; i++)
     for(int j = 0; j < 3; j++)
       plan[i][j] = meanPlane.plan[i][j];
+}
+
+
+void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_e,
+					 int &nE, int &GS)
+{
+
+  std::set<MEdge, Less_Edge> es;
+  for(unsigned int i = 0; i < getNumMeshElements(); i++){
+    MElement *e = getMeshElement(i);
+    for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
+  } 
+
+  avg = 0.0;
+  min_e = 1.e22;
+  max_e = 0;
+  nE = es.size();
+  GS = 0;
+  double oneoversqr2 = 1. / sqrt(2.);
+  double sqr2 = sqrt(2.);
+  for (std::set<MEdge, Less_Edge>::const_iterator it = es.begin();
+       it!=es.end();++it){    
+    double u1,v1,u2,v2;
+    MVertex *vert1 =  it->getVertex(0);
+    vert1->getParameter(0, u1);
+    vert1->getParameter(1, v1);
+    MVertex *vert2 =  it->getVertex(1);
+    vert2->getParameter(0, u2);
+    vert2->getParameter(1, v2);
+    double l1 = BGM_MeshSize(this,u1,v1,vert1->x(), vert1->y(),vert1->z());
+    double l2 = BGM_MeshSize(this,u2,v2,vert2->x(), vert2->y(),vert2->z());
+    double correctLC = 0.5*(l1+l2);
+    double lone = it->length()/correctLC;
+    if (lone > oneoversqr2 && lone < sqr2) GS++;
+    double add = lone >1 ? (1. / lone) - 1. : lone - 1.;
+    avg += lone >1 ? (1. / lone) - 1. : lone - 1.;
+    max_e = std::max(max_e, lone);
+    min_e = std::min(min_e, lone);
+  }
+  avg = 100*exp(1./nE*avg);
+
 }
 
 double GFace::curvatureDiv(const SPoint2 &param) const

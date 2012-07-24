@@ -244,6 +244,10 @@ class GFace : public GEntity
   // for that face
   void moveToValidRange(SPoint2 &pt) const;
 
+  //compute mesh statistics
+  void computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_e,
+				    int &nE, int &GS);
+
   // compound
   void setCompound(GFaceCompound *gfc) { compound = gfc; }
   GFaceCompound *getCompound() const { return compound; }
