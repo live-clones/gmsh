@@ -140,7 +140,6 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0)
     Msg::Warning("FIXME Why {mesh 2} then {mesh 0} then {mesh 2} imply not corner vertices");
     Msg::Warning("FIXME Why more vertices after first mesh generation");
     Msg::Warning("FIXME Update of Action pointing to edge and vertex (when change)");
-    Msg::Warning("FIXME Deletion of action twoTri2Quad when Collapse pointing to it");
   }
   
   // Be able to compute geometrical angle at corners
@@ -995,8 +994,6 @@ double Rec2DData::getGlobalQuality(int numVert, double valVert,
 
 Rec2DAction* Rec2DData::getBestAction()
 {
-  static int a = -1;
-  if (++a < 1) Msg::Warning("FIXME implement better compute qual for collapse");
   if (_cur->_actions.size() == 0)
     return NULL;
   Action *ac = *std::max_element(_cur->_actions.begin(),
@@ -1681,8 +1678,6 @@ void Rec2DTwoTri2Quad::operator delete(void *p)
 
 void Rec2DTwoTri2Quad::hide()
 {
-  static int a = -1;
-  if (++a < 1) Msg::Warning("FIXME changer le systme d'execution action");
   if (_triangles[0])
     _triangles[0]->remove(this);
   if (_triangles[1])
@@ -1691,10 +1686,7 @@ void Rec2DTwoTri2Quad::hide()
 }
 
 void Rec2DTwoTri2Quad::reveal()
-{
-  static int a = -1;
-  if (++a < 1) Msg::Warning("FIXME regarder si action sans son triangle");
-  
+{ 
   if (_triangles[0])
     _triangles[0]->add(this);
   if (_triangles[1])
@@ -2529,12 +2521,12 @@ void Rec2DCollapse::
       getNeighbourElements(std::vector<Rec2DElement*> &elem,
                            Rec2DElement *rel                ) const
 {
-  if (!rel) {
+  if (true || !rel) {
     _rec->getNeighbourElements(elem, rel);
     return;
   }
   if (rel != _rec->_triangles[0] && rel != _rec->_triangles[1]) {
-    Msg::Error("[Rec2DTwoTri2Quad] Wrong element for getNeighbour");
+    Msg::Error("[Rec2DTwoTri2Quad] Wrong element getNeighbour");
     return;
   }
   elem.clear();
@@ -2568,14 +2560,6 @@ bool Rec2DCollapse::_hasIdenticalElement() const
 {
   return _rec->_triangles[0]->hasIdenticalNeighbour() ||
          _rec->_triangles[1]->hasIdenticalNeighbour()   ;
-}
-
-bool Rec2DCollapse::whatWouldYouDo
-  (std::map<Rec2DVertex*, std::vector<int> > &suggestions)
-{
-  static int a = -1;
-  if (++a < 1) Msg::Error("FIXME Need definition Rec2DTwoTri2Quad::whatWouldYouDo");
-  return false;
 }
 
 
@@ -4126,8 +4110,6 @@ bool Rec2DNode::canBeDeleted()
 Rec2DNode* Rec2DNode::selectBestNode()
 {
   for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
-    static int a = -1;
-    if (++a < 1) Msg::Warning("FIXME !!!");
     if (_son[i]) _son[i]->rmvFather(this);
     if (_son[i]) _son[i]->_ra->printTypeRew();
     delete _son[i];

@@ -422,7 +422,6 @@ class Rec2DCollapse : public Rec2DAction {
     virtual void apply(Rec2DDataChange*, std::vector<Rec2DAction*>*&) const;
     
     virtual bool isObsolete() const;
-    virtual bool whatWouldYouDo(std::map<Rec2DVertex*, std::vector<int> >&);
     
     virtual inline Rec2DVertex* getVertex(int i) const {
       return _rec->getVertex(i);
@@ -729,7 +728,7 @@ class Rec2DNode {
     inline bool hasSon() const {return _son[0];}
     void rmvFather(Rec2DNode *n) {
       if (_father != n) {
-        Msg::Error("have not this father");
+        Msg::Error("is not my father");
         return;
       }
       _father = NULL;
