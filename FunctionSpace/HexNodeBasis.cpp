@@ -5,15 +5,15 @@ HexNodeBasis::HexNodeBasis(const int order){
   // Set Basis Type //
   this->order = order;
 
-  type    = 0;
-  size    = (order + 1) * (order + 1) * (order + 1);
-  nodeNbr = 8;
-  dim     = 3;
+  type = 0;
+  dim  = 3;
 
   nVertex =  8;
   nEdge   = 12 * (order - 1);
   nFace   =  6 * (order - 1) * (order - 1);
   nCell   =      (order - 1) * (order - 1) * (order - 1);
+
+  size = (order + 1) * (order + 1) * (order + 1);
 
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];

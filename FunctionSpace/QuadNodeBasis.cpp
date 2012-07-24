@@ -5,15 +5,15 @@ QuadNodeBasis::QuadNodeBasis(const int order){
   // Set Basis Type //
   this->order = order;
 
-  type    = 0;
-  size    = (order + 1) * (order + 1);
-  nodeNbr = 4;
-  dim     = 2;
+  type = 0;
+  dim  = 2;
 
   nVertex = 4                            ;
   nEdge   = 4 * (order - 1)              ;
   nFace   = 0                            ;
   nCell   =     (order - 1) * (order - 1);
+
+  size = (order + 1) * (order + 1);
 
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];

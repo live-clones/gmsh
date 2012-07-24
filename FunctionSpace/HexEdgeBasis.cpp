@@ -8,15 +8,15 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Set Basis Type //
   this->order = order;
   
-  type    = 1;
-  size    = 3 * (order + 2) * (order + 2) * (order + 1);
-  nodeNbr = 8;
-  dim     = 3;
+  type = 1;
+  dim  = 3;
 
   nVertex =  0                              ;
   nEdge   = 12                 * (order + 1);
   nFace   = 12         * order * (order + 1);
   nCell   =  3 * order * order * (order + 1);
+
+  size = 3 * (order + 2) * (order + 2) * (order + 1);
 
   // Alloc Temporary Space //
   const int  orderPlus      = order + 1;

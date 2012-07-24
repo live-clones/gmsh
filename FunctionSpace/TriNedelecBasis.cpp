@@ -2,16 +2,17 @@
 
 TriNedelecBasis::TriNedelecBasis(void){
   // Set Basis Type //
-  order   = 1;
-  type    = 1;
-  size    = 3;
-  nodeNbr = 3;
-  dim     = 2;
+  order = 1;
+
+  type = 1;
+  dim  = 2;
 
   nVertex = 0;
   nEdge   = 3;
   nFace   = 0;
   nCell   = 0;
+
+  size = 3;
 
   // Lagrange //
   Polynomial* lagrange    = new Polynomial[3];

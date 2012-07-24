@@ -5,15 +5,15 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   // Set Basis Type //
   this->order = order;
   
-  type    = 1;
-  size    = 2 * (order + 2) * (order + 1);
-  nodeNbr = 4;
-  dim     = 2;
+  type = 1;
+  dim  = 2;
 
   nVertex = 0                      ;
   nEdge   = 4 * (order + 1)        ;
   nFace   = 0                      ;
   nCell   = 2 * (order + 1) * order;
+
+  size = 2 * (order + 2) * (order + 1);
 
   // Alloc Temporary Space //
   const int  orderPlus = order + 1;

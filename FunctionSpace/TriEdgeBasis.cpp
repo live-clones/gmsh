@@ -5,15 +5,15 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Set Basis Type //
   this->order = order;
  
-  type    = 1;
-  size    = (order + 1) * (order + 2);
-  nodeNbr = 3;
-  dim     = 2;
+  type = 1;
+  dim  = 2;
 
   nVertex = 0;
   nEdge   = 3 * (order + 1);
   nFace   = 0;
   nCell   = ((order - 1) * order + order - 1);
+
+  size = (order + 1) * (order + 2);
 
   // Alloc Temporary Space //
   const int orderPlus     = order + 1;

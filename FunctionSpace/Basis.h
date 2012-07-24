@@ -17,14 +17,14 @@ class Basis{
 
   int order;
   int type;
-  int size;
-  int nodeNbr;
   int dim;
 
   int nVertex;
   int nEdge;
   int nFace;
   int nCell;
+
+  int size;
 
  public:
   //! Deletes this Basis
@@ -55,33 +55,29 @@ class Basis{
   //! @todo Check if the 'form numbering' is good
   int getType(void) const;
   
-  //! @return Returns the number of Polynomial%s 
-  //! (or Vector%s of Polynomial%s) in the Basis
-  int getSize(void) const;
-
-  //! @return Returns the node number of 
-  //! the @em geometric @em reference @em element
-  int getNodeNbr(void) const;
-
   //! @return Returns the @em dimension 
-  //! (1D, 2D or 3D) of the Basis
+  //! (2D or 3D) of the Basis
   int getDim(void) const;
 
   //! @return Returns the number of @em Vertex
   //! @em Based functions of this Basis
-  int getNVertex(void) const;
+  int getNVertexBased(void) const;
 
   //! @return Returns the number of @em Edge
   //! @em Based functions of this Basis
-  int getNEdge(void) const;
+  int getNEdgeBased(void) const;
 
   //! @return Returns the number of @em Face
   //! @em Based functions of this Basis
-  int getNFace(void) const;
+  int getNFaceBased(void) const;
 
   //! @return Returns the number of @em Cell
   //! @em Based functions of this Basis
-  int getNCell(void) const;
+  int getNCellBased(void) const;
+
+  //! @return Returns the number of Polynomial%s 
+  //! (or Vector%s of Polynomial%s) in the Basis
+  int getSize(void) const;
 
  protected:
   //! Instantiate a new Basis
@@ -105,32 +101,28 @@ inline int Basis::getType(void) const{
   return type;
 }
 
-inline int Basis::getSize(void) const{
-  return size;
-}
-
-inline int Basis::getNodeNbr(void) const{
-  return nodeNbr;
-}
-
 inline int Basis::getDim(void) const{
   return dim;
 }
 
-inline int Basis::getNVertex(void) const{
+inline int Basis::getNVertexBased(void) const{
   return nVertex;
 }
 
-inline int Basis::getNEdge(void) const{
+inline int Basis::getNEdgeBased(void) const{
   return nEdge;
 }
 
-inline int Basis::getNFace(void) const{
+inline int Basis::getNFaceBased(void) const{
   return nFace;
 }
 
-inline int Basis::getNCell(void) const{
+inline int Basis::getNCellBased(void) const{
   return nCell;
+}
+
+inline int Basis::getSize(void) const{
+  return size;
 }
 
 #endif

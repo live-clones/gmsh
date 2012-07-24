@@ -1,59 +1,70 @@
 #ifndef _FUNCTIONSPACE_H_
 #define _FUNCTIONSPACE_H_
 
-#include <map>
-#include "MElement.h"
-#include "Mapper.h"
 #include "Basis.h"
+#include "GroupOfElement.h"
+#include "MElement.h"
 
 /** 
     @class FunctionSpace
     @brief A Function Space
-
+    
     This class represents a Function Space
 
-    @todo Add interpolation @n
-    --> inheritance: FunctionSpaceScalar & FunctionSapceVector @n
-    "double or fullVector" interpolate(Element, pyhsical coordinate, coef) @n
-    "double or fullVector" interpolate(Element, ref coordinate     , coef) @n
-    "double or fullVector" interpolate(physical coordinate, coef) --> use octree?? @n    
+    @todo Hybrid Mesh
 */
 
 class FunctionSpace{
  private:
-  
-  class ElementComparator{
-  public:
-    bool operator()(const MElement* a, const MElement* b) const;
-  };
-  
-  std::map<MElement*, Basis*, ElementComparator>* ebLookUp; // Element to Basis Lookup
+  const Basis* basis;
+  const GroupOfElement* goe;
+
+  int fPerVertex;
+  int fPerEdge;
+  int fPerFace;
+  int fPerCell;
 
  public:
-   FunctionSpace(void);
+   FunctionSpace(const GroupOfElement& goe, 
+		 int basisType, int order);
+
   ~FunctionSpace(void);
 
-  void associate(MElement& element, Basis& basis);
-  void associate(int physical, Basis& basis);
-  
-  Basis& getBasis(MElement& element) const;
+  const GroupOfElement& getSupport(void) const;
+  const Basis&          getBasis(MElement& element) const;
+
+  int getNFunctionPerVertex(MElement& element) const;
+  int getNFunctionPerEdge(MElement& element) const;
+  int getNFunctionPerFace(MElement& element) const;
+  int getNFunctionPerCell(MElement& element) const;
 };
 
 //////////////////////
 // Inline Functions //
 //////////////////////
 
-inline void FunctionSpace::associate(MElement& element, Basis& basis){
-  ebLookUp->insert(std::pair<MElement*, Basis*>(&element, &basis));
+inline const GroupOfElement& FunctionSpace::getSupport(void) const{
+  return *goe;
 }
 
-inline Basis& FunctionSpace::getBasis(MElement& element) const{
-  return *(ebLookUp->find(&element)->second);
+inline const Basis& FunctionSpace::getBasis(MElement& element) const{
+  return *basis;
 }
 
-inline bool FunctionSpace::ElementComparator::operator()
-(const MElement* a, const MElement* b) const{
-  return a->getNum() < b->getNum();
+inline int FunctionSpace::getNFunctionPerVertex(MElement& element) const{
+  return fPerVertex;
+}
+
+inline int FunctionSpace::getNFunctionPerEdge(MElement& element) const{
+  return fPerEdge;
+}
+
+inline int FunctionSpace::getNFunctionPerFace(MElement& element) const{
+  return fPerFace;
+}
+
+inline int FunctionSpace::getNFunctionPerCell(MElement& element) const{
+  return fPerCell;
 }
 
 #endif
