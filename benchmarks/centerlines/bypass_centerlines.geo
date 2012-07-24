@@ -5,8 +5,8 @@ Mesh.LcIntegrationPrecision = 1.e-2;
 
 Merge "bypass.stl";
 
-Mesh.RecombineAll = 1;
-Mesh.Bunin = 200;
+//Mesh.RecombineAll = 1;
+//Mesh.Bunin = 200;
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesBYPASS.msh";

@@ -1,10 +1,10 @@
-Mesh.Algorithm = 8; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
+Mesh.Algorithm = 6; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
 Mesh.Algorithm3D = 7; //(1=tetgen, 4=netgen, 5=FrontalDel, 6=FrontalHex, 7=MMG3D, 9=R-tree
 
 Mesh.LcIntegrationPrecision = 1.e-2;
 
 Mesh.RecombineAll = 1;
-Mesh.Bunin = 150;
+//Mesh.Bunin = 150;
 
 Merge "aorta2.stl";
 

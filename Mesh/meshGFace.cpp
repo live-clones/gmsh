@@ -1149,13 +1149,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     removeFourTrianglesNodes(gf,false);
 
   //Emi print efficiency index
-  gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
-				   gf->meshStatistics.longest_edge_length,
-				   gf->meshStatistics.smallest_edge_length,
-				   gf->meshStatistics.nbEdge,
-				   gf->meshStatistics.nbGoodLength);
-  printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
-  gf->meshStatistics.status = GFace::DONE;
+  // gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
+  // 				   gf->meshStatistics.longest_edge_length,
+  // 				   gf->meshStatistics.smallest_edge_length,
+  // 				   gf->meshStatistics.nbEdge,
+  // 				   gf->meshStatistics.nbGoodLength);
+  // printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
+  // gf->meshStatistics.status = GFace::DONE;
 
   // delete the mesh
   delete m;
@@ -1438,6 +1438,11 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
   bool recombine =  (CTX::instance()->mesh.recombineAll);
   int nbBoundaries = gf->edges().size();
+
+  printf("coucou test generator elliptic \n");
+  if (center) printf("center \n");
+  if (recombine) printf("recombine \n");
+  printf("nb boundaries =%d \n", nbBoundaries);
 
   if (center && recombine && nbBoundaries == 2) {
     printf("--> regular periodic grid generator (elliptic smooth) \n");
