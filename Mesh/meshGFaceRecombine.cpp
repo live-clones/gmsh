@@ -438,9 +438,16 @@ void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
     case 3 : // triangle of best neighbour action
       for (unsigned int i = 0; i < neighbourEl.size(); ++i)
         neighbourEl[i]->getUniqueActions(actions);
-      std::sort(actions.begin(), actions.end(), gterRec2DAction());
       if (actions.size()) {
+        std::max_element(actions.begin(), actions.end(), lessAction())
+          ->getElements(elements);
+        std::sort(actions.begin(), actions.end(), gterRec2DAction());
         actions[0]->getElements(elements);
+        
+        if (actions[0] != std::max_element(actions.begin(), actions.end(), lessAction()))
+          Msg::Error("ce n'est pas ca");
+        else
+          Msg::Info("c'est ca");
         for (unsigned int i = 0; i < elements.size(); ++i) {
           for (unsigned int j = 0; j < neighbourEl.size(); ++j) {
             if (elements[i] == neighbourEl[j]) {
