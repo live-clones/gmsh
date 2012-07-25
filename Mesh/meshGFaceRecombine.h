@@ -17,9 +17,9 @@
 #define REC2D_VERT_TRIA 1
 #define REC2D_VERT_QUAD 2
 #define REC2D_NUMB_SONS 6
-#define REC2D_COEF_ANGL .5
+#define REC2D_COEF_ANGL .0
 #define REC2D_COEF_DEGR .5
-#define REC2D_COEF_ANDE .0 //(1. - REC2D_COEF_ANGL - REC2D_COEF_DEGR)
+#define REC2D_COEF_ANDE (1. - REC2D_COEF_ANGL - REC2D_COEF_DEGR)
 #define REC2D_COEF_ORIE .0
 #define REC2D_COEF_LENG .5
 #define REC2D_COEF_ORLE .5 //(1. - REC2D_COEF_ORIE - REC2D_COEF_LENG)
@@ -73,8 +73,7 @@ class Recombine2D {
     bool developTree();
     int getNumTri() const;
     static void nextTreeActions(std::vector<Rec2DAction*>&,
-                                const std::vector<Rec2DElement*> &neighbours,
-                                Rec2DElement*&                               );
+                                const std::vector<Rec2DElement*> &neighbours);
     
     inline void setStrategy(int s) {_strategy = s;}
     void drawState(double shiftx, double shifty) const;
@@ -136,7 +135,7 @@ class Rec2DData {
     Rec2DData();
     ~Rec2DData();
     
-    static void checkEntities();
+    static bool checkEntities();
     
     void printState() const;
     void printActions() const;
@@ -315,7 +314,7 @@ class Rec2DAction {
     virtual void hide() = 0;
     static void hide(Rec2DAction*);
     virtual void reveal() = 0;
-    virtual bool checkCoherence() const = 0;
+    virtual bool checkCoherence(const Rec2DAction *ra = NULL) const = 0;
     
     bool operator<(const Rec2DAction&) const;
     double getReward() const;
@@ -327,12 +326,11 @@ class Rec2DAction {
     virtual Rec2DVertex* getVertex(int) const = 0;
     virtual int getNumElement() = 0;
     virtual void getElements(std::vector<Rec2DElement*>&) const = 0;
-    virtual void getNeighbourElements(std::vector<Rec2DElement*>&,
-                                      Rec2DElement*               ) const = 0;
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&,
-                                          Rec2DElement*               ) const = 0;
+    virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const = 0;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const = 0;
     virtual int getNum(double shiftx, double shifty) = 0;
     virtual Rec2DElement* getRandomElement() const = 0;
+    virtual bool has(const Rec2DElement*) const = 0;
     //virtual void print() = 0;
     virtual bool haveElem() = 0;
     virtual Rec2DAction* getBase() const = 0;
@@ -368,7 +366,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     void operator delete(void*);
     virtual void hide();
     virtual void reveal();
-    virtual bool checkCoherence() const;
+    virtual bool checkCoherence(const Rec2DAction *ra = NULL) const;
     
     virtual void color(int, int, int) const;
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
@@ -379,12 +377,11 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual inline Rec2DVertex* getVertex(int i) const {return _vertices[i];} //-
     virtual inline int getNumElement() {return 2;}
     virtual void getElements(std::vector<Rec2DElement*>&) const;
-    virtual void getNeighbourElements(std::vector<Rec2DElement*>&,
-                                      Rec2DElement*               ) const;
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&,
-                                          Rec2DElement*               ) const;
+    virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const;
     virtual int getNum(double shiftx, double shifty);
     virtual Rec2DElement* getRandomElement() const;
+    virtual bool has(const Rec2DElement*) const;
     //virtual void print();
     virtual bool haveElem() {return true;}
     inline virtual Rec2DAction* getBase() const {return NULL;}
@@ -415,7 +412,9 @@ class Rec2DCollapse : public Rec2DAction {
     void operator delete(void*);
     virtual void hide();
     virtual void reveal();
-    virtual bool checkCoherence() const {return _rec->checkCoherence();}
+    virtual bool checkCoherence(const Rec2DAction *ra = NULL) const {
+      return _rec->checkCoherence(this);
+    }
     
     virtual void color(int c1, int c2, int c3) const {_rec->color(c1, c2, c3);}
     virtual void apply(std::vector<Rec2DVertex*> &newPar);
@@ -430,14 +429,13 @@ class Rec2DCollapse : public Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*> &vec) const {
       _rec->getElements(vec);
     }
-    virtual void getNeighbourElements(std::vector<Rec2DElement*> &,
-                                      Rec2DElement*                ) const;
-    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &vec,
-                                          Rec2DElement *rel               ) const;
+    virtual void getNeighbourElements(std::vector<Rec2DElement*> &) const;
+    virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &) const;
     virtual int getNum(double shiftx, double shifty) {return -1;}
     virtual inline Rec2DElement* getRandomElement() const {
       return _rec->getRandomElement();
     }
+    virtual bool has(const Rec2DElement *rel) const {return _rec->has(rel);}
     //virtual void print();
     virtual bool haveElem() {return false;}
     inline virtual Rec2DAction* getBase() const {return _rec;}
@@ -648,7 +646,8 @@ class Rec2DElement {
     void add(Rec2DEdge*);
     bool has(const Rec2DEdge*) const;
     void add(const Rec2DAction*);
-    void remove(const Rec2DAction*);
+    bool has(const Rec2DAction*) const;
+    void rmv(const Rec2DAction*);
     void addNeighbour(const Rec2DEdge*, const Rec2DElement*);
     void rmvNeighbour(const Rec2DEdge*, const Rec2DElement*);
     bool isNeighbour(const Rec2DEdge*, const Rec2DElement*) const;
@@ -713,7 +712,6 @@ class Rec2DNode {
     Rec2DDataChange *_dataChange;
     int _remainingTri;
     const int _d;
-    Rec2DElement *_elementOrigin;
     
   public :
     Rec2DNode(Rec2DNode *father, Rec2DAction*,
