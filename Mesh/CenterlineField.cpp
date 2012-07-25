@@ -625,7 +625,7 @@ void Centerline::createSplitCompounds()
     int num_gec = NE+i+1;
     Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
-    GEdge *gec = current->addCompoundEdge(e_compound,num_gec);
+    /* GEdge *gec = */ current->addCompoundEdge(e_compound,num_gec);
     //gec->meshAttributes.Method = MESH_TRANSFINITE;
     //gec->meshAttributes.nbPointsTransfinite = nbPoints;
   }
@@ -1172,18 +1172,18 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
                                           beta, lc_n, lc_t, hwall_t);
    }
    else if (ds > thickness && onInOutlets){
-     metr = buildMetricTangentToCurve(dir_n,lc_n,lc_t); 
+     metr = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
    }
    else if (ds > thickness && !onInOutlets){
-     //metr = buildMetricTangentToCurve(dir_n,lc_n,lc_t); 
+     //metr = buildMetricTangentToCurve(dir_n,lc_n,lc_t);
      //curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, radMax, beta, lc_n, lc_t, hwall_t);
      curvMetric1 = buildMetricTangentToCurve(dir_n,lc_n,lc_a); //lc_t
      curvMetric2 = buildMetricTangentToCurve(dir_cross,lc_t,lc_a); //lc_t
-     curvMetric = intersection(curvMetric1,curvMetric2); 
+     curvMetric = intersection(curvMetric1,curvMetric2);
      //metr = SMetric3(1./(lc_a*lc_a), 1./(hfar*hfar),1./(hfar*hfar), dir_a, dir_a1, dir_a2);
-     metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n), 1./(lc_t*lc_t), dir_a, dir_n, dir_cross); 
-     metr = intersection_conserveM1(metr,curvMetric);  
-     //metr = intersection(metr,curvMetric); 
+     metr = SMetric3(1./(lc_a*lc_a), 1./(lc_n*lc_n), 1./(lc_t*lc_t), dir_a, dir_n, dir_cross);
+     metr = intersection_conserveM1(metr,curvMetric);
+     //metr = intersection(metr,curvMetric);
    }
 
    return;
