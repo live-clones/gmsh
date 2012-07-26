@@ -1108,12 +1108,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
        // }
   }
 
+  gf->meshStatistics.status = GFace::DONE;
+
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
 
   // BOUNDARY LAYER
   if (!onlyInitialMesh) {
-    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) 
+    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       buildBackGroundMesh (gf);
       //      backgroundMesh::setCrossFieldsByDistance(gf);
     modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
@@ -1439,12 +1441,12 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
   bool recombine =  (CTX::instance()->mesh.recombineAll);
   int nbBoundaries = gf->edges().size();
 
-  printf("coucou test generator elliptic \n");
-  if (center) printf("center \n");
-  if (recombine) printf("recombine \n");
-  printf("nb boundaries =%d \n", nbBoundaries);
-
   if (center && recombine && nbBoundaries == 2) {
+    printf("coucou test generator elliptic \n");
+    if (center) printf("center \n");
+    if (recombine) printf("recombine \n");
+    printf("nb boundaries =%d \n", nbBoundaries);
+
     printf("--> regular periodic grid generator (elliptic smooth) \n");
     //bool success  = createRegularTwoCircleGrid(center, gf);
     bool success  = createRegularTwoCircleGridPeriodic(center, gf);
