@@ -136,6 +136,7 @@ inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f,
 
 double NewGetLc(BDS_Point *p)
 {
+
   return Extend1dMeshIn2dSurfaces() ?
     std::min(p->lc(), p->lcBGM()) : p->lcBGM();
 }
@@ -165,6 +166,7 @@ double NewGetLc(BDS_Edge *e, GFace *f, double SCALINGU, double SCALINGV)
 {
   double linearLength = computeEdgeLinearLength(e, f, SCALINGU, SCALINGV);
   double l = correctLC_ (e->p1,e->p2,f, SCALINGU, SCALINGV);
+  //printf("BDS correct lc =%g lreal=%g \n", l,linearLength);
   return linearLength / l;
 }
 
@@ -178,6 +180,7 @@ double NewGetLc(BDS_Point *p1, BDS_Point *p2, GFace *f, double su, double sv)
 void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
                                   double &max_e, double &min_e, int &nE, int &GS)
 {
+
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   avg = 0.0;
   min_e = 1.e22;

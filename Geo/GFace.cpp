@@ -588,7 +588,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_
     for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
   }
 
-  avg = 0.0;
+  avg = 0;
   min_e = 1.e22;
   max_e = 0;
   nE = es.size();
@@ -609,13 +609,13 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_
     double correctLC = 0.5*(l1+l2);
     double lone = it->length()/correctLC;
     if (lone > oneoversqr2 && lone < sqr2) GS++;
-    //double add = lone > 1 ? (1. / lone) - 1. : lone - 1.;
     avg += lone >1 ? (1. / lone) - 1. : lone - 1.;
     max_e = std::max(max_e, lone);
     min_e = std::min(min_e, lone);
   }
-  avg = 100*exp(1./nE*avg);
 #endif
+  //printf("Emi efficiency tau (%g) =%g nE=%d nT=%d \n", avg, 100*exp(avg/(double)nE), nE, getNumMeshElements());
+
 }
 
 double GFace::curvatureDiv(const SPoint2 &param) const

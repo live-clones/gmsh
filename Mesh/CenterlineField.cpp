@@ -1029,6 +1029,7 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
 
 double Centerline::operator() (double x, double y, double z, GEntity *ge)
 {
+ 
   if (update_needed){
      std::ifstream input;
      input.open(fileName.c_str());

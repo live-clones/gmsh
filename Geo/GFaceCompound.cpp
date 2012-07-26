@@ -602,6 +602,7 @@ bool GFaceCompound::trivial() const
 // no overlapping of triangles
 bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 {
+
   vert.clear();
   bool has_overlap = false;
   double EPS = 1.e-2;
@@ -633,15 +634,12 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 	  std::set<MVertex *>::iterator it2 = ov.find(v2);
 	  vert.push_back(v1);
 	  vert.push_back(v2);
+	  Msg::Info("=== Overlap");
 	  return has_overlap;
 	}
       }
     }
 
-  }
-
-  if (has_overlap ) {
-    Msg::Debug("Overlap for compound face %d", this->tag());
   }
 
   return has_overlap;
@@ -929,9 +927,9 @@ bool GFaceCompound::parametrize() const
       Msg::Info("Parametrizing surface %d with 'FE conformal map'", tag());
       parametrize_conformal(0, NULL, NULL);
     }
-    //printStuff(55);
+    printStuff(55);
     oriented = checkOrientation(0, true);
-    //printStuff(77);
+    printStuff(77);
     if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
       parametrize_conformal(0, NULL, NULL);
@@ -1574,11 +1572,11 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     myAssembler.numberVertex(v, 0, 2);
   }
 
-  // for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
-  //   MVertex *v = *itv;
-  //   myAssembler.numberVertex(v, 0, 1);
-  //   myAssembler.numberVertex(v, 0, 2);
-  // }
+  for(std::set<MVertex *>::iterator itv = fillNodes.begin(); itv !=fillNodes.end() ; ++itv){
+    MVertex *v = *itv;
+    myAssembler.numberVertex(v, 0, 1);
+    myAssembler.numberVertex(v, 0, 2);
+  }
 
   laplaceTerm laplace1(model(), 1, ONE);
   laplaceTerm laplace2(model(), 2, ONE);
@@ -1595,13 +1593,13 @@ bool GFaceCompound::parametrize_conformal_spectral() const
     }
   }
 
-  // for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 != fillTris.end(); it2++){
-  //   SElement se((*it2));
-  //   laplace1.addToMatrix(myAssembler, &se);
-  //   laplace2.addToMatrix(myAssembler, &se);
-  //   cross12.addToMatrix(myAssembler, &se);
-  //   cross21.addToMatrix(myAssembler, &se);
-  // }
+  for (std::list<MTriangle*>::iterator it2 = fillTris.begin(); it2 != fillTris.end(); it2++){
+    SElement se((*it2));
+    laplace1.addToMatrix(myAssembler, &se);
+    laplace2.addToMatrix(myAssembler, &se);
+    cross12.addToMatrix(myAssembler, &se);
+    cross21.addToMatrix(myAssembler, &se);
+  }
 
   double epsilon = 1.e-6;
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){

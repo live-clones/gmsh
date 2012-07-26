@@ -406,21 +406,25 @@ static void PrintMesh2dStatistics(GModel *m)
   }
 
   for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){
-    worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
-    best = std::max((*it)->meshStatistics.best_element_shape, best);
-    avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;
-    e_avg += (*it)->meshStatistics.efficiency_index;//* (*it)->meshStatistics.nbEdge;
-    e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
-    e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
-    if ((*it)->meshStatistics.status == GFace::FAILED ||
-        (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
-    nTotT += (*it)->meshStatistics.nbTriangle;
-    nTotE += (*it)->meshStatistics.nbEdge;
-    nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
-    nTotGoodQuality += (*it)->meshStatistics.nbGoodQuality;
-    numFaces++;
+      if((*it)->geomType() != GEntity::DiscreteSurface){
+      worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
+      best = std::max((*it)->meshStatistics.best_element_shape, best);
+      avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;
+      e_avg += (*it)->meshStatistics.efficiency_index;
+      e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
+      e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
+      if ((*it)->meshStatistics.status == GFace::FAILED ||
+	  (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
+      nTotT += (*it)->meshStatistics.nbTriangle;
+      nTotE += (*it)->meshStatistics.nbEdge;
+      nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
+      nTotGoodQuality += (*it)->meshStatistics.nbGoodQuality;
+      numFaces++;
+    }
   }
 
+  Msg::Info("*** Efficiency index for surface mesh tau=%g ", 100*exp(e_avg/(double)nTotE));
+  
   fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
           nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,

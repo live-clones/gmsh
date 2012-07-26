@@ -388,8 +388,11 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
     lc = l1;
   }
 
-  // Msg::Debug("BGM X,Y,Z=%g,%g,%g L4=%g L3=%g L2=%g L1=%g LC=%g LFINAL=%g",
-  //            X, Y, Z, l4, l3, l2, l1, lc, lc * CTX::instance()->mesh.lcFactor);
+  //Msg::Debug("BGM X,Y,Z=%g,%g,%g L4=%g L3=%g L2=%g L1=%g LC=%g LFINAL=%g DIM =%d ",
+  //X, Y, Z, l4, l3, l2, l1, lc, lc * CTX::instance()->mesh.lcFactor, ge->dim());
+
+  //Emi fix
+  //if (lc == l1) lc /= 10.;
 
   return lc * CTX::instance()->mesh.lcFactor;
 }

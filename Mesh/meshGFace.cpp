@@ -1093,7 +1093,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
        // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-       //   printf("coucou here !!!\n");
        //   backgroundMesh::unset();
        //   buildBackGroundMesh (gf);
        // }
@@ -1108,6 +1107,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
        // }
   }
 
+  computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,  	  	 
+			       gf->meshStatistics.longest_edge_length,  	  	 
+			       gf->meshStatistics.smallest_edge_length,  	  	 
+			       gf->meshStatistics.nbEdge,  	  	 
+			       gf->meshStatistics.nbGoodLength);  	  	 
+  //printf("=== Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
+  
   gf->meshStatistics.status = GFace::DONE;
 
   // fill the small gmsh structures
@@ -1117,7 +1123,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if (!onlyInitialMesh) {
     if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       buildBackGroundMesh (gf);
-      //      backgroundMesh::setCrossFieldsByDistance(gf);
+      //backgroundMesh::setCrossFieldsByDistance(gf);
     modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
   }
 
@@ -1151,13 +1157,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     removeFourTrianglesNodes(gf,false);
 
   //Emi print efficiency index
-  // gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
-  // 				   gf->meshStatistics.longest_edge_length,
-  // 				   gf->meshStatistics.smallest_edge_length,
-  // 				   gf->meshStatistics.nbEdge,
-  // 				   gf->meshStatistics.nbGoodLength);
-  // printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
-  // gf->meshStatistics.status = GFace::DONE;
+  gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
+  				   gf->meshStatistics.longest_edge_length,
+  				   gf->meshStatistics.smallest_edge_length,
+  				   gf->meshStatistics.nbEdge,
+  				   gf->meshStatistics.nbGoodLength);
+  //printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
+  
 
   // delete the mesh
   delete m;
@@ -1177,7 +1183,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 			      gf->additionalVertices.end());
   gf->additionalVertices.clear();
 
-  return true;
+   return true;
 }
 
 // this function buils a list of vertices (BDS) that are consecutive
@@ -1440,13 +1446,8 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
   bool recombine =  (CTX::instance()->mesh.recombineAll);
   int nbBoundaries = gf->edges().size();
-
+  
   if (center && recombine && nbBoundaries == 2) {
-    printf("coucou test generator elliptic \n");
-    if (center) printf("center \n");
-    if (recombine) printf("recombine \n");
-    printf("nb boundaries =%d \n", nbBoundaries);
-
     printf("--> regular periodic grid generator (elliptic smooth) \n");
     //bool success  = createRegularTwoCircleGrid(center, gf);
     bool success  = createRegularTwoCircleGridPeriodic(center, gf);
@@ -1738,6 +1739,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
                                  gf->meshStatistics.nbEdge,
                                  gf->meshStatistics.nbGoodLength);*/
     gf->meshStatistics.status = GFace::DONE;
+
     //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
     //            backgroundMesh::unset();
     //    }
@@ -1897,7 +1899,6 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Generating the mesh");
 
   if(meshGeneratorElliptic(gf)){
-    //printf("--> elliptic grid generator for face %d done \n", gf->tag());
     gf->meshStatistics.status = GFace::DONE;
     return;
   }
@@ -2085,6 +2086,16 @@ void partitionAndRemesh(GFaceCompound *gf)
       }
       gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
     }
+
+    //update mesh statistics
+    gf->meshStatistics.efficiency_index += gfc->meshStatistics.efficiency_index;
+    gf->meshStatistics.longest_edge_length = std::max(gf->meshStatistics.longest_edge_length,
+						     gfc->meshStatistics.longest_edge_length);
+    gf->meshStatistics.smallest_edge_length= std::min(gf->meshStatistics.smallest_edge_length, 
+						       gfc->meshStatistics.smallest_edge_length);
+    gf->meshStatistics.nbGoodLength  += gfc->meshStatistics.nbGoodLength;
+    gf->meshStatistics.nbGoodQuality += gfc->meshStatistics.nbGoodQuality;
+    gf->meshStatistics.nbEdge += gfc->meshStatistics.nbEdge;
 
   }
 
