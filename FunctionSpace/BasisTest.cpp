@@ -15,8 +15,8 @@
 #include "PlotBasis.h"
 
 using namespace std;
-/*
-int main(int argc, char** argv){
+
+int test(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
 
@@ -24,7 +24,7 @@ int main(int argc, char** argv){
   Mesh msh(argv[1]);
 
   // Plot Basis //
-  QuadEdgeBasis b(1);
+  HexEdgeBasis b(1);
   
   PlotBasis plot(msh.getGroup(2), b);
   plot.write("basis");
@@ -34,4 +34,4 @@ int main(int argc, char** argv){
   
   return 0;
 }
-*/
+

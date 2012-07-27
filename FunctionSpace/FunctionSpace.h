@@ -11,7 +11,9 @@
     
     This class represents a Function Space
 
-    @todo Hybrid Mesh
+    @todo 
+    Hybrid Mesh@n
+    Put DofManager::dofFromElement here ??
 */
 
 class FunctionSpace{
