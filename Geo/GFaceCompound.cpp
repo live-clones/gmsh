@@ -447,7 +447,7 @@ void GFaceCompound::printFillTris() const
 
   if (fillTris.size() > 0){
     char name[256];
-    std::list<GFace*>::const_iterator itf = _compound.begin();
+    //std::list<GFace*>::const_iterator itf = _compound.begin();
     sprintf(name, "fillTris-%d.pos", tag());
     FILE * ftri = fopen(name,"w");
     fprintf(ftri,"View \"\"{\n");
@@ -630,8 +630,8 @@ bool GFaceCompound::checkOverlap(std::vector<MVertex *> &vert) const
 	  has_overlap = true;
 	  MVertex *v1 = orderedLoop[i];
 	  MVertex *v2 = orderedLoop[k];
-	  std::set<MVertex *>::iterator it1 = ov.find(v1);
-	  std::set<MVertex *>::iterator it2 = ov.find(v2);
+	  //std::set<MVertex *>::iterator it1 = ov.find(v1);
+	  //std::set<MVertex *>::iterator it2 = ov.find(v2);
 	  vert.push_back(v1);
 	  vert.push_back(v2);
 	  Msg::Info("=== Overlap");
@@ -2247,30 +2247,30 @@ void GFaceCompound::computeHessianMapping() const
       SPoint3 uv = coordinates[vv[i]];
       A(i,0) = uv.x()*uv.x(); A(i,1) = uv.x()*uv.y(); A(i,2) = uv.y()*uv.y();
       A(i,3) = uv.x(); A(i,4) = uv.y(); A(i,5) = 1.;
-      bx(i) = vv[i]->x();   
+      bx(i) = vv[i]->x();
       by(i) = vv[i]->y();
       bz(i) = vv[i]->z();
     }
     ATAx.gemmWithAtranspose(A,A,1.,0.);
     ATAy = ATAx; ATAz = ATAx;
-    A.multWithATranspose(bx,1.,0.,ATbx); 
-    A.multWithATranspose(by,1.,0.,ATby); 
-    A.multWithATranspose(bz,1.,0.,ATbz); 
+    A.multWithATranspose(bx,1.,0.,ATbx);
+    A.multWithATranspose(by,1.,0.,ATby);
+    A.multWithATranspose(bz,1.,0.,ATbz);
     ATAx.luSolve(ATbx,coeffsx);
     ATAy.luSolve(ATby,coeffsy);
     ATAz.luSolve(ATbz,coeffsz);
     SPoint3 uv = coordinates[ver];
     xuu[ver] = SVector3(2.*coeffsx(0),2.*coeffsy(0),2.*coeffsz(0)) ;
     xvv[ver] = SVector3(2.*coeffsx(2),2.*coeffsy(2),2.*coeffsz(2)) ;
-    xuv[ver] = SVector3(coeffsx(1), coeffsy(1),coeffsz(1)); 
-    xu[ver]  = SVector3(2.*coeffsx(0)*uv.x()+coeffsx(1)*uv.y()+coeffsx(3), 
-			2.*coeffsy(0)*uv.x()+coeffsy(1)*uv.y()+coeffsy(3), 
+    xuv[ver] = SVector3(coeffsx(1), coeffsy(1),coeffsz(1));
+    xu[ver]  = SVector3(2.*coeffsx(0)*uv.x()+coeffsx(1)*uv.y()+coeffsx(3),
+			2.*coeffsy(0)*uv.x()+coeffsy(1)*uv.y()+coeffsy(3),
 			2.*coeffsz(0)*uv.x()+coeffsz(1)*uv.y()+coeffsz(3));
-    xv[ver] = SVector3(coeffsx(1)*uv.x()+2.*coeffsx(2)*uv.y()+coeffsx(4), 
+    xv[ver] = SVector3(coeffsx(1)*uv.x()+2.*coeffsx(2)*uv.y()+coeffsx(4),
 		       coeffsy(1)*uv.x()+2.*coeffsy(2)*uv.y()+coeffsy(4),
 		       coeffsz(1)*uv.x()+2.*coeffsz(2)*uv.y()+coeffsz(4));
   }
- 
+
 #endif
 }
 static void GFaceCompoundBB(void *a, double*mmin, double*mmax)

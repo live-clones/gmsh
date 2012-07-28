@@ -960,7 +960,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 	min_dist = dist;
 	min_u = u;
 	min_v = v;
-	GPoint pnt = point(min_u, min_v);
+	//GPoint pnt = point(min_u, min_v);
       }
     }
   }
@@ -971,7 +971,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
   initial_conditions[1] = min_v;
 
   //  printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
-  GPoint pnt = point(min_u, min_v);
+  // GPoint pnt = point(min_u, min_v);
   //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E\n",
   //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
   //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
