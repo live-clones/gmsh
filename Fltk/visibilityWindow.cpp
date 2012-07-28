@@ -1175,12 +1175,13 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       o4->tooltip("Sort by name");
       o4->callback(visibility_sort_cb, (void *)"name");
 
+      gg->end();
+
       Fl_Button *o5 = new Fl_Button
         (width - 4 * WB, 2 * WB + BH, 2 * WB, BH, "+");
       o5->tooltip("Add parameter name for first selected item");
       o5->callback(visibility_sort_cb, (void *)"+");
 
-      gg->end();
     }
     {
       Fl_Group *gg = new Fl_Group
