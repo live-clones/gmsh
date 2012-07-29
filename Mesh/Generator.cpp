@@ -375,7 +375,7 @@ static void Mesh1D(GModel *m)
 	mesher(*it);
 	nPending++;
       }
-      if(!nIter) Msg::ProgressMeter(nPending, nTot, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
     if(!nPending) break;
     if(nIter++ > 10) break;
@@ -472,7 +472,7 @@ static void Mesh2D(GModel *m)
           mesher(*it);
           nPending++;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
@@ -480,7 +480,7 @@ static void Mesh2D(GModel *m)
           mesher(*it);
           nPending++;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
       if(nIter++ > 10) break;

@@ -350,7 +350,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
         farF[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc, theta, phi);
       ffmax = (ffmax < farF[i][j]) ? farF[i][j] : ffmax ;
     }
-    Msg::ProgressMeter(i, _NbPhi, "Computing far field");
+    Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
   }
 
   if(_normalize){

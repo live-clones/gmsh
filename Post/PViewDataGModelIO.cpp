@@ -115,7 +115,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
       _max = std::max(_max, val);
     }
     if(numEnt > 100000)
-      Msg::ProgressMeter(i + 1, numEnt, "Reading data");
+      Msg::ProgressMeter(i + 1, numEnt, true, "Reading data");
   }
 
   if(partition >= 0)

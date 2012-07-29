@@ -69,8 +69,7 @@ class Msg {
   static void Direct(int level, const char *fmt, ...);
   static void StatusBar(int num, bool log, const char *fmt, ...);
   static void Debug(const char *fmt, ...);
-  static void ProgressMeter(int n, int N, const char *fmt, ...);
-  static void ProgressMeter(int n, int N){ ProgressMeter(n, N, ""); }
+  static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
   static void SetProgressMeterStep(int step){ _progressMeterStep = (step > 0) ? step : 1; }
   static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
   static double &Timer(std::string str){ return _timers[str]; }

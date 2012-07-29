@@ -392,7 +392,7 @@ void Msg::Debug(const char *fmt, ...)
   }
 }
 
-void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
+void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 {
   if(_commRank || _verbosity < 4) return;
 
@@ -419,7 +419,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     }
 #endif
 
-    if(CTX::instance()->terminal){
+    if(log && CTX::instance()->terminal){
       fprintf(stdout, "%s                     \r", str2);
       fflush(stdout);
     }
@@ -438,7 +438,7 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
     }
 #endif
 
-    if(CTX::instance()->terminal){
+    if(log && CTX::instance()->terminal){
       fprintf(stdout, "Done!                                              \r");
       fflush(stdout);
     }

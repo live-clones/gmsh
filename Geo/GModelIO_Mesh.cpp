@@ -383,7 +383,7 @@ int GModel::readMSH(const std::string &name)
           Msg::Warning("Skipping duplicate vertex %d", num);
         vertexMap[num] = newVertex;
         if(numVertices > 100000)
-          Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
+          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
       }
       // If the vertex numbering is dense, transfer the map into a
       // vector to speed up element creation
@@ -544,7 +544,7 @@ int GModel::readMSH(const std::string &name)
     for(unsigned int j = 0; j < ghosts.size(); j++)
       _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
     if(numElements > 100000)
-      Msg::ProgressMeter(i + 1, numElements, "Reading elements");
+      Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
     delete [] indices;
         }
       }
@@ -629,7 +629,7 @@ int GModel::readMSH(const std::string &name)
               for(int j = 0; j < numPartitions - 1; j++)
                 _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
             if(numElements > 100000)
-              Msg::ProgressMeter(numElementsPartial + i + 1, numElements,
+              Msg::ProgressMeter(numElementsPartial + i + 1, numElements, true,
                                  "Reading elements");
           }
           delete [] data;
@@ -3344,7 +3344,7 @@ int GModel::readDIFF(const std::string &name)
       else
         vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
       if(numVertices > 100000)
-        Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
+        Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices &&
@@ -3490,7 +3490,7 @@ int GModel::readDIFF(const std::string &name)
                        vertices, elements, physicals);
       // trouble if elementary[i-1][0]>1 nodal post-processing needed ?
       if(numElements > 100000)
-        Msg::ProgressMeter(i + 1, numElements, "Reading elements");
+        Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
     }
   }
 
