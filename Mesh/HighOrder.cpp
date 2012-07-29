@@ -1319,10 +1319,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
 
   int nPts = order - 1;
 
-  if (!linear)
-    Msg::StatusBar(2, true, "Meshing order %d, curvilinear ON...", order);
-  else
-    Msg::StatusBar(2, true, "Meshing order %d, curvilinear OFF...", order);
+  char msg[256];
+  sprintf(msg, "Meshing order %d (curvilinear %s)...", order, linear ? "off" : "on");
+
+  Msg::StatusBar(2, true, msg);
 
   double t1 = Cpu();
 
@@ -1333,18 +1333,20 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   edgeContainer edgeVertices;
   faceContainer faceVertices;
 
-  int counter = 1;
+  Msg::ResetProgressMeter();
+
+  int counter = 0, nTot = m->getNumEdges() + m->getNumFaces() + m->getNumRegions();
+
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    Msg::Info("Meshing curves order %d (%i/%i)...", order, counter, m->getNumEdges());
-    counter++;
+    Msg::Info("Meshing curve %d order %d", (*it)->tag(), order);
+    Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, edgeVertices, linear, nPts);
   }
 
-  counter = 1;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    Msg::Info("Meshing surfaces order %d (%i/%i)...", order, counter, m->getNumFaces());
-    counter++;
+    Msg::Info("Meshing surface %d order %d", (*it)->tag(), order);
+    Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
@@ -1359,10 +1361,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   // printJacobians(m, "smoothness_b.pos");
   // m->writeMSH("RAW.msh");
 
-  counter = 1;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    Msg::Info("Meshing volumes order %d (%i/%i)...", order, counter, m->getNumRegions());
-    counter++;
+    Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
+    Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
@@ -1379,9 +1380,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
       hot.applySmoothingTo(v, (*it));
-      //hot.applySmoothingTo(v, .1,0);
+      // hot.applySmoothingTo(v, .1,0);
     }
-    //    hot.ensureMinimumDistorsion(0.1);
+    // hot.ensureMinimumDistorsion(0.1);
     checkHighOrderTriangles("Final surface mesh", m, bad, worst);
   }
   checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
