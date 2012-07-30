@@ -1,6 +1,11 @@
 #ifndef _FUNCTIONSPACE_H_
 #define _FUNCTIONSPACE_H_
 
+#include <map>
+
+#include "Dof.h"
+#include "GroupOfDof.h"
+
 #include "Basis.h"
 #include "GroupOfElement.h"
 #include "MElement.h"
@@ -13,13 +18,18 @@
 
     @todo 
     Hybrid Mesh@n
-    Put DofManager::dofFromElement here ??
 */
+
+class ElementComparator;
 
 class FunctionSpace{
  private:
+  friend class DofManager;
+
   const Basis* basis;
   const GroupOfElement* goe;
+
+  std::map<const MElement*, const GroupOfDof*, ElementComparator>* eToGoD;
 
   int fPerVertex;
   int fPerEdge;
@@ -39,6 +49,14 @@ class FunctionSpace{
   int getNFunctionPerEdge(MElement& element) const;
   int getNFunctionPerFace(MElement& element) const;
   int getNFunctionPerCell(MElement& element) const;
+
+ private:
+  void associate(const MElement& element, const GroupOfDof& god);
+};
+
+class ElementComparator{
+ public:
+  bool operator()(const MElement* a, const MElement* b) const;
 };
 
 //////////////////////
@@ -67,6 +85,14 @@ inline int FunctionSpace::getNFunctionPerFace(MElement& element) const{
 
 inline int FunctionSpace::getNFunctionPerCell(MElement& element) const{
   return fPerCell;
+}
+
+inline void FunctionSpace::associate(const MElement& element, const GroupOfDof& god){
+  //return fPerCell;
+}
+
+inline bool ElementComparator::operator()(const MElement* a, const MElement* b) const{
+  return a->getNum() < b->getNum();
 }
 
 #endif

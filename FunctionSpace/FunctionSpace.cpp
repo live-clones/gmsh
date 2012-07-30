@@ -5,14 +5,15 @@ using namespace std;
 
 FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order){
   // Save GroupOfElement //
-  this->goe = &goe;
+  this->goe = &goe;  
 
   // Look for 1st element to get element type //
   // (We suppose only one type of Mesh !!) //
   int elementType = goe.get(0).getType();
   
-  // Create Basis //
-  basis = BasisGenerator::generate(elementType, basisType, order);
+  // Init Struct //
+  basis  = BasisGenerator::generate(elementType, basisType, order);
+  eToGoD = new map<const MElement*, const GroupOfDof*, ElementComparator>;
 
   // Count Function per Entity //
   int nVertex = goe.get(0).getNumVertices();
@@ -37,5 +38,6 @@ FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order
 
 FunctionSpace::~FunctionSpace(void){
   delete basis;
+  delete eToGoD;
 }
 
