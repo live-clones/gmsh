@@ -101,8 +101,8 @@ class PView{
   // return view only if it does *not* contain that partition)
   static PView *getViewByName(const std::string &name, int timeStep=-1,
                               int partition=-1);
-  static int getViewIndexByName(const std::string &name, int timeStep=-1,
-                                int partition=-1);
+  static PView *getViewByFileName(const std::string &name, int timeStep=-1,
+                                  int partition=-1);
   static PView *getViewByNum(int num, int timeStep=-1, int partition=-1);
 
   // IO read routines (these are global: they can create multiple

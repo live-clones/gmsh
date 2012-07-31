@@ -510,7 +510,7 @@ PointNumero *DocRecord::ConvertDlistToArray(DListPeek *dlist, int *n)
   return ptr;
 }
 
-// build ready to use voronoi datas
+// build ready to use voronoi data
 void DocRecord::ConvertDListToVoronoiData()
 {
   if (_adjacencies){
@@ -519,7 +519,7 @@ void DocRecord::ConvertDListToVoronoiData()
         delete [] _adjacencies[i].t;
     delete [] _adjacencies;
   }
-  if (_hull)delete [] _hull;
+  if (_hull) delete [] _hull;
   _hullSize = CountPointsOnHull ();
   _hull = new PointNumero[_hullSize];
   ConvexHull();
@@ -578,8 +578,8 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
       if (!onHull(i)){
 	GPoint p0(pc[0], pc[1], 0.0);
 	//if (gf) p0 = gf->point(pc[0], pc[1]);
-        fprintf(f,"SP(%g,%g,%g)  {%g};\n",p0.x(),p0.y(),p0.z(),(double)i);
-        voronoiCell (i,pts);
+        fprintf(f,"SP(%g,%g,%g){%g};\n",p0.x(), p0.y(), p0.z(), (double)i);
+        voronoiCell(i, pts);
         for (unsigned int j = 0; j < pts.size(); j++){
 	  SPoint2 pp1 = pts[j];
 	  SPoint2 pp2 = pts[(j+1)%pts.size()];
@@ -589,13 +589,13 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
 	  //    p1 = gf->point(p1.x(), p1.y());
 	  //    p2 = gf->point(p2.x(), p2.y());
 	  // }
-          fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-                  p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),
-                  (double)i,(double)i);
+          fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+                  p1.x(), p1.y(), p1.z(), p2.x(), p2.y(), p2.z(),
+                  (double)i, (double)i);
         }
        }
       else {
-        fprintf(f,"SP(%g,%g,%g)  {%g};\n",pc[0],pc[1],0.0,-(double)i);
+        fprintf(f,"SP(%g,%g,%g){%g};\n", pc[0] ,pc[1], 0., -(double)i);
       }
     }
     fprintf(f,"};\n");
@@ -605,7 +605,6 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
 
 void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
 {
-
   FILE *f = fopen(fileName.c_str(),"w");
    if (_adjacencies){
     fprintf(f,"View \"medial axis\" {\n");
@@ -615,13 +614,13 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
       if (!onHull(i)){
 	GPoint p0(pc[0], pc[1], 0.0);
 	if (gf) p0 = gf->point(pc[0], pc[1]);
-        fprintf(f,"SP(%g,%g,%g)  {%g};\n",p0.x(),p0.y(),p0.z(),(double)i);
+        fprintf(f,"SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
         voronoiCell (i,pts);
         for (unsigned int j = 0; j < pts.size(); j++){
 	  SVector3 pp1(pts[j].x(), pts[j].y(), 0.0);
-	  SVector3 pp2(pts[(j+1)%pts.size()].x(),pts[(j+1)%pts.size()].y(), 0.0);
-	  SVector3 v1(pp1.x()-pc.x(),pp1.y()-pc.y(),0.0);
-	  SVector3 v2(pp2.x()-pc.x(),pp2.y()-pc.y(),0.0);
+	  SVector3 pp2(pts[(j+1) % pts.size()].x(), pts[(j+1) % pts.size()].y(), 0.0);
+	  SVector3 v1(pp1.x()-pc.x(), pp1.y()-pc.y(), 0.0);
+	  SVector3 v2(pp2.x()-pc.x(), pp2.y()-pc.y(), 0.0);
 	  GPoint p1(pp1.x(), pp1.y(), 0.0);
 	  GPoint p2(pp2.x(), pp2.y(), 0.0);
 	  if (gf) {
@@ -638,10 +637,10 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 	    ge->lines.push_back(new MLine(v0, v1));
 	    ge->mesh_vertices.push_back(v0);
 	    ge->mesh_vertices.push_back(v1);
-	    fprintf(f,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-		    p1.x(),p1.y(),p1.z(),
-		    p2.x(),p2.y(),p2.z(),
-		    (double)i,(double)i);
+	    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+		    p1.x(), p1.y(), p1.z(),
+		    p2.x(), p2.y(), p2.z(),
+		    (double)i, (double)i);
 	 }
         }
        }
@@ -795,7 +794,7 @@ int DocRecord::ConvertDListToTriangles()
 
   for(int i = 0; i < n; i++)
     delete [] striangle[i].t;
-  delete []striangle;
+  delete [] striangle;
 
   return 1;
 }
@@ -862,7 +861,6 @@ void DocRecord::setPoints(fullMatrix<double> *p)
     data(i) = (*p)(i, 2) < 0  ? (void *) 1 : NULL;
   }
 }
-
 
 void DocRecord::recur_tag_triangles(int iTriangle, std::set<int>& taggedTriangles,
                                     std::map<std::pair<void*, void*>,

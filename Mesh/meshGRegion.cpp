@@ -121,8 +121,8 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     if (allTets.size() != 2 ) continue;
     SPoint3 pc1 = allTets[0]->circumcenter();
     SPoint3 pc2 = allTets[1]->circumcenter();
-    std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
-    std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
+    //std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
+    //std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
     //if( it1 != candidates.end() || it2 != candidates.end())
       fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
 	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),

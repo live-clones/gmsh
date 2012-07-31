@@ -41,7 +41,7 @@
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
-int Msg::_progressMeterStep = 10;
+int Msg::_progressMeterStep = 20;
 int Msg::_progressMeterCurrent = 0;
 std::map<std::string, double> Msg::_timers;
 int Msg::_warningCount = 0;

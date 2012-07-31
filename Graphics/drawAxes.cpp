@@ -14,8 +14,8 @@
 #include "Numeric.h"
 #include "gl2ps.h"
 
-static int drawTics(drawContext *ctx, int comp, int n, std::string &format, 
-                    std::string &label, double p1[3], double p2[3], 
+static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
+                    std::string &label, double p1[3], double p2[3],
                     double perp[3], int mikado, double pixelfact)
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
@@ -43,21 +43,21 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     default: break;
     }
   }
-  
+
   double tmp = 2. * CTX::instance()->glFontSize * pixelfact;
   if(n * tmp > l) n = 3;
   if(n * tmp > l) n = 2;
-  
+
   double step = l / (double)(n - 1);
 
   for(int i = 0; i < n; i++){
     double d = i * step;
     double p[3] = {p1[0] + t[0] * d, p1[1] + t[1] * d, p1[2] + t[2] * d};
-    double q[3] = {p[0] + perp[0] * w, 
-                   p[1] + perp[1] * w, 
+    double q[3] = {p[0] + perp[0] * w,
+                   p[1] + perp[1] * w,
                    p[2] + perp[2] * w};
     double r[3] = {p[0] + perp[0] * w * 1.4,
-                   p[1] + perp[1] * w * 1.4, 
+                   p[1] + perp[1] * w * 1.4,
                    p[2] + perp[2] * w * 1.4 };
 
     glBegin(GL_LINES);
@@ -68,7 +68,7 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     if(i < n-1 && !mikado){
       for(int j = 1; j < 10; j++){
         double dd = d + j * step/10.;
-        double pp[3] = {p1[0] + t[0] * dd, 
+        double pp[3] = {p1[0] + t[0] * dd,
                         p1[1] + t[1] * dd,
                         p1[2] + t[2] * dd};
         double qq[3] = {pp[0] + perp[0] * w2,
@@ -118,23 +118,23 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3], double p
   glLineStipple(1, 0x1111);
   gl2psEnable(GL2PS_LINE_STIPPLE);
   glBegin(GL_LINES);
-  
+
   for(int i = 1; i < n1 - 1; i++){
     double d = (double)i / (double)(n1 - 1) * l1;
     glVertex3d(p1[0] + t1[0] * d,
                p1[1] + t1[1] * d,
                p1[2] + t1[2] * d);
-    glVertex3d(p1[0] + t1[0] * d + t2[0] * l2, 
-               p1[1] + t1[1] * d + t2[1] * l2, 
+    glVertex3d(p1[0] + t1[0] * d + t2[0] * l2,
+               p1[1] + t1[1] * d + t2[1] * l2,
                p1[2] + t1[2] * d + t2[2] * l2);
   }
   for(int i = 1; i < n2 - 1; i++){
     double d = (double)i/(double)(n2 - 1) * l2;
-    glVertex3d(p1[0] + t2[0] * d, 
-               p1[1] + t2[1] * d, 
+    glVertex3d(p1[0] + t2[0] * d,
+               p1[1] + t2[1] * d,
                p1[2] + t2[2] * d);
-    glVertex3d(p1[0] + t2[0] * d + t1[0] * l1, 
-               p1[1] + t2[1] * d + t1[1] * l1, 
+    glVertex3d(p1[0] + t2[0] * d + t1[0] * l1,
+               p1[1] + t2[1] * d + t1[1] * l1,
                p1[2] + t2[2] * d + t1[2] * l1);
   }
 
@@ -144,14 +144,14 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3], double p
 }
 
 void drawContext::drawAxis(double xmin, double ymin, double zmin,
-                           double xmax, double ymax, double zmax, 
+                           double xmax, double ymax, double zmax,
                            int nticks, int mikado)
 {
   if(mikado){
     nticks = (nticks - 1) * mikado;
     if(nticks < 1) nticks = 1;
-    double dd[3] = {(xmax - xmin) / nticks, 
-                    (ymax - ymin) / nticks, 
+    double dd[3] = {(xmax - xmin) / nticks,
+                    (ymax - ymin) / nticks,
                     (zmax - zmin) / nticks};
     double axe_color[4];
     glGetDoublev(GL_CURRENT_COLOR, axe_color);
@@ -167,7 +167,7 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin,
   }
   else{
     glBegin(GL_LINES);
-    glVertex3d(xmin, ymin, zmin); 
+    glVertex3d(xmin, ymin, zmin);
     glVertex3d(xmax, ymax, zmax);
     glEnd();
   }
@@ -214,12 +214,12 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
   double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
   double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
-  
-  int nx = (xmin != xmax) ? 
+
+  int nx = (xmin != xmax) ?
     drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm, mikado, pixelfact) : 0;
-  int ny = (ymin != ymax) ? 
+  int ny = (ymin != ymax) ?
     drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym, mikado, pixelfact) : 0;
-  int nz = (zmin != zmax) ? 
+  int nz = (zmin != zmax) ?
     drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm, mikado, pixelfact) : 0;
 
   drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
@@ -242,7 +242,7 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
     drawAxis(xmax, ymin, zmax, xmax, ymax, zmax, ny, mikado);
     drawAxis(xmax, ymax, zmin, xmax, ymax, zmax, nz, mikado);
   }
-  
+
   if(mode > 2){
     drawGridStipple(nx, ny, orig, xx, yy);
     drawGridStipple(ny, nz, orig, yy, zz);
@@ -260,7 +260,7 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
   }
 }
 
-void drawContext::drawAxes(int mode, int tics[3], std::string format[3], 
+void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
                            std::string label[3], SBoundingBox3d &bb, int mikado)
 {
   double bbox[6] = {bb.min().x(), bb.max().x(),
@@ -278,13 +278,13 @@ void drawContext::drawAxes()
       break;
     }
   }
-   
+
   if(geometryExists && (CTX::instance()->drawBBox || !CTX::instance()->mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glLineWidth((float)CTX::instance()->lineWidth);
-    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+    gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
-    drawBox(CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2], 
+    drawBox(CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2],
             CTX::instance()->max[0], CTX::instance()->max[1], CTX::instance()->max[2]);
     glColor3d(1.,0.,0.);
     for(int j = 0; j < 6; j++)
@@ -292,26 +292,26 @@ void drawContext::drawAxes()
         drawPlaneInBoundingBox
           (CTX::instance()->min[0], CTX::instance()->min[1], CTX::instance()->min[2],
            CTX::instance()->max[0], CTX::instance()->max[1], CTX::instance()->max[2],
-           CTX::instance()->clipPlane[j][0], CTX::instance()->clipPlane[j][1], 
+           CTX::instance()->clipPlane[j][0], CTX::instance()->clipPlane[j][1],
            CTX::instance()->clipPlane[j][2], CTX::instance()->clipPlane[j][3]);
   }
 
   if(CTX::instance()->axes){
     glColor4ubv((GLubyte *) & CTX::instance()->color.axes);
     glLineWidth((float)CTX::instance()->lineWidth);
-    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+    gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
     if(!CTX::instance()->axesAutoPosition){
-      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics, 
-               CTX::instance()->axesFormat, CTX::instance()->axesLabel, 
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+               CTX::instance()->axesFormat, CTX::instance()->axesLabel,
                CTX::instance()->axesPosition, CTX::instance()->axesMikado);
     }
     else if(geometryExists){
-      double bb[6] = 
-        {CTX::instance()->min[0], CTX::instance()->max[0], CTX::instance()->min[1], 
+      double bb[6] =
+        {CTX::instance()->min[0], CTX::instance()->max[0], CTX::instance()->min[1],
          CTX::instance()->max[1], CTX::instance()->min[2], CTX::instance()->max[2]};
-      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics, 
-               CTX::instance()->axesFormat, CTX::instance()->axesLabel, 
+      drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+               CTX::instance()->axesFormat, CTX::instance()->axesLabel,
                bb, CTX::instance()->axesMikado);
     }
   }
@@ -345,7 +345,7 @@ void drawContext::drawSmallAxes()
     glLoadIdentity();
     gluLookAt(camera.position.x,camera.position.y,camera.position.z,
 	      camera.target.x,camera.target.y,camera.target.z,
-	      camera.up.x,camera.up.y,camera.up.z);      
+	      camera.up.x,camera.up.y,camera.up.z);
     glPushMatrix();
     glPopMatrix();
     float fvViewMatrix[16];
@@ -367,7 +367,7 @@ void drawContext::drawSmallAxes()
     zy = l * rot[9];
   }
   glLineWidth((float)CTX::instance()->lineWidth);
-  gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+  gl2psLineWidth((float)(CTX::instance()->lineWidth *
 			 CTX::instance()->print.epsLineWidthFactor));
   glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
 

@@ -288,11 +288,16 @@ PView *PView::getViewByName(const std::string &name, int timeStep, int partition
   return 0;
 }
 
-int PView::getViewIndexByName(const std::string &name, int timeStep, int partition)
+PView *PView::getViewByFileName(const std::string &name, int timeStep, int partition)
 {
-  PView *view = getViewByName(name, timeStep, partition);
-  if(view) return view->getIndex();
-  return -1;
+  // search views from most recently to least recently added
+  for(int i = list.size() - 1; i >= 0; i--){
+    if(list[i]->getData()->getFileName() == name &&
+       ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
+        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
+      return list[i];
+  }
+  return 0;
 }
 
 PView *PView::getViewByNum(int num, int timeStep, int partition)
