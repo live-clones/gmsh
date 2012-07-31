@@ -1,14 +1,12 @@
 #ifndef _FUNCTIONSPACE_H_
 #define _FUNCTIONSPACE_H_
 
-#include <map>
-
-#include "Dof.h"
-#include "GroupOfDof.h"
+#include <vector>
 
 #include "Basis.h"
 #include "GroupOfElement.h"
 #include "MElement.h"
+#include "Dof.h"
 
 /** 
     @class FunctionSpace
@@ -24,12 +22,8 @@ class ElementComparator;
 
 class FunctionSpace{
  private:
-  friend class DofManager;
-
   const Basis* basis;
   const GroupOfElement* goe;
-
-  std::map<const MElement*, const GroupOfDof*, ElementComparator>* eToGoD;
 
   int fPerVertex;
   int fPerEdge;
@@ -43,20 +37,14 @@ class FunctionSpace{
   ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
-  const Basis&          getBasis(MElement& element) const;
+  const Basis&          getBasis(const MElement& element) const;
 
-  int getNFunctionPerVertex(MElement& element) const;
-  int getNFunctionPerEdge(MElement& element) const;
-  int getNFunctionPerFace(MElement& element) const;
-  int getNFunctionPerCell(MElement& element) const;
+  const std::vector<Dof*> getKeys(const MElement& element) const;
 
- private:
-  void associate(const MElement& element, const GroupOfDof& god);
-};
-
-class ElementComparator{
- public:
-  bool operator()(const MElement* a, const MElement* b) const;
+  int getNFunctionPerVertex(const MElement& element) const;
+  int getNFunctionPerEdge(const MElement& element) const;
+  int getNFunctionPerFace(const MElement& element) const;
+  int getNFunctionPerCell(const MElement& element) const;
 };
 
 //////////////////////
@@ -67,32 +55,24 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
 
-inline const Basis& FunctionSpace::getBasis(MElement& element) const{
+inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
   return *basis;
 }
 
-inline int FunctionSpace::getNFunctionPerVertex(MElement& element) const{
+inline int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
   return fPerVertex;
 }
 
-inline int FunctionSpace::getNFunctionPerEdge(MElement& element) const{
+inline int FunctionSpace::getNFunctionPerEdge(const MElement& element) const{
   return fPerEdge;
 }
 
-inline int FunctionSpace::getNFunctionPerFace(MElement& element) const{
+inline int FunctionSpace::getNFunctionPerFace(const MElement& element) const{
   return fPerFace;
 }
 
-inline int FunctionSpace::getNFunctionPerCell(MElement& element) const{
+inline int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
   return fPerCell;
-}
-
-inline void FunctionSpace::associate(const MElement& element, const GroupOfDof& god){
-  //return fPerCell;
-}
-
-inline bool ElementComparator::operator()(const MElement* a, const MElement* b) const{
-  return a->getNum() < b->getNum();
 }
 
 #endif
