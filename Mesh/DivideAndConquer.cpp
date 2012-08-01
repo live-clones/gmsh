@@ -828,7 +828,7 @@ DocRecord::DocRecord(int n)
 DocRecord::~DocRecord()
 {
   if(points) delete [] points;
-  if(triangles) delete []triangles;
+  if(triangles) delete [] triangles;
   if(_hull) delete [] _hull;
   if (_adjacencies){
     for(int i = 0; i < numPoints; i++)
@@ -842,7 +842,7 @@ void DocRecord::MakeMeshWithPoints()
   if(numPoints < 3) return;
   BuildDelaunay();
   ConvertDListToTriangles();
-  //RemoveAllDList();
+  RemoveAllDList();
 }
 
 void DocRecord::Voronoi()
