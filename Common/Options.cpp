@@ -4102,7 +4102,7 @@ double opt_geometry_extrude_return_lateral(OPT_ARGS_NUM)
 double opt_geometry_scaling_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->geom.scalingFactor = (int)val;
+    CTX::instance()->geom.scalingFactor = val;
   return CTX::instance()->geom.scalingFactor;
 }
 
