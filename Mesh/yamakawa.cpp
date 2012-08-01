@@ -140,6 +140,53 @@ bool Facet::operator<(const Facet& facet) const{
   return hash<facet.get_hash();
 }
 
+/****************class Diagonal****************/
+
+Diagonal::Diagonal(){}
+
+Diagonal::Diagonal(MVertex* a2,MVertex* b2){
+  a = a2;
+  b = b2;
+  compute_hash();
+}
+
+Diagonal::~Diagonal(){}
+
+MVertex* Diagonal::get_a(){
+  return a;
+}
+
+MVertex* Diagonal::get_b(){
+  return b;
+}
+
+void Diagonal::set_vertices(MVertex* a2,MVertex* b2){
+  a = a2;
+  b = b2;
+  compute_hash();
+}
+
+bool Diagonal::same_vertices(Diagonal diagonal){
+  bool c1,c2;
+	
+  c1 = (a==diagonal.get_a()) || (a==diagonal.get_b());
+  c2 = (b==diagonal.get_a()) || (b==diagonal.get_b());
+	
+  return c1 && c2;
+}
+
+void Diagonal::compute_hash(){
+  hash = (unsigned long long)a + (unsigned long long)b;
+}
+
+unsigned long long Diagonal::get_hash() const{
+  return hash;
+}
+
+bool Diagonal::operator<(const Diagonal& diagonal) const{
+  return hash<diagonal.get_hash();
+}
+
 /****************class Recombinator****************/
 
 Recombinator::Recombinator(){}
@@ -177,7 +224,8 @@ void Recombinator::execute(GRegion* gr){
 	
   std::sort(potential.begin(),potential.end());
 
-  hash_table.clear();	
+  hash_tableA.clear();
+  hash_tableB.clear();
   merge(gr);
 
   rearrange(gr);
@@ -501,9 +549,13 @@ void Recombinator::merge(GRegion* gr){
 	  flag = 0;
 	}
 
-	if(!conformity(hex)){
+	if(!conformityA(hex)){
 	  flag = 0;
 	}
+	  
+	if(!conformityB(hex)){
+	  flag = 0;
+	}  
 
 	if(flag){
 	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
@@ -514,7 +566,8 @@ void Recombinator::merge(GRegion* gr){
 		it2->second = 1;
 	  }
 	  gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
-	  build_hash_table(hex);
+	  build_hash_tableA(hex);
+	  build_hash_tableB(hex);
 	  idle = 0;
 	  count++;
 	}
@@ -1085,10 +1138,10 @@ bool Recombinator::inclusion(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
 	
-  it = hash_table.find(facet);
+  it = hash_tableA.find(facet);
   flag = 0;
 	
-  while(it!=hash_table.end()){
+  while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
@@ -1104,7 +1157,30 @@ bool Recombinator::inclusion(Facet facet){
   return flag;
 }
 
-bool Recombinator::conformity(Hex hex){
+bool Recombinator::inclusion(Diagonal diagonal){
+  bool flag;
+  std::multiset<Diagonal>::iterator it;
+	
+  it = hash_tableB.find(diagonal);
+  flag = 0;
+	
+  while(it!=hash_tableB.end()){
+    if(diagonal.get_hash()!=it->get_hash()){
+	  break;
+	}
+		
+	if(diagonal.same_vertices(*it)){
+	  flag = 1;
+	  break;
+	}
+		
+	it++;
+  }
+	
+  return flag;
+}
+
+bool Recombinator::conformityA(Hex hex){
   bool c1,c2,c3,c4,c5,c6;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -1118,17 +1194,17 @@ bool Recombinator::conformity(Hex hex){
   g = hex.get_g();
   h = hex.get_h();
 	
-  c1 = conformity(a,b,c,d);
-  c2 = conformity(e,f,g,h);
-  c3 = conformity(a,b,f,e);
-  c4 = conformity(b,c,g,f);
-  c5 = conformity(d,c,g,h);
-  c6 = conformity(d,a,e,h);
+  c1 = conformityA(a,b,c,d);
+  c2 = conformityA(e,f,g,h);
+  c3 = conformityA(a,b,f,e);
+  c4 = conformityA(b,c,g,f);
+  c5 = conformityA(d,c,g,h);
+  c6 = conformityA(d,a,e,h);
 	
   return c1 && c2 && c3 && c4 && c5 && c6;
 }
 
-bool Recombinator::conformity(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+bool Recombinator::conformityA(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   bool c1,c2,c3,c4;
 	
   c1 = inclusion(Facet(a,b,c));
@@ -1137,6 +1213,56 @@ bool Recombinator::conformity(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   c4 = inclusion(Facet(b,c,d));
 	
   return (c1 && c2 && c3 && c4) || (!c1 && !c2 && !c3 && !c4);
+}
+
+bool Recombinator::conformityB(Hex hex){
+  int count;
+  bool flag;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+	
+  a = hex.get_a();
+  b = hex.get_b();
+  c = hex.get_c();
+  d = hex.get_d();
+  e = hex.get_e();
+  f = hex.get_f();
+  g = hex.get_g();
+  h = hex.get_h();
+	
+  flag = inclusion(Diagonal(a,b));
+  flag = flag || inclusion(Diagonal(b,f));
+  flag = flag || inclusion(Diagonal(f,e));
+  flag = flag || inclusion(Diagonal(e,a));
+  flag = flag || inclusion(Diagonal(d,c));
+  flag = flag || inclusion(Diagonal(c,g));
+  flag = flag || inclusion(Diagonal(g,h));
+  flag = flag || inclusion(Diagonal(h,d));
+  flag = flag || inclusion(Diagonal(b,c));
+  flag = flag || inclusion(Diagonal(f,g));
+  flag = flag || inclusion(Diagonal(e,h));
+  flag = flag || inclusion(Diagonal(a,d));
+	
+  count = 0;
+  count = count + (int)inclusion(Diagonal(a,f));
+  count = count + (int)inclusion(Diagonal(b,e));
+  count = count + (int)inclusion(Diagonal(d,g));
+  count = count + (int)inclusion(Diagonal(c,h));
+  count = count + (int)inclusion(Diagonal(b,g));
+  count = count + (int)inclusion(Diagonal(c,f));
+  count = count + (int)inclusion(Diagonal(e,g));
+  count = count + (int)inclusion(Diagonal(f,h));
+  count = count + (int)inclusion(Diagonal(a,h));
+  count = count + (int)inclusion(Diagonal(d,e));
+  count = count + (int)inclusion(Diagonal(a,c));
+  count = count + (int)inclusion(Diagonal(b,d));
+	
+  if(flag || count%2==1){
+    return 0;
+  }
+  else{
+    return 1;
+  }
 }
 
 void Recombinator::build_vertex_to_vertices(GRegion* gr){
@@ -1202,7 +1328,7 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
   }
 }
 
-void Recombinator::build_hash_table(Hex hex){
+void Recombinator::build_hash_tableA(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
 	
@@ -1215,29 +1341,29 @@ void Recombinator::build_hash_table(Hex hex){
   g = hex.get_g();
   h = hex.get_h();
 	
-  build_hash_table(a,b,c,d);
-  build_hash_table(e,f,g,h);
-  build_hash_table(a,b,f,e);
-  build_hash_table(b,c,g,f);
-  build_hash_table(d,c,g,h);
-  build_hash_table(d,a,e,h);
+  build_hash_tableA(a,b,c,d);
+  build_hash_tableA(e,f,g,h);
+  build_hash_tableA(a,b,f,e);
+  build_hash_tableA(b,c,g,f);
+  build_hash_tableA(d,c,g,h);
+  build_hash_tableA(d,a,e,h);
 }
 
-void Recombinator::build_hash_table(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
-  build_hash_table(Facet(a,b,c));
-  build_hash_table(Facet(a,c,d));
-  build_hash_table(Facet(a,b,d));
-  build_hash_table(Facet(b,d,c));
+void Recombinator::build_hash_tableA(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  build_hash_tableA(Facet(a,b,c));
+  build_hash_tableA(Facet(a,c,d));
+  build_hash_tableA(Facet(a,b,d));
+  build_hash_tableA(Facet(b,d,c));
 }
 
-void Recombinator::build_hash_table(Facet facet){
+void Recombinator::build_hash_tableA(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
 	
-  it = hash_table.find(facet);
+  it = hash_tableA.find(facet);
   flag = 1;
 	
-  while(it!=hash_table.end()){
+  while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
@@ -1251,7 +1377,58 @@ void Recombinator::build_hash_table(Facet facet){
   }
 	
   if(flag){
-    hash_table.insert(facet);
+    hash_tableA.insert(facet);
+  }	
+}
+
+void Recombinator::build_hash_tableB(Hex hex){
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+	
+  a = hex.get_a();
+  b = hex.get_b();
+  c = hex.get_c();
+  d = hex.get_d();
+  e = hex.get_e();
+  f = hex.get_f();
+  g = hex.get_g();
+  h = hex.get_h();
+	
+  build_hash_tableB(a,b,c,d);
+  build_hash_tableB(e,f,g,h);
+  build_hash_tableB(a,b,f,e);
+  build_hash_tableB(b,c,g,f);
+  build_hash_tableB(d,c,g,h);
+  build_hash_tableB(d,a,e,h);
+}
+
+void Recombinator::build_hash_tableB(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  build_hash_tableB(Diagonal(a,c));
+  build_hash_tableB(Diagonal(b,d));
+}
+
+void Recombinator::build_hash_tableB(Diagonal diagonal){
+  bool flag;
+  std::multiset<Diagonal>::iterator it;
+	
+  it = hash_tableB.find(diagonal);
+  flag = 1;
+	
+  while(it!=hash_tableB.end()){
+    if(diagonal.get_hash()!=it->get_hash()){
+	  break;
+	}
+		
+	if(diagonal.same_vertices(*it)){
+	  flag = 0;
+	  break;
+	}
+		
+	it++;
+  }
+	
+  if(flag){
+    hash_tableB.insert(diagonal);
   }	
 }
 
@@ -1301,10 +1478,10 @@ void Recombinator::print_vertex_to_elements(GRegion* gr){
   }
 }
 
-void Recombinator::print_hash_table(){
+void Recombinator::print_hash_tableA(){
   std::multiset<Facet>::iterator it;
 	
-  for(it=hash_table.begin();it!=hash_table.end();it++){
+  for(it=hash_tableA.begin();it!=hash_tableA.end();it++){
     printf("%lld\n",it->get_hash());
   }
 }
