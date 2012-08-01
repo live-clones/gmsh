@@ -78,7 +78,7 @@ class drawTransformScaled : public drawTransform {
     z += _tra[2];
   }
 };
- 
+
 // global drawing functions, which need to be redefined for each
 // widget toolkit (FLTK, Qt, etc.)
 class drawContextGlobal {
@@ -113,14 +113,14 @@ class drawContext {
 
  public:
   Camera camera;
-  double r[3]; // current Euler angles (in degrees!) 
-  double t[3], s[3]; // current translation and scale 
+  double r[3]; // current Euler angles (in degrees!)
+  double t[3], s[3]; // current translation and scale
   double quaternion[4]; // current quaternion used for "trackball" rotation
-  int viewport[4]; // current viewport 
-  double rot[16]; // current rotation matrix 
+  int viewport[4]; // current viewport
+  double rot[16]; // current rotation matrix
   double t_init[3]; // initial translation before applying modelview transform
-  double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates 
-  double pixel_equiv_x, pixel_equiv_y; // approx equiv model length of a pixel 
+  double vxmin, vxmax, vymin, vymax; // current viewport in real coordinates
+  double pixel_equiv_x, pixel_equiv_y; // approx equiv model length of a pixel
   double model[16], proj[16]; // the modelview and projection matrix as they were
                               // at the time of the last InitPosition() call
   enum RenderMode {GMSH_RENDER=1, GMSH_SELECT=2, GMSH_FEEDBACK=3};
@@ -133,28 +133,28 @@ class drawContext {
   void setTransform(drawTransform *transform){ _transform = transform; }
   drawTransform *getTransform(){ return _transform; }
   void transform(double &x, double &y, double &z)
-  { 
-    if(_transform) _transform->transform(x, y, z); 
+  {
+    if(_transform) _transform->transform(x, y, z);
   }
   void transformOneForm(double &x, double &y, double &z)
   {
-    if(_transform) _transform->transformOneForm(x, y, z); 
+    if(_transform) _transform->transformOneForm(x, y, z);
   }
   void transformTwoForm(double &x, double &y, double &z)
   {
-    if(_transform) _transform->transformTwoForm(x, y, z); 
+    if(_transform) _transform->transformTwoForm(x, y, z);
   }
   void hide(GModel *m){ _hiddenModels.insert(m); }
   void hide(PView *v){ _hiddenViews.insert(v); }
   void show(GModel *m)
-  { 
+  {
     std::set<GModel*>::iterator it = _hiddenModels.find(m);
-    if(it != _hiddenModels.end()) _hiddenModels.erase(it); 
+    if(it != _hiddenModels.end()) _hiddenModels.erase(it);
   }
   void show(PView *v)
-  { 
+  {
     std::set<PView*>::iterator it = _hiddenViews.find(v);
-    if(it != _hiddenViews.end()) _hiddenViews.erase(it); 
+    if(it != _hiddenViews.end()) _hiddenViews.erase(it);
   }
   void showAll(){ _hiddenModels.clear(); _hiddenViews.clear(); }
   bool isVisible(GModel *m){ return (_hiddenModels.find(m) == _hiddenModels.end()); }
@@ -172,8 +172,8 @@ class drawContext {
   void unproject(double x, double y, double p[3], double d[3]);
   void viewport2World(double win[3], double xyz[3]);
   void world2Viewport(double xyz[3], double win[3]);
-  bool select(int type, bool multiple, bool mesh, int x, int y, int w, int h, 
-              std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges, 
+  bool select(int type, bool multiple, bool mesh, int x, int y, int w, int h,
+              std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
               std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
               std::vector<MElement*> &elements);
   int fix2dCoordinates(double *x, double *y);
@@ -187,17 +187,17 @@ class drawContext {
   void drawText2d();
   void drawGraph2d();
   void drawAxis(double xmin, double ymin, double zmin,
-                double xmax, double ymax, double zmax, 
+                double xmax, double ymax, double zmax,
                 int nticks, int mikado);
   void drawAxes(int mode, int tics[3], std::string format[3],
-                std::string label[3], double bb[6], int mikado);
-  void drawAxes(int mode, int tics[3], std::string format[3], 
-                std::string label[3], SBoundingBox3d &bb, int mikado);
+                std::string label[3], double bb[6], int mikado, double value_bb[6]);
+  void drawAxes(int mode, int tics[3], std::string format[3],
+                std::string label[3], SBoundingBox3d &bb, int mikado, SBoundingBox3d &value_bb);
   void drawAxes();
   void drawSmallAxes();
   void drawTrackball();
   void drawScales();
-  void drawString(const std::string &s, const std::string &font_name, int font_enum, 
+  void drawString(const std::string &s, const std::string &font_name, int font_enum,
                   int font_size, int align);
   void drawString(const std::string &s);
   void drawStringCenter(const std::string &s);
@@ -208,10 +208,10 @@ class drawContext {
   void drawEllipse(double x, double y, double z, float v0[3], float v1[3], int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
-  void drawTaperedCylinder(double width, double val1, double val2, 
-                           double ValMin, double ValMax, 
+  void drawTaperedCylinder(double width, double val1, double val2,
+                           double ValMin, double ValMax,
                            double *x, double *y, double *z, int light);
-  void drawArrow3d(double x, double y, double z, double dx, double dy, double dz, 
+  void drawArrow3d(double x, double y, double z, double dx, double dy, double dz,
                    double length, int light);
   void drawVector(int Type, int Fill, double x, double y, double z,
                   double dx, double dy, double dz, int light);
@@ -254,10 +254,10 @@ class mousePosition {
     win[1] = (double)y;
     win[2] = 0.;
 
-    wnr[0] = 
-      (ctx->vxmin + win[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin)) 
+    wnr[0] =
+      (ctx->vxmin + win[0] / (double)ctx->viewport[2] * (ctx->vxmax - ctx->vxmin))
       / ctx->s[0] - ctx->t[0] + ctx->t_init[0] / ctx->s[0];
-    wnr[1] = 
+    wnr[1] =
       (ctx->vymax - win[1] / (double)ctx->viewport[3] * (ctx->vymax - ctx->vymin))
       / ctx->s[1] - ctx->t[1] + ctx->t_init[1] / ctx->s[1];
     wnr[2] = 0.;

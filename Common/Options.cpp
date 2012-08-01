@@ -2680,6 +2680,55 @@ double opt_general_axes_zmax(OPT_ARGS_NUM)
   return CTX::instance()->axesPosition[5];
 }
 
+double opt_general_axes_force_value(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesForceValue = (int)val;
+  return CTX::instance()->axesForceValue;
+}
+
+double opt_general_axes_value_xmin(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[0] = val;
+  return CTX::instance()->axesValue[0];
+}
+
+double opt_general_axes_value_xmax(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[1] = val;
+  return CTX::instance()->axesValue[1];
+}
+
+double opt_general_axes_value_ymin(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[2] = val;
+  return CTX::instance()->axesValue[2];
+}
+
+double opt_general_axes_value_ymax(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[3] = val;
+  return CTX::instance()->axesValue[3];
+}
+
+double opt_general_axes_value_zmin(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[4] = val;
+  return CTX::instance()->axesValue[4];
+}
+
+double opt_general_axes_value_zmax(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->axesValue[5] = val;
+  return CTX::instance()->axesValue[5];
+}
+
 double opt_general_small_axes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6532,7 +6581,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->autoPosition = (int)val;
-    if(opt->autoPosition < 0 || opt->autoPosition > 9)
+    if(opt->autoPosition < 0 || opt->autoPosition > 10)
       opt->autoPosition = 0;
   }
 #if defined(HAVE_FLTK)

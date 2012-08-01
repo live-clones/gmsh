@@ -525,16 +525,16 @@ void drawContext::drawGraph2d()
         drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
       }
     }
-    else if(opt->autoPosition >= 2 && opt->autoPosition <= 9){
+    else if(opt->autoPosition >= 2 && opt->autoPosition <= 10){
       // top left (2), top right (3), bottom left (4), bottom right (5), top
-      // half (6), bottom half (7), left half (8), right half (9)
+      // half (6), bottom half (7), left half (8), right half (9), top 1/3 (10)
       double winw = viewport[2] - viewport[0];
       double winh = viewport[3] - viewport[1];
       double fracw = 0.85, frach = 0.85;
       int a = opt->autoPosition;
       double wd = (a <= 5 || a == 8 || a == 9) ? 2. : 1.;
       double w = fracw * winw / wd - xsep;
-      double hd = (a <= 5 || a == 6 || a == 7) ? 2. : 1.;
+      double hd = (a == 10) ? 3. : (a <= 5 || a == 6 || a == 7) ? 2. : 1.;
       double h = frach * winh / hd - ysep;
       double x = viewport[0] + (1 - fracw) / 3. * winw;
       if(a == 3 || a == 5 || a == 9)

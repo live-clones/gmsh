@@ -16,12 +16,16 @@
 
 static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
                     std::string &label, double p1[3], double p2[3],
-                    double perp[3], int mikado, double pixelfact)
+                    double perp[3], int mikado, double pixelfact,
+                    double value_p1[3], double value_p2[3])
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
   double t[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
   double l = norme(t);
+  double value_t[3] = {value_p2[0] - value_p1[0], value_p2[1] - value_p1[1],
+                       value_p2[2] - value_p1[2]};
+  double value_l = norme(value_t);
   double w = 10 * pixelfact; // big tics 10 pixels
   double w2 = 5 * pixelfact; // small tics 5 pixels
 
@@ -49,6 +53,7 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
   if(n * tmp > l) n = 2;
 
   double step = l / (double)(n - 1);
+  double value_step = value_l / (double)(n - 1);
 
   for(int i = 0; i < n; i++){
     double d = i * step;
@@ -59,6 +64,11 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     double r[3] = {p[0] + perp[0] * w * 1.4,
                    p[1] + perp[1] * w * 1.4,
                    p[2] + perp[2] * w * 1.4 };
+
+    double value_d = i * value_step;
+    double value_p[3] = {value_p1[0] + value_t[0] * value_d,
+                         value_p1[1] + value_t[1] * value_d,
+                         value_p1[2] + value_t[2] * value_d};
 
     glBegin(GL_LINES);
     glVertex3d(p[0], p[1], p[2]);
@@ -83,9 +93,9 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
 
     char str[256];
     if(comp < 0) // display the length (ruler)
-      sprintf(str, format.c_str(), d);
+      sprintf(str, format.c_str(), value_d);
     else // display the coordinate
-      sprintf(str, format.c_str(), p[comp]);
+      sprintf(str, format.c_str(), value_p[comp]);
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
@@ -174,7 +184,8 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin,
 }
 
 void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
-                           std::string label[3], double bb[6], int mikado)
+                           std::string label[3], double bb[6], int mikado,
+                           double value_bb[6])
 {
   // mode 0: nothing
   //      1: axes
@@ -191,11 +202,16 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
   double zmin = bb[4], zmax = bb[5];
   double orig[3] = {xmin, ymin, zmin};
 
+  double value_xmin = value_bb[0], value_xmax = value_bb[1];
+  double value_ymin = value_bb[2], value_ymax = value_bb[3];
+  double value_zmin = value_bb[4], value_zmax = value_bb[5];
+  double value_orig[3] = {value_xmin, value_ymin, value_zmin};
+
   double pixelfact = pixel_equiv_x / s[0];
 
   if(mode == 5){ // draw ruler from xyz_min to xyz_max
     double end[3] = {xmax, ymax, zmax};
-    double dir[3] = {xmax-xmin, ymax-ymin, zmax-zmin};
+    double dir[3] = {xmax - xmin, ymax - ymin, zmax - zmin};
     double perp[3];
     if((fabs(dir[0]) >= fabs(dir[1]) && fabs(dir[0]) >= fabs(dir[2])) ||
        (fabs(dir[1]) >= fabs(dir[0]) && fabs(dir[1]) >= fabs(dir[2]))){
@@ -204,23 +220,28 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
     else{
       perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
     }
-    drawTics(this, -1, tics[0], format[0], label[0], orig, end, perp, mikado, pixelfact);
+    double value_end[3] = {value_xmax, value_ymax, value_zmax};
+    drawTics(this, -1, tics[0], format[0], label[0], orig, end, perp, mikado,
+             pixelfact, value_orig, value_end);
     drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, tics[0], mikado);
     return;
   }
   double xx[3] = {xmax, ymin, zmin};
   double yy[3] = {xmin, ymax, zmin};
   double zz[3] = {xmin, ymin, zmax};
+  double value_xx[3] = {value_xmax, value_ymin, value_zmin};
+  double value_yy[3] = {value_xmin, value_ymax, value_zmin};
+  double value_zz[3] = {value_xmin, value_ymin, value_zmax};
   double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
   double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
 
-  int nx = (xmin != xmax) ?
-    drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm, mikado, pixelfact) : 0;
-  int ny = (ymin != ymax) ?
-    drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym, mikado, pixelfact) : 0;
-  int nz = (zmin != zmax) ?
-    drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm, mikado, pixelfact) : 0;
+  int nx = (xmin != xmax) ? drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm,
+                                     mikado, pixelfact, value_orig, value_xx) : 0;
+  int ny = (ymin != ymax) ? drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym,
+                                     mikado, pixelfact, value_orig, value_yy) : 0;
+  int nz = (zmin != zmax) ? drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm,
+                                     mikado, pixelfact, value_orig, value_zz) : 0;
 
   drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
   drawAxis(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
@@ -261,12 +282,16 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
 }
 
 void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
-                           std::string label[3], SBoundingBox3d &bb, int mikado)
+                           std::string label[3], SBoundingBox3d &bb, int mikado,
+                           SBoundingBox3d &value_bb)
 {
   double bbox[6] = {bb.min().x(), bb.max().x(),
                     bb.min().y(), bb.max().y(),
                     bb.min().z(), bb.max().z()};
-  drawAxes(mode, tics, format, label, bbox, mikado);
+  double value_bbox[6] = {value_bb.min().x(), value_bb.max().x(),
+                          value_bb.min().y(), value_bb.max().y(),
+                          value_bb.min().z(), value_bb.max().z()};
+  drawAxes(mode, tics, format, label, bbox, mikado, value_bbox);
 }
 
 void drawContext::drawAxes()
@@ -304,7 +329,9 @@ void drawContext::drawAxes()
     if(!CTX::instance()->axesAutoPosition){
       drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
                CTX::instance()->axesFormat, CTX::instance()->axesLabel,
-               CTX::instance()->axesPosition, CTX::instance()->axesMikado);
+               CTX::instance()->axesPosition, CTX::instance()->axesMikado,
+               CTX::instance()->axesForceValue ? CTX::instance()->axesValue :
+               CTX::instance()->axesPosition);
     }
     else if(geometryExists){
       double bb[6] =
@@ -312,7 +339,8 @@ void drawContext::drawAxes()
          CTX::instance()->max[1], CTX::instance()->min[2], CTX::instance()->max[2]};
       drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
                CTX::instance()->axesFormat, CTX::instance()->axesLabel,
-               bb, CTX::instance()->axesMikado);
+               bb, CTX::instance()->axesMikado, CTX::instance()->axesForceValue ?
+               CTX::instance()->axesValue : bb);
     }
   }
 

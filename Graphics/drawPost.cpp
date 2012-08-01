@@ -23,7 +23,7 @@
 #include <FL/gl.h>
 #endif
 
-static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type, 
+static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
                        bool useNormalArray)
 {
   if(!va || !va->getNumVertices()) return;
@@ -99,7 +99,7 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
   if(!va || va->getNumVerticesPerElement() != 4) return;
 
   PViewOptions *opt = p->getOptions();
-  
+
   for(int i = 0; i < va->getNumVertices(); i += 4) {
     float *s = va->getVertexArray(3 * i);
     float vv[3][3];
@@ -127,7 +127,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   if(!va || va->getNumVerticesPerElement() != 2) return;
 
   PViewOptions *opt = p->getOptions();
-  
+
   for(int i = 0; i < va->getNumVertices(); i += 2){
     float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
@@ -137,9 +137,9 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     if((l || opt->vectorType == 6) && lmax){
       double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
       // log scaling
-      if(opt->scaleType == PViewOptions::Logarithmic && 
+      if(opt->scaleType == PViewOptions::Logarithmic &&
          opt->tmpMin > 0 && opt->tmpMax > opt->tmpMin && l != opt->tmpMin){
-        scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l * 
+        scale = (opt->arrowSizeMax - opt->arrowSizeMin) / l *
           log10(l / opt->tmpMin) / log10(opt->tmpMax / opt->tmpMin);
       }
       if(opt->arrowSizeMin && l) scale += opt->arrowSizeMin / l;
@@ -165,7 +165,7 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
   }
 }
 
-static std::string stringValue(int numComp, double d[9], double norm, 
+static std::string stringValue(int numComp, double d[9], double norm,
                                const char *format)
 {
   char label[100];
@@ -183,7 +183,7 @@ static std::string stringValue(int numComp, double d[9], double norm,
   return std::string(label);
 }
 
-static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numComp, 
+static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numComp,
                              double **xyz, double **val)
 {
   PViewOptions *opt = p->getOptions();
@@ -230,7 +230,7 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
   }
 }
 
-static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes, 
+static void drawNormalVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
                                    double **xyz, double **val)
 {
   PViewOptions *opt = p->getOptions();
@@ -265,7 +265,7 @@ static void drawTangentVectorGlyphs(drawContext *ctx, PView *p, int numNodes,
   for(int i = 0; i < 3; i++)
     t[i] *= opt->tangents * ctx->pixel_equiv_x / ctx->s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
-  ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2], 
+  ctx->drawVector(CTX::instance()->vectorType, 0, pc[0], pc[1], pc[2], t[0], t[1], t[2],
                   opt->light);
 }
 
@@ -361,7 +361,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
       if(dim == 2 && opt->normals)
         drawNormalVectorGlyphs(ctx, p, numNodes, xyz, val);
       else if(dim == 1 && opt->tangents)
-        drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);  
+        drawTangentVectorGlyphs(ctx, p, numNodes, xyz, val);
     }
   }
   for(int j = 0; j < NMAX; j++){
@@ -397,15 +397,15 @@ class drawPView {
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
-   
+
     glPointSize((float)opt->pointSize);
-    gl2psPointSize((float)(opt->pointSize * 
+    gl2psPointSize((float)(opt->pointSize *
                            CTX::instance()->print.epsPointSizeFactor));
-    
+
     glLineWidth((float)opt->lineWidth);
     gl2psLineWidth((float)(opt->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
-    
+
     if(opt->lightTwoSide)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     else
@@ -414,16 +414,16 @@ class drawPView {
     if(opt->axes && opt->type == PViewOptions::Plot3D){
       glColor4ubv((GLubyte *) & opt->color.axes);
       glLineWidth((float)CTX::instance()->lineWidth);
-      gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+      gl2psLineWidth((float)(CTX::instance()->lineWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       if(!opt->axesAutoPosition)
         _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
-                       opt->axesPosition, opt->axesMikado);
+                       opt->axesPosition, opt->axesMikado, opt->axesPosition);
       else if(!opt->tmpBBox.empty())
         _ctx->drawAxes(opt->axes, opt->axesTics, opt->axesFormat, opt->axesLabel,
-                       opt->tmpBBox, opt->axesMikado);
+                       opt->tmpBBox, opt->axesMikado, opt->tmpBBox);
     }
-    
+
     if(!CTX::instance()->clipWholeElements){
       for(int i = 0; i < 6; i++)
         if(opt->clip & (1 << i))
@@ -446,7 +446,7 @@ class drawPView {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         // glBlendEquation(GL_FUNC_ADD);
         glEnable(GL_BLEND);
-        if(p->va_triangles && p->va_triangles->getNumVertices() && 
+        if(p->va_triangles && p->va_triangles->getNumVertices() &&
            eyeChanged(_ctx, p)){
           Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
           p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
@@ -494,7 +494,7 @@ class drawPView {
         _ctx->drawString(str, style);
       }
     }
-    
+
     if(CTX::instance()->alpha){
       glDisable(GL_BLEND);
       glEnable(GL_DEPTH_TEST);
@@ -522,7 +522,7 @@ class drawPViewBoundingBox {
 
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glLineWidth((float)CTX::instance()->lineWidth);
-    gl2psLineWidth((float)(CTX::instance()->lineWidth * 
+    gl2psLineWidth((float)(CTX::instance()->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
 
     _ctx->drawBox(bb.min().x(), bb.min().y(), bb.min().z(),
@@ -532,9 +532,9 @@ class drawPViewBoundingBox {
       if(opt->clip & (1 << i))
         _ctx->drawPlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
                                      bb.max().x(), bb.max().y(), bb.max().z(),
-                                     CTX::instance()->clipPlane[i][0], 
-                                     CTX::instance()->clipPlane[i][1], 
-                                     CTX::instance()->clipPlane[i][2], 
+                                     CTX::instance()->clipPlane[i][0],
+                                     CTX::instance()->clipPlane[i][1],
+                                     CTX::instance()->clipPlane[i][2],
                                      CTX::instance()->clipPlane[i][3]);
   }
 };

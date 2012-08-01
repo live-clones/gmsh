@@ -149,8 +149,8 @@ class CTX {
   // small axes options
   int smallAxes, smallAxesSize, smallAxesPos[2];
   // large axes options
-  int axes, axesAutoPosition, axesTics[3], axesMikado;
-  double axesPosition[6];
+  int axes, axesAutoPosition, axesTics[3], axesMikado, axesForceValue;
+  double axesPosition[6], axesValue[6];
   std::string axesLabel[3], axesFormat[3];
   // simple dynamic lock (should be a mutex)
   int lock;
