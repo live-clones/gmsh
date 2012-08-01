@@ -4,7 +4,7 @@ Mesh.Algorithm3D = 7; //(1=tetgen, 4=netgen, 7=mmg3D
 Mesh.LcIntegrationPrecision = 1.e-2;
 
 Mesh.RecombineAll = 1;
-Mesh.Bunin = 170;
+//Mesh.Bunin = 120;
 
 Merge "aneu_ext.stl";
 

@@ -4,7 +4,7 @@ Mesh.Algorithm3D = 7;
 Mesh.LcIntegrationPrecision = 1.e-2;
 
 Mesh.RecombineAll = 1;
-Mesh.Bunin = 130;
+Mesh.Bunin = 100;
 
 Merge "carotid.stl";
 
@@ -16,7 +16,7 @@ Field[1].nbElemLayer = 4;
 Field[1].hLayer = 0.2; //percent of vessel radius
 
 Field[1].closeVolume =1;
-//Field[1].extrudeWall =1;
+Field[1].extrudeWall =1;
 Field[1].reMesh =1;
 
 Field[1].run;

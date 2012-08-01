@@ -869,7 +869,7 @@ void Centerline::cutMesh()
     //for (int k= 0; k< edges[i].children.size() ; k++) printf("%d ", edges[i].children[k].tag);
     //printf("\n");
 
-    int nbSplit = (int)floor(AR/2 + 0.9);
+    int nbSplit = (int)floor(AR/2 + 0.9); //AR/2 + 0.9
     if( nbSplit > 1 ){
       printf("->> cut branch in %d parts \n",  nbSplit);
       double li  = L/nbSplit;
@@ -1135,7 +1135,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    curvature.vertexNodalValues(vertices[index[0]], curv, 0);
 
    double sign = (curv > 0.0) ? -1.0: 1.0;
-   double beta = CTX::instance()->mesh.smoothRatio;
+   double beta = CTX::instance()->mesh.smoothRatio; //beta = 1.25 better !
    double ratio = 1.1;
 
    double thickness = radMax/3.;

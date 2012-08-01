@@ -8,6 +8,7 @@
 #include "Context.h"
 #include "polynomialBasis.h"
 #include "MQuadrangle.h"
+#include "qualityMeasures.h"
 int MHexahedron::getVolumeSign()
 {
   double mat[3][3];
@@ -32,6 +33,39 @@ void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQHPts(pOrder);
 }
 
+double MHexahedron::angleShapeMeasure()
+{
+
+#if defined(HAVE_MESH)
+   double angleMax = 0.0;
+   double angleMin = M_PI;
+   double zeta = 0.0;
+   for (int i=0; i<getNumFaces(); i++){
+     std::vector<MVertex*> vv;
+     vv.push_back(getFace(i).getVertex(0));
+     vv.push_back(getFace(i).getVertex(1));
+     vv.push_back(getFace(i).getVertex(2)); 
+     vv.push_back(getFace(i).getVertex(3));
+     // MVertex *v0 = new MVertex(0, 0, 0); vv.push_back(v0);
+     // MVertex *v1 = new MVertex(1., 0, 0);vv.push_back(v1);
+     // MVertex *v2 = new MVertex(2., 1., 0);vv.push_back(v2);
+     // MVertex *v3 = new MVertex(1, 1., 0);vv.push_back(v3);
+     for (int j=0; j<4; j++){
+       SVector3 a(vv[(j+2)%4]->x()-vv[(j+1)%4]->x(),vv[(j+2)%4]->y()-vv[(j+1)%4]->y(),vv[(j+2)%4]->z()-vv[(j+1)%4]->z()  );
+       SVector3 b(vv[(j+1)%4]->x()-vv[(j)%4]->x(),  vv[(j+1)%4]->y()-vv[(j)%4]->y(),  vv[(j+1)%4]->z()-vv[(j)%4]->z()  );
+       double angle = acos( dot(a,b)/(norm(a)*norm(b))); //*180/M_PI;
+       angleMax = std::max(angleMax, angle);
+       angleMin = std::min(angleMin, angle);
+     }
+     //printf("angle max =%g min =%g \n", angleMax*180/M_PI, angleMin*180/M_PI);
+   }
+   zeta = 1.-std::max((angleMax-0.5*M_PI)/(0.5*M_PI),(0.5*M_PI-angleMin)/(0.5*M_PI));
+   return zeta; 
+#else
+   return 1.;
+#endif
+
+}
 double MHexahedron::getInnerRadius()
 {
   //Only for vertically aligned elements (not inclined)

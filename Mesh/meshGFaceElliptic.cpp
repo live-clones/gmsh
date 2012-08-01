@@ -41,7 +41,7 @@ static void printQuads(GFace *gf, fullMatrix<SPoint2> uv, std::vector<MQuadrangl
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"%s\" {\n",name);
 
-  for (int i = 0; i < uv.size1(); i++)
+  for (int i = 1; i < uv.size1()-1; i++)
     for (int j = 0; j < uv.size2(); j++)
       fprintf(f,"SP(%g,%g,%g) {%d};\n", uv(i,j).x(), uv(i,j).y(), 0.0, i);
 
@@ -85,11 +85,17 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"%s\" {\n",name);
 
-  for (unsigned int i = 0; i < p1.size(); i++)
-    fprintf(f,"SP(%g,%g,%g) {%d};\n", p1[i].x(), p1[i].y(), 0.0, i);
+  // for (unsigned int i = 0; i < p1.size(); i++)
+  //   fprintf(f,"SP(%g,%g,%g) {%d};\n", p1[i].x(), p1[i].y(), 0.0, i);
+  // for (unsigned int j = 0; j < p2.size(); j++)
+  //   fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, 100+j);
 
-  for (unsigned int j = 0; j < p2.size(); j++)
-    fprintf(f,"SP(%g,%g,%g) {%d};\n", p2[j].x(), p2[j].y(), 0.0, 100+j);
+   for (unsigned int i = 0; i < p1.size()-1; i++)
+     fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n", p1[i].x(), p1[i].y(), 0.0, p1[i+1].x(), p1[i+1].y(), 0.0, 1, 1);
+   for (unsigned int i = 0; i < p2.size()-1; i++)
+     fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n", p2[i].x(), p2[i].y(), 0.0, p2[i+1].x(), p2[i+1].y(), 0.0, 1, 1);
+   fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n", p1[p1.size()-1].x(), p1[ p1.size()-1].y(), 0.0, p1[0].x(), p1[0].y(), 0.0, 1, 1);
+   fprintf(f,"SL(%g,%g,%g,%g,%g,%g) {%d,%d};\n", p2[p2.size()-1].x(), p2[ p2.size()-1].y(), 0.0, p2[0].x(), p2[0].y(), 0.0, 1, 1);
 
   fprintf(f,"};\n");
   fclose(f);
@@ -235,7 +241,7 @@ static void transfiniteSmoother(GFace* gf,
    int N = uv.size2();
    int jStart = isPeriodic ? 0 : 1;
 
-   int numSmooth = 100;
+   int numSmooth = 150;
   fullMatrix<SPoint2> uvold = uv;
   for(int k = 0; k < numSmooth; k++){
     double norm = 0.0;
@@ -750,7 +756,6 @@ bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
   updateFaceQuads(gf, quads, newv);
 
   //exit(1);
-
   //printParamGrid(gf, vert1, vert2, e00,e22,e02,e02,e02,e02, quads);
 
   return true;

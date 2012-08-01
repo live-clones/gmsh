@@ -429,7 +429,7 @@ double qmTriangleAngles (MTriangle *e) {
   rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
   double tmp[3][3];
 
-  // double minAngle = 120.0;
+  //double minAngle = 120.0;
   for (int i = 0; i < e->getNumPrimaryVertices(); i++) {
     const double u = i == 1 ? 1 : 0;
     const double v = i == 2 ? 1 : 0;
@@ -468,13 +468,12 @@ double qmTriangleAngles (MTriangle *e) {
     double quality = (atan(a*(x+M_PI/9)) + atan(a*(M_PI/9-x)))/den;
     worst_quality = std::min(worst_quality, quality);
 
-    // minAngle = std::min(angle, minAngle);
-    // printf("Angle %g ", angle);
+    //minAngle = std::min(angle, minAngle);
+    //printf("Angle %g ", angle);
     // printf("Quality %g\n",quality);
   }
-  // printf("MinAngle %g ", minAngle);
-  // printf("\n");
-  // return minAngle;
+  //printf("MinAngle %g \n", minAngle);
+  //return minAngle;
 
   return worst_quality;
 }
@@ -530,12 +529,13 @@ double qmQuadrangleAngles (MQuadrangle *e) {
 
     double c;
     prosca(v1,v2,&c);
-    //    printf("Youhou %g %g\n",c,acos(c)*180/M_PI);
     double x = fabs(acos(c))-M_PI/2;
+    //double angle = fabs(acos(c))*180/M_PI;
     double quality = (atan(a*(x+M_PI/4)) + atan(a*(2*M_PI/4 - (x+M_PI/4))))/den;
     worst_quality = std::min(worst_quality, quality);
   }
-
+  
   return worst_quality;
+
 }
 

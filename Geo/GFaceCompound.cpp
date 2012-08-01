@@ -175,13 +175,18 @@ static bool computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
 
   int nbPts = cavV.size();
   fullMatrix<double> u(100,2);
-  int i = 0;
+  int ipt = 0;
   for(std::vector<MVertex*>::iterator it = cavV.begin(); it != cavV.end(); it++){
     SPoint3 vsp = coordinates[*it];
-    u(i,0) = vsp[0];
-    u(i,1) = vsp[1];
-    i++;
+    u(ipt,0) = vsp[0];
+    u(ipt,1) = vsp[1];
+    ucg += u(ipt,0);
+    vcg += u(ipt,1);
+    ipt++;
   }
+  ucg /= ipt;
+  vcg /= ipt;
+
   double eps = -5.e-7;
   int N = nbPts;
 
@@ -238,6 +243,8 @@ static bool computeCGKernelPolygon(std::map<MVertex*,SPoint3> &coordinates,
 
   int nbFinal = setP.size();
   if(nbFinal > 0){
+    ucg = 0.0;
+    vcg = 0.0;
     for(std::set<int>::iterator it =setP.begin(); it != setP.end(); it++){
       ucg += u(*it,0);
       vcg += u(*it,1);
@@ -679,11 +686,14 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
     else if (!moveBoundaries){
       if (iter ==0) Msg::Info("--- Flipping : applying cavity checks.");
       Msg::Debug("--- Cavity Check - iter %d -",iter);
-      bool success = one2OneMap();
-      if (success) return checkOrientation(iter+1);
+      oriented = one2OneMap();
+      printStuff(iter);
+      iter++;
+      if (!oriented) return checkOrientation(iter);
     }
   }
-  else if (iter > 0 && iter < iterMax){
+  
+  if (iter > 0 && iter < iterMax){
     Msg::Info("--- Flipping : no more flips (%d iter)", iter);
   }
 
@@ -857,11 +867,11 @@ bool GFaceCompound::one2OneMap() const
       std::vector<MVertex*> cavV;
       myPolygon(vTri, cavV);
       bool success = computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
-      if (success){
+      //if (success){ //if not succes compute with CG polygon
 	nbRepair++;
 	SPoint3 p_cg(u_cg,v_cg,0.0);
 	coordinates[v] = p_cg;
-      }
+      //}
     }
   }
   if (nbRepair == 0) return false;
@@ -918,24 +928,24 @@ bool GFaceCompound::parametrize() const
   // Conformal map parametrization
   else if (_mapping == CONFORMAL){
     std::vector<MVertex *> vert;
-    bool oriented;
+    bool oriented, overlap;
     if (_type == SPECTRAL){
       Msg::Info("Parametrizing surface %d with 'spectral conformal map'", tag());
-      parametrize_conformal_spectral();
+      overlap = parametrize_conformal_spectral();
     }
-    else if (_type == FE){
+    else {
       Msg::Info("Parametrizing surface %d with 'FE conformal map'", tag());
-      parametrize_conformal(0, NULL, NULL);
+      overlap = parametrize_conformal(0, NULL, NULL);
     }
-    printStuff(55);
-    oriented = checkOrientation(0, true);
-    printStuff(77);
-    if (_type==SPECTRAL &&  (!oriented  || checkOverlap(vert)) ){
+    //printStuff(55);
+    oriented = checkOrientation(0);
+    //printStuff(77);
+    if (_type==SPECTRAL &&  (!oriented || overlap) ){
       Msg::Warning("!!! parametrization switched to 'FE conformal' map");
-      parametrize_conformal(0, NULL, NULL);
-      oriented = checkOrientation(0, true);
+      overlap = parametrize_conformal(0, NULL, NULL);
+      oriented = checkOrientation(0);
     }
-    if (!oriented || checkOverlap(vert)){
+    if (!oriented || overlap){
       Msg::Warning("$$$ parametrization switched to 'convex' map");
       _type  = UNITCIRCLE;
       parametrize(ITERU,CONVEX);
@@ -973,6 +983,7 @@ bool GFaceCompound::parametrize() const
 
   if (_mapping != RBF){
     if (!checkOrientation(0)){
+      printStuff(22);
       Msg::Info("### parametrization switched to 'convex map' onto circle");
       printStuff(33);
       _type = UNITCIRCLE;
