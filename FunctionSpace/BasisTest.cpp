@@ -16,7 +16,7 @@
 
 using namespace std;
 
-int test(int argc, char** argv){
+int basisTest(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
 
@@ -24,7 +24,7 @@ int test(int argc, char** argv){
   Mesh msh(argv[1]);
 
   // Plot Basis //
-  HexEdgeBasis b(1);
+  TriEdgeBasis b(5);
   
   PlotBasis plot(msh.getGroup(2), b);
   plot.write("basis");

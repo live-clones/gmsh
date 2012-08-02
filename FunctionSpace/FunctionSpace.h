@@ -7,6 +7,7 @@
 #include "GroupOfElement.h"
 #include "MElement.h"
 #include "Dof.h"
+#include "DofManager.h"
 
 /** 
     @class FunctionSpace
@@ -19,26 +20,32 @@
 */
 
 class ElementComparator;
+class DofManager;
 
 class FunctionSpace{
- private:
-  const Basis* basis;
+ protected:
+  const Basis*          basis;
   const GroupOfElement* goe;
+  const DofManager*     dofM;
 
   int fPerVertex;
   int fPerEdge;
   int fPerFace;
   int fPerCell;
 
- public:
-   FunctionSpace(const GroupOfElement& goe, 
-		 int basisType, int order);
+  int type;
 
-  ~FunctionSpace(void);
+ public:
+  FunctionSpace(const GroupOfElement& goe, 
+		int basisType, int order);
+
+  virtual ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
   const Basis&          getBasis(const MElement& element) const;
+  int                   getType(void) const;
 
+  void                    associate(const DofManager& dofM);
   const std::vector<Dof*> getKeys(const MElement& element) const;
 
   int getNFunctionPerVertex(const MElement& element) const;
@@ -57,6 +64,14 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
 
 inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
   return *basis;
+}
+
+inline int FunctionSpace::getType(void) const{
+  return type;
+}
+
+inline void FunctionSpace::associate(const DofManager& dofM){
+  this->dofM = &dofM;
 }
 
 inline int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{

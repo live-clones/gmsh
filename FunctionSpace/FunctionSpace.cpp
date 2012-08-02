@@ -4,6 +4,9 @@
 using namespace std;
 
 FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order){
+  // DofManager //
+  dofM = NULL;
+
   // Save GroupOfElement //
   this->goe = &goe;  
 
@@ -12,6 +15,7 @@ FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order
   int elementType = goe.get(0).getType();
   
   // Init Struct //
+  type   = basisType;
   basis  = BasisGenerator::generate(elementType, basisType, order);
 
   // Count Function per Entity //
