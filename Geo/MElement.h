@@ -243,6 +243,8 @@ class MElement
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
+  // To be compatible with _vgrads of functionSpace without having to put under fullMatrix form
+  double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]);
   double getJacobian(double u, double v, double w, double jac[3][3]);
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j){
     double JAC[3][3];
@@ -266,6 +268,7 @@ class MElement
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p);
+  virtual void pnt(const std::vector<double> &sf,SPoint3 &p); // To be compatible with functionSpace without changing form
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
 
   // invert the parametrisation

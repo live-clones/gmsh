@@ -369,6 +369,24 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
   return _computeDeterminantAndRegularize(this, jac);
 }
 
+double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
+{
+  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+
+  for (int i = 0; i < getNumShapeFunctions(); i++) {
+    const MVertex *v = getShapeFunctionNode(i);
+    for (int j = 0; j < 3; j++) {
+      double mult = gsf[i][j];
+      jac[j][0] += v->x() * mult;
+      jac[j][1] += v->y() * mult;
+      jac[j][2] += v->z() * mult;
+    }
+  }
+  return _computeDeterminantAndRegularize(this, jac);
+}
+
 double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
@@ -395,6 +413,18 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p)
   double x = 0., y = 0., z = 0.;
   double sf[1256];
   getShapeFunctions(u, v, w, sf);
+  for (int j = 0; j < getNumShapeFunctions(); j++) {
+    const MVertex *v = getShapeFunctionNode(j);
+    x += sf[j] * v->x();
+    y += sf[j] * v->y();
+    z += sf[j] * v->z();
+  }
+  p = SPoint3(x, y, z);
+}
+
+void MElement::pnt(const std::vector<double> &sf, SPoint3 &p)
+{
+  double x = 0., y = 0., z = 0.;
   for (int j = 0; j < getNumShapeFunctions(); j++) {
     const MVertex *v = getShapeFunctionNode(j);
     x += sf[j] * v->x();
