@@ -10,8 +10,8 @@ set(SRC
   Basis.cpp
   BasisScalar.cpp
   BasisVector.cpp
-  BasisTest.cpp
   BasisGenerator.cpp
+  BasisTest.cpp
 
   QuadNodeBasis.cpp
   QuadEdgeBasis.cpp

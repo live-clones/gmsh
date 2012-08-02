@@ -13,21 +13,25 @@
 #include "HexEdgeBasis.h"
 
 #include "PlotBasis.h"
+#include "WriterMsh.h"
 
 using namespace std;
 
-int basisTest(int argc, char** argv){
+int main(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
 
   // Get Mesh //
   Mesh msh(argv[1]);
 
+  // Writer for .msh
+  WriterMsh writer(msh.getGroup(2).getAll());
+
   // Plot Basis //
   TriEdgeBasis b(5);
   
-  PlotBasis plot(msh.getGroup(2), b);
-  plot.write("basis");
+  PlotBasis plot(msh.getGroup(2), b, writer);
+  plot.plot("basis");
   
   // Stop Gmsh //
   GmshFinalize();
