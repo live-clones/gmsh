@@ -17,7 +17,7 @@
 
 using namespace std;
 
-int main(int argc, char** argv){
+int ain(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
 
@@ -28,7 +28,7 @@ int main(int argc, char** argv){
   WriterMsh writer(msh.getGroup(2).getAll());
 
   // Plot Basis //
-  TriEdgeBasis b(5);
+  HexNodeBasis b(1);
   
   PlotBasis plot(msh.getGroup(2), b, writer);
   plot.plot("basis");
