@@ -72,7 +72,8 @@ namespace nglib
        //testout = &cout;
        mycout = new ostream(new mystreambuf());
        myerr = new ostream(new mystreambuf());
-       testout = new ostream(new mystreambuf());
+       testout = new ofstream("/dev/null");
+       //testout = new ostream(new mystreambuf());
      }
    }
 
