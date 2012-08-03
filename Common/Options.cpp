@@ -2575,7 +2575,7 @@ double opt_general_axes_auto_position(OPT_ARGS_NUM)
 double opt_general_axes_tics0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->axesTics[0] = (int)val;
+    CTX::instance()->axesTics[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[17]->value
@@ -2587,7 +2587,7 @@ double opt_general_axes_tics0(OPT_ARGS_NUM)
 double opt_general_axes_tics1(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->axesTics[1] = (int)val;
+    CTX::instance()->axesTics[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[18]->value
@@ -2599,7 +2599,7 @@ double opt_general_axes_tics1(OPT_ARGS_NUM)
 double opt_general_axes_tics2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->axesTics[2] = (int)val;
+    CTX::instance()->axesTics[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.value[19]->value
@@ -6853,7 +6853,7 @@ double opt_view_axes_tics0(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    opt->axesTics[0] = (int)val;
+    opt->axesTics[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -6871,7 +6871,7 @@ double opt_view_axes_tics1(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    opt->axesTics[1] = (int)val;
+    opt->axesTics[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
@@ -6889,7 +6889,7 @@ double opt_view_axes_tics2(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    opt->axesTics[2] = (int)val;
+    opt->axesTics[2] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {

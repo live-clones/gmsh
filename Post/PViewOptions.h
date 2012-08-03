@@ -60,7 +60,8 @@ class PViewOptions {
   int type;
   int position[2], size[2], autoPosition;
   std::string format;
-  int axes, axesAutoPosition, axesMikado, axesTics[3];
+  int axes, axesAutoPosition, axesMikado;
+  double axesTics[3];
   std::string axesFormat[3], axesLabel[3];
   double axesPosition[6];
   double customMin, customMax, tmpMin, tmpMax, externalMin, externalMax;

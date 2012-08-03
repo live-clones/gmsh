@@ -299,7 +299,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     int nb = opt->axesTics[0];
     if(opt->axes){
       char tmp[256];
-      sprintf(tmp, opt->axesFormat[0].c_str(), - M_PI * 1.e-4);
+      sprintf(tmp, opt->axesFormat[0].c_str(), -M_PI * 1.e4);
       if((nb - 1) * drawContext::global()->getStringWidth(tmp) > width)
         nb = (int)(width / drawContext::global()->getStringWidth(tmp)) + 1;
     }
@@ -487,7 +487,7 @@ void drawContext::drawGraph2d()
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
-    sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
+    sprintf(label, opt->format.c_str(), -M_PI * 1.e4);
     xsep = std::max(xsep, drawContext::global()->getStringWidth(label));
   }
 

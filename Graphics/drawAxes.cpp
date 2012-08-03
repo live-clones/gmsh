@@ -14,7 +14,9 @@
 #include "Numeric.h"
 #include "gl2ps.h"
 
-static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
+#define SQU(a)      ((a)*(a))
+
+static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
                     std::string &label, double p1[3], double p2[3],
                     double perp[3], int mikado, double pixelfact,
                     double value_p1[3], double value_p2[3])
@@ -26,18 +28,18 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
   double value_t[3] = {value_p2[0] - value_p1[0], value_p2[1] - value_p1[1],
                        value_p2[2] - value_p1[2]};
   double value_l = norme(value_t);
-  double w = 10 * pixelfact; // big tics 10 pixels
-  double w2 = 5 * pixelfact; // small tics 5 pixels
+  double w = 10 * pixelfact; // tic marks are 10 pixels long
+  double w2 = w * 1.3; // distance to labels
 
-  glRasterPos3d(p2[0] + t[0] * w * 1.4,
-                p2[1] + t[1] * w * 1.4,
-                p2[2] + t[2] * w * 1.4);
+  // draw label at the end of the axis
+  glRasterPos3d(p2[0] + t[0] * w2, p2[1] + t[1] * w2, p2[2] + t[2] * w2);
   ctx->drawString(label);
 
+  // return number of tics in special cases
   if(n < 2) return 0;
-
   if(format.empty()) return n;
 
+  // select perp direction automatically if it is not provided
   double lp = norme(perp);
   if(!lp){
     switch(comp){
@@ -48,22 +50,28 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     }
   }
 
-  double tmp = 2. * CTX::instance()->glFontSize * pixelfact;
-  if(n * tmp > l) n = 3;
-  if(n * tmp > l) n = 2;
+  // reduce number of tics depending on font size and length of axis on screen
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
+                                 CTX::instance()->glFontSize);
+  char tmp[256];
+  sprintf(tmp, format.c_str(), -M_PI * 1.e4);
+  double win1[3], win2[3];
+  ctx->world2Viewport(p1, win1);
+  ctx->world2Viewport(p2, win2);
+  double winl = sqrt(SQU(win2[0] - win1[0]) + SQU(win2[1] - win1[1]));
+  double strl = drawContext::global()->getStringWidth(tmp);
+  if((n - 1) * strl > winl) n = (int)(winl / strl) + 1;
+  if(n <= 1) n = 2;
 
+  // draw n tics
   double step = l / (double)(n - 1);
   double value_step = value_l / (double)(n - 1);
 
   for(int i = 0; i < n; i++){
     double d = i * step;
     double p[3] = {p1[0] + t[0] * d, p1[1] + t[1] * d, p1[2] + t[2] * d};
-    double q[3] = {p[0] + perp[0] * w,
-                   p[1] + perp[1] * w,
-                   p[2] + perp[2] * w};
-    double r[3] = {p[0] + perp[0] * w * 1.4,
-                   p[1] + perp[1] * w * 1.4,
-                   p[2] + perp[2] * w * 1.4 };
+    double q[3] = {p[0] + perp[0] * w, p[1] + perp[1] * w, p[2] + perp[2] * w};
+    double r[3] = {p[0] + perp[0] * w2, p[1] + perp[1] * w2, p[2] + perp[2] * w2};
 
     double value_d = i * value_step;
     double value_p[3] = {value_p1[0] + value_t[0] * value_d,
@@ -75,43 +83,25 @@ static int drawTics(drawContext *ctx, int comp, int n, std::string &format,
     glVertex3d(q[0], q[1], q[2]);
     glEnd();
 
-    if(i < n-1 && !mikado){
-      for(int j = 1; j < 10; j++){
-        double dd = d + j * step/10.;
-        double pp[3] = {p1[0] + t[0] * dd,
-                        p1[1] + t[1] * dd,
-                        p1[2] + t[2] * dd};
-        double qq[3] = {pp[0] + perp[0] * w2,
-                        pp[1] + perp[1] * w2,
-                        pp[2] + perp[2] * w2};
-        glBegin(GL_LINES);
-        glVertex3d(pp[0], pp[1], pp[2]);
-        glVertex3d(qq[0], qq[1], qq[2]);
-        glEnd();
-      }
-    }
-
-    char str[256];
-    if(comp < 0) // display the length (ruler)
-      sprintf(str, format.c_str(), value_d);
-    else // display the coordinate
-      sprintf(str, format.c_str(), value_p[comp]);
+    // draw tic labels
+    if(comp < 0) // display the length value (ruler-mode, starting at 0)
+      sprintf(tmp, format.c_str(), value_d);
+    else // display the coordinate value
+      sprintf(tmp, format.c_str(), value_p[comp]);
     double winp[3], winr[3];
     ctx->world2Viewport(p, winp);
     ctx->world2Viewport(r, winr);
-    drawContext::global()->setFont(CTX::instance()->glFontEnum,
-                                   CTX::instance()->glFontSize);
     if(fabs(winr[0] - winp[0]) < 2.) // center align
-      winr[0] -= drawContext::global()->getStringWidth(str) / 2.;
+      winr[0] -= drawContext::global()->getStringWidth(tmp) / 2.;
     else if(winr[0] < winp[0]) // right align
-      winr[0] -= drawContext::global()->getStringWidth(str);
+      winr[0] -= drawContext::global()->getStringWidth(tmp);
     if(fabs(winr[1] - winp[1]) < 2.) // center align
       winr[1] -= drawContext::global()->getStringHeight() / 3.;
     else if(winr[1] < winp[1]) // top align
       winr[1] -= drawContext::global()->getStringHeight();
     ctx->viewport2World(winr, r);
     glRasterPos3d(r[0], r[1], r[2]);
-    ctx->drawString(str);
+    ctx->drawString(tmp);
   }
 
   return n;
@@ -155,17 +145,17 @@ static void drawGridStipple(int n1, int n2, double p1[3], double p2[3], double p
 
 void drawContext::drawAxis(double xmin, double ymin, double zmin,
                            double xmax, double ymax, double zmax,
-                           int nticks, int mikado)
+                           int ntics, int mikado)
 {
   if(mikado){
-    nticks = (nticks - 1) * mikado;
-    if(nticks < 1) nticks = 1;
-    double dd[3] = {(xmax - xmin) / nticks,
-                    (ymax - ymin) / nticks,
-                    (zmax - zmin) / nticks};
+    ntics = (ntics - 1) * mikado;
+    if(ntics < 1) ntics = 1;
+    double dd[3] = {(xmax - xmin) / ntics,
+                    (ymax - ymin) / ntics,
+                    (zmax - zmin) / ntics};
     double axe_color[4];
     glGetDoublev(GL_CURRENT_COLOR, axe_color);
-    for(int i = 1; i <= nticks; i++){
+    for(int i = 1; i <= ntics; i++){
       if(i % 2) glColor4dv(axe_color);
       else glColor3f(1, 1, 1);
       double cx[2] = {xmin + (i - 1) * dd[0], xmin + i * dd[0]};
@@ -183,7 +173,7 @@ void drawContext::drawAxis(double xmin, double ymin, double zmin,
   }
 }
 
-void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
+void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
                            std::string label[3], double bb[6], int mikado,
                            double value_bb[6])
 {
@@ -281,7 +271,7 @@ void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
   }
 }
 
-void drawContext::drawAxes(int mode, int tics[3], std::string format[3],
+void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
                            std::string label[3], SBoundingBox3d &bb, int mikado,
                            SBoundingBox3d &value_bb)
 {
