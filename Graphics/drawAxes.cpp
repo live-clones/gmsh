@@ -29,14 +29,14 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
                        value_p2[2] - value_p1[2]};
   double value_l = norme(value_t);
   double w = 10 * pixelfact; // tic marks are 10 pixels long
-  double w2 = w * 1.3; // distance to labels
+  double w2 = w * 1.25; // distance to labels
 
   // draw label at the end of the axis
   glRasterPos3d(p2[0] + t[0] * w2, p2[1] + t[1] * w2, p2[2] + t[2] * w2);
   ctx->drawString(label);
 
   // return number of tics in special cases
-  if(n < 2) return 0;
+  if(n < 2.) return 0;
   if(format.empty()) return n;
 
   // select perp direction automatically if it is not provided
@@ -61,7 +61,12 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
   double winl = sqrt(SQU(win2[0] - win1[0]) + SQU(win2[1] - win1[1]));
   double strl = drawContext::global()->getStringWidth(tmp);
   if((n - 1) * strl > winl) n = (int)(winl / strl) + 1;
-  if(n <= 1) n = 2;
+  if(n <= 1){
+    if(comp < 0) // ruler
+      n = 2;
+    else
+      return 0;
+  }
 
   // draw n tics
   double step = l / (double)(n - 1);
