@@ -16,6 +16,10 @@
 #include "Context.h"
 #include "OS.h"
 
+#if !defined(WIN32) || defined(__CYGWIN__)
+#include <sys/stat.h>
+#endif
+
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
@@ -157,11 +161,13 @@ void Msg::Exit(int level)
 
 static int streamIsFile(FILE* stream)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   // the given stream is definately not interactive if it is a regular file
   struct stat stream_stat;
   if(fstat(fileno(stream), &stream_stat) == 0){
     if(stream_stat.st_mode & S_IFREG) return 1;
   }
+#endif
   return 0;
 }
 
