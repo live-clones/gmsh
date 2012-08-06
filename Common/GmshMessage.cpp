@@ -158,7 +158,7 @@ void Msg::Exit(int level)
 
 static int streamIsFile(FILE* stream)
 {
-  // the given stream is definately not interactive if it is a regular file
+  // the given stream is definitely not interactive if it is a regular file
   struct stat stream_stat;
   if(fstat(fileno(stream), &stream_stat) == 0){
     if(stream_stat.st_mode & S_IFREG) return 1;
