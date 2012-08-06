@@ -22,8 +22,6 @@ set(SRC
   HexEdgeBasis.cpp
 
   FunctionSpace.cpp
-  FunctionSpaceScalar.cpp
-  FunctionSpaceNode.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

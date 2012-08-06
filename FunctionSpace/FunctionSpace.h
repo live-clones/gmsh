@@ -52,6 +52,12 @@ class FunctionSpace{
   int getNFunctionPerEdge(const MElement& element) const;
   int getNFunctionPerFace(const MElement& element) const;
   int getNFunctionPerCell(const MElement& element) const;
+
+  /*
+  void interpolateAtNodes(const MElement& element, 
+			  const std::vector<double>& coef,
+			  std::vector<double>& nodeValue) const;
+  */
 };
 
 //////////////////////
