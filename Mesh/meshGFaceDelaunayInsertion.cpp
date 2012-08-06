@@ -373,29 +373,6 @@ void connectTris(ITER beg, ITER end)
   }
 }
 
-template <class ITER>
-void connectQuas(ITER beg, ITER end)
-{
-  std::set<edgeXquad> conn;
-  while (beg != end){
-    for (int i = 0; i < 4; i++){
-      edgeXquad fxt(*beg, i);
-      std::set<edgeXquad>::iterator found = conn.find(fxt);
-      if (found == conn.end())
-	conn.insert(fxt);
-      else if (found->t1 != *beg){
-	found->t1->setNeigh(found->i1, *beg);
-	(*beg)->setNeigh(i, found->t1);
-      }
-    }
-    ++beg;
-  }
-}
-
-void connectQuads(std::vector<MQua4*> &l)
-{
-  connectQuas(l.begin(), l.end());
-}
 
 void connectTriangles(std::list<MTri3*> &l)
 {
@@ -583,7 +560,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .25 || d2 < LL * .25 || cosv < -0.5) && !force) {
+    if ((d1 < LL * .25 || d2 < LL * .25 || cosv < -.9) && !force) {
       onePointIsTooClose = true;
     }
 

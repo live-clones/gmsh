@@ -19,6 +19,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
+#include "MPyramid.h"
 #include "BDS.h"
 #include "Context.h"
 #include "GFaceCompound.h"
@@ -29,6 +30,64 @@
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
+
+// hybrid mesh recovery structure
+class splitQuadRecovery {
+  std::multimap<GEntity*, std::pair<MVertex*,MFace> >_data;
+ public : 
+  void add (const MFace &f, MVertex *v, GEntity*ge) ;
+  int buildPyramids (GModel *gm);
+};
+
+void splitQuadRecovery::add (const MFace &f, MVertex *v, GEntity*ge) {
+  _data.insert(std::make_pair(ge, std::make_pair(v,f)));
+}
+
+// re-create quads and 
+int splitQuadRecovery::buildPyramids (GModel *gm) {
+  int NBPY = 0;
+  std::set<MFace,Less_Face> allFaces;
+  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
+    for (unsigned int i=0; i < (*it)->triangles.size();i++){
+      allFaces.insert ((*it)->triangles[i]->getFace(0));
+      delete (*it)->triangles[i];
+    }
+    (*it)->triangles.clear();
+    for ( std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 = _data.lower_bound(*it) ; it2 != _data.upper_bound(*it) ; ++it2) {
+      MVertex *v = it2->second.first;
+      v->onWhat()->mesh_vertices.erase
+	(std::find(v->onWhat()->mesh_vertices.begin(),
+		   v->onWhat()->mesh_vertices.end(),
+		   v));
+      const MFace &f = it2->second.second;
+      std::set<MFace,Less_Face> :: iterator itf0 = allFaces.find(MFace(f.getVertex(0),f.getVertex(1),v));
+      std::set<MFace,Less_Face> :: iterator itf1 = allFaces.find(MFace(f.getVertex(1),f.getVertex(2),v));
+      std::set<MFace,Less_Face> :: iterator itf2 = allFaces.find(MFace(f.getVertex(2),f.getVertex(3),v));
+      std::set<MFace,Less_Face> :: iterator itf3 = allFaces.find(MFace(f.getVertex(3),f.getVertex(0),v));
+      if (itf0 != allFaces.end() && itf1 != allFaces.end() && itf2 != allFaces.end() && itf3 != allFaces.end() ){
+	(*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3)));
+	allFaces.erase(*itf0);
+	allFaces.erase(*itf1);
+	allFaces.erase(*itf2);
+	allFaces.erase(*itf3);
+
+	//	printf("some pyramids should be created %d regions\n",(*it)->numRegions());
+	for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
+	  //	  printf("one pyramid is created\n");
+	  if (iReg == 1) {Msg::Fatal("cannot build pyramids on non manifold faces ..."); v = new MVertex (v->x(),v->y(),v->z(),(*it)->getRegion(iReg)); }
+	  else v->setEntity ((*it)->getRegion(iReg));
+	  (*it)->getRegion(iReg)->pyramids.push_back(new MPyramid(f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3),v));      
+	  (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
+	  NBPY++;
+	}
+      }
+    }
+    for (std::set<MFace,Less_Face> :: iterator itf = allFaces.begin() ; itf != allFaces.end(); ++itf){
+      (*it)->triangles.push_back(new MTriangle(itf->getVertex(0),itf->getVertex(1),itf->getVertex(2)));
+    }        
+  }
+  return NBPY;
+}
 
 void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 {
@@ -254,6 +313,72 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 #endif
 }
 
+void getBoundingInfoAndSplitQuads (GRegion *gr, 
+				   std::map<MFace,GEntity*,Less_Face> &allBoundingFaces,
+				   std::set<MVertex*> &allBoundingVertices,
+				   splitQuadRecovery &sqr){
+  
+  std::map<MFace,GEntity*,Less_Face> allBoundingFaces_temp;
+
+  // Get all the faces that are on the boundary
+  std::list<GFace*> faces = gr->faces();
+  std::list<GFace*>::iterator it = faces.begin();
+  while (it != faces.end()){
+    GFace *gf = (*it);
+    for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+      allBoundingFaces_temp[gf->getMeshElement(i)->getFace(0)] = gf;
+    }
+    ++it;
+  }
+
+  // if some elements pre-exist in the mesh, then use the
+  // internal faces of those
+
+  for (unsigned int i=0;i<gr->getNumMeshElements();i++){
+    MElement *e = gr->getMeshElement(i);
+    for (int j=0;j<e->getNumFaces();j++){
+      std::map<MFace,GEntity*,Less_Face>::iterator it = allBoundingFaces_temp.find(e->getFace(j));
+      if (it == allBoundingFaces_temp.end())allBoundingFaces_temp[e->getFace(j)] = gr;
+      else allBoundingFaces_temp.erase(it);
+    }
+  }
+  
+  std::map<MFace,GEntity*,Less_Face>::iterator itx = allBoundingFaces_temp.begin();
+  for (; itx != allBoundingFaces_temp.end();++itx){
+    const MFace &f = itx->first;
+    // SPLIT that face into 4 triangular faces 
+    if (f.getNumVertices() == 4){
+      MVertex *v0 = f.getVertex(0); 
+      MVertex *v1 = f.getVertex(1); 
+      MVertex *v2 = f.getVertex(2); 
+      MVertex *v3 = f.getVertex(3); 
+
+      MVertex *newv = new MVertex ((v0->x() + v1->x() + v2->x() + v3->x())*0.25,
+				   (v0->y() + v1->y() + v2->y() + v3->y())*0.25,
+				   (v0->z() + v1->z() + v2->z() + v3->z())*0.25,itx->second); 
+      sqr.add(f,newv,itx->second);
+      allBoundingFaces[MFace(v0,v1,newv)] = itx->second;
+      allBoundingFaces[MFace(v1,v2,newv)] = itx->second;
+      allBoundingFaces[MFace(v2,v3,newv)] = itx->second;
+      allBoundingFaces[MFace(v3,v0,newv)] = itx->second;
+      itx->second->mesh_vertices.push_back(newv);
+      //      myGr->pyramids.push_back(new MPyramid(v0,v1,v2,v3,newv));      
+      allBoundingVertices.insert(v0);
+      allBoundingVertices.insert(v1);
+      allBoundingVertices.insert(v2);
+      allBoundingVertices.insert(v3);
+      allBoundingVertices.insert(newv);
+    }
+    else{
+      allBoundingFaces[f] = itx->second;
+      allBoundingVertices.insert(f.getVertex(0));
+      allBoundingVertices.insert(f.getVertex(1));
+      allBoundingVertices.insert(f.getVertex(2));
+    }
+  }  
+}
+
+
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
   std::list<GFace*> faces = gr->faces();
@@ -273,10 +398,13 @@ void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices
 
 #if defined(HAVE_TETGEN)
 #include "tetgen.h"
-void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV)
+void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV,  splitQuadRecovery &sqr)
 {
   std::set<MVertex*> allBoundingVertices;
-  getAllBoundingVertices(gr, allBoundingVertices);
+  std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
+  getBoundingInfoAndSplitQuads (gr, allBoundingFaces,allBoundingVertices,sqr);
+  
+  //getAllBoundingVertices(gr, allBoundingVertices);
 
   in.mesh_dim = 3;
   in.firstnumber = 1;
@@ -314,42 +442,29 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 	I++;
   }
 
-  int nbFace = 0;
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
-  while(it != faces.end()){
-    GFace *gf = (*it);
-    nbFace += gf->triangles.size();
-    ++it;
-  }
-
-  in.numberoffacets = nbFace;
+  in.numberoffacets = allBoundingFaces.size();
   in.facetlist = new tetgenio::facet[in.numberoffacets];
   in.facetmarkerlist = new int[in.numberoffacets];
-
-  it = faces.begin();
+  
   I = 0;
-  while(it != faces.end()){
-    GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++){
-      MTriangle *t = gf->triangles[i];
-      tetgenio::facet *f = &in.facetlist[I];
-      tetgenio::init(f);
-      f->numberofholes = 0;
-      f->numberofpolygons = 1;
-      f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
-      tetgenio::polygon *p = &f->polygonlist[0];
-      tetgenio::init(p);
-      p->numberofvertices = 3;
-      p->vertexlist = new int[p->numberofvertices];
-      p->vertexlist[0] = t->getVertex(0)->getIndex();
-      p->vertexlist[1] = t->getVertex(1)->getIndex();
-      p->vertexlist[2] = t->getVertex(2)->getIndex();
-      in.facetmarkerlist[I] = gf->tag();
-      ++I;
-    }
-    ++it;
-  }
+  std::map<MFace,GEntity*,Less_Face>::iterator it = allBoundingFaces.begin();
+  for (; it != allBoundingFaces.end();++it){
+    const MFace &fac = it->first;
+    tetgenio::facet *f = &in.facetlist[I];
+    tetgenio::init(f);
+    f->numberofholes = 0;
+    f->numberofpolygons = 1;
+    f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
+    tetgenio::polygon *p = &f->polygonlist[0];
+    tetgenio::init(p);
+    p->numberofvertices = 3;
+    p->vertexlist = new int[p->numberofvertices];
+    p->vertexlist[0] = fac.getVertex(0)->getIndex();
+    p->vertexlist[1] = fac.getVertex(1)->getIndex();
+    p->vertexlist[2] = fac.getVertex(2)->getIndex();
+    in.facetmarkerlist[I] = (it->second->dim() == 3) ? -it->second->tag() : it->second->tag();
+    ++I;    
+  }  
 }
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
@@ -379,7 +494,10 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     GFace *gf = (*it);
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
+      delete gf->quadrangles[i];
     gf->triangles.clear();
+    gf->quadrangles.clear();
     gf->deleteVertexArrays();
   }
 
@@ -397,87 +515,89 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // nodes for non manifold geometries (single surface connected to
   // volume)
   for(int i = 0; i < out.numberoftrifaces; i++){
-    MVertex *v[3];
-    v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
-    v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
-    v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
-    GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
-
-    double guess[2] = {0, 0};
-    if (needParam) {
-      int Count = 0;
+    if (out.trifacemarkerlist[i] > 0) {
+      MVertex *v[3];
+      v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
+      v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
+      v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
+      // do not recover prismatic faces !!!
+      GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
+      
+      double guess[2] = {0, 0};
+      if (needParam) {
+	int Count = 0;
+	for(int j = 0; j < 3; j++){
+	  if(!v[j]->onWhat()){
+	    Msg::Error("Uncategorized vertex %d", v[j]->getNum());
+	  }
+	  else if(v[j]->onWhat()->dim() == 2){
+	    double uu,vv;
+	    v[j]->getParameter(0, uu);
+	    v[j]->getParameter(1, vv);
+	    guess[0] += uu;
+	    guess[1] += vv;
+	    Count++;
+	  }
+	  else if(v[j]->onWhat()->dim() == 1){
+	    GEdge *ge = (GEdge*)v[j]->onWhat();
+	    double UU;
+	    v[j]->getParameter(0, UU);
+	    SPoint2 param;
+	    param = ge->reparamOnFace(gf, UU, 1);
+	    guess[0] += param.x();
+	    guess[1] += param.y();
+	    Count++;
+	  }
+	  else if(v[j]->onWhat()->dim() == 0){
+	    SPoint2 param;
+	    GVertex *gv = (GVertex*)v[j]->onWhat();
+	    param = gv->reparamOnFace(gf,1);
+	    guess[0] += param.x();
+	    guess[1] += param.y();
+	    Count++;
+	  }
+	}
+	if(Count != 0){
+	  guess[0] /= Count;
+	  guess[1] /= Count;
+	}
+      }
+      
       for(int j = 0; j < 3; j++){
-	if(!v[j]->onWhat()){
-	  Msg::Error("Uncategorized vertex %d", v[j]->getNum());
-	}
-	else if(v[j]->onWhat()->dim() == 2){
-	  double uu,vv;
-	  v[j]->getParameter(0, uu);
-	  v[j]->getParameter(1, vv);
-	  guess[0] += uu;
-	  guess[1] += vv;
-	  Count++;
-	}
-	else if(v[j]->onWhat()->dim() == 1){
-	  GEdge *ge = (GEdge*)v[j]->onWhat();
-	  double UU;
-	  v[j]->getParameter(0, UU);
-	  SPoint2 param;
-	  param = ge->reparamOnFace(gf, UU, 1);
-	  guess[0] += param.x();
-	  guess[1] += param.y();
-	  Count++;
-	}
-	else if(v[j]->onWhat()->dim() == 0){
-	  SPoint2 param;
-	  GVertex *gv = (GVertex*)v[j]->onWhat();
-	  param = gv->reparamOnFace(gf,1);
-	  guess[0] += param.x();
-	  guess[1] += param.y();
-	  Count++;
+	if(v[j]->onWhat()->dim() == 3){
+	  v[j]->onWhat()->mesh_vertices.erase
+	    (std::find(v[j]->onWhat()->mesh_vertices.begin(),
+		       v[j]->onWhat()->mesh_vertices.end(),
+		       v[j]));
+	  MVertex *v1b;
+	  if(needParam){
+	    // parametric coordinates should be set for the vertex !
+	    // (this is not 100 % safe yet, so we reserve that operation
+	    // for high order meshes)
+	    GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
+	    if(gp.g()){
+	      v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	    }
+	    else{
+	      v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+	      Msg::Warning("The point was not projected back to the surface (%g %g %g)",
+			   v[j]->x(), v[j]->y(), v[j]->z());
+	    }
+	  }
+	  else{
+	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+	  }
+	  
+	  gf->mesh_vertices.push_back(v1b);
+	  numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
+	  delete v[j];
+	  v[j] = v1b;
 	}
       }
-      if(Count != 0){
-	guess[0] /= Count;
-	guess[1] /= Count;
-      }
-    }
-
-    for(int j = 0; j < 3; j++){
-      if(v[j]->onWhat()->dim() == 3){
-        v[j]->onWhat()->mesh_vertices.erase
-          (std::find(v[j]->onWhat()->mesh_vertices.begin(),
-                     v[j]->onWhat()->mesh_vertices.end(),
-                     v[j]));
-        MVertex *v1b;
-        if(needParam){
-          // parametric coordinates should be set for the vertex !
-          // (this is not 100 % safe yet, so we reserve that operation
-          // for high order meshes)
-          GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
-          if(gp.g()){
-            v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-          }
-          else{
-            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-            Msg::Warning("The point was not projected back to the surface (%g %g %g)",
-                         v[j]->x(), v[j]->y(), v[j]->z());
-          }
-        }
-        else{
-          v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-        }
-
-        gf->mesh_vertices.push_back(v1b);
-        numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-        delete v[j];
-        v[j] = v1b;
-      }
-    }
-    MTriangle *t = new MTriangle(v[0], v[1], v[2]);
-    gf->triangles.push_back(t);
+      MTriangle *t = new MTriangle(v[0], v[1], v[2]);
+      gf->triangles.push_back(t);
+    }// do not do anything with prismatic faces
   }
-
   for(int i = 0; i < out.numberoftetrahedra; i++){
     MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] - 1];
     MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] - 1];
@@ -493,6 +613,34 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
   buildAdditionalPoints3D (gr);
 }
+
+void _relocateVertex(MVertex *ver,
+		     const std::vector<MElement*> &lt)
+{
+  if(ver->onWhat()->dim() != 3) return;
+  double x = 0, y=0, z=0;
+  int N = 0;
+  bool isPyramid = false;
+  for(unsigned int i = 0; i < lt.size(); i++){
+    double XCG=0,YCG=0,ZCG=0;
+    for (int j=0;j<lt[i]->getNumVertices();j++){
+      XCG += lt[i]->getVertex(j)->x();
+      YCG += lt[i]->getVertex(j)->y();
+      ZCG += lt[i]->getVertex(j)->z();
+    }
+    x += XCG;
+    y += YCG;
+    z += ZCG;
+    if (lt[i]->getNumVertices() == 5) isPyramid = true;
+    N += lt[i]->getNumVertices();
+  }
+  if (isPyramid){
+    ver->x() = x / N;
+    ver->y() = y / N;
+    ver->z() = z / N;
+  }
+}
+
 
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
@@ -523,21 +671,26 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // mesh with tetgen, possibly changing the mesh on boundaries (leave
   // this in block, so in/out are destroyed before we refine the mesh)
+  splitQuadRecovery sqr;
   {
     tetgenio in, out;
     std::vector<MVertex*> numberedV;
     char opts[128];
-    buildTetgenStructure(gr, in, numberedV);
+    buildTetgenStructure(gr, in, numberedV, sqr);
+    // JFR REMOVED THE -q OPTION BECAUSE MESH SIZES AT VERTICES WERE WRONG ...
+    // COULD BE FIXED IF NEEDED
     if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL ||
        CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX ||
        CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
        CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
-      sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+      // sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      // 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "-q3.5Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
@@ -608,8 +761,22 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
  }
  else
    if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
-     insertVerticesInRegion(gr);
+     insertVerticesInRegion(gr);     
    }
+
+ if (sqr.buildPyramids (gr->model())){
+   // relocate vertices if pyramids
+   for(unsigned int k = 0; k < regions.size(); k++){
+     v2t_cont adj;
+     buildVertexToElement(regions[k]->tetrahedra, adj);
+     buildVertexToElement(regions[k]->pyramids, adj);
+     v2t_cont::iterator it = adj.begin();
+     while (it != adj.end()){
+       //_relocateVertex( it->first, it->second);
+       ++it;
+     }
+   }
+ }
 #endif
 }
 
@@ -872,11 +1039,15 @@ void meshGRegion::operator() (GRegion *gr)
 
   std::list<GFace*> faces = gr->faces();
 
+  // REMOVE SANITY CHECK FOR DELAUNAY : PYRAMIDS AVAILABLE
   // sanity check
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-    if((*it)->quadrangles.size()){
-      Msg::Error("Cannot tetrahedralize volume with quadrangles on boundary");
-      return;
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
+    for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+      if((*it)->quadrangles.size()){
+	Msg::Error("Cannot tetrahedralize volume with quadrangles on boundary");
+	return;
+      }
     }
   }
 

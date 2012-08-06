@@ -65,6 +65,8 @@ inline double norme(double a[3])
   }
   return mod;
 }
+double norm2(double a[3][3]);
+
 void normal3points(double x0, double y0, double z0,
                    double x1, double y1, double z1,
                    double x2, double y2, double z2,

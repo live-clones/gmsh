@@ -31,6 +31,17 @@ GRegion::~GRegion()
   deleteMesh();
 }
 
+void GRegion::set(const std::list<GFace*> f) { 
+  for (std::list<GFace*>::iterator it =  l_faces.begin(); it !=  l_faces.end() ; ++it){
+    (*it)->delRegion(this);
+  }
+  l_faces = f; 
+  for (std::list<GFace*>::iterator it =  l_faces.begin(); it !=  l_faces.end() ; ++it){
+    (*it)->addRegion(this);
+  }
+}
+
+
 void GRegion::deleteMesh()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];

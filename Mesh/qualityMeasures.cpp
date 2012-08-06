@@ -172,11 +172,41 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       return 2. * sqrt(6.) * rhoin / l;
     }
     break;
+  case QMTET_COND:
+    {
+      /// condition number is defined as (see Knupp & Freitag in IJNME) 
+      double INVW[3][3] = {{1,-1./sqrt(3.),-1./sqrt(6.)},{0,2/sqrt(3.),-1./sqrt(6.)},{0,0,sqrt(1.5)}};
+      double A[3][3] = {{x2-x1,y2-y1,z2-z1},{x3-x1,y3-y1,z3-z1},{x4-x1,y4-y1,z4-z1}};
+      double S[3][3],INVS[3][3];
+      matmat(A,INVW,S);
+      *volume = inv3x3(S,INVS) * 2 / sqrt(2);
+      double normS = norm2 (S);
+      double normINVS = norm2 (INVS);
+      return normS * normINVS;      
+    }
   default:
     Msg::Error("Unknown quality measure");
     return 0.;
   }
 }
+
+/*
+double conditionNumberAndDerivativeOfTet(const double &x1, const double &y1, const double &z1,
+					 const double &x2, const double &y2, const double &z2,
+					 const double &x3, const double &y3, const double &z3,
+					 const double &x4, const double &y4, const double &z4){
+
+  double INVW[3][3] = {{1,-1./sqrt(3.),-1./sqrt(6.)},{0,2/sqrt(3.),-1./sqrt(6.)},{0,0,sqrt(1.5)}};
+      double A[3][3] = {{x2-x1,y2-y1,z2-z1},{x3-x1,y3-y1,z3-z1},{x4-x1,y4-y1,z4-z1}};
+      double S[3][3],INVS[3][3];
+      matmat(A,INVW,S);
+      double sigma = inv3x3(S,INVS);
+      double normS = norm2 (S);
+      double normINVS = norm2 (INVS);
+      conditionNumber = normS * normINVS;      
+  
+}
+*/
 
 double mesh_functional_distorsion(MElement *t, double u, double v)
 {
