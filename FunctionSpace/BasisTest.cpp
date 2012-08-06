@@ -25,7 +25,8 @@ int ain(int argc, char** argv){
   Mesh msh(argv[1]);
 
   // Writer for .msh
-  WriterMsh writer(msh.getGroup(2).getAll());
+  WriterMsh writer;
+  writer.setDomain(msh.getGroup(2).getAll());
 
   // Plot Basis //
   HexNodeBasis b(1);

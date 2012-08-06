@@ -1,12 +1,14 @@
 #include "FunctionSpaceNode.h"
 #include "Polynomial.h"
 #include "BasisScalar.h"
+#include "fullMatrix.h"
+#include "Mapper.h"
 #include "Exception.h"
 
 using namespace std;
 
 FunctionSpaceNode::FunctionSpaceNode(const GroupOfElement& goe, int order):
-FunctionSpace(goe, 0, order){
+FunctionSpaceScalar(goe, 0, order){
   // Just Call Super Constructor with basisType = 0
 }
 
@@ -14,9 +16,10 @@ FunctionSpace(goe, 0, order){
 FunctionSpaceNode::~FunctionSpaceNode(void){
 }
 
-vector<double> FunctionSpaceNode::
+void FunctionSpaceNode::
 interpolateAtNodes(const MElement& elem, 
-		   const vector<double>& coef) const{
+		   const vector<double>& coef,
+		   std::vector<double>& nodeValue) const{
   // Check
   unsigned int wS = coef.size();
   unsigned int bS = basis->getSize();
@@ -42,20 +45,33 @@ interpolateAtNodes(const MElement& elem,
   const vector<Polynomial>& fun = 
     static_cast<const BasisScalar*>(basis)->getBasis();
 
-  // Init Vector
-  vector<double> value(N);
+  // Init some stuff
+  fullMatrix<double> invJac(3, 3);
+  fullVector<double> xyz(3);
+  fullVector<double> origin(3);
+  
+  origin(0) = node[0]->x();
+  origin(1) = node[0]->y();
+  origin(2) = node[0]->z();
 
   // Interpolate
   for(unsigned int n = 0; n < N; n++){
-    const double x = node[n]->x();
-    const double y = node[n]->y();
-    const double z = node[n]->z();
+    // Map from physical to reference space 
+    xyz(0) = node[n]->x();
+    xyz(1) = node[n]->y();
+    xyz(2) = node[n]->z();
 
-    value[n] = 0;
+    element.getJacobian(xyz(0), xyz(1), xyz(2), invJac);
+    invJac.invertInPlace();
+    
+    const fullVector<double> uvw = 
+      Mapper::invMap(xyz, origin, invJac);
+
+
+    // Interpolate
+    const int id = node[n]->getNum();
 
     for(unsigned int i = 0; i < bS; i++)
-      value[n] += fun[i].at(x, y, z) * coef[i];
+      nodeValue[id] += fun[i].at(uvw(0), uvw(1), uvw(2)) * coef[i];
   }
-
-  return value;
 }

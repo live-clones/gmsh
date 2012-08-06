@@ -22,6 +22,7 @@ set(SRC
   HexEdgeBasis.cpp
 
   FunctionSpace.cpp
+  FunctionSpaceScalar.cpp
   FunctionSpaceNode.cpp
 )
 
