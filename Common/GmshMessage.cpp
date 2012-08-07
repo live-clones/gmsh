@@ -458,10 +458,8 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
 
-    if(strlen(fmt)) strcat(str, " ");
-
     char str2[1024];
-    sprintf(str2, "%s(%d %%)", str, _progressMeterCurrent);
+    sprintf(str2, "[%3d%%] %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
 
