@@ -222,7 +222,7 @@ void Msg::Fatal(const char *fmt, ...)
   if(CTX::instance()->terminal){
     const char *c0 = "", *c1 = "";
     if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[31m"; c1 = "\33[0m";  // red
+      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
       fprintf(stderr, "%sFatal   : [On processor %d] %s%s\n", c0, _commRank, str, c1);
@@ -262,7 +262,7 @@ void Msg::Error(const char *fmt, ...)
   if(CTX::instance()->terminal){
     const char *c0 = "", *c1 = "";
     if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[31m"; c1 = "\33[0m";  // red
+      c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
       fprintf(stderr, "%sError   : [On processor %d] %s%s\n", c0, _commRank, str, c1);
@@ -549,10 +549,14 @@ void Msg::PrintErrorCounter(const char *title)
 #endif
 
   if(CTX::instance()->terminal){
-    fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(),
+    const char *c0 = "", *c1 = "";
+    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
+      c0 = "\33[31m"; c1 = "\33[0m";  // red
+    }
+    fprintf(stderr, "%s%s\n%s\n%s\n%s\n%s\n%s%s\n", c0, (prefix + line).c_str(),
             (prefix + title).c_str(), (prefix + warn).c_str(),
             (prefix + err).c_str(), (prefix + help).c_str(),
-            (prefix + line).c_str());
+            (prefix + line).c_str(), c1);
     fflush(stderr);
   }
 }

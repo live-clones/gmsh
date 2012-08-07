@@ -6,6 +6,7 @@
 #include <string>
 #include <time.h>
 #include "GmshConfig.h"
+#include "GmshVersion.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GmshRemote.h"
@@ -133,9 +134,10 @@ int GmshFinalize()
 
 int GmshBatch()
 {
-  Msg::Info("Running '%s' [%d node(s), max. %d thread(s)]",
-            Msg::GetCommandLineArgs().c_str(),
-            Msg::GetCommSize(), Msg::GetMaxThreads());
+  Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
+            Msg::GetCommandLineArgs().c_str(), GMSH_VERSION,
+            Msg::GetCommSize(), Msg::GetCommSize() > 1 ? "s" : "",
+            Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
   OpenProject(GModel::current()->getFileName());
