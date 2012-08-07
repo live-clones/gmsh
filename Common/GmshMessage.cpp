@@ -451,22 +451,20 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 
   double percent = 100. * (double)n/(double)N;
 
-  if(percent >= _progressMeterCurrent){
-    char str[1024];
+  if(percent >= _progressMeterCurrent || n > N - 1){
+    char str[1024], str2[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
-
-    char str2[1024];
-    sprintf(str2, "[%3d%%] %s", _progressMeterCurrent, str);
+    sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
       FlGui::instance()->check();
-      FlGui::instance()->setProgress(str, n, 0, N);
+      FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif
 
@@ -477,22 +475,6 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 
     while(_progressMeterCurrent < percent)
       _progressMeterCurrent += _progressMeterStep;
-  }
-
-  if(n > N - 1){
-    if(_client) _client->Progress("Done!");
-
-#if defined(HAVE_FLTK)
-    if(FlGui::available() && _verbosity > 4){
-      FlGui::instance()->check();
-      FlGui::instance()->setProgress("", 0, 0, N);
-    }
-#endif
-
-    if(log && CTX::instance()->terminal){
-      fprintf(stdout, "Done!                                              \r");
-      fflush(stdout);
-    }
   }
 }
 
