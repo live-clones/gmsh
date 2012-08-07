@@ -4,24 +4,22 @@
 using namespace std;
 
 FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order){
-  // DofManager //
-  dofM = NULL;
-
   // Save GroupOfElement //
   this->goe = &goe;  
 
-  // Look for 1st element to get element type //
-  // (We suppose only one type of Mesh !!) //
-  int elementType = goe.get(0).getType();
+  // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
+  MElement& element = goe.get(0); 
+  int elementType   = element.getType();
+  int nVertex       = element.getNumVertices();
+  int nEdge         = element.getNumEdges();
+  int nFace         = element.getNumFaces();
+  nTotVertex        = goe.getNVertex();
   
   // Init Struct //
-  type   = basisType;
-  basis  = BasisGenerator::generate(elementType, basisType, order);
-
-  // Count Function per Entity //
-  int nVertex = goe.get(0).getNumVertices();
-  int nEdge   = goe.get(0).getNumEdges();
-  int nFace   = goe.get(0).getNumFaces();
+  type  = basisType;
+  basis = BasisGenerator::generate(elementType, 
+				   basisType, 
+				   order);
 
   fPerVertex = basis->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
@@ -39,10 +37,11 @@ FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
 }
 
-const vector<Dof*> FunctionSpace::getKeys(const MElement& elem) const{  
-  // nTotVertex 
-  int nTotVertex = goe->getNVertex();
+FunctionSpace::~FunctionSpace(void){
+  delete basis;
+}
 
+vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{ 
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -79,54 +78,19 @@ const vector<Dof*> FunctionSpace::getKeys(const MElement& elem) const{
   int nDof = 
     nDofVertex + nDofEdge + nDofFace + nDofCell;
 
-  vector<Dof*> myDof(nDof);
+  vector<Dof> myDof(nDof);
 
   int it = 0;
 
   // Add Vertex Based Dof //
   for(int i = 0; i < nVertex; i++){
-    // Get Id of Vertex
-    const int id = vertex[i]->getNum();
-
-    // New Dof
     for(int j = 0; j < nFVertex; j++){
-      myDof[it] = new Dof(id, j);
+      myDof[it].setDof(vertex[i]->getNum(), j);
       it++;
     }
-  }
-
-  // Add Edge Based Dof //
-  for(int i = 0; i < nEdge; i++){
-    // Get Id of Edge 
-    MVertex* vEdge0 = edge[i].getSortedVertex(0);
-    MVertex* vEdge1 = edge[i].getSortedVertex(1);
-
-    const int id = 
-      vEdge0->getNum() + 
-      vEdge1->getNum() * nTotVertex;
-
-    // Insert new Dof
-    for(int j = 0; j < nFEdge; j++){
-      myDof[it] = new Dof(id, j);
-      it++;
-    }
-  }  
-
-  // Add Cell Based Dof //
-  // Get Id of Cell 
-  const int id = element.getNum() * nTotVertex * nTotVertex;
-
-  // Insert new Dof
-  for(int j = 0; j < nFCell; j++){
-    myDof[it] = new Dof(id, j);
-    it++;
   }
   
   return myDof;
-}
-
-FunctionSpace::~FunctionSpace(void){
-  delete basis;
 }
 
 /*

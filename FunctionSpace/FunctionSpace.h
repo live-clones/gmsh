@@ -4,10 +4,12 @@
 #include <vector>
 
 #include "Basis.h"
+#include "Dof.h"
 #include "GroupOfElement.h"
 #include "MElement.h"
-#include "Dof.h"
-#include "DofManager.h"
+#include "MVertex.h"
+#include "MEdge.h"
+#include "MFace.h"
 
 /** 
     @class FunctionSpace
@@ -19,21 +21,17 @@
     Hybrid Mesh@n
 */
 
-class ElementComparator;
-class DofManager;
-
 class FunctionSpace{
  protected:
-  const Basis*          basis;
-  const GroupOfElement* goe;
-  const DofManager*     dofM;
-
+  const Basis* basis;
   int fPerVertex;
   int fPerEdge;
   int fPerFace;
   int fPerCell;
-
   int type;
+
+  const GroupOfElement* goe;
+  int nTotVertex;
 
  public:
   FunctionSpace(const GroupOfElement& goe, 
@@ -45,13 +43,15 @@ class FunctionSpace{
   const Basis&          getBasis(const MElement& element) const;
   int                   getType(void) const;
 
-  void                    associate(const DofManager& dofM);
-  const std::vector<Dof*> getKeys(const MElement& element) const;
-
   int getNFunctionPerVertex(const MElement& element) const;
   int getNFunctionPerEdge(const MElement& element) const;
   int getNFunctionPerFace(const MElement& element) const;
   int getNFunctionPerCell(const MElement& element) const;
+
+  std::vector<Dof> getKeys(const MElement& element) const;
+  std::vector<Dof> getKeys(const MVertex& element) const;
+  std::vector<Dof> getKeys(const MEdge& element) const;
+  std::vector<Dof> getKeys(const MFace& element) const;
 
   /*
   void interpolateAtNodes(const MElement& element, 
@@ -74,10 +74,6 @@ inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
 
 inline int FunctionSpace::getType(void) const{
   return type;
-}
-
-inline void FunctionSpace::associate(const DofManager& dofM){
-  this->dofM = &dofM;
 }
 
 inline int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
