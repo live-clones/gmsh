@@ -469,7 +469,8 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 #endif
 
     if(log && CTX::instance()->terminal){
-      fprintf(stdout, "%s                     \r", str2);
+      fprintf(stdout, "%s                                          \r",
+              (n > N - 1) ? "" : str2);
       fflush(stdout);
     }
 
