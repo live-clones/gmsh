@@ -4,8 +4,9 @@
 using namespace std;
 
 FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order){
-  // Save GroupOfElement //
-  this->goe = &goe;  
+  // Save GroupOfElement & Mesh //
+  this->goe  = &goe;  
+  this->mesh = &(goe.getMesh());
 
   // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
   MElement& element = goe.get(0); 
@@ -84,7 +85,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Add Vertex Based Dof //
   for(int i = 0; i < nVertex; i++){
     for(int j = 0; j < nFVertex; j++){
-      myDof[it].setDof(vertex[i]->getNum(), j);
+      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
       it++;
     }
   }

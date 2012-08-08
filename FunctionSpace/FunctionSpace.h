@@ -5,7 +5,10 @@
 
 #include "Basis.h"
 #include "Dof.h"
+
+#include "Mesh.h"
 #include "GroupOfElement.h"
+
 #include "MElement.h"
 #include "MVertex.h"
 #include "MEdge.h"
@@ -23,6 +26,7 @@
 
 class FunctionSpace{
  protected:
+  Mesh* mesh;
   const GroupOfElement* goe;
   const Basis* basis;
 
