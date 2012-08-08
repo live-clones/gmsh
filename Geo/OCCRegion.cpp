@@ -26,7 +26,7 @@ void OCCRegion::setup()
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
     TopoDS_Shape shell = exp2.Current();
     Msg::Debug("OCC Region %d - New Shell",tag());
-    for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){         
+    for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       GFace *f = getOCCFaceByNativePtr(model(),face);
       if(f){
@@ -35,7 +35,7 @@ void OCCRegion::setup()
       }
       else
         Msg::Error("Unknown face in region %d", tag());
-    }      
+    }
   }
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
@@ -44,7 +44,6 @@ GEntity::GeomType OCCRegion::geomType() const
 {
   return Unknown;
 }
-
 
 bool FaceHaveDifferentOrientations(const TopoDS_Face& aFR,
 				   const TopoDS_Face& aF)
@@ -82,19 +81,19 @@ void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
 	if (occF){
 	  TopoDS_Face oldf = occF->getTopoDS_Face();
 	  if (oldf.IsSame(_face)){
-	    _face_replacement = *((TopoDS_Face*)(*it2)->getNativePtr());		  
+	    _face_replacement = *((TopoDS_Face*)(*it2)->getNativePtr());
 	  }
 	  else {
 	    oldf = occF->getTopoDS_FaceOld();
 	    if (oldf.IsSame(_face)){
-	      _face_replacement = *((TopoDS_Face*)(*it2)->getNativePtr());		  
+	      _face_replacement = *((TopoDS_Face*)(*it2)->getNativePtr());
 	    }
 	  }
 	}
       }
       if (_face_replacement.IsNull()){
 	Msg::Error("cannot find an face for gluing a region");
-      }      
+      }
 
       if (_face_replacement.IsSame(_face)) {
 	aBB.Add(_shell_replacement, _face);
@@ -104,7 +103,7 @@ void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
           _face_replacement.Reverse();
 	aBB.Add(_shell_replacement, _face_replacement);
       }
-    }    
+    }
     aBB.Add(_s_replacement, _shell_replacement);
   }
   s = _s_replacement;

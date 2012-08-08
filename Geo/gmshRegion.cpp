@@ -21,6 +21,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(ori);
+      f->addRegion(this);
     }
     else
       Msg::Error("Unknown surface %d", s->Num);
@@ -32,11 +33,11 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(sign(is));
+      f->addRegion(this);
     }
     else
       Msg::Error("Unknown surface %d", is);
   }
-
   resetMeshAttributes();
 }
 

@@ -76,11 +76,10 @@ class splitQuadRecovery {
 	allFaces.erase(*itf1);
 	allFaces.erase(*itf2);
 	allFaces.erase(*itf3);
-	printf("some pyramids should be created %d regions\n",(*it)->numRegions());
+	// printf("some pyramids should be created %d regions\n", (*it)->numRegions());
 	for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
-	   printf("one pyramid is created\n");
 	  if (iReg == 1) {
-            Msg::Error("cannot build pyramids on non manifold faces ...");
+            Msg::Error("Cannot build pyramids on non manifold faces");
             v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
           }
 	  else
@@ -358,7 +357,7 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   std::map<MFace, GEntity*, Less_Face>::iterator itx = allBoundingFaces_temp.begin();
   for (; itx != allBoundingFaces_temp.end();++itx){
     const MFace &f = itx->first;
-    // SPLIT that face into 4 triangular faces
+    // split the quad face into 4 triangular faces
     if (f.getNumVertices() == 4){
       sqr.setEmpty(false);
       MVertex *v0 = f.getVertex(0);
@@ -374,7 +373,6 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
       allBoundingFaces[MFace(v2,v3,newv)] = itx->second;
       allBoundingFaces[MFace(v3,v0,newv)] = itx->second;
       itx->second->mesh_vertices.push_back(newv);
-      // myGr->pyramids.push_back(new MPyramid(v0,v1,v2,v3,newv));
       allBoundingVertices.insert(v0);
       allBoundingVertices.insert(v1);
       allBoundingVertices.insert(v2);
@@ -390,26 +388,10 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   }
 }
 
-void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
-{
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
-
-  while (it != faces.end()){
-    GFace *gf = (*it);
-    for(unsigned int i = 0; i < gf->triangles.size(); i++){
-      MTriangle *t = gf->triangles[i];
-      for(int k = 0; k < 3; k++)
-        if(allBoundingVertices.find(t->getVertex(k)) ==  allBoundingVertices.end())
-          allBoundingVertices.insert(t->getVertex(k));
-    }
-    ++it;
-  }
-}
-
 #if defined(HAVE_TETGEN)
 #include "tetgen.h"
-void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV,  splitQuadRecovery &sqr)
+void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV,
+                          splitQuadRecovery &sqr)
 {
   std::set<MVertex*> allBoundingVertices;
   std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
@@ -479,10 +461,10 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                         std::vector<MVertex*> &numberedV)
 {
-  // improvement has to be done here : tetgen splits some of the
-  // existing edges of the mesh. If those edges are classified on some
-  // model faces, new points SHOULD be classified on the model face
-  // and get the right set of parametric coordinates.
+  // improvement has to be done here : tetgen splits some of the existing edges
+  // of the mesh. If those edges are classified on some model faces, new points
+  // SHOULD be classified on the model face and get the right set of parametric
+  // coordinates.
 
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
@@ -520,9 +502,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
   bool needParam = (CTX::instance()->mesh.order > 1 &&
                     CTX::instance()->mesh.secondOrderExperimental);
-  // re-create the triangular meshes FIXME: this can lead to hanging
-  // nodes for non manifold geometries (single surface connected to
-  // volume)
+  // re-create the triangular meshes FIXME: this can lead to hanging nodes for
+  // non manifold geometries (single surface connected to volume)
   for(int i = 0; i < out.numberoftrifaces; i++){
     if (out.trifacemarkerlist[i] > 0) {
       MVertex *v[3];
@@ -580,9 +561,9 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 		       v[j]));
 	  MVertex *v1b;
 	  if(needParam){
-	    // parametric coordinates should be set for the vertex !
-	    // (this is not 100 % safe yet, so we reserve that operation
-	    // for high order meshes)
+	    // parametric coordinates should be set for the vertex !  (this is
+	    // not 100 % safe yet, so we reserve that operation for high order
+	    // meshes)
 	    GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
 	    if(gp.g()){
 	      v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
@@ -650,8 +631,6 @@ void _relocateVertex(MVertex *ver,
   }
 }
 
-
-
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
@@ -686,8 +665,6 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV, sqr);
-    // JFR REMOVED THE -q OPTION BECAUSE MESH SIZES AT VERTICES WERE WRONG ...
-    // COULD BE FIXED IF NEEDED
     if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL ||
        CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX ||
        CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
@@ -695,8 +672,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
       sprintf(opts, "-pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+      // removed -q because mesh sizes at vertices were wrong...
       // sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
-      // 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+      // 	 (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
       sprintf(opts, "-Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
@@ -751,7 +729,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  //EMI VORONOI FOR CENRTERLINE
+  // EMI Voronoi for centerlines
   if (Msg::GetVerbosity() == 20) {
     std::set<SPoint3> candidates;
     printVoronoi(gr, candidates);
@@ -795,6 +773,23 @@ namespace nglib {
 #include "nglib_gmsh.h"
 }
 using namespace nglib;
+
+static void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
+{
+  std::list<GFace*> faces = gr->faces();
+  std::list<GFace*>::iterator it = faces.begin();
+
+  while (it != faces.end()){
+    GFace *gf = (*it);
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
+      MTriangle *t = gf->triangles[i];
+      for(int k = 0; k < 3; k++)
+        if(allBoundingVertices.find(t->getVertex(k)) ==  allBoundingVertices.end())
+          allBoundingVertices.insert(t->getVertex(k));
+    }
+    ++it;
+  }
+}
 
 Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
                               std::vector<MVertex*> &numberedV)

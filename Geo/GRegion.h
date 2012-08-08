@@ -26,8 +26,8 @@ class GRegion : public GEntity {
  protected:
   std::list<GFace*> l_faces;
   std::list<int> l_dirs;
-  GRegionCompound *compound; // this model ede belongs to a compound 
-  
+  GRegionCompound *compound; // this model ede belongs to a compound
+
   // replace faces (for gluing) for specific modelers, we have to
   // re-create internal data ...
   virtual void replaceFacesInternal (std::list<GFace*> &) {}
@@ -48,7 +48,7 @@ class GRegion : public GEntity {
   // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
-  void set(const std::list<GFace*> f);
+  inline void set(const std::list<GFace*> f) { l_faces = f; }
 
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;
@@ -91,7 +91,7 @@ class GRegion : public GEntity {
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
-  
+
   // compound
   void setCompound(GRegionCompound *grc) { compound = grc; }
   GRegionCompound *getCompound() const { return compound; }

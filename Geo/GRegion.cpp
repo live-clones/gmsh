@@ -31,17 +31,6 @@ GRegion::~GRegion()
   deleteMesh();
 }
 
-void GRegion::set(const std::list<GFace*> f) { 
-  for (std::list<GFace*>::iterator it =  l_faces.begin(); it !=  l_faces.end() ; ++it){
-    (*it)->delRegion(this);
-  }
-  l_faces = f; 
-  for (std::list<GFace*>::iterator it =  l_faces.begin(); it !=  l_faces.end() ; ++it){
-    (*it)->addRegion(this);
-  }
-}
-
-
 void GRegion::deleteMesh()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
@@ -62,7 +51,7 @@ void GRegion::deleteMesh()
 }
 
 unsigned int GRegion::getNumMeshElements()
-{ 
+{
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
     polyhedra.size();
 }
@@ -108,19 +97,19 @@ MElement *const *GRegion::getStartElementType(int type) const
 }
 
 MElement *GRegion::getMeshElement(unsigned int index)
-{ 
+{
   if(index < tetrahedra.size())
     return tetrahedra[index];
   else if(index < tetrahedra.size() + hexahedra.size())
     return hexahedra[index - tetrahedra.size()];
   else if(index < tetrahedra.size() + hexahedra.size() + prisms.size())
     return prisms[index - tetrahedra.size() - hexahedra.size()];
-  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + 
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() +
           pyramids.size())
     return pyramids[index - tetrahedra.size() - hexahedra.size() - prisms.size()];
-  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + 
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() +
           pyramids.size() + polyhedra.size())
-    return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() - 
+    return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() -
                      pyramids.size()];
   return 0;
 }
@@ -152,7 +141,7 @@ SOrientedBoundingBox GRegion::getOBB()
   if (!_obb) {
     std::vector<SPoint3> vertices;
     std::list<GFace*> b_faces = faces();
-    for (std::list<GFace*>::iterator b_face = b_faces.begin(); 
+    for (std::list<GFace*>::iterator b_face = b_faces.begin();
          b_face != b_faces.end(); b_face++) {
       if((*b_face)->getNumMeshVertices() > 0) {
         int N = (*b_face)->getNumMeshVertices();
@@ -177,17 +166,17 @@ SOrientedBoundingBox GRegion::getOBB()
           vertices.push_back(pt1);
           vertices.push_back(pt2);
         }
-      } 
+      }
       else if ((*b_face)->buildSTLTriangulation()) {
         for (unsigned int i = 0; i < (*b_face)->stl_vertices.size(); i++){
           GPoint p = (*b_face)->point((*b_face)->stl_vertices[i]);
           vertices.push_back(SPoint3(p.x(), p.y(), p.z()));
-        } 
+        }
       }
       else {
         int N = 10;
         std::list<GEdge*> b_edges = (*b_face)->edges();
-        for (std::list<GEdge*>::iterator b_edge = b_edges.begin(); 
+        for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
              b_edge != b_edges.end(); b_edge++) {
           Range<double> tr = (*b_edge)->parBounds(0);
           for (int j = 0; j < N; j++) {
@@ -196,7 +185,7 @@ SOrientedBoundingBox GRegion::getOBB()
             SPoint3 pt(p.x(), p.y(), p.z());
             vertices.push_back(pt);
           }
-        }       
+        }
       }
     }
     _obb = SOrientedBoundingBox::buildOBB(vertices);
@@ -312,7 +301,7 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
   std::list<int> newdirs;
   for ( ; it != l_faces.end(); ++it, ++it2, ++it3){
     (*it)->delRegion(this);
-    (*it2)->addRegion(this);        
+    (*it2)->addRegion(this);
     // if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
       newdirs.push_back(*it3);
     // else
@@ -332,13 +321,13 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
   double volumez = 0;
   double surface = 0;
   cg[0] = cg[1] = cg[2] = 0.0;
-  for ( ; it != l_faces.end(); ++it,++itdir){    
+  for ( ; it != l_faces.end(); ++it,++itdir){
     //printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(int)(*it)->triangles.size());
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *e = (*it)->triangles[i];
       int npt;
       IntPt *pts;
-      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
+      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);
       for (int j=0;j<npt;j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
@@ -370,19 +359,19 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
 
   it = l_faces.begin();
   itdir =  l_dirs.begin();
-  inertia[0] =   
-    inertia[1] = 
-    inertia[2] = 
-    inertia[3] = 
-    inertia[4] = 
+  inertia[0] =
+    inertia[1] =
+    inertia[2] =
+    inertia[3] =
+    inertia[4] =
     inertia[5] = 0.0;
 
-  for ( ; it != l_faces.end(); ++it,++itdir){    
+  for ( ; it != l_faces.end(); ++it,++itdir){
     for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
       MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
-      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);      
+      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);
       for (int j = 0; j < npt; j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
