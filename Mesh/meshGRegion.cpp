@@ -34,60 +34,73 @@
 // hybrid mesh recovery structure
 class splitQuadRecovery {
   std::multimap<GEntity*, std::pair<MVertex*,MFace> >_data;
- public : 
-  void add (const MFace &f, MVertex *v, GEntity*ge) ;
-  int buildPyramids (GModel *gm);
-};
-
-void splitQuadRecovery::add (const MFace &f, MVertex *v, GEntity*ge) {
-  _data.insert(std::make_pair(ge, std::make_pair(v,f)));
-}
-
-// re-create quads and 
-int splitQuadRecovery::buildPyramids (GModel *gm) {
-  int NBPY = 0;
-  std::set<MFace,Less_Face> allFaces;
-  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
-    for (unsigned int i=0; i < (*it)->triangles.size();i++){
-      allFaces.insert ((*it)->triangles[i]->getFace(0));
-      delete (*it)->triangles[i];
-    }
-    (*it)->triangles.clear();
-    for ( std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 = _data.lower_bound(*it) ; it2 != _data.upper_bound(*it) ; ++it2) {
-      MVertex *v = it2->second.first;
-      v->onWhat()->mesh_vertices.erase
-	(std::find(v->onWhat()->mesh_vertices.begin(),
-		   v->onWhat()->mesh_vertices.end(),
-		   v));
-      const MFace &f = it2->second.second;
-      std::set<MFace,Less_Face> :: iterator itf0 = allFaces.find(MFace(f.getVertex(0),f.getVertex(1),v));
-      std::set<MFace,Less_Face> :: iterator itf1 = allFaces.find(MFace(f.getVertex(1),f.getVertex(2),v));
-      std::set<MFace,Less_Face> :: iterator itf2 = allFaces.find(MFace(f.getVertex(2),f.getVertex(3),v));
-      std::set<MFace,Less_Face> :: iterator itf3 = allFaces.find(MFace(f.getVertex(3),f.getVertex(0),v));
-      if (itf0 != allFaces.end() && itf1 != allFaces.end() && itf2 != allFaces.end() && itf3 != allFaces.end() ){
-	(*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3)));
+  bool _empty;
+ public :
+  splitQuadRecovery() : _empty(true) {}
+  bool empty(){ return _empty; }
+  void setEmpty(bool val){ _empty = val; }
+  void add (const MFace &f, MVertex *v, GEntity*ge)
+  {
+    _data.insert(std::make_pair(ge, std::make_pair(v,f)));
+  }
+  int buildPyramids(GModel *gm)
+  {
+    if(empty()) return 0;
+    int NBPY = 0;
+    for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
+      std::set<MFace, Less_Face> allFaces;
+      for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
+        allFaces.insert ((*it)->triangles[i]->getFace(0));
+        delete (*it)->triangles[i];
+      }
+      (*it)->triangles.clear();
+      for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
+             _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
+        MVertex *v = it2->second.first;
+        v->onWhat()->mesh_vertices.erase(std::find(v->onWhat()->mesh_vertices.begin(),
+                                                   v->onWhat()->mesh_vertices.end(), v));
+        const MFace &f = it2->second.second;
+        std::set<MFace, Less_Face>::iterator itf0 = allFaces.find(MFace(f.getVertex(0),
+                                                                        f.getVertex(1),v));
+        std::set<MFace, Less_Face>::iterator itf1 = allFaces.find(MFace(f.getVertex(1),
+                                                                        f.getVertex(2),v));
+        std::set<MFace, Less_Face>::iterator itf2 = allFaces.find(MFace(f.getVertex(2),
+                                                                        f.getVertex(3),v));
+        std::set<MFace, Less_Face>::iterator itf3 = allFaces.find(MFace(f.getVertex(3),
+                                                                        f.getVertex(0),v));
+        if (itf0 != allFaces.end() && itf1 != allFaces.end() &&
+            itf2 != allFaces.end() && itf3 != allFaces.end()){
+          (*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0), f.getVertex(1),
+                                                       f.getVertex(2), f.getVertex(3)));
 	allFaces.erase(*itf0);
 	allFaces.erase(*itf1);
 	allFaces.erase(*itf2);
 	allFaces.erase(*itf3);
-
-	//	printf("some pyramids should be created %d regions\n",(*it)->numRegions());
+	printf("some pyramids should be created %d regions\n",(*it)->numRegions());
 	for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
-	  //	  printf("one pyramid is created\n");
-	  if (iReg == 1) {Msg::Fatal("cannot build pyramids on non manifold faces ..."); v = new MVertex (v->x(),v->y(),v->z(),(*it)->getRegion(iReg)); }
-	  else v->setEntity ((*it)->getRegion(iReg));
-	  (*it)->getRegion(iReg)->pyramids.push_back(new MPyramid(f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3),v));      
+	   printf("one pyramid is created\n");
+	  if (iReg == 1) {
+            Msg::Error("cannot build pyramids on non manifold faces ...");
+            v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
+          }
+	  else
+            v->setEntity ((*it)->getRegion(iReg));
+	  (*it)->getRegion(iReg)->pyramids.push_back
+            (new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v));
 	  (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
 	  NBPY++;
 	}
+        }
+      }
+      for (std::set<MFace, Less_Face>::iterator itf = allFaces.begin();
+           itf != allFaces.end(); ++itf){
+        (*it)->triangles.push_back
+          (new MTriangle(itf->getVertex(0), itf->getVertex(1), itf->getVertex(2)));
       }
     }
-    for (std::set<MFace,Less_Face> :: iterator itf = allFaces.begin() ; itf != allFaces.end(); ++itf){
-      (*it)->triangles.push_back(new MTriangle(itf->getVertex(0),itf->getVertex(1),itf->getVertex(2)));
-    }        
+    return NBPY;
   }
-  return NBPY;
-}
+};
 
 void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 {
@@ -194,7 +207,6 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 
 void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 {
-
   std::vector<MTetrahedron*> elements = gr->tetrahedra;
   std::list<GFace*> allFaces = gr->faces();
 
@@ -313,12 +325,12 @@ void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
 #endif
 }
 
-void getBoundingInfoAndSplitQuads (GRegion *gr, 
-				   std::map<MFace,GEntity*,Less_Face> &allBoundingFaces,
-				   std::set<MVertex*> &allBoundingVertices,
-				   splitQuadRecovery &sqr){
-  
-  std::map<MFace,GEntity*,Less_Face> allBoundingFaces_temp;
+void getBoundingInfoAndSplitQuads(GRegion *gr,
+                                  std::map<MFace,GEntity*,Less_Face> &allBoundingFaces,
+                                  std::set<MVertex*> &allBoundingVertices,
+                                  splitQuadRecovery &sqr)
+{
+  std::map<MFace, GEntity*, Less_Face> allBoundingFaces_temp;
 
   // Get all the faces that are on the boundary
   std::list<GFace*> faces = gr->faces();
@@ -331,38 +343,38 @@ void getBoundingInfoAndSplitQuads (GRegion *gr,
     ++it;
   }
 
-  // if some elements pre-exist in the mesh, then use the
-  // internal faces of those
+  // if some elements pre-exist in the mesh, then use the internal faces of
+  // those
 
   for (unsigned int i=0;i<gr->getNumMeshElements();i++){
     MElement *e = gr->getMeshElement(i);
-    for (int j=0;j<e->getNumFaces();j++){
-      std::map<MFace,GEntity*,Less_Face>::iterator it = allBoundingFaces_temp.find(e->getFace(j));
-      if (it == allBoundingFaces_temp.end())allBoundingFaces_temp[e->getFace(j)] = gr;
+    for (int j = 0; j < e->getNumFaces(); j++){
+      std::map<MFace, GEntity*, Less_Face>::iterator it = allBoundingFaces_temp.find(e->getFace(j));
+      if (it == allBoundingFaces_temp.end()) allBoundingFaces_temp[e->getFace(j)] = gr;
       else allBoundingFaces_temp.erase(it);
     }
   }
-  
-  std::map<MFace,GEntity*,Less_Face>::iterator itx = allBoundingFaces_temp.begin();
+
+  std::map<MFace, GEntity*, Less_Face>::iterator itx = allBoundingFaces_temp.begin();
   for (; itx != allBoundingFaces_temp.end();++itx){
     const MFace &f = itx->first;
-    // SPLIT that face into 4 triangular faces 
+    // SPLIT that face into 4 triangular faces
     if (f.getNumVertices() == 4){
-      MVertex *v0 = f.getVertex(0); 
-      MVertex *v1 = f.getVertex(1); 
-      MVertex *v2 = f.getVertex(2); 
-      MVertex *v3 = f.getVertex(3); 
-
+      sqr.setEmpty(false);
+      MVertex *v0 = f.getVertex(0);
+      MVertex *v1 = f.getVertex(1);
+      MVertex *v2 = f.getVertex(2);
+      MVertex *v3 = f.getVertex(3);
       MVertex *newv = new MVertex ((v0->x() + v1->x() + v2->x() + v3->x())*0.25,
 				   (v0->y() + v1->y() + v2->y() + v3->y())*0.25,
-				   (v0->z() + v1->z() + v2->z() + v3->z())*0.25,itx->second); 
+				   (v0->z() + v1->z() + v2->z() + v3->z())*0.25,itx->second);
       sqr.add(f,newv,itx->second);
       allBoundingFaces[MFace(v0,v1,newv)] = itx->second;
       allBoundingFaces[MFace(v1,v2,newv)] = itx->second;
       allBoundingFaces[MFace(v2,v3,newv)] = itx->second;
       allBoundingFaces[MFace(v3,v0,newv)] = itx->second;
       itx->second->mesh_vertices.push_back(newv);
-      //      myGr->pyramids.push_back(new MPyramid(v0,v1,v2,v3,newv));      
+      // myGr->pyramids.push_back(new MPyramid(v0,v1,v2,v3,newv));
       allBoundingVertices.insert(v0);
       allBoundingVertices.insert(v1);
       allBoundingVertices.insert(v2);
@@ -375,9 +387,8 @@ void getBoundingInfoAndSplitQuads (GRegion *gr,
       allBoundingVertices.insert(f.getVertex(1));
       allBoundingVertices.insert(f.getVertex(2));
     }
-  }  
+  }
 }
-
 
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {
@@ -402,9 +413,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 {
   std::set<MVertex*> allBoundingVertices;
   std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
-  getBoundingInfoAndSplitQuads (gr, allBoundingFaces,allBoundingVertices,sqr);
-  
-  //getAllBoundingVertices(gr, allBoundingVertices);
+  getBoundingInfoAndSplitQuads(gr, allBoundingFaces, allBoundingVertices, sqr);
 
   in.mesh_dim = 3;
   in.firstnumber = 1;
@@ -426,26 +435,26 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 
   for(int i=0;i<Filler::get_nbr_new_vertices();i++){
     MVertex* v;
-	v = Filler::get_new_vertex(i);
-	in.pointlist[(I - 1) * 3 + 0] = v->x();
-	in.pointlist[(I - 1) * 3 + 1] = v->y();
-	in.pointlist[(I - 1) * 3 + 2] = v->z();
-	I++;
+    v = Filler::get_new_vertex(i);
+    in.pointlist[(I - 1) * 3 + 0] = v->x();
+    in.pointlist[(I - 1) * 3 + 1] = v->y();
+    in.pointlist[(I - 1) * 3 + 2] = v->z();
+    I++;
   }
 
   for(int i=0;i<LpSmoother::get_nbr_interior_vertices();i++){
     MVertex* v;
-	v = LpSmoother::get_interior_vertex(i);
-	in.pointlist[(I - 1) * 3 + 0] = v->x();
-	in.pointlist[(I - 1) * 3 + 1] = v->y();
-	in.pointlist[(I - 1) * 3 + 2] = v->z();
-	I++;
+    v = LpSmoother::get_interior_vertex(i);
+    in.pointlist[(I - 1) * 3 + 0] = v->x();
+    in.pointlist[(I - 1) * 3 + 1] = v->y();
+    in.pointlist[(I - 1) * 3 + 2] = v->z();
+    I++;
   }
 
   in.numberoffacets = allBoundingFaces.size();
   in.facetlist = new tetgenio::facet[in.numberoffacets];
   in.facetmarkerlist = new int[in.numberoffacets];
-  
+
   I = 0;
   std::map<MFace,GEntity*,Less_Face>::iterator it = allBoundingFaces.begin();
   for (; it != allBoundingFaces.end();++it){
@@ -463,8 +472,8 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
     p->vertexlist[1] = fac.getVertex(1)->getIndex();
     p->vertexlist[2] = fac.getVertex(2)->getIndex();
     in.facetmarkerlist[I] = (it->second->dim() == 3) ? -it->second->tag() : it->second->tag();
-    ++I;    
-  }  
+    ++I;
+  }
 }
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
@@ -522,7 +531,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
       v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
       // do not recover prismatic faces !!!
       GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
-      
+
       double guess[2] = {0, 0};
       if (needParam) {
 	int Count = 0;
@@ -562,7 +571,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  guess[1] /= Count;
 	}
       }
-      
+
       for(int j = 0; j < 3; j++){
 	if(v[j]->onWhat()->dim() == 3){
 	  v[j]->onWhat()->mesh_vertices.erase
@@ -587,7 +596,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  else{
 	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
 	  }
-	  
+
 	  gf->mesh_vertices.push_back(v1b);
 	  numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
 	  delete v[j];
@@ -761,7 +770,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
  }
  else
    if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
-     insertVerticesInRegion(gr);     
+     insertVerticesInRegion(gr);
    }
 
  if (sqr.buildPyramids (gr->model())){
@@ -772,7 +781,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
      buildVertexToElement(regions[k]->pyramids, adj);
      v2t_cont::iterator it = adj.begin();
      while (it != adj.end()){
-       //_relocateVertex( it->first, it->second);
+       _relocateVertex( it->first, it->second);
        ++it;
      }
    }

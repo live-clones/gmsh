@@ -45,7 +45,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       e->addFace(this);
       l_dirs.push_back((c->Num > 0) ? 1 : -1);
       if (List_Nbr(s->Generatrices) == 2){
-        e->meshAttributes.minimumMeshSegments = 
+        e->meshAttributes.minimumMeshSegments =
           std::max(e->meshAttributes.minimumMeshSegments, 2);
       }
     }
@@ -116,11 +116,11 @@ void gmshFace::resetMeshAttributes()
       else
         Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
-  }  
+  }
 }
 
 Range<double> gmshFace::parBounds(int i) const
-{ 
+{
   return Range<double>(0, 1);
 }
 
@@ -183,7 +183,7 @@ Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
   }
 }
 
-void gmshFace::secondDer(const SPoint2 &param, 
+void gmshFace::secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry){
@@ -247,7 +247,7 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
       }
     }
     sys2x2(MN, BN, UV);
-    return GPoint(XP, YP, ZP, this, UV);    
+    return GPoint(XP, YP, ZP, this, UV);
   }
 
   Vertex v;
@@ -269,7 +269,7 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
     double u, v, vec[3] = {qp.x() - x, qp.y() - y, qp.z() - z};
     prosca(vec, VX, &u);
     prosca(vec, VY, &v);
-    return SPoint2(u, v); 
+    return SPoint2(u, v);
   }
   else{
     return GFace::parFromPoint(qp, onSurface);
@@ -279,25 +279,25 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 GEntity::GeomType gmshFace::geomType() const
 {
   switch(s->Typ){
-  case MSH_SURF_PLAN: 
-    if(s->geometry) 
+  case MSH_SURF_PLAN:
+    if(s->geometry)
       return ParametricSurface;
     else
       return Plane;
   case MSH_SURF_REGL:
-  case MSH_SURF_TRIC: 
+  case MSH_SURF_TRIC:
     return RuledSurface;
-  case MSH_SURF_DISCRETE: 
+  case MSH_SURF_DISCRETE:
     return DiscreteSurface;
   case MSH_SURF_BND_LAYER:
     return BoundaryLayerSurface;
-  default: 
+  default:
     return Unknown;
   }
 }
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
-{ 
+{
   if(s->Typ == MSH_SURF_PLAN){
     // OK to use the normal from the mean plane here: we compensate
     // for the (possibly wrong) orientation at the end
@@ -320,7 +320,7 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
       }
     }
     // we're inside if angle equals 2 * pi
-    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5) 
+    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5)
       return true;
     return false;
   }
@@ -338,7 +338,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
     else
       return true;
   }
-  
+
   stl_vertices.clear();
   stl_triangles.clear();
 
@@ -355,21 +355,21 @@ bool gmshFace::buildSTLTriangulation(bool force)
   meshGFace mesher (false,true);
   mesher(this);
   printf("%d triangles face %d\n",triangles_stl.size(),tag());
-  CTX::instance()->mesh = _temp;  
+  CTX::instance()->mesh = _temp;
 
   std::map<MVertex*,int> _v;
   int COUNT =0;
   for (int j = 0; j < triangles_stl.size(); j++){
     int C[3];
     for (int i=0;i<3;i++){
-      std::map<MVertex*,int>::iterator it = 
+      std::map<MVertex*,int>::iterator it =
         _v.find(triangles_stl[j]->getVertex(j));
       if (it != _v.end()){
         stl_triangles.push_back(COUNT);
         _v[triangles_stl[j]->getVertex(j)] = COUNT++;
       }
       else stl_triangles.push_back(it->second);
-    }    
+    }
   }
   std::map<MVertex*,int>::iterator itv = _v.begin();
   for ( ; itv != _v.end() ; ++itv){
@@ -378,7 +378,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
     reparamMeshVertexOnFace(v, this, param);
     stl_vertices.push_back(param);
   }
-  
+
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};

@@ -246,7 +246,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     }
     return SPoint2(U, V);
   }
-  else if (s->Typ ==  MSH_SURF_TRIC){
+  else if (s->Typ == MSH_SURF_TRIC){
     Curve *C[3];
     for(int i = 0; i < 3; i++)
       List_Read(s->Generatrices, i, &C[i]);
@@ -288,8 +288,9 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     }
     return SPoint2(U, V);
   }
-  else
+  else{
     return GEdge::reparamOnFace(face, epar, dir);
+  }
 }
 
 void gmshEdge::writeGEO(FILE *fp)
