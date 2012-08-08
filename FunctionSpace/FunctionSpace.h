@@ -23,15 +23,14 @@
 
 class FunctionSpace{
  protected:
+  const GroupOfElement* goe;
   const Basis* basis;
+
   int fPerVertex;
   int fPerEdge;
   int fPerFace;
   int fPerCell;
   int type;
-
-  const GroupOfElement* goe;
-  int nTotVertex;
 
  public:
   FunctionSpace(const GroupOfElement& goe, 

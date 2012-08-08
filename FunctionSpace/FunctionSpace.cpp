@@ -13,8 +13,7 @@ FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order
   int nVertex       = element.getNumVertices();
   int nEdge         = element.getNumEdges();
   int nFace         = element.getNumFaces();
-  nTotVertex        = goe.getNVertex();
-  
+ 
   // Init Struct //
   type  = basisType;
   basis = BasisGenerator::generate(elementType, 
