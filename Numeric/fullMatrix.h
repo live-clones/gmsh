@@ -31,7 +31,7 @@ class fullVector
     _data = new scalar[_r];
     setAll(scalar(0.));
   }
-  
+
   fullVector(scalar *original, int r)
   {
     _r = r;

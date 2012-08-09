@@ -44,19 +44,19 @@ double MTetrahedron::getCircumRadius()
 
 void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
 
-  // the fastest available algo for computing scaled jacobians for 
-  // quadratic tetrahedron 
+  // the fastest available algo for computing scaled jacobians for
+  // quadratic tetrahedron
   const int nbNodT = 10;
   const int nbBezT = 20;
   static int done = 0;
   static fullMatrix<double> gsf[nbBezT];
-  const bezierBasis *jac_basis = getJacobianFuncSpace()->bezier;  
-  if (!done){    
+  const bezierBasis *jac_basis = getJacobianFuncSpace()->bezier;
+  if (!done){
     double gs[nbNodT][3];
     for (int i=0;i<jac_basis->points.size1();i++){
       const double u = jac_basis->points(i,0);
       const double v = jac_basis->points(i,1);
-      const double w = jac_basis->points(i,2);      
+      const double w = jac_basis->points(i,2);
       getGradShapeFunctions(u,v,w,gs);
       fullMatrix<double> a (nbNodT,3);
       for (int j=0;j < nbNodT;j++){
@@ -66,9 +66,9 @@ void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
       }
       gsf[i]= a;
     }
-    done=1; 
+    done=1;
   }
-  
+
   double x[nbNodT];for (int i=0;i<nbNodT;i++)x[i] = getVertex(i)->x();
   double y[nbNodT];for (int i=0;i<nbNodT;i++)y[i] = getVertex(i)->y();
   double z[nbNodT];for (int i=0;i<nbNodT;i++)z[i] = getVertex(i)->z();
@@ -81,14 +81,14 @@ void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
   // straight sided element may be WRONG while curved
   // one is OK
   const double ss = fabs(1./dot(crossprod(v1,v2),v3));
-  
+
   double jac[3][3];
   static fullVector<double>Ji(nbBezT);
   for (int i=0;i < nbBezT;i++){
     jac[0][0] = jac[0][1] = jac[0][2] = 0.;
     jac[1][0] = jac[1][1] = jac[1][2] = 0.;
     jac[2][0] = jac[2][1] = jac[2][2] = 0.;
-    fullMatrix<double> &g = gsf[i]; 
+    fullMatrix<double> &g = gsf[i];
     for (int j = 0; j < nbNodT; j++) {
       for (int k = 0; k < 3; k++) {
 	const double gg = g(j, k);
@@ -100,8 +100,8 @@ void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
     const double dJ = jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
       jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
       jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2];
-    Ji(i) = dJ * ss;    
-  }    
+    Ji(i) = dJ * ss;
+  }
   static fullVector<double> Bi( nbBezT );
   jac_basis->matrixLag2Bez.mult(Ji,Bi);
   //  printf("%22.15E\n",*std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size()));
