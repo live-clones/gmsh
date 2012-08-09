@@ -3,17 +3,21 @@
 
 using namespace std;
 
-FunctionSpace::FunctionSpace(const GroupOfElement& goe, int basisType, int order){
+FunctionSpace::FunctionSpace(const GroupOfElement& goe, Mesh& mesh,
+			     int basisType, int order){
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;  
-  this->mesh = &(goe.getMesh());
+  this->mesh = &mesh;
 
   // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
-  MElement& element = goe.get(0); 
-  int elementType   = element.getType();
-  int nVertex       = element.getNumVertices();
-  int nEdge         = element.getNumEdges();
-  int nFace         = element.getNumFaces();
+  const MElement& element = goe.get(0);
+  MElement& myElement =
+    const_cast<MElement&>(element);
+
+  int elementType = myElement.getType();
+  int nVertex     = myElement.getNumVertices();
+  int nEdge       = myElement.getNumEdges();
+  int nFace       = myElement.getNumFaces();
  
   // Init Struct //
   type  = basisType;

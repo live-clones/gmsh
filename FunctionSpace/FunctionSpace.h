@@ -37,7 +37,7 @@ class FunctionSpace{
   int type;
 
  public:
-  FunctionSpace(const GroupOfElement& goe, 
+  FunctionSpace(const GroupOfElement& goe, Mesh& mesh,
 		int basisType, int order);
 
   virtual ~FunctionSpace(void);
