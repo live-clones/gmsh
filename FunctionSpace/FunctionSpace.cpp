@@ -3,11 +3,11 @@
 
 using namespace std;
 
-FunctionSpace::FunctionSpace(const GroupOfElement& goe, Mesh& mesh,
+FunctionSpace::FunctionSpace(const GroupOfElement& goe,
 			     int basisType, int order){
   // Save GroupOfElement & Mesh //
-  this->goe  = &goe;  
-  this->mesh = &mesh;
+  this->goe  = &goe;
+  this->mesh = &(goe.getMesh());
 
   // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
   const MElement& element = goe.get(0);

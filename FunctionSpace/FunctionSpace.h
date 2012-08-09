@@ -26,9 +26,9 @@
 
 class FunctionSpace{
  protected:
-  Mesh* mesh;
+  const Mesh*           mesh;
   const GroupOfElement* goe;
-  const Basis* basis;
+  const Basis*          basis;
 
   int fPerVertex;
   int fPerEdge;
@@ -37,7 +37,7 @@ class FunctionSpace{
   int type;
 
  public:
-  FunctionSpace(const GroupOfElement& goe, Mesh& mesh,
+  FunctionSpace(const GroupOfElement& goe,
 		int basisType, int order);
 
   virtual ~FunctionSpace(void);
