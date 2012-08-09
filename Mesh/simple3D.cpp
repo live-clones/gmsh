@@ -314,8 +314,6 @@ void Filler::treat_model(){
   GModel* model = GModel::current();
   GModel::riter it;
 
-  Frame_field::init_model();
-
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -323,8 +321,6 @@ void Filler::treat_model(){
 	  treat_region(gr);
 	}
   }
-
-  Frame_field::clear();
 }
 
 void Filler::treat_region(GRegion* gr){
@@ -349,6 +345,7 @@ void Filler::treat_region(GRegion* gr){
   std::set<MVertex*>::iterator it;
   RTree<Node*,double,3,double> rtree;
 
+  Frame_field::init_model();
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -438,6 +435,7 @@ void Filler::treat_region(GRegion* gr){
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
+  Frame_field::clear();
 #endif
 }
 
