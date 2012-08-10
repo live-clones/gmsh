@@ -233,6 +233,7 @@ class PostOp{
  private:
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MElement*> > vertex_to_tetrahedra;
+  std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
  public:
   PostOp();
   ~PostOp();
@@ -241,8 +242,9 @@ class PostOp{
   void execute(GRegion*);
 	
   void init_markings(GRegion*);
-  void pyramids(GRegion*);
-  void pyramids(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
+  void pyramids(GRegion*,int);
+  void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
+  void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
 	
@@ -251,10 +253,14 @@ class PostOp{
   bool six(MElement*);
   bool eight(MElement*);
 	
+  bool apex(MElement*,MVertex*);
+	
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,MElement*);
-  void find(MVertex*,MVertex*,std::set<MElement*>&);
+  void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
+  void find_pyramids(MVertex*,MVertex*,std::set<MElement*>&);
 	
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);
 	
   void build_vertex_to_tetrahedra(GRegion*);
+  void build_vertex_to_pyramids(GRegion*);
 };
