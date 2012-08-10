@@ -3,8 +3,15 @@
 
 using namespace std;
 
-FunctionSpace::FunctionSpace(const GroupOfElement& goe,
-			     int basisType, int order){
+FunctionSpace::FunctionSpace(void){
+}
+
+FunctionSpace::~FunctionSpace(void){
+  delete basis;
+}
+
+void FunctionSpace::build(const GroupOfElement& goe,
+			  int basisType, int order){
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
@@ -39,10 +46,6 @@ FunctionSpace::FunctionSpace(const GroupOfElement& goe,
     fPerFace = 0;  
   
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
-}
-
-FunctionSpace::~FunctionSpace(void){
-  delete basis;
 }
 
 vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{ 
@@ -94,8 +97,52 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
     }
   }
   
+  // Add Edge Based Dof //
+  for(int i = 0; i < nEdge; i++){
+    for(int j = 0; j < nFEdge; j++){
+      myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
+      it++;
+    }
+  }
+  /*
+  // Add Face Based Dof //
+  for(int i = 0; i < nFace; i++){
+    for(int j = 0; j < nFFace; j++){
+      myDof[it].setDof(mesh->getGlobalId(face[i]), j);
+      it++;
+    }
+  }
+  */
+  // Add Cell Based Dof //
+  for(int j = 0; j < nFCell; j++){
+    myDof[it].setDof(mesh->getGlobalId(element), j);
+    it++;
+  }
+  
+  
   return myDof;
 }
+
+int FunctionSpace::getElementType(const Dof& dof) const{
+  const unsigned int type = dof.getType();
+
+  if(type < fPerVertex)    // Vertex Based
+    return 0; 
+
+  else if(type < fPerEdge) // Edge Based
+    return 1;
+
+  else if(type < fPerFace) // Face Based
+    return 2;
+
+  else                     // Cell Based
+    return 3; 
+}
+
+int FunctionSpace::getElementGlobalId(const Dof& dof) const{
+  return dof.getEntity();
+}
+
 
 /*
 #include "Polynomial.h"

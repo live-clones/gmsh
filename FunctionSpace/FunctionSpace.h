@@ -30,37 +30,37 @@ class FunctionSpace{
   const GroupOfElement* goe;
   const Basis*          basis;
 
-  int fPerVertex;
-  int fPerEdge;
-  int fPerFace;
-  int fPerCell;
-  int type;
+  unsigned int fPerVertex;
+  unsigned int fPerEdge;
+  unsigned int fPerFace;
+  unsigned int fPerCell;
+  unsigned int type;
 
  public:
-  FunctionSpace(const GroupOfElement& goe,
-		int basisType, int order);
-
   virtual ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
   const Basis&          getBasis(const MElement& element) const;
   int                   getType(void) const;
 
-  int getNFunctionPerVertex(const MElement& element) const;
-  int getNFunctionPerEdge(const MElement& element) const;
-  int getNFunctionPerFace(const MElement& element) const;
-  int getNFunctionPerCell(const MElement& element) const;
+  unsigned int getNFunctionPerVertex(const MElement& element) const;
+  unsigned int getNFunctionPerEdge(const MElement& element) const;
+  unsigned int getNFunctionPerFace(const MElement& element) const;
+  unsigned int getNFunctionPerCell(const MElement& element) const;
 
   std::vector<Dof> getKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MVertex& element) const;
   std::vector<Dof> getKeys(const MEdge& element) const;
   std::vector<Dof> getKeys(const MFace& element) const;
 
-  /*
-  void interpolateAtNodes(const MElement& element, 
-			  const std::vector<double>& coef,
-			  std::vector<double>& nodeValue) const;
-  */
+  int getElementType(const Dof& dof) const;
+  int getElementGlobalId(const Dof& dof) const;
+
+ protected:
+  FunctionSpace();
+
+  void build(const GroupOfElement& goe,
+	     int basisType, int order);
 };
 
 //////////////////////
@@ -79,19 +79,19 @@ inline int FunctionSpace::getType(void) const{
   return type;
 }
 
-inline int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
+inline unsigned int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
   return fPerVertex;
 }
 
-inline int FunctionSpace::getNFunctionPerEdge(const MElement& element) const{
+inline unsigned int FunctionSpace::getNFunctionPerEdge(const MElement& element) const{
   return fPerEdge;
 }
 
-inline int FunctionSpace::getNFunctionPerFace(const MElement& element) const{
+inline unsigned int FunctionSpace::getNFunctionPerFace(const MElement& element) const{
   return fPerFace;
 }
 
-inline int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
+inline unsigned int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
   return fPerCell;
 }
 

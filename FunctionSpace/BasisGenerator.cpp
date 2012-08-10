@@ -35,11 +35,11 @@ Basis* BasisGenerator::generate(int elementType,
 Basis* BasisGenerator::TriGen(int basisType, 
 			      int order){
   switch(basisType){
-  case  0: 
+  case  0: return new TriNodeBasis(order);
+  case  1: 
     if (order == 0) return new TriNedelecBasis();
-    else            return new TriNodeBasis(order);
+    else            return new TriEdgeBasis(order);
 
-  case  1: return new TriEdgeBasis(order);
   case  2: throw Exception("2-form not implemented on Triangles");
   case  3: throw Exception("3-form not implemented on Triangles");
 
