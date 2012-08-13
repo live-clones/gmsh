@@ -204,7 +204,7 @@ namespace onelabUtils {
   bool updateGraph(const std::string &graphNum)
   {
     bool changed = false;
-
+#if defined(HAVE_POST)
     PView *view = 0;
 
     for(unsigned int i = 0; i < PView::list.size(); i++){
@@ -254,7 +254,7 @@ namespace onelabUtils {
       delete view;
       changed = true;
     }
-
+#endif
     return changed;
   }
 
