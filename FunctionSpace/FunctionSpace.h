@@ -40,7 +40,6 @@ class FunctionSpace{
   virtual ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
-  const Basis&          getBasis(const MElement& element) const;
   int                   getType(void) const;
 
   unsigned int getNFunctionPerVertex(const MElement& element) const;
@@ -69,10 +68,6 @@ class FunctionSpace{
 
 inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
-}
-
-inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
-  return *basis;
 }
 
 inline int FunctionSpace::getType(void) const{

@@ -25,7 +25,7 @@ class BasisScalar: public Basis{
   
   //! @return Returns the set of @em Polynomial%s
   //! defining this (scalar) Basis
-  const std::vector<Polynomial>& getBasis(void) const;
+  const std::vector<Polynomial>& getFunctions(void) const;
 
  protected:
   //! Instantiate a new BasisScalar
@@ -37,7 +37,10 @@ class BasisScalar: public Basis{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<Polynomial>& BasisScalar::getBasis(void) const{
+inline 
+const std::vector<Polynomial>& BasisScalar::
+getFunctions(void) const{
+
   return *basis;
 }
 

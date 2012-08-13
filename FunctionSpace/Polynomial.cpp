@@ -1,6 +1,7 @@
 #include <cmath>
 #include <sstream>
 #include <stack>
+
 #include "Polynomial.h"
 
 using namespace std;

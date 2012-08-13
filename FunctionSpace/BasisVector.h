@@ -25,7 +25,7 @@ class BasisVector: public Basis{
 
   //! @return Returns the set of @em Polynomial%s
   //! defining this (vectorial) Basis
-  const std::vector<std::vector<Polynomial> >& getBasis(void) const;
+  const std::vector<std::vector<Polynomial> >& getFunctions(void) const;
 
  protected:
   //! Instantiate a new BasisVector
@@ -37,7 +37,10 @@ class BasisVector: public Basis{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<std::vector<Polynomial> >& BasisVector::getBasis(void) const{
+inline 
+const std::vector<std::vector<Polynomial> >& BasisVector::
+getFunctions(void) const{
+
   return *basis;
 }
 
