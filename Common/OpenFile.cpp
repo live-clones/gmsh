@@ -154,7 +154,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
 
 static std::vector<FILE*> openedFiles;
 
-int ParseFile(std::string fileName, bool close, bool warnIfMissing)
+int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 {
 #if !defined(HAVE_PARSER)
   Msg::Error("Gmsh parser is not compiled in this version");
@@ -218,7 +218,7 @@ int ParseFile(std::string fileName, bool close, bool warnIfMissing)
 #endif
 }
 
-void ParseString(std::string str)
+void ParseString(const std::string &str)
 {
   if(str.empty()) return;
   std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
@@ -230,7 +230,7 @@ void ParseString(std::string str)
   }
 }
 
-int MergeFile(std::string fileName, bool warnIfMissing)
+int MergeFile(const std::string &fileName, bool warnIfMissing)
 {
   if(GModel::current()->getName() == ""){
     GModel::current()->setFileName(fileName);
@@ -437,6 +437,81 @@ int MergeFile(std::string fileName, bool warnIfMissing)
   return status;
 }
 
+int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
+                            bool hideNewViews, bool warnIfMissing)
+{
+  // check if there is a mesh in the file
+  FILE *fp = fopen(fileName.c_str(), "rb");
+  if(!fp){
+    if(warnIfMissing) Msg::Warning("Unable to open file '%s'", fileName.c_str());
+    return 0;
+  }
+  char header[256];
+  if(!fgets(header, sizeof(header), fp)) return 0;
+  bool haveMesh = false;
+  if(!strncmp(header, "$MeshFormat", 11)){
+    while(!feof(fp) && fgets(header, sizeof(header), fp)){
+      if(!strncmp(header, "$Nodes", 6)){
+        haveMesh = true;
+        break;
+      }
+      else if(!strncmp(header, "$NodeData", 9) ||
+              !strncmp(header, "$ElementData", 12) ||
+              !strncmp(header, "$ElementNodeData", 16)){
+        break;
+      }
+    }
+  }
+  fclose(fp);
+
+  // store old step values
+  unsigned int n = PView::list.size();
+  std::vector<int> steps(n, 0);
+  if(showLastStep){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      steps[i] = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+  }
+
+  // if there is a mesh, create a new model to store it (don't merge elements in
+  // the current mesh!)
+  GModel *old = GModel::current();
+  if(haveMesh){
+    GModel *m = new GModel();
+    GModel::setCurrent(m);
+  }
+  int ret = MergeFile(fileName, warnIfMissing);
+  GModel::setCurrent(old);
+  old->setVisibility(1);
+
+  // hide everything except the onelab X-Y graphs
+  if(hideNewViews){
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+        PView::list[i]->getOptions()->visible = 0;
+    }
+  }
+  else if(n != PView::list.size()){
+    // if we created new views, assume we only want to see those (and the
+    // onelab X-Y graphs)
+    for(unsigned int i = 0; i < n; i++){
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+        PView::list[i]->getOptions()->visible = 0;
+    }
+  }
+
+  // if we added steps, go to the last one
+  if(showLastStep){
+    steps.resize(PView::list.size(), 0);
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
+      if(step > steps[i])
+        opt_view_timestep(i, GMSH_SET|GMSH_GUI, step - 1);
+    }
+  }
+
+  return ret;
+}
+
 void ClearProject()
 {
 #if defined(HAVE_POST)
@@ -470,7 +545,7 @@ void ClearProject()
 #endif
 }
 
-void OpenProject(std::string fileName)
+void OpenProject(const std::string &fileName)
 {
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");

@@ -692,7 +692,7 @@ bool GFaceCompound::checkOrientation(int iter, bool moveBoundaries) const
       if (!oriented) return checkOrientation(iter);
     }
   }
-  
+
   if (iter > 0 && iter < iterMax){
     Msg::Info("--- Flipping : no more flips (%d iter)", iter);
   }
@@ -866,7 +866,8 @@ bool GFaceCompound::one2OneMap() const
       double u_cg, v_cg;
       std::vector<MVertex*> cavV;
       myPolygon(vTri, cavV);
-      bool success = computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
+      //bool success =
+         computeCGKernelPolygon(coordinates, cavV, u_cg, v_cg);
       //if (success){ //if not succes compute with CG polygon
 	nbRepair++;
 	SPoint3 p_cg(u_cg,v_cg,0.0);
