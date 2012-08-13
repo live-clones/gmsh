@@ -10,6 +10,8 @@
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "Context.h"
+#include "OS.h"
+#include "OpenFile.h"
 #include "CreateFile.h"
 #include "StringUtils.h"
 #include "onelabUtils.h"
@@ -256,6 +258,64 @@ namespace onelabUtils {
     }
 #endif
     return changed;
+  }
+
+  bool runGmshClient(const std::string &action, bool meshAuto)
+  {
+    bool redraw = false;
+
+    onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
+    if(it == onelab::server::instance()->lastClient()) return redraw;
+
+    onelab::client *c = it->second;
+    std::string mshFileName = onelabUtils::getMshFileName(c);
+    if(action == "initialize") return redraw;
+
+    static std::string modelName = "";
+    if(modelName.empty()){
+      // first pass is special to prevent model reload, as well as
+      // remeshing if a mesh file already exists on disk
+      modelName = GModel::current()->getName();
+      if(!StatFile(mshFileName))
+        onelab::server::instance()->setChanged(false, "Gmsh");
+    }
+
+    if(action == "check"){
+      if(onelab::server::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload geometry if Gmsh parameters have been modified or if
+        // the model name has changed
+        modelName = GModel::current()->getName();
+        redraw = true;
+        OpenProject(GModel::current()->getFileName());
+      }
+    }
+    else if(action == "compute"){
+      if(onelab::server::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload the geometry, mesh it and save the mesh if Gmsh
+        // parameters have been modified or if the model name has
+        // changed
+        modelName = GModel::current()->getName();
+        redraw = true;
+        OpenProject(GModel::current()->getFileName());
+        if(!GModel::current()->empty() && meshAuto){
+          GModel::current()->mesh(3);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+        }
+      }
+      else if(StatFile(mshFileName)){
+        // mesh+save if the mesh file does not exist
+        if(meshAuto){
+          redraw = true;
+          GModel::current()->mesh(3);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+        }
+      }
+      onelab::server::instance()->setChanged(false, "Gmsh");
+    }
+
+    return redraw;
   }
 
 }

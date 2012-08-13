@@ -380,58 +380,6 @@ static void updateGraphs()
   }
 }
 
-static void runGmshClient(const std::string &action)
-{
-  onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
-  if(it == onelab::server::instance()->lastClient()) return;
-
-  onelab::client *c = it->second;
-  std::string mshFileName = onelabUtils::getMshFileName(c);
-  if(action == "initialize") return;
-
-  static std::string modelName = "";
-  if(modelName.empty()){
-    // first pass is special to prevent model reload, as well as
-    // remeshing if a mesh file already exists on disk
-    modelName = GModel::current()->getName();
-    if(!StatFile(mshFileName))
-      onelab::server::instance()->setChanged(false, "Gmsh");
-  }
-
-  if(action == "check"){
-    if(onelab::server::instance()->getChanged("Gmsh") ||
-       modelName != GModel::current()->getName()){
-      // reload geometry if Gmsh parameters have been modified or if
-      // the model name has changed
-      modelName = GModel::current()->getName();
-      geometry_reload_cb(0, 0);
-    }
-  }
-  else if(action == "compute"){
-    if(onelab::server::instance()->getChanged("Gmsh") ||
-       modelName != GModel::current()->getName()){
-      // reload the geometry, mesh it and save the mesh if Gmsh
-      // parameters have been modified or if the model name has
-      // changed
-      modelName = GModel::current()->getName();
-      geometry_reload_cb(0, 0);
-      if(!GModel::current()->empty() &&
-         FlGui::instance()->onelab->meshAuto()){
-        mesh_3d_cb(0, 0);
-        CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
-      }
-    }
-    else if(StatFile(mshFileName)){
-      // mesh+save if the mesh file does not exist
-      if(FlGui::instance()->onelab->meshAuto()){
-        mesh_3d_cb(0, 0);
-        CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
-      }
-    }
-    onelab::server::instance()->setChanged(false, "Gmsh");
-  }
-}
-
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -509,13 +457,16 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   do{ // enter loop
 
-    //check whether the client is a onelab Metamodel
+    // check whether the client is a onelab Metamodel
     std::vector<onelab::number> n;
-    onelab::server::instance()->get(n,"HasGmsh");
+    onelab::server::instance()->get(n, "HasGmsh");
     bool metamodel = (n.size() && n[0].getValue());
 
-    // If the client is a NOT a metamodel Gmsh gets executed
-    if(!metamodel) runGmshClient(action);
+    // if the client is a not a metamodel, run Gmsh
+    if(!metamodel){
+      if(onelabUtils::runGmshClient(action, FlGui::instance()->onelab->meshAuto()))
+        drawContext::global()->draw();
+    }
 
     if(action == "compute")
       FlGui::instance()->onelab->checkForErrors("Gmsh");
@@ -539,7 +490,8 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(FlGui::instance()->onelab->stop()) break;
     }
 
-    // update geometry in Gmsh window which might have been by the metamodel
+    // update geometry in Gmsh window which might have been changed by the
+    // metamodel
     if(metamodel)
       geometry_reload_cb(0, 0);
 
