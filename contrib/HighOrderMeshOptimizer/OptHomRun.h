@@ -13,6 +13,7 @@ struct OptHomParameters {
   int nbLayers ; // number of layers taken around a bad element
   int dim ; // which dimension to optimize
   int itMax ; // max number of iterations in the optimization process
+  int optPassMax ; // max number of optimization passes
   double TMAX ; // max CPU time allowed
   bool onlyVisible ; // apply optimization to visible entities ONLY
   double DistanceFactor; // filter elements such that no elements further away than

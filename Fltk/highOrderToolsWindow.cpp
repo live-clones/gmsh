@@ -123,6 +123,7 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.onlyVisible = onlyVisible;
     p.dim  = GModel::current()->getDim();//o->meshOrder;
     p.itMax = (int) o->value[3]->value();
+    p.optPassMax = (int) o->value[4]->value();
     p.weightFixed =  o->value[5]->value();
     p.weightFree =  o->value[6]->value();
     p.DistanceFactor =  o->value[7]->value();
@@ -141,7 +142,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
-  int height = 23 * BH;
+  int height = 25 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "High Order Tools");
@@ -152,7 +153,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
 
   butt[1] = new Fl_Check_Button
-    (x,y, 1.5*IW-WB, BH, "Apply to visible entities only");
+    (x,y, 1.5*IW-WB, BH, "Visible entities only");
   butt[1]->type(FL_TOGGLE_BUTTON);
   butt[1]->value(1);
 
@@ -268,27 +269,26 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   choice[2]->callback(chooseopti_cb);
 
   static Fl_Menu_Item menu_objf[] = {
-    {"CAD Fixed Bnd", 0, 0, 0},
-    {"CAD Free Bnd", 0, 0, 0},
-    {"Mesh Only", 0, 0, 0},
+    {"Fixed", 0, 0, 0},
+    {"Free", 0, 0, 0},
     {0}
   };
 
   static Fl_Menu_Item menu_strategy[] = {
     {"Generic", 0, 0, 0},
-    {"Boundary Layer", 0, 0, 0},
+    {"Boundary Layer ", 0, 0, 0},
     {0}
   };
 
   y += BH;
   choice[0] = new Fl_Choice
-    (x,y, IW, BH, "Objective function");
+    (x,y, IW, BH, "Boundary nodes");
   choice[0]->menu(menu_objf);
   choice[0]->align(FL_ALIGN_RIGHT);
 
   y += BH;
   choice[1] = new Fl_Choice
-    (x,y, IW, BH, "Strategy");
+    (x,y, IW, BH, "Blob strategy");
   choice[1]->menu(menu_strategy);
   choice[1]->align(FL_ALIGN_RIGHT);
 
@@ -305,7 +305,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   value[3] = new Fl_Value_Input
-    (x,y, IW, BH, "Maximum number of iterations");
+    (x,y, IW, BH, "Max. number of iterations");
   value[3]->minimum(1);
   value[3]->maximum(10000);
   value[3]->step(10);
@@ -314,15 +314,16 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   value[4] = new Fl_Value_Input
-    (x,y, IW, BH, "Tolerance");
-  value[4]->minimum(1.e-12);
-  value[4]->maximum(0.1);
-  value[4]->step(1.e-5);
+    (x,y, IW, BH, "Max. number of optimization passes");
+  value[4]->minimum(1);
+  value[4]->maximum(100);
+  value[4]->step(1);
   value[4]->align(FL_ALIGN_RIGHT);
-  value[4]->value(1.e-4);
+  value[4]->value(50);
 
+  y += 1.5*BH;
   push[1] = new Fl_Button
-    (width - BB - 2 * WB, y, BB, BH, "Apply");
+    (x,y, IW, BH, "Apply");
   push[1]->callback(highordertools_runelas_cb);
 
   y += 1.5*BH;
@@ -348,10 +349,10 @@ void highOrderToolsWindow::show(bool redrawOnly)
   else {
     value[0]->value(meshOrder);
     butt[0]->value(!complete);
-    if (CAD)output[0]->value("Available");
+    if (CAD) output[0]->value("Available");
     else {
       output[0]->value("Not Available");
-      choice[0]->value(2);
+      choice[0]->deactivate();
     }
     win->show();
   }

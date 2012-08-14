@@ -291,7 +291,7 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
 
 
 
-int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double b_max, bool optimizeMetricMin, int pInt, int itMax)
+int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double b_max, bool optimizeMetricMin, int pInt, int itMax, int optPassMax)
 {
 
   barrier_min = b_min;
@@ -342,7 +342,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
     setBarrierTerm(jacBar);
-    if (ITER ++ > 50) break;
+    if (ITER ++ > optPassMax) break;
   }
 
   if (!_optimizeMetricMin) {
@@ -354,14 +354,9 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
       recalcJacDist();
       jacBar =  1.1 * maxJac;
       setBarrierTerm(jacBar);
-      if (ITER ++ > 50) break;
+      if (ITER ++ > optPassMax) break;
     }
   }
-
-  //  for (int i = 0; i<3; i++) {
-  //    lambda *= 100;
-  //    OptimPass(x, gradObj, itMax);
-  //  }
 
   OptHomMessage("Optimization done Range (%g,%g)",minJac,maxJac);
 
