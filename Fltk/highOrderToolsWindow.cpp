@@ -268,15 +268,15 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   choice[2]->callback(chooseopti_cb);
 
   static Fl_Menu_Item menu_objf[] = {
-    {"CAD + FIXBND", 0, 0, 0},
-    {"CAD + FREEBND", 0, 0, 0},
-    {"MESH ONLY", 0, 0, 0},
+    {"CAD Fixed Bnd", 0, 0, 0},
+    {"CAD Free Bnd", 0, 0, 0},
+    {"Mesh Only", 0, 0, 0},
     {0}
   };
 
   static Fl_Menu_Item menu_strategy[] = {
-    {"GLOBAL", 0, 0, 0},
-    {"BLOBS ", 0, 0, 0},
+    {"Generic", 0, 0, 0},
+    {"Boundary Layer", 0, 0, 0},
     {0}
   };
 
