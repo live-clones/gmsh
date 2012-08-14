@@ -8,8 +8,9 @@
 
 #include <string>
 
-int GuessFileFormatFromFileName(std::string fileName);
+int GetFileFormatFromExtension(const std::string &fileName);
+int GuessFileFormatFromFileName(const std::string &fileName);
 std::string GetDefaultFileName(int format);
-void CreateOutputFile(std::string fileName, int format, bool redraw=true);
+void CreateOutputFile(const std::string &fileName, int format, bool redraw=true);
 
 #endif

@@ -27,9 +27,8 @@
 #include "gl2yuv.h"
 #endif
 
-int GuessFileFormatFromFileName(std::string fileName)
+int GetFileFormatFromExtension(const std::string &ext)
 {
-  std::string ext = SplitFileName(fileName)[2];
   if     (ext == ".geo")  return FORMAT_GEO;
   else if(ext == ".msh")  return FORMAT_MSH;
   else if(ext == ".pos")  return FORMAT_POS;
@@ -71,6 +70,12 @@ int GuessFileFormatFromFileName(std::string fileName)
   else if(ext == ".iges") return FORMAT_IGES;
   else if(ext == ".igs")  return FORMAT_IGES;
   else                           return -1;
+}
+
+int GuessFileFormatFromFileName(const std::string &fileName)
+{
+  std::string ext = SplitFileName(fileName)[2];
+  return GetFileFormatFromExtension(ext);
 }
 
 std::string GetDefaultFileName(int format)
@@ -158,10 +163,10 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
-void CreateOutputFile(std::string fileName, int format, bool redraw)
+void CreateOutputFile(const std::string &fileName, int format, bool redraw)
 {
-  if(fileName.empty())
-    fileName = GetDefaultFileName(format);
+  std::string name = fileName;
+  if(name.empty()) name = GetDefaultFileName(format);
 
   int oldFormat = CTX::instance()->print.fileFormat;
   CTX::instance()->print.fileFormat = format;
@@ -169,120 +174,120 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
   bool error = false;
 
   if(redraw)
-    Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
+    Msg::StatusBar(2, true, "Writing '%s'...", name.c_str());
 
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(fileName, GuessFileFormatFromFileName(fileName), false);
+    CreateOutputFile(name, GuessFileFormatFromFileName(name), false);
     break;
 
   case FORMAT_OPT:
-    PrintOptions(0, GMSH_FULLRC, 1, 1, fileName.c_str());
+    PrintOptions(0, GMSH_FULLRC, 1, 1, name.c_str());
     break;
 
   case FORMAT_MSH:
     if(GModel::current()->getMeshPartitions().size() &&
        CTX::instance()->mesh.mshFilePartitioned == 1)
       GModel::current()->writePartitionedMSH
-        (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+        (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     else if(GModel::current()->getMeshPartitions().size() &&
             CTX::instance()->mesh.mshFilePartitioned == 2)
       GModel::current()->writeMSH
-        (fileName, CTX::instance()->mesh.mshFileVersion,
+        (name, CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor,
          0, -1000);
     else
       GModel::current()->writeMSH
-        (fileName, CTX::instance()->mesh.mshFileVersion,
+        (name, CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
          CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_STL:
     GModel::current()->writeSTL
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+      (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VRML:
     GModel::current()->writeVRML
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_PLY2:
-    GModel::current()->writePLY2(fileName);
+    GModel::current()->writePLY2(name);
     break;
 
   case FORMAT_UNV:
     GModel::current()->writeUNV
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VTK:
     GModel::current()->writeVTK
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+      (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor,
        CTX::instance()->bigEndian);
     break;
 
   case FORMAT_MESH:
     GModel::current()->writeMESH
-      (fileName, CTX::instance()->mesh.saveElementTagType,
+      (name, CTX::instance()->mesh.saveElementTagType,
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MAIL:
     GModel::current()->writeMAIL
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_IR3:
     GModel::current()->writeIR3
-      (fileName, CTX::instance()->mesh.saveElementTagType,
+      (name, CTX::instance()->mesh.saveElementTagType,
        CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_BDF:
     GModel::current()->writeBDF
-      (fileName, CTX::instance()->mesh.bdfFieldFormat,
+      (name, CTX::instance()->mesh.bdfFieldFormat,
        CTX::instance()->mesh.saveElementTagType, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_DIFF:
     GModel::current()->writeDIFF
-      (fileName, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+      (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_INP:
     GModel::current()->writeINP
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_P3D:
     GModel::current()->writeP3D
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_CGNS:
     GModel::current()->writeCGNS
-      (fileName, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions,
+      (name, CTX::instance()->mesh.zoneDefinition, CTX::instance()->cgnsOptions,
        CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MED:
     GModel::current()->writeMED
-      (fileName, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_POS:
     GModel::current()->writePOS
-      (fileName, CTX::instance()->print.posElementary,
+      (name, CTX::instance()->print.posElementary,
        CTX::instance()->print.posElement, CTX::instance()->print.posGamma,
        CTX::instance()->print.posEta, CTX::instance()->print.posRho,
        CTX::instance()->print.posDisto, CTX::instance()->mesh.saveAll,
@@ -290,16 +295,16 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
     break;
 
   case FORMAT_GEO:
-    GModel::current()->writeGEO(fileName, CTX::instance()->print.geoLabels,
+    GModel::current()->writeGEO(name, CTX::instance()->print.geoLabels,
                                 CTX::instance()->print.geoOnlyPhysicals);
     break;
 
   case FORMAT_BREP:
-    GModel::current()->writeOCCBREP(fileName);
+    GModel::current()->writeOCCBREP(name);
     break;
 
   case FORMAT_STEP:
-    GModel::current()->writeOCCSTEP(fileName);
+    GModel::current()->writeOCCSTEP(name);
     break;
 
 #if defined(HAVE_FLTK)
@@ -311,9 +316,9 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(fileName.c_str(), "wb");
+      FILE *fp = fopen(name.c_str(), "wb");
       if(!fp){
-        Msg::Error("Unable to open file '%s'", fileName.c_str());
+        Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
         break;
       }
@@ -348,13 +353,13 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(fileName.c_str(), "wb");
+      FILE *fp = fopen(name.c_str(), "wb");
       if(!fp){
-        Msg::Error("Unable to open file '%s'", fileName.c_str());
+        Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
         break;
       }
-      std::string base = SplitFileName(fileName)[1];
+      std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
@@ -419,13 +424,13 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(fileName.c_str(), "w");
+      FILE *fp = fopen(name.c_str(), "w");
       if(!fp){
-        Msg::Error("Unable to open file '%s'", fileName.c_str());
+        Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
         break;
       }
-      std::string base = SplitFileName(fileName)[1];
+      std::string base = SplitFileName(name)[1];
       GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
       GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
       GLint viewport[4] = {0, 0, width, height};
@@ -487,7 +492,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
               "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
               "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
               "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
-              pattern.c_str(), repeat, fileName.c_str(),
+              pattern.c_str(), repeat, name.c_str(),
               CTX::instance()->homeDir.c_str());
       for(unsigned int i = 0; i < frames.size(); i++){
         fprintf(fp, "%s", frames[i].c_str());
@@ -526,7 +531,7 @@ void CreateOutputFile(std::string fileName, int format, bool redraw)
   CTX::instance()->printing = 0;
 
   if(redraw && !error)
-    Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
+    Msg::StatusBar(2, true, "Done writing '%s'", name.c_str());
 
 #if defined(HAVE_OPENGL)
   if(redraw) drawContext::global()->draw();
