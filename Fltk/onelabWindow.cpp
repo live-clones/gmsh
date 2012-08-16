@@ -345,7 +345,7 @@ bool onelab::localNetworkClient::kill()
   return false;
 }
 
-static void initializeLoop()
+static void initializeLoops()
 {
   onelabUtils::initializeLoop("1");
   onelabUtils::initializeLoop("2");
@@ -355,7 +355,7 @@ static void initializeLoop()
     FlGui::instance()->onelab->rebuildTree();
 }
 
-static bool incrementLoop()
+static bool incrementLoops()
 {
   bool ret = false;
   if(onelabUtils::incrementLoop("3"))      ret = true;
@@ -453,7 +453,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
 
-  if(action == "compute") initializeLoop();
+  if(action == "compute") initializeLoops();
 
   do{ // enter loop
 
@@ -490,10 +490,8 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(FlGui::instance()->onelab->stop()) break;
     }
 
-    // update geometry in Gmsh window which might have been changed by the
-    // metamodel
-    if(metamodel)
-      geometry_reload_cb(0, 0);
+    // update geometry which might have been changed by the metamodel
+    if(metamodel) geometry_reload_cb(0, 0);
 
     if(action != "initialize"){
       updateGraphs();
@@ -501,7 +499,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
-          incrementLoop());
+          incrementLoops());
 
   FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->setButtonMode("check", "compute");
