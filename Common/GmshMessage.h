@@ -70,7 +70,8 @@ class Msg {
   static void StatusBar(int num, bool log, const char *fmt, ...);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
-  static void SetProgressMeterStep(int step){ _progressMeterStep = (step > 0) ? step : 1; }
+  static void SetProgressMeterStep(int step){ _progressMeterStep = step; }
+  static int GetProgressMeterStep(){ return _progressMeterStep; }
   static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
   static double &Timer(std::string str){ return _timers[str]; }
   static void PrintTimers();

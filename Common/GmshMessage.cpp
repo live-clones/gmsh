@@ -447,7 +447,8 @@ void Msg::Debug(const char *fmt, ...)
 
 void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 4) return;
+  if(_commRank || _verbosity < 4 ||
+     _progressMeterStep <= 0 || _progressMeterStep >= 100) return;
 
   double percent = 100. * (double)n/(double)N;
 

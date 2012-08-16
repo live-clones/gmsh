@@ -2363,6 +2363,14 @@ double opt_general_verbosity(OPT_ARGS_NUM)
   return Msg::GetVerbosity();
 }
 
+double opt_general_progress_meter_step(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    Msg::SetProgressMeterStep((int)val);
+  }
+  return Msg::GetProgressMeterStep();
+}
+
 double opt_general_nopopup(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
