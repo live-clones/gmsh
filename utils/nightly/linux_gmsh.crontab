@@ -1,4 +1,0 @@
-#
-# this will launch a new build every night at 1h01
-#
-1 1 * * * ${HOME}/src/gmsh/utils/nightly/linux.sh -svn
