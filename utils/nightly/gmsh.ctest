@@ -1,0 +1,70 @@
+# Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
+
+# this is the common ctest script used by all gmsh nightly (and experimental)
+# builds, on all architectures
+
+set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
+set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
+set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+set(CTEST_BUILD_CONFIGURATION "RelWithDebInfo")
+
+set(CTEST_SVN_REPOS https://geuz.org/svn/gmsh/trunk)
+
+find_program(CTEST_SVN_COMMAND NAMES svn)
+find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
+find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
+
+if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
+  set(CTEST_CHECKOUT_COMMAND 
+      "${CTEST_SVN_COMMAND} co ${CTEST_SVN_REPOS} ${CTEST_SOURCE_DIRECTORY}")
+endif(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
+set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
+
+set(CTEST_CONFIGURE_COMMAND 
+    "${CTEST_CMAKE_COMMAND} -DCMAKE_BUILD_TYPE:STRING=${CTEST_BUILD_CONFIGURATION}")
+set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} ${CTEST_BUILD_OPTIONS}")
+set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} \"-G${CTEST_CMAKE_GENERATOR}\"")
+set(CTEST_CONFIGURE_COMMAND "${CTEST_CONFIGURE_COMMAND} \"${CTEST_SOURCE_DIRECTORY}\"")
+
+# make sure everybody outputs messages in english
+set($ENV{LC_MESSAGES} "en_US")
+
+# select Experimental dashboard if none is selected
+if(NOT CDASH_MODEL)
+  set(CDASH_MODEL "Experimental")
+endif(NOT CDASH_MODEL)
+
+ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
+ctest_start(${CDASH_MODEL})
+ctest_update()
+ctest_configure()
+ctest_build(TARGET html)
+ctest_build(TARGET package)
+if(WITH_TEST)
+  ctest_test()
+endif(WITH_TEST)
+if (WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
+  ctest_coverage()
+endif (WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
+if (WITH_MEMCHECK AND CTEST_MEMORYCHECK_COMMAND)
+  ctest_memcheck()
+endif (WITH_MEMCHECK AND CTEST_MEMORYCHECK_COMMAND)
+ctest_submit()
+
+macro(upload_package WEB ARCH EXTRA EXT1 EXT2)
+  file(GLOB FILE ${CTEST_BINARY_DIRECTORY}/gmsh-*${EXT1})
+  if(FILE)
+    if(${FILE} MATCHES "-svn")
+      execute_process(COMMAND scp -C ${FILE} ${WEB}/gmsh-svn-${ARCH}${EXTRA}${EXT2}
+                      TIMEOUT 60)
+    else(${FILE} MATCHES "-svn")
+      get_filename_component(NAME ${FILE} NAME)
+      string(REPLACE ${EXT1} "" BASE ${NAME})
+      execute_process(COMMAND scp -C ${FILE} ${WEB}/${BASE}${EXTRA}${EXT2}
+                      TIMEOUT 60)
+    endif(${FILE} MATCHES "-svn")
+  endif(FILE)
+endmacro(upload_package)

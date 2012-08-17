@@ -1,0 +1,25 @@
+# Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
+
+set(CTEST_SITE "ace25 (Debian 32 bits)")
+set(CTEST_CMAKE_COMMAND "/usr/local/bin/cmake")
+
+set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux")
+
+set(WITH_TEST TRUE)      # run the tests?
+set(WITH_COVERAGE FALSE) # check code coverage?
+set(WITH_MEMCHECK FALSE) # check memory with valgrind?
+
+#################################################################################
+set(CTEST_BUILD_NAME "Linux32")
+set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
+set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/med;/usr/local/opencascade;/usr/local")
+set(OPT "${OPT} -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE")
+set(OPT "${OPT} -DPETSC_ARCH=linux_complex_umfpack")
+set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.0.0-p12")
+set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.0.0-p7")
+set(CTEST_BUILD_OPTIONS ${OPT})
+include(gmsh.ctest)
+upload_package(${WEB_BIN} Linux "" .tar.gz .tgz)
