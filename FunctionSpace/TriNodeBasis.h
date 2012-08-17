@@ -5,7 +5,7 @@
 
 /**
    @class TriNodeBasis
-   @brief A Node-Basis for Triangles
+   @brief A Node Basis for Triangles
  
    This class can instantiate a Node-Based Basis 
    (high or low order) for Triangles.@n
@@ -17,8 +17,9 @@
 
 class TriNodeBasis: public BasisScalar{
  public:
-  //! Returns a new Node-Basis for Triangles of the given order
   //! @param order The order of the Basis
+  //!
+  //! Returns a new Node-Basis for Triangles of the given order
   TriNodeBasis(const int order);
   
   //! Deletes this Basis

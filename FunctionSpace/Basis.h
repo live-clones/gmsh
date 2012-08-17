@@ -2,13 +2,16 @@
 #define _BASIS_H_
 
 /**
-   @class Basis
-   @brief Mother class of all Basis
+   @interface Basis
+   @brief Common Interface of all Basis
 
-   This class is the @em mother (by @em inheritence) of all Basis.@n
+   This class is the @em common @em interface for all Basis.@n
 
    A Basis is @em set of @em linearly @em independent Polynomial%s 
    (or Vector%s of Polynomial%s).@n
+
+   @note
+   A Basis is an @em interface, so it @em can't be instanciated
  */
 
 class Basis{
@@ -52,7 +55,6 @@ class Basis{
   //! @li 1 for 1-form
   //! @li 2 for 2-form
   //! @li 3 for 3-form
-  //! @todo Check if the 'form numbering' is good
   int getType(void) const;
   
   //! @return Returns the @em dimension 
@@ -80,8 +82,10 @@ class Basis{
   int getSize(void) const;
 
  protected:
+  //! @internal
   //! Instantiate a new Basis
-  //! @warning Users can't instantiate a Basis
+  //!
+  //! @endinternal
   Basis(void);
 };
 

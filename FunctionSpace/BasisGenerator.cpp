@@ -23,16 +23,16 @@ Basis* BasisGenerator::generate(int elementType,
 				int basisType, 
 				int order){
   switch(elementType){
-  case TYPE_TRI: return TriGen(basisType, order);
-  case TYPE_QUA: return QuaGen(basisType, order);
-  case TYPE_HEX: return HexGen(basisType, order);
+  case TYPE_TRI: return triGen(basisType, order);
+  case TYPE_QUA: return quaGen(basisType, order);
+  case TYPE_HEX: return hexGen(basisType, order);
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation", 
 			   elementType);
   }
 }
 
-Basis* BasisGenerator::TriGen(int basisType, 
+Basis* BasisGenerator::triGen(int basisType, 
 			      int order){
   switch(basisType){
   case  0: return new TriNodeBasis(order);
@@ -47,7 +47,7 @@ Basis* BasisGenerator::TriGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::QuaGen(int basisType, 
+Basis* BasisGenerator::quaGen(int basisType, 
 			      int order){
   switch(basisType){
   case  0: return new QuadNodeBasis(order);
@@ -59,7 +59,7 @@ Basis* BasisGenerator::QuaGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::HexGen(int basisType, 
+Basis* BasisGenerator::hexGen(int basisType, 
 			      int order){
   switch(basisType){
   case  0: return new HexNodeBasis(order);

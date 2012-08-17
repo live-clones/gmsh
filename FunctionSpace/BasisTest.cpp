@@ -34,7 +34,7 @@ int ain(int argc, char** argv){
   // Plot Basis //
   HexNodeBasis b(1);
   
-  PlotBasis plot(goe, b, writer);
+  PlotBasis plot(b, goe, writer);
   plot.plot("basis");
   
   // Stop Gmsh //

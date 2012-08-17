@@ -6,12 +6,16 @@
 #include "Polynomial.h"
 
 /**
-   @class BasisVector
-   @brief Mother class of all 
-   @em vectorial Basis
+   @interface BasisVector
+   @brief Common Interface for all 
+   @em Vectorial Basis
 
-   This class is the @em mother (by @em inheritence) 
-   of all @em vectorial Basis.@n
+   This class is the @em common @em interface for all 
+   @em vectorial Basis.@n
+
+   @note
+   A BasisVector is an @em interface, 
+   so it @em can't be instanciated
 */
 
 class BasisVector: public Basis{
@@ -28,8 +32,10 @@ class BasisVector: public Basis{
   const std::vector<std::vector<Polynomial> >& getFunctions(void) const;
 
  protected:
+  //! @internal
   //! Instantiate a new BasisVector
-  //! @warning Users can't instantiate a BasisVector
+  //!
+  //! @endinternal
   BasisVector(void);
 };
 

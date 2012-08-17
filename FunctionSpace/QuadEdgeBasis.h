@@ -5,7 +5,7 @@
 
 /**
    @class QuadEdgeBasis
-   @brief An Edge-Basis for Quads
+   @brief An Edge Basis for Quads
  
    This class can instantiate an Edge-Based Basis 
    (high or low order) for Quads.@n
@@ -17,8 +17,9 @@
 
 class QuadEdgeBasis: public BasisVector{
  public:
-  //! Returns a new Edge-Basis for Quads of the given order
   //! @param order The order of the Basis
+  //!
+  //! Returns a new Edge-Basis for Quads of the given order
   QuadEdgeBasis(const int order);
   
   //! Deletes this Basis

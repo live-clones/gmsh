@@ -6,12 +6,16 @@
 #include "Polynomial.h"
 
 /**
-   @class BasisScalar
-   @brief Mother class of all 
-   @em scalar Basis
+   @interface BasisScalar
+   @brief Common Interface for all 
+   @em Scalar Basis
 
-   This class is the @em mother (by @em inheritence) 
-   of all @em scalar Basis.@n
+   This class is the @em common @em interface for all 
+   @em scalar Basis.@n
+
+   @note
+   A BasisScalar is an @em interface, 
+   so it @em can't be instanciated
 */
 
 class BasisScalar: public Basis{
@@ -28,8 +32,10 @@ class BasisScalar: public Basis{
   const std::vector<Polynomial>& getFunctions(void) const;
 
  protected:
-  //! Instantiate a new BasisScalar
-  //! @warning Users can't instantiate a BasisScalar
+  //! @internal
+  //! Instantiates a new BasisScalar
+  //!
+  //! @endinternal
   BasisScalar(void);
 };
 

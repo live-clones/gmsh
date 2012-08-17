@@ -5,7 +5,7 @@
 
 /**
    @class HexEdgeBasis
-   @brief An Edge-Basis for Hexahedrons
+   @brief An Edge Basis for Hexahedrons
  
    This class can instantiate an Edge-Based Basis 
    (high or low order) for Hexahedrons.@n
@@ -17,8 +17,9 @@
 
 class HexEdgeBasis: public BasisVector{
  public:
-  //! Returns a new Edge-Basis for Hexahedrons of the given order
   //! @param order The order of the Basis
+  //!
+  //! Returns a new Edge-Basis for Hexahedrons of the given order
   HexEdgeBasis(const int order);
   
   //! Deletes this Basis

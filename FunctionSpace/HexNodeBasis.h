@@ -5,7 +5,7 @@
 
 /**
    @class HexNodeBasis
-   @brief A Node-Basis for Hexahedrons
+   @brief A Node Basis for Hexahedrons
  
    This class can instantiate a Node-Based Basis 
    (high or low order) for Hexahedrons.@n
@@ -17,8 +17,9 @@
 
 class HexNodeBasis: public BasisScalar{
  public:
-  //! Returns a new Node-Basis for Hexahedrons of the given order
   //! @param order The order of the Basis
+  //!
+  //! Returns a new Node-Basis for Hexahedrons of the given order
   HexNodeBasis(const int order);
 
   //! @return Deletes this Basis
