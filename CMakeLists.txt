@@ -29,6 +29,8 @@ option(ENABLE_BAMG "Enable Bamg mesh generator" ${DEFAULT})
 option(ENABLE_BFGS "Enable BFGS" ${DEFAULT})
 option(ENABLE_BLAS_LAPACK "Use BLAS and Lapack for linear algebra" ON)
 option(ENABLE_BLOSSOM "Enable Blossom algo (based on MATCH and concorde97)" ${DEFAULT})
+option(ENABLE_BUILD_LIB "Build static Gmsh library" OFF)
+option(ENABLE_BUILD_SHARED "Build shared Gmsh library" OFF)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ${DEFAULT})
 option(ENABLE_DINTEGRATION "Enable discrete integration and levelsets" ${DEFAULT})
@@ -66,7 +68,7 @@ option(ENABLE_TETGEN "Enable Tetgen mesh generator" ${DEFAULT})
 option(ENABLE_TETGEN_OLD "Use old version of Tetgen" OFF)
 option(ENABLE_VORO3D "Enable Voro3D" ${DEFAULT})
 option(ENABLE_WRAP_JAVA "Build Java wrappers" OFF)
-option(ENABLE_WRAP_PYTHON "Build Python wrappers" ${DEFAULT})
+option(ENABLE_WRAP_PYTHON "Build Python wrappers" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 6)
@@ -89,15 +91,17 @@ set(GMSH_API
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
     Geo/MVertexBoundaryLayerData.h Geo/MEdge.h 
-    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h 
-    Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h 
-    Geo/MPyramid.h Geo/MElementCut.h Geo/MElementOctree.h Geo/discreteVertex.h 
-    Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h Geo/SPoint3.h
-    Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h Geo/Pair.h Geo/Range.h 
-    Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h
-    Geo/Homology.h Geo/Chain.h Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h
-  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h Mesh/meshGFaceElliptic.h Mesh/meshPartition.h
-    Mesh/meshGFaceDelaunayInsertion.h Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
+    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h 
+    Geo/MTriangle.h Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h 
+    Geo/MPrism.h Geo/MPyramid.h Geo/MElementCut.h Geo/MElementOctree.h 
+    Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h 
+    Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h 
+    Geo/Pair.h Geo/Range.h Geo/SOrientedBoundingBox.h 
+    Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h Geo/Homology.h Geo/Chain.h 
+    Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h
+  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
+    Mesh/meshGFaceElliptic.h Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h 
+    Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
     Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h
   Numeric/mathEvaluator.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
@@ -293,7 +297,7 @@ if(ENABLE_BLAS_LAPACK)
     endif(BLAS_FOUND)
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-    message("WARNING: Could not find Blas or Lapack: most meshing algorithms "
+    message(STATUS "Warning: Could not find Blas or Lapack: most meshing algorithms "
             "will not be functional")
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 endif(ENABLE_BLAS_LAPACK)
@@ -555,8 +559,8 @@ if(HAVE_MESH OR HAVE_SOLVER)
     add_subdirectory(contrib/Metis)
     include_directories(contrib/Metis)
     set_config_option(HAVE_METIS "Metis")
-    message("WARNING: By including Metis you have to comply with Metis' special "
-            "licensing requirements stated in contrib/Metis/README.txt.")
+    message(STATUS "Warning: By including Metis you have to comply with Metis' "
+            "special licensing requirements stated in contrib/Metis/README.txt.")
   endif(ENABLE_METIS)
 
   if(ENABLE_CHACO)
@@ -633,7 +637,7 @@ if(HAVE_MESH)
     endif(TETGEN_LIB AND TETGEN_INC)
   endif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
   if(HAVE_TETGEN)
-    message("WARNING: By including Tetgen you have to comply with Tetgen's "
+    message(STATUS "Warning: By including Tetgen you have to comply with Tetgen's "
             "special licensing requirements stated in contrib/Tetgen*/LICENSE.")
   endif(HAVE_TETGEN)
 endif(HAVE_MESH)
@@ -1019,34 +1023,31 @@ foreach(DIR ${GMSH_DIRS})
   source_group(${DIR} REGULAR_EXPRESSION ${DIR}/.*)
 endforeach(DIR)
 
-# static library target: we don't build it by default (we could then
-# create the gmsh target by linking with it) because doing so slows
-# down the compile/link development a lot: running ranlib+ar on a
-# large static lib every time we recompile is frustratingly
-# slow. Instead, we build the gmsh target directly from the object
-# files. This is much faster but has one side effect: when we actually
-# want to build the lib we need to recompile everything (the first
-# time--it's a separate target)
-add_library(lib STATIC EXCLUDE_FROM_ALL ${GMSH_SRC})
-set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
-if(MSVC)
-  set_target_properties(lib PROPERTIES DEBUG_POSTFIX d) 
-  if(ENABLE_MSVC_STATIC_RUNTIME)
-    set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
-  endif(ENABLE_MSVC_STATIC_RUNTIME)
-endif(MSVC)
+# static library target
+if(ENABLE_BUILD_LIB)
+  add_library(lib STATIC ${GMSH_SRC})
+  set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
+  if(MSVC)
+    set_target_properties(lib PROPERTIES DEBUG_POSTFIX d) 
+    if(ENABLE_MSVC_STATIC_RUNTIME)
+      set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
+    endif(ENABLE_MSVC_STATIC_RUNTIME)
+  endif(MSVC)
+endif(ENABLE_BUILD_LIB)
 
-# shared library target: we don't build it by default either
-add_library(shared SHARED EXCLUDE_FROM_ALL ${GMSH_SRC})
-set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
-if(HAVE_LAPACK AND LAPACK_FLAGS)
-  set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
-endif(HAVE_LAPACK AND LAPACK_FLAGS)
-if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
-  message("WARNING: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library wont link. "
-          "Change in msvc /MT flag to /MD in the shared project properties")
-endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)		  
-target_link_libraries(shared ${LINK_LIBRARIES})
+# shared library target
+if(ENABLE_BUILD_SHARED OR ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+  add_library(shared SHARED ${GMSH_SRC})
+  set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
+  if(HAVE_LAPACK AND LAPACK_FLAGS)
+    set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
+  endif(HAVE_LAPACK AND LAPACK_FLAGS)
+  if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
+    message(STATUS "Warning: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
+            "won't link. In MSVC change /MT to /MD in the shared project properties")
+  endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)		  
+  target_link_libraries(shared ${LINK_LIBRARIES})
+endif(ENABLE_BUILD_SHARED OR ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
 
 # binary targets
 if(HAVE_FLTK)
@@ -1082,6 +1083,7 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
+# parser target
 find_program(BISON bison)
 find_program(FLEX flex)
 if(BISON AND FLEX)
@@ -1158,7 +1160,9 @@ endif(WIN32 OR CYGWIN)
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
-install(TARGETS lib shared DESTINATION lib OPTIONAL)
+if(ENABLE_BUILD_LIB)
+  install(TARGETS lib shared DESTINATION lib OPTIONAL)
+endif(ENABLE_BUILD_LIB)
 install(FILES ${GMSH_API} DESTINATION include/gmsh)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
@@ -1211,7 +1215,7 @@ if(MAKEINFO OR TEXI2PDF)
   add_custom_target(clean_doc COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ})
 endif(MAKEINFO OR TEXI2PDF)
 
-if(APPLE)
+if(APPLE AND ENABLE_BUILD_LIB)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_framework.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info_framework.plist "${F1}")
@@ -1236,7 +1240,7 @@ if(APPLE)
         ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Versions/A/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
-endif(APPLE)
+endif(APPLE AND ENABLE_BUILD_LIB)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
 set(CPACK_PACKAGE_VERSION_MAJOR ${GMSH_MAJOR_VERSION})
@@ -1297,7 +1301,7 @@ if(ENABLE_WRAP_PYTHON)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
     string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
     if(SWIG_MAJOR_VERSION EQUAL 1)
-      message("WARNING: Python bindings require SWIG >= 2: disabling Python")
+      message(WARNING "Python bindings require SWIG >= 2: disabling Python")
     else(SWIG_MAJOR_VERSION EQUAL 1)
       add_subdirectory(wrappers/gmshpy)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
@@ -1306,29 +1310,34 @@ endif(ENABLE_WRAP_PYTHON)
 
 if(ENABLE_WRAP_JAVA) 
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK) 
-    message("WARNING: Java wrapping samples will not work without BLAS and LAPACK")
+    message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
   add_subdirectory(wrappers/java) 
 endif(ENABLE_WRAP_JAVA)
 
 include(CPack)
 
-message("")
-message("Gmsh ${GMSH_VERSION} has been configured for ${GMSH_OS} with the "
-        "following options:" ${GMSH_CONFIG_OPTIONS})
-message("")
-message("C compiler: " ${CMAKE_C_COMPILER})
-message("C++ compiler: " ${CMAKE_CXX_COMPILER})
-if(NOT CMAKE_BUILD_TYPE)
-  message("C compiler flags: " ${CMAKE_C_FLAGS})
-  message("C++ compiler flags: " ${CMAKE_CXX_FLAGS})
-else(NOT CMAKE_BUILD_TYPE)
-  message("Build type: " ${CMAKE_BUILD_TYPE})
-endif(NOT CMAKE_BUILD_TYPE)
-message("Install prefix: " ${CMAKE_INSTALL_PREFIX})
-message("")
-message("Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration.")
-message("")
+include(CTest)
+# we will need some common testing framwork to make actual tests
+file(GLOB_RECURSE TESTFILES tutorial/x*.geo)
+foreach(TESTFILE ${TESTFILES})
+  add_test(${TESTFILE} gmsh ${TESTFILE})
+endforeach()
+
+message(STATUS "")
+message(STATUS "Gmsh ${GMSH_VERSION} has been configured for ${GMSH_OS}")
+message(STATUS "")
+message(STATUS " * Build options:" ${GMSH_CONFIG_OPTIONS})
+message(STATUS " * Build type: " ${CMAKE_BUILD_TYPE})
+message(STATUS " * C compiler: " ${CMAKE_C_COMPILER})
+message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
+if(ENV_PETSC_ARCH)
+  message(STATUS " * PETSc arch: " ${ENV_PETSC_ARCH})
+endif(ENV_PETSC_ARCH)
+message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
+message(STATUS "")
+message(STATUS "Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration.")
+message(STATUS "")
 
 mark_as_advanced(BISON FLEX GMP_LIB GMSH_EXTRA_VERSION HDF5_LIB MAKEINFO 
                  MED_LIB OCC_INC CGNS_INC SZ_LIB TAUCS_LIB ACIS_LIB TEXI2PDF)
