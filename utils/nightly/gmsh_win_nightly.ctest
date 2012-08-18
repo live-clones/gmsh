@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
-set(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
+set(CTEST_NIGHTLY_START_TIME "22:00:00 UTC")
 set(CDASH_MODEL "Nightly")
 set(EXTRA_VERSION "-svn")
 include(gmsh_win.ctest)
