@@ -3,7 +3,6 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
-set(CTEST_SITE "ace25 (Windows XP)")
 set(CTEST_CMAKE_COMMAND "cmake")
 
 set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows")
