@@ -559,7 +559,7 @@ if(HAVE_MESH OR HAVE_SOLVER)
     add_subdirectory(contrib/Metis)
     include_directories(contrib/Metis)
     set_config_option(HAVE_METIS "Metis")
-    message(STATUS "Warning: By including Metis you have to comply with Metis' "
+    message(STATUS "Note: By including Metis you have to comply with Metis' "
             "special licensing requirements stated in contrib/Metis/README.txt.")
   endif(ENABLE_METIS)
 
@@ -637,7 +637,7 @@ if(HAVE_MESH)
     endif(TETGEN_LIB AND TETGEN_INC)
   endif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
   if(HAVE_TETGEN)
-    message(STATUS "Warning: By including Tetgen you have to comply with Tetgen's "
+    message(STATUS "Note: By including Tetgen you have to comply with Tetgen's "
             "special licensing requirements stated in contrib/Tetgen*/LICENSE.")
   endif(HAVE_TETGEN)
 endif(HAVE_MESH)
@@ -1043,7 +1043,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
     set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
   endif(HAVE_LAPACK AND LAPACK_FLAGS)
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
-    message(STATUS "Warning: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
+    message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)		  
   target_link_libraries(shared ${LINK_LIBRARIES})
