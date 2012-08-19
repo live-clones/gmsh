@@ -568,7 +568,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   _gear = new Fl_Menu_Button
     (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
-  _gear->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
