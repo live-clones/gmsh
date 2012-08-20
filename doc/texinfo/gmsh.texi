@@ -3120,9 +3120,11 @@ in standard third-party formats (like MED:
 Once loaded into Gmsh, scalar fields can be displayed as iso-value lines
 and surfaces or color maps, whereas vector fields can be represented
 either by three-dimensional arrows or by displacement maps. (Tensor
-fields are currently displayed as Von-Mises effective stresses. To
-display other (combinations of) components, use @code{Plugin(Extract)}:
-see @ref{Post-processing plugins}.)
+fields are currently displayed as Von-Mises effective stresses, min/max
+eigenvalues, eigenvectors, ellipsis or ellipsoid. To display other
+(combinations of) components, you can use the @code{Force scalar} or
+@code{Force vector} options, or use @code{Plugin(MathEval)}: see
+@ref{Post-processing plugins}.)
 
 In Gmsh's jargon, each dataset is called a ``view''. Each view is given
 a name, and can be manipulated either individually (each view has its
@@ -5471,7 +5473,7 @@ Yes, using scripts. Have a look at @file{tutorial/t8.geo} or
 
 Yes, by using either the ``Force field'' options in
 `Tools->Options->View->Visibility', or by using
-`Tools->Plugins->Extract'.
+`Tools->Plugins->MathEval'.
 
 @item Can I do arithmetic operations on a view? Can I perform operations involving different views?
 
