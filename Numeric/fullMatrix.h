@@ -164,7 +164,7 @@ class fullVector
   }
   void binaryLoad (FILE *f)
   {
-    if(fread (_data, sizeof(scalar), _r, f) != _r) return;
+    if(fread (_data, sizeof(scalar), _r, f) != (size_t)_r) return;
   }
 };
 
