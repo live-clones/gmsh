@@ -332,7 +332,7 @@ inline SVector3 operator* (const STensor3& t, const SVector3& v){
     for (int j=0; j<3; j++)
       temp[i]+= t(i,j)*v[j];
   return temp;
-};
+}
 
 inline SVector3 operator* (const SVector3& v, const STensor3& t){
   SVector3 temp(0.,0.,0.);
@@ -340,7 +340,7 @@ inline SVector3 operator* (const SVector3& v, const STensor3& t){
     for (int j=0; j<3; j++)
       temp[j]+= v[i]*t(i,j);
   return temp;
-};
+}
 
 
 inline STensor3 operator*(const STensor3 &t, double m)
