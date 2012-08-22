@@ -539,6 +539,10 @@ int GModel::adaptMesh(std::vector<int> technique,
                       int niter, bool meshAll)
 {
 #if defined(HAVE_MESH)
+
+  // copy context (in order to allow multiple calls)
+  CTX _backup = *(CTX::instance());
+
   if (getNumMeshElements() == 0) mesh(getDim());
   int nbElemsOld = getNumMeshElements();
   int nbElems;
@@ -642,6 +646,9 @@ int GModel::adaptMesh(std::vector<int> technique,
   }
 
   fields->reset();
+  // copy context (in order to allow multiple calls)
+  *(CTX::instance()) = _backup ;
+
 
   return 0;
 #else

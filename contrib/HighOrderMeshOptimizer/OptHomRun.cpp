@@ -401,6 +401,19 @@ static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getCon
   return result;
 }
 
+
+static void PrintBlob (std::set<MElement*> &eles, int iTag){
+  char name[256];
+  sprintf(name,"BLOB%d.pos",iTag);
+  FILE *f = fopen (name,"w");
+  fprintf(f,"View\"%s\"{\n",name);
+  for (std::set<MElement*>::iterator it = eles.begin(); it != eles.end();++it){
+    (*it)->writePOS(f,true,false,false,false,false,false,1.0,iTag);
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+}
+
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 {
 
@@ -454,6 +467,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       //#pragma omp parallel for schedule(dynamic, 1)
       p.SUCCESS = 1;
       for (int i = 0; i < toOptimize.size(); ++i) {
+	PrintBlob (toOptimize[i].first, i+1);
         OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
         fflush(stdout);
         OptHOM temp(&entity, toOptimize[i].first, toOptimize[i].second, method);
@@ -524,6 +538,7 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
           //      std::ostringstream ossF;
           //      ossF << "final_" << (*itf)->tag() << ".msh";
           //      temp.mesh.writeMSH(ossF.str().c_str());
+	  PrintBlob (toOptimize, ITER);
         }
         double DTF = Cpu()-tf1;
         if (p.SUCCESS == 1){

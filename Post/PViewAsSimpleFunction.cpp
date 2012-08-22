@@ -12,7 +12,7 @@ double PViewEvaluator::operator() (const double x, const double y, const double 
   PViewData * pvd = _pv->getData();
   double value;
   bool found = pvd->searchScalar(x, y, z, &value, _step);
-  printf("found %d %g %g %g %g\n",found,x,y,value,x*x+y*y);
+  //  printf("found %d %g %g %g %g\n",found,x,y,value,x*x+y*y);
   if (found) return value;
   return 1.e22;
 }

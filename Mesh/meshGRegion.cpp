@@ -670,14 +670,14 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
        CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
        CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
-      sprintf(opts, "-pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-q1.3pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
       // removed -q because mesh sizes at vertices were wrong...
       // sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       // 	 (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "-Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+      sprintf(opts, "-q1.5Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
