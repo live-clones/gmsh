@@ -440,6 +440,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
                             bool hideNewViews, bool warnIfMissing)
 {
+#if defined(HAVE_POST)
   // check if there is a mesh in the file
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
@@ -510,6 +511,9 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
   }
 
   return ret;
+#else
+  return 0;
+#endif
 }
 
 void ClearProject()
