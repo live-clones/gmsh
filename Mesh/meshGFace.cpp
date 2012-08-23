@@ -1107,11 +1107,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
        // }
   }
 
+  /*
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
 			       gf->meshStatistics.longest_edge_length,
 			       gf->meshStatistics.smallest_edge_length,
 			       gf->meshStatistics.nbEdge,
 			       gf->meshStatistics.nbGoodLength);
+  */
   //printf("=== Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
 
   gf->meshStatistics.status = GFace::DONE;
@@ -1157,11 +1159,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     removeFourTrianglesNodes(gf,false);
 
   //Emi print efficiency index
+  /*
   gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
   				   gf->meshStatistics.longest_edge_length,
   				   gf->meshStatistics.smallest_edge_length,
   				   gf->meshStatistics.nbEdge,
   				   gf->meshStatistics.nbGoodLength);
+  */
   //printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
 
 
