@@ -692,7 +692,7 @@ void meshMetric::scaleMetric( int nbElementsTarget,
     m.eig(V,S);
     S(0) = std::min(std::max(S(0),1/(hmax*hmax)),1/(hmin*hmin));
     S(1) = std::min(std::max(S(1),1/(hmax*hmax)),1/(hmin*hmin));
-    S(2) = std::min(std::max(S(2),1/(hmax*hmax)),1/(hmin*hmin));
+    if (_dim == 3)S(2) = std::min(std::max(S(2),1/(hmax*hmax)),1/(hmin*hmin));
     SVector3 t1 (V(0,0),V(1,0),V(2,0));
     SVector3 t2 (V(0,1),V(1,1),V(2,1));
     SVector3 t3 (V(0,2),V(1,2),V(2,2));
