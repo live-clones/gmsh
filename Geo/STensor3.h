@@ -53,7 +53,7 @@ class SMetric3 {
            const SVector3 &t2,
            const SVector3 &t3)
   {
-    // M = e^1 * diag * e^1^t
+    // M = e^t * diag * e
     // where the elements of diag are l_i = h_i^-2
     // and the rows of e are the UNIT and ORTHOGONAL directions
 
