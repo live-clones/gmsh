@@ -6,6 +6,7 @@
 #ifndef _MESH_METRIC_H_
 #define _MESH_METRIC_H_
 
+
 #include <map>
 #include <algorithm>
 #include "STensor3.h"
@@ -41,15 +42,16 @@ class meshMetric: public Field {
   std::map<MVertex*,double> vals;
   std::map<MVertex*,SVector3> grads,dgrads[3];
 
+ public:
   typedef std::map<MVertex*,SMetric3> nodalMetricTensor;
   typedef std::map<MVertex*,double> nodalField;
-
+ private:
   nodalMetricTensor _nodalMetrics,_hessian;
   nodalField _nodalSizes, _detMetric;
 
   std::map<int,nodalMetricTensor> setOfMetrics;
   std::map<int,nodalField> setOfSizes;
-  std::map<int,nodalField> setOfDetMetric;
+  //  std::map<int,nodalField> setOfDetMetric;
 
  public:
   meshMetric(std::vector<MElement*> elements);
@@ -81,6 +83,10 @@ class meshMetric: public Field {
     if (needMetricUpdate) intersectMetrics();
     return _nodalMetrics[v];
   }
+  // this function scales the mesh metric in order 
+  // to reach a target number of elements 
+  void scaleMetric( int nbElementsTarget, 
+		    nodalMetricTensor &nmt );
 
   void computeMetric();
   void computeMetricLevelSet();

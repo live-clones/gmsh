@@ -105,13 +105,13 @@ void meshMetric::intersectMetrics()
   for (;it != _adj.end();it++) {
     MVertex *ver = it->first;
     _nodalMetrics[ver] = setOfMetrics[0][ver];
-    _detMetric[ver] = setOfDetMetric[0][ver];
+    //    _detMetric[ver] = setOfDetMetric[0][ver];
     _nodalSizes[ver] = setOfSizes[0][ver];
     for (unsigned int i=1;i<setOfMetrics.size();i++){
       _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
       _nodalSizes[ver] = std::min(_nodalSizes[ver],setOfSizes[i][ver]);
     }
-    _detMetric[ver] = sqrt(_nodalMetrics[ver].determinant());
+    //    _detMetric[ver] = sqrt(_nodalMetrics[ver].determinant());
   }
   needMetricUpdate=false;
 
@@ -356,15 +356,19 @@ void meshMetric::computeMetricLevelSet()
     _hessian[ver] = hessian;
     setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
   }
 
 }
 
-void meshMetric::computeMetricHessian()
+void meshMetric::computeMetricHessian( )
 {
   int metricNumber = setOfMetrics.size();
+
+  double _epsilonP = 1.;
+  double hminP = 1.e-12;
+  double hmaxP = 1.e+12;
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
 
@@ -381,10 +385,11 @@ void meshMetric::computeMetricHessian()
     fullMatrix<double> V(3,3);
     fullVector<double> S(3);
     H.eig(V,S);
+    
 
-    double lambda1 = std::min(std::max(fabs(S(0))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-    double lambda2 = std::min(std::max(fabs(S(1))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin));
-    double lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilon,1./(hmax*hmax)),1./(hmin*hmin)) : 1.;
+    double lambda1 = std::min(std::max(fabs(S(0))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
+    double lambda2 = std::min(std::max(fabs(S(1))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
+    double lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP)) : 1.;
 
     SVector3 t1 (V(0,0),V(1,0),V(2,0));
     SVector3 t2 (V(0,1),V(1,1),V(2,1));
@@ -395,9 +400,11 @@ void meshMetric::computeMetricHessian()
     _hessian[ver] = H;
     setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
   }
+
+  scaleMetric(_epsilon, setOfMetrics[metricNumber]);
 
 }
 
@@ -459,7 +466,7 @@ void meshMetric::computeMetricFrey()
     _hessian[ver] = hessian;
     setOfSizes[metricNumber].insert(std::make_pair(ver, std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3))));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
   }
 }
@@ -529,7 +536,7 @@ void meshMetric::computeMetricEigenDir()
     }
     _hessian[ver] = hessian;
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
 
   }
 
@@ -557,7 +564,7 @@ void meshMetric::computeMetricIsoLinInterp()
     _hessian[ver] = H;
     setOfSizes[metricNumber].insert(std::make_pair(ver, lambda));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,H));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(H.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(H.determinant())));
 
   }
 
@@ -623,11 +630,74 @@ void meshMetric::computeMetricScaledHessian()
     SMetric3 metric(l1,l2,l3,*itT1,*itT2,*itT3);
     setOfSizes[metricNumber].insert(std::make_pair(ver, 1./sqrt(lMax)));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
+    //    setOfDetMetric[metricNumber].insert(std::make_pair(ver,sqrt(metric.determinant())));
     itL1++; itL2++; if (_dim == 3) itL3++;
     itT1++; itT2++; itT3++;
   }
 
+}
+
+
+// this function scales the mesh metric in order 
+// to reach a target number of elements 
+// We know that the number of elements in the final
+// mesh will be (assuming M_e the metric at centroid of element e)
+//   N = \sum_e \sqrt {\det (M_e)} V_e
+// where V_e is the volume of e
+// assuming that N_{target} = K N, we have
+//   K N = K \sum_e \sqrt {\det (M_e)} V_e
+//       =   \sum_e \sqrt {K^2 \det (M_e)} V_e
+//       =   \sum_e \sqrt {\det (K^{2/d} M_e)} V_e
+//  where d is the dimension of the problem.
+// This means that the metric should be scaled by K^{2/d} where
+// K is N_target / N 
+
+void meshMetric::scaleMetric( int nbElementsTarget, 
+			      nodalMetricTensor &nmt )
+{
+  // compute N
+  double N = 0;
+  for (unsigned int i=0;i<_elements.size();i++){
+    MElement *e = _elements[i];    
+    SMetric3 m1 = nmt[e->getVertex(0)];
+    SMetric3 m2 = nmt[e->getVertex(1)];
+    SMetric3 m3 = nmt[e->getVertex(2)];
+    if (_dim == 2){
+      SMetric3 m =  interpolation(m1,m2,m3,0.3333,0.3333);
+      N += sqrt(m.determinant()) * e->getVolume()  * 3.0;
+      //      printf("%12.5E %12.5E\n",m.determinant(),e->getVolume());
+    }
+    else{
+      SMetric3 m4 = nmt[e->getVertex(3)];
+      SMetric3 m =  interpolation(m1,m2,m3,m4,0.25,0.25,0.25);
+      N += sqrt(m.determinant()) * e->getVolume() * 4.0;
+    }
+  }  
+  double scale = pow ((double)nbElementsTarget/N,2.0/_dim);
+  //  printf("%d elements --- %d element target --- %12.5E elements with the present metric\n",
+  //  	 _elements.size(),nbElementsTarget,N);	 
+  //  getchar();
+  for (nodalMetricTensor::iterator it = nmt.begin(); it != nmt.end() ; ++it){
+    if (_dim == 3){
+      it->second *= scale;
+    }
+    else {
+      it->second(0,0) *= scale;
+      it->second(1,0) *= scale;
+      it->second(1,1) *= scale;
+    }
+    SMetric3 &m = it->second;
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    m.eig(V,S);
+    S(0) = std::min(std::max(S(0),1/(hmax*hmax)),1/(hmin*hmin));
+    S(1) = std::min(std::max(S(1),1/(hmax*hmax)),1/(hmin*hmin));
+    S(2) = std::min(std::max(S(2),1/(hmax*hmax)),1/(hmin*hmin));
+    SVector3 t1 (V(0,0),V(1,0),V(2,0));
+    SVector3 t2 (V(0,1),V(1,1),V(2,1));
+    SVector3 t3 (V(0,2),V(1,2),V(2,2));
+    m = SMetric3(S(0),S(1),S(2),t1,t2,t3);
+  }
 }
 
 void meshMetric::computeMetric()
@@ -676,7 +746,9 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge)
 
 void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
 {
-  if (needMetricUpdate) intersectMetrics();
+  if (needMetricUpdate) {
+    intersectMetrics();
+  }
   if (!setOfMetrics.size()){
     std::cout  << "meshMetric::operator() : No metric defined ! " << std::endl;
     throw;

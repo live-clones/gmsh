@@ -19,13 +19,13 @@ def Adaptation ( gm , gm_adapt) :
     print "hello 3", myMap.size()
     pv = PView ('xcarre','NodeData', gm, myMap)
     pve = PViewEvaluator (pv)
-    lcMin = 0.00001
+    lcMin = 0.001
     lcMax = .1
-    eps = 1.e-2
-    nbIter = 4
+    NBTARGET = 13000 
+    nbIter = 2
     allDim = 1
     
-    gm_adapt.adaptMesh([2], [pve], [[eps, lcMin, lcMax]], nbIter, allDim)
+    gm_adapt.adaptMesh([2], [pve], [[NBTARGET, lcMin, lcMax]], nbIter, allDim)
     print "hello 4"
 
 gm = GModel()
@@ -38,6 +38,11 @@ gm_adapt.load('square.geo')
 gm_adapt2 = GModel()
 gm_adapt2.load('square.geo')
 
+gm_adapt3 = GModel()
+gm_adapt3.load('square.geo')
+
 Adaptation ( gm , gm_adapt2)
 print "------------------------------------------------------------------------"
 Adaptation ( gm_adapt2 , gm_adapt)
+print "------------------------------------------------------------------------"
+Adaptation ( gm_adapt , gm_adapt3)
