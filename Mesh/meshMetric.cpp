@@ -11,6 +11,7 @@
 #include "gmshLevelset.h"
 #include "MElementOctree.h"
 #include "OS.h"
+#include <algorithm>
 
 /*
 static void increaseStencil(MVertex *v, v2t_cont &adj, std::vector<MElement*> &lt)
@@ -137,10 +138,18 @@ void meshMetric::exportInfo(const char * fileendname)
   std::vector<MElement*>::iterator itelemen = _elements.end();
   for (;itelem!=itelemen;itelem++){
     MElement* e = *itelem;
-    out_metric << "TT(";
-    out_grad << "VT(";
-    out_ls << "ST(";
-    out_hess << "ST(";
+    if (e->getDim() == 2) {
+      out_metric << "TT(";
+      out_grad << "VT(";
+      out_ls << "ST(";
+      out_hess << "ST(";
+    }
+    else {
+      out_metric << "TS(";
+      out_grad << "VS(";
+      out_ls << "SS(";
+      out_hess << "SS(";
+    }
     for ( int i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
       out_metric << ver->x() << "," << ver->y() << "," << ver->z();
@@ -298,7 +307,8 @@ void meshMetric::computeHessian()
       dudz = d2udxz*x+d2udyz*y+d2udz2*z+coeffs(8);
     }
     double duNorm = sqrt(dudx*dudx+dudy*dudy+dudz*dudz);
-    if (duNorm == 0. || _technique == meshMetric::HESSIAN) duNorm = 1.;
+    if (duNorm == 0. || _technique == meshMetric::HESSIAN ||
+        _technique == meshMetric::EIGENDIRECTIONS || _technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H) duNorm = 1.;
     grads[ver] = SVector3(dudx/duNorm,dudy/duNorm,dudz/duNorm);
     dgrads[0][ver] = SVector3(d2udx2,d2udxy,d2udxz);
     dgrads[1][ver] = SVector3(d2udxy,d2udy2,d2udyz);
@@ -473,6 +483,7 @@ void meshMetric::computeMetricFrey()
 
 void meshMetric::computeMetricEigenDir()
 {
+
   int metricNumber = setOfMetrics.size();
 
   for (v2t_cont::iterator it=_adj.begin(); it!=_adj.end(); it++) {
@@ -491,12 +502,12 @@ void meshMetric::computeMetricEigenDir()
 
     const double metric_value_hmax = 1./(hmax*hmax);
     const SVector3 gVec = grads[ver];                                                             // Gradient vector
-    const double norm = gVec.norm();
+    const double gMag = gVec.norm(), invGMag = 1./gMag;
     SMetric3 metric;
 
-    if (signed_dist < _E && signed_dist > _E_moins && norm != 0.0){
+    if (signed_dist < _E && signed_dist > _E_moins && gMag != 0.0){
       const double metric_value_hmin = 1./(hmin*hmin);
-      const SVector3 nVec = (1./norm)*gVec;                                                       // Unit normal vector
+      const SVector3 nVec = invGMag*gVec;                                                         // Unit normal vector
       double lambda_n;                                                                            // Eigenvalues of metric for normal & tangential directions
       if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
         const double h_dist = hmin + ((hmax-hmin)/_E)*dist;                                       // Characteristic element size in the normal direction - linear interp between hmin and hmax
@@ -506,26 +517,55 @@ void meshMetric::computeMetricEigenDir()
         const double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);                   // ... or linear interpolation between 1/h_min^2 and 1/h_max^2
         lambda_n = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
       }
-      SVector3 tVec0, tVec1 = SPoint3(0.,0.,1.);                                                  // Unit tangential vectors
-      double kappa0, kappa1 = 0.;                                                                 // Curvatures
-      if (_dim == 2) {                                                                            // Curvature formulas: cf. R. Goldman, "Curvature formulas for implicit curves and surfaces", Computer Aided Geometric Design 22 (2005), pp. 632–658
-        tVec0 = SPoint3(-nVec(1),nVec(0),0.);
-        kappa0 = fabs(-gVec(1)*(-gVec(1)*hessian(0,0)+gVec(0)*hessian(0,1))+
-            gVec(0)*(-gVec(1)*hessian(1,0)+gVec(0)*hessian(1,1)))/pow(norm,3);
+      std::vector<SVector3> tVec;                                                                 // Unit tangential vectors
+      std::vector<double> kappa;                                                                  // Curvatures
+      if (_dim == 2) {                                                                            // 2D curvature formula: cf. R. Goldman, "Curvature formulas for implicit curves and surfaces", Computer Aided Geometric Design 22 (2005), pp. 632–658
+        kappa.resize(2);
+        kappa[0] = fabs(-gVec(1)*(-gVec(1)*hessian(0,0)+gVec(0)*hessian(0,1))+
+            gVec(0)*(-gVec(1)*hessian(1,0)+gVec(0)*hessian(1,1)))*pow(invGMag,3);
+        kappa[1] = 1.;
+        tVec.resize(2);
+        tVec[0] = SVector3(-nVec(1),nVec(0),0.);
+        tVec[1] = SVector3(0.,0.,1.);
       }
-      else {
-        // TODO: Implement 3D curvatures
-        tVec0 = SPoint3(0.,0.,0.);
-        tVec1 = SPoint3(0.,0.,0.);
-        kappa0 = 0.;
-        kappa1 = 0.;
+      else {                                                                                      // 3D curvature formula: cf. A.G. Belyaev, A.A. Pasko and T.L. Kunii, "Ridges and Ravines on Implicit Surfaces," CGI, pp.530-535, Computer Graphics International 1998 (CGI'98), 1998
+        fullMatrix<double> ImGG(3,3);
+        ImGG(0,0) = 1.-gVec(0)*gVec(0); ImGG(0,1) = -gVec(0)*gVec(1); ImGG(0,2) = -gVec(0)*gVec(2);
+        ImGG(1,0) = -gVec(1)*gVec(0); ImGG(1,1) = 1.-gVec(1)*gVec(1); ImGG(1,2) = -gVec(1)*gVec(2);
+        ImGG(2,0) = -gVec(2)*gVec(0); ImGG(2,1) = -gVec(2)*gVec(1); ImGG(2,2) = 1.-gVec(2)*gVec(2);
+        fullMatrix<double> hess(3,3);
+        hessian.getMat(hess);
+        fullMatrix<double> gN(3,3);                                                               // Gradient of unit normal
+        gN.gemm(ImGG,hess,1.,0.);
+        gN.scale(invGMag);
+        fullMatrix<double> eigVecL(3,3), eigVecR(3,3);
+        fullVector<double> eigValRe(3), eigValIm(3);
+        gN.eig(eigValRe,eigValIm,eigVecL,eigVecR,false);                                          // Eigendecomp. of gradient of unit normal
+        kappa.resize(3);                                                                          // Store abs. val. of eigenvalues (= principal curvatures only in non-normal directions)
+        kappa[0] = fabs(eigValRe(0));
+        kappa[1] = fabs(eigValRe(1));
+        kappa[2] = fabs(eigValRe(2));
+        tVec.resize(3);                                                                           // Store normalized eigenvectors (= principal directions only in non-normal directions)
+        tVec[0] = SVector3(eigVecR(0,0),eigVecR(1,0),eigVecR(2,0));
+        tVec[0].normalize();
+        tVec[1] = SVector3(eigVecR(0,1),eigVecR(1,1),eigVecR(2,1));
+        tVec[1].normalize();
+        tVec[2] = SVector3(eigVecR(0,2),eigVecR(1,2),eigVecR(2,2));
+        tVec[2].normalize();
+        std::vector<double> tVecDotNVec(3);                                                       // Store dot products with normal vector to look for normal direction
+        tVecDotNVec[0] = fabs(dot(tVec[0],nVec));
+        tVecDotNVec[1] = fabs(dot(tVec[1],nVec));
+        tVecDotNVec[2] = fabs(dot(tVec[2],nVec));
+        const int i_N = max_element(tVecDotNVec.begin(),tVecDotNVec.end())-tVecDotNVec.begin();   // Index of normal dir. = max. dot products (close to 0. in tangential dir.)
+        kappa.erase(kappa.begin()+i_N);                                                           // Remove normal dir.
+        tVec.erase(tVec.begin()+i_N);
       }
-      const double invh_t0 = (_Np*kappa0)/6.283185307, invh_t1 = (_Np*kappa1)/6.283185307;        // Inverse of tangential size 0
+      const double invh_t0 = (_Np*kappa[0])/6.283185307, invh_t1 = (_Np*kappa[1])/6.283185307;    // Inverse of tangential size 0
       const double lambda_t0 = invh_t0*invh_t0, lambda_t1 = invh_t1*invh_t1;
       const double lambdaP_n = std::min(std::max(lambda_n,metric_value_hmax),metric_value_hmin);  // Truncate eigenvalues
       const double lambdaP_t0 = std::min(std::max(lambda_t0,metric_value_hmax),metric_value_hmin);
       const double lambdaP_t1 = (_dim == 2) ? 1. : std::min(std::max(lambda_t1,metric_value_hmax),metric_value_hmin);
-      metric = SMetric3(lambdaP_n,lambdaP_t0,lambdaP_t1,nVec,tVec0,tVec1);
+      metric = SMetric3(lambdaP_n,lambdaP_t0,lambdaP_t1,nVec,tVec[0],tVec[1]);
       const double h_n = 1./sqrt(lambdaP_n), h_t0 = 1./sqrt(lambdaP_t0), h_t1 = 1./sqrt(lambdaP_t1);
       setOfSizes[metricNumber].insert(std::make_pair(ver,std::min(std::min(h_n,h_t0),h_t1)));
     }
