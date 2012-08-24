@@ -12,12 +12,12 @@ set(WITH_COVERAGE FALSE) # check code coverage?
 set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 
 #################################################################################
-set(CTEST_BUILD_NAME "MacOSX32")
+set(CTEST_BUILD_NAME "MacOSX64")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
-set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local/med;/usr/local")
-set(OPT "${OPT} -DPETSC_ARCH=umfpack-cxx-opt")
-set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.0.0-p7")
-set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.0.0-p7")
+set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local/hdf5-1.8.7;/usr/local")
+set(OPT "${OPT} -DPETSC_ARCH=macosx_complex_mumps_seq")
+set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.1-p8")
+set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.1-p6")
 set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
 upload_package(${WEB_BIN} MacOSX "" .dmg .dmg)
