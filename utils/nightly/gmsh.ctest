@@ -6,7 +6,7 @@
 # this is the common ctest script used by all gmsh nightly (and experimental)
 # builds, on all architectures
 
-set(CTEST_SITE "ace25.montefiore")
+set(CTEST_SITE "ace45.montefiore")
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
 set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
