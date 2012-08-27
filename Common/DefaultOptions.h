@@ -1152,6 +1152,8 @@ StringXNumber PostProcessingOptions_Number[] = {
 } ;
 
 StringXNumber ViewOptions_Number[] = {
+  { F|O, "AbscissaRangeType" , opt_view_abscissa_range_type , 1 ,
+    "Ascissa scale range type (1=default, 2=custom)" },
   { F|O, "AdaptVisualizationGrid" , opt_view_adapt_visualization_grid , 0. ,
     "Use adaptive visualization grid (for high-order elements)?" },
   { F|O, "AngleSmoothNormals" , opt_view_angle_smooth_normals , 30.0 ,
@@ -1233,6 +1235,10 @@ StringXNumber ViewOptions_Number[] = {
     "Forced component 7 (if View.ForceComponents > 0)" },
   { F|O, "ComponentMap8" , opt_view_component_map8 , 8,
     "Forced component 8 (if View.ForceComponents > 0)" },
+  { F,   "CustomAbscissaMax" , opt_view_custom_abscissa_max , 0. ,
+    "User-defined maximum abscissa value" },
+  { F,   "CustomAbscissaMin" , opt_view_custom_abscissa_min , 0. ,
+    "User-defined minimum abscissa value" },
   { F,   "CustomMax" , opt_view_custom_max , 0. ,
     "User-defined maximum value to be displayed" },
   { F,   "CustomMin" , opt_view_custom_min , 0. ,

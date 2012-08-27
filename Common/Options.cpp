@@ -5955,6 +5955,34 @@ double opt_view_custom_max(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_custom_abscissa_min(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->customAbscissaMin = val;
+    if(view) view->setChanged(true);
+  }
+  return opt->customAbscissaMin;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_custom_abscissa_max(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->customAbscissaMax = val;
+    if(view) view->setChanged(true);
+  }
+  return opt->customAbscissaMax;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_xmin(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
@@ -7408,6 +7436,22 @@ double opt_view_range_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->rangeType;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_abscissa_range_type(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->abscissaRangeType = (int)val;
+    if(opt->abscissaRangeType < 1 || opt->abscissaRangeType > 3)
+      opt->abscissaRangeType = 1;
+    if(view) view->setChanged(true);
+  }
+  return opt->abscissaRangeType;
 #else
   return 0.;
 #endif

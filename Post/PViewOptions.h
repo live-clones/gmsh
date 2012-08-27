@@ -65,6 +65,7 @@ class PViewOptions {
   std::string axesFormat[3], axesLabel[3];
   double axesPosition[6];
   double customMin, customMax, tmpMin, tmpMax, externalMin, externalMax;
+  double customAbscissaMin, customAbscissaMax;
   SBoundingBox3d tmpBBox;
   double offset[3], raise[3], transform[3][3], displacementFactor, normalRaise;
   double explode;
@@ -75,7 +76,7 @@ class PViewOptions {
   double angleSmoothNormals;
   int saturateValues, fakeTransparency;
   int showElement, showTime, showScale;
-  int scaleType, rangeType;
+  int scaleType, rangeType, abscissaRangeType;
   int vectorType, tensorType, glyphLocation, centerGlyphs;
   int timeStep;
   int drawStrings;

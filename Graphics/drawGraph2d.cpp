@@ -49,7 +49,8 @@ void drawContext::drawText2d()
 }
 
 static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
-                         double &xmax, std::vector<std::vector<double> > &y)
+                         double &xmax, std::vector<std::vector<double> > &y,
+                         double &ymin, double &ymax)
 {
   PViewData *data = p->getData(true); // use adaptive data if available
   PViewOptions *opt = p->getOptions();
@@ -155,6 +156,20 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
   if(x.empty()) return false;
 
+  if(opt->abscissaRangeType == PViewOptions::Custom){
+    std::vector<double> x2;
+    std::vector<std::vector<double> > y2(y.size());
+    for(unsigned int i = 0; i < x.size(); i++){
+      if(x[i] >= opt->customAbscissaMin && x[i] <= opt->customAbscissaMax){
+        x2.push_back(x[i]);
+        for(unsigned int j = 0; j < y2.size(); j++)
+          y2[j].push_back(y[j][i]);
+      }
+    }
+    x = x2;
+    y = y2;
+  }
+
   if(space){
     xmin = xmax = x[0];
     for(unsigned int i = 1; i < x.size(); i++){
@@ -171,6 +186,15 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < y[i].size(); j++)
         y[i][j] = log10(y[i][j]);
+
+  ymin = VAL_INF;
+  ymax = -VAL_INF;
+  for(unsigned int i = 0; i < y.size(); i++){
+    for(unsigned int j = 0; j < y[i].size(); j++){
+      ymin = std::min(ymin, y[i][j]);
+      ymax = std::max(ymax, y[i][j]);
+    }
+  }
 
   return true;
 }
@@ -440,9 +464,13 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
                       double width, double height)
 {
+  std::vector<double> x;
+  std::vector<std::vector<double> > y;
+  double xmin, xmax, ymin, ymax;
+  if(!getGraphData(p, x, xmin, xmax, y, ymin, ymax)) return;
+
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
-
   if(opt->rangeType == PViewOptions::Custom){
     opt->tmpMin = opt->customMin;
     opt->tmpMax = opt->customMax;
@@ -452,8 +480,8 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     opt->tmpMax = data->getMax(opt->timeStep);
   }
   else{
-    opt->tmpMin = data->getMin();
-    opt->tmpMax = data->getMax();
+    opt->tmpMin = ymin;
+    opt->tmpMax = ymax;
   }
 
   if(opt->scaleType == PViewOptions::Logarithmic){
@@ -461,10 +489,6 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     opt->tmpMax = log10(opt->tmpMax);
   }
 
-  std::vector<double> x;
-  std::vector<std::vector<double> > y;
-  double xmin, xmax;
-  if(!getGraphData(p, x, xmin, xmax, y)) return;
   drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax);
   drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y);
 }
