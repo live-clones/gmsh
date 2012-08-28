@@ -376,7 +376,7 @@ void meshGEdge::operator() (GEdge *ge)
       a = Integration(ge, t_begin, t_end, F_Lc, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
-    
+
     // we should maybe provide an option to disable the smoothing
     for (unsigned int i = 0; i < Points.size(); i++){
       IntPoint &pt = Points[i];
@@ -388,7 +388,7 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   // force odd number of points for if blossom is used for recombination
-   if(ge->meshAttributes.Method != MESH_TRANSFINITE &&
+  if(ge->meshAttributes.Method != MESH_TRANSFINITE &&
      CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
     if(CTX::instance()->mesh.recombineAll){
       N++;
