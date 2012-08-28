@@ -101,6 +101,15 @@ void voroMetal3D::execute(GRegion* gr){
   execute(vertices2);
 }
 
+void voroMetal3D::execute(std::vector<double>& vertices){
+  std::vector<SPoint3> pts;
+  for (unsigned int i=0;i<vertices.size()/3;i++){
+    SPoint3 pp (vertices[3*i],vertices[3*i+1],vertices[3*i+2]);
+    pts.push_back(pp);
+  }
+  execute(pts);
+}
+
 void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 {
 #if defined(HAVE_VORO3D)
@@ -147,6 +156,10 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   }
 
   delta = 0.2*(max_x - min_x);
+  min_x=min_y=min_z = 0;
+  max_x=max_y=max_z = 1;
+  delta = 0;
+
   container cont(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
 
   for(i=0;i<vertices.size();i++){
