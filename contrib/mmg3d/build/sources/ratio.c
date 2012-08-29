@@ -371,7 +371,7 @@ int MMG_ratio(pMesh mesh, pSol sol,char* firaoame) {
 	    iel,ielreal,pt->v[0],pt->v[1],pt->v[2],pt->v[3]);
   }
 
-  if ( abs(mesh->info.imprim) < 5 )  return;
+  if ( abs(mesh->info.imprim) < 5 )  return 1;
 
   fprintf(stdout,"\n     HISTOGRAMM\n");
   for (k=1; k<9; k++) {
