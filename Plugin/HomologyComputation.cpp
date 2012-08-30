@@ -19,13 +19,20 @@
 
 StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "ComputeHomology", NULL, 1.},
-  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.}
+  {GMSH_FULLRC, "ComputeCohomology", NULL, 0.},
+  {GMSH_FULLRC, "HomologyPhysicalGroupsBegin", NULL, -1.},
+  {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", NULL, -1.},
+  {GMSH_FULLRC, "CreatePostProcessingViews", NULL, 1.},
+  {GMSH_FULLRC, "ReductionOmit", NULL, 1.},
+  {GMSH_FULLRC, "ReductionCombine", NULL, 1.},
+  {GMSH_FULLRC, "PostProcessSmoothen", NULL, 1.}
 };
 
 StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "DomainPhysicalGroups", NULL, ""},
   {GMSH_FULLRC, "SubdomainPhysicalGroups", NULL, ""},
-  {GMSH_FULLRC, "DimensionOfChainsToSave", NULL, "1, 2"},
+  {GMSH_FULLRC, "ReductionImmunePhysicalGroups", NULL, ""},
+  {GMSH_FULLRC, "DimensionOfChainsToSave", NULL, "0, 1, 2, 3"},
   {GMSH_FULLRC, "Filename", NULL, "homology.msh"}
 };
 
@@ -95,20 +102,29 @@ bool GMSH_HomologyComputationPlugin::parseStringOpt
 
 PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 {
-  std::string fileName = HomologyComputationOptions_String[3].def;
+  std::string fileName = HomologyComputationOptions_String[4].def;
   int hom = (int)HomologyComputationOptions_Number[0].def;
   int coh = (int)HomologyComputationOptions_Number[1].def;
+  int hompg = (int)HomologyComputationOptions_Number[2].def;
+  int cohpg = (int)HomologyComputationOptions_Number[3].def;
+  bool pviews = (bool)HomologyComputationOptions_Number[4].def;
+  bool omit = (bool)HomologyComputationOptions_Number[5].def;
+  bool combine = (bool)HomologyComputationOptions_Number[6].def;
+  bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
+  std::vector<int> imdomain;
   std::vector<int> dimsave;
   if(!parseStringOpt(0, domain)) return 0;
   if(!parseStringOpt(1, subdomain)) return 0;
-  if(!parseStringOpt(2, dimsave)) return 0;
+  if(!parseStringOpt(2, imdomain)) return 0;
+  if(!parseStringOpt(3, dimsave)) return 0;
 
   GModel* m = GModel::current();
 
-  Homology* homology = new Homology(m, domain, subdomain);
+  Homology* homology = new Homology(m, domain, subdomain, imdomain,
+                                    true, combine, omit, smoothen);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis();
@@ -116,8 +132,14 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
 
   for(unsigned int i = 0; i < dimsave.size(); i++) {
     int dim = dimsave.at(i);
-    if(dim > -1 && dim < 4 && hom != 0) homology->addChainsToModel(dim);
-    if(dim > -1 && dim < 4 && coh != 0) homology->addCochainsToModel(dim);
+    if(dim > -1 && dim < 4 && hom != 0) {
+      homology->addChainsToModel(dim, pviews, hompg);
+      if(hompg != -1) hompg += homology->betti(dim);
+    }
+    if(dim > -1 && dim < 4 && coh != 0) {
+      homology->addCochainsToModel(dim, pviews, cohpg);
+      if(cohpg != -1) cohpg += homology->betti(dim);
+    }
   }
 
   delete homology;

@@ -235,7 +235,8 @@ public:
   // elementary chains are turned into mesh elements with
   // orientation and multiplicity given by elementary chain coefficient
   // (and create a post-processing view)
-  void addToModel(GModel* m, bool post=true) const;
+  // (and request a physical group number)
+  void addToModel(GModel* m, bool post=true, int physicalNumRequest=-1) const;
 };
 
 template <class C>
@@ -449,7 +450,8 @@ Chain<C>& Chain<C>::operator*=(const C& coeff)
 }
 
 template <class C>
-void Chain<C>::addToModel(GModel* m, bool post) const
+void Chain<C>::addToModel(GModel* m, bool post,
+                          int physicalNumRequest) const
 {
   if(this->isZero()) {
     Msg::Info("A chain is zero element of C%d, not added to the model",
@@ -486,6 +488,10 @@ void Chain<C>::addToModel(GModel* m, bool post) const
   for(int i = 0; i < 4; i++)
     max[i] = m->getMaxPhysicalNumber(i);
   int physicalNum = *std::max_element(max,max+4) + 1;
+  if(physicalNumRequest > -1 && physicalNumRequest < physicalNum)
+    Msg::Warning("Requested chain physical group number already taken. Using next available.");
+  else if(physicalNumRequest > -1 && physicalNumRequest >= physicalNum)
+    physicalNum = physicalNumRequest;
 
   std::map<int, std::vector<MElement*> > entityMap;
   entityMap[entityNum] = elements;

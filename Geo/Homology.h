@@ -87,8 +87,10 @@ class Homology
  public:
 
   // Determine domain and relative subdomain of (co)homology computation
-  Homology(GModel* model, std::vector<int> physicalDomain,
+  Homology(GModel* model,
+           std::vector<int> physicalDomain,
 	   std::vector<int> physicalSubdomain,
+           std::vector<int> physicalIm,
            bool saveOrig=true,
 	   bool combine=true, bool omit=true, bool smoothen=true);
   ~Homology();
@@ -103,8 +105,9 @@ class Homology
   // add chains to Gmsh model
   // dim: only add dim-chains if dim != -1
   // post: create a post-processing view
-  void addChainsToModel(int dim=-1, bool post=true);
-  void addCochainsToModel(int dim=-1, bool post=true);
+  // physicalNumRequest: number the chains starting from this if available
+  void addChainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1);
+  void addCochainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1);
 
   // get representative chains of a (co)homology space basis
   void getHomologyBasis(int dim, std::vector<Chain<int> >& hom);

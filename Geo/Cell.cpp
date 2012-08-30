@@ -330,9 +330,9 @@ bool CombinedCell::hasVertex(int vertex) const
 void Cell::printCell()
 {
   printf("%d-cell %d: \n" , getDim(), getNum());
-  printf("Vertices: ");
+  printf("  Vertices:");
   for(int i = 0; i < this->getNumVertices(); i++){
-    printf("%d ", this->getMeshVertex(i)->getNum());
+    printf(" %d", this->getMeshVertex(i)->getNum());
   }
   printf(", in subdomain: %d, ", inSubdomain());
   printf("combined: %d. \n" , isCombined() );

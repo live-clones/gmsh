@@ -37,7 +37,8 @@ class GModel
 {
  private:
   friend class OCCFactory;
-  std::multimap<std::pair<std::vector<int>, std::vector<int> >, std::string> _homologyRequests;
+  std::multimap<std::pair<std::vector<int>, std::vector<int> >,
+                std::pair<std::string, std::vector<int> > > _homologyRequests;
   std::set<GRegion*, GEntityLessThan> _chainRegions;
   std::set<GFace*, GEntityLessThan> _chainFaces;
   std::set<GEdge*, GEntityLessThan> _chainEdges;
@@ -406,9 +407,9 @@ class GModel
   // In this first attempt, only the highest dimensional mesh is adapted, which is ok if
   // we assume that boundaries are already adapted.
   // This should be fixed.
-  int adaptMesh(std::vector<int> technique, 
-		std::vector<simpleFunction<double>*> f, 
-		std::vector<std::vector<double> > parameters, 
+  int adaptMesh(std::vector<int> technique,
+		std::vector<simpleFunction<double>*> f,
+		std::vector<std::vector<double> > parameters,
 		int niter, bool meshAll=false);
 
   // make the mesh a high order mesh at order N
@@ -511,7 +512,7 @@ class GModel
 
   // request homology computation
   void addHomologyRequest(const std::string &type, std::vector<int> &domain,
-                          std::vector<int> &subdomain);
+                          std::vector<int> &subdomain, std::vector<int> &dim);
   void computeHomology();
 
   // "automatic" IO based on Gmsh global functions

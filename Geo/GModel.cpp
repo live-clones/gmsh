@@ -97,7 +97,7 @@ GModel::~GModel()
   delete _fields;
 #endif
 
-  if(_factory) 
+  if(_factory)
     delete _factory;
 }
 
@@ -2934,12 +2934,16 @@ void GModel::createPartitionBoundaries(int createGhostCells, int createAllDims)
 #endif
 }
 
-void GModel::addHomologyRequest(const std::string &type, std::vector<int> &domain,
-                                std::vector<int> &subdomain)
+void GModel::addHomologyRequest(const std::string &type,
+                                std::vector<int> &domain,
+                                std::vector<int> &subdomain,
+                                std::vector<int> &dim)
 {
-  std::pair<std::vector<int>, std::vector<int> > p(domain, subdomain);
-  _homologyRequests.insert
-    (std::pair<std::pair<std::vector<int>, std::vector<int> >, std::string>(p, type));
+  typedef std::pair<std::vector<int>, std::vector<int> > dpair;
+  typedef std::pair<std::string, std::vector<int> > tpair;
+  dpair p(domain, subdomain);
+  tpair p2(type, dim);
+  _homologyRequests.insert(std::pair<dpair, tpair>(p, p2));
 }
 
 void GModel::computeHomology()
@@ -2949,36 +2953,56 @@ void GModel::computeHomology()
 #if defined(HAVE_KBIPACK)
   // find unique domain/subdomain requests
   typedef std::pair<std::vector<int>, std::vector<int> > dpair;
+  typedef std::pair<std::string, std::vector<int> > tpair;
   std::set<dpair> domains;
-  for(std::map<dpair, std::string>::iterator it = _homologyRequests.begin();
+  for(std::map<dpair, tpair>::iterator it = _homologyRequests.begin();
       it != _homologyRequests.end(); it++)
     domains.insert(it->first);
   Msg::Info("Number of cell complexes to construct: %d", domains.size());
 
   for(std::set<dpair>::iterator it = domains.begin(); it != domains.end(); it++){
-    std::pair<std::multimap<dpair, std::string>::iterator,
-              std::multimap<dpair, std::string>::iterator> itp =
+    std::pair<std::multimap<dpair, tpair>::iterator,
+              std::multimap<dpair, tpair>::iterator> itp =
       _homologyRequests.equal_range(*it);
     bool prepareToRestore = (itp.first != --itp.second);
     itp.second++;
+    std::vector<int> imdomain;
     Homology* homology = new Homology(this, itp.first->first.first,
-                                      itp.first->first.second,
+                                      itp.first->first.second, imdomain,
                                       prepareToRestore);
 
-    // do not save 0-, and n-chains, where n is the dimension of the model
-    // (usually not needed for anything, available through the plugin)
-    for(std::multimap<dpair, std::string>::iterator itt = itp.first;
+    for(std::multimap<dpair, tpair>::iterator itt = itp.first;
         itt != itp.second; itt++){
-      std::string type = itt->second;
+      std::string type = itt->second.first;
+      std::vector<int> dim = itt->second.second;
+
+      std::stringstream ss;
+      for(unsigned int i = 0; i < dim.size(); i++) {
+        int d = dim.at(i);
+        if(d >= 0 && d <= getDim()) {
+          ss << "H";
+          if(type == "Homology") ss << "_";
+          if(type == "Cohomology") ss << "^";
+          ss << d;
+          if(i < dim.size()-1 && dim.at(i+1) >=0 && dim.at(i+1) <= getDim())
+            ss << ", ";
+        }
+      }
+      std::string dims = ss.str();
+
       if(type == "Homology") {
         homology->findHomologyBasis();
-        if(this->getDim() != 1) homology->addChainsToModel(1);
-        if(this->getDim() != 2) homology->addChainsToModel(2);
+        Msg::Info("Homology space basis chains to save: %s.", dims.c_str());
+        for(unsigned int i = 0; i < dim.size(); i++)
+          if(dim.at(i) >= 0 && dim.at(i) <= getDim())
+            homology->addChainsToModel(i);
       }
       else if(type == "Cohomology") {
         homology->findCohomologyBasis();
-        if(this->getDim() != 1) homology->addCochainsToModel(1);
-        if(this->getDim() != 2) homology->addCochainsToModel(2);
+        Msg::Info("Cohomology space basis cochains to save: %s.", dims.c_str());
+        for(unsigned int i = 0; i < dim.size(); i++)
+          if(dim.at(i) >= 0 && dim.at(i) <= getDim())
+            homology->addCochainsToModel(i);
       }
       else
         Msg::Error("Unknown type of homology computation: %s", type.c_str());
