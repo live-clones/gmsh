@@ -25,6 +25,10 @@ StringXNumber NearToFarFieldOptions_Number[] = {
   {GMSH_FULLRC, "NegativeTime",     NULL, 0.},
 };
 
+StringXString NearToFarFieldOptions_String[] = {
+  {GMSH_FULLRC, "MatlabOutputFile",       NULL, "farfield.m"},
+};
+
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterNearToFarFieldPlugin()
@@ -45,7 +49,8 @@ std::string GMSH_NearToFarFieldPlugin::getHelp() const
     "is normalized to 1. If `dB' is set, the far field is computed in dB. "
     "If `NegativeTime' is set, E and H are assumed to have exp(-iwt) time "
     "dependency; otherwise they are assume to have exp(+iwt) time "
-    "dependency.\n\n"
+    "dependency. If `MatlabOutputFile' is given the raw far field data is "
+    "also exported in Matlab format.\n\n"
     "Plugin(NearToFarField) creates one new view.";
 }
 
@@ -54,9 +59,19 @@ int GMSH_NearToFarFieldPlugin::getNbOptions() const
   return sizeof(NearToFarFieldOptions_Number) / sizeof(StringXNumber);
 }
 
+int GMSH_NearToFarFieldPlugin::getNbOptionsStr() const
+{
+  return sizeof(NearToFarFieldOptions_String) / sizeof(StringXString);
+}
+
 StringXNumber *GMSH_NearToFarFieldPlugin::getOption(int iopt)
 {
   return &NearToFarFieldOptions_Number[iopt];
+}
+
+StringXString *GMSH_NearToFarFieldPlugin::getOptionStr(int iopt)
+{
+  return &NearToFarFieldOptions_String[iopt];
 }
 
 // Compute field using e^{j\omega t} time dependency, following Jin in "Finite
@@ -217,6 +232,16 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(std::vector<element*> &allElem
   return (norm(einf[0]) + norm(einf[1]) + norm(einf[2]));
 }
 
+static void printVector(FILE *fp, const std::string &name,
+                        std::vector<std::vector<double> > &vec)
+{
+  fprintf(fp, "%s = [", name.c_str());
+  for (unsigned int i = 0; i < vec.size(); i++)
+    for (unsigned int j = 0; j < vec[i].size(); j++)
+      fprintf(fp, "%.16g ", vec[i][j]);
+  fprintf(fp, "];\n");
+}
+
 PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
 {
   double _k0 = (double)NearToFarFieldOptions_Number[0].def;
@@ -231,6 +256,8 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
   bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
   int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
+
+  std::string _outFile = NearToFarFieldOptions_String[0].def;
 
   PView *ve = getView(_eView, v);
   if(!ve){
@@ -257,12 +284,13 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     return v;
   }
 
-  // center of the Far Field sphere
+  // center and radius of the visualization sphere
   SBoundingBox3d bbox = eData->getBoundingBox();
   double x0 = bbox.center().x();
   double y0 = bbox.center().y();
   double z0 = bbox.center().z();
   double lc = norm(SVector3(bbox.max(), bbox.min()));
+  double r_sph = lc ? lc / 2. : 1;
 
   if(x0 != hData->getBoundingBox().center().x() ||
      y0 != hData->getBoundingBox().center().y() ||
@@ -321,87 +349,104 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     return v;
   }
 
-  // View for far field that will contain the radiation pattern
+  // view for far field that will contain the radiation pattern
   PView *vf = new PView();
   PViewDataList *dataFar = getDataList(vf);
 
-  std::vector<std::vector<double> > allPhi(_NbPhi + 1);
-  std::vector<std::vector<double> > allThe(_NbPhi + 1);
-  std::vector<std::vector<double> > farF(_NbPhi + 1);
+  std::vector<std::vector<double> > phi(_NbPhi + 1), theta(_NbPhi + 1);
+  std::vector<std::vector<double> > x(_NbPhi + 1), y(_NbPhi + 1), z(_NbPhi + 1);
+  std::vector<std::vector<double> > farField(_NbPhi + 1);
   for (int i = 0; i <= _NbPhi; i++){
-    allPhi[i].resize(_NbThe + 1);
-    allThe[i].resize(_NbThe + 1);
-    farF[i].resize(_NbThe + 1);
+    phi[i].resize(_NbThe + 1);
+    theta[i].resize(_NbThe + 1);
+    x[i].resize(_NbThe + 1);
+    y[i].resize(_NbThe + 1);
+    z[i].resize(_NbThe + 1);
+    farField[i].resize(_NbThe + 1);
   }
 
-  double dPhi   = (_phiEnd - _phiStart) / _NbPhi ;
+  double dPhi = (_phiEnd - _phiStart) / _NbPhi ;
   double dTheta = (_thetaEnd - _thetaStart) / _NbThe ;
   double ffmax = 0.0 ;
   Msg::ResetProgressMeter();
   for (int i = 0; i <= _NbPhi; i++){
-    double phi = _phiStart + i * dPhi ;
     for (int j = 0; j <= _NbThe; j++){
-      double theta = _thetaStart + j * dTheta ;
-      allPhi[i][j] = phi ;
-      allThe[i][j] = theta ;
+      phi[i][j] = _phiStart + i * dPhi ;
+      theta[i][j] = _thetaStart + j * dTheta ;
       if(_negativeTime)
-        farF[i][j] = getFarFieldMonk(allElems, js, ms, _k0, theta, phi);
+        farField[i][j] = getFarFieldMonk(allElems, js, ms, _k0,
+                                         theta[i][j], phi[i][j]);
       else
-        farF[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc, theta, phi);
-      ffmax = (ffmax < farF[i][j]) ? farF[i][j] : ffmax ;
+        farField[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc,
+                                        theta[i][j], phi[i][j]);
+      ffmax = (ffmax < farField[i][j]) ? farField[i][j] : ffmax ;
     }
     Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
   }
+  for(unsigned int i = 0; i < allElems.size(); i++)
+    delete allElems[i];
 
   if(_normalize){
     for (int i = 0; i <= _NbPhi; i++)
       for (int j = 0; j <= _NbThe; j++)
         if(ffmax != 0.0)
-          farF[i][j] /= ffmax ;
+          farField[i][j] /= ffmax ;
         else
           Msg::Warning("Far field pattern not normalized, max value = %g", ffmax);
   }
 
-  for(unsigned int i = 0; i < allElems.size(); i++)
-    delete allElems[i];
+  for (int i = 0; i <= _NbPhi; i++){
+    for (int j = 0; j <= _NbThe; j++){
+      x[i][j] = x0 + r_sph * farField[i][j] * sin(theta[i][j]) * cos(phi[i][j]);
+      y[i][j] = y0 + r_sph * farField[i][j] * sin(theta[i][j]) * sin(phi[i][j]);
+      z[i][j] = z0 + r_sph * farField[i][j] * cos(theta[i][j]);
+    }
+  }
 
-  // construct sphere for visualization, centered at center of bb and with
-  // radius relative to the bb size
-  double r_sph = lc ? lc / 2. : 1; // radius of sphere for visu
+  if(_dB){
+    for (int i = 0; i <= _NbPhi; i++)
+      for (int j = 0; j <= _NbThe; j++)
+        farField[i][j] = 10 * log10(farField[i][j]);
+  }
+
+  if(_outFile.size()){
+    FILE *fp = fopen(_outFile.c_str(), "w");
+    if(fp){
+      printVector(fp, "phi", phi);
+      printVector(fp, "theta", theta);
+      printVector(fp, "farField", farField);
+      printVector(fp, "x", x);
+      printVector(fp, "y", y);
+      printVector(fp, "z", z);
+      fclose(fp);
+    }
+    else
+      Msg::Error("Could not open file '%s'", _outFile.c_str());
+  }
 
   for (int i = 0; i < _NbPhi; i++){
     for (int j = 0; j < _NbThe; j++){
-      double P1[3] = { x0 + r_sph * farF[i ][j ] * sin(allThe[i ][j ]) * cos(allPhi[i ][j ]),
-                       y0 + r_sph * farF[i ][j ] * sin(allThe[i ][j ]) * sin(allPhi[i ][j ]),
-                       z0 + r_sph * farF[i ][j ] * cos(allThe[i ][j ]) } ;
-      double P2[3] = { x0 + r_sph * farF[i+1][j ] * sin(allThe[i+1][j ]) * cos(allPhi[i+1][j  ]),
-                       y0 + r_sph * farF[i+1][j ] * sin(allThe[i+1][j ]) * sin(allPhi[i+1][j  ]),
-                       z0 + r_sph * farF[i+1][j ] * cos(allThe[i+1][j ]) } ;
-      double P3[3] = { x0 + r_sph * farF[i+1][j+1] * sin(allThe[i+1][j+1]) * cos(allPhi[i+1][j+1]),
-                       y0 + r_sph * farF[i+1][j+1] * sin(allThe[i+1][j+1]) * sin(allPhi[i+1][j+1]),
-                       z0 + r_sph * farF[i+1][j+1] * cos(allThe[i+1][j+1]) } ;
-      double P4[3] = { x0 + r_sph * farF[i ][j+1] * sin(allThe[i ][j+1]) * cos(allPhi[i ][j+1]),
-                       y0 + r_sph * farF[i ][j+1] * sin(allThe[i ][j+1]) * sin(allPhi[i ][j+1]),
-                       z0 + r_sph * farF[i ][j+1] * cos(allThe[i ][j+1]) } ;
-
-      dataFar->SQ.push_back(P1[0]); dataFar->SQ.push_back(P2[0]);
-      dataFar->SQ.push_back(P3[0]); dataFar->SQ.push_back(P4[0]);
-      dataFar->SQ.push_back(P1[1]); dataFar->SQ.push_back(P2[1]);
-      dataFar->SQ.push_back(P3[1]); dataFar->SQ.push_back(P4[1]);
-      dataFar->SQ.push_back(P1[2]); dataFar->SQ.push_back(P2[2]);
-      dataFar->SQ.push_back(P3[2]); dataFar->SQ.push_back(P4[2]);
-      (dataFar->NbSQ)++;
-      if(!_dB){
-        dataFar->SQ.push_back(farF[i ][j  ]);
-        dataFar->SQ.push_back(farF[i+1][j  ]);
-        dataFar->SQ.push_back(farF[i+1][j+1]);
-        dataFar->SQ.push_back(farF[i ][j+1]);
+      if(_NbPhi == 1 || _NbThe == 1){
+        dataFar->NbSP++;
+        dataFar->SP.push_back(x[i][j]); dataFar->SP.push_back(y[i][j]);
+        dataFar->SP.push_back(z[i][j]); dataFar->SP.push_back(farField[i][j]);
       }
       else{
-        dataFar->SQ.push_back(10*log10(farF[i ][j]));
-        dataFar->SQ.push_back(10*log10(farF[i+1][j ]));
-        dataFar->SQ.push_back(10*log10(farF[i+1][j+1]));
-        dataFar->SQ.push_back(10*log10(farF[i ][j+1]));
+        double P1[3] = {x[i][j], y[i][j], z[i][j]};
+        double P2[3] = {x[i+1][j], y[i+1][j], z[i+1][j]};
+        double P3[3] = {x[i+1][j+1], y[i+1][j+1], z[i+1][j+1]};
+        double P4[3] = {x[i][j+1], y[i][j+1], z[i][j+1]};
+        dataFar->NbSQ++;
+        dataFar->SQ.push_back(P1[0]); dataFar->SQ.push_back(P2[0]);
+        dataFar->SQ.push_back(P3[0]); dataFar->SQ.push_back(P4[0]);
+        dataFar->SQ.push_back(P1[1]); dataFar->SQ.push_back(P2[1]);
+        dataFar->SQ.push_back(P3[1]); dataFar->SQ.push_back(P4[1]);
+        dataFar->SQ.push_back(P1[2]); dataFar->SQ.push_back(P2[2]);
+        dataFar->SQ.push_back(P3[2]); dataFar->SQ.push_back(P4[2]);
+        dataFar->SQ.push_back(farField[i][j]);
+        dataFar->SQ.push_back(farField[i+1][j]);
+        dataFar->SQ.push_back(farField[i+1][j+1]);
+        dataFar->SQ.push_back(farField[i][j+1]);
       }
     }
   }
