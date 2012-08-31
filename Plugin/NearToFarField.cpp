@@ -365,9 +365,9 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     farField[i].resize(_NbThe + 1);
   }
 
-  double dPhi = (_phiEnd - _phiStart) / _NbPhi ;
-  double dTheta = (_thetaEnd - _thetaStart) / _NbThe ;
-  double ffmax = 0.0 ;
+  double dPhi = (_phiEnd - _phiStart) / _NbPhi;
+  double dTheta = (_thetaEnd - _thetaStart) / _NbThe;
+  double ffmin = 1e200, ffmax = -1e200;
   Msg::ResetProgressMeter();
   for (int i = 0; i <= _NbPhi; i++){
     for (int j = 0; j <= _NbThe; j++){
@@ -379,7 +379,8 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
       else
         farField[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc,
                                         theta[i][j], phi[i][j]);
-      ffmax = (ffmax < farField[i][j]) ? farField[i][j] : ffmax ;
+      ffmin = std::min(ffmin, farField[i][j]);
+      ffmax = std::max(ffmax, farField[i][j]);
     }
     Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
   }
@@ -387,26 +388,38 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     delete allElems[i];
 
   if(_normalize){
-    for (int i = 0; i <= _NbPhi; i++)
-      for (int j = 0; j <= _NbThe; j++)
-        if(ffmax != 0.0)
+    if(!ffmax)
+      Msg::Warning("Cannot normalize far field (max = 0)");
+    else
+      for (int i = 0; i <= _NbPhi; i++)
+        for (int j = 0; j <= _NbThe; j++)
           farField[i][j] /= ffmax ;
-        else
-          Msg::Warning("Far field pattern not normalized, max value = %g", ffmax);
+  }
+
+  if(_dB){
+    ffmin = 1e200;
+    ffmax = -1e200;
+    for (int i = 0; i <= _NbPhi; i++){
+      for (int j = 0; j <= _NbThe; j++){
+        farField[i][j] = 10 * log10(farField[i][j]);
+        ffmin = std::min(ffmin, farField[i][j]);
+        ffmax = std::max(ffmax, farField[i][j]);
+      }
+    }
   }
 
   for (int i = 0; i <= _NbPhi; i++){
     for (int j = 0; j <= _NbThe; j++){
-      x[i][j] = x0 + r_sph * farField[i][j] * sin(theta[i][j]) * cos(phi[i][j]);
-      y[i][j] = y0 + r_sph * farField[i][j] * sin(theta[i][j]) * sin(phi[i][j]);
-      z[i][j] = z0 + r_sph * farField[i][j] * cos(theta[i][j]);
+      double df = (ffmax - ffmin);
+      if(!df){
+        Msg::Warning("zero far field range");
+        df = 1.;
+      }
+      double f = (farField[i][j] - ffmin) / df; // in [0,1]
+      x[i][j] = x0 + r_sph * f * sin(theta[i][j]) * cos(phi[i][j]);
+      y[i][j] = y0 + r_sph * f * sin(theta[i][j]) * sin(phi[i][j]);
+      z[i][j] = z0 + r_sph * f * cos(theta[i][j]);
     }
-  }
-
-  if(_dB){
-    for (int i = 0; i <= _NbPhi; i++)
-      for (int j = 0; j <= _NbThe; j++)
-        farField[i][j] = 10 * log10(farField[i][j]);
   }
 
   if(_outFile.size()){
