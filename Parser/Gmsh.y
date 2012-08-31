@@ -3758,28 +3758,28 @@ Homology :
       List_Delete($3);
       List_Delete($5);
     }
-  | HomologyCommand '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
+  | HomologyCommand '(' ListOfDouble ')' '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
       std::vector<int> domain, subdomain, dim;
+      for(int i = 0; i < List_Nbr($6); i++){
+        double d;
+        List_Read($6, i, &d);
+        domain.push_back((int)d);
+      }
+      for(int i = 0; i < List_Nbr($8); i++){
+        double d;
+        List_Read($8, i, &d);
+        subdomain.push_back((int)d);
+      }
       for(int i = 0; i < List_Nbr($3); i++){
         double d;
         List_Read($3, i, &d);
-        domain.push_back((int)d);
-      }
-      for(int i = 0; i < List_Nbr($5); i++){
-        double d;
-        List_Read($5, i, &d);
-        subdomain.push_back((int)d);
-      }
-      for(int i = 0; i < List_Nbr($7); i++){
-        double d;
-        List_Read($7, i, &d);
         dim.push_back((int)d);
       }
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
+      List_Delete($6);
+      List_Delete($8);
       List_Delete($3);
-      List_Delete($5);
-      List_Delete($7);
     }
  ;
 

@@ -2995,14 +2995,14 @@ void GModel::computeHomology()
         Msg::Info("Homology space basis chains to save: %s.", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++)
           if(dim.at(i) >= 0 && dim.at(i) <= getDim())
-            homology->addChainsToModel(i);
+            homology->addChainsToModel(dim.at(i));
       }
       else if(type == "Cohomology") {
         homology->findCohomologyBasis();
         Msg::Info("Cohomology space basis cochains to save: %s.", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++)
           if(dim.at(i) >= 0 && dim.at(i) <= getDim())
-            homology->addCochainsToModel(i);
+            homology->addCochainsToModel(dim.at(i));
       }
       else
         Msg::Error("Unknown type of homology computation: %s", type.c_str());
