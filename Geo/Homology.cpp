@@ -182,7 +182,7 @@ void Homology::findHomologyBasis()
       std::string generator = "";
       convert(i, generator);
 
-      std::string name = "H" + dimension + domain + generator;
+      std::string name = "H_" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
@@ -248,8 +248,7 @@ void Homology::findCohomologyBasis()
       std::string generator = "";
       convert(i, generator);
 
-      std::string name = "H" + dimension + "*" +
-	domain + generator;
+      std::string name = "H^" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
       chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
       int torsion = chainComplex.getTorsion(j,i);
