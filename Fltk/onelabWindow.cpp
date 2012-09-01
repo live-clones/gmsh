@@ -288,7 +288,7 @@ bool onelab::localNetworkClient::run()
       break;
     case GmshSocket::GMSH_MERGE_FILE:
       if(FlGui::instance()->onelab->mergeAuto()){
-        int n = PView::list.size();
+        unsigned int n = PView::list.size();
         MergePostProcessingFile(message, FlGui::instance()->onelab->showLastStep(),
                                 FlGui::instance()->onelab->hideNewViews(), true);
         drawContext::global()->draw();
