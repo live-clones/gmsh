@@ -17,8 +17,5 @@
     <key>Minute</key>
     <integer>1</integer>
   </dict>
-
-  <key>RunAtLoad</key>
-  <true/>
 </dict>
 </plist>
