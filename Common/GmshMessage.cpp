@@ -717,6 +717,28 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
   }
   if(noRange && fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
+  // if no range/min/max/step info is provided, try to compute a reasonnable
+  // range and step (this makes the gui much nicer to use)
+  if(noRange && !fopt.count("Range") && !fopt.count("Step") &&
+     !fopt.count("Min") && !fopt.count("Max")){
+    bool isInteger = (std::floor(val[0]) == val[0]);
+    double fact = isInteger ? 10. : 100.;
+    if(val[0] > 0){
+      ps[0].setMin(val[0] / fact);
+      ps[0].setMax(val[0] * fact);
+      ps[0].setStep((val[0] * fact - val[0] / fact) / 100.);
+    }
+    else if(val[0] < 0){
+      ps[0].setMin(val[0] * fact);
+      ps[0].setMax(val[0] / fact);
+      ps[0].setStep((val[0] / fact - val[0] * fact) / 100.);
+    }
+    if(std::floor(val[0]) == val[0]){ // integer
+      ps[0].setMin((int)ps[0].getMin());
+      ps[0].setMax((int)ps[0].getMax());
+      ps[0].setStep((int)ps[0].getStep());
+    }
+  }
   if(noChoices && fopt.count("Choices")){
     ps[0].setChoices(fopt["Choices"]);
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
