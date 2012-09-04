@@ -1261,7 +1261,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
       oldWorst = std::min(oldWorst, qmTriangle(*it, QMTRI_RHO));
       double ps;
       prosca(norm1, norm2, &ps);
-      if(ps < .5) return false;
+      double threshold = (isSphere ? 0.9 : 0.5);
+      if(ps < threshold) return false;
     }
     ++it;
   }
