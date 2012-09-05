@@ -27,6 +27,8 @@
 #ifndef _ONELAB_H_
 #define _ONELAB_H_
 
+#include <time.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -201,6 +203,44 @@ namespace onelab{
       version = getNextToken(msg, first);
       type = getNextToken(msg, first);
       name = getNextToken(msg, first);
+    }
+    static bool fromFile(std::vector<std::string> &msg,
+                         const std::string &fileName)
+    {
+      msg.clear();
+      FILE *fp = fopen(fileName.c_str(), "rb");
+      if(!fp) return false;
+      char tmp[1000];
+      if(!fgets(tmp, sizeof(tmp), fp)) return false; // first line is comment
+      while(!feof(fp)){
+        int numc = 0;
+        if(!fscanf(fp, "%d ", &numc)) break; // space is important
+        msg.push_back("");
+        for(int i = 0; i < numc; i++)
+          msg.back() += fgetc(fp);
+        if(!fgets(tmp, sizeof(tmp), fp)) return false; // end of line
+      }
+      fclose(fp);
+      return true;
+    }
+    static bool toFile(const std::vector<std::string> &msg,
+                       const std::string &fileName,
+                       const std::string &creator)
+    {
+      FILE *fp = fopen(fileName.c_str(), "wb");
+      if(!fp) return false;
+      time_t now;
+      time(&now);
+      fprintf(fp, "OneLab database created by %s on %s",
+              creator.c_str(), ctime(&now));
+      for(unsigned int i = 0; i < msg.size(); i++){
+        fprintf(fp, "%d ", (int)msg[i].size());
+        for(unsigned int j = 0; j < msg[i].size(); j++)
+          fputc(msg[i][j], fp);
+        fputc('\n', fp);
+      }
+      fclose(fp);
+      return true;
     }
   };
 
@@ -665,14 +705,39 @@ namespace onelab{
     }
     // serialize the parameter space (optinally only serialize those parameters
     // that depend on the given client)
-    std::string toChar(const std::string &client="") const
+    std::vector<std::string> toChar(const std::string &client="") const
     {
-      std::string s;
+      std::vector<std::string> s;
       std::set<parameter*> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::const_iterator it = ps.begin(); it != ps.end(); it++)
-        if(client.empty() || (*it)->hasClient(client)) s += (*it)->toChar() + "\n";
+        if(client.empty() || (*it)->hasClient(client))
+          s.push_back((*it)->toChar());
       return s;
+    }
+    // unserialize the parameter space
+    bool fromChar(const std::vector<std::string> &msg, const std::string &client)
+    {
+      for(unsigned int i = 0; i < msg.size(); i++){
+        std::string version, type, name;
+        onelab::parameter::getInfoFromChar(msg[i], version, type, name);
+        if(onelab::parameter::version() != version) return false;
+        if(type == "number"){
+          onelab::number p; p.fromChar(msg[i]); set(p, client);
+        }
+        else if(type == "string"){
+          onelab::string p; p.fromChar(msg[i]); set(p, client);
+        }
+        else if(type == "region"){
+          onelab::region p; p.fromChar(msg[i]); set(p, client);
+        }
+        else if(type == "function"){
+          onelab::function p; p.fromChar(msg[i]); set(p, client);
+        }
+        else
+          return false;
+      }
+      return true;
     }
   };
 
@@ -713,6 +778,52 @@ namespace onelab{
     virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<region> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<function> &ps, const std::string &name="") = 0;
+    std::vector<std::string> toChar()
+    {
+      std::vector<std::string> out;
+      std::vector<number> n; get(n);
+      for(unsigned int i = 0; i < n.size(); i++) out.push_back(n[i].toChar());
+      std::vector<number> s; get(s);
+      for(unsigned int i = 0; i < s.size(); i++) out.push_back(s[i].toChar());
+      std::vector<region> r; get(r);
+      for(unsigned int i = 0; i < r.size(); i++) out.push_back(r[i].toChar());
+      std::vector<region> f; get(f);
+      for(unsigned int i = 0; i < f.size(); i++) out.push_back(f[i].toChar());
+      return out;
+    }
+    bool fromChar(const std::vector<std::string> &msg)
+    {
+      for(unsigned int i = 0; i < msg.size(); i++){
+        std::string version, type, name;
+        onelab::parameter::getInfoFromChar(msg[i], version, type, name);
+        if(onelab::parameter::version() != version) return false;
+        if(type == "number"){
+          onelab::number p; p.fromChar(msg[i]); set(p);
+        }
+        else if(type == "string"){
+          onelab::string p; p.fromChar(msg[i]); set(p);
+        }
+        else if(type == "region"){
+          onelab::region p; p.fromChar(msg[i]); set(p);
+        }
+        else if(type == "function"){
+          onelab::function p; p.fromChar(msg[i]); set(p);
+        }
+        else
+          return false;
+      }
+      return true;
+    }
+    bool toFile(const std::string &fileName)
+    {
+      return parameter::toFile(toChar(), fileName, getName());
+    }
+    bool fromFile(const std::string &fileName)
+    {
+      std::vector<std::string> msg;
+      if(parameter::fromFile(msg, fileName)) return fromChar(msg);
+      return false;
+    }
   };
 
   // The onelab server: a singleton that stores the parameter space and
@@ -764,11 +875,25 @@ namespace onelab{
     {
       return _parameterSpace.getChanged(client);
     }
-    std::string toChar(const std::string &client="")
+    unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
+    std::vector<std::string> toChar(const std::string &client="")
     {
       return _parameterSpace.toChar(client);
     }
-    unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
+    bool fromChar(const std::vector<std::string> &msg, const std::string &client="")
+    {
+      return _parameterSpace.fromChar(msg, client);
+    }
+    bool toFile(const std::string &fileName, const std::string &client="")
+    {
+      return parameter::toFile(toChar(client), fileName, "onelab server");
+    }
+    bool fromFile(const std::string &fileName, const std::string &client="")
+    {
+      std::vector<std::string> msg;
+      if(parameter::fromFile(msg, fileName)) return fromChar(msg, client);
+      return false;
+    }
   };
 
   class localClient : public client{

@@ -412,16 +412,16 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "dump"){
-    std::string db = onelab::server::instance()->toChar();
+    std::vector<std::string> db = onelab::server::instance()->toChar();
     Msg::Direct("OneLab database dump:");
-    int start = 0;
     for(unsigned int i = 0; i < db.size(); i++){
-      if(db[i] == onelab::parameter::charSep()) db[i] = '|';
-      if(db[i] == '\n'){
-        Msg::Direct("%s", db.substr(start, i - start).c_str());
-        start = i + 1;
-      }
+      for(unsigned int j = 0; j < db[i].size(); j++)
+        if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
+      Msg::Direct("%s", db[i].c_str());
     }
+    Msg::Info("Writing database `onelab.db'...");
+    onelab::server::instance()->toFile("onelab.db");
+    Msg::Info("Done writing database");
     FlGui::instance()->showMessages();
     return;
   }
