@@ -44,6 +44,7 @@ class FunctionSpace{
   unsigned int fPerEdge;
   unsigned int fPerFace;
   unsigned int fPerCell;
+
   unsigned int type;
 
  public:

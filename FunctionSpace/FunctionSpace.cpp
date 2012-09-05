@@ -1,6 +1,7 @@
 #include "FunctionSpace.h"
 #include "BasisGenerator.h"
 
+
 using namespace std;
 
 FunctionSpace::FunctionSpace(void){
@@ -31,7 +32,8 @@ void FunctionSpace::build(const GroupOfElement& goe,
   basis = BasisGenerator::generate(elementType, 
 				   basisType, 
 				   order);
-
+  
+  // Number of *Per* Entity functions //
   fPerVertex = basis->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
 
@@ -124,18 +126,27 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 }
 
 int FunctionSpace::getElementType(const Dof& dof) const{
-  const unsigned int type = dof.getType();
+  // Get Entity //
+  const unsigned int entity = dof.getEntity();
 
-  if(type < fPerVertex)    // Vertex Based
+  // Total Number of Entities //
+  const unsigned int nVertex = mesh->getVertexNumber();
+  const unsigned int nEdge   = mesh->getEdgeNumber();
+  const unsigned int nFace   = mesh->getFaceNumber();
+  
+  // Vertex Based
+  if(entity < nVertex)
     return 0; 
 
-  else if(type < fPerEdge) // Edge Based
+  // Edge Based
+  else if(entity < nVertex + nEdge)
     return 1;
 
-  else if(type < fPerFace) // Face Based
+  // Face Based
+  else if(entity < nVertex + nEdge + nFace)
     return 2;
-
-  else                     // Cell Based
+  
+  // Cell Based
+  else
     return 3; 
 }
-
