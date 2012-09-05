@@ -422,8 +422,15 @@ void onelab_cb(Fl_Widget *w, void *data)
     Msg::Info("Writing database `onelab.db'...");
     onelab::server::instance()->toFile("onelab.db");
     Msg::Info("Done writing database");
-    FlGui::instance()->showMessages();
     return;
+  }
+
+  if(action == "load"){
+    std::string name = "onelab.db";
+    Msg::Info("Loading database '%s'...", name.c_str());
+    onelab::server::instance()->fromFile(name);
+    Msg::Info("Done loading database '%s'", name.c_str());
+    action = "check";
   }
 
   if(action == "reset"){
@@ -570,15 +577,16 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
-  _gear->add("_Print database", 0, onelab_cb, (void*)"dump");
+  _gear->add("Print database", 0, onelab_cb, (void*)"dump");
+  _gear->add("_Load database", 0, onelab_cb, (void*)"load");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("_Always show last step", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[2].set();
   ((Fl_Menu_Item*)_gear->menu())[3].set();
-  ((Fl_Menu_Item*)_gear->menu())[4].clear();
-  ((Fl_Menu_Item*)_gear->menu())[5].set();
+  ((Fl_Menu_Item*)_gear->menu())[4].set();
+  ((Fl_Menu_Item*)_gear->menu())[5].clear();
+  ((Fl_Menu_Item*)_gear->menu())[6].set();
   _gearFrozenMenuSize = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
@@ -1019,19 +1027,19 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else{
     _butt[1]->deactivate();
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 5) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
 }
 

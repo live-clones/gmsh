@@ -215,10 +215,11 @@ namespace onelab{
       while(!feof(fp)){
         int numc = 0;
         if(!fscanf(fp, "%d ", &numc)) break; // space is important
+        if(!numc) break;
         msg.push_back("");
         for(int i = 0; i < numc; i++)
           msg.back() += fgetc(fp);
-        if(!fgets(tmp, sizeof(tmp), fp)) return false; // end of line
+        if(!fgets(tmp, sizeof(tmp), fp)) break; // end of line
       }
       fclose(fp);
       return true;
