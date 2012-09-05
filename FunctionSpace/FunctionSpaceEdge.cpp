@@ -27,20 +27,17 @@ interpolate(const MElement& element,
   // Get Basis Functions //
   const vector<vector<Polynomial> >& fun = getBasis(element).getFunctions();
   const unsigned int nFun                = fun.size();
+
+  // Get Reference coordinate //
+  double phys[3] = {xyz(0), xyz(1), xyz(2)};
+  double uvw[3];
+  
+  eelement.xyz2uvw(phys, uvw);
   
   // Get Jacobian //
   fullMatrix<double>  invJac(3, 3);        
-  eelement.getJacobian(xyz(0), xyz(1), xyz(2), invJac);
+  eelement.getJacobian(uvw[0], uvw[1], uvw[2], invJac);
   invJac.invertInPlace();
-
-  // Get First Vertex of Element //
-  fullVector<double> origin(3);
-  origin(0) = eelement.getVertex(0)->x();
-  origin(1) = eelement.getVertex(0)->y();
-  origin(2) = eelement.getVertex(0)->z();
-
-  // Map XYZ to Reference Plane (UVW) //
-  fullVector<double> uvw = Mapper::invMap(xyz, origin, invJac);
  
   // Interpolate (in Reference Place) //
   fullVector<double> val(3); 
@@ -50,7 +47,7 @@ interpolate(const MElement& element,
 
   for(unsigned int i = 0; i < nFun; i++){
     fullVector<double> vi = 
-      Mapper::grad(Polynomial::at(fun[i], uvw(0), uvw(1), uvw(2)),
+      Mapper::grad(Polynomial::at(fun[i], uvw[0], uvw[1], uvw[2]),
 		   invJac);
     
     vi.scale(coef[i]);
