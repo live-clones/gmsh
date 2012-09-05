@@ -635,8 +635,10 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
-  if(sockname.empty())
-    _onelabClient = new onelab::localClient(name);
+  if(sockname.empty()){
+    _onelabClient = new onelab::localClient("Gmsh");
+    _onelabClient->fromFile(name);
+  }
   else{
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
     _onelabClient = c;
@@ -661,7 +663,6 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       //Info("Performing OneLab '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
     }
-
   }
 #endif
 }

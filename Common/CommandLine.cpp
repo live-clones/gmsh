@@ -151,6 +151,10 @@ void GetOptions(int argc, char *argv[])
           Msg::InitializeOnelab(argv[i], argv[i + 1]);
           i += 2;
         }
+        else if(argv[i]){
+          Msg::InitializeOnelab(argv[i], "");
+          i += 1;
+        }
         else
           Msg::Fatal("Missing client name and/or address of OneLab server");
       }
