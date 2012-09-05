@@ -10,25 +10,41 @@
 #ifndef _MESH_GFACE_RECOMBINE_H_
 #define _MESH_GFACE_RECOMBINE_H_
 
-#define REC2D_VERT_ONLY
+#define REC2D_ONLY_RECO
+#define REC2D_RECO_BLOS
+
 #define REC2D_ALIGNMENT .5
 #define REC2D_EDGE_BASE 2
 #define REC2D_EDGE_QUAD 1
 #define REC2D_VERT_TRIA 1
 #define REC2D_VERT_QUAD 2
-#define REC2D_NUMB_SONS 6
-#define REC2D_COEF_ANGL .0
-#define REC2D_COEF_DEGR .5
-#define REC2D_COEF_ANDE (1. - REC2D_COEF_ANGL - REC2D_COEF_DEGR)
-#define REC2D_COEF_ORIE .0
-#define REC2D_COEF_LENG .5
-#define REC2D_COEF_ORLE .5 //(1. - REC2D_COEF_ORIE - REC2D_COEF_LENG)
+
+#ifdef REC2D_ONLY_RECO
+  #define REC2D_NUMB_SONS 20
+  #define REC2D_VERT_ONLY
+  #define REC2D_COEF_ANGL 1.
+  #define REC2D_COEF_DEGR .0
+  #define REC2D_COEF_ANDE .0
+  #define REC2D_COEF_ORIE .0
+  #define REC2D_COEF_LENG .0
+  #define REC2D_COEF_ORLE .0
+#else
+  #define REC2D_NUMB_SONS 6
+  #define REC2D_VERT_ONLY
+  #define REC2D_COEF_ANGL .0
+  #define REC2D_COEF_DEGR .5
+  #define REC2D_COEF_ANDE (1. - REC2D_COEF_ANGL - REC2D_COEF_DEGR)
+  #define REC2D_COEF_ORIE .0
+  #define REC2D_COEF_LENG .5
+  #define REC2D_COEF_ORLE .5 //(1. - REC2D_COEF_ORIE - REC2D_COEF_LENG)
+#endif
 
 #include "GFace.h"
 #include "BackgroundMesh.h"
 //#include "GModel.h"
 //#include "MEdge.h"
 //#include "MQuadrangle.h"
+  #include "meshGFaceOptimize.h"
 
 class Rec2DNode;
 class Rec2DVertex;
@@ -70,10 +86,12 @@ class Recombine2D {
     
     bool recombine();
     double recombine(int depth);
+    void compareWithBlossom();
     bool developTree();
     int getNumTri() const;
     static void nextTreeActions(std::vector<Rec2DAction*>&,
-                                const std::vector<Rec2DElement*> &neighbours);
+                                const std::vector<Rec2DElement*> &neighbours,
+                                const Rec2DNode *node = NULL);
     
     inline void setStrategy(int s) {_strategy = s;}
     void drawState(double shiftx, double shifty) const;
@@ -118,6 +136,9 @@ class Rec2DData {
     long double _valEdge, _valVert;
     static Rec2DData *_cur;
     int _remainingTri;
+#ifdef REC2D_RECO_BLOS
+    long double _valQuad;
+#endif
     
     std::vector<Rec2DEdge*> _edges;
     std::vector<Rec2DVertex*> _vertices;
@@ -125,6 +146,10 @@ class Rec2DData {
     
     std::vector<Action*> _actions;
     std::vector<Rec2DAction*> _hiddenActions;
+#ifdef REC2D_ONLY_RECO
+    std::set<Rec2DElement*> _elementWithOneAction;
+    std::set<Rec2DElement*> _elementWithZeroAction;
+#endif
     std::vector<Rec2DNode*> _endNodes;
     std::vector<Rec2DDataChange*> _changes;
     
@@ -153,6 +178,9 @@ class Rec2DData {
     static inline int getNumEndNode() {return _cur->_endNodes.size();}
     static inline int getNumElement() {return _cur->_elements.size();}
     static Rec2DDataChange* getNewDataChange();
+//#ifdef REC2D_ONLY_RECO
+//    //static Rec2DDataChange* getCurrentDataChange() {return _cur->_changes.back();}
+//#endif
     static bool revertDataChange(Rec2DDataChange*);
     static void clearChanges();
     static int getNumChanges() {return _cur->_changes.size();}
@@ -170,6 +198,11 @@ class Rec2DData {
       _cur->_numEdge += num;
       _cur->_valEdge += (long double)val;
     }
+#ifdef REC2D_RECO_BLOS    
+    static inline void addQuadQual(double val) {
+      _cur->_valQuad += val;
+    }
+#endif
     static inline int getNumEdge() {return _cur->_numEdge;}
     static inline double getValEdge() {return (double)_cur->_valEdge;}
     static inline int getNumVert() {return _cur->_numVert;}
@@ -201,6 +234,18 @@ class Rec2DData {
     static void rmv(const Rec2DElement*);
     static void rmv(const Rec2DAction*);
     static bool has(const Rec2DAction*);
+#ifdef REC2D_ONLY_RECO
+    static void addHasZeroAction(const Rec2DElement*);
+    static void rmvHasZeroAction(const Rec2DElement*);
+    static bool hasHasZeroAction(const Rec2DElement*);
+    static int getNumZeroAction();
+    static void addHasOneAction(const Rec2DElement*);
+    static void rmvHasOneAction(const Rec2DElement*);
+    static bool hasHasOneAction(const Rec2DElement*);
+    static int getNumOneAction();
+    static Rec2DAction* getOneAction();
+    static void getOneActions(std::vector<Rec2DAction*>&);
+#endif
     
     static void addEndNode(const Rec2DNode*);
     static void sortEndNode();
@@ -222,7 +267,7 @@ enum Rec2DChangeType {
   SwapVertInAction, SwapVertInEdge, //10-11
   SwapEdgeInAction, SwapEdgeInElem, //12-13
   RemoveElem, AddElem, Relocate, ChangePar, SavePar, //14-18
-  SwapMVertInElement,
+  SwapMVertInElement, ValQuad,
   Error, Reverted
 };
 
@@ -234,6 +279,7 @@ class Rec2DChange {
   
   public :
     Rec2DChange() {Msg::Error("[Rec2DChange] I should not be created in this manner");}
+    Rec2DChange(double);
     Rec2DChange(Rec2DEdge*, bool toHide = false);
     Rec2DChange(Rec2DVertex*, bool toHide = false);
     Rec2DChange(Rec2DElement*, bool toHide = false);
@@ -269,6 +315,8 @@ class Rec2DDataChange {
   public :
     ~Rec2DDataChange();
     
+    inline void add(double d) {_changes.push_back(new Rec2DChange(d));}
+    
     inline void hide(Rec2DEdge *re) {_changes.push_back(new Rec2DChange(re, 1));}
     inline void hide(Rec2DVertex *rv) {_changes.push_back(new Rec2DChange(rv, 1));} 
     inline void hide(Rec2DElement *rel) {_changes.push_back(new Rec2DChange(rel, 1));}
@@ -300,7 +348,7 @@ class Rec2DDataChange {
 
 class Rec2DAction {
   protected :
-    double _globQualIfExecuted;
+    double _globQualIfExecuted, _reward;
     int _lastUpdate, _numPointing;
     
     void *_dataAction; // Rec2DData::Action*
@@ -318,6 +366,7 @@ class Rec2DAction {
     
     bool operator<(const Rec2DAction&) const;
     double getReward() const;
+    double getRealReward() const;
     inline void *getDataAction() const {return _dataAction;}
     virtual void color(int, int, int) const = 0;
     virtual void apply(std::vector<Rec2DVertex*> &newPar) = 0;
@@ -349,6 +398,7 @@ class Rec2DAction {
     
   private :
     virtual void _computeGlobQual() = 0;
+    virtual void _computeReward() = 0;
 };
 
 class Rec2DTwoTri2Quad : public Rec2DAction {
@@ -359,6 +409,9 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     friend class Rec2DCollapse;
     Rec2DCollapse *_col;
     double _valVert;
+#ifdef REC2D_RECO_BLOS
+    RecombineTriangle *_rt;
+#endif
     
   public :
     Rec2DTwoTri2Quad(Rec2DElement*, Rec2DElement*);
@@ -396,6 +449,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     
   private :
     virtual void _computeGlobQual();
+    virtual void _computeReward();
     void _doWhatYouHaveToDoWithParity(Rec2DDataChange*) const;
 };
 
@@ -450,6 +504,7 @@ class Rec2DCollapse : public Rec2DAction {
     
   private :
     virtual void _computeGlobQual();
+    virtual void _computeReward();
     bool _hasIdenticalElement() const;
 };
 
@@ -521,7 +576,6 @@ class Rec2DVertex {
     double _sumQualEdge;
     int _sumEdge, _sumAngle;
 #endif
-    
     friend void Rec2DData::add(const Rec2DVertex*);
     friend void Rec2DData::rmv(const Rec2DVertex*);
     
@@ -640,8 +694,8 @@ class Rec2DElement {
     bool has(const Rec2DElement*) const;
     void print() const;
     
-    bool inline isTri() const {return _numEdge == 3;}
-    bool inline isQuad() const {return _numEdge == 4;}
+    inline bool isTri() const {return _numEdge == 3;}
+    inline bool isQuad() const {return _numEdge == 4;}
     
     void add(Rec2DEdge*);
     bool has(const Rec2DEdge*) const;
@@ -711,13 +765,13 @@ class Rec2DNode {
     std::vector<Rec2DAction*> *_createdActions;
     Rec2DDataChange *_dataChange;
     int _remainingTri;
-    const int _d;
+    int _d;
     
   public :
     Rec2DNode(Rec2DNode *father, Rec2DAction*,
               double &bestEndGlobQual, int depth = -1);
     ~Rec2DNode();
-    bool canBeDeleted();
+    bool canBeDeleted() const;
     
     Rec2DNode* selectBestNode();
     void recoverSequence();
@@ -759,6 +813,8 @@ class Rec2DNode {
     }
     bool makeChanges();
     bool revertChanges();
+    void printSequence() const;
+    inline bool isInSequence() const {return _father && _father->_d != _d;}
     
     bool operator<(Rec2DNode&);
     inline Rec2DNode* getFather() const {return _father;}
