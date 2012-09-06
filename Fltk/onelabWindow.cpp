@@ -419,17 +419,22 @@ void onelab_cb(Fl_Widget *w, void *data)
         if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
       Msg::Direct("%s", db[i].c_str());
     }
-    Msg::Info("Writing database `onelab.db'...");
-    onelab::server::instance()->toFile("onelab.db");
-    Msg::Info("Done writing database");
+    std::string name = "onelab.db";
+    Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
+    if(onelab::server::instance()->toFile(name))
+      Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
+    else
+      Msg::Error("Could not write database '%s'", name.c_str());
     return;
   }
 
   if(action == "load"){
     std::string name = "onelab.db";
-    Msg::Info("Loading database '%s'...", name.c_str());
-    onelab::server::instance()->fromFile(name);
-    Msg::Info("Done loading database '%s'", name.c_str());
+    Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
+    if(onelab::server::instance()->fromFile(name))
+      Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
+    else
+      Msg::Error("Could not load database '%s'", name.c_str());
     action = "check";
   }
 
@@ -577,7 +582,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
-  _gear->add("Print database", 0, onelab_cb, (void*)"dump");
+  _gear->add("Save database", 0, onelab_cb, (void*)"dump");
   _gear->add("_Load database", 0, onelab_cb, (void*)"load");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
