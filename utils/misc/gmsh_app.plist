@@ -11,6 +11,7 @@
     <key>CFBundleSignature</key><string>GMSH</string>
     <key>CFBundleGetInfoString</key><string>Gmsh GMSH_VERSION, Copyright 1997-2012 C. Geuzaine and J.-F. Remacle</string>
     <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>
+    <key>NSHighResolutionCapable</key><true/>
     <key>CFBundleDocumentTypes</key>
     <array>
       <dict>
