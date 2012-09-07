@@ -32,7 +32,7 @@ int basisTest(int argc, char** argv){
   writer.setDomain(goe.getAll());
 
   // Plot Basis //
-  HexNodeBasis b(1);
+  TriNodeBasis b(3);
   
   PlotBasis plot(b, goe, writer);
   plot.plot("basis");
