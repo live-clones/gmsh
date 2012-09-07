@@ -467,7 +467,6 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements,
                             std::vector<med_int> &conn, std::vector<med_int> &fam,
                             med_geometrie_element &type)
 {
-  type = MED_NONE;
   if(elements.empty()) return;
   type = msh2medElementType(elements[0]->getTypeForMSH());
   if(type == MED_NONE){
@@ -626,8 +625,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 
   // write the elements
   {
-    med_geometrie_element typ = MED_NONE;
     { // points
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(viter it = firstVertex(); it != lastVertex(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -635,6 +634,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // lines
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(eiter it = firstEdge(); it != lastEdge(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -642,6 +642,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // triangles
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -649,6 +650,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // quads
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -656,6 +658,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // tets
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -663,6 +666,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // hexas
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -670,6 +674,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // prisms
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
         if(saveAll || (*it)->physicals.size())
@@ -677,6 +682,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // pyramids
+      med_geometrie_element typ = MED_NONE;
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
         if(saveAll || (*it)->physicals.size())
