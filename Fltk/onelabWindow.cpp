@@ -481,7 +481,6 @@ void onelab_cb(Fl_Widget *w, void *data)
     std::vector<onelab::number> n;
     onelab::server::instance()->get(n, "HasGmsh");
     bool metamodel = (n.size() && n[0].getValue());
-
     // if the client is a not a metamodel, run Gmsh
     if(!metamodel){
       if(onelabUtils::runGmshClient(action, FlGui::instance()->onelab->meshAuto()))
