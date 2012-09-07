@@ -411,30 +411,38 @@ void onelab_cb(Fl_Widget *w, void *data)
     return;
   }
 
-  if(action == "dump"){
+  if(action == "save"){
     std::vector<std::string> db = onelab::server::instance()->toChar();
-    Msg::Direct("OneLab database dump:");
+    Msg::Direct("OneLab database:");
     for(unsigned int i = 0; i < db.size(); i++){
       for(unsigned int j = 0; j < db[i].size(); j++)
         if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
       Msg::Direct("%s", db[i].c_str());
     }
-    std::string name = "onelab.db";
-    Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
-    if(onelab::server::instance()->toFile(name))
-      Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
-    else
-      Msg::Error("Could not write database '%s'", name.c_str());
+    std::string path = SplitFileName(GModel::current()->getFileName())[0];
+    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db",
+                   (path + "onelab.db").c_str())){
+      std::string name = fileChooserGetName(1);
+      Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
+      if(onelab::server::instance()->toFile(name))
+        Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
+      else
+        Msg::Error("Could not write database '%s'", name.c_str());
+    }
     return;
   }
 
   if(action == "load"){
-    std::string name = "onelab.db";
-    Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
-    if(onelab::server::instance()->fromFile(name))
-      Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
-    else
-      Msg::Error("Could not load database '%s'", name.c_str());
+    std::string path = SplitFileName(GModel::current()->getFileName())[0];
+    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db",
+                   (path + "onelab.db").c_str())) {
+      std::string name = fileChooserGetName(1);
+      Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
+      if(onelab::server::instance()->fromFile(name))
+        Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
+      else
+        Msg::Error("Could not load database '%s'", name.c_str());
+    }
     action = "check";
   }
 
@@ -582,8 +590,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
-  _gear->add("Save database", 0, onelab_cb, (void*)"dump");
-  _gear->add("_Load database", 0, onelab_cb, (void*)"load");
+  _gear->add("Save database...", 0, onelab_cb, (void*)"save");
+  _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
