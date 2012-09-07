@@ -19,7 +19,7 @@
 
 using namespace std;
 
-int ain(int argc, char** argv){
+int basisTest(int argc, char** argv){
   // Init Gmsh //
   GmshInitialize(argc, argv);
 

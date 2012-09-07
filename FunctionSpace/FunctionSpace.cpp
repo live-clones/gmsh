@@ -92,17 +92,17 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   int it = 0;
 
   // Add Vertex Based Dof //
-  for(int i = 0; i < nVertex; i++){
-    for(int j = 0; j < nFVertex; j++){
-      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
+  for(int i = 0; i < nFVertex; i++){
+    for(int j = 0; j < nVertex; j++){
+      myDof[it].setDof(mesh->getGlobalId(*vertex[j]), i);
       it++;
     }
   }
   
   // Add Edge Based Dof //
-  for(int i = 0; i < nEdge; i++){
-    for(int j = 0; j < nFEdge; j++){
-      myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
+  for(int i = 0; i < nFEdge; i++){
+    for(int j = 0; j < nEdge; j++){
+      myDof[it].setDof(mesh->getGlobalId(edge[j]), i);
       it++;
     }
   }
@@ -116,8 +116,8 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   }
   */
   // Add Cell Based Dof //
-  for(int j = 0; j < nFCell; j++){
-    myDof[it].setDof(mesh->getGlobalId(element), j);
+  for(int i = 0; i < nFCell; i++){
+    myDof[it].setDof(mesh->getGlobalId(element), i);
     it++;
   }
   
