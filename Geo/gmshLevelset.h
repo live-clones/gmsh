@@ -209,7 +209,6 @@ protected:
   void init ();
 
 public:
-  gLevelsetQuadric() : gLevelsetPrimitive() {init(); }
   gLevelsetQuadric(int tag=1) : gLevelsetPrimitive(tag) {init(); }
   gLevelsetQuadric(const gLevelsetQuadric &);
   virtual ~gLevelsetQuadric() {}
