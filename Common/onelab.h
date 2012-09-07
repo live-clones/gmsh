@@ -704,7 +704,7 @@ namespace onelab{
           (*it)->setChanged(changed);
       return true;
     }
-    // serialize the parameter space (optinally only serialize those parameters
+    // serialize the parameter space (optionally only serialize those parameters
     // that depend on the given client)
     std::vector<std::string> toChar(const std::string &client="") const
     {
@@ -717,7 +717,7 @@ namespace onelab{
       return s;
     }
     // unserialize the parameter space
-    bool fromChar(const std::vector<std::string> &msg, const std::string &client)
+    bool fromChar(const std::vector<std::string> &msg, const std::string &client="")
     {
       for(unsigned int i = 0; i < msg.size(); i++){
         std::string version, type, name;
