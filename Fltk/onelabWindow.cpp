@@ -615,6 +615,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
+int onelabWindow::meshAuto(){ return _gear->menu()[3].value(); }
+int onelabWindow::mergeAuto(){ return _gear->menu()[4].value(); }
+int onelabWindow::hideNewViews(){ return _gear->menu()[5].value(); }
+int onelabWindow::showLastStep(){ return _gear->menu()[6].value(); }
+
 static bool getFlColor(const std::string &str, Fl_Color &c)
 {
   if(str == "1"){
