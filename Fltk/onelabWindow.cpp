@@ -380,6 +380,36 @@ static void updateGraphs()
   }
 }
 
+static void writeDb(const std::string &fileName, bool withTimeStamp=false)
+{
+  std::string name(fileName);
+  if(withTimeStamp){
+    time_t now;
+    time(&now);
+    tm *t = localtime(&now);
+    char stamp[32];
+    sprintf(stamp, "_%04d-%02d-%02d-%02d:%02d:%02d", 1900 + t->tm_year,
+            1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+    std::vector<std::string> split = SplitFileName(fileName);
+    name = split[0] + split[1] + stamp + split[2];
+  }
+
+  Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
+  if(onelab::server::instance()->toFile(name))
+    Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
+  else
+    Msg::Error("Could not write database '%s'", name.c_str());
+}
+
+static void loadDb(const std::string &name)
+{
+  Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
+  if(onelab::server::instance()->fromFile(name))
+    Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
+  else
+    Msg::Error("Could not load database '%s'", name.c_str());
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -419,30 +449,16 @@ void onelab_cb(Fl_Widget *w, void *data)
         if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
       Msg::Direct("%s", db[i].c_str());
     }
-    std::string path = SplitFileName(GModel::current()->getFileName())[0];
-    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db",
-                   (path + "onelab.db").c_str())){
-      std::string name = fileChooserGetName(1);
-      Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
-      if(onelab::server::instance()->toFile(name))
-        Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
-      else
-        Msg::Error("Could not write database '%s'", name.c_str());
-    }
+    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str()))
+      writeDb(fileChooserGetName(1));
     return;
   }
 
   if(action == "load"){
-    std::string path = SplitFileName(GModel::current()->getFileName())[0];
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db",
-                   (path + "onelab.db").c_str())) {
-      std::string name = fileChooserGetName(1);
-      Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
-      if(onelab::server::instance()->fromFile(name))
-        Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
-      else
-        Msg::Error("Could not load database '%s'", name.c_str());
-    }
+    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", s.c_str()))
+      loadDb(fileChooserGetName(1));
     action = "check";
   }
 
@@ -519,6 +535,12 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
+
+  bool autoSaveDb = false;
+  if(action == "compute" && autoSaveDb){
+    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    writeDb(s, true);
+  }
 
   FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->setButtonMode("check", "compute");
