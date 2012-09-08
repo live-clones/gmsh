@@ -51,11 +51,11 @@ class onelabWindow{
   bool isBusy();
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
-  int saveAuto();
-  int meshAuto();
-  int mergeAuto();
-  int hideNewViews();
-  int showLastStep();
+  int autoSaveDatabase();
+  int autoMesh();
+  int autoMergeFile();
+  int autoHideNewViews();
+  int autoShowLastStep();
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];

@@ -287,10 +287,10 @@ bool onelab::localNetworkClient::run()
       Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_MERGE_FILE:
-      if(FlGui::instance()->onelab->mergeAuto()){
+      if(FlGui::instance()->onelab->autoMergeFile()){
         unsigned int n = PView::list.size();
-        MergePostProcessingFile(message, FlGui::instance()->onelab->showLastStep(),
-                                FlGui::instance()->onelab->hideNewViews(), true);
+        MergePostProcessingFile(message, FlGui::instance()->onelab->autoShowLastStep(),
+                                FlGui::instance()->onelab->autoHideNewViews(), true);
         drawContext::global()->draw();
         if(n != PView::list.size())
           FlGui::instance()->menu->setContext(menu_post, 0);
@@ -499,7 +499,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     bool metamodel = (n.size() && n[0].getValue());
     // if the client is a not a metamodel, run Gmsh
     if(!metamodel){
-      if(onelabUtils::runGmshClient(action, FlGui::instance()->onelab->meshAuto()))
+      if(onelabUtils::runGmshClient(action, FlGui::instance()->onelab->autoMesh()))
         drawContext::global()->draw();
     }
 
@@ -536,7 +536,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
 
-  if(FlGui::instance()->onelab->saveAuto() && action == "compute"){
+  if(FlGui::instance()->onelab->autoSaveDatabase() && action == "compute"){
     std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     writeDb(s, true);
   }
@@ -637,11 +637,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
-int onelabWindow::saveAuto(){ return _gear->menu()[3].value(); }
-int onelabWindow::meshAuto(){ return _gear->menu()[4].value(); }
-int onelabWindow::mergeAuto(){ return _gear->menu()[5].value(); }
-int onelabWindow::hideNewViews(){ return _gear->menu()[6].value(); }
-int onelabWindow::showLastStep(){ return _gear->menu()[7].value(); }
+int onelabWindow::autoSaveDatabase(){ return _gear->menu()[3].value(); }
+int onelabWindow::autoMesh(){ return _gear->menu()[4].value(); }
+int onelabWindow::autoMergeFile(){ return _gear->menu()[5].value(); }
+int onelabWindow::autoHideNewViews(){ return _gear->menu()[6].value(); }
+int onelabWindow::autoShowLastStep(){ return _gear->menu()[7].value(); }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
 {

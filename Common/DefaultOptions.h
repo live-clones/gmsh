@@ -1111,7 +1111,20 @@ StringXNumber SolverOptions_Number[] = {
     "Enable default solver plugins?" },
 
   { F|O, "Timeout" , opt_solver_timeout , 5. ,
-    "Time (in seconds) before closing the socket if no connection is happening." },
+    "Time (in seconds) before closing the socket if no connection is happening" },
+
+  /* TODO
+  { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 0. ,
+    "Automatically save database after each computation" },
+  { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
+    "Automatically mesh if necesssary" },
+  { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
+    "Automatically merge result files" },
+  { F|O, "AutoHideNewViews" , opt_solver_auto_hide_new_views , 1. ,
+    "Automcatically hide newly merged results" },
+  { F|O, "AutoShowLastStep" , opt_solver_auto_show_last_step , 1. ,
+    "Automatically show the last time step in newly merged results" },
+  */
 
   { 0, 0 , 0 , 0. , 0 }
 } ;
