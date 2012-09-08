@@ -536,8 +536,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
 
-  bool autoSaveDb = false;
-  if(action == "compute" && autoSaveDb){
+  if(FlGui::instance()->onelab->saveAuto() && action == "compute"){
     std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     writeDb(s, true);
   }
@@ -613,14 +612,16 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
+  _gear->add("Save database automatically", 0, 0, 0, FL_MENU_TOGGLE);
+  ((Fl_Menu_Item*)_gear->menu())[3].clear();
   _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
-  _gear->add("_Always show last step", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[3].set();
   ((Fl_Menu_Item*)_gear->menu())[4].set();
-  ((Fl_Menu_Item*)_gear->menu())[5].clear();
-  ((Fl_Menu_Item*)_gear->menu())[6].set();
+  _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
+  ((Fl_Menu_Item*)_gear->menu())[5].set();
+  _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
+  ((Fl_Menu_Item*)_gear->menu())[6].clear();
+  _gear->add("_Always show last step", 0, 0, 0, FL_MENU_TOGGLE);
+  ((Fl_Menu_Item*)_gear->menu())[7].set();
   _gearFrozenMenuSize = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
@@ -636,10 +637,11 @@ onelabWindow::onelabWindow(int deltaFontSize)
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
-int onelabWindow::meshAuto(){ return _gear->menu()[3].value(); }
-int onelabWindow::mergeAuto(){ return _gear->menu()[4].value(); }
-int onelabWindow::hideNewViews(){ return _gear->menu()[5].value(); }
-int onelabWindow::showLastStep(){ return _gear->menu()[6].value(); }
+int onelabWindow::saveAuto(){ return _gear->menu()[3].value(); }
+int onelabWindow::meshAuto(){ return _gear->menu()[4].value(); }
+int onelabWindow::mergeAuto(){ return _gear->menu()[5].value(); }
+int onelabWindow::hideNewViews(){ return _gear->menu()[6].value(); }
+int onelabWindow::showLastStep(){ return _gear->menu()[7].value(); }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
 {
@@ -1066,19 +1068,19 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else{
     _butt[1]->deactivate();
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 1 || i > 6) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
 }
 

@@ -51,6 +51,7 @@ class onelabWindow{
   bool isBusy();
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
+  int saveAuto();
   int meshAuto();
   int mergeAuto();
   int hideNewViews();
