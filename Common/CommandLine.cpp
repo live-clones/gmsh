@@ -130,12 +130,15 @@ void GetOptions(int argc, char *argv[])
   CTX::instance()->terminal = 1;
 
 #if defined(HAVE_PARSER)
-  // Parse session and option files
-  ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
-  ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
+  if(argc && argv){
+    // parse session and option file (if argc/argv is not provided skip this
+    // step: this is usually what is expected when using Gmsh as a library)
+    ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
+    ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
+  }
 #endif
 
-  // Get command line options
+  // get command line options
   int i = 1;
   while(i < argc) {
 
@@ -211,8 +214,8 @@ void GetOptions(int argc, char *argv[])
       else if (!strcmp(argv[i] + 1,"partWeight")) {
         i++;
         bool check = true;
-        opt_mesh_partition_partitioner(0,GMSH_SET,2);     // set Metis partitioner
-        opt_mesh_partition_metis_algorithm(0,GMSH_SET,3); // set partGraphKWay w/ weights
+        opt_mesh_partition_partitioner(0, GMSH_SET, 2); // Metis partitioner
+        opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
         while (check) {
           if (argv[i]) {
             if (!strcmp(argv[i],"triangle")) {
@@ -777,9 +780,8 @@ void GetOptions(int argc, char *argv[])
 #endif
 #if defined(__APPLE__)
       else if(!strncmp(argv[i] + 1, "psn", 3)) {
-        // The Mac Finder launches programs with a special command
-        // line argument of the form -psn_XXX: just ignore it silently
-        // (and don't exit!)
+        // the Mac Finder launches programs with a special command line argument
+        // of the form -psn_XXX: just ignore it silently (and don't exit!)
         i++;
       }
 #endif
