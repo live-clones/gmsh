@@ -287,10 +287,10 @@ bool onelab::localNetworkClient::run()
       Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_MERGE_FILE:
-      if(FlGui::instance()->onelab->autoMergeFile()){
+      if(CTX::instance()->solver.autoMergeFile){
         unsigned int n = PView::list.size();
-        MergePostProcessingFile(message, FlGui::instance()->onelab->autoShowLastStep(),
-                                FlGui::instance()->onelab->autoHideNewViews(), true);
+        MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
+                                CTX::instance()->solver.autoHideNewViews, true);
         drawContext::global()->draw();
         if(n != PView::list.size())
           FlGui::instance()->menu->setContext(menu_post, 0);
@@ -499,7 +499,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     bool metamodel = (n.size() && n[0].getValue());
     // if the client is a not a metamodel, run Gmsh
     if(!metamodel){
-      if(onelabUtils::runGmshClient(action, FlGui::instance()->onelab->autoMesh()))
+      if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
         drawContext::global()->draw();
     }
 
@@ -536,7 +536,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
 
-  if(FlGui::instance()->onelab->autoSaveDatabase() && action == "compute"){
+  if(CTX::instance()->solver.autoSaveDatabase && action == "compute"){
     std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     writeDb(s, true);
   }
@@ -544,6 +544,22 @@ void onelab_cb(Fl_Widget *w, void *data)
   FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->setButtonMode("check", "compute");
   if(action != "initialize") FlGui::instance()->onelab->show();
+}
+
+
+void onelab_option_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string what((const char*)data);
+  double val = ((Fl_Menu_*)w)->mvalue()->value() ? 1. : 0.;
+  if(what == "save")
+    CTX::instance()->solver.autoSaveDatabase = val;
+  else if(what == "merge")
+    CTX::instance()->solver.autoMergeFile = val;
+  else if(what == "hide")
+    CTX::instance()->solver.autoHideNewViews = val;
+  else if(what == "step")
+    CTX::instance()->solver.autoShowLastStep = val;
 }
 
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
@@ -612,17 +628,26 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
-  _gear->add("Save database automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[3].clear();
-  _gear->add("Remesh automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[4].set();
-  _gear->add("Merge results automatically", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[5].set();
-  _gear->add("Hide new views", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[6].clear();
-  _gear->add("_Always show last step", 0, 0, 0, FL_MENU_TOGGLE);
-  ((Fl_Menu_Item*)_gear->menu())[7].set();
-  _gearFrozenMenuSize = _gear->menu()->size();
+
+  _gearOptionsStart = _gear->menu()->size();
+
+  _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
+             FL_MENU_TOGGLE |
+             (CTX::instance()->solver.autoSaveDatabase ? FL_MENU_VALUE : 0));
+  _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
+             FL_MENU_TOGGLE |
+             (CTX::instance()->solver.autoMesh ? FL_MENU_VALUE : 0));
+  _gear->add("Merge results automatically", 0, onelab_option_cb, (void*)"merge",
+             FL_MENU_TOGGLE |
+             (CTX::instance()->solver.autoMergeFile ? FL_MENU_VALUE : 0));
+  _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
+             FL_MENU_TOGGLE |
+             (CTX::instance()->solver.autoHideNewViews ? FL_MENU_VALUE : 0));
+  _gear->add("_Always show last step", 0, onelab_option_cb, (void*)"step",
+             FL_MENU_TOGGLE |
+             (CTX::instance()->solver.autoShowLastStep ? FL_MENU_VALUE : 0));
+
+  _gearOptionsEnd = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
                               width - 2 * BB - BB / 2 - 4 * WB,
@@ -636,12 +661,6 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   FL_NORMAL_SIZE += _deltaFontSize;
 }
-
-int onelabWindow::autoSaveDatabase(){ return _gear->menu()[3].value(); }
-int onelabWindow::autoMesh(){ return _gear->menu()[4].value(); }
-int onelabWindow::autoMergeFile(){ return _gear->menu()[5].value(); }
-int onelabWindow::autoHideNewViews(){ return _gear->menu()[6].value(); }
-int onelabWindow::autoShowLastStep(){ return _gear->menu()[7].value(); }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
 {
@@ -1068,19 +1087,22 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
     _butt[1]->label("Stop");
     _butt[1]->callback(onelab_cb, (void*)"stop");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else if(butt1 == "kill"){
     _butt[1]->activate();
     _butt[1]->label("Kill");
     _butt[1]->callback(onelab_cb, (void*)"kill");
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
   else{
     _butt[1]->deactivate();
     for(int i = 0; i < _gear->menu()->size(); i++)
-      if(i < 3 || i > 7) ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
   }
 }
 
@@ -1095,7 +1117,7 @@ void onelabWindow::rebuildSolverList()
 {
   // update OneLab window title and gear menu
   _title = "OneLab";
-  for(int i = _gear->menu()->size(); i >= _gearFrozenMenuSize - 1; i--)
+  for(int i = _gear->menu()->size(); i >= _gearOptionsEnd - 1; i--)
     _gear->remove(i);
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){

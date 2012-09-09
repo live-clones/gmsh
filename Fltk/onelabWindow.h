@@ -23,7 +23,7 @@ class onelabWindow{
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
-  int _gearFrozenMenuSize;
+  int _gearOptionsStart, _gearOptionsEnd;
   std::vector<Fl_Widget*> _treeWidgets;
   std::vector<char*> _treeStrings;
   std::string _title;
@@ -51,11 +51,6 @@ class onelabWindow{
   bool isBusy();
   void show(){ _win->show(); }
   int shown(){ return _win->shown(); }
-  int autoSaveDatabase();
-  int autoMesh();
-  int autoMergeFile();
-  int autoHideNewViews();
-  int autoShowLastStep();
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];

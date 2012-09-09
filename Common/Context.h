@@ -222,6 +222,8 @@ class CTX {
     double timeout;
     std::string socketName;
     std::string name[5], executable[5], remoteLogin[5];
+    int autoSaveDatabase, autoMesh, autoMergeFile, autoHideNewViews;
+    int autoShowLastStep;
   }solver;
   // print options
   struct{
@@ -252,15 +254,13 @@ class CTX {
   } color;
   // is the machine big-endian?
   int bigEndian;
-  // how RGBA values are packed and unpacked into/from an unsigned
-  // integer to be fed to glColor4ubv (depends on machine byte
-  // ordering!):
+  // how RGBA values are packed and unpacked into/from an unsigned integer to be
+  // fed to glColor4ubv (depends on machine byte ordering!):
   unsigned int packColor(int R, int G, int B, int A);
   int unpackRed(unsigned int X);
   int unpackGreen(unsigned int X);
   int unpackBlue(unsigned int X);
   int unpackAlpha(unsigned int X);
-
 };
 
 #endif

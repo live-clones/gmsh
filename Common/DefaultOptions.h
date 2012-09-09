@@ -1106,14 +1106,6 @@ StringXNumber MeshOptions_Number[] = {
 StringXNumber SolverOptions_Number[] = {
   { F|O, "AlwaysListen" , opt_solver_listen , 0. ,
     "Always listen to incoming connection requests?" },
-
-  { F|O, "Plugins" , opt_solver_plugins , 0. ,
-    "Enable default solver plugins?" },
-
-  { F|O, "Timeout" , opt_solver_timeout , 5. ,
-    "Time (in seconds) before closing the socket if no connection is happening" },
-
-  /* TODO
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 0. ,
     "Automatically save database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
@@ -1124,7 +1116,12 @@ StringXNumber SolverOptions_Number[] = {
     "Automcatically hide newly merged results" },
   { F|O, "AutoShowLastStep" , opt_solver_auto_show_last_step , 1. ,
     "Automatically show the last time step in newly merged results" },
-  */
+
+  { F|O, "Plugins" , opt_solver_plugins , 0. ,
+    "Enable default solver plugins?" },
+
+  { F|O, "Timeout" , opt_solver_timeout , 5. ,
+    "Time (in seconds) before closing the socket if no connection is happening" },
 
   { 0, 0 , 0 , 0. , 0 }
 } ;

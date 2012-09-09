@@ -5725,6 +5725,41 @@ double opt_solver_plugins(OPT_ARGS_NUM)
   return CTX::instance()->solver.plugins;
 }
 
+double opt_solver_auto_save_database(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoSaveDatabase = (int)val;
+  return CTX::instance()->solver.autoSaveDatabase;
+}
+
+double opt_solver_auto_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoMesh = (int)val;
+  return CTX::instance()->solver.autoMesh;
+}
+
+double opt_solver_auto_merge_file(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoMergeFile = (int)val;
+  return CTX::instance()->solver.autoMergeFile;
+}
+
+double opt_solver_auto_hide_new_views(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoHideNewViews = (int)val;
+  return CTX::instance()->solver.autoHideNewViews;
+}
+
+double opt_solver_auto_show_last_step(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoShowLastStep = (int)val;
+  return CTX::instance()->solver.autoShowLastStep;
+}
+
 double opt_post_horizontal_scales(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
