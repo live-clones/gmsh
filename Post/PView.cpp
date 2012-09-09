@@ -39,7 +39,7 @@ PView::PView(int num)
 {
   _init(num);
   _data = new PViewDataList();
-  _options = new PViewOptions(PViewOptions::reference);
+  _options = new PViewOptions(*PViewOptions::reference());
   if(_options->adaptVisualizationGrid)
     _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
                             _options->targetError);
@@ -49,7 +49,7 @@ PView::PView(PViewData *data, int num)
 {
   _init(num);
   _data = data;
-  _options = new PViewOptions(PViewOptions::reference);
+  _options = new PViewOptions(*PViewOptions::reference());
   if(_options->adaptVisualizationGrid)
     _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
                             _options->targetError);
@@ -74,7 +74,7 @@ PView::PView(PView *ref, bool copyOptions)
   if(copyOptions)
     _options = new PViewOptions(*ref->getOptions());
   else
-    _options = new PViewOptions(PViewOptions::reference);
+    _options = new PViewOptions(*PViewOptions::reference());
   if(_options->adaptVisualizationGrid)
     _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
                             _options->targetError);
@@ -88,7 +88,7 @@ PView::PView(const std::string &xname, const std::string &yname,
   _data->setXY(x, y);
   _data->setName(yname);
   _data->setFileName(yname + ".pos");
-  _options = new PViewOptions(PViewOptions::reference);
+  _options = new PViewOptions(*PViewOptions::reference());
   _options->type = PViewOptions::Plot2D;
   _options->axes = 3;
   _options->lineWidth = 2.;
@@ -117,7 +117,7 @@ PView::PView(const std::string &name, const std::string &type,
   d->setName(name);
   d->setFileName(name + ".msh");
   _data = d;
-  _options = new PViewOptions(PViewOptions::reference);
+  _options = new PViewOptions(*PViewOptions::reference());
   if(_options->adaptVisualizationGrid)
     _data->initAdaptiveData(_options->timeStep, _options->maxRecursionLevel,
                             _options->targetError);
@@ -173,7 +173,7 @@ void PView::setOptions(PViewOptions *val)
   if(val)
     _options = val;
   else if(_options) // deep copy options from reference view
-    *_options = PViewOptions::reference;
+    *_options = *PViewOptions::reference();
 }
 
 PViewData *PView::getData(bool useAdaptiveIfAvailable)

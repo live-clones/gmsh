@@ -500,7 +500,7 @@ GmshColorTable *GetColorTable(int num)
 #if defined(HAVE_POST)
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
-    opt = &PViewOptions::reference;
+    opt = PViewOptions::reference();
   else{
     opt = PView::list[num]->getOptions();
     // assume that if we access the colortable we will change it
@@ -517,7 +517,7 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file)
 #if defined(HAVE_POST)
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
-    opt = &PViewOptions::reference;
+    opt = PViewOptions::reference();
   else
     opt = PView::list[num]->getOptions();
 
@@ -872,7 +872,7 @@ void PrintOptionsDoc()
   PViewData *data = 0;                                  \
   PViewOptions *opt;                                    \
   if(PView::list.empty())                               \
-    opt = &PViewOptions::reference;                     \
+    opt = PViewOptions::reference();                    \
   else{                                                 \
     if(num < 0 || num >= (int)PView::list.size()){      \
       Msg::Warning("View[%d] does not exist", num);     \

@@ -48,13 +48,13 @@ class meshPartitionOptions
                                         // 3 - Octasection
   double eigtol;                        // Tolerance to the eigensolver
   long seed;                            // RNG seed
-  
+
   // parameters
   int refine_partition;                 // Refine partitions at each level
   int internal_vertices;                // Increase internal vertices
   int refine_map;                       // Refine processor mapping
   int terminal_propogation;             // Run with terminal propogation
-  
+
   // METIS
   int algorithm;
                                         // 1 - Recursive
@@ -70,23 +70,24 @@ class meshPartitionOptions
                                         // 3 - Random boundary refinement (with
                                         //     minimization of connectivity
                                         //     along sub-domains)
-  
-  // element weights for load-balancing (currently used in METIS algorithm 3) 
-  int triWeight;  
+
+  // element weights for load-balancing (currently used in METIS algorithm 3)
+  int triWeight;
   int quaWeight;
   int tetWeight;
   int priWeight;
   int pyrWeight;
   int hexWeight;
-  
+
   // NODAL WEIGHT
   std::vector<int> nodalWeights;
   std::map<int, std::vector<int> > vWeightMap;
   std::map<int, int > eWeightMap;
   std::vector<int> tolerance;
-    
+
  public:
   meshPartitionOptions(){ setDefaults(); }
+  ~meshPartitionOptions(){}
   void setAlgorithm(int algo){ algorithm = algo; }
   void setNumOfPartitions(int numPart){ num_partitions = numPart; }
   int getNumOfPartitions(){ return num_partitions; }
@@ -127,7 +128,7 @@ class meshPartitionOptions
     tetWeight = 1;
     priWeight = 1;
     pyrWeight = 1;
-    hexWeight = 1; 
+    hexWeight = 1;
   }
 };
 

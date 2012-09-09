@@ -8,6 +8,8 @@
 #ifndef _CGNSOPTIONS_H_
 #define _CGNSOPTIONS_H_
 
+#include <string>
+
 class CGNSOptions
 {
  public:
@@ -34,10 +36,8 @@ class CGNSOptions
   bool writeUserDef;                    // T - write user-defined elements for
                                         //     element types unsupported by CGNS
 
-  CGNSOptions()
-  {
-    setDefaults();
-  }
+  CGNSOptions(){ setDefaults(); }
+  ~CGNSOptions(){}
   void setDefaults()
   {
     baseName = "Base_1";

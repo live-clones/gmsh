@@ -10,8 +10,6 @@
 #include "PViewOptions.h"
 #include "mathEvaluator.h"
 
-PViewOptions PViewOptions::reference;
-
 PViewOptions::PViewOptions() : genRaiseEvaluator(0)
 {
   ColorTable_InitParam(2, &colorTable);
@@ -23,10 +21,18 @@ PViewOptions::~PViewOptions()
   if(genRaiseEvaluator) delete genRaiseEvaluator;
 }
 
+PViewOptions *PViewOptions::_reference = 0;
+
+PViewOptions *PViewOptions::reference()
+{
+  if(!_reference) _reference = new PViewOptions();
+  return _reference;
+}
+
 double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 {
   if(numIso == 1) return (min + max) / 2.;
-  
+
   if(scaleType == Linear){
     // treat min/max separately to avoid numerical errors (important
     // not to miss first/last discrete iso on piece-wise constant
@@ -69,7 +75,7 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
   return 0;
 }
 
-unsigned int PViewOptions::getColor(double val, double min, double max, 
+unsigned int PViewOptions::getColor(double val, double min, double max,
                                     bool forceLinear, int numColors)
 {
   if(colorTable.size == 1) return colorTable.table[0];
@@ -91,7 +97,7 @@ unsigned int PViewOptions::getColor(double val, double min, double max,
 
 unsigned int PViewOptions::getColor(int i, int nb)
 {
-  int index = (nb == 1) ? colorTable.size / 2 : 
+  int index = (nb == 1) ? colorTable.size / 2 :
     (int)(i / (double)(nb - 1) * (colorTable.size - 1) + 0.5);
   if(index < 0) index = 0;
   else if(index > colorTable.size - 1) index = colorTable.size - 1;
@@ -100,7 +106,7 @@ unsigned int PViewOptions::getColor(int i, int nb)
 
 void PViewOptions::createGeneralRaise()
 {
-  const char *names[] = 
+  const char *names[] =
     { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> expressions(3), variables(numVariables);

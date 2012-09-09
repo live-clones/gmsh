@@ -104,11 +104,13 @@ class PViewOptions {
     unsigned int tangents, normals;
     unsigned int text2d, text3d, axes, background2d;
   } color;
+ private:
+  // static reference that contains default values
+  static PViewOptions *_reference;
  public:
-  // static reference container that contains default values
-  static PViewOptions reference;
   PViewOptions();
   ~PViewOptions();
+  static PViewOptions *reference();
   // return a floating point value in [min, max] corresponding to the
   // integer iso in [0, numIso - 1]
   double getScaleValue(int iso, int numIso, double min, double max);
