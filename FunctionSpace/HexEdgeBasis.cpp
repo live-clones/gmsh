@@ -148,11 +148,8 @@ HexEdgeBasis::HexEdgeBasis(const int order){
     liftingSub[i] = lifting[edge1[i]] - lifting[edge2[i]];
 
 
-  // Basis //
-  basis = new std::vector<std::vector<Polynomial> >(size);
-
-  for(int i = 0; i < size; i++)
-    (*basis)[i].resize(3);
+  // Basis (temporary --- *no* const) //
+  std::vector<std::vector<Polynomial>*> basis(size);
 
 
   // Edge Based (Nedelec) // 
@@ -160,16 +157,16 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   Polynomial oneHalf(0.5, 0, 0, 0);
 
   for(int e = 0; e < 12; e++){
-    (*basis)[i] = 
-      (liftingSub[e]).gradient();
+    basis[i] = 
+      new std::vector<Polynomial>((liftingSub[e]).gradient());
     
-    (*basis)[i][0].mul(lagrangeSum[e]);
-    (*basis)[i][1].mul(lagrangeSum[e]);
-    (*basis)[i][2].mul(lagrangeSum[e]);
+    basis[i]->at(0).mul(lagrangeSum[e]);
+    basis[i]->at(1).mul(lagrangeSum[e]);
+    basis[i]->at(2).mul(lagrangeSum[e]);
 
-    (*basis)[i][0].mul(oneHalf);
-    (*basis)[i][1].mul(oneHalf);
-    (*basis)[i][2].mul(oneHalf);
+    basis[i]->at(0).mul(oneHalf);
+    basis[i]->at(1).mul(oneHalf);
+    basis[i]->at(2).mul(oneHalf);
 
     i++;
   }
@@ -178,8 +175,8 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Edge Based (High Order) //
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 12; e++){
-      (*basis)[i] = 
-	(intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient();
+      basis[i] = 
+	new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient());
      
       i++;
     }
@@ -237,9 +234,9 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int f = 0; f < 6; f++){
-	(*basis)[i] = (iLegendreXi[l1][f]   * 
-		       iLegendreEta[l2][f]  *
-		       lambda[f]).gradient();
+	basis[i] = new std::vector<Polynomial>((iLegendreXi[l1][f]   * 
+						iLegendreEta[l2][f]  *
+						lambda[f]).gradient());
 
 	 i++;
       }
@@ -251,6 +248,8 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int f = 0; f < 6; f++){
+	basis[i] = new std::vector<Polynomial>(3);
+
 	Polynomial tmp1 = 
 	  legendreXi[l1][f]   * 
 	  iLegendreEta[l2][f];
@@ -269,9 +268,9 @@ HexEdgeBasis::HexEdgeBasis(const int order){
 	gr2[1].mul(tmp2);
 	gr2[2].mul(tmp2);	
 	
-	(*basis)[i][0] = (gr1[0] - gr2[0]) * lambda[f];
-	(*basis)[i][1] = (gr1[1] - gr2[1]) * lambda[f];
-	(*basis)[i][2] = (gr1[2] - gr2[2]) * lambda[f];
+	basis[i]->at(0) = (gr1[0] - gr2[0]) * lambda[f];
+	basis[i]->at(1) = (gr1[1] - gr2[1]) * lambda[f];
+	basis[i]->at(2) = (gr1[2] - gr2[2]) * lambda[f];
 
 	i++;
       }
@@ -284,11 +283,11 @@ HexEdgeBasis::HexEdgeBasis(const int order){
     for(int f = 0; f < 6; f++){
       Polynomial tmp = iLegendreEta[l][f] * lambda[f];
       
-      (*basis)[i] = grXi[f];
+      basis[i] = new std::vector<Polynomial>(grXi[f]);
       
-      (*basis)[i][0].mul(tmp);
-      (*basis)[i][1].mul(tmp);
-      (*basis)[i][2].mul(tmp);
+      basis[i]->at(0).mul(tmp);
+      basis[i]->at(1).mul(tmp);
+      basis[i]->at(2).mul(tmp);
       
       i++;   
     }
@@ -300,11 +299,11 @@ HexEdgeBasis::HexEdgeBasis(const int order){
     for(int f = 0; f < 6; f++){
       Polynomial tmp = iLegendreXi[l][f] * lambda[f];
       
-      (*basis)[i] = grEta[f];
+      basis[i] = new std::vector<Polynomial>(grEta[f]);
       
-      (*basis)[i][0].mul(tmp);
-      (*basis)[i][1].mul(tmp);
-      (*basis)[i][2].mul(tmp);
+      basis[i]->at(0).mul(tmp);
+      basis[i]->at(1).mul(tmp);
+      basis[i]->at(2).mul(tmp);
       
       i++;   
     }
@@ -335,9 +334,9 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int l3 = 1; l3 < orderPlus; l3++){
-	(*basis)[i] = (iLegendreX[l1] * 
-		       iLegendreY[l2] *
-		       iLegendreZ[l3]).gradient();
+	basis[i] = new std::vector<Polynomial>((iLegendreX[l1] * 
+						iLegendreY[l2] *
+						iLegendreZ[l3]).gradient());
 
 	i++;
 	cellNumber++;
@@ -348,11 +347,13 @@ HexEdgeBasis::HexEdgeBasis(const int order){
 
   // Cell Based (Type 2 -- First Part) //
   for(int j = 0; j < cellNumber; j++){
+    basis[i] = new std::vector<Polynomial>(3);
+
     int off = j + cellStart;
  
-    (*basis)[i][0] = (*basis)[off][0];
-    (*basis)[i][1] = (*basis)[off][1] * Polynomial(-1, 0, 0, 0); 
-    (*basis)[i][2] = (*basis)[off][2];
+    basis[i]->at(0) = basis[off]->at(0);
+    basis[i]->at(1) = basis[off]->at(1) * Polynomial(-1, 0, 0, 0); 
+    basis[i]->at(2) = basis[off]->at(2);
 
     i++;
   }
@@ -360,11 +361,13 @@ HexEdgeBasis::HexEdgeBasis(const int order){
 
   // Cell Based (Type 2 -- Second Part) //
   for(int j = 0; j < cellNumber; j++){
+    basis[i] = new std::vector<Polynomial>(3);
+
     int off = j + cellStart;
 
-    (*basis)[i][0] = (*basis)[off][0];
-    (*basis)[i][1] = (*basis)[off][1] * Polynomial(-1, 0, 0, 0); 
-    (*basis)[i][2] = (*basis)[off][2] * Polynomial(-1, 0, 0, 0);
+    basis[i]->at(0) = basis[off]->at(0);
+    basis[i]->at(1) = basis[off]->at(1) * Polynomial(-1, 0, 0, 0); 
+    basis[i]->at(2) = basis[off]->at(2) * Polynomial(-1, 0, 0, 0);
 
     i++;
   }
@@ -373,9 +376,11 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Cell Based (Type 3 -- First Part) //
   for(int l2 = 1; l2 < orderPlus; l2++){
     for(int l3 = 1; l3 < orderPlus; l3++){ 
-      (*basis)[i][0] = iLegendreY[l2] * iLegendreZ[l3];
-      (*basis)[i][1] = zero;
-      (*basis)[i][2] = zero;
+      basis[i] = new std::vector<Polynomial>(3);
+
+      basis[i]->at(0) = iLegendreY[l2] * iLegendreZ[l3];
+      basis[i]->at(1) = zero;
+      basis[i]->at(2) = zero;
       
       i++;
     }
@@ -385,9 +390,11 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Cell Based (Type 3 -- Second Part) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l3 = 1; l3 < orderPlus; l3++){      
-      (*basis)[i][0] = zero;
-      (*basis)[i][1] = iLegendreX[l1] * iLegendreZ[l3];
-      (*basis)[i][2] = zero;
+      basis[i] = new std::vector<Polynomial>(3);
+      
+      basis[i]->at(0) = zero;
+      basis[i]->at(1) = iLegendreX[l1] * iLegendreZ[l3];
+      basis[i]->at(2) = zero;
       
       i++;
     }
@@ -397,9 +404,11 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Cell Based (Type 3 -- Thrid Part) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
-      (*basis)[i][0] = zero;
-      (*basis)[i][1] = zero;
-      (*basis)[i][2] = iLegendreX[l1] * iLegendreY[l2];
+      basis[i] = new std::vector<Polynomial>(3);
+      
+      basis[i]->at(0) = zero;
+      basis[i]->at(1) = zero;
+      basis[i]->at(2) = iLegendreX[l1] * iLegendreY[l2];
       
       i++;
     }
@@ -438,90 +447,16 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   delete[] iLegendreX;
   delete[] iLegendreY;
   delete[] iLegendreZ;
+
+  
+  // Set Basis //
+  this->basis = new std::vector<const std::vector<Polynomial>*>
+    (basis.begin(), basis.end());
 }
 
 HexEdgeBasis::~HexEdgeBasis(void){
+  for(int i = 0; i < size; i++)
+    delete (*basis)[i];
+
   delete basis;
 }
-
-/*
-#include <cstdio>
-int main(void){
-  const int P = 1;
-  const double d = 0.1;
-  const char x[3] = {'X', 'Y', 'Z'};
-
-  HexEdgeBasis b(P);
-
-  printf("%d = %d + %d + %d + %d = %d\n",
-	 b.getSize(), 
-	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
-	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
-  
-  const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
-  
-  printf("\n");
-  printf("clear all;\n");
-  printf("close all;\n");
-  printf("\n");
-
-  printf("\n");
-  printf("Order      = %d\n", b.getOrder());
-  printf("Type       = %d\n", b.getType());
-  printf("Size       = %d\n", b.getSize());
-  printf("NodeNumber = %d\n", b.getNodeNbr());
-  printf("Dimension  = %d\n", b.getDim());
-  printf("\n");
-
-  printf("function [rx ry rz] = p(i, x, y, z)\n");
-  printf("p = zeros(%d, 3);\n", b.getSize());
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++){
-    for(int j = 0; j < 3; j++)
-      printf("p(%d, %d) = %s;\n", i + 1, j + 1, basis[i][j].toString().c_str());
-    //printf("p(%d) = %s", i, basis[i].toString().c_str());
-    printf("\n");
-  }
-
-  printf("\n");
-  printf("rx = p(i, 1);\n");
-  printf("ry = p(i, 2);\n");
-  printf("rz = p(i, 3);\n");
-  printf("end\n");
-  printf("\n");
-  
-  printf("d = %f;\nx = [0:d:1];\ny = x;\nz = x;\n\nlx = length(x);\nly = length(y);\nlz = length(z);\n\n", d);
-  
-  for(int i = 0; i < b.getSize(); i++)
-    for(int j = 0; j < 3; j++)
-      printf("p%d%c = zeros(lx, ly, lz);\n", i + 1, x[j]);
-
-  printf("\n");
-  printf("for i = 1:lx\n");
-  printf("for j = 1:ly\n");
-  printf("for k = 1:lz\n");
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++)
-    printf("[p%dX(j, i, k), p%dY(j, i, k), p%dZ(j, i, k)] = p(%d, x(i), y(j), z(k));\n", i + 1, i + 1, i + 1, i + 1);
-
-  printf("\n");
-  printf("end\n");
-  printf("end\n");
-  printf("end\n");
-
-  printf("\n");
-  printf("SizeOfBasis = %lu\n", sizeof(b) + sizeof(basis) * b.getSize()); 
-  printf("\n");
-  
-  printf("\n");
-  for(int i = b.getSize() - 1; i >= 0; i--)
-    printf("figure;\nquiver3(x, y, z, p%dX, p%dY, p%dZ);\n", i + 1, i + 1, i + 1);
-  
-  printf("\n");
-  
-  return 0;
-}
-*/
-

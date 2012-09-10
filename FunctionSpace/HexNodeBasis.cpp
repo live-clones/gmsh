@@ -69,49 +69,49 @@ HexNodeBasis::HexNodeBasis(const int order){
 
 
   // Basis //
-  basis = new std::vector<Polynomial>(size);
+  basis = new std::vector<const Polynomial*>(size);
 
 
   // Vertex Based (Lagrange) // 
   (*basis)[0] = 
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
+    new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
   (*basis)[1] = 
-    (Polynomial(1, 1, 0, 0))                          *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
+    new Polynomial((Polynomial(1, 1, 0, 0))                          *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
   (*basis)[2] = 
-    (Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
+    new Polynomial((Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 1, 0)) *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
   (*basis)[3] = 
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0))                          *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
+    new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 1, 0))                          *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
   (*basis)[4] = 
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
-     Polynomial(1, 0, 0, 1);
+    new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
+		   Polynomial(1, 0, 0, 1));
 
   (*basis)[5] = 
-    (Polynomial(1, 1, 0, 0))                          *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
-     Polynomial(1, 0, 0, 1);
+    new Polynomial((Polynomial(1, 1, 0, 0))                          *
+		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
+		   Polynomial(1, 0, 0, 1));
 
   (*basis)[6] = 
-    (Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0)) *
-     Polynomial(1, 0, 0, 1);
+    new Polynomial((Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 1, 0)) *
+		   Polynomial(1, 0, 0, 1));
 
   (*basis)[7] = 
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0))                          *
-     Polynomial(1, 0, 0, 1);
+    new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+		   (Polynomial(1, 0, 1, 0))                          *
+		   Polynomial(1, 0, 0, 1));
 
   
   // Edge Based //
@@ -124,9 +124,9 @@ HexNodeBasis::HexNodeBasis(const int order){
 
   for(int l = 1; l < order; l++){
     for(int e = 0; e < 12; e++){
-      (*basis)[i] = 
+      (*basis)[i] = new Polynomial(
 	legendre[l].compose(lifting[edge1[e]] - lifting[edge2[e]]) * 
-	((*basis)[edge1[e]] + (*basis)[edge2[e]]);
+	(*(*basis)[edge1[e]] + *(*basis)[edge2[e]]));
             
       i++;
     }
@@ -151,20 +151,20 @@ HexNodeBasis::HexNodeBasis(const int order){
   // 'Lambda' Functions
   for(int f = 0; f < 6; f++)
     lambda[f] = 
-      (*basis)[face1[f]] +
-      (*basis)[face2[f]] +
-      (*basis)[face3[f]] +
-      (*basis)[face4[f]];
+      *(*basis)[face1[f]] +
+      *(*basis)[face2[f]] +
+      *(*basis)[face3[f]] +
+      *(*basis)[face4[f]];
 
 
   // Face Based //
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
       for(int f = 0; f < 6; f++){	
-	(*basis)[i] = 
+	(*basis)[i] = new Polynomial(
 	  legendre[l1].compose(xi[f])  *
 	  legendre[l2].compose(eta[f]) *
-	  lambda[f];
+	  lambda[f]);
 	  
 	i++;
       }
@@ -185,9 +185,9 @@ HexNodeBasis::HexNodeBasis(const int order){
     for(int l2 = 1; l2 < order; l2++){
       for(int l3 = 1; l3 < order; l3++){
 	(*basis)[i] = 
-	  legendre[l1].compose(px) * 
-	  legendre[l2].compose(py) *
-	  legendre[l3].compose(pz);
+	  new Polynomial(legendre[l1].compose(px) * 
+			 legendre[l2].compose(py) *
+			 legendre[l3].compose(pz));
 	
 	i++;
       }
@@ -205,120 +205,8 @@ HexNodeBasis::HexNodeBasis(const int order){
 }
 
 HexNodeBasis::~HexNodeBasis(void){
+  for(int i = 0; i < size; i++)
+    delete (*basis)[i];
+
   delete basis;
 }
-
-/*
-#include <cstdio>
-int main(void){
-
-  const int P = 8;
-  const double d = 0.05;
-
-  HexNodeBasis b(P);
-  
-  printf("%d = %d + %d + %d + %d = %d\n",
-	 b.getSize(), 
-	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
-	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
-
-  const std::vector<Polynomial>& basis = b.getBasis();
-  
-  printf("\n");
-  printf("clear all;\n");
-  printf("\n");
-
-  printf("\n");
-  printf("Order      = %d\n", b.getOrder());
-  printf("Type       = %d\n", b.getType());
-  printf("Size       = %d\n", b.getSize());
-  printf("NodeNumber = %d\n", b.getNodeNbr());
-  printf("Dimension  = %d\n", b.getDim());
-  printf("\n");
-
-  printf("function r = p(i, x, y, z)\n");
-  printf("p = zeros(%d, 1);\n", b.getSize());
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++)
-    printf("p(%d) = %s;\n", i + 1, basis[i].toString().c_str());
-
-  printf("\n");
-  printf("r = p(i, 1);\n");
-  printf("end\n");
-  printf("\n");
-  
-  printf("d = %f;\nx = [0:d:1];\ny = x;\nz = x;\n\nlx = length(x);\nly = length(y);\nlz = length(z);\n\n", d);
-  
-  for(int i = 0; i < b.getSize(); i++)
-    printf("p%d = zeros(lx, ly, lz);\n", i + 1);
-
-  printf("\n");
-  printf("for i = 1:lx\n");
-  printf("for j = 1:ly\n");
-  printf("for k = 1:lz\n");
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++)
-    printf("p%d(j, i, k) = p(%d, x(i), y(j), z(k));\n", i + 1, i + 1);
-  
-  printf("\nend\n");
-  printf("end\n");
-  printf("end\n");
-
-  printf("\n");
-  printf("SizeOfBasis = %lu\n", sizeof(b) + sizeof(basis) * b.getSize()); 
-  printf("\n");
-  
-  printf("\n");
-  for(int i = b.getSize(); i > 0; i--){
-    printf("figure;\n");
-
-    printf("subplot(3, 2, 1);\n");
-    printf("contourf(x, y, squeeze(p%d(:, :, 1)));\n", i);
-    printf("colorbar;\n");
-    printf("title('z = 0');\n");
-    printf("ylabel('x');\n");
-    printf("xlabel('y');\n\n");
-
-    printf("subplot(3, 2, 2);\n");
-    printf("contourf(x, y, squeeze(p%d(:, :, end)));\n", i);
-    printf("colorbar;\n");
-    printf("title('z = 1');\n");
-    printf("ylabel('x');\n");
-    printf("xlabel('y');\n\n");
-
-    printf("subplot(3, 2, 3);\n");
-    printf("contourf(x, z, squeeze(p%d(:, 1, :)));\n", i);
-    printf("colorbar;\n");
-    printf("title('y = 0');\n");
-    printf("ylabel('x');\n");
-    printf("xlabel('z');\n\n");
-
-    printf("subplot(3, 2, 4);\n");
-    printf("contourf(x, z, squeeze(p%d(:, end, :)));\n", i);
-    printf("colorbar;\n");
-    printf("title('y = 1');\n");
-    printf("ylabel('x');\n");
-    printf("xlabel('z');\n\n");
-
-    printf("subplot(3, 2, 5);\n");
-    printf("contourf(y, z, squeeze(p%d(1, :, :)));\n", i);
-    printf("colorbar;\n");
-    printf("title('x = 0');\n");
-    printf("ylabel('y');\n");
-    printf("xlabel('z');\n\n");
-
-    printf("subplot(3, 2, 6);\n");
-    printf("contourf(y, z, squeeze(p%d(end, :, :)));\n", i);
-    printf("colorbar;\n");
-    printf("title('x = 1');\n");  
-    printf("ylabel('y');\n");
-    printf("xlabel('z');\n\n\n");
-}
-  
-  printf("\n");
-    
-  return 0;
-}
-*/

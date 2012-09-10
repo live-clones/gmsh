@@ -25,8 +25,8 @@ interpolate(const MElement& element,
     const_cast<MElement&>(element);
   
   // Get Basis Functions //
-  const vector<vector<Polynomial> >& fun = getBasis(element).getFunctions();
-  const unsigned int nFun                = fun.size();
+  const vector<const vector<Polynomial>*>& fun = getBasis(element).getFunctions();
+  const unsigned int nFun                      = fun.size();
 
   // Get Reference coordinate //
   double phys[3] = {xyz(0), xyz(1), xyz(2)};
@@ -47,7 +47,7 @@ interpolate(const MElement& element,
 
   for(unsigned int i = 0; i < nFun; i++){
     fullVector<double> vi = 
-      Mapper::grad(Polynomial::at(fun[i], uvw[0], uvw[1], uvw[2]),
+      Mapper::grad(Polynomial::at(*fun[i], uvw[0], uvw[1], uvw[2]),
 		   invJac);
     
     vi.scale(coef[i]);

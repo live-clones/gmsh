@@ -20,7 +20,7 @@
 
 class BasisVector: public Basis{
  protected:
-  std::vector<std::vector<Polynomial> >* basis;
+  std::vector<const std::vector<Polynomial>*>* basis;
 
  public:
   //! Deletes this BasisVector
@@ -29,7 +29,7 @@ class BasisVector: public Basis{
 
   //! @return Returns the set of @em Polynomial%s
   //! defining this (vectorial) Basis
-  const std::vector<std::vector<Polynomial> >& getFunctions(void) const;
+  const std::vector<const std::vector<Polynomial>*>& getFunctions(void) const;
 
  protected:
   //! @internal
@@ -44,7 +44,7 @@ class BasisVector: public Basis{
 //////////////////////
 
 inline 
-const std::vector<std::vector<Polynomial> >& BasisVector::
+const std::vector<const std::vector<Polynomial>*>& BasisVector::
 getFunctions(void) const{
 
   return *basis;

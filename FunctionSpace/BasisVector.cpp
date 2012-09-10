@@ -6,4 +6,3 @@ BasisVector::BasisVector(void){
 
 BasisVector::~BasisVector(void){
 }
-

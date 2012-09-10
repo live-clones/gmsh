@@ -32,8 +32,10 @@ int basisTest(int argc, char** argv){
   writer.setDomain(goe.getAll());
 
   // Plot Basis //
-  TriNodeBasis b(3);
+  HexEdgeBasis b(3);
   
+  cout << "Size: " << b.getSize() << endl;
+
   PlotBasis plot(b, goe, writer);
   plot.plot("basis");
   

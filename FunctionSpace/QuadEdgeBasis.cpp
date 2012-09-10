@@ -78,11 +78,8 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     liftingSub[i] = lifting[j] - lifting[i];
 
 
-  // Basis //
-  basis = new std::vector<std::vector<Polynomial> >(size);
-
-  for(int i = 0; i < size; i++)
-    (*basis)[i].resize(3);
+  // Basis (temporary --- *no* const) //
+  std::vector<std::vector<Polynomial>*> basis(size);
 
 
   // Edge Based (Nedelec) // 
@@ -90,16 +87,15 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   Polynomial oneHalf(0.5, 0, 0, 0);
 
   for(int e = 0; e < 4; e++){
-    (*basis)[i] = 
-      (liftingSub[e]).gradient();
+    basis[i] = new std::vector<Polynomial>(liftingSub[e].gradient());
     
-    (*basis)[i][0].mul(lagrangeSum[e]);
-    (*basis)[i][1].mul(lagrangeSum[e]);
-    (*basis)[i][2].mul(lagrangeSum[e]);
-
-    (*basis)[i][0].mul(oneHalf);
-    (*basis)[i][1].mul(oneHalf);
-    (*basis)[i][2].mul(oneHalf);
+    basis[i]->at(0).mul(lagrangeSum[e]);
+    basis[i]->at(1).mul(lagrangeSum[e]);
+    basis[i]->at(2).mul(lagrangeSum[e]);
+  
+    basis[i]->at(0).mul(oneHalf);
+    basis[i]->at(1).mul(oneHalf);
+    basis[i]->at(2).mul(oneHalf);
 
     i++;
   }
@@ -107,8 +103,8 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   // Edge Based (High Order) //
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 4; e++){
-      (*basis)[i] = 
-	(intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient();
+      basis[i] = 
+	new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient());
      
       i++;
     }
@@ -133,7 +129,7 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   // Cell Based (Type 1) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
-      (*basis)[i] = (iLegendreX[l1] * iLegendreY[l2]).gradient();
+      basis[i] = new std::vector<Polynomial>((iLegendreX[l1] * iLegendreY[l2]).gradient());
 
       i++;
     }
@@ -142,9 +138,11 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   // Cell Based (Type 2) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
-      (*basis)[i][0] =  legendreX[l1] * iLegendreY[l2];
-      (*basis)[i][1] = iLegendreX[l1] *  legendreY[l2] * -1;
-      (*basis)[i][2] = zero;
+      basis[i] = new std::vector<Polynomial>(3);
+
+      basis[i]->at(0) =  legendreX[l1] * iLegendreY[l2];
+      basis[i]->at(1) = iLegendreX[l1] *  legendreY[l2] * -1;
+      basis[i]->at(2) = zero;
 
       i++;
     }
@@ -152,13 +150,16 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
 
   // Cell Based (Type 3) //
   for(int l = 1, iPlus = i + order; l < orderPlus; l++, iPlus++){
-    (*basis)[i][0] = iLegendreY[l];
-    (*basis)[i][1] = zero;
-    (*basis)[i][2] = zero;
+    basis[i]     = new std::vector<Polynomial>(3);
+    basis[iPlus] = new std::vector<Polynomial>(3);
 
-    (*basis)[iPlus][0] = zero;
-    (*basis)[iPlus][1] = iLegendreX[l];
-    (*basis)[iPlus][2] = zero;
+    basis[i]->at(0) = iLegendreY[l];
+    basis[i]->at(1) = zero;
+    basis[i]->at(2) = zero;
+
+    basis[iPlus]->at(0) = zero;
+    basis[iPlus]->at(1) = iLegendreX[l];
+    basis[iPlus]->at(2) = zero;
 
     i++;
   }
@@ -177,86 +178,16 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
 
   delete[] lifting;
   delete[] liftingSub;
+
+
+  // Set Basis //
+  this->basis = new std::vector<const std::vector<Polynomial>*>
+    (basis.begin(), basis.end());
 }
 
 QuadEdgeBasis::~QuadEdgeBasis(void){
+  for(int i = 0; i < size; i++)
+    delete (*basis)[i];
+
   delete basis;
 }
-
-/*
-#include <cstdio>
-int main(void){
-  const int P = 8;
-  const double d = 0.05;
-  const char x[2] = {'X', 'Y'};
-
-  QuadEdgeBasis b(P);
-
-  printf("%d = %d + %d + %d + %d = %d\n",
-	 b.getSize(), 
-	 b.getNVertex(), b.getNEdge(), b.getNFace(), b.getNCell(),
-	 b.getNVertex() + b.getNEdge() + b.getNFace() + b.getNCell());
-  
-  const std::vector<std::vector<Polynomial> >& basis = b.getBasis();
-  
-  printf("\n");
-  printf("clear all;\n");
-  printf("close all;\n");
-  printf("\n");
-
-  printf("\n");
-  printf("Order      = %d\n", b.getOrder());
-  printf("Type       = %d\n", b.getType());
-  printf("Size       = %d\n", b.getSize());
-  printf("NodeNumber = %d\n", b.getNodeNbr());
-  printf("Dimension  = %d\n", b.getDim());
-  printf("\n");
-
-  printf("function [rx ry] = p(i, x, y)\n");
-  printf("p = zeros(%d, 2);\n", b.getSize());
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++){
-    for(int j = 0; j < 2; j++)
-      printf("p(%d, %d) = %s;\n", i + 1, j + 1, basis[i][j].toString().c_str());
-    //printf("p(%d) = %s", i, basis[i].toString().c_str());
-    printf("\n");
-  }
-
-  printf("\n");
-  printf("rx = p(i, 1);\n");
-  printf("ry = p(i, 2);\n");
-  printf("end\n");
-  printf("\n");
-  
-  printf("d = %lf;\nx = [0:d:1];\ny = x;\n\nlx = length(x);\nly = length(y);\n\n", d);
-  
-  for(int i = 0; i < b.getSize(); i++)
-    for(int j = 0; j < 2; j++)
-      printf("p%d%c = zeros(lx, ly);\n", i + 1, x[j]);
-
-  printf("\n");
-  printf("for i = 1:lx\n");
-  printf("for j = 1:ly\n");
-  printf("\n");
-
-  for(int i = 0; i < b.getSize(); i++)
-    printf("[p%dX(j, i), p%dY(j, i)] = p(%d, x(i), y(j));\n", i + 1, i + 1, i + 1);
-
-  printf("\n");
-  printf("end\n");
-  printf("end\n");
-
-  printf("\n");
-  printf("SizeOfBasis = %lu\n", sizeof(b) + sizeof(basis) * b.getSize()); 
-  printf("\n");
-
-  printf("\n");
-  for(int i = 0; i < b.getSize(); i++)
-    printf("figure;\nquiver(x, y, p%dX, p%dY);\n", i + 1, i + 1);
-  
-  printf("\n");
-
-  return 0;
-}
-*/
