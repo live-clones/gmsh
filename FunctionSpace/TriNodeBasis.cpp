@@ -16,10 +16,13 @@ TriNodeBasis::TriNodeBasis(const int order){
   size    = (order + 1) * (order + 2) / 2;
 
   // Alloc Temporary Space //
-  Polynomial* legendre    = new Polynomial[order];
-  Polynomial* intLegendre = new Polynomial[order];
-  Polynomial* lagrangeSub = new Polynomial[3];
-  Polynomial* lagrangeSum = new Polynomial[3];
+  Polynomial* legendre     = new Polynomial[order];
+  Polynomial* intLegendre  = new Polynomial[order];
+
+  Polynomial  lagrangeSub[3];
+  Polynomial  lagrangeSum[3];
+  Polynomial rLagrangeSub[3];
+  Polynomial rLagrangeSum[3];
 
   // Classical and Intrated-Scaled Legendre Polynomial //
   const int orderMinus = order - 1;
@@ -28,8 +31,9 @@ TriNodeBasis::TriNodeBasis(const int order){
   Legendre::intScaled(intLegendre, order);
  
 
-  // Basis //
-  basis = new std::vector<const Polynomial*>(size);
+  // Basis (& revert) //
+     basis = new std::vector<const Polynomial*>(size);
+  revBasis = new std::vector<const Polynomial*>(size);
 
   // Vertex Based (Lagrange) // 
   (*basis)[0] = 
@@ -43,14 +47,23 @@ TriNodeBasis::TriNodeBasis(const int order){
   (*basis)[2] = 
     new Polynomial(Polynomial(1, 0, 1, 0));
 
-  
-  // Lagrange Sum //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSum[i] = *(*basis)[i] + *(*basis)[j];
+  // Vertex Based (revert) //
+  for(int i = 0; i < 3; i++)
+    (*revBasis)[i] = (*basis)[i];  
 
-  // Lagrange Sub //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSub[i] = *(*basis)[j] - *(*basis)[i];
+  
+  // Lagrange Sum (& revert) //
+  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
+     lagrangeSum[i] = *(*basis)[i] + *(*basis)[j];
+    rLagrangeSum[i] = *(*basis)[j] + *(*basis)[i];
+  }
+
+
+  // Lagrange Sub (& revert) //
+  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
+     lagrangeSub[i] = *(*basis)[j] - *(*basis)[i];
+    rLagrangeSub[i] = *(*basis)[i] - *(*basis)[j];
+  }
 
   
   // Edge Based //
@@ -60,7 +73,10 @@ TriNodeBasis::TriNodeBasis(const int order){
     for(int e = 0; e < 3; e++){
       (*basis)[i] = new Polynomial(
 	intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e]));
-            
+
+      (*revBasis)[i] = new Polynomial(
+	intLegendre[l].compose(rLagrangeSub[e], rLagrangeSum[e]));
+      
       i++;
     }
   }
@@ -75,6 +91,7 @@ TriNodeBasis::TriNodeBasis(const int order){
 	intLegendre[l1].compose(lagrangeSub[0], lagrangeSum[0]) * 
 	legendre[l2].compose(p) * *(*basis)[2]);
       
+      (*revBasis)[i] = (*basis)[i];
       i++;
     }
   }
@@ -82,13 +99,16 @@ TriNodeBasis::TriNodeBasis(const int order){
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
-  delete[] lagrangeSub;
-  delete[] lagrangeSum;
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  for(int i = 0; i < size; i++)
+  for(int i = 0; i < size; i++){
     delete (*basis)[i];
+    
+    if(i >= nVertex && i < nVertex + nEdge)
+      delete (*revBasis)[i];
+  }
 
   delete basis;
+  delete revBasis;
 }
