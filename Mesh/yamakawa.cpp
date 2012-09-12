@@ -15,6 +15,7 @@
 #include "MQuadrangle.h"
 #include "MPyramid.h"
 #include "MPrism.h"
+#include "MTetrahedron.h"
 
 /*****************************************/
 /****************class Hex****************/
@@ -2822,16 +2823,19 @@ void PostOp::execute(){
 
 void PostOp::execute(GRegion* gr){
   printf("................PYRAMIDS................\n");
-  
+  estimate1 = 0;
+  estimate2 = 0;
+  iterations = 0;
+	
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
-  pyramids(gr,1);
+  pyramids1(gr);
   rearrange(gr);
   
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
   build_vertex_to_pyramids(gr);
-  pyramids(gr,2);
+  //pyramids2(gr);
   rearrange(gr);
 	
   statistics(gr);
@@ -2845,72 +2849,68 @@ void PostOp::init_markings(GRegion* gr){
 	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-	if(four(element)){
+	if(four(element) || five(element)){
 	  markings.insert(std::pair<MElement*,bool>(element,0));
 	}
   }
 }
 
-void PostOp::pyramids(GRegion* gr,int step){
+void PostOp::pyramids1(GRegion* gr){
   unsigned int i;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
   MElement* element;
+  std::vector<MElement*> hexahedra;
+  std::vector<MElement*> prisms;
   std::vector<MTetrahedron*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
+	
+  hexahedra.clear();
+  prisms.clear();
 	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(eight(element)){
-	  a = element->getVertex(0);
-	  b = element->getVertex(1);
-	  c = element->getVertex(2);
-	  d = element->getVertex(3);
-	  e = element->getVertex(4);
-	  f = element->getVertex(5);
-	  g = element->getVertex(6);
-	  h = element->getVertex(7);
-		
-	  if(step==1){
-	    pyramids1(a,b,c,d,gr);
-	    pyramids1(e,f,g,h,gr);
-	    pyramids1(a,b,f,e,gr);
-	    pyramids1(b,c,g,f,gr);
-	    pyramids1(d,c,g,h,gr);
-	    pyramids1(d,a,e,h,gr);
-	  }
-	  else if(step==2){
-	    pyramids2(a,b,c,d,gr);
-		pyramids2(e,f,g,h,gr);
-		pyramids2(a,b,f,e,gr);
-		pyramids2(b,c,g,f,gr);
-		pyramids2(d,c,g,h,gr);
-		pyramids2(d,a,e,h,gr);
-	  }
+	  hexahedra.push_back(element);
+	}
+	else if(six(element)){
+	  prisms.push_back(element);
 	}
   }
-
-  for(i=0;i<gr->getNumMeshElements();i++){
-    element = gr->getMeshElement(i);
-	if(six(element)){
-	  a = element->getVertex(0);
-	  b = element->getVertex(1);
-	  c = element->getVertex(2);
-	  d = element->getVertex(3);
-	  e = element->getVertex(4);
-	  f = element->getVertex(5);
 		
-	  if(step==1){
-	    pyramids1(a,d,f,c,gr);
-	    pyramids1(a,b,e,d,gr);
-	    pyramids1(b,c,f,e,gr);
-	  }
-	  else if(step==2){
-	    pyramids2(a,d,f,c,gr);
-		pyramids2(a,b,e,d,gr);
-		pyramids2(b,c,f,e,gr);
-	  }
-	}
+  for(i=0;i<hexahedra.size();i++){
+    element = hexahedra[i];
+
+	a = element->getVertex(0);
+	b = element->getVertex(1);
+	c = element->getVertex(2);
+	d = element->getVertex(3);
+	e = element->getVertex(4);
+	f = element->getVertex(5);
+	g = element->getVertex(6);
+	h = element->getVertex(7);
+		
+	pyramids1(a,b,c,d,gr);
+	pyramids1(e,f,g,h,gr);
+	pyramids1(a,b,f,e,gr);
+	pyramids1(b,c,g,f,gr);
+	pyramids1(d,c,g,h,gr);
+	pyramids1(d,a,e,h,gr);
+  }
+
+  for(i=0;i<prisms.size();i++){
+    element = prisms[i];
+
+	a = element->getVertex(0);
+	b = element->getVertex(1);
+	c = element->getVertex(2);
+	d = element->getVertex(3);
+	e = element->getVertex(4);
+	f = element->getVertex(5);
+		
+	pyramids1(a,d,f,c,gr);
+	pyramids1(a,b,e,d,gr);
+	pyramids1(b,c,f,e,gr);
   }	
 	
   it = gr->tetrahedra.begin();
@@ -2924,6 +2924,90 @@ void PostOp::pyramids(GRegion* gr,int step){
 	  it++;
 	}
   }
+}
+
+void PostOp::pyramids2(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+  MElement* element;
+  std::vector<MElement*> hexahedra;
+  std::vector<MElement*> prisms;
+  std::vector<MTetrahedron*>::iterator it1;
+  std::vector<MPyramid*>::iterator it2;
+  std::map<MElement*,bool>::iterator it;
+	
+  hexahedra.clear();
+  prisms.clear();
+	
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+	if(eight(element)){
+	  hexahedra.push_back(element);
+	}
+	else if(six(element)){
+	  prisms.push_back(element);
+	}
+  }
+	
+  for(i=0;i<hexahedra.size();i++){
+    element = hexahedra[i];
+		
+	a = element->getVertex(0);
+	b = element->getVertex(1);
+	c = element->getVertex(2);
+	d = element->getVertex(3);
+	e = element->getVertex(4);
+	f = element->getVertex(5);
+	g = element->getVertex(6);
+	h = element->getVertex(7);
+		
+	pyramids2(a,b,c,d,gr);
+	pyramids2(e,f,g,h,gr);
+	pyramids2(a,b,f,e,gr);
+	pyramids2(b,c,g,f,gr);
+	pyramids2(d,c,g,h,gr);
+	pyramids2(d,a,e,h,gr);
+  }
+	
+  for(i=0;i<prisms.size();i++){
+    element = prisms[i];
+		
+	a = element->getVertex(0);
+	b = element->getVertex(1);
+	c = element->getVertex(2);
+	d = element->getVertex(3);
+	e = element->getVertex(4);
+	f = element->getVertex(5);
+		
+	pyramids2(a,d,f,c,gr);
+	pyramids2(a,b,e,d,gr);
+	pyramids2(b,c,f,e,gr);
+  }	
+	
+  it1 = gr->tetrahedra.begin();
+  while(it1!=gr->tetrahedra.end()){
+    element = (MElement*)(*it1);
+	it = markings.find(element);
+	if(it->second==1){
+	  it1 = gr->tetrahedra.erase(it1);
+	}
+	else{
+	  it1++;
+	}
+  }
+	
+  it2 = gr->pyramids.begin();
+  while(it2!=gr->pyramids.end()){
+    element = (MElement*)(*it2);
+	it = markings.find(element);
+	if(it->second==1){
+	  it2 = gr->pyramids.erase(it2);
+	}
+	else{
+	  it2++;
+	}
+  }	
 }
 
 void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
@@ -2958,9 +3042,9 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 	  vertex = find(a,b,c,d,*it);
 			
 	  if(vertex!=0){
-	    it1->second = 1;
-		it2->second = 1;
 		gr->addPyramid(new MPyramid(a,b,c,d,vertex));
+		it1->second = 1;
+		it2->second = 1;
 	  }
 	}
   }
@@ -2968,6 +3052,15 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
 void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   bool flag;
+  double x,y,z;
+  MVertex* mid;
+  MVertex *diagA,*diagB;
+  MVertex *N1,*N2;
+  MVertex *v1,*v2,*v3,*v4,*v5;
+  MTetrahedron* temp;
+  MPyramid* temp2;
+  std::vector<MElement*> movables;
+  std::set<MVertex*> Ns;
   std::set<MElement*> bin1;
   std::set<MElement*> bin2;
   std::set<MElement*> bin3;
@@ -2975,6 +3068,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   std::set<MElement*> tetrahedra;
   std::set<MElement*> pyramids;
   std::set<MElement*>::iterator it;
+  std::map<MElement*,bool>::iterator it2;
 	
   flag = 0;	
 	
@@ -3006,17 +3100,121 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
     pyramids.insert(*it);
   }
 	
-  if(pyramids.size()==1){
-    printf("A\n");
+  if(pyramids.size()==0 && tetrahedra.size()==1){
+	printf("tetrahedron deleted\n");
+    it2 = markings.find(*tetrahedra.begin());
+	it2->second = 1;
+	return;
+  }	
+	
+  if(flag){
+    diagA = a;
+	diagB = c;
   }
-  else if(pyramids.size()==2){
-    printf("B\n");
+  else{
+    diagA = b;
+	diagB = d;
   }
-  else if(pyramids.size()==0 && tetrahedra.size()>1){
-    printf("C\n");
-  }
-  else if(pyramids.size()==0 && tetrahedra.size()==1){
-    printf("D\n");
+	
+  Ns.clear();
+  Ns.insert(diagA);
+  Ns.insert(diagB);
+	
+  x = (diagA->x() + diagB->x())/2.0;
+  y = (diagA->y() + diagB->y())/2.0;
+  z = (diagA->z() + diagB->z())/2.0;
+	
+  mid = 0;
+  movables.clear();
+	
+  if(tetrahedra.size()>0 || pyramids.size()>0){
+	estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
+	estimate2 = estimate2 + 1;
+	  
+	mid = new MVertex(x,y,z);
+	gr->addMeshVertex(mid);
+		
+	temp2 = new MPyramid(a,b,c,d,mid);
+	gr->addPyramid(temp2);
+	markings.insert(std::pair<MElement*,bool>(temp2,0));
+	build_vertex_to_pyramids(temp2);
+	  
+	for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
+	  N1 = other(*it,diagA,diagB);
+	  N2 = other(*it,diagA,diagB,N1);
+			
+	  if(N1!=0 && N2!=0){
+		Ns.insert(N1);
+		Ns.insert(N2);
+		  
+	    temp = new MTetrahedron(N1,N2,diagA,mid);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+				
+		temp = new MTetrahedron(N1,N2,diagB,mid);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+				
+		it2 = markings.find(*it);
+		it2->second = 1;
+		erase_vertex_to_tetrahedra(*it);
+	  }
+	}
+		
+	for(it=pyramids.begin();it!=pyramids.end();it++){
+	  v1 = (*it)->getVertex(0);
+	  v2 = (*it)->getVertex(1);
+	  v3 = (*it)->getVertex(2);
+	  v4 = (*it)->getVertex(3);
+	  v5 = (*it)->getVertex(4);
+			
+	  temp2 = new MPyramid(v1,v2,v3,v4,mid);
+	  gr->addPyramid(temp2);
+	  markings.insert(std::pair<MElement*,bool>(temp2,0));
+	  build_vertex_to_pyramids(temp2);
+			
+	  if(different(v1,v2,diagA,diagB)){
+	    temp = new MTetrahedron(v1,v2,mid,v5);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+	  }
+			
+	  if(different(v2,v3,diagA,diagB)){
+	    temp = new MTetrahedron(v2,v3,mid,v5);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+	  }
+			
+	  if(different(v3,v4,diagA,diagB)){
+	    temp = new MTetrahedron(v3,v4,mid,v5);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+	  }
+			
+	  if(different(v4,v1,diagA,diagB)){
+	    temp = new MTetrahedron(v4,v1,mid,v5);
+		gr->addTetrahedron(temp);
+		markings.insert(std::pair<MElement*,bool>(temp,0));
+		build_vertex_to_tetrahedra(temp);
+		movables.push_back(temp);
+	  }
+			
+	  it2 = markings.find(*it);
+	  it2->second = 1;
+	  erase_vertex_to_pyramids(*it);
+	}
+	
+	mean(Ns,mid,movables);
   }
 }
 
@@ -3062,7 +3260,7 @@ void PostOp::statistics(GRegion* gr){
 	  
     if(five(element)){
 	  nbr5 = nbr5 + 1;
-	  vol5 = vol5 + element->getVolume();
+	  vol5 = vol5 + workaround(element);
 	}
 		
 	if(four(element)){
@@ -3071,7 +3269,13 @@ void PostOp::statistics(GRegion* gr){
 	}
 		
 	nbr = nbr + 1;
-	vol = vol + element->getVolume();
+	  
+	if(!five(element)){
+	  vol = vol + element->getVolume();
+	}
+	else{
+	  vol = vol + workaround(element);
+	}
   }
 	
   printf("Number :\n");
@@ -3085,6 +3289,8 @@ void PostOp::statistics(GRegion* gr){
   printf("  percentage of pyramids : %.2f\n",vol5*100.0/vol);
   printf("  percentage of tetrahedra : %.2f\n",vol4*100.0/vol);
   printf("Total number of elements : %d\n",gr->getNumMeshElements());
+  printf("Total volume : %f\n",vol);
+  printf("Misc : %d %d %f\n",estimate1,estimate2,iterations/estimate2);
 }
 
 bool PostOp::four(MElement* element){
@@ -3107,18 +3313,131 @@ bool PostOp::eight(MElement* element){
   else return 0;
 }
 
-bool PostOp::apex(MElement* element,MVertex* vertex){
-  bool flag;
+bool PostOp::equal(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4){
+  if((v1==v3 && v2==v4) || (v1==v4 && v2==v3)){
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+bool PostOp::different(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4){
+  if(v1!=v3 && v1!=v4 && v2!=v3 && v2!=v4){
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2){
+  int i;
+  MVertex* vertex;
+  MVertex* pointer;
 	
-  flag = 0;
+  pointer = 0;	
 	
-  if(five(element)){
-    if(element->getVertex(4)==vertex){
-	  flag = 1;
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+	if(vertex!=v1 && vertex!=v2){
+	  pointer = vertex;
+	  break;
 	}
   }
 	
-  return flag;
+  return pointer;
+}
+
+MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2,MVertex* v3){
+  int i;
+  MVertex* vertex;
+  MVertex* pointer;
+	
+  pointer = 0;	
+	
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+	if(vertex!=v1 && vertex!=v2 && vertex!=v3){
+	  pointer = vertex;
+	  break;
+	}
+  }
+	
+  return pointer;
+}
+
+void PostOp::mean(const std::set<MVertex*>& Ns,MVertex* mid,const std::vector<MElement*>& movables){
+  unsigned int i;
+  int j;
+  bool flag;
+  double x,y,z;
+  double init_x,init_y,init_z;
+  std::set<MVertex*>::iterator it;
+
+  x = 0.0;
+  y = 0.0;
+  z = 0.0;
+	
+  init_x = mid->x();
+  init_y = mid->y();
+  init_z = mid->z();
+	
+  for(it=Ns.begin();it!=Ns.end();it++){
+    x = x + (*it)->x();
+	y = y + (*it)->y();
+	z = z + (*it)->z();
+  }
+	
+  x = x/Ns.size();
+  y = y/Ns.size();
+  z = z/Ns.size();
+	
+  for(i=0;i<movables.size();i++){
+    movables[i]->setVolumePositive();
+  }	
+	
+  mid->setXYZ(x,y,z);
+	
+  for(j=0;j<100;j++){
+	flag = 0;
+	  
+	for(i=0;i<movables.size();i++){
+	  if(movables[i]->getVolume()<0.0){
+	    flag = 1;
+	  }
+	}
+	  
+	if(!flag){
+	  break;
+	}
+	  
+	x = 0.1*init_x + 0.9*mid->x();
+	y = 0.1*init_y + 0.9*mid->y();
+	z = 0.1*init_z + 0.9*mid->z();
+	  
+	mid->setXYZ(x,y,z);
+  }
+	
+  iterations = iterations + j;
+}
+
+double PostOp::workaround(MElement* element){
+  double volume;
+  MTetrahedron* temp1;
+  MTetrahedron* temp2;
+	
+  volume = 0.0;	
+	
+  if(five(element)){
+    temp1 = new MTetrahedron(element->getVertex(0),element->getVertex(1),element->getVertex(2),element->getVertex(4));
+	temp2 = new MTetrahedron(element->getVertex(2),element->getVertex(3),element->getVertex(0),element->getVertex(4));
+	volume = fabs(temp1->getVolume()) + fabs(temp2->getVolume());
+	delete temp1;
+	delete temp2;
+  }
+	
+  return volume;
 }
 
 MVertex* PostOp::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,MElement* element){
@@ -3152,14 +3471,34 @@ void PostOp::find_tetrahedra(MVertex* v1,MVertex* v2,std::set<MElement*>& final)
 }
 
 void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
+  bool flag1,flag2,flag3,flag4;
+  bool flag5,flag6,flag7,flag8;
+  std::set<MElement*>::iterator it;
   std::map<MVertex*,std::set<MElement*> >::iterator it1;
   std::map<MVertex*,std::set<MElement*> >::iterator it2;
+  std::set<MElement*> temp;
 	
   it1 = vertex_to_pyramids.find(v1);
   it2 = vertex_to_pyramids.find(v2);
 	
+  temp.clear();	
+	
   if(it1!=vertex_to_pyramids.end() && it2!=vertex_to_pyramids.end()){
-    intersection(it1->second,it2->second,final);
+    intersection(it1->second,it2->second,temp);
+  }
+	
+  for(it=temp.begin();it!=temp.end();it++){
+    flag1 = equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(1));
+	flag2 = equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(2));
+	flag3 = equal(v1,v2,(*it)->getVertex(2),(*it)->getVertex(3));
+	flag4 = equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(0));
+	flag5 = equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(4));
+	flag6 = equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(4));
+	flag7 = equal(v1,v2,(*it)->getVertex(2),(*it)->getVertex(4));
+	flag8 = equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(4));
+	if(flag1 || flag2 || flag3 || flag4 || flag5 || flag6 || flag7 || flag8){
+	  final.insert(*it);
+	}
   }
 }
 
@@ -3169,60 +3508,100 @@ void PostOp::intersection(const std::set<MElement*>& bin1,const std::set<MElemen
 
 void PostOp::build_vertex_to_tetrahedra(GRegion* gr){
   unsigned int i;
-  int j;
   MElement* element;
-  MVertex* vertex;
-  std::set<MElement*> bin;
-  std::map<MVertex*,std::set<MElement*> >::iterator it;
 	
   vertex_to_tetrahedra.clear();	
 	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
-	  for(j=0;j<element->getNumVertices();j++){
-	    vertex = element->getVertex(j);
-				
-		it = vertex_to_tetrahedra.find(vertex);
-		if(it!=vertex_to_tetrahedra.end()){
-		  it->second.insert(element);
-		}
-		else{
-		  bin.clear();
-		  bin.insert(element);
-		  vertex_to_tetrahedra.insert(std::pair<MVertex*,std::set<MElement*> >(vertex,bin));
-		}
-	  }
+	  build_vertex_to_tetrahedra(element);
+	}
+  }
+}
+
+void PostOp::build_vertex_to_tetrahedra(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::set<MElement*> bin;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+	
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+		
+	it = vertex_to_tetrahedra.find(vertex);
+	if(it!=vertex_to_tetrahedra.end()){
+	  it->second.insert(element);
+	}
+	else{
+	  bin.clear();
+	  bin.insert(element);
+	  vertex_to_tetrahedra.insert(std::pair<MVertex*,std::set<MElement*> >(vertex,bin));
+	}
+  }
+}
+
+void PostOp::erase_vertex_to_tetrahedra(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+	
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+		
+	it = vertex_to_tetrahedra.find(vertex);
+	if(it!=vertex_to_tetrahedra.end()){
+	  it->second.erase(element);
 	}
   }
 }
 
 void PostOp::build_vertex_to_pyramids(GRegion* gr){
   unsigned int i;
-  int j;
   MElement* element;
-  MVertex* vertex;
-  std::set<MElement*> bin;
-  std::map<MVertex*,std::set<MElement*> >::iterator it;
 	
   vertex_to_pyramids.clear();	
 	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(five(element)){
-	  for(j=0;j<element->getNumVertices();j++){
-	    vertex = element->getVertex(j);
-				
-		it = vertex_to_pyramids.find(vertex);
-		if(it!=vertex_to_pyramids.end()){
-		  it->second.insert(element);
-		}
-		else{
-		  bin.clear();
-		  bin.insert(element);
-		  vertex_to_pyramids.insert(std::pair<MVertex*,std::set<MElement*> >(vertex,bin));
-		}
-	  }
+	  build_vertex_to_pyramids(element);
+	}
+  }
+}
+
+void PostOp::build_vertex_to_pyramids(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::set<MElement*> bin;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+	
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+		
+	it = vertex_to_pyramids.find(vertex);
+	if(it!=vertex_to_pyramids.end()){
+	  it->second.insert(element);
+	}
+	else{
+	  bin.clear();
+	  bin.insert(element);
+	  vertex_to_pyramids.insert(std::pair<MVertex*,std::set<MElement*> >(vertex,bin));
+	}
+  }
+}
+
+void PostOp::erase_vertex_to_pyramids(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+	
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+		
+	it = vertex_to_pyramids.find(vertex);
+	if(it!=vertex_to_pyramids.end()){
+	  it->second.erase(element);
 	}
   }
 }

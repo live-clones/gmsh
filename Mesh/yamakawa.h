@@ -231,6 +231,9 @@ class Supplementary{
 
 class PostOp{
  private:
+  int estimate1;
+  int estimate2;
+  double iterations;
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MElement*> > vertex_to_tetrahedra;
   std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
@@ -242,7 +245,8 @@ class PostOp{
   void execute(GRegion*);
 	
   void init_markings(GRegion*);
-  void pyramids(GRegion*,int);
+  void pyramids1(GRegion*);
+  void pyramids2(GRegion*);
   void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
@@ -252,8 +256,13 @@ class PostOp{
   bool five(MElement*);
   bool six(MElement*);
   bool eight(MElement*);
-	
-  bool apex(MElement*,MVertex*);
+
+  bool equal(MVertex*,MVertex*,MVertex*,MVertex*);
+  bool different(MVertex*,MVertex*,MVertex*,MVertex*);
+  MVertex* other(MElement*,MVertex*,MVertex*);
+  MVertex* other(MElement*,MVertex*,MVertex*,MVertex*);
+  void mean(const std::set<MVertex*>&,MVertex*,const std::vector<MElement*>&);
+  double workaround(MElement*);
 	
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,MElement*);
   void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
@@ -262,5 +271,10 @@ class PostOp{
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);
 	
   void build_vertex_to_tetrahedra(GRegion*);
+  void build_vertex_to_tetrahedra(MElement*);
+  void erase_vertex_to_tetrahedra(MElement*);
+	
   void build_vertex_to_pyramids(GRegion*);
+  void build_vertex_to_pyramids(MElement*);
+  void erase_vertex_to_pyramids(MElement*);
 };
