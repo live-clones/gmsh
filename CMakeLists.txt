@@ -243,7 +243,7 @@ if(ENABLE_BLAS_LAPACK)
     set(MKL_LIBS_REQUIRED mkl_gf_lp64 iomp5 mkl_gnu_thread mkl_core guide pthread)
     find_all_libraries(LAPACK_LIBRARIES MKL_LIBS_REQUIRED "" ${MKL_PATH})
     if(NOT LAPACK_LIBRARIES)
-      #match lapack 9.0 on 64bit
+      # match lapack 9.0 on 64bit
       set(MKL_LIBS_REQUIRED mkl_lapack mkl_em64t guide)
       find_all_libraries(LAPACK_LIBRARIES MKL_LIBS_REQUIRED "" ${MKL_PATH})
     endif(NOT LAPACK_LIBRARIES)
