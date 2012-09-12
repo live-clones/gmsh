@@ -8,6 +8,15 @@ FunctionSpace::FunctionSpace(void){
 }
 
 FunctionSpace::~FunctionSpace(void){
+  map<const MElement*, vector<bool>*>::iterator it 
+    = edgeClosure->begin();
+  map<const MElement*, vector<bool>*>::iterator stop 
+    = edgeClosure->end();
+  
+  for(; it != stop; it++)
+    delete it->second;
+  delete edgeClosure;
+
   delete basis;
 }
 
@@ -48,6 +57,66 @@ void FunctionSpace::build(const GroupOfElement& goe,
     fPerFace = 0;  
   
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
+
+  // Build Closure
+  edgeClosure = new map<const MElement*, vector<bool>*>;
+  closure();
+}
+
+void FunctionSpace::closure(void){
+  // Get Elements //
+  const vector<const MElement*>& element = goe->getAll();
+  const unsigned int             size    = element.size();    
+
+  // Iterate on elements //
+  for(unsigned int i = 0; i < size; i++){
+    // Get Element data
+    MElement& myElement =
+      const_cast<MElement&>(*element[i]);
+
+    const unsigned int nVertex = myElement.getNumVertices();
+    const unsigned int nEdge   = myElement.getNumEdges();
+    const unsigned int nFace   = myElement.getNumFaces();
+
+    const unsigned int nTotVertex = nVertex * fPerVertex;
+    const unsigned int nTotEdge   = nEdge   * fPerEdge;
+    const unsigned int nTotFace   = nFace   * fPerFace;
+    
+    const unsigned int nTot    = nTotVertex + nTotEdge + nTotFace + fPerCell;
+
+    // Closure
+    vector<bool>* closure = new vector<bool>(nTot);
+    unsigned int it = 0;
+
+    // Closure for vertices
+    for(unsigned int j = 0; j < nTotVertex; j++, it++)
+      (*closure)[it] = true;
+
+    // Closure for edges 
+    for(unsigned int j = 0; j < fPerEdge; j++){
+      for(unsigned int k = 0; k < nEdge; k++, it++){
+	// Orientation 
+	int orientation = mesh->getOrientation(myElement.getEdge(k));
+	
+	if(orientation == 1)
+	  (*closure)[it] = true;
+	
+	else
+	  (*closure)[it] = false;
+      }
+    }
+
+    // Closure for faces
+    // TODO
+
+    // Closure for cells
+    for(unsigned int j = 0; j < fPerCell; j++, it++)
+      (*closure)[it] = true;    
+
+    // Add Closure
+    edgeClosure->insert
+      (pair<const MElement*, vector<bool>*>(element[i], closure));
+  }
 }
 
 vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{ 

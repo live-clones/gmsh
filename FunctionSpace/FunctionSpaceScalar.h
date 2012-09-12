@@ -28,7 +28,10 @@ class FunctionSpaceScalar : public FunctionSpace{
     interpolate(const MElement& element, 
 		const std::vector<double>& coef,
 		const fullVector<double>& xyz) const = 0;
-
+  
+  const std::vector<const Polynomial*> 
+    getLocalFunctions(const MElement& element) const;
+  
   const BasisScalar& getBasis(const MElement& element) const;
 };
 

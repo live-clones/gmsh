@@ -1,6 +1,7 @@
 #ifndef _FUNCTIONSPACE_H_
 #define _FUNCTIONSPACE_H_
 
+#include <map>
 #include <vector>
 
 #include "Basis.h"
@@ -40,6 +41,8 @@ class FunctionSpace{
   const GroupOfElement* goe;
   const Basis*          basis;
 
+  std::map<const MElement*, std::vector<bool>*>* edgeClosure;
+
   unsigned int fPerVertex;
   unsigned int fPerEdge;
   unsigned int fPerFace;
@@ -71,6 +74,8 @@ class FunctionSpace{
 
   void build(const GroupOfElement& goe,
 	     int basisType, int order);
+
+  void closure(void);
 };
 
 
