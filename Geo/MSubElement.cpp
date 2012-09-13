@@ -318,17 +318,14 @@ bool MSubPoint::isInside(double u, double v, double w)
   double v_uvw[3];
   _orig->xyz2uvw(v_xyz, v_uvw);
 
-  double p_xyz[3] = {u, v, w};
-  double p_uvw[3];
-  _orig->xyz2uvw(p_xyz, p_uvw);
-
-  double d_xyz[3] = {p_uvw[0]-v_uvw[0], p_uvw[1]-v_uvw[1], p_uvw[2]-v_uvw[2]};
+  double d_xyz[3] = {u-v_uvw[0], v-v_uvw[1], w-v_uvw[2]};
   double tol = _isInsideTolerance;
 
    if (d_xyz[0]*d_xyz[0]+d_xyz[1]*d_xyz[1]+d_xyz[2]*d_xyz[2]<tol*tol)
      return true;
   return false;
 }
+
 void MSubPoint::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   static IntPt GQL[1];
