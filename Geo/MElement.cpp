@@ -17,6 +17,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "MElementCut.h"
+#include "MSubElement.h"
 #include "GEntity.h"
 #include "StringUtils.h"
 #include "Numeric.h"
@@ -734,16 +735,28 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
       }
       return;
     }
-    if(type == MSH_LIN_B || type == MSH_LIN_C){
+    if(type == MSH_TET_SUB){
+      MTetrahedron *tt = new MTetrahedron(getVertex(0), getVertex(1), getVertex(2), getVertex(3));
+      tt->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      delete tt;
+      return;
+    }
+    if(type == MSH_TRI_B || type == MSH_TRI_SUB){
+      MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
+      t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      delete t;
+      return;
+    }
+    if(type == MSH_LIN_B || type == MSH_LIN_C || type == MSH_LIN_SUB){
       MLine *l = new MLine(getVertex(0), getVertex(1));
       l->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete l;
       return;
     }
-    if(type == MSH_TRI_B){
-      MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
-      t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
-      delete t;
+    if(type == MSH_PNT_SUB){
+      MPoint *p = new MPoint(getVertex(0));
+      p->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      delete p;
       return;
     }
   }
@@ -1171,6 +1184,10 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
   case MSH_PYR_14  : if(name) *name = "Pyramid 14";       return 5 + 8 + 1;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
+  case MSH_PNT_SUB: if(name) *name = "Point Xfem";      return 1;
+  case MSH_LIN_SUB: if(name) *name = "Line Xfem";       return 2;
+  case MSH_TRI_SUB: if(name) *name = "Triangle Xfem";   return 3;
+  case MSH_TET_SUB: if(name) *name = "Tetrahedron Xfem";return 4;
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
@@ -1332,6 +1349,10 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_HEX_512: return new MHexahedronN(v, 7, num, part);
   case MSH_HEX_729: return new MHexahedronN(v, 8, num, part);
   case MSH_HEX_1000:return new MHexahedronN(v, 9, num, part);
+  case MSH_PNT_SUB:return new MSubPoint(v, num, part, owner, parent);
+  case MSH_LIN_SUB:return new MSubLine(v, num, part, owner, parent);
+  case MSH_TRI_SUB:return new MSubTriangle(v, num, part, owner, parent);
+  case MSH_TET_SUB:return new MSubTetrahedron(v, num, part, owner, parent);
   default:          return 0;
   }
 }

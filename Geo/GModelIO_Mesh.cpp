@@ -816,41 +816,61 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
 
   int n = 0;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
+  {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+    if(!CTX::instance()->mesh.saveTri){
+      for(unsigned int i = 0; i < (*it)->points.size(); i++)
+        if((*it)->points[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
+    }
+  }
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(!CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	if((*it)->lines[i]->ownsParent())
-	  n += (saveAll ? 1 : (*it)->physicals.size());
+        if((*it)->lines[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
     }
   }
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+  {
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(CTX::instance()->mesh.saveTri){
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++){
-        int nbC = (*it)->polygons[i]->getNumChildren()-1;
-	n += (saveAll ? nbC : nbC * (*it)->physicals.size());
-      }
-    }
-    else{
       for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
-	if((*it)->polygons[i]->ownsParent())
-	  n += (saveAll ? 1 : (*it)->physicals.size());
-    }
-  }
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
-    if(CTX::instance()->mesh.saveTri){
-      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++){
-        int nbC = (*it)->polyhedra[i]->getNumChildren()-1;
-	n += (saveAll ? nbC : nbC * (*it)->physicals.size());
+      {
+        int nbC = (*it)->polygons[i]->getNumChildren()-1;
+        n += (saveAll ? nbC : nbC * (*it)->physicals.size());
       }
     }
-    else{
+    else
+    {
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+        if((*it)->triangles[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
+      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
+        if((*it)->polygons[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
+    }
+  }
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+  {
+    n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
+    if(CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
-	if((*it)->polyhedra[i]->ownsParent())
-	  n += (saveAll ? 1 : (*it)->physicals.size());
+      {
+        int nbC = (*it)->polyhedra[i]->getNumChildren()-1;
+        n += (saveAll ? nbC : nbC * (*it)->physicals.size());
+      }
+    }
+    else
+    {
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+        if((*it)->tetrahedra[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
+      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
+        if((*it)->polyhedra[i]->ownsParent())
+          n += (saveAll ? 1 : (*it)->physicals.size());
     }
   }
   return n;
@@ -939,10 +959,25 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   //parents
   if (!CTX::instance()->mesh.saveTri){
+   for(viter it = firstVertex(); it != lastVertex(); ++it)
+     for(unsigned int i = 0; i < (*it)->points.size(); i++)
+       if((*it)->points[i]->ownsParent())
+         writeElementMSH(fp, this, (*it)->points[i]->getParent(),
+                         saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
    for(eiter it = firstEdge(); it != lastEdge(); ++it)
      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
        if((*it)->lines[i]->ownsParent())
          writeElementMSH(fp, this, (*it)->lines[i]->getParent(),
+                         saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
+   for(fiter it = firstFace(); it != lastFace(); ++it)
+     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+       if((*it)->triangles[i]->ownsParent())
+         writeElementMSH(fp, this, (*it)->triangles[i]->getParent(),
+                         saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
+   for(riter it = firstRegion(); it != lastRegion(); ++it)
+     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+       if((*it)->tetrahedra[i]->ownsParent())
+         writeElementMSH(fp, this, (*it)->tetrahedra[i]->getParent(),
                          saveAll, version, binary, num, (*it)->tag(), (*it)->physicals);
    for(fiter it = firstFace(); it != lastFace(); ++it)
      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)

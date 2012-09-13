@@ -198,7 +198,12 @@
 // Additional types
 #define MSH_PYR_1   132
 
-#define MSH_NUM_TYPE 132
+#define MSH_PNT_SUB 133
+#define MSH_LIN_SUB 134
+#define MSH_TRI_SUB 135
+#define MSH_TET_SUB 136
+
+#define MSH_NUM_TYPE 136
 
 // Geometric entities
 #define ENT_NONE     0
