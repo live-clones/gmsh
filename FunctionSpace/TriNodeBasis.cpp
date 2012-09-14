@@ -76,6 +76,7 @@ TriNodeBasis::TriNodeBasis(const int order){
     }
   }
 
+
   // Cell Based //
   Polynomial p             = *(*basis)[2] * 2 - Polynomial(1, 0, 0, 0);
   const int  orderMinusTwo = order - 2;
@@ -87,9 +88,11 @@ TriNodeBasis::TriNodeBasis(const int order){
 	legendre[l2].compose(p) * *(*basis)[2]);
       
       (*revBasis)[i] = (*basis)[i];
+
       i++;
     }
   }
+
 
   // Free Temporary Sapce //
   delete[] legendre;

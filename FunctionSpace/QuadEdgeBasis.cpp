@@ -25,11 +25,11 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   Polynomial* legendreX   = new Polynomial[orderPlus];
   Polynomial* legendreY   = new Polynomial[orderPlus];
 
-  Polynomial* lagrange    = new Polynomial[4];
-  Polynomial* lagrangeSum = new Polynomial[4];
-
-  Polynomial* lifting     = new Polynomial[4];
-  Polynomial* liftingSub  = new Polynomial[4];
+  Polynomial  lagrange[4];
+  Polynomial  lifting[4];
+  Polynomial  lagrangeSum[4];
+  Polynomial  liftingSub[4];
+  Polynomial rLiftingSub[4];
 
   // Integrated and classical Legendre Polynomial //
   Legendre::integrated(intLegendre, orderPlus);
@@ -74,12 +74,14 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     (Polynomial(1, 0, 1, 0));
 
   // Lifting Sub //
-  for(int i = 0, j = 1; i < 4; i++, j = (j + 1) % 4)
-    liftingSub[i] = lifting[j] - lifting[i];
-
+  for(int i = 0, j = 1; i < 4; i++, j = (j + 1) % 4){
+     liftingSub[i] = lifting[j] - lifting[i];
+    rLiftingSub[i] = lifting[i] - lifting[j];
+  }
 
   // Basis (temporary --- *no* const) //
   std::vector<std::vector<Polynomial>*> basis(size);
+  std::vector<std::vector<Polynomial>*> revBasis(size);
 
 
   // Edge Based (Nedelec) // 
@@ -87,6 +89,7 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   Polynomial oneHalf(0.5, 0, 0, 0);
 
   for(int e = 0; e < 4; e++){
+    // Direct
     basis[i] = new std::vector<Polynomial>(liftingSub[e].gradient());
     
     basis[i]->at(0).mul(lagrangeSum[e]);
@@ -97,6 +100,18 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     basis[i]->at(1).mul(oneHalf);
     basis[i]->at(2).mul(oneHalf);
 
+    // Revert
+    revBasis[i] = new std::vector<Polynomial>(rLiftingSub[e].gradient());
+    
+    revBasis[i]->at(0).mul(lagrangeSum[e]);
+    revBasis[i]->at(1).mul(lagrangeSum[e]);
+    revBasis[i]->at(2).mul(lagrangeSum[e]);
+  
+    revBasis[i]->at(0).mul(oneHalf);
+    revBasis[i]->at(1).mul(oneHalf);
+    revBasis[i]->at(2).mul(oneHalf);
+
+    // Next
     i++;
   }
 
@@ -104,7 +119,12 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 4; e++){
       basis[i] = 
-	new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient());
+	new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * 
+				     lagrangeSum[e]).gradient());
+
+      revBasis[i] = 
+	new std::vector<Polynomial>((intLegendre[l].compose(rLiftingSub[e]) * 
+				     lagrangeSum[e]).gradient());
      
       i++;
     }
@@ -131,6 +151,8 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     for(int l2 = 1; l2 < orderPlus; l2++){
       basis[i] = new std::vector<Polynomial>((iLegendreX[l1] * iLegendreY[l2]).gradient());
 
+      revBasis[i] = basis[i];
+
       i++;
     }
   }
@@ -143,6 +165,8 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
       basis[i]->at(0) =  legendreX[l1] * iLegendreY[l2];
       basis[i]->at(1) = iLegendreX[l1] *  legendreY[l2] * -1;
       basis[i]->at(2) = zero;
+
+      revBasis[i] = basis[i];
 
       i++;
     }
@@ -161,8 +185,11 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
     basis[iPlus]->at(1) = iLegendreX[l];
     basis[iPlus]->at(2) = zero;
 
+    revBasis[i] = basis[i];
+
     i++;
   }
+
 
   // Free Temporary Sapce //
   delete[] legendre;
@@ -173,21 +200,23 @@ QuadEdgeBasis::QuadEdgeBasis(const int order){
   delete[] legendreX;
   delete[] legendreY;
 
-  delete[] lagrange;
-  delete[] lagrangeSum;
-
-  delete[] lifting;
-  delete[] liftingSub;
-
 
   // Set Basis //
   this->basis = new std::vector<const std::vector<Polynomial>*>
     (basis.begin(), basis.end());
+
+  this->revBasis = new std::vector<const std::vector<Polynomial>*>
+    (revBasis.begin(), revBasis.end());
 }
 
 QuadEdgeBasis::~QuadEdgeBasis(void){
-  for(int i = 0; i < size; i++)
+  for(int i = 0; i < size; i++){
     delete (*basis)[i];
 
+    if(i >= nVertex && i < nVertex + nEdge)
+      delete (*revBasis)[i];
+  }
+
   delete basis;
+  delete revBasis;
 }

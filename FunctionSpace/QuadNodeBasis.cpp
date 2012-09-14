@@ -17,7 +17,7 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];
-  Polynomial* lifting  = new Polynomial[4];
+  Polynomial  lifting[4];
 
   // Legendre Polynomial //
   Legendre::integrated(legendre, order);
@@ -42,7 +42,8 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 
 
   // Basis //
-  basis = new std::vector<const Polynomial*>(size);
+     basis = new std::vector<const Polynomial*>(size);
+  revBasis = new std::vector<const Polynomial*>(size);
 
   // Vertex Based (Lagrange) // 
   (*basis)[0] = 
@@ -61,6 +62,11 @@ QuadNodeBasis::QuadNodeBasis(const int order){
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)));
   
+  // Vertex Based (Revert) //
+  for(int i = 0; i < 3; i++)
+    (*revBasis)[i] = (*basis)[i];
+
+
   // Edge Based //
   int i = 4;
 
@@ -69,10 +75,14 @@ QuadNodeBasis::QuadNodeBasis(const int order){
       (*basis)[i] = 
 	new Polynomial(legendre[l].compose(lifting[e2] - lifting[e1]) * 
 		       (*(*basis)[e1] + *(*basis)[e2]));
-            
+
+      (*revBasis)[i] = 
+	new Polynomial(legendre[l].compose(lifting[e1] - lifting[e2]) * 
+		       (*(*basis)[e1] + *(*basis)[e2]));            
       i++;
     }
   }
+
 
   // Cell Based //
   Polynomial px = Polynomial(2, 1, 0, 0);
@@ -86,18 +96,25 @@ QuadNodeBasis::QuadNodeBasis(const int order){
       (*basis)[i] = 
 	new Polynomial(legendre[l1].compose(px) * legendre[l2].compose(py));
 
+      (*revBasis)[i] = (*basis)[i];
+
       i++;
     }
   }
 
+
   // Free Temporary Sapce //
   delete[] legendre;
-  delete[] lifting;
 }
 
 QuadNodeBasis::~QuadNodeBasis(void){
-  for(int i = 0; i < size; i++)
+  for(int i = 0; i < size; i++){
     delete (*basis)[i];
 
+    if(i >= nVertex && i < nVertex + nEdge)
+      delete (*revBasis)[i];
+  }
+
   delete basis;
+  delete revBasis;
 }
