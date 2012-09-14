@@ -21,6 +21,7 @@
 class BasisVector: public Basis{
  protected:
   std::vector<const std::vector<Polynomial>*>* basis;
+  std::vector<const std::vector<Polynomial>*>* revBasis;
 
  public:
   //! Deletes this BasisVector
@@ -30,6 +31,12 @@ class BasisVector: public Basis{
   //! @return Returns the set of @em Polynomial%s
   //! defining this (vectorial) Basis
   const std::vector<const std::vector<Polynomial>*>& getFunctions(void) const;
+
+  //! @param closure A natural number
+  //! @return Returns the set of @em Polynomial%s
+  //! defining this (scalar) Basis, for the given closure
+  const std::vector<const std::vector<Polynomial>*>& 
+    getFunctions(unsigned int closure) const;
 
  protected:
   //! @internal
@@ -49,5 +56,16 @@ getFunctions(void) const{
 
   return *basis;
 }
+
+inline
+const std::vector<const std::vector<Polynomial>*>& BasisVector::
+getFunctions(unsigned int closure) const{
+  if(!closure)
+    return *basis;
+
+  else
+    return *revBasis;
+}
+
 
 #endif

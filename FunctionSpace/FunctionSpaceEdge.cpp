@@ -25,7 +25,7 @@ interpolate(const MElement& element,
     const_cast<MElement&>(element);
   
   // Get Basis Functions //
-  const vector<const vector<Polynomial>*>& fun = getBasis(element).getFunctions();
+  const vector<const vector<Polynomial>*>& fun = getLocalFunctions(element);
   const unsigned int nFun                      = fun.size();
 
   // Get Reference coordinate //

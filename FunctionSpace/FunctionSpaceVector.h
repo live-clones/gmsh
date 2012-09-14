@@ -29,6 +29,9 @@ class FunctionSpaceVector : public FunctionSpace{
 		const std::vector<double>& coef,
 		const fullVector<double>& xyz) const = 0;
 
+  const std::vector<const std::vector<Polynomial>*>
+    getLocalFunctions(const MElement& element) const;
+
   const BasisVector& getBasis(const MElement& element) const;
 };
 

@@ -19,10 +19,9 @@ TriNodeBasis::TriNodeBasis(const int order){
   Polynomial* legendre     = new Polynomial[order];
   Polynomial* intLegendre  = new Polynomial[order];
 
-  Polynomial  lagrangeSub[3];
   Polynomial  lagrangeSum[3];
+  Polynomial  lagrangeSub[3];
   Polynomial rLagrangeSub[3];
-  Polynomial rLagrangeSum[3];
 
   // Classical and Intrated-Scaled Legendre Polynomial //
   const int orderMinus = order - 1;
@@ -51,13 +50,9 @@ TriNodeBasis::TriNodeBasis(const int order){
   for(int i = 0; i < 3; i++)
     (*revBasis)[i] = (*basis)[i];  
 
-  
   // Lagrange Sum (& revert) //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
+  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
      lagrangeSum[i] = *(*basis)[i] + *(*basis)[j];
-    rLagrangeSum[i] = *(*basis)[j] + *(*basis)[i];
-  }
-
 
   // Lagrange Sub (& revert) //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
@@ -75,7 +70,7 @@ TriNodeBasis::TriNodeBasis(const int order){
 	intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e]));
 
       (*revBasis)[i] = new Polynomial(
-	intLegendre[l].compose(rLagrangeSub[e], rLagrangeSum[e]));
+	intLegendre[l].compose(rLagrangeSub[e], lagrangeSum[e]));
       
       i++;
     }

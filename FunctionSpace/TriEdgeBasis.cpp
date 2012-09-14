@@ -21,13 +21,13 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 
   Polynomial* legendre    = new Polynomial[orderPlus];
   Polynomial* intLegendre = new Polynomial[orderPlus];
-  
-  Polynomial* lagrange    = new Polynomial[3];
-  Polynomial* lagrangeSub = new Polynomial[3];
-  Polynomial* lagrangeSum = new Polynomial[3];
-
   Polynomial* u           = new Polynomial[orderPlus];
   Polynomial* v           = new Polynomial[orderPlus];
+
+  Polynomial  lagrange    [3];
+  Polynomial  lagrangeSum [3];
+  Polynomial  lagrangeSub [3];
+  Polynomial rLagrangeSub [3];
 
   // Classical and Intrated-Scaled Legendre Polynomial //
   Legendre::legendre(legendre, order);
@@ -45,21 +45,25 @@ TriEdgeBasis::TriEdgeBasis(const int order){
 
   // Lagrange Sum //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSum[i] = lagrange[j] + lagrange[i];
+     lagrangeSum[i] = lagrange[j] + lagrange[i];
 
-  // Lagrange Sub //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSub[i] = lagrange[i] - lagrange[j];
+  // Lagrange Sub (& revert) //
+  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
+      lagrangeSub[i] = lagrange[i] - lagrange[j];
+     rLagrangeSub[i] = lagrange[j] - lagrange[i];
+  }
 
 
-  // Basis (temporary --- *no* const) //
-  std::vector<std::vector<Polynomial>*> basis(size);
+  // Basis & Revert (temporary --- *no* const) //
+  std::vector<std::vector<Polynomial>*>    basis(size);
+  std::vector<std::vector<Polynomial>*> revBasis(size);
 
 
   // Edge Based (Nedelec) //
   int i = 0;
 
   for(int j = 1; i < 3; j = (j + 1) % 3){
+    // Direct
     std::vector<Polynomial> tmp = lagrange[j].gradient();
     tmp[0].mul(lagrange[i]);
     tmp[1].mul(lagrange[i]);
@@ -75,6 +79,23 @@ TriEdgeBasis::TriEdgeBasis(const int order){
     basis[i]->at(1).sub(tmp[1]);
     basis[i]->at(2).sub(tmp[2]);
 
+    // Revert 
+    std::vector<Polynomial> tmpR = lagrange[i].gradient();
+    tmpR[0].mul(lagrange[j]);
+    tmpR[1].mul(lagrange[j]);
+    tmpR[2].mul(lagrange[j]);
+
+    revBasis[i] = new std::vector<Polynomial>(lagrange[j].gradient());
+
+    revBasis[i]->at(0).mul(lagrange[i]);
+    revBasis[i]->at(1).mul(lagrange[i]);
+    revBasis[i]->at(2).mul(lagrange[i]);
+   
+    revBasis[i]->at(0).sub(tmpR[0]);
+    revBasis[i]->at(1).sub(tmpR[1]);
+    revBasis[i]->at(2).sub(tmpR[2]);
+
+    // Next
     i++;
   }
 
@@ -82,8 +103,12 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 3; e++){
       basis[i] = 
-	new std::vector<Polynomial>((intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e])).gradient());
+	new std::vector<Polynomial>((intLegendre[l].compose(lagrangeSub[e],  
+							    lagrangeSum[e])).gradient());
 
+      revBasis[i] = 
+	new std::vector<Polynomial>((intLegendre[l].compose(rLagrangeSub[e], 
+							    lagrangeSum[e])).gradient());
       i++;
     }
   }
@@ -114,6 +139,8 @@ TriEdgeBasis::TriEdgeBasis(const int order){
       basis[i]->at(0).add(tmp[0]);
       basis[i]->at(1).add(tmp[1]);
       basis[i]->at(2).add(tmp[2]);
+
+      revBasis[i] = basis[i];
       
       i++;
     }
@@ -137,6 +164,8 @@ TriEdgeBasis::TriEdgeBasis(const int order){
       basis[i]->at(1).sub(tmp[1]);
       basis[i]->at(2).sub(tmp[2]);
  
+      revBasis[i] = basis[i];
+
       i++;
     }
   }
@@ -148,6 +177,8 @@ TriEdgeBasis::TriEdgeBasis(const int order){
     basis[i]->at(0).mul(v[l]);
     basis[i]->at(1).mul(v[l]);
     basis[i]->at(2).mul(v[l]);
+
+    revBasis[i] = basis[i];
     
     i++;
   }
@@ -155,21 +186,26 @@ TriEdgeBasis::TriEdgeBasis(const int order){
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
-  delete[] lagrange;
-  delete[] lagrangeSub;
-  delete[] lagrangeSum;
   delete[] u;
   delete[] v;
 
 
   // Set Basis //
-  this->basis = new std::vector<const std::vector<Polynomial>*>
+  this->basis    = new std::vector<const std::vector<Polynomial>*>
     (basis.begin(), basis.end());
+
+  this->revBasis = new std::vector<const std::vector<Polynomial>*>
+    (revBasis.begin(), revBasis.end());
 }
 
 TriEdgeBasis::~TriEdgeBasis(void){
-  for(int i = 0; i < size; i++)
+  for(int i = 0; i < size; i++){
     delete (*basis)[i];
 
+    if(i >= nVertex && i < nVertex + nEdge)
+      delete (*revBasis)[i];
+  }
+
   delete basis;
+  delete revBasis;
 }
