@@ -380,7 +380,7 @@ static void updateGraphs()
   }
 }
 
-static void writeDb(const std::string &fileName, bool withTimeStamp=false)
+static void saveDb(const std::string &fileName, bool withTimeStamp=false)
 {
   std::string name(fileName);
   if(withTimeStamp){
@@ -394,11 +394,11 @@ static void writeDb(const std::string &fileName, bool withTimeStamp=false)
     name = split[0] + split[1] + stamp + split[2];
   }
 
-  Msg::StatusBar(2, true, "Writing database '%s'...", name.c_str());
+  Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
   if(onelab::server::instance()->toFile(name))
-    Msg::StatusBar(2, true, "Done writing database '%s'", name.c_str());
+    Msg::StatusBar(2, true, "Done saving database '%s'", name.c_str());
   else
-    Msg::Error("Could not write database '%s'", name.c_str());
+    Msg::Error("Could not save database '%s'", name.c_str());
 }
 
 static void loadDb(const std::string &name)
@@ -451,7 +451,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
     std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str()))
-      writeDb(fileChooserGetName(1));
+      saveDb(fileChooserGetName(1));
     return;
   }
 
@@ -538,7 +538,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->solver.autoSaveDatabase && action == "compute"){
     std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    writeDb(s, true);
+    saveDb(s, true);
   }
 
   FlGui::instance()->onelab->stop(false);

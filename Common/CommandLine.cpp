@@ -47,9 +47,8 @@ const char *GetGmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
 void PrintUsage(const char *name)
 {
-  // If you make changes in this routine, please also change the
-  // texinfo documentation (doc/texinfo/gmsh.texi) and the man page
-  // (doc/gmsh.1)
+  // If you make changes in this routine, please also change the texinfo
+  // documentation (doc/texinfo/gmsh.texi) and the man page (doc/gmsh.1)
   Msg::Direct("Usage: %s [options] [files]", name);
   Msg::Direct("Geometry options:");
   Msg::Direct("  -0                    Output unrolled geometry, then exit");
