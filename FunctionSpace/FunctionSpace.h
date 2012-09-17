@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <string>
 
 #include "Basis.h"
 #include "Dof.h"
@@ -66,8 +67,7 @@ class FunctionSpace{
   std::vector<Dof> getKeys(const MEdge& edge) const;
   std::vector<Dof> getKeys(const MFace& face) const;
 
-  int getElementType(const Dof& dof) const;
-  int getElementGlobalId(const Dof& dof) const;
+  std::string toString(void) const;
 
  protected:
   FunctionSpace(void);
@@ -145,40 +145,9 @@ class FunctionSpace{
    @param face A MFace
    @return Returns all the Dof%s associated to the given MFace
    **
-   
-   @fn FunctionSpace::getElementType
-   @param dof A Dof
-   @return Returns the @em type of the @em element,
-   to which the given Dof is @em associated
-   
-   @note
-   Type is equal to:
-   @li @c 0, if the element is a  @em Vertex 
-   @li @c 1, if the element is an @em Edge
-   @li @c 2, if the element is a  @em Face
-   @li @c 3, if the element is a  @em Cell
-   
-   @warning
-   There are no error recovery if 
-   the Element is not in the Mesh
 
-   @todo
-   Error recovery if 
-   the Element is not in the Mesh   
-   **
-   
-   @fn FunctionSpace::getElementGlobalId
-   @param dof A Dof
-   @return Returns the @em Mesh @em Global @em @c ID of
-   the Element, to which the given Dof is @em associated
- 
-   @warning
-   There are no error recovery if 
-   the Element is not in the Mesh
-
-   @todo
-   Error recovery if 
-   the Element is not in the Mesh   
+   @fn FunctionSpace::toString
+   @return Returns the FunctionSpace string
    **
 
    @internal
@@ -190,6 +159,13 @@ class FunctionSpace{
    @param order The order of this FunctionSpace
 
    Initializes a FunctionSpace with the given parameters  
+   @endinternal
+   **
+
+   @internal
+   @fn FunctionSpace::closure
+
+   Compute closure for Basis Functions  
    @endinternal
 */
 
@@ -220,10 +196,6 @@ inline unsigned int FunctionSpace::getNFunctionPerFace(const MElement& element) 
 
 inline unsigned int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
   return fPerCell;
-}
-
-inline int FunctionSpace::getElementGlobalId(const Dof& dof) const{
-  return dof.getEntity();
 }
 
 #endif

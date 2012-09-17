@@ -1,6 +1,6 @@
+#include <sstream>
 #include "FunctionSpace.h"
 #include "BasisGenerator.h"
-
 
 using namespace std;
 
@@ -193,28 +193,6 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   return myDof;
 }
 
-int FunctionSpace::getElementType(const Dof& dof) const{
-  // Get Entity //
-  const unsigned int entity = dof.getEntity();
-
-  // Total Number of Entities //
-  const unsigned int nVertex = mesh->getVertexNumber();
-  const unsigned int nEdge   = mesh->getEdgeNumber();
-  const unsigned int nFace   = mesh->getFaceNumber();
-  
-  // Vertex Based
-  if(entity < nVertex)
-    return 0; 
-
-  // Edge Based
-  else if(entity < nVertex + nEdge)
-    return 1;
-
-  // Face Based
-  else if(entity < nVertex + nEdge + nFace)
-    return 2;
-  
-  // Cell Based
-  else
-    return 3; 
+string FunctionSpace::toString(void) const{
+  return basis->toString();
 }

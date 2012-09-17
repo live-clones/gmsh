@@ -37,6 +37,8 @@ class BasisScalar: public Basis{
   //! defining this (scalar) Basis, for the given closure
   const std::vector<const Polynomial*>& getFunctions(unsigned int closure) const;
 
+  virtual std::string toString(void) const;
+
  protected:
   //! @internal
   //! Instantiates a new BasisScalar
@@ -48,13 +50,6 @@ class BasisScalar: public Basis{
 //////////////////////
 // Inline Functions //
 //////////////////////
-
-inline 
-const std::vector<const Polynomial*>& BasisScalar::
-getFunctions(void) const{
-
-  return *basis;
-}
 
 inline
 const std::vector<const Polynomial*>& BasisScalar::

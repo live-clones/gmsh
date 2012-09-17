@@ -60,6 +60,12 @@ class FunctionSpaceVector : public FunctionSpace{
    ---> check
    **
 
+   @fn FunctionSpaceVector::getLocalFunctions
+   @param element A MElement
+   @return Returns the basis functions associated
+   to the given element (with correct @em closure)
+   **
+
    @fn FunctionSpaceVector::getBasis
    @param element A MElement of the support 
    of this FunctionSpace

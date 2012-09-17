@@ -28,15 +28,13 @@ class BasisVector: public Basis{
   //!
   virtual ~BasisVector(void);
 
-  //! @return Returns the set of @em Polynomial%s
-  //! defining this (vectorial) Basis
-  const std::vector<const std::vector<Polynomial>*>& getFunctions(void) const;
-
   //! @param closure A natural number
   //! @return Returns the set of @em Polynomial%s
   //! defining this (scalar) Basis, for the given closure
   const std::vector<const std::vector<Polynomial>*>& 
     getFunctions(unsigned int closure) const;
+
+  virtual std::string toString(void) const;
 
  protected:
   //! @internal
@@ -49,13 +47,6 @@ class BasisVector: public Basis{
 //////////////////////
 // Inline Functions //
 //////////////////////
-
-inline 
-const std::vector<const std::vector<Polynomial>*>& BasisVector::
-getFunctions(void) const{
-
-  return *basis;
-}
 
 inline
 const std::vector<const std::vector<Polynomial>*>& BasisVector::

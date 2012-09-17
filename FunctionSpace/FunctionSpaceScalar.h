@@ -60,6 +60,12 @@ class FunctionSpaceScalar : public FunctionSpace{
    ---> check
    **
 
+   @fn FunctionSpaceScalar::getLocalFunctions
+   @param element A MElement
+   @return Returns the basis functions associated
+   to the given element (with correct @em closure)
+   **
+
    @fn FunctionSpaceScalar::getBasis
    @param element A MElement of the support 
    of this FunctionSpace

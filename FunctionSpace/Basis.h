@@ -1,6 +1,8 @@
 #ifndef _BASIS_H_
 #define _BASIS_H_
 
+#include <string>
+
 /**
    @interface Basis
    @brief Common Interface of all Basis
@@ -80,6 +82,9 @@ class Basis{
   //! @return Returns the number of Polynomial%s 
   //! (or Vector%s of Polynomial%s) in the Basis
   int getSize(void) const;
+
+  //! @return Returns the Basis String
+  virtual std::string toString(void) const = 0;
 
  protected:
   //! @internal
