@@ -262,8 +262,6 @@ void linearSystemPETScBlockDouble::preAllocateEntries()
 void linearSystemPETScBlockDouble::zeroMatrix()
 {
   if (_isAllocated && _entriesPreAllocated) {
-    MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY);
     MatZeroEntries(_a);
   }
 }
@@ -271,8 +269,6 @@ void linearSystemPETScBlockDouble::zeroMatrix()
 void linearSystemPETScBlockDouble::zeroRightHandSide()
 {
   if (_isAllocated) {
-    VecAssemblyBegin(_b);
-    VecAssemblyEnd(_b);
     VecZeroEntries(_b);
   }
 }
@@ -280,8 +276,6 @@ void linearSystemPETScBlockDouble::zeroRightHandSide()
 void linearSystemPETScBlockDouble::zeroSolution()
 {
   if (_isAllocated) {
-    VecAssemblyBegin(_x);
-    VecAssemblyEnd(_x);
     VecZeroEntries(_x);
   }
 }
