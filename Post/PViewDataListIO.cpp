@@ -579,7 +579,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool save
   fprintf(fp, "$Elements\n");
   fprintf(fp, "%d\n", (int)elements.size());
   for(unsigned int i = 0; i < elements.size(); i++)
-    elements[i]->writeMSH(fp, 2.2, false, i + 1);
+    elements[i]->writeMSH2(fp, 2.2, false, i + 1);
   fprintf(fp, "$EndElements\n");
 
   if(haveInterpolationMatrices()){

@@ -40,6 +40,10 @@ class MElement
                    int faceIndex=-1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                    double *x, double *y, double *z, SVector3 *n);
+  // fill the vector of integers that will be written after the element number
+  // and type in writeMSH
+  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
+                            std::vector<short> *ghosts=0);
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}
@@ -306,11 +310,12 @@ class MElement
   double integrateFlux(double val[], int face, int pOrder, int order=-1);
 
   // IO routines
-  virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false,
-                        int num=0, int elementary=1, int physical=1,
-                        int parentNum=0, int dom1Num = 0, int dom2Num = 0,
+  virtual void writeMSH(FILE *fp, bool binary=false, int elementary=1,
                         std::vector<short> *ghosts=0);
-
+  virtual void writeMSH2(FILE *fp, double version=1.0, bool binary=false,
+                         int num=0, int elementary=1, int physical=1,
+                         int parentNum=0, int dom1Num = 0, int dom2Num = 0,
+                         std::vector<short> *ghosts=0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printGamma, bool printEta, bool printRho,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);

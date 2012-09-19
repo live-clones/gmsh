@@ -1,10 +1,14 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Frederic Duboeuf
+
 #include "MSubElement.h"
 
-
-
-//--------------------------------------------------------------------------
 // MSubTetrahedron
-//--------------------------------------------------------------------------
 
 MSubTetrahedron::~MSubTetrahedron()
 {
@@ -12,24 +16,44 @@ MSubTetrahedron::~MSubTetrahedron()
     delete _orig;
 }
 
+void MSubTetrahedron::_fillInfoMSH(std::vector<int> &info, int elementary,
+                                   std::vector<short> *ghosts)
+{
+  info.clear();
+  info.push_back(0);
+  info.push_back(getParent()->getNum());
+  if(getPartition())
+    info.push_back(getPartition());
+  if(ghosts)
+    info.insert(info.end(), ghosts->begin(), ghosts->end());
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+}
+
 const polynomialBasis* MSubTetrahedron::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
   return 0;
 }
+
 const JacobianBasis* MSubTetrahedron::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
   return 0;
 }
+
 void MSubTetrahedron::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
 }
+
 void MSubTetrahedron::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
 }
+
 void MSubTetrahedron::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
@@ -57,6 +81,7 @@ bool MSubTetrahedron::isInside(double u, double v, double w)
     return true;
   return false;
 }
+
 void MSubTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts=0;
@@ -97,9 +122,7 @@ void MSubTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 }
 
 
-//--------------------------------------------------------------------------
 // MSubTriangle
-//--------------------------------------------------------------------------
 
 MSubTriangle::~MSubTriangle()
 {
@@ -107,24 +130,44 @@ MSubTriangle::~MSubTriangle()
     delete _orig;
 }
 
+void MSubTriangle::_fillInfoMSH(std::vector<int> &info, int elementary,
+                                std::vector<short> *ghosts)
+{
+  info.clear();
+  info.push_back(0);
+  info.push_back(getParent()->getNum());
+  if(getPartition())
+    info.push_back(getPartition());
+  if(ghosts)
+    info.insert(info.end(), ghosts->begin(), ghosts->end());
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+}
+
 const polynomialBasis* MSubTriangle::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
   return 0;
 }
+
 const JacobianBasis* MSubTriangle::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
   return 0;
 }
+
 void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
 }
+
 void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
 }
+
 void MSubTriangle::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
@@ -151,6 +194,7 @@ bool MSubTriangle::isInside(double u, double v, double w)
     return true;
   return false;
 }
+
 void MSubTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts=0;
@@ -189,10 +233,7 @@ void MSubTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = _intpt;
 }
 
-
-//--------------------------------------------------------------------------
 // MSubLine
-//--------------------------------------------------------------------------
 
 MSubLine::~MSubLine()
 {
@@ -200,24 +241,44 @@ MSubLine::~MSubLine()
     delete _orig;
 }
 
+void MSubLine::_fillInfoMSH(std::vector<int> &info, int elementary,
+                            std::vector<short> *ghosts)
+{
+  info.clear();
+  info.push_back(0);
+  info.push_back(getParent()->getNum());
+  if(getPartition())
+    info.push_back(getPartition());
+  if(ghosts)
+    info.insert(info.end(), ghosts->begin(), ghosts->end());
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+}
+
 const polynomialBasis* MSubLine::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
   return 0;
 }
+
 const JacobianBasis* MSubLine::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
   return 0;
 }
+
 void MSubLine::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
 }
+
 void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
 }
+
 void MSubLine::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
@@ -243,6 +304,7 @@ bool MSubLine::isInside(double u, double v, double w)
     return true;
   return false;
 }
+
 void MSubLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 {
   *npts=0;
@@ -277,9 +339,7 @@ void MSubLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = _intpt;
 }
 
-//--------------------------------------------------------------------------
 // MSubPoint
-//--------------------------------------------------------------------------
 
 MSubPoint::~MSubPoint()
 {
@@ -287,24 +347,44 @@ MSubPoint::~MSubPoint()
     delete _orig;
 }
 
+void MSubPoint::_fillInfoMSH(std::vector<int> &info, int elementary,
+                             std::vector<short> *ghosts)
+{
+  info.clear();
+  info.push_back(0);
+  info.push_back(getParent()->getNum());
+  if(getPartition())
+    info.push_back(getPartition());
+  if(ghosts)
+    info.insert(info.end(), ghosts->begin(), ghosts->end());
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+}
+
 const polynomialBasis* MSubPoint::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
   return 0;
 }
+
 const JacobianBasis* MSubPoint::getJacobianFuncSpace(int order) const
 {
   if(_orig) return _orig->getJacobianFuncSpace(order);
   return 0;
 }
+
 void MSubPoint::getShapeFunctions(double u, double v, double w, double s[], int o)
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
 }
+
 void MSubPoint::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
 }
+
 void MSubPoint::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);

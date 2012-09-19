@@ -44,6 +44,12 @@ class GModel
   std::set<GEdge*, GEntityLessThan> _chainEdges;
   std::set<GVertex*, GEntityLessThan> _chainVertices;
 
+  int _readMSH2(const std::string &name);
+  int _writeMSH2(const std::string &name, double version=2.2, bool binary=false,
+                 bool saveAll=false, bool saveParametric=false,
+                 double scalingFactor=1.0, int elementStartNum=0,
+                 int saveSinglePartition=0);
+
  protected:
   // the name of the model
   std::string _name;

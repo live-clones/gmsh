@@ -710,9 +710,50 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   return result;
 }
 
-void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
-                        int elementary, int physical, int parentNum,
-                        int dom1Num, int dom2Num, std::vector<short> *ghosts)
+void MElement::_fillInfoMSH(std::vector<int> &info, int elementary,
+                            std::vector<short> *ghosts)
+{
+  info.clear();
+  info.push_back(0);
+  info.push_back(elementary);
+  if(_partition)
+    info.push_back(_partition);
+  if(ghosts)
+    info.insert(info.end(), ghosts->begin(), ghosts->end());
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+}
+
+void MElement::writeMSH(FILE *fp, bool binary, int elementary,
+                        std::vector<short> *ghosts)
+{
+  int type = getTypeForMSH();
+  if(!type) return;
+
+  std::vector<int> info;
+  _fillInfoMSH(info, elementary, ghosts);
+
+  // if necessary, change the ordering of the vertices to get positive volume
+  setVolumePositive();
+
+  if(!binary){
+    fprintf(fp, "%d %d", _num, type);
+    for(unsigned int i = 0; i < info.size(); i++)
+      fprintf(fp, " %d", info[i]);
+    fprintf(fp, "\n");
+  }
+  else{
+    fwrite(&_num, sizeof(int), 1, fp);
+    fwrite(&type, sizeof(int), 1, fp);
+    fwrite(&info[0], sizeof(int), info.size(), fp);
+  }
+}
+
+void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
+                         int elementary, int physical, int parentNum,
+                         int dom1Num, int dom2Num, std::vector<short> *ghosts)
 {
   int type = getTypeForMSH();
 
@@ -731,31 +772,31 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
     if(poly){
       for (int i = 0; i < getNumChildren() ; i++){
          MElement *t = getChild(i);
-         t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+         t->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       }
       return;
     }
     if(type == MSH_TET_SUB){
       MTetrahedron *tt = new MTetrahedron(getVertex(0), getVertex(1), getVertex(2), getVertex(3));
-      tt->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      tt->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete tt;
       return;
     }
     if(type == MSH_TRI_B || type == MSH_TRI_SUB){
       MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
-      t->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      t->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete t;
       return;
     }
     if(type == MSH_LIN_B || type == MSH_LIN_C || type == MSH_LIN_SUB){
       MLine *l = new MLine(getVertex(0), getVertex(1));
-      l->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      l->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete l;
       return;
     }
     if(type == MSH_PNT_SUB){
       MPoint *p = new MPoint(getVertex(0));
-      p->writeMSH(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
+      p->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete p;
       return;
     }

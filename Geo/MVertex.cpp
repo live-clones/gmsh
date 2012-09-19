@@ -67,7 +67,78 @@ void MVertex::forceNum(int num)
   }
 }
 
-void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
+void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  if(!binary){
+    fprintf(fp, "%d %.16g %.16g %.16g ", _index, x() * scalingFactor,
+            y() * scalingFactor, z() * scalingFactor);
+  }
+  else{
+    fwrite(&_index, sizeof(int), 1, fp);
+    double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
+    fwrite(data, sizeof(double), 3, fp);
+  }
+
+  int zero = 0;
+  if(!onWhat()){
+    if(!binary)
+      fprintf(fp, "0\n");
+    else
+      fwrite(&zero, sizeof(int), 1, fp);
+  }
+  else{
+    int entity = onWhat()->tag();
+    int dim = onWhat()->dim();
+    if(!binary)
+      fprintf(fp, "%d %d ", entity, dim);
+    else{
+      fwrite(&entity, sizeof(int), 1, fp);
+      fwrite(&dim, sizeof(int), 1, fp);
+    }
+    switch(dim){
+    case 0:
+      if(!binary)
+        fprintf(fp, "\n");
+      break;
+    case 1:
+      {
+        double _u;
+        getParameter(0, _u);
+        if(!binary)
+          fprintf(fp, "%.16g\n", _u);
+        else
+          fwrite(&_u, sizeof(double), 1, fp);
+      }
+      break;
+    case 2:
+      {
+        double _u, _v;
+        getParameter(0, _u);
+        getParameter(1, _v);
+        if(!binary)
+          fprintf(fp, "%.16g %.16g\n", _u, _v);
+        else{
+          fwrite(&_u, sizeof(double), 1, fp);
+          fwrite(&_v, sizeof(double), 1, fp);
+        }
+      }
+      break;
+    default:
+      if(!binary)
+        fprintf(fp, "0 0 0\n");
+      else{
+        fwrite(&zero, sizeof(int), 1, fp);
+        fwrite(&zero, sizeof(int), 1, fp);
+        fwrite(&zero, sizeof(int), 1, fp);
+      }
+      break;
+    }
+  }
+}
+
+void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 

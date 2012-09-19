@@ -61,7 +61,7 @@ class MVertex{
   // get/set the visibility flag
   virtual char getVisibility(){ return _visible; }
   virtual void setVisibility(char val){ _visible = val; }
-  
+
   // get the "polynomial order" of the vertex
   inline int getPolynomialOrder(){ return _order; }
   inline void setPolynomialOrder(int order){ _order = (char)order; }
@@ -106,12 +106,13 @@ class MVertex{
   }
 
   // linear coordinate search for the vertex in a set
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator
   linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos);
 
   // IO routines
-  void writeMSH(FILE *fp, bool binary=false, bool saveParametric=false,
-                double scalingFactor=1.0);
+  void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
+  void writeMSH2(FILE *fp, bool binary=false, bool saveParametric=false,
+                 double scalingFactor=1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
@@ -130,7 +131,7 @@ class MEdgeVertex : public MVertex{
   MVertexBoundaryLayerData* bl_data;
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0,
-              int num = 0) 
+              int num = 0)
     : MVertex(x, y, z, ge,num), _u(u), _lc(lc)
   {
   }
@@ -146,7 +147,7 @@ class MFaceVertex : public MVertex{
  public :
   MVertexBoundaryLayerData* bl_data;
 
-  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0) 
+  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0)
     : MVertex(x, y, z, ge, num), _u(u), _v(v),bl_data(0)
   {
   }
@@ -154,15 +155,15 @@ class MFaceVertex : public MVertex{
   virtual bool getParameter(int i, double &par) const { par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par)
   {
-    if(!i) 
-      _u = par; 
-    else 
-      _v = par; 
-    return true; 
+    if(!i)
+      _u = par;
+    else
+      _v = par;
+    return true;
   }
 };
 
-bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
+bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
                            SPoint2 &param1, SPoint2 &param2);
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface=true);
