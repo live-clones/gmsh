@@ -1390,10 +1390,10 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_HEX_512: return new MHexahedronN(v, 7, num, part);
   case MSH_HEX_729: return new MHexahedronN(v, 8, num, part);
   case MSH_HEX_1000:return new MHexahedronN(v, 9, num, part);
-  case MSH_PNT_SUB:return new MSubPoint(v, num, part, owner, parent);
-  case MSH_LIN_SUB:return new MSubLine(v, num, part, owner, parent);
-  case MSH_TRI_SUB:return new MSubTriangle(v, num, part, owner, parent);
-  case MSH_TET_SUB:return new MSubTetrahedron(v, num, part, owner, parent);
+  case MSH_PNT_SUB: return new MSubPoint(v, num, part, owner, parent);
+  case MSH_LIN_SUB: return new MSubLine(v, num, part, owner, parent);
+  case MSH_TRI_SUB: return new MSubTriangle(v, num, part, owner, parent);
+  case MSH_TET_SUB: return new MSubTetrahedron(v, num, part, owner, parent);
   default:          return 0;
   }
 }

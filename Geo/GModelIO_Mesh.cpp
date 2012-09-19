@@ -8,9 +8,6 @@
 #include <string.h>
 #include <map>
 #include <string>
-#include <sstream>
-#include <iomanip>
-#include <cassert>
 #include "GModel.h"
 #include "GmshDefines.h"
 #include "MPoint.h"
@@ -63,15 +60,6 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
-static void replaceCommaByDot(const std::string name)
-{
-  char myCommand[1000], myCommand2[1000];
-  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
-  SystemCall(myCommand, true);
-  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
-  SystemCall(myCommand2, true);
-}
-
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
 {
@@ -99,26 +87,11 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
   }
   return true;
 }
-static bool getProperties(int num, int *indices, std::vector<double> &vec,
-                        std::vector<double> &properties)
-{
-  for(int i = 0; i < num; i++){
-    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      properties.push_back(vec[indices[i]]);
-  }
-  return true;
-}
 
 static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
                                   int reg, int part, std::vector<MVertex*> &v,
                                   std::map<int, std::vector<MElement*> > elements[10],
-                                  std::map<int, std::map<int, std::string> > physicals[4],
-                                  bool owner=false, MElement *parent=0,
-                                  MElement *d1=0, MElement *d2=0)
+                                  std::map<int, std::map<int, std::string> > physicals[4])
 {
   if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
@@ -127,35 +100,22 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int physical,
   }
 
   MElementFactory factory;
-  MElement *e = factory.create(typeMSH, v, num, part, owner, parent, d1, d2);
-
+  MElement *e = factory.create(typeMSH, v, num, part);
   if(!e){
     Msg::Error("Unknown type of element %d", typeMSH);
-    return NULL;
+    return 0;
   }
 
   switch(e->getType()){
-  case TYPE_PNT :
-    elements[0][reg].push_back(e); break;
-  case TYPE_LIN :
-    elements[1][reg].push_back(e); break;
-  case TYPE_TRI :
-    elements[2][reg].push_back(e); break;
-  case TYPE_QUA :
-    elements[3][reg].push_back(e); break;
-  case TYPE_TET :
-    elements[4][reg].push_back(e); break;
-  case TYPE_HEX :
-    elements[5][reg].push_back(e); break;
-  case TYPE_PRI :
-    elements[6][reg].push_back(e); break;
-  case TYPE_PYR :
-    elements[7][reg].push_back(e); break;
-  case TYPE_POLYG :
-    elements[8][reg].push_back(e); break;
-  case TYPE_POLYH :
-    elements[9][reg].push_back(e); break;
-  default : Msg::Error("Wrong type of element"); return NULL;
+  case TYPE_PNT : elements[0][reg].push_back(e); break;
+  case TYPE_LIN : elements[1][reg].push_back(e); break;
+  case TYPE_TRI : elements[2][reg].push_back(e); break;
+  case TYPE_QUA : elements[3][reg].push_back(e); break;
+  case TYPE_TET : elements[4][reg].push_back(e); break;
+  case TYPE_HEX : elements[5][reg].push_back(e); break;
+  case TYPE_PRI : elements[6][reg].push_back(e); break;
+  case TYPE_PYR : elements[7][reg].push_back(e); break;
+  default : Msg::Error("Wrong type of element"); return 0;
   }
 
   int dim = e->getDim();
@@ -446,103 +406,27 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
-static int skipUntil(FILE *fp, const char *key)
+static void replaceCommaByDot(const std::string name)
 {
-  char str[256], key_bracket[256];
-  strcpy(key_bracket, key);
-  strcat(key_bracket, "[");
-  while(fscanf(fp, "%s", str)){
-    if(!strcmp(str, key)){
-      while(!feof(fp) && fgetc(fp) != '['){}
-      return 1;
-    }
-    if(!strcmp(str, key_bracket)){
-      return 1;
-    }
-  }
-  return 0;
+  char myCommand[1000], myCommand2[1000];
+  sprintf(myCommand, "sed 's/,/./g' %s > temp.txt", name.c_str());
+  SystemCall(myCommand, true);
+  sprintf(myCommand2, "mv temp.txt %s ", name.c_str());
+  SystemCall(myCommand2, true);
 }
 
-static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
-                            std::vector<MVertex*> &allVertexVector)
+static bool getProperties(int num, int *indices, std::vector<double> &vec,
+                        std::vector<double> &properties)
 {
-  double x, y, z;
-  if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
-  vertexVector.push_back(new MVertex(x, y, z));
-  while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
-    vertexVector.push_back(new MVertex(x, y, z));
-  for(unsigned int i = 0; i < vertexVector.size(); i++)
-    allVertexVector.push_back(vertexVector[i]);
-  Msg::Info("%d vertices", vertexVector.size());
-  return 1;
-}
-
-static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int region,
-                            std::map<int, std::vector<MElement*> > elements[3],
-                            bool strips=false)
-{
-  int i;
-  std::vector<int> idx;
-  if(fscanf(fp, "%d", &i) != 1) return 0;
-  idx.push_back(i);
-
-  // check if vertex indices are separated by commas
-  char tmp[256];
-  const char *format;
-  fpos_t position;
-  fgetpos(fp, &position);
-  if(!fgets(tmp, sizeof(tmp), fp)) return 0;
-  fsetpos(fp, &position);
-  if(strstr(tmp, ","))
-    format = " , %d";
-  else
-    format = " %d";
-
-  while(fscanf(fp, format, &i) == 1){
-    if(i != -1){
-      idx.push_back(i);
+  for(int i = 0; i < num; i++){
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
     }
-    else{
-      std::vector<MVertex*> vertices;
-      if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
-      idx.clear();
-      if(vertices.size() < 2){
-        Msg::Info("Skipping %d-vertex element", (int)vertices.size());
-      }
-      else if(vertices.size() == 2){
-        elements[0][region].push_back(new MLine(vertices));
-      }
-      else if(vertices.size() == 3){
-        elements[1][region].push_back(new MTriangle(vertices));
-      }
-      else if(!strips && vertices.size() == 4){
-        elements[2][region].push_back(new MQuadrangle(vertices));
-      }
-      else if(strips){ // triangle strip
-        for(unsigned int j = 2; j < vertices.size(); j++){
-          if(j % 2)
-            elements[1][region].push_back
-              (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
-          else
-            elements[1][region].push_back
-              (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
-        }
-      }
-      else{ // import polygon as triangle fan
-        for(unsigned int j = 2; j < vertices.size(); j++){
-          elements[1][region].push_back
-            (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
-        }
-      }
-    }
+    else
+      properties.push_back(vec[indices[i]]);
   }
-  if(idx.size()){
-    Msg::Error("Prematured end of VRML file");
-    return 0;
-  }
-  Msg::Info("%d elements", elements[0][region].size() +
-            elements[1][region].size() + elements[2][region].size());
-  return 1;
+  return true;
 }
 
 int GModel::readPLY(const std::string &name)
@@ -758,6 +642,105 @@ int GModel::writePLY2(const std::string &name)
   }
 
   fclose(fp);
+  return 1;
+}
+
+static int skipUntil(FILE *fp, const char *key)
+{
+  char str[256], key_bracket[256];
+  strcpy(key_bracket, key);
+  strcat(key_bracket, "[");
+  while(fscanf(fp, "%s", str)){
+    if(!strcmp(str, key)){
+      while(!feof(fp) && fgetc(fp) != '['){}
+      return 1;
+    }
+    if(!strcmp(str, key_bracket)){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
+                            std::vector<MVertex*> &allVertexVector)
+{
+  double x, y, z;
+  if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
+  vertexVector.push_back(new MVertex(x, y, z));
+  while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
+    vertexVector.push_back(new MVertex(x, y, z));
+  for(unsigned int i = 0; i < vertexVector.size(); i++)
+    allVertexVector.push_back(vertexVector[i]);
+  Msg::Info("%d vertices", vertexVector.size());
+  return 1;
+}
+
+static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int region,
+                            std::map<int, std::vector<MElement*> > elements[3],
+                            bool strips=false)
+{
+  int i;
+  std::vector<int> idx;
+  if(fscanf(fp, "%d", &i) != 1) return 0;
+  idx.push_back(i);
+
+  // check if vertex indices are separated by commas
+  char tmp[256];
+  const char *format;
+  fpos_t position;
+  fgetpos(fp, &position);
+  if(!fgets(tmp, sizeof(tmp), fp)) return 0;
+  fsetpos(fp, &position);
+  if(strstr(tmp, ","))
+    format = " , %d";
+  else
+    format = " %d";
+
+  while(fscanf(fp, format, &i) == 1){
+    if(i != -1){
+      idx.push_back(i);
+    }
+    else{
+      std::vector<MVertex*> vertices;
+      if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
+      idx.clear();
+      if(vertices.size() < 2){
+        Msg::Info("Skipping %d-vertex element", (int)vertices.size());
+      }
+      else if(vertices.size() == 2){
+        elements[0][region].push_back(new MLine(vertices));
+      }
+      else if(vertices.size() == 3){
+        elements[1][region].push_back(new MTriangle(vertices));
+      }
+      else if(!strips && vertices.size() == 4){
+        elements[2][region].push_back(new MQuadrangle(vertices));
+      }
+      else if(strips){ // triangle strip
+        for(unsigned int j = 2; j < vertices.size(); j++){
+          if(j % 2)
+            elements[1][region].push_back
+              (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
+          else
+            elements[1][region].push_back
+              (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
+        }
+      }
+      else{ // import polygon as triangle fan
+        for(unsigned int j = 2; j < vertices.size(); j++){
+          elements[1][region].push_back
+            (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
+        }
+      }
+    }
+  }
+  if(idx.size()){
+    Msg::Error("Prematured end of VRML file");
+    return 0;
+  }
+  Msg::Info("%d elements", elements[0][region].size() +
+            elements[1][region].size() + elements[2][region].size());
   return 1;
 }
 
