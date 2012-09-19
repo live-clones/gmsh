@@ -274,7 +274,8 @@ PhysicalGroup *FindPhysicalGroup(int inum, int type);
 List_T *GetAllEntityNumbers(int dim);
 
 void TranslateShapes(double X,double Y,double Z, List_T *shapes);
-void DilatShapes(double X,double Y,double Z, double A, List_T *shapes);
+void DilatShapes(double X,double Y,double Z, double A, double B, double C,
+                 List_T *shapes);
 void RotateShapes(double Ax,double Ay,double Az,
                   double Px,double Py, double Pz, double alpha, List_T *shapes);
 void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);

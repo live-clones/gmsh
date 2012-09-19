@@ -1822,7 +1822,12 @@ Transform :
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      DilatShapes($3[0], $3[1], $3[2], $5, $8);
+      DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
+      $$ = $8;
+    }
+  | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
+    {
+      DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
       $$ = $8;
     }
   | tSTRING '{' MultipleShape '}'
