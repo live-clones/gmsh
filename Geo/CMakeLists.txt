@@ -19,16 +19,13 @@ set(SRC
   GModel.cpp
     GModelVertexArrays.cpp
     GModelFactory.cpp
-    GModelIO_Geo.cpp
-    GModelIO_Mesh.cpp
-    GModelIO_MSH.cpp
-    GModelIO_MSH2.cpp
-    GModelIO_OCC.cpp 
-      OCC_Connect.cpp
-    GModelIO_ACIS.cpp
-    GModelIO_Fourier.cpp
-    GModelIO_CGNS.cpp
-    GModelIO_MED.cpp
+    GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp 
+      GModelIO_Fourier.cpp OCC_Connect.cpp
+    GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_VTK.cpp GModelIO_POS.cpp 
+      GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp GModelIO_STL.cpp 
+      GModelIO_PLY.cpp GModelIO_VRML.cpp GModelIO_UNV.cpp GModelIO_BDF.cpp 
+      GModelIO_IR3.cpp GModelIO_DIFF.cpp GModelIO_GEOM.cpp GModelIO_INP.cpp
+      GModelIO_MAIL.cpp GModelIO_P3D.cpp 
   ExtrudeParams.cpp
   Geo.cpp
   GeoStringInterface.cpp GeoInterpolation.cpp

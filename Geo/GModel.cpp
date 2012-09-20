@@ -1081,7 +1081,8 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
 }
 
 template<class T>
-static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements, bool force=false)
+static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements,
+                                                bool force=false)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     for(int j = 0; j < elements[i]->getNumVertices(); j++){
@@ -1181,6 +1182,237 @@ void GModel::_pruneMeshVertexAssociations()
     _associateEntityWithElementVertices(*it, (*it)->points, true);
   }
   _storeVerticesInEntities(vertices);
+}
+
+void GModel::_storePhysicalTagsInEntities(int dim,
+                                          std::map<int, std::map<int, std::string> > &map)
+{
+  std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
+  for(; it != map.end(); ++it){
+    GEntity *ge = 0;
+    switch(dim){
+    case 0: ge = getVertexByTag(it->first); break;
+    case 1: ge = getEdgeByTag(it->first); break;
+    case 2: ge = getFaceByTag(it->first); break;
+    case 3: ge = getRegionByTag(it->first); break;
+    }
+    if(ge){
+      std::map<int, std::string>::const_iterator it2 = it->second.begin();
+      for(; it2 != it->second.end(); ++it2){
+        if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
+           ge->physicals.end()){
+          ge->physicals.push_back(it2->first);
+	}
+      }
+    }
+  }
+}
+
+static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                        std::vector<MVertex*> &vertices)
+{
+  for(int i = 0; i < num; i++){
+    if(!map.count(indices[i])){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(map[indices[i]]);
+  }
+  return true;
+}
+
+static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                        std::vector<MVertex*> &vertices, int minVertex = 0)
+{
+  for(int i = 0; i < num; i++){
+    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(vec[indices[i]]);
+  }
+  return true;
+}
+
+MElement *GModel::createElementMSH(int num, int typeMSH, int physical,
+                                   int reg, int part, std::vector<MVertex*> &v,
+                                   std::map<int, std::vector<MElement*> > elements[10],
+                                   std::map<int, std::map<int, std::string> > physicals[4])
+{
+  if(CTX::instance()->mesh.switchElementTags) {
+    int tmp = reg;
+    reg = physical;
+    physical = tmp;
+  }
+
+  MElementFactory factory;
+  MElement *e = factory.create(typeMSH, v, num, part);
+  if(!e){
+    Msg::Error("Unknown type of element %d", typeMSH);
+    return 0;
+  }
+
+  switch(e->getType()){
+  case TYPE_PNT : elements[0][reg].push_back(e); break;
+  case TYPE_LIN : elements[1][reg].push_back(e); break;
+  case TYPE_TRI : elements[2][reg].push_back(e); break;
+  case TYPE_QUA : elements[3][reg].push_back(e); break;
+  case TYPE_TET : elements[4][reg].push_back(e); break;
+  case TYPE_HEX : elements[5][reg].push_back(e); break;
+  case TYPE_PRI : elements[6][reg].push_back(e); break;
+  case TYPE_PYR : elements[7][reg].push_back(e); break;
+  default : Msg::Error("Wrong type of element"); return 0;
+  }
+
+  int dim = e->getDim();
+  if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
+    physicals[dim][reg][physical] = "unnamed";
+
+  if(part) getMeshPartitions().insert(part);
+  return e;
+}
+
+GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
+                             std::vector<int> &elementNum,
+                             std::vector<std::vector<int> > &vertexIndices,
+                             std::vector<int> &elementType,
+                             std::vector<int> &physical,
+                             std::vector<int> &elementary,
+                             std::vector<int> &partition)
+{
+  GModel *gm = new GModel();
+  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::map<int, std::string> > physicals[4];
+  std::vector<MVertex*> vertexVector;
+
+  int numVertices = (int)vertexMap.size();
+  int numElement = (int)elementNum.size();
+
+  if(numElement != (int)vertexIndices.size())
+    Msg::Error("Dimension in vertices numbers");
+  if(numElement != (int)elementType.size())
+    Msg::Error("Dimension in elementType numbers");
+  if(numElement != (int)physical.size())
+    Msg::Error("Dimension in physical numbers");
+  if(numElement != (int)elementary.size())
+    Msg::Error("Dimension in elementary numbers");
+  if(numElement != (int)partition.size())
+    Msg::Error("Dimension in partition numbers");
+
+  std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+  std::map<int, MVertex*>::const_iterator end = vertexMap.end();
+
+  int maxVertex = std::numeric_limits<int>::min();
+  int minVertex = std::numeric_limits<int>::max();
+  int num;
+
+  for(; it != end; ++it){
+    num = it->first;
+    minVertex = std::min(minVertex, num);
+    maxVertex = std::max(maxVertex, num);
+  }
+  if(minVertex == std::numeric_limits<int>::max())
+    Msg::Error("Could not determine the min index of vertices");
+
+  // If the vertex numbering is dense, transfer the map into a
+  // vector to speed up element creation
+  if((minVertex == 1 && maxVertex == numVertices) ||
+     (minVertex == 0 && maxVertex == numVertices - 1)){
+    Msg::Info("Vertex numbering is dense");
+    vertexVector.resize(vertexMap.size() + 1);
+    if(minVertex == 1)
+      vertexVector[0] = 0;
+    else
+      vertexVector[numVertices] = 0;
+    std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+    for(; it != vertexMap.end(); ++it)
+      vertexVector[it->first] = it->second;
+    vertexMap.clear();
+  }
+
+  int *indices;
+  int nbVertices;
+  for(int i = 0; i < numElement; ++i){
+    num = elementNum[i];
+    std::vector<MVertex*> vertices;
+    nbVertices = (int)vertexIndices[i].size();
+    indices = &vertexIndices[i][0];
+    if(vertexVector.size()){
+      if(!getVertices(nbVertices, indices, vertexVector, vertices)){
+        Msg::Error("Vertex not found aborting");
+        delete gm;
+        return 0;
+      }
+    }
+    else{
+      if(!getVertices(nbVertices, indices, vertexMap, vertices)){
+        Msg::Error("Vertex not found aborting");
+        delete gm;
+        return 0;
+      }
+    }
+
+    gm->createElementMSH(num, elementType[i], physical[i], elementary[i],
+                         partition[i], vertices, elements, physicals);
+  }
+
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new (discrete) one.
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    gm->_storeElementsInEntities(elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  gm->_associateEntityWithMeshVertices();
+
+  // store the vertices in their associated geometrical entity
+  if(vertexVector.size())
+    gm->_storeVerticesInEntities(vertexVector);
+  else
+    gm->_storeVerticesInEntities(vertexMap);
+
+  // store the physical tags
+  for(int i = 0; i < 4; i++)
+    gm->_storePhysicalTagsInEntities(i, physicals[i]);
+
+  return gm;
+}
+
+GModel *GModel::createGModel
+(std::map<int, std::vector<MElement*> > &entityToElementsMap,
+ std::map<int, std::vector<int> > &entityToPhysicalsMap)
+{
+  GModel* gm = new GModel();
+
+  std::map<int, MVertex*> vertexMap;
+  std::map<int, std::map<int, std::string> > physicals[4];
+  for(std::map<int, std::vector<MElement*> >::iterator it =
+        entityToElementsMap.begin(); it != entityToElementsMap.end();
+      it++) {
+    int entity = it->first;
+    for(unsigned int iE = 0; iE < it->second.size(); iE++) {
+      MElement* me = it->second[iE];
+      for(int iV = 0; iV < me->getNumVertices(); iV++) {
+        vertexMap[me->getVertex(iV)->getNum()] = me->getVertex(iV);
+      }
+      if(me->getPartition()) {
+        gm->getMeshPartitions().insert(me->getPartition());
+      }
+      std::vector<int> entityPhysicals = entityToPhysicalsMap[entity];
+      for(unsigned int i = 0; i < entityPhysicals.size(); i++) {
+        physicals[me->getDim()][entity][entityPhysicals[i]] = "unnamed";
+      }
+    }
+  }
+
+  gm->_storeElementsInEntities(entityToElementsMap);
+  gm->_associateEntityWithMeshVertices();
+  gm->_storeVerticesInEntities(vertexMap);
+  for(int i = 0; i < 4; i++)
+    gm->_storePhysicalTagsInEntities(i, physicals[i]);
+
+  return gm;
 }
 
 void GModel::checkMeshCoherence(double tolerance)
