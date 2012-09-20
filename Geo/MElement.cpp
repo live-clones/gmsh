@@ -1398,6 +1398,32 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   }
 }
 
+MElement *MElementFactory::create(int num, int type, const std::vector<int> &tags,
+                                  std::vector<MVertex*> &v,
+                                  std::map<int, MElement*> &elementCache,
+                                  std::vector<short> &ghosts)
+{
+  MElement *parent = 0;
+  int part = 0;
+  if(tags.size() > 2 && (type == MSH_PNT_SUB || type == MSH_LIN_SUB ||
+                         type == MSH_TRI_SUB || type == MSH_TET_SUB)){
+    parent = elementCache[tags[1]];
+    if(tags[2]){ // num partitions
+      part = tags[3];
+      for(int i = 0; i < tags[2] - 1; i++)
+        ghosts.push_back(tags[4 + i]);
+    }
+  }
+  else if(tags.size() > 1){
+    if(tags[1]){ // num partitions
+      part = tags[2];
+      for(int i = 0; i < tags[1] - 1; i++)
+        ghosts.push_back(tags[3 + i]);
+    }
+  }
+  create(type, v, num, part, false, parent);
+}
+
 void MElement::xyzTouvw(fullMatrix<double> *xu)
 {
   double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];

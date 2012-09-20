@@ -123,6 +123,13 @@ class GModel
   void _storePhysicalTagsInEntities(int dim,
                                     std::map<int, std::map<int, std::string> > &map);
 
+  // utility function to create a mesh element in the I/O routines (don't use in
+  // new code; it will be removed eventually)
+  MElement *_createElementMSH(int num, int typeMSH, int physical,
+                              int reg, int part, std::vector<MVertex*> &v,
+                              std::map<int, std::vector<MElement*> > elements[10],
+                              std::map<int, std::map<int, std::string> > physicals[4]);
+
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 
@@ -488,15 +495,9 @@ class GModel
   // if cutElem is set to false, split the model without cutting the elements
   GModel *buildCutGModel(gLevelset *ls, bool cutElem=true, bool saveTri=false);
 
-  // utility function to create a mesh element in the I/O routines
-  MElement *createElementMSH(int num, int typeMSH, int physical,
-                             int reg, int part, std::vector<MVertex*> &v,
-                             std::map<int, std::vector<MElement*> > elements[10],
-                             std::map<int, std::map<int, std::string> > physicals[4]);
-
-  // create a GModel by importing a mesh (vertexMap has a dim equal to
-  // the number of vertices and all the other vectors have a dim equal
-  // to the number of elements)
+  // create a GModel by importing a mesh (vertexMap has a dim equal to the
+  // number of vertices and all the other vectors have a dim equal to the number
+  // of elements)
   static GModel *createGModel(std::map<int, MVertex*> &vertexMap,
                               std::vector<int> &numElement,
                               std::vector<std::vector<int> > &vertexIndices,
@@ -505,9 +506,9 @@ class GModel
                               std::vector<int> &elementary,
                               std::vector<int> &partition);
 
-  // create a GModel from newly created mesh elements
-  // (with their own newly created mesh vertices),
-  // and let element entities have given physical group tags
+  // create a GModel from newly created mesh elements (with their own newly
+  // created mesh vertices), and let element entities have given physical group
+  // tags
   static GModel *createGModel
     (std::map<int, std::vector<MElement*> > &entityToElementsMap,
      std::map<int, std::vector<int> > &entityToPhysicalsMap);

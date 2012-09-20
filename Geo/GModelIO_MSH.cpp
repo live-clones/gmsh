@@ -14,14 +14,345 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "StringUtils.h"
+
+static bool getVertices(int num, const std::vector<int> &indices,
+                        std::map<int, MVertex*> &map,
+                        std::vector<MVertex*> &vertices)
+{
+  for(int i = 0; i < num; i++){
+    if(!map.count(indices[i])){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(map[indices[i]]);
+  }
+  return true;
+}
+
+static bool getVertices(int num, const std::vector<int> &indices,
+                        std::vector<MVertex*> &vec,
+                        std::vector<MVertex*> &vertices, int minVertex = 0)
+{
+  for(int i = 0; i < num; i++){
+    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
+      Msg::Error("Wrong vertex index %d", indices[i]);
+      return false;
+    }
+    else
+      vertices.push_back(vec[indices[i]]);
+  }
+  return true;
+}
 
 int GModel::readMSH(const std::string &name)
 {
-  double version = 2.2;
-  if(version < 3)
-    return _readMSH2(name);
+  FILE *fp = fopen(name.c_str(), "rb");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
 
-  return 0;
+  char str[256] = "";
+  double version = 2.2;
+  bool binary = false, swap = false, postpro = false;
+  int minVertex = 0;
+  std::map<int, std::vector<int> > entities[4];
+  std::map<int, std::vector<MElement*> > elements[10];
+
+  while(1) {
+
+    while(str[0] != '$'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+
+    if(feof(fp))
+      break;
+
+    // $MeshFormat section
+    if(!strncmp(&str[1], "MeshFormat", 10)) {
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int format, size;
+      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
+      if(version < 3.) return _readMSH2(name);
+      if(format){
+        binary = true;
+        Msg::Info("Mesh is in binary format");
+        int one;
+        if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+        if(one != 1){
+          swap = true;
+          Msg::Info("Swapping bytes from binary file");
+        }
+      }
+    }
+
+    // $PhysicalNames section
+    else if(!strncmp(&str[1], "PhysicalNames", 13)) {
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int numNames;
+      if(sscanf(str, "%d", &numNames) != 1) return 0;
+      for(int i = 0; i < numNames; i++) {
+        int dim, num;
+        if(fscanf(fp, "%d", &dim) != 1) return 0;
+        if(fscanf(fp, "%d", &num) != 1) return 0;
+        if(!fgets(str, sizeof(str), fp)) return 0;
+        std::string name = ExtractDoubleQuotedString(str, 256);
+        if(name.size()) setPhysicalName(name, dim, num);
+      }
+    }
+
+    // $Entities section
+    else if(!strncmp(&str[1], "Entities", 8)) {
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int numEntities;
+      if(sscanf(str, "%d", &numEntities) != 1) return 0;
+      for(int i = 0; i < numEntities; i++) {
+        int num, dim, numPhysicals;
+        if(fscanf(fp, "%d %d %d", &num, &dim, &numPhysicals) != 3) return 0;
+        if(numPhysicals > 0){
+          std::vector<int> physicals(numPhysicals);
+          for(int j = 0; j < numPhysicals; j++){
+            if(fscanf(fp, "%d", &physicals[j]) != 1) return 0;
+          }
+          entities[dim][num] = physicals;
+        }
+      }
+    }
+
+    // $Nodes section
+    else if(!strncmp(&str[1], "Nodes", 5)) {
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int numVertices;
+      if(sscanf(str, "%d", &numVertices) != 1) return 0;
+      Msg::Info("%d vertices", numVertices);
+      Msg::ResetProgressMeter();
+      std::map<int, MVertex*> vertexMap;
+      std::vector<MVertex*> vertexVector;
+      int maxVertex = -1;
+      minVertex = numVertices + 1;
+      for(int i = 0; i < numVertices; i++) {
+        int num, entity, dim;
+        double xyz[3];
+        MVertex *vertex = 0;
+        if(!binary){
+          if(fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2],
+                    &entity, &dim) != 6)
+            return 0;
+        }
+        else{
+          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&num, sizeof(int), 1);
+          if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+          if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
+          if(fread(&entity, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&entity, sizeof(int), 1);
+          if(fread(&dim, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&dim, sizeof(int), 1);
+        }
+        if(entity){
+          switch(dim){
+          case 0:
+            {
+              GVertex *gv = getVertexByTag(entity);
+              if (gv) gv->deleteMesh();
+              vertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
+            }
+            break;
+          case 1:
+            {
+              GEdge *ge = getEdgeByTag(entity);
+              double u;
+              if(!binary){
+                if (fscanf(fp, "%lf", &u) != 1) return 0;
+              }
+              else{
+                if(fread(&u, sizeof(double), 1, fp) != 1) return 0;
+                if(swap) SwapBytes((char*)&u, sizeof(double), 1);
+              }
+              vertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, u, -1.0, num);
+            }
+            break;
+          case 2:
+            {
+              GFace *gf = getFaceByTag(entity);
+              double uv[2];
+              if(!binary){
+                if (fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) return 0;
+              }
+              else{
+                if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
+                if(swap) SwapBytes((char*)uv, sizeof(double), 2);
+              }
+              vertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);
+            }
+            break;
+          case 3:
+            {
+              GRegion *gr = getRegionByTag(entity);
+              double uvw[3];
+              if(!binary){
+                if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 2) return 0;
+              }
+              else{
+                if(fread(uvw, sizeof(double), 3, fp) != 3) return 0;
+                if(swap) SwapBytes((char*)uvw, sizeof(double), 3);
+              }
+              vertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
+            }
+            break;
+          default:
+            Msg::Error("Wrong entity dimension for vertex %d", num);
+            return 0;
+          }
+        }
+        minVertex = std::min(minVertex, num);
+        maxVertex = std::max(maxVertex, num);
+        if(vertexMap.count(num))
+          Msg::Warning("Skipping duplicate vertex %d", num);
+        vertexMap[num] = vertex;
+        if(numVertices > 100000)
+          Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
+      }
+      // if the vertex numbering is dense, transfer the map into a vector to
+      // speed up element creation
+      if((int)vertexMap.size() == numVertices &&
+         ((minVertex == 1 && maxVertex == numVertices) ||
+          (minVertex == 0 && maxVertex == numVertices - 1))){
+        Msg::Info("Vertex numbering is dense");
+        vertexVector.resize(vertexMap.size() + 1);
+        if(minVertex == 1)
+          vertexVector[0] = 0;
+        else
+          vertexVector[numVertices] = 0;
+        std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+        for(; it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
+        vertexMap.clear();
+      }
+
+      // cache the vertex indexing data
+      _vertexVectorCache = vertexVector;
+      _vertexMapCache = vertexMap;
+    }
+
+    // $Elements section
+    else if(!strncmp(&str[1], "Elements", 8)) {
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      int numElements;
+      if(sscanf(str, "%d", &numElements) != 1) return 0;
+      Msg::Info("%d elements", numElements);
+      Msg::ResetProgressMeter();
+      std::map<int, MElement*> elementMap;
+      for(int i = 0; i < numElements; i++) {
+        int num, type, numTags, numVertices;
+        if(!binary){
+          if(fscanf(fp, "%d %d %d", &num, &type, &numTags) != 3) return 0;
+        }
+        else{
+          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&num, sizeof(int), 1);
+          if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&type, sizeof(int), 1);
+          if(fread(&numTags, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&numTags, sizeof(int), 1);
+        }
+        std::vector<int> tags;
+        if(numTags > 0){
+          tags.resize(numTags);
+          if(!binary){
+            for(int j = 0; j < numTags; j++){
+              if(fscanf(fp, "%d", &tags[j]) != 1) return 0;
+            }
+          }
+          else{
+            if(fread(&tags[0], sizeof(int), numTags, fp) != numTags) return 0;
+            if(swap) SwapBytes((char*)&tags[0], sizeof(int), numTags);
+          }
+        }
+        if(!(numVertices = MElement::getInfoMSH(type))) {
+          return 0;
+        }
+        std::vector<int> indices(numVertices);
+        if(!binary){
+          for(int j = 0; j < numVertices; j++)
+            if(fscanf(fp, "%d", &indices[j]) != 1) return 0;
+        }
+        else{
+          if(fread(&indices[0], sizeof(int), numVertices, fp) != numVertices) return 0;
+          if(swap) SwapBytes((char*)&indices[0], sizeof(int), numVertices);
+        }
+        std::vector<MVertex*> vertices;
+        if(_vertexVectorCache.size()){
+          if(!getVertices(numVertices, indices, _vertexVectorCache, vertices, minVertex))
+            return 0;
+        }
+        else{
+          if(!getVertices(numVertices, indices, _vertexMapCache, vertices))
+            return 0;
+        }
+        std::vector<short> ghosts;
+        MElementFactory factory;
+        MElement *element = factory.create(num, type, tags, vertices, elementMap,
+                                           ghosts);
+        elementMap[num] = element;
+        int part = element->getPartition();
+        if(part) getMeshPartitions().insert(part);
+        int elementary = tags.size() ? tags[0] : 0;
+        switch(element->getType()){
+        case TYPE_PNT: elements[0][elementary].push_back(element); break;
+        case TYPE_LIN: elements[1][elementary].push_back(element); break;
+        case TYPE_TRI: elements[2][elementary].push_back(element); break;
+        case TYPE_QUA: elements[3][elementary].push_back(element); break;
+        case TYPE_TET: elements[4][elementary].push_back(element); break;
+        case TYPE_HEX: elements[5][elementary].push_back(element); break;
+        case TYPE_PRI: elements[6][elementary].push_back(element); break;
+        case TYPE_PYR: elements[7][elementary].push_back(element); break;
+        }
+        for(unsigned int j = 0; j < ghosts.size(); j++)
+          _ghostCells.insert(std::pair<MElement*, short>(element, ghosts[j]));
+        if(numElements > 100000)
+          Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
+      }
+      // cache the element map
+      _elementMapCache = elementMap;
+    }
+
+    // Post-processing sections
+    else if(!strncmp(&str[1], "NodeData", 8) ||
+            !strncmp(&str[1], "ElementData", 11) ||
+            !strncmp(&str[1], "ElementNodeData", 15)) {
+      postpro = true;
+      break;
+    }
+
+    do {
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    } while(str[0] != '$');
+  }
+
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new (discrete) one.
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  _associateEntityWithMeshVertices();
+
+  // store the vertices in their associated geometrical entity
+  if(_vertexVectorCache.size())
+    _storeVerticesInEntities(_vertexVectorCache);
+  else
+    _storeVerticesInEntities(_vertexMapCache);
+
+  // FIXME: store physicals in entities
+
+  fclose(fp);
+
+  return postpro ? 2 : 1;
 }
 
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)

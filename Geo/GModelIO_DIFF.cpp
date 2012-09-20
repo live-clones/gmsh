@@ -294,8 +294,8 @@ int GModel::readDIFF(const std::string &name)
         if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices))
           return 0;
       }
-      createElementMSH(num, type, physical, elementary[i-1][1], partition,
-                       vertices, elements, physicals);
+      _createElementMSH(num, type, physical, elementary[i-1][1], partition,
+                        vertices, elements, physicals);
       // trouble if elementary[i-1][0]>1 nodal post-processing needed ?
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");

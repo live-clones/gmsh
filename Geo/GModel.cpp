@@ -1237,10 +1237,10 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
   return true;
 }
 
-MElement *GModel::createElementMSH(int num, int typeMSH, int physical,
-                                   int reg, int part, std::vector<MVertex*> &v,
-                                   std::map<int, std::vector<MElement*> > elements[10],
-                                   std::map<int, std::map<int, std::string> > physicals[4])
+MElement *GModel::_createElementMSH(int num, int typeMSH, int physical,
+                                    int reg, int part, std::vector<MVertex*> &v,
+                                    std::map<int, std::vector<MElement*> > elements[10],
+                                    std::map<int, std::map<int, std::string> > physicals[4])
 {
   if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
@@ -1355,8 +1355,8 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
       }
     }
 
-    gm->createElementMSH(num, elementType[i], physical[i], elementary[i],
-                         partition[i], vertices, elements, physicals);
+    gm->_createElementMSH(num, elementType[i], physical[i], elementary[i],
+                          partition[i], vertices, elements, physicals);
   }
 
   // store the elements in their associated elementary entity. If the
@@ -2361,6 +2361,7 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
 
   return gec;
 }
+
 GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, int num)
 {
 #if defined(HAVE_SOLVER)
@@ -2500,7 +2501,6 @@ GFace* GModel::addFace (std::vector<GEdge *> edges,
   return 0;
 }
 
-
 GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges){
   if(_factory)
     return _factory->addPlanarFace(this, edges);
@@ -2602,8 +2602,9 @@ static void computeDuplicates(GModel *model,
                               std::map<GVertex*, GVertex*> &Duplicates2Unique,
                               const double &eps)
 {
-  // FIXME: currently we use a greedy algorithm in n^2 (using a
-  // kd-tree: cf. MVertexPositionSet)
+  // FIXME: currently we use a greedy algorithm in n^2 (using a kd-tree:
+  // cf. MVertexPositionSet)
+
   // FIXME: add option to remove orphaned entities after duplicate check
   std::list<GVertex*> v;
   v.insert(v.begin(), model->firstVertex(), model->lastVertex());

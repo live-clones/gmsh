@@ -361,6 +361,10 @@ class MElementFactory{
  public:
   MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,
                    bool owner=false, MElement *parent=0, MElement *d1=0, MElement *d2=0);
+  MElement *create(int num, int type, const std::vector<int> &tags,
+                   std::vector<MVertex*> &v,
+                   std::map<int, MElement*> &elementCache,
+                   std::vector<short> &ghosts);
 };
 
 // Traits of various elements based on the dimension.  These generally define
