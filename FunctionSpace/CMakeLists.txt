@@ -11,7 +11,6 @@ set(SRC
   BasisScalar.cpp
   BasisVector.cpp
   BasisGenerator.cpp
-  BasisTest.cpp
 
   QuadNodeBasis.cpp
   QuadEdgeBasis.cpp
