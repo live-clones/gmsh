@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <limits>
 #include <stdlib.h>
 #include <sstream>
 #include <stack>
@@ -578,7 +579,7 @@ int GModel::adaptMesh(std::vector<int> technique,
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
-      //metric->exportInfo(name);
+      metric->exportInfo(name);
 
       if (ITER++ >= niter)  break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
