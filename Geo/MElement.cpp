@@ -779,28 +779,16 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
       }
       return;
     }
-    if(type == MSH_TET_SUB){
-      MTetrahedron *tt = new MTetrahedron(getVertex(0), getVertex(1), getVertex(2), getVertex(3));
-      tt->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
-      delete tt;
-      return;
-    }
-    if(type == MSH_TRI_B || type == MSH_TRI_SUB){
+    if(type == MSH_TRI_B){
       MTriangle *t = new MTriangle(getVertex(0), getVertex(1), getVertex(2));
       t->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete t;
       return;
     }
-    if(type == MSH_LIN_B || type == MSH_LIN_C || type == MSH_LIN_SUB){
+    if(type == MSH_LIN_B || type == MSH_LIN_C){
       MLine *l = new MLine(getVertex(0), getVertex(1));
       l->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
       delete l;
-      return;
-    }
-    if(type == MSH_PNT_SUB){
-      MPoint *p = new MPoint(getVertex(0));
-      p->writeMSH2(fp, version, binary, num++, elementary, physical, 0, 0, 0, ghosts);
-      delete p;
       return;
     }
   }
