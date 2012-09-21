@@ -10,20 +10,6 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
-{
-  for(int i = 0; i < num; i++){
-    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      vertices.push_back(vec[indices[i]]);
-  }
-  return true;
-}
-
 static int skipUntil(FILE *fp, const char *key)
 {
   char str[256], key_bracket[256];
@@ -82,7 +68,14 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
     }
     else{
       std::vector<MVertex*> vertices;
-      if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
+      for(unsigned int j = 0; j < idx.size(); j++){
+        if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)){
+          Msg::Error("Wrong vertex index %d", idx[j]);
+          return 0;
+        }
+        else
+          vertices.push_back(vertexVector[idx[j]]);
+      }
       idx.clear();
       if(vertices.size() < 2){
         Msg::Info("Skipping %d-vertex element", (int)vertices.size());
