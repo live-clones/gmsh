@@ -348,7 +348,20 @@ int GModel::readMSH(const std::string &name)
   else
     _storeVerticesInEntities(_vertexMapCache);
 
-  // FIXME: store physicals in entities
+  // store physicals in entities
+  for(int dim = 0; dim < 4; dim++){
+    for(std::map<int, std::vector<int> >::iterator it = entities[dim].begin();
+        it != entities[dim].end(); it++){
+      GEntity *ge = 0;
+      switch(dim){
+      case 0: ge = getVertexByTag(it->first); break;
+      case 1: ge = getEdgeByTag(it->first); break;
+      case 2: ge = getFaceByTag(it->first); break;
+      case 3: ge = getRegionByTag(it->first); break;
+      }
+      ge->physicals = it->second;
+    }
+  }
 
   fclose(fp);
 
