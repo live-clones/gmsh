@@ -14,20 +14,6 @@
 #include "MPrism.h"
 #include "Context.h"
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
-{
-  for(int i = 0; i < num; i++){
-    if(!map.count(indices[i])){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      vertices.push_back(map[indices[i]]);
-  }
-  return true;
-}
-
 int GModel::readUNV(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
@@ -37,9 +23,10 @@ int GModel::readUNV(const std::string &name)
   }
 
   char buffer[256];
-  std::map<int, MVertex*> vertexMap;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
+
+  _vertexMapCache.clear();
 
   while(!feof(fp)) {
     if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -59,7 +46,7 @@ int GModel::readUNV(const std::string &name)
           for(unsigned int i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
           if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-          vertexMap[num] = new MVertex(x, y, z, 0, num);
+          _vertexMapCache[num] = new MVertex(x, y, z, 0, num);
         }
       }
       else if(record == 2412){ // elements
@@ -86,11 +73,16 @@ int GModel::readUNV(const std::string &name)
             if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
             break;
           }
-          int n[30];
-          for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) return 0;
-          std::vector<MVertex*> vertices;
-          if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
-
+          std::vector<MVertex*> vertices(numNodes);
+          for(int i = 0; i < numNodes; i++){
+            int n;
+            if(!fscanf(fp, "%d", &n)) return 0;
+            vertices[i] = getMeshVertexByTag(n);
+            if(!vertices[i]){
+              Msg::Error("Wrong vertex index %d", n);
+              return 0;
+            }
+          }
           int dim = -1;
           switch(type){
           case 11: case 21: case 22: case 31:
@@ -173,7 +165,7 @@ int GModel::readUNV(const std::string &name)
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
-  _storeVerticesInEntities(vertexMap);
+  _storeVerticesInEntities(_vertexMapCache);
 
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
