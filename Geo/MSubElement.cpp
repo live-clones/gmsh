@@ -16,22 +16,6 @@ MSubTetrahedron::~MSubTetrahedron()
     delete _orig;
 }
 
-void MSubTetrahedron::_fillInfoMSH(std::vector<int> &info, int elementary,
-                                   std::vector<short> *ghosts)
-{
-  info.clear();
-  info.push_back(0);
-  info.push_back(getParent()->getNum());
-  if(getPartition())
-    info.push_back(getPartition());
-  if(ghosts)
-    info.insert(info.end(), ghosts->begin(), ghosts->end());
-  info[0] = info.size() - 1;
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
-}
-
 const polynomialBasis* MSubTetrahedron::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
@@ -130,22 +114,6 @@ MSubTriangle::~MSubTriangle()
     delete _orig;
 }
 
-void MSubTriangle::_fillInfoMSH(std::vector<int> &info, int elementary,
-                                std::vector<short> *ghosts)
-{
-  info.clear();
-  info.push_back(0);
-  info.push_back(getParent()->getNum());
-  if(getPartition())
-    info.push_back(getPartition());
-  if(ghosts)
-    info.insert(info.end(), ghosts->begin(), ghosts->end());
-  info[0] = info.size() - 1;
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
-}
-
 const polynomialBasis* MSubTriangle::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
@@ -241,22 +209,6 @@ MSubLine::~MSubLine()
     delete _orig;
 }
 
-void MSubLine::_fillInfoMSH(std::vector<int> &info, int elementary,
-                            std::vector<short> *ghosts)
-{
-  info.clear();
-  info.push_back(0);
-  info.push_back(getParent()->getNum());
-  if(getPartition())
-    info.push_back(getPartition());
-  if(ghosts)
-    info.insert(info.end(), ghosts->begin(), ghosts->end());
-  info[0] = info.size() - 1;
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
-}
-
 const polynomialBasis* MSubLine::getFunctionSpace(int order) const
 {
   if(_orig) return _orig->getFunctionSpace(order);
@@ -345,22 +297,6 @@ MSubPoint::~MSubPoint()
 {
   if(_owner)
     delete _orig;
-}
-
-void MSubPoint::_fillInfoMSH(std::vector<int> &info, int elementary,
-                             std::vector<short> *ghosts)
-{
-  info.clear();
-  info.push_back(0);
-  info.push_back(getParent()->getNum());
-  if(getPartition())
-    info.push_back(getPartition());
-  if(ghosts)
-    info.insert(info.end(), ghosts->begin(), ghosts->end());
-  info[0] = info.size() - 1;
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
 }
 
 const polynomialBasis* MSubPoint::getFunctionSpace(int order) const

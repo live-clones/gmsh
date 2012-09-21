@@ -55,7 +55,7 @@ int GModel::readMSH(const std::string &name)
   }
 
   char str[256] = "";
-  double version = 2.2;
+  double version = 0.;
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
   std::map<int, std::vector<int> > entities[4];

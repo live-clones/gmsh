@@ -40,10 +40,6 @@ class MElement
                    int faceIndex=-1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                    double *x, double *y, double *z, SVector3 *n);
-  // fill the vector of integers that will be written after the element number
-  // and type in writeMSH
-  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
-                            std::vector<short> *ghosts=0);
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}

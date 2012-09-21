@@ -24,8 +24,6 @@ class MSubTetrahedron : public MTetrahedron
   MElement* _orig;
   std::vector<MElement*> _parents;
   IntPt *_intpt;
-  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
-                            std::vector<short> *ghosts=0);
  public:
   MSubTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0,
                   int part=0, bool owner=false, MElement* orig=NULL)
@@ -61,8 +59,6 @@ class MSubTriangle : public MTriangle
   MElement* _orig;
   std::vector<MElement*> _parents;
   IntPt *_intpt;
-  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
-                            std::vector<short> *ghosts=0);
  public:
   MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0,
                bool owner=false, MElement* orig=NULL)
@@ -97,8 +93,6 @@ class MSubLine : public MLine
   MElement* _orig;
   std::vector<MElement*> _parents;
   IntPt *_intpt;
-  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
-                            std::vector<short> *ghosts=0);
  public:
   MSubLine(MVertex *v0, MVertex *v1, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(0) {}
@@ -132,8 +126,6 @@ class MSubPoint : public MPoint
   MElement* _orig;
   std::vector<MElement*> _parents;
   IntPt *_intpt;
-  virtual void _fillInfoMSH(std::vector<int> &info, int elementary=1,
-                            std::vector<short> *ghosts=0);
  public:
   MSubPoint(MVertex *v0, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
     : MPoint(v0, num, part), _owner(owner), _orig(orig), _intpt(0) {}

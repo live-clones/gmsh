@@ -710,42 +710,45 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   return result;
 }
 
-void MElement::_fillInfoMSH(std::vector<int> &info, int elementary,
-                            std::vector<short> *ghosts)
-{
-  info.clear();
-  info.push_back(0);
-  info.push_back(elementary);
-  if(_partition)
-    info.push_back(_partition);
-  if(ghosts)
-    info.insert(info.end(), ghosts->begin(), ghosts->end());
-  info[0] = info.size() - 1;
-  std::vector<int> verts;
-  getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
-}
-
 void MElement::writeMSH(FILE *fp, bool binary, int elementary,
                         std::vector<short> *ghosts)
 {
+  int num = getNum();
   int type = getTypeForMSH();
   if(!type) return;
-
-  std::vector<int> info;
-  _fillInfoMSH(info, elementary, ghosts);
 
   // if necessary, change the ordering of the vertices to get positive volume
   setVolumePositive();
 
+  std::vector<int> info;
+  info.push_back(0);
+  info.push_back(elementary);
+  if(getParent())
+    info.push_back(getParent()->getNum());
+  if(getPartition()){
+    if(ghosts){
+      info.push_back(1 + ghosts->size());
+      info.push_back(getPartition());
+      info.insert(info.end(), ghosts->begin(), ghosts->end());
+    }
+    else{
+      info.push_back(1);
+      info.push_back(getPartition());
+    }
+  }
+  info[0] = info.size() - 1;
+  std::vector<int> verts;
+  getVerticesIdForMSH(verts);
+  info.insert(info.end(), verts.begin(), verts.end());
+
   if(!binary){
-    fprintf(fp, "%d %d", _num, type);
+    fprintf(fp, "%d %d", num, type);
     for(unsigned int i = 0; i < info.size(); i++)
       fprintf(fp, " %d", info[i]);
     fprintf(fp, "\n");
   }
   else{
-    fwrite(&_num, sizeof(int), 1, fp);
+    fwrite(&num, sizeof(int), 1, fp);
     fwrite(&type, sizeof(int), 1, fp);
     fwrite(&info[0], sizeof(int), info.size(), fp);
   }
@@ -1225,10 +1228,10 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
   case MSH_PYR_14  : if(name) *name = "Pyramid 14";       return 5 + 8 + 1;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
-  case MSH_PNT_SUB: if(name) *name = "Point Xfem";      return 1;
-  case MSH_LIN_SUB: if(name) *name = "Line Xfem";       return 2;
-  case MSH_TRI_SUB: if(name) *name = "Triangle Xfem";   return 3;
-  case MSH_TET_SUB: if(name) *name = "Tetrahedron Xfem";return 4;
+  case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
+  case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;
+  case MSH_TRI_SUB : if(name) *name = "Triangle Xfem";    return 3;
+  case MSH_TET_SUB : if(name) *name = "Tetrahedron Xfem"; return 4;
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
