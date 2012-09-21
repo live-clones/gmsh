@@ -1290,8 +1290,8 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
     parent = newParent;
   }
 
-  MElementFactory factory;
-  MElement *newEl = factory.create(eType, vmv, getNum(), _partition, ownsParent(), parent);
+  MElementFactory f;
+  MElement *newEl = f.create(eType, vmv, getNum(), _partition, ownsParent(), parent);
 
   for(int i = 0; i < 2; i++) {
     MElement *dom = getDomain(i);
@@ -1408,10 +1408,20 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 
   std::vector<MVertex*> vertices(numVertices);
   if(data.size() > startVertices + numVertices - 1){
-    for(int i = 0; i < numVertices; i++)
-      vertices[i] = model->getMeshVertexByTag(data[startVertices + i]);
+    for(int i = 0; i < numVertices; i++){
+      int numVertex = data[startVertices + i];
+      MVertex *v = model->getMeshVertexByTag(numVertex);
+      if(v){
+        vertices[i] = v;
+      }
+      else{
+        Msg::Error("Unknown vertex %d in element %d", numVertex, num);
+        return 0;
+      }
+    }
   }
   else{
+    Msg::Error("Missing data in element %d", num);
     return 0;
   }
 

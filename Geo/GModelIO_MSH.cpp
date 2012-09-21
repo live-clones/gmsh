@@ -248,8 +248,9 @@ int GModel::readMSH(const std::string &name)
             if(swap) SwapBytes((char*)&data[0], sizeof(int), numData);
           }
         }
-        MElementFactory factory;
-        MElement *element = factory.create(num, type, data, this);
+        MElementFactory f;
+        MElement *element = f.create(num, type, data, this);
+        if(!element) return 0;
         switch(element->getType()){
         case TYPE_PNT: elements[0][entity].push_back(element); break;
         case TYPE_LIN: elements[1][entity].push_back(element); break;
