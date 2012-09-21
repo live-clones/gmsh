@@ -123,13 +123,6 @@ class GModel
   void _storePhysicalTagsInEntities(int dim,
                                     std::map<int, std::map<int, std::string> > &map);
 
-  // utility function to create a mesh element in the I/O routines (don't use in
-  // new code; it will be removed eventually)
-  MElement *_createElementMSH(int num, int typeMSH, int physical,
-                              int reg, int part, std::vector<MVertex*> &v,
-                              std::map<int, std::vector<MElement*> > elements[10],
-                              std::map<int, std::map<int, std::string> > physicals[4]);
-
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 

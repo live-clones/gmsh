@@ -294,9 +294,31 @@ int GModel::readDIFF(const std::string &name)
         if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices))
           return 0;
       }
-      _createElementMSH(num, type, physical, elementary[i-1][1], partition,
-                        vertices, elements, physicals);
-      // trouble if elementary[i-1][0]>1 nodal post-processing needed ?
+
+      MElementFactory f;
+      MElement *e = f.create(type, vertices, num, partition);
+      if(!e){
+        Msg::Error("Unknown type of element %d", type);
+        return 0;
+      }
+      int reg = elementary[i-1][1];
+      switch(e->getType()){
+      case TYPE_PNT : elements[0][reg].push_back(e); break;
+      case TYPE_LIN : elements[1][reg].push_back(e); break;
+      case TYPE_TRI : elements[2][reg].push_back(e); break;
+      case TYPE_QUA : elements[3][reg].push_back(e); break;
+      case TYPE_TET : elements[4][reg].push_back(e); break;
+      case TYPE_HEX : elements[5][reg].push_back(e); break;
+      case TYPE_PRI : elements[6][reg].push_back(e); break;
+      case TYPE_PYR : elements[7][reg].push_back(e); break;
+      default : Msg::Error("Wrong type of element"); return 0;
+      }
+      int dim = e->getDim();
+      if(physical && (!physicals[dim].count(reg) ||
+                      !physicals[dim][reg].count(physical)))
+        physicals[dim][reg][physical] = "unnamed";
+      if(partition) getMeshPartitions().insert(partition);
+
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
     }
