@@ -67,7 +67,7 @@ void MVertex::forceNum(int num)
   }
 }
 
-void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
+void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -82,7 +82,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
   }
 
   int zero = 0;
-  if(!onWhat()){
+  if(!onWhat() || !saveParametric){
     if(!binary)
       fprintf(fp, "0\n");
     else

@@ -110,7 +110,8 @@ class MVertex{
   linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos);
 
   // IO routines
-  void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
+  void writeMSH(FILE *fp, bool binary=false, bool saveParametric=false,
+                double scalingFactor=1.0);
   void writeMSH2(FILE *fp, bool binary=false, bool saveParametric=false,
                  double scalingFactor=1.0);
   void writePLY2(FILE *fp);

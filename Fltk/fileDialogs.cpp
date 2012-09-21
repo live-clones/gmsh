@@ -859,6 +859,8 @@ int mshFileDialog(const char *name)
     {"Version 1", 0, 0, 0},
     {"Version 2 ASCII", 0, 0, 0},
     {"Version 2 Binary", 0, 0, 0},
+    {"Version 3 ASCII (Experimental)", 0, 0, 0},
+    {"Version 3 Binary (Experimental)", 0, 0, 0},
     {0}
   };
 
@@ -889,8 +891,12 @@ int mshFileDialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
 
-  dialog->c->value((CTX::instance()->mesh.mshFileVersion == 1.0) ? 0 :
-                   CTX::instance()->mesh.binary ? 2 : 1);
+  if(CTX::instance()->mesh.mshFileVersion == 1.0)
+    dialog->c->value(0);
+  else if(CTX::instance()->mesh.mshFileVersion < 3.0)
+    dialog->c->value(!CTX::instance()->mesh.binary ? 1 : 2);
+  else
+    dialog->c->value(!CTX::instance()->mesh.binary ? 3 : 4);
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
   dialog->b[2]->value(CTX::instance()->mesh.mshFilePartitioned ? 1 : 0);
@@ -903,7 +909,8 @@ int mshFileDialog(const char *name)
       if (!o) break;
       if (o == dialog->ok) {
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
-                                  (dialog->c->value() == 0) ? 1.0 : 2.2);
+                                  (dialog->c->value() == 0) ? 1.0 :
+                                  (dialog->c->value() < 3) ? 2.2 : 3.0);
         opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);

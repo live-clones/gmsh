@@ -16,36 +16,6 @@
 #include "MPyramid.h"
 #include "StringUtils.h"
 
-static bool getVertices(int num, const std::vector<int> &indices,
-                        std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
-{
-  for(int i = 0; i < num; i++){
-    if(!map.count(indices[i])){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      vertices.push_back(map[indices[i]]);
-  }
-  return true;
-}
-
-static bool getVertices(int num, const std::vector<int> &indices,
-                        std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
-{
-  for(int i = 0; i < num; i++){
-    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      vertices.push_back(vec[indices[i]]);
-  }
-  return true;
-}
-
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");
@@ -138,8 +108,8 @@ int GModel::readMSH(const std::string &name)
         double xyz[3];
         MVertex *vertex = 0;
         if(!binary){
-          if(fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2],
-                    &entity, &dim) != 6)
+          if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
+                    &entity) != 5)
             return 0;
         }
         else{
@@ -149,10 +119,18 @@ int GModel::readMSH(const std::string &name)
           if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
           if(fread(&entity, sizeof(int), 1, fp) != 1) return 0;
           if(swap) SwapBytes((char*)&entity, sizeof(int), 1);
-          if(fread(&dim, sizeof(int), 1, fp) != 1) return 0;
-          if(swap) SwapBytes((char*)&dim, sizeof(int), 1);
         }
-        if(entity){
+        if(!entity){
+          vertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+        }
+        else{
+          if(!binary){
+            if(fscanf(fp, "%d", &entity) != 1) return 0;
+          }
+          else{
+            if(fread(&dim, sizeof(int), 1, fp) != 1) return 0;
+            if(swap) SwapBytes((char*)&dim, sizeof(int), 1);
+          }
           switch(dim){
           case 0:
             {
@@ -455,7 +433,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "%d\n", numVertices);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeMSH(fp, binary, scalingFactor);
+      entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric, scalingFactor);
 
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndNodes\n");
