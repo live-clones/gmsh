@@ -1412,7 +1412,7 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &tag
         ghosts.push_back(tags[3 + i]);
     }
   }
-  create(type, v, num, part, false, parent);
+  return create(type, v, num, part, false, parent);
 }
 
 void MElement::xyzTouvw(fullMatrix<double> *xu)
