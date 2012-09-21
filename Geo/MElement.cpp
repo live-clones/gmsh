@@ -7,6 +7,7 @@
 #include <math.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GModel.h"
 #include "MElement.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -710,7 +711,7 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   return result;
 }
 
-void MElement::writeMSH(FILE *fp, bool binary, int elementary,
+void MElement::writeMSH(FILE *fp, bool binary, int entity,
                         std::vector<short> *ghosts)
 {
   int num = getNum();
@@ -720,37 +721,40 @@ void MElement::writeMSH(FILE *fp, bool binary, int elementary,
   // if necessary, change the ordering of the vertices to get positive volume
   setVolumePositive();
 
-  std::vector<int> info;
-  info.push_back(0);
-  info.push_back(elementary);
-  if(getParent())
-    info.push_back(getParent()->getNum());
-  if(getPartition()){
-    if(ghosts){
-      info.push_back(1 + ghosts->size());
-      info.push_back(getPartition());
-      info.insert(info.end(), ghosts->begin(), ghosts->end());
-    }
-    else{
-      info.push_back(1);
-      info.push_back(getPartition());
-    }
-  }
-  info[0] = info.size() - 1;
   std::vector<int> verts;
   getVerticesIdForMSH(verts);
-  info.insert(info.end(), verts.begin(), verts.end());
+
+  // FIXME: once we create elements using their own interpretion of data, we
+  // should move this also into each element base class
+  std::vector<int> data;
+  data.insert(data.end(), verts.begin(), verts.end());
+  if(getParent())
+    data.push_back(getParent()->getNum());
+  if(getPartition()){
+    if(ghosts){
+      data.push_back(1 + ghosts->size());
+      data.push_back(getPartition());
+      data.insert(data.end(), ghosts->begin(), ghosts->end());
+    }
+    else{
+      data.push_back(1);
+      data.push_back(getPartition());
+    }
+  }
+  int numData = data.size();
 
   if(!binary){
-    fprintf(fp, "%d %d", num, type);
-    for(unsigned int i = 0; i < info.size(); i++)
-      fprintf(fp, " %d", info[i]);
+    fprintf(fp, "%d %d %d %d", num, type, entity, numData);
+    for(unsigned int i = 0; i < numData; i++)
+      fprintf(fp, " %d", data[i]);
     fprintf(fp, "\n");
   }
   else{
     fwrite(&num, sizeof(int), 1, fp);
     fwrite(&type, sizeof(int), 1, fp);
-    fwrite(&info[0], sizeof(int), info.size(), fp);
+    fwrite(&entity, sizeof(int), 1, fp);
+    fwrite(&numData, sizeof(int), 1, fp);
+    fwrite(&data[0], sizeof(int), numData, fp);
   }
 }
 
@@ -1389,30 +1393,55 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   }
 }
 
-MElement *MElementFactory::create(int num, int type, const std::vector<int> &tags,
-                                  std::vector<MVertex*> &v,
-                                  std::map<int, MElement*> &elementCache,
-                                  std::vector<short> &ghosts)
+MElement *MElementFactory::create(int num, int type, const std::vector<int> &data,
+                                  GModel *model)
 {
-  MElement *parent = 0;
+  // This should be rewritten: each element should register itself in a static
+  // factory owned e.g. directly by MElement, and interpret its data by
+  // itself. This would remove the ugly switch in the routine above.
+
+  int numVertices = MElement::getInfoMSH(type), startVertices = 0;
+  if(data.size() && !numVertices){
+    startVertices = 1;
+    numVertices = data[0];
+  }
+
+  std::vector<MVertex*> vertices(numVertices);
+  if(data.size() > startVertices + numVertices - 1){
+    for(int i = 0; i < numVertices; i++)
+      vertices[i] = model->getMeshVertexByTag(data[startVertices + i]);
+  }
+  else{
+    return 0;
+  }
+
   int part = 0;
-  if(tags.size() > 2 && (type == MSH_PNT_SUB || type == MSH_LIN_SUB ||
-                         type == MSH_TRI_SUB || type == MSH_TET_SUB)){
-    parent = elementCache[tags[1]];
-    if(tags.size() > 3 && tags[2]){ // num partitions
-      part = tags[3];
-      for(int i = 0; i < tags[2] - 1; i++)
-        ghosts.push_back(tags[4 + i]);
+  int startPartitions = startVertices + numVertices;
+
+  MElement *parent = 0;
+  if((type == MSH_PNT_SUB || type == MSH_LIN_SUB ||
+      type == MSH_TRI_SUB || type == MSH_TET_SUB)){
+    parent = model->getMeshElementByTag(data[startPartitions]);
+    startPartitions += 1;
+  }
+
+  std::vector<short> ghosts;
+  if(data.size() > startPartitions){
+    int numPartitions = data[startPartitions];
+    if(numPartitions > 0 && data.size() > startPartitions + numPartitions - 1){
+      part = data[startPartitions + 1];
+      for(int i = 1; i < numPartitions; i++)
+        ghosts.push_back(data[startPartitions + 1 + i]);
     }
   }
-  else if(tags.size() > 1){
-    if(tags[1]){ // num partitions
-      part = tags[2];
-      for(int i = 0; i < tags[1] - 1; i++)
-        ghosts.push_back(tags[3 + i]);
-    }
-  }
-  return create(type, v, num, part, false, parent);
+
+  MElement *element = create(type, vertices, num, part, false, parent);
+
+  for(unsigned int j = 0; j < ghosts.size(); j++)
+    model->getGhostCells().insert(std::pair<MElement*, short>(element, ghosts[j]));
+  if(part) model->getMeshPartitions().insert(part);
+
+  return element;
 }
 
 void MElement::xyzTouvw(fullMatrix<double> *xu)

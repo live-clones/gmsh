@@ -18,6 +18,8 @@
 #include "JacobianBasis.h"
 #include "GaussIntegration.h"
 
+class GModel;
+
 // A mesh element.
 class MElement
 {
@@ -357,10 +359,7 @@ class MElementFactory{
  public:
   MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,
                    bool owner=false, MElement *parent=0, MElement *d1=0, MElement *d2=0);
-  MElement *create(int num, int type, const std::vector<int> &tags,
-                   std::vector<MVertex*> &v,
-                   std::map<int, MElement*> &elementCache,
-                   std::vector<short> &ghosts);
+  MElement *create(int num, int type, const std::vector<int> &data, GModel *model);
 };
 
 // Traits of various elements based on the dimension.  These generally define

@@ -63,7 +63,8 @@ class MSubTriangle : public MTriangle
   MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0,
                bool owner=false, MElement* orig=NULL)
     : MTriangle(v0, v1, v2, num, part), _owner(owner), _orig(orig), _intpt(0) {}
-  MSubTriangle(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
+  MSubTriangle(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
+               MElement* orig=NULL)
     : MTriangle(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
   ~MSubTriangle();
   virtual int getTypeForMSH() const { return MSH_TRI_SUB; }
@@ -94,9 +95,11 @@ class MSubLine : public MLine
   std::vector<MElement*> _parents;
   IntPt *_intpt;
  public:
-  MSubLine(MVertex *v0, MVertex *v1, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
+  MSubLine(MVertex *v0, MVertex *v1, int num=0, int part=0, bool owner=false,
+           MElement* orig=NULL)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(0) {}
-  MSubLine(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
+  MSubLine(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
+           MElement* orig=NULL)
     : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
   ~MSubLine();
   virtual int getTypeForMSH() const { return MSH_LIN_SUB; }
@@ -129,7 +132,8 @@ class MSubPoint : public MPoint
  public:
   MSubPoint(MVertex *v0, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
     : MPoint(v0, num, part), _owner(owner), _orig(orig), _intpt(0) {}
-  MSubPoint(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false, MElement* orig=NULL)
+  MSubPoint(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
+            MElement* orig=NULL)
     : MPoint(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
   ~MSubPoint();
   virtual int getTypeForMSH() const { return MSH_PNT_SUB; }

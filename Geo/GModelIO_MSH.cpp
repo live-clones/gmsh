@@ -129,8 +129,8 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
       Msg::Info("%d vertices", numVertices);
       Msg::ResetProgressMeter();
-      std::map<int, MVertex*> vertexMap;
-      std::vector<MVertex*> vertexVector;
+      _vertexMapCache.clear();
+      _vertexVectorCache.clear();
       int maxVertex = -1;
       minVertex = numVertices + 1;
       for(int i = 0; i < numVertices; i++) {
@@ -157,7 +157,7 @@ int GModel::readMSH(const std::string &name)
           case 0:
             {
               GVertex *gv = getVertexByTag(entity);
-              if (gv) gv->deleteMesh();
+              if(gv) gv->deleteMesh();
               vertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
             }
             break;
@@ -166,7 +166,7 @@ int GModel::readMSH(const std::string &name)
               GEdge *ge = getEdgeByTag(entity);
               double u;
               if(!binary){
-                if (fscanf(fp, "%lf", &u) != 1) return 0;
+                if(fscanf(fp, "%lf", &u) != 1) return 0;
               }
               else{
                 if(fread(&u, sizeof(double), 1, fp) != 1) return 0;
@@ -180,7 +180,7 @@ int GModel::readMSH(const std::string &name)
               GFace *gf = getFaceByTag(entity);
               double uv[2];
               if(!binary){
-                if (fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) return 0;
+                if(fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) return 0;
               }
               else{
                 if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
@@ -210,32 +210,28 @@ int GModel::readMSH(const std::string &name)
         }
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
-        if(vertexMap.count(num))
+        if(_vertexMapCache.count(num))
           Msg::Warning("Skipping duplicate vertex %d", num);
-        vertexMap[num] = vertex;
+        _vertexMapCache[num] = vertex;
         if(numVertices > 100000)
           Msg::ProgressMeter(i + 1, numVertices, true, "Reading nodes");
       }
       // if the vertex numbering is dense, transfer the map into a vector to
       // speed up element creation
-      if((int)vertexMap.size() == numVertices &&
+      if((int)_vertexMapCache.size() == numVertices &&
          ((minVertex == 1 && maxVertex == numVertices) ||
           (minVertex == 0 && maxVertex == numVertices - 1))){
         Msg::Info("Vertex numbering is dense");
-        vertexVector.resize(vertexMap.size() + 1);
+        _vertexVectorCache.resize(_vertexMapCache.size() + 1);
         if(minVertex == 1)
-          vertexVector[0] = 0;
+          _vertexVectorCache[0] = 0;
         else
-          vertexVector[numVertices] = 0;
-        std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
-        for(; it != vertexMap.end(); ++it)
-          vertexVector[it->first] = it->second;
-        vertexMap.clear();
+          _vertexVectorCache[numVertices] = 0;
+        for(std::map<int, MVertex*>::const_iterator it = _vertexMapCache.begin();
+            it != _vertexMapCache.end(); ++it)
+          _vertexVectorCache[it->first] = it->second;
+        _vertexMapCache.clear();
       }
-
-      // cache the vertex indexing data
-      _vertexVectorCache = vertexVector;
-      _vertexMapCache = vertexMap;
     }
 
     // $Elements section
@@ -245,79 +241,53 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%d", &numElements) != 1) return 0;
       Msg::Info("%d elements", numElements);
       Msg::ResetProgressMeter();
-      std::map<int, MElement*> elementMap;
+      _elementMapCache.clear();
       for(int i = 0; i < numElements; i++) {
-        int num, type, numTags, numVertices;
+        int num, type, entity, numData;
         if(!binary){
-          if(fscanf(fp, "%d %d %d", &num, &type, &numTags) != 3) return 0;
+          if(fscanf(fp, "%d %d %d %d", &num, &type, &entity, &numData) != 4) return 0;
         }
         else{
           if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
           if(swap) SwapBytes((char*)&num, sizeof(int), 1);
           if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
           if(swap) SwapBytes((char*)&type, sizeof(int), 1);
-          if(fread(&numTags, sizeof(int), 1, fp) != 1) return 0;
-          if(swap) SwapBytes((char*)&numTags, sizeof(int), 1);
+          if(fread(&entity, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&entity, sizeof(int), 1);
+          if(fread(&numData, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) SwapBytes((char*)&numData, sizeof(int), 1);
         }
-        std::vector<int> tags;
-        if(numTags > 0){
-          tags.resize(numTags);
+        std::vector<int> data;
+        if(numData > 0){
+          data.resize(numData);
           if(!binary){
-            for(int j = 0; j < numTags; j++){
-              if(fscanf(fp, "%d", &tags[j]) != 1) return 0;
+            for(int j = 0; j < numData; j++){
+              if(fscanf(fp, "%d", &data[j]) != 1) return 0;
             }
           }
           else{
-            if(fread(&tags[0], sizeof(int), numTags, fp) != numTags) return 0;
-            if(swap) SwapBytes((char*)&tags[0], sizeof(int), numTags);
+            if(fread(&data[0], sizeof(int), numData, fp) != numData) return 0;
+            if(swap) SwapBytes((char*)&data[0], sizeof(int), numData);
           }
         }
-        if(!(numVertices = MElement::getInfoMSH(type))) {
-          return 0;
-        }
-        std::vector<int> indices(numVertices);
-        if(!binary){
-          for(int j = 0; j < numVertices; j++)
-            if(fscanf(fp, "%d", &indices[j]) != 1) return 0;
-        }
-        else{
-          if(fread(&indices[0], sizeof(int), numVertices, fp) != numVertices) return 0;
-          if(swap) SwapBytes((char*)&indices[0], sizeof(int), numVertices);
-        }
-        std::vector<MVertex*> vertices;
-        if(_vertexVectorCache.size()){
-          if(!getVertices(numVertices, indices, _vertexVectorCache, vertices, minVertex))
-            return 0;
-        }
-        else{
-          if(!getVertices(numVertices, indices, _vertexMapCache, vertices))
-            return 0;
-        }
-        std::vector<short> ghosts;
         MElementFactory factory;
-        MElement *element = factory.create(num, type, tags, vertices, elementMap,
-                                           ghosts);
-        elementMap[num] = element;
-        int part = element->getPartition();
-        if(part) getMeshPartitions().insert(part);
-        int elementary = tags.size() ? tags[0] : 0;
+        MElement *element = factory.create(num, type, data, this);
         switch(element->getType()){
-        case TYPE_PNT: elements[0][elementary].push_back(element); break;
-        case TYPE_LIN: elements[1][elementary].push_back(element); break;
-        case TYPE_TRI: elements[2][elementary].push_back(element); break;
-        case TYPE_QUA: elements[3][elementary].push_back(element); break;
-        case TYPE_TET: elements[4][elementary].push_back(element); break;
-        case TYPE_HEX: elements[5][elementary].push_back(element); break;
-        case TYPE_PRI: elements[6][elementary].push_back(element); break;
-        case TYPE_PYR: elements[7][elementary].push_back(element); break;
+        case TYPE_PNT: elements[0][entity].push_back(element); break;
+        case TYPE_LIN: elements[1][entity].push_back(element); break;
+        case TYPE_TRI: elements[2][entity].push_back(element); break;
+        case TYPE_QUA: elements[3][entity].push_back(element); break;
+        case TYPE_TET: elements[4][entity].push_back(element); break;
+        case TYPE_HEX: elements[5][entity].push_back(element); break;
+        case TYPE_PRI: elements[6][entity].push_back(element); break;
+        case TYPE_PYR: elements[7][entity].push_back(element); break;
+        case TYPE_POLYG: elements[8][entity].push_back(element); break;
+        case TYPE_POLYH: elements[9][entity].push_back(element); break;
         }
-        for(unsigned int j = 0; j < ghosts.size(); j++)
-          _ghostCells.insert(std::pair<MElement*, short>(element, ghosts[j]));
+        _elementMapCache[num] = element;
         if(numElements > 100000)
           Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
       }
-      // cache the element map
-      _elementMapCache = elementMap;
     }
 
     // Post-processing sections
