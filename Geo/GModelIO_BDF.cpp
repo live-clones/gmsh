@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
-#include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -14,20 +13,6 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
-
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
-{
-  for(int i = 0; i < num; i++){
-    if(!map.count(indices[i])){
-      Msg::Error("Wrong vertex index %d", indices[i]);
-      return false;
-    }
-    else
-      vertices.push_back(map[indices[i]]);
-  }
-  return true;
-}
 
 static int getFormatBDF(char *buffer, int &keySize)
 {
@@ -175,7 +160,15 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   // ignore the extra fields when we know how many vertices we need
   int numCheck = (numVertices > 0) ? numVertices : fields.size() - 2;
-  if(!getVertices(numCheck, n, vertexMap, vertices)) return 0;
+
+  for(int i = 0; i < numCheck; i++){
+    std::map<int, MVertex*>::iterator it = vertexMap.find(n[i]);
+    if(it == vertexMap.end()){
+      Msg::Error("Wrong vertex index %d", n[i]);
+      return 0;
+    }
+    vertices.push_back(it->second);
+  }
   return 1;
 }
 

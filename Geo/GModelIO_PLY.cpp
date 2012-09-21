@@ -16,10 +16,10 @@
 #endif
 
 static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+                        std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
-    if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
+    if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
       Msg::Error("Wrong vertex index %d", indices[i]);
       return false;
     }
