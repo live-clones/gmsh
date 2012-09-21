@@ -1411,7 +1411,7 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &tag
   if(tags.size() > 2 && (type == MSH_PNT_SUB || type == MSH_LIN_SUB ||
                          type == MSH_TRI_SUB || type == MSH_TET_SUB)){
     parent = elementCache[tags[1]];
-    if(tags[2]){ // num partitions
+    if(tags.size() > 3 && tags[2]){ // num partitions
       part = tags[3];
       for(int i = 0; i < tags[2] - 1; i++)
         ghosts.push_back(tags[4 + i]);
