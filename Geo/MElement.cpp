@@ -168,12 +168,13 @@ void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3]
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3],
-                                     int o){
+void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w,
+                                                double s[][3][3][3], int o)
+{
   const polynomialBasis* fs = getFunctionSpace(o);
   if(fs) fs->dddf(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
-};
+}
 
 SPoint3 MElement::barycenter_infty ()
 {
@@ -485,6 +486,15 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     uvw[2] = wn;
     iter++ ;
   }
+}
+
+void MElement::xyzTouvw(fullMatrix<double> *xu)
+{
+  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];
+  xyz2uvw(_xyz, _uvw);
+  (*xu)(1,0) = _uvw[0];
+  (*xu)(1,1) = _uvw[1];
+  (*xu)(1,2) = _uvw[2];
 }
 
 void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
@@ -971,6 +981,7 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     }
   }
 }
+
 void MElement::writePLY2(FILE *fp)
 {
   setVolumePositive();
@@ -1452,13 +1463,4 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   if(part) model->getMeshPartitions().insert(part);
 
   return element;
-}
-
-void MElement::xyzTouvw(fullMatrix<double> *xu)
-{
-  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];
-  xyz2uvw(_xyz, _uvw);
-  (*xu)(1,0) = _uvw[0];
-  (*xu)(1,1) = _uvw[1];
-  (*xu)(1,2) = _uvw[2];
 }
