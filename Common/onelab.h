@@ -127,7 +127,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.02"; }
+    static std::string version() { return "1.03"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -161,6 +161,7 @@ namespace onelab{
               << sanitize(getName()) << charSep()
               << sanitize(getLabel()) << charSep()
               << sanitize(getHelp()) << charSep()
+              << (getChanged() ? 1 : 0) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
               << (getReadOnly() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
@@ -182,6 +183,7 @@ namespace onelab{
       setName(getNextToken(msg, pos));
       setLabel(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
+      setChanged(atoi(getNextToken(msg, pos).c_str()));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       setReadOnly(atoi(getNextToken(msg, pos).c_str()));
       int numAttributes = atoi(getNextToken(msg, pos).c_str());
