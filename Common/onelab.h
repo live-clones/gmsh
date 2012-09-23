@@ -55,7 +55,9 @@ namespace onelab{
     std::string _help;
     // clients that use this parameter
     std::set<std::string> _clients;
-    // flag to check if the parameter has been changed since the last run()
+    // flag to check if the value of the parameter has been changed since the
+    // last computation (normally this is reset after all the clients have been
+    // run)
     bool _changed;
     // should the parameter be visible in the interface?
     bool _visible;
