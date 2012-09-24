@@ -149,7 +149,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "onelab")) {
         i++;
-        if(argv[i] && argv[i + 1]){
+        if(argv[i] && argv[i + 1] && argv[i + 1][0] != '-'){
           Msg::InitializeOnelab(argv[i], argv[i + 1]);
           i += 2;
         }
