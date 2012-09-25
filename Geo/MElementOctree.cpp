@@ -132,8 +132,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, in
   std::vector<void*> v;
   std::vector<MElement*> e;
   Octree_SearchAll(P, _octree,&v);
-  for (std::vector<void*>::iterator it = v.begin();
-       it != v.end(); ++it){
+  for (std::vector<void*>::iterator it = v.begin(); it != v.end(); ++it) {
     MElement *el = (MElement*) *it;
     if (dim == -1 || el->getDim() == dim)e.push_back(el);
   }
@@ -146,14 +145,14 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, in
       std::vector<GEntity*> entities;
       _gm->getEntities(entities);
       for(unsigned int i = 0; i < entities.size(); i++){
-	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	  MElement* el = entities[i]->getMeshElement(j);
-	  if (dim == -1 ||  el->getDim() == dim){
-	    if (MElementInEle(el, P)){
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          MElement* el = entities[i]->getMeshElement(j);
+          if (dim == -1 ||  el->getDim() == dim){
+            if (MElementInEle(el, P)){
               e.push_back(el);
-	    }
-	  }
-	}
+            }
+          }
+        }
       }
       if(!e.empty()) {
         MElement::setTolerance(initialTol);
@@ -212,15 +211,15 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       std::vector<GEntity*> entities;
       _gm->getEntities(entities);
       for(unsigned int i = 0; i < entities.size(); i++){
-	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	  e = entities[i]->getMeshElement(j);
-	  if (dim == -1 ||  e->getDim() == dim){
-	    if (MElementInEle(e, P)){
-	      MElement::setTolerance(initialTol);
-	      return e;
-	    }
-	  }
-	}
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          e = entities[i]->getMeshElement(j);
+          if (dim == -1 ||  e->getDim() == dim){
+            if (MElementInEle(e, P)) {
+              MElement::setTolerance(initialTol);
+              return e;
+            }
+          }
+        }
       }
     }
     MElement::setTolerance(initialTol);
@@ -233,14 +232,14 @@ MElement *MElementOctree::find(double x, double y, double z, int dim, bool stric
       tol *= 10.0;
       MElement::setTolerance(tol);
       for(unsigned int i = 0; i < _elems.size(); i++){
-	  e = _elems[i];
-	  if (dim == -1 ||  e->getDim() == dim){
-	    if (MElementInEle(e, P)){
-	      MElement::setTolerance(initialTol);
-	      return e;
-	    }
-	  }
-	}
+        e = _elems[i];
+        if (dim == -1 ||  e->getDim() == dim){
+          if (MElementInEle(e, P)){
+            MElement::setTolerance(initialTol);
+            return e;
+          }
+        }
+      }
     }
     MElement::setTolerance(initialTol);
     //Msg::Warning("Point %g %g %g not found",x,y,z);
