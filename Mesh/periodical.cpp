@@ -182,6 +182,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   std::ofstream file2("cells.geo");
+  file2 << "Coherence;\n";
   file2 << "c = 1.0;\n";
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
@@ -362,4 +363,37 @@ void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::o
   }
 
   file << "};\n";
+}
+
+void voroMetal3D::correspondance(){
+  int i;
+  GFace* gf;
+  GModel* model = GModel::current();
+  GModel::fiter it;
+  std::vector<GFace*> faces;
+  std::map<GFace*,bool> markings;
+	
+  faces.clear();	
+	
+  for(it=model->firstFace();it!=model->lastFace();it++)
+  {
+    gf = *it;
+	if(gf->numRegions()==1){
+	  faces.push_back(gf);
+	}
+	printf("%d ",gf->numRegions());
+  }
+  printf("\n");
+	
+  printf("%zu\n",faces.size());
+	
+  markings.clear();	
+	
+  for(i=0;i<faces.size();i++){
+    markings.insert(std::pair<GFace*,bool>(faces[i],0));
+  }
+	
+  std::ofstream file;
+  file.open("cells.geo",ios::out | ios::app);
+  //geofile << "test\n";
 }

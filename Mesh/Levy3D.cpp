@@ -1452,8 +1452,6 @@ void LpSmoother::improve_model(){
   GModel* model = GModel::current();
   GModel::riter it;
 
-  Frame_field::init_model();
-
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -1461,8 +1459,6 @@ void LpSmoother::improve_model(){
 	  improve_region(gr);
 	}
   }
-
-  Frame_field::clear();
 }
 
 void LpSmoother::improve_region(GRegion* gr)
@@ -1494,6 +1490,7 @@ void LpSmoother::improve_region(GRegion* gr)
   alglib::real_1d_array x;
   alglib::real_1d_array alglib_scales;
 
+  Frame_field::init_model();
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -1623,6 +1620,7 @@ void LpSmoother::improve_region(GRegion* gr)
   delete octree;
   free(initial_conditions);
   free(scales);
+  Frame_field::clear();
 #endif
 }
 
