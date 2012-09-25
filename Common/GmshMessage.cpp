@@ -637,8 +637,10 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
   if(_onelabClient) delete _onelabClient;
   if(sockname.empty()){
     _onelabClient = new onelab::localClient("Gmsh");
-    if(!_onelabClient->fromFile(name))
-      Error("Error loading onelab database '%s'", name.c_str());
+    if(name != "Gmsh"){ // load db from file:
+      if(!_onelabClient->fromFile(name))
+        Error("Error loading onelab database '%s'", name.c_str());
+    }
   }
   else{
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
