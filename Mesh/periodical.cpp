@@ -394,6 +394,6 @@ void voroMetal3D::correspondance(){
   }
 	
   std::ofstream file;
-  file.open("cells.geo",ios::out | ios::app);
+  file.open("cells.geo",std::ios::out | std::ios::app);
   //geofile << "test\n";
 }
