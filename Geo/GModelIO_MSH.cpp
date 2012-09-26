@@ -46,7 +46,10 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int format, size;
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
-      if(version < 3.) return _readMSH2(name);
+      if(version < 3.){
+        fclose(fp);
+        return _readMSH2(name);
+      }
       if(format){
         binary = true;
         Msg::Info("Mesh is in binary format");

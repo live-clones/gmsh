@@ -154,7 +154,7 @@ void GetOptions(int argc, char *argv[])
           i += 2;
         }
         else if(argv[i]){
-          Msg::InitializeOnelab(argv[i], "");
+          Msg::InitializeOnelab(argv[i]);
           i += 1;
         }
         else
