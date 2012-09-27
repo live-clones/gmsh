@@ -21,7 +21,7 @@ class OCCVertex : public GVertex {
   double max_curvature_of_surfaces() const;
  public:
   OCCVertex(GModel *m, int num, TopoDS_Vertex _v);
-  virtual ~OCCVertex() {}
+  virtual ~OCCVertex();
   virtual GPoint point() const { return GPoint(x(), y(), z()); }
   virtual double x() const { return _x; }
   virtual double y() const { return _y; }
@@ -32,8 +32,6 @@ class OCCVertex : public GVertex {
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   TopoDS_Vertex getShape() { return v; }
 };
-
-GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
 
 #endif
 

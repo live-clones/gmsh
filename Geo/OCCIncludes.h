@@ -54,6 +54,7 @@ using std::iostream;
 #include <BRepTools_WireExplorer.hxx>
 #include <BRepTools.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
+#include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopExp.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>

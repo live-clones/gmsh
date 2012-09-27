@@ -12,11 +12,18 @@
 #include "OCCRegion.h"
 
 #if defined(HAVE_OCC)
+#include "GModelIO_OCC.h"
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   : GRegion(m, num), s(_s)
 {
   setup();
+  model()->getOCCInternals()->bind(s, num);
+}
+
+OCCRegion::~OCCRegion()
+{
+  model()->getOCCInternals()->unbind(s);
 }
 
 void OCCRegion::setup()
@@ -28,7 +35,7 @@ void OCCRegion::setup()
     Msg::Debug("OCC Region %d - New Shell",tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());
-      GFace *f = getOCCFaceByNativePtr(model(),face);
+      GFace *f = model()->getOCCInternals()->getOCCFaceByNativePtr(model(),face);
       if(f){
         l_faces.push_back(f);
         f->addRegion(this);
@@ -108,20 +115,6 @@ void OCCRegion::replaceFacesInternal(std::list<GFace*> &new_faces)
   }
   s = _s_replacement;
   setup();
-}
-
-GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind)
-{
-  GModel::riter it =model->firstRegion();
-  for (; it !=model->lastRegion(); it++){
-    OCCRegion *occr = dynamic_cast<OCCRegion*>(*it);
-    if (occr){
-      if (toFind.IsSame(occr->getTopoDS_Shape())){
-	return *it;
-      }
-    }
-  }
-  return 0;
 }
 
 #endif

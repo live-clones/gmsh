@@ -725,7 +725,7 @@ GEntity *OCCFactory::addSphere(GModel *gm, double xc, double yc, double zc, doub
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GRegion* OCCFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
@@ -763,7 +763,7 @@ GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
@@ -795,7 +795,7 @@ GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
@@ -828,7 +828,7 @@ GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return gm->_occ_internals->getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
@@ -850,7 +850,7 @@ GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
 GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,

@@ -14,6 +14,7 @@
 #include "Context.h"
 
 #if defined(HAVE_OCC)
+#include "GModelIO_OCC.h"
 #include <Standard_Version.hxx>
 #include <Geom_CylindricalSurface.hxx>
 #include <Geom_ConicalSurface.hxx>
@@ -33,6 +34,13 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
 {
   setup();
+  model()->getOCCInternals()->bind(s, num);
+}
+
+OCCFace::~OCCFace()
+{
+  model()->getOCCInternals()->unbind(s);
+  model()->getOCCInternals()->unbind(_replaced);
 }
 
 void OCCFace::setup()
@@ -47,7 +55,7 @@ void OCCFace::setup()
     std::list<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = getOCCEdgeByNativePtr(model(), edge);
+      GEdge *e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
       if(!e){
 	Msg::Error("Unknown edge in face %d", tag());
       }
@@ -409,19 +417,6 @@ bool OCCFace::buildSTLTriangulation(bool force)
   return true;
 }
 
-GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
-{
-  GModel::fiter it =model->firstFace();
-  for (; it !=model->lastFace(); ++it){
-    OCCFace *gf = dynamic_cast<OCCFace*>(*it);
-    if (gf){
-      if(toFind.IsSame(gf->getTopoDS_Face())) return *it;
-      if(toFind.IsSame(gf->getTopoDS_FaceOld())) return *it;
-    }
-  }
-  return 0;
-}
-
 void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 {
 #if defined(OCC_VERSION_HEX) && OCC_VERSION_HEX >= 0x060503
@@ -520,6 +515,7 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
   s = newFace;
 
   setup();
+  model()->getOCCInternals()->bind(_replaced, tag());
 }
 
 bool OCCFace::isSphere (double &radius, SPoint3 &center) const

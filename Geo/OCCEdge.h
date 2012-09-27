@@ -27,7 +27,7 @@ class OCCEdge : public GEdge {
   mutable GFace *trimmed;
  public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
-  virtual ~OCCEdge() {}
+  virtual ~OCCEdge();
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
@@ -48,8 +48,6 @@ class OCCEdge : public GEdge {
   TopoDS_Edge getTopoDS_EdgeOld() const {return _replacement;}
   void replaceEndingPointsInternals(GVertex *, GVertex *);
 };
-
-GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
 
 #endif
 

@@ -16,33 +16,40 @@
 class OCC_Internals {
  protected :
   TopoDS_Shape shape;
+  // all TopoDS_Shapes in the OCC model
   TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
+  // cache mapping TopoDS_Shapes to their corresponding GEntity tags
+  TopTools_DataMapOfShapeInteger gvNumCache, geNumCache, gfNumCache, grNumCache;
  public:
-  enum BooleanOperator { Intersection, Cut, Section, Fuse }; 
-  OCC_Internals()
-  {
-    somap.Clear();
-    shmap.Clear();
-    fmap.Clear();
-    wmap.Clear();
-    emap.Clear();
-    vmap.Clear();
-  }
+  enum BooleanOperator { Intersection, Cut, Section, Fuse };
+  OCC_Internals(){}
   TopoDS_Shape getShape () { return shape; }
   void buildLists();
   void buildShapeFromLists(TopoDS_Shape _shape);
   void addShapeToLists(TopoDS_Shape shape);
   void healGeometry(double tolerance, bool fixdegenerated,
                     bool fixsmalledges, bool fixspotstripfaces,
-                    bool sewfaces, bool makesolids=false, 
+                    bool sewfaces, bool makesolids=false,
                     bool connect=false);
-  void loadBREP(const char *);  
-  void writeBREP(const char *);  
+  void loadBREP(const char *);
+  void writeBREP(const char *);
   void loadSTEP(const char *);
-  void writeSTEP(const char *);  
+  void writeSTEP(const char *);
   void loadIGES(const char *);
   void loadShape(const TopoDS_Shape *);
   void buildGModel(GModel *gm);
+  void bind(TopoDS_Vertex vertex, int num){ gvNumCache.Bind(vertex, num); }
+  void bind(TopoDS_Edge edge, int num){ geNumCache.Bind(edge, num); }
+  void bind(TopoDS_Face face, int num){ gfNumCache.Bind(face, num); }
+  void bind(TopoDS_Solid solid, int num){ grNumCache.Bind(solid, num); }
+  void unbind(TopoDS_Vertex vertex){ gvNumCache.UnBind(vertex); }
+  void unbind(TopoDS_Edge edge){ geNumCache.UnBind(edge); }
+  void unbind(TopoDS_Face face){ gfNumCache.UnBind(face); }
+  void unbind(TopoDS_Solid solid){ grNumCache.UnBind(solid); }
+  GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
+  GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
+  GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
+  GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
   GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
   GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
   GFace *addFaceToModel(GModel *model, TopoDS_Face f);

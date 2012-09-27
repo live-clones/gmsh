@@ -13,7 +13,9 @@
 
 #if defined(HAVE_OCC)
 
-OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v) 
+#include "GModelIO_OCC.h"
+
+OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v)
   : GVertex(m, num), v(_v)
 {
   max_curvature = -1;
@@ -21,6 +23,12 @@ OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v)
   _x = pnt.X();
   _y = pnt.Y();
   _z = pnt.Z();
+  model()->getOCCInternals()->bind(v, num);
+}
+
+OCCVertex::~OCCVertex()
+{
+  model()->getOCCInternals()->unbind(v);
 }
 
 void OCCVertex::setPosition(GPoint &p)
@@ -35,7 +43,7 @@ void OCCVertex::setPosition(GPoint &p)
   }
 }
 
-double max_surf_curvature(const GVertex *gv, double x, double y, double z, 
+double max_surf_curvature(const GVertex *gv, double x, double y, double z,
                           const GEdge *_myGEdge)
 {
   std::list<GFace *> faces = _myGEdge->faces();
@@ -46,14 +54,14 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
     double cc = (*it)->curvatureDiv(par);
     if(cc > 0) curv = std::max(curv, cc);
     ++it;
-  }  
+  }
   return curv;
 }
 
 double OCCVertex::max_curvature_of_surfaces() const
-{  
+{
   if(max_curvature < 0){
-    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); 
+    for(std::list<GEdge*>::const_iterator it = l_edges.begin();
         it != l_edges.end(); ++it){
       max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
                                max_curvature);
@@ -82,7 +90,7 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
       }
     }
     ++it;
-  }  
+  }
   it = l_edges.begin();
   while(it != l_edges.end()){
     std::list<GEdge*> l = gf->edges();
@@ -109,20 +117,6 @@ SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 
   // normally never here
   return GVertex::reparamOnFace(gf, dir);
-}
-
-GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind)
-{
-  GModel::viter it =model->firstVertex();
-  for (; it != model->lastVertex(); it++){
-    OCCVertex *occv = dynamic_cast<OCCVertex*>(*it);
-    if (occv){
-      if (toFind.IsSame(occv->getShape())){
-	return *it;
-      }
-    }
-  }
-  return 0;
 }
 
 #endif

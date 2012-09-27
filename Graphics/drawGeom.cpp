@@ -339,7 +339,7 @@ class drawGFace {
     if(CTX::instance()->geom.surfaces) {
       bool selected = false;
       if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
-          selected = true;
+        selected = true;
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
                          f->getSelection(), CTX::instance()->color.geom.selection);

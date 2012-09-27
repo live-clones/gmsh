@@ -12,6 +12,7 @@
 #include "Context.h"
 
 #if defined(HAVE_OCC)
+#include "GModelIO_OCC.h"
 #include <Geom2dLProp_CLProps2d.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_OffsetCurve.hxx>
@@ -24,34 +25,23 @@
 #include <Geom_Conic.hxx>
 #include <BOPTools_Tools.hxx>
 
-GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind)
-{
-  GModel::eiter it = model->firstEdge();
-  for (; it != model->lastEdge(); it++){
-    OCCEdge *ed = dynamic_cast<OCCEdge*>(*it);
-    if (ed){
-      if (toFind.IsSame(ed->getTopoDS_Edge())){
-	return *it;
-      }
-      if (toFind.IsSame(ed->getTopoDS_EdgeOld())){
-	return *it;
-      }
-    }
-  }
-  return 0;
-}
-
-OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
-  : GEdge(model, num, v1, v2), c(edge), trimmed(0)
+OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
+  : GEdge(m, num, v1, v2), c(edge), trimmed(0)
 {
   curve = BRep_Tool::Curve(c, s0, s1);
   // build the reverse curve
   c_rev = c;
   c_rev.Reverse();
+  model()->getOCCInternals()->bind(c, num);
+}
+
+OCCEdge::~OCCEdge()
+{
+  model()->getOCCInternals()->unbind(c);
 }
 
 Range<double> OCCEdge::parBounds(int i) const
-{ 
+{
   return Range<double>(s0, s1);
 }
 
@@ -84,7 +74,7 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     else{
       c2d = BRep_Tool::CurveOnSurface(c_rev, *s, t0, t1);
     }
-  
+
     if(c2d.IsNull()){
       Msg::Fatal("Reparam on face failed: curve %d is not on surface %d",
 		 tag(), face->tag());
@@ -116,12 +106,12 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnCurve proj(pnt, curve, s0, s1);
-  
+
   if(!proj.NbPoints()){
     Msg::Error("OCC Project Point on Curve FAIL");
     return GPoint(0, 0);
   }
-  
+
   param = proj.LowerDistanceParameter();
 
   if(param < s0 || param > s1){
@@ -167,7 +157,7 @@ GPoint OCCEdge::point(double par) const
 }
 
 SVector3 OCCEdge::firstDer(double par) const
-{  
+{
   BRepAdaptor_Curve brepc(c);
   BRepLProp_CLProps prop(brepc, 1, 1e-5);
   prop.SetParameter(par);
@@ -230,9 +220,9 @@ int OCCEdge::minimumMeshSegments() const
   int np;
   if(geomType() == Line)
     np = GEdge::minimumMeshSegments();
-  else 
+  else
     np = CTX::instance()->mesh.minCurvPoints - 1;
-  
+
   // if the edge is closed, ensure that at least 3 points are
   // generated in the 1D mesh (4 segments, one of which is
   // degenerated)
@@ -249,7 +239,7 @@ int OCCEdge::minimumDrawSegments() const
     return CTX::instance()->geom.numSubEdges * GEdge::minimumDrawSegments();
 }
 
-double OCCEdge::curvature(double par) const 
+double OCCEdge::curvature(double par) const
 {
   const double eps = 1.e-15;
 
@@ -265,7 +255,7 @@ double OCCEdge::curvature(double par) const
   else{
     BRepAdaptor_Curve brepc(c);
     BRepLProp_CLProps prop(brepc, 2, eps);
-    prop.SetParameter(par); 
+    prop.SetParameter(par);
     if(!prop.IsTangentDefined())
       Crv = eps;
     else
@@ -288,9 +278,9 @@ void OCCEdge::writeGEO(FILE *fp)
     // GEO supports only circle arcs < Pi
     if(s1 - s0 < M_PI){
       fprintf(fp, "p%d = newp;\n", tag());
-      fprintf(fp, "Point(p%d + 1) = {%.16g, %.16g, %.16g};\n", 
+      fprintf(fp, "Point(p%d + 1) = {%.16g, %.16g, %.16g};\n",
               tag(), center.X(), center.Y(), center.Z());
-      fprintf(fp, "Circle(%d) = {%d, p%d + 1, %d};\n", 
+      fprintf(fp, "Circle(%d) = {%d, p%d + 1, %d};\n",
               tag(), getBeginVertex()->tag(), tag(), getEndVertex()->tag());
     }
     else
@@ -311,7 +301,7 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
 
   //  printf("%p %p --- %p %p replacing %d %d by %d %d in occedge %d\n",
   //	 v0,v1,g0,g1,v0->tag(),v1->tag(),g0->tag(),g1->tag(),tag());
-  
+
   Standard_Boolean bIsDE = BRep_Tool::Degenerated(c);
 
   TopoDS_Edge aEx = c;
@@ -340,7 +330,7 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
     _replacement=E;
   }
   else {
-    BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement); 
+    BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
   }
   TopoDS_Edge temp = c;
   c = _replacement;

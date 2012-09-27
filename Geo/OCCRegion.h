@@ -18,14 +18,12 @@ class OCCRegion : public GRegion {
   void setup();
  public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
-  virtual ~OCCRegion() {}
+  virtual ~OCCRegion();
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
   TopoDS_Solid getTopoDS_Shape() {return s;}
 };
-
-GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
 
 #endif
 
