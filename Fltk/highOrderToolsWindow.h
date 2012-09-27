@@ -14,7 +14,6 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Output.H>
-#include "GmshConfig.h"
 
 class highOrderToolsWindow{
  public:

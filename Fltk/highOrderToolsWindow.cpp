@@ -35,7 +35,10 @@ typedef unsigned long intptr_t;
 #include "Options.h"
 #include "Context.h"
 #include "HighOrder.h"
+
+#if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
+#endif
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -46,11 +49,11 @@ static void change_completeness_cb(Fl_Widget *w, void *data)
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
   bool onlyVisible = (bool)o->butt[1]->value();
   if (!o->complete){
-    SetHighOrderComplete (GModel::current(), onlyVisible);
+    SetHighOrderComplete(GModel::current(), onlyVisible);
     o->complete = 1;
   }
   else if (o->complete){
-    SetHighOrderInComplete (GModel::current(), onlyVisible);
+    SetHighOrderInComplete(GModel::current(), onlyVisible);
     o->complete = 0;
   }
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
@@ -59,6 +62,7 @@ static void change_completeness_cb(Fl_Widget *w, void *data)
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_OPTHOM)
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   int order = (int)o->value[0]->value();
@@ -73,16 +77,20 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
 
   distanceFromMeshToGeometry_t dist;
   computeDistanceFromMeshToGeometry (GModel::current(), dist);
-  for (std::map<GEntity*, double> ::iterator it = dist.d2.begin(); it !=dist.d2.end();++it){
-    printf ("GEntity %d of dim %d : dist %12.5E\n",it->first->tag(),it->first->dim(),it->second);
+  for (std::map<GEntity*, double> ::iterator it = dist.d2.begin();
+       it !=dist.d2.end();++it){
+    printf ("GEntity %d of dim %d : dist %12.5E\n",
+            it->first->tag(), it->first->dim(), it->second);
   }
 
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
+#endif
 }
 
 static void chooseopti_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_OPTHOM)
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
   int elastic = o->choice[2]->value();
 
@@ -101,11 +109,12 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
       o->value[i]->activate();
     //    o->push[1]->activate();
   }
-
+#endif
 }
 
 static void highordertools_runelas_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_OPTHOM)
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
 
   bool elastic = o->choice[2]->value() == 1;
@@ -135,6 +144,7 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
+#endif
 }
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
@@ -150,7 +160,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   int y = WB;
   int x = 2 * WB;
-
 
   butt[1] = new Fl_Check_Button
     (x,y, 1.5*IW-WB, BH, "Visible entities only");
@@ -342,7 +351,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
 void highOrderToolsWindow::show(bool redrawOnly)
 {
-  getMeshInfoForHighOrder (GModel::current(),meshOrder,complete, CAD);
+  getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);
 
   if(win->shown() && redrawOnly)
     win->redraw();

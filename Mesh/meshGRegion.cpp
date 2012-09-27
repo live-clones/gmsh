@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshGRegion.h"
+#include "meshGFaceOptimize.h"
 #include "meshGFaceBoundaryLayers.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
