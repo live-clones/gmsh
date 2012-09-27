@@ -9,7 +9,9 @@
   #include "Generator.h"
   #include "DivideAndConquer.h"
   #include "highOrderTools.h"
+#if defined(HAVE_BFGS)
   #include "meshGFaceLloyd.h"
+#endif
   #include "meshGFaceOptimize.h"
   #include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
@@ -20,7 +22,9 @@
 #endif
   #include "Field.h"
   #include "meshMetric.h"
+#if defined(HAVE_ANN)
   #include "CenterlineField.h"
+#endif
   #include "simple3D.h"
   #include "Voronoi3D.h"
   #include "Levy3D.h"
@@ -42,7 +46,9 @@ namespace std {
 %include "Generator.h"
 %include "DivideAndConquer.h"
 %include "highOrderTools.h"
+#if defined(HAVE_BFGS)
 %include "meshGFaceLloyd.h"
+#endif
 %include "meshGFaceOptimize.h"
 %include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
@@ -53,7 +59,9 @@ namespace std {
 #endif
 %include "Field.h"
 %include "meshMetric.h"
+#if defined(HAVE_ANN)
 %include "CenterlineField.h"
+#endif
 %include "simple3D.h"
 %include "Voronoi3D.h"
 %include "Levy3D.h"
