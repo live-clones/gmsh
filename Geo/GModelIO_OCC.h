@@ -15,8 +15,9 @@
 
 class OCC_Internals {
  protected :
+  // the shape
   TopoDS_Shape shape;
-  // all TopoDS_Shapes in the OCC model
+  // all the (sub) TopoDS_Shapes in 'shape'
   TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
   // cache mapping TopoDS_Shapes to their corresponding GEntity tags
   TopTools_DataMapOfShapeInteger gvNumCache, geNumCache, gfNumCache, grNumCache;
