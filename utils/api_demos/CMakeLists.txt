@@ -24,6 +24,9 @@ else(APPLE)
   set(glut "glut")
 endif(APPLE)
 
+add_executable(mainVertexArray mainVertexArray.cpp)
+target_link_libraries(mainVertexArray shared)
+
 add_executable(mainAntTweakBar mainAntTweakBar.cpp)
 target_link_libraries(mainAntTweakBar shared AntTweakBar ${glut})
 
