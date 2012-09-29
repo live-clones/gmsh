@@ -189,7 +189,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   while(!feof(gmsh_yyin)){
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20){
-      Msg::Error("Too many errors: aborting...");
+      if(gmsh_yyerrorstate != 999) // 999 is a volontary exit
+        Msg::Error("Too many errors: aborting parser...");
       gmsh_yyflush();
       break;
     }

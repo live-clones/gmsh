@@ -126,6 +126,7 @@ Elliptic		return tElliptic;
 EndFor                  return tEndFor;
 EndIf                   return tEndIf;
 Euclidian               return tEuclidian;
+Error                   return tError;
 Exit                    return tExit;
 
 Fabs                    return tFabs;

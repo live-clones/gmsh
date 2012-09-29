@@ -106,7 +106,7 @@ struct doubleXstring{
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
-%token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
+%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -208,6 +208,11 @@ Printf :
       Msg::Direct($3);
       Free($3);
     }
+  | tError '(' tBIGSTR ')' tEND
+    {
+      Msg::Error($3);
+      Free($3);
+    }
   | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
     {
       std::string tmp = FixRelativePath(gmsh_yyname, $6);
@@ -232,6 +237,19 @@ Printf :
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
 	Msg::Direct(tmpstring);
+      Free($3);
+      List_Delete($5);
+    }
+  | tError '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
+    {
+      char tmpstring[1024];
+      int i = PrintListOfDouble($3, $5, tmpstring);
+      if(i < 0)
+	yymsg(0, "Too few arguments in Error");
+      else if(i > 0)
+	yymsg(0, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
+      else
+	Msg::Error(tmpstring);
       Free($3);
       List_Delete($5);
     }
@@ -2623,7 +2641,8 @@ Command :
     }
    | tExit tEND
     {
-      exit(0);
+      gmsh_yyerrorstate = 999; // this will be checked when yyparse returns
+      YYABORT;
     }
    | tSyncModel tEND
     {
