@@ -4219,6 +4219,78 @@ FExpr_Multi :
     {
       $$ = GetAllEntityNumbers(3);
     }
+  | tPhysical tPoint '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      for(int i = 0; i < List_Nbr($4); i++){
+        double num;
+        List_Read($4, i, &num);
+        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_POINT);
+        if(p){
+          for(int j = 0; j < List_Nbr(p->Entities); j++){
+            int nume;
+            List_Read(p->Entities, j, &nume);
+            double d = nume;
+            List_Add($$, &d);
+          }
+        }
+      }
+      List_Delete($4);
+    }
+  | tPhysical tLine '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      for(int i = 0; i < List_Nbr($4); i++){
+        double num;
+        List_Read($4, i, &num);
+        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_LINE);
+        if(p){
+          for(int j = 0; j < List_Nbr(p->Entities); j++){
+            int nume;
+            List_Read(p->Entities, j, &nume);
+            double d = nume;
+            List_Add($$, &d);
+          }
+        }
+      }
+      List_Delete($4);
+    }
+  | tPhysical tSurface '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      for(int i = 0; i < List_Nbr($4); i++){
+        double num;
+        List_Read($4, i, &num);
+        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_SURFACE);
+        if(p){
+          for(int j = 0; j < List_Nbr(p->Entities); j++){
+            int nume;
+            List_Read(p->Entities, j, &nume);
+            double d = nume;
+            List_Add($$, &d);
+          }
+        }
+      }
+      List_Delete($4);
+    }
+  | tPhysical tVolume '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      for(int i = 0; i < List_Nbr($4); i++){
+        double num;
+        List_Read($4, i, &num);
+        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_VOLUME);
+        if(p){
+          for(int j = 0; j < List_Nbr(p->Entities); j++){
+            int nume;
+            List_Read(p->Entities, j, &nume);
+            double d = nume;
+            List_Add($$, &d);
+          }
+        }
+      }
+      List_Delete($4);
+    }
   | Transform
     {
       $$ = List_Create(List_Nbr($1), 1, sizeof(double));

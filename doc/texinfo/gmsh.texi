@@ -1336,6 +1336,7 @@ List of expressions are also widely used, and are defined as:
   @var{extrude}
   Point @{ @var{expression} @} |
   Point|Line|Surface|Volume "*" |
+  Physical Point|Line|Surface|Volume @{ @var{expression-list} @}
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
@@ -1350,10 +1351,11 @@ permits to reference an expression sublist (whose elements are those
 corresponding to the indices provided by the @var{expression-list}).
 The next two cases permit to retrieve the indices of entities created
 through geometrical transformations and extrusions (see
-@ref{Transformations}, and @ref{Extrusions}). The last two cases permit
-to retrieve the coordinates of a given geometry point (@pxref{Points}),
-or to retrieve the id numbers of all points, lines, surfaces or volumes
-in the model.
+@ref{Transformations}, and @ref{Extrusions}). The last three cases
+permit to retrieve the coordinates of a given geometry point
+(@pxref{Points}), to retrieve the id numbers of all points, lines,
+surfaces or volumes in the model, or to retrieve the elementary entities
+making up physical groups.
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
