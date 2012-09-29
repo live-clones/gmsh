@@ -4502,15 +4502,30 @@ StringExpr :
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer)
 {
-  int j, k;
-  char tmp1[256], tmp2[256];
+  // if format does not contain formatting characters, simply append values to
+  // format using %g formatting; useful for quick debugging of lists
+  int numFormats = 0;
+  for(int i = 0; i < strlen(format); i++)
+    if(format[i] == '%') numFormats++;
+  if(!numFormats){
+    strcpy(buffer, format);
+    for(int i = 0; i < List_Nbr(list); i++){
+      double d;
+      List_Read(list, i, &d);
+      char tmp[256];
+      sprintf(tmp, " %g", d);
+      strcat(buffer, tmp);
+    }
+    return 0;
+  }
 
-  j = 0;
+  char tmp1[256], tmp2[256];
+  int j = 0, k = 0;
   buffer[j] = '\0';
 
   while(j < (int)strlen(format) && format[j] != '%') j++;
   strncpy(buffer, format, j);
-  buffer[j]='\0';
+  buffer[j] = '\0';
   for(int i = 0; i < List_Nbr(list); i++){
     k = j;
     j++;
@@ -4528,7 +4543,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
       }
     }
     else
-      return List_Nbr(list)-i;
+      return List_Nbr(list) - i;
   }
   if(j != (int)strlen(format))
     return -1;
