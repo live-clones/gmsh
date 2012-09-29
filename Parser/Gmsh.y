@@ -229,7 +229,7 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      char tmpstring[1024];
+      char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
@@ -242,7 +242,7 @@ Printf :
     }
   | tError '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
     {
-      char tmpstring[1024];
+      char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Error");
@@ -255,7 +255,7 @@ Printf :
     }
   | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
     {
-      char tmpstring[1024];
+      char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
@@ -1028,7 +1028,7 @@ Affectation :
 	    List_Read($9, i, &id);
 	    vl.push_back((int)id);
 	  }
-    option->list(vl);
+          option->list(vl);
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
@@ -4479,7 +4479,7 @@ StringExpr :
     }
   | tSprintf '(' StringExprVar ',' RecursiveListOfDouble ')'
     {
-      char tmpstring[1024];
+      char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0){
 	yymsg(0, "Too few arguments in Sprintf");
@@ -4502,8 +4502,8 @@ StringExpr :
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer)
 {
-  // if format does not contain formatting characters, simply append values to
-  // format using %g formatting; useful for quick debugging of lists
+  // if format does not contain formatting characters, dump the list (useful for
+  // quick debugging of lists)
   int numFormats = 0;
   for(int i = 0; i < strlen(format); i++)
     if(format[i] == '%') numFormats++;
@@ -4513,7 +4513,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
       double d;
       List_Read(list, i, &d);
       char tmp[256];
-      sprintf(tmp, " %g", d);
+      sprintf(tmp, " [%d]%g", i, d);
       strcat(buffer, tmp);
     }
     return 0;

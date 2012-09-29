@@ -197,7 +197,7 @@ void Msg::Fatal(const char *fmt, ...)
 {
   _errorCount++;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -242,7 +242,7 @@ void Msg::Error(const char *fmt, ...)
 
   if(_verbosity < 1) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -279,7 +279,7 @@ void Msg::Warning(const char *fmt, ...)
 
   if(_commRank || _verbosity < 2) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -310,7 +310,7 @@ void Msg::Info(const char *fmt, ...)
 {
   if(_commRank || _verbosity < 4) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -337,7 +337,7 @@ void Msg::Direct(const char *fmt, ...)
 {
   if(_commRank || _verbosity < 3) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -350,7 +350,7 @@ void Msg::Direct(int level, const char *fmt, ...)
 {
   if(_commRank || _verbosity < level) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -390,7 +390,7 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
   if(_commRank || _verbosity < 4) return;
   if(num < 1 || num > 3) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -421,7 +421,7 @@ void Msg::Debug(const char *fmt, ...)
 {
   if(_verbosity < 99) return;
 
-  char str[1024];
+  char str[5000];
   va_list args;
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
@@ -454,7 +454,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
   double percent = 100. * (double)n/(double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
-    char str[1024], str2[1024];
+    char str[5000], str2[5000];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);

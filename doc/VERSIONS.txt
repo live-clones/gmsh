@@ -1,3 +1,5 @@
+faster STEP/BRep import; minor bug fixes.
+
 2.6.1 (July 15, 2012): minor improvements and bug fixes.
 
 2.6.0 (Jun 19, 2012): new quadrilateral meshing algorithms (Blossom and
