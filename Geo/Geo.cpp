@@ -3006,12 +3006,28 @@ static void ReplaceDuplicatePoints()
   }
   List_Delete(All);
 
-  // TODO: replace old points in physical groups
+  // Replace old points in physical groups
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
+      (GModel::current()->getGEOInternals()->PhysicalGroups, i);
+    if(p->Typ == MSH_PHYSICAL_POINT){
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        v2 = FindPoint(std::abs(num), points2delete);
+        if(v2){
+          if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2)))
+            Msg::Error("Weird point %d in Coherence", v2->Num);
+          else
+            List_Write(p->Entities, j, &(*pv2)->Num);
+        }
+      }
+    }
+  }
 
   Tree_Action(points2delete, Free_Vertex);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
-
 }
 
 static void ReplaceDuplicateCurves()
@@ -3114,7 +3130,24 @@ static void ReplaceDuplicateCurves()
   }
   List_Delete(All);
 
-  // TODO: replace old curves in physical groups
+  // Replace old curves in physical groups
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
+      (GModel::current()->getGEOInternals()->PhysicalGroups, i);
+    if(p->Typ == MSH_PHYSICAL_LINE){
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        c2 = FindCurve(std::abs(num), curves2delete);
+        if(c2){
+          if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
+            Msg::Error("Weird curve %d in Coherence", c2->Num);
+          else
+            List_Write(p->Entities, j, &(*pc2)->Num);
+        }
+      }
+    }
+  }
 
   Tree_Action(curves2delete, Free_Curve);
   Tree_Delete(curves2delete);
@@ -3206,7 +3239,24 @@ static void ReplaceDuplicateSurfaces()
   }
   List_Delete(All);
 
-  // TODO: replace old surfaces in physical groups
+  // Replace old surfaces in physical groups
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
+      (GModel::current()->getGEOInternals()->PhysicalGroups, i);
+    if(p->Typ == MSH_PHYSICAL_SURFACE){
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        s2 = FindSurface(std::abs(num), surfaces2delete);
+        if(s2){
+          if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
+            Msg::Error("Weird surface %d in Coherence", s2->Num);
+          else
+            List_Write(p->Entities, j, &(*ps2)->Num);
+        }
+      }
+    }
+  }
 
   Tree_Action(surfaces2delete, Free_Surface);
   Tree_Delete(surfaces2delete);
