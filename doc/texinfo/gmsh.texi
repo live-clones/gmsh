@@ -1896,7 +1896,7 @@ Divides and affects @var{expression} to a real option.
 @item Exit;
 Aborts the current script.
 
-@item Printf ( @var{char-expression} , @var{expression-list} );
+@item Printf ( @var{char-expression} <, @var{expression-list}> );
 Prints a character expression in the information window and/or on the
 terminal. @code{Printf} is equivalent to the @code{printf} C function:
 @var{char-expression} is a format string that can contain formatting
@@ -1912,6 +1912,9 @@ Same as @code{Printf} above, but output the expression in a file.
 @item Printf ( @var{char-expression} , @var{expression-list} ) >> @var{char-expression};
 Same as @code{Printf} above, but appends the expression at the end of
 the file.
+
+@item Error ( @var{char-expression} <, @var{expression-list}> );
+Same as @code{Printf}, but raises an error.
 
 @item Merge @var{char-expression};
 Merges a file named @var{char-expression}. This command is equivalent to
