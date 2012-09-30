@@ -640,7 +640,7 @@ namespace onelab{
         T tmp(name);
         typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
         if(it != ps.end()){
-	  if(client.size()) (*it)->addClient(client);
+          if(client.size()) (*it)->addClient(client);
           p.push_back(**it);
         }
       }
