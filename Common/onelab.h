@@ -315,7 +315,6 @@ namespace onelab{
       addClients(p.getClients()); // complete the list of clients
       setLabel(p.getLabel());
       setHelp(p.getHelp());
-      setChanged(p.getChanged());
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
@@ -391,7 +390,6 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
-      setChanged(p.getChanged());
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
@@ -466,7 +464,6 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
-      setChanged(p.getChanged());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -547,7 +544,6 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
-      setChanged(p.getChanged());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -703,8 +699,9 @@ namespace onelab{
       std::set<parameter*> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++){
-        if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged())
+        if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged()){
           return true;
+        }
       }
       return false;
     }
