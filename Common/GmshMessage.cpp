@@ -786,6 +786,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
         onelab::region p(name, num.str());
         p.setDimension(dim);
         p.setReadOnly(true);
+        p.setAttribute("Closed", "1");
         _onelabClient->set(p);
       }
     }

@@ -599,6 +599,48 @@ static void onelab_add_solver_cb(Fl_Widget *w, void *data)
   }
 }
 
+template<class T>
+static void setClosed(const std::string &path, std::vector<T> &ps,
+                      const std::string &value)
+{
+  onelab::server::instance()->get(ps);
+  for(unsigned int i = 0; i < ps.size(); i++){
+    if(ps[i].getPath() == path){
+      ps[i].setAttribute("Closed", value);
+      onelab::server::instance()->set(ps[i]);
+    }
+  }
+}
+
+static void onelab_tree_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tree *tree = (Fl_Tree*)w;
+  Fl_Tree_Item *item = (Fl_Tree_Item*)tree->callback_item();
+  std::string path = FlGui::instance()->onelab->getPath(item);
+  std::vector<onelab::number> numbers;
+  std::vector<onelab::string> strings;
+  std::vector<onelab::region> regions;
+  std::vector<onelab::function> functions;
+  switch(tree->callback_reason()){
+  case FL_TREE_REASON_SELECTED: break;
+  case FL_TREE_REASON_DESELECTED: break;
+  case FL_TREE_REASON_OPENED:
+    setClosed(path, numbers, "0");
+    setClosed(path, strings, "0");
+    setClosed(path, regions, "0");
+    setClosed(path, functions, "0");
+    break;
+  case FL_TREE_REASON_CLOSED:
+    setClosed(path, numbers, "1");
+    setClosed(path, strings, "1");
+    setClosed(path, regions, "1");
+    setClosed(path, functions, "1");
+    break;
+  default:
+    break;
+  }
+}
+
 onelabWindow::onelabWindow(int deltaFontSize)
   : _deltaFontSize(deltaFontSize), _stop(false)
 {
@@ -612,6 +654,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _win->box(GMSH_WINDOW_BOX);
 
   _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
 
@@ -980,14 +1023,7 @@ void onelabWindow::rebuildTree()
 
   _itemWidth = (int)(0.45 * _tree->w());
 
-  std::vector<std::string> closed;
-  for (Fl_Tree_Item *n = _tree->first(); n; n = n->next())
-    if(n->is_close()) closed.push_back(getPath(n));
-
-  if(_treeWidgets.empty()){ // first time we build the tree
-    closed.push_back("Gmsh");
-    closed.push_back("Gmsh/Physical groups");
-  }
+  std::set<std::string> closed;
 
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
@@ -1004,6 +1040,8 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
     if(!numbers[i].getVisible()) continue;
+    if(numbers[i].getAttribute("Closed") == "1")
+      closed.insert(numbers[i].getPath());
     _addParameter(numbers[i]);
   }
 
@@ -1011,6 +1049,8 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
     if(!strings[i].getVisible()) continue;
+    if(strings[i].getAttribute("Closed") == "1")
+      closed.insert(strings[i].getPath());
     _addParameter(strings[i]);
   }
 
@@ -1018,6 +1058,8 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(regions);
   for(unsigned int i = 0; i < regions.size(); i++){
     if(!regions[i].getVisible()) continue;
+    if(regions[i].getAttribute("Closed") == "1")
+      closed.insert(regions[i].getPath());
     _addParameter(regions[i]);
   }
 
@@ -1025,6 +1067,8 @@ void onelabWindow::rebuildTree()
   onelab::server::instance()->get(functions);
   for(unsigned int i = 0; i < functions.size(); i++){
     if(!functions[i].getVisible()) continue;
+    if(functions[i].getAttribute("Closed") == "1")
+      closed.insert(functions[i].getPath());
     _addParameter(functions[i]);
   }
 
@@ -1041,8 +1085,8 @@ void onelabWindow::rebuildTree()
     }
   }
 
-  for(unsigned int i = 0; i < closed.size(); i++)
-    _tree->close(closed[i].c_str());
+  for(std::set<std::string>::iterator it = closed.begin(); it != closed.end(); it++)
+    _tree->close(it->c_str(), 0);
 
   _tree->redraw();
 

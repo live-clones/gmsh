@@ -100,6 +100,11 @@ namespace onelab{
     const std::string &getName() const { return _name; }
     const std::string &getLabel() const { return _label; }
     const std::string &getHelp() const { return _help; }
+    std::string getPath() const
+    {
+      std::string::size_type last = _name.find_last_of('/');
+      return _name.substr(0, last);
+    }
     std::string getShortName() const
     {
       if(_label.size()) return _label;
