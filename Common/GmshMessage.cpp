@@ -631,6 +631,35 @@ bool Msg::UseOnelab()
 #endif
 }
 
+void Msg::SetOnelabNumber(std::string name, double val, bool visible)
+{
+  if(_onelabClient){
+    std::vector<onelab::number> numbers;
+    _onelabClient->get(numbers, name);
+    if(numbers.empty()){
+      numbers.resize(1);
+      numbers[0].setName(name);
+    }
+    numbers[0].setValue(val);
+    numbers[0].setVisible(visible);
+    _onelabClient->set(numbers[0]);
+  }
+}
+void Msg::SetOnelabString(std::string name, std::string val, bool visible)
+{
+  if(_onelabClient){
+    std::vector<onelab::string> strings;
+    _onelabClient->get(strings, name);
+    if(strings.empty()){
+      strings.resize(1);
+      strings[0].setName(name);
+    }
+    strings[0].setValue(val);
+    strings[0].setVisible(visible);
+    _onelabClient->set(strings[0]);
+  }
+}
+
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #if defined(HAVE_ONELAB)
@@ -647,18 +676,10 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     _onelabClient = c;
     _client = c->getGmshClient();
 
-    onelab::number o5(name + "/UseCommandLine",1);
-    o5.setVisible(false);
-    _onelabClient->set(o5);
-    onelab::string o(name + "/FileExtension", ".geo");
-    o.setVisible(false);
-    _onelabClient->set(o);
-    onelab::string o3(name + "/9CheckCommand", "-");
-    o3.setVisible(false);
-    _onelabClient->set(o3);
-    onelab::string o4(name + "/9ComputeCommand", "-3");
-    o4.setVisible(false);
-    _onelabClient->set(o4);
+    SetOnelabNumber(name + "/UseCommandLine", 1, false);
+    SetOnelabString(name + "/FileExtension", ".geo", false);
+    SetOnelabString(name + "/9CheckCommand", "-", false);
+    SetOnelabString(name + "/9ComputeCommand", "-3", false);
 
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
@@ -783,11 +804,24 @@ void Msg::ImportPhysicalsAsOnelabRegions()
             ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
              (dim == 1) ? "Line" : "Point") + num.str();
         name.insert(0, "Gmsh/Physical groups/");
-        onelab::region p(name, num.str());
-        p.setDimension(dim);
-        p.setReadOnly(true);
-        p.setAttribute("Closed", "1");
-        _onelabClient->set(p);
+	std::vector<onelab::region> regions;
+        std::set<std::string> val;
+        val.insert(num.str());
+        _onelabClient->get(regions, name);
+        if(regions.empty()){
+          regions.resize(1);
+          regions[0].setName(name);
+          regions[0].setValue(val);
+          regions[0].setReadOnly(true);
+	  regions[0].setAttribute("Closed", "1");
+          _onelabClient->set(regions[0]);
+        }
+
+        // onelab::region p(name, num.str());
+        // p.setDimension(dim);
+        // p.setReadOnly(true);
+        // p.setAttribute("Closed", "1");
+        // _onelabClient->set(p);
       }
     }
   }

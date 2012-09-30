@@ -315,6 +315,7 @@ namespace onelab{
       addClients(p.getClients()); // complete the list of clients
       setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setChanged(p.getChanged());
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
@@ -390,12 +391,13 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setChanged(p.getChanged());
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
-        setChanged(true);
+        setChanged(true);	
       }
       if(p.getKind() != getKind()){
         setKind(p.getKind());
@@ -439,12 +441,15 @@ namespace onelab{
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help), _value(value), _dimension(-1) {}
+      : parameter(name, label, help), _value(value), _dimension(-1) {
+	setChanged(false); // FIXME
+    }
     region(const std::string &name, const std::string &value,
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _dimension(-1)
     {
       if(value.size()) _value.insert(value);
+      setChanged(false); // FIXME
     }
     void setValue(const std::set<std::string> &value){ _value = value; }
     void setDimension(int dim){ _dimension = dim; }
@@ -464,6 +469,7 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setChanged(p.getChanged());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -471,6 +477,7 @@ namespace onelab{
       }
       setDimension(p.getDimension());
       setChoices(p.getChoices());
+      setChanged(false); // FIXME
     }
     std::string toChar() const
     {
@@ -544,6 +551,7 @@ namespace onelab{
       addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
+      setChanged(p.getChanged());
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
@@ -601,6 +609,8 @@ namespace onelab{
     // set a parameter in the parameter space; if it already exists, update it
     // (adding new clients if necessary). This needs to be locked to avoid race
     // conditions when several clients try to set a parameter at the same time.
+    // One needs to make an exception for parameters "client/Action".
+
     template <class T> bool _set(const T &p, const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
     {
@@ -634,7 +644,7 @@ namespace onelab{
         T tmp(name);
         typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
         if(it != ps.end()){
-          if(client.size()) (*it)->addClient(client);
+	  if(client.size()) (*it)->addClient(client);
           p.push_back(**it);
         }
       }
