@@ -713,7 +713,8 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
-  bool noRange = true, noChoices = true, noLoop = true, noGraph = true;
+  bool noRange = true, noChoices = true, noLoop = true;
+  bool noGraph = true, noClosed = true;
   if(ps.size()){
     val[0] = ps[0].getValue(); // always use value from server
     // keep track of these attributes, which can be changed server-side
@@ -723,6 +724,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     if(ps[0].getChoices().size()) noChoices = false;
     if(ps[0].getAttribute("Loop").size()) noLoop = false;
     if(ps[0].getAttribute("Graph").size()) noGraph = false;
+    if(ps[0].getAttribute("Closed").size()) noClosed = false;
   }
   else{
     ps.resize(1);
@@ -781,6 +783,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(copt.count("ShortHelp")) ps[0].setLabel(copt["ShortHelp"][0]);
   if(noLoop && copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(noGraph && copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
+  if(noClosed && copt.count("Closed")) ps[0].setAttribute("Closed", copt["Closed"][0]);
   if(copt.count("Highlight")) ps[0].setAttribute("Highlight", copt["Highlight"][0]);
   _onelabClient->set(ps[0]);
 #endif
@@ -804,20 +807,6 @@ void Msg::ImportPhysicalsAsOnelabRegions()
             ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
              (dim == 1) ? "Line" : "Point") + num.str();
         name.insert(0, "Gmsh/Physical groups/");
-        /*
-	std::vector<onelab::region> regions;
-        std::set<std::string> val;
-        val.insert(num.str());
-        _onelabClient->get(regions, name);
-        if(regions.empty()){
-          regions.resize(1);
-          regions[0].setName(name);
-          regions[0].setValue(val);
-          regions[0].setReadOnly(true);
-	  regions[0].setAttribute("Closed", "1");
-          _onelabClient->set(regions[0]);
-        }
-        */
         onelab::region p(name, num.str());
         p.setDimension(dim);
         p.setReadOnly(true);
