@@ -658,7 +658,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
 
-  _itemWidth = (int)(0.5 * _tree->w());
+  _itemWidth = (int)(0.4 * _tree->w());
 
   _butt[0] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
   _butt[0]->callback(onelab_cb, (void*)"check");
@@ -1021,7 +1021,7 @@ void onelabWindow::rebuildTree()
 {
   FL_NORMAL_SIZE -= _deltaFontSize;
 
-  _itemWidth = (int)(0.45 * _tree->w());
+  _itemWidth = (int)(0.4 * _tree->w());
 
   std::set<std::string> closed;
 

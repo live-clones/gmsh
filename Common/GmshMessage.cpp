@@ -804,6 +804,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
             ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
              (dim == 1) ? "Line" : "Point") + num.str();
         name.insert(0, "Gmsh/Physical groups/");
+        /*
 	std::vector<onelab::region> regions;
         std::set<std::string> val;
         val.insert(num.str());
@@ -816,12 +817,12 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 	  regions[0].setAttribute("Closed", "1");
           _onelabClient->set(regions[0]);
         }
-
-        // onelab::region p(name, num.str());
-        // p.setDimension(dim);
-        // p.setReadOnly(true);
-        // p.setAttribute("Closed", "1");
-        // _onelabClient->set(p);
+        */
+        onelab::region p(name, num.str());
+        p.setDimension(dim);
+        p.setReadOnly(true);
+        p.setAttribute("Closed", "1");
+        _onelabClient->set(p);
       }
     }
   }

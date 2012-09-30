@@ -397,7 +397,7 @@ namespace onelab{
       setAttributes(p.getAttributes());
       if(p.getValue() != getValue()){
         setValue(p.getValue());
-        setChanged(true);	
+        setChanged(true);
       }
       if(p.getKind() != getKind()){
         setKind(p.getKind());
@@ -441,15 +441,12 @@ namespace onelab{
     region(const std::string &name="",
            const std::set<std::string> &value = std::set<std::string>(),
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help), _value(value), _dimension(-1) {
-	setChanged(false); // FIXME
-    }
+      : parameter(name, label, help), _value(value), _dimension(-1) {}
     region(const std::string &name, const std::string &value,
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _dimension(-1)
     {
       if(value.size()) _value.insert(value);
-      setChanged(false); // FIXME
     }
     void setValue(const std::set<std::string> &value){ _value = value; }
     void setDimension(int dim){ _dimension = dim; }
@@ -477,7 +474,6 @@ namespace onelab{
       }
       setDimension(p.getDimension());
       setChoices(p.getChoices());
-      setChanged(false); // FIXME
     }
     std::string toChar() const
     {
