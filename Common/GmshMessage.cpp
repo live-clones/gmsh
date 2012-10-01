@@ -716,7 +716,8 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-    val[0] = ps[0].getValue(); // always use value from server
+    if(!ps[0].getReadOnly())
+      val[0] = ps[0].getValue(); // use value from server
     // keep track of these attributes, which can be changed server-side
     if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
        ps[0].getMax() != onelab::parameter::maxNumber() ||
