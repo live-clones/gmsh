@@ -417,7 +417,7 @@ void Chain<C>::addElemChain(const ElemChain& c, C coeff)
 {
   if(coeff == 0) return;
   if(_dim != -1 && _dim != c.getDim()) {
-    Msg::Error("Cannot add elementrary d%-chain to %d-chain",
+    Msg::Error("Cannot add elementrary %d-chain to %d-chain",
                c.getDim(), _dim);
     return;
   }

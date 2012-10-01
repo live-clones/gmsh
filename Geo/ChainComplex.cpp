@@ -489,7 +489,7 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   }
   mpz_clear(elem);
 
-  if(deform && (dim == 1 || dim == 2) ) smoothenChain(chain);
+  if(deform && basis == 3 && (dim == 1 || dim == 2) ) smoothenChain(chain);
 }
 
 int ChainComplex::getBasisSize(int dim, int basis)

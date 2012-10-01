@@ -3204,6 +3204,7 @@ void GModel::computeHomology()
         itt != itp.second; itt++){
       std::string type = itt->second.first;
       std::vector<int> dim = itt->second.second;
+      if(dim.empty()) for(int i = 0; i < 4; i++) dim.push_back(i);
 
       std::stringstream ss;
       for(unsigned int i = 0; i < dim.size(); i++) {
@@ -3220,14 +3221,14 @@ void GModel::computeHomology()
       std::string dims = ss.str();
 
       if(type == "Homology") {
-        homology->findHomologyBasis();
+        homology->findHomologyBasis(dim);
         Msg::Info("Homology space basis chains to save: %s.", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++)
           if(dim.at(i) >= 0 && dim.at(i) <= getDim())
             homology->addChainsToModel(dim.at(i));
       }
       else if(type == "Cohomology") {
-        homology->findCohomologyBasis();
+        homology->findCohomologyBasis(dim);
         Msg::Info("Cohomology space basis cochains to save: %s.", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++)
           if(dim.at(i) >= 0 && dim.at(i) <= getDim())

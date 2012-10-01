@@ -40,13 +40,24 @@ extern "C"
 std::string GMSH_HomologyPostProcessingPlugin::getHelp() const
 {
   return "Plugin(HomologyPostProcessing) operates on representative "
-    "basis chains of homology and cohomology spaces.\n\n"
+    "basis chains of homology and cohomology spaces. Functionality:\n\n"
 
-    "Define the physical groups of chains and their dimension "
-    "to be transformed by the "
-    "given integer transformation matrix. Number of matrix columns must "
-    "equal to the number of chains given. The resulting "
-    "chains are thus integer combinations of the given chains. ";
+    "1. (co)homology basis transformation:\n "
+    "'TransformationMatrix': Integer matrix of the transformation.\n "
+    "'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.\n "
+    "Results a new (co)chain basis that is an integer cobination of the given basis. \n\n"
+
+    "2. Make basis representations of a homology space and a cohomology space "
+    "compatible: \n"
+    "'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.\n"
+    "'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.\n"
+    "Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.\n\n"
+
+    "Options:\n"
+    "'PhysicalGroupsToTraceResults': Trace the resulting cochains to the given physical groups.\n"
+    "'NameForResultChains': Post-processing view name prefix for the results.\n"
+    "'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.\n";
+
 }
 
 int GMSH_HomologyPostProcessingPlugin::getNbOptions() const

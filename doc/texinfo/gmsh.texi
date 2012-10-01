@@ -3030,16 +3030,18 @@ Sets number of elliptic smoothing steps for the surfaces listed in
 @var{expression-list} (smoothing only applies to transfinite meshes at
 the moment).
 
-@item Homology @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @};
+@item Homology ( @{ @var{expression-list} @} ) @{ @{ @var{expression-list} @} , @{ @var{expression-list} @} @};
 Compute a basis representation for homology spaces after a mesh has
-been generated. The first @var{expression-list} is a list of physical
-groups that constitute the computation domain. The second
-@var{expression-list} is a list of physical groups that constitute the
-relative subdomain of relative homology computation; if empty,
-absolute homology is computed. Resulting basis representation chains
-are stored as physical groups in the mesh.
+been generated. The first @var{expression-list} is a list of
+dimensions whose homology bases are computed; if empty, all bases are
+computed. The second @var{expression-list} is a list physical groups
+that constitute the computation domain; if empty, the whole mesh is
+the domain. The third @var{expression-list} is a list of physical
+groups that constitute the relative subdomain of relative homology
+computation; if empty, absolute homology is computed. Resulting basis
+representation chains are stored as physical groups in the mesh.
 
-@item Cohomology @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @};
+@item Cohomology ( @{ @var{expression-list} @} ) @{ @{ @var{expression-list} @} , @{ @var{expression-list} @} @};
 Similar to command @code{Homology}, but computes a basis representation
 for cohomology spaces instead.
 

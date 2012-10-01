@@ -44,7 +44,7 @@ class Homology
   bool _saveOrig;
 
   // use cell combining
-  bool _combine;
+  int _combine;
   // use cell omit
   bool _omit;
   // use chain smoothning
@@ -56,10 +56,11 @@ class Homology
   // cell complex of the domain
   CellComplex* _cellComplex;
 
-  bool _homologyComputed;
-  bool _cohomologyComputed;
+  bool _homologyComputed[4];
+  bool _cohomologyComputed[4];
 
-  // resulting chains
+  // resulting betti numbers and chains
+  int _betti[4];
   std::vector<Chain<int>*> _chains[4];
   std::vector<Chain<int>*> _cochains[4];
 
@@ -81,8 +82,8 @@ class Homology
   void _createChain(std::map<Cell*, int, Less_Cell>& preChain,
                     std::string name, bool co);
 
-  void _deleteChains();
-  void _deleteCochains();
+  void _deleteChains(std::vector<int> dim=std::vector<int>());
+  void _deleteCochains(std::vector<int> dim=std::vector<int>());
 
  public:
 
@@ -92,15 +93,17 @@ class Homology
 	   std::vector<int> physicalSubdomain,
            std::vector<int> physicalIm,
            bool saveOrig=true,
-	   bool combine=true, bool omit=true, bool smoothen=true);
+	   int combine=2, bool omit=true, bool smoothen=true);
   ~Homology();
 
   GModel* getModel() const { return _model; }
   void setFileName(std::string fileName) { _fileName = fileName; }
 
   // find the bases of (co)homology spaces
-  void findHomologyBasis();
-  void findCohomologyBasis();
+  // if dim is empty, find 0-,1-,2-,3-(co)homology spaces bases
+  // otherwise only find those indicated in dim
+  void findHomologyBasis(std::vector<int> dim=std::vector<int>());
+  void findCohomologyBasis(std::vector<int> dim=std::vector<int>());
 
   // add chains to Gmsh model
   // dim: only add dim-chains if dim != -1
@@ -113,10 +116,10 @@ class Homology
   void getHomologyBasis(int dim, std::vector<Chain<int> >& hom);
   void getCohomologyBasis(int dim, std::vector<Chain<int> >& coh);
 
-  // get Betti number
+  // get a Betti number
   int betti(int dim);
 
-  // get Euler characteristic
+  // get the Euler characteristic
   int eulerCharacteristic();
 
   // write the generators to a file

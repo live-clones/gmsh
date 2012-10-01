@@ -24,7 +24,7 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "CohomologyPhysicalGroupsBegin", NULL, -1.},
   {GMSH_FULLRC, "CreatePostProcessingViews", NULL, 1.},
   {GMSH_FULLRC, "ReductionOmit", NULL, 1.},
-  {GMSH_FULLRC, "ReductionCombine", NULL, 1.},
+  {GMSH_FULLRC, "ReductionCombine", NULL, 2.},
   {GMSH_FULLRC, "PostProcessSmoothen", NULL, 1.}
 };
 
@@ -109,7 +109,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   int cohpg = (int)HomologyComputationOptions_Number[3].def;
   bool pviews = (bool)HomologyComputationOptions_Number[4].def;
   bool omit = (bool)HomologyComputationOptions_Number[5].def;
-  bool combine = (bool)HomologyComputationOptions_Number[6].def;
+  int combine = (int)HomologyComputationOptions_Number[6].def;
   bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
 
   std::vector<int> domain;
@@ -127,8 +127,8 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
                                     true, combine, omit, smoothen);
   homology->setFileName(fileName);
 
-  if(hom != 0) homology->findHomologyBasis();
-  if(coh != 0) homology->findCohomologyBasis();
+  if(hom != 0) homology->findHomologyBasis(dimsave);
+  if(coh != 0) homology->findCohomologyBasis(dimsave);
 
   for(unsigned int i = 0; i < dimsave.size(); i++) {
     int dim = dimsave.at(i);

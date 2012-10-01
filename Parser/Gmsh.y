@@ -3746,8 +3746,6 @@ Homology :
     HomologyCommand tEND
     {
       std::vector<int> domain, subdomain, dim;
-      if(GModel::current()->getDim() != 1) dim.push_back(1);
-      if(GModel::current()->getDim() != 2) dim.push_back(2);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
     }
   | HomologyCommand '{' ListOfDouble '}' tEND
@@ -3758,8 +3756,6 @@ Homology :
         List_Read($3, i, &d);
         domain.push_back((int)d);
       }
-      if(GModel::current()->getDim() != 1) dim.push_back(1);
-      if(GModel::current()->getDim() != 2) dim.push_back(2);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
       List_Delete($3);
     }
@@ -3776,8 +3772,6 @@ Homology :
         List_Read($5, i, &d);
         subdomain.push_back((int)d);
       }
-      if(GModel::current()->getDim() != 1) dim.push_back(1);
-      if(GModel::current()->getDim() != 2) dim.push_back(2);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
       List_Delete($3);
       List_Delete($5);

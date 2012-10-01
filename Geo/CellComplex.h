@@ -38,12 +38,21 @@ class CellComplex
   std::vector<Cell*> _newcells;
   std::vector<Cell*> _removedcells;
 
+  // cell complex dimension
   int _dim;
+
+  // cell are simplexes
   bool _simplicial;
+
+  // save the original unreduced complex for another reduction run
   bool _saveorig;
+
+  // has a relative subdomain
+  bool _relative;
 
   int _deleteCount;
 
+  // is the cell complex at reduced state
   bool _reduced;
 
   // for constructor
@@ -76,8 +85,9 @@ class CellComplex
 
 
   GModel* getModel() const { return _model; }
-  int getDim() { return _dim; }
-  bool simplicial() { return _simplicial; }
+  int getDim() const { return _dim; }
+  bool simplicial() const { return _simplicial; }
+  bool relative() const { return _relative; }
 
   // get the number of certain dimensional cells
   int getSize(int dim, bool orig=false){
@@ -110,6 +120,9 @@ class CellComplex
   // remove cells in subdomain from this cell complex
   void removeSubdomain();
 
+  // remove dim-dimensional cells from this cell complex
+  void removeCells(int dim);
+
   // (co)reduction of this cell complex
   // removes (co)reduction pairs of cell of dimension dim and dim-1
   int reduction(int dim, bool omit, std::vector<Cell*>& omittedCells);
@@ -125,10 +138,12 @@ class CellComplex
   // belong to this cell complex
   bool coherent();
 
-  // full (co)reduction of this cell complex (all dimensions, with combining)
-  // (with highest dimensional cell omitting?)
-  int reduceComplex(bool docombine=true, bool omit=true);
-  int coreduceComplex(bool docombine=true, bool omit=true);
+  // full (co)reduction of this cell complex (all dimensions)
+  // (combine = 1 -> with combining)
+  // (combine = 2 -> with combining and dual combining)
+  // (omit = true -> with highest dimensional cell omitting?)
+  int reduceComplex(int combine=1, bool omit=true);
+  int coreduceComplex(int combine=1, bool omit=true);
 
   bool isReduced() const { return _reduced; }
 

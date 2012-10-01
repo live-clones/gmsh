@@ -39,6 +39,34 @@ bool equalVertices(const std::vector<MVertex*>& v1,
 
 int Cell::_globalNum = 0;
 
+std::pair<Cell*, bool> Cell::createCell(MElement* element, int domain)
+{
+  Cell* cell = new Cell();
+  cell->_dim = element->getDim();
+  cell->_domain = domain;
+  cell->_combined = false;
+  cell->_immune = false;
+  cell->_num = 0;
+
+  for(int i = 0; i < element->getNumPrimaryVertices(); i++)
+    cell->_v.push_back(element->getVertex(i));
+
+  return std::make_pair(cell, cell->_sortVertexIndices());
+}
+
+std::pair<Cell*, bool> Cell::createCell(Cell* parent, int i)
+{
+  Cell* cell = new Cell();
+  cell->_dim = parent->getDim()-1;
+  cell->_domain = parent->getDomain();
+  cell->_combined = false;
+  cell->_immune = false;
+  cell->_num = 0;
+
+  parent->findBdElement(i, cell->_v);
+  return std::make_pair(cell, cell->_sortVertexIndices());
+}
+
 Cell::Cell(MElement* element, int domain)
 {
   _dim = element->getDim();
@@ -65,16 +93,24 @@ Cell::Cell(Cell* parent, int i)
   _sortVertexIndices();
 }
 
-void Cell::_sortVertexIndices()
+bool Cell::_sortVertexIndices()
 {
   std::map<MVertex*, int, MVertexLessThanNum> si;
 
+  bool noinsert = false;
   for(unsigned int i = 0; i < _v.size(); i++)
-    si[_v[i]] = i;
+    noinsert = (!si.insert(std::make_pair(_v[i], i)).second || noinsert);
+
+  if(noinsert == true) {
+    Msg::Warning("The input mesh has degenerate elements, ignored");
+    return false;
+  }
 
   std::map<MVertex*, int, MVertexLessThanNum>::iterator it;
   for(it = si.begin(); it != si.end(); it++)
     _si.push_back(it->second);
+
+  return true;
 }
 
 inline int Cell::getSortedVertex(int vertex) const
@@ -436,30 +472,30 @@ bool Cell::hasCoboundary(Cell* cell, bool orig)
     return false;
   }
 }
-/*
-void Cell::printBoundary(bool orig)
+
+void Cell::printBoundary()
 {
-  for(biter it = firstBoundary(orig); it != lastBoundary(orig); it++){
-    printf("Boundary cell orientation: %d ", (*it).second);
-    Cell* cell2 = (*it).first;
+  for(biter it = firstBoundary(); it != lastBoundary(); it++){
+    printf("Boundary cell orientation: %d ", it->second.get());
+    Cell* cell2 = it->first;
     cell2->printCell();
   }
-  if(firstBoundary(orig) == lastBoundary(orig)){
+  if(firstBoundary() == lastBoundary()){
     printf("Cell boundary is empty. \n");
   }
 }
 
-void Cell::printCoboundary(bool orig)
+void Cell::printCoboundary()
 {
-  for(biter it = firstCoboundary(orig); it != lastCoboundary(orig); it++){
-    printf("Coboundary cell orientation: %d, ", (*it).second);
-    Cell* cell2 = (*it).first;
+  for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
+    printf("Coboundary cell orientation: %d, ", it->second.get());
+    Cell* cell2 = it->first;
     cell2->printCell();
-    if(firstCoboundary(orig) == lastCoboundary(orig)){
+    if(firstCoboundary() == lastCoboundary()){
       printf("Cell coboundary is empty. \n");
     }
   }
-  }*/
+}
 
 CombinedCell::CombinedCell(Cell* c1, Cell* c2, bool orMatch, bool co)
 {

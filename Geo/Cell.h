@@ -56,6 +56,8 @@ class Cell {
   std::map<Cell*, BdInfo, Less_Cell> _bd;
   std::map<Cell*, BdInfo, Less_Cell> _cbd;
 
+  Cell() {}
+
  private:
 
   char _dim;
@@ -63,11 +65,13 @@ class Cell {
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<char> _si;
 
-  inline void _sortVertexIndices();
+  inline bool _sortVertexIndices();
 
  public:
 
-  Cell() {}
+  static std::pair<Cell*, bool> createCell(MElement* element, int domain);
+  static std::pair<Cell*, bool> createCell(Cell* parent, int i);
+
   Cell(MElement* element, int domain);
   Cell(Cell* parent, int i);
 
@@ -85,7 +89,7 @@ class Cell {
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
 
-  int getNumSortedVertices() const { return _v.size(); }
+  int getNumSortedVertices() const { return _si.size(); }
   inline int getSortedVertex(int vertex) const;
   int getNumVertices() const { return _v.size(); }
   MVertex* getMeshVertex(int vertex) const { return _v.at(vertex); }
@@ -182,8 +186,8 @@ class Cell {
 
   // print cell debug info
   virtual void printCell();
-  //virtual void printBoundary(bool orig=false);
-  //virtual void printCoboundary(bool orig=false);
+  virtual void printBoundary();
+  virtual void printCoboundary();
 
   // tools for combined cells
   bool isCombined() const { return _combined; }
