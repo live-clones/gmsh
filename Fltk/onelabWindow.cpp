@@ -388,10 +388,20 @@ static void saveDb(const std::string &fileName, bool withTimeStamp=false)
     time(&now);
     tm *t = localtime(&now);
     char stamp[32];
-    sprintf(stamp, "_%04d-%02d-%02d-%02d:%02d:%02d", 1900 + t->tm_year,
+    sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
             1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
     std::vector<std::string> split = SplitFileName(fileName);
     name = split[0] + split[1] + stamp + split[2];
+
+    // FIXME:
+    // modifiy all the "client/9Output files" onelab variables to include the
+    // stamp and rename the files on disk using the new name
+    //       iterate over all OutputFiles
+    //       SplitFileName
+    //       change name in onelab db
+    //       rename(old, new); on disk (in stdio.h)
+    // need to detect if a file is already stamped. We could simply check the
+    // sequence of _ - - - _ - - - . characters for this.
   }
 
   Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
