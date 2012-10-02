@@ -100,6 +100,11 @@ namespace onelab{
     const std::string &getName() const { return _name; }
     const std::string &getLabel() const { return _label; }
     const std::string &getHelp() const { return _help; }
+    std::string getPath() const
+    {
+      std::string::size_type last = _name.find_last_of('/');
+      return _name.substr(0, last);
+    }
     std::string getShortName() const
     {
       if(_label.size()) return _label;
@@ -129,7 +134,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.03"; }
+    static std::string version() { return "1.04"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -263,17 +268,21 @@ namespace onelab{
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
+    // when in a loop, indicates current index in the vector _choices; is -1
+    // when not in a loop
+    int _index;
     std::vector<double> _choices;
     std::map<double, std::string> _valueLabels;
   public:
     number(const std::string &name="", double value=0.,
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _value(value),
-        _min(-maxNumber()), _max(maxNumber()), _step(0.) {}
+      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(0) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
+    void setIndex(int index){ _index = index; }
     void setChoices(const std::vector<double> &choices){ _choices = choices; }
     void setChoiceLabels(const std::vector<std::string> &labels)
     {
@@ -294,6 +303,7 @@ namespace onelab{
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
+    int getIndex() const { return _index; }
     const std::vector<double> &getChoices() const { return _choices; }
     const std::map<double, std::string> &getValueLabels() const
     {
@@ -320,6 +330,7 @@ namespace onelab{
       setMin(p.getMin());
       setMax(p.getMax());
       setStep(p.getStep());
+      setIndex(p.getIndex());
       setChoices(p.getChoices());
       setValueLabels(p.getValueLabels());
     }
@@ -328,6 +339,7 @@ namespace onelab{
       std::ostringstream sstream;
       sstream << parameter::toChar() << _value << charSep()
               << _min << charSep() << _max << charSep() << _step << charSep()
+	      << _index << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
@@ -347,6 +359,7 @@ namespace onelab{
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
       setStep(atof(getNextToken(msg, pos).c_str()));
+      setIndex(atoi(getNextToken(msg, pos).c_str()));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = atof(getNextToken(msg, pos).c_str());
@@ -397,6 +410,9 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
+      // FIXME: this will be handled differently
+      if(getName().find("/Action") != std::string::npos)
+	setChanged(false);
     }
     std::string toChar() const
     {
@@ -692,8 +708,9 @@ namespace onelab{
       std::set<parameter*> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++){
-        if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged())
+        if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged()){
           return true;
+        }
       }
       return false;
     }

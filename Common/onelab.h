@@ -134,7 +134,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.03"; }
+    static std::string version() { return "1.04"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -268,8 +268,8 @@ namespace onelab{
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
-    // when in a loop, indicates current index in the vector _choices
-    // is -1 when not in a loop
+    // when in a loop, indicates current index in the vector _choices; is -1
+    // when not in a loop
     int _index;
     std::vector<double> _choices;
     std::map<double, std::string> _valueLabels;
@@ -410,6 +410,7 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
+      // FIXME: this will be handled differently
       if(getName().find("/Action") != std::string::npos)
 	setChanged(false);
     }
@@ -611,8 +612,6 @@ namespace onelab{
     // set a parameter in the parameter space; if it already exists, update it
     // (adding new clients if necessary). This needs to be locked to avoid race
     // conditions when several clients try to set a parameter at the same time.
-    // One needs to make an exception for parameters "client/Action".
-
     template <class T> bool _set(const T &p, const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
     {

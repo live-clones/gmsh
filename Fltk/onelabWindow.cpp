@@ -689,20 +689,15 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gearOptionsStart = _gear->menu()->size();
 
   _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
-             FL_MENU_TOGGLE |
-             (CTX::instance()->solver.autoSaveDatabase ? FL_MENU_VALUE : 0));
+             FL_MENU_TOGGLE);
   _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
-             FL_MENU_TOGGLE |
-             (CTX::instance()->solver.autoMesh ? FL_MENU_VALUE : 0));
+             FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, onelab_option_cb, (void*)"merge",
-             FL_MENU_TOGGLE |
-             (CTX::instance()->solver.autoMergeFile ? FL_MENU_VALUE : 0));
+             FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
-             FL_MENU_TOGGLE |
-             (CTX::instance()->solver.autoHideNewViews ? FL_MENU_VALUE : 0));
+             FL_MENU_TOGGLE);
   _gear->add("_Always show last step", 0, onelab_option_cb, (void*)"step",
-             FL_MENU_TOGGLE |
-             (CTX::instance()->solver.autoShowLastStep ? FL_MENU_VALUE : 0));
+             FL_MENU_TOGGLE);
 
   _gearOptionsEnd = _gear->menu()->size();
 
@@ -1175,7 +1170,20 @@ void onelabWindow::rebuildSolverList()
 {
   // update OneLab window title and gear menu
   _title = "OneLab";
-  for(int i = _gear->menu()->size(); i >= _gearOptionsEnd - 1; i--)
+  Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
+  int values[5] = {CTX::instance()->solver.autoSaveDatabase,
+                   CTX::instance()->solver.autoMesh,
+                   CTX::instance()->solver.autoMergeFile,
+                   CTX::instance()->solver.autoHideNewViews,
+                   CTX::instance()->solver.autoShowLastStep};
+  for(int i = 0; i < 5; i++){
+    int idx = _gearOptionsStart - 1 + i;
+    if(values[i])
+      menu[idx].set();
+    else
+      menu[idx].clear();
+  }
+  for(int i = menu->size(); i >= _gearOptionsEnd - 1; i--)
     _gear->remove(i);
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
