@@ -530,9 +530,13 @@ void onelab_cb(Fl_Widget *w, void *data)
       o.setVisible(false);
       onelab::server::instance()->set(o);
       c->run();
-      if(action == "compute")
+      if(action == "compute"){
         FlGui::instance()->onelab->checkForErrors(c->getName());
+	if(metamodel)
+	  onelab::server::instance()->setChanged(false,c->getName());
+      }
       if(FlGui::instance()->onelab->stop()) break;
+
     }
 
     // update geometry which might have been changed by the metamodel

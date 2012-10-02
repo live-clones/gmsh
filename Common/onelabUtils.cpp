@@ -100,8 +100,10 @@ namespace onelabUtils {
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
     for(unsigned int i = 0; i < numbers.size(); i++){
+
       if(numbers[i].getAttribute("Loop") == level){
         if(numbers[i].getChoices().size() > 1){
+	  numbers[i].setIndex(0);
           numbers[i].setValue(numbers[i].getChoices()[0]);
           onelab::server::instance()->set(numbers[i]);
           changed = true;
@@ -139,21 +141,31 @@ namespace onelabUtils {
         loop = true;
 
         if(numbers[i].getChoices().size() > 1){
+	  int j=numbers[i].getIndex();
+	  if((j>=0) && (j < numbers[i].getChoices().size())){
+	    numbers[i].setValue(numbers[i].getChoices()[j]);
+	    numbers[i].setIndex(j+1);
+	    onelab::server::instance()->set(numbers[i]);
+            Msg::Info("Recomputing with %dth choice %s=%g", j,
+		      numbers[i].getName().c_str(), numbers[i].getValue());
+	    recompute = true;
+	  }
+
           // FIXME should store loopVariable attribute in the parameter
           // -- the following test will loop forever if 2 values are
           // identical in the list of choices
-          std::vector<double> choices(numbers[i].getChoices());
-          for(unsigned int j = 0; j < choices.size() - 1; j++){
-            if(numbers[i].getValue() == choices[j]){
-              numbers[i].setValue(choices[j + 1]);
-              onelab::server::instance()->set(numbers[i]);
-              Msg::Info("Recomputing with new choice %s=%g",
-                        numbers[i].getName().c_str(), numbers[i].getValue());
-              recompute = true;
-              break;
-            }
-          }
-        }
+          // std::vector<double> choices(numbers[i].getChoices());
+          // for(unsigned int j = 0; j < choices.size() - 1; j++){
+          //   if(numbers[i].getValue() == choices[j]){
+          //     numbers[i].setValue(choices[j + 1]);
+          //     onelab::server::instance()->set(numbers[i]);
+          //     Msg::Info("Recomputing with new choice %s=%g",
+          //               numbers[i].getName().c_str(), numbers[i].getValue());
+          //     recompute = true;
+          //     break;
+          //   }
+	  // }
+	}
         else if(numbers[i].getStep() > 0){
           if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
              numbers[i].getValue() < numbers[i].getMax()){
