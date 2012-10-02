@@ -796,7 +796,10 @@ void Msg::ImportPhysicalsAsOnelabRegions()
   if(_onelabClient){
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel::current()->getPhysicalGroups(groups);
-    for(int dim = 0; dim < 3; dim++){
+    // FIXME 
+    // for(int dim = 0; dim < 3; dim++) is clearly a mistake
+    // should the loop start at dim=0 or dim=1?
+    for(int dim = 0; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
         // create "read-only" onelab region
