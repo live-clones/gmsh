@@ -62,6 +62,12 @@ int GModel::readMSH(const std::string &name)
       }
     }
 
+    // FIXME:
+    // change this into "$PhysicalAttributes"
+    //  #attribs
+    //    dim num #nums num1 num2... #str str1 str2...
+    //    dum num ...
+
     // $PhysicalNames section
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
       if(!fgets(str, sizeof(str), fp)) return 0;
