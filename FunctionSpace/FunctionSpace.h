@@ -6,7 +6,9 @@
 #include <string>
 
 #include "Basis.h"
+#include "Comparators.h"
 #include "Dof.h"
+#include "GroupOfDof.h"
 
 #include "Mesh.h"
 #include "GroupOfElement.h"
@@ -38,24 +40,33 @@
 
 class FunctionSpace{
  protected:
+  // Geometry //
   const Mesh*           mesh;
   const GroupOfElement* goe;
-  const Basis*          basis;
 
-  std::map<const MElement*, std::vector<bool>*>* edgeClosure;
-
+  // Basis //
+  const Basis* basis;
   unsigned int fPerVertex;
   unsigned int fPerEdge;
   unsigned int fPerFace;
   unsigned int fPerCell;
-
   unsigned int type;
+
+  // Closure //
+  std::map<const MElement*, std::vector<bool>*>* edgeClosure;
+
+  // Dofs //
+  std::set<const Dof*, DofComparator>*     dof;
+  std::vector<GroupOfDof*>*                group;
+  std::map<
+    const MElement*, 
+    const GroupOfDof*, ElementComparator>* eToGod; 
 
  public:
   virtual ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
-  int                   getType(void) const;
+  unsigned int          getType(void) const;
 
   unsigned int getNFunctionPerVertex(const MElement& element) const;
   unsigned int getNFunctionPerEdge(const MElement& element) const;
@@ -67,6 +78,14 @@ class FunctionSpace{
   std::vector<Dof> getKeys(const MEdge& edge) const;
   std::vector<Dof> getKeys(const MFace& face) const;
 
+  unsigned int dofNumber(void) const;
+  unsigned int groupNumber(void) const;
+
+  const std::vector<const Dof*>   getAllDofs(void) const;
+  const std::vector<GroupOfDof*>& getAllGroups(void) const;
+
+  const GroupOfDof& getGoDFromElement(const MElement& element) const;
+
   std::string toString(void) const;
 
  protected:
@@ -75,7 +94,10 @@ class FunctionSpace{
   void build(const GroupOfElement& goe,
 	     int basisType, int order);
 
-  void closure(void);
+  void buildClosure(void);
+  void buildDof(void);
+
+  void insertDof(Dof& d, GroupOfDof* god);  
 };
 
 
@@ -178,7 +200,7 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
 
-inline int FunctionSpace::getType(void) const{
+inline unsigned int FunctionSpace::getType(void) const{
   return type;
 }
 
@@ -196,6 +218,22 @@ inline unsigned int FunctionSpace::getNFunctionPerFace(const MElement& element) 
 
 inline unsigned int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
   return fPerCell;
+}
+
+inline unsigned int FunctionSpace::dofNumber(void) const{
+  return dof->size();
+}
+
+inline unsigned int FunctionSpace::groupNumber(void) const{
+  return group->size();
+}
+
+inline const std::vector<const Dof*> FunctionSpace::getAllDofs(void) const{
+  return std::vector<const Dof*>(dof->begin(), dof->end());
+}
+
+inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
+  return *group;
 }
 
 #endif

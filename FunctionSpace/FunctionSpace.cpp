@@ -1,23 +1,53 @@
 #include <sstream>
 #include "FunctionSpace.h"
 #include "BasisGenerator.h"
+#include "Exception.h"
 
 using namespace std;
 
 FunctionSpace::FunctionSpace(void){
+  // No Dof //
+  dof    = NULL;
+  group  = NULL;
+  eToGod = NULL;
 }
 
 FunctionSpace::~FunctionSpace(void){
-  map<const MElement*, vector<bool>*>::iterator it 
+  // Basis //
+  delete basis;
+
+  // Closure //
+  map<const MElement*, vector<bool>*>::iterator cIt 
     = edgeClosure->begin();
-  map<const MElement*, vector<bool>*>::iterator stop 
+  map<const MElement*, vector<bool>*>::iterator cStop 
     = edgeClosure->end();
-  
-  for(; it != stop; it++)
-    delete it->second;
+
+  for(; cIt != cStop; cIt++)
+    delete cIt->second;
   delete edgeClosure;
 
-  delete basis;
+  // Dof //
+  if(dof){
+    set<const Dof*>::iterator dStop = dof->end();
+    set<const Dof*>::iterator dIt   = dof->begin();
+
+    for(; dIt != dStop; dIt++)
+      delete *dIt;
+    delete dof;
+  }
+
+  // Group //
+  if(group){
+    unsigned int nElement = group->size();
+
+    for(unsigned int i = 0; i < nElement; i++)
+      delete (*group)[i];
+    delete group;
+  }
+  
+  // Element To GoD //
+  if(eToGod)
+    delete eToGod;
 }
 
 void FunctionSpace::build(const GroupOfElement& goe,
@@ -58,15 +88,20 @@ void FunctionSpace::build(const GroupOfElement& goe,
   
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
 
-  // Build Closure
-  edgeClosure = new map<const MElement*, vector<bool>*>;
-  closure();
+  // Build Closure //
+  buildClosure();
+
+  // Build Dof //
+  buildDof();
 }
 
-void FunctionSpace::closure(void){
+void FunctionSpace::buildClosure(void){
   // Get Elements //
   const vector<const MElement*>& element = goe->getAll();
   const unsigned int             size    = element.size();    
+
+  // Init //
+  edgeClosure = new map<const MElement*, vector<bool>*>;
 
   // Iterate on elements //
   for(unsigned int i = 0; i < size; i++){
@@ -116,6 +151,59 @@ void FunctionSpace::closure(void){
     // Add Closure
     edgeClosure->insert
       (pair<const MElement*, vector<bool>*>(element[i], closure));
+  }
+}
+
+void FunctionSpace::buildDof(void){
+  // Get Elements //
+  unsigned int nElement                  = goe->getNumber();
+  const vector<const MElement*>& element = goe->getAll();
+
+  // Init Struct //
+  dof      = new set<const Dof*, DofComparator>;         
+  group    = new vector<GroupOfDof*>(nElement);
+  eToGod   = new map<const MElement*, 
+		     const GroupOfDof*, 
+		     ElementComparator>;
+
+  // Create Dofs //
+  for(unsigned int i = 0; i < nElement; i++){
+    // Get Dof for this Element
+    vector<Dof> myDof = getKeys(*(element[i]));
+    unsigned int nDof = myDof.size();
+    
+    // Create new GroupOfDof
+    GroupOfDof* god = new GroupOfDof(nDof, *(element[i])); 
+    (*group)[i]     = god;
+
+    // Add Dof
+    for(unsigned int j = 0; j < nDof; j++)
+      insertDof(myDof[j], god);
+
+    // Map GOD
+    eToGod->insert(pair<const MElement*, const GroupOfDof*>
+		   (element[i], god));
+  }
+}
+
+void FunctionSpace::insertDof(Dof& d, GroupOfDof* god){
+  // Copy 'd'
+  const Dof* tmp = new Dof(d);
+
+  // Try to insert Dof //
+  pair<set<const Dof*, DofComparator>::iterator, bool> p
+    = dof->insert(tmp);
+ 
+  // If insertion is OK (Dof 'd' didn't exist) //
+  //   --> Add new Dof in GoD
+  if(p.second)
+    god->add(tmp);
+  
+  // If insertion failed (Dof 'd' already exists) //
+  //   --> delete 'd' and add existing Dof in GoD
+  else{
+    delete tmp; 
+    god->add(*(p.first));
   }
 }
 
@@ -191,6 +279,18 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   }
 
   return myDof;
+}
+
+const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) const{
+  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator it = 
+    eToGod->find(&element);
+
+  if(it == eToGod->end())
+    throw 
+      Exception("Their is no GroupOfDof associated with the given MElement");
+
+  else
+    return *(it->second); 
 }
 
 string FunctionSpace::toString(void) const{
