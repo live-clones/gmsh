@@ -50,12 +50,26 @@ class Frame_field{
  public:
   static void init_model();
   static void init_face(GFace*);
-  static bool inside_domain(MElementOctree*,double,double);
-  static double get_size(GFace*,double,double);
-  static bool translate(GFace*,MElementOctree*,MVertex*,SVector3&,SVector3&);
+  static bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
   static Matrix search(double,double,double);
-  static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static bool inside_domain(MElementOctree*,double,double);
+  static double get_ratio(GFace*,SPoint2);
   static void print_field1();
   static void print_field2();
+  static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static void clear();
+};
+
+class Size_field{
+ private:
+  static std::map<MVertex*,double> boundary;
+  static MElementOctree* octree;
+  Size_field();
+ public:
+  static void init_model();
+  static void solve();
+  static double search(double,double,double);
+  static double get_ratio(GFace*,SPoint2);
+  static void print_field();
   static void clear();
 };

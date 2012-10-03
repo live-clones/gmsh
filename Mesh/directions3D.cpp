@@ -11,6 +11,14 @@
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include <fstream>
+#include "MTetrahedron.h"
+
+#if defined(HAVE_PETSC)
+#include "dofManager.h"
+#include "laplaceTerm.h"
+#include "linearSystemPETSc.h"
+#include "linearSystemFull.h"
+#endif
 
 /****************class Matrix****************/
 
@@ -120,7 +128,9 @@ void Frame_field::init_model(){
   for(it=model->firstFace();it!=model->lastFace();it++)
   {
     gf = *it;
-	init_face(gf);
+	if(gf->geomType()==GEntity::CompoundSurface){
+	  init_face(gf);
+	}
   }
 
   duplicate = annAllocPts(field.size(),3);
@@ -144,6 +154,8 @@ void Frame_field::init_face(GFace* gf){
   unsigned int i;
   int j;
   bool ok;
+  double average_x,average_y;
+  SPoint2 point;
   SVector3 v1,v2,v3;
   MVertex* vertex;
   MElement* element;
@@ -155,9 +167,23 @@ void Frame_field::init_face(GFace* gf){
 
   for(i=0;i<gf->getNumMeshElements();i++){
     element = gf->getMeshElement(i);
+	  
+	average_x = 0.0;
+	average_y = 0.0;
+	  
 	for(j=0;j<element->getNumVertices();j++){
 	  vertex = element->getVertex(j);
-	  ok = translate(gf,octree,vertex,v1,v2);
+	  reparamMeshVertexOnFace(vertex,gf,point);
+	  average_x = average_x + point.x();
+	  average_y = average_y + point.y();
+	}	
+	  
+	average_x = average_x/element->getNumVertices();
+	average_y = average_y/element->getNumVertices();
+	  
+	for(j=0;j<element->getNumVertices();j++){
+	  vertex = element->getVertex(j);
+	  ok = translate(gf,octree,vertex,SPoint2(average_x,average_y),v1,v2);
 	  if(ok){
 	    v3 = crossprod(v1,v2);
 	    v1.normalize();
@@ -178,27 +204,7 @@ void Frame_field::init_face(GFace* gf){
   }
 }
 
-bool Frame_field::inside_domain(MElementOctree* octree,double x,double y){
-  MElement* element;
-  element = (MElement*)octree->find(x,y,0.0,2,true);
-  if(element!=NULL) return 1;
-  else return 0;
-}
-
-double Frame_field::get_size(GFace* gf,double x,double y){
-  double ratio;
-  double uv[2];
-  double tab[3];
-
-  uv[0] = x;
-  uv[1] = y;
-  buildMetric(gf,uv,tab);
-  ratio = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
-
-  return ratio*backgroundMesh::current()->operator()(x,y,0.0);
-}
-
-bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVector3& v1,SVector3& v2){
+bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPoint2 corr,SVector3& v1,SVector3& v2){
   bool ok;
   double k;
   double size;
@@ -217,7 +223,7 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SVe
   reparamMeshVertexOnFace(vertex,gf,point);
   x = point.x();
   y = point.y();
-  size = get_size(gf,x,y);
+  size = backgroundMesh::current()->operator()(x,y,0.0)*get_ratio(gf,corr);
   angle = backgroundMesh::current()->getAngle(x,y,0.0);
 
   delta_x = k*size*cos(angle);
@@ -281,11 +287,23 @@ Matrix Frame_field::search(double x,double y,double z){
   return random[val].second;
 }
 
-void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
-  file << "SL ("
-  << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
-  << "{10, 20};\n";
+bool Frame_field::inside_domain(MElementOctree* octree,double x,double y){
+  MElement* element;
+  element = (MElement*)octree->find(x,y,0.0,2,true);
+  if(element!=NULL) return 1;
+  else return 0;
+}
+
+double Frame_field::get_ratio(GFace* gf,SPoint2 point){
+  double val;
+  double uv[2];
+  double tab[3];
+	
+  uv[0] = point.x();
+  uv[1] = point.y();
+  buildMetric(gf,uv,tab);
+  val = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
+  return val;
 }
 
 void Frame_field::print_field1(){
@@ -372,6 +390,13 @@ void Frame_field::print_field2(){
   file << "};\n";
 }
 
+void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
+  file << "SL ("
+  << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
+  << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
+  << "{10, 20};\n";
+}
+
 void Frame_field::clear(){
   field.clear();
   random.clear();
@@ -382,6 +407,195 @@ void Frame_field::clear(){
   #endif
 }
 
+/****************class Size_field****************/
+
+Size_field::Size_field(){}
+
+void Size_field::init_model(){
+  size_t i;
+  int j;
+  double local_size;
+  double average_x,average_y;
+  SPoint2 point;
+  MElement* element;
+  MVertex* vertex;
+  GFace* gf;
+  GModel* model = GModel::current();
+  GModel::fiter it;
+  
+  boundary.clear();	
+	
+  for(it=model->firstFace();it!=model->lastFace();it++){
+    gf = *it;
+	if(gf->geomType()==GEntity::CompoundSurface){
+	  backgroundMesh::set(gf);
+	  for(i=0;i<gf->getNumMeshElements();i++){
+	    element = gf->getMeshElement(i);
+		
+	    average_x = 0.0;
+	    average_y = 0.0;
+		
+	    for(j=0;j<element->getNumVertices();j++){
+	      vertex = element->getVertex(j);
+		  reparamMeshVertexOnFace(vertex,gf,point);
+		  average_x = average_x + point.x();
+		  average_y = average_y + point.y();
+	    }	
+		
+	    average_x = average_x/element->getNumVertices();
+	    average_y = average_y/element->getNumVertices();
+		
+	    for(j=0;j<element->getNumVertices();j++){
+	      vertex = element->getVertex(j);
+		  reparamMeshVertexOnFace(vertex,gf,point);
+		  local_size = backgroundMesh::current()->operator()(point.x(),point.y(),0.0);
+		  boundary.insert(std::pair<MVertex*,double>(vertex,/*local_size*/0.2));
+	    }
+	  }
+	}
+  }
+
+  octree = new MElementOctree(model);
+}
+
+void Size_field::solve(){
+#if defined(HAVE_PETSC)
+  linearSystem<double>* system = 0;
+  //system = new linearSystemPETSc<double>;
+  system = new linearSystemFull<double>;
+
+  size_t i;
+  int j;
+  double val;
+  MElement* element;
+  MVertex* vertex;
+  MTetrahedron* temp;
+  GRegion* gr;
+  GModel* model = GModel::current();
+  GModel::riter it;
+  std::map<MVertex*,double>::iterator it2;
+  std::set<MVertex*>::iterator it3;
+  std::set<MVertex*> interior;
+	
+  interior.clear();
+	
+  dofManager<double> assembler(system);
+	
+  for(it2=boundary.begin();it2!=boundary.end();it2++){
+    assembler.fixVertex(it2->first,0,1,it2->second);
+  }
+	
+  for(it=model->firstRegion();it!=model->lastRegion();it++){
+    gr = *it;
+	for(i=0;i<gr->getNumMeshElements();i++){
+	  element = gr->getMeshElement(i);
+	  for(j=0;j<element->getNumVertices();j++){
+	    vertex = element->getVertex(j);
+	    interior.insert(vertex);
+	  }
+	}
+  }	
+		
+  for(it3=interior.begin();it3!=interior.end();it3++){
+    it2 = boundary.find(*it3);
+	if(it2==boundary.end()){
+	  assembler.numberVertex(*it3,0,1);
+	}
+  }
+	
+  simpleFunction<double> ONE(1.0);
+  laplaceTerm term(0,1,&ONE);
+  for(it=model->firstRegion();it!=model->lastRegion();it++){
+    gr = *it;
+	for(i=0;i<gr->getNumMeshElements();i++){
+      element = gr->getMeshElement(i);
+	  temp = (MTetrahedron*)element;
+	  SElement se(temp);
+	  term.addToMatrix(assembler,&se);
+	}
+  }
+	
+  system->systemSolve();
+	
+  for(it3=interior.begin();it3!=interior.end();it3++){
+    assembler.getDofValue(*it3,0,1,val);
+    boundary.insert(std::pair<MVertex*,double>(*it3,val));
+  }
+	
+  delete system;
+#endif	
+}
+
+double Size_field::search(double x,double y,double z){
+  double u,v,w;
+  double val;
+  MElement* element;
+  double temp1[3];
+  double temp2[3];
+  std::map<MVertex*,double>::iterator it1;
+  std::map<MVertex*,double>::iterator it2;
+  std::map<MVertex*,double>::iterator it3;
+  std::map<MVertex*,double>::iterator it4;
+	
+  val = 1.0;	
+	
+  element = (MElement*)octree->find(x,y,z,3,true);
+	
+  if(element!=NULL){
+	temp1[0] = x;
+	temp1[1] = y;
+	temp1[2] = z;
+	
+	element->xyz2uvw(temp1,temp2);
+	  
+	u = temp2[0];
+    v = temp2[1];
+	w = temp2[2];
+	
+	it1 = boundary.find(element->getVertex(0)); 
+	it2 = boundary.find(element->getVertex(1));
+	it3 = boundary.find(element->getVertex(2));
+	it4 = boundary.find(element->getVertex(3));
+	  
+	if(it1!=boundary.end() && it2!=boundary.end() && it3!=boundary.end() && it4!=boundary.end()){
+	  val = (it1->second)*(1.0-u-v-w) + (it2->second)*u + (it3->second)*v + (it4->second)*w;
+	}
+  }
+	
+  return val;
+}
+
+double Size_field::get_ratio(GFace* gf,SPoint2 point){
+  double val;
+  double uv[2];
+  double tab[3];
+	
+  uv[0] = point.x();
+  uv[1] = point.y();
+  buildMetric(gf,uv,tab);
+  val = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
+  return val;
+}
+
+void Size_field::print_field(){
+  double x,y,z;
+  std::map<MVertex*,double>::iterator it;
+		
+  for(it=boundary.begin();it!=boundary.end();it++){
+	x = (it->first)->x();
+	y = (it->first)->y();
+	z = (it->first)->z();
+    printf("(%f,%f,%f) -> %f\n",x,y,z,it->second);
+  }
+
+  printf("%zu\n",boundary.size());
+}
+
+void Size_field::clear(){
+  delete octree;
+  boundary.clear();
+}
+
 /****************static declarations****************/
 
 std::map<MVertex*,Matrix> Frame_field::field;
@@ -390,3 +604,5 @@ std::vector<std::pair<MVertex*,Matrix> > Frame_field::random;
 ANNpointArray Frame_field::duplicate;
 ANNkd_tree* Frame_field::kd_tree;
 #endif
+std::map<MVertex*,double> Size_field::boundary;
+MElementOctree* Size_field::octree;
