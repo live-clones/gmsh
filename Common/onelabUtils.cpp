@@ -142,7 +142,7 @@ namespace onelabUtils {
 
         if(numbers[i].getChoices().size() > 1){
 	  int j = numbers[i].getIndex() + 1;
-	  if(j >= 0 && j < numbers[i].getChoices().size()){
+	  if((j >= 0) && (j < (int) numbers[i].getChoices().size())){
 	    numbers[i].setValue(numbers[i].getChoices()[j]);
 	    numbers[i].setIndex(j);
 	    onelab::server::instance()->set(numbers[i]);
