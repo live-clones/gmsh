@@ -16,6 +16,7 @@
 #include "GModel.h"
 #include "Options.h"
 #include "Context.h"
+#include "OpenFile.h"
 #include "OS.h"
 
 #if defined(HAVE_ONELAB)
@@ -660,12 +661,25 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
   }
 }
 
+class localGmsh : public onelab::localClient {
+public:
+  localGmsh() : onelab::localClient("Gmsh") {}
+  void sendMergeFileRequest(const std::string &msg)
+  {
+    MergePostProcessingFile(msg, CTX::instance()->solver.autoShowLastStep,
+                            CTX::instance()->solver.autoHideNewViews, true);
+  }
+  void sendInfo(const std::string &msg){ Msg::Info("%s", msg.c_str()); }
+  void sendWarning(const std::string &msg){ Msg::Warning("%s", msg.c_str()); }
+  void sendError(const std::string &msg){ Msg::Error("%s", msg.c_str()); }
+};
+
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
   if(sockname.empty()){
-    _onelabClient = new onelab::localClient("Gmsh");
+    _onelabClient = new localGmsh();
     if(name != "Gmsh"){ // load db from file:
       if(!_onelabClient->fromFile(name))
         Error("Error loading onelab database '%s'", name.c_str());
@@ -796,9 +810,6 @@ void Msg::ImportPhysicalsAsOnelabRegions()
   if(_onelabClient){
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel::current()->getPhysicalGroups(groups);
-    // FIXME 
-    // for(int dim = 0; dim < 3; dim++) is clearly a mistake
-    // should the loop start at dim=0 or dim=1?
     for(int dim = 0; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
@@ -814,6 +825,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
         onelab::region p(name, num.str());
         p.setDimension(dim);
         p.setReadOnly(true);
+        p.setAttribute("Closed", "1");
         _onelabClient->set(p);
       }
     }

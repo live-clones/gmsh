@@ -14,6 +14,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Input.H>
 #include "onelab.h"
 
@@ -70,5 +71,6 @@ void onelab_cb(Fl_Widget *w, void *data);
 #endif
 
 void solver_cb(Fl_Widget *w, void *data);
+int metamodel_cb(const std::string &name, const std::string &action="");
 
 #endif

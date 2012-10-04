@@ -11,6 +11,10 @@
 #include "onelab.h"
 #endif
 
+#if defined(HAVE_ONELAB_METAMODEL)
+#include "metamodel.h"
+#endif
+
 #if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 
 #include <FL/Fl_Check_Button.H>
@@ -402,6 +406,24 @@ static void saveDb(const std::string &fileName, bool withTimeStamp=false)
     //       rename(old, new); on disk (in stdio.h)
     // need to detect if a file is already stamped. We could simply check the
     // sequence of _ - - - _ - - - . characters for this.
+    std::vector<onelab::string> strings;
+    onelab::server::instance()->get(strings);
+    for(unsigned int i = 0; i < strings.size(); i++){
+      if(strings[i].getName().find("Output files") != std::string::npos){
+        for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
+          std::vector<std::string> split = SplitFileName(strings[i].getChoices()[j]);
+          int n = split[1].size();
+          if(n > 18 &&
+             split[1][n-3] == '-' && split[1][n-6] == '-' && split[1][n-9] == '_' &&
+             split[1][n-12] == '-' && split[1][n-15] == '-' && split[1][n-18] == '_'){
+            printf("already stamped! %s\n", strings[i].getChoices()[j].c_str());
+          }
+          else{
+            printf("renaming %s\n", strings[i].getChoices()[j].c_str());
+          }
+        }
+      }
+    }
   }
 
   Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
@@ -501,14 +523,15 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute") initializeLoops();
 
+  // check whether we are running a metamodel
+  std::vector<onelab::number> n;
+  onelab::server::instance()->get(n, "IsMetamodel");
+  bool isMetamodel = (n.size() && n[0].getValue());
+
   do{ // enter loop
 
-    // check whether the client is a onelab Metamodel
-    std::vector<onelab::number> n;
-    onelab::server::instance()->get(n, "HasGmsh");
-    bool metamodel = (n.size() && n[0].getValue());
     // if the client is a not a metamodel, run Gmsh
-    if(!metamodel){
+    if(!isMetamodel){
       if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
         drawContext::global()->draw();
     }
@@ -517,30 +540,31 @@ void onelab_cb(Fl_Widget *w, void *data)
       FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
 
-    // iterate over all other clients (there should narmally only be one)
-    for(onelab::server::citer it = onelab::server::instance()->firstClient();
-        it != onelab::server::instance()->lastClient(); it++){
-      onelab::client *c = it->second;
-      if(c->getName() == "Gmsh" || // local Gmsh client
-         c->getName() == "Listen" || // unknown client connecting through "-listen"
-         c->getName() == "GmshRemote") // distant post-processing Gmsh client
-        continue;
-      if(action != "initialize") onelabUtils::guessModelName(c);
-      onelab::string o(c->getName() + "/Action", action);
-      o.setVisible(false);
-      onelab::server::instance()->set(o);
-      c->run();
-      if(action == "compute"){
-        FlGui::instance()->onelab->checkForErrors(c->getName());
-	if(metamodel)
-	  onelab::server::instance()->setChanged(false,c->getName());
-      }
-      if(FlGui::instance()->onelab->stop()) break;
-
+    if(isMetamodel){
+#if defined(HAVE_ONELAB_METAMODEL)
+      metamodel(action);
+#endif
     }
-
-    // update geometry which might have been changed by the metamodel
-    if(metamodel) geometry_reload_cb(0, 0);
+    else{
+      // iterate over all other clients (there should narmally only be one)
+      for(onelab::server::citer it = onelab::server::instance()->firstClient();
+          it != onelab::server::instance()->lastClient(); it++){
+        onelab::client *c = it->second;
+        if(c->getName() == "Gmsh" || // local Gmsh client
+           c->getName() == "Listen" || // unknown client connecting through "-listen"
+           c->getName() == "GmshRemote") // distant post-processing Gmsh client
+          continue;
+        if(action != "initialize") onelabUtils::guessModelName(c);
+        onelab::string o(c->getName() + "/Action", action);
+        o.setVisible(false);
+        onelab::server::instance()->set(o);
+        c->run();
+        if(action == "compute"){
+          FlGui::instance()->onelab->checkForErrors(c->getName());
+        }
+        if(FlGui::instance()->onelab->stop()) break;
+      }
+    }
 
     if(action != "initialize"){
       updateGraphs();
@@ -1298,6 +1322,39 @@ void solver_cb(Fl_Widget *w, void *data)
     onelab_cb(0, (void*)"check");
 }
 
+int metamodel_cb(const std::string &name, const std::string &action)
+{
+#if defined(HAVE_ONELAB_METAMODEL)
+  Msg::ResetErrorCounter();
+  if(FlGui::instance()->onelab->isBusy())
+    FlGui::instance()->onelab->show();
+  else{
+    initializeMetamodel(Msg::GetOnelabClient());
+
+    onelab::number n("IsMetamodel", 1.);
+    n.setVisible(false);
+    onelab::server::instance()->set(n);
+    std::vector<std::string> split = SplitFileName(name);
+    onelab::string s1("Arguments/WorkingDir", split[0]);
+    s1.setVisible(false);
+    onelab::server::instance()->set(s1);
+    onelab::string s2("Arguments/FileName", split[1]);
+    s2.setVisible(false);
+    onelab::server::instance()->set(s2);
+
+    FlGui::instance()->onelab->rebuildSolverList();
+
+    if(FlGui::instance()->available())
+      onelab_cb(0, (void*)"check");
+    else
+      metamodel(action);
+  }
+  return 1;
+#else
+  return 0;
+#endif
+}
+
 #else
 
 #if defined(HAVE_ONELAB)
@@ -1319,6 +1376,12 @@ bool onelab::localNetworkClient::kill()
 void solver_cb(Fl_Widget *w, void *data)
 {
   Msg::Error("The solver interface requires OneLab and FLTK 1.3");
+}
+
+int metamodel_cb(const std::string &name, const std::string &action)
+{
+  Msg::Error("Metamodels require OneLab and FLTK 1.3");
+  return 0;
 }
 
 #endif

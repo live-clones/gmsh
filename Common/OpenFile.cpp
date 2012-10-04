@@ -37,6 +37,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#include "onelabWindow.h"
 #include "menuWindow.h"
 #include "drawContext.h"
 #endif
@@ -371,6 +372,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 #if defined(HAVE_3M)
   else if(ext == ".csv"){
     status = readFile3M(fileName);
+  }
+#endif
+#if defined(HAVE_ONELAB_METAMODEL)
+  else if(ext == ".ol"){
+    // TODO: allow passing action to metamodel from command line
+    status = metamodel_cb(fileName);
   }
 #endif
   else {

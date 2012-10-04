@@ -84,6 +84,7 @@ class Msg {
                        const char *one, const char *two=0);
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
   static GmshClient *GetGmshClient(){ return _client; }
+  static onelab::client *GetOnelabClient(){ return _onelabClient; }
   static void FinalizeOnelab();
   static bool UseOnelab();
   static void SetOnelabNumber(std::string name, double val, bool visible);
