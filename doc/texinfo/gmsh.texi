@@ -3524,14 +3524,15 @@ information about the file (@code{$MeshFormat}), followed by several
 optional sections defining the nodes (@code{$Nodes}), elements
 (@code{$Elements}), region names (@code{$PhysicalName}) and
 post-processing datasets (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}). 
+@code{$ElementNodeData}).
 
 Any section with an unrecognized header is simply ignored: you can thus
 add comments in a @file{.msh} file by putting them e.g. inside a
 @code{$Comments}/@code{$EndComments} section.
 
 Sections can be repeated in the same file, and post-processing sections
-can be put into separate files (e.g. one file per time step).
+can be put into separate files (e.g. one file per time step).  Nodes are
+assumed to be defined before elements.
 
 The format is defined as follows:
 
