@@ -59,6 +59,9 @@ namespace onelab{
     // last computation (normally this is reset after all the clients have been
     // run)
     bool _changed;
+    // flag indicating that the _changed flag of this parameter will always be
+    // reset to false when the parameter is updated
+    bool _neverChanged;
     // should the parameter be visible in the interface?
     bool _visible;
     // sould the paramete be "read-only" (not settable by the user)
@@ -70,12 +73,13 @@ namespace onelab{
     parameter(const std::string &name="", const std::string &label="",
               const std::string &help="")
       : _name(name), _label(label), _help(help), _changed(true),
-        _visible(true), _readOnly(false) {}
+        _neverChanged(false), _visible(true), _readOnly(false) {}
     virtual ~parameter(){}
     void setName(const std::string &name){ _name = name; }
     void setLabel(const std::string &label){ _label = label; }
     void setHelp(const std::string &help){ _help = help; }
     void setChanged(bool changed){ _changed = changed; }
+    void setNeverChanged(bool never){ _neverChanged = never; }
     void setVisible(bool visible){ _visible = visible; }
     void setReadOnly(bool readOnly){ _readOnly = readOnly; }
     void setAttribute(const std::string &key, const std::string &value)
@@ -119,6 +123,7 @@ namespace onelab{
       return s;
     }
     bool getChanged() const { return _changed; }
+    bool getNeverChanged() const { return _neverChanged; }
     bool getVisible() const { return _visible; }
     bool getReadOnly() const { return _readOnly; }
     std::string getAttribute(const std::string &key) const
@@ -134,7 +139,7 @@ namespace onelab{
     const std::set<std::string> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.04"; }
+    static std::string version() { return "1.05"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -168,6 +173,7 @@ namespace onelab{
               << sanitize(getName()) << charSep()
               << sanitize(getLabel()) << charSep()
               << sanitize(getHelp()) << charSep()
+              << (getNeverChanged() ? 1 : 0) << charSep()
               << (getChanged() ? 1 : 0) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
               << (getReadOnly() ? 1 : 0) << charSep()
@@ -190,6 +196,7 @@ namespace onelab{
       setName(getNextToken(msg, pos));
       setLabel(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
+      setNeverChanged(atoi(getNextToken(msg, pos).c_str()));
       setChanged(atoi(getNextToken(msg, pos).c_str()));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       setReadOnly(atoi(getNextToken(msg, pos).c_str()));
@@ -333,6 +340,7 @@ namespace onelab{
       setIndex(p.getIndex());
       setChoices(p.getChoices());
       setValueLabels(p.getValueLabels());
+      if(getNeverChanged()) setChanged(false);
     }
     std::string toChar() const
     {
@@ -410,9 +418,7 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
-      // FIXME: this will be handled differently
-      if(getName().find("/Action") != std::string::npos)
-	setChanged(false);
+      if(getNeverChanged()) setChanged(false);
     }
     std::string toChar() const
     {
@@ -482,6 +488,7 @@ namespace onelab{
       }
       setDimension(p.getDimension());
       setChoices(p.getChoices());
+      if(getNeverChanged()) setChanged(false);
     }
     std::string toChar() const
     {
@@ -561,6 +568,7 @@ namespace onelab{
         setChanged(true);
       }
       setChoices(p.getChoices());
+      if(getNeverChanged()) setChanged(false);
     }
     std::string toChar() const
     {
