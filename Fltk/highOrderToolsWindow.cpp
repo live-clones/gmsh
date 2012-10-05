@@ -96,7 +96,6 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
 
   if (elastic == 1){
     o->choice[0]->deactivate();
-    o->choice[1]->deactivate();
     for (int i=3;i<=6;i++)
       o->value[i]->deactivate();
     //   o->push[1]->deactivate();
@@ -104,7 +103,6 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
   else {
     o->push[0]->activate();
     o->choice[0]->activate();
-    o->choice[1]->activate();
     for (int i=3;i<=6;i++)
       o->value[i]->activate();
     //    o->push[1]->activate();
@@ -137,7 +135,6 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.weightFree =  o->value[6]->value();
     p.DistanceFactor =  o->value[7]->value();
     p.method =  o->CAD ? (int)o->choice[0]->value() : 2;
-    p.filter =  (int)o->choice[1]->value();
     HighOrderMeshOptimizer (GModel::current(),p);
     printf("CPU TIME = %4f seconds\n",p.CPU);
   }
@@ -296,12 +293,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   choice[0]->align(FL_ALIGN_RIGHT);
 
   y += BH;
-  choice[1] = new Fl_Choice
-    (x,y, IW, BH, "Blob strategy");
-  choice[1]->menu(menu_strategy);
-  choice[1]->align(FL_ALIGN_RIGHT);
-
-  y += BH;
   value[5] = new Fl_Value_Input
     (x,y, IW, BH, "W fixed");
   value[5]->align(FL_ALIGN_RIGHT);
@@ -358,7 +349,10 @@ void highOrderToolsWindow::show(bool redrawOnly)
   else {
     value[0]->value(meshOrder);
     butt[0]->value(!complete);
-    if (CAD) output[0]->value("Available");
+    if (CAD) {
+      output[0]->value("Available");
+      choice[0]->value(1);
+    }
     else {
       output[0]->value("Not Available");
       choice[0]->deactivate();

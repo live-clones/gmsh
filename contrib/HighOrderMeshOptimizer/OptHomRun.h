@@ -19,7 +19,6 @@ struct OptHomParameters {
   double DistanceFactor; // filter elements such that no elements further away than
                          // DistanceFactor times the max distance to straight sided version of an element are optimized
   int method ;  // how jacobians are computed and if points can move on boundaries
-  int filter ; // 0--> standard 1--> boundary layers
   // OUTPUT ------>
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minJac, maxJac; // after optimization, range of jacobians
@@ -31,7 +30,7 @@ struct OptHomParameters {
   OptHomParameters ()
   // default values
   : BARRIER_MIN_METRIC (-1.), BARRIER_MIN (0.1), BARRIER_MAX (2.0) , weightFixed (1.e6),  weightFree (1.e2),
-    nbLayers (6) , dim(3) , itMax(10000), onlyVisible(true), DistanceFactor(12), method(1), filter(1)
+    nbLayers (6) , dim(3) , itMax(10000), onlyVisible(true), DistanceFactor(12), method(1)
   {
   }
 };

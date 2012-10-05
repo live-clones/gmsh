@@ -80,55 +80,6 @@ double distMaxStraight (MElement *el)
 
 
 
-SVector3 vecMaxStraight (MElement *el)
-{
-
-  const polynomialBasis *lagrange = el->getFunctionSpace();
-  const polynomialBasis *lagrange1 = el->getFunctionSpace(1);
-  int nV = lagrange->points.size1();
-  int nV1 = lagrange1->points.size1();
-  SPoint3 sxyz[256];
-  for (int i = 0; i < nV1; ++i) {
-    sxyz[i] = el->getVertex(i)->point();
-  }
-  for (int i = nV1; i < nV; ++i) {
-    double f[256];
-    lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1), lagrange->points(i, 2), f);
-    for (int j = 0; j < nV1; ++j)
-      sxyz[i] += sxyz[j] * f[j];
-  }
-
-  double maxdx = 0.0;
-  SVector3 maxVec;
-  for (int iV = nV1; iV < nV; iV++) {
-    SVector3 d = el->getVertex(iV)->point()-sxyz[iV];
-    double dx = d.norm();
-    if (dx > maxdx) {
-      maxdx = dx;
-      maxVec = d;
-    }
-  }
-
-  return maxVec;
-
-}
-
-
-
-static void PrintBlob (std::set<MElement*> &eles, int iTag){
-  char name[256];
-  sprintf(name,"BLOB%d.pos", iTag);
-  FILE *f = fopen (name,"w");
-  fprintf(f,"View\"%s\"{\n", name);
-  for (std::set<MElement*>::iterator it = eles.begin(); it != eles.end();++it){
-    (*it)->writePOS(f, true, false, false, false, false, false,1.0, iTag);
-  }
-  fprintf(f,"};\n");
-  fclose(f);
-}
-
-
-
 void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
   FILE *f = fopen(fn.c_str(),"w");
 
@@ -238,66 +189,6 @@ static std::set<MElement*> getSurroundingBlob(MElement *el, int depth, std::map<
 
 
 
-// Returns max. dist. between primary vertices of an element
-static double elementSize(MElement* el)
-{
-
-  std::vector<SPoint3> vert;
-  vert.reserve(el->getNumPrimaryVertices());
-  for (int i = 0; i < el->getNumPrimaryVertices(); i++) vert.push_back(el->getVertex(i)->point());
-
-  double maxDistSq = 0;
-  for (int i = 0; i < el->getNumPrimaryVertices()-1; i++)
-    for (int j = i+1; j < el->getNumPrimaryVertices(); j++)
-      maxDistSq = std::max(maxDistSq, SVector3(vert[j]-vert[i]).normSq());
-
-  return sqrt(maxDistSq);
-
-}
-
-
-
-static std::set<MElement*> getSurroundingBlob_BL(MElement *el, int depth, std::map<MVertex *, std::vector<MElement*> > &vertex2elements, const double distFactor)
-{
-
-  const SPoint3 p = el->barycenter_infty();
-  const double halfElSize = 0.5*elementSize(el);
-//std::cout << "El. " << el->getNum() << " -> halfElSize = " << halfElSize << "\n";
-  SVector3 dir = vecMaxStraight(el);
-  dir.normalize();
-//std::cout << "El. " << el->getNum() << " -> direction (" << dir(0) << ", " << dir(1) << ", " << dir(2) << ")\n";
-
-  std::set<MElement*> blob;
-  std::list<MElement*> currentLayer, lastLayer;
-
-  blob.insert(el);
-  lastLayer.push_back(el);
-  for (int d = 0; d < depth; ++d) {
-    currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin(); it != lastLayer.end(); ++it) {
-      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements[(*it)->getVertex(i)];
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN) {
-          const SVector3 barBar = (*itN)->barycenter_infty()-p;
-          const SVector3 barProj = dir*dot(dir, barBar);
-          double projDist = (barBar-barProj).norm();
-//std::cout << "El. " << el->getNum() << ", d = " << d << ", i = " << i << ", projDist = " << projDist << "\n";
-          double elSize2 = elementSize(*itN);
-          if (projDist <= halfElSize+elSize2)
-            if (blob.insert(*itN).second) currentLayer.push_back(*itN);       // Assume that if an el is too far, its neighbours are too far as well
-        }
-      }
-    }
-    lastLayer = currentLayer;
-  }
-
-//std::cout << " -> Blob of " << blob.size() << " elements\n";
-  return blob;
-
-}
-
-
-
 static void addBlobChaintoGroup(std::set<int> &group, const std::vector<std::set<int> > &groupConnect, std::vector<bool> &todoPB, int iB)
 {
 
@@ -316,8 +207,10 @@ static void addBlobChaintoGroup(std::set<int> &group, const std::vector<std::set
 static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getConnectedBlobs(GEntity &entity, const std::set<MElement*> &badElements, int depth, const double distFactor)
 {
 
+  OptHomMessage("Starting blob generation from %i bad elements...",badElements.size());
+
   // Compute vertex -> element connectivity
-//  std::cout << "Computing vertex -> element connectivity...\n";
+  std::cout << "Computing vertex -> element connectivity...\n";
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
   for (size_t i = 0; i < entity.getNumMeshElements(); ++i) {
     MElement &element = *entity.getMeshElement(i);
@@ -327,17 +220,15 @@ static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getCon
   }
 
   // Contruct primary blobs
-//  std::cout << "Constructing " << badElements.size() << " primary blobs...\n";
+  std::cout << "Constructing " << badElements.size() << " primary blobs...\n";
   std::vector<std::set<MElement*> > primBlobs;
   primBlobs.reserve(badElements.size());
-  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
+  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it)
     primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements, distFactor));
-//    blobs.push_back(getSurroundingBlob_BL(*it, depth, vertex2elements, distFactor));
-  }
 
 
   // Compute blob connectivity
-//  std::cout << "Computing blob connectivity...\n";
+  std::cout << "Computing blob connectivity...\n";
   std::map<MElement*, std::set<int> > tags;
   std::vector<std::set<int> > blobConnect(primBlobs.size());
   for (int iB = 0; iB < primBlobs.size(); ++iB) {
@@ -353,7 +244,7 @@ static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getCon
   }
 
   // Identify groups of connected blobs
-//  std::cout << "Identifying groups of primary blobs...\n";
+  std::cout << "Identifying groups of primary blobs...\n";
   std::list<std::set<int> > groups;
   std::vector<bool> todoPB(primBlobs.size(), true);
   for (int iB = 0; iB < primBlobs.size(); ++iB)
@@ -364,7 +255,7 @@ static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getCon
     }
 
   // Merge primary blobs according to groups
-//  std::cout << "Merging primary blobs into " << groups.size() << " blobs...\n";
+  std::cout << "Merging primary blobs into " << groups.size() << " blobs...\n";
   std::list<std::set<MElement*> > blobs;
   for (std::list<std::set<int> >::iterator itG = groups.begin(); itG != groups.end(); ++itG) {
     blobs.push_back(std::set<MElement*>());
@@ -375,12 +266,12 @@ static std::vector<std::pair<std::set<MElement*> , std::set<MVertex*> > > getCon
   }
 
   // Store and compute blob boundaries
-//  std::cout << "Storing and computing boundaries for " << blobs.size() << " blobs...\n";
+  std::cout << "Computing boundaries for " << blobs.size() << " blobs...\n";
   std::vector<std::pair<std::set<MElement *>, std::set<MVertex*> > > result;
   for (std::list<std::set<MElement*> >::iterator itB = blobs.begin(); itB != blobs.end(); ++itB)
     result.push_back(std::pair<std::set<MElement*>, std::set<MVertex*> >(*itB, getBndVertices(*itB, vertex2elements)));
 
-//  std::cout << "Done with blobs\n";
+  OptHomMessage("Generated %i blobs",blobs.size());
 
   return result;
 
@@ -433,8 +324,9 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 
     //#pragma omp parallel for schedule(dynamic, 1)
     p.SUCCESS = 1;
+    p.minJac = 1.e100;
+    p.maxJac = -1.e100;
     for (int i = 0; i < toOptimize.size(); ++i) {
-//PrintBlob (toOptimize[i].first, i+1);
       OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
       fflush(stdout);
       OptHOM temp(&entity, toOptimize[i].first, toOptimize[i].second, method);
@@ -443,6 +335,11 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
         OptHomMessage("Jacobian optimization succeed, starting svd optimization");
         success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
       }
+      double minJac, maxJac, distMaxBND, distAvgBND;
+      temp.recalcJacDist();
+      temp.getJacDist(minJac, maxJac, distMaxBND, distAvgBND);
+      p.minJac = std::min(p.minJac,minJac);
+      p.maxJac = std::max(p.maxJac,maxJac);
       temp.mesh.updateGEntityPositions();
       if (success <= 0) {
         std::ostringstream ossI2;
