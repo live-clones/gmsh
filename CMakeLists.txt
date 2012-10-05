@@ -901,13 +901,12 @@ endif(ENABLE_ACIS)
 
 if(ENABLE_ONELAB)
   set_config_option(HAVE_ONELAB "OneLab")
+  if(ENABLE_ONELAB_METAMODEL)
+    add_subdirectory(contrib/onelab)
+    include_directories(contrib/onelab)
+    set_config_option(HAVE_ONELAB_METAMODEL "OneLabMetamodel")
+  endif(ENABLE_ONELAB_METAMODEL)
 endif(ENABLE_ONELAB)
-
-if(ENABLE_ONELAB_METAMODEL)
-  add_subdirectory(contrib/onelab)
-  include_directories(contrib/onelab)
-  set_config_option(HAVE_ONELAB_METAMODEL "OneLabMetamodel")
-endif(ENABLE_ONELAB_METAMODEL)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF)
