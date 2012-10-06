@@ -388,42 +388,43 @@ static void saveDb(const std::string &fileName, bool withTimeStamp=false)
 {
   std::string name(fileName);
   if(withTimeStamp){
+    // create time stamp
     time_t now;
     time(&now);
     tm *t = localtime(&now);
     char stamp[32];
     sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
             1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
-    std::vector<std::string> split = SplitFileName(fileName);
-    name = split[0] + split[1] + stamp + split[2];
 
-    // FIXME:
-    // modifiy all the "client/9Output files" onelab variables to include the
-    // stamp and rename the files on disk using the new name
-    //       iterate over all OutputFiles
-    //       SplitFileName
-    //       change name in onelab db
-    //       rename(old, new); on disk (in stdio.h)
-    // need to detect if a file is already stamped. We could simply check the
-    // sequence of _ - - - _ - - - . characters for this.
+    // add time stamp in all output files in the db, and rename them on disk
     std::vector<onelab::string> strings;
     onelab::server::instance()->get(strings);
     for(unsigned int i = 0; i < strings.size(); i++){
-      if(strings[i].getName().find("Output files") != std::string::npos){
-        for(unsigned int j = 0; j < strings[i].getChoices().size(); j++){
-          std::vector<std::string> split = SplitFileName(strings[i].getChoices()[j]);
+      if(strings[i].getName().find("9Output files") != std::string::npos){
+        std::vector<std::string> names = strings[i].getChoices();
+        for(unsigned int j = 0; j < names.size(); j++){
+          std::vector<std::string> split = SplitFileName(names[j]);
           int n = split[1].size();
-          if(n > 18 &&
-             split[1][n-3] == '-' && split[1][n-6] == '-' && split[1][n-9] == '_' &&
-             split[1][n-12] == '-' && split[1][n-15] == '-' && split[1][n-18] == '_'){
-            printf("already stamped! %s\n", strings[i].getChoices()[j].c_str());
-          }
-          else{
-            printf("renaming %s\n", strings[i].getChoices()[j].c_str());
+          // if name is not already stamped
+          if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
+             split[1][n-9] != '_'){
+            std::string old = names[j];
+            names[j] = split[0] + split[1] + stamp + split[2];
+            Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
+            rename(old.c_str(), names[j].c_str());
           }
         }
+        strings[i].setChoices(names);
+        strings[i].setValue(names.back());
+        onelab::server::instance()->set(strings[i]);
       }
     }
+
+    {
+      std::vector<std::string> split = SplitFileName(fileName);
+      name = split[0] + split[1] + stamp + split[2];
+    }
+    FlGui::instance()->onelab->rebuildTree();
   }
 
   Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
