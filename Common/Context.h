@@ -222,8 +222,8 @@ class CTX {
     double timeout;
     std::string socketName;
     std::string name[5], executable[5], remoteLogin[5];
-    int autoSaveDatabase, autoMesh, autoMergeFile, autoHideNewViews;
-    int autoShowLastStep;
+    int autoSaveDatabase, autoArchiveSolutions, autoMesh, autoMergeFile;
+    int autoHideNewViews, autoShowLastStep;
   }solver;
   // print options
   struct{

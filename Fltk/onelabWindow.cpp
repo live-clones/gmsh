@@ -384,49 +384,49 @@ static void updateGraphs()
   }
 }
 
-static void saveDb(const std::string &fileName, bool withTimeStamp=false)
+static std::string timeStamp()
 {
-  std::string name(fileName);
-  if(withTimeStamp){
-    // create time stamp
-    time_t now;
-    time(&now);
-    tm *t = localtime(&now);
-    char stamp[32];
-    sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
-            1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+  time_t now;
+  time(&now);
+  tm *t = localtime(&now);
+  char stamp[32];
+  sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
+          1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+  return std::string(stamp);
+}
 
-    // add time stamp in all output files in the db, and rename them on disk
-    std::vector<onelab::string> strings;
-    onelab::server::instance()->get(strings);
-    for(unsigned int i = 0; i < strings.size(); i++){
-      if(strings[i].getName().find("9Output files") != std::string::npos){
-        std::vector<std::string> names = strings[i].getChoices();
-        for(unsigned int j = 0; j < names.size(); j++){
-          std::vector<std::string> split = SplitFileName(names[j]);
-          int n = split[1].size();
-          // if name is not already stamped
-          if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
-             split[1][n-9] != '_'){
-            std::string old = names[j];
-            names[j] = split[0] + split[1] + stamp + split[2];
-            Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
-            rename(old.c_str(), names[j].c_str());
-          }
+static void archiveSolutions(const std::string &timeStamp)
+{
+  // add time stamp in all output files in the db, and rename them on disk
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings);
+  for(unsigned int i = 0; i < strings.size(); i++){
+    if(strings[i].getName().find("9Output files") != std::string::npos){
+      std::vector<std::string> names = strings[i].getChoices();
+      for(unsigned int j = 0; j < names.size(); j++){
+        std::vector<std::string> split = SplitFileName(names[j]);
+        int n = split[1].size();
+        // if name is not already stamped
+        if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
+           split[1][n-9] != '_'){
+          std::string old = names[j];
+          names[j] = split[0] + split[1] + timeStamp + split[2];
+          Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
+          rename(old.c_str(), names[j].c_str());
         }
-        strings[i].setChoices(names);
-        strings[i].setValue(names.back());
-        onelab::server::instance()->set(strings[i]);
       }
+      strings[i].setChoices(names);
+      strings[i].setValue(names.back());
+      onelab::server::instance()->set(strings[i]);
     }
-
-    {
-      std::vector<std::string> split = SplitFileName(fileName);
-      name = split[0] + split[1] + stamp + split[2];
-    }
-    FlGui::instance()->onelab->rebuildTree();
   }
+  FlGui::instance()->onelab->rebuildTree();
+}
 
+static void saveDb(const std::string &fileName, const std::string &timeStamp="")
+{
+  std::vector<std::string> split = SplitFileName(fileName);
+  std::string name = split[0] + split[1] + timeStamp + split[2];
   Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
   if(onelab::server::instance()->toFile(name))
     Msg::StatusBar(2, true, "Done saving database '%s'", name.c_str());
@@ -577,9 +577,12 @@ void onelab_cb(Fl_Widget *w, void *data)
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
 
-  if(CTX::instance()->solver.autoSaveDatabase && action == "compute"){
-    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    saveDb(s, true);
+  if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
+                             CTX::instance()->solver.autoArchiveSolutions)){
+    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    std::string stamp = timeStamp();
+    if(CTX::instance()->solver.autoArchiveSolutions) archiveSolutions(stamp);
+    if(CTX::instance()->solver.autoSaveDatabase) saveDb(db, stamp);
   }
 
   FlGui::instance()->onelab->stop(false);
@@ -595,6 +598,8 @@ void onelab_option_cb(Fl_Widget *w, void *data)
   double val = ((Fl_Menu_*)w)->mvalue()->value() ? 1. : 0.;
   if(what == "save")
     CTX::instance()->solver.autoSaveDatabase = val;
+  else if(what == "archive")
+    CTX::instance()->solver.autoArchiveSolutions = val;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
   else if(what == "hide")
@@ -716,6 +721,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gearOptionsStart = _gear->menu()->size();
 
   _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
+             FL_MENU_TOGGLE);
+  _gear->add("Archive solutions automatically", 0, onelab_option_cb, (void*)"archive",
              FL_MENU_TOGGLE);
   _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
              FL_MENU_TOGGLE);
@@ -1198,12 +1205,13 @@ void onelabWindow::rebuildSolverList()
   // update OneLab window title and gear menu
   _title = "OneLab";
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
-  int values[5] = {CTX::instance()->solver.autoSaveDatabase,
+  int values[6] = {CTX::instance()->solver.autoSaveDatabase,
+                   CTX::instance()->solver.autoArchiveSolutions,
                    CTX::instance()->solver.autoMesh,
                    CTX::instance()->solver.autoMergeFile,
                    CTX::instance()->solver.autoHideNewViews,
                    CTX::instance()->solver.autoShowLastStep};
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 6; i++){
     int idx = _gearOptionsStart - 1 + i;
     if(values[i])
       menu[idx].set();

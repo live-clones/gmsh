@@ -1106,6 +1106,8 @@ StringXNumber MeshOptions_Number[] = {
 StringXNumber SolverOptions_Number[] = {
   { F|O, "AlwaysListen" , opt_solver_listen , 0. ,
     "Always listen to incoming connection requests?" },
+  { F|O, "AutoArchiveSolutions" , opt_solver_auto_archive_solutions , 0. ,
+    "Automatically archive solutions after each computation" },
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 0. ,
     "Automatically save database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
