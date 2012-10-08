@@ -324,7 +324,7 @@ void Filler::treat_model(){
 }
 
 void Filler::treat_region(GRegion* gr){
-#if defined(HAVE_RTREE)
+  #if defined(HAVE_RTREE)
   unsigned int i;
   int j;
   int count;
@@ -345,7 +345,7 @@ void Filler::treat_region(GRegion* gr){
   std::set<MVertex*>::iterator it;
   RTree<Node*,double,3,double> rtree;
 
-  Frame_field::init_model();
+  Frame_field::init_region(gr);
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -436,7 +436,7 @@ void Filler::treat_region(GRegion* gr){
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
   Frame_field::clear();
-#endif
+  #endif
 }
 
 Metric Filler::get_metric(double x,double y,double z){

@@ -48,15 +48,17 @@ class Frame_field{
   #endif
   Frame_field();
  public:
-  static void init_model();
+  static void init_region(GRegion*);
   static void init_face(GFace*);
   static bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
   static Matrix search(double,double,double);
+  static Matrix combine(double,double,double);
   static bool inside_domain(MElementOctree*,double,double);
   static double get_ratio(GFace*,SPoint2);
   static void print_field1();
-  static void print_field2();
+  static void print_field2(GRegion*);
   static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static GRegion* test();
   static void clear();
 };
 
@@ -66,10 +68,29 @@ class Size_field{
   static MElementOctree* octree;
   Size_field();
  public:
-  static void init_model();
-  static void solve();
+  static void init_region(GRegion*);
+  static void solve(GRegion*);
   static double search(double,double,double);
   static double get_ratio(GFace*,SPoint2);
   static void print_field();
+  static GRegion* test();
+  static void clear();
+};
+
+class Nearest_point{
+ private:
+  static std::vector<SPoint3> random;
+  #if defined(HAVE_ANN)
+  static ANNpointArray duplicate;
+  static ANNkd_tree* kd_tree;
+  #endif
+  Nearest_point();
+ public:
+  static void init_region(GRegion*);
+  static bool search(double,double,double,SVector3&);
+  static double T(double,double,double,double,double);
+  static void print_field(GRegion*);
+  static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static GRegion* test();
   static void clear();
 };

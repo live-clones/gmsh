@@ -1463,7 +1463,7 @@ void LpSmoother::improve_model(){
 
 void LpSmoother::improve_region(GRegion* gr)
 {
-#if defined(HAVE_BFGS)
+  #if defined(HAVE_BFGS)
   unsigned int i;
   int offset;
   double epsg;
@@ -1490,7 +1490,7 @@ void LpSmoother::improve_region(GRegion* gr)
   alglib::real_1d_array x;
   alglib::real_1d_array alglib_scales;
 
-  Frame_field::init_model();
+  Frame_field::init_region(gr);
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -1621,7 +1621,7 @@ void LpSmoother::improve_region(GRegion* gr)
   free(initial_conditions);
   free(scales);
   Frame_field::clear();
-#endif
+  #endif
 }
 
 int LpSmoother::get_nbr_interior_vertices(){
