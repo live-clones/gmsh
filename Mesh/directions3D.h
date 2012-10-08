@@ -80,6 +80,7 @@ class Size_field{
 class Nearest_point{
  private:
   static std::vector<SPoint3> random;
+  static std::vector<MElement*> vicinity;
   #if defined(HAVE_ANN)
   static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
@@ -89,6 +90,8 @@ class Nearest_point{
   static void init_region(GRegion*);
   static bool search(double,double,double,SVector3&);
   static double T(double,double,double,double,double);
+  static SPoint3 closest(MElement*,SPoint3);
+  static double clamp(double,double,double);
   static void print_field(GRegion*);
   static void print_segment(SPoint3,SPoint3,std::ofstream&);
   static GRegion* test();

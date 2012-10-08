@@ -451,9 +451,7 @@ GRegion* Frame_field::test(){
 }
 
 void Frame_field::clear(){
-  #if defined(HAVE_ANN)
   Nearest_point::clear();	
-  #endif
   field.clear();
   random.clear();
   #if defined(HAVE_ANN)
@@ -670,12 +668,13 @@ void Nearest_point::init_region(GRegion* gr){
   fullMatrix<double> gauss_points;
   fullVector<double> gauss_weights;
 	
-  gaussIntegration::getTriangle(12,gauss_points,gauss_weights);
+  gaussIntegration::getTriangle(8,gauss_points,gauss_weights);
   gauss_num = gauss_points.size1();	
 	
   faces = gr->faces();
 	
   random.clear();
+  vicinity.clear();
   vertices.clear();
 	
   for(it=faces.begin();it!=faces.end();it++){
@@ -704,6 +703,7 @@ void Nearest_point::init_region(GRegion* gr){
 		z = T(u,v,z1,z2,z3);
 		
 		random.push_back(SPoint3(x,y,z));
+		vicinity.push_back(element);
 	  }
 		
 	  vertices.insert(element->getVertex(0));
@@ -716,7 +716,8 @@ void Nearest_point::init_region(GRegion* gr){
 	x = (*it2)->x();
 	y = (*it2)->y();
 	z = (*it2)->z();
-    random.push_back(SPoint3(x,y,z));
+    //random.push_back(SPoint3(x,y,z));
+	//vicinity.push_back(NULL);
   }
 	
   duplicate = annAllocPts(random.size(),3);
@@ -757,9 +758,15 @@ bool Nearest_point::search(double x,double y,double z,SVector3& vec){
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
-  	
-  e2 = 0.000001;
-  point = random[index];
+
+  if(vicinity[index]!=NULL){
+	point = closest(vicinity[index],SPoint3(x,y,z));
+  }
+  else{
+    point = random[index];
+  }
+	
+  e2 = 0.000001;	
 	
   if(fabs(point.x()-x)>e2 || fabs(point.y()-y)>e2 || fabs(point.z()-z)>e2){
     vec = SVector3(point.x()-x,point.y()-y,point.z()-z);
@@ -777,6 +784,107 @@ bool Nearest_point::search(double x,double y,double z,SVector3& vec){
 
 double Nearest_point::T(double u,double v,double val1,double val2,double val3){
   return (1.0-u-v)*val1 + u*val2 + v*val3;
+}
+
+//The following method comes from this page : gamedev.net/topic/552906-closest-point-on-triangle
+//It can also be found on this page : geometrictools.com/LibMathematics/Distance/Distance.html
+SPoint3 Nearest_point::closest(MElement* element,SPoint3 point){		
+  SVector3 edge0 = SVector3(element->getVertex(1)->x()-element->getVertex(0)->x(),element->getVertex(1)->y()-element->getVertex(0)->y(),
+							element->getVertex(1)->z()-element->getVertex(0)->z());
+  SVector3 edge1 = SVector3(element->getVertex(2)->x()-element->getVertex(0)->x(),element->getVertex(2)->y()-element->getVertex(0)->y(),
+							element->getVertex(2)->z()-element->getVertex(0)->z());
+  SVector3 v0 = SVector3(element->getVertex(0)->x()-point.x(),element->getVertex(0)->y()-point.y(),
+						 element->getVertex(0)->z()-point.z());
+	
+  double a = dot(edge0,edge0);
+  double b = dot(edge0,edge1);
+  double c = dot(edge1,edge1);
+  double d = dot(edge0,v0);
+  double e = dot(edge1,v0);
+		
+  double det = a*c-b*b;
+  double s = b*e-c*d;
+  double t = b*d-a*e;
+		
+  if(s+t<det){
+    if(s<0.0){
+	  if(t<0.0){
+	    if(d<0.0){
+		  s = clamp(-d/a,0.0,1.0);
+		  t = 0.0;
+		}
+		else{
+		  s = 0.0;
+		  t = clamp(-e/c,0.0,1.0);
+		}
+	  }
+	  else{
+	    s = 0.0;
+		t = clamp(-e/c,0.0,1.0);
+	  }
+	}
+	else if(t<0.0){
+	  s = clamp(-d/a,0.0,1.0);
+	  t = 0.0;
+	}
+	else{
+	  double invDet = 1.0/det;
+	  s *= invDet;
+	  t *= invDet;
+	}
+  }
+  else{
+    if(s<0.0){
+	  double tmp0 = b+d;
+	  double tmp1 = c+e;
+	  if(tmp1>tmp0){
+	    double numer = tmp1-tmp0;
+		double denom = a-2.0*b+c;
+		s = clamp(numer/denom,0.0,1.0);
+		t = 1.0-s;
+	  }
+	  else{
+	    t = clamp(-e/c,0.0,1.0);
+		s = 0.0;
+	  }
+	}
+	else if(t<0.0){
+	  if(a+d>b+e){
+	    double numer = c+e-b-d;
+		double denom = a-2.0*b+c;
+		s = clamp(numer/denom,0.0,1.0);
+		t = 1.0-s;
+	  }
+	  else{
+	    s = clamp(-e/c,0.0,1.0);
+		t = 0.0;
+	  }
+	}
+	else{
+	  double numer = c+e-b-d;
+	  double denom = a-2.0*b+c;
+	  s = clamp(numer/denom,0.0,1.0);
+	  t = 1.0-s;
+	}
+  }
+		
+  return SPoint3(element->getVertex(0)->x()+s*edge0.x()+t*edge1.x(),element->getVertex(0)->y()+s*edge0.y()+t*edge1.y(),
+				 element->getVertex(0)->z()+s*edge0.z()+t*edge1.z());
+}
+
+double Nearest_point::clamp(double x,double min,double max){
+  double val;
+	
+  val = x;
+  
+  if(val<min){
+    val = min;
+  }
+  else if(val>max){
+    val = max;
+  }
+	
+  return val;
 }
 
 void Nearest_point::print_field(GRegion* gr){
@@ -828,6 +936,7 @@ GRegion* Nearest_point::test(){
 
 void Nearest_point::clear(){
   random.clear();
+  vicinity.clear();
   #if defined(HAVE_ANN)
   delete duplicate;
   delete kd_tree;
@@ -848,6 +957,7 @@ std::map<MVertex*,double> Size_field::boundary;
 MElementOctree* Size_field::octree;
 
 std::vector<SPoint3> Nearest_point::random;
+std::vector<MElement*> Nearest_point::vicinity;
 #if defined(HAVE_ANN)
 ANNpointArray Nearest_point::duplicate;
 ANNkd_tree* Nearest_point::kd_tree;
