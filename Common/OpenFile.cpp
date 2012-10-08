@@ -374,7 +374,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     status = readFile3M(fileName);
   }
 #endif
-#if defined(HAVE_ONELAB_METAMODEL)
+#if defined(HAVE_ONELAB_METAMODEL) && defined(HAVE_FLTK) 
   else if(ext == ".ol"){
     // TODO: allow passing action to metamodel from command line
     status = metamodel_cb(fileName);
