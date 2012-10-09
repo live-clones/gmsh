@@ -1359,7 +1359,6 @@ int metamodel_cb(const std::string &name, const std::string &action)
     FlGui::instance()->onelab->rebuildSolverList();
 
     if(FlGui::instance()->available()){
-      onelab_cb(0, (void*)"initialize");
       onelab_cb(0, (void*)"check");
     }
     else

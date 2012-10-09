@@ -711,7 +711,6 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
-  std::cout << "FHF geometry_reload " << fileName << std::endl;
   OpenProject(fileName);
   drawContext::global()->draw();
 }
