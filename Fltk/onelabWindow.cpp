@@ -57,7 +57,7 @@ class onelabGmshServer : public GmshServer{
     double start = GetTimeInSeconds();
     while(1){
       if(timeout > 0 && GetTimeInSeconds() - start > timeout)
-        return 2; // timout
+        return 2; // timeout
       if(_client->getPid() < 0 || (_client->getExecutable().empty() &&
                                    !CTX::instance()->solver.listen))
         return 1; // process has been killed or we stopped listening
@@ -545,10 +545,13 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(isMetamodel){
 #if defined(HAVE_ONELAB_METAMODEL)
       metamodel(action);
+      geometry_reload_cb(0, 0);
+      //std::cout << "FHFap:" << GModel::current()->getFileName() << std::endl;
+      //std::cout << "FHFap:" << GModel::current()->getName() << std::endl;
 #endif
     }
     else{
-      // iterate over all other clients (there should narmally only be one)
+      // iterate over all other clients (there should normally only be one)
       for(onelab::server::citer it = onelab::server::instance()->firstClient();
           it != onelab::server::instance()->lastClient(); it++){
         onelab::client *c = it->second;
@@ -1355,8 +1358,10 @@ int metamodel_cb(const std::string &name, const std::string &action)
 
     FlGui::instance()->onelab->rebuildSolverList();
 
-    if(FlGui::instance()->available())
+    if(FlGui::instance()->available()){
+      onelab_cb(0, (void*)"initialize");
       onelab_cb(0, (void*)"check");
+    }
     else
       metamodel(action);
   }

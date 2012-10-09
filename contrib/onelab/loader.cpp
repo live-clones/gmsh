@@ -1,9 +1,10 @@
 #include "StringUtils.h"
 #include "onelabUtils.h"
 #include "OnelabClients.h"
+#include "metamodel.h"
+#include <algorithm>
 
 onelab::server *onelab::server::_server = 0;
-
 std::string clientName;
 
 std::string stateToChar(){
@@ -194,17 +195,17 @@ bool menu() {
       choice=0;
     }
     else if (choice==4){
-      metamodel(ANALYZE);
+      metamodel("check");
       choice=0;
     }
     else if (choice==5){
-      metamodel(COMPUTE);
+      metamodel("compute");
       choice=0;
     }
     else if (choice==6){
       initializeLoops();
       do{
-	metamodel(COMPUTE);
+	metamodel("compute");
       }while(incrementLoops());
       choice=0;
     }
@@ -222,37 +223,65 @@ void PrintUsage(const char *name){
 
 int main(int argc, char *argv[]){
   bool launchMenu=false;
-  parseMode todo=COMPUTE;
   int i = 1;
-
-  clientName.assign("meta");
-  OLMsg::loader = new onelab::remoteNetworkClient(clientName, "");
-  // OLMsg::_onelabclient is a onelab:LocalClient independent of MetaModel
-  OLMsg::InitializeOnelab("onelab","");
-
+  std::string caseName="", todo="compute", modelName="", workingDir="";
+  onelab::remoteNetworkClient *client = 0;
 
   while(i < argc) {
     if(argv[i][0] == '-') {
       if(!strcmp(argv[i] + 1, "a")) {
         i++;
-	todo=ANALYZE;
+	todo="check";
       }
       else if(!strcmp(argv[i] + 1, "i")) {
 	i++;
 	launchMenu=true;
       }
+      else if(!strcmp(argv[i] + 1, "onelab")) {
+	std::string clientName=argv[i+1];
+	client = new onelab::remoteNetworkClient(clientName,argv[i+2]);
+	if(client){
+	  std::string action, cmd;
+
+	  std::vector<onelab::string> ps;
+	  client->get(ps,clientName+"/Action");
+	  if(ps.size() && ps[0].getValue().size())
+	    action.assign(ps[0].getValue());
+
+	  if(!action.compare("compute")){
+	    std::vector<onelab::string> ps;
+	    client->get(ps,clientName+"/FullCmdLine");
+	    if(ps.size() && ps[0].getValue().size())
+	      cmd.assign(ps[0].getValue());
+
+	    if(cmd.size()){
+	      OLMsg::Info("Loader calls <%s>",cmd.c_str());
+	      SystemCall(cmd.c_str(),true); //true->blocking
+	    }
+	    else
+	      OLMsg::Info("No full command line found for <%s>",
+			  clientName.c_str());
+	  }
+	  OLMsg::Info("Stopping client <%s>", clientName.c_str());
+	  delete client;
+	}
+	exit(1);
+      }
     }
     else {
-      std::string caseName=argv[i];
-      if(caseName.size()){
-	modelName.assign(SplitFileName(caseName)[1]);
-	workingDir.assign(SplitFileName(caseName)[0]);
-      }
-      else
-	OLMsg::Fatal("No valid input model name.");
+      caseName=argv[i];
+      modelName.assign(SplitFileName(caseName)[1]);
+      workingDir.assign(SplitFileName(caseName)[0]);
       i++;
     }
   }
+
+  if(caseName.empty())
+    OLMsg::Fatal("No valid input model name <%s>.", caseName.c_str());
+
+  OLMsg::InitializeOnelab("onelab");
+  OLMsg::SetOnelabString("Arguments/FileName",modelName);
+  OLMsg::SetOnelabString("Arguments/WorkingDir",workingDir);
 
   if(launchMenu)
     menu();

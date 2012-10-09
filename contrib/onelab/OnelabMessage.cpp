@@ -14,7 +14,7 @@
 
 #define ALWAYS_TRUE 1
 
-onelab::remoteNetworkClient *OLMsg::loader = 0;
+//onelab::remoteNetworkClient *OLMsg::loader = 0;
 
 int OLMsg::_commRank = 0;
 int OLMsg::_commSize = 1;
@@ -91,9 +91,9 @@ void OLMsg::Fatal(const char *fmt, ...)
   }
 
   OLMsg::SetOnelabString("MetaModel/STATUS","STOP");
-  FinalizeClient();
+  //FinalizeClient();
   FinalizeOnelab();
-  delete loader;
+  //delete loader;
   Exit(1);
 }
 
@@ -214,6 +214,219 @@ void OLMsg::StatusBar(int num, bool log, const char *fmt, ...)
     fflush(stdout);
   }
 }
+
+// void OLMsg::InitializeOnelab(const std::string &name, const std::string &sockname)
+// {
+//   if(_onelabClient) delete _onelabClient;
+//   if (sockname.empty())
+//     _onelabClient = new onelab::localClient(name);
+//   else{
+//     onelab::remoteNetworkClient *c =
+//       new onelab::remoteNetworkClient(name, sockname);
+//     _onelabClient = c;
+//     _client = c->getGmshClient();
+//   }
+// }
+
+void OLMsg::InitializeOnelab(const std::string &name)
+{
+  if(_onelabClient) delete _onelabClient;
+  _onelabClient = new onelab::localClient(name);
+  OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
+}
+
+
+double OLMsg::GetOnelabNumber(std::string name)
+{
+  if(_onelabClient){
+    std::vector<onelab::number> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size())
+      return ps[0].getValue();
+  }
+  return 0;
+}
+
+void OLMsg::GetOnelabNumber(std::string name, double *val)
+{
+  if(_onelabClient){
+    std::vector<onelab::number> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size()){
+      *val = ps[0].getValue();
+      return;
+    }
+  }
+  *val = 0;
+}
+
+void OLMsg::SetOnelabNumber(std::string name, double val, bool visible)
+{
+  if(_onelabClient){
+    std::vector<onelab::number> numbers;
+    _onelabClient->get(numbers, name);
+    if(numbers.empty()){
+      numbers.resize(1);
+      numbers[0].setName(name);
+    }
+    numbers[0].setValue(val);
+    numbers[0].setVisible(visible);
+    _onelabClient->set(numbers[0]);
+  }
+}
+
+std::string OLMsg::GetOnelabString(std::string name)
+{
+  std::string str="";
+  if(_onelabClient){
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size() && ps[0].getValue().size())
+      str = ps[0].getValue();
+  }
+  return str;
+}
+
+bool OLMsg::GetOnelabChoices(std::string name, std::vector<std::string> &choices){
+  if(_onelabClient){
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size() && ps[0].getValue().size()){
+      choices=ps[0].getChoices();
+      return true;
+    }
+  }
+  return false;
+}
+
+void OLMsg::SetOnelabString(std::string name, std::string val, bool visible)
+{
+  if(_onelabClient){
+    std::vector<onelab::string> strings;
+    _onelabClient->get(strings, name);
+    if(strings.empty()){
+      strings.resize(1);
+      strings[0].setName(name);
+    }
+    strings[0].setValue(val);
+    strings[0].setVisible(visible);
+    _onelabClient->set(strings[0]);
+  }
+}
+
+void OLMsg::SetOnelabAttributeString(std::string name,
+				   std::string attrib,std::string val){
+  if(_onelabClient){
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size()){
+      ps[0].setAttribute(attrib,val);
+    }
+  }
+}
+std::string OLMsg::GetOnelabAttributeString(std::string name,std::string attrib){
+  std::string str="";
+  if(_onelabClient){
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size())
+      str = ps[0].getAttribute(attrib);
+  }
+  return str;
+}
+std::string OLMsg::GetOnelabAttributeNumber(std::string name,std::string attrib){
+  std::string str="";
+  if(_onelabClient){
+    std::vector<onelab::number> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size())
+      str = ps[0].getAttribute(attrib);
+  }
+  return str;
+}
+
+int fullNameLessThan::compareFullNames(const std::string a, const std::string b) const{
+  std::string::const_iterator ita, itb;
+  ita=a.begin(); itb=b.begin();
+  if( (*ita >= '0') && (*ita <= '9')) ita++;
+  if( (*itb >= '0') && (*itb <= '9')) itb++;
+
+  while( (ita<a.end()) && (itb<b.end()) && (*ita == *itb) ){
+    if(*ita == '/'){
+      ita++;
+      if( (*ita >= '0') && (*ita <= '9')) ita++;
+    }
+    else
+      ita++;
+
+    if(*itb == '/'){
+      itb++;
+      if( (*itb >= '0') && (*itb <= '9')) itb++;
+    }
+    else
+      itb++;
+  }
+  return *ita < *itb ;
+}
+void OLMsg::recordFullName(const std::string &name){
+  OLMsg::_fullNameDict.insert(name);
+}
+std::string OLMsg::obtainFullName(const std::string &name){
+  std::set<std::string, fullNameLessThan>::iterator it;
+
+  // fullNameLessThan* comp=new fullNameLessThan;
+  // std::cout << "Dict=" << OLMsg::_fullNameDict.size() << std::endl;
+  // std::cout << "Looking for " << name << std::endl;
+  // for ( it=OLMsg::_fullNameDict.begin() ; it != OLMsg::_fullNameDict.end(); it++ )
+  //   std::cout << *it << " <" << comp->operator()(*it,name) << ">" << std::endl;
+  // std::cout << std::endl;
+
+  it = OLMsg::_fullNameDict.find(name);
+  if(it == OLMsg::_fullNameDict.end()){
+    return name;
+  }
+  else{
+    return *it;
+  }
+}
+
+void OLMsg::MergeFile(const std::string &name){
+  if(_onelabClient)
+    _onelabClient->sendMergeFileRequest(name);
+  else
+    OLMsg::Info("Not connected to Gmsh");
+}
+
+
+// void OLMsg::AddOnelabNumberChoice(std::string name, double val)
+// {
+//   if(_onelabClient){
+//     std::vector<double> choices;
+//     std::vector<onelab::number> ps;
+//     _onelabClient->get(ps, name);
+//     if(ps.size()){
+//       choices = ps[0].getChoices();
+//     }
+//     else{
+//       ps.resize(1);
+//       ps[0].setName(name);
+//     }
+//     ps[0].setVisible(false);
+//     choices.push_back(val);
+//     ps[0].setChoices(choices);
+//     _onelabClient->set(ps[0]);
+//   }
+// }
+
+void OLMsg::FinalizeOnelab(){
+  if(_onelabClient){
+    delete _onelabClient;
+    _onelabClient = 0;
+    _client = 0;
+  }
+}
+
+
 
 /*
 void OLMsg::Debug(const char *fmt, ...)
@@ -376,7 +589,7 @@ void OLMsg::InitClient(std::string sockname)
 void OLMsg::Barrier()
 {
 }
-*/
+
 void OLMsg::FinalizeClient()
 {
   if(_client){
@@ -386,279 +599,4 @@ void OLMsg::FinalizeClient()
   }
   _client = 0;
 }
-
-void OLMsg::InitializeOnelab(const std::string &name, const std::string &sockname)
-{
-  if(_onelabClient) delete _onelabClient;
-  if (sockname.empty())
-    _onelabClient = new onelab::localClient(name);
-  else{
-    onelab::remoteNetworkClient *c =
-      new onelab::remoteNetworkClient(name, sockname);
-    _onelabClient = c;
-    _client = c->getGmshClient();
-  }
-}
-
-double OLMsg::GetOnelabNumber(std::string name)
-{
-  if(_onelabClient){
-    std::vector<onelab::number> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size())
-      return ps[0].getValue();
-  }
-  return 0;
-}
-
-void OLMsg::GetOnelabNumber(std::string name, double *val)
-{
-  if(_onelabClient){
-    std::vector<onelab::number> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size()){
-      *val = ps[0].getValue();
-      return;
-    }
-  }
-  *val = 0;
-}
-
-void OLMsg::SetOnelabNumber(std::string name, double val, bool visible)
-{
-  if(_onelabClient){
-    std::vector<onelab::number> numbers;
-    _onelabClient->get(numbers, name);
-    if(numbers.empty()){
-      numbers.resize(1);
-      numbers[0].setName(name);
-    }
-    numbers[0].setValue(val);
-    numbers[0].setVisible(visible);
-    _onelabClient->set(numbers[0]);
-  }
-}
-
-std::string OLMsg::GetOnelabString(std::string name)
-{
-  std::string str="";
-  if(_onelabClient){
-    std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size() && ps[0].getValue().size())
-      str = ps[0].getValue();
-  }
-  return str;
-}
-
-bool OLMsg::GetOnelabChoices(std::string name, std::vector<std::string> &choices){
-  if(_onelabClient){
-    std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size() && ps[0].getValue().size()){
-      choices=ps[0].getChoices();
-      return true;
-    }
-  }
-  return false;
-}
-
-void OLMsg::SetOnelabString(std::string name, std::string val, bool visible)
-{
-  if(_onelabClient){
-    std::vector<onelab::string> strings;
-    _onelabClient->get(strings, name);
-    if(strings.empty()){
-      strings.resize(1);
-      strings[0].setName(name);
-    }
-    strings[0].setValue(val);
-    strings[0].setVisible(visible);
-    _onelabClient->set(strings[0]);
-  }
-}
-
-void OLMsg::SetOnelabAttributeString(std::string name,
-				   std::string attrib,std::string val){
-  if(_onelabClient){
-    std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size()){
-      ps[0].setAttribute(attrib,val);
-    }
-  }
-}
-std::string OLMsg::GetOnelabAttributeString(std::string name,std::string attrib){
-  std::string str="";
-  if(_onelabClient){
-    std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size())
-      str = ps[0].getAttribute(attrib);
-  }
-  return str;
-}
-std::string OLMsg::GetOnelabAttributeNumber(std::string name,std::string attrib){
-  std::string str="";
-  if(_onelabClient){
-    std::vector<onelab::number> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size())
-      str = ps[0].getAttribute(attrib);
-  }
-  return str;
-}
-
-void OLMsg::AddOnelabNumberChoice(std::string name, double val)
-{
-  if(_onelabClient){
-    std::vector<double> choices;
-    std::vector<onelab::number> ps;
-    _onelabClient->get(ps, name);
-    if(ps.size()){
-      choices = ps[0].getChoices();
-    }
-    else{
-      ps.resize(1);
-      ps[0].setName(name);
-    }
-    ps[0].setAttribute("Highlight","Coral"); // only used by PostArray
-    ps[0].setReadOnly(false);
-    ps[0].setVisible(true);
-    ps[0].setValue(val);
-    choices.push_back(val);
-    ps[0].setChoices(choices);
-    _onelabClient->set(ps[0]);
-  }
-}
-
-int fullNameLessThan::compareFullNames(const std::string a, const std::string b) const{
-  std::string::const_iterator ita, itb;
-  ita=a.begin(); itb=b.begin();
-  if( (*ita >= '0') && (*ita <= '9')) ita++;
-  if( (*itb >= '0') && (*itb <= '9')) itb++;
-
-  while( (ita<a.end()) && (itb<b.end()) && (*ita == *itb) ){
-    if(*ita == '/'){
-      ita++;
-      if( (*ita >= '0') && (*ita <= '9')) ita++;
-    }
-    else
-      ita++;
-
-    if(*itb == '/'){
-      itb++;
-      if( (*itb >= '0') && (*itb <= '9')) itb++;
-    }
-    else
-      itb++;
-  }
-  return *ita < *itb ;
-}
-void OLMsg::recordFullName(const std::string &name){
-  OLMsg::_fullNameDict.insert(name);
-}
-std::string OLMsg::obtainFullName(const std::string &name){
-  std::set<std::string, fullNameLessThan>::iterator it;
-
-  // fullNameLessThan* comp=new fullNameLessThan;
-  // std::cout << "Dict=" << OLMsg::_fullNameDict.size() << std::endl;
-  // std::cout << "Looking for " << name << std::endl;
-  // for ( it=OLMsg::_fullNameDict.begin() ; it != OLMsg::_fullNameDict.end(); it++ )
-  //   std::cout << *it << " <" << comp->operator()(*it,name) << ">" << std::endl;
-  // std::cout << std::endl;
-
-  it = OLMsg::_fullNameDict.find(name);
-  if(it == OLMsg::_fullNameDict.end()){
-    return name;
-  }
-  else{
-    return *it;
-  }
-}
-
-void OLMsg::SendMergeFileRequest(const std::string &name){
-  _onelabClient->sendMergeFileRequest(name);
-}
-
-int OLMsg::Synchronize_Down(){
-  OLMsg::_fullNameDict.clear();
-  std::vector<onelab::number> numbers;
-  loader->get(numbers,"");
-  if(numbers.size()){
-    for(std::vector<onelab::number>::const_iterator it = numbers.begin();
-	it != numbers.end(); it++){
-      if(_onelabClient) _onelabClient->set(*it);
-      OLMsg::recordFullName((*it).getName());
-      //std::cout << "FHF d " << (*it).getName() << "=" << (*it).getChanged() << std::endl;
-    }
-  }
-  std::vector<onelab::string> strings;
-  loader->get(strings,"");
-  if(strings.size()){
-    for(std::vector<onelab::string>::const_iterator it = strings.begin();
-  	it != strings.end(); it++){
-      if(_onelabClient) _onelabClient->set(*it);
-      OLMsg::recordFullName((*it).getName());
-      //std::cout << "FHF d " << (*it).getName() << "=" << (*it).getChanged() << std::endl;
-    }
-  }
-  std::vector<onelab::region> regions;
-  loader->get(regions,"");
-  if(regions.size()){
-    for(std::vector<onelab::region>::const_iterator it = regions.begin();
-  	it != regions.end(); it++){
-      if(_onelabClient) _onelabClient->set(*it);
-      OLMsg::recordFullName((*it).getName());
-    }
-  }
-  return(numbers.size()+strings.size()+regions.size());
-}
-
-int OLMsg::Synchronize_Up(){
-  std::vector<onelab::number> numbers;
-  _onelabClient->get(numbers,"");
-  if(numbers.size()){
-    for(std::vector<onelab::number>::const_iterator it = numbers.begin();
-  	it != numbers.end(); it++){
-      loader->set(*it);
-      //std::cout << "FHF u " << (*it).getName() << "="
-      //<< (*it).getChanged() << std::endl;
-    }
-  }
-  loader->get(numbers,"");
-  if(numbers.size()){
-    for(std::vector<onelab::number>::const_iterator it = numbers.begin();
-  	it != numbers.end(); it++){
-      //std::cout << "FHF control " << (*it).getName() << "="
-      //<< (*it).getChanged() << std::endl;
-    }
-  }
-
-  std::vector<onelab::string> strings;
-  _onelabClient->get(strings,"");
-  if(strings.size()){
-    for(std::vector<onelab::string>::const_iterator it = strings.begin();
-	it != strings.end(); it++){
-      loader->set(*it);
-      //std::cout << "FHF u " << (*it).getName() << "=" << (*it).getChanged() << std::endl;
-    }
-  }
-  std::vector<onelab::region> regions;
-  _onelabClient->get(regions,"");
-  if(regions.size()){
-    for(std::vector<onelab::region>::const_iterator it = regions.begin();
-	it != regions.end(); it++){
-      loader->set(*it);
-    }
-  }
-  return(numbers.size()+strings.size()+regions.size());
-}
-
-void OLMsg::FinalizeOnelab(){
-  if(_onelabClient){
-    delete _onelabClient;
-    _onelabClient = 0;
-    _client = 0;
-  }
-}
+*/

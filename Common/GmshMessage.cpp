@@ -664,9 +664,13 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 class localGmsh : public onelab::localClient {
 public:
   localGmsh() : onelab::localClient("Gmsh") {}
-  void sendMergeFileRequest(const std::string &msg)
+  void sendMergeFileRequest(const std::string &name)
   {
-    MergePostProcessingFile(msg, CTX::instance()->solver.autoShowLastStep,
+    if(name.find(".geo")!= std::string::npos){
+      GModel::current()->setFileName(name);
+    }
+    else
+      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
                             CTX::instance()->solver.autoHideNewViews, true);
   }
   void sendInfo(const std::string &msg){ Msg::Info("%s", msg.c_str()); }

@@ -91,11 +91,13 @@ class OLMsg {
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
-  static void InitClient(std::string sockname);
+  //static void InitClient(std::string sockname);
   static GmshClient *GetClient(){ return _client; }
-  static void FinalizeClient();
-  static void InitializeOnelab(const std::string &name,
-			       const std::string &sockname);
+  //static void FinalizeClient();
+
+  static void InitializeOnelab(const std::string &name);
+  static void FinalizeOnelab();
+
   static void SetOnelabClient(onelab::client *client){ _onelabClient = client; }
   static void SetOnelabNumber(std::string name, double val, bool visible=true);
   static void GetOnelabNumber(std::string name, double *val);
@@ -115,16 +117,15 @@ class OLMsg {
 				      std::vector<double> > &fopt,
 				      std::map<std::string,
 				      std::vector<std::string> > &copt);
-  static void AddOnelabNumberChoice(std::string name, double val);
+  static void MergeFile(const std::string &name);
 
-  static void SendMergeFileRequest(const std::string &name);
-
+  //static void AddOnelabNumberChoice(std::string name, double val);
   // communication with loader
-  static onelab::remoteNetworkClient *loader;
+  //static onelab::remoteNetworkClient *loader;
+  //static int Synchronize_Down();
+  //static int Synchronize_Up();
+
   static bool hasGmsh;
-  static int Synchronize_Down();
-  static int Synchronize_Up();
-  static void FinalizeOnelab();
   static void recordFullName(const std::string &name);
   static std::string obtainFullName(const std::string &name);
 };

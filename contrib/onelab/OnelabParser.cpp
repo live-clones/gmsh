@@ -13,6 +13,7 @@ namespace olkey{
   static std::string include(label+"include");
   static std::string message(label+"msg");
   static std::string showParam(label+"show");
+  static std::string showGmsh(label+"merge");
   static std::string dump(label+"dump");
   static std::string ifcond(label+"if");
   static std::string iftrue(label+"iftrue"), ifntrue(label+"ifntrue");
@@ -522,9 +523,7 @@ void localSolverClient::parse_sentence(std::string line) {
       name.assign(longName(name));
       get(numbers,name); 
       if(numbers.size()){
-	if(arguments[0].empty())
-	  numbers[0].setValue(0);
-	else
+	if(arguments[0].size())
 	  numbers[0].setValue(atof(resolveGetVal(arguments[0]).c_str()));
 	numbers[0].setReadOnly(1);
 	set(numbers[0]);
@@ -532,10 +531,11 @@ void localSolverClient::parse_sentence(std::string line) {
       else{
 	get(strings,name); 
 	if(strings.size()){
-	  if(arguments[0].empty())
+	  if(arguments[0].empty())  // resets an empty string
 	    strings[0].setValue("");
 	  else
 	    strings[0].setValue(arguments[0]);
+	  numbers[0].setReadOnly(1);
 	  set(strings[0]);
 	}
 	else{
@@ -643,6 +643,7 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
     olkey::include.assign(olkey::label+"include");
     olkey::message.assign(olkey::label+"msg");
     olkey::showParam.assign(olkey::label+"show");
+    olkey::showGmsh.assign(olkey::label+"merge");
     olkey::dump.assign(olkey::label+"dump");
     olkey::ifcond.assign(olkey::label+"if");
     olkey::iftrue.assign(olkey::label+"iftrue");
@@ -770,23 +771,38 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     cursor = pos+olkey::showParam.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
       OLMsg::Fatal("Misformed <%s> statement: (%s)",
-		 olkey::showParam.c_str(),line.c_str());
-    std::string lname=longName(arguments[0]);
-    std::string msg;
-    get(numbers,lname);
-    if (numbers.size())
-      msg.assign(numbers[0].toChar());
-    else{
-      get(strings,lname);
-      if (strings.size())
-	msg.assign(strings[0].toChar());
-      else
-	OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
-		     arguments[0].c_str(),olkey::showParam.c_str());
+		   olkey::showParam.c_str(),line.c_str());
+    for(unsigned int i = 0; i < arguments.size(); i++){
+      std::string lname=longName(arguments[i]);
+      std::string msg;
+      get(numbers,lname);
+      if (numbers.size())
+	msg.assign(numbers[0].toChar());
+      else{
+	get(strings,lname);
+	if (strings.size())
+	  msg.assign(strings[0].toChar());
+	else
+	  OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+		       arguments[i].c_str(),olkey::showParam.c_str());
+      }
+      for(unsigned int j = 0; j < msg.size(); j++)
+	if(msg[j] == onelab::parameter::charSep()) msg[j] = '|';
+      OLMsg::Info("%s",msg.c_str());
     }
-    for(unsigned int i = 0; i < msg.size(); i++)
-      if(msg[i] == onelab::parameter::charSep()) msg[i] = '|';
-    OLMsg::Info("%s",msg.c_str());
+  }
+  else if ( (pos=line.find(olkey::showGmsh)) != std::string::npos) { 
+    // onelab.showGmsh
+    cursor = pos+olkey::showGmsh.length();
+    if(enclosed(line.substr(cursor),arguments,pos)<1)
+      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+		   olkey::showGmsh.c_str(),line.c_str());
+    if (OLMsg::GetOnelabString(getName()+"/MergedGeo").empty()){
+      std::string fileName=resolveGetVal(arguments[0]);
+      OLMsg::MergeFile(fileName);
+      OLMsg::SetOnelabString(getName()+"/MergedGeo",fileName);
+      OLMsg::Info("Merge a geometry <%s> to Gmsh", fileName.c_str());
+    }
   }
   else if ( (pos=line.find(olkey::dump)) != std::string::npos) { 
     // onelab.dump 
@@ -1150,7 +1166,7 @@ void MetaModel::client_sentence(const std::string &name,
 
   if(!action.compare("register")){
     if(isTodo(REGISTER)){
-      // syntax name.register([interf...|encaps...]{,cmdl{host{,rdir}}}}) ;
+      // syntax name.register([interf...|native]{,cmdl{host{,rdir}}}}) ;
       if(!findClientByName(name)){
 	OLMsg::Info("Define client <%s>", name.c_str());
 	std::string cmdl="",host="",rdir="";
@@ -1291,6 +1307,15 @@ void MetaModel::client_sentence(const std::string &name,
     if(c=findClientByName(name)){
       c->checkCommandLine();
       c->analyze();
+    }
+    else
+      OLMsg::Fatal("Unknown client <%s>", name.c_str());
+  }
+  else if(!action.compare("compute")){
+    localSolverClient *c;
+    if(c=findClientByName(name)){
+      c->checkCommandLine();
+      c->compute();
     }
     else
       OLMsg::Fatal("Unknown client <%s>", name.c_str());

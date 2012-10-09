@@ -35,7 +35,6 @@ std::string itoa(const int i);
 std::string ftoa(const double x);
 bool checkIfPresent(std::string fileName);
 int mySystem(std::string commandLine);
-void GmshDisplay(onelab::remoteNetworkClient *loader, std::string fileName, std::vector<std::string> choices);
 std::string getCurrentWorkdir();
 std::string getUserHomedir();
 std::string sanitize(const std::string &in);
@@ -159,6 +158,7 @@ class localSolverClient : public onelab::localClient{
   virtual bool checkCommandLine();
   virtual void analyze() =0;
   virtual void compute() =0;
+  void addNumberChoice(std::string name, double val);
   void PostArray(std::vector<std::string> choices);
   void GmshMerge(std::vector<std::string> choices);
 };
@@ -275,16 +275,27 @@ class InterfacedClient : public localSolverClient {
 };
 
 class NativeClient : public localNetworkSolverClient { 
-  // utilise localNetworkClient::run
 public:
  NativeClient(const std::string &name, const std::string &cmdl, const std::string &wdir) 
    : localNetworkSolverClient(name,cmdl,wdir) {}
   ~NativeClient(){}
 
-  //uses localNetworkSolver::buildCommandLine();
   virtual void analyze();
-  virtual void compute() ;
+  virtual void compute();
 };
+
+
+class EncapsulatedClient : public localNetworkSolverClient{
+ public:
+ EncapsulatedClient(const std::string &name, const std::string &cmdl, const std::string &wdir) : localNetworkSolverClient(name,cmdl,wdir) {}
+  ~EncapsulatedClient(){}
+
+  std::string buildCommandLine();
+  void analyze();
+  void convert();
+  void compute();
+};
+
 
 class RemoteInterfacedClient : public InterfacedClient, public remoteClient {
 public:
