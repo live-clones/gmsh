@@ -1336,6 +1336,11 @@ void solver_cb(Fl_Widget *w, void *data)
     onelab_cb(0, (void*)"check");
 }
 
+void flgui_wait_cb(double time)
+{
+  FlGui::instance()->wait(time);
+}
+
 int metamodel_cb(const std::string &name, const std::string &action)
 {
 #if defined(HAVE_ONELAB_METAMODEL)
@@ -1343,7 +1348,7 @@ int metamodel_cb(const std::string &name, const std::string &action)
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{
-    initializeMetamodel(Msg::GetOnelabClient());
+    initializeMetamodel(Msg::GetOnelabClient(), &flgui_wait_cb);
 
     onelab::number n("IsMetamodel", 1.);
     n.setVisible(false);

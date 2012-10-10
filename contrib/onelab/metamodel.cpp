@@ -1,13 +1,16 @@
 #include "OnelabClients.h"
 #include "metamodel.h"
 
-void initializeMetamodel(onelab::client *client)
+void (*my_gui_wait_fct)(double time) = 0;
+
+void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double time))
 {
   //called by  "metamodel_cb"
   //copies the Msg::_onelabClient to  OLMsg::_onelabClient
   //This pointer refers to an object of class localGmsh() (cf GmshMessage.cpp)
   //which is a onelab::client with sone Gmsh features (merge and messages).
   OLMsg::SetOnelabClient(client);
+  my_gui_wait_fct = gui_wait_fct;
 }
 
 int metamodel(const std::string &action){
