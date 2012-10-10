@@ -3171,7 +3171,23 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 	  v3 = (*it)->getVertex(2);
 	  v4 = (*it)->getVertex(3);
 	  v5 = (*it)->getVertex(4);
-			
+
+	  if(v1!=diagA && v1!=diagB){
+	    Ns.insert(v1);
+	  }
+	  if(v2!=diagA && v2!=diagB){
+	    Ns.insert(v2);
+	  }
+	  if(v3!=diagA && v3!=diagB){
+	    Ns.insert(v3);
+	  }
+	  if(v4!=diagA && v4!=diagB){
+	    Ns.insert(v4);
+	  }
+	  if(v5!=diagA && v5!=diagB){
+	    Ns.insert(v5);
+	  }
+
 	  temp2 = new MPyramid(v1,v2,v3,v4,mid);
 	  gr->addPyramid(temp2);
 	  markings.insert(std::pair<MElement*,bool>(temp2,0));
