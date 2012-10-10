@@ -666,12 +666,11 @@ public:
   localGmsh() : onelab::localClient("Gmsh") {}
   void sendMergeFileRequest(const std::string &name)
   {
+    MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
+                            CTX::instance()->solver.autoHideNewViews, true);
     if(name.find(".geo")!= std::string::npos){
       GModel::current()->setFileName(name);
     }
-    else
-      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
-                            CTX::instance()->solver.autoHideNewViews, true);
   }
   void sendInfo(const std::string &msg){ Msg::Info("%s", msg.c_str()); }
   void sendWarning(const std::string &msg){ Msg::Warning("%s", msg.c_str()); }
@@ -734,7 +733,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-    if(!ps[0].getReadOnly())
+    //if(!ps[0].getReadOnly())
       val[0] = ps[0].getValue(); // use value from server
     // keep track of these attributes, which can be changed server-side
     if(ps[0].getMin() != -onelab::parameter::maxNumber() ||

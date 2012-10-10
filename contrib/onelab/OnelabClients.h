@@ -227,11 +227,8 @@ class MetaModel : public localSolverClient {
     clientName = cname;
     genericNameFromArgs = fname.size() ? fname : cmdl;
     setWorkingDir(wdir); // wdir from args
-    openOnelabBlock();
     _todo=REGISTER;
-    parse_onefile( genericNameFromArgs + onelabExtension + ".save",false);
-    parse_onefile( genericNameFromArgs + onelabExtension);
-    closeOnelabBlock();
+    construct();
   }
   ~MetaModel(){}
   typedef std::vector<localSolverClient*>::iterator citer;
@@ -252,12 +249,13 @@ class MetaModel : public localSolverClient {
       if(_clients[i]->getName() == name) return _clients[i];
     return 0;
   }
+
   std::string genericNameFromArgs, clientName;
   void client_sentence(const std::string &name, const std::string &action, 
 		       const std::vector<std::string> &arguments);
   std::string toChar(){}
   void PostArray(std::vector<std::string> choices);
-  void initialize();
+  void construct();
   void analyze();
   void compute();
 };

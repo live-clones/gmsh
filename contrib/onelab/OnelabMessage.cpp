@@ -31,6 +31,8 @@ GmshClient *OLMsg::_client = 0;
 onelab::client *OLMsg::_onelabClient = 0;
 bool OLMsg::hasGmsh=false;
 std::set<std::string, fullNameLessThan> OLMsg::_fullNameDict;
+void (*OLMsg::gui_wait_fct)(double time) = 0;
+
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -215,19 +217,6 @@ void OLMsg::StatusBar(int num, bool log, const char *fmt, ...)
   }
 }
 
-// void OLMsg::InitializeOnelab(const std::string &name, const std::string &sockname)
-// {
-//   if(_onelabClient) delete _onelabClient;
-//   if (sockname.empty())
-//     _onelabClient = new onelab::localClient(name);
-//   else{
-//     onelab::remoteNetworkClient *c =
-//       new onelab::remoteNetworkClient(name, sockname);
-//     _onelabClient = c;
-//     _client = c->getGmshClient();
-//   }
-// }
-
 void OLMsg::InitializeOnelab(const std::string &name)
 {
   if(_onelabClient) delete _onelabClient;
@@ -235,6 +224,12 @@ void OLMsg::InitializeOnelab(const std::string &name)
   OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
 }
 
+void OLMsg::SetGuiWaitFunction(void (*fct)(double time)){
+  gui_wait_fct = fct;
+}
+void (*OLMsg::GetGuiWaitFunction())(double){
+  return gui_wait_fct;
+}
 
 double OLMsg::GetOnelabNumber(std::string name)
 {
@@ -391,11 +386,36 @@ std::string OLMsg::obtainFullName(const std::string &name){
 }
 
 void OLMsg::MergeFile(const std::string &name){
-  if(_onelabClient)
-    _onelabClient->sendMergeFileRequest(name);
+  //This routine allows sending input files (geo, pos, msh) to Gmsh
+  //The parameter Gmsh/MergedGeo ensures that only one geometry
+  //is sent to Gmsh. It is reloaded afted each metamodel execution
+  //
+  if(_onelabClient){
+    if(name.find(".geo") != std::string::npos){
+      if(GetOnelabString("Gmsh/MergedGeo").empty()){
+	SetOnelabString("Gmsh/MergedGeo",name,false);
+	Info("Merge a geometry <%s> to Gmsh", name.c_str());
+	_onelabClient->sendMergeFileRequest(name);
+      }
+    }
+    else{
+      Info("Merge a geometry <%s> to Gmsh", name.c_str());
+      _onelabClient->sendMergeFileRequest(name);
+    }
+  }
   else
     OLMsg::Info("Not connected to Gmsh");
 }
+
+
+void OLMsg::FinalizeOnelab(){
+  if(_onelabClient){
+    delete _onelabClient;
+    _onelabClient = 0;
+    _client = 0;
+  }
+}
+
 
 
 // void OLMsg::AddOnelabNumberChoice(std::string name, double val)
@@ -417,186 +437,3 @@ void OLMsg::MergeFile(const std::string &name){
 //     _onelabClient->set(ps[0]);
 //   }
 // }
-
-void OLMsg::FinalizeOnelab(){
-  if(_onelabClient){
-    delete _onelabClient;
-    _onelabClient = 0;
-    _client = 0;
-  }
-}
-
-
-
-/*
-void OLMsg::Debug(const char *fmt, ...)
-{
-  if(_verbosity < 99) return;
-
-  char str[1024];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-
-  if(_callback) (*_callback)("Debug", str);
-  if(_client) _client->Info(str);
-
-  if(ALWAYS_TRUE){
-    if(_commSize > 1)
-      fprintf(stdout, "Debug   : [On processor %d] %s\n", _commRank, str);
-    else
-      fprintf(stdout, "Debug   : %s\n", str);
-    fflush(stdout);
-  }
-}
-
-void OLMsg::ProgressMeter(int n, int N, const char *fmt, ...)
-{
-  if(_commRank || _verbosity < 3) return;
-
-  double percent = 100. * (double)n/(double)N;
-
-  if(percent >= _progressMeterCurrent){
-    char str[1024];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(str, sizeof(str), fmt, args);
-    va_end(args);
-
-    if(strlen(fmt)) strcat(str, " ");
-
-    char str2[1024];
-    sprintf(str2, "(%d %%)", _progressMeterCurrent);
-    strcat(str, str2);
-
-    if(_client) _client->Progress(str);
-
-    if(ALWAYS_TRUE){
-      fprintf(stdout, "%s                     \r", str);
-      fflush(stdout);
-    }
-
-    while(_progressMeterCurrent < percent)
-      _progressMeterCurrent += _progressMeterStep;
-  }
-
-  if(n > N - 1){
-    if(_client) _client->Progress("Done!");
-
-    if(ALWAYS_TRUE){
-      fprintf(stdout, "Done!                                              \r");
-      fflush(stdout);
-    }
-  }
-}
-
-void OLMsg::PrintTimers()
-{
-  // do a single stdio call!
-  std::string str;
-  for(std::map<std::string, double>::iterator it = _timers.begin();
-      it != _timers.end(); it++){
-    if(it != _timers.begin()) str += ", ";
-    char tmp[256];
-    sprintf(tmp, "%s = %gs ", it->first.c_str(), it->second);
-    str += std::string(tmp);
-  }
-  if(!str.size()) return;
-
-  if(ALWAYS_TRUE){
-    if(_commSize > 1)
-      fprintf(stdout, "Timers  : [On processor %d] %s\n", _commRank, str.c_str());
-    else
-      fprintf(stdout, "Timers  : %s\n", str.c_str());
-    fflush(stdout);
-  }
-}
-
-void OLMsg::PrintErrorCounter(const char *title)
-{
-  if(_commRank || _verbosity < 1) return;
-  if(!_warningCount && !_errorCount) return;
-
-  std::string prefix = _errorCount ? "Error   : " : "Warning : ";
-  std::string help("Check the full log for details");
-  std::string line(std::max(strlen(title), help.size()), '-');
-  char warn[128], err[128];
-  sprintf(warn, "%5d warning%s", _warningCount, _warningCount == 1 ? "" : "s");
-  sprintf(err, "%5d error%s", _errorCount, _errorCount == 1 ? "" : "s");
-
-  if(ALWAYS_TRUE){
-    fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(),
-            (prefix + title).c_str(), (prefix + warn).c_str(),
-            (prefix + err).c_str(), (prefix + help).c_str(),
-            (prefix + line).c_str());
-    fflush(stderr);
-  }
-}
-
-double OLMsg::GetValue(const char *text, double defaultval)
-{
-  printf("%s (default=%.16g): ", text, defaultval);
-  char str[256];
-  char *ret = fgets(str, sizeof(str), stdin);
-  if(!ret || !strlen(str) || !strcmp(str, "\n"))
-    return defaultval;
-  else
-    return atof(str);
-}
-
-std::string OLMsg::GetString(const char *text, std::string defaultval)
-{
-  printf("%s (default=%s): ", text, defaultval.c_str());
-  char str[256];
-  char *ret = fgets(str, sizeof(str), stdin);
-  if(!ret || !strlen(str) || !strcmp(str, "\n"))
-    return defaultval;
-  else
-    return std::string(str);
-}
-
-int OLMsg::GetAnswer(const char *question, int defaultval, const char *zero,
-                   const char *one, const char *two)
-{
-  if(two)
-    printf("%s\n\n0=[%s] 1=[%s] 2=[%s] (default=%d): ", question,
-           zero, one, two, defaultval);
-  else
-    printf("%s\n\n0=[%s] 1=[%s] (default=%d): ", question,
-           zero, one, defaultval);
-  char str[256];
-  char *ret = fgets(str, sizeof(str), stdin);
-  if(!ret || !strlen(str) || !strcmp(str, "\n"))
-    return defaultval;
-  else
-    return atoi(ret);
-}
-
-void OLMsg::InitClient(std::string sockname)
-{
-  if(_client) delete _client;
-  _client = new GmshClient();
-  if(_client->Connect(sockname.c_str()) < 0){
-    OLMsg::Error("Unable to connect to server on %s", sockname.c_str());
-    delete _client;
-    _client = 0;
-  }
-  else
-    _client->Start();
-}
-
-void OLMsg::Barrier()
-{
-}
-
-void OLMsg::FinalizeClient()
-{
-  if(_client){
-    _client->Stop();
-    _client->Disconnect();
-    delete _client;
-  }
-  _client = 0;
-}
-*/

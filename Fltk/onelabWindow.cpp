@@ -544,10 +544,8 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(isMetamodel){
 #if defined(HAVE_ONELAB_METAMODEL)
-      metamodel(action);
-      geometry_reload_cb(0, 0);
-      //std::cout << "FHFap:" << GModel::current()->getFileName() << std::endl;
-      //std::cout << "FHFap:" << GModel::current()->getName() << std::endl;
+      if(metamodel(action))  
+	geometry_reload_cb(0, 0);
 #endif
     }
     else{

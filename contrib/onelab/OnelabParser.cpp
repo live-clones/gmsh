@@ -797,12 +797,8 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     if(enclosed(line.substr(cursor),arguments,pos)<1)
       OLMsg::Fatal("Misformed <%s> statement: (%s)",
 		   olkey::showGmsh.c_str(),line.c_str());
-    if (OLMsg::GetOnelabString(getName()+"/MergedGeo").empty()){
-      std::string fileName=resolveGetVal(arguments[0]);
-      OLMsg::MergeFile(fileName);
-      OLMsg::SetOnelabString(getName()+"/MergedGeo",fileName);
-      OLMsg::Info("Merge a geometry <%s> to Gmsh", fileName.c_str());
-    }
+    std::string fileName=resolveGetVal(arguments[0]);
+    OLMsg::MergeFile(fileName);
   }
   else if ( (pos=line.find(olkey::dump)) != std::string::npos) { 
     // onelab.dump 
@@ -1302,24 +1298,6 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
   }
-  else if(!action.compare("check")){
-    localSolverClient *c;
-    if(c=findClientByName(name)){
-      c->checkCommandLine();
-      c->analyze();
-    }
-    else
-      OLMsg::Fatal("Unknown client <%s>", name.c_str());
-  }
-  else if(!action.compare("compute")){
-    localSolverClient *c;
-    if(c=findClientByName(name)){
-      c->checkCommandLine();
-      c->compute();
-    }
-    else
-      OLMsg::Fatal("Unknown client <%s>", name.c_str());
-  }
   else if(!action.compare("up")){
     if(arguments.size()%4==0){
       if(isTodo(REGISTER)){
@@ -1354,6 +1332,29 @@ void MetaModel::client_sentence(const std::string &name,
       OLMsg::Fatal("Wrong number of arguments <%d> for <%s>",
 		 arguments.size(), action.c_str());
   }
+  else if(!action.compare("check")){
+    localSolverClient *c;
+    if(c=findClientByName(name)){
+      c->checkCommandLine();
+      c->analyze();
+    }
+    else
+      OLMsg::Fatal("Unknown client <%s>", name.c_str());
+  }
+  else if(!action.compare("compute")){
+    localSolverClient *c;
+    if(c=findClientByName(name)){
+      c->checkCommandLine();
+      if(isTodo(REGISTER))
+	c->analyze(); // computes nothing at registration
+      else{
+	c->compute();
+	onelab::server::instance()->setChanged(false, c->getName());
+      }
+    }
+    else
+      OLMsg::Fatal("Unknown client <%s>", name.c_str());
+  }
   else if(!action.compare("merge")){
     if(isTodo(COMPUTE)){
       std::vector<std::string> choices;
@@ -1361,7 +1362,30 @@ void MetaModel::client_sentence(const std::string &name,
 	choices.push_back(resolveGetVal(arguments[i]));
       }
       localSolverClient *c;
-      if(c=findClientByName(name)) c->GmshMerge(choices);
+      if(c=findClientByName(name)) {
+	OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
+	c->GmshMerge(choices);
+      }
+    }
+  }
+  else if(!action.compare("computeMerge")){
+    std::vector<std::string> choices;
+    for(unsigned int i = 0; i < arguments.size(); i++){
+      choices.push_back(resolveGetVal(arguments[i]));
+    }
+    localSolverClient *c;
+    if(c=findClientByName(name)) {
+      c->checkCommandLine();
+      if(isTodo(REGISTER))
+	c->analyze(); // computes nothing at registration
+      else{
+	if(onelab::server::instance()->getChanged(c->getName())){
+	  c->compute();
+	  c->GmshMerge(choices);
+	  OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
+	  onelab::server::instance()->setChanged(false, c->getName());
+	}
+      }
     }
   }
   else

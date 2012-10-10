@@ -59,15 +59,9 @@ class onelabMetaModelServer : public GmshServer{
       // return immediately, i.e., do polling)
       int ret = Select(0, 0, socket);
       if(ret == 0){ // nothing available
-        // if asked, refresh the onelab GUI
-        std::vector<onelab::string> ps;
-        onelab::server::instance()->get(ps, "Gmsh/Action");
-        if(ps.size() && ps[0].getValue() == "refresh"){
-          ps[0].setVisible(false);
-          ps[0].setValue("");
-          onelab::server::instance()->set(ps[0]);
-          //onelab_cb(0, (void*)"refresh");
-        }
+	//FlGui::instance()->wait(waitint);
+	void (*waitFct)(double) = OLMsg::GetGuiWaitFunction();
+	if(waitFct) waitFct(waitint);
       }
       else if(ret > 0){
         return 0; // data is there!
@@ -361,21 +355,24 @@ std::string localSolverClient::toChar(){
   return sstream.str();
 }
 
+const std::string localSolverClient::getString(const std::string what){
+  std::string name=getName() + "/" + what;
+  std::vector<onelab::string> strings;
+  get(strings, name);
+  if(strings.size())
+    return strings[0].getValue();
+  else{
+    //OLMsg::Info("Undefined parameter <%s> in getString", name.c_str());
+    return "";
+  }
+}
+
 void localSolverClient::setAction(const std::string action){
   std::string name=getName() + "/Action";
   onelab::string s(name, action);
   s.setVisible(false);
   s.setNeverChanged(true);
   set(s);
-}
-
-const std::string localSolverClient::getString(const std::string what){
-  std::vector<onelab::string> strings;
-  get(strings, getName() + "/" + what);
-  if(strings.size())
-    return strings[0].getValue();
-  else
-    return "";
 }
 
 const bool localSolverClient::getList(const std::string type, std::vector<std::string> &choices){
@@ -391,9 +388,6 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
 
 bool localSolverClient::checkCommandLine(){
   OLMsg::Info("Check command line for <%s>",getName().c_str());
-  // if(getCommandLine().empty()){
-  //   // look if one has a commandLine on server
-  //   std::string commandLine = getString("CommandLine");
 
   if(getCommandLine().empty())
     OLMsg::Fatal("No commandline for client <%s>", getName().c_str());
@@ -620,17 +614,28 @@ bool MetaModel::checkCommandLines(){
   return allDefined;
 }
 
-void MetaModel::initialize()
+void MetaModel::construct()
 {
-  OLMsg::Info("Initialize Metamodel by the loader");
-  OLMsg::SetOnelabString(clientName + "/9CheckCommand","-a",false);
-  OLMsg::SetOnelabNumber(clientName + "/UseCommandLine",1,false);
-  OLMsg::SetOnelabNumber(clientName + "/Initialized",1,false);
+  OLMsg::Info("Metamodel now CONSTRUCTING");
+  openOnelabBlock();
+  parse_onefile( genericNameFromArgs + onelabExtension + ".save",false);
+  parse_onefile( genericNameFromArgs + onelabExtension);
+  closeOnelabBlock();
 }
 
+// void MetaModel::initialize()
+// {
+//   OLMsg::Info("Metamodel now INITIALIZING");
+//   OLMsg::Info("Initialize Metamodel by the loader");
+//   OLMsg::SetOnelabString(clientName + "/9CheckCommand","-a",false);
+//   OLMsg::SetOnelabNumber(clientName + "/UseCommandLine",1,false);
+//   OLMsg::SetOnelabNumber(clientName + "/Initialized",1,false);
+// }
+
+
 void MetaModel::analyze() {
+  OLMsg::Info("Metamodel now ANALYZING");
   std::string fileName = genericNameFromArgs + onelabExtension;
-  OLMsg::Info("Metamodel now ANALYZING",fileName.c_str());
   openOnelabBlock();
   parse_onefile(fileName);
   closeOnelabBlock();
@@ -638,8 +643,8 @@ void MetaModel::analyze() {
 
 
 void MetaModel::compute() {
+  OLMsg::Info("Metamodel now COMPUTING");
   std::string fileName = genericNameFromArgs + onelabExtension;
-  OLMsg::Info("Metamodel now COMPUTING",fileName.c_str());
   openOnelabBlock();
   parse_onefile(fileName);
   closeOnelabBlock();
@@ -696,7 +701,7 @@ void InterfacedClient::analyze() {
   std::vector<std::string> choices;
 
   setAction("check");
-  OLMsg::Info("Analyses <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
@@ -775,7 +780,7 @@ void InterfacedClient::compute(){
 
 void NativeClient::analyze() {
   setAction("check");
-  OLMsg::Info("Analyses <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   run();
 }
@@ -819,7 +824,7 @@ void EncapsulatedClient::analyze() {
   std::vector<std::string> choices;
 
   setAction("check");
-  OLMsg::Info("Analyses <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
@@ -861,7 +866,7 @@ void EncapsulatedClient::compute(){
   std::string cmd;
   std::vector<std::string> choices;
 
-  setAction("compute");
+  //setAction("compute");
   std::string name=getName();
   OLMsg::Info("Computes <%s> changed=%d", name.c_str(),
 	      onelab::server::instance()->getChanged(name));
@@ -958,7 +963,7 @@ void RemoteNativeClient::analyze(){
   std::vector<std::string> choices;
 
   setAction("check");
-  OLMsg::Info("Analyses <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
 
   if(getList("InputFiles",choices)){
@@ -974,7 +979,7 @@ void RemoteNativeClient::compute(){
   std::vector<std::string> choices;
 
   setAction("compute");
-  OLMsg::Info("Analyses <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
 
   if(getActive() && onelab::server::instance()->getChanged(getName())){

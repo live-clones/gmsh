@@ -1,7 +1,6 @@
 #include "OnelabClients.h"
 #include "metamodel.h"
 
-void (*my_gui_wait_fct)(double time) = 0;
 
 void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double time))
 {
@@ -9,8 +8,10 @@ void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double tim
   //copies the Msg::_onelabClient to  OLMsg::_onelabClient
   //This pointer refers to an object of class localGmsh() (cf GmshMessage.cpp)
   //which is a onelab::client with sone Gmsh features (merge and messages).
+  //Initilizes also the wait function the Gmsh Gui
+  //so that Gmsh windows may remain active during client computations.
   OLMsg::SetOnelabClient(client);
-  my_gui_wait_fct = gui_wait_fct;
+  OLMsg::SetGuiWaitFunction(gui_wait_fct);
 }
 
 int metamodel(const std::string &action){
@@ -51,9 +52,6 @@ int metamodel(const std::string &action){
   if( myModel->isTodo(EXIT)){
     // exit metamodel
   }
-  else if( myModel->isTodo(INITIALIZE)){
-    myModel->initialize();
-  }
   else if( myModel->isTodo(ANALYZE)){
     myModel->analyze();
   }
@@ -62,8 +60,13 @@ int metamodel(const std::string &action){
   }
   else
     OLMsg::Fatal("Main: Unknown Action <%d>", todo);
-
   delete myModel;
-  OLMsg::Info("Leave metamodel");
+
+  int reload=OLMsg::GetOnelabNumber("Gmsh/NeedReloadGeom");
+  OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",0,false);
+
+  OLMsg::Info("Leave metamodel - need reload=%d",reload);
   OLMsg::Info("==============================================");
+
+  return reload;
 }

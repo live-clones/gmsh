@@ -54,6 +54,8 @@ class OLMsg {
   static onelab::client *_onelabClient;
   // dictionnary for parameter names
   static std::set<std::string, fullNameLessThan> _fullNameDict;
+  // Gmsh wait function 
+  static void (*gui_wait_fct)(double time);
  public:
   OLMsg() {}
   static void Init(int argc, char **argv);
@@ -92,8 +94,10 @@ class OLMsg {
   static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
   //static void InitClient(std::string sockname);
-  static GmshClient *GetClient(){ return _client; }
   //static void FinalizeClient();
+  static GmshClient *GetClient(){ return _client; }
+  static void SetGuiWaitFunction(void (*fct)(double time));
+  static void (*GetGuiWaitFunction())(double);
 
   static void InitializeOnelab(const std::string &name);
   static void FinalizeOnelab();
