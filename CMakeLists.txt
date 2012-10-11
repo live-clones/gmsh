@@ -964,7 +964,7 @@ check_cxx_compiler_flag("-Wall" WALL)
 if(WALL)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
-       Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp)
+       Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp contrib/onelab/*.cpp)
   set_source_files_properties(${WALL_SRC} COMPILE_FLAGS "-Wall")
 endif(WALL)
 
