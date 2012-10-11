@@ -161,6 +161,18 @@ int StatFile(const std::string &fileName)
 #endif
 }
 
+int CreateDirectory(const std::string &dirName)
+{
+#if !defined(WIN32) || defined(__CYGWIN__)
+  if(mkdir(dirName.c_str(), 0777))
+    return 0;
+#else
+  if(_mkdir(dirName.c_str()))
+    return 0;
+#endif
+  return 1;
+}
+
 int KillProcess(int pid)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)

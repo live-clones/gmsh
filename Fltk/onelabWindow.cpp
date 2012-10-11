@@ -396,8 +396,19 @@ static std::string timeStamp()
   return std::string(stamp);
 }
 
-static void archiveSolutions(const std::string &timeStamp)
+static void saveDb(const std::string &fileName)
 {
+  Msg::StatusBar(2, true, "Saving database '%s'...", fileName.c_str());
+  if(onelab::server::instance()->toFile(fileName))
+    Msg::StatusBar(2, true, "Done saving database '%s'", fileName.c_str());
+  else
+    Msg::Error("Could not save database '%s'", fileName.c_str());
+}
+
+static void archiveSolutions(const std::string &fileName)
+{
+  std::string stamp = timeStamp();
+
   // add time stamp in all output files in the db, and rename them on disk
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
@@ -411,7 +422,8 @@ static void archiveSolutions(const std::string &timeStamp)
         if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
            split[1][n-9] != '_'){
           std::string old = names[j];
-          names[j] = split[0] + split[1] + timeStamp + split[2];
+          CreateDirectory(split[0] + "archive/");
+          names[j] = split[0] + "archive/" + split[1] + stamp + split[2];
           Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
           rename(old.c_str(), names[j].c_str());
         }
@@ -421,18 +433,15 @@ static void archiveSolutions(const std::string &timeStamp)
       onelab::server::instance()->set(strings[i]);
     }
   }
-  FlGui::instance()->onelab->rebuildTree();
-}
 
-static void saveDb(const std::string &fileName, const std::string &timeStamp="")
-{
-  std::vector<std::string> split = SplitFileName(fileName);
-  std::string name = split[0] + split[1] + timeStamp + split[2];
-  Msg::StatusBar(2, true, "Saving database '%s'...", name.c_str());
-  if(onelab::server::instance()->toFile(name))
-    Msg::StatusBar(2, true, "Done saving database '%s'", name.c_str());
-  else
-    Msg::Error("Could not save database '%s'", name.c_str());
+  // save stamped db
+  {
+    std::vector<std::string> split = SplitFileName(fileName);
+    CreateDirectory(split[0] + "archive/");
+    saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
+  }
+
+  FlGui::instance()->onelab->rebuildTree();
 }
 
 static void loadDb(const std::string &name)
@@ -582,9 +591,8 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
                              CTX::instance()->solver.autoArchiveSolutions)){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    std::string stamp = timeStamp();
-    if(CTX::instance()->solver.autoArchiveSolutions) archiveSolutions(stamp);
-    if(CTX::instance()->solver.autoSaveDatabase) saveDb(db, stamp);
+    if(CTX::instance()->solver.autoArchiveSolutions) archiveSolutions(db);
+    if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
   }
 
   FlGui::instance()->onelab->stop(false);
@@ -1296,6 +1304,9 @@ void solver_cb(Fl_Widget *w, void *data)
   }
   else
     FlGui::instance()->onelab->rebuildSolverList();
+
+  std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+  if(!StatFile(db)) loadDb(db);
 
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
