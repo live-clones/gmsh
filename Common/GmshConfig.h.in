@@ -45,6 +45,7 @@
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB_METAMODEL
 #cmakedefine HAVE_OPENGL
+#cmakedefine HAVE_OPTHOM
 #cmakedefine HAVE_OSMESA
 #cmakedefine HAVE_PARSER
 #cmakedefine HAVE_PETSC
