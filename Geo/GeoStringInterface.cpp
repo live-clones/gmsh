@@ -27,14 +27,14 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
     std::vector<std::string> split = SplitFileName(fileName);
     if(split[2].size() && split[2] != ".geo" && split[2] != ".GEO"){
       std::ostringstream sstream;
-      sstream << 
+      sstream <<
         "A scripting command is going to be appended to a non-`.geo' file. Are\n"
         "you sure you want to proceed?\n\n"
         "You probably want to create a new `.geo' file containing the command\n"
         "`Merge \"" << split[1] + split[2] << "\";' and use that file instead.\n\n"
         "(To disable this warning in the future, select `Enable expert mode'\n"
         "in the option dialog.)";
-      int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel", "Proceed as is", 
+      int ret = Msg::GetAnswer(sstream.str().c_str(), 2, "Cancel", "Proceed as is",
                                "Create new `.geo' file");
       if(ret == 2){
         std::string newFileName = split[0] + split[1] + ".geo";
@@ -137,7 +137,7 @@ void add_recosurf(List_T *list, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_trsfline(std::vector<int> &l, std::string fileName, std::string type, 
+void add_trsfline(std::vector<int> &l, std::string fileName, std::string type,
                   std::string typearg, std::string pts)
 {
   std::ostringstream sstream;
@@ -194,10 +194,14 @@ void add_embedded(std::string what, std::vector<int> &l, std::string fileName)
   add_infile(sstream.str(), fileName, true);
 }
 
-void add_param(std::string par, std::string value, std::string fileName)
+void add_param(std::string par, std::string value, std::string label,
+               std::string path, std::string fileName)
 {
   std::ostringstream sstream;
-  sstream << par << " = " << value << ";";
+  sstream << "DefineConstant[ " << par << " = { " << value;
+  if(label.size()) sstream << ", Label \"" << label << "\"";
+  if(path.size()) sstream << ", Path \"" << path << "\"";
+  sstream << "}];";
   add_infile(sstream.str(), fileName);
 }
 
@@ -205,18 +209,18 @@ void add_point(std::string fileName, std::string x, std::string y,
                std::string z, std::string lc)
 {
   std::ostringstream sstream;
-  sstream << "Point(" << NEWPOINT() << ") = {" << x << ", " << y << ", " 
+  sstream << "Point(" << NEWPOINT() << ") = {" << x << ", " << y << ", "
           << z ;
   if(lc.size()) sstream << ", " << lc;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_field_option(int field_id, std::string option_name, 
+void add_field_option(int field_id, std::string option_name,
                       std::string option_value, std::string fileName)
 {
   std::ostringstream sstream;
-  sstream << "Field[" << field_id << "]." << option_name << " = " 
+  sstream << "Field[" << field_id << "]." << option_name << " = "
           << option_value << ";";
   add_infile(sstream.str(), fileName);
 }
@@ -281,7 +285,7 @@ void add_lineloop(List_T *list, std::string fileName, int *numloop)
 
 void add_surf(std::string type, List_T *list, std::string fileName)
 {
-  std::ostringstream sstream;  
+  std::ostringstream sstream;
   sstream << type << "(" << NEWSURFACE() << ") = {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
@@ -305,7 +309,7 @@ void add_vol(List_T *list, std::string fileName)
 void add_physical(std::string type, List_T *list, std::string fileName)
 {
   std::ostringstream sstream;
-  sstream << "Physical " << type << "(" << NEWPHYSICAL() << ") = {" 
+  sstream << "Physical " << type << "(" << NEWPHYSICAL() << ") = {"
           << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
@@ -315,15 +319,15 @@ void add_compound(std::string type, List_T *list, std::string fileName)
   std::ostringstream sstream;
   if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
   if (type == "Surface"){
-    sstream << "Compound " << type << "(" << NEWSURFACE()+1000 << ") = {" 
+    sstream << "Compound " << type << "(" << NEWSURFACE()+1000 << ") = {"
 	    << list2string(list) << "};";
   }
   else if (type == "Line"){
-    sstream << "Compound " << type << "(" << NEWLINE()+1000 << ") = {" 
+    sstream << "Compound " << type << "(" << NEWLINE()+1000 << ") = {"
 	    << list2string(list) << "};";
   }
   else{
-    sstream << "Compound " << type << "(" << NEWREG() << ") = {" 
+    sstream << "Compound " << type << "(" << NEWREG() << ") = {"
 	    << list2string(list) << "};";
   }
   add_infile(sstream.str(), fileName);
@@ -341,12 +345,12 @@ void translate(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void rotate(int add, List_T *list, std::string fileName, std::string what, 
+void rotate(int add, List_T *list, std::string fileName, std::string what,
             std::string ax, std::string ay, std::string az,
             std::string px, std::string py, std::string pz, std::string angle)
 {
   std::ostringstream sstream;
-  sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {" 
+  sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {"
           << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
   if(add) sstream << "Duplicata { ";
   sstream << what << "{" << list2string(list) << "};";
@@ -379,21 +383,21 @@ void symmetry(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void extrude(List_T *list, std::string fileName, std::string what, 
+void extrude(List_T *list, std::string fileName, std::string what,
              std::string tx, std::string ty, std::string tz)
 {
   std::ostringstream sstream;
-  sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what 
+  sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what
           << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void protude(List_T *list, std::string fileName, std::string what, 
+void protude(List_T *list, std::string fileName, std::string what,
              std::string ax, std::string ay, std::string az,
              std::string px, std::string py, std::string pz, std::string angle)
 {
   std::ostringstream sstream;
-  sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {" 
+  sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {"
           << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
           << what << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName);

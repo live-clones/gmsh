@@ -18,6 +18,8 @@ static void con_geometry_define_parameter_cb(Fl_Widget *w, void *data)
 {
   add_param(FlGui::instance()->geoContext->input[0]->value(),
             FlGui::instance()->geoContext->input[1]->value(),
+            FlGui::instance()->geoContext->input[24]->value(),
+            FlGui::instance()->geoContext->input[25]->value(),
             GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
 }
@@ -49,7 +51,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   int width = 31 * FL_NORMAL_SIZE;
   int height = 4 * WB + 8 * BH;
 
-  win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false, 
+  win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
                           "Contextual Geometry Definitions");
   win->box(GMSH_WINDOW_BOX);
   {
@@ -62,9 +64,12 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       input[0]->value("lc");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Value");
       input[1]->value("0.1");
-      for(int i = 0; i < 2; i++) {
-        input[i]->align(FL_ALIGN_RIGHT);
-      }
+      input[24] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Label");
+      input[24]->value("");
+      input[25] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Path");
+      input[25]->value("Gmsh/Parameters");
+      for(int i = 0; i < 2; i++)   input[i]->align(FL_ALIGN_RIGHT);
+      for(int i = 24; i < 26; i++) input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
           (width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Add");
@@ -251,7 +256,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       choice[0]->align(FL_ALIGN_RIGHT);
       group[1]->end();
     }
-    
+
     // 2: Transfinite surface
     {
       group[2] = new Fl_Group

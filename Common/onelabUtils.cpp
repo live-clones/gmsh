@@ -68,7 +68,6 @@ namespace onelabUtils {
       }
       onelab::string o("Gmsh/MshFileName", name, "Mesh name");
       o.setKind("file");
-      o.setAttribute("Closed", "1");
       c->set(o);
       return name;
     }

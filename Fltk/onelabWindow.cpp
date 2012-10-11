@@ -23,6 +23,7 @@
 #include <FL/Fl_Output.H>
 #include <FL/fl_ask.H>
 #include "inputRange.h"
+#include "inputRegion.h"
 #include "paletteWindow.h"
 #include "menuWindow.h"
 #include "fileDialogs.h"
@@ -544,7 +545,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(isMetamodel){
 #if defined(HAVE_ONELAB_METAMODEL)
-      if(metamodel(action))  
+      if(metamodel(action))
 	geometry_reload_cb(0, 0);
 #endif
     }
@@ -983,37 +984,6 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   return but;
 }
 
-static std::string _set2string(const std::set<std::string> &s)
-{
-  std::string out;
-  for(std::set<std::string>::const_iterator it = s.begin(); it != s.end(); it++){
-    if(it != s.begin()) out += ", ";
-    out += *it;
-  }
-  return out;
-}
-
-static std::string trim(const std::string &str, const std::string& white=" ")
-{
-  size_t beg = str.find_first_not_of(white);
-  if(beg == std::string::npos) return "";
-  size_t end = str.find_last_not_of(white);
-  return str.substr(beg, end - beg + 1);
-}
-
-static std::set<std::string> _string2set(const std::string &s)
-{
-  std::set<std::string> out;
-  std::string::size_type first = 0;
-  while(1){
-    std::string str = trim(onelab::parameter::getNextToken(s, first, ','));
-    //str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
-    if(str.empty()) break;
-    out.insert(str);
-  }
-  return out;
-}
-
 static void onelab_region_input_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -1021,8 +991,8 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
   std::vector<onelab::region> regions;
   onelab::server::instance()->get(regions, name);
   if(regions.size()){
-    Fl_Input *o = (Fl_Input*)w;
-    regions[0].setValue(_string2set(o->value()));
+    inputRegion *o = (inputRegion*)w;
+    regions[0].setValue(o->value());
     onelab::server::instance()->set(regions[0]);
   }
 }
@@ -1032,16 +1002,15 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
 {
   // non-editable value
   if(p.getReadOnly()){
-    Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
-    but->value(_set2string(p.getValue()).c_str());
+    inputRegion *but = new inputRegion(1, 1, _itemWidth, 1, true);
+    but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
     return but;
   }
 
-  // general group input -- will be improved :-)
-  Fl_Input *but = new Fl_Input(1, 1, _itemWidth, 1);
-  but->value(_set2string(p.getValue()).c_str());
+  inputRegion *but = new inputRegion(1, 1, _itemWidth, 1, false);
+  but->value(p.getValue());
   but->align(FL_ALIGN_RIGHT);
   but->callback(onelab_region_input_cb, (void*)n);
   if(highlight) but->color(c);
@@ -1052,13 +1021,13 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::function &p, Fl_Tree_Item *
                                              bool highlight, Fl_Color c)
 {
   // non-editable value
-  //if(p.getReadOnly()){
+  if(1 || p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
     but->value("TODO function");
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
     return but;
-  //}
+  }
 }
 
 void onelabWindow::rebuildTree()
