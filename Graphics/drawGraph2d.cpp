@@ -479,9 +479,15 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     opt->tmpMin = data->getMin(opt->timeStep);
     opt->tmpMax = data->getMax(opt->timeStep);
   }
-  else{
+  else if(opt->abscissaRangeType == PViewOptions::Custom){
+    // FIXME: should also compute min/max for reduced abscissa range over all
+    // steps
     opt->tmpMin = ymin;
     opt->tmpMax = ymax;
+  }
+  else {
+    opt->tmpMin = data->getMin();
+    opt->tmpMax = data->getMax();
   }
 
   if(opt->scaleType == PViewOptions::Logarithmic){
