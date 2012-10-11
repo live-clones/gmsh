@@ -944,7 +944,10 @@ namespace onelab{
     {
       server::instance()->registerClient(this);
     }
-    virtual ~localClient(){}
+    virtual ~localClient()
+    {
+      server::instance()->unregisterClient(this);
+    }
     virtual bool set(const number &p){ return _set(p); }
     virtual bool set(const string &p){ return _set(p); }
     virtual bool set(const function &p){ return _set(p); }
