@@ -3,12 +3,22 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#ifndef _INPUT_REGION_H_
+#define _INPUT_REGION_H_
+
 #include <string>
 #include <stdio.h>
+#include <set>
+#include <string>
 #include <FL/Fl.H>
+#include <FL/Fl_Group.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Button.H>
+#include "FlGui.h"
+#include "GEntity.h"
+#include "Options.h"
+#include "GmshDefines.h"
 
 class inputRegion : public Fl_Group {
  private:
@@ -19,11 +29,7 @@ class inputRegion : public Fl_Group {
     inputRegion *b = (inputRegion*)data;
     b->do_callback();
   }
-  static void _region_butt_cb(Fl_Widget *w, void *data)
-  {
-    inputRegion *b = (inputRegion*)data;
-    printf("SELECT region with mouse!\n");
-  }
+  static void _region_butt_cb(Fl_Widget *w, void *data);
   std::string _set2string(const std::set<std::string> &s)
   {
     std::string out;
@@ -66,7 +72,7 @@ class inputRegion : public Fl_Group {
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
 
-    _region_butt = new Fl_Button(x + input_w, y, butt_w, h, ".");
+    _region_butt = new Fl_Button(x + input_w, y, butt_w, h, "+");
     _region_butt->callback(_region_butt_cb, this);
     _region_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _region_butt->tooltip("Interactive region selection");
@@ -82,3 +88,5 @@ class inputRegion : public Fl_Group {
     _input->value(_set2string(val).c_str());
   }
 };
+
+#endif

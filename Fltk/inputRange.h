@@ -3,6 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#ifndef _INPUT_RANGE_H_
+#define _INPUT_RANGE_H_
+
 #include <string>
 #include <sstream>
 #include <stdio.h>
@@ -316,3 +319,5 @@ class inputRange : public Fl_Group {
   int color(){ return _input->color(); }
   Fl_Value_Input *input(){ return _input; }
 };
+
+#endif
