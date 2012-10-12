@@ -25,6 +25,7 @@
 #include <windows.h>
 #include <process.h>
 #include <io.h>
+#include <direct.h>
 #endif
 
 #if defined(__APPLE__)
