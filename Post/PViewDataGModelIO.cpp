@@ -46,6 +46,14 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
   return true;
 }
 
+void PViewDataGModel::destroyData()
+{
+  for(unsigned int i=0;i<_steps.size();i++)
+  {
+    _steps[i]->destroyData();
+  }
+}
+
 bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fileName,
                               int fileIndex, FILE *fp, bool binary, bool swap,
                               int step, double time, int partition, int numComp,
@@ -125,7 +133,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
   return true;
 }
 
-bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool savemesh)
+bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool savemesh,bool multipleView)
 {
   if(_steps.empty()) return true;
 
@@ -139,7 +147,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool sa
   bool writeNodesAndElements = savemesh;
   FILE *fp;
   if(writeNodesAndElements){
-    if(!model->writeMSH(fileName, 2.0, binary)) return false;
+    if(!model->writeMSH(fileName, 2.0, binary,false,false,1.0,0,0,multipleView)) return false;
     // append data
     fp = fopen(fileName.c_str(), binary ? "ab" : "a");
     if(!fp){
@@ -148,7 +156,10 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool sa
     }
   }
   else{
-    fp = fopen(fileName.c_str(), binary ? "wb" : "w");
+    if(multipleView)
+      fp = fopen(fileName.c_str(), binary ? "ab" : "a");
+    else
+      fp = fopen(fileName.c_str(), binary ? "wb" : "w");
     if(!fp){
       Msg::Error("Unable to open file '%s'", fileName.c_str());
       return false;

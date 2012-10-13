@@ -10,7 +10,7 @@
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 
-template<class real>
+template<class Real>
 class stepData{
  private:
   // a pointer to the underlying model
@@ -34,7 +34,7 @@ class stepData{
   // optimal. This is the price to pay if we want 1) rapid access to
   // the data and 2) not to store any additional info in MVertex or
   // MElement)
-  std::vector<real*> *_data;
+  std::vector<Real*> *_data;
   // a vector containing the multiplying factor allowing to compute
   // the number of values stored in _data for each index (number of
   // values = getMult() * getNumComponents()). If _mult is empty, a
@@ -52,7 +52,7 @@ class stepData{
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
   }
-  stepData(stepData<real> &other) : _data(0)
+  stepData(stepData<Real> &other) : _data(0)
   {
     _model = other._model;
     _entities = other._entities;
@@ -65,12 +65,12 @@ class stepData{
     _numComp = other._numComp;
     if(other._data){
       int n = other.getNumData();
-      _data = new std::vector<real*>(n, (real*)0);
+      _data = new std::vector<Real*>(n, (Real*)0);
       for(int i = 0; i < n; i++){
-        real *d = other.getData(i);
+        Real *d = other.getData(i);
         if(d){
           int m = other.getMult(i) * _numComp;
-          (*_data)[i] = new real[m];
+          (*_data)[i] = new Real[m];
           for(int j = 0; j < m; j++) (*_data)[i][j] = d[j];
         }
       }
@@ -109,15 +109,15 @@ class stepData{
   }
   void resizeData(int n)
   {
-    if(!_data) _data = new std::vector<real*>(n, (real*)0);
-    if(n > (int)_data->size()) _data->resize(n, (real*)0);
+    if(!_data) _data = new std::vector<Real*>(n, (Real*)0);
+    if(n > (int)_data->size()) _data->resize(n, (Real*)0);
   }
-  real *getData(int index, bool allocIfNeeded=false, int mult=1)
+  Real *getData(int index, bool allocIfNeeded=false, int mult=1)
   {
     if(allocIfNeeded){
       if(index >= getNumData()) resizeData(index + 100); // optimize this
       if(!(*_data)[index]){
-        (*_data)[index] = new real[_numComp * mult];
+        (*_data)[index] = new Real[_numComp * mult];
         for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
       }
       if(mult > 1){
@@ -234,12 +234,14 @@ class PViewDataGModel : public PViewData {
   bool addData(GModel *model, std::map<int, std::vector<double> > &data,
                int step, double time, int partition, int numComp);
 
+  // Allow to destroy the data
+  void destroyData();
   // I/O routines
   bool readMSH(const std::string &viewName, const std::string &fileName,
                int fileIndex, FILE *fp, bool binary, bool swap, int step,
                double time, int partition, int numComp, int numNodes,
                const std::string &interpolationScheme);
-  bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
+  bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true,bool multipleView=false);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
 };

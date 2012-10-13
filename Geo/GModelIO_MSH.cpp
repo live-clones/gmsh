@@ -373,13 +373,17 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T
 int GModel::writeMSH(const std::string &name, double version, bool binary,
                      bool saveAll, bool saveParametric,
                      double scalingFactor, int elementStartNum,
-                     int saveSinglePartition)
+                     int saveSinglePartition,bool multipleView )
 {
   if(version < 3)
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
-                      scalingFactor, elementStartNum, saveSinglePartition);
+                      scalingFactor, elementStartNum, saveSinglePartition,multipleView);
 
-  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp;
+  if(multipleView)
+    fp = fopen(name.c_str(), binary ? "ab" : "a");
+  else
+    fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

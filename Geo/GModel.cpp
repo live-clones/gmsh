@@ -471,7 +471,7 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   return -1;
 }
 
-int GModel::getDim()
+int GModel::getDim() const
 {
   if(getNumRegions() > 0) return 3;
   if(getNumFaces() > 0) return 2;

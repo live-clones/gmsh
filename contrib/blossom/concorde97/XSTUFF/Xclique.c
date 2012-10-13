@@ -1143,15 +1143,15 @@ Xnodeptr *u1, *u2, *u3, *u4, *u5;
 #endif
 {
     printf ("U1: ");
-    nodeptr_print (u1);
+    nodeptr_print (G,u1);
     printf ("U2: ");
-    nodeptr_print (u2);
+    nodeptr_print (G,u2);
     printf ("U3: ");
-    nodeptr_print (u3);
+    nodeptr_print (G,u3);
     printf ("U4: ");
-    nodeptr_print (u4);
+    nodeptr_print (G,u4);
     printf ("U5: ");
-    nodeptr_print (u5);
+    nodeptr_print (G,u5);
 }
 #endif /* DEBUG */
 

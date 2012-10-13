@@ -55,10 +55,10 @@ static int
 #ifdef  DEBUG
 #ifdef CC_PROTOTYPE_ANSI
 static void
-    dumpcutcadj (Xgraph *G),
+    dumpcutcadj (Xgraph *G);
 #else
 static void
-    dumpcutcadj (),
+    dumpcutcadj ();
 #endif
 #endif
 

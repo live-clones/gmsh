@@ -48,7 +48,8 @@ class GModel
   int _writeMSH2(const std::string &name, double version=2.2, bool binary=false,
                  bool saveAll=false, bool saveParametric=false,
                  double scalingFactor=1.0, int elementStartNum=0,
-                 int saveSinglePartition=0);
+                 int saveSinglePartition=0,
+                 bool multipleView=false);
 
  protected:
   // the name of the model
@@ -299,7 +300,7 @@ class GModel
   std::string getElementaryName(int dim, int num);
 
   //get the highest dimension of the GModel
-  int getDim();
+  int getDim() const;
 
   // set the selection flag on all entities
   void setSelection(int val);
@@ -554,7 +555,7 @@ class GModel
   int writeMSH(const std::string &name, double version=2.2, bool binary=false,
                bool saveAll=false, bool saveParametric=false,
                double scalingFactor=1.0, int elementStartNum=0,
-               int saveSinglePartition=0);
+               int saveSinglePartition=0, bool multipleView=false);
   int writePartitionedMSH(const std::string &baseName, bool binary=false,
                           bool saveAll=false, bool saveParametric=false,
                           double scalingFactor=1.0);
