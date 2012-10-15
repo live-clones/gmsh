@@ -20,7 +20,6 @@ static std::string onelabExtension(".ol");
 // Possible actions for clients
 enum parseMode {INITIALIZE, REGISTER, ANALYZE, COMPUTE, EXIT, STOP};
 
-static char charSep() { return '\0'; }
 #if defined(WIN32)
 static std::string dirSep("\\");
 static std::string cmdSep(" & ");
@@ -42,7 +41,7 @@ std::string removeBlanks(const std::string &in);
 bool isPath(const std::string &in);
 
 // Parser TOOLS 
-int enclosed(const std::string &in, std::vector<std::string> &arguments);
+int enclosed(const std::string &in, std::vector<std::string> &arguments, size_t &end);
 int extract(const std::string &in, std::string &paramName, std::string &action, std::vector<std::string> &arguments);
 bool extractRange(const std::string &in, std::vector<double> &arguments);
 std::string extractExpandPattern(const std::string& str);
@@ -51,7 +50,7 @@ std::string extractExpandPattern(const std::string& str);
 typedef std::vector <std::vector <double> > array;
 array read_array(std::string fileName, char sep);
 double find_in_array(int i, int j, const std::vector <std::vector <double> > &data);
-std::vector<double> extract_column(const int j, array data);
+//std::vector<double> extract_column(const int j, array data);
 
 static std::string getShortName(const std::string &name) {
   std::string s = name;
@@ -219,8 +218,12 @@ class remoteClient {
 
 class MetaModel : public localSolverClient {
  private:
+  // clients in order of appearance in the metamodel 
   std::vector<localSolverClient *> _clients;
+  // action performed at this metamodel call
   parseMode _todo;
+  // remains false as long as the clients do not need recomputation 
+  bool _started;
  public:
  MetaModel(const std::string &cmdl, const std::string &wdir, const std::string &cname, const std::string &fname) 
    : localSolverClient(cname,cmdl,wdir){
@@ -228,6 +231,7 @@ class MetaModel : public localSolverClient {
     genericNameFromArgs = fname.size() ? fname : cmdl;
     setWorkingDir(wdir); // wdir from args
     _todo=REGISTER;
+    _started=false;
     construct();
   }
   ~MetaModel(){}
@@ -235,6 +239,7 @@ class MetaModel : public localSolverClient {
   void setTodo(const parseMode x) { _todo=x; }
   parseMode getTodo() { return _todo; }
   bool isTodo(const parseMode x) { return (_todo==x);}
+  bool isStarted(bool x) { _started = _started || x; return _started; }
   citer firstClient(){ return _clients.begin(); }
   citer lastClient(){ return _clients.end(); }
   int getNumClients() { return _clients.size(); };
@@ -253,7 +258,7 @@ class MetaModel : public localSolverClient {
   std::string genericNameFromArgs, clientName;
   void client_sentence(const std::string &name, const std::string &action, 
 		       const std::vector<std::string> &arguments);
-  std::string toChar(){}
+  std::string toChar(){ return "";}
   void PostArray(std::vector<std::string> choices);
   void construct();
   void analyze();
@@ -320,6 +325,15 @@ public:
   void compute() ;
 };
 
+class RemoteEncapsulatedClient : public EncapsulatedClient, public remoteClient {
+public:
+ RemoteEncapsulatedClient(const std::string &name, const std::string &cmdl, const std::string &wdir, const std::string &host, const std::string &rdir) 
+   : EncapsulatedClient(name,cmdl,wdir), remoteClient(host,rdir) {}
+  ~RemoteEncapsulatedClient(){}
+
+  bool checkCommandLine();
+  void compute() ;
+};
 #endif
 
 

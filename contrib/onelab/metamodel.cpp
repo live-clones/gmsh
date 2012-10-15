@@ -16,6 +16,7 @@ void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double tim
 
 int metamodel(const std::string &action){
   OLMsg::Info("Start metamodel");
+  OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
 
   parseMode todo;
   if(action == "initialize")
@@ -32,9 +33,6 @@ int metamodel(const std::string &action){
   std::string modelName = OLMsg::GetOnelabString("Arguments/FileName");
   std::string workingDir = OLMsg::GetOnelabString("Arguments/WorkingDir");
   std::string clientName = "meta";
-
-  std::cout << "FHF ModelName=" << modelName << std::endl;
-  std::cout << "FHF WorkingDir=" << workingDir << std::endl;
 
   MetaModel *myModel =
     new MetaModel(clientName, workingDir, clientName, modelName);

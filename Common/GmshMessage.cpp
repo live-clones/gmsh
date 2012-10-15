@@ -733,8 +733,24 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-    if(!ps[0].getReadOnly())
+
+    // modified implementation of ReadOnly
+    if(fopt.count("ReadOnly")) {
+      ps[0].setReadOnly(fopt["ReadOnly"][0] ? true : false);
+      if(ps[0].getReadOnly()) 
+	// If the parameter is set "read-only" in this statement
+	// use local value
+	ps[0].setValue(val[0]);
+      else
+	// use value from server
+	val[0] = ps[0].getValue(); 
+    }
+    else
       val[0] = ps[0].getValue(); // use value from server
+
+    // if(!ps[0].getReadOnly())
+    //   val[0] = ps[0].getValue(); // use value from server
+
     // keep track of these attributes, which can be changed server-side
     if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
        ps[0].getMax() != onelab::parameter::maxNumber() ||
@@ -790,12 +806,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
   }
   if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
-  if(fopt.count("ReadOnly")) {
-    ps[0].setReadOnly(fopt["ReadOnly"][0] ? true : false);
-    // If the parameter is set "read-only" here, the local value is used instead
-    // of that from the server
-    if(ps[0].getReadOnly()) ps[0].setValue(val[0]);
-  }
   if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
   if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);
   if(copt.count("ShortHelp")) ps[0].setLabel(copt["ShortHelp"][0]);
