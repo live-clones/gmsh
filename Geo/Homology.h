@@ -99,11 +99,27 @@ class Homology
   GModel* getModel() const { return _model; }
   void setFileName(std::string fileName) { _fileName = fileName; }
 
+  void getDomain(std::vector<int>& domain) { domain = _domain; }
+  void getSubdomain(std::vector<int>& subdomain) { subdomain = _subdomain; }
+
   // find the bases of (co)homology spaces
   // if dim is empty, find 0-,1-,2-,3-(co)homology spaces bases
   // otherwise only find those indicated in dim
   void findHomologyBasis(std::vector<int> dim=std::vector<int>());
   void findCohomologyBasis(std::vector<int> dim=std::vector<int>());
+
+  // find a homology and cohomology basis pair such that
+  // the incidence matrix of the bases is an identity matrix
+  // if master==0, homology basis determines the cohomology basis
+  // if dim is empty, find 0-,1-,2-,3-(co)homology spaces bases
+  // otherwise only find those indicated in dim
+  void findCompatibleBasisPair(int master=0,
+                               std::vector<int> dim=std::vector<int>());
+
+  // is the (co)homology in given dimensions already compited
+  // if dim is empty, return true only if computed in all dimensions
+  bool isHomologyComputed(std::vector<int> dim=std::vector<int>());
+  bool isCohomologyComputed(std::vector<int> dim=std::vector<int>());
 
   // add chains to Gmsh model
   // dim: only add dim-chains if dim != -1

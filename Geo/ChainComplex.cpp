@@ -668,7 +668,7 @@ void ChainComplex::smoothenChain(std::map<Cell*, int, Less_Cell>& cells)
   }
   eraseNullCells(cells);
   int size = cells.size();
-  Msg::Info("Smoothened a %d-chain from %d cells to %d cells",
+  Msg::Info("Simplified a %d-chain from %d cells to %d cells",
             dim, start, size);
 }
 

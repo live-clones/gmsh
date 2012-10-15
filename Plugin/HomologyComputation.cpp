@@ -25,7 +25,7 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "CreatePostProcessingViews", NULL, 1.},
   {GMSH_FULLRC, "ReductionOmit", NULL, 1.},
   {GMSH_FULLRC, "ReductionCombine", NULL, 2.},
-  {GMSH_FULLRC, "PostProcessSmoothen", NULL, 1.}
+  {GMSH_FULLRC, "PostProcessSimplify", NULL, 1.}
 };
 
 StringXString HomologyComputationOptions_String[] = {

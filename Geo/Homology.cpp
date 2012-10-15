@@ -137,8 +137,8 @@ void Homology::_deleteChains(std::vector<int> dim)
     if(d < 0 || d > 3) continue;
     for(unsigned int i = 0; i < _chains[d].size(); i++) {
       delete _chains[d].at(i);
-      _chains[d].clear();
     }
+    _chains[d].clear();
     _homologyComputed[d] = false;
   }
 }
@@ -157,8 +157,8 @@ void Homology::_deleteCochains(std::vector<int> dim)
     if(d < 0 || d > 3) continue;
     for(unsigned int i = 0; i < _cochains[d].size(); i++) {
       delete _cochains[d].at(i);
-      _cochains[d].clear();
     }
+    _cochains[d].clear();
     _cohomologyComputed[d] = false;
   }
 }
@@ -179,7 +179,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(_combine, _omit);
 
-  if(!dim.empty() && _combine > 1) {
+  if(!dim.empty() && _combine > 1 && !_smoothen) {
     for(int i = 1; i <= 3;  i++) {
       if(!std::binary_search(dim.begin(), dim.end(), i)) {
         _cellComplex->cocombine(i-1);
@@ -297,7 +297,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
       std::string name = "H^" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
-      chainComplex.getBasisChain(chain, i, j, 3, _smoothen);
+      chainComplex.getBasisChain(chain, i, j, 3, false);
       int torsion = chainComplex.getTorsion(j,i);
       if(!chain.empty()) {
         _createChain(chain, name, true);
@@ -328,6 +328,102 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   else {
     for(unsigned int i = 0; i < dim.size(); i++)
       _cohomologyComputed[dim.at(i)] = true;
+  }
+}
+
+bool Homology::isHomologyComputed(std::vector<int> dim)
+{
+  if(dim.empty()) return (_homologyComputed[0] &&
+                          _homologyComputed[1] &&
+                          _homologyComputed[2] &&
+                          _homologyComputed[3]);
+
+  bool computed = true;
+  for(unsigned int i = 0; i < dim.size(); i++) {
+    int d = dim.at(i);
+    if(d < 0 || d > 3) continue;
+    computed = computed && _homologyComputed[d];
+  }
+  return computed;
+}
+
+bool Homology::isCohomologyComputed(std::vector<int> dim)
+{
+  if(dim.empty()) return (_cohomologyComputed[0] &&
+                          _cohomologyComputed[1] &&
+                          _cohomologyComputed[2] &&
+                          _cohomologyComputed[3]);
+
+  bool computed = true;
+  for(unsigned int i = 0; i < dim.size(); i++) {
+    int d = dim.at(i);
+    if(d < 0 || d > 3) continue;
+    computed = computed && _cohomologyComputed[d];
+  }
+  return computed;
+}
+
+void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
+{
+  if(!this->isHomologyComputed(dim)) this->findHomologyBasis(dim);
+  if(!this->isCohomologyComputed(dim)) this->findCohomologyBasis(dim);
+  for(unsigned int idim = 0 ; idim < dim.size(); idim++) {
+    int d = dim.at(idim);
+    if(d < 1 || d > 2) continue;
+    int n = this->betti(d);
+    if(n < 2) continue;
+    if((int)_chains[d].size() != n || (int)_cochains[d].size() != n) {
+      Msg::Warning("Cannot produce compatible %d-(co)homology bases.", d);
+      Msg::Debug("%d basis %d-chains and %d basis %d-cochains.",
+                 (int)_chains[d].size(), d, (int)_cochains[d].size(), d);
+      continue;
+    }
+    fullMatrix<double> m(n,n);
+    for(int i = 0; i < n; i++) {
+      for(int j = 0; j < n; j++) {
+        if(master==0) m(i,j) = incidence(*_cochains[d].at(i), *_chains[d].at(j));
+        else m(i,j) = incidence(*_chains[d].at(i), *_cochains[d].at(j));
+      }
+    }
+
+    int det = m.determinant();
+    if(abs(det) != 1 || !m.invertInPlace()) {
+      Msg::Warning("Cannot produce compatible %d-(co)homology bases.", d);
+      Msg::Debug("Incidence matrix: ");
+      for(int i = 0; i < n; i++)
+        for(int j = 0; j < n; j++)
+          Msg::Debug("(%d, %d) = %d", i, j, m(i,j));
+      continue;
+    }
+
+    std::vector<Chain<int>*> newBasis(n, NULL);
+
+    if(master==0) {
+      for(int i = 0; i < n; i++) {
+        newBasis.at(i) = new Chain<int>();
+        for(int j = 0; j < n; j++) {
+          *newBasis.at(i) += (int)m(i,j)*(*_cochains[d].at(j));
+        }
+      }
+      for(int i = 0; i < n; i++) {
+        newBasis.at(i)->setName(_cochains[d].at(i)->getName());
+        delete _cochains[d].at(i);
+        _cochains[d].at(i) = newBasis.at(i);
+      }
+    }
+    else {
+      for(int i = 0; i < n; i++) {
+        newBasis.at(i) = new Chain<int>();
+        for(int j = 0; j < n; j++) {
+          *newBasis.at(i) += (int)m(i,j)*(*_chains[d].at(j));
+        }
+      }
+      for(int i = 0; i < n; i++) {
+        newBasis.at(i)->setName(_chains[d].at(i)->getName());
+        delete _chains[d].at(i);
+        _chains[d].at(i) = newBasis.at(i);
+      }
+    }
   }
 }
 
