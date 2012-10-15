@@ -78,7 +78,7 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
   do{
     if(in[pos]=='(') count++;
     if(in[pos]==')') count--;
-    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') ){
+    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
       arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
       if(count!=1)
 	OLMsg::Fatal("Syntax error: <%s>",in.c_str());
