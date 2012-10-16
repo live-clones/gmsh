@@ -524,24 +524,22 @@ void smoothing::optimize_face(GFace* gf){
     }
   }
 
-  // destroy the mesh
   deMeshGFace killer;
   killer(gf);
 
-  // put all additional vertices in the list of
-  // vertices
+  int option;
+  option = gf->getMeshingAlgo();
+  gf->setMeshingAlgo(ALGO_2D_MESHADAPT);
+	
   gf->additionalVertices = mesh_vertices;
-  // remesh the face with all those vertices in
-  Msg::Info("Lloyd remeshing of face %d ", gf->tag());
   meshGFace mesher;
   mesher(gf);
-  // assign those vertices to the face internal vertices
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
-                           gf->additionalVertices.begin(),
-                           gf->additionalVertices.end());
-  // clear the list of additional vertices
+  
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),gf->additionalVertices.begin(),gf->additionalVertices.end()); //?
   gf->additionalVertices.clear();
 
+  gf->setMeshingAlgo(option);	
+	
   free(initial_conditions);
   free(variables_scales);
 }
