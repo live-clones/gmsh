@@ -17,21 +17,42 @@ getLocalFunctions(const MElement& element) const{
     throw Exception("Element not found for closure");
 
   vector<bool>* closure   = it->second;
-  const unsigned int size = closure->size();
 
   // Get Basis //
-  const vector<const Polynomial*>&    basis = getBasis(element).getFunctions(0);
-  const vector<const Polynomial*>& revBasis = getBasis(element).getFunctions(1);
+  const vector       <const Polynomial*>&   node = getBasis(element).getNodeFunctions();
+  const vector<vector<const Polynomial*>*>& edge = getBasis(element).getEdgeFunctions();
+  const vector       <const Polynomial*>&   cell = getBasis(element).getCellFunctions();
 
   // Get Functions //
-  vector<const Polynomial*> fun(size);
+  unsigned int i           = 0;
+  const unsigned int nNode = node.size();
+  const unsigned int nEdge = edge[0]->size();
+  const unsigned int nCell = cell.size();
+
+  vector<const Polynomial*> fun(getBasis(element).getSize());
   
-  for(unsigned int i = 0; i < size; i++)
+  // Vertex Based //
+  for(unsigned int j = 0; j < nNode; j++){
+    fun[i] = node[j];
+    i++;
+  }
+
+  // Edge Based //
+  for(unsigned int j = 0; j < nEdge; j++){
     if((*closure)[i])
-      fun[i] = basis[i];
+      fun[i] = (*edge[0])[j];
 
     else
-      fun[i] = revBasis[i];
+      fun[i] = (*edge[1])[j];
+
+    i++;
+  }
+
+  // Vertex Based //
+  for(unsigned int j = 0; j < nCell; j++){
+    fun[i] = cell[j];
+    i++;
+  }
 
   // Return 
   return fun;

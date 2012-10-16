@@ -1,6 +1,8 @@
 #include "TriNodeBasis.h"
 #include "Legendre.h"
 
+using namespace std;
+
 TriNodeBasis::TriNodeBasis(const int order){
   // Set Basis Type //
   this->order = order;
@@ -20,8 +22,7 @@ TriNodeBasis::TriNodeBasis(const int order){
   Polynomial* intLegendre  = new Polynomial[order];
 
   Polynomial  lagrangeSum[3];
-  Polynomial  lagrangeSub[3];
-  Polynomial rLagrangeSub[3];
+  Polynomial  lagrangeSub[2][3];
 
   // Classical and Intrated-Scaled Legendre Polynomial //
   const int orderMinus = order - 1;
@@ -30,83 +31,102 @@ TriNodeBasis::TriNodeBasis(const int order){
   Legendre::intScaled(intLegendre, order);
  
 
-  // Basis (& revert) //
-     basis = new std::vector<const Polynomial*>(size);
-  revBasis = new std::vector<const Polynomial*>(size);
+  // Basis //
+  node = new vector<const Polynomial*>(nVertex);
+  edge = new vector<vector<const Polynomial*>*>(2);
+  face = new vector<vector<const Polynomial*>*>(0);
+  cell = new vector<const Polynomial*>(nCell);
 
-  // Vertex Based (Lagrange) // 
-  (*basis)[0] = 
+  (*edge)[0] = new vector<const Polynomial*>(nEdge);
+  (*edge)[1] = new vector<const Polynomial*>(nEdge);
+
+
+  // Vertex Based (Lagrange) //
+  (*node)[0] = 
     new Polynomial(Polynomial(1, 0, 0, 0) - 
 		   Polynomial(1, 1, 0, 0) - 
 		   Polynomial(1, 0, 1, 0));
 
-  (*basis)[1] = 
+  (*node)[1] = 
     new Polynomial(Polynomial(1, 1, 0, 0));
 
-  (*basis)[2] = 
+  (*node)[2] = 
     new Polynomial(Polynomial(1, 0, 1, 0));
+ 
 
-  // Vertex Based (revert) //
-  for(int i = 0; i < 3; i++)
-    (*revBasis)[i] = (*basis)[i];  
-
-  // Lagrange Sum (& revert) //
+  // Lagrange Sum //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-     lagrangeSum[i] = *(*basis)[i] + *(*basis)[j];
+     lagrangeSum[i] = *(*node)[i] + *(*node)[j];
 
-  // Lagrange Sub (& revert) //
+  // Lagrange Sub //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-     lagrangeSub[i] = *(*basis)[j] - *(*basis)[i];
-    rLagrangeSub[i] = *(*basis)[i] - *(*basis)[j];
+    lagrangeSub[0][i] = *(*node)[j] - *(*node)[i];
+    lagrangeSub[1][i] = *(*node)[i] - *(*node)[j];
   }
 
-  
+ 
   // Edge Based //
-  int i = 3;
+  for(int c = 0; c < 2; c++){
+    unsigned int i = 0;
 
-  for(int l = 1; l < order; l++){
-    for(int e = 0; e < 3; e++){
-      (*basis)[i] = new Polynomial(
-	intLegendre[l].compose(lagrangeSub[e], lagrangeSum[e]));
-
-      (*revBasis)[i] = new Polynomial(
-	intLegendre[l].compose(rLagrangeSub[e], lagrangeSum[e]));
-      
-      i++;
+    for(int l = 1; l < order; l++){
+      for(int e = 0; e < 3; e++){
+	(*(*edge)[c])[i] = 
+	  new Polynomial(intLegendre[l].compose(lagrangeSub[c][e], lagrangeSum[e]));
+	
+	i++;
+      }
     }
   }
 
 
   // Cell Based //
-  Polynomial p             = *(*basis)[2] * 2 - Polynomial(1, 0, 0, 0);
+  Polynomial p             = *(*node)[2] * 2 - Polynomial(1, 0, 0, 0);
   const int  orderMinusTwo = order - 2;
+
+  unsigned int i = 0;
   
   for(int l1 = 1; l1 < orderMinus; l1++){
     for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
-      (*basis)[i] = new Polynomial(
-	intLegendre[l1].compose(lagrangeSub[0], lagrangeSum[0]) * 
-	legendre[l2].compose(p) * *(*basis)[2]);
-      
-      (*revBasis)[i] = (*basis)[i];
+      (*cell)[i] = 
+	new Polynomial(intLegendre[l1].compose(lagrangeSub[0][0], lagrangeSum[0]) * 
+		       legendre[l2].compose(p) * *(*node)[2]);
 
       i++;
     }
   }
-
-
+  
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  for(int i = 0; i < size; i++){
-    delete (*basis)[i];
-    
-    if(i >= nVertex && i < nVertex + nEdge)
-      delete (*revBasis)[i];
-  }
+  // Vertex Based //
+  for(int i = 0; i < nVertex; i++)
+    delete (*node)[i];
+  
+  delete node;
 
-  delete basis;
-  delete revBasis;
+
+  // Edge Based //
+  for(int c = 0; c < 2; c++){
+    for(int i = 0; i < nEdge; i++)
+      delete (*(*edge)[c])[i];
+    
+    delete (*edge)[c];
+  }
+  
+  delete edge;
+
+
+  // Face Based //
+  delete face;
+
+
+  // Cell Based //
+  for(int i = 0; i < nCell; i++)
+    delete (*cell)[i];
+
+  delete cell;
 }
