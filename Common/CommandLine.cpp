@@ -137,7 +137,9 @@ void GetOptions(int argc, char *argv[])
   }
 #endif
 
-  Msg::SetExecutableName(argv[0]);
+  std::string execName="gmsh";
+  if(execName.size())
+    Msg::SetExecutableName(execName);
 
   // get command line options
   int i = 1;
