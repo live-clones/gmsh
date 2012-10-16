@@ -366,12 +366,19 @@ void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::o
 }
 
 void voroMetal3D::correspondance(){
-  int i;
+  unsigned int i;
+  unsigned int j;
+  bool flag;
+  double e;
   GFace* gf;
   GModel* model = GModel::current();
   GModel::fiter it;
   std::vector<GFace*> faces;
   std::map<GFace*,bool> markings;
+  std::map<GFace*,bool>::iterator it1;
+  std::map<GFace*,bool>::iterator it2;
+  surface_params params1;
+  surface_params params2;
 	
   faces.clear();	
 	
@@ -393,7 +400,37 @@ void voroMetal3D::correspondance(){
     markings.insert(std::pair<GFace*,bool>(faces[i],0));
   }
 	
+  e = 0.000001;	
+  
   std::ofstream file;
-  file.open("cells.geo",std::ios::out | std::ios::app);
-  //geofile << "test\n";
+  file.open("cells.geo",std::ios::out | std::ios::app);	
+	
+  for(i=0;i<faces.size();i++){
+    for(j=0;j<faces.size();j++){
+	  flag = 0;	
+	
+	  params1 = faces[i]->getSurfaceParams();
+	  params2 = faces[j]->getSurfaceParams();
+		
+	  if(fabs(params1.cx-params2.cx)<1.0+e && fabs(params1.cx-params2.cx)>1.0-e && fabs(params1.cy-params2.cy)<e && fabs(params1.cz-params2.cz)<e){
+	    flag = 1;
+	  }
+	  if(fabs(params1.cy-params2.cy)<1.0+e && fabs(params1.cy-params2.cy)>1.0-e && fabs(params1.cx-params2.cx)<e && fabs(params1.cz-params2.cz)<e){
+	    flag = 1;
+	  }
+	  if(fabs(params1.cz-params2.cz)<1.0+e && fabs(params1.cz-params2.cz)>1.0-e && fabs(params1.cy-params2.cy)<e && fabs(params1.cx-params2.cx)<e){
+	    flag = 1;
+	  }
+		
+	  if(flag){
+	    it1 = markings.find(faces[i]); 
+	    it2 = markings.find(faces[j]);
+		if(it1->second==0 && it2->second==0){
+		  it1->second = 1;
+		  it2->second = 1;
+		  file << faces[i]->tag() << " " << faces[j]->tag() << "\n";
+		}
+	  }
+	}
+  }
 }
