@@ -31,6 +31,9 @@ class MSubTetrahedron : public MTetrahedron
   MSubTetrahedron(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
                   MElement* orig=NULL)
     : MTetrahedron(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
+  MSubTetrahedron(const MTetrahedron &tet, bool owner=false, MElement* orig=NULL)
+    : MTetrahedron(tet), _owner(owner), _orig(orig), _intpt(0) {}
+
   ~MSubTetrahedron();
   virtual int getTypeForMSH() const { return MSH_TET_SUB; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
@@ -66,6 +69,8 @@ class MSubTriangle : public MTriangle
   MSubTriangle(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
                MElement* orig=NULL)
     : MTriangle(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
+  MSubTriangle(const MTriangle &tri, bool owner=false, MElement* orig=NULL)
+    : MTriangle(tri), _owner(owner), _orig(orig), _intpt(0) {}
   ~MSubTriangle();
   virtual int getTypeForMSH() const { return MSH_TRI_SUB; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
@@ -101,6 +106,9 @@ class MSubLine : public MLine
   MSubLine(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
            MElement* orig=NULL)
     : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
+  MSubLine(const MLine &lin, bool owner=false, MElement* orig=NULL)
+    : MLine(lin), _owner(owner), _orig(orig), _intpt(0) {}
+
   ~MSubLine();
   virtual int getTypeForMSH() const { return MSH_LIN_SUB; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
@@ -135,6 +143,9 @@ class MSubPoint : public MPoint
   MSubPoint(std::vector<MVertex*> v, int num=0, int part=0, bool owner=false,
             MElement* orig=NULL)
     : MPoint(v, num, part), _owner(owner), _orig(orig), _intpt(0) {}
+  MSubPoint(const MPoint &pt, bool owner=false, MElement* orig=NULL)
+    : MPoint(pt), _owner(owner), _orig(orig), _intpt(0) {}
+
   ~MSubPoint();
   virtual int getTypeForMSH() const { return MSH_PNT_SUB; }
   virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
