@@ -1150,7 +1150,7 @@ std::string removeBlanks(const std::string &in)
 bool isPath(const std::string &in)
 {
   size_t pos=in.find_last_not_of(" 0123456789");
-  if(in.compare(pos,1,dirSep))
+  if(in.compare(pos,1,"/"))
     OLMsg::Fatal("The argument <%s> is not a valid path (must end with '/')",in.c_str());
   return true;
 }
