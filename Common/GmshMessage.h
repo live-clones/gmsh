@@ -44,6 +44,8 @@ class Msg {
   static GmshClient *_client;
   // communication with onelab server
   static onelab::client *_onelabClient;
+  // executable name
+  static std::string _execName;
  public:
   Msg() {}
   static void Init(int argc, char **argv);
@@ -83,6 +85,9 @@ class Msg {
   static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
+  static void SetExecutableName(const std::string &name) { _execName.assign(name); }
+  static std::string GetExecutableName() { return _execName; }
+  static void LoadOnelabClient(const std::string &name, const std::string &sockName);
   static GmshClient *GetGmshClient(){ return _client; }
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
   static void FinalizeOnelab();
@@ -90,9 +95,9 @@ class Msg {
   static void SetOnelabNumber(std::string name, double val, bool visible);
   static void SetOnelabString(std::string name, std::string val, bool visible);
   static void ExchangeOnelabParameter(const std::string &key,
-                                      std::vector<double> &val,
-                                      std::map<std::string, std::vector<double> > &fopt,
-                                      std::map<std::string, std::vector<std::string> > &copt);
+                   std::vector<double> &val,
+                   std::map<std::string, std::vector<double> > &fopt,
+                   std::map<std::string, std::vector<std::string> > &copt);
   static void ImportPhysicalsAsOnelabRegions();
 };
 

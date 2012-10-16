@@ -29,6 +29,7 @@ std::string OLMsg::_commandLine;
 std::string OLMsg::_launchDate;
 GmshClient *OLMsg::_client = 0;
 onelab::client *OLMsg::_onelabClient = 0;
+std::string OLMsg::_loaderName;
 bool OLMsg::hasGmsh=false;
 std::set<std::string, fullNameLessThan> OLMsg::_fullNameDict;
 void (*OLMsg::gui_wait_fct)(double time) = 0;
@@ -230,6 +231,13 @@ void OLMsg::SetGuiWaitFunction(void (*fct)(double time)){
 void (*OLMsg::GetGuiWaitFunction())(double){
   return gui_wait_fct;
 }
+
+// void OLMsg::SetLoaderName(const std::string &name) { 
+//   _loaderName = name; 
+// }
+// std::string OLMsg::GetLoaderName() { 
+//   return _loaderName; 
+// }
 
 double OLMsg::GetOnelabNumber(std::string name)
 {

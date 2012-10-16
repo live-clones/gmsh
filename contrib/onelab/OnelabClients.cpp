@@ -115,7 +115,7 @@ std::string localNetworkSolverClient::appendArguments(){
     command.append(" " + getSocketSwitch() + " " + getName() + " %s");
   }
   else
-    OLMsg::Fatal("buildCommandLine: Unknown Action <%s>", action.c_str());
+    OLMsg::Fatal("appendArguments: Unknown Action <%s>", action.c_str());
   return command;
 }
 
@@ -155,9 +155,6 @@ bool localNetworkSolverClient::run()
 
   std::string command = buildCommandLine();
   if(command.size()) command.append(appendArguments());
-
-  // std::cout << "sockname=<" << sockname << ">" << std::endl;
-  // std::cout << "command=<" << command << ">" << std::endl;
 
   int sock;
   try{
@@ -337,6 +334,12 @@ bool localNetworkSolverClient::run()
   server->Shutdown();
   delete server;
   OLMsg::StatusBar(2, true, "Done running '%s'", _name.c_str());
+
+  if(command.empty()){
+    OLMsg::Info("Client disconnected: starting new connection");
+    goto new_connection;
+  }
+
   return true;
 }
 
@@ -844,9 +847,7 @@ void EncapsulatedClient::convert() {
 }
 
 std::string EncapsulatedClient::buildCommandLine(){
-  std::string command;
-  command.assign("lol");
-  return command;
+  return OLMsg::GetLoaderName();
 }
 
 void EncapsulatedClient::compute(){
@@ -866,16 +867,17 @@ void EncapsulatedClient::compute(){
     }
   }
 
-  setAction("compute");
   if(buildRmCommand(cmd)) mySystem(cmd);
 
+  // the client command line is buit and stored in a onelab parameter
   cmd.assign("");
   if(!getWorkingDir().empty())
     cmd.append("cd " + getWorkingDir() + cmdSep);
   cmd.append(FixWindowsPath(getCommandLine()));
   cmd.append(" " + getString("Arguments"));
-
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
+
+  // the encapsulating localNetworkClient is called 
   run();
 
   if(getList("OutputFiles",choices)){
@@ -920,8 +922,6 @@ void RemoteInterfacedClient::compute(){
       syncOutputFile(getWorkingDir(),choices[i]);
   }
 
-  // if(getList("PostArray",choices))
-  //   PostArray(choices);
   OLMsg::Info("Client %s completed",getName().c_str());
 }
 
@@ -981,8 +981,6 @@ void RemoteNativeClient::compute(){
       syncOutputFile(getWorkingDir(),choices[i]);
   }
 
-  // if(getList("PostArray",choices))
-  //   PostArray(choices);
   OLMsg::Info("Client %s completed",getName().c_str());
 }
 
@@ -998,6 +996,7 @@ void RemoteEncapsulatedClient::compute(){
   std::vector<std::string> choices;
 
   OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
+
   analyze();
   setAction("compute");
 
@@ -1011,19 +1010,26 @@ void RemoteEncapsulatedClient::compute(){
     mySystem(cmd);
   }
 
-  cmd.assign("ssh "+getRemoteHost()+" 'cd "+getRemoteDir()+"; "
-	     +getCommandLine()+" "+getString("Arguments")+"'");
-  mySystem(cmd);
+  // the client command line is buit and stored in a onelab parameter
+  cmd.assign("ssh "+getRemoteHost());
+  if(!getRemoteDir().empty())
+    cmd.append(" 'cd " + getRemoteDir() + ";");
+  cmd.append(" "+FixWindowsPath(getCommandLine()));
+  cmd.append(" " + getString("Arguments") + " '");
+  OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
+
+  // the encapsulating localNetworkClient is called 
+  run();
 
   if(getList("OutputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++)
       syncOutputFile(getWorkingDir(),choices[i]);
   }
 
-  // if(getList("PostArray",choices))
-  //   PostArray(choices);
   OLMsg::Info("Client %s completed",getName().c_str());
 }
+
+
 
 // ONELAB additional TOOLS (no access to server in tools)
 // options for 'onelab_client'

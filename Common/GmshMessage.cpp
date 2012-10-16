@@ -53,6 +53,7 @@ GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
 GmshClient *Msg::_client = 0;
+std::string Msg::_execName;
 #if defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
@@ -707,6 +708,48 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
   }
 #endif
 }
+
+void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
+{
+#if defined(HAVE_ONELAB)
+  onelab::remoteNetworkClient *client = 0;
+  client = new onelab::remoteNetworkClient(clientName,sockName);
+  if(client){
+    std::string action, cmd;
+    std::vector<onelab::string> ps;
+    client->get(ps,clientName+"/Action");
+    if(ps.size() && ps[0].getValue().size())
+      action.assign(ps[0].getValue());
+
+    cmd.assign("");
+    if(!action.compare("compute")){
+      std::vector<onelab::string> ps;
+      client->get(ps,clientName+"/FullCmdLine");
+      if(ps.size() && ps[0].getValue().size())
+	cmd.append(" " + ps[0].getValue());
+
+      if(cmd.size()){
+	Msg::Info("Loader calls <%s>",cmd.c_str());
+	SystemCall(cmd.c_str(),true); //true->blocking
+      }
+      else
+	Msg::Info("No full command line found for <%s>",
+		    clientName.c_str());
+    }
+    Msg::Info("Stopping client <%s>", clientName.c_str());
+    delete client;
+  }
+  exit(1);
+#endif
+}
+
+// void Msg::SetExecutableName(const std::string &name){ 
+//   _execName.assign(name); 
+// }
+// std::string Msg::GetExecutableName(){ 
+//   return _execName; 
+// }
+
 
 void Msg::ExchangeOnelabParameter(const std::string &key,
                                   std::vector<double> &val,

@@ -2,7 +2,7 @@
 #include "metamodel.h"
 
 
-void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double time))
+void initializeMetamodel(const std::string &loaderName, onelab::client *client, void (*gui_wait_fct)(double time))
 {
   //called by  "metamodel_cb"
   //copies the Msg::_onelabClient to  OLMsg::_onelabClient
@@ -10,8 +10,10 @@ void initializeMetamodel(onelab::client *client, void (*gui_wait_fct)(double tim
   //which is a onelab::client with sone Gmsh features (merge and messages).
   //Initilizes also the wait function the Gmsh Gui
   //so that Gmsh windows may remain active during client computations.
+  OLMsg::SetLoaderName(loaderName);
   OLMsg::SetOnelabClient(client);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
+
 }
 
 int metamodel(const std::string &action){
@@ -27,6 +29,7 @@ int metamodel(const std::string &action){
     todo = COMPUTE;
   }
   else{
+    todo = EXIT;
     OLMsg::Fatal("Unknown action <%s>", action.c_str());
   }
 

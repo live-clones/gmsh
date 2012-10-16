@@ -290,7 +290,9 @@ public:
 
 class EncapsulatedClient : public localNetworkSolverClient{
  public:
- EncapsulatedClient(const std::string &name, const std::string &cmdl, const std::string &wdir) : localNetworkSolverClient(name,cmdl,wdir) {}
+ EncapsulatedClient(const std::string &name, const std::string &cmdl, const std::string &wdir) : localNetworkSolverClient(name,cmdl,wdir) {
+    setSocketSwitch("-lol");
+  }
   ~EncapsulatedClient(){}
 
   std::string buildCommandLine();
