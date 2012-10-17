@@ -23,13 +23,13 @@
 class inputRegion : public Fl_Group {
  private:
   Fl_Input *_input;
-  Fl_Button *_region_butt;
+  Fl_Button *_add_butt;
   static void _input_cb(Fl_Widget *w, void *data)
   {
     inputRegion *b = (inputRegion*)data;
     b->do_callback();
   }
-  static void _region_butt_cb(Fl_Widget *w, void *data);
+  static void _add_butt_cb(Fl_Widget *w, void *data);
   std::string _set2string(const std::set<std::string> &s)
   {
     std::string out;
@@ -72,12 +72,12 @@ class inputRegion : public Fl_Group {
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
 
-    _region_butt = new Fl_Button(x + input_w, y, butt_w, h, "+");
-    _region_butt->callback(_region_butt_cb, this);
-    _region_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _region_butt->tooltip("Interactive region selection");
+    _add_butt = new Fl_Button(x + input_w, y, butt_w, h, "+");
+    _add_butt->callback(_add_butt_cb, this);
+    _add_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+    _add_butt->tooltip("Add region interactively");
 
-    if(readOnly) _region_butt->deactivate();
+    if(readOnly) _add_butt->deactivate();
 
     end(); // close the group
     resizable(_input);
