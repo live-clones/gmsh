@@ -376,16 +376,18 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 #endif
 #if defined(HAVE_ONELAB) && defined(HAVE_FLTK)
   else if(ext == ".pro" && opt_solver_name(0, GMSH_GET, "") == "GetDP"){
+    // FIXME: this is a hack -- think about a better way
     std::vector<std::string> split = SplitFileName(fileName);
     GModel::current()->setName("");
     status = MergeFile(split[0] + split[1] + ".geo");
+    CTX::instance()->lock = 0; // "uber hack for OpenProject in runGmshClient
     solver_cb(0, 0);
     return status;
   }
 #endif
 #if defined(HAVE_ONELAB_METAMODEL) && defined(HAVE_FLTK)
   else if(ext == ".ol"){
-    // TODO: allow passing action to metamodel from command line
+    // FIXME: this is a hack -- think about a better way
     status = metamodel_cb(fileName);
   }
 #endif

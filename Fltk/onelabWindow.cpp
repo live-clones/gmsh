@@ -558,7 +558,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 	geometry_reload_cb(0, 0);
 #endif
     }
-    else{ 
+    else{
       // iterate over all other clients (there should normally only be one)
       for(onelab::server::citer it = onelab::server::instance()->firstClient();
           it != onelab::server::instance()->lastClient(); it++){

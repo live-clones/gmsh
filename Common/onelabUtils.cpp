@@ -269,6 +269,8 @@ namespace onelabUtils {
     if(action == "initialize") return redraw;
 
     static std::string modelName = "";
+    // FIXME: need to check if mesh file date is newer than model file
+    // date... or at least find a better solution
     if(modelName.empty()){
       // first pass is special to prevent model reload, as well as
       // remeshing if a mesh file already exists on disk
@@ -280,8 +282,8 @@ namespace onelabUtils {
     if(action == "check"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){
-        // reload geometry if Gmsh parameters have been modified or if
-        // the model name has changed
+        // reload geometry if Gmsh parameters have been modified or if the model
+        // name has changed
         modelName = GModel::current()->getName();
         redraw = true;
         OpenProject(GModel::current()->getFileName());
