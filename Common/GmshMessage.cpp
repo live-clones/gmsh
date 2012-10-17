@@ -743,13 +743,17 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
 #endif
 }
 
-// void Msg::SetExecutableName(const std::string &name){ 
-//   _execName.assign(name); 
-// }
-// std::string Msg::GetExecutableName(){ 
-//   return _execName; 
-// }
-
+static void _setStandardOptions(onelab::parameter *p,
+                                std::map<std::string, std::vector<double> > &fopt,
+                                std::map<std::string, std::vector<std::string> > &copt)
+{
+  if(copt.count("Label")) p->setLabel(copt["Label"][0]);
+  if(copt.count("ShortHelp")) p->setLabel(copt["ShortHelp"][0]);
+  if(copt.count("Help")) p->setHelp(copt["Help"][0]);
+  if(fopt.count("Visible")) p->setVisible(fopt["Visible"][0] ? true : false);
+  if(fopt.count("ReadOnly")) p->setReadOnly(fopt["ReadOnly"][0] ? true : false);
+  if(copt.count("Highlight")) p->setAttribute("Highlight", copt["Highlight"][0]);
+}
 
 void Msg::ExchangeOnelabParameter(const std::string &key,
                                   std::vector<double> &val,
@@ -776,24 +780,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-
-    // modified implementation of ReadOnly
-    if(fopt.count("ReadOnly")) {
-      ps[0].setReadOnly(fopt["ReadOnly"][0] ? true : false);
-      if(ps[0].getReadOnly()) 
-	// If the parameter is set "read-only" in this statement
-	// use local value
-	ps[0].setValue(val[0]);
-      else
-	// use value from server
-	val[0] = ps[0].getValue(); 
-    }
+    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
+      ps[0].setValue(val[0]); // use local value
     else
       val[0] = ps[0].getValue(); // use value from server
-
-    // if(!ps[0].getReadOnly())
-    //   val[0] = ps[0].getValue(); // use value from server
-
     // keep track of these attributes, which can be changed server-side
     if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
        ps[0].getMax() != onelab::parameter::maxNumber() ||
@@ -848,14 +838,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setChoices(fopt["Choices"]);
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
   }
-  if(fopt.count("Visible")) ps[0].setVisible(fopt["Visible"][0] ? true : false);
-  if(copt.count("Help")) ps[0].setHelp(copt["Help"][0]);
-  if(copt.count("Label")) ps[0].setLabel(copt["Label"][0]);
-  if(copt.count("ShortHelp")) ps[0].setLabel(copt["ShortHelp"][0]);
   if(noLoop && copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(noGraph && copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
   if(noClosed && copt.count("Closed")) ps[0].setAttribute("Closed", copt["Closed"][0]);
-  if(copt.count("Highlight")) ps[0].setAttribute("Highlight", copt["Highlight"][0]);
+  _setStandardOptions(&ps[0], fopt, copt);
   _onelabClient->set(ps[0]);
 #endif
 }
