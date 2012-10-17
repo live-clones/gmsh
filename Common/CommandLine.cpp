@@ -162,19 +162,15 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing client name and/or address of OneLab server");
       }
-
-      //FHF
       else if(!strcmp(argv[i] + 1, "lol")) {
 	i++;
         if(argv[i] && argv[i + 1] && argv[i + 1][0] != '-'){
           Msg::LoadOnelabClient(argv[i], argv[i + 1]);
           i += 2;
         }
-	else 
+	else
 	  Msg::Fatal("Missing client name and/or address of OneLab server");
       }
-      //
-
       else if(!strcmp(argv[i] + 1, "socket")) {
         i++;
         if(argv[i])
