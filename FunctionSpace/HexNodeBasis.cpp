@@ -119,8 +119,8 @@ HexNodeBasis::HexNodeBasis(const int order){
   int i = 8;
 
   // Points definig Edges
-  int edge1[12] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
-  int edge2[12] = {1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7};
+  const unsigned int edge1[12] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
+  const unsigned int edge2[12] = {1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7};
 
   for(int l = 1; l < order; l++){
     for(int e = 0; e < 12; e++){
@@ -135,10 +135,10 @@ HexNodeBasis::HexNodeBasis(const int order){
   
   // Face Based (Preliminary) //
   // Points definig Faces
-  int face1[6] = {0, 3, 2, 1, 5, 4};
-  int face2[6] = {1, 7, 6, 0, 6, 7};
-  int face3[6] = {2, 6, 5, 4, 7, 3};
-  int face4[6] = {3, 2, 1, 5, 4, 0};
+  const unsigned int face1[6] = {0, 3, 2, 1, 5, 4};
+  const unsigned int face2[6] = {1, 7, 6, 0, 6, 7};
+  const unsigned int face3[6] = {2, 6, 5, 4, 7, 3};
+  const unsigned int face4[6] = {3, 2, 1, 5, 4, 0};
 
   // 'Xi' Functions
   for(int f = 0; f < 6; f++)

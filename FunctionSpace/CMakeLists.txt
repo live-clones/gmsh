@@ -19,7 +19,8 @@ set(SRC
   TriNedelecBasis.cpp
   HexNodeBasis.cpp
   HexEdgeBasis.cpp
-
+  TetNodeBasis.cpp
+  
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp
   FunctionSpaceVector.cpp

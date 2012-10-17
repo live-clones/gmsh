@@ -8,52 +8,68 @@ FunctionSpaceScalar::~FunctionSpaceScalar(void){
 
 const vector<const Polynomial*> FunctionSpaceScalar::
 getLocalFunctions(const MElement& element) const{
-
-  // Get Closure //
-  map<const MElement*, vector<bool>*>::iterator it = 
-    edgeClosure->find(&element);
-
-  if(it == edgeClosure->end())
-    throw Exception("Element not found for closure");
-
-  vector<bool>* closure   = it->second;
-
+  
   // Get Basis //
-  const vector       <const Polynomial*>&   node = getBasis(element).getNodeFunctions();
-  const vector<vector<const Polynomial*>*>& edge = getBasis(element).getEdgeFunctions();
-  const vector       <const Polynomial*>&   cell = getBasis(element).getCellFunctions();
+  const BasisScalar&                        basis = getBasis(element);
+  const vector       <const Polynomial*>&   node  = basis.getNodeFunctions();
+  const vector<vector<const Polynomial*>*>& edge  = basis.getEdgeFunctions();
+  const vector       <const Polynomial*>&   cell  = basis.getCellFunctions();
+
+  const unsigned int nFNode = basis.getNVertexBased();
+  const unsigned int nFEdge = basis.getNEdgeBased();
+  const unsigned int nFCell = basis.getNCellBased();
+
+
+  // Get Edge Closure //
+  MElement&          eelement = const_cast<MElement&>(element);
+  const unsigned int nEdge    = eelement.getNumEdges();
+  
+  vector<bool> edgeClosure(nEdge);
+  
+  // Look Edges 
+  for(unsigned int i = 0; i < nEdge; i++){
+    MEdge edge     = eelement.getEdge(i);
+    edgeClosure[i] = 
+      edge.getVertex(0)->getNum() > edge.getVertex(1)->getNum();
+  }
+
 
   // Get Functions //
-  unsigned int i           = 0;
-  const unsigned int nNode = node.size();
-  const unsigned int nEdge = edge[0]->size();
-  const unsigned int nCell = cell.size();
-
-  vector<const Polynomial*> fun(getBasis(element).getSize());
+  vector<const Polynomial*> fun(basis.getSize());
+  unsigned int i = 0;
   
-  // Vertex Based //
-  for(unsigned int j = 0; j < nNode; j++){
+  // Vertex Based
+  for(unsigned int j = 0; j < nFNode; j++){
     fun[i] = node[j];
     i++;
   }
 
-  // Edge Based //
-  for(unsigned int j = 0; j < nEdge; j++){
-    if((*closure)[i])
-      fun[i] = (*edge[0])[j];
+  // Edge Based
+  // Number of basis function *per* edge
+  //  --> should always be an integer !
+  const unsigned int nFPerEdge = nFEdge / nEdge;
+  unsigned int fEdge = 0;
 
-    else
-      fun[i] = (*edge[1])[j];
-
-    i++;
+  for(unsigned int j = 0; j < nFPerEdge; j++){
+    for(unsigned int k = 0; k < nEdge; k++){
+      if(edgeClosure[k])
+	fun[i] = (*edge[0])[fEdge];
+      
+      else
+	fun[i] = (*edge[1])[fEdge];
+      
+      fEdge++;
+      i++;
+    }
   }
 
-  // Vertex Based //
-  for(unsigned int j = 0; j < nCell; j++){
+  // Vertex Based
+  for(unsigned int j = 0; j < nFCell; j++){
     fun[i] = cell[j];
     i++;
   }
 
-  // Return 
+
+  // Return //
   return fun;
 }

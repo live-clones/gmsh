@@ -17,6 +17,7 @@ FunctionSpace::~FunctionSpace(void){
   delete basis;
 
   // Closure //
+  /*
   map<const MElement*, vector<bool>*>::iterator cIt 
     = edgeClosure->begin();
   map<const MElement*, vector<bool>*>::iterator cStop 
@@ -25,7 +26,7 @@ FunctionSpace::~FunctionSpace(void){
   for(; cIt != cStop; cIt++)
     delete cIt->second;
   delete edgeClosure;
-
+  */
   // Dof //
   if(dof){
     set<const Dof*>::iterator dStop = dof->end();
@@ -89,7 +90,7 @@ void FunctionSpace::build(const GroupOfElement& goe,
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
 
   // Build Closure //
-  buildClosure();
+  //buildClosure();
 
   // Build Dof //
   buildDof();
