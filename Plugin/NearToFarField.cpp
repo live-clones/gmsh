@@ -78,6 +78,7 @@ StringXString *GMSH_NearToFarFieldPlugin::getOptionStr(int iopt)
 // Element Analysis of Antennas and Arrays", p. 176. This is not the usual `far
 // field', as it still contains the e^{ikr}/r factor.
 double GMSH_NearToFarFieldPlugin::getFarFieldJin(std::vector<element*> &allElems,
+                                                 std::vector<std::vector<double> > &farfieldvector,
                                                  std::vector<std::vector<double> > &js,
                                                  std::vector<std::vector<double> > &ms,
                                                  double k0, double rFar, double theta,
@@ -178,6 +179,7 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(std::vector<element*> &allElems
 // Compute far field using e^{-i\omega t} time dependency, following Monk in
 // "Finite Element Methods for Maxwell's equations", p. 233
 double GMSH_NearToFarFieldPlugin::getFarFieldMonk(std::vector<element*> &allElems,
+                                                  std::vector<std::vector<double> > &farfieldvector,
                                                   std::vector<std::vector<double> > &js,
                                                   std::vector<std::vector<double> > &ms,
                                                   double k0, double theta, double phi)
@@ -226,9 +228,16 @@ double GMSH_NearToFarFieldPlugin::getFarFieldMonk(std::vector<element*> &allElem
   prodve(xHat, integral_r, xHat_x_integral_r);
   prodve(xHat, integral_i, xHat_x_integral_i);
   std::complex<double> coef = I * k0 / 4. / M_PI;
+  double  coef1 =  k0 / 4. / M_PI;
   std::complex<double> einf[3] = {coef * (xHat_x_integral_r[0] + I * xHat_x_integral_i[0]),
                                   coef * (xHat_x_integral_r[1] + I * xHat_x_integral_i[1]),
                                   coef * (xHat_x_integral_r[2] + I * xHat_x_integral_i[2])};
+
+   for(int comp = 0; comp < 3; comp++){
+      farfieldvector[comp][0] = -coef1 * xHat_x_integral_i[comp];
+      farfieldvector[comp][1] =  coef1 * xHat_x_integral_r[comp]; 
+     }
+
   return (norm(einf[0]) + norm(einf[1]) + norm(einf[2]));
 }
 
@@ -356,6 +365,18 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   std::vector<std::vector<double> > phi(_NbPhi + 1), theta(_NbPhi + 1);
   std::vector<std::vector<double> > x(_NbPhi + 1), y(_NbPhi + 1), z(_NbPhi + 1);
   std::vector<std::vector<double> > farField(_NbPhi + 1);
+  std::vector<std::vector<double> > farField1r(_NbPhi + 1);
+  std::vector<std::vector<double> > farField2r(_NbPhi + 1);
+  std::vector<std::vector<double> > farField3r(_NbPhi + 1);
+  std::vector<std::vector<double> > farField1i(_NbPhi + 1);
+  std::vector<std::vector<double> > farField2i(_NbPhi + 1);
+  std::vector<std::vector<double> > farField3i(_NbPhi + 1);
+  std::vector<std::vector<double> > farfieldvector(3);
+
+  for(int comp = 0; comp < 3; comp++){
+      farfieldvector[comp].resize(2);
+     }
+
   for (int i = 0; i <= _NbPhi; i++){
     phi[i].resize(_NbThe + 1);
     theta[i].resize(_NbThe + 1);
@@ -363,6 +384,13 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     y[i].resize(_NbThe + 1);
     z[i].resize(_NbThe + 1);
     farField[i].resize(_NbThe + 1);
+
+    farField1r[i].resize(_NbThe + 1);
+    farField2r[i].resize(_NbThe + 1);
+    farField3r[i].resize(_NbThe + 1);
+    farField1i[i].resize(_NbThe + 1);
+    farField2i[i].resize(_NbThe + 1);
+    farField3i[i].resize(_NbThe + 1);
   }
 
   double dPhi = (_phiEnd - _phiStart) / _NbPhi;
@@ -373,15 +401,29 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
     for (int j = 0; j <= _NbThe; j++){
       phi[i][j] = _phiStart + i * dPhi ;
       theta[i][j] = _thetaStart + j * dTheta ;
-      if(_negativeTime)
-        farField[i][j] = getFarFieldMonk(allElems, js, ms, _k0,
+      if(_negativeTime){
+        farField[i][j] = getFarFieldMonk(allElems, farfieldvector, js, ms, _k0,
                                          theta[i][j], phi[i][j]);
-      else
-        farField[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc,
+        farField1r[i][j] =  farfieldvector[1][0];
+        farField2r[i][j] =  farfieldvector[2][0];
+        farField3r[i][j] =  farfieldvector[3][0];
+        farField1i[i][j] =  farfieldvector[1][1];
+        farField2i[i][j] =  farfieldvector[2][1];
+        farField3i[i][j] =  farfieldvector[3][1];}       
+      else {
+        farField[i][j] = getFarFieldJin(allElems, farfieldvector, js, ms, _k0, 10 * lc,
                                         theta[i][j], phi[i][j]);
-      ffmin = std::min(ffmin, farField[i][j]);
-      ffmax = std::max(ffmax, farField[i][j]);
-    }
+        farField1r[i][j] =  farfieldvector[1][0];
+        farField2r[i][j] =  farfieldvector[2][0];
+        farField3r[i][j] =  farfieldvector[3][0];
+        farField1i[i][j] =  farfieldvector[1][1];
+        farField2i[i][j] =  farfieldvector[2][1];
+        farField3i[i][j] =  farfieldvector[3][1];}
+
+        ffmin = std::min(ffmin, farField[i][j]);
+        ffmax = std::max(ffmax, farField[i][j]);
+     }
+      
     Msg::ProgressMeter(i, _NbPhi, true, "Computing far field");
   }
   for(unsigned int i = 0; i < allElems.size(); i++)
@@ -428,6 +470,14 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
       printVector(fp, "phi", phi);
       printVector(fp, "theta", theta);
       printVector(fp, "farField", farField);
+
+      printVector(fp, "farField1r", farField1r);
+      printVector(fp, "farField2r", farField2r);
+      printVector(fp, "farField3r", farField3r);
+      printVector(fp, "farField1i", farField1i);
+      printVector(fp, "farField2i", farField2i);
+      printVector(fp, "farField3i", farField3i);
+
       printVector(fp, "x", x);
       printVector(fp, "y", y);
       printVector(fp, "z", z);

@@ -36,11 +36,13 @@ class GMSH_NearToFarFieldPlugin : public GMSH_PostPlugin
   PView *execute(PView *);
 
   double getFarFieldJin(std::vector<element*> &allElems,
+                        std::vector<std::vector<double> > &farfieldvector,
                         std::vector<std::vector<double> > &js,
                         std::vector<std::vector<double> > &ms,
                         double k0, double r_far, double theta, double phi);
 
   double getFarFieldMonk(std::vector<element*> &allElems,
+                         std::vector<std::vector<double> > &farfieldvector,
                          std::vector<std::vector<double> > &js,
                          std::vector<std::vector<double> > &ms,
                          double k0, double theta, double phi);
