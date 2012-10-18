@@ -553,7 +553,7 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
     std::string fullName = wdir+trueName;
     if(checkIfPresent(fullName)){
       cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+trueName);
-      sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+      //FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
       return mySystem(cmd);
     }
     else{
@@ -567,7 +567,7 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
       std::string fullName = wdir+fileName;
       if(checkIfPresent(fullName)){
 	cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+fileName);
-	sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+	//FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
 	return mySystem(cmd);
       }
       else{
@@ -591,13 +591,13 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 
   if(checkIfPresentRemote(fileName)){
     size_t pos=fileName.find_first_not_of(" ");
-    if(!fileName.compare(pos,1,".")){ 
+    if(!fileName.compare(pos,1,".")){
       // the file must be copied back on local host
       cmd.assign("rsync -e ssh -auv "+_remoteHost+":"+_remoteDir+dirSep
 		 +fileName.substr(pos,std::string::npos)+" .");
       if(!wdir.empty())
 	cmd.append(dirSep+wdir);
-      sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+      //FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
       return mySystem(cmd);
     }
   }
@@ -807,7 +807,7 @@ void NativeClient::compute() {
 
 // ENCAPSULATED Client
 // EncapsulatedClient's are InterfacedClient's called via the loader
-// so that Gmsh sees them as a localNetworkClient 
+// so that Gmsh sees them as a localNetworkClient
 
 void EncapsulatedClient::analyze() {
   size_t pos;
@@ -877,7 +877,7 @@ void EncapsulatedClient::compute(){
   cmd.append(" " + getString("Arguments"));
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
-  // the encapsulating localNetworkClient is called 
+  // the encapsulating localNetworkClient is called
   run();
 
   if(getList("OutputFiles",choices)){
@@ -1018,7 +1018,7 @@ void RemoteEncapsulatedClient::compute(){
   cmd.append(" " + getString("Arguments") + " '");
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
-  // the encapsulating localNetworkClient is called 
+  // the encapsulating localNetworkClient is called
   run();
 
   if(getList("OutputFiles",choices)){
