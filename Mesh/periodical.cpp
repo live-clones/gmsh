@@ -182,7 +182,6 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   std::ofstream file2("cells.geo");
-  file2 << "Coherence;\n";
   file2 << "c = 1.0;\n";
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
@@ -289,6 +288,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 	print_geo_volume(get_counter(),obj.face_loops2,file2);
 	increase_counter();
   }
+  file2 << "Coherence;\n";	
   file << "};\n";
 
   for(i=0;i<pointers.size();i++) delete pointers[i];
@@ -428,7 +428,8 @@ void voroMetal3D::correspondance(){
 		if(it1->second==0 && it2->second==0){
 		  it1->second = 1;
 		  it2->second = 1;
-		  file << faces[i]->tag() << " " << faces[j]->tag() << "\n";
+		  printf("%d %d\n",faces[i]->tag(),faces[j]->tag());
+		  //file << faces[i]->tag() << " " << faces[j]->tag() << "\n";
 		}
 	  }
 	}
