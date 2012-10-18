@@ -79,6 +79,7 @@ string	{alpha}({alpha}|{digit})*
 "<="                    return tLESSOREQUAL;
 ">="                    return tGREATEROREQUAL;
 
+Abort                   return tAbort;
 Acos                    return tAcos;
 ArcCos                  return tAcos;
 Alias                   return tAlias;

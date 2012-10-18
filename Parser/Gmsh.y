@@ -119,7 +119,7 @@ struct doubleXstring{
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
-%token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
+%token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
 %token tHomology tCohomology
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -2640,6 +2640,10 @@ Command :
       Free($2);
     }
    | tExit tEND
+    {
+      Msg::Exit(0);
+    }
+   | tAbort tEND
     {
       gmsh_yyerrorstate = 999; // this will be checked when yyparse returns
       YYABORT;

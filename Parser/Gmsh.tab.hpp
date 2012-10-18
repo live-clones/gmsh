@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 2.5.  */
+/* A Bison parser, made by GNU Bison 2.4.3.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2009, 2010 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -147,33 +148,34 @@
      tIf = 365,
      tEndIf = 366,
      tExit = 367,
-     tField = 368,
-     tReturn = 369,
-     tCall = 370,
-     tFunction = 371,
-     tShow = 372,
-     tHide = 373,
-     tGetValue = 374,
-     tGetEnv = 375,
-     tGetString = 376,
-     tHomology = 377,
-     tCohomology = 378,
-     tGMSH_MAJOR_VERSION = 379,
-     tGMSH_MINOR_VERSION = 380,
-     tGMSH_PATCH_VERSION = 381,
-     tAFFECTDIVIDE = 382,
-     tAFFECTTIMES = 383,
-     tAFFECTMINUS = 384,
-     tAFFECTPLUS = 385,
-     tOR = 386,
-     tAND = 387,
-     tNOTEQUAL = 388,
-     tEQUAL = 389,
-     tGREATEROREQUAL = 390,
-     tLESSOREQUAL = 391,
-     UNARYPREC = 392,
-     tMINUSMINUS = 393,
-     tPLUSPLUS = 394
+     tAbort = 368,
+     tField = 369,
+     tReturn = 370,
+     tCall = 371,
+     tFunction = 372,
+     tShow = 373,
+     tHide = 374,
+     tGetValue = 375,
+     tGetEnv = 376,
+     tGetString = 377,
+     tHomology = 378,
+     tCohomology = 379,
+     tGMSH_MAJOR_VERSION = 380,
+     tGMSH_MINOR_VERSION = 381,
+     tGMSH_PATCH_VERSION = 382,
+     tAFFECTDIVIDE = 383,
+     tAFFECTTIMES = 384,
+     tAFFECTMINUS = 385,
+     tAFFECTPLUS = 386,
+     tOR = 387,
+     tAND = 388,
+     tNOTEQUAL = 389,
+     tEQUAL = 390,
+     tGREATEROREQUAL = 391,
+     tLESSOREQUAL = 392,
+     UNARYPREC = 393,
+     tMINUSMINUS = 394,
+     tPLUSPLUS = 395
    };
 #endif
 
@@ -183,7 +185,7 @@
 typedef union YYSTYPE
 {
 
-/* Line 2068 of yacc.c  */
+/* Line 1685 of yacc.c  */
 #line 92 "Gmsh.y"
 
   char *c;
@@ -196,8 +198,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 2068 of yacc.c  */
-#line 201 "Gmsh.tab.hpp"
+/* Line 1685 of yacc.c  */
+#line 203 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
