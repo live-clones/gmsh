@@ -396,7 +396,7 @@ void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
       continue;
     }
 
-    std::vector<Chain<int>*> newBasis(n, NULL);
+    std::vector<Chain<int>*> newBasis(n);
 
     if(master==0) {
       for(int i = 0; i < n; i++) {
