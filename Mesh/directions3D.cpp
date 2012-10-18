@@ -506,7 +506,7 @@ void Size_field::init_region(GRegion* gr){
 	    vertex = element->getVertex(j);
 		reparamMeshVertexOnFace(vertex,gf,point);
 		local_size = backgroundMesh::current()->operator()(point.x(),point.y(),0.0);
-		boundary.insert(std::pair<MVertex*,double>(vertex,/*local_size*/0.2));
+		boundary.insert(std::pair<MVertex*,double>(vertex,local_size));
 	  }
 	}
   }
@@ -618,16 +618,34 @@ double Size_field::get_ratio(GFace* gf,SPoint2 point){
 }
 
 void Size_field::print_field(){
+  double min,max;
   double x,y,z;
   std::map<MVertex*,double>::iterator it;
-		
+
+  min = 1000000000.0;
+  max = -1000000000.0;
+	
   for(it=boundary.begin();it!=boundary.end();it++){
 	x = (it->first)->x();
 	y = (it->first)->y();
 	z = (it->first)->z();
-    printf("(%f,%f,%f) -> %f\n",x,y,z,it->second);
+	
+	if(it->second>max){
+      max = it->second;
+	}
+    
+	if(it->second<min){
+	  min = it->second;
+	}
+	  
+	printf("x = %f, y = %f, z = %f, mesh size = %f\n",x,y,z,it->second);
   }
 
+  printf("\n");	
+	
+  printf("min mesh size = %f\n",min);
+  printf("max mesh size = %f\n",max);	
+	
   printf("%zu\n",boundary.size());
 }
 
