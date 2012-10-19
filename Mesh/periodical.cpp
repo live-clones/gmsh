@@ -102,12 +102,18 @@ void voroMetal3D::execute(GRegion* gr){
 }
 
 void voroMetal3D::execute(std::vector<double>& vertices){
-  std::vector<SPoint3> pts;
-  for (unsigned int i=0;i<vertices.size()/3;i++){
-    SPoint3 pp (vertices[3*i],vertices[3*i+1],vertices[3*i+2]);
-    pts.push_back(pp);
+  unsigned int i;
+  SPoint3 point;
+  std::vector<SPoint3> temp;
+  
+  temp.clear();	
+	
+  for(i=0;i<vertices.size()/3;i++){
+	point = SPoint3(vertices[3*i],vertices[3*i+1],vertices[3*i+2]);
+    temp.push_back(point);
   }
-  execute(pts);
+  
+  execute(temp);
 }
 
 void voroMetal3D::execute(std::vector<SPoint3>& vertices)
@@ -130,6 +136,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   double min_x,max_x;
   double min_y,max_y;
   double min_z,max_z;
+  double min_area;
   voronoicell_neighbor* pointer;
   voronoicell_neighbor cell;
   std::vector<int> faces;
@@ -138,6 +145,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   std::vector<SPoint3> generators;
   std::vector<int> temp;
   std::vector<int> temp2;
+  std::vector<double> areas;
   geo_cell obj;
 
   min_x = 1000000000.0;
@@ -179,10 +187,27 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 
   initialize_counter();
 
+  min_area = 1000000000.0;
+	
+  for(i=0;i<pointers.size();i++){
+    areas.clear();
+	
+    pointers[i]->face_areas(areas);
+	  
+    for(j=0;j<areas.size();j++){
+	  if(areas[j]<min_area){
+	    min_area = areas[j];
+	  }
+	}
+  }
+	
+  printf("Squared root of smallest face area : %.9f\n",sqrt(min_area));
+		
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   std::ofstream file2("cells.geo");
   file2 << "c = 1.0;\n";
+		
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
 
@@ -288,6 +313,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 	print_geo_volume(get_counter(),obj.face_loops2,file2);
 	increase_counter();
   }
+
   file2 << "Coherence;\n";	
   file << "};\n";
 
@@ -365,20 +391,30 @@ void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::o
   file << "};\n";
 }
 
-void voroMetal3D::correspondance(){
+void voroMetal3D::correspondance(double e){
   unsigned int i;
   unsigned int j;
+  int count;
+  int count2;
   bool flag;
-  double e;
+  double x,y,z;
+  double delta_x;
+  double delta_y;
+  double delta_z;
+  SPoint3 p1;
+  SPoint3 p2;
   GFace* gf;
   GModel* model = GModel::current();
   GModel::fiter it;
   std::vector<GFace*> faces;
+  std::list<GVertex*> vertices;
+  std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
-  std::map<GFace*,bool>::iterator it1;
-  std::map<GFace*,bool>::iterator it2;
-  surface_params params1;
-  surface_params params2;
+  std::list<GVertex*>::iterator it2;
+  std::map<GFace*,SPoint3>::iterator it3;
+  std::map<GFace*,SPoint3>::iterator it4;
+  std::map<GFace*,bool>::iterator it5;
+  std::map<GFace*,bool>::iterator it6;
 	
   faces.clear();	
 	
@@ -388,50 +424,121 @@ void voroMetal3D::correspondance(){
 	if(gf->numRegions()==1){
 	  faces.push_back(gf);
 	}
-	printf("%d ",gf->numRegions());
   }
-  printf("\n");
 	
-  printf("%zu\n",faces.size());
-	
+  centers.clear();
   markings.clear();	
+	
+  for(i=0;i<faces.size();i++){
+	x = 0.0;
+	y = 0.0;
+	z = 0.0;
+	
+	vertices.clear();
+	
+	vertices = faces[i]->vertices();
+	
+	for(it2=vertices.begin();it2!=vertices.end();it2++){
+	  x = x + (*it2)->x();
+	  y = y + (*it2)->y();
+	  z = z + (*it2)->z();
+    }
+	  
+	x = x/vertices.size();
+	y = y/vertices.size();
+	z = z/vertices.size();
+	  
+	centers.insert(std::pair<GFace*,SPoint3>(faces[i],SPoint3(x,y,z)));
+  }	
 	
   for(i=0;i<faces.size();i++){
     markings.insert(std::pair<GFace*,bool>(faces[i],0));
   }
 	
-  e = 0.000001;	
-  
+  count = 0;
+  count2 = 0;
+	
   std::ofstream file;
   file.open("cells.geo",std::ios::out | std::ios::app);	
+  std::ofstream file2("check.pos");
+  file2 << "View \"test\" {\n";	
+		
+  printf("Face 1 nbr. - Face 2 nbr.\n");	
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
 	  flag = 0;	
 	
-	  params1 = faces[i]->getSurfaceParams();
-	  params2 = faces[j]->getSurfaceParams();
+	  it3 = centers.find(faces[i]);
+	  it4 = centers.find(faces[j]);
 		
-	  if(fabs(params1.cx-params2.cx)<1.0+e && fabs(params1.cx-params2.cx)>1.0-e && fabs(params1.cy-params2.cy)<e && fabs(params1.cz-params2.cz)<e){
+	  p1 = it3->second;
+	  p2 = it4->second;
+		
+	  delta_x = fabs(p2.x()-p1.x());
+	  delta_y = fabs(p2.y()-p1.y());
+	  delta_z = fabs(p2.z()-p1.z());
+		
+	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
 	    flag = 1;
 	  }
-	  if(fabs(params1.cy-params2.cy)<1.0+e && fabs(params1.cy-params2.cy)>1.0-e && fabs(params1.cx-params2.cx)<e && fabs(params1.cz-params2.cz)<e){
+	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
 	    flag = 1;
 	  }
-	  if(fabs(params1.cz-params2.cz)<1.0+e && fabs(params1.cz-params2.cz)>1.0-e && fabs(params1.cy-params2.cy)<e && fabs(params1.cx-params2.cx)<e){
+	  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+	    flag = 1;
+	  }
+	  
+	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+	    flag = 1;
+	  }
+	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+	    flag = 1;
+	  }
+	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+	    flag = 1;
+	  }
+			
+	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
 	    flag = 1;
 	  }
 		
 	  if(flag){
-	    it1 = markings.find(faces[i]); 
-	    it2 = markings.find(faces[j]);
-		if(it1->second==0 && it2->second==0){
-		  it1->second = 1;
-		  it2->second = 1;
+	    it5 = markings.find(faces[i]);
+	    it6 = markings.find(faces[j]);
+		if(it5->second==0 && it6->second==0){
+		  it5->second = 1;
+		  it6->second = 1;
+		  
 		  printf("%d %d\n",faces[i]->tag(),faces[j]->tag());
+		  print_segment(p1,p2,file2);
 		  //file << faces[i]->tag() << " " << faces[j]->tag() << "\n";
+		  
+		  count++;
+		}
+		else{
+		  count2++;
 		}
 	  }
 	}
   }
+
+  file2 << "};\n";
+	
+  printf("Number of linked exterior faces : %d\n",2*count);
+  printf("Total number of exterior faces : %zu\n",faces.size());
+  printf("Number of mislinked : %d\n",count2-count);
+}
+
+bool voroMetal3D::equal(double x,double y,double e){
+  bool flag;
+	
+  if(x>y-e && x<y+e){
+    flag = 1;
+  }
+  else{
+    flag = 0;
+  }
+	
+  return flag;
 }
