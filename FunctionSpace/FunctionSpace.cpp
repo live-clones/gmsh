@@ -16,17 +16,6 @@ FunctionSpace::~FunctionSpace(void){
   // Basis //
   delete basis;
 
-  // Closure //
-  /*
-  map<const MElement*, vector<bool>*>::iterator cIt 
-    = edgeClosure->begin();
-  map<const MElement*, vector<bool>*>::iterator cStop 
-    = edgeClosure->end();
-
-  for(; cIt != cStop; cIt++)
-    delete cIt->second;
-  delete edgeClosure;
-  */
   // Dof //
   if(dof){
     set<const Dof*>::iterator dStop = dof->end();
@@ -89,70 +78,8 @@ void FunctionSpace::build(const GroupOfElement& goe,
   
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
 
-  // Build Closure //
-  //buildClosure();
-
   // Build Dof //
   buildDof();
-}
-
-void FunctionSpace::buildClosure(void){
-  // Get Elements //
-  const vector<const MElement*>& element = goe->getAll();
-  const unsigned int             size    = element.size();    
-
-  // Init //
-  edgeClosure = new map<const MElement*, vector<bool>*>;
-
-  // Iterate on elements //
-  for(unsigned int i = 0; i < size; i++){
-    // Get Element data
-    MElement& myElement =
-      const_cast<MElement&>(*element[i]);
-
-    const unsigned int nVertex = myElement.getNumVertices();
-    const unsigned int nEdge   = myElement.getNumEdges();
-    const unsigned int nFace   = myElement.getNumFaces();
-
-    const unsigned int nTotVertex = nVertex * fPerVertex;
-    const unsigned int nTotEdge   = nEdge   * fPerEdge;
-    const unsigned int nTotFace   = nFace   * fPerFace;
-    
-    const unsigned int nTot    = nTotVertex + nTotEdge + nTotFace + fPerCell;
-
-    // Closure
-    vector<bool>* closure = new vector<bool>(nTot);
-    unsigned int it = 0;
-
-    // Closure for vertices
-    for(unsigned int j = 0; j < nTotVertex; j++, it++)
-      (*closure)[it] = true;
-
-    // Closure for edges 
-    for(unsigned int j = 0; j < fPerEdge; j++){
-      for(unsigned int k = 0; k < nEdge; k++, it++){
-	// Orientation 
-	int orientation = mesh->getOrientation(myElement.getEdge(k));
-	
-	if(orientation == 1)
-	  (*closure)[it] = true;
-	
-	else
-	  (*closure)[it] = false;
-      }
-    }
-
-    // Closure for faces
-    // TODO
-
-    // Closure for cells
-    for(unsigned int j = 0; j < fPerCell; j++, it++)
-      (*closure)[it] = true;    
-
-    // Add Closure
-    edgeClosure->insert
-      (pair<const MElement*, vector<bool>*>(element[i], closure));
-  }
 }
 
 void FunctionSpace::buildDof(void){
@@ -264,7 +191,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
       it++;
     }
   }
-  /*
+  
   // Add Face Based Dof //
   for(int i = 0; i < nFFace; i++){
     for(int j = 0; j < nFace; j++){
@@ -272,7 +199,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
       it++;
     }
   }
-  */
+  
   // Add Cell Based Dof //
   for(int i = 0; i < nFCell; i++){
     myDof[it].setDof(mesh->getGlobalId(element), i);

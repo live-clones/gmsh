@@ -23,25 +23,34 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   Polynomial* intLegendre  = new Polynomial[order];
 
   // Classical, Scaled and Intrated-Scaled Legendre Polynomial //
-  const unsigned int orderMinus      = order - 1;
-  const unsigned int orderMinusTwo   = order - 2;
-  const unsigned int orderMinusThree = order - 3;
+  const int orderMinus      = order - 1;
+  const int orderMinusTwo   = order - 2;
+  const int orderMinusThree = order - 3;
 
   Legendre::legendre(legendre, orderMinus);
   Legendre::scaled(sclLegendre, orderMinus);
   Legendre::intScaled(intLegendre, order);
 
-  // Points definig Edges //
-  const unsigned int edge0[6] = {0, 1, 2, 2, 3, 3};
-  const unsigned int edge1[6] = {1, 2, 0, 3, 0, 1};
+  // Vertices definig Edges //
+  const int edgeV[6][2] = {
+    {0, 1},
+    {1, 2},
+    {2, 0},
+    {3, 0},
+    {3, 2},
+    {3, 1}
+  };
 
-  // Points definig Faces //
-  const unsigned int face0[4] = {0, 0, 0, 1};
-  const unsigned int face1[4] = {1, 1, 2, 2};
-  const unsigned int face2[4] = {3, 2, 3, 3};
+  // Vertices definig Faces //
+  const int faceV[4][3] = {
+    {0, 2, 1},
+    {0, 1, 3},
+    {0, 3, 2},
+    {3, 1, 2}
+  };
 
   // Counter //
-  unsigned int i;
+   int i;
 
   // Basis //
   node = new vector<const Polynomial*>(nVertex);
@@ -81,16 +90,16 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   i = 0;
 
   for(unsigned int l = 1; l < order; l++){
-    for(unsigned int e = 0; e < 6; e++){
+    for(int e = 0; e < 6; e++){
       (*(*edge)[0])[i] = 
 	new Polynomial(intLegendre[l].compose
-		       (*(*node)[edge0[e]] - *(*node)[edge1[e]], 
-			*(*node)[edge0[e]] + *(*node)[edge1[e]]));
+		       (*(*node)[edgeV[e][0]] - *(*node)[edgeV[e][1]], 
+			*(*node)[edgeV[e][0]] + *(*node)[edgeV[e][1]]));
 
       (*(*edge)[1])[i] = 
 	new Polynomial(intLegendre[l].compose
-		       (*(*node)[edge1[e]] - *(*node)[edge0[e]], 
-			*(*node)[edge1[e]] + *(*node)[edge0[e]]));      
+		       (*(*node)[edgeV[e][1]] - *(*node)[edgeV[e][0]], 
+			*(*node)[edgeV[e][1]] + *(*node)[edgeV[e][0]]));      
       
       i++;
     }
@@ -100,73 +109,73 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   // Face Based //
   i = 0;
 
-  for(unsigned int l1 = 1; l1 < orderMinus; l1++){
-    for(unsigned int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
-      for(unsigned int m = 0; m < 4; m++){
+  for(int l1 = 1; l1 < orderMinus; l1++){
+    for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
+      for(int m = 0; m < 4; m++){
 	Polynomial sum = 
-	  *(*node)[face0[m]] + 
-	  *(*node)[face1[m]] + 
-	  *(*node)[face2[m]];	  
+	  *(*node)[faceV[m][0]] + 
+	  *(*node)[faceV[m][1]] + 
+	  *(*node)[faceV[m][2]];	  
 
 	(*(*face)[0])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face0[m]] - *(*node)[face1[m]], 
-			  *(*node)[face0[m]] + *(*node)[face1[m]]) * 
+			 (*(*node)[faceV[m][0]] - *(*node)[faceV[m][1]], 
+			  *(*node)[faceV[m][0]] + *(*node)[faceV[m][1]]) * 
 			 
-			 *(*node)[face2[m]] * 
+			 *(*node)[faceV[m][2]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face2[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][2]] * 2 - sum, sum));
 
 	(*(*face)[1])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face1[m]] - *(*node)[face0[m]], 
-			  *(*node)[face1[m]] + *(*node)[face0[m]]) * 
+			 (*(*node)[faceV[m][1]] - *(*node)[faceV[m][0]], 
+			  *(*node)[faceV[m][1]] + *(*node)[faceV[m][0]]) * 
 			 
-			 *(*node)[face2[m]] * 
+			 *(*node)[faceV[m][2]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face2[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][2]] * 2 - sum, sum));
 
 	(*(*face)[2])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face1[m]] - *(*node)[face2[m]], 
-			  *(*node)[face1[m]] + *(*node)[face2[m]]) * 
+			 (*(*node)[faceV[m][1]] - *(*node)[faceV[m][2]], 
+			  *(*node)[faceV[m][1]] + *(*node)[faceV[m][2]]) * 
 			 
-			 *(*node)[face0[m]] * 
+			 *(*node)[faceV[m][0]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face0[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][0]] * 2 - sum, sum));
 
 	(*(*face)[3])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face2[m]] - *(*node)[face1[m]], 
-			  *(*node)[face2[m]] + *(*node)[face1[m]]) * 
+			 (*(*node)[faceV[m][2]] - *(*node)[faceV[m][1]], 
+			  *(*node)[faceV[m][2]] + *(*node)[faceV[m][1]]) * 
 			 
-			 *(*node)[face0[m]] * 
+			 *(*node)[faceV[m][0]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face0[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][0]] * 2 - sum, sum));
 
 	(*(*face)[4])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face2[m]] - *(*node)[face0[m]], 
-			  *(*node)[face2[m]] + *(*node)[face0[m]]) * 
+			 (*(*node)[faceV[m][2]] - *(*node)[faceV[m][0]], 
+			  *(*node)[faceV[m][2]] + *(*node)[faceV[m][0]]) * 
 			 
-			 *(*node)[face1[m]] * 
+			 *(*node)[faceV[m][1]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face1[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][1]] * 2 - sum, sum));
 
 	(*(*face)[5])[i] = 
 	  new Polynomial(intLegendre[l1].compose
-			 (*(*node)[face0[m]] - *(*node)[face2[m]], 
-			  *(*node)[face0[m]] + *(*node)[face2[m]]) * 
+			 (*(*node)[faceV[m][0]] - *(*node)[faceV[m][2]], 
+			  *(*node)[faceV[m][0]] + *(*node)[faceV[m][2]]) * 
 			 
-			 *(*node)[face1[m]] * 
+			 *(*node)[faceV[m][1]] * 
 			 
 			 sclLegendre[l2].compose
-			 (*(*node)[face1[m]] * 2 - sum, sum));
+			 (*(*node)[faceV[m][1]] * 2 - sum, sum));
 
 	i++;
       }
@@ -184,9 +193,9 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 
   i = 0;
   
-  for(unsigned int l1 = 1; l1 < orderMinusTwo; l1++){
-    for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
-      for(unsigned int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
+  for(int l1 = 1; l1 < orderMinusTwo; l1++){
+    for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
+      for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
 	
 	(*cell)[i] = 
 	  new Polynomial(intLegendre[l1].compose(sub, add)             * 
