@@ -38,10 +38,17 @@ class BasisScalar: public Basis{
   //! defining this (scalar) Basis, for the given closure
   const std::vector<const Polynomial*>& getFunctions(unsigned int closure) const;
 
-  const std::vector            <const Polynomial*>&   getNodeFunctions(void) const;
-  const std::vector<std::vector<const Polynomial*>*>& getEdgeFunctions(void) const;
-  const std::vector<std::vector<const Polynomial*>*>& getFaceFunctions(void) const;
-  const std::vector            <const Polynomial*>&   getCellFunctions(void) const;
+  const std::vector<const Polynomial*>&
+    getNodeFunctions(void) const;
+  
+  const std::vector<std::vector<const Polynomial*>*>&
+    getEdgeFunctions(void) const;
+  
+  const std::vector<std::vector<const Polynomial*>*>&
+    getFaceFunctions(void) const;
+ 
+  const std::vector<const Polynomial*>&
+    getCellFunctions(void) const;
 
   virtual std::string toString(void) const;
 

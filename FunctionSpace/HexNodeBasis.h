@@ -5,10 +5,10 @@
 
 /**
    @class HexNodeBasis
-   @brief A Node Basis for Hexahedrons
+   @brief A Node Basis for Hexahedra
  
    This class can instantiate a Node-Based Basis 
-   (high or low order) for Hexahedrons.@n
+   (high or low order) for Hexahedra.@n
    
    It uses 
    <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>  
@@ -19,7 +19,7 @@ class HexNodeBasis: public BasisScalar{
  public:
   //! @param order The order of the Basis
   //!
-  //! Returns a new Node-Basis for Hexahedrons of the given order
+  //! Returns a new Node-Basis for Hexahedra of the given order
   HexNodeBasis(const int order);
 
   //! @return Deletes this Basis
