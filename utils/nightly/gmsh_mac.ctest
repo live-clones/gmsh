@@ -15,6 +15,7 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 set(CTEST_BUILD_NAME "MacOSX64")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
 set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local/hdf5-1.8.7;/usr/local")
+set(OPT "${OPT} -DCMAKE_CXX_FLAGS=-mmacosx-version-min=10.5")
 set(OPT "${OPT} -DPETSC_ARCH=macosx_complex_mumps_seq")
 set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.1-p8")
 set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.1-p6")
