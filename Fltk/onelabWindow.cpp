@@ -502,34 +502,32 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "load"){
-    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", s.c_str()))
+    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
       loadDb(fileChooserGetName(1));
     action = "check";
   }
 
   if(action == "reset"){
-    // clear everything except model names and command line setup
-    std::vector<onelab::string> modelNames;
-    std::vector<onelab::number> useCommandLines;
+    // clear everything except command line and model name setup
+    std::vector<onelab::number> useCommandLines, guessModelNames;
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
       onelab::client *c = it->second;
-      std::vector<onelab::string> ps;
-      c->get(ps, c->getName() + "/1ModelName");
-      if(ps.size()) modelNames.push_back(ps[0]);
-      std::vector<onelab::number> ps2;
-      c->get(ps2, c->getName() + "/UseCommandLine");
-      if(ps2.size()) useCommandLines.push_back(ps2[0]);
+      std::vector<onelab::number> ps;
+      c->get(ps, c->getName() + "/UseCommandLine");
+      if(ps.size()) useCommandLines.push_back(ps[0]);
+      c->get(ps, c->getName() + "/GuessModelName");
+      if(ps.size()) guessModelNames.push_back(ps[0]);
     }
     onelab::server::instance()->clear();
     if(onelab::server::instance()->findClient("Gmsh") !=
        onelab::server::instance()->lastClient())
       geometry_reload_cb(0, 0);
-    for(unsigned int i = 0; i < modelNames.size(); i++)
-      onelab::server::instance()->set(modelNames[i]);
     for(unsigned int i = 0; i < useCommandLines.size(); i++)
       onelab::server::instance()->set(useCommandLines[i]);
+    for(unsigned int i = 0; i < guessModelNames.size(); i++)
+      onelab::server::instance()->set(guessModelNames[i]);
     action = "check";
   }
 
