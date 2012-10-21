@@ -155,11 +155,13 @@ int StatFile(const std::string &fileName)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   struct stat buf;
-  return stat(fileName.c_str(), &buf);
+  int ret = stat(fileName.c_str(), &buf);
+  // could get file modification time from buf
 #else
   struct _stat buf;
-  return _stat(fileName.c_str(), &buf);
+  int ret _stat(fileName.c_str(), &buf);
 #endif
+  return ret;
 }
 
 int CreateDirectory(const std::string &dirName)

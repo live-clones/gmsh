@@ -20,6 +20,10 @@
 #include "Parser.h"
 #endif
 
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#endif
+
 void add_infile(std::string text, std::string fileName, bool forceDestroy)
 {
   // make sure we don't add stuff in a non-geo file
@@ -96,6 +100,12 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
   fclose(fp);
 #else
   Msg::Error("GEO file creation not available without Gmsh parser");
+#endif
+
+  // mark all Gmsh data as changed in onelab (will force e.g. a reload and a
+  // remesh)
+#if defined(HAVE_ONELAB)
+  onelab::server::instance()->setChanged(true, "Gmsh");
 #endif
 }
 

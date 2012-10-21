@@ -405,7 +405,7 @@ static void saveDb(const std::string &fileName)
     Msg::Error("Could not save database '%s'", fileName.c_str());
 }
 
-static void archiveSolutions(const std::string &fileName)
+static void archiveOutputFiles(const std::string &fileName)
 {
   std::string stamp = timeStamp();
 
@@ -415,6 +415,7 @@ static void archiveSolutions(const std::string &fileName)
   for(unsigned int i = 0; i < strings.size(); i++){
     if(strings[i].getName().find("9Output files") != std::string::npos){
       std::vector<std::string> names = strings[i].getChoices();
+      names.push_back(strings[i].getValue());
       for(unsigned int j = 0; j < names.size(); j++){
         std::vector<std::string> split = SplitFileName(names[j]);
         int n = split[1].size();
@@ -428,8 +429,9 @@ static void archiveSolutions(const std::string &fileName)
           rename(old.c_str(), names[j].c_str());
         }
       }
-      strings[i].setChoices(names);
       strings[i].setValue(names.back());
+      names.pop_back();
+      strings[i].setChoices(names);
       onelab::server::instance()->set(strings[i]);
     }
   }
@@ -589,9 +591,9 @@ void onelab_cb(Fl_Widget *w, void *data)
           incrementLoops());
 
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
-                             CTX::instance()->solver.autoArchiveSolutions)){
+                             CTX::instance()->solver.autoArchiveOutputFiles)){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(CTX::instance()->solver.autoArchiveSolutions) archiveSolutions(db);
+    if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
     if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
   }
 
@@ -609,7 +611,7 @@ void onelab_option_cb(Fl_Widget *w, void *data)
   if(what == "save")
     CTX::instance()->solver.autoSaveDatabase = val;
   else if(what == "archive")
-    CTX::instance()->solver.autoArchiveSolutions = val;
+    CTX::instance()->solver.autoArchiveOutputFiles = val;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
   else if(what == "hide")
@@ -732,7 +734,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
              FL_MENU_TOGGLE);
-  _gear->add("Archive solutions automatically", 0, onelab_option_cb, (void*)"archive",
+  _gear->add("Archive output files automatically", 0, onelab_option_cb, (void*)"archive",
              FL_MENU_TOGGLE);
   _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
              FL_MENU_TOGGLE);
@@ -1184,7 +1186,7 @@ void onelabWindow::rebuildSolverList()
   _title = "OneLab";
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
   int values[6] = {CTX::instance()->solver.autoSaveDatabase,
-                   CTX::instance()->solver.autoArchiveSolutions,
+                   CTX::instance()->solver.autoArchiveOutputFiles,
                    CTX::instance()->solver.autoMesh,
                    CTX::instance()->solver.autoMergeFile,
                    CTX::instance()->solver.autoHideNewViews,

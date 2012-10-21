@@ -41,6 +41,15 @@
       </dict>
       <dict>
         <key>CFBundleTypeExtensions</key><array>
+          <string>pro</string>
+          <string>ol</string></array>
+        <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>
+        <key>CFBundleTypeName</key><string>Gmsh Solver File</string>
+        <key>CFBundleTypeOSTypes</key><array><string>GSOL</string></array>
+        <key>CFBundleTypeRole</key><string>Viewer</string>
+      </dict>
+      <dict>
+        <key>CFBundleTypeExtensions</key><array>
           <string>pos</string>
           <string>med</string><string>rmed</string></array>
         <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>

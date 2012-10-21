@@ -5732,11 +5732,11 @@ double opt_solver_auto_save_database(OPT_ARGS_NUM)
   return CTX::instance()->solver.autoSaveDatabase;
 }
 
-double opt_solver_auto_archive_solutions(OPT_ARGS_NUM)
+double opt_solver_auto_archive_output_files(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->solver.autoArchiveSolutions = (int)val;
-  return CTX::instance()->solver.autoArchiveSolutions;
+    CTX::instance()->solver.autoArchiveOutputFiles = (int)val;
+  return CTX::instance()->solver.autoArchiveOutputFiles;
 }
 
 double opt_solver_auto_mesh(OPT_ARGS_NUM)

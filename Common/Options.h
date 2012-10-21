@@ -469,7 +469,7 @@ double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);
 double opt_solver_auto_save_database(OPT_ARGS_NUM);
-double opt_solver_auto_archive_solutions(OPT_ARGS_NUM);
+double opt_solver_auto_archive_output_files(OPT_ARGS_NUM);
 double opt_solver_auto_mesh(OPT_ARGS_NUM);
 double opt_solver_auto_merge_file(OPT_ARGS_NUM);
 double opt_solver_auto_hide_new_views(OPT_ARGS_NUM);

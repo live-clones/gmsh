@@ -53,13 +53,14 @@ namespace onelabUtils {
 
   std::string getMshFileName(onelab::client *c)
   {
+    std::string name;
     std::vector<onelab::string> ps;
     c->get(ps, "Gmsh/MshFileName");
     if(ps.size()){
-      return ps[0].getValue();
+      name = ps[0].getValue();
     }
     else{
-      std::string name = CTX::instance()->outputFileName;
+      name = CTX::instance()->outputFileName;
       if(name.empty()){
         if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
           name = GetDefaultFileName(FORMAT_MSH);
@@ -69,8 +70,17 @@ namespace onelabUtils {
       onelab::string o("Gmsh/MshFileName", name, "Mesh name");
       o.setKind("file");
       c->set(o);
-      return name;
     }
+
+    // we could keep track of mesh file name in "Output files" so we could
+    // archive the mesh automatically:
+    /*
+      onelab::string copy("Gmsh/9Output files", name, "Mesh name");
+      copy.setKind("file");
+      copy.setVisible(false);
+      c->set(copy);
+    */
+    return name;
   }
 
   void guessModelName(onelab::client *c)
@@ -268,16 +278,8 @@ namespace onelabUtils {
     std::string mshFileName = onelabUtils::getMshFileName(c);
     if(action == "initialize") return redraw;
 
-    static std::string modelName = "";
-    // FIXME: need to check if mesh file date is newer than model file
-    // date... or at least find a better solution
-    if(modelName.empty()){
-      // first pass is special to prevent model reload, as well as
-      // remeshing if a mesh file already exists on disk
-      modelName = GModel::current()->getName();
-      if(!StatFile(mshFileName))
-        onelab::server::instance()->setChanged(false, "Gmsh");
-    }
+    static std::string modelName = GModel::current()->getName();
+    static bool firstComputation = true;
 
     if(action == "check"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
@@ -292,13 +294,16 @@ namespace onelabUtils {
     else if(action == "compute"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){
-        // reload the geometry, mesh it and save the mesh if Gmsh
-        // parameters have been modified or if the model name has
-        // changed
+        // reload the geometry, mesh it and save the mesh if Gmsh parameters
+        // have been modified or if the model name has changed
         modelName = GModel::current()->getName();
         redraw = true;
         OpenProject(GModel::current()->getFileName());
-        if(!GModel::current()->empty() && meshAuto){
+        if(firstComputation && !StatFile(mshFileName)){
+          Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date",
+                    mshFileName.c_str());
+        }
+        else if(!GModel::current()->empty() && meshAuto){
           GModel::current()->mesh(3);
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
@@ -311,6 +316,7 @@ namespace onelabUtils {
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
       }
+      firstComputation = false;
       onelab::server::instance()->setChanged(false, "Gmsh");
     }
 

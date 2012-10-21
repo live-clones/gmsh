@@ -1895,8 +1895,11 @@ Multiplies and affects @var{expression} to a real option.
 @item @var{real-option} /= @var{expression};
 Divides and affects @var{expression} to a real option.
 
-@item Exit;
+@item Abort;
 Aborts the current script.
+
+@item Exit;
+Exits Gmsh.
 
 @item Printf ( @var{char-expression} <, @var{expression-list}> );
 Prints a character expression in the information window and/or on the
