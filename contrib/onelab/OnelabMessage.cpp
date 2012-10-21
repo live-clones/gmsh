@@ -95,9 +95,9 @@ void OLMsg::Fatal(const char *fmt, ...)
 
   OLMsg::SetOnelabString("MetaModel/STATUS","STOP");
   //FinalizeClient();
-  FinalizeOnelab();
+  //FinalizeOnelab();
   //delete loader;
-  Exit(1);
+  //Exit(1);
 }
 
 void OLMsg::Error(const char *fmt, ...)

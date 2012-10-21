@@ -411,7 +411,6 @@ bool localSolverClient::checkCommandLine(){
     run(); // does nothing for Interfaced clients, initializes native clients
   }
   else{
-    std::cout << "FHF hasGmsh=" << OLMsg::hasGmsh << std::endl;
     if(OLMsg::hasGmsh) {
       // exits metamodel and restores control to the onelab window
       OLMsg::Error("The command line of client <%s> is undefined.",
@@ -553,7 +552,11 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
     std::string fullName = wdir+trueName;
     if(checkIfPresent(fullName)){
       cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+trueName);
-      //FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+#if defined(WIN32)
+      Sleep((int)(OLMsg::GetOnelabNumber("RSYNCDELAY")*1000));
+#else
+      sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+#endif
       return mySystem(cmd);
     }
     else{

@@ -90,14 +90,18 @@ uses localNetworkSolverClient::run instead of onelab::client::run().
 
 Both "localSolverNetworkClient" and "localSolverClient" are pure virtual.
 
-The combination of two alternatives native/interfaced and local/remote
-yields 4 clients: 
-InterfacedClient, RemoteInterfacesClient
-NativeClient, RemoteINterfacedClient
+Encapsulated clients are interfaced clients called through a gmsh capsule
+so that the GUI may remain active.
 
 The base class "remoteClient" is a base class 
 for clients running on a remote host.
 It provides appropriate versions of checkIfPresent() and checkCommandLine().
+
+The combination of native/interfaced/encapsulated and local/remote
+yields 6 clients: 
+NativeClient, RemoteINterfacedClient
+InterfacedClient, RemoteInterfacesClient
+Encapsulated, RemoteEncapsulated
 */
 class localSolverClient : public onelab::localClient{
  private:
@@ -154,6 +158,7 @@ class localSolverClient : public onelab::localClient{
   bool checkIfPresentLocal(const std::string &fileName){
     return checkIfPresent(getWorkingDir()+fileName);
   }
+  virtual bool isNative() { return false; }
   virtual bool checkCommandLine();
   virtual void analyze() =0;
   virtual void compute() =0;
@@ -187,6 +192,7 @@ class localNetworkSolverClient : public localSolverClient{
   int getRemote(){ return _remote; }
   void setRemote(bool rem){ _remote = rem; }
 
+  bool isNative() { return true; }
   virtual std::string buildCommandLine();
   std::string appendArguments();
   virtual bool run();

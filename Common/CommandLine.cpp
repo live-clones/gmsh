@@ -137,7 +137,7 @@ void GetOptions(int argc, char *argv[])
   }
 #endif
 
-  Msg::SetExecutableName(argc?argv[0]:"");
+  if(argc) Msg::SetExecutableName(argv[0]);
 
   // get command line options
   int i = 1;

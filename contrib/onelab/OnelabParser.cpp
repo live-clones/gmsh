@@ -1281,6 +1281,11 @@ void MetaModel::client_sentence(const std::string &name,
 	strings[0].setVisible(false);
 	set(strings[0]);
       }
+      localSolverClient *c;
+      if((c=findClientByName(name))){
+	c->checkCommandLine(); // initialize client if native
+	c->analyze();
+      }
     }
     else if(isTodo(ANALYZE)){
       localSolverClient *c;
@@ -1334,22 +1339,20 @@ void MetaModel::client_sentence(const std::string &name,
       OLMsg::Fatal("Wrong number of arguments <%d> for <%s>",
 		 arguments.size(), action.c_str());
   }
-  else if(!action.compare("check")){
-    localSolverClient *c;
-    if((c=findClientByName(name))){
-      c->checkCommandLine();
-      c->analyze();
-    }
-    else
-      OLMsg::Fatal("Unknown client <%s>", name.c_str());
-  }
-  else if(!action.compare("compute")){
-    localSolverClient *c;
-    if((c=findClientByName(name))){
-      c->checkCommandLine();
-      if(isTodo(REGISTER))
-	c->analyze(); // computes nothing at registration
-      else{
+  // else if(!action.compare("check")){
+  //   localSolverClient *c;
+  //   if((c=findClientByName(name))){
+  //     c->checkCommandLine();
+  //     c->analyze();
+  //   }
+  //   else
+  //     OLMsg::Fatal("Unknown client <%s>", name.c_str());
+  // }
+  else if(!action.compare("alwaysCompute")){
+    if(isTodo(ANALYZE)){
+      localSolverClient *c;
+      if((c=findClientByName(name))){
+	//c->checkCommandLine();
 	c->compute();
 	onelab::server::instance()->setChanged(false, c->getName());
       }
@@ -1370,24 +1373,21 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
   }
-  else if(!action.compare("computeMerge")){
+  else if(!action.compare("frontPage")){
     std::vector<std::string> choices;
     for(unsigned int i = 0; i < arguments.size(); i++){
       choices.push_back(resolveGetVal(arguments[i]));
     }
     localSolverClient *c;
     if((c=findClientByName(name))) {
-      c->checkCommandLine();
-      if(isTodo(REGISTER))
-	c->analyze(); // computes nothing at registration
-      else{
+      //c->checkCommandLine();
+      if(isTodo(ANALYZE) || isTodo(COMPUTE))
 	if(onelab::server::instance()->getChanged(c->getName())){
 	  c->compute();
 	  c->GmshMerge(choices);
 	  OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
 	  onelab::server::instance()->setChanged(false, c->getName());
 	}
-      }
     }
   }
   else

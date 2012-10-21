@@ -227,6 +227,8 @@ int main(int argc, char *argv[]){
   std::string caseName="", todo="compute", modelName="", workingDir="";
   onelab::remoteNetworkClient *client = 0;
 
+  //if(argc) OLMsg::SetExecutableName(argv[0]);
+
   while(i < argc) {
     if(argv[i][0] == '-') {
       if(!strcmp(argv[i] + 1, "a")) {
