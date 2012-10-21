@@ -721,9 +721,10 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _butt[1] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
   _butt[1]->callback(onelab_cb, (void*)"compute");
 
+  int BB2 = BB / 2 + 4;
   _gear = new Fl_Menu_Button
-    (_butt[0]->x() - WB - BB/2, _butt[0]->y(), BB/2, BH, "@-1gmsh_gear");
-  _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
+    (_butt[0]->x() - WB - BB2, _butt[0]->y(), BB2, BH, "@-1gmsh_gear");
+  _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
@@ -746,10 +747,10 @@ onelabWindow::onelabWindow(int deltaFontSize)
   _gearOptionsEnd = _gear->menu()->size();
 
   Fl_Box *resbox = new Fl_Box(WB, WB,
-                              width - 2 * BB - BB / 2 - 4 * WB,
+                              width - 2 * BB - BB2 - 4 * WB,
                               height - 3 * WB - BH);
   _win->resizable(resbox);
-  _win->size_range(2 * BB + BB / 2 + 4 * WB + 1, 2 * BH + 3 * WB);
+  _win->size_range(2 * BB + BB2 + 4 * WB + 1, 2 * BH + 3 * WB);
 
   _win->position
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
