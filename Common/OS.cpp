@@ -159,7 +159,7 @@ int StatFile(const std::string &fileName)
   // could get file modification time from buf
 #else
   struct _stat buf;
-  int ret _stat(fileName.c_str(), &buf);
+  int ret = _stat(fileName.c_str(), &buf);
 #endif
   return ret;
 }
