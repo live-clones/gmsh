@@ -614,6 +614,121 @@ void Recombinator::merge(GRegion* gr){
   printf("hexahedra average quality (0->1) : %f\n",quality/count);
 }
 
+void Recombinator::improved_merge(GRegion* gr){
+  unsigned int i;
+  int count;
+  int idle;
+  bool flag;
+  double threshold;
+  double quality;
+  double coeff;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+  MElement* element;
+  std::set<MElement*> parts;
+  std::set<MElement*>::iterator it;
+  std::map<MElement*,bool>::iterator it2;
+  std::vector<MTetrahedron*>::iterator it3;
+  Hex hex;
+	
+  count = 1;
+  idle = 0;
+  quality = 0.0;
+	
+  for(i=0;i<potential.size();i++){
+    hex = potential[i];
+		
+	a = hex.get_a();
+	b = hex.get_b();
+	c = hex.get_c();
+	d = hex.get_d();
+	e = hex.get_e();
+	f = hex.get_f();
+	g = hex.get_g();
+	h = hex.get_h();
+		
+	parts.clear();
+	find(a,hex,parts);
+	find(b,hex,parts);
+	find(c,hex,parts);
+	find(d,hex,parts);
+	find(e,hex,parts);
+	find(f,hex,parts);
+	find(g,hex,parts);
+	find(h,hex,parts);
+		
+	flag = 1;
+		
+	for(it=parts.begin();it!=parts.end();it++){
+	  element = *it;
+	  it2 = markings.find(element);
+	  if(it2->second==1 && !sliver(element,hex)){
+	    flag = 0;
+		break;
+	  }
+	}
+		
+	threshold = 0.25;
+	if(hex.get_quality()<threshold){
+	  flag = 0;
+	}
+		
+	if(!valid(hex,parts)){
+	  flag = 0;
+	}
+		
+	if(!conformityA(hex)){
+	  flag = 0;
+	}
+		
+	if(!conformityB(hex)){
+	  flag = 0;
+	}  
+		
+	if(!conformityC(hex)){
+	  flag = 0;
+	}  
+		
+	if(flag){
+	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
+	  quality = quality + hex.get_quality();
+	  for(it=parts.begin();it!=parts.end();it++){
+	    element = *it;
+		it2 = markings.find(element);
+		it2->second = 1;
+	  }
+	  gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
+	  build_hash_tableA(hex);
+	  build_hash_tableB(hex);
+	  build_hash_tableC(hex);
+	  idle = 0;
+	  count++;
+	}
+	else{
+	  idle++;
+	}
+		
+	coeff = 0.1;  
+	if((double)idle>coeff*(double)potential.size() && potential.size()>2000){
+	  break;
+	}
+  }
+	
+  it3 = gr->tetrahedra.begin();
+  while(it3!=gr->tetrahedra.end()){
+    element = (MElement*)(*it3);
+	it2 = markings.find(element);
+	if(it2->second==1){
+	  it3 = gr->tetrahedra.erase(it3);
+	}
+	else{
+	  it3++;
+	}
+  }
+	
+  printf("hexahedra average quality (0->1) : %f\n",quality/count);
+}
+
 void Recombinator::rearrange(GRegion* gr){
   size_t i;
   MElement* element;

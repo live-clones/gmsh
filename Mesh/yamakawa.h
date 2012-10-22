@@ -87,6 +87,7 @@ class Recombinator{
   void patern2(GRegion*);
   void patern3(GRegion*);
   void merge(GRegion*);
+  void improved_merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
 	
