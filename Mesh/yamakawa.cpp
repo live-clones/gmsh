@@ -999,7 +999,7 @@ MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already
   MElement* element;
   MVertex *a,*b,*c,*d;
   MVertex* pointer;
-  std::set<MElement*>::iterator it;
+  std::set<MElement*>::const_iterator it;
 
   pointer = 0;
 
@@ -1127,7 +1127,7 @@ bool Recombinator::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set<
   bool flag1,flag2,flag3;
   MVertex *a,*b,*c,*d;
   MElement* element;
-  std::set<MElement*>::iterator it;
+  std::set<MElement*>::const_iterator it;
 
   ok = 0;
 
@@ -2341,7 +2341,7 @@ bool Supplementary::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set
   bool flag1,flag2,flag3;
   MVertex *a,*b,*c,*d;
   MElement* element;
-  std::set<MElement*>::iterator it;
+  std::set<MElement*>::const_iterator it;
 	
   ok = 0;
 	
@@ -3389,7 +3389,7 @@ void PostOp::mean(const std::set<MVertex*>& Ns,MVertex* mid,const std::vector<ME
   bool flag;
   double x,y,z;
   double init_x,init_y,init_z;
-  std::set<MVertex*>::iterator it;
+  std::set<MVertex*>::const_iterator it;
 
   x = 0.0;
   y = 0.0;

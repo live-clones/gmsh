@@ -2,6 +2,13 @@
 #include "OnelabClients.h"
 #include "StringUtils.h"
 #include <algorithm>
+#ifdef WIN32
+#define POPEN _popen
+#define PCLOSE _pclose
+#else
+#define POPEN popen
+#define PCLOSE pclose
+#endif
 
 class onelabMetaModelServer : public GmshServer{
  private:
@@ -510,15 +517,15 @@ bool remoteClient::checkCommandLine(const std::string &commandLine){
   mySystem(cmd);
 
   cmd.assign("ssh "+getRemoteHost()+" 'which "+commandLine+"'");
-  fp = popen(cmd.c_str(), "r");
+  fp = POPEN(cmd.c_str(), "r");
   if(fgets(cbuf, 1024, fp) == NULL){
     OLMsg::Warning("The executable <%s> does not exist",
 		 commandLine.c_str());
-    pclose(fp);
+    PCLOSE(fp);
     return false;
   }
   OLMsg::Info("The executable <%s> exists", commandLine.c_str());
-  pclose(fp);
+  PCLOSE(fp);
 
   return true;
 }
@@ -530,14 +537,14 @@ bool remoteClient::checkIfPresentRemote(const std::string &fileName){
 
   cmd.assign("ssh "+_remoteHost+" 'cd "+_remoteDir+"; ls "+fileName+" 2>/dev/null'");
   //std::cout << "check remote<" << cmd << ">" << std::endl;
-  fp = popen(cmd.c_str(), "r");
+  fp = POPEN(cmd.c_str(), "r");
   if(fgets(cbuf, 1024, fp) == NULL){
     OLMsg::Fatal("The file <%s> is not present", fileName.c_str());
-    pclose(fp);
+    PCLOSE(fp);
     return false;
   }
   OLMsg::Info("The file <%s> is present", fileName.c_str());
-  pclose(fp);
+  PCLOSE(fp);
   return true;
 }
 
@@ -1113,9 +1120,10 @@ bool checkIfPresent(std::string fileName){
   }
 }
 
-#include <unistd.h>
+
 #include <sys/types.h>
 #if not defined WIN32
+#include <unistd.h>
 #include <pwd.h>
 std::string getUserHomedir(){
   struct passwd *pw = getpwuid(getuid());
@@ -1123,9 +1131,16 @@ std::string getUserHomedir(){
   str.append("/");
   return str;
 }
+#include <sys/param.h>
+#else
+#include <direct.h>
 #endif
 
-#include <sys/param.h>
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif
+
+
 std::string getCurrentWorkdir(){
   char path[MAXPATHLEN];
   getcwd(path, MAXPATHLEN);

@@ -196,7 +196,7 @@ static void addBlobChaintoGroup(std::set<int> &group, const std::vector<std::set
     todoPB[iB] = false;
     group.insert(iB);
     const std::set<int> &connect = groupConnect[iB];
-    for (std::set<int>::iterator itBC = connect.begin(); itBC != connect.end(); ++itBC)
+    for (std::set<int>::const_iterator itBC = connect.begin(); itBC != connect.end(); ++itBC)
       addBlobChaintoGroup(group, groupConnect, todoPB, *itBC);
   }
 

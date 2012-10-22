@@ -163,8 +163,8 @@ std::string extractExpandPattern(const std::string& str){
   return pattern; 
 }
 
-std::string localSolverClient::longName(const std::string name){
-  std::set<std::string>::iterator it;
+std::string localSolverClient::longName(std::string name){
+  std::set<std::string, ShortNameLessThan>::iterator it;
   std::string fullName;
   if((it = _parameters.find(name)) != _parameters.end())
     fullName.assign(OLMsg::obtainFullName(*it));
