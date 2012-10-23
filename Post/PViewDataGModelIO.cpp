@@ -156,22 +156,28 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool sa
     }
   }
   else{
-    if(multipleView)
+    if(multipleView){
       fp = fopen(fileName.c_str(), binary ? "ab" : "a");
-    else
+      if(!fp){
+        Msg::Error("Unable to open file '%s'", fileName.c_str());
+        return false;
+      }
+    }
+    else{
       fp = fopen(fileName.c_str(), binary ? "wb" : "w");
-    if(!fp){
-      Msg::Error("Unable to open file '%s'", fileName.c_str());
-      return false;
+      if(!fp){
+        Msg::Error("Unable to open file '%s'", fileName.c_str());
+        return false;
+      }
+      fprintf(fp, "$MeshFormat\n");
+      fprintf(fp, "%g %d %d\n", 2.2, binary ? 1 : 0, (int)sizeof(double));
+      if(binary){
+        int one = 1;
+        fwrite(&one, sizeof(int), 1, fp);
+        fprintf(fp, "\n");
+      }
+      fprintf(fp, "$EndMeshFormat\n");
     }
-    fprintf(fp, "$MeshFormat\n");
-    fprintf(fp, "%g %d %d\n", 2.2, binary ? 1 : 0, (int)sizeof(double));
-    if(binary){
-      int one = 1;
-      fwrite(&one, sizeof(int), 1, fp);
-      fprintf(fp, "\n");
-    }
-    fprintf(fp, "$EndMeshFormat\n");
   }
 
   if(haveInterpolationMatrices()){
