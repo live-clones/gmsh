@@ -20,10 +20,10 @@
 
 class BasisVector: public Basis{
  protected:
-  std::vector            <const std::vector<Polynomial>*>*   node;
-  std::vector<std::vector<const std::vector<Polynomial>*>*>* edge;
-  std::vector<std::vector<const std::vector<Polynomial>*>*>* face;
-  std::vector            <const std::vector<Polynomial>*>*   cell;
+  std::vector            <std::vector<Polynomial>*>*   node;
+  std::vector<std::vector<std::vector<Polynomial>*>*>* edge;
+  std::vector<std::vector<std::vector<Polynomial>*>*>* face;
+  std::vector            <std::vector<Polynomial>*>*   cell;
 
   std::vector<const std::vector<Polynomial>*>* basis;
   std::vector<const std::vector<Polynomial>*>* revBasis;
@@ -33,23 +33,17 @@ class BasisVector: public Basis{
   //!
   virtual ~BasisVector(void);
 
-  //! @param closure A natural number
-  //! @return Returns the set of @em Polynomial%s
-  //! defining this (scalar) Basis, for the given closure
-  const std::vector<const std::vector<Polynomial>*>& 
-    getFunctions(unsigned int closure) const;
-
-  const std::vector<const std::vector<Polynomial>*>&
-    getNodeFunctions(void) const;
+  const std::vector<Polynomial>&
+    getNodeFunction(unsigned int i) const;
   
-  const std::vector<std::vector<const std::vector<Polynomial>*>*>&
-    getEdgeFunctions(void) const;
+  const std::vector<Polynomial>&
+    getEdgeFunction(unsigned int closure, unsigned int i) const;
   
-  const std::vector<std::vector<const std::vector<Polynomial>*>*>&
-    getFaceFunctions(void) const;
+  const std::vector<Polynomial>&
+    getFaceFunction(unsigned int closure, unsigned int i) const;
  
-  const std::vector<const std::vector<Polynomial>*>&
-    getCellFunctions(void) const;
+  const std::vector<Polynomial>&
+    getCellFunction(unsigned int i) const;
 
   virtual std::string toString(void) const;
 
@@ -66,37 +60,27 @@ class BasisVector: public Basis{
 //////////////////////
 
 inline
-const std::vector<const std::vector<Polynomial>*>& BasisVector::
-getFunctions(unsigned int closure) const{
-  if(!closure)
-    return *basis;
-
-  else
-    return *revBasis;
-}
-
-inline
-const std::vector<const std::vector<Polynomial>*>& 
-BasisVector::getNodeFunctions(void) const{
-  return *node;
+const std::vector<Polynomial>& 
+BasisVector::getNodeFunction(unsigned int i) const{
+  return *(*node)[i];
 }
 
 inline  
-const std::vector<std::vector<const std::vector<Polynomial>*>*>& 
-BasisVector::getEdgeFunctions(void) const{
-  return *edge;
+const std::vector<Polynomial>& 
+BasisVector::getEdgeFunction(unsigned int closure, unsigned int i) const{
+  return *(*(*edge)[closure])[i];
 }
 
 inline
-const std::vector<std::vector<const std::vector<Polynomial>*>*>& 
-BasisVector::getFaceFunctions(void) const{
-  return *face;
+const std::vector<Polynomial>& 
+BasisVector::getFaceFunction(unsigned int closure, unsigned int i) const{
+  return *(*(*face)[closure])[i];
 }
 
 inline
-const std::vector<const std::vector<Polynomial>*>& 
-BasisVector::getCellFunctions(void) const{
-  return *cell;
+const std::vector<Polynomial>& 
+BasisVector::getCellFunction(unsigned int i) const{
+  return *(*cell)[i];
 }
 
 #endif

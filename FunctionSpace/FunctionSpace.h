@@ -52,9 +52,6 @@ class FunctionSpace{
   unsigned int fPerCell;
   unsigned int type;
 
-  // Closure //
-  std::map<const MElement*, std::vector<bool>*>* edgeClosure;
-
   // Dofs //
   std::set<const Dof*, DofComparator>*     dof;
   std::vector<GroupOfDof*>*                group;
@@ -89,15 +86,19 @@ class FunctionSpace{
   std::string toString(void) const;
 
  protected:
+  // Init 
   FunctionSpace(void);
 
   void build(const GroupOfElement& goe,
 	     int basisType, int order);
 
-  void buildClosure(void);
+  // Dof
   void buildDof(void);
+  void insertDof(Dof& d, GroupOfDof* god);    
 
-  void insertDof(Dof& d, GroupOfDof* god);  
+  // Closure
+  std::vector<int> getEdgeClosure(const MElement& element) const;
+  std::vector<int> getFaceClosure(const MElement& element) const;
 };
 
 

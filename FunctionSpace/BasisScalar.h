@@ -20,10 +20,10 @@
 
 class BasisScalar: public Basis{
  protected:
-  std::vector            <const Polynomial*>*   node;
-  std::vector<std::vector<const Polynomial*>*>* edge;
-  std::vector<std::vector<const Polynomial*>*>* face;
-  std::vector            <const Polynomial*>*   cell;
+  std::vector            <Polynomial*>*   node;
+  std::vector<std::vector<Polynomial*>*>* edge;
+  std::vector<std::vector<Polynomial*>*>* face;
+  std::vector            <Polynomial*>*   cell;
 
   std::vector<const Polynomial*>* basis;
   std::vector<const Polynomial*>* revBasis;
@@ -33,22 +33,17 @@ class BasisScalar: public Basis{
   //!
   virtual ~BasisScalar(void);
   
-  //! @param closure A natural number
-  //! @return Returns the set of @em Polynomial%s
-  //! defining this (scalar) Basis, for the given closure
-  const std::vector<const Polynomial*>& getFunctions(unsigned int closure) const;
-
-  const std::vector<const Polynomial*>&
-    getNodeFunctions(void) const;
+  const Polynomial&
+    getNodeFunction(unsigned int i) const;
   
-  const std::vector<std::vector<const Polynomial*>*>&
-    getEdgeFunctions(void) const;
+  const Polynomial&
+    getEdgeFunction(unsigned int closure, unsigned int i) const;
   
-  const std::vector<std::vector<const Polynomial*>*>&
-    getFaceFunctions(void) const;
+  const Polynomial&
+    getFaceFunction(unsigned int closure, unsigned int i) const;
  
-  const std::vector<const Polynomial*>&
-    getCellFunctions(void) const;
+  const Polynomial&
+    getCellFunction(unsigned int i) const;
 
   virtual std::string toString(void) const;
 
@@ -61,41 +56,31 @@ class BasisScalar: public Basis{
 };
 
 //////////////////////
-// Inline Functions //
+// Inline Function //
 //////////////////////
 
 inline
-const std::vector<const Polynomial*>& BasisScalar::
-getFunctions(unsigned int closure) const{
-  if(!closure)
-    return *basis;
-
-  else
-    return *revBasis;
-}
-
-inline
-const std::vector<const Polynomial*>& 
-BasisScalar::getNodeFunctions(void) const{
-  return *node;
+const Polynomial& 
+BasisScalar::getNodeFunction(unsigned int i) const{
+  return *(*node)[i];
 }
 
 inline  
-const std::vector<std::vector<const Polynomial*>*>& 
-BasisScalar::getEdgeFunctions(void) const{
-  return *edge;
+const Polynomial& 
+BasisScalar::getEdgeFunction(unsigned int closure, unsigned int i) const{
+  return *(*(*edge)[closure])[i];
 }
 
 inline
-const std::vector<std::vector<const Polynomial*>*>& 
-BasisScalar::getFaceFunctions(void) const{
-  return *face;
+const Polynomial& 
+BasisScalar::getFaceFunction(unsigned int closure, unsigned int i) const{
+  return *(*(*face)[closure])[i];
 }
 
 inline
-const std::vector<const Polynomial*>& 
-BasisScalar::getCellFunctions(void) const{
-  return *cell;
+const Polynomial&
+BasisScalar::getCellFunction(unsigned int i) const{
+  return *(*cell)[i];
 }
 
 #endif

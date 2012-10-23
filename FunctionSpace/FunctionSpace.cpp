@@ -221,6 +221,80 @@ const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) cons
     return *(it->second); 
 }
 
+vector<int> FunctionSpace::getEdgeClosure(const MElement& element) const{
+  // Get not const Element (gmsh problem, not mine !) //
+  MElement& eelement = const_cast<MElement&>(element);
+
+  // Get Edge Closure //
+  const unsigned int nEdge = eelement.getNumEdges();
+  vector<int> edgeClosure(nEdge);
+
+  // Look Edges 
+  for(unsigned int i = 0; i < nEdge; i++){
+    MEdge edge = eelement.getEdge(i);
+    
+    if(edge.getVertex(0)->getNum() < 
+       edge.getVertex(1)->getNum())
+      
+      edgeClosure[i] = 0;
+
+    else
+      edgeClosure[i] = 1;
+  }
+
+  // Return //
+  return edgeClosure;
+}
+
+vector<int> FunctionSpace::getFaceClosure(const MElement& element) const{
+  // Get not const Element (gmsh problem, not mine !) //
+  MElement& eelement = const_cast<MElement&>(element);
+
+  // Get Face Closure //
+  const unsigned int nFace = eelement.getNumFaces();
+  vector<int> faceClosure(nFace);
+  
+  // Look Faces 
+  for(unsigned int i = 0; i < nFace; i++){
+    MFace face = eelement.getFace(i);
+
+    unsigned int v[3];
+    v[0] = face.getVertex(0)->getNum();
+    v[1] = face.getVertex(1)->getNum();
+    v[2] = face.getVertex(2)->getNum();
+
+    bool c[3];
+    c[0] = v[0] < v[1];
+    c[1] = v[1] < v[2];
+    c[2] = v[2] < v[0];
+
+    if(c[0])
+      if(c[1])
+	faceClosure[i] = 0;
+    
+      else
+	if(c[2])
+	  faceClosure[i] = 4;
+    
+	else
+	  faceClosure[i] = 5;
+    
+    else
+      if(c[1])
+	if(c[2])
+	  faceClosure[i] = 2;
+    
+	else
+	  faceClosure[i] = 1;
+    
+      else
+	faceClosure[i] = 3;
+  }
+
+  // Return //
+  return faceClosure;
+}
+
 string FunctionSpace::toString(void) const{
   return basis->toString();
 }

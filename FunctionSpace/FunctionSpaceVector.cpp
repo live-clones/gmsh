@@ -6,36 +6,72 @@ using namespace std;
 FunctionSpaceVector::~FunctionSpaceVector(void){
 }
 
-  const vector<const vector<Polynomial>*> FunctionSpaceVector::
+const vector<const vector<Polynomial>*> FunctionSpaceVector::
 getLocalFunctions(const MElement& element) const{
 
-  // Get Closure //
-  map<const MElement*, vector<bool>*>::iterator it = 
-    edgeClosure->find(&element);
-
-  if(it == edgeClosure->end())
-    throw Exception("Element not found for closure");
-
-  vector<bool>* closure   = it->second;
-  const unsigned int size = closure->size();
-
   // Get Basis //
-  const vector<const vector<Polynomial>*>& basis = 
-    getBasis(element).getFunctions(0);
-  
-  const vector<const vector<Polynomial>*>& revBasis = 
-    getBasis(element).getFunctions(1);
+  const BasisVector&  basis = getBasis(element);
+
+  const unsigned int nFNode = basis.getNVertexBased();
+  const unsigned int nFEdge = basis.getNEdgeBased();
+  const unsigned int nFFace = basis.getNFaceBased();
+  const unsigned int nFCell = basis.getNCellBased();
+
+  // Get Closure //
+  vector<int> edgeClosure = getEdgeClosure(element);
+  vector<int> faceClosure = getFaceClosure(element); 
 
   // Get Functions //
-  vector<const vector<Polynomial>*> fun(size);
+  vector<const vector<Polynomial>*> fun(basis.getSize());
+  unsigned int i = 0;
   
-  for(unsigned int i = 0; i < size; i++)
-    if((*closure)[i])
-      fun[i] = basis[i];
+  // Vertex Based
+  for(unsigned int j = 0; j < nFNode; j++){
+    fun[i] = &basis.getNodeFunction(j);
+    i++;
+  }
 
-    else
-      fun[i] = revBasis[i];
+  // Edge Based
+  // Number of basis function *per* edge
+  //  --> should always be an integer !
+  const unsigned int nEdge     = edgeClosure.size();
+  const unsigned int nFPerEdge = nFEdge / nEdge;
+  unsigned int fEdge = 0;
 
-  // Return 
+  for(unsigned int j = 0; j < nFPerEdge; j++){
+    for(unsigned int k = 0; k < nEdge; k++){
+      fun[i] = 
+	&basis.getEdgeFunction(edgeClosure[k], fEdge);
+      
+      fEdge++;
+      i++;
+    }
+  }
+
+  // Face Based
+  // Number of basis function *per* face
+  //  --> should always be an integer !
+  const unsigned int nFace     = faceClosure.size();
+  const unsigned int nFPerFace = nFFace / nFace;
+  unsigned int fFace = 0;
+
+  for(unsigned int j = 0; j < nFPerFace; j++){
+    for(unsigned int k = 0; k < nFace; k++){
+      fun[i] = 
+	&basis.getFaceFunction(faceClosure[k], fFace);
+      
+      fFace++;
+      i++;
+    }
+  }
+
+  // Cell Based
+  for(unsigned int j = 0; j < nFCell; j++){
+    fun[i] = &basis.getCellFunction(j);
+    i++;
+  }
+
+
+  // Return //
   return fun;
 }

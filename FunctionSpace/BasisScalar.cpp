@@ -14,7 +14,7 @@ string BasisScalar::toString(void) const{
   stringstream stream;
 
   for(int i = 0; i < size; i++)
-    stream << "f(" << i << ") = " << (*basis)[i]->toString() << endl;
+    stream << "f(" << i << ") = " << endl;
 
   return stream.str();
 }

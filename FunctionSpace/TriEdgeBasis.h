@@ -20,7 +20,7 @@ class TriEdgeBasis: public BasisVector{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Triangles of the given order
-  TriEdgeBasis(const int order);
+  TriEdgeBasis(int order);
   
   //! Deletes this Basis
   //!

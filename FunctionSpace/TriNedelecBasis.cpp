@@ -1,5 +1,7 @@
 #include "TriNedelecBasis.h"
 
+using namespace std;
+
 TriNedelecBasis::TriNedelecBasis(void){
   // Set Basis Type //
   order = 1;
@@ -27,62 +29,81 @@ TriNedelecBasis::TriNedelecBasis(void){
     Polynomial(1, 0, 1, 0);
 
 
-  // Basis (temporary --- *no* const) //
-  std::vector<std::vector<Polynomial>*>    basis(size);
-  std::vector<std::vector<Polynomial>*> revBasis(size);
+  // Basis //
+  node = new vector<vector<Polynomial>*>(nVertex);
+  edge = new vector<vector<vector<Polynomial>*>*>(2);
+  face = new vector<vector<vector<Polynomial>*>*>(0);
+  cell = new vector<vector<Polynomial>*>(nCell);
+  
+  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
+  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
 
-
+  
+  // Nedelec //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-    // Direct
-    std::vector<Polynomial> tmp = lagrange[j].gradient();
+    // Temp
+    vector<Polynomial> tmp = lagrange[j].gradient();
+    
+    // Edge[0]
     tmp[0].mul(lagrange[i]);
     tmp[1].mul(lagrange[i]);
     tmp[2].mul(lagrange[i]);
-
-    basis[i] = new std::vector<Polynomial>(lagrange[i].gradient());
-
-    basis[i]->at(0).mul(lagrange[j]);
-    basis[i]->at(1).mul(lagrange[j]);
-    basis[i]->at(2).mul(lagrange[j]);
-   
-    basis[i]->at(0).sub(tmp[0]);
-    basis[i]->at(1).sub(tmp[1]);
-    basis[i]->at(2).sub(tmp[2]);
-
-    // Revert 
-    std::vector<Polynomial> tmpR = lagrange[i].gradient();
-    tmpR[0].mul(lagrange[j]);
-    tmpR[1].mul(lagrange[j]);
-    tmpR[2].mul(lagrange[j]);
-
-    revBasis[i] = new std::vector<Polynomial>(lagrange[j].gradient());
-
-    revBasis[i]->at(0).mul(lagrange[i]);
-    revBasis[i]->at(1).mul(lagrange[i]);
-    revBasis[i]->at(2).mul(lagrange[i]);
-   
-    revBasis[i]->at(0).sub(tmpR[0]);
-    revBasis[i]->at(1).sub(tmpR[1]);
-    revBasis[i]->at(2).sub(tmpR[2]);
+    
+    (*(*edge)[0])[i] = new vector<Polynomial>(lagrange[i].gradient());
+    
+    (*(*edge)[0])[i]->at(0).mul(lagrange[j]);
+    (*(*edge)[0])[i]->at(1).mul(lagrange[j]);
+    (*(*edge)[0])[i]->at(2).mul(lagrange[j]);      
+    
+    (*(*edge)[0])[i]->at(0).sub(tmp[0]);
+    (*(*edge)[0])[i]->at(1).sub(tmp[1]);
+    (*(*edge)[0])[i]->at(2).sub(tmp[2]);
+    
+    //Edge[1]
+    tmp = lagrange[i].gradient();
+    
+    tmp[0].mul(lagrange[j]);
+    tmp[1].mul(lagrange[j]);
+    tmp[2].mul(lagrange[j]);
+    
+    (*(*edge)[1])[i] = new vector<Polynomial>(lagrange[j].gradient());
+    
+    (*(*edge)[1])[i]->at(0).mul(lagrange[i]);
+    (*(*edge)[1])[i]->at(1).mul(lagrange[i]);
+    (*(*edge)[1])[i]->at(2).mul(lagrange[i]);
+    
+    (*(*edge)[1])[i]->at(0).sub(tmp[0]);
+    (*(*edge)[1])[i]->at(1).sub(tmp[1]);
+    (*(*edge)[1])[i]->at(2).sub(tmp[2]);
   }
-
-
-  // Set Basis //
-  this->basis    = new std::vector<const std::vector<Polynomial>*>
-    (basis.begin(), basis.end());
-
-  this->revBasis = new std::vector<const std::vector<Polynomial>*>
-    (revBasis.begin(), revBasis.end());
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){
-  for(int i = 0; i < size; i++)
-    delete (*basis)[i];
+  // Vertex Based //
+  for(int i = 0; i < nVertex; i++)
+    delete (*node)[i];
+  
+  delete node;
 
-  delete basis;
 
-  for(int i = 0; i < size; i++)
-    delete (*revBasis)[i];
+  // Edge Based //
+  for(int c = 0; c < 2; c++){
+    for(int i = 0; i < nEdge; i++)
+      delete (*(*edge)[c])[i];
+    
+    delete (*edge)[c];
+  }
+  
+  delete edge;
 
-  delete revBasis;
+
+  // Face Based //
+  delete face;
+
+
+  // Cell Based //
+  for(int i = 0; i < nCell; i++)
+    delete (*cell)[i];
+
+  delete cell;
 }

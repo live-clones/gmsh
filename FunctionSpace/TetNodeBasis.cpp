@@ -3,7 +3,7 @@
 
 using namespace std;
 
-TetNodeBasis::TetNodeBasis(unsigned int order){
+TetNodeBasis::TetNodeBasis(int order){
   // Set Basis Type //
   this->order = order;
   
@@ -15,7 +15,7 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   nFace   = 2 * (order - 1) * (order - 2);
   nCell   =     (order - 1) * (order - 2) * (order - 3) / 6;
 
-  size    = nVertex + nEdge + nFace + nCell;
+  size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
   Polynomial* legendre     = new Polynomial[order];
@@ -50,23 +50,23 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   };
 
   // Counter //
-   int i;
+  int i;
 
   // Basis //
-  node = new vector<const Polynomial*>(nVertex);
-  edge = new vector<vector<const Polynomial*>*>(2);
-  face = new vector<vector<const Polynomial*>*>(6);
-  cell = new vector<const Polynomial*>(nCell);
+  node = new vector<Polynomial*>(nVertex);
+  edge = new vector<vector<Polynomial*>*>(2);
+  face = new vector<vector<Polynomial*>*>(6);
+  cell = new vector<Polynomial*>(nCell);
 
-  (*edge)[0] = new vector<const Polynomial*>(nEdge);
-  (*edge)[1] = new vector<const Polynomial*>(nEdge);
+  (*edge)[0] = new vector<Polynomial*>(nEdge);
+  (*edge)[1] = new vector<Polynomial*>(nEdge);
 
-  (*face)[0] = new vector<const Polynomial*>(nFace);
-  (*face)[1] = new vector<const Polynomial*>(nFace);
-  (*face)[2] = new vector<const Polynomial*>(nFace);
-  (*face)[3] = new vector<const Polynomial*>(nFace);
-  (*face)[4] = new vector<const Polynomial*>(nFace);
-  (*face)[5] = new vector<const Polynomial*>(nFace);
+  (*face)[0] = new vector<Polynomial*>(nFace);
+  (*face)[1] = new vector<Polynomial*>(nFace);
+  (*face)[2] = new vector<Polynomial*>(nFace);
+  (*face)[3] = new vector<Polynomial*>(nFace);
+  (*face)[4] = new vector<Polynomial*>(nFace);
+  (*face)[5] = new vector<Polynomial*>(nFace);
 
 
   // Vertex Based (Lagrange) //
@@ -89,7 +89,7 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   // Edge Based //
   i = 0;
 
-  for(unsigned int l = 1; l < order; l++){
+  for(int l = 1; l < order; l++){
     for(int e = 0; e < 6; e++){
       (*(*edge)[0])[i] = 
 	new Polynomial(intLegendre[l].compose

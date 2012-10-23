@@ -20,7 +20,7 @@ class TetEdgeBasis: public BasisVector{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Tetrahedra of the given order
-  TetEdgeBasis(const int order);
+  TetEdgeBasis(int order);
   
   //! Deletes this Basis
   //!

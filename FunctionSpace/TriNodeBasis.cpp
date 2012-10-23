@@ -3,7 +3,7 @@
 
 using namespace std;
 
-TriNodeBasis::TriNodeBasis(const int order){
+TriNodeBasis::TriNodeBasis(int order){
   // Set Basis Type //
   this->order = order;
   
@@ -32,13 +32,13 @@ TriNodeBasis::TriNodeBasis(const int order){
  
 
   // Basis //
-  node = new vector<const Polynomial*>(nVertex);
-  edge = new vector<vector<const Polynomial*>*>(2);
-  face = new vector<vector<const Polynomial*>*>(0);
-  cell = new vector<const Polynomial*>(nCell);
+  node = new vector<Polynomial*>(nVertex);
+  edge = new vector<vector<Polynomial*>*>(2);
+  face = new vector<vector<Polynomial*>*>(0);
+  cell = new vector<Polynomial*>(nCell);
 
-  (*edge)[0] = new vector<const Polynomial*>(nEdge);
-  (*edge)[1] = new vector<const Polynomial*>(nEdge);
+  (*edge)[0] = new vector<Polynomial*>(nEdge);
+  (*edge)[1] = new vector<Polynomial*>(nEdge);
 
 
   // Vertex Based (Lagrange) //
@@ -56,7 +56,7 @@ TriNodeBasis::TriNodeBasis(const int order){
 
   // Lagrange Sum //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-     lagrangeSum[i] = *(*node)[i] + *(*node)[j];
+    lagrangeSum[i] = *(*node)[i] + *(*node)[j];
 
   // Lagrange Sub //
   for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
