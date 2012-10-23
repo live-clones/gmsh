@@ -10,6 +10,7 @@
 #include "TriNedelecBasis.h"
 
 #include "TetNodeBasis.h"
+#include "TetEdgeBasis.h"
 
 #include "HexNodeBasis.h"
 #include "HexEdgeBasis.h"
@@ -66,7 +67,7 @@ Basis* BasisGenerator::tetGen(int basisType,
 			      int order){
   switch(basisType){
   case  0: return new TetNodeBasis(order);
-  case  1: throw Exception("1-form not implemented on Tetrahedrons");
+  case  1: return new TetEdgeBasis(order);
   case  2: throw Exception("2-form not implemented on Tetrahedrons");
   case  3: throw Exception("3-form not implemented on Tetrahedrons");
 
