@@ -31,11 +31,11 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
   arguments.resize(0);
   cursor=0;
   if ( (pos=in.find("(",cursor)) == std::string::npos )
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
 
   if (pos>0){
     std::cout << pos << in << std::endl;
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
   }
   unsigned int count=1;
   pos++; // skips '('
@@ -46,18 +46,18 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
     else if(in[pos]==',' && (count==1)) {
       arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
       if(count!=1)
-	OLMsg::Fatal("Syntax error: mismatched parenthesis <%s>",in.c_str());
+	OLMsg::Error("Syntax error: mismatched parenthesis <%s>",in.c_str());
       cursor=pos+1; // skips ','
     }
     else if(in[pos]==';') 
-	OLMsg::Fatal("Syntax error: unterminated sentence <%s>",in.c_str());
+	OLMsg::Error("Syntax error: unterminated sentence <%s>",in.c_str());
 
     pos++;
   } while( count && (pos!=std::string::npos) );
   // count is 0 when the closing brace is found. 
 
   if(count)
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
   else
     arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
   end=pos;
@@ -70,7 +70,7 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
   arguments.resize(0);
   cursor=0;
   if ( (pos=in.find("(",cursor)) == std::string::npos )
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
 
   unsigned int count=1;
   pos++; // skips '('
@@ -81,7 +81,7 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
     if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
       arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
       if(count!=1)
-	OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+	OLMsg::Error("Syntax error: <%s>",in.c_str());
       cursor=pos;
       if(in[pos+1]=='='){
 	arguments.push_back(in.substr(cursor,2));
@@ -97,12 +97,12 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
   // count is 0 when the closing brace is found. 
 
   if(count)
-    OLMsg::Fatal("Syntax error: mismatched parenthesis in <%s>",in.c_str());
+    OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
   else
     arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
 
   if((arguments.size()!=1) && (arguments.size()!=3))
-    OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+    OLMsg::Error("Syntax error: <%s>",in.c_str());
   return arguments.size();
 }
 
@@ -112,41 +112,16 @@ int extract(const std::string &in, std::string &paramName,
   size_t pos, cursor;
   cursor=0;
   if ( (pos=in.find(".",cursor)) == std::string::npos )
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
   else
     paramName.assign(sanitize(in.substr(cursor,pos-cursor)));
   cursor = pos+1; // skips '.'
   if ( (pos=in.find("(",cursor)) == std::string::npos )
-     OLMsg::Fatal("Syntax error: <%s>",in.c_str());
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
   else
     action.assign(sanitize(in.substr(cursor,pos-cursor)));
   cursor = pos;
   return enclosed(in.substr(cursor),arguments,pos);
-}
-
-bool extractRange(const std::string &in, std::vector<double> &arguments){
-  // syntax: a:b:c or a:b#n
-  size_t pos, cursor;
-  arguments.resize(0);
-  cursor=0;
-  if ( (pos=in.find(":",cursor)) == std::string::npos )
-     OLMsg::Fatal("Syntax error in range <%s>",in.c_str());
-  else{
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
-  }
-  cursor = pos+1; // skips ':'
-  if ( (pos=in.find(":",cursor)) != std::string::npos ){
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
-    arguments.push_back(atof(in.substr(pos+1).c_str()));
-  }
-  else if ( (pos=in.find("#",cursor)) != std::string::npos ){
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
-    double NumStep = atof(in.substr(pos+1).c_str());
-    arguments.push_back((arguments[1]-arguments[0])/((NumStep==0)?1:NumStep));
-  }
-  else
-     OLMsg::Fatal("Syntax error in range <%s>",in.c_str());
-  return (arguments.size()==3);
 }
 
 std::string extractExpandPattern(const std::string& str){
@@ -158,7 +133,7 @@ std::string extractExpandPattern(const std::string& str){
   if(posa!=std::string::npos) 
     pattern.replace(posa,5,",");
   if(pattern.size()!=3)
-    OLMsg::Fatal("Incorrect expand pattern <%s>",
+    OLMsg::Error("Incorrect expand pattern <%s>",
 	       str.c_str());
   return pattern; 
 }
@@ -186,7 +161,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
     cursor = pos+olkey::getValue.length();
     int NumArg=enclosed(line.substr(cursor),arguments,pos);
     if(NumArg<1)
-      OLMsg::Fatal("Misformed %s statement: <%s>",
+      OLMsg::Error("Misformed %s statement: <%s>",
 		 olkey::getValue.c_str(),line.c_str());
     std::string paramName=longName(arguments[0]);
     get(numbers,paramName);
@@ -236,7 +211,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	    buff.assign(Num.str());
 	  }
 	  else
-	    OLMsg::Fatal("Unknown action <%s> in %s statement",
+	    OLMsg::Error("Unknown action <%s> in %s statement",
 		       action.c_str(),olkey::getValue.c_str());
 	}
 	else if(!name.compare("range")) {
@@ -247,7 +222,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	  if( (stp == 0) ||
 	      (min == -onelab::parameter::maxNumber()) ||
 	      (max ==  onelab::parameter::maxNumber()) )
-	    OLMsg::Fatal("Invalid range description for parameter <%s>",
+	    OLMsg::Error("Invalid range description for parameter <%s>",
 		       paramName.c_str());
 	  if(!action.compare("size")) {
 	    buff.assign(ftoa(fabs((max-min)/stp)));
@@ -262,7 +237,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	  else if(!action.compare("expand")) {
 	  }
 	  else
-	    OLMsg::Fatal("Unknown action <%s> in %s statement",
+	    OLMsg::Error("Unknown action <%s> in %s statement",
 		       action.c_str(),olkey::getValue.c_str());
 	}
       }
@@ -272,7 +247,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
       if (strings.size())
 	buff.assign(strings[0].getValue());
       else
-	OLMsg::Fatal("resolveGetVal: unknown variable: <%s>",paramName.c_str());
+	OLMsg::Error("resolveGetVal: unknown variable: <%s>",paramName.c_str());
     }
     line.replace(pos0,cursor+pos-pos0,buff); 
     cursor=pos0+buff.length();
@@ -284,7 +259,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
     size_t pos0=pos;
     cursor=pos+olkey::mathex.length();
     if(enclosed(line.substr(cursor),arguments,pos) != 1)
-      OLMsg::Fatal("Misformed %s statement: <%s>",
+      OLMsg::Error("Misformed %s statement: <%s>",
 		 olkey::mathex.c_str(),line.c_str());
     //std::cout << "MathEx evaluates now <"<< arguments[0]<< "> " << std::endl;
     smlib::mathex* mathExp = new smlib::mathex();
@@ -296,7 +271,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 
   // Check now wheter the line still contains OL.
   if ( (pos=line.find(olkey::label)) != std::string::npos)
-    OLMsg::Fatal("Unidentified onelab command in <%s>",line.c_str());
+    OLMsg::Error("Unidentified onelab command in <%s>",line.c_str());
 
   return line;
 }
@@ -324,11 +299,36 @@ bool localSolverClient::resolveLogicExpr(std::vector<std::string> arguments) {
     else if (!arguments[1].compare("!="))
       condition = (val1!=val2);
     else
-      OLMsg::Fatal("Unknown logical operator <%s>", arguments[1].c_str());
+      OLMsg::Error("Unknown logical operator <%s>", arguments[1].c_str());
   }
   else
-    OLMsg::Fatal("Invalid logical expression");
+    OLMsg::Error("Invalid logical expression");
   return condition;
+}
+
+bool extractRange(const std::string &in, std::vector<double> &arguments){
+  // syntax: a:b:c or a:b#n
+  size_t pos, cursor;
+  arguments.resize(0);
+  cursor=0;
+  if ( (pos=in.find(":",cursor)) == std::string::npos )
+     OLMsg::Error("Syntax error in range <%s>",in.c_str());
+  else{
+    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+  }
+  cursor = pos+1; // skips ':'
+  if ( (pos=in.find(":",cursor)) != std::string::npos ){
+    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+    arguments.push_back(atof(in.substr(pos+1).c_str()));
+  }
+  else if ( (pos=in.find("X",cursor)) != std::string::npos ){
+    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+    double NumStep = atof(in.substr(pos+1).c_str());
+    arguments.push_back((arguments[1]-arguments[0])/((NumStep==0)?1:NumStep));
+  }
+  else
+     OLMsg::Error("Syntax error in range <%s>",in.c_str());
+  return (arguments.size()==3);
 }
 
 void localSolverClient::parse_sentence(std::string line) { 
@@ -402,7 +402,7 @@ void localSolverClient::parse_sentence(std::string line) {
     else if(!action.compare("radioButton")) { 
       // syntax: paramName.radioButton(val,path,label)
       if(arguments[0].empty())
-	OLMsg::Fatal("No value given for param <%s>",name.c_str());
+	OLMsg::Error("No value given for param <%s>",name.c_str());
       double val=atof(arguments[0].c_str());
       if((arguments.size()>1) && isPath(arguments[1]))
 	name.assign(arguments[1] + name);
@@ -429,7 +429,7 @@ void localSolverClient::parse_sentence(std::string line) {
       // set the range of an existing number
       // syntax: paramName.range({a:b:c|a:b#n|min,max,step})
       if(arguments[0].empty())
-	OLMsg::Fatal("No argument given for MinMax <%s>",name.c_str());
+	OLMsg::Error("No argument given for MinMax <%s>",name.c_str());
       name.assign(longName(name));
       get(numbers,name);
       if(numbers.size()){ // parameter must exist
@@ -447,7 +447,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  numbers[0].setStep(atof(arguments[2].c_str()));
 	}
 	else
-	  OLMsg::Fatal("Wrong number of arguments for MinMax <%s>",name.c_str());
+	  OLMsg::Error("Wrong number of arguments for MinMax <%s>",name.c_str());
       }
       set(numbers[0]);
     }
@@ -470,7 +470,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
@@ -499,7 +499,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
@@ -508,7 +508,7 @@ void localSolverClient::parse_sentence(std::string line) {
       get(numbers,name);
       if(numbers.size()){ // parameter must exist
 	if(arguments.size() % 2)
-	  OLMsg::Fatal("Nb of labels does not match nb of choices for <%s>",
+	  OLMsg::Error("Nb of labels does not match nb of choices for <%s>",
 		     name.c_str());
 	std::vector<double> choices=numbers[0].getChoices();
 	for(unsigned int i = 0; i < arguments.size(); i=i+2){
@@ -521,7 +521,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	set(numbers[0]);
       }
       else
-	OLMsg::Fatal("The number <%s> does not exist",name.c_str());
+	OLMsg::Error("The number <%s> does not exist",name.c_str());
     }
     else if(!action.compare("setValue")){ // force change on server
       name.assign(longName(name));
@@ -543,13 +543,13 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
     else if(!action.compare("setVisible")){
       if(arguments[0].empty())
-	OLMsg::Fatal("Missing argument SetVisible <%s>",name.c_str());
+	OLMsg::Error("Missing argument SetVisible <%s>",name.c_str());
       name.assign(longName(name));
       get(numbers,name); 
       if(numbers.size()){ 
@@ -563,13 +563,13 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
     else if(!action.compare("setReadOnly")){
       if(arguments[0].empty())
-	OLMsg::Fatal("Missing argument SetReadOnly <%s>",name.c_str());
+	OLMsg::Error("Missing argument SetReadOnly <%s>",name.c_str());
       name.assign(longName(name));
       get(numbers,name); 
       if(numbers.size()){ 
@@ -583,7 +583,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
@@ -603,13 +603,13 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
     else if(!action.compare("setAttribute")){
       if(arguments.size() !=2 )
-	OLMsg::Fatal("SetAttribute <%s> needs two arguments %d", 
+	OLMsg::Error("SetAttribute <%s> needs two arguments %d", 
 		   name.c_str(), arguments.size());
       name.assign(longName(name));
       get(numbers,name); 
@@ -625,7 +625,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  set(strings[0]);
 	}
 	else{
-	  OLMsg::Fatal("The parameter <%s> does not exist",name.c_str());
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
 	}
       }
     }
@@ -690,19 +690,19 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     else if(NumArg==2)
       modify_tags(arguments[0],arguments[1]);
     else
-      OLMsg::Fatal("Misformed <%s> statement", olkey::deflabel.c_str());
+      OLMsg::Error("Misformed <%s> statement", olkey::deflabel.c_str());
   }
   else if( (pos=line.find(olkey::begin)) != std::string::npos) {
     // onelab.begin
     if (!parse_block(infile))
-      OLMsg::Fatal("Misformed <%s> block <%s>",
+      OLMsg::Error("Misformed <%s> block <%s>",
 		 olkey::begin.c_str(),olkey::end.c_str());
   }
   else if ( (pos=line.find(olkey::iftrue)) != std::string::npos) {
     // onelab.iftrue
     cursor = pos+olkey::iftrue.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::iftrue.c_str(),line.c_str());
     bool condition = false;
     get(strings,longName(arguments[0]));
@@ -713,18 +713,18 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       if (numbers.size())
 	condition = (bool) numbers[0].getValue();
       else
-	OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+	OLMsg::Error("Unknown parameter <%s> in <%s> statement",
 		   arguments[0].c_str(),olkey::iftrue.c_str());
     }
     if (!parse_ifstatement(infile,condition))
-      OLMsg::Fatal("Misformed <%s> statement: <%s>",
+      OLMsg::Error("Misformed <%s> statement: <%s>",
 		 olkey::iftrue.c_str(),arguments[0].c_str());
   }
   else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos) {
     // onelab.ifntrue
     cursor = pos+olkey::ifntrue.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::ifntrue.c_str(),line.c_str());
     bool condition = false;
     get(strings,longName(arguments[0]));
@@ -735,12 +735,12 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       if (numbers.size())
 	condition = (bool) numbers[0].getValue();
       else
-	OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+	OLMsg::Error("Unknown parameter <%s> in <%s> statement",
 		   arguments[0].c_str(),olkey::ifntrue.c_str());
     }
     std::cout << "cond=" << condition << std::endl;
     if (!parse_ifstatement(infile,!condition))
-      OLMsg::Fatal("Misformed <%s> statement: <%s>",
+      OLMsg::Error("Misformed <%s> statement: <%s>",
 		 olkey::ifntrue.c_str(),arguments[0].c_str());
   }
   else if ( (pos=line.find(olkey::ifcond)) != std::string::npos) {
@@ -749,7 +749,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     extractLogic(line.substr(cursor),arguments);
     bool condition= resolveLogicExpr(arguments);
     if (!parse_ifstatement(infile,condition)){
-      OLMsg::Fatal("Misformed %s statement: <%s>", 
+      OLMsg::Error("Misformed %s statement: <%s>", 
 		 olkey::ifcond.c_str(), line.c_str());
     }
   }
@@ -757,7 +757,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.include
     cursor = pos+olkey::include.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::include.c_str(),line.c_str());
     parse_onefile(arguments[0]);
   }
@@ -765,7 +765,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.message
     cursor = pos+olkey::message.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::message.c_str(),line.c_str());
     std::string msg = resolveGetVal(arguments[0]);
     OLMsg::Info("%s",msg.c_str());
@@ -774,7 +774,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.showParam
     cursor = pos+olkey::showParam.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		   olkey::showParam.c_str(),line.c_str());
     for(unsigned int i = 0; i < arguments.size(); i++){
       std::string lname=longName(arguments[i]);
@@ -787,7 +787,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	if (strings.size())
 	  msg.assign(strings[0].toChar());
 	else
-	  OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+	  OLMsg::Error("Unknown parameter <%s> in <%s> statement",
 		       arguments[i].c_str(),olkey::showParam.c_str());
       }
       for(unsigned int j = 0; j < msg.size(); j++)
@@ -799,7 +799,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.showGmsh
     cursor = pos+olkey::showGmsh.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		   olkey::showGmsh.c_str(),line.c_str());
     std::string fileName=resolveGetVal(arguments[0]);
     OLMsg::MergeFile(fileName);
@@ -808,7 +808,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.dump 
     cursor = pos+olkey::dump.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::dump.c_str(),line.c_str());
     onelab::server::instance()->toFile(resolveGetVal(arguments[0]));
   }
@@ -842,11 +842,11 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	// append the next line
 	getline (infile,line);
 	if((pos=line.find_first_not_of(" \t"))==std::string::npos){
-	  OLMsg::Fatal("Empty line not allowed within a command <%s>",
+	  OLMsg::Error("Empty line not allowed within a command <%s>",
 		     cmds.c_str());
 	}
 	else if(!line.compare(pos,olkey::comment.size(),olkey::comment)){
-	  OLMsg::Fatal("Comment lines not allowed within a command <%s>",
+	  OLMsg::Error("Comment lines not allowed within a command <%s>",
 		     cmds.c_str());
 	}
 	NbLines++; // command should not span over more than 10 lines
@@ -855,7 +855,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	break;
     } while (infile.good() && NbLines<=10);
     if(NbLines>=10)
-      OLMsg::Fatal("Command <%s> should not span over more than 10 lines",
+      OLMsg::Error("Command <%s> should not span over more than 10 lines",
 		 cmds.c_str());
     parse_sentence(cmds);
   }
@@ -869,7 +869,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     // onelab.getRegion: nothing to do
   }
   else if( (pos=line.find(olkey::label)) != std::string::npos) {
-      OLMsg::Fatal("Unknown ONELAB keyword in <%s>",line.c_str());
+      OLMsg::Error("Unknown ONELAB keyword in <%s>",line.c_str());
   }
   else{
     // not a onelab line, skip
@@ -933,7 +933,7 @@ void localSolverClient::parse_onefile(std::string fileName, bool mandatory) {
   }
   else
     if(mandatory)
-      OLMsg::Fatal("The file <%s> does not exist",fullName.c_str());
+      OLMsg::Error("The file <%s> does not exist",fullName.c_str());
     else
       OLMsg::Info("The file <%s> does not exist",fullName.c_str());
 } 
@@ -988,7 +988,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     else if(NumArg==2)
       modify_tags(arguments[0],arguments[1]);
     else
-      OLMsg::Fatal("Misformed <%s> statement", olkey::deflabel.c_str());
+      OLMsg::Error("Misformed <%s> statement", olkey::deflabel.c_str());
   }
   else if( (pos=line.find(olkey::begin)) != std::string::npos) {
     // onelab.begin
@@ -996,7 +996,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       getline (infile,line);
       if( (pos=line.find(olkey::end)) != std::string::npos) return;
     }
-    OLMsg::Fatal("Misformed <%s> block <%s>",
+    OLMsg::Error("Misformed <%s> block <%s>",
 	       olkey::begin.c_str(),olkey::end.c_str());
   }
   else if ( (pos=line.find(olkey::iftrue)) != std::string::npos) {
@@ -1005,7 +1005,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     // pos=line.find_first_of(')',cursor)+1;
     // if(enclosed(line.substr(cursor,pos-cursor),arguments)<1)
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::iftrue.c_str(),line.c_str());
     bool condition = false;
     get(strings,longName(arguments[0]));
@@ -1016,11 +1016,11 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       if (numbers.size())
 	condition = (bool) numbers[0].getValue();
       else
-	OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+	OLMsg::Error("Unknown parameter <%s> in <%s> statement",
 		   arguments[0].c_str(),olkey::iftrue.c_str());
     }
     if (!convert_ifstatement(infile,outfile,condition))
-      OLMsg::Fatal("Misformed <%s> statement: %s",
+      OLMsg::Error("Misformed <%s> statement: %s",
 		 olkey::iftrue.c_str(),arguments[0].c_str());     
   }
   else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos) {
@@ -1029,7 +1029,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     // pos=line.find_first_of(')',cursor)+1;
     // if(enclosed(line.substr(cursor,pos-cursor),arguments)<1)    
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::ifntrue.c_str(),line.c_str());
     bool condition = false;
     get(strings,longName(arguments[0]));
@@ -1040,11 +1040,11 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       if (numbers.size())
 	condition = (bool) numbers[0].getValue();
       else
-	OLMsg::Fatal("Unknown parameter <%s> in <%s> statement",
+	OLMsg::Error("Unknown parameter <%s> in <%s> statement",
 		   arguments[0].c_str(),olkey::ifntrue.c_str());
     }
     if (!convert_ifstatement(infile,outfile,!condition))
-      OLMsg::Fatal("Misformed <%s> statement: %s",
+      OLMsg::Error("Misformed <%s> statement: %s",
 		 olkey::ifntrue.c_str(),arguments[0].c_str());  
   }
   else if ( (pos=line.find(olkey::ifcond)) != std::string::npos) {
@@ -1053,13 +1053,13 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     extractLogic(line.substr(cursor),arguments);
     bool condition= resolveLogicExpr(arguments);
     if (!convert_ifstatement(infile,outfile,condition))
-      OLMsg::Fatal("Misformed %s statement: <%s>", line.c_str());
+      OLMsg::Error("Misformed %s statement: <%s>", line.c_str());
   }
   else if ( (pos=line.find(olkey::include)) != std::string::npos) {
     // onelab.include
     cursor = pos+olkey::include.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::include.c_str(),line.c_str());
     convert_onefile(arguments[0],outfile);
   }
@@ -1067,7 +1067,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     // onelab.message
     cursor = pos+olkey::message.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Fatal("Misformed <%s> statement: (%s)",
+      OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::message.c_str(),line.c_str());
     std::string msg = resolveGetVal(arguments[0]);
     OLMsg::Info("%s",msg.c_str());
@@ -1116,14 +1116,14 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 	    buff.append(1,pattern[2]);
 	  }
 	  else
-	    OLMsg::Fatal("Unknown %s action: <%s>",
+	    OLMsg::Error("Unknown %s action: <%s>",
 		       olkey::getRegion.c_str(), arguments[1].c_str());
 	}
 	else
-	  OLMsg::Fatal("Unknown region: <%s>",paramName.c_str());
+	  OLMsg::Error("Unknown region: <%s>",paramName.c_str());
       }
       else
-	OLMsg::Fatal("Misformed <%s> statement: (%s)",
+	OLMsg::Error("Misformed <%s> statement: (%s)",
 		   olkey::getRegion.c_str(),line.c_str());
       line.replace(pos0,cursor+pos-pos0,buff);
       cursor=pos0+buff.length();
@@ -1131,7 +1131,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     outfile << line << std::endl; 
   }
   else if ( (pos=line.find(olkey::label)) != std::string::npos){
-    OLMsg::Fatal("Unidentified onelab command in <%s>",line.c_str());
+    OLMsg::Error("Unidentified onelab command in <%s>",line.c_str());
   }
   else{
     outfile << line << std::endl; 
@@ -1151,13 +1151,13 @@ void localSolverClient::convert_onefile(std::string fileName, std::ofstream &out
     infile.close();
   }
   else
-    OLMsg::Fatal("The file %s cannot be opened",fullName.c_str());
+    OLMsg::Error("The file %s cannot be opened",fullName.c_str());
 }
 
 void localSolverClient::client_sentence(const std::string &name, 
 					const std::string &action, 
 		       const std::vector<std::string> &arguments) {
-  OLMsg::Fatal("The action <%s> is unknown in this context",action.c_str());
+  OLMsg::Error("The action <%s> is unknown in this context",action.c_str());
 }
 
 void MetaModel::client_sentence(const std::string &name, 
@@ -1212,7 +1212,7 @@ void MetaModel::client_sentence(const std::string &name,
     if((c=findClientByName(name)))
       c->setWorkingDir(c->getWorkingDir()+arguments[0]);
     else
-      OLMsg::Fatal("Unknown client <%s>", name.c_str());
+      OLMsg::Error("Unknown client <%s>", name.c_str());
   }
   else if(!action.compare("active")){
     localSolverClient *c;
@@ -1220,7 +1220,7 @@ void MetaModel::client_sentence(const std::string &name,
       if((c=findClientByName(name)))
 	c->setActive(atof( resolveGetVal(arguments[0]).c_str() ));
       else
-	OLMsg::Fatal("Unknown client <%s>", name.c_str());
+	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
     else
       OLMsg::Error("No argument for <%s.Active> statement", name.c_str());
@@ -1299,7 +1299,7 @@ void MetaModel::client_sentence(const std::string &name,
 	  bool changed = onelab::server::instance()->getChanged(c->getName());
 	  bool started = isStarted(changed);
 
-	  std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << std::endl;
+	  std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorNum() << std::endl;
 	  if(started) c->compute();
 	}
       }
@@ -1336,7 +1336,7 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
     else
-      OLMsg::Fatal("Wrong number of arguments <%d> for <%s>",
+      OLMsg::Error("Wrong number of arguments <%d> for <%s>",
 		 arguments.size(), action.c_str());
   }
   // else if(!action.compare("check")){
@@ -1346,7 +1346,7 @@ void MetaModel::client_sentence(const std::string &name,
   //     c->analyze();
   //   }
   //   else
-  //     OLMsg::Fatal("Unknown client <%s>", name.c_str());
+  //     OLMsg::Error("Unknown client <%s>", name.c_str());
   // }
   else if(!action.compare("alwaysCompute")){
     if(isTodo(ANALYZE)){
@@ -1358,7 +1358,7 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
     else
-      OLMsg::Fatal("Unknown client <%s>", name.c_str());
+      OLMsg::Error("Unknown client <%s>", name.c_str());
   }
   else if(!action.compare("merge")){
     if(isTodo(COMPUTE)){
@@ -1391,5 +1391,5 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else
-    OLMsg::Fatal("Unknown action <%s>",action.c_str());
+    OLMsg::Error("Unknown action <%s>",action.c_str());
 }

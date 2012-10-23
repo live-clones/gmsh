@@ -51,6 +51,14 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 #define vsnprintf _vsnprintf
 #endif
 
+int OLMsg::GetErrorNum(){
+  return _errorCount;
+}
+
+void OLMsg::ResetErrorNum(){
+  _errorCount=0;
+}
+
 void OLMsg::Init(int argc, char **argv)
 {
   time_t now;
@@ -92,12 +100,10 @@ void OLMsg::Fatal(const char *fmt, ...)
       fprintf(stderr, "Fatal   : %s\n", str);
    fflush(stderr);
   }
-
-  OLMsg::SetOnelabString("MetaModel/STATUS","STOP");
   //FinalizeClient();
-  //FinalizeOnelab();
+  FinalizeOnelab();
   //delete loader;
-  //Exit(1);
+  Exit(1);
 }
 
 void OLMsg::Error(const char *fmt, ...)
@@ -144,8 +150,6 @@ void OLMsg::Warning(const char *fmt, ...)
     fflush(stderr);
   }
 }
-
-
 
 void OLMsg::Info(const char *fmt, ...)
 {

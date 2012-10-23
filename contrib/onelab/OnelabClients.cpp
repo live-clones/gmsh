@@ -122,7 +122,7 @@ std::string localNetworkSolverClient::appendArguments(){
     command.append(" " + getSocketSwitch() + " " + getName() + " %s");
   }
   else
-    OLMsg::Fatal("appendArguments: Unknown Action <%s>", action.c_str());
+    OLMsg::Error("appendArguments: Unknown Action <%s>", action.c_str());
   return command;
 }
 
@@ -234,7 +234,7 @@ bool localNetworkSolverClient::run()
           onelab::function p; p.fromChar(message); set(p);
         }
         else
-          OLMsg::Fatal("FIXME query not done for this parameter type: <%s>",
+          OLMsg::Error("FIXME query not done for this parameter type: <%s>",
 		     message.c_str());
       }
       break;
@@ -328,7 +328,7 @@ bool localNetworkSolverClient::run()
       break;
     case GmshSocket::GMSH_ERROR:
       //OLMsg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
-      OLMsg::Fatal("%-8.8s: %s", _name.c_str(), message.c_str());
+      OLMsg::Error("%-8.8s: %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_MERGE_FILE:
       break;
@@ -539,7 +539,7 @@ bool remoteClient::checkIfPresentRemote(const std::string &fileName){
   //std::cout << "check remote<" << cmd << ">" << std::endl;
   fp = POPEN(cmd.c_str(), "r");
   if(fgets(cbuf, 1024, fp) == NULL){
-    OLMsg::Fatal("The file <%s> is not present", fileName.c_str());
+    OLMsg::Error("The file <%s> is not present", fileName.c_str());
     PCLOSE(fp);
     return false;
   }
@@ -567,7 +567,7 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
       return mySystem(cmd);
     }
     else{
-      OLMsg::Fatal("The input file <%s> is not present", fullName.c_str());
+      OLMsg::Error("The input file <%s> is not present", fullName.c_str());
       return false;
     }
   }
@@ -581,13 +581,13 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
 	return mySystem(cmd);
       }
       else{
-	OLMsg::Fatal("The input file <%s> is not present", fullName.c_str());
+	OLMsg::Error("The input file <%s> is not present", fullName.c_str());
 	return false;
       }
     }
     else { //should be found remote
       if(!checkIfPresentRemote(fileName)){
-	OLMsg::Fatal("The input file <%s> is not present", fileName.c_str());
+	OLMsg::Error("The input file <%s> is not present", fileName.c_str());
 	return false;
       }
       else
@@ -625,7 +625,7 @@ void MetaModel::saveCommandLines(const std::string fileName){
     for(citer it = _clients.begin(); it != _clients.end(); it++)
       outfile << (*it)->toChar();
   else
-    OLMsg::Fatal("The file <%s> cannot be opened",fileNameSave.c_str());
+    OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
   outfile.close();
 }
 
@@ -677,7 +677,7 @@ void MetaModel::registerClient(const std::string &name, const std::string &type,
     else if(!type.compare(0,6,"encaps"))
       c= new EncapsulatedClient(name,cmdl,getWorkingDir());
     else
-      OLMsg::Fatal("Unknown client type", type.c_str());
+      OLMsg::Error("Unknown client type", type.c_str());
   }
   else{ // remote client
     if(!type.compare(0,6,"interf"))
@@ -687,7 +687,7 @@ void MetaModel::registerClient(const std::string &name, const std::string &type,
     else if(!type.compare(0,6,"encaps"))
       c= new RemoteEncapsulatedClient(name,cmdl,getWorkingDir(),host,rdir);
     else
-      OLMsg::Fatal("Unknown remote client type", type.c_str());
+      OLMsg::Error("Unknown remote client type", type.c_str());
   }
   _clients.push_back(c);
 }
@@ -713,9 +713,10 @@ void InterfacedClient::analyze() {
   size_t pos;
   std::vector<std::string> choices;
 
-  setAction("check");
   OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
+  setAction("check");
+
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
     if((pos=choices[i].find(onelabExtension)) != std::string::npos){
@@ -730,6 +731,7 @@ void InterfacedClient::analyze() {
 void InterfacedClient::convert() {
   size_t pos;
   std::vector<std::string> choices;
+
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
     if((pos=choices[i].find(onelabExtension)) != std::string::npos){
@@ -740,7 +742,7 @@ void InterfacedClient::convert() {
       if (outfile.is_open())
 	convert_onefile(choices[i],outfile);
       else
-	OLMsg::Fatal("The file <%s> cannot be opened",ofileName.c_str());
+	OLMsg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
     }
   }
@@ -750,9 +752,9 @@ void InterfacedClient::compute(){
   std::string cmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Computes <%s>", getName().c_str());
-
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -784,9 +786,9 @@ void InterfacedClient::compute(){
 // NATIVE Client
 
 void NativeClient::analyze() {
-  setAction("check");
   OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
+  setAction("check");
   run();
 }
 
@@ -794,8 +796,9 @@ void NativeClient::compute() {
   std::string cmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Computes <%s>", getName().c_str());
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
   if(buildRmCommand(cmd)) mySystem(cmd);
@@ -823,9 +826,10 @@ void EncapsulatedClient::analyze() {
   size_t pos;
   std::vector<std::string> choices;
 
-  setAction("check");
   OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
+  setAction("check");
+
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
     if((pos=choices[i].find(onelabExtension)) != std::string::npos){
@@ -840,6 +844,7 @@ void EncapsulatedClient::analyze() {
 void EncapsulatedClient::convert() {
   size_t pos;
   std::vector<std::string> choices;
+
   getList("InputFiles", choices);
   for(unsigned int i = 0; i < choices.size(); i++){
     if((pos=choices[i].find(onelabExtension)) != std::string::npos){
@@ -850,7 +855,7 @@ void EncapsulatedClient::convert() {
       if (outfile.is_open())
 	convert_onefile(choices[i],outfile);
       else
-	OLMsg::Fatal("The file <%s> cannot be opened",ofileName.c_str());
+	OLMsg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
     }
   }
@@ -864,9 +869,9 @@ void EncapsulatedClient::compute(){
   std::string cmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Computes <%s>", getName().c_str());
-
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -908,9 +913,9 @@ void RemoteInterfacedClient::compute(){
   std::string cmd,rmcmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Computes <%s>", getName().c_str());
-
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -954,9 +959,9 @@ void RemoteNativeClient::analyze(){
   std::string cmd,rmcmd;
   std::vector<std::string> choices;
 
-  setAction("check");
   OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
+  setAction("check");
 
   if(getList("InputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++)
@@ -970,8 +975,9 @@ void RemoteNativeClient::compute(){
   std::string cmd,rmcmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str());
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -1005,9 +1011,9 @@ void RemoteEncapsulatedClient::compute(){
   std::string cmd,rmcmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
-
   analyze();
+  if(OLMsg::GetErrorNum()) return;
+  OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -1115,7 +1121,7 @@ bool checkIfPresent(std::string fileName){
   if (!stat(fileName.c_str(), &buf))
     return true;
   else{
-    OLMsg::Fatal("The file <%s> is not present.",fileName.c_str());
+    OLMsg::Error("The file <%s> is not present.",fileName.c_str());
     return false;
   }
 }
@@ -1169,7 +1175,7 @@ bool isPath(const std::string &in)
 {
   size_t pos=in.find_last_not_of(" 0123456789");
   if(in.compare(pos,1,"/"))
-    OLMsg::Fatal("The argument <%s> is not a valid path (must end with '/')",in.c_str());
+    OLMsg::Error("The argument <%s> is not a valid path (must end with '/')",in.c_str());
   return true;
 }
 
@@ -1179,7 +1185,7 @@ bool isPath(const std::string &in)
 //     if(col<=data[i].size())
 //       column.push_back(data[i][col-1]);
 //     else
-//       OLMsg::Fatal("Column number (%d) out of range.",col);
+//       OLMsg::Error("Column number (%d) out of range.",col);
 //   return column;
 // }
 
@@ -1189,7 +1195,7 @@ double find_in_array(int lin, int col, const std::vector <std::vector <double> >
     if ( col>=0 && col<(int)data[lin].size() )
       return data[lin][col];
   }
-  OLMsg::Fatal("The value has not been calculated: (%d,%d) out of range",lin,col);
+  OLMsg::Error("The value has not been calculated: (%d,%d) out of range",lin,col);
   return(0);
 }
 

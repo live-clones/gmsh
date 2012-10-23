@@ -75,6 +75,8 @@ class OLMsg {
   /* static int GetVerbosity(){ return _verbosity; } */
   /* static std::string GetLaunchDate(){ return _launchDate; } */
   /* static std::string GetCommandLineArgs(){ return _commandLine; } */
+  static int GetErrorNum();
+  static void ResetErrorNum();
   static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);

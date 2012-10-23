@@ -13,12 +13,12 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *client, 
   OLMsg::SetLoaderName(loaderName);
   OLMsg::SetOnelabClient(client);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
-
 }
 
 int metamodel(const std::string &action){
   OLMsg::Info("Start metamodel");
   OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
+  OLMsg::ResetErrorNum();
 
   parseMode todo;
   if(action == "initialize")
@@ -30,7 +30,7 @@ int metamodel(const std::string &action){
   }
   else{
     todo = EXIT;
-    OLMsg::Fatal("Unknown action <%s>", action.c_str());
+    OLMsg::Error("Unknown action <%s>", action.c_str());
   }
 
   std::string modelName = OLMsg::GetOnelabString("Arguments/FileName");
@@ -60,13 +60,17 @@ int metamodel(const std::string &action){
     myModel->compute();
   }
   else
-    OLMsg::Fatal("Main: Unknown Action <%d>", todo);
+    OLMsg::Error("Main: Unknown Action <%d>", todo);
   delete myModel;
 
   int reload=OLMsg::GetOnelabNumber("Gmsh/NeedReloadGeom");
+  int errors=OLMsg::GetErrorNum();
   OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",0,false);
 
-  OLMsg::Info("Leave metamodel - need reload=%d",reload);
+  if(errors)
+    OLMsg::Error("Leave metamodel - %d errors",errors);
+  else
+    OLMsg::Info("Leave metamodel - need reload=%d",reload);
   OLMsg::Info("==============================================");
 
   return reload;

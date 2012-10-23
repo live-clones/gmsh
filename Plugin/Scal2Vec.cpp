@@ -8,13 +8,13 @@
 #include "shapeFunctions.h"
 
 StringXNumber Scal2VecOptions_Number[] = {
-  {GMSH_FULLRC, "View X", NULL, -1.},
-  {GMSH_FULLRC, "View Y", NULL, -1.},
-  {GMSH_FULLRC, "View Z", NULL, -1.}
+  {GMSH_FULLRC, "ViewX", NULL, -1.},
+  {GMSH_FULLRC, "ViewY", NULL, -1.},
+  {GMSH_FULLRC, "ViewZ", NULL, -1.}
 };
 
 StringXString Scal2VecOptions_String[] = {
-  {GMSH_FULLRC, "Name NewView", NULL, "NewView"}
+  {GMSH_FULLRC, "NameNewView", NULL, "NewView"}
 };
 
 extern "C"
@@ -27,10 +27,10 @@ extern "C"
 
 std::string GMSH_Scal2VecPlugin::getHelp() const
 {
-  return "Plugin(Scal2Vec) converts the scalar fields of 'View X', "
-         "'View Y' and/or 'View Z' into a vectorial field. "
-         "The new view 'Name NewView' contains it.\n\n"
-         "If the value of 'View X', 'View Y' or 'View Z' is -1, "
+  return "Plugin(Scal2Vec) converts the scalar fields of 'ViewX', "
+         "'ViewY' and/or 'ViewZ' into a vectorial field. "
+         "The new view 'NameNewView' contains it.\n\n"
+         "If the value of 'ViewX', 'ViewY' or 'ViewZ' is -1, "
          "the value of the vectorial field in the corresponding direction is 0.";
 }
 
