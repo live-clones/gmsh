@@ -1139,6 +1139,8 @@ static void addEdgeNodes(polynomialBasis::clCont &closureFull, const int *edges,
   for (unsigned int iClosure = 0; iClosure < closureFull.size(); iClosure++) {
     std::vector<int> &cl = closureFull[iClosure];
     for (int iEdge = 0; edges[iEdge] >= 0; iEdge += 2) {
+      if (cl.empty())
+        continue;
       int n0 = cl[edges[iEdge]];
       int n1 = cl[edges[iEdge + 1]];
       int oEdge = nodes2edges[n0][n1];
@@ -1485,6 +1487,8 @@ static void generateFaceClosurePrismFull(polynomialBasis::clCont &closureFull,
       nodeSum2Face[nodeSum] = iFace;
     }
     for (unsigned int i = 0; i < closureFull.size(); i++ ) {
+      if (closureFull[i].empty())
+        continue;
       for (int iFace = 0; iFace < numFaces; iFace++ ) {
         int nodeSum = 0;
         for (int iNode = 0; iNode < numFaceNodes; iNode++)
