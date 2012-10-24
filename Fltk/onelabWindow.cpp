@@ -610,6 +610,8 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     CTX::instance()->solver.autoSaveDatabase = val;
   else if(what == "archive")
     CTX::instance()->solver.autoArchiveOutputFiles = val;
+  else if(what == "mesh")
+    CTX::instance()->solver.autoMesh = val;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
   else if(what == "hide")
