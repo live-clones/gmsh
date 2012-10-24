@@ -276,12 +276,18 @@ namespace onelabUtils {
 
     onelab::client *c = it->second;
     std::string mshFileName = onelabUtils::getMshFileName(c);
-    if(action == "initialize") return redraw;
 
     static std::string modelName = GModel::current()->getName();
     static bool firstComputation = true;
 
-    if(action == "check"){
+    if(action == "initialize"){
+      // nothing to do
+    }
+    else if(action == "reset"){
+      firstComputation = false;
+      OpenProject(GModel::current()->getFileName());
+    }
+    else if(action == "check"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){
         // reload geometry if Gmsh parameters have been modified or if the model

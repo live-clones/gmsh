@@ -523,7 +523,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::server::instance()->clear();
     if(onelab::server::instance()->findClient("Gmsh") !=
        onelab::server::instance()->lastClient())
-      geometry_reload_cb(0, 0);
+      onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
     for(unsigned int i = 0; i < useCommandLines.size(); i++)
       onelab::server::instance()->set(useCommandLines[i]);
     for(unsigned int i = 0; i < guessModelNames.size(); i++)
