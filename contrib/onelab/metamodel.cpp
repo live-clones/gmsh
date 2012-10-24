@@ -2,7 +2,7 @@
 #include "metamodel.h"
 
 
-void initializeMetamodel(const std::string &loaderName, onelab::client *client, void (*gui_wait_fct)(double time))
+void initializeMetamodel(const std::string &loaderName, onelab::client *olclient, void (*gui_wait_fct)(double time))
 {
   //called by  "metamodel_cb"
   //copies the Msg::_onelabClient to  OLMsg::_onelabClient
@@ -11,7 +11,7 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *client, 
   //Initilizes also the wait function the Gmsh Gui
   //so that Gmsh windows may remain active during client computations.
   OLMsg::SetLoaderName(loaderName);
-  OLMsg::SetOnelabClient(client);
+  OLMsg::SetOnelabClient(olclient);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
 }
 
@@ -42,8 +42,11 @@ int metamodel(const std::string &action){
   myModel->setTodo(todo);
 
   if(OLMsg::GetOnelabNumber("LOGFILES")){
-    freopen("stdout.txt","w",stdout);
-    freopen("stderr.txt","w",stderr);
+    if(workingDir.size()) workingDir.append(dirSep);
+    std::string mystdout = workingDir + "stdout.txt";
+    std::string mystderr = workingDir + "stderr.txt";
+    freopen(mystdout.c_str(),"w",stdout);
+    freopen(mystderr.c_str(),"w",stderr);
   }
 
   //if not all clients have valid commandlines -> exit metamodel

@@ -105,11 +105,11 @@ class OLMsg {
   static std::string GetLoaderName(){ return _loaderName; }
   static void SetGuiWaitFunction(void (*fct)(double time));
   static void (*GetGuiWaitFunction())(double);
+  static void SetOnelabClient(onelab::client *client){ _onelabClient = client;}
 
   static void InitializeOnelab(const std::string &name);
   static void FinalizeOnelab();
 
-  static void SetOnelabClient(onelab::client *client){ _onelabClient = client; }
   static void SetOnelabNumber(std::string name, double val, bool visible=true);
   static void GetOnelabNumber(std::string name, double *val);
   static double GetOnelabNumber(std::string name);

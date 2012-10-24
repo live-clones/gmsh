@@ -115,11 +115,11 @@ std::string localNetworkSolverClient::appendArguments(){
   }
   else if(action == "check") {
     command.assign(" " + getString("Arguments") + " " + checkCommand) ;
-    command.append(" " + getSocketSwitch() + " " + getName() + " %s");
+    command.append(" " + getSocketSwitch() + " \"" + getName() + "\" %s");
   }
   else if(action == "compute"){
     command.assign(" " + getString("Arguments") + " " + computeCommand);
-    command.append(" " + getSocketSwitch() + " " + getName() + " %s");
+    command.append(" " + getSocketSwitch() + " \"" + getName() + "\" %s");
   }
   else
     OLMsg::Error("appendArguments: Unknown Action <%s>", action.c_str());

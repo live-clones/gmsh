@@ -118,8 +118,9 @@ void OLMsg::Error(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback) (*_callback)("Error", str);
-  if(_client) _client->Error(str);
+  //if(_callback) (*_callback)("Error", str);
+  //if(_client) _client->Error(str);
+  if(_onelabClient) _onelabClient->sendError(str);
 
   if(ALWAYS_TRUE){
     if(_commSize > 1)
@@ -142,8 +143,9 @@ void OLMsg::Warning(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback) (*_callback)("Warning", str);
-  if(_client) _client->Warning(str);
+  //if(_callback) (*_callback)("Warning", str);
+  //if(_client) _client->Warning(str);
+  if(_onelabClient) _onelabClient->sendWarning(str);
 
   if(ALWAYS_TRUE){
     fprintf(stderr, "Warning : %s\n", str);
@@ -161,8 +163,9 @@ void OLMsg::Info(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback) (*_callback)("Info", str);
-  if(_client) _client->Info(str);
+  //if(_callback) (*_callback)("Info", str);
+  //if(_client) _client->Info(str);
+  if(_onelabClient) _onelabClient->sendInfo(str);
 
   if(ALWAYS_TRUE){
     fprintf(stdout, "Onelab  : %s\n", str);
