@@ -16,6 +16,23 @@ TriNedelecBasis::TriNedelecBasis(void){
 
   size = 3;
 
+  // Vertices definig Edges & Permutations //
+  const int edgeV[2][3][2] = 
+    {
+      { {0, 1}, {1, 2}, {2, 0} },
+      { {1, 0}, {2, 1}, {0, 2} }
+    }; 
+
+  // Basis //
+  node = new vector<vector<Polynomial>*>(nVertex);
+  edge = new vector<vector<vector<Polynomial>*>*>(2);
+  face = new vector<vector<vector<Polynomial>*>*>(0);
+  cell = new vector<vector<Polynomial>*>(nCell);
+  
+  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
+  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
+
+
   // Lagrange //
   Polynomial lagrange[3];
 
@@ -29,53 +46,27 @@ TriNedelecBasis::TriNedelecBasis(void){
     Polynomial(1, 0, 1, 0);
 
 
-  // Basis //
-  node = new vector<vector<Polynomial>*>(nVertex);
-  edge = new vector<vector<vector<Polynomial>*>*>(2);
-  face = new vector<vector<vector<Polynomial>*>*>(0);
-  cell = new vector<vector<Polynomial>*>(nCell);
-  
-  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
-  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
-
-  
   // Nedelec //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-    // Temp
-    vector<Polynomial> tmp = lagrange[j].gradient();
-    
-    // Edge[0]
-    tmp[0].mul(lagrange[i]);
-    tmp[1].mul(lagrange[i]);
-    tmp[2].mul(lagrange[i]);
-    
-    (*(*edge)[0])[i] = new vector<Polynomial>(lagrange[i].gradient());
-    
-    (*(*edge)[0])[i]->at(0).mul(lagrange[j]);
-    (*(*edge)[0])[i]->at(1).mul(lagrange[j]);
-    (*(*edge)[0])[i]->at(2).mul(lagrange[j]);      
-    
-    (*(*edge)[0])[i]->at(0).sub(tmp[0]);
-    (*(*edge)[0])[i]->at(1).sub(tmp[1]);
-    (*(*edge)[0])[i]->at(2).sub(tmp[2]);
-    
-    //Edge[1]
-    tmp = lagrange[i].gradient();
-    
-    tmp[0].mul(lagrange[j]);
-    tmp[1].mul(lagrange[j]);
-    tmp[2].mul(lagrange[j]);
-    
-    (*(*edge)[1])[i] = new vector<Polynomial>(lagrange[j].gradient());
-    
-    (*(*edge)[1])[i]->at(0).mul(lagrange[i]);
-    (*(*edge)[1])[i]->at(1).mul(lagrange[i]);
-    (*(*edge)[1])[i]->at(2).mul(lagrange[i]);
-    
-    (*(*edge)[1])[i]->at(0).sub(tmp[0]);
-    (*(*edge)[1])[i]->at(1).sub(tmp[1]);
-    (*(*edge)[1])[i]->at(2).sub(tmp[2]);
-  }
+  for(int c = 0; c < 2; c++){
+    for(int e = 0; e < 3; e++){
+      vector<Polynomial> tmp = lagrange[edgeV[c][e][1]].gradient();
+ 
+      tmp[0].mul(lagrange[edgeV[c][e][0]]);
+      tmp[1].mul(lagrange[edgeV[c][e][0]]);
+      tmp[2].mul(lagrange[edgeV[c][e][0]]);
+      
+      (*(*edge)[c])[e] = 
+	new vector<Polynomial>(lagrange[edgeV[c][e][0]].gradient());
+
+      (*(*edge)[c])[e]->at(0).mul(lagrange[edgeV[c][e][1]]);
+      (*(*edge)[c])[e]->at(1).mul(lagrange[edgeV[c][e][1]]);
+      (*(*edge)[c])[e]->at(2).mul(lagrange[edgeV[c][e][1]]);      
+      
+      (*(*edge)[c])[e]->at(0).sub(tmp[0]);
+      (*(*edge)[c])[e]->at(1).sub(tmp[1]);
+      (*(*edge)[c])[e]->at(2).sub(tmp[2]);
+    }
+  }  
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){

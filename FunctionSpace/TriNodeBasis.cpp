@@ -15,21 +15,27 @@ TriNodeBasis::TriNodeBasis(int order){
   nFace   = 0;
   nCell   =     (order - 1) * (order - 2) / 2;
 
-  size    = (order + 1) * (order + 2) / 2;
+  size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
-  Polynomial* legendre     = new Polynomial[order];
-  Polynomial* intLegendre  = new Polynomial[order];
-
-  Polynomial  lagrangeSum[3];
-  Polynomial  lagrangeSub[2][3];
-
-  // Classical and Intrated-Scaled Legendre Polynomial //
   const int orderMinus = order - 1;
 
+  Polynomial* legendre    = new Polynomial[order];
+  Polynomial* intLegendre = new Polynomial[order];
+
+  Polynomial lagrangeSum[3];
+  Polynomial lagrangeSub[2][3];
+
+  // Legendre Polynomial //
   Legendre::legendre(legendre, orderMinus);
   Legendre::intScaled(intLegendre, order);
- 
+
+  // Vertices definig Edges & Permutations //
+  const int edgeV[2][3][2] = 
+    {
+      { {0, 1}, {1, 2}, {2, 0} },
+      { {1, 0}, {2, 1}, {0, 2} }
+    }; 
 
   // Basis //
   node = new vector<Polynomial*>(nVertex);
@@ -55,13 +61,20 @@ TriNodeBasis::TriNodeBasis(int order){
  
 
   // Lagrange Sum //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSum[i] = *(*node)[i] + *(*node)[j];
+  for(int e = 0; e < 3; e++)
+    lagrangeSum[e] = 
+      *(*node)[edgeV[0][e][0]] + 
+      *(*node)[edgeV[0][e][1]];
 
   // Lagrange Sub //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-    lagrangeSub[0][i] = *(*node)[j] - *(*node)[i];
-    lagrangeSub[1][i] = *(*node)[i] - *(*node)[j];
+  for(int e = 0; e < 3; e++){
+    lagrangeSub[0][e] = 
+      *(*node)[edgeV[0][e][0]] - 
+      *(*node)[edgeV[0][e][1]];
+    
+    lagrangeSub[1][e] = 
+      *(*node)[edgeV[1][e][0]] - 
+      *(*node)[edgeV[1][e][1]];
   }
 
  
@@ -96,6 +109,7 @@ TriNodeBasis::TriNodeBasis(int order){
     }
   }
   
+
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;

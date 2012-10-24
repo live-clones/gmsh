@@ -15,7 +15,7 @@ TriEdgeBasis::TriEdgeBasis(int order){
   nFace   = 0;
   nCell   = ((order - 1) * order + order - 1);
 
-  size = (order + 1) * (order + 2);
+  size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
   const int orderPlus     = order + 1;
@@ -30,9 +30,26 @@ TriEdgeBasis::TriEdgeBasis(int order){
   Polynomial lagrangeSum [3];
   Polynomial lagrangeSub [2][3];
 
-  // Classical and Intrated-Scaled Legendre Polynomial //
+  // Legendre Polynomial //
   Legendre::legendre(legendre, order);
   Legendre::intScaled(intLegendre, orderPlus);
+
+  // Vertices definig Edges & Permutations //
+  const int edgeV[2][3][2] = 
+    {
+      { {0, 1}, {1, 2}, {2, 0} },
+      { {1, 0}, {2, 1}, {0, 2} }
+    }; 
+
+  // Basis //
+  node = new vector<vector<Polynomial>*>(nVertex);
+  edge = new vector<vector<vector<Polynomial>*>*>(2);
+  face = new vector<vector<vector<Polynomial>*>*>(0);
+  cell = new vector<vector<Polynomial>*>(nCell);
+  
+  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
+  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
+
 
   // Lagrange //
   lagrange[0] = 
@@ -45,84 +62,63 @@ TriEdgeBasis::TriEdgeBasis(int order){
     Polynomial(1, 0, 1, 0);
 
   // Lagrange Sum //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3)
-    lagrangeSum[i] = lagrange[j] + lagrange[i];
+  for(int e = 0; e < 3; e++)
+    lagrangeSum[e] = 
+      lagrange[edgeV[0][e][0]] + 
+      lagrange[edgeV[0][e][1]];
 
-  // Lagrange Sub (& revert) //
-  for(int i = 0, j = 1; i < 3; i++, j = (j + 1) % 3){
-    lagrangeSub[0][i] = lagrange[i] - lagrange[j];
-    lagrangeSub[1][i] = lagrange[j] - lagrange[i];
+  // Lagrange Sub //
+  for(int e = 0; e < 3; e++){
+    lagrangeSub[0][e] = 
+      lagrange[edgeV[0][e][0]] - 
+      lagrange[edgeV[0][e][1]];
+    
+    lagrangeSub[1][e] = 
+      lagrange[edgeV[1][e][0]] - 
+      lagrange[edgeV[1][e][1]];
   }
 
-
-  // Basis //
-  node = new vector<vector<Polynomial>*>(nVertex);
-  edge = new vector<vector<vector<Polynomial>*>*>(2);
-  face = new vector<vector<vector<Polynomial>*>*>(0);
-  cell = new vector<vector<Polynomial>*>(nCell);
-  
-  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
-  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
-  
-  // Counter 
-  unsigned int i = 0;
-
-  
+    
   // Edge Based (Nedelec) //
-  for(int j = 1; i < 3; j = (j + 1) % 3){
-    // Temp
-    vector<Polynomial> tmp = lagrange[j].gradient();
- 
-    // Edge[0]
-    tmp[0].mul(lagrange[i]);
-    tmp[1].mul(lagrange[i]);
-    tmp[2].mul(lagrange[i]);
-
-    (*(*edge)[0])[i] = new vector<Polynomial>(lagrange[i].gradient());
-
-    (*(*edge)[0])[i]->at(0).mul(lagrange[j]);
-    (*(*edge)[0])[i]->at(1).mul(lagrange[j]);
-    (*(*edge)[0])[i]->at(2).mul(lagrange[j]);      
-
-    (*(*edge)[0])[i]->at(0).sub(tmp[0]);
-    (*(*edge)[0])[i]->at(1).sub(tmp[1]);
-    (*(*edge)[0])[i]->at(2).sub(tmp[2]);
-
-    //Edge[1]
-    tmp = lagrange[i].gradient();
-
-    tmp[0].mul(lagrange[j]);
-    tmp[1].mul(lagrange[j]);
-    tmp[2].mul(lagrange[j]);
-
-    (*(*edge)[1])[i] = new vector<Polynomial>(lagrange[j].gradient());
-
-    (*(*edge)[1])[i]->at(0).mul(lagrange[i]);
-    (*(*edge)[1])[i]->at(1).mul(lagrange[i]);
-    (*(*edge)[1])[i]->at(2).mul(lagrange[i]);
-  
-    (*(*edge)[1])[i]->at(0).sub(tmp[0]);
-    (*(*edge)[1])[i]->at(1).sub(tmp[1]);
-    (*(*edge)[1])[i]->at(2).sub(tmp[2]);
-
-    // Next
-    i++;
-  }
-  
-  // Edge Based (High Order) //
-  for(int l = 1; l < orderPlus; l++){
+  for(int c = 0; c < 2; c++){
     for(int e = 0; e < 3; e++){
-      (*(*edge)[0])[i] = 
-	new vector<Polynomial>((intLegendre[l].compose(lagrangeSub[0][e],  
-						       lagrangeSum[e])).gradient());
+      vector<Polynomial> tmp = lagrange[edgeV[c][e][1]].gradient();
+ 
+      tmp[0].mul(lagrange[edgeV[c][e][0]]);
+      tmp[1].mul(lagrange[edgeV[c][e][0]]);
+      tmp[2].mul(lagrange[edgeV[c][e][0]]);
+      
+      (*(*edge)[c])[e] = 
+	new vector<Polynomial>(lagrange[edgeV[c][e][0]].gradient());
 
-      (*(*edge)[1])[i] = 
-	new vector<Polynomial>((intLegendre[l].compose(lagrangeSub[1][e], 
-						       lagrangeSum[e])).gradient());
-      i++;
+      (*(*edge)[c])[e]->at(0).mul(lagrange[edgeV[c][e][1]]);
+      (*(*edge)[c])[e]->at(1).mul(lagrange[edgeV[c][e][1]]);
+      (*(*edge)[c])[e]->at(2).mul(lagrange[edgeV[c][e][1]]);      
+      
+      (*(*edge)[c])[e]->at(0).sub(tmp[0]);
+      (*(*edge)[c])[e]->at(1).sub(tmp[1]);
+      (*(*edge)[c])[e]->at(2).sub(tmp[2]);
+    }
+  }  
+
+
+  // Edge Based (High Order) //
+  for(int c = 0; c < 2; c++){
+    unsigned int i = 0;
+
+    for(int l = 1; l < orderPlus; l++){
+      for(int e = 0; e < 3; e++){
+	(*(*edge)[c])[i + 3] = 
+	  new vector<Polynomial>
+	  ((intLegendre[l].compose(lagrangeSub[c][e],  
+				   lagrangeSum[e])).gradient());
+
+	i++;
+      }
     }
   }
-  
+
+
   // Cell Based (Preliminary) //
   Polynomial p = lagrange[2] * 2 - Polynomial(1, 0, 0, 0);
   
@@ -132,7 +128,7 @@ TriEdgeBasis::TriEdgeBasis(int order){
     v[l].mul(lagrange[2]);
   }
 
-  i = 0;
+  unsigned int i = 0;
   
   // Cell Based (Type 1) //
   for(int l1 = 1; l1 < order; l1++){

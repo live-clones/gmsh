@@ -1,6 +1,8 @@
 #include "HexNodeBasis.h"
 #include "Legendre.h"
 
+using namespace std;
+
 HexNodeBasis::HexNodeBasis(const int order){
   // Set Basis Type //
   this->order = order;
@@ -13,7 +15,7 @@ HexNodeBasis::HexNodeBasis(const int order){
   nFace   =  6 * (order - 1) * (order - 1);
   nCell   =      (order - 1) * (order - 1) * (order - 1);
 
-  size = (order + 1) * (order + 1) * (order + 1);
+  size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];
@@ -25,6 +27,27 @@ HexNodeBasis::HexNodeBasis(const int order){
 
   // Legendre Polynomial //
   Legendre::integrated(legendre, order);
+
+  // Vertices definig Edges & Permutations //
+  const int edgeV[2][12][2] = 
+    {
+      { {0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 5}, {2, 3}, 
+	{2, 6},	{3, 7}, {4, 5}, {4, 7}, {5, 6}, {6, 7} },
+
+      { {1, 0}, {3, 0}, {4, 0}, {2, 1}, {5, 1}, {3, 2}, 
+	{6, 2},	{7, 3}, {5, 4}, {7, 4}, {6, 5}, {7, 6} },
+    };
+
+  const int faceV[6][4] = 
+    {
+      {0, 3, 2, 1},
+      {0, 1, 5, 4},
+      {0, 4, 7, 3},
+      {1, 2, 6, 5},
+      {2, 3, 7, 6},
+      {4, 5, 6, 7}
+    };
+
   
   // Lifting //
   lifting[0] = 
@@ -67,7 +90,7 @@ HexNodeBasis::HexNodeBasis(const int order){
     (Polynomial(1, 0, 1, 0))                          +
      Polynomial(1, 0, 0, 1);
 
-
+  /*
   // Basis //
   basis = new std::vector<const Polynomial*>(size);
 
@@ -194,7 +217,7 @@ HexNodeBasis::HexNodeBasis(const int order){
     }
   }
 
-
+  */
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] lifting;
@@ -205,8 +228,38 @@ HexNodeBasis::HexNodeBasis(const int order){
 }
 
 HexNodeBasis::~HexNodeBasis(void){
-  for(int i = 0; i < size; i++)
-    delete (*basis)[i];
+  // Vertex Based //
+  for(int i = 0; i < nVertex; i++)
+    delete (*node)[i];
+  
+  delete node;
 
-  delete basis;
+
+  // Edge Based //
+  for(int c = 0; c < 2; c++){
+    for(int i = 0; i < nEdge; i++)
+      delete (*(*edge)[c])[i];
+    
+    delete (*edge)[c];
+  }
+  
+  delete edge;
+
+
+  // Face Based //
+  for(int c = 0; c < 6; c++){
+    for(int i = 0; i < nFace; i++)
+      delete (*(*face)[c])[i];
+    
+    delete (*face)[c];
+  }
+
+  delete face;
+
+
+  // Cell Based //
+  for(int i = 0; i < nCell; i++)
+    delete (*cell)[i];
+
+  delete cell;
 }

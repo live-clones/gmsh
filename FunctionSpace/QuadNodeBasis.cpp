@@ -1,6 +1,8 @@
 #include "QuadNodeBasis.h"
 #include "Legendre.h"
 
+using namespace std;
+
 QuadNodeBasis::QuadNodeBasis(const int order){
   // Set Basis Type //
   this->order = order;
@@ -8,20 +10,38 @@ QuadNodeBasis::QuadNodeBasis(const int order){
   type = 0;
   dim  = 2;
 
-  nVertex = 4                            ;
-  nEdge   = 4 * (order - 1)              ;
-  nFace   = 0                            ;
+  nVertex = 4;
+  nEdge   = 4 * (order - 1);
+  nFace   = 0;
   nCell   =     (order - 1) * (order - 1);
 
-  size = (order + 1) * (order + 1);
+  size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
   Polynomial* legendre = new Polynomial[order];
   Polynomial  lifting[4];
+  Polynomial  liftingSub[2][4];
 
   // Legendre Polynomial //
   Legendre::integrated(legendre, order);
   
+  // Vertices definig Edges & Permutations //
+  const int edgeV[2][4][2] = 
+    {
+      { {0, 1}, {1, 2}, {2, 3}, {3, 0} },
+      { {1, 0}, {2, 1}, {3, 2}, {0, 3} }
+    }; 
+
+  // Basis //
+  node = new vector<Polynomial*>(nVertex);
+  edge = new vector<vector<Polynomial*>*>(2);
+  face = new vector<vector<Polynomial*>*>(0);
+  cell = new vector<Polynomial*>(nCell);
+
+  (*edge)[0] = new vector<Polynomial*>(nEdge);
+  (*edge)[1] = new vector<Polynomial*>(nEdge);
+
+
   // Lifting //
   lifting[0] = 
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
@@ -39,47 +59,48 @@ QuadNodeBasis::QuadNodeBasis(const int order){
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0));
 
+  // Lifting Sub //
+  for(int e = 0; e < 4; e++){
+    liftingSub[0][e] = 
+      lifting[edgeV[0][e][0]] - 
+      lifting[edgeV[0][e][1]];
+    
+    liftingSub[1][e] = 
+      lifting[edgeV[1][e][0]] - 
+      lifting[edgeV[1][e][1]];
+  }
 
-
-  // Basis //
-     basis = new std::vector<const Polynomial*>(size);
-  revBasis = new std::vector<const Polynomial*>(size);
 
   // Vertex Based (Lagrange) // 
-  (*basis)[0] = 
+  (*node)[0] = 
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)));
 
-  (*basis)[1] = 
+  (*node)[1] = 
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)));
 
-  (*basis)[2] = 
+  (*node)[2] = 
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)));
 
-  (*basis)[3] = 
+  (*node)[3] = 
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)));
-  
-  // Vertex Based (Revert) //
-  for(int i = 0; i < 3; i++)
-    (*revBasis)[i] = (*basis)[i];
 
 
   // Edge Based //
-  int i = 4;
+  for(int c = 0; c < 2; c++){
+    unsigned int i = 0;
 
-  for(int l = 1; l < order; l++){
-    for(int e1 = 0, e2 = 1; e1 < 4; e1++, e2 = (e2 + 1) % 4){
-      (*basis)[i] = 
-	new Polynomial(legendre[l].compose(lifting[e2] - lifting[e1]) * 
-		       (*(*basis)[e1] + *(*basis)[e2]));
+    for(int l = 1; l < order; l++){
+      for(int e = 0; e < 4; e++){
+	(*(*edge)[c])[i] = 
+	  new Polynomial(legendre[l].compose(liftingSub[c][e]) * 
+			 (*(*node)[edgeV[c][e][0]] + *(*node)[edgeV[c][e][1]]));
 
-      (*revBasis)[i] = 
-	new Polynomial(legendre[l].compose(lifting[e1] - lifting[e2]) * 
-		       (*(*basis)[e1] + *(*basis)[e2]));            
-      i++;
+	i++;
+      }
     }
   }
 
@@ -91,12 +112,12 @@ QuadNodeBasis::QuadNodeBasis(const int order){
   px = px - Polynomial(1, 0, 0, 0);
   py = py - Polynomial(1, 0, 0, 0);
 
+  unsigned int i = 0;
+
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
-      (*basis)[i] = 
+      (*cell)[i] = 
 	new Polynomial(legendre[l1].compose(px) * legendre[l2].compose(py));
-
-      (*revBasis)[i] = (*basis)[i];
 
       i++;
     }
@@ -108,13 +129,31 @@ QuadNodeBasis::QuadNodeBasis(const int order){
 }
 
 QuadNodeBasis::~QuadNodeBasis(void){
-  for(int i = 0; i < size; i++){
-    delete (*basis)[i];
+  // Vertex Based //
+  for(int i = 0; i < nVertex; i++)
+    delete (*node)[i];
+  
+  delete node;
 
-    if(i >= nVertex && i < nVertex + nEdge)
-      delete (*revBasis)[i];
+
+  // Edge Based //
+  for(int c = 0; c < 2; c++){
+    for(int i = 0; i < nEdge; i++)
+      delete (*(*edge)[c])[i];
+    
+    delete (*edge)[c];
   }
+  
+  delete edge;
 
-  delete basis;
-  delete revBasis;
+
+  // Face Based //
+  delete face;
+
+
+  // Cell Based //
+  for(int i = 0; i < nCell; i++)
+    delete (*cell)[i];
+
+  delete cell;
 }

@@ -28,7 +28,7 @@ TetEdgeBasis::TetEdgeBasis(int order){
   Polynomial* sclLegendre = new Polynomial[orderMinus];
   Polynomial* intLegendre = new Polynomial[orderPlus];
 
-  // Classical and Intrated-Scaled Legendre Polynomial //
+  // Legendre Polynomial //
   Legendre::legendre(legendre, orderMinusTwo);
   Legendre::scaled(sclLegendre, orderMinusTwo);
   Legendre::intScaled(intLegendre, orderPlus);
@@ -97,7 +97,8 @@ TetEdgeBasis::TetEdgeBasis(int order){
       tmp[1].mul(lagrange[edgeV[c][e][0]]);
       tmp[2].mul(lagrange[edgeV[c][e][0]]);
       
-      (*(*edge)[c])[e] = new vector<Polynomial>(lagrange[edgeV[c][e][0]].gradient());
+      (*(*edge)[c])[e] = 
+	new vector<Polynomial>(lagrange[edgeV[c][e][0]].gradient());
       
       (*(*edge)[c])[e]->at(0).mul(lagrange[edgeV[c][e][1]]);
       (*(*edge)[c])[e]->at(1).mul(lagrange[edgeV[c][e][1]]);
