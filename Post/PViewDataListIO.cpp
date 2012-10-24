@@ -525,7 +525,8 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
   }
 }
 
-bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool savemesh)
+bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool savemesh,
+                             bool multipleView)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");

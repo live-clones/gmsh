@@ -133,7 +133,8 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
   return true;
 }
 
-bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool savemesh,bool multipleView)
+bool PViewDataGModel::writeMSH(const std::string &fileName, bool binary, bool savemesh,
+                               bool multipleView)
 {
   if(_steps.empty()) return true;
 

@@ -256,7 +256,8 @@ class PViewData {
   virtual bool writeTXT(const std::string &fileName);
   virtual bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
                         bool append=false);
-  virtual bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true);
+  virtual bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true,
+                        bool multipleView=false);
   virtual bool writeMED(const std::string &fileName);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);
