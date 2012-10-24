@@ -20,7 +20,7 @@ class QuadNodeBasis: public BasisScalar{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Quads of the given order
-  QuadNodeBasis(const int order);
+  QuadNodeBasis(int order);
 
   //! @return Deletes this Basis
   //!

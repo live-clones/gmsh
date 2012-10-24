@@ -25,9 +25,6 @@ class BasisScalar: public Basis{
   std::vector<std::vector<Polynomial*>*>* face;
   std::vector            <Polynomial*>*   cell;
 
-  std::vector<const Polynomial*>* basis;
-  std::vector<const Polynomial*>* revBasis;
-
  public:
   //! Deletes this BasisScalar
   //!

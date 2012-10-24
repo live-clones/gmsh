@@ -20,7 +20,7 @@ class HexNodeBasis: public BasisScalar{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Hexahedra of the given order
-  HexNodeBasis(const int order);
+  HexNodeBasis(int order);
 
   //! @return Deletes this Basis
   //!

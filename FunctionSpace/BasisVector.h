@@ -25,9 +25,6 @@ class BasisVector: public Basis{
   std::vector<std::vector<std::vector<Polynomial>*>*>* face;
   std::vector            <std::vector<Polynomial>*>*   cell;
 
-  std::vector<const std::vector<Polynomial>*>* basis;
-  std::vector<const std::vector<Polynomial>*>* revBasis;
-
  public:
   //! Deletes this BasisVector
   //!

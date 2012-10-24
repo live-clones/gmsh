@@ -20,7 +20,7 @@ class HexEdgeBasis: public BasisVector{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Hexahedra of the given order
-  HexEdgeBasis(const int order);
+  HexEdgeBasis(int order);
   
   //! Deletes this Basis
   //!

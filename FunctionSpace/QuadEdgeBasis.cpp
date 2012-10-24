@@ -3,7 +3,7 @@
 
 using namespace std;
 
-QuadEdgeBasis::QuadEdgeBasis(const int order){
+QuadEdgeBasis::QuadEdgeBasis(int order){
   // Set Basis Type //
   this->order = order;
   

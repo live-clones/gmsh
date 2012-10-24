@@ -20,7 +20,7 @@ class QuadEdgeBasis: public BasisVector{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Quads of the given order
-  QuadEdgeBasis(const int order);
+  QuadEdgeBasis(int order);
   
   //! Deletes this Basis
   //!

@@ -4,14 +4,15 @@
 
 using namespace std;
 
-HexEdgeBasis::HexEdgeBasis(const int order){
+HexEdgeBasis::HexEdgeBasis(int order){
+  /*
   // Set Basis Type //
   this->order = order;
   
   type = 1;
   dim  = 3;
 
-  nVertex =  0                              ;
+  nVertex =  0;
   nEdge   = 12                 * (order + 1);
   nFace   = 12         * order * (order + 1);
   nCell   =  3 * order * order * (order + 1);
@@ -46,7 +47,7 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   Polynomial* liftingSub    = new Polynomial[12];
 
 
-  // Integrated and classical Legendre Polynomial //
+  // Legendre Polynomial //
   Legendre::integrated(intLegendre, orderPlus);
   Legendre::legendre(legendre, order);
 
@@ -452,11 +453,14 @@ HexEdgeBasis::HexEdgeBasis(const int order){
   // Set Basis //
   this->basis = new std::vector<const std::vector<Polynomial>*>
     (basis.begin(), basis.end());
+  */
 }
 
 HexEdgeBasis::~HexEdgeBasis(void){
+  /*
   for(int i = 0; i < size; i++)
     delete (*basis)[i];
 
   delete basis;
+  */
 }

@@ -3,7 +3,8 @@
 
 using namespace std;
 
-HexNodeBasis::HexNodeBasis(const int order){
+HexNodeBasis::HexNodeBasis(int order){
+  /*
   // Set Basis Type //
   this->order = order;
 
@@ -90,7 +91,7 @@ HexNodeBasis::HexNodeBasis(const int order){
     (Polynomial(1, 0, 1, 0))                          +
      Polynomial(1, 0, 0, 1);
 
-  /*
+
   // Basis //
   basis = new std::vector<const Polynomial*>(size);
 
@@ -217,7 +218,7 @@ HexNodeBasis::HexNodeBasis(const int order){
     }
   }
 
-  */
+
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] lifting;
@@ -225,9 +226,11 @@ HexNodeBasis::HexNodeBasis(const int order){
   delete[] xi;
   delete[] eta;
   delete[] lambda;
+*/
 }
 
 HexNodeBasis::~HexNodeBasis(void){
+  /*
   // Vertex Based //
   for(int i = 0; i < nVertex; i++)
     delete (*node)[i];
@@ -262,4 +265,5 @@ HexNodeBasis::~HexNodeBasis(void){
     delete (*cell)[i];
 
   delete cell;
+  */
 }
