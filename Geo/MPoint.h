@@ -68,6 +68,9 @@ class MPoint : public MElement {
   }
   virtual bool isInside(double u, double v, double w)
   {
+    double tol = _isInsideTolerance;
+    if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol)
+      return false;
     return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts)

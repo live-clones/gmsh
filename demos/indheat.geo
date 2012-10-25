@@ -3,7 +3,7 @@ nn = 40; // mesh subdivisions per turn
 
 DefineConstant
 [
- turns = {10, Label "Number of coil turns"},
+ turns = {5, Label "Number of coil turns"},
  r = {0.11, Label "Coil radius"},
  rc = {0.01, Label "Coil wire radius"},
  hc = {0.25, Label "Coil height"},
@@ -142,3 +142,6 @@ Physical Surface(SKIN_TUBE) = CombinedBoundary{ Volume{vol_tube[]}; };
 Physical Surface(IN) = in;
 Physical Surface(OUT) = out;
 Physical Surface(INF) = {s:s+5};
+
+Homology(2) {{COIL,TUBE},{SKIN_COIL, SKIN_TUBE}};
+Cohomology(1) {{AIR},{}};

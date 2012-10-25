@@ -28,7 +28,8 @@ std::string GMSH_IntegratePlugin::getHelp() const
     "line/surface elements.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(Integrate) creates one new view."
-    "If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.\n\n"
+    "If `OverTime' = 1 , the plugin integrates the scalar view "
+    "over time instead of over space.\n\n"
     "Plugin(Integrate) creates one new view.";
 }
 
@@ -118,9 +119,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 
   }
   else{
-    printf("EMI INTEGRATE OVER TIME \n");
-
-    int timeBeg =  data1->getFirstNonEmptyTimeStep();
+    int timeBeg = data1->getFirstNonEmptyTimeStep();
     int timeEnd = data1->getNumTimeSteps();
     for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
       for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
@@ -147,7 +146,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	  for(int nod = 0; nod < numNodes; nod++){
 	    double val;
 	    data1->getValue(step, ent, ele, nod, 0, val);
-	    timeIntegral[nod] += val*dt;
+	    timeIntegral[nod] += val * dt;
 	  }
 	}
 	for(int nod = 0; nod < numNodes; nod++)

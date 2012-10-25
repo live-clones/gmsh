@@ -123,7 +123,8 @@ MElementOctree::~MElementOctree()
 }
 
 
-std::vector<MElement *> MElementOctree::findAll(double x, double y, double z, int dim, bool strict)
+std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
+                                                int dim, bool strict)
 {
   double maxTol = 1.;
   double tolIncr = 10.;

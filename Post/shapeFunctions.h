@@ -15,7 +15,7 @@ class element{
 protected:
   bool _ownData;
   double *_x, *_y, *_z;
-  static double ONE, ZERO;
+  static double TOL;
 public:
   element(double *x, double *y, double *z, int numNodes=0)
   {
@@ -50,8 +50,8 @@ public:
     y = _y[num];
     z = _z[num];
   }
-  static void setTolerance (const double tol){ ONE = 1. + tol; ZERO = -tol; }
-  static double getTolerance () { return -ZERO; }
+  static void setTolerance (const double tol){ TOL = tol; }
+  static double getTolerance () { return TOL; }
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;
   virtual void getNode(int num, double &u, double &v, double &w) = 0;
@@ -305,6 +305,8 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    if(fabs(u) > TOL || fabs(v) > TOL || fabs(w) > TOL)
+      return 0;
     return 1;
   }
 };
@@ -364,7 +366,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(u < -ONE || u > ONE)
+    if(u < -(1. + TOL) || u > (1. + TOL) || fabs(v) > TOL || fabs(w) > TOL)
       return 0;
     return 1;
   }
@@ -460,7 +462,7 @@ public:
 #endif
   int isInside(double u, double v, double w)
   {
-    if(u < ZERO || v < ZERO || u > (ONE - v))
+    if(u < -TOL || v < -TOL || u > ((1. + TOL) - v) || fabs(w) > TOL)
       return 0;
     return 1;
   }
@@ -541,7 +543,8 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(u < -ONE || v < -ONE || u > ONE || v > ONE)
+    if(u < -(1. + TOL) || v < -(1. + TOL) || u > (1. + TOL) || v > (1. + TOL) ||
+       fabs(w) > TOL)
       return 0;
     return 1;
   }
@@ -628,7 +631,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(u < ZERO || v < ZERO || w < ZERO || u > (ONE - v - w))
+    if(u < (-TOL) || v < (-TOL) || w < (-TOL) || u > ((1. + TOL) - v - w))
       return 0;
     return 1;
   }
@@ -735,7 +738,8 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(u < -ONE || v < -ONE || w < -ONE || u > ONE || v > ONE || w > ONE)
+    if(u < -(1. + TOL) || v < -(1. + TOL) || w < -(1. + TOL) ||
+       u > (1. + TOL) || v > (1. + TOL) || w > (1. + TOL))
       return 0;
     return 1;
   }
@@ -829,7 +833,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(w > ONE || w < -ONE || u < ZERO || v < ZERO || u > (ONE - v))
+    if(w > (1. + TOL) || w < -(1. + TOL) || u < (-TOL) || v < (-TOL) || u > ((1. + TOL) - v))
       return 0;
     return 1;
   }
@@ -951,8 +955,8 @@ public:
   }
   int isInside(double u, double v, double w)
   {
-    if(u < (w - ONE) || u > (ONE - w) || v < (w - ONE) || v > (ONE - w) ||
-       w < ZERO || w > ONE)
+    if(u < (w - (1. + TOL)) || u > ((1. + TOL) - w) || v < (w - (1. + TOL)) ||
+       v > ((1. + TOL) - w) || w < (-TOL) || w > (1. + TOL))
       return 0;
     return 1;
   }
@@ -981,8 +985,6 @@ class elementFactory{
   }
 };
 
-#undef ONE
-#undef ZERO
 #undef SQU
 
 #endif

@@ -143,7 +143,7 @@ class MTriangle : public MElement {
   virtual bool isInside(double u, double v, double w)
   {
     double tol = _isInsideTolerance;
-    if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
+    if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v) || fabs(w) > tol)
       return false;
     return true;
   }
