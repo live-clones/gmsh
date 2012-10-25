@@ -16,6 +16,8 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *olclient
 }
 
 int metamodel(const std::string &action){
+  int errors;
+
   OLMsg::Info("Start metamodel");
   OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
   OLMsg::ResetErrorNum();
@@ -37,44 +39,48 @@ int metamodel(const std::string &action){
   std::string workingDir = OLMsg::GetOnelabString("Arguments/WorkingDir");
   std::string clientName = "meta";
 
-  MetaModel *myModel =
-    new MetaModel(clientName, workingDir, clientName, modelName);
-  myModel->setTodo(todo);
-
   if(OLMsg::GetOnelabNumber("LOGFILES")){
     if(workingDir.size()) workingDir.append(dirSep);
-    std::string mystdout = workingDir + "stdout.txt";
-    std::string mystderr = workingDir + "stderr.txt";
+    std::string mystdout = FixWindowsQuotes(workingDir + "stdout.txt");
+    std::string mystderr = FixWindowsQuotes(workingDir + "stderr.txt");
     freopen(mystdout.c_str(),"w",stdout);
     freopen(mystderr.c_str(),"w",stderr);
+    OLMsg::Info("Redirecting stdout into <%s>",mystdout.c_str());
+    OLMsg::Info("Redirecting stderr into <%s>",mystderr.c_str());
   }
+
+  MetaModel *myModel =
+    new MetaModel("meta", workingDir, "meta", modelName);
+  myModel->setTodo(todo);
 
   //if not all clients have valid commandlines -> exit metamodel
-  if(!myModel->checkCommandLines())
-    myModel->setTodo(EXIT);
+  // if(!myModel->checkCommandLines())
+  //   myModel->setTodo(EXIT);
 
-  if( myModel->isTodo(EXIT)){
-    // exit metamodel
-  }
-  else if( myModel->isTodo(ANALYZE)){
+  if(OLMsg::GetErrorNum()) myModel->setTodo(EXIT);
+
+  if( myModel->isTodo(ANALYZE)){
     myModel->analyze();
   }
   else if( myModel->isTodo(COMPUTE)){
     myModel->compute();
   }
+  else if( myModel->isTodo(EXIT)){
+  }
   else
     OLMsg::Error("Main: Unknown Action <%d>", todo);
   delete myModel;
 
+  if((errors=OLMsg::GetErrorNum())){
+    OLMsg::Error("Leave metamodel - %d errors",errors);
+    OLMsg::Info("==============================================");
+    return 0;
+  }
+
   int reload=OLMsg::GetOnelabNumber("Gmsh/NeedReloadGeom");
-  int errors=OLMsg::GetErrorNum();
   OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",0,false);
 
-  if(errors)
-    OLMsg::Error("Leave metamodel - %d errors",errors);
-  else
-    OLMsg::Info("Leave metamodel - need reload=%d",reload);
+  OLMsg::Info("Leave metamodel - need reload=%d", reload);
   OLMsg::Info("==============================================");
-
   return reload;
 }

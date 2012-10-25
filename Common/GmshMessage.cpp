@@ -721,15 +721,17 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
     if(ps.size() && ps[0].getValue().size())
       action.assign(ps[0].getValue());
 
-    cmd.assign("");
+    //cmd.assign("");
     if(!action.compare("compute")){
       std::vector<onelab::string> ps;
       client->get(ps,clientName+"/FullCmdLine");
       if(ps.size() && ps[0].getValue().size())
-	cmd.append(" " + ps[0].getValue());
+	cmd.assign(ps[0].getValue());
 
       if(cmd.size()){
 	Msg::Info("Loader calls <%s>",cmd.c_str());
+	//client->sendInfo(strcat("Loader calls",cmd.c_str()));
+	std::cout << "Loader calls " << cmd << std::endl;
 	SystemCall(cmd.c_str(),true); //true->blocking
       }
       else

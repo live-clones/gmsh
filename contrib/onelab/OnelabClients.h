@@ -39,6 +39,8 @@ std::string getUserHomedir();
 std::string sanitize(const std::string &in);
 std::string removeBlanks(const std::string &in);
 bool isPath(const std::string &in);
+std::string FixWindowQuotes(const std::string &in);
+std::string unquote(const std::string &in);
 
 // Parser TOOLS 
 int enclosed(const std::string &in, std::vector<std::string> &arguments, size_t &end);

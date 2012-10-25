@@ -407,10 +407,6 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
 
 bool localSolverClient::checkCommandLine(){
   OLMsg::Info("Check command line for <%s>",getName().c_str());
-
-  if(getCommandLine().empty())
-    OLMsg::Warning("No commandline for client <%s>", getName().c_str());
-
   if(!isActive()) return true;
 
   if(!getCommandLine().empty()){
@@ -418,13 +414,9 @@ bool localSolverClient::checkCommandLine(){
     run(); // does nothing for Interfaced clients, initializes native clients
   }
   else{
+    OLMsg::Error("No commandline for client <%s>", getName().c_str());
     if(OLMsg::hasGmsh) {
-      // exits metamodel and restores control to the onelab window
-      OLMsg::Error("The command line of client <%s> is undefined.",
-		 getName().c_str());
-      std::cout << "\n\nBrowse for executable in the ONELAB window.\n\n"
-		<< std::endl;
-      return false;
+      return false; // exits metamodel and restores control to gmsh
     }
     else{ // asks the user in console mode
       std::cout << "\nONELAB:Enter the command line (with path) of the executable file of <" << getName() << ">" << std::endl;
@@ -645,6 +637,7 @@ void MetaModel::construct()
   parse_onefile( genericNameFromArgs + onelabExtension + ".save",false);
   parse_onefile( genericNameFromArgs + onelabExtension);
   closeOnelabBlock();
+  saveCommandLines(genericNameFromArgs);
 }
 
 void MetaModel::analyze() {
@@ -862,7 +855,7 @@ void EncapsulatedClient::convert() {
 }
 
 std::string EncapsulatedClient::buildCommandLine(){
-  return OLMsg::GetLoaderName();
+  return FixWindowsQuote(OLMsg::GetLoaderName());
 }
 
 void EncapsulatedClient::compute(){
@@ -893,6 +886,7 @@ void EncapsulatedClient::compute(){
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
   // the encapsulating localNetworkClient is called
+  OLMsg::Info("Command line=<%s>",cmd.c_str());
   run();
 
   if(getList("OutputFiles",choices)){
@@ -977,7 +971,7 @@ void RemoteNativeClient::compute(){
 
   analyze();
   if(OLMsg::GetErrorNum()) return;
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str());
+  OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
   setAction("compute");
 
   if(getList("InputFiles",choices)){
@@ -1035,6 +1029,7 @@ void RemoteEncapsulatedClient::compute(){
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
   // the encapsulating localNetworkClient is called
+  OLMsg::Info("Command line=<%s>",cmd.c_str());
   run();
 
   if(getList("OutputFiles",choices)){
@@ -1128,6 +1123,7 @@ bool checkIfPresent(std::string fileName){
 
 
 #include <sys/types.h>
+
 #if not defined WIN32
 #include <unistd.h>
 #include <pwd.h>
@@ -1162,6 +1158,26 @@ std::string sanitize(const std::string &in)
       out.push_back(in[i]);
   return out;
 }
+
+std::string FixWindowQuotes(const std::string &in)
+{
+#if defined(WIN32)
+  return "\"" + in + "\"";
+#else
+  return in;
+#endif
+}
+
+std::string unquote(const std::string &in)
+{
+  size_t pos0=in.find_first_not_of(" ");
+  size_t pos=in.find_last_not_of(" ");
+  if( (pos0 != std::string::npos) && (pos != std::string::npos))
+    if(in.compare(pos0,1,"\"")) pos0++;
+    if(in.compare(pos,1,"\"")) pos--;
+    return in.substr(pos0,pos-pos0+1);
+}
+
 std::string removeBlanks(const std::string &in)
 {
   size_t pos0=in.find_first_not_of(" ");
@@ -1175,7 +1191,7 @@ bool isPath(const std::string &in)
 {
   size_t pos=in.find_last_not_of(" 0123456789");
   if(in.compare(pos,1,"/"))
-    OLMsg::Error("The argument <%s> is not a valid path (must end with '/')",in.c_str());
+    OLMsg::Error("The argument <%s> is not a valid parameter path (must end with '/')",in.c_str());
   return true;
 }
 
