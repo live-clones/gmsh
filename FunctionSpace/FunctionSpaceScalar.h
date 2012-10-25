@@ -3,6 +3,7 @@
 
 #include "fullMatrix.h"
 #include "BasisScalar.h"
+#include "GradBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -21,6 +22,12 @@
 
 
 class FunctionSpaceScalar : public FunctionSpace{
+ protected:
+  const BasisScalar* basisScalar;
+
+  mutable bool       hasGrad;
+  mutable GradBasis* gradBasis;
+
  public:
   virtual ~FunctionSpaceScalar(void);
 
@@ -31,8 +38,14 @@ class FunctionSpaceScalar : public FunctionSpace{
   
   const std::vector<const Polynomial*> 
     getLocalFunctions(const MElement& element) const;
+
+  const std::vector<const std::vector<Polynomial>*>
+    getGradLocalFunctions(const MElement& element) const;
   
   const BasisScalar& getBasis(const MElement& element) const;
+
+ protected:
+  FunctionSpaceScalar(void);
 };
 
 
@@ -77,10 +90,10 @@ class FunctionSpaceScalar : public FunctionSpace{
 //////////////////////
 // Inline Functions //
 //////////////////////
-
+/*
 inline const BasisScalar& FunctionSpaceScalar::
 getBasis(const MElement& element) const{
-  return static_cast<const BasisScalar&>(*basis);
+  return *basisScalar;
 }
-
+*/
 #endif

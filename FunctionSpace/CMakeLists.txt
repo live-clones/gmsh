@@ -12,6 +12,10 @@ set(SRC
   BasisVector.cpp
   BasisGenerator.cpp
 
+  GradBasis.cpp
+  CurlBasis.cpp
+  DivBasis.cpp
+
   QuadNodeBasis.cpp
   QuadEdgeBasis.cpp
   TriNodeBasis.cpp

@@ -61,7 +61,7 @@ void FunctionSpace::build(const GroupOfElement& goe,
   basis = BasisGenerator::generate(elementType, 
 				   basisType, 
 				   order);
-  
+
   // Number of *Per* Entity functions //
   fPerVertex = basis->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
@@ -99,7 +99,7 @@ void FunctionSpace::buildDof(void){
     // Get Dof for this Element
     vector<Dof> myDof = getKeys(*(element[i]));
     unsigned int nDof = myDof.size();
-    
+
     // Create new GroupOfDof
     GroupOfDof* god = new GroupOfDof(nDof, *(element[i])); 
     (*group)[i]     = god;
@@ -221,7 +221,7 @@ const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) cons
     return *(it->second); 
 }
 
-vector<int> FunctionSpace::getEdgeClosure(const MElement& element) const{
+vector<int> FunctionSpace::getEdgeClosure(const MElement& element){
   // Get not const Element (gmsh problem, not mine !) //
   MElement& eelement = const_cast<MElement&>(element);
 
@@ -246,7 +246,7 @@ vector<int> FunctionSpace::getEdgeClosure(const MElement& element) const{
   return edgeClosure;
 }
 
-vector<int> FunctionSpace::getFaceClosure(const MElement& element) const{
+vector<int> FunctionSpace::getFaceClosure(const MElement& element){
   // Get not const Element (gmsh problem, not mine !) //
   MElement& eelement = const_cast<MElement&>(element);
 

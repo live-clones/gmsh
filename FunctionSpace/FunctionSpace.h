@@ -97,8 +97,8 @@ class FunctionSpace{
   void insertDof(Dof& d, GroupOfDof* god);    
 
   // Closure
-  std::vector<int> getEdgeClosure(const MElement& element) const;
-  std::vector<int> getFaceClosure(const MElement& element) const;
+  static std::vector<int> getEdgeClosure(const MElement& element);
+  static std::vector<int> getFaceClosure(const MElement& element);
 };
 
 

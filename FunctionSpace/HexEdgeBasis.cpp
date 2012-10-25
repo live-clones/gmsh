@@ -17,6 +17,9 @@ HexEdgeBasis::HexEdgeBasis(int order){
   nFace   = 12         * order * (order + 1);
   nCell   =  3 * order * order * (order + 1);
 
+  nEdgeClosure = 2;
+  nFaceClosure = 8;
+
   size = 3 * (order + 2) * (order + 2) * (order + 1);
 
   // Alloc Temporary Space //

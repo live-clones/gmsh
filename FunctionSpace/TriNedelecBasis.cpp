@@ -14,6 +14,9 @@ TriNedelecBasis::TriNedelecBasis(void){
   nFace   = 0;
   nCell   = 0;
 
+  nEdgeClosure = 2;
+  nFaceClosure = 0;
+
   size = 3;
 
   // Vertices definig Edges & Permutations //

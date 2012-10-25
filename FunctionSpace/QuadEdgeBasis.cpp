@@ -15,6 +15,9 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   nFace   = 0;
   nCell   = 2 * (order + 1) * order;
 
+  nEdgeClosure = 2;
+  nFaceClosure = 0;
+
   size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //

@@ -29,6 +29,9 @@ class Basis{
   int nFace;
   int nCell;
 
+  int nEdgeClosure;
+  int nFaceClosure;
+
   int size;
 
  public:
@@ -79,6 +82,14 @@ class Basis{
   //! @em Based functions of this Basis
   int getNCellBased(void) const;
 
+  //! @return Returns the number of @em edge
+  //! @em closures for this Basis
+  int getNEdgeClosure(void) const;
+
+  //! @return Returns the number of @em face
+  //! @em closures for this Basis
+  int getNFaceClosure(void) const;
+
   //! @return Returns the number of Polynomial%s 
   //! (or Vector%s of Polynomial%s) in the Basis
   int getSize(void) const;
@@ -128,6 +139,14 @@ inline int Basis::getNFaceBased(void) const{
 
 inline int Basis::getNCellBased(void) const{
   return nCell;
+}
+
+inline int Basis::getNEdgeClosure(void) const{
+  return nEdgeClosure;
+}
+
+inline int Basis::getNFaceClosure(void) const{
+  return nFaceClosure;
 }
 
 inline int Basis::getSize(void) const{

@@ -15,6 +15,9 @@ TetNodeBasis::TetNodeBasis(int order){
   nFace   = 2 * (order - 1) * (order - 2);
   nCell   =     (order - 1) * (order - 2) * (order - 3) / 6;
 
+  nEdgeClosure = 2;
+  nFaceClosure = 6;
+
   size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //

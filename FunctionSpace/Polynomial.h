@@ -36,8 +36,10 @@ class Polynomial{
    Polynomial(void);
   ~Polynomial(void);
 
-  void                    derivative(const int dim);
+  void derivative(const int dim);
   std::vector<Polynomial> gradient(void) const;
+  static std::vector<Polynomial> curl(const std::vector<Polynomial>& p);
+  static Polynomial divergence(const std::vector<Polynomial>& p);
 
   double operator()
     (const double x, const double y, const double z) const;  

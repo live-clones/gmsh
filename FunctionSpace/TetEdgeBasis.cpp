@@ -15,6 +15,9 @@ TetEdgeBasis::TetEdgeBasis(int order){
   nFace   = 4 * (order + 1) * (order - 1);
   nCell   =     (order + 1) * (order - 1) * (order - 2) / 2;
 
+  nEdgeClosure = 2;
+  nFaceClosure = 6;
+
   size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
@@ -343,7 +346,7 @@ TetEdgeBasis::TetEdgeBasis(int order){
 }
 
 TetEdgeBasis::~TetEdgeBasis(void){
-    // Vertex Based //
+  // Vertex Based //
   for(int i = 0; i < nVertex; i++)
     delete (*node)[i];
   

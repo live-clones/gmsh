@@ -15,6 +15,9 @@ TriEdgeBasis::TriEdgeBasis(int order){
   nFace   = 0;
   nCell   = ((order - 1) * order + order - 1);
 
+  nEdgeClosure = 2;
+  nFaceClosure = 0;
+
   size = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //

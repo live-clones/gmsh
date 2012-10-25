@@ -10,6 +10,10 @@ FunctionSpaceNode::FunctionSpaceNode(const GroupOfElement& goe,
 				     int order){
   // Build 0Form Basis //
   build(goe, 0, order); 
+
+  // Init BasisScalar //
+  basisScalar = 
+    static_cast<const BasisScalar*>(basis);
 }
     
 FunctionSpaceNode::~FunctionSpaceNode(void){

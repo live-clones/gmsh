@@ -101,6 +101,47 @@ vector<Polynomial> Polynomial::gradient(void) const{
   return grad;
 }
 
+vector<Polynomial> Polynomial::curl(const vector<Polynomial>& p){
+  vector<Polynomial> rot(3);
+
+  // Partial Derivatives //
+  Polynomial dP0d1 = p[0];
+  Polynomial dP0d2 = p[0];
+  Polynomial dP1d0 = p[1];
+  Polynomial dP1d2 = p[1];
+  Polynomial dP2d0 = p[2];
+  Polynomial dP2d1 = p[2];
+
+  dP0d1.derivative(1);
+  dP0d2.derivative(2);
+  dP1d0.derivative(0);
+  dP1d2.derivative(2);
+  dP2d0.derivative(0);
+  dP2d1.derivative(1);
+
+  // Curl //
+  rot[0] = dP2d1 - dP1d2;
+  rot[1] = dP0d2 - dP2d0;
+  rot[2] = dP1d0 - dP0d1;
+
+  // Return //
+  return rot;
+}
+
+Polynomial Polynomial::divergence(const vector<Polynomial>& p){
+  // Partial Derivatives //
+  Polynomial dP0d0 = p[0];
+  Polynomial dP1d1 = p[1];
+  Polynomial dP2d2 = p[2];
+
+  dP0d0.derivative(0);
+  dP1d1.derivative(1);
+  dP2d2.derivative(2);
+
+  // Return Div //
+  return dP0d0 + dP1d1 + dP2d2;
+}
+
 double Polynomial::at
   (const double x, const double y, const double z) const{
   
