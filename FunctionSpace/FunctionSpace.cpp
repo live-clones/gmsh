@@ -52,7 +52,7 @@ void FunctionSpace::build(const GroupOfElement& goe,
     const_cast<MElement&>(element);
 
   int elementType = myElement.getType();
-  int nVertex     = myElement.getNumVertices();
+  int nVertex     = myElement.getNumPrimaryVertices();
   int nEdge       = myElement.getNumEdges();
   int nFace       = myElement.getNumFaces();
  
@@ -140,7 +140,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   MElement& element = const_cast<MElement&>(elem);
 
   // Get Element Data //
-  const int nVertex = element.getNumVertices();
+  const int nVertex = element.getNumPrimaryVertices();
   const int nEdge   = element.getNumEdges();
   const int nFace   = element.getNumFaces(); 
 
