@@ -3,6 +3,8 @@
 
 #include "fullMatrix.h"
 #include "BasisVector.h"
+#include "CurlBasis.h"
+#include "DivBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -21,6 +23,15 @@
 
 
 class FunctionSpaceVector : public FunctionSpace{
+ protected:
+  const BasisVector* basisVector;
+
+  mutable bool       hasCurl;
+  mutable CurlBasis* curlBasis;
+
+  mutable bool       hasDiv;
+  mutable DivBasis*  divBasis;
+
  public:
   virtual ~FunctionSpaceVector(void);
 
@@ -32,7 +43,14 @@ class FunctionSpaceVector : public FunctionSpace{
   const std::vector<const std::vector<Polynomial>*>
     getLocalFunctions(const MElement& element) const;
 
-  const BasisVector& getBasis(const MElement& element) const;
+  const std::vector<const std::vector<Polynomial>*>
+    getCurlLocalFunctions(const MElement& element) const;
+
+  const std::vector<const Polynomial*> 
+    getDivLocalFunctions(const MElement& element) const;
+
+ protected:
+  FunctionSpaceVector(void);
 };
 
 
@@ -64,23 +82,43 @@ class FunctionSpaceVector : public FunctionSpace{
    @param element A MElement
    @return Returns the basis functions associated
    to the given element (with correct @em closure)
-   **
-
-   @fn FunctionSpaceVector::getBasis
-   @param element A MElement of the support 
-   of this FunctionSpace
-   @return Returns the Basis (BasisVector) associated
-   to the given MElement
- */
-
+*/
 
 //////////////////////
 // Inline Functions //
 //////////////////////
 
-inline const BasisVector& FunctionSpaceVector::
-getBasis(const MElement& element) const{
-  return static_cast<const BasisVector&>(*basis);
+inline const std::vector<const std::vector<Polynomial>*> 
+FunctionSpaceVector::getLocalFunctions(const MElement& element) const{
+  return locBasis(element, *basisVector);
+}
+
+inline const std::vector<const std::vector<Polynomial>*>
+FunctionSpaceVector::getCurlLocalFunctions(const MElement& element) const{
+
+  // Got Curl Basis ? //
+  // --> mutable data 
+  //  --> Just a 'cache memory' 
+  if(!hasCurl){
+    curlBasis = new CurlBasis(*basisVector);
+    hasCurl   = true;
+  }
+
+  return locBasis(element, *curlBasis);
+}
+
+inline const std::vector<const Polynomial*> 
+FunctionSpaceVector::getDivLocalFunctions(const MElement& element) const{
+
+  // Got Div Basis ? //
+  // --> mutable data 
+  //  --> Just a 'cache memory' 
+  if(!hasDiv){
+    divBasis = new DivBasis(*basisVector);
+    hasDiv   = true;
+  }
+
+  return locBasis(element, *divBasis);
 }
 
 #endif

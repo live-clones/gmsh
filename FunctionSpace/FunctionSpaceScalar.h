@@ -41,8 +41,6 @@ class FunctionSpaceScalar : public FunctionSpace{
 
   const std::vector<const std::vector<Polynomial>*>
     getGradLocalFunctions(const MElement& element) const;
-  
-  const BasisScalar& getBasis(const MElement& element) const;
 
  protected:
   FunctionSpaceScalar(void);
@@ -77,23 +75,29 @@ class FunctionSpaceScalar : public FunctionSpace{
    @param element A MElement
    @return Returns the basis functions associated
    to the given element (with correct @em closure)
-   **
-
-   @fn FunctionSpaceScalar::getBasis
-   @param element A MElement of the support 
-   of this FunctionSpace
-   @return Returns the Basis (BasisScalar) associated
-   to the given MElement
  */
-
 
 //////////////////////
 // Inline Functions //
 //////////////////////
-/*
-inline const BasisScalar& FunctionSpaceScalar::
-getBasis(const MElement& element) const{
-  return *basisScalar;
+
+inline const std::vector<const Polynomial*> 
+FunctionSpaceScalar::getLocalFunctions(const MElement& element) const{
+  return locBasis(element, *basisScalar);
 }
-*/
+
+inline const std::vector<const std::vector<Polynomial>*>
+FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
+
+  // Got Grad Basis ? //
+  // --> mutable data 
+  //  --> Just a 'cache memory' 
+  if(!hasGrad){
+    gradBasis = new GradBasis(*basisScalar);
+    hasGrad   = true;
+  }
+
+  return locBasis(element, *gradBasis);
+}
+
 #endif

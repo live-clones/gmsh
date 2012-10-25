@@ -6,6 +6,9 @@
 #include <string>
 
 #include "Basis.h"
+#include "BasisScalar.h"
+#include "BasisVector.h"
+
 #include "Comparators.h"
 #include "Dof.h"
 #include "GroupOfDof.h"
@@ -99,6 +102,16 @@ class FunctionSpace{
   // Closure
   static std::vector<int> getEdgeClosure(const MElement& element);
   static std::vector<int> getFaceClosure(const MElement& element);
+
+  // Local Basis
+  static 
+    const std::vector<const Polynomial*>
+    locBasis(const MElement& element, 
+	     const BasisScalar& basis);
+  static 
+    const std::vector<const std::vector<Polynomial>*>
+    locBasis(const MElement& element, 
+	     const BasisVector& basis);
 };
 
 

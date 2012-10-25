@@ -10,6 +10,10 @@ FunctionSpaceEdge::FunctionSpaceEdge(const GroupOfElement& goe,
 				     int order){
   // Build 1Form Basis //
   build(goe, 1, order); 
+
+  // Init BasisVector //
+  basisVector = 
+    static_cast<const BasisVector*>(basis);
 }
     
 FunctionSpaceEdge::~FunctionSpaceEdge(void){
