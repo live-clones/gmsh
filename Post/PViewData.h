@@ -106,47 +106,43 @@ class PViewData {
   // return the number of geometrical entities in the view
   virtual int getNumEntities(int step=-1){ return 0; }
 
-  // return the number of elements in the ent-th entity, or the total
-  // number of elements if ent < 0
+  // return the number of elements in the ent-th entity, or the total number of
+  // elements if ent < 0
   virtual int getNumElements(int step=-1, int ent=-1){ return 0; }
 
-  // return the geometrical dimension of the ele-th element in the
-  // ent-th entity
+  // return the geometrical dimension of the ele-th element in the ent-th entity
   virtual int getDimension(int step, int ent, int ele){ return 0; }
 
-  // return the number of nodes of the ele-th element in the ent-th
-  // entity
+  // return the number of nodes of the ele-th element in the ent-th entity
   virtual int getNumNodes(int step, int ent, int ele){ return 0; }
 
-  // get/set the coordinates and tag of the nod-th node from the
-  // ele-th element in the ent-th entity (if the node has a tag,
-  // getNode returns it)
+  // get/set the coordinates and tag of the nod-th node from the ele-th element
+  // in the ent-th entity (if the node has a tag, getNode returns it)
   virtual int getNode(int step, int ent, int ele, int nod,
                       double &x, double &y, double &z){ return 0; }
   virtual void setNode(int step, int ent, int ele, int nod,
                        double x, double y, double z);
   virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
 
-  // return the number of components available for the ele-th element in
-  // the ent-th entity
+  // return the number of components available for the ele-th element in the
+  // ent-th entity
   virtual int getNumComponents(int step, int ent, int ele){ return 0; }
 
-  // return the number of values available for the ele-th element in
-  // the ent-th entity
+  // return the number of values available for the ele-th element in the ent-th
+  // entity
   virtual int getNumValues(int step, int ent, int ele){ return 0; }
 
   // get the idx'th value for the ele-th element in the ent-th entity
   virtual void getValue(int step, int ent, int ele, int idx, double &val){}
 
-  // gets/set the comp-th component (at the step-th time step)
-  // associated with the node-th node from the ele-th element in the
-  // ent-th entity
+  // gets/set the comp-th component (at the step-th time step) associated with
+  // the node-th node from the ele-th element in the ent-th entity
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val){}
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
 
-  // return a scalar value (same as value for scalars, norm for
-  // vectors, etc.) associated with the node-th node from the ele-th
-  // element in the ent-th entity
+  // return a scalar value (same as value for scalars, norm for vectors, etc.)
+  // associated with the node-th node from the ele-th element in the ent-th
+  // entity
   void getScalarValue(int step, int ent, int ele, int nod, double &val,
                       int forceNumComponents=0, int componentMap[9]=0);
 
@@ -237,27 +233,30 @@ class PViewData {
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
 
-  // search for the value of the View at point x, y, z. Values are
-  // interpolated using standard first order shape functions in the
-  // post element. If several time steps are present, they are all
-  // interpolated unless time step is set to a different value than
-  // -1.
+  // search for the value of the View at point x, y, z. Values are interpolated
+  // using standard first order shape functions in the post element. If several
+  // time steps are present, they are all interpolated unless time step is set
+  // to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
   bool searchScalarWithTol(double x, double y, double z, double *values,
                            int step=-1, double *size=0, double tol=1.e-2);
   bool searchVector(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
+  bool searchVectorWithTol(double x, double y, double z, double *values,
+                           int step=-1, double *size=0, double tol=1.e-2);
   bool searchTensor(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
+  bool searchTensorWithTol(double x, double y, double z, double *values,
+                           int step=-1, double *size=0, double tol=1.e-2);
 
   // I/O routines
   virtual bool writeSTL(const std::string &fileName);
   virtual bool writeTXT(const std::string &fileName);
-  virtual bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
-                        bool append=false);
-  virtual bool writeMSH(const std::string &fileName, bool binary=false, bool savemesh=true,
-                        bool multipleView=false);
+  virtual bool writePOS(const std::string &fileName, bool binary=false,
+                        bool parsed=true, bool append=false);
+  virtual bool writeMSH(const std::string &fileName, bool binary=false,
+                        bool savemesh=true, bool multipleView=false);
   virtual bool writeMED(const std::string &fileName);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);

@@ -119,7 +119,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   double y = ProbeOptions_Number[1].def;
   double z = ProbeOptions_Number[2].def;
   int iView = (int)ProbeOptions_Number[3].def;
-  
+
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
@@ -163,7 +163,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   }
 
   delete [] val;
-  
+
   for(int i = 0; i < numSteps; i++){
     double time = v1->getData()->getTime(i);
     data2->Time.push_back(time);
@@ -171,6 +171,6 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   data2->setName(v1->getData()->getName() + "_Probe");
   data2->setFileName(v1->getData()->getName() + "_Probe.pos");
   data2->finalize();
-  
+
   return v2;
 }

@@ -47,6 +47,8 @@ class OctreePost
                            int step=-1, double *size=0, double tol=1.e-2);
   bool searchVector(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
+  bool searchVectorWithTol(double x, double y, double z, double *values,
+                           int step=-1, double *size=0, double tol=1.e-2);
   bool searchTensor(double x, double y, double z, double *values,
                     int step=-1, double *size=0);
   bool searchTensorWithTol(double x, double y, double z, double *values,

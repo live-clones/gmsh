@@ -208,9 +208,23 @@ bool PViewData::searchVector(double x, double y, double z, double *values,
   return _octree->searchVector(x, y, z, values, step, size);
 }
 
+bool PViewData::searchVectorWithTol(double x, double y, double z, double *values,
+                                    int step, double *size, double tol)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchVectorWithTol(x, y, z, values, step, size, tol);
+}
+
 bool PViewData::searchTensor(double x, double y, double z, double *values,
                              int step, double *size)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchTensor(x, y, z, values, step, size);
+}
+
+bool PViewData::searchTensorWithTol(double x, double y, double z, double *values,
+                                    int step, double *size, double tol)
+{
+  if(!_octree) _octree = new OctreePost(this);
+  return _octree->searchTensorWithTol(x, y, z, values, step, size, tol);
 }

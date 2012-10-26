@@ -528,6 +528,22 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   return false;
 }
 
+bool OctreePost::searchVectorWithTol(double x, double y, double z, double *values,
+                                     int step, double *size, double tol)
+{
+  bool a = searchVector(x, y, z, values, step, size);
+  if(!a && tol != 0.){
+    double oldtol1 = element::getTolerance();
+    double oldtol2 = MElement::getTolerance();
+    element::setTolerance(tol);
+    MElement::setTolerance(tol);
+    a = searchVector(x, y, z, values, step, size);
+    element::setTolerance(oldtol1);
+    MElement::setTolerance(oldtol2);
+  }
+  return a;
+}
+
 bool OctreePost::searchTensor(double x, double y, double z, double *values,
                               int step, double *size)
 {
