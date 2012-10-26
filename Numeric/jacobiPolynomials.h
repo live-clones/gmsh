@@ -11,6 +11,7 @@
 class JacobiPolynomials {
 
  public:
+  JacobiPolynomials() {};
   JacobiPolynomials(double a, double b, int o);
   ~JacobiPolynomials();
 

@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
+#include "nodalBasis.h"
 #include <iostream>
 
 #define SQU(a)  ((a)*(a))
@@ -65,15 +66,20 @@ inline double pow_int(const double &a, const int &n)
   }
 }
 
-class polynomialBasis
+fullMatrix<double> generate1DMonomials(int order);
+
+
+
+
+class polynomialBasis : public nodalBasis
 {
   // integrationOrder, closureId => df/dXi
   mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace;
  public:
   // for now the only implemented polynomial basis are nodal poly
   // basis, we use the type of the corresponding gmsh element as type
-  int type, parentType, order, dimension;
-  bool serendip;
+  //int type, parentType, order, dimension;
+  //bool serendip;
   class closure : public std::vector<int> {
     public:
     int type;
@@ -89,10 +95,13 @@ class polynomialBasis
   // quad face)
   clCont closures, fullClosures;
   std::vector<int> closureRef;
-  fullMatrix<double> points;
+  //fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
   int numFaces;
+
+  void initialize();
+
   inline int getNumShapeFunctions() const {return coefficients.size1();}
   // for a given face/edge, with both a sign and a rotation, give an
   // ordered list of nodes on this face/edge

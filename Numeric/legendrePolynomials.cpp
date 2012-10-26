@@ -5,8 +5,10 @@
 
 #include "legendrePolynomials.h"
 
-LegendrePolynomials::LegendrePolynomials(int o): n(o) {}
-LegendrePolynomials::~LegendrePolynomials() {;}
+LegendrePolynomials::LegendrePolynomials(int o): n(o) {
+
+}
+LegendrePolynomials::~LegendrePolynomials() {}
 
 void LegendrePolynomials::f(double u, double *val) const
 {

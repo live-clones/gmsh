@@ -51,9 +51,8 @@ void OptHomMessage (const char *s, ...) {
 
 double distMaxStraight (MElement *el)
 {
-
-  const polynomialBasis *lagrange = el->getFunctionSpace();
-  const polynomialBasis *lagrange1 = el->getFunctionSpace(1);
+  const polynomialBasis *lagrange = (polynomialBasis*)el->getFunctionSpace();
+  const polynomialBasis *lagrange1 = (polynomialBasis*)el->getFunctionSpace(1);
   int nV = lagrange->points.size1();
   int nV1 = lagrange1->points.size1();
   SPoint3 sxyz[256];

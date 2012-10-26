@@ -117,7 +117,7 @@ class MPolyhedron : public MElement {
       vol += _parts[i]->getVolume();
     return vol;
   }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const
   {
     return (_orig ? _orig->getFunctionSpace(order) : 0);
   }
@@ -258,7 +258,7 @@ class MPolygon : public MElement {
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const
   {
     return (_orig ? _orig->getFunctionSpace(order) : 0);
   }
@@ -323,7 +323,7 @@ class MLineChild : public MLine {
       delete _orig;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_C; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const
   {
     if(_orig) return _orig->getFunctionSpace(order);
     return 0;
@@ -353,6 +353,7 @@ class MLineChild : public MLine {
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual bool ownsParent() const { return _owner; }
 };
+
 
 // -------------------- Border classes
 

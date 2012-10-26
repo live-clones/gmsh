@@ -685,6 +685,8 @@ if(ENABLE_MED OR ENABLE_CGNS)
         endif(ZLIB_FOUND)
       endif(NOT HAVE_LIBZ)
     endif(MED_LIB OR CGNS_LIB)
+  else(HDF5_LIB)
+    message(STATUS "HDF5 not found")
   endif(HDF5_LIB)
 endif(ENABLE_MED OR ENABLE_CGNS)
 

@@ -430,7 +430,6 @@ fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
   }
 
   points.scale(overOrder);
-  points.print();
   return points;
 
 }
@@ -778,9 +777,5 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
         }
       }
     }
-    for (int i = 0; i < points.size1(); i++) {
-      printf("Point(%d) %g, %g, %g\n", i, points(i,0),points(i,1),points(i,2));
-    }
-    printf("number of points : %d\n\n", nbPoints);
     return points;
 }

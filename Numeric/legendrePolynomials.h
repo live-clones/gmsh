@@ -11,6 +11,7 @@
 class LegendrePolynomials {
 
  public:
+  LegendrePolynomials() {};
   LegendrePolynomials(int o);
   ~LegendrePolynomials();
 

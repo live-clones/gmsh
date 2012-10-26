@@ -128,7 +128,7 @@ class MTetrahedron : public MElement {
   virtual double getCircumRadius();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w)
   {

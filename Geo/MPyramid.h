@@ -67,6 +67,7 @@ class MPyramid : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
   {
@@ -122,7 +123,7 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  /*virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     double r = (w != 1.) ? (u * v * w / (1. - w)) : 0.;
     s[0] = 0.25 * ((1. - u) * (1. - v) - w + r);
@@ -131,6 +132,7 @@ class MPyramid : public MElement {
     s[3] = 0.25 * ((1. - u) * (1. + v) - w - r);
     s[4] = w;
   }
+  */
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
   {
     if(w == 1.) {
@@ -444,6 +446,107 @@ class MPyramid14 : public MPyramid {
     tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
     tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
   }
+  virtual void getNode(int num, double &u, double &v, double &w)
+  {
+    num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
+};
+
+//------------------------------------------------------------------------------
+
+class MPyramidN : public MPyramid {
+
+ protected:
+  std::vector<MVertex*> _vs;
+  const char _order;
+  double _disto;
+ public:
+  MPyramidN(MVertex* v0, MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4,
+      const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+    : MPyramid(v0, v1, v2, v3, v4, num, part), _vs(v), _order(order), _disto(-1e22)
+  {
+    for (unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+    getFunctionSpace(order);
+  }
+
+  MPyramidN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+    : MPyramid(v[0], v[1], v[2], v[3], v[4], num, part), _order(order), _disto(-1e22)
+  {
+    for (unsigned int i = 5; i < v.size(); i++ ) _vs.push_back(v[i]);
+    for (unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+    getFunctionSpace(order);
+  }
+
+  ~MPyramidN();
+
+  virtual double distoShapeMeasure();
+  virtual int getPolynomialOrder() const { return _order; }
+  virtual int getNumVertices() const { return 5 + _vs.size(); }
+  virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
+  virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
+  virtual int getNumFaceVertices() const 
+  {
+    return (_order-1)*(_order-1) + 4 * ((_order - 1) * (_order - 2)) / 2;
+  }
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(_order+1);
+    MPyramid::_getEdgeVertices(num, v);
+    int j = 2;
+    const int ie = (num + 1) * (_order - 1);
+    for(int i = num * (_order -1); i != ie; ++i) v[j++] = _vs[i];
+  }
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    int j = 3;
+    if (num == 4) {
+      j = 4; 
+      v.resize(_order * _order);
+    }
+    else {
+      v.resize(3 + 3 * (_order - 1) + (_order-1) * (_order - 2) /2);
+    }
+    MPyramid::_getFaceVertices(num, v);
+    int nbVQ =  (_order-1)*(_order-1);
+    int nbVT = (_order - 1) * (_order - 2) / 2;
+    const int ie = (num == 4) ? 4*nbVT + nbVQ : (num+1)*nbVT;
+    for (int i = num*nbVT; i != ie; ++i) v[j++] = _vs[i];
+  }
+  virtual int getNumVolumeVertices() const
+  {
+    switch(getTypeForMSH()){
+    case MSH_PYR_30 : return 1;
+    case MSH_PYR_55 : return 5;
+    case MSH_PYR_91 : return 14;
+    case MSH_PYR_140 : return 30;
+    case MSH_PYR_204 : return 55;
+    case MSH_PYR_285 : return 91;
+    case MSH_PYR_385 : return 140;
+    default : return 0;
+    }
+  }
+  virtual int getTypeForMSH() const
+  {
+    if(_order == 3 && _vs.size() + 5 == 29) return MSH_PYR_29;
+    if(_order == 3 && _vs.size() + 5 == 30) return MSH_PYR_30;
+    if(_order == 4 && _vs.size() + 5 == 50) return MSH_PYR_50;
+    if(_order == 4 && _vs.size() + 5 == 55) return MSH_PYR_55;
+    if(_order == 5 && _vs.size() + 5 == 77) return MSH_PYR_77;
+    if(_order == 5 && _vs.size() + 5 == 91) return MSH_PYR_91;
+    if(_order == 6 && _vs.size() + 5 == 110) return MSH_PYR_110;
+    if(_order == 6 && _vs.size() + 5 == 140) return MSH_PYR_140;
+    if(_order == 7 && _vs.size() + 5 == 149) return MSH_PYR_149;
+    if(_order == 7 && _vs.size() + 5 == 204) return MSH_PYR_204;
+    if(_order == 8 && _vs.size() + 5 == 194) return MSH_PYR_194;
+    if(_order == 8 && _vs.size() + 5 == 285) return MSH_PYR_285;
+    if(_order == 9 && _vs.size() + 5 == 245) return MSH_PYR_245;
+    if(_order == 9 && _vs.size() + 5 == 385) return MSH_PYR_385;
+    return 0;
+  }
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep();
   virtual void getNode(int num, double &u, double &v, double &w)
   {
     num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);

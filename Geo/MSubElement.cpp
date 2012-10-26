@@ -18,7 +18,7 @@ MSubTetrahedron::~MSubTetrahedron()
 
 const polynomialBasis* MSubTetrahedron::getFunctionSpace(int order) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return (polynomialBasis*)_orig->getFunctionSpace(order);
   return 0;
 }
 
@@ -116,7 +116,7 @@ MSubTriangle::~MSubTriangle()
 
 const polynomialBasis* MSubTriangle::getFunctionSpace(int order) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return (polynomialBasis*)_orig->getFunctionSpace(order);
   return 0;
 }
 
@@ -211,7 +211,7 @@ MSubLine::~MSubLine()
 
 const polynomialBasis* MSubLine::getFunctionSpace(int order) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return (polynomialBasis*)_orig->getFunctionSpace(order);
   return 0;
 }
 
@@ -301,7 +301,7 @@ MSubPoint::~MSubPoint()
 
 const polynomialBasis* MSubPoint::getFunctionSpace(int order) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return (polynomialBasis*)_orig->getFunctionSpace(order);
   return 0;
 }
 

@@ -609,6 +609,7 @@ int GModel::readCGNS(const std::string &name)
     double ielem = irmax[0] - 1;
     double jelem = irmax[1] - 1;
     double kelem = irmax[2] - 1;
+    printf("Elems %g %g %g\n", ielem, jelem, kelem);
     int order = 1;
     bool done = false;
     while(fmod(ielem / 2.0, 1.0) == 0.0 && fmod(jelem / 2.0, 1.0) == 0.0 && fmod(kelem / 2.0, 1.0) == 0.0 and order < 5) {

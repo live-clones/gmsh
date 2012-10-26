@@ -469,7 +469,7 @@ void highOrderTools::computeStraightSidedPositions ()
     for (unsigned int i=0;i<(*it)->triangles.size();i++){
       MTriangle *t = (*it)->triangles[i];
       MFace face = t->getFace(0);
-      const polynomialBasis* fs = t->getFunctionSpace();
+      const nodalBasis* fs = t->getFunctionSpace();
       for (int j=0;j<t->getNumVertices();j++){
         if (t->getVertex(j)->onWhat() == *it){
           const double t1 = fs->points(j, 0);
@@ -484,7 +484,7 @@ void highOrderTools::computeStraightSidedPositions ()
       //      printf("coucou quad %d\n",i);
       MQuadrangle *q = (*it)->quadrangles[i];
       MFace face = q->getFace(0);
-      const polynomialBasis* fs = q->getFunctionSpace();
+      const nodalBasis* fs = q->getFunctionSpace();
       for (int j=0;j<q->getNumVertices();j++){
         if (q->getVertex(j)->onWhat() == *it){
           const double t1 = fs->points(j, 0);
@@ -509,7 +509,7 @@ void highOrderTools::computeStraightSidedPositions ()
           (*it)->tetrahedra[i]->getVertex(1),
           (*it)->tetrahedra[i]->getVertex(2),
           (*it)->tetrahedra[i]->getVertex(3));
-      const polynomialBasis* fs = t->getFunctionSpace();
+      const nodalBasis* fs = t->getFunctionSpace();
       for (int j=0;j<t->getNumVertices();j++){
         if (t->getVertex(j)->onWhat() == *it){
           double t1 = fs->points(j, 0);
@@ -532,7 +532,7 @@ void highOrderTools::computeStraightSidedPositions ()
           (*it)->hexahedra[i]->getVertex(5),
           (*it)->hexahedra[i]->getVertex(6),
           (*it)->hexahedra[i]->getVertex(7));
-      const polynomialBasis* fs = h->getFunctionSpace();
+      const nodalBasis* fs = h->getFunctionSpace();
       for (int j=0;j<h->getNumVertices();j++){
         if (h->getVertex(j)->onWhat() == *it){
           double t1 = fs->points(j, 0);

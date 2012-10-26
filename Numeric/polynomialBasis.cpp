@@ -42,6 +42,8 @@ static void printClosure(polynomialBasis::clCont &fullClosure,
 }
 */
 
+
+
 int polynomialBasis::getTag(int parentTag, int order, bool serendip)
 {
   switch (parentTag) {
@@ -131,7 +133,7 @@ int polynomialBasis::getTag(int parentTag, int order, bool serendip)
   }
 }
 
-static fullMatrix<double> generate1DMonomials(int order)
+fullMatrix<double> generate1DMonomials(int order)
 {
   fullMatrix<double> monomials(order + 1, 1);
   for (int i = 0; i < order + 1; i++) monomials(i, 0) = i;
@@ -964,7 +966,6 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
   (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
-    Msg::Info("Here");
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
          monomial.size1(),point.size1(),
          monomial.size2(),point.size2() );
@@ -1537,6 +1538,82 @@ static void generateClosureOrder0(polynomialBasis::clCont &closure, int nb)
 }
 
 std::map<int, polynomialBasis> polynomialBases::fs;
+
+
+void polynomialBasis::initialize()
+{
+  switch(parentType) {
+    case TYPE_PNT:
+      monomials = generate1DMonomials(0);
+      break;
+    case TYPE_LIN:
+      monomials = generate1DMonomials(order);
+      generate1dVertexClosure(closures, order);
+      generate1dVertexClosureFull(fullClosures, closureRef, order);
+      break;
+    case TYPE_TRI:
+      monomials = serendip ? generatePascalSerendipityTriangle(order) :
+                    generatePascalTriangle(order);
+      if (order == 0) {
+        generateClosureOrder0(closures, 6);
+        generateClosureOrder0(fullClosures, 6);
+        closureRef.resize(6,0);
+      }
+      else {
+        generate2dEdgeClosure(closures, order);
+        generate2dEdgeClosureFull(fullClosures, closureRef, order, 3, serendip);
+      }
+      break;
+    case TYPE_QUA:
+      monomials = serendip ? generatePascalQuadSerendip(order) :
+                    generatePascalQuad(order);
+      if (order == 0) {
+        generateClosureOrder0(closures, 8);
+        generateClosureOrder0(fullClosures, 8);
+        closureRef.resize(8, 0);
+      }
+      else {
+        generate2dEdgeClosure(closures, order, 4);
+        generate2dEdgeClosureFull(fullClosures, closureRef, order, 4, serendip);
+      }
+      break;
+    case TYPE_TET:
+      monomials = serendip ? generatePascalSerendipityTetrahedron(order) :
+                    generatePascalTetrahedron(order);
+      if (order == 0) {
+        generateClosureOrder0(closures,24);
+        generateClosureOrder0(fullClosures, 24);
+        closureRef.resize(24, 0);
+      }
+      else {
+        generateFaceClosureTet(closures, order);
+        generateFaceClosureTetFull(fullClosures, closureRef, order, serendip);
+      }
+      break;
+    case TYPE_PRI:
+      monomials = generatePascalPrism(order);
+      if (order == 0) {
+        generateClosureOrder0(closures,48);
+        generateClosureOrder0(fullClosures,48);
+        closureRef.resize(48, 0);
+      }
+      else {
+        generateFaceClosurePrism(closures, order);
+        generateFaceClosurePrismFull(fullClosures, closureRef, order);
+      }
+      break;
+    case TYPE_HEX:
+      monomials = generatePascalHex(order, serendip);
+      generateFaceClosureHex(closures, order, serendip, points);
+      generateFaceClosureHexFull(fullClosures, closureRef, order, serendip, points);
+      break;
+  }
+  
+  this->points.print();
+  coefficients = generateLagrangeMonomialCoefficients(monomials, points);
+
+}
+
 
 const polynomialBasis *polynomialBases::find(int tag)
 {

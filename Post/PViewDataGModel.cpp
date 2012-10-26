@@ -143,7 +143,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
           // the mesh is curved
           MElement *e = _getOneElementOfGivenType(model, it->first);
           if(e && e->getPolynomialOrder() > 1 && e->getFunctionSpace()){
-            const polynomialBasis *fs = e->getFunctionSpace();
+            const polynomialBasis *fs = (polynomialBasis*) e->getFunctionSpace();
             setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
                                      fs->coefficients, fs->monomials);
           }
@@ -173,7 +173,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
       if(!haveInterpolationMatrices(types[i])){
         MElement *e = _getOneElementOfGivenType(model, types[i]);
         if(e){
-          const polynomialBasis *fs = e->getFunctionSpace();
+          const polynomialBasis *fs = (polynomialBasis*) e->getFunctionSpace();
           if(fs){
             if(e->getPolynomialOrder() > 1){
               if(_type == ElementData){

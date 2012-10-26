@@ -6,9 +6,12 @@
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "polynomialBasis.h"
 #include "MQuadrangle.h"
 #include "qualityMeasures.h"
+
 int MHexahedron::getVolumeSign()
 {
   double mat[3][3];
@@ -162,8 +165,8 @@ int MHexahedronN::getNumEdgesRep()
 {
   return 12 * CTX::instance()->mesh.numSubEdges;
 }
-
-const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
+ 
+const nodalBasis* MHexahedron::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
@@ -171,31 +174,31 @@ const polynomialBasis* MHexahedron::getFunctionSpace(int o) const
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_HEX_1);
-    case 1: return polynomialBases::find(MSH_HEX_8);
-    case 2: return polynomialBases::find(MSH_HEX_20);
-    case 3: return polynomialBases::find(MSH_HEX_56);
-    case 4: return polynomialBases::find(MSH_HEX_98);
-    case 5: return polynomialBases::find(MSH_HEX_152);
-    case 6: return polynomialBases::find(MSH_HEX_222);
-    case 7: return polynomialBases::find(MSH_HEX_296);
-    case 8: return polynomialBases::find(MSH_HEX_386);
-    case 9: return polynomialBases::find(MSH_HEX_488);
+    case 0: return BasisFactory::create(MSH_HEX_1);
+    case 1: return BasisFactory::create(MSH_HEX_8);
+    case 2: return BasisFactory::create(MSH_HEX_20);
+    case 3: return BasisFactory::create(MSH_HEX_56);
+    case 4: return BasisFactory::create(MSH_HEX_98);
+    case 5: return BasisFactory::create(MSH_HEX_152);
+    case 6: return BasisFactory::create(MSH_HEX_222);
+    case 7: return BasisFactory::create(MSH_HEX_296);
+    case 8: return BasisFactory::create(MSH_HEX_386);
+    case 9: return BasisFactory::create(MSH_HEX_488);
     default: Msg::Error("Order %d hex function space not implemented", order);
     }
   }
   else {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_HEX_1);
-    case 1: return polynomialBases::find(MSH_HEX_8);
-    case 2: return polynomialBases::find(MSH_HEX_27);
-    case 3: return polynomialBases::find(MSH_HEX_64);
-    case 4: return polynomialBases::find(MSH_HEX_125);
-    case 5: return polynomialBases::find(MSH_HEX_216);
-    case 6: return polynomialBases::find(MSH_HEX_343);
-    case 7: return polynomialBases::find(MSH_HEX_512);
-    case 8: return polynomialBases::find(MSH_HEX_729);
-    case 9: return polynomialBases::find(MSH_HEX_1000);
+    case 0: return BasisFactory::create(MSH_HEX_1);
+    case 1: return BasisFactory::create(MSH_HEX_8);
+    case 2: return BasisFactory::create(MSH_HEX_27);
+    case 3: return BasisFactory::create(MSH_HEX_64);
+    case 4: return BasisFactory::create(MSH_HEX_125);
+    case 5: return BasisFactory::create(MSH_HEX_216);
+    case 6: return BasisFactory::create(MSH_HEX_343);
+    case 7: return BasisFactory::create(MSH_HEX_512);
+    case 8: return BasisFactory::create(MSH_HEX_729);
+    case 9: return BasisFactory::create(MSH_HEX_1000);
     default: Msg::Error("Order %d hex function space not implemented", order);
     }
   }

@@ -7,6 +7,7 @@
 #include "MTetrahedron.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "BasisFactory.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -184,7 +185,7 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3])
   sys3x3(mat, b, uvw, &det);
 }
 
-const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
+const nodalBasis* MTetrahedron::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
@@ -192,33 +193,33 @@ const polynomialBasis* MTetrahedron::getFunctionSpace(int o) const
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_TET_1);
-    case 1: return polynomialBases::find(MSH_TET_4);
-    case 2: return polynomialBases::find(MSH_TET_10);
-    case 3: return polynomialBases::find(MSH_TET_20);
-    case 4: return polynomialBases::find(MSH_TET_34);
-    case 5: return polynomialBases::find(MSH_TET_52);
-    case 6: return polynomialBases::find(MSH_TET_74);
-    case 7: return polynomialBases::find(MSH_TET_100);
-    case 8: return polynomialBases::find(MSH_TET_130);
-    case 9: return polynomialBases::find(MSH_TET_164);
-    case 10: return polynomialBases::find(MSH_TET_202);
+    case 0: return BasisFactory::create(MSH_TET_1);
+    case 1: return BasisFactory::create(MSH_TET_4);
+    case 2: return BasisFactory::create(MSH_TET_10);
+    case 3: return BasisFactory::create(MSH_TET_20);
+    case 4: return BasisFactory::create(MSH_TET_34);
+    case 5: return BasisFactory::create(MSH_TET_52);
+    case 6: return BasisFactory::create(MSH_TET_74);
+    case 7: return BasisFactory::create(MSH_TET_100);
+    case 8: return BasisFactory::create(MSH_TET_130);
+    case 9: return BasisFactory::create(MSH_TET_164);
+    case 10: return BasisFactory::create(MSH_TET_202);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
   else {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_TET_1);
-    case 1: return polynomialBases::find(MSH_TET_4);
-    case 2: return polynomialBases::find(MSH_TET_10);
-    case 3: return polynomialBases::find(MSH_TET_20);
-    case 4: return polynomialBases::find(MSH_TET_35);
-    case 5: return polynomialBases::find(MSH_TET_56);
-    case 6: return polynomialBases::find(MSH_TET_84);
-    case 7: return polynomialBases::find(MSH_TET_120);
-    case 8: return polynomialBases::find(MSH_TET_165);
-    case 9: return polynomialBases::find(MSH_TET_220);
-    case 10: return polynomialBases::find(MSH_TET_286);
+    case 0: return BasisFactory::create(MSH_TET_1);
+    case 1: return BasisFactory::create(MSH_TET_4);
+    case 2: return BasisFactory::create(MSH_TET_10);
+    case 3: return BasisFactory::create(MSH_TET_20);
+    case 4: return BasisFactory::create(MSH_TET_35);
+    case 5: return BasisFactory::create(MSH_TET_56);
+    case 6: return BasisFactory::create(MSH_TET_84);
+    case 7: return BasisFactory::create(MSH_TET_120);
+    case 8: return BasisFactory::create(MSH_TET_165);
+    case 9: return BasisFactory::create(MSH_TET_220);
+    case 10: return BasisFactory::create(MSH_TET_286);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
