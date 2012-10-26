@@ -11,6 +11,7 @@ set(SRC
     BergotBasis.cpp
     jacobiPolynomials.cpp
     legendrePolynomials.cpp
+  pointsGenerators.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp
