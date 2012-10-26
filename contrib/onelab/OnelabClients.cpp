@@ -855,7 +855,7 @@ void EncapsulatedClient::convert() {
 }
 
 std::string EncapsulatedClient::buildCommandLine(){
-  return FixWindowsQuote(OLMsg::GetLoaderName());
+  return FixWindowsQuotes(OLMsg::GetLoaderName());
 }
 
 void EncapsulatedClient::compute(){
@@ -1159,7 +1159,7 @@ std::string sanitize(const std::string &in)
   return out;
 }
 
-std::string FixWindowQuotes(const std::string &in)
+std::string FixWindowsQuotes(const std::string &in)
 {
 #if defined(WIN32)
   return "\"" + in + "\"";
