@@ -584,19 +584,19 @@ int openglWindow::handle(int event)
         static char text[1024] = "";
         sprintf(text, "%s %s", ge ? ge->getInfoString().c_str() : "",
                 me ? me->getInfoString().c_str() : "");
-#if 0
-        Fl_Tooltip::exit(0);
-        double d1 = Fl_Tooltip::delay();
-        double d2 = Fl_Tooltip::hoverdelay();
-        Fl_Tooltip::delay(0);
-        Fl_Tooltip::hoverdelay(0);
-        if(strlen(text) > 3)
-          Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, text);
-        Fl_Tooltip::delay(d1);
-        Fl_Tooltip::hoverdelay(d2);
-#else
-        Msg::StatusBar(2, false, text);
-#endif
+        if(CTX::instance()->tooltips){
+          Fl_Tooltip::exit(0);
+          double d1 = Fl_Tooltip::delay();
+          double d2 = Fl_Tooltip::hoverdelay();
+          Fl_Tooltip::delay(0);
+          Fl_Tooltip::hoverdelay(0);
+          if(strlen(text) > 3)
+            Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, text);
+          Fl_Tooltip::delay(d1);
+          Fl_Tooltip::hoverdelay(d2);
+        }
+        else
+          Msg::StatusBar(2, false, text);
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
