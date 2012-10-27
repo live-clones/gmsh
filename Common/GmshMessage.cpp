@@ -635,6 +635,7 @@ bool Msg::UseOnelab()
 
 void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 {
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
@@ -646,9 +647,12 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible)
     numbers[0].setVisible(visible);
     _onelabClient->set(numbers[0]);
   }
+#endif
 }
+
 void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 {
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
@@ -660,8 +664,10 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
     strings[0].setVisible(visible);
     _onelabClient->set(strings[0]);
   }
+#endif
 }
 
+#if defined(HAVE_ONELAB)
 class localGmsh : public onelab::localClient {
 public:
   localGmsh() : onelab::localClient("Gmsh") {}
@@ -677,6 +683,7 @@ public:
   void sendWarning(const std::string &msg){ Msg::Warning("%s", msg.c_str()); }
   void sendError(const std::string &msg){ Msg::Error("%s", msg.c_str()); }
 };
+#endif
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
@@ -745,6 +752,7 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
 #endif
 }
 
+#if defined(HAVE_ONELAB)
 static void _setStandardOptions(onelab::parameter *p,
                                 std::map<std::string, std::vector<double> > &fopt,
                                 std::map<std::string, std::vector<std::string> > &copt)
@@ -755,16 +763,12 @@ static void _setStandardOptions(onelab::parameter *p,
   if(fopt.count("Visible")) p->setVisible(fopt["Visible"][0] ? true : false);
   if(fopt.count("ReadOnly")) p->setReadOnly(fopt["ReadOnly"][0] ? true : false);
   if(copt.count("Highlight")) p->setAttribute("Highlight", copt["Highlight"][0]);
+  if(copt.count("AutoCheck")) p->setAttribute("AutoCheck", copt["AutoCheck"][0]);
 }
 
-void Msg::ExchangeOnelabParameter(const std::string &key,
-                                  std::vector<double> &val,
-                                  std::map<std::string, std::vector<double> > &fopt,
-                                  std::map<std::string, std::vector<std::string> > &copt)
+static std::string _getParameterName(const std::string &key,
+                                     std::map<std::string, std::vector<std::string> > &copt)
 {
-#if defined(HAVE_ONELAB)
-  if(!_onelabClient || val.empty()) return;
-
   std::string name(key);
   if(copt.count("Path")){
     std::string path = copt["Path"][0];
@@ -776,6 +780,19 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     else
       name = path + "/" + name;
   }
+  return name;
+}
+#endif
+
+void Msg::ExchangeOnelabParameter(const std::string &key,
+                                  std::vector<double> &val,
+                                  std::map<std::string, std::vector<double> > &fopt,
+                                  std::map<std::string, std::vector<std::string> > &copt)
+{
+#if defined(HAVE_ONELAB)
+  if(!_onelabClient || val.empty()) return;
+
+  std::string name = _getParameterName(key, copt);
 
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
@@ -819,7 +836,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noRange && !fopt.count("Range") && !fopt.count("Step") &&
      !fopt.count("Min") && !fopt.count("Max")){
     bool isInteger = (floor(val[0]) == val[0]);
-    double fact = isInteger ? 10. : 100.;
+    double fact = isInteger ? 5. : 20.;
     if(val[0] > 0){
       ps[0].setMin(val[0] / fact);
       ps[0].setMax(val[0] * fact);
@@ -842,6 +859,41 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
   if(noLoop && copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
   if(noGraph && copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
+  if(noClosed && copt.count("Closed")) ps[0].setAttribute("Closed", copt["Closed"][0]);
+  _setStandardOptions(&ps[0], fopt, copt);
+  _onelabClient->set(ps[0]);
+#endif
+}
+
+void Msg::ExchangeOnelabParameter(const std::string &key,
+                                  std::string &val,
+                                  std::map<std::string, std::vector<double> > &fopt,
+                                  std::map<std::string, std::vector<std::string> > &copt)
+{
+#if defined(HAVE_ONELAB)
+  if(!_onelabClient || val.empty()) return;
+
+  std::string name = _getParameterName(key, copt);
+
+  std::vector<onelab::string> ps;
+  _onelabClient->get(ps, name);
+  bool noChoices = true, noClosed = true;
+  if(ps.size()){
+    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
+      ps[0].setValue(val); // use local value
+    else
+      val = ps[0].getValue(); // use value from server
+    // keep track of these attributes, which can be changed server-side
+    if(ps[0].getChoices().size()) noChoices = false;
+    if(ps[0].getAttribute("Closed").size()) noClosed = false;
+  }
+  else{
+    ps.resize(1);
+    ps[0].setName(name);
+    ps[0].setValue(val);
+  }
+  if(copt.count("Kind")) ps[0].setKind(copt["Kind"][0]);
+  if(noChoices && copt.count("Choices")) ps[0].setChoices(copt["Choices"]);
   if(noClosed && copt.count("Closed")) ps[0].setAttribute("Closed", copt["Closed"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
   _onelabClient->set(ps[0]);

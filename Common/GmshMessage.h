@@ -98,6 +98,10 @@ class Msg {
                                       std::vector<double> &val,
                                       std::map<std::string, std::vector<double> > &fopt,
                                       std::map<std::string, std::vector<std::string> > &copt);
+  static void ExchangeOnelabParameter(const std::string &key,
+                                      std::string &val,
+                                      std::map<std::string, std::vector<double> > &fopt,
+                                      std::map<std::string, std::vector<std::string> > &copt);
   static void ImportPhysicalsAsOnelabRegions();
 };
 

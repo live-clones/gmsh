@@ -1123,6 +1123,30 @@ DefineConstants :
         Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yysymbols[key].value = val;
       }
+      Free($3);
+    }
+  | DefineConstants Comma tSTRING tAFFECT StringExpr
+    {
+      std::string key($3), val($5);
+      floatOptions.clear(); charOptions.clear();
+      if(!gmsh_yystringsymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yystringsymbols[key] = val;
+      }
+      Free($3);
+      Free($5);
+    }
+  | DefineConstants Comma tSTRING tAFFECT '{' StringExpr
+    { floatOptions.clear(); charOptions.clear(); }
+      FloatParameterOptions '}'
+    {
+      std::string key($3), val($6);
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yystringsymbols[key] = val;
+      }
+      Free($3);
+      Free($6);
     }
  ;
 
