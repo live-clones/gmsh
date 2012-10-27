@@ -17,7 +17,8 @@
 #include "FlGui.h"
 #include "drawContext.h"
 #include "Context.h"
- 
+#include <FL/Fl_Tooltip.H>
+
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1]) return;
@@ -25,7 +26,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   ctx->s[0] *= (double)ctx->viewport[2] / (click2.win[0] - click1.win[0]);
   ctx->s[1] *= (double)ctx->viewport[3] / (click2.win[1] - click1.win[1]);
   ctx->s[2] = std::min(ctx->s[0], ctx->s[1]); // bof...
-  
+
   // recenter around the center of the lasso rectangle
   mousePosition tmp(click1);
   tmp.wnr[0] = 0.5 * (click1.wnr[0] + click2.wnr[0]);
@@ -34,7 +35,7 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
 
   ctx->initPosition();
   drawContext::global()->draw();
-  FlGui::instance()->manip->update();  
+  FlGui::instance()->manip->update();
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
@@ -51,24 +52,24 @@ openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
 }
 
 openglWindow::~openglWindow()
-{ 
+{
   delete _ctx;
 }
 
 void openglWindow::_drawScreenMessage()
 {
-  if(screenMessage[0].empty() && screenMessage[1].empty()) 
+  if(screenMessage[0].empty() && screenMessage[1].empty())
     return;
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.text);
-  drawContext::global()->setFont(CTX::instance()->glFontEnum, 
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double h = drawContext::global()->getStringHeight();
-  
+
   if(screenMessage[0].size()){
     const char *txt = screenMessage[0].c_str();
     double w = drawContext::global()->getStringWidth(txt);
-    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2., 
+    glRasterPos2d(_ctx->viewport[2] / 2. - w / 2.,
                   _ctx->viewport[3] - 1.2 * h);
     drawContext::global()->drawString(txt);
   }
@@ -124,7 +125,7 @@ void openglWindow::draw()
   glViewport(_ctx->viewport[0], _ctx->viewport[1],
              _ctx->viewport[2], _ctx->viewport[3]);
 
-  if(lassoMode) { 
+  if(lassoMode) {
     // draw the zoom or selection lasso on top of the current scene
     // (without using overlays!)
     glMatrixMode(GL_PROJECTION);
@@ -163,21 +164,21 @@ void openglWindow::draw()
     glEnable(GL_DEPTH_TEST);
     glDrawBuffer(GL_BACK);
   }
-  else if(addPointMode) { 
+  else if(addPointMode) {
     // draw the whole scene and the point to add
     if(CTX::instance()->fastRedraw) {
       CTX::instance()->mesh.draw = 0;
       CTX::instance()->post.draw = 0;
     }
-    
+
     glClearColor
       ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
        (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
-       (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
+       (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
        0.0F);
-    
+
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    
+
     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
     glPointSize((float)CTX::instance()->geom.pointSize);
@@ -198,18 +199,18 @@ void openglWindow::draw()
       glClearColor
         ((GLclampf)(CTX::instance()->unpackRed(CTX::instance()->color.bg) / 255.),
          (GLclampf)(CTX::instance()->unpackGreen(CTX::instance()->color.bg) / 255.),
-         (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.), 
+         (GLclampf)(CTX::instance()->unpackBlue(CTX::instance()->color.bg) / 255.),
          0.0F);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-   
+
     if(CTX::instance()->camera && !CTX::instance()->stereo){
       Camera *cam = &(_ctx->camera);
       if (!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);  
+      cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       glFrustum(cam->glFleft, cam->glFright, cam->glFbottom,
-                cam->glFtop, cam->glFnear, cam->glFfar); 
+                cam->glFtop, cam->glFnear, cam->glFfar);
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       glDrawBuffer(GL_BACK);
@@ -217,7 +218,7 @@ void openglWindow::draw()
       glLoadIdentity();
       gluLookAt(cam->position.x,cam->position.y,cam->position.z,
 		cam->target.x,cam->target.y,cam->target.z,
-		cam->up.x,cam->up.y,cam->up.z);      
+		cam->up.x,cam->up.y,cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
@@ -243,7 +244,7 @@ void openglWindow::draw()
       glLoadIdentity();
       gluLookAt(cam->position.x+eye.x, cam->position.y+eye.y, cam->position.z+eye.z,
                 cam->target.x+eye.x, cam->target.y+eye.y, cam->target.z+eye.z,
-                cam->up.x,  cam->up.y, cam->up.z); 
+                cam->up.x,  cam->up.y, cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
@@ -256,14 +257,14 @@ void openglWindow::draw()
       top    =   cam->wd2;
       bottom = - cam->wd2;
       glFrustum(left, right, bottom, top, cam->glFnear, cam->glFfar);
-      
+
       glMatrixMode(GL_MODELVIEW);
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glLoadIdentity();
       gluLookAt(cam->position.x-eye.x, cam->position.y-eye.y, cam->position.z-eye.z,
                 cam->target.x-eye.x, cam->target.y-eye.y, cam->target.z-eye.z,
-                cam->up.x, cam->up.y, cam->up.z); 
+                cam->up.x, cam->up.y, cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
       _drawScreenMessage();
@@ -301,12 +302,12 @@ int openglWindow::handle(int event)
     if(FlGui::instance()->testArrowShortcuts())
       return 1;
     return Fl_Gl_Window::handle(event);
-    
+
   case FL_PUSH:
     _setLastHandled(this);
     take_focus(); // force keyboard focus when we click in the window
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());
-    if(Fl::event_button() == 1 && 
+    if(Fl::event_button() == 1 &&
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!lassoMode && Fl::event_state(FL_CTRL)) {
         lassoMode = true;
@@ -325,7 +326,7 @@ int openglWindow::handle(int event)
         }
         else{
 	  if (CTX::instance()->camera){
-	    Camera * cam = &(_ctx->camera);      
+	    Camera * cam = &(_ctx->camera);
 	    double dy = fabs(-_click.win[1] + _curr.win[1]);
 	    double dx = fabs(-_click.win[0] + _curr.win[0]);
 	    double factx = w() / fabs(dx);
@@ -335,8 +336,8 @@ int openglWindow::handle(int event)
 	    double y_med = (_click.win[1] + _curr.win[1]) / 2.;
 	    double theta_x = .96 * cam->radians * (w() / 2 - x_med) * 2. / h();
 	    double theta_y = .96 * cam->radians * (h() / 2 - y_med) * 2. / h();
-	    cam->moveRight(theta_x); 
-	    cam->moveUp(theta_y); 
+	    cam->moveRight(theta_x);
+	    cam->moveUp(theta_y);
 	    _ctx->camera.zoom(fact);
 	    _ctx->camera.update();
 	    redraw();
@@ -355,7 +356,7 @@ int openglWindow::handle(int event)
         _trySelectionXYWH[3] = 5;
       }
     }
-    else if(Fl::event_button() == 2 || 
+    else if(Fl::event_button() == 2 ||
             (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
       if(!lassoMode && Fl::event_state(FL_CTRL)) {
         // make zoom isotropic
@@ -424,14 +425,14 @@ int openglWindow::handle(int event)
 	fact = ((dy > 0) ? fact : 1. / fact);
 	_ctx->camera.zoom(fact);
        	_ctx->camera.update();
-	redraw();	
+	redraw();
       }
       else{
 	_ctx->s[0] *= ((dy > 0) ? fact : 1./fact);
 	_ctx->s[1] = _ctx->s[0];
 	_ctx->s[2] = _ctx->s[0];
 	_prev.recenter(_ctx);
-	redraw();	
+	redraw();
       }
     }
     FlGui::instance()->manip->update();
@@ -448,14 +449,14 @@ int openglWindow::handle(int event)
       else {
         if(Fl::event_state(FL_META)) {
           // will try to select or unselect entities on the fly
-          _trySelection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
+          _trySelection = Fl::event_state(FL_SHIFT) ? -1 : 1;
           _trySelectionXYWH[0] = (int)_curr.win[0];
           _trySelectionXYWH[1] = (int)_curr.win[1];
           _trySelectionXYWH[2] = 5;
           _trySelectionXYWH[3] = 5;
         }
 	// (m1) and (!shift) and (!alt)  => rotation
-        else if(Fl::event_button() == 1 && 
+        else if(Fl::event_button() == 1 &&
                 !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
           if(CTX::instance()->useTrackball)
             _ctx->addQuaternion((2. * _prev.win[0] - w()) / w(),
@@ -480,8 +481,8 @@ int openglWindow::handle(int event)
 	    _ctx->camera.zoom(fact);
 	    _ctx->camera.update();
 	    redraw();
-	  }	
-	  else{          
+	  }
+	  else{
             // move in y greater than move in x
 	    if(fabs(dy) > fabs(dx)) {
 	      double fact = (CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
@@ -497,15 +498,15 @@ int openglWindow::handle(int event)
         // other case => translation
 	else {
 	  if (CTX::instance()->camera){
-	    Camera * cam= &(_ctx->camera);      
-	    double theta_x = cam->radians * (-(double)_prev.win[0] + 
+	    Camera * cam= &(_ctx->camera);
+	    double theta_x = cam->radians * (-(double)_prev.win[0] +
                                              (double)_curr.win[0]) * 2. / h();
 	    double theta_y = cam->radians * (-(double)_prev.win[1] +
                                              (double)_curr.win[1]) * 2. / h();
-	    cam->moveRight(theta_x); 
-	    cam->moveUp(theta_y); 
-	  }	
-	  else{          
+	    cam->moveRight(theta_x);
+	    cam->moveUp(theta_y);
+	  }
+	  else{
 	    _ctx->t[0] += (_curr.wnr[0] - _click.wnr[0]);
 	    _ctx->t[1] += (_curr.wnr[1] - _click.wnr[1]);
 	    _ctx->t[2] = 0.;
@@ -534,7 +535,7 @@ int openglWindow::handle(int event)
       double p[3], d[3];
       _ctx->unproject(_curr.win[0], _curr.win[1], p, d);
       // find closest point to the center of gravity
-      double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1], 
+      double r[3] = {CTX::instance()->cg[0] - p[0], CTX::instance()->cg[1] - p[1],
                      CTX::instance()->cg[2] - p[2]}, t;
       prosca(r, d, &t);
       for(int i = 0; i < 3; i++){
@@ -548,11 +549,11 @@ int openglWindow::handle(int event)
         }
       }
       char str[32];
-      sprintf(str, "%g", _point[0]); 
+      sprintf(str, "%g", _point[0]);
       FlGui::instance()->geoContext->input[2]->value(str);
-      sprintf(str, "%g", _point[1]); 
+      sprintf(str, "%g", _point[1]);
       FlGui::instance()->geoContext->input[3]->value(str);
-      sprintf(str, "%g", _point[2]); 
+      sprintf(str, "%g", _point[2]);
       FlGui::instance()->geoContext->input[4]->value(str);
       redraw();
     }
@@ -563,12 +564,12 @@ int openglWindow::handle(int event)
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
-        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes, 
+        bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
                            (int)_curr.win[0], (int)_curr.win[1], 5, 5,
                            vertices, edges, faces, regions, elements);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_LINE && edges.size()) || 
+           (_selection == ENT_LINE && edges.size()) ||
            (_selection == ENT_SURFACE && faces.size()) ||
            (_selection == ENT_VOLUME && regions.size()))
           cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
@@ -580,9 +581,22 @@ int openglWindow::handle(int event)
         else if(faces.size()) ge = faces[0];
         else if(regions.size()) ge = regions[0];
         MElement *me = elements.size() ? elements[0] : 0;
-        Msg::StatusBar(2, false, "%s %s",
-                       ge ? ge->getInfoString().c_str() : "", 
-                       me ? me->getInfoString().c_str() : "");
+        static char text[1024] = "";
+        sprintf(text, "%s %s", ge ? ge->getInfoString().c_str() : "",
+                me ? me->getInfoString().c_str() : "");
+#if 0
+        Fl_Tooltip::exit(0);
+        double d1 = Fl_Tooltip::delay();
+        double d2 = Fl_Tooltip::hoverdelay();
+        Fl_Tooltip::delay(0);
+        Fl_Tooltip::hoverdelay(0);
+        if(strlen(text) > 3)
+          Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, text);
+        Fl_Tooltip::delay(d1);
+        Fl_Tooltip::hoverdelay(d2);
+#else
+        Msg::StatusBar(2, false, text);
+#endif
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
@@ -593,7 +607,7 @@ int openglWindow::handle(int event)
   }
 }
 
-bool openglWindow::_select(int type, bool multiple, bool mesh, 
+bool openglWindow::_select(int type, bool multiple, bool mesh,
                            int x, int y, int w, int h,
                            std::vector<GVertex*> &vertices,
                            std::vector<GEdge*> &edges,
@@ -607,20 +621,20 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
   if(_lock) return false;
   _lock = true;
   make_current();
-  bool ret = _ctx->select(type, multiple, mesh, x, y, w, h, 
+  bool ret = _ctx->select(type, multiple, mesh, x, y, w, h,
                           vertices, edges, faces, regions, elements);
   _lock = false;
   return ret;
 }
 
-char openglWindow::selectEntity(int type, 
+char openglWindow::selectEntity(int type,
                                 std::vector<GVertex*> &vertices,
                                 std::vector<GEdge*> &edges,
                                 std::vector<GFace*> &faces,
                                 std::vector<GRegion*> &regions,
                                 std::vector<MElement*> &elements)
 {
-  // force keyboard focus in GL window 
+  // force keyboard focus in GL window
   take_focus();
   _selection = type;
   _trySelection = 0;
@@ -668,7 +682,7 @@ char openglWindow::selectEntity(int type,
       }
       else if(_select(_selection, multi, true, _trySelectionXYWH[0],
                       _trySelectionXYWH[1], _trySelectionXYWH[2],
-                      _trySelectionXYWH[3], vertices, edges, faces, 
+                      _trySelectionXYWH[3], vertices, edges, faces,
                       regions, elements)){
         _selection = ENT_NONE;
         selectionMode = false;
