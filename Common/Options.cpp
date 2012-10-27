@@ -5739,6 +5739,13 @@ double opt_solver_auto_archive_output_files(OPT_ARGS_NUM)
   return CTX::instance()->solver.autoArchiveOutputFiles;
 }
 
+double opt_solver_auto_check(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoCheck = (int)val;
+  return CTX::instance()->solver.autoCheck;
+}
+
 double opt_solver_auto_mesh(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

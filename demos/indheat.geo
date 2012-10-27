@@ -10,9 +10,13 @@ DefineConstant
  ht = {0.4, Label "Tube height"},
  rt1 = {0.075, Label "Tube internal radius"},
  rt2 = {0.092, Label "Tube external radius"},
- lb = {1, Label "Infinite box width"}
+ lb = {1, Label "Infinite box width"},
  left = {1, Choices{0,1}, Label "Terminals on the left?"}
+ // macro = {"aa.pos", Label "Run my macro!", Kind "macro", Path "Actions"},
+ // showLines = {1, Choices {0,1}, Label "Show lines?"}
 ];
+
+//Geometry.Lines = showLines;
 
 // inductor
 p = newp;
@@ -32,8 +36,8 @@ s = news;
 Plane Surface(s) = {ll};
 tmp[] = {s};
 vol_coil[] = {};
-For j In {1:4*turns+(left?2:0)}
-  tmp[] = Extrude { {0,0,hc/turns/4}, {0,0,1} , {0,0,0} , Pi/2}
+For j In {1:4*Floor(turns)+(left?2:0)}
+  tmp[] = Extrude { {0,0,hc/Floor(turns)/4}, {0,0,1} , {0,0,0} , Pi/2}
                   { Surface {tmp[0]}; /*Layers {nn / 4};*/ };
   vol_coil[] += tmp[1];
 EndFor
@@ -143,5 +147,5 @@ Physical Surface(IN) = in;
 Physical Surface(OUT) = out;
 Physical Surface(INF) = {s:s+5};
 
-Homology(2) {{COIL,TUBE},{SKIN_COIL, SKIN_TUBE}};
-Cohomology(1) {{AIR},{}};
+//Homology(2) {{COIL,TUBE},{SKIN_COIL, SKIN_TUBE}};
+//Cohomology(1) {{AIR},{}};

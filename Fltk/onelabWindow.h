@@ -48,6 +48,7 @@ class onelabWindow{
   int h(){ return _win->h(); }
   void rebuildSolverList();
   void rebuildTree();
+  void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
   void show(){ _win->show(); }

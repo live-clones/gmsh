@@ -383,9 +383,10 @@ namespace onelab{
   // The string class. A string has a mutable "kind": we do not derive
   // specialized classes, because the kind should be changeable at runtime
   // (e.g. from a client-dependent mathematical expression to a table of
-  // values). Kinds currently recognized by Gmsh are: "file". Possible kinds
-  // could be "complex", "matrix m n", "hostname", client-dependent mathematical
-  // expression, onelab mathematical expression (through mathex?), ...
+  // values). Kinds currently recognized by Gmsh are: "file", "macro". Possible
+  // kinds could be "complex", "matrix m n", "hostname", client-dependent
+  // mathematical expression, onelab mathematical expression (through mathex?),
+  // ...
   class string : public parameter{
   private:
     std::string _value, _kind;

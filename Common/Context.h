@@ -223,7 +223,7 @@ class CTX {
     std::string socketName;
     std::string name[5], executable[5], remoteLogin[5];
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
-    int autoHideNewViews, autoShowLastStep;
+    int autoHideNewViews, autoShowLastStep, autoCheck;
   }solver;
   // print options
   struct{

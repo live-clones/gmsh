@@ -600,7 +600,6 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
-
 void onelab_option_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -610,6 +609,10 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     CTX::instance()->solver.autoSaveDatabase = val;
   else if(what == "archive")
     CTX::instance()->solver.autoArchiveOutputFiles = val;
+  else if(what == "check"){
+    CTX::instance()->solver.autoCheck = val;
+    FlGui::instance()->onelab->setButtonVisibility();
+  }
   else if(what == "mesh")
     CTX::instance()->solver.autoMesh = val;
   else if(what == "merge")
@@ -737,6 +740,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
              FL_MENU_TOGGLE);
   _gear->add("Archive output files automatically", 0, onelab_option_cb, (void*)"archive",
              FL_MENU_TOGGLE);
+  _gear->add("Check model after each change", 0, onelab_option_cb, (void*)"check",
+             FL_MENU_TOGGLE);
   _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
              FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, onelab_option_cb, (void*)"merge",
@@ -758,6 +763,8 @@ onelabWindow::onelabWindow(int deltaFontSize)
     (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
   _win->end();
 
+  setButtonVisibility();
+
   FL_NORMAL_SIZE += _deltaFontSize;
 }
 
@@ -776,6 +783,15 @@ static bool getFlColor(const std::string &str, Fl_Color &c)
   }
   c = FL_BLACK;
   return false;
+}
+
+template<class T>
+static void autoCheck(const T &pold, const T &pnew, bool force=false)
+{
+  if(!CTX::instance()->solver.autoCheck && pnew.getAttribute("AutoCheck") != "1")
+    return;
+  if(force || pold.getValue() != pnew.getValue())
+    onelab_cb(0, (void*)"check");
 }
 
 template<class T>
@@ -802,8 +818,10 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
     Fl_Check_Button *o = (Fl_Check_Button*)w;
+    onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
     onelab::server::instance()->set(numbers[0]);
+    autoCheck(old, numbers[0]);
   }
 }
 
@@ -816,8 +834,10 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
   if(numbers.size()){
     Fl_Choice *o = (Fl_Choice*)w;
     std::vector<double> choices = numbers[0].getChoices();
+    onelab::number old = numbers[0];
     if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
     onelab::server::instance()->set(numbers[0]);
+    autoCheck(old, numbers[0]);
   }
 }
 
@@ -829,6 +849,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
     inputRange *o = (inputRange*)w;
+    onelab::number old = numbers[0];
     if(o->doCallbackOnValues()){
       numbers[0].setValue(o->value());
       numbers[0].setMin(o->minimum());
@@ -841,6 +862,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
     updateGraphs();
+    autoCheck(old, numbers[0]);
   }
 }
 
@@ -913,6 +935,18 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   return but;
 }
 
+static void onelab_string_button_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings, name);
+  if(strings.size()){
+    MergeFile(strings[0].getValue());
+    autoCheck(strings[0], strings[0], true);
+  }
+}
+
 static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -921,8 +955,10 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
     Fl_Input_Choice *o = (Fl_Input_Choice*)w;
+    onelab::string old = strings[0];
     strings[0].setValue(o->value());
     onelab::server::instance()->set(strings[0]);
+    autoCheck(old, strings[0]);
   }
 }
 
@@ -954,6 +990,15 @@ static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
 Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
                                              bool highlight, Fl_Color c)
 {
+  // macro button
+  if(p.getKind() == "macro"){
+    Fl_Button *but = new Fl_Button(1, 1, _itemWidth, 1);
+    but->align(FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    but->callback(onelab_string_button_cb, (void*)n);
+    if(highlight) but->color(c);
+    return but;
+  }
+
   // non-editable value
   if(p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, _itemWidth, 1);
@@ -1003,8 +1048,10 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(regions, name);
   if(regions.size()){
     inputRegion *o = (inputRegion*)w;
+    onelab::region old = regions[0];
     regions[0].setValue(o->value());
     onelab::server::instance()->set(regions[0]);
+    autoCheck(old, regions[0]);
   }
 }
 
@@ -1132,6 +1179,23 @@ void onelabWindow::checkForErrors(const std::string &client)
   }
 }
 
+void onelabWindow::setButtonVisibility()
+{
+  if(_butt[0]->visible() && CTX::instance()->solver.autoCheck){
+    _butt[0]->hide();
+    _gear->position(_gear->x() + _butt[0]->w() + WB, _gear->y());
+    _win->init_sizes();
+    _win->redraw();
+  }
+
+  if(!_butt[0]->visible() && !CTX::instance()->solver.autoCheck){
+    _butt[0]->show();
+    _gear->position(_gear->x() - _butt[0]->w() - WB, _gear->y());
+    _win->init_sizes();
+    _win->redraw();
+  }
+}
+
 void onelabWindow::setButtonMode(const std::string &butt0, const std::string &butt1)
 {
   if(butt0 == "check"){
@@ -1186,13 +1250,14 @@ void onelabWindow::rebuildSolverList()
   // update OneLab window title and gear menu
   _title = "OneLab";
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
-  int values[6] = {CTX::instance()->solver.autoSaveDatabase,
+  int values[7] = {CTX::instance()->solver.autoSaveDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
+                   CTX::instance()->solver.autoCheck,
                    CTX::instance()->solver.autoMesh,
                    CTX::instance()->solver.autoMergeFile,
                    CTX::instance()->solver.autoHideNewViews,
                    CTX::instance()->solver.autoShowLastStep};
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 7; i++){
     int idx = _gearOptionsStart - 1 + i;
     if(values[i])
       menu[idx].set();

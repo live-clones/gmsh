@@ -1108,6 +1108,8 @@ StringXNumber SolverOptions_Number[] = {
     "Always listen to incoming connection requests?" },
   { F|O, "AutoArchiveOutputFiles" , opt_solver_auto_archive_output_files , 0. ,
     "Automatically archive output files after each computation" },
+  { F|O, "AutoCheck" , opt_solver_auto_check , 1. ,
+    "Automatically check model every time a parameter is changed" },
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 1. ,
     "Automatically save database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
