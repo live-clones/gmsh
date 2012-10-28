@@ -40,12 +40,13 @@ std::string sanitize(const std::string &in);
 std::string removeBlanks(const std::string &in);
 bool isPath(const std::string &in);
 std::string FixWindowsQuotes(const std::string &in);
+std::string FixExecPath(const std::string &in);
 std::string unquote(const std::string &in);
 
 // Parser TOOLS 
 int enclosed(const std::string &in, std::vector<std::string> &arguments, size_t &end);
 int extract(const std::string &in, std::string &paramName, std::string &action, std::vector<std::string> &arguments);
-bool extractRange(const std::string &in, std::vector<double> &arguments);
+//bool extractRange(const std::string &in, std::vector<double> &arguments);
 std::string extractExpandPattern(const std::string& str);
 
 
@@ -141,6 +142,7 @@ class localSolverClient : public onelab::localClient{
   const void closeOnelabBlock() { _onelabBlock=false; }
   std::string resolveGetVal(std::string line);
   bool resolveLogicExpr(std::vector<std::string> arguments);
+  bool resolveRange(const std::string &in, std::vector<double> &arguments);
   void parse_sentence(std::string line) ;
   void parse_oneline(std::string line, std::ifstream &infile) ;
   bool parse_block(std::ifstream &infile) ;

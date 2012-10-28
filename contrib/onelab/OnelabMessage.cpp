@@ -29,7 +29,6 @@ std::string OLMsg::_commandLine;
 std::string OLMsg::_launchDate;
 GmshClient *OLMsg::_client = 0;
 onelab::client *OLMsg::_onelabClient = 0;
-std::string OLMsg::_loaderName;
 bool OLMsg::hasGmsh=false;
 std::set<std::string, fullNameLessThan> OLMsg::_fullNameDict;
 void (*OLMsg::gui_wait_fct)(double time) = 0;
@@ -90,8 +89,11 @@ void OLMsg::Fatal(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback) (*_callback)("Fatal", str);
-  if(_client) _client->Error(str);
+  //if(_callback) (*_callback)("Fatal", str);
+  //if(_client) _client->Error(str);
+
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendError(str);
 
   if(ALWAYS_TRUE){
     if(_commSize > 1)
@@ -120,7 +122,8 @@ void OLMsg::Error(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Error", str);
   //if(_client) _client->Error(str);
-  if(_onelabClient) _onelabClient->sendError(str);
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendError(str);
 
   if(ALWAYS_TRUE){
     if(_commSize > 1)
@@ -145,7 +148,8 @@ void OLMsg::Warning(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Warning", str);
   //if(_client) _client->Warning(str);
-  if(_onelabClient) _onelabClient->sendWarning(str);
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendWarning(str);
 
   if(ALWAYS_TRUE){
     fprintf(stderr, "Warning : %s\n", str);
@@ -165,7 +169,8 @@ void OLMsg::Info(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Info", str);
   //if(_client) _client->Info(str);
-  if(_onelabClient) _onelabClient->sendInfo(str);
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendInfo(str);
 
   if(ALWAYS_TRUE){
     fprintf(stdout, "Onelab  : %s\n", str);
@@ -196,8 +201,10 @@ void OLMsg::Direct(int level, const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback) (*_callback)("Direct", str);
-  if(_client) _client->Info(str);
+  //if(_callback) (*_callback)("Direct", str);
+  //if(_client) _client->Info(str);
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendInfo(str);
 
   if(ALWAYS_TRUE){
     fprintf(stdout, "%s\n", str);
@@ -216,8 +223,11 @@ void OLMsg::StatusBar(int num, bool log, const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(_callback && log) (*_callback)("Info", str);
-  if(_client && log) _client->Info(str);
+  //if(_callback && log) (*_callback)("Info", str);
+  //if(_client && log) _client->Info(str);
+
+  if(_onelabClient && OLMsg::hasGmsh) 
+    _onelabClient->sendInfo(str);
 
   if(log && ALWAYS_TRUE){
     fprintf(stdout, "Info    : %s\n", str);
@@ -238,13 +248,6 @@ void OLMsg::SetGuiWaitFunction(void (*fct)(double time)){
 void (*OLMsg::GetGuiWaitFunction())(double){
   return gui_wait_fct;
 }
-
-// void OLMsg::SetLoaderName(const std::string &name) { 
-//   _loaderName = name; 
-// }
-// std::string OLMsg::GetLoaderName() { 
-//   return _loaderName; 
-// }
 
 double OLMsg::GetOnelabNumber(std::string name)
 {

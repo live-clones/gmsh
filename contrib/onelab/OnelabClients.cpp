@@ -99,7 +99,7 @@ std::string localNetworkSolverClient::buildCommandLine(){
   command.assign("");
   if(!getWorkingDir().empty())
     command.append("cd " + getWorkingDir() + cmdSep);
-  command.append(FixWindowsPath(getCommandLine()));
+  command.append(FixExecPath(getCommandLine()));
   return command;
 }
 
@@ -406,12 +406,39 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
 }
 
 bool localSolverClient::checkCommandLine(){
-  OLMsg::Info("Check command line for <%s>",getName().c_str());
+  OLMsg::Info("Check command line <%s> for client <%s>",
+	      getCommandLine().c_str(), getName().c_str());
   if(!isActive()) return true;
 
+  //if(*getCommandLine().rbegin() != '=') return false;
+
   if(!getCommandLine().empty()){
-    setAction("initialize");
-    run(); // does nothing for Interfaced clients, initializes native clients
+    if(isNative()){
+      setAction("initialize");
+      if(!run()){  // initializes native clients
+	OLMsg::Error("Invalid commandline <%s> for client <%s>",
+	   FixExecPath(getCommandLine()).c_str(), getName().c_str());
+	//setCommandLine("");
+	return false;
+      }
+    }
+    else{
+      std::string cmd,commandLine;
+      char cbuf [1024];
+      FILE *fp;
+      commandLine.assign(FixExecPath(getCommandLine()));
+      cmd.assign("which "+commandLine);
+      fp = POPEN(cmd.c_str(), "r");
+      if(fgets(cbuf, 1024, fp) == NULL){
+	OLMsg::Error("The executable <%s> does not exist",
+		       commandLine.c_str());
+	PCLOSE(fp);
+	return false;
+      }
+      OLMsg::Info("The executable <%s> exists", commandLine.c_str());
+      PCLOSE(fp);
+      return true;
+    }
   }
   else{
     OLMsg::Error("No commandline for client <%s>", getName().c_str());
@@ -608,18 +635,6 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 
 // client METAMODEL
 
-void MetaModel::saveCommandLines(const std::string fileName){
-  //save client command lines
-  std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
-  std::ofstream outfile(fileNameSave.c_str());
-
-  if (outfile.is_open())
-    for(citer it = _clients.begin(); it != _clients.end(); it++)
-      outfile << (*it)->toChar();
-  else
-    OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
-  outfile.close();
-}
 
 bool MetaModel::checkCommandLines(){
   bool allDefined=true;
@@ -660,6 +675,7 @@ void MetaModel::compute() {
 
 void MetaModel::registerClient(const std::string &name, const std::string &type, const std::string &cmdl, const std::string &host, const std::string &rdir) {
   localSolverClient *c;
+
   // Clients are assigned by default the same working dir as the MetaModel
   // i.e. the working dir from args
   if(host.empty() || rdir.empty()){ //local client
@@ -763,7 +779,7 @@ void InterfacedClient::compute(){
   cmd.assign("");
   if(!getWorkingDir().empty())
     cmd.append("cd " + getWorkingDir() + cmdSep);
-  cmd.append(FixWindowsPath(getCommandLine()));
+  cmd.append(FixExecPath(getCommandLine()));
   cmd.append(" " + getString("Arguments"));
 
   if(cmd.size()) mySystem(cmd.c_str());
@@ -782,7 +798,9 @@ void NativeClient::analyze() {
   OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   setAction("check");
-  run();
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 }
 
 void NativeClient::compute() {
@@ -801,7 +819,10 @@ void NativeClient::compute() {
       checkIfPresentLocal(choices[i]);
     }
   }
-  run();
+
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 
   if(getList("OutputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++){
@@ -855,7 +876,9 @@ void EncapsulatedClient::convert() {
 }
 
 std::string EncapsulatedClient::buildCommandLine(){
-  return FixWindowsQuotes(OLMsg::GetLoaderName());
+  std::string cmd= FixExecPath(OLMsg::GetOnelabString("LoaderPathName"));
+  OLMsg::Info("command line=<%s>",cmd.c_str());
+  return cmd;
 }
 
 void EncapsulatedClient::compute(){
@@ -881,13 +904,16 @@ void EncapsulatedClient::compute(){
   cmd.assign("");
   if(!getWorkingDir().empty())
     cmd.append("cd " + getWorkingDir() + cmdSep);
-  cmd.append(FixWindowsPath(getCommandLine()));
+  cmd.append(FixExecPath(getCommandLine()));
   cmd.append(" " + getString("Arguments"));
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
   // the encapsulating localNetworkClient is called
   OLMsg::Info("Command line=<%s>",cmd.c_str());
-  run();
+
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 
   if(getList("OutputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++){
@@ -941,7 +967,7 @@ std::string RemoteNativeClient::buildCommandLine(){
   std::string command;
   command.assign("incomp_ssh -f "+getRemoteHost());
   command.append(" 'cd "+getRemoteDir()+"; ");
-  command.append(FixWindowsPath(getCommandLine())+" ");
+  command.append(FixExecPath(getCommandLine())+" ");
   return command;
 }
 
@@ -961,7 +987,10 @@ void RemoteNativeClient::analyze(){
     for(unsigned int i = 0; i < choices.size(); i++)
       syncInputFile(getWorkingDir(),choices[i]);
   }
-  run();
+
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 }
 
 
@@ -984,7 +1013,9 @@ void RemoteNativeClient::compute(){
     mySystem(cmd);
   }
 
-  run();
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 
   if(getList("OutputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++)
@@ -1024,13 +1055,16 @@ void RemoteEncapsulatedClient::compute(){
   cmd.assign("ssh "+getRemoteHost());
   if(!getRemoteDir().empty())
     cmd.append(" 'cd " + getRemoteDir() + ";");
-  cmd.append(" "+FixWindowsPath(getCommandLine()));
+  cmd.append(" "+FixExecPath(getCommandLine()));
   cmd.append(" " + getString("Arguments") + " '");
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
   // the encapsulating localNetworkClient is called
   OLMsg::Info("Command line=<%s>",cmd.c_str());
-  run();
+
+  if(!run())
+    OLMsg::Error("Invalid commandline <%s> for client <%s>",
+		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
 
   if(getList("OutputFiles",choices)){
     for(unsigned int i = 0; i < choices.size(); i++)
@@ -1159,6 +1193,19 @@ std::string sanitize(const std::string &in)
   return out;
 }
 
+std::string quote(const std::string &in){
+  return "\"" + in + "\"";
+}
+std::string unquote(const std::string &in)
+{
+  size_t pos0=in.find_first_not_of(" ");
+  size_t pos=in.find_last_not_of(" ");
+  if( (pos0 != std::string::npos) && (pos != std::string::npos))
+    if(in.compare(pos0,1,"\"")) pos0++;
+    if(in.compare(pos,1,"\"")) pos--;
+    return in.substr(pos0,pos-pos0+1);
+}
+
 std::string FixWindowsQuotes(const std::string &in)
 {
 #if defined(WIN32)
@@ -1168,14 +1215,38 @@ std::string FixWindowsQuotes(const std::string &in)
 #endif
 }
 
-std::string unquote(const std::string &in)
+std::string FixExecPath(const std::string &in)
 {
-  size_t pos0=in.find_first_not_of(" ");
-  size_t pos=in.find_last_not_of(" ");
-  if( (pos0 != std::string::npos) && (pos != std::string::npos))
-    if(in.compare(pos0,1,"\"")) pos0++;
-    if(in.compare(pos,1,"\"")) pos--;
-    return in.substr(pos0,pos-pos0+1);
+  std::string cmd,split0,split1,split2;
+  std::cout << "in=<" << in << ">" << std::endl;
+
+  cmd.assign(removeBlanks(in));
+  cmd.assign(FixWindowsPath(cmd));
+
+  split0.assign(SplitFileName(cmd)[0]);
+  split1.assign(SplitFileName(cmd)[1]);
+  split2.assign(SplitFileName(cmd)[2]);
+  std::cout << "0=<" << split0 << ">" << std::endl;
+  std::cout << "1=<" << split1 << ">" << std::endl;
+  std::cout << "2=<" << split2 << ">" << std::endl;
+
+  if(split2==".app")
+    cmd.assign(cmd + "/Contents/MacOS/" + split1);
+  
+  if(split1.find("elmerfem") != std::string::npos){
+#if not defined(WIN32)
+    cmd.assign("ELMER_HOME=" + quote(split0.substr(0,split0.size()-4)) );
+    cmd.append(cmdSep);
+    cmd.append( quote("$ELMER_HOME/bin/"+split1) );
+#endif
+  }
+  else
+    if(cmd[0] != '\"') cmd.assign(quote(cmd));
+
+  std::cout << "cmd=<" << cmd << ">" << std::endl;
+
+  //exit(1);
+  return cmd;
 }
 
 std::string removeBlanks(const std::string &in)
@@ -1190,9 +1261,13 @@ std::string removeBlanks(const std::string &in)
 bool isPath(const std::string &in)
 {
   size_t pos=in.find_last_not_of(" 0123456789");
-  if(in.compare(pos,1,"/"))
+  if(pos==std::string::npos) return true;
+  if(in.compare(pos,1,"/")){
     OLMsg::Error("The argument <%s> is not a valid parameter path (must end with '/')",in.c_str());
-  return true;
+    return false;
+  }
+  else
+    return true;
 }
 
 // std::vector <double> extract_column(const unsigned int col, const array data){

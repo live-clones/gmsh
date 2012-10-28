@@ -10,8 +10,8 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *olclient
   //which is a onelab::client with sone Gmsh features (merge and messages).
   //Initilizes also the wait function the Gmsh Gui
   //so that Gmsh windows may remain active during client computations.
-  OLMsg::SetLoaderName(loaderName);
   OLMsg::SetOnelabClient(olclient);
+  OLMsg::SetOnelabString("LoaderPathName",loaderName,false);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
 }
 

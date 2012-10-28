@@ -120,12 +120,18 @@ namespace onelabUtils {
         else if(numbers[i].getStep() > 0){
           if(numbers[i].getMin() != -onelab::parameter::maxNumber()){
             numbers[i].setValue(numbers[i].getMin());
+	    numbers[i].setIndex(0); // indicates we are in a loop
+	    std::vector<double> choices;
+	    numbers[0].setChoices(choices);
             onelab::server::instance()->set(numbers[i]);
             changed = true;
           }
         }
         else if(numbers[i].getStep() < 0){
           if(numbers[i].getMax() != onelab::parameter::maxNumber()){
+	    numbers[i].setIndex(0); // indicates we are in a loop
+	    std::vector<double> choices;
+	    numbers[0].setChoices(choices);
             numbers[i].setValue(numbers[i].getMax());
             onelab::server::instance()->set(numbers[i]);
             changed = true;
@@ -161,24 +167,34 @@ namespace onelabUtils {
 	  }
 	}
         else if(numbers[i].getStep() > 0){
+	  int j = numbers[i].getIndex() + 1;
+	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-             numbers[i].getValue() < numbers[i].getMax()){
-            numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
+             val < numbers[i].getMax()){
+            numbers[i].setValue(val);
+	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
             Msg::Info("Recomputing with new step %s=%g",
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
+	  else
+	    numbers[i].setIndex(numbers[i].getMax()); 
         }
         else if(numbers[i].getStep() < 0){
+	  int j = numbers[i].getIndex() + 1;
+	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-             numbers[i].getValue() > numbers[i].getMin()){
-            numbers[i].setValue(numbers[i].getValue() + numbers[i].getStep());
+             val > numbers[i].getMin()){
+            numbers[i].setValue(val);
+	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
             Msg::Info("Recomputing with new step %s=%g",
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
+	  else
+	    numbers[i].setIndex(numbers[i].getMin());
         }
       }
     }

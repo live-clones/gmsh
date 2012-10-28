@@ -11,6 +11,7 @@ namespace olkey{
   static std::string begin(label+"block");
   static std::string end(label+"endblock");
   static std::string include(label+"include");
+  static std::string loader(label+"loaderName");
   static std::string message(label+"msg");
   static std::string showParam(label+"show");
   static std::string showGmsh(label+"merge");
@@ -21,6 +22,25 @@ namespace olkey{
   static std::string getValue(label+"get");
   static std::string mathex(label+"eval");
   static std::string getRegion(label+"region");
+}
+
+// Client member function moved here because it uses parser commands 
+void MetaModel::saveCommandLines(const std::string fileName){
+  //save client command lines
+  std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
+  std::ofstream outfile(fileNameSave.c_str());
+  if (outfile.is_open()){
+    outfile << olkey::ifcond << "(" << olkey::getValue ;
+    outfile << "(LoaderPathName) == ";
+    outfile << OLMsg::GetOnelabString("LoaderPathName") << ")" << std::endl;
+    for(citer it = _clients.begin(); it != _clients.end(); it++)
+      if((*it)->checkCommandLine())
+	 outfile << (*it)->toChar();
+    outfile << olkey::olendif << std::endl;
+  }
+  else
+    OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
+  outfile.close();
 }
 
 int enclosed(const std::string &in, std::vector<std::string> &arguments,
@@ -312,23 +332,33 @@ bool localSolverClient::resolveLogicExpr(std::vector<std::string> arguments) {
   return condition;
 }
 
-bool extractRange(const std::string &in, std::vector<double> &arguments){
-  // syntax: a:b:c or a:b#n
+bool localSolverClient::resolveRange(const std::string &in, std::vector<double> &arguments){
+  // syntax: a:b:c or a:b|n with a,b,c numbers and n integer
+  double val;
   size_t pos, cursor;
   arguments.resize(0);
   cursor=0;
   if ( (pos=in.find(":",cursor)) == std::string::npos )
      OLMsg::Error("Syntax error in range <%s>",in.c_str());
   else{
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+    val=atof(resolveGetVal(in.substr(cursor,pos-cursor)).c_str());
+    arguments.push_back(val);
   }
   cursor = pos+1; // skips ':'
   if ( (pos=in.find(":",cursor)) != std::string::npos ){
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
-    arguments.push_back(atof(in.substr(pos+1).c_str()));
+    //arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+    //arguments.push_back(atof(in.substr(pos+1).c_str()));
+    val=atof(resolveGetVal(in.substr(cursor,pos-cursor)).c_str());
+    arguments.push_back(val);
+    val=atof(resolveGetVal(in.substr(pos+1)).c_str());
+    arguments.push_back(val);
   }
-  else if ( (pos=in.find("X",cursor)) != std::string::npos ){
-    arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+  else if ( (pos=in.find("|",cursor)) != std::string::npos ){
+    // arguments.push_back(atof(in.substr(cursor,pos-cursor).c_str()));
+    // double NumStep = atof(in.substr(pos+1).c_str());
+  //arguments.push_back((arguments[1]-arguments[0])/((NumStep==0)?1:NumStep));
+    val=atof(resolveGetVal(in.substr(cursor,pos-cursor)).c_str());
+    arguments.push_back(val);
     double NumStep = atof(in.substr(pos+1).c_str());
     arguments.push_back((arguments[1]-arguments[0])/((NumStep==0)?1:NumStep));
   }
@@ -373,7 +403,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	numbers[0].setLabel(arguments[2]);
       if(arguments.size()>3){
 	std::vector<double> bounds;
-	if (extractRange(arguments[3],bounds)){
+	if (resolveRange(arguments[3],bounds)){
 	  numbers[0].setMin(bounds[0]);
 	  numbers[0].setMax(bounds[1]);
 	  numbers[0].setStep(bounds[2]);
@@ -444,7 +474,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	if(numbers.size()){ // parameter must exist
 	  if(arguments.size()==1){
 	    std::vector<double> bounds;
-	    if (extractRange(arguments[0],bounds)){
+	    if (resolveRange(arguments[0],bounds)){
 	      numbers[0].setMin(bounds[0]);
 	      numbers[0].setMax(bounds[1]);
 	      numbers[0].setStep(bounds[2]);
@@ -661,6 +691,7 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
     olkey::begin.assign(olkey::label+"block");
     olkey::end.assign(olkey::label+"endblock");
     olkey::include.assign(olkey::label+"include");
+    olkey::loader.assign(olkey::label+"loaderName");
     olkey::message.assign(olkey::label+"msg");
     olkey::showParam.assign(olkey::label+"show");
     olkey::showGmsh.assign(olkey::label+"merge");
@@ -793,6 +824,17 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Info("%s",msg.c_str());
     }
   }
+  else if ( (pos=line.find(olkey::loader)) != std::string::npos) { 
+    // onelab.loaderName
+    cursor = pos+olkey::loader.length();
+    if(enclosed(line.substr(cursor),arguments,pos)<1)
+      OLMsg::Error("Misformed <%s> statement: (%s)",
+		 olkey::loader.c_str(),line.c_str());
+    else{
+      std::string msg = resolveGetVal(arguments[0]);
+      OLMsg::Info("%s",msg.c_str());
+    }
+  }
   else if ( (pos=line.find(olkey::showParam)) != std::string::npos) { 
     // onelab.showParam
     cursor = pos+olkey::showParam.length();
@@ -870,10 +912,12 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	if((pos=line.find_first_not_of(" \t"))==std::string::npos){
 	  OLMsg::Error("Empty line not allowed within a command <%s>",
 		     cmds.c_str());
+	  break;
 	}
 	else if(!line.compare(pos,olkey::comment.size(),olkey::comment)){
 	  OLMsg::Error("Comment lines not allowed within a command <%s>",
 		     cmds.c_str());
+	  break;
 	}
 	NbLines++; // command should not span over more than 10 lines
       }
@@ -1199,7 +1243,8 @@ void MetaModel::client_sentence(const std::string &name,
       // syntax name.register([interf...|native]{,cmdl{host{,rdir}}}}) ;
       if(!findClientByName(name)){
 	OLMsg::Info("Define client <%s>", name.c_str());
-	std::string cmdl="",host="",rdir="";
+	std::string type="",cmdl="",host="",rdir="";
+	if(arguments.size()>=1) type.assign(resolveGetVal(arguments[0]));
 	if(arguments.size()>=2) cmdl.assign(resolveGetVal(arguments[1]));
 	if(arguments.size()>=3) host.assign(resolveGetVal(arguments[2]));
 	if(arguments.size()>=4) rdir.assign(resolveGetVal(arguments[3]));
@@ -1221,7 +1266,10 @@ void MetaModel::client_sentence(const std::string &name,
 	    set(str);
 	  }
 	}
-	registerClient(name,resolveGetVal(arguments[0]),cmdl,host,rdir);
+
+	if((!type.compare(0,6,"encaps")) && (!OLMsg::hasGmsh))
+	  type.assign("interf");
+	registerClient(name,type,cmdl,host,rdir);
       }
       else
 	OLMsg::Error("Redefinition of client <%s>", name.c_str());
@@ -1410,7 +1458,7 @@ void MetaModel::client_sentence(const std::string &name,
     }
     localSolverClient *c;
     if((c=findClientByName(name))) {
-      if(isTodo(REGISTER))
+      if(isTodo(REGISTER) && !OLMsg::GetErrorNum())
 	if(onelab::server::instance()->getChanged(c->getName())){
 	  c->compute();
 	  c->GmshMerge(choices);
