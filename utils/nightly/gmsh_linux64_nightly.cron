@@ -1,0 +1,4 @@
+#
+# this will launch a new build every night at 1h01
+#
+1 1 * * * cd ${HOME}/src/gmsh/utils/nightly && /usr/bin/ctest -S gmsh_linux_nightly.ctest -VV > ${HOME}/src/gmsh/nightly.log 2>&1
