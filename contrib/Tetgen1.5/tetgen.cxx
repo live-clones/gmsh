@@ -11783,7 +11783,7 @@ void tetgenmesh::btree_insert(point insertpt)
   // Get the tree node (save in this point).
   ptary = (point *) point2ppt(insertpt);
   // Get the current array length.
-  arylen = (long) ptary[0];
+  arylen = (long long) ptary[0];
   // Insert the point into the node.
   ptary[arylen + 1] = insertpt;
   // Increase the array length by 1.
@@ -11808,7 +11808,7 @@ void tetgenmesh::btree_search(point insertpt, triface* searchtet)
   // Get the tree node (save in this point).
   ptary = (point *) point2ppt(insertpt);
   // Get the current array length.
-  arylen = (long) ptary[0];
+  arylen = (long long) ptary[0];
 
   if (arylen == 0) {
     searchtet->tet = NULL;
@@ -11892,7 +11892,7 @@ void tetgenmesh::ordervertices(point* vertexarray, int arraysize)
     jpptary = (point **) fastlookup(btreenode_list, j);
     // Order the points in the node.
     ptary = *jpptary;
-    arylen = (long) ptary[0];
+    arylen = (long long) ptary[0];
     for (j = 2; j <= arylen; j++) { // Skip the first point.
       vertexarray[index] = ptary[j];
       index++;
@@ -28436,10 +28436,10 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
       while ((nextsh.sh != NULL) && (nextsh.sh != shloop.sh)) {
         if (nextsh.sh[3] == NULL) {
           printf("  !! !! Wrong subface-subface connection (Dead subface).\n");
-          printf("    First: x%lx (%d, %d, %d).\n", (unsigned long) spinsh.sh,
+          printf("    First: x%lx (%d, %d, %d).\n", (unsigned long long) spinsh.sh,
                  pointmark(sorg(spinsh)), pointmark(sdest(spinsh)), 
                  pointmark(sapex(spinsh)));
-          printf("    Second: x%lx (DEAD)\n", (unsigned long) nextsh.sh);
+          printf("    Second: x%lx (DEAD)\n", (unsigned long long) nextsh.sh);
           horrors++;
           break;
         }
@@ -28447,10 +28447,10 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
         if (!(((sorg(nextsh) == pa) && (sdest(nextsh) == pb)) ||
               ((sorg(nextsh) == pb) && (sdest(nextsh) == pa)))) {
            printf("  !! !! Wrong subface-subface connection.\n");
-           printf("    First: x%lx (%d, %d, %d).\n", (unsigned long) spinsh.sh,
+           printf("    First: x%lx (%d, %d, %d).\n", (unsigned long long) spinsh.sh,
                   pointmark(sorg(spinsh)), pointmark(sdest(spinsh)), 
                   pointmark(sapex(spinsh)));
-           printf("    Scond: x%lx (%d, %d, %d).\n", (unsigned long) nextsh.sh,
+           printf("    Scond: x%lx (%d, %d, %d).\n", (unsigned long long) nextsh.sh,
                   pointmark(sorg(nextsh)), pointmark(sdest(nextsh)), 
                   pointmark(sapex(nextsh)));
            horrors++;
@@ -28459,10 +28459,10 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
         // Check they should not have the same apex.
         if (sapex(nextsh) == sapex(spinsh)) {
            printf("  !! !! Existing two duplicated subfaces.\n");
-           printf("    First: x%lx (%d, %d, %d).\n", (unsigned long) spinsh.sh,
+           printf("    First: x%lx (%d, %d, %d).\n", (unsigned long long) spinsh.sh,
                   pointmark(sorg(spinsh)), pointmark(sdest(spinsh)), 
                   pointmark(sapex(spinsh)));
-           printf("    Scond: x%lx (%d, %d, %d).\n", (unsigned long) nextsh.sh,
+           printf("    Scond: x%lx (%d, %d, %d).\n", (unsigned long long) nextsh.sh,
                   pointmark(sorg(nextsh)), pointmark(sdest(nextsh)), 
                   pointmark(sapex(nextsh)));
            horrors++;
@@ -28476,19 +28476,19 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
       if (checkseg.sh != NULL) {
         if (checkseg.sh[3] == NULL) {
           printf("  !! !! Wrong subface-subseg connection (Dead subseg).\n");
-          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
+          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) shloop.sh,
                  pointmark(sorg(shloop)), pointmark(sdest(shloop)), 
                  pointmark(sapex(shloop)));
-          printf("    Sub: x%lx (Dead)\n", (unsigned long) checkseg.sh);
+          printf("    Sub: x%lx (Dead)\n", (unsigned long long) checkseg.sh);
           horrors++;
         } else {
           if (!(((sorg(checkseg) == pa) && (sdest(checkseg) == pb)) ||
                 ((sorg(checkseg) == pb) && (sdest(checkseg) == pa)))) {
             printf("  !! !! Wrong subface-subseg connection.\n");
-            printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
+            printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) shloop.sh,
                    pointmark(sorg(shloop)), pointmark(sdest(shloop)), 
                    pointmark(sapex(shloop)));
-            printf("    Seg: x%lx (%d, %d).\n", (unsigned long) checkseg.sh,
+            printf("    Seg: x%lx (%d, %d).\n", (unsigned long long) checkseg.sh,
                    pointmark(sorg(checkseg)), pointmark(sdest(checkseg)));
             horrors++;
           }
@@ -28502,20 +28502,20 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
     if (neightet.tet != NULL) {
       if (neightet.tet[4] == NULL) {
         printf("  !! !! Wrong sub-to-tet connection (Dead tet)\n");
-        printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
+        printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) shloop.sh,
                pointmark(sorg(shloop)), pointmark(sdest(shloop)), 
                pointmark(sapex(shloop)));
-        printf("    Tet: x%lx (DEAD)\n", (unsigned long) neightet.tet);
+        printf("    Tet: x%lx (DEAD)\n", (unsigned long long) neightet.tet);
         horrors++;
       } else {
         if (!((sorg(shloop) == org(neightet)) && 
               (sdest(shloop) == dest(neightet)))) {
           printf("  !! !! Wrong sub-to-tet connection\n");
-          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) shloop.sh,
+          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) shloop.sh,
                  pointmark(sorg(shloop)), pointmark(sdest(shloop)), 
                  pointmark(sapex(shloop)));
           printf("    Tet: x%lx (%d, %d, %d, %d).\n",
-                 (unsigned long) neightet.tet, pointmark(org(neightet)), 
+                 (unsigned long long) neightet.tet, pointmark(org(neightet)), 
                  pointmark(dest(neightet)), pointmark(apex(neightet)),
                  pointmark(oppo(neightet)));
           horrors++;
@@ -28524,11 +28524,11 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
         if (!((sorg(spinsh) == org(neightet)) && 
               (sdest(spinsh) == dest(neightet)))) {
           printf("  !! !! Wrong tet-sub connection.\n");
-          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) spinsh.sh,
+          printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) spinsh.sh,
                  pointmark(sorg(spinsh)), pointmark(sdest(spinsh)), 
                  pointmark(sapex(spinsh)));
           printf("    Tet: x%lx (%d, %d, %d, %d).\n", 
-                 (unsigned long) neightet.tet, pointmark(org(neightet)), 
+                 (unsigned long long) neightet.tet, pointmark(org(neightet)), 
                  pointmark(dest(neightet)), pointmark(apex(neightet)), 
                  pointmark(oppo(neightet)));
           horrors++;
@@ -28539,11 +28539,11 @@ int tetgenmesh::checkshells(/*int sub2tet*/)
           if (!((sorg(spinsh) == org(symtet)) && 
                 (sdest(spinsh) == dest(symtet)))) {
             printf("  !! !! Wrong tet-sub connection.\n");
-            printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long) spinsh.sh,
+            printf("    Sub: x%lx (%d, %d, %d).\n", (unsigned long long) spinsh.sh,
                    pointmark(sorg(spinsh)), pointmark(sdest(spinsh)), 
                    pointmark(sapex(spinsh)));
             printf("    Tet: x%lx (%d, %d, %d, %d).\n", 
-                   (unsigned long) symtet.tet, pointmark(org(symtet)), 
+                   (unsigned long long) symtet.tet, pointmark(org(symtet)), 
                    pointmark(dest(symtet)), pointmark(apex(symtet)), 
                    pointmark(oppo(symtet)));
             horrors++;
@@ -28623,9 +28623,9 @@ int tetgenmesh::checksegments()
                 ((org(tetloop) == pb) && (dest(tetloop) == pa)))) {
             printf("  !! Wrong tet-seg connection.\n");
             printf("    Tet: x%lx (%d, %d, %d, %d) - Seg: x%lx (%d, %d).\n", 
-                   (unsigned long) tetloop.tet, pointmark(org(tetloop)),
+                   (unsigned long long) tetloop.tet, pointmark(org(tetloop)),
                    pointmark(dest(tetloop)), pointmark(apex(tetloop)),
-                   pointmark(oppo(tetloop)), (unsigned long) sseg.sh,
+                   pointmark(oppo(tetloop)), (unsigned long long) sseg.sh,
                    pointmark(pa), pointmark(pb));
             horrors++;
           } else {
@@ -28636,11 +28636,11 @@ int tetgenmesh::checksegments()
               if (checkseg.sh != sseg.sh) {
                 printf("  !! Wrong tet->seg connection.\n");
                 printf("    Tet: x%lx (%d, %d, %d, %d) - ", 
-                       (unsigned long) neightet.tet, pointmark(org(neightet)),
+                       (unsigned long long) neightet.tet, pointmark(org(neightet)),
                        pointmark(dest(neightet)), pointmark(apex(neightet)),
                        pointmark(oppo(neightet)));
                 if (checkseg.sh != NULL) {
-                  printf("Seg x%lx (%d, %d).\n", (unsigned long) checkseg.sh,
+                  printf("Seg x%lx (%d, %d).\n", (unsigned long long) checkseg.sh,
                          pointmark(sorg(checkseg)),pointmark(sdest(checkseg))); 
                 } else {
                   printf("Seg: NULL.\n");
@@ -28660,9 +28660,9 @@ int tetgenmesh::checksegments()
                 ((org(neightet) == pb) && (dest(neightet) == pa)))) {
               printf("  !! Wrong seg->tet connection (Wrong edge).\n");
               printf("    Tet: x%lx (%d, %d, %d, %d) - Seg: x%lx (%d, %d).\n", 
-                     (unsigned long) neightet.tet, pointmark(org(neightet)),
+                     (unsigned long long) neightet.tet, pointmark(org(neightet)),
                      pointmark(dest(neightet)), pointmark(apex(neightet)),
-                     pointmark(oppo(neightet)), (unsigned long) sseg.sh,
+                     pointmark(oppo(neightet)), (unsigned long long) sseg.sh,
                      pointmark(pa), pointmark(pb));
               horrors++;
             }
@@ -28679,7 +28679,7 @@ int tetgenmesh::checksegments()
         printf("  !! A marked edge: (%d, %d, %d, %d) -- x%lx %d.\n",
                pointmark(org(neightet)), pointmark(dest(neightet)),
                pointmark(apex(neightet)), pointmark(oppo(neightet)),
-               (unsigned long) neightet.tet, neightet.ver);
+               (unsigned long long) neightet.tet, neightet.ver);
         // Check if all tets at the edge are marked.
         spintet = neightet;
         while (1) {
@@ -28688,7 +28688,7 @@ int tetgenmesh::checksegments()
             printf("  !! !! An unmarked edge (%d, %d, %d, %d) -- x%lx %d.\n",
                    pointmark(org(spintet)), pointmark(dest(spintet)),
                    pointmark(apex(spintet)), pointmark(oppo(spintet)),
-                   (unsigned long) spintet.tet, spintet.ver);
+                   (unsigned long long) spintet.tet, spintet.ver);
             horrors++;
           }
           if (spintet.tet == neightet.tet) break;
@@ -28721,7 +28721,7 @@ int tetgenmesh::checksegments()
           //  sesymself(spinsh);
           //  printf("  !! Wrong ori at subface (%d, %d, %d) -- x%lx %d\n",
           //         pointmark(sorg(spinsh)), pointmark(sdest(spinsh)),
-          //         pointmark(sapex(spinsh)), (unsigned long) spinsh.sh,
+          //         pointmark(sapex(spinsh)), (unsigned long long) spinsh.sh,
           //         spinsh.shver);
           //  horrors++;
           //}
@@ -28734,7 +28734,7 @@ int tetgenmesh::checksegments()
                 printf("  !! !! No seg at tet (%d, %d, %d, %d) -- x%lx %d\n",
                        pointmark(org(spintet)), pointmark(dest(spintet)),
                        pointmark(apex(spintet)), pointmark(oppo(spintet)),
-                       (unsigned long) spintet.tet, spintet.ver);
+                       (unsigned long long) spintet.tet, spintet.ver);
                 horrors++;
               }
               if (checkseg.sh != sseg.sh) {
@@ -28753,7 +28753,7 @@ int tetgenmesh::checksegments()
         } else { 
           printf("  !! Wrong seg-subface (%d, %d, %d) -- x%lx %d connect\n",
                  pointmark(sorg(spinsh)), pointmark(sdest(spinsh)),
-                 pointmark(sapex(spinsh)), (unsigned long) spinsh.sh,
+                 pointmark(sapex(spinsh)), (unsigned long long) spinsh.sh,
                  spinsh.shver);
           horrors++;
           break;
