@@ -163,6 +163,9 @@ StringXString PostProcessingOptions_String[] = {
 } ;
 
 StringXString ViewOptions_String[] = {
+  { F|O, "Attributes" , opt_view_attributes , "" ,
+    "Optional string attributes" },
+
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,

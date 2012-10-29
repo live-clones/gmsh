@@ -1632,6 +1632,18 @@ std::string opt_view_stipple9(OPT_ARGS_STR)
 #endif
 }
 
+std::string opt_view_attributes(OPT_ARGS_STR)
+{
+#if defined(HAVE_POST)
+  GET_VIEW("");
+  if(action & GMSH_SET)
+    opt->attributes = val;
+  return opt->attributes;
+#else
+  return "";
+#endif
+}
+
 // Numeric option routines
 
 double opt_general_initial_context(OPT_ARGS_NUM)

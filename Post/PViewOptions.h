@@ -98,6 +98,7 @@ class PViewOptions {
   int clip; // status of clip planes (bit array)
   int forceNumComponents, componentMap[9];
   int sampling;
+  std::string attributes;
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;

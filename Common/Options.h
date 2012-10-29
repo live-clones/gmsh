@@ -91,6 +91,7 @@ std::string opt_view_stipple6(OPT_ARGS_STR);
 std::string opt_view_stipple7(OPT_ARGS_STR);
 std::string opt_view_stipple8(OPT_ARGS_STR);
 std::string opt_view_stipple9(OPT_ARGS_STR);
+std::string opt_view_attributes(OPT_ARGS_STR);
 
 // NUMBERS
 
