@@ -206,6 +206,7 @@ Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
+StrFind                 return tStrFind;
 Show                    return tShow;
 Symmetry                return tSymmetry;
 SyncModel               return tSyncModel;

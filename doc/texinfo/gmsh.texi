@@ -1292,6 +1292,7 @@ parsing of the script file:
   @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
   @var{built-in-function} |
   @var{real-option} |
+  StrFind(@var{char-expression}, @var{char-expression}) |
   GetValue("@var{string}", @var{expression})
 @end example
 
@@ -1303,7 +1304,9 @@ respectively. The operators @var{operator-unary-left},
 @var{operator-ternary-left} and @var{operator-ternary-right} are defined
 in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
 see @ref{Built-in functions}. The various @w{@var{real-option}s} are
-listed in @ref{Options}.
+listed in @ref{Options}. @code{StrFind} searches the first
+@var{char-expression} for any occurrence of the second
+@var{char-expression}.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter

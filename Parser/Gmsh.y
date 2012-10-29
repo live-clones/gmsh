@@ -106,7 +106,7 @@ struct doubleXstring{
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
-%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative
+%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrFind
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -4060,6 +4060,15 @@ FExpr_Single :
     {
       $$ = Msg::GetValue($3, $5);
       Free($3);
+    }
+  | tStrFind '(' StringExprVar ',' StringExprVar ')'
+    {
+      std::string s($3), substr($5);
+      if(s.find(substr) != std::string::npos)
+        $$ = 1.;
+      else
+        $$ = 0.;
+      Free($3); Free($5);
     }
 ;
 
