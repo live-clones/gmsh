@@ -80,21 +80,7 @@ class polynomialBasis : public nodalBasis
   // basis, we use the type of the corresponding gmsh element as type
   //int type, parentType, order, dimension;
   //bool serendip;
-  class closure : public std::vector<int> {
-    public:
-    int type;
-  };
-  typedef std::vector<closure> clCont;
-  // closures is the list of the nodes of each face, in the order of
-  // the polynomialBasis of the face; fullClosures is mapping of the
-  // nodes of the element that rotates the element so that the
-  // considered face becomes the first one in the right orientation;
-  // For element, like prisms that have different kind of faces,
-  // fullCLosure[i] rotates the element so that the considered face
-  // becomes the closureRef[i]-th face (the first tringle or the first
-  // quad face)
-  clCont closures, fullClosures;
-  std::vector<int> closureRef;
+
   //fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
@@ -456,7 +442,6 @@ class polynomialBasis : public nodalBasis
       break;
     }
   }
-  static int getTag(int parentTag, int order, bool serendip = false);
 };
 
 class polynomialBases

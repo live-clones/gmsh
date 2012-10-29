@@ -14,6 +14,7 @@
 
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
+#define SQU(a)      ((a)*(a))
 
 struct mean_plane
 {

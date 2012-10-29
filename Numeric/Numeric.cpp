@@ -7,8 +7,6 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 
-#define SQU(a)      ((a)*(a))
-
 double myatan2(double a, double b)
 {
   if(a == 0.0 && b == 0)

@@ -43,96 +43,6 @@ static void printClosure(polynomialBasis::clCont &fullClosure,
 */
 
 
-
-int polynomialBasis::getTag(int parentTag, int order, bool serendip)
-{
-  switch (parentTag) {
-  case TYPE_PNT :
-    return MSH_PNT;
-  case TYPE_LIN :
-    switch(order) {
-    case 0 : return MSH_LIN_1;
-    case 1 : return MSH_LIN_2;
-    case 2 : return MSH_LIN_3;
-    case 3 : return MSH_LIN_4;
-    case 4 : return MSH_LIN_5;
-    case 5 : return MSH_LIN_6;
-    case 6 : return MSH_LIN_7;
-    case 7 : return MSH_LIN_8;
-    case 8 : return MSH_LIN_9;
-    case 9 : return MSH_LIN_10;
-    case 10: return MSH_LIN_11;
-    default : Msg::Error("line order %i unknown", order); return 0;
-    }
-  case TYPE_TRI :
-    switch(order) {
-    case 0 : return MSH_TRI_1;
-    case 1 : return MSH_TRI_3;
-    case 2 : return MSH_TRI_6;
-    case 3 : return serendip ? MSH_TRI_9  : MSH_TRI_10;
-    case 4 : return serendip ? MSH_TRI_12 : MSH_TRI_15;
-    case 5 : return serendip ? MSH_TRI_15I: MSH_TRI_21;
-    case 6 : return serendip ? MSH_TRI_18 : MSH_TRI_28;
-    case 7 : return serendip ? MSH_TRI_21I: MSH_TRI_36;
-    case 8 : return serendip ? MSH_TRI_24 : MSH_TRI_45;
-    case 9 : return serendip ? MSH_TRI_27 : MSH_TRI_55;
-    case 10: return serendip ? MSH_TRI_30 : MSH_TRI_66;
-    default : Msg::Error("triangle order %i unknown", order); return 0;
-    }
-  case TYPE_QUA :
-    switch(order) {
-    case 0 : return MSH_QUA_1;
-    case 1 : return MSH_QUA_4;
-    case 2 : return serendip ? MSH_QUA_8  : MSH_QUA_9;
-    case 3 : return serendip ? MSH_QUA_12 : MSH_QUA_16;
-    case 4 : return serendip ? MSH_QUA_16I: MSH_QUA_25;
-    case 5 : return serendip ? MSH_QUA_20 : MSH_QUA_36;
-    case 6 : return serendip ? MSH_QUA_24 : MSH_QUA_49;
-    case 7 : return serendip ? MSH_QUA_28 : MSH_QUA_64;
-    case 8 : return serendip ? MSH_QUA_32 : MSH_QUA_81;
-    case 9 : return serendip ? MSH_QUA_36I: MSH_QUA_100;
-    case 10: return serendip ? MSH_QUA_40 : MSH_QUA_121;
-    default : Msg::Error("quad order %i unknown", order); return 0;
-    }
-  case TYPE_TET :
-    switch(order) {
-    case 0 : return MSH_TET_1;
-    case 1 : return MSH_TET_4;
-    case 2 : return MSH_TET_10;
-    case 3 : return MSH_TET_20;
-    case 4 : return serendip ? MSH_TET_34 : MSH_TET_35;
-    case 5 : return serendip ? MSH_TET_52 : MSH_TET_56;
-    case 6 : return serendip ? MSH_TET_74 : MSH_TET_84;
-    case 7 : return serendip ? MSH_TET_100: MSH_TET_120;
-    case 8 : return serendip ? MSH_TET_130: MSH_TET_165;
-    case 9 : return serendip ? MSH_TET_164: MSH_TET_220;
-    case 10: return serendip ? MSH_TET_202: MSH_TET_286;
-    default : Msg::Error("terahedron order %i unknown", order); return 0;
-    }
-  case TYPE_HEX :
-    switch(order) {
-    case 1 : return MSH_HEX_8;
-    case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
-    case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
-    case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
-    case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
-    case 6 : return serendip ? MSH_HEX_222: MSH_HEX_343;
-    case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
-    case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
-    case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;
-    default : Msg::Error("hexahedron order %i unknown", order); return 0;
-    }
-  case TYPE_PRI :
-    switch(order) {
-    case 0 : return MSH_PRI_1;
-    case 1 : return MSH_PRI_6;
-    case 2 : return MSH_PRI_18;
-    default : Msg::Error("prism order %i unknown", order); return 0;
-    }
-  default : Msg::Error("unknown element type %i", parentTag); return 0;
-  }
-}
-
 fullMatrix<double> generate1DMonomials(int order)
 {
   fullMatrix<double> monomials(order + 1, 1);
@@ -1024,7 +934,7 @@ static void getFaceClosureTet(int iFace, int iSign, int iRotate,
 {
   closure.clear();
   closure.resize((order + 1) * (order + 2) / 2);
-  closure.type = polynomialBasis::getTag(TYPE_TRI, order, false);
+  closure.type = nodalBasis::getTag(TYPE_TRI, order, false);
 
   switch (order){
   case 0:
@@ -1119,7 +1029,7 @@ static void generate2dEdgeClosureFull(polynomialBasis::clCont &closure,
     if (serendip) break;
   }
   for (int r = 0; r < nNod*2 ; r++) {
-    closure[r].type = polynomialBasis::getTag(TYPE_LIN, order);
+    closure[r].type = nodalBasis::getTag(TYPE_LIN, order);
     closureRef[r] = 0;
   }
 }
@@ -1322,7 +1232,7 @@ static void generateFaceClosureHex(polynomialBasis::clCont &closure, int order,
 {
   closure.clear();
   const polynomialBasis &fsFace = *polynomialBases::find
-    (polynomialBasis::getTag(TYPE_QUA, order, serendip));
+    (nodalBasis::getTag(TYPE_QUA, order, serendip));
   for (int iRotate = 0; iRotate < 4; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 6; iFace++) {
@@ -1407,7 +1317,7 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
   // int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8},
   //                         {8, 13, 11, 7}, {9, 11, 14, 10}};
   int nVertex = isTriangle ? 3 : 4;
-  closure.type = polynomialBasis::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+  closure.type = nodalBasis::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
   for (int i = 0; i < nVertex; ++i){
     int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
     closure[i] = order1node[iFace][k];
@@ -1523,7 +1433,7 @@ static void generate2dEdgeClosure(polynomialBasis::clCont &closure, int order, i
       closure[j].push_back( nNod + (order-1)*j + i );
       closure[nNod+j].push_back(nNod + (order-1)*(j+1) -i -1);
     }
-    closure[j].type = closure[nNod+j].type = polynomialBasis::getTag(TYPE_LIN, order);
+    closure[j].type = closure[nNod+j].type = nodalBasis::getTag(TYPE_LIN, order);
   }
 }
 
