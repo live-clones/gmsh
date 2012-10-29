@@ -410,8 +410,6 @@ bool localSolverClient::checkCommandLine(){
 	      getCommandLine().c_str(), getName().c_str());
   if(!isActive()) return true;
 
-  //if(*getCommandLine().rbegin() != '=') return false;
-
   if(!getCommandLine().empty()){
     if(isNative()){
       setAction("initialize");
@@ -578,11 +576,12 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
     std::string fullName = wdir+trueName;
     if(checkIfPresent(fullName)){
       cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+trueName);
-#if defined(WIN32)
-      Sleep((int)(OLMsg::GetOnelabNumber("RSYNCDELAY")*1000));
-#else
-      sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
-#endif
+// #if defined(WIN32)
+//       Sleep((int)(OLMsg::GetOnelabNumber("RSYNCDELAY")*1000));
+// #else
+//       sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+// #endif
+      SleepInSeconds(OLMsg::GetOnelabNumber("RSYNCDELAY"));
       return mySystem(cmd);
     }
     else{
@@ -595,8 +594,9 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
       //should be found local
       std::string fullName = wdir+fileName;
       if(checkIfPresent(fullName)){
-	cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+fileName);
-	//FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+	cmd.assign("rsync -e ssh -auv "+fullName+" " + _remoteHost);
+	cmd.append(":" + _remoteDir + "/"+fileName);
+	SleepInSeconds(OLMsg::GetOnelabNumber("RSYNCDELAY"));
 	return mySystem(cmd);
       }
       else{
@@ -626,7 +626,7 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 		 +fileName.substr(pos,std::string::npos)+" .");
       if(!wdir.empty())
 	cmd.append(dirSep+wdir);
-      //FIXME sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
+      SleepInSeconds(OLMsg::GetOnelabNumber("RSYNCDELAY"));
       return mySystem(cmd);
     }
   }
@@ -1226,9 +1226,9 @@ std::string FixExecPath(const std::string &in)
   split0.assign(SplitFileName(cmd)[0]);
   split1.assign(SplitFileName(cmd)[1]);
   split2.assign(SplitFileName(cmd)[2]);
-  std::cout << "0=<" << split0 << ">" << std::endl;
-  std::cout << "1=<" << split1 << ">" << std::endl;
-  std::cout << "2=<" << split2 << ">" << std::endl;
+  // std::cout << "0=<" << split0 << ">" << std::endl;
+  // std::cout << "1=<" << split1 << ">" << std::endl;
+  // std::cout << "2=<" << split2 << ">" << std::endl;
 
   if(split2==".app")
     cmd.assign(cmd + "/Contents/MacOS/" + split1);
@@ -1243,9 +1243,7 @@ std::string FixExecPath(const std::string &in)
   else
     if(cmd[0] != '\"') cmd.assign(quote(cmd));
 
-  std::cout << "cmd=<" << cmd << ">" << std::endl;
-
-  //exit(1);
+  //std::cout << "cmd=<" << cmd << ">" << std::endl;
   return cmd;
 }
 

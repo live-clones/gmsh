@@ -11,6 +11,7 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *olclient
   //Initilizes also the wait function the Gmsh Gui
   //so that Gmsh windows may remain active during client computations.
   OLMsg::SetOnelabClient(olclient);
+  OLMsg::Info("I can now communicate with gmsh");
   OLMsg::SetOnelabString("LoaderPathName",loaderName,false);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
 }
@@ -23,39 +24,31 @@ int metamodel(const std::string &action){
   OLMsg::ResetErrorNum();
 
   parseMode todo;
-  if(action == "initialize")
-    todo = INITIALIZE;
-  else if(action == "check")
-    todo = ANALYZE;
-  else if(action == "compute"){
+  // if(action == "initialize")
+  //   todo = INITIALIZE;
+
+  if(action == "compute")
     todo = COMPUTE;
-  }
   else{
-    todo = EXIT;
-    OLMsg::Error("Unknown action <%s>", action.c_str());
+    todo = ANALYZE;
   }
 
   std::string modelName = OLMsg::GetOnelabString("Arguments/FileName");
   std::string workingDir = OLMsg::GetOnelabString("Arguments/WorkingDir");
   std::string clientName = "meta";
 
-  if(OLMsg::GetOnelabNumber("LOGFILES")){
-    if(workingDir.size()) workingDir.append(dirSep);
-    std::string mystdout = FixWindowsQuotes(workingDir + "stdout.txt");
-    std::string mystderr = FixWindowsQuotes(workingDir + "stderr.txt");
-    freopen(mystdout.c_str(),"w",stdout);
-    freopen(mystderr.c_str(),"w",stderr);
-    OLMsg::Info("Redirecting stdout into <%s>",mystdout.c_str());
-    OLMsg::Info("Redirecting stderr into <%s>",mystderr.c_str());
-  }
-
   MetaModel *myModel =
     new MetaModel("meta", workingDir, "meta", modelName);
   myModel->setTodo(todo);
 
-  //if not all clients have valid commandlines -> exit metamodel
-  // if(!myModel->checkCommandLines())
-  //   myModel->setTodo(EXIT);
+  if(OLMsg::GetOnelabNumber("LOGFILES")){
+    std::string mystdout = FixWindowsQuotes(workingDir + "stdout.txt");
+    std::string mystderr = FixWindowsQuotes(workingDir + "stderr.txt");
+    OLMsg::Info("Redirecting stdout into <%s>",mystdout.c_str());
+    OLMsg::Info("Redirecting stderr into <%s>",mystderr.c_str());
+    freopen(mystdout.c_str(),"w",stdout);
+    freopen(mystderr.c_str(),"w",stderr);
+  }
 
   if(OLMsg::GetErrorNum()) myModel->setTodo(EXIT);
 

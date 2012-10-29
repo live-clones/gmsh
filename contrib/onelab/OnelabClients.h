@@ -18,7 +18,7 @@
 // Onelab file extension
 static std::string onelabExtension(".ol");
 // Possible actions for clients
-enum parseMode {INITIALIZE, REGISTER, ANALYZE, COMPUTE, EXIT, STOP};
+enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 
 #if defined(WIN32)
 static std::string dirSep("\\");
@@ -140,6 +140,7 @@ class localSolverClient : public onelab::localClient{
   const bool isOnelabBlock() { return _onelabBlock; }
   const void openOnelabBlock() { _onelabBlock=true; }
   const void closeOnelabBlock() { _onelabBlock=false; }
+  std::string resolveString(const std::string &line);
   std::string resolveGetVal(std::string line);
   bool resolveLogicExpr(std::vector<std::string> arguments);
   bool resolveRange(const std::string &in, std::vector<double> &arguments);

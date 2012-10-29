@@ -168,7 +168,35 @@ std::string localSolverClient::longName(const std::string name){
   return fullName;
 }
 
+std::string localSolverClient::resolveString(const std::string &line) {
+  //looks for the first OL.get() statement,
+  //returns a onelab::string value from the server, if any, or "" otherwise
+  //if no OL.get() statement found, returns line unchanged.
+  std::vector<onelab::string> strings;
+  std::vector<std::string> arguments;
+  size_t pos,cursor;
+
+  if((pos=line.find(olkey::getValue)) != std::string::npos){
+    cursor = pos+olkey::getValue.length();
+    int NumArg=enclosed(line.substr(cursor),arguments,pos);
+    if(NumArg<1){
+      OLMsg::Error("Misformed %s statement: <%s>",
+		   olkey::getValue.c_str(),line.c_str());
+      return "??";
+    }
+    std::string paramName=longName(arguments[0]);
+    get(strings,paramName);
+    if (strings.size())
+      return strings[0].getValue();
+    else
+      return "";
+  }
+  return line;
+}
+
 std::string localSolverClient::resolveGetVal(std::string line) {
+  //looks for OL.get() statements, substitute the value from server
+  //then ealuate the resulting string with mathex.
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
   std::vector<std::string> arguments;
@@ -265,7 +293,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
       }
     }
     else{
-      get(strings,longName(paramName));
+      get(strings,paramName);
       if (strings.size())
 	buff.assign(strings[0].getValue());
       else{
@@ -304,28 +332,49 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 
 bool localSolverClient::resolveLogicExpr(std::vector<std::string> arguments) {
   std::vector<onelab::number> numbers;
+
   double val1, val2;
+  std::string str1,str2;
   bool condition=false;
 
-  val1 = atof( resolveGetVal(arguments[0]).c_str() );
-  if(arguments.size()==1)
-    condition=(bool)val1;
+  if(arguments.size()==1){
+    str1.assign(resolveString(arguments[0]));
+    if(str1.size())
+      return true;
+    val1 = atof( resolveGetVal(arguments[0]).c_str() );
+    return (bool)val1;
+  }
   else if(arguments.size()==3){
-    val2=atof( resolveGetVal(arguments[2]).c_str() );
-    if(!arguments[1].compare("<"))
-      condition = (val1<val2);
-    else if (!arguments[1].compare("<="))
-      condition = (val1<=val2);
-    else if (!arguments[1].compare(">"))
-      condition = (val1>val2);
-    else if (!arguments[1].compare(">="))
-      condition = (val1>=val2);
-    else if (!arguments[1].compare("=="))
-      condition = (val1==val2);   
-    else if (!arguments[1].compare("!="))
-      condition = (val1!=val2);
-    else
-      OLMsg::Error("Unknown logical operator <%s>", arguments[1].c_str());
+
+    str1.assign(resolveString(arguments[0]));
+    str2.assign(resolveString(arguments[2]));
+    if(str1.size() && str2.size()){
+      if (!arguments[1].compare("=="))
+	condition = !str1.compare(str2);   
+      else if (!arguments[1].compare("!="))
+	condition = str1.compare(str2);
+      else
+	OLMsg::Error("Unknown logical operator <%s> for strings",
+		     arguments[1].c_str());
+    }
+    else{
+      val1 = atof( resolveGetVal(arguments[0]).c_str() );
+      val2 = atof( resolveGetVal(arguments[2]).c_str() );
+      if(!arguments[1].compare("<"))
+	condition = (val1<val2);
+      else if (!arguments[1].compare("<="))
+	condition = (val1<=val2);
+      else if (!arguments[1].compare(">"))
+	condition = (val1>val2);
+      else if (!arguments[1].compare(">="))
+	condition = (val1>=val2);
+      else if (!arguments[1].compare("=="))
+	condition = (val1==val2);   
+      else if (!arguments[1].compare("!="))
+	condition = (val1!=val2);
+      else
+	OLMsg::Error("Unknown logical operator <%s>", arguments[1].c_str());
+    }
   }
   else
     OLMsg::Error("Invalid logical expression");
@@ -1358,10 +1407,10 @@ void MetaModel::client_sentence(const std::string &name,
 	set(strings[0]);
       }
       localSolverClient *c;
-      if((c=findClientByName(name))){
-	if(c->checkCommandLine() && !OLMsg::GetErrorNum())
-	  c->analyze();
-      }
+      if(!OLMsg::GetErrorNum())
+	if((c=findClientByName(name)))
+	  if(c->checkCommandLine())
+	    c->analyze();
     }
     else if(isTodo(ANALYZE)){
       localSolverClient *c;
