@@ -10,6 +10,7 @@
   #include "GaussIntegration.h"
   #include "JacobianBasis.h"
   #include "fullMatrix.h"
+  #include "nodalBasis.h"
   #include "polynomialBasis.h"
 %}
 
@@ -18,4 +19,5 @@
 %include "fullMatrix.h"
 %template(fullMatrixDouble) fullMatrix<double>;
 %template(fullVectorDouble) fullVector<double>;
+%include "nodalBasis.h"
 %include "polynomialBasis.h"

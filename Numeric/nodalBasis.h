@@ -20,7 +20,7 @@ class nodalBasis {
 
   // Basis functions evaluation
   inline virtual void f(double u, double v, double w, double *sf) const {};
-  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const;
+  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const {};
 
   // Basis functions gradients evaluation
   inline virtual void df(double u, double v, double w, double grads[][3]) const {};
