@@ -5,6 +5,12 @@
 
 #include <FL/Fl.H>
 #include "GmshConfig.h"
+#if !defined(HAVE_NO_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_NO_INTPTR_T)
+typedef unsigned long intptr_t;
+#endif
+
 #include "GmshMessage.h"
 
 #if defined(HAVE_ONELAB)
@@ -461,9 +467,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    updateGraphs();
-    FlGui::instance()->onelab->rebuildTree();
-    return;
+    // nothing to do
   }
 
   if(action == "stop"){
@@ -788,10 +792,11 @@ static bool getFlColor(const std::string &str, Fl_Color &c)
 template<class T>
 static void autoCheck(const T &pold, const T &pnew, bool force=false)
 {
-  if(!CTX::instance()->solver.autoCheck && pnew.getAttribute("AutoCheck") != "1")
-    return;
-  if(force || pold.getValue() != pnew.getValue())
-    onelab_cb(0, (void*)"check");
+  if((CTX::instance()->solver.autoCheck && pnew.getAttribute("AutoCheck") != "0") ||
+     pnew.getAttribute("AutoCheck") == "1"){
+    if(force || pold.getValue() != pnew.getValue())
+      onelab_cb(0, (void*)"check");
+  }
 }
 
 template<class T>
@@ -1379,7 +1384,7 @@ void solver_cb(Fl_Widget *w, void *data)
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else
-    onelab_cb(0, (void*)"check");
+    onelab_cb(0, (num >= 0) ? (void*)"check" : (void*)"refresh");
 }
 
 void flgui_wait_cb(double time)
