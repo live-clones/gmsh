@@ -1034,7 +1034,7 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   but->menubutton()->copy(&menu[0]);
   but->value(p.getValue().c_str());
   but->callback(onelab_string_input_choice_cb, (void*)n);
-  but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
+  but->input()->when(FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
   if(highlight) but->input()->color(c);
   return but;
