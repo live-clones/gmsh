@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdio.h>
+#include <string.h>
 #include "openglWindow.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
