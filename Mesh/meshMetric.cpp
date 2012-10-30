@@ -771,17 +771,28 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge)
   MElement::setTolerance(1.e-4);
   MElement *e = _octree->find(x, y, z, _dim);
   MElement::setTolerance(initialTol);
-  if (e){
+  double value = 0.;
+  if (e) {
     e->xyz2uvw(xyz,uvw);
     double *val = new double [e->getNumVertices()];
     for (int i=0;i<e->getNumVertices();i++){
       val[i] = _nodalSizes[e->getVertex(i)];
     }
-    double value = e->interpolate(val,uvw[0],uvw[1],uvw[2]);
+    value = e->interpolate(val,uvw[0],uvw[1],uvw[2]);
     delete [] val;
-    return value;
   }
-  return 1.e22;
+  else {
+    Msg::Warning("point %g %g %g not found, looking for nearest node",x,y,z);
+    double minDist = 1.e100;
+    for (nodalField::iterator it = _nodalSizes.begin(); it != _nodalSizes.end(); it++) {
+      const double dist = xyz.distance(it->first->point());
+      if (dist <= minDist) {
+        minDist = dist;
+        value = it->second;
+      }
+    }
+  }
+  return value;
 }
 
 void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
@@ -813,7 +824,15 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
     }
   }
   else{
-    Msg::Warning("point %g %g %g not found",x,y,z);
+    Msg::Warning("point %g %g %g not found, looking for nearest node",x,y,z);
+    double minDist = 1.e100;
+    for (nodalMetricTensor::iterator it = _nodalMetrics.begin(); it != _nodalMetrics.end(); it++) {
+      const double dist = xyz.distance(it->first->point());
+      if (dist <= minDist) {
+        minDist = dist;
+        metr = it->second;
+      }
+    }
   }
 }
 
