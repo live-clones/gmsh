@@ -15,8 +15,7 @@
 
 CTX::CTX()
 {
-  // initialize everything that has no default value in
-  // DefaultOptions.h
+  // initialize everything that has no default value in DefaultOptions.h
   short int word = 0x0001;
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
@@ -40,6 +39,7 @@ CTX::CTX()
   outputFileName = "";
   bgmFileName = "";
   createAppendMeshStatReport = 0;
+  launchOnelabAtStartup = -2;
   lc = 1.;
   min[0] = min[1] = min[2] = max[2] = 0.;
   max[0] = max[1] = 1.; // for nice view when adding point in new model

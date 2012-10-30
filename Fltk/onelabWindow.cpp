@@ -792,6 +792,11 @@ static bool getFlColor(const std::string &str, Fl_Color &c)
 template<class T>
 static void autoCheck(const T &pold, const T &pnew, bool force=false)
 {
+  if(onelabUtils::getFirstComputationFlag()){
+    if(pold.getValue() != pnew.getValue())
+      onelabUtils::setFirstComputationFlag(false);
+  }
+
   if((CTX::instance()->solver.autoCheck && pnew.getAttribute("AutoCheck") != "0") ||
      pnew.getAttribute("AutoCheck") == "1"){
     if(force || pold.getValue() != pnew.getValue())

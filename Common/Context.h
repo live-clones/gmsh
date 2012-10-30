@@ -82,6 +82,8 @@ class CTX {
   std::vector<std::string> recentFiles;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
+  // should we launch the onelab interface at startup?
+  int launchOnelabAtStartup ;
   // save session/option file on exit?
   int sessionSave, optionsSave;
   // ask confirmation when overwriting files?

@@ -12,7 +12,7 @@ DefineConstant
  rt2 = {0.092, Label "Tube external radius"},
  lb = {1, Label "Infinite box width"},
  left = {1, Choices{0,1}, Label "Terminals on the left?"}
- // macro = {"aa.pos", Label "Run my macro!", Kind "macro", Path "Actions"},
+ //macro = {"aa.pos", Label "Run my macro!", Kind "macro", Path "Actions"},
  // showLines = {1, Choices {0,1}, Label "Show lines?"}
 ];
 

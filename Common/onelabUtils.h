@@ -20,6 +20,8 @@ namespace onelabUtils {
   std::vector<double> getRange(onelab::number &p);
   bool updateGraph(const std::string &graphNum);
   bool runGmshClient(const std::string &action, bool meshAuto);
+  bool getFirstComputationFlag();
+  void setFirstComputationFlag(bool val);
 }
 
 #endif

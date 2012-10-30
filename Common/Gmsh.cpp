@@ -40,6 +40,7 @@
 #include "FlGui.h"
 #include "menuWindow.h"
 #include "drawContext.h"
+#include "onelabWindow.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -255,11 +256,14 @@ int GmshFLTK(int argc, char **argv)
       Msg::Error("Invalid background mesh (no view)");
   }
 
-  // listen to external solvers
 #if defined(HAVE_ONELAB)
+  // listen to external solvers
   if(CTX::instance()->solver.listen){
     onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
     c->run();
+  }
+  if(CTX::instance()->launchOnelabAtStartup != -2){
+    solver_cb(0, (void*)CTX::instance()->launchOnelabAtStartup);
   }
 #endif
 

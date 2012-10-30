@@ -791,6 +791,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 {
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
+  CTX::instance()->launchOnelabAtStartup = -1;
 
   std::string name = _getParameterName(key, copt);
 
@@ -872,6 +873,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 {
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
+  CTX::instance()->launchOnelabAtStartup = -1;
 
   std::string name = _getParameterName(key, copt);
 

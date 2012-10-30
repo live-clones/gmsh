@@ -179,7 +179,7 @@ namespace onelabUtils {
             recompute = true;
           }
 	  else
-	    numbers[i].setIndex(numbers[i].getMax()); 
+	    numbers[i].setIndex(numbers[i].getMax());
         }
         else if(numbers[i].getStep() < 0){
 	  int j = numbers[i].getIndex() + 1;
@@ -283,6 +283,10 @@ namespace onelabUtils {
     return changed;
   }
 
+  static bool _firstComputation = true;
+  void setFirstComputationFlag(bool val){ _firstComputation = val; }
+  bool getFirstComputationFlag(){ return _firstComputation; }
+
   bool runGmshClient(const std::string &action, bool meshAuto)
   {
     bool redraw = false;
@@ -294,13 +298,12 @@ namespace onelabUtils {
     std::string mshFileName = onelabUtils::getMshFileName(c);
 
     static std::string modelName = GModel::current()->getName();
-    static bool firstComputation = true;
 
     if(action == "initialize"){
       // nothing to do
     }
     else if(action == "reset"){
-      firstComputation = false;
+      setFirstComputationFlag(false);
       OpenProject(GModel::current()->getFileName());
     }
     else if(action == "check"){
@@ -321,7 +324,7 @@ namespace onelabUtils {
         modelName = GModel::current()->getName();
         redraw = true;
         OpenProject(GModel::current()->getFileName());
-        if(firstComputation && !StatFile(mshFileName)){
+        if(getFirstComputationFlag() && !StatFile(mshFileName)){
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date",
                     mshFileName.c_str());
         }
@@ -338,7 +341,7 @@ namespace onelabUtils {
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
       }
-      firstComputation = false;
+      setFirstComputationFlag(false);
       onelab::server::instance()->setChanged(false, "Gmsh");
     }
 
