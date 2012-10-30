@@ -16,18 +16,18 @@ class nodalBasis {
   bool serendip;
   fullMatrix<double> points;
 
-  virtual void initialize() {};
+  virtual void initialize() = 0;
 
   // Basis functions evaluation
-  inline virtual void f(double u, double v, double w, double *sf) const {};
-  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const {};
+  inline virtual void f(double u, double v, double w, double *sf) const {Msg::Fatal("Not implemented");};
+  inline virtual void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const {Msg::Fatal("Not implemented");};
 
   // Basis functions gradients evaluation
-  inline virtual void df(double u, double v, double w, double grads[][3]) const {};
-  inline void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const {};
+  inline virtual void df(double u, double v, double w, double grads[][3]) const {Msg::Fatal("Not implemented");};
+  inline virtual void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const {Msg::Fatal("Not implemented");};
   
-  inline void ddf(double u, double v, double w, double grads[][3][3]) const {};
-  inline void dddf(double u, double v, double w, double grads[][3][3][3]) const {};
+  inline virtual void ddf(double u, double v, double w, double grads[][3][3]) const {Msg::Fatal("Not implemented");};
+  inline virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");};
 
   inline virtual int getNumShapeFunctions() const {Msg::Fatal("Not implemented"); return -1;}
 
@@ -50,7 +50,7 @@ class nodalBasis {
   inline virtual const std::vector<int> &getClosure(int id) const {Msg::Fatal("Not implemented"); std::vector<int> *ret=NULL; return *ret;}
   inline virtual const std::vector<int> &getFullClosure(int id) const {Msg::Fatal("Not implemented"); std::vector<int> *ret=NULL; return *ret;}
   inline virtual int getClosureId(int iFace, int iSign=1, int iRot=0) const {Msg::Fatal("Not implemented"); return -1;}
-  inline void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const {Msg::Fatal("Not implemented");iFace=-1; iSign=-1; iRot=-1;}
+  inline virtual void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const {Msg::Fatal("Not implemented");iFace=-1; iSign=-1; iRot=-1;}
 
   static int getTag(int parentTag, int order, bool serendip = false)
   {

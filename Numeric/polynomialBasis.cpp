@@ -1521,8 +1521,7 @@ void polynomialBasis::initialize()
   
   this->points.print();
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
-
-}
+ }
 
 
 const polynomialBasis *polynomialBases::find(int tag)
