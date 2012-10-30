@@ -381,6 +381,7 @@ void Filler::treat_region(GRegion* gr){
     parent = fifo.front();
 	fifo.pop();
 	garbage.push_back(parent);
+	
 	n1 = new Node();
 	n2 = new Node();
 	n3 = new Node();
@@ -388,6 +389,7 @@ void Filler::treat_region(GRegion* gr){
 	n5 = new Node();
 	n6 = new Node();
 	offsprings(gr,octree,parent,n1,n2,n3,n4,n5,n6);
+	
 	data.clear();
 	data.push_back(n1);
 	data.push_back(n2);
@@ -395,6 +397,7 @@ void Filler::treat_region(GRegion* gr){
 	data.push_back(n4);
 	data.push_back(n5);
 	data.push_back(n6);
+	
 	for(i=0;i<6;i++){
 	  ok = 0;
 	  spawn = data[i];
@@ -402,13 +405,15 @@ void Filler::treat_region(GRegion* gr){
 	  x = point.x();
 	  y = point.y();
 	  z = point.z();
+	  
 	  if(inside_domain(octree,x,y,z)){
 		compute_parameters(spawn,gr);
 	    if(far_from_boundary(octree,spawn)){
 		  wrapper.set_too_close(0);
 		  wrapper.set_spawn(spawn);
 		  wrapper.set_parent(parent);
-                  rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
+		  rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
+		  
 		  if(!wrapper.get_too_close()){
 		    fifo.push(spawn);
 		    rtree.Insert(spawn->min,spawn->max,spawn);
@@ -464,37 +469,7 @@ double Filler::get_size(double x,double y,double z){
   return 0.25;
 }
 
-Metric Filler::get_clf_metric(double x,double y,double z,GEntity* ge){
-  SVector3 v1,v2,v3;
-  Metric m;
-  Field* field;
-  FieldManager* manager;
-
-  m = Metric();
-  manager = ge->model()->getFields();
-  if(manager->getBackgroundField()>0){
-    field = manager->get(manager->getBackgroundField());
-	if(field){
-	  (*field)(x,y,z,v1,v2,v3,ge);
-
-	  m.set_m11(v1.x());
-	  m.set_m21(v1.y());
-	  m.set_m31(v1.z());
-
-	  m.set_m12(v2.x());
-	  m.set_m22(v2.y());
-	  m.set_m32(v2.z());
-
-	  m.set_m13(v3.x());
-	  m.set_m23(v3.y());
-	  m.set_m33(v3.z());
-	}
-  }
-
-  return m;
-}
-
-double Filler::get_clf_size(double x,double y,double z,GEntity* ge){
+double Filler::get_size(double x,double y,double z,GEntity* ge){
   double h;
   Field* field;
   FieldManager* manager;

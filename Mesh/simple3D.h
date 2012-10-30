@@ -19,8 +19,7 @@ class Filler{
   static std::vector<MVertex*> new_vertices;
   Metric get_metric(double,double,double);
   double get_size(double,double,double);
-  Metric get_clf_metric(double,double,double,GEntity*);
-  double get_clf_size(double,double,double,GEntity*);
+  double get_size(double,double,double,GEntity*);
   bool inside_domain(MElementOctree*,double,double,double);
   bool far_from_boundary(MElementOctree*,Node*);
   void compute_parameters(Node*,GEntity*);
