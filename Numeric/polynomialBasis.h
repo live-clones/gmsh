@@ -84,7 +84,6 @@ class polynomialBasis : public nodalBasis
   //fullMatrix<double> points;
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
-  int numFaces;
 
   void initialize();
 
