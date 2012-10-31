@@ -2,7 +2,7 @@ SOLVERS=loader
 SOURCES=myOS StringUtils mathex OnelabClients OnelabMessage OnelabParser metamodel
 
 COMMON_DIR=$(GMSH_DIR)/Common
-ONELAB_DIR=$(GMSH_DIR)/projects/onelab
+ONELAB_DIR=$(GMSH_DIR)/contrib/onelab
 MATHEX_DIR=$(GMSH_DIR)/contrib/MathEx
 
 OBJDIR=objects
