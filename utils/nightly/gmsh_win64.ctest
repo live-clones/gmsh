@@ -1,0 +1,26 @@
+# Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
+
+set(CTEST_CMAKE_COMMAND "cmake")
+
+set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows")
+
+set(WITH_TEST TRUE)      # run the tests?
+set(WITH_COVERAGE FALSE) # check code coverage?
+set(WITH_MEMCHECK FALSE) # check memory with valgrind?
+
+#################################################################################
+set(CTEST_BUILD_NAME "Win64")
+set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
+set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw")
+set(OPT "${OPT} -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe")
+set(OPT "${OPT} -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe")
+set(OPT "${OPT} -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe")
+set(OPT "${OPT} -DPETSC_ARCH=win64_complex_mumps_seq")
+set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.1-p8")
+set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.1-p6")
+set(CTEST_BUILD_OPTIONS ${OPT})
+include(gmsh.ctest)
+upload_package(${WEB_BIN} Windows 64 .zip .zip)
