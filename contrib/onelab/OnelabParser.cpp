@@ -24,19 +24,94 @@ namespace olkey{
   static std::string getRegion(label+"region");
 }
 
+int extractLogic(const std::string &in, std::vector<std::string> &arguments){
+  // syntax: ( argument[0], argument[1]\in{<,>,<=,>=,==,!=}, arguments[2])
+  size_t pos, cursor;
+  arguments.resize(0);
+  cursor=0;
+  if ( (pos=in.find("(",cursor)) == std::string::npos )
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
+
+  unsigned int count=1;
+  pos++; // skips '('
+  cursor=pos; 
+  do{
+    if(in[pos]=='(') count++;
+    if(in[pos]==')') count--;
+    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
+      arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
+      if(count!=1)
+	OLMsg::Error("Syntax error: <%s>",in.c_str());
+      cursor=pos;
+      if(in[pos+1]=='='){
+	arguments.push_back(in.substr(cursor,2));
+	pos++;
+      }
+      else{
+      	arguments.push_back(in.substr(cursor,1));
+      }
+      cursor=pos+1;
+    }
+    pos++;
+  } while( count && (pos!=std::string::npos) );
+  // count is 0 when the closing brace is found. 
+
+  if(count)
+    OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
+  else
+    arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
+
+  if((arguments.size()!=1) && (arguments.size()!=3))
+    OLMsg::Error("Syntax error: <%s>",in.c_str());
+  return arguments.size();
+}
+
 // Client member function moved here because it uses parser commands 
 void MetaModel::saveCommandLines(const std::string fileName){
-  //save client command lines
+  std::vector<std::string> arguments, buffer;
+  size_t cursor, pos;
+  std::string loaderPathName=OLMsg::GetOnelabString("LoaderPathName");
+
   std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
+  std::ifstream infile(fileNameSave.c_str());
+  if (infile.is_open()){
+    while (infile.good()){
+      std::string line;
+      getline(infile,line);
+      if ( (pos=line.find(olkey::ifcond)) != std::string::npos) {
+	cursor = pos+olkey::ifcond.length();
+	extractLogic(line.substr(cursor),arguments);
+	if(arguments.size() >= 2){
+	  bool keep = arguments[2].compare(loaderPathName);
+	  if(keep) buffer.push_back(line);
+	  do{
+	    getline (infile,line);
+	    if(keep) buffer.push_back(line);
+	  } while ((pos=line.find(olkey::olendif)) != std::string::npos);
+	}
+	else
+	  OLMsg::Error("Incorrect statement <%s> in <%s>",
+		       line.c_str(), fileNameSave.c_str());
+      }
+    }
+  }
+  infile.close();
+
+  //save client command lines
   std::ofstream outfile(fileNameSave.c_str());
   if (outfile.is_open()){
     outfile << olkey::ifcond << "(" << olkey::getValue ;
     outfile << "(LoaderPathName) == ";
-    outfile << OLMsg::GetOnelabString("LoaderPathName") << ")" << std::endl;
+    outfile << loaderPathName << ")" << std::endl;
     for(citer it = _clients.begin(); it != _clients.end(); it++)
       if((*it)->checkCommandLine())
 	 outfile << (*it)->toChar();
     outfile << olkey::olendif << std::endl;
+
+    for(std::vector<std::string>::const_iterator it = buffer.begin();
+	it != buffer.end(); it++){
+      outfile << (*it) << std::endl;
+    }
   }
   else
     OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
@@ -84,47 +159,6 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
   return arguments.size();
 }
 
-int extractLogic(const std::string &in, std::vector<std::string> &arguments){
-  // syntax: ( argument[0], argument[1]\in{<,>,<=,>=,==,!=}, arguments[2])
-  size_t pos, cursor;
-  arguments.resize(0);
-  cursor=0;
-  if ( (pos=in.find("(",cursor)) == std::string::npos )
-     OLMsg::Error("Syntax error: <%s>",in.c_str());
-
-  unsigned int count=1;
-  pos++; // skips '('
-  cursor=pos; 
-  do{
-    if(in[pos]=='(') count++;
-    if(in[pos]==')') count--;
-    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
-      arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
-      if(count!=1)
-	OLMsg::Error("Syntax error: <%s>",in.c_str());
-      cursor=pos;
-      if(in[pos+1]=='='){
-	arguments.push_back(in.substr(cursor,2));
-	pos++;
-      }
-      else{
-      	arguments.push_back(in.substr(cursor,1));
-      }
-      cursor=pos+1;
-    }
-    pos++;
-  } while( count && (pos!=std::string::npos) );
-  // count is 0 when the closing brace is found. 
-
-  if(count)
-    OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
-  else
-    arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
-
-  if((arguments.size()!=1) && (arguments.size()!=3))
-    OLMsg::Error("Syntax error: <%s>",in.c_str());
-  return arguments.size();
-}
 
 int extract(const std::string &in, std::string &paramName, 
 	    std::string &action, std::vector<std::string> &arguments){
@@ -1332,7 +1366,7 @@ void MetaModel::client_sentence(const std::string &name,
 	OLMsg::Error("No pathname given for client <%s>", name.c_str());
     }
   }
-  else if(!action.compare("workingDir")){
+  else if(!action.compare("workingSubdir")){
     localSolverClient *c;
     if((c=findClientByName(name)))
       c->setWorkingDir(c->getWorkingDir()+arguments[0]);

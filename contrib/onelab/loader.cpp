@@ -227,8 +227,6 @@ int main(int argc, char *argv[]){
   std::string caseName="", todo="compute", modelName="", workingDir="";
   onelab::remoteNetworkClient *client = 0;
 
-  //if(argc) OLMsg::SetExecutableName(argv[0]);
-
   while(i < argc) {
     if(argv[i][0] == '-') {
       if(!strcmp(argv[i] + 1, "a")) {
@@ -282,6 +280,7 @@ int main(int argc, char *argv[]){
     OLMsg::Fatal("No valid input model name <%s>.", caseName.c_str());
 
   OLMsg::InitializeOnelab("onelab");
+  if(argc) OLMsg::SetOnelabString("LoaderPathName",argv[0]);
   OLMsg::SetOnelabString("Arguments/FileName",modelName);
   OLMsg::SetOnelabString("Arguments/WorkingDir",workingDir);
 

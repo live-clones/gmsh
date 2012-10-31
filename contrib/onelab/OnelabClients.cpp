@@ -678,6 +678,8 @@ void MetaModel::registerClient(const std::string &name, const std::string &type,
 
   // Clients are assigned by default the same working dir as the MetaModel
   // i.e. the working dir from args
+  // A working subdir (useful to organize submodels in a metamodel)
+  // can be defined with the command: client.workingSubdir(subdir) 
   if(host.empty() || rdir.empty()){ //local client
     if(!type.compare(0,6,"interf"))
       c= new InterfacedClient(name,cmdl,getWorkingDir());
@@ -1218,7 +1220,7 @@ std::string FixWindowsQuotes(const std::string &in)
 std::string FixExecPath(const std::string &in)
 {
   std::string cmd,split0,split1,split2;
-  std::cout << "in=<" << in << ">" << std::endl;
+  //std::cout << "in=<" << in << ">" << std::endl;
 
   cmd.assign(removeBlanks(in));
   cmd.assign(FixWindowsPath(cmd));

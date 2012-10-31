@@ -560,6 +560,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_ONELAB_METAMODEL)
       if(metamodel(action))
 	geometry_reload_cb(0, 0);
+      Msg::ResetErrorCounter();
 #endif
     }
     else{
