@@ -1519,7 +1519,6 @@ void polynomialBasis::initialize()
       break;
   }
   
-  this->points.print();
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
  }
 

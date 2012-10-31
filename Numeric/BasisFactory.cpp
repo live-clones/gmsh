@@ -186,7 +186,6 @@ const nodalBasis* BasisFactory::create(int elementType) {
     B->numFaces = 4;
     B->dimension = 3;
     B->points = gmshGeneratePointsTetrahedron(B->order, B->serendip);
-    B->points.print();
     break;
   case TYPE_PRI :
     B->numFaces = 5;
