@@ -67,6 +67,7 @@ class FunctionSpace{
 
   const GroupOfElement& getSupport(void) const;
   unsigned int          getType(void) const;
+  unsigned int          getOrder(void) const;
 
   unsigned int getNFunctionPerVertex(const MElement& element) const;
   unsigned int getNFunctionPerEdge(const MElement& element) const;
@@ -136,6 +137,11 @@ class FunctionSpace{
    the Basis functions composing 
    this Function Space.
    @see Basis::getType()
+   **
+
+   @fn FunctionSpace::getOrder
+   @return Return the @em order
+   of this FunctionSpace
    **
 
    @fn FunctionSpace::getNFunctionPerVertex
@@ -216,6 +222,10 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
 
 inline unsigned int FunctionSpace::getType(void) const{
   return type;
+}
+
+inline unsigned int FunctionSpace::getOrder(void) const{
+  return (unsigned int)(basis->getOrder());
 }
 
 inline unsigned int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
