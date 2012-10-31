@@ -1391,6 +1391,8 @@ void solver_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->show();
   else
     onelab_cb(0, (num >= 0) ? (void*)"check" : (void*)"refresh");
+
+  CTX::instance()->launchOnelabAtStartup = -2;
 }
 
 void flgui_wait_cb(double time)

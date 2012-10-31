@@ -147,6 +147,8 @@ static void file_open_cb(Fl_Widget *w, void *data)
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->menu->setContext(menu_post, 0);
+  if(CTX::instance()->launchOnelabAtStartup != -2)
+    solver_cb(0, (void*)CTX::instance()->launchOnelabAtStartup);
 }
 
 static void file_merge_cb(Fl_Widget *w, void *data)
@@ -161,6 +163,8 @@ static void file_merge_cb(Fl_Widget *w, void *data)
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->menu->setContext(menu_post, 0);
+  if(CTX::instance()->launchOnelabAtStartup != -2)
+    solver_cb(0, (void*)CTX::instance()->launchOnelabAtStartup);
 }
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
