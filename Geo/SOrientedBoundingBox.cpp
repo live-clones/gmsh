@@ -285,13 +285,13 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     }
   }
 
-  double means[3];
+  //double means[3];
   double sizes[3];
 
   // Note:  the size is computed in the box's coordinates!
   for(int i = 0 ; i < 3 ; i++) {
     sizes[i] = maxs(i) - mins(i);
-    means[i] = (maxs(i) - mins(i)) / 2.;
+    //means[i] = (maxs(i) - mins(i)) / 2.;
   }
   /*
   Msg::Debug("Sizes : %f %f %f",sizes[0],sizes[1], sizes[2]);

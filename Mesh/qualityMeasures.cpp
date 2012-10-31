@@ -518,10 +518,10 @@ double qmQuadrangleAngles (MQuadrangle *e) {
 
   // This matrix is used to "rotate" the triangle to get each vertex
   // as the "origin" of the mapping in turn
-  double rot[3][3];
-  rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
-  rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
-  rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
+  //double rot[3][3];
+  //rot[0][0]=-1; rot[0][1]=1; rot[0][2]=0;
+  //rot[1][0]=-1; rot[1][1]=0; rot[1][2]=0;
+  //rot[2][0]= 0; rot[2][1]=0; rot[2][2]=1;
   //double tmp[3][3];
 
   const double u[9] = {-1,-1, 1, 1, 0,0,1,-1,0};

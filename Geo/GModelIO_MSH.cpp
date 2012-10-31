@@ -253,7 +253,7 @@ int GModel::readMSH(const std::string &name)
             }
           }
           else{
-            if(fread(&data[0], sizeof(int), numData, fp) != numData) return 0;
+            if((int) fread(&data[0], sizeof(int), numData, fp) != numData) return 0;
             if(swap) SwapBytes((char*)&data[0], sizeof(int), numData);
           }
         }

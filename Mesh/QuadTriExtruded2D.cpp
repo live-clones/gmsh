@@ -507,7 +507,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
 
       // count vertices that are on a boundary edge
       int edge_verts_count = 0;
-      int skip_index = 0;
+      //int skip_index = 0;
       int bnd_indices[4];
       for( int p = 0; p < element->getNumVertices(); p++ ){
         if( pos_src_edge.find( element->getVertex(p) ) != pos_src_edge.end() ){
@@ -515,7 +515,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
           bnd_indices[p] = 1;
         }
         else{
-          skip_index = p;
+          //skip_index = p;
           bnd_indices[p] = 0;
         }
       }

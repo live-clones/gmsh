@@ -34,9 +34,9 @@ void dofManager<double>::scatterSolution()
   int index;
   while (MPI_Waitany (Msg::GetCommSize(), &reqRecv[0], &index, &status) == 0 && index != MPI_UNDEFINED) {
     if (status.MPI_TAG == 0)
-      for (int j = 0; j < recvBuf[index].size(); j++) {
+      for (unsigned int j = 0; j < recvBuf[index].size(); j++) {
         ghostValue[ghostByProc[index][j]] = recvBuf[index][j];
-        const Dof &dof = ghostByProc[index][j];
+        //const Dof &dof = ghostByProc[index][j];
       }
   }
   MPI_Waitall (Msg::GetCommSize(), &reqSend[0], MPI_STATUS_IGNORE);

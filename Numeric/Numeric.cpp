@@ -789,12 +789,12 @@ double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
 
   fullVector<double> grad(N);
   fullVector<double> dir(N);
-  double f, feps, finit;
+  double f, feps;//, finit;
 
   for (int iter = 0; iter < MAXIT; iter++){
     // compute gradient of func
     f = func(x, data);
-    if (iter == 0) finit = f;
+    //if (iter == 0) finit = f;
     // printf("Opti iter %d x = (%g %g) f = %g\n",iter,x(0),x(1),f);
     // printf("grad = (");
     for (int j = 0; j < N; j++){
@@ -897,22 +897,22 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
       SVector3 pp2 = p - p2;
       const double t23 = dot(pp2, t3) / n2t3;
       d = 1.e10;
-      bool found = false;
+      //bool found = false;
       SPoint3 closePt;
       if (t12 >= 0 && t12 <= 1.){
         d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));
         closePt = p1 + (p2 - p1) * t12;
-        found = true;
+        //found = true;
       }
       if (t13 >= 0 && t13 <= 1.){
         if (p.distance(p1 + (p3 - p1) * t13) < fabs(d)) closePt = p1 + (p3 - p1) * t13;
         d = sign * std::min(fabs(d), p.distance(p1 + (p3 - p1) * t13));
-        found = true;
+        //found = true;
       }
       if (t23 >= 0 && t23 <= 1.){
         if (p.distance(p2 + (p3 - p2) * t23) < fabs(d)) closePt = p2 + (p3 - p2) * t23;
         d = sign * std::min(fabs(d), p.distance(p2 + (p3 - p2) * t23));
-        found = true;
+        //found = true;
       }
       if (p.distance(p1) < fabs(d)){
         closePt = p1;

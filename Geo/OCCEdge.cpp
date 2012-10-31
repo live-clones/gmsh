@@ -317,8 +317,8 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
     Standard_Real aTol;
     BRep_Builder aBB;
     TopoDS_Edge E;
-    TopAbs_Orientation anOrE;
-    anOrE = c.Orientation();
+    //TopAbs_Orientation anOrE;
+    //anOrE = c.Orientation();
     aTol = BRep_Tool::Tolerance(c);
     E = aEx;
     E.EmptyCopy();

@@ -609,14 +609,14 @@ static void bruteForceEdgeQuadToTriPrism( GRegion *gr, MElement *elem,
   }
 
   // verify number of vertices
-  int n_lat;
+  //int n_lat;
   if( verts.size() != 6 ){
     Msg::Error("In bruteForceEdgeQuadToTriPrism(), number of vertices not equal "
                "6.");
     return;
   }
-  else
-    n_lat = 3;
+  //else
+    //n_lat = 3;
 
 
   // NOTE THAT FACES ARE NUMBERED CONSECUTIVELY FROM 0, starting from vertex 0 and moving around laterally.
@@ -2101,13 +2101,13 @@ static void bruteForceEdgeQuadToTriHexa( GRegion *gr, MElement *elem,
   }
 
   // verify number of vertices
-  int n_lat;
+  //int n_lat;
   if( verts.size() != 8 ){
     Msg::Error("In bruteForceEdgeQuadToTriHexa(), number of vertices not equal 8.");
     return;
   }
-  else
-    n_lat = 4;
+  //else
+    //n_lat = 4;
 
   // numbers of each type of face
   //int num_degen = face_types["degen"].size();
@@ -4315,7 +4315,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
   // need these for double layer extrusion purposes
-  unsigned int j_second_from_top = 0, k_second_from_top = 0;
+  /*unsigned int j_second_from_top = 0, k_second_from_top = 0;
   if( ep ){
     if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
       j_second_from_top = ep->mesh.NbLayer-1;
@@ -4325,7 +4325,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
       j_second_from_top = std::max(ep->mesh.NbLayer-2, 0);
       k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-1;
     }
-  }
+  }*/
 
 
   bool is_problem = false;
@@ -4825,10 +4825,10 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
   int pyramid_top = -1, base_face_1 = -1;
 
   // variables to hold pyramid base corners and diagonal node indices:
-  int b1_diag[2], b2_diag[2], b3_diag[2];
+  /*int b1_diag[2], b2_diag[2], b3_diag[2];
   for( int p = 0; p < 2; p++ ){
     b1_diag[p] = -1-p; b2_diag[p] = -2-p; b3_diag[p] = -3-p;
-  }
+  }*/
 
 
   // find a 3-diag corner
@@ -5494,7 +5494,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
     is_dbl = true;
 
   // Find where top divided layer starts
-  int j_top_start = 0, k_top_start = 0;
+  /*int j_top_start = 0, k_top_start = 0;
   if( is_dbl ){  // second from top
     if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
       j_top_start = ep->mesh.NbLayer-1;
@@ -5508,10 +5508,10 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   else{ // first from top
     j_top_start = ep->mesh.NbLayer-1;
     k_top_start = ep->mesh.NbElmLayer[j_top_start]-1;
-  }
+  }*/
 
   // for one point bd quads
-  int j_second_from_bottom = ep->mesh.NbLayer-1,
+  /*int j_second_from_bottom = ep->mesh.NbLayer-1,
       k_second_from_bottom = ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1;
   if( ep->mesh.NbElmLayer[0] > 1 ){
     j_second_from_bottom = 0;
@@ -5520,7 +5520,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   else if( ep->mesh.NbLayer > 1 ){
     j_second_from_bottom = 1;
     k_second_from_bottom = 0;
-  }
+  }*/
 
 
   // a container for new problem elements (if such new problems are found, there's a bug)

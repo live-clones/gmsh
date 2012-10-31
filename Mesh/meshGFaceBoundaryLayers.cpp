@@ -161,7 +161,7 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
     std::vector<MVertex*> _connections;
     std::vector<SVector3> _dirs;
-    double LL;
+    //double LL;
     for (std::multimap<MVertex*,MVertex*>::iterator itm =
            _columns->_non_manifold_edges.lower_bound(*it);
          itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
@@ -223,7 +223,7 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
     if (_connections.size() == 2){
       MEdge e1 (*it,_connections[0]);
       MEdge e2 (*it,_connections[1]);
-      LL = 0.5 * (e1.length() + e2.length());
+      //LL = 0.5 * (e1.length() + e2.length());
       std::vector<SVector3> N1,N2;
       for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
              _columns->_normals.lower_bound(e1);

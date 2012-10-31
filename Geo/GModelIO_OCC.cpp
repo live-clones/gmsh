@@ -815,10 +815,10 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
           TopTools_ListOfShape listShapeC;
           addSimpleShapes(C, listShapeC);
           TopTools_ListIteratorOfListOfShape itSubC(listShapeC);
-          bool isOnlySolids = true;
+          //bool isOnlySolids = true;
           for(; itSubC.More(); itSubC.Next()) {
             TopoDS_Shape aValueC = itSubC.Value();
-            if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
+            //if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
           }
 	  // if(isOnlySolids)
 	  //   theNewShape = GlueFaces(C, Precision::Confusion());
@@ -874,10 +874,10 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
           TopTools_ListOfShape listShapeC;
           addSimpleShapes(C, listShapeC);
           TopTools_ListIteratorOfListOfShape itSubC(listShapeC);
-          bool isOnlySolids = true;
+          //bool isOnlySolids = true;
           for(; itSubC.More(); itSubC.Next()) {
             TopoDS_Shape aValueC = itSubC.Value();
-            if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
+            //if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
           }
 	  // if(isOnlySolids)
 	  //   theNewShape = GlueFaces(C, Precision::Confusion());

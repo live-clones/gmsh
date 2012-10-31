@@ -133,7 +133,7 @@ static void addToVertexArrays(int length, const char* bytes, int swap)
 static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
 {
 #if defined(HAVE_MPI)
-  int rank = Msg::GetCommRank();
+  //int rank = Msg::GetCommRank();
   int nbDaemon = Msg::GetCommSize();
   // tell every node to start computing
   int mpi_msg = MPI_GMSH_COMPUTE_VIEW;
@@ -147,7 +147,7 @@ static void gatherAndSendVertexArrays(GmshClient* client, bool swap)
     MPI_Status status;
     MPI_Recv(&nbArrays, 1, MPI_INT, MPI_ANY_SOURCE,
              MPI_GMSH_DATA_READY, MPI_COMM_WORLD, &status);
-    int source = status.MPI_SOURCE;
+    //int source = status.MPI_SOURCE;
     // get each varray in turn, then add it to the varrays of
     // the master node
     for (int j = 0; j < nbArrays; j++) {

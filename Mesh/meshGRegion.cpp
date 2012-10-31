@@ -494,12 +494,12 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   }
 
   // TODO: re-create 1D mesh
-  for(int i = 0; i < out.numberofedges; i++){
+  /*for(int i = 0; i < out.numberofedges; i++){
     MVertex *v[2];
     v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
     v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
     //implement here the 1D mesh ...
-  }
+  }*/
 
   bool needParam = (CTX::instance()->mesh.order > 1 &&
                     CTX::instance()->mesh.secondOrderExperimental);

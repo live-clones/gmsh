@@ -1868,12 +1868,12 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
   }
 
   double dist = 1.e22;
-  AttractorField *cc;
+  //AttractorField *cc;
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
        it != _att_fields.end(); ++it){
     double cdist = (*(*it)) (x, y, z);
     if (cdist < dist){
-      cc = *it;
+      //cc = *it;
       dist = cdist;
     }
   }

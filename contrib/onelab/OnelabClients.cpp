@@ -1181,7 +1181,7 @@ std::string getUserHomedir(){
 
 std::string getCurrentWorkdir(){
   char path[MAXPATHLEN];
-  getcwd(path, MAXPATHLEN);
+  if(!getcwd(path, MAXPATHLEN)) return "";
   std::string str = path;
   return str;
 }

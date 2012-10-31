@@ -2093,10 +2093,10 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
   }
   std::set<MEdge,Less_Edge>::iterator it = edges.begin();
   std::list<MEdge> border;
-  bool closed = true;
+  //bool closed = true;
   for ( ; it != edges.end() ; ++it){
     if (it->getVertex(0) == v || it->getVertex(1) == v){
-      closed = false;
+      //closed = false;
     }
     else {
       border.push_back(*it);
@@ -3104,7 +3104,7 @@ Temporary::~Temporary(){}
 
 SVector3 Temporary::compute_gradient(MElement*element)
 {
-  double x1,y1,z1;
+  /*double x1,y1,z1;
   double x2,y2,z2;
   double x3,y3,z3;
   double x,y,z;
@@ -3122,7 +3122,7 @@ SVector3 Temporary::compute_gradient(MElement*element)
   z3 = vertex3->z();
   x = (x1+x2+x3)/3.0;
   y = (y1+y2+y3)/3.0;
-  z = (z1+z2+z3)/3.0;
+  z = (z1+z2+z3)/3.0;*/
   return SVector3(0.0,1.0,0.0);
 }
 
@@ -3170,12 +3170,12 @@ SVector3 Temporary::compute_normal(MElement*element)
 
 SVector3 Temporary::compute_other_vector(MElement*element)
 {
-  int number;
+  //int number;
   double length;
   SVector3 normal;
   SVector3 gradient;
   SVector3 other_vector;
-  number = element->getNum();
+  //number = element->getNum();
   normal = Temporary::compute_normal(element);
   gradient = Temporary::compute_gradient(element);//gradients[number];
   other_vector = crossprod(gradient,normal);
@@ -3185,7 +3185,7 @@ SVector3 Temporary::compute_other_vector(MElement*element)
 
 double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2)
 {
-  int number;
+  //int number;
   double scalar_productA,scalar_productB;
   double alignment;
   SVector3 gradient;
@@ -3193,7 +3193,7 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
   SVector3 edge;
   MVertex*vertexA;
   MVertex*vertexB;
-  number = element1->getNum();
+  //number = element1->getNum();
   gradient = Temporary::compute_gradient(element1);//gradients[number];
   other_vector = Temporary::compute_other_vector(element1);
   vertexA = _edge.getVertex(0);

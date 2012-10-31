@@ -1345,7 +1345,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 
 	// for the Edge, find the left and right vertices of the initial
 	// 1D mesh and interpolate to find (u,v)
-	MVertex *vL = v0;
+	//MVertex *vL = v0;
 	MVertex *vR = v1;
 	double tB = ge->parBounds(0).low();
 	double tE = ge->parBounds(0).high();
@@ -1371,7 +1371,7 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	  }
 	  else{
 	    itL = coordinates.find(vR);
-	    vL = vR;
+	    //vL = vR;
 	    tL = tR;
 	  }
 	  j++;

@@ -1057,7 +1057,7 @@ SVector3 LpCVT::simple(VoronoiElement element,int p){
 
 SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
   int i;
-  double u,v,w;
+  double u;//,v,w;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1086,8 +1086,8 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
 
   for(i=0;i<gauss_num;i++){
     u = gauss_points(i,0);
-	v = gauss_points(i,1);
-	w = gauss_points(i,2);
+	//v = gauss_points(i,1);
+	//w = gauss_points(i,2);
 	weight = gauss_weights(i);
 	rho = rho_cache[i];
 	drho_dx = drho_dx_cache[i];
@@ -1109,7 +1109,7 @@ SVector3 LpCVT::dF_dC1(VoronoiElement element,int p){
 
 SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   int i;
-  double u,v,w;
+  double v;//u,v,w;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1137,9 +1137,9 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
   gz = generator.z();
 
   for(i=0;i<gauss_num;i++){
-    u = gauss_points(i,0);
+    //u = gauss_points(i,0);
 	v = gauss_points(i,1);
-	w = gauss_points(i,2);
+	//w = gauss_points(i,2);
 	weight = gauss_weights(i);
 	rho = rho_cache[i];
 	drho_dx = drho_dx_cache[i];
@@ -1161,7 +1161,7 @@ SVector3 LpCVT::dF_dC2(VoronoiElement element,int p){
 
 SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   int i;
-  double u,v,w;
+  double w;//u,v,w;
   double comp_x,comp_y,comp_z;
   double weight;
   double rho;
@@ -1189,8 +1189,8 @@ SVector3 LpCVT::dF_dC3(VoronoiElement element,int p){
   gz = generator.z();
 
   for(i=0;i<gauss_num;i++){
-    u = gauss_points(i,0);
-	v = gauss_points(i,1);
+    //u = gauss_points(i,0);
+	//v = gauss_points(i,1);
 	w = gauss_points(i,2);
 	weight = gauss_weights(i);
 	rho = rho_cache[i];

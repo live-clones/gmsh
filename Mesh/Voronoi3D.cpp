@@ -99,9 +99,9 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
   double min_x,max_x;
   double min_y,max_y;
   double min_z,max_z;
-  double volume1;
+  //double volume1;
   double volume2;
-  double l1,l2,l3,l4,l5;
+  //double l1,l2,l3,l4,l5;
   voronoicell_neighbor* pointer;
   voronoicell_neighbor cell;
   VoronoiVertex v1,v2,v3,v4;
@@ -132,7 +132,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 
   delta = 0.2*(max_x - min_x);
   container cont(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,false,false,false,vertices.size());
-  volume1 = (max_x-min_x+2.0*delta)*(max_y-min_y+2.0*delta)*(max_z-min_z+2.0*delta);
+  //volume1 = (max_x-min_x+2.0*delta)*(max_y-min_y+2.0*delta)*(max_z-min_z+2.0*delta);
 
   for(i=0;i<vertices.size();i++){
     cont.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z());
@@ -244,7 +244,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 
   volume2 = 0.0;
   for(i=0;i<clipped.size();i++){
-    if(clipped[i].get_v2().get_category()==1){
+    /*if(clipped[i].get_v2().get_category()==1){
 	  l1 = (clipped[i].get_v2().get_point()).distance(clipped[i].get_v1().get_point());
 	  l2 = (clipped[i].get_v2().get_point()).distance(generators[IDs[clipped[i].get_v2().get_index1()]]);
 	  l3 = (clipped[i].get_v2().get_point()).distance(generators[IDs[clipped[i].get_v2().get_index2()]]);
@@ -267,7 +267,7 @@ void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& c
 	  l4 = (clipped[i].get_v4().get_point()).distance(generators[IDs[clipped[i].get_v4().get_index3()]]);
 	  l5 = (clipped[i].get_v4().get_point()).distance(generators[IDs[clipped[i].get_v4().get_index4()]]);
 	  //printf("%f %f %f %f %f %f %f %f %f\n",l1,l2,l3,l4,l5,l1-l2,l1-l3,l1-l4,l1-l5);
-	}
+	}*/
 	clipped[i].compute_jacobian();
 	volume2 = volume2 + fabs(clipped[i].get_jacobian())/6.0;
   }

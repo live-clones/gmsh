@@ -411,7 +411,7 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   const int MaxIter = 25;
   const int NumInitGuess = 11;
 
-  double err, err2;
+  double err;//, err2;
   int iter;
 
   Range<double> uu = parBounds(0);
@@ -428,27 +428,27 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   for(int i = 0; i < NumInitGuess; i++){
     u = init[i];
     double uNew = u;
-    err = 1.0;
+    //err2 = 1.0;
     iter = 1;
 
     SVector3 dPQ = P - Q;
-    err2 = dPQ.norm();
+    err = dPQ.norm();
 
-    if (err2 < 1.e-8 * CTX::instance()->lc) return true;
+    if (err < 1.e-8 * CTX::instance()->lc) return true;
 
-    while(iter++ < MaxIter && err2 > 1e-8 * CTX::instance()->lc) {
+    while(iter++ < MaxIter && err > 1e-8 * CTX::instance()->lc) {
       SVector3 der = firstDer(u);
       uNew = u - relax * dot(dPQ,der) / dot(der,der);
       uNew = std::min(uMax,std::max(uMin,uNew));
       P = position(uNew);
 
       dPQ = P - Q;
-      err2 = dPQ.norm();
-      err = fabs(uNew - u);
+      err = dPQ.norm();
+      //err2 = fabs(uNew - u);
       u = uNew;
     }
 
-    if (err2 < 1e-8 * CTX::instance()->lc) return true;
+    if (err < 1e-8 * CTX::instance()->lc) return true;
   }
 
   if(relax > 1.e-2) {

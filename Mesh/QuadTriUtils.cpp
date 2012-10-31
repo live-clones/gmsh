@@ -496,9 +496,9 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     return 0;
 
   GModel *model = face->model();
-  GEdge *face_source = NULL;
-  if( ep && ep->geo.Mode == EXTRUDED_ENTITY)
-    face_source = model->getEdgeByTag(std::abs(ep->geo.Source));
+  //GEdge *face_source = NULL;
+  //if( ep && ep->geo.Mode == EXTRUDED_ENTITY)
+    //face_source = model->getEdgeByTag(std::abs(ep->geo.Source));
 
   GFace *reg_source = model->getFaceByTag( std::abs(reg_ep->geo.Source) );
 
@@ -540,12 +540,12 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
 
   bool edge_found = false;
   int common_count = 0;
-  GEdge *common_edge = NULL;
+  //GEdge *common_edge = NULL;
   for( ite = region_source_edges.begin(); ite != region_source_edges.end(); ite++){
     if( std::find( face_edges.begin(), face_edges.end(), (*ite) )
          != face_edges.end() ){
       edge_found = true;
-      common_edge = (*ite);
+      //common_edge = (*ite);
       common_count++;
       if( common_count > 1 )
         return 0;

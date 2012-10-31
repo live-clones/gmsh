@@ -761,8 +761,8 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
   if (dot(ne,nc) < 0) dir = 1;
   if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
 
-  int shift = 0;
-  if(is_cut) shift = NE;
+  //int shift = 0;
+  //if(is_cut) shift = NE;
   for (int i= 0; i< NF; i++){
     GFace *gfc ;
     if (is_cut) gfc = current->getFaceByTag(NF+i+1);

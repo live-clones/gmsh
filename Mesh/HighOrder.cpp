@@ -1097,7 +1097,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         vq.push_back(ve[6*nPts + q]);
         vq.push_back(ve[7*nPts + q]);
 
-        int triverts = nPts*(nPts-1)/2;
+        //int triverts = nPts*(nPts-1)/2;
 
         if (nPts-q == 4)
           for (int f = 0; f < 12; f++)

@@ -4608,7 +4608,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
   int numFormats = 0;
-  for(int i = 0; i < strlen(format); i++)
+  for(unsigned int i = 0; i < strlen(format); i++)
     if(format[i] == '%') numFormats++;
   if(!numFormats){
     strcpy(buffer, format);

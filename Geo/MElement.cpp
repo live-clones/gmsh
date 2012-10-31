@@ -755,7 +755,7 @@ void MElement::writeMSH(FILE *fp, bool binary, int entity,
 
   if(!binary){
     fprintf(fp, "%d %d %d %d", num, type, entity, numData);
-    for(unsigned int i = 0; i < numData; i++)
+    for(int i = 0; i < numData; i++)
       fprintf(fp, " %d", data[i]);
     fprintf(fp, "\n");
   }
@@ -1522,7 +1522,7 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   }
 
   std::vector<MVertex*> vertices(numVertices);
-  if(data.size() > startVertices + numVertices - 1){
+  if((int) data.size() > startVertices + numVertices - 1){
     for(int i = 0; i < numVertices; i++){
       int numVertex = data[startVertices + i];
       MVertex *v = model->getMeshVertexByTag(numVertex);
@@ -1551,9 +1551,9 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   }
 
   std::vector<short> ghosts;
-  if(data.size() > startPartitions){
+  if((int) data.size() > startPartitions){
     int numPartitions = data[startPartitions];
-    if(numPartitions > 0 && data.size() > startPartitions + numPartitions - 1){
+    if(numPartitions > 0 && (int) data.size() > startPartitions + numPartitions - 1){
       part = data[startPartitions + 1];
       for(int i = 1; i < numPartitions; i++)
         ghosts.push_back(data[startPartitions + 1 + i]);
