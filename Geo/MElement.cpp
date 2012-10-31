@@ -112,6 +112,7 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
+  if (getType() == TYPE_PYR) return;
   extern double mesh_functional_distorsion(MElement*,double,double);
   if (getPolynomialOrder() == 1) return;
   const bezierBasis *jac = getJacobianFuncSpace()->bezier;
