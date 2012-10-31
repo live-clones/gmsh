@@ -10,7 +10,7 @@
 #include "BasisFactory.h"
 
 int MPyramid::getVolumeSign()
-{ 
+{
   double mat[3][3];
   mat[0][0] = _v[1]->x() - _v[0]->x();
   mat[0][1] = _v[3]->x() - _v[0]->x();
@@ -66,9 +66,6 @@ const nodalBasis* MPyramid::getFunctionSpace(int o) const
   return 0;
 }
 
-
-
-
 MPyramidN::~MPyramidN() {}
 
 double MPyramidN::distoShapeMeasure()
@@ -112,7 +109,7 @@ void MPyramidN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n
 
   // not great, but better than nothing
   static const int f[8] = {0, 1, 0, 2, 2, 3, 2, 3};
-  n[0] = n[1] = getFace(f[iEdge]).normal();  
+  n[0] = n[1] = getFace(f[iEdge]).normal();
 }
 
 
@@ -205,11 +202,9 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     n[1] = n[0];
     n[2] = n[0];
 
-  } else {
-
-
+  }
+  else {
     SPoint3 pnt1, pnt2, pnt3;
-    double J1[3][3], J2[3][3], J3[3][3];
 
     /*
     0
