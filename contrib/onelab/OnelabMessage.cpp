@@ -50,14 +50,6 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 #define vsnprintf _vsnprintf
 #endif
 
-int OLMsg::GetErrorNum(){
-  return _errorCount;
-}
-
-void OLMsg::ResetErrorNum(){
-  _errorCount=0;
-}
-
 void OLMsg::Init(int argc, char **argv)
 {
   time_t now;

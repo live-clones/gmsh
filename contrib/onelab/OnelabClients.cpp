@@ -410,13 +410,25 @@ bool localSolverClient::checkCommandLine(){
 	      getCommandLine().c_str(), getName().c_str());
   if(!isActive()) return true;
 
-  if(!getCommandLine().empty()){
+  if(getCommandLine().empty()){
+    if(OLMsg::hasGmsh) {
+      OLMsg::Error("No command line for client <%s>", getName().c_str());
+      return false; // restores control to gmsh
+    }
+    else{ // asks the user in console mode
+      std::cout << "\nONELAB: Enter pathname of the executable file for <" << getName() << ">" << std::endl;
+      std::string cmdl;
+      std::getline (std::cin,cmdl);
+      setCommandLine(cmdl);
+      return checkCommandLine();
+    }
+  }
+  else{
     if(isNative()){
       setAction("initialize");
-      if(!run()){  // initializes native clients
+      if(!run()){ // initializes native clients, false otherwise
 	OLMsg::Error("Invalid commandline <%s> for client <%s>",
 	   FixExecPath(getCommandLine()).c_str(), getName().c_str());
-	//setCommandLine("");
 	return false;
       }
     }
@@ -425,7 +437,7 @@ bool localSolverClient::checkCommandLine(){
       char cbuf [1024];
       FILE *fp;
       commandLine.assign(FixExecPath(getCommandLine()));
-      cmd.assign("which "+commandLine);
+      cmd.assign(whichCmd + commandLine);
       fp = POPEN(cmd.c_str(), "r");
       if(fgets(cbuf, 1024, fp) == NULL){
 	OLMsg::Error("The executable <%s> does not exist",
@@ -435,20 +447,6 @@ bool localSolverClient::checkCommandLine(){
       }
       OLMsg::Info("The executable <%s> exists", commandLine.c_str());
       PCLOSE(fp);
-      return true;
-    }
-  }
-  else{
-    OLMsg::Error("No commandline for client <%s>", getName().c_str());
-    if(OLMsg::hasGmsh) {
-      return false; // exits metamodel and restores control to gmsh
-    }
-    else{ // asks the user in console mode
-      std::cout << "\nONELAB:Enter the command line (with path) of the executable file of <" << getName() << ">" << std::endl;
-      std::string cmdl;
-      std::getline (std::cin,cmdl);
-      setCommandLine(cmdl);
-      return cmdl.size();
     }
   }
   return true;
@@ -462,11 +460,7 @@ bool localSolverClient::buildRmCommand(std::string &cmd){
     cmd.append("cd " + getWorkingDir() + cmdSep);
 
   if(getList("OutputFiles",choices)){
-#if defined(WIN32)
-    cmd.append("del ");
-#else
-    cmd.append("rm -rf ");
-#endif
+    cmd.append(removeCmd); // defined in OnelabClients.h
     if(choices.size()){
       for(unsigned int i = 0; i < choices.size(); i++)
 	cmd.append(choices[i]+" ");
@@ -635,16 +629,6 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 
 // client METAMODEL
 
-
-bool MetaModel::checkCommandLines(){
-  bool allDefined=true;
-  for(citer it = _clients.begin(); it != _clients.end(); it++){
-    allDefined = allDefined && (*it)->checkCommandLine();
-  }
-  saveCommandLines(genericNameFromArgs);
-  return allDefined;
-}
-
 void MetaModel::construct()
 {
   OLMsg::Info("Metamodel now CONSTRUCTING");
@@ -764,7 +748,7 @@ void InterfacedClient::compute(){
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
@@ -810,7 +794,7 @@ void NativeClient::compute() {
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
@@ -888,7 +872,7 @@ void EncapsulatedClient::compute(){
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
@@ -936,7 +920,7 @@ void RemoteInterfacedClient::compute(){
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s>", getName().c_str());
   setAction("compute");
 
@@ -1001,7 +985,7 @@ void RemoteNativeClient::compute(){
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
   setAction("compute");
 
@@ -1039,7 +1023,7 @@ void RemoteEncapsulatedClient::compute(){
   std::vector<std::string> choices;
 
   analyze();
-  if(OLMsg::GetErrorNum()) return;
+  if(OLMsg::GetErrorCount()) return;
   OLMsg::Info("Computes <%s> changed=%d", getName().c_str());
   setAction("compute");
 
@@ -1174,17 +1158,17 @@ std::string getUserHomedir(){
 #include <direct.h>
 #endif
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
-#endif
+// #ifndef MAXPATHLEN
+// #define MAXPATHLEN 1024
+// #endif
 
-
-std::string getCurrentWorkdir(){
-  char path[MAXPATHLEN];
-  if(!getcwd(path, MAXPATHLEN)) return "";
-  std::string str = path;
-  return str;
-}
+// std::string getCurrentWorkdir(){
+//   char path[MAXPATHLEN];
+//   if(!getcwd(path, MAXPATHLEN)) return "";
+//   std::string str = path;
+//   str.append(dirSep);
+//   return str;
+// }
 
 std::string sanitize(const std::string &in)
 {

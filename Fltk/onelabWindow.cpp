@@ -1416,8 +1416,9 @@ int metamodel_cb(const std::string &name, const std::string &action)
     onelab::number n("IsMetamodel", 1.);
     n.setVisible(false);
     onelab::server::instance()->set(n);
-    std::vector<std::string> split = SplitFileName(name);
-    onelab::string s1("Arguments/WorkingDir", split[0]);
+    std::vector<std::string> split = SplitFileName(name); 
+    onelab::string s1("Arguments/WorkingDir",
+		      split[0].size()?split[0]:getCurrentWorkdir());
     s1.setVisible(false);
     onelab::server::instance()->set(s1);
     onelab::string s2("Arguments/FileName", split[1]);

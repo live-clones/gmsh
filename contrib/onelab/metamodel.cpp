@@ -21,7 +21,7 @@ int metamodel(const std::string &action){
 
   OLMsg::Info("Start metamodel");
   OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
-  OLMsg::ResetErrorNum();
+  OLMsg::ResetErrorCounter();
 
   parseMode todo;
   // if(action == "initialize")
@@ -50,7 +50,7 @@ int metamodel(const std::string &action){
     freopen(mystderr.c_str(),"w",stderr);
   }
 
-  if(OLMsg::GetErrorNum()) myModel->setTodo(EXIT);
+  if(OLMsg::GetErrorCount()) myModel->setTodo(EXIT);
 
   if( myModel->isTodo(ANALYZE)){
     myModel->analyze();
@@ -64,7 +64,7 @@ int metamodel(const std::string &action){
     OLMsg::Error("Main: Unknown Action <%d>", todo);
   delete myModel;
 
-  if((errors=OLMsg::GetErrorNum())){
+  if((errors=OLMsg::GetErrorCount())){
     OLMsg::Error("Leave metamodel - %d errors",errors);
     OLMsg::Info("==============================================");
     return 0;

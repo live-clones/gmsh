@@ -73,8 +73,6 @@ class OLMsg {
   /* static int GetVerbosity(){ return _verbosity; } */
   /* static std::string GetLaunchDate(){ return _launchDate; } */
   /* static std::string GetCommandLineArgs(){ return _commandLine; } */
-  static int GetErrorNum();
-  static void ResetErrorNum();
   static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);
@@ -89,8 +87,11 @@ class OLMsg {
   static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
   static double &Timer(std::string str){ return _timers[str]; }
   static void PrintTimers();
+
   static void ResetErrorCounter(){ _warningCount = 0; _errorCount = 0; }
   static void PrintErrorCounter(const char *title);
+  static int GetErrorCount(){ return _errorCount; }
+
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,

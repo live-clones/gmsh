@@ -228,3 +228,21 @@ int SystemCall(const std::string &command, bool blocking)
   return system(cmd.c_str());
 #endif
 }
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif
+
+std::string getCurrentWorkdir(){
+  char path[MAXPATHLEN];
+  if(!getcwd(path, MAXPATHLEN)) return "";
+  std::string str = path;
+  //match the convention of SplitFileName that delivers directory path
+  //endig with a directory separator
+#if defined(WIN32)
+  str.append("\\");
+#else
+  str.append("/");
+#endif
+  return str;
+}

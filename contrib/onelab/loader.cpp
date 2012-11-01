@@ -272,6 +272,8 @@ int main(int argc, char *argv[]){
       caseName=argv[i];
       modelName.assign(SplitFileName(caseName)[1]);
       workingDir.assign(SplitFileName(caseName)[0]);
+      if(workingDir.empty())
+	workingDir.assign(getCurrentWorkdir());
       i++;
     }
   }

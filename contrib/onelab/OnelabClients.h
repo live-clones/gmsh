@@ -23,9 +23,13 @@ enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 #if defined(WIN32)
 static std::string dirSep("\\");
 static std::string cmdSep(" & ");
+static std::string removeCmd("del ");
+static std::string whichCmd("where ");
 #else
 static std::string dirSep("/");
 static std::string cmdSep(" ; ");
+static std::string removeCmd("rm -rf ");
+static std::string whichCmd("which ");
 #endif
 
 // TOOLS 

@@ -71,6 +71,7 @@ void MetaModel::saveCommandLines(const std::string fileName){
   std::vector<std::string> arguments, buffer;
   size_t cursor, pos;
   std::string loaderPathName=OLMsg::GetOnelabString("LoaderPathName");
+  OLMsg::Info("Save command lines for loader <%s>", loaderPathName.c_str());
 
   std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
   std::ifstream infile(fileNameSave.c_str());
@@ -87,7 +88,7 @@ void MetaModel::saveCommandLines(const std::string fileName){
 	  do{
 	    getline (infile,line);
 	    if(keep) buffer.push_back(line);
-	  } while ((pos=line.find(olkey::olendif)) != std::string::npos);
+	  } while ((pos=line.find(olkey::olendif)) == std::string::npos);
 	}
 	else
 	  OLMsg::Error("Incorrect statement <%s> in <%s>",
@@ -1441,7 +1442,7 @@ void MetaModel::client_sentence(const std::string &name,
 	set(strings[0]);
       }
       localSolverClient *c;
-      if(!OLMsg::GetErrorNum())
+      if(!OLMsg::GetErrorCount())
 	if((c=findClientByName(name)))
 	  if(c->checkCommandLine())
 	    c->analyze();
@@ -1458,7 +1459,7 @@ void MetaModel::client_sentence(const std::string &name,
 	  bool changed = onelab::server::instance()->getChanged(c->getName());
 	  bool started = isStarted(changed);
 
-	  std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorNum() << std::endl;
+	  std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
 	  if(started) c->compute();
 	}
       }
@@ -1541,7 +1542,7 @@ void MetaModel::client_sentence(const std::string &name,
     }
     localSolverClient *c;
     if((c=findClientByName(name))) {
-      if(isTodo(REGISTER) && !OLMsg::GetErrorNum())
+      if(isTodo(REGISTER) && !OLMsg::GetErrorCount())
 	if(onelab::server::instance()->getChanged(c->getName())){
 	  c->compute();
 	  c->GmshMerge(choices);
