@@ -467,7 +467,10 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    // nothing to do
+    updateGraphs();
+    FlGui::instance()->onelab->rebuildTree();
+    FlGui::instance()->onelab->show();
+    return;
   }
 
   if(action == "stop"){
