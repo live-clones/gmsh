@@ -469,7 +469,8 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action == "refresh"){
     updateGraphs();
     FlGui::instance()->onelab->rebuildTree();
-    FlGui::instance()->onelab->show();
+    if(!FlGui::instance()->onelab->shown())
+      FlGui::instance()->onelab->show();
     return;
   }
 
