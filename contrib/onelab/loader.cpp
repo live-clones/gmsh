@@ -217,7 +217,7 @@ bool menu() {
 }
 
 void PrintUsage(const char *name){
-  printf("\nUsage:       %s [-a -i] modelName\n", name);
+  printf("\nUsage:       %s [-a -i -h -v int] modelName\n", name);
   exit(1);
 }
 
@@ -237,7 +237,7 @@ int main(int argc, char *argv[]){
 	i++;
 	launchMenu=true;
       }
-      else if(!strcmp(argv[i] + 1, "onelab")) {
+      else if(!strcmp(argv[i] + 1, "lol")) {
 	std::string clientName=argv[i+1];
 	client = new onelab::remoteNetworkClient(clientName,argv[i+2]);
 	if(client){
@@ -261,11 +261,22 @@ int main(int argc, char *argv[]){
 	    else
 	      OLMsg::Info("No full command line found for <%s>",
 			  clientName.c_str());
+	    //OLMsg::Info("Stopping client <%s>", clientName.c_str());
 	  }
-	  OLMsg::Info("Stopping client <%s>", clientName.c_str());
 	  delete client;
 	}
 	exit(1);
+      }
+      else if(!strcmp(argv[i] + 1, "v")) {
+        i++;
+        if(argv[i])
+          OLMsg::SetVerbosity(atoi(argv[i++]));
+        else
+          OLMsg::Fatal("Missing number");
+      }
+      else {
+	i++;
+	PrintUsage(argv[0]);
       }
     }
     else {

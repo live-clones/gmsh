@@ -18,40 +18,41 @@ class onelabMetaModelServer : public GmshServer{
     : GmshServer(), _client(client) {}
   ~onelabMetaModelServer(){}
 
-  int NonBlockingSystemCall(const char *command)
-  {
-#if defined(WIN32)
-    STARTUPINFO suInfo;
-    PROCESS_INFORMATION prInfo;
-    memset(&suInfo, 0, sizeof(suInfo));
-    suInfo.cb = sizeof(suInfo);
-    std::string cmd(command);
-    OLMsg::Info("Calling <%s>", cmd.c_str());
-    // DETACHED_PROCESS removes the console (useful if the program to launch is
-    // a console-mode exe)
-    CreateProcess(NULL,(char *)cmd.c_str(), NULL, NULL, FALSE,
-		  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-		  &suInfo, &prInfo);
-    return 0;
-#else
-    if(!system(NULL)) {
-      OLMsg::Error("Could not find /bin/sh: aborting system call");
-      return 1;
-    }
-    std::string cmd(command);
-    size_t pos;
-    if((pos=cmd.find("incomp_ssh ")) != std::string::npos){
-      cmd.assign(cmd.substr(pos+7));  // remove "incomp_"
-      cmd.append(" & '");
-    }
-    else
-      cmd.append(" & ");
+//   int NonBlockingSystemCall(const char *command)
+//   {
+// #if defined(WIN32)
+//     STARTUPINFO suInfo;
+//     PROCESS_INFORMATION prInfo;
+//     memset(&suInfo, 0, sizeof(suInfo));
+//     suInfo.cb = sizeof(suInfo);
+//     std::string cmd(command);
+//     OLMsg::Info("Calling <%s>", cmd.c_str());
+//     // DETACHED_PROCESS removes the console (useful if the program to launch is
+//     // a console-mode exe)
+//     CreateProcess(NULL,(char *)cmd.c_str(), NULL, NULL, FALSE,
+// 		  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
+// 		  &suInfo, &prInfo);
+//     return 0;
+// #else
+//     if(!system(NULL)) {
+//       OLMsg::Error("Could not find /bin/sh: aborting system call");
+//       return 1;
+//     }
+//     std::string cmd(command);
+//     size_t pos;
+//     if((pos=cmd.find("incomp_ssh ")) != std::string::npos){
+//       cmd.assign(cmd.substr(pos+7));  // remove "incomp_"
+//       cmd.append(" & '");
+//     }
+//     else
+//       cmd.append(" & ");
 
-    OLMsg::Info("Calling <%s>", cmd.c_str());
-    return system(cmd.c_str());
-#endif
-  }// non blocking
+//     OLMsg::Info("Calling <%s>", cmd.c_str());
+//     return system(cmd.c_str());
+// #endif
+//   }// non blocking
 
+  int NonBlockingSystemCall(const char *str){ return SystemCall(str); }
   int NonBlockingWait(int socket, double waitint, double timeout)
   {
     double start = GetTimeInSeconds();
@@ -66,16 +67,6 @@ class onelabMetaModelServer : public GmshServer{
       // return immediately, i.e., do polling)
       int ret = Select(0, 0, socket);
       if(ret == 0){ // nothing available
-        // if asked, refresh the onelab GUI
-        // std::vector<onelab::string> ps;
-        // onelab::server::instance()->get(ps, "Gmsh/Action");
-        // if(ps.size() && ps[0].getValue() == "refresh"){
-        //   ps[0].setVisible(false);
-        //   ps[0].setValue("");
-        //   onelab::server::instance()->set(ps[0]);
-        //   onelab_cb(0, (void*)"refresh");
-        //}
-
         // wait at most waitint seconds and respond to FLTK events
 	//FlGui::instance()->wait(waitint);
 	void (*waitFct)(double) = OLMsg::GetGuiWaitFunction();
@@ -160,6 +151,7 @@ bool localNetworkSolverClient::run()
     sockname = tmp.str();
   }
 
+  _socketMsg = OLMsg::GetOnelabNumber("SHOWSOCKETMESSAGES")?true:false;
   std::string command = buildCommandLine();
   if(command.size()) command.append(appendArguments());
 
@@ -178,7 +170,7 @@ bool localNetworkSolverClient::run()
     return false;
   }
 
-  OLMsg::StatusBar(2, true, "Now running client <%s>", _name.c_str());
+  //OLMsg::StatusBar(2, true, "Now running client <%s>", _name.c_str());
 
   while(1) {
     if(_pid < 0) break;
@@ -193,16 +185,16 @@ bool localNetworkSolverClient::run()
       OLMsg::Error("Did not receive message header: stopping server");
       break;
     }
-     // else
-     //   std::cout << "FHF: Received header=" << type << std::endl;
+    else if(_socketMsg)
+      OLMsg::Info("Received header <%d>",type);
 
     std::string message(length, ' ');
     if(!server->ReceiveMessage(length, &message[0])){
       OLMsg::Error("Did not receive message body: stopping server");
       break;
     }
-    //else
-    //  std::cout << "FHF: Received message=" << message << std::endl;
+    else if(_socketMsg)
+      OLMsg::Info("Received message <%s>",message.c_str());
 
     switch (type) {
     case GmshSocket::GMSH_START:
@@ -405,6 +397,11 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
     return false;
 }
 
+
+/*
+si cmd est un path, vérifier la présence du fichier
+sinon faire un which (n'existe pas sous WIN)
+ */
 bool localSolverClient::checkCommandLine(){
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
@@ -437,7 +434,8 @@ bool localSolverClient::checkCommandLine(){
       char cbuf [1024];
       FILE *fp;
       commandLine.assign(FixExecPath(getCommandLine()));
-      cmd.assign(whichCmd + commandLine);
+#if !defined(WIN32)
+      cmd.assign("which " + commandLine);
       fp = POPEN(cmd.c_str(), "r");
       if(fgets(cbuf, 1024, fp) == NULL){
 	OLMsg::Error("The executable <%s> does not exist",
@@ -445,8 +443,11 @@ bool localSolverClient::checkCommandLine(){
 	PCLOSE(fp);
 	return false;
       }
-      OLMsg::Info("The executable <%s> exists", commandLine.c_str());
+      else 
+	commandLine.assign(cbuf);
       PCLOSE(fp);
+#endif
+      return checkIfPresent(sanitizeString(commandLine,"\n"));
     }
   }
   return true;
@@ -570,11 +571,6 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
     std::string fullName = wdir+trueName;
     if(checkIfPresent(fullName)){
       cmd.assign("rsync -e ssh -auv "+fullName+" "+_remoteHost+":"+_remoteDir+"/"+trueName);
-// #if defined(WIN32)
-//       Sleep((int)(OLMsg::GetOnelabNumber("RSYNCDELAY")*1000));
-// #else
-//       sleep(OLMsg::GetOnelabNumber("RSYNCDELAY"));
-// #endif
       SleepInSeconds(OLMsg::GetOnelabNumber("RSYNCDELAY"));
       return mySystem(cmd);
     }
@@ -775,7 +771,6 @@ void InterfacedClient::compute(){
       checkIfPresentLocal(choices[i]);
     }
   }
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 // NATIVE Client
@@ -815,7 +810,6 @@ void NativeClient::compute() {
       checkIfPresentLocal(choices[i]);
     }
   }
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 // ENCAPSULATED Client
@@ -863,7 +857,7 @@ void EncapsulatedClient::convert() {
 
 std::string EncapsulatedClient::buildCommandLine(){
   std::string cmd= FixExecPath(OLMsg::GetOnelabString("LoaderPathName"));
-  OLMsg::Info("command line=<%s>",cmd.c_str());
+  OLMsg::Info("Loader pathname=<%s>",cmd.c_str());
   return cmd;
 }
 
@@ -886,17 +880,16 @@ void EncapsulatedClient::compute(){
 
   if(buildRmCommand(cmd)) mySystem(cmd);
 
-  // the client command line is buit and stored in a onelab parameter
+  // the client command line is built and stored in a onelab parameter
   cmd.assign("");
-  if(!getWorkingDir().empty())
-    cmd.append("cd " + getWorkingDir() + cmdSep);
+  // if(!getWorkingDir().empty())
+  //   cmd.append("cd " + getWorkingDir() + cmdSep);
   cmd.append(FixExecPath(getCommandLine()));
   cmd.append(" " + getString("Arguments"));
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
-
-  // the encapsulating localNetworkClient is called
   OLMsg::Info("Command line=<%s>",cmd.c_str());
 
+  // the encapsulating localNetworkClient is called
   if(!run())
     OLMsg::Error("Invalid commandline <%s> for client <%s>",
 		 FixExecPath(getCommandLine()).c_str(), getName().c_str());
@@ -906,7 +899,6 @@ void EncapsulatedClient::compute(){
       checkIfPresentLocal(choices[i]);
     }
   }
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 // REMOTE INTERFACED Client
@@ -942,8 +934,6 @@ void RemoteInterfacedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++)
       syncOutputFile(getWorkingDir(),choices[i]);
   }
-
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 
@@ -1007,8 +997,6 @@ void RemoteNativeClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++)
       syncOutputFile(getWorkingDir(),choices[i]);
   }
-
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 
@@ -1056,8 +1044,6 @@ void RemoteEncapsulatedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++)
       syncOutputFile(getWorkingDir(),choices[i]);
   }
-
-  OLMsg::Info("Client %s completed",getName().c_str());
 }
 
 
@@ -1170,9 +1156,18 @@ std::string getUserHomedir(){
 //   return str;
 // }
 
+std::string sanitizeString(const std::string &in, const std::string &forbidden)
+{
+  std::string out;
+  for(unsigned int i = 0; i < in.size(); i++)
+    if ( forbidden.find(in[i]) == std::string::npos)
+      out.push_back(in[i]);
+  return out;
+}
+
 std::string sanitize(const std::string &in)
 {
-  std::string out, forbidden(" ();");
+  std::string out, forbidden(" ();\n");
   for(unsigned int i = 0; i < in.size(); i++)
     if ( forbidden.find(in[i]) == std::string::npos)
       out.push_back(in[i]);

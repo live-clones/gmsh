@@ -11,7 +11,6 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *olclient
   //Initilizes also the wait function the Gmsh Gui
   //so that Gmsh windows may remain active during client computations.
   OLMsg::SetOnelabClient(olclient);
-  OLMsg::Info("I can now communicate with gmsh");
   OLMsg::SetOnelabString("LoaderPathName",loaderName,false);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
 }
@@ -24,9 +23,6 @@ int metamodel(const std::string &action){
   OLMsg::ResetErrorCounter();
 
   parseMode todo;
-  // if(action == "initialize")
-  //   todo = INITIALIZE;
-
   if(action == "compute")
     todo = COMPUTE;
   else{

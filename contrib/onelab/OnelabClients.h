@@ -41,6 +41,7 @@ int mySystem(std::string commandLine);
 std::string getCurrentWorkdir();
 std::string getUserHomedir();
 std::string sanitize(const std::string &in);
+std::string sanitizeString(const std::string &in, const std::string &forbidden);
 std::string removeBlanks(const std::string &in);
 bool isPath(const std::string &in);
 std::string FixWindowsQuotes(const std::string &in);
@@ -186,10 +187,12 @@ class localNetworkSolverClient : public localSolverClient{
   GmshServer *_gmshServer;
   // flag indicating if the client is a remote one
   bool _remote;
+  // flag indicating whether socket communication should be shown
+  bool _socketMsg;
  public:
  localNetworkSolverClient(const std::string &name, const std::string &cmdl, const std::string &wdir)
    : localSolverClient(name,cmdl,wdir), _socketSwitch("-onelab"),
-    _pid(-1), _gmshServer(0), _remote(false) {}
+    _pid(-1), _gmshServer(0), _remote(false), _socketMsg(false) {}
   virtual ~localNetworkSolverClient(){}
   virtual bool isNetworkClient(){ return true; }
   const std::string &getSocketSwitch(){ return _socketSwitch; }

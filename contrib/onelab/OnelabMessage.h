@@ -69,8 +69,8 @@ class OLMsg {
   /* static int GetNumThreads(); */
   /* static int GetMaxThreads(); */
   /* static int GetThreadNum(); */
-  /* static void SetVerbosity(int val){ _verbosity = val; } */
-  /* static int GetVerbosity(){ return _verbosity; } */
+  static void SetVerbosity(int val){ _verbosity = val; }
+  static int GetVerbosity(){ return _verbosity; }
   /* static std::string GetLaunchDate(){ return _launchDate; } */
   /* static std::string GetCommandLineArgs(){ return _commandLine; } */
   static void Fatal(const char *fmt, ...);
@@ -128,13 +128,6 @@ class OLMsg {
 				      std::map<std::string,
 				      std::vector<std::string> > &copt);
   static void MergeFile(const std::string &name);
-
-  //static void AddOnelabNumberChoice(std::string name, double val);
-  // communication with loader
-  //static onelab::remoteNetworkClient *loader;
-  //static int Synchronize_Down();
-  //static int Synchronize_Up();
-
   static bool hasGmsh;
   static void recordFullName(const std::string &name);
   static std::string obtainFullName(const std::string &name);

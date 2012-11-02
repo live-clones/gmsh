@@ -105,7 +105,7 @@ void MetaModel::saveCommandLines(const std::string fileName){
     outfile << "(LoaderPathName) == ";
     outfile << loaderPathName << ")" << std::endl;
     for(citer it = _clients.begin(); it != _clients.end(); it++)
-      if((*it)->checkCommandLine())
+      //if((*it)->checkCommandLine())
 	 outfile << (*it)->toChar();
     outfile << olkey::olendif << std::endl;
 
@@ -1350,9 +1350,6 @@ void MetaModel::client_sentence(const std::string &name,
 	    set(str);
 	  }
 	}
-
-	if((!type.compare(0,6,"encaps")) && (!OLMsg::hasGmsh))
-	  type.assign("interf");
 	registerClient(name,type,cmdl,host,rdir);
       }
       else
@@ -1377,8 +1374,10 @@ void MetaModel::client_sentence(const std::string &name,
   else if(!action.compare("active")){
     localSolverClient *c;
     if(arguments[0].size()){
-      if((c=findClientByName(name)))
+      if((c=findClientByName(name))){
 	c->setActive(atof( resolveGetVal(arguments[0]).c_str() ));
+	onelab::server::instance()->setChanged(true, c->getName());
+      }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
@@ -1536,23 +1535,23 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else if(!action.compare("frontPage")){
-    std::vector<std::string> choices;
-    for(unsigned int i = 0; i < arguments.size(); i++){
-      choices.push_back(resolveGetVal(arguments[i]));
+    if(OLMsg::hasGmsh){
+      std::vector<std::string> choices;
+      for(unsigned int i = 0; i < arguments.size(); i++){
+	choices.push_back(resolveGetVal(arguments[i]));
+      }
+      localSolverClient *c;
+      if((c=findClientByName(name))) {
+	if(isTodo(REGISTER) && !OLMsg::GetErrorCount())
+	  if(onelab::server::instance()->getChanged(c->getName())){
+	    c->compute();
+	    c->GmshMerge(choices);
+	    OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
+	    //onelab::server::instance()->setChanged(false, c->getName());
+	  }
+      }
+      else
+	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
-    localSolverClient *c;
-    if((c=findClientByName(name))) {
-      if(isTodo(REGISTER) && !OLMsg::GetErrorCount())
-	if(onelab::server::instance()->getChanged(c->getName())){
-	  c->compute();
-	  c->GmshMerge(choices);
-	  OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
-	  //onelab::server::instance()->setChanged(false, c->getName());
-	}
-    }
-    else
-      OLMsg::Error("Unknown client <%s>", name.c_str());
   }
-  else
-    OLMsg::Error("Unknown action <%s>",action.c_str());
 }
