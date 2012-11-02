@@ -582,22 +582,13 @@ int openglWindow::handle(int event)
         else if(faces.size()) ge = faces[0];
         else if(regions.size()) ge = regions[0];
         MElement *me = elements.size() ? elements[0] : 0;
-        static char text[1024] = "";
-        sprintf(text, "%s %s", ge ? ge->getInfoString().c_str() : "",
-                me ? me->getInfoString().c_str() : "");
-        if(CTX::instance()->tooltips){
-          Fl_Tooltip::exit(0);
-          double d1 = Fl_Tooltip::delay();
-          double d2 = Fl_Tooltip::hoverdelay();
-          Fl_Tooltip::delay(0);
-          Fl_Tooltip::hoverdelay(0);
-          if(strlen(text) > 3)
-            Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, text);
-          Fl_Tooltip::delay(d1);
-          Fl_Tooltip::hoverdelay(d2);
-        }
+        std::string text;
+        if(ge) text += ge->getInfoString();
+        if(me) text += me->getInfoString();
+        if(CTX::instance()->tooltips)
+          drawTooltip(text);
         else
-          Msg::StatusBar(2, false, text);
+          Msg::StatusBar(2, false, text.c_str());
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());
@@ -694,4 +685,21 @@ char openglWindow::selectEntity(int type,
       }
     }
   }
+}
+
+void openglWindow::drawTooltip(const std::string &text)
+{
+  static char str[1024];
+  strncpy(str, text.c_str(), sizeof(str));
+  Fl_Tooltip::exit(0);
+  bool enabled = Fl_Tooltip::enabled();
+  if(!enabled) Fl_Tooltip::enable();
+  double d1 = Fl_Tooltip::delay();
+  double d2 = Fl_Tooltip::hoverdelay();
+  Fl_Tooltip::delay(0);
+  Fl_Tooltip::hoverdelay(0);
+  Fl_Tooltip::enter_area(this, _curr.win[0], _curr.win[1], 100, 50, str);
+  Fl_Tooltip::delay(d1);
+  Fl_Tooltip::hoverdelay(d2);
+  if(!enabled) Fl_Tooltip::disable();
 }

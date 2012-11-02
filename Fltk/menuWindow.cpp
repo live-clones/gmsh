@@ -1790,6 +1790,63 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   Msg::StatusBar(3, false, "");
 }
 
+static std::vector<std::string> getInfoStrings(MElement *ele)
+{
+  std::vector<std::string> info;
+  {
+    std::ostringstream sstream;
+    sstream << "Element " << ele->getNum() << ":";
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    const char *name;
+    MElement::getInfoMSH(ele->getTypeForMSH(), &name);
+    sstream << " " << name
+            << " (MSH type " << ele->getTypeForMSH()
+            << ", dimension "<< ele->getDim()
+            << ", order "<< ele->getPolynomialOrder()
+            << ", partition " << ele->getPartition()
+            << ")";
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream << " Vertices:";
+    for(int i = 0; i < ele->getNumVertices(); i++)
+      sstream << " " << ele->getVertex(i)->getNum();
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    SPoint3 pt = ele->barycenter();
+    sstream << " Barycenter: (" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream << " Quality: "
+            << "rho = " << ele->rhoShapeMeasure() << " "
+            << "gamma = " << ele->gammaShapeMeasure() << " "
+            << "eta = " << ele->etaShapeMeasure();
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    double jmin, jmax;
+    ele->scaledJacRange(jmin, jmax);
+    sstream << " Scaled Jacobian range: " << jmin << " " << jmax;
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream << " Inner / outer radius: "
+            << ele->getInnerRadius() << " / " << ele->getOuterRadius();
+    info.push_back(sstream.str());
+  }
+  return info;
+}
+
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->pickElements = 1;
@@ -1804,33 +1861,19 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         MElement *ele = FlGui::instance()->selectedElements[0];
         GModel::current()->setSelection(0);
         ele->setVisibility(2);
-        Msg::Direct("Element %d:", ele->getNum());
-        int type = ele->getTypeForMSH();
-        const char *name;
-        MElement::getInfoMSH(type, &name);
-        Msg::Direct("  Type: %d ('%s')", type, name);
-        Msg::Direct("  Dimension: %d", ele->getDim());
-        Msg::Direct("  Order: %d", ele->getPolynomialOrder());
-        Msg::Direct("  Partition: %d", ele->getPartition());
-        char tmp1[32], tmp2[512];
-        sprintf(tmp2, "  Vertices:");
-        for(int i = 0; i < ele->getNumVertices(); i++){
-          sprintf(tmp1, " %d", ele->getVertex(i)->getNum());
-          strcat(tmp2, tmp1);
-        }
-        Msg::Direct(tmp2);
-        SPoint3 pt = ele->barycenter();
-        Msg::Direct("  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
-        Msg::Direct("  Rho: %g", ele->rhoShapeMeasure());
-        Msg::Direct("  Gamma: %g", ele->gammaShapeMeasure());
-        Msg::Direct("  Eta: %g", ele->etaShapeMeasure());
-        double jmin, jmax; ele->scaledJacRange(jmin, jmax);
-        Msg::Direct("  Scaled Jacobian Range: %g %g", jmin, jmax);
-        Msg::Direct("  Inner / outer radius: %g / %g",
-                    ele->getInnerRadius(), ele->getOuterRadius());
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
-        FlGui::instance()->showMessages();
+        std::vector<std::string> info = getInfoStrings(ele);
+        for(unsigned int i = 0; i < info.size(); i++)
+          Msg::Direct("%s", info[i].c_str());
+        if(CTX::instance()->tooltips){
+          std::string str;
+          for(unsigned int i = 0; i < info.size(); i++)
+            str += info[i] + "\n";
+          FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
+        }
+        else
+          FlGui::instance()->showMessages();
       }
     }
     if(ib == 'q') {

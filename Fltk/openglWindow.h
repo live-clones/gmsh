@@ -44,12 +44,13 @@ class openglWindow : public Fl_Gl_Window {
   openglWindow(int x, int y, int w, int h, const char *l=0);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
-  char selectEntity(int type, 
+  char selectEntity(int type,
                     std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
                     std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
                     std::vector<MElement*> &elements);
   static openglWindow *getLastHandled(){ return _lastHandled; }
   static void setLastHandled(openglWindow *w){ _lastHandled = w; }
+  void drawTooltip(const std::string &text);
 };
 
 #endif
