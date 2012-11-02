@@ -34,7 +34,9 @@ static void saturate(int nb, double **val, double vmin, double vmax,
   }
 }
 
-static double saturateVector(double *val, int numComp2, double *val2, double min, double max) {
+static double saturateVector(double *val, int numComp2, double *val2,
+                             double min, double max)
+{
   double v = ComputeScalarRep(numComp2, val2);  // v >= 0
   if (v < min && v > 1e-15) {
     double f = min / v;
@@ -639,7 +641,7 @@ static void addScalarQuadrangle(PView *p, double **xyz,
 }
 
 static void addOutlinePolygon(PView *p, double **xyz,
-                                  unsigned int color, bool pre, int numNodes)
+                              unsigned int color, bool pre, int numNodes)
 {
   for(int i = 0; i < numNodes / 3; i++)
     addOutlineTriangle(p, xyz, color, pre, 3*i, 3*i + 1, 3*i + 2);
@@ -669,7 +671,7 @@ static void addScalarPolygon(PView *p, double **xyz,
     }
 
     opt->boundary--;
-    for(std::map<MEdge, int, Less_Edge>::iterator ite = edges.begin(); 
+    for(std::map<MEdge, int, Less_Edge>::iterator ite = edges.begin();
         ite != edges.end(); ite++){
       int i = (int) (*ite).second / 100;
       int j = (*ite).second % 100;
@@ -794,8 +796,8 @@ static void addOutlinePrism(PView *p, double **xyz, unsigned int color,
   for(int i = 0; i < 2; i++)
     addOutlineTriangle(p, xyz, color, pre, it[i][0], it[i][1], it[i][2]);
 }
-static void addScalarPrism(PView *p, double **xyz,
-                           double **val, bool pre)
+
+static void addScalarPrism(PView *p, double **xyz, double **val, bool pre)
 {
   PViewOptions *opt = p->getOptions();
   const int iq[3][4] = {{0, 1, 4, 3}, {0, 3, 5, 2}, {1, 2, 5, 4}};
@@ -996,7 +998,9 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
   if(opt->glyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
-      double v2 = opt->saturateValues ? saturateVector(val[i], numComp2, val2[i], opt->externalMin, opt->externalMax) : ComputeScalarRep(numComp2, val2[i]);
+      double v2 = opt->saturateValues ?
+        saturateVector(val[i], numComp2, val2[i], opt->externalMin, opt->externalMax) :
+        ComputeScalarRep(numComp2, val2[i]);
       if(v2 >= opt->externalMin && v2 <= opt->externalMax){
         unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
                                            (opt->intervalsType == PViewOptions::Discrete) ?
@@ -1028,7 +1032,9 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
 
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
-    double v2 = opt->saturateValues ? saturateVector(d, numComp2, d2, opt->externalMin, opt->externalMax) : ComputeScalarRep(numComp2, d2);
+    double v2 = opt->saturateValues ?
+      saturateVector(d, numComp2, d2, opt->externalMin, opt->externalMax) :
+      ComputeScalarRep(numComp2, d2);
     if(v2 >= opt->externalMin * (1. - 1.e-15) &&
        v2 <= opt->externalMax * (1. + 1.e-15)){
       unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
@@ -1115,7 +1121,9 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     }
   }
   else {
-    double **vval[3] = {new double*[numNodes], new double*[numNodes], new double*[numNodes]};
+    double **vval[3] = {new double*[numNodes],
+                        new double*[numNodes],
+                        new double*[numNodes]};
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < numNodes; j++)
         vval[i][j] = new double[3];
