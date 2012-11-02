@@ -745,7 +745,7 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   _gearOptionsStart = _gear->menu()->size();
 
-  _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
+  _gear->add("Save && load database automatically", 0, onelab_option_cb, (void*)"save",
              FL_MENU_TOGGLE);
   _gear->add("Archive output files automatically", 0, onelab_option_cb, (void*)"archive",
              FL_MENU_TOGGLE);
@@ -1388,8 +1388,10 @@ void solver_cb(Fl_Widget *w, void *data)
   else
     FlGui::instance()->onelab->rebuildSolverList();
 
-  std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-  if(!StatFile(db)) loadDb(db);
+  if(CTX::instance()->solver.autoSaveDatabase){
+    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(!StatFile(db)) loadDb(db);
+  }
 
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
@@ -1416,7 +1418,7 @@ int metamodel_cb(const std::string &name, const std::string &action)
     onelab::number n("IsMetamodel", 1.);
     n.setVisible(false);
     onelab::server::instance()->set(n);
-    std::vector<std::string> split = SplitFileName(name); 
+    std::vector<std::string> split = SplitFileName(name);
     onelab::string s1("Arguments/WorkingDir",
 		      split[0].size()?split[0]:getCurrentWorkdir());
     s1.setVisible(false);
