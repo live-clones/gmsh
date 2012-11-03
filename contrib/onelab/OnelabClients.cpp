@@ -18,40 +18,6 @@ class onelabMetaModelServer : public GmshServer{
     : GmshServer(), _client(client) {}
   ~onelabMetaModelServer(){}
 
-//   int NonBlockingSystemCall(const char *command)
-//   {
-// #if defined(WIN32)
-//     STARTUPINFO suInfo;
-//     PROCESS_INFORMATION prInfo;
-//     memset(&suInfo, 0, sizeof(suInfo));
-//     suInfo.cb = sizeof(suInfo);
-//     std::string cmd(command);
-//     OLMsg::Info("Calling <%s>", cmd.c_str());
-//     // DETACHED_PROCESS removes the console (useful if the program to launch is
-//     // a console-mode exe)
-//     CreateProcess(NULL,(char *)cmd.c_str(), NULL, NULL, FALSE,
-// 		  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-// 		  &suInfo, &prInfo);
-//     return 0;
-// #else
-//     if(!system(NULL)) {
-//       OLMsg::Error("Could not find /bin/sh: aborting system call");
-//       return 1;
-//     }
-//     std::string cmd(command);
-//     size_t pos;
-//     if((pos=cmd.find("incomp_ssh ")) != std::string::npos){
-//       cmd.assign(cmd.substr(pos+7));  // remove "incomp_"
-//       cmd.append(" & '");
-//     }
-//     else
-//       cmd.append(" & ");
-
-//     OLMsg::Info("Calling <%s>", cmd.c_str());
-//     return system(cmd.c_str());
-// #endif
-//   }// non blocking
-
   int NonBlockingSystemCall(const char *str){ return SystemCall(str); }
   int NonBlockingWait(int socket, double waitint, double timeout)
   {
@@ -397,15 +363,11 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
     return false;
 }
 
-
-/*
-si cmd est un path, vérifier la présence du fichier
-sinon faire un which (n'existe pas sous WIN)
- */
 bool localSolverClient::checkCommandLine(){
+  bool success=true;
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
-  if(!isActive()) return true;
+  if(!isActive()) return success;
 
   if(getCommandLine().empty()){
     if(OLMsg::hasGmsh) {
@@ -421,36 +383,41 @@ bool localSolverClient::checkCommandLine(){
     }
   }
   else{
-    if(isNative()){
+    if(isNative()){ // check done by initializing of the client
       setAction("initialize");
       if(!run()){ // initializes native clients, false otherwise
 	OLMsg::Error("Invalid commandline <%s> for client <%s>",
 	   FixExecPath(getCommandLine()).c_str(), getName().c_str());
-	return false;
+	success=false;
       }
     }
-    else{
+    else{ // check whether the executable exists as a file
       std::string cmd,commandLine;
       char cbuf [1024];
       FILE *fp;
       commandLine.assign(FixExecPath(getCommandLine()));
 #if !defined(WIN32)
+      // resolve a possible link or alias
       cmd.assign("which " + commandLine);
       fp = POPEN(cmd.c_str(), "r");
       if(fgets(cbuf, 1024, fp) == NULL){
 	OLMsg::Error("The executable <%s> does not exist",
 		       commandLine.c_str());
 	PCLOSE(fp);
-	return false;
+	success=false;
       }
-      else 
-	commandLine.assign(cbuf);
+      else
+	commandLine.assign(sanitizeString(cbuf,"\n"));
       PCLOSE(fp);
 #endif
-      return checkIfPresent(sanitizeString(commandLine,"\n"));
+      success=checkIfPresent(commandLine);
     }
   }
-  return true;
+  if(success)
+    OLMsg::SetOnelabString(getName()+"/CommandLine",getCommandLine(),false);
+  else
+    setCommandLine("");
+  return success;
 }
 
 bool localSolverClient::buildRmCommand(std::string &cmd){
@@ -1051,6 +1018,7 @@ void RemoteEncapsulatedClient::compute(){
 // ONELAB additional TOOLS (no access to server in tools)
 // options for 'onelab_client'
 
+/*
 int getOptions(int argc, char *argv[], parseMode &todo, std::string &commandLine, std::string &caseName, std::string &clientName, std::string &sockName){
 
   commandLine=argv[0];
@@ -1097,6 +1065,7 @@ int getOptions(int argc, char *argv[], parseMode &todo, std::string &commandLine
   }
   return(1);
 }
+*/
 
 std::string itoa(const int i){
   std::ostringstream tmp;

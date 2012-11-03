@@ -1345,7 +1345,7 @@ void MetaModel::client_sentence(const std::string &name,
 	    onelab::string str;
 	    str.setName(name + "/CommandLine");
 	    str.setKind("file");
-	    str.setVisible(cmdl.empty());
+	    //str.setVisible(cmdl.empty());
 	    str.setAttribute("Highlight","Ivory");
 	    set(str);
 	  }
@@ -1483,7 +1483,7 @@ void MetaModel::client_sentence(const std::string &name,
 	  }
 	}
       }
-      else if(isTodo(COMPUTE)){
+      else if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount()){
 	std::vector<std::string> choices;
 	for(unsigned int i = 0; i < arguments.size(); i++){
 	  std::string str=resolveGetVal(arguments[i]);
@@ -1498,20 +1498,10 @@ void MetaModel::client_sentence(const std::string &name,
       OLMsg::Error("Wrong number of arguments <%d> for <%s>",
 		 arguments.size(), action.c_str());
   }
-  // else if(!action.compare("check")){
-  //   localSolverClient *c;
-  //   if((c=findClientByName(name))){
-  //     c->checkCommandLine();
-  //     c->analyze();
-  //   }
-  //   else
-  //     OLMsg::Error("Unknown client <%s>", name.c_str());
-  // }
   else if(!action.compare("alwaysCompute")){
     if(isTodo(ANALYZE)){
       localSolverClient *c;
       if((c=findClientByName(name))){
-	//c->checkCommandLine();
 	c->compute();
 	onelab::server::instance()->setChanged(false, c->getName());
       }
@@ -1520,7 +1510,7 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else if(!action.compare("merge")){
-    if(isTodo(COMPUTE)){
+    if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount()){
       std::vector<std::string> choices;
       for(unsigned int i = 0; i < arguments.size(); i++){
 	choices.push_back(resolveGetVal(arguments[i]));

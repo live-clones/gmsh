@@ -33,7 +33,7 @@ static std::string whichCmd("which ");
 #endif
 
 // TOOLS 
-int getOptions(int argc, char *argv[], parseMode &todo, std::string &commandLine, std::string &caseName, std::string &clientName, std::string &sockName);
+//int getOptions(int argc, char *argv[], parseMode &todo, std::string &commandLine, std::string &caseName, std::string &clientName, std::string &sockName);
 std::string itoa(const int i);
 std::string ftoa(const double x);
 bool checkIfPresent(std::string fileName);
