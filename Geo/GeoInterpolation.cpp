@@ -101,7 +101,7 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 {
   Vertex V;
   int i, j;
-  double T[4];
+  double T[4] = {0., 0., 0., 0.};
 
   if (derivee == 0){
     T[3] = 1.;

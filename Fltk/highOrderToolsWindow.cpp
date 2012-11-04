@@ -280,12 +280,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {0}
   };
 
-  static Fl_Menu_Item menu_strategy[] = {
-    {"Generic", 0, 0, 0},
-    {"Boundary Layer ", 0, 0, 0},
-    {0}
-  };
-
   y += BH;
   choice[0] = new Fl_Choice
     (x,y, IW, BH, "Boundary nodes");
