@@ -25,6 +25,16 @@ int GModel::readMSH(const std::string &name)
   }
 
   char str[256] = "";
+
+  // detect prehistoric MSH files
+  fgets(str, sizeof(str), fp);
+  if(!strncmp(&str[1], "NOD", 3)){
+    fclose(fp);
+    return _readMSH2(name);
+  }
+  strcpy(str, "");
+  rewind(fp);
+
   double version = 0.;
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
