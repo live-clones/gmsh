@@ -26,7 +26,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   int _noisy, _gmres;
  public:
   linearSystemGmm()
-    : _a(0), _b(0), _x(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
+    : _x(0), _b(0), _a(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
   virtual bool isAllocated() const { return _a != 0; }
   virtual void allocate(int nbRows)
   {

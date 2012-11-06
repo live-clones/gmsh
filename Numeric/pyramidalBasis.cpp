@@ -35,7 +35,7 @@ void pyramidalBasis::initialize()
   }
   VDM.invert(*VDMinv);
 }
-  
+
 inline void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
   int n = order+1;
@@ -56,5 +56,3 @@ inline void pyramidalBasis::df(double u, double v, double w, double grads[][3]) 
 {
 
 }
-
-

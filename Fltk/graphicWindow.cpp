@@ -2708,7 +2708,9 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
     win->callback(remove_graphic_window_cb);
   }
 
+#if defined(__APPLE__)
   sysbar = 0;
+#endif
   bar = 0;
   if(main){
 #if defined(__APPLE__)
@@ -3098,7 +3100,11 @@ void graphicWindow::copySelectedMessagesToClipboard()
 
 void graphicWindow::fillRecentHistoryMenu()
 {
-  if(!bar && !sysbar) return;
+#if defined(__APPLE__)
+  if(CTX::instance()->systemMenuBar && !sysbar)
+    return;
+#endif
+
   Fl_Menu_Item *table = bar_table;
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar)

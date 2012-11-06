@@ -8,7 +8,7 @@
 
 #include "fullMatrix.h"
 
- /* 
+ /*
   * Functions to generate point distributions on
   * the references elements, for all orders.
   */

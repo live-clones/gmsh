@@ -19,7 +19,7 @@ class pyramidalBasis: public nodalBasis
 
   // Orthogonal basis for the pyramid
   BergotBasis bergot;
-  
+
  public:
   pyramidalBasis();
 
@@ -29,6 +29,5 @@ class pyramidalBasis: public nodalBasis
   void initialize();
 
 };
-
 
 #endif
