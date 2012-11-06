@@ -199,6 +199,7 @@ class MTriangle6 : public MTriangle {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
     return getVertex(map[num]);
   }
+  virtual void xyz2uvw(double xyz[3], double uvw[3]){ MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3; }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
@@ -294,6 +295,7 @@ class MTriangleN : public MTriangle {
     if(_order == 10  && _vs.size() == 27) return 0;
     return 0;
   }
+  virtual void xyz2uvw(double xyz[3], double uvw[3]){ MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }
   virtual int getNumEdgesRep();
   virtual int getNumFacesRep();
