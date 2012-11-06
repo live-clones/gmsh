@@ -66,8 +66,9 @@ class FunctionSpace{
   virtual ~FunctionSpace(void);
 
   const GroupOfElement& getSupport(void) const;
-  unsigned int          getType(void) const;
   unsigned int          getOrder(void) const;
+  unsigned int          getType(void) const;
+  bool                  isScalar(void) const;
 
   unsigned int getNFunctionPerVertex(const MElement& element) const;
   unsigned int getNFunctionPerEdge(const MElement& element) const;
@@ -132,6 +133,11 @@ class FunctionSpace{
    FunctionSpace
    **
 
+   @fn FunctionSpace::getOrder
+   @return Return the @em order
+   of this FunctionSpace
+   **
+
    @fn FunctionSpace::getType
    @return Return the @em type of
    the Basis functions composing 
@@ -139,9 +145,11 @@ class FunctionSpace{
    @see Basis::getType()
    **
 
-   @fn FunctionSpace::getOrder
-   @return Return the @em order
-   of this FunctionSpace
+   @fn FunctionSpace::isScalar
+   @return Return @c true if this 
+   FunstionSpace is scalar, and
+   @c flase otherwise
+   @see Basis::isScalar()
    **
 
    @fn FunctionSpace::getNFunctionPerVertex
@@ -220,12 +228,16 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
 
+inline unsigned int FunctionSpace::getOrder(void) const{
+  return (unsigned int)(basis->getOrder());
+}
+
 inline unsigned int FunctionSpace::getType(void) const{
   return type;
 }
 
-inline unsigned int FunctionSpace::getOrder(void) const{
-  return (unsigned int)(basis->getOrder());
+inline bool FunctionSpace::isScalar(void) const{
+  return basis->isScalar();
 }
 
 inline unsigned int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{

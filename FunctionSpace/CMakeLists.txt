@@ -18,11 +18,18 @@ set(SRC
 
   QuadNodeBasis.cpp
   QuadEdgeBasis.cpp
+
+  LagrangeGenerator.cpp
+  LagrangeBasis.cpp
+  TriLagrangeBasis.cpp
+
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
+
   HexNodeBasis.cpp
   HexEdgeBasis.cpp
+
   TetNodeBasis.cpp
   TetEdgeBasis.cpp
   

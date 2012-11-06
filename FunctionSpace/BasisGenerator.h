@@ -58,6 +58,7 @@ class BasisGenerator{
    @note Element types are:
    @li @c TYPE_TRI for Triangles
    @li @c TYPE_QUA for Quadrangles
+   @li @c TYPE_TET for Tetrahedrons
    @li @c TYPE_HEX for Hexahedrons
 
    @note Basis types are:
