@@ -41,12 +41,13 @@
 #if defined(HAVE_FLTK)
 #include <FL/Fl_Tooltip.H>
 #include "FlGui.h"
-#include "menuWindow.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "clippingWindow.h"
+#include "onelabGroup.h"
+#include "viewButton.h"
 #endif
 
 // General routines for string options
@@ -1279,9 +1280,9 @@ std::string opt_view_name(OPT_ARGS_STR)
         if((i == num ||
             PView::list[i]->getAliasOf() == view->getNum() ||
             PView::list[i]->getNum() == view->getAliasOf()) &&
-           i < (int)FlGui::instance()->menu->toggle.size()) {
-          FlGui::instance()->menu->toggle[i]->copy_label(data->getName().c_str());
-          FlGui::instance()->menu->toggle[i]->redraw();
+           FlGui::instance()->onelab->getViewButton(i)) {
+          FlGui::instance()->onelab->getViewButton(i)->copy_label(data->getName());
+          FlGui::instance()->onelab->getViewButton(i)->redraw();
         }
       }
     }
@@ -1800,48 +1801,6 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->glSize[1];
-}
-
-double opt_general_menu_position0(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->menuPosition[0] = (int)val;
-  return CTX::instance()->menuPosition[0];
-}
-
-double opt_general_menu_position1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->menuPosition[1] = (int)val;
-  return CTX::instance()->menuPosition[1];
-}
-
-double opt_general_solver_position0(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->solverPosition[0] = (int)val;
-  return CTX::instance()->solverPosition[0];
-}
-
-double opt_general_solver_position1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->solverPosition[1] = (int)val;
-  return CTX::instance()->solverPosition[1];
-}
-
-double opt_general_solver_size0(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->solverSize[0] = (int)val;
-  return CTX::instance()->solverSize[0];
-}
-
-double opt_general_solver_size1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->solverSize[1] = (int)val;
-  return CTX::instance()->solverSize[1];
 }
 
 double opt_general_context_position0(OPT_ARGS_NUM)
@@ -2463,12 +2422,12 @@ double opt_general_orthographic(OPT_ARGS_NUM)
     if(CTX::instance()->ortho){
       FlGui::instance()->options->general.choice[2]->value(0);
       if(FlGui::available())
-        Msg::StatusBar(2, false, "Orthographic projection");
+        Msg::StatusBar(false, "Orthographic projection");
     }
     else{
       FlGui::instance()->options->general.choice[2]->value(1);
       if(FlGui::available())
-        Msg::StatusBar(2, false, "Perspective projection");
+        Msg::StatusBar(false, "Perspective projection");
     }
   }
 #endif
@@ -2483,13 +2442,13 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
   if(FlGui::available() && (action & GMSH_GUI)) {
     if(CTX::instance()->mouseSelection){
       if(FlGui::available())
-        Msg::StatusBar(2, false, "Mouse selection ON");
+        Msg::StatusBar(false, "Mouse selection ON");
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->butt[9]->color(FL_BACKGROUND_COLOR);
     }
     else{
       if(FlGui::available())
-        Msg::StatusBar(2, false, "Mouse selection OFF");
+        Msg::StatusBar(false, "Mouse selection OFF");
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->butt[9]->color(FL_RED);
     }
@@ -6555,8 +6514,8 @@ double opt_view_visible(OPT_ARGS_NUM)
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI) && num >= 0 &&
-     num < (int)FlGui::instance()->menu->toggle.size())
-    FlGui::instance()->menu->toggle[num]->value(opt->visible);
+     FlGui::instance()->onelab->getViewButton(num))
+    FlGui::instance()->onelab->getViewButton(num)->value(opt->visible);
 #endif
   return opt->visible;
 #else

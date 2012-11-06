@@ -6,21 +6,18 @@
 #ifndef _ONELAB_WINDOW_H_
 #define _ONELAB_WINDOW_H_
 
-#include "GmshConfig.h"
-#include <FL/Fl.H>
-
-#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
 #include <vector>
-#include <FL/Fl_Window.H>
+#include <FL/Fl.H>
 #include <FL/Fl_Tree.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Input.H>
 #include "onelab.h"
 
-class onelabWindow{
+class viewButton;
+
+class onelabGroup : public Fl_Group{
  private:
-  Fl_Window *_win;
   Fl_Tree *_tree;
   Fl_Button *_butt[2];
   Fl_Menu_Button *_gear;
@@ -28,7 +25,6 @@ class onelabWindow{
   std::vector<Fl_Widget*> _treeWidgets;
   std::vector<char*> _treeStrings;
   std::string _title;
-  int _deltaFontSize;
   bool _stop;
   int _itemWidth;
   template <class T> void _addParameter(T &p);
@@ -40,25 +36,26 @@ class onelabWindow{
                                  bool highlight, Fl_Color c);
   Fl_Widget *_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
                                  bool highlight, Fl_Color c);
+  void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
+  void _addViewMenu(int num);
+  std::set<std::string> _getClosedGmshMenus();
+  void _addGmshMenus();
  public:
-  onelabWindow(int deltaFontSize=0);
-  int x(){ return _win->x(); }
-  int y(){ return _win->y(); }
-  int w(){ return _win->w(); }
-  int h(){ return _win->h(); }
+  onelabGroup(int x, int y, int w, int h, const char *l=0);
   void rebuildSolverList();
   void rebuildTree();
+  void redrawTree(){ _tree->redraw(); }
+  void openTreeItem(const std::string &name);
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
-  void show(){ _win->show(); }
-  int shown(){ return _win->shown(); }
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];
     _tree->item_pathname(path, 1024, item);
     return std::string(path);
   }
+  viewButton *getViewButton(int num);
   void addSolver(const std::string &name, const std::string &exe,
                  const std::string &hostName, int index);
   void removeSolver(const std::string &name);
@@ -68,9 +65,6 @@ class onelabWindow{
 };
 
 void onelab_cb(Fl_Widget *w, void *data);
-
-#endif
-
 void solver_cb(Fl_Widget *w, void *data);
 int metamodel_cb(const std::string &name, const std::string &action="");
 

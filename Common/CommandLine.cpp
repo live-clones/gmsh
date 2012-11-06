@@ -20,12 +20,10 @@
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION > 6)
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 3)
 // OK
-#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-// also OK
 #else
-#error "Gmsh requires FLTK >= 1.1.7 or FLTK 1.3.x"
+#error "Gmsh requires FLTK >= 1.3"
 #endif
 #endif
 

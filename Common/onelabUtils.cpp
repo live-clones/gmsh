@@ -140,8 +140,8 @@ namespace onelabUtils {
       }
     }
 
-    // force this to make sure that we remesh, even if a mesh exists and
-    // we did not actually change a Gmsh parameter
+    // force this to make sure that we remesh, even if a mesh exists and we did
+    // not actually change a Gmsh parameter
     if(changed)
       onelab::server::instance()->setChanged(true, "Gmsh");
   }

@@ -63,10 +63,10 @@ static fourierProjectionFace *createProjectionFaceFromName(const char *name)
 }
 
 static void project_point(FM::ProjectionSurface *ps, double x, double y, double z,
-                          std::vector<double> &u, std::vector<double> &v, 
+                          std::vector<double> &u, std::vector<double> &v,
                           std::vector<double> &dist,
                           std::vector<std::complex<double> > &f)
-{                  
+{
   double uu, vv, p[3], n[3];
   ps->OrthoProjectionOnSurface(x, y, z, uu, vv);
   if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
@@ -95,7 +95,7 @@ static void getTangents(const SVector3 n, SVector3 &t1, SVector3 &t2, const doub
   b.normalize();
   double x = n[0], y = n[1], z = n[2];
   double c = cos(angle * M_PI / 180.), s = sin(angle * M_PI / 180.);
-  double rot[3][3] = 
+  double rot[3][3] =
     {{x * x * (1-c) + c    , x * y * (1-c) - z * s, x * z * (1-c) + y * s},
      {y * x * (1-c) + z * s, y * y * (1-c) + c    , y * z * (1-c) - x * s},
      {x * z * (1-c) - y * s, y * z * (1-c) + x * s, z * z * (1-c) + c    }};
@@ -173,7 +173,7 @@ static void browse_cb(Fl_Widget *w, void *data)
     projections[i]->face->setVisibility(false);
     projections[i]->group->hide();
   }
-  
+
   projection *p = e->getCurrentProjection();
   if(p){
     p->face->setVisibility(true);
@@ -282,18 +282,18 @@ static void select_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
 
     if(ele.size() || ent.size())
-      Msg::StatusBar(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
-                  "last selection or 'q' to abort]", str);
+      Msg::StatusGl("Select %s\n[Press 'e' to end selection, 'u' to undo"
+                    "last selection or 'q' to abort]", str);
     else
-      Msg::StatusBar(3, false, "Select %s\n"
-                  "[Press 'e' to end selection or 'q' to abort]", str);
+      Msg::StatusGl("Select %s\n"
+                    "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = FlGui::instance()->selectEntity(what);
     if(ib == 'l') {
       if(CTX::instance()->pickElements){
         for(unsigned int i = 0; i < FlGui::instance()->selectedElements.size(); i++){
           if(FlGui::instance()->selectedElements[i]->getVisibility() != 2){
-            FlGui::instance()->selectedElements[i]->setVisibility(2); 
+            FlGui::instance()->selectedElements[i]->setVisibility(2);
             ele.push_back(FlGui::instance()->selectedElements[i]);
           }
         }
@@ -353,8 +353,8 @@ static void select_cb(Fl_Widget *w, void *data)
 
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
-  drawContext::global()->draw();  
-  Msg::StatusBar(3, false, "");
+  drawContext::global()->draw();
+  Msg::StatusGl("");
 }
 
 static void filter_cb(Fl_Widget *w, void *data)
@@ -428,7 +428,7 @@ static void save_selection_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(gv && gv->getSelection())
-        fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(), 
+        fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(),
                 gv->x(), gv->y(), gv->z());
     }
     std::vector<MElement*> &ele(e->getElements());
@@ -561,8 +561,8 @@ static void compute_cb(Fl_Widget *w, void *data)
     else {
       // create the Fourier faces (with boundaries)
       if(ps->IsUPeriodic()) {
-        FM::Patch* patchL = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+        FM::Patch* patchL =
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
                          uM, vM, h0, h1, h2, h3);
         patchL->SetMinU(-0.35);
         patchL->SetMaxU(0.35);
@@ -570,7 +570,7 @@ static void compute_cb(Fl_Widget *w, void *data)
           AddPatch(patchL);
         m->getFMInternals()->makeGFace(patchL,m);
         //makeGFace(patchL);
-        FM::Patch* patchR = 
+        FM::Patch* patchR =
           new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
                          uM, vM, h0, h1, h2, h3);
         patchR->SetMinU(0.15);
@@ -581,8 +581,8 @@ static void compute_cb(Fl_Widget *w, void *data)
         //makeGFace(patchR);
       }
       else if (ps->IsVPeriodic()) {
-        FM::Patch* patchL = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+        FM::Patch* patchL =
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
                          uM, vM, h0, h1, h2, h3);
         patchL->SetMinV(-0.35);
         patchL->SetMaxV(0.35);
@@ -590,7 +590,7 @@ static void compute_cb(Fl_Widget *w, void *data)
           AddPatch(patchL);
         m->getFMInternals()->makeGFace(patchL,m);
         //makeGFace(patchL);
-        FM::Patch* patchR = 
+        FM::Patch* patchR =
           new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
                          uM, vM, h0, h1, h2, h3);
         patchR->SetMinV(0.15);
@@ -601,8 +601,8 @@ static void compute_cb(Fl_Widget *w, void *data)
         //makeGFace(patchR);
       }
       else {
-        FM::Patch* patch = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+        FM::Patch* patch =
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
                          uM, vM, h0, h1, h2, h3);
         m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
           AddPatch(patch);
@@ -665,7 +665,7 @@ static void action_cb(Fl_Widget *w, void *data)
   if(what == "delete_last" || what == "save_last"){
     int id = -1;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-      if((*it)->getNativeType() == GEntity::FourierModel) 
+      if((*it)->getNativeType() == GEntity::FourierModel)
         id = std::max(id, (*it)->tag());
     if(id > 0) faces.push_back(m->getFaceByTag(id));
   }
@@ -675,16 +675,16 @@ static void action_cb(Fl_Widget *w, void *data)
         faces.push_back(*it);
   }
   else if(what == "delete_select" || what == "save_select"){
-    Msg::StatusBar(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
+    Msg::StatusGl("Select Surface\n[Press 'e' to end selection 'q' to abort]");
     char ib = FlGui::instance()->selectEntity(ENT_SURFACE);
-    if(ib == 'l') faces.insert(faces.end(), 
-                               FlGui::instance()->selectedFaces.begin(), 
+    if(ib == 'l') faces.insert(faces.end(),
+                               FlGui::instance()->selectedFaces.begin(),
                                FlGui::instance()->selectedFaces.end());
-    Msg::StatusBar(3, false, "");
+    Msg::StatusGl("");
   }
 
   if(what[0] == 'd'){
-    for(unsigned int i = 0; i < faces.size(); i++) 
+    for(unsigned int i = 0; i < faces.size(); i++)
       delete_fourier(faces[i]);
   }
   else{
@@ -702,7 +702,7 @@ static void action_cb(Fl_Widget *w, void *data)
       fclose(fp);
     }
   }
-  
+
   drawContext::global()->draw();
 }
 
@@ -713,10 +713,10 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   ColorTable_Recompute(&_colorTable);
 }
 
-void uvPlot::set(std::vector<double> &u, std::vector<double> &v, 
+void uvPlot::set(std::vector<double> &u, std::vector<double> &v,
                  std::vector<double> &dist, std::vector<std::complex<double> > &f)
-{ 
-  _u = u; 
+{
+  _u = u;
   _v = v;
   _dist = dist;
   _f = f;
@@ -787,17 +787,17 @@ void uvPlot::draw()
   fl_draw(max, pw - (int)fl_width(max) - 5, h() - 5);
 }
 
-projection::projection(fourierProjectionFace *f, int x, int y, int w, int h, 
-                       int bb, int bh, projectionEditor *e) 
+projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
+                       int bb, int bh, projectionEditor *e)
   : face(f)
 {
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GModel::current()->bounds();
   FM::ProjectionSurface *ps = (FM::ProjectionSurface*)f->getNativePtr();
-  
+
   Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, bb, bh, "Set position");
   b->callback(set_position_cb, e);
-  
+
   { // origin is stored in parameters[0,1,2]
     SPoint3 pc = bounds.center();
     for(int i = 0; i < 3; i++){
@@ -812,9 +812,9 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
     ps->SetOrigin(pc[0], pc[1], pc[2]);
     Fl_Repeat_Button *bm[3], *bp[3];
     for(int i = 0; i < 3; i++){
-      new Fl_Box(x + w - bb / 3 - bb / 6, y + (1 + i) * bh, bb / 8, bh, 
+      new Fl_Box(x + w - bb / 3 - bb / 6, y + (1 + i) * bh, bb / 8, bh,
                  (i == 0) ? "E0" : (i == 1) ? "E1" : "E2");
-      bp[i] = new Fl_Repeat_Button(x + w - bb / 3, y + (1 + i) * bh, 
+      bp[i] = new Fl_Repeat_Button(x + w - bb / 3, y + (1 + i) * bh,
                                    bb / 8, bh / 2, "+");
       bm[i] = new Fl_Repeat_Button(x + w - bb / 3, y + (1 + i) * bh + bh / 2,
                                    bb / 8, bh / 2, "-");
@@ -881,24 +881,24 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
   group->hide();
 }
 
-projectionEditor::projectionEditor() 
+projectionEditor::projectionEditor()
 {
   GModel *m = GModel::current();
 
-  // construct FM_Internals 
+  // construct FM_Internals
   m->readFourier();
   printf("readerSize = %d\n",m->getFMInternals()->getSize());
   printf("currentSize = %d\n",m->getFMInternals()->current()->GetNumGroups());
 
   // construct GUI in terms of standard sizes
   const int width = (int)(3.75 * BB), height = 24 * BH;
-  
+
   // create all widgets (we construct this once, we never deallocate!)
   _window = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Reparameterize");
-  
+
   new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
-  
+
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
@@ -912,7 +912,7 @@ projectionEditor::projectionEditor()
   }
   o->end();
 
-  {  
+  {
     Fl_Toggle_Button *b1 = new Fl_Toggle_Button
       (width - WB - 3 * BB / 2, WB, 3 * BB / 2, BH, "Hide unselected");
     b1->callback(proj_hide_cb);
@@ -944,13 +944,13 @@ projectionEditor::projectionEditor()
   int uvw = width - 2 * WB - 2 * hard - 3 * WB;
   int uvh = height - 7 * WB - 14 * BH - 2 * hard;
 
-  _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
+  _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard,
                                        hard, uvh);
   _hardEdges[1] = new Fl_Toggle_Button(width - 4 * WB - hard, 3 * WB + 9 * BH + hard,
                                        hard, uvh);
-  _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
+  _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH,
                                        uvw, hard);
-  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 4 * WB - 5 * BH - hard, 
+  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 4 * WB - 5 * BH - hard,
                                        uvw, hard);
   for(int i = 0; i < 4; i++)
     _hardEdges[i]->tooltip("Push to mark edge as `hard'");
@@ -965,7 +965,7 @@ projectionEditor::projectionEditor()
   _slider->callback(filter_cb, this);
   _slider->tooltip("Filter selection by distance to projection surface");
 
-  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 4 * WB - 5 * BH - hard, 
+  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 4 * WB - 5 * BH - hard,
                                       2 * WB, hard);
   _orientation->callback(filter_cb, this);
   _orientation->tooltip("Filter elements using orientation");
@@ -986,12 +986,12 @@ projectionEditor::projectionEditor()
 
   _modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 4 * BH, BB  / 2, BH);
   _modes[0]->tooltip("Number of Fourier modes along u");
-  _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 4 * BH, BB  / 2, BH, 
+  _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 4 * BH, BB  / 2, BH,
                                  "Fourier modes");
   _modes[1]->tooltip("Number of Fourier modes along v");
   _modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
   _modes[2]->tooltip("Number of Chebyshev modes along u");
-  _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
+  _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH,
                                  "Chebyshev modes");
   _modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
@@ -1000,10 +1000,10 @@ projectionEditor::projectionEditor()
     _modes[i]->minimum(1);
     _modes[i]->step(1);
     _modes[i]->align(FL_ALIGN_RIGHT);
-  }    
+  }
 
   {
-    Fl_Button *b = new Fl_Button(width - WB - BB, height - 3 * WB - 4 * BH, 
+    Fl_Button *b = new Fl_Button(width - WB - BB, height - 3 * WB - 4 * BH,
                                   BB, 2 * BH, "Generate\nPatch");
     b->callback(compute_cb, this);
   }
@@ -1011,7 +1011,7 @@ projectionEditor::projectionEditor()
   {
     int bb = (int)(0.37 * BB);
     new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
-    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, 
+    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH,
                                   bb, BH, "last");
     b1->callback(action_cb, (void*)"delete_last");
     Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 2 * WB - 2 * BH,
@@ -1038,11 +1038,11 @@ projectionEditor::projectionEditor()
   }
 
   {
-    Fl_Button *b1 = new Fl_Button(WB, height - WB - BH, BB, BH, 
+    Fl_Button *b1 = new Fl_Button(WB, height - WB - BH, BB, BH,
                                   "Blend");
     b1->callback(blend_cb, this);
-    
-    //Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - WB - BH, BB, 
+
+    //Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - WB - BH, BB,
     //                            BH, "Intersect");
   }
 
@@ -1063,13 +1063,13 @@ void projectionEditor::load(fourierProjectionFace *face, std::string tag)
 }
 
 void projectionEditor::show()
-{ 
-  _window->show(); 
-  select_cb(0, this); 
+{
+  _window->show();
+  select_cb(0, this);
 }
 
-int projectionEditor::getSelectionMode() 
-{ 
+int projectionEditor::getSelectionMode()
+{
   if(_select[0]->value())
     return ENT_POINT;
   else

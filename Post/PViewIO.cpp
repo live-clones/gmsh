@@ -300,7 +300,7 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
 
 bool PView::write(const std::string &fileName, int format, bool append)
 {
-  Msg::StatusBar(2, true, "Writing '%s'...", fileName.c_str());
+  Msg::StatusBar(true, "Writing '%s'...", fileName.c_str());
 
   bool ret;
   switch(format){
@@ -329,6 +329,6 @@ bool PView::write(const std::string &fileName, int format, bool append)
   default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
 
-  if(ret) Msg::StatusBar(2, true, "Done writing '%s'", fileName.c_str());
+  if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;
 }

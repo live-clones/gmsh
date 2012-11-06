@@ -13,10 +13,10 @@ DefineConstant
  lb = {1, Label "Infinite box width"},
  left = {1, Choices{0,1}, Label "Terminals on the left?"}
  //macro = {"aa.pos", Label "Run my macro!", Kind "macro", Path "Actions"},
- // showLines = {1, Choices {0,1}, Label "Show lines?"}
+  showLines = {1, Choices {0,1}, Label "Show lines?"}
 ];
 
-//Geometry.Lines = showLines;
+Geometry.Lines = showLines;
 
 // inductor
 p = newp;

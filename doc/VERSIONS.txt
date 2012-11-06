@@ -1,4 +1,5 @@
-faster STEP/BRep import; minor bug fixes.
+?: new single-window GUI, with dynamically customizable widget tree; faster
+STEP/BRep import; minor bug fixes.
 
 2.6.1 (July 15, 2012): minor improvements and bug fixes.
 

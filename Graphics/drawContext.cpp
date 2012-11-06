@@ -51,19 +51,23 @@ drawContext::drawContext(drawTransform *transform)
 
   _quadric = 0; // cannot create it here: needs valid opengl context
   _displayLists = 0;
-
 }
 
 drawContext::~drawContext()
 {
-  if(_quadric) gluDeleteQuadric(_quadric);
-  if(_displayLists) glDeleteLists(_displayLists, 3);
+  invalidateQuadricsAndDisplayLists();
 }
 
 drawContextGlobal *drawContext::global()
 {
   if(!_global) _global = new drawContextGlobal(); // create dummy default
   return _global;
+}
+
+void drawContext::invalidateQuadricsAndDisplayLists()
+{
+  if(_quadric){ gluDeleteQuadric(_quadric); _quadric = 0; }
+  if(_displayLists){ glDeleteLists(_displayLists, 3); _displayLists = 0; }
 }
 
 void drawContext::createQuadricsAndDisplayLists()
@@ -232,22 +236,20 @@ static int needPolygonOffset()
 
 void drawContext::draw3d()
 {
-  // We can only create this when a valid opengl context exists. (It's
-  // cheap to create so we just do it at each redraw: this makes it
-  // much simpler to deal with option changes, e.g. arrow shape
-  // changes)
+  // We can only create this when a valid opengl context exists. (It's cheap to
+  // create so we just do it at each redraw: this makes it much simpler to deal
+  // with option changes, e.g. arrow shape changes)
   createQuadricsAndDisplayLists();
 
-  // We should only enable the polygon offset when there is a mix of
-  // lines and polygons to be drawn; enabling it all the time can lead
-  // to very small but annoying artifacts in the picture. Since there
-  // are so many ways in Gmsh to combine polygons and lines
-  // (geometries + meshes + views...), we do our best here to
-  // automatically detect if we should enable it. Note: the formula
-  // for the offset is "offset = factor*DZ+r*units", where DZ is a
-  // measurement of the change in depth relative to the screen area of
-  // the polygon, and r is the smallest value that is guaranteed to
-  // produce a resolvable offset for a given implementation.
+  // We should only enable the polygon offset when there is a mix of lines and
+  // polygons to be drawn; enabling it all the time can lead to very small but
+  // annoying artifacts in the picture. Since there are so many ways in Gmsh to
+  // combine polygons and lines (geometries + meshes + views...), we do our best
+  // here to automatically detect if we should enable it. Note: the formula for
+  // the offset is "offset = factor*DZ+r*units", where DZ is a measurement of
+  // the change in depth relative to the screen area of the polygon, and r is
+  // the smallest value that is guaranteed to produce a resolvable offset for a
+  // given implementation.
   glPolygonOffset((float)CTX::instance()->polygonOffsetFactor,
                   (float)CTX::instance()->polygonOffsetUnits);
   if(CTX::instance()->polygonOffsetFactor || CTX::instance()->polygonOffsetUnits)
@@ -258,7 +260,6 @@ void drawContext::draw3d()
 
   // speedup drawing of textured fonts on cocoa mac version
 #if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   int numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.pointsNum)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
@@ -268,7 +269,6 @@ void drawContext::draw3d()
   numStrings *= 2;
   if(gl_texture_pile_height() < numStrings)
     gl_texture_pile_height(numStrings);
-#endif
 #endif
 
   glDepthFunc(GL_LESS);
@@ -446,10 +446,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
   // no initial translation of the model
   t_init[0] = t_init[1] = t_init[2] = 0.;
 
-  // set up the near and far clipping planes so that the box is large
-  // enough to manipulate the model and zoom, but not too big
-  // (otherwise the z-buffer resolution e.g. with Mesa can become
-  // insufficient)
+  // set up the near and far clipping planes so that the box is large enough to
+  // manipulate the model and zoom, but not too big (otherwise the z-buffer
+  // resolution e.g. with Mesa can become insufficient)
   double zmax = std::max(fabs(CTX::instance()->min[2]),
 			 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
@@ -502,10 +501,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glDisable(GL_DEPTH_TEST);
       glPushMatrix();
       glLoadIdentity();
-      // the z values and the translation are only needed for GL2PS,
-      // which does not understand "no depth test" (hence we must make
-      // sure that we draw the background behind the rest of the
-      // scene)
+      // the z values and the translation are only needed for GL2PS, which does
+      // not understand "no depth test" (hence we must make sure that we draw
+      // the background behind the rest of the scene)
       glOrtho((double)viewport[0], (double)viewport[2],
 	      (double)viewport[1], (double)viewport[3],
 	      clip_near, clip_far);
@@ -525,9 +523,9 @@ void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
       glLoadIdentity();
     }
     else {
-      // recenter the model such that the perspective is always at the
-      // center of gravity (we should maybe add an option to choose
-      // this, as we do for the rotation center)
+      // recenter the model such that the perspective is always at the center of
+      // gravity (we should maybe add an option to choose this, as we do for the
+      // rotation center)
       t_init[0] = CTX::instance()->cg[0];
       t_init[1] = CTX::instance()->cg[1];
       vxmin -= t_init[0];
@@ -610,12 +608,11 @@ void drawContext::initRenderModel()
 
   glShadeModel(GL_SMOOTH);
 
-  // Normalize the normals automatically. We could use the more
-  // efficient glEnable(GL_RESCALE_NORMAL) instead (since we initially
-  // specify unit normals), but GL_RESCALE_NORMAL does only work with
-  // isotropic scalings (and we allow anistotropic scalings in
-  // myZoom). Note that GL_RESCALE_NORMAL is only available in
-  // GL_VERSION_1_2.
+  // Normalize the normals automatically. We could use the more efficient
+  // glEnable(GL_RESCALE_NORMAL) instead (since we initially specify unit
+  // normals), but GL_RESCALE_NORMAL does only work with isotropic scalings (and
+  // we allow anistotropic scalings in myZoom). Note that GL_RESCALE_NORMAL is
+  // only available in GL_VERSION_1_2.
   glEnable(GL_NORMALIZE);
 
   // lighting is enabled/disabled for each particular primitive later
@@ -648,9 +645,9 @@ void drawContext::initPosition()
                  -CTX::instance()->rotationCenter[1],
                  -CTX::instance()->rotationCenter[2]);
 
-  // store the projection and modelview matrices at this precise
-  // moment (so that we can use them at any later time, even if the
-  // context has changed, i.e., even if we are out of draw())
+  // store the projection and modelview matrices at this precise moment (so that
+  // we can use them at any later time, even if the context has changed, i.e.,
+  // even if we are out of draw())
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
 
@@ -658,9 +655,9 @@ void drawContext::initPosition()
     glClipPlane((GLenum)(GL_CLIP_PLANE0 + i), CTX::instance()->clipPlane[i]);
 }
 
-// Takes a cursor position in window coordinates and returns the line
-// (given by a point and a unit direction vector), in real space, that
-// corresponds to that cursor position
+// Takes a cursor position in window coordinates and returns the line (given by
+// a point and a unit direction vector), in real space, that corresponds to that
+// cursor position
 void drawContext::unproject(double x, double y, double p[3], double d[3])
 {
   GLint vp[4];
@@ -671,8 +668,8 @@ void drawContext::unproject(double x, double y, double p[3], double d[3])
   GLdouble x0, y0, z0, x1, y1, z1;
 
   // we use the stored model and proj matrices instead of directly
-  // getGetDouble'ing the matrices since unproject can be called in or
-  // after draw2d
+  // getGetDouble'ing the matrices since unproject can be called in or after
+  // draw2d
   if(!gluUnProject(x, y, 0.0, model, proj, vp, &x0, &y0, &z0))
     Msg::Warning("unproject1 failed");
   if(!gluUnProject(x, y, 1.0, model, proj, vp, &x1, &y1, &z1))
@@ -725,8 +722,8 @@ class hitDepthLessThan{
   }
 };
 
-// returns the element at a given position in a vertex array (element
-// pointers are not always stored: returning 0 is not an error)
+// returns the element at a given position in a vertex array (element pointers
+// are not always stored: returning 0 is not an error)
 static MElement *getElement(GEntity *e, int va_type, int index)
 {
   switch(va_type){
@@ -756,8 +753,8 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   regions.clear();
   elements.clear();
 
-  // in our case the selection buffer size is equal to between 5 and 7
-  // times the maximum number of possible hits
+  // in our case the selection buffer size is equal to between 5 and 7 times the
+  // maximum number of possible hits
   GModel *m = GModel::current();
   int eles = (mesh && CTX::instance()->pickElements) ? 4 * m->getNumMeshElements() : 0;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
@@ -799,14 +796,13 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   for(int i = 0; i < numhits; i++) {
     // in Gmsh 'names' should always be 0, 2 or 4:
     // * names == 0 means that there is nothing on the stack
-    // * if names == 2, the first name is the type of the entity
-    //   (0 for point, 1 for edge, 2 for face or 3 for volume) and
-    //   the second is the entity number;
-    // * if names == 4, the first name is the type of the entity,
-    //   the second is the entity number, the third is the type
-    //   of vertex array (2 for line, 3 for triangle, 4 for quad)
-    //   and the fourth is the index of the element in the vertex
-    //   array
+    // * if names == 2, the first name is the type of the entity (0 for point, 1
+    //   for edge, 2 for face or 3 for volume) and the second is the entity
+    //   number;
+    // * if names == 4, the first name is the type of the entity, the second is
+    //   the entity number, the third is the type of vertex array (2 for line, 3
+    //   for triangle, 4 for quad) and the fourth is the index of the element in
+    //   the vertex array
     GLuint names = *ptr++;
     *ptr++; // mindepth
     GLuint maxdepth = *ptr++;
@@ -835,9 +831,9 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   // sort hits to get closest entities first
   std::sort(hits.begin(), hits.end(), hitDepthLessThan());
 
-  // filter result: if type == ENT_NONE, return the closest entity of
-  // "lowest dimension" (point < line < surface < volume). Otherwise,
-  // return the closest entity of type "type"
+  // filter result: if type == ENT_NONE, return the closest entity of "lowest
+  // dimension" (point < line < surface < volume). Otherwise, return the closest
+  // entity of type "type"
   GLuint typmin = 10;
   for(unsigned int i = 0; i < hits.size(); i++)
     typmin = std::min(typmin, hits[i].type);

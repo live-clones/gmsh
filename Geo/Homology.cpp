@@ -86,7 +86,7 @@ void Homology::_getElements(const std::vector<GEntity*>& entities,
 
 void Homology::_createCellComplex()
 {
-  Msg::StatusBar(2, true, "Creating cell complex...");
+  Msg::StatusBar(true, "Creating cell complex...");
   double t1 = Cpu();
 
   if(_domainEntities.empty()) Msg::Error("Domain is empty");
@@ -117,7 +117,7 @@ void Homology::_createCellComplex()
     Msg::Error("Cell Complex is empty: check the domain and the mesh");
   }
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done creating cell complex (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done creating cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
 	    _cellComplex->getSize(1), _cellComplex->getSize(0));
@@ -174,7 +174,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 {
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
-  Msg::StatusBar(2, true, "Reducing cell complex...");
+  Msg::StatusBar(true, "Reducing cell complex...");
 
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(_combine, _omit);
@@ -188,17 +188,17 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   }
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
 	    _cellComplex->getSize(1), _cellComplex->getSize(0));
 
-  Msg::StatusBar(2, true, "Computing homology space bases ...");
+  Msg::StatusBar(true, "Computing homology space bases ...");
   t1 = Cpu();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.computeHomology();
   t2 = Cpu();
-  Msg::StatusBar(2, true, "Done computing homology space bases (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done computing homology space bases (%g s)", t2 - t1);
 
   std::string domain = _getDomainString(_domain, _subdomain);
   _deleteChains(dim);
@@ -235,7 +235,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   Msg::Info("H_3 = %d", _betti[3]);
   if(omitted != 0) Msg::Info("The computation of basis elements in the highest dimension was omitted");
 
-  Msg::StatusBar(2, false, "H_0: %d, H_1: %d, H_2: %d, H_3: %d",
+  Msg::StatusBar(false, "H_0: %d, H_1: %d, H_2: %d, H_3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
   if(dim.empty()) {
@@ -253,7 +253,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
-  Msg::StatusBar(2, true, "Reducing cell complex...");
+  Msg::StatusBar(true, "Reducing cell complex...");
 
   double t1 = Cpu();
 
@@ -270,18 +270,18 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   double t2 = Cpu();
 
-  Msg::StatusBar(2, true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
 	    _cellComplex->getSize(1), _cellComplex->getSize(0));
 
-  Msg::StatusBar(2, true, "Computing cohomology space bases ...");
+  Msg::StatusBar(true, "Computing cohomology space bases ...");
   t1 = Cpu();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
   chainComplex.transposeHMatrices();
   chainComplex.computeHomology(true);
   t2 = Cpu();
-  Msg::StatusBar(2, true, "Done computing cohomology space bases (%g s)", t2- t1);
+  Msg::StatusBar(true, "Done computing cohomology space bases (%g s)", t2- t1);
 
   std::string domain = _getDomainString(_domain, _subdomain);
   _deleteCochains(dim);
@@ -318,7 +318,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   Msg::Info("H^3 = %d", _betti[3]);
   if(omitted != 0) Msg::Info("The computation of basis elements in the highest dimension was omitted");
 
-  Msg::StatusBar(2, false, "H^0: %d, H^1: %d, H^2: %d, H^3: %d",
+  Msg::StatusBar(false, "H^0: %d, H^1: %d, H^2: %d, H^3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
   if(dim.empty()) {

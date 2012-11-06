@@ -13,11 +13,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
-#include "GmshConfig.h"
-
-#if defined(HAVE_FL_TREE)
-#include "FL/Fl_Tree.H"
-#endif
+#include <FL/Fl_Tree.H>
 
 class visibilityWindow{
  public:
@@ -25,10 +21,8 @@ class visibilityWindow{
   Fl_Choice *browser_type;
   Fl_Browser *browser;
   Fl_Multi_Browser *per_window;
-#if defined(HAVE_FL_TREE)
   Fl_Tree *tree;
   Fl_Button *tree_create;
-#endif
   Fl_Check_Button *butt[2];
   Fl_Button *push[2];
   Fl_Input *input[10];

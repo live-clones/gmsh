@@ -69,7 +69,8 @@ class Msg {
   static void Info(const char *fmt, ...);
   static void Direct(const char *fmt, ...);
   static void Direct(int level, const char *fmt, ...);
-  static void StatusBar(int num, bool log, const char *fmt, ...);
+  static void StatusBar(bool log, const char *fmt, ...);
+  static void StatusGl(const char *fmt, ...);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
   static void SetProgressMeterStep(int step){ _progressMeterStep = step; }

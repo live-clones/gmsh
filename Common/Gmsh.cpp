@@ -38,9 +38,9 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
-#include "menuWindow.h"
+#include "graphicWindow.h"
 #include "drawContext.h"
-#include "onelabWindow.h"
+#include "onelabGroup.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -235,15 +235,12 @@ int GmshFLTK(int argc, char **argv)
 
   // init first context
   switch (CTX::instance()->initialContext) {
-  case 1: FlGui::instance()->menu->setContext(menu_geometry, 0); break;
-  case 2: FlGui::instance()->menu->setContext(menu_mesh, 0); break;
-  case 3: FlGui::instance()->menu->setContext(menu_solver, 0); break;
-  case 4: FlGui::instance()->menu->setContext(menu_post, 0); break;
+  case 1: FlGui::instance()->openModule("Geometry"); break;
+  case 2: FlGui::instance()->openModule("Mesh"); break;
+  case 3: FlGui::instance()->openModule("Solver"); break;
+  case 4: FlGui::instance()->openModule("Post-processing"); break;
   default: // automatic
-    if(PView::list.size())
-      FlGui::instance()->menu->setContext(menu_post, 0);
-    else
-      FlGui::instance()->menu->setContext(menu_geometry, 0);
+    if(PView::list.size()) FlGui::instance()->openModule("Post-processing");
     break;
   }
 
@@ -256,16 +253,14 @@ int GmshFLTK(int argc, char **argv)
       Msg::Error("Invalid background mesh (no view)");
   }
 
-#if defined(HAVE_ONELAB)
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
     c->run();
   }
-  if(CTX::instance()->launchOnelabAtStartup != -2){
-    solver_cb(0, (void*)CTX::instance()->launchOnelabAtStartup);
-  }
-#endif
+
+  // launch solver (if requested) and fill onelab tree
+  solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

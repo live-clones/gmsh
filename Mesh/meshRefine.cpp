@@ -45,7 +45,7 @@ static void Subdivide(GEdge *ge)
   ge->lines = lines2;
 
   // 2nd order meshing destroyed the ordering of the vertices on the edge
-  std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(), 
+  std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
             MVertexLessThanParam());
   for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
@@ -105,7 +105,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
         }
         MVertex *newv;
         if (reparamOK){
-          GPoint gp = gf->point(pt);            
+          GPoint gp = gf->point(pt);
           newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
         }
         else {
@@ -159,7 +159,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
     }
     gr->tetrahedra = tetrahedra2;
   }
-  
+
   std::vector<MHexahedron*> hexahedra2;
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
     MHexahedron *h = gr->hexahedra[i];
@@ -273,40 +273,40 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
 
   }
   gr->hexahedra = hexahedra2;
-  
+
   std::vector<MPrism*> prisms2;
   for(unsigned int i = 0; i < gr->prisms.size(); i++){
     MPrism *p = gr->prisms[i];
     if(p->getNumVertices() == 18){
       prisms2.push_back
-        (new MPrism(p->getVertex(0), p->getVertex(6), p->getVertex(7), 
+        (new MPrism(p->getVertex(0), p->getVertex(6), p->getVertex(7),
                     p->getVertex(8), p->getVertex(15), p->getVertex(16)));
       prisms2.push_back
-        (new MPrism(p->getVertex(8), p->getVertex(15), p->getVertex(16), 
-                    p->getVertex(3), p->getVertex(12), p->getVertex(13)));              
+        (new MPrism(p->getVertex(8), p->getVertex(15), p->getVertex(16),
+                    p->getVertex(3), p->getVertex(12), p->getVertex(13)));
       prisms2.push_back
-        (new MPrism(p->getVertex(6), p->getVertex(1), p->getVertex(9), 
-                    p->getVertex(15), p->getVertex(10), p->getVertex(17)));             
+        (new MPrism(p->getVertex(6), p->getVertex(1), p->getVertex(9),
+                    p->getVertex(15), p->getVertex(10), p->getVertex(17)));
       prisms2.push_back
-        (new MPrism(p->getVertex(15), p->getVertex(10), p->getVertex(17), 
-                    p->getVertex(12), p->getVertex(4), p->getVertex(14)));              
+        (new MPrism(p->getVertex(15), p->getVertex(10), p->getVertex(17),
+                    p->getVertex(12), p->getVertex(4), p->getVertex(14)));
       prisms2.push_back
-        (new MPrism(p->getVertex(7), p->getVertex(9), p->getVertex(2), 
-                    p->getVertex(16), p->getVertex(17), p->getVertex(11)));             
+        (new MPrism(p->getVertex(7), p->getVertex(9), p->getVertex(2),
+                    p->getVertex(16), p->getVertex(17), p->getVertex(11)));
       prisms2.push_back
-        (new MPrism(p->getVertex(16), p->getVertex(17), p->getVertex(11), 
-                    p->getVertex(13), p->getVertex(14), p->getVertex(5)));              
+        (new MPrism(p->getVertex(16), p->getVertex(17), p->getVertex(11),
+                    p->getVertex(13), p->getVertex(14), p->getVertex(5)));
       prisms2.push_back
-        (new MPrism(p->getVertex(9), p->getVertex(7), p->getVertex(6), 
-                    p->getVertex(17), p->getVertex(16), p->getVertex(15)));             
+        (new MPrism(p->getVertex(9), p->getVertex(7), p->getVertex(6),
+                    p->getVertex(17), p->getVertex(16), p->getVertex(15)));
       prisms2.push_back
-        (new MPrism(p->getVertex(17), p->getVertex(16), p->getVertex(15), 
+        (new MPrism(p->getVertex(17), p->getVertex(16), p->getVertex(15),
                     p->getVertex(14), p->getVertex(13), p->getVertex(12)));
-    }      
+    }
     delete p;
   }
   gr->prisms = prisms2;
-  
+
   std::vector<MPyramid*> pyramids2;
   for(unsigned int i = 0; i < gr->pyramids.size(); i++){
     if(splitIntoHexas){
@@ -317,31 +317,31 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
     if(p->getNumVertices() == 14){
       // Base
       pyramids2.push_back
-        (new MPyramid(p->getVertex(0), p->getVertex(5), p->getVertex(13), 
+        (new MPyramid(p->getVertex(0), p->getVertex(5), p->getVertex(13),
                       p->getVertex(6), p->getVertex(7)));
       pyramids2.push_back
-        (new MPyramid(p->getVertex(5), p->getVertex(1), p->getVertex(8), 
+        (new MPyramid(p->getVertex(5), p->getVertex(1), p->getVertex(8),
                       p->getVertex(13), p->getVertex(9)));
       pyramids2.push_back
-        (new MPyramid(p->getVertex(13), p->getVertex(8), p->getVertex(2), 
+        (new MPyramid(p->getVertex(13), p->getVertex(8), p->getVertex(2),
                       p->getVertex(10), p->getVertex(11)));
       pyramids2.push_back
         (new MPyramid(p->getVertex(6), p->getVertex(13), p->getVertex(10),
                       p->getVertex(3), p->getVertex(12)));
-      
+
       // Split remaining into tets
       // Top
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(7), p->getVertex(9), p->getVertex(12), p->getVertex(4))));
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(9), p->getVertex(11), p->getVertex(12), p->getVertex(4))));
-      
+
       // Upside down one
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(9), p->getVertex(12), p->getVertex(11), p->getVertex(13))));
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(7), p->getVertex(12), p->getVertex(9), p->getVertex(13))));
-      
+
       // Four tets around bottom perimeter
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(7), p->getVertex(9), p->getVertex(5), p->getVertex(13))));
@@ -363,9 +363,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
 
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas)
 {
-  Msg::StatusBar(2, true, "Refining mesh...");
+  Msg::StatusBar(true, "Refining mesh...");
   double t1 = Cpu();
-        
+
   // Create 2nd order mesh (using "2nd order complete" elements) to
   // generate vertex positions
   SetOrderN(m, 2, linear, false);
@@ -389,5 +389,5 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
 
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done refining mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }

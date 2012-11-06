@@ -37,8 +37,8 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
-#include "onelabWindow.h"
-#include "menuWindow.h"
+#include "onelabGroup.h"
+#include "graphicWindow.h"
 #include "drawContext.h"
 #endif
 
@@ -257,7 +257,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   if(!fgets(header, sizeof(header), fp)) return 0;
   fclose(fp);
 
-  Msg::StatusBar(2, true, "Reading '%s'...", fileName.c_str());
+  Msg::StatusBar(true, "Reading '%s'...", fileName.c_str());
 
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
@@ -379,7 +379,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     std::vector<std::string> split = SplitFileName(fileName);
     GModel::current()->setName("");
     status = MergeFile(split[0] + split[1] + ".geo");
-    CTX::instance()->launchOnelabAtStartup = 0;
+    CTX::instance()->launchSolverAtStartup = 0;
     return status;
   }
 #endif
@@ -445,7 +445,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   Msg::ImportPhysicalsAsOnelabRegions();
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
-  Msg::StatusBar(2, true, "Done reading '%s'", fileName.c_str());
+  Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());
 
    // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))
@@ -606,7 +606,7 @@ void OpenProject(const std::string &fileName)
       CTX::instance()->recentFiles.resize(5);
 #if defined(HAVE_FLTK)
     if(FlGui::available())
-      FlGui::instance()->menu->fillRecentHistoryMenu();
+      FlGui::instance()->graph[0]->fillRecentHistoryMenu();
 #endif
   }
 

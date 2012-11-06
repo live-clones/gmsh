@@ -39,8 +39,8 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
   FlGui::instance()->manip->update();
 }
 
-openglWindow::openglWindow(int x, int y, int w, int h, const char *l)
-  : Fl_Gl_Window(x, y, w, h, l), _lock(false),
+openglWindow::openglWindow(int x, int y, int w, int h)
+  : Fl_Gl_Window(x, y, w, h, "gl"), _lock(false),
     _selection(ENT_NONE), _trySelection(0)
 {
   _ctx = new drawContext();
@@ -85,39 +85,45 @@ void openglWindow::_drawScreenMessage()
 
 void openglWindow::_drawBorder()
 {
-  // draw thin border if the parent group has more than 2 children (it
-  // has at least 2: the message console and one opengl window)
-  if(parent()->children() > 2){
-    unsigned char r, g, b;
-    Fl::get_color(color(), r, g, b);
-    /* would need to redraw all gl's when _lastHandled is changed
-    if(_lastHandled == this)
-      Fl::get_color(FL_SELECTION_COLOR, r, g, b);
-    else
-      Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
-    */
-    glColor3ub(r, g, b);
-    glLineWidth(1.0F);
-    glBegin(GL_LINE_LOOP);
-    glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
-    glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
-    glVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
-    glVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
-    glEnd();
+  // draw thin border if the parent group has more than 2 opengl windows
+  int numgl = 0;
+  for(int i = 0; i < parent()->children(); i++){
+    if(parent()->child(i)->label() &&
+       !strcmp(parent()->child(i)->label(), label()))
+      numgl++;
   }
+  if(numgl < 2) return;
+
+  unsigned char r, g, b;
+  Fl::get_color(color(), r, g, b);
+  /* would need to redraw all gl's when _lastHandled is changed
+   if(_lastHandled == this)
+     Fl::get_color(FL_SELECTION_COLOR, r, g, b);
+   else
+     Fl::get_color(FL_BACKGROUND_COLOR, r, g, b);
+  */
+  glColor3ub(r, g, b);
+  glLineWidth(1.0F);
+  glBegin(GL_LINE_LOOP);
+  glVertex2d(_ctx->viewport[0], _ctx->viewport[1]);
+  glVertex2d(_ctx->viewport[2], _ctx->viewport[1]);
+  glVertex2d(_ctx->viewport[2], _ctx->viewport[3]);
+  glVertex2d(_ctx->viewport[0], _ctx->viewport[3]);
+  glEnd();
 }
 
 void openglWindow::draw()
 {
-  // some drawing routines can create data (STL triangulations, etc.):
-  // make sure that we don't fire draw() while we are already drawing,
-  // e.g. due to an impromptu Fl::check(). The same lock is also used
-  // in _select to guarantee that we don't mix GL_RENDER and GL_SELECT
-  // rendering passes.
+  // some drawing routines can create data (STL triangulations, etc.): make sure
+  // that we don't fire draw() while we are already drawing, e.g. due to an
+  // impromptu Fl::check(). The same lock is also used in _select to guarantee
+  // that we don't mix GL_RENDER and GL_SELECT rendering passes.
   if(_lock) return;
   _lock = true;
 
   Msg::Debug("openglWindow::draw()");
+
+  if(!context_valid()) _ctx->invalidateQuadricsAndDisplayLists();
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;
@@ -127,8 +133,8 @@ void openglWindow::draw()
              _ctx->viewport[2], _ctx->viewport[3]);
 
   if(lassoMode) {
-    // draw the zoom or selection lasso on top of the current scene
-    // (without using overlays!)
+    // draw the zoom or selection lasso on top of the current scene (without
+    // using overlays!)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho((double)_ctx->viewport[0], (double)_ctx->viewport[2],
@@ -224,7 +230,6 @@ void openglWindow::draw()
       _ctx->draw2d();
       _drawScreenMessage();
       _drawBorder();
-      //    glPushMatrix();
     }
     else if(CTX::instance()->stereo){
       Camera *cam = &(_ctx->camera);
@@ -588,7 +593,7 @@ int openglWindow::handle(int event)
         if(CTX::instance()->tooltips)
           drawTooltip(text);
         else
-          Msg::StatusBar(2, false, text.c_str());
+          Msg::StatusBar(false, text.c_str());
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());

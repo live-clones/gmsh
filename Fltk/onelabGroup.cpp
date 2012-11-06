@@ -12,28 +12,21 @@ typedef unsigned long intptr_t;
 #endif
 
 #include "GmshMessage.h"
-
-#if defined(HAVE_ONELAB)
 #include "onelab.h"
-#endif
-
-#if defined(HAVE_ONELAB_METAMODEL)
-#include "metamodel.h"
-#endif
-
-#if defined(HAVE_ONELAB) && (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
-
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Choice.H>
+#include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Output.H>
 #include <FL/fl_ask.H>
 #include "inputRange.h"
 #include "inputRegion.h"
+#include "viewButton.h"
 #include "paletteWindow.h"
-#include "menuWindow.h"
+#include "graphicWindow.h"
 #include "fileDialogs.h"
-#include "onelabWindow.h"
+#include "onelabGroup.h"
 #include "FlGui.h"
 #include "Context.h"
 #include "GModel.h"
@@ -47,9 +40,13 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #include "PView.h"
 
+#if defined(HAVE_ONELAB_METAMODEL)
+#include "metamodel.h"
+#endif
+
 // This file contains the Gmsh/FLTK specific parts of the OneLab
-// interface. You'll need to reimplement this if you plan to build
-// a different OneLab server.
+// interface. You'll need to reimplement this if you plan to build a different
+// OneLab server.
 
 class onelabGmshServer : public GmshServer{
  private:
@@ -148,7 +145,7 @@ bool onelab::localNetworkClient::run()
     return false;
   }
 
-  Msg::StatusBar(2, true, "Running '%s'...", _name.c_str());
+  Msg::StatusBar(true, "Running '%s'...", _name.c_str());
 
   while(1) {
 
@@ -286,7 +283,7 @@ bool onelab::localNetworkClient::run()
       }
       break;
     case GmshSocket::GMSH_PROGRESS:
-      Msg::StatusBar(2, false, "%s %s", _name.c_str(), message.c_str());
+      Msg::StatusBar(false, "%s %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_INFO:
       Msg::Direct("%-8.8s: %s", _name.c_str(), message.c_str());
@@ -303,8 +300,10 @@ bool onelab::localNetworkClient::run()
         MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
                                 CTX::instance()->solver.autoHideNewViews, true);
         drawContext::global()->draw();
-        if(n != PView::list.size())
-          FlGui::instance()->menu->setContext(menu_post, 0);
+        if(n != PView::list.size()){
+          FlGui::instance()->rebuildTree();
+          FlGui::instance()->openModule("Post-processing");
+        }
       }
       break;
     case GmshSocket::GMSH_PARSE_STRING:
@@ -333,7 +332,7 @@ bool onelab::localNetworkClient::run()
   server->Shutdown();
   delete server;
 
-  Msg::StatusBar(2, true, "Done running '%s'", _name.c_str());
+  Msg::StatusBar(true, "Done running '%s'", _name.c_str());
 
   if(command.empty()){
     Msg::Info("Client disconnected: starting new connection");
@@ -363,7 +362,7 @@ static void initializeLoops()
   onelabUtils::initializeLoop("3");
 
   if(onelab::server::instance()->getChanged())
-    FlGui::instance()->onelab->rebuildTree();
+    FlGui::instance()->rebuildTree();
 }
 
 static bool incrementLoops()
@@ -374,7 +373,7 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
   if(onelab::server::instance()->getChanged())
-    FlGui::instance()->onelab->rebuildTree();
+    FlGui::instance()->rebuildTree();
 
   return ret;
 }
@@ -404,9 +403,9 @@ static std::string timeStamp()
 
 static void saveDb(const std::string &fileName)
 {
-  Msg::StatusBar(2, true, "Saving database '%s'...", fileName.c_str());
+  Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
   if(onelab::server::instance()->toFile(fileName))
-    Msg::StatusBar(2, true, "Done saving database '%s'", fileName.c_str());
+    Msg::StatusBar(true, "Done saving database '%s'", fileName.c_str());
   else
     Msg::Error("Could not save database '%s'", fileName.c_str());
 }
@@ -449,14 +448,14 @@ static void archiveOutputFiles(const std::string &fileName)
     saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
   }
 
-  FlGui::instance()->onelab->rebuildTree();
+  FlGui::instance()->rebuildTree();
 }
 
 static void loadDb(const std::string &name)
 {
-  Msg::StatusBar(2, true, "Loading database '%s'...", name.c_str());
+  Msg::StatusBar(true, "Loading database '%s'...", name.c_str());
   if(onelab::server::instance()->fromFile(name))
-    Msg::StatusBar(2, true, "Done loading database '%s'", name.c_str());
+    Msg::StatusBar(true, "Done loading database '%s'", name.c_str());
   else
     Msg::Error("Could not load database '%s'", name.c_str());
 }
@@ -468,9 +467,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh"){
     updateGraphs();
-    FlGui::instance()->onelab->rebuildTree();
-    if(!FlGui::instance()->onelab->shown())
-      FlGui::instance()->onelab->show();
+    FlGui::instance()->rebuildTree();
     return;
   }
 
@@ -591,7 +588,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(action != "initialize"){
       updateGraphs();
-      FlGui::instance()->onelab->rebuildTree();
+      FlGui::instance()->rebuildTree();
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
@@ -691,6 +688,7 @@ static void onelab_tree_cb(Fl_Widget *w, void *data)
   std::vector<onelab::string> strings;
   std::vector<onelab::region> regions;
   std::vector<onelab::function> functions;
+
   switch(tree->callback_reason()){
   case FL_TREE_REASON_SELECTED: break;
   case FL_TREE_REASON_DESELECTED: break;
@@ -711,33 +709,31 @@ static void onelab_tree_cb(Fl_Widget *w, void *data)
   }
 }
 
-onelabWindow::onelabWindow(int deltaFontSize)
-  : _deltaFontSize(deltaFontSize), _stop(false)
+onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
+  : Fl_Group(x,y,w,h,l), _stop(false)
 {
-  FL_NORMAL_SIZE -= _deltaFontSize;
-
-  int width = CTX::instance()->solverSize[0];
-  int height = CTX::instance()->solverSize[1];
-
-  _win = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows ? true : false, "OneLab");
-  _win->box(GMSH_WINDOW_BOX);
-
-  _tree = new Fl_Tree(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  _tree = new Fl_Tree(x, y, w, h - BH - 2 * WB);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
+  _tree->box(FL_FLAT_BOX);
+  _tree->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2));
 
   _itemWidth = (int)(0.4 * _tree->w());
 
-  _butt[0] = new Fl_Button(width - 2*WB - 2*BB, height - WB - BH, BB, BH, "Check");
-  _butt[0]->callback(onelab_cb, (void*)"check");
-  _butt[1] = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Compute");
-  _butt[1]->callback(onelab_cb, (void*)"compute");
+  box(FL_FLAT_BOX);
+  color(_tree->color());
 
   int BB2 = BB / 2 + 4;
+
+  _butt[0] = new Fl_Button(x + w - 3 * WB - 3 * BB2, y + h - WB - BH, BB2, BH, "Check");
+  _butt[0]->callback(onelab_cb, (void*)"check");
+
+  _butt[1] = new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
+  _butt[1]->callback(onelab_cb, (void*)"compute");
+
   _gear = new Fl_Menu_Button
-    (_butt[0]->x() - WB - BB2, _butt[0]->y(), BB2, BH, "@-1gmsh_gear");
+    (x + w - WB - BB2, y + h - WB - BH, BB2, BH, "@-1gmsh_gear");
   _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
@@ -762,19 +758,12 @@ onelabWindow::onelabWindow(int deltaFontSize)
 
   _gearOptionsEnd = _gear->menu()->size();
 
-  Fl_Box *resbox = new Fl_Box(WB, WB,
-                              width - 2 * BB - BB2 - 4 * WB,
-                              height - 3 * WB - BH);
-  _win->resizable(resbox);
-  _win->size_range(2 * BB + BB2 + 4 * WB + 1, 2 * BH + 3 * WB);
+  end();
 
-  _win->position
-    (CTX::instance()->solverPosition[0], CTX::instance()->solverPosition[1]);
-  _win->end();
+  Fl_Box *resbox = new Fl_Box(x + WB, y + WB, WB, WB);
+  resizable(resbox);
 
-  setButtonVisibility();
-
-  FL_NORMAL_SIZE += _deltaFontSize;
+  rebuildSolverList();
 }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
@@ -810,7 +799,7 @@ static void autoCheck(const T &pold, const T &pnew, bool force=false)
 }
 
 template<class T>
-void onelabWindow::_addParameter(T &p)
+void onelabGroup::_addParameter(T &p)
 {
   bool highlight = false;
   Fl_Color c;
@@ -823,6 +812,45 @@ void onelabWindow::_addParameter(T &p)
   widget->copy_label(p.getShortName().c_str());
   n->widget(widget);
   _tree->end();
+}
+
+void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
+{
+  Fl_Tree_Item *n = _tree->add(path.c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  _tree->begin();
+  Fl_Button *but = new Fl_Button(1, 1, (3 * _itemWidth) / 2, 1);
+  but->align(FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  but->callback(callback, data);
+  _treeWidgets.push_back(but);
+  std::string label = path;
+  std::string::size_type last = path.find_last_of('/');
+  if(last != std::string::npos) label = path.substr(last + 1);
+  but->copy_label(label.c_str());
+  n->widget(but);
+  _tree->end();
+}
+
+void onelabGroup::_addViewMenu(int num)
+{
+  std::ostringstream path;
+  path << "0Gmsh modules/Post-processing/View" << num;
+  Fl_Tree_Item *n = _tree->add(path.str().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 5);
+  _tree->begin();
+  viewButton *but = new viewButton(1, 1, (7 * _itemWidth) / 4, 1, num);
+  _treeWidgets.push_back(but);
+  n->widget(but);
+  _tree->end();
+}
+
+viewButton *onelabGroup::getViewButton(int num)
+{
+  char tmp[256];
+  sprintf(tmp, "0Gmsh modules/Post-processing/View%d", num);
+  Fl_Tree_Item *n = _tree->find_item(tmp);
+  if(n) return (viewButton*)n->widget();
+  return 0;
 }
 
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
@@ -881,8 +909,8 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
   }
 }
 
-Fl_Widget *onelabWindow::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
-                                             bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
+                                            bool highlight, Fl_Color c)
 {
   // non-editable value
   if(p.getReadOnly()){
@@ -1002,12 +1030,12 @@ static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-Fl_Widget *onelabWindow::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
-                                             bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
+                                            bool highlight, Fl_Color c)
 {
   // macro button
   if(p.getKind() == "macro"){
-    Fl_Button *but = new Fl_Button(1, 1, _itemWidth, 1);
+    Fl_Button *but = new Fl_Button(1, 1, (3 * _itemWidth) / 2, 1);
     but->align(FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void*)n);
     if(highlight) but->color(c);
@@ -1070,8 +1098,8 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
   }
 }
 
-Fl_Widget *onelabWindow::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
-                                             bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
+                                            bool highlight, Fl_Color c)
 {
   // non-editable value
   if(p.getReadOnly()){
@@ -1090,8 +1118,8 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
   return but;
 }
 
-Fl_Widget *onelabWindow::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
-                                             bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
+                                            bool highlight, Fl_Color c)
 {
   // non-editable value
   if(1 || p.getReadOnly()){
@@ -1103,13 +1131,18 @@ Fl_Widget *onelabWindow::_addParameterWidget(onelab::function &p, Fl_Tree_Item *
   }
 }
 
-void onelabWindow::rebuildTree()
+static void onelab_subtree_cb(Fl_Widget *w, void *data)
 {
-  FL_NORMAL_SIZE -= _deltaFontSize;
+  Fl_Tree_Item *n = (Fl_Tree_Item*)data;
+  n->open_toggle();
+  FlGui::instance()->onelab->redrawTree();
+}
 
+void onelabGroup::rebuildTree()
+{
   _itemWidth = (int)(0.4 * _tree->w());
 
-  std::set<std::string> closed;
+  std::set<std::string> closed = _getClosedGmshMenus();
 
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
@@ -1121,6 +1154,8 @@ void onelabWindow::rebuildTree()
   for(unsigned int i = 0; i < _treeStrings.size(); i++)
     free(_treeStrings[i]);
   _treeStrings.clear();
+
+  _addGmshMenus();
 
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
@@ -1161,8 +1196,11 @@ void onelabWindow::rebuildTree()
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
     if(n->has_children()){
       _tree->begin();
-      Fl_Box *but = new Fl_Box(1, 1, _itemWidth, 1);
+      Fl_Button *but = new Fl_Button(1, 1, _itemWidth, 1);
+      but->box(FL_NO_BOX);
+      but->clear_visible_focus();
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      but->callback(onelab_subtree_cb, (void*)n);
       _treeWidgets.push_back(but);
       onelab::string o(n->label());
       but->copy_label(o.getShortName().c_str());
@@ -1177,11 +1215,18 @@ void onelabWindow::rebuildTree()
   _tree->redraw();
 
   FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
-
-  FL_NORMAL_SIZE += _deltaFontSize;
 }
 
-void onelabWindow::checkForErrors(const std::string &client)
+void onelabGroup::openTreeItem(const std::string &name)
+{
+  Fl_Tree_Item *n = _tree->find_item(name.c_str());
+  if(n && n->has_children()){
+    n->open();
+    _tree->redraw();
+  }
+}
+
+void onelabGroup::checkForErrors(const std::string &client)
 {
   if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode){
     Msg::ResetErrorCounter();
@@ -1194,24 +1239,22 @@ void onelabWindow::checkForErrors(const std::string &client)
   }
 }
 
-void onelabWindow::setButtonVisibility()
+void onelabGroup::setButtonVisibility()
 {
-  if(_butt[0]->visible() && CTX::instance()->solver.autoCheck){
-    _butt[0]->hide();
-    _gear->position(_gear->x() + _butt[0]->w() + WB, _gear->y());
-    _win->init_sizes();
-    _win->redraw();
-  }
-
-  if(!_butt[0]->visible() && !CTX::instance()->solver.autoCheck){
+  if(!CTX::instance()->solver.autoCheck)
     _butt[0]->show();
-    _gear->position(_gear->x() - _butt[0]->w() - WB, _gear->y());
-    _win->init_sizes();
-    _win->redraw();
-  }
+  else
+    _butt[0]->hide();
+
+  if(onelab::server::instance()->getNumClients() > 1)
+    _butt[1]->show();
+  else
+    _butt[1]->hide();
+
+  redraw();
 }
 
-void onelabWindow::setButtonMode(const std::string &butt0, const std::string &butt1)
+void onelabGroup::setButtonMode(const std::string &butt0, const std::string &butt1)
 {
   if(butt0 == "check"){
     _butt[0]->activate();
@@ -1224,7 +1267,7 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
 
   if(butt1 == "compute"){
     _butt[1]->activate();
-    _butt[1]->label("Compute");
+    _butt[1]->label("Run");
     _butt[1]->callback(onelab_cb, (void*)"compute");
     for(int i = 0; i < _gear->menu()->size(); i++)
       ((Fl_Menu_Item*)_gear->menu())[i].activate();
@@ -1253,14 +1296,14 @@ void onelabWindow::setButtonMode(const std::string &butt0, const std::string &bu
   }
 }
 
-bool onelabWindow::isBusy()
+bool onelabGroup::isBusy()
 {
   std::string s(_butt[1]->label());
-  if(s == "Compute") return false;
+  if(s == "Run") return false;
   return true;
 }
 
-void onelabWindow::rebuildSolverList()
+void onelabGroup::rebuildSolverList()
 {
   // update OneLab window title and gear menu
   _title = "OneLab";
@@ -1295,7 +1338,7 @@ void onelabWindow::rebuildSolverList()
     _title += " " + it->second->getName();
   }
   _gear->add("Add new client...", 0, onelab_add_solver_cb);
-  _win->label(_title.c_str());
+  //label(_title.c_str());
 
   // update Gmsh solver menu
   std::vector<std::string> names, exes, hosts;
@@ -1321,11 +1364,13 @@ void onelabWindow::rebuildSolverList()
       opt_solver_remote_login(i, GMSH_SET, "");
     }
   }
-  FlGui::instance()->menu->setContext(menu_solver, 0);
+
+  setButtonVisibility();
+  rebuildTree();
 }
 
-void onelabWindow::addSolver(const std::string &name, const std::string &executable,
-                             const std::string &remoteLogin, int index)
+void onelabGroup::addSolver(const std::string &name, const std::string &executable,
+                            const std::string &remoteLogin, int index)
 {
   if(onelab::server::instance()->findClient(name) !=
      onelab::server::instance()->lastClient()) return; // solver already exists
@@ -1356,7 +1401,7 @@ void onelabWindow::addSolver(const std::string &name, const std::string &executa
   onelab_cb(0, (void*)"initialize");
 }
 
-void onelabWindow::removeSolver(const std::string &name)
+void onelabGroup::removeSolver(const std::string &name)
 {
   onelab::server::citer it = onelab::server::instance()->findClient(name);
   if(it != onelab::server::instance()->lastClient()){
@@ -1385,8 +1430,9 @@ void solver_cb(Fl_Widget *w, void *data)
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     FlGui::instance()->onelab->addSolver(name, exe, host, num);
   }
-  else
+  else{
     FlGui::instance()->onelab->rebuildSolverList();
+  }
 
   if(CTX::instance()->solver.autoSaveDatabase){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
@@ -1398,7 +1444,7 @@ void solver_cb(Fl_Widget *w, void *data)
   else
     onelab_cb(0, (num >= 0) ? (void*)"check" : (void*)"refresh");
 
-  CTX::instance()->launchOnelabAtStartup = -2;
+  CTX::instance()->launchSolverAtStartup = -1;
 }
 
 void flgui_wait_cb(double time)
@@ -1440,34 +1486,3 @@ int metamodel_cb(const std::string &name, const std::string &action)
   return 0;
 #endif
 }
-
-#else
-
-#if defined(HAVE_ONELAB)
-
-bool onelab::localNetworkClient::run()
-{
-  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
-  return false;
-}
-
-bool onelab::localNetworkClient::kill()
-{
-  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
-  return false;
-}
-
-#endif
-
-void solver_cb(Fl_Widget *w, void *data)
-{
-  Msg::Error("The solver interface requires OneLab and FLTK 1.3");
-}
-
-int metamodel_cb(const std::string &name, const std::string &action)
-{
-  Msg::Error("Metamodels require OneLab and FLTK 1.3");
-  return 0;
-}
-
-#endif

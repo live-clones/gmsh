@@ -79,8 +79,8 @@ class drawTransformScaled : public drawTransform {
   }
 };
 
-// global drawing functions, which need to be redefined for each
-// widget toolkit (FLTK, Qt, etc.)
+// global drawing functions, which need to be redefined for each widget toolkit
+// (FLTK, Qt, etc.)
 class drawContextGlobal {
  public:
   drawContextGlobal(){}
@@ -160,6 +160,7 @@ class drawContext {
   bool isVisible(GModel *m){ return (_hiddenModels.find(m) == _hiddenModels.end()); }
   bool isVisible(PView *v){ return (_hiddenViews.find(v) == _hiddenViews.end()); }
   void createQuadricsAndDisplayLists();
+  void invalidateQuadricsAndDisplayLists();
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
@@ -264,8 +265,8 @@ class mousePosition {
   }
   void recenter(drawContext *ctx)
   {
-    // compute the equivalent translation to apply *after* the scaling
-    // so that the scaling is done around the point which was clicked:
+    // compute the equivalent translation to apply *after* the scaling so that
+    // the scaling is done around the point which was clicked:
     ctx->t[0] = t[0] * (s[0] / ctx->s[0]) - wnr[0] * (1. - (s[0] / ctx->s[0]));
     ctx->t[1] = t[1] * (s[1] / ctx->s[1]) - wnr[1] * (1. - (s[1] / ctx->s[1]));
   }

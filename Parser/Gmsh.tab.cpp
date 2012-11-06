@@ -7106,7 +7106,7 @@ yyreduce:
     {
       if(!strcmp((yyvsp[(1) - (3)].c), "Include")){
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(2) - (3)].c));
-	Msg::StatusBar(2, true, "Reading '%s'...", tmp.c_str());
+	Msg::StatusBar(true, "Reading '%s'...", tmp.c_str());
 	// Warning: we explicitly ask ParseFile not to fclose() the included
         // file, in order to allow user functions definitions in these files.
         // The files will be closed in the next time OpenFile terminates. If
@@ -7117,7 +7117,7 @@ yyreduce:
         // instead of using the FILE pointer...)
 	ParseFile(tmp, false, true);
 	SetBoundingBox();
-	Msg::StatusBar(2, true, "Done reading '%s'", tmp.c_str());
+	Msg::StatusBar(true, "Done reading '%s'", tmp.c_str());
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Print")){
 	// make sure we have the latest data from GEO_Internals in GModel
@@ -10579,7 +10579,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
   int numFormats = 0;
-  for(int i = 0; i < strlen(format); i++)
+  for(unsigned int i = 0; i < strlen(format); i++)
     if(format[i] == '%') numFormats++;
   if(!numFormats){
     strcpy(buffer, format);

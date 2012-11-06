@@ -66,9 +66,6 @@ written by Bruce Hendrickson and Robert Leland at Sandia National Laboratories
 under US Department of Energy contract DE-AC04-76DP00789 and is copyrighted by
 Sandia Corporation: check the configuration options.
 
-This version of Gmsh may contain code (in the contrib/Fl_Tree subdirectory),
-copyright (C) 2009 Greg Ercolano: check the configuration options.
-
 This version of Gmsh may contain code (in the contrib/gmm subdirectory)
 copyright (C) 2002-2008 Yves Renard: check the configuration options.
 

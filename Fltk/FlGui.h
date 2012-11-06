@@ -20,7 +20,6 @@
 
 class graphicWindow;
 class openglWindow;
-class menuWindow;
 class optionWindow;
 class fieldWindow;
 class pluginWindow;
@@ -32,7 +31,7 @@ class manipWindow;
 class geometryContextWindow;
 class meshContextWindow;
 class aboutWindow;
-class onelabWindow;
+class onelabGroup;
 class Fl_Widget;
 
 class GVertex;
@@ -53,7 +52,6 @@ class FlGui{
   std::vector<MElement*> selectedElements;
  public:
   std::vector<graphicWindow*> graph;
-  menuWindow *menu;
   optionWindow *options;
   fieldWindow *fields;
   pluginWindow *plugins;
@@ -65,7 +63,7 @@ class FlGui{
   geometryContextWindow *geoContext;
   meshContextWindow *meshContext;
   aboutWindow *about;
-  onelabWindow *onelab;
+  onelabGroup *onelab;
  public:
   FlGui(int argc, char **argv);
   ~FlGui(){}
@@ -107,7 +105,7 @@ class FlGui{
   // select an entity in the most recent graphic window
   char selectEntity(int type);
   // display status message
-  void setStatus(const char *msg, int num);
+  void setStatus(const char *msg, bool opengl=false);
   // display status message and update progress bar
   void setProgress(const char *msg, double val, double min, double max);
   // create the window for physical context dependant definitions
@@ -118,6 +116,10 @@ class FlGui{
   void showMessages();
   // add line in message console(s)
   void saveMessages(const char *fileName);
+  // rebuild the tree
+  void rebuildTree();
+  // open module in tree
+  void openModule(const std::string &name);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

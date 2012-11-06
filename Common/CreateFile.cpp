@@ -174,7 +174,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
   bool error = false;
 
   if(redraw)
-    Msg::StatusBar(2, true, "Writing '%s'...", name.c_str());
+    Msg::StatusBar(true, "Writing '%s'...", name.c_str());
 
   switch (format) {
 
@@ -531,7 +531,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
   CTX::instance()->printing = 0;
 
   if(redraw && !error)
-    Msg::StatusBar(2, true, "Done writing '%s'", name.c_str());
+    Msg::StatusBar(true, "Done writing '%s'", name.c_str());
 
 #if defined(HAVE_OPENGL)
   if(redraw) drawContext::global()->draw();

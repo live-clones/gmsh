@@ -1021,8 +1021,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
     if (nPts == 1) {
       if(incomplete) {
-        pyramids2.push_back(new MPyramid13(p->getVertex(0), p->getVertex(1), 
-                            p->getVertex(2), p->getVertex(3), 
+        pyramids2.push_back(new MPyramid13(p->getVertex(0), p->getVertex(1),
+                            p->getVertex(2), p->getVertex(3),
                             p->getVertex(4), ve[0], ve[1], ve[2],
 			                      ve[3], ve[4], ve[5], ve[6], ve[7]));
       }
@@ -1080,7 +1080,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         verts_lvl1[0] = 31;
         verts_lvl1[1] = 37;
         verts_lvl1[2] = 40;
-        verts_lvl1[3] = 34;     
+        verts_lvl1[3] = 34;
         break;
       case(2):
         verts_lvl1[0] = 21;
@@ -1104,7 +1104,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
             veq.push_back(ve[verts_lvl3[f]-5]);
         else if (nPts-q == 3)
           for (int f = 0; f < 8; f++)
-            veq.push_back(ve[verts_lvl2[f]-5]);        
+            veq.push_back(ve[verts_lvl2[f]-5]);
         else if (nPts-q == 2)
           for (int f = 0; f < 4; f++)
             veq.push_back(ve[verts_lvl1[f]-5]);
@@ -1152,7 +1152,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                                { -0.5,  0.5},
                                {  0.0, -0.5},
                                {  0.5,  0.0},
-                               {  0.0,  0.5},                               
+                               {  0.0,  0.5},
                                { -0.5,  0.0},
                                {  0.0,  0.0}
                                  };
@@ -1454,7 +1454,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   char msg[256];
   sprintf(msg, "Meshing order %d (curvilinear %s)...", order, linear ? "off" : "on");
 
-  Msg::StatusBar(2, true, msg);
+  Msg::StatusBar(true, msg);
 
   double t1 = Cpu();
 
@@ -1520,7 +1520,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
   // m->writeMSH("CORRECTED.msh");
 
-  Msg::StatusBar(2, true, "Done meshing order %d (%g s)", order, t2 - t1);
+  Msg::StatusBar(true, "Done meshing order %d (%g s)", order, t2 - t1);
 }
 
 void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist)

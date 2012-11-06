@@ -1,4 +1,3 @@
-
 // Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -15,7 +14,12 @@
 #include <FL/Fl_Tile.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
+#if defined(__APPLE__)
+#include <FL/Fl_Sys_Menu_Bar.H>
+#endif
+#include <FL/Fl_Menu_Bar.H>
 #include "openglWindow.h"
+#include "onelabGroup.h"
 
 class graphicWindow{
  private:
@@ -24,12 +28,17 @@ class graphicWindow{
   bool _autoScrollMessages;
  public:
   Fl_Window *win;
+#if defined(__APPLE__)
+  Fl_Sys_Menu_Bar *sysbar;
+#endif
+  Fl_Menu_Bar *bar;
   Fl_Tile *tile;
   std::vector<openglWindow*> gl;
   Fl_Browser *browser;
+  onelabGroup *onelab;
   Fl_Box *bottom;
   Fl_Button *butt[14];
-  Fl_Progress *label[2];
+  Fl_Progress *label;
   int minWidth, minHeight;
  public:
   graphicWindow(bool main=true, int numTiles=1);
@@ -48,8 +57,22 @@ class graphicWindow{
   void clearMessages();
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
+  void fillRecentHistoryMenu();
 };
 
+void file_quit_cb(Fl_Widget *w, void *data);
+void file_watch_cb(Fl_Widget *w, void *data);
+void mod_geometry_cb(Fl_Widget *w, void *data);
+void mod_mesh_cb(Fl_Widget *w, void *data);
+void mod_solver_cb(Fl_Widget *w, void *data);
+void mod_post_cb(Fl_Widget *w, void *data);
+void mod_back_cb(Fl_Widget *w, void *data);
+void mod_forward_cb(Fl_Widget *w, void *data);
+void geometry_reload_cb(Fl_Widget *w, void *data);
+void mesh_1d_cb(Fl_Widget *w, void *data);
+void mesh_2d_cb(Fl_Widget *w, void *data);
+void mesh_3d_cb(Fl_Widget *w, void *data);
+void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
 void status_play_manual(int time, int incr, bool redraw=true);

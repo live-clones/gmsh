@@ -41,7 +41,7 @@ class openglWindow : public Fl_Gl_Window {
   bool addPointMode, lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
   std::string screenMessage[2];
-  openglWindow(int x, int y, int w, int h, const char *l=0);
+  openglWindow(int x, int y, int w, int h);
   ~openglWindow();
   drawContext *getDrawContext(){ return _ctx; }
   char selectEntity(int type,

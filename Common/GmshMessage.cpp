@@ -387,10 +387,9 @@ void Msg::Direct(int level, const char *fmt, ...)
   }
 }
 
-void Msg::StatusBar(int num, bool log, const char *fmt, ...)
+void Msg::StatusBar(bool log, const char *fmt, ...)
 {
   if(_commRank || _verbosity < 4) return;
-  if(num < 1 || num > 3) return;
 
   char str[5000];
   va_list args;
@@ -404,8 +403,8 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(log) FlGui::instance()->check();
-    if(!log || num != 2 || _verbosity > 4)
-      FlGui::instance()->setStatus(str, num - 1);
+    if(!log || _verbosity > 4)
+      FlGui::instance()->setStatus(str);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
@@ -417,6 +416,20 @@ void Msg::StatusBar(int num, bool log, const char *fmt, ...)
     fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
+}
+
+void Msg::StatusGl(const char *fmt, ...)
+{
+#if defined(HAVE_FLTK)
+  if(_commRank) return;
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  if(FlGui::available())
+    FlGui::instance()->setStatus(str, true);
+#endif
 }
 
 void Msg::Debug(const char *fmt, ...)
@@ -791,7 +804,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 {
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
-  CTX::instance()->launchOnelabAtStartup = -1;
 
   std::string name = _getParameterName(key, copt);
 
@@ -873,7 +885,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 {
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
-  CTX::instance()->launchOnelabAtStartup = -1;
 
   std::string name = _getParameterName(key, copt);
 
@@ -919,10 +930,11 @@ void Msg::ImportPhysicalsAsOnelabRegions()
           name = std::string("Physical") +
             ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
              (dim == 1) ? "Line" : "Point") + num.str();
-        name.insert(0, "Gmsh/Physical groups/");
+        name.insert(0, "Gmsh parameters/Physical groups/");
         onelab::region p(name, num.str());
         p.setDimension(dim);
         p.setReadOnly(true);
+        p.setVisible(false);
         p.setAttribute("Closed", "1");
         _onelabClient->set(p);
       }

@@ -18,7 +18,6 @@
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_FLTK
-#cmakedefine HAVE_FL_TREE
 #cmakedefine HAVE_FOURIER_MODEL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP

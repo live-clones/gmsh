@@ -17,8 +17,9 @@ typedef unsigned long intptr_t;
 #include "GmshMessage.h"
 #include "FlGui.h"
 #include "optionWindow.h"
+#include "graphicWindow.h"
+#include "openglWindow.h"
 #include "paletteWindow.h"
-#include "menuWindow.h"
 #include "extraDialogs.h"
 #include "drawContext.h"
 #include "Options.h"
@@ -29,8 +30,6 @@ typedef unsigned long intptr_t;
 #include "PViewOptions.h"
 #include "OS.h"
 #include "Context.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
@@ -174,8 +173,7 @@ static void options_restore_defaults_cb(Fl_Widget *w, void *data)
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
   ReInitOptions(0);
   InitOptionsGUI(0);
-  if(FlGui::instance()->menu->module->value() == 3) // hack to refresh the buttons
-    FlGui::instance()->menu->setContext(menu_post, 0);
+  FlGui::instance()->rebuildTree();
   drawContext::global()->draw();
 }
 
@@ -193,7 +191,7 @@ static void general_options_color_scheme_cb(Fl_Widget *w, void *data)
 
 static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(3, false, "Select entity or element\n[Press 'q' to abort]");
+  Msg::StatusGl("Select entity or element\n[Press 'q' to abort]");
 
   CTX::instance()->pickElements = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -221,7 +219,7 @@ static void general_options_rotation_center_select_cb(Fl_Widget *w, void *data)
   CTX::instance()->mesh.changed = ENT_ALL;
   GModel::current()->setSelection(0);
   drawContext::global()->draw();
-  Msg::StatusBar(3, false, "");
+  Msg::StatusGl("");
 }
 
 static void general_options_ok_cb(Fl_Widget *w, void *data)

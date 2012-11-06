@@ -2535,7 +2535,7 @@ Command :
     {
       if(!strcmp($1, "Include")){
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	Msg::StatusBar(2, true, "Reading '%s'...", tmp.c_str());
+	Msg::StatusBar(true, "Reading '%s'...", tmp.c_str());
 	// Warning: we explicitly ask ParseFile not to fclose() the included
         // file, in order to allow user functions definitions in these files.
         // The files will be closed in the next time OpenFile terminates. If
@@ -2546,7 +2546,7 @@ Command :
         // instead of using the FILE pointer...)
 	ParseFile(tmp, false, true);
 	SetBoundingBox();
-	Msg::StatusBar(2, true, "Done reading '%s'", tmp.c_str());
+	Msg::StatusBar(true, "Done reading '%s'", tmp.c_str());
       }
       else if(!strcmp($1, "Print")){
 	// make sure we have the latest data from GEO_Internals in GModel

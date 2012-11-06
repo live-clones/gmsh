@@ -79,7 +79,7 @@ void inputRegion::_add_butt_cb(Fl_Widget *w, void *data)
 
   int dim = ENT_ALL; // TODO use onelab::region::dim
 
-  Msg::StatusBar(3, false, "Select entities\n[Press 'e' to end]");
+  Msg::StatusGl("Select entities\n[Press 'e' to end]");
   while(1){
     char ib = FlGui::instance()->selectEntity(dim);
     if(ib == 'l'){
@@ -96,7 +96,7 @@ void inputRegion::_add_butt_cb(Fl_Widget *w, void *data)
       break;
     }
   }
-  Msg::StatusBar(3, false, "");
+  Msg::StatusGl("");
 
   b->do_callback();
 

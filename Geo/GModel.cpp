@@ -1416,7 +1416,7 @@ void GModel::checkMeshCoherence(double tolerance)
   int numEle = getNumMeshElements();
   if(!numEle) return;
 
-  Msg::StatusBar(2, true, "Checking mesh coherence (%d elements)...", numEle);
+  Msg::StatusBar(true, "Checking mesh coherence (%d elements)...", numEle);
 
   SBoundingBox3d bbox = bounds();
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
@@ -1469,12 +1469,12 @@ void GModel::checkMeshCoherence(double tolerance)
     if(num) Msg::Error("%d duplicate element%s", num, num > 1 ? "s" : "");
   }
 
-  Msg::StatusBar(2, true, "Done checking mesh coherence");
+  Msg::StatusBar(true, "Done checking mesh coherence");
 }
 
 int GModel::removeDuplicateMeshVertices(double tolerance)
 {
-  Msg::StatusBar(2, true, "Removing duplicate mesh vertices...");
+  Msg::StatusBar(true, "Removing duplicate mesh vertices...");
 
   SBoundingBox3d bbox = bounds();
   double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
@@ -1546,7 +1546,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   if(num)
     Msg::Info("Removed %d duplicate mesh %s", num, num > 1 ? "vertices" : "vertex");
 
-  Msg::StatusBar(2, true, "Done removing duplicate mesh vertices");
+  Msg::StatusBar(true, "Done removing duplicate mesh vertices");
   return num;
 }
 
@@ -1817,7 +1817,7 @@ void GModel::makeDiscreteFacesSimplyConnected()
 
 void GModel::createTopologyFromMesh(int ignoreHoles)
 {
-  Msg::StatusBar(2, true, "Creating topology from mesh...");
+  Msg::StatusBar(true, "Creating topology from mesh...");
   double t1 = Cpu();
 
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
@@ -1842,7 +1842,7 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   exportDiscreteGEOInternals();
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done creating topology from mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
 }
 
 void GModel::createTopologyFromRegions(std::vector<discreteRegion*> &discRegions)

@@ -466,8 +466,6 @@ class listBrowser : public Fl_Browser{
     : Fl_Browser(x, y, w, h, c){}
 };
 
-#if defined(HAVE_FL_TREE)
-
 static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
 {
   std::ostringstream vertex;
@@ -730,8 +728,6 @@ class treeBrowser : public Fl_Tree{
     : Fl_Tree(x, y, w, h, c){}
 };
 
-#endif
-
 void visibility_cb(Fl_Widget *w, void *data)
 {
   // get the visibility info from the model, and update the browser
@@ -743,15 +739,13 @@ void visibility_cb(Fl_Widget *w, void *data)
     FlGui::instance()->visibility->show(false);
 
   _rebuild_list_browser();
-#if defined(HAVE_FL_TREE)
   _rebuild_tree_browser(false);
-#endif
   FlGui::instance()->visibility->updatePerWindow(true);
 }
 
 static void visibility_save_cb(Fl_Widget *w, void *data)
 {
-  Msg::StatusBar(2, true, "Appending visibility info to '%s'...",
+  Msg::StatusBar(true, "Appending visibility info to '%s'...",
                  GModel::current()->getFileName().c_str());
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
@@ -803,7 +797,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   }
   str += "}\n";
   add_infile(str, GModel::current()->getFileName());
-  Msg::StatusBar(2, true, "Done appending visibility info");
+  Msg::StatusBar(true, "Done appending visibility info");
 }
 
 static void _set_visibility_by_number(int what, int num, char val, bool recursive,
@@ -1063,8 +1057,8 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     if(what == ENT_ALL)
       CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
-    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]",
-                   str.c_str(), mode ? "" : "'u' to undo or ");
+    Msg::StatusGl("Select %s\n[Press %s'q' to abort]",
+                  str.c_str(), mode ? "" : "'u' to undo or ");
 
     char ib = FlGui::instance()->selectEntity(what);
     if(ib == 'l') {
@@ -1087,7 +1081,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
-  Msg::StatusBar(3, false, "");
+  Msg::StatusGl("");
 }
 
 static void visibility_per_window_cb(Fl_Widget *w, void *data)
@@ -1220,7 +1214,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     g->end();
     Fl_Group::current()->resizable(g);
   }
-#if defined(HAVE_FL_TREE)
   {
     Fl_Group *g = new Fl_Group
       (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Tree browser");
@@ -1245,7 +1238,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     g->resizable(tree);
     g->end();
   }
-#endif
   {
     Fl_Group *g = new Fl_Group
       (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Numeric");

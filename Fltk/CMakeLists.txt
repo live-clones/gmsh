@@ -7,7 +7,6 @@ set(SRC
   FlGui.cpp
     graphicWindow.cpp
       openglWindow.cpp
-    menuWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
     fieldWindow.cpp
@@ -24,8 +23,9 @@ set(SRC
     projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
-    onelabWindow.cpp
+    onelabGroup.cpp
     inputRegion.cpp
+    viewButton.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

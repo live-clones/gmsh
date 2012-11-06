@@ -284,7 +284,6 @@ static void drawGlyphs(drawContext *ctx, PView *p)
 
   // speedup drawing of textured fonts on cocoa mac version
 #if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
-#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3)
   if(opt->intervalsType == PViewOptions::Numeric){
     int numStrings = 0;
     for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)
@@ -292,7 +291,6 @@ static void drawGlyphs(drawContext *ctx, PView *p)
     if(gl_texture_pile_height() < numStrings)
       gl_texture_pile_height(numStrings);
   }
-#endif
 #endif
 
   //double xyz[PVIEW_NMAX][3], val[PVIEW_NMAX][9];

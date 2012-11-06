@@ -358,7 +358,7 @@ static void Mesh0D(GModel *m)
 static void Mesh1D(GModel *m)
 {
   if(TooManyElements(m, 1)) return;
-  Msg::StatusBar(2, true, "Meshing 1D...");
+  Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
@@ -383,7 +383,7 @@ static void Mesh1D(GModel *m)
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
-  Msg::StatusBar(2, true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
+  Msg::StatusBar(true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -441,7 +441,7 @@ static void PrintMesh2dStatistics(GModel *m)
 static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
-  Msg::StatusBar(2, true, "Meshing 2D...");
+  Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
@@ -520,7 +520,7 @@ static void Mesh2D(GModel *m)
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
-  Msg::StatusBar(2, true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
+  Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
 
   PrintMesh2dStatistics(m);
 }
@@ -535,7 +535,7 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
 static void Mesh3D(GModel *m)
 {
   if(TooManyElements(m, 3)) return;
-  Msg::StatusBar(2, true, "Meshing 3D...");
+  Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();
 
   // mesh the extruded volumes first
@@ -567,46 +567,46 @@ static void Mesh3D(GModel *m)
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
-  Msg::StatusBar(2, true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
+  Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
 void OptimizeMeshNetgen(GModel *m)
 {
-  Msg::StatusBar(2, true, "Optimizing 3D mesh with Netgen...");
+  Msg::StatusBar(true, "Optimizing 3D mesh with Netgen...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
 
 void OptimizeMesh(GModel *m)
 {
-  Msg::StatusBar(2, true, "Optimizing 3D mesh...");
+  Msg::StatusBar(true, "Optimizing 3D mesh...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done optimizing 3D mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
 {
-  Msg::StatusBar(2, true, "Adapting 3D mesh...");
+  Msg::StatusBar(true, "Adapting 3D mesh...");
   double t1 = Cpu();
 
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done adaptating 3D mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done adaptating 3D mesh (%g s)", t2 - t1);
 }
 
 void RecombineMesh(GModel *m)
 {
-  Msg::StatusBar(2, true, "Recombining 2D mesh...");
+  Msg::StatusBar(true, "Recombining 2D mesh...");
   double t1 = Cpu();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
@@ -617,7 +617,7 @@ void RecombineMesh(GModel *m)
   CTX::instance()->mesh.changed = ENT_ALL;
 
   double t2 = Cpu();
-  Msg::StatusBar(2, true, "Done recombining 2D mesh (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done recombining 2D mesh (%g s)", t2 - t1);
 }
 
 //#include <google/profiler.h>

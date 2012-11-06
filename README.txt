@@ -10,9 +10,8 @@ is located in doc/texinfo/. See the demos/ directory and the web site
 http://geuz.org/gmsh for additional examples.
 
 Building Gmsh from its source code requires a C++ compiler and CMake
-(http://cmake.org).  Building the graphical user interface requires FLTK 1.1.7
-or above (http://fltk.org), configured with OpenGL support. Building the 64 bit
-graphical version on MacOS X requires FLTK 1.3.
+(http://cmake.org).  Building the graphical user interface requires FLTK 1.3
+(http://fltk.org), configured with OpenGL support.
 
 
 Build Gmsh using CMake's graphical user interface
