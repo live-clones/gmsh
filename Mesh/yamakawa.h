@@ -78,10 +78,10 @@ class Recombinator{
  public:
   Recombinator();
   ~Recombinator();
-  
+
   void execute();
   void execute(GRegion*);
-  
+
   void init_markings(GRegion*);
   void patern1(GRegion*);
   void patern2(GRegion*);
@@ -90,7 +90,7 @@ class Recombinator{
   void improved_merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
-	
+
   bool sliver(MElement*,Hex);
   double diagonal(MElement*,int&,int&);
   double distance(MVertex*,MVertex*);
@@ -101,29 +101,29 @@ class Recombinator{
   bool valid(Hex);
   double eta(MVertex*,MVertex*,MVertex*,MVertex*);
   bool linked(MVertex*,MVertex*);
-	
+
   void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
   void find(MVertex*,MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
   void find(MVertex*,MVertex*,std::set<MElement*>&);
   void find(MVertex*,Hex,std::set<MElement*>&);
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
-  
+
   void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
   void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);
-  
+
   bool inclusion(MVertex*,Hex);
   bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
   bool inclusion(Facet);
   bool inclusion(Diagonal);
   bool duplicate(Diagonal);
-  
+
   bool conformityA(Hex);
   bool conformityA(MVertex*,MVertex*,MVertex*,MVertex*);
   bool conformityB(Hex);
   bool conformityC(Hex);
-	
+
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_elements(GRegion*);
   void build_hash_tableA(Hex);
@@ -134,15 +134,15 @@ class Recombinator{
   void build_hash_tableB(Diagonal);
   void build_hash_tableC(Hex);
   void build_hash_tableC(Diagonal);
-  
+
   void print_vertex_to_vertices(GRegion*);
   void print_vertex_to_elements(GRegion*);
   void print_hash_tableA();
   void print_segment(SPoint3,SPoint3,std::ofstream&);
-	
+
   double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
   double max_scaled_jacobian(MElement*,int&);
-  double min_scaled_jacobian(Hex);	
+  double min_scaled_jacobian(Hex);
 };
 
 class Prism{
@@ -177,44 +177,44 @@ class Supplementary{
  public:
   Supplementary();
   ~Supplementary();
-	
+
   void execute();
-  void execute(GRegion*);	
-	
+  void execute(GRegion*);
+
   void init_markings(GRegion*);
   void patern(GRegion*);
   void merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
-	
+
   bool four(MElement*);
   bool five(MElement*);
   bool six(MElement*);
-  bool eight(MElement*);	
-	
+  bool eight(MElement*);
+
   bool sliver(MElement*,Prism);
   bool valid(Prism,const std::set<MElement*>&);
   bool valid(Prism);
   double eta(MVertex*,MVertex*,MVertex*,MVertex*);
-  bool linked(MVertex*,MVertex*);	
-	
-  void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);	
+  bool linked(MVertex*,MVertex*);
+
+  void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
   void find(MVertex*,Prism,std::set<MElement*>&);
-	
-  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);	
-	
+
+  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
+
   bool inclusion(MVertex*,Prism);
   bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
   bool inclusion(Facet);
   bool inclusion(Diagonal);
   bool duplicate(Diagonal);
-	
+
   bool conformityA(Prism);
   bool conformityA(MVertex*,MVertex*,MVertex*,MVertex*);
   bool conformityB(Prism);
   bool conformityC(Prism);
-	
+
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_tetrahedra(GRegion*);
   void build_hash_tableA(Prism);
@@ -225,7 +225,7 @@ class Supplementary{
   void build_hash_tableB(Diagonal);
   void build_hash_tableC(Prism);
   void build_hash_tableC(Diagonal);
-	
+
   double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
   double min_scaled_jacobian(Prism);
 };
@@ -241,10 +241,10 @@ class PostOp{
  public:
   PostOp();
   ~PostOp();
-	
+
   void execute();
   void execute(GRegion*);
-	
+
   void init_markings(GRegion*);
   void pyramids1(GRegion*);
   void pyramids2(GRegion*);
@@ -252,7 +252,7 @@ class PostOp{
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
-	
+
   bool four(MElement*);
   bool five(MElement*);
   bool six(MElement*);
@@ -264,17 +264,17 @@ class PostOp{
   MVertex* other(MElement*,MVertex*,MVertex*,MVertex*);
   void mean(const std::set<MVertex*>&,MVertex*,const std::vector<MElement*>&);
   double workaround(MElement*);
-	
+
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,MElement*);
   void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
   void find_pyramids(MVertex*,MVertex*,std::set<MElement*>&);
-	
+
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);
-	
+
   void build_vertex_to_tetrahedra(GRegion*);
   void build_vertex_to_tetrahedra(MElement*);
   void erase_vertex_to_tetrahedra(MElement*);
-	
+
   void build_vertex_to_pyramids(GRegion*);
   void build_vertex_to_pyramids(MElement*);
   void erase_vertex_to_pyramids(MElement*);

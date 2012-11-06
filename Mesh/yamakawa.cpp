@@ -127,11 +127,11 @@ void Facet::set_vertices(MVertex* a2,MVertex* b2,MVertex* c2){
 
 bool Facet::same_vertices(Facet facet){
   bool c1,c2,c3;
-	
+
   c1 = (a==facet.get_a()) || (a==facet.get_b()) || (a==facet.get_c());
   c2 = (b==facet.get_a()) || (b==facet.get_b()) || (b==facet.get_c());
   c3 = (c==facet.get_a()) || (c==facet.get_b()) || (c==facet.get_c());
-	
+
   return c1 && c2 && c3;
 }
 
@@ -177,10 +177,10 @@ void Diagonal::set_vertices(MVertex* a2,MVertex* b2){
 
 bool Diagonal::same_vertices(Diagonal diagonal){
   bool c1,c2;
-	
+
   c1 = (a==diagonal.get_a()) || (a==diagonal.get_b());
   c2 = (b==diagonal.get_a()) || (b==diagonal.get_b());
-	
+
   return c1 && c2;
 }
 
@@ -233,7 +233,7 @@ void Recombinator::execute(GRegion* gr){
   printf("patern no. 2\n");
   patern3(gr);
   printf("patern no. 3\n");
-	
+
   std::sort(potential.begin(),potential.end());
 
   hash_tableA.clear();
@@ -565,15 +565,15 @@ void Recombinator::merge(GRegion* gr){
 	if(!conformityA(hex)){
 	  flag = 0;
 	}
-	  
+
 	if(!conformityB(hex)){
 	  flag = 0;
-	}  
+	}
 
 	if(!conformityC(hex)){
 	  flag = 0;
-	}  
-	  
+	}
+
 	if(flag){
 	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
 	  quality = quality + hex.get_quality();
@@ -592,8 +592,8 @@ void Recombinator::merge(GRegion* gr){
 	else{
 	  idle++;
 	}
-	  
-	coeff = 0.1;  
+
+	coeff = 0.1;
 	if((double)idle>coeff*(double)potential.size() && potential.size()>2000){
 	  break;
 	}
@@ -630,14 +630,14 @@ void Recombinator::improved_merge(GRegion* gr){
   std::map<MElement*,bool>::iterator it2;
   std::vector<MTetrahedron*>::iterator it3;
   Hex hex;
-	
+
   count = 1;
   idle = 0;
   quality = 0.0;
-	
+
   for(i=0;i<potential.size();i++){
     hex = potential[i];
-		
+
 	a = hex.get_a();
 	b = hex.get_b();
 	c = hex.get_c();
@@ -646,7 +646,7 @@ void Recombinator::improved_merge(GRegion* gr){
 	f = hex.get_f();
 	g = hex.get_g();
 	h = hex.get_h();
-		
+
 	parts.clear();
 	find(a,hex,parts);
 	find(b,hex,parts);
@@ -656,9 +656,9 @@ void Recombinator::improved_merge(GRegion* gr){
 	find(f,hex,parts);
 	find(g,hex,parts);
 	find(h,hex,parts);
-		
+
 	flag = 1;
-		
+
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
 	  it2 = markings.find(element);
@@ -667,28 +667,28 @@ void Recombinator::improved_merge(GRegion* gr){
 		break;
 	  }
 	}
-		
+
 	threshold = 0.25;
 	if(hex.get_quality()<threshold){
 	  flag = 0;
 	}
-		
+
 	if(!valid(hex,parts)){
 	  flag = 0;
 	}
-		
+
 	if(!conformityA(hex)){
 	  flag = 0;
 	}
-		
+
 	if(!conformityB(hex)){
 	  flag = 0;
-	}  
-		
+	}
+
 	if(!conformityC(hex)){
 	  flag = 0;
-	}  
-		
+	}
+
 	if(flag){
 	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
 	  quality = quality + hex.get_quality();
@@ -707,13 +707,13 @@ void Recombinator::improved_merge(GRegion* gr){
 	else{
 	  idle++;
 	}
-		
-	coeff = 0.1;  
+
+	coeff = 0.1;
 	if((double)idle>coeff*(double)potential.size() && potential.size()>2000){
 	  break;
 	}
   }
-	
+
   it3 = gr->tetrahedra.begin();
   while(it3!=gr->tetrahedra.end()){
     element = (MElement*)(*it3);
@@ -725,7 +725,7 @@ void Recombinator::improved_merge(GRegion* gr){
 	  it3++;
 	}
   }
-	
+
   printf("hexahedra average quality (0->1) : %f\n",quality/count);
 }
 
@@ -1270,69 +1270,69 @@ bool Recombinator::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set<
 bool Recombinator::inclusion(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
-	
+
   it = hash_tableA.find(facet);
   flag = 0;
-	
+
   while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(facet.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
 bool Recombinator::inclusion(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableB.find(diagonal);
   flag = 0;
-	
+
   while(it!=hash_tableB.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
 bool Recombinator::duplicate(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableC.find(diagonal);
   flag = 0;
-	
+
   while(it!=hash_tableC.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
@@ -1340,7 +1340,7 @@ bool Recombinator::conformityA(Hex hex){
   bool c1,c2,c3,c4,c5,c6;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1349,25 +1349,25 @@ bool Recombinator::conformityA(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   c1 = conformityA(a,b,c,d);
   c2 = conformityA(e,f,g,h);
   c3 = conformityA(a,b,f,e);
   c4 = conformityA(b,c,g,f);
   c5 = conformityA(d,c,g,h);
   c6 = conformityA(d,a,e,h);
-	
+
   return c1 && c2 && c3 && c4 && c5 && c6;
 }
 
 bool Recombinator::conformityA(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   bool c1,c2,c3,c4;
-	
+
   c1 = inclusion(Facet(a,b,c));
   c2 = inclusion(Facet(a,c,d));
   c3 = inclusion(Facet(a,b,d));
   c4 = inclusion(Facet(b,c,d));
-	
+
   return (c1 && c2 && c3 && c4) || (!c1 && !c2 && !c3 && !c4);
 }
 
@@ -1379,7 +1379,7 @@ bool Recombinator::conformityB(Hex hex){
   bool c9,c10,c11,c12;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1388,7 +1388,7 @@ bool Recombinator::conformityB(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   flag1 = inclusion(Diagonal(a,b));
   flag1 = flag1 || inclusion(Diagonal(b,f));
   flag1 = flag1 || inclusion(Diagonal(f,e));
@@ -1401,7 +1401,7 @@ bool Recombinator::conformityB(Hex hex){
   flag1 = flag1 || inclusion(Diagonal(f,g));
   flag1 = flag1 || inclusion(Diagonal(e,h));
   flag1 = flag1 || inclusion(Diagonal(a,d));
-	
+
   c1 = inclusion(Diagonal(a,f));
   c2 = inclusion(Diagonal(b,e));
   flag2 = (c1 && !c2) || (!c1 && c2);
@@ -1420,7 +1420,7 @@ bool Recombinator::conformityB(Hex hex){
   c11 = inclusion(Diagonal(a,c));
   c12 = inclusion(Diagonal(b,d));
   flag2 = flag2 || (c11 && !c12) || (!c11 && c12);
-	
+
   if(flag1 || flag2){
     return 0;
   }
@@ -1433,7 +1433,7 @@ bool Recombinator::conformityC(Hex hex){
   bool flag;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1442,7 +1442,7 @@ bool Recombinator::conformityC(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   flag = duplicate(Diagonal(a,f));
   flag = flag || duplicate(Diagonal(b,e));
   flag = flag || duplicate(Diagonal(d,g));
@@ -1455,7 +1455,7 @@ bool Recombinator::conformityC(Hex hex){
   flag = flag || duplicate(Diagonal(d,e));
   flag = flag || duplicate(Diagonal(a,c));
   flag = flag || duplicate(Diagonal(b,d));
-	
+
   if(flag){
     return 0;
   }
@@ -1530,7 +1530,7 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
 void Recombinator::build_hash_tableA(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1539,7 +1539,7 @@ void Recombinator::build_hash_tableA(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   build_hash_tableA(a,b,c,d);
   build_hash_tableA(e,f,g,h);
   build_hash_tableA(a,b,f,e);
@@ -1558,32 +1558,32 @@ void Recombinator::build_hash_tableA(MVertex* a,MVertex* b,MVertex* c,MVertex* d
 void Recombinator::build_hash_tableA(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
-	
+
   it = hash_tableA.find(facet);
   flag = 1;
-	
+
   while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(facet.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableA.insert(facet);
-  }	
+  }
 }
 
 void Recombinator::build_hash_tableB(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1592,7 +1592,7 @@ void Recombinator::build_hash_tableB(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   build_hash_tableB(a,b,c,d);
   build_hash_tableB(e,f,g,h);
   build_hash_tableB(a,b,f,e);
@@ -1609,32 +1609,32 @@ void Recombinator::build_hash_tableB(MVertex* a,MVertex* b,MVertex* c,MVertex* d
 void Recombinator::build_hash_tableB(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableB.find(diagonal);
   flag = 1;
-	
+
   while(it!=hash_tableB.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableB.insert(diagonal);
-  }	
+  }
 }
 
 void Recombinator::build_hash_tableC(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   a = hex.get_a();
   b = hex.get_b();
   c = hex.get_c();
@@ -1643,7 +1643,7 @@ void Recombinator::build_hash_tableC(Hex hex){
   f = hex.get_f();
   g = hex.get_g();
   h = hex.get_h();
-	
+
   build_hash_tableC(Diagonal(a,b));
   build_hash_tableC(Diagonal(b,c));
   build_hash_tableC(Diagonal(c,d));
@@ -1661,26 +1661,26 @@ void Recombinator::build_hash_tableC(Hex hex){
 void Recombinator::build_hash_tableC(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableC.find(diagonal);
   flag = 1;
-	
+
   while(it!=hash_tableC.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableC.insert(diagonal);
-  }	
+  }
 }
 
 void Recombinator::print_vertex_to_vertices(GRegion* gr){
@@ -1731,7 +1731,7 @@ void Recombinator::print_vertex_to_elements(GRegion* gr){
 
 void Recombinator::print_hash_tableA(){
   std::multiset<Facet>::iterator it;
-	
+
   for(it=hash_tableA.begin();it!=hash_tableA.end();it++){
     printf("%lld\n",it->get_hash());
   }
@@ -1915,7 +1915,7 @@ void Supplementary::execute(){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
-	
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -1930,18 +1930,18 @@ void Supplementary::execute(GRegion* gr){
   MElement* element;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
-	
+
   printf("................PRISMS................\n");
   init_markings(gr);
- 
+
   build_vertex_to_vertices(gr);
   build_vertex_to_tetrahedra(gr);
   printf("connectivity\n");
-	
+
   potential.clear();
   patern(gr);
   printf("patern\n");
-	
+
   hash_tableA.clear();
   hash_tableB.clear();
   hash_tableC.clear();
@@ -1956,21 +1956,21 @@ void Supplementary::execute(GRegion* gr){
 	  f = element->getVertex(5);
 	  g = element->getVertex(6);
 	  h = element->getVertex(7);
-		
+
 	  build_hash_tableA(a,b,c,d);
 	  build_hash_tableA(e,f,g,h);
 	  build_hash_tableA(a,b,f,e);
 	  build_hash_tableA(b,c,g,f);
 	  build_hash_tableA(d,c,g,h);
 	  build_hash_tableA(d,a,e,h);
-		
+
 	  build_hash_tableB(a,b,c,d);
 	  build_hash_tableB(e,f,g,h);
 	  build_hash_tableB(a,b,f,e);
 	  build_hash_tableB(b,c,g,f);
 	  build_hash_tableB(d,c,g,h);
 	  build_hash_tableB(d,a,e,h);
-		
+
 	  build_hash_tableC(Diagonal(a,b));
 	  build_hash_tableC(Diagonal(b,c));
 	  build_hash_tableC(Diagonal(c,d));
@@ -1985,22 +1985,22 @@ void Supplementary::execute(GRegion* gr){
 	  build_hash_tableC(Diagonal(d,h));
 	}
   }
-	
+
   std::sort(potential.begin(),potential.end());
-	
-  merge(gr);	
-	
+
+  merge(gr);
+
   rearrange(gr);
-	
+
   statistics(gr);
 }
 
 void Supplementary::init_markings(GRegion* gr){
   unsigned int i;
   MElement* element;
-	
+
   markings.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
@@ -2023,13 +2023,13 @@ void Supplementary::patern(GRegion* gr){
   std::set<MVertex*>::iterator it1;
   std::set<MVertex*>::iterator it2;
   Prism prism;
-	
+
   vertices.resize(3);
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
-	  for(j=0;j<4;j++){ 
+	  for(j=0;j<4;j++){
 	    a = element->getVertex(j);
 		vertices[0] = element->getVertex((j+1)%4);
 		vertices[1] = element->getVertex((j+2)%4);
@@ -2081,20 +2081,20 @@ void Supplementary::merge(GRegion* gr){
   std::map<MElement*,bool>::iterator it2;
   std::vector<MTetrahedron*>::iterator it3;
   Prism prism;
-	
+
   count = 1;
   quality = 0.0;
-	
+
   for(i=0;i<potential.size();i++){
     prism = potential[i];
-		
+
 	a = prism.get_a();
 	b = prism.get_b();
 	c = prism.get_c();
 	d = prism.get_d();
 	e = prism.get_e();
 	f = prism.get_f();
-		
+
 	parts.clear();
 	find(a,prism,parts);
 	find(b,prism,parts);
@@ -2102,9 +2102,9 @@ void Supplementary::merge(GRegion* gr){
 	find(d,prism,parts);
 	find(e,prism,parts);
 	find(f,prism,parts);
-		
+
 	flag = 1;
-		
+
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
 	  it2 = markings.find(element);
@@ -2113,28 +2113,28 @@ void Supplementary::merge(GRegion* gr){
 		break;
 	  }
 	}
-		
+
 	threshold = 0.15;
 	if(prism.get_quality()<threshold){
       flag = 0;
 	}
-		
+
 	if(!valid(prism,parts)){
       flag = 0;
 	}
-		
+
 	if(!conformityA(prism)){
 	  flag = 0;
 	}
-	  
+
 	if(!conformityB(prism)){
 	  flag = 0;
-	}  
-	  
+	}
+
 	if(!conformityC(prism)){
 	  flag = 0;
-	}  
-	  
+	}
+
 	if(flag){
 	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
 	  quality = quality + prism.get_quality();
@@ -2150,7 +2150,7 @@ void Supplementary::merge(GRegion* gr){
 	  count++;
 	}
   }
-	
+
   it3 = gr->tetrahedra.begin();
   while(it3!=gr->tetrahedra.end()){
     element = (MElement*)(*it3);
@@ -2162,14 +2162,14 @@ void Supplementary::merge(GRegion* gr){
       it3++;
 	}
   }
-	
+
   printf("prisms average quality (0->1) : %f\n",quality/count);
 }
 
 void Supplementary::rearrange(GRegion* gr){
   size_t i;
   MElement* element;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	element->setVolumePositive();
@@ -2181,25 +2181,25 @@ void Supplementary::statistics(GRegion* gr){
   int all_nbr,prism_nbr;
   double all_volume,prism_volume,volume;
   MElement* element;
-	
+
   all_nbr = 0;
   prism_nbr = 0;
   all_volume = 0.0;
   prism_volume = 0.0;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	volume = element->getVolume();
-		
+
 	if(six(element)){
 	  prism_nbr = prism_nbr + 1;
 	  prism_volume = prism_volume + volume;
 	}
-		
+
 	all_nbr = all_nbr + 1;
 	all_volume = all_volume + volume;
   }
-	
+
   printf("percentage of prisms (number) : %.2f\n",prism_nbr*100.0/all_nbr);
   printf("percentage of prisms (volume) : %.2f\n",prism_volume*100.0/all_volume);
 }
@@ -2228,31 +2228,31 @@ bool Supplementary::sliver(MElement* element,Prism prism){
   bool val;
   bool flag1,flag2,flag3,flag4;
   MVertex *a,*b,*c,*d;
-	
+
   val = 0;
   a = element->getVertex(0);
   b = element->getVertex(1);
   c = element->getVertex(2);
   d = element->getVertex(3);
-	
+
   flag1 = inclusion(a,prism.get_a(),prism.get_d(),prism.get_f(),prism.get_c());
   flag2 = inclusion(b,prism.get_a(),prism.get_d(),prism.get_f(),prism.get_c());
   flag3 = inclusion(c,prism.get_a(),prism.get_d(),prism.get_f(),prism.get_c());
   flag4 = inclusion(d,prism.get_a(),prism.get_d(),prism.get_f(),prism.get_c());
   if(flag1 && flag2 && flag3 && flag4) val = 1;
-	
+
   flag1 = inclusion(a,prism.get_a(),prism.get_b(),prism.get_e(),prism.get_d());
   flag2 = inclusion(b,prism.get_a(),prism.get_b(),prism.get_e(),prism.get_d());
   flag3 = inclusion(c,prism.get_a(),prism.get_b(),prism.get_e(),prism.get_d());
   flag4 = inclusion(d,prism.get_a(),prism.get_b(),prism.get_e(),prism.get_d());
   if(flag1 && flag2 && flag3 && flag4) val = 1;
-	
+
   flag1 = inclusion(a,prism.get_b(),prism.get_c(),prism.get_f(),prism.get_e());
   flag2 = inclusion(b,prism.get_b(),prism.get_c(),prism.get_f(),prism.get_e());
   flag3 = inclusion(c,prism.get_b(),prism.get_c(),prism.get_f(),prism.get_e());
   flag4 = inclusion(d,prism.get_b(),prism.get_c(),prism.get_f(),prism.get_e());
   if(flag1 && flag2 && flag3 && flag4) val = 1;
-	
+
   return val;
 }
 
@@ -2264,36 +2264,36 @@ bool Supplementary::valid(Prism prism,const std::set<MElement*>& parts){
   bool flag4,flag5;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   flag1A = inclusion(a,d,f,parts);
   flag1B = inclusion(a,f,c,parts);
   flag1C = inclusion(a,c,d,parts);
   flag1D = inclusion(c,d,f,parts);
   ok1 = (flag1A && flag1B) || (flag1C && flag1D);
-	
+
   flag2A = inclusion(a,b,d,parts);
   flag2B = inclusion(b,d,e,parts);
   flag2C = inclusion(a,d,e,parts);
   flag2D = inclusion(a,b,e,parts);
   ok2 = (flag2A && flag2B) || (flag2C && flag2D);
-	
+
   flag3A = inclusion(b,c,f,parts);
   flag3B = inclusion(b,e,f,parts);
   flag3C = inclusion(b,c,e,parts);
   flag3D = inclusion(c,e,f,parts);
   ok3 = (flag3A && flag3B) || (flag3C && flag3D);
-	
+
   flag4 = inclusion(a,b,c,parts);
   flag5 = inclusion(d,e,f,parts);
   ok4 = flag4 && flag5;
-	
+
   if(ok1 && ok2 && ok3 && ok4){
     return 1;
   }
@@ -2307,20 +2307,20 @@ bool Supplementary::valid(Prism prism){
   double eta1,eta2,eta3;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   k = 0.000001;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   eta1 = eta(a,d,f,c);
   eta2 = eta(a,b,e,d);
   eta3 = eta(b,c,f,e);
-	
+
   if(eta1>k && eta2>k && eta3>k){
     return 1;
   }
@@ -2332,7 +2332,7 @@ bool Supplementary::valid(Prism prism){
 double Supplementary::eta(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   double val;
   MQuadrangle* quad;
-	
+
   quad = new MQuadrangle(a,b,c,d);
   val = quad->etaShapeMeasure();
   delete quad;
@@ -2343,10 +2343,10 @@ bool Supplementary::linked(MVertex* v1,MVertex* v2){
   bool flag;
   std::map<MVertex*,std::set<MVertex*> >::iterator it;
   std::set<MVertex*>::iterator it2;
-	
+
   it = vertex_to_vertices.find(v1);
   flag = 0;
-	
+
   if(it!=vertex_to_vertices.end()){
     for(it2=(it->second).begin();it2!=(it->second).end();it2++){
       if(*it2==v2){
@@ -2355,17 +2355,17 @@ bool Supplementary::linked(MVertex* v1,MVertex* v2){
 	  }
     }
   }
-	
+
   return flag;
 }
 
 void Supplementary::find(MVertex* v1,MVertex* v2,const std::vector<MVertex*>& already,std::set<MVertex*>& final){
   std::map<MVertex*,std::set<MVertex*> >::iterator it1;
   std::map<MVertex*,std::set<MVertex*> >::iterator it2;
-	
+
   it1 = vertex_to_vertices.find(v1);
   it2 = vertex_to_vertices.find(v2);
-	
+
   if(it1!=vertex_to_vertices.end() && it2!=vertex_to_vertices.end()){
     intersection(it1->second,it2->second,already,final);
   }
@@ -2376,21 +2376,21 @@ void Supplementary::find(MVertex* vertex,Prism prism,std::set<MElement*>& final)
   MVertex *a,*b,*c,*d;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
   std::set<MElement*>::iterator it2;
-	
+
   it = vertex_to_tetrahedra.find(vertex);
-	
+
   if(it!=vertex_to_tetrahedra.end()){
     for(it2=(it->second).begin();it2!=(it->second).end();it2++){
       a = (*it2)->getVertex(0);
 	  b = (*it2)->getVertex(1);
 	  c = (*it2)->getVertex(2);
 	  d = (*it2)->getVertex(3);
-		
+
 	  flag1 = inclusion(a,prism);
 	  flag2 = inclusion(b,prism);
 	  flag3 = inclusion(c,prism);
 	  flag4 = inclusion(d,prism);
-		
+
 	  if(flag1 && flag2 && flag3 && flag4){
 	    final.insert(*it2);
 	  }
@@ -2404,19 +2404,19 @@ void Supplementary::intersection(const std::set<MVertex*>& bin1,const std::set<M
   bool ok;
   std::set<MVertex*> temp;
   std::set<MVertex*>::iterator it;
-	
+
   std::set_intersection(bin1.begin(),bin1.end(),bin2.begin(),bin2.end(),std::inserter(temp,temp.end()));
-	
+
   for(it=temp.begin();it!=temp.end();it++){
     ok = 1;
-		
+
 	for(i=0;i<already.size();i++){
 	  if((*it)==already[i]){
 	    ok = 0;
 		break;
 	  }
 	}
-		
+
 	if(ok){
 	  final.insert(*it);
 	}
@@ -2425,29 +2425,29 @@ void Supplementary::intersection(const std::set<MVertex*>& bin1,const std::set<M
 
 bool Supplementary::inclusion(MVertex* vertex,Prism prism){
   bool flag;
-	
+
   flag = 0;
-	
+
   if(vertex==prism.get_a()) flag = 1;
   else if(vertex==prism.get_b()) flag = 1;
   else if(vertex==prism.get_c()) flag = 1;
   else if(vertex==prism.get_d()) flag = 1;
   else if(vertex==prism.get_e()) flag = 1;
   else if(vertex==prism.get_f()) flag = 1;
-	
+
   return flag;
 }
 
 bool Supplementary::inclusion(MVertex* vertex,MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   bool flag;
-	
+
   flag = 0;
-	
+
   if(vertex==a) flag = 1;
   else if(vertex==b) flag = 1;
   else if(vertex==c) flag = 1;
   else if(vertex==d) flag = 1;
-	
+
   return flag;
 }
 
@@ -2457,96 +2457,96 @@ bool Supplementary::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set
   MVertex *a,*b,*c,*d;
   MElement* element;
   std::set<MElement*>::const_iterator it;
-	
+
   ok = 0;
-	
+
   for(it=bin.begin();it!=bin.end();it++){
     element = *it;
-		
+
 	a = element->getVertex(0);
 	b = element->getVertex(1);
 	c = element->getVertex(2);
 	d = element->getVertex(3);
-		
+
 	flag1 = inclusion(v1,a,b,c,d);
 	flag2 = inclusion(v2,a,b,c,d);
 	flag3 = inclusion(v3,a,b,c,d);
-		
+
 	if(flag1 && flag2 && flag3){
 	  ok = 1;
 	  break;
 	}
   }
-	
+
   return ok;
 }
 
 bool Supplementary::inclusion(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
-	
+
   it = hash_tableA.find(facet);
   flag = 0;
-	
+
   while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(facet.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
 bool Supplementary::inclusion(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableB.find(diagonal);
   flag = 0;
-	
+
   while(it!=hash_tableB.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
 bool Supplementary::duplicate(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableC.find(diagonal);
   flag = 0;
-	
+
   while(it!=hash_tableC.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 1;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   return flag;
 }
 
@@ -2554,29 +2554,29 @@ bool Supplementary::conformityA(Prism prism){
   bool c1,c2,c3;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   c1 = conformityA(a,d,f,c);
   c2 = conformityA(a,d,e,b);
   c3 = conformityA(b,c,f,e);
-	
+
   return c1 && c2 && c3;
 }
 
 bool Supplementary::conformityA(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   bool c1,c2,c3,c4;
-	
+
   c1 = inclusion(Facet(a,b,c));
   c2 = inclusion(Facet(a,c,d));
   c3 = inclusion(Facet(a,b,d));
   c4 = inclusion(Facet(b,c,d));
-	
+
   return (c1 && c2 && c3 && c4) || (!c1 && !c2 && !c3 && !c4);
 }
 
@@ -2587,14 +2587,14 @@ bool Supplementary::conformityB(Prism prism){
   bool c4,c5,c6;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   flag1 = inclusion(Diagonal(a,c));
   flag1 = flag1 || inclusion(Diagonal(d,f));
   flag1 = flag1 || inclusion(Diagonal(d,a));
@@ -2604,7 +2604,7 @@ bool Supplementary::conformityB(Prism prism){
   flag1 = flag1 || inclusion(Diagonal(e,f));
   flag1 = flag1 || inclusion(Diagonal(a,b));
   flag1 = flag1 || inclusion(Diagonal(b,c));
-	
+
   c1 = inclusion(Diagonal(a,f));
   c2 = inclusion(Diagonal(d,c));
   flag2 = (c1 && !c2) || (!c1 && c2);
@@ -2614,7 +2614,7 @@ bool Supplementary::conformityB(Prism prism){
   c5 = inclusion(Diagonal(b,f));
   c6 = inclusion(Diagonal(c,e));
   flag2 = flag2 || (c5 && !c6) || (!c5 && c6);
-	
+
   if(flag1 || flag2){
     return 0;
   }
@@ -2627,21 +2627,21 @@ bool Supplementary::conformityC(Prism prism){
   bool flag;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   flag = duplicate(Diagonal(a,f));
   flag = flag || duplicate(Diagonal(d,c));
   flag = flag || duplicate(Diagonal(a,e));
   flag = flag || duplicate(Diagonal(b,d));
   flag = flag || duplicate(Diagonal(b,f));
   flag = flag || duplicate(Diagonal(c,e));
-	
+
   if(flag){
     return 0;
   }
@@ -2657,9 +2657,9 @@ void Supplementary::build_vertex_to_vertices(GRegion* gr){
   MVertex *a,*b,*c,*d;
   std::set<MVertex*> bin;
   std::map<MVertex*,std::set<MVertex*> >::iterator it;
-	
+
   vertex_to_vertices.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
@@ -2668,7 +2668,7 @@ void Supplementary::build_vertex_to_vertices(GRegion* gr){
 	    b = element->getVertex((j+1)%4);
 	    c = element->getVertex((j+2)%4);
 	    d = element->getVertex((j+3)%4);
-			
+
 	    it = vertex_to_vertices.find(a);
 	    if(it!=vertex_to_vertices.end()){
 	      it->second.insert(b);
@@ -2694,15 +2694,15 @@ void Supplementary::build_vertex_to_tetrahedra(GRegion* gr){
   MVertex* vertex;
   std::set<MElement*> bin;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-	
+
   vertex_to_tetrahedra.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
 	  for(j=0;j<element->getNumVertices();j++){
 	    vertex = element->getVertex(j);
-				
+
 		it = vertex_to_tetrahedra.find(vertex);
 		if(it!=vertex_to_tetrahedra.end()){
 		  it->second.insert(element);
@@ -2720,14 +2720,14 @@ void Supplementary::build_vertex_to_tetrahedra(GRegion* gr){
 void Supplementary::build_hash_tableA(Prism prism){
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   build_hash_tableA(a,d,f,c);
   build_hash_tableA(a,d,e,b);
   build_hash_tableA(b,c,f,e);
@@ -2743,39 +2743,39 @@ void Supplementary::build_hash_tableA(MVertex* a,MVertex* b,MVertex* c,MVertex* 
 void Supplementary::build_hash_tableA(Facet facet){
   bool flag;
   std::multiset<Facet>::iterator it;
-	
+
   it = hash_tableA.find(facet);
   flag = 1;
-	
+
   while(it!=hash_tableA.end()){
     if(facet.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(facet.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableA.insert(facet);
-  }	
+  }
 }
 
 void Supplementary::build_hash_tableB(Prism prism){
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   build_hash_tableB(a,d,f,c);
   build_hash_tableB(a,d,e,b);
   build_hash_tableB(b,e,f,c);
@@ -2789,39 +2789,39 @@ void Supplementary::build_hash_tableB(MVertex* a,MVertex* b,MVertex* c,MVertex* 
 void Supplementary::build_hash_tableB(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableB.find(diagonal);
   flag = 1;
-	
+
   while(it!=hash_tableB.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableB.insert(diagonal);
-  }	
+  }
 }
 
 void Supplementary::build_hash_tableC(Prism prism){
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   build_hash_tableC(Diagonal(a,d));
   build_hash_tableC(Diagonal(d,f));
   build_hash_tableC(Diagonal(f,c));
@@ -2836,41 +2836,41 @@ void Supplementary::build_hash_tableC(Prism prism){
 void Supplementary::build_hash_tableC(Diagonal diagonal){
   bool flag;
   std::multiset<Diagonal>::iterator it;
-	
+
   it = hash_tableC.find(diagonal);
   flag = 1;
-	
+
   while(it!=hash_tableC.end()){
     if(diagonal.get_hash()!=it->get_hash()){
 	  break;
 	}
-		
+
 	if(diagonal.same_vertices(*it)){
 	  flag = 0;
 	  break;
 	}
-		
+
 	it++;
   }
-	
+
   if(flag){
     hash_tableC.insert(diagonal);
-  }	
+  }
 }
 
 double Supplementary::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   double val;
   double l1,l2,l3;
   SVector3 vec1,vec2,vec3;
-	
+
   vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z());
   vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z());
   vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z());
-	
+
   l1 = vec1.norm();
   l2 = vec2.norm();
   l3 = vec3.norm();
-	
+
   val = dot(vec1,crossprod(vec2,vec3));
   return fabs(val)/(l1*l2*l3);
 }
@@ -2882,35 +2882,35 @@ double Supplementary::min_scaled_jacobian(Prism prism){
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
   std::vector<double> jacobians;
-	
+
   a = prism.get_a();
   b = prism.get_b();
   c = prism.get_c();
   d = prism.get_d();
   e = prism.get_e();
   f = prism.get_f();
-	
+
   j1 = scaled_jacobian(a,b,c,d);
   j2 = scaled_jacobian(b,a,c,e);
   j3 = scaled_jacobian(c,a,b,f);
   j4 = scaled_jacobian(d,a,e,f);
   j5 = scaled_jacobian(e,b,d,f);
   j6 = scaled_jacobian(f,c,d,e);
-	
+
   jacobians.push_back(j1);
   jacobians.push_back(j2);
   jacobians.push_back(j3);
   jacobians.push_back(j4);
   jacobians.push_back(j5);
   jacobians.push_back(j6);
-	
+
   min = 1000000000.0;
   for(i=0;i<6;i++){
     if(jacobians[i]<=min){
 	  min = jacobians[i];
 	}
   }
-	
+
   return min;
 }
 
@@ -2926,7 +2926,7 @@ void PostOp::execute(){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
-	
+
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
@@ -2941,27 +2941,27 @@ void PostOp::execute(GRegion* gr){
   estimate1 = 0;
   estimate2 = 0;
   iterations = 0;
-	
+
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
   pyramids1(gr);
   rearrange(gr);
-  
+
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
   build_vertex_to_pyramids(gr);
   //pyramids2(gr);
   rearrange(gr);
-	
+
   statistics(gr);
 }
 
 void PostOp::init_markings(GRegion* gr){
   unsigned int i;
   MElement* element;
-	
+
   markings.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element) || five(element)){
@@ -2979,10 +2979,10 @@ void PostOp::pyramids1(GRegion* gr){
   std::vector<MElement*> prisms;
   std::vector<MTetrahedron*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
-	
+
   hexahedra.clear();
   prisms.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(eight(element)){
@@ -2992,7 +2992,7 @@ void PostOp::pyramids1(GRegion* gr){
 	  prisms.push_back(element);
 	}
   }
-		
+
   for(i=0;i<hexahedra.size();i++){
     element = hexahedra[i];
 
@@ -3004,7 +3004,7 @@ void PostOp::pyramids1(GRegion* gr){
 	f = element->getVertex(5);
 	g = element->getVertex(6);
 	h = element->getVertex(7);
-		
+
 	pyramids1(a,b,c,d,gr);
 	pyramids1(e,f,g,h,gr);
 	pyramids1(a,b,f,e,gr);
@@ -3022,12 +3022,12 @@ void PostOp::pyramids1(GRegion* gr){
 	d = element->getVertex(3);
 	e = element->getVertex(4);
 	f = element->getVertex(5);
-		
+
 	pyramids1(a,d,f,c,gr);
 	pyramids1(a,b,e,d,gr);
 	pyramids1(b,c,f,e,gr);
-  }	
-	
+  }
+
   it = gr->tetrahedra.begin();
   while(it!=gr->tetrahedra.end()){
     element = (MElement*)(*it);
@@ -3051,10 +3051,10 @@ void PostOp::pyramids2(GRegion* gr){
   std::vector<MTetrahedron*>::iterator it1;
   std::vector<MPyramid*>::iterator it2;
   std::map<MElement*,bool>::iterator it;
-	
+
   hexahedra.clear();
   prisms.clear();
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(eight(element)){
@@ -3064,10 +3064,10 @@ void PostOp::pyramids2(GRegion* gr){
 	  prisms.push_back(element);
 	}
   }
-	
+
   for(i=0;i<hexahedra.size();i++){
     element = hexahedra[i];
-		
+
 	a = element->getVertex(0);
 	b = element->getVertex(1);
 	c = element->getVertex(2);
@@ -3076,7 +3076,7 @@ void PostOp::pyramids2(GRegion* gr){
 	f = element->getVertex(5);
 	g = element->getVertex(6);
 	h = element->getVertex(7);
-		
+
 	pyramids2(a,b,c,d,gr);
 	pyramids2(e,f,g,h,gr);
 	pyramids2(a,b,f,e,gr);
@@ -3084,22 +3084,22 @@ void PostOp::pyramids2(GRegion* gr){
 	pyramids2(d,c,g,h,gr);
 	pyramids2(d,a,e,h,gr);
   }
-	
+
   for(i=0;i<prisms.size();i++){
     element = prisms[i];
-		
+
 	a = element->getVertex(0);
 	b = element->getVertex(1);
 	c = element->getVertex(2);
 	d = element->getVertex(3);
 	e = element->getVertex(4);
 	f = element->getVertex(5);
-		
+
 	pyramids2(a,d,f,c,gr);
 	pyramids2(a,b,e,d,gr);
 	pyramids2(b,c,f,e,gr);
-  }	
-	
+  }
+
   it1 = gr->tetrahedra.begin();
   while(it1!=gr->tetrahedra.end()){
     element = (MElement*)(*it1);
@@ -3111,7 +3111,7 @@ void PostOp::pyramids2(GRegion* gr){
 	  it1++;
 	}
   }
-	
+
   it2 = gr->pyramids.begin();
   while(it2!=gr->pyramids.end()){
     element = (MElement*)(*it2);
@@ -3122,7 +3122,7 @@ void PostOp::pyramids2(GRegion* gr){
 	else{
 	  it2++;
 	}
-  }	
+  }
 }
 
 void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
@@ -3133,12 +3133,12 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it1;
   std::map<MElement*,bool>::iterator it2;
-	
+
   bin1.clear();
   bin2.clear();
   find_tetrahedra(a,c,bin1);
   find_tetrahedra(b,d,bin2);
-	
+
   bin.clear();
   for(it=bin1.begin();it!=bin1.end();it++){
     bin.insert(*it);
@@ -3146,16 +3146,16 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   for(it=bin2.begin();it!=bin2.end();it++){
     bin.insert(*it);
   }
-	
+
   if(bin.size()==2){
     it = bin.begin();
 	it1 = markings.find(*it);
 	it++;
 	it2 = markings.find(*it);
-		
+
 	if(it1->second==0 && it2->second==0){
 	  vertex = find(a,b,c,d,*it);
-			
+
 	  if(vertex!=0){
 		gr->addPyramid(new MPyramid(a,b,c,d,vertex));
 		it1->second = 1;
@@ -3184,21 +3184,21 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   std::set<MElement*> pyramids;
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
-	
-  flag = 0;	
-	
+
+  flag = 0;
+
   bin1.clear();
   bin2.clear();
   find_tetrahedra(a,c,bin1);
   find_tetrahedra(b,d,bin2);
   if(bin1.size()!=0) flag = 1;
-	
+
   bin3.clear();
   bin4.clear();
   find_pyramids(a,c,bin3);
   find_pyramids(b,d,bin4);
   if(bin3.size()!=0) flag = 1;
-	
+
   tetrahedra.clear();
   for(it=bin1.begin();it!=bin1.end();it++){
     tetrahedra.insert(*it);
@@ -3206,7 +3206,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   for(it=bin2.begin();it!=bin2.end();it++){
     tetrahedra.insert(*it);
   }
-	
+
   pyramids.clear();
   for(it=bin3.begin();it!=bin3.end();it++){
     pyramids.insert(*it);
@@ -3214,14 +3214,14 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   for(it=bin4.begin();it!=bin4.end();it++){
     pyramids.insert(*it);
   }
-	
+
   if(pyramids.size()==0 && tetrahedra.size()==1){
 	printf("tetrahedron deleted\n");
     it2 = markings.find(*tetrahedra.begin());
 	it2->second = 1;
 	return;
-  }	
-	
+  }
+
   if(flag){
     diagA = a;
 	diagB = c;
@@ -3230,56 +3230,56 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
     diagA = b;
 	diagB = d;
   }
-	
+
   Ns.clear();
   Ns.insert(diagA);
   Ns.insert(diagB);
-	
+
   x = (diagA->x() + diagB->x())/2.0;
   y = (diagA->y() + diagB->y())/2.0;
   z = (diagA->z() + diagB->z())/2.0;
-	
+
   mid = 0;
   movables.clear();
-	
+
   if(tetrahedra.size()>0 || pyramids.size()>0){
 	estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
 	estimate2 = estimate2 + 1;
-	  
+
 	mid = new MVertex(x,y,z);
 	gr->addMeshVertex(mid);
-		
+
 	temp2 = new MPyramid(a,b,c,d,mid);
 	gr->addPyramid(temp2);
 	markings.insert(std::pair<MElement*,bool>(temp2,0));
 	build_vertex_to_pyramids(temp2);
-	  
+
 	for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
 	  N1 = other(*it,diagA,diagB);
 	  N2 = other(*it,diagA,diagB,N1);
-			
+
 	  if(N1!=0 && N2!=0){
 		Ns.insert(N1);
 		Ns.insert(N2);
-		  
+
 	    temp = new MTetrahedron(N1,N2,diagA,mid);
 		gr->addTetrahedron(temp);
 		markings.insert(std::pair<MElement*,bool>(temp,0));
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
-				
+
 		temp = new MTetrahedron(N1,N2,diagB,mid);
 		gr->addTetrahedron(temp);
 		markings.insert(std::pair<MElement*,bool>(temp,0));
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
-				
+
 		it2 = markings.find(*it);
 		it2->second = 1;
 		erase_vertex_to_tetrahedra(*it);
 	  }
 	}
-		
+
 	for(it=pyramids.begin();it!=pyramids.end();it++){
 	  v1 = (*it)->getVertex(0);
 	  v2 = (*it)->getVertex(1);
@@ -3307,7 +3307,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 	  gr->addPyramid(temp2);
 	  markings.insert(std::pair<MElement*,bool>(temp2,0));
 	  build_vertex_to_pyramids(temp2);
-			
+
 	  if(different(v1,v2,diagA,diagB)){
 	    temp = new MTetrahedron(v1,v2,mid,v5);
 		gr->addTetrahedron(temp);
@@ -3315,7 +3315,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
 	  }
-			
+
 	  if(different(v2,v3,diagA,diagB)){
 	    temp = new MTetrahedron(v2,v3,mid,v5);
 		gr->addTetrahedron(temp);
@@ -3323,7 +3323,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
 	  }
-			
+
 	  if(different(v3,v4,diagA,diagB)){
 	    temp = new MTetrahedron(v3,v4,mid,v5);
 		gr->addTetrahedron(temp);
@@ -3331,7 +3331,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
 	  }
-			
+
 	  if(different(v4,v1,diagA,diagB)){
 	    temp = new MTetrahedron(v4,v1,mid,v5);
 		gr->addTetrahedron(temp);
@@ -3339,12 +3339,12 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 		build_vertex_to_tetrahedra(temp);
 		movables.push_back(temp);
 	  }
-			
+
 	  it2 = markings.find(*it);
 	  it2->second = 1;
 	  erase_vertex_to_pyramids(*it);
 	}
-	
+
 	mean(Ns,mid,movables);
   }
 }
@@ -3352,7 +3352,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 void PostOp::rearrange(GRegion* gr){
   unsigned int i;
   MElement* element;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	element->setVolumePositive();
@@ -3364,7 +3364,7 @@ void PostOp::statistics(GRegion* gr){
   int nbr,nbr8,nbr6,nbr5,nbr4;
   double vol,vol8,vol6,vol5,vol4;
   MElement* element;
-	
+
   nbr = 0;
   nbr8 = 0;
   nbr6 = 0;
@@ -3375,32 +3375,32 @@ void PostOp::statistics(GRegion* gr){
   vol6 = 0.0;
   vol5 = 0.0;
   vol4 = 0.0;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-		
+
 	if(eight(element)){
 	  nbr8 = nbr8 + 1;
 	  vol8 = vol8 + element->getVolume();
 	}
-		
+
 	if(six(element)){
 	  nbr6 = nbr6 + 1;
 	  vol6 = vol6 + element->getVolume();
-	}  
-	  
+	}
+
     if(five(element)){
 	  nbr5 = nbr5 + 1;
 	  vol5 = vol5 + workaround(element);
 	}
-		
+
 	if(four(element)){
 	  nbr4 = nbr4 + 1;
 	  vol4 = vol4 + element->getVolume();
 	}
-		
+
 	nbr = nbr + 1;
-	  
+
 	if(!five(element)){
 	  vol = vol + element->getVolume();
 	}
@@ -3408,7 +3408,7 @@ void PostOp::statistics(GRegion* gr){
 	  vol = vol + workaround(element);
 	}
   }
-	
+
   printf("Number :\n");
   printf("  percentage of hexahedra : %.2f\n",nbr8*100.0/nbr);
   printf("  percentage of prisms : %.2f\n",nbr6*100.0/nbr);
@@ -3466,9 +3466,9 @@ MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2){
   int i;
   MVertex* vertex;
   MVertex* pointer;
-	
-  pointer = 0;	
-	
+
+  pointer = 0;
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
 	if(vertex!=v1 && vertex!=v2){
@@ -3476,7 +3476,7 @@ MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2){
 	  break;
 	}
   }
-	
+
   return pointer;
 }
 
@@ -3484,9 +3484,9 @@ MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2,MVertex* v3){
   int i;
   MVertex* vertex;
   MVertex* pointer;
-	
-  pointer = 0;	
-	
+
+  pointer = 0;
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
 	if(vertex!=v1 && vertex!=v2 && vertex!=v3){
@@ -3494,7 +3494,7 @@ MVertex* PostOp::other(MElement* element,MVertex* v1,MVertex* v2,MVertex* v3){
 	  break;
 	}
   }
-	
+
   return pointer;
 }
 
@@ -3509,47 +3509,47 @@ void PostOp::mean(const std::set<MVertex*>& Ns,MVertex* mid,const std::vector<ME
   x = 0.0;
   y = 0.0;
   z = 0.0;
-	
+
   init_x = mid->x();
   init_y = mid->y();
   init_z = mid->z();
-	
+
   for(it=Ns.begin();it!=Ns.end();it++){
     x = x + (*it)->x();
 	y = y + (*it)->y();
 	z = z + (*it)->z();
   }
-	
+
   x = x/Ns.size();
   y = y/Ns.size();
   z = z/Ns.size();
-	
+
   for(i=0;i<movables.size();i++){
     movables[i]->setVolumePositive();
-  }	
-	
+  }
+
   mid->setXYZ(x,y,z);
-	
+
   for(j=0;j<100;j++){
 	flag = 0;
-	  
+
 	for(i=0;i<movables.size();i++){
 	  if(movables[i]->getVolume()<0.0){
 	    flag = 1;
 	  }
 	}
-	  
+
 	if(!flag){
 	  break;
 	}
-	  
+
 	x = 0.1*init_x + 0.9*mid->x();
 	y = 0.1*init_y + 0.9*mid->y();
 	z = 0.1*init_z + 0.9*mid->z();
-	  
+
 	mid->setXYZ(x,y,z);
   }
-	
+
   iterations = iterations + j;
 }
 
@@ -3557,9 +3557,9 @@ double PostOp::workaround(MElement* element){
   double volume;
   MTetrahedron* temp1;
   MTetrahedron* temp2;
-	
-  volume = 0.0;	
-	
+
+  volume = 0.0;
+
   if(five(element)){
     temp1 = new MTetrahedron(element->getVertex(0),element->getVertex(1),element->getVertex(2),element->getVertex(4));
 	temp2 = new MTetrahedron(element->getVertex(2),element->getVertex(3),element->getVertex(0),element->getVertex(4));
@@ -3567,7 +3567,7 @@ double PostOp::workaround(MElement* element){
 	delete temp1;
 	delete temp2;
   }
-	
+
   return volume;
 }
 
@@ -3575,9 +3575,9 @@ MVertex* PostOp::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,MElement* 
   int i;
   MVertex* vertex;
   MVertex* pointer;
-	
-  pointer = 0;	
-	
+
+  pointer = 0;
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
 	if(vertex!=v1 && vertex!=v2 && vertex!=v3 && vertex!=v4){
@@ -3585,17 +3585,17 @@ MVertex* PostOp::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,MElement* 
 	  break;
 	}
   }
-	
+
   return pointer;
 }
 
 void PostOp::find_tetrahedra(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
   std::map<MVertex*,std::set<MElement*> >::iterator it1;
   std::map<MVertex*,std::set<MElement*> >::iterator it2;
-	
+
   it1 = vertex_to_tetrahedra.find(v1);
   it2 = vertex_to_tetrahedra.find(v2);
-	
+
   if(it1!=vertex_to_tetrahedra.end() && it2!=vertex_to_tetrahedra.end()){
     intersection(it1->second,it2->second,final);
   }
@@ -3608,16 +3608,16 @@ void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
   std::map<MVertex*,std::set<MElement*> >::iterator it1;
   std::map<MVertex*,std::set<MElement*> >::iterator it2;
   std::set<MElement*> temp;
-	
+
   it1 = vertex_to_pyramids.find(v1);
   it2 = vertex_to_pyramids.find(v2);
-	
-  temp.clear();	
-	
+
+  temp.clear();
+
   if(it1!=vertex_to_pyramids.end() && it2!=vertex_to_pyramids.end()){
     intersection(it1->second,it2->second,temp);
   }
-	
+
   for(it=temp.begin();it!=temp.end();it++){
     flag1 = equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(1));
 	flag2 = equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(2));
@@ -3640,9 +3640,9 @@ void PostOp::intersection(const std::set<MElement*>& bin1,const std::set<MElemen
 void PostOp::build_vertex_to_tetrahedra(GRegion* gr){
   unsigned int i;
   MElement* element;
-	
-  vertex_to_tetrahedra.clear();	
-	
+
+  vertex_to_tetrahedra.clear();
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(four(element)){
@@ -3656,10 +3656,10 @@ void PostOp::build_vertex_to_tetrahedra(MElement* element){
   MVertex* vertex;
   std::set<MElement*> bin;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-	
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
-		
+
 	it = vertex_to_tetrahedra.find(vertex);
 	if(it!=vertex_to_tetrahedra.end()){
 	  it->second.insert(element);
@@ -3676,10 +3676,10 @@ void PostOp::erase_vertex_to_tetrahedra(MElement* element){
   int i;
   MVertex* vertex;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-	
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
-		
+
 	it = vertex_to_tetrahedra.find(vertex);
 	if(it!=vertex_to_tetrahedra.end()){
 	  it->second.erase(element);
@@ -3690,9 +3690,9 @@ void PostOp::erase_vertex_to_tetrahedra(MElement* element){
 void PostOp::build_vertex_to_pyramids(GRegion* gr){
   unsigned int i;
   MElement* element;
-	
-  vertex_to_pyramids.clear();	
-	
+
+  vertex_to_pyramids.clear();
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	if(five(element)){
@@ -3706,10 +3706,10 @@ void PostOp::build_vertex_to_pyramids(MElement* element){
   MVertex* vertex;
   std::set<MElement*> bin;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-	
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
-		
+
 	it = vertex_to_pyramids.find(vertex);
 	if(it!=vertex_to_pyramids.end()){
 	  it->second.insert(element);
@@ -3726,10 +3726,10 @@ void PostOp::erase_vertex_to_pyramids(MElement* element){
   int i;
   MVertex* vertex;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-	
+
   for(i=0;i<element->getNumVertices();i++){
     vertex = element->getVertex(i);
-		
+
 	it = vertex_to_pyramids.find(vertex);
 	if(it!=vertex_to_pyramids.end()){
 	  it->second.erase(element);
