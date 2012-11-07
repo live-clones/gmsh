@@ -84,10 +84,6 @@ This version of Gmsh may contain code (in the contrib/mpeg_encode subdirectory)
 copyright (c) 1995 The Regents of the University of California: check the
 configuration options.
 
-This version of Gmsh may contain code (in the contrib/NativeFileChooser
-subdirectory), copyright (C) 2004 Greg Ercolano: check the configuration
-options.
-
 This version of Gmsh may contain code (in the contrib/Netgen subdirectory)
 copyright (C) 1994-2004 Joachim Sch"oberl: check the configuration options.
 
