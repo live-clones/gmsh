@@ -2603,6 +2603,18 @@ void message_cb(Fl_Widget *w, void *data)
   FlGui::check();
 }
 
+void menu_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = getGraphicWindow
+    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  if(!g->onelab) return;
+  if(g->onelab->w())
+    g->hideMenu();
+  else
+    g->showMenu();
+  FlGui::check();
+}
+
 static void message_menu_scroll_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
@@ -2677,7 +2689,7 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
   int sw = FL_NORMAL_SIZE + 3; // status button width
 
-  int mheight = main ? 10 : 0; // dummy (nonzero)
+  int mheight = main ? 10 /* dummy, nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
@@ -2687,7 +2699,7 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
     CTX::instance()->glSize[1] = glheight;
   }
 
-  int twidth = main ? (13 * sw + 2 * FL_NORMAL_SIZE + 2) : 0;
+  int twidth = main ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
   int width = glwidth + twidth;
   // make sure width < screen width
@@ -2822,7 +2834,7 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   minHeight = 100;
   win->size_range(minWidth, minHeight);
 
-  // tiled windows (menu tree, opengl, messages)
+  // tiled windows (tree menu, opengl, messages)
   tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
 
   int w2 = glwidth / 2, h2 = glheight / 2;
@@ -2890,9 +2902,14 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
 
   tile->end();
 
-  // resize the tile to match the prescribed sizes
+  // resize the tiles to match the prescribed sizes
   tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
   _savedMessageHeight = CTX::instance()->msgSize;
+
+  // should we allow a zero-sized menu?
+  if(CTX::instance()->menuSize < 10) CTX::instance()->menuSize = 10;
+  tile->position(twidth, 0, CTX::instance()->menuSize, 0);
+  _savedMenuWidth = CTX::instance()->menuSize;
 
   win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   win->end();
@@ -3000,6 +3017,42 @@ void graphicWindow::checkAnimButtons()
     butt[10]->deactivate();
     butt[11]->deactivate();
   }
+}
+
+void graphicWindow::resizeMenu(int dh)
+{
+  if(!onelab) return;
+  for(unsigned int i = 0; i < gl.size(); i++){
+    if(gl[i]->x() == onelab->x() + onelab->w())
+      gl[i]->resize(gl[i]->x() + dh, gl[i]->y(), gl[i]->w() - dh, gl[i]->h());
+  }
+  onelab->resize(onelab->x(), onelab->y(), onelab->w() + dh, onelab->h());
+  onelab->redraw();
+}
+
+void graphicWindow::showMenu()
+{
+  if(!onelab || !win->shown()) return;
+  if(onelab->w() < 5){
+    int width = _savedMenuWidth;
+    if(width < 5) width = 200;
+    int maxw = win->w();
+    if(width > maxw) width = maxw / 2;
+    resizeMenu(width - onelab->w());
+  }
+}
+
+void graphicWindow::hideMenu()
+{
+  if(!onelab) return;
+  _savedMenuWidth = onelab->w();
+  resizeMenu(-onelab->w());
+}
+
+int graphicWindow::getMenuWidth()
+{
+  if(!onelab) return 0;
+  return onelab->w();
 }
 
 void graphicWindow::resizeMessages(int dh)

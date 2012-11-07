@@ -417,7 +417,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "GraphicsPositionY" , opt_general_graphics_position1 , 50. ,
     "Vertical position (in pixels) of the upper left corner of the graphic "
     "window" },
-  { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 600. ,
+  { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 800. ,
     "Width (in pixels) of the graphic window" },
 
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
@@ -505,6 +505,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum model coordinate along the Y-axis (read-only)" },
   { F,   "MaxZ" , opt_general_zmax , 0. ,
     "Maximum model coordinate along the Z-axis (read-only)" },
+  { F|S, "MenuWidth" , opt_general_menu_size , 300. ,
+    "Width (in pixels) of the menu tree" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
     "Height (in pixels) of the message console" },
   { F,   "MinX" , opt_general_xmin , 0. ,

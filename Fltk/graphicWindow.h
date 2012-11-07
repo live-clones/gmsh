@@ -24,7 +24,7 @@
 class graphicWindow{
  private:
   std::string _title;
-  int _savedMessageHeight;
+  int _savedMessageHeight, _savedMenuWidth;
   bool _autoScrollMessages;
  public:
   Fl_Window *win;
@@ -58,6 +58,10 @@ class graphicWindow{
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   void fillRecentHistoryMenu();
+  void resizeMenu(int dh);
+  void showMenu();
+  void hideMenu();
+  int getMenuWidth();
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
@@ -77,5 +81,6 @@ void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
 void status_play_manual(int time, int incr, bool redraw=true);
 void message_cb(Fl_Widget *w, void *data);
+void menu_cb(Fl_Widget *w, void *data);
 
 #endif

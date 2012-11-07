@@ -1847,6 +1847,15 @@ double opt_general_message_size(OPT_ARGS_NUM)
   return CTX::instance()->msgSize;
 }
 
+double opt_general_menu_size(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->menuSize = (int)val;
+    if(CTX::instance()->menuSize < 0) CTX::instance()->menuSize = 0;
+  }
+  return CTX::instance()->menuSize;
+}
+
 double opt_general_option_position0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

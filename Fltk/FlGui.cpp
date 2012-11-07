@@ -372,6 +372,10 @@ int FlGui::testGlobalShortcuts(int event)
     file_quit_cb(0, 0);
     status = 1;
   }
+  else if(Fl::test_shortcut(FL_CTRL + 't') || Fl::test_shortcut(FL_META + 't')){
+    menu_cb(0, 0);
+    status = 1;
+  }
   else if(Fl::test_shortcut('g')) {
     FlGui::instance()->openModule("Geometry");
     status = 1;
@@ -794,6 +798,7 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glSize[0] = graph[0]->win->w();
   CTX::instance()->glSize[1] = (graph[0]->win->h() - graph[0]->bottom->h());
   CTX::instance()->msgSize = graph[0]->getMessageHeight();
+  CTX::instance()->menuSize = graph[0]->getMenuWidth();
   CTX::instance()->optPosition[0] = options->win->x();
   CTX::instance()->optPosition[1] = options->win->y();
   CTX::instance()->pluginPosition[0] = plugins->win->x();
