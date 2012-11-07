@@ -69,11 +69,12 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
 // Client member function moved here because it uses parser commands 
 void MetaModel::saveCommandLines(const std::string fileName){
   std::vector<std::string> arguments, buffer;
-  size_t cursor, pos;
   std::string loaderPathName=OLMsg::GetOnelabString("LoaderPathName");
   OLMsg::Info("Save command lines for loader <%s>", loaderPathName.c_str());
-
   std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
+
+  /*
+  size_t cursor, pos;
   std::ifstream infile(fileNameSave.c_str());
   if (infile.is_open()){
     while (infile.good()){
@@ -97,22 +98,26 @@ void MetaModel::saveCommandLines(const std::string fileName){
     }
   }
   infile.close();
+  */
 
   //save client command lines
   std::ofstream outfile(fileNameSave.c_str());
   if (outfile.is_open()){
-    outfile << olkey::ifcond << "(" << olkey::getValue ;
-    outfile << "(LoaderPathName) == ";
-    outfile << loaderPathName << ")" << std::endl;
-    for(citer it = _clients.begin(); it != _clients.end(); it++)
+    // outfile << olkey::ifcond << "(" << olkey::getValue ;
+    // outfile << "(LoaderPathName) == ";
+    // outfile << loaderPathName << ")" << std::endl;
+    for(citer it = _clients.begin(); it != _clients.end(); it++){
       //if((*it)->checkCommandLine())
 	 outfile << (*it)->toChar();
-    outfile << olkey::olendif << std::endl;
+    }
+    //outfile << olkey::olendif << std::endl;
 
+    /*
     for(std::vector<std::string>::const_iterator it = buffer.begin();
 	it != buffer.end(); it++){
       outfile << (*it) << std::endl;
     }
+    */
   }
   else
     OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
@@ -1243,7 +1248,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 
       if(NumArg>0){
 	std::string paramName;
-	paramName.assign("Gmsh/Physical groups/"+arguments[0]);
+	paramName.assign("Gmsh parameters/Physical groups/"+arguments[0]);
 	get(regions,paramName);
 	if (regions.size()){
 	  std::set<std::string> region;

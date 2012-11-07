@@ -24,19 +24,20 @@ enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 static std::string dirSep("\\");
 static std::string cmdSep(" & ");
 static std::string removeCmd("del ");
-static std::string whichCmd("where ");
+static std::string lsCmd("dir ");
 #else
 static std::string dirSep("/");
 static std::string cmdSep(" ; ");
 static std::string removeCmd("rm -rf ");
-static std::string whichCmd("which ");
+static std::string lsCmd("ls ");
 #endif
 
 // TOOLS 
-//int getOptions(int argc, char *argv[], parseMode &todo, std::string &commandLine, std::string &caseName, std::string &clientName, std::string &sockName);
+
 std::string itoa(const int i);
 std::string ftoa(const double x);
 bool checkIfPresent(std::string fileName);
+bool chmod(std::string fileName);
 int mySystem(std::string commandLine);
 std::string getCurrentWorkdir();
 std::string getUserHomedir();
@@ -45,7 +46,7 @@ std::string sanitizeString(const std::string &in, const std::string &forbidden);
 std::string removeBlanks(const std::string &in);
 bool isPath(const std::string &in);
 std::string FixWindowsQuotes(const std::string &in);
-std::string FixExecPath(const std::string &in);
+std::string QuoteExecPath(const std::string &in);
 std::string unquote(const std::string &in);
 
 // Parser TOOLS 
@@ -169,6 +170,7 @@ class localSolverClient : public onelab::localClient{
     return checkIfPresent(getWorkingDir()+fileName);
   }
   virtual bool isNative() { return false; }
+  void FixExecPath(const std::string &in);
   virtual bool checkCommandLine();
   virtual void analyze() =0;
   virtual void compute() =0;
