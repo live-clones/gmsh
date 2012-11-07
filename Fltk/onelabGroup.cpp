@@ -1246,7 +1246,10 @@ void onelabGroup::setButtonVisibility()
   else
     _butt[0]->hide();
 
-  if(onelab::server::instance()->getNumClients() > 1)
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers);
+
+  if(onelab::server::instance()->getNumClients() > 1 || numbers.size())
     _butt[1]->show();
   else
     _butt[1]->hide();

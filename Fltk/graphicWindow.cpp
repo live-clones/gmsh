@@ -2822,7 +2822,7 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   minHeight = 100;
   win->size_range(minWidth, minHeight);
 
-  // tiled windows (opengl, messages, menu)
+  // tiled windows (menu tree, opengl, messages)
   tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
 
   int w2 = glwidth / 2, h2 = glheight / 2;
