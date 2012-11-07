@@ -36,7 +36,7 @@ class MSubTetrahedron : public MTetrahedron
 
   ~MSubTetrahedron();
   virtual int getTypeForMSH() const { return MSH_TET_SUB; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
@@ -73,7 +73,7 @@ class MSubTriangle : public MTriangle
     : MTriangle(tri), _owner(owner), _orig(orig), _intpt(0) {}
   ~MSubTriangle();
   virtual int getTypeForMSH() const { return MSH_TRI_SUB; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
@@ -111,7 +111,7 @@ class MSubLine : public MLine
 
   ~MSubLine();
   virtual int getTypeForMSH() const { return MSH_LIN_SUB; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
@@ -148,7 +148,7 @@ class MSubPoint : public MPoint
 
   ~MSubPoint();
   virtual int getTypeForMSH() const { return MSH_PNT_SUB; }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);

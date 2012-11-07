@@ -124,7 +124,7 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w)
   {

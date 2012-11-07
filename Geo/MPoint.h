@@ -7,6 +7,7 @@
 #define _MPOINT_H_
 
 #include "MElement.h"
+#include "BasisFactory.h"
 
 /*
  * MPoint
@@ -58,9 +59,9 @@ class MPoint : public MElement {
   {
     s[0][0] = s[0][1] = s[0][2] = 0.;
   }
-  virtual const polynomialBasis* getFunctionSpace(int o) const
+  virtual const nodalBasis* getFunctionSpace(int o) const
   {
-    return polynomialBases::find(MSH_PNT);
+    return BasisFactory::create(MSH_PNT);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int o) const
   {

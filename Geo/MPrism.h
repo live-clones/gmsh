@@ -127,7 +127,7 @@ class MPrism : public MElement {
     tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
   }
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual int getVolumeSign();
   virtual void getNode(int num, double &u, double &v, double &w)

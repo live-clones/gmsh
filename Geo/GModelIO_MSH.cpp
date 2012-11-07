@@ -468,18 +468,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   _elementIndexCache.clear();
 
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    writeElementsMSH(fp, this, *it, (*it)->points, saveAll, saveSinglePartition,
-                     binary);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    writeElementsMSH(fp, this, *it, (*it)->lines, saveAll, saveSinglePartition,
-                     binary);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    writeElementsMSH(fp, this, *it, (*it)->triangles, saveAll, saveSinglePartition,
-                     binary);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    writeElementsMSH(fp, this, *it, (*it)->quadrangles, saveAll, saveSinglePartition,
-                     binary);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->tetrahedra, saveAll, saveSinglePartition,
                      binary);
@@ -491,6 +479,18 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      binary);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->pyramids, saveAll, saveSinglePartition,
+                     binary);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    writeElementsMSH(fp, this, *it, (*it)->triangles, saveAll, saveSinglePartition,
+                     binary);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    writeElementsMSH(fp, this, *it, (*it)->quadrangles, saveAll, saveSinglePartition,
+                     binary);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    writeElementsMSH(fp, this, *it, (*it)->lines, saveAll, saveSinglePartition,
+                     binary);
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    writeElementsMSH(fp, this, *it, (*it)->points, saveAll, saveSinglePartition,
                      binary);
 
   if(binary) fprintf(fp, "\n");

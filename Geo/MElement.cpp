@@ -1330,7 +1330,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
 
 // Gives the parent type corresponding to 
 // any element type.
-// Ex. : MSN_TRI_3 -> TYPE_TRI
+// Ex. : MSH_TRI_3 -> TYPE_TRI
 int MElement::ParentTypeFromTag(int tag)
 {
   switch(tag) {

@@ -5,6 +5,7 @@
 
 #include "MPrism.h"
 #include "Numeric.h"
+#include "BasisFactory.h"
 
 int MPrism::getVolumeSign()
 { 
@@ -30,25 +31,25 @@ void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPriPts(pOrder);
 }
 
-const polynomialBasis* MPrism::getFunctionSpace(int o) const
+const nodalBasis* MPrism::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   int nv = getNumVolumeVertices();
-  
+
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_PRI_1);
-    case 1: return polynomialBases::find(MSH_PRI_6);
-    case 2: return polynomialBases::find(MSH_PRI_18);
+    case 0: return BasisFactory::create(MSH_PRI_1);
+    case 1: return BasisFactory::create(MSH_PRI_6);
+    case 2: return BasisFactory::create(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
-  else { 
+  else {
     switch (order) {
-    case 0: return polynomialBases::find(MSH_PRI_1);
-    case 1: return polynomialBases::find(MSH_PRI_6);
-    case 2: return polynomialBases::find(MSH_PRI_18);
+    case 0: return BasisFactory::create(MSH_PRI_1);
+    case 1: return BasisFactory::create(MSH_PRI_6);
+    case 2: return BasisFactory::create(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }

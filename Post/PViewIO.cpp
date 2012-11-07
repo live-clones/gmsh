@@ -309,7 +309,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
   case 2: ret = _data->writePOS(fileName, false, true, append); break; // parsed
   case 3: ret = _data->writeSTL(fileName); break;
   case 4: ret = _data->writeTXT(fileName); break;
-  case 5: ret = _data->writeMSH(fileName, CTX::instance()->mesh.binary); break;
+  case 5: ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary); break;
   case 6: ret = _data->writeMED(fileName); break;
   case 10:
     {
@@ -319,7 +319,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
       else if(ext == ".stl")
         ret = _data->writeSTL(fileName);
       else if(ext == ".msh")
-        ret = _data->writeMSH(fileName, CTX::instance()->mesh.binary);
+        ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary);
       else if(ext == ".med")
         ret = _data->writeMED(fileName);
       else

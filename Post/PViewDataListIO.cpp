@@ -525,12 +525,12 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
   }
 }
 
-bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool savemesh,
+bool PViewDataList::writeMSH(const std::string &fileName, double version, bool binary, bool savemesh,
                              bool multipleView)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
-    return _adaptive->getData()->writeMSH(fileName, binary);
+    return _adaptive->getData()->writeMSH(fileName, version, binary);
   }
 
   FILE *fp = fopen(fileName.c_str(), "w");
@@ -579,8 +579,11 @@ bool PViewDataList::writeMSH(const std::string &fileName, bool binary, bool save
 
   fprintf(fp, "$Elements\n");
   fprintf(fp, "%d\n", (int)elements.size());
-  for(unsigned int i = 0; i < elements.size(); i++)
+  for(unsigned int i = 0; i < elements.size(); i++){
+    if(version > 2.2)
+      Msg::Warning("PViewDataList: Unable to writeMSH in version '%d'. Version 2.2 selected.", version);
     elements[i]->writeMSH2(fp, 2.2, false, i + 1);
+  }
   fprintf(fp, "$EndElements\n");
 
   if(haveInterpolationMatrices()){
