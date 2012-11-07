@@ -265,7 +265,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num)
 
   _toggle = new Fl_Light_Button(x, y, w - popw, h);
   _toggle->callback(view_toggle_cb, (void *)num);
-  _toggle->align(FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
   _toggle->copy_label(data->getName().c_str());
   strcpy(_tooltip, data->getFileName().c_str());
