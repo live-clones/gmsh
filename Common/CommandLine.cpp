@@ -115,6 +115,7 @@ void PrintUsage(const char *name)
   Msg::Direct("  -string \"string\"      Parse option string at startup");
   Msg::Direct("  -option file          Parse option file at startup");
   Msg::Direct("  -convert files        Convert files into latest binary formats, then exit");
+  Msg::Direct("  -vmsh float           Select msh file version");
   Msg::Direct("  -version              Show version number");
   Msg::Direct("  -info                 Show detailed version information");
   Msg::Direct("  -help                 Show this message");
@@ -161,13 +162,13 @@ void GetOptions(int argc, char *argv[])
           Msg::Fatal("Missing client name and/or address of OneLab server");
       }
       else if(!strcmp(argv[i] + 1, "lol")) {
-	i++;
+        i++;
         if(argv[i] && argv[i + 1] && argv[i + 1][0] != '-'){
           Msg::LoadOnelabClient(argv[i], argv[i + 1]);
           i += 2;
         }
-	else
-	  Msg::Fatal("Missing client name and/or address of OneLab server");
+        else
+          Msg::Fatal("Missing client name and/or address of OneLab server");
       }
       else if(!strcmp(argv[i] + 1, "socket")) {
         i++;
@@ -315,21 +316,21 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "hoMindisto")) {
         i++;
         if(argv[i])
-	  opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
+          opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "hoElasticity")) {
         i++;
         if(argv[i])
-	  opt_mesh_ho_poisson(0, GMSH_SET, atof(argv[i++]));
+          opt_mesh_ho_poisson(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "hoNlayers")) {
         i++;
         if(argv[i])
-	  opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
+          opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
@@ -409,6 +410,14 @@ void GetOptions(int argc, char *argv[])
         i++;
         if(argv[i])
           CTX::instance()->numTiles = atoi(argv[i++]);
+        else
+          Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "vmsh")) {
+        i++;
+        if(argv[i]){
+          CTX::instance()->mesh.mshFileVersion = atof(argv[i++]);
+        }
         else
           Msg::Fatal("Missing number");
       }
