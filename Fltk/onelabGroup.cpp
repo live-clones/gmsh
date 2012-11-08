@@ -1241,19 +1241,24 @@ void onelabGroup::checkForErrors(const std::string &client)
 
 void onelabGroup::setButtonVisibility()
 {
-  if(!CTX::instance()->solver.autoCheck)
-    _butt[0]->show();
-  else
-    _butt[0]->hide();
-
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
-
-  if(onelab::server::instance()->getNumClients() > 1 || numbers.size())
+  bool showRun = onelab::server::instance()->getNumClients() > 1 || numbers.size();
+  if(CTX::instance()->solver.autoCheck){
+    _butt[0]->hide();
+    if(showRun)
+      _butt[1]->show();
+    else
+      _butt[1]->hide();
+  }
+  else if(showRun){
+    _butt[0]->show();
     _butt[1]->show();
-  else
+  }
+  else{
+    _butt[0]->hide();
     _butt[1]->hide();
-
+  }
   redraw();
 }
 
