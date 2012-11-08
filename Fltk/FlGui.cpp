@@ -197,7 +197,7 @@ static int globalShortcut(int event)
   return FlGui::instance()->testGlobalShortcuts(event);
 }
 
-FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
+FlGui::FlGui(int argc, char **argv)
 {
   // set X display
   if(CTX::instance()->display.size())
@@ -306,6 +306,7 @@ FlGui::FlGui(int argc, char **argv) : _openedThroughMacFinder(false)
 }
 
 FlGui *FlGui::_instance = 0;
+std::string FlGui::_openedThroughMacFinder = "";
 
 FlGui *FlGui::instance(int argc, char **argv)
 {

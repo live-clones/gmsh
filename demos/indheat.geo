@@ -3,17 +3,17 @@ nn = 40; // mesh subdivisions per turn
 
 DefineConstant
 [
- turns = {5, Label "Number of coil turns"},
- r = {0.11, Label "Coil radius"},
- rc = {0.01, Label "Coil wire radius"},
- hc = {0.25, Label "Coil height"},
- ht = {0.4, Label "Tube height"},
- rt1 = {0.075, Label "Tube internal radius"},
- rt2 = {0.092, Label "Tube external radius"},
- lb = {1, Label "Infinite box width"},
- left = {1, Choices{0,1}, Label "Terminals on the left?"}
+ turns = {5, Label "Number of coil turns", Path "Parameters"},
+ r = {0.11, Label "Coil radius", Path "Parameters"},
+ rc = {0.01, Label "Coil wire radius", Path "Parameters"},
+ hc = {0.25, Label "Coil height", Path "Parameters"},
+ ht = {0.4, Label "Tube height", Path "Parameters"},
+ rt1 = {0.075, Label "Tube internal radius", Path "Parameters"},
+ rt2 = {0.092, Label "Tube external radius", Path "Parameters"},
+ lb = {1, Label "Infinite box width", Path "Parameters"},
+ left = {1, Choices{0,1}, Label "Terminals on the left?", Path "Parameters"}
  //macro = {"aa.pos", Label "Run my macro!", Kind "macro", Path "Actions"},
-  showLines = {1, Choices {0,1}, Label "Show lines?"}
+ showLines = {1, Choices {0,1}, Label "Show lines?", Path "Options"}
 ];
 
 Geometry.Lines = showLines;

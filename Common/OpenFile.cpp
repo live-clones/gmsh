@@ -634,8 +634,12 @@ void OpenProject(const std::string &fileName)
 void OpenProjectMacFinder(const char *fileName)
 {
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::instance()->setOpenedThroughMacFinder(true);
+  if(!FlGui::available()){
+    // Gmsh is not ready: will open the file later
+    FlGui::setOpenedThroughMacFinder(fileName);
+  }
+  else if(FlGui::available()){
+    // Gmsh is running
     OpenProject(fileName);
     drawContext::global()->draw();
   }

@@ -43,7 +43,7 @@ class MElement;
 class FlGui{
  private:
   static FlGui *_instance;
-  bool _openedThroughMacFinder;
+  static std::string _openedThroughMacFinder;
  public:
   std::vector<GVertex*> selectedVertices;
   std::vector<GEdge*> selectedEdges;
@@ -80,8 +80,11 @@ class FlGui{
   // wait (at most time seconds) for any events, then process them
   static void wait(double time);
   // is a file opened through the Mac Finder?
-  void setOpenedThroughMacFinder(bool val){ _openedThroughMacFinder = val; }
-  bool getOpenedThroughMacFinder(){ return _openedThroughMacFinder; }
+  static void setOpenedThroughMacFinder(const std::string &name)
+  {
+    _openedThroughMacFinder = name;
+  }
+  static std::string getOpenedThroughMacFinder(){ return _openedThroughMacFinder; }
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
   // test the arrow shortcuts (not in the application-level shortcuts)
