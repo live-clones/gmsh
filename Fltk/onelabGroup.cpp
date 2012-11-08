@@ -1034,7 +1034,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
                                             bool highlight, Fl_Color c)
 {
   // macro button
-  if(p.getKind() == "macro"){
+  if(p.getAttribute("Macro") == "Gmsh"){
     Fl_Button *but = new Fl_Button(1, 1, (3 * _itemWidth) / 2, 1);
     but->align(FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void*)n);

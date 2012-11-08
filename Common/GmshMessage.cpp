@@ -777,6 +777,7 @@ static void _setStandardOptions(onelab::parameter *p,
   if(fopt.count("ReadOnly")) p->setReadOnly(fopt["ReadOnly"][0] ? true : false);
   if(copt.count("Highlight")) p->setAttribute("Highlight", copt["Highlight"][0]);
   if(copt.count("AutoCheck")) p->setAttribute("AutoCheck", copt["AutoCheck"][0]);
+  if(copt.count("Macro")) p->setAttribute("Macro", copt["Macro"][0]);
 }
 
 static std::string _getParameterName(const std::string &key,
