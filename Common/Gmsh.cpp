@@ -228,7 +228,6 @@ int GmshFLTK(int argc, char **argv)
     }
   }
   else{
-    Msg::Info("AAAAAAAAAAAAAAAAAAAAA\n");
     OpenProject(FlGui::getOpenedThroughMacFinder());
   }
 
