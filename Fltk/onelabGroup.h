@@ -27,6 +27,7 @@ class onelabGroup : public Fl_Group{
   std::string _title;
   bool _stop;
   int _itemWidth;
+  std::set<std::string> _manuallyClosed;
   template <class T> void _addParameter(T &p);
   Fl_Widget *_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
                                  bool highlight, Fl_Color c);
@@ -54,6 +55,18 @@ class onelabGroup : public Fl_Group{
     char path[1024];
     _tree->item_pathname(path, 1024, item);
     return std::string(path);
+  }
+  void insertInManuallyClosed(const std::string &path)
+  {
+    _manuallyClosed.insert(path);
+  }
+  void removeFromManuallyClosed(const std::string &path)
+  {
+    _manuallyClosed.erase(path);
+  }
+  bool isManuallyClosed(const std::string &path)
+  {
+    return _manuallyClosed.find(path) != _manuallyClosed.end();
   }
   viewButton *getViewButton(int num);
   void addSolver(const std::string &name, const std::string &exe,

@@ -303,7 +303,8 @@ bool onelab::localNetworkClient::run()
         drawContext::global()->draw();
         if(n != PView::list.size()){
           FlGui::instance()->rebuildTree();
-          FlGui::instance()->openModule("Post-processing");
+          if(!FlGui::instance()->onelab->isManuallyClosed("0Gmsh modules/Post-processing"))
+            FlGui::instance()->openModule("Post-processing");
         }
       }
       break;
@@ -680,26 +681,23 @@ static void setClosed(const std::string &path, std::vector<T> &ps,
   }
 }
 
-static void onelab_tree_cb(Fl_Widget *w, void *data)
+static void setOpenedClosed(Fl_Tree_Item *item, int reason)
 {
-  Fl_Tree *tree = (Fl_Tree*)w;
-  Fl_Tree_Item *item = (Fl_Tree_Item*)tree->callback_item();
-  std::string path = FlGui::instance()->onelab->getPath(item);
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
   std::vector<onelab::region> regions;
   std::vector<onelab::function> functions;
-
-  switch(tree->callback_reason()){
-  case FL_TREE_REASON_SELECTED: break;
-  case FL_TREE_REASON_DESELECTED: break;
+  std::string path = FlGui::instance()->onelab->getPath(item);
+  switch(reason){
   case FL_TREE_REASON_OPENED:
+    FlGui::instance()->onelab->removeFromManuallyClosed(path);
     setClosed(path, numbers, "0");
     setClosed(path, strings, "0");
     setClosed(path, regions, "0");
     setClosed(path, functions, "0");
     break;
   case FL_TREE_REASON_CLOSED:
+    FlGui::instance()->onelab->insertInManuallyClosed(path);
     setClosed(path, numbers, "1");
     setClosed(path, strings, "1");
     setClosed(path, regions, "1");
@@ -708,6 +706,29 @@ static void onelab_tree_cb(Fl_Widget *w, void *data)
   default:
     break;
   }
+}
+
+static void onelab_tree_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tree *tree = (Fl_Tree*)w;
+  Fl_Tree_Item *item = (Fl_Tree_Item*)tree->callback_item();
+  setOpenedClosed(item, tree->callback_reason());
+}
+
+static void onelab_subtree_cb(Fl_Widget *w, void *data)
+{
+  Fl_Tree_Item *n = (Fl_Tree_Item*)data;
+  int reason;
+  if(n->is_open()){
+    reason = FL_TREE_REASON_CLOSED;
+    n->close();
+  }
+  else{
+    reason = FL_TREE_REASON_OPENED;
+    n->open();
+  }
+  setOpenedClosed(n, reason);
+  FlGui::instance()->onelab->redrawTree();
 }
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
@@ -1143,13 +1164,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n
     if(highlight) but->color(c);
     return but;
   }
-}
-
-static void onelab_subtree_cb(Fl_Widget *w, void *data)
-{
-  Fl_Tree_Item *n = (Fl_Tree_Item*)data;
-  n->open_toggle();
-  FlGui::instance()->onelab->redrawTree();
 }
 
 void onelabGroup::rebuildTree()
