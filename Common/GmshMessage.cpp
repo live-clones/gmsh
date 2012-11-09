@@ -778,6 +778,7 @@ static void _setStandardOptions(onelab::parameter *p,
   if(copt.count("Highlight")) p->setAttribute("Highlight", copt["Highlight"][0]);
   if(copt.count("AutoCheck")) p->setAttribute("AutoCheck", copt["AutoCheck"][0]);
   if(copt.count("Macro")) p->setAttribute("Macro", copt["Macro"][0]);
+  if(copt.count("GmshOption")) p->setAttribute("GmshOption", copt["GmshOption"][0]);
 }
 
 static std::string _getParameterName(const std::string &key,

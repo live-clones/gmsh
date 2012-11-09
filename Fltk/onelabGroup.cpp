@@ -27,6 +27,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "fileDialogs.h"
 #include "onelabGroup.h"
+#include "Gmsh.h"
 #include "FlGui.h"
 #include "Context.h"
 #include "GModel.h"
@@ -853,6 +854,16 @@ viewButton *onelabGroup::getViewButton(int num)
   return 0;
 }
 
+static void setGmshOption(onelab::number &n)
+{
+  std::string opt = n.getAttribute("GmshOption");
+  if(opt.empty()) return;
+  std::string::size_type dot = opt.find('.');
+  if(dot == std::string::npos) return;
+  GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
+  drawContext::global()->draw();
+}
+
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -864,6 +875,7 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
     onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
     onelab::server::instance()->set(numbers[0]);
+    setGmshOption(numbers[0]);
     autoCheck(old, numbers[0]);
   }
 }
@@ -880,6 +892,7 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
     onelab::number old = numbers[0];
     if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
     onelab::server::instance()->set(numbers[0]);
+    setGmshOption(numbers[0]);
     autoCheck(old, numbers[0]);
   }
 }
@@ -904,6 +917,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
+    setGmshOption(numbers[0]);
     updateGraphs();
     autoCheck(old, numbers[0]);
   }
