@@ -945,5 +945,6 @@ void FlGui::rebuildTree()
 
 void FlGui::openModule(const std::string &name)
 {
-  onelab->openTreeItem("0Gmsh modules/" + name);
+  if(!onelab->isManuallyClosed("0Gmsh modules/" + name))
+    onelab->openTreeItem("0Gmsh modules/" + name);
 }

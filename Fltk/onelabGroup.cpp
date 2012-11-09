@@ -303,8 +303,7 @@ bool onelab::localNetworkClient::run()
         drawContext::global()->draw();
         if(n != PView::list.size()){
           FlGui::instance()->rebuildTree();
-          if(!FlGui::instance()->onelab->isManuallyClosed("0Gmsh modules/Post-processing"))
-            FlGui::instance()->openModule("Post-processing");
+          FlGui::instance()->openModule("Post-processing");
         }
       }
       break;
