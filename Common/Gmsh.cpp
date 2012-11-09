@@ -89,17 +89,17 @@ int GmshSetBoundingBox(double xmin, double xmax,
 
 int GmshSetOption(std::string category, std::string name, std::string value, int index)
 {
-  return StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
+  return StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
 int GmshSetOption(std::string category, std::string name, double value, int index)
 {
-  return NumberOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
+  return NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
 int GmshSetOption(std::string category, std::string name, unsigned int value, int index)
 {
-  return ColorOption(GMSH_SET, category.c_str(), index, name.c_str(), value);
+  return ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
 int GmshGetOption(std::string category, std::string name, std::string &value, int index)
