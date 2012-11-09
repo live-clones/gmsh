@@ -26,7 +26,7 @@ class onelabGroup : public Fl_Group{
   std::vector<char*> _treeStrings;
   std::string _title;
   bool _stop;
-  int _baseWidth, _connWidth;
+  int _baseWidth, _indent;
   std::set<std::string> _manuallyClosed;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
