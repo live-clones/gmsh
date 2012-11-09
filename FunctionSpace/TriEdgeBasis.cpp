@@ -131,6 +131,24 @@ TriEdgeBasis::TriEdgeBasis(int order){
     v[l].mul(lagrange[2]);
   }
 
+  vector<Polynomial> gradL1 = lagrange[0].gradient();
+  vector<Polynomial> gradL2 = lagrange[1].gradient();
+  
+  vector<Polynomial> l2GradL1(gradL1);
+  l2GradL1[0].mul(lagrange[1]);
+  l2GradL1[1].mul(lagrange[1]);
+  l2GradL1[2].mul(lagrange[1]);
+  
+  vector<Polynomial> l1GradL2(gradL2);
+  l1GradL2[0].mul(lagrange[0]);
+  l1GradL2[1].mul(lagrange[0]);
+  l1GradL2[2].mul(lagrange[0]);
+  
+  vector<Polynomial> subGradL1L2(l2GradL1);
+  subGradL1L2[0].sub(l1GradL2[0]);
+  subGradL1L2[1].sub(l1GradL2[1]);
+  subGradL1L2[2].sub(l1GradL2[2]);
+
   unsigned int i = 0;
   
   // Cell Based (Type 1) //
@@ -179,11 +197,13 @@ TriEdgeBasis::TriEdgeBasis(int order){
 
   // Cell Based (Type 3) //
   for(int l = 0; l < orderMinus; l++){
-    (*cell)[i] = new vector<Polynomial>(*(*cell)[0]);
-
-    (*cell)[i]->at(0).mul(v[l]);
-    (*cell)[i]->at(1).mul(v[l]);
-    (*cell)[i]->at(2).mul(v[l]);
+    vector<Polynomial> subGradL1L2V(subGradL1L2);
+    
+    subGradL1L2V[0].mul(v[l]);
+    subGradL1L2V[1].mul(v[l]);
+    subGradL1L2V[2].mul(v[l]);
+    
+    (*cell)[i] = new vector<Polynomial>(subGradL1L2V);
     
     i++;
   }
