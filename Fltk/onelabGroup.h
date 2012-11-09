@@ -26,8 +26,9 @@ class onelabGroup : public Fl_Group{
   std::vector<char*> _treeStrings;
   std::string _title;
   bool _stop;
-  int _itemWidth;
+  int _baseWidth, _connWidth;
   std::set<std::string> _manuallyClosed;
+  void _computeWidths();
   template <class T> void _addParameter(T &p);
   Fl_Widget *_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
                                  bool highlight, Fl_Color c);

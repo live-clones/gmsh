@@ -254,16 +254,18 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
     GModel::current()->getFields()->setBackgroundMesh(index);
 }
 
-viewButton::viewButton(int x, int y, int w, int h, int num)
+viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   : Fl_Group(x,y,w,h)
 {
-  int popw = 4 * FL_NORMAL_SIZE + 3;
+  int popw = 4 * FL_NORMAL_SIZE;
 
   PView *view = PView::list[num];
   PViewData *data = view->getData();
   PViewOptions *opt = view->getOptions();
 
-  _toggle = new Fl_Light_Button(x, y, w - popw, h);
+  _toggle = new Fl_Check_Button(x, y, w - popw, h);
+  _toggle->box(FL_FLAT_BOX);
+  _toggle->color(col);
   _toggle->callback(view_toggle_cb, (void *)num);
   _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
@@ -272,9 +274,12 @@ viewButton::viewButton(int x, int y, int w, int h, int num)
   _toggle->tooltip(_tooltip);
   sprintf(_arrow, "[%d]@#-1>", num);
   _butt = new Fl_Button(x + w - popw, y, popw, h, _arrow);
+
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _butt->tooltip("Show view option menu (Shift+w)");
-
+  _butt->box(FL_FLAT_BOX);
+  _butt->color(col);
+  _butt->selection_color(col);
   _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
   _popup->add("Reload/View", 'r',
