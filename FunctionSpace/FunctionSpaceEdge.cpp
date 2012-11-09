@@ -51,15 +51,14 @@ interpolate(const MElement& element,
 
   for(unsigned int i = 0; i < nFun; i++){
     fullVector<double> vi = 
-      Mapper::grad(Polynomial::at(*fun[i], uvw[0], uvw[1], uvw[2]),
-		   invJac);
+      Polynomial::at(*fun[i], uvw[0], uvw[1], uvw[2]);
     
     vi.scale(coef[i]);
     val.axpy(vi, 1);
   }
 
   // Return Interpolated Value //
-  return val;
+  return Mapper::grad(val, invJac);
 }
 
 fullVector<double> FunctionSpaceEdge::
@@ -88,13 +87,12 @@ interpolateInRefSpace(const MElement& element,
 
   for(unsigned int i = 0; i < nFun; i++){
     fullVector<double> vi = 
-      Mapper::grad(Polynomial::at(*fun[i], uvw(0), uvw(1), uvw(2)),
-		   invJac);
+      Polynomial::at(*fun[i], uvw(0), uvw(1), uvw(2));
     
     vi.scale(coef[i]);
     val.axpy(vi, 1);
   }
 
   // Return Interpolated Value //
-  return val;
+  return Mapper::grad(val, invJac);
 }
