@@ -6,6 +6,10 @@
 #include "polynomialBasis.h"
 #include "BasisScalar.h"
 
+#include "MElement.h"
+#include "FunctionSpaceScalar.h"
+#include "FunctionSpaceVector.h"
+
 /**
    @interface LagrangeBasis
    @brief Interoface for Lagrange Basis
@@ -39,13 +43,28 @@ class LagrangeBasis: public BasisScalar{
   //! @return Returns the Monomial Matrix
   const fullMatrix<double>& getMonomial(void) const;
 
-  //! @param coef A vector of Real numbers
-  //! @param basis A vector of Polynomials 
-  //! in a @em Reference Space
+  //! @param element A MElement
+  //! @param coef A vector of coefficient associated 
+  //! to the given Element
+  //! @param fSpace The (scalar) Function Space 
+  //! of the given Coefficients
   //! @return Projects the given Coefficients in this LagrangeBasis@n
-  fullVector<double> project(const fullVector<double>& coef,
-			     const std::vector<const Polynomial*>& basis);
+  std::vector<double> project(const MElement& element,
+			      const std::vector<double>& coef,
+			      const FunctionSpaceScalar& fSpace);
 
+  //! @param element A MElement
+  //! @param coef A vector of coefficient associated 
+  //! to the given Element
+  //! @param fSpace The (vectorial) Function Space 
+  //! of the given Coefficients
+  //! @return Projects the given Coefficients in this LagrangeBasis@n
+  //! @note Each Coefficients will be projected into a vector
+  //! with the same dimesion as the vectorial Polynomials
+  std::vector<fullVector<double> > 
+    project(const MElement& element,
+	    const std::vector<double>& coef,
+	    const FunctionSpaceVector& fSpace);
  protected:
   //! Returns a new LagrangeBasis
   //!

@@ -35,6 +35,11 @@ class FunctionSpaceScalar : public FunctionSpace{
     interpolate(const MElement& element, 
 		const std::vector<double>& coef,
 		const fullVector<double>& xyz) const = 0;
+
+  virtual double 
+    interpolateInRefSpace(const MElement& element, 
+			  const std::vector<double>& coef,
+			  const fullVector<double>& uvw) const = 0;
   
   const std::vector<const Polynomial*> 
     getLocalFunctions(const MElement& element) const;
@@ -57,7 +62,26 @@ class FunctionSpaceScalar : public FunctionSpace{
    @param coef The coefficients of the interpolation
    @param xyz The coordinate 
    (of point @em inside the given @c element)
-   of the interpolation
+   of the interpolation in the @em Physical Space
+
+   @return Returns the (scalar) interpolated value
+
+   @warning
+   If the given coordinate are not in the given
+   @c element @em Bad @em Things may happend
+   
+   @todo
+   If the given coordinate are not in the given
+   @c element @em Bad @em Things may happend
+   ---> check
+   **
+
+   @fn FunctionSpaceScalar::interpolateInRefSpace
+   @param element The MElement to interpolate on
+   @param coef The coefficients of the interpolation
+   @param uvw The coordinate 
+   (of point @em inside the given @c element)
+   of the interpolation in the @em Reference Space
 
    @return Returns the (scalar) interpolated value
 

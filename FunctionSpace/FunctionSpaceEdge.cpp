@@ -61,3 +61,40 @@ interpolate(const MElement& element,
   // Return Interpolated Value //
   return val;
 }
+
+fullVector<double> FunctionSpaceEdge::
+interpolateInRefSpace(const MElement& element, 
+		      const std::vector<double>& coef,
+		      const fullVector<double>& uvw) const{
+ 
+  // Const Cast For MElement //
+  MElement& eelement = 
+    const_cast<MElement&>(element);
+  
+  // Get Basis Functions //
+  const vector<const vector<Polynomial>*>& fun = getLocalFunctions(element);
+  const unsigned int nFun                      = fun.size();
+
+  // Get Jacobian //
+  fullMatrix<double>  invJac(3, 3);        
+  eelement.getJacobian(uvw(0), uvw(1), uvw(2), invJac);
+  invJac.invertInPlace();
+ 
+  // Interpolate (in Reference Place) //
+  fullVector<double> val(3); 
+  val(0) = 0; 
+  val(1) = 0; 
+  val(2) = 0;
+
+  for(unsigned int i = 0; i < nFun; i++){
+    fullVector<double> vi = 
+      Mapper::grad(Polynomial::at(*fun[i], uvw(0), uvw(1), uvw(2)),
+		   invJac);
+    
+    vi.scale(coef[i]);
+    val.axpy(vi, 1);
+  }
+
+  // Return Interpolated Value //
+  return val;
+}

@@ -21,6 +21,11 @@ class FunctionSpaceEdge : public FunctionSpaceVector{
     interpolate(const MElement& element, 
 		const std::vector<double>& coef,
 		const fullVector<double>& xyz) const;
+
+  virtual fullVector<double> 
+    interpolateInRefSpace(const MElement& element, 
+			  const std::vector<double>& coef,
+			  const fullVector<double>& uvw) const;
 };
 
 

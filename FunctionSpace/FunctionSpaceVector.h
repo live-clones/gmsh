@@ -40,6 +40,11 @@ class FunctionSpaceVector : public FunctionSpace{
 		const std::vector<double>& coef,
 		const fullVector<double>& xyz) const = 0;
 
+  virtual fullVector<double> 
+    interpolateInRefSpace(const MElement& element, 
+			  const std::vector<double>& coef,
+			  const fullVector<double>& uvw) const = 0;
+
   const std::vector<const std::vector<Polynomial>*>
     getLocalFunctions(const MElement& element) const;
 
@@ -64,7 +69,26 @@ class FunctionSpaceVector : public FunctionSpace{
    @param coef The coefficients of the interpolation
    @param xyz The coordinate 
    (of point @em inside the given @c element)
-   of the interpolation
+   of the interpolation in the @em Physical Space
+
+   @return Returns the (vectorial) interpolated value
+
+   @warning
+   If the given coordinate are not in the given
+   @c element @em Bad @em Things may happend
+   
+   @todo
+   If the given coordinate are not in the given
+   @c element @em Bad @em Things may happend
+   ---> check
+   **
+
+   @fn FunctionSpaceVector::interpolateInRefSpace
+   @param element The MElement to interpolate on
+   @param coef The coefficients of the interpolation
+   @param xyz The coordinate 
+   (of point @em inside the given @c element)
+   of the interpolation in the @em Reference Space
 
    @return Returns the (vectorial) interpolated value
 

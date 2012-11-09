@@ -48,3 +48,23 @@ interpolate(const MElement& element,
   // Return Interpolated Value //
   return val;
 }
+
+double FunctionSpaceNode::
+interpolateInRefSpace(const MElement& element, 
+		      const std::vector<double>& coef,
+		      const fullVector<double>& uvw) const{
+
+  // Get Basis Functions //
+  const vector<const Polynomial*> fun = getLocalFunctions(element);
+  const unsigned int nFun             = fun.size();
+  
+  // Interpolate (in Reference Place) //
+  double val = 0; 
+
+  for(unsigned int i = 0; i < nFun; i++)
+    val += 
+      fun[i]->at(uvw(0), uvw(1), uvw(2)) * coef[i];
+
+  // Return Interpolated Value //
+  return val;
+}
