@@ -3026,6 +3026,18 @@ void graphicWindow::resizeMenu(int dh)
   onelab->redraw();
 }
 
+int graphicWindow::getGlHeight()
+{
+  int h = win->h() - bottom->h(); // yes, ignore message browser
+  if(bar) h -= bar->h();
+  return h;
+}
+
+int graphicWindow::getGlWidth()
+{
+  return win->w();
+}
+
 void graphicWindow::showMenu()
 {
   if(!onelab || !win->shown()) return;
