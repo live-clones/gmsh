@@ -994,6 +994,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
       char *str = strdup(it->second.c_str());
       _treeStrings.push_back(str);
       Fl_Menu_Item menuItem = {str, 0, 0, 0, 0};
+      if(highlight) menuItem.labelcolor(c);
       menu.push_back(menuItem);
     }
     Fl_Menu_Item it = {0};
@@ -1007,7 +1008,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
     }
     but->callback(onelab_number_choice_cb, (void*)n);
     but->align(FL_ALIGN_RIGHT);
-    if(highlight) n->labelbgcolor(c);
     return but;
   }
 
@@ -1015,9 +1015,11 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   if(p.getChoices().size() == 2 &&
      p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
     Fl_Check_Button *but = new Fl_Check_Button(1, 1, 2 * ww, 1);
+    but->box(FL_FLAT_BOX);
+    but->color(_tree->color());
     but->value(p.getValue());
     but->callback(onelab_number_check_button_cb, (void*)n);
-    if(highlight) n->labelbgcolor(c);
+    if(highlight) but->color(c);
     return but;
   }
 
