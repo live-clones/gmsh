@@ -3381,7 +3381,7 @@ void onelabGroup::_addGmshMenus()
   _tree->sortorder(FL_TREE_SORT_NONE);
 
   // add static geometry and mesh module items
-  for(int i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]); i++)
+  for(unsigned int i = 0; i < sizeof(static_modules) / sizeof(static_modules[0]); i++)
     _addMenu(static_modules[i].label, static_modules[i].callback, static_modules[i].arg);
 
   // add dynamic solver module items

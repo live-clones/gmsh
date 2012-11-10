@@ -678,6 +678,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan entities (lines connected to a single surface, etc.)?" },
 
+  { F|O, "LabelType" , opt_geometry_label_type , 1. ,
+    "Type of entity label (1=elementary number, 2=physical number)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,

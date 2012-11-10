@@ -49,7 +49,7 @@ struct contextMeshOptions {
 
 struct contextGeometryOptions {
   int draw, light, lightTwoSide, points, lines, surfaces, volumes;
-  int pointsNum, linesNum, surfacesNum, volumesNum;
+  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
   double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
   int pointType, lineType, surfaceType, numSubEdges;
   int oldCircle, extrudeSplinePoints, extrudeReturnLateral, oldNewreg;

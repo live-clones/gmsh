@@ -434,6 +434,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
+  opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value() + 1);
 
   if(old_hide_compound != (int)opt_geometry_hide_compounds(0, GMSH_GET, 0)){
     GModel::current()->setCompoundVisibility();
@@ -1903,27 +1904,38 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[3]->callback(geometry_options_ok_cb);
 
       geo.butt[4] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point numbers");
+        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Point labels");
       geo.butt[4]->type(FL_TOGGLE_BUTTON);
       geo.butt[4]->callback(geometry_options_ok_cb);
 
       geo.butt[5] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line numbers");
+        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
       geo.butt[6] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface numbers");
+        (L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface labels");
       geo.butt[6]->type(FL_TOGGLE_BUTTON);
       geo.butt[6]->callback(geometry_options_ok_cb);
 
       geo.butt[7] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume numbers");
+        (L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume labels");
       geo.butt[7]->type(FL_TOGGLE_BUTTON);
       geo.butt[7]->callback(geometry_options_ok_cb);
 
+      static Fl_Menu_Item menu_label_type[] = {
+        {"Elementary tags", 0, 0, 0},
+        {"Physical tags", 0, 0, 0},
+        {0}
+      };
+      geo.choice[4] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
+      geo.choice[4]->menu(menu_label_type);
+      geo.choice[4]->align(FL_ALIGN_RIGHT);
+      geo.choice[4]->callback(geometry_options_ok_cb);
+
       geo.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Normals");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Normals");
       geo.value[0]->minimum(0);
       geo.value[0]->maximum(500);
       geo.value[0]->step(1);
@@ -1932,7 +1944,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[0]->callback(geometry_options_ok_cb);
 
       geo.value[1] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Tangents");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Tangents");
       geo.value[1]->minimum(0);
       geo.value[1]->maximum(500);
       geo.value[1]->step(1);
@@ -1941,7 +1953,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->callback(geometry_options_ok_cb);
 
       geo.butt[17] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Hide entities making up coumpounds");
+        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Hide entities making up coumpounds");
       geo.butt[17]->type(FL_TOGGLE_BUTTON);
       geo.butt[17]->callback(geometry_options_ok_cb);
 
@@ -2348,8 +2360,8 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_label_type[] = {
         {"Number", 0, 0, 0},
-        {"Elementary entity", 0, 0, 0},
-        {"Physical group", 0, 0, 0},
+        {"Elementary tag", 0, 0, 0},
+        {"Physical tag", 0, 0, 0},
         {"Mesh partition", 0, 0, 0},
         {"Coordinates", 0, 0, 0},
         {0}
