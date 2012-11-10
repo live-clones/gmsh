@@ -257,7 +257,7 @@ static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   : Fl_Group(x,y,w,h)
 {
-  int popw = 4 * FL_NORMAL_SIZE;
+  int popw = FL_NORMAL_SIZE + 2;
 
   PView *view = PView::list[num];
   PViewData *data = view->getData();
@@ -269,12 +269,13 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _toggle->callback(view_toggle_cb, (void *)num);
   _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
-  _toggle->copy_label(data->getName().c_str());
+  char tmp[256];
+  sprintf(tmp, "[%d] %s", num, data->getName().c_str());
+  _toggle->copy_label(tmp);
   strcpy(_tooltip, data->getFileName().c_str());
   _toggle->tooltip(_tooltip);
-  sprintf(_arrow, "[%d]@#-1>", num);
-  _butt = new Fl_Button(x + w - popw, y, popw, h, _arrow);
 
+  _butt = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _butt->tooltip("Show view option menu (Shift+w)");
   _butt->box(FL_FLAT_BOX);
