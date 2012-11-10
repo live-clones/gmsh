@@ -318,27 +318,31 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
-  int L1 = 10 * FL_NORMAL_SIZE, L2 = 6 * FL_NORMAL_SIZE;
+  int L1 = 13 * FL_NORMAL_SIZE, L2 = 6 * FL_NORMAL_SIZE;
 
-  int width = (CTX::instance()->pluginSize[0] < width0) ? width0 : 
+  int width = (CTX::instance()->pluginSize[0] < width0) ? width0 :
     CTX::instance()->pluginSize[0];
-  int height = (CTX::instance()->pluginSize[1] < height0) ? height0 : 
+  int height = (CTX::instance()->pluginSize[1] < height0) ? height0 :
     CTX::instance()->pluginSize[1];
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Plugins");
   win->box(GMSH_WINDOW_BOX);
 
-  browser = new Fl_Hold_Browser(WB, WB, L1, height - 2 * WB);
+  browser = new Fl_Hold_Browser(0, 0, L1, height);
   browser->callback(plugin_browser_cb);
+  browser->box(FL_FLAT_BOX);
+  browser->has_scrollbar(Fl_Browser_::VERTICAL);
 
-  view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 2 * WB - BH);
+  view_browser = new Fl_Multi_Browser(L1, 0, L2, height - BH);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
+  view_browser->box(FL_FLAT_BOX);
 
-  Fl_Button *b = new Fl_Button(WB + L1, height - WB - BH, L2, BH, "New view");
+  Fl_Button *b = new Fl_Button(L1, height - BH, L2, BH, "New view");
   b->callback(plugin_create_new_view_cb);
   b->tooltip("Create new post-processing dataset based on current mesh");
+  b->box(FL_FLAT_BOX);
 
   for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
         instance()->begin(); it != PluginManager::instance()->end(); ++it) {
@@ -346,7 +350,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
     if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN ||
        p->getType() == GMSH_Plugin::GMSH_MESH_PLUGIN) {
       browser->add(p->getName().c_str(), p);
-      _createDialogBox(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, 
+      _createDialogBox(p, L1 + L2 + WB, WB, width - L1 - L2 - 2 * WB,
                        height - 2 * WB);
       // select first plugin by default
       if(it == PluginManager::instance()->begin()){
@@ -357,10 +361,10 @@ pluginWindow::pluginWindow(int deltaFontSize)
   }
 
   record = new Fl_Check_Button
-    (L1 + L2 + 3 * WB, height - BH - 2 * WB, BB, BH, "Record");
+    (L1 + L2 + 2 * WB, height - BH - 2 * WB, BB, BH, "Record");
   record->type(FL_TOGGLE_BUTTON);
   record->tooltip("Append scripting command to file options when plugin is run");
-  
+
   win->resizable(new Fl_Box(L1 + L2 + 2 * BH, height - 4 * BH, 10, 10));
   win->size_range(width0, height0);
 

@@ -1301,7 +1301,8 @@ optionWindow::optionWindow(int deltaFontSize)
   win->label("Options - General");
 
   // Selection browser
-  browser = new Fl_Hold_Browser(WB, WB, L - WB, height - 2 * WB);
+  browser = new Fl_Hold_Browser(0, 0, L, height);
+  browser->box(FL_FLAT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
   browser->add("General");
   browser->add("Geometry");
@@ -3670,13 +3671,13 @@ void optionWindow::activate(const char *what)
   if(!strcmp(what, "fast_redraw")){
     if(general.butt[2]->value()){
       browser->resize(browser->x(), browser->y(), browser->w(),
-                      win->h() - 3 * WB - BH);
+                      win->h() - 2 * WB - BH);
       redraw->show();
       win->redraw();
     }
     else{
       browser->resize(browser->x(), browser->y(), browser->w(),
-                      win->h() - 2 * WB);
+                      win->h());
       redraw->hide();
       win->redraw();
     }

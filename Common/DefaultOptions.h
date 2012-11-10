@@ -505,7 +505,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum model coordinate along the Y-axis (read-only)" },
   { F,   "MaxZ" , opt_general_zmax , 0. ,
     "Maximum model coordinate along the Z-axis (read-only)" },
-  { F|S, "MenuWidth" , opt_general_menu_size , 300. ,
+  { F|S, "MenuWidth" , opt_general_menu_size , 200. ,
     "Width (in pixels) of the menu tree" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
     "Height (in pixels) of the message console" },

@@ -70,33 +70,33 @@ static void clip_update_cb(Fl_Widget *w, void *data)
                    FlGui::instance()->clipping->box[4]->value(),
                    FlGui::instance()->clipping->box[5]->value()};
     // left
-    CTX::instance()->clipPlane[0][0] = 1.; 
+    CTX::instance()->clipPlane[0][0] = 1.;
     CTX::instance()->clipPlane[0][1] = 0.;
     CTX::instance()->clipPlane[0][2] = 0.;
     CTX::instance()->clipPlane[0][3] = -c[0] + d[0] / 2.;
     // top
-    CTX::instance()->clipPlane[1][0] = 0.; 
-    CTX::instance()->clipPlane[1][1] = 1.; 
+    CTX::instance()->clipPlane[1][0] = 0.;
+    CTX::instance()->clipPlane[1][1] = 1.;
     CTX::instance()->clipPlane[1][2] = 0.;
     CTX::instance()->clipPlane[1][3] = -c[1] + d[1] / 2.;
     // near
-    CTX::instance()->clipPlane[2][0] = 0.; 
-    CTX::instance()->clipPlane[2][1] = 0.; 
+    CTX::instance()->clipPlane[2][0] = 0.;
+    CTX::instance()->clipPlane[2][1] = 0.;
     CTX::instance()->clipPlane[2][2] = 1.;
     CTX::instance()->clipPlane[2][3] = -c[2] + d[2] / 2.;
     // right
-    CTX::instance()->clipPlane[3][0] = -1.; 
-    CTX::instance()->clipPlane[3][1] = 0.; 
+    CTX::instance()->clipPlane[3][0] = -1.;
+    CTX::instance()->clipPlane[3][1] = 0.;
     CTX::instance()->clipPlane[3][2] = 0.;
     CTX::instance()->clipPlane[3][3] = c[0] + d[0] / 2.;
     // bottom
-    CTX::instance()->clipPlane[4][0] = 0.; 
-    CTX::instance()->clipPlane[4][1] = -1.; 
+    CTX::instance()->clipPlane[4][0] = 0.;
+    CTX::instance()->clipPlane[4][1] = -1.;
     CTX::instance()->clipPlane[4][2] = 0.;
     CTX::instance()->clipPlane[4][3] = c[1] + d[1] / 2.;
     // far
-    CTX::instance()->clipPlane[5][0] = 0.; 
-    CTX::instance()->clipPlane[5][1] = 0.; 
+    CTX::instance()->clipPlane[5][0] = 0.;
+    CTX::instance()->clipPlane[5][1] = 0.;
     CTX::instance()->clipPlane[5][2] = -1.;
     CTX::instance()->clipPlane[5][3] = c[2] + d[2] / 2.;
 
@@ -104,9 +104,9 @@ static void clip_update_cb(Fl_Widget *w, void *data)
     for(int j = 0; j < 4; j++)
       FlGui::instance()->clipping->plane[j]->value(CTX::instance()->clipPlane[idx][j]);
   }
-  
-  if(CTX::instance()->clipWholeElements || 
-     CTX::instance()->clipWholeElements != 
+
+  if(CTX::instance()->clipWholeElements ||
+     CTX::instance()->clipWholeElements !=
      FlGui::instance()->clipping->butt[0]->value()){
     for(int clip = 0; clip < 6; clip++){
       if(CTX::instance()->mesh.clip)
@@ -116,14 +116,14 @@ static void clip_update_cb(Fl_Widget *w, void *data)
           PView::list[index]->setChanged(true);
     }
   }
-  
-  CTX::instance()->clipWholeElements = 
+
+  CTX::instance()->clipWholeElements =
     FlGui::instance()->clipping->butt[0]->value();
-  CTX::instance()->clipOnlyDrawIntersectingVolume = 
+  CTX::instance()->clipOnlyDrawIntersectingVolume =
     FlGui::instance()->clipping->butt[1]->value();
-  CTX::instance()->clipOnlyVolume = 
+  CTX::instance()->clipOnlyVolume =
     FlGui::instance()->clipping->butt[2]->value();
-  
+
   int old = CTX::instance()->drawBBox;
   CTX::instance()->drawBBox = 1;
   if(CTX::instance()->fastRedraw)
@@ -195,8 +195,9 @@ clippingWindow::clippingWindow(int deltaFontSize)
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Clipping");
   win->box(GMSH_WINDOW_BOX);
 
-  browser = new Fl_Multi_Browser(WB, WB, L - WB, height - BH - 3 * WB);
+  browser = new Fl_Multi_Browser(0, 0, L, height);
   browser->callback(clip_update_cb);
+  browser->box(FL_FLAT_BOX);
 
   Fl_Tabs *o = new Fl_Tabs
     (L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);
@@ -212,9 +213,10 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
     Fl_Button *invert = new Fl_Button
       (L + 2 * WB, 2 * WB + 2 * BH, FL_NORMAL_SIZE, 4 * BH, "-");
+    invert->box(FL_THIN_UP_BOX);
     invert->callback(clip_invert_cb);
     invert->tooltip("Invert orientation");
-    
+
     plane[0] = new Fl_Value_Input
       (L + 2 * WB + FL_NORMAL_SIZE, 2 * WB + 2 * BH, BW - FL_NORMAL_SIZE, BH, "A");
     plane[1] = new Fl_Value_Input
@@ -300,7 +302,7 @@ void clippingWindow::resetBrowser()
   for(int i = 0; i < browser->size(); i++){
     if((i == 0 && CTX::instance()->geom.clip & (1 << idx)) ||
        (i == 1 && CTX::instance()->mesh.clip & (1 << idx)) ||
-       (i > 1 && i - 2 < (int)PView::list.size() && 
+       (i > 1 && i - 2 < (int)PView::list.size() &&
         PView::list[i - 2]->getOptions()->clip & (1 << idx)))
       browser->select(i + 1);
   }
@@ -315,7 +317,7 @@ void clippingWindow::resetBrowser()
   }
   double val1 = 0;
   for(int i = 0; i < 3; i++)
-    val1 = std::max(val1, std::max(fabs(CTX::instance()->min[i]), 
+    val1 = std::max(val1, std::max(fabs(CTX::instance()->min[i]),
                                    fabs(CTX::instance()->max[i])));
   val1 *= 1.5;
 
@@ -324,14 +326,14 @@ void clippingWindow::resetBrowser()
   plane[3]->maximum(val1);
 
   fillBoxValuesFromPlaneValues();
-  
+
   for(int i = 0; i < 6; i++){
     box[i]->step(val1 / 200.);
     box[i]->minimum(-val1);
     box[i]->maximum(val1);
   }
 }
-  
+
 void clippingWindow::fillBoxValuesFromPlaneValues()
 {
   double c[3] = {(-CTX::instance()->clipPlane[0][3] + CTX::instance()->clipPlane[3][3]) / 2.,
