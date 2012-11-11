@@ -339,7 +339,7 @@ void drawContext::drawBackgroundGradient()
     glVertex2i(viewport[0], viewport[1]);
     glEnd();
   }
-  else if(CTX::instance()->bgGradient == 4){ // radial
+  else if(CTX::instance()->bgGradient == 3){ // radial
     double cx = 0.5 * (viewport[0] + viewport[2]);
     double cy = 0.5 * (viewport[1] + viewport[3]);
     double r = 0.5 * std::max(viewport[2] - viewport[0],
@@ -357,19 +357,19 @@ void drawContext::drawBackgroundGradient()
     glEnd();
   }
 #if defined(HAVE_POPPLER)
-  else if(CTX::instance()->bgGradient == 3){ // PDF @ background
+  else if(CTX::instance()->bgGradient == 4){ // PDF @ background
     GLuint texture=gmshPopplerWrapper::getTextureForPage(800,600);
     glEnable( GL_TEXTURE_2D );
     glBindTexture(GL_TEXTURE_2D,texture);
     glBegin(GL_QUADS);
     glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-    
+
     int dw =viewport[2] - viewport[0];
     int dh =viewport[3] - viewport[1];
 
     int dw_im = gmshPopplerWrapper::width();
     int dh_im = gmshPopplerWrapper::height();
-    
+
     // consterve aspect ratio : dw / dh = dw_im / dh_im
     //    dw = dh * dw_im / dh_im;
     dh = dw * dh_im / dw_im;

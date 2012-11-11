@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #include "gmshPopplerWrapper.h"
 
 #if defined(HAVE_POPPLER)
@@ -8,7 +13,7 @@
 
 gmshPopplerWrapper *gmshPopplerWrapper::_instance = 0;
 poppler::document  *gmshPopplerWrapper::_current_doc = 0;
-#if defined(HAVE_OPENGL)  
+#if defined(HAVE_OPENGL)
 std::map<int,GLuint> gmshPopplerWrapper::_pages2textures;
 int gmshPopplerWrapper::_w = -1;
 int gmshPopplerWrapper::_h = -1;
@@ -20,8 +25,8 @@ gmshPopplerWrapper *gmshPopplerWrapper::instance() {
   return _instance;
 }
 
-int gmshPopplerWrapper::load_from_file (const std::string &file_name, 
-					const std::string &owner_password, 
+int gmshPopplerWrapper::load_from_file (const std::string &file_name,
+					const std::string &owner_password,
 					const std::string &user_password){
   if (_current_doc) delete _current_doc;
   _current_doc = poppler::document::load_from_file (file_name,owner_password,
@@ -32,8 +37,8 @@ int gmshPopplerWrapper::load_from_file (const std::string &file_name,
   return 1;
 }
 
-#if defined(HAVE_OPENGL)  
-GLuint gmshPopplerWrapper::getTextureForPage(double xres, 
+#if defined(HAVE_OPENGL)
+GLuint gmshPopplerWrapper::getTextureForPage(double xres,
 					     double yres) {
   int iPage = _current_page;
   std::map<int,GLuint>::iterator it = _pages2textures.find(iPage);
@@ -41,7 +46,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   if (!_current_doc)return 0;
   poppler::page *_current_page = _current_doc->create_page (iPage);
   poppler::page_renderer pr;
-  poppler::image im =  pr.render_page (_current_page,xres,yres,-1,-1,-1);  
+  poppler::image im =  pr.render_page (_current_page,xres,yres,-1,-1,-1);
   _w = im.width();
   _h = im.height();
   //  im.save("page.png","png");
@@ -51,7 +56,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   _pages2textures[iPage] = texture;
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  
+
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im.width(),im.height(), 0,
 	       GL_RGBA, GL_UNSIGNED_BYTE,im.const_data());
   return texture;

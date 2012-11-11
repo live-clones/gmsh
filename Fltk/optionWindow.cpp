@@ -1743,6 +1743,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Vertical", 0, 0, 0},
         {"Horizontal", 0, 0, 0},
         {"Radial", 0, 0, 0},
+        {"Image", 0, 0, 0},
         {0}
       };
 

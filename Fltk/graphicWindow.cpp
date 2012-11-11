@@ -2660,7 +2660,8 @@ class dummyBox : public Fl_Box {
   dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
 };
 
-graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true)
+graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
+  : _autoScrollMessages(true)
 {
   static bool first = true;
   if(first){
@@ -2695,7 +2696,7 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
     CTX::instance()->glSize[1] = glheight;
   }
 
-  int twidth = main ? 14 * sw : 0;
+  int twidth = (main && !detachTree) ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
   int width = glwidth + twidth;
   // make sure width < screen width
@@ -2890,7 +2891,11 @@ graphicWindow::graphicWindow(bool main, int numTiles) : _autoScrollMessages(true
   }
 
   if(main){
-    onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
+    if(!detachTree)
+      onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
+    else{
+      // create new win containing the onelab group
+    }
   }
   else{
     onelab = 0;

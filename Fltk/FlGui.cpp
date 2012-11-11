@@ -687,6 +687,7 @@ int FlGui::testArrowShortcuts()
     status_play_manual(0, CTX::instance()->post.animStep);
     return 1;
   }
+#if defined(HAVE_POPPLER)
   else if(Fl::test_shortcut(FL_ALT + FL_Up)) {
     gmshPopplerWrapper::setCurrentPageDown();
     drawContext::global()->draw();
@@ -697,8 +698,7 @@ int FlGui::testArrowShortcuts()
     drawContext::global()->draw();
     return 1;
   }
-
-
+#endif
   return 0;
 }
 

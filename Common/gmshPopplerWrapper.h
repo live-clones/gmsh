@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #ifndef  _GMSHPOPPLERWRAPPER_PDF_H_
 #define _GMSHPOPPLERWRAPPER_PDF_H_
 
@@ -9,7 +14,7 @@
 #include <poppler/cpp/poppler-document.h>
 #include <poppler/cpp/poppler-page.h>
 #include <poppler/cpp/poppler-image.h>
-#if defined(HAVE_OPENGL)  
+#if defined(HAVE_OPENGL)
 #include<OpenGL/gl.h>
 #endif
 
@@ -25,15 +30,15 @@ private:
 
 public:
   static gmshPopplerWrapper *instance();
-  static int load_from_file (const std::string &file_name, 
-			     const std::string &owner_password=std::string(), 
+  static int load_from_file (const std::string &file_name,
+			     const std::string &owner_password=std::string(),
 			     const std::string &user_password=std::string());
   static int width() {return _w;}
   static int height() {return _h;}
   static void setCurrentPageUp () {_current_page++;}
   static void setCurrentPageDown () {if(_current_page > 0) _current_page--;}
-#if defined(HAVE_OPENGL)  
-  static GLuint getTextureForPage(double xres, 
+#if defined(HAVE_OPENGL)
+  static GLuint getTextureForPage(double xres,
 				  double yres) ;
 #endif
 };

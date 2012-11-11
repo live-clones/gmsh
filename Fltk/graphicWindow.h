@@ -41,7 +41,7 @@ class graphicWindow{
   Fl_Progress *label;
   int minWidth, minHeight;
  public:
-  graphicWindow(bool main=true, int numTiles=1);
+  graphicWindow(bool main=true, int numTiles=1, bool detachTree=false);
   ~graphicWindow();
   void setTitle(std::string str);
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
