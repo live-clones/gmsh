@@ -358,8 +358,9 @@ void drawContext::drawBackgroundGradient()
   }
 #if defined(HAVE_POPPLER)
   else if(CTX::instance()->bgGradient == 4){ // PDF @ background
-    GLuint texture=gmshPopplerWrapper::getTextureForPage(800,600);
-    glEnable( GL_TEXTURE_2D );
+    // FIXME: this should move to drawBackgroundImage below!
+    GLuint texture = gmshPopplerWrapper::getTextureForPage(800,600);
+    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D,texture);
     glBegin(GL_QUADS);
     glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
@@ -370,7 +371,7 @@ void drawContext::drawBackgroundGradient()
     int dw_im = gmshPopplerWrapper::width();
     int dh_im = gmshPopplerWrapper::height();
 
-    // consterve aspect ratio : dw / dh = dw_im / dh_im
+    // conserve aspect ratio : dw / dh = dw_im / dh_im
     //    dw = dh * dw_im / dh_im;
     dh = dw * dh_im / dw_im;
 
