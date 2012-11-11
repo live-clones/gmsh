@@ -900,7 +900,8 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::include.c_str(),line.c_str());
     else
-      parse_onefile(arguments[0]);
+      OLMsg::Info("Parse file <%s> success=%d", arguments[0].c_str(), 
+		  parse_onefile(getWorkingDir() + arguments[0]));
   }
   else if ( (pos=line.find(olkey::message)) != std::string::npos) { 
     // onelab.message
@@ -1078,23 +1079,24 @@ bool localSolverClient::parse_ifstatement(std::ifstream &infile,
   return level?false:true ;
 } 
 
-void localSolverClient::parse_onefile(std::string fileName, bool mandatory) { 
-  std::string fullName=getWorkingDir()+fileName;
-  std::ifstream infile(fullName.c_str());
+bool localSolverClient::parse_onefile(std::string fileName, bool mandatory) { 
+  std::ifstream infile(fileName.c_str());
   if (infile.is_open()){
-    OLMsg::Info("Parse file <%s>",fullName.c_str());
     while (infile.good()){
       std::string line;
       getline(infile,line);
       parse_oneline(line,infile);
     }
     infile.close();
+    return true;
   }
-  else
-    if(mandatory)
-      OLMsg::Error("The file <%s> does not exist",fullName.c_str());
-    else
-      OLMsg::Warning("The file <%s> does not exist",fullName.c_str());
+  else{
+    return !mandatory;
+    // if(mandatory)
+    //   OLMsg::Error("The file <%s> does not exist",fileName.c_str());
+    // else
+    //   OLMsg::Warning("The file <%s> does not exist",fileName.c_str());
+  }
 } 
 
 bool localSolverClient::convert_ifstatement(std::ifstream &infile, std::ofstream &outfile, bool condition) { 
@@ -1221,7 +1223,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::include.c_str(),line.c_str());
     else
-      convert_onefile(arguments[0],outfile);
+      convert_onefile(getWorkingDir() + arguments[0], outfile);
   }
   else if ( (pos=line.find(olkey::message)) != std::string::npos) { 
     // onelab.message
@@ -1301,10 +1303,9 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 }
 
 void localSolverClient::convert_onefile(std::string fileName, std::ofstream &outfile) {
-  std::string fullName=getWorkingDir()+fileName;
-  std::ifstream infile(fullName.c_str());
+  std::ifstream infile(fileName.c_str());
   if (infile.is_open()){
-    OLMsg::Info("Convert file <%s>",fullName.c_str());
+    OLMsg::Info("Convert file <%s>",fileName.c_str());
     while ( infile.good() ) {
       std::string line;
       getline (infile,line);
@@ -1313,7 +1314,7 @@ void localSolverClient::convert_onefile(std::string fileName, std::ofstream &out
     infile.close();
   }
   else
-    OLMsg::Error("The file %s cannot be opened",fullName.c_str());
+    OLMsg::Error("The file %s cannot be opened",fileName.c_str());
 }
 
 void localSolverClient::client_sentence(const std::string &name, 
@@ -1445,11 +1446,12 @@ void MetaModel::client_sentence(const std::string &name,
 	strings[0].setVisible(false);
 	set(strings[0]);
       }
-      localSolverClient *c;
-      if(!OLMsg::GetErrorCount())
+      if(!OLMsg::GetErrorCount()){
+	localSolverClient *c;
 	if((c=findClientByName(name)))
 	  if(c->checkCommandLine())
 	    c->analyze();
+      }
     }
     else if(isTodo(ANALYZE)){
       localSolverClient *c;

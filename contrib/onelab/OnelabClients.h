@@ -17,6 +17,8 @@
 
 // Onelab file extension
 static std::string onelabExtension(".ol");
+static std::string localFileTag("_");
+
 // Possible actions for clients
 enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 
@@ -42,8 +44,10 @@ int mySystem(std::string commandLine);
 std::string getCurrentWorkdir();
 std::string getUserHomedir();
 std::string sanitize(const std::string &in);
-std::string sanitizeString(const std::string &in, const std::string &forbidden);
+std::string sanitizeString(const std::string &in, 
+			   const std::string  &forbidden);
 std::string removeBlanks(const std::string &in);
+std::vector<std::string> SplitOLFileName(const std::string &in);
 bool isPath(const std::string &in);
 std::string FixWindowsQuotes(const std::string &in);
 std::string QuoteExecPath(const std::string &in);
@@ -154,7 +158,7 @@ class localSolverClient : public onelab::localClient{
   void parse_oneline(std::string line, std::ifstream &infile) ;
   bool parse_block(std::ifstream &infile) ;
   bool parse_ifstatement(std::ifstream &infile, bool condition) ;
-  void parse_onefile(std::string ifileName, bool mandatory=true);
+  bool parse_onefile(std::string ifileName, bool mandatory=true);
   void convert_oneline(std::string line, std::ifstream &infile, 
 		       std::ofstream &outfile);
   bool convert_ifstatement(std::ifstream &infile, 
@@ -166,9 +170,6 @@ class localSolverClient : public onelab::localClient{
 
   // execution
   bool buildRmCommand(std::string &cmd);
-  bool checkIfPresentLocal(const std::string &fileName){
-    return checkIfPresent(getWorkingDir()+fileName);
-  }
   virtual bool isNative() { return false; }
   void FixExecPath(const std::string &in);
   virtual bool checkCommandLine();
@@ -353,6 +354,7 @@ public:
    : EncapsulatedClient(name,cmdl,wdir), remoteClient(host,rdir) {}
   ~RemoteEncapsulatedClient(){}
 
+  std::string buildCommandLine();
   bool checkCommandLine();
   void compute() ;
 };
