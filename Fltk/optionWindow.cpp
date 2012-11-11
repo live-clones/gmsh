@@ -2992,13 +2992,13 @@ optionWindow::optionWindow(int deltaFontSize)
       view.butt[5]->callback(view_options_ok_cb);
 
       view.butt[10] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW / 2, BH, "Draw element outlines");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw element outlines");
       view.butt[10]->tooltip("(Alt+e)");
       view.butt[10]->type(FL_TOGGLE_BUTTON);
       view.butt[10]->callback(view_options_ok_cb);
 
       view.butt[2] = new Fl_Check_Button
-        (L + 2 * WB + BW / 2, 2 * WB + 4 * BH, BW / 2, BH, "Draw 3D skin only");
+        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Draw only skin of 3D views");
       view.butt[2]->type(FL_TOGGLE_BUTTON);
       view.butt[2]->callback(view_options_ok_cb);
 
@@ -3015,12 +3015,12 @@ optionWindow::optionWindow(int deltaFontSize)
       };
 
       view.menu[1] = new Fl_Menu_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Elements");
       view.menu[1]->menu(menu_view_element_types);
       view.menu[1]->callback(view_options_ok_cb);
 
       view.value[6] = new Fl_Value_Input
-        (L + width / 2, 2 * WB + 5 * BH, width / 4 - 2 * WB, BH, "Sampling");
+        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Sampling");
       view.value[6]->minimum(1);
       view.value[6]->maximum(100);
       view.value[6]->step(1);
@@ -3036,13 +3036,13 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       view.choice[9] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Element boundary mode");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element boundary mode");
       view.choice[9]->menu(menu_boundary);
       view.choice[9]->align(FL_ALIGN_RIGHT);
       view.choice[9]->callback(view_options_ok_cb);
 
       view.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
+        (L + 2 * WB, 2 * WB + 8 * BH, IW / 2, BH);
       view.value[0]->minimum(0);
       view.value[0]->maximum(500);
       view.value[0]->step(1);
@@ -3051,7 +3051,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[0]->callback(view_options_ok_cb);
 
       view.value[1] = new Fl_Value_Input
-        (L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Normals and tangents");
+        (L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW / 2, BH, "Normals and tangents");
       view.value[1]->minimum(0);
       view.value[1]->maximum(500);
       view.value[1]->step(1);
@@ -3067,7 +3067,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
 
       view.menu[0] = new Fl_Menu_Button
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fields");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
       view.menu[0]->menu(menu_view_field_types);
       view.menu[0]->callback(view_options_ok_cb);
 
@@ -3079,7 +3079,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       view.choice[14] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH);
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
       view.choice[14]->menu(menu_force_field_type);
       view.choice[14]->align(FL_ALIGN_RIGHT);
       view.choice[14]->callback(view_options_ok_cb);
@@ -3088,7 +3088,7 @@ optionWindow::optionWindow(int deltaFontSize)
         int W = width - 5 * WB - IW;
         int w = W / 9;
         view.value[70 + i] = new Fl_Value_Input
-          (L + 3 * WB + IW + i * w, 2 * WB + 9 * BH, w, BH);
+          (L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
         view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
         view.value[70 + i]->step(1);
