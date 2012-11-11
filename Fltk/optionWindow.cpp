@@ -511,6 +511,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
                   (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
                   (o->mesh.choice[2]->value() == 4) ? ALGO_2D_FRONTAL_QUAD :
+                  (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
                   (o->mesh.choice[3]->value() == 0) ? ALGO_3D_DELAUNAY :
@@ -2134,6 +2135,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
         {"Delaunay for quads", 0, 0, 0},
+        {"Packing Of Parallelograms", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {

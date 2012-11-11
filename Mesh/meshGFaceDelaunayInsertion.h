@@ -98,6 +98,7 @@ void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
 void bowyerWatson(GFace *gf, int MAXPNT= 1000000000);
 void bowyerWatsonFrontal(GFace *gf);
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad);
+void bowyerWatsonParallelograms(GFace *gf);
 void buildBackGroundMesh (GFace *gf);
 
 struct edgeXface

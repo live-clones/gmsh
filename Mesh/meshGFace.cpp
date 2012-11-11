@@ -307,6 +307,7 @@ static bool algoDelaunay2D(GFace *gf)
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG)
     return true;
 
@@ -1121,11 +1122,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
 
-  // BOUNDARY LAYER
+  bool infty = false;
+  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD || gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+    infty = true;
   if (!onlyInitialMesh) {
-    if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
+    if (infty)
       buildBackGroundMesh (gf);
-      //backgroundMesh::setCrossFieldsByDistance(gf);
+    // BOUNDARY LAYER
     modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
   }
 
@@ -1138,6 +1141,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
       bowyerWatsonFrontalLayers(gf,true);
     }
+    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS){
+      bowyerWatsonParallelograms(gf);
+    }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf);
@@ -1145,7 +1151,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf,15000);
       meshGFaceBamg(gf);
     }
-    laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)) 
+      laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
 
   if(debug){
@@ -1884,6 +1891,7 @@ void meshGFace::operator() (GFace *gf, bool print)
   case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
   case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
   case ALGO_2D_BAMG : algo = "Bamg"; break;
+  case ALGO_2D_PACK_PRLGRMS : algo = "Square Packing"; break;
   case ALGO_2D_AUTO :
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";
     break;

@@ -48,6 +48,7 @@ typedef unsigned long intptr_t;
 #include "StringUtils.h"
 #include "Generator.h"
 #include "gl2ps.h"
+#include "gmshPopplerWrapper.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -686,6 +687,18 @@ int FlGui::testArrowShortcuts()
     status_play_manual(0, CTX::instance()->post.animStep);
     return 1;
   }
+  else if(Fl::test_shortcut(FL_ALT + FL_Up)) {
+    gmshPopplerWrapper::setCurrentPageDown();
+    drawContext::global()->draw();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_Down)) {
+    gmshPopplerWrapper::setCurrentPageUp();
+    drawContext::global()->draw();
+    return 1;
+  }
+
+
   return 0;
 }
 

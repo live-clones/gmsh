@@ -3,10 +3,11 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
-set(SRC
+set(SRC  
   Gmsh.cpp
     GmshRemote.cpp
     GmshMessage.cpp
+  gmshPopplerWrapper.cpp
   Context.cpp
   Options.cpp
   CommandLine.cpp

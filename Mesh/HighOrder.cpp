@@ -1483,7 +1483,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
 
-  highOrderTools hot(m);
+  //  highOrderTools hot(m);
 
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
@@ -1511,7 +1511,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      hot.applySmoothingTo(v, (*it));
+      //hot.applySmoothingTo(v, (*it));
       // hot.applySmoothingTo(v, .1,0);
     }
     // hot.ensureMinimumDistorsion(0.1);

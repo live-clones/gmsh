@@ -52,6 +52,7 @@ class MQuadrangle : public MElement {
   }
   ~MQuadrangle(){}
   virtual double etaShapeMeasure();
+  virtual double gammaShapeMeasure();
   virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }

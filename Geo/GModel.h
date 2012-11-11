@@ -636,6 +636,7 @@ class GModel
 
   // CEA triangulation
   int writeMAIL(const std::string &name, bool saveAll, double scalingFactor);
+
 };
 
 #endif

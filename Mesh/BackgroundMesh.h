@@ -71,6 +71,7 @@ class backgroundMesh : public simpleFunction<double>
   void propagateCrossFieldByDistance(GFace *);
   void updateSizes(GFace *);
   double operator () (double u, double v, double w) const; // returns mesh size
+  bool inDomain (double u, double v, double w) const; // returns true if in domain
   double getAngle(double u, double v, double w) const ; 
   void print(const std::string &filename, GFace *gf, 
               const std::map<MVertex*, double>&) const;

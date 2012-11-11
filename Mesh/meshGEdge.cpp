@@ -390,7 +390,8 @@ void meshGEdge::operator() (GEdge *ge)
   // force odd number of points for if blossom is used for recombination
   if(ge->meshAttributes.Method != MESH_TRANSFINITE &&
      CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
-    if(CTX::instance()->mesh.recombineAll){
+
+    if(1 || CTX::instance()->mesh.recombineAll){
       N++;
     }
     else{

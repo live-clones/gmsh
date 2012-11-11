@@ -20,6 +20,10 @@
 #include "GeomMeshMatcher.h"
 #include "Field.h"
 
+#if defined(HAVE_POPPLER)
+#include "gmshPopplerWrapper.h"
+#endif
+
 #if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
@@ -318,6 +322,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   }
   else if(ext == ".diff" || ext == ".DIFF"){
     status = GModel::current()->readDIFF(fileName);
+  }
+  else if(ext == ".pdf" || ext == ".PDF"){
+#if defined(HAVE_POPPLER)
+    status = gmshPopplerWrapper::instance()->load_from_file(fileName);
+#else
+    Msg::Error("Gmsh has to be compiled with POPPLER for displaying PDF documents");
+    status = 0;
+#endif
   }
   else if(ext == ".med" || ext == ".MED" || ext == ".mmed" || ext == ".MMED" ||
           ext == ".rmed" || ext == ".RMED"){

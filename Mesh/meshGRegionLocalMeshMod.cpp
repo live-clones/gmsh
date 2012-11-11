@@ -64,6 +64,9 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
   ring.push_back(lastinring);
   cavity.push_back(t);
 
+  // a change here for hybrid meshes
+
+  int ITER = 0;
   while (1){
     MVertex *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
     MVertex *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
@@ -100,6 +103,9 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
       Msg::Error("loc = %d", iLocalEdge);
       return false;
     }
+    // FIXME when hybrid mesh, this loops for ever
+    //    if (cavity.size() > 10)return false;
+    //    printf("%d %d\n",ITER++, cavity.size());
   }
   computeNeighboringTetsOfACavity (cavity,outside);
   return true;

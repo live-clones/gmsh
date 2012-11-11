@@ -50,6 +50,7 @@
 #cmakedefine HAVE_PETSC
 #cmakedefine HAVE_PLUGINS
 #cmakedefine HAVE_POST
+#cmakedefine HAVE_POPPLER
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_RTREE
 #cmakedefine HAVE_SALOME

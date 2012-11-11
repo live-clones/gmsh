@@ -38,6 +38,7 @@ set(SRC
     yamakawa.cpp
     Field.cpp
     CenterlineField.cpp
+    surfaceFiller.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

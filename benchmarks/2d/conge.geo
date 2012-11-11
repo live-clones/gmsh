@@ -1,4 +1,4 @@
-unit = 1.0e-02 ;
+unit = 1.0e0 ;
 
 e1 =  4.5 * unit ;
 e2 =  6.0 * unit / 2.0 ;
@@ -14,8 +14,8 @@ r  =  1.0 * unit ;
 ccos = (-h5*R1+e2* (h5*h5+e2*e2-R1*R1)^0.5) / (h5*h5+e2*e2) ;
 ssin = ( 1.0 - ccos*ccos )^0.5 ;
 
-Lc1 = 0.003 ;
-Lc2 = 0.003 ;
+Lc1 = 0.3 * unit;
+Lc2 = 0.1 * unit;
 
 Point(1) = { -e1-e2, 0.0  , 0.0 , Lc1};
 Point(2) = { -e1-e2, h1   , 0.0 , Lc1};

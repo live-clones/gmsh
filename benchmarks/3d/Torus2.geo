@@ -1,5 +1,5 @@
 
-Mesh.CharacteristicLengthFactor = 0.1;
+Mesh.CharacteristicLengthFactor = 0.05;
 
 lc = 0.7;
 Point(1) = {0,0,0,lc};
@@ -21,3 +21,4 @@ Surface Loop(72) = {45,23,67,71,49,27,15,59,37,41,19,63};
 
 //Compound Surface(100)={45,23,67,71,49,27,15,59,37,41,19,63};
 
+Recombine Surface {50, 71, 67, 63, 59, 6, 45, 41, 23, 19, 37, 49, 28, 15, 27};

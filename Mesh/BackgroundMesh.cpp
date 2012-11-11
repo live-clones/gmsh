@@ -906,6 +906,11 @@ void backgroundMesh::updateSizes(GFace *_gf)
   }
 }
 
+bool backgroundMesh::inDomain (double u, double v, double w) const
+{
+  return _octree->find(u, v, w, 2, true) != 0;
+}
+
 double backgroundMesh::operator() (double u, double v, double w) const
 {
   double uv[3] = {u, v, w};

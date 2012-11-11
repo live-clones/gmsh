@@ -2094,6 +2094,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   if(!lt && _mapping != RBF){
     //printf("POINT no success %d tris %d quad \n", triangles.size(), quadrangles.size());
     GPoint gp = pointInRemeshedOctree(par1,par2);
+    gp.setNoSuccess();
     return gp;
   }
   else if (!lt && _mapping == RBF){

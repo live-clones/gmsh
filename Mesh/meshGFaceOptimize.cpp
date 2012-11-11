@@ -630,7 +630,7 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   bool badQuality = false;
   for (unsigned int j=0;j<e1.size();++j){
     surface_new += surfaceFaceUV(e1[j],gf);
-    qualityNew[j] = (e1[j]->getNumVertices() == 4) ? e1[j]->etaShapeMeasure() : e1[j]->gammaShapeMeasure();
+    qualityNew[j] = e1[j]->gammaShapeMeasure();
     if (qualityNew[j] < 0.01) {
       badQuality = true;
       break;
@@ -640,6 +640,50 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   v1->setParameter(0,before.x());
   v1->setParameter(1,before.y());
   v1->setXYZ(pbefore.x(),pbefore.y(),pbefore.z());
+
+  if (badQuality || (surface_new - surface_old)  > 1.e-10 * surface_old) {
+    return false;
+  }
+  return true;
+}
+
+
+static bool _isItAGoodIdeaToMoveThoseVertices (GFace *gf,
+					       const std::vector<MElement*> &e1,
+					       std::vector<MVertex *>v,
+					       const std::vector<SPoint2> &before,
+					       const std::vector<SPoint2> &after)
+{
+  double surface_old = 0;
+  double surface_new = 0;
+
+  std::vector<SPoint3> pafter(v.size()), pbefore(v.size());
+  for (unsigned int i=0; i<v.size();++i){
+    GPoint gp = gf->point(after[i]);
+    if (!gp.succeeded())return false;
+    pafter[i] = SPoint3  (gp.x(),gp.y(),gp.z());
+    pbefore[i] = SPoint3(v[i]->x(),v[i]->y(),v[i]->z());
+  }
+  
+  for (unsigned int j=0;j<e1.size();++j)
+    surface_old += surfaceFaceUV(e1[j],gf);
+
+  for (unsigned int i=0; i<v.size();++i){
+    v[i]->setParameter(0,after[i].x());
+    v[i]->setParameter(1,after[i].y());
+    v[i]->setXYZ(pafter[i].x(),pafter[i].y(),pafter[i].z());
+  }
+
+  bool badQuality = false;
+  for (unsigned int j=0;j<e1.size();++j){
+    surface_new += surfaceFaceUV(e1[j],gf);
+  }
+
+  for (unsigned int i=0; i<v.size();++i){
+    v[i]->setParameter(0,before[i].x());
+    v[i]->setParameter(1,before[i].y());
+    v[i]->setXYZ(pbefore[i].x(),pbefore[i].y(),pbefore[i].z());
+  }
 
   if (badQuality || (surface_new - surface_old)  > 1.e-10 * surface_old) {
     return false;
@@ -1515,7 +1559,7 @@ static int _splitFlatQuads(GFace *gf, double minQual)
     if(it->second.size()==1 && it->first->onWhat()->dim() == 1) {
       const std::vector<MElement*> &lt = it->second;
       MElement *e = lt[0];
-      if (e->getNumVertices() == 4 && e->etaShapeMeasure() < minQual){
+      if (e->getNumVertices() == 4 && e->gammaShapeMeasure() < minQual){
 	int k=0;
 	while(1){
 	  if (e->getVertex(k) == it->first){
@@ -1749,51 +1793,131 @@ struct p1p2p3 {
 #if defined(HAVE_BFGS)
 // Callback function for BFGS
 
+static void sort_edges (std::vector<MEdge> &eds){
+
+  std::list<MEdge> eds_sorted;
+  eds_sorted.push_back(*eds.begin());
+  eds.erase(eds.begin());
+  
+  while(!eds.empty()){
+    MEdge first = (eds_sorted.front());
+    MEdge last  = (eds_sorted.back());
+    for (unsigned int i=0;i<eds.size();i++){
+      MVertex *v1 = eds[i].getVertex(0);
+      MVertex *v2 = eds[i].getVertex(1);
+      bool found = true;
+      // v1 -- v2 -- first
+      if (first.getVertex(0) == v2) eds_sorted.push_front(MEdge(v1,v2));
+      // v2 -- v1 -- first
+      else if (first.getVertex(0) == v1) eds_sorted.push_front(MEdge(v2,v1));
+      // last -- v1 -- v2 
+      else if (last.getVertex(1) == v1) eds_sorted.push_back(MEdge(v1,v2));
+      // last -- v2 -- v1 
+      else if (last.getVertex(1) == v2) eds_sorted.push_back(MEdge(v2,v1));
+      else found = false;
+      if (found) {
+	eds.erase(eds.begin() + i);
+	break;
+      }
+    }
+  }
+  eds.insert(eds.begin(),eds_sorted.begin(),eds_sorted.end());
+}
+
+static int OPTI_NUMBER = 1;
 struct opti_data_vertex_relocation {
+  int nv;
   const std::vector<MElement*> & e;
-  MVertex *v;
+  MVertex *v[4];
+  bool movable[4];
   GFace *gf;
-  double minq,eps;
   opti_data_vertex_relocation (const std::vector<MElement*> & _e,
                                MVertex * _v, GFace *_gf)
-    : e(_e), v(_v), gf(_gf)
+    : nv(1),e(_e), gf(_gf)
   {
-    minq = -2;
-    eps = minq / (1. - minq);
+    v[0] = _v;
+    movable[0] = true;
   }
+
+  opti_data_vertex_relocation (const std::vector<MElement*> & _e,
+                               MVertex * _v1, MVertex * _v2, MVertex * _v3, MVertex * _v4, GFace *_gf)
+    : nv(4),e(_e), gf(_gf)
+  {
+    v[0] = _v1;
+    v[1] = _v2;
+    v[2] = _v3;
+    v[3] = _v4;
+    for (int i=0;i<4;i++){
+      movable[i] = v[0]->onWhat()->dim() == 2;
+    }
+  }
+
+  void print_cavity (char *name){
+    FILE *f = fopen(name,"w");
+    fprintf(f,"View \"\"{\n");
+    for (unsigned int i=0;i<e.size();++i){
+      MElement *el = e[i];
+      el->writePOS(f,false,false,true,false,false,false);
+    }
+    fprintf(f,"};");
+    fclose (f);
+  }
+
+  /// quality measure for a quad
+
   double f() const
   {
+    /*
+        double minq = 1.0;
+        for (unsigned int i=0;i<e.size();++i){
+          MElement *el = e[i];
+          minq = std::min(el->gammaShapeMeasure(), minq);
+        }
+        if (minq < 0)minq *= 1.1;
+        else minq *= 0.;
+    */
     double val = 0.0;
-    for (unsigned int i = 0; i < e.size(); i++){
-      const double q = (e[i]->getNumVertices() == 4) ? e[i]->etaShapeMeasure() :
-	e[i]->gammaShapeMeasure();
-      const double dd = (1 + eps) * q - eps;
-      const double  l = (dd>0) ? log (dd) : 1.e22;
-      const double  m = (q-1);
-      val += l * l + m*m;
+    for (unsigned int i=0;i<e.size();++i){
+      MElement *el = e[i];
+      //      double m = log((el->gammaShapeMeasure()-minq)/(1.-minq));
+      //      val += m*m;//el->gammaShapeMeasure();
+      val += el->gammaShapeMeasure();
     }
+
     return val;
   }
-  void df(const double &F, const double &U, const double &V, double &dfdu, double &dfdv)
+  void df(const double &F, const double U[], const double V[], double dfdu[], double dfdv[])
   {
     const double eps = 1.e-6;
-    set_(U+eps,V);
-    const double FU = f();
-    set_(U,V+eps);
-    const double FV = f();
-    set_(U,V);
-    dfdu = -(F-FU)/eps;
-    dfdv = -(F-FV)/eps;
+    for (int i=0;i<nv;i++){
+      if (!set_(U[i]+eps,V[i],i)){
+	for (int j=0;j<nv;j++)dfdu[j] = dfdv[j] = 0;
+	return;
+      }
+      //      printf("coucou2 %22.15E, %22.15E\n", U[i]+eps,V[i]);
+      const double FU = f();
+      set_(U[i],V[i]+eps,i);
+      //      printf("coucou3\n");
+      const double FV = f();
+      set_(U[i],V[i],i);
+      //      printf("coucou4\n");
+      //    printf("%12.5E %12.5E %12.5E\n",F,FU,FV);
+      dfdu[i] = movable[i] ? -(F-FU)/eps : 0 ;
+      dfdv[i] = movable[i] ? -(F-FV)/eps : 0;
+    }
   }
-  void set_(double U, double V)
+  bool set_(double U, double V, int iv)
   {
+    //    if (!movable[iv])return;
+    //    printf("getting point of surface %d (%22.15E,%22.15E)\n",gf->tag(),U,V);
     GPoint gp = gf->point(U,V);
-    if (!gp.succeeded()) Msg::Error("point not OK \n");
-    v->x() = gp.x();
-    v->y() = gp.y();
-    v->z() = gp.z();
-    v->setParameter(0,U);
-    v->setParameter(1,V);
+    if (!gp.succeeded()) return false;//Msg::Error("point not OK");
+    v[iv]->x() = gp.x();
+    v[iv]->y() = gp.y();
+    v[iv]->z() = gp.z();
+    v[iv]->setParameter(0,U);
+    v[iv]->setParameter(1,V);
+    return true;
   }
 };
 
@@ -1801,21 +1925,112 @@ void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x,
                                       double& func, alglib::real_1d_array& grad, void* ptr)
 {
   opti_data_vertex_relocation* w = static_cast<opti_data_vertex_relocation*>(ptr);
-  w->set_(x[0],x[1]);
+  
+  double u[4] ; for (int i=0;i<w->nv;i++)u[i] = x[2*i];
+  double v[4] ; for (int i=0;i<w->nv;i++)v[i] = x[2*i+1];
+  //  printf("hoplaboum !!!\n");
+  for (int i=0;i<w->nv;i++) w->set_(u[i],v[i],i);
   func = w->f();
   //  printf("F(%3.2f,%3.2f) = %12.5E\n",x[0],x[1],func);
-  w->df(func,x[0],x[1],grad[0],grad[1]);
+  double dfdu[4],dfdv[4];
+  w->df(func,u,v,dfdu,dfdv);
+  for (int i=0;i<w->nv;i++) {
+    grad[2*i] = dfdu[i];
+    grad[2*i+1] = dfdv[i];
+  }
 }
+
+
+// use optimization for untangling one single quad
+// take all neighboring quads and move all vertices
+// when possible
+static int _untangleQuad (GFace *gf, MQuadrangle *q,v2t_cont & adj)
+{  
+  std::set<MElement*> all;
+  for (int i=0;i<4;i++){
+    std::vector<MElement*> &adji = adj[q->getVertex(i)];
+    all.insert(adji.begin(),adji.end());
+    // FIXME    
+    if (q->getVertex(i)->onWhat()->dim() != 2)return 0;
+  }
+  std::vector<MElement*> lt;
+  lt.insert(lt.begin(),all.begin(),all.end());
+
+  double minq_old = 100.;
+  for (unsigned int i = 0; i < lt.size(); i++){
+    const double q = lt[i]->gammaShapeMeasure();
+    minq_old = std::min(q,minq_old);
+  }
+  //  printf("-------x--------x------------x-------------------\n");
+  //  printf ("optimizing quadrangle (minq %12.5E) with BFGS %3d\n",minq_old,OPTI_NUMBER);
+
+
+  alglib::ae_int_t dim = 8;
+  alglib::ae_int_t corr = 2; 
+  alglib::minlbfgsstate state;
+  alglib::real_1d_array x; 
+  std::vector<double> initial_conditions(8);
+  opti_data_vertex_relocation data(lt,q->getVertex(0),q->getVertex(1),q->getVertex(2),q->getVertex(3),gf);
+  
+  //  char NNN[256];
+  //  sprintf(NNN,"UNTANGLE_cavity_%d_before.pos",OPTI_NUMBER);
+  //  data.print_cavity (NNN);
+
+  double U[4],V[4];
+  for (int i=0;i<4;i++){
+    q->getVertex(i)->getParameter(0,U[i]);
+    q->getVertex(i)->getParameter(1,V[i]);
+    initial_conditions[2*i] = U[i];
+    initial_conditions[2*i+1] = V[i];
+  }
+  x.setcontent(dim, &initial_conditions[0]);
+  minlbfgscreate(8, corr, x, state);
+  double epsg = 0.0;
+  double epsf = 0.0;
+  double epsx = 0.0;
+  alglib::ae_int_t maxits = 12;
+  minlbfgssetcond(state,epsg,epsf,epsx,maxits);
+  minlbfgsoptimize(state, bfgs_callback_vertex_relocation,NULL,&data);
+  alglib::minlbfgsreport rep;
+  minlbfgsresults(state,x,rep);
+
+  double minq = 100.;
+  for (unsigned int i = 0; i < data.e.size(); i++){
+    const double q = data.e[i]->gammaShapeMeasure();
+    minq = std::min(q,minq);
+  }
+  //  printf("minq = %12.5E\n",minq);
+
+  std::vector<SPoint2> before;for(int i=0;i<4;i++)before.push_back(SPoint2(U[i],V[i]));
+  std::vector<SPoint2> after;for(int i=0;i<4;i++)after.push_back(SPoint2(x[2*i],x[2*i+1]));
+  std::vector<MVertex*> vs;for(int i=0;i<4;i++)vs.push_back(q->getVertex(i));
+  bool success = _isItAGoodIdeaToMoveThoseVertices (gf,lt,vs,before,after);
+
+  if (!success || minq < 0.0 || minq <= minq_old/2)   for (int i=0;i<4;i++)data.set_(U[i],V[i],i);
+  else return 1;
+  return 0;
+  //  else printf("OKIDOKI-UNTANGLE\n");
+  //  sprintf(NNN,"UNTANGLE_cavity_%d_after.pos",OPTI_NUMBER++);
+  //  data.print_cavity (NNN);
+}
+
 
 // use optimization
 static void _relocateVertexOpti(GFace *gf, MVertex *ver,
 				const std::vector<MElement*> &lt)
 {
-  // DOES NOT WORK AT ALL !!!
-  return;
+  //  return;
   if(ver->onWhat()->dim() != 2)return;
-  printf("heyhey\n");
-  //  printf ("optimizing vertex position with BFGS\n");
+
+  double minq_old = 100.;
+  //  printf("------------------------------------------------\n");
+  for (unsigned int i = 0; i < lt.size(); i++){
+    const double q = lt[i]->gammaShapeMeasure();
+    minq_old = std::min(q,minq_old);
+    //    printf("Q(%d) = %12.5E\n",lt[i]->getNumVertices(),q);
+  }
+
+  //  printf ("optimizing vertex position (minq %12.5E) with BFGS\n",minq_old);
   // we optimize the local coordinates of the node
   alglib::ae_int_t dim = 2;
   alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
@@ -1823,6 +2038,12 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   alglib::real_1d_array x; // = "[0.5,0.5]";
   std::vector<double> initial_conditions(dim);
   opti_data_vertex_relocation data(lt,ver,gf);
+  
+  //  char NNN[256];
+  //  sprintf(NNN,"cavity_%d_before.pos",OPTI_NUMBER);
+  //  data.print_cavity (NNN);
+
+
   double U, V;
   ver->getParameter(0,U);
   ver->getParameter(1,V);
@@ -1830,7 +2051,7 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   initial_conditions[1] = V;
   x.setcontent(dim, &initial_conditions[0]);
   minlbfgscreate(2, corr, x, state);
-  double epsg = 1.e-12;
+  double epsg = 0.0;
   double epsf = 0.0;
   double epsx = 0.0;
   alglib::ae_int_t maxits = 10;
@@ -1839,17 +2060,24 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   alglib::minlbfgsreport rep;
   minlbfgsresults(state,x,rep);
 
-  double minq = 0;
+  double minq = 100.;
   for (unsigned int i = 0; i < data.e.size(); i++){
-    const double q = (data.e[i]->getNumVertices() == 4) ? data.e[i]->etaShapeMeasure() :
-      data.e[i]->gammaShapeMeasure();
+    const double q = data.e[i]->gammaShapeMeasure();
     minq = std::min(q,minq);
   }
-  if (minq < 0.01) data.set_(U,V);
-  else printf("OKIDOKI\n");
+  //  printf("minq = %12.5E\n",minq);
+
+  bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,SPoint2(U,V),SPoint2(x[0],x[1]));
+
+  if (!success || minq < 0 || minq <= minq_old/2) data.set_(U,V,0);
+  else {
+//printf("OKIDOKI\n");
+  }
   //  if (rep.terminationtype != 4){
   //    data.set_(U,V);
   //  }
+  //  sprintf(NNN,"cavity_%d_after.pos",OPTI_NUMBER++);
+  //  data.print_cavity (NNN);
 
 }
 #endif
@@ -1915,7 +2143,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
     }
     else{
 #if defined(HAVE_BFGS)
-        _relocateVertexOpti(gf, ver, lt);
+      _relocateVertexOpti(gf, ver, lt);
 #endif
     }
   }
@@ -1931,7 +2159,7 @@ void quadBlob::smooth (int niter)
   }
 }
 
-void laplaceSmoothing(GFace *gf, int niter)
+void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
@@ -1944,6 +2172,25 @@ void laplaceSmoothing(GFace *gf, int niter)
     }
   }
 }
+
+
+int untangleInvalidQuads(GFace *gf, int niter)
+{
+  //  return;
+  int N = 0;
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles, adj);
+  buildVertexToElement(gf->quadrangles, adj);
+  for(int i = 0; i < niter; i++){
+    for (unsigned int j=0;j<gf->quadrangles.size();j++){
+      if (gf->quadrangles[j]->gammaShapeMeasure() < 0.1){
+	N += _untangleQuad (gf, gf->quadrangles[j], adj);
+      }
+    }
+  }
+  return N;
+}
+
 
 int _edgeSwapQuadsForBetterQuality(GFace *gf)
 {
@@ -1964,7 +2211,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
       MVertex *v2 = it->first.getVertex(1);
       MElement *e1 = it->second.first;
       MElement *e2 = it->second.second;
-      double worst_quality_old = std::min(e1->etaShapeMeasure(),e2->etaShapeMeasure());
+      double worst_quality_old = std::min(e1->gammaShapeMeasure(),e2->gammaShapeMeasure());
 
       if (worst_quality_old < .3 && (
 	  deleted.find(e1) == deleted.end() ||
@@ -2006,8 +2253,8 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf)
 	  q1B = new MQuadrangle (v11,v12,v21,v1);
 	  q2B = new MQuadrangle (v21,v12,v2,v22);
 	}
-	double worst_quality_A = std::min(q1A->etaShapeMeasure(),q2A->etaShapeMeasure());
-	double worst_quality_B = std::min(q1B->etaShapeMeasure(),q2B->etaShapeMeasure());
+	double worst_quality_A = std::min(q1A->gammaShapeMeasure(),q2A->gammaShapeMeasure());
+	double worst_quality_B = std::min(q1B->gammaShapeMeasure(),q2B->gammaShapeMeasure());
 
 	bool ca1,ca2,cb1,cb2;
 	double old_surface = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf) ;
@@ -2723,6 +2970,9 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   if(CTX::instance()->mesh.algoRecombine == 1){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
+    if (ncount % 2 != 0) {
+      printf("strange\n"); 
+    }
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
       Msg::Info("Blossom: %d internal %d closed",(int)pairs.size(), (int)makeGraphPeriodic.size());
@@ -3007,18 +3257,20 @@ void recombineIntoQuads(GFace *gf,
           }
 
 	  double t4 = Cpu();
-          laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+	  untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing);
+          laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
 	  double t5 = Cpu();
           optistatus[3] = edgeSwapQuadsForBetterQuality(gf);
 
           if(optistatus[3] && saveAll){
             sprintf(NAME,"iter%dS.msh",COUNT++); gf->model()->writeMSH(NAME);
           }
+	  double t5b = Cpu();
 	  tFQ += (t2-t1);
 	  tTQ += (t3-t2);
 	  tDI += (t4-t3);
 	  tLA += (t5-t4);
-	  tSW += (t6-t5);
+	  tSW += (t5b-t5);
 	  tBU += (t7-t6);
           if (!(optistatus[0]+optistatus[1]+optistatus[2]+optistatus[3]+optistatus[4]))
             break;
@@ -3027,15 +3279,14 @@ void recombineIntoQuads(GFace *gf,
 	    if (optistatus[i] != oldoptistatus[i])theSame = false;
 	      oldoptistatus[i] = optistatus[i];
 	  }
-	  if(theSame)break;
+ 	  if(theSame)break;
 	  if (ITER++ >= 20)break;
         }
 	Msg::Debug("Opti times FQ(%4.3f) tQ(%4.3f) DI(%4.3f) LA(%4.3f) "
                    "SW(%4.3f) BUN(%4.3f)",tFQ,tTQ,tDI,tLA,tSW,tBU);
       }
 
-      if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
-
+      if(haveParam) laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing, true);
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
@@ -3046,9 +3297,9 @@ void recombineIntoQuads(GFace *gf,
 
   // simple recombination algo
   _recombineIntoQuads(gf, 0);
-  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, true);
   _recombineIntoQuads(gf, 0);
-  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
+  if(haveParam) laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, true);
 
   if (saveAll) gf->model()->writeMSH("after.msh");
 
@@ -3061,7 +3312,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   std::vector<MQuadrangle*> qds;
   for (unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
-    if (q->etaShapeMeasure() < minqual){
+    if (q->gammaShapeMeasure() < minqual){
       MTriangle *t11 = new MTriangle (q->getVertex(0),q->getVertex(1),q->getVertex(2));
       MTriangle *t12 = new MTriangle (q->getVertex(2),q->getVertex(3),q->getVertex(0));
       MTriangle *t21 = new MTriangle (q->getVertex(1),q->getVertex(2),q->getVertex(3));
