@@ -1935,7 +1935,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[4]->callback(geometry_options_ok_cb);
 
       geo.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Normals");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW / 2, BH);
       geo.value[0]->minimum(0);
       geo.value[0]->maximum(500);
       geo.value[0]->step(1);
@@ -1944,7 +1944,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[0]->callback(geometry_options_ok_cb);
 
       geo.value[1] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Tangents");
+        (L + 2 * WB + IW / 2, 2 * WB + 6 * BH, IW / 2, BH, "Normals and tangents");
       geo.value[1]->minimum(0);
       geo.value[1]->maximum(500);
       geo.value[1]->step(1);
@@ -1953,7 +1953,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->callback(geometry_options_ok_cb);
 
       geo.butt[17] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Hide entities making up coumpounds");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Hide entities making up coumpounds");
       geo.butt[17]->type(FL_TOGGLE_BUTTON);
       geo.butt[17]->callback(geometry_options_ok_cb);
 
@@ -2367,13 +2367,13 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       mesh.choice[7] = new Fl_Choice
-        (L + width / 2, 2 * WB + 5 * BH, width / 4 - 2 * WB, BH, "Label type");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Label type");
       mesh.choice[7]->menu(menu_label_type);
       mesh.choice[7]->align(FL_ALIGN_RIGHT);
       mesh.choice[7]->callback(mesh_options_ok_cb);
 
       mesh.value[12] = new Fl_Value_Input
-        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Sampling");
+        (L + 2 * width / 3 - 2 * WB, 2 * WB + 7 * BH, width / 8, BH, "Sampling");
       mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
       mesh.value[12]->step(1);
@@ -2392,12 +2392,12 @@ optionWindow::optionWindow(int deltaFontSize)
       };
 
       mesh.menu = new Fl_Menu_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Elements");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Elements");
       mesh.menu->menu(menu_mesh_element_types);
       mesh.menu->callback(mesh_options_ok_cb);
 
       mesh.value[4] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW / 4, BH);
+        (L + 2 * WB, 2 * WB + 9 * BH, IW / 4, BH);
       mesh.value[4]->minimum(0);
       mesh.value[4]->maximum(1);
       mesh.value[4]->step(0.01);
@@ -2406,7 +2406,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[4]->callback(mesh_options_ok_cb);
 
       mesh.value[5] = new Fl_Value_Input
-        (L + 2 * WB + IW / 4, 2 * WB + 8 * BH, IW / 2 - IW / 4, BH);
+        (L + 2 * WB + IW / 4, 2 * WB + 9 * BH, IW / 2 - IW / 4, BH);
       mesh.value[5]->minimum(0);
       mesh.value[5]->maximum(1);
       mesh.value[5]->step(0.01);
@@ -2422,25 +2422,25 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       mesh.choice[6] = new Fl_Choice
-        (L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW/2, BH, "Quality range");
+        (L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW/2, BH, "Quality range");
       mesh.choice[6]->menu(menu_quality_type);
       mesh.choice[6]->align(FL_ALIGN_RIGHT);
       mesh.choice[6]->callback(mesh_options_ok_cb);
 
       mesh.value[6] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
+        (L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       mesh.value[6]->align(FL_ALIGN_RIGHT);
       mesh.value[6]->when(FL_WHEN_RELEASE);
       mesh.value[6]->callback(mesh_options_ok_cb);
 
       mesh.value[7] = new Fl_Value_Input
-        (L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Size range");
+        (L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "Size range");
       mesh.value[7]->align(FL_ALIGN_RIGHT);
       mesh.value[7]->when(FL_WHEN_RELEASE);
       mesh.value[7]->callback(mesh_options_ok_cb);
 
       mesh.value[8] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Normals");
+        (L + 2 * WB, 2 * WB + 11 * BH, IW / 2, BH);
       mesh.value[8]->minimum(0);
       mesh.value[8]->maximum(500);
       mesh.value[8]->step(1);
@@ -2449,7 +2449,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[8]->callback(mesh_options_ok_cb);
 
       mesh.value[13] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tangents");
+        (L + 2 * WB + IW / 2, 2 * WB + 11 * BH, IW / 2, BH, "Normals and tangents");
       mesh.value[13]->minimum(0);
       mesh.value[13]->maximum(200);
       mesh.value[13]->step(1.0);
@@ -3042,7 +3042,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[9]->callback(view_options_ok_cb);
 
       view.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Normals");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW / 2, BH);
       view.value[0]->minimum(0);
       view.value[0]->maximum(500);
       view.value[0]->step(1);
@@ -3051,7 +3051,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[0]->callback(view_options_ok_cb);
 
       view.value[1] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Tangents");
+        (L + 2 * WB + IW / 2, 2 * WB + 7 * BH, IW / 2, BH, "Normals and tangents");
       view.value[1]->minimum(0);
       view.value[1]->maximum(500);
       view.value[1]->step(1);
@@ -3067,7 +3067,7 @@ optionWindow::optionWindow(int deltaFontSize)
       };
 
       view.menu[0] = new Fl_Menu_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Fields");
       view.menu[0]->menu(menu_view_field_types);
       view.menu[0]->callback(view_options_ok_cb);
 
@@ -3079,7 +3079,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       view.choice[14] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH);
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH);
       view.choice[14]->menu(menu_force_field_type);
       view.choice[14]->align(FL_ALIGN_RIGHT);
       view.choice[14]->callback(view_options_ok_cb);
@@ -3088,7 +3088,7 @@ optionWindow::optionWindow(int deltaFontSize)
         int W = width - 5 * WB - IW;
         int w = W / 9;
         view.value[70 + i] = new Fl_Value_Input
-          (L + 3 * WB + IW + i * w, 2 * WB + 10 * BH, w, BH);
+          (L + 3 * WB + IW + i * w, 2 * WB + 9 * BH, w, BH);
         view.value[70 + i]->minimum(-1);
         view.value[70 + i]->maximum(9);
         view.value[70 + i]->step(1);
