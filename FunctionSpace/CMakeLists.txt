@@ -16,12 +16,14 @@ set(SRC
   CurlBasis.cpp
   DivBasis.cpp
 
-  QuadNodeBasis.cpp
-  QuadEdgeBasis.cpp
-
   LagrangeGenerator.cpp
   LagrangeBasis.cpp
   TriLagrangeBasis.cpp
+
+  LineNodeBasis.cpp
+
+  QuadNodeBasis.cpp
+  QuadEdgeBasis.cpp
 
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
