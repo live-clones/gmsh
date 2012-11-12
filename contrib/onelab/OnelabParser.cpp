@@ -66,7 +66,17 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
   return arguments.size();
 }
 
-// Client member function moved here because it uses parser commands 
+// Client member functions defined here because they use parser commands 
+
+// std::string localSolverClient::toChar(){
+//   std::ostringstream sstream;
+//   if(getCommandLine().size()){
+//     sstream << getName() << "." << "commandLine("
+// 	    << getCommandLine() << ");\n";
+//   }
+//   return sstream.str();
+// }
+
 void MetaModel::saveCommandLines(const std::string fileName){
   std::vector<std::string> arguments, buffer;
   std::string loaderPathName=OLMsg::GetOnelabString("LoaderPathName");
@@ -107,7 +117,6 @@ void MetaModel::saveCommandLines(const std::string fileName){
     // outfile << "(LoaderPathName) == ";
     // outfile << loaderPathName << ")" << std::endl;
     for(citer it = _clients.begin(); it != _clients.end(); it++){
-      //if((*it)->checkCommandLine())
 	 outfile << (*it)->toChar();
     }
     //outfile << olkey::olendif << std::endl;
@@ -489,7 +498,7 @@ void localSolverClient::parse_sentence(std::string line) {
       // if(arguments[0].empty()) numbers[0].setReadOnly(1);
 
       if(arguments.size()>2)
-	numbers[0].setLabel(arguments[2]);
+	numbers[0].setLabel(unquote(arguments[2]));
       if(arguments.size()>3){
 	std::vector<double> bounds;
 	if (resolveRange(arguments[3],bounds)){
@@ -521,7 +530,7 @@ void localSolverClient::parse_sentence(std::string line) {
       std::vector<std::string> choices;
       strings[0].setChoices(choices);
 
-      if(arguments.size()>2) strings[0].setLabel(arguments[2]);
+      if(arguments.size()>2) strings[0].setLabel(unquote(arguments[2]));
       set(strings[0]);
     }
     else if(!action.compare("radioButton")) { 
@@ -545,7 +554,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	numbers[0].setValue(val);
       }
       if(arguments.size()>2)
-	numbers[0].setLabel(arguments[2]);
+	numbers[0].setLabel(unquote(arguments[2]));
       std::vector<double> choices;
       choices.push_back(0);
       choices.push_back(1);
@@ -575,8 +584,23 @@ void localSolverClient::parse_sentence(std::string line) {
 	    numbers[0].setStep(atof(arguments[2].c_str()));
 	  }
 	  else
-	    OLMsg::Error("Wrong number of arguments for MinMax <%s>",name.c_str());
+	    OLMsg::Error("Wrong number of arguments for range <%s>",
+			 name.c_str());
 	}
+	set(numbers[0]);
+      }
+    }
+    else if(!action.compare("withinRange")){ 
+      // ensure the value is in the prescribed range
+      name.assign(longName(name));
+      get(numbers,name);
+      if(numbers.size()){ // parameter must exist
+	if( (numbers[0].getMin() != -onelab::parameter::maxNumber()) &&
+	    (numbers[0].getValue() < numbers[0].getMin()) )
+	  numbers[0].setValue(numbers[0].getMin());
+	if( (numbers[0].getMax() != onelab::parameter::maxNumber()) &&
+	    (numbers[0].getValue() > numbers[0].getMax()) )
+	  numbers[0].setValue(numbers[0].getMax());
 	set(numbers[0]);
       }
     }
@@ -644,7 +668,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  double val=atof(resolveGetVal(arguments[i]).c_str());
 	  if(std::find(choices.begin(),choices.end(),val)==choices.end())
 	    choices.push_back(val);
-	  numbers[0].setValueLabel(val,arguments[i+1]);
+	  numbers[0].setValueLabel(val,unquote(arguments[i+1]));
 	}
 	numbers[0].setChoices(choices);
 	set(numbers[0]);
@@ -1356,10 +1380,37 @@ void MetaModel::client_sentence(const std::string &name,
 	    set(str);
 	  }
 	}
+	if(host.empty()) {
+	  host=OLMsg::GetOnelabString(name + "/remoteHost");
+	}
+	if(rdir.empty()) {
+	  rdir=OLMsg::GetOnelabString(name + "/remoteWork");
+	}
+
 	registerClient(name,type,cmdl,host,rdir);
       }
       else
 	OLMsg::Error("Redefinition of client <%s>", name.c_str());
+    }
+  }
+  else if(!action.compare("remote")){
+    if(isTodo(REGISTER)){
+      if(arguments.size()>0)
+	OLMsg::SetOnelabString(name + "/remoteHost", arguments[0], false);
+      else{
+	onelab::string str;
+	str.setName(name + "/remoteHost");
+	str.setAttribute("Highlight","Ivory");
+	set(str);
+      }
+      if(arguments.size()>1)
+	OLMsg::SetOnelabString(name + "/remoteDir", arguments[1], false);
+      else{
+	onelab::string str;
+	str.setName(name + "/remoteDir");
+	str.setAttribute("Highlight","Ivory");
+	set(str);
+      }
     }
   }
   else if(!action.compare("commandLine")){
@@ -1373,7 +1424,7 @@ void MetaModel::client_sentence(const std::string &name,
   else if(!action.compare("workingSubdir")){
     localSolverClient *c;
     if((c=findClientByName(name)))
-      c->setWorkingDir(c->getWorkingDir()+arguments[0]);
+      c->setWorkingDir(c->getWorkingDir() + arguments[0]);
     else
       OLMsg::Error("Unknown client <%s>", name.c_str());
   }

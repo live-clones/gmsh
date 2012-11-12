@@ -460,6 +460,7 @@ bool localSolverClient::checkCommandLine(){
   }
   else{
     //setCommandLine("");
+    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
   }
@@ -606,9 +607,8 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
 	cmd.assign("rsync -e ssh -auv " + localName + " " + _remoteHost +":");
 	if(_remoteDir.size())
 	  cmd.append(_remoteDir);
-	cmd.append(fileName);
+	cmd.append(split[1]);
 
-	//OLMsg::Info("System call <%s>", cmd.c_str());
 	SleepInSeconds(OLMsg::GetOnelabNumber("RSYNCDELAY"));
 	return mySystem(cmd);
       }
@@ -673,8 +673,8 @@ void MetaModel::analyze() {
   OLMsg::Info("Metamodel now ANALYZING");
   std::string fileName = genericNameFromArgs + onelabExtension;
   openOnelabBlock();
-  OLMsg::Info("Parse file <%s> success=%d", fileName.c_str(), 
-	      parse_onefile(fileName));
+  OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+	      parse_onefile(fileName)?"ok":"ko");
   closeOnelabBlock();
 }
 
@@ -682,8 +682,8 @@ void MetaModel::compute() {
   OLMsg::Info("Metamodel now COMPUTING");
   std::string fileName = genericNameFromArgs + onelabExtension;
   openOnelabBlock();
-  OLMsg::Info("Parse file <%s> success=%d", fileName.c_str(), 
-	      parse_onefile(fileName));
+  OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+	      parse_onefile(fileName)?"ok":"ko");
   closeOnelabBlock();
   onelab::server::instance()->setChanged(false);
 }
@@ -693,9 +693,9 @@ void MetaModel::registerClient(const std::string &name, const std::string &type,
 
   // Clients are assigned by default the same working dir as the MetaModel
   // i.e. the working dir from args
-  // A working subdir (useful to organize submodels in a metamodel)
+  // A working (relative) subdir (useful to organize submodels)
   // can be defined with the command: client.workingSubdir(subdir) 
-  if(host.empty() || rdir.empty()){ //local client
+  if(host.empty()){ //local client
     if(!type.compare(0,6,"interf"))
       c= new InterfacedClient(name,cmdl,getWorkingDir());
     else if(!type.compare(0,6,"native"))
@@ -968,6 +968,7 @@ bool RemoteInterfacedClient::checkCommandLine(){
   }
   else{
     //setCommandLine("");
+    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
   }
@@ -1043,6 +1044,7 @@ bool RemoteNativeClient::checkCommandLine(){
   }
   else{
     //setCommandLine("");
+    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
   }
@@ -1129,6 +1131,7 @@ bool RemoteEncapsulatedClient::checkCommandLine(){
   }
   else{
   //   setCommandLine("");
+    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
   }
@@ -1209,7 +1212,9 @@ std::string ftoa(const double x){
 }
 
 int mySystem(std::string commandLine){
-  OLMsg::Info("Calling <%s>",commandLine.c_str());
+  //Don't use OLMsg::Info here otherwise the message appears twice
+  //in the Gmsh message window.
+  std::cout << "Onelab: Calling <" << commandLine << ">" << std::endl;
   return SystemCall(commandLine.c_str(), true);
 }
 
@@ -1274,10 +1279,11 @@ std::string unquote(const std::string &in)
 {
   size_t pos0=in.find_first_not_of(" ");
   size_t pos=in.find_last_not_of(" ");
-  if( (pos0 != std::string::npos) && (pos != std::string::npos))
-    if(in.compare(pos0,1,"\"")) pos0++;
-    if(in.compare(pos,1,"\"")) pos--;
-    return in.substr(pos0,pos-pos0+1);
+  if( (pos0 != std::string::npos) && (!in.compare(pos0,1,"\"")))
+    pos0++;
+  if( (pos != std::string::npos) && (!in.compare(pos,1,"\"")))
+    pos--;
+  return in.substr(pos0,pos-pos0+1);
 }
 
 std::string FixWindowsQuotes(const std::string &in)
@@ -1357,7 +1363,7 @@ double find_in_array(int lin, int col, const std::vector <std::vector <double> >
 	return data[lin][col];
     }
   }
-  OLMsg::Error("The value has not been calculated: (%d,%d) out of range",lin,col);
+  OLMsg::Error("Find in array: (%d,%d) out of range",lin,col);
   return(0);
 }
 
