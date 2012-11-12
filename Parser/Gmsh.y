@@ -130,6 +130,7 @@ struct doubleXstring{
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <l> RecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
@@ -1138,7 +1139,7 @@ DefineConstants :
     }
   | DefineConstants Comma tSTRING tAFFECT '{' StringExpr
     { floatOptions.clear(); charOptions.clear(); }
-      FloatParameterOptions '}'
+      CharParameterOptions '}'
     {
       std::string key($3), val($6);
       if(!gmsh_yysymbols.count(key)){
@@ -1204,6 +1205,45 @@ FloatParameterOption :
       Free($3);
     }
  ;
+
+CharParameterOptions :
+  | CharParameterOptions CharParameterOption
+ ;
+
+CharParameterOption :
+
+    ',' tSTRING FExpr
+    {
+      std::string key($2);
+      double val = $3;
+      floatOptions[key].push_back(val);
+      Free($2);
+    }
+
+  | ',' tSTRING tBIGSTR
+    {
+      std::string key($2);
+      std::string val($3);
+      charOptions[key].push_back(val);
+      Free($2);
+      Free($3);
+    }
+
+  | ',' tSTRING '{' RecursiveListOfStringExprVar '}'
+    {
+      std::string key($2);
+      for(int i = 0; i < List_Nbr($4); i++){
+        char *s;
+        List_Read($4, i, &s);
+        std::string val(s);
+        Free(s);
+        charOptions[key].push_back(val);
+      }
+      Free($2);
+      List_Delete($4);
+    }
+ ;
+
 
 //  S H A P E
 
@@ -4600,6 +4640,16 @@ StringExpr :
       List_Delete($5);
     }
 ;
+
+RecursiveListOfStringExprVar :
+    StringExprVar
+    {
+      $$ = List_Create(20,20,sizeof(char*));
+      List_Add($$, &($1));
+    }
+  | RecursiveListOfStringExprVar ',' StringExprVar
+    { List_Add($$, &($3)); }
+ ;
 
 %%
 
