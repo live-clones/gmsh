@@ -537,6 +537,11 @@ void onelab_cb(Fl_Widget *w, void *data)
     action = "check";
   }
 
+  if(FlGui::instance()->onelab->isBusy()){
+    Msg::Info("I'm busy! Ask me that later...");
+    return;
+  }
+
   FlGui::instance()->onelab->setButtonMode("", "stop");
 
   if(action == "compute") initializeLoops();

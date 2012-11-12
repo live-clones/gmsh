@@ -12,8 +12,8 @@ DefineConstant
  rt2 = {0.092, Label "Tube external radius", Path "Parameters"},
  lb = {1, Label "Infinite box width", Path "Parameters"},
  left = {1, Choices{0,1}, Label "Terminals on the left?", Path "Parameters"}
- macro = {"title.script", Label "Run my macro!", Path "Actions",
-          Macro "Gmsh", AutoCheck "0"},
+ macro = {"title.script", Label "Add title", Path "Macros",
+          Macro "Gmsh", AutoCheck "0", Highlight "Turquoise"},
  showLines = {Geometry.Lines, Choices {0,1}, Label "Show lines?", Path "Options",
               GmshOption "Geometry.Lines", AutoCheck "0"}
 ];
