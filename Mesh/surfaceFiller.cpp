@@ -25,7 +25,7 @@ static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 /// in a r-tree structure for generating points with the
 /// right spacing in the tangent plane
 
-
+#if defined(HAVE_RTREE)
 struct surfacePointWithExclusionRegion {  
   MVertex *_v;
   SPoint2 _center;
@@ -244,10 +244,12 @@ bool compute4neighbors (GFace *gf,   // the surface
   }
   return true;
 } 
+#endif
 
 // fills a surface with points in order to build a nice
 // quad mesh ------------
 void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
+  #if defined(HAVE_RTREE)
 
   // get all the boundary vertices
   std::set<MVertex*> bnd_vertices;
@@ -336,6 +338,7 @@ void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
   fclose(f);
   //  printf("packed.size = %d\n",packed.size());
   //  delete rtree;
+  #endif
 }
 
 
