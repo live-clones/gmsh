@@ -2950,7 +2950,7 @@ void PostOp::execute(GRegion* gr){
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
   build_vertex_to_pyramids(gr);
-  //pyramids2(gr);
+  pyramids2(gr);
   rearrange(gr);
 
   statistics(gr);
