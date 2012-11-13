@@ -9,8 +9,11 @@
 IntPt * GQL[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 IntPt *getGQLPts(int order)
-{ 
-  int n = (order+1)/2;
+{  
+  // Number of Gauss Point:
+  // (order + 1) / 2 *ROUNDED UP*
+
+  int n     = (order + 1) / (double)2 + 0.5;
   int index = n;
   if(!GQL[index]) {
     double *pt,*wt;
@@ -28,5 +31,5 @@ IntPt *getGQLPts(int order)
 
 int getNGQLPts(int order)
 { 
-  return (order+1)/2;
+  return (order + 1) / (double)2 + 0.5;
 }
