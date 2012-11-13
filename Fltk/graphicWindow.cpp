@@ -2881,8 +2881,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
     browser->type(FL_MULTI_BROWSER);
     browser->callback(message_browser_cb, this);
     browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
-#if defined(__APPLE__)
-    // horizontal scrollbar is buggy on Mac when tiles are resized
+#if 1
+    // scrollbars are buggy when tiles are resized; hiding the horizontal one
+    // somewhat alleviates the problem
     browser->has_scrollbar(Fl_Browser_::VERTICAL);
 #endif
   }
