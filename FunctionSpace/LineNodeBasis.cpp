@@ -36,13 +36,13 @@ LineNodeBasis::LineNodeBasis(int order){
 
   // Vertex Based (Lagrange) //
   (*node)[0] = 
-    new Polynomial(Polynomial(1, 0, 0, 0) - 
-		   Polynomial(1, 1, 0, 0) *
+    new Polynomial((Polynomial(1, 0, 0, 0) - 
+		    Polynomial(1, 1, 0, 0)) *
 		   0.5);
-
+  
   (*node)[1] = 
-    new Polynomial(Polynomial(1, 0, 0, 0) + 
-		   Polynomial(1, 1, 0, 0) *
+    new Polynomial((Polynomial(1, 0, 0, 0) + 
+		    Polynomial(1, 1, 0, 0)) *
 		   0.5);
   
   
