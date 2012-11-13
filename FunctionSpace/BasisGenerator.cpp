@@ -3,6 +3,8 @@
 #include "Exception.h"
 
 #include "LineNodeBasis.h"
+#include "LineEdgeBasis.h"
+#include "LineNedelecBasis.h"
 
 #include "QuadNodeBasis.h"
 #include "QuadEdgeBasis.h"
@@ -43,7 +45,10 @@ Basis* BasisGenerator::linGen(int basisType,
 			      int order){
   switch(basisType){ 
   case  0: return new LineNodeBasis(order);
-  case  1: throw Exception("1-form not implemented on Lines");
+  case  1: 
+    if (order == 0) return new LineNedelecBasis();
+    else            return new LineEdgeBasis(order);
+
   case  2: throw Exception("2-form not implemented on Lines");
   case  3: throw Exception("3-form not implemented on Lines");
 

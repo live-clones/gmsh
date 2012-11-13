@@ -21,6 +21,8 @@ set(SRC
   TriLagrangeBasis.cpp
 
   LineNodeBasis.cpp
+  LineEdgeBasis.cpp
+  LineNedelecBasis.cpp
 
   QuadNodeBasis.cpp
   QuadEdgeBasis.cpp

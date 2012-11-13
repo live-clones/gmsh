@@ -20,9 +20,19 @@ LineNodeBasis::LineNodeBasis(int order){
 
   size = nVertex + nEdge + nFace + nCell;
 
-  // Legendre Polynomial //
+  // Alloc Temporary Space //
   Polynomial* intLegendre = new Polynomial[order];
+
+  const Polynomial x[2] = {
+    Polynomial(+1, 1, 0, 0),
+    Polynomial(-1, 1, 0, 0)
+  };
+
+  // Legendre Polynomial //
   Legendre::integrated(intLegendre, order);
+
+  // Permutations //
+  const int permutation[2] = {0, 1};
 
   // Basis //
   node = new vector<Polynomial*>(nVertex);
@@ -45,12 +55,6 @@ LineNodeBasis::LineNodeBasis(int order){
 
 
   // Edge Based //
-  const int permutation[2] = {0, 1};
-  const Polynomial    x[2] = {
-    Polynomial(+1, 1, 0, 0),
-    Polynomial(-1, 1, 0, 0)
-  };
-  
   for(int c = 0; c < 2; c++){
     unsigned int i = 0;
     
