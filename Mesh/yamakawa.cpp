@@ -3246,7 +3246,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 	estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
 	estimate2 = estimate2 + 1;
 
-	mid = new MVertex(x,y,z);
+	mid = new MVertex(x,y,z,gr);
 	gr->addMeshVertex(mid);
 
 	temp2 = new MPyramid(a,b,c,d,mid);
