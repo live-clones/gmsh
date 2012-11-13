@@ -297,7 +297,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   model->recomputeMeshPartitions();
 
   if (options.createPartitionBoundaries || options.createGhostCells)
-    CreatePartitionBoundaries (model, options.createGhostCells);
+    CreatePartitionBoundaries (model, options.createGhostCells, options.createAllDims);
 
   Msg::StatusBar(true, "Done partitioning graph");
   return 0;

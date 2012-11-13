@@ -19,6 +19,7 @@ class meshPartitionOptions
   int renumber;
   bool createPartitionBoundaries;
   bool createGhostCells;
+  bool createAllDims;
 
   // Chaco
   int global_method;                    // 1 - Multilevel-KL
@@ -123,6 +124,7 @@ class meshPartitionOptions
     refine_algorithm = 3;
     createPartitionBoundaries = true;
     createGhostCells = true;
+    createAllDims = false;
     triWeight = 1;
     quaWeight = 1;
     tetWeight = 1;
