@@ -321,34 +321,40 @@ FunctionSpace::locBasis(const MElement& element,
   // Edge Based
   // Number of basis function *per* edge
   //  --> should always be an integer !
-  const unsigned int nEdge     = edgeClosure.size();
-  const unsigned int nFPerEdge = nFEdge / nEdge;
-  unsigned int fEdge = 0;
+  const unsigned int nEdge = edgeClosure.size();
 
-  for(unsigned int j = 0; j < nFPerEdge; j++){
-    for(unsigned int k = 0; k < nEdge; k++){
-      fun[i] = 
-	&basis.getEdgeFunction(edgeClosure[k], fEdge);
-      
-      fEdge++;
-      i++;
+  if(nEdge){
+    const unsigned int nFPerEdge = nFEdge / nEdge;
+    unsigned int fEdge = 0;
+    
+    for(unsigned int j = 0; j < nFPerEdge; j++){
+      for(unsigned int k = 0; k < nEdge; k++){
+	fun[i] = 
+	  &basis.getEdgeFunction(edgeClosure[k], fEdge);
+	
+	fEdge++;
+	i++;
+      }
     }
   }
 
   // Face Based
   // Number of basis function *per* face
   //  --> should always be an integer !
-  const unsigned int nFace     = faceClosure.size();
-  const unsigned int nFPerFace = nFFace / nFace;
-  unsigned int fFace = 0;
-
-  for(unsigned int j = 0; j < nFPerFace; j++){
-    for(unsigned int k = 0; k < nFace; k++){
-      fun[i] = 
-	&basis.getFaceFunction(faceClosure[k], fFace);
-      
-      fFace++;
-      i++;
+  const unsigned int nFace = faceClosure.size();
+  
+  if(nFace){
+    const unsigned int nFPerFace = nFFace / nFace;
+    unsigned int fFace = 0;
+    
+    for(unsigned int j = 0; j < nFPerFace; j++){
+      for(unsigned int k = 0; k < nFace; k++){
+	fun[i] = 
+	  &basis.getFaceFunction(faceClosure[k], fFace);
+	
+	fFace++;
+	i++;
+      }
     }
   }
 
@@ -390,16 +396,19 @@ FunctionSpace::locBasis(const MElement& element,
   // Number of basis function *per* edge
   //  --> should always be an integer !
   const unsigned int nEdge     = edgeClosure.size();
-  const unsigned int nFPerEdge = nFEdge / nEdge;
-  unsigned int fEdge = 0;
 
-  for(unsigned int j = 0; j < nFPerEdge; j++){
-    for(unsigned int k = 0; k < nEdge; k++){
-      fun[i] = 
-	&basis.getEdgeFunction(edgeClosure[k], fEdge);
-      
-      fEdge++;
-      i++;
+  if(nEdge){
+    const unsigned int nFPerEdge = nFEdge / nEdge;
+    unsigned int fEdge = 0;
+    
+    for(unsigned int j = 0; j < nFPerEdge; j++){
+      for(unsigned int k = 0; k < nEdge; k++){
+	fun[i] = 
+	  &basis.getEdgeFunction(edgeClosure[k], fEdge);
+	
+	fEdge++;
+	i++;
+      }
     }
   }
 
@@ -407,16 +416,19 @@ FunctionSpace::locBasis(const MElement& element,
   // Number of basis function *per* face
   //  --> should always be an integer !
   const unsigned int nFace     = faceClosure.size();
-  const unsigned int nFPerFace = nFFace / nFace;
-  unsigned int fFace = 0;
 
-  for(unsigned int j = 0; j < nFPerFace; j++){
-    for(unsigned int k = 0; k < nFace; k++){
-      fun[i] = 
-	&basis.getFaceFunction(faceClosure[k], fFace);
-      
-      fFace++;
-      i++;
+  if(nFace){
+    const unsigned int nFPerFace = nFFace / nFace;
+    unsigned int fFace = 0;
+    
+    for(unsigned int j = 0; j < nFPerFace; j++){
+      for(unsigned int k = 0; k < nFace; k++){
+	fun[i] = 
+	  &basis.getFaceFunction(faceClosure[k], fFace);
+	
+	fFace++;
+	i++;
+      }
     }
   }
 

@@ -36,16 +36,14 @@ LineNodeBasis::LineNodeBasis(int order){
 
   // Vertex Based (Lagrange) //
   (*node)[0] = 
-    new Polynomial((Polynomial(1, 0, 0, 0) - 
-		    Polynomial(1, 1, 0, 0)) *
-		   0.5);
+    new Polynomial(Polynomial(0.5, 0, 0, 0) - 
+		   Polynomial(0.5, 1, 0, 0));
   
   (*node)[1] = 
-    new Polynomial((Polynomial(1, 0, 0, 0) + 
-		    Polynomial(1, 1, 0, 0)) *
-		   0.5);
-  
-  
+    new Polynomial(Polynomial(0.5, 0, 0, 0) + 
+		   Polynomial(0.5, 1, 0, 0));
+
+
   // Edge Based //
   const int permutation[2] = {0, 1};
   const Polynomial    x[2] = {

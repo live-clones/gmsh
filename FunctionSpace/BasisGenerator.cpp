@@ -2,6 +2,8 @@
 #include "GmshDefines.h"
 #include "Exception.h"
 
+#include "LineNodeBasis.h"
+
 #include "QuadNodeBasis.h"
 #include "QuadEdgeBasis.h"
 
@@ -26,6 +28,7 @@ Basis* BasisGenerator::generate(int elementType,
 				int basisType, 
 				int order){
   switch(elementType){
+  case TYPE_LIN: return linGen(basisType, order);
   case TYPE_TRI: return triGen(basisType, order);
   case TYPE_QUA: return quaGen(basisType, order);
   case TYPE_TET: return tetGen(basisType, order);
@@ -34,6 +37,18 @@ Basis* BasisGenerator::generate(int elementType,
   default: throw Exception("Unknown Element Type (%d) for Basis Generation", 
 			   elementType);
   }
+}
+
+Basis* BasisGenerator::linGen(int basisType, 
+			      int order){
+  switch(basisType){ 
+  case  0: return new LineNodeBasis(order);
+  case  1: throw Exception("1-form not implemented on Lines");
+  case  2: throw Exception("2-form not implemented on Lines");
+  case  3: throw Exception("3-form not implemented on Lines");
+
+  default: throw Exception("There is no %d-form", basisType);
+  }  
 }
 
 Basis* BasisGenerator::triGen(int basisType, 

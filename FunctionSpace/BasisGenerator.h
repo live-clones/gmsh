@@ -24,6 +24,7 @@ class BasisGenerator{
 			 int basisType, 
 			 int order);
 
+  static Basis* linGen(int basisType, int order);
   static Basis* triGen(int basisType, int order);
   static Basis* quaGen(int basisType, int order);
   static Basis* tetGen(int basisType, int order);
@@ -56,10 +57,28 @@ class BasisGenerator{
    @em instantiated Basis
 
    @note Element types are:
+   @li @c TYPE_LIN for Lines
    @li @c TYPE_TRI for Triangles
    @li @c TYPE_QUA for Quadrangles
    @li @c TYPE_TET for Tetrahedrons
    @li @c TYPE_HEX for Hexahedrons
+
+   @note Basis types are:
+   @li @c 0 for 0-Form
+   @li @c 1 for 1-Form
+   @li @c 2 for 2-Form
+   @li @c 3 for 3-Form
+   **
+
+   @fn BasisGenerator::linGen
+   @param basisType The Basis type
+   @param order The order or the requested Basis
+
+   This method will @em instanciate the requested Basis,
+   with a @em Line for support
+   
+   @return Returns a @em pointer to a newly 
+   @em instantiated Basis
 
    @note Basis types are:
    @li @c 0 for 0-Form
