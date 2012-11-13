@@ -1,8 +1,8 @@
 /*********************************************************************
  *
  *  Gmsh tutorial 3
- * 
- *  Extruded meshes, options
+ *
+ *  Extruded meshes, parameters, options
  *
  *********************************************************************/
 
@@ -19,8 +19,8 @@ Include "t1.geo";
 
 h = 0.1;
 
-Extrude {0,0,h} { 
-  Surface{6}; Layers{ {8,2}, {0.5,1} }; 
+Extrude {0,0,h} {
+  Surface{6}; Layers{ {8,2}, {0.5,1} };
 }
 
 // The extrusion can also be performed with a rotation instead of a
@@ -29,15 +29,21 @@ Extrude {0,0,h} {
 // are specified by an axis direction ({0,1,0}), an axis point
 // ({-0.1,0,0.1}) and a rotation angle (-Pi/2):
 
-Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } { 
-  Surface{122}; Layers{7}; Recombine; 
+Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
+  Surface{122}; Layers{7}; Recombine;
 }
 
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0},
-// {0,0.15,0.25}, Pi/2) can also be combined:
+// {0,0.15,0.25}, Pi/2) can also be combined. Here the angle is
+// specified as a 'parameter', using the 'DefineConstant' syntax.
+// This parameter can be modified insteractively in the GUI, and
+// can be exchanged with other codes using the ONELAB framework:
 
-out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } { 
-  Surface{144}; Layers{10}; Recombine; 
+DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
+                         Label "Extrusion angle", Path "Parameters"} ];
+
+out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
+  Surface{144}; Layers{10}; Recombine;
 };
 
 // In this last extrusion command we retrieved the volume number
