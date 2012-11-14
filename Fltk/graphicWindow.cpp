@@ -2947,7 +2947,6 @@ void graphicWindow::detachMenu()
   if(browser->h() == 0) resizeMessages(1);
   int w = onelab->w();
   tile->remove(onelab);
-  // make sure browser is not zero-size when adding children
   browser->resize(0, browser->y(), browser->w() + w, browser->h());
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->x() == w)
@@ -2986,7 +2985,7 @@ void graphicWindow::attachMenu()
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
   }
   tile->add(onelab);
-  onelab->resize(0, bar ? bar->h() : 0, w, tile->h());
+  onelab->resize(tile->x(), tile->y(), w, tile->h());
   tile->redraw();
 }
 
