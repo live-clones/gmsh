@@ -2901,8 +2901,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
   _savedMessageHeight = CTX::instance()->msgSize;
 
-  if(CTX::instance()->menuSize[0] < onelab->getMinWindowWidth())
-    CTX::instance()->menuSize[0] = onelab->getMinWindowWidth();
+  int minw = 3 * BB/2 + 4 * WB;
+  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
   _savedMenuWidth = CTX::instance()->menuSize[0];
 
