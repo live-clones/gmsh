@@ -23,12 +23,12 @@ static std::string localFileTag("_");
 enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 
 #if defined(WIN32)
-static std::string dirSep("\\");
+static char dirSep='\\';
 static std::string cmdSep(" & ");
 static std::string removeCmd("del ");
 static std::string lsCmd("dir ");
 #else
-static std::string dirSep("/");
+static char dirSep='/';
 static std::string cmdSep(" ; ");
 static std::string removeCmd("rm -rf ");
 static std::string lsCmd("ls ");
@@ -48,7 +48,9 @@ std::string sanitizeString(const std::string &in,
 			   const std::string  &forbidden);
 std::string removeBlanks(const std::string &in);
 std::vector<std::string> SplitOLFileName(const std::string &in);
-bool isPath(const std::string &in);
+std::vector<std::string> SplitOLHostName(const std::string &in);
+std::string FixOLPath(const std::string &in);
+std::string FixPathName(const std::string &in);
 std::string FixWindowsQuotes(const std::string &in);
 std::string QuoteExecPath(const std::string &in);
 std::string unquote(const std::string &in);
@@ -56,9 +58,7 @@ std::string unquote(const std::string &in);
 // Parser TOOLS 
 int enclosed(const std::string &in, std::vector<std::string> &arguments, size_t &end);
 int extract(const std::string &in, std::string &paramName, std::string &action, std::vector<std::string> &arguments);
-//bool extractRange(const std::string &in, std::vector<double> &arguments);
 std::string extractExpandPattern(const std::string& str);
-
 
 typedef std::vector <std::vector <double> > array;
 array read_array(std::string fileName, char sep);
@@ -120,6 +120,7 @@ class localSolverClient : public onelab::localClient{
  private:
   std::string _commandLine;
   std::string _workingDir;
+  bool _remote;
   int _active;
   bool _onelabBlock;
   std::set<std::string, ShortNameLessThan> _parameters;
@@ -128,7 +129,7 @@ class localSolverClient : public onelab::localClient{
  localSolverClient(const std::string &name, const std::string &cmdl, 
 		   const std::string &wdir) 
    : onelab::localClient(name), _commandLine(cmdl), _workingDir(wdir),
-    _active(1), _onelabBlock(false) {
+    _remote(false), _active(1), _onelabBlock(false) {
   }
   virtual ~localSolverClient(){}
   const std::string &getCommandLine(){ return _commandLine; }
@@ -140,12 +141,14 @@ class localSolverClient : public onelab::localClient{
   const std::string getString(const std::string what);
   const bool getList(const std::string type, 
 		     std::vector<std::string> &choices);
+  const bool isRemote() { return _remote; }
+  const void setRemote(bool flag){ _remote = flag; }
   const bool isActive() { return (bool)_active; }
   const void setActive(int val) { _active=val; }
   int getActive() { return _active; }
   virtual std::string toChar();
 
-  // parser
+  // parser commands
   void modify_tags(const std::string lab, const std::string com);
   const bool isOnelabBlock() { return _onelabBlock; }
   const void openOnelabBlock() { _onelabBlock=true; }
@@ -188,14 +191,12 @@ class localNetworkSolverClient : public localSolverClient{
   int _pid;
   // underlying GmshServer
   GmshServer *_gmshServer;
-  // flag indicating if the client is a remote one
-  bool _remote;
   // flag indicating whether socket communication should be shown
   bool _socketMsg;
  public:
  localNetworkSolverClient(const std::string &name, const std::string &cmdl, const std::string &wdir)
    : localSolverClient(name,cmdl,wdir), _socketSwitch("-onelab"),
-    _pid(-1), _gmshServer(0), _remote(false), _socketMsg(false) {}
+    _pid(-1), _gmshServer(0), _socketMsg(false) {}
   virtual ~localNetworkSolverClient(){}
   virtual bool isNetworkClient(){ return true; }
   const std::string &getSocketSwitch(){ return _socketSwitch; }
@@ -204,8 +205,6 @@ class localNetworkSolverClient : public localSolverClient{
   void setPid(int pid){ _pid = pid; }
   GmshServer *getGmshServer(){ return _gmshServer; }
   void setGmshServer(GmshServer *server){ _gmshServer = server; }
-  int getRemote(){ return _remote; }
-  void setRemote(bool rem){ _remote = rem; }
 
   bool isNative() { return true; }
   virtual std::string buildCommandLine();
@@ -243,7 +242,7 @@ class MetaModel : public localSolverClient {
   std::vector<localSolverClient *> _clients;
   // action performed at this metamodel call
   parseMode _todo;
-  // remains false as long as the clients do not need recomputation 
+  // remains false as long as the successive clients need no recomputation 
   bool _started;
  public:
  MetaModel(const std::string &cmdl, const std::string &wdir, const std::string &cname, const std::string &fname) 
@@ -269,7 +268,8 @@ class MetaModel : public localSolverClient {
 		      const std::string &cmdl, const std::string &host, 
 		      const std::string &rdir);
   bool checkCommandLines();
-  void saveCommandLines(const std::string fileName);
+  void saveCommandLines();
+  bool findCommandLine(const std::string &client, const std::string &host);
   localSolverClient *findClientByName(std::string name){
     for(unsigned int i=0; i<_clients.size(); i++)
       if(_clients[i]->getName() == name) return _clients[i];
@@ -326,7 +326,9 @@ class EncapsulatedClient : public localNetworkSolverClient{
 class RemoteInterfacedClient : public InterfacedClient, public remoteClient {
 public:
  RemoteInterfacedClient(const std::string &name, const std::string &cmdl, const std::string &wdir, const std::string &host, const std::string &rdir) 
-   : InterfacedClient(name,cmdl,wdir), remoteClient(host,rdir) {}
+   : InterfacedClient(name,cmdl,wdir), remoteClient(host,rdir) {
+    setRemote(true);
+  }
   ~RemoteInterfacedClient(){}
 
   bool checkCommandLine();
@@ -351,7 +353,9 @@ public:
 class RemoteEncapsulatedClient : public EncapsulatedClient, public remoteClient {
 public:
  RemoteEncapsulatedClient(const std::string &name, const std::string &cmdl, const std::string &wdir, const std::string &host, const std::string &rdir) 
-   : EncapsulatedClient(name,cmdl,wdir), remoteClient(host,rdir) {}
+   : EncapsulatedClient(name,cmdl,wdir), remoteClient(host,rdir) {
+    setRemote(true);
+  }
   ~RemoteEncapsulatedClient(){}
 
   std::string buildCommandLine();

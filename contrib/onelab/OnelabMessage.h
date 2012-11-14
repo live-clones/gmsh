@@ -114,6 +114,7 @@ class OLMsg {
   static double GetOnelabNumber(std::string name);
   static void SetOnelabString(std::string name, std::string val, bool visible=true);
   static std::string GetOnelabString(std::string name);
+  static void SetVisible(std::string name, bool visible);
   static void SetOnelabAttributeString(std::string name,
 				       std::string attrib,std::string val);
   static std::string GetOnelabAttributeString(std::string name,std::string attrib);

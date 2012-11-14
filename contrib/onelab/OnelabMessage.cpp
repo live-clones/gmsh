@@ -319,6 +319,18 @@ void OLMsg::SetOnelabString(std::string name, std::string val, bool visible)
   }
 }
 
+void OLMsg::SetVisible(std::string name, bool visible)
+{
+  if(_onelabClient){
+    std::vector<onelab::string> strings;
+    _onelabClient->get(strings, name);
+    if(strings.size()){
+      strings[0].setVisible(visible);
+      _onelabClient->set(strings[0]);
+    }
+  }
+}
+
 void OLMsg::SetOnelabAttributeString(std::string name,
 				   std::string attrib,std::string val){
   if(_onelabClient){

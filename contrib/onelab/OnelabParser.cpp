@@ -24,112 +24,106 @@ namespace olkey{
   static std::string getRegion(label+"region");
 }
 
-int extractLogic(const std::string &in, std::vector<std::string> &arguments){
-  // syntax: ( argument[0], argument[1]\in{<,>,<=,>=,==,!=}, arguments[2])
-  size_t pos, cursor;
-  arguments.resize(0);
-  cursor=0;
-  if ( (pos=in.find("(",cursor)) == std::string::npos )
-     OLMsg::Error("Syntax error: <%s>",in.c_str());
-
-  unsigned int count=1;
-  pos++; // skips '('
-  cursor=pos; 
-  do{
-    if(in[pos]=='(') count++;
-    if(in[pos]==')') count--;
-    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
-      arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
-      if(count!=1)
-	OLMsg::Error("Syntax error: <%s>",in.c_str());
-      cursor=pos;
-      if(in[pos+1]=='='){
-	arguments.push_back(in.substr(cursor,2));
-	pos++;
-      }
-      else{
-      	arguments.push_back(in.substr(cursor,1));
-      }
-      cursor=pos+1;
-    }
-    pos++;
-  } while( count && (pos!=std::string::npos) );
-  // count is 0 when the closing brace is found. 
-
-  if(count)
-    OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
-  else
-    arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
-
-  if((arguments.size()!=1) && (arguments.size()!=3))
-    OLMsg::Error("Syntax error: <%s>",in.c_str());
-  return arguments.size();
-}
-
 // Client member functions defined here because they use parser commands 
 
-// std::string localSolverClient::toChar(){
-//   std::ostringstream sstream;
-//   if(getCommandLine().size()){
-//     sstream << getName() << "." << "commandLine("
-// 	    << getCommandLine() << ");\n";
-//   }
-//   return sstream.str();
-// }
+bool MetaModel::findCommandLine(const std::string &client, const std::string &host){
+  std::string fileName;
+  size_t pos;
 
-void MetaModel::saveCommandLines(const std::string fileName){
-  std::vector<std::string> arguments, buffer;
-  std::string loaderPathName=OLMsg::GetOnelabString("LoaderPathName");
-  OLMsg::Info("Save command lines for loader <%s>", loaderPathName.c_str());
-  std::string fileNameSave = getWorkingDir()+fileName+onelabExtension+".save";
+  //std::cout << "FHF search cmdl: " << client << " , " << host << std::endl; 
 
-  /*
-  size_t cursor, pos;
-  std::ifstream infile(fileNameSave.c_str());
-  if (infile.is_open()){
-    while (infile.good()){
+  fileName = getWorkingDir() + genericNameFromArgs + onelabExtension + ".save";
+
+  std::ifstream infile(fileName.c_str());
+  if(infile.is_open()){
+    while(infile.good()){
       std::string line;
       getline(infile,line);
-      if ( (pos=line.find(olkey::ifcond)) != std::string::npos) {
-	cursor = pos+olkey::ifcond.length();
-	extractLogic(line.substr(cursor),arguments);
-	if(arguments.size() >= 2){
-	  bool keep = arguments[2].compare(loaderPathName);
-	  if(keep) buffer.push_back(line);
-	  do{
-	    getline (infile,line);
-	    if(keep) buffer.push_back(line);
-	  } while ((pos=line.find(olkey::olendif)) == std::string::npos);
+      if( (pos=line.find(olkey::separator)) != std::string::npos){
+	std::string name, action;
+	std::vector<std::string> args;
+	extract(line.substr(0,pos),name,action,args);
+	// (name, action, args) = client.commandLine(cmdl{,rhost{,rdir}})
+	std::string cmdl="", rhost="localhost", rdir="";
+	cmdl = args[0];
+	if(args.size() > 1) rhost= args[1]; 
+	if(args.size() > 2) rdir = args[2];
+
+	if(name == client){
+	  if( (host.empty() && (rhost != "localhost" )) ||
+	      (host.size() && (rhost == host)) ) {
+	    OLMsg::SetOnelabString(name + "/CommandLine", cmdl);
+	    if(rhost.compare("localhost")){
+	      OLMsg::SetOnelabString(name + "/HostName", rhost);
+	      if(rdir.size())
+		OLMsg::SetOnelabString(name + "/RemoteDir", rdir);
+	    }
+	    //std::cout << "FHF found cmdl: " << cmdl << "," << rhost << std::endl;
+	    return true;
+	  }
 	}
-	else
-	  OLMsg::Error("Incorrect statement <%s> in <%s>",
-		       line.c_str(), fileNameSave.c_str());
       }
     }
   }
   infile.close();
-  */
+  return false;
+}
+
+std::string localSolverClient::toChar(){
+  std::ostringstream sstream;
+
+  if(getCommandLine().size()){
+    sstream << getName() << ".commandLine(" << getCommandLine();
+    std::string host=OLMsg::GetOnelabString(getName() + "/HostName");
+    if(host.size() && host.compare("localhost")) {
+      sstream << "," << host ;
+      std::string rdir=OLMsg::GetOnelabString(getName() + "/RemoteDir");
+      if(rdir.size()) sstream << "," << rdir;
+    }
+    sstream << ");" << std::endl;
+  }
+  return sstream.str();
+}
+
+void MetaModel::saveCommandLines(){
+  std::vector<std::string> arguments, buffer;
+  std::string fileName;
+  fileName = getWorkingDir() + genericNameFromArgs + onelabExtension + ".save";
+
+  std::ifstream infile(fileName.c_str());
+  if(infile.is_open()){
+    while(infile.good()){
+      std::string line;
+      getline(infile,line);
+      size_t pos;
+      if( (pos=line.find(olkey::separator)) != std::string::npos){
+	std::string name, action;
+	std::vector<std::string> args;
+	extract(line.substr(0,pos),name,action,args);
+	std::string host = OLMsg::GetOnelabString(name + "/HostName");
+	std::string rhost=(args.size()>=2)?args[1]:"";
+	bool keep = rhost.compare(host);
+	if(keep) buffer.push_back(line);
+      }
+    }
+  }
+  else
+    OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
+  infile.close();
 
   //save client command lines
-  std::ofstream outfile(fileNameSave.c_str());
-  if (outfile.is_open()){
-    // outfile << olkey::ifcond << "(" << olkey::getValue ;
-    // outfile << "(LoaderPathName) == ";
-    // outfile << loaderPathName << ")" << std::endl;
+  std::ofstream outfile(fileName.c_str());
+  if(outfile.is_open()){
     for(citer it = _clients.begin(); it != _clients.end(); it++){
 	 outfile << (*it)->toChar();
     }
-    //outfile << olkey::olendif << std::endl;
-
-    /*
     for(std::vector<std::string>::const_iterator it = buffer.begin();
 	it != buffer.end(); it++){
       outfile << (*it) << std::endl;
     }
-    */
   }
   else
-    OLMsg::Error("The file <%s> cannot be opened",fileNameSave.c_str());
+    OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
   outfile.close();
 }
 
@@ -191,6 +185,48 @@ int extract(const std::string &in, std::string &paramName,
     action.assign(sanitize(in.substr(cursor,pos-cursor)));
   cursor = pos;
   return enclosed(in.substr(cursor),arguments,pos);
+}
+
+int extractLogic(const std::string &in, std::vector<std::string> &arguments){
+  // syntax: ( argument[0], argument[1]\in{<,>,<=,>=,==,!=}, arguments[2])
+  size_t pos, cursor;
+  arguments.resize(0);
+  cursor=0;
+  if ( (pos=in.find("(",cursor)) == std::string::npos )
+     OLMsg::Error("Syntax error: <%s>",in.c_str());
+
+  unsigned int count=1;
+  pos++; // skips '('
+  cursor=pos; 
+  do{
+    if(in[pos]=='(') count++;
+    if(in[pos]==')') count--;
+    if( (in[pos]=='<') || (in[pos]=='=') || (in[pos]=='>') || (in[pos]=='!') ){
+      arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
+      if(count!=1)
+	OLMsg::Error("Syntax error: <%s>",in.c_str());
+      cursor=pos;
+      if(in[pos+1]=='='){
+	arguments.push_back(in.substr(cursor,2));
+	pos++;
+      }
+      else{
+      	arguments.push_back(in.substr(cursor,1));
+      }
+      cursor=pos+1;
+    }
+    pos++;
+  } while( count && (pos!=std::string::npos) );
+  // count is 0 when the closing brace is found. 
+
+  if(count)
+    OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
+  else
+    arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
+
+  if((arguments.size()!=1) && (arguments.size()!=3))
+    OLMsg::Error("Syntax error: <%s>",in.c_str());
+  return arguments.size();
 }
 
 std::string extractExpandPattern(const std::string& str){
@@ -480,8 +516,8 @@ void localSolverClient::parse_sentence(std::string line) {
     if(!action.compare("number")) { 
       double val;
       // syntax: paramName.number(val,path,help,range(optional))
-      if((arguments.size()>1) && isPath(arguments[1]))
-	name.assign(arguments[1] + name);
+      if(arguments.size()>1)
+	name.assign(FixOLPath(arguments[1]) + name);
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(numbers, name);
@@ -511,8 +547,8 @@ void localSolverClient::parse_sentence(std::string line) {
     }
     else if(!action.compare("string")) { 
       // syntax: paramName.string(val,path,help)
-      if((arguments.size()>1) && isPath(arguments[1]))
-	name.assign(arguments[1] + name); // append path
+      if(arguments.size()>1)
+	name.assign(FixOLPath(arguments[1]) + name); // append path
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(strings, name);
@@ -540,8 +576,8 @@ void localSolverClient::parse_sentence(std::string line) {
 	OLMsg::Error("No value given for param <%s>",name.c_str());
       else
 	val=atof(arguments[0].c_str());
-      if((arguments.size()>1) && isPath(arguments[1]))
-	name.assign(arguments[1] + name);
+      if(arguments.size()>1)
+	name.assign(FixOLPath(arguments[1]) + name);
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(numbers, name);
@@ -897,11 +933,12 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	get(numbers,longName(arguments[0]));
 	if (numbers.size())
 	  condition = (bool) numbers[0].getValue();
-	else
-	  OLMsg::Error("Unknown parameter <%s> in <%s> statement",
-		       arguments[0].c_str(),olkey::ifntrue.c_str());
+	else{
+	  condition=false;
+	  // OLMsg::Warning("Unknown parameter <%s> in <%s> statement",
+	  // 	       arguments[0].c_str(),olkey::ifntrue.c_str());
+	}
       }
-      std::cout << "cond=" << condition << std::endl;
       if (!parse_ifstatement(infile,!condition))
 	OLMsg::Error("Misformed <%s> statement: <%s>",
 		     olkey::ifntrue.c_str(),arguments[0].c_str());
@@ -924,8 +961,8 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Error("Misformed <%s> statement: (%s)",
 		 olkey::include.c_str(),line.c_str());
     else
-      OLMsg::Info("Parse file <%s> success=%d", arguments[0].c_str(), 
-		  parse_onefile(getWorkingDir() + arguments[0]));
+      OLMsg::Info("Parse file <%s> %s", arguments[0].c_str(), 
+	      parse_onefile(getWorkingDir() + arguments[0])?"done":"failed");
   }
   else if ( (pos=line.find(olkey::message)) != std::string::npos) { 
     // onelab.message
@@ -1223,9 +1260,11 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 	get(numbers,longName(arguments[0]));
 	if (numbers.size())
 	  condition = (bool) numbers[0].getValue();
-	else
-	  OLMsg::Error("Unknown parameter <%s> in <%s> statement",
-		       arguments[0].c_str(),olkey::ifntrue.c_str());
+	else{
+	  condition=false;
+	  // OLMsg::Error("Unknown parameter <%s> in <%s> statement",
+	  // 	       arguments[0].c_str(),olkey::ifntrue.c_str());
+	}
       }
       if (!convert_ifstatement(infile,outfile,!condition))
 	OLMsg::Error("Misformed <%s> statement: %s",
@@ -1354,73 +1393,106 @@ void MetaModel::client_sentence(const std::string &name,
 
   if(!action.compare("register")){
     if(isTodo(REGISTER)){
-      // syntax name.register([interf...|native]{,cmdl{host{,rdir}}}}) ;
+      std::string type="",cmdl="",host="",rdir="";
+      // syntax name.register([interf...|native]{,cmdl}) ;
       if(!findClientByName(name)){
 	OLMsg::Info("Define client <%s>", name.c_str());
-	std::string type="",cmdl="",host="",rdir="";
 	if(arguments.size()>=1) type.assign(resolveGetVal(arguments[0]));
 	if(arguments.size()>=2) cmdl.assign(resolveGetVal(arguments[1]));
-	if(arguments.size()>=3) host.assign(resolveGetVal(arguments[2]));
-	if(arguments.size()>=4) rdir.assign(resolveGetVal(arguments[3]));
-	if(arguments.size()>=5) 
+	if(arguments.size()>=3) 
 	  OLMsg::Warning("Unused arguments for client <%s>", name.c_str());
 
+	// if argument 'cmdl' is empty,
+	// 1. look on server for one remote host cmdl 
+	//    defined by a previous .remote() sentence
+	// 2. look in the .save file for a local host cmdl
+	// 3. create an empty parameter restore control to the GUI
+
+	host = OLMsg::GetOnelabString(name + "/HostName");
+	rdir = OLMsg::GetOnelabString(name + "/RemoteDir");
+	if(cmdl.empty())
+	  cmdl = OLMsg::GetOnelabString(name + "/CommandLine");
+
 	if(cmdl.empty()) {
-	  // if argument 'cmdl' is empty, look for one on the server
-	  // (read beforehand from the file metamodel.ol.save)
-	  // otherwise register with empty cmdl
-	  // (this situation is dealt with later on)
-	  cmdl=OLMsg::GetOnelabString(name + "/CommandLine");
-	  if(cmdl.empty()) {
+	  host="localhost";
+	  if(findCommandLine(name,host))
+	    cmdl = OLMsg::GetOnelabString(name + "/CommandLine");
+	}
+	if(cmdl.empty()) {
+	  if(OLMsg::hasGmsh){
 	    onelab::string str;
 	    str.setName(name + "/CommandLine");
 	    str.setKind("file");
-	    //str.setVisible(cmdl.empty());
 	    str.setAttribute("Highlight","Ivory");
 	    set(str);
+	    OLMsg::Error("No commandline found for client <%s>",
+	  		 name.c_str());
+	  }
+	  else{ // asks the user in console mode
+	    std::cout << "\nONELAB: Enter pathname of the executable file for <" << name << ">" << std::endl;
+	    std::getline (std::cin,cmdl);
+	    OLMsg::SetOnelabString(name + "/CommandLine",cmdl);
 	  }
 	}
-	if(host.empty()) {
-	  host=OLMsg::GetOnelabString(name + "/remoteHost");
-	}
-	if(rdir.empty()) {
-	  rdir=OLMsg::GetOnelabString(name + "/remoteWork");
-	}
-
 	registerClient(name,type,cmdl,host,rdir);
       }
       else
 	OLMsg::Error("Redefinition of client <%s>", name.c_str());
     }
   }
-  else if(!action.compare("remote")){
+  else if(!action.compare("remote") || !action.compare("hostname")){
     if(isTodo(REGISTER)){
-      if(arguments.size()>0)
-	OLMsg::SetOnelabString(name + "/remoteHost", arguments[0], false);
-      else{
-	onelab::string str;
-	str.setName(name + "/remoteHost");
-	str.setAttribute("Highlight","Ivory");
-	set(str);
+      std::string host="",rdir="";
+      if(arguments.size()>=1) host.assign(resolveGetVal(arguments[0]));
+      if(arguments.size()>=2) rdir.assign(resolveGetVal(arguments[1]));
+      if(arguments.size()>=3) 
+	  OLMsg::Warning("Unused arguments for client <%s>", name.c_str());
+
+      if(host.empty()){
+	std::string in = OLMsg::GetOnelabString(name + "/HostName");
+	if(in.size()){
+	  std::vector<std::string> split = SplitOLHostName(in);
+	  host = split[0];
+	  rdir = split[1]; 
+	  OLMsg::SetOnelabString(name + "/HostName", host);
+	  if(rdir.size())
+	    OLMsg::SetOnelabString(name + "/RemoteDir", rdir);
+	}
       }
-      if(arguments.size()>1)
-	OLMsg::SetOnelabString(name + "/remoteDir", arguments[1], false);
-      else{
-	onelab::string str;
-	str.setName(name + "/remoteDir");
-	str.setAttribute("Highlight","Ivory");
-	set(str);
+      if(!findCommandLine(name,host)){
+	if(OLMsg::hasGmsh){
+	  onelab::string str;
+	  str.setName(name + "/HostName");
+	  str.setAttribute("Highlight","Ivory");
+	  set(str);
+	  OLMsg::Error("No hostname found for remote client <%s>",name.c_str());
+	}
+	else{ // asks the user in console mode
+	  std::cout << "\nONELAB: Enter remote host for <" << name << "> (name@host:dir)" << std::endl;
+	  std::string in;
+	  std::getline (std::cin,in);
+	  if(in.size()){
+	    std::vector<std::string> split = SplitOLHostName(in);
+	    OLMsg::SetOnelabString(name + "/HostName", split[0]);
+	    if(split[1].size())
+	      OLMsg::SetOnelabString(name + "/RemoteDir", split[1]);
+	  }
+	}
       }
     }
   }
-  else if(!action.compare("commandLine")){
+/* else if(!action.compare("commandLine")){ 
     if(isTodo(REGISTER)){
-      if(arguments[0].size())
-	OLMsg::SetOnelabString(name + "/CommandLine",arguments[0],false);
+      if(arguments[0].size() >= 1)
+	OLMsg::SetOnelabString(name + "/CommandLine", arguments[0], false);
       else
 	OLMsg::Error("No pathname given for client <%s>", name.c_str());
+      if(arguments[0].size() >= 2)
+	OLMsg::SetOnelabString(name + "/HostName", arguments[1], false);
+      if(arguments[0].size() >= 3)
+	OLMsg::SetOnelabString(name + "/RemoteDir",arguments[2], false);
     }
-  }
+    }*/
   else if(!action.compare("workingSubdir")){
     localSolverClient *c;
     if((c=findClientByName(name)))

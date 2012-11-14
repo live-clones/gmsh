@@ -95,7 +95,7 @@ bool localNetworkSolverClient::run()
   std::string socketName = ":";
 #else
   std::string socketName;
-  if(getRemote())
+  if(isRemote())
     socketName = ":";
   else
     socketName = getUserHomedir() + ".gmshsock";
@@ -323,15 +323,6 @@ bool localNetworkSolverClient::kill()
 
 // client LOCALSOLVERCLIENT
 
-std::string localSolverClient::toChar(){
-  std::ostringstream sstream;
-  if(getCommandLine().size()){
-    sstream << getName() << "." << "commandLine("
-	    << getCommandLine() << ");\n";
-  }
-  return sstream.str();
-}
-
 const std::string localSolverClient::getString(const std::string what){
   std::string name=getName() + "/" + what;
   std::vector<onelab::string> strings;
@@ -416,7 +407,8 @@ bool localSolverClient::checkCommandLine(){
     }
   }
   else{
-    FixExecPath(getCommandLine());
+    if(!isRemote())
+      FixExecPath(getCommandLine());
 
     if(isNative()){ // native clients checked by initializing
       setAction("initialize");
@@ -455,11 +447,13 @@ bool localSolverClient::checkCommandLine(){
     }
   }
   if(success){
-    OLMsg::SetOnelabString(getName()+"/CommandLine",getCommandLine(),false);
+    OLMsg::SetVisible(getName()+"/CommandLine",false);
+    OLMsg::SetVisible(getName()+"/HostName",false);
+    OLMsg::SetVisible(getName()+"/RemoteDir",false);
     OLMsg::Info("Command line ok");
   }
   else{
-    //setCommandLine("");
+    setCommandLine("");
     OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
@@ -662,10 +656,9 @@ void MetaModel::construct()
 {
   OLMsg::Info("Metamodel now CONSTRUCTING");
   openOnelabBlock();
-  parse_onefile( genericNameFromArgs + onelabExtension + ".save", false);
   parse_onefile( genericNameFromArgs + onelabExtension);
   closeOnelabBlock();
-  saveCommandLines(genericNameFromArgs);
+  saveCommandLines();
   onelab::server::instance()->setChanged(true, getName());
 }
 
@@ -674,7 +667,7 @@ void MetaModel::analyze() {
   std::string fileName = genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
-	      parse_onefile(fileName)?"ok":"ko");
+	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
 }
 
@@ -683,7 +676,7 @@ void MetaModel::compute() {
   std::string fileName = genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
-	      parse_onefile(fileName)?"ok":"ko");
+	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
   onelab::server::instance()->setChanged(false);
 }
@@ -691,11 +684,11 @@ void MetaModel::compute() {
 void MetaModel::registerClient(const std::string &name, const std::string &type, const std::string &cmdl, const std::string &host, const std::string &rdir) {
   localSolverClient *c;
 
-  // Clients are assigned by default the same working dir as the MetaModel
-  // i.e. the working dir from args
-  // A working (relative) subdir (useful to organize submodels)
+  // Clients are assigned by default the same (local) working dir 
+  // as the MetaModel, i.e. the working dir from args
+  // A working (local relative) subdir (useful to organize submodels)
   // can be defined with the command: client.workingSubdir(subdir) 
-  if(host.empty()){ //local client
+  if(host.empty() || !host.compare("localhost")){ //local client
     if(!type.compare(0,6,"interf"))
       c= new InterfacedClient(name,cmdl,getWorkingDir());
     else if(!type.compare(0,6,"native"))
@@ -748,8 +741,8 @@ void InterfacedClient::analyze() {
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
       checkIfPresent(fileName);
-      OLMsg::Info("Parse file <%s> success=%d", fileName.c_str(), 
-		  parse_onefile(fileName));
+      OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+		  parse_onefile(fileName)?"done":"failed");
     }
   }
   convert();
@@ -875,8 +868,8 @@ void EncapsulatedClient::analyze() {
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
       checkIfPresent(fileName);
-      OLMsg::Info("Parse file <%s> success=%d", fileName.c_str(), 
-		  parse_onefile(fileName));
+      OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+		  parse_onefile(fileName)?"done":"failed");
     }
   }
   convert();
@@ -1309,7 +1302,7 @@ std::string removeBlanks(const std::string &in)
   size_t pos0=in.find_first_not_of(" ");
   size_t pos=in.find_last_not_of(" ");
   if( (pos0 != std::string::npos) && (pos != std::string::npos))
-    return in.substr(pos0,pos-pos0+1);
+    return in.substr(pos0, pos-pos0+1);
   else
     return "";
 }
@@ -1324,7 +1317,7 @@ std::vector<std::string> SplitOLFileName(const std::string &in)
   if(posa != localFileTag.size()) posa = 0;
 
   std::vector<std::string> s(3);
-  s[0] = in.substr(0,posa);
+  s[0] = in.substr(0, posa);
   s[1] = in.substr(posa, posb-posa);
   s[2] = in.substr(posb, in.size()-posb);
 
@@ -1332,17 +1325,40 @@ std::vector<std::string> SplitOLFileName(const std::string &in)
   return s;
 }
 
-
-bool isPath(const std::string &in)
+std::vector<std::string> SplitOLHostName(const std::string &in)
 {
-  size_t pos=in.find_last_not_of(" 0123456789");
-  if(pos == std::string::npos) return true;
-  if(in.compare(pos,1,"/")){
-    OLMsg::Error("The argument <%s> is not a valid parameter path (must end with '/')",in.c_str());
-    return false;
+  // returns [ hostname, directory]
+  std::vector<std::string> s(2);
+  size_t pos = in.find(":");
+  if(pos == std::string::npos){
+    s[0] = in; 
+    s[1] = "";
   }
-  else
-    return true;
+  else{
+    s[0] = in.substr(0,pos);
+    s[1] = FixPathName(in.substr(pos+1,in.size()-pos-1));
+  }
+  //std::cout << "FHF in=<" << s[0] << "|" << s[1] << std::endl;
+  return s;
+}
+
+std::string FixOLPath(const std::string &in)
+{
+  std::string out = in;
+  if(out.size()){
+    size_t pos = out.find_last_not_of(" 0123456789");
+    if((pos != std::string::npos) && (out.compare(pos,1,"/")))
+      out.insert(pos,"/");
+  }
+  return out;
+}
+
+std::string FixPathName(const std::string &in)
+{
+  std::string out = in;
+  if(out.size())
+    if(out[out.size()-1] != dirSep) out.push_back(dirSep);
+  return out;
 }
 
 // std::vector <double> extract_column(const unsigned int col, const array data){
