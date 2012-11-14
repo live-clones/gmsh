@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _ONELAB_WINDOW_H_
-#define _ONELAB_WINDOW_H_
+#ifndef _ONELAB_GROUP_H_
+#define _ONELAB_GROUP_H_
 
 #include <vector>
 #include <FL/Fl.H>
