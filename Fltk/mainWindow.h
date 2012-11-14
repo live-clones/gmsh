@@ -8,7 +8,6 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
-#include <FL/fl_ask.H>
 
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
@@ -26,8 +25,7 @@ class mainWindow : public Fl_Window {
 #else
       if(Fl::test_shortcut(FL_CTRL+'w')){
 #endif
-        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
-          do_callback();
+        do_callback();
         return 1;
       }
       break;
