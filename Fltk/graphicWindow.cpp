@@ -2845,25 +2845,24 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, glheight));
     gl.back()->end();
   }
-  /*
   else if(numTiles == 3){
-    gl.push_back(new openglWindow(0, 0, w2, glheight));
+    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
     gl.back()->end();
-    gl.push_back(new openglWindow(w2, 0, width - w2, h2));
+    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(w2, h2, width - w2, glheight - h2));
+    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
   }
   else if(numTiles == 4){
-    gl.push_back(new openglWindow(0, 0, w2, h2));
+    gl.push_back(new openglWindow(twidth, mh, w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(w2, 0, width - w2, h2));
+    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(0, h2, width - w2, glheight - h2));
+    gl.push_back(new openglWindow(twidth, mh + h2, w2, glheight - h2));
     gl.back()->end();
-    gl.push_back(new openglWindow(w2, h2, width - w2, glheight - h2));
+    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
     gl.back()->end();
-    }*/
+  }
   else{
     gl.push_back(new openglWindow(twidth, mh, glwidth, glheight));
     gl.back()->end();
