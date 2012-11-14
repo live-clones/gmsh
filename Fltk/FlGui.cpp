@@ -271,6 +271,7 @@ FlGui::FlGui(int argc, char **argv)
 #endif
 
   graph[0]->win->show(1, argv);
+  if(graph[0]->menuwin) graph[0]->menuwin->show();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)

@@ -2927,7 +2927,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     menuwin->resizable(onelab);
     menuwin->size_range(onelab->getMinWindowWidth(), onelab->getMinWindowHeight());
     menuwin->end();
-    menuwin->show();
   }
   else{
     menuwin = 0;
@@ -3025,8 +3024,8 @@ void graphicWindow::hideMenu()
 void graphicWindow::showHideMenu()
 {
   if(menuwin || !onelab) return;
-  if(onelab->w()) hideMenu();
-  else showMenu();
+  if(onelab->w() < 5) showMenu();
+  else hideMenu();
 }
 
 int graphicWindow::getMenuWidth()
@@ -3202,8 +3201,8 @@ void graphicWindow::hideMessages()
 void graphicWindow::showHideMessages()
 {
   if(!browser) return;
-  if(browser->h()) hideMessages();
-  else showMessages();
+  if(browser->h() < 5) showMessages();
+  else hideMessages();
 }
 
 int graphicWindow::getMessageHeight()
