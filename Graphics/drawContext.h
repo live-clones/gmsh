@@ -193,7 +193,8 @@ class drawContext {
   void drawAxes(int mode, double tics[3], std::string format[3],
                 std::string label[3], double bb[6], int mikado, double value_bb[6]);
   void drawAxes(int mode, double tics[3], std::string format[3],
-                std::string label[3], SBoundingBox3d &bb, int mikado, SBoundingBox3d &value_bb);
+                std::string label[3], SBoundingBox3d &bb, int mikado,
+                SBoundingBox3d &value_bb);
   void drawAxes();
   void drawSmallAxes();
   void drawTrackball();
@@ -205,7 +206,8 @@ class drawContext {
   void drawStringRight(const std::string &s);
   void drawString(const std::string &s, double style);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
-  void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3], float v2[3], int light);
+  void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
+                     float v2[3], int light);
   void drawEllipse(double x, double y, double z, float v0[3], float v1[3], int light);
   void drawSphere(double size, double x, double y, double z, int light);
   void drawCylinder(double width, double *x, double *y, double *z, int light);
