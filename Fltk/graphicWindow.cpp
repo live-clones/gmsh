@@ -2069,7 +2069,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
+    {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
@@ -2133,7 +2133,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Plugins",         FL_META+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
-    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0},
+    {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
 #if defined(HAVE_3M)
     {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
