@@ -2079,9 +2079,9 @@ static Fl_Menu_Item bar_table[] = {
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
-    {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
+    {"Minimize",           FL_CTRL+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom", FL_MENU_DIVIDER},
-    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_CTRL+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
@@ -2987,7 +2987,7 @@ void graphicWindow::attachMenu()
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
   }
   tile->add(onelab);
-  onelab->resize(0, 0, w, tile->h());
+  onelab->resize(0, bar ? bar->h() : 0, w, tile->h());
   tile->redraw();
 }
 

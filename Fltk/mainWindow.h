@@ -12,6 +12,7 @@
 
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
+  void (*myhandle)(int event);
  private:
   int handle(int event)
   {
@@ -34,8 +35,8 @@ class mainWindow : public Fl_Window {
     return Fl_Window::handle(event);
   }
  public:
-  mainWindow(int w, int h, bool nonModal, const char *l=0) 
-    : Fl_Window(w, h, l) 
+  mainWindow(int w, int h, bool nonModal, const char *l=0)
+    : Fl_Window(w, h, l)
   {
     if(nonModal) set_non_modal();
   }
