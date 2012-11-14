@@ -116,7 +116,7 @@ FlGui::FlGui(int argc, char **argv)
   onelab = graph.back()->getMenu();
 
 #if defined(WIN32)
-  graph[0]->win->icon
+  graph[0]->getWindow()->icon
     ((const char*)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
                             IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
@@ -135,7 +135,7 @@ FlGui::FlGui(int argc, char **argv)
     0x08, 0x00, 0xff, 0x1f, 0x08, 0x00, 0xff, 0x1f, 0x04, 0x40, 0xfd, 0x3f,
     0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
     0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00};
-  graph[0]->win->icon
+  graph[0]->getWindow()->icon
     ((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
                                         gmsh32x32, 32, 32));
 #endif
