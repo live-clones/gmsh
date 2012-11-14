@@ -26,33 +26,43 @@ class graphicWindow{
   std::string _title;
   int _savedMessageHeight, _savedMenuWidth;
   bool _autoScrollMessages;
- public:
-  Fl_Window *win, *menuwin;
 #if defined(__APPLE__)
-  Fl_Sys_Menu_Bar *sysbar;
+  Fl_Sys_Menu_Bar *_sysbar;
 #endif
-  Fl_Menu_Bar *bar;
-  Fl_Tile *tile;
+  Fl_Menu_Bar *_bar;
+  Fl_Tile *_tile;
+  Fl_Window *_win, *_menuwin;
+  Fl_Browser *_browser;
+  onelabGroup *_onelab;
+  Fl_Box *_bottom;
+  Fl_Button *_butt[14];
+  Fl_Progress *_label;
+  int _minWidth, _minHeight;
+ public:
   std::vector<openglWindow*> gl;
-  Fl_Browser *browser;
-  onelabGroup *onelab;
-  Fl_Box *bottom;
-  Fl_Button *butt[14];
-  Fl_Progress *label;
-  int minWidth, minHeight;
  public:
   graphicWindow(bool main=true, int numTiles=1, bool detachedMenu=false);
   ~graphicWindow();
+  Fl_Window *getWindow(){ return _win; }
+  Fl_Window *getMenuWindow(){ return _menuwin; }
+  onelabGroup *getMenu(){ return _onelab; }
+  Fl_Progress *getProgress(){ return _label; }
+  Fl_Button *getSelectionButton(){ return _butt[9]; }
+  void setGlWidth(int w);
+  void setGlHeight(int h);
+  int getMinWidth(){ return _minWidth; }
+  int getMinHeight(){ return _minHeight; }
   void setTitle(std::string str);
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
   bool getAutoScroll(){ return _autoScrollMessages; }
   int getGlHeight();
   int getGlWidth();
+  void setStereo();
   void resizeMenu(int dh);
   void showMenu();
   void hideMenu();
   void showHideMenu();
-  bool isMenuDetached(){ return menuwin ? true : false; }
+  bool isMenuDetached(){ return _menuwin ? true : false; }
   int getMenuWidth();
   int getMenuHeight();
   int getMenuPositionX();
@@ -60,7 +70,7 @@ class graphicWindow{
   void detachMenu();
   void attachMenu();
   void attachDetachMenu();
-  void split(openglWindow *g, char how);
+  bool split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
   void resizeMessages(int dh);

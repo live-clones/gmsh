@@ -1770,12 +1770,7 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(action & GMSH_SET){
-      FlGui::instance()->graph[0]->win->size
-        (CTX::instance()->glSize[0],
-         FlGui::instance()->graph[0]->win->h());
-      // workaround resizing bug on Mac
-      FlGui::instance()->graph[0]->win->size_range
-        (FlGui::instance()->graph[0]->minWidth, FlGui::instance()->graph[0]->minHeight);
+      FlGui::instance()->graph[0]->setGlWidth(CTX::instance()->glSize[0]);
     }
   }
 #endif
@@ -1791,12 +1786,7 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(action & GMSH_SET){
-      FlGui::instance()->graph[0]->win->size
-        (FlGui::instance()->graph[0]->win->w(),
-         FlGui::instance()->graph[0]->bottom->h() + CTX::instance()->glSize[1]);
-      // workaround resizing bug on Mac
-      FlGui::instance()->graph[0]->win->size_range
-        (FlGui::instance()->graph[0]->minWidth, FlGui::instance()->graph[0]->minHeight);
+      FlGui::instance()->graph[0]->setGlHeight(CTX::instance()->glSize[1]);
     }
   }
 #endif
@@ -2488,16 +2478,16 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
       if(FlGui::available())
         Msg::StatusBar(false, "Mouse selection ON");
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->butt[9]->color(FL_BACKGROUND_COLOR);
+        FlGui::instance()->graph[i]->getSelectionButton()->color(FL_BACKGROUND_COLOR);
     }
     else{
       if(FlGui::available())
         Msg::StatusBar(false, "Mouse selection OFF");
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-        FlGui::instance()->graph[i]->butt[9]->color(FL_RED);
+        FlGui::instance()->graph[i]->getSelectionButton()->color(FL_RED);
     }
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->butt[9]->redraw();
+      FlGui::instance()->graph[i]->getSelectionButton()->redraw();
   }
 #endif
   return CTX::instance()->mouseSelection;

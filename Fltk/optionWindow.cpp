@@ -338,22 +338,9 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    // beginning of test to re-allocate gl for stereo: inspired from
-    // "split" method
     if (CTX::instance()->stereo){
-      openglWindow::setLastHandled(0);
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
-	graphicWindow * graph = FlGui::instance()->graph[i];
-	graph->tile->clear();
-	graph->gl.clear();
-	openglWindow* stereo_gl = new openglWindow(0, 0, graph->tile->w(), graph->tile->h());
-	stereo_gl->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
-	stereo_gl->end();
-	graph->gl.push_back(stereo_gl);
-	graph->tile->add(stereo_gl);
-	stereo_gl->show();
-        Msg::Info("new gl windows for stereo vision!");
-      }
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+	FlGui::instance()->graph[i]->setStereo();
     }
   }
 

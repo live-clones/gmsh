@@ -243,7 +243,7 @@ FlGui::FlGui(int argc, char **argv)
                                     CTX::instance()->detachedMenu ? true : false));
 
   // FIXME: make this cleaner ;-)
-  onelab = graph.back()->onelab;
+  onelab = graph.back()->getMenu();
 
 #if defined(WIN32)
   graph[0]->win->icon
@@ -270,8 +270,8 @@ FlGui::FlGui(int argc, char **argv)
                                         gmsh32x32, 32, 32));
 #endif
 
-  graph[0]->win->show(1, argv);
-  if(graph[0]->menuwin) graph[0]->menuwin->show();
+  graph[0]->getWindow()->show(1, argv);
+  if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
@@ -281,9 +281,11 @@ FlGui::FlGui(int argc, char **argv)
   // create additional graphic windows
   for(int i = 1; i < CTX::instance()->numWindows; i++){
     graphicWindow *g = new graphicWindow(false, CTX::instance()->numTiles);
-    g->win->resize(graph.back()->win->x() + 10, graph.back()->win->y() + 10,
-                   graph.back()->win->w(), graph.back()->win->h());
-    g->win->show();
+    g->getWindow()->resize(graph.back()->getWindow()->x() + 10,
+                           graph.back()->getWindow()->y() + 10,
+                           graph.back()->getWindow()->w(),
+                           graph.back()->getWindow()->h());
+    g->getWindow()->show();
     graph.push_back(g);
   }
 
@@ -753,10 +755,8 @@ void FlGui::splitCurrentOpenglWindow(char how)
 {
   openglWindow *g = getCurrentOpenglWindow();
   for(unsigned int i = 0; i < graph.size(); i++){
-    if(graph[i]->tile->find(g) != graph[i]->tile->children()){
-      graph[i]->split(g, how);
+    if(graph[i]->split(g, how))
       break;
-    }
   }
 }
 
@@ -774,8 +774,8 @@ void FlGui::setStatus(const char *msg, bool opengl)
     strncpy(buff, msg, sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
     for(unsigned int i = 0; i < graph.size(); i++){
-      graph[i]->label->label(buff);
-      graph[i]->label->redraw();
+      graph[i]->getProgress()->label(buff);
+      graph[i]->getProgress()->redraw();
     }
   }
   else{
@@ -797,20 +797,20 @@ void FlGui::setStatus(const char *msg, bool opengl)
 void FlGui::setProgress(const char *msg, double val, double min, double max)
 {
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
-    if(FlGui::instance()->graph[i]->label->value() != val)
-      FlGui::instance()->graph[i]->label->value(val);
-    if(FlGui::instance()->graph[i]->label->minimum() != min)
-      FlGui::instance()->graph[i]->label->minimum(min);
-    if(FlGui::instance()->graph[i]->label->maximum() != max)
-      FlGui::instance()->graph[i]->label->maximum(max);
+    if(FlGui::instance()->graph[i]->getProgress()->value() != val)
+      FlGui::instance()->graph[i]->getProgress()->value(val);
+    if(FlGui::instance()->graph[i]->getProgress()->minimum() != min)
+      FlGui::instance()->graph[i]->getProgress()->minimum(min);
+    if(FlGui::instance()->graph[i]->getProgress()->maximum() != max)
+      FlGui::instance()->graph[i]->getProgress()->maximum(max);
   }
   setStatus(msg);
 }
 
 void FlGui::storeCurrentWindowsInfo()
 {
-  CTX::instance()->glPosition[0] = graph[0]->win->x();
-  CTX::instance()->glPosition[1] = graph[0]->win->y();
+  CTX::instance()->glPosition[0] = graph[0]->getWindow()->x();
+  CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
   CTX::instance()->msgSize = graph[0]->getMessageHeight();
@@ -873,8 +873,8 @@ void window_cb(Fl_Widget *w, void *data)
 
   if(str == "minimize"){
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-      if(FlGui::instance()->graph[i]->win->shown())
-        FlGui::instance()->graph[i]->win->iconize();
+      if(FlGui::instance()->graph[i]->getWindow()->shown())
+        FlGui::instance()->graph[i]->getWindow()->iconize();
     if(FlGui::instance()->options->win->shown())
       FlGui::instance()->options->win->iconize();
     if(FlGui::instance()->plugins->win->shown())
@@ -894,25 +894,25 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(str == "zoom"){
     if(zoom){
-      oldx = FlGui::instance()->graph[0]->win->x();
-      oldy = FlGui::instance()->graph[0]->win->y();
-      oldw = FlGui::instance()->graph[0]->win->w();
-      oldh = FlGui::instance()->graph[0]->win->h();
+      oldx = FlGui::instance()->graph[0]->getWindow()->x();
+      oldy = FlGui::instance()->graph[0]->getWindow()->y();
+      oldw = FlGui::instance()->graph[0]->getWindow()->w();
+      oldh = FlGui::instance()->graph[0]->getWindow()->h();
 //#define FS
 #ifndef FS
-      FlGui::instance()->graph[0]->win->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
+      FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
       FlGui::instance()->graph[0]->hideMessages();
       FlGui::check();
 #else
-      FlGui::instance()->graph[0]->win->fullscreen();
+      FlGui::instance()->graph[0]->getWindow()->fullscreen();
 #endif
       zoom = 0;
     }
     else{
 #ifndef FS
-      FlGui::instance()->graph[0]->win->resize(oldx, oldy, oldw, oldh);
+      FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
 #else
-      FlGui::instance()->graph[0]->win->fullscreen_off();
+      FlGui::instance()->graph[0]->getWindow()->fullscreen_off();
 #endif
       zoom = 1;
     }
@@ -920,7 +920,7 @@ void window_cb(Fl_Widget *w, void *data)
   else if(str == "front"){
     // the order is important!
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-      FlGui::instance()->graph[i]->win->show();
+      FlGui::instance()->graph[i]->getWindow()->show();
     if(FlGui::instance()->options->win->shown())
       FlGui::instance()->options->win->show();
     if(FlGui::instance()->plugins->win->shown())

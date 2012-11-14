@@ -237,9 +237,11 @@ static void file_window_cb(Fl_Widget *w, void *data)
     graphicWindow *g2 = new graphicWindow(false, CTX::instance()->numTiles);
     FlGui::instance()->graph.push_back(g2);
     FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
-    g2->win->resize(g1->win->x() + 10, g1->win->y() + 10,
-                    g1->win->w(), g1->win->h());
-    g2->win->show();
+    g2->getWindow()->resize(g1->getWindow()->x() + 10,
+                            g1->getWindow()->y() + 10,
+                            g1->getWindow()->w(),
+                            g1->getWindow()->h());
+    g2->getWindow()->show();
   }
   else if(str == "split_h"){
     FlGui::instance()->splitCurrentOpenglWindow('h');
@@ -2273,7 +2275,7 @@ static graphicWindow *getGraphicWindow(Fl_Widget *w)
 {
   if(!w || !w->parent()) return FlGui::instance()->graph[0];
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-    if(FlGui::instance()->graph[i]->win == w->parent())
+    if(FlGui::instance()->graph[i]->getWindow() == w->parent())
       return FlGui::instance()->graph[i];
   return FlGui::instance()->graph[0];
 }
@@ -2577,7 +2579,7 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
   std::vector<graphicWindow*> graph2;
   graphicWindow *deleteMe = 0;
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
-    if(FlGui::instance()->graph[i]->win == w)
+    if(FlGui::instance()->graph[i]->getWindow() == w)
       deleteMe = FlGui::instance()->graph[i];
     else
       graph2.push_back(FlGui::instance()->graph[i]);
@@ -2711,32 +2713,32 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
   if(main){
-    win = new mainWindow(width, height, false);
-    win->callback(file_quit_cb);
+    _win = new mainWindow(width, height, false);
+    _win->callback(file_quit_cb);
   }
   else{
-    win = new paletteWindow(width, height, false);
-    win->callback(remove_graphic_window_cb);
+    _win = new paletteWindow(width, height, false);
+    _win->callback(remove_graphic_window_cb);
   }
 
 #if defined(__APPLE__)
-  sysbar = 0;
+  _sysbar = 0;
 #endif
-  bar = 0;
+  _bar = 0;
   if(main){
 #if defined(__APPLE__)
     if(CTX::instance()->systemMenuBar){
-      sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
-      sysbar->menu(sysbar_table);
-      sysbar->global();
+      _sysbar = new Fl_Sys_Menu_Bar(1, 1, 1, 1);
+      _sysbar->menu(sysbar_table);
+      _sysbar->global();
       fillRecentHistoryMenu();
     }
     else{
 #endif
-      bar = new Fl_Menu_Bar(0, 0, width, BH);
-      bar->menu(bar_table);
-      bar->box(FL_UP_BOX);
-      bar->global();
+      _bar = new Fl_Menu_Bar(0, 0, width, BH);
+      _bar->menu(bar_table);
+      _bar->box(FL_UP_BOX);
+      _bar->global();
       fillRecentHistoryMenu();
 #if defined(__APPLE__)
     }
@@ -2744,97 +2746,97 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   // bottom button bar
-  bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
-  bottom->box(FL_FLAT_BOX);
+  _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
+  _bottom->box(FL_FLAT_BOX);
 
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
 
-  butt[5] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
-  butt[5]->callback(status_options_cb, (void *)"model");
-  butt[5]->tooltip("Select active model");
+  _butt[5] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_models");
+  _butt[5]->callback(status_options_cb, (void *)"model");
+  _butt[5]->tooltip("Select active model");
   x += sw;
-  butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
-  butt[0]->callback(status_xyz1p_cb, (void *)"x");
-  butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
+  _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
+  _butt[0]->callback(status_xyz1p_cb, (void *)"x");
+  _butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
   x += sw;
-  butt[1] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Y");
-  butt[1]->callback(status_xyz1p_cb, (void *)"y");
-  butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
+  _butt[1] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Y");
+  _butt[1]->callback(status_xyz1p_cb, (void *)"y");
+  _butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
   x += sw;
-  butt[2] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Z");
-  butt[2]->callback(status_xyz1p_cb, (void *)"z");
-  butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
+  _butt[2] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Z");
+  _butt[2]->callback(status_xyz1p_cb, (void *)"z");
+  _butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
   x += sw;
-  butt[4] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
-  butt[4]->callback(status_xyz1p_cb, (void *)"r");
-  butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
+  _butt[4] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
+  _butt[4]->callback(status_xyz1p_cb, (void *)"r");
+  _butt[4]->tooltip("Rotate +90 or -90 (Shift) degrees, or sync rotations (Alt)");
   x += sw;
-  butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
-  butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
-  butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
+  _butt[3] = new Fl_Button(x, mh + glheight + mheight + 2, 2 * FL_NORMAL_SIZE, sht, "1:1");
+  _butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
+  _butt[3]->tooltip("Set unit scale, sync scale between viewports (Alt), "
                    "or reset bounding box around visible entities (Shift)");
   x += 2 * FL_NORMAL_SIZE;
-  butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_ortho");
-  butt[8]->callback(status_options_cb, (void *)"p");
-  butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
+  _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_ortho");
+  _butt[8]->callback(status_options_cb, (void *)"p");
+  _butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;
-  butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "M");
-  butt[12]->callback(status_options_cb, (void *)"M");
-  butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
+  _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "M");
+  _butt[12]->callback(status_options_cb, (void *)"M");
+  _butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
   x += sw;
-  butt[13] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
-  butt[13]->callback(status_options_cb, (void *)"clscale");
-  butt[13]->tooltip("Change mesh element size factor");
+  _butt[13] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
+  _butt[13]->callback(status_options_cb, (void *)"clscale");
+  _butt[13]->tooltip("Change mesh element size factor");
   x += sw;
-  butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
-  butt[9]->callback(status_options_cb, (void *)"S");
-  butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
+  _butt[9] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "S");
+  _butt[9]->callback(status_options_cb, (void *)"S");
+  _butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
   x += sw;
-  butt[6] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
-  butt[6]->callback(status_rewind_cb);
-  butt[6]->tooltip("Rewind animation");
-  butt[6]->deactivate();
+  _butt[6] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rewind");
+  _butt[6]->callback(status_rewind_cb);
+  _butt[6]->tooltip("Rewind animation");
+  _butt[6]->deactivate();
   x += sw;
-  butt[10] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
-  butt[10]->callback(status_stepbackward_cb);
-  butt[10]->tooltip("Step backward");
-  butt[10]->deactivate();
+  _butt[10] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
+  _butt[10]->callback(status_stepbackward_cb);
+  _butt[10]->tooltip("Step backward");
+  _butt[10]->deactivate();
   x += sw;
-  butt[7] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
-  butt[7]->callback(status_play_cb);
-  butt[7]->tooltip("Play/pause animation");
-  butt[7]->deactivate();
+  _butt[7] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
+  _butt[7]->callback(status_play_cb);
+  _butt[7]->tooltip("Play/pause animation");
+  _butt[7]->deactivate();
   x += sw;
-  butt[11] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
-  butt[11]->callback(status_stepforward_cb);
-  butt[11]->tooltip("Step forward");
-  butt[11]->deactivate();
+  _butt[11] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
+  _butt[11]->callback(status_stepforward_cb);
+  _butt[11]->tooltip("Step forward");
+  _butt[11]->deactivate();
   x += sw;
 
   for(int i = 0; i < 14; i++) {
-    butt[i]->box(FL_FLAT_BOX);
-    butt[i]->selection_color(FL_WHITE);
-    butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    _butt[i]->box(FL_FLAT_BOX);
+    _butt[i]->selection_color(FL_WHITE);
+    _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
   x += 2;
-  label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
-  label->box(FL_THIN_DOWN_BOX);
-  label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
+  _label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
+  _label->box(FL_THIN_DOWN_BOX);
+  _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  _label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
 
   // dummy resizable box
   dummyBox *resbox = new dummyBox(x, mh, width - x, glheight);
-  win->resizable(resbox);
+  _win->resizable(resbox);
 
   // set mininum window size
-  minWidth = x;
-  minHeight = 100;
-  win->size_range(minWidth, minHeight);
+  _minWidth = x;
+  _minHeight = 100;
+  _win->size_range(_minWidth, _minHeight);
 
   // tiled windows (tree menu, opengl, messages)
-  tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
+  _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
 
   int w2 = glwidth / 2, h2 = glheight / 2;
   if(numTiles == 2){
@@ -2876,178 +2878,178 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
 
   if(main){
-    browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
-    browser->box(FL_THIN_DOWN_BOX);
-    browser->textfont(FL_COURIER);
-    browser->textsize(FL_NORMAL_SIZE - 1);
-    browser->type(FL_MULTI_BROWSER);
-    browser->callback(message_browser_cb, this);
-    browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
+    _browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
+    _browser->box(FL_THIN_DOWN_BOX);
+    _browser->textfont(FL_COURIER);
+    _browser->textsize(FL_NORMAL_SIZE - 1);
+    _browser->type(FL_MULTI_BROWSER);
+    _browser->callback(message_browser_cb, this);
+    _browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
   }
   else{
-    browser = 0;
+    _browser = 0;
   }
 
   if(main && !detachedMenu){
-    onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
+    _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
   }
   else{
-    onelab = 0;
+    _onelab = 0;
   }
 
-  tile->end();
+  _tile->end();
 
   // resize the tiles to match the prescribed sizes
-  tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
+  _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
   _savedMessageHeight = CTX::instance()->msgSize;
 
   int minw = 3 * BB/2 + 4 * WB;
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
-  tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
+  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
   _savedMenuWidth = CTX::instance()->menuSize[0];
 
-  win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
-  win->end();
+  _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
+  _win->end();
 
   if(main && detachedMenu){
-    menuwin = new mainWindow
+    _menuwin = new mainWindow
       (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
        CTX::instance()->nonModalWindows ? true : false, "Gmsh");
-    menuwin->callback(file_quit_cb);
-    menuwin->box(GMSH_WINDOW_BOX);
-    onelab = new onelabGroup(0, 0, menuwin->w(), menuwin->h());
-    menuwin->position(CTX::instance()->menuPosition[0],
-                      CTX::instance()->menuPosition[1]);
-    menuwin->resizable(onelab);
-    menuwin->size_range(onelab->getMinWindowWidth(), onelab->getMinWindowHeight());
-    menuwin->end();
+    _menuwin->callback(file_quit_cb);
+    _menuwin->box(GMSH_WINDOW_BOX);
+    _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
+    _menuwin->position(CTX::instance()->menuPosition[0],
+                       CTX::instance()->menuPosition[1]);
+    _menuwin->resizable(_onelab);
+    _menuwin->size_range(_onelab->getMinWindowWidth(), _onelab->getMinWindowHeight());
+    _menuwin->end();
   }
   else{
-    menuwin = 0;
+    _menuwin = 0;
   }
 }
 
 graphicWindow::~graphicWindow()
 {
   openglWindow::setLastHandled(0);
-  tile->clear();
-  win->clear();
-  Fl::delete_widget(win);
+  _tile->clear();
+  _win->clear();
+  Fl::delete_widget(_win);
 }
 
 void graphicWindow::setTitle(std::string str)
 {
   _title = str;
-  win->label(_title.c_str());
+  _win->label(_title.c_str());
 }
 
 void graphicWindow::detachMenu()
 {
-  if(menuwin || !onelab || !browser) return;
-  if(browser->h() == 0) resizeMessages(1);
-  int w = onelab->w();
-  tile->remove(onelab);
-  browser->resize(0, browser->y(), browser->w() + w, browser->h());
+  if(_menuwin || !_onelab || !_browser) return;
+  if(_browser->h() == 0) resizeMessages(1);
+  int w = _onelab->w();
+  _tile->remove(_onelab);
+  _browser->resize(0, _browser->y(), _browser->w() + w, _browser->h());
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->x() == w)
       gl[i]->resize(0, gl[i]->y(), gl[i]->w() + w, gl[i]->h());
   }
-  tile->redraw();
+  _tile->redraw();
 
-  menuwin = new mainWindow
+  _menuwin = new mainWindow
     (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
      CTX::instance()->nonModalWindows ? true : false, "Gmsh");
-  menuwin->callback(file_quit_cb);
-  menuwin->box(GMSH_WINDOW_BOX);
-  menuwin->add(onelab);
-  onelab->resize(0, 0, menuwin->w(), menuwin->h());
-  menuwin->position(CTX::instance()->menuPosition[0],
-                    CTX::instance()->menuPosition[1]);
-  menuwin->resizable(onelab);
-  menuwin->size_range(onelab->getMinWindowWidth(), onelab->getMinWindowHeight());
-  menuwin->end();
-  menuwin->show();
+  _menuwin->callback(file_quit_cb);
+  _menuwin->box(GMSH_WINDOW_BOX);
+  _menuwin->add(_onelab);
+  _onelab->resize(0, 0, _menuwin->w(), _menuwin->h());
+  _menuwin->position(CTX::instance()->menuPosition[0],
+                     CTX::instance()->menuPosition[1]);
+  _menuwin->resizable(_onelab);
+  _menuwin->size_range(_onelab->getMinWindowWidth(), _onelab->getMinWindowHeight());
+  _menuwin->end();
+  _menuwin->show();
 }
 
 void graphicWindow::attachMenu()
 {
-  if(!menuwin || !onelab || !browser) return;
-  menuwin->remove(onelab);
-  menuwin->hide();
-  delete menuwin;
-  menuwin = 0;
-  if(browser->h() == 0) resizeMessages(1);
-  int w = onelab->w();
-  if(browser->w() - w < 0) w = browser->w() / 2;
-  browser->resize(w, browser->y(), browser->w() - w, browser->h());
+  if(!_menuwin || !_onelab || !_browser) return;
+  _menuwin->remove(_onelab);
+  _menuwin->hide();
+  delete _menuwin;
+  _menuwin = 0;
+  if(_browser->h() == 0) resizeMessages(1);
+  int w = _onelab->w();
+  if(_browser->w() - w < 0) w = _browser->w() / 2;
+  _browser->resize(w, _browser->y(), _browser->w() - w, _browser->h());
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->x() == 0)
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
   }
-  tile->add(onelab);
-  onelab->resize(tile->x(), tile->y(), w, tile->h());
-  tile->redraw();
+  _tile->add(_onelab);
+  _onelab->resize(_tile->x(), _tile->y(), w, _tile->h());
+  _tile->redraw();
 }
 
 void graphicWindow::attachDetachMenu()
 {
-  if(menuwin) attachMenu();
+  if(_menuwin) attachMenu();
   else detachMenu();
 }
 
 void graphicWindow::showMenu()
 {
-  if(menuwin || !onelab || !win->shown()) return;
-  if(onelab->w() < 5){
+  if(_menuwin || !_onelab || !_win->shown()) return;
+  if(_onelab->w() < 5){
     int width = _savedMenuWidth;
-    if(width < 5) width = onelab->getMinWindowWidth();
-    int maxw = win->w();
+    if(width < 5) width = _onelab->getMinWindowWidth();
+    int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
-    resizeMenu(width - onelab->w());
+    resizeMenu(width - _onelab->w());
   }
 }
 
 void graphicWindow::hideMenu()
 {
-  if(menuwin || !onelab) return;
-  _savedMenuWidth = onelab->w();
-  resizeMenu(-onelab->w());
+  if(_menuwin || !_onelab) return;
+  _savedMenuWidth = _onelab->w();
+  resizeMenu(-_onelab->w());
 }
 
 void graphicWindow::showHideMenu()
 {
-  if(menuwin || !onelab) return;
-  if(onelab->w() < 5) showMenu();
+  if(_menuwin || !_onelab) return;
+  if(_onelab->w() < 5) showMenu();
   else hideMenu();
 }
 
 int graphicWindow::getMenuWidth()
 {
-  if(!onelab) return 0;
-  return onelab->w();
+  if(!_onelab) return 0;
+  return _onelab->w();
 }
 
 int graphicWindow::getMenuHeight()
 {
-  if(!menuwin) return 0;
-  return menuwin->h();
+  if(!_menuwin) return 0;
+  return _menuwin->h();
 }
 
 int graphicWindow::getMenuPositionX()
 {
-  if(!menuwin) return 0;
-  return menuwin->x();
+  if(!_menuwin) return 0;
+  return _menuwin->x();
 }
 
 int graphicWindow::getMenuPositionY()
 {
-  if(!menuwin) return 0;
-  return menuwin->y();
+  if(!_menuwin) return 0;
+  return _menuwin->y();
 }
 
-void graphicWindow::split(openglWindow *g, char how)
+bool graphicWindow::split(openglWindow *g, char how)
 {
-  if(tile->find(g) == tile->children()) return;
+  if(_tile->find(g) == _tile->children()) return false; // not found
 
   if(how == 'u'){
     // after many tries I cannot figure out how to do this cleanly, so let's be
@@ -3055,24 +3057,24 @@ void graphicWindow::split(openglWindow *g, char how)
     int mode = g->mode();
     openglWindow::setLastHandled(0);
     for(unsigned int i = 0; i < gl.size(); i++){
-      tile->remove(gl[i]);
+      _tile->remove(gl[i]);
       delete gl[i];
     }
     gl.clear();
     openglWindow *g2 = new openglWindow
-      (tile->x() + (onelab && !menuwin ? onelab->w() : 0),
-       tile->y(),
-       tile->w() - (onelab && !menuwin ? onelab->w() : 0),
-       tile->h() - (browser ? browser->h() : 0));
+      (_tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0),
+       _tile->y(),
+       _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
+       _tile->h() - (_browser ? _browser->h() : 0));
     g2->end();
     g2->mode(mode);
     gl.push_back(g2);
-    tile->add(g2);
+    _tile->add(g2);
     g2->show();
   }
   else{
     // make sure browser is not zero-size when adding children
-    if(browser && browser->h() == 0) resizeMessages(1);
+    if(_browser && _browser->h() == 0) resizeMessages(1);
     int x1 = g->x();
     int y1 = g->y();
     int w1 = (how == 'h') ? g->w() / 2 : g->w();
@@ -3088,23 +3090,45 @@ void graphicWindow::split(openglWindow *g, char how)
     g2->mode(g->mode());
 
     gl.push_back(g2);
-    tile->add(g2);
+    _tile->add(g2);
     g2->show();
 
     g->resize(x1, y1, w1, h1);
     g2->resize(x2, y2, w2, h2);
   }
+  return true;
+}
+
+void graphicWindow::setStereo()
+{
+  openglWindow::setLastHandled(0);
+  for(unsigned int i = 0; i < gl.size(); i++){
+    _tile->remove(gl[i]);
+    delete gl[i];
+  }
+  gl.clear();
+  openglWindow *g2 = new openglWindow
+    (_tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0),
+     _tile->y(),
+     _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
+     _tile->h() - (_browser ? _browser->h() : 0));
+  g2->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
+  g2->end();
+  gl.push_back(g2);
+  _tile->add(g2);
+  g2->show();
+  Msg::Info("new gl window for stereo vision!");
 }
 
 void graphicWindow::setAnimButtons(int mode)
 {
   if(mode) {
-    butt[7]->callback(status_play_cb);
-    butt[7]->label("@-1gmsh_play");
+    _butt[7]->callback(status_play_cb);
+    _butt[7]->label("@-1gmsh_play");
   }
   else {
-    butt[7]->callback(status_pause_cb);
-    butt[7]->label("@-1gmsh_pause");
+    _butt[7]->callback(status_pause_cb);
+    _butt[7]->label("@-1gmsh_pause");
   }
 }
 
@@ -3123,105 +3147,122 @@ void graphicWindow::checkAnimButtons()
     }
   }
   if(play){
-    butt[6]->activate();
-    butt[7]->activate();
-    butt[10]->activate();
-    butt[11]->activate();
+    _butt[6]->activate();
+    _butt[7]->activate();
+    _butt[10]->activate();
+    _butt[11]->activate();
   }
   else{
-    butt[6]->deactivate();
-    butt[7]->deactivate();
-    butt[10]->deactivate();
-    butt[11]->deactivate();
+    _butt[6]->deactivate();
+    _butt[7]->deactivate();
+    _butt[10]->deactivate();
+    _butt[11]->deactivate();
   }
 }
 
 void graphicWindow::resizeMenu(int dh)
 {
-  if(menuwin || !onelab) return;
+  if(_menuwin || !_onelab) return;
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == onelab->x() + onelab->w())
+    if(gl[i]->x() == _onelab->x() + _onelab->w())
       gl[i]->resize(gl[i]->x() + dh, gl[i]->y(), gl[i]->w() - dh, gl[i]->h());
   }
-  onelab->resize(onelab->x(), onelab->y(), onelab->w() + dh, onelab->h());
-  onelab->redraw();
+  _onelab->resize(_onelab->x(), _onelab->y(), _onelab->w() + dh, _onelab->h());
+  _onelab->redraw();
 }
 
 int graphicWindow::getGlHeight()
 {
-  int h = win->h() - bottom->h(); // yes, ignore message browser
-  if(bar) h -= bar->h();
+  int h = _win->h() - _bottom->h(); // yes, ignore message browser
+  if(_bar) h -= _bar->h();
   return h;
 }
 
 int graphicWindow::getGlWidth()
 {
-  return win->w();
+  return _win->w();
+}
+
+void graphicWindow::setGlWidth(int w)
+{
+  _win->size(w, _win->h());
+  // workaround resizing bug on Mac
+  _win->size_range(_minWidth, _minHeight);
+}
+
+void graphicWindow::setGlHeight(int h)
+{
+  int hh = h + _bottom->h();
+  if(_bar) hh += _bar->h();
+  _win->size(_win->w(), h);
+  // workaround resizing bug on Mac
+  _win->size_range(_minWidth, _minHeight);
 }
 
 void graphicWindow::resizeMessages(int dh)
 {
-  if(!browser) return;
+  if(!_browser) return;
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->y() + gl[i]->h() == browser->y())
+    if(gl[i]->y() + gl[i]->h() == _browser->y())
       gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
   }
-  browser->resize(browser->x(), browser->y() - dh, browser->w(), browser->h() + dh);
-  browser->redraw();
+  _browser->resize(_browser->x(), _browser->y() - dh,
+                   _browser->w(), _browser->h() + dh);
+  _browser->redraw();
 }
 
 void graphicWindow::showMessages()
 {
-  if(!browser || !win->shown()) return;
-  if(browser->h() < 5){
+  if(!_browser || !_win->shown()) return;
+  if(_browser->h() < 5){
     int height = _savedMessageHeight;
     if(height < 5) height = 50;
-    int maxh = win->h() - bottom->h();
+    int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
-    resizeMessages(height - browser->h());
+    resizeMessages(height - _browser->h());
   }
   if(_autoScrollMessages)
-    browser->bottomline(browser->size());
+    _browser->bottomline(_browser->size());
 }
 
 void graphicWindow::hideMessages()
 {
-  if(!browser) return;
-  _savedMessageHeight = browser->h();
-  resizeMessages(-browser->h());
+  if(!_browser) return;
+  _savedMessageHeight = _browser->h();
+  resizeMessages(-_browser->h());
 }
 
 void graphicWindow::showHideMessages()
 {
-  if(!browser) return;
-  if(browser->h() < 5) showMessages();
+  if(!_browser) return;
+  if(_browser->h() < 5) showMessages();
   else hideMessages();
 }
 
 int graphicWindow::getMessageHeight()
 {
-  if(!browser) return 0;
-  if(!browser->h()) return _savedMessageHeight;
-  return browser->h();
+  if(!_browser) return 0;
+  if(!_browser->h()) return _savedMessageHeight;
+  return _browser->h();
 }
 
 void graphicWindow::addMessage(const char *msg)
 {
-  if(!browser) return;
-  browser->add(msg, 0);
-  if(_autoScrollMessages && win->shown() && browser->h() >= 10)
-    browser->bottomline(browser->size());
+  if(!_browser) return;
+  _browser->add(msg, 0);
+  if(_autoScrollMessages && _win->shown() && _browser->h() >= 10)
+    _browser->bottomline(_browser->size());
 }
 
 void graphicWindow::clearMessages()
 {
-  if(!browser) return;
-  browser->clear();
+  if(!_browser) return;
+  _browser->clear();
 }
 
 void graphicWindow::saveMessages(const char *filename)
 {
-  if(!browser) return;
+  if(!_browser) return;
 
   FILE *fp = fopen(filename, "w");
 
@@ -3231,8 +3272,8 @@ void graphicWindow::saveMessages(const char *filename)
   }
 
   Msg::StatusBar(true, "Writing '%s'...", filename);
-  for(int i = 1; i <= browser->size(); i++) {
-    const char *c = browser->text(i);
+  for(int i = 1; i <= _browser->size(); i++) {
+    const char *c = _browser->text(i);
     if(c[0] == '@')
       fprintf(fp, "%s\n", &c[5]);
     else
@@ -3244,12 +3285,12 @@ void graphicWindow::saveMessages(const char *filename)
 
 void graphicWindow::copySelectedMessagesToClipboard()
 {
-  if(!browser) return;
+  if(!_browser) return;
 
   std::string buff;
-  for(int i = 1; i <= browser->size(); i++) {
-    if(browser->selected(i)) {
-      const char *c = browser->text(i);
+  for(int i = 1; i <= _browser->size(); i++) {
+    if(_browser->selected(i)) {
+      const char *c = _browser->text(i);
       if(strlen(c) > 5 && c[0] == '@')
         buff += std::string(&c[5]);
       else
@@ -3265,7 +3306,7 @@ void graphicWindow::copySelectedMessagesToClipboard()
 void graphicWindow::fillRecentHistoryMenu()
 {
 #if defined(__APPLE__)
-  if(CTX::instance()->systemMenuBar && !sysbar)
+  if(CTX::instance()->systemMenuBar && !_sysbar)
     return;
 #endif
 
@@ -3282,7 +3323,7 @@ void graphicWindow::fillRecentHistoryMenu()
 
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar)
-    sysbar->menu(table);
+    _sysbar->menu(table);
 #endif
 }
 
