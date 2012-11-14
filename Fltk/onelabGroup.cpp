@@ -786,6 +786,9 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
 
+  _minWindowWidth = 3 * BB2 + 4 * WB;
+  _minWindowHeight = 2 * BH + 3 * WB;
+
   _gearOptionsStart = _gear->menu()->size();
 
   _gear->add("Save && load database automatically", 0, onelab_option_cb, (void*)"save",

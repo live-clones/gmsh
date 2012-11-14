@@ -1847,13 +1847,48 @@ double opt_general_message_size(OPT_ARGS_NUM)
   return CTX::instance()->msgSize;
 }
 
-double opt_general_menu_size(OPT_ARGS_NUM)
+double opt_general_detached_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    CTX::instance()->menuSize = (int)val;
-    if(CTX::instance()->menuSize < 0) CTX::instance()->menuSize = 0;
+    CTX::instance()->detachedMenu = (int)val;
   }
-  return CTX::instance()->menuSize;
+  return CTX::instance()->detachedMenu;
+}
+
+double opt_general_menu_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->menuSize[0] = (int)val;
+    if(CTX::instance()->menuSize[0] < 0) CTX::instance()->menuSize[0] = 0;
+  }
+  return CTX::instance()->menuSize[0];
+}
+
+double opt_general_menu_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->menuSize[1] = (int)val;
+    if(CTX::instance()->menuSize[1] < 0) CTX::instance()->menuSize[1] = 300;
+  }
+  return CTX::instance()->menuSize[1];
+}
+
+double opt_general_menu_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->menuPosition[0] = (int)val;
+    if(CTX::instance()->menuPosition[0] < 0) CTX::instance()->menuPosition[0] = 0;
+  }
+  return CTX::instance()->menuPosition[0];
+}
+
+double opt_general_menu_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->menuPosition[1] = (int)val;
+    if(CTX::instance()->menuPosition[1] < 0) CTX::instance()->menuPosition[1] = 300;
+  }
+  return CTX::instance()->menuPosition[1];
 }
 
 double opt_general_option_position0(OPT_ARGS_NUM)

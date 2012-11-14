@@ -27,7 +27,7 @@ class graphicWindow{
   int _savedMessageHeight, _savedMenuWidth;
   bool _autoScrollMessages;
  public:
-  Fl_Window *win;
+  Fl_Window *win, *menuwin;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *sysbar;
 #endif
@@ -41,29 +41,38 @@ class graphicWindow{
   Fl_Progress *label;
   int minWidth, minHeight;
  public:
-  graphicWindow(bool main=true, int numTiles=1, bool detachTree=false);
+  graphicWindow(bool main=true, int numTiles=1, bool detachedMenu=false);
   ~graphicWindow();
   void setTitle(std::string str);
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
   bool getAutoScroll(){ return _autoScrollMessages; }
   int getGlHeight();
   int getGlWidth();
-  int getMessageHeight();
+  void resizeMenu(int dh);
+  void showMenu();
+  void hideMenu();
+  void showHideMenu();
+  bool isMenuDetached(){ return menuwin ? true : false; }
+  int getMenuWidth();
+  int getMenuHeight();
+  int getMenuPositionX();
+  int getMenuPositionY();
+  void detachMenu();
+  void attachMenu();
+  void attachDetachMenu();
   void split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
+  void resizeMessages(int dh);
   void showMessages();
   void hideMessages();
-  void resizeMessages(int dh);
+  void showHideMessages();
   void addMessage(const char *msg);
   void clearMessages();
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
+  int getMessageHeight();
   void fillRecentHistoryMenu();
-  void resizeMenu(int dh);
-  void showMenu();
-  void hideMenu();
-  int getMenuWidth();
 };
 
 void file_quit_cb(Fl_Widget *w, void *data);
@@ -82,7 +91,8 @@ void help_about_cb(Fl_Widget *w, void *data);
 void status_xyz1p_cb(Fl_Widget *w, void *data);
 void status_options_cb(Fl_Widget *w, void *data);
 void status_play_manual(int time, int incr, bool redraw=true);
-void message_cb(Fl_Widget *w, void *data);
-void menu_cb(Fl_Widget *w, void *data);
+void show_hide_message_cb(Fl_Widget *w, void *data);
+void show_hide_menu_cb(Fl_Widget *w, void *data);
+void attach_detach_menu_cb(Fl_Widget *w, void *data);
 
 #endif

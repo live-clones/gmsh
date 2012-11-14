@@ -239,7 +239,8 @@ FlGui::FlGui(int argc, char **argv)
   // all the windows are contructed (even if some are not displayed) since the
   // shortcuts should be valid even for hidden windows, and we don't want to
   // test for widget existence every time
-  graph.push_back(new graphicWindow(true, CTX::instance()->numTiles));
+  graph.push_back(new graphicWindow(true, CTX::instance()->numTiles,
+                                    CTX::instance()->detachedMenu ? true : false));
 
   // FIXME: make this cleaner ;-)
   onelab = graph.back()->onelab;
@@ -375,7 +376,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_CTRL + 't') || Fl::test_shortcut(FL_META + 't')){
-    menu_cb(0, 0);
+    show_hide_menu_cb(0, 0);
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
@@ -812,7 +813,15 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
   CTX::instance()->msgSize = graph[0]->getMessageHeight();
-  CTX::instance()->menuSize = graph[0]->getMenuWidth();
+  CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
+  if(graph[0]->isMenuDetached()){
+    CTX::instance()->detachedMenu = 1;
+    CTX::instance()->menuSize[1] = graph[0]->getMenuHeight();
+    CTX::instance()->menuPosition[0] = graph[0]->getMenuPositionX();
+    CTX::instance()->menuPosition[1] = graph[0]->getMenuPositionY();
+  }
+  else
+    CTX::instance()->detachedMenu = 0;
   CTX::instance()->optPosition[0] = options->win->x();
   CTX::instance()->optPosition[1] = options->win->y();
   CTX::instance()->pluginPosition[0] = plugins->win->x();

@@ -2072,7 +2072,7 @@ static Fl_Menu_Item bar_table[] = {
     {"&3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
-    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
+    {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)show_hide_message_cb, 0},
     {0},
   {"&Window", 0, 0, 0, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
@@ -2081,6 +2081,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom", FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
@@ -2135,7 +2136,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"3M",              0, (Fl_Callback *)window3M_cb, 0, FL_MENU_DIVIDER},
 #endif
     {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
-    {"Message Console", FL_META+'l', (Fl_Callback *)message_cb, 0},
+    {"Message Console", FL_META+'l', (Fl_Callback *)show_hide_message_cb, 0},
     {0},
   {"Window", 0, 0, 0, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
@@ -2144,6 +2145,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
     {"Minimize",           FL_META+'m', (Fl_Callback *)window_cb, (void*)"minimize"},
     {"Zoom",               0, (Fl_Callback *)window_cb, (void*)"zoom", FL_MENU_DIVIDER},
+    {"Attach/Detach Menu", FL_META+'d', (Fl_Callback *)attach_detach_menu_cb, 0, FL_MENU_DIVIDER},
     {"Bring All to Front", 0, (Fl_Callback *)window_cb, (void*)"front"},
     {0},
   {"Help", 0, 0, 0, FL_SUBMENU},
@@ -2587,27 +2589,27 @@ static void remove_graphic_window_cb(Fl_Widget *w, void *data)
   }
 }
 
-void message_cb(Fl_Widget *w, void *data)
+void show_hide_message_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
-  if(!g->browser) return;
-  if(g->browser->h())
-    g->hideMessages();
-  else
-    g->showMessages();
+  g->showHideMessages();
   FlGui::check();
 }
 
-void menu_cb(Fl_Widget *w, void *data)
+void show_hide_menu_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
-  if(!g->onelab) return;
-  if(g->onelab->w())
-    g->hideMenu();
-  else
-    g->showMenu();
+  g->showHideMenu();
+  FlGui::check();
+}
+
+void attach_detach_menu_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = getGraphicWindow
+    (FlGui::instance()->getCurrentOpenglWindow()->parent());
+  g->attachDetachMenu();
   FlGui::check();
 }
 
@@ -2660,7 +2662,7 @@ class dummyBox : public Fl_Box {
   dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
 };
 
-graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
+graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   : _autoScrollMessages(true)
 {
   static bool first = true;
@@ -2696,7 +2698,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
     CTX::instance()->glSize[1] = glheight;
   }
 
-  int twidth = (main && !detachTree) ? 14 * sw : 0;
+  int twidth = (main && !detachedMenu) ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
   int width = glwidth + twidth;
   // make sure width < screen width
@@ -2886,12 +2888,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
     browser = 0;
   }
 
-  if(main){
-    if(!detachTree)
-      onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
-    else{
-      // create new win containing the onelab group
-    }
+  if(main && !detachedMenu){
+    onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
   }
   else{
     onelab = 0;
@@ -2903,13 +2901,31 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachTree)
   tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
   _savedMessageHeight = CTX::instance()->msgSize;
 
-  // should we allow a zero-sized menu?
-  if(CTX::instance()->menuSize < 10) CTX::instance()->menuSize = 10;
-  tile->position(twidth, 0, CTX::instance()->menuSize, 0);
-  _savedMenuWidth = CTX::instance()->menuSize;
+  if(CTX::instance()->menuSize[0] < onelab->getMinWindowWidth())
+    CTX::instance()->menuSize[0] = onelab->getMinWindowWidth();
+  tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
+  _savedMenuWidth = CTX::instance()->menuSize[0];
 
   win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   win->end();
+
+  if(main && detachedMenu){
+    menuwin = new mainWindow
+      (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
+       CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+    menuwin->callback(file_quit_cb);
+    menuwin->box(GMSH_WINDOW_BOX);
+    onelab = new onelabGroup(0, 0, menuwin->w(), menuwin->h());
+    menuwin->position(CTX::instance()->menuPosition[0],
+                      CTX::instance()->menuPosition[1]);
+    menuwin->resizable(onelab);
+    menuwin->size_range(onelab->getMinWindowWidth(), onelab->getMinWindowHeight());
+    menuwin->end();
+    menuwin->show();
+  }
+  else{
+    menuwin = 0;
+  }
 }
 
 graphicWindow::~graphicWindow()
@@ -2926,6 +2942,111 @@ void graphicWindow::setTitle(std::string str)
   win->label(_title.c_str());
 }
 
+void graphicWindow::detachMenu()
+{
+  if(menuwin || !onelab || !browser) return;
+  if(browser->h() == 0) resizeMessages(1);
+  int w = onelab->w();
+  tile->remove(onelab);
+  // make sure browser is not zero-size when adding children
+  browser->resize(0, browser->y(), browser->w() + w, browser->h());
+  for(unsigned int i = 0; i < gl.size(); i++){
+    if(gl[i]->x() == w)
+      gl[i]->resize(0, gl[i]->y(), gl[i]->w() + w, gl[i]->h());
+  }
+  tile->redraw();
+
+  menuwin = new mainWindow
+    (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
+     CTX::instance()->nonModalWindows ? true : false, "Gmsh");
+  menuwin->callback(file_quit_cb);
+  menuwin->box(GMSH_WINDOW_BOX);
+  menuwin->add(onelab);
+  onelab->resize(0, 0, menuwin->w(), menuwin->h());
+  menuwin->position(CTX::instance()->menuPosition[0],
+                    CTX::instance()->menuPosition[1]);
+  menuwin->resizable(onelab);
+  menuwin->size_range(onelab->getMinWindowWidth(), onelab->getMinWindowHeight());
+  menuwin->end();
+  menuwin->show();
+}
+
+void graphicWindow::attachMenu()
+{
+  if(!menuwin || !onelab || !browser) return;
+  menuwin->remove(onelab);
+  menuwin->hide();
+  delete menuwin;
+  menuwin = 0;
+  if(browser->h() == 0) resizeMessages(1);
+  int w = onelab->w();
+  if(browser->w() - w < 0) w = browser->w() / 2;
+  browser->resize(w, browser->y(), browser->w() - w, browser->h());
+  for(unsigned int i = 0; i < gl.size(); i++){
+    if(gl[i]->x() == 0)
+      gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
+  }
+  tile->add(onelab);
+  onelab->resize(0, 0, w, tile->h());
+  tile->redraw();
+}
+
+void graphicWindow::attachDetachMenu()
+{
+  if(menuwin) attachMenu();
+  else detachMenu();
+}
+
+void graphicWindow::showMenu()
+{
+  if(menuwin || !onelab || !win->shown()) return;
+  if(onelab->w() < 5){
+    int width = _savedMenuWidth;
+    if(width < 5) width = onelab->getMinWindowWidth();
+    int maxw = win->w();
+    if(width > maxw) width = maxw / 2;
+    resizeMenu(width - onelab->w());
+  }
+}
+
+void graphicWindow::hideMenu()
+{
+  if(menuwin || !onelab) return;
+  _savedMenuWidth = onelab->w();
+  resizeMenu(-onelab->w());
+}
+
+void graphicWindow::showHideMenu()
+{
+  if(menuwin || !onelab) return;
+  if(onelab->w()) hideMenu();
+  else showMenu();
+}
+
+int graphicWindow::getMenuWidth()
+{
+  if(!onelab) return 0;
+  return onelab->w();
+}
+
+int graphicWindow::getMenuHeight()
+{
+  if(!menuwin) return 0;
+  return menuwin->h();
+}
+
+int graphicWindow::getMenuPositionX()
+{
+  if(!menuwin) return 0;
+  return menuwin->x();
+}
+
+int graphicWindow::getMenuPositionY()
+{
+  if(!menuwin) return 0;
+  return menuwin->y();
+}
+
 void graphicWindow::split(openglWindow *g, char how)
 {
   if(tile->find(g) == tile->children()) return;
@@ -2940,10 +3061,11 @@ void graphicWindow::split(openglWindow *g, char how)
       delete gl[i];
     }
     gl.clear();
-    openglWindow *g2 = new openglWindow(tile->x() + (onelab ? onelab->w() : 0),
-                                        tile->y(),
-                                        tile->w() - (onelab ? onelab->w() : 0),
-                                        tile->h() - (browser ? browser->h() : 0));
+    openglWindow *g2 = new openglWindow
+      (tile->x() + (onelab && !menuwin ? onelab->w() : 0),
+       tile->y(),
+       tile->w() - (onelab && !menuwin ? onelab->w() : 0),
+       tile->h() - (browser ? browser->h() : 0));
     g2->end();
     g2->mode(mode);
     gl.push_back(g2);
@@ -3018,7 +3140,7 @@ void graphicWindow::checkAnimButtons()
 
 void graphicWindow::resizeMenu(int dh)
 {
-  if(!onelab) return;
+  if(menuwin || !onelab) return;
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->x() == onelab->x() + onelab->w())
       gl[i]->resize(gl[i]->x() + dh, gl[i]->y(), gl[i]->w() - dh, gl[i]->h());
@@ -3037,31 +3159,6 @@ int graphicWindow::getGlHeight()
 int graphicWindow::getGlWidth()
 {
   return win->w();
-}
-
-void graphicWindow::showMenu()
-{
-  if(!onelab || !win->shown()) return;
-  if(onelab->w() < 5){
-    int width = _savedMenuWidth;
-    if(width < 5) width = 200;
-    int maxw = win->w();
-    if(width > maxw) width = maxw / 2;
-    resizeMenu(width - onelab->w());
-  }
-}
-
-void graphicWindow::hideMenu()
-{
-  if(!onelab) return;
-  _savedMenuWidth = onelab->w();
-  resizeMenu(-onelab->w());
-}
-
-int graphicWindow::getMenuWidth()
-{
-  if(!onelab) return 0;
-  return onelab->w();
 }
 
 void graphicWindow::resizeMessages(int dh)
@@ -3094,6 +3191,13 @@ void graphicWindow::hideMessages()
   if(!browser) return;
   _savedMessageHeight = browser->h();
   resizeMessages(-browser->h());
+}
+
+void graphicWindow::showHideMessages()
+{
+  if(!browser) return;
+  if(browser->h()) hideMessages();
+  else showMessages();
 }
 
 int graphicWindow::getMessageHeight()

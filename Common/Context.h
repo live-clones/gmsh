@@ -103,7 +103,7 @@ class CTX {
   // show tootips in the GUI?
   int tooltips;
   // position and size of various windows in the GUI
-  int glPosition[2], glSize[2], msgSize, menuSize;
+  int glPosition[2], glSize[2], msgSize, menuPosition[2], menuSize[2], detachedMenu;
   int optPosition[2], visPosition[2], hotPosition[2], clipPosition[2], manipPosition[2];
   int statPosition[2], ctxPosition[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];

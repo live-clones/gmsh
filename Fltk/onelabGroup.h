@@ -27,6 +27,7 @@ class onelabGroup : public Fl_Group{
   std::string _title;
   bool _stop;
   int _baseWidth, _indent;
+  int _minWindowWidth, _minWindowHeight;
   std::set<std::string> _manuallyClosed;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
@@ -51,6 +52,8 @@ class onelabGroup : public Fl_Group{
   void setButtonVisibility();
   void setButtonMode(const std::string &butt0, const std::string &butt1);
   bool isBusy();
+  int getMinWindowWidth(){ return _minWindowWidth; }
+  int getMinWindowHeight(){ return _minWindowHeight; }
   std::string getPath(Fl_Tree_Item *item)
   {
     char path[1024];
