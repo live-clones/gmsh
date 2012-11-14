@@ -772,7 +772,7 @@ void window_cb(Fl_Widget *w, void *data)
 #ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
       FlGui::instance()->graph[0]->hideMessages();
-      FlGui::check();
+      FlGui::instance()->graph[0]->getWindow()->redraw();
 #else
       FlGui::instance()->graph[0]->getWindow()->fullscreen();
 #endif
@@ -781,6 +781,7 @@ void window_cb(Fl_Widget *w, void *data)
     else{
 #ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
+      FlGui::instance()->graph[0]->getWindow()->redraw();
 #else
       FlGui::instance()->graph[0]->getWindow()->fullscreen_off();
 #endif
