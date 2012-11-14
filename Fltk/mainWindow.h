@@ -8,10 +8,10 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/fl_ask.H>
 
 // Derive the main window from Fl_Window (it shows up faster that way)
 class mainWindow : public Fl_Window {
-  void (*myhandle)(int event);
  private:
   int handle(int event)
   {
@@ -25,7 +25,8 @@ class mainWindow : public Fl_Window {
 #else
       if(Fl::test_shortcut(FL_CTRL+'w')){
 #endif
-        do_callback();
+        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
+          do_callback();
         return 1;
       }
       break;
@@ -33,8 +34,8 @@ class mainWindow : public Fl_Window {
     return Fl_Window::handle(event);
   }
  public:
-  mainWindow(int w, int h, bool nonModal, const char *l=0)
-    : Fl_Window(w, h, l)
+  mainWindow(int w, int h, bool nonModal, const char *l=0) 
+    : Fl_Window(w, h, l) 
   {
     if(nonModal) set_non_modal();
   }

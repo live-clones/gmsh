@@ -479,12 +479,6 @@ static void file_rename_cb(Fl_Widget *w, void *data)
 
 void file_quit_cb(Fl_Widget *w, void *data)
 {
-  if(data){
-    std::string opt((const char*)data);
-    if(opt == "ask")
-      if(!fl_choice("Do you really want to quit?", "Cancel", "Quit", 0))
-        return;
-  }
   Msg::Exit(0);
 }
 
@@ -2718,7 +2712,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // non-modal)
   if(main){
     win = new mainWindow(width, height, false);
-    win->callback(file_quit_cb, (void*)"ask");
+    win->callback(file_quit_cb);
   }
   else{
     win = new paletteWindow(width, height, false);
@@ -2916,10 +2910,10 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   win->end();
 
   if(main && detachedMenu){
-    menuwin = new paletteWindow
+    menuwin = new mainWindow
       (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
        CTX::instance()->nonModalWindows ? true : false, "Gmsh");
-    menuwin->callback(file_quit_cb, (void*)"ask");
+    menuwin->callback(file_quit_cb);
     menuwin->box(GMSH_WINDOW_BOX);
     onelab = new onelabGroup(0, 0, menuwin->w(), menuwin->h());
     menuwin->position(CTX::instance()->menuPosition[0],
@@ -2961,10 +2955,10 @@ void graphicWindow::detachMenu()
   }
   tile->redraw();
 
-  menuwin = new paletteWindow
+  menuwin = new mainWindow
     (CTX::instance()->menuSize[0], CTX::instance()->menuSize[1],
      CTX::instance()->nonModalWindows ? true : false, "Gmsh");
-  menuwin->callback(file_quit_cb, (void*)"ask");
+  menuwin->callback(file_quit_cb);
   menuwin->box(GMSH_WINDOW_BOX);
   menuwin->add(onelab);
   onelab->resize(0, 0, menuwin->w(), menuwin->h());
