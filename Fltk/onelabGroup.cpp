@@ -1220,6 +1220,8 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n
 
 void onelabGroup::rebuildTree()
 {
+  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+
   _computeWidths();
 
   std::set<std::string> closed = _getClosedGmshMenus();
@@ -1294,6 +1296,8 @@ void onelabGroup::rebuildTree()
     _tree->close(it->c_str(), 0);
 
   _tree->redraw();
+
+  FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
 
   FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
 }
