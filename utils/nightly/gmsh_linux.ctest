@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
-set(CTEST_CMAKE_COMMAND "/usr/local/bin/cmake")
+set(CTEST_CMAKE_COMMAND "/usr/bin/cmake")
 
 set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux")
 
@@ -14,11 +14,11 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 #################################################################################
 set(CTEST_BUILD_NAME "Linux32")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
-set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/med;/usr/local/opencascade;/usr/local")
+set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local")
 set(OPT "${OPT} -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE")
-set(OPT "${OPT} -DPETSC_ARCH=linux_complex_umfpack")
-set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.0.0-p12")
-set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.0.0-p7")
+set(OPT "${OPT} -DPETSC_ARCH=linux_complex_mumps_seq")
+set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.1-p8")
+set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.1-p4")
 set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
 upload_package(${WEB_BIN} Linux "" .tar.gz .tgz)
