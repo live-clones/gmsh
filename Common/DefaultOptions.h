@@ -509,7 +509,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Maximum model coordinate along the Z-axis (read-only)" },
   { F|S, "MenuWidth" , opt_general_menu_size0 , 200. ,
     "Width (in pixels) of the menu tree" },
-  { F|S, "MenuHeight" , opt_general_menu_size1 , 400. ,
+  { F|S, "MenuHeight" , opt_general_menu_size1 , 200. ,
     "Height (in pixels) of the (detached) menu tree" },
   { F|S, "MenuPositionX" , opt_general_menu_position0 , 400. ,
     "Horizontal position (in pixels) of the (detached) menu tree" },
