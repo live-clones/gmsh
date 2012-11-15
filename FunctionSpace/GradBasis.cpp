@@ -4,7 +4,7 @@ using namespace std;
 
 GradBasis::GradBasis(const BasisScalar& other){
   // Set Basis Type //
-  order = other.getOrder();
+  order = other.getOrder() - 1;
   
   type = other.getType();
   dim  = other.getDim();

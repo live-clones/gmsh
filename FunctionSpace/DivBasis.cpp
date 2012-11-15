@@ -4,7 +4,7 @@ using namespace std;
 
 DivBasis::DivBasis(const BasisVector& other){
   // Set Basis Type //
-  order = other.getOrder();
+  order = other.getOrder() - 1;
   
   type = other.getType();
   dim  = other.getDim();
