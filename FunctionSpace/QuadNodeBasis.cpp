@@ -127,6 +127,30 @@ QuadNodeBasis::QuadNodeBasis(int order){
   }
 
 
+  // Mapping to Gmsh Quad //
+  // x = (u + 1) / 2
+  // y = (v + 1) / 2
+  //
+  // (x, y) = Zaglmayr Ref Quad
+  // (u, v) = Gmsh     Ref Quad
+
+  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) + 
+		   Polynomial(0.5, 0, 0, 0));
+
+  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) + 
+		   Polynomial(0.5, 0, 0, 0));
+
+  for(int i = 0; i < nVertex; i++)
+    *(*node)[i] = (*node)[i]->compose(mapX, mapY);
+
+  for(int i = 0; i < nEdgeClosure; i++)
+    for(int j = 0; j < nEdge; j++)
+      *(*(*edge)[i])[j] = (*(*edge)[i])[j]->compose(mapX, mapY);
+
+  for(int i = 0; i < nCell; i++)
+    *(*cell)[i] = (*cell)[i]->compose(mapX, mapY);
+  
+
   // Free Temporary Sapce //
   delete[] legendre;
 }

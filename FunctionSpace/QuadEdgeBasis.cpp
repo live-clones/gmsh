@@ -201,6 +201,33 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   }
 
 
+  // Mapping to Gmsh Quad //
+  // x = (u + 1) / 2
+  // y = (v + 1) / 2
+  //
+  // (x, y) = Zaglmayr Ref Quad
+  // (u, v) = Gmsh     Ref Quad
+
+  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) + 
+		   Polynomial(0.5, 0, 0, 0));
+
+  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) + 
+		   Polynomial(0.5, 0, 0, 0));
+
+  for(int i = 0; i < nEdgeClosure; i++){
+    for(int j = 0; j < nEdge; j++){
+      (*(*edge)[i])[j]->at(0) = (*(*edge)[i])[j]->at(0).compose(mapX, mapY);
+      (*(*edge)[i])[j]->at(1) = (*(*edge)[i])[j]->at(1).compose(mapX, mapY);
+      (*(*edge)[i])[j]->at(2) = (*(*edge)[i])[j]->at(2).compose(mapX, mapY);
+    }
+  }
+
+  for(int i = 0; i < nCell; i++){
+    (*cell)[i]->at(0) = (*cell)[i]->at(0).compose(mapX, mapY);
+    (*cell)[i]->at(1) = (*cell)[i]->at(1).compose(mapX, mapY);
+    (*cell)[i]->at(2) = (*cell)[i]->at(2).compose(mapX, mapY);
+  }
+
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
