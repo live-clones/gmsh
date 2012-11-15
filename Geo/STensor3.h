@@ -305,6 +305,12 @@ class STensor3 {
     return prod;
   }
 
+  double determinant() const{
+    fullMatrix<double> m(3,3);
+    getMat(m);
+    double det = m.determinant();
+    return det;
+  };
   void print(const char *) const;
 };
 
