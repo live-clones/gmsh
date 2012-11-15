@@ -74,7 +74,7 @@ fullMatrix<double> generate1DMonomials(int order);
 class polynomialBasis : public nodalBasis
 {
   // integrationOrder, closureId => df/dXi
-  mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace;
+//  mutable std::map<int,std::vector<fullMatrix<double> > > _dfAtFace;
  public:
   // for now the only implemented polynomial basis are nodal poly
   // basis, we use the type of the corresponding gmsh element as type
@@ -85,372 +85,33 @@ class polynomialBasis : public nodalBasis
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
 
-  void initialize();
+  polynomialBasis(int tag);
+  ~polynomialBasis();
 
-  inline int getNumShapeFunctions() const {return coefficients.size1();}
-  // for a given face/edge, with both a sign and a rotation, give an
-  // ordered list of nodes on this face/edge
-  inline int getClosureType(int id) const
-  {
-    return closures[id].type;
-  }
-  inline const std::vector<int> &getClosure(int id) const
-  {
-    return closures[id];
-  }
-  inline const std::vector<int> &getFullClosure(int id) const
-  {
-    return fullClosures[id];
-  }
-  inline int getClosureId(int iFace, int iSign=1, int iRot=0) const
-  {
-    return iFace + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
-  }
-  inline void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const
-  {
-    iFace = i % numFaces;
-    i = (i - iFace)/numFaces;
-    iSign = i % 2;
-    iRot = (i - iSign) / 2;
-  }
-  inline void evaluateMonomials(double u, double v, double w, double p[]) const
-  {
-    for (int j = 0; j < monomials.size1(); j++) {
-      p[j] = pow_int(u, (int)monomials(j, 0));
-      if (monomials.size2() > 1) p[j] *= pow_int(v, (int)monomials(j, 1));
-      if (monomials.size2() > 2) p[j] *= pow_int(w, (int)monomials(j, 2));
-    }
-  }
-  inline void f(double u, double v, double w, double *sf) const
-  {
-    double p[1256];
-    evaluateMonomials(u, v, w, p);
-    for (int i = 0; i < coefficients.size1(); i++) {
-      sf[i] = 0.0;
-      for (int j = 0; j < coefficients.size2(); j++) {
-        sf[i] += coefficients(i, j) * p[j];
-      }
-    }
-  }
-  inline void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const
-  {
-    double p[1256];
-    sf.resize (coord.size1(), coefficients.size1());
-    for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
-      evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord(iPoint,2), p);
-      for (int i = 0; i < coefficients.size1(); i++)
-        for (int j = 0; j < coefficients.size2(); j++)
-          sf(iPoint,i) += coefficients(i, j) * p[j];
-    }
-  }
-  inline void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
-  {
-    double dfv[1256][3];
-    dfm.resize (coefficients.size1(), coord.size1() * 3, false);
-    int ii = 0;
-    int dimCoord = coord.size2();
-    for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
-      df(coord(iPoint,0), dimCoord > 1 ? coord(iPoint, 1) : 0., dimCoord > 2 ? coord(iPoint, 2) : 0., dfv);
-      for (int i = 0; i < coefficients.size1(); i++) {
-        dfm(i, iPoint * 3 + 0) = dfv[i][0];
-        dfm(i, iPoint * 3 + 1) = dfv[i][1];
-        dfm(i, iPoint * 3 + 2) = dfv[i][2];
-        ++ii;
-      }
-    }
-  }
-  inline void df(double u, double v, double w, double grads[][3]) const
-  {
-    switch (monomials.size2()) {
-    case 1:
-      for (int i = 0; i < coefficients.size1(); i++){
-        grads[i][0] = 0;
-        grads[i][1] = 0;
-        grads[i][2] = 0;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 0)
-            grads[i][0] += coefficients(i, j) *
-              pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0);
-        }
-      }
-      break;
-    case 2:
-      for (int i = 0; i < coefficients.size1(); i++){
-        grads[i][0] = 0;
-        grads[i][1] = 0;
-        grads[i][2] = 0;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 0)
-            grads[i][0] += coefficients(i, j) *
-              pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0) *
-              pow_int(v, (int)monomials(j, 1));
-          if (monomials(j, 1) > 0)
-            grads[i][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)(monomials(j, 1) - 1)) * monomials(j, 1);
-        }
-      }
-      break;
-    case 3:
-      for (int i = 0; i < coefficients.size1(); i++){
-        grads[i][0] = 0;
-        grads[i][1] = 0;
-        grads[i][2] = 0;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 0)
-            grads[i][0] += coefficients(i, j) *
-              pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)monomials(j, 2));
-          if (monomials(j, 1) > 0)
-            grads[i][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)(monomials(j, 1) - 1)) * monomials(j, 1) *
-              pow_int(w, (int)monomials(j, 2));
-          if (monomials(j, 2) > 0)
-            grads[i][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)(monomials(j, 2) - 1)) * monomials(j, 2);
-        }
-      }
-      break;
-    }
-  }
-  inline void ddf(double u, double v, double w, double hess[][3][3]) const
-  {
-    switch (monomials.size2()) {
-    case 1:
-      for (int i = 0; i < coefficients.size1(); i++){
-        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
-        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
-        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
+  virtual void f(double u, double v, double w, double *sf) const;
+  virtual void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const;
+  virtual void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
+  virtual void df(double u, double v, double w, double grads[][3]) const;
+  virtual void ddf(double u, double v, double w, double hess[][3][3]) const;
+  virtual  void dddf(double u, double v, double w, double third[][3][3][3]) const;
 
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 1) // second derivative !=0
-            hess[i][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 2)) *
-              monomials(j, 0) * (monomials(j, 0) - 1);
-        }
-      }
-      break;
-    case 2:
-      for (int i = 0; i < coefficients.size1(); i++){
-        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
-        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
-        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 1) // second derivative !=0
-            hess[i][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 2)) *
-              monomials(j, 0) * (monomials(j, 0) - 1) * pow_int(v, (int)monomials(j, 1));
-          if ((monomials(j, 1) > 0) && (monomials(j, 0) > 0))
-            hess[i][0][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-              pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1);
-          if (monomials(j, 1) > 1)
-            hess[i][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
-        }
-        hess[i][1][0] = hess[i][0][1];
-      }
-      break;
-    case 3:
-      for (int i = 0; i < coefficients.size1(); i++){
-        hess[i][0][0] = hess[i][0][1] = hess[i][0][2] = 0;
-        hess[i][1][0] = hess[i][1][1] = hess[i][1][2] = 0;
-        hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 1)
-            hess[i][0][0] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0) * (monomials(j, 0)-1) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)monomials(j, 2));
+  virtual int getNumShapeFunctions() const;
 
-          if ((monomials(j, 0) > 0) && (monomials(j, 1) > 0))
-            hess[i][0][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-              pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1) *
-              pow_int(w, (int)monomials(j, 2));
-          if ((monomials(j, 0) > 0) && (monomials(j, 2) > 0))
-            hess[i][0][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)monomials(j, 2) - 1) * monomials(j, 2);
-          if (monomials(j, 1) > 1)
-            hess[i][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1)-1) *
-              pow_int(w, (int)monomials(j, 2));
-          if ((monomials(j, 1) > 0) && (monomials(j, 2) > 0))
-            hess[i][1][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1) *
-              pow_int(w, (int)monomials(j, 2) - 1) * monomials(j, 2);
-          if (monomials(j, 2) > 1)
-            hess[i][2][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
-        }
-        hess[i][1][0] = hess[i][0][1];
-        hess[i][2][0] = hess[i][0][2];
-        hess[i][2][1] = hess[i][1][2];
-      }
-      break;
-    }
-  }
-  inline  void dddf(double u, double v, double w, double third[][3][3][3]) const
-  {
-    switch (monomials.size2()) {
-    case 1:
-      for (int i = 0; i < coefficients.size1(); i++){
-        for (int p=0; p<3; p++)
-          for (int q=0; q<3; q++)
-            for (int r=0; r<3; r++)
-              third[i][p][q][r] = 0.;
+  inline void evaluateMonomials(double u, double v, double w, double p[]) const;
 
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 2) // third derivative !=0
-            third[i][0][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 3)) *
-              monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2);
-        }
-      }
-      break;
-    case 2:
-      for (int i = 0; i < coefficients.size1(); i++){
-        for (int p=0; p<3; p++)
-          for (int q=0; q<3; q++)
-            for (int r=0; r<3; r++)
-              third[i][p][q][r] = 0.;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 2) // second derivative !=0
-            third[i][0][0][0] += coefficients(i, j) *
-              pow_int(u, (int)(monomials(j, 0) - 3))*monomials(j, 0) * (monomials(j, 0) - 1) *(monomials(j, 0) - 2) *
-              pow_int(v, (int)monomials(j, 1));
-          if ((monomials(j, 0) > 1) && (monomials(j, 1) > 0))
-            third[i][0][0][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-              pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1);
-          if ((monomials(j, 0) > 0) && (monomials(j, 1) > 1))
-            third[i][0][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-              pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
-          if (monomials(j, 1) > 2)
-            third[i][1][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1) - 3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2);
-        }
-        third[i][0][1][0] = third[i][0][0][1];
-        third[i][1][0][0] = third[i][0][0][1];
-        third[i][1][0][1] = third[i][0][1][1];
-        third[i][1][1][0] = third[i][0][1][1];
-      }
-      break;
-    case 3:
-      for (int i = 0; i < coefficients.size1(); i++){
-        for (int p=0; p<3; p++)
-          for (int q=0; q<3; q++)
-            for (int r=0; r<3; r++)
-              third[i][p][q][r] = 0.;
-        for(int j = 0; j < coefficients.size2(); j++){
-          if (monomials(j, 0) > 2) // second derivative !=0
-            third[i][0][0][0] += coefficients(i, j) *
-              pow_int(u, (int)(monomials(j, 0) - 3)) *monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2) *
-              pow_int(v, (int)monomials(j, 1))*
-              pow_int(w, (int)monomials(j, 2));
-
-          if ((monomials(j, 0) > 1) && (monomials(j, 1) > 0))
-            third[i][0][0][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-              pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1)*
-              pow_int(w, (int)monomials(j, 2));
-
-          if ((monomials(j, 0) > 1) && (monomials(j, 2) > 0))
-            third[i][0][0][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-              pow_int(v, (int)monomials(j, 1)) *
-              pow_int(w, (int)monomials(j, 2) - 1)* monomials(j, 2);
-
-          if ((monomials(j, 0) > 0) && (monomials(j, 1) > 1))
-            third[i][0][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-              pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1)*
-              pow_int(w, (int)monomials(j, 2));
-
-          if ((monomials(j, 0) > 0) && (monomials(j, 1) > 0)&& (monomials(j, 2) > 0))
-            third[i][0][1][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-              pow_int(v, (int)monomials(j, 1) - 1) *monomials(j, 1) *
-              pow_int(w, (int)monomials(j, 2) - 1) *monomials(j, 2);
-
-          if ((monomials(j, 0) > 0) && (monomials(j, 2) > 1))
-            third[i][0][2][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-              pow_int(v, (int)monomials(j, 1))*
-              pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
-          if ((monomials(j, 1) > 2))
-            third[i][1][1][1] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1)-3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2)*
-              pow_int(w, (int)monomials(j, 2));
-
-          if ((monomials(j, 1) > 1) && (monomials(j, 2) > 0))
-            third[i][1][1][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1)-2) * monomials(j, 1) * (monomials(j, 1) - 1)*
-              pow_int(w, (int)monomials(j, 2) - 1) *monomials(j, 2) ;
-
-          if ((monomials(j, 1) > 0) && (monomials(j, 2) > 1))
-            third[i][1][2][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1)-1) *monomials(j, 1)*
-              pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1) ;
-
-          if ((monomials(j, 2) > 2))
-            third[i][2][2][2] += coefficients(i, j) *
-              pow_int(u, (int)monomials(j, 0)) *
-              pow_int(v, (int)monomials(j, 1))*
-              pow_int(w, (int)monomials(j, 2) - 3) * monomials(j, 2) * (monomials(j, 2) - 1)*(monomials(j, 2) - 2);
-
-
-        }
-        third[i][0][1][0] = third[i][0][0][1];
-        third[i][1][0][0] = third[i][0][0][1];
-
-        third[i][2][0][0] = third[i][0][0][2];
-        third[i][0][2][0] = third[i][0][0][2];
-
-        third[i][1][0][1] = third[i][0][1][1];
-        third[i][1][1][0] = third[i][0][1][1];
-
-        third[i][0][2][1] = third[i][0][1][2];
-        third[i][1][0][2] = third[i][0][1][2];
-        third[i][1][2][0] = third[i][0][1][2];
-        third[i][2][1][0] = third[i][0][1][2];
-        third[i][2][0][1] = third[i][0][1][2];
-
-        third[i][2][2][0] = third[i][0][2][2];
-        third[i][2][0][2] = third[i][0][2][2];
-
-        third[i][1][2][1] = third[i][1][1][2];
-        third[i][2][1][1] = third[i][1][1][2];
-
-        third[i][2][2][1] = third[i][1][2][2];
-        third[i][2][1][2] = third[i][1][2][2];
-      }
-      break;
-    }
-  }
 };
 
-class polynomialBases
+
+
+inline void polynomialBasis::evaluateMonomials(double u, double v, double w, double p[]) const
 {
- private:
-  static std::map<int, polynomialBasis> fs;
-  static std::map<std::pair<int, int>, fullMatrix<double> > injector;
- public :
-  static const polynomialBasis *find(int);
-  static const fullMatrix<double> &findInjector(int, int);
-};
+  for (int j = 0; j < monomials.size1(); j++) {
+    p[j] = pow_int(u, (int)monomials(j, 0));
+    if (monomials.size2() > 1) p[j] *= pow_int(v, (int)monomials(j, 1));
+    if (monomials.size2() > 2) p[j] *= pow_int(w, (int)monomials(j, 2));
+  }
+}
+
+
 
 #endif

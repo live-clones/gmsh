@@ -355,6 +355,7 @@ class MElement
                          std::map<MElement*, MElement*> &newDomains);
 
   static int ParentTypeFromTag(int tag);
+  static int OrderFromTag(int tag);
 
 };
 

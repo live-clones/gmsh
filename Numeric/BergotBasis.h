@@ -11,15 +11,17 @@
 #include "jacobiPolynomials.h"
 #include "legendrePolynomials.h"
 
-class BergotBasis : public nodalBasis {
+class BergotBasis {
  public:
 
-  BergotBasis() {};
   BergotBasis(int p);
-  ~BergotBasis();
+  virtual ~BergotBasis();
+
+  int size() const { const int n = order+1; return n*(n+1)*(2*n+1)/6; }
+
 
   void f(double u, double v, double w, double *val) const;
-  inline void df(double u, double v, double w, double grads[][3]) const;
+  void df(double u, double v, double w, double grads[][3]) const;
 
   void initialize() {};
 
@@ -35,8 +37,6 @@ class BergotBasis : public nodalBasis {
 
   //! list of Jacobi polynomials up to order p in function of index i (\f$ \alpha = 2*i + 2\f$)
   std::map<int,JacobiPolynomials> jacobi;
-
-  int size() const;
 
 };
 

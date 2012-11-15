@@ -620,7 +620,7 @@ DI_Element & DI_Element::operator= (const DI_Element &rhs){
 void DI_Element::getShapeFunctions(double u, double v, double w, double s[], int o) const
 {
   //printf("type elem =%d  order =%d\n", type(), o);
-  const polynomialBasis* fs = getFunctionSpace(o);
+  const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->f(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }
@@ -628,7 +628,7 @@ void DI_Element::getShapeFunctions(double u, double v, double w, double s[], int
 void DI_Element::getGradShapeFunctions(double u, double v, double w, double s[][3],
                                      int o) const
 {
-  const polynomialBasis* fs = getFunctionSpace(o);
+  const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }
@@ -642,7 +642,7 @@ void DI_Element::setPolynomialOrder (int o) {
 
   if(o == 1) return;
 
-  const polynomialBasis *fs = getFunctionSpace(o);
+  const nodalBasis *fs = getFunctionSpace(o);
   if(!fs) Msg::Error("Function space not implemented for this type of element");
 
   mid_ = new DI_Point[nbMid()];
@@ -668,7 +668,7 @@ void DI_Element::setPolynomialOrder (int o, const DI_Element *e, const std::vect
 
   if(o == 1) return;
 
-  const polynomialBasis *fs = getFunctionSpace(o);
+  const nodalBasis *fs = getFunctionSpace(o);
   if(!fs) Msg::Error("Function space not implemented for this type of element");
 
   mid_ = new DI_Point[nbMid()];
@@ -1042,10 +1042,10 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
 }
 
 // DI_Line methods --------------------------------------------------------------------------------
-const polynomialBasis* DI_Line::getFunctionSpace(int o) const{
+const nodalBasis* DI_Line::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_LIN, order);
-  return polynomialBases::find(tag);
+  return BasisFactory::create(tag);
 }
 
 void DI_Line::computeIntegral() {
@@ -1062,11 +1062,11 @@ void DI_Line::computeIntegral() {
   // }
 }
 // DI_Triangle methods ----------------------------------------------------------------------------
-const polynomialBasis* DI_Triangle::getFunctionSpace(int o) const
+const nodalBasis* DI_Triangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_TRI, order);
-  return polynomialBases::find(tag);
+  return BasisFactory::create(tag);
 }
 void DI_Triangle::computeIntegral() {
   integral_ = TriSurf(pt(0), pt(1), pt(2));
@@ -1087,10 +1087,10 @@ double DI_Triangle::quality() const {
 }
 
 // DI_Quad methods --------------------------------------------------------------------------------
-const polynomialBasis* DI_Quad::getFunctionSpace(int o) const{
+const nodalBasis* DI_Quad::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_QUA, order);
-  return polynomialBases::find(tag);
+  return BasisFactory::create(tag);
 }
 
 void DI_Quad::computeIntegral() {
@@ -1111,10 +1111,10 @@ void DI_Quad::computeIntegral() {
 }
 
 // DI_Tetra methods -------------------------------------------------------------------------------
-const polynomialBasis* DI_Tetra::getFunctionSpace(int o) const{
+const nodalBasis* DI_Tetra::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_TET, order);
-  return polynomialBases::find(tag);
+  return BasisFactory::create(tag);
 }
 
 void DI_Tetra::computeIntegral() {
@@ -1126,10 +1126,10 @@ double DI_Tetra::quality() const {
 
 
 // Hexahedron methods -----------------------------------------------------------------------------
-const polynomialBasis* DI_Hexa::getFunctionSpace(int o) const{
+const nodalBasis* DI_Hexa::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_HEX, order);
-  return polynomialBases::find(tag);
+  return BasisFactory::create(tag);
 }
 void DI_Hexa::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(3), pt(4)) + TetraVol(pt(1), pt(4), pt(5), pt(7))

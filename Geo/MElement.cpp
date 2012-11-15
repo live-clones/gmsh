@@ -112,7 +112,7 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
-  if (getType() == TYPE_PYR) return;
+//  if (getType() == TYPE_PYR) return;
   extern double mesh_functional_distorsion(MElement*,double,double);
   if (getPolynomialOrder() == 1) return;
   const bezierBasis *jac = getJacobianFuncSpace()->bezier;
@@ -1416,6 +1416,138 @@ int MElement::ParentTypeFromTag(int tag)
   }
 }
 
+// Gives the order corresponding to any element type.
+int MElement::OrderFromTag(int tag)
+{
+
+  switch (tag) {
+  case MSH_PNT     : return 0;
+  case MSH_LIN_1   : return 0;
+  case MSH_LIN_2   : return 1;
+  case MSH_LIN_3   : return 2;
+  case MSH_LIN_4   : return 3;
+  case MSH_LIN_5   : return 4;
+  case MSH_LIN_6   : return 5;
+  case MSH_LIN_7   : return 6;
+  case MSH_LIN_8   : return 7;
+  case MSH_LIN_9   : return 8;
+  case MSH_LIN_10  : return 9;
+  case MSH_LIN_11  : return 10;
+  case MSH_TRI_1   : return 0;
+  case MSH_TRI_3   : return 1;
+  case MSH_TRI_6   : return 2;
+  case MSH_TRI_10  : return 3;
+  case MSH_TRI_15  : return 4;
+  case MSH_TRI_21  : return 5;
+  case MSH_TRI_28  : return 6;
+  case MSH_TRI_36  : return 7;
+  case MSH_TRI_45  : return 8;
+  case MSH_TRI_55  : return 9;
+  case MSH_TRI_66  : return 10;
+  case MSH_TRI_9   : return 3;
+  case MSH_TRI_12  : return 4;
+  case MSH_TRI_15I : return 5;
+  case MSH_TRI_18  : return 6;
+  case MSH_TRI_21I : return 7;
+  case MSH_TRI_24  : return 8;
+  case MSH_TRI_27  : return 9;
+  case MSH_TRI_30  : return 10;
+  case MSH_TET_1   : return 0;
+  case MSH_TET_4   : return 1;
+  case MSH_TET_10  : return 2;
+  case MSH_TET_20  : return 3;
+  case MSH_TET_35  : return 4;
+  case MSH_TET_56  : return 5;
+  case MSH_TET_84  : return 6;
+  case MSH_TET_120 : return 7;
+  case MSH_TET_165 : return 8;
+  case MSH_TET_220 : return 9;
+  case MSH_TET_286 : return 10;
+  case MSH_TET_34  : return 4;
+  case MSH_TET_52  : return 5;
+  case MSH_TET_74  : return 6;
+  case MSH_TET_100 : return 7;
+  case MSH_TET_130 : return 8;
+  case MSH_TET_164 : return 9;
+  case MSH_TET_202 : return 10;
+  case MSH_QUA_1   : return 0;
+  case MSH_QUA_4   : return 1;
+  case MSH_QUA_9   : return 2;
+  case MSH_QUA_16  : return 3;
+  case MSH_QUA_25  : return 4;
+  case MSH_QUA_36  : return 5;
+  case MSH_QUA_49  : return 6;
+  case MSH_QUA_64  : return 7;
+  case MSH_QUA_81  : return 8;
+  case MSH_QUA_100 : return 9;
+  case MSH_QUA_121 : return 10;
+  case MSH_QUA_8   : return 2;
+  case MSH_QUA_12  : return 3;
+  case MSH_QUA_16I : return 4;
+  case MSH_QUA_20  : return 5;
+  case MSH_QUA_24  : return 6;
+  case MSH_QUA_28  : return 7;
+  case MSH_QUA_32  : return 8;
+  case MSH_QUA_36I : return 9;
+  case MSH_QUA_40  : return 10;
+  case MSH_PRI_1   : return 0;
+  case MSH_PRI_6   : return 1;
+  case MSH_PRI_18  : return 2;
+  case MSH_PRI_40  : return 3;
+  case MSH_PRI_75  : return 4;
+  case MSH_PRI_126 : return 5;
+  case MSH_PRI_196 : return 6;
+  case MSH_PRI_288 : return 7;
+  case MSH_PRI_405 : return 8;
+  case MSH_PRI_550 : return 9;
+  case MSH_PRI_15  : return 2;
+  case MSH_PRI_38  : return 3;
+  case MSH_PRI_66  : return 4;
+  case MSH_PRI_102 : return 5;
+  case MSH_PRI_146 : return 6;
+  case MSH_PRI_198 : return 7;
+  case MSH_PRI_258 : return 8;
+  case MSH_PRI_326 : return 9;
+  case MSH_HEX_8   : return 1;
+  case MSH_HEX_27  : return 2;
+  case MSH_HEX_64  : return 3;
+  case MSH_HEX_125 : return 4;
+  case MSH_HEX_216 : return 5;
+  case MSH_HEX_343 : return 6;
+  case MSH_HEX_512 : return 7;
+  case MSH_HEX_729 : return 8;
+  case MSH_HEX_1000: return 9;
+  case MSH_HEX_20  : return 2;
+  case MSH_HEX_56  : return 3;
+  case MSH_HEX_98  : return 4;
+  case MSH_HEX_152 : return 5;
+  case MSH_HEX_222 : return 6;
+  case MSH_HEX_296 : return 7;
+  case MSH_HEX_386 : return 8;
+  case MSH_HEX_488 : return 9;
+  case MSH_PYR_5   : return 1;
+  case MSH_PYR_14  : return 2;
+  case MSH_PYR_30  : return 3;
+  case MSH_PYR_55  : return 4;
+  case MSH_PYR_91  : return 5;
+  case MSH_PYR_140 : return 6;
+  case MSH_PYR_204 : return 7;
+  case MSH_PYR_285 : return 8;
+  case MSH_PYR_385 : return 9;
+  case MSH_PYR_13  : return 2;
+  case MSH_PYR_29  : return 3;
+  case MSH_PYR_50  : return 4;
+  case MSH_PYR_77  : return 5;
+  case MSH_PYR_110 : return 6;
+  case MSH_PYR_149 : return 7;
+  case MSH_PYR_194 : return 8;
+  case MSH_PYR_245 : return 9;
+  default :
+    Msg::Error("Unknown element type %d: reverting to order 1",tag);
+    return 1;
+  }
+
+}
 
 
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,

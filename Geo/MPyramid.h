@@ -68,6 +68,7 @@ class MPyramid : public MElement {
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
+  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
   {

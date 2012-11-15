@@ -7,6 +7,7 @@ set(SRC
   Numeric.cpp
     fullMatrix.cpp
   BasisFactory.cpp
+    nodalBasis.cpp
     polynomialBasis.cpp
     JacobianBasis.cpp
     BergotBasis.cpp

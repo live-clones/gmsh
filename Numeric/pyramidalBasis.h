@@ -11,6 +11,8 @@
 #include "nodalBasis.h"
 #include "BergotBasis.h"
 
+
+
 class pyramidalBasis: public nodalBasis
 {
  private:
@@ -18,16 +20,19 @@ class pyramidalBasis: public nodalBasis
   fullMatrix<double>* VDMinv;
 
   // Orthogonal basis for the pyramid
-  BergotBasis bergot;
+  BergotBasis *bergot;
 
  public:
-  pyramidalBasis();
+  pyramidalBasis(int tag);
+  ~pyramidalBasis();
 
-  inline void f(double u, double v, double w, double *val) const;
-  inline void df(double u, double v, double w, double grads[][3]) const;
-
-  void initialize();
+  virtual void f(double u, double v, double w, double *val) const;
+  virtual void f(fullMatrix<double> &coord, fullMatrix<double> &sf);
+  virtual void df(double u, double v, double w, double grads[][3]) const;
+  virtual void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
 
 };
+
+
 
 #endif

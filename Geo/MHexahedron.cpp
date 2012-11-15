@@ -184,7 +184,7 @@ const nodalBasis* MHexahedron::getFunctionSpace(int o) const
     case 7: return BasisFactory::create(MSH_HEX_296);
     case 8: return BasisFactory::create(MSH_HEX_386);
     case 9: return BasisFactory::create(MSH_HEX_488);
-    default: Msg::Error("Order %d hex function space not implemented", order);
+    default: Msg::Error("Order %d hex function space not implemented", order); break;
     }
   }
   else {
@@ -199,7 +199,44 @@ const nodalBasis* MHexahedron::getFunctionSpace(int o) const
     case 7: return BasisFactory::create(MSH_HEX_512);
     case 8: return BasisFactory::create(MSH_HEX_729);
     case 9: return BasisFactory::create(MSH_HEX_1000);
-    default: Msg::Error("Order %d hex function space not implemented", order);
+    default: Msg::Error("Order %d hex function space not implemented", order); break;
+    }
+  }
+  return 0;
+}
+
+const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nv = getNumVolumeVertices();
+
+  if ((nv == 0) && (o == -1)) {
+    switch (order) {
+    case 1: return JacobianBasis::find(MSH_HEX_8);
+    case 2: return JacobianBasis::find(MSH_HEX_20);
+    case 3: return JacobianBasis::find(MSH_HEX_56);
+    case 4: return JacobianBasis::find(MSH_HEX_98);
+    case 5: return JacobianBasis::find(MSH_HEX_152);
+    case 6: return JacobianBasis::find(MSH_HEX_222);
+    case 7: return JacobianBasis::find(MSH_HEX_296);
+    case 8: return JacobianBasis::find(MSH_HEX_386);
+    case 9: return JacobianBasis::find(MSH_HEX_488);
+    default: Msg::Error("Order %d hex incomplete Jacobian function space not implemented", order); break;
+    }
+  }
+  else {
+    switch (order) {
+    case 1: return JacobianBasis::find(MSH_HEX_8);
+    case 2: return JacobianBasis::find(MSH_HEX_27);
+    case 3: return JacobianBasis::find(MSH_HEX_64);
+    case 4: return JacobianBasis::find(MSH_HEX_125);
+    case 5: return JacobianBasis::find(MSH_HEX_216);
+    case 6: return JacobianBasis::find(MSH_HEX_343);
+    case 7: return JacobianBasis::find(MSH_HEX_512);
+    case 8: return JacobianBasis::find(MSH_HEX_729);
+    case 9: return JacobianBasis::find(MSH_HEX_1000);
+    default: Msg::Error("Order %d hex Jacobian function space not implemented", order); break;
     }
   }
   return 0;

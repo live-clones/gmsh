@@ -21,7 +21,6 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "fullMatrix.h"
-#include "polynomialBasis.h"
 #include "BasisFactory.h"
 
 #define SQU(a)      ((a)*(a))
@@ -598,14 +597,14 @@ static int getNewFacePoints(int numPrimaryFacePoints, int nPts, fullMatrix<doubl
     switch (nPts){
     case 0 : break;
     case 1 : break;
-    case 2 : points = polynomialBases::find(MSH_TRI_10)->points; start = 9; break;
-    case 3 : points = polynomialBases::find(MSH_TRI_15)->points; start = 12; break;
-    case 4 : points = polynomialBases::find(MSH_TRI_21)->points; start = 15; break;
-    case 5 : points = polynomialBases::find(MSH_TRI_28)->points; start = 18; break;
-    case 6 : points = polynomialBases::find(MSH_TRI_36)->points; start = 21; break;
-    case 7 : points = polynomialBases::find(MSH_TRI_45)->points; start = 24; break;
-    case 8 : points = polynomialBases::find(MSH_TRI_55)->points; start = 27; break;
-    case 9 : points = polynomialBases::find(MSH_TRI_66)->points; start = 30; break;
+    case 2 : points = BasisFactory::create(MSH_TRI_10)->points; start = 9; break;
+    case 3 : points = BasisFactory::create(MSH_TRI_15)->points; start = 12; break;
+    case 4 : points = BasisFactory::create(MSH_TRI_21)->points; start = 15; break;
+    case 5 : points = BasisFactory::create(MSH_TRI_28)->points; start = 18; break;
+    case 6 : points = BasisFactory::create(MSH_TRI_36)->points; start = 21; break;
+    case 7 : points = BasisFactory::create(MSH_TRI_45)->points; start = 24; break;
+    case 8 : points = BasisFactory::create(MSH_TRI_55)->points; start = 27; break;
+    case 9 : points = BasisFactory::create(MSH_TRI_66)->points; start = 30; break;
     default :
       Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
       break;
@@ -614,14 +613,14 @@ static int getNewFacePoints(int numPrimaryFacePoints, int nPts, fullMatrix<doubl
   case 4:
     switch (nPts){
     case 0 : break;
-    case 1 : points = polynomialBases::find(MSH_QUA_9)->points; break;
-    case 2 : points = polynomialBases::find(MSH_QUA_16)->points; break;
-    case 3 : points = polynomialBases::find(MSH_QUA_25)->points; break;
-    case 4 : points = polynomialBases::find(MSH_QUA_36)->points; break;
-    case 5 : points = polynomialBases::find(MSH_QUA_49)->points; break;
-    case 6 : points = polynomialBases::find(MSH_QUA_64)->points; break;
-    case 7 : points = polynomialBases::find(MSH_QUA_81)->points; break;
-    case 8 : points = polynomialBases::find(MSH_QUA_100)->points; break;
+    case 1 : points = BasisFactory::create(MSH_QUA_9)->points; break;
+    case 2 : points = BasisFactory::create(MSH_QUA_16)->points; break;
+    case 3 : points = BasisFactory::create(MSH_QUA_25)->points; break;
+    case 4 : points = BasisFactory::create(MSH_QUA_36)->points; break;
+    case 5 : points = BasisFactory::create(MSH_QUA_49)->points; break;
+    case 6 : points = BasisFactory::create(MSH_QUA_64)->points; break;
+    case 7 : points = BasisFactory::create(MSH_QUA_81)->points; break;
+    case 8 : points = BasisFactory::create(MSH_QUA_100)->points; break;
     default :
       Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
       break;
@@ -743,14 +742,14 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
   case TYPE_HEX :
     switch (nPts){
     case 0: return;
-    case 1: points = polynomialBases::find(MSH_HEX_27)->points; break;
-    case 2: points = polynomialBases::find(MSH_HEX_64)->points; break;
-    case 3: points = polynomialBases::find(MSH_HEX_125)->points; break;
-    case 4: points = polynomialBases::find(MSH_HEX_216)->points; break;
-    case 5: points = polynomialBases::find(MSH_HEX_343)->points; break;
-    case 6: points = polynomialBases::find(MSH_HEX_512)->points; break;
-    case 7: points = polynomialBases::find(MSH_HEX_729)->points; break;
-    case 8: points = polynomialBases::find(MSH_HEX_1000)->points; break;
+    case 1: points = BasisFactory::create(MSH_HEX_27)->points; break;
+    case 2: points = BasisFactory::create(MSH_HEX_64)->points; break;
+    case 3: points = BasisFactory::create(MSH_HEX_125)->points; break;
+    case 4: points = BasisFactory::create(MSH_HEX_216)->points; break;
+    case 5: points = BasisFactory::create(MSH_HEX_343)->points; break;
+    case 6: points = BasisFactory::create(MSH_HEX_512)->points; break;
+    case 7: points = BasisFactory::create(MSH_HEX_729)->points; break;
+    case 8: points = BasisFactory::create(MSH_HEX_1000)->points; break;
     default :
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;

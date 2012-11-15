@@ -13,6 +13,7 @@ class bezierBasis {
  private :
   static std::map<int, bezierBasis> _bbs;
  public :
+  int order;
   int numLagPts;
   int numDivisions;
   // the 'numLagPts' first exponents are related to 'Lagrangian' values

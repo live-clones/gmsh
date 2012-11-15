@@ -9,7 +9,7 @@
 #include <map>
 #include <cmath>
 #include "gmshLevelset.h"
-#include "polynomialBasis.h"
+#include "BasisFactory.h"
 #include "GmshDefines.h"
 
 // Element type
@@ -48,8 +48,8 @@ class DI_Point
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
   virtual ~DI_Point(){}
-  virtual const polynomialBasis* getFunctionSpace(int o) const
-  { return polynomialBases::find(MSH_PNT);  }
+  virtual const nodalBasis* getFunctionSpace(int o) const
+  { return BasisFactory::create(MSH_PNT); }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     s[0] = 1.;
@@ -245,7 +245,7 @@ class DI_Element
     if(pts_) delete [] pts_;
     if(mid_) delete [] mid_;
   }
-  virtual const polynomialBasis* getFunctionSpace(int order=-1) const { return 0; }
+  virtual const nodalBasis* getFunctionSpace(int order=-1) const { return 0; }
   // return type
   virtual int type() const = 0;
   // return the dimension of the element
@@ -410,7 +410,7 @@ class DI_Line : public DI_Element
   inline int nbVert() const {return 2;}
   inline int nbMid() const {return polOrder_ - 1;}
   inline int nbEdg() const {return 1;}
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 2.;}
   void getRefIntegrationPoints (const int polynomialOrder,
@@ -477,7 +477,7 @@ class DI_Triangle : public DI_Element
     return 0.5 * (polOrder_ - 1) * (polOrder_ + 4);
   }
   inline int nbEdg() const {return 3;}
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 0.5;}
   void getRefIntegrationPoints (const int polynomialOrder,
@@ -561,7 +561,7 @@ class DI_Quad : public DI_Element
     return (polOrder_ - 1) * (polOrder_ + 3);
   }
   inline int nbEdg() const {return 4;}
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 4.;}
   void getRefIntegrationPoints (const int polynomialOrder,
@@ -643,7 +643,7 @@ class DI_Tetra : public DI_Element
     return (polOrder_ + 1) * (polOrder_ + 2) * (polOrder_ + 3) / 6 - 4;
   }
   inline int nbEdg() const {return 6;}
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 1. / 6.;}
   inline void getRefIntegrationPoints (const int polynomialOrder,
@@ -745,7 +745,7 @@ class DI_Hexa : public DI_Element
     return (polOrder_ + 1) * (polOrder_ + 1) * (polOrder_ + 1) - 8;
   }
   inline int nbEdg() const {return 12;}
-  virtual const polynomialBasis* getFunctionSpace(int o=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   void computeIntegral();
   inline double refIntegral() const {return 8.;}
   void getRefIntegrationPoints (const int polynomialOrder,

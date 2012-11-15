@@ -8,6 +8,9 @@
 #include "JacobianBasis.h"
 #include <vector>
 #include "polynomialBasis.h"
+#include "pyramidalBasis.h"
+#include "pointsGenerators.h"
+#include "BasisFactory.h"
 
 // Bezier Exponents
 static fullMatrix<double> generate1DExponents(int order)
@@ -449,8 +452,8 @@ static fullMatrix<double> generateExponentsHex(int order)
   fullMatrix<double> lineExp = generate1DExponents(order);
 
   for (int i = 0; i < 2; ++i) {
-    for (int j = 0; i < 2; ++j) {
-      for (int k = 0; i < 2; ++k) {
+    for (int j = 0; j < 2; ++j) {
+      for (int k = 0; k < 2; ++k) {
         exponents(index, 0) = lineExp(i, 0);
         exponents(index, 1) = lineExp(j, 0);
         exponents(index, 2) = lineExp(k, 0);
@@ -460,8 +463,8 @@ static fullMatrix<double> generateExponentsHex(int order)
   }
   
   for (int i = 2; i < lineExp.size1(); ++i) {
-    for (int j = 0; i < 2; ++j) {
-      for (int k = 0; i < 2; ++k) {
+    for (int j = 0; j < 2; ++j) {
+      for (int k = 0; k < 2; ++k) {
         exponents(index, 0) = lineExp(i, 0);
         exponents(index, 1) = lineExp(j, 0);
         exponents(index, 2) = lineExp(k, 0);
@@ -470,8 +473,8 @@ static fullMatrix<double> generateExponentsHex(int order)
     }
   }
   for (int i = 0; i < lineExp.size1(); ++i) {
-    for (int j = 2; i < lineExp.size1(); ++j) {
-      for (int k = 0; i < 2; ++k) {
+    for (int j = 2; j < lineExp.size1(); ++j) {
+      for (int k = 0; k < 2; ++k) {
         exponents(index, 0) = lineExp(i, 0);
         exponents(index, 1) = lineExp(j, 0);
         exponents(index, 2) = lineExp(k, 0);
@@ -480,8 +483,8 @@ static fullMatrix<double> generateExponentsHex(int order)
     }
   }
   for (int i = 0; i < lineExp.size1(); ++i) {
-    for (int j = 0; i < lineExp.size1(); ++j) {
-      for (int k = 2; i < lineExp.size1(); ++k) {
+    for (int j = 0; j < lineExp.size1(); ++j) {
+      for (int k = 2; k < lineExp.size1(); ++k) {
         exponents(index, 0) = lineExp(i, 0);
         exponents(index, 1) = lineExp(j, 0);
         exponents(index, 2) = lineExp(k, 0);
@@ -505,64 +508,6 @@ static fullMatrix<double> generate1DPoints(int order)
   }
 
   return line;
-}
-
-static fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
-{
-  int nbPoints = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
-  fullMatrix<double> point(nbPoints, 2);
-
-  point(0, 0) = 0;
-  point(0, 1) = 0;
-
-  if (order > 0) {
-    double dd = 1. / order;
-
-    point(1, 0) = 1;
-    point(1, 1) = 0;
-    point(2, 0) = 0;
-    point(2, 1) = 1;
-
-    int index = 3;
-
-    if (order > 1) {
-
-      double ksi = 0;
-      double eta = 0;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        ksi += dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      ksi = 1.;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        ksi -= dd;
-        eta += dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      eta = 1.;
-      ksi = 0.;
-
-      for (int i = 0; i < order - 1; i++, index++) {
-        eta -= dd;
-        point(index, 0) = ksi;
-        point(index, 1) = eta;
-      }
-
-      if (order > 2 && !serendip) {
-        fullMatrix<double> inner = gmshGeneratePointsTriangle(order - 3, serendip);
-        inner.scale(1. - 3. * dd);
-        inner.add(dd);
-        point.copy(inner, 0, nbPoints - index, 0, 2, index, 0);
-      }
-    }
-  }
-  return point;
 }
 
 static fullMatrix<double> generatePointsQuadRecur(int order, bool serendip)
@@ -615,143 +560,6 @@ static fullMatrix<double> generatePointsQuad(int order, bool serendip)
     point(i,0) = (1.+point(i,0))*.5;
     point(i,1) = (1.+point(i,1))*.5;
   }
-  return point;
-}
-
-
-static fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
-{
-  int nbPoints =
-    (serendip ?
-     4 +  6 * std::max(0, order - 1) + 4 * std::max(0, (order - 2) * (order - 1) / 2) :
-     (order + 1) * (order + 2) * (order + 3) / 6);
-
-  fullMatrix<double> point(nbPoints, 3);
-
-  double overOrder = (order == 0 ? 1. : 1. / order);
-
-  point(0, 0) = 0.;
-  point(0, 1) = 0.;
-  point(0, 2) = 0.;
-
-  if (order > 0) {
-    point(1, 0) = order;
-    point(1, 1) = 0;
-    point(1, 2) = 0;
-
-    point(2, 0) = 0.;
-    point(2, 1) = order;
-    point(2, 2) = 0.;
-
-    point(3, 0) = 0.;
-    point(3, 1) = 0.;
-    point(3, 2) = order;
-
-    // edges e5 and e6 switched in original version, opposite direction
-    // the template has been defined in table edges_tetra and faces_tetra (MElement.h)
-
-    if (order > 1) {
-      for (int k = 0; k < (order - 1); k++) {
-        point(4 + k, 0) = k + 1;
-        point(4 +      order - 1  + k, 0) = order - 1 - k;
-        point(4 + 2 * (order - 1) + k, 0) = 0.;
-        point(4 + 3 * (order - 1) + k, 0) = 0.;
-        // point(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
-        // point(4 + 5 * (order - 1) + k, 0) = 0.;
-        point(4 + 4 * (order - 1) + k, 0) = 0.;
-        point(4 + 5 * (order - 1) + k, 0) = k+1;
-
-        point(4 + k, 1) = 0.;
-        point(4 +      order - 1  + k, 1) = k + 1;
-        point(4 + 2 * (order - 1) + k, 1) = order - 1 - k;
-        point(4 + 3 * (order - 1) + k, 1) = 0.;
-        //         point(4 + 4 * (order - 1) + k, 1) = 0.;
-        //         point(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
-        point(4 + 4 * (order - 1) + k, 1) = k+1;
-        point(4 + 5 * (order - 1) + k, 1) = 0.;
-
-        point(4 + k, 2) = 0.;
-        point(4 +      order - 1  + k, 2) = 0.;
-        point(4 + 2 * (order - 1) + k, 2) = 0.;
-        point(4 + 3 * (order - 1) + k, 2) = order - 1 - k;
-        point(4 + 4 * (order - 1) + k, 2) = order - 1 - k;
-        point(4 + 5 * (order - 1) + k, 2) = order - 1 - k;
-      }
-
-      if (order > 2) {
-        int ns = 4 + 6 * (order - 1);
-        int nbdofface = nbdoftriangle(order - 3);
-
-        double *u = new double[nbdofface];
-        double *v = new double[nbdofface];
-        double *w = new double[nbdofface];
-
-        nodepositionface0(order - 3, u, v, w);
-
-        // u-v plane
-
-        for (int i = 0; i < nbdofface; i++){
-          point(ns + i, 0) = u[i] * (order - 3) + 1.;
-          point(ns + i, 1) = v[i] * (order - 3) + 1.;
-          point(ns + i, 2) = w[i] * (order - 3);
-        }
-
-        ns = ns + nbdofface;
-
-        // u-w plane
-
-        nodepositionface1(order - 3, u, v, w);
-
-        for (int i=0; i < nbdofface; i++){
-          point(ns + i, 0) = u[i] * (order - 3) + 1.;
-          point(ns + i, 1) = v[i] * (order - 3) ;
-          point(ns + i, 2) = w[i] * (order - 3) + 1.;
-        }
-
-        // v-w plane
-
-        ns = ns + nbdofface;
-
-        nodepositionface2(order - 3, u, v, w);
-
-        for (int i = 0; i < nbdofface; i++){
-          point(ns + i, 0) = u[i] * (order - 3);
-          point(ns + i, 1) = v[i] * (order - 3) + 1.;
-          point(ns + i, 2) = w[i] * (order - 3) + 1.;
-        }
-
-        // u-v-w plane
-
-        ns = ns + nbdofface;
-
-        nodepositionface3(order - 3, u, v, w);
-
-        for (int i = 0; i < nbdofface; i++){
-          point(ns + i, 0) = u[i] * (order - 3) + 1.;
-          point(ns + i, 1) = v[i] * (order - 3) + 1.;
-          point(ns + i, 2) = w[i] * (order - 3) + 1.;
-        }
-
-        ns = ns + nbdofface;
-
-        delete [] u;
-        delete [] v;
-        delete [] w;
-
-        if (!serendip && order > 3) {
-
-          fullMatrix<double> interior = gmshGeneratePointsTetrahedron(order - 4, false);
-          for (int k = 0; k < interior.size1(); k++) {
-            point(ns + k, 0) = 1. + interior(k, 0) * (order - 4);
-            point(ns + k, 1) = 1. + interior(k, 1) * (order - 4);
-            point(ns + k, 2) = 1. + interior(k, 2) * (order - 4);
-          }
-        }
-      }
-    }
-  }
-
-  point.scale(overOrder);
   return point;
 }
 
@@ -1126,9 +934,10 @@ static fullMatrix<double> generateSubDivisor
 
 
 
-static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &points
-  , const fullMatrix<double> &monomials, const fullMatrix<double> &coefficients)
+static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &points,
+                               const fullMatrix<double> &monomials, const fullMatrix<double> &coefficients)
 {
+
   int nbPts = points.size1();
   int nbDofs = monomials.size1();
   int dim = points.size2();
@@ -1208,9 +1017,13 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
           }
         }
       }
+      break;
   }
   return;
+
 }
+
+
 
 std::map<int, bezierBasis> bezierBasis::_bbs;
 const bezierBasis *bezierBasis::find(int tag)
@@ -1220,80 +1033,96 @@ const bezierBasis *bezierBasis::find(int tag)
     return &it->second;
 
   bezierBasis &B = _bbs[tag];
-  const polynomialBasis *F = polynomialBases::find(tag);
-  int dimSimplex;
-  std::vector< fullMatrix<double> > subPoints;
-  switch (F->parentType) {
-    case TYPE_PNT :
-      B.numLagPts = 1;
-      B.exponents = generate1DExponents(0);
-      B.points    = generate1DPoints(0);
-      dimSimplex = 0;
-      break;
-    case TYPE_LIN : {
-      B.numLagPts = 2;
-      B.exponents = generate1DExponents(F->order);
-      B.points    = generate1DPoints(F->order);
-      dimSimplex = 0;
-      subPoints = generateSubPointsLine(0);
-      break;
-    }
-    case TYPE_TRI : {
-      B.numLagPts = 3;
-      B.exponents = generateExponentsTriangle(F->order);
-      B.points    = gmshGeneratePointsTriangle(F->order,false);
-      dimSimplex = 2;
-      subPoints = generateSubPointsTriangle(F->order);
-      break;
-    }
-    case TYPE_QUA : {
-      B.numLagPts = 4;
-      B.exponents = generateExponentsQuad(F->order);
-      B.points    = generatePointsQuad(F->order,false);
-      dimSimplex = 0;
-      subPoints = generateSubPointsQuad(F->order);
-      //      B.points.print("points");
-      break;
-    }
-    case TYPE_TET : {
-      B.numLagPts = 4;
-      B.exponents = generateExponentsTetrahedron(F->order);
-      B.points    = gmshGeneratePointsTetrahedron(F->order,false);
-      dimSimplex = 3;
-      subPoints = generateSubPointsTetrahedron(F->order);
-      break;
-    }
-    case TYPE_PRI : {
-      B.numLagPts = 6;
-      B.exponents = generateExponentsPrism(F->order);
-      B.points    = generatePointsPrism(F->order, false);
-      dimSimplex = 2;
-      subPoints = generateSubPointsPrism(F->order);
-      break;
-    }
-    case TYPE_HEX : {
-      B.numLagPts = 8;
-      B.exponents = generateExponentsHex(F->order);
-      B.points    = generatePointsHex(F->order, false);
-      dimSimplex = 0;
-      subPoints = generateSubPointsHex(F->order);
-      break;
-    }
-    default : {
-      Msg::Error("Unknown function space %d: reverting to TET_1", tag);
-      F = polynomialBases::find(MSH_TET_1);
-      B.numLagPts = 4;
-      B.exponents = generateExponentsTetrahedron(0);
-      B.points    = gmshGeneratePointsTetrahedron(0, false);
-      dimSimplex = 3;
-      subPoints = generateSubPointsTetrahedron(0);
-    }
-  }
-  B.matrixBez2Lag = generateBez2LagMatrix(B.exponents, B.points, F->order, dimSimplex);
-  B.matrixBez2Lag.invert(B.matrixLag2Bez);
-  B.subDivisor = generateSubDivisor(B.exponents, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
+  B.order = MElement::OrderFromTag(tag);
 
-  B.numDivisions = (int) pow(2., (int) B.points.size2());
+  if (MElement::ParentTypeFromTag(tag) == TYPE_PYR) {
+    B.numLagPts = 5;
+    B.points = gmshGeneratePointsPyramid(B.order,false);
+    B.matrixLag2Bez.resize(B.points.size1(),B.points.size1(),0.);
+    B.matrixBez2Lag.resize(B.points.size1(),B.points.size1(),0.);
+    for (int i=0; i<B.matrixBez2Lag.size1(); ++i) {
+      B.matrixLag2Bez(i,i) = 1.;
+      B.matrixBez2Lag(i,i) = 1.;
+    }
+//    B.subDivisor = generateSubDivisor(B.exponents, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
+//    B.numDivisions = (int) pow(2., (int) B.points.size2());
+  }
+  else {
+    const polynomialBasis *F = (polynomialBasis*)BasisFactory::create(tag);
+    int dimSimplex;
+    std::vector< fullMatrix<double> > subPoints;
+    switch (F->parentType) {
+      case TYPE_PNT :
+        B.numLagPts = 1;
+        B.exponents = generate1DExponents(0);
+        B.points    = generate1DPoints(0);
+        dimSimplex = 0;
+        break;
+      case TYPE_LIN : {
+        B.numLagPts = 2;
+        B.exponents = generate1DExponents(F->order);
+        B.points    = generate1DPoints(F->order);
+        dimSimplex = 0;
+        subPoints = generateSubPointsLine(0);
+        break;
+      }
+      case TYPE_TRI : {
+        B.numLagPts = 3;
+        B.exponents = generateExponentsTriangle(F->order);
+        B.points    = gmshGeneratePointsTriangle(F->order,false);
+        dimSimplex = 2;
+        subPoints = generateSubPointsTriangle(F->order);
+        break;
+      }
+      case TYPE_QUA : {
+        B.numLagPts = 4;
+        B.exponents = generateExponentsQuad(F->order);
+        B.points    = generatePointsQuad(F->order,false);
+        dimSimplex = 0;
+        subPoints = generateSubPointsQuad(F->order);
+        //      B.points.print("points");
+        break;
+      }
+      case TYPE_TET : {
+        B.numLagPts = 4;
+        B.exponents = generateExponentsTetrahedron(F->order);
+        B.points    = gmshGeneratePointsTetrahedron(F->order,false);
+        dimSimplex = 3;
+        subPoints = generateSubPointsTetrahedron(F->order);
+        break;
+      }
+      case TYPE_PRI : {
+        B.numLagPts = 6;
+        B.exponents = generateExponentsPrism(F->order);
+        B.points    = generatePointsPrism(F->order, false);
+        dimSimplex = 2;
+        subPoints = generateSubPointsPrism(F->order);
+        break;
+      }
+      case TYPE_HEX : {
+        B.numLagPts = 8;
+        B.exponents = generateExponentsHex(F->order);
+        B.points    = generatePointsHex(F->order, false);
+        dimSimplex = 0;
+        subPoints = generateSubPointsHex(F->order);
+        break;
+      }
+      default : {
+        Msg::Error("Unknown function space %d: reverting to TET_1", tag);
+        B.numLagPts = 4;
+        B.exponents = generateExponentsTetrahedron(0);
+        B.points    = gmshGeneratePointsTetrahedron(0, false);
+        dimSimplex = 3;
+        subPoints = generateSubPointsTetrahedron(0);
+        break;
+      }
+    }
+    B.matrixBez2Lag = generateBez2LagMatrix(B.exponents, B.points, F->order, dimSimplex);
+    B.matrixBez2Lag.invert(B.matrixLag2Bez);
+    B.subDivisor = generateSubDivisor(B.exponents, subPoints, B.matrixLag2Bez, F->order, dimSimplex);
+    B.numDivisions = (int) pow(2., (int) B.points.size2());
+  }
+
   return &B;
 }
 
@@ -1301,24 +1130,38 @@ std::map<int, JacobianBasis> JacobianBasis::_fs;
 const JacobianBasis *JacobianBasis::find(int tag)
 {
   std::map<int, JacobianBasis>::const_iterator it = _fs.find(tag);
-  if (it != _fs.end())
-    return &it->second;
+  if (it != _fs.end()) return &it->second;
   JacobianBasis &J = _fs[tag];
-  const polynomialBasis *F = polynomialBases::find(tag);
-  int jacobianOrder;
-  switch (F->parentType) {
-    case TYPE_PNT : jacobianOrder = 0; break;
-    case TYPE_LIN : jacobianOrder = F->order - 1; break;
-    case TYPE_TRI : jacobianOrder = 2 * (F->order - 1); break;
-    case TYPE_QUA : jacobianOrder = 2 * F->order - 1; break;
-    case TYPE_TET : jacobianOrder = 3 * (F->order - 1); break;
-    case TYPE_PRI : jacobianOrder = 3 * F->order - 1; break;
-    case TYPE_HEX : jacobianOrder = 3 * F->order - 1; break;
+  if (MElement::ParentTypeFromTag(tag) == TYPE_PYR) {
+    switch (tag) {
+    case MSH_PYR_5 : J.bezier = bezierBasis::find(MSH_PYR_14); break;   // TODO: Order 1, Jac. "order" 2, check this
+    case MSH_PYR_14 : J.bezier = bezierBasis::find(MSH_PYR_91); break;  // TODO: Order 2, Jac. "order" 5, check this
+    case MSH_PYR_30 : J.bezier = bezierBasis::find(MSH_PYR_285); break; // TODO: Order 3, Jac. "order" 8, check this
     default :
-      Msg::Error("Unknown function space %d: reverting to TET_4", tag);
-      jacobianOrder = 0;
+      Msg::Error("Unknown Jacobian function space for element type %d: reverting to PYR_5", tag);
+      J.bezier = bezierBasis::find(MSH_PYR_14);
+      break;
+    }
   }
-  J.bezier = bezierBasis::find(polynomialBasis::getTag(F->parentType, jacobianOrder, false));
-  generateGradShapes(J, J.bezier->points, F->monomials, F->coefficients);
+  else {
+    const int parentType = MElement::ParentTypeFromTag(tag), order = MElement::OrderFromTag(tag);
+    int jacobianOrder;
+    switch (parentType) {
+      case TYPE_PNT : jacobianOrder = 0; break;
+      case TYPE_LIN : jacobianOrder = order - 1; break;
+      case TYPE_TRI : jacobianOrder = 2 * (order - 1); break;
+      case TYPE_QUA : jacobianOrder = 2 * order - 1; break;
+      case TYPE_TET : jacobianOrder = 3 * (order - 1); break;
+      case TYPE_PRI : jacobianOrder = 3 * order - 1; break;
+      case TYPE_HEX : jacobianOrder = 3 * order - 1; break;
+      default :
+        Msg::Error("Unknown Jacobian function space for element type %d: reverting to TET_4", tag);
+        jacobianOrder = 0;
+        break;
+    }
+    J.bezier = bezierBasis::find(polynomialBasis::getTag(parentType, jacobianOrder, false));
+    polynomialBasis *F = (polynomialBasis*)BasisFactory::create(tag);
+    generateGradShapes(J, J.bezier->points, F->monomials, F->coefficients);
+  }
   return &J;
 }

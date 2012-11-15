@@ -1,4 +1,4 @@
-#include "polynomialBasis.h"
+#include "BasisFactory.h"
 #include "Exception.h"
 #include "TriLagrangeBasis.h"
 
@@ -57,7 +57,7 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
     break;
   }
 
-  l     = polynomialBases::find(tag);
+  l     = (polynomialBasis*)BasisFactory::create(tag);
   point = new fullMatrix<double>(triPoint(order));
   
   // Set Basis Type //

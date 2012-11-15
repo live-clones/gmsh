@@ -150,10 +150,6 @@ SVector3 Mesh::getNormalEl(int iEl)
       return n;
       break;
     }
-    case TYPE_TET: {
-      return SVector3(0.);
-      break;
-    }
     default:
       std::cout << "ERROR: getNormalEl: Unknown element type" << std::endl;
       break;

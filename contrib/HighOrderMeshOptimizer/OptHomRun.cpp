@@ -329,6 +329,9 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
       OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
       fflush(stdout);
       OptHOM temp(&entity, toOptimize[i].first, toOptimize[i].second, method);
+std::ostringstream ossI1;
+ossI1 << "initial_" << entity.tag() << "ITER_" << i << ".msh";
+temp.mesh.writeMSH(ossI1.str().c_str());
       int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
       if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
         OptHomMessage("Jacobian optimization succeed, starting svd optimization");

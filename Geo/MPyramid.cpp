@@ -66,6 +66,20 @@ const nodalBasis* MPyramid::getFunctionSpace(int o) const
   return 0;
 }
 
+const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
+{
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  switch (order) {
+    case 1: return JacobianBasis::find(MSH_PYR_5);
+    case 2: return JacobianBasis::find(MSH_PYR_14);
+    case 3: return JacobianBasis::find(MSH_PYR_30);
+    default: Msg::Error("Order %d pyramid function space not implemented", order); break;
+  }
+
+  return 0;
+}
+
 MPyramidN::~MPyramidN() {}
 
 double MPyramidN::distoShapeMeasure()

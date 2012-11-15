@@ -10,6 +10,8 @@
 
 }*/
 
+
+
 BergotBasis::BergotBasis(int p): order(p)
 {
   // allocate function information and fill
@@ -41,6 +43,7 @@ BergotBasis::BergotBasis(int p): order(p)
 }
 
 
+
 BergotBasis::~BergotBasis()
 {
   delete [] iOrder;
@@ -49,10 +52,7 @@ BergotBasis::~BergotBasis()
 
 }
 
-int BergotBasis::size() const
-{
-  return (2*order*order*order + 9*order*order + 13*order + 6)/6;
-}
+
 
 void BergotBasis::f(double u, double v, double w, double* val) const
 {
@@ -99,7 +99,9 @@ void BergotBasis::f(double u, double v, double w, double* val) const
   }
 }
 
-inline void BergotBasis::df(double u, double v, double w, double grads[][3]) const
+
+
+void BergotBasis::df(double u, double v, double w, double grads[][3]) const
 {
   std::vector<double> uFcts(order+1);
   legendre.f(u,&(uFcts[0]));

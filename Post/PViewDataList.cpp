@@ -6,7 +6,7 @@
 #include "PViewDataList.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "polynomialBasis.h"
+#include "BasisFactory.h"
 #include "Numeric.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -883,11 +883,11 @@ void PViewDataList::setOrder2(int type)
   case TYPE_TET: typeMSH = MSH_TET_10; break;
   case TYPE_HEX: typeMSH = MSH_HEX_27; break;
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
-  case TYPE_PYR: typeMSH = MSH_PYR_14; break;
+//  case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
-  const polynomialBasis *fs = polynomialBases::find(typeMSH);
+  const polynomialBasis *fs = (polynomialBasis*)BasisFactory::create(typeMSH);
   if(!fs){
-    Msg::Error("Could not find function space for element type %d", typeMSH);
+    Msg::Error("Could not find polynomial function space for element type %d", typeMSH);
     return;
   }
   setInterpolationMatrices(type, fs->coefficients, fs->monomials,
