@@ -85,7 +85,7 @@ private:
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);
   SVector3 getNormalEl(int iEl);
-  static fullMatrix<double> computeGSF(const polynomialBasis *lagrange, const bezierBasis *bezier);
+  static fullMatrix<double> computeGSF(const nodalBasis *lagrange, const bezierBasis *bezier);
   static inline int indJB2DBase(int nNod, int l, int i, int j) { return (l*nNod+i)*nNod+j; }
   inline int indJB2D(int iEl, int l, int i, int j) { return indJB2DBase(_nNodEl[iEl],l,i,j); }
   static inline int indJB3DBase(int nNod, int l, int i, int j, int m) { return ((l*nNod+i)*nNod+j)*nNod+m; }

@@ -43,7 +43,7 @@ pyramidalBasis::~pyramidalBasis()
 
 
 
-inline void pyramidalBasis::f(double u, double v, double w, double *val) const
+void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
 
   const int N = bergot->size();
@@ -60,7 +60,7 @@ inline void pyramidalBasis::f(double u, double v, double w, double *val) const
 
 
 
-inline void pyramidalBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf)
+void pyramidalBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf)
 {
 
   const int N = bergot->size(), NPts = coord.size1();
@@ -81,7 +81,7 @@ inline void pyramidalBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf)
 
 
 
-inline void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
+void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 {
 
   const int N = bergot->size();
@@ -102,18 +102,18 @@ inline void pyramidalBasis::df(double u, double v, double w, double grads[][3]) 
 
 
 
-inline void pyramidalBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
+void pyramidalBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
 {
 
   const int N = bergot->size(), NPts = coord.size1();
 
   double dfv[N][3];
-  dfm.resize (NPts, 3*N, false);
+  dfm.resize (N, 3*NPts, false);
 
   for (int iPt=0; iPt<NPts; iPt++) {
     df(coord(iPt,0), coord(iPt,1), coord(iPt,2), dfv);
     for (int i = 0; i < N; i++) {
-      dfm(i, 3*iPt+0) = dfv[i][0];
+      dfm(i, 3*iPt) = dfv[i][0];
       dfm(i, 3*iPt+1) = dfv[i][1];
       dfm(i, 3*iPt+2) = dfv[i][2];
     }

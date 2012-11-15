@@ -27,7 +27,7 @@ BergotBasis::BergotBasis(int p): order(p)
   for (int i=0;i<=order;i++) {
     for (int j=0;j<=order;j++) {
       int mIJ = std::max(i,j);
-      for (int k=0;k<= (int) (order - mIJ);k++,index++) {
+      for (int k=0; k<=order-mIJ; k++,index++) {
 
         iOrder[index] = i;
         jOrder[index] = j;
@@ -56,13 +56,13 @@ BergotBasis::~BergotBasis()
 
 void BergotBasis::f(double u, double v, double w, double* val) const
 {
-  double uhat = (w == 1.) ? 1 : u/(1.-w);
+  double uhat = (w == 1.) ? 1. : u/(1.-w);
 
   std::vector<double> uFcts(order+1);
   //double uFcts[order+1];
   legendre.f(uhat,&(uFcts[0]));
 
-  double vhat = (w == 1.) ? 1 : v/(1.-w);
+  double vhat = (w == 1.) ? 1. : v/(1.-w);
   std::vector<double> vFcts(order+1);
   legendre.f(vhat,&(vFcts[0]));
 
@@ -83,9 +83,9 @@ void BergotBasis::f(double u, double v, double w, double* val) const
   for (int i=0;i<=order;i++) {
     for (int j=0;j<=order;j++) {
       int mIJ = std::max(i,j);
-      double fact = pow_int(1-w,(int) mIJ);
+      double fact = pow(1-w, mIJ);
       double* wf = (wFcts.find(mIJ))->second;
-      for (int k=0;k<=(int) (order - mIJ);k++,index++) {
+      for (int k=0; k<=order-mIJ; k++,index++) {
         val[index] = uFcts[i] * vFcts[j] * wf[k] * fact;
       }
     }
@@ -140,11 +140,11 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
       double* wf = (wFcts .find(mIJ))->second;
       double* wg = (wGrads.find(mIJ))->second;
 
-      double wPowM2 = pow_int(1.-w,((int) mIJ) - 2);
+      double wPowM2 = pow(1.-w, mIJ-2);
       double wPowM1 = wPowM2*(1.-w);
       double wPowM0 = wPowM1*(1.-w);
 
-      for (int k=0;k<= (int) (order - mIJ);k++,index++) {
+      for (int k=0; k<=order-mIJ; k++,index++) {
 
         grads[index][0] = uGrads[i] * vFcts[j]  * wf[k] * wPowM1;
 

@@ -13,7 +13,7 @@ std::map<int, fullMatrix<double> > Mesh::_lag2Bez;
 
 
 
-fullMatrix<double> Mesh::computeGSF(const polynomialBasis *lagrange, const bezierBasis *bezier)
+fullMatrix<double> Mesh::computeGSF(const nodalBasis *lagrange, const bezierBasis *bezier)
 {
   // bezier points are defined in the [0,1] x [0,1] quad
   fullMatrix<double> bezierPoints = bezier->points;
@@ -70,7 +70,7 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
   for(std::set<MElement*>::const_iterator it = els.begin(); it != els.end(); ++it, ++iEl) {
     MElement *el = *it;
     _el[iEl] = el;
-    const polynomialBasis *lagrange = (polynomialBasis*) el->getFunctionSpace();
+    const nodalBasis *lagrange = el->getFunctionSpace();
     const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
     if (_lag2Bez.find(lagrange->type) == _lag2Bez.end()) {
       _gradShapeFunctions[lagrange->type] = computeGSF(lagrange, bezier);
