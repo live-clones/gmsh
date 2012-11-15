@@ -275,8 +275,8 @@ namespace onelab{
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
-    // when in a loop, indicates current index in the vector _choices; is -1
-    // when not in a loop
+    // when in a loop, indicates current index in the vector _choices; 
+    // is -1 when not in a loop
     int _index;
     std::vector<double> _choices;
     std::map<double, std::string> _valueLabels;
@@ -284,7 +284,7 @@ namespace onelab{
     number(const std::string &name="", double value=0.,
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _value(value),
-      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(0) {}
+      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(-1) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }

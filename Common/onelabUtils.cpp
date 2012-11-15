@@ -149,6 +149,7 @@ namespace onelabUtils {
 
   bool incrementLoop(const std::string &level)
   {
+    // called at the end of the do{...} while(incrementLoops); 
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
@@ -171,7 +172,7 @@ namespace onelabUtils {
 	  int j = numbers[i].getIndex() + 1;
 	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-             val < numbers[i].getMax()){
+             val <= numbers[i].getMax()){
             numbers[i].setValue(val);
 	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
@@ -180,13 +181,13 @@ namespace onelabUtils {
             recompute = true;
           }
 	  else
-	    numbers[i].setIndex(numbers[i].getMax());
+	    numbers[i].setIndex(numbers[i].getMax());// FIXME makes sense?
         }
         else if(numbers[i].getStep() < 0){
 	  int j = numbers[i].getIndex() + 1;
 	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-             val > numbers[i].getMin()){
+             val >= numbers[i].getMin()){
             numbers[i].setValue(val);
 	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
@@ -195,7 +196,7 @@ namespace onelabUtils {
             recompute = true;
           }
 	  else
-	    numbers[i].setIndex(numbers[i].getMin());
+	    numbers[i].setIndex(numbers[i].getMin()); // FIXME makes sense?
         }
       }
     }

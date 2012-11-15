@@ -52,11 +52,11 @@ bool MetaModel::findCommandLine(const std::string &client, const std::string &ho
 	if(name == client){
 	  if( (host.empty() && (rhost != "localhost" )) ||
 	      (host.size() && (rhost == host)) ) {
-	    OLMsg::SetOnelabString(name + "/CommandLine", cmdl);
+	    OLMsg::SetOnelabString(name + "/CommandLine", cmdl, false);
 	    if(rhost.compare("localhost")){
-	      OLMsg::SetOnelabString(name + "/HostName", rhost);
+	      OLMsg::SetOnelabString(name + "/HostName", rhost, false);
 	      if(rdir.size())
-		OLMsg::SetOnelabString(name + "/RemoteDir", rdir);
+		OLMsg::SetOnelabString(name + "/RemoteDir", rdir, false);
 	    }
 	    //std::cout << "FHF found cmdl: " << cmdl << "," << rhost << std::endl;
 	    return true;
@@ -1423,6 +1423,7 @@ void MetaModel::client_sentence(const std::string &name,
 	    onelab::string str;
 	    str.setName(name + "/CommandLine");
 	    str.setKind("file");
+	    str.setVisible(true);
 	    str.setAttribute("Highlight","Ivory");
 	    set(str);
 	    OLMsg::Error("No commandline found for client <%s>",
@@ -1448,34 +1449,40 @@ void MetaModel::client_sentence(const std::string &name,
       if(arguments.size()>=3) 
 	  OLMsg::Warning("Unused arguments for client <%s>", name.c_str());
 
-      if(host.empty()){
+      if(host.size()){
+	OLMsg::SetOnelabString(name + "/HostName", host, false);
+	if(rdir.size())
+	  OLMsg::SetOnelabString(name + "/RemoteDir", rdir, false);
+      }
+      else{
 	std::string in = OLMsg::GetOnelabString(name + "/HostName");
 	if(in.size()){
 	  std::vector<std::string> split = SplitOLHostName(in);
 	  host = split[0];
 	  rdir = split[1]; 
-	  OLMsg::SetOnelabString(name + "/HostName", host);
+	  OLMsg::SetOnelabString(name + "/HostName", host, false);
 	  if(rdir.size())
-	    OLMsg::SetOnelabString(name + "/RemoteDir", rdir);
+	    OLMsg::SetOnelabString(name + "/RemoteDir", rdir, false);
 	}
-      }
-      if(!findCommandLine(name,host)){
-	if(OLMsg::hasGmsh){
-	  onelab::string str;
-	  str.setName(name + "/HostName");
-	  str.setAttribute("Highlight","Ivory");
-	  set(str);
-	  OLMsg::Error("No hostname found for remote client <%s>",name.c_str());
-	}
-	else{ // asks the user in console mode
-	  std::cout << "\nONELAB: Enter remote host for <" << name << "> (name@host:dir)" << std::endl;
-	  std::string in;
-	  std::getline (std::cin,in);
-	  if(in.size()){
-	    std::vector<std::string> split = SplitOLHostName(in);
-	    OLMsg::SetOnelabString(name + "/HostName", split[0]);
-	    if(split[1].size())
-	      OLMsg::SetOnelabString(name + "/RemoteDir", split[1]);
+	if(!findCommandLine(name,host)){
+	  if(OLMsg::hasGmsh){
+	    onelab::string str;
+	    str.setName(name + "/HostName");
+	    str.setVisible(true);
+	    str.setAttribute("Highlight","Ivory");
+	    set(str);
+	    OLMsg::Error("No hostname found for remote client <%s>",name.c_str());
+	  }
+	  else{ // asks the user in console mode
+	    std::cout << "\nONELAB: Enter remote host for <" << name << "> (name@host:dir)" << std::endl;
+	    std::string in;
+	    std::getline (std::cin,in);
+	    if(in.size()){
+	      std::vector<std::string> split = SplitOLHostName(in);
+	      OLMsg::SetOnelabString(name + "/HostName", split[0], false);
+	      if(split[1].size())
+		OLMsg::SetOnelabString(name + "/RemoteDir", split[1], false);
+	    }
 	  }
 	}
       }
