@@ -26,6 +26,7 @@ class linearSystemBase {
   void setParameter (std::string key, std::string value);
   virtual void insertInSparsityPattern(int _row, int _col){};
   virtual double normInfRightHandSide() const = 0;
+  virtual void createMatrix() {};
 };
 
 template <class scalar>

@@ -131,6 +131,29 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   _entriesPreAllocated = false;
 }
 
+template<class scalar>
+void linearSystemPETSc<scalar>::createMatrix(){
+  if (isAllocated())
+    #if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
+    _try(MatDestroy(&_a));
+    #else
+    _try(MatDestroy(_a));
+    #endif
+  _try(MatCreate(_comm, &_a));
+  _try(MatSetSizes(_a, _localSize, _localSize, _globalSize, _globalSize));
+  // override the default options with the ones from the option
+  // database (if any)
+  if (this->_parameters.count("petscOptions"))
+    _try(PetscOptionsInsertString(this->_parameters["petscOptions"].c_str()));
+  if (this->_parameters.count("petscPrefix"))
+    _try(MatAppendOptionsPrefix(_a, this->_parameters["petscPrefix"].c_str()));
+  _try(MatSetFromOptions(_a));
+
+  _entriesPreAllocated = false;
+  _matrixModified = true;
+  _isAllocated = true;
+};
+
 template <class scalar>
 void linearSystemPETSc<scalar>::print()
 {
