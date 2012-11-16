@@ -26,6 +26,10 @@
 #include <process.h>
 #include <io.h>
 #include <direct.h>
+#include <fcntl.h>
+#include <io.h>
+#include <iostream>
+#include <fstream>
 #endif
 
 #if defined(__APPLE__)
@@ -238,12 +242,39 @@ std::string getCurrentWorkdir()
   if(!getcwd(path, sizeof(path))) return "";
 #endif
   std::string str(path);
-  // match the convention of SplitFileName that delivers directory path endig
-  // with a directory separator
+  // match the convention of SplitFileName that delivers directory path 
+  // ending with a directory separator
 #if defined(WIN32)
   str.append("\\");
 #else
   str.append("/");
 #endif
   return str;
+}
+
+void RedirectIOToConsole()
+{
+#if defined(WIN32) && !defined(__CYGWIN__)
+  // Win32 GUI apps do not write to the DOS console; make it work again by
+  // attaching to parent console, which allows to use the DOS shell to work 
+  // with Gmsh on the command line (without this hack, you need to either use
+  // a better shell (e.g. bash), or compile a /subsystem:console version
+  AttachConsole(ATTACH_PARENT_PROCESS);
+  // redirect unbuffered stdout, stdin and stderr to the console
+  intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
+  int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+  *stdout = _fdopen(hConHandle, "w");
+  setvbuf(stdout, NULL, _IONBF, 0);
+  lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
+  hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+  *stdin = _fdopen(hConHandle, "r");
+  setvbuf(stdin, NULL, _IONBF, 0);
+  lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
+  hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+  *stderr = _fdopen(hConHandle, "w");
+  setvbuf(stderr, NULL, _IONBF, 0);
+  // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to 
+  // console as well
+  std::ios::sync_with_stdio();
+#endif
 }

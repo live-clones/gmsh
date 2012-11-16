@@ -22,5 +22,6 @@ int KillProcess(int pid);
 int CreateDirectory(const std::string &dirName);
 int SystemCall(const std::string &command, bool blocking=false);
 std::string getCurrentWorkdir();
+void RedirectIOToConsole();
 
 #endif

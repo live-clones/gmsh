@@ -45,6 +45,10 @@
 
 int GmshInitialize(int argc, char **argv)
 {
+#if defined(HAVE_FLTK)
+  RedirectIOToConsole();
+#endif
+
   // we need at least one model during option parsing
   GModel *dummy = 0;
   if(GModel::list.empty()) dummy = new GModel();
