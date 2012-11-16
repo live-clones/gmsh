@@ -17,6 +17,10 @@
 #include "PViewOptions.h"
 #endif
 
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
+
 #if defined(HAVE_KBIPACK)
 
 template <class TTypeA, class TTypeB>
@@ -515,6 +519,9 @@ void Chain<C>::addToModel(GModel* m, bool post,
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
     view->setOptions(opt);
+#if defined(HAVE_FLTK)
+    FlGui::instance()->rebuildTree();
+#endif
   }
 #endif
 }
