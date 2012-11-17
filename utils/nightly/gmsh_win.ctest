@@ -14,7 +14,7 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 #################################################################################
 set(CTEST_BUILD_NAME "Win32")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
-set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/med;/usr/local/opencascade;/usr/local;/usr/i686-w64-mingw32/sys-root/mingw")
+set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local;/usr/i686-w64-mingw32/sys-root/mingw")
 set(OPT "${OPT} -DCMAKE_C_COMPILER=/usr/bin/i686-w64-mingw32-gcc.exe")
 set(OPT "${OPT} -DCMAKE_CXX_COMPILER=/usr/bin/i686-w64-mingw32-g++.exe")
 set(OPT "${OPT} -DCMAKE_Fortran_COMPILER=/usr/bin/i686-w64-mingw32-gfortran.exe")
