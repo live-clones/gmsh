@@ -2934,6 +2934,10 @@ graphicWindow::~graphicWindow()
   _tile->clear();
   _win->clear();
   Fl::delete_widget(_win);
+  if(_menuwin){
+    _menuwin->clear();
+    Fl::delete_widget(_menuwin);
+  }
 }
 
 void graphicWindow::setTitle(std::string str)

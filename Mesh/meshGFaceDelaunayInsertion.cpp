@@ -40,7 +40,7 @@ static bool isBoundary(MTri3 *t, double limit_, int &active)
 }
 */
 template <class ITERATOR>
-void _printTris(char *name, ITERATOR it,  ITERATOR end, 
+void _printTris(char *name, ITERATOR it,  ITERATOR end,
                 std::vector<double> &Us, std::vector<double> &Vs, bool param=true)
 {
   FILE *ff = fopen (name,"w");
@@ -700,7 +700,9 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
     if (inside) return t;
     if (ITER++ > (int)AllTris.size()) break;
   }
-  //  return 0;
+
+  return 0; // FIXME: removing this leads to horrible performance
+
   for(std::set<MTri3*,compareTri3Ptr>::iterator itx = AllTris.begin();
       itx != AllTris.end();++itx){
     if (!(*itx)->isDeleted()){
@@ -768,12 +770,10 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     if(!p.succeeded() || !insertVertex
        (false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
         Us, Vs, metric) ) {
-
       //      Msg::Debug("Point %g %g cannot be inserted because %d",
       //                       center[0], center[1], p.succeeded() );
       //      printf("Point %g %g cannot be inserted because %d",
       //	     center[0], center[1], p.succeeded() );
-
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
@@ -782,24 +782,20 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
     else {
       //      printf("done ! %d\n",AllTris.size());
-
       gf->mesh_vertices.push_back(v);
       return true;
     }
   }
   else {
-    printf("NOT INSIDE\n");
-    /*
     MTriangle *base = worst->tri();
-    Msg::Info("Point %g %g is outside (%g %g , %g %g , %g %g)",
-	      center[0], center[1],
-	      Us[base->getVertex(0)->getIndex()],
-	      Vs[base->getVertex(0)->getIndex()],
-	      Us[base->getVertex(1)->getIndex()],
-	      Vs[base->getVertex(1)->getIndex()],
-	      Us[base->getVertex(2)->getIndex()],
-	      Vs[base->getVertex(2)->getIndex()]);
-    */
+    Msg::Debug("Point %g %g is outside (%g %g , %g %g , %g %g)",
+               center[0], center[1],
+               Us[base->getVertex(0)->getIndex()],
+               Vs[base->getVertex(0)->getIndex()],
+               Us[base->getVertex(1)->getIndex()],
+               Vs[base->getVertex(1)->getIndex()],
+               Us[base->getVertex(2)->getIndex()],
+               Vs[base->getVertex(2)->getIndex()]);
     AllTris.erase(it);
     worst->forceRadius(0);
     AllTris.insert(worst);
@@ -1005,14 +1001,14 @@ double optimalPointFrontal (GFace *gf,
   const double d = rhoM_hat * sqrt(3.)*0.5;
 
   // d is corrected in a way that the mesh size is computed at point newPoint
-  
+
 
   //  printf("%12.5E %12.5E\n",d,RATIO);
 
   //  const double L = d ;
   // avoid to go toooooo far
   const double L = d > q ? q : d;
-  
+
 
   newPoint[0] = midpoint[0] + L * dir[0]/RATIO;
   newPoint[1] = midpoint[1] + L * dir[1]/RATIO;
@@ -1595,7 +1591,7 @@ void bowyerWatsonParallelograms(GFace *gf)
 
   //  printf("CARNAVAL !!!\n");
 
-  //  std::sort(packed.begin(), packed.end(), lexicographicSort()); 
+  //  std::sort(packed.begin(), packed.end(), lexicographicSort());
 
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
@@ -1605,7 +1601,7 @@ void bowyerWatsonParallelograms(GFace *gf)
       AllTris.erase(AllTris.begin());
     }
     else{
-      double newPoint[2] ; 
+      double newPoint[2] ;
       packed[i]->getParameter(0,newPoint[0]);
       packed[i]->getParameter(1,newPoint[1]);
       delete packed[i];
@@ -1613,7 +1609,7 @@ void bowyerWatsonParallelograms(GFace *gf)
       buildMetric(gf, newPoint, metric);
       bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, Us, Vs, vSizes,
 				  vSizesBGM, vMetricsBGM, AllTris, 0, worst);
-      if (!success)printf("success %d %d\n",success,AllTris.size());
+      if (!success) printf("success %d %d\n", success, (int)AllTris.size());
       i++;
     }
   }
