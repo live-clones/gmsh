@@ -11,7 +11,6 @@ namespace olkey{
   static std::string begin(label+"block");
   static std::string end(label+"endblock");
   static std::string include(label+"include");
-  static std::string loader(label+"loaderName");
   static std::string message(label+"msg");
   static std::string showParam(label+"show");
   static std::string showGmsh(label+"merge");
@@ -280,8 +279,10 @@ std::string localSolverClient::resolveString(const std::string &line) {
 }
 
 std::string localSolverClient::resolveGetVal(std::string line) {
-  //looks for OL.get() statements, substitute the value from server
-  //then ealuate the resulting string with mathex.
+  //looks for OL.get() statements, substitute values from server
+  //then evaluate the resulting string with mathex.
+  //OL.get(name 
+  //        {, {choices|range}.{size|comp|expand|index}|attributes.get(args)})
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
   std::vector<std::string> arguments;
@@ -374,6 +375,11 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	  else
 	    OLMsg::Error("Unknown action <%s> in %s statement",
 		       action.c_str(),olkey::getValue.c_str());
+	}
+	else if(!name.compare(0,6,"attrib")) {
+	  if(!action.compare("get")) {
+	    buff.assign(numbers[0].getAttribute(args[0]));
+	  }
 	}
       }
     }
@@ -840,7 +846,6 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
     olkey::begin.assign(olkey::label+"block");
     olkey::end.assign(olkey::label+"endblock");
     olkey::include.assign(olkey::label+"include");
-    olkey::loader.assign(olkey::label+"loaderName");
     olkey::message.assign(olkey::label+"msg");
     olkey::showParam.assign(olkey::label+"show");
     olkey::showGmsh.assign(olkey::label+"merge");
@@ -975,17 +980,6 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Info("%s",msg.c_str());
     }
   }
-  else if ( (pos=line.find(olkey::loader)) != std::string::npos) { 
-    // onelab.loaderName
-    cursor = pos+olkey::loader.length();
-    if(enclosed(line.substr(cursor),arguments,pos)<1)
-      OLMsg::Error("Misformed <%s> statement: (%s)",
-		 olkey::loader.c_str(),line.c_str());
-    else{
-      std::string msg = resolveGetVal(arguments[0]);
-      OLMsg::Info("%s",msg.c_str());
-    }
-  }
   else if ( (pos=line.find(olkey::showParam)) != std::string::npos) { 
     // onelab.showParam
     cursor = pos+olkey::showParam.length();
@@ -1019,7 +1013,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 		   olkey::showGmsh.c_str(),line.c_str());
     else{
       std::string fileName=resolveGetVal(arguments[0]);
-      OLMsg::MergeFile(fileName);
+      OLMsg::MergeFile(getWorkingDir() + fileName);
     }
   }
   else if ( (pos=line.find(olkey::dump)) != std::string::npos) { 
@@ -1605,20 +1599,20 @@ void MetaModel::client_sentence(const std::string &name,
     if(arguments.size()%4==0){
       if(isTodo(REGISTER)){
 	// predefine the parameters to upload
-	for(unsigned int i = 0; i < arguments.size(); i++){
-	  if(i%4==3){ 
-	    std::string str=resolveGetVal(arguments[i]);
-	    OLMsg::recordFullName(str);
-	    std::vector<onelab::number> numbers;
-	    get(numbers, str);
-	    if(numbers.empty()){ 
-	      numbers.resize(1);
-	      numbers[0].setName(str);
-	      numbers[0].setValue(0);
-	      set(numbers[0]);
-	    }
-	  }
-	}
+	// for(unsigned int i = 0; i < arguments.size(); i++){
+	//   if(i%4==3){ 
+	//     std::string str=resolveGetVal(arguments[i]);
+	//     OLMsg::recordFullName(str);
+	//     std::vector<onelab::number> numbers;
+	//     get(numbers, str);
+	//     if(numbers.empty()){ 
+	//       numbers.resize(1);
+	//       numbers[0].setName(str);
+	//       numbers[0].setValue(0);
+	//       set(numbers[0]);
+	//     }
+	//   }
+	// }
       }
       else if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount()){
 	std::vector<std::string> choices;

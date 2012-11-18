@@ -408,10 +408,8 @@ std::string OLMsg::obtainFullName(const std::string &name){
 }
 
 void OLMsg::MergeFile(const std::string &name){
-  //This routine allows sending input files (geo, pos, msh) to Gmsh
-  //The parameter Gmsh/MergedGeo ensures that only one geometry
-  //is sent to Gmsh. It is reloaded afted each metamodel execution
-  //
+  //Sends files (geo, pos, msh) to Gmsh
+  //The parameter Gmsh/MergedGeo ensures that the geometry is sent once.
   if(_onelabClient){
     if(name.find(".geo") != std::string::npos){
       if(GetOnelabString("Gmsh/MergedGeo").empty()){
@@ -421,7 +419,7 @@ void OLMsg::MergeFile(const std::string &name){
       }
     }
     else{
-      Info("Merge a geometry <%s> to Gmsh", name.c_str());
+      Info("Merge <%s> to Gmsh", name.c_str());
       _onelabClient->sendMergeFileRequest(name);
     }
   }

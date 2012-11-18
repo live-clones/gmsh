@@ -684,13 +684,23 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 class localGmsh : public onelab::localClient {
 public:
   localGmsh() : onelab::localClient("Gmsh") {}
+  // redefinition of virtual onelab_client::sendMergeFileRequest
   void sendMergeFileRequest(const std::string &name)
   {
-    MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
-                            CTX::instance()->solver.autoHideNewViews, true);
     if(name.find(".geo")!= std::string::npos){
+      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
+			      CTX::instance()->solver.autoHideNewViews, true);
       GModel::current()->setFileName(name);
     }
+    else if((name.find(".opt")!= std::string::npos)){
+      MergeFile(name);
+    }
+    else if((name.find(".macro")!= std::string::npos)){
+      MergeFile(name);
+    }
+    else
+      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
+			      CTX::instance()->solver.autoHideNewViews, true);
   }
   void sendInfo(const std::string &msg){ Msg::Info("%s", msg.c_str()); }
   void sendWarning(const std::string &msg){ Msg::Warning("%s", msg.c_str()); }

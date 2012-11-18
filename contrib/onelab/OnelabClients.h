@@ -63,7 +63,6 @@ std::string extractExpandPattern(const std::string& str);
 typedef std::vector <std::vector <double> > array;
 array read_array(std::string fileName, char sep);
 double find_in_array(int i, int j, const std::vector <std::vector <double> > &data);
-//std::vector<double> extract_column(const int j, array data);
 
 static std::string getShortName(const std::string &name) {
   std::string s = name;
