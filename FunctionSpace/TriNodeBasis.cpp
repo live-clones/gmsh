@@ -72,12 +72,12 @@ TriNodeBasis::TriNodeBasis(int order){
   // Lagrange Sub //
   for(int e = 0; e < 3; e++){
     lagrangeSub[0][e] = 
-      *(*node)[edgeV[0][e][0]] - 
-      *(*node)[edgeV[0][e][1]];
+      *(*node)[edgeV[0][e][1]] - 
+      *(*node)[edgeV[0][e][0]];
     
     lagrangeSub[1][e] = 
-      *(*node)[edgeV[1][e][0]] - 
-      *(*node)[edgeV[1][e][1]];
+      *(*node)[edgeV[1][e][1]] - 
+      *(*node)[edgeV[1][e][0]];
   }
 
  
@@ -97,7 +97,7 @@ TriNodeBasis::TriNodeBasis(int order){
 
 
   // Cell Based //
-  Polynomial p             = *(*node)[2] * 2 - Polynomial(1, 0, 0, 0);
+  Polynomial p             = (*(*node)[2] * 2) - Polynomial(1, 0, 0, 0);
   const int  orderMinusTwo = order - 2;
 
   unsigned int i = 0;
