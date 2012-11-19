@@ -12,8 +12,13 @@
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Esc & Cmd-w on Mac, Alt+F4 on Windows)
 class paletteWindow : public Fl_Double_Window {
- private:
-  int handle(int event)
+ public:
+  paletteWindow(int w, int h, bool nonModal, const char *l=0)
+    : Fl_Double_Window(w, h, l)
+  {
+    if(nonModal) set_non_modal();
+  }
+  virtual int handle(int event)
   {
     switch (event) {
     case FL_SHORTCUT:
@@ -32,13 +37,7 @@ class paletteWindow : public Fl_Double_Window {
     }
     return Fl_Double_Window::handle(event);
   }
- public:
-  paletteWindow(int w, int h, bool nonModal, const char *l=0)
-    : Fl_Double_Window(w, h, l) 
-  {
-    if(nonModal) set_non_modal();
-  }
-  void show()
+  virtual void show()
   {
     if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
     Fl_Double_Window::show();

@@ -2653,15 +2653,35 @@ static void message_browser_cb(Fl_Widget *w, void *data)
     g->copySelectedMessagesToClipboard();
 }
 
-// This dummy box class permits to define a box widget that will not
-// eat the FL_ENTER/FL_LEAVE events (the new Box widget in fltk > 1.1
-// does that, so that gl->handle() was not called when the mouse
-// moved)
+// This dummy box class permits to define a box widget that will not eat the
+// FL_ENTER/FL_LEAVE events (the box widget in fltk > 1.1 does that, so that
+// gl->handle() was not called when the mouse moved)
 class dummyBox : public Fl_Box {
  private:
   int handle(int){ return 0; } // always!
  public:
   dummyBox(int x, int y, int w, int h, const char *l=0) : Fl_Box(x, y, w, h, l) {}
+};
+
+// The main graphic window has a special resize behaviour forcing the message
+// tile to always keep its height
+class mainWindowSpecialResize : public mainWindow {
+ public:
+  mainWindowSpecialResize(int w, int h, bool nonModal, const char *l=0)
+    : mainWindow(w, h, nonModal, l) {}
+  virtual void resize(int X,int Y,int W,int H)
+  {
+    bool special = (shown() && this == FlGui::instance()->graph[0]->getWindow());
+    int old_mh = 0;
+    if(special)
+      old_mh = FlGui::instance()->graph[0]->getMessageHeight();
+    Fl_Window::resize(X, Y, W, H);
+    const int minimum_non_message_height = 100;
+    if(special && old_mh < h() - minimum_non_message_height){
+      int mh = FlGui::instance()->graph[0]->getMessageHeight();
+      FlGui::instance()->graph[0]->resizeMessages(old_mh - mh);
+    }
+  }
 };
 
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
@@ -2713,7 +2733,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   // the graphic window should be a "normal" window (neither modal nor
   // non-modal)
   if(main){
-    _win = new mainWindow(width, height, false);
+    _win = new mainWindowSpecialResize(width, height, false);
     _win->callback(file_quit_cb);
   }
   else{
@@ -2820,9 +2840,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
-  x += 2;
+  x += 4;
   _label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
-  _label->box(FL_THIN_DOWN_BOX);
+  _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
 
@@ -2878,7 +2898,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   if(main){
     _browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
-    _browser->box(FL_THIN_DOWN_BOX);
+    _browser->box(GMSH_SIMPLE_TOP_BOX);
     _browser->textfont(FL_COURIER);
     _browser->textsize(FL_NORMAL_SIZE - 1);
     _browser->type(FL_MULTI_BROWSER);
@@ -3189,6 +3209,7 @@ int graphicWindow::getGlWidth()
 void graphicWindow::setGlWidth(int w)
 {
   _win->size(w, _win->h());
+  _win->redraw();
   // workaround resizing bug on Mac
   _win->size_range(_minWidth, _minHeight);
 }
@@ -3197,7 +3218,8 @@ void graphicWindow::setGlHeight(int h)
 {
   int hh = h + _bottom->h();
   if(_bar) hh += _bar->h();
-  _win->size(_win->w(), h);
+  _win->size(_win->w(), hh);
+  _win->redraw();
   // workaround resizing bug on Mac
   _win->size_range(_minWidth, _minHeight);
 }
@@ -3243,6 +3265,12 @@ void graphicWindow::showHideMessages()
 }
 
 int graphicWindow::getMessageHeight()
+{
+  if(!_browser) return 0;
+  return _browser->h();
+}
+
+int graphicWindow::getSavedMessageHeight()
 {
   if(!_browser) return 0;
   if(!_browser->h()) return _savedMessageHeight;

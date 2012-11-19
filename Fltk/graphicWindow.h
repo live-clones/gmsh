@@ -82,6 +82,7 @@ class graphicWindow{
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
   int getMessageHeight();
+  int getSavedMessageHeight();
   void fillRecentHistoryMenu();
 };
 
