@@ -21,6 +21,7 @@ typedef unsigned long intptr_t;
 #include <FL/Fl_Output.H>
 #include <FL/fl_ask.H>
 #include "inputRange.h"
+#include "outputRange.h"
 #include "inputRegion.h"
 #include "viewButton.h"
 #include "paletteWindow.h"
@@ -753,7 +754,17 @@ static unsigned char gear_bits[] = {
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x,y,w,h,l), _stop(false)
 {
-  _tree = new Fl_Tree(x, y, w, h - BH - 2 * WB);
+  int col = FL_BACKGROUND2_COLOR;
+  color(col);
+
+  box(GMSH_SIMPLE_RIGHT_BOX);
+  int dx = Fl::box_dx(box());
+  int dy = Fl::box_dy(box());
+  int dw = Fl::box_dw(box());
+  int dh = Fl::box_dh(box());
+
+  _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
+  _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   _tree->showroot(0);
@@ -763,9 +774,6 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->end();
 
   _computeWidths();
-
-  box(FL_FLAT_BOX);
-  color(_tree->color());
 
   int BB2 = BB / 2 + 4;
 
@@ -974,6 +982,20 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers, name);
+  if(numbers.size()){
+    outputRange *o = (outputRange*)w;
+    numbers[0].setAttribute("Graph", o->graph());
+    onelab::server::instance()->set(numbers[0]);
+    updateGraphs();
+  }
+}
+
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
                                             bool highlight, Fl_Color c)
 {
@@ -983,11 +1005,11 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
 
   // non-editable value
   if(p.getReadOnly()){
-    Fl_Output *but = new Fl_Output(1, 1, ww, 1);
-    char tmp[128];
-    sprintf(tmp, "%g", p.getValue());
-    but->value(tmp);
+    outputRange *but = new outputRange(1, 1, ww, 1);
+    but->callback(onelab_number_output_range_cb, (void*)n);
+    but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
+    but->graph(p.getAttribute("Graph"));
     if(highlight) but->color(c);
     return but;
   }
