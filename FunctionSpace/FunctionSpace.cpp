@@ -125,13 +125,13 @@ void FunctionSpace::insertDof(Dof& d, GroupOfDof* god){
   // If insertion is OK (Dof 'd' didn't exist) //
   //   --> Add new Dof in GoD
   if(p.second)
-    god->add(tmp);
+    god->add(*tmp);
   
   // If insertion failed (Dof 'd' already exists) //
   //   --> delete 'd' and add existing Dof in GoD
   else{
     delete tmp; 
-    god->add(*(p.first));
+    god->add(*(*(p.first)));
   }
 }
 
