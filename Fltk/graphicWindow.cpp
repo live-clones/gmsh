@@ -2984,6 +2984,7 @@ void graphicWindow::detachMenu()
      CTX::instance()->nonModalWindows ? true : false, "Gmsh");
   _menuwin->callback(file_quit_cb);
   _menuwin->box(GMSH_WINDOW_BOX);
+  _onelab->box(FL_FLAT_BOX);
   _menuwin->add(_onelab);
   _onelab->resize(0, 0, _menuwin->w(), _menuwin->h());
   _menuwin->position(CTX::instance()->menuPosition[0],
@@ -3009,6 +3010,7 @@ void graphicWindow::attachMenu()
     if(gl[i]->x() == 0)
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
   }
+  _onelab->box(GMSH_SIMPLE_RIGHT_BOX);
   _tile->add(_onelab);
   _onelab->resize(_tile->x(), _tile->y(), w, _tile->h());
   _tile->redraw();
