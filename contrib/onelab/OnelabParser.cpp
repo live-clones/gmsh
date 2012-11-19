@@ -536,9 +536,6 @@ void localSolverClient::parse_sentence(std::string line) {
 	  val=atof(resolveGetVal(arguments[0]).c_str());
 	numbers[0].setValue(val);
       }
-      // parameters defined with no value are ReadOnly
-      // if(arguments[0].empty()) numbers[0].setReadOnly(1);
-
       if(arguments.size()>2)
 	numbers[0].setLabel(unquote(arguments[2]));
       if(arguments.size()>3){
@@ -564,10 +561,6 @@ void localSolverClient::parse_sentence(std::string line) {
 	std::string val=resolveGetVal(arguments[0]);
 	strings[0].setValue(val);
       }
-
-      // parameters defined with no value are ReadOnly
-      // if(arguments[0].empty()) strings[0].setReadOnly(1);
-
       // choices list is reset
       std::vector<std::string> choices;
       strings[0].setChoices(choices);
@@ -646,6 +639,32 @@ void localSolverClient::parse_sentence(std::string line) {
 	set(numbers[0]);
       }
     }
+    else if(!action.compare("setValue")){ 
+      // a set request together with a setReadOnly(1) forces 
+      // the value on server to be changed.  
+      name.assign(longName(name));
+      get(numbers,name); 
+      if(numbers.size()){
+	if(arguments[0].size())
+	  numbers[0].setValue(atof(resolveGetVal(arguments[0]).c_str()));
+	numbers[0].setReadOnly(1);
+	set(numbers[0]);
+      }
+      else{
+	get(strings,name); 
+	if(strings.size()){
+	  if(arguments[0].empty())  // resets an empty string
+	    strings[0].setValue("");
+	  else
+	    strings[0].setValue(arguments[0]);
+	  strings[0].setReadOnly(1);
+	  set(strings[0]);
+	}
+	else{
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
+	}
+      }
+    }
     else if(!action.compare("resetChoices")){
       name.assign(longName(name));
       get(numbers,name);
@@ -717,30 +736,6 @@ void localSolverClient::parse_sentence(std::string line) {
       }
       else
 	OLMsg::Error("The number <%s> does not exist",name.c_str());
-    }
-    else if(!action.compare("setValue")){ // force change on server
-      name.assign(longName(name));
-      get(numbers,name); 
-      if(numbers.size()){
-	if(arguments[0].size())
-	  numbers[0].setValue(atof(resolveGetVal(arguments[0]).c_str()));
-	numbers[0].setReadOnly(1);
-	set(numbers[0]);
-      }
-      else{
-	get(strings,name); 
-	if(strings.size()){
-	  if(arguments[0].empty())  // resets an empty string
-	    strings[0].setValue("");
-	  else
-	    strings[0].setValue(arguments[0]);
-	  strings[0].setReadOnly(1);
-	  set(strings[0]);
-	}
-	else{
-	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
-	}
-      }
     }
     else if(!action.compare("setVisible")){
       if(arguments[0].empty())

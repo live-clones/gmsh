@@ -62,7 +62,7 @@ int metamodel(const std::string &action){
 
   if((errors=OLMsg::GetErrorCount())){
     OLMsg::Error("Leave metamodel - %d errors",errors);
-    OLMsg::Info("==============================================");
+    OLMsg::Info("=====  O  N  E  L  A  B  =====");
     return 0;
   }
 
@@ -70,6 +70,6 @@ int metamodel(const std::string &action){
   OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",0,false);
 
   OLMsg::Info("Leave metamodel - need reload=%d", reload);
-  OLMsg::Info("==============================================");
+  OLMsg::Info("=====  O  N  E  L  A  B  =====");
   return reload;
 }

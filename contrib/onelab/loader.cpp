@@ -7,40 +7,6 @@
 onelab::server *onelab::server::_server = 0;
 std::string clientName;
 
-std::string stateToChar(){
-  std::vector<onelab::number> numbers;
-  std::ostringstream sstream;
-  onelab::server::instance()->get(numbers);
-  for(std::vector<onelab::number>::iterator it = numbers.begin();
-      it != numbers.end(); it++)
-    sstream << (*it).getValue() << '\t';
-  return sstream.str();
-}
-
-std::string showParamSpace(){
-  std::vector<std::string> parameters=onelab::server::instance()->toChar();
-  std::string db = "ONELAB parameter space: size="
-    + itoa(onelab::server::instance()->getNumParameters()) + "\n";
-  for(unsigned int i = 0; i < parameters.size(); i++)
-    db.append(parameters[i] + '\n');
-  for(unsigned int i = 0; i < db.size(); i++)
-    if(db[i] == onelab::parameter::charSep()) db[i] = ' ';
-  return db.c_str();
-}
-
-std::string showClientStatus(){
-  std::ostringstream sstream;
-  std::string name;
-  std::cout << "\nONELAB: Present state of the onelab clients" << std::endl;
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    name.assign(it->first);
-    sstream << "<" << onelab::server::instance()->getChanged(name) << "> "
-	    << name << std::endl;
-  }
-  return sstream.str();
-}
-
 void initializeLoop(const std::string &level)
 {
   bool changed = false;
@@ -141,6 +107,59 @@ bool incrementLoops()
   else if(incrementLoop("2")) ret = true;
   else if(incrementLoop("1")) ret = true;
   return ret;
+}
+
+std::string stateToChar(){
+  std::vector<onelab::number> numbers;
+  std::ostringstream sstream;
+  onelab::server::instance()->get(numbers);
+  for(std::vector<onelab::number>::iterator it = numbers.begin();
+      it != numbers.end(); it++)
+    sstream << (*it).getValue() << '\t';
+  return sstream.str();
+}
+
+std::string showParamSpace(){
+  std::vector<std::string> parameters=onelab::server::instance()->toChar();
+  std::string db = "ONELAB parameter space: size="
+    + itoa(onelab::server::instance()->getNumParameters()) + "\n";
+  for(unsigned int i = 0; i < parameters.size(); i++)
+    db.append(parameters[i] + '\n');
+  for(unsigned int i = 0; i < db.size(); i++)
+    if(db[i] == onelab::parameter::charSep()) db[i] = ' ';
+  return db.c_str();
+}
+
+std::string showClientStatus(){
+  std::ostringstream sstream;
+  std::string name;
+  std::cout << "\nONELAB: Present state of the onelab clients" << std::endl;
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    name.assign(it->first);
+    sstream << "<" << onelab::server::instance()->getChanged(name) << "> "
+	    << name << std::endl;
+  }
+  return sstream.str();
+}
+
+bool setParameter(const std::string &name, const std::string &value){
+  std::vector<onelab::number> numbers;
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(numbers,name);
+  if (numbers.size()) {
+    numbers[0].setValue(atof(value.c_str()));
+    return onelab::server::instance()->set(numbers[0]);
+  }
+  else{
+    onelab::server::instance()->get(strings,name);
+    if (strings.size()) {
+      strings[0].setValue(value);
+      return onelab::server::instance()->set(strings[0]);
+    }
+    else
+      OLMsg::Error("The parameter <%s> does not exist", name.c_str());
+  }
 }
 
 bool menu() {

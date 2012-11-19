@@ -354,7 +354,6 @@ const bool localSolverClient::getList(const std::string type, std::vector<std::s
     return false;
 }
 
-
 void localSolverClient::FixExecPath(const std::string &in)
 {
   //only use with local clients
@@ -368,7 +367,7 @@ void localSolverClient::FixExecPath(const std::string &in)
 
 #if not defined(WIN32)
   //if(split[0].find("elmerfem") != std::string::npos){
-  if(!split[1].compare("ElmerSolver") && split[2].empty()){
+  if(!split[1].compare("ElmerSolver") && split[2].empty() && split[0].size()){
     std::string fileName = getWorkingDir() + getName() + ".sh";
     std::string elmerHome=split[0].substr(0,split[0].size()-4);
     std::ofstream outfile(fileName.c_str());
@@ -486,9 +485,8 @@ void localSolverClient::addNumberChoice(std::string name, double val)
     ps.resize(1);
     ps[0].setName(name);
   }
-  ps[0].setAttribute("Highlight","Coral");
-  ps[0].setReadOnly(false);
-  ps[0].setVisible(true);
+  //ps[0].setAttribute("Highlight","Coral");
+  //ps[0].setReadOnly(false);
   ps[0].setValue(val);
   choices.push_back(val);
   ps[0].setChoices(choices);
@@ -659,7 +657,7 @@ void MetaModel::construct()
   parse_onefile( genericNameFromArgs + onelabExtension);
   closeOnelabBlock();
   saveCommandLines();
-  onelab::server::instance()->setChanged(true, getName());
+  //onelab::server::instance()->setChanged(true, getName());
 }
 
 void MetaModel::analyze() {
