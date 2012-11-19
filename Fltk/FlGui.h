@@ -10,6 +10,9 @@
 #include <vector>
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
+#define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE+1)
+#define GMSH_SIMPLE_TOP_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE+2)
+
 #define IW (10 * FL_NORMAL_SIZE)    // input field width
 #define BB (7 * FL_NORMAL_SIZE)     // width of a button with internal label
 #define BH (2 * FL_NORMAL_SIZE + 1) // button height

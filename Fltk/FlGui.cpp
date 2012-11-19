@@ -67,6 +67,22 @@ static int globalShortcut(int event)
   return FlGui::instance()->testGlobalShortcuts(event);
 }
 
+static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
+{
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+  fl_color(FL_BACKGROUND_COLOR);
+  fl_line(x + w - 1, y, x + w - 1, y + h);
+}
+
+static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
+{
+  fl_color(c);
+  fl_rectf(x, y, w, h);
+  fl_color(FL_BACKGROUND_COLOR);
+  fl_line(x, y, x + w, y);
+}
+
 FlGui::FlGui(int argc, char **argv)
 {
   // set X display
@@ -78,6 +94,10 @@ FlGui::FlGui(int argc, char **argv)
   Fl::background2(120, 120, 120);
   Fl::foreground(200, 200, 200);
 #endif
+
+  // add new box types used in graphic window
+  Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 1, 1, 2, 2);
+  Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 1, 1, 2, 2);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
@@ -683,7 +703,7 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
-  CTX::instance()->msgSize = graph[0]->getMessageHeight();
+  CTX::instance()->msgSize = graph[0]->getSavedMessageHeight();
   CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
   if(graph[0]->isMenuDetached()){
     CTX::instance()->detachedMenu = 1;
@@ -772,7 +792,7 @@ void window_cb(Fl_Widget *w, void *data)
 #ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
       FlGui::instance()->graph[0]->hideMessages();
-      FlGui::instance()->graph[0]->getWindow()->redraw();
+      FlGui::instance()->check();
 #else
       FlGui::instance()->graph[0]->getWindow()->fullscreen();
 #endif
@@ -781,7 +801,7 @@ void window_cb(Fl_Widget *w, void *data)
     else{
 #ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
-      FlGui::instance()->graph[0]->getWindow()->redraw();
+      FlGui::instance()->check();
 #else
       FlGui::instance()->graph[0]->getWindow()->fullscreen_off();
 #endif
