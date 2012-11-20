@@ -19,9 +19,9 @@
 
 class TriLagrangeBasis: public LagrangeBasis{
  public:
-  //! @param odrer A natural number
+  //! @param order A natural number
   //!
-  //! Returns a new  for TriLagrangeBasis 
+  //! Returns a new TriLagrangeBasis 
   //! of the given Order
   TriLagrangeBasis(int order);
   

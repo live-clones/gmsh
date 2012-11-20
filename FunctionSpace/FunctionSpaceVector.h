@@ -14,7 +14,9 @@
     This is the @em common @em interface of
     all @em Vectorial FunctionSpaces.@n
 
-    A FunctionSpaceVector can be @em interpolated.
+    A FunctionSpaceVector can be @em interpolated,
+    and can return a @em Local Basis associated
+    to an Element of the Support.
 
     @note
     A VectorFunctionSpace is an @em interface, so it
@@ -86,7 +88,7 @@ class FunctionSpaceVector : public FunctionSpace{
    @fn FunctionSpaceVector::interpolateInRefSpace
    @param element The MElement to interpolate on
    @param coef The coefficients of the interpolation
-   @param xyz The coordinate 
+   @param uvw The coordinate 
    (of point @em inside the given @c element)
    of the interpolation in the @em Reference Space
 
@@ -105,6 +107,20 @@ class FunctionSpaceVector : public FunctionSpace{
    @fn FunctionSpaceVector::getLocalFunctions
    @param element A MElement
    @return Returns the basis functions associated
+   to the given element (with correct @em closure)
+   **
+
+   @fn FunctionSpaceVector::getCurlLocalFunctions
+   @param element A MElement
+   @return Returns the @em curl 
+   of the basis functions associated
+   to the given element (with correct @em closure)
+   **
+
+   @fn FunctionSpaceVector::getDivLocalFunctions
+   @param element A MElement
+   @return Returns the @em divergence
+   of the basis functions associated
    to the given element (with correct @em closure)
 */
 

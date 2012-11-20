@@ -124,11 +124,13 @@ class Polynomial{
    parameters
    @note
    Note that Monomials are special case of Polynomial%s
+   **
 
    @fn Polynomial::Polynomial(const Polynomial&)
    @param other A Polynomial
    @return Returns a new Polynomial, which is
    the @em copy of the given one
+   **
 
    @fn Polynomial::Polynomial(void)
    @return Returns a new Polynomial, which is
@@ -140,10 +142,12 @@ class Polynomial{
    the @em zero @em Polynomial.@n
    Indeed, the @em zero @em Polynomial has one monomial, 
    @em @c 0.
+   **
 
    @fn Polynomial::~Polynomial
    @return Deletes this Polynomial
- 
+   **
+
    @fn Polynomial::derivative
    @param dim The dimention to use for the
    derivation
@@ -154,10 +158,24 @@ class Polynomial{
    @li @c 0 is for the @c x coordinate
    @li @c 1 is for the @c y coordinate
    @li @c 2 is for the @c z coordinate
-   
+   **
+
    @fn Polynomial::gradient
    @return Returns a Vector with the gradient 
    of this Polynomial
+   **
+   
+   @fn Polynomial::curl
+   @param p A vector of Polynomial%s
+   @return Returns the @em curl of the given
+   vector of Polynomial%s
+   **
+   
+   @fn Polynomial::divergence
+   @param p A vector of Polynomial%s
+   @return Returns the @em divergence of the given
+   vector of Polynomial%s
+   **
 
    @fn double Polynomial::operator()(const double, const double, const double)
    @param x A value
@@ -165,6 +183,7 @@ class Polynomial{
    @param z A value
    @return Returns the @em evaluation of this
    Polynomial at (@c x, @c y, @c z)
+   **
 
    @fn double Polynomial::at(const double, const double, const double) const
    @param x A value
@@ -172,6 +191,7 @@ class Polynomial{
    @param z A value
    @return Returns the @em evaluation of this
    Polynomial at (@c x, @c y, @c z)
+   **
 
    @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, const double, const double, const double)
    @param P A vector of Polynomial%s
@@ -180,26 +200,31 @@ class Polynomial{
    @param z A value
    @return Returns a fullVector with the @em evaluation of
    the given vector of Polynomial%s at (@c x, @c y, @c z)
+   **
 
    @fn Polynomial Polynomial::operator+(const Polynomial&) const
    @param other An other Polynomial
    @return Returns a @em new Polynomial, which is the
    @em sum of this Polynomial and the given one
+   **
 
    @fn Polynomial Polynomial::operator-(const Polynomial&) const
    @param other An other Polynomial
    @return Returns a @em new Polynomial, which is the
    @em difference of this Polynomial and the given one
+   **
 
    @fn Polynomial Polynomial::operator*(const Polynomial&) const
    @param other An other Polynomial
    @return Returns a @em new Polynomial, which is the
    @em product of this Polynomial and the given one
+   **
 
    @fn Polynomial Polynomial::operator*(const double) const
    @param alpha A value
    @return Returns a @em new Polynomial, 
    which is this Polynomial @em multiplied by @c alpha
+   **
 
    @fn Polynomial::add
    @param other An other Polynomial
@@ -208,6 +233,7 @@ class Polynomial{
    @note
    The result of this operation is stored in 
    this Polynomial  
+   **
 
    @fn Polynomial::sub
    @param other An other Polynomial
@@ -216,6 +242,7 @@ class Polynomial{
    @note
    The result of this operation is stored in 
    this Polynomial  
+   **
 
    @fn void Polynomial::mul(const Polynomial&)
    @param other An other Polynomial
@@ -224,6 +251,7 @@ class Polynomial{
    @note
    The result of this operation is stored in 
    this Polynomial  
+   **
 
    @fn void Polynomial::mul(const double)
    @param alpha A value
@@ -232,10 +260,12 @@ class Polynomial{
    @note
    The result of this operation is stored in 
    this Polynomial  
+   **
 
    @fn Polynomial::power
    @param n A @em natural number
    @return Takes this Polynomial to the power @c n
+   **
 
    @fn Polynomial Polynomial::compose(const Polynomial&) const
    @param other An other Polynomial, 
@@ -244,6 +274,7 @@ class Polynomial{
    Let this Polynomial be @c P(x, @c y, @c z).@n
    This method returns a @em new Polynomial,
    representing @c P(Q(x, @c y, @c z), @c y, @c z)
+   **
 
    @fn Polynomial Polynomial::compose(const Polynomial&, const Polynomial&) const
    @param otherA An other Polynomial, 
@@ -254,11 +285,13 @@ class Polynomial{
    Let this Polynomial be @c P(x, @c y, @c z).@n
    This method returns a @em new Polynomial, representing 
    @c P(Q(x, @c y, @c z), @c R(x, @c y, @c z), @c z)
+   **
 
    @fn void Polynomial::operator=(const Polynomial&)
    @param other A Polynomial
    @return Sets this Polynomial to a @em copy
    of the given one
+   **
 
    @fn Polynomial::toString
    @return Returns a string representing this Polynomial

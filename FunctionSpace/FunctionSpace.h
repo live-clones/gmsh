@@ -33,6 +33,9 @@
 
     Those MElement%s @em must belong to the @em same Mesh.
 
+    A FunctionSpace is also responsible for the generation of all
+    the Dof%s and GroupOfDof%s related to its geometrical @em Support.
+
     @note
     A FunctionSpace is an @em interface, so it
     can't be instantiated.
@@ -80,13 +83,13 @@ class FunctionSpace{
   std::vector<Dof> getKeys(const MEdge& edge) const;
   std::vector<Dof> getKeys(const MFace& face) const;
 
-  unsigned int dofNumber(void) const;
-  unsigned int groupNumber(void) const;
-
   const std::vector<const Dof*>   getAllDofs(void) const;
   const std::vector<GroupOfDof*>& getAllGroups(void) const;
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
+
+  unsigned int dofNumber(void) const;
+  unsigned int groupNumber(void) const;
 
   std::string toString(void) const;
 
@@ -146,9 +149,9 @@ class FunctionSpace{
    **
 
    @fn FunctionSpace::isScalar
-   @return Return @c true if this 
-   FunstionSpace is scalar, and
-   @c flase otherwise
+   @return Returns:
+   @li @c true, if this FunstionSpace is scalar
+   @li @c flase, otherwise
    @see Basis::isScalar()
    **
 
@@ -196,27 +199,38 @@ class FunctionSpace{
    @return Returns all the Dof%s associated to the given MFace
    **
 
+   @fn FunctionSpace::getAllDofs
+   @return Returns all the @em Dof%s associated to every Element%s
+   of this FunctionSpace @em support
+   **
+
+   @fn FunctionSpace::getAllGroups
+   @return Returns all the @em GroupOfDof%s associated to every Element%s
+   of this FunctionSpace @em support
+   **
+
+   @fn FunctionSpace::getGoDFromElement
+   @param element An Element of the FunctionSpace Support
+   @return Returns the @em GroupOfDof%s associated to 
+   the given @em Element
+   @note
+   If the given Element is not in the FunctionSpace Support,
+   an Exception is thrown
+   **   
+
+   @fn FunctionSpace::dofNumber
+   @return Returns the number of Dof%s 
+   given by FunctionSpace::getAllDofs()
+   **
+
+   @fn FunctionSpace::groupNumber
+   @return Returns the number of GroupOfDof%s 
+   given by FunctionSpace::getAllGroups()
+   **
+
    @fn FunctionSpace::toString
    @return Returns the FunctionSpace string
    **
-
-   @internal
-   @fn FunctionSpace::build
-   @param goe The GroupOfElement defining the support
-   of this FunctionSpace
-   @param basisType The Type of the Basis to use to build
-   this FunctionSpace
-   @param order The order of this FunctionSpace
-
-   Initializes a FunctionSpace with the given parameters  
-   @endinternal
-   **
-
-   @internal
-   @fn FunctionSpace::closure
-
-   Compute closure for Basis Functions  
-   @endinternal
 */
 
 

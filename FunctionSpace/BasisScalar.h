@@ -29,16 +29,30 @@ class BasisScalar: public Basis{
   //! Deletes this BasisScalar
   //!
   virtual ~BasisScalar(void);
-  
+
+  //! @param i A natural number
+  //! @return Returns the @c i%th @em Vertex Based 
+  //! Basis Function
   const Polynomial&
     getNodeFunction(unsigned int i) const;
   
+  //! @param i A natural number
+  //! @param closure A natural number
+  //! @return Returns the @c i%th @em Edge Based 
+  //! Basis Function, with the @c closure%th Closure
   const Polynomial&
     getEdgeFunction(unsigned int closure, unsigned int i) const;
   
+  //! @param i A natural number
+  //! @param closure A natural number
+  //! @return Returns the @c i%th @em Face Based 
+  //! Basis Function, with the @c closure%th Closure
   const Polynomial&
     getFaceFunction(unsigned int closure, unsigned int i) const;
  
+  //! @param i A natural number
+  //! @return Returns the @c i%th @em Cell Based 
+  //! Basis Function
   const Polynomial&
     getCellFunction(unsigned int i) const;
 

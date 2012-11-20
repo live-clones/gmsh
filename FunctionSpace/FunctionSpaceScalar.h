@@ -13,7 +13,9 @@
     This is the @em common @em interface of
     all @em Scalar FunctionSpaces.@n
 
-    A FunctionSpaceScalar can be @em interpolated.
+    A FunctionSpaceScalar can be @em interpolated,
+    and can return a @em Local Basis associated
+    to an Element of the Support.
 
     @note
     A ScalarFunctionSpace is an @em interface, so it
@@ -98,6 +100,13 @@ class FunctionSpaceScalar : public FunctionSpace{
    @fn FunctionSpaceScalar::getLocalFunctions
    @param element A MElement
    @return Returns the basis functions associated
+   to the given element (with correct @em closure)
+   **
+
+   @fn FunctionSpaceScalar::getGradLocalFunctions
+   @param element A MElement
+   @return Returns the @em gradient 
+   of the basis functions associated
    to the given element (with correct @em closure)
  */
 

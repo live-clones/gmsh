@@ -30,15 +30,29 @@ class BasisVector: public Basis{
   //!
   virtual ~BasisVector(void);
 
+  //! @param i A natural number
+  //! @return Returns the @c i%th @em Vertex Based 
+  //! Basis Function
   const std::vector<Polynomial>&
     getNodeFunction(unsigned int i) const;
   
+  //! @param i A natural number
+  //! @param closure A natural number
+  //! @return Returns the @c i%th @em Edge Based 
+  //! Basis Function, with the @c closure%th Closure
   const std::vector<Polynomial>&
     getEdgeFunction(unsigned int closure, unsigned int i) const;
   
+  //! @param i A natural number
+  //! @param closure A natural number
+  //! @return Returns the @c i%th @em Face Based 
+  //! Basis Function, with the @c closure%th Closure
   const std::vector<Polynomial>&
     getFaceFunction(unsigned int closure, unsigned int i) const;
  
+  //! @param i A natural number
+  //! @return Returns the @c i%th @em Cell Based 
+  //! Basis Function
   const std::vector<Polynomial>&
     getCellFunction(unsigned int i) const;
 

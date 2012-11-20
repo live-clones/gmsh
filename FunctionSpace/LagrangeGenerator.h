@@ -35,7 +35,7 @@ class LagrangeGenerator{
    @fn LagrangeGenerator::generate
    @param elementType The type of the element,
    on which the requested LagrangeBasis will be created
-   @param order The order or the requested LagrangeBasis
+   @param lagrangeOrder The order or the requested LagrangeBasis
 
    This method will @em instanciate the requested LagrangeBasis
 

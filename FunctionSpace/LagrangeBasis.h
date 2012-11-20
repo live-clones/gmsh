@@ -12,7 +12,7 @@
 
 /**
    @interface LagrangeBasis
-   @brief Interoface for Lagrange Basis
+   @brief Interface for Lagrange Basis
  
    This is an interface for Lagrange Basis.@n
  
@@ -48,7 +48,7 @@ class LagrangeBasis: public BasisScalar{
   //! to the given Element
   //! @param fSpace The (scalar) Function Space 
   //! of the given Coefficients
-  //! @return Projects the given Coefficients in this LagrangeBasis@n
+  //! @return Projects the given Coefficients in this LagrangeBasis
   std::vector<double> project(const MElement& element,
 			      const std::vector<double>& coef,
 			      const FunctionSpaceScalar& fSpace);
@@ -58,9 +58,7 @@ class LagrangeBasis: public BasisScalar{
   //! to the given Element
   //! @param fSpace The (vectorial) Function Space 
   //! of the given Coefficients
-  //! @return Projects the given Coefficients in this LagrangeBasis@n
-  //! @note Each Coefficients will be projected into a vector
-  //! with the same dimesion as the vectorial Polynomials
+  //! @return Projects the given Coefficients in this LagrangeBasis
   std::vector<fullVector<double> > 
     project(const MElement& element,
 	    const std::vector<double>& coef,

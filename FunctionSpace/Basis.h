@@ -63,7 +63,7 @@ class Basis{
   int getType(void) const;
   
   //! @return Returns the @em dimension 
-  //! (2D or 3D) of the Basis
+  //! (1D, 2D or 3D) of the Basis
   int getDim(void) const;
 
   //! @return Returns the number of @em Vertex
