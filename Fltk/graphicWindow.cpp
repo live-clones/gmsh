@@ -676,6 +676,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
+  //ClearProject();
   OpenProject(fileName);
   drawContext::global()->draw();
 }
@@ -2671,17 +2672,15 @@ class mainWindowSpecialResize : public mainWindow {
     : mainWindow(w, h, nonModal, l) {}
   virtual void resize(int X,int Y,int W,int H)
   {
-    bool special = (FlGui::available() && shown() && 
+    bool special = (FlGui::available() && shown() &&
 		    this == FlGui::instance()->graph[0]->getWindow());
-    int old_mh = 0;
+    int mh = 0;
     if(special)
-      old_mh = FlGui::instance()->graph[0]->getMessageHeight();
+      mh = FlGui::instance()->graph[0]->getMessageHeight();
     Fl_Window::resize(X, Y, W, H);
     const int minimum_non_message_height = 100;
-    if(special && old_mh < h() - minimum_non_message_height){
-      int mh = FlGui::instance()->graph[0]->getMessageHeight();
-      FlGui::instance()->graph[0]->resizeMessages(old_mh - mh);
-    }
+    if(special && mh < h() - minimum_non_message_height)
+      FlGui::instance()->graph[0]->setMessageHeight(mh);
   }
 };
 
@@ -2921,12 +2920,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // resize the tiles to match the prescribed sizes
   _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
-  _savedMessageHeight = CTX::instance()->msgSize;
 
+  // if the tree widget is too small it will not be rebuilt correctly (probably
+  // a bug)... so impose minimum width
   int minw = 3 * BB/2 + 4 * WB;
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
-  _savedMenuWidth = CTX::instance()->menuSize[0];
 
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
@@ -2970,7 +2969,7 @@ void graphicWindow::setTitle(std::string str)
 void graphicWindow::detachMenu()
 {
   if(_menuwin || !_onelab || !_browser) return;
-  if(_browser->h() == 0) resizeMessages(1);
+  if(_browser->h() == 0) setMessageHeight(1);
   int w = _onelab->w();
   _tile->remove(_onelab);
   _browser->resize(0, _browser->y(), _browser->w() + w, _browser->h());
@@ -3003,7 +3002,7 @@ void graphicWindow::attachMenu()
   _menuwin->hide();
   delete _menuwin;
   _menuwin = 0;
-  if(_browser->h() == 0) resizeMessages(1);
+  if(_browser->h() == 0) setMessageHeight(1);
   int w = _onelab->w();
   if(_browser->w() - w < 0) w = _browser->w() / 2;
   _browser->resize(w, _browser->y(), _browser->w() - w, _browser->h());
@@ -3027,19 +3026,19 @@ void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
   if(_onelab->w() < 5){
-    int width = _savedMenuWidth;
+    int width = CTX::instance()->menuSize[0];
     if(width < 5) width = _onelab->getMinWindowWidth();
     int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
-    resizeMenu(width - _onelab->w());
+    setMenuWidth(width);
   }
 }
 
 void graphicWindow::hideMenu()
 {
   if(_menuwin || !_onelab) return;
-  _savedMenuWidth = _onelab->w();
-  resizeMenu(-_onelab->w());
+  CTX::instance()->menuSize[0] = _onelab->w();
+  setMenuWidth(0);
 }
 
 void graphicWindow::showHideMenu()
@@ -3100,7 +3099,7 @@ bool graphicWindow::split(openglWindow *g, char how)
   }
   else{
     // make sure browser is not zero-size when adding children
-    if(_browser && _browser->h() == 0) resizeMessages(1);
+    if(_browser && _browser->h() == 0) setMessageHeight(1);
     int x1 = g->x();
     int y1 = g->y();
     int w1 = (how == 'h') ? g->w() / 2 : g->w();
@@ -3186,15 +3185,23 @@ void graphicWindow::checkAnimButtons()
   }
 }
 
-void graphicWindow::resizeMenu(int dh)
+void graphicWindow::setMenuWidth(int w)
 {
-  if(_menuwin || !_onelab) return;
+  if(_menuwin){
+    _menuwin->size(std::max(w, _onelab->getMinWindowWidth()), _menuwin->h());
+    _menuwin->redraw();
+    return;
+  }
+  if(!_onelab || !_browser) return;
+  double dw = w - _onelab->w();
+  if(!dw) return;
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->x() == _onelab->x() + _onelab->w())
-      gl[i]->resize(gl[i]->x() + dh, gl[i]->y(), gl[i]->w() - dh, gl[i]->h());
+      gl[i]->resize(gl[i]->x() + dw, gl[i]->y(), gl[i]->w() - dw, gl[i]->h());
   }
-  _onelab->resize(_onelab->x(), _onelab->y(), _onelab->w() + dh, _onelab->h());
-  _onelab->redraw();
+  _browser->resize(_browser->x() + dw, _browser->y(), _browser->w() - dw, _browser->h());
+  _onelab->resize(_onelab->x(), _onelab->y(), _onelab->w() + dw, _onelab->h());
+  _tile->redraw();
 }
 
 int graphicWindow::getGlHeight()
@@ -3211,43 +3218,43 @@ int graphicWindow::getGlWidth()
 
 void graphicWindow::setGlWidth(int w)
 {
-  _win->size(w, _win->h());
+  if(w == _win->w()) return;
+  _win->size(std::max(w, _minWidth), _win->h());
   _win->redraw();
-  // workaround resizing bug on Mac
-  _win->size_range(_minWidth, _minHeight);
 }
 
 void graphicWindow::setGlHeight(int h)
 {
   int hh = h + _bottom->h();
   if(_bar) hh += _bar->h();
-  _win->size(_win->w(), hh);
+  if(hh == _win->h()) return;
+  _win->size(_win->w(), std::max(hh, _minHeight));
   _win->redraw();
-  // workaround resizing bug on Mac
-  _win->size_range(_minWidth, _minHeight);
 }
 
-void graphicWindow::resizeMessages(int dh)
+void graphicWindow::setMessageHeight(int h)
 {
   if(!_browser) return;
+  int dh = h - _browser->h();
+  if(!dh) return;
   for(unsigned int i = 0; i < gl.size(); i++){
     if(gl[i]->y() + gl[i]->h() == _browser->y())
       gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
   }
   _browser->resize(_browser->x(), _browser->y() - dh,
                    _browser->w(), _browser->h() + dh);
-  _browser->redraw();
+  _tile->redraw();
 }
 
 void graphicWindow::showMessages()
 {
   if(!_browser || !_win->shown()) return;
   if(_browser->h() < 5){
-    int height = _savedMessageHeight;
+    int height = CTX::instance()->msgSize;
     if(height < 5) height = 50;
     int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
-    resizeMessages(height - _browser->h());
+    setMessageHeight(height);
   }
   if(_autoScrollMessages)
     _browser->bottomline(_browser->size());
@@ -3256,8 +3263,8 @@ void graphicWindow::showMessages()
 void graphicWindow::hideMessages()
 {
   if(!_browser) return;
-  _savedMessageHeight = _browser->h();
-  resizeMessages(-_browser->h());
+  CTX::instance()->msgSize = _browser->h();
+  setMessageHeight(0);
 }
 
 void graphicWindow::showHideMessages()
@@ -3270,13 +3277,6 @@ void graphicWindow::showHideMessages()
 int graphicWindow::getMessageHeight()
 {
   if(!_browser) return 0;
-  return _browser->h();
-}
-
-int graphicWindow::getSavedMessageHeight()
-{
-  if(!_browser) return 0;
-  if(!_browser->h()) return _savedMessageHeight;
   return _browser->h();
 }
 

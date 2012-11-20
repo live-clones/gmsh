@@ -1771,10 +1771,8 @@ double opt_general_graphics_size0(OPT_ARGS_NUM)
     if(CTX::instance()->glSize[0] <= 0) CTX::instance()->glSize[0] = 600;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    if(action & GMSH_SET){
-      FlGui::instance()->graph[0]->setGlWidth(CTX::instance()->glSize[0]);
-    }
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->graph[0]->setGlWidth(CTX::instance()->glSize[0]);
   }
 #endif
   return CTX::instance()->glSize[0];
@@ -1787,10 +1785,8 @@ double opt_general_graphics_size1(OPT_ARGS_NUM)
     if(CTX::instance()->glSize[1] <= 0) CTX::instance()->glSize[1] = 600;
   }
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    if(action & GMSH_SET){
-      FlGui::instance()->graph[0]->setGlHeight(CTX::instance()->glSize[1]);
-    }
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->graph[0]->setGlHeight(CTX::instance()->glSize[1]);
   }
 #endif
   return CTX::instance()->glSize[1];
@@ -1837,6 +1833,11 @@ double opt_general_message_size(OPT_ARGS_NUM)
     CTX::instance()->msgSize = (int)val;
     if(CTX::instance()->msgSize < 0) CTX::instance()->msgSize = 0;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->graph[0]->setMessageHeight(CTX::instance()->msgSize);
+  }
+#endif
   return CTX::instance()->msgSize;
 }
 
@@ -1845,6 +1846,14 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     CTX::instance()->detachedMenu = (int)val;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    if(CTX::instance()->detachedMenu)
+      FlGui::instance()->graph[0]->detachMenu();
+    else
+      FlGui::instance()->graph[0]->attachMenu();
+  }
+#endif
   return CTX::instance()->detachedMenu;
 }
 
@@ -1854,6 +1863,11 @@ double opt_general_menu_size0(OPT_ARGS_NUM)
     CTX::instance()->menuSize[0] = (int)val;
     if(CTX::instance()->menuSize[0] < 0) CTX::instance()->menuSize[0] = 0;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->graph[0]->setMenuWidth(CTX::instance()->menuSize[0]);
+  }
+#endif
   return CTX::instance()->menuSize[0];
 }
 

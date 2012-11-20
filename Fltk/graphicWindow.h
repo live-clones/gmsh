@@ -24,7 +24,6 @@
 class graphicWindow{
  private:
   std::string _title;
-  int _savedMessageHeight, _savedMenuWidth;
   bool _autoScrollMessages;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *_sysbar;
@@ -48,32 +47,33 @@ class graphicWindow{
   onelabGroup *getMenu(){ return _onelab; }
   Fl_Progress *getProgress(){ return _label; }
   Fl_Button *getSelectionButton(){ return _butt[9]; }
-  void setGlWidth(int w);
-  void setGlHeight(int h);
   int getMinWidth(){ return _minWidth; }
   int getMinHeight(){ return _minHeight; }
-  void setTitle(std::string str);
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
   bool getAutoScroll(){ return _autoScrollMessages; }
-  int getGlHeight();
-  int getGlWidth();
+  void setTitle(std::string str);
   void setStereo();
-  void resizeMenu(int dh);
-  void showMenu();
-  void hideMenu();
-  void showHideMenu();
-  bool isMenuDetached(){ return _menuwin ? true : false; }
+  int getGlWidth();
+  void setGlWidth(int w);
+  int getGlHeight();
+  void setGlHeight(int h);
   int getMenuWidth();
+  void setMenuWidth(int w);
   int getMenuHeight();
   int getMenuPositionX();
   int getMenuPositionY();
+  void showMenu();
+  void hideMenu();
+  void showHideMenu();
   void detachMenu();
   void attachMenu();
   void attachDetachMenu();
+  bool isMenuDetached(){ return _menuwin ? true : false; }
   bool split(openglWindow *g, char how);
   void setAnimButtons(int mode);
   void checkAnimButtons();
-  void resizeMessages(int dh);
+  int getMessageHeight();
+  void setMessageHeight(int h);
   void showMessages();
   void hideMessages();
   void showHideMessages();
@@ -81,8 +81,6 @@ class graphicWindow{
   void clearMessages();
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
-  int getMessageHeight();
-  int getSavedMessageHeight();
   void fillRecentHistoryMenu();
 };
 

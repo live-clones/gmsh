@@ -90,9 +90,10 @@ FlGui::FlGui(int argc, char **argv)
     Fl::display(CTX::instance()->display.c_str());
 
 #if 0 // dark scheme... not bad, but needs work
-  Fl::background(60, 60, 60);
-  Fl::background2(120, 120, 120);
-  Fl::foreground(200, 200, 200);
+  Fl::background(110, 110, 110);
+  Fl::background2(140, 140, 140);
+  Fl::foreground(230, 230, 230);
+  //Fl::set_color(FL_SELECTION_COLOR, 50, 50, 0);
 #endif
 
   // add new box types used in graphic window
@@ -703,7 +704,7 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
-  CTX::instance()->msgSize = graph[0]->getSavedMessageHeight();
+  CTX::instance()->msgSize = graph[0]->getMessageHeight();
   CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
   if(graph[0]->isMenuDetached()){
     CTX::instance()->detachedMenu = 1;
