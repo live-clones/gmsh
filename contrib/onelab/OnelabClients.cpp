@@ -657,6 +657,7 @@ void MetaModel::construct()
   parse_onefile( genericNameFromArgs + onelabExtension);
   closeOnelabBlock();
   saveCommandLines();
+  //onelab::server::instance()->setChanged(true, getName());
 }
 
 void MetaModel::analyze() {
