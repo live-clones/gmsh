@@ -346,6 +346,8 @@ void Filler::treat_region(GRegion* gr){
   RTree<Node*,double,3,double> rtree;
 
   Frame_field::init_region(gr);
+  Size_field::init_region(gr);
+  Size_field::solve(gr);
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -408,12 +410,11 @@ void Filler::treat_region(GRegion* gr){
 	  
 	  if(inside_domain(octree,x,y,z)){
 		compute_parameters(spawn,gr);
-	    if(far_from_boundary(octree,spawn)){
+		if(far_from_boundary(octree,spawn)){
 		  wrapper.set_too_close(0);
 		  wrapper.set_spawn(spawn);
 		  wrapper.set_parent(parent);
 		  rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
-		  
 		  if(!wrapper.get_too_close()){
 		    fifo.push(spawn);
 		    rtree.Insert(spawn->min,spawn->max,spawn);
@@ -425,6 +426,7 @@ void Filler::treat_region(GRegion* gr){
 	  }
 	  if(!ok) delete spawn;
 	}
+	
 	printf("%d\n",count);
 	count++;
   }
@@ -440,6 +442,7 @@ void Filler::treat_region(GRegion* gr){
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
+  Size_field::clear();
   Frame_field::clear();
   #endif
 }
@@ -466,7 +469,7 @@ Metric Filler::get_metric(double x,double y,double z){
 }
 
 double Filler::get_size(double x,double y,double z){
-  return 0.25;
+  return Size_field::search(x,y,z);
 }
 
 double Filler::get_size(double x,double y,double z,GEntity* ge){
@@ -606,19 +609,22 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
   x = point.x() + h_nearer*direction.x();
   y = point.y() + h_nearer*direction.y();
   z = point.z() + h_nearer*direction.z();
+  
   if(inside_domain(octree,x,y,z)){
     h_farther = get_size(x,y,z);
   }
   else h_farther = h_nearer;
 
   coeffA = 1.0;
-  coeffB = 0.2;
+  coeffB = 0.16;
+  
   if(h_farther>h_nearer){
     average = coeffA*h_nearer + (1.0-coeffA)*h_farther;
   }
   else{
     average = coeffB*h_nearer + (1.0-coeffB)*h_farther;
   }
+	
   return average;
 }
 
@@ -691,5 +697,3 @@ void Filler::print_node(Node* node,std::ofstream& file){
 /*********static declarations*********/
 
 std::vector<MVertex*> Filler::new_vertices;
-
-

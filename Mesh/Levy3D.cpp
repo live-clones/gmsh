@@ -869,7 +869,7 @@ void LpCVT::compute_parameters(){
 
 double LpCVT::get_size(double x,double y,double z){
   //if outside domain return 1.0 (or other value > 0.0)
-  return 0.25;
+  return Size_field::search(x,y,z);
 }
 
 Tensor LpCVT::get_tensor(double x,double y,double z){
@@ -1491,6 +1491,8 @@ void LpSmoother::improve_region(GRegion* gr)
   alglib::real_1d_array alglib_scales;
 
   Frame_field::init_region(gr);
+  Size_field::init_region(gr);
+  Size_field::solve(gr);
   octree = new MElementOctree(gr->model());
 
   for(i=0;i<gr->getNumMeshElements();i++){
@@ -1620,6 +1622,7 @@ void LpSmoother::improve_region(GRegion* gr)
   delete octree;
   free(initial_conditions);
   free(scales);
+  Size_field::clear();
   Frame_field::clear();
   #endif
 }

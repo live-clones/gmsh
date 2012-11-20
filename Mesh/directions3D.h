@@ -72,7 +72,7 @@ class Size_field{
   static void solve(GRegion*);
   static double search(double,double,double);
   static double get_ratio(GFace*,SPoint2);
-  static void print_field();
+  static void print_field(GRegion* gr);
   static GRegion* test();
   static void clear();
 };

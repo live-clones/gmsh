@@ -364,6 +364,49 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
   }
 }
 
+void verification(alglib::real_1d_array& x,void* ptr){
+  int num;
+  int index;
+  int dimension;
+  double e;
+  double func;
+  double R,L,U,D;
+  wrapper* w;
+  DocRecord* pointer;
+	
+  w = static_cast<wrapper*>(ptr);
+  dimension = w->get_dimension();
+  pointer = w->get_triangulator();
+  num = pointer->numPoints;
+  srand(time(NULL));
+  index = rand()%num;
+  e = 0.0000001;
+	
+  alglib::real_1d_array grad;
+  grad.setlength(dimension);
+	
+  x[index] = x[index] + e;
+  callback(x,R,grad,ptr);
+  x[index] = x[index] - e;
+	
+  x[index] = x[index] - e;
+  callback(x,L,grad,ptr);
+  x[index] = x[index] + e;
+	
+  x[index + dimension/2] = x[index + dimension/2] + e;
+  callback(x,U,grad,ptr);
+  x[index + dimension/2] = x[index + dimension/2] - e;
+	
+  x[index + dimension/2] = x[index + dimension/2] - e;
+  callback(x,D,grad,ptr);
+  x[index + dimension/2] = x[index + dimension/2] + e;
+	
+  callback(x,func,grad,ptr);
+	
+  printf("%f %f\n",(R-L)/(2.0*e),(U-D)/(2.0*e));
+  printf("%f %f\n",grad[index],grad[index + dimension/2]);
+}
+
 /****************class smoothing****************/
 
 smoothing::smoothing(int param1,int param2){
@@ -482,6 +525,10 @@ void smoothing::optimize_face(GFace* gf){
   w.set_max(2*ITER_MAX);
   w.set_triangulator(&triangulator);
   w.set_octree(octree);
+
+  /*if(num_interior>1){
+    verification(x,&w);
+  }*/	
 
   if(num_interior>1){
     minlbfgscreate(2*num_interior,4,x,state);

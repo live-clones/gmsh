@@ -2922,7 +2922,7 @@ PostOp::PostOp(){}
 
 PostOp::~PostOp(){}
 
-void PostOp::execute(){
+void PostOp::execute(bool flag){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
@@ -2931,12 +2931,12 @@ void PostOp::execute(){
   {
     gr = *it;
 	if(gr->getNumMeshElements()>0){
-	  execute(gr);
+	  execute(gr,flag);
 	}
   }
 }
 
-void PostOp::execute(GRegion* gr){
+void PostOp::execute(GRegion* gr,bool flag){
   printf("................PYRAMIDS................\n");
   estimate1 = 0;
   estimate2 = 0;
@@ -2947,11 +2947,13 @@ void PostOp::execute(GRegion* gr){
   pyramids1(gr);
   rearrange(gr);
 
-  init_markings(gr);
-  build_vertex_to_tetrahedra(gr);
-  build_vertex_to_pyramids(gr);
-  pyramids2(gr);
-  rearrange(gr);
+  if(flag){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    pyramids2(gr);
+    rearrange(gr);
+  }
 
   statistics(gr);
 }

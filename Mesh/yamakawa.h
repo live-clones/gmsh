@@ -242,8 +242,8 @@ class PostOp{
   PostOp();
   ~PostOp();
 
-  void execute();
-  void execute(GRegion*);
+  void execute(bool);
+  void execute(GRegion*,bool);
 
   void init_markings(GRegion*);
   void pyramids1(GRegion*);
