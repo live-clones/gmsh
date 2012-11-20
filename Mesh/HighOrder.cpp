@@ -801,9 +801,9 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
     std::vector<MVertex*> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts);
     if(nbPts == 1)
-      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0]));
+      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0], l->getPartition()));
     else
-      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve));
+      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve, l->getPartition()));
     delete l;
   }
   ge->lines = lines2;
