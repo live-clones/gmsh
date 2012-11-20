@@ -2671,7 +2671,8 @@ class mainWindowSpecialResize : public mainWindow {
     : mainWindow(w, h, nonModal, l) {}
   virtual void resize(int X,int Y,int W,int H)
   {
-    bool special = (shown() && this == FlGui::instance()->graph[0]->getWindow());
+    bool special = (FlGui::available() && shown() && 
+		    this == FlGui::instance()->graph[0]->getWindow());
     int old_mh = 0;
     if(special)
       old_mh = FlGui::instance()->graph[0]->getMessageHeight();
