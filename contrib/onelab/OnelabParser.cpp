@@ -530,8 +530,10 @@ void localSolverClient::parse_sentence(std::string line) {
       if(numbers.empty()){ 
 	numbers.resize(1);
 	numbers[0].setName(name);
-	if(arguments[0].empty())
+	if(arguments[0].empty()){
 	  val=0;
+	  numbers[0].setReadOnly(true);
+	}
 	else
 	  val=atof(resolveGetVal(arguments[0]).c_str());
 	numbers[0].setValue(val);

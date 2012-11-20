@@ -1,5 +1,5 @@
 #include "StringUtils.h"
-#include "onelabUtils.h"
+//#include "onelabUtils.h"
 #include "OnelabClients.h"
 #include "metamodel.h"
 #include <algorithm>
@@ -37,11 +37,16 @@ void initializeLoop(const std::string &level)
       }
     }
   }
-
   // force this to make sure that we remesh, even if a mesh exists and
   // we did not actually change a Gmsh parameter
   if(changed)
-    onelab::server::instance()->setChanged(true, "Gmsh");
+   onelab::server::instance()->setChanged(true, "Gmsh");
+}
+void initializeLoops()
+{
+  initializeLoop("1");
+  initializeLoop("2");
+  initializeLoop("3");
 }
 
 bool incrementLoop(const std::string &level)
@@ -91,13 +96,6 @@ bool incrementLoop(const std::string &level)
     initializeLoop(level);
 
   return recompute;
-}
-
-void initializeLoops()
-{
-  initializeLoop("1");
-  initializeLoop("2");
-  initializeLoop("3");
 }
 
 bool incrementLoops()

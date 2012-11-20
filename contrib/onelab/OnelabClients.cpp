@@ -473,7 +473,7 @@ bool localSolverClient::buildRmCommand(std::string &cmd){
   return false;
 }
 
-void localSolverClient::addNumberChoice(std::string name, double val)
+void localSolverClient::addNumberChoice(std::string name, double val, bool readOnly)
 {
   std::vector<double> choices;
   std::vector<onelab::number> ps;
@@ -486,7 +486,7 @@ void localSolverClient::addNumberChoice(std::string name, double val)
     ps[0].setName(name);
   }
   //ps[0].setAttribute("Highlight","Coral");
-  //ps[0].setReadOnly(false);
+  ps[0].setReadOnly(readOnly);
   ps[0].setValue(val);
   choices.push_back(val);
   ps[0].setChoices(choices);
@@ -502,7 +502,7 @@ void localSolverClient::PostArray(std::vector<std::string> choices)
     std::string fileName = getWorkingDir()+choices[4*i];
       //checkIfPresent or make available locally
     double val=find_in_array(lin,col,read_array(fileName,' '));
-    addNumberChoice(choices[4*i+3],val);
+    addNumberChoice(choices[4*i+3],val,true);
     OLMsg::Info("Upload parameter <%s>=%e from file <%s>",
 		choices[4*i+3].c_str(),val,fileName.c_str());
     i++;
@@ -657,7 +657,6 @@ void MetaModel::construct()
   parse_onefile( genericNameFromArgs + onelabExtension);
   closeOnelabBlock();
   saveCommandLines();
-  //onelab::server::instance()->setChanged(true, getName());
 }
 
 void MetaModel::analyze() {

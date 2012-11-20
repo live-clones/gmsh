@@ -177,7 +177,7 @@ class localSolverClient : public onelab::localClient{
   virtual bool checkCommandLine();
   virtual void analyze() =0;
   virtual void compute() =0;
-  void addNumberChoice(std::string name, double val);
+  void addNumberChoice(std::string name, double val, bool readOnly=false);
   void PostArray(std::vector<std::string> choices);
   void GmshMerge(std::vector<std::string> choices);
 };
