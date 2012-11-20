@@ -566,8 +566,10 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(isMetamodel){
 #if defined(HAVE_ONELAB_METAMODEL)
-      if(metamodel(action))
-	geometry_reload_cb(0, 0);
+      if(metamodel(action)){
+        OpenProject(GModel::current()->getFileName());
+        drawContext::global()->draw();
+      }
       Msg::ResetErrorCounter();
 #endif
     }
