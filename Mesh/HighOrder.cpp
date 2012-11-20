@@ -819,20 +819,20 @@ MTriangle *setHighOrder(MTriangle *t, GFace *gf,
   getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts);
   if(nPts == 1){
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve[0], ve[1], ve[2]);
+                          ve[0], ve[1], ve[2], 0, t->getPartition());
   }
   else{
     if(incomplete){
       return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                            ve, nPts + 1);
+                            ve, nPts + 1, 0, t->getPartition());
     }
     else{
       MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-		       ve, nPts + 1);
+		       ve, nPts + 1, 0, t->getPartition());
       getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());
       return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                            ve, nPts + 1);
+                            ve, nPts + 1, 0, t->getPartition());
     }
   }
 }
@@ -847,25 +847,29 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
   if(incomplete){
     if(nPts == 1){
       return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3]);
+                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3],
+			      0, q->getPartition());
     }
     else{
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve, nPts + 1);
+                              q->getVertex(3), ve, nPts + 1,
+			      0, q->getPartition());
     }
   }
   else {
     MQuadrangleN incpl(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-		       q->getVertex(3), ve, nPts + 1);
+		       q->getVertex(3), ve, nPts + 1, 0, q->getPartition());
     getFaceVertices(gf, &incpl, q, vf, faceVertices, linear, nPts);
     ve.insert(ve.end(), vf.begin(), vf.end());
     if(nPts == 1){
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]);
+                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0],
+			      0, q->getPartition());
     }
     else{
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve, nPts + 1);
+                              q->getVertex(3), ve, nPts + 1,
+			      0, q->getPartition());
     }
   }
 }
@@ -907,17 +911,19 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     if(nPts == 1){
       tetrahedra2.push_back
         (new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                            t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+                            t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5],
+			    0, t->getPartition()));
     }
     else{
       getFaceVertices(gr, t, vf, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());
       MTetrahedronN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          t->getVertex(3), ve, nPts + 1);
+                          t->getVertex(3), ve, nPts + 1, 0, t->getPartition());
       getRegionVertices(gr, &incpl, t, vr, linear, nPts);
       ve.insert(ve.end(), vr.begin(), vr.end());
       MTetrahedron *n = new MTetrahedronN(t->getVertex(0), t->getVertex(1),
-                                          t->getVertex(2), t->getVertex(3), ve, nPts + 1);
+                                          t->getVertex(2), t->getVertex(3), ve, nPts + 1,
+					  0, t->getPartition());
       tetrahedra2.push_back(n);
     }
     delete t;
@@ -936,7 +942,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 			     h->getVertex(3), h->getVertex(4), h->getVertex(5),
 			     h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
 			     ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-			     ve[11]));
+			     ve[11], 0, h->getPartition()));
       }
       else{
 	getFaceVertices(gr, h, vf, faceVertices, edgeVertices, linear, nPts);
@@ -948,7 +954,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 			     h->getVertex(3), h->getVertex(4), h->getVertex(5),
 			     h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
 			     ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-			     ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+			     ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v,
+			     0, h->getPartition()));
       }
     }
     else {
@@ -956,12 +963,13 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       ve.insert(ve.end(), vf.begin(), vf.end());
       MHexahedronN incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                          h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                         h->getVertex(6), h->getVertex(7), ve, nPts + 1);
+                         h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0, h->getPartition());
       getRegionVertices(gr, &incpl, h, vr, linear, nPts);
       ve.insert(ve.end(), vr.begin(), vr.end());
       MHexahedron *n = new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                                         h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                                        h->getVertex(6), h->getVertex(7), ve, nPts + 1);
+                                        h->getVertex(6), h->getVertex(7), ve, nPts + 1,
+					0, h->getPartition());
       hexahedra2.push_back(n);
     }
     delete h;
@@ -977,7 +985,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       prisms2.push_back
         (new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                       p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
+                      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
+		      0, p->getPartition()));
     }
     else{
       if (nPts == 1) {
@@ -986,7 +995,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 	  (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2),
 			p->getVertex(3), p->getVertex(4), p->getVertex(5),
 			ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
-			vf[0], vf[1], vf[2]));
+			vf[0], vf[1], vf[2],
+			0, p->getPartition()));
       }
       else {
         Msg::Error("PrismN generation not implemented");
@@ -1021,16 +1031,18 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     if (nPts == 1) {
       if(incomplete) {
         pyramids2.push_back(new MPyramid13(p->getVertex(0), p->getVertex(1),
-                            p->getVertex(2), p->getVertex(3),
-                            p->getVertex(4), ve[0], ve[1], ve[2],
-			                      ve[3], ve[4], ve[5], ve[6], ve[7]));
+					   p->getVertex(2), p->getVertex(3),
+					   p->getVertex(4), ve[0], ve[1], ve[2],
+					   ve[3], ve[4], ve[5], ve[6], ve[7],
+					   0, p->getPartition()));
       }
       else {
         getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
         pyramids2.push_back
             (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-			                      p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2],
-			                      ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+			    p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2],
+			    ve[3], ve[4], ve[5], ve[6], ve[7], vf[0],
+			    0, p->getPartition()));
       }
     }
     else {
@@ -1171,7 +1183,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       }
       ve.insert(ve.end(), vr.begin(), vr.end());
       MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-				                          p->getVertex(3), p->getVertex(4), ve, nPts + 1);
+				  p->getVertex(3), p->getVertex(4), ve, nPts + 1,
+				  0, p->getPartition());
       pyramids2.push_back(n);
       SPoint3 test_pnt;
       n->pnt(-1,-1,0, test_pnt);
@@ -1193,7 +1206,7 @@ static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisibl
     std::vector<MVertex*> v1;
     for(int j = 0; j < n; j++)
       v1.push_back(ele->getVertex(j));
-    elements1.push_back(new T(v1));
+    elements1.push_back(new T(v1, 0, ele->getPartition()));
     delete ele;
   }
   elements = elements1;
@@ -1547,12 +1560,12 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      MTriangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2));
+      MTriangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), 0, t->getPartition());
       getFaceVertices (*it, t, t, vf, faceVertices, false, nPts);
       for (int j=3;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
       MTriangleN *newTr = new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-					 vt, nPts + 1);
+					 vt, nPts + 1, 0, t->getPartition());
       newT.push_back(newTr);
 
       delete t;
@@ -1563,13 +1576,13 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       MQuadrangle *t = (*it)->quadrangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3));
+      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3), 0, t->getPartition());
       getFaceVertices (*it, t, &TEMP, vf, faceVertices, false, nPts);
       for (int j=4;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
       newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
                                       t->getVertex(2), t->getVertex(3),
-				      vt, nPts + 1));
+				      vt, nPts + 1, 0, t->getPartition()));
       delete t;
     }
     (*it)->quadrangles = newQ;
@@ -1601,7 +1614,7 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible)
            j < t->getNumVertices(); j++)
         toDelete.insert(t->getVertex(j));
       newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-				    vt, order));
+				    vt, order, 0, t->getPartition()));
       delete t;
     }
     (*it)->triangles = newT;
@@ -1615,7 +1628,7 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible)
         vt.push_back(t->getVertex(j));
       newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
                                       t->getVertex(2), t->getVertex(3),
-				      vt, nPts + 1));
+				      vt, nPts + 1, 0, t->getPartition()));
       delete t;
     }
     (*it)->quadrangles = newQ;
