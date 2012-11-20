@@ -653,8 +653,9 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 void MetaModel::construct()
 {
   OLMsg::Info("Metamodel now CONSTRUCTING");
+  std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
-  parse_onefile( genericNameFromArgs + onelabExtension);
+  parse_onefile(fileName);
   closeOnelabBlock();
   saveCommandLines();
   //onelab::server::instance()->setChanged(true, getName());
@@ -662,7 +663,7 @@ void MetaModel::construct()
 
 void MetaModel::analyze() {
   OLMsg::Info("Metamodel now ANALYZING");
-  std::string fileName = genericNameFromArgs + onelabExtension;
+  std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
 	      parse_onefile(fileName)?"done":"failed");
@@ -671,7 +672,7 @@ void MetaModel::analyze() {
 
 void MetaModel::compute() {
   OLMsg::Info("Metamodel now COMPUTING");
-  std::string fileName = genericNameFromArgs + onelabExtension;
+  std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
 	      parse_onefile(fileName)?"done":"failed");
