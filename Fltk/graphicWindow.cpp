@@ -2998,6 +2998,9 @@ void graphicWindow::detachMenu()
 void graphicWindow::attachMenu()
 {
   if(!_menuwin || !_onelab || !_browser) return;
+  CTX::instance()->menuSize[1] = _menuwin->h();
+  CTX::instance()->menuPosition[0] = _menuwin->x();
+  CTX::instance()->menuPosition[1] = _menuwin->y();
   _menuwin->remove(_onelab);
   _menuwin->hide();
   delete _menuwin;
