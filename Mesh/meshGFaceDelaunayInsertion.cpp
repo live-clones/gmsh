@@ -25,7 +25,9 @@
 #include "surfaceFiller.h"
 
 double LIMIT_ = 0.5 * sqrt(2.0) * 1;
-
+int  N_GLOBAL_SEARCH;
+int  N_SEARCH;
+double DT_INSERT_VERTEX;
 int MTri3::radiusNorm = 2;
 
 /*
@@ -401,14 +403,17 @@ int inCircumCircle(MTriangle *base,
 template <class ITER>
 void connectTris(ITER beg, ITER end)
 {
-  std::set<edgeXface> conn;
+  std::vector<edgeXface> conn;
+  //  std::set<edgeXface> conn;
   while (beg != end){
     if (!(*beg)->isDeleted()){
       for (int i = 0; i < 3; i++){
         edgeXface fxt(*beg, i);
-        std::set<edgeXface>::iterator found = conn.find(fxt);
+	//        std::set<edgeXface>::iterator found = conn.find(fxt);
+	std::vector<edgeXface>::iterator found  = std::find(conn.begin(), conn.end(), fxt); 
         if (found == conn.end())
-          conn.insert(fxt);
+	  conn.push_back(fxt);
+	  //          conn.insert(fxt);
         else if (found->t1 != *beg){
           found->t1->setNeigh(found->i1, *beg);
           (*beg)->setNeigh(i, found->t1);
@@ -553,7 +558,8 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
                   std::vector<SMetric3> &vMetricsBGM,
                   std::vector<double> &Us,
                   std::vector<double> &Vs,
-                  double *metric = 0)
+                  double *metric, 
+		  MTri3 **oneNewTriangle)
 {
   std::list<edgeXface> shell;
   std::list<MTri3*> cavity;
@@ -566,6 +572,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
   else{
     recurFindCavityAniso(gf, shell, cavity, metric, param, t, Us, Vs);
   }
+
 
   // check that volume is conserved
   double newVolume = 0;
@@ -596,7 +603,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 
     MTri3 *t4;
     t4 = new MTri3(t, LL,0,&Us,&Vs,gf);
-
+    if (oneNewTriangle) *oneNewTriangle = t4; 
     //    double din = t->getInnerRadius();
 
     double d1 = distance(it->v[0],v);
@@ -605,7 +612,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
-
+	
     if ((d1 < LL * .0025 || d2 < LL * .0025 || cosv < -.9999999) && !force) {
       onePointIsTooClose = true;
     }
@@ -628,7 +635,10 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && shell.size() > 3 &&
       !onePointIsTooClose){
     connectTris(new_cavity.begin(), new_cavity.end());
+    //    clock_t t1 = clock();
     allTets.insert(newTris, newTris + shell.size());
+    //    clock_t t2 = clock();
+    //    DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
         int active_edge;
@@ -661,21 +671,25 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
     for (unsigned int i = 0; i < shell.size(); i++) delete newTris[i];
     delete [] newTris;
     //    throw;
+    //    clock_t t2 = clock();
+    //    DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
     return false;
   }
 }
 
-
 static MTri3* search4Triangle (MTri3 *t, double pt[2],
 			       std::vector<double> &Us, std::vector<double> &Vs,
-			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2]) {
+			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2], bool force = false) {
 
-  bool inside = invMapUV(t->tri(), pt, Us, Vs, uv, 1.e-8);
+  //  bool inside = t->inCircumCircle(pt);
+  bool inside =  invMapUV(t->tri(), pt, Us, Vs, uv, 1.e-8);
+
   //  printf("inside = %d (%g %g)\n",inside,pt[0],pt[1]);
   if (inside) return t;
   SPoint3 q1(pt[0],pt[1],0);
   int ITER = 0;
   while (1){
+    N_SEARCH ++ ;
     SPoint3 q2((Us[t->tri()->getVertex(0)->getIndex()] +
                 Us[t->tri()->getVertex(1)->getIndex()] +
                 Us[t->tri()->getVertex(2)->getIndex()]) / 3.0,
@@ -701,8 +715,9 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
     if (ITER++ > (int)AllTris.size()) break;
   }
 
-  return 0; // FIXME: removing this leads to horrible performance
+  if (!force)return 0; // FIXME: removing this leads to horrible performance
 
+  N_GLOBAL_SEARCH ++ ;
   for(std::set<MTri3*,compareTri3Ptr>::iterator itx = AllTris.begin();
       itx != AllTris.end();++itx){
     if (!(*itx)->isDeleted()){
@@ -723,8 +738,9 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
                          std::vector<SMetric3> &vMetricsBGM,
                          std::set<MTri3*,compareTri3Ptr> &AllTris,
                          std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0,
-                         MTri3 *worst = 0)
+                         MTri3 *worst = 0,  MTri3 **oneNewTriangle = 0)
 {
+
   if (worst){
     it = AllTris.find(worst);
     if (worst != *it){
@@ -734,11 +750,12 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
   else worst = *it;
 
+
   MTri3 *ptin = 0;
   bool inside = false;
   double uv[2];
   //  printf("inserting %g %g\n",center[0],center[1]);
-  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv);
+  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
   if (ptin) inside = true;
 
   if (inside) {
@@ -767,9 +784,12 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     Us.push_back(center[0]);
     Vs.push_back(center[1]);
 
+
+    //    clock_t t1 = clock();
+
     if(!p.succeeded() || !insertVertex
        (false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
-        Us, Vs, metric) ) {
+        Us, Vs, metric, oneNewTriangle) ) {
       //      Msg::Debug("Point %g %g cannot be inserted because %d",
       //                       center[0], center[1], p.succeeded() );
       //      printf("Point %g %g cannot be inserted because %d",
@@ -782,6 +802,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
     else {
       //      printf("done ! %d\n",AllTris.size());
+      //      clock_t t2 = clock();
+      //      DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
       gf->mesh_vertices.push_back(v);
       return true;
     }
@@ -1421,7 +1443,7 @@ void buildBackGroundMesh (GFace *gf)
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     //  Do a background mesh
-    bowyerWatson(gf);
+    bowyerWatson(gf,4000);
     //  Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
@@ -1577,9 +1599,10 @@ void bowyerWatsonParallelograms(GFace *gf)
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
   std::vector<SMetric3> vMetricsBGM;
   std::vector<MVertex*> packed;
+  std::vector<SMetric3> metrics;
 
   printf("creating the points\n");
-  packingOfParallelograms(gf, packed);
+  packingOfParallelograms(gf, packed, metrics);
   printf("points created\n");
 
   buildMeshGenerationDataStructures
@@ -1591,8 +1614,14 @@ void bowyerWatsonParallelograms(GFace *gf)
 
   //  printf("CARNAVAL !!!\n");
 
-  //  std::sort(packed.begin(), packed.end(), lexicographicSort());
+  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic()); 
 
+  printf("staring to insert points\n");
+  N_GLOBAL_SEARCH = 0;
+  N_SEARCH = 0;
+  DT_INSERT_VERTEX = 0;
+  clock_t t1 = clock();
+  MTri3 *oneNewTriangle = 0;
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
     if (worst->isDeleted()){
@@ -1607,12 +1636,35 @@ void bowyerWatsonParallelograms(GFace *gf)
       delete packed[i];
       double metric[3];
       buildMetric(gf, newPoint, metric);
+      SMetric3 ANIZO_MESH = metrics[i];
+      
       bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, Us, Vs, vSizes,
-				  vSizesBGM, vMetricsBGM, AllTris, 0, worst);
-      if (!success) printf("success %d %d\n", success, (int)AllTris.size());
+				  vSizesBGM, vMetricsBGM, AllTris, 0, oneNewTriangle, &oneNewTriangle);
+      if (!success) oneNewTriangle = 0;
+	//      if (!success)printf("success %d %d\n",success,AllTris.size());
       i++;
     }
+
+    if(1.0* AllTris.size() > 2.5 * vSizes.size()){
+      int n1 = AllTris.size();
+      std::set<MTri3*,compareTri3Ptr>::iterator itd = AllTris.begin();
+      while(itd != AllTris.end()){
+        if((*itd)->isDeleted()){
+          delete  *itd;
+          AllTris.erase(itd++);
+        }
+        else
+          itd++;
+      }
+      //      Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
+    }
+
+
   }
+  printf("%d vertices \n",packed.size());
+  clock_t t2 = clock();
+  double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, Us, Vs);
   backgroundMesh::unset();
 }
