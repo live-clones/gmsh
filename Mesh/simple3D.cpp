@@ -74,18 +74,18 @@ class Node{
 
 class Wrapper{
  private:
-  bool too_close;
-  Node* spawn;
+  bool ok;
+  Node* individual;
   Node* parent;
  public:
   Wrapper();
   Wrapper(Node*,Node*);
   ~Wrapper();
-  void set_too_close(bool);
-  void set_spawn(Node*);
+  void set_ok(bool);
+  void set_individual(Node*);
   void set_parent(Node*);
-  bool get_too_close();
-  Node* get_spawn();
+  bool get_ok();
+  Node* get_individual();
   Node* get_parent();
 };
 
@@ -123,19 +123,19 @@ bool rtree_callback(Node* neighbour,void* w){
   double h;
   double distance;
   Metric m;
-  Node *spawn,*parent;
+  Node *individual,*parent;
   Wrapper* wrapper;
 
   wrapper = static_cast<Wrapper*>(w);
-  spawn = wrapper->get_spawn();
+  individual = wrapper->get_individual();
   parent = wrapper->get_parent();
-  h = spawn->get_size();
-  m = spawn->get_metric();
+  h = individual->get_size();
+  m = individual->get_metric();
 
   if(neighbour!=parent){
-    distance = infinity_distance(spawn->get_point(),neighbour->get_point(),m);
+    distance = infinity_distance(individual->get_point(),neighbour->get_point(),m);
 	if(distance<k1*h){
-	  wrapper->set_too_close(1);
+	  wrapper->set_ok(0);
 	  return false;
 	}
   }
@@ -268,35 +268,35 @@ SPoint3 Node::get_point(){
 /*********class Wrapper*********/
 
 Wrapper::Wrapper(){
-  too_close = 0;
+  ok = 1;
 }
 
-Wrapper::Wrapper(Node* new_spawn,Node* new_parent){
-  too_close = 0;
-  spawn = new_spawn;
+Wrapper::Wrapper(Node* new_individual,Node* new_parent){
+  ok = 1;
+  individual = new_individual;
   parent = new_parent;
 }
 
 Wrapper::~Wrapper(){}
 
-void Wrapper::set_too_close(bool new_too_close){
-  too_close = new_too_close;
+void Wrapper::set_ok(bool new_ok){
+  ok = new_ok;
 }
 
-void Wrapper::set_spawn(Node* new_spawn){
-  spawn = new_spawn;
+void Wrapper::set_individual(Node* new_individual){
+  individual = new_individual;
 }
 
 void Wrapper::set_parent(Node* new_parent){
   parent = new_parent;
 }
 
-bool Wrapper::get_too_close(){
-  return too_close;
+bool Wrapper::get_ok(){
+  return ok;
 }
 
-Node* Wrapper::get_spawn(){
-  return spawn;
+Node* Wrapper::get_individual(){
+  return individual;
 }
 
 Node* Wrapper::get_parent(){
@@ -328,20 +328,20 @@ void Filler::treat_region(GRegion* gr){
   unsigned int i;
   int j;
   int count;
-  bool ok;
+  bool ok2;
   double x,y,z;
   SPoint3 point;
-  Node *node,*spawn,*parent,*n1,*n2,*n3,*n4,*n5,*n6;
+  Node *node,*individual,*parent;
   MVertex* vertex;
   MElement* element;
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
   std::queue<Node*> fifo;
-  std::vector<Node*> data;
+  std::vector<Node*> spawns;
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
-  std::set<MVertex*> old_vertices;
+  std::set<MVertex*> temp;
   std::set<MVertex*>::iterator it;
   RTree<Node*,double,3,double> rtree;
 
@@ -349,16 +349,20 @@ void Filler::treat_region(GRegion* gr){
   Size_field::init_region(gr);
   Size_field::solve(gr);
   octree = new MElementOctree(gr->model());
+  garbage.clear();
+  boundary_vertices.clear();
+  temp.clear();
+  new_vertices.clear();
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
 	  vertex = element->getVertex(j);
-	  old_vertices.insert(vertex);
+	  temp.insert(vertex);
 	}
   }
 
-  for(it=old_vertices.begin();it!=old_vertices.end();it++){
+  for(it=temp.begin();it!=temp.end();it++){
 	if((*it)->onWhat()->dim()<3){
 	  boundary_vertices.push_back(*it);
 	}
@@ -370,7 +374,8 @@ void Filler::treat_region(GRegion* gr){
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
-    node = new Node(SPoint3(x,y,z));
+    
+	node = new Node(SPoint3(x,y,z));
 	compute_parameters(node,gr);
 	rtree.Insert(node->min,node->max,node);
 	fifo.push(node);
@@ -384,47 +389,42 @@ void Filler::treat_region(GRegion* gr){
 	fifo.pop();
 	garbage.push_back(parent);
 	
-	n1 = new Node();
-	n2 = new Node();
-	n3 = new Node();
-	n4 = new Node();
-	n5 = new Node();
-	n6 = new Node();
-	offsprings(gr,octree,parent,n1,n2,n3,n4,n5,n6);
+	spawns.clear();
+	spawns.resize(6);
+	  
+	for(i=0;i<6;i++){
+	  spawns[i] = new Node();
+	}
 	
-	data.clear();
-	data.push_back(n1);
-	data.push_back(n2);
-	data.push_back(n3);
-	data.push_back(n4);
-	data.push_back(n5);
-	data.push_back(n6);
+	create_spawns(gr,octree,parent,spawns);
 	
 	for(i=0;i<6;i++){
-	  ok = 0;
-	  spawn = data[i];
-	  point = spawn->get_point();
+	  ok2 = 0;
+	  individual = spawns[i];
+	  point = individual->get_point();
 	  x = point.x();
 	  y = point.y();
 	  z = point.z();
 	  
 	  if(inside_domain(octree,x,y,z)){
-		compute_parameters(spawn,gr);
-		if(far_from_boundary(octree,spawn)){
-		  wrapper.set_too_close(0);
-		  wrapper.set_spawn(spawn);
+		compute_parameters(individual,gr);
+		if(far_from_boundary(octree,individual)){
+		  wrapper.set_ok(1);
+		  wrapper.set_individual(individual);
 		  wrapper.set_parent(parent);
-		  rtree.Search(spawn->min,spawn->max,rtree_callback,&wrapper);
-		  if(!wrapper.get_too_close()){
-		    fifo.push(spawn);
-		    rtree.Insert(spawn->min,spawn->max,spawn);
+		  rtree.Search(individual->min,individual->max,rtree_callback,&wrapper);
+			
+		  if(wrapper.get_ok()){
+		    fifo.push(individual);
+		    rtree.Insert(individual->min,individual->max,individual);
 			vertex = new MVertex(x,y,z,gr,0);
 			new_vertices.push_back(vertex);
-			ok = 1;
+			ok2 = 1;
 		  }
 	    }
 	  }
-	  if(!ok) delete spawn;
+		
+	  if(!ok2) delete individual;
 	}
 	
 	printf("%d\n",count);
@@ -438,10 +438,10 @@ void Filler::treat_region(GRegion* gr){
   mesher(gr); //?
   MeshDelaunayVolume(regions);
 
-  delete octree;
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
+  delete octree;
   Size_field::clear();
   Frame_field::clear();
   #endif
@@ -477,7 +477,7 @@ double Filler::get_size(double x,double y,double z,GEntity* ge){
   Field* field;
   FieldManager* manager;
 
-  h = 0.25;
+  h = 1.0;
   manager = ge->model()->getFields();
   if(manager->getBackgroundField()>0){
     field = manager->get(manager->getBackgroundField());
@@ -542,7 +542,7 @@ void Filler::compute_parameters(Node* node,GEntity* ge){
   node->max[2] = z + sqrt3*h;
 }
 
-void Filler::offsprings(GEntity* ge,MElementOctree* octree,Node* node,Node* n1,Node* n2,Node* n3,Node* n4,Node* n5,Node* n6){
+void Filler::create_spawns(GEntity* ge,MElementOctree* octree,Node* node,std::vector<Node*>& spawns){
   double x,y,z;
   double x1,y1,z1;
   double x2,y2,z2;
@@ -592,37 +592,37 @@ void Filler::offsprings(GEntity* ge,MElementOctree* octree,Node* node,Node* n1,N
   y6 = y - h6*m.get_m23();
   z6 = z - h6*m.get_m33();
 
-  *n1 = Node(SPoint3(x1,y1,z1));
-  *n2 = Node(SPoint3(x2,y2,z2));
-  *n3 = Node(SPoint3(x3,y3,z3));
-  *n4 = Node(SPoint3(x4,y4,z4));
-  *n5 = Node(SPoint3(x5,y5,z5));
-  *n6 = Node(SPoint3(x6,y6,z6));
+  *spawns[0] = Node(SPoint3(x1,y1,z1));
+  *spawns[1] = Node(SPoint3(x2,y2,z2));
+  *spawns[2] = Node(SPoint3(x3,y3,z3));
+  *spawns[3] = Node(SPoint3(x4,y4,z4));
+  *spawns[4] = Node(SPoint3(x5,y5,z5));
+  *spawns[5] = Node(SPoint3(x6,y6,z6));
 }
 
-double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,double h_nearer,SVector3 direction){
+double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,double h1,SVector3 direction){
   double x,y,z;
   double average;
-  double h_farther;
+  double h2;
   double coeffA,coeffB;
 
-  x = point.x() + h_nearer*direction.x();
-  y = point.y() + h_nearer*direction.y();
-  z = point.z() + h_nearer*direction.z();
+  x = point.x() + h1*direction.x();
+  y = point.y() + h1*direction.y();
+  z = point.z() + h1*direction.z();
   
   if(inside_domain(octree,x,y,z)){
-    h_farther = get_size(x,y,z);
+    h2 = get_size(x,y,z);
   }
-  else h_farther = h_nearer;
+  else h2 = h1;
 
   coeffA = 1.0;
   coeffB = 0.16;
   
-  if(h_farther>h_nearer){
-    average = coeffA*h_nearer + (1.0-coeffA)*h_farther;
+  if(h2>h1){
+    average = coeffA*h1 + (1.0-coeffA)*h2;
   }
   else{
-    average = coeffB*h_nearer + (1.0-coeffB)*h_farther;
+    average = coeffB*h1 + (1.0-coeffB)*h2;
   }
 	
   return average;
