@@ -403,6 +403,27 @@ int inCircumCircle(MTriangle *base,
 template <class ITER>
 void connectTris(ITER beg, ITER end)
 {
+  std::set<edgeXface> conn;
+  while (beg != end){
+    if (!(*beg)->isDeleted()){
+      for (int i = 0; i < 3; i++){
+        edgeXface fxt(*beg, i);
+	std::set<edgeXface>::iterator found = conn.find(fxt);
+        if (found == conn.end())
+	  conn.insert(fxt);
+        else if (found->t1 != *beg){
+          found->t1->setNeigh(found->i1, *beg);
+          (*beg)->setNeigh(i, found->t1);
+        }
+      }
+    }
+    ++beg;
+  }
+}
+
+template <class ITER>
+void connectTris_vector(ITER beg, ITER end)
+{
   std::vector<edgeXface> conn;
   //  std::set<edgeXface> conn;
   while (beg != end){
@@ -423,6 +444,7 @@ void connectTris(ITER beg, ITER end)
     ++beg;
   }
 }
+
 
 
 void connectTriangles(std::list<MTri3*> &l)
@@ -634,7 +656,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && shell.size() > 3 &&
       !onePointIsTooClose){
-    connectTris(new_cavity.begin(), new_cavity.end());
+    connectTris_vector(new_cavity.begin(), new_cavity.end());
     //    clock_t t1 = clock();
     allTets.insert(newTris, newTris + shell.size());
     //    clock_t t2 = clock();
