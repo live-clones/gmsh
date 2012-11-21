@@ -3,36 +3,9 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <cmath>
 #include "BergotBasis.h"
-
-/*BergotBasis::BergotBasis() {
-
-
-}*/
-
-
-
-namespace {
-
-// Private function to compute value and gradients of Jacobi polynomial at 1 (the general
-// implementation in class jacobiPolynomials does not handle the indefinite form)
-inline void jacobiDiffOne(int alpha, int beta, int n, double *wf, double *wg)
-{
-
-  const int fMax = std::max(n,1)+alpha;
-  std::vector<double> fact(fMax+1);
-  fact[0] = 1.;
-  for (int i=1;i<=fMax;i++) fact[i] = i*fact[i-1];
-  wf[0] = 1.; wg[0] = 0.;
-  for (int k=1;k<=n;k++) {
-    wf[k] = fact[k+alpha]/(fact[alpha]*fact[k]);
-    wg[k] = 0.5*(k+alpha+beta+1)*fact[k+alpha]/(fact[alpha+1]*fact[k-1]);
-  }
-
-}
-
-}
-
+#include "MElement.h"
 
 
 
@@ -125,12 +98,9 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
     std::vector<double> &wf = wFcts[mIJ], &wg = wGrads[mIJ];
     wf.resize(kMax+1);
     wg.resize(kMax+1);
-    if (what == 1.)  jacobiDiffOne(2*mIJ+2,0,kMax,&(wf[0]),&(wg[0]));
-    else {
-      JacobiPolynomials jacobi(2.*mIJ+2.,0.,kMax);
-      jacobi.f(what,&(wf[0]));
-      jacobi.df(what,&(wg[0]));
-    }
+    JacobiPolynomials jacobi(2.*mIJ+2.,0.,kMax);
+    jacobi.f(what,&(wf[0]));
+    jacobi.df(what,&(wg[0]));
   }
 
   // Recombine to find the shape function gradients
@@ -177,7 +147,7 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
           grads[index][0] = uGrads[i] * vFcts[j]  * wf[k] * powM1;
           grads[index][1] = uFcts[i]  * vGrads[j] * wf[k] * powM1;
           grads[index][2] = wf[k]*powM2*(u*uGrads[i]*vFcts[j]+v*uFcts[i]*vGrads[j])
-                            + uFcts[i]*vFcts[j]*powM1*(2.*oMW*wg[k]-mIJ*wf[k]);
+                                    + uFcts[i]*vFcts[j]*powM1*(2.*oMW*wg[k]-mIJ*wf[k]);
         }
       }
     }

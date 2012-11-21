@@ -124,50 +124,6 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
-  /*virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
-  {
-    double r = (w != 1.) ? (u * v * w / (1. - w)) : 0.;
-    s[0] = 0.25 * ((1. - u) * (1. - v) - w + r);
-    s[1] = 0.25 * ((1. + u) * (1. - v) - w - r);
-    s[2] = 0.25 * ((1. + u) * (1. + v) - w + r);
-    s[3] = 0.25 * ((1. - u) * (1. + v) - w - r);
-    s[4] = w;
-  }
-  */
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
-  {
-    if(w == 1.) {
-      s[0][0] = -0.25 ;
-      s[0][1] = -0.25 ;
-      s[0][2] = -0.25 ;
-      s[1][0] =  0.25 ;
-      s[1][1] = -0.25 ;
-      s[1][2] = -0.25 ;
-      s[2][0] =  0.25 ;
-      s[2][1] =  0.25 ;
-      s[2][2] = -0.25 ;
-      s[3][0] = -0.25 ;
-      s[3][1] =  0.25 ;
-      s[3][2] = -0.25 ;
-    }
-    else{
-      s[0][0] = 0.25 * ( -(1. - v) + v * w / (1. - w)) ;
-      s[0][1] = 0.25 * ( -(1. - u) + u * w / (1. - w)) ;
-      s[0][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ;
-      s[1][0] = 0.25 * (  (1. - v) - v * w / (1. - w)) ;
-      s[1][1] = 0.25 * ( -(1. + u) - u * w / (1. - w)) ;
-      s[1][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ;
-      s[2][0] = 0.25 * (  (1. + v) + v * w / (1. - w)) ;
-      s[2][1] = 0.25 * (  (1. + u) + u * w / (1. - w)) ;
-      s[2][2] = 0.25 * ( -1.     + u * v / (1. - w) + u * v * w / (1. - w) / (1. - w)) ;
-      s[3][0] = 0.25 * ( -(1. + v) - v * w / (1. - w)) ;
-      s[3][1] = 0.25 * (  (1. - u) - u * w / (1. - w)) ;
-      s[3][2] = 0.25 * ( -1.     - u * v / (1. - w) - u * v * w / (1. - w) / (1. - w)) ;
-    }
-    s[4][0] = 0.;
-    s[4][1] = 0.;
-    s[4][2] = 1.;
-  }
   virtual void getNode(int num, double &u, double &v, double &w)
   {
     switch(num) {

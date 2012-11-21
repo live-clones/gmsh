@@ -1025,6 +1025,26 @@ static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &poi
 
 
 
+static void generateGradShapesPyramid(JacobianBasis &jfs, const fullMatrix<double> &points, const pyramidalBasis *F)
+{
+
+  fullMatrix<double> allDPsi;
+  F->df(points, allDPsi);
+
+  const int NBez = points.size1(), NLag = allDPsi.size1();
+  jfs.gradShapeMatX.resize(NBez,NLag);
+  jfs.gradShapeMatY.resize(NBez,NLag);
+  jfs.gradShapeMatZ.resize(NBez,NLag);
+  for (int i=0; i<NBez; i++)
+    for (int j=0; j<NLag; j++) {
+      jfs.gradShapeMatX(i,j) = allDPsi(j,3*i);
+      jfs.gradShapeMatY(i,j) = allDPsi(j,3*i+1);
+      jfs.gradShapeMatZ(i,j) = allDPsi(j,3*i+2);
+    }
+
+}
+
+
 std::map<int, bezierBasis> bezierBasis::_bbs;
 const bezierBasis *bezierBasis::find(int tag)
 {
@@ -1142,6 +1162,8 @@ const JacobianBasis *JacobianBasis::find(int tag)
       J.bezier = bezierBasis::find(MSH_PYR_14);
       break;
     }
+    pyramidalBasis *F = (pyramidalBasis*)BasisFactory::create(tag);
+    generateGradShapesPyramid(J, J.bezier->points, F);
   }
   else {
     const int parentType = MElement::ParentTypeFromTag(tag), order = MElement::OrderFromTag(tag);

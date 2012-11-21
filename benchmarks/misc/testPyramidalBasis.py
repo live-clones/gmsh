@@ -6,7 +6,7 @@ import math
 
 # Parameters
 Nr = 100
-p = 8
+p = 2
 
 
 
@@ -144,12 +144,14 @@ polyEval(nodalCoeff,p,poly,basis.points)
 #for i in range(nodalCoeff.size()) :
 #  print(" -> %g" % nodalCoeff(i))
 
-# Generate Nr random points in pyramid (well, Nr-1 random plus (0,0,1) to test indeterminate form)
+# Generate Nr random points in pyramid (well, Nr-5 random plus vertices to test indeterminate form)
 uvwr = fullMatrixDouble(Nr,3)
-uvwr.set(0,0,0)
-uvwr.set(0,1,0)
-uvwr.set(0,2,1)
-for i in range(1,Nr):
+uvwr.set(0,0,-1); uvwr.set(0,1,-1); uvwr.set(0,2,0)
+uvwr.set(1,0,-1); uvwr.set(1,1,1); uvwr.set(1,2,0)
+uvwr.set(2,0,1); uvwr.set(2,1,1); uvwr.set(2,2,0)
+uvwr.set(3,0,1); uvwr.set(3,1,-1); uvwr.set(3,2,0)
+uvwr.set(4,0,0); uvwr.set(4,1,0); uvwr.set(4,2,1)
+for i in range(5,Nr):
   uvwr.set(i,0,1000)
   uvwr.set(i,1,1000)
   uvwr.set(i,2,1000)

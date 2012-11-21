@@ -21,11 +21,11 @@ class nodalBasis {
 
   // Basis functions evaluation
   virtual void f(double u, double v, double w, double *sf) const {Msg::Fatal("Not implemented");};
-  virtual void f(fullMatrix<double> &coord, fullMatrix<double> &sf) const {Msg::Fatal("Not implemented");};
+  virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const {Msg::Fatal("Not implemented");};
 
   // Basis functions gradients evaluation
   virtual void df(double u, double v, double w, double grads[][3]) const {Msg::Fatal("Not implemented");};
-  virtual void df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const {Msg::Fatal("Not implemented");};
+  virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const {Msg::Fatal("Not implemented");};
   
   virtual void ddf(double u, double v, double w, double grads[][3][3]) const {Msg::Fatal("Not implemented");};
   virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");};

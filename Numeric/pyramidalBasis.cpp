@@ -62,7 +62,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
 
 
-void pyramidalBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf)
+void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf)
 {
 
   const int N = bergot->size(), NPts = coord.size1();
@@ -107,7 +107,7 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 
 
 
-void pyramidalBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
+void pyramidalBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const
 {
 
   const int N = bergot->size(), NPts = coord.size1();

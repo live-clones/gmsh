@@ -404,7 +404,7 @@ void polynomialBasis::f(double u, double v, double w, double *sf) const
 
 
 
-void polynomialBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf) const
+void polynomialBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const
 {
   double p[1256];
   sf.resize (coord.size1(), coefficients.size1());
@@ -418,7 +418,7 @@ void polynomialBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf) const
 
 
 
-void polynomialBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) const
+void polynomialBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const
 {
   double dfv[1256][3];
   dfm.resize (coefficients.size1(), coord.size1() * 3, false);
