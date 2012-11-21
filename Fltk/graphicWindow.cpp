@@ -677,6 +677,7 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
+  // TODO: we should probably reset the onelab DB here, too
   OpenProject(fileName);
   drawContext::global()->draw();
 }
@@ -3028,9 +3029,9 @@ void graphicWindow::attachDetachMenu()
 void graphicWindow::showMenu()
 {
   if(_menuwin || !_onelab || !_win->shown()) return;
-  if(_onelab->w() < 5){
+  if(_onelab->w() < FL_NORMAL_SIZE){
     int width = CTX::instance()->menuSize[0];
-    if(width < 5) width = _onelab->getMinWindowWidth();
+    if(width < FL_NORMAL_SIZE) width = _onelab->getMinWindowWidth();
     int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
@@ -3047,7 +3048,7 @@ void graphicWindow::hideMenu()
 void graphicWindow::showHideMenu()
 {
   if(_menuwin || !_onelab) return;
-  if(_onelab->w() < 5) showMenu();
+  if(_onelab->w() < FL_NORMAL_SIZE) showMenu();
   else hideMenu();
 }
 
@@ -3252,9 +3253,9 @@ void graphicWindow::setMessageHeight(int h)
 void graphicWindow::showMessages()
 {
   if(!_browser || !_win->shown()) return;
-  if(_browser->h() < 5){
+  if(_browser->h() < FL_NORMAL_SIZE){
     int height = CTX::instance()->msgSize;
-    if(height < 5) height = 50;
+    if(height < FL_NORMAL_SIZE) height = 5 * FL_NORMAL_SIZE;
     int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
     setMessageHeight(height);
@@ -3273,7 +3274,7 @@ void graphicWindow::hideMessages()
 void graphicWindow::showHideMessages()
 {
   if(!_browser) return;
-  if(_browser->h() < 5) showMessages();
+  if(_browser->h() < FL_NORMAL_SIZE) showMessages();
   else hideMessages();
 }
 
