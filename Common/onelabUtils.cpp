@@ -143,13 +143,15 @@ namespace onelabUtils {
 
     // force this to make sure that we remesh, even if a mesh exists and we did
     // not actually change a Gmsh parameter
-    if(changed)
+    if(changed){
+      setFirstComputationFlag(false);
       onelab::server::instance()->setChanged(true, "Gmsh");
+    }
   }
 
   bool incrementLoop(const std::string &level)
   {
-    // called at the end of the do{...} while(incrementLoops); 
+    // called at the end of the do{...} while(incrementLoops);
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
