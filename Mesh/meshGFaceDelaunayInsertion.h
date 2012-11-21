@@ -119,6 +119,11 @@ struct edgeXface
     if(v[1] < other.v[1]) return true;
     return false;
   }
+  inline bool operator == ( const edgeXface &other) const
+  {
+    if(v[0] == other.v[0] && v[1] == other.v[1]) return true;
+    return false;
+  }
 };
 
 
