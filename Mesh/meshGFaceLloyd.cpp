@@ -8,6 +8,7 @@
 
 #include <set>
 #include <fstream>
+#include <time.h>
 #include "meshGFaceLloyd.h"
 #include "DivideAndConquer.h"
 #include "GFace.h"
