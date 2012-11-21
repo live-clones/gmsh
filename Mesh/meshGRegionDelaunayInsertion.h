@@ -21,6 +21,10 @@ class GRegion;
 class GFace;
 class GModel;
 
+double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
+		       double circumcenter[3], double *xi, double *eta, double *zeta);
+
+
 class MTet4Factory;
 
 // Memory usage for 1 million tets:
@@ -81,31 +85,14 @@ class MTet4
     MVertex *v1 = base->getVertex(1);
     MVertex *v2 = base->getVertex(2);
     MVertex *v3 = base->getVertex(3);
-    double X[4] = {v0->x(), v1->x(), v2->x(), v3->x()};
-    double Y[4] = {v0->y(), v1->y(), v2->y(), v3->y()};
-    double Z[4] = {v0->z(), v1->z(), v2->z(), v3->z()};
-    double b[3], mat[3][3], dum;    
-    b[0] = X[1] * X[1] - X[0] * X[0] +
-      Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
-    b[1] = X[2] * X[2] - X[1] * X[1] +
-      Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
-    b[2] = X[3] * X[3] - X[2] * X[2] +
-      Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
-    for(int i = 0; i < 3; i++)
-      b[i] *= 0.5;
-    mat[0][0] = X[1] - X[0];
-    mat[0][1] = Y[1] - Y[0];
-    mat[0][2] = Z[1] - Z[0];
-    mat[1][0] = X[2] - X[1];
-    mat[1][1] = Y[2] - Y[1];
-    mat[1][2] = Z[2] - Z[1];
-    mat[2][0] = X[3] - X[2];
-    mat[2][1] = Y[3] - Y[2];
-    mat[2][2] = Z[3] - Z[2];
-    if(!sys3x3(mat, b, res, &dum)) {
-      res[0] = res[1] = res[2] = 10.0e10;
-    }
+    double A[4] = {v0->x(), v0->y(), v0->z()};
+    double B[4] = {v1->x(), v1->y(), v1->z()};
+    double C[4] = {v2->x(), v2->y(), v2->z()};
+    double D[4] = {v3->x(), v3->y(), v3->z()};
+    double x,y,z;
+    tetcircumcenter (A,B,C,D,res,&x,&y,&z);
   }
+
   void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM)
   {
     base = t;
