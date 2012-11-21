@@ -1,5 +1,7 @@
 #include "GmshConfig.h"
 #include "surfaceFiller.h"
+#include "Field.h"
+#include "GModel.h"
 #include <queue>
 #include <stack>
 
@@ -31,6 +33,7 @@ struct surfacePointWithExclusionRegion {
   SPoint2 _center;
   SPoint2 _p[4][NUMDIR];
   SPoint2 _q[4];
+  SMetric3 _meshMetric;
   /*
          + p3
     p4   |    
@@ -40,7 +43,8 @@ struct surfacePointWithExclusionRegion {
 
 */
 
-  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR]){
+  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SMetric3 & meshMetric){
+    _meshMetric = meshMetric;
     _v = v;
     _center = (p[0][0]+p[1][0]+p[2][0]+p[3][0])*.25;
     for (int i=0;i<4;i++)_q[i] = _center + (p[i][0]+p[(i+1)%4][0]-_center*2)*FACTOR;
@@ -137,7 +141,8 @@ bool inExclusionZone (SPoint2 &p,
 bool compute4neighbors (GFace *gf,   // the surface
 			MVertex *v_center, // the wertex for which we wnt to generate 4 neighbors
 			bool goNonLinear, // do we compute the position in the real surface which is nonlinear
-			SPoint2 newP[4][NUMDIR]) // look into other directions 
+			SPoint2 newP[4][NUMDIR], // look into other directions 
+			SMetric3 &metricField) // the mesh metric
 {
   // we assume that v is on surface gf
 
@@ -145,8 +150,19 @@ bool compute4neighbors (GFace *gf,   // the surface
   SPoint2 midpoint;
   reparamMeshVertexOnFace(v_center, gf, midpoint);
 
-  double size_1 = backgroundMesh::current()->operator()(midpoint[0],midpoint[1],0.0);
-  double size_2 = size_1;
+  double L = backgroundMesh::current()->operator()(midpoint[0],midpoint[1],0.0);
+  metricField = SMetric3(1./(L*L));  
+  FieldManager *fields = gf->model()->getFields();
+  if(fields->getBackgroundField() > 0){
+    Field *f = fields->get(fields->getBackgroundField());
+    if (!f->isotropic()){
+      (*f)(v_center->x(),v_center->y(),v_center->z(), metricField,gf);
+    }
+    else {
+      L = (*f)(v_center->x(),v_center->y(),v_center->z(), gf);
+      metricField = SMetric3(1./(L*L));  
+    }    
+  }
     
   // get the unit normal at that point
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(midpoint[0],midpoint[1]));
@@ -166,6 +182,9 @@ bool compute4neighbors (GFace *gf,   // the surface
     SVector3 t2 = crossprod(t1,n);
     t2.normalize();
     
+    double size_1 = sqrt(1. / dot(t1,metricField,t1));
+    double size_2 = sqrt(1. / dot(t2,metricField,t2));
+
     // compute the first fundamental form i.e. the metric tensor at the point
     // M_{ij} = s_i \cdot s_j 
     double M = dot(s1,s1);
@@ -203,14 +222,14 @@ bool compute4neighbors (GFace *gf,   // the surface
     
     //    printf("%12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());
     // this is the rectangle in the parameter plane.
-    double r1 = 1.e-8*(double)rand() / RAND_MAX;
-    double r2 = 1.e-8*(double)rand() / RAND_MAX;
-    double r3 = 1.e-8*(double)rand() / RAND_MAX;
-    double r4 = 1.e-8*(double)rand() / RAND_MAX;
-    double r5 = 1.e-8*(double)rand() / RAND_MAX;
-    double r6 = 1.e-8*(double)rand() / RAND_MAX;
-    double r7 = 1.e-8* (double)rand() / RAND_MAX;
-    double r8 = 1.e-8*(double)rand() / RAND_MAX;
+    double r1 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r2 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r3 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r4 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r5 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r6 = 0*1.e-8*(double)rand() / RAND_MAX;
+    double r7 = 0*1.e-8* (double)rand() / RAND_MAX;
+    double r8 = 0*1.e-8*(double)rand() / RAND_MAX;
     double newPoint[4][2] = {{midpoint[0] - covar1[0] * size_param_1 +r1,
 			      midpoint[1] - covar1[1] * size_param_1 +r2},
 			     {midpoint[0] - covar2[0] * size_param_2 +r3,
@@ -248,7 +267,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 
 // fills a surface with points in order to build a nice
 // quad mesh ------------
-void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
+void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
   #if defined(HAVE_RTREE)
 
   // get all the boundary vertices
@@ -262,21 +281,17 @@ void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
   }
 
   // put boundary vertices in a fifo queue  
-
-  // let us start without r-tree for now
-
   std::queue<surfacePointWithExclusionRegion*> fifo;
   std::vector<surfacePointWithExclusionRegion*> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion*,double,2,double> rtree;
-
-  SVector3 t1;
+  SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
   std::set<MVertex*>::iterator it =  bnd_vertices.begin() ;
   for (; it !=  bnd_vertices.end() ; ++it){
-    compute4neighbors (gf, *it, false, newp);
+    compute4neighbors (gf, *it, false, newp, metricField);
     surfacePointWithExclusionRegion *sp = 
-      new surfacePointWithExclusionRegion (*it, newp);    
+      new surfacePointWithExclusionRegion (*it, newp, metricField);    
     fifo.push(sp); 
     vertices.push_back(sp); 
     double _min[2],_max[2];
@@ -303,9 +318,9 @@ void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
 	  GPoint gp = gf->point(parent->_p[i][dir]);
 	  MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 	  //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
-	  compute4neighbors (gf, v, false, newp);
+	  compute4neighbors (gf, v, false, newp, metricField);
 	  surfacePointWithExclusionRegion *sp = 
-	    new surfacePointWithExclusionRegion (v, newp);    
+	    new surfacePointWithExclusionRegion (v, newp, metricField);    
 	  fifo.push(sp); 
 	  vertices.push_back(sp); 
 	  double _min[2],_max[2];
@@ -327,6 +342,7 @@ void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed){
   for (int i=0;i<vertices.size();i++){
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
+      metrics.push_back(vertices[i]->_meshMetric);
       SPoint2 midpoint;
       reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
       //      fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",vertices[i]._v->x(),vertices[i]._v->y(),vertices[i]._v->z());

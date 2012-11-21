@@ -4,7 +4,8 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 
+#include "STensor3.h"
 #include <vector>
 class GFace;
 class MVertex;
-void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed);
+void packingOfParallelograms(GFace* gf, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics );

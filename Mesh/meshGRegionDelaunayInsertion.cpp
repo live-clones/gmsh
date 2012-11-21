@@ -235,20 +235,17 @@ void nonrecurFindCavity(std::list<faceXtet> & shell,
 }
 
 
-bool insertVertex(MVertex *v,
-                  MTet4 *t,
-                  MTet4Factory &myFactory,
-                  std::set<MTet4*,compareTet4Ptr> &allTets,
-		  std::vector<double> & vSizes,
-                  std::vector<double> & vSizesBGM,
-		  std::set<MTet4*,compareTet4Ptr> *activeTets = 0 )
+bool insertVertexB(std::list<faceXtet> &shell,
+		   std::list<MTet4*> &cavity,
+		   MVertex *v,
+		   MTet4 *t,
+		   MTet4Factory &myFactory,
+		   std::set<MTet4*,compareTet4Ptr> &allTets,
+		   std::vector<double> & vSizes,
+		   std::vector<double> & vSizesBGM,
+		   std::set<MTet4*,compareTet4Ptr> *activeTets = 0 )
 {
-  std::list<faceXtet> shell;
-  std::list<MTet4*> cavity;
   std::list<MTet4*> new_cavity;
-
-  recurFindCavity(shell, cavity, v, t);
-
   // check that volume is conserved
   double newVolume = 0;
   double oldVolume = 0;
@@ -340,6 +337,24 @@ bool insertVertex(MVertex *v,
     return false;
   }
 }
+
+bool insertVertex(MVertex *v,
+                  MTet4 *t,
+                  MTet4Factory &myFactory,
+                  std::set<MTet4*,compareTet4Ptr> &allTets,
+		  std::vector<double> & vSizes,
+                  std::vector<double> & vSizesBGM,
+		  std::set<MTet4*,compareTet4Ptr> *activeTets = 0 )
+{
+  std::list<faceXtet> shell;
+  std::list<MTet4*> cavity;
+
+  recurFindCavity(shell, cavity, v, t);
+
+  return insertVertexB(shell,cavity,v,t,myFactory,allTets,vSizes,vSizesBGM,activeTets);
+  
+}
+
 
 static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes)
 {
@@ -1019,6 +1034,7 @@ void insertVerticesInRegion (GRegion *gr)
       double center[3];
       double uvw[3];
       MTetrahedron *base = worst->tet();
+
       double pa[3] = {base->getVertex(0)->x(),
 		      base->getVertex(0)->y(),
 		      base->getVertex(0)->z()};
@@ -1032,22 +1048,30 @@ void insertVerticesInRegion (GRegion *gr)
 		      base->getVertex(3)->y(),
 		      base->getVertex(3)->z()};
 
-      //      double UU,VV,WW;
       tetcircumcenter(pa,pb,pc,pd, center,&uvw[0],&uvw[1],&uvw[2] );
-      //      worst->tet()->xyz2uvw(center, uvw);
-      //      printf("%12.5E %12.5E %12.5E -- %12.5E %12.5E %12.5E \n",
-      //	     UU,VV,WW,uvw[0],uvw[1],uvw[2]);
-      /*
-      if (!worst->tet()->isInside(uvw[0], uvw[1], uvw[2]) &&
-	  worst->getRadius() > 20){
-	uvw[0] = uvw[1] = uvw[2] = 0.25;
-	center[0] = 0.25*(pa[0]+pb[0]+pc[0]+pd[0]);
-	center[1] = 0.25*(pa[1]+pb[1]+pc[1]+pd[1]);
-	center[2] = 0.25*(pa[2]+pb[2]+pc[2]+pd[2]);
-      }
-      */
 
-      if(worst->tet()->isInside(uvw[0], uvw[1], uvw[2])){
+
+      //// A TEST !!!
+      std::list<faceXtet> shell;
+      std::list<MTet4*> cavity;
+      MVertex vv (center[0], center[1], center[2], worst->onWhat());
+      recurFindCavity(shell, cavity, &vv, worst);
+      bool FOUND = false;
+      for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){	  
+	MTetrahedron *toto = (*itc)->tet();
+	//	(*itc)->setDeleted(false);
+	toto->xyz2uvw(center,uvw);
+	if (toto->isInside(uvw[0], uvw[1], uvw[2])){
+	  worst = (*itc);
+	  FOUND = true;
+	  break;	  
+	}
+      }
+      /// END TETS
+      
+      //      worst->tet()->xyz2uvw(center,uvw);
+      
+      if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
         double lc1 =
@@ -1060,7 +1084,7 @@ void insertVerticesInRegion (GRegion *gr)
         vSizes.push_back(lc1);
         vSizesBGM.push_back(lc);
         // compute mesh spacing there
-        if(!insertVertex(v, worst, myFactory, allTets, vSizes,vSizesBGM)){
+        if(!insertVertexB(shell,cavity,v, worst, myFactory, allTets, vSizes,vSizesBGM)){
 	  COUNT_MISS_1++;
           myFactory.changeTetRadius(allTets.begin(), 0.);
           delete v;
@@ -1072,6 +1096,7 @@ void insertVerticesInRegion (GRegion *gr)
 	//	printf("point outside %12.5E %12.5E %12.5E %12.5E %12.5E\n",VV,uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
         myFactory.changeTetRadius(allTets.begin(), 0.0);
 	COUNT_MISS_2++;
+	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)  (*itc)->setDeleted(false);
       }
     }
 

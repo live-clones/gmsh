@@ -1623,9 +1623,9 @@ void bowyerWatsonParallelograms(GFace *gf)
   std::vector<MVertex*> packed;
   std::vector<SMetric3> metrics;
 
-  printf("creating the points\n");
-  packingOfParallelograms(gf, packed);//, metrics);
-  printf("points created\n");
+  //  printf("creating the points\n");
+  packingOfParallelograms(gf, packed, metrics);
+  //  printf("points created\n");
 
   buildMeshGenerationDataStructures
     (gf, AllTris, vSizes, vSizesBGM, vMetricsBGM,Us, Vs);
@@ -1668,7 +1668,7 @@ void bowyerWatsonParallelograms(GFace *gf)
     }
 
     if(1.0* AllTris.size() > 2.5 * vSizes.size()){
-      int n1 = AllTris.size();
+      //      int n1 = AllTris.size();
       std::set<MTri3*,compareTri3Ptr>::iterator itd = AllTris.begin();
       while(itd != AllTris.end()){
         if((*itd)->isDeleted()){
