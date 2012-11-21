@@ -26,17 +26,8 @@ class BergotBasis {
   void initialize() {};
 
  private:
+
   int order; //!< maximal order of surrounding functional spaces (on triangle / quad)
-
-  int *iOrder; //!< order of \f$\hat \xi \f$ polynomial
-  int *jOrder; //!< order of \f$\hat \eta \f$ polynomial
-  int *kOrder; //!< order of \f$\hat \zeta \f$ polynomial
-
-  //! list of Legendre polynomials up to order p
-  LegendrePolynomials legendre;
-
-  //! list of Jacobi polynomials up to order p in function of index i (\f$ \alpha = 2*i + 2\f$)
-  std::map<int,JacobiPolynomials> jacobi;
 
 };
 

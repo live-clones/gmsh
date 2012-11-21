@@ -17,7 +17,7 @@ class pyramidalBasis: public nodalBasis
 {
  private:
   // Inverse of the Vandermonde matrix
-  fullMatrix<double>* VDMinv;
+  fullMatrix<double> VDMinv;
 
   // Orthogonal basis for the pyramid
   BergotBasis *bergot;

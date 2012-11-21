@@ -19,10 +19,10 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
     num_points -= (order-2)*((order-2)+1)*(2*(order-2)+1)/6;
   }
 
-  VDMinv = new fullMatrix<double>(num_points, num_points);
+  VDMinv.resize(num_points, num_points);
 
   // Invert the Vandermonde matrix
-  fullMatrix<double> VDM = fullMatrix<double>(num_points, num_points);
+  fullMatrix<double> VDM(num_points, num_points);
   for (int j = 0; j < num_points; j++) {
     double f[num_points];
     bergot->f(points(j,0), points(j,1), points(j, 2), f);
@@ -30,7 +30,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
       VDM(i,j) = f[i];
     }
   }
-  VDM.invert(*VDMinv);
+  VDM.invert(VDMinv);
 
 }
 
@@ -48,13 +48,15 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
   const int N = bergot->size();
 
-  double f[N];
-  bergot->f(u, v, w, f);
+  double *fval = new double[N];
+  bergot->f(u, v, w, fval);
 
   for (int i = 0; i < N; i++) {
     val[i] = 0.;
-    for (int j = 0; j < N; j++) val[i] += (*VDMinv)(i,j)*f[j];
+    for (int j = 0; j < N; j++) val[i] += VDMinv(i,j)*fval[j];
   }
+  
+  delete[] fval;
 
 }
 
@@ -66,16 +68,17 @@ void pyramidalBasis::f(fullMatrix<double> &coord, fullMatrix<double> &sf)
   const int N = bergot->size(), NPts = coord.size1();
 
   sf.resize(NPts, N);
-  double f[N];
-  fullVector<double> fVect(f,N);
+  double *fval = new double[N];
 
   for (int iPt=0; iPt<NPts; iPt++) {
-    bergot->f(coord(iPt,0), coord(iPt,0), coord(iPt,0), f);
+    bergot->f(coord(iPt,0), coord(iPt,1), coord(iPt,2), fval);
     for (int i = 0; i < N; i++) {
       sf(iPt,i) = 0.;
-      for (int j = 0; j < N; j++) sf(iPt,i) += (*VDMinv)(i,j)*f[j];
+      for (int j = 0; j < N; j++) sf(iPt,i) += VDMinv(i,j)*fval[j];
     }
   }
+  
+  delete[] fval;
 
 }
 
@@ -86,17 +89,19 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 
   const int N = bergot->size();
 
-  double df[N][3];
-  bergot->df(u, v, w, df);
+  double (*dfval)[3] = new double[N][3];
+  bergot->df(u, v, w, dfval);
 
   for (int i = 0; i < N; i++) {
     grads[i][0] = 0.; grads[i][1] = 0.; grads[i][2] = 0.;
     for (int j = 0; j < N; j++) {
-      grads[i][0] += (*VDMinv)(i,j)*df[j][0];
-      grads[i][1] += (*VDMinv)(i,j)*df[j][1];
-      grads[i][2] += (*VDMinv)(i,j)*df[j][2];
+      grads[i][0] += VDMinv(i,j)*dfval[j][0];
+      grads[i][1] += VDMinv(i,j)*dfval[j][1];
+      grads[i][2] += VDMinv(i,j)*dfval[j][2];
     }
   }
+
+  delete[] dfval;
 
 }
 
@@ -107,7 +112,7 @@ void pyramidalBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) cons
 
   const int N = bergot->size(), NPts = coord.size1();
 
-  double dfv[N][3];
+  double (*dfv)[3] = new double[N][3];
   dfm.resize (N, 3*NPts, false);
 
   for (int iPt=0; iPt<NPts; iPt++) {
@@ -118,5 +123,7 @@ void pyramidalBasis::df(fullMatrix<double> &coord, fullMatrix<double> &dfm) cons
       dfm(i, 3*iPt+2) = dfv[i][2];
     }
   }
+
+  delete[] dfv;
 
 }

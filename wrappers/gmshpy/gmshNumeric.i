@@ -12,6 +12,7 @@
   #include "fullMatrix.h"
   #include "nodalBasis.h"
   #include "polynomialBasis.h"
+  #include "pyramidalBasis.h"
 %}
 
 %include "GaussIntegration.h"
@@ -21,3 +22,4 @@
 %template(fullVectorDouble) fullVector<double>;
 %include "nodalBasis.h"
 %include "polynomialBasis.h"
+%include "pyramidalBasis.h"
