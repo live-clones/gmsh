@@ -431,7 +431,7 @@ void connectTris_vector(ITER beg, ITER end)
       for (int i = 0; i < 3; i++){
         edgeXface fxt(*beg, i);
 	//        std::set<edgeXface>::iterator found = conn.find(fxt);
-	std::vector<edgeXface>::iterator found  = std::find(conn.begin(), conn.end(), fxt); 
+	std::vector<edgeXface>::iterator found  = std::find(conn.begin(), conn.end(), fxt);
         if (found == conn.end())
 	  conn.push_back(fxt);
 	  //          conn.insert(fxt);
@@ -580,7 +580,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
                   std::vector<SMetric3> &vMetricsBGM,
                   std::vector<double> &Us,
                   std::vector<double> &Vs,
-                  double *metric, 
+                  double *metric,
 		  MTri3 **oneNewTriangle)
 {
   std::list<edgeXface> shell;
@@ -625,7 +625,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 
     MTri3 *t4;
     t4 = new MTri3(t, LL,0,&Us,&Vs,gf);
-    if (oneNewTriangle) *oneNewTriangle = t4; 
+    if (oneNewTriangle) *oneNewTriangle = t4;
     //    double din = t->getInnerRadius();
 
     double d1 = distance(it->v[0],v);
@@ -634,7 +634,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
-	
+
     if ((d1 < LL * .0025 || d2 < LL * .0025 || cosv < -.9999999) && !force) {
       onePointIsTooClose = true;
     }
@@ -1624,7 +1624,7 @@ void bowyerWatsonParallelograms(GFace *gf)
   std::vector<SMetric3> metrics;
 
   printf("creating the points\n");
-  packingOfParallelograms(gf, packed, metrics);
+  packingOfParallelograms(gf, packed);//, metrics);
   printf("points created\n");
 
   buildMeshGenerationDataStructures
@@ -1636,13 +1636,13 @@ void bowyerWatsonParallelograms(GFace *gf)
 
   //  printf("CARNAVAL !!!\n");
 
-  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic()); 
+  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
 
   printf("staring to insert points\n");
   N_GLOBAL_SEARCH = 0;
   N_SEARCH = 0;
   DT_INSERT_VERTEX = 0;
-  clock_t t1 = clock();
+  //clock_t t1 = clock();
   MTri3 *oneNewTriangle = 0;
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
@@ -1659,7 +1659,7 @@ void bowyerWatsonParallelograms(GFace *gf)
       double metric[3];
       buildMetric(gf, newPoint, metric);
       SMetric3 ANIZO_MESH = metrics[i];
-      
+
       bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, Us, Vs, vSizes,
 				  vSizesBGM, vMetricsBGM, AllTris, 0, oneNewTriangle, &oneNewTriangle);
       if (!success) oneNewTriangle = 0;
@@ -1684,9 +1684,9 @@ void bowyerWatsonParallelograms(GFace *gf)
 
   }
   printf("%d vertices \n",packed.size());
-  clock_t t2 = clock();
-  double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
-  if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  //clock_t t2 = clock();
+  //double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, Us, Vs);
   backgroundMesh::unset();
 }
