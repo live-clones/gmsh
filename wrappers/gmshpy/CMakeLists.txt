@@ -84,6 +84,9 @@ foreach(module ${SWIG_MODULES})
   set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
       "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from ${module} import *\n")
   list(APPEND GMSHPY_DEPENDS "_${module}")
+  if(APPLE)
+    set_target_properties("_${module}" PROPERTIES LINK_FLAGS "-undefined suppress -flat_namespace")
+  endif(APPLE)
 endforeach(module)
 
 add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
