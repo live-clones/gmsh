@@ -89,22 +89,24 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
     std::vector<double> &wf = wFcts[mIJ], &wg = wGrads[mIJ];
     wf.resize(kMax+1);
     wg.resize(kMax+1);
-//    if (what == 1.) {
-//      const int alpha = 2*mIJ+2, fMax = kMax+alpha;
-//      std::vector<double> fact(fMax);
-//      fact[0] = 0.;
-//      for (int i=1;i<=fMax;i++) fact[i] = i*fact[i-1];
-//      wf[0] = 1.; wg[0] = 0.;
-//      for (int k=1;k<=kMax;k++) {
-//        wf[k] = fact[k+alpha]/(fact[alpha]*fact[k]);
-//        wg[k] = 0.5*(k+alpha+2)*fact[k+alpha]/(fact[alpha+1]*fact[k-1]);
-//      }
-//    }
-//    else {
+    if (what == 1.) {
+      const int alpha = 2*mIJ+2, fMax = std::max(kMax,1)+alpha;
+      std::vector<double> fact(fMax);
+      fact[0] = 1.;
+      for (int i=1;i<=fMax;i++) fact[i] = i*fact[i-1];
+      wf[0] = 1.; wg[0] = 0.;
+      for (int k=1;k<=kMax;k++) {
+//        std::cout << "DBGTT: calc. fMax = " << fMax << ", alpha = " << alpha << ", k = " << k << "\n";
+        wf[k] = fact[k+alpha]/(fact[alpha]*fact[k]);
+        wg[k] = 0.5*(k+alpha+2)*fact[k+alpha]/(fact[alpha+1]*fact[k-1]);
+//        std::cout << "DBGTT:     -> wf[k] = " << wf[k] << ", wg[k] = " << wg[k] << "\n";
+      }
+    }
+    else {
       JacobiPolynomials jacobi(2.*mIJ+2.,0.,kMax);
       jacobi.f(what,&(wf[0]));
       jacobi.df(what,&(wg[0]));
-//    }
+    }
 //    for (int k=0; k<=order-mIJ; k++) std::cout << " -> mIJ = " << mIJ << ", k = " << k
 //        << " -> wf[k] = " << wf[k] << ", wg[k] = " << wg[k] << "\n";
   }

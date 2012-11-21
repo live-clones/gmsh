@@ -15,22 +15,22 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 
   int n = order+1;
   int num_points = n*(n+1)*(2*n+1)/6;
-  if (serendip and order > 2) {
+  if (serendip && (order > 2)) {
     num_points -= (order-2)*((order-2)+1)*(2*(order-2)+1)/6;
   }
 
   VDMinv.resize(num_points, num_points);
+  double *fval = new double[num_points];
 
   // Invert the Vandermonde matrix
   fullMatrix<double> VDM(num_points, num_points);
   for (int j = 0; j < num_points; j++) {
-    double f[num_points];
-    bergot->f(points(j,0), points(j,1), points(j, 2), f);
-    for (int i = 0; i < num_points; i++) {
-      VDM(i,j) = f[i];
-    }
+    bergot->f(points(j,0), points(j,1), points(j, 2), fval);
+    for (int i = 0; i < num_points; i++) VDM(i,j) = fval[i];
   }
   VDM.invert(VDMinv);
+
+  delete[] fval;
 
 }
 

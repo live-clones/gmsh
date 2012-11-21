@@ -765,7 +765,7 @@ static fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
       }
 
       // Volume
-      if (!serendip and order > 2) {
+      if ((!serendip) && (order > 2)) {
         fullMatrix<double> volume_points = gmshGeneratePointsPyramid(order - 3, false);
         // scale to order-3/order
         fullMatrix<double> T(3,3);
