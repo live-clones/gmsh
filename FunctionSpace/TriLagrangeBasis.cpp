@@ -66,27 +66,34 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
   type = 0;
   dim  = 2; 
 
-  nVertex = l->coefficients.size1();
-  nEdge   = 0;
+  nVertex = 3;
+  nEdge   = 3 * (order - 1);
   nFace   = 0;
-  nCell   = 0;
+  nCell   =     (order - 1) * (order - 2) / 2;
 
-  nEdgeClosure = 0;
+  nEdgeClosure = 2;
   nFaceClosure = 0;
 
-  size = nVertex;
- 
-
-  // Basis (pure nodal) //
-  node = new vector<Polynomial*>(nVertex);
-  edge = new vector<vector<Polynomial*>*>(0);
-  face = new vector<vector<Polynomial*>*>(0);
-  cell = new vector<Polynomial*>(0);
+  size = nVertex + nEdge + nFace + nCell;
 
 
-  // Instanciate Polynomials //
+  // Alloc Some Stuff //
   const int nMonomial = l->monomials.size1();
+  unsigned int** edgeOrder;
+  Polynomial* pEdgeClosureLess = new Polynomial[nEdge];
 
+
+  // Basis //
+  node = new vector<Polynomial*>(nVertex);
+  edge = new vector<vector<Polynomial*>*>(2);
+  face = new vector<vector<Polynomial*>*>(0);
+  cell = new vector<Polynomial*>(nCell);
+
+  (*edge)[0] = new vector<Polynomial*>(nEdge);
+  (*edge)[1] = new vector<Polynomial*>(nEdge);
+
+
+  // Vertex Based //
   for(int i = 0; i < nVertex; i++){
     Polynomial p = Polynomial(0, 0, 0, 0);
     
@@ -97,6 +104,58 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
 			 0);                    // powerZ
     
     (*node)[i] = new Polynomial(p);
+  }
+
+
+  // Edge Based //
+  // Without Closure
+  for(int i = 0; i < nEdge; i++){
+    int ci              = i + nVertex;
+    pEdgeClosureLess[i] = Polynomial(0, 0, 0, 0);
+    
+    for(int j = 0; j < nMonomial; j++)
+      pEdgeClosureLess[i] = 
+	pEdgeClosureLess[i] + 
+	Polynomial(l->coefficients(ci, j), // Coef 
+		   l->monomials(j, 0),     // powerX
+		   l->monomials(j, 1),     // powerY
+		   0);                     // powerZ
+  }
+
+  // With Closure
+  edgeOrder = triEdgeOrder(order); // Closure Ordering
+
+  for(int i = 0; i < nEdge; i++){
+    (*(*edge)[0])[i] = 
+      new Polynomial(pEdgeClosureLess[edgeOrder[0][i]]);
+    
+    (*(*edge)[1])[i] = 
+      new Polynomial(pEdgeClosureLess[edgeOrder[1][i]]);
+  }
+
+
+  // Cell Based //
+  for(int i = 0; i < nCell; i++){
+    int ci       = i + nVertex + nEdge;
+    Polynomial p = Polynomial(0, 0, 0, 0);
+    
+    for(int j = 0; j < nMonomial; j++)
+      p = p + Polynomial(l->coefficients(ci, j), // Coef 
+			 l->monomials(j, 0),     // powerX
+			 l->monomials(j, 1),     // powerY
+			 0);                     // powerZ
+    
+    (*cell)[i] = new Polynomial(p);
+  }
+
+  
+  // Delete Temporary Space //
+  delete[] pEdgeClosureLess;
+
+  if(edgeOrder){
+    delete[] edgeOrder[0];
+    delete[] edgeOrder[1];
+    delete[] edgeOrder;
   }
 }
 

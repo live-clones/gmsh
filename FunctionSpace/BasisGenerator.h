@@ -1,6 +1,7 @@
 #ifndef _BASISGENERATOR_H_
 #define _BASISGENERATOR_H_
 
+#include <string>
 #include "Basis.h"
 
 /**
@@ -22,13 +23,27 @@ class BasisGenerator{
 
   static Basis* generate(int elementType, 
 			 int basisType, 
+			 int order,
+			 std::string family);
+
+  static Basis* generate(int elementType, 
+			 int basisType, 
 			 int order);
 
-  static Basis* linGen(int basisType, int order);
-  static Basis* triGen(int basisType, int order);
-  static Basis* quaGen(int basisType, int order);
-  static Basis* tetGen(int basisType, int order);
-  static Basis* hexGen(int basisType, int order);
+  static Basis* linZaglmayrGen(int basisType, int order);
+  static Basis* triZaglmayrGen(int basisType, int order);
+  static Basis* quaZaglmayrGen(int basisType, int order);
+  static Basis* tetZaglmayrGen(int basisType, int order);
+  static Basis* hexZaglmayrGen(int basisType, int order);
+
+ private:
+  static Basis* generateZaglmayr(int elementType, 
+				 int basisType, 
+				 int order);
+
+  static Basis* generateLagrange(int elementType, 
+				 int basisType, 
+				 int order);  
 };
 
 
@@ -50,8 +65,10 @@ class BasisGenerator{
    on which the requested Basis will be created
    @param basisType The Basis type
    @param order The order or the requested Basis
+   @param family A string
 
-   This method will @em instanciate the requested Basis
+   This method will @em instanciate the requested Basis,
+   of the requested family
 
    @return Returns a @em pointer to a newly 
    @em instantiated Basis
@@ -68,9 +85,28 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note Families are:
+   @li @c zaglmayr for 
+   <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>
+   Basis Functions
+   @li @c lagrange for Lagrange's Basis Functions   
    **
 
-   @fn BasisGenerator::linGen
+   @fn BasisGenerator::generate
+   @param elementType The type of the element,
+   on which the requested Basis will be created
+   @param basisType The Basis type
+   @param order The order or the requested Basis
+
+   Same as 
+   BasisGenerator::generate(@c elementType, @c basisType, @c order, @c zaglmayr)
+
+   @return Returns a @em pointer to a newly 
+   @em instantiated Basis
+   **
+
+   @fn BasisGenerator::linZaglmayrGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -85,9 +121,11 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note The Basis family will be @c zaglmayr
    **
 
-   @fn BasisGenerator::triGen
+   @fn BasisGenerator::triZaglmayrGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -102,9 +140,11 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note The Basis family will be @c zaglmayr
    **
 
-   @fn BasisGenerator::quaGen
+   @fn BasisGenerator::quaZaglmayrGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -119,9 +159,11 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note The Basis family will be @c zaglmayr
    **
 
-   @fn BasisGenerator::tetGen
+   @fn BasisGenerator::tetZaglmayrGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -136,9 +178,11 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note The Basis family will be @c zaglmayr
    **
 
-   @fn BasisGenerator::hexGen
+   @fn BasisGenerator::hexZaglmayrGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -153,7 +197,23 @@ class BasisGenerator{
    @li @c 1 for 1-Form
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
+
+   @note The Basis family will be @c zaglmayr
    **
  */
+
+//////////////////////
+// Inline Functions //
+//////////////////////
+
+inline Basis* BasisGenerator::generate(int elementType, 
+				       int basisType, 
+				       int order){
+  
+  return BasisGenerator::generate(elementType, 
+				  basisType, 
+				  order,
+				  "zaglmayr");
+}
 
 #endif

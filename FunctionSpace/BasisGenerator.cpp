@@ -12,6 +12,7 @@
 #include "TriNodeBasis.h"
 #include "TriEdgeBasis.h"
 #include "TriNedelecBasis.h"
+#include "TriLagrangeBasis.h"
 
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
@@ -28,21 +29,57 @@ BasisGenerator::~BasisGenerator(void){
 
 Basis* BasisGenerator::generate(int elementType, 
 				int basisType, 
-				int order){
+				int order,
+				std::string family){
+  
+  if(!family.compare(std::string("zaglmayr")))
+    return generateZaglmayr(elementType, basisType, order);
+
+  else if(!family.compare(std::string("lagrange")))
+    return generateLagrange(elementType, basisType, order);
+
+  else
+    throw Exception("Unknwown Basis Family: %s", family.c_str());
+}
+
+Basis* BasisGenerator::generateZaglmayr(int elementType, 
+					int basisType, 
+					int order){
+  
   switch(elementType){
-  case TYPE_LIN: return linGen(basisType, order);
-  case TYPE_TRI: return triGen(basisType, order);
-  case TYPE_QUA: return quaGen(basisType, order);
-  case TYPE_TET: return tetGen(basisType, order);
-  case TYPE_HEX: return hexGen(basisType, order);
+  case TYPE_LIN: return linZaglmayrGen(basisType, order);
+  case TYPE_TRI: return triZaglmayrGen(basisType, order);
+  case TYPE_QUA: return quaZaglmayrGen(basisType, order);
+  case TYPE_TET: return tetZaglmayrGen(basisType, order);
+  case TYPE_HEX: return hexZaglmayrGen(basisType, order);
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation", 
 			   elementType);
   }
 }
 
-Basis* BasisGenerator::linGen(int basisType, 
-			      int order){
+Basis* BasisGenerator::generateLagrange(int elementType, 
+					int basisType, 
+					int order){
+  if(basisType != 0)
+    throw 
+      Exception("Cannot Have a %d-Form Lagrange Basis (0-Form only)",
+		basisType);
+
+  switch(elementType){
+  case TYPE_LIN: throw Exception("Lagrange Basis on Lines not Implemented");
+  case TYPE_TRI: return new TriLagrangeBasis(order);
+  case TYPE_QUA: throw Exception("Lagrange Basis on Quads not Implemented");
+  case TYPE_TET: throw Exception("Lagrange Basis on Tets not Implemented");
+  case TYPE_HEX: throw Exception("Lagrange Basis on Hexs not Implemented");
+
+  default: throw Exception("Unknown Element Type (%d) for Basis Generation", 
+			   elementType);
+  }
+}
+
+Basis* BasisGenerator::linZaglmayrGen(int basisType, 
+				      int order){
   switch(basisType){ 
   case  0: return new LineNodeBasis(order);
   case  1: 
@@ -56,8 +93,8 @@ Basis* BasisGenerator::linGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::triGen(int basisType, 
-			      int order){
+Basis* BasisGenerator::triZaglmayrGen(int basisType, 
+				      int order){
   switch(basisType){
   case  0: return new TriNodeBasis(order);
   case  1: 
@@ -71,8 +108,8 @@ Basis* BasisGenerator::triGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::quaGen(int basisType, 
-			      int order){
+Basis* BasisGenerator::quaZaglmayrGen(int basisType, 
+				      int order){
   switch(basisType){
   case  0: return new QuadNodeBasis(order);
   case  1: return new QuadEdgeBasis(order);
@@ -83,8 +120,8 @@ Basis* BasisGenerator::quaGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::tetGen(int basisType, 
-			      int order){
+Basis* BasisGenerator::tetZaglmayrGen(int basisType, 
+				      int order){
   switch(basisType){
   case  0: return new TetNodeBasis(order);
   case  1: return new TetEdgeBasis(order);
@@ -95,8 +132,8 @@ Basis* BasisGenerator::tetGen(int basisType,
   }  
 }
 
-Basis* BasisGenerator::hexGen(int basisType, 
-			      int order){
+Basis* BasisGenerator::hexZaglmayrGen(int basisType, 
+				      int order){
   switch(basisType){
   case  0: return new HexNodeBasis(order);
   case  1: return new HexEdgeBasis(order);

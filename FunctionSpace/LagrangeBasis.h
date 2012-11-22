@@ -67,6 +67,16 @@ class LagrangeBasis: public BasisScalar{
   //! Returns a new LagrangeBasis
   //!
   LagrangeBasis(void);
+
+  //! @param order The ordre of the requested LagrangeBasis
+  //! @return Returns a 2D table 
+  //! (of size 2 x (3 * (@c order - 1)))
+  //! with the Edge Triangle Inverted Closure for Lagrange
+  //! @note The first dimension of the returned table
+  //! is the direct closure, and the second dimension 
+  //! the invert closure
+  //! @warning The returned table @em must be @em deleted
+  static unsigned int** triEdgeOrder(int order);
 };
 
 

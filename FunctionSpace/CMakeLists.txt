@@ -8,6 +8,7 @@ set(SRC
   Legendre.cpp
 
   Basis.cpp
+  LagrangeBasis.cpp
   BasisScalar.cpp
   BasisVector.cpp
   BasisGenerator.cpp
@@ -16,9 +17,6 @@ set(SRC
   CurlBasis.cpp
   DivBasis.cpp
 
-  LagrangeGenerator.cpp
-  LagrangeBasis.cpp
-  TriLagrangeBasis.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp
@@ -30,6 +28,7 @@ set(SRC
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
+  TriLagrangeBasis.cpp
 
   HexNodeBasis.cpp
   HexEdgeBasis.cpp

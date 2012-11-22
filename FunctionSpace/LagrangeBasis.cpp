@@ -58,3 +58,42 @@ project(const MElement& element,
   // Return ;
   return newCoef;
 }
+
+unsigned int** LagrangeBasis::triEdgeOrder(int order){
+  // Check //
+  if(order <= 1)
+    return NULL;
+
+  // Number of Edge Based Basis //
+  const unsigned int orderMinus = order - 1;
+  const unsigned int size       = 3 * orderMinus;
+  
+  // Alloc //
+  unsigned int i;
+  unsigned int** edgeOrder = new unsigned int*[2];
+  edgeOrder[0]             = new unsigned int[size];
+  edgeOrder[1]             = new unsigned int[size];
+
+  // Direct Numeration //
+  i = 0;
+
+  for(unsigned int j = 0; j < orderMinus; j++){
+    for(unsigned int k = 0; k < size; k += orderMinus){
+      edgeOrder[0][i] = k + j;
+      i++;
+    }
+  }
+
+  // Invert Numeration //
+  i = 0;
+
+ for(unsigned int j = 0; j < orderMinus; j++){
+    for(unsigned int k = 0; k < size; k += orderMinus){
+      edgeOrder[1][i] = k + orderMinus - 1 - j;
+      i++;
+    }
+  }
+
+  // Retrun //
+  return edgeOrder;
+}
