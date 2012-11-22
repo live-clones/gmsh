@@ -110,7 +110,6 @@ class drawContext {
   std::set<PView*> _hiddenViews;
   std::vector<GLfloat> _bgImage;
   int _bgImageSize[2];
-
  public:
   Camera camera;
   double r[3]; // current Euler angles (in degrees!)
@@ -128,6 +127,22 @@ class drawContext {
  public:
   drawContext(drawTransform *transform=0);
   ~drawContext();
+  void copyViewAttributes(drawContext *ctx)
+  {
+    camera = ctx->camera;
+    for(int i = 0; i < 3; i++){
+      r[i] = ctx->r[i];
+      t[i] = ctx->t[i];
+      s[i] = ctx->s[i];
+      t_init[i] = ctx->t_init[i];
+    }
+    for(int i = 0; i < 4; i++){
+      quaternion[i] = ctx->quaternion[i];
+    }
+    for(int i = 0; i < 16; i++){
+      rot[i] = ctx->rot[i];
+    }
+  }
   static void setGlobal(drawContextGlobal *global){ _global = global; }
   static drawContextGlobal *global();
   void setTransform(drawTransform *transform){ _transform = transform; }

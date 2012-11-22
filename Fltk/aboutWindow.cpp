@@ -22,8 +22,8 @@ static const char *help_link(Fl_Widget *w, const char *uri)
 
 aboutWindow::aboutWindow()
 {
-  int width = 26 * FL_NORMAL_SIZE;
-  int height = 17 * BH;
+  int width = 28 * FL_NORMAL_SIZE;
+  int height = 18 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");

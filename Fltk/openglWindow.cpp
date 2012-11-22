@@ -85,6 +85,7 @@ void openglWindow::_drawScreenMessage()
 
 void openglWindow::_drawBorder()
 {
+  if(!parent()) return;
   // draw thin border if the parent group has more than 2 opengl windows
   int numgl = 0;
   for(int i = 0; i < parent()->children(); i++){

@@ -237,6 +237,7 @@ class CTX {
     int gifDither, gifSort, gifInterlace, gifTransparent;
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
     int compositeWindows, deleteTmpFiles, background;
+    int width, height;
   } print;
   // color options
   struct{

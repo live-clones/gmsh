@@ -1483,6 +1483,9 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "GifTransparent" , opt_print_gif_transparent , 0. ,
     "Output transparent GIF image" },
 
+  { F|O, "Height" , opt_print_height , -1. ,
+    "Height of printed image; use (possibly scaled) current height if < 0" },
+
   { F|O, "JpegQuality" , opt_print_jpeg_quality , 100. ,
     "JPEG quality (between 1 and 100)" },
   { F|O, "JpegSmoothing" , opt_print_jpeg_smoothing , 0. ,
@@ -1510,6 +1513,9 @@ StringXNumber PrintOptions_Number[] = {
     "Print all TeX strings as equations" },
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
+
+  { F|O, "Width" , opt_print_width , -1. ,
+    "Width of printed image; use (possibly scaled) current width if < 0)" },
 
   { 0, 0 , 0 , 0. }
 } ;

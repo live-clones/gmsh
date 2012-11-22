@@ -124,8 +124,36 @@ std::string GetDefaultFileName(int format)
 #if defined(HAVE_FLTK)
 static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 {
+  openglWindow *newg = 0;
+
+  if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
+    GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
+    GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
+    if(CTX::instance()->print.width <= 0){
+      width *= CTX::instance()->print.height / height;
+      height = CTX::instance()->print.height;
+    }
+    else if(CTX::instance()->print.height <= 0){
+      height *= CTX::instance()->print.width / width;
+      width = CTX::instance()->print.width;
+    }
+    else{
+      width = CTX::instance()->print.width;
+      height = CTX::instance()->print.height;
+    }
+    newg = new openglWindow(100, 100, width, height);
+    int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+    if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+    newg->mode(mode);
+    newg->end();
+    newg->getDrawContext()->copyViewAttributes
+      (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+    newg->show();
+    openglWindow::setLastHandled(newg);
+  }
+
   PixelBuffer *buffer;
-  if(!CTX::instance()->print.compositeWindows){
+  if(newg || !CTX::instance()->print.compositeWindows){
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
     GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
     buffer = new PixelBuffer(width, height, format, type);
@@ -159,6 +187,13 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       delete buffers[i];
     }
   }
+
+  if(newg){
+    openglWindow::setLastHandled(0);
+    newg->hide();
+    delete newg;
+  }
+
   return buffer;
 }
 #endif

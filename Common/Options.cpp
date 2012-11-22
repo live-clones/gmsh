@@ -8280,6 +8280,20 @@ double opt_print_delete_tmp_files(OPT_ARGS_NUM)
   return CTX::instance()->print.deleteTmpFiles;
 }
 
+double opt_print_height(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.height = (int)val;
+  return CTX::instance()->print.height;
+}
+
+double opt_print_width(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.width = (int)val;
+  return CTX::instance()->print.width;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)

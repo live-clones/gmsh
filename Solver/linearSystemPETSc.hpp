@@ -161,6 +161,15 @@ void linearSystemPETSc<scalar>::print()
   _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
   _try(VecAssemblyBegin(_b));
   _try(VecAssemblyEnd(_b));
+
+  /*
+  PetscViewer fd;
+  _try(PetscViewerASCIIOpen(PETSC_COMM_WORLD, "mat.m", &fd));
+  _try(PetscViewerSetFormat(fd, PETSC_VIEWER_ASCII_MATLAB));
+  _try(PetscObjectSetName((PetscObject)_a, "A"));
+  _try(MatView(_a, fd));
+  */
+
   if(Msg::GetCommRank()==0)
     printf("a :\n");
   MatView(_a, PETSC_VIEWER_STDOUT_WORLD);
