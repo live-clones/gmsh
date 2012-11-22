@@ -1508,6 +1508,7 @@ int MElement::OrderFromTag(int tag)
   case MSH_PRI_198 : return 7;
   case MSH_PRI_258 : return 8;
   case MSH_PRI_326 : return 9;
+  case MSH_HEX_1   : return 0;
   case MSH_HEX_8   : return 1;
   case MSH_HEX_27  : return 2;
   case MSH_HEX_64  : return 3;

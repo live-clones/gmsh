@@ -213,6 +213,7 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
+    case 0: return JacobianBasis::find(MSH_HEX_1);
     case 1: return JacobianBasis::find(MSH_HEX_8);
     case 2: return JacobianBasis::find(MSH_HEX_20);
     case 3: return JacobianBasis::find(MSH_HEX_56);
@@ -227,6 +228,7 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
   }
   else {
     switch (order) {
+    case 0: return JacobianBasis::find(MSH_HEX_1);
     case 1: return JacobianBasis::find(MSH_HEX_8);
     case 2: return JacobianBasis::find(MSH_HEX_27);
     case 3: return JacobianBasis::find(MSH_HEX_64);

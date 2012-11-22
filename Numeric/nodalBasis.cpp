@@ -1463,6 +1463,7 @@ nodalBasis::nodalBasis(int tag)
   case MSH_PRI_198 : parentType = TYPE_PRI; order = 7; serendip = true; break;
   case MSH_PRI_258 : parentType = TYPE_PRI; order = 8; serendip = true; break;
   case MSH_PRI_326 : parentType = TYPE_PRI; order = 9; serendip = true; break;
+  case MSH_HEX_1   : parentType = TYPE_HEX; order = 0; serendip = false; break;
   case MSH_HEX_8   : parentType = TYPE_HEX; order = 1; serendip = false; break;
   case MSH_HEX_27  : parentType = TYPE_HEX; order = 2; serendip = false; break;
   case MSH_HEX_64  : parentType = TYPE_HEX; order = 3; serendip = false; break;

@@ -150,6 +150,7 @@ inline int nodalBasis::getTag(int parentTag, int order, bool serendip)
     break;
   case TYPE_HEX :
     switch(order) {
+    case 0 : return MSH_HEX_1;
     case 1 : return MSH_HEX_8;
     case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
     case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
