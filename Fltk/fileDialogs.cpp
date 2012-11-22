@@ -183,14 +183,16 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
 {
   struct _genericBitmapFileDialog{
     Fl_Window *window;
+    Fl_Value_Slider *s[2];
     Fl_Check_Button *b[3];
+    Fl_Value_Input *v[2];
     Fl_Button *ok, *cancel;
   };
   static _genericBitmapFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _genericBitmapFileDialog;
-    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -203,16 +205,52 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
     dialog->b[2] = new Fl_Check_Button
       (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
     dialog->b[2]->type(FL_TOGGLE_BUTTON);
+    dialog->v[0] = new Fl_Value_Input
+      (WB, y, BB / 2, BH);
+    dialog->v[0]->minimum(-1);
+    dialog->v[0]->maximum(5000);
+    dialog->v[0]->step(1);
+    dialog->v[1] = new Fl_Value_Input
+      (WB + BB / 2, y, BB - BB / 2, BH, "Dimensions"); y += BH;
+    dialog->v[1]->minimum(-1);
+    dialog->v[1]->maximum(5000);
+    dialog->v[1]->step(1);
+    dialog->v[1]->align(FL_ALIGN_RIGHT);
+    dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality"); y += BH;
+    dialog->s[0]->type(FL_HOR_SLIDER);
+    dialog->s[0]->align(FL_ALIGN_RIGHT);
+    dialog->s[0]->minimum(1);
+    dialog->s[0]->maximum(100);
+    dialog->s[0]->step(1);
+    dialog->s[1] = new Fl_Value_Slider(WB, y, BB, BH, "Smoothing"); y += BH;
+    dialog->s[1]->type(FL_HOR_SLIDER);
+    dialog->s[1]->align(FL_ALIGN_RIGHT);
+    dialog->s[1]->minimum(0);
+    dialog->s[1]->maximum(100);
+    dialog->s[1]->step(1);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
+  if(format == FORMAT_JPEG){
+    dialog->s[0]->activate();
+    dialog->s[1]->activate();
+  }
+  else{
+    dialog->s[0]->deactivate();
+    dialog->s[1]->deactivate();
+  }
+
   dialog->window->label(title);
+  dialog->s[0]->value(CTX::instance()->print.jpegQuality);
+  dialog->s[1]->value(CTX::instance()->print.jpegSmoothing);
   dialog->b[0]->value(CTX::instance()->print.text);
   dialog->b[1]->value(CTX::instance()->print.background);
   dialog->b[2]->value(CTX::instance()->print.compositeWindows);
+  dialog->v[0]->value(CTX::instance()->print.width);
+  dialog->v[1]->value(CTX::instance()->print.height);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -221,9 +259,13 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
+        opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
+        opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
         opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
         opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
+        opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
+        opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
@@ -274,82 +316,6 @@ int latexFileDialog(const char *name)
       if (o == dialog->ok) {
         opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
         CreateOutputFile(name, FORMAT_TEX);
-        dialog->window->hide();
-        return 1;
-      }
-      if (o == dialog->window || o == dialog->cancel){
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
-}
-
-// Save jpeg dialog
-
-int jpegFileDialog(const char *name)
-{
-  struct _jpegFileDialog{
-    Fl_Window *window;
-    Fl_Value_Slider *s[2];
-    Fl_Check_Button *b[3];
-    Fl_Button *ok, *cancel;
-  };
-  static _jpegFileDialog *dialog = NULL;
-
-  if(!dialog){
-    dialog = new _jpegFileDialog;
-    int h = 3 * WB + 6 * BH, w = 2 * BB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "JPEG Options");
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
-    dialog->s[0] = new Fl_Value_Slider(WB, y, BB, BH, "Quality"); y += BH;
-    dialog->s[0]->type(FL_HOR_SLIDER);
-    dialog->s[0]->align(FL_ALIGN_RIGHT);
-    dialog->s[0]->minimum(1);
-    dialog->s[0]->maximum(100);
-    dialog->s[0]->step(1);
-    dialog->s[1] = new Fl_Value_Slider(WB, y, BB, BH, "Smoothing"); y += BH;
-    dialog->s[1]->type(FL_HOR_SLIDER);
-    dialog->s[1]->align(FL_ALIGN_RIGHT);
-    dialog->s[1]->minimum(0);
-    dialog->s[1]->maximum(100);
-    dialog->s[1]->step(1);
-    dialog->b[0] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print text strings"); y += BH;
-    dialog->b[0]->type(FL_TOGGLE_BUTTON);
-    dialog->b[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
-    dialog->b[1]->type(FL_TOGGLE_BUTTON);
-    dialog->b[2] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
-    dialog->b[2]->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
-  }
-
-  dialog->s[0]->value(CTX::instance()->print.jpegQuality);
-  dialog->s[1]->value(CTX::instance()->print.jpegSmoothing);
-  dialog->b[0]->value(CTX::instance()->print.text);
-  dialog->b[1]->value(CTX::instance()->print.background);
-  dialog->b[2]->value(CTX::instance()->print.compositeWindows);
-  dialog->window->show();
-
-  while(dialog->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == dialog->ok) {
-        opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
-        opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
-        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
-        opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
-        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
-        CreateOutputFile(name, FORMAT_JPEG);
         dialog->window->hide();
         return 1;
       }

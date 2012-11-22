@@ -289,7 +289,8 @@ static int _save_ply2(const char *name){ return genericMeshFileDialog
 static int _save_eps(const char *name){ return gl2psFileDialog
     (name, "EPS Options", FORMAT_EPS); }
 static int _save_gif(const char *name){ return gifFileDialog(name); }
-static int _save_jpeg(const char *name){ return jpegFileDialog(name); }
+static int _save_jpeg(const char *name){ return genericBitmapFileDialog
+    (name, "JPEG Options", FORMAT_JPEG); }
 static int _save_mpeg(const char *name){ return mpegFileDialog(name); }
 static int _save_tex(const char *name){ return latexFileDialog(name); }
 static int _save_pdf(const char *name){ return gl2psFileDialog

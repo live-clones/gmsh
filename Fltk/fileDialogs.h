@@ -9,10 +9,10 @@
 #include <string>
 
 typedef enum {
-  FILE_CHOOSER_SINGLE, 
-  FILE_CHOOSER_MULTI, 
-  FILE_CHOOSER_CREATE, 
-  FILE_CHOOSER_DIRECTORY 
+  FILE_CHOOSER_SINGLE,
+  FILE_CHOOSER_MULTI,
+  FILE_CHOOSER_CREATE,
+  FILE_CHOOSER_DIRECTORY
 } FILE_CHOOSER_TYPE;
 
 int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
@@ -21,7 +21,6 @@ std::string fileChooserGetName(int num);
 int fileChooserGetFilter();
 void fileChooserGetPosition(int *x, int *y);
 
-int jpegFileDialog(const char *filename);
 int mpegFileDialog(const char *filename);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);

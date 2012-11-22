@@ -519,8 +519,8 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
       int repeat = (int)(CTX::instance()->post.animDelay * 24);
       if(repeat < 1) repeat = 1;
       std::string pattern("I");
-      // including P frames would lead to smaller files, but the
-      // quality degradation is perceptible:
+      // including P frames would lead to smaller files, but the quality
+      // degradation is perceptible:
       // for(int i = 1; i < repeat; i++) pattern += "P";
       fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
               "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
