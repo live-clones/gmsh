@@ -15,7 +15,11 @@
 #include <poppler/cpp/poppler-page.h>
 #include <poppler/cpp/poppler-image.h>
 #if defined(HAVE_OPENGL)
-#include<OpenGL/gl.h>
+#  if defined(__APPLE__) || defined(HAVE_OPENGL_GL_H)
+#    include <OpenGL/gl.h>
+#  else
+#    include <GL/gl.h>
+#  endif
 #endif
 
 class gmshPopplerWrapper {
