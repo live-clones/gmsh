@@ -612,6 +612,9 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->stop(false);
   FlGui::instance()->onelab->setButtonMode("check", "compute");
+
+  Msg::StatusBar(true, "Done");
+
   if(action != "initialize") FlGui::instance()->onelab->show();
 }
 
