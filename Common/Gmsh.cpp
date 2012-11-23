@@ -201,6 +201,11 @@ int GmshBatch()
     CreateOutputFile(name, CTX::instance()->mesh.fileFormat);
   }
 
+#if defined(HAVE_FLTK) // FIXME this actually does not require the GUI
+  // launch solver (if requested)
+  solver_batch_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+#endif
+
   time_t now;
   time(&now);
   std::string currtime = ctime(&now);

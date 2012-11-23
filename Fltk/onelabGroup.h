@@ -83,6 +83,7 @@ class onelabGroup : public Fl_Group{
 
 void onelab_cb(Fl_Widget *w, void *data);
 void solver_cb(Fl_Widget *w, void *data);
+void solver_batch_cb(Fl_Widget *w, void *data);
 int metamodel_cb(const std::string &name, const std::string &action="");
 
 #endif

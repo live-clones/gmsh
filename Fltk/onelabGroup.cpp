@@ -81,7 +81,7 @@ class onelabGmshServer : public GmshServer{
           onelab_cb(0, (void*)"refresh");
         }
         // wait at most waitint seconds and respond to FLTK events
-        FlGui::instance()->wait(waitint);
+        if(FlGui::available()) FlGui::instance()->wait(waitint);
       }
       else if(ret > 0){
         return 0; // data is there!
@@ -193,8 +193,9 @@ bool onelab::localNetworkClient::run()
         else if(type == "number"){
           onelab::number p; p.fromChar(message); set(p);
           if(p.getName() == getName() + "/Progress")
-            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
-                                           p.getMin(), p.getMax());
+            if(FlGui::available())
+              FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
+                                             p.getMin(), p.getMax());
         }
         else if(type == "string"){
           onelab::string p; p.fromChar(message); set(p);
@@ -302,7 +303,7 @@ bool onelab::localNetworkClient::run()
         MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
                                 CTX::instance()->solver.autoHideNewViews, true);
         drawContext::global()->draw();
-        if(n != PView::list.size()){
+        if(FlGui::available() && n != PView::list.size()){
           FlGui::instance()->rebuildTree();
           FlGui::instance()->openModule("Post-processing");
         }
@@ -320,7 +321,8 @@ bool onelab::localNetworkClient::run()
       {
         int n = PView::list.size();
         PView::fillVertexArray(this, length, &message[0], swap);
-        FlGui::instance()->updateViews(n != (int)PView::list.size());
+        if(FlGui::available())
+          FlGui::instance()->updateViews(n != (int)PView::list.size());
         drawContext::global()->draw();
       }
       break;
@@ -363,7 +365,7 @@ static void initializeLoops()
   onelabUtils::initializeLoop("2");
   onelabUtils::initializeLoop("3");
 
-  if(onelab::server::instance()->getChanged())
+  if(FlGui::available() && onelab::server::instance()->getChanged())
     FlGui::instance()->rebuildTree();
 }
 
@@ -374,7 +376,7 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("2")) ret = true;
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
-  if(onelab::server::instance()->getChanged())
+  if(FlGui::available() && onelab::server::instance()->getChanged())
     FlGui::instance()->rebuildTree();
 
   return ret;
@@ -1566,6 +1568,59 @@ void solver_cb(Fl_Widget *w, void *data)
     onelab_cb(0, (num >= 0) ? (void*)"check" : (void*)"refresh");
 
   CTX::instance()->launchSolverAtStartup = -1;
+}
+
+void solver_batch_cb(Fl_Widget *w, void *data)
+{
+  int num = (intptr_t)data;
+  if(num < 0) return;
+  std::string name = opt_solver_name(num, GMSH_GET, "");
+  std::string exe = opt_solver_executable(num, GMSH_GET, "");
+  std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+  if(exe.empty()){
+    Msg::Error("Solver executable name not provided");
+    return;
+  }
+
+  // create client
+  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, exe, host);
+  c->setIndex(num);
+  onelab::string o(c->getName() + "/Action");
+
+  // initialize
+  onelabUtils::runGmshClient("initalize", CTX::instance()->solver.autoMesh);
+  o.setValue("initialize");
+  onelab::server::instance()->set(o);
+  c->run();
+
+  // load db
+  if(CTX::instance()->solver.autoSaveDatabase){
+    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(!StatFile(db)) loadDb(db);
+  }
+
+  // check
+  onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
+  o.setValue("check");
+  onelab::server::instance()->set(o);
+  c->run();
+
+  // compute
+  initializeLoops();
+  do{
+    onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
+    onelabUtils::guessModelName(c);
+    o.setValue("compute");
+    onelab::server::instance()->set(o);
+    c->run();
+  } while(incrementLoops());
+
+  if(CTX::instance()->solver.autoSaveDatabase ||
+     CTX::instance()->solver.autoArchiveOutputFiles){
+    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
+    if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
+  }
 }
 
 void flgui_wait_cb(double time)
