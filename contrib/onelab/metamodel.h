@@ -9,3 +9,11 @@ namespace onelab{ class client; }
 
 int metamodel(const std::string &todo);
 void initializeMetamodel(const std::string &, onelab::client *,  void (*wait)(double time));
+
+/* PYTHON functions */
+
+void modelName(const std::string &name, const std::string &wdir);
+void setNumber(const std::string &name, const double value);
+void setString(const std::string &name, const std::string &value);
+double getNumber(const std::string &name);
+std::string getString(const std::string &name);

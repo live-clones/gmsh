@@ -107,7 +107,7 @@ void MetaModel::saveCommandLines(){
     }
   }
   else
-    OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
+    OLMsg::Warning("The file <%s> cannot be opened",fileName.c_str());
   infile.close();
 
   //save client command lines
@@ -623,8 +623,10 @@ void localSolverClient::parse_sentence(std::string line) {
 	  else
 	    OLMsg::Error("Wrong number of arguments for range <%s>",
 			 name.c_str());
+	  set(numbers[0]);
 	}
-	set(numbers[0]);
+	else
+	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
       }
     }
     else if(!action.compare("withinRange")){ 
@@ -640,6 +642,8 @@ void localSolverClient::parse_sentence(std::string line) {
 	  numbers[0].setValue(numbers[0].getMax());
 	set(numbers[0]);
       }
+      else
+	OLMsg::Error("The parameter <%s> does not exist",name.c_str());
     }
     else if(!action.compare("setValue")){ 
       // a set request together with a setReadOnly(1) forces 
@@ -662,9 +666,8 @@ void localSolverClient::parse_sentence(std::string line) {
 	  strings[0].setReadOnly(1);
 	  set(strings[0]);
 	}
-	else{
+	else
 	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
-	}
       }
     }
     else if(!action.compare("resetChoices")){
@@ -1586,7 +1589,8 @@ void MetaModel::client_sentence(const std::string &name,
 	  bool changed = onelab::server::instance()->getChanged(c->getName());
 	  bool started = isStarted(changed);
 
-	  std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
+	  if(OLMsg::GetVerbosity())
+	    std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
 	  if(started) c->compute();
 	}
       }
@@ -1638,7 +1642,7 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else if(!action.compare("merge")){
-    if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount()){
+    if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount() && (OLMsg::hasGmsh)){
       std::vector<std::string> choices;
       for(unsigned int i = 0; i < arguments.size(); i++){
 	choices.push_back(resolveGetVal(arguments[i]));

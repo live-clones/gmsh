@@ -4,6 +4,7 @@ SOURCES=myOS StringUtils mathex OnelabClients OnelabMessage OnelabParser metamod
 COMMON_DIR=$(GMSH_DIR)/Common
 ONELAB_DIR=$(GMSH_DIR)/contrib/onelab
 MATHEX_DIR=$(GMSH_DIR)/contrib/MathEx
+CPPFLAGS+= $(shell python-config --includes) -fPIC
 
 OBJDIR=objects
 
@@ -52,4 +53,9 @@ $(OBJDIR)/%.o : %.cpp $(ONELAB_DIR)/*.h
 clean :
 	$(RM) $(TARGETS) $(OBJDIR)/*.o
 
+onelab_wrap.cpp : onelab.i
+	swig -python -c++ -o $@ $<
+
+_onelab.so : $(OBJECTS) $(OBJDIR)/onelab_wrap.o
+	$(CXX) -bundle -flat_namespace -undefined suppress $(OBJECTS) $(OBJDIR)/onelab_wrap.o -o _onelab.so
 .PRECIOUS: $(OBJDIR)/%.o

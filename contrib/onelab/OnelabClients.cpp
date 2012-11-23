@@ -468,7 +468,7 @@ bool localSolverClient::buildRmCommand(std::string &cmd){
       split = SplitOLFileName(choices[i]);
       cmd.append(split[1] + " ");
     }
-    return true;
+    if(choices.size()) return true;
   }
   return false;
 }
@@ -1206,7 +1206,8 @@ std::string ftoa(const double x){
 int mySystem(std::string commandLine){
   //Don't use OLMsg::Info here otherwise the message appears twice
   //in the Gmsh message window.
-  std::cout << "Onelab: Calling <" << commandLine << ">" << std::endl;
+  if(OLMsg::GetVerbosity())
+    std::cout << "Onelab: Calling <" << commandLine << ">" << std::endl;
   return SystemCall(commandLine.c_str(), true);
 }
 
@@ -1269,6 +1270,7 @@ std::string quote(const std::string &in){
 }
 std::string unquote(const std::string &in)
 {
+  if(in.empty()) return "";
   size_t pos0=in.find_first_not_of(" ");
   size_t pos=in.find_last_not_of(" ");
   if( (pos0 != std::string::npos) && (!in.compare(pos0,1,"\"")))

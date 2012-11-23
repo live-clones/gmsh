@@ -1,5 +1,4 @@
 #include "StringUtils.h"
-//#include "onelabUtils.h"
 #include "OnelabClients.h"
 #include "metamodel.h"
 #include <algorithm>
@@ -141,24 +140,6 @@ std::string showClientStatus(){
   return sstream.str();
 }
 
-bool setParameter(const std::string &name, const std::string &value){
-  std::vector<onelab::number> numbers;
-  std::vector<onelab::string> strings;
-  onelab::server::instance()->get(numbers,name);
-  if (numbers.size()) {
-    numbers[0].setValue(atof(value.c_str()));
-    return onelab::server::instance()->set(numbers[0]);
-  }
-  else{
-    onelab::server::instance()->get(strings,name);
-    if (strings.size()) {
-      strings[0].setValue(value);
-      return onelab::server::instance()->set(strings[0]);
-    }
-    else
-      OLMsg::Error("The parameter <%s> does not exist", name.c_str());
-  }
-}
 
 bool menu() {
   int choice, counter1=0, counter2=0;

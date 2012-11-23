@@ -1,6 +1,30 @@
 #include "OnelabClients.h"
 #include "metamodel.h"
 
+/* PYTHON functions */
+
+void modelName(const std::string &name, const std::string &wdir=""){
+  OLMsg::InitializeOnelab("onelab");
+  OLMsg::SetOnelabString("Arguments/FileName",name);
+  OLMsg::SetOnelabString("Arguments/WorkingDir",wdir);
+  OLMsg::SetVerbosity(0);
+}
+
+void setNumber(const std::string &name, const double value){
+  OLMsg::SetOnelabNumber(name, value);
+}
+void setString(const std::string &name, const std::string &value){
+  OLMsg::SetOnelabString(name, value);
+}
+double getNumber(const std::string &name){
+  return OLMsg::GetOnelabNumber(name);
+}
+std::string getString(const std::string &name){
+  return OLMsg::GetOnelabString(name);
+}
+
+
+/* Interface Gmsh - Metamodels */
 
 void initializeMetamodel(const std::string &loaderName, onelab::client *olclient, void (*gui_wait_fct)(double time))
 {
