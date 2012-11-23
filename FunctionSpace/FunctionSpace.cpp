@@ -60,7 +60,7 @@ void FunctionSpace::build(const GroupOfElement& goe,
   type  = basisType;
   basis = BasisGenerator::generate(elementType, 
 				   basisType, 
-				   order, "lagrange");
+				   order, "zaglmayr");
 
   // Number of *Per* Entity functions //
   fPerVertex = basis->getNVertexBased() / nVertex;
