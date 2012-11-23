@@ -572,29 +572,20 @@ double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
   return s * 0.5;
 }
 
-bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
-                  std::set<MTri3*, compareTri3Ptr> &allTets,
-                  std::set<MTri3*, compareTri3Ptr> *activeTets,
-                  std::vector<double> &vSizes,
-                  std::vector<double> &vSizesBGM,
-                  std::vector<SMetric3> &vMetricsBGM,
-                  std::vector<double> &Us,
-                  std::vector<double> &Vs,
-                  double *metric,
-		  MTri3 **oneNewTriangle)
+bool insertVertexB (std::list<edgeXface> &shell,
+		    std::list<MTri3*> &cavity,
+		    bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
+		    std::set<MTri3*, compareTri3Ptr> &allTets,
+		    std::set<MTri3*, compareTri3Ptr> *activeTets,
+		    std::vector<double> &vSizes,
+		    std::vector<double> &vSizesBGM,
+		    std::vector<SMetric3> &vMetricsBGM,
+		    std::vector<double> &Us,
+		    std::vector<double> &Vs,
+		    double *metric,
+		    MTri3 **oneNewTriangle)
 {
-  std::list<edgeXface> shell;
-  std::list<MTri3*> cavity;
   std::list<MTri3*> new_cavity;
-
-  if (!metric){
-    double p[3] = {v->x(), v->y(), v->z()};
-    recurFindCavity(shell, cavity, p, param, t, Us, Vs);
-  }
-  else{
-    recurFindCavityAniso(gf, shell, cavity, metric, param, t, Us, Vs);
-  }
-
 
   // check that volume is conserved
   double newVolume = 0;
@@ -699,6 +690,41 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
   }
 }
 
+bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
+                  std::set<MTri3*, compareTri3Ptr> &allTets,
+                  std::set<MTri3*, compareTri3Ptr> *activeTets,
+                  std::vector<double> &vSizes,
+                  std::vector<double> &vSizesBGM,
+                  std::vector<SMetric3> &vMetricsBGM,
+                  std::vector<double> &Us,
+                  std::vector<double> &Vs,
+                  double *metric,
+		  MTri3 **oneNewTriangle)
+{
+  std::list<edgeXface> shell;
+  std::list<MTri3*> cavity;
+
+  if (!metric){
+    double p[3] = {v->x(), v->y(), v->z()};
+    recurFindCavity(shell, cavity, p, param, t, Us, Vs);
+  }
+  else{
+    recurFindCavityAniso(gf, shell, cavity, metric, param, t, Us, Vs);
+  }
+
+  return insertVertexB(shell, cavity, force, gf, v, param , t,
+		       allTets,
+		       activeTets,
+		       vSizes,
+		       vSizesBGM,
+		       vMetricsBGM,
+		       Us,
+		       Vs,
+		       metric,
+		       oneNewTriangle);
+}
+
+
 static MTri3* search4Triangle (MTri3 *t, double pt[2],
 			       std::vector<double> &Us, std::vector<double> &Vs,
 			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2], bool force = false) {
@@ -771,16 +797,36 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
   }
   else worst = *it;
-
-
+  
   MTri3 *ptin = 0;
-  bool inside = false;
+  std::list<edgeXface> shell;
+  std::list<MTri3*> cavity;
   double uv[2];
-  //  printf("inserting %g %g\n",center[0],center[1]);
-  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
-  if (ptin) inside = true;
 
-  if (inside) {
+  // if the point is able to break the bad triangle "worst"
+  if (1){
+    if (inCircumCircleAniso(gf, worst->tri(), center, metric, Us, Vs)){
+      recurFindCavityAniso(gf, shell, cavity, metric, center, worst, Us, Vs);
+      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+	if (invMapUV((*itc)->tri(), center, Us, Vs, uv, 1.e-8)) {
+	  ptin = *itc;
+	  break;
+	}
+      }
+    }
+    // else look for it
+    else {
+      printf("we should never be here !!!\n");
+      ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
+      if (ptin) {
+	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, Us, Vs);    
+      }
+    }
+  }
+  
+  //  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
+
+  if (ptin) {
     // we use here local coordinates as real coordinates
     // x,y and z will be computed hereafter
     // Msg::Info("Point is inside");
@@ -789,16 +835,11 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setIndex(Us.size());
     double lc1,lc;
-    if (0 && backgroundMesh::current()){
-      lc1 = lc =
-	backgroundMesh::current()->operator()(center[0], center[1], 0.0);
-    }
-    else {
-      lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getIndex()] +
-		    uv[0] * vSizes[ptin->tri()->getVertex(1)->getIndex()] +
-		    uv[1] * vSizes[ptin->tri()->getVertex(2)->getIndex()]);
-      lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
-    }
+    lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getIndex()] +
+	   uv[0] * vSizes[ptin->tri()->getVertex(1)->getIndex()] +
+	   uv[1] * vSizes[ptin->tri()->getVertex(2)->getIndex()]);
+    lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
+
     //SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(), p.z());
     //                               vMetricsBGM.push_back(metr);
     vSizesBGM.push_back(lc);
@@ -809,8 +850,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 
     //    clock_t t1 = clock();
 
-    if(!p.succeeded() || !insertVertex
-       (false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
+    if(!p.succeeded() || !insertVertexB
+       (shell, cavity,false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
         Us, Vs, metric, oneNewTriangle) ) {
       //      Msg::Debug("Point %g %g cannot be inserted because %d",
       //                       center[0], center[1], p.succeeded() );
@@ -820,6 +861,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       worst->forceRadius(-1);
       AllTris.insert(worst);
       delete v;
+      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);      
       return false;
     }
     else {
@@ -832,6 +874,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
   else {
     MTriangle *base = worst->tri();
+    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);
     Msg::Debug("Point %g %g is outside (%g %g , %g %g , %g %g)",
                center[0], center[1],
                Us[base->getVertex(0)->getIndex()],
