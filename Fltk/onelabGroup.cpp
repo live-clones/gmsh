@@ -74,7 +74,7 @@ class onelabGmshServer : public GmshServer{
         // if asked, refresh the onelab GUI
         std::vector<onelab::string> ps;
         onelab::server::instance()->get(ps, "Gmsh/Action");
-        if(ps.size() && ps[0].getValue() == "refresh"){
+        if(FlGui::available() && ps.size() && ps[0].getValue() == "refresh"){
           ps[0].setVisible(false);
           ps[0].setValue("");
           onelab::server::instance()->set(ps[0]);
