@@ -524,128 +524,19 @@ void file_watch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-#if defined(__APPLE__)
-#  define CC(str) "Cmd+" str " "
-#else
-#  define CC(str) "Ctrl+" str
-#endif
-
 static void help_short_cb(Fl_Widget *w, void *data)
 {
-  Msg::Direct(" ");
-  Msg::Direct("Keyboard shortcuts:");
-  Msg::Direct(" ");
-  Msg::Direct("  Left arrow    Go to previous time step");
-  Msg::Direct("  Right arrow   Go to next time step");
-  Msg::Direct("  Up arrow      Make previous view visible");
-  Msg::Direct("  Down arrow    Make next view visible");
-  Msg::Direct(" ");
-  Msg::Direct("  <             Go back to previous context");
-  Msg::Direct("  >             Go forward to next context");
-  Msg::Direct("  0             Reload project file");
-  Msg::Direct("  1 or F1       Mesh lines");
-  Msg::Direct("  2 or F2       Mesh surfaces");
-  Msg::Direct("  3 or F3       Mesh volumes");
-  Msg::Direct("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
-  Msg::Direct(" ");
-  Msg::Direct("  g             Go to geometry module");
-  Msg::Direct("  m             Go to mesh module");
-  Msg::Direct("  p             Go to post-processing module");
-  Msg::Direct("  s             Go to solver module");
-  Msg::Direct(" ");
-  Msg::Direct("  Shift+a       Bring all windows to front");
-  Msg::Direct("  Shift+g       Show geometry options");
-  Msg::Direct("  Shift+m       Show mesh options");
-  Msg::Direct("  Shift+o       Show general options");
-  Msg::Direct("  Shift+p       Show post-processing options");
-  Msg::Direct("  Shift+s       Show solver options");
-  Msg::Direct("  Shift+u       Show post-processing view plugins");
-  Msg::Direct("  Shift+w       Show post-processing view options");
-  Msg::Direct("  Shift+Escape  Enable full mouse selection");
-  Msg::Direct(" ");
-  Msg::Direct("  " CC("i") "        Show statistics window");
-  Msg::Direct("  " CC("l") "        Show message console");
-#if defined(__APPLE__)
-  Msg::Direct("  " CC("m") "        Minimize window");
-#endif
-  Msg::Direct("  " CC("n") "        Create new project file");
-  Msg::Direct("  " CC("o") "        Open project file");
-  Msg::Direct("  " CC("q") "        Quit");
-  Msg::Direct("  " CC("r") "        Rename project file");
-  Msg::Direct("  " CC("s") "        Save file as");
-  Msg::Direct(" ");
-  Msg::Direct("  Shift+" CC("c") "  Show clipping plane window");
-  Msg::Direct("  Shift+" CC("m") "  Show manipulator window");
-  Msg::Direct("  Shift+" CC("n") "  Show option window");
-  Msg::Direct("  Shift+" CC("o") "  Merge file(s)");
-  Msg::Direct("  Shift+" CC("s") "  Save mesh in default format");
-  Msg::Direct("  Shift+" CC("u") "  Show plugin window");
-  Msg::Direct("  Shift+" CC("v") "  Show visibility window");
-  Msg::Direct(" ");
-  Msg::Direct("  Alt+a         Loop through axes modes");
-  Msg::Direct("  Alt+b         Hide/show bounding boxes");
-  Msg::Direct("  Alt+c         Loop through predefined color schemes");
-  Msg::Direct("  Alt+e         Hide/Show element outlines for visible post-pro views");
-  Msg::Direct("  Alt+f         Change redraw mode (fast/full)");
-  Msg::Direct("  Alt+h         Hide/show all post-processing views");
-  Msg::Direct("  Alt+i         Hide/show all post-processing view scales");
-  Msg::Direct("  Alt+l         Hide/show geometry lines");
-  Msg::Direct("  Alt+m         Toggle visibility of all mesh entities");
-  Msg::Direct("  Alt+n         Hide/show all post-processing view annotations");
-  Msg::Direct("  Alt+o         Change projection mode (orthographic/perspective)");
-  Msg::Direct("  Alt+p         Hide/show geometry points");
-  Msg::Direct("  Alt+r         Loop through range modes for visible post-pro views");
-  Msg::Direct("  Alt+s         Hide/show geometry surfaces");
-  Msg::Direct("  Alt+t         Loop through interval modes for visible post-pro views");
-  Msg::Direct("  Alt+v         Hide/show geometry volumes");
-  Msg::Direct("  Alt+w         Enable/disable all lighting");
-  Msg::Direct("  Alt+x         Set X view");
-  Msg::Direct("  Alt+y         Set Y view");
-  Msg::Direct("  Alt+z         Set Z view");
-  Msg::Direct(" ");
-  Msg::Direct("  Alt+Shift+a   Hide/show small axes");
-  Msg::Direct("  Alt+Shift+b   Hide/show mesh volume faces");
-  Msg::Direct("  Alt+Shift+d   Hide/show mesh surface faces");
-  Msg::Direct("  Alt+Shift+l   Hide/show mesh lines");
-  Msg::Direct("  Alt+Shift+o   Adjust projection parameters");
-  Msg::Direct("  Alt+Shift+p   Hide/show mesh points");
-  Msg::Direct("  Alt+Shift+s   Hide/show mesh surface edges");
-  Msg::Direct("  Alt+Shift+v   Hide/show mesh volume edges");
-  Msg::Direct("  Alt+Shift+w   Reverse all mesh normals");
-  Msg::Direct("  Alt+Shift+x   Set -X view");
-  Msg::Direct("  Alt+Shift+y   Set -Y view");
-  Msg::Direct("  Alt+Shift+z   Set -Z view");
-  Msg::Direct(" ");
+  std::vector<std::string> s = GetShortcutsUsage();
+  for(unsigned int i = 0; i < s.size(); i++)
+    Msg::Direct("%s", s[i].c_str());
   FlGui::instance()->showMessages();
 }
 
-#undef CC
-
 static void help_mouse_cb(Fl_Widget *w, void *data)
 {
-  Msg::Direct(" ");
-  Msg::Direct("Mouse actions:");
-  Msg::Direct(" ");
-  Msg::Direct("  Move                - Highlight the entity under the mouse pointer");
-  Msg::Direct("                        and display its properties in the status bar");
-  Msg::Direct("                      - Resize a lasso zoom or a lasso (un)selection");
-  Msg::Direct("  Left button         - Rotate");
-  Msg::Direct("                      - Select an entity");
-  Msg::Direct("                      - Accept a lasso zoom or a lasso selection");
-  Msg::Direct("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection");
-  Msg::Direct("  Middle button       - Zoom");
-  Msg::Direct("                      - Unselect an entity");
-  Msg::Direct("                      - Accept a lasso zoom or a lasso unselection");
-  Msg::Direct("  Ctrl+Middle button  Orthogonalize display");
-  Msg::Direct("  Right button        - Pan");
-  Msg::Direct("                      - Cancel a lasso zoom or a lasso (un)selection");
-  Msg::Direct("                      - Pop-up menu on post-processing view button");
-  Msg::Direct("  Ctrl+Right button   Reset to default viewpoint");
-  Msg::Direct(" ");
-  Msg::Direct("  For a 2 button mouse, Middle button = Shift+Left button");
-  Msg::Direct("  For a 1 button mouse, Middle button = Shift+Left button, "
-              "Right button = Alt+Left button");
-  Msg::Direct(" ");
+  std::vector<std::string> s = GetMouseUsage();
+  for(unsigned int i = 0; i < s.size(); i++)
+    Msg::Direct("%s", s[i].c_str());
   FlGui::instance()->showMessages();
 }
 

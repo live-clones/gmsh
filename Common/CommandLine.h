@@ -6,6 +6,8 @@
 #ifndef _COMMAND_LINE_H_
 #define _COMMAND_LINE_H_
 
+#include <string>
+
 int GetGmshMajorVersion();
 int GetGmshMinorVersion();
 int GetGmshPatchVersion();
@@ -18,7 +20,10 @@ const char *GetGmshBuildOS();
 const char *GetGmshShortLicense();
 const char *GetGmshBuildOptions();
 
-void PrintUsage(const char *name);
+std::vector<std::string> GetUsage(const std::string &name);
+std::vector<std::string> GetShortcutsUsage();
+std::vector<std::string> GetMouseUsage();
+void PrintUsage(const std::string &name);
 void GetOptions(int argc, char *argv[]);
 
 #endif

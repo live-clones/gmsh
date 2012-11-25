@@ -43,82 +43,224 @@ const char *GetGmshBuildOS(){ return GMSH_OS; }
 const char *GetGmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 const char *GetGmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
-void PrintUsage(const char *name)
+std::vector<std::string> GetUsage(const std::string &name)
 {
   // If you make changes in this routine, please also change the texinfo
   // documentation (doc/texinfo/gmsh.texi) and the man page (doc/gmsh.1)
-  Msg::Direct("Usage: %s [options] [files]", name);
-  Msg::Direct("Geometry options:");
-  Msg::Direct("  -0                    Output unrolled geometry, then exit");
-  Msg::Direct("  -tol float            Set geometrical tolerance");
-  Msg::Direct("  -match                Match geometries and meshes");
-  Msg::Direct("Mesh options:");
-  Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
-  Msg::Direct("  -format string        Select output mesh format (auto (default), msh, msh1, msh2,");
-  Msg::Direct("                          unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)");
-  Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
-  Msg::Direct("  -part int             Partition after batch mesh generation");
-  Msg::Direct("  -partWeight <tri|quad|tet|prism|hex> int");
-  Msg::Direct("                          Weight of a triangle/quad/etc. during partitioning");
-  Msg::Direct("  -renumber             Renumber the mesh elements after batch mesh generation");
-  Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
-  Msg::Direct("  -o file               Specify output file name");
-  Msg::Direct("  -bin                  Use binary format when available");
-  Msg::Direct("  -parametric           Save vertices with their parametric coordinates");
-  Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");
-  Msg::Direct("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, delquad, ");
-  Msg::Direct("                          del3d, front3d, mmg3d)");
-  Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
-  Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
-  Msg::Direct("  -hoOptimize           Optimize high order meshes");
-  Msg::Direct("  -hoMindisto float     Minimum quality for high-order elements before optimization (0.0->1.0)");
-  Msg::Direct("  -hoNLayers int        Number of high order element layers to optimize");
-  Msg::Direct("  -hoElasticity float   Poisson ration for the elasticity analogy (-1.0 < nu < 0.5)");
-  Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
-  Msg::Direct("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
-  Msg::Direct("  -clscale float        Set global mesh element size scaling factor");
-  Msg::Direct("  -clmin float          Set minimum mesh element size");
-  Msg::Direct("  -clmax float          Set maximum mesh element size");
-  Msg::Direct("  -anisoMax float       Set maximum anisotropy (only used in bamg for now)");
-  Msg::Direct("  -smoothRatio float    Set smoothing ration between mesh sizes at nodes of a same edge");
-  Msg::Direct("                          (only used in bamg)");
-  Msg::Direct("  -clcurv               Automatically compute element sizes from curvatures");
-  Msg::Direct("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
-  Msg::Direct("  -swapangle            Set the threshold angle (in degree) between two adjacent faces");
-  Msg::Direct("                          below which a swap is allowed");
-  Msg::Direct("  -rand float           Set random perturbation factor");
-  Msg::Direct("  -bgm file             Load background mesh from file");
-  Msg::Direct("  -check                Perform various consistency checks on mesh");
-  Msg::Direct("  -mpass int            Do several passes on the mesh for complex backround fields");
-  Msg::Direct("  -ignorePartBound      Ignore partitions boundaries");
+  std::vector<std::string> s;
+  s.push_back("Usage: " + name + " [options] [files]");
+  s.push_back("Geometry options:");
+  s.push_back("  -0                    Output unrolled geometry, then exit");
+  s.push_back("  -tol float            Set geometrical tolerance");
+  s.push_back("  -match                Match geometries and meshes");
+  s.push_back("Mesh options:");
+  s.push_back("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
+  s.push_back("  -format string        Select output mesh format (auto (default), msh, msh1, msh2,");
+  s.push_back("                          unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)");
+  s.push_back("  -refine               Perform uniform mesh refinement, then exit");
+  s.push_back("  -part int             Partition after batch mesh generation");
+  s.push_back("  -partWeight <tri|quad|tet|prism|hex> int");
+  s.push_back("                          Weight of a triangle/quad/etc. during partitioning");
+  s.push_back("  -renumber             Renumber the mesh elements after batch mesh generation");
+  s.push_back("  -saveall              Save all elements (discard physical group definitions)");
+  s.push_back("  -o file               Specify output file name");
+  s.push_back("  -bin                  Use binary format when available");
+  s.push_back("  -parametric           Save vertices with their parametric coordinates");
+  s.push_back("  -numsubedges          Set the number of subdivisions when displaying high order elements");
+  s.push_back("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, delquad, ");
+  s.push_back("                          del3d, front3d, mmg3d)");
+  s.push_back("  -smooth int           Set number of mesh smoothing steps");
+  s.push_back("  -order int            Set mesh order (1, ..., 5)");
+  s.push_back("  -hoOptimize           Optimize high order meshes");
+  s.push_back("  -hoMindisto float     Minimum quality for high-order elements before optimization (0.0->1.0)");
+  s.push_back("  -hoNLayers int        Number of high order element layers to optimize");
+  s.push_back("  -hoElasticity float   Poisson ration for the elasticity analogy (-1.0 < nu < 0.5)");
+  s.push_back("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
+  s.push_back("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
+  s.push_back("  -clscale float        Set global mesh element size scaling factor");
+  s.push_back("  -clmin float          Set minimum mesh element size");
+  s.push_back("  -clmax float          Set maximum mesh element size");
+  s.push_back("  -anisoMax float       Set maximum anisotropy (only used in bamg for now)");
+  s.push_back("  -smoothRatio float    Set smoothing ration between mesh sizes at nodes of a same edge");
+  s.push_back("                          (only used in bamg)");
+  s.push_back("  -clcurv               Automatically compute element sizes from curvatures");
+  s.push_back("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
+  s.push_back("  -swapangle            Set the threshold angle (in degree) between two adjacent faces");
+  s.push_back("                          below which a swap is allowed");
+  s.push_back("  -rand float           Set random perturbation factor");
+  s.push_back("  -bgm file             Load background mesh from file");
+  s.push_back("  -check                Perform various consistency checks on mesh");
+  s.push_back("  -mpass int            Do several passes on the mesh for complex backround fields");
+  s.push_back("  -ignorePartBound      Ignore partitions boundaries");
 #if defined(HAVE_FLTK)
-  Msg::Direct("Post-processing options:");
-  Msg::Direct("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
-  Msg::Direct("  -combine              Combine views having identical names into multi-time-step views");
-  Msg::Direct("Display options:");
-  Msg::Direct("  -n                    Hide all meshes and post-processing views on startup");
-  Msg::Direct("  -nodb                 Disable double buffering");
-  Msg::Direct("  -fontsize int         Specify the font size for the GUI");
-  Msg::Direct("  -theme string         Specify FLTK GUI theme");
-  Msg::Direct("  -display string       Specify display");
+  s.push_back("Post-processing options:");
+  s.push_back("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
+  s.push_back("  -combine              Combine views having identical names into multi-time-step views");
+  s.push_back("Display options:");
+  s.push_back("  -n                    Hide all meshes and post-processing views on startup");
+  s.push_back("  -nodb                 Disable double buffering");
+  s.push_back("  -fontsize int         Specify the font size for the GUI");
+  s.push_back("  -theme string         Specify FLTK GUI theme");
+  s.push_back("  -display string       Specify display");
 #endif
-  Msg::Direct("Other options:");
-  Msg::Direct("  -                     Parse input files, then exit");
+  s.push_back("Other options:");
+  s.push_back("  -                     Parse input files, then exit");
 #if defined(HAVE_FLTK)
-  Msg::Direct("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
+  s.push_back("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
-  Msg::Direct("  -pid                  Print process id on stdout");
-  Msg::Direct("  -listen               Always listen to incoming connection requests");
-  Msg::Direct("  -watch pattern        Pattern of files to merge as they become available");
-  Msg::Direct("  -v int                Set verbosity level");
-  Msg::Direct("  -nopopup              Don't popup dialog windows in scripts");
-  Msg::Direct("  -string \"string\"      Parse option string at startup");
-  Msg::Direct("  -option file          Parse option file at startup");
-  Msg::Direct("  -convert files        Convert files into latest binary formats, then exit");
-  Msg::Direct("  -vmsh float           Select msh file version");
-  Msg::Direct("  -version              Show version number");
-  Msg::Direct("  -info                 Show detailed version information");
-  Msg::Direct("  -help                 Show this message");
+  s.push_back("  -pid                  Print process id on stdout");
+  s.push_back("  -listen               Always listen to incoming connection requests");
+  s.push_back("  -watch pattern        Pattern of files to merge as they become available");
+  s.push_back("  -v int                Set verbosity level");
+  s.push_back("  -nopopup              Don't popup dialog windows in scripts");
+  s.push_back("  -string \"string\"      Parse option string at startup");
+  s.push_back("  -option file          Parse option file at startup");
+  s.push_back("  -convert files        Convert files into latest binary formats, then exit");
+  s.push_back("  -vmsh float           Select msh file version");
+  s.push_back("  -version              Show version number");
+  s.push_back("  -info                 Show detailed version information");
+  s.push_back("  -help                 Show this message");
+  return s;
+}
+
+std::vector<std::string> GetShortcutsUsage()
+{
+  // If you make changes in this routine, please also change the texinfo
+  // documentation (doc/texinfo/gmsh.texi)
+  std::vector<std::string> s;
+
+#if defined(__APPLE__)
+#  define CC(str) "Cmd+" str " "
+#else
+#  define CC(str) "Ctrl+" str
+#endif
+  s.push_back(" ");
+  s.push_back("Keyboard shortcuts:");
+  s.push_back(" ");
+  s.push_back("  Left arrow    Go to previous time step");
+  s.push_back("  Right arrow   Go to next time step");
+  s.push_back("  Up arrow      Make previous view visible");
+  s.push_back("  Down arrow    Make next view visible");
+  s.push_back(" ");
+  s.push_back("  <             Go back to previous context");
+  s.push_back("  >             Go forward to next context");
+  s.push_back("  0             Reload project file");
+  s.push_back("  1 or F1       Mesh lines");
+  s.push_back("  2 or F2       Mesh surfaces");
+  s.push_back("  3 or F3       Mesh volumes");
+  s.push_back("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
+  s.push_back(" ");
+  s.push_back("  g             Go to geometry module");
+  s.push_back("  m             Go to mesh module");
+  s.push_back("  p             Go to post-processing module");
+  s.push_back("  s             Go to solver module");
+  s.push_back(" ");
+  s.push_back("  Shift+a       Bring all windows to front");
+  s.push_back("  Shift+g       Show geometry options");
+  s.push_back("  Shift+m       Show mesh options");
+  s.push_back("  Shift+o       Show general options");
+  s.push_back("  Shift+p       Show post-processing options");
+  s.push_back("  Shift+s       Show solver options");
+  s.push_back("  Shift+u       Show post-processing view plugins");
+  s.push_back("  Shift+w       Show post-processing view options");
+  s.push_back("  Shift+Escape  Enable full mouse selection");
+  s.push_back(" ");
+  s.push_back("  " CC("i") "        Show statistics window");
+  s.push_back("  " CC("l") "        Show message console");
+#if defined(__APPLE__)
+  s.push_back("  " CC("m") "        Minimize window");
+#endif
+  s.push_back("  " CC("n") "        Create new project file");
+  s.push_back("  " CC("o") "        Open project file");
+  s.push_back("  " CC("q") "        Quit");
+  s.push_back("  " CC("r") "        Rename project file");
+  s.push_back("  " CC("s") "        Save file as");
+  s.push_back(" ");
+  s.push_back("  Shift+" CC("c") "  Show clipping plane window");
+  s.push_back("  Shift+" CC("m") "  Show manipulator window");
+  s.push_back("  Shift+" CC("n") "  Show option window");
+  s.push_back("  Shift+" CC("o") "  Merge file(s)");
+  s.push_back("  Shift+" CC("s") "  Save mesh in default format");
+  s.push_back("  Shift+" CC("u") "  Show plugin window");
+  s.push_back("  Shift+" CC("v") "  Show visibility window");
+  s.push_back(" ");
+  s.push_back("  Alt+a         Loop through axes modes");
+  s.push_back("  Alt+b         Hide/show bounding boxes");
+  s.push_back("  Alt+c         Loop through predefined color schemes");
+  s.push_back("  Alt+e         Hide/Show element outlines for visible post-pro views");
+  s.push_back("  Alt+f         Change redraw mode (fast/full)");
+  s.push_back("  Alt+h         Hide/show all post-processing views");
+  s.push_back("  Alt+i         Hide/show all post-processing view scales");
+  s.push_back("  Alt+l         Hide/show geometry lines");
+  s.push_back("  Alt+m         Toggle visibility of all mesh entities");
+  s.push_back("  Alt+n         Hide/show all post-processing view annotations");
+  s.push_back("  Alt+o         Change projection mode (orthographic/perspective)");
+  s.push_back("  Alt+p         Hide/show geometry points");
+  s.push_back("  Alt+r         Loop through range modes for visible post-pro views");
+  s.push_back("  Alt+s         Hide/show geometry surfaces");
+  s.push_back("  Alt+t         Loop through interval modes for visible post-pro views");
+  s.push_back("  Alt+v         Hide/show geometry volumes");
+  s.push_back("  Alt+w         Enable/disable all lighting");
+  s.push_back("  Alt+x         Set X view");
+  s.push_back("  Alt+y         Set Y view");
+  s.push_back("  Alt+z         Set Z view");
+  s.push_back(" ");
+  s.push_back("  Alt+Shift+a   Hide/show small axes");
+  s.push_back("  Alt+Shift+b   Hide/show mesh volume faces");
+  s.push_back("  Alt+Shift+d   Hide/show mesh surface faces");
+  s.push_back("  Alt+Shift+l   Hide/show mesh lines");
+  s.push_back("  Alt+Shift+o   Adjust projection parameters");
+  s.push_back("  Alt+Shift+p   Hide/show mesh points");
+  s.push_back("  Alt+Shift+s   Hide/show mesh surface edges");
+  s.push_back("  Alt+Shift+v   Hide/show mesh volume edges");
+  s.push_back("  Alt+Shift+w   Reverse all mesh normals");
+  s.push_back("  Alt+Shift+x   Set -X view");
+  s.push_back("  Alt+Shift+y   Set -Y view");
+  s.push_back("  Alt+Shift+z   Set -Z view");
+  s.push_back(" ");
+  return s;
+
+#undef CC
+}
+
+std::vector<std::string> GetMouseUsage()
+{
+  // If you make changes in this routine, please also change the texinfo
+  // documentation (doc/texinfo/gmsh.texi)
+  std::vector<std::string> s;
+
+  s.push_back(" ");
+  s.push_back("Mouse actions:");
+  s.push_back(" ");
+  s.push_back("  Move                - Highlight the entity under the mouse pointer");
+  s.push_back("                        and display its properties");
+  s.push_back("                      - Resize a lasso zoom or a lasso (un)selection");
+  s.push_back("  Left button         - Rotate");
+  s.push_back("                      - Select an entity");
+  s.push_back("                      - Accept a lasso zoom or a lasso selection");
+  s.push_back("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection");
+  s.push_back("  Middle button       - Zoom");
+  s.push_back("                      - Unselect an entity");
+  s.push_back("                      - Accept a lasso zoom or a lasso unselection");
+  s.push_back("  Ctrl+Middle button  Orthogonalize display");
+  s.push_back("  Right button        - Pan");
+  s.push_back("                      - Cancel a lasso zoom or a lasso (un)selection");
+  s.push_back("                      - Pop-up menu on post-processing view button");
+  s.push_back("  Ctrl+Right button   Reset to default viewpoint");
+  s.push_back(" ");
+  s.push_back("  For a 2 button mouse, Middle button = Shift+Left button");
+  s.push_back("  For a 1 button mouse, Middle button = Shift+Left button, "
+              "Right button = Alt+Left button");
+  s.push_back(" ");
+
+  return s;
+}
+
+void PrintUsage(const std::string &name)
+{
+  std::vector<std::string> s = GetUsage(name);
+  for(unsigned int i = 0; i < s.size(); i++)
+    Msg::Direct("%s", s[i].c_str());
 }
 
 void GetOptions(int argc, char *argv[])

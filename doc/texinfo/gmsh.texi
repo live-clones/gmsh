@@ -970,7 +970,6 @@ In the following, for a 2 button mouse, @kbd{Middle button} =
 @itemize @bullet
 @item
 Highlight the entity under the mouse pointer and display its properties
-in the status bar
 @item
 Resize a lasso zoom or a lasso selection/unselection started with
 @kbd{Ctrl+Left button}
