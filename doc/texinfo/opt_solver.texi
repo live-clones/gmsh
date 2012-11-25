@@ -29,31 +29,6 @@ System command to launch solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
-@item Solver.Hostname0
-Hostname where to launch solver 0@*
-Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
-
-@item Solver.Hostname1
-Hostname where to launch solver 1@*
-Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
-
-@item Solver.Hostname2
-Hostname where to launch solver 2@*
-Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
-
-@item Solver.Hostname3
-Hostname where to launch solver 3@*
-Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
-
-@item Solver.Hostname4
-Hostname where to launch solver 4@*
-Default value: @code{""}@*
-Saved in: @code{General.SessionFileName}
-
 @item Solver.Name0
 Name of solver 0@*
 Default value: @code{"GetDP"}@*
@@ -79,6 +54,31 @@ Name of solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.RemoteLogin0
+Command to login to a remote host to launch solver 0@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin1
+Command to login to a remote host to launch solver 1@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin2
+Command to login to a remote host to launch solver 2@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin3
+Command to login to a remote host to launch solver 3@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin4
+Command to login to a remote host to launch solver 4@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.SocketName
 Base name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)@*
 Default value: @code{".gmshsock"}@*
@@ -89,13 +89,48 @@ Always listen to incoming connection requests?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.AutoArchiveOutputFiles
+Automatically archive output files after each computation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoCheck
+Automatically check model every time a parameter is changed@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoSaveDatabase
+Automatically save database after each computation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoMesh
+Automatically mesh if necesssary@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoMergeFile
+Automatically merge result files@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoHideNewViews
+Automcatically hide newly merged results@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoShowLastStep
+Automatically show the last time step in newly merged results@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Plugins
 Enable default solver plugins?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.Timeout
-Time (in seconds) before closing the socket if no connection is happening.@*
+Time (in seconds) before closing the socket if no connection is happening@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 

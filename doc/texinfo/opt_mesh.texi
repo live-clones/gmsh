@@ -10,7 +10,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D)@*
+3D mesh algorithm (1=Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D, 9=R-tree)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -36,6 +36,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Binary
 Write mesh files in binary format (if possible)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Bunin
+Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -199,9 +204,24 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderNoMetric
-Don't use metric computation to create high-order meshes.@*
+@item Mesh.HighOrderNumLayers
+Number of high order mesh elements to consider for optimization.@*
+Default value: @code{3}@*
+Saved in: @code{-}
+
+@item Mesh.HighOrderOptimize
+Number of smoothing steps of internal edges for high order meshes@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderPoissonRatio
+Poisson ratio of the material used in the elastic smoother for high order meshes.Must be between -1.0 and 0.5, excluded.@*
+Default value: @code{0.33}@*
+Saved in: @code{-}
+
+@item Mesh.HighOrderSmoothingThreshold
+Distorition threshold when choosing which high order element to optimize.@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling
@@ -285,7 +305,7 @@ Default value: @code{2.2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFilePartitioned
-Split MSH file by mesh partition@*
+Split MSH file by mesh partition (0: no, 1: yes, 2: create physicals by partition)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -454,6 +474,11 @@ Random factor used in the 2D meshing algorithm (should be increased if RandomFac
 Default value: @code{1e-09}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.IgnorePartitionBoundary
+Ignore partitions boundaries (0=no, 1=yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.RecombinationAlgorithm
 Mesh recombination algorithm (0=standard, 1=blossom)@*
 Default value: @code{1}@*
@@ -470,8 +495,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RemeshParametrization
-Remsh Parametrization (0=harmonic, 1=conformal, 2=rbf harmonic)@*
-Default value: @code{0}@*
+Remeshing using discrete parametrization (0=harmonic_circle, 1=conformal_spectral, 2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square, 7=conformal_fe@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RefineSteps
@@ -532,11 +557,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SmoothInternalEdges
-Number of smoothing steps of internal edges for high order meshes@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals

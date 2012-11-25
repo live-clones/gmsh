@@ -196,10 +196,11 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
-@item Plugin(CutParametric)
-Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u), `Y'(u), `Z'(u)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'].
 
-If `ConnectPoints' is set, the plugin creates line elements; otherwise, the plugin generates points.
+@item Plugin(CutParametric)
+Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u,v), `Y'(u,v), `Z'(u,v)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'] and `NumPointsV' values of the parameter v in [`MinV', `MaxV'].
+
+If `ConnectPoints' is set, the plugin creates surface or line elements; otherwise, the plugin generates points.
 
 If `View' < 0, the plugin is run on the current view.
 
@@ -207,11 +208,11 @@ Plugin(CutParametric) creates one new view.
 String options:
 @table @code
 @item X
-Default value: @code{"0.1 + 0.5 * Cos(u)"}
+Default value: @code{"2 * Cos(u) * Sin(v)"}
 @item Y
-Default value: @code{"0.1 + 0.5 * Sin(u)"}
+Default value: @code{"4 * Sin(u) * Sin(v)"}
 @item Z
-Default value: @code{"0"}
+Default value: @code{"0.1 + 0.5 * Cos(v)"}
 @end table
 Numeric options:
 @table @code
@@ -220,7 +221,13 @@ Default value: @code{0}
 @item MaxU
 Default value: @code{6.2832}
 @item NumPointsU
-Default value: @code{360}
+Default value: @code{180}
+@item MinV
+Default value: @code{0}
+@item MaxV
+Default value: @code{6.2832}
+@item NumPointsV
+Default value: @code{180}
 @item ConnectPoints
 Default value: @code{0}
 @item View
@@ -520,30 +527,79 @@ Default value: @code{20}
 Default value: @code{-1}
 @end table
 
-@item Plugin(Homology)
-Plugin(Homology) computes ranks and basis elements of (relative) homology and cohomology spaces.
+@item Plugin(HomologyComputation)
+Plugin(HomologyComputation) computes representative chains of basis elements of (relative) homology and cohomology spaces.
 
 Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. 
 
-Plugin(Homology) creates new views, one for each basis element. The resulting basis chains together with the mesh are saved to the file given.
+Plugin(HomologyComputation) creates new views, one for each basis element. The resulting basis chains of desired dimension together with the mesh are saved to the given file.
 String options:
 @table @code
+@item DomainPhysicalGroups
+Default value: @code{""}
+@item SubdomainPhysicalGroups
+Default value: @code{""}
+@item ReductionImmunePhysicalGroups
+Default value: @code{""}
+@item DimensionOfChainsToSave
+Default value: @code{"0, 1, 2, 3"}
 @item Filename
 Default value: @code{"homology.msh"}
 @end table
 Numeric options:
 @table @code
-@item PhysicalGroupForDomain1
-Default value: @code{0}
-@item PhysicalGroupForDomain2
-Default value: @code{0}
-@item PhysicalGroupForSubdomain1
-Default value: @code{0}
-@item PhysicalGroupForSubdomain2
-Default value: @code{0}
-@item CompututeHomology
+@item ComputeHomology
 Default value: @code{1}
 @item ComputeCohomology
+Default value: @code{0}
+@item HomologyPhysicalGroupsBegin
+Default value: @code{-1}
+@item CohomologyPhysicalGroupsBegin
+Default value: @code{-1}
+@item CreatePostProcessingViews
+Default value: @code{1}
+@item ReductionOmit
+Default value: @code{1}
+@item ReductionCombine
+Default value: @code{2}
+@item PostProcessSimplify
+Default value: @code{1}
+@end table
+
+@item Plugin(HomologyPostProcessing)
+Plugin(HomologyPostProcessing) operates on representative basis chains of homology and cohomology spaces. Functionality:
+
+1. (co)homology basis transformation:
+ 'TransformationMatrix': Integer matrix of the transformation.
+ 'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.
+ Results a new (co)chain basis that is an integer cobination of the given basis. 
+
+2. Make basis representations of a homology space and a cohomology space compatible: 
+'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.
+'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.
+Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.
+
+Options:
+'PhysicalGroupsToTraceResults': Trace the resulting cochains to the given physical groups.
+'NameForResultChains': Post-processing view name prefix for the results.
+'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.
+
+String options:
+@table @code
+@item TransformationMatrix
+Default value: @code{"1, 0; 0, 1"}
+@item PhysicalGroupsOfOperatedChains
+Default value: @code{"1, 2"}
+@item PhysicalGroupsOfOperatedChains2
+Default value: @code{""}
+@item PhysicalGroupsToTraceResults
+Default value: @code{""}
+@item NameForResultChains
+Default value: @code{"c"}
+@end table
+Numeric options:
+@table @code
+@item ApplyBoundaryOperatorToResults
 Default value: @code{0}
 @end table
 
@@ -552,10 +608,14 @@ Plugin(Integrate) integrates scalar fields over all the elements in the view `Vi
 
 If `View' < 0, the plugin is run on the current view.
 
+Plugin(Integrate) creates one new view.If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.
+
 Plugin(Integrate) creates one new view.
 Numeric options:
 @table @code
 @item View
+Default value: @code{-1}
+@item OverTime
 Default value: @code{-1}
 @end table
 
@@ -691,7 +751,9 @@ Plugin(MinMax) computes the min/max of a view.
 
 If `View' < 0, the plugin is run on the current view.
 
-If `OverTime' = 1, calculates the min-max over space AND time
+If `OverTime' = 1, calculates the min/max over space AND time
+
+If `Argument' = 1, calculates the min/max AND the argmin/argmax
 
 Plugin(MinMax) creates two new views.
 Numeric options:
@@ -699,6 +761,8 @@ Numeric options:
 @item View
 Default value: @code{-1}
 @item OverTime
+Default value: @code{0}
+@item Argument
 Default value: @code{0}
 @end table
 
@@ -771,23 +835,32 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NearToFarField)
-Plugin(NearToFarField) computes the far field pattern from the near electric and magnetic fields on a surface (regular grid) enclosing the radiating device (antenna).
+Plugin(NearToFarField) computes the far field pattern from the near electric E and magnetic H fields on a surface enclosing the radiating device (antenna).
 
-Parameters: the wavenumber, the far field distance (radious) and angular discretisation, i.e. the number of divisions for phi in [0, 2*Pi] and theta in [0, Pi].
-
-If `View' < 0, the plugin is run on the current view.
+Parameters: the wavenumber, the angular discretisation (phi in [0, 2*Pi] and theta in [0, Pi]) of the far field sphere and the indices of the views containing the complex-valued E and H fields. If `Normalize' is set, the far field is normalized to 1. If `dB' is set, the far field is computed in dB. If `NegativeTime' is set, E and H are assumed to have exp(-iwt) time dependency; otherwise they are assume to have exp(+iwt) time dependency. If `MatlabOutputFile' is given the raw far field data is also exported in Matlab format.
 
 Plugin(NearToFarField) creates one new view.
+String options:
+@table @code
+@item MatlabOutputFile
+Default value: @code{"farfield.m"}
+@end table
 Numeric options:
 @table @code
 @item Wavenumber
 Default value: @code{1}
-@item FarDistance
-Default value: @code{1}
+@item PhiStart
+Default value: @code{0}
+@item PhiEnd
+Default value: @code{6.28319}
 @item NumPointsPhi
-Default value: @code{120}
-@item NumPointsTheta
 Default value: @code{60}
+@item ThetaStart
+Default value: @code{0}
+@item ThetaEnd
+Default value: @code{3.14159}
+@item NumPointsTheta
+Default value: @code{30}
 @item EView
 Default value: @code{0}
 @item HView
@@ -796,6 +869,8 @@ Default value: @code{1}
 Default value: @code{1}
 @item dB
 Default value: @code{1}
+@item NegativeTime
+Default value: @code{0}
 @end table
 
 @item Plugin(NearestNeighbor)
@@ -804,6 +879,14 @@ Plugin(NearestNeighbor) computes the distance from each point in `View' to its n
 If `View' < 0, the plugin is run on the current view.
 
 Plugin(NearestNeighbor) is executed in-place.
+Numeric options:
+@table @code
+@item View
+Default value: @code{-1}
+@end table
+
+@item Plugin(NewView)
+Plugin(NewView) creates a new view from a mesh.
 Numeric options:
 @table @code
 @item View
@@ -923,21 +1006,21 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Scal2Vec)
-Plugin(Scal2Vec) converts the scalar fields of 'View X', 'View Y' and/or 'View Z' into a vectorial field. The new view 'Name NewView' contains it.
+Plugin(Scal2Vec) converts the scalar fields of 'ViewX', 'ViewY' and/or 'ViewZ' into a vectorial field. The new view 'NameNewView' contains it.
 
-If the value of 'View X', 'View Y' or 'View Z' is -1, the value of the vectorial field in the corresponding direction is 0.
+If the value of 'ViewX', 'ViewY' or 'ViewZ' is -1, the value of the vectorial field in the corresponding direction is 0.
 String options:
 @table @code
-@item Name NewView
+@item NameNewView
 Default value: @code{"NewView"}
 @end table
 Numeric options:
 @table @code
-@item View X
+@item ViewX
 Default value: @code{-1}
-@item View Y
+@item ViewY
 Default value: @code{-1}
-@item View Z
+@item ViewZ
 Default value: @code{-1}
 @end table
 

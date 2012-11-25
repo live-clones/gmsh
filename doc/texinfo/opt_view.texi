@@ -4,6 +4,11 @@
 @c
 
 @ftable @code
+@item View.Attributes
+Optional string attributes@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AxesFormatX
 Number format for X-axis (in standard C form)@*
 Default value: @code{"%.3g"}@*
@@ -114,6 +119,11 @@ Tenth stippling pattern@*
 Default value: @code{"1*0xFFFF"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.AbscissaRangeType
+Ascissa scale range type (1=default, 2=custom)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AdaptVisualizationGrid
 Use adaptive visualization grid (for high-order elements)?@*
 Default value: @code{0}@*
@@ -135,7 +145,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
-Position the scale or 2D plot automatically@*
+Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: top 1/3)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -303,6 +313,16 @@ Saved in: @code{General.OptionsFileName}
 Forced component 8 (if View.ForceComponents > 0)@*
 Default value: @code{8}@*
 Saved in: @code{General.OptionsFileName}
+
+@item View.CustomAbscissaMax
+User-defined maximum abscissa value@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.CustomAbscissaMin
+User-defined minimum abscissa value@*
+Default value: @code{0}@*
+Saved in: @code{-}
 
 @item View.CustomMax
 User-defined maximum value to be displayed@*
@@ -767,6 +787,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.Color.Axes
 Axes color@*
 Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Background2D
+Bacground color for 2D plots@*
+Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColorTable

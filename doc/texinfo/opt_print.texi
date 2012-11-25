@@ -64,6 +64,11 @@ Save labels in unrolled Gmsh geometries@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.GeoOnlyPhysicals
+Only save entities that belong to physical groups@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.GifDither
 Apply dithering to GIF output@*
 Default value: @code{0}@*
@@ -82,6 +87,11 @@ Saved in: @code{General.OptionsFileName}
 @item Print.GifTransparent
 Output transparent GIF image@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.Height
+Height of printed image; use (possibly scaled) current height if < 0@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.JpegQuality
@@ -132,6 +142,11 @@ Saved in: @code{General.OptionsFileName}
 @item Print.Text
 Print text strings?@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.Width
+Width of printed image; use (possibly scaled) current width if < 0)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

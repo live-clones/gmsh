@@ -44,6 +44,11 @@ Highlight orphan entities (lines connected to a single surface, etc.)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.LabelType
+Type of entity label (1=elementary number, 2=physical number)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Light
 Enable lighting for the geometry@*
 Default value: @code{1}@*
