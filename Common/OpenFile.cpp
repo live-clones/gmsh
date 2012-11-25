@@ -547,6 +547,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
 
 void ClearProject()
 {
+  Msg::Info("Clearing all models and views...");
 #if defined(HAVE_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     delete PView::list[i];
@@ -563,6 +564,7 @@ void ClearProject()
       fclose(openedFiles[i]);
     openedFiles.clear();
   }
+  Msg::Info("Done clearing all models and views");
 
   new GModel();
   GModel::current()->setFileName(CTX::instance()->defaultFileName);

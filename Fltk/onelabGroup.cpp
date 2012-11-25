@@ -74,11 +74,11 @@ class onelabGmshServer : public GmshServer{
         // if asked, refresh the onelab GUI
         std::vector<onelab::string> ps;
         onelab::server::instance()->get(ps, "Gmsh/Action");
-        if(FlGui::available() && ps.size() && ps[0].getValue() == "refresh"){
+        if(ps.size() && ps[0].getValue() == "refresh"){
           ps[0].setVisible(false);
           ps[0].setValue("");
           onelab::server::instance()->set(ps[0]);
-          onelab_cb(0, (void*)"refresh");
+          if(FlGui::available()) onelab_cb(0, (void*)"refresh");
         }
         // wait at most waitint seconds and respond to FLTK events
         if(FlGui::available()) FlGui::instance()->wait(waitint);
@@ -1588,7 +1588,7 @@ void solver_batch_cb(Fl_Widget *w, void *data)
   onelab::string o(c->getName() + "/Action");
 
   // initialize
-  onelabUtils::runGmshClient("initalize", CTX::instance()->solver.autoMesh);
+  onelabUtils::runGmshClient("initialize", CTX::instance()->solver.autoMesh);
   o.setValue("initialize");
   onelab::server::instance()->set(o);
   c->run();
@@ -1601,6 +1601,7 @@ void solver_batch_cb(Fl_Widget *w, void *data)
 
   // check
   onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
+  onelabUtils::guessModelName(c);
   o.setValue("check");
   onelab::server::instance()->set(o);
   c->run();
