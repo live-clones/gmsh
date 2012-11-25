@@ -3074,7 +3074,7 @@ as well as the way meshes are displayed in the GUI, is given in
 @cindex Solver, module
 @cindex Module, Solver
 
-External solvers can driven by Gmsh through the ONELAB
+External solvers can be driven by Gmsh through the ONELAB
 @url{http://www.onelab.info} interface. To add a new solver in the
 solver module, you need to specify its name (@code{Solver.Name0},
 @code{Solver.Name1}, etc.) and the path to the executable
