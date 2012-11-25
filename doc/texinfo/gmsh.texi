@@ -1039,10 +1039,6 @@ Make next view visible
 
 @sp 1 @c ----------------------------------------------
 
-@item <
-Go back to previous context
-@item >
-Go forward to next context
 @item 0
 Reload project file
 @item 1 or F1
@@ -1088,6 +1084,8 @@ Show post-processing view options
 
 @item Ctrl+i
 Show statistics window 
+@item Ctrl+d
+Attach/detach menu
 @item Ctrl+l
 Show message console
 @item Ctrl+n

@@ -127,34 +127,25 @@ std::vector<std::string> GetShortcutsUsage()
 {
   // If you make changes in this routine, please also change the texinfo
   // documentation (doc/texinfo/gmsh.texi)
-  std::vector<std::string> s;
-
 #if defined(__APPLE__)
 #  define CC(str) "Cmd+" str " "
 #else
 #  define CC(str) "Ctrl+" str
 #endif
-  s.push_back(" ");
-  s.push_back("Keyboard shortcuts:");
-  s.push_back(" ");
+  std::vector<std::string> s;
   s.push_back("  Left arrow    Go to previous time step");
   s.push_back("  Right arrow   Go to next time step");
   s.push_back("  Up arrow      Make previous view visible");
   s.push_back("  Down arrow    Make next view visible");
-  s.push_back(" ");
-  s.push_back("  <             Go back to previous context");
-  s.push_back("  >             Go forward to next context");
   s.push_back("  0             Reload project file");
   s.push_back("  1 or F1       Mesh lines");
   s.push_back("  2 or F2       Mesh surfaces");
   s.push_back("  3 or F3       Mesh volumes");
   s.push_back("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
-  s.push_back(" ");
   s.push_back("  g             Go to geometry module");
   s.push_back("  m             Go to mesh module");
   s.push_back("  p             Go to post-processing module");
   s.push_back("  s             Go to solver module");
-  s.push_back(" ");
   s.push_back("  Shift+a       Bring all windows to front");
   s.push_back("  Shift+g       Show geometry options");
   s.push_back("  Shift+m       Show mesh options");
@@ -164,8 +155,8 @@ std::vector<std::string> GetShortcutsUsage()
   s.push_back("  Shift+u       Show post-processing view plugins");
   s.push_back("  Shift+w       Show post-processing view options");
   s.push_back("  Shift+Escape  Enable full mouse selection");
-  s.push_back(" ");
   s.push_back("  " CC("i") "        Show statistics window");
+  s.push_back("  " CC("d") "        Attach/detach menu");
   s.push_back("  " CC("l") "        Show message console");
 #if defined(__APPLE__)
   s.push_back("  " CC("m") "        Minimize window");
@@ -175,7 +166,6 @@ std::vector<std::string> GetShortcutsUsage()
   s.push_back("  " CC("q") "        Quit");
   s.push_back("  " CC("r") "        Rename project file");
   s.push_back("  " CC("s") "        Save file as");
-  s.push_back(" ");
   s.push_back("  Shift+" CC("c") "  Show clipping plane window");
   s.push_back("  Shift+" CC("m") "  Show manipulator window");
   s.push_back("  Shift+" CC("n") "  Show option window");
@@ -183,7 +173,6 @@ std::vector<std::string> GetShortcutsUsage()
   s.push_back("  Shift+" CC("s") "  Save mesh in default format");
   s.push_back("  Shift+" CC("u") "  Show plugin window");
   s.push_back("  Shift+" CC("v") "  Show visibility window");
-  s.push_back(" ");
   s.push_back("  Alt+a         Loop through axes modes");
   s.push_back("  Alt+b         Hide/show bounding boxes");
   s.push_back("  Alt+c         Loop through predefined color schemes");
@@ -204,7 +193,6 @@ std::vector<std::string> GetShortcutsUsage()
   s.push_back("  Alt+x         Set X view");
   s.push_back("  Alt+y         Set Y view");
   s.push_back("  Alt+z         Set Z view");
-  s.push_back(" ");
   s.push_back("  Alt+Shift+a   Hide/show small axes");
   s.push_back("  Alt+Shift+b   Hide/show mesh volume faces");
   s.push_back("  Alt+Shift+d   Hide/show mesh surface faces");
@@ -217,9 +205,7 @@ std::vector<std::string> GetShortcutsUsage()
   s.push_back("  Alt+Shift+x   Set -X view");
   s.push_back("  Alt+Shift+y   Set -Y view");
   s.push_back("  Alt+Shift+z   Set -Z view");
-  s.push_back(" ");
   return s;
-
 #undef CC
 }
 
@@ -228,10 +214,6 @@ std::vector<std::string> GetMouseUsage()
   // If you make changes in this routine, please also change the texinfo
   // documentation (doc/texinfo/gmsh.texi)
   std::vector<std::string> s;
-
-  s.push_back(" ");
-  s.push_back("Mouse actions:");
-  s.push_back(" ");
   s.push_back("  Move                - Highlight the entity under the mouse pointer");
   s.push_back("                        and display its properties");
   s.push_back("                      - Resize a lasso zoom or a lasso (un)selection");
@@ -251,8 +233,6 @@ std::vector<std::string> GetMouseUsage()
   s.push_back("  For a 2 button mouse, Middle button = Shift+Left button");
   s.push_back("  For a 1 button mouse, Middle button = Shift+Left button, "
               "Right button = Alt+Left button");
-  s.push_back(" ");
-
   return s;
 }
 

@@ -524,33 +524,15 @@ void file_watch_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void help_short_cb(Fl_Widget *w, void *data)
-{
-  std::vector<std::string> s = GetShortcutsUsage();
-  for(unsigned int i = 0; i < s.size(); i++)
-    Msg::Direct("%s", s[i].c_str());
-  FlGui::instance()->showMessages();
-}
-
-static void help_mouse_cb(Fl_Widget *w, void *data)
-{
-  std::vector<std::string> s = GetMouseUsage();
-  for(unsigned int i = 0; i < s.size(); i++)
-    Msg::Direct("%s", s[i].c_str());
-  FlGui::instance()->showMessages();
-}
-
-static void help_command_line_cb(Fl_Widget *w, void *data)
-{
-  Msg::Direct(" ");
-  PrintUsage("gmsh");
-  FlGui::instance()->showMessages();
-}
-
 static void help_online_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
   SystemCall(ReplaceSubString("%s", "http://geuz.org/gmsh/doc/texinfo/", prog));
+}
+
+static void help_basic_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->about->winhelp->show();
 }
 
 void help_about_cb(Fl_Widget *w, void *data)
@@ -1982,9 +1964,7 @@ static Fl_Menu_Item bar_table[] = {
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"M&ouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
-    {"&Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
-    {"C&ommand Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
+    {"&Keyboard and Mouse Usage",    0, (Fl_Callback *)help_basic_cb, 0},
     {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
     {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
@@ -2046,9 +2026,7 @@ static Fl_Menu_Item sysbar_table[] = {
     {0},
   {"Help", 0, 0, 0, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"Mouse Actions",        0, (Fl_Callback *)help_mouse_cb, 0},
-    {"Keyboard Shortcuts",   0, (Fl_Callback *)help_short_cb, 0},
-    {"Command Line Options", 0, (Fl_Callback *)help_command_line_cb, 0},
+    {"Keyboard and Mouse Usage",        0, (Fl_Callback *)help_basic_cb, 0},
     {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?"},
     {0},
   {0}

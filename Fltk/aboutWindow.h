@@ -13,7 +13,7 @@
 
 class aboutWindow{
  public:
-  Fl_Window *win;
+  Fl_Window *win, *winhelp;
  public:
   aboutWindow();
 };
