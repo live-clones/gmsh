@@ -1,6 +1,16 @@
 #ifndef _EVALUATEDBASIS_H_
 #define _EVALUATEDBASIS_H_
 
+/**
+   @interface EvaluatedBasis
+   @brief Common Interface for Evaluated Basis
+
+   This class is the @em common @em interface for all EvaluatedBasis.@n
+
+   An EvaluatedBasis is a @em Basis that has been @em Evaluated at
+   some points.@n
+ */
+
 class EvaluatedBasis{
  protected:
   bool scalar;

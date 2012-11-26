@@ -126,6 +126,52 @@ class FunctionSpaceScalar : public FunctionSpace{
    @return Returns the @em gradient 
    of the basis functions associated
    to the given element (with correct @em closure)
+   **
+
+   @fn FunctionSpaceScalar::preEvaluateLocalFunctions
+   @param points A set of @c 3D Points
+
+   Precomputes the Local Functions of this FunctionSpace
+   at the given Points.
+
+   @note Each row of @c point is a new Point,
+   and each column is a coordinate (for a total of
+   3 columns)
+   **
+
+   @fn FunctionSpaceScalar::preEvaluateGradLocalFunctions
+   @param points A set of @c 3D Points
+
+   Precomputes the @em Gradient of the Local Functions 
+   of this FunctionSpace at the given Points.
+
+   @note Each row of @c point is a new Point,
+   and each column is a coordinate (for a total of
+   3 columns)
+   **
+
+   @fn FunctionSpaceScalar::getEvaluatedLocalFunctions
+   @param element A MElement
+   @return Returns the @em values of the @em precomputed 
+   Basis Functions associated
+   to the given element (with correct @em closure)
+   
+   @note
+   The returned values must be computed by
+   FunctionSpaceScalar::preEvaluateLocalFunctions(), 
+   if not an Exception will be thrown
+   **
+
+   @fn FunctionSpaceScalar::getEvaluatedGradLocalFunctions
+   @param element A MElement
+   @return Returns the @em values of the @em precomputed 
+   @em Gradients of the Basis Functions associated
+   to the given element (with correct @em closure)
+   
+   @note
+   The returned values must be computed by
+   FunctionSpaceScalar::preEvaluateGradLocalFunctions(), 
+   if not an Exception will be thrown
  */
 
 //////////////////////

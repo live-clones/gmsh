@@ -60,7 +60,7 @@ class BasisGenerator{
    Deletes this BasisGenerator
    **
 
-   @fn BasisGenerator::generate
+   @fn BasisGenerator::generate(int, int, int, std::string)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type
@@ -93,7 +93,7 @@ class BasisGenerator{
    @li @c lagrange for Lagrange's Basis Functions   
    **
 
-   @fn BasisGenerator::generate
+   @fn BasisGenerator::generate(int, int, int)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type

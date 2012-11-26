@@ -6,6 +6,13 @@
 #include "BasisScalar.h"
 #include "EvaluatedBasis.h"
 
+/**
+   @class EvaluatedBasisScalar
+   @brief A @em Scalar EvaluatedBasis 
+
+   This class is a @em Scalar EvaluatedBasis.@n
+*/
+
 class EvaluatedBasisScalar: public EvaluatedBasis{
  protected:
   std::vector            <std::vector<double>*>*   node;

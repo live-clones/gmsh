@@ -6,6 +6,13 @@
 #include "BasisVector.h"
 #include "EvaluatedBasis.h"
 
+/**
+   @class EvaluatedBasisVector
+   @brief A @em Vectorial EvaluatedBasis 
+
+   This class is a @em Vectorial EvaluatedBasis.@n
+*/
+
 class EvaluatedBasisVector: public EvaluatedBasis{
  protected:
   std::vector            <std::vector<fullVector<double> >*>*   node;
