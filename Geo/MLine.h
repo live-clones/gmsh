@@ -199,6 +199,8 @@ class MLineN : public MLine {
   }
   virtual int getTypeForMSH() const
   {
+    if(_vs.size() == 0) return MSH_LIN_2;
+    if(_vs.size() == 1) return MSH_LIN_3;
     if(_vs.size() == 2) return MSH_LIN_4;
     if(_vs.size() == 3) return MSH_LIN_5;
     if(_vs.size() == 4) return MSH_LIN_6;
