@@ -2,8 +2,11 @@
 #define _FUNCTIONSPACESCALAR_H_
 
 #include "fullMatrix.h"
+#include "Exception.h"
 #include "BasisScalar.h"
 #include "GradBasis.h"
+#include "EvaluatedBasisScalar.h"
+#include "EvaluatedBasisVector.h"
 #include "FunctionSpace.h"
 
 /**
@@ -30,6 +33,12 @@ class FunctionSpaceScalar : public FunctionSpace{
   mutable bool       hasGrad;
   mutable GradBasis* gradBasis;
 
+  bool locPreEvaluated;
+  bool gradPreEvaluated;
+  
+  EvaluatedBasisScalar* evalLoc;
+  EvaluatedBasisVector* evalGrad;
+
  public:
   virtual ~FunctionSpaceScalar(void);
 
@@ -49,6 +58,15 @@ class FunctionSpaceScalar : public FunctionSpace{
   const std::vector<const std::vector<Polynomial>*>
     getGradLocalFunctions(const MElement& element) const;
 
+  void preEvaluateLocalFunctions(fullMatrix<double>& points);
+  void preEvaluateGradLocalFunctions(fullMatrix<double>& points);
+
+  const std::vector<const std::vector<double>*>
+    getEvaluatedLocalFunctions(const MElement& element) const;
+
+  const std::vector<const std::vector<fullVector<double> >*>
+    getEvaluatedGradLocalFunctions(const MElement& element) const;
+  
  protected:
   FunctionSpaceScalar(void);
 };
@@ -121,7 +139,7 @@ FunctionSpaceScalar::getLocalFunctions(const MElement& element) const{
 
 inline const std::vector<const std::vector<Polynomial>*>
 FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
-
+  
   // Got Grad Basis ? //
   // --> mutable data 
   //  --> Just a 'cache memory' 
@@ -129,8 +147,24 @@ FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
     gradBasis = new GradBasis(*basisScalar);
     hasGrad   = true;
   }
-
+  
   return locBasis(element, *gradBasis);
+}
+
+inline const std::vector<const std::vector<double>*>
+FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
+  if(!locPreEvaluated)
+    throw Exception("Local Basis Functions not PreEvaluated");
+
+  return locEvalBasis(element, *evalLoc);
+}
+
+inline const std::vector<const std::vector<fullVector<double> >*>
+FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) const{
+  if(!gradPreEvaluated)
+    throw Exception("Gradients of Local Basis Functions not PreEvaluated");
+
+  return locEvalBasis(element, *evalGrad);
 }
 
 #endif

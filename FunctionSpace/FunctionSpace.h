@@ -9,6 +9,9 @@
 #include "BasisScalar.h"
 #include "BasisVector.h"
 
+#include "EvaluatedBasisScalar.h"
+#include "EvaluatedBasisVector.h"
+
 #include "Comparators.h"
 #include "Dof.h"
 #include "GroupOfDof.h"
@@ -117,6 +120,16 @@ class FunctionSpace{
     const std::vector<const std::vector<Polynomial>*>
     locBasis(const MElement& element, 
 	     const BasisVector& basis);
+
+  static 
+    const std::vector<const std::vector<double>*>
+    locEvalBasis(const MElement& element, 
+		 const EvaluatedBasisScalar& evalBasis);
+
+  static 
+    const std::vector<const std::vector<fullVector<double> >*>
+    locEvalBasis(const MElement& element,
+		 const EvaluatedBasisVector& evalBasis);
 };
 
 

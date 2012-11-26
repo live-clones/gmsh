@@ -17,6 +17,9 @@ set(SRC
   CurlBasis.cpp
   DivBasis.cpp
 
+  EvaluatedBasis.cpp
+  EvaluatedBasisScalar.cpp
+  EvaluatedBasisVector.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp
