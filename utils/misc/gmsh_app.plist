@@ -43,7 +43,7 @@
         <key>CFBundleTypeExtensions</key><array>
           <string>pro</string>
           <string>ol</string></array>
-        <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>
+        <key>CFBundleTypeIconFile</key><string>GmshSol.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Solver File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GSOL</string></array>
         <key>CFBundleTypeRole</key><string>Viewer</string>

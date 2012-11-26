@@ -1305,6 +1305,8 @@ if(APPLE AND ENABLE_APP_BUNDLE)
           RENAME GmshGeo.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
           RENAME GmshMsh.icns)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsSol.icns DESTINATION .
+          RENAME GmshSol.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
   set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
