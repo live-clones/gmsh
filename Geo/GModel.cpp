@@ -2313,6 +2313,7 @@ void GModel::save(std::string fileName)
   CreateOutputFile(fileName, guess);
   GModel::setCurrent(temp);
 }
+
 GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
 
   if (num ==-1) num =  getMaxElementaryNumber(1) + 1;

@@ -213,9 +213,8 @@ int GModel::readMED(const std::string &name)
   for(unsigned int i = 0; i < meshNames.size(); i++){
     GModel *m = findByName(meshNames[i]);
     if(!m){
-      for(unsigned int j = 0; j < GModel::list.size(); j++)
-        GModel::list[j]->setVisibility(0);
       m = new GModel(meshNames[i]);
+      GModel::setCurrent(m);
     }
     ret = m->readMED(name, i);
     if(!ret) return 0;
