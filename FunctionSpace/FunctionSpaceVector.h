@@ -2,9 +2,12 @@
 #define _FUNCTIONSPACEVECTOR_H_
 
 #include "fullMatrix.h"
+#include "Exception.h"
 #include "BasisVector.h"
 #include "CurlBasis.h"
 #include "DivBasis.h"
+#include "EvaluatedBasisScalar.h"
+#include "EvaluatedBasisVector.h"
 #include "FunctionSpace.h"
 
 /**
@@ -34,6 +37,14 @@ class FunctionSpaceVector : public FunctionSpace{
   mutable bool       hasDiv;
   mutable DivBasis*  divBasis;
 
+  bool locPreEvaluated;
+  bool curlPreEvaluated;
+  bool divPreEvaluated;
+  
+  EvaluatedBasisVector* evalLoc;
+  EvaluatedBasisVector* evalCurl;
+  EvaluatedBasisScalar* evalDiv;
+
  public:
   virtual ~FunctionSpaceVector(void);
 
@@ -55,6 +66,19 @@ class FunctionSpaceVector : public FunctionSpace{
 
   const std::vector<const Polynomial*> 
     getDivLocalFunctions(const MElement& element) const;
+
+  void preEvaluateLocalFunctions(fullMatrix<double>& points);
+  void preEvaluateCurlLocalFunctions(fullMatrix<double>& points);
+  void preEvaluateDivLocalFunctions(fullMatrix<double>& points);
+
+  const std::vector<const std::vector<fullVector<double> >*>
+    getEvaluatedLocalFunctions(const MElement& element) const;
+
+  const std::vector<const std::vector<fullVector<double> >*>
+    getEvaluatedCurlLocalFunctions(const MElement& element) const;
+
+  const std::vector<const std::vector<double>*>
+    getEvaluatedDivLocalFunctions(const MElement& element) const;
 
  protected:
   FunctionSpaceVector(void);
@@ -122,6 +146,75 @@ class FunctionSpaceVector : public FunctionSpace{
    @return Returns the @em divergence
    of the basis functions associated
    to the given element (with correct @em closure)
+   **
+
+   @fn FunctionSpaceVector::preEvaluateLocalFunctions
+   @param points A set of @c 3D Points
+
+   Precomputes the Local Functions of this FunctionSpace
+   at the given Points.
+
+   @note Each row of @c point is a new Point,
+   and each column is a coordinate (for a total of
+   3 columns)
+   **
+
+   @fn FunctionSpaceVector::preEvaluateCurlLocalFunctions
+   @param points A set of @c 3D Points
+
+   Precomputes the @em Curl of the Local Functions 
+   of this FunctionSpace at the given Points.
+
+   @note Each row of @c point is a new Point,
+   and each column is a coordinate (for a total of
+   3 columns)
+   **
+
+   @fn FunctionSpaceVector::preEvaluateDivLocalFunctions
+   @param points A set of @c 3D Points
+
+   Precomputes the @em Divergence of the Local Functions 
+   of this FunctionSpace at the given Points.
+
+   @note Each row of @c point is a new Point,
+   and each column is a coordinate (for a total of
+   3 columns)
+   **
+
+   @fn FunctionSpaceVector::getEvaluatedLocalFunctions
+   @param element A MElement
+   @return Returns the @em values of the @em precomputed 
+   Basis Functions associated
+   to the given element (with correct @em closure)
+   
+   @note
+   The returned values @em must be computed by
+   FunctionSpaceVector::preEvaluateLocalFunctions(), 
+   if not an Exception will be thrown
+   **
+
+   @fn FunctionSpaceVector::getEvaluatedCurlLocalFunctions
+   @param element A MElement
+   @return Returns the @em values of the @em precomputed 
+   @em Curls of the Basis Functions associated
+   to the given element (with correct @em closure)
+   
+   @note
+   The returned values @em must be computed by
+   FunctionSpaceVector::preEvaluateCurlLocalFunctions(), 
+   if not an Exception will be thrown
+   **
+
+   @fn FunctionSpaceVector::getEvaluatedDivLocalFunctions
+   @param element A MElement
+   @return Returns the @em values of the @em precomputed 
+   @em Divergences of the Basis Functions associated
+   to the given element (with correct @em closure)
+   
+   @note
+   The returned values @em must be computed by
+   FunctionSpaceVector::preEvaluateDivLocalFunctions(), 
+   if not an Exception will be thrown
 */
 
 //////////////////////
@@ -159,6 +252,30 @@ FunctionSpaceVector::getDivLocalFunctions(const MElement& element) const{
   }
 
   return locBasis(element, *divBasis);
+}
+
+inline const std::vector<const std::vector<fullVector<double> >*>
+FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
+  if(!locPreEvaluated)
+    throw Exception("Local Basis Functions not PreEvaluated");
+
+  return locEvalBasis(element, *evalLoc);
+}
+
+inline const std::vector<const std::vector<fullVector<double> >*>
+FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) const{
+  if(!curlPreEvaluated)
+    throw Exception("Curls of Local Basis Functions not PreEvaluated");
+
+  return locEvalBasis(element, *evalCurl);
+}
+
+inline const std::vector<const std::vector<double>*>
+FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) const{
+  if(!divPreEvaluated)
+    throw Exception("Divergences of Local Basis Functions not PreEvaluated");
+
+  return locEvalBasis(element, *evalDiv);
 }
 
 #endif

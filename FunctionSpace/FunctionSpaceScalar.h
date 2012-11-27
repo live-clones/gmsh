@@ -157,7 +157,7 @@ class FunctionSpaceScalar : public FunctionSpace{
    to the given element (with correct @em closure)
    
    @note
-   The returned values must be computed by
+   The returned values @em must be computed by
    FunctionSpaceScalar::preEvaluateLocalFunctions(), 
    if not an Exception will be thrown
    **
@@ -169,7 +169,7 @@ class FunctionSpaceScalar : public FunctionSpace{
    to the given element (with correct @em closure)
    
    @note
-   The returned values must be computed by
+   The returned values @em must be computed by
    FunctionSpaceScalar::preEvaluateGradLocalFunctions(), 
    if not an Exception will be thrown
  */

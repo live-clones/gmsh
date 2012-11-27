@@ -8,6 +8,8 @@ FunctionSpaceScalar::FunctionSpaceScalar(void){
   
   locPreEvaluated  = false;
   gradPreEvaluated = false;  
+  evalLoc          = NULL;
+  evalGrad         = NULL;
 }
 
 FunctionSpaceScalar::~FunctionSpaceScalar(void){
