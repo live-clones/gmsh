@@ -1,6 +1,6 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2011 C. Geuzaine
+ * Copyright (C) 1999-2012 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
@@ -36,7 +36,6 @@
 #ifndef __GL2PS_H__
 #define __GL2PS_H__
 
-#include "GmshConfig.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -77,18 +76,22 @@
 #  endif
 #endif
 
+#if defined(HAVE_NO_VSNPRINTF)
+#  define GL2PS_HAVE_NO_VSNPRINTF
+#endif
+
 /* Version number */
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 3
-#define GL2PS_PATCH_VERSION 6
+#define GL2PS_PATCH_VERSION 8
 #define GL2PS_EXTRA_VERSION ""
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
                        0.01 * GL2PS_MINOR_VERSION + \
                        0.0001 * GL2PS_PATCH_VERSION)
 
-#define GL2PS_COPYRIGHT "(C) 1999-2011 C. Geuzaine"
+#define GL2PS_COPYRIGHT "(C) 1999-2012 C. Geuzaine"
 
 /* Output file formats (the values and the ordering are important!) */
 
@@ -176,6 +179,9 @@ GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname,
                              GLshort fontsize);
 GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname,
                                 GLshort fontsize, GLint align, GLfloat angle);
+GL2PSDLL_API GLint gl2psTextOptColor(const char *str, const char *fontname,
+                                     GLshort fontsize, GLint align, GLfloat angle,
+                                     GL2PSrgba color);
 GL2PSDLL_API GLint gl2psSpecial(GLint format, const char *str);
 GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
                                    GLint xorig, GLint yorig,
@@ -192,6 +198,7 @@ GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
                                      const unsigned char *imagemap);
 GL2PSDLL_API const char *gl2psGetFileExtension(GLint format);
 GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format);
+GL2PSDLL_API GLint gl2psGetFileFormat();
 
 #if defined(__cplusplus)
 }
