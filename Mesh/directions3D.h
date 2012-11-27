@@ -40,8 +40,8 @@ class Matrix{
 
 class Frame_field{
  private:
-  static std::map<MVertex*,Matrix> field;
-  static std::vector<std::pair<MVertex*,Matrix> > random;
+  static std::map<MVertex*,Matrix> temp;
+  static std::vector<std::pair<MVertex*,Matrix> > field;
   #if defined(HAVE_ANN)
   static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
@@ -79,7 +79,7 @@ class Size_field{
 
 class Nearest_point{
  private:
-  static std::vector<SPoint3> random;
+  static std::vector<SPoint3> field;
   static std::vector<MElement*> vicinity;
   #if defined(HAVE_ANN)
   static ANNpointArray duplicate;
