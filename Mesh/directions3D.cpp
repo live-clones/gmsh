@@ -126,8 +126,8 @@ void Frame_field::init_region(GRegion* gr){
 	
   faces = gr->faces();	
 	
+  temp.clear();
   field.clear();
-  random.clear();
 
   for(it=faces.begin();it!=faces.end();it++)
   {
@@ -135,20 +135,20 @@ void Frame_field::init_region(GRegion* gr){
 	init_face(gf);
   }
 
-  duplicate = annAllocPts(field.size(),3);
+  duplicate = annAllocPts(temp.size(),3);
 
   index = 0;
-  for(it2=field.begin();it2!=field.end();it2++){
+  for(it2=temp.begin();it2!=temp.end();it2++){
 	vertex = it2->first;
 	m = it2->second;
 	duplicate[index][0] = vertex->x();
 	duplicate[index][1] = vertex->y();
 	duplicate[index][2] = vertex->z();
-	random.push_back(std::pair<MVertex*,Matrix>(vertex,m));
+	field.push_back(std::pair<MVertex*,Matrix>(vertex,m));
 	index++;
   }
 
-  kd_tree = new ANNkd_tree(duplicate,field.size(),3);
+  kd_tree = new ANNkd_tree(duplicate,temp.size(),3);
   #endif
 }
 
@@ -200,7 +200,7 @@ void Frame_field::init_face(GFace* gf){
 	    m.set_m13(v3.x());
 	    m.set_m23(v3.y());
 	    m.set_m33(v3.z());
-	    field.insert(std::pair<MVertex*,Matrix>(vertex,m));
+	    temp.insert(std::pair<MVertex*,Matrix>(vertex,m));
 	  }
 	}
   }
@@ -221,7 +221,7 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPo
   GPoint gp2;
 
   ok = true;
-  k = 0.1;
+  k = 0.00001;
   reparamMeshVertexOnFace(vertex,gf,point);
   x = point.x();
   y = point.y();
@@ -247,6 +247,8 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPo
 	if(!inside_domain(octree,x2,y2)) ok = false;
   }
 
+  ok = true; //?	
+	
   if(ok){
 	gp1 = gf->point(x1,y1);
 	gp2 = gf->point(x2,y2);
@@ -286,7 +288,7 @@ Matrix Frame_field::search(double x,double y,double z){
   delete[] distances;
   #endif
 
-  return random[index].second;
+  return field[index].second;
 }
 
 Matrix Frame_field::combine(double x,double y,double z){
@@ -369,7 +371,7 @@ void Frame_field::print_field1(){
   std::ofstream file("frame1.pos");
   file << "View \"test\" {\n";
 
-  for(it=field.begin();it!=field.end();it++){
+  for(it=temp.begin();it!=temp.end();it++){
     vertex = it->first;
 	m = it->second;
 
@@ -452,8 +454,8 @@ GRegion* Frame_field::test(){
 
 void Frame_field::clear(){
   Nearest_point::clear();	
+  temp.clear();
   field.clear();
-  random.clear();
   #if defined(HAVE_ANN)
   delete duplicate;
   delete kd_tree;
@@ -748,7 +750,7 @@ void Nearest_point::init_region(GRegion* gr){
   MElement* element;
   GFace* gf;
   std::list<GFace*> faces;
-  std::set<MVertex*> vertices;
+  std::set<MVertex*> temp;
   std::list<GFace*>::iterator it;
   std::set<MVertex*>::iterator it2;
   fullMatrix<double> gauss_points;
@@ -759,9 +761,9 @@ void Nearest_point::init_region(GRegion* gr){
 	
   faces = gr->faces();
 	
-  random.clear();
+  field.clear();
   vicinity.clear();
-  vertices.clear();
+  temp.clear();
 	
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
@@ -788,33 +790,33 @@ void Nearest_point::init_region(GRegion* gr){
 		y = T(u,v,y1,y2,y3);
 		z = T(u,v,z1,z2,z3);
 		
-		random.push_back(SPoint3(x,y,z));
+		field.push_back(SPoint3(x,y,z));
 		vicinity.push_back(element);
 	  }
 		
-	  vertices.insert(element->getVertex(0));
-	  vertices.insert(element->getVertex(1));
-	  vertices.insert(element->getVertex(2));
+	  temp.insert(element->getVertex(0));
+	  temp.insert(element->getVertex(1));
+	  temp.insert(element->getVertex(2));
 	}
   }
 
-  for(it2=vertices.begin();it2!=vertices.end();it2++){
+  for(it2=temp.begin();it2!=temp.end();it2++){
 	x = (*it2)->x();
 	y = (*it2)->y();
 	z = (*it2)->z();
-    //random.push_back(SPoint3(x,y,z));
+    //field.push_back(SPoint3(x,y,z));
 	//vicinity.push_back(NULL);
   }
 	
-  duplicate = annAllocPts(random.size(),3);
+  duplicate = annAllocPts(field.size(),3);
 	
-  for(i=0;i<random.size();i++){
-	duplicate[i][0] = random[i].x();
-	duplicate[i][1] = random[i].y();
-	duplicate[i][2] = random[i].z();
+  for(i=0;i<field.size();i++){
+	duplicate[i][0] = field[i].x();
+	duplicate[i][1] = field[i].y();
+	duplicate[i][2] = field[i].z();
   }
 
-  kd_tree = new ANNkd_tree(duplicate,random.size(),3);
+  kd_tree = new ANNkd_tree(duplicate,field.size(),3);
   #endif
 }
 
@@ -849,7 +851,7 @@ bool Nearest_point::search(double x,double y,double z,SVector3& vec){
 	point = closest(vicinity[index],SPoint3(x,y,z));
   }
   else{
-    point = random[index];
+    point = field[index];
   }
 	
   e2 = 0.000001;	
@@ -1021,7 +1023,7 @@ GRegion* Nearest_point::test(){
 }
 
 void Nearest_point::clear(){
-  random.clear();
+  field.clear();
   vicinity.clear();
   #if defined(HAVE_ANN)
   delete duplicate;
@@ -1032,8 +1034,8 @@ void Nearest_point::clear(){
 
 /****************static declarations****************/
 
-std::map<MVertex*,Matrix> Frame_field::field;
-std::vector<std::pair<MVertex*,Matrix> > Frame_field::random;
+std::map<MVertex*,Matrix> Frame_field::temp;
+std::vector<std::pair<MVertex*,Matrix> > Frame_field::field;
 #if defined(HAVE_ANN)
 ANNpointArray Frame_field::duplicate;
 ANNkd_tree* Frame_field::kd_tree;
@@ -1042,7 +1044,7 @@ ANNkd_tree* Frame_field::kd_tree;
 std::map<MVertex*,double> Size_field::boundary;
 MElementOctree* Size_field::octree;
 
-std::vector<SPoint3> Nearest_point::random;
+std::vector<SPoint3> Nearest_point::field;
 std::vector<MElement*> Nearest_point::vicinity;
 #if defined(HAVE_ANN)
 ANNpointArray Nearest_point::duplicate;
