@@ -130,11 +130,13 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
     GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
     if(CTX::instance()->print.width <= 0){
-      width *= CTX::instance()->print.height / height;
+      double w = width * CTX::instance()->print.height / (double)height;
+      width = (int)w;
       height = CTX::instance()->print.height;
     }
     else if(CTX::instance()->print.height <= 0){
-      height *= CTX::instance()->print.width / width;
+      double h = height * CTX::instance()->print.width / (double)width;
+      height = (int)h;
       width = CTX::instance()->print.width;
     }
     else{
