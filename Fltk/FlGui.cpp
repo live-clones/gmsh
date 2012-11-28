@@ -40,7 +40,7 @@ typedef unsigned long intptr_t;
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "OpenFile.h"
-#include "Win32Icon.h"
+#include "WinIcon.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "Context.h"
