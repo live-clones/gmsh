@@ -77,6 +77,8 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
 void Msg::Init(int argc, char **argv)
 {
+  int sargc = 0;
+  char **sargv = new char*[argc];
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
@@ -87,8 +89,6 @@ void Msg::Init(int argc, char **argv)
 #endif
 #if defined(HAVE_PETSC)
   // prune argv from stuff that confuses PETSc
-  int sargc = 0;
-  char **sargv = new char*[argc];
   for(int i = 0; i < argc; i++){
     std::string val(argv[i]);
     if(val != "-info" && val != "-help" && val != "-v")
