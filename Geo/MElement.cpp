@@ -112,19 +112,25 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
-//  if (getType() == TYPE_PYR) return;
-  extern double mesh_functional_distorsion(MElement*,double,double);
+  extern double mesh_functional_distorsion_2D(MElement*,double,double);
+  extern double mesh_functional_distorsion_3D(MElement*,double,double,double);
   if (getPolynomialOrder() == 1) return;
   const bezierBasis *jac = getJacobianFuncSpace()->bezier;
   fullVector<double>Ji(jac->points.size1());
   for (int i=0;i<jac->points.size1();i++){
     double u = jac->points(i,0);
     double v = jac->points(i,1);
-    if (getType() == TYPE_QUA){
-      u = -1 + 2*u;
-      v = -1 + 2*v;
+    if (getDim() == 2) {
+      if (getType() == TYPE_QUA) {
+        u = -1 + 2*u;
+        v = -1 + 2*v;
+      }
+      Ji(i) = mesh_functional_distorsion_2D(this,u,v);
     }
-    Ji(i) = mesh_functional_distorsion(this,u,v);
+    else {
+      double w = jac->points(i,2);
+      Ji(i) = mesh_functional_distorsion_3D(this,u,v,w);
+    }
   }
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
   jac->matrixLag2Bez.mult(Ji,Bi);

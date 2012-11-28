@@ -208,7 +208,7 @@ double conditionNumberAndDerivativeOfTet(const double &x1, const double &y1, con
 }
 */
 
-double mesh_functional_distorsion(MElement *t, double u, double v)
+double mesh_functional_distorsion_2D(MElement *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];
@@ -253,25 +253,25 @@ static double MINQ (double a, double b, double c){
 
 double mesh_functional_distorsion_p2_bezier_refined(MTriangle *t)
 {
-  double J1 =mesh_functional_distorsion(t,0.0,0.0);
-  double J2 =mesh_functional_distorsion(t,1.0,0.0);
-  double J3 =mesh_functional_distorsion(t,0.0,1.0);
-  double J4 =mesh_functional_distorsion(t,0.5,0.0);
-  double J5 =mesh_functional_distorsion(t,0.5,0.5);
-  double J6 =mesh_functional_distorsion(t,0.0,0.5);
+  double J1 =mesh_functional_distorsion_2D(t,0.0,0.0);
+  double J2 =mesh_functional_distorsion_2D(t,1.0,0.0);
+  double J3 =mesh_functional_distorsion_2D(t,0.0,1.0);
+  double J4 =mesh_functional_distorsion_2D(t,0.5,0.0);
+  double J5 =mesh_functional_distorsion_2D(t,0.5,0.5);
+  double J6 =mesh_functional_distorsion_2D(t,0.0,0.5);
 
-  double J36 =mesh_functional_distorsion(t,0.0,.75);
-  double J35 =mesh_functional_distorsion(t,0.25,.75);
-  double J56 =mesh_functional_distorsion(t,0.25,.5);
+  double J36 =mesh_functional_distorsion_2D(t,0.0,.75);
+  double J35 =mesh_functional_distorsion_2D(t,0.25,.75);
+  double J56 =mesh_functional_distorsion_2D(t,0.25,.5);
 
-  double J16 =mesh_functional_distorsion(t,0.0,.25);
-  double J14 =mesh_functional_distorsion(t,0.25,.0);
-  double J46 =mesh_functional_distorsion(t,0.25,.25);
+  double J16 =mesh_functional_distorsion_2D(t,0.0,.25);
+  double J14 =mesh_functional_distorsion_2D(t,0.25,.0);
+  double J46 =mesh_functional_distorsion_2D(t,0.25,.25);
 
 
-  double J45 =mesh_functional_distorsion(t,0.5,.25);
-  double J52 =mesh_functional_distorsion(t,0.75,.25);
-  double J24 =mesh_functional_distorsion(t,0.75,.0);
+  double J45 =mesh_functional_distorsion_2D(t,0.5,.25);
+  double J52 =mesh_functional_distorsion_2D(t,0.75,.25);
+  double J24 =mesh_functional_distorsion_2D(t,0.75,.0);
 
   double d[15] = {
     J1,J6,J4,2*J16-0.5*(J1+J6),2*J14-0.5*(J1+J4),2*J46-0.5*(J6+J4),
@@ -282,12 +282,12 @@ double mesh_functional_distorsion_p2_bezier_refined(MTriangle *t)
 
 double mesh_functional_distorsion_p2_exact(MTriangle *t)
 {
-  double J1 =mesh_functional_distorsion(t,0.0,0.0);
-  double J2 =mesh_functional_distorsion(t,1.0,0.0);
-  double J3 =mesh_functional_distorsion(t,0.0,1.0);
-  double J4 =mesh_functional_distorsion(t,0.5,0.0);
-  double J5 =mesh_functional_distorsion(t,0.5,0.5);
-  double J6 =mesh_functional_distorsion(t,0.0,0.5);
+  double J1 =mesh_functional_distorsion_2D(t,0.0,0.0);
+  double J2 =mesh_functional_distorsion_2D(t,1.0,0.0);
+  double J3 =mesh_functional_distorsion_2D(t,0.0,1.0);
+  double J4 =mesh_functional_distorsion_2D(t,0.5,0.0);
+  double J5 =mesh_functional_distorsion_2D(t,0.5,0.5);
+  double J6 =mesh_functional_distorsion_2D(t,0.0,0.5);
 
   const double a = J1;
   const double b = -3*J1-J2+4*J4;
@@ -347,7 +347,7 @@ double mesh_functional_distorsion_pN(MElement *t)
       v = -1 + 2*v;
     }
 
-    Ji(i) = mesh_functional_distorsion(t,u,v);
+    Ji(i) = mesh_functional_distorsion_2D(t,u,v);
   }
 
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );
@@ -406,16 +406,16 @@ double qmDistorsionOfMapping (MQuadrangle *e)
 }
 
 
-static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, double w)
+double mesh_functional_distorsion_3D(MElement *t, double u, double v, double w)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];
-  t->getPrimaryJacobian(u, v, w, mat);
-  const double det1 = det3x3(mat);
-  t->getJacobian(u, v, w, mat);
-  const double detN = det3x3(mat);
+  const double det1 = t->getPrimaryJacobian(u, v, w, mat);
+//  const double det1 = det3x3(mat);
+  const double detN = t->getJacobian(u, v, w, mat);
+//  const double detN = det3x3(mat);
   if (det1 == 0 || detN == 0) return 0;
-  double dist = det1 / detN;
+  double dist = detN / det1;
   return dist;
 }
 
@@ -427,7 +427,7 @@ double qmDistorsionOfMapping(MTetrahedron *t)
     const double u = jac->points(i,0);
     const double v = jac->points(i,1);
     const double w = jac->points(i,2);
-    Ji(i) = mesh_functional_distorsion(t,u,v,w);
+    Ji(i) = mesh_functional_distorsion_3D(t,u,v,w);
   }
 
   fullVector<double> Bi( jac->matrixLag2Bez.size1() );

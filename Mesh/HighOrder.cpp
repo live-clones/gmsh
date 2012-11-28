@@ -1325,7 +1325,7 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
                  avg / (count ? count : 1));
 }
 
-extern double mesh_functional_distorsion(MElement *t, double u, double v);
+extern double mesh_functional_distorsion_2D(MElement *t, double u, double v);
 
 void printJacobians(GModel *m, const char *nm)
 {
@@ -1343,7 +1343,7 @@ void printJacobians(GModel *m, const char *nm)
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);
           t->pnt(u, v, 0, pt);
-          D[i][k] = mesh_functional_distorsion(t, u, v);
+          D[i][k] = mesh_functional_distorsion_2D(t, u, v);
           //X[i][k] = u;
           //Y[i][k] = v;
           //Z[i][k] = 0.0;
