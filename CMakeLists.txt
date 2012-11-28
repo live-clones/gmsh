@@ -1088,7 +1088,7 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 if(WIN32 AND NOT MSVC OR CYGWIN)
   if(HAVE_64BIT_SIZE_T)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-      "-Wl,--stack,16777216 -mwindows -static")
+      "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res -mwindows -static")
   else(HAVE_64BIT_SIZE_T)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS 
       "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows -static")
