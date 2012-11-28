@@ -77,20 +77,31 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
 void Msg::Init(int argc, char **argv)
 {
+  int sargc = argc;
+  char **sargv = argv;
+  for(int i = 0; i < argc; i++){
+    std::string val(argv[i]);
+    if(val == "info" || val == "-info" ||
+       val == "help" || val == "-help"){
+      sargc = 0;
+      sargv = 0;
+      break;
+    }
+  }
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
-  if(!flag) MPI_Init(&argc, &argv);
+  if(!flag) MPI_Init(&sargc, &sargv);
   MPI_Comm_rank(MPI_COMM_WORLD, &_commRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
 #if defined(HAVE_PETSC)
-  PetscInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
   PetscPopSignalHandler();
 #endif
 #if defined(HAVE_SLEPC)
-  SlepcInitialize(&argc, &argv, PETSC_NULL, PETSC_NULL);
+  SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
 #endif
   time_t now;
   time(&now);
