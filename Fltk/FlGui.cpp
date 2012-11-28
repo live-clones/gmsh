@@ -138,8 +138,7 @@ FlGui::FlGui(int argc, char **argv)
 
 #if defined(WIN32)
   graph[0]->getWindow()->icon
-    ((const char*)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
-                            IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
+    ((const void*)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
 #elif defined(__APPLE__)
   // nothing to do here
 #else
