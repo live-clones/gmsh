@@ -1,5 +1,6 @@
 ?: new single-window GUI, with dynamically customizable widget tree; faster
-STEP/BRep import; minor bug fixes.
+STEP/BRep import; arbitrary size image export; faster 2D Delaunay/Frontal
+algorithms; minor bug fixes.
 
 2.6.1 (July 15, 2012): minor improvements and bug fixes.
 
