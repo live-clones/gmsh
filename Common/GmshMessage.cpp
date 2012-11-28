@@ -95,11 +95,11 @@ void Msg::Init(int argc, char **argv)
       sargv[sargc++] = argv[i];
   }
   PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
-  delete [] sargv;
   PetscPopSignalHandler();
-#endif
 #if defined(HAVE_SLEPC)
   SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+#endif
+  delete [] sargv;
 #endif
   time_t now;
   time(&now);
