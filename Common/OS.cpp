@@ -259,7 +259,7 @@ void RedirectIOToConsole()
   // attaching to parent console, which allows to use the DOS shell to work 
   // with Gmsh on the command line (without this hack, you need to either use
   // a better shell (e.g. bash), or compile a /subsystem:console version
-  AttachConsole(ATTACH_PARENT_PROCESS);
+  if(!AttachConsole(ATTACH_PARENT_PROCESS)) return;
   // redirect unbuffered stdout, stdin and stderr to the console
   intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
   int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
