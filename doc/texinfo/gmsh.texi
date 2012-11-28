@@ -277,8 +277,8 @@ Frequently asked questions
 @cindex Internet address
 @cindex Download
 
-The source code and various pre-compiled versions of Gmsh (for Unix,
-Windows and Mac OS) can be downloaded from @uref{http://geuz.org/gmsh/}.
+The source code and various pre-compiled versions of Gmsh (for Windows,
+Mac and Unix) can be downloaded from @uref{http://geuz.org/gmsh/}.
 Gmsh is also directly available in pre-packaged form in various Linux
 and BSD distributions (Debian, Ubuntu, FreeBSD, ...).
 
@@ -5102,7 +5102,7 @@ mailing list (@email{gmsh@@geuz.org}).
 @enumerate
 @item Which OSes does Gmsh run on?
 
-Gmsh runs on Windows XP/Vista, Mac OS X, Linux and most Unix variants.
+Gmsh runs on Windows, Mac OS X, Linux and most Unix variants.
 
 @item Are there additional requirements to run Gmsh?
 
