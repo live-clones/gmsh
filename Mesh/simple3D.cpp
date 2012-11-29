@@ -451,7 +451,7 @@ Metric Filler::get_metric(double x,double y,double z){
   Metric m;
   Matrix m2;
 
-  m2 = Frame_field::combine(x,y,z);
+  m2 = Frame_field::search(x,y,z);
 
   m.set_m11(m2.get_m11());
   m.set_m21(m2.get_m21());
