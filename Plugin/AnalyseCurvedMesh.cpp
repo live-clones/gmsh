@@ -75,102 +75,6 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "Tolerance = R+ , << 1 : tolerance (relatively to J_min and J_max) used during the computation of J_min and J_max";
 }
 
-// Miscellaneous method
-static void setJacobian(MElement *el, const JacobianBasis *jfs, fullVector<double> &jacobian)
-{
-  int numVertices = el->getNumVertices();
-  fullVector<double> nodesX(numVertices);
-  fullVector<double> nodesY;
-  fullVector<double> nodesZ;
-  fullVector<double> interm1;
-  fullVector<double> interm2;
-
-  switch (el->getDim()) {
-
-    case 1 :
-      for (int i = 0; i < numVertices; i++) {
-        nodesX(i) = el->getVertex(i)->x();
-      }
-      jfs->gradShapeMatX.mult(nodesX, jacobian);
-      break;
-
-    case 2 :
-      nodesY.resize(numVertices);
-      interm1.resize(jacobian.size());
-      interm2.resize(jacobian.size());
-
-      for (int i = 0; i < numVertices; i++) {
-        nodesX(i) = el->getVertex(i)->x();
-        nodesY(i) = el->getVertex(i)->y();
-      }
-
-      jfs->gradShapeMatX.mult(nodesX, jacobian);
-      jfs->gradShapeMatY.mult(nodesY, interm2);
-      jacobian.multTByT(interm2);
-
-      jfs->gradShapeMatY.mult(nodesX, interm1);
-      jfs->gradShapeMatX.mult(nodesY, interm2);
-      interm1.multTByT(interm2);
-
-      jacobian.axpy(interm1, -1);
-      break;
-
-    case 3 :
-      nodesY.resize(numVertices);
-      nodesZ.resize(numVertices);
-      interm1.resize(jacobian.size());
-      interm2.resize(jacobian.size());
-
-      for (int i = 0; i < numVertices; i++) {
-        nodesX(i) = el->getVertex(i)->x();
-        nodesY(i) = el->getVertex(i)->y();
-        nodesZ(i) = el->getVertex(i)->z();
-      }
-
-      jfs->gradShapeMatX.mult(nodesX, jacobian);
-      jfs->gradShapeMatY.mult(nodesY, interm2);
-      jacobian.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesZ, interm2);
-      jacobian.multTByT(interm2);
-
-      jfs->gradShapeMatX.mult(nodesY, interm1);
-      jfs->gradShapeMatY.mult(nodesZ, interm2);
-      interm1.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesX, interm2);
-      interm1.multTByT(interm2);
-      jacobian.axpy(interm1, 1);
-
-      jfs->gradShapeMatX.mult(nodesZ, interm1);
-      jfs->gradShapeMatY.mult(nodesX, interm2);
-      interm1.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesY, interm2);
-      interm1.multTByT(interm2);
-      jacobian.axpy(interm1, 1);
-
-
-      jfs->gradShapeMatX.mult(nodesY, interm1);
-      jfs->gradShapeMatY.mult(nodesX, interm2);
-      interm1.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesZ, interm2);
-      interm1.multTByT(interm2);
-      jacobian.axpy(interm1, -1);
-
-      jfs->gradShapeMatX.mult(nodesZ, interm1);
-      jfs->gradShapeMatY.mult(nodesY, interm2);
-      interm1.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesX, interm2);
-      interm1.multTByT(interm2);
-      jacobian.axpy(interm1, -1);
-
-      jfs->gradShapeMatX.mult(nodesX, interm1);
-      jfs->gradShapeMatY.mult(nodesZ, interm2);
-      interm1.multTByT(interm2);
-      jfs->gradShapeMatZ.mult(nodesY, interm2);
-      interm1.multTByT(interm2);
-      jacobian.axpy(interm1, -1);
-  }
-}
-
 static double sum(fullVector<double> &v)
 {
   double sum = .0;
@@ -334,8 +238,8 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
   fullVector<double> jac1B(jfs1->bezier->points.size1(), numEl);
   fullVector<double> jacBez, jacobian, jac1;
 
-  setJacobian(el, jfs, jacobianB);
-  setJacobian(el, jfs1, jac1B);
+  jfs->getSignedJacobian(el, jacobianB);
+  jfs1->getSignedJacobian(el, jac1B);
   bb->matrixLag2Bez.mult(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
@@ -350,8 +254,8 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    setJacobian(el[k], jfs, jacobian);
-    setJacobian(el[k], jfs1, jac1);
+    jfs->getSignedJacobian(el[k], jacobian);
+    jfs1->getSignedJacobian(el[k], jac1);
 #endif
 
     // AmJ : avgJ is not the average Jac for quad, prism or hex
@@ -539,8 +443,8 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
   fullVector<double> jac1B(jfs1->bezier->points.size1(), numEl);
   fullVector<double> jacBez, jacobian, jac1;
 
-  setJacobian(el, jfs, jacobianB);
-  setJacobian(el, jfs1, jac1B);
+  jfs->getSignedJacobian(el, jacobianB);
+  jfs1->getSignedJacobian(el, jac1B);
   bb->matrixLag2Bez.mult(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
@@ -564,8 +468,8 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    setJacobian(el[k], jfs, jacobian);
-    setJacobian(el[k], jfs1, jac1);
+    jfs->getSignedJacobian(el[k], jacobian);
+    jfs1->getSignedJacobian(el[k], jac1);
     bb->matrixLag2Bez.mult(jacobian, jacBez);
 #endif
 

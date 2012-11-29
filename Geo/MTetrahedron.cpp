@@ -119,16 +119,6 @@ double MTetrahedron::distoShapeMeasure()
 #endif
 }
 
-double MTetrahedronN::distoShapeMeasure()
-{
-#if defined(HAVE_MESH)
-  _disto = qmDistorsionOfMapping(this);
-#else
-  _disto = 0.;
-#endif
-  return _disto;
-}
-
 double MTetrahedron::getInnerRadius()
 {
   // radius of inscribed sphere = 3 * Volume / sum(Area_i)

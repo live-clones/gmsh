@@ -410,9 +410,10 @@ void polynomialBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf)
   sf.resize (coord.size1(), coefficients.size1());
   for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
     evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord(iPoint,2), p);
-    for (int i = 0; i < coefficients.size1(); i++)
-      for (int j = 0; j < coefficients.size2(); j++)
-        sf(iPoint,i) += coefficients(i, j) * p[j];
+    for (int i = 0; i < coefficients.size1(); i++) {
+      sf(iPoint,i) = 0.;
+      for (int j = 0; j < coefficients.size2(); j++) sf(iPoint,i) += coefficients(i, j) * p[j];
+    }
   }
 }
 

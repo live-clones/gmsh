@@ -436,7 +436,6 @@ class MPyramidN : public MPyramid {
 
   ~MPyramidN();
 
-  virtual double distoShapeMeasure();
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }

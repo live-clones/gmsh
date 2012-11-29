@@ -112,28 +112,22 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
-  extern double mesh_functional_distorsion_2D(MElement*,double,double);
-  extern double mesh_functional_distorsion_3D(MElement*,double,double,double);
   if (getPolynomialOrder() == 1) return;
-  const bezierBasis *jac = getJacobianFuncSpace()->bezier;
-  fullVector<double>Ji(jac->points.size1());
-  for (int i=0;i<jac->points.size1();i++){
-    double u = jac->points(i,0);
-    double v = jac->points(i,1);
-    if (getDim() == 2) {
-      if (getType() == TYPE_QUA) {
-        u = -1 + 2*u;
-        v = -1 + 2*v;
-      }
-      Ji(i) = mesh_functional_distorsion_2D(this,u,v);
-    }
-    else {
-      double w = jac->points(i,2);
-      Ji(i) = mesh_functional_distorsion_3D(this,u,v,w);
-    }
-  }
-  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);
+  const JacobianBasis *jac = getJacobianFuncSpace();                       // Calc signed Jacobian
+  const bezierBasis *bez = jac->bezier;
+  const int numJacNodes = bez->points.size1();
+  fullVector<double> Ji(numJacNodes);
+  jac->getSignedJacobian(this,Ji);
+  const JacobianBasis *jac1 = getJacobianFuncSpace(1);                     // Calc signed primary Jacobian
+  const int numJac1Nodes = jac1->bezier->points.size1();
+  fullVector<double> J1i(numJac1Nodes), J1Ji(numJacNodes);
+  jac1->getSignedJacobian(this,J1i);
+  for (int i=0; i<numJac1Nodes; i++) if (J1i(i) == 0) std::cout << "DBGTT: el " << getNum() << ", Ji1(" << i << ") == 0!\n";
+  jac->primJac2Jac.mult(J1i,J1Ji);
+  fullVector<double> SJi(numJacNodes);                                     // Calc scaled Jacobian
+  for (int i=0; i<numJacNodes; i++) SJi(i) = Ji(i)/J1Ji(i);
+  fullVector<double> Bi(numJacNodes);                                      // Transform to Bezier basis
+  bez->matrixLag2Bez.mult(SJi,Bi);
   jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 #endif

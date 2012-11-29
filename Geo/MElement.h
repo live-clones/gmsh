@@ -182,7 +182,7 @@ class MElement
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
-  virtual double distoShapeMeasure(){ return 1.0; }
+  virtual double distoShapeMeasure(){ double jmin,jmax; scaledJacRange(jmin,jmax); return jmin; }
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax);
 

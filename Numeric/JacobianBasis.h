@@ -9,6 +9,9 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
+
+class MElement;
+
 class bezierBasis {
  private :
   static std::map<int, bezierBasis> _bbs;
@@ -29,10 +32,10 @@ class JacobianBasis {
   static std::map<int, JacobianBasis> _fs;
  public :
   const bezierBasis *bezier;
-  fullMatrix<double> gradShapeMatX;
-  fullMatrix<double> gradShapeMatY;
-  fullMatrix<double> gradShapeMatZ;
+  fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
+  fullMatrix<double> primJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
   static const JacobianBasis *find(int);
+  void getSignedJacobian(MElement *el, fullVector<double> &jacobian) const;
 };
 
 #endif

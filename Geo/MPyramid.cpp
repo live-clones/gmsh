@@ -82,16 +82,6 @@ const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
 
 MPyramidN::~MPyramidN() {}
 
-double MPyramidN::distoShapeMeasure()
-{
-#if defined(HAVE_MESH)
-  _disto = 0.0; //qmDistorsionOfMapping(this);
-#else
-  _disto = 0.;
-#endif
-  return _disto;
-}
-
 int MPyramidN::getNumEdgesRep(){ return 8 * CTX::instance()->mesh.numSubEdges; }
 
 void MPyramidN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
