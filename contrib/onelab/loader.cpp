@@ -236,6 +236,7 @@ int main(int argc, char *argv[]){
 	launchMenu=true;
       }
       else if(!strcmp(argv[i] + 1, "lol")) {
+	//loader used to call non-native clients (type=encapsulated) 
 	std::string clientName=argv[i+1];
 	client = new onelab::remoteNetworkClient(clientName,argv[i+2]);
 	if(client){
@@ -264,6 +265,37 @@ int main(int argc, char *argv[]){
 	  delete client;
 	}
 	exit(1);
+      }
+      else if(!strcmp(argv[i] + 1, "onelab")) {
+	//loader used as a test native client
+	client = new onelab::remoteNetworkClient(argv[i+1],argv[i+2]);
+	if(!client){
+	  std::cout << "I have no client\n";
+	  exit(1);
+	}
+	std::vector<onelab::string> strings;
+	client->get(strings,client->getName()+"/9CheckCommand"); 
+	if(strings.empty()){ // initialize
+	  onelab::string s(client->getName()+"/9CheckCommand","-a");
+	  client->set(s);
+	  onelab::number o(client->getName()+"/Initialized",1);
+	  client->set(o);
+	}
+	else{ 
+	  std::cout << "I am initialized: CheckCommand=<" 
+		    << strings[0].getValue() << ">" << std::endl;	
+	  onelab::number o("alpha",123456);
+	  client->set(o);
+	  client->get(strings,"MESSAGE"); 
+	  if(strings.size()){
+	    std::cout << "I have to tell you: " << strings[0].getValue() << std::endl;
+	  }
+	  std::cout << "Now sleeping for 5s\n";
+	  SleepInSeconds(5);
+	  std::cout << "Awake again\n";
+	}
+	delete client;
+	return 0;
       }
       else if(!strcmp(argv[i] + 1, "v")) {
         i++;

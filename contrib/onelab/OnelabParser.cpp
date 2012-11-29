@@ -1676,4 +1676,6 @@ void MetaModel::client_sentence(const std::string &name,
 	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
   }
+  else
+    OLMsg::Error("Unknown action <%s>", action.c_str());
 }

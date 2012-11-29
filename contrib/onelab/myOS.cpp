@@ -184,7 +184,7 @@ int SystemCall(const std::string &command, bool blocking)
   PROCESS_INFORMATION prInfo;
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
-  //OLMsg::Info("Calling <%s>", command.c_str());
+  OLMsg::Info("Calling <%s>", command.c_str());
   if(blocking){
     CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
                   NORMAL_PRIORITY_CLASS, NULL, NULL,
@@ -210,7 +210,7 @@ int SystemCall(const std::string &command, bool blocking)
   }
   std::string cmd(command);
   if(!blocking) cmd += " &";
-  //OLMsg::Info("Calling <%s>", cmd.c_str());
+  OLMsg::Info("Calling <%s>", cmd.c_str());
   return system(cmd.c_str());
 #endif
 }
