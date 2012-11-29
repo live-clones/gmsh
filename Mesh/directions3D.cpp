@@ -446,9 +446,9 @@ void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
 GRegion* Frame_field::test(){
   GRegion* gr;
   GModel* model = GModel::current();
-	
+
   gr = *(model->firstRegion());
-	
+
   return gr;
 }
 
@@ -479,38 +479,38 @@ void Size_field::init_region(GRegion* gr){
   GModel* model = GModel::current();
   std::list<GFace*> faces;
   std::list<GFace*>::iterator it;
-  
+
   faces = gr->faces();
 
   boundary.clear();	
 
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
-	backgroundMesh::set(gf);
-	
-	for(i=0;i<gf->getNumMeshElements();i++){
-	  element = gf->getMeshElement(i);
-		
-	  average_x = 0.0;
-	  average_y = 0.0;
-		
-	  for(j=0;j<element->getNumVertices();j++){
-	    vertex = element->getVertex(j);
-		reparamMeshVertexOnFace(vertex,gf,point);
-		average_x = average_x + point.x();
-		average_y = average_y + point.y();
-	  }	
-		
-	  average_x = average_x/element->getNumVertices();
-	  average_y = average_y/element->getNumVertices();
-		
-	  for(j=0;j<element->getNumVertices();j++){
-	    vertex = element->getVertex(j);
-		reparamMeshVertexOnFace(vertex,gf,point);
-		local_size = backgroundMesh::current()->operator()(point.x(),point.y(),0.0);
-		boundary.insert(std::pair<MVertex*,double>(vertex,local_size));
-	  }
-	}
+    backgroundMesh::set(gf);
+
+    for(i=0;i<gf->getNumMeshElements();i++){
+      element = gf->getMeshElement(i);
+
+      average_x = 0.0;
+      average_y = 0.0;
+
+      for(j=0;j<element->getNumVertices();j++){
+        vertex = element->getVertex(j);
+        reparamMeshVertexOnFace(vertex,gf,point);
+        average_x = average_x + point.x();
+        average_y = average_y + point.y();
+      }
+
+      average_x = average_x/element->getNumVertices();
+      average_y = average_y/element->getNumVertices();
+
+      for(j=0;j<element->getNumVertices();j++){
+        vertex = element->getVertex(j);
+        reparamMeshVertexOnFace(vertex,gf,point);
+        local_size = backgroundMesh::current()->operator()(point.x(),point.y(),0.0);
+        boundary.insert(std::pair<MVertex*,double>(vertex,local_size));
+      }
+    }
   }
 
   octree = new MElementOctree(model);
@@ -529,57 +529,57 @@ void Size_field::solve(GRegion* gr){
   std::set<MVertex*> interior;
   std::set<MVertex*>::iterator it;
   std::map<MVertex*,double>::iterator it2;
-  
+
   interior.clear();
-	
+
   dofManager<double> assembler(system);
-	
+
   count = 0;
   for(it2=boundary.begin();it2!=boundary.end();it2++){
     assembler.fixVertex(it2->first,0,1,it2->second);
-	count++;
+    count++;
   }
   //printf("\n");
   //printf("number of boundary vertices = %d\n",count);	
-	
+
   for(i=0;i<gr->tetrahedra.size();i++){
     interior.insert(gr->tetrahedra[i]->getVertex(0));
-	interior.insert(gr->tetrahedra[i]->getVertex(1));
-	interior.insert(gr->tetrahedra[i]->getVertex(2));
-	interior.insert(gr->tetrahedra[i]->getVertex(3));
+    interior.insert(gr->tetrahedra[i]->getVertex(1));
+    interior.insert(gr->tetrahedra[i]->getVertex(2));
+    interior.insert(gr->tetrahedra[i]->getVertex(3));
   }	
-			
+
   for(it=interior.begin();it!=interior.end();it++){
     it2 = boundary.find(*it);
-	if(it2==boundary.end()){
-	  assembler.numberVertex(*it,0,1);
-	}
+    if(it2==boundary.end()){
+      assembler.numberVertex(*it,0,1);
+    }
   }
 
   for(i=0;i<gr->tetrahedra.size();i++){
     gr->tetrahedra[i]->setVolumePositive();
   }
-	
+
   count2 = 0;
   volume = 0.0;
   simpleFunction<double> ONE(1.0);
   laplaceTerm term(0,1,&ONE);
   for(i=0;i<gr->tetrahedra.size();i++){
-	SElement se(gr->tetrahedra[i]);
-	term.addToMatrix(assembler,&se);
-	count2++;
-	volume = volume + gr->tetrahedra[i]->getVolume();
+    SElement se(gr->tetrahedra[i]);
+    term.addToMatrix(assembler,&se);
+    count2++;
+    volume = volume + gr->tetrahedra[i]->getVolume();
   }
   //printf("number of tetrahedra = %d\n",count2);	
   //printf("volume = %f\n",volume);
-	
+
   system->systemSolve();
-	
+
   for(it=interior.begin();it!=interior.end();it++){
     assembler.getDofValue(*it,0,1,val);
     boundary.insert(std::pair<MVertex*,double>(*it,val));
   }
-	
+
   delete system;
   #endif	
 }
@@ -600,26 +600,26 @@ double Size_field::search(double x,double y,double z){
   element = (MElement*)octree->find(x,y,z,3,true);
 	
   if(element!=NULL){
-	temp1[0] = x;
-	temp1[1] = y;
-	temp1[2] = z;
-	
-	element->xyz2uvw(temp1,temp2);
-	  
-	u = temp2[0];
+    temp1[0] = x;
+    temp1[1] = y;
+    temp1[2] = z;
+
+    element->xyz2uvw(temp1,temp2);
+
+    u = temp2[0];
     v = temp2[1];
-	w = temp2[2];
-	
-	it1 = boundary.find(element->getVertex(0)); 
-	it2 = boundary.find(element->getVertex(1));
-	it3 = boundary.find(element->getVertex(2));
-	it4 = boundary.find(element->getVertex(3));
-	  
-	if(it1!=boundary.end() && it2!=boundary.end() && it3!=boundary.end() && it4!=boundary.end()){
-	  val = (it1->second)*(1.0-u-v-w) + (it2->second)*u + (it3->second)*v + (it4->second)*w;
-	}
+    w = temp2[2];
+
+    it1 = boundary.find(element->getVertex(0)); 
+    it2 = boundary.find(element->getVertex(1));
+    it3 = boundary.find(element->getVertex(2));
+    it4 = boundary.find(element->getVertex(3));
+
+    if(it1!=boundary.end() && it2!=boundary.end() && it3!=boundary.end() && it4!=boundary.end()){
+      val = (it1->second)*(1.0-u-v-w) + (it2->second)*u + (it3->second)*v + (it4->second)*w;
+    }
   }
-	
+
   return val;
 }
 
@@ -627,7 +627,7 @@ double Size_field::get_ratio(GFace* gf,SPoint2 point){
   double val;
   double uv[2];
   double tab[3];
-	
+
   uv[0] = point.x();
   uv[1] = point.y();
   buildMetric(gf,uv,tab);
@@ -638,7 +638,7 @@ double Size_field::get_ratio(GFace* gf,SPoint2 point){
 void Size_field::print_field(GRegion* gr){
   size_t i;
   double min,max;
-  double x,y,z;
+  //double x,y,z;
   double x1,y1,z1,h1;
   double x2,y2,z2,h2;
   double x3,y3,z3,h3;
@@ -651,80 +651,80 @@ void Size_field::print_field(GRegion* gr){
 
   min = 1000000000.0;
   max = -1000000000.0;
-	
+
   for(it=boundary.begin();it!=boundary.end();it++){
-	x = (it->first)->x();
-	y = (it->first)->y();
-	z = (it->first)->z();
-	
-	if(it->second>max){
+    //x = (it->first)->x();
+    //y = (it->first)->y();
+    //z = (it->first)->z();
+
+    if(it->second>max){
       max = it->second;
-	}
-    
-	if(it->second<min){
-	  min = it->second;
-	}
-	  
-	//printf("x = %f, y = %f, z = %f, mesh size = %f\n",x,y,z,it->second);
+    }
+
+    if(it->second<min){
+      min = it->second;
+    }
+
+    //printf("x = %f, y = %f, z = %f, mesh size = %f\n",x,y,z,it->second);
   }
 
   //printf("\n");	
-	
+
   printf("min mesh size = %f\n",min);
   printf("max mesh size = %f\n",max);	
-	
+
   printf("total number of vertices = %zu\n",boundary.size());
   printf("\n");	
-	
+
   std::ofstream file("laplace.pos");
   file << "View \"test\" {\n";	
-	
+
   for(i=0;i<gr->tetrahedra.size();i++){
     x1 = gr->tetrahedra[i]->getVertex(0)->x();
-	y1 = gr->tetrahedra[i]->getVertex(0)->y();
-	z1 = gr->tetrahedra[i]->getVertex(0)->z();
-	it1 = boundary.find(gr->tetrahedra[i]->getVertex(0));
-		
-	x2 = gr->tetrahedra[i]->getVertex(1)->x();
-	y2 = gr->tetrahedra[i]->getVertex(1)->y();
-	z2 = gr->tetrahedra[i]->getVertex(1)->z();
-	it2 = boundary.find(gr->tetrahedra[i]->getVertex(1));
-		
-	x3 = gr->tetrahedra[i]->getVertex(2)->x();
-	y3 = gr->tetrahedra[i]->getVertex(2)->y();
-	z3 = gr->tetrahedra[i]->getVertex(2)->z();
-	it3 = boundary.find(gr->tetrahedra[i]->getVertex(2));
-		
-	x4 = gr->tetrahedra[i]->getVertex(3)->x();
-	y4 = gr->tetrahedra[i]->getVertex(3)->y();
-	z4 = gr->tetrahedra[i]->getVertex(3)->z();
-	it4 = boundary.find(gr->tetrahedra[i]->getVertex(3));
-		
-	if(it1!=boundary.end() && it2!=boundary.end() && it3!=boundary.end() && it4!=boundary.end()){
-	  h1 = it1->second;
-	  h2 = it2->second;
-	  h3 = it3->second;
-	  h4 = it4->second;
-		
-	  file << "SS ("
-	  << x1 << ", " << y1 << ", " << z1 << ", " 
-	  << x2 << ", " << y2 << ", " << z2 << ", "
-	  << x3 << ", " << y3 << ", " << z3 << ", "
-	  << x4 << ", " << y4 << ", " << z4 << "){"
-	  << h1 << ", " << h2 << ", " << h3 << ", "
-	  << h4 << "};\n";
-	}
+    y1 = gr->tetrahedra[i]->getVertex(0)->y();
+    z1 = gr->tetrahedra[i]->getVertex(0)->z();
+    it1 = boundary.find(gr->tetrahedra[i]->getVertex(0));
+
+    x2 = gr->tetrahedra[i]->getVertex(1)->x();
+    y2 = gr->tetrahedra[i]->getVertex(1)->y();
+    z2 = gr->tetrahedra[i]->getVertex(1)->z();
+    it2 = boundary.find(gr->tetrahedra[i]->getVertex(1));
+
+    x3 = gr->tetrahedra[i]->getVertex(2)->x();
+    y3 = gr->tetrahedra[i]->getVertex(2)->y();
+    z3 = gr->tetrahedra[i]->getVertex(2)->z();
+    it3 = boundary.find(gr->tetrahedra[i]->getVertex(2));
+
+    x4 = gr->tetrahedra[i]->getVertex(3)->x();
+    y4 = gr->tetrahedra[i]->getVertex(3)->y();
+    z4 = gr->tetrahedra[i]->getVertex(3)->z();
+    it4 = boundary.find(gr->tetrahedra[i]->getVertex(3));
+
+    if(it1!=boundary.end() && it2!=boundary.end() && it3!=boundary.end() && it4!=boundary.end()){
+      h1 = it1->second;
+      h2 = it2->second;
+      h3 = it3->second;
+      h4 = it4->second;
+
+      file << "SS ("
+      << x1 << ", " << y1 << ", " << z1 << ", " 
+      << x2 << ", " << y2 << ", " << z2 << ", "
+      << x3 << ", " << y3 << ", " << z3 << ", "
+      << x4 << ", " << y4 << ", " << z4 << "){"
+      << h1 << ", " << h2 << ", " << h3 << ", "
+      << h4 << "};\n";
+    }
   }
-	
+
   file << "};\n";
 }
 
 GRegion* Size_field::test(){
   GRegion* gr;
   GModel* model = GModel::current();
-	
+
   gr = *(model->firstRegion());
-	
+
   return gr;
 }
 
