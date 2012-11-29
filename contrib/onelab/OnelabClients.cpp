@@ -442,6 +442,8 @@ bool localSolverClient::checkCommandLine(){
 	}
 	PCLOSE(fp);
       }
+#else
+      success=true;
 #endif
     }
   }
@@ -452,10 +454,10 @@ bool localSolverClient::checkCommandLine(){
     OLMsg::Info("Command line ok");
   }
   else{
-    setCommandLine("");
-    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
     OLMsg::Error("Invalid command line <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
+    //setCommandLine("");
+    OLMsg::SetOnelabString(getName() + "/CommandLine", getCommandLine(), true);
   }
   return success;
 }
