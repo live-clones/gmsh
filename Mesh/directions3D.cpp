@@ -826,7 +826,7 @@ bool Nearest_point::search(double x,double y,double z,SVector3& vec){
   #if defined(HAVE_ANN)
   double e;
   double e2;
-  SPoint3 point;
+  SPoint3 found;
   ANNpoint query;
   ANNidxArray indices;
   ANNdistArray distances;
@@ -848,16 +848,16 @@ bool Nearest_point::search(double x,double y,double z,SVector3& vec){
   delete[] distances;
 
   if(vicinity[index]!=NULL){
-	point = closest(vicinity[index],SPoint3(x,y,z));
+	found = closest(vicinity[index],SPoint3(x,y,z));
   }
   else{
-    point = field[index];
+    found = field[index];
   }
 	
   e2 = 0.000001;	
 	
-  if(fabs(point.x()-x)>e2 || fabs(point.y()-y)>e2 || fabs(point.z()-z)>e2){
-    vec = SVector3(point.x()-x,point.y()-y,point.z()-z);
+  if(fabs(found.x()-x)>e2 || fabs(found.y()-y)>e2 || fabs(found.z()-z)>e2){
+    vec = SVector3(found.x()-x,found.y()-y,found.z()-z);
     vec.normalize();
 	val = 1;
   }
