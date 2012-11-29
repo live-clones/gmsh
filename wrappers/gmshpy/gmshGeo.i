@@ -53,6 +53,10 @@ namespace std {
   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
   %template(GEdgeList) list<GEdge*, std::allocator<GEdge*> >;
   %template(GLevelsetVector) vector<gLevelset *, std::allocator<gLevelset *> >;
+  %template(IntVector) std::vector<int>;
+  %template(DoubleVector) std::vector<double, std::allocator<double> >;
+  %template(DoubleVectorVector) std::vector<std::vector<double, std::allocator<double> > >;
+  %template(StringVector) std::vector<std::string, std::allocator<std::string> >;
 }
 
 %include "GmshConfig.h"
