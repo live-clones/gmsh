@@ -1336,11 +1336,15 @@ double LpCVT::df_dz(SPoint3 p1,SPoint3 p2,Tensor t,int p){
 }
 
 SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3 x2,SPoint3 x3){
+  double e;
   fullMatrix<double> A(3,3);
   fullMatrix<double> B(3,3);
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
+  
+  e = 0.000000001;	
+	
   A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
@@ -1350,7 +1354,22 @@ SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   A(2,0) = x3.x() - x0.x();
   A(2,1) = x3.y() - x0.y();
   A(2,2) = x3.z() - x0.z();
+  
+  if(fabs(A.determinant())<e){
+    srand(time(NULL));
+    A(0,0) = A(0,0) + e*((double)rand())/((double)RAND_MAX);
+    A(0,1) = A(0,1) + e*((double)rand())/((double)RAND_MAX);
+    A(0,2) = A(0,2) + e*((double)rand())/((double)RAND_MAX);
+    A(1,0) = A(1,0) + e*((double)rand())/((double)RAND_MAX);
+    A(1,1) = A(1,1) + e*((double)rand())/((double)RAND_MAX);
+    A(1,2) = A(1,2) + e*((double)rand())/((double)RAND_MAX);
+    A(2,0) = A(2,0) + e*((double)rand())/((double)RAND_MAX);
+    A(2,1) = A(2,1) + e*((double)rand())/((double)RAND_MAX);
+    A(2,2) = A(2,2) + e*((double)rand())/((double)RAND_MAX);
+  }
+
   A.invertInPlace();
+
   B(0,0) = C.x() - x0.x();
   B(0,1) = C.y() - x0.y();
   B(0,2) = C.z() - x0.z();
@@ -1360,11 +1379,14 @@ SVector3 LpCVT::bisectors3(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   B(2,0) = C.x() - x0.x();
   B(2,1) = C.y() - x0.y();
   B(2,2) = C.z() - x0.z();
+  
   A.mult_naive(B,M);
+  
   _dIdC(0,0) = dIdC.x();
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
+  
   return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
@@ -1374,6 +1396,7 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
+  
   A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
@@ -1383,7 +1406,9 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   A(2,0) = normal1.x();
   A(2,1) = normal1.y();
   A(2,2) = normal1.z();
+  
   A.invertInPlace();
+  
   B(0,0) = C.x() - x0.x();
   B(0,1) = C.y() - x0.y();
   B(0,2) = C.z() - x0.z();
@@ -1393,11 +1418,14 @@ SVector3 LpCVT::bisectors2(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SPoint3
   B(2,0) = 0.0;
   B(2,1) = 0.0;
   B(2,2) = 0.0;
+  
   A.mult_naive(B,M);
+  
   _dIdC(0,0) = dIdC.x();
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
+  
   return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
@@ -1407,6 +1435,7 @@ SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector
   fullMatrix<double> M(3,3);
   fullMatrix<double> _dIdC(1,3);
   fullMatrix<double> _val(1,3);
+  
   A(0,0) = x1.x() - x0.x();
   A(0,1) = x1.y() - x0.y();
   A(0,2) = x1.z() - x0.z();
@@ -1416,7 +1445,9 @@ SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector
   A(2,0) = normal2.x();
   A(2,1) = normal2.y();
   A(2,2) = normal2.z();
+  
   A.invertInPlace();
+  
   B(0,0) = C.x() - x0.x();
   B(0,1) = C.y() - x0.y();
   B(0,2) = C.z() - x0.z();
@@ -1426,11 +1457,14 @@ SVector3 LpCVT::bisectors1(SVector3 dIdC,SPoint3 C,SPoint3 x0,SPoint3 x1,SVector
   B(2,0) = 0.0;
   B(2,1) = 0.0;
   B(2,2) = 0.0;
+  
   A.mult_naive(B,M);
+  
   _dIdC(0,0) = dIdC.x();
   _dIdC(0,1) = dIdC.y();
   _dIdC(0,2) = dIdC.z();
   _dIdC.mult_naive(M,_val);
+  
   return SVector3(_val(0,0),_val(0,1),_val(0,2));
 }
 
