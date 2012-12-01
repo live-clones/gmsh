@@ -13,7 +13,7 @@
 template<int N> float ElementDataLessThan<N>::tolerance = 0.0F;
 float BarycenterLessThan::tolerance = 0.0F;
 
-VertexArray::VertexArray(int numVerticesPerElement, int numElements) 
+VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   : _numVerticesPerElement(numVerticesPerElement)
 {
   int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
@@ -55,7 +55,7 @@ void VertexArray::_addElement(MElement *ele)
   if(ele && CTX::instance()->pickElements) _elements.push_back(ele);
 }
 
-void VertexArray::add(double *x, double *y, double *z, SVector3 *n, 
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
                       unsigned int *col, MElement *ele, bool unique, bool boundary)
 {
   if(col){
@@ -73,8 +73,8 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     add(x, y, z, n, 0, 0, 0, 0, ele, unique, boundary);
 }
 
-void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r, 
-                      unsigned char *g, unsigned char *b, unsigned char *a, 
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned char *r,
+                      unsigned char *g, unsigned char *b, unsigned char *a,
                       MElement *ele, bool unique, bool boundary)
 {
   int npe = getNumVerticesPerElement();
@@ -95,7 +95,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     for(int i = 0; i < npe; i++)
       pc += Barycenter(x[i], y[i], z[i]);
     BarycenterLessThan::tolerance = (float)(CTX::instance()->lc * 1.e-12);
-    if(_barycenters.find(pc) != _barycenters.end()) 
+    if(_barycenters.find(pc) != _barycenters.end())
       return;
     _barycenters.insert(pc);
   }
@@ -181,7 +181,7 @@ void VertexArray::sort(double x, double y, double z)
     char *np = _normals.empty() ? 0 : &_normals[3 * npe * i];
     unsigned char *cp = _colors.empty() ? 0 : &_colors[4 * npe * i];
     elements.push_back(AlphaElement(vp, np, cp));
-  }  
+  }
   std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
 
   std::vector<float> sortedVertices;
@@ -203,7 +203,7 @@ void VertexArray::sort(double x, double y, double z)
           sortedColors.push_back(elements[i].c[4 * j + k]);
     }
   }
-  
+
   _vertices = sortedVertices;
   _normals = sortedNormals;
   _colors = sortedColors;
@@ -216,7 +216,7 @@ double VertexArray::getMemoryInMb()
   return (double)bytes / 1024. / 1024.;
 }
 
-char *VertexArray::toChar(int num, std::string name, int type, double min, double max, 
+char *VertexArray::toChar(int num, std::string name, int type, double min, double max,
                           int numsteps, double time, SBoundingBox3d bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
@@ -255,21 +255,21 @@ char *VertexArray::toChar(int num, std::string name, int type, double min, doubl
 int VertexArray::decodeHeader(int length, const char *bytes, int swap,
                               std::string &name, int &num, int &type,
                               double &min, double &max, int &numSteps, double &time,
-                              double &xmin, double &ymin, double &zmin, 
+                              double &xmin, double &ymin, double &zmin,
                               double &xmax, double &ymax, double &zmax)
 {
   int is = sizeof(int), ds = sizeof(double);
-  
+
   if(length < 4 * is + 9 * ds){
     Msg::Error("Too few bytes to create vertex array: %d", length);
     return 0;
   }
-  
+
   if(swap){
     Msg::Error("Should swap bytes in vertex array--not implemented yet");
     return 0;
   }
-  
+
   int index = 0;
   memcpy(&num, &bytes[index], is); index += is;
   int ss; memcpy(&ss, &bytes[index], is); index += is;
@@ -310,18 +310,18 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
 
   int nn; memcpy(&nn, &bytes[index], is); index += is;
   if(nn){
-    _normals.resize(nn); int ns = nn * sizeof(char); 
+    _normals.resize(nn); int ns = nn * sizeof(char);
     memcpy(&_normals[0], &bytes[index], ns); index += ns;
   }
 
   int cn; memcpy(&cn, &bytes[index], is); index += is;
   if(cn){
-    _colors.resize(cn); int cs = cn * sizeof(unsigned char); 
+    _colors.resize(cn); int cs = cn * sizeof(unsigned char);
     memcpy(&_colors[0], &bytes[index], cs); index += cs;
   }
 }
 
-void VertexArray::merge(VertexArray* va) 
+void VertexArray::merge(VertexArray* va)
 {
   if(va->getNumVertices() != 0) {
     _vertices.insert(_vertices.end(), va->firstVertex(), va->lastVertex());

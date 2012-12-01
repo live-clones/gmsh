@@ -92,7 +92,7 @@ class Barycenter {
  private:
   float _x, _y, _z;
  public:
-  Barycenter(double x, double y, double z) 
+  Barycenter(double x, double y, double z)
     : _x((float)x), _y((float)y), _z((float)z){}
   inline float x() const { return _x; }
   inline float y() const { return _y; }
@@ -114,6 +114,26 @@ class BarycenterLessThan{
   }
 };
 
+class BarycenterHash {
+ public:
+  std::size_t operator()(const Barycenter &b) const
+  {
+    return b.x()+b.y()+b.z();
+  }
+};
+
+class BarycenterEqual {
+ public:
+  bool operator ()(const Barycenter &a, const Barycenter &b) const
+  {
+    return (fabs(a.x()-b.x()) < BarycenterLessThan::tolerance &&
+            fabs(a.y()-b.y()) < BarycenterLessThan::tolerance &&
+            fabs(a.z()-b.z()) < BarycenterLessThan::tolerance);
+  }
+};
+
+//#include <tr1/unordered_set>
+
 class VertexArray{
  private:
   int _numVerticesPerElement;
@@ -123,10 +143,12 @@ class VertexArray{
   std::vector<MElement*> _elements;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
+  //std::tr1::unordered_set<Barycenter, BarycenterHash, BarycenterEqual> _barycenters;
+
   // add stuff in the arrays
   void _addVertex(float x, float y, float z);
   void _addNormal(float nx, float ny, float nz);
-  void _addColor(unsigned char r, unsigned char g, unsigned char b, 
+  void _addColor(unsigned char r, unsigned char g, unsigned char b,
                  unsigned char a);
   void _addElement(MElement *ele);
  public:
@@ -138,7 +160,7 @@ class VertexArray{
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
   // return the number of element pointers
   int getNumElementPointers() { return _elements.size(); }
-  // return a pointer to the raw vertex array (warning: 1) we don't 
+  // return a pointer to the raw vertex array (warning: 1) we don't
   // range check 2) calling this if _vertices.size() == 0 will cause
   // some compilers to throw an exception)
   float *getVertexArray(int i=0){ return &_vertices[i]; }
@@ -159,13 +181,13 @@ class VertexArray{
   MElement **getElementPointerArray(int i=0){ return &_elements[i]; }
   std::vector<MElement*>::iterator firstElementPointer(){return _elements.begin();}
   std::vector<MElement*>::iterator lastElementPointer(){return _elements.end();}
-  
+
   // add element data in the arrays (if unique is set, only add the
   // element if another one with the same barycenter is not already
   // present)
-  void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col, 
+  void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
            MElement *ele=0, bool unique=true, bool boundary=false);
-  void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r=0, 
+  void add(double *x, double *y, double *z, SVector3 *n, unsigned char *r=0,
            unsigned char *g=0, unsigned char *b=0, unsigned char *a=0,
            MElement *ele=0, bool unique=true, bool boundary=false);
   // finalize the arrays
@@ -176,13 +198,13 @@ class VertexArray{
   double getMemoryInMb();
   // serialize the vertex array into a string (for sending over the
   // network)
-  char *toChar(int num, std::string name, int type, double min, double max, 
+  char *toChar(int num, std::string name, int type, double min, double max,
                int numsteps, double time, SBoundingBox3d bbox, int &len);
   void fromChar(int length, const char *bytes, int swap);
   static int decodeHeader(int length, const char *bytes, int swap,
                           std::string &name, int &num, int &type,
                           double &min, double &max, int &numSteps, double &time,
-                          double &xmin, double &ymin, double &zmin, 
+                          double &xmin, double &ymin, double &zmin,
                           double &xmax, double &ymax, double &zmax);
   // merge another vertex array into this one
   void merge(VertexArray *va);
