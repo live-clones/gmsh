@@ -274,10 +274,10 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
   const double a = metric[0];
   const double b = metric[1];
   const double d = metric[2];
-  double d2 = (x[0] - uv[0]) * (x[0] - uv[0]) * a
-    + (x[1] - uv[1]) * (x[1] - uv[1]) * d
-    + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
-  return d2 < Radius2;
+  const double d0 = (x[0] - uv[0]);
+  const double d1 = (x[1] - uv[1]);
+  const double d3 =  d0*d0*a + d1*d1*d + 2.0*d0*d1*b;
+  return d3 < Radius2;
 }
 
 int inCircumCircleAniso(GFace *gf, MTriangle *base,
@@ -292,7 +292,6 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
                   (Vs[base->getVertex(0)->getIndex()] +
                    Vs[base->getVertex(1)->getIndex()] +
                    Vs[base->getVertex(2)->getIndex()]) / 3.};
-
   buildMetric(gf, pa, metric);
   circumCenterMetric(base, metric, Us, Vs, x, Radius2);
 
@@ -300,11 +299,10 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
   const double b = metric[1];
   const double d = metric[2];
 
-  double d2 = (x[0] - uv[0]) * (x[0] - uv[0]) * a
-    + (x[1] - uv[1]) * (x[1] - uv[1]) * d
-    + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
-
-  return d2 < Radius2;
+  const double d0 = (x[0] - uv[0]);
+  const double d1 = (x[1] - uv[1]);
+  const double d3 =  d0*d0*a + d1*d1*d + 2.0*d0*d1*b;
+  return d3 < Radius2;
 }
 
 MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric,
@@ -558,7 +556,7 @@ bool invMapUV(MTriangle *t, double *p,
   return false;
 }
 
-double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
+inline double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
 {
   double u1 = Us[t->getVertex(0)->getIndex()];
   double v1 = Vs[t->getVertex(0)->getIndex()];
@@ -572,6 +570,7 @@ double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
   return s * 0.5;
 }
 
+double __DT2;
 bool insertVertexB (std::list<edgeXface> &shell,
 		    std::list<MTri3*> &cavity,
 		    bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
@@ -585,6 +584,8 @@ bool insertVertexB (std::list<edgeXface> &shell,
 		    double *metric,
 		    MTri3 **oneNewTriangle)
 {
+  if (shell.size() <= 3 || shell.size() != cavity.size() + 2) return false;
+  
   std::list<MTri3*> new_cavity;
 
   // check that volume is conserved
@@ -616,7 +617,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 
     MTri3 *t4;
     t4 = new MTri3(t, LL,0,&Us,&Vs,gf);
-    if (oneNewTriangle) *oneNewTriangle = t4;
+    if (oneNewTriangle) {force = true; *oneNewTriangle = t4;}
     //    double din = t->getInnerRadius();
 
     double d1 = distance(it->v[0],v);
@@ -626,7 +627,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .0025 || d2 < LL * .0025 || cosv < -.9999999) && !force) {
+    if ((d1 < LL * .5 || d2 < LL * .5 || cosv < -.9) && !force) {
       onePointIsTooClose = true;
     }
 
@@ -643,15 +644,16 @@ bool insertVertexB (std::list<edgeXface> &shell,
     newVolume += ss;
     ++it;
   }
+  
 
-
-  if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && shell.size() > 3 &&
-      !onePointIsTooClose){
+  if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && !onePointIsTooClose){
     connectTris_vector(new_cavity.begin(), new_cavity.end());
-    //    clock_t t1 = clock();
+    //    printf("%d %d\n",shell.size(),cavity.size());
+    clock_t t1 = clock();
+    // 30 % of the time is spent here !!!
     allTets.insert(newTris, newTris + shell.size());
     //    clock_t t2 = clock();
-    //    DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
+    __DT2 += (double)(clock()-t1)/CLOCKS_PER_SEC;
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
         int active_edge;
@@ -668,7 +670,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
   // The cavity is NOT star shaped
   else{
 
-    //        printf("(%g %g) %22.15E %22.15E %d %d %d %d %d\n",v->x(),v->y(),oldVolume,  newVolume, newVolume,shell.size(), onePointIsTooClose, cavity.size(), new_cavity.size(),allTets.size());
+    //    printf("(%g %g) %22.15E %22.15E %d %d %d %d %d\n",v->x(),v->y(),oldVolume,  newVolume, newVolume,shell.size(), onePointIsTooClose, cavity.size(), new_cavity.size(),allTets.size());
     //    printf("12.5E 12.5E 12.5E 12.5E 12.5E\n",d1,d2,LL,cosv);
 
     ittet = cavity.begin();
@@ -764,7 +766,7 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
   }
 
   if (!force)return 0; // FIXME: removing this leads to horrible performance
-
+  
   N_GLOBAL_SEARCH ++ ;
   for(std::set<MTri3*,compareTri3Ptr>::iterator itx = AllTris.begin();
       itx != AllTris.end();++itx){
@@ -777,6 +779,8 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
   }
   return 0;
 }
+
+//double __DT1;
 
 static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it,
                          double center[2], double metric[3],
@@ -806,7 +810,9 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   // if the point is able to break the bad triangle "worst"
   if (1){
     if (inCircumCircleAniso(gf, worst->tri(), center, metric, Us, Vs)){
+      //      clock_t t1 = clock();
       recurFindCavityAniso(gf, shell, cavity, metric, center, worst, Us, Vs);
+      //      __DT1 += (double) (clock() - t1)/CLOCKS_PER_SEC ;
       for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
 	if (invMapUV((*itc)->tri(), center, Us, Vs, uv, 1.e-8)) {
 	  ptin = *itc;
@@ -816,14 +822,14 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
     // else look for it
     else {
-      printf("we should never be here !!!\n");
+      //      printf("cocuou\n");
       ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
       if (ptin) {
 	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, Us, Vs);    
       }
     }
   }
-  
+ 
   //  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
 
   if (ptin) {
@@ -853,8 +859,8 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     if(!p.succeeded() || !insertVertexB
        (shell, cavity,false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
         Us, Vs, metric, oneNewTriangle) ) {
-      //      Msg::Debug("Point %g %g cannot be inserted because %d",
-      //                       center[0], center[1], p.succeeded() );
+      Msg::Debug("Point %g %g cannot be inserted because %d",
+		 center[0], center[1], p.succeeded() );
       //      printf("Point %g %g cannot be inserted because %d",
       //	     center[0], center[1], p.succeeded() );
       AllTris.erase(it);
@@ -910,6 +916,8 @@ void bowyerWatson(GFace *gf, int MAXPNT)
   }
 
   int ITER = 0;
+  int NBDELETED = 0;
+  //  double DT1 = 0 , DT2=0, DT3=0;
   while (1){
     //    if(ITER % 1== 0){
     //      char name[245];
@@ -918,14 +926,20 @@ void bowyerWatson(GFace *gf, int MAXPNT)
     //    }
     MTri3 *worst = *AllTris.begin();
     if (worst->isDeleted()){
+      //      clock_t t1 = clock();
       delete worst->tri();
       delete worst;
       AllTris.erase(AllTris.begin());
+      NBDELETED ++;
+      //      DT1 += (double) (clock() - t1)/CLOCKS_PER_SEC ;
     }
     else{
-      if(ITER++ % 5000 == 0)
+      //      clock_t t2 = clock();
+      if(ITER++ % 5000 == 0){
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
+	printf("%d %d %d\n",vSizes.size(), AllTris.size(),NBDELETED);
+      }
       double center[2],metric[3],r2;
       if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0) ||
           (int)vSizes.size() > MAXPNT) break;
@@ -939,10 +953,15 @@ void bowyerWatson(GFace *gf, int MAXPNT)
                        Vs[base->getVertex(2)->getIndex()]) / 3.};
       buildMetric(gf, pa,  metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);
+      //      DT2 += (double) (clock() - t2)/CLOCKS_PER_SEC ;
+      //      clock_t t3 = clock() ;
       insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes,
                    vSizesBGM, vMetricsBGM, AllTris);
+      //      DT3 += (double) (clock() - t3)/CLOCKS_PER_SEC ;
     }
   }
+  //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
+  printf("%12.5E \n",__DT2);
 #if defined(HAVE_ANN)
   {
     FieldManager *fields = gf->model()->getFields();
@@ -1176,6 +1195,7 @@ void optimalPointFrontalB (GFace *gf,
   }
   else {
     Msg::Debug("--- Non optimal point found -----------");
+    //    Msg::Info("--- Non optimal point found -----------");
   }
 }
 
@@ -1230,7 +1250,7 @@ void bowyerWatsonFrontal(GFace *gf)
         worst->getRadius() > LIMIT_){
       if(ITER++ % 5000 == 0)
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
-                   vSizes.size(), worst->getRadius());
+                   gf->mesh_vertices.size(), worst->getRadius());
       double newPoint[2], metric[3];
       //optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
       optimalPointFrontalB (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
@@ -1703,7 +1723,7 @@ void bowyerWatsonParallelograms(GFace *gf)
       buildMetric(gf, newPoint, metric);
       SMetric3 ANIZO_MESH = metrics[i];
 
-      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, Us, Vs, vSizes,
+      bool success = insertAPoint( gf, AllTris.begin(), newPoint, metric, Us, Vs, vSizes,
 				  vSizesBGM, vMetricsBGM, AllTris, 0, oneNewTriangle, &oneNewTriangle);
       if (!success) oneNewTriangle = 0;
 	//      if (!success)printf("success %d %d\n",success,AllTris.size());

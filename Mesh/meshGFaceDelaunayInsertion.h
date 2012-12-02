@@ -49,7 +49,7 @@ class MTri3
   static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm  
   bool isDeleted() const { return deleted; }
   void forceRadius(double r) { circum_radius = r; }
-  double getRadius() const { return circum_radius; }
+  inline double getRadius() const { return circum_radius; }
 
   MTri3(MTriangle *t, double lc, SMetric3 *m = 0, const std::vector<double> *Us = 0, const std::vector<double> *Vs = 0, GFace *gf = 0);
   inline MTriangle *tri() const { return base; }

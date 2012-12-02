@@ -235,7 +235,8 @@ Field[2].hfar = 1.5;
 Field[2].hwall_n = 0.001;
 Field[2].hwall_t = 0.01;
 Field[2].ratio = 1.3;
-Field[2].thickness = .1;
+Field[2].thickness = .03;
+Field[2].IntersectMetrics = 1;
 //Background Field = 2;
 
 Field[1] = Box;

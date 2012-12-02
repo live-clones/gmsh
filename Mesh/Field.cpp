@@ -1931,7 +1931,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       const double b = lc_t;
       const double h = lc_n;
       double oneOverD2 = .5/(b * b) *
-        (1. + sqrt (1. + (4. * crv * crv * b * b * b * b / (h * h * beta * beta))));
+        (1. + sqrt (1. + (4. * crv * crv * b * b * b * b / (h * h * beta * beta))));      
       metr = buildMetricTangentToCurve(t1, sqrt(1. / oneOverD2), lc_n);
       return;
     }
@@ -2013,7 +2013,7 @@ void BoundaryLayerField::operator() (double x, double y, double z,
   }
   if (iIntersect)
     for (unsigned int i = 0; i < hop.size(); i++)
-      v = intersection_conserve_mostaniso(v, hop[i]);
+      v = intersection_conserveM1(v, hop[i]);
   metr = v;
 }
 #endif

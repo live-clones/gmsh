@@ -17,7 +17,7 @@
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 
-static const double FACTOR = .81;
+static const double FACTOR = .71;
 static const int NUMDIR = 3;
 static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 
@@ -163,6 +163,8 @@ bool compute4neighbors (GFace *gf,   // the surface
       metricField = SMetric3(1./(L*L));  
     }    
   }
+
+  //  printf("M = (%g %g %g)\n",metricField(0,0),metricField(1,1),metricField(0,1));
     
   // get the unit normal at that point
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(midpoint[0],midpoint[1]));
@@ -220,7 +222,15 @@ bool compute4neighbors (GFace *gf,   // the surface
 						  2*E*covar2[1]*covar2[0]+
 						  N*covar2[1]*covar2[1]);
     
-    //    printf("%12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());
+    /*    printf("%12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",
+	   M*covar1[0]*covar1[0]+
+	   2*E*covar1[1]*covar1[0]+
+	   N*covar1[1]*covar1[1], 
+	   M*covar2[0]*covar2[0]+
+	   2*E*covar2[1]*covar2[0]+
+	   N*covar2[1]*covar2[1]
+	   ,covar1[0],covar1[1],covar2[0],covar2[1],l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());*/
+
     // this is the rectangle in the parameter plane.
     double r1 = 0*1.e-8*(double)rand() / RAND_MAX;
     double r2 = 0*1.e-8*(double)rand() / RAND_MAX;
@@ -270,6 +280,8 @@ bool compute4neighbors (GFace *gf,   // the surface
 void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
   #if defined(HAVE_RTREE)
 
+  //  FILE *f = fopen ("parallelograms.pos","w"); 
+  
   // get all the boundary vertices
   std::set<MVertex*> bnd_vertices;
   for(unsigned int i=0;i<gf->getNumMeshElements();i++){
@@ -296,7 +308,9 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     vertices.push_back(sp); 
     double _min[2],_max[2];
     sp->minmax(_min,_max);
-    rtree.Insert(_min,_max,sp);    
+    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
+    rtree.Insert(_min,_max,sp);
+    //    sp->print(f);
   }
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
@@ -345,8 +359,8 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
       metrics.push_back(vertices[i]->_meshMetric);
       SPoint2 midpoint;
       reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
-      //      fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",vertices[i]._v->x(),vertices[i]._v->y(),vertices[i]._v->z());
-      fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
+      fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z());
+	    //fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
     }
     delete  vertices[i];
   }
