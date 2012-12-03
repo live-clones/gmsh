@@ -7,6 +7,7 @@
 #include <map>
 #include <algorithm>
 #include "GmshMessage.h"
+#include "OS.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunayInsertion.h"
@@ -585,7 +586,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 		    MTri3 **oneNewTriangle)
 {
   if (shell.size() <= 3 || shell.size() != cavity.size() + 2) return false;
-  
+
   std::list<MTri3*> new_cavity;
 
   // check that volume is conserved
@@ -644,16 +645,16 @@ bool insertVertexB (std::list<edgeXface> &shell,
     newVolume += ss;
     ++it;
   }
-  
+
 
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && !onePointIsTooClose){
     connectTris_vector(new_cavity.begin(), new_cavity.end());
     //    printf("%d %d\n",shell.size(),cavity.size());
-    clock_t t1 = clock();
+    double t1 = Cpu();
     // 30 % of the time is spent here !!!
     allTets.insert(newTris, newTris + shell.size());
-    //    clock_t t2 = clock();
-    __DT2 += (double)(clock()-t1)/CLOCKS_PER_SEC;
+    //    double t2 = Cpu();
+    __DT2 += Cpu()-t1;
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
         int active_edge;
@@ -686,8 +687,8 @@ bool insertVertexB (std::list<edgeXface> &shell,
     for (unsigned int i = 0; i < shell.size(); i++) delete newTris[i];
     delete [] newTris;
     //    throw;
-    //    clock_t t2 = clock();
-    //    DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
+    //    double t2 = Cpu();
+    //    DT_INSERT_VERTEX += t2-t1;
     return false;
   }
 }
@@ -766,7 +767,7 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2],
   }
 
   if (!force)return 0; // FIXME: removing this leads to horrible performance
-  
+
   N_GLOBAL_SEARCH ++ ;
   for(std::set<MTri3*,compareTri3Ptr>::iterator itx = AllTris.begin();
       itx != AllTris.end();++itx){
@@ -801,7 +802,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     }
   }
   else worst = *it;
-  
+
   MTri3 *ptin = 0;
   std::list<edgeXface> shell;
   std::list<MTri3*> cavity;
@@ -810,9 +811,9 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   // if the point is able to break the bad triangle "worst"
   if (1){
     if (inCircumCircleAniso(gf, worst->tri(), center, metric, Us, Vs)){
-      //      clock_t t1 = clock();
+      //      double t1 = Cpu();
       recurFindCavityAniso(gf, shell, cavity, metric, center, worst, Us, Vs);
-      //      __DT1 += (double) (clock() - t1)/CLOCKS_PER_SEC ;
+      //      __DT1 += Cpu() - t1 ;
       for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
 	if (invMapUV((*itc)->tri(), center, Us, Vs, uv, 1.e-8)) {
 	  ptin = *itc;
@@ -825,11 +826,11 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       //      printf("cocuou\n");
       ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
       if (ptin) {
-	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, Us, Vs);    
+	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, Us, Vs);
       }
     }
   }
- 
+
   //  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
 
   if (ptin) {
@@ -854,7 +855,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     Vs.push_back(center[1]);
 
 
-    //    clock_t t1 = clock();
+    //    double t1 = Cpu();
 
     if(!p.succeeded() || !insertVertexB
        (shell, cavity,false, gf, v, center, ptin, AllTris,ActiveTris, vSizes, vSizesBGM,vMetricsBGM,
@@ -867,13 +868,13 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       worst->forceRadius(-1);
       AllTris.insert(worst);
       delete v;
-      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);      
+      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);
       return false;
     }
     else {
       //      printf("done ! %d\n",AllTris.size());
-      //      clock_t t2 = clock();
-      //      DT_INSERT_VERTEX += (double)(t2-t1)/CLOCKS_PER_SEC;
+      //      double t2 = Cpu();
+      //      DT_INSERT_VERTEX += (t2-t1);
       gf->mesh_vertices.push_back(v);
       return true;
     }
@@ -926,19 +927,19 @@ void bowyerWatson(GFace *gf, int MAXPNT)
     //    }
     MTri3 *worst = *AllTris.begin();
     if (worst->isDeleted()){
-      //      clock_t t1 = clock();
+      //      double t1 = Cpu();
       delete worst->tri();
       delete worst;
       AllTris.erase(AllTris.begin());
       NBDELETED ++;
-      //      DT1 += (double) (clock() - t1)/CLOCKS_PER_SEC ;
+      //      DT1 += (Cpu() - t1);
     }
     else{
-      //      clock_t t2 = clock();
+      //      double t2 = Cpu();
       if(ITER++ % 5000 == 0){
         Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
                    vSizes.size(), worst->getRadius());
-	printf("%d %d %d\n",vSizes.size(), AllTris.size(),NBDELETED);
+	//printf("%d %d %d\n",vSizes.size(), AllTris.size(),NBDELETED);
       }
       double center[2],metric[3],r2;
       if (worst->getRadius() < /*1.333333/(sqrt(3.0))*/0.5 * sqrt(2.0) ||
@@ -953,15 +954,15 @@ void bowyerWatson(GFace *gf, int MAXPNT)
                        Vs[base->getVertex(2)->getIndex()]) / 3.};
       buildMetric(gf, pa,  metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);
-      //      DT2 += (double) (clock() - t2)/CLOCKS_PER_SEC ;
-      //      clock_t t3 = clock() ;
+      //      DT2 += (Cpu() - t2) ;
+      //      double t3 = Cpu() ;
       insertAPoint(gf, AllTris.begin(), center, metric, Us, Vs, vSizes,
                    vSizesBGM, vMetricsBGM, AllTris);
-      //      DT3 += (double) (clock() - t3)/CLOCKS_PER_SEC ;
+      //      DT3 += (Cpu() - t3) ;
     }
   }
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
-  printf("%12.5E \n",__DT2);
+  //printf("%12.5E \n",__DT2);
 #if defined(HAVE_ANN)
   {
     FieldManager *fields = gf->model()->getFields();
@@ -1705,7 +1706,7 @@ void bowyerWatsonParallelograms(GFace *gf)
   N_GLOBAL_SEARCH = 0;
   N_SEARCH = 0;
   DT_INSERT_VERTEX = 0;
-  //clock_t t1 = clock();
+  // double t1 = Cpu();
   MTri3 *oneNewTriangle = 0;
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
@@ -1746,9 +1747,9 @@ void bowyerWatsonParallelograms(GFace *gf)
 
 
   }
-  printf("%d vertices \n",packed.size());
-  //clock_t t2 = clock();
-  //double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  printf("%d vertices \n", (int)packed.size());
+  // double t2 = Cpu();
+  //double DT = (t2-t1);
   //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, Us, Vs);
   backgroundMesh::unset();

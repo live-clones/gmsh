@@ -655,7 +655,6 @@ void drawContext::initPosition()
 {
   glScaled(s[0], s[1], s[2]);
   glTranslated(t[0], t[1], t[2]);
-
   if(CTX::instance()->rotationCenterCg)
     glTranslated(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
