@@ -2174,10 +2174,12 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 }
 
 
+
 int untangleInvalidQuads(GFace *gf, int niter)
 {
   //  return;
   int N = 0;
+#if defined(HAVE_BFGS)
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
@@ -2188,6 +2190,7 @@ int untangleInvalidQuads(GFace *gf, int niter)
       }
     }
   }
+#endif
   return N;
 }
 
