@@ -231,10 +231,16 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 
   // Compute the empirical means
   fullVector<double> mean(3);
+  fullVector<double> vmins(3);
+  fullVector<double> vmaxs(3);
   for (int i = 0; i < 3; i++) {
     mean(i) = 0;
+    vmins(i) = DBL_MAX;
+    vmaxs(i) = -DBL_MAX;
     for (int j = 0; j < num_vertices; j++) {
       mean(i) += data(i,j);
+      vmaxs(i) =std::max(vmaxs(i),data(i,j));
+      vmins(i) = std::min(vmins(i),data(i,j));
     }
     mean(i) /= (double)num_vertices;
   }
@@ -293,12 +299,27 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     sizes[i] = maxs(i) - mins(i);
     //means[i] = (maxs(i) - mins(i)) / 2.;
   }
-  /*
-  Msg::Debug("Sizes : %f %f %f",sizes[0],sizes[1], sizes[2]);
-  Msg::Debug("Eig Axis 1 : %f %f %f",left_eigv(0,0),left_eigv(1,0), left_eigv(2,0));
-  Msg::Debug("Eig Axis 2 : %f %f %f",left_eigv(0,1),left_eigv(1,1), left_eigv(2,1));
-  Msg::Debug("Eig Axis 3 : %f %f %f",left_eigv(0,2),left_eigv(1,2), left_eigv(2,2));
-  */
+
+  if (sizes[0] == 0 && sizes[1] == 0) {
+    // Entity is a straight line...
+    SVector3 center;
+    SVector3 Axis1;
+    SVector3 Axis2;
+    SVector3 Axis3;
+
+    Axis1[0] = left_eigv(0,0); Axis1[1] = left_eigv(1,0); Axis1[2] = left_eigv(2,0);
+    Axis2[0] = left_eigv(0,1); Axis2[1] = left_eigv(1,1); Axis2[2] = left_eigv(2,1);
+    Axis3[0] = left_eigv(0,2); Axis3[1] = left_eigv(1,2); Axis3[2] = left_eigv(2,2);
+
+    center[0] = (vmaxs(0)+vmins(0))/2.0;
+    center[1] = (vmaxs(1)+vmins(1))/2.0;
+    center[2] = (vmaxs(2)+vmins(2))/2.0;
+    
+    return(new SOrientedBoundingBox(center, sizes[0], sizes[1], sizes[2],
+                                    Axis1, Axis2, Axis3));
+  }
+
+
   // We take the smallest component, then project the data on the plane defined by the other twos
 
   int smallest_comp = 0;
@@ -336,7 +357,6 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     record.points[i].where.h = points[i]->x()+(10e-6)*sizes[smallest_comp==0?1:0]*(-0.5+((double)rand())/RAND_MAX);
     record.points[i].where.v = points[i]->y()+(10e-6)*sizes[smallest_comp==2?1:0]*(-0.5+((double)rand())/RAND_MAX);
     record.points[i].adjacent = NULL;
-    //Msg::Info("Points for delaunay : %f %f",record.points[i].where.h,record.points[i].where.v);
   }
 
   record.MakeMeshWithPoints();
