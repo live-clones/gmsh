@@ -201,7 +201,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
 	}
   }
 	
-  printf("Squared root of smallest face area : %.9f\n",sqrt(min_area));
+  printf("\nSquared root of smallest face area : %.9f\n\n",sqrt(min_area));
 		
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
@@ -395,7 +395,6 @@ void voroMetal3D::correspondance(double e){
   unsigned int i;
   unsigned int j;
   int count;
-  int count2;
   bool flag;
   double x,y,z;
   double delta_x;
@@ -404,17 +403,24 @@ void voroMetal3D::correspondance(double e){
   SPoint3 p1;
   SPoint3 p2;
   GFace* gf;
+  GVertex* v1;
+  GVertex* v2;
   GModel* model = GModel::current();
   GModel::fiter it;
   std::vector<GFace*> faces;
   std::list<GVertex*> vertices;
+  std::list<GEdge*> edges;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
+  std::set<GVertex*> duplicate;
   std::list<GVertex*>::iterator it2;
   std::map<GFace*,SPoint3>::iterator it3;
   std::map<GFace*,SPoint3>::iterator it4;
   std::map<GFace*,bool>::iterator it5;
   std::map<GFace*,bool>::iterator it6;
+  std::list<GEdge*>::iterator it7;
+  std::set<GVertex*>::iterator it8;
+  std::set<GVertex*>::iterator it9;
 	
   faces.clear();	
 	
@@ -456,14 +462,9 @@ void voroMetal3D::correspondance(double e){
   }
 	
   count = 0;
-  count2 = 0;
 	
-  std::ofstream file;
-  file.open("cells.geo",std::ios::out | std::ios::app);	
-  std::ofstream file2("check.pos");
-  file2 << "View \"test\" {\n";	
-		
-  printf("Face 1 nbr. - Face 2 nbr.\n");	
+  std::ofstream file("check.pos");
+  file << "View \"test\" {\n";	
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
@@ -510,24 +511,81 @@ void voroMetal3D::correspondance(double e){
 		  it5->second = 1;
 		  it6->second = 1;
 		  
-		  printf("%d %d\n",faces[i]->tag(),faces[j]->tag());
-		  print_segment(p1,p2,file2);
-		  //file << faces[i]->tag() << " " << faces[j]->tag() << "\n";
+		  print_segment(p1,p2,file);
 		  
 		  count++;
-		}
-		else{
-		  count2++;
 		}
 	  }
 	}
   }
 
-  file2 << "};\n";
+  file << "};\n";
 	
-  printf("Number of linked exterior faces : %d\n",2*count);
+  printf("\nNumber of exterior face periodicities : %d\n",2*count);
   printf("Total number of exterior faces : %zu\n",faces.size());
-  printf("Number of mislinked : %d\n",count2-count);
+	
+  duplicate.clear();
+	
+  for(i=0;i<faces.size();i++){
+    gf = faces[i];
+		
+	edges = gf->edges();
+		
+	for(it7=edges.begin();it7!=edges.end();it7++){
+	  duplicate.insert((*it7)->getBeginVertex());
+	  duplicate.insert((*it7)->getEndVertex());
+	}
+  }
+
+  count = 0;	
+	
+  std::ofstream file2("vertices");	
+	
+  for(it8=duplicate.begin();it8!=duplicate.end();it8++){
+    v1 = *it8;
+	  
+	for(it9=duplicate.begin();it9!=duplicate.end();it9++){
+	  v2 = *it9;
+			
+	  delta_x = fabs(v2->x()-v1->x());
+	  delta_y = fabs(v2->y()-v1->y());
+	  delta_z = fabs(v2->z()-v1->z());
+		
+	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+	    count++;
+	  }
+	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+		count++;
+	  }
+	  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+		count++;
+	  }
+			
+	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+		count++;
+	  }
+	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+	    count++;
+	  }
+	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+        file2 << v1->tag() << " " << v2->tag() << "\n";
+		count++;
+	  }
+			
+	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+	    file2 << v1->tag() << " " << v2->tag() << "\n";
+		count++;
+	  }
+	}
+  }
+	
+  printf("\nNumber of exterior vertex periodicities : %d\n",count);
+  printf("Total number of exterior vertices : %zu\n\n",duplicate.size());	
 }
 
 bool voroMetal3D::equal(double x,double y,double e){
@@ -539,6 +597,6 @@ bool voroMetal3D::equal(double x,double y,double e){
   else{
     flag = 0;
   }
-	
+
   return flag;
 }
