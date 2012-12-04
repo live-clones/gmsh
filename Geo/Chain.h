@@ -11,6 +11,7 @@
 #include <sstream>
 #include "GModel.h"
 #include "MElement.h"
+#include "Context.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -507,7 +508,7 @@ void Chain<C>::addToModel(GModel* m, bool post,
   m->setPhysicalName(_name, dim, physicalNum);
 
 #if defined(HAVE_POST)
-  if(post) {
+  if(post && CTX::instance()->batch == 0) {
     // create PView for instant visualization
     std::string pnum = "";
     convert(physicalNum, pnum);
