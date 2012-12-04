@@ -403,24 +403,17 @@ void voroMetal3D::correspondance(double e){
   SPoint3 p1;
   SPoint3 p2;
   GFace* gf;
-  GVertex* v1;
-  GVertex* v2;
   GModel* model = GModel::current();
   GModel::fiter it;
   std::vector<GFace*> faces;
   std::list<GVertex*> vertices;
-  std::list<GEdge*> edges;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
-  std::set<GVertex*> duplicate;
   std::list<GVertex*>::iterator it2;
   std::map<GFace*,SPoint3>::iterator it3;
   std::map<GFace*,SPoint3>::iterator it4;
   std::map<GFace*,bool>::iterator it5;
   std::map<GFace*,bool>::iterator it6;
-  std::list<GEdge*>::iterator it7;
-  std::set<GVertex*>::iterator it8;
-  std::set<GVertex*>::iterator it9;
 	
   faces.clear();	
 	
@@ -468,8 +461,6 @@ void voroMetal3D::correspondance(double e){
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
-	  flag = 0;	
-	
 	  it3 = centers.find(faces[i]);
 	  it4 = centers.find(faces[j]);
 		
@@ -480,33 +471,12 @@ void voroMetal3D::correspondance(double e){
 	  delta_y = fabs(p2.y()-p1.y());
 	  delta_z = fabs(p2.z()-p1.z());
 		
-	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
-	    flag = 1;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
-	    flag = 1;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
-	    flag = 1;
-	  }
-	  
-	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
-	    flag = 1;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
-	    flag = 1;
-	  }
-	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
-	    flag = 1;
-	  }
-			
-	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
-	    flag = 1;
-	  }
+	  flag = correspondance(delta_x,delta_y,delta_z,e);
 		
 	  if(flag){
 	    it5 = markings.find(faces[i]);
 	    it6 = markings.find(faces[j]);
+		
 		if(it5->second==0 && it6->second==0){
 		  it5->second = 1;
 		  it6->second = 1;
@@ -522,70 +492,39 @@ void voroMetal3D::correspondance(double e){
   file << "};\n";
 	
   printf("\nNumber of exterior face periodicities : %d\n",2*count);
-  printf("Total number of exterior faces : %zu\n",faces.size());
-	
-  duplicate.clear();
-	
-  for(i=0;i<faces.size();i++){
-    gf = faces[i];
-		
-	edges = gf->edges();
-		
-	for(it7=edges.begin();it7!=edges.end();it7++){
-	  duplicate.insert((*it7)->getBeginVertex());
-	  duplicate.insert((*it7)->getEndVertex());
-	}
-  }
+  printf("Total number of exterior faces : %zu\n\n",faces.size());
+}
 
-  count = 0;	
+bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e){
+  bool flag;
 	
-  std::ofstream file2("vertices");	
+  flag = 0;
 	
-  for(it8=duplicate.begin();it8!=duplicate.end();it8++){
-    v1 = *it8;
-	  
-	for(it9=duplicate.begin();it9!=duplicate.end();it9++){
-	  v2 = *it9;
-			
-	  delta_x = fabs(v2->x()-v1->x());
-	  delta_y = fabs(v2->y()-v1->y());
-	  delta_z = fabs(v2->z()-v1->z());
-		
-	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-	    count++;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-		count++;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-		count++;
-	  }
-			
-	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-		count++;
-	  }
-	  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-	    count++;
-	  }
-	  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
-        file2 << v1->tag() << " " << v2->tag() << "\n";
-		count++;
-	  }
-			
-	  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
-	    file2 << v1->tag() << " " << v2->tag() << "\n";
-		count++;
-	  }
-	}
+  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
   }
 	
-  printf("\nNumber of exterior vertex periodicities : %d\n",count);
-  printf("Total number of exterior vertices : %zu\n\n",duplicate.size());	
+  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+	
+  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+	
+  return flag;
 }
 
 bool voroMetal3D::equal(double x,double y,double e){
