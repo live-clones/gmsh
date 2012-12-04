@@ -29,5 +29,6 @@ class voroMetal3D{
   void print_geo_line_loop(int,std::vector<int>&,std::vector<int>&,std::ofstream&);
   void print_geo_face_loop(int,std::vector<int>&,std::ofstream&);
   void correspondance(double);
+  bool correspondance(double,double,double,double);
   bool equal(double,double,double);
 };
