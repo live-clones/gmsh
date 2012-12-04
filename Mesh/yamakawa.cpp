@@ -3553,6 +3553,28 @@ void PostOp::mean(const std::set<MVertex*>& Ns,MVertex* mid,const std::vector<ME
   }
 
   iterations = iterations + j;
+	
+  for(j=0;j<6;j++){
+    flag = 0;
+		
+	for(i=0;i<movables.size();i++){
+	  if(movables[i]->gammaShapeMeasure()<0.2){
+	    flag = 1;
+	  }
+	}
+		
+	if(!flag){
+	  break;
+	}
+		
+	x = 0.1*init_x + 0.9*mid->x();
+	y = 0.1*init_y + 0.9*mid->y();
+	z = 0.1*init_z + 0.9*mid->z();
+		
+	mid->setXYZ(x,y,z);
+  }
+
+  iterations = iterations + j;
 }
 
 double PostOp::workaround(MElement* element){
