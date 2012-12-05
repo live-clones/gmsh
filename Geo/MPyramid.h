@@ -193,101 +193,6 @@ class MPyramid : public MElement {
  *            1--------8-------2
  *
  */
-class MPyramid13 : public MPyramid {
- protected:
-  MVertex *_vs[8];
- public :
-  MPyramid13(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-             MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-             MVertex *v10, MVertex *v11, MVertex *v12, int num=0, int part=0)
-    : MPyramid(v0, v1, v2, v3, v4, num, part)
-  {
-    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9;
-    _vs[5] = v10; _vs[6] = v11; _vs[7] = v12;
-    for(int i = 0; i < 8; i++) _vs[i]->setPolynomialOrder(2);
-  }
-  MPyramid13(const std::vector<MVertex*> &v, int num=0, int part=0)
-    : MPyramid(v, num, part)
-  {
-    for(int i = 0; i < 8; i++) _vs[i] = v[5 + i];
-    for(int i = 0; i < 8; i++) _vs[i]->setPolynomialOrder(2);
-  }
-  ~MPyramid13(){}
-  virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 13; }
-  virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual int getNumEdgeVertices() const { return 8; }
-  virtual int getNumEdgesRep(){ return 16; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[16][2] = {
-      {0, 5}, {5, 1},
-      {0, 6}, {6, 3},
-      {0, 7}, {7, 4},
-      {1, 8}, {8, 2},
-      {1, 9}, {9, 4},
-      {2, 10}, {10, 3},
-      {2, 11}, {11, 4},
-      {3, 12}, {12, 4}
-    };
-    static const int f[8] = {0, 1, 1, 2, 0, 3, 2, 3};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
-  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    v.resize(3);
-    MPyramid::_getEdgeVertices(num, v);
-    v[2] = _vs[num];
-  }
-  virtual int getNumFacesRep(){ return 22; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[22][3] = {
-      {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
-      {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
-      {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
-      {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
-      {0, 6, 5}, {3, 10, 6}, {2, 8, 10}, {1, 5, 8}, {5, 6, 10}, {5, 10, 8}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
-  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    v.resize((num < 4) ? 6 : 8);
-    MPyramid::_getFaceVertices(num, v);
-    static const int f[4][3] = {
-      {0, 4, 2},
-      {1, 2, 7},
-      {3, 6, 4},
-      {5, 7, 6}
-    };
-    if(num < 4) {
-      v[3] = _vs[f[num][0]];
-      v[4] = _vs[f[num][1]];
-      v[5] = _vs[f[num][2]];
-    }
-    else {
-      v[4] = _vs[1];
-      v[5] = _vs[5];
-      v[6] = _vs[3];
-      v[7] = _vs[0];
-    }
-  }
-  virtual int getTypeForMSH() const { return MSH_PYR_13; }
-  virtual void revert()
-  {
-    MVertex *tmp;
-    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
-    tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
-    tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
-  }
-  virtual void getNode(int num, double &u, double &v, double &w)
-  {
-    num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
-  }
-};
 
 /*
  * MPyramid14
@@ -308,106 +213,6 @@ class MPyramid13 : public MPyramid {
  *            1--------8-------2
  *
  */
-class MPyramid14 : public MPyramid {
- protected:
-  MVertex *_vs[9];
- public :
-  MPyramid14(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-             MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-             MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13,
-             int num=0, int part=0)
-    : MPyramid(v0, v1, v2, v3, v4, num, part)
-  {
-    _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9;
-    _vs[5] = v10; _vs[6] = v11; _vs[7] = v12; _vs[8] = v13;
-    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
-  }
-  MPyramid14(const std::vector<MVertex*> &v, int num=0, int part=0)
-    : MPyramid(v, num, part)
-  {
-    for(int i = 0; i < 9; i++) _vs[i] = v[5 + i];
-    for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
-  }
-  ~MPyramid14(){}
-  virtual int getPolynomialOrder() const { return 2; }
-  virtual int getNumVertices() const { return 14; }
-  virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual int getNumEdgeVertices() const { return 8; }
-  virtual int getNumFaceVertices() const { return 1; }
-  virtual int getNumEdgesRep(){ return 16; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[16][2] = {
-      {0, 5}, {5, 1},
-      {0, 6}, {6, 3},
-      {0, 7}, {7, 4},
-      {1, 8}, {8, 2},
-      {1, 9}, {9, 4},
-      {2, 10}, {10, 3},
-      {2, 11}, {11, 4},
-      {3, 12}, {12, 4}
-    };
-    static const int f[8] = {0, 1, 1, 2, 0, 3, 2, 3};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
-  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    v.resize(3);
-    MPyramid::_getEdgeVertices(num, v);
-    v[2] = _vs[num];
-  }
-  virtual int getNumFacesRep(){ return 24; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[24][3] = {
-      {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
-      {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
-      {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
-      {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
-      {0, 6, 13}, {0, 13, 5}, {3, 10, 13}, {3, 13, 6},
-      {2, 8, 13}, {2, 13, 10}, {1, 5, 13}, {1, 13, 8}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
-  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
-  {
-    v.resize((num < 4) ? 6 : 9);
-    MPyramid::_getFaceVertices(num, v);
-    static const int f[4][3] = {
-      {0, 4, 2},
-      {1, 2, 7},
-      {3, 6, 4},
-      {5, 7, 6}
-    };
-    if(num < 4) {
-      v[3] = _vs[f[num][0]];
-      v[4] = _vs[f[num][1]];
-      v[5] = _vs[f[num][2]];
-    }
-    else {
-      v[4] = _vs[1];
-      v[5] = _vs[5];
-      v[6] = _vs[3];
-      v[7] = _vs[0];
-      v[8] = _vs[8];
-    }
-  }
-  virtual int getTypeForMSH() const { return MSH_PYR_14; }
-  virtual const char *getStringForPOS() const { return "SY2"; }
-  virtual void revert()
-  {
-    MVertex *tmp;
-    tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
-    tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
-    tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
-    tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
-  }
-  virtual void getNode(int num, double &u, double &v, double &w)
-  {
-    num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
-  }
-};
 
 //------------------------------------------------------------------------------
 
@@ -483,6 +288,8 @@ class MPyramidN : public MPyramid {
   }
   virtual int getTypeForMSH() const
   {
+    if(_order == 2 && _vs.size() + 5 == 13) return MSH_PYR_13;
+    if(_order == 2 && _vs.size() + 5 == 14) return MSH_PYR_14;
     if(_order == 3 && _vs.size() + 5 == 29) return MSH_PYR_29;
     if(_order == 3 && _vs.size() + 5 == 30) return MSH_PYR_30;
     if(_order == 4 && _vs.size() + 5 == 50) return MSH_PYR_50;

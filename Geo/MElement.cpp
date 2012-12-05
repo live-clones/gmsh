@@ -1605,9 +1605,6 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PRI_6:   return new MPrism(v, num, part);
   case MSH_PRI_15:  return new MPrism15(v, num, part);
   case MSH_PRI_18:  return new MPrism18(v, num, part);
-  case MSH_PYR_5:   return new MPyramid(v, num, part);
-  case MSH_PYR_13:  return new MPyramid13(v, num, part);
-  case MSH_PYR_14:  return new MPyramid14(v, num, part);
   case MSH_TET_20:  return new MTetrahedronN(v, 3, num, part);
   case MSH_TET_34:  return new MTetrahedronN(v, 3, num, part);
   case MSH_TET_35:  return new MTetrahedronN(v, 4, num, part);
@@ -1631,6 +1628,9 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_LIN_SUB: return new MSubLine(v, num, part, owner, parent);
   case MSH_TRI_SUB: return new MSubTriangle(v, num, part, owner, parent);
   case MSH_TET_SUB: return new MSubTetrahedron(v, num, part, owner, parent);
+  case MSH_PYR_5:   return new MPyramid(v, num, part);
+  case MSH_PYR_13:  return new MPyramidN(v, 2, num, part);
+  case MSH_PYR_14:  return new MPyramidN(v, 2, num, part);
   case MSH_PYR_30:  return new MPyramidN(v, 3, num, part);
   case MSH_PYR_55:  return new MPyramidN(v, 4, num, part);
   case MSH_PYR_91:  return new MPyramidN(v, 5, num, part);

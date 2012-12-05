@@ -1023,61 +1023,35 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   }
   gr->prisms = prisms2;
 
+/* * * * * * * * * * * * * * * * * PYRAMIDS * * * * * * * * * * * * * * * * * */
+
   std::vector<MPyramid*> pyramids2;
+  
   for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf, vr;
     getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
-    if (nPts == 1) {
-      if(incomplete) {
-        pyramids2.push_back(new MPyramid13(p->getVertex(0), p->getVertex(1),
-					   p->getVertex(2), p->getVertex(3),
-					   p->getVertex(4), ve[0], ve[1], ve[2],
-					   ve[3], ve[4], ve[5], ve[6], ve[7],
-					   0, p->getPartition()));
-      }
-      else {
-        getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
-        pyramids2.push_back
-            (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-			    p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2],
-			    ve[3], ve[4], ve[5], ve[6], ve[7], vf[0],
-			    0, p->getPartition()));
-      }
+
+    getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
+
+    ve.insert(ve.end(), vf.begin(), vf.end());
+
+    vr.reserve((nPts-1)*(nPts)*(2*(nPts-1)+1)/6);
+
+    int verts_lvl3[12] = {37,40,38,43,46,44,49,52,50,55,58,56};
+
+    int verts_lvl2[8];
+    if (nPts == 4) {
+      verts_lvl2[0] = 42; verts_lvl2[1] = 41;
+      verts_lvl2[2] = 48; verts_lvl2[3] = 47;
+      verts_lvl2[4] = 54; verts_lvl2[5] = 53;
+      verts_lvl2[6] = 60; verts_lvl2[7] = 59;
+    } else {
+      verts_lvl2[0] = 29; verts_lvl2[1] = 30;
+      verts_lvl2[2] = 35; verts_lvl2[3] = 36;
+      verts_lvl2[4] = 38; verts_lvl2[5] = 39;
+      verts_lvl2[6] = 32; verts_lvl2[7] = 33;
     }
-    else {
-      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
-      ve.insert(ve.end(), vf.begin(), vf.end());
-
-      // Creating quads to get the internal vertices
-      /*
-       * P3 : q1 - 21 22 23 24
-       * P4 : q1 - 29 30 32 33 35 36 38 39
-       *      q2 - 31 34 37 40
-       * P5 : q1 - 37 40 38 43 46 44 49 52 50 55 58 56
-       *      q2 - 42 41 48 47 54 53 60 59
-       *      q3 - 39 45 51 57
-       */
-
-      vr.reserve((nPts-1)*(nPts)*(2*(nPts-1)+1)/6);
-      /*for (int tmp = 0; tmp < (nPts-1)*(nPts)*(2*(nPts-1)+1)/6; tmp++) {
-        vr.push_back(0);
-      }*/
-
-      int verts_lvl3[12] = {37,40,38,43,46,44,49,52,50,55,58,56};
-
-      int verts_lvl2[8];
-      if (nPts == 4) {
-        verts_lvl2[0] = 42; verts_lvl2[1] = 41;
-        verts_lvl2[2] = 48; verts_lvl2[3] = 47;
-        verts_lvl2[4] = 54; verts_lvl2[5] = 53;
-        verts_lvl2[6] = 60; verts_lvl2[7] = 59;
-      } else {
-        verts_lvl2[0] = 29; verts_lvl2[1] = 30;
-        verts_lvl2[2] = 35; verts_lvl2[3] = 36;
-        verts_lvl2[4] = 38; verts_lvl2[5] = 39;
-        verts_lvl2[6] = 32; verts_lvl2[7] = 33;
-      }
 
     int verts_lvl1[4];
     switch(nPts) {
@@ -1101,99 +1075,98 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         break;
     }
 
-      for (int q = 0; q < nPts - 1; q++) {
-        std::vector<MVertex*> vq, veq;
-        vq.push_back(ve[2*nPts + q]);
-        vq.push_back(ve[4*nPts + q]);
-        vq.push_back(ve[6*nPts + q]);
-        vq.push_back(ve[7*nPts + q]);
+    for (int q = 0; q < nPts - 1; q++) {
+      std::vector<MVertex*> vq, veq;
+      vq.push_back(ve[2*nPts + q]);
+      vq.push_back(ve[4*nPts + q]);
+      vq.push_back(ve[6*nPts + q]);
+      vq.push_back(ve[7*nPts + q]);
 
-        //int triverts = nPts*(nPts-1)/2;
+      if (nPts-q == 4)
+        for (int f = 0; f < 12; f++)
+          veq.push_back(ve[verts_lvl3[f]-5]);
+      else if (nPts-q == 3)
+        for (int f = 0; f < 8; f++)
+          veq.push_back(ve[verts_lvl2[f]-5]);
+      else if (nPts-q == 2)
+        for (int f = 0; f < 4; f++)
+          veq.push_back(ve[verts_lvl1[f]-5]);
 
-        if (nPts-q == 4)
-          for (int f = 0; f < 12; f++)
-            veq.push_back(ve[verts_lvl3[f]-5]);
-        else if (nPts-q == 3)
-          for (int f = 0; f < 8; f++)
-            veq.push_back(ve[verts_lvl2[f]-5]);
-        else if (nPts-q == 2)
-          for (int f = 0; f < 4; f++)
-            veq.push_back(ve[verts_lvl1[f]-5]);
+      if (nPts-q == 2) {
+        MQuadrangle8 incpl2(vq[0], vq[1], vq[2], vq[3],
+                     veq[0], veq[1], veq[2], veq[3]);
+        SPoint3 pointz;
+        incpl2.pnt(0,0,0,pointz);
+        MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
 
-        if (nPts-q == 2) {
-          MQuadrangle8 incpl2(vq[0], vq[1], vq[2], vq[3],
-                       veq[0], veq[1], veq[2], veq[3]);
-          SPoint3 pointz;
-          incpl2.pnt(0,0,0,pointz);
+        gr->mesh_vertices.push_back(v);
+        std::vector<MVertex*>::iterator cursor = vr.begin();
+        cursor += nPts == 2 ? 0 : 4;
+        vr.insert(cursor, v);
+      }
+      else if (nPts-q == 3) {
+
+        MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 3);
+        int offsets[4] = {nPts == 4 ? 7 : 0,
+                          nPts == 4 ? 9 : 1,
+                          nPts == 4 ? 11 : 2,
+                          nPts == 4 ? 12 : 3};
+        double quad_v [4][2] = {{-1.0/3.0, -1.0/3.0},
+                             { 1.0/3.0, -1.0/3.0},
+                             { 1.0/3.0,  1.0/3.0},
+                             {-1.0/3.0,  1.0/3.0}};
+        SPoint3 pointz;
+        for (int k = 0; k<4; k++) {
+          incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
           MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-
           gr->mesh_vertices.push_back(v);
           std::vector<MVertex*>::iterator cursor = vr.begin();
-          cursor += nPts == 2 ? 0 : 4;
+          cursor += offsets[k];
           vr.insert(cursor, v);
         }
-        else if (nPts-q == 3) {
-
-          MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 3);
-          int offsets[4] = {nPts == 4 ? 7 : 0,
-                            nPts == 4 ? 9 : 1,
-                            nPts == 4 ? 11 : 2,
-                            nPts == 4 ? 12 : 3};
-          double quad_v [4][2] = {{-1.0/3.0, -1.0/3.0},
-                               { 1.0/3.0, -1.0/3.0},
-                               { 1.0/3.0,  1.0/3.0},
-                               {-1.0/3.0,  1.0/3.0}};
-          SPoint3 pointz;
-          for (int k = 0; k<4; k++) {
-            incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
-            MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-            gr->mesh_vertices.push_back(v);
-            std::vector<MVertex*>::iterator cursor = vr.begin();
-            cursor += offsets[k];
-            vr.insert(cursor, v);
-          }
-        }
-        else if (nPts-q == 4) {
-          MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 4);
-          int offsets[9] = {0, 1, 2, 3, 5, 8, 10, 6, 13};
-          double quad_v [9][2] = {
-                               { -0.5, -0.5},
-                               {  0.5, -0.5},
-                               {  0.5,  0.5},
-                               { -0.5,  0.5},
-                               {  0.0, -0.5},
-                               {  0.5,  0.0},
-                               {  0.0,  0.5},
-                               { -0.5,  0.0},
-                               {  0.0,  0.0}
-                                 };
-          SPoint3 pointz;
-          for (int k = 0; k<9; k++) {
-            incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
-            MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-            gr->mesh_vertices.push_back(v);
-            std::vector<MVertex*>::iterator cursor = vr.begin();
-            cursor += offsets[k];
-            vr.insert(cursor, v);
-          }
-
-
-        }
-
       }
-      ve.insert(ve.end(), vr.begin(), vr.end());
-      MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-				  p->getVertex(3), p->getVertex(4), ve, nPts + 1,
-				  0, p->getPartition());
-      pyramids2.push_back(n);
-      SPoint3 test_pnt;
-      n->pnt(-1,-1,0, test_pnt);
+      else if (nPts-q == 4) {
+        MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 4);
+        int offsets[9] = {0, 1, 2, 3, 5, 8, 10, 6, 13};
+        double quad_v [9][2] = {
+                             { -0.5, -0.5},
+                             {  0.5, -0.5},
+                             {  0.5,  0.5},
+                             { -0.5,  0.5},
+                             {  0.0, -0.5},
+                             {  0.5,  0.0},
+                             {  0.0,  0.5},
+                             { -0.5,  0.0},
+                             {  0.0,  0.0}
+                               };
+        SPoint3 pointz;
+        for (int k = 0; k<9; k++) {
+          incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
+          MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
+          gr->mesh_vertices.push_back(v);
+          std::vector<MVertex*>::iterator cursor = vr.begin();
+          cursor += offsets[k];
+          vr.insert(cursor, v);
+        }
+      }
+
     }
+    ve.insert(ve.end(), vr.begin(), vr.end());
+    MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1), 
+                                p->getVertex(2), p->getVertex(3),
+                                p->getVertex(4), ve, nPts + 1,
+			                          0, p->getPartition());
+    pyramids2.push_back(n);
+    SPoint3 test_pnt;
+    n->pnt(-1,-1,0, test_pnt);
+    
     delete p;
   }
   gr->pyramids = pyramids2;
   gr->deleteVertexArrays();
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 template<class T>
 static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisible)
