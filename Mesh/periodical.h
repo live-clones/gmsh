@@ -14,10 +14,10 @@ class voroMetal3D{
  public:
   voroMetal3D();
   ~voroMetal3D();
-  void execute();
-  void execute(GRegion*);
-  void execute(std::vector<SPoint3>&);
-  void execute(std::vector<double>&);
+  void execute(double);
+  void execute(GRegion*,double);
+  void execute(std::vector<SPoint3>&,double);
+  void execute(std::vector<double>&,double);
   void print_segment(SPoint3,SPoint3,std::ofstream&);
   void initialize_counter();
   void increase_counter();
