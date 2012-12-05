@@ -63,7 +63,7 @@ voroMetal3D::voroMetal3D(){}
 
 voroMetal3D::~voroMetal3D(){}
 
-void voroMetal3D::execute(){
+void voroMetal3D::execute(double h){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
@@ -72,12 +72,12 @@ void voroMetal3D::execute(){
   {
     gr = *it;
 	if(gr->getNumMeshElements()>0){
-	  execute(gr);
+	  execute(gr,h);
 	}
   }
 }
 
-void voroMetal3D::execute(GRegion* gr){
+void voroMetal3D::execute(GRegion* gr,double h){
   unsigned int i;
   int j;
   MElement* element;
@@ -98,10 +98,10 @@ void voroMetal3D::execute(GRegion* gr){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
   }
 
-  execute(vertices2);
+  execute(vertices2,h);
 }
 
-void voroMetal3D::execute(std::vector<double>& vertices){
+void voroMetal3D::execute(std::vector<double>& vertices,double h){
   unsigned int i;
   SPoint3 point;
   std::vector<SPoint3> temp;
@@ -113,10 +113,10 @@ void voroMetal3D::execute(std::vector<double>& vertices){
     temp.push_back(point);
   }
   
-  execute(temp);
+  execute(temp,h);
 }
 
-void voroMetal3D::execute(std::vector<SPoint3>& vertices)
+void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 {
 #if defined(HAVE_VORO3D)
   unsigned int i;
@@ -206,7 +206,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices)
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
   std::ofstream file2("cells.geo");
-  file2 << "c = 1.0;\n";
+  file2 << "c=" << h << ";\n";
 		
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
@@ -395,7 +395,12 @@ void voroMetal3D::correspondance(double e){
   unsigned int i;
   unsigned int j;
   int count;
+  int index;
   bool flag;
+  bool flag1;
+  bool flag2;
+  bool flag3;
+  bool flag4;
   double x,y,z;
   double delta_x;
   double delta_y;
@@ -403,10 +408,21 @@ void voroMetal3D::correspondance(double e){
   SPoint3 p1;
   SPoint3 p2;
   GFace* gf;
+  GFace* gf1;
+  GFace* gf2;
+  GVertex* v1;
+  GVertex* v2;
+  GVertex* v3;
+  GVertex* v4;
   GModel* model = GModel::current();
   GModel::fiter it;
   std::vector<GFace*> faces;
+  std::vector<std::pair<GFace*,GFace*> > pairs;
+  std::vector<int> indices1;
+  std::vector<int> indices2;
   std::list<GVertex*> vertices;
+  std::list<GEdge*> edges1;
+  std::list<GEdge*> edges2;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
   std::list<GVertex*>::iterator it2;
@@ -414,6 +430,8 @@ void voroMetal3D::correspondance(double e){
   std::map<GFace*,SPoint3>::iterator it4;
   std::map<GFace*,bool>::iterator it5;
   std::map<GFace*,bool>::iterator it6;
+  std::list<GEdge*>::iterator it7;
+  std::list<GEdge*>::iterator it8;
 	
   faces.clear();	
 	
@@ -426,7 +444,8 @@ void voroMetal3D::correspondance(double e){
   }
 	
   centers.clear();
-  markings.clear();	
+  markings.clear();
+  pairs.clear();
 	
   for(i=0;i<faces.size();i++){
 	x = 0.0;
@@ -457,7 +476,8 @@ void voroMetal3D::correspondance(double e){
   count = 0;
 	
   std::ofstream file("check.pos");
-  file << "View \"test\" {\n";	
+  file << "View \"test\" {\n";
+  std::ofstream file3("vectors");
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
@@ -481,8 +501,12 @@ void voroMetal3D::correspondance(double e){
 		  it5->second = 1;
 		  it6->second = 1;
 		  
+		  pairs.push_back(std::pair<GFace*,GFace*>(faces[i],faces[j]));
+			
 		  print_segment(p1,p2,file);
 		  
+		  file3 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
+			
 		  count++;
 		}
 	  }
@@ -493,6 +517,72 @@ void voroMetal3D::correspondance(double e){
 	
   printf("\nNumber of exterior face periodicities : %d\n",2*count);
   printf("Total number of exterior faces : %zu\n\n",faces.size());
+	
+  std::ofstream file2;
+  file2.open("cells.geo",std::ios::out | std::ios::app);
+	
+  for(i=0;i<pairs.size();i++){
+    gf1 = pairs[i].first;
+	gf2 = pairs[i].second;
+  
+	edges1 = gf1->edges();
+	edges2 = gf2->edges();  
+	 
+	indices1.clear();
+	indices2.clear();
+	  
+	for(it7=edges1.begin();it7!=edges1.end();it7++){
+	  v1 = (*it7)->getBeginVertex();
+	  v2 = (*it7)->getEndVertex();
+		
+	  flag1 = 0;
+	  flag2 = 0;
+	  flag3 = 0;
+	  flag4 = 0;
+		
+	  indices1.push_back((*it7)->tag());	
+		
+	  for(it8=edges2.begin();it8!=edges2.end();it8++){
+	    v3 = (*it8)->getBeginVertex();
+		v4 = (*it8)->getEndVertex();
+		  
+		flag1 = correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e);
+		flag2 = correspondance(fabs(v4->x()-v2->x()),fabs(v4->y()-v2->y()),fabs(v4->z()-v2->z()),e);
+		  
+		flag3 = correspondance(fabs(v4->x()-v1->x()),fabs(v4->y()-v1->y()),fabs(v4->z()-v1->z()),e);
+		flag4 = correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e);
+		  
+		if(flag1 && flag2){
+		  index = (*it8)->tag();
+		}
+		else if(flag3 && flag4){
+		  index = -((*it8)->tag());
+		}
+	  }
+				
+	  indices2.push_back(index);
+	}
+	  
+	if(indices1.size()!=indices2.size()){
+	  printf("Error\n\n");
+	}
+	  
+	file2 << "Periodic Surface " << gf1->tag() << " {";  
+	  
+	for(j=0;j<indices1.size();j++){
+	  if(j>0) file2 << ",";
+	  file2 << indices1[j];
+	}
+	  
+	file2 << "} = " << gf2->tag() << " {";
+	  
+	for(j=0;j<indices2.size();j++){
+      if(j>0) file2 << ",";
+	  file2 << indices2[j];
+	}
+	  
+	file2 << "};\n";
+  }
 }
 
 bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e){
