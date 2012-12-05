@@ -306,6 +306,19 @@ class MPyramidN : public MPyramid {
     if(_order == 9 && _vs.size() + 5 == 385) return MSH_PYR_385;
     return 0;
   }
+  virtual void revert()
+  {
+/*    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
+    std::vector<MVertex*> inv(_vs.size());
+    std::vector<int> reverseIndices = _getReverseIndices(_order);
+    for (unsigned int i = 0; i< _vs.size(); i++)
+      inv[i] = _vs[reverseIndices[i + 4] - 4];
+    _vs = inv;*/
+
+    Msg::Error("Revert not implemented yet for MPyramidN");
+
+  }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
