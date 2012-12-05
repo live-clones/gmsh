@@ -34,8 +34,7 @@ class CellComplex
   // original cells of this cell complex
   std::set<Cell*, Less_Cell> _ocells[4];
 
-  // new cells created during reductions
-  std::vector<Cell*> _newcells;
+  // original cells removed during reductions
   std::vector<Cell*> _removedcells;
 
   // cell complex dimension
@@ -51,9 +50,14 @@ class CellComplex
   bool _relative;
 
   int _deleteCount;
+  int _createCount;
 
   // is the cell complex at reduced state
   bool _reduced;
+
+  int _numRelativeCells[4];
+  int _numSubdomainCells[4];
+
 
   // for constructor
   bool _insertCells(std::vector<MElement*>& elements, int domain);
@@ -61,16 +65,18 @@ class CellComplex
 
   bool _immunizeCells(std::vector<MElement*>& elements);
 
+  Cell* _omitCell(Cell* cell, bool dual);
+
   // enqueue cells in queue if they are not there already
   void enqueueCells(std::map<Cell*, short int, Less_Cell>& cells,
 		    std::queue<Cell*>& Q, std::set<Cell*, Less_Cell>& Qset);
 
   // insert/remove a cell from this cell complex
-  void removeCell(Cell* cell, bool other=true);
+  void removeCell(Cell* cell, bool other=true, bool del=false);
   void insertCell(Cell* cell);
 
   // queued coreduction
-  int coreduction(Cell* startCell, bool omit,
+  int coreduction(Cell* startCell, int omit,
 		  std::vector<Cell*>& omittedCells);
 
  public:
@@ -89,16 +95,26 @@ class CellComplex
   bool simplicial() const { return _simplicial; }
   bool relative() const { return _relative; }
 
+
+
   // get the number of certain dimensional cells
   int getSize(int dim, bool orig=false){
     if(!orig) return _cells[dim].size();
     else return _ocells[dim].size(); }
+
+  // get domain of a cell
+  // cell in domain relative to subdomain  -> domain = 0
+  // cell in domain                        -> domain = 1
+  // cell in subdomain                     -> domain = 2
+  int getDomain(Cell* cell, std::string& str);
 
   // get dim-dimensional cells
   // domain = 0: cells in domain relative to subdomain
   // domain = 1: cells in domain
   // domain = 2: cells in subdomain
   void getCells(std::set<Cell*, Less_Cell>& cells, int dim, int domain=0);
+  int getNumCells(int dim, int domain=0);
+  Cell* getACell(int dim, int domain=0);
   //std::set<Cell*, Less_Cell> getOrigCells(int dim){ return _ocells[dim]; }
 
   // iterator for the cells of same dimension
@@ -125,8 +141,8 @@ class CellComplex
 
   // (co)reduction of this cell complex
   // removes (co)reduction pairs of cell of dimension dim and dim-1
-  int reduction(int dim, bool omit, std::vector<Cell*>& omittedCells);
-  int coreduction(int dim, bool omit, std::vector<Cell*>& omittedCells);
+  int reduction(int dim, int omit, std::vector<Cell*>& omittedCells);
+  int coreduction(int dim, int omit, std::vector<Cell*>& omittedCells);
 
   // Cell combining for reduction and coreduction
   int combine(int dim);
@@ -140,9 +156,9 @@ class CellComplex
 
   // full (co)reduction of this cell complex (all dimensions)
   // (combine = 1 -> with combining)
-  // (combine = 2 -> with combining and dual combining)
   // (omit = true -> with highest dimensional cell omitting?)
-  int reduceComplex(int combine=1, bool omit=true);
+  // (homseq = true -> homology sequence splitting possible after reduction)
+  int reduceComplex(int combine=1, bool omit=true, bool homseq=false);
   int coreduceComplex(int combine=1, bool omit=true);
 
   bool isReduced() const { return _reduced; }

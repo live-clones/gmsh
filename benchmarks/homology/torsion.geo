@@ -130,5 +130,7 @@ Surface Loop(85) = {76, 78, 74, 80, 46, 48, 84, 64, 62, 60, 58, 82, 56, 54, 52, 
 Volume(86) = {85};
 Physical Volume(87) = {86};
 Physical Surface(88) = {46, 48, 64, 62, 60, 58, 56, 54, 52, 50};
+Physical Surface(89) = {78, 80, 76, 74, 84, 82};
 
 Homology {{87},{88}};
+Homology {{87},{89}};
