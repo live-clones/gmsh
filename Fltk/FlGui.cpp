@@ -795,6 +795,7 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->check();
 #else
       FlGui::instance()->graph[0]->getWindow()->fullscreen();
+      FlGui::instance()->graph[0]->hideMessages();
 #endif
       zoom = 0;
     }

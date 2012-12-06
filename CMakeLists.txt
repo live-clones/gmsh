@@ -109,7 +109,8 @@ set(GMSH_API
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
     Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
+  Post/PView.h Post/PViewData.h Post/PViewDataList.h Plugin/PluginManager.h
+    Post/OctreePost.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
