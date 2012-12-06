@@ -14,25 +14,40 @@
 #include "adaptiveData.h"
 #include "GmshMessage.h"
 
-int PView::_globalNum = 0;
+int PView::_globalNum = 1;
 std::vector<PView*> PView::list;
 
 void PView::_init(int num)
 {
   if(num){
     _num = num;
-    _globalNum = std::max(_globalNum, _num);
+    _globalNum = std::max(_globalNum, _num) + 1;
   }
   else{
-    _num = ++_globalNum;
+    _num = _globalNum++;
   }
+
   _changed = true;
   _aliasOf = 0;
   _eye = SPoint3(0., 0., 0.);
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
   normals = 0;
-  list.push_back(this);
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+
+  bool replaced = false;
+  for(unsigned int i = 0; i < list.size(); i++){
+    if(list[i]->getNum() == _num){
+      Msg::Info("Replacing View[%d]", i);
+      replaced = true;
+      delete list[i];
+      _index = i;
+      list[i] = this;
+      break;
+    }
+  }
+  if(!replaced){
+    _index = list.size();
+    list.push_back(this);
+  }
 }
 
 PView::PView(int num)
