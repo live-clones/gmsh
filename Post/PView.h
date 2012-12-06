@@ -61,6 +61,10 @@ class PView{
   // default destructor
   ~PView();
 
+  // get/set global number
+  static int getGlobalNum(){ return _globalNum; }
+  static void setGlobalNum(int num){ _globalNum = num; }
+
   // delete the vertex arrays, used to draw the view efficiently
   void deleteVertexArrays();
 
