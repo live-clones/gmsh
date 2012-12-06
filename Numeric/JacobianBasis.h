@@ -16,7 +16,7 @@ class bezierBasis {
  private :
   static std::map<int, bezierBasis> _bbs;
  public :
-  int order;
+  int dim, order;
   int numLagPts;
   int numDivisions;
   // the 'numLagPts' first exponents are related to 'Lagrangian' values
@@ -29,13 +29,34 @@ class bezierBasis {
 
 class JacobianBasis {
  private:
-  static std::map<int, JacobianBasis> _fs;
- public :
+  static std::map<int, JacobianBasis*> _fs;
   const bezierBasis *bezier;
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
-  fullMatrix<double> primJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
+  fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
+ public :
   static const JacobianBasis *find(int);
-  void getSignedJacobian(MElement *el, fullVector<double> &jacobian) const;
+  JacobianBasis(int tag);
+  inline int getNumJacNodes() const { return gradShapeMatX.size1(); }
+  inline int getNumMapNodes() const { return gradShapeMatX.size2(); }
+  inline const fullMatrix<double> &getPoints() const { return bezier->points; }
+  inline int getNumDivisions() const { return bezier->numDivisions; }
+  inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
+  inline int getNumLagPts() const { return bezier->numLagPts; }
+  void getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const;
+  void getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+                         const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const;
+  inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
+    bezier->matrixLag2Bez.mult(jac,bez);
+  }
+  inline void lag2Bez(const fullMatrix<double> &jac, fullMatrix<double> &bez) const {
+    bezier->matrixLag2Bez.mult(jac,bez);
+  }
+  inline void primJac2Jac(const fullVector<double> &primJac, fullVector<double> &jac) const {
+    matrixPrimJac2Jac.mult(primJac,jac);
+  }
+  inline void subDivisor(const fullVector<double> &bez, fullVector<double> &result) const {
+    bezier->subDivisor.mult(bez,result);
+  }
 };
 
 #endif

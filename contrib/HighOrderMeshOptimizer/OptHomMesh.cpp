@@ -9,14 +9,13 @@
 
 
 std::map<int, fullMatrix<double> > Mesh::_gradShapeFunctions;
-std::map<int, fullMatrix<double> > Mesh::_lag2Bez;
 
 
 
-fullMatrix<double> Mesh::computeGSF(const nodalBasis *lagrange, const bezierBasis *bezier)
+fullMatrix<double> Mesh::computeGSF(const nodalBasis *lagrange, const JacobianBasis *jac)
 {
   // bezier points are defined in the [0,1] x [0,1] quad
-  fullMatrix<double> bezierPoints = bezier->points;
+  fullMatrix<double> bezierPoints = jac->getPoints();
   if (lagrange->parentType == TYPE_QUA) {
     for (int i = 0; i < bezierPoints.size1(); ++i) {
       bezierPoints(i, 0) = -1 + 2 * bezierPoints(i, 0);
@@ -71,12 +70,10 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
     MElement *el = *it;
     _el[iEl] = el;
     const nodalBasis *lagrange = el->getFunctionSpace();
-    const bezierBasis *bezier = JacobianBasis::find(lagrange->type)->bezier;
-    if (_lag2Bez.find(lagrange->type) == _lag2Bez.end()) {
-      _gradShapeFunctions[lagrange->type] = computeGSF(lagrange, bezier);
-      _lag2Bez[lagrange->type] = bezier->matrixLag2Bez;
-    }
-    _nBezEl[iEl] = bezier->points.size1();
+    const JacobianBasis *jac = JacobianBasis::find(lagrange->type);
+    if (_gradShapeFunctions.find(lagrange->type) == _gradShapeFunctions.end())
+      _gradShapeFunctions[lagrange->type] = computeGSF(lagrange, jac);
+    _nBezEl[iEl] = jac->getNumJacNodes();
     _nNodEl[iEl] = lagrange->points.size1();
     for (int iVEl = 0; iVEl < lagrange->points.size1(); iVEl++) {
       MVertex *vert = el->getVertex(iVEl);
@@ -375,8 +372,8 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<
   //  gradScaledJac(iEl,OLD);
   //  scaledJac(iEl,OLD);
 
+  const JacobianBasis *jacBasis = JacobianBasis::find(_el[iEl]->getTypeForMSH());
   fullMatrix<double> &gsf = _gradShapeFunctions[_el[iEl]->getTypeForMSH()];
-  const fullMatrix<double> &l2b = _lag2Bez[_el[iEl]->getTypeForMSH()];
   const int nbBez = _nBezEl[iEl];
   const int nbNod = _nNodEl[iEl];
   fullMatrix<double> JDJ (nbBez,3*nbNod+1);
@@ -428,7 +425,7 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ , std::vector<
   }
   
   //  (N_b x N_b) x (N_b x 3*N_n + 1) 
-  l2b.mult(JDJ,BDB);
+  jacBasis->lag2Bez(JDJ,BDB);
 
   // the scaled jacobian
   //  printf("ELEMENT %d\n",iEl);

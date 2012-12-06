@@ -935,27 +935,6 @@ static fullMatrix<double> generateSubDivisor
 
 
 
-static void generateGradShapes(JacobianBasis &jfs, const fullMatrix<double> &points, const nodalBasis *F)
-{
-
-  fullMatrix<double> allDPsi;
-  F->df(points, allDPsi);
-
-  const int NBez = points.size1(), NLag = allDPsi.size1();
-  jfs.gradShapeMatX.resize(NBez,NLag);
-  jfs.gradShapeMatY.resize(NBez,NLag);
-  jfs.gradShapeMatZ.resize(NBez,NLag);
-  for (int i=0; i<NBez; i++)
-    for (int j=0; j<NLag; j++) {
-      jfs.gradShapeMatX(i,j) = allDPsi(j,3*i);
-      jfs.gradShapeMatY(i,j) = allDPsi(j,3*i+1);
-      jfs.gradShapeMatZ(i,j) = allDPsi(j,3*i+2);
-    }
-
-}
-
-
-
 std::map<int, bezierBasis> bezierBasis::_bbs;
 const bezierBasis *bezierBasis::find(int tag)
 {
@@ -967,6 +946,7 @@ const bezierBasis *bezierBasis::find(int tag)
   B.order = MElement::OrderFromTag(tag);
 
   if (MElement::ParentTypeFromTag(tag) == TYPE_PYR) {
+    B.dim = 3;
     B.numLagPts = 5;
     B.points = gmshGeneratePointsPyramid(B.order,false);
     B.matrixLag2Bez.resize(B.points.size1(),B.points.size1(),0.);
@@ -982,12 +962,14 @@ const bezierBasis *bezierBasis::find(int tag)
     std::vector< fullMatrix<double> > subPoints;
     switch (MElement::ParentTypeFromTag(tag)) {
       case TYPE_PNT :
+        B.dim = 0;
         B.numLagPts = 1;
         B.exponents = generate1DExponents(0);
         B.points    = generate1DPoints(0);
         dimSimplex = 0;
         break;
       case TYPE_LIN : {
+        B.dim = 1;
         B.numLagPts = 2;
         B.exponents = generate1DExponents(B.order);
         B.points    = generate1DPoints(B.order);
@@ -996,6 +978,7 @@ const bezierBasis *bezierBasis::find(int tag)
         break;
       }
       case TYPE_TRI : {
+        B.dim = 2;
         B.numLagPts = 3;
         B.exponents = generateExponentsTriangle(B.order);
         B.points    = gmshGeneratePointsTriangle(B.order,false);
@@ -1004,6 +987,7 @@ const bezierBasis *bezierBasis::find(int tag)
         break;
       }
       case TYPE_QUA : {
+        B.dim = 2;
         B.numLagPts = 4;
         B.exponents = generateExponentsQuad(B.order);
         B.points    = generatePointsQuad(B.order,false);
@@ -1013,6 +997,7 @@ const bezierBasis *bezierBasis::find(int tag)
         break;
       }
       case TYPE_TET : {
+        B.dim = 3;
         B.numLagPts = 4;
         B.exponents = generateExponentsTetrahedron(B.order);
         B.points    = gmshGeneratePointsTetrahedron(B.order,false);
@@ -1021,6 +1006,7 @@ const bezierBasis *bezierBasis::find(int tag)
         break;
       }
       case TYPE_PRI : {
+        B.dim = 3;
         B.numLagPts = 6;
         B.exponents = generateExponentsPrism(B.order);
         B.points    = generatePointsPrism(B.order, false);
@@ -1029,6 +1015,7 @@ const bezierBasis *bezierBasis::find(int tag)
         break;
       }
       case TYPE_HEX : {
+        B.dim = 3;
         B.numLagPts = 8;
         B.exponents = generateExponentsHex(B.order);
         B.points    = generatePointsHex(B.order, false);
@@ -1038,6 +1025,7 @@ const bezierBasis *bezierBasis::find(int tag)
       }
       default : {
         Msg::Error("Unknown function space %d: reverting to TET_1", tag);
+        B.dim = 3;
         B.numLagPts = 4;
         B.exponents = generateExponentsTetrahedron(0);
         B.points    = gmshGeneratePointsTetrahedron(0, false);
@@ -1057,30 +1045,18 @@ const bezierBasis *bezierBasis::find(int tag)
 
 
 
-static void generatePrimJac2Jac(JacobianBasis &jfs, const nodalBasis *primJacBasis)
+JacobianBasis::JacobianBasis(int tag)
 {
-  const int numJacNodes = jfs.bezier->points.size1(), numPrimJacSF = primJacBasis->getNumShapeFunctions();
-  jfs.primJac2Jac.resize(numJacNodes,numPrimJacSF);
-  primJacBasis->f(jfs.bezier->points,jfs.primJac2Jac);
-}
 
-
-
-std::map<int, JacobianBasis> JacobianBasis::_fs;
-const JacobianBasis *JacobianBasis::find(int tag)
-{
-  std::map<int, JacobianBasis>::const_iterator it = _fs.find(tag);
-  if (it != _fs.end()) return &it->second;
-  JacobianBasis &J = _fs[tag];
   int jacType, primJacType;
+
   if (MElement::ParentTypeFromTag(tag) == TYPE_PYR) {
     switch (tag) {
     case MSH_PYR_5 : jacType = MSH_PYR_14; primJacType = MSH_PYR_14; break;   // TODO: Order 1, Jac. "order" 2, check this
     case MSH_PYR_14 : jacType = MSH_PYR_91; primJacType = MSH_PYR_14; break;  // TODO: Order 2, Jac. "order" 5, check this
     case MSH_PYR_30 : jacType = MSH_PYR_285; primJacType = MSH_PYR_14; break; // TODO: Order 3, Jac. "order" 8, check this
     default :
-      Msg::Error("Unknown Jacobian function space for element type %d: reverting to PYR_5", tag);
-      J.bezier = bezierBasis::find(MSH_PYR_14);
+      Msg::Error("Unknown Jacobian function space for element type %d", tag);
       break;
     }
   }
@@ -1103,54 +1079,74 @@ const JacobianBasis *JacobianBasis::find(int tag)
     jacType = polynomialBasis::getTag(parentType, jacobianOrder, false);
     primJacType = polynomialBasis::getTag(parentType, primJacobianOrder, false);
   }
-  J.bezier = bezierBasis::find(jacType);
+
+  // Store Bezier basis
+  bezier = bezierBasis::find(jacType);
+
+  // Store shape function gradients of mapping at Jacobian nodes
   const nodalBasis *mapBasis = BasisFactory::create(tag);
-  generateGradShapes(J, J.bezier->points, mapBasis);
+  fullMatrix<double> allDPsi;
+  mapBasis->df(getPoints(), allDPsi);
+  const int numJacNodes = getPoints().size1(), numMapNodes = allDPsi.size1();
+  gradShapeMatX.resize(numJacNodes,numMapNodes);
+  gradShapeMatY.resize(numJacNodes,numMapNodes);
+  gradShapeMatZ.resize(numJacNodes,numMapNodes);
+  for (int i=0; i<numJacNodes; i++)
+    for (int j=0; j<numMapNodes; j++) {
+      gradShapeMatX(i,j) = allDPsi(j,3*i);
+      gradShapeMatY(i,j) = allDPsi(j,3*i+1);
+      gradShapeMatZ(i,j) = allDPsi(j,3*i+2);
+    }
+
+  // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   const nodalBasis *primJacBasis = BasisFactory::create(primJacType);
-  generatePrimJac2Jac(J, primJacBasis);
-  return &J;
+  const int numPrimJacSF = primJacBasis->getNumShapeFunctions();
+  matrixPrimJac2Jac.resize(numJacNodes,numPrimJacSF);
+  primJacBasis->f(getPoints(),matrixPrimJac2Jac);
+
 }
 
 
 
-void JacobianBasis::getSignedJacobian(MElement *el, fullVector<double> &jacobian) const
+std::map<int, JacobianBasis*> JacobianBasis::_fs;
+const JacobianBasis *JacobianBasis::find(int tag)
 {
 
-  const int numVertices = gradShapeMatX.size2(), numJacNodes = gradShapeMatX.size1();
+  std::map<int, JacobianBasis*>::const_iterator it = _fs.find(tag);
+  if (it != _fs.end()) return it->second;
 
-  switch (el->getDim()) {
+  JacobianBasis *B = new JacobianBasis(tag);
+  _fs.insert(std::make_pair(tag, B));
+  return B;
+
+}
+
+
+
+void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
+{
+
+  switch (bezier->dim) {
 
     case 1 : {
+      const int numVertices = gradShapeMatX.size2();
       fullVector<double> nodesX(numVertices);
-      for (int i = 0; i < numVertices; i++) {
-        nodesX(i) = el->getShapeFunctionNode(i)->x();
-      }
+      nodesXYZ.copyOneColumn(nodesX,0);
       gradShapeMatX.mult(nodesX, jacobian);
       break;
     }
 
     case 2 : {
-      fullMatrix<double> nodesXY(numVertices,2);
-      for (int i = 0; i < numVertices; i++) {
-        MVertex *v = el->getShapeFunctionNode(i);
-        nodesXY(i,0) = v->x();
-        nodesXY(i,1) = v->y();
-      }
+      const int numJacNodes = gradShapeMatX.size1();
       fullMatrix<double> dxydX(numJacNodes,2), dxydY(numJacNodes,2);
-      gradShapeMatX.mult(nodesXY, dxydX);
-      gradShapeMatY.mult(nodesXY, dxydY);
+      gradShapeMatX.mult(nodesXYZ, dxydX);
+      gradShapeMatY.mult(nodesXYZ, dxydY);
       for (int i = 0; i < numJacNodes; i++) jacobian(i) = dxydX(i,0)*dxydY(i,1)-dxydX(i,1)*dxydY(i,0);
       break;
     }
 
     case 3 : {
-      fullMatrix<double> nodesXYZ(numVertices,3);
-      for (int i = 0; i < numVertices; i++) {
-        MVertex *v = el->getShapeFunctionNode(i);
-        nodesXYZ(i,0) = v->x();
-        nodesXYZ(i,1) = v->y();
-        nodesXYZ(i,2) = v->z();
-      }
+      const int numJacNodes = gradShapeMatX.size1();
       fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3), dxyzdZ(numJacNodes,3);
       gradShapeMatX.mult(nodesXYZ, dxyzdX);
       gradShapeMatY.mult(nodesXYZ, dxyzdY);
@@ -1162,6 +1158,54 @@ void JacobianBasis::getSignedJacobian(MElement *el, fullVector<double> &jacobian
         jacobian(i) = dxdX*dydY*dzdZ + dxdY*dydZ*dzdX + dydX*dzdY*dxdZ
                       - dxdZ*dydY*dzdX - dxdY*dydX*dzdZ - dydZ*dzdY*dxdX;
       }
+      break;
+    }
+
+  }
+
+}
+
+
+
+void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+                                      const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
+{
+
+  switch (bezier->dim) {
+
+    case 1 : {
+      gradShapeMatX.mult(nodesX, jacobian);
+      break;
+    }
+
+    case 2 : {
+      const int numJacNodes = gradShapeMatX.size1(), numEl = nodesX.size2();
+      fullMatrix<double> dxdX(numJacNodes,numEl), dydX(numJacNodes,numEl);
+      fullMatrix<double> dxdY(numJacNodes,numEl), dydY(numJacNodes,numEl);
+      gradShapeMatX.mult(nodesX, dxdX); gradShapeMatX.mult(nodesY, dydX);
+      gradShapeMatY.mult(nodesX, dxdY); gradShapeMatY.mult(nodesY, dydY);
+      for (int iEl = 0; iEl < numEl; iEl++)
+        for (int i = 0; i < numJacNodes; i++)
+          jacobian(i,iEl) = dxdX(i,iEl)*dydY(i,iEl)-dydX(i,iEl)*dxdY(i,iEl);
+      break;
+    }
+
+    case 3 : {
+      const int numJacNodes = gradShapeMatX.size1(), numEl = nodesX.size2();
+      fullMatrix<double> dxdX(numJacNodes,numEl), dydX(numJacNodes,numEl), dzdX(numJacNodes,numEl);
+      fullMatrix<double> dxdY(numJacNodes,numEl), dydY(numJacNodes,numEl), dzdY(numJacNodes,numEl);
+      fullMatrix<double> dxdZ(numJacNodes,numEl), dydZ(numJacNodes,numEl), dzdZ(numJacNodes,numEl);
+      gradShapeMatX.mult(nodesX, dxdX); gradShapeMatX.mult(nodesY, dydX); gradShapeMatX.mult(nodesZ, dzdX);
+      gradShapeMatY.mult(nodesX, dxdY); gradShapeMatY.mult(nodesY, dydY); gradShapeMatY.mult(nodesZ, dzdY);
+      gradShapeMatZ.mult(nodesX, dxdZ); gradShapeMatZ.mult(nodesY, dydZ); gradShapeMatZ.mult(nodesZ, dzdZ);
+      for (int iEl = 0; iEl < numEl; iEl++)
+        for (int i = 0; i < numJacNodes; i++)
+          jacobian(i,iEl) = dxdX(i,iEl)*dydY(i,iEl)*dzdZ(i,iEl)
+                          + dxdY(i,iEl)*dydZ(i,iEl)*dzdX(i,iEl)
+                          + dydX(i,iEl)*dzdY(i,iEl)*dxdZ(i,iEl)
+                          - dxdZ(i,iEl)*dydY(i,iEl)*dzdX(i,iEl)
+                          - dxdY(i,iEl)*dydX(i,iEl)*dzdZ(i,iEl)
+                          - dydZ(i,iEl)*dzdY(i,iEl)*dxdX(i,iEl);
       break;
     }
 

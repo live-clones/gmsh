@@ -113,21 +113,20 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
   if (getPolynomialOrder() == 1) return;
-  const JacobianBasis *jac = getJacobianFuncSpace();                       // Calc signed Jacobian
-  const bezierBasis *bez = jac->bezier;
-  const int numJacNodes = bez->points.size1();
-  fullVector<double> Ji(numJacNodes);
-  jac->getSignedJacobian(this,Ji);
-  const JacobianBasis *jac1 = getJacobianFuncSpace(1);                     // Calc signed primary Jacobian
-  const int numJac1Nodes = jac1->bezier->points.size1();
-  fullVector<double> J1i(numJac1Nodes), J1Ji(numJacNodes);
-  jac1->getSignedJacobian(this,J1i);
-  for (int i=0; i<numJac1Nodes; i++) if (J1i(i) == 0) std::cout << "DBGTT: el " << getNum() << ", Ji1(" << i << ") == 0!\n";
-  jac->primJac2Jac.mult(J1i,J1Ji);
-  fullVector<double> SJi(numJacNodes);                                     // Calc scaled Jacobian
+  const JacobianBasis *jac = getJacobianFuncSpace(),*jac1 = getJacobianFuncSpace(1);    // Jac. and prim. Jac. basis
+  const int numJacNodes = jac->getNumJacNodes(), numJac1Nodes = jac1->getNumJacNodes();
+  const int numMapNodes = jac->getNumMapNodes(), numMap1Nodes = jac1->getNumMapNodes();
+  const int dim = getDim();
+  fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMap1Nodes,dim);
+  getNodesCoord(nodesXYZ);
+  nodesXYZ1.copy(nodesXYZ,0,numMap1Nodes,0,dim,0,0);
+  fullVector<double> Ji(numJacNodes), J1i(numJac1Nodes), J1Ji(numJacNodes);
+  jac->getSignedJacobian(nodesXYZ,Ji);
+  jac1->getSignedJacobian(nodesXYZ1,J1i);
+  jac->primJac2Jac(J1i,J1Ji);
+  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);                                 // Calc scaled Jacobian -> Bezier
   for (int i=0; i<numJacNodes; i++) SJi(i) = Ji(i)/J1Ji(i);
-  fullVector<double> Bi(numJacNodes);                                      // Transform to Bezier basis
-  bez->matrixLag2Bez.mult(SJi,Bi);
+  jac->lag2Bez(SJi,Bi);
   jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 #endif
@@ -410,6 +409,34 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
   }
 
   return _computeDeterminantAndRegularize(this, jac);
+}
+
+void MElement::getSignedJacobian(fullVector<double> &jacobian, int o)
+{
+  const int dim = getDim(), numNodes = getNumVertices();
+  fullMatrix<double> nodesXYZ(numNodes,dim);
+  getNodesCoord(nodesXYZ);
+  getJacobianFuncSpace(o)->getSignedJacobian(nodesXYZ,jacobian);
+}
+
+void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ)
+{
+  const int dim = getDim(), numNodes = getNumShapeFunctions();
+  if (dim <= 1)
+    for (int i = 0; i < numNodes; i++) nodesXYZ(i,0) = getShapeFunctionNode(i)->x();
+  else if (dim == 2)
+    for (int i = 0; i < numNodes; i++) {
+      MVertex *v = getShapeFunctionNode(i);
+      nodesXYZ(i,0) = v->x();
+      nodesXYZ(i,1) = v->y();
+    }
+  else if (dim == 3)
+    for (int i = 0; i < numNodes; i++) {
+      MVertex *v = getShapeFunctionNode(i);
+      nodesXYZ(i,0) = v->x();
+      nodesXYZ(i,1) = v->y();
+      nodesXYZ(i,2) = v->z();
+    }
 }
 
 void MElement::pnt(double u, double v, double w, SPoint3 &p)

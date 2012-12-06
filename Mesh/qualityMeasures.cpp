@@ -337,11 +337,11 @@ double mesh_functional_distorsion_p2_exact(MTriangle *t)
 
 double mesh_functional_distorsion_pN(MElement *t)
 {
-  const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
-  fullVector<double>Ji(jac->points.size1());
-  for (int i=0;i<jac->points.size1();i++){
-    double u = jac->points(i,0);
-    double v = jac->points(i,1);
+  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  fullVector<double>Ji(jac->getNumJacNodes());
+  for (int i=0;i<jac->getNumJacNodes();i++){
+    double u = jac->getPoints()(i,0);
+    double v = jac->getPoints()(i,1);
     if (t->getType() == TYPE_QUA){
       u = -1 + 2*u;
       v = -1 + 2*v;
@@ -350,8 +350,8 @@ double mesh_functional_distorsion_pN(MElement *t)
     Ji(i) = mesh_functional_distorsion_2D(t,u,v);
   }
 
-  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);
+  fullVector<double> Bi( jac->getNumJacNodes() );
+  jac->lag2Bez(Ji,Bi);
   return *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 }
 
@@ -421,17 +421,17 @@ double mesh_functional_distorsion_3D(MElement *t, double u, double v, double w)
 
 double qmDistorsionOfMapping(MTetrahedron *t)
 {
-  const bezierBasis *jac = t->getJacobianFuncSpace()->bezier;
-  fullVector<double>Ji(jac->points.size1());
-  for (int i=0;i<jac->points.size1();i++){
-    const double u = jac->points(i,0);
-    const double v = jac->points(i,1);
-    const double w = jac->points(i,2);
+  const JacobianBasis *jac = t->getJacobianFuncSpace();
+  fullVector<double>Ji(jac->getNumJacNodes());
+  for (int i=0;i<jac->getNumJacNodes();i++){
+    const double u = jac->getPoints()(i,0);
+    const double v = jac->getPoints()(i,1);
+    const double w = jac->getPoints()(i,2);
     Ji(i) = mesh_functional_distorsion_3D(t,u,v,w);
   }
 
-  fullVector<double> Bi( jac->matrixLag2Bez.size1() );
-  jac->matrixLag2Bez.mult(Ji,Bi);
+  fullVector<double> Bi( jac->getNumJacNodes() );
+  jac->lag2Bez(Ji,Bi);
   /*
      jac->matrixLag2Bez.print("Lag2Bez");
 

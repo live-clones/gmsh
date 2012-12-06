@@ -8,6 +8,7 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "BasisFactory.h"
+#include "JacobianBasis.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -51,13 +52,13 @@ void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
   const int nbBezT = 20;
   static int done = 0;
   static fullMatrix<double> gsf[nbBezT];
-  const bezierBasis *jac_basis = getJacobianFuncSpace()->bezier;
+  const JacobianBasis *jac_basis = getJacobianFuncSpace();
   if (!done){
     double gs[nbNodT][3];
-    for (int i=0;i<jac_basis->points.size1();i++){
-      const double u = jac_basis->points(i,0);
-      const double v = jac_basis->points(i,1);
-      const double w = jac_basis->points(i,2);
+    for (int i=0;i<jac_basis->getNumJacNodes();i++){
+      const double u = jac_basis->getPoints()(i,0);
+      const double v = jac_basis->getPoints()(i,1);
+      const double w = jac_basis->getPoints()(i,2);
       getGradShapeFunctions(u,v,w,gs);
       fullMatrix<double> a (nbNodT,3);
       for (int j=0;j < nbNodT;j++){
@@ -104,7 +105,7 @@ void MTetrahedron10::scaledJacRange(double &jmin, double &jmax){
     Ji(i) = dJ * ss;
   }
   static fullVector<double> Bi( nbBezT );
-  jac_basis->matrixLag2Bez.mult(Ji,Bi);
+  jac_basis->lag2Bez(Ji,Bi);
   //  printf("%22.15E\n",*std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size()));
   jmin= *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax= *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());

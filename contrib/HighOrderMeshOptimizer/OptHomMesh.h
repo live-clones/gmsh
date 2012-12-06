@@ -80,12 +80,11 @@ private:
   bool projJac;                                 // Using "projected" Jacobians or not
 
   static std::map<int, fullMatrix<double> >  _gradShapeFunctions; // gradients of shape functions at Bezier points 
-  static std::map<int, fullMatrix<double> >  _lag2Bez; // gradients of shape functions at Bezier points 
 
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);
   SVector3 getNormalEl(int iEl);
-  static fullMatrix<double> computeGSF(const nodalBasis *lagrange, const bezierBasis *bezier);
+  static fullMatrix<double> computeGSF(const nodalBasis *lagrange, const JacobianBasis *jac);
   static inline int indJB2DBase(int nNod, int l, int i, int j) { return (l*nNod+i)*nNod+j; }
   inline int indJB2D(int iEl, int l, int i, int j) { return indJB2DBase(_nNodEl[iEl],l,i,j); }
   static inline int indJB3DBase(int nNod, int l, int i, int j, int m) { return ((l*nNod+i)*nNod+j)*nNod+m; }

@@ -49,7 +49,7 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     void checkValidity(int toDo);
     void computeMinMax(std::map<int, std::vector<double> > *data = 0);
     void computeMinMax(MElement *const *, int numEl, std::map<int, std::vector<double> > *data = 0);
-    int subDivision(const bezierBasis*, const fullVector<double>&, int depth);
+    int subDivision(const JacobianBasis *, const fullVector<double>&, int depth);
     void hideValid_ShowInvalid(std::vector<MElement*> &invalids);
 };
 
@@ -72,7 +72,7 @@ private:
 public:
   BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
   void subDivisions(fullVector<double> &vect) const
-    {_jfs->bezier->subDivisor.mult(_jacBez, vect);}
+    {_jfs->subDivisor(_jacBez, vect);}
   
   inline int depth() const {return _depthSub;}
   inline double minJ() const {return _minJ;}

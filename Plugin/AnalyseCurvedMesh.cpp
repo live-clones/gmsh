@@ -228,23 +228,39 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
-  const bezierBasis *bb = jfs->bezier;
-
-  int numSamplingPt = bb->points.size1();
+  const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
+  const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
+  const int dim = el[0]->getDim();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
   fullMatrix<double> jacBezB(numSamplingPt, numEl);
-  fullVector<double> jac1B(jfs1->bezier->points.size1(), numEl);
+  fullMatrix<double> jac1B(numSamplingPt1, numEl);
   fullVector<double> jacBez, jacobian, jac1;
 
-  jfs->getSignedJacobian(el, jacobianB);
-  jfs1->getSignedJacobian(el, jac1B);
-  bb->matrixLag2Bez.mult(jacobianB, jacBezB);
+  fullMatrix<double> nodesX(numMapNodes, numEl), nodesY(numMapNodes, numEl), nodesZ(numMapNodes, numEl);
+  fullMatrix<double> nodesX1(numMapNodes, numEl), nodesY1(numMapNodes, numEl), nodesZ1(numMapNodes, numEl);
+  for (int k = 0; k < numEl; ++k)
+    for (int i = 0; i < numMapNodes; ++i)
+    {
+      MVertex *v = (el[k])->getShapeFunctionNode(i);
+      nodesX(i,k) = v->x();
+      nodesY(i,k) = v->y();
+      nodesZ(i,k) = v->z();
+      if (i < numMapNodes1) {
+        nodesX1(i,k) = nodesX(i,k);
+        nodesY1(i,k) = nodesY(i,k);
+        nodesZ1(i,k) = nodesZ(i,k);
+      }
+    }
+
+  jfs->getSignedJacobian(nodesX, nodesY, nodesZ, jacobianB);
+  jfs1->getSignedJacobian(nodesX1, nodesY1, nodesZ1, jac1B);
+  jfs->lag2Bez(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> jac1(jfs1->bezier->points.size1());
+  fullVector<double> jac1(numSamplingPt1);
 #endif
 
   for (int k = 0; k < numEl; ++k) {
@@ -254,8 +270,11 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    jfs->getSignedJacobian(el[k], jacobian);
-    jfs1->getSignedJacobian(el[k], jac1);
+    fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMapNodes1,dim);
+    el[k]->getNodesCoord(nodesXYZ);
+    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,dim,0,0);
+    jfs->getSignedJacobian(nodesXYZ,jacobian);
+    jfs1->getSignedJacobian(nodesXYZ1,jac1);
 #endif
 
     // AmJ : avgJ is not the average Jac for quad, prism or hex
@@ -281,7 +300,7 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     }
 
 #ifndef _ANALYSECURVEDMESH_BLAS_
-    bb->matrixLag2Bez.mult(jacobian, jacBez);
+    jfs->lag2Bez(jacobian, jacBez);
 #endif
 
     for (i = 0; i < jacBez.size() && jacBez(i) > _bezBreak * avgJ; ++i);
@@ -296,7 +315,7 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
       continue;
     }
     else {
-      int result = subDivision(bb, jacBez, _maxDepth-1);
+      int result = subDivision(jfs, jacBez, _maxDepth-1);
       if (result < 0) {
         invalids.push_back(el[k]);
         ++_numInvalid;
@@ -313,16 +332,16 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
   }
 }
 
-int GMSH_AnalyseCurvedMeshPlugin::subDivision(const bezierBasis *bb,
+int GMSH_AnalyseCurvedMeshPlugin::subDivision(const JacobianBasis *jb,
                                               const fullVector<double> &jacobian,
                                               int depth)
 {
-  fullVector<double> newJacobian(bb->subDivisor.size1());
-  bb->subDivisor.mult(jacobian, newJacobian);
+  fullVector<double> newJacobian(jb->getNumSubNodes());
+  jb->subDivisor(jacobian, newJacobian);
 
-  for (int i = 0; i < bb->numDivisions; i++)
-  for (int j = 0; j < bb->numLagPts; j++)
-  if (newJacobian(i * bb->points.size1() + j) <= _jacBreak)
+  for (int i = 0; i < jb->getNumDivisions(); i++)
+  for (int j = 0; j < jb->getNumLagPts(); j++)
+  if (newJacobian(i * jb->getNumJacNodes() + j) <= _jacBreak)
     return -1;
 
   int i = 0;
@@ -338,9 +357,9 @@ int GMSH_AnalyseCurvedMeshPlugin::subDivision(const bezierBasis *bb,
     std::vector<int> negTag, posTag;
     bool zeroTag = false;
 
-    for (int i = 0; i < bb->numDivisions; i++) {
+    for (int i = 0; i < jb->getNumDivisions(); i++) {
       subJacobian.setAsProxy(newJacobian, i * jacobian.size(), jacobian.size());
-      int tag = subDivision(bb, subJacobian, depth-1);
+      int tag = subDivision(jb, subJacobian, depth-1);
 
       if (tag < 0)
         negTag.push_back(tag);
@@ -433,25 +452,42 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
-  const bezierBasis *bb = jfs->bezier;
 
-  int numSamplingPt = bb->points.size1();
+  const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
+  const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
+  const int dim = el[0]->getDim();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
   fullMatrix<double> jacBezB(numSamplingPt, numEl);
-  fullVector<double> jac1B(jfs1->bezier->points.size1(), numEl);
+  fullMatrix<double> jac1B(numSamplingPt1, numEl);
   fullVector<double> jacBez, jacobian, jac1;
 
-  jfs->getSignedJacobian(el, jacobianB);
-  jfs1->getSignedJacobian(el, jac1B);
-  bb->matrixLag2Bez.mult(jacobianB, jacBezB);
+  fullMatrix<double> nodesX(numMapNodes, numEl), nodesY(numMapNodes, numEl), nodesZ(numMapNodes, numEl);
+  fullMatrix<double> nodesX1(numMapNodes1, numEl), nodesY1(numMapNodes1, numEl), nodesZ1(numMapNodes1, numEl);
+  for (int k = 0; k < numEl; ++k)
+    for (int i = 0; i < numMapNodes; ++i)
+    {
+      MVertex *v = (el[k])->getShapeFunctionNode(i);
+      nodesX(i,k) = v->x();
+      nodesY(i,k) = v->y();
+      nodesZ(i,k) = v->z();
+      if (i < numMapNodes1) {
+        nodesX1(i,k) = nodesX(i,k);
+        nodesY1(i,k) = nodesY(i,k);
+        nodesZ1(i,k) = nodesZ(i,k);
+      }
+    }
+
+  jfs->getSignedJacobian(nodesX, nodesY, nodesZ, jacobianB);
+  jfs1->getSignedJacobian(nodesX, nodesY, nodesZ, jac1B);
+  jfs->lag2Bez(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> jac1(jfs1->bezier->points.size1());
+  fullVector<double> jac1(numSamplingPt1);
 #endif
-  fullVector<double> subJacBez(bb->subDivisor.size1());
+  fullVector<double> subJacBez(jfs->getNumSubNodes());
 
   _min_Javg = 1.7e308;
   _max_Javg = -1.7e308;
@@ -468,9 +504,12 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    jfs->getSignedJacobian(el[k], jacobian);
-    jfs1->getSignedJacobian(el[k], jac1);
-    bb->matrixLag2Bez.mult(jacobian, jacBez);
+    fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMapNodes1,dim);
+    el[k]->getNodesCoord(nodesXYZ);
+    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,dim,0,0);
+    jfs->getSignedJacobian(nodesXYZ,jacobian);
+    jfs1->getSignedJacobian(nodesXYZ1,jac1);
+    jfs->lag2Bez(jacobian, jacBez);
 #endif
 
     // AmJ : avgJ is not the average Jac for quad, prism or hex
@@ -522,7 +561,7 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
         pqMin.pop();
         delete bj;
 
-        for (int i = 0; i < bb->numDivisions; i++) {
+        for (int i = 0; i < jfs->getNumDivisions(); i++) {
           jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
           bj = new BezierJacobian(jacBez, jfs, currentDepth);
           pqMin.push(bj);
@@ -555,7 +594,7 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
         pqMax.pop();
         delete bj;
 
-        for (int i = 0; i < bb->numDivisions; i++) {
+        for (int i = 0; i < jfs->getNumDivisions(); i++) {
           jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
           bj = new BezierJacobian(jacBez, jfs, currentDepth);
           pqMax.push(bj);
@@ -690,7 +729,7 @@ BezierJacobian::BezierJacobian(fullVector<double> &v, const JacobianBasis *jfs, 
 
   _minJ = _maxJ = v(0);
   int i = 1;
-  for (; i < jfs->bezier->numLagPts; i++) {
+  for (; i < jfs->getNumLagPts(); i++) {
     if (_minJ > v(i)) _minJ = v(i);
     if (_maxJ < v(i)) _maxJ = v(i);
   }
