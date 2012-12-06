@@ -688,25 +688,27 @@ void Curvature::computePointareas(){
       const int V0 = _VertexToInt[A->getNum()];
       const int V1 = _VertexToInt[B->getNum()];
       const int V2 = _VertexToInt[C->getNum()];
-      
+
+      factor[0] = 1.0;
+      factor[1] = 1.0;
+      factor[2] = 1.0;
       // if (_isOnBoundary[V0])
       // {
       //     factor[0] = 1.0;
       // }
-      // else { factor[0] = 1.0;}
+      // else {factor[0] = 1.0;}
       // if (_isOnBoundary[V1])
       // {
       //     factor[1] = 1.0;
       // }
       // else {factor[1] = 1.0;}
-
       // if (_isOnBoundary[V2])
       // {
       //     factor[2] = 1.0;
       // }
       // else {factor[2] = 1.0;}
-
-      //Edges
+      
+//Edges
       e[0] = SVector3(C->x() - B->x(), C->y() - B->y(), C->z() - B->z()); //vector side of a triangular element
       e[1] = SVector3(A->x() - C->x(), A->y() - C->y(), A->z() - C->z());
       e[2] = SVector3(B->x() - A->x(), B->y() - A->y(), B->z() - A->z());
@@ -1128,6 +1130,9 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
       //Estimate curvature based on variations of normals along edges:
       //intialization:
       m = SVector3(0.0, 0.0, 0.0);
+       for (int i = 0; i< 3; ++i)
+	 for (int j = 0; j< 3; ++j)
+	   w(i,j) = 0.0;
 
       //filling:
       for (int j = 0; j< 3; ++j)

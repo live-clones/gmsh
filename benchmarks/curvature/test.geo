@@ -1,4 +1,4 @@
- Mesh.RemeshParametrization=0; //(0) harmonic (1) conformal
+ Mesh.RemeshParametrization=1; //(0) harmonic (1) conformal
  Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split only with metis 
  
  Mesh.Algorithm=1; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)

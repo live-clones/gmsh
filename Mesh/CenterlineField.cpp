@@ -1029,7 +1029,7 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
 
 double Centerline::operator() (double x, double y, double z, GEntity *ge)
 {
- 
+
   if (update_needed){
      std::ifstream input;
      input.open(fileName.c_str());
@@ -1041,7 +1041,6 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
    }
 
    double xyz[3] = {x,y,z};
-
    //take xyz = closest point on boundary in case we are on the planar in/out faces
    //or in the volume
    bool isCompound = false;
@@ -1078,6 +1077,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
 
 void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
 {
+
   if (update_needed){
      std::ifstream input;
      input.open(fileName.c_str());
