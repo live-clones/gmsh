@@ -36,6 +36,7 @@ void PView::_init(int num)
   bool replaced = false;
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getNum() == _num){
+      // warning: this can potentially break aliases
       Msg::Info("Replacing View[%d]", i);
       replaced = true;
       delete list[i];
