@@ -825,7 +825,7 @@ bool PViewDataList::combineTime(nameData &nd)
 }
 
 int PViewDataList::_getRawData(int idxtype, std::vector<double> **l, int **ne,
-                                int *nc, int *nn)
+                               int *nc, int *nn)
 {
   int type = 0;
   // No constant nn for polygons!
@@ -883,7 +883,7 @@ void PViewDataList::setOrder2(int type)
   case TYPE_TET: typeMSH = MSH_TET_10; break;
   case TYPE_HEX: typeMSH = MSH_HEX_27; break;
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
-//  case TYPE_PYR: typeMSH = MSH_PYR_14; break;
+  // case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
   const polynomialBasis *fs = (polynomialBasis*)BasisFactory::create(typeMSH);
   if(!fs){
@@ -958,4 +958,16 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type, int num
     break;
   }
   return 0;
+}
+
+void PViewDataList::import(int N[24], std::vector<double> *V[24])
+{
+  for(int i = 0; i < 24; i++){
+    std::vector<double> *list = 0;
+    int *nbe = 0, nbc, nbn;
+    _getRawData(i, &list, &nbe, &nbc, &nbn);
+    *nbe = N[i];
+    *list = *V[i];
+  }
+  finalize();
 }

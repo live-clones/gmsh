@@ -120,13 +120,14 @@ class PViewDataList : public PViewData {
   // specific to list-based data sets
   void setOrder2(int type);
   std::vector<double> *incrementList(int numComp, int type, int numNodes = 0);
+  void import(int N[24], std::vector<double> *V[24]);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);
   bool writePOS(const std::string &fileName, bool binary=false, bool parsed=true,
                 bool append=false);
-  virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false, bool savemesh=true,
-                        bool multipleView=false);
+  virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
+                        bool savemesh=true, bool multipleView=false);
 };
 
 #endif
