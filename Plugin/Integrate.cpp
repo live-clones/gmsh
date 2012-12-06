@@ -30,7 +30,6 @@ std::string GMSH_IntegratePlugin::getHelp() const
     "the circulation/flux of the field over "
     "line/surface elements is calculated.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Integrate) creates one new view."
     "If `OverTime' = 1 , the plugin integrates the scalar view "
     "over time instead of over space.\n\n"
     "Plugin(Integrate) creates one new view.";
@@ -129,6 +128,9 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
     for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++){
       for(int ele = 0; ele < data1->getNumElements(timeBeg, ent); ele++){
 	if(data1->skipElement(timeBeg, ent, ele)) continue;
+	int dim = data1->getDimension(timeBeg, ent, ele);
+	if((dimension>0) && (dim!=dimension)) continue;
+
 	int numNodes = data1->getNumNodes(timeBeg, ent, ele);
 	int type = data1->getType(timeBeg, ent, ele);
 	int numComp = data1->getNumComponents(timeBeg, ent, ele);
