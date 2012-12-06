@@ -741,7 +741,8 @@ void InterfacedClient::analyze() {
     split = SplitOLFileName(choices[i]);
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
       OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
 		  parse_onefile(fileName)?"done":"failed");
     }
@@ -758,7 +759,8 @@ void InterfacedClient::convert() {
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
       std::string ofileName = getWorkingDir() + split[1] ;
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
       std::ofstream outfile(ofileName.c_str());
       if (outfile.is_open())
 	convert_onefile(fileName,outfile);
@@ -781,7 +783,8 @@ void InterfacedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++){
       split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 
@@ -800,7 +803,8 @@ void InterfacedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++){
       split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 }
@@ -828,7 +832,8 @@ void NativeClient::compute() {
     for(unsigned int i = 0; i < choices.size(); i++){
       split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 
@@ -847,7 +852,8 @@ void NativeClient::compute() {
     for(unsigned int i = 0; i < choices.size(); i++){
       split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 }
@@ -868,7 +874,8 @@ void EncapsulatedClient::analyze() {
     split = SplitOLFileName(choices[i]);
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
       OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
 		  parse_onefile(fileName)?"done":"failed");
     }
@@ -885,7 +892,8 @@ void EncapsulatedClient::convert() {
     if(split[2].size()){ // if .ol file
       std::string fileName = getWorkingDir() + split[1] + split[2];
       std::string ofileName = getWorkingDir() + split[1] ;
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
       std::ofstream outfile(ofileName.c_str());
       if (outfile.is_open())
 	convert_onefile(fileName, outfile);
@@ -914,7 +922,8 @@ void EncapsulatedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++){
      split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 
@@ -941,7 +950,8 @@ void EncapsulatedClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++){
       split = SplitOLFileName(choices[i]);
       std::string fileName = getWorkingDir() + split[1];
-      checkIfPresent(fileName);
+      if(!checkIfPresent(fileName))
+	OLMsg::Error("The file <%s> is not present",fileName.c_str());
     }
   }
 }
