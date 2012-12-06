@@ -223,7 +223,7 @@ class MElement
   virtual const nodalBasis* getFunctionSpace(int order=-1) const { return 0; }
 
   // get the function space for the jacobian of the element
-  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const { return 0; }
+  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const { return 0; }
 
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w);

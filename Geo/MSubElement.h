@@ -38,9 +38,13 @@ class MSubTetrahedron : public MTetrahedron
   virtual int getTypeForMSH() const { return MSH_TET_SUB; }
   virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o);
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1);
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int order=-1);
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order=-1);
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order=-1);
+  virtual int getNumShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions();
+  virtual MVertex* getShapeFunctionNode(int i);
   // the parametric coordinates are the coordinates in the local parent element
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
@@ -75,9 +79,13 @@ class MSubTriangle : public MTriangle
   virtual int getTypeForMSH() const { return MSH_TRI_SUB; }
   virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o);
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1);
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int order=-1);
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order=-1);
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order=-1);
+  virtual int getNumShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions();
+  virtual MVertex* getShapeFunctionNode(int i);
   // the parametric coordinates are the coordinates in the local parent element
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
@@ -113,9 +121,13 @@ class MSubLine : public MLine
   virtual int getTypeForMSH() const { return MSH_LIN_SUB; }
   virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o);
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1);
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int order=-1);
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order=-1);
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order=-1);
+  virtual int getNumShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions();
+  virtual MVertex* getShapeFunctionNode(int i);
   // the parametric coordinates are the coordinates in the local parent element
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
@@ -150,9 +162,13 @@ class MSubPoint : public MPoint
   virtual int getTypeForMSH() const { return MSH_PNT_SUB; }
   virtual const nodalBasis* getFunctionSpace(int order=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o);
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o);
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o);
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1);
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int order=-1);
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order=-1);
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order=-1);
+  virtual int getNumShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions();
+  virtual MVertex* getShapeFunctionNode(int i);
   // the parametric coordinates are the coordinates in the local parent element
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);

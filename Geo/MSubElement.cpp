@@ -12,8 +12,8 @@
 
 MSubTetrahedron::~MSubTetrahedron()
 {
-  if(_owner)
-    delete _orig;
+//   if(_owner)
+//     delete _orig;
 }
 
 const nodalBasis* MSubTetrahedron::getFunctionSpace(int order) const
@@ -28,19 +28,39 @@ const JacobianBasis* MSubTetrahedron::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubTetrahedron::getShapeFunctions(double u, double v, double w, double s[], int o)
+void MSubTetrahedron::getShapeFunctions(double u, double v, double w, double s[], int order)
 {
-  if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTetrahedron::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+void MSubTetrahedron::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
 {
-  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTetrahedron::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+void MSubTetrahedron::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
 {
-  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
+}
+
+void MSubTetrahedron::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+{
+  if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
+}
+
+int MSubTetrahedron::getNumShapeFunctions()
+{
+  if(_orig) _orig->getNumShapeFunctions();
+}
+
+int MSubTetrahedron::getNumPrimaryShapeFunctions()
+{
+  if(_orig) _orig->getNumPrimaryShapeFunctions();
+}
+
+MVertex* MSubTetrahedron::getShapeFunctionNode(int i)
+{
+  if(_orig) return _orig->getShapeFunctionNode(i);
 }
 
 bool MSubTetrahedron::isInside(double u, double v, double w)
@@ -110,8 +130,8 @@ void MSubTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 MSubTriangle::~MSubTriangle()
 {
-  if(_owner)
-    delete _orig;
+//   if(_owner)
+//     delete _orig;
 }
 
 const nodalBasis* MSubTriangle::getFunctionSpace(int order) const
@@ -126,19 +146,39 @@ const JacobianBasis* MSubTriangle::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[], int o)
+void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[], int order)
 {
-  if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
 {
-  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTriangle::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+void MSubTriangle::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
 {
-  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
+}
+
+void MSubTriangle::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+{
+  if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
+}
+
+int MSubTriangle::getNumShapeFunctions()
+{
+  if(_orig) _orig->getNumShapeFunctions();
+}
+
+int MSubTriangle::getNumPrimaryShapeFunctions()
+{
+  if(_orig) _orig->getNumPrimaryShapeFunctions();
+}
+
+MVertex* MSubTriangle::getShapeFunctionNode(int i)
+{
+  if(_orig) return _orig->getShapeFunctionNode(i);
 }
 
 bool MSubTriangle::isInside(double u, double v, double w)
@@ -205,8 +245,8 @@ void MSubTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 MSubLine::~MSubLine()
 {
-  if(_owner)
-    delete _orig;
+//   if(_owner)
+//     delete _orig;
 }
 
 const nodalBasis* MSubLine::getFunctionSpace(int order) const
@@ -221,19 +261,39 @@ const JacobianBasis* MSubLine::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubLine::getShapeFunctions(double u, double v, double w, double s[], int o)
+void MSubLine::getShapeFunctions(double u, double v, double w, double s[], int order)
 {
-  if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
 {
-  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubLine::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+void MSubLine::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
 {
-  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
+}
+
+void MSubLine::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+{
+  if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
+}
+
+int MSubLine::getNumShapeFunctions()
+{
+  if(_orig) _orig->getNumShapeFunctions();
+}
+
+int MSubLine::getNumPrimaryShapeFunctions()
+{
+  if(_orig) _orig->getNumPrimaryShapeFunctions();
+}
+
+MVertex* MSubLine::getShapeFunctionNode(int i)
+{
+  if(_orig) return _orig->getShapeFunctionNode(i);
 }
 
 bool MSubLine::isInside(double u, double v, double w)
@@ -291,12 +351,13 @@ void MSubLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = _intpt;
 }
 
+
 // MSubPoint
 
 MSubPoint::~MSubPoint()
 {
-  if(_owner)
-    delete _orig;
+//   if(_owner)
+//     delete _orig;
 }
 
 const nodalBasis* MSubPoint::getFunctionSpace(int order) const
@@ -311,19 +372,39 @@ const JacobianBasis* MSubPoint::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubPoint::getShapeFunctions(double u, double v, double w, double s[], int o)
+void MSubPoint::getShapeFunctions(double u, double v, double w, double s[], int order)
 {
-  if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubPoint::getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+void MSubPoint::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
 {
-  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubPoint::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+void MSubPoint::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
 {
-  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
+  if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
+}
+
+void MSubPoint::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+{
+  if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
+}
+
+int MSubPoint::getNumShapeFunctions()
+{
+  if(_orig) _orig->getNumShapeFunctions();
+}
+
+int MSubPoint::getNumPrimaryShapeFunctions()
+{
+  if(_orig) _orig->getNumPrimaryShapeFunctions();
+}
+
+MVertex* MSubPoint::getShapeFunctionNode(int i)
+{
+  if(_orig) return _orig->getShapeFunctionNode(i);
 }
 
 bool MSubPoint::isInside(double u, double v, double w)
