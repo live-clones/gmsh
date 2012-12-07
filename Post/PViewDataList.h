@@ -120,7 +120,8 @@ class PViewDataList : public PViewData {
   // specific to list-based data sets
   void setOrder2(int type);
   std::vector<double> *incrementList(int numComp, int type, int numNodes = 0);
-  void import(int N[24], std::vector<double> *V[24]);
+  void importLists(int N[24], std::vector<double> *V[24]);
+  void getListPointers(int N[24], std::vector<double> *V[24]);
 
   // I/O routines
   bool readPOS(FILE *fp, double version, bool binary);

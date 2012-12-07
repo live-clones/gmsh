@@ -960,14 +960,25 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type, int num
   return 0;
 }
 
-void PViewDataList::import(int N[24], std::vector<double> *V[24])
+void PViewDataList::importLists(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++){
     std::vector<double> *list = 0;
     int *nbe = 0, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
     *nbe = N[i];
-    *list = *V[i];
+    *list = *V[i]; // deep copy
   }
   finalize();
+}
+
+void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
+{
+  for(int i = 0; i < 24; i++){
+    std::vector<double> *list = 0;
+    int *nbe = 0, nbc, nbn;
+    _getRawData(i, &list, &nbe, &nbc, &nbn);
+    N[i] = *nbe;
+    V[i] = list; // copy pointer only
+  }
 }
