@@ -776,7 +776,7 @@ void LpCVT::eval(std::vector<SPoint3>& bank,std::vector<int>& movability,int off
   compute_parameters();
 
   for(i=0;i<clipped.size();i++){
-	if(clipped[i].get_quality()<e) continue;
+	if(clipped[i].get_quality()<e) continue; //not exact
 	init_caches(clipped[i],p);
     energy = energy + F(clipped[i],p);
 	grad1 = dF_dC1(clipped[i],p);
