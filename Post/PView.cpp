@@ -33,22 +33,19 @@ void PView::_init(int tag)
   va_points = va_lines = va_triangles = va_vectors = va_ellipses = 0;
   normals = 0;
 
-  bool replaced = false;
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getTag() == _tag){
-      // warning: this can potentially break aliases
-      Msg::Info("Replacing View[%d] (tag = %d)", i, _tag);
-      replaced = true;
-      delete list[i];
-      _index = i;
-      list[i] = this;
-      break;
+      // in normal operation this should not happen, but we allow it when
+      // programmatically forcing view tags (e.g. when using the views from
+      // within getdp's post-processing operations); this is dangerous, as it
+      // breaks aliases
+      Msg::Info("Removing existing View[%d] (tag = %d)", i, _tag);
+      delete list[i]; // warning: this changes the list
     }
   }
-  if(!replaced){
-    _index = list.size();
-    list.push_back(this);
-  }
+
+  list.push_back(this);
+  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
 PView::PView(int tag)
