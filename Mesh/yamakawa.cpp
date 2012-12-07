@@ -136,7 +136,7 @@ bool Facet::same_vertices(Facet facet){
 }
 
 void Facet::compute_hash(){
-  hash = (unsigned long long)a + (unsigned long long)b + (unsigned long long)c;
+  hash = a->getNum() + b->getNum() + c->getNum();
 }
 
 unsigned long long Facet::get_hash() const{
@@ -185,7 +185,7 @@ bool Diagonal::same_vertices(Diagonal diagonal){
 }
 
 void Diagonal::compute_hash(){
-  hash = (unsigned long long)a + (unsigned long long)b;
+  hash = a->getNum() + b->getNum();
 }
 
 unsigned long long Diagonal::get_hash() const{
