@@ -1389,7 +1389,7 @@ void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double
   e = 0.000001;
 
   for(it=clipped.begin();it!=clipped.end();it++){
-	if(it->get_quality()<e) continue;
+	if(it->get_quality()<e) continue; //not exact
     v1 = it->get_v1();
 	v2 = it->get_v2();
 	v3 = it->get_v3();
