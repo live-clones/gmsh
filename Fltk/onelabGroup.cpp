@@ -351,6 +351,8 @@ bool onelab::localNetworkClient::kill()
   if(_pid > 0) {
     if(KillProcess(_pid)){
       Msg::Info("Killed '%s' (pid %d)", _name.c_str(), _pid);
+      if(FlGui::available())
+        FlGui::instance()->setProgress("Killed", 0, 0, 0);
       _pid = -1;
       return true;
     }
