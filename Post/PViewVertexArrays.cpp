@@ -1435,22 +1435,22 @@ void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,
                             const char *bytes, int swap)
 {
   std::string name;
-  int num, type, numSteps;
+  int tag, type, numSteps;
   double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
-  if(!VertexArray::decodeHeader(length, bytes, swap, name, num, type, min, max,
+  if(!VertexArray::decodeHeader(length, bytes, swap, name, tag, type, min, max,
                                 numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax))
     return;
 
-  Msg::Debug("Filling vertex array (type %d) in view num %d", type, num);
+  Msg::Debug("Filling vertex array (type %d) in view tag %d", type, tag);
 
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
 
-  PView *p = PView::getViewByNum(num);
+  PView *p = PView::getViewByTag(tag);
   if(!p){
-    Msg::Info("View num %d does not exist: creating new view", num);
+    Msg::Info("View tag %d does not exist: creating new view", tag);
     PViewData *data = new PViewDataRemote(remote, min, max, numSteps, time, bbox);
     data->setName(name + " (remote)");
-    p = new PView(data, num);
+    p = new PView(data, tag);
     SetBoundingBox();
   }
   else{

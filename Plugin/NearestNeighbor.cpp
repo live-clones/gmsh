@@ -43,14 +43,14 @@ StringXNumber *GMSH_NearestNeighborPlugin::getOption(int iopt)
 PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 {
   int iView = (int)NearestNeighborOptions_Number[0].def;
-  
+
   PView *v1 = getView(iView, v);
   if(!v1) return v;
   PViewData *data1 = v1->getData();
 
   int totpoints = data1->getNumPoints();
   if(!totpoints){
-    Msg::Error("View[%d] contains no points", v1->getNum());
+    Msg::Error("View[%d] contains no points", iView);
     return 0;
   }
 
@@ -94,6 +94,6 @@ PView *GMSH_NearestNeighborPlugin::execute(PView *v)
 
   data1->setName(v1->getData()->getName() + "_NearestNeighbor");
   data1->finalize();
-  
+
   return v1;
 }

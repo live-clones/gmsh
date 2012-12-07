@@ -45,10 +45,10 @@ std::string GMSH_Plugin::serialize()
 {
   std::ostringstream sstream;
   for(int i = 0; i < getNbOptionsStr(); i++)
-    sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str 
+    sstream << "Plugin(" << getName() << ")." << getOptionStr(i)->str
             <<  "= \"" << getOptionStr(i)->def << "\";\n";
   for(int i = 0; i < getNbOptions(); i++)
-    sstream << "Plugin(" << getName() << ")." << getOption(i)->str 
+    sstream << "Plugin(" << getName() << ")." << getOption(i)->str
             << "=" << getOption(i)->def << ";\n";
   sstream << "Plugin(" << getName() << ").Run;\n";
   return sstream.str();
@@ -59,7 +59,7 @@ PView *GMSH_PostPlugin::executeRemote(PView *view)
   int j = -1, remoteIndex = -1;
   for(unsigned int i = 0; i < PView::list.size(); i++){
     if(PView::list[i]->getData()->isRemote()) j++;
-    if(PView::list[i]->getNum() == view->getNum()){
+    if(PView::list[i]->getTag() == view->getTag()){
       remoteIndex = j;
       break;
     }
@@ -68,11 +68,11 @@ PView *GMSH_PostPlugin::executeRemote(PView *view)
     Msg::Error("Unable to determine index of remote view");
     return view;
   }
-  
+
   for(int i = 0; i < getNbOptions(); i++)
     if(std::string(getOption(i)->str) == "View")
       getOption(i)->def = remoteIndex;
-  
+
   std::string options = serialize();
   view->getData()->fillRemoteVertexArrays(options);
   return view;

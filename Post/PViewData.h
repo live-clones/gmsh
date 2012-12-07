@@ -260,6 +260,8 @@ class PViewData {
   virtual bool writeMED(const std::string &fileName);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);
+  virtual void importLists(int N[24], std::vector<double> *V[24]);
+  virtual void getListPointers(int N[24], std::vector<double> *V[24]);
 };
 
 class nameData{

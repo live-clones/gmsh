@@ -253,7 +253,7 @@ char *VertexArray::toChar(int num, std::string name, int type, double min, doubl
 }
 
 int VertexArray::decodeHeader(int length, const char *bytes, int swap,
-                              std::string &name, int &num, int &type,
+                              std::string &name, int &tag, int &type,
                               double &min, double &max, int &numSteps, double &time,
                               double &xmin, double &ymin, double &zmin,
                               double &xmax, double &ymax, double &zmax)
@@ -271,7 +271,7 @@ int VertexArray::decodeHeader(int length, const char *bytes, int swap,
   }
 
   int index = 0;
-  memcpy(&num, &bytes[index], is); index += is;
+  memcpy(&tag, &bytes[index], is); index += is;
   int ss; memcpy(&ss, &bytes[index], is); index += is;
   if(ss){
     std::vector<char> n(ss);
@@ -295,9 +295,9 @@ int VertexArray::decodeHeader(int length, const char *bytes, int swap,
 void VertexArray::fromChar(int length, const char *bytes, int swap)
 {
   std::string name;
-  int num, type, numSteps;
+  int tag, type, numSteps;
   double min, max, time, xmin, ymin, zmin, xmax, ymax, zmax;
-  int index = decodeHeader(length, bytes, swap, name, num, type, min, max,
+  int index = decodeHeader(length, bytes, swap, name, tag, type, min, max,
                            numSteps, time, xmin, ymin, zmin, xmax, ymax, zmax);
   if(!index) return;
 

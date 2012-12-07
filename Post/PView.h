@@ -22,14 +22,14 @@ namespace onelab{ class localNetworkClient; }
 // A post-processing view.
 class PView{
  private:
-  static int _globalNum;
-  // unique tag of the view (> 0)
-  int _num;
+  static int _globalTag;
+  // unique tag of the view (>= 0)
+  int _tag;
   // index of the view in the current view list
   int _index;
   // flag to mark that the view has changed
   bool _changed;
-  // tag of the source view if this view is an alias, zero otherwise
+  // tag of the source view if this view is an alias, -1 otherwise
   int _aliasOf;
   // eye position (for transparency sorting)
   SPoint3 _eye;
@@ -38,13 +38,13 @@ class PView{
   // the data
   PViewData *_data;
   // initialize private stuff
-  void _init(int num=0);
+  void _init(int tag=-1);
 
  public:
   // create a new view with list-based data
-  PView(int num=0);
+  PView(int tag=-1);
   // construct a new view using the given data
-  PView(PViewData *data, int num=0);
+  PView(PViewData *data, int tag=-1);
   // construct a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions=true);
   // construct a new list-based view from a simple 2D dataset
@@ -61,9 +61,9 @@ class PView{
   // default destructor
   ~PView();
 
-  // get/set global number
-  static int getGlobalNum(){ return _globalNum; }
-  static void setGlobalNum(int num){ _globalNum = num; }
+  // get/set global tag
+  static int getGlobalTag(){ return _globalTag; }
+  static void setGlobalTag(int tag){ _globalTag = tag; }
 
   // delete the vertex arrays, used to draw the view efficiently
   void deleteVertexArrays();
@@ -76,8 +76,8 @@ class PView{
   PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
 
-  // get the view number (unique and immutable)
-  int getNum(){ return _num; }
+  // get the view tag (unique and immutable)
+  int getTag(){ return _tag; }
 
   // get/set the view index (in the view list)
   int getIndex(){ return _index; }
@@ -107,7 +107,7 @@ class PView{
                               int partition=-1);
   static PView *getViewByFileName(const std::string &name, int timeStep=-1,
                                   int partition=-1);
-  static PView *getViewByNum(int num, int timeStep=-1, int partition=-1);
+  static PView *getViewByTag(int tag, int timeStep=-1, int partition=-1);
 
   // IO read routines (these are global: they can create multiple
   // views)

@@ -243,3 +243,13 @@ bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
   }
   return true;
 }
+
+void PViewData::importLists(int N[24], std::vector<double> *V[24])
+{
+  Msg::Error("importLists not available for this view data type");
+}
+
+void PViewData::getListPointers(int N[24], std::vector<double> *V[24])
+{
+  Msg::Error("getListPointers not avalailable for this view data type");
+}

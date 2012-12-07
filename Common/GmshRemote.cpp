@@ -48,7 +48,7 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
       if(va[type]){
         int len;
         char *str = va[type]->toChar
-          (p->getNum(), data->getName(), type + 1, min, max,
+          (p->getTag(), data->getName(), type + 1, min, max,
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
         client->SendMessage(GmshSocket::GMSH_VERTEX_ARRAY, len, str);
@@ -85,7 +85,7 @@ static void computeAndSendVertexArrays()
       if(va[type]){
         int len;
         char *str = va[type]->toChar
-          (p->getNum(), data->getName(), type + 1, min, max,
+          (p->getTag(), data->getName(), type + 1, min, max,
            data->getNumTimeSteps(), data->getTime(opt->timeStep),
            data->getBoundingBox(), len);
         MPI_Send(&len, 1, MPI_INT, 0, MPI_GMSH_VARRAY_LEN, MPI_COMM_WORLD);

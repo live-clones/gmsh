@@ -1281,8 +1281,8 @@ std::string opt_view_name(OPT_ARGS_STR)
     if(FlGui::available()){
       for(int i = 0; i < (int)PView::list.size(); i++){
         if((i == num ||
-            PView::list[i]->getAliasOf() == view->getNum() ||
-            PView::list[i]->getNum() == view->getAliasOf()) &&
+            PView::list[i]->getAliasOf() == view->getTag() ||
+            PView::list[i]->getTag() == view->getAliasOf()) &&
            FlGui::instance()->onelab->getViewButton(i)) {
           FlGui::instance()->onelab->getViewButton(i)->copy_label(data->getName());
           FlGui::instance()->onelab->getViewButton(i)->redraw();

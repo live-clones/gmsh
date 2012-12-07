@@ -202,7 +202,7 @@ class VertexArray{
                int numsteps, double time, SBoundingBox3d bbox, int &len);
   void fromChar(int length, const char *bytes, int swap);
   static int decodeHeader(int length, const char *bytes, int swap,
-                          std::string &name, int &num, int &type,
+                          std::string &name, int &tag, int &type,
                           double &min, double &max, int &numSteps, double &time,
                           double &xmin, double &ymin, double &zmin,
                           double &xmax, double &ymax, double &zmax);
