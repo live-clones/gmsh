@@ -250,7 +250,7 @@ namespace onelabUtils {
     onelab::server::instance()->get(numbers);
     for(unsigned int i = 0; i < numbers.size(); i++){
       std::string v = numbers[i].getAttribute("Graph");
-      v.resize(8, '0');
+      v.resize(36, '0');
       if(v[2 * num] == '1'){
         x = getRange(numbers[i]);
         xName = numbers[i].getShortName();
@@ -275,7 +275,7 @@ namespace onelabUtils {
         view = new PView(xName, yName, x, y);
         view->getData()->setFileName("OneLab" + graphNum);
         view->getOptions()->intervalsType = PViewOptions::Discrete;
-        view->getOptions()->autoPosition = num + 2;
+        view->getOptions()->autoPosition = num / 2 + 2;
       }
       changed = true;
     }

@@ -200,25 +200,32 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 }
 
 static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
-                          double width, double height, double xmin, double xmax)
+                          double width, double height, double xmin, double xmax,
+                          int tic, int overlay)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
   if(!opt->axes) return;
 
-  int alpha = CTX::instance()->unpackAlpha(opt->color.background2d);
-  if(alpha != 0){
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glColor4ubv((GLubyte *) & opt->color.background2d);
-    glBegin(GL_QUADS);
-    glVertex2d(xleft, ytop);
-    glVertex2d(xleft + width, ytop);
-    glVertex2d(xleft + width, ytop - height);
-    glVertex2d(xleft, ytop - height);
-    glEnd();
-    glDisable(GL_BLEND);
+  if(overlay > 2) return;
+
+  if(width <= 0 || height <= 0) return;
+
+  if(!overlay){
+    int alpha = CTX::instance()->unpackAlpha(opt->color.background2d);
+    if(alpha != 0){
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glEnable(GL_BLEND);
+      glColor4ubv((GLubyte *) & opt->color.background2d);
+      glBegin(GL_QUADS);
+      glVertex2d(xleft, ytop);
+      glVertex2d(xleft + width, ytop);
+      glVertex2d(xleft + width, ytop - height);
+      glVertex2d(xleft, ytop - height);
+      glEnd();
+      glDisable(GL_BLEND);
+    }
   }
 
   // total font height
@@ -226,8 +233,6 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     drawContext::global()->getStringHeight() : 1;
   // height above ref. point
   double font_a = font_h - drawContext::global()->getStringDescent();
-
-  const double tic = 5.;
 
   glPointSize((float)CTX::instance()->pointSize);
   gl2psPointSize((float)(CTX::instance()->pointSize *
@@ -240,15 +245,17 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   glColor4ubv((GLubyte *) & opt->color.axes);
 
   // bare axes
-  glBegin(GL_LINE_STRIP);
-  glVertex2d(xleft, ytop);
-  glVertex2d(xleft, ytop - height);
-  glVertex2d(xleft + width, ytop - height);
-  if(opt->axes > 1){
-    glVertex2d(xleft + width, ytop);
+  if(!overlay){
+    glBegin(GL_LINE_STRIP);
     glVertex2d(xleft, ytop);
+    glVertex2d(xleft, ytop - height);
+    glVertex2d(xleft + width, ytop - height);
+    if(opt->axes > 1){
+      glVertex2d(xleft + width, ytop);
+      glVertex2d(xleft, ytop);
+    }
+    glEnd();
   }
-  glEnd();
 
   // y label
   std::string label = data->getName();
@@ -268,13 +275,14 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   }
   if(opt->scaleType == PViewOptions::Logarithmic)
     label = "Log10 " + label;
-  glRasterPos2d(xleft, ytop + font_h + tic);
-  ctx->drawStringCenter(label.c_str());
+  glRasterPos2d(xleft + (overlay ? width : 0), ytop + font_h + tic);
+  ctx->drawStringCenter(label);
 
   // x label
   label = opt->axesLabel[0];
-  glRasterPos2d(xleft + width / 2, ytop - height - 2 * font_h - 2 * tic);
-  ctx->drawStringCenter(label.c_str());
+  glRasterPos2d(xleft + width / 2,
+                ytop - height - 2 * font_h - 2 * tic - overlay * (font_h + tic));
+  ctx->drawStringCenter(label);
 
   // y tics and horizontal grid
   if(opt->nbIso > 0){
@@ -284,36 +292,40 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double dy = height / (double)nb;
     double dv = (opt->tmpMax - opt->tmpMin) / (double)nb;
     for(int i = 0; i < nb + 1; i++){
-      if(opt->axes > 0){
+      glBegin(GL_LINES);
+      glVertex2d(xleft, ytop - i * dy);
+      glVertex2d(xleft + tic, ytop - i * dy);
+      if(opt->axes > 1){
+        glVertex2d(xleft + width - tic, ytop - i * dy);
+        glVertex2d(xleft + width, ytop - i * dy);
+      }
+      glEnd();
+      if(opt->axes > 2 && i != 0 && i != nb){
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(1, 0x1111);
+        gl2psEnable(GL2PS_LINE_STIPPLE);
+        gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
         glBegin(GL_LINES);
         glVertex2d(xleft, ytop - i * dy);
-        glVertex2d(xleft + tic, ytop - i * dy);
-        if(opt->axes > 1){
-          glVertex2d(xleft + width - tic, ytop - i * dy);
-          glVertex2d(xleft + width, ytop - i * dy);
-        }
+        glVertex2d(xleft + width, ytop - i * dy);
         glEnd();
-        if(opt->axes > 2 && i != 0 && i != nb){
-          glEnable(GL_LINE_STIPPLE);
-          glLineStipple(1, 0x1111);
-          gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-          glBegin(GL_LINES);
-          glVertex2d(xleft, ytop - i * dy);
-          glVertex2d(xleft + width, ytop - i * dy);
-          glEnd();
-          glDisable(GL_LINE_STIPPLE);
-          gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth((float)(CTX::instance()->lineWidth *
-                                 CTX::instance()->print.epsLineWidthFactor));
-        }
+        glDisable(GL_LINE_STIPPLE);
+        gl2psDisable(GL2PS_LINE_STIPPLE);
+        gl2psLineWidth((float)(CTX::instance()->lineWidth *
+                               CTX::instance()->print.epsLineWidthFactor));
       }
       if(opt->showScale){
         char tmp[256];
         sprintf(tmp, opt->format.c_str(), (i == nb) ? opt->tmpMin :
                 (opt->tmpMax - i * dv));
-        glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
-        ctx->drawStringRight(tmp);
+        if(!overlay){
+          glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
+          ctx->drawStringRight(tmp);
+        }
+        else{
+          glRasterPos2d(xleft + width + 2 * tic, ytop - i * dy - font_a / 3.);
+          ctx->drawString(tmp);
+        }
       }
     }
   }
@@ -321,49 +333,47 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   // x tics and vertical grid
   if(opt->axesTics[0] > 0){
     int nb = opt->axesTics[0];
-    if(opt->axes){
-      char tmp[256];
-      sprintf(tmp, opt->axesFormat[0].c_str(), -M_PI * 1.e4);
-      if((nb - 1) * drawContext::global()->getStringWidth(tmp) > width)
-        nb = (int)(width / drawContext::global()->getStringWidth(tmp)) + 1;
-    }
+    char tmp[256];
+    sprintf(tmp, opt->axesFormat[0].c_str(), -M_PI * 1.e4);
+    if((nb - 1) * drawContext::global()->getStringWidth(tmp) > width)
+      nb = (int)(width / drawContext::global()->getStringWidth(tmp)) + 1;
     if(nb == 1) nb++;
 
     double dx = width / (double)(nb - 1);
     double ybot = ytop - height;
 
     for(int i = 0; i < nb; i++){
-      if(opt->axes){
+      glBegin(GL_LINES);
+      glVertex2d(xleft + i * dx, ybot);
+      glVertex2d(xleft + i * dx, ybot + tic);
+      if(opt->axes > 1){
+        glVertex2d(xleft + i * dx, ytop);
+        glVertex2d(xleft + i * dx, ytop - tic);
+      }
+      glEnd();
+      if(opt->axes > 2 && i != 0 && i != nb - 1){
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(1, 0x1111);
+        gl2psEnable(GL2PS_LINE_STIPPLE);
+        gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
         glBegin(GL_LINES);
+        glVertex2d(xleft + i * dx, ytop);
         glVertex2d(xleft + i * dx, ybot);
-        glVertex2d(xleft + i * dx, ybot + tic);
-        if(opt->axes > 1){
-          glVertex2d(xleft + i * dx, ytop);
-          glVertex2d(xleft + i * dx, ytop - tic);
-        }
         glEnd();
-        if(opt->axes > 2 && i != 0 && i != nb - 1){
-          glEnable(GL_LINE_STIPPLE);
-          glLineStipple(1, 0x1111);
-          gl2psEnable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
-          glBegin(GL_LINES);
-          glVertex2d(xleft + i * dx, ytop);
-          glVertex2d(xleft + i * dx, ybot);
-          glEnd();
-          glDisable(GL_LINE_STIPPLE);
-          gl2psDisable(GL2PS_LINE_STIPPLE);
-          gl2psLineWidth((float)(CTX::instance()->lineWidth *
-                                 CTX::instance()->print.epsLineWidthFactor));
-        }
-
+        glDisable(GL_LINE_STIPPLE);
+        gl2psDisable(GL2PS_LINE_STIPPLE);
+        gl2psLineWidth((float)(CTX::instance()->lineWidth *
+                               CTX::instance()->print.epsLineWidthFactor));
+      }
+      if(opt->showScale){
         char tmp[256];
         if(nb == 1)
           sprintf(tmp, opt->axesFormat[0].c_str(), xmin);
         else
           sprintf(tmp, opt->axesFormat[0].c_str(),
                   xmin + i * (xmax - xmin) / (double)(nb - 1));
-        glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
+        glRasterPos2d(xleft + i * dx,
+                      ybot - font_h - tic - overlay * (font_h + tic));
         ctx->drawStringCenter(tmp);
       }
     }
@@ -413,6 +423,8 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
                             double xmin, double xmax,
                             std::vector<std::vector<double> > &y)
 {
+  if(width <= 0 || height <= 0) return;
+
   PViewOptions *opt = p->getOptions();
 
   glPointSize((float)opt->pointSize);
@@ -462,7 +474,7 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
 }
 
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
-                      double width, double height)
+                      double width, double height, int tic, int overlay=0)
 {
   std::vector<double> x;
   std::vector<std::vector<double> > y;
@@ -495,7 +507,7 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     opt->tmpMax = log10(opt->tmpMax);
   }
 
-  drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax);
+  drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax, tic, overlay);
   drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y);
 }
 
@@ -513,73 +525,88 @@ void drawContext::drawGraph2d()
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  double xsep = 0., ysep = 5 * drawContext::global()->getStringHeight();
+  const int tic = 5; // size of tic marks and interline
+  const int mx = 25, my = 5; // x- and y-margin
+  double xsep = 0., ysep = drawContext::global()->getStringHeight() + tic;
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
     PViewOptions *opt = graphs[i]->getOptions();
     sprintf(label, opt->format.c_str(), -M_PI * 1.e4);
     xsep = std::max(xsep, drawContext::global()->getStringWidth(label));
   }
+  xsep += tic;
 
+  //  +-----------------winw--------------------+
+  //  |      my+3*ysep                          |
+  //  |mx+xsep+---w---+mx+2*xsep+---w---+mx+xsep|
+  //  |       |       |         |       |       |
+  //  |       h       |         |       |       |
+  //  |       |       |         |       |       |
+  //  |       +-------+         +-------+       |
+  // winh   my+5*ysep                           |
+  //  |       +-------+         +-------+       |
+  //  |       |       |         |       |       |
+  //  |       h       |         |       |       |
+  //  |       |       |         |       |       |
+  //  |       +-------+         +-------+       |
+  //  |       my+4*ysep                         |
+  //  +-----------------------------------------+
+
+  int overlay[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  double winw = viewport[2] - viewport[0];
+  double winh = viewport[3] - viewport[1];
   for(unsigned int i = 0; i < graphs.size(); i++){
+    double x = viewport[0] + mx + xsep;
+    double y = viewport[1] + my + 3 * ysep;
     PView *p = graphs[i];
     PViewOptions *opt = graphs[i]->getOptions();
     if(opt->autoPosition == 1){ // automatic
-      double winw = viewport[2] - viewport[0];
-      double winh = viewport[3] - viewport[1];
       if(graphs.size() == 1){
-        double fracw = 0.75, frach = 0.75;
-        double w = fracw * winw - xsep;
-        double h = frach * winh - ysep;
-        double x = viewport[0] + (1 - fracw) / 2. * winw;
-        double y = viewport[1] + (1 - frach) / 2. * winh;
-        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        double w = winw - 2 * mx - 2 * xsep;
+        double h = winh - 2 * my - 7 * ysep;
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
       }
       else if(graphs.size() == 2){
-        double fracw = 0.75, frach = 0.85;
-        double w = fracw * winw - xsep;
-        double h = frach * winh / 2. - ysep;
-        double x = viewport[0] + (1 - fracw) / 2. * winw;
-        double y = viewport[1] + (1 - frach) / 3. * winh;
-        if(i == 1) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        double w = winw - 2 * mx - 2 * xsep;
+        double h = (winh - 3 * my - 12 * ysep) / 2.;
+        if(i == 1) y += (h + my + 5 * ysep);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
       }
       else{
-        double fracw = 0.85, frach = 0.85;
-        double w = fracw * winw / 2. - xsep;
-        double h = frach * winh / 2. - ysep;
-        double x = viewport[0] + (1 - fracw) / 3. * winw;
-        if(i == 1 || i == 3) x += (w + xsep + (1 - fracw) / 3. * winw);
-        double y = viewport[1] + (1 - frach) / 3. * winh;
-        if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
-        drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+        double w = (winw - 3 * mx - 4 * xsep) / 2.;
+        double h = (winh - 3 * my - 12 * ysep) / 2.;
+        if(i == 1 || i == 3) x += (w + mx + 2 * xsep);
+        if(i == 2 || i == 3) y += (h + 5 * ysep);
+        drawGraph(this, p, x, viewport[3] - y, w, h, tic);
       }
     }
     else if(opt->autoPosition >= 2 && opt->autoPosition <= 10){
       // top left (2), top right (3), bottom left (4), bottom right (5), top
-      // half (6), bottom half (7), left half (8), right half (9), top 1/3 (10)
-      double winw = viewport[2] - viewport[0];
-      double winh = viewport[3] - viewport[1];
-      double fracw = 0.85, frach = 0.85;
+      // half (6), bottom half (7), left half (8), right half (9), full (10)
       int a = opt->autoPosition;
-      double wd = (a <= 5 || a == 8 || a == 9) ? 2. : 1.;
-      double w = fracw * winw / wd - xsep;
-      double hd = (a == 10) ? 3. : (a <= 5 || a == 6 || a == 7) ? 2. : 1.;
-      double h = frach * winh / hd - ysep;
-      double x = viewport[0] + (1 - fracw) / 3. * winw;
-      if(a == 3 || a == 5 || a == 9)
-        x += (w + xsep + (1 - fracw) / 3. * winw);
-      double y = viewport[1] + (1 - frach) / 3. * winh;
-      if(a == 4 || a == 5 || a == 7)
-        y += (h + ysep + (1 - frach) / 3. * winh);
-      drawGraph(this, p, x + 0.95 * xsep, viewport[3] - (y + 0.4 * ysep), w, h);
+      double w, h;
+      if(a <= 5 || a == 8 || a == 9)
+        w = (winw - 3 * mx - 4 * xsep) / 2.;
+      else
+        w = winw - 2 * mx - 2 * xsep;
+      if(a <= 5 || a == 6 || a == 7)
+        h = (winh - 3 * my - 12 * ysep) / 2.;
+      else
+        h = winh - 2 * my - 7 * ysep;
+      if(a == 3 || a == 5 || a == 9) x += (w + mx + 2 * xsep);
+      if(a == 4 || a == 5 || a == 7) y += (h + my + 5 * ysep);
+      drawGraph(this, p, x, viewport[3] - y, w, h, tic,
+                overlay[opt->autoPosition]);
+      if(opt->axes)
+        overlay[opt->autoPosition] += (opt->axesLabel[0].size() ? 2 : 1);
     }
     else{ // manual
       double x = opt->position[0], y = opt->position[1];
       int center = fix2dCoordinates(&x, &y);
-      drawGraph(this, p, x - (center & 1 ? opt->size[0] / 2. : 0),
+      drawGraph(this, p,
+                x - (center & 1 ? opt->size[0] / 2. : 0),
                 y + (center & 2 ? opt->size[1] / 2. : 0),
-                opt->size[0], opt->size[1]);
+                opt->size[0], opt->size[1], tic);
     }
   }
 }
