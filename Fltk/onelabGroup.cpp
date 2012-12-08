@@ -386,11 +386,14 @@ static bool incrementLoops()
 
 static void updateGraphs()
 {
-  bool redraw0 = onelabUtils::updateGraph("0");
-  bool redraw1 = onelabUtils::updateGraph("1");
-  bool redraw2 = onelabUtils::updateGraph("2");
-  bool redraw3 = onelabUtils::updateGraph("3");
-  if(redraw0 || redraw1 || redraw2 || redraw3){
+  bool redraw = false;
+  for(int i = 0; i < 18; i++){
+    std::ostringstream tmp;
+    tmp << i;
+    bool ret = onelabUtils::updateGraph(tmp.str());
+    redraw = redraw || ret;
+  }
+  if(redraw){
     FlGui::instance()->updateViews();
     drawContext::global()->draw();
   }
