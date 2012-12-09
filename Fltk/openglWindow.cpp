@@ -426,6 +426,7 @@ int openglWindow::handle(int event)
 
   case FL_MOUSEWHEEL:
     {
+      _prev.set(_ctx, Fl::event_x(), Fl::event_y());
       double dy = Fl::event_dy();
       double fact = (5. * CTX::instance()->zoomFactor * fabs(dy) + h()) / (double)h();
       if (CTX::instance()->camera){
