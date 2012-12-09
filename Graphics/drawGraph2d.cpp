@@ -276,13 +276,17 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   if(opt->scaleType == PViewOptions::Logarithmic)
     label = "Log10 " + label;
   glRasterPos2d(xleft + (overlay ? width : 0), ytop + font_h + tic);
-  ctx->drawStringCenter(label);
+  ctx->drawString(label,CTX::instance()->glFontTitle,
+                  CTX::instance()->glFontEnumTitle,
+                  CTX::instance()->glFontSizeTitle, 1);
 
   // x label
   label = opt->axesLabel[0];
   glRasterPos2d(xleft + width / 2,
                 ytop - height - 2 * font_h - 2 * tic - overlay * (font_h + tic));
-  ctx->drawStringCenter(label);
+  ctx->drawString(label,CTX::instance()->glFontTitle,
+                  CTX::instance()->glFontEnumTitle,
+                  CTX::instance()->glFontSizeTitle, 1);
 
   // y tics and horizontal grid
   if(opt->nbIso > 0){

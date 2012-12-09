@@ -1648,7 +1648,7 @@ int metamodel_cb(const std::string &name, const std::string &action)
     onelab::server::instance()->set(n);
     std::vector<std::string> split = SplitFileName(name);
     onelab::string s1("Arguments/WorkingDir",
-		      split[0].size()?split[0]:getCurrentWorkdir());
+		      split[0].size() ? split[0] : GetCurrentWorkdir());
     s1.setVisible(false);
     onelab::server::instance()->set(s1);
     onelab::string s2("Arguments/FileName", split[1]);

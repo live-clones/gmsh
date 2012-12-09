@@ -201,7 +201,7 @@ void statisticsWindow::compute(bool elementQuality)
 {
 #if 0
   {
-    // MINIMUM MAXIMUM ANGLES 
+    // MINIMUM MAXIMUM ANGLES
     double minAngle = 1.0; //M_PI;
     double meanAngle = 0.0;
     int count = 0;

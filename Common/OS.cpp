@@ -233,7 +233,7 @@ int SystemCall(const std::string &command, bool blocking)
 #endif
 }
 
-std::string getCurrentWorkdir()
+std::string GetCurrentWorkdir()
 {
   char path[1024];
 #if defined(WIN32)
@@ -242,7 +242,7 @@ std::string getCurrentWorkdir()
   if(!getcwd(path, sizeof(path))) return "";
 #endif
   std::string str(path);
-  // match the convention of SplitFileName that delivers directory path 
+  // match the convention of SplitFileName that delivers directory path
   // ending with a directory separator
 #if defined(WIN32)
   str.append("\\");
@@ -256,7 +256,7 @@ void RedirectIOToConsole()
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   // Win32 GUI apps do not write to the DOS console; make it work again by
-  // attaching to parent console, which allows to use the DOS shell to work 
+  // attaching to parent console, which allows to use the DOS shell to work
   // with Gmsh on the command line (without this hack, you need to either use
   // a better shell (e.g. bash), or compile a /subsystem:console version
   if(!AttachConsole(ATTACH_PARENT_PROCESS)) return;
@@ -276,7 +276,7 @@ void RedirectIOToConsole()
   fp = _fdopen(hConHandle, "w");
   *stderr = *fp;
   setvbuf(stderr, NULL, _IONBF, 0);
-  // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to 
+  // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to
   // console as well
   std::ios::sync_with_stdio();
 #endif

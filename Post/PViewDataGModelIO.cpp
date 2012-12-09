@@ -133,8 +133,8 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
   return true;
 }
 
-bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool binary, bool savemesh,
-                               bool multipleView)
+bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool binary,
+                               bool savemesh, bool multipleView)
 {
   if(_steps.empty()) return true;
 
@@ -148,7 +148,8 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
   bool writeNodesAndElements = savemesh;
   FILE *fp;
   if(writeNodesAndElements){
-    if(!model->writeMSH(fileName, version, binary,false,false,1.0,0,0,multipleView)) return false;
+    if(!model->writeMSH(fileName, version, binary, false, false, 1.0, 0,
+                        0, multipleView)) return false;
     // append data
     fp = fopen(fileName.c_str(), binary ? "ab" : "a");
     if(!fp){
