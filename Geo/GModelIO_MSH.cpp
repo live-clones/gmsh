@@ -400,12 +400,16 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     return 0;
   }
 
+  // FIXME: should make this available to users, and should allow to renumber
+  // elements, too. Renumbering should be disabled by default.
+  bool renumber = false;
+
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  int numVertices = indexMeshVertices(saveAll, saveSinglePartition);
+  int numVertices = indexMeshVertices(saveAll, saveSinglePartition, renumber);
 
   // get the number of elements we need to save
   std::vector<GEntity*> entities;

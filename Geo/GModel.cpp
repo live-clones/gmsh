@@ -909,7 +909,7 @@ void GModel::removeInvisibleElements()
   destroyMeshCaches();
 }
 
-int GModel::indexMeshVertices(bool all, int singlePartition)
+int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -940,15 +940,21 @@ int GModel::indexMeshVertices(bool all, int singlePartition)
 
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0, index = 0;
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      if(!entities[i]->mesh_vertices[j]->getIndex()){
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v = entities[i]->mesh_vertices[j];
+      if(!v->getIndex()){
         index++;
         numVertices++;
-        entities[i]->mesh_vertices[j]->setIndex(index);
+        if(renumber)
+          v->setIndex(index);
+        else
+          v->setIndex(v->getNum());
       }
-      else if(entities[i]->mesh_vertices[j]->getIndex() == -2)
+      else if(v->getIndex() == -2)
         index++;
+    }
+  }
 
   return numVertices;
 }
