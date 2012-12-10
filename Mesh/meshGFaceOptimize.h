@@ -59,7 +59,7 @@ void buildEdgeToElements(std::vector<MElement*> &tris, e2t_cont &adj);
 void laplaceSmoothing(GFace *gf, int niter=1, bool infinity_norm = false);
 
 void _relocateVertex(GFace *gf, MVertex *ver,
-		     const std::vector<MElement*> &lt);
+                     const std::vector<MElement*> &lt);
 
 /*
 void edgeSwappingLawson(GFace *gf);
@@ -99,8 +99,8 @@ void buildMeshGenerationDataStructures(GFace *gf,
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
                            std::vector<double> &Us, std::vector<double> &Vs);
 void recombineIntoQuads(GFace *gf, 
-			bool topologicalOpti   = true, 
-			bool nodeRepositioning = true);
+                        bool topologicalOpti   = true, 
+                        bool nodeRepositioning = true);
 void quadsToTriangles(GFace *gf, double minqual);
 
 struct swapquad{
@@ -136,19 +136,19 @@ struct swapquad{
 
 class Temporary{
   private :
-	static double w1,w2,w3;
-	static std::vector<SVector3> gradients;
-	void read_data(std::string);
-	static SVector3 compute_normal(MElement*);
-	static SVector3 compute_other_vector(MElement*);
-	static SVector3 compute_gradient(MElement*);
+        static double w1,w2,w3;
+        static std::vector<SVector3> gradients;
+        void read_data(std::string);
+        static SVector3 compute_normal(MElement*);
+        static SVector3 compute_other_vector(MElement*);
+        static SVector3 compute_gradient(MElement*);
   public :
-	Temporary();
-	~Temporary();
-	void quadrilaterize(std::string,double,double,double);
-	static double compute_total_cost(double,double);
-	static void select_weights(double,double,double);
-	static double compute_alignment(const MEdge&,MElement*,MElement*);
+        Temporary();
+        ~Temporary();
+        void quadrilaterize(std::string,double,double,double);
+        static double compute_total_cost(double,double);
+        static void select_weights(double,double,double);
+        static double compute_alignment(const MEdge&,MElement*,MElement*);
 };
 
 #endif
