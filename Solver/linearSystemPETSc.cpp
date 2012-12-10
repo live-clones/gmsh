@@ -118,6 +118,7 @@ void linearSystemPETScBlockDouble::getFromSolution(int row, fullMatrix<double> &
   }
 }
 
+
 void linearSystemPETScBlockDouble::allocate(int nbRows)
 {
   MPI_Comm comm = _sequential ? PETSC_COMM_SELF: PETSC_COMM_WORLD;
@@ -138,12 +139,25 @@ void linearSystemPETScBlockDouble::allocate(int nbRows)
   if (_parameters.count("petscPrefix"))
     MatAppendOptionsPrefix(_a, _parameters["petscPrefix"].c_str());
   MatSetFromOptions(_a);
-  MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd);
-  MatGetSize(_a, &_globalSize, &_localSize);
-  _globalSize /= _blockSize;
-  _localSize /= _blockSize;
-  _localRowStart /= _blockSize;
-  _localRowEnd /= _blockSize;
+  //since PETSc 3.3 GetOwnershipRange and MatGetSize() cannot be called before SetPreallocation
+  _localSize = nbRows;
+  _localRowStart = 0;
+  _localRowEnd = nbRows;
+  _globalSize = _localSize;
+  #ifdef HAVE_MPI
+  if (!_sequential) {
+    _localRowStart = 0;
+    if (Msg::GetCommRank() != 0) {
+      MPI_Status status;
+      MPI_Recv((void*)&_localRowStart, 1, MPI_INT, Msg::GetCommRank() - 1, 1, MPI_COMM_WORLD, &status);
+    }
+    _localRowEnd = _localRowStart + nbRows;
+    if (Msg::GetCommRank() != Msg::GetCommSize() - 1) {
+      MPI_Send((void*)&_localRowEnd, 1, MPI_INT, Msg::GetCommRank() + 1, 1, MPI_COMM_WORLD);
+    }
+    MPI_Allreduce((void*)&_localSize, (void*)&_globalSize, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  }
+  #endif
   // override the default options with the ones from the option
   // database (if any)
   VecCreate(comm, &_x);

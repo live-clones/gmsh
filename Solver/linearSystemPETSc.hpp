@@ -114,10 +114,24 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   if (this->_parameters.count("petscPrefix"))
     _try(MatAppendOptionsPrefix(_a, this->_parameters["petscPrefix"].c_str()));
   _try(MatSetFromOptions(_a));
-  _try(MatGetOwnershipRange(_a, &_localRowStart, &_localRowEnd));
-  int nbColumns;
-  _localSize = _localRowEnd - _localRowStart;
-  _try(MatGetSize(_a, &_globalSize, &nbColumns));
+  //since PETSc 3.3 GetOwnershipRange and MatGetSize cannot be called before MatXXXSetPreallocation
+  _localSize = nbRows;
+  #ifdef HAVE_MPI
+  _localRowStart = 0;
+  if (Msg::GetCommRank() != 0) {
+    MPI_Status status;
+    MPI_Recv((void*)&_localRowStart, 1, MPI_INT, Msg::GetCommRank() - 1, 1, MPI_COMM_WORLD, &status);
+  }
+  _localRowEnd = _localRowStart + nbRows;
+  if (Msg::GetCommRank() != Msg::GetCommSize() - 1) {
+    MPI_Send((void*)&_localRowEnd, 1, MPI_INT, Msg::GetCommRank() + 1, 1, MPI_COMM_WORLD);
+  }
+  MPI_Allreduce((void*)&_localSize, (void*)&_globalSize, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  #else
+  _localRowStart = 0;
+  _localRowEnd = nbRows;
+  _globalSize = _localSize;
+  #endif
   // preallocation option must be set after other options
   _try(VecCreate(_comm, &_x));
   _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
