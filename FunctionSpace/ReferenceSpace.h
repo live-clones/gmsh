@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include "MElement.h"
 
 class ReferenceSpace{
  protected:
@@ -14,11 +15,16 @@ class ReferenceSpace{
     unsigned int  number;   // Number of Next Choise
     unsigned int* possible; // Possible  Next Choise
     node_s*       next;     // Next           Choise
+  
+    unsigned int  leafId;   // If leaf: this leaf number
+                            //     (from 0 to nLeaf - 1)
+                            // Else: no meaning
   };
 
   typedef node_s node;
 
   // Permutation (Tree + Leaf) //
+  unsigned int   nextLeafId;
   unsigned int   nVertex;
   unsigned int   nPerm;
   unsigned int** perm;
@@ -41,6 +47,8 @@ class ReferenceSpace{
 
   unsigned int getNReferenceSpace(void) const;
   
+  unsigned int getReferenceSpace(const MElement& element) const;
+
   std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllEdge(void) const;
   
@@ -53,7 +61,7 @@ class ReferenceSpace{
   ReferenceSpace(void);
 
   void init(void);
-  void generate(node* pTreeRoot);
+  void populate(node* pTreeRoot);
   void destroy(node* node);
   
   void getEdge(void);
@@ -67,6 +75,13 @@ class ReferenceSpace{
 					   unsigned int a, 
 					   unsigned int b,
 					   unsigned int c);
+
+  static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a, 
+			    const std::pair<unsigned int, MVertex*>& b);
+
+  static unsigned int treeLookup(const node* root,
+				 std::vector<std::pair<unsigned int, MVertex*> >& 
+				 sortedArray);
 
   std::string toString(const node* node) const;
 };
@@ -91,6 +106,13 @@ inline
 std::vector<const std::vector<const std::vector<unsigned int>*>*>&
 ReferenceSpace::getAllFace(void) const{
   return *face;
+}
+
+inline 
+bool 
+ReferenceSpace::sortPredicate(const std::pair<unsigned int, MVertex*>& a, 
+			      const std::pair<unsigned int, MVertex*>& b){
+  return a.second->getNum() < b.second->getNum();
 }
 
 #endif

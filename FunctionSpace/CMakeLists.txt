@@ -7,6 +7,10 @@ set(SRC
   Polynomial.cpp
   Legendre.cpp
 
+  ReferenceSpace.cpp
+  TriReferenceSpace.cpp
+  TetReferenceSpace.cpp
+
   Basis.cpp
   LagrangeBasis.cpp
   BasisScalar.cpp

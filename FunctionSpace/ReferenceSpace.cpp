@@ -1,9 +1,15 @@
+#include <algorithm>
 #include <sstream>
+
+#include "Exception.h"
 #include "ReferenceSpace.h"
 
 using namespace std;
 
 ReferenceSpace::ReferenceSpace(void){
+  // Defining Ref Edge and Face in //
+  // Dervived Class                //
+  // And CALL INIT()               //
 }
 
 ReferenceSpace::~ReferenceSpace(void){
@@ -34,7 +40,8 @@ ReferenceSpace::~ReferenceSpace(void){
 
 void ReferenceSpace::init(void){
   // Init Root //
-  nPerm = 0;
+  nPerm      = 0;
+  nextLeafId = 0;
 
   pTreeRoot.depth    = 0;
   pTreeRoot.last     = NULL; 
@@ -45,12 +52,15 @@ void ReferenceSpace::init(void){
   for(unsigned int i = 0; i < pTreeRoot.number; i++)
     pTreeRoot.possible[i] = i;
 
-  // Generate Tree //
+  // Populate Tree //
   lPerm = new list<unsigned int*>;
-  generate(&pTreeRoot);
+  populate(&pTreeRoot);
 
+  // Get Permutations //
   perm = new unsigned int*[nPerm];
   for(unsigned int i = 0; i < nPerm; i++){
+    // Take Permutation for queue
+    //             (AND IN ORDER)
     perm[i] = lPerm->front();
     lPerm->pop_front();
   }
@@ -62,25 +72,43 @@ void ReferenceSpace::init(void){
   getFace();
 }
 
-void ReferenceSpace::generate(node* pTreeRoot){
-  const unsigned int number = pTreeRoot->number;
-  const unsigned int depth  = pTreeRoot->depth;
+void ReferenceSpace::populate(node* pTreeRoot){
+  // Get Some Data on this Root //
+  const unsigned int number     = pTreeRoot->number;
+  const unsigned int nextNumber = number - 1;
+  const unsigned int depth      = pTreeRoot->depth;
+  const unsigned int nextDepth  = pTreeRoot->depth + 1;
 
+  // Temp Data //
+  unsigned int nextLast;
+  unsigned int offset;
+
+  // If Leaf : a new permutation is found //
   if(!number){
-    pTreeRoot->next = NULL;
+    // Init Permutation
+    pTreeRoot->next   = NULL;
+    pTreeRoot->leafId = nextLeafId;
+    
+    // Value for Next Permutation
+    nextLeafId++;
     nPerm++;
+    
+    // Put this Permutation in queue 
+    //                (AND IN ORDER)
     lPerm->push_back(pTreeRoot->last);
   }
 
+  // Else: continue to build the tree //
   else{
+    // We got 'number' child nodes
     pTreeRoot->next = new node[number];
 
+    // Init each child node 
     for(unsigned int i = 0; i < number; i++){
-      unsigned int nextDepth  = pTreeRoot->depth + 1;
-      unsigned int nextLast   = pTreeRoot->possible[i];
-      unsigned int nextNumber = number - 1;
-      unsigned int offset     = 0;
+      nextLast = pTreeRoot->possible[i];
+      offset   = 0;
       
+      // Depth and Last Choices of child nodes
       pTreeRoot->next[i].depth       = nextDepth;
       pTreeRoot->next[i].last        = new unsigned int[nextDepth];
       pTreeRoot->next[i].last[depth] = nextLast;
@@ -88,6 +116,7 @@ void ReferenceSpace::generate(node* pTreeRoot){
       for(unsigned int j = 0; j < depth; j++)
 	pTreeRoot->next[i].last[j] = pTreeRoot->last[j];
 
+      // Possibilities of child node
       pTreeRoot->next[i].number   = nextNumber;
       pTreeRoot->next[i].possible = new unsigned int[nextNumber];
       
@@ -98,7 +127,8 @@ void ReferenceSpace::generate(node* pTreeRoot){
 	  pTreeRoot->next[i].possible[j] = pTreeRoot->possible[j + offset];
       }
 
-      generate(&pTreeRoot->next[i]);
+      // Populate each child node (until a leaf is found)
+      populate(&pTreeRoot->next[i]);
     }
   }
 }
@@ -190,6 +220,64 @@ inOrder(unsigned int permutation,
   }
   
   return inorder;  
+}
+
+unsigned int ReferenceSpace::getReferenceSpace(const MElement& elem) const{
+  // Const_Cast //
+  MElement& element = const_cast<MElement&>(elem);
+
+  // Get Primary Vertices //
+  const int nVertex = element.getNumPrimaryVertices();
+  vector<pair<unsigned int, MVertex*> > vertex(nVertex);
+
+  for(int i = 0; i < nVertex; i++){
+    vertex[i].first  = i;
+    vertex[i].second = element.getVertex(i);  
+  }
+
+  // Sort Them with repsect to Vertex Global ID // 
+  //                 (vertex[i].second->getNum) //
+  std::sort(vertex.begin(), vertex.end(), sortPredicate);  
+
+  // Tree Lookup //
+  try{
+    return treeLookup(&pTreeRoot, vertex);
+  }
+
+  catch(...){
+    throw Exception("Cannot Find Reference Space for Element %d",
+		    element.getNum());
+  }
+}
+
+unsigned int ReferenceSpace::treeLookup(const node* root,
+					vector<pair<unsigned int, MVertex*> >& 
+					sortedArray){
+  // Temp Data //
+  unsigned int choice;
+  unsigned int i;
+
+  // If Root is *not* a Leaf: Lookup //
+  if(root->number){
+    // Get This Choice
+    choice = sortedArray[root->depth].first;
+
+    // Look for next node corresponding to this Choice
+    i = 0;
+    while(root->possible[i] != choice)
+      i++;
+
+    // Look if a this Choice has been found
+    if(i == root->number)
+      throw Exception();
+
+    // Go to next Node
+    return treeLookup(&root->next[i], sortedArray);
+  }
+
+  // Else: Return Leaf ID //
+  else
+    return root->leafId; 
 }
 
 string ReferenceSpace::toString(void) const{
