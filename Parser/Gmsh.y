@@ -673,7 +673,6 @@ Affectation :
     }
 
   // This variant can be used to force the variable type to "list"
-
   | tSTRING '[' ']' NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
@@ -737,6 +736,42 @@ Affectation :
       }
       Free($1);
     }
+
+  // for compatibility with GetDP
+  | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	if(!$5){
+          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+          s.list = true;
+	  s.value.resize(index + 1, 0.);
+	  s.value[index] = $6;
+	}
+	else
+	  yymsg(0, "Unknown variable '%s'", $1);
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if(s.list){
+          if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
+          switch($5){
+          case 0 : s.value[index] = $6; break;
+          case 1 : s.value[index] += $6; break;
+          case 2 : s.value[index] -= $6; break;
+          case 3 : s.value[index] *= $6; break;
+          case 4 :
+            if($6) s.value[index] /= $6;
+            else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, $6);
+            break;
+          }
+        }
+        else
+          yymsg(0, "Variable '%s' is not a list", $1);
+      }
+      Free($1);
+    }
+
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
@@ -783,6 +818,55 @@ Affectation :
       List_Delete($4);
       List_Delete($8);
     }
+
+  // for compatibility with GetDP
+  | tSTRING '(' '{' RecursiveListOfDouble '}' ')' NumericAffectation ListOfDouble tEND
+    {
+      if(List_Nbr($4) != List_Nbr($8)){
+	yymsg(0, "Incompatible array dimensions in affectation");
+      }
+      else{
+	if(!gmsh_yysymbols.count($1)){
+	  if(!$7){
+            gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+            s.list = true;
+	    for(int i = 0; i < List_Nbr($4); i++){
+	      int index = (int)(*(double*)List_Pointer($4, i));
+	      s.value.resize(index + 1, 0.);
+	      s.value[index] = *(double*)List_Pointer($8, i);
+	    }
+	  }
+	  else
+	    yymsg(0, "Unknown variable '%s'", $1);
+	}
+	else{
+          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+          if(s.list){
+            for(int i = 0; i < List_Nbr($4); i++){
+              int index = (int)(*(double*)List_Pointer($4, i));
+              double d = *(double*)List_Pointer($8, i);
+              if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
+              switch($7){
+              case 0 : s.value[index] = d; break;
+              case 1 : s.value[index] += d; break;
+              case 2 : s.value[index] -= d; break;
+              case 3 : s.value[index] *= d; break;
+              case 4 :
+                if($8) s.value[index] /= d;
+                else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, d);
+                break;
+              }
+            }
+          }
+          else
+            yymsg(0, "Variable '%s' is not a list", $1);
+        }
+      }
+      Free($1);
+      List_Delete($4);
+      List_Delete($8);
+    }
+
   | tSTRING NumericIncrement tEND
     {
       if(!gmsh_yysymbols.count($1))
@@ -3919,7 +4003,8 @@ FExpr :
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
   | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3 * $3 + $5 * $5); }
   | tRand   '(' FExpr ')'            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
-  // The following is for GetDP compatibility
+
+  // for compatibility with GetDP
   | tExp    '[' FExpr ']'            { $$ = exp($3);      }
   | tLog    '[' FExpr ']'            { $$ = log($3);      }
   | tLog10  '[' FExpr ']'            { $$ = log10($3);    }
@@ -3976,7 +4061,8 @@ FExpr_Single :
       }
       Free($1);
     }
-  // This is for GetDP compatibility (we should generalize it so
+
+  // for compatibility with GetDP (we should generalize it so
   // that we can create variables with this syntax, use them
   // recursively, etc., but I don't have time to do it now)
   | tSTRING '~' '{' FExpr '}'
@@ -4394,6 +4480,19 @@ FExpr_Multi :
       }
       Free($1);
     }
+  // for compatibility with GetDP
+  | tSTRING '(' ')'
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(unsigned int i = 0; i < s.value.size(); i++)
+	  List_Add($$, &s.value[i]);
+      }
+      Free($1);
+    }
   | tList '[' tSTRING ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
@@ -4407,6 +4506,25 @@ FExpr_Multi :
       Free($3);
     }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(int i = 0; i < List_Nbr($4); i++){
+	  int index = (int)(*(double*)List_Pointer_Fast($4, i));
+	  if((int)s.value.size() < index + 1)
+	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+	  else
+	    List_Add($$, &s.value[index]);
+	}
+      }
+      Free($1);
+      List_Delete($4);
+    }
+  // for compatibility with GetDP
+  | tSTRING '(' '{' RecursiveListOfDouble '}' ')'
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
