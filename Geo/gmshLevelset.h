@@ -22,6 +22,7 @@
 #include "cartesian.h"
 #include "simpleFunction.h"
 
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -289,6 +290,21 @@ public:
   gLevelsetMathEval(std::string f, int tag=1);
   ~gLevelsetMathEval(){ if (_expr) delete _expr; }
   double operator () (const double x, const double y, const double z) const;
+  int type() const { return UNKNOWN; }
+};
+
+class gLevelsetSimpleFunction: public gLevelsetPrimitive
+{
+  simpleFunction<double> *_f;
+public:
+  gLevelsetSimpleFunction(simpleFunction<double> *f, int tag=1){
+    _f = f; 
+  }
+  ~gLevelsetSimpleFunction(){}
+  double operator () (const double x, const double y, const double z) const
+  {
+    return (*_f)(x,y,z);
+  }
   int type() const { return UNKNOWN; }
 };
 
