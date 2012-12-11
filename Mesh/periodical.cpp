@@ -129,6 +129,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
   int val;
   int face_number;
   int last;
+  int mem;
   double x,y,z;
   double x1,y1,z1;
   double x2,y2,z2;
@@ -205,6 +206,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 		
   std::ofstream file("cells.pos");
   file << "View \"test\" {\n";
+  
   std::ofstream file2("cells.geo");
   file2 << "c=" << h << ";\n";
 		
@@ -303,6 +305,9 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 	for(j=0;j<obj.line_loops2.size();j++){
 	  print_geo_face(get_counter(),obj.line_loops2[j],file2);
 	  obj.faces2.push_back(get_counter());
+	  mem = get_counter();	
+	  increase_counter();
+	  print_geo_physical_face(get_counter(),mem,file2);
 	  increase_counter();
 	}
 
@@ -354,6 +359,12 @@ void voroMetal3D::print_geo_line(int index1,int index2,int index3,std::ofstream&
 
 void voroMetal3D::print_geo_face(int index1,int index2,std::ofstream& file){
   file << "Plane Surface(" << index1 << ")={"
+  << index2
+  << "};\n";
+}
+
+void voroMetal3D::print_geo_physical_face(int index1,int index2,std::ofstream& file){
+  file << "Physical Surface(" << index1 << ")={"
   << index2
   << "};\n";
 }
@@ -516,7 +527,7 @@ void voroMetal3D::correspondance(double e){
 			
 		  print_segment(p1,p2,file);
 		  
-		  file2 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
+		  file2 << faces[i]->physicals[0] << " " << faces[j]->physicals[0] << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
 			
 		  count++;
 		}
