@@ -25,6 +25,7 @@ class voroMetal3D{
   void print_geo_point(int,double,double,double,std::ofstream&);
   void print_geo_line(int,int,int,std::ofstream&);
   void print_geo_face(int,int,std::ofstream&);
+  void print_geo_physical_face(int,int,std::ofstream&);
   void print_geo_volume(int,int,std::ofstream&);
   void print_geo_line_loop(int,std::vector<int>&,std::vector<int>&,std::ofstream&);
   void print_geo_face_loop(int,std::vector<int>&,std::ofstream&);
