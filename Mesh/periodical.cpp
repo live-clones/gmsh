@@ -310,7 +310,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 	  print_geo_physical_face(get_counter(),mem,file2);
 	  increase_counter();
 	}
-
+	  
 	print_geo_face_loop(get_counter(),obj.faces2,file2);
 	obj.face_loops2 = get_counter();
 	increase_counter();
@@ -334,7 +334,7 @@ void voroMetal3D::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
 }
 
 void voroMetal3D::initialize_counter(){
-  counter = 1;
+  counter = 12;
 }
 
 void voroMetal3D::increase_counter(){
@@ -545,7 +545,16 @@ void voroMetal3D::correspondance(double e){
   
   std::ofstream file4("check2.pos");
   file4 << "View \"test\" {\n";
-		
+	
+  file3 << "Physical Surface(11)={";
+	
+  for(i=0;i<faces.size();i++){
+    if(i>0) file3 << ",";
+	file3 << faces[i]->tag();  
+  }
+	
+  file3 << "};\n";	
+	
   for(i=0;i<pairs.size();i++){
     gf1 = pairs[i].first;
 	gf2 = pairs[i].second;
