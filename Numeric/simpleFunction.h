@@ -7,7 +7,7 @@
 #define _SIMPLE_FUNCTION_H_
 
 // FIXME: Numeric/ should not depend on Geo/
-#include "MElement.h"
+class MElement;
 
 template <class scalar>
 class simpleFunction {

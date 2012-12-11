@@ -13,6 +13,7 @@
 #endif
 
 #include "MVertex.h"
+#include "MElement.h"
 //#include "directions3D.h"
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"

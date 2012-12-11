@@ -30,6 +30,7 @@
 #include <math.h>
 #include <limits.h>
 #include <time.h>
+#include "MElement.h"
 #if  (defined(unix) || defined(__unix)) && !defined(__AIX)
 #define SYSTIMES
 #include <sys/times.h>

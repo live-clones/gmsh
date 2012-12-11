@@ -14,6 +14,7 @@
 #include "SPoint2.h"
 #include "simpleFunction.h"
 #include "Octree.h"
+#include "MElement.h"
 
 class GFace;
 typedef struct _CDLIST DListRecord, *DListPeek;
