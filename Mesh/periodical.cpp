@@ -395,7 +395,9 @@ void voroMetal3D::correspondance(double e){
   unsigned int i;
   unsigned int j;
   int count;
-  int index;
+  int val;
+  int normal;
+  int phase;
   bool flag;
   bool flag1;
   bool flag2;
@@ -418,11 +420,14 @@ void voroMetal3D::correspondance(double e){
   GModel::fiter it;
   std::vector<GFace*> faces;
   std::vector<std::pair<GFace*,GFace*> > pairs;
+  std::vector<int> categories;
   std::vector<int> indices1;
   std::vector<int> indices2;
   std::list<GVertex*> vertices;
   std::list<GEdge*> edges1;
   std::list<GEdge*> edges2;
+  std::list<int> orientations1;
+  std::list<int> orientations2;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
   std::list<GVertex*>::iterator it2;
@@ -432,6 +437,9 @@ void voroMetal3D::correspondance(double e){
   std::map<GFace*,bool>::iterator it6;
   std::list<GEdge*>::iterator it7;
   std::list<GEdge*>::iterator it8;
+  std::list<int>::iterator it9;
+  std::list<int>::iterator it10;
+  std::list<GEdge*>::iterator mem;
 	
   faces.clear();	
 	
@@ -446,6 +454,7 @@ void voroMetal3D::correspondance(double e){
   centers.clear();
   markings.clear();
   pairs.clear();
+  categories.clear();
 	
   for(i=0;i<faces.size();i++){
 	x = 0.0;
@@ -477,7 +486,8 @@ void voroMetal3D::correspondance(double e){
 	
   std::ofstream file("check.pos");
   file << "View \"test\" {\n";
-  std::ofstream file3("vectors");
+  
+  std::ofstream file2("vectors");
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
@@ -491,7 +501,7 @@ void voroMetal3D::correspondance(double e){
 	  delta_y = fabs(p2.y()-p1.y());
 	  delta_z = fabs(p2.z()-p1.z());
 		
-	  flag = correspondance(delta_x,delta_y,delta_z,e);
+	  flag = correspondance(delta_x,delta_y,delta_z,e,val);
 		
 	  if(flag){
 	    it5 = markings.find(faces[i]);
@@ -502,10 +512,11 @@ void voroMetal3D::correspondance(double e){
 		  it6->second = 1;
 		  
 		  pairs.push_back(std::pair<GFace*,GFace*>(faces[i],faces[j]));
+		  categories.push_back(val);
 			
 		  print_segment(p1,p2,file);
 		  
-		  file3 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
+		  file2 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
 			
 		  count++;
 		}
@@ -518,9 +529,12 @@ void voroMetal3D::correspondance(double e){
   printf("\nNumber of exterior face periodicities : %d\n",2*count);
   printf("Total number of exterior faces : %zu\n\n",faces.size());
 	
-  std::ofstream file2;
-  file2.open("cells.geo",std::ios::out | std::ios::app);
-	
+  std::ofstream file3;
+  file3.open("cells.geo",std::ios::out | std::ios::app);
+  
+  std::ofstream file4("check2.pos");
+  file4 << "View \"test\" {\n";
+		
   for(i=0;i<pairs.size();i++){
     gf1 = pairs[i].first;
 	gf2 = pairs[i].second;
@@ -528,93 +542,181 @@ void voroMetal3D::correspondance(double e){
 	edges1 = gf1->edges();
 	edges2 = gf2->edges();  
 	 
+	orientations1 = gf1->edgeOrientations();
+	orientations2 = gf2->edgeOrientations();
+	  
 	indices1.clear();
 	indices2.clear();
 	  
+	phase = 1;
+	normal = 0;  
+	  
+	it9 = orientations1.begin(); 
 	for(it7=edges1.begin();it7!=edges1.end();it7++){
 	  v1 = (*it7)->getBeginVertex();
 	  v2 = (*it7)->getEndVertex();
+		
+	  indices1.push_back((*it7)->tag());
 		
 	  flag1 = 0;
 	  flag2 = 0;
 	  flag3 = 0;
 	  flag4 = 0;
-		
-	  indices1.push_back((*it7)->tag());	
-		
+			
+	  it10 = orientations2.begin();	
 	  for(it8=edges2.begin();it8!=edges2.end();it8++){
 	    v3 = (*it8)->getBeginVertex();
 		v4 = (*it8)->getEndVertex();
 		  
-		flag1 = correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e);
-		flag2 = correspondance(fabs(v4->x()-v2->x()),fabs(v4->y()-v2->y()),fabs(v4->z()-v2->z()),e);
+		correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e,categories[i],flag1);
+		correspondance(fabs(v4->x()-v2->x()),fabs(v4->y()-v2->y()),fabs(v4->z()-v2->z()),e,categories[i],flag2);
 		  
-		flag3 = correspondance(fabs(v4->x()-v1->x()),fabs(v4->y()-v1->y()),fabs(v4->z()-v1->z()),e);
-		flag4 = correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e);
+		correspondance(fabs(v4->x()-v1->x()),fabs(v4->y()-v1->y()),fabs(v4->z()-v1->z()),e,categories[i],flag3);
+		correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e,categories[i],flag4);
 		  
 		if(flag1 && flag2){
-		  index = (*it8)->tag();
+	      if(phase==1){
+		    mem = it8;
+			phase = 2;
+		  }
+		  else if(phase==2){
+			mem++;
+			  
+			if(it8==mem){
+			  normal = 1;
+			}
+			else{
+			  normal = -1;
+			}
+			  
+			phase = 3;
+		  }
+			
+		  indices2.push_back((*it8)->tag());	
+			
+		  print_segment(SPoint3(v3->x(),v3->y(),v3->z()),SPoint3(v1->x(),v1->y(),v1->z()),file4);
+		  print_segment(SPoint3(v4->x(),v4->y(),v4->z()),SPoint3(v2->x(),v2->y(),v2->z()),file4);
 		}
 		else if(flag3 && flag4){
-		  index = -((*it8)->tag());
+		  if(phase==1){
+		    mem = it8;
+			phase = 2;
+		  }
+		  else if(phase==2){
+		    mem++;
+			  
+			if(it8==mem){
+			  normal = 1;
+			}
+			else{
+			  normal = -1;
+			}
+			  
+			phase = 3;
+		  }
+		  
+		  indices2.push_back(-(*it8)->tag());	
+			
+		  print_segment(SPoint3(v4->x(),v4->y(),v4->z()),SPoint3(v1->x(),v1->y(),v1->z()),file4);
+		  print_segment(SPoint3(v3->x(),v3->y(),v3->z()),SPoint3(v2->x(),v2->y(),v2->z()),file4);
 		}
+		  
+		it10++;
 	  }
-				
-	  indices2.push_back(index);
+		
+	  it9++;
 	}
 	  
 	if(indices1.size()!=indices2.size()){
 	  printf("Error\n\n");
 	}
 	  
-	file2 << "Periodic Surface " << gf1->tag() << " {";  
+	file3 << "Periodic Surface " << gf1->tag() << " {";  
 	  
 	for(j=0;j<indices1.size();j++){
-	  if(j>0) file2 << ",";
-	  file2 << indices1[j];
+	  if(j>0) file3 << ",";
+	  file3 << indices1[j];
 	}
 	  
-	file2 << "} = " << gf2->tag() << " {";
+	file3 << "} = " << gf2->tag() << " {";
 	  
 	for(j=0;j<indices2.size();j++){
-      if(j>0) file2 << ",";
-	  file2 << indices2[j];
+      if(j>0) file3 << ",";
+	  file3 << indices2[j];
 	}
 	  
-	file2 << "};\n";
+	file3 << "};\n";
   }
+	
+  file4 << "};\n";
 }
 
-bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e){
+bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int& val){
   bool flag;
 	
   flag = 0;
+  val = 1000;
 	
   if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
     flag = 1;
+	val = 1;
   }
   if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
     flag = 1;
+	val = 2;
   }
   if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
     flag = 1;
+	val = 3;
   }
 	
   if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
     flag = 1;
+	val = 4;
   }
   if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
     flag = 1;
+	val = 5;
   }
   if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
     flag = 1;
+	val = 6;
   }
 	
   if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
     flag = 1;
+	val = 7;
   }
 	
   return flag;
+}
+
+void voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int val,bool& flag){
+  flag = 0;
+	
+  if(val==1 && equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(val==2 && equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(val==3 && equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+	
+  if(val==4 && equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(val==5 && equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+  if(val==6 && equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
+	
+  if(val==7 && equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+    flag = 1;
+  }
 }
 
 bool voroMetal3D::equal(double x,double y,double e){
