@@ -2851,46 +2851,214 @@ void _triangleSplit (GFace *gf, MElement *t, bool swop = false)
   gf->mesh_vertices.push_back(fv);
 }
 
-struct RecombineTriangle
+//used for meshGFaceRecombine development
+int recombineWithBlossom(GFace *gf, double dx, double dy,
+                         int *&elist, std::map<MElement*,int> &t2n)
 {
-  MElement *t1, *t2;
-  double angle;
-  double cost_quality; //addition for class Temporary
-  double cost_alignment; //addition for class Temporary
-  double total_cost; //addition for class Temporary
-  MVertex *n1, *n2, *n3, *n4;
-  RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2)
-    : t1(_t1), t2(_t2)
-  {
-    n1 = me.getVertex(0);
-    n2 = me.getVertex(1);
+  int recur_level = 0;
+  bool cubicGraph = 1;
+  int success = 1;
 
-    if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
-    else if(t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
-    else if(t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
-    if(t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
-    else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
-    else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
-
-    double a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
-    double a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
-    double a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
-    double a4 = 180 * angle3Vertices(n3, n1, n4) / M_PI;
-    angle = fabs(90. - a1);
-    angle = std::max(fabs(90. - a2),angle);
-    angle = std::max(fabs(90. - a3),angle);
-    angle = std::max(fabs(90. - a4),angle);
-        cost_quality = 1.0 - std::max(1.0 - angle/90.0,0.0); //addition for class Temporary
-        cost_alignment = Temporary::compute_alignment(me,_t1,_t2); //addition for class Temporary
-        total_cost = Temporary::compute_total_cost(cost_quality,cost_alignment); //addition for class Temporary
-        total_cost = 100.0*cost_quality; //addition for class Temporary
-  }
-  bool operator < (const RecombineTriangle &other) const
+  std::set<MVertex*> emb_edgeverts;
   {
-    //return angle < other.angle;
-        return total_cost < other.total_cost; //addition for class Temporary
+    std::list<GEdge*> emb_edges = gf->embeddedEdges();
+    std::list<GEdge*>::iterator ite = emb_edges.begin();
+    while(ite != emb_edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+        emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+                             (*ite)->mesh_vertices.end() );
+        emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+                             (*ite)->getBeginVertex()->mesh_vertices.end());
+        emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+                             (*ite)->getEndVertex()->mesh_vertices.end());
+      }
+      ++ite;
+    }
   }
-};
+
+  {
+    std::list<GEdge*> _edges = gf->edges();
+    std::list<GEdge*>::iterator ite = _edges.begin();
+    while(ite != _edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+        if ((*ite)->isSeam(gf)){
+          emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
+                               (*ite)->mesh_vertices.end() );
+          emb_edgeverts.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
+                               (*ite)->getBeginVertex()->mesh_vertices.end());
+          emb_edgeverts.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
+                               (*ite)->getEndVertex()->mesh_vertices.end());
+        }
+      }
+      ++ite;
+    }
+  }
+
+  e2t_cont adj;
+  buildEdgeToElement(gf->triangles, adj);
+
+  std::vector<RecombineTriangle> pairs;
+  std::map<MVertex*,std::pair<MElement*,MElement*> > makeGraphPeriodic;
+
+  for(e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
+    if(it->second.second &&
+        it->second.first->getNumVertices() == 3 &&
+        it->second.second->getNumVertices() == 3 &&
+        (emb_edgeverts.find(it->first.getVertex(0)) == emb_edgeverts.end() ||
+         emb_edgeverts.find(it->first.getVertex(1)) == emb_edgeverts.end())){
+      pairs.push_back(RecombineTriangle(it->first,
+                                     it->second.first,
+                                     it->second.second));
+    }
+    else if (!it->second.second &&
+             it->second.first->getNumVertices() == 3){
+      for (int i=0;i<2;i++){
+        MVertex *v = it->first.getVertex(i);
+        std::map<MVertex*,std::pair<MElement*,MElement*> > :: iterator itv =
+          makeGraphPeriodic.find(v);
+        if (itv == makeGraphPeriodic.end()){
+          makeGraphPeriodic[v] = std::make_pair(it->second.first,(MElement*)0);
+        }
+        else{
+          if ( itv->second.first !=  it->second.first)
+            itv->second.second = it->second.first;
+          else
+            makeGraphPeriodic.erase(itv);
+        }
+      }
+    }
+  }
+  
+  std::sort(pairs.begin(),pairs.end());
+  std::set<MElement*> touched;
+  std::vector<std::pair<MElement*,MElement*> > toProcess;
+
+  if(CTX::instance()->mesh.algoRecombine == 1){
+#if defined(HAVE_BLOSSOM)
+    int ncount = gf->triangles.size();
+    if (ncount % 2 == 0) {
+      int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
+      Msg::Info("Blossom: %d internal %d closed",(int)pairs.size(), (int)makeGraphPeriodic.size());
+      //Msg::Info("Cubic Graph should have ne (%d) = 3 x nv (%d) ",ecount,ncount);
+      Msg::Debug("Perfect Match Starts %d edges %d nodes",ecount,ncount);
+      //std::map<MElement*,int> t2n;
+      std::map<int,MElement*> n2t;
+      for (unsigned int i=0;i<gf->triangles.size();++i){
+        t2n[gf->triangles[i]] = i;
+        n2t[i] = gf->triangles[i];
+      }
+      
+      elist = new int [2*ecount];
+      //int *elist = new int [2*ecount];
+      int *elen  = new int [ecount];
+      for (unsigned int i = 0; i < pairs.size(); ++i){
+        elist[2*i]   = t2n[pairs[i].t1];
+        elist[2*i+1] = t2n[pairs[i].t2];
+        //elen [i] =  (int) pairs[i].angle;
+        elen [i] = (int) pairs[i].total_cost; //addition for class Temporary
+        double angle = atan2(pairs[i].n1->y()-pairs[i].n2->y(),
+                             pairs[i].n1->x()-pairs[i].n2->x());
+
+        //double x = .5*(pairs[i].n1->x()+pairs[i].n2->x());
+        //double y = .5*(pairs[i].n1->y()+pairs[i].n2->y());
+        //double opti = atan2(y,x);
+        //angle -= opti;
+        while (angle < 0 || angle > M_PI/2){
+          if (angle < 0) angle += M_PI/2;
+          if (angle > M_PI/2) angle -= M_PI/2;
+        }
+        //elen [i] =  (int) 180. * fabs(angle-M_PI/4)/M_PI;
+
+        int NB = 0;
+        if (pairs[i].n1->onWhat()->dim() < 2)NB++;
+        if (pairs[i].n2->onWhat()->dim() < 2)NB++;
+        if (pairs[i].n3->onWhat()->dim() < 2)NB++;
+        if (pairs[i].n4->onWhat()->dim() < 2)NB++;
+        if (elen[i] >  gf->meshAttributes.recombineAngle && NB > 2) {elen[i] = 1000;}
+      }
+
+      if (cubicGraph){
+        std::map<MVertex*,std::pair<MElement*,MElement*> > :: iterator itv = makeGraphPeriodic.begin();
+        int CC = pairs.size();
+        for ( ; itv != makeGraphPeriodic.end(); ++itv){
+          elist[2*CC]   = t2n[itv->second.first];
+          elist[2*CC+1] = t2n[itv->second.second];
+          elen [CC++] =  100000;
+        }
+      }
+      
+      double matzeit = 0.0;
+      char MATCHFILE[256];
+      sprintf(MATCHFILE,".face.match");
+      if (perfect_match (ncount, NULL, ecount, &elist, &elen, NULL, MATCHFILE,
+                         0, 0, 0, 0, &matzeit)){
+        Msg::Error("Didn't worked");
+      }
+      else {
+        Msg::Info("imhere: with %d", elist[0]);
+        for (int k=0;k<elist[0];k++){
+          int i1 = elist[1+3*k],i2 = elist[1+3*k+1],an=elist[1+3*k+2];
+          // FIXME !!
+          if (an == 100000 /*|| an == 1000*/){
+            toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
+            Msg::Debug("Extra edge found in blossom algorithm, optimization will be required");
+          }
+          else{
+            MElement *t1 = n2t[i1];
+            MElement *t2 = n2t[i2];
+            MVertex *other = 0;
+            for(int i = 0; i < 3; i++) {
+              if (t1->getVertex(0) != t2->getVertex(i) &&
+                  t1->getVertex(1) != t2->getVertex(i) &&
+                  t1->getVertex(2) != t2->getVertex(i)){
+                other = t2->getVertex(i);
+                break;
+              }
+            }
+            int start = 0;
+            for(int i = 0; i < 3; i++) {
+              if (t2->getVertex(0) != t1->getVertex(i) &&
+                  t2->getVertex(1) != t1->getVertex(i) &&
+                  t2->getVertex(2) != t1->getVertex(i)){
+                start=i;
+                break;
+              }
+            }
+            
+            MVertex *mv[4], *v[4];
+            v[0] = t1->getVertex(start);
+            v[1] = t1->getVertex((start+1)%3);
+            v[2] = other;
+            v[3] = t1->getVertex((start+2)%3);
+            
+            for (unsigned int i = 0; i < 4; ++i) {
+              mv[i] = new MVertex(v[i]->x() + dx,
+                                  v[i]->y() + dy,
+                                  v[i]->z()      );
+            }
+            MQuadrangle *q = new MQuadrangle(mv[0], mv[1], mv[2], mv[3]);
+            gf->quadrangles.push_back(q);
+          }
+        }
+        //fclose(f);
+        //free(elist);
+        pairs.clear();
+        if (recur_level == 0)
+          Msg::Debug("Perfect Match Succeeded in Quadrangulation (%g sec)", matzeit);
+        else
+          Msg::Info(" :-) Perfect Match Succeeded in Quadrangulation after Splits (%g sec)",
+                    matzeit);
+      }
+    }
+#else
+    Msg::Warning("Gmsh should be compiled with the Blossom IV code and CONCORDE "
+                 "in order to allow the Blossom optimization");
+#endif
+  }
+
+  if (toProcess.size()) postProcessExtraEdges (gf,toProcess);
+  return success;
+}
 
 static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 {
