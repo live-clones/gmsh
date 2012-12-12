@@ -117,16 +117,25 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   //since PETSc 3.3 GetOwnershipRange and MatGetSize cannot be called before MatXXXSetPreallocation
   _localSize = nbRows;
   #ifdef HAVE_MPI
-  _localRowStart = 0;
-  if (Msg::GetCommRank() != 0) {
-    MPI_Status status;
-    MPI_Recv((void*)&_localRowStart, 1, MPI_INT, Msg::GetCommRank() - 1, 1, MPI_COMM_WORLD, &status);
+  PetscMPIInt commSize;
+  MPI_Comm_size(_comm,&commSize);
+  if (commSize>1){
+    _localRowStart = 0;
+    if (Msg::GetCommRank() != 0) {
+      MPI_Status status;
+      MPI_Recv((void*)&_localRowStart, 1, MPI_INT, Msg::GetCommRank() - 1, 1, MPI_COMM_WORLD, &status);
+    }
+    _localRowEnd = _localRowStart + nbRows;
+    if (Msg::GetCommRank() != Msg::GetCommSize() - 1) {
+      MPI_Send((void*)&_localRowEnd, 1, MPI_INT, Msg::GetCommRank() + 1, 1, MPI_COMM_WORLD);
+    }
+    MPI_Allreduce((void*)&_localSize, (void*)&_globalSize, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   }
-  _localRowEnd = _localRowStart + nbRows;
-  if (Msg::GetCommRank() != Msg::GetCommSize() - 1) {
-    MPI_Send((void*)&_localRowEnd, 1, MPI_INT, Msg::GetCommRank() + 1, 1, MPI_COMM_WORLD);
+  else{
+    _localRowStart = 0;
+    _localRowEnd = nbRows;
+    _globalSize = _localSize;
   }
-  MPI_Allreduce((void*)&_localSize, (void*)&_globalSize, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   #else
   _localRowStart = 0;
   _localRowEnd = nbRows;
