@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Tristan Carrier
+//   Tristan Carrier Maxime Melchior
 
 #include "GRegion.h"
 
