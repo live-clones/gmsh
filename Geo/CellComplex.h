@@ -25,6 +25,10 @@ class CellComplex
 {
  private:
 
+
+  std::pair<Cell*, double> _smallestCell;
+  std::pair<Cell*, double> _biggestCell;
+
   GModel* _model;
 
   // sorted containers of unique cells in this cell complex
@@ -158,8 +162,11 @@ class CellComplex
   // (combine = 1 -> with combining)
   // (omit = true -> with highest dimensional cell omitting?)
   // (homseq = true -> homology sequence splitting possible after reduction)
+  // (heuristic =  0 -> no heuristic, let mesh indexing determine
+  //               1 -> omit 0-cell in biggest element
+  //              -1 -> omit 0-cell in smallest element)
   int reduceComplex(int combine=1, bool omit=true, bool homseq=false);
-  int coreduceComplex(int combine=1, bool omit=true);
+  int coreduceComplex(int combine=1, bool omit=true, int heuristic=0);
 
   bool isReduced() const { return _reduced; }
 

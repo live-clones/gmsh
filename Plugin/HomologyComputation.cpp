@@ -25,7 +25,8 @@ StringXNumber HomologyComputationOptions_Number[] = {
   {GMSH_FULLRC, "CreatePostProcessingViews", NULL, 1.},
   {GMSH_FULLRC, "ReductionOmit", NULL, 1.},
   {GMSH_FULLRC, "ReductionCombine", NULL, 2.},
-  {GMSH_FULLRC, "PostProcessSimplify", NULL, 1.}
+  {GMSH_FULLRC, "PostProcessSimplify", NULL, 1.},
+  {GMSH_FULLRC, "ReductionHeuristic", NULL, 1.}
 };
 
 StringXString HomologyComputationOptions_String[] = {
@@ -111,6 +112,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   bool omit = (bool)HomologyComputationOptions_Number[5].def;
   int combine = (int)HomologyComputationOptions_Number[6].def;
   bool smoothen = (bool)HomologyComputationOptions_Number[7].def;
+  int heuristic = (int)HomologyComputationOptions_Number[8].def;
 
   std::vector<int> domain;
   std::vector<int> subdomain;
@@ -124,7 +126,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
   GModel* m = GModel::current();
 
   Homology* homology = new Homology(m, domain, subdomain, imdomain,
-                                    true, combine, omit, smoothen);
+                                    true, combine, omit, smoothen, heuristic);
   homology->setFileName(fileName);
 
   if(hom != 0) homology->findHomologyBasis(dimsave);

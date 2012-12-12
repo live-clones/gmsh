@@ -18,6 +18,8 @@ CellComplex::CellComplex(GModel* model,
   _model(model), _dim(0), _simplicial(true), _saveorig(saveOriginalComplex),
   _relative(false)
 {
+  _smallestCell.second = -1.;
+  _biggestCell.second = -1.;
   _deleteCount = 0;
   _createCount = 0;
   _insertCells(subdomainElements, 1);
@@ -62,8 +64,17 @@ CellComplex::CellComplex(GModel* model,
 bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 			       int domain)
 {
+  std::pair<Cell*, double> smallestElement[4];
+  std::pair<Cell*, double> biggestElement[4];
+  for(int i = 0; i < 4; i++) {
+    smallestElement[i].second = -1.;
+    biggestElement[i].second = -1.;
+  }
+  _dim = 0;
+
   for(unsigned int i=0; i < elements.size(); i++){
     MElement* element = elements.at(i);
+    int dim = element->getDim();
     int type = element->getType();
     if(type == TYPE_PYR || type == TYPE_PRI ||
        type == TYPE_POLYG || type == TYPE_POLYH) {
@@ -77,6 +88,8 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
       delete maybeCell.first;
       continue;
     }
+
+    if(_dim < dim) _dim = dim;
     Cell* cell = maybeCell.first;
     std::pair<citer, bool> insert =
       _cells[cell->getDim()].insert(cell);
@@ -86,7 +99,17 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
       if(domain) cell->setDomain(domain);
     }
     else _createCount++;
+
+    if(domain == 0) {
+      double size = fabs(element->getVolume());
+      if(smallestElement[dim].second < 0. || smallestElement[dim].second > size)
+        smallestElement[dim] = std::make_pair(cell, size);
+      if(biggestElement[dim].second < 0. || biggestElement[dim].second < size)
+        biggestElement[dim] = std::make_pair(cell, size);
+    }
   }
+  _smallestCell = smallestElement[_dim];
+  _biggestCell = biggestElement[_dim];
 
   for (int dim = 3; dim > 0; dim--){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
@@ -109,6 +132,10 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
 	if(domain == 0) {
 	  int ori = cell->findBdCellOrientation(newCell, i);
 	  cell->addBoundaryCell( ori, newCell, true);
+          if(_smallestCell.first == cell)
+            _smallestCell = std::make_pair(newCell, _smallestCell.second);
+          if(_biggestCell.first == cell)
+            _biggestCell = std::make_pair(newCell, _biggestCell.second);
 	}
       }
     }
@@ -508,7 +535,7 @@ void CellComplex::removeCells(int dim)
   _reduced = true;
 }
 
-int CellComplex::coreduceComplex(int combine, bool omit)
+int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
 {
   Msg::Debug("Cell Complex coreduction:");
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
@@ -537,8 +564,22 @@ int CellComplex::coreduceComplex(int combine, bool omit)
 
     std::vector<Cell*> newCells;
     while (getSize(0) != 0){
+
       citer cit = firstCell(0);
       Cell* cell = *cit;
+
+      if(heuristic == -1 && _smallestCell.second != 0. &&
+         hasCell(_smallestCell.first)) {
+        Msg::Debug("Omitted a cell in the smallest mesh element with volume %g",
+                   _smallestCell.second);
+        cell = _smallestCell.first;
+      }
+      else if(heuristic == 1 && _biggestCell.second != 0. &&
+              hasCell(_biggestCell.first)) {
+        Msg::Debug("Omitted a cell in the biggest mesh element with volume %g",
+                   _biggestCell.second);
+        cell = _biggestCell.first;
+      }
 
       newCells.push_back(_omitCell(cell, true));
     }
@@ -599,7 +640,7 @@ int CellComplex::combine(int dim)
            inSameDomain(s, c1) && inSameDomain(s, c2) &&
            c1->getImmune() == c2->getImmune() ) {
 
-          removeCell(s, true, true);
+          removeCell(s, true, false);
 
           c1->getBoundary(bd_c);
           enqueueCells(bd_c, Q, Qset);
@@ -615,10 +656,6 @@ int CellComplex::combine(int dim)
           cit = firstCell(dim);
           count++;
 
-          if(s->isCombined()) {
-            delete s;
-            _deleteCount++;
-          }
           if(c1->isCombined()) {
             delete c1;
             _deleteCount++;
@@ -656,6 +693,7 @@ int CellComplex::cocombine(int dim)
 
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
     Cell* cell = *cit;
+
     cell->getCoboundary(cbd_c);
     enqueueCells(cbd_c, Q, Qset);
 
@@ -674,7 +712,8 @@ int CellComplex::cocombine(int dim)
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
            && inSameDomain(s, c1) && inSameDomain(s, c2)){
-	  removeCell(s, true, true);
+
+          removeCell(s, true, false);
 
           c1->getCoboundary(cbd_c);
           enqueueCells(cbd_c, Q, Qset);
@@ -691,10 +730,6 @@ int CellComplex::cocombine(int dim)
           cit = firstCell(dim);
           count++;
 
-          if(s->isCombined()) {
-            delete s;
-            _deleteCount++;
-          }
           if(c1->isCombined()) {
             delete c1;
             _deleteCount++;

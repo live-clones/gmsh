@@ -19,10 +19,11 @@ Homology::Homology(GModel* model,
 		   std::vector<int> physicalSubdomain,
                    std::vector<int> physicalImdomain,
                    bool saveOrig,
-		   int combine, bool omit, bool smoothen) :
+		   int combine, bool omit, bool smoothen, int heuristic) :
   _model(model), _domain(physicalDomain), _subdomain(physicalSubdomain),
   _imdomain(physicalImdomain), _saveOrig(saveOrig),
-  _combine(combine), _omit(omit), _smoothen(smoothen), _cellComplex(NULL)
+  _combine(combine), _omit(omit), _smoothen(smoothen),
+  _heuristic(heuristic), _cellComplex(NULL)
 {
   _fileName = "";
 
@@ -49,6 +50,9 @@ Homology::Homology(GModel* model,
     _cohomologyComputed[i] = false;
     _betti[i] = -1;
   }
+
+  if(abs(_heuristic) > 1) _heuristic = 0;
+
 }
 
 void Homology::_getEntities(const std::vector<int>& physicalGroups,
@@ -257,7 +261,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   double t1 = Cpu();
 
-  int omitted = _cellComplex->coreduceComplex(_combine, _omit);
+  int omitted = _cellComplex->coreduceComplex(_combine, _omit, _heuristic);
 
   std::sort(dim.begin(), dim.end());
   if(!dim.empty()  && _combine > 1) {

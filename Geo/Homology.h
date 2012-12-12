@@ -49,6 +49,8 @@ class Homology
   bool _omit;
   // use chain smoothning
   bool _smoothen;
+  // corecution heuristic
+  int _heuristic;
 
   // file name to store the results
   std::string _fileName;
@@ -93,7 +95,8 @@ class Homology
 	   std::vector<int> physicalSubdomain,
            std::vector<int> physicalIm,
            bool saveOrig=true,
-	   int combine=2, bool omit=true, bool smoothen=true);
+	   int combine=2, bool omit=true, bool smoothen=true,
+           int heuristic=1);
   ~Homology();
 
   GModel* getModel() const { return _model; }
