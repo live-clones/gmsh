@@ -32,7 +32,9 @@ class JacobianBasis {
   static std::map<int, JacobianBasis*> _fs;
   const bezierBasis *bezier;
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
+  fullVector<double> primGradShapeBarX, primGradShapeBarY, primGradShapeBarZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
+  int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
  public :
   static const JacobianBasis *find(int);
   JacobianBasis(int tag);
@@ -42,6 +44,10 @@ class JacobianBasis {
   inline int getNumDivisions() const { return bezier->numDivisions; }
   inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
   inline int getNumLagPts() const { return bezier->numLagPts; }
+  void getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
+  double getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
+  void getSignedJacobian(const fullMatrix<double> &nodesXYZ,
+                         const fullMatrix<double> &normals, fullVector<double> &jacobian) const;
   void getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const;
   void getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                          const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const;

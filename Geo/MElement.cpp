@@ -116,10 +116,9 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
   const JacobianBasis *jac = getJacobianFuncSpace(),*jac1 = getJacobianFuncSpace(1);    // Jac. and prim. Jac. basis
   const int numJacNodes = jac->getNumJacNodes(), numJac1Nodes = jac1->getNumJacNodes();
   const int numMapNodes = jac->getNumMapNodes(), numMap1Nodes = jac1->getNumMapNodes();
-  const int dim = getDim();
-  fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMap1Nodes,dim);
+  fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMap1Nodes,3);
   getNodesCoord(nodesXYZ);
-  nodesXYZ1.copy(nodesXYZ,0,numMap1Nodes,0,dim,0,0);
+  nodesXYZ1.copy(nodesXYZ,0,numMap1Nodes,0,3,0,0);
   fullVector<double> Ji(numJacNodes), J1i(numJac1Nodes), J1Ji(numJacNodes);
   jac->getSignedJacobian(nodesXYZ,Ji);
   jac1->getSignedJacobian(nodesXYZ1,J1i);
@@ -413,30 +412,21 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
 
 void MElement::getSignedJacobian(fullVector<double> &jacobian, int o)
 {
-  const int dim = getDim(), numNodes = getNumVertices();
-  fullMatrix<double> nodesXYZ(numNodes,dim);
+  const int numNodes = getNumVertices();
+  fullMatrix<double> nodesXYZ(numNodes,3);
   getNodesCoord(nodesXYZ);
   getJacobianFuncSpace(o)->getSignedJacobian(nodesXYZ,jacobian);
 }
 
 void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ)
 {
-  const int dim = getDim(), numNodes = getNumShapeFunctions();
-  if (dim <= 1)
-    for (int i = 0; i < numNodes; i++) nodesXYZ(i,0) = getShapeFunctionNode(i)->x();
-  else if (dim == 2)
-    for (int i = 0; i < numNodes; i++) {
-      MVertex *v = getShapeFunctionNode(i);
-      nodesXYZ(i,0) = v->x();
-      nodesXYZ(i,1) = v->y();
-    }
-  else if (dim == 3)
-    for (int i = 0; i < numNodes; i++) {
-      MVertex *v = getShapeFunctionNode(i);
-      nodesXYZ(i,0) = v->x();
-      nodesXYZ(i,1) = v->y();
-      nodesXYZ(i,2) = v->z();
-    }
+  const int numNodes = getNumShapeFunctions();
+  for (int i = 0; i < numNodes; i++) {
+    MVertex *v = getShapeFunctionNode(i);
+    nodesXYZ(i,0) = v->x();
+    nodesXYZ(i,1) = v->y();
+    nodesXYZ(i,2) = v->z();
+  }
 }
 
 void MElement::pnt(double u, double v, double w, SPoint3 &p)

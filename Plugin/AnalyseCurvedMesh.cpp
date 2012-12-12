@@ -230,7 +230,6 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
   }
   const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
   const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
-  const int dim = el[0]->getDim();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
@@ -270,9 +269,9 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMapNodes1,dim);
+    fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMapNodes1,3);
     el[k]->getNodesCoord(nodesXYZ);
-    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,dim,0,0);
+    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,3,0,0);
     jfs->getSignedJacobian(nodesXYZ,jacobian);
     jfs1->getSignedJacobian(nodesXYZ1,jac1);
 #endif
@@ -455,7 +454,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
 
   const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
   const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
-  const int dim = el[0]->getDim();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
@@ -504,9 +502,9 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
     jacobian.setAsProxy(jacobianB, k);
     jac1.setAsProxy(jac1B, k);
 #else
-    fullMatrix<double> nodesXYZ(numMapNodes,dim), nodesXYZ1(numMapNodes1,dim);
+    fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMapNodes1,3);
     el[k]->getNodesCoord(nodesXYZ);
-    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,dim,0,0);
+    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,3,0,0);
     jfs->getSignedJacobian(nodesXYZ,jacobian);
     jfs1->getSignedJacobian(nodesXYZ1,jac1);
     jfs->lag2Bez(jacobian, jacBez);
