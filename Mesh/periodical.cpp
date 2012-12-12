@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Tristan Carrier
+//   Tristan Carrier Maxime Melchior
 
 #include "periodical.h"
 #include "GModel.h"
@@ -204,10 +204,11 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 	
   printf("\nSquared root of smallest face area : %.9f\n\n",sqrt(min_area));
 		
-  std::ofstream file("cells.pos");
+  std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
-  
-  std::ofstream file2("cells.geo");
+
+  std::ofstream file2("MicrostructurePolycrystal3D.geo");
+
   file2 << "c=" << h << ";\n";
 		
   for(i=0;i<pointers.size();i++){
@@ -305,9 +306,6 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 	for(j=0;j<obj.line_loops2.size();j++){
 	  print_geo_face(get_counter(),obj.line_loops2[j],file2);
 	  obj.faces2.push_back(get_counter());
-	  mem = get_counter();	
-	  increase_counter();
-	  print_geo_physical_face(get_counter(),mem,file2);
 	  increase_counter();
 	}
 	  
@@ -316,6 +314,9 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
 	increase_counter();
 
 	print_geo_volume(get_counter(),obj.face_loops2,file2);
+	mem = get_counter();
+        increase_counter();
+        print_geo_physical_volume(get_counter(),mem,file2);	
 	increase_counter();
   }
 
@@ -371,6 +372,12 @@ void voroMetal3D::print_geo_physical_face(int index1,int index2,std::ofstream& f
 
 void voroMetal3D::print_geo_volume(int index1,int index2,std::ofstream& file){
   file << "Volume(" << index1 << ")={"
+  << index2
+  << "};\n";
+}
+
+void voroMetal3D::print_geo_physical_volume(int index1,int index2,std::ofstream& file){
+  file << "Physical Volume(" << index1 << ")={"
   << index2
   << "};\n";
 }
@@ -434,6 +441,7 @@ void voroMetal3D::correspondance(double e){
   std::vector<int> categories;
   std::vector<int> indices1;
   std::vector<int> indices2;
+  std::vector<int> indices3;
   std::list<GVertex*> vertices;
   std::list<GEdge*> edges1;
   std::list<GEdge*> edges2;
@@ -495,7 +503,7 @@ void voroMetal3D::correspondance(double e){
 	
   count = 0;
 	
-  std::ofstream file("check.pos");
+  std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
   
   std::ofstream file2("vectors");
@@ -527,7 +535,7 @@ void voroMetal3D::correspondance(double e){
 			
 		  print_segment(p1,p2,file);
 		  
-		  file2 << faces[i]->physicals[0] << " " << faces[j]->physicals[0] << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
+		  file2 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
 			
 		  count++;
 		}
@@ -541,13 +549,13 @@ void voroMetal3D::correspondance(double e){
   printf("Total number of exterior faces : %zu\n\n",faces.size());
 	
   std::ofstream file3;
-  file3.open("cells.geo",std::ios::out | std::ios::app);
+  file3.open("MicrostructurePolycrystal3D.geo",std::ios::out | std::ios::app);
   
-  std::ofstream file4("check2.pos");
+  std::ofstream file4("MicrostructurePolycrystal3D2.pos");
   file4 << "View \"test\" {\n";
 	
   file3 << "Physical Surface(11)={";
-
+	
   count = 0;
   for(it=model->firstFace();it!=model->lastFace();it++)
   {
@@ -556,8 +564,8 @@ void voroMetal3D::correspondance(double e){
 	file3 << gf->tag();
 	count++;
   }
-
-  file3 << "};\n";	
+	
+  file3 << "};\n";
 	
   for(i=0;i<pairs.size();i++){
     gf1 = pairs[i].first;
@@ -571,25 +579,36 @@ void voroMetal3D::correspondance(double e){
 	  
 	indices1.clear();
 	indices2.clear();
-	  
+	indices3.clear();	  
 	phase = 1;
 	normal = 0;  
 	  
 	it9 = orientations1.begin(); 
-	for(it7=edges1.begin();it7!=edges1.end();it7++){
+	it10 = orientations2.begin();
+	for(it8=edges2.begin();it8!=edges2.end();it8++,it10++){
+	  if (*it10==1)
+	  	indices3.push_back((*it8)->tag());
+	  else
+		indices3.push_back(-(*it8)->tag());
+	}
+	int countReverseEdge=0;
+	for(it7=edges1.begin();it7!=edges1.end();it7++,it9++){
 	  v1 = (*it7)->getBeginVertex();
 	  v2 = (*it7)->getEndVertex();
-		
-	  indices1.push_back((*it7)->tag());
+	  
+	  if (*it9==1)	
+	  	indices1.push_back((*it7)->tag());
+	  else
+		indices1.push_back(-(*it7)->tag());
 		
 	  flag1 = 0;
 	  flag2 = 0;
 	  flag3 = 0;
 	  flag4 = 0;
 			
-	  it10 = orientations2.begin();	
-	  for(it8=edges2.begin();it8!=edges2.end();it8++){
-	    v3 = (*it8)->getBeginVertex();
+	  it10 = orientations2.begin();
+	  for(it8=edges2.begin();it8!=edges2.end();it8++,it10++){
+	        v3 = (*it8)->getBeginVertex();
 		v4 = (*it8)->getEndVertex();
 		  
 		correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e,categories[i],flag1);
@@ -599,9 +618,9 @@ void voroMetal3D::correspondance(double e){
 		correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e,categories[i],flag4);
 		  
 		if(flag1 && flag2){
-	      if(phase==1){
+	          if(phase==1){
 		    mem = it8;
-			phase = 2;
+		    phase = 2;
 		  }
 		  else if(phase==2){
 			mem++;
@@ -615,9 +634,12 @@ void voroMetal3D::correspondance(double e){
 			  
 			phase = 3;
 		  }
-			
-		  indices2.push_back((*it8)->tag());	
-			
+		  if (*it9==1)	
+		  	indices2.push_back((*it8)->tag());
+		  else
+			indices2.push_back(-(*it8)->tag());
+		  if (*it9!=*it10)
+		  	countReverseEdge++;
 		  print_segment(SPoint3(v3->x(),v3->y(),v3->z()),SPoint3(v1->x(),v1->y(),v1->z()),file4);
 		  print_segment(SPoint3(v4->x(),v4->y(),v4->z()),SPoint3(v2->x(),v2->y(),v2->z()),file4);
 		}
@@ -638,17 +660,16 @@ void voroMetal3D::correspondance(double e){
 			  
 			phase = 3;
 		  }
-		  
-		  indices2.push_back(-(*it8)->tag());	
-			
+		  if (*it9==1)
+		  	indices2.push_back(-(*it8)->tag());
+		  else
+			indices2.push_back((*it8)->tag());
+		  if (*it9!=*it10)
+                        countReverseEdge++;
 		  print_segment(SPoint3(v4->x(),v4->y(),v4->z()),SPoint3(v1->x(),v1->y(),v1->z()),file4);
 		  print_segment(SPoint3(v3->x(),v3->y(),v3->z()),SPoint3(v2->x(),v2->y(),v2->z()),file4);
 		}
-		  
-		it10++;
 	  }
-		
-	  it9++;
 	}
 	  
 	if(indices1.size()!=indices2.size()){
@@ -661,7 +682,6 @@ void voroMetal3D::correspondance(double e){
 	  if(j>0) file3 << ",";
 	  file3 << indices1[j];
 	}
-	  
 	file3 << "} = " << gf2->tag() << " {";
 	  
 	for(j=0;j<indices2.size();j++){
