@@ -92,33 +92,32 @@ static void copyMesh(GFace *source, GFace *target)
   }
 
   SPoint2 param_source[2], param_target[2];
+  SVector3 DX;
   int count = 0;
   for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
     MVertex *vs = it->first;
     MVertex *vt = it->second;
-    if (vs->onWhat()->dim() == 1){
-      reparamMeshVertexOnFace(vs, source, param_source[count]);
-      reparamMeshVertexOnFace(vt, target, param_target[count++]);
-      if (count == 2) break;
-    }
+    reparamMeshVertexOnFace(vs, source, param_source[count]);
+    reparamMeshVertexOnFace(vt, target, param_target[count++]);
+    DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
+    if (count == 2) break;
   }
 
-  if (count < 2) return;
-
-  const double t1u = param_target[0].x(), t1v = param_target[0].y();
-  const double t2u = param_target[1].x(), t2v = param_target[1].y();
-  const double s1u = param_source[0].x(), s1v = param_source[0].y();
-  const double s2u = param_source[1].x(), s2v = param_source[1].y();
-
+  double t1u = param_target[0].x(), t1v = param_target[0].y();
+  double t2u = param_target[1].x(), t2v = param_target[1].y();
+  double s1u = param_source[0].x(), s1v = param_source[0].y();
+  double s2u = param_source[1].x(), s2v = param_source[1].y();
+  
   SVector3 _a(s2u - s1u, s2v - s1v, 0);
   SVector3 _b(t2u - t1u, t2v - t1v, 0);
+    
   SVector3 _c = crossprod(_a, _b);
   double sinA = _c.z();
   double cosA = dot(_a, _b);
   const double theta = atan2(sinA, cosA);
   const double c = cos(theta);
   const double s = sin(theta);
-
+  
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
     double u, v;
@@ -127,12 +126,15 @@ static void copyMesh(GFace *source, GFace *target)
     // apply transformation
     const double U =   c * (u - s1u) + s * (v - s1v) + t1u;
     const double V =  -s * (u - s1u) + c * (v - s1v) + t1v;
-    GPoint gp = target->point(SPoint2(U, V));
+    SPoint3 tp (vs->x() + DX.x(),vs->y() + DX.y(),vs->z() + DX.z());
+    const double initialGuess[2] = {U,V};
+    SPoint2 XXX = target->parFromPoint(tp,initialGuess);
+    GPoint gp = target->point(XXX);
+    
     MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target, U, V);
     target->mesh_vertices.push_back(vt);
     vs2vt[vs] = vt;
   }
-
   for (unsigned i = 0; i < source->triangles.size(); i++){
     MVertex *vt[3];
     for (int j = 0; j < 3; j++){
@@ -165,7 +167,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
-
+  
   for (unsigned i = 0; i < source->quadrangles.size(); i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
@@ -768,6 +770,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
         (double)RAND_MAX;
       double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
         (double)RAND_MAX;
+      //      printf("%22.15E %22.15E \n",XX,YY);
       doc.points[i].where.h = points[i]->u + XX;
       doc.points[i].where.v = points[i]->v + YY;
       doc.points[i].data = points[i];
