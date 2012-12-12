@@ -170,7 +170,7 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface=true);
 bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
-double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3);
+double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3);
 
 inline double distance (MVertex *v1, MVertex *v2){
   const double dx = v1->x() - v2->x();

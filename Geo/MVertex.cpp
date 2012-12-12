@@ -32,7 +32,7 @@ bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
   return false;
 }
 
-double angle3Vertices(MVertex *p1, MVertex *p2, MVertex *p3)
+double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
 {
   SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
   SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
