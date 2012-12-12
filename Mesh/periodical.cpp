@@ -547,12 +547,16 @@ void voroMetal3D::correspondance(double e){
   file4 << "View \"test\" {\n";
 	
   file3 << "Physical Surface(11)={";
-	
-  for(i=0;i<faces.size();i++){
-    if(i>0) file3 << ",";
-	file3 << faces[i]->tag();  
+
+  count = 0;
+  for(it=model->firstFace();it!=model->lastFace();it++)
+  {
+    gf = *it;
+	if(count>0) file3 << ",";
+	file3 << gf->tag();
+	count++;
   }
-	
+
   file3 << "};\n";	
 	
   for(i=0;i<pairs.size();i++){
