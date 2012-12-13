@@ -198,7 +198,7 @@ class GmshSocket{
   int ReceiveHeader(int *type, int *len, int *swap)
   {
     *swap = 0;
-    if(_ReceiveData(type, sizeof(int))){
+    if(_ReceiveData(type, sizeof(int)) > 0){
       if(*type < 0) return 0;
       if(*type > 65535){
         // the data comes from a machine with different endianness and
@@ -206,7 +206,7 @@ class GmshSocket{
         *swap = 1;
         _SwapBytes((char*)type, sizeof(int), 1);
       }
-      if(_ReceiveData(len, sizeof(int))){
+      if(_ReceiveData(len, sizeof(int)) > 0){
         if(*len < 0) return 0;
         if(*swap) _SwapBytes((char*)len, sizeof(int), 1);
         return 1;
