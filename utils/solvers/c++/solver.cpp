@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
   std::vector<onelab::string> strings;
 
-  // try to get the string variable "My solver/My string" from the server
+  // try to get the string variable "My string" from the server
   client->get(strings, "My string");
   if(strings.size()){
     std::cout << "Got string from server: '" << strings[0].getValue() << "'\n";

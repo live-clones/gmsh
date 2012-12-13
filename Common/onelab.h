@@ -146,8 +146,19 @@ namespace onelab{
     {
       if(first == std::string::npos) return "";
       std::string::size_type last = msg.find_first_of(separator, first);
-      std::string next = msg.substr(first, last - first);
-      first = (last == std::string::npos) ? last : last + 1;
+      std::string next;
+      if(last == std::string::npos){
+        next = msg.substr(first);
+        first = last;
+      }
+      else if(first == last){
+        next = "";
+        first = last + 1;
+      }
+      else{
+        next = msg.substr(first, last - first);
+        first = last + 1;
+      }
       return next;
     }
     static std::vector<std::string> split(const std::string &msg,
@@ -275,7 +286,7 @@ namespace onelab{
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
-    // when in a loop, indicates current index in the vector _choices; 
+    // when in a loop, indicates current index in the vector _choices;
     // is -1 when not in a loop
     int _index;
     std::vector<double> _choices;

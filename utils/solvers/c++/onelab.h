@@ -146,8 +146,19 @@ namespace onelab{
     {
       if(first == std::string::npos) return "";
       std::string::size_type last = msg.find_first_of(separator, first);
-      std::string next = msg.substr(first, last - first);
-      first = (last == std::string::npos) ? last : last + 1;
+      std::string next;
+      if(last == std::string::npos){
+        next = msg.substr(first);
+        first = last;
+      }
+      else if(first == last){
+        next = "";
+        first = last + 1;
+      }
+      else{
+        next = msg.substr(first, last - first);
+        first = last + 1;
+      }
       return next;
     }
     static std::vector<std::string> split(const std::string &msg,
@@ -275,8 +286,8 @@ namespace onelab{
   class number : public parameter{
   private:
     double _value, _min, _max, _step;
-    // when in a loop, indicates current index in the vector _choices; is -1
-    // when not in a loop
+    // when in a loop, indicates current index in the vector _choices;
+    // is -1 when not in a loop
     int _index;
     std::vector<double> _choices;
     std::map<double, std::string> _valueLabels;
@@ -284,7 +295,7 @@ namespace onelab{
     number(const std::string &name="", double value=0.,
            const std::string &label="", const std::string &help="")
       : parameter(name, label, help), _value(value),
-      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(0) {}
+      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(-1) {}
     void setValue(double value){ _value = value; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
@@ -383,9 +394,10 @@ namespace onelab{
   // The string class. A string has a mutable "kind": we do not derive
   // specialized classes, because the kind should be changeable at runtime
   // (e.g. from a client-dependent mathematical expression to a table of
-  // values). Kinds currently recognized by Gmsh are: "file". Possible kinds
-  // could be "complex", "matrix m n", "hostname", client-dependent mathematical
-  // expression, onelab mathematical expression (through mathex?), ...
+  // values). Kinds currently recognized by Gmsh are: "file". Possible
+  // kinds could be "complex", "matrix m n", "hostname", client-dependent
+  // mathematical expression, onelab mathematical expression (through mathex?),
+  // ...
   class string : public parameter{
   private:
     std::string _value, _kind;
@@ -944,7 +956,10 @@ namespace onelab{
     {
       server::instance()->registerClient(this);
     }
-    virtual ~localClient(){}
+    virtual ~localClient()
+    {
+      server::instance()->unregisterClient(this);
+    }
     virtual bool set(const number &p){ return _set(p); }
     virtual bool set(const string &p){ return _set(p); }
     virtual bool set(const function &p){ return _set(p); }
