@@ -36,15 +36,6 @@ double MTriangle::getVolume()
   return norm(crossprod(v1, v2)) / 2.;
 }
 
-double MTriangle::distoShapeMeasure()
-{
-#if defined(HAVE_MESH)
-  return qmDistorsionOfMapping(this);
-#else
-  return 0.;
-#endif
-}
-
 double MTriangle::getInnerRadius()
 {
   // radius of inscribed circle = 2 * Area / sum(Line_i)

@@ -317,17 +317,6 @@ double MQuadrangle::gammaShapeMeasure(){
 }
 
 
-double MQuadrangle::distoShapeMeasure()
-{
-#if defined(HAVE_MESH)
-  //  return qmTriangleAngles(this);
-  return qmDistorsionOfMapping(this);
-#else
-  return 0.;
-#endif
-}
-
-
 double MQuadrangle::angleShapeMeasure()
 {
 #if defined(HAVE_MESH)

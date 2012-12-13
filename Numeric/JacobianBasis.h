@@ -21,7 +21,7 @@ class bezierBasis {
   int numDivisions;
   // the 'numLagPts' first exponents are related to 'Lagrangian' values
   fullMatrix<double> exponents; // exponents of Bezier FF
-  fullMatrix<double> points; // sampling point
+  fullMatrix<double> bezierPoints, lagPoints; // sampling point
   fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
   fullMatrix<double> subDivisor;
   static const bezierBasis *find(int);
@@ -35,12 +35,14 @@ class JacobianBasis {
   fullVector<double> primGradShapeBarX, primGradShapeBarY, primGradShapeBarZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
   int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
+  inline const fullMatrix<double> &getPoints() const { return bezier->lagPoints; }
  public :
   static const JacobianBasis *find(int);
   JacobianBasis(int tag);
-  inline int getNumJacNodes() const { return gradShapeMatX.size1(); }
-  inline int getNumMapNodes() const { return gradShapeMatX.size2(); }
-  inline const fullMatrix<double> &getPoints() const { return bezier->points; }
+  inline int getNumJacNodes() const { return numJacNodes; }
+  inline int getNumMapNodes() const { return numMapNodes; }
+  inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
+  inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
   inline int getNumDivisions() const { return bezier->numDivisions; }
   inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
   inline int getNumLagPts() const { return bezier->numLagPts; }
@@ -48,6 +50,11 @@ class JacobianBasis {
   double getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
   void getSignedJacobian(const fullMatrix<double> &nodesXYZ,
                          const fullMatrix<double> &normals, fullVector<double> &jacobian) const;
+  void getSignedJacAndGradients(const fullMatrix<double> &nodesXYZ,
+                                const fullMatrix<double> &normals, fullMatrix<double> &JDJ) const;
+  void getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
+                                const fullMatrix<double> &nodesXYZStraight,
+                                fullVector<double> &lambdaJ , fullMatrix<double> &gradLambdaJ) const;
   void getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const;
   void getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                          const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const;

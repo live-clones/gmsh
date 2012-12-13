@@ -60,31 +60,28 @@ private:
 
   GEntity *_ge;
   int _dim;
-  int _nPC;                                     // Total nb. of parametric coordinates
+  int _nPC;                                       // Total nb. of parametric coordinates
 
-  std::vector<MElement*> _el;                   // List of elements
-  std::vector<SVector3> _normEl;                // Normals to 2D elements
-  std::vector<double> _invStraightJac;          // Initial Jacobians for 3D elements
-  std::vector<MVertex*> _vert, _freeVert;       // List of vert., free vert.
-  std::vector<int> _fv2V;                       // Index of free vert. -> index of vert.
-  std::vector<bool> _forced;                    // Is vertex forced?
-  std::vector<SPoint3> _xyz, _ixyz;             // Physical coord. of ALL vertices (current, straight, init.)
-  std::vector<SPoint3> _uvw, _iuvw;             // Parametric coord. of FREE vertices (current, straight, init.)
-  std::vector<int> _startPCFV;                  // Start index of parametric coordinates for a free vertex
-  std::vector<int> _nPCFV;                      // Number of parametric coordinates for a free vertex
-  std::vector<std::vector<int> > _el2FV, _el2V; // Free vertices, vertices in element
-  std::vector<int> _nBezEl, _nNodEl;            // Number of Bezier poly. and nodes for an el.
-  std::vector<std::vector<int> > _indPCEl;      // Index of parametric coord. for an el.
+  std::vector<MElement*> _el;                     // List of elements
+  std::vector<fullMatrix<double> > _scaledNormEl; // Normals to 2D elements for Jacobian regularization and scaling
+  std::vector<double> _invStraightJac;            // Initial Jacobians for 3D elements
+  std::vector<MVertex*> _vert, _freeVert;         // List of vert., free vert.
+  std::vector<int> _fv2V;                         // Index of free vert. -> index of vert.
+  std::vector<bool> _forced;                      // Is vertex forced?
+  std::vector<SPoint3> _xyz, _ixyz;               // Physical coord. of ALL vertices (current, straight, init.)
+  std::vector<SPoint3> _uvw, _iuvw;               // Parametric coord. of FREE vertices (current, straight, init.)
+  std::vector<int> _startPCFV;                    // Start index of parametric coordinates for a free vertex
+  std::vector<int> _nPCFV;                        // Number of parametric coordinates for a free vertex
+  std::vector<std::vector<int> > _el2FV, _el2V;   // Free vertices, vertices in element
+  std::vector<int> _nBezEl, _nNodEl;              // Number of Bezier poly. and nodes for an el.
+  std::vector<std::vector<int> > _indPCEl;        // Index of parametric coord. for an el.
 
   ParamCoord *_pc;
-  bool projJac;                                 // Using "projected" Jacobians or not
-
-  static std::map<int, fullMatrix<double> >  _gradShapeFunctions; // gradients of shape functions at Bezier points 
+  bool projJac;                                   // Using "projected" Jacobians or not
 
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);
-  SVector3 getNormalEl(int iEl);
-  static fullMatrix<double> computeGSF(const nodalBasis *lagrange, const JacobianBasis *jac);
+  void calcScaledNormalEl2D(int iEl);
   static inline int indJB2DBase(int nNod, int l, int i, int j) { return (l*nNod+i)*nNod+j; }
   inline int indJB2D(int iEl, int l, int i, int j) { return indJB2DBase(_nNodEl[iEl],l,i,j); }
   static inline int indJB3DBase(int nNod, int l, int i, int j, int m) { return ((l*nNod+i)*nNod+j)*nNod+m; }

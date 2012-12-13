@@ -52,7 +52,6 @@ class MTriangle : public MElement {
   virtual int getDim() const { return 2; }
   virtual double etaShapeMeasure();
   virtual double gammaShapeMeasure();
-  virtual double distoShapeMeasure();
   virtual double getInnerRadius();
   virtual double getOuterRadius();
   virtual double angleShapeMeasure();

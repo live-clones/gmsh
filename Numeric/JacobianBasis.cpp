@@ -11,7 +11,7 @@
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
-#include "MElement.h"
+#include "Numeric.h"
 
 // Bezier Exponents
 static fullMatrix<double> generate1DExponents(int order)
@@ -935,6 +935,25 @@ static fullMatrix<double> generateSubDivisor
 
 
 
+// Convert Bezier points to Lagrange points
+static fullMatrix<double> bez2LagPoints(bool dim1, bool dim2, bool dim3, const fullMatrix<double> &bezierPoints)
+{
+
+  const int numPt = bezierPoints.size1();
+  fullMatrix<double> lagPoints(numPt,3);
+
+  for (int i=0; i<numPt; i++) {
+    lagPoints(i,0) = dim1 ? -1. + 2*bezierPoints(i,0) : bezierPoints(i,0);
+    lagPoints(i,1) = dim2 ? -1. + 2*bezierPoints(i,1) : bezierPoints(i,1);
+    lagPoints(i,2) = dim3 ? -1. + 2*bezierPoints(i,2) : bezierPoints(i,2);
+  }
+
+  return lagPoints;
+
+}
+
+
+
 std::map<int, bezierBasis> bezierBasis::_bbs;
 const bezierBasis *bezierBasis::find(int tag)
 {
@@ -948,9 +967,10 @@ const bezierBasis *bezierBasis::find(int tag)
   if (MElement::ParentTypeFromTag(tag) == TYPE_PYR) {
     B.dim = 3;
     B.numLagPts = 5;
-    B.points = gmshGeneratePointsPyramid(B.order,false);
-    B.matrixLag2Bez.resize(B.points.size1(),B.points.size1(),0.);
-    B.matrixBez2Lag.resize(B.points.size1(),B.points.size1(),0.);
+    B.bezierPoints = gmshGeneratePointsPyramid(B.order,false);
+    B.lagPoints = B.bezierPoints;
+    B.matrixLag2Bez.resize(B.bezierPoints.size1(),B.bezierPoints.size1(),0.);
+    B.matrixBez2Lag.resize(B.bezierPoints.size1(),B.bezierPoints.size1(),0.);
     for (int i=0; i<B.matrixBez2Lag.size1(); ++i) {
       B.matrixLag2Bez(i,i) = 1.;
       B.matrixBez2Lag(i,i) = 1.;
@@ -965,14 +985,16 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 0;
         B.numLagPts = 1;
         B.exponents = generate1DExponents(0);
-        B.points    = generate1DPoints(0);
+        B.bezierPoints = generate1DPoints(0);
+        B.lagPoints = B.bezierPoints;
         dimSimplex = 0;
         break;
       case TYPE_LIN : {
         B.dim = 1;
         B.numLagPts = 2;
         B.exponents = generate1DExponents(B.order);
-        B.points    = generate1DPoints(B.order);
+        B.bezierPoints = generate1DPoints(B.order);
+        B.lagPoints = bez2LagPoints(true,false,false,B.bezierPoints);
         dimSimplex = 0;
         subPoints = generateSubPointsLine(0);
         break;
@@ -981,7 +1003,8 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 2;
         B.numLagPts = 3;
         B.exponents = generateExponentsTriangle(B.order);
-        B.points    = gmshGeneratePointsTriangle(B.order,false);
+        B.bezierPoints = gmshGeneratePointsTriangle(B.order,false);
+        B.lagPoints = B.bezierPoints;
         dimSimplex = 2;
         subPoints = generateSubPointsTriangle(B.order);
         break;
@@ -990,7 +1013,8 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 2;
         B.numLagPts = 4;
         B.exponents = generateExponentsQuad(B.order);
-        B.points    = generatePointsQuad(B.order,false);
+        B.bezierPoints = generatePointsQuad(B.order,false);
+        B.lagPoints = bez2LagPoints(true,true,false,B.bezierPoints);
         dimSimplex = 0;
         subPoints = generateSubPointsQuad(B.order);
         //      B.points.print("points");
@@ -1000,7 +1024,8 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 3;
         B.numLagPts = 4;
         B.exponents = generateExponentsTetrahedron(B.order);
-        B.points    = gmshGeneratePointsTetrahedron(B.order,false);
+        B.bezierPoints = gmshGeneratePointsTetrahedron(B.order,false);
+        B.lagPoints = B.bezierPoints;
         dimSimplex = 3;
         subPoints = generateSubPointsTetrahedron(B.order);
         break;
@@ -1009,7 +1034,8 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 3;
         B.numLagPts = 6;
         B.exponents = generateExponentsPrism(B.order);
-        B.points    = generatePointsPrism(B.order, false);
+        B.bezierPoints = generatePointsPrism(B.order, false);
+        B.lagPoints = bez2LagPoints(false,false,true,B.bezierPoints);
         dimSimplex = 2;
         subPoints = generateSubPointsPrism(B.order);
         break;
@@ -1018,7 +1044,8 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 3;
         B.numLagPts = 8;
         B.exponents = generateExponentsHex(B.order);
-        B.points    = generatePointsHex(B.order, false);
+        B.bezierPoints = generatePointsHex(B.order, false);
+        B.lagPoints = bez2LagPoints(true,true,true,B.bezierPoints);
         dimSimplex = 0;
         subPoints = generateSubPointsHex(B.order);
         break;
@@ -1028,16 +1055,17 @@ const bezierBasis *bezierBasis::find(int tag)
         B.dim = 3;
         B.numLagPts = 4;
         B.exponents = generateExponentsTetrahedron(0);
-        B.points    = gmshGeneratePointsTetrahedron(0, false);
+        B.bezierPoints = gmshGeneratePointsTetrahedron(0, false);
+        B.lagPoints = B.bezierPoints;
         dimSimplex = 3;
         subPoints = generateSubPointsTetrahedron(0);
         break;
       }
     }
-    B.matrixBez2Lag = generateBez2LagMatrix(B.exponents, B.points, B.order, dimSimplex);
+    B.matrixBez2Lag = generateBez2LagMatrix(B.exponents, B.bezierPoints, B.order, dimSimplex);
     B.matrixBez2Lag.invert(B.matrixLag2Bez);
     B.subDivisor = generateSubDivisor(B.exponents, subPoints, B.matrixLag2Bez, B.order, dimSimplex);
-    B.numDivisions = (int) pow(2., (int) B.points.size2());
+    B.numDivisions = (int) pow(2., (int) B.bezierPoints.size2());
   }
 
   return &B;
@@ -1120,7 +1148,7 @@ JacobianBasis::JacobianBasis(int tag)
   xBar /= numPrimMapNodes;
   yBar /= numPrimMapNodes;
   zBar /= numPrimMapNodes;
-  double barDPsi[numPrimMapNodes][3];
+  double (*barDPsi)[3] = new double[numPrimMapNodes][3];
   primMapBasis->df(xBar, yBar, zBar, barDPsi);
   primGradShapeBarX.resize(numPrimMapNodes);
   primGradShapeBarY.resize(numPrimMapNodes);
@@ -1130,6 +1158,7 @@ JacobianBasis::JacobianBasis(int tag)
     primGradShapeBarY(j) = barDPsi[j][1];
     primGradShapeBarZ(j) = barDPsi[j][2];
   }
+  delete[] barDPsi;
 
 }
 
@@ -1192,7 +1221,7 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMa
     dxyzdXbar(2) += primGradShapeBarX(j)*nodesXYZ(j,2);
     dxyzdYbar(0) += primGradShapeBarY(j)*nodesXYZ(j,0);
     dxyzdYbar(1) += primGradShapeBarY(j)*nodesXYZ(j,1);
-    dxyzdYbar(2) += primGradShapeBarX(j)*nodesXYZ(j,2);
+    dxyzdYbar(2) += primGradShapeBarY(j)*nodesXYZ(j,2);
   }
 
   result(0,2) = dxyzdXbar(0) * dxyzdYbar(1) - dxyzdXbar(1) * dxyzdYbar(0);
@@ -1303,6 +1332,165 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ,
       break;
     }
 
+  }
+
+}
+
+
+
+// Calculate (signed) Jacobian at mapping's nodes for one element, given vectors for regularization
+// of line and surface Jacobians in 3D
+void JacobianBasis::getSignedJacAndGradients(const fullMatrix<double> &nodesXYZ,
+                                             const fullMatrix<double> &normals,
+                                             fullMatrix<double> &JDJ) const
+{
+
+  switch (bezier->dim) {
+
+    case 0 : {
+      for (int i = 0; i < numJacNodes; i++) {
+        for (int j = 0; j < numMapNodes; j++) {
+          JDJ (i,j) = 0.;
+          JDJ (i,j+1*numMapNodes) = 0.;
+          JDJ (i,j+2*numMapNodes) = 0.;
+        }
+        JDJ(i,3*numMapNodes) = 1.;
+      }
+      break;
+    }
+
+    case 1 : {
+      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3);
+      gradShapeMatX.mult(nodesXYZ, dxyzdX);
+      for (int i = 0; i < numJacNodes; i++) {
+        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
+        const double &dxdY = normals(0,0), &dydY = normals(0,1), &dzdY = normals(0,2);
+        const double &dxdZ = normals(1,0), &dydZ = normals(1,1), &dzdZ = normals(1,2);
+        for (int j = 0; j < numMapNodes; j++) {
+          const double &dPhidX = gradShapeMatX(i,j);
+          JDJ (i,j) = dPhidX * dydY * dzdZ + dPhidX * dzdY * dydZ;
+          JDJ (i,j+1*numMapNodes) = dPhidX * dzdY * dxdZ - dPhidX * dxdY * dzdZ;
+          JDJ (i,j+2*numMapNodes) = dPhidX * dxdY * dydZ - dPhidX * dydY * dxdZ;
+        }
+        JDJ(i,3*numMapNodes) = calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ);
+      }
+      break;
+    }
+
+    case 2 : {
+      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3);
+      gradShapeMatX.mult(nodesXYZ, dxyzdX);
+      gradShapeMatY.mult(nodesXYZ, dxyzdY);
+      for (int i = 0; i < numJacNodes; i++) {
+        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
+        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
+        const double &dxdZ = normals(0,0), &dydZ = normals(0,1), &dzdZ = normals(0,2);
+        for (int j = 0; j < numMapNodes; j++) {
+          const double &dPhidX = gradShapeMatX(i,j);
+          const double &dPhidY = gradShapeMatY(i,j);
+          JDJ (i,j) =
+            dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ +
+            dPhidX * dzdY * dydZ - dydX * dPhidY * dzdZ;
+          JDJ (i,j+1*numMapNodes) =
+            dxdX * dPhidY * dzdZ +
+            dPhidX * dzdY * dxdZ - dzdX * dPhidY * dxdZ
+                                 - dPhidX * dxdY * dzdZ;
+          JDJ (i,j+2*numMapNodes) =
+                                   dPhidX * dxdY * dydZ +
+            dydX * dPhidY * dxdZ - dPhidX * dydY * dxdZ -
+            dxdX * dPhidY * dydZ;
+        }
+        JDJ(i,3*numMapNodes) = calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ);
+      }
+      break;
+    }
+
+    case 3 : {
+      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3), dxyzdZ(numJacNodes,3);
+      gradShapeMatX.mult(nodesXYZ, dxyzdX);
+      gradShapeMatY.mult(nodesXYZ, dxyzdY);
+      gradShapeMatZ.mult(nodesXYZ, dxyzdZ);
+      for (int i = 0; i < numJacNodes; i++) {
+        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
+        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
+        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
+        for (int j = 0; j < numMapNodes; j++) {
+          const double &dPhidX = gradShapeMatX(i,j);
+          const double &dPhidY = gradShapeMatY(i,j);
+          const double &dPhidZ = gradShapeMatZ(i,j);
+          JDJ (i,j) =
+            dPhidX * dydY * dzdZ + dzdX * dPhidY * dydZ +
+            dydX * dzdY * dPhidZ - dzdX * dydY * dPhidZ -
+            dPhidX * dzdY * dydZ - dydX * dPhidY * dzdZ;
+          JDJ (i,j+1*numMapNodes) =
+            dxdX * dPhidY * dzdZ + dzdX * dxdY * dPhidZ +
+            dPhidX * dzdY * dxdZ - dzdX * dPhidY * dxdZ -
+            dxdX * dzdY * dPhidZ - dPhidX * dxdY * dzdZ;
+          JDJ (i,j+2*numMapNodes) =
+            dxdX * dydY * dPhidZ + dPhidX * dxdY * dydZ +
+            dydX * dPhidY * dxdZ - dPhidX * dydY * dxdZ -
+            dxdX * dPhidY * dydZ - dydX * dxdY * dPhidZ;
+        }
+        JDJ(i,3*numMapNodes) = calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ);
+      }
+      break;
+    }
+
+  }
+
+}
+
+
+
+void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
+                                             const fullMatrix<double> &nodesXYZStraight,
+                                             fullVector<double> &lambdaJ , fullMatrix<double> &gradLambdaJ) const
+{
+
+  // jacobian of the straight elements (only triangles for now)
+  SPoint3 v0(nodesXYZ(0,0),nodesXYZ(0,1),nodesXYZ(0,2));
+  SPoint3 v1(nodesXYZ(1,0),nodesXYZ(1,1),nodesXYZ(1,2));
+  SPoint3 v2(nodesXYZ(2,0),nodesXYZ(2,1),nodesXYZ(2,2));
+  SPoint3 *IXYZ[3] = {&v0, &v1, &v2};
+  double jaci[2][2] = {
+    {IXYZ[1]->x() - IXYZ[0]->x(), IXYZ[2]->x() - IXYZ[0]->x()},
+    {IXYZ[1]->y() - IXYZ[0]->y(), IXYZ[2]->y() - IXYZ[0]->y()}
+  };
+  double invJaci[2][2];
+  inv2x2(jaci, invJaci);
+
+  for (int l = 0; l < numJacNodes; l++) {
+    double jac[2][2] = {{0., 0.}, {0., 0.}};
+    for (int i = 0; i < numMapNodes; i++) {
+      const double &dPhidX = gradShapeMatX(l,i);
+      const double &dPhidY = gradShapeMatY(l,i);
+      const double dpsidx = dPhidX * invJaci[0][0] + dPhidY * invJaci[1][0];
+      const double dpsidy = dPhidX * invJaci[0][1] + dPhidY * invJaci[1][1];
+      jac[0][0] += nodesXYZ(i,0) * dpsidx;
+      jac[0][1] += nodesXYZ(i,0) * dpsidy;
+      jac[1][0] += nodesXYZ(i,1) * dpsidx;
+      jac[1][1] += nodesXYZ(i,1) * dpsidy;
+    }
+    const double dxdx = jac[0][0] * jac[0][0] + jac[0][1] * jac[0][1];
+    const double dydy = jac[1][0] * jac[1][0] + jac[1][1] * jac[1][1];
+    const double dxdy = jac[0][0] * jac[1][0] + jac[0][1] * jac[1][1];
+    const double sqr = sqrt((dxdx - dydy) * (dxdx - dydy) + 4 * dxdy * dxdy);
+    const double osqr = sqr > 1e-8 ? 1/sqr : 0;
+    lambdaJ(l) = 0.5 * (dxdx + dydy - sqr);
+    const double axx = (1 - (dxdx - dydy) * osqr) * jac[0][0] - 2 * dxdy * osqr * jac[1][0];
+    const double axy = (1 - (dxdx - dydy) * osqr) * jac[0][1] - 2 * dxdy * osqr * jac[1][1];
+    const double ayx = -2 * dxdy * osqr * jac[0][0] + (1 - (dydy - dxdx) * osqr) * jac[1][0];
+    const double ayy = -2 * dxdy * osqr * jac[0][1] + (1 - (dydy - dxdx) * osqr) * jac[1][1];
+    const double axixi   = axx * invJaci[0][0] + axy * invJaci[0][1];
+    const double aetaeta = ayx * invJaci[1][0] + ayy * invJaci[1][1];
+    const double aetaxi  = ayx * invJaci[0][0] + ayy * invJaci[0][1];
+    const double axieta  = axx * invJaci[1][0] + axy * invJaci[1][1];
+    for (int i = 0; i < numMapNodes; i++) {
+      const double &dPhidX = gradShapeMatX(l,i);
+      const double &dPhidY = gradShapeMatY(l,i);
+      gradLambdaJ(l, i + 0 * numMapNodes) = axixi * dPhidX + axieta * dPhidY;
+      gradLambdaJ(l, i + 1 * numMapNodes) = aetaxi * dPhidX + aetaeta * dPhidY;
+    }
   }
 
 }
