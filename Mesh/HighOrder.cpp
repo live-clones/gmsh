@@ -278,7 +278,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       bool reparamOK = true;
       if(!linear) {
         reparamOK &= reparamMeshVertexOnEdge(v0, ge, u0);
-        if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 && v1 == ge->getEndVertex()->mesh_vertices[0])
+        if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
+           v1 == ge->getEndVertex()->mesh_vertices[0])
           u1 = ge->parBounds(0).high();
         else
           reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
@@ -1026,7 +1027,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 /* * * * * * * * * * * * * * * * * PYRAMIDS * * * * * * * * * * * * * * * * * */
 
   std::vector<MPyramid*> pyramids2;
-  
+
   for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf, vr;
@@ -1152,14 +1153,14 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
 
     }
     ve.insert(ve.end(), vr.begin(), vr.end());
-    MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1), 
+    MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1),
                                 p->getVertex(2), p->getVertex(3),
                                 p->getVertex(4), ve, nPts + 1,
 			                          0, p->getPartition());
     pyramids2.push_back(n);
     SPoint3 test_pnt;
     n->pnt(-1,-1,0, test_pnt);
-    
+
     delete p;
   }
   gr->pyramids = pyramids2;
@@ -1316,7 +1317,7 @@ void printJacobians(GModel *m, const char *nm)
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);
           t->pnt(u, v, 0, pt);
-          D[i][k] = mesh_functional_distorsion_2D(t, u, v);
+          //D[i][k] = mesh_functional_distorsion_2D(t, u, v);
           //X[i][k] = u;
           //Y[i][k] = v;
           //Z[i][k] = 0.0;
@@ -1549,7 +1550,8 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       MQuadrangle *t = (*it)->quadrangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3), 0, t->getPartition());
+      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                        t->getVertex(3), 0, t->getPartition());
       getFaceVertices (*it, t, &TEMP, vf, faceVertices, false, nPts);
       for (int j=4;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
