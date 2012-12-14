@@ -1150,29 +1150,33 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double signMax = (rhoMax > 0.0) ? -1.0: 1.0;
      
    //user-defined parameters
-   double beta = 1.2; //CTX::instance()->mesh.smoothRatio; 
    double thickness = radMax/3.;
    double hwall_t = 2*M_PI*radMax/nbPoints;
-   double h_far =  radMax/2.;
-   double h_a =  radMax; //3.*hwall_t;
+   double h_far =  radMax/4.;
 
    //define h_n, h_t1, and h_t2
+   double beta = (ds <= thickness) ? 1.2 : 2.8; //CTX::instance()->mesh.smoothRatio; 
+   double dist = (ds <= thickness) ? ds: thickness; 
    double h_n_0 = thickness/20.;
    double h_n   = std::min( (h_n_0+ds*log(beta)), h_far); 
-   //double h_n   =  ds*(beta-1) + hwall_n;
-   //if (ds > thickness) h_n  =  hwall_t *(rho+sign*thickness)/rho ;
+   double h_a_0 = radMax;
 
-   double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(beta*beta-1)) *
-     (sqrt(1+ (4.*rhoMin*rhoMin*(beta*beta-1))/(h_n*h_n))-1.); 
-   double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(beta*beta-1)) *
-    (sqrt(1+ (4.*rhoMax*rhoMax*(beta*beta-1))/(h_n*h_n))-1.);
+   double betaMin = 10.; 
+   double betaMax = 3.2; 
+   double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(betaMin*betaMin-1)) *
+     (sqrt(1+ (4.*rhoMin*rhoMin*(betaMin*betaMin-1))/(h_n*h_n))-1.); 
+   double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(betaMax*betaMax-1)) *
+    (sqrt(1+ (4.*rhoMax*rhoMax*(betaMax*betaMax-1))/(h_n*h_n))-1.);
    double h_t1_0 = sqrt(1./oneOverD2_min);
    double h_t2_0 = sqrt(1./oneOverD2_max);
-   double h_t1  = (h_t1_0+signMin*ds*log(beta));
-   double h_t2  = (h_t2_0+signMax*ds*log(beta));
-   //double ll2 =  hwall_t *(rho+sign*ds)/rho ; //sign * ds*(ratio-1) + hwall_t;
-   //if (ds > thickness) ll2  =  hwall_t *(rho+sign*thickness)/rho ; 
+   double h_t1 =  h_t1_0*(rhoMin+signMin*dist)/rhoMin ;
+   double h_t2 =  h_t2_0*(rhoMax+signMax*dist)/rhoMax ;  
+   //double h_t1  = std::min((h_t1_0+dist*log(beta)), radMax);
+   //double h_t2  = std::min((h_t2_0+dist*log(beta)), radMax);
 
+   double dCenter = radMax -ds;
+   double h_a = h_a_0 - (h_a_0-h_t1)/(radMax-thickness)*dCenter; 
+      
    //printf("************* rhoMin =%g rhoMax=%g \n", rhoMin, rhoMax);
    //printf("h_n_0 =%g h_n =%g\n", h_n_0 , h_n);
    //printf("h_t1_0 =%g h_t2_0=%g ds=%g\n", h_t1_0, h_t2_0, ds);
@@ -1181,12 +1185,9 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    //length between min and max
    double lcMin = ((2 * M_PI *radMax) /( 20*nbPoints )); //CTX::instance()->mesh.lcMin;
    double lcMax =  lcMin*2000.; //CTX::instance()->mesh.lcMax;
-   h_n = std::max(h_n, lcMin);
-   h_n = std::min(h_n, lcMax);
-   h_t1 = std::max(h_t1, lcMin);
-   h_t1 = std::min(h_t1, lcMax);
-   h_t2 = std::max(h_t2, lcMin);
-   h_t2 = std::min(h_t2, lcMax);
+   h_n = std::max(h_n, lcMin);    h_n = std::min(h_n, lcMax);
+   h_t1 = std::max(h_t1, lcMin);  h_t1 = std::min(h_t1, lcMax);
+   h_t2 = std::max(h_t2, lcMin);  h_t2 = std::min(h_t2, lcMax);
 
    //curvature metric
    SMetric3 curvMetric, curvMetric1, curvMetric2;
@@ -1194,19 +1195,15 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      metr = buildMetricTangentToCurve(dir_n,h_n,h_t2);
    }
    else {
-     if (ds <= thickness ){
+     if (ds < thickness ){
        metr = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, h_n, h_t1, h_t2);
      }
      else {
-       //printf("in volume \n");
        curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, h_n, h_t1, h_t2);
-       //curvMetric1 = buildMetricTangentToCurve(dir_n,lc_n,lc_a); //lc_t
-       //curvMetric2 = buildMetricTangentToCurve(dir_cross,lc_t,lc_a); //lc_t
-       //curvMetric = intersection(curvMetric1,curvMetric2);
-       metr = SMetric3(1./(h_a*h_a), 1./(h_far*h_far), 1./(h_far*h_far), dir_a, dir_n, dir_cross);  
+       metr = SMetric3( 1./(h_a_0*h_a_0), 1./(h_n*h_n), 1./(h_n*h_n), dir_a, dir_n, dir_cross);
        //metr = intersection_conserveM1(metr,curvMetric);
-       metr = intersection_conserve_mostaniso(metr, curvMetric);
-       //metr = intersection(metr,curvMetric);
+       //metr = intersection_conserve_mostaniso(metr, curvMetric);
+       metr = intersection(metr,curvMetric);
      }
    }
 
@@ -1220,8 +1217,7 @@ SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dir
 {
 
   SVector3 dirNorm = crossprod(dirMax,dirMin);
-  SMetric3 curvMetric (1./(h_t1*h_t1),1./(h_t2*h_t2),
-                       1./(h_n*h_n), dirMin, dirMax, dirNorm); 
+  SMetric3 curvMetric (1./(h_t1*h_t1),1./(h_t2*h_t2),1./(h_n*h_n), dirMin, dirMax, dirNorm); 
 
   return curvMetric;
 }
