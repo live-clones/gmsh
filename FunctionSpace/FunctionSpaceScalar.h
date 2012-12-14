@@ -5,8 +5,7 @@
 #include "Exception.h"
 #include "BasisScalar.h"
 #include "GradBasis.h"
-#include "EvaluatedBasisScalar.h"
-#include "EvaluatedBasisVector.h"
+#include "EvaluatedBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -36,8 +35,8 @@ class FunctionSpaceScalar : public FunctionSpace{
   bool locPreEvaluated;
   bool gradPreEvaluated;
   
-  EvaluatedBasisScalar* evalLoc;
-  EvaluatedBasisVector* evalGrad;
+  EvaluatedBasis* evalLoc;
+  EvaluatedBasis* evalGrad;
 
  public:
   virtual ~FunctionSpaceScalar(void);
@@ -52,19 +51,19 @@ class FunctionSpaceScalar : public FunctionSpace{
 			  const std::vector<double>& coef,
 			  const fullVector<double>& uvw) const = 0;
   
-  const std::vector<const Polynomial*> 
+  const std::vector<const Polynomial*>&
     getLocalFunctions(const MElement& element) const;
 
-  const std::vector<const std::vector<Polynomial>*>
+  const std::vector<const std::vector<Polynomial>*>&
     getGradLocalFunctions(const MElement& element) const;
 
   void preEvaluateLocalFunctions(fullMatrix<double>& points);
   void preEvaluateGradLocalFunctions(fullMatrix<double>& points);
 
-  const std::vector<const std::vector<double>*>
+  const fullMatrix<double>&
     getEvaluatedLocalFunctions(const MElement& element) const;
 
-  const std::vector<const std::vector<fullVector<double> >*>
+  const fullMatrix<double>&
     getEvaluatedGradLocalFunctions(const MElement& element) const;
   
  protected:
@@ -178,12 +177,12 @@ class FunctionSpaceScalar : public FunctionSpace{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<const Polynomial*> 
+inline const std::vector<const Polynomial*>&
 FunctionSpaceScalar::getLocalFunctions(const MElement& element) const{
   return locBasis(element, *basisScalar);
 }
 
-inline const std::vector<const std::vector<Polynomial>*>
+inline const std::vector<const std::vector<Polynomial>*>&
 FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
   
   // Got Grad Basis ? //
@@ -197,7 +196,7 @@ FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
   return locBasis(element, *gradBasis);
 }
 
-inline const std::vector<const std::vector<double>*>
+inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
   if(!locPreEvaluated)
     throw Exception("Local Basis Functions not PreEvaluated");
@@ -205,7 +204,7 @@ FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
   return locEvalBasis(element, *evalLoc);
 }
 
-inline const std::vector<const std::vector<fullVector<double> >*>
+inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) const{
   if(!gradPreEvaluated)
     throw Exception("Gradients of Local Basis Functions not PreEvaluated");

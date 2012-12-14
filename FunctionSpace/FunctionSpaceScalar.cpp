@@ -30,7 +30,7 @@ preEvaluateLocalFunctions(fullMatrix<double>& points){
     delete evalLoc;
 
   // New Struct //
-  evalLoc = new EvaluatedBasisScalar(*basisScalar, points);
+  evalLoc = new EvaluatedBasis(*basisScalar, points);
 
   // PreEvaluated //
   locPreEvaluated = true;
@@ -51,7 +51,7 @@ preEvaluateGradLocalFunctions(fullMatrix<double>& points){
     delete evalGrad;
 
   // New Struct //
-  evalGrad = new EvaluatedBasisVector(*gradBasis, points);
+  evalGrad = new EvaluatedBasis(*gradBasis, points);
 
   // PreEvaluated //
   gradPreEvaluated = true;

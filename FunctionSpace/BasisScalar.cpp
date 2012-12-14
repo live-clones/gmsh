@@ -12,32 +12,27 @@ BasisScalar::~BasisScalar(void){
 
 string BasisScalar::toString(void) const{
   stringstream stream;
+  unsigned int i = 0;
 
   stream << "Vertex Based:" << endl;
-  for(int i = 0; i < nVertex; i++)
-    stream << " # " << i + 1         << "\t"
-	   << "f("  << i + 1         << ") = "
-	   << (*node)[i]->toString() << endl;
+  for(; i < nVertex; i++)
+    stream << "f("  << i + 1                << ") = "
+	   << (*(*basis)[0])[i]->toString() << endl;
 
-  stream << "Edge Based:" << endl;
-  for(int i = 0; i < nEdge; i++)
-    for(int j = 0; j < nEdgeClosure; j++)
-      stream << " # " << i + 1 + nVertex     << "\t"
-	     << "f_"  << j << "(" << i + 1   << ") = " 
-	     << (*(*edge)[j])[i]->toString() << endl;
+  stream << "Edge Based:"   << endl;
+  for(; i < nVertex + nEdge; i++)
+    stream << "f(" << i + 1                 << ") = " 
+	   << (*(*basis)[0])[i]->toString() << endl;
 
-  stream << "Face Based:" << endl;
-  for(int i = 0; i < nFace; i++)
-    for(int j = 0; j < nFaceClosure; j++)
-      stream << " # " << i + 1 + nVertex + nEdge << "\t"
-	     << "f_"  << j << "(" << i + 1       << ") = " 
-	     << (*(*face)[j])[i]->toString()     << endl;
+  stream << "Face Based:"   << endl;
+  for(; i < nVertex + nEdge + nFace; i++)
+    stream << "f(" << i + 1                 << ") = " 
+	   << (*(*basis)[0])[i]->toString() << endl;
 
-  stream << "Cell Based:" << endl;
-  for(int i = 0; i < nCell; i++)
-    stream << " # " << i + 1 + nVertex + nEdge + nFace << "\t"
-	   << "f("  << i + 1                           << ") = " 
-	   << (*cell)[i]->toString()                   << endl;
+  stream << "Cell Based:"   << endl;
+  for(; i < nVertex + nEdge + nFace + nCell; i++)
+    stream << "f("  << i + 1                << ") = " 
+	   << (*(*basis)[0])[i]->toString() << endl;
 
   return stream.str();
 }

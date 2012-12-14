@@ -6,8 +6,7 @@
 #include "BasisVector.h"
 #include "CurlBasis.h"
 #include "DivBasis.h"
-#include "EvaluatedBasisScalar.h"
-#include "EvaluatedBasisVector.h"
+#include "EvaluatedBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -41,9 +40,9 @@ class FunctionSpaceVector : public FunctionSpace{
   bool curlPreEvaluated;
   bool divPreEvaluated;
   
-  EvaluatedBasisVector* evalLoc;
-  EvaluatedBasisVector* evalCurl;
-  EvaluatedBasisScalar* evalDiv;
+  EvaluatedBasis* evalLoc;
+  EvaluatedBasis* evalCurl;
+  EvaluatedBasis* evalDiv;
 
  public:
   virtual ~FunctionSpaceVector(void);
@@ -58,26 +57,26 @@ class FunctionSpaceVector : public FunctionSpace{
 			  const std::vector<double>& coef,
 			  const fullVector<double>& uvw) const = 0;
 
-  const std::vector<const std::vector<Polynomial>*>
+  const std::vector<const std::vector<Polynomial>*>&
     getLocalFunctions(const MElement& element) const;
 
-  const std::vector<const std::vector<Polynomial>*>
+  const std::vector<const std::vector<Polynomial>*>&
     getCurlLocalFunctions(const MElement& element) const;
 
-  const std::vector<const Polynomial*> 
+  const std::vector<const Polynomial*>&
     getDivLocalFunctions(const MElement& element) const;
 
   void preEvaluateLocalFunctions(fullMatrix<double>& points);
   void preEvaluateCurlLocalFunctions(fullMatrix<double>& points);
   void preEvaluateDivLocalFunctions(fullMatrix<double>& points);
 
-  const std::vector<const std::vector<fullVector<double> >*>
+  const fullMatrix<double>&
     getEvaluatedLocalFunctions(const MElement& element) const;
 
-  const std::vector<const std::vector<fullVector<double> >*>
+  const fullMatrix<double>&
     getEvaluatedCurlLocalFunctions(const MElement& element) const;
 
-  const std::vector<const std::vector<double>*>
+  const fullMatrix<double>&
     getEvaluatedDivLocalFunctions(const MElement& element) const;
 
  protected:
@@ -221,12 +220,12 @@ class FunctionSpaceVector : public FunctionSpace{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<const std::vector<Polynomial>*> 
+inline const std::vector<const std::vector<Polynomial>*>&
 FunctionSpaceVector::getLocalFunctions(const MElement& element) const{
   return locBasis(element, *basisVector);
 }
 
-inline const std::vector<const std::vector<Polynomial>*>
+inline const std::vector<const std::vector<Polynomial>*>&
 FunctionSpaceVector::getCurlLocalFunctions(const MElement& element) const{
 
   // Got Curl Basis ? //
@@ -240,7 +239,7 @@ FunctionSpaceVector::getCurlLocalFunctions(const MElement& element) const{
   return locBasis(element, *curlBasis);
 }
 
-inline const std::vector<const Polynomial*> 
+inline const std::vector<const Polynomial*>&
 FunctionSpaceVector::getDivLocalFunctions(const MElement& element) const{
 
   // Got Div Basis ? //
@@ -254,7 +253,7 @@ FunctionSpaceVector::getDivLocalFunctions(const MElement& element) const{
   return locBasis(element, *divBasis);
 }
 
-inline const std::vector<const std::vector<fullVector<double> >*>
+inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
   if(!locPreEvaluated)
     throw Exception("Local Basis Functions not PreEvaluated");
@@ -262,7 +261,7 @@ FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
   return locEvalBasis(element, *evalLoc);
 }
 
-inline const std::vector<const std::vector<fullVector<double> >*>
+inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) const{
   if(!curlPreEvaluated)
     throw Exception("Curls of Local Basis Functions not PreEvaluated");
@@ -270,7 +269,7 @@ FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) con
   return locEvalBasis(element, *evalCurl);
 }
 
-inline const std::vector<const std::vector<double>*>
+inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) const{
   if(!divPreEvaluated)
     throw Exception("Divergences of Local Basis Functions not PreEvaluated");

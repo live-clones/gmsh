@@ -2,6 +2,7 @@
 #define _BASIS_H_
 
 #include <string>
+#include "ReferenceSpace.h"
 
 /**
    @interface Basis
@@ -18,26 +19,28 @@
 
 class Basis{
  protected:
-  bool scalar;
+  const ReferenceSpace* refSpace;
+  unsigned int    nRefSpace;
+  bool            scalar;
 
-  int order;
-  int type;
-  int dim;
+  unsigned int order;
+  unsigned int type;
+  unsigned int dim;
 
-  int nVertex;
-  int nEdge;
-  int nFace;
-  int nCell;
+  unsigned int nVertex;
+  unsigned int nEdge;
+  unsigned int nFace;
+  unsigned int nCell;
 
-  int nEdgeClosure;
-  int nFaceClosure;
-
-  int size;
+  unsigned int nFunction;
 
  public:
   //! Deletes this Basis
   //!
   virtual ~Basis(void);
+
+  //! @return Returns the ReferenceSpace of this Basis
+  const ReferenceSpace& getReferenceSpace(void) const;
 
   //! @return Returns:
   //! @li @c true, if this is a 
@@ -53,46 +56,39 @@ class Basis{
   bool isScalar(void) const;
 
   //! @return Returns the @em polynomial @em order of the Basis
-  int getOrder(void) const;
+  unsigned int getOrder(void) const;
 
   //! @return Returns the @em type of the Basis:
   //! @li 0 for 0-form
   //! @li 1 for 1-form
   //! @li 2 for 2-form
   //! @li 3 for 3-form
-  int getType(void) const;
+  unsigned int getType(void) const;
   
   //! @return Returns the @em dimension 
   //! (1D, 2D or 3D) of the Basis
-  int getDim(void) const;
+  unsigned int getDim(void) const;
 
   //! @return Returns the number of @em Vertex
   //! @em Based functions of this Basis
-  int getNVertexBased(void) const;
+  unsigned int getNVertexBased(void) const;
 
   //! @return Returns the number of @em Edge
   //! @em Based functions of this Basis
-  int getNEdgeBased(void) const;
+  unsigned int getNEdgeBased(void) const;
 
   //! @return Returns the number of @em Face
   //! @em Based functions of this Basis
-  int getNFaceBased(void) const;
+  unsigned int getNFaceBased(void) const;
 
   //! @return Returns the number of @em Cell
   //! @em Based functions of this Basis
-  int getNCellBased(void) const;
-
-  //! @return Returns the number of @em edge
-  //! @em closures for this Basis
-  int getNEdgeClosure(void) const;
-
-  //! @return Returns the number of @em face
-  //! @em closures for this Basis
-  int getNFaceClosure(void) const;
+  unsigned int getNCellBased(void) const;
 
   //! @return Returns the number of Polynomial%s 
-  //! (or Vector%s of Polynomial%s) in the Basis
-  int getSize(void) const;
+  //! (or Vector%s of Polynomial%s) Functions 
+  //! in this Basis
+  unsigned int getNFunction(void) const;
 
   //! @return Returns the Basis String
   virtual std::string toString(void) const = 0;
@@ -109,48 +105,45 @@ class Basis{
 // Inline Functions //
 //////////////////////
 
+inline const ReferenceSpace& 
+Basis::getReferenceSpace(void) const{
+  return *refSpace;
+}
+
 inline bool Basis::isScalar(void) const{
   return scalar;
 }
 
-inline int Basis::getOrder(void) const{
+inline unsigned int Basis::getOrder(void) const{
   return order;
 }
 
-inline int Basis::getType(void) const{
+inline unsigned int Basis::getType(void) const{
   return type;
 }
 
-inline int Basis::getDim(void) const{
+inline unsigned int Basis::getDim(void) const{
   return dim;
 }
 
-inline int Basis::getNVertexBased(void) const{
+inline unsigned int Basis::getNVertexBased(void) const{
   return nVertex;
 }
 
-inline int Basis::getNEdgeBased(void) const{
+inline unsigned int Basis::getNEdgeBased(void) const{
   return nEdge;
 }
 
-inline int Basis::getNFaceBased(void) const{
+inline unsigned int Basis::getNFaceBased(void) const{
   return nFace;
 }
 
-inline int Basis::getNCellBased(void) const{
+inline unsigned int Basis::getNCellBased(void) const{
   return nCell;
 }
 
-inline int Basis::getNEdgeClosure(void) const{
-  return nEdgeClosure;
-}
-
-inline int Basis::getNFaceClosure(void) const{
-  return nFaceClosure;
-}
-
-inline int Basis::getSize(void) const{
-  return size;
+inline unsigned int Basis::getNFunction(void) const{
+  return nFunction;
 }
 
 #endif

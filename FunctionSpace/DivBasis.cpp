@@ -3,94 +3,43 @@
 using namespace std;
 
 DivBasis::DivBasis(const BasisVector& other){
+  // Reference Space //
+  refSpace  = &other.getReferenceSpace();
+  nRefSpace = other.getReferenceSpace().getNReferenceSpace();
+
   // Set Basis Type //
   order = other.getOrder() - 1;
   
   type = other.getType();
   dim  = other.getDim();
   
-  nVertex = other.getNVertexBased();
-  nEdge   = other.getNEdgeBased();
-  nFace   = other.getNFaceBased();
-  nCell   = other.getNCellBased();
+  nVertex   = other.getNVertexBased();
+  nEdge     = other.getNEdgeBased();
+  nFace     = other.getNFaceBased();
+  nCell     = other.getNCellBased();
+  nFunction = other.getNFunction();
   
-  nEdgeClosure = other.getNEdgeClosure();
-  nFaceClosure = other.getNFaceClosure();
+  // Basis //
+  basis = new vector<vector<const Polynomial*>*>(nRefSpace);
 
-  size = other.getSize();
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    (*basis)[s] = new vector<const Polynomial*>(nFunction);
 
-  // Alloc Basis //
-  node = new vector<Polynomial*>(nVertex);
-  edge = new vector<vector<Polynomial*>*>(2);
-  face = new vector<vector<Polynomial*>*>(6);
-  cell = new vector<Polynomial*>(nCell);
-
-  for(int i = 0; i < nEdgeClosure; i++)
-    (*edge)[i] = new vector<Polynomial*>(nEdge);
-
-  for(int i = 0; i < nFaceClosure; i++)
-    (*face)[i] = new vector<Polynomial*>(nFace);  
-
-  // Node Based //
-  for(int i = 0; i < nVertex; i++)
-    (*node)[i] = 
-      new Polynomial
-      (Polynomial::divergence(other.getNodeFunction(i)));
-  
-  // Edge Based //
-  for(int i = 0; i < nEdgeClosure; i++)
-    for(int j = 0; j < nEdge; j++)
-      (*(*edge)[i])[j] = 
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    for(unsigned int i = 0; i < nFunction; i++)
+      (*(*basis)[s])[i] = 
 	new Polynomial
-	(Polynomial::divergence(other.getEdgeFunction(i, j)));
-
-  // Face Based //
-  for(int i = 0; i < nFaceClosure; i++)
-    for(int j = 0; j < nFace; j++)
-      (*(*face)[i])[j] = 
-	new Polynomial
-	(Polynomial::divergence(other.getFaceFunction(i, j)));
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    (*cell)[i] = 
-      new Polynomial
-      (Polynomial::divergence(other.getCellFunction(i)));
+	(Polynomial::divergence(other.getFunction(s, i)));
 }
 
 DivBasis::~DivBasis(void){
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
-  
-  delete node;
-
-
-  // Edge Based //
-  for(int c = 0; c < nEdgeClosure; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete (*(*basis)[i])[j];
     
-    delete (*edge)[c];
+    delete (*basis)[i];
   }
   
-  delete edge;
-
-
-  // Face Based //
-  for(int c = 0; c < nFaceClosure; c++){
-    for(int i = 0; i < nFace; i++)
-      delete (*(*face)[c])[i];
-    
-    delete (*face)[c];
-  }
-
-  delete face;
-
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    delete (*cell)[i];
-  
-  delete cell;
+  delete basis;
 }

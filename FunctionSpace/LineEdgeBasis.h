@@ -24,7 +24,7 @@ class LineEdgeBasis: public BasisVector{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Lines of the given order
-  LineEdgeBasis(int order);
+  LineEdgeBasis(unsigned int order);
   
   //! Deletes this Basis
   //!

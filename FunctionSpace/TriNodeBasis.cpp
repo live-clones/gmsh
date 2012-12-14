@@ -1,117 +1,99 @@
 #include "TriNodeBasis.h"
+#include "TriReferenceSpace.h"
 #include "Legendre.h"
 
 using namespace std;
 
-TriNodeBasis::TriNodeBasis(int order){
-  // Set Basis Type //
+TriNodeBasis::TriNodeBasis(unsigned int order){
+  // Reference Space //
+  refSpace  = new TriReferenceSpace;
+  nRefSpace = refSpace->getNReferenceSpace();
+
+  const vector<const vector<const vector<unsigned int>*>*>&
+    edgeV = refSpace->getAllEdge();
+
+  // Set BasisTwo Type //
   this->order = order;
   
   type = 0;
   dim  = 2;
 
-  nVertex = 3;
-  nEdge   = 3 * (order - 1);
-  nFace   = 0;
-  nCell   =     (order - 1) * (order - 2) / 2;
+  nVertex   = 3;
+  nEdge     = 3 * (order - 1);
+  nFace     = 0;
+  nCell     =     (order - 1) * (order - 2) / 2;
+  nFunction = nVertex + nEdge + nFace + nCell;
 
-  nEdgeClosure = 2;
-  nFaceClosure = 0;
-
-  size = nVertex + nEdge + nFace + nCell;
-
-  // Alloc Temporary Space //
-  const int orderMinus = order - 1;
+  // Alloc Some Space //
+  const unsigned int orderMinus = order - 1;
 
   Polynomial* legendre    = new Polynomial[order];
   Polynomial* intLegendre = new Polynomial[order];
-
-  Polynomial lagrangeSum[3];
-  Polynomial lagrangeSub[2][3];
 
   // Legendre Polynomial //
   Legendre::legendre(legendre, orderMinus);
   Legendre::intScaled(intLegendre, order);
 
-  // Vertices definig Edges & Permutations //
-  const int edgeV[2][3][2] = 
+  // Lagrange Polynomial //
+  const Polynomial lagrange[3] = 
     {
-      { {0, 1}, {1, 2}, {2, 0} },
-      { {1, 0}, {2, 1}, {0, 2} }
-    }; 
+      Polynomial(Polynomial(1, 0, 0, 0) - 
+		 Polynomial(1, 1, 0, 0) - 
+		 Polynomial(1, 0, 1, 0)),
+ 
+      Polynomial(Polynomial(1, 1, 0, 0)),
+
+      Polynomial(Polynomial(1, 0, 1, 0))
+    };
 
   // Basis //
-  node = new vector<Polynomial*>(nVertex);
-  edge = new vector<vector<Polynomial*>*>(2);
-  face = new vector<vector<Polynomial*>*>(0);
-  cell = new vector<Polynomial*>(nCell);
+  basis = new vector<vector<const Polynomial*>*>(nRefSpace);
 
-  (*edge)[0] = new vector<Polynomial*>(nEdge);
-  (*edge)[1] = new vector<Polynomial*>(nEdge);
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    (*basis)[s] = new vector<const Polynomial*>(nFunction);
 
-
-  // Vertex Based (Lagrange) //
-  (*node)[0] = 
-    new Polynomial(Polynomial(1, 0, 0, 0) - 
-		   Polynomial(1, 1, 0, 0) - 
-		   Polynomial(1, 0, 1, 0));
-
-  (*node)[1] = 
-    new Polynomial(Polynomial(1, 1, 0, 0));
-
-  (*node)[2] = 
-    new Polynomial(Polynomial(1, 0, 1, 0));
- 
-
-  // Lagrange Sum //
-  for(int e = 0; e < 3; e++)
-    lagrangeSum[e] = 
-      *(*node)[edgeV[0][e][0]] + 
-      *(*node)[edgeV[0][e][1]];
-
-  // Lagrange Sub //
-  for(int e = 0; e < 3; e++){
-    lagrangeSub[0][e] = 
-      *(*node)[edgeV[0][e][1]] - 
-      *(*node)[edgeV[0][e][0]];
-    
-    lagrangeSub[1][e] = 
-      *(*node)[edgeV[1][e][1]] - 
-      *(*node)[edgeV[1][e][0]];
+  // Vertex Based //
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    (*(*basis)[s])[0] = new Polynomial(lagrange[0]);
+    (*(*basis)[s])[1] = new Polynomial(lagrange[1]);
+    (*(*basis)[s])[2] = new Polynomial(lagrange[2]);
   }
-
- 
+  
   // Edge Based //
-  for(int c = 0; c < 2; c++){
-    unsigned int i = 0;
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nVertex;
 
-    for(int l = 1; l < order; l++){
-      for(int e = 0; e < 3; e++){
-	(*(*edge)[c])[i] = 
-	  new Polynomial(intLegendre[l].compose(lagrangeSub[c][e], lagrangeSum[e]));
+    for(unsigned int l = 1; l < order; l++){
+      for(unsigned int e = 0; e < 3; e++){
+	(*(*basis)[s])[i] = 
+	  new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
+						lagrange[(*(*edgeV[s])[e])[0]]
+						, 
+						lagrange[(*(*edgeV[s])[e])[0]] +
+						lagrange[(*(*edgeV[s])[e])[1]]));
+	i++;
+      }
+    }
+  }
+  
+  // Cell Based //
+  const Polynomial p = (lagrange[2] * 2) - Polynomial(1, 0, 0, 0);
+  const unsigned int orderMinusTwo = order - 2;
+  
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nVertex + nEdge;
+    
+    for(unsigned int l1 = 1; l1 < orderMinus; l1++){
+      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
+	(*(*basis)[s])[i] = 
+	  new Polynomial(intLegendre[l1].compose(lagrange[1] - lagrange[0], 
+						 lagrange[1] + lagrange[0]) * 
+			 legendre[l2].compose(p) * lagrange[2]);
 	
 	i++;
       }
     }
   }
-
-
-  // Cell Based //
-  Polynomial p             = (*(*node)[2] * 2) - Polynomial(1, 0, 0, 0);
-  const int  orderMinusTwo = order - 2;
-
-  unsigned int i = 0;
-  
-  for(int l1 = 1; l1 < orderMinus; l1++){
-    for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
-      (*cell)[i] = 
-	new Polynomial(intLegendre[l1].compose(lagrangeSub[0][0], lagrangeSum[0]) * 
-		       legendre[l2].compose(p) * *(*node)[2]);
-
-      i++;
-    }
-  }
-  
 
   // Free Temporary Sapce //
   delete[] legendre;
@@ -119,31 +101,16 @@ TriNodeBasis::TriNodeBasis(int order){
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
-  
-  delete node;
+  // ReferenceSpace //
+  delete refSpace;
 
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete (*(*basis)[i])[j];
 
-  // Edge Based //
-  for(int c = 0; c < 2; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
-    
-    delete (*edge)[c];
+    delete (*basis)[i];
   }
-  
-  delete edge;
 
-
-  // Face Based //
-  delete face;
-
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    delete (*cell)[i];
-
-  delete cell;
+  delete basis;
 }

@@ -1,34 +1,52 @@
 #ifndef _EVALUATEDBASIS_H_
 #define _EVALUATEDBASIS_H_
 
+#include <vector>
+#include "fullMatrix.h"
+#include "BasisScalar.h"
+#include "BasisVector.h"
+#include "MElement.h"
+#include "ReferenceSpace.h"
+
 /**
-   @interface EvaluatedBasis
-   @brief Common Interface for Evaluated Basis
+   @class EvaluatedBasis
+   @brief A Basis that has been Evaluated
 
-   This class is the @em common @em interface for all EvaluatedBasis.@n
-
-   An EvaluatedBasis is a @em Basis that has been @em Evaluated at
-   some points.@n
+   This class is A basis that has been Evaluated at
+   some given points.@n
  */
 
 class EvaluatedBasis{
- protected:
-  bool scalar;
+ private:
+  const ReferenceSpace* refSpace;
+  unsigned int nRefSpace;
+  bool         scalar;
 
-  unsigned int nVertex;
-  unsigned int nEdge;
-  unsigned int nFace;
-  unsigned int nCell;
-
-  unsigned int nEdgeClosure;
-  unsigned int nFaceClosure;
-
+  unsigned int nFunction;
   unsigned int nPoint;
 
+  std::vector<fullMatrix<double>*>* eBasis;
+
  public:
+  //! @param basis the Basis to Evaluate
+  //! @param point the Evaluation Points
+  //!
+  //! Instanciates the requested EvaluatedBasisScalar
+  //!
+  EvaluatedBasis(const BasisScalar& basis, 
+		 const fullMatrix<double>& point);
+
+  //! @param basis the Basis to Evaluate
+  //! @param point the Evaluation Points
+  //!
+  //! Instanciates the requested EvaluatedBasisVector
+  //!
+  EvaluatedBasis(const BasisVector& basis, 
+		 const fullMatrix<double>& point);
+
   //! Deletes this EvaluatedBasis
   //!
-  virtual ~EvaluatedBasis(void);
+  ~EvaluatedBasis(void);
 
   //! @return Returns:
   //! @li @c true, if the evaluated
@@ -36,76 +54,53 @@ class EvaluatedBasis{
   //! @li @c false, otherwise  
   bool isScalar(void) const;
 
-  //! @return Returns the number of @em Vertex
-  //! @em Based functions of this EvaluatedBasis
-  unsigned int getNVertexBased(void) const;
-
-  //! @return Returns the number of @em Edge
-  //! @em Based functions of this EvaluatedBasis
-  unsigned int getNEdgeBased(void) const;
-
-  //! @return Returns the number of @em Face
-  //! @em Based functions of this EvaluatedBasis
-  unsigned int getNFaceBased(void) const;
-
-  //! @return Returns the number of @em Cell
-  //! @em Based functions of this EvaluatedBasis
-  unsigned int getNCellBased(void) const;
-
-  //! @return Returns the number of @em edge
-  //! @em closures for this EvaluatedBasis
-  unsigned int getNEdgeClosure(void) const;
-
-  //! @return Returns the number of @em face
-  //! @em closures for this EvaluatedBasis
-  unsigned int getNFaceClosure(void) const;
+  //! @return Returns the number of 
+  //! evaluated @em Functions
+  unsigned int getNFunction(void) const;
 
   //! @return Returns the number of 
-  //! evaluation Points
+  //! evaluation @em Points
   unsigned int getNPoint(void) const;
 
- protected:
-  //! @internal
-  //! Instantiate a new EvaluatedBasis
-  //!
-  //! @endinternal
-  EvaluatedBasis(void);
+  //! @param refSpace A natural number
+  //! @return Returns the evaluation of all Basis Functions
+  //! (at every evaluation Points)
+  //! for the @c refSpace%th @em ReferenceSpace
+  const fullMatrix<double>&
+    getEvaluation(unsigned int refSpace) const;
+
+  //! @param element A MElement
+  //! @return Returns the evaluation of all Basis Functions
+  //! (at every evaluation Points)
+  //! in the ReferenceSpace of the given element
+  const fullMatrix<double>&
+    getEvaluation(const MElement& element) const;
 };
 
 //////////////////////
-// Inline Functions //
+// Inline Function //
 //////////////////////
 
 inline bool EvaluatedBasis::isScalar(void) const{
   return scalar;
 }
 
-inline unsigned int EvaluatedBasis::getNVertexBased(void) const{
-  return nVertex;
-}
-
-inline unsigned int EvaluatedBasis::getNEdgeBased(void) const{
-  return nEdge;
-}
-
-inline unsigned int EvaluatedBasis::getNFaceBased(void) const{
-  return nFace;
-}
-
-inline unsigned int EvaluatedBasis::getNCellBased(void) const{
-  return nCell;
-}
-
-inline unsigned int EvaluatedBasis::getNEdgeClosure(void) const{
-  return nEdgeClosure;
-}
-
-inline unsigned int EvaluatedBasis::getNFaceClosure(void) const{
-  return nFaceClosure;
+inline unsigned int EvaluatedBasis::getNFunction(void) const{
+  return nFunction;
 }
 
 inline unsigned int EvaluatedBasis::getNPoint(void) const{
   return nPoint;
+}
+
+inline const fullMatrix<double>& 
+EvaluatedBasis::getEvaluation(unsigned int refSpace) const{
+  return *(*eBasis)[refSpace];
+}
+
+inline const fullMatrix<double>& 
+EvaluatedBasis::getEvaluation(const MElement& element) const{
+  return *(*eBasis)[refSpace->getReferenceSpace(element)];
 }
 
 #endif

@@ -1,12 +1,15 @@
 #include "BasisFactory.h"
 #include "Exception.h"
+#include "TriReferenceSpace.h"
 #include "TriLagrangeBasis.h"
 
 using namespace std;
 
-TriLagrangeBasis::TriLagrangeBasis(int order){
+TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
+  throw Exception("TriLagrangeBasis: Removed");
+  /*
   // Call polynomialBasis procedure //
-  int tag;
+  unsigned int tag;
 
   switch(order){
   case 1:
@@ -60,60 +63,55 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
   l     = (polynomialBasis*)BasisFactory::create(tag);
   point = new fullMatrix<double>(triPoint(order));
   
+  // Reference Space //
+  refSpace  = new TriReferenceSpace;
+  nRefSpace = refSpace->getNReferenceSpace();
+
   // Set Basis Type //
   this->order = order;
 
   type = 0;
   dim  = 2; 
 
-  nVertex = 3;
-  nEdge   = 3 * (order - 1);
-  nFace   = 0;
-  nCell   =     (order - 1) * (order - 2) / 2;
-
-  nEdgeClosure = 2;
-  nFaceClosure = 0;
-
-  size = nVertex + nEdge + nFace + nCell;
-
+  nVertex   = 3;
+  nEdge     = 3 * (order - 1);
+  nFace     = 0;
+  nCell     =     (order - 1) * (order - 2) / 2;
+  nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Some Stuff //
-  const int nMonomial = l->monomials.size1();
+  const unsigned int nMonomial = l->monomials.size1();
   unsigned int** edgeOrder;
   Polynomial* pEdgeClosureLess = new Polynomial[nEdge];
-
-
+  
   // Basis //
-  node = new vector<Polynomial*>(nVertex);
-  edge = new vector<vector<Polynomial*>*>(2);
-  face = new vector<vector<Polynomial*>*>(0);
-  cell = new vector<Polynomial*>(nCell);
+  basis = new vector<vector<const Polynomial*>*>(nRefSpace);
 
-  (*edge)[0] = new vector<Polynomial*>(nEdge);
-  (*edge)[1] = new vector<Polynomial*>(nEdge);
-
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    (*basis)[s] = new vector<const Polynomial*>(nFunction);
 
   // Vertex Based //
-  for(int i = 0; i < nVertex; i++){
-    Polynomial p = Polynomial(0, 0, 0, 0);
-    
-    for(int j = 0; j < nMonomial; j++)
-      p = p + Polynomial(l->coefficients(i, j), // Coef 
-			 l->monomials(j, 0),    // powerX
-			 l->monomials(j, 1),    // powerY
-			 0);                    // powerZ
-    
-    (*node)[i] = new Polynomial(p);
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(unsigned int i = 0; i < nVertex; i++){
+      Polynomial p = Polynomial(0, 0, 0, 0);
+      
+      for(unsigned int j = 0; j < nMonomial; j++)
+	p = p + Polynomial(l->coefficients(i, j), // Coef 
+			   l->monomials(j, 0),    // powerX
+			   l->monomials(j, 1),    // powerY
+			   0);                    // powerZ
+      
+      (*(*basis)[s])[i] = new Polynomial(p);
+    }
   }
-
 
   // Edge Based //
   // Without Closure
-  for(int i = 0; i < nEdge; i++){
-    int ci              = i + nVertex;
+  for(unsigned int i = 0; i < nEdge; i++){
+    unsigned int ci     = i + nVertex;
     pEdgeClosureLess[i] = Polynomial(0, 0, 0, 0);
     
-    for(int j = 0; j < nMonomial; j++)
+    for(unsigned int j = 0; j < nMonomial; j++)
       pEdgeClosureLess[i] = 
 	pEdgeClosureLess[i] + 
 	Polynomial(l->coefficients(ci, j), // Coef 
@@ -125,29 +123,27 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
   // With Closure
   edgeOrder = triEdgeOrder(order); // Closure Ordering
 
-  for(int i = 0; i < nEdge; i++){
-    (*(*edge)[0])[i] = 
-      new Polynomial(pEdgeClosureLess[edgeOrder[0][i]]);
-    
-    (*(*edge)[1])[i] = 
-      new Polynomial(pEdgeClosureLess[edgeOrder[1][i]]);
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(unsigned int i = nVertex; i < nEdge; i++){
+      (*(*basis)[s])[i] = 
+	new Polynomial(pEdgeClosureLess[edgeOrder[s][i]]);
+    }
   }
-
 
   // Cell Based //
-  for(int i = 0; i < nCell; i++){
-    int ci       = i + nVertex + nEdge;
-    Polynomial p = Polynomial(0, 0, 0, 0);
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(unsigned int i = nVertex + nEdge; i < nCell; i++){
+      Polynomial p = Polynomial(0, 0, 0, 0);
     
-    for(int j = 0; j < nMonomial; j++)
-      p = p + Polynomial(l->coefficients(ci, j), // Coef 
-			 l->monomials(j, 0),     // powerX
-			 l->monomials(j, 1),     // powerY
-			 0);                     // powerZ
-    
-    (*cell)[i] = new Polynomial(p);
+      for(unsigned int j = 0; j < nMonomial; j++)
+	p = p + Polynomial(l->coefficients(i, j), // Coef 
+			   l->monomials(j, 0),    // powerX
+			   l->monomials(j, 1),    // powerY
+			   0);                    // powerZ
+      
+      (*(*basis)[s])[i] = new Polynomial(p);
+    }
   }
-
   
   // Delete Temporary Space //
   delete[] pEdgeClosureLess;
@@ -157,47 +153,25 @@ TriLagrangeBasis::TriLagrangeBasis(int order){
     delete[] edgeOrder[1];
     delete[] edgeOrder;
   }
+  */
 }
 
 TriLagrangeBasis::~TriLagrangeBasis(void){
   // Delete gmsh polynomial Basis //
   // --> no method to do so :-(
   //  --> erased ??
+  // ReferenceSpace //
+  delete refSpace;
 
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
-  
-  delete node;
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete (*(*basis)[i])[j];
 
-  // Edge Based //
-  for(int c = 0; c < nEdgeClosure; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
-    
-    delete (*edge)[c];
-  }
-  
-  delete edge;
-
-  // Face Based //
-  for(int c = 0; c < nFaceClosure; c++){
-    for(int i = 0; i < nFace; i++)
-      delete (*(*face)[c])[i];
-    
-    delete (*face)[c];
+    delete (*basis)[i];
   }
 
-  delete face;
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    delete (*cell)[i];
-
-  delete cell;
-
-  // Delete Lagrange Points //
-  delete point;
+  delete basis;
 }
 
 fullMatrix<double> TriLagrangeBasis::

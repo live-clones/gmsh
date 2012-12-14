@@ -8,6 +8,7 @@ set(SRC
   Legendre.cpp
 
   ReferenceSpace.cpp
+  LineReferenceSpace.cpp
   TriReferenceSpace.cpp
   TetReferenceSpace.cpp
 
@@ -22,26 +23,24 @@ set(SRC
   DivBasis.cpp
 
   EvaluatedBasis.cpp
-  EvaluatedBasisScalar.cpp
-  EvaluatedBasisVector.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp
   LineNedelecBasis.cpp
 
-  QuadNodeBasis.cpp
-  QuadEdgeBasis.cpp
+#  QuadNodeBasis.cpp
+#  QuadEdgeBasis.cpp
 
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
   TriLagrangeBasis.cpp
 
-  HexNodeBasis.cpp
-  HexEdgeBasis.cpp
+#  HexNodeBasis.cpp
+#  HexEdgeBasis.cpp
 
-  TetNodeBasis.cpp
-  TetEdgeBasis.cpp
+#  TetNodeBasis.cpp
+#  TetEdgeBasis.cpp
   
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

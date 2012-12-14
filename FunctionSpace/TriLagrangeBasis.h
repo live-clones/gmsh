@@ -23,7 +23,7 @@ class TriLagrangeBasis: public LagrangeBasis{
   //!
   //! Returns a new TriLagrangeBasis 
   //! of the given Order
-  TriLagrangeBasis(int order);
+  TriLagrangeBasis(unsigned int order);
   
   //! Deletes this Basis
   //!

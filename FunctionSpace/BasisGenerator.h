@@ -21,29 +21,29 @@ class BasisGenerator{
    BasisGenerator(void);
   ~BasisGenerator(void);
 
-  static Basis* generate(int elementType, 
-			 int basisType, 
-			 int order,
+  static Basis* generate(unsigned int elementType, 
+			 unsigned int basisType, 
+			 unsigned int order,
 			 std::string family);
 
-  static Basis* generate(int elementType, 
-			 int basisType, 
-			 int order);
+  static Basis* generate(unsigned int elementType, 
+			 unsigned int basisType, 
+			 unsigned int order);
 
-  static Basis* linZaglmayrGen(int basisType, int order);
-  static Basis* triZaglmayrGen(int basisType, int order);
-  static Basis* quaZaglmayrGen(int basisType, int order);
-  static Basis* tetZaglmayrGen(int basisType, int order);
-  static Basis* hexZaglmayrGen(int basisType, int order);
+  static Basis* linZaglmayrGen(unsigned int basisType, unsigned int order);
+  static Basis* triZaglmayrGen(unsigned int basisType, unsigned int order);
+  static Basis* quaZaglmayrGen(unsigned int basisType, unsigned int order);
+  static Basis* tetZaglmayrGen(unsigned int basisType, unsigned int order);
+  static Basis* hexZaglmayrGen(unsigned int basisType, unsigned int order);
 
  private:
-  static Basis* generateZaglmayr(int elementType, 
-				 int basisType, 
-				 int order);
+  static Basis* generateZaglmayr(unsigned int elementType, 
+				 unsigned int basisType, 
+				 unsigned int order);
 
-  static Basis* generateLagrange(int elementType, 
-				 int basisType, 
-				 int order);  
+  static Basis* generateLagrange(unsigned int elementType, 
+				 unsigned int basisType, 
+				 unsigned int order);  
 };
 
 
@@ -60,7 +60,7 @@ class BasisGenerator{
    Deletes this BasisGenerator
    **
 
-   @fn BasisGenerator::generate(int, int, int, std::string)
+   @fn BasisGenerator::generate(unsigned int, unsigned int, unsigned int, std::string)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type
@@ -93,7 +93,7 @@ class BasisGenerator{
    @li @c lagrange for Lagrange's Basis Functions   
    **
 
-   @fn BasisGenerator::generate(int, int, int)
+   @fn BasisGenerator::generate(unsigned int, unsigned int, unsigned int)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type
@@ -206,9 +206,9 @@ class BasisGenerator{
 // Inline Functions //
 //////////////////////
 
-inline Basis* BasisGenerator::generate(int elementType, 
-				       int basisType, 
-				       int order){
+inline Basis* BasisGenerator::generate(unsigned int elementType, 
+				       unsigned int basisType, 
+				       unsigned int order){
   
   return BasisGenerator::generate(elementType, 
 				  basisType, 

@@ -24,7 +24,7 @@ class LineNodeBasis: public BasisScalar{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Lines of the given order
-  LineNodeBasis(int order);
+  LineNodeBasis(unsigned int order);
   
   //! Deletes this Basis
   //!

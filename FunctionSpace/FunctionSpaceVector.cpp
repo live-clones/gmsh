@@ -41,7 +41,7 @@ preEvaluateLocalFunctions(fullMatrix<double>& points){
     delete evalLoc;
 
   // New Struct //
-  evalLoc = new EvaluatedBasisVector(*basisVector, points);
+  evalLoc = new EvaluatedBasis(*basisVector, points);
 
   // PreEvaluated //
   locPreEvaluated = true;
@@ -62,7 +62,7 @@ preEvaluateCurlLocalFunctions(fullMatrix<double>& points){
     delete evalCurl;
 
   // New Struct //
-  evalCurl = new EvaluatedBasisVector(*curlBasis, points);
+  evalCurl = new EvaluatedBasis(*curlBasis, points);
 
   // PreEvaluated //
   curlPreEvaluated = true;
@@ -83,7 +83,7 @@ preEvaluateDivLocalFunctions(fullMatrix<double>& points){
     delete evalDiv;
 
   // New Struct //
-  evalDiv = new EvaluatedBasisScalar(*divBasis, points);
+  evalDiv = new EvaluatedBasis(*divBasis, points);
 
   // PreEvaluated //
   divPreEvaluated = true;

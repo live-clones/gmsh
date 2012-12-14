@@ -20,7 +20,7 @@ class TriNodeBasis: public BasisScalar{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Triangles of the given order
-  TriNodeBasis(int order);
+  TriNodeBasis(unsigned int order);
   
   //! Deletes this Basis
   //!

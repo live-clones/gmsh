@@ -20,41 +20,32 @@
 
 class BasisScalar: public Basis{
  protected:
-  std::vector            <Polynomial*>*   node;
-  std::vector<std::vector<Polynomial*>*>* edge;
-  std::vector<std::vector<Polynomial*>*>* face;
-  std::vector            <Polynomial*>*   cell;
+  std::vector<std::vector<const Polynomial*>*>* basis;
 
  public:
   //! Deletes this BasisScalar
   //!
   virtual ~BasisScalar(void);
 
+  //! @param refSpace A natural number
   //! @param i A natural number
-  //! @return Returns the @c i%th @em Vertex Based 
-  //! Basis Function
+  //! @return Returns the @c i%th @em 
+  //! Basis Function of the @c refSpace%th ReferenceSpace
   const Polynomial&
-    getNodeFunction(unsigned int i) const;
-  
-  //! @param i A natural number
-  //! @param closure A natural number
-  //! @return Returns the @c i%th @em Edge Based 
-  //! Basis Function, with the @c closure%th Closure
-  const Polynomial&
-    getEdgeFunction(unsigned int closure, unsigned int i) const;
-  
-  //! @param i A natural number
-  //! @param closure A natural number
-  //! @return Returns the @c i%th @em Face Based 
-  //! Basis Function, with the @c closure%th Closure
-  const Polynomial&
-    getFaceFunction(unsigned int closure, unsigned int i) const;
- 
-  //! @param i A natural number
-  //! @return Returns the @c i%th @em Cell Based 
-  //! Basis Function
-  const Polynomial&
-    getCellFunction(unsigned int i) const;
+    getFunction(unsigned int refSpace, unsigned int i) const;
+
+  //! @param refSpace A natural number
+  //! @return Returns the @em all
+  //! Basis Function of the @c refSpace%th ReferenceSpace
+  const std::vector<const Polynomial*>&
+    getFunction(unsigned int refSpace) const;
+
+  //! @param element An Element
+  //! @return Returns the @em all
+  //! Basis Function in the @c given element
+  //! @em ReferenceSpace
+  const std::vector<const Polynomial*>&
+    getFunction(const MElement& element) const;  
 
   virtual std::string toString(void) const;
 
@@ -70,28 +61,22 @@ class BasisScalar: public Basis{
 // Inline Function //
 //////////////////////
 
-inline
+inline  
 const Polynomial& 
-BasisScalar::getNodeFunction(unsigned int i) const{
-  return *(*node)[i];
+BasisScalar::getFunction(unsigned int refSpace, unsigned int i) const{
+  return *(*(*basis)[refSpace])[i];
 }
 
 inline  
-const Polynomial& 
-BasisScalar::getEdgeFunction(unsigned int closure, unsigned int i) const{
-  return *(*(*edge)[closure])[i];
+const std::vector<const Polynomial*>&
+BasisScalar::getFunction(unsigned int refSpace) const{
+  return *(*basis)[refSpace];
 }
 
-inline
-const Polynomial& 
-BasisScalar::getFaceFunction(unsigned int closure, unsigned int i) const{
-  return *(*(*face)[closure])[i];
-}
-
-inline
-const Polynomial&
-BasisScalar::getCellFunction(unsigned int i) const{
-  return *(*cell)[i];
+inline  
+const std::vector<const Polynomial*>&
+BasisScalar::getFunction(const MElement& element) const{
+  return *(*basis)[refSpace->getReferenceSpace(element)];
 }
 
 #endif

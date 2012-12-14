@@ -1,75 +1,59 @@
 #include "LineNedelecBasis.h"
+#include "LineReferenceSpace.h"
 #include "Legendre.h"
 
 using namespace std;
 
 LineNedelecBasis::LineNedelecBasis(void){
+  // Reference Space //
+  refSpace  = new LineReferenceSpace;
+  nRefSpace = refSpace->getNReferenceSpace();
+
   // Set Basis Type //
   order = 1;
   
   type = 1;
   dim  = 1;
 
-  nVertex = 0;
-  nEdge   = 1;
-  nFace   = 0;
-  nCell   = 0;
-
-  nEdgeClosure = 2;
-  nFaceClosure = 0;
-
-  size = 1;
+  nVertex   = 0;
+  nEdge     = 1;
+  nFace     = 0;
+  nCell     = 0;
+  nFunction = 1;
 
   // Alloc Temporary Space //
-  const Polynomial plusOneHalf(+0.5, 0, 0, 0);
-  const Polynomial minusOneHalf(-0.5, 0, 0, 0);
-  const Polynomial zero(0, 0, 0, 0);
+  vector<Polynomial> first(3);
+  first[0] = Polynomial(+0.5, 0, 0, 0);
+  first[1] = Polynomial( 0  , 0, 0, 0);
+  first[2] = Polynomial( 0  , 0, 0, 0);
+
+  vector<Polynomial> second(3);
+  second[0] = Polynomial(-0.5, 0, 0, 0);
+  second[1] = Polynomial( 0  , 0, 0, 0);
+  second[2] = Polynomial( 0  , 0, 0, 0);
 
   // Basis //
-  node = new vector<vector<Polynomial>*>(nVertex);
-  edge = new vector<vector<vector<Polynomial>*>*>(nEdgeClosure);
-  face = new vector<vector<vector<Polynomial>*>*>(nFaceClosure);
-  cell = new vector<vector<Polynomial>*>(nCell);
-  
-  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
-  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
+  basis = new vector<vector<const vector<Polynomial>*>*>(nRefSpace);
 
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
 
   // Nedelec // 
-  (*(*edge)[0])[0]        = new vector<Polynomial>(3);
-  (*(*edge)[0])[0]->at(0) = plusOneHalf; 
-  (*(*edge)[0])[0]->at(1) = zero; 
-  (*(*edge)[0])[0]->at(2) = zero; 
-
-  (*(*edge)[1])[0]        = new vector<Polynomial>(3);
-  (*(*edge)[1])[0]->at(0) = minusOneHalf; 
-  (*(*edge)[1])[0]->at(1) = zero; 
-  (*(*edge)[1])[0]->at(2) = zero; 
+  (*(*basis)[0])[0] = new vector<Polynomial>(first);
+  (*(*basis)[1])[0] = new vector<Polynomial>(second);
 }
 
 LineNedelecBasis::~LineNedelecBasis(void){
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
-  
-  delete node;
+  // ReferenceSpace //
+  delete refSpace;
 
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete (*(*basis)[i])[j];
 
-  // Edge Based //
-  for(int c = 0; c < 2; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
-    
-    delete (*edge)[c];
+    delete (*basis)[i];
   }
-  
-  delete edge;
 
-
-  // Face Based //
-  delete face;
-
-
-  // Cell Based //
-  delete cell;
+  delete basis;
 }
