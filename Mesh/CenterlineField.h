@@ -159,8 +159,8 @@ class Centerline : public Field{
   //Print for debugging
   void printSplit() const;
  
-  SMetric3 metricBasedOnSurfaceCurvature(SVector3 dMin, SVector3 dMax, double cMin, double cMax, double radMax, 
-					 double beta, double lc_n, double lc_t, double hwall_t);
+  SMetric3 metricBasedOnSurfaceCurvature(SVector3 dMin, SVector3 dMax, double cMin, double cMax,
+					  double lc_n, double lc_t1, double lc_t2);
 
 };
 #else

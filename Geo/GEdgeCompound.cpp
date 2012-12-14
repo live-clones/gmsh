@@ -271,7 +271,7 @@ double GEdgeCompound::curvatures(const double par, SVector3 *dirMax, SVector3 *d
     double cMax[2];
     SVector3 dMin[2];
     SVector3 dMax[2];
-    curvature.edgeNodalValuesAndDirections(mline, dMax, dMin, cMax, cMin, 0);
+    curvature.edgeNodalValuesAndDirections(mline, dMax, dMin, cMax, cMin, 1);
 
     *dirMax = (1-tLocMLine)*dMax[0] + tLocMLine*dMax[1];
     *dirMin = (1-tLocMLine)*dMin[0] + tLocMLine*dMin[1];

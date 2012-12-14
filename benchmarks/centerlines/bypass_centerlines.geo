@@ -10,7 +10,7 @@ Merge "bypass.stl";
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesBYPASS.msh";
-Field[1].nbPoints = 15;
+Field[1].nbPoints = 25;
 
 Field[1].nbElemLayer = 4;
 Field[1].hLayer = 0.2;//percent of vessel radius
