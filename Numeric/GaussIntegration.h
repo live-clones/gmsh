@@ -31,6 +31,9 @@ IntPt *getGQTetPts(int order);
 int getNGQPriPts(int order);
 IntPt *getGQPriPts(int order);
 
+int getNGQPyrPts(int order);
+IntPt *getGQPyrPts(int order);
+
 int getNGQHPts(int order);
 IntPt *getGQHPts(int order);
 
@@ -49,6 +52,8 @@ class gaussIntegration {
   static void getHexahedron(int order, fullMatrix<double> &pts, 
                             fullVector<double> &weights);
   static void getPrism(int order, fullMatrix<double> &pts,
+                       fullVector<double> &weights);
+  static void getPyramid(int order, fullMatrix<double> &pts,
                        fullVector<double> &weights);
 };
 

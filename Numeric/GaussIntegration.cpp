@@ -55,6 +55,12 @@ void gaussIntegration::getPrism(int order, fullMatrix<double> &pts,
   pts2fullMatrix(getNGQPriPts(order),getGQPriPts(order),pts,weights);
 }
 
+void gaussIntegration::getPyramid(int order, fullMatrix<double> &pts,
+                                fullVector<double> &weights)
+{
+  pts2fullMatrix(getNGQPyrPts(order),getGQPyrPts(order),pts,weights);
+}
+
 void gaussIntegration::get(int elementType, int order, fullMatrix<double> &pts,
                            fullVector<double> &weights)
 {
@@ -65,6 +71,7 @@ void gaussIntegration::get(int elementType, int order, fullMatrix<double> &pts,
   case TYPE_TET : pts2fullMatrix(getNGQTetPts(order), getGQTetPts(order), pts, weights); break;
   case TYPE_HEX : pts2fullMatrix(getNGQHPts(order), getGQHPts(order), pts, weights); break;
   case TYPE_PRI : pts2fullMatrix(getNGQPriPts(order), getGQPriPts(order), pts, weights); break;
+  case TYPE_PYR : pts2fullMatrix(getNGQPyrPts(order), getGQPyrPts(order), pts, weights); break;
   case TYPE_PNT :
     weights.resize(1,1);
     weights(0) = 1.;

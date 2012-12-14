@@ -6,37 +6,65 @@
 #include "GmshMessage.h"
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
+#include "GaussJacobi1D.h"
 
 IntPt *getGQPyrPts(int order);
 int getNGQPyrPts(int order);
 
-IntPt * GQP[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+IntPt * GQPyr[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 IntPt *getGQPyrPts(int order)
 {
-  int nLin = (order+3)/2;
-  int nTri = getNGQTPts(order);
-  int n = nLin*nTri;
+
   int index = order;
-  if (order >= (int)(sizeof(GQP) / sizeof(IntPt*)))
-    Msg::Fatal("Increase size of GQP in gauss quadrature prism");
-  if(!GQP[index]){
+
+  if(!GQPyr[index]) {
+
+    int nbPtUV = order/2 + 1;
+    int nbPtW  = order/2 + 1;
+    int nbPtUV2 = nbPtUV * nbPtUV;
+
     double *linPt,*linWt;
-    IntPt *triPts = getGQTPts(order);
-    gmshGaussLegendre1D(nLin,&linPt,&linWt);
-    GQP[index] = new IntPt[n];
+    gmshGaussLegendre1D(nbPtUV,&linPt,&linWt);
+
+    double *GJ20Pt, *GJ20Wt;
+    getGaussJacobiQuadrature(2, 0, nbPtW, &GJ20Pt, &GJ20Wt);
+
+    GQPyr[index] = new IntPt[getNGQPyrPts(order)];
+    if (order >= (int)(sizeof(GQPyr) / sizeof(IntPt*)))
+      Msg::Fatal("Increase size of GQPyr in gauss quadrature prism");
+
     int l = 0;
-    for(int i=0; i < nTri; i++) {
-      for(int j=0; j < nLin; j++) {
-        GQP[index][l].pt[0] = triPts[i].pt[0];
-        GQP[index][l].pt[1] = triPts[i].pt[1];
-        GQP[index][l].pt[2] = linPt[j];
-        GQP[index][l++].weight = triPts[i].weight*linWt[j];
-      }
+    for (int i = 0; i < getNGQPyrPts(order); i++) {
+
+      // compose an integration rule for (1-w)^2 f(u,v,w) on the standard hexahedron
+
+      int iW = i / (nbPtUV2);
+      int iU = (i - iW*nbPtUV2)/nbPtUV;
+      int iV = (i - iW*nbPtUV2 - iU*nbPtUV);
+
+      // std::cout << "Points " << iU << " " << iV << " " << iW << std::endl;
+
+      int wt = linWt[iU]*linWt[iV]*GJ20Wt[iW];
+
+      double up = linPt[iU];
+      double vp = linPt[iV];
+      double wp = GJ20Pt[iW];
+      
+      // now incorporate the Duffy transformation from pyramid to hexahedron
+
+      GQPyr[index][l].pt[0] = 0.5*(1-wp)*up;
+      GQPyr[index][l].pt[1] = 0.5*(1-wp)*vp;
+      GQPyr[index][l].pt[2] = 0.5*(1+wp);
+
+      wt *= 0.125;
+      GQPyr[index][l++].weight = wt;
+
     }
+
   }
-  return GQP[index];
+  return GQPyr[index];
 }
 
 
