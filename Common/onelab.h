@@ -148,7 +148,7 @@ namespace onelab{
       std::string::size_type last = msg.find_first_of(separator, first);
       std::string next("");
       if(last == std::string::npos){
-        next = msg.substr(first, last - first);
+        next = msg.substr(first);
         first = last;
       }
       else if(first == last){
