@@ -3217,12 +3217,12 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
     pyramids.insert(*it);
   }
 
-  if(pyramids.size()==0 && tetrahedra.size()==1){
+  /*if(pyramids.size()==0 && tetrahedra.size()==1){
 	printf("tetrahedron deleted\n");
     it2 = markings.find(*tetrahedra.begin());
 	it2->second = 1;
 	return;
-  }
+  }*/
 
   if(flag){
     diagA = a;
