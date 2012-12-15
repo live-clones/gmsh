@@ -226,7 +226,7 @@ static void updateSizes(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
       if (itv != LCS.end()){
 	double LL = itv->second.first/itv->second.second;
 	SMetric3 l4(1./(LL*LL));
-	//	printf("adding a size %g\n",LL);
+	//printf("adding a size %g\n",LL);
 	SMetric3 MM = intersection_conserve_mostaniso (l4, m);
 	m = MM;
       }

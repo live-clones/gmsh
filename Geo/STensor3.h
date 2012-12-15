@@ -62,7 +62,6 @@ class SMetric3 {
     e(1,0) = t2(0); e(1,1) = t2(1); e(1,2) = t2(2);
     e(2,0) = t3(0); e(2,1) = t3(1); e(2,2) = t3(2);
     e.transposeInPlace();
-    //      e.invertInPlace();
 
     fullMatrix<double> tmp(3,3);
     tmp(0,0) = l1 * e(0,0);
@@ -83,6 +82,7 @@ class SMetric3 {
     _val[3] = tmp(2,0) * e(0,0) + tmp(2,1) * e(1,0) + tmp(2,2) * e(2,0);
     _val[4] = tmp(2,0) * e(0,1) + tmp(2,1) * e(1,1) + tmp(2,2) * e(2,1);
     _val[5] = tmp(2,0) * e(0,2) + tmp(2,1) * e(1,2) + tmp(2,2) * e(2,2);
+
   }
   inline double &operator()(int i, int j)
   {
@@ -166,6 +166,7 @@ inline double dot(const SVector3 &a, const SMetric3 &m, const SVector3 &b)
 // preserve orientation of m1
 SMetric3 intersection_conserveM1 (const SMetric3 &m1,
 				  const SMetric3 &m2);
+
 // preserve orientation of the most anisotropic metric
 SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2);
 // compute the largest inscribed ellipsoid...
