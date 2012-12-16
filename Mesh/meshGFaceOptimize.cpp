@@ -138,11 +138,7 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
 
 void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
-                                       std::vector<double> &vSizes,
-                                       std::vector<double> &vSizesBGM,
-                                       std::vector<SMetric3> &vMetricsBGM,
-                                       std::vector<double> &Us,
-                                       std::vector<double> &Vs)
+				       bidimMeshData & data)
 {
   std::map<MVertex*, double> vSizesMap;
   std::list<GEdge*> edges = gf->edges();
@@ -164,33 +160,34 @@ void buildMeshGenerationDataStructures(GFace *gf,
     }
   }
 
-  int NUM = 0;
+  //  int NUM = 0;
   for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
     // FIXME: this vertex-stored indexing makes the optimization
     // routines not thread-safe (we cannot concurrently optimize two
-    // surfaces that share an edge)
-    it->first->setIndex(NUM++);
-    vSizes.push_back(it->second);
-    vSizesBGM.push_back(it->second);
-    vMetricsBGM.push_back(SMetric3(it->second));
+    // surfaces that share an edge)    
+    //    it->first->setIndex(NUM++);
+    // OK, I can fix that 
+    //    vSizes.push_back(it->second);
+    //    vSizesBGM.push_back(it->second);
+    //    vMetricsBGM.push_back(SMetric3(it->second));
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
-    Us.push_back(param[0]);
-    Vs.push_back(param[1]);
+    //    Us.push_back(param[0]);
+    //    Vs.push_back(param[1]);
+    data.addVertex (it->first, param[0], param[1], it->second, it->second); 
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    double lc = 0.3333333333 * (vSizes[gf->triangles[i]->getVertex(0)->getIndex()] +
-                                vSizes[gf->triangles[i]->getVertex(1)->getIndex()] +
-                                vSizes[gf->triangles[i]->getVertex(2)->getIndex()]);
-    AllTris.insert(new MTri3(gf->triangles[i], lc, 0, &Us, &Vs, gf));
+    double lc = 0.3333333333 * (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
+                                data.vSizes[data.getIndex(gf->triangles[i]->getVertex(1))] +
+                                data.vSizes[data.getIndex(gf->triangles[i]->getVertex(2))]);
+    AllTris.insert(new MTri3(gf->triangles[i], lc, 0, &data, gf));
   }
   gf->triangles.clear();
   connectTriangles(AllTris);
 }
 
-void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
-                           std::vector<double> &Us, std::vector<double> &Vs)
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData & data)
 {
   while (1) {
     if(AllTris.begin() == AllTris.end()) break;
@@ -211,15 +208,21 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
     MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
-    normal3points(Us[v0->getIndex()], Vs[v0->getIndex()], 0.,
-                  Us[v1->getIndex()], Vs[v1->getIndex()], 0.,
-                  Us[v2->getIndex()], Vs[v2->getIndex()], 0., n1);
+    int index0 = data.getIndex (v0);
+    int index1 = data.getIndex (v1);
+    int index2 = data.getIndex (v2);
+    normal3points(data.Us[index0], data.Vs[index0], 0.,
+                  data.Us[index1], data.Vs[index1], 0.,
+                  data.Us[index2], data.Vs[index2], 0., n1);
     for(unsigned int j = 1; j < gf->triangles.size(); j++){
       t = gf->triangles[j];
       v0 = t->getVertex(0); v1 = t->getVertex(1); v2 = t->getVertex(2);
-      normal3points(Us[v0->getIndex()], Vs[v0->getIndex()], 0.,
-                    Us[v1->getIndex()], Vs[v1->getIndex()], 0.,
-                    Us[v2->getIndex()], Vs[v2->getIndex()], 0., n2);
+      index0 = data.getIndex (v0);
+      index1 = data.getIndex (v1);
+      index2 = data.getIndex (v2);
+      normal3points(data.Us[index0], data.Vs[index0], 0.,
+		    data.Us[index1], data.Vs[index1], 0.,
+		    data.Us[index2], data.Vs[index2], 0., n2);
       double pp; prosca(n1, n2, &pp);
       if(pp < 0) t->revert();
     }
@@ -318,14 +321,15 @@ double surfaceFaceUV(MElement *t,GFace *gf, bool *concave = 0)
   }
 }
 
-double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,
-                         const std::vector<double> &Us,
-                         const std::vector<double> &Vs)
+double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,bidimMeshData & data)
 {
-  const double v12[2] = {Us[v2->getIndex()] - Us[v1->getIndex()],
-                         Vs[v2->getIndex()] - Vs[v1->getIndex()]};
-  const double v13[2] = {Us[v3->getIndex()] - Us[v1->getIndex()],
-                         Vs[v3->getIndex()] - Vs[v1->getIndex()]};
+  int index1 = data.getIndex(v1);
+  int index2 = data.getIndex(v2);
+  int index3 = data.getIndex(v3);
+  const double v12[2] = {data.Us[index2] - data.Us[index1],
+                         data.Vs[index2] - data.Vs[index1]};
+  const double v13[2] = {data.Us[index3] - data.Us[index1],
+                         data.Vs[index3] - data.Vs[index1]};
   return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
 }
 
@@ -1793,6 +1797,7 @@ struct p1p2p3 {
 #if defined(HAVE_BFGS)
 // Callback function for BFGS
 
+/*
 static void sort_edges (std::vector<MEdge> &eds){
 
   std::list<MEdge> eds_sorted;
@@ -1823,8 +1828,8 @@ static void sort_edges (std::vector<MEdge> &eds){
   }
   eds.insert(eds.begin(),eds_sorted.begin(),eds_sorted.end());
 }
-
-static int OPTI_NUMBER = 1;
+*/
+//static int OPTI_NUMBER = 1;
 struct opti_data_vertex_relocation {
   int nv;
   const std::vector<MElement*> & e;
@@ -2539,9 +2544,7 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
 }
 
 bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
-              std::vector<MTri3*> &newTris, const swapCriterion &cr,
-              const std::vector<double> &Us, const std::vector<double> &Vs,
-              const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
+              std::vector<MTri3*> &newTris, const swapCriterion &cr, bidimMeshData & data)
 {
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if(!t2) return false;
@@ -2558,13 +2561,13 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   if(configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
 
-  const double volumeRef = surfaceTriangleUV(v1, v2, v3, Us, Vs) +
-    surfaceTriangleUV(v1, v2, v4, Us, Vs);
+  const double volumeRef = surfaceTriangleUV(v1, v2, v3, data) +
+    surfaceTriangleUV(v1, v2, v4, data);
 
   MTriangle *t1b = new MTriangle(v2, v3, v4);
   MTriangle *t2b = new MTriangle(v4, v3, v1);
-  const double v1b = surfaceTriangleUV(v2, v3, v4, Us, Vs);
-  const double v2b = surfaceTriangleUV(v4, v3, v1, Us, Vs);
+  const double v1b = surfaceTriangleUV(v2, v3, v4, data);
+  const double v2b = surfaceTriangleUV(v4, v3, v1, data);
   const double volume = v1b + v2b;
   if(fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) ||
       v1b < 1.e-8 * (volume + volumeRef) ||
@@ -2590,36 +2593,16 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
     }
   case SWCR_DEL:
     {
-      double edgeCenter[2] ={(Us[v1->getIndex()] + Us[v2->getIndex()] + Us[v3->getIndex()] +
-                              Us[v4->getIndex()]) * .25,
-                             (Vs[v1->getIndex()] + Vs[v2->getIndex()] + Vs[v3->getIndex()] +
-                              Vs[v4->getIndex()]) * .25};
-      double uv4[2] ={Us[v4->getIndex()], Vs[v4->getIndex()]};
+      int index1 = data.getIndex(v1);
+      int index2 = data.getIndex(v2);
+      int index3 = data.getIndex(v3);
+      int index4 = data.getIndex(v4);
+      double edgeCenter[2] ={(data.Us[index1] + data.Us[index2] + data.Us[index3] + data.Us[index4]) * .25,
+                             (data.Vs[index1] + data.Vs[index2] + data.Vs[index3] + data.Vs[index4]) * .25};
+      double uv4[2] ={data.Us[index4], data.Vs[index4]};
       double metric[3];
       buildMetric(gf, edgeCenter, metric);
-      if(!inCircumCircleAniso(gf, t1->tri(), uv4, metric, Us, Vs)){
-        delete t1b;
-        delete t2b;
-        return false;
-      }
-    }
-    break;
-  case SWCR_CLOSE:
-    {
-      double avg1[3] = {(v1->x() + v2->x()) *.5,(v1->y() + v2->y()) *.5,
-                        (v1->z() + v2->z()) *.5};
-      double avg2[3] = {(v3->x() + v4->x()) *.5,(v3->y() + v4->y()) *.5,
-                        (v3->z() + v4->z()) *.5};
-
-      GPoint gp1 = gf->point(SPoint2((Us[v1->getIndex()] + Us[v2->getIndex()]) * .5,
-                                     (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5));
-      GPoint gp2 = gf->point(SPoint2((Us[v3->getIndex()] + Us[v4->getIndex()]) * .5,
-                                     (Vs[v3->getIndex()] + Vs[v4->getIndex()]) * .5));
-      double d1 = (avg1[0] - gp1.x()) * (avg1[0] - gp1.x()) + (avg1[1] - gp1.y()) *
-        (avg1[1]-gp1.y()) + (avg1[2] - gp1.z()) * (avg1[2] - gp1.z());
-      double d2 = (avg2[0] - gp2.x()) * (avg2[0] - gp2.x()) + (avg2[1] - gp2.y()) *
-        (avg2[1] - gp2.y()) + (avg2[2] - gp2.z()) * (avg2[2] - gp2.z());
-      if(d1 < d2){
+      if(!inCircumCircleAniso(gf, t1->tri(), uv4, metric, data)){
         delete t1b;
         delete t2b;
         return false;
@@ -2650,22 +2633,25 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       if(!found)cavity.push_back(t2->getNeigh(i));
     }
   }
-  double lc1 = 0.3333333333 * (vSizes[t1b->getVertex(0)->getIndex()] +
-                               vSizes[t1b->getVertex(1)->getIndex()] +
-                               vSizes[t1b->getVertex(2)->getIndex()]);
-  double lcBGM1 = 0.3333333333 * (vSizesBGM[t1b->getVertex(0)->getIndex()] +
-                                  vSizesBGM[t1b->getVertex(1)->getIndex()] +
-                                  vSizesBGM[t1b->getVertex(2)->getIndex()]);
-  double lc2 = 0.3333333333 * (vSizes[t2b->getVertex(0)->getIndex()] +
-                               vSizes[t2b->getVertex(1)->getIndex()] +
-                               vSizes[t2b->getVertex(2)->getIndex()]);
-  double lcBGM2 = 0.3333333333 * (vSizesBGM[t2b->getVertex(0)->getIndex()] +
-                                  vSizesBGM[t2b->getVertex(1)->getIndex()] +
-                                  vSizesBGM[t2b->getVertex(2)->getIndex()]);
+
+  int i10 = data.getIndex(t1b->getVertex(0));
+  int i11 = data.getIndex(t1b->getVertex(1));
+  int i12 = data.getIndex(t1b->getVertex(2));
+
+  int i20 = data.getIndex(t2b->getVertex(0));
+  int i21 = data.getIndex(t2b->getVertex(1));
+  int i22 = data.getIndex(t2b->getVertex(2));
+  
+  double lc1 = 0.3333333333 * (data.vSizes[i10] + data.vSizes[i11] + data.vSizes[i12]);
+  double lcBGM1 = 0.3333333333 * (data.vSizesBGM[i10] + data.vSizesBGM[i11] + data.vSizesBGM[i12]);
+
+  double lc2 = 0.3333333333 * (data.vSizes[i20] + data.vSizes[i21] + data.vSizes[i22]);
+  double lcBGM2 = 0.3333333333 * (data.vSizesBGM[i20] + data.vSizesBGM[i21] + data.vSizesBGM[i22]);
+
   MTri3 *t1b3 = new MTri3(t1b, Extend1dMeshIn2dSurfaces() ?
-                          std::min(lc1, lcBGM1) : lcBGM1, 0, &Us, &Vs, gf);
+                          std::min(lc1, lcBGM1) : lcBGM1, 0, &data, gf);
   MTri3 *t2b3 = new MTri3(t2b, Extend1dMeshIn2dSurfaces() ?
-                          std::min(lc2, lcBGM2) : lcBGM2, 0, &Us, &Vs, gf);
+                          std::min(lc2, lcBGM2) : lcBGM2, 0, &data, gf);
 
   cavity.push_back(t1b3);
   cavity.push_back(t2b3);
@@ -2679,9 +2665,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 }
 
 int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
-                 const swapCriterion &cr,
-                 const std::vector<double> &Us, const std::vector<double> &Vs,
-                 const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
+                 const swapCriterion &cr,bidimMeshData & data)
 {
   typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
 
@@ -2693,7 +2677,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
       if(!(*it)->isDeleted()){
         for(int i = 0; i < 3; i++){
-          if(edgeSwap(configs, *it, gf, i, newTris, cr, Us, Vs, vSizes, vSizesBGM)){
+          if(edgeSwap(configs, *it, gf, i, newTris, cr, data)){
             nbSwap++;
             break;
           }
@@ -2712,30 +2696,6 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     if(nbSwap == 0) break;
   }
   return nbSwapTot;
-}
-
-inline double computeEdgeAdimLength(MVertex *v1, MVertex *v2, GFace *f,
-                                    const std::vector<double> &Us,
-                                    const std::vector<double> &Vs,
-                                    const std::vector<double> &vSizes ,
-                                    const std::vector<double> &vSizesBGM)
-{
-  const double edgeCenter[2] ={(Us[v1->getIndex()] + Us[v2->getIndex()]) * .5,
-                               (Vs[v1->getIndex()] + Vs[v2->getIndex()]) * .5};
-  GPoint GP = f->point (edgeCenter[0], edgeCenter[1]);
-
-  const double dx1 = v1->x() - GP.x();
-  const double dy1 = v1->y() - GP.y();
-  const double dz1 = v1->z() - GP.z();
-  const double l1 = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
-  const double dx2 = v2->x() - GP.x();
-  const double dy2 = v2->y() - GP.y();
-  const double dz2 = v2->z() - GP.z();
-  const double l2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
-  if(Extend1dMeshIn2dSurfaces())
-    return 2 * (l1 + l2) / (std::min(vSizes[v1->getIndex()], vSizesBGM[v1->getIndex()]) +
-                            std::min(vSizes[v2->getIndex()], vSizesBGM[v2->getIndex()]));
-  return 2 * (l1 + l2) / (vSizesBGM[v1->getIndex()] + vSizesBGM[v2->getIndex()]);
 }
 
 

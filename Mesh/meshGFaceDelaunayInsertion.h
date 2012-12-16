@@ -9,6 +9,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "STensor3.h"
+#include "GEntity.h"
 #include <list>
 #include <set>
 #include <map>
@@ -18,23 +19,38 @@ class GFace;
 class BDS_Mesh;
 class BDS_Point;
 
+struct bidimMeshData 
+{
+  std::map<MVertex*,int> indices;
+  std::vector<double> Us, Vs, vSizes, vSizesBGM;
+  std::vector<SMetric3> vMetricsBGM;
+  inline void addVertex (MVertex* mv, double u, double v, double size, double sizeBGM){
+    int index = Us.size();
+    if (mv->onWhat()->dim() == 2)mv->setIndex(index);
+    else indices[mv] = index;
+    Us.push_back(u);
+    Vs.push_back(v);
+    vSizes.push_back(size);
+    vSizesBGM.push_back(sizeBGM);
+  }
+  inline int getIndex (MVertex *mv) {
+    if (mv->onWhat()->dim() == 2)return mv->getIndex();
+    return indices[mv];
+  }
+};
+
+
 void buildMetric(GFace *gf, double *uv, double *metric);
 int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, 
                         double *p4, double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, 
-                        const double *metric, const std::vector<double> &Us,
-                        const std::vector<double> &Vs);
+                        const double *metric, bidimMeshData & data);
 void circumCenterMetric(double *pa, double *pb, double *pc, const double *metric,
                         double *x, double &Radius2);
-void circumCenterMetric(MTriangle *base, const double *metric,
-                        const std::vector<double> &Us, 
-                        const std::vector<double> &Vs,
+void circumCenterMetric(MTriangle *base, const double *metric, bidimMeshData & data,
                         double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
-                                  const std::vector<double> &Us,
-                                  const std::vector<double> &Vs);
-bool invMapUV(MTriangle *t, double *p,
-              const std::vector<double> &Us, const std::vector<double> &Vs,
+bool circumCenterMetricInTriangle(MTriangle *base, const double *metric, bidimMeshData &data);
+bool invMapUV(MTriangle *t, double *p, bidimMeshData &data,
               double *uv, double tol);
 
 class MTri3
@@ -51,7 +67,7 @@ class MTri3
   void forceRadius(double r) { circum_radius = r; }
   inline double getRadius() const { return circum_radius; }
 
-  MTri3(MTriangle *t, double lc, SMetric3 *m = 0, const std::vector<double> *Us = 0, const std::vector<double> *Vs = 0, GFace *gf = 0);
+  MTri3(MTriangle *t, double lc, SMetric3 *m = 0, bidimMeshData * data = 0, GFace *gf = 0);
   inline MTriangle *tri() const { return base; }
   inline void  setNeigh(int iN , MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN ) const { return neigh[iN]; }

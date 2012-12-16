@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <stack>
 #include <math.h>
 #include <stdio.h>
 #include "GmshMessage.h"
@@ -514,17 +515,27 @@ BDS_GeomEntity *BDS_Mesh::get_geom(int p1, int p2)
 
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
 {
-  if(!t->g) {
-    t->g = g;
-    // g->t.push_back(t);
-    if(!t->e1->g && t->e1->numfaces() == 2) {
-      recur_tag(t->e1->otherFace(t), g);
-    }
-    if(!t->e2->g && t->e2->numfaces() == 2) {
-      recur_tag(t->e2->otherFace(t), g);
-    }
-    if(!t->e3->g && t->e3->numfaces() == 2) {
-      recur_tag(t->e3->otherFace(t), g);
+  std::stack<BDS_Face*> _stack;
+  _stack.push(t);
+
+  while(!_stack.empty()){
+    t = _stack.top();
+    _stack.pop();
+    if(!t->g) {
+      t->g = g;
+      // g->t.push_back(t);
+      if(!t->e1->g && t->e1->numfaces() == 2) {
+	_stack.push(t->e1->otherFace(t));
+	//	recur_tag(t->e1->otherFace(t), g);
+      }
+      if(!t->e2->g && t->e2->numfaces() == 2) {
+	_stack.push(t->e2->otherFace(t));
+	//	recur_tag(t->e2->otherFace(t), g);
+      }
+      if(!t->e3->g && t->e3->numfaces() == 2) {
+	_stack.push(t->e3->otherFace(t));	
+	//	recur_tag(t->e3->otherFace(t), g);
+      }
     }
   }
 }

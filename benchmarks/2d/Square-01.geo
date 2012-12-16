@@ -10,4 +10,4 @@ Line(3) = {1,4};
 Line(4) = {4,3};       
 Line Loop(5) = {1,2,3,4};       
 Plane Surface(6) = {5};       
-Recombine Surface {6};
+//Recombine Surface {6};

@@ -3727,7 +3727,7 @@ Periodic :
           int j_slave  = (int)d_slave;
           Curve *c_slave = FindCurve(abs(j_slave));
           if(c_slave){
-            c_slave->meshMaster = j_master;
+	    GModel::current()->getGEOInternals()->periodicEdges[j_slave] = j_master;
           }
           else{
             GEdge *ge = GModel::current()->getEdgeByTag(abs(j_slave));
@@ -3751,11 +3751,12 @@ Periodic :
         int j_slave = (int)$3;
         Surface *s_slave = FindSurface(abs(j_slave));
         if(s_slave){
-          s_slave->meshMaster = j_master;
+	  GModel::current()->getGEOInternals()->periodicFaces[j_slave] = j_master;
           for (int i = 0; i < List_Nbr($5); i++){
             double dm, ds;
             List_Read($5, i, &ds);
             List_Read($10, i, &dm);
+	    GModel::current()->getGEOInternals()->periodicEdges[(int)ds] = (int)dm;
             s_slave->edgeCounterparts[(int)ds] = (int)dm;
           }
         }
@@ -3768,6 +3769,8 @@ Periodic :
               List_Read($5, i, &ds);
               List_Read($10, i, &dm);
               gf->edgeCounterparts[(int)ds] = (int)dm;
+	      GEdge *ges = GModel::current()->getEdgeByTag(abs((int)ds));
+	      ges->setMeshMaster((int)dm);
             }
           }
           else yymsg(0, "Unknown surface %d", j_slave);

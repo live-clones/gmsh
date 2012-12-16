@@ -16,6 +16,65 @@
 #include "MPyramid.h"
 #include "StringUtils.h"
 
+void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities)
+{
+  int count = 0;
+  for (unsigned int i = 0 ; i < entities.size() ; i++) if (entities[i]->meshMaster() != entities[i]->tag())count++;
+  if (!count)return;
+  fprintf(fp, "$Periodic\n");
+  fprintf(fp, "%d\n",count);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *g_slave = entities[i];
+    int meshMaster = g_slave->meshMaster();
+    if (g_slave->tag() != meshMaster){      
+      GEntity *g_master = 0;
+      switch(g_slave->dim()){
+      case 0 : g_master = g_slave->model()->getVertexByTag(abs(meshMaster));break;
+      case 1 : g_master = g_slave->model()->getEdgeByTag(abs(meshMaster));break;
+      case 2 : g_master = g_slave->model()->getFaceByTag(abs(meshMaster));break;
+      case 3 : g_master = g_slave->model()->getRegionByTag(abs(meshMaster));break;
+      }
+      fprintf(fp,"%d %d %d\n",g_slave->dim(),g_slave->tag(),g_master->tag());
+      fprintf(fp,"%d \n",(int)g_slave->correspondingVertices.size());
+      for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin() ; it != g_slave->correspondingVertices.end() ; it++){
+	MVertex *v1 = it->first;
+	MVertex *v2 = it->second;
+	fprintf(fp,"%d %d\n",v1->getNum(),v2->getNum());
+      }
+    }
+  }
+  fprintf(fp, "$EndPeriodic\n");
+}
+
+void readMSHPeriodicNodes (FILE *fp, GModel *gm)
+{
+  int count;
+  fscanf(fp, "%d",&count);
+  for(int i = 0; i < count; i++){
+    int dim,slave,master;
+    fscanf(fp,"%d %d %d",&dim,&slave,&master);
+    GEntity *s=0,*m=0;
+    switch(dim){
+    case 0 : s = gm->getVertexByTag(slave); m = gm->getVertexByTag(master); break; 
+    case 1 : s = gm->getEdgeByTag(slave); m = gm->getEdgeByTag(master); break; 
+    case 2 : s = gm->getFaceByTag(slave); m = gm->getFaceByTag(master); break; 
+    }
+    if (s && m){
+      s->setMeshMaster(m->tag());
+      int numv;
+      fscanf(fp,"%d",&numv);
+      for(int j = 0; j < numv; j++){
+	int v1,v2;
+	fscanf(fp,"%d %d",&v1,&v2);
+	MVertex *mv1 = gm->getMeshVertexByTag(v1);
+	MVertex *mv2 = gm->getMeshVertexByTag(v2);
+	s->correspondingVertices[mv1] = mv2;
+      }
+    }
+  }
+}
+
+
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");
@@ -28,7 +87,7 @@ int GModel::readMSH(const std::string &name)
 
   // detect prehistoric MSH files
   fgets(str, sizeof(str), fp);
-  if(!strncmp(&str[1], "NOD", 3)){
+  if(!strncmp(&str[1], "NOD", 3) || !strncmp(&str[1], "NOE", 3)){
     fclose(fp);
     return _readMSH2(name);
   }
@@ -295,6 +354,10 @@ int GModel::readMSH(const std::string &name)
       postpro = true;
       break;
     }
+    else if(!strncmp(&str[1], "Periodical", 10)) {
+      readMSHPeriodicNodes (fp, this);
+    }
+
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
@@ -500,7 +563,14 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndElements\n");
+
+  //save periodic nodes
+  writeMSHPeriodicNodes (fp,entities);
+
+
   fclose(fp);
 
   return 1;
 }
+
+

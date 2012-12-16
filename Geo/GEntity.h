@@ -32,7 +32,7 @@ class GEntity {
   // the tag (the number) of this entity
   int _tag;
 
-  // gives the number of the master entity in periodic mesh, gives 0
+  // gives the number of the master entity in periodic mesh, gives _tag
   // if non-periodic
   int _meshMaster;
 
@@ -258,8 +258,8 @@ class GEntity {
   }
 
   // returns the tag of the entity that its master entity (for mesh) 
-  int meshMaster() const { return _meshMaster; }
-  void setMeshMaster(int m) { _meshMaster = m; }
+  int meshMaster() const;
+  void setMeshMaster(int m);
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
@@ -323,6 +323,11 @@ class GEntity {
   GEdge   *cast2Edge();
   GFace   *cast2Face();
   GRegion *cast2Region();
+
+  // periodic data
+  double periodicTransformation[4][4];
+  std::map<MVertex*,MVertex*> correspondingVertices;
+
 };
 
 class GEntityLessThan {

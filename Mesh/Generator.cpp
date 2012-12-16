@@ -347,12 +347,22 @@ static bool CancelDelaunayHybrid(GModel *m)
 static void Mesh0D(GModel *m)
 {
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
-    GVertex *gv = *it;
+    GVertex *gv = *it;        
     if(gv->mesh_vertices.empty())
       gv->mesh_vertices.push_back(new MVertex(gv->x(), gv->y(), gv->z(), gv));
     if(gv->points.empty())
       gv->points.push_back(new MPoint(gv->mesh_vertices.back()));
   }
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
+    GVertex *gv = *it;        
+    if (gv->meshMaster() != gv->tag()){
+      if (gv->correspondingVertices.empty()){
+	GVertex *master = m->getVertexByTag(abs(gv->meshMaster()));
+	if(master)gv->correspondingVertices[gv->mesh_vertices[0]] = (master->mesh_vertices[0]);
+      }
+    }
+  }
+
 }
 
 static void Mesh1D(GModel *m)
@@ -442,7 +452,7 @@ static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
-  double t1 = Cpu();
+  double t1 = GetTimeInSeconds();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
@@ -466,14 +476,23 @@ static void Mesh2D(GModel *m)
     int nIter = 0, nTot = m->getNumFaces();
     while(1){
       int nPending = 0;
-      for(std::set<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
-        if ((*it)->meshStatistics.status == GFace::PENDING){
+      
+      std::vector<GFace*> _temp; _temp.insert(_temp.begin(),f.begin(),f.end());
+      
+#pragma omp parallel for schedule (dynamic) 
+      for(size_t K = 0 ; K < _temp.size() ; K++){
+	if (_temp[K]->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);
-          mesher(*it);
-          nPending++;
-        }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+	  mesher(_temp[K]);
+#pragma omp critical
+	  {
+	    nPending++;
+	  }
+	}
       }
+#pragma omp master      
+      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+      
       for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);
@@ -518,7 +537,7 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
 
-  double t2 = Cpu();
+  double t2 = GetTimeInSeconds();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
 

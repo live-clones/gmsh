@@ -469,7 +469,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
-  pC->meshMaster = Num;
   GModel::current()->getGEOInternals()->MaxLineNum =
     std::max(GModel::current()->getGEOInternals()->MaxLineNum, Num);
   pC->Method = MESH_UNSTRUCTURED;
@@ -584,7 +583,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Num = Num;
   pS->geometry = 0;
   pS->InSphereCenter = 0;
-  pS->meshMaster = Num;
 
   GModel::current()->getGEOInternals()->MaxSurfaceNum =
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
@@ -2643,7 +2641,7 @@ int Extrude_ProtudeSurface(int type, int is,
   Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
 
   chapeau->Num = NEWSURFACE();
-  chapeau->meshMaster = chapeau->Num;
+  //  GModel::current()->getGEOInternals()->periodicFaces[chapeau->Num] = chapeau->meshMaster;
   GModel::current()->getGEOInternals()->MaxSurfaceNum = chapeau->Num;
   Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
 

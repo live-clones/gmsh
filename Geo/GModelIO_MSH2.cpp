@@ -28,6 +28,8 @@
 
 #define FAST_ELEMENTS 1
 
+extern void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities);
+
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
 {
@@ -1017,6 +1019,8 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   else{
     fprintf(fp, "$ENDELM\n");
   }
+
+  writeMSHPeriodicNodes (fp,entities);
 
   fclose(fp);
 

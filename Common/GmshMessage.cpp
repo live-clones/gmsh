@@ -331,10 +331,13 @@ void Msg::Info(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::instance()->check();
-    std::string tmp = std::string("Info    : ") + str;
-    FlGui::instance()->addMessage(tmp.c_str());
+  #pragma omp critical
+  {
+    if(FlGui::available()){
+      FlGui::instance()->check();
+      std::string tmp = std::string("Info    : ") + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+    }
   }
 #endif
 
@@ -371,18 +374,21 @@ void Msg::Direct(int level, const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::instance()->check();
-    std::string tmp;
-    if(level < 2)
-      tmp = std::string("@C1@.") + str;
-    else if(level < 3)
-      tmp = std::string("@C5@.") + str;
-    else
-      tmp = std::string("@C4@.") + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    if(level == 1)
-      FlGui::instance()->showMessages();
+#pragma omp master
+  {
+    if(FlGui::available()){
+      FlGui::instance()->check();
+      std::string tmp;
+      if(level < 2)
+	tmp = std::string("@C1@.") + str;
+      else if(level < 3)
+	tmp = std::string("@C5@.") + str;
+      else
+	tmp = std::string("@C4@.") + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      if(level == 1)
+	FlGui::instance()->showMessages();
+    }
   }
 #endif
 
@@ -410,13 +416,16 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    if(log) FlGui::instance()->check();
-    if(!log || _verbosity > 4)
-      FlGui::instance()->setStatus(str);
-    if(log){
-      std::string tmp = std::string("Info    : ") + str;
-      FlGui::instance()->addMessage(tmp.c_str());
+#pragma omp master 
+  {
+    if(FlGui::available()){
+      if(log) FlGui::instance()->check();
+      if(!log || _verbosity > 4)
+	FlGui::instance()->setStatus(str);
+      if(log){
+	std::string tmp = std::string("Info    : ") + str;
+	FlGui::instance()->addMessage(tmp.c_str());
+      }
     }
   }
 #endif

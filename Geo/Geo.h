@@ -165,7 +165,6 @@ class Surface{
   // disappear from the class Surface.
   gmshSurface *geometry;
   // the mesh master surface
-  int meshMaster;
   std::map<int,int> edgeCounterparts;
   std::vector<int> compound, compoundBoundary[4];
 };
@@ -219,6 +218,8 @@ class GEO_Internals{
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
   void reset_physicals();
+  std::map<int,int> periodicFaces;
+  std::map<int,int> periodicEdges;
 };
 
 class Shape{

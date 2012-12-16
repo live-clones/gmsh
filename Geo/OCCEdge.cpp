@@ -126,17 +126,14 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
-
   if (face->geomType() == GEntity::CompoundSurface) return false;
   if (face->getNativeType() != GEntity::OpenCascadeModel) return false;
 
+  bool ret;
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
-  //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());
-  //  printf("periodic %d %d\n",surface.IsUPeriodic(),surface.IsVPeriodic());
-  //  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
-  return BRep_Tool::IsClosed(c, *s);
-
+  ret =  BRep_Tool::IsClosed(c, *s);
+  return ret;
 }
 
 GPoint OCCEdge::point(double par) const

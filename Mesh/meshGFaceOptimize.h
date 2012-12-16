@@ -13,9 +13,12 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "STensor3.h"
 
+
+
 class GFace;
 class GVertex;
 class MVertex;
+
 
 class edge_angle {
  public :
@@ -70,34 +73,12 @@ enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
 
 int edgeSwapPass(GFace *gf, 
                  std::set<MTri3*, compareTri3Ptr> &allTris, 
-                 const swapCriterion &cr,
-                 const std::vector<double> &Us, 
-                 const std::vector<double> &Vs,
-                 const std::vector<double> &vSizes, 
-                 const std::vector<double> &vSizesBGM);
-/*int edgeSplitPass(double maxLC, GFace *gf, 
-                  std::set<MTri3*, compareTri3Ptr> &allTris,
-                  const splitCriterion &cr,   
-                  std::vector<double> &Us,
-                  std::vector<double> &Vs,
-                  std::vector<double> &vSizes ,
-                  std::vector<double> &vSizesBGM);
-int edgeCollapsePass(double minLC, GFace *gf, 
-                     std::set<MTri3*, compareTri3Ptr> &allTris,
-                     std::vector<double> &Us,
-                     std::vector<double> &Vs,
-                     std::vector<double> &vSizes ,
-                     std::vector<double> &vSizesBGM);*/
+                 const swapCriterion &cr, bidimMeshData &DATA);
 void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 void buildMeshGenerationDataStructures(GFace *gf, 
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
-                                       std::vector<double> &vSizes,
-                                       std::vector<double> &vSizesBGM,
-                                       std::vector<SMetric3> &vMetricsBGM,
-                                       std::vector<double> &Us,
-                                       std::vector<double> &Vs);
-void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
-                           std::vector<double> &Us, std::vector<double> &Vs);
+				       bidimMeshData & data);
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData &DATA);
 void recombineIntoQuads(GFace *gf, 
                         bool topologicalOpti   = true, 
                         bool nodeRepositioning = true);

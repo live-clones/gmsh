@@ -360,7 +360,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
       metrics.push_back(vertices[i]->_meshMetric);
       SPoint2 midpoint;
       reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
-      fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z());
+      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
+	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
+	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
+	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
 	    //fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
     }
     delete  vertices[i];

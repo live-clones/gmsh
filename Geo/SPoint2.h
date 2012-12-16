@@ -24,6 +24,7 @@ class SPoint2 {
   inline double y(void) const;
   double &operator[](int);
   double operator[](int) const;
+  double distance(const SPoint2 &p)const;
   SPoint2 &operator=(const SPoint2 &p);
   void operator+=(const SPoint2 &p);
   void operator-=(const SPoint2 &p);
@@ -80,5 +81,11 @@ inline void SPoint2::operator*=(double mult)
 
 inline SPoint2 SPoint2::operator*(double mult)
 { return SPoint2(P[0]*mult, P[1]*mult); }
+
+inline double SPoint2::distance(const SPoint2 &p)const
+{
+  double x = P[0] - p.P[0], y = P[1] - p.P[1];
+  return sqrt(x * x + y * y);
+}
 
 #endif
