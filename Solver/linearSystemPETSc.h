@@ -79,7 +79,6 @@ class linearSystemPETSc : public linearSystem<scalar> {
   std::vector<scalar> getData();
   std::vector<int> getRowPointers();
   std::vector<int> getColumnsIndices();
-  virtual void createMatrix();
 };
 
 class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
