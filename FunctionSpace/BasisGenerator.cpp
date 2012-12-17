@@ -122,7 +122,7 @@ Basis* BasisGenerator::quaZaglmayrGen(unsigned int basisType,
 Basis* BasisGenerator::tetZaglmayrGen(unsigned int basisType, 
 				      unsigned int order){
   switch(basisType){
-    //case  0: return new TetNodeBasis(order);
+  case  0: return new TetNodeBasis(order);
     //case  1: return new TetEdgeBasis(order);
   case  2: throw Exception("2-form not implemented on Tetrahedrons");
   case  3: throw Exception("3-form not implemented on Tetrahedrons");

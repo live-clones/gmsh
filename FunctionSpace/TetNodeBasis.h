@@ -20,7 +20,7 @@ class TetNodeBasis: public BasisScalar{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Tetrahedra of the given order
-  TetNodeBasis(int order);
+  TetNodeBasis(unsigned int order);
   
   //! Deletes this Basis
   //!

@@ -1,29 +1,36 @@
 #include "TetNodeBasis.h"
+#include "TetReferenceSpace.h"
 #include "Legendre.h"
 
 using namespace std;
 
-TetNodeBasis::TetNodeBasis(int order){
+TetNodeBasis::TetNodeBasis(unsigned int order){
+  // Reference Space //
+  refSpace  = new TetReferenceSpace;
+  nRefSpace = refSpace->getNReferenceSpace();
+
+  const vector<const vector<const vector<unsigned int>*>*>&
+    edgeV = refSpace->getAllEdge();
+
+  const vector<const vector<const vector<unsigned int>*>*>&
+    faceV = refSpace->getAllFace();
+
   // Set Basis Type //
   this->order = order;
   
   type = 0;
   dim  = 3;
 
-  nVertex = 4;
-  nEdge   = 6 * (order - 1);
-  nFace   = 2 * (order - 1) * (order - 2);
-  nCell   =     (order - 1) * (order - 2) * (order - 3) / 6;
-
-  nEdgeClosure = 2;
-  nFaceClosure = 6;
-
-  size = nVertex + nEdge + nFace + nCell;
+  nVertex   = 4;
+  nEdge     = 6 * (order - 1);
+  nFace     = 2 * (order - 1) * (order - 2);
+  nCell     =     (order - 1) * (order - 2) * (order - 3) / 6;
+  nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
-  const int orderMinus      = order - 1;
-  const int orderMinusTwo   = order - 2;
-  const int orderMinusThree = order - 3;
+  const unsigned int orderMinus      = order - 1;
+  const unsigned int orderMinusTwo   = order - 2;
+  const unsigned int orderMinusThree = order - 3;
 
   Polynomial* legendre     = new Polynomial[order];
   Polynomial* sclLegendre  = new Polynomial[order];
@@ -34,99 +41,81 @@ TetNodeBasis::TetNodeBasis(int order){
   Legendre::scaled(sclLegendre, orderMinus);
   Legendre::intScaled(intLegendre, order);
 
-  // Vertices definig Edges & Permutations //
-  const int edgeV[2][6][2] = 
+  // Lagrange Polynomial //
+  const Polynomial lagrange[4] = 
     {
-      { {0, 1}, {1, 2}, {2, 0}, 
-	{3, 0}, {3, 2}, {3, 1} },
+      Polynomial(Polynomial(1, 0, 0, 0) - 
+		 Polynomial(1, 1, 0, 0) - 
+		 Polynomial(1, 0, 1, 0) - 
+		 Polynomial(1, 0, 0, 1)),
+ 
+      Polynomial(Polynomial(1, 1, 0, 0)),
+
+      Polynomial(Polynomial(1, 0, 1, 0)),
       
-      { {1, 0}, {2, 1}, {0, 2}, 
-	{0, 3}, {2, 3}, {1, 3} }
+      Polynomial(Polynomial(1, 0, 0, 1))
     };
 
-  // Vertices definig Faces & Permutations //
-  const int faceV[6][4][3] = 
-    {
-      { {0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2} },
-      { {2, 0, 1}, {1, 0, 3}, {3, 0, 2}, {1, 3, 2} },
-      { {2, 1, 0}, {1, 3, 0}, {3, 2, 0}, {1, 2, 3} },
-      { {1, 2, 0}, {3, 1, 0}, {2, 3, 0}, {2, 1, 3} },
-      { {1, 0, 2}, {3, 0, 1}, {2, 0, 3}, {2, 3, 1} },
-      { {0, 1, 2}, {0, 3, 1}, {0, 2, 3}, {3, 2, 1} },
-    };
 
   // Basis //
-  node = new vector<Polynomial*>(nVertex);
-  edge = new vector<vector<Polynomial*>*>(2);
-  face = new vector<vector<Polynomial*>*>(6);
-  cell = new vector<Polynomial*>(nCell);
+  basis = new vector<vector<const Polynomial*>*>(nRefSpace);
 
-  (*edge)[0] = new vector<Polynomial*>(nEdge);
-  (*edge)[1] = new vector<Polynomial*>(nEdge);
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    (*basis)[s] = new vector<const Polynomial*>(nFunction);
 
-  (*face)[0] = new vector<Polynomial*>(nFace);
-  (*face)[1] = new vector<Polynomial*>(nFace);
-  (*face)[2] = new vector<Polynomial*>(nFace);
-  (*face)[3] = new vector<Polynomial*>(nFace);
-  (*face)[4] = new vector<Polynomial*>(nFace);
-  (*face)[5] = new vector<Polynomial*>(nFace);
+  // Vertex Based //
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    (*(*basis)[s])[0] = new Polynomial(lagrange[0]);
+    (*(*basis)[s])[1] = new Polynomial(lagrange[1]);
+    (*(*basis)[s])[2] = new Polynomial(lagrange[2]);
+    (*(*basis)[s])[3] = new Polynomial(lagrange[3]);
+  }
 
-
-  // Vertex Based (Lagrange) //
-  (*node)[0] = 
-    new Polynomial(Polynomial(1, 0, 0, 0) - 
-		   Polynomial(1, 1, 0, 0) - 
-		   Polynomial(1, 0, 1, 0) - 
-		   Polynomial(1, 0, 0, 1));
-
-  (*node)[1] = 
-    new Polynomial(Polynomial(1, 1, 0, 0));
-
-  (*node)[2] = 
-    new Polynomial(Polynomial(1, 0, 1, 0));
-
-  (*node)[3] = 
-    new Polynomial(Polynomial(1, 0, 0, 1));
-
- 
   // Edge Based //
-  for(int c = 0; c < 2; c++){
-    unsigned int i = 0;
+  for(unsigned int s = 0; s < 2; s++){
+    unsigned int i = nVertex;
 
-    for(int l = 1; l < order; l++){
-      for(int e = 0; e < 6; e++){
-	(*(*edge)[c])[i] = 
+    for(unsigned int l = 1; l < order; l++){
+      for(unsigned int e = 0; e < 6; e++){
+	(*(*basis)[s])[i] = 
 	  new Polynomial(intLegendre[l].compose
-			 (*(*node)[edgeV[c][e][0]] - *(*node)[edgeV[c][e][1]], 
-			  *(*node)[edgeV[c][e][0]] + *(*node)[edgeV[c][e][1]]));
+			 (lagrange[(*(*edgeV[s])[e])[0]] - 
+			  lagrange[(*(*edgeV[s])[e])[1]]
+			  , 
+			  lagrange[(*(*edgeV[s])[e])[0]] + 
+			  lagrange[(*(*edgeV[s])[e])[1]]));
 	
 	i++;
       }
     }
   }
 
-
   // Face Based //
-  for(int c = 0; c < 6; c++){
-    unsigned int i = 0;
+  for(unsigned int s = 0; s < 6; s++){
+    unsigned int i = nVertex + nEdge;
 
-    for(int l1 = 1; l1 < orderMinus; l1++){
-      for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
-	for(int f = 0; f < 4; f++){
+    for(unsigned int l1 = 1; l1 < orderMinus; l1++){
+      for(unsigned int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
+	for(unsigned int f = 0; f < 4; f++){
 	  Polynomial sum = 
-	    *(*node)[faceV[c][f][0]] + 
-	    *(*node)[faceV[c][f][1]] + 
-	    *(*node)[faceV[c][f][2]];	  
+	    lagrange[(*(*faceV[s])[f])[0]] + 
+	    lagrange[(*(*faceV[s])[f])[1]] + 
+	    lagrange[(*(*faceV[s])[f])[2]];	  
 	  
-	  (*(*face)[c])[i] = 
+	  (*(*basis)[s])[i] = 
 	    new Polynomial(intLegendre[l1].compose
-			   (*(*node)[faceV[c][f][0]] - *(*node)[faceV[c][f][1]], 
-			    *(*node)[faceV[c][f][0]] + *(*node)[faceV[c][f][1]]) * 
-			 
-			   *(*node)[faceV[c][f][2]] * 
-			 
+			   (lagrange[(*(*faceV[s])[f])[0]] - 
+			    lagrange[(*(*faceV[s])[f])[1]]
+			    , 
+			    lagrange[(*(*faceV[s])[f])[0]] + 
+			    lagrange[(*(*faceV[s])[f])[1]]) 
+			   
+			   * 
+			   
+			   lagrange[(*(*faceV[s])[f])[2]] 
+			   * 
 			   sclLegendre[l2].compose
-			   (*(*node)[faceV[c][f][2]] * 2 - sum, sum));
+			   (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum));
 	
 	  i++;
 	}
@@ -134,34 +123,35 @@ TetNodeBasis::TetNodeBasis(int order){
     }
   }
   
-
   // Cell Based //
-  Polynomial oneMinusFour         = Polynomial(1, 0, 0, 0) - *(*node)[3];
-  Polynomial twoThreeOneMinusFour = *(*node)[2] * 2 - oneMinusFour;
-  Polynomial twoFourMinusOne      = *(*node)[3] * 2 - Polynomial(1, 0, 0, 0);
+  const Polynomial oneMinusFour         = Polynomial(1, 0, 0, 0) - lagrange[3];
+  const Polynomial twoThreeOneMinusFour = lagrange[2] * 2 - oneMinusFour;
+  const Polynomial twoFourMinusOne      = lagrange[3] * 2 - Polynomial(1, 0, 0, 0);
 
-  Polynomial sub = *(*node)[0] - *(*node)[1];
-  Polynomial add = *(*node)[0] + *(*node)[1];
+  const Polynomial sub = lagrange[0] - lagrange[1];
+  const Polynomial add = lagrange[0] + lagrange[1];
 
-  unsigned int i = 0;
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nVertex + nEdge + nFace;
   
-  for(int l1 = 1; l1 < orderMinusTwo; l1++){
-    for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
-      for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
+    for(unsigned int l1 = 1; l1 < orderMinusTwo; l1++){
+      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
+	for(unsigned int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
+	  
+	  (*(*basis)[s])[i] = 
+	    new Polynomial(intLegendre[l1].compose(sub, add)             * 
+			   lagrange[2]                                   * 		 
+			   sclLegendre[l2].compose(twoThreeOneMinusFour, 
+						   oneMinusFour)         *
+			   lagrange[3]                                   *
+			   legendre[l3].compose(twoFourMinusOne));
 	
-	(*cell)[i] = 
-	  new Polynomial(intLegendre[l1].compose(sub, add)             * 
-			 *(*node)[2]                                   * 		 
-			 sclLegendre[l2].compose(twoThreeOneMinusFour, 
-						 oneMinusFour)         *
-			 *(*node)[3]                                   *
-			 legendre[l3].compose(twoFourMinusOne));
-	
-	i++;
+	  i++;
+	}
       }
     }
   }
-  
+
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] sclLegendre;
@@ -169,38 +159,16 @@ TetNodeBasis::TetNodeBasis(int order){
 }
 
 TetNodeBasis::~TetNodeBasis(void){
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
-  
-  delete node;
+  // ReferenceSpace //
+  delete refSpace;
 
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete (*(*basis)[i])[j];
 
-  // Edge Based //
-  for(int c = 0; c < 2; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
-    
-    delete (*edge)[c];
-  }
-  
-  delete edge;
-
-
-  // Face Based //
-  for(int c = 0; c < 6; c++){
-    for(int i = 0; i < nFace; i++)
-      delete (*(*face)[c])[i];
-    
-    delete (*face)[c];
+    delete (*basis)[i];
   }
 
-  delete face;
-
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    delete (*cell)[i];
-
-  delete cell;
+  delete basis;
 }
