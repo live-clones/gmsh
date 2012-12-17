@@ -72,7 +72,7 @@ GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
 // sets the entity m from which the mesh will be copied
 void GEntity::setMeshMaster(int m_signed){
 
-  printf("setting mesh master %d to mesh entity %d\n",m_signed,tag());
+  //  printf("setting mesh master %d to mesh entity %d\n",m_signed,tag());
 
   GEntity *gMaster = 0;
   int m = abs(m_signed);
@@ -91,7 +91,7 @@ void GEntity::setMeshMaster(int m_signed){
     _meshMaster = m_signed;
   }
   else {
-    printf("mesh entity %d has already a master %d\n",m,masterOfMaster);
+    //    printf("mesh entity %d has already a master %d\n",m,masterOfMaster);
     setMeshMaster ( masterOfMaster * ((m_signed > 0) ? 1 : -1));
   }
 }

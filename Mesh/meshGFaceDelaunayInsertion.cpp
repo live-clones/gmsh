@@ -277,17 +277,20 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
 }
 
 int inCircumCircleAniso(GFace *gf, MTriangle *base,
-                        const double *uv, const double *metric,
+                        const double *uv, const double *metricb,
 			bidimMeshData & data)
 {
-  //  int index0 = data.getIndex (base->getVertex(0)); 
-  //  int index1 = data.getIndex (base->getVertex(1)); 
-  //  int index2 = data.getIndex (base->getVertex(2)); 
-  //  double x[2], Radius2, metric[3];
   double x[2], Radius2;
-  //  double pa[2] = {(data.Us[index0] +data.Us[index1] + data.Us[index2]) / 3.,
-  //		  (data.Vs[index0] +data.Vs[index1] + data.Vs[index2]) / 3.};
-  //  buildMetric(gf, pa, metric);
+  double metric[3];
+  if (!metricb){
+    int index0 = data.getIndex (base->getVertex(0)); 
+    int index1 = data.getIndex (base->getVertex(1)); 
+    int index2 = data.getIndex (base->getVertex(2)); 
+    double pa[2] = {(data.Us[index0] +data.Us[index1] + data.Us[index2]) / 3.,
+  		  (data.Vs[index0] +data.Vs[index1] + data.Vs[index2]) / 3.};
+    buildMetric(gf, pa, metric);
+  }
+  else {metric[0] = metricb[0];metric[1] = metricb[1];metric[2] = metricb[2];};
   circumCenterMetric(base, metric, data, x, Radius2);
 
   const double a = metric[0];
