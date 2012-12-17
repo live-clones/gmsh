@@ -28,9 +28,9 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
-  const unsigned int orderMinus      = order - 1;
-  const unsigned int orderMinusTwo   = order - 2;
-  const unsigned int orderMinusThree = order - 3;
+  const int orderMinus      = order - 1;
+  const int orderMinusTwo   = order - 2;
+  const int orderMinusThree = order - 3;
 
   Polynomial* legendre     = new Polynomial[order];
   Polynomial* sclLegendre  = new Polynomial[order];
@@ -72,11 +72,11 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   }
 
   // Edge Based //
-  for(unsigned int s = 0; s < 2; s++){
+  for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex;
 
     for(unsigned int l = 1; l < order; l++){
-      for(unsigned int e = 0; e < 6; e++){
+      for(int e = 0; e < 6; e++){
 	(*(*basis)[s])[i] = 
 	  new Polynomial(intLegendre[l].compose
 			 (lagrange[(*(*edgeV[s])[e])[0]] - 
@@ -84,19 +84,18 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 			  , 
 			  lagrange[(*(*edgeV[s])[e])[0]] + 
 			  lagrange[(*(*edgeV[s])[e])[1]]));
-	
 	i++;
       }
     }
   }
 
   // Face Based //
-  for(unsigned int s = 0; s < 6; s++){
+  for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex + nEdge;
 
-    for(unsigned int l1 = 1; l1 < orderMinus; l1++){
-      for(unsigned int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
-	for(unsigned int f = 0; f < 4; f++){
+    for(int l1 = 1; l1 < orderMinus; l1++){
+      for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
+	for(int f = 0; f < 4; f++){
 	  Polynomial sum = 
 	    lagrange[(*(*faceV[s])[f])[0]] + 
 	    lagrange[(*(*faceV[s])[f])[1]] + 
@@ -116,7 +115,6 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 			   * 
 			   sclLegendre[l2].compose
 			   (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum));
-	
 	  i++;
 	}
       }
@@ -134,10 +132,9 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex + nEdge + nFace;
   
-    for(unsigned int l1 = 1; l1 < orderMinusTwo; l1++){
-      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
-	for(unsigned int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
-	  
+    for(int l1 = 1; l1 < orderMinusTwo; l1++){
+      for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
+	for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
 	  (*(*basis)[s])[i] = 
 	    new Polynomial(intLegendre[l1].compose(sub, add)             * 
 			   lagrange[2]                                   * 		 
@@ -145,7 +142,6 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 						   oneMinusFour)         *
 			   lagrange[3]                                   *
 			   legendre[l3].compose(twoFourMinusOne));
-	
 	  i++;
 	}
       }

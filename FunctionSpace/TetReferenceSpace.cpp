@@ -1,5 +1,6 @@
 #include <sstream>
 #include "TetReferenceSpace.h"
+#include "MTetrahedron.h"
 
 using namespace std;
 
@@ -11,28 +12,23 @@ TetReferenceSpace::TetReferenceSpace(void){
   nEdge   = 6;
   refEdge = new unsigned int*[nEdge];
 
-  for(unsigned int i = 0; i < nEdge; i++)
-    refEdge[i] = new unsigned int[2];
-
-  refEdge[0][0] = 0; refEdge[0][1] = 1;
-  refEdge[1][0] = 1; refEdge[1][1] = 2;
-  refEdge[2][0] = 2; refEdge[2][1] = 0;
-  refEdge[3][0] = 0; refEdge[3][1] = 3;
-  refEdge[4][0] = 1; refEdge[4][1] = 3;
-  refEdge[5][0] = 2; refEdge[5][1] = 3;
-
+  for(unsigned int i = 0; i < nEdge; i++){
+    refEdge[i]    = new unsigned int[2];
+    refEdge[i][0] = MTetrahedron::edges_tetra(i, 0);
+    refEdge[i][1] = MTetrahedron::edges_tetra(i, 1); 
+  }
+  
   // Face Definition //
   nFace   = 4;
   refFace = new unsigned int*[nFace];
 
-  for(unsigned int i = 0; i < nFace; i++)
-    refFace[i] = new unsigned int[3];
+  for(unsigned int i = 0; i < nFace; i++){
+    refFace[i]    = new unsigned int[3];
+    refFace[i][0] = MTetrahedron::faces_tetra(i, 0); 
+    refFace[i][1] = MTetrahedron::faces_tetra(i, 1); 
+    refFace[i][2] = MTetrahedron::faces_tetra(i, 2);
+  }
 
-  refFace[0][0] = 0; refFace[0][1] = 1; refFace[0][2] = 2; 
-  refFace[1][0] = 0; refFace[1][1] = 1; refFace[1][2] = 3;
-  refFace[2][0] = 1; refFace[2][1] = 2; refFace[2][2] = 3;
-  refFace[3][0] = 2; refFace[3][1] = 0; refFace[3][2] = 3;
-  
   // Init All //
   init();
 }

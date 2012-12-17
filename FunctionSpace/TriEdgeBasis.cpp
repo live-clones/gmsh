@@ -25,8 +25,8 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Some Space //
-  const unsigned int orderPlus  = order + 1;
-  const unsigned int orderMinus = order - 1;
+  const int orderPlus  = order + 1;
+  const int orderMinus = order - 1;
 
   Polynomial* legendre    = new Polynomial[orderPlus];
   Polynomial* intLegendre = new Polynomial[orderPlus];
@@ -57,7 +57,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
 
   // Edge Based (Nedelec) //
   for(unsigned int s = 0; s < nRefSpace; s++){
-    for(unsigned int e = 0; e < 3; e++){
+    for(int e = 0; e < 3; e++){
       vector<Polynomial> tmp1 = lagrange[(*(*edgeV[s])[e])[1]].gradient();
       vector<Polynomial> tmp2 = lagrange[(*(*edgeV[s])[e])[0]].gradient();
 
@@ -82,8 +82,8 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = 3;
 
-    for(unsigned int l = 1; l < orderPlus; l++){
-      for(unsigned int e = 0; e < 3; e++){
+    for(int l = 1; l < orderPlus; l++){
+      for(int e = 0; e < 3; e++){
 	(*(*basis)[s])[i] = 
 	  new vector<Polynomial>
 	  ((intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[0]] -
@@ -101,7 +101,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   // Preliminaries 
   const Polynomial p = lagrange[2] * 2 - Polynomial(1, 0, 0, 0);
   
-  for(unsigned int l = 0; l < orderPlus; l++){
+  for(int l = 0; l < orderPlus; l++){
     u[l] = intLegendre[l].compose(lagrange[1] - lagrange[0], 
 				  lagrange[0] + lagrange[1]);
     v[l] = legendre[l].compose(p);
@@ -131,7 +131,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   
     // Type 1
     for(unsigned int l1 = 1; l1 < order; l1++){
-      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinus; l2++){
+      for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
 	vector<Polynomial> tmp1 = v[l2].gradient();
 	vector<Polynomial> tmp2 = u[l1].gradient();
 
@@ -155,7 +155,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   
     // Type 2
     for(unsigned int l1 = 1; l1 < order; l1++){
-      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinus; l2++){
+      for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
 	vector<Polynomial> tmp1 = v[l2].gradient();
 	vector<Polynomial> tmp2 = u[l1].gradient();
 	
@@ -178,7 +178,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
     }
 
     // Type 3
-    for(unsigned int l = 0; l < orderMinus; l++){
+    for(int l = 0; l < orderMinus; l++){
       vector<Polynomial> subGradL1L2V(subGradL1L2);
     
       subGradL1L2V[0].mul(v[l]);

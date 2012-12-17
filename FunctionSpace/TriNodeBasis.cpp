@@ -25,7 +25,7 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Some Space //
-  const unsigned int orderMinus = order - 1;
+  const int orderMinus = order - 1;
 
   Polynomial* legendre    = new Polynomial[order];
   Polynomial* intLegendre = new Polynomial[order];
@@ -64,7 +64,7 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
     unsigned int i = nVertex;
 
     for(unsigned int l = 1; l < order; l++){
-      for(unsigned int e = 0; e < 3; e++){
+      for(int e = 0; e < 3; e++){
 	(*(*basis)[s])[i] = 
 	  new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
 						lagrange[(*(*edgeV[s])[e])[0]]
@@ -78,16 +78,17 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   
   // Cell Based //
   const Polynomial p = (lagrange[2] * 2) - Polynomial(1, 0, 0, 0);
-  const unsigned int orderMinusTwo = order - 2;
+  const int orderMinusTwo = order - 2;
   
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex + nEdge;
     
-    for(unsigned int l1 = 1; l1 < orderMinus; l1++){
-      for(unsigned int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
+    for(int l1 = 1; l1 < orderMinus; l1++){
+      for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
 	(*(*basis)[s])[i] = 
 	  new Polynomial(intLegendre[l1].compose(lagrange[1] - lagrange[0], 
-						 lagrange[1] + lagrange[0]) * 
+						 lagrange[1] + lagrange[0]) 
+			 * 
 			 legendre[l2].compose(p) * lagrange[2]);
 	
 	i++;

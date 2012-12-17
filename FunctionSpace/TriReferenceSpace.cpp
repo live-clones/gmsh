@@ -1,5 +1,6 @@
 #include <sstream>
 #include "TriReferenceSpace.h"
+#include "MTriangle.h"
 
 using namespace std;
 
@@ -11,12 +12,11 @@ TriReferenceSpace::TriReferenceSpace(void){
   nEdge   = 3;
   refEdge = new unsigned int*[nEdge];
 
-  for(unsigned int i = 0; i < nEdge; i++)
-    refEdge[i] = new unsigned int[2];
-
-  refEdge[0][0] = 0; refEdge[0][1] = 1;
-  refEdge[1][0] = 1; refEdge[1][1] = 2;
-  refEdge[2][0] = 2; refEdge[2][1] = 0;
+  for(unsigned int i = 0; i < nEdge; i++){
+    refEdge[i]    = new unsigned int[2];
+    refEdge[i][0] = MTriangle::edges_tri(i, 0);
+    refEdge[i][1] = MTriangle::edges_tri(i, 1); 
+  }
 
   // Face Definition //
   nFace   = 0;
