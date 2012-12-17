@@ -938,6 +938,7 @@ namespace onelab{
     }
   };
 
+  // A local client, which lives in the same memory space as the server.
   class localClient : public client{
   private:
     template <class T> bool _set(const T &p)
@@ -974,6 +975,7 @@ namespace onelab{
                      const std::string &name=""){ return _get(ps, name); }
   };
 
+  // The local part of a network client.
   class localNetworkClient : public localClient{
   private:
     // executable of the client (including filesystem path, if necessary)
@@ -1007,6 +1009,7 @@ namespace onelab{
     virtual bool kill();
   };
 
+  // The remote part of a network client.
   class remoteNetworkClient : public client{
   private:
     // address (inet:port or unix socket) of the server
