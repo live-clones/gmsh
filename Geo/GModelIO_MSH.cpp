@@ -390,7 +390,8 @@ int GModel::readMSH(const std::string &name)
       case 2: ge = getFaceByTag(it->first); break;
       case 3: ge = getRegionByTag(it->first); break;
       }
-      ge->physicals = it->second;
+      if(ge)
+        ge->physicals = it->second;
     }
   }
 
