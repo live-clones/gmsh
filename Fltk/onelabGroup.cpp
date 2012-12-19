@@ -1641,7 +1641,8 @@ int metamodel_cb(const std::string &name, const std::string &action)
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{
-    initializeMetamodel(Msg::GetExecutableName(),Msg::GetOnelabClient(), &flgui_wait_cb);
+    initializeMetamodel(Msg::GetExecutableName(),Msg::GetOnelabClient(),
+			&flgui_wait_cb,Msg::GetVerbosity());
 
     onelab::number n("IsMetamodel", 1.);
     n.setVisible(false);
