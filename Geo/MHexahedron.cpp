@@ -180,7 +180,7 @@ const nodalBasis* MHexahedron::getFunctionSpace(int o) const
     case 3: return BasisFactory::create(MSH_HEX_56);
     case 4: return BasisFactory::create(MSH_HEX_98);
     case 5: return BasisFactory::create(MSH_HEX_152);
-    case 6: return BasisFactory::create(MSH_HEX_222);
+    case 6: return BasisFactory::create(MSH_HEX_218);
     case 7: return BasisFactory::create(MSH_HEX_296);
     case 8: return BasisFactory::create(MSH_HEX_386);
     case 9: return BasisFactory::create(MSH_HEX_488);
@@ -219,7 +219,7 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
     case 3: return JacobianBasis::find(MSH_HEX_56);
     case 4: return JacobianBasis::find(MSH_HEX_98);
     case 5: return JacobianBasis::find(MSH_HEX_152);
-    case 6: return JacobianBasis::find(MSH_HEX_222);
+    case 6: return JacobianBasis::find(MSH_HEX_218);
     case 7: return JacobianBasis::find(MSH_HEX_296);
     case 8: return JacobianBasis::find(MSH_HEX_386);
     case 9: return JacobianBasis::find(MSH_HEX_488);

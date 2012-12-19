@@ -1477,7 +1477,7 @@ nodalBasis::nodalBasis(int tag)
   case MSH_HEX_56  : parentType = TYPE_HEX; order = 3; serendip = true; break;
   case MSH_HEX_98  : parentType = TYPE_HEX; order = 4; serendip = true; break;
   case MSH_HEX_152 : parentType = TYPE_HEX; order = 5; serendip = true; break;
-  case MSH_HEX_222 : parentType = TYPE_HEX; order = 6; serendip = true; break;
+  case MSH_HEX_218 : parentType = TYPE_HEX; order = 6; serendip = true; break;
   case MSH_HEX_296 : parentType = TYPE_HEX; order = 7; serendip = true; break;
   case MSH_HEX_386 : parentType = TYPE_HEX; order = 8; serendip = true; break;
   case MSH_HEX_488 : parentType = TYPE_HEX; order = 9; serendip = true; break;

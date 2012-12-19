@@ -156,7 +156,7 @@ inline int nodalBasis::getTag(int parentTag, int order, bool serendip)
     case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
     case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
     case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
-    case 6 : return serendip ? MSH_HEX_222: MSH_HEX_343;
+    case 6 : return serendip ? MSH_HEX_218: MSH_HEX_343;
     case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
     case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
     case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;

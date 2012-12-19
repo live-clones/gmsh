@@ -161,7 +161,7 @@
 #define MSH_HEX_56   99
 #define MSH_HEX_98  100
 #define MSH_HEX_152 101
-#define MSH_HEX_222 102
+#define MSH_HEX_218 102
 #define MSH_HEX_296 103
 #define MSH_HEX_386 104
 #define MSH_HEX_488 105

@@ -1238,7 +1238,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_HEX_56  : if(name) *name = "Hexahedron 56";    return 56;
   case MSH_HEX_98  : if(name) *name = "Hexahedron 98";    return 98;
   case MSH_HEX_152 : if(name) *name = "Hexahedron 152";   return 152;
-  case MSH_HEX_222 : if(name) *name = "Hexahedron 222";   return 222;
+  case MSH_HEX_218 : if(name) *name = "Hexahedron 218";   return 218;
   case MSH_HEX_296 : if(name) *name = "Hexahedron 296";   return 296;
   case MSH_HEX_386 : if(name) *name = "Hexahedron 386";   return 386;
   case MSH_HEX_488 : if(name) *name = "Hexahedron 488";   return 488;
@@ -1420,7 +1420,7 @@ int MElement::ParentTypeFromTag(int tag)
     case(MSH_HEX_512):  case(MSH_HEX_729):
     case(MSH_HEX_1000): case(MSH_HEX_56):
     case(MSH_HEX_98):   case(MSH_HEX_152):
-    case(MSH_HEX_222):  case(MSH_HEX_296):
+    case(MSH_HEX_218):  case(MSH_HEX_296):
     case(MSH_HEX_386):  case(MSH_HEX_488):
       return TYPE_HEX;
     case(MSH_POLYG_): case(MSH_POLYG_B):
@@ -1539,7 +1539,7 @@ int MElement::OrderFromTag(int tag)
   case MSH_HEX_56  : return 3;
   case MSH_HEX_98  : return 4;
   case MSH_HEX_152 : return 5;
-  case MSH_HEX_222 : return 6;
+  case MSH_HEX_218 : return 6;
   case MSH_HEX_296 : return 7;
   case MSH_HEX_386 : return 8;
   case MSH_HEX_488 : return 9;
