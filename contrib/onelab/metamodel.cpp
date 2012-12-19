@@ -26,7 +26,7 @@ std::string getString(const std::string &name){
 
 /* Interface Gmsh - Metamodels */
 
-void initializeMetamodel(const std::string &loaderName, onelab::client *olclient, void (*gui_wait_fct)(double time))
+void initializeMetamodel(const std::string &loaderName, onelab::client *olclient, void (*gui_wait_fct)(double time), const int verbosity)
 {
   //called by  "metamodel_cb"
   //copies the Msg::_onelabClient to  OLMsg::_onelabClient
@@ -37,6 +37,7 @@ void initializeMetamodel(const std::string &loaderName, onelab::client *olclient
   OLMsg::SetOnelabClient(olclient);
   OLMsg::SetOnelabString("LoaderPathName",loaderName,false);
   OLMsg::SetGuiWaitFunction(gui_wait_fct);
+  OLMsg::SetVerbosity(verbosity);
 }
 
 int metamodel(const std::string &action){

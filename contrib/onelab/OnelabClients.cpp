@@ -141,7 +141,7 @@ bool localNetworkSolverClient::run()
   while(1) {
     if(_pid < 0) break;
 
-    int stop = server->NonBlockingWait(sock, 0.001, 0.);
+    int stop = server->NonBlockingWait(sock, 0.0001, 0.);
     if(stop || _pid < 0) {
       OLMsg::Info("Stop=%d _pid=%d",stop, _pid);
       break;
@@ -504,7 +504,7 @@ void localSolverClient::PostArray(std::vector<std::string> choices)
     std::string fileName = getWorkingDir()+choices[4*i];
       //checkIfPresent or make available locally
     double val=find_in_array(lin,col,read_array(fileName,' '));
-    addNumberChoice(choices[4*i+3],val,true);
+    addNumberChoice(longName(choices[4*i+3]),val,true);
     OLMsg::Info("Upload parameter <%s>=%e from file <%s>",
 		choices[4*i+3].c_str(),val,fileName.c_str());
     i++;

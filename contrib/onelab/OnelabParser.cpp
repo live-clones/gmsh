@@ -153,9 +153,6 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
 	OLMsg::Error("Syntax error: mismatched parenthesis <%s>",in.c_str());
       cursor=pos+1; // skips ','
     }
-    else if(in[pos]==';') 
-	OLMsg::Error("Syntax error: unterminated sentence <%s>",in.c_str());
-
     pos++;
   } while( count && (pos!=std::string::npos) );
   // count is 0 when the closing brace is found. 
@@ -188,7 +185,14 @@ int extract(const std::string &in, std::string &paramName,
   else
     action.assign(sanitize(in.substr(cursor,pos-cursor)));
   cursor = pos;
-  return enclosed(in.substr(cursor),arguments,pos);
+
+  int NumArg = enclosed(in.substr(cursor),arguments,pos);
+  //std::cout << "FHF=" << in.substr(cursor+pos) << std::endl;
+  if((in.find_first_not_of(" \t",cursor+pos)) != std::string::npos){
+    OLMsg::Error("Ghost command in <%s> (forgot a %s ?)",
+  		 in.c_str(),olkey::separator.c_str());
+  }
+  return NumArg;
 }
 
 int extractLogic(const std::string &in, std::vector<std::string> &arguments){
@@ -735,18 +739,21 @@ void localSolverClient::parse_sentence(std::string line) {
       name.assign(longName(name));
       get(numbers,name);
       if(numbers.size()){ // parameter must exist
-	if(arguments.size() % 2)
+	if(arguments.size() % 2){
 	  OLMsg::Error("Nb of labels does not match nb of choices for <%s>",
-		     name.c_str());
-	std::vector<double> choices=numbers[0].getChoices();
-	for(unsigned int i = 0; i < arguments.size(); i=i+2){
-	  double val=atof(resolveGetVal(arguments[i]).c_str());
-	  if(std::find(choices.begin(),choices.end(),val)==choices.end())
-	    choices.push_back(val);
-	  numbers[0].setValueLabel(val,unquote(arguments[i+1]));
+		       name.c_str());
 	}
-	numbers[0].setChoices(choices);
-	set(numbers[0]);
+	else{
+	  std::vector<double> choices=numbers[0].getChoices();
+	  for(unsigned int i = 0; i < arguments.size(); i=i+2){
+	    double val=atof(resolveGetVal(arguments[i]).c_str());
+	    if(std::find(choices.begin(),choices.end(),val)==choices.end())
+	      choices.push_back(val);
+	    numbers[0].setValueLabel(val,unquote(arguments[i+1]));
+	  }
+	  numbers[0].setChoices(choices);
+	  set(numbers[0]);
+	}
       }
       else
 	OLMsg::Error("The number <%s> does not exist",name.c_str());
@@ -903,7 +910,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Error("Misformed <%s> statement", olkey::deflabel.c_str());
   }
   else if( (pos=line.find(olkey::begin)) != std::string::npos) {
-    // onelab.begin
+    // onelab.block
     if (!parse_block(infile))
       OLMsg::Error("Misformed <%s> block <%s>",
 		 olkey::begin.c_str(),olkey::end.c_str());
@@ -1039,52 +1046,57 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   else if( isOnelabBlock() ||
 	 ( !isOnelabBlock() &&
 	   ((pos=line.find(olkey::line)) != std::string::npos)) ){
-    // either any other line within a onelabBlock or a line 
+    // either any line with no "OL." within a onelabBlock or a line 
     // introduced by a "onelab.line" tag not within a onelabBlock
     std::string cmds="",cmd;
     size_t posa, posb;
-    int NbLines=1;
+    int NbLines = 1;
+    bool err = false, terminated = false;
     do{
+      // skip tag 'olkey::line' if any
       if( (pos=line.find(olkey::line)) != std::string::npos)
 	posa=pos + olkey::line.size();
       else
-	posa=0; // skip tag 'olkey::line' if any
+	posa=0;
 
-      posb=line.find(olkey::comment); // skip trailing comments if any
+      // skip trailing comments if any
+      posb=line.find(olkey::comment); 
       if(posb==std::string::npos)
 	cmd.assign(line.substr(posa));
       else
 	cmd.assign(line.substr(posa,posb-posa));
-      cmds.append(cmd);
 
+      cmds.append(cmd);
       //std::cout << "cmds=<" << cmds << ">" << std::endl;
 
       // check whether "cmd" ends now with "olkey::separator"
       posb=cmd.find_last_not_of(" \t")-olkey::separator.length()+1;
       if(posb<0) posb=0;
-      if(cmd.compare(posb,olkey::separator.length(),olkey::separator)){
-	// append the next line
+      terminated = !cmd.compare(posb,olkey::separator.length(),olkey::separator);
+
+      if(!terminated){
+	// not found olkey::separator => append the next line
 	getline (infile,line);
-	if((pos=line.find_first_not_of(" \t"))==std::string::npos){
-	  OLMsg::Error("Empty line not allowed within a command <%s>",
-		     cmds.c_str());
-	  break;
+	NbLines++; // command should not span over more than 20 lines
+	if((pos=line.find_first_not_of(" \t")) == std::string::npos)
+	  getline (infile,line);
+	else if(!line.compare(pos,olkey::comment.size(),olkey::comment))
+	  getline (infile,line);
+	else if(!line.compare(pos,olkey::end.size(),olkey::end)){
+	  err = true;
+	  closeOnelabBlock();
 	}
-	else if(!line.compare(pos,olkey::comment.size(),olkey::comment)){
-	  OLMsg::Error("Comment lines not allowed within a command <%s>",
-		     cmds.c_str());
-	  break;
-	}
-	NbLines++; // command should not span over more than 10 lines
       }
-      else
-	break;
-    } while (infile.good() && NbLines<=10);
-    if(NbLines>=10)
-      OLMsg::Error("Command <%s> should not span over more than 10 lines",
-		 cmds.c_str());
-    else
+    } while (infile.good() && !err && !terminated && NbLines <= 20);
+  
+    if(terminated)
       parse_sentence(cmds);
+    else if(err)
+      OLMsg::Error("Block ended within multiline command <%s>",
+		   cmds.c_str());
+    else if(NbLines >= 20)
+      OLMsg::Error("Command <%s> should not span over more than 20 lines",
+		   cmds.c_str());
   }
   else if ( (pos=line.find(olkey::getValue)) != std::string::npos) {
     // onelab.getValue: nothing to do
