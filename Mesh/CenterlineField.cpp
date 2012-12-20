@@ -863,7 +863,7 @@ void Centerline::cutMesh()
   for(unsigned int i = 0; i < edges.size(); i++){
     std::vector<MLine*> lines = edges[i].lines;
     double L = edges[i].length;
-    double D = (edges[i].minRad+edges[i].maxRad);
+    double D = 2.*edges[i].minRad;  //(edges[i].minRad+edges[i].maxRad); //
     double AR = L/D;
     printf("*** Centerline branch %d (AR=%.1f) \n", edges[i].tag, AR);
     //if ( edges[i].children.size()) printf("children (%d) = ", edges[i].children.size());
@@ -1151,16 +1151,16 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      
    //user-defined parameters
    //define h_n, h_t1, and h_t2
-   double thickness = radMax/2.;
+   double thickness = radMax/3.;
    double h_far = radMax/5.;
-   double beta = (ds <= thickness) ? 1.2 : 2.8; //CTX::instance()->mesh.smoothRatio; 
+   double beta = (ds <= thickness) ? 1.2 : 2.1; //CTX::instance()->mesh.smoothRatio; 
    double dist = (ds <= thickness) ? ds: thickness; 
 
    double h_n_0 = thickness/20.;
    double h_n   = std::min( (h_n_0+ds*log(beta)), h_far); 
 
-   double betaMin = 10.; 
-   double betaMax = 3.2; 
+   double betaMin = 10.0; 
+   double betaMax = 3.1; 
    double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(betaMin*betaMin-1)) *
      (sqrt(1+ (4.*rhoMin*rhoMin*(betaMin*betaMin-1))/(h_n*h_n))-1.); 
    double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(betaMax*betaMax-1)) *
