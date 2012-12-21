@@ -234,7 +234,7 @@ unsigned int ReferenceSpace::getReferenceSpace(const MElement& elem) const{
     vertex[i].first  = i;
     vertex[i].second = element.getVertex(i);  
   }
-
+  
   // Sort Them with repsect to Vertex Global ID // 
   //                 (vertex[i].second->getNum) //
   std::sort(vertex.begin(), vertex.end(), sortPredicate);  

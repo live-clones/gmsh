@@ -100,6 +100,12 @@ EvaluatedBasis::getEvaluation(unsigned int refSpace) const{
 
 inline const fullMatrix<double>& 
 EvaluatedBasis::getEvaluation(const MElement& element) const{
+  /*
+  std::cout << element.getNum() 
+	    << ": "
+	    << refSpace->getReferenceSpace(element)
+	    << std::endl;
+  */
   return *(*eBasis)[refSpace->getReferenceSpace(element)];
 }
 

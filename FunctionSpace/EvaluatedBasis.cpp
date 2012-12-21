@@ -38,7 +38,7 @@ EvaluatedBasis(const BasisVector& basis,
   scalar    = false;
   nFunction = basis.getNFunction();  
   nPoint    = point.size1();
-
+  
   // Alloc //
   eBasis = new vector<fullMatrix<double>*>(nRefSpace);
   

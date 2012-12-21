@@ -40,7 +40,7 @@ set(SRC
 #  HexEdgeBasis.cpp
 
   TetNodeBasis.cpp
-#  TetEdgeBasis.cpp
+  TetEdgeBasis.cpp
   
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

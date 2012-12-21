@@ -75,7 +75,7 @@ void FunctionSpace::build(const GroupOfElement& goe,
     fPerFace = basis->getNFaceBased() / nFace;
   else
     fPerFace = 0;  
-  
+
   fPerCell = basis->getNCellBased(); // We always got 1 cell 
 
   // Build Dof //
