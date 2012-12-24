@@ -50,6 +50,7 @@ class client :
 
   def __init__(self):
     self.client = None
+    self.name = ""
     for i, v in enumerate(sys.argv) :
       if v == '-onelab':
         self.name = sys.argv[i + 1]

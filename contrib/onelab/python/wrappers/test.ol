@@ -1,1 +1,2 @@
-../test.ol
+Native.register(native, ./test.py);
+Native.run();
