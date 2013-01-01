@@ -23,7 +23,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  * 
- *  Please report all bugs and problems to <gmsh@geuz.org>.
+ *  Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
  */
 
 /* This file contains a dummy client solver for Gmsh. It does not

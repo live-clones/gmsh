@@ -22,7 +22,7 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to <gmsh@geuz.org>.
+// Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #ifndef _ONELAB_H_
 #define _ONELAB_H_
@@ -356,6 +356,7 @@ namespace onelab{
     std::string toChar() const
     {
       std::ostringstream sstream;
+      sstream.precision(16);
       sstream << parameter::toChar() << _value << charSep()
               << _min << charSep() << _max << charSep() << _step << charSep()
 	      << _index << charSep()
@@ -702,7 +703,7 @@ namespace onelab{
              const std::string &client=""){ return _set(p, client, _functions); }
     bool get(std::vector<number> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _numbers); }
-    bool get(std::vector<string> &ps, const std::string &name="",
+    bool get(std::vector<onelab::string> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _strings); }
     bool get(std::vector<region> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _regions); }
@@ -817,7 +818,7 @@ namespace onelab{
     virtual bool set(const region &p) = 0;
     virtual bool set(const function &p) = 0;
     virtual bool get(std::vector<number> &ps, const std::string &name="") = 0;
-    virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
+    virtual bool get(std::vector<onelab::string> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<region> &ps, const std::string &name="") = 0;
     virtual bool get(std::vector<function> &ps, const std::string &name="") = 0;
     std::vector<std::string> toChar()
@@ -938,6 +939,7 @@ namespace onelab{
     }
   };
 
+  // A local client, which lives in the same memory space as the server.
   class localClient : public client{
   private:
     template <class T> bool _set(const T &p)
@@ -966,7 +968,7 @@ namespace onelab{
     virtual bool set(const region &p){ return _set(p); }
     virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    virtual bool get(std::vector<string> &ps,
+    virtual bool get(std::vector<onelab::string> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<function> &ps,
                      const std::string &name=""){ return _get(ps, name); }
@@ -974,6 +976,7 @@ namespace onelab{
                      const std::string &name=""){ return _get(ps, name); }
   };
 
+  // The local part of a network client.
   class localNetworkClient : public localClient{
   private:
     // executable of the client (including filesystem path, if necessary)
@@ -1003,10 +1006,13 @@ namespace onelab{
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
     void setGmshServer(GmshServer *server){ _gmshServer = server; }
+    #ifndef SWIG
     virtual bool run();
     virtual bool kill();
+    #endif
   };
 
+  // The remote part of a network client.
   class remoteNetworkClient : public client{
   private:
     // address (inet:port or unix socket) of the server
@@ -1109,7 +1115,7 @@ namespace onelab{
     virtual bool set(const region &p){ return _set(p); }
     virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    virtual bool get(std::vector<string> &ps,
+    virtual bool get(std::vector<onelab::string> &ps,
                      const std::string &name=""){ return _get(ps, name); }
     virtual bool get(std::vector<function> &ps,
                      const std::string &name=""){ return _get(ps, name); }

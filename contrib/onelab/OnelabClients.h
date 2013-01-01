@@ -1,7 +1,7 @@
 // ONELAB - Copyright (C) 2010-2012 C. Geuzaine, F. Henrotte
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #ifndef _ONELAB_CLIENTS_H_
 #define _ONELAB_CLIENTS_H_

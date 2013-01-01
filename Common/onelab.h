@@ -22,7 +22,7 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to <gmsh@geuz.org>.
+// Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #ifndef _ONELAB_H_
 #define _ONELAB_H_
@@ -356,6 +356,7 @@ namespace onelab{
     std::string toChar() const
     {
       std::ostringstream sstream;
+      sstream.precision(16);
       sstream << parameter::toChar() << _value << charSep()
               << _min << charSep() << _max << charSep() << _step << charSep()
 	      << _index << charSep()

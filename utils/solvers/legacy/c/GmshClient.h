@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2012 C. Geuzaine, J.-F. Remacle
+ * Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,7 +23,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  * 
- * Please report all bugs and problems to <gmsh@geuz.org>.
+ * Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
  */
 
 #ifndef _GMSH_CLIENT_H_
