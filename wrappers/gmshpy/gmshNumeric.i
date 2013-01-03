@@ -11,6 +11,7 @@
   #include "JacobianBasis.h"
   #include "fullMatrix.h"
   #include "nodalBasis.h"
+  #include "BasisFactory.h"
   #include "simpleFunction.h"
   #include "simpleFunctionPython.h"
   #include "polynomialBasis.h"
@@ -28,3 +29,4 @@
 %include "nodalBasis.h"
 %include "polynomialBasis.h"
 %include "pyramidalBasis.h"
+%include "BasisFactory.h"
