@@ -2148,7 +2148,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
     }
     else{
 #if defined(HAVE_BFGS)
-      _relocateVertexOpti(gf, ver, lt);
+      //      _relocateVertexOpti(gf, ver, lt);
 #endif
     }
   }
