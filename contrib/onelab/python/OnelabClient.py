@@ -62,6 +62,8 @@ class client :
   _GMSH_START = 1
   _GMSH_STOP = 2
   _GMSH_INFO = 10
+  _GMSH_MERGE_FILE = 20
+  _GMSH_PARSE_STRING = 21
   _GMSH_PARAMETER = 23
   _GMSH_PARAMETER_QUERY = 24
 
@@ -107,6 +109,13 @@ class client :
     p = _parameter('number', name=name, value=value, **param)
     self._get_parameter(p)
     return p.value
+
+  def merge_file(self, filename) :
+    if not self.socket :
+      return
+    if filename and filename[0] != '/' :
+      filename = os.getcwd() + "/" + filename;
+    self._send(self._GMSH_PARSE_STRING, 'Merge "'+filename+'";')
 
   def __init__(self):
     self.socket = None

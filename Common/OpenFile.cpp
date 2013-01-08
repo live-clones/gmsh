@@ -400,6 +400,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     // FIXME: this is a hack -- think about a better way
     status = metamodel_cb(fileName);
   }
+  else if(ext == ".py"){
+    FlGui::instance()->onelab->addSolver("python", fileName, "", 1);
+    onelab_cb(0, (void*)"check");
+    status = 1;
+  }
 #endif
   else {
     CTX::instance()->geom.draw = 1;
