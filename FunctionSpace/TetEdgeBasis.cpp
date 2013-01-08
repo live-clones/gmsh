@@ -62,7 +62,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
 
   for(unsigned int s = 0; s < nRefSpace; s++)
     (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
-  
+    
   // Edge Based (Nedelec) //
   for(unsigned int s = 0; s < nRefSpace; s++){
     for(int e = 0; e < 6; e++){
@@ -102,97 +102,152 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       }
     }
   }
+  
+  // Face Based (Preliminary) //
+  unsigned int faceOffset = 0;
+
+  // Sum
+  Polynomial** sum;
+  sum = new Polynomial*[nRefSpace];
+  
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    sum[s] = new Polynomial[4];
     
-  // Face Based //
+    for(unsigned int f = 0; f < 4; f++)
+      sum[s][f] = 
+	lagrange[(*(*faceV[s])[f])[0]] +
+	lagrange[(*(*faceV[s])[f])[1]] +
+	lagrange[(*(*faceV[s])[f])[2]];
+  }
+
+  // Polynomial u
+  Polynomial*** u;
+  u = new Polynomial**[nRefSpace];
+  
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    u[s] = new Polynomial*[orderPlus];
+    
+    for(int l = 0; l < orderPlus; l++){
+      u[s][l] = new Polynomial[4];
+      
+      for(unsigned int f = 0; f < 4; f++)
+	u[s][l][f] = 
+	  intLegendre[l].compose(lagrange[(*(*faceV[s])[f])[0]] - 
+				  lagrange[(*(*faceV[s])[f])[1]]
+				  ,
+				  lagrange[(*(*faceV[s])[f])[0]] + 
+				  lagrange[(*(*faceV[s])[f])[1]]);
+    }
+  }
+  
+  // Polynomial v
+  Polynomial*** v;
+  v = new Polynomial**[nRefSpace];
+  
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    v[s] = new Polynomial*[orderMinus];
+    
+    for(int l = 0; l < orderMinus; l++){
+      v[s][l] = new Polynomial[4];
+      
+      for(unsigned int f = 0; f < 4; f++)
+	v[s][l][f] = 
+	    lagrange[(*(*faceV[s])[f])[2]] * 
+	    sclLegendre[l].compose
+	  (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum[s][f], sum[s][f]);
+    }
+  }
+
+  // Face Based (Type 1) // 
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nEdge;
 
     for(unsigned int l1 = 1; l1 < order; l1++){
       for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
 	for(int f = 0; f < 4; f++){
-	  // Preliminary Type 1
-	  Polynomial sum = 
-	    lagrange[(*(*faceV[s])[f])[0]] +
-	    lagrange[(*(*faceV[s])[f])[1]] +
-	    lagrange[(*(*faceV[s])[f])[2]];	  
 	  
-	  Polynomial u = 
-	    intLegendre[l1].compose(lagrange[(*(*faceV[s])[f])[0]] - 
-				    lagrange[(*(*faceV[s])[f])[1]]
-				    ,
-				    lagrange[(*(*faceV[s])[f])[0]] + 
-				    lagrange[(*(*faceV[s])[f])[1]]);
-	  Polynomial v = 
-	    lagrange[(*(*faceV[s])[f])[2]] * 
-	    sclLegendre[l2].compose(lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum);
+	  (*(*basis)[s])[i] = 
+	    new vector<Polynomial>((u[s][l1][f] * v[s][l2][f]).gradient());
 	  
-	  // Preliminary Type 2
-	  vector<Polynomial> gradU = u.gradient();
-	  vector<Polynomial> gradV = v.gradient();
+	  i++;
+	  
+	  if(s == 0)
+	    faceOffset++;
+	}
+      }
+    }
+  }
+
+  // Face Based (Type 2) //
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nEdge + faceOffset;
+
+    for(unsigned int l1 = 1; l1 < order; l1++){
+      for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
+	for(int f = 0; f < 4; f++){	  
+	  vector<Polynomial> gradU = u[s][l1][f].gradient();
+	  vector<Polynomial> gradV = v[s][l2][f].gradient();
 
 	  vector<Polynomial> vGradU(gradU);
-	  vGradU[0].mul(v);
-	  vGradU[1].mul(v);
-	  vGradU[2].mul(v);
+	  vGradU[0].mul(v[s][l2][f]);
+	  vGradU[1].mul(v[s][l2][f]);
+	  vGradU[2].mul(v[s][l2][f]);
 
 	  vector<Polynomial> uGradV(gradV);
-	  uGradV[0].mul(u);
-	  uGradV[1].mul(u);
-	  uGradV[2].mul(u);
+	  uGradV[0].mul(u[s][l1][f]);
+	  uGradV[1].mul(u[s][l1][f]);
+	  uGradV[2].mul(u[s][l1][f]);
 
 	  vector<Polynomial> subGradUV(vGradU);
 	  subGradUV[0].sub(uGradV[0]);
 	  subGradUV[1].sub(uGradV[1]);
 	  subGradUV[2].sub(uGradV[2]);
 
-	  // Preliminary Type 3
-	  vector<Polynomial> gradL1 = lagrange[(*(*faceV[s])[f])[0]].gradient();
- 	  vector<Polynomial> gradL2 = lagrange[(*(*faceV[s])[f])[1]].gradient();
-
-	  vector<Polynomial> l2GradL1(gradL1);
-	  l2GradL1[0].mul(lagrange[(*(*faceV[s])[f])[1]]);
-	  l2GradL1[1].mul(lagrange[(*(*faceV[s])[f])[1]]);
-	  l2GradL1[2].mul(lagrange[(*(*faceV[s])[f])[1]]);
-
-	  vector<Polynomial> l1GradL2(gradL2);
-	  l1GradL2[0].mul(lagrange[(*(*faceV[s])[f])[0]]);
-	  l1GradL2[1].mul(lagrange[(*(*faceV[s])[f])[0]]);
-	  l1GradL2[2].mul(lagrange[(*(*faceV[s])[f])[0]]);
-
-	  vector<Polynomial> subGradL1L2V(l2GradL1);
-	  subGradL1L2V[0].sub(l1GradL2[0]);
-	  subGradL1L2V[1].sub(l1GradL2[1]);
-	  subGradL1L2V[2].sub(l1GradL2[2]);
-
-	  subGradL1L2V[0].mul(v);
-	  subGradL1L2V[1].mul(v);
-	  subGradL1L2V[2].mul(v);
-	  
-	  
-	  // Type 1
-	  (*(*basis)[s])[i] = 
-	    new vector<Polynomial>((u * v).gradient());
-	  
-	  i++;
-	  
-	  // Type 2
 	  (*(*basis)[s])[i] =
 	    new vector<Polynomial>(subGradUV);
 
 	  i++;
-	  
-	  // Type 3
-	  if(l1 == 1){
-  	    (*(*basis)[s])[i] =
-	      new vector<Polynomial>(subGradL1L2V);
-	    
-	    i++;
-	  }
 	}
       }
     }
   }
-      
+
+  // Face Based (Type 3) //
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nEdge + faceOffset * 2;
+
+    for(int l2 = 0; l2  < orderMinus; l2++){
+      for(int f = 0; f < 4; f++){
+	vector<Polynomial> gradL1 = lagrange[(*(*faceV[s])[f])[0]].gradient();
+	vector<Polynomial> gradL2 = lagrange[(*(*faceV[s])[f])[1]].gradient();
+
+	vector<Polynomial> l2GradL1(gradL1);
+	l2GradL1[0].mul(lagrange[(*(*faceV[s])[f])[1]]);
+	l2GradL1[1].mul(lagrange[(*(*faceV[s])[f])[1]]);
+	l2GradL1[2].mul(lagrange[(*(*faceV[s])[f])[1]]);
+	
+	vector<Polynomial> l1GradL2(gradL2);
+	l1GradL2[0].mul(lagrange[(*(*faceV[s])[f])[0]]);
+	l1GradL2[1].mul(lagrange[(*(*faceV[s])[f])[0]]);
+	l1GradL2[2].mul(lagrange[(*(*faceV[s])[f])[0]]);
+
+	vector<Polynomial> subGradL1L2V(l2GradL1);
+	subGradL1L2V[0].sub(l1GradL2[0]);
+	subGradL1L2V[1].sub(l1GradL2[1]);
+	subGradL1L2V[2].sub(l1GradL2[2]);
+
+	subGradL1L2V[0].mul(v[s][l2][f]);
+	subGradL1L2V[1].mul(v[s][l2][f]);
+	subGradL1L2V[2].mul(v[s][l2][f]);
+	  
+	(*(*basis)[s])[i] =
+	  new vector<Polynomial>(subGradL1L2V);
+	
+	i++;
+      }
+    }
+  }
+        
   // Cell Based //
   const Polynomial one(1, 0, 0, 0);
   
@@ -312,11 +367,38 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       }
     }
   }
-      
-  // Free Temporary Sapce //
+        
+  // Free Temporary Space //
+  // Legendre
   delete[] legendre;
   delete[] sclLegendre;
   delete[] intLegendre;
+
+  // Sum
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    delete[] sum[s];
+  
+  delete[] sum;
+  
+  // Polynomial u
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(int l = 0; l < orderPlus; l++)
+      delete[] u[s][l];
+
+    delete[] u[s];
+  }
+
+  delete[] u;
+
+  // Polynomial v
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(int l = 0; l < orderMinus; l++)
+      delete[] v[s][l];
+
+    delete[] v[s];
+  }
+
+  delete[] v;
 }
 
 TetEdgeBasis::~TetEdgeBasis(void){
