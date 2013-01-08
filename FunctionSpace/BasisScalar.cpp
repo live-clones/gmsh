@@ -13,26 +13,27 @@ BasisScalar::~BasisScalar(void){
 string BasisScalar::toString(void) const{
   stringstream stream;
   unsigned int i = 0;
+  const unsigned int refSpace = 0;
 
   stream << "Vertex Based:" << endl;
   for(; i < nVertex; i++)
-    stream << "f("  << i + 1                << ") = "
-	   << (*(*basis)[0])[i]->toString() << endl;
+    stream << "f("  << i + 1                       << ") = "
+	   << (*(*basis)[refSpace])[i]->toString() << endl;
 
   stream << "Edge Based:"   << endl;
   for(; i < nVertex + nEdge; i++)
-    stream << "f(" << i + 1                 << ") = " 
-	   << (*(*basis)[0])[i]->toString() << endl;
+    stream << "f(" << i + 1                        << ") = " 
+	   << (*(*basis)[refSpace])[i]->toString() << endl;
 
   stream << "Face Based:"   << endl;
   for(; i < nVertex + nEdge + nFace; i++)
-    stream << "f(" << i + 1                 << ") = " 
-	   << (*(*basis)[0])[i]->toString() << endl;
+    stream << "f(" << i + 1                        << ") = " 
+	   << (*(*basis)[refSpace])[i]->toString() << endl;
 
   stream << "Cell Based:"   << endl;
   for(; i < nVertex + nEdge + nFace + nCell; i++)
-    stream << "f("  << i + 1                << ") = " 
-	   << (*(*basis)[0])[i]->toString() << endl;
+    stream << "f("  << i + 1                       << ") = " 
+	   << (*(*basis)[refSpace])[i]->toString() << endl;
 
   return stream.str();
 }

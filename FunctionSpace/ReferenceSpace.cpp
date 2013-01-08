@@ -288,7 +288,7 @@ string ReferenceSpace::toString(void) const{
   stream << toString(&pTreeRoot) << endl;
 
   // ReferenceSpaces //
-  stream << "ReferenceSpace:" << endl;
+  stream << "Reference Spaces:" << endl;
   
   for(unsigned int i = 0; i < nPerm; i++){
     stream << "  * ";
@@ -297,6 +297,29 @@ string ReferenceSpace::toString(void) const{
       stream << perm[i][j] << " ";
 
     stream << " (# " << i + 1 << ")" << endl;
+  }
+
+  stream << "Edges Permutations:" << endl;
+  
+  for(unsigned int i = 0; i < nPerm; i++){
+    stream << "  * RefSpace #" << i + 1 << ":" << endl;
+    
+    for(unsigned int j = 0; j < nEdge; j++)
+      stream << "      -- [" 
+	     << edge->at(i)->at(j)->at(0) << ", "
+	     << edge->at(i)->at(j)->at(1) << "]" << endl;
+  }
+
+  stream << "Faces Permutations:" << endl;
+  
+  for(unsigned int i = 0; i < nPerm; i++){
+    stream << "  * RefSpace #" << i + 1 << ":" << endl;
+    
+    for(unsigned int j = 0; j < nFace; j++)
+      stream << "      -- [" 
+	     << face->at(i)->at(j)->at(0) << ", "
+	     << face->at(i)->at(j)->at(1) << ", "
+	     << face->at(i)->at(j)->at(2) << "]" << endl;
   }
 
   return stream.str();

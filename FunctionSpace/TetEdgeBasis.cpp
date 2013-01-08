@@ -62,7 +62,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
 
   for(unsigned int s = 0; s < nRefSpace; s++)
     (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
-
+  
   // Edge Based (Nedelec) //
   for(unsigned int s = 0; s < nRefSpace; s++){
     for(int e = 0; e < 6; e++){
@@ -84,7 +84,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       (*(*basis)[s])[e] = new vector<Polynomial>(tmp1);
     }
   }
-
+  
   // Edge Based (High Order) //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = 6;
@@ -102,7 +102,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       }
     }
   }
-  
+    
   // Face Based //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nEdge;
@@ -147,7 +147,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
 
 	  // Preliminary Type 3
 	  vector<Polynomial> gradL1 = lagrange[(*(*faceV[s])[f])[0]].gradient();
-	  vector<Polynomial> gradL2 = lagrange[(*(*faceV[s])[f])[1]].gradient();
+ 	  vector<Polynomial> gradL2 = lagrange[(*(*faceV[s])[f])[1]].gradient();
 
 	  vector<Polynomial> l2GradL1(gradL1);
 	  l2GradL1[0].mul(lagrange[(*(*faceV[s])[f])[1]]);
@@ -168,19 +168,19 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
 	  subGradL1L2V[1].mul(v);
 	  subGradL1L2V[2].mul(v);
 	  
-
+	  
 	  // Type 1
 	  (*(*basis)[s])[i] = 
 	    new vector<Polynomial>((u * v).gradient());
 	  
 	  i++;
-
+	  
 	  // Type 2
 	  (*(*basis)[s])[i] =
 	    new vector<Polynomial>(subGradUV);
 
 	  i++;
-
+	  
 	  // Type 3
 	  if(l1 == 1){
   	    (*(*basis)[s])[i] =
@@ -192,7 +192,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       }
     }
   }
-  
+      
   // Cell Based //
   const Polynomial one(1, 0, 0, 0);
   
@@ -312,7 +312,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
       }
     }
   }
-  
+      
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] sclLegendre;
