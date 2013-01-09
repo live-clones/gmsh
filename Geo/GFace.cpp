@@ -799,8 +799,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   int iter;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
-  double initu[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0., 0., 1.};
-  double initv[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0., 1., 0., 1.};
+  double initu[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 1., 0.};
+  double initv[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 1., 0.};
 
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
@@ -808,6 +808,12 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   umax = ru.high();
   vmin = rv.low();
   vmax = rv.high();
+
+  const double tol = Precision*(SQU(umax-umin)+SQU(vmax-vmin));
+  for(int i = 0; i < NumInitGuess; i++) {
+    initu[i] = umin + initu[i]*(umax-umin);
+    initv[i] = vmin + initv[i]*(vmax-vmin);
+  }
 
   for(int i = 0; i < NumInitGuess; i++){
     for(int j = 0; j < NumInitGuess; j++){
@@ -821,7 +827,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
       if (err2 < 1.e-8 * CTX::instance()->lc) return;
 
-      while(err > Precision && iter < MaxIter) {
+      while(err > tol && iter < MaxIter) {
         P = point(U, V);
         Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
         mat[0][0] = der.left().x();
@@ -851,7 +857,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
         V = Vnew;
       }
 
-      if(iter < MaxIter && err <= Precision &&
+      if(iter < MaxIter && err <= tol &&
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
         if (onSurface && err2 > 1.e-4 * CTX::instance()->lc)
