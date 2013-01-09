@@ -1179,8 +1179,8 @@ const JacobianBasis *JacobianBasis::find(int tag)
 
 
 
-// Computes (unit) normals to straight line element
-void JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const
+// Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)
+double JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const
 {
 
   fullVector<double> dxyzdXbar(3);
@@ -1206,11 +1206,13 @@ void JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMat
   const double norm1 = sqrt(result(1,0)*result(1,0)+result(1,1)*result(1,1)+result(1,2)*result(1,2));
   result(1,0) /= norm1; result(1,1) /= norm1; result(1,2) /= norm1;
 
+  return sqrt(dxyzdXbar(0)*dxyzdXbar(0)+dxyzdXbar(1)*dxyzdXbar(1)+dxyzdXbar(2)*dxyzdXbar(2));
+
 }
 
 
 
-// Computes (unit) normal to straight surface element (with norm as return value)
+// Computes (unit) normal to straight surface element at barycenter (with norm as return value)
 double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const
 {
 
@@ -1236,12 +1238,35 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMa
 
 
 
-inline double calcDet3D(double dxdX, double dydX, double dzdX,
-                        double dxdY, double dydY, double dzdY,
-                        double dxdZ, double dydZ, double dzdZ)
+static inline double calcDet3D(double dxdX, double dydX, double dzdX,
+                               double dxdY, double dydY, double dzdY,
+                               double dxdZ, double dydZ, double dzdZ)
 {
   return dxdX*dydY*dzdZ + dxdY*dydZ*dzdX + dydX*dzdY*dxdZ
        - dxdZ*dydY*dzdX - dxdY*dydX*dzdZ - dydZ*dzdY*dxdX;
+}
+
+
+
+// Returns absolute value of Jacobian of straight volume element at barycenter
+double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
+{
+
+  double dxdX = 0, dydX = 0, dzdX = 0, dxdY = 0, dydY = 0, dzdY = 0, dxdZ = 0, dydZ = 0, dzdZ = 0;
+  for (int j=0; j<numPrimMapNodes; j++) {
+    dxdX += primGradShapeBarX(j)*nodesXYZ(j,0);
+    dydX += primGradShapeBarX(j)*nodesXYZ(j,1);
+    dzdX += primGradShapeBarX(j)*nodesXYZ(j,2);
+    dxdY += primGradShapeBarY(j)*nodesXYZ(j,0);
+    dydY += primGradShapeBarY(j)*nodesXYZ(j,1);
+    dzdY += primGradShapeBarY(j)*nodesXYZ(j,2);
+    dxdZ += primGradShapeBarZ(j)*nodesXYZ(j,0);
+    dydZ += primGradShapeBarZ(j)*nodesXYZ(j,1);
+    dzdZ += primGradShapeBarZ(j)*nodesXYZ(j,2);
+  }
+
+  return fabs(calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ));
+
 }
 
 
@@ -1271,6 +1296,44 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVe
     case 3 : {
       fullMatrix<double> dum;
       getSignedJacobian(nodesXYZ,dum,jacobian);
+      break;
+    }
+
+  }
+
+}
+
+
+
+// Calculate scaled (signed) Jacobian at mapping's nodes for one element, with normal vectors to
+// straight element for regularization and scaling
+void JacobianBasis::getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
+{
+
+  switch (bezier->dim) {
+
+    case 1 : {
+      fullMatrix<double> normals(2,3);
+      const double scale = 1./getPrimNormals1D(nodesXYZ,normals);
+      normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;  // Faster to scale 1 normal than afterwards
+      getSignedJacobian(nodesXYZ,normals,jacobian);
+      break;
+    }
+
+    case 2 : {
+      fullMatrix<double> normal(1,3);
+      const double scale = 1./getPrimNormal2D(nodesXYZ,normal);
+      normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;     // Faster to scale normal than afterwards
+      getSignedJacobian(nodesXYZ,normal,jacobian);
+      break;
+    }
+
+    case 0 :
+    case 3 : {
+      fullMatrix<double> dum;
+      const double scale = 1./getPrimJac3D(nodesXYZ);
+      getSignedJacobian(nodesXYZ,dum,jacobian);
+      jacobian.scale(scale);
       break;
     }
 

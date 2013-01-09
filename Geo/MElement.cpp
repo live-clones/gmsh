@@ -112,19 +112,12 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
-  if (getPolynomialOrder() == 1) return;
-  const JacobianBasis *jac = getJacobianFuncSpace(),*jac1 = getJacobianFuncSpace(1);    // Jac. and prim. Jac. basis
-  const int numJacNodes = jac->getNumJacNodes(), numJac1Nodes = jac1->getNumJacNodes();
-  const int numMapNodes = jac->getNumMapNodes(), numMap1Nodes = jac1->getNumMapNodes();
-  fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMap1Nodes,3);
+  const JacobianBasis *jac = getJacobianFuncSpace();
+  const int numJacNodes = jac->getNumJacNodes();
+  fullMatrix<double> nodesXYZ(jac->getNumMapNodes(),3);
   getNodesCoord(nodesXYZ);
-  nodesXYZ1.copy(nodesXYZ,0,numMap1Nodes,0,3,0,0);
-  fullVector<double> Ji(numJacNodes), J1i(numJac1Nodes), J1Ji(numJacNodes);
-  jac->getSignedJacobian(nodesXYZ,Ji);
-  jac1->getSignedJacobian(nodesXYZ1,J1i);
-  jac->primJac2Jac(J1i,J1Ji);
-  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);                                 // Calc scaled Jacobian -> Bezier
-  for (int i=0; i<numJacNodes; i++) SJi(i) = Ji(i)/J1Ji(i);
+  fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
+  jac->getScaledJacobian(nodesXYZ,SJi);
   jac->lag2Bez(SJi,Bi);
   jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
