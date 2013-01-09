@@ -7,7 +7,7 @@ using namespace std;
 LineNodeBasis::LineNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();

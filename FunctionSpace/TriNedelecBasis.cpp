@@ -6,7 +6,7 @@ using namespace std;
 TriNedelecBasis::TriNedelecBasis(void){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();

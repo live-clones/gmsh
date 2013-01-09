@@ -5,7 +5,7 @@ using namespace std;
 DivBasis::DivBasis(const BasisVector& other){
   // Reference Space //
   refSpace  = &other.getReferenceSpace();
-  nRefSpace = other.getReferenceSpace().getNReferenceSpace();
+  nRefSpace = other.getReferenceSpace().getNPermutation();
 
   // Set Basis Type //
   order = other.getOrder() - 1;

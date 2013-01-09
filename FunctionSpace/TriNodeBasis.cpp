@@ -7,7 +7,7 @@ using namespace std;
 TriNodeBasis::TriNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();

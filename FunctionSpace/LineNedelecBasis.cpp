@@ -7,7 +7,7 @@ using namespace std;
 LineNedelecBasis::LineNedelecBasis(void){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
 
   // Set Basis Type //
   order = 1;

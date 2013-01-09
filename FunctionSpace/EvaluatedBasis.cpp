@@ -8,7 +8,7 @@ EvaluatedBasis(const BasisScalar& basis,
 	       const fullMatrix<double>& point){
   // Data //
   refSpace  = &basis.getReferenceSpace(); 
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
   scalar    = true;
   nFunction = basis.getNFunction();
   nPoint    = point.size1();
@@ -34,7 +34,7 @@ EvaluatedBasis(const BasisVector& basis,
 	       const fullMatrix<double>& point){
   // Data //
   refSpace  = &basis.getReferenceSpace(); 
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = refSpace->getNPermutation();
   scalar    = false;
   nFunction = basis.getNFunction();  
   nPoint    = point.size1();

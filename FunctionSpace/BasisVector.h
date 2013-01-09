@@ -76,7 +76,7 @@ BasisVector::getFunction(unsigned int refSpace) const{
 inline  
 const std::vector<const std::vector<Polynomial>*>&
 BasisVector::getFunction(const MElement& element) const{
-  return *(*basis)[refSpace->getReferenceSpace(element)];
+  return *(*basis)[refSpace->getPermutation(element)];
 }
 
 #endif

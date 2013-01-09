@@ -222,7 +222,7 @@ inOrder(unsigned int permutation,
   return inorder;  
 }
 
-unsigned int ReferenceSpace::getReferenceSpace(const MElement& elem) const{
+unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 

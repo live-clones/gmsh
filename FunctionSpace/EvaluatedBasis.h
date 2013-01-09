@@ -100,7 +100,7 @@ EvaluatedBasis::getEvaluation(unsigned int refSpace) const{
 
 inline const fullMatrix<double>& 
 EvaluatedBasis::getEvaluation(const MElement& element) const{
-  return *(*eBasis)[refSpace->getReferenceSpace(element)];
+  return *(*eBasis)[refSpace->getPermutation(element)];
 }
 
 #endif

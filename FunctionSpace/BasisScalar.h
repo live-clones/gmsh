@@ -76,7 +76,7 @@ BasisScalar::getFunction(unsigned int refSpace) const{
 inline  
 const std::vector<const Polynomial*>&
 BasisScalar::getFunction(const MElement& element) const{
-  return *(*basis)[refSpace->getReferenceSpace(element)];
+  return *(*basis)[refSpace->getPermutation(element)];
 }
 
 #endif
