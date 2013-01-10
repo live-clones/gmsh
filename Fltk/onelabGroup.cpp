@@ -241,6 +241,8 @@ bool onelab::localNetworkClient::run()
           server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
         }
         else{
+          // FIXME: introduce GMSH_PARAMETER_NOT_FOUND message to handle this
+          // (need to change onelab.h accordingly)
           reply = "OneLab parameter '" + name + "' not found";
           server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
         }

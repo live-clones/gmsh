@@ -416,7 +416,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-#pragma omp master 
+#pragma omp master
   {
     if(FlGui::available()){
       if(log) FlGui::instance()->check();
