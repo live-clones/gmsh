@@ -108,9 +108,11 @@ class FlGui{
   // select an entity in the most recent graphic window
   char selectEntity(int type);
   // display status message
-  void setStatus(const char *msg, bool opengl=false);
+  void setStatus(const std::string &msg, bool opengl=false);
   // display status message and update progress bar
-  void setProgress(const char *msg, double val, double min, double max);
+  void setProgress(const std::string &msg, double val, double min, double max);
+  // set color of progress message
+  void setProgressColor(int col);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
   // add line in message console(s)

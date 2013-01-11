@@ -657,11 +657,11 @@ char FlGui::selectEntity(int type)
      selectedElements);
 }
 
-void FlGui::setStatus(const char *msg, bool opengl)
+void FlGui::setStatus(const std::string &msg, bool opengl)
 {
   if(!opengl){
     static char buff[1024];
-    strncpy(buff, msg, sizeof(buff) - 1);
+    strncpy(buff, msg.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
     for(unsigned int i = 0; i < graph.size(); i++){
       graph[i]->getProgress()->label(buff);
@@ -670,21 +670,21 @@ void FlGui::setStatus(const char *msg, bool opengl)
   }
   else{
     openglWindow *gl = getCurrentOpenglWindow();
-    int n = strlen(msg);
+    int n = msg.size();
     int i = 0;
     while(i < n) if(msg[i++] == '\n') break;
-    gl->screenMessage[0] = std::string(msg);
+    gl->screenMessage[0] = msg;
     if(i)
       gl->screenMessage[0].resize(i - 1);
     if(i < n)
-      gl->screenMessage[1] = std::string(&msg[i]);
+      gl->screenMessage[1] = msg.substr(i);
     else
       gl->screenMessage[1].clear();
     drawContext::global()->draw();
   }
 }
 
-void FlGui::setProgress(const char *msg, double val, double min, double max)
+void FlGui::setProgress(const std::string &msg, double val, double min, double max)
 {
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
     if(FlGui::instance()->graph[i]->getProgress()->value() != val)
@@ -695,6 +695,12 @@ void FlGui::setProgress(const char *msg, double val, double min, double max)
       FlGui::instance()->graph[i]->getProgress()->maximum(max);
   }
   setStatus(msg);
+}
+
+void FlGui::setProgressColor(int col)
+{
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    FlGui::instance()->graph[i]->getProgress()->labelcolor(col);
 }
 
 void FlGui::storeCurrentWindowsInfo()
