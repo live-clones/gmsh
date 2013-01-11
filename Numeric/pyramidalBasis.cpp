@@ -13,11 +13,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 
   bergot = new BergotBasis(order);
 
-  int n = order+1;
-  int num_points = n*(n+1)*(2*n+1)/6;
-  if (serendip && (order > 2)) {
-    num_points -= (order-2)*((order-2)+1)*(2*(order-2)+1)/6;
-  }
+  int num_points = points.size1();
 
   VDMinv.resize(num_points, num_points);
   double *fval = new double[num_points];
@@ -43,6 +39,10 @@ pyramidalBasis::~pyramidalBasis()
 
 
 
+int pyramidalBasis::getNumShapeFunctions() const { return points.size1(); }
+
+
+
 void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
 
@@ -62,7 +62,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
 
 
-void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf)
+void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const
 {
 
   const int N = bergot->size(), NPts = coord.size1();
