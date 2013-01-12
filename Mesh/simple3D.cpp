@@ -16,6 +16,7 @@
 #include "CenterlineField.h"
 #include <algorithm>
 #include "directions3D.h"
+#include "Context.h"
 
 #if defined(HAVE_RTREE)
 #include "rtree.h"
@@ -368,8 +369,6 @@ void Filler::treat_region(GRegion* gr){
 	}
   }
 
-  std::ofstream file("nodes.pos");
-  file << "View \"test\" {\n";
   for(i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
@@ -379,10 +378,11 @@ void Filler::treat_region(GRegion* gr){
 	compute_parameters(node,gr);
 	rtree.Insert(node->min,node->max,node);
 	fifo.push(node);
-	print_node(node,file);
   }
-  file << "};\n";
-
+  
+  std::ofstream file("nodes.pos");
+  file << "View \"test\" {\n";	
+  
   count = 1;
   while(!fifo.empty()){
     parent = fifo.front();
@@ -420,6 +420,7 @@ void Filler::treat_region(GRegion* gr){
 			vertex = new MVertex(x,y,z,gr,0);
 			new_vertices.push_back(vertex);
 			ok2 = 1;
+			print_segment(individual->get_point(),parent->get_point(),file);
 		  }
 	    }
 	  }
@@ -430,6 +431,11 @@ void Filler::treat_region(GRegion* gr){
 	printf("%d\n",count);
 	count++;
   }
+  
+  file << "};\n";
+
+  int option = CTX::instance()->mesh.algo3d;
+  CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
 
   deleter(gr);
   std::vector<GRegion*> regions;
@@ -438,6 +444,8 @@ void Filler::treat_region(GRegion* gr){
   mesher(gr); //?
   MeshDelaunayVolume(regions);
 
+  CTX::instance()->mesh.algo3d = option;
+	
   for(i=0;i<garbage.size();i++) delete garbage[i];
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
