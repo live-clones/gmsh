@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2011 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
@@ -502,27 +502,29 @@ void Recombinator::patern3(GRegion* gr){
 void Recombinator::merge(GRegion* gr){
   unsigned int i;
   int count;
-  int idle;
   bool flag;
   double threshold;
   double quality;
-  double coeff;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
   MElement* element;
   std::set<MElement*> parts;
+  std::vector<MTetrahedron*> opt;
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
-  std::vector<MTetrahedron*>::iterator it3;
   Hex hex;
 
   count = 1;
-  idle = 0;
   quality = 0.0;
 
   for(i=0;i<potential.size();i++){
     hex = potential[i];
 
+	threshold = 0.25;
+	if(hex.get_quality()<threshold){
+	  break;
+	}  
+	  
 	a = hex.get_a();
 	b = hex.get_b();
 	c = hex.get_c();
@@ -543,7 +545,6 @@ void Recombinator::merge(GRegion* gr){
 	find(h,hex,parts);
 
 	flag = 1;
-
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
 	  it2 = markings.find(element);
@@ -552,62 +553,48 @@ void Recombinator::merge(GRegion* gr){
 		break;
 	  }
 	}
-
-	threshold = 0.25;
-	if(hex.get_quality()<threshold){
-	  flag = 0;
-	}
+	if(!flag) continue;
 
 	if(!valid(hex,parts)){
-	  flag = 0;
+	  continue;
 	}
 
 	if(!conformityA(hex)){
-	  flag = 0;
+	  continue;
 	}
 
 	if(!conformityB(hex)){
-	  flag = 0;
+	  continue;
 	}
 
 	if(!conformityC(hex)){
-	  flag = 0;
+	  continue;
 	}
 
-	if(flag){
-	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
-	  quality = quality + hex.get_quality();
-	  for(it=parts.begin();it!=parts.end();it++){
-	    element = *it;
-		it2 = markings.find(element);
-		it2->second = 1;
-	  }
-	  gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
-	  build_hash_tableA(hex);
-	  build_hash_tableB(hex);
-	  build_hash_tableC(hex);
-	  idle = 0;
-	  count++;
+	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
+	quality = quality + hex.get_quality();
+	for(it=parts.begin();it!=parts.end();it++){
+	  element = *it;
+	  it2 = markings.find(element);
+	  it2->second = 1;
 	}
-	else{
-	  idle++;
-	}
-
-	coeff = 0.1;
-	if((double)idle>coeff*(double)potential.size() && potential.size()>2000){
-	  break;
-	}
+	gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
+	build_hash_tableA(hex);
+	build_hash_tableB(hex);
+	build_hash_tableC(hex);
+	count++;
   }
 
-  it3 = gr->tetrahedra.begin();
-  while(it3!=gr->tetrahedra.end()){
-	element = (MElement*)(*it3);
+  opt.clear();
+  opt.resize(gr->tetrahedra.size());
+  opt = gr->tetrahedra;
+  gr->tetrahedra.clear();
+	
+  for(i=0;i<opt.size();i++){
+    element = (MElement*)(opt[i]);
 	it2 = markings.find(element);
-    if(it2->second==1){
-      it3 = gr->tetrahedra.erase(it3);
-	}
-	else{
-	  it3++;
+	if(it2->second==0){
+	  gr->tetrahedra.push_back(opt[i]);  
 	}
   }
 
@@ -617,27 +604,30 @@ void Recombinator::merge(GRegion* gr){
 void Recombinator::improved_merge(GRegion* gr){
   unsigned int i;
   int count;
-  int idle;
   bool flag;
   double threshold;
   double quality;
-  double coeff;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
   MElement* element;
   std::set<MElement*> parts;
+  std::vector<MTetrahedron*> opt;
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
   std::vector<MTetrahedron*>::iterator it3;
   Hex hex;
-
+	
   count = 1;
-  idle = 0;
   quality = 0.0;
-
+	
   for(i=0;i<potential.size();i++){
     hex = potential[i];
-
+		
+	threshold = 0.25;
+	if(hex.get_quality()<threshold){
+	  break;
+	}  
+		
 	a = hex.get_a();
 	b = hex.get_b();
 	c = hex.get_c();
@@ -646,7 +636,7 @@ void Recombinator::improved_merge(GRegion* gr){
 	f = hex.get_f();
 	g = hex.get_g();
 	h = hex.get_h();
-
+		
 	parts.clear();
 	find(a,hex,parts);
 	find(b,hex,parts);
@@ -656,9 +646,8 @@ void Recombinator::improved_merge(GRegion* gr){
 	find(f,hex,parts);
 	find(g,hex,parts);
 	find(h,hex,parts);
-
+		
 	flag = 1;
-
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
 	  it2 = markings.find(element);
@@ -667,65 +656,51 @@ void Recombinator::improved_merge(GRegion* gr){
 		break;
 	  }
 	}
-
-	threshold = 0.25;
-	if(hex.get_quality()<threshold){
-	  flag = 0;
-	}
-
+	if(!flag) continue;
+		
 	if(!valid(hex,parts)){
-	  flag = 0;
+	  continue;
 	}
-
+		
 	if(!conformityA(hex)){
-	  flag = 0;
+	  continue;
 	}
-
+		
 	if(!conformityB(hex)){
-	  flag = 0;
+	  continue;
 	}
-
+		
 	if(!conformityC(hex)){
-	  flag = 0;
+	  continue;
 	}
-
-	if(flag){
-	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
-	  quality = quality + hex.get_quality();
-	  for(it=parts.begin();it!=parts.end();it++){
-	    element = *it;
-		it2 = markings.find(element);
-		it2->second = 1;
-	  }
-	  gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
-	  build_hash_tableA(hex);
-	  build_hash_tableB(hex);
-	  build_hash_tableC(hex);
-	  idle = 0;
-	  count++;
+		
+	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
+	quality = quality + hex.get_quality();
+	for(it=parts.begin();it!=parts.end();it++){
+	  element = *it;
+	  it2 = markings.find(element);
+	  it2->second = 1;
 	}
-	else{
-	  idle++;
-	}
-
-	coeff = 0.1;
-	if((double)idle>coeff*(double)potential.size() && potential.size()>2000){
-	  break;
-	}
+	gr->addHexahedron(new MHexahedron(a,b,c,d,e,f,g,h));
+	build_hash_tableA(hex);
+	build_hash_tableB(hex);
+	build_hash_tableC(hex);
+	count++;
   }
-
-  it3 = gr->tetrahedra.begin();
-  while(it3!=gr->tetrahedra.end()){
-    element = (MElement*)(*it3);
+	
+  opt.clear();
+  opt.resize(gr->tetrahedra.size());
+  opt = gr->tetrahedra;
+  gr->tetrahedra.clear();
+	
+  for(i=0;i<opt.size();i++){
+    element = (MElement*)(opt[i]);
 	it2 = markings.find(element);
-	if(it2->second==1){
-	  it3 = gr->tetrahedra.erase(it3);
-	}
-	else{
-	  it3++;
+	if(it2->second==0){
+	  gr->tetrahedra.push_back(opt[i]);  
 	}
   }
-
+	
   printf("hexahedra average quality (0->1) : %f\n",quality/count);
 }
 
@@ -2077,9 +2052,9 @@ void Supplementary::merge(GRegion* gr){
   MVertex *d,*e,*f;
   MElement* element;
   std::set<MElement*> parts;
+  std::vector<MTetrahedron*> opt;
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it2;
-  std::vector<MTetrahedron*>::iterator it3;
   Prism prism;
 
   count = 1;
@@ -2087,6 +2062,11 @@ void Supplementary::merge(GRegion* gr){
 
   for(i=0;i<potential.size();i++){
     prism = potential[i];
+
+	threshold = 0.15;
+	if(prism.get_quality()<threshold){
+	  break;
+	}  
 
 	a = prism.get_a();
 	b = prism.get_b();
@@ -2104,7 +2084,6 @@ void Supplementary::merge(GRegion* gr){
 	find(f,prism,parts);
 
 	flag = 1;
-
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
 	  it2 = markings.find(element);
@@ -2113,56 +2092,51 @@ void Supplementary::merge(GRegion* gr){
 		break;
 	  }
 	}
-
-	threshold = 0.15;
-	if(prism.get_quality()<threshold){
-      flag = 0;
-	}
-
+	if(!flag) continue;
+	
 	if(!valid(prism,parts)){
-      flag = 0;
+	  continue;
 	}
 
 	if(!conformityA(prism)){
-	  flag = 0;
+	  continue;
 	}
 
 	if(!conformityB(prism)){
-	  flag = 0;
+	  continue;
 	}
 
 	if(!conformityC(prism)){
-	  flag = 0;
+	  continue;
 	}
 
-	if(flag){
-	  printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
-	  quality = quality + prism.get_quality();
-	  for(it=parts.begin();it!=parts.end();it++){
-	    element = *it;
-		it2 = markings.find(element);
-		it2->second = 1;
-	  }
-	  gr->addPrism(new MPrism(a,b,c,d,e,f));
-	  build_hash_tableA(prism);
-	  build_hash_tableB(prism);
-	  build_hash_tableC(prism);
-	  count++;
+	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
+	quality = quality + prism.get_quality();
+	for(it=parts.begin();it!=parts.end();it++){
+      element = *it;
+	  it2 = markings.find(element);
+	  it2->second = 1;
 	}
+	gr->addPrism(new MPrism(a,b,c,d,e,f));
+	build_hash_tableA(prism);
+	build_hash_tableB(prism);
+	build_hash_tableC(prism);
+	count++;
   }
 
-  it3 = gr->tetrahedra.begin();
-  while(it3!=gr->tetrahedra.end()){
-    element = (MElement*)(*it3);
+  opt.clear();
+  opt.resize(gr->tetrahedra.size());
+  opt = gr->tetrahedra;
+  gr->tetrahedra.clear();
+	
+  for(i=0;i<opt.size();i++){
+    element = (MElement*)(opt[i]);
 	it2 = markings.find(element);
-	if(it2->second==1){
-	  it3 = gr->tetrahedra.erase(it3);
-	}
-	else{
-      it3++;
+	if(it2->second==0){
+	  gr->tetrahedra.push_back(opt[i]);
 	}
   }
-
+	
   printf("prisms average quality (0->1) : %f\n",quality/count);
 }
 
@@ -2979,8 +2953,8 @@ void PostOp::pyramids1(GRegion* gr){
   MElement* element;
   std::vector<MElement*> hexahedra;
   std::vector<MElement*> prisms;
-  std::vector<MTetrahedron*>::iterator it;
-  std::map<MElement*,bool>::iterator it2;
+  std::vector<MTetrahedron*> opt;
+  std::map<MElement*,bool>::iterator it;
 
   hexahedra.clear();
   prisms.clear();
@@ -3030,15 +3004,16 @@ void PostOp::pyramids1(GRegion* gr){
 	pyramids1(b,c,f,e,gr);
   }
 
-  it = gr->tetrahedra.begin();
-  while(it!=gr->tetrahedra.end()){
-    element = (MElement*)(*it);
-	it2 = markings.find(element);
-	if(it2->second==1){
-	  it = gr->tetrahedra.erase(it);
-	}
-	else{
-	  it++;
+  opt.clear();
+  opt.resize(gr->tetrahedra.size());
+  opt = gr->tetrahedra;
+  gr->tetrahedra.clear();
+	
+  for(i=0;i<opt.size();i++){
+    element = (MElement*)(opt[i]);
+	it = markings.find(element);
+	if(it->second==0){
+	  gr->tetrahedra.push_back(opt[i]);
 	}
   }
 }
@@ -3050,8 +3025,8 @@ void PostOp::pyramids2(GRegion* gr){
   MElement* element;
   std::vector<MElement*> hexahedra;
   std::vector<MElement*> prisms;
-  std::vector<MTetrahedron*>::iterator it1;
-  std::vector<MPyramid*>::iterator it2;
+  std::vector<MTetrahedron*> opt1;
+  std::vector<MPyramid*> opt2;
   std::map<MElement*,bool>::iterator it;
 
   hexahedra.clear();
@@ -3102,27 +3077,29 @@ void PostOp::pyramids2(GRegion* gr){
 	pyramids2(b,c,f,e,gr);
   }
 
-  it1 = gr->tetrahedra.begin();
-  while(it1!=gr->tetrahedra.end()){
-    element = (MElement*)(*it1);
+  opt1.clear();
+  opt1.resize(gr->tetrahedra.size());
+  opt1 = gr->tetrahedra;
+  gr->tetrahedra.clear();
+	
+  for(i=0;i<opt1.size();i++){
+    element = (MElement*)(opt1[i]);
 	it = markings.find(element);
-	if(it->second==1){
-	  it1 = gr->tetrahedra.erase(it1);
-	}
-	else{
-	  it1++;
+	if(it->second==0){
+	  gr->tetrahedra.push_back(opt1[i]);
 	}
   }
 
-  it2 = gr->pyramids.begin();
-  while(it2!=gr->pyramids.end()){
-    element = (MElement*)(*it2);
+  opt2.clear();
+  opt2.resize(gr->pyramids.size());
+  opt2 = gr->pyramids;
+  gr->pyramids.clear();
+	
+  for(i=0;i<opt2.size();i++){
+    element = (MElement*)(opt2[i]);
 	it = markings.find(element);
-	if(it->second==1){
-	  it2 = gr->pyramids.erase(it2);
-	}
-	else{
-	  it2++;
+	if(it->second==0){
+	  gr->pyramids.push_back(opt2[i]);
 	}
   }
 }
