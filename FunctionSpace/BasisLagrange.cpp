@@ -1,3 +1,4 @@
+#include "Exception.h"
 #include "BasisLagrange.h"
 
 BasisLagrange::BasisLagrange(void){
@@ -9,12 +10,14 @@ BasisLagrange::~BasisLagrange(void){
 fullMatrix<double>* BasisLagrange::
 getFunctions(const MElement& element, 
 	     double u, double v, double w) const{
-  return new fullMatrix<double>(nFunction, 1);
+  throw Exception("BasisLagrange::Not Implemented");
 }
 
-fullMatrix<double>* BasisLagrange::getFunctions(unsigned int permutation, 
+fullMatrix<double>* BasisLagrange::getFunctions(unsigned int orientation, 
 						double u, double v, double w) const{
 
+  throw Exception("BasisLagrange::Not Implemented");
+  /*
   // Alloc Memory //
   fullMatrix<double>  tmp(nFunction, 1);
   fullMatrix<double>* values = new fullMatrix<double>(nFunction, 1);
@@ -31,22 +34,25 @@ fullMatrix<double>* BasisLagrange::getFunctions(unsigned int permutation,
   
   // Return //
   return values;
+  */
 }
 
 void BasisLagrange::preEvaluateFunctions(const fullMatrix<double>& point) const{
+  throw Exception("BasisLagrange::Not Implemented");
 }
 
 void BasisLagrange::preEvaluateGradFunctions(const fullMatrix<double>& point) const{
+  throw Exception("BasisLagrange::Not Implemented");
 }
 
 const fullMatrix<double>& 
 BasisLagrange::getPreEvaluatedFunctions(const MElement& element) const{
-  return fullMatrix<double>(nFunction, 1);
+  throw Exception("BasisLagrange::Not Implemented");
 }
  
 const fullMatrix<double>& 
 BasisLagrange::getPreEvaluatedGradFunctions(const MElement& element) const{
-  return fullMatrix<double>(nFunction, 1);
+  throw Exception("BasisLagrange::Not Implemented");
 }
 
 std::vector<double> BasisLagrange::

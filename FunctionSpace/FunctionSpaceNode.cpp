@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "BasisScalar.h"
+#include "BasisLocalScalar.h"
 #include "Mapper.h"
 #include "FunctionSpaceNode.h"
 
@@ -12,8 +12,8 @@ FunctionSpaceNode::FunctionSpaceNode(const GroupOfElement& goe,
   build(goe, 0, order); 
 
   // Init BasisScalar //
-  basisScalar = 
-    static_cast<const BasisScalar*>(basis);
+  localBasisScalar = 
+    static_cast<const BasisLocalScalar*>(localBasis);
 }
     
 FunctionSpaceNode::~FunctionSpaceNode(void){
@@ -35,10 +35,9 @@ interpolate(const MElement& element,
   eelement.xyz2uvw(phys, uvw);
 
   // Get Basis Functions //
-  fullMatrix<double>* fun = basisScalar->getFunctions(element,
-						      uvw[0],
-						      uvw[1],
-						      uvw[2]);
+  fullMatrix<double>* fun = 
+    localBasisScalar->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+
   const unsigned int nFun = fun->size1();
 
   // Interpolate (in Reference Place) //
@@ -58,10 +57,9 @@ interpolateInRefSpace(const MElement& element,
 		      const fullVector<double>& uvw) const{
 
   // Get Basis Functions //
-  fullMatrix<double>* fun = basisScalar->getFunctions(element,
-						      uvw(0),
-						      uvw(1),
-						      uvw(2));
+  fullMatrix<double>* fun = 
+    localBasisScalar->getFunctions(element, uvw(0), uvw(1), uvw(2));
+
   const unsigned int nFun = fun->size1();
   
   // Interpolate (in Reference Place) //

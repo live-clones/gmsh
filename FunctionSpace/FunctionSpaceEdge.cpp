@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "BasisVector.h"
+#include "BasisLocalVector.h"
 #include "Mapper.h"
 #include "FunctionSpaceEdge.h"
 
@@ -12,8 +12,8 @@ FunctionSpaceEdge::FunctionSpaceEdge(const GroupOfElement& goe,
   build(goe, 1, order); 
 
   // Init BasisVector //
-  basisVector = 
-    static_cast<const BasisVector*>(basis);
+  localBasisVector = 
+    static_cast<const BasisLocalVector*>(localBasis);
 }
     
 FunctionSpaceEdge::~FunctionSpaceEdge(void){
@@ -40,10 +40,9 @@ interpolate(const MElement& element,
   invJac.invertInPlace();
  
   // Get Basis Functions //
-  fullMatrix<double>* fun = basisVector->getFunctions(element,
-						      uvw[0],
-						      uvw[1],
-						      uvw[2]);
+  fullMatrix<double>* fun = 
+    localBasisVector->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+
   const unsigned int nFun = fun->size1();
 
   // Interpolate (in Reference Place) //
@@ -78,10 +77,9 @@ interpolateInRefSpace(const MElement& element,
   invJac.invertInPlace();
 
   // Get Basis Functions // 
-  fullMatrix<double>* fun = basisVector->getFunctions(element,
-						      uvw(0),
-						      uvw(1),
-						      uvw(2));
+  fullMatrix<double>* fun = 
+    localBasisVector->getFunctions(element, uvw(0), uvw(1), uvw(2));
+
   const unsigned int nFun = fun->size1();
 
 

@@ -4,9 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "Basis.h"
-#include "BasisScalar.h"
-#include "BasisVector.h"
+#include "BasisLocal.h"
 
 #include "Comparators.h"
 #include "Dof.h"
@@ -34,10 +32,6 @@
 
     A FunctionSpace is also responsible for the generation of all
     the Dof%s and GroupOfDof%s related to its geometrical @em Support.
-
-    @note
-    A FunctionSpace is an @em interface, so it
-    can't be instantiated.
     
     @todo 
     Allow Hybrid Mesh
@@ -50,12 +44,12 @@ class FunctionSpace{
   const GroupOfElement* goe;
 
   // Basis //
-  const Basis* basis;
-  unsigned int fPerVertex;
-  unsigned int fPerEdge;
-  unsigned int fPerFace;
-  unsigned int fPerCell;
-  unsigned int type;
+  const BasisLocal* localBasis;
+  unsigned int      fPerVertex;
+  unsigned int      fPerEdge;
+  unsigned int      fPerFace;
+  unsigned int      fPerCell;
+  unsigned int      type;
 
   // Dofs //
   std::set<const Dof*, DofComparator>*     dof;
@@ -222,7 +216,7 @@ inline const GroupOfElement& FunctionSpace::getSupport(void) const{
 }
 
 inline unsigned int FunctionSpace::getOrder(void) const{
-  return (unsigned int)(basis->getOrder());
+  return (unsigned int)(localBasis->getOrder());
 }
 
 inline unsigned int FunctionSpace::getType(void) const{
@@ -230,7 +224,7 @@ inline unsigned int FunctionSpace::getType(void) const{
 }
 
 inline bool FunctionSpace::isScalar(void) const{
-  return basis->isScalar();
+  return localBasis->isScalar();
 }
 
 inline unsigned int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{

@@ -53,19 +53,19 @@ getFunctions(const MElement& element,
   // Alloc Memory //
   fullMatrix<double>* values = new fullMatrix<double>(nFunction, 1);
 
-  // Define Permutation //
-  unsigned int permutation = refSpace->getPermutation(element);
+  // Define Orientation //
+  unsigned int orientation = refSpace->getPermutation(element);
 
   // Fill Matrix //
   for(unsigned int i = 0; i < nFunction; i++)
-    (*values)(i, 0) = basis[permutation][i]->at(u, v, w);
+    (*values)(i, 0) = basis[orientation][i]->at(u, v, w);
   
   // Return //
   return values;
 }
 
 fullMatrix<double>* BasisHierarchicalScalar::
-getFunctions(unsigned int permutation,
+getFunctions(unsigned int orientation,
 	     double u, double v, double w) const{
   
   // Alloc Memory //
@@ -73,7 +73,7 @@ getFunctions(unsigned int permutation,
 
   // Fill Matrix //
   for(unsigned int i = 0; i < nFunction; i++)
-    (*values)(i, 0) = basis[permutation][i]->at(u, v, w);
+    (*values)(i, 0) = basis[orientation][i]->at(u, v, w);
   
   // Return //
   return values;

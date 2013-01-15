@@ -71,13 +71,13 @@ getFunctions(const MElement& element,
   // Alloc Memory //
   fullMatrix<double>* values = new fullMatrix<double>(nFunction, 3);
 
-  // Define Permutation //
-  unsigned int permutation = refSpace->getPermutation(element);
+  // Define Orientation //
+  unsigned int orientation = refSpace->getPermutation(element);
 
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
     fullVector<double> eval = 
-      Polynomial::at(*basis[permutation][i], u, v, w);
+      Polynomial::at(*basis[orientation][i], u, v, w);
     
     (*values)(i, 0) = eval(0);
     (*values)(i, 1) = eval(1);
@@ -89,7 +89,7 @@ getFunctions(const MElement& element,
 }
 
 fullMatrix<double>* BasisHierarchicalVector::
-getFunctions(unsigned int permutation, 
+getFunctions(unsigned int orientation, 
 	     double u, double v, double w) const{
   
   // Alloc Memory //
@@ -98,7 +98,7 @@ getFunctions(unsigned int permutation,
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
     fullVector<double> eval = 
-      Polynomial::at(*basis[permutation][i], u, v, w);
+      Polynomial::at(*basis[orientation][i], u, v, w);
     
     (*values)(i, 0) = eval(0);
     (*values)(i, 1) = eval(1);

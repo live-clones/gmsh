@@ -2,13 +2,20 @@
 #define _BASISHIERARCHICALSCALAR_H_
 
 #include <string>
-#include "BasisScalar.h"
+#include "BasisLocalScalar.h"
 #include "Polynomial.h"
 #include "ReferenceSpace.h"
 
-class BasisHierarchicalScalar: public BasisScalar{
+/**
+   @interface BasisHierarchicalScalar
+   @brief Interface for Hierarchical Scalar Local Basis
+   
+   This is an interface for Hierarchical Scalar Local Basis.@n
+*/
+
+class BasisHierarchicalScalar: public BasisLocalScalar{
  protected:
-  // Permutation //
+  // Orientation //
   ReferenceSpace* refSpace;
   unsigned int    nRefSpace;
 
@@ -32,7 +39,7 @@ class BasisHierarchicalScalar: public BasisScalar{
   virtual fullMatrix<double>* getFunctions(const MElement& element, 
 					   double u, double v, double w) const;
 
-  virtual fullMatrix<double>* getFunctions(unsigned int permutation,
+  virtual fullMatrix<double>* getFunctions(unsigned int orientation,
 					   double u, double v, double w) const;
 
   virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
@@ -52,5 +59,23 @@ class BasisHierarchicalScalar: public BasisScalar{
  private:
   void getGrad(void) const;
 };
+
+/**
+   @internal
+   @fn BasisHierarchicalScalar::BasisHierarchicalScalar
+   
+   Instanciates an new BasisHierarchicalScalar
+   @endinternal
+   **
+
+   @fn BasisHierarchicalScalar::~BasisHierarchicalScalar
+   
+   Deletes this BasisHierarchicalScalar
+   **
+
+   @fn BasisHierarchicalScalar::toString   
+   @return Returns a string describing this 
+   BasisHierarchicalScalar
+ */
 
 #endif

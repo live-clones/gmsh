@@ -2,7 +2,7 @@
 #define _FUNCTIONSPACEVECTOR_H_
 
 #include "Exception.h"
-#include "BasisVector.h"
+#include "BasisLocalVector.h"
 #include "FunctionSpace.h"
 
 /**
@@ -24,7 +24,7 @@
 
 class FunctionSpaceVector : public FunctionSpace{
  protected:
-  const BasisVector* basisVector;
+  const BasisLocalVector* localBasisVector;
 
  public:
   virtual ~FunctionSpaceVector(void);
@@ -100,28 +100,8 @@ class FunctionSpaceVector : public FunctionSpace{
    ---> check
    **
 
-   @fn FunctionSpaceVector::getLocalFunctions
-   @param element A MElement
-   @return Returns the basis functions associated
-   to the given element (with correct @em closure)
-   **
-
-   @fn FunctionSpaceVector::getCurlLocalFunctions
-   @param element A MElement
-   @return Returns the @em curl 
-   of the basis functions associated
-   to the given element (with correct @em closure)
-   **
-
-   @fn FunctionSpaceVector::getDivLocalFunctions
-   @param element A MElement
-   @return Returns the @em divergence
-   of the basis functions associated
-   to the given element (with correct @em closure)
-   **
-
    @fn FunctionSpaceVector::preEvaluateLocalFunctions
-   @param points A set of @c 3D Points
+   @param point A set of @c 3D Points
 
    Precomputes the Local Functions of this FunctionSpace
    at the given Points.
@@ -132,7 +112,7 @@ class FunctionSpaceVector : public FunctionSpace{
    **
 
    @fn FunctionSpaceVector::preEvaluateCurlLocalFunctions
-   @param points A set of @c 3D Points
+   @param point A set of @c 3D Points
 
    Precomputes the @em Curl of the Local Functions 
    of this FunctionSpace at the given Points.
@@ -143,7 +123,7 @@ class FunctionSpaceVector : public FunctionSpace{
    **
 
    @fn FunctionSpaceVector::preEvaluateDivLocalFunctions
-   @param points A set of @c 3D Points
+   @param point A set of @c 3D Points
 
    Precomputes the @em Divergence of the Local Functions 
    of this FunctionSpace at the given Points.
@@ -195,23 +175,23 @@ class FunctionSpaceVector : public FunctionSpace{
 
 inline void FunctionSpaceVector::
 preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
-  basisVector->preEvaluateFunctions(point);
+  localBasisVector->preEvaluateFunctions(point);
 }
 
 inline void FunctionSpaceVector::
 preEvaluateCurlLocalFunctions(const fullMatrix<double>& point) const{
-  basisVector->preEvaluateCurlFunctions(point);
+  localBasisVector->preEvaluateCurlFunctions(point);
 }
 
 inline void FunctionSpaceVector::
 preEvaluateDivLocalFunctions(const fullMatrix<double>& point) const{
-  basisVector->preEvaluateDivFunctions(point);
+  localBasisVector->preEvaluateDivFunctions(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
   try{
-    return basisVector->getPreEvaluatedFunctions(element);
+    return localBasisVector->getPreEvaluatedFunctions(element);
   }
   
   catch(Exception& any){
@@ -222,7 +202,7 @@ FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) const{
   try{
-    return basisVector->getPreEvaluatedCurlFunctions(element);
+    return localBasisVector->getPreEvaluatedCurlFunctions(element);
   }
   
   catch(Exception& any){
@@ -233,7 +213,7 @@ FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) con
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) const{
   try{
-    return basisVector->getPreEvaluatedFunctions(element);
+    return localBasisVector->getPreEvaluatedFunctions(element);
   }
   
   catch(Exception& any){

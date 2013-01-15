@@ -2,7 +2,7 @@
 #define _FUNCTIONSPACESCALAR_H_
 
 #include "Exception.h"
-#include "BasisScalar.h"
+#include "BasisLocalScalar.h"
 #include "FunctionSpace.h"
 
 /**
@@ -24,7 +24,7 @@
 
 class FunctionSpaceScalar : public FunctionSpace{
  protected:
-  const BasisScalar* basisScalar;
+  const BasisLocalScalar* localBasisScalar;
 
  public:
   virtual ~FunctionSpaceScalar(void);
@@ -96,21 +96,8 @@ class FunctionSpaceScalar : public FunctionSpace{
    ---> check
    **
 
-   @fn FunctionSpaceScalar::getLocalFunctions
-   @param element A MElement
-   @return Returns the basis functions associated
-   to the given element (with correct @em closure)
-   **
-
-   @fn FunctionSpaceScalar::getGradLocalFunctions
-   @param element A MElement
-   @return Returns the @em gradient 
-   of the basis functions associated
-   to the given element (with correct @em closure)
-   **
-
    @fn FunctionSpaceScalar::preEvaluateLocalFunctions
-   @param points A set of @c 3D Points
+   @param point A set of @c 3D Points
 
    Precomputes the Local Functions of this FunctionSpace
    at the given Points.
@@ -121,7 +108,7 @@ class FunctionSpaceScalar : public FunctionSpace{
    **
 
    @fn FunctionSpaceScalar::preEvaluateGradLocalFunctions
-   @param points A set of @c 3D Points
+   @param point A set of @c 3D Points
 
    Precomputes the @em Gradient of the Local Functions 
    of this FunctionSpace at the given Points.
@@ -161,18 +148,18 @@ class FunctionSpaceScalar : public FunctionSpace{
 
 inline void FunctionSpaceScalar::
 preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
-  basisScalar->preEvaluateFunctions(point);
+  localBasisScalar->preEvaluateFunctions(point);
 }
 
 inline void FunctionSpaceScalar::
 preEvaluateGradLocalFunctions(const fullMatrix<double>& point) const{
-  basisScalar->preEvaluateGradFunctions(point);
+  localBasisScalar->preEvaluateGradFunctions(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
   try{
-    return basisScalar->getPreEvaluatedFunctions(element);
+    return localBasisScalar->getPreEvaluatedFunctions(element);
   }
   
   catch(Exception& any){
@@ -183,7 +170,7 @@ FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) const{
   try{
-    return basisScalar->getPreEvaluatedGradFunctions(element);
+    return localBasisScalar->getPreEvaluatedGradFunctions(element);
   }
   
   catch(Exception& any){

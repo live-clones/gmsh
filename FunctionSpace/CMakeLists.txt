@@ -13,9 +13,11 @@ set(SRC
   TetReferenceSpace.cpp
 
   Basis.cpp
-  BasisScalar.cpp
-  BasisVector.cpp
   BasisGenerator.cpp
+
+  BasisLocal.cpp
+  BasisLocalScalar.cpp
+  BasisLocalVector.cpp
 
   BasisLagrange.cpp
   BasisHierarchicalScalar.cpp

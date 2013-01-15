@@ -2,13 +2,20 @@
 #define _BASISHIERARCHICALVECTOR_H_
 
 #include <string>
-#include "BasisVector.h"
+#include "BasisLocalVector.h"
 #include "Polynomial.h"
 #include "ReferenceSpace.h"
 
-class BasisHierarchicalVector: public BasisVector{
+/**
+   @interface BasisHierarchicalVector
+   @brief Interface for Hierarchical Vectorial Local Basis
+   
+   This is an interface for Hierarchical Vectorial Local Basis.@n
+*/
+
+class BasisHierarchicalVector: public BasisLocalVector{
  protected:
-  // Permutation //
+  // Orientation //
   ReferenceSpace* refSpace;
   unsigned int    nRefSpace;
 
@@ -38,7 +45,7 @@ class BasisHierarchicalVector: public BasisVector{
   virtual fullMatrix<double>* getFunctions(const MElement& element, 
 					   double u, double v, double w) const;
 
-  virtual fullMatrix<double>* getFunctions(unsigned int permutation, 
+  virtual fullMatrix<double>* getFunctions(unsigned int orientation, 
 					   double u, double v, double w) const;
 
   virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
@@ -63,6 +70,24 @@ class BasisHierarchicalVector: public BasisVector{
   void getCurl(void) const;
   void getDiv(void) const;
 };
+
+/**
+   @internal
+   @fn BasisHierarchicalVector::BasisHierarchicalVector
+   
+   Instanciates an new BasisHierarchicalVector
+   @endinternal
+   **
+
+   @fn BasisHierarchicalVector::~BasisHierarchicalVector
+   
+   Deletes this BasisHierarchicalVector
+   **
+
+   @fn BasisHierarchicalVector::toString   
+   @return Returns a string describing this 
+   BasisHierarchicalVector
+ */
 
 #endif
 

@@ -14,7 +14,7 @@ FunctionSpace::FunctionSpace(void){
 
 FunctionSpace::~FunctionSpace(void){
   // Basis //
-  delete basis;
+  delete localBasis;
 
   // Dof //
   if(dof){
@@ -57,26 +57,26 @@ void FunctionSpace::build(const GroupOfElement& goe,
   int nFace       = myElement.getNumFaces();
  
   // Init Struct //
-  type  = basisType;
-  basis = BasisGenerator::generate(elementType, 
-				   basisType, 
-				   order, "hierarchical");
-
+  type      = basisType;
+  localBasis = BasisGenerator::generate(elementType, 
+					basisType, 
+					order, "hierarchical");
+  
   // Number of *Per* Entity functions //
-  fPerVertex = basis->getNVertexBased() / nVertex;
+  fPerVertex = localBasis->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
 
   if(nEdge)
-    fPerEdge = basis->getNEdgeBased() / nEdge;
+    fPerEdge = localBasis->getNEdgeBased() / nEdge;
   else
     fPerEdge = 0;
 
   if(nFace)
-    fPerFace = basis->getNFaceBased() / nFace;
+    fPerFace = localBasis->getNFaceBased() / nFace;
   else
     fPerFace = 0;  
 
-  fPerCell = basis->getNCellBased(); // We always got 1 cell 
+  fPerCell = localBasis->getNCellBased(); // We always got 1 cell 
 
   // Build Dof //
   buildDof();

@@ -9,14 +9,12 @@
 
    A Basis is @em set of @em linearly @em independent Polynomial%s 
    (or Vector%s of Polynomial%s).@n
-
-   @note
-   A Basis is an @em interface, so it @em can't be instanciated
  */
 
 class Basis{
  protected:
   bool scalar;
+  bool local;
 
   unsigned int order;
   unsigned int type;
@@ -36,9 +34,9 @@ class Basis{
 
   //! @return Returns:
   //! @li @c true, if this is a 
-  //! @em scalar Basis (BasisScalar)
+  //! @em scalar Basis
   //! @li @c false, if this is a
-  //! @em vectorial Basis (BasisVector)
+  //! @em vectorial Basis
   //!
   //! @note
   //! Scalar basis are sets of 
@@ -46,6 +44,13 @@ class Basis{
   //! Vectorial basis are sets of 
   //! Vector%s of Polynomial%s  
   bool isScalar(void) const;
+
+  //! @return Returns:
+  //! @li @c true, if this is a 
+  //! @em Local Basis 
+  //! @li @c false, if this is a
+  //! @em Global Basis 
+  bool isLocal(void) const;
 
   //! @return Returns the @em polynomial @em order of the Basis
   unsigned int getOrder(void) const;
@@ -96,6 +101,10 @@ class Basis{
 
 inline bool Basis::isScalar(void) const{
   return scalar;
+}
+
+inline bool Basis::isLocal(void) const{
+  return local;
 }
 
 inline unsigned int Basis::getOrder(void) const{
