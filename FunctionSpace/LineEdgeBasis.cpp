@@ -47,21 +47,21 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   Legendre::integrated(intLegendre, orderPlus);
 
   // Basis //
-  basis = new vector<vector<const vector<Polynomial>*>*>(nRefSpace);
+  basis = new vector<Polynomial>**[nRefSpace];
 
   for(unsigned int s = 0; s < nRefSpace; s++)
-    (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
+    basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based (Nedelec) // 
-  (*(*basis)[0])[0] = new vector<Polynomial>(first);
-  (*(*basis)[1])[0] = new vector<Polynomial>(second);
+  basis[0][0] = new vector<Polynomial>(first);
+  basis[1][0] = new vector<Polynomial>(second);
 
   // Edge Based (High Order) //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = 1;
     
     for(unsigned int l = 1; l < orderPlus; l++){
-      (*(*basis)[s])[i] = 
+      basis[s][i] = 
 	new vector<Polynomial>((intLegendre[l].compose
 				(x[(*(*edgeV[s])[0])[0]])).gradient());
       
@@ -80,10 +80,10 @@ LineEdgeBasis::~LineEdgeBasis(void){
   // Basis //
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++)
-      delete (*(*basis)[i])[j];
+      delete basis[i][j];
 
-    delete (*basis)[i];
+    delete[] basis[i];
   }
 
-  delete basis;
+  delete[] basis;
 }

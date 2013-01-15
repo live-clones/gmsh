@@ -1,7 +1,7 @@
 #ifndef _LINENEDELECBASIS_H_
 #define _LINENEDELECBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class LineNedelecBasis
@@ -11,7 +11,7 @@
    for Lines.@n
 */
 
-class LineNedelecBasis: public BasisVector{
+class LineNedelecBasis: public BasisHierarchicalVector{
  public:
   //! Returns a new Nedelec Basis for Lines
   //!

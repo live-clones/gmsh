@@ -1,7 +1,7 @@
 #ifndef _TRIEDGEBASIS_H_
 #define _TRIEDGEBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class TriEdgeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
 */
 
-class TriEdgeBasis: public BasisVector{
+class TriEdgeBasis: public BasisHierarchicalVector{
  public:
   //! @param order The order of the Basis
   //!

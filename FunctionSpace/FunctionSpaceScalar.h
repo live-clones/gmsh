@@ -1,11 +1,8 @@
 #ifndef _FUNCTIONSPACESCALAR_H_
 #define _FUNCTIONSPACESCALAR_H_
 
-#include "fullMatrix.h"
 #include "Exception.h"
 #include "BasisScalar.h"
-#include "GradBasis.h"
-#include "EvaluatedBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -29,15 +26,6 @@ class FunctionSpaceScalar : public FunctionSpace{
  protected:
   const BasisScalar* basisScalar;
 
-  mutable bool       hasGrad;
-  mutable GradBasis* gradBasis;
-
-  bool locPreEvaluated;
-  bool gradPreEvaluated;
-  
-  EvaluatedBasis* evalLoc;
-  EvaluatedBasis* evalGrad;
-
  public:
   virtual ~FunctionSpaceScalar(void);
 
@@ -51,14 +39,8 @@ class FunctionSpaceScalar : public FunctionSpace{
 			  const std::vector<double>& coef,
 			  const fullVector<double>& uvw) const = 0;
   
-  const std::vector<const Polynomial*>&
-    getLocalFunctions(const MElement& element) const;
-
-  const std::vector<const std::vector<Polynomial>*>&
-    getGradLocalFunctions(const MElement& element) const;
-
-  void preEvaluateLocalFunctions(fullMatrix<double>& points);
-  void preEvaluateGradLocalFunctions(fullMatrix<double>& points);
+  void preEvaluateLocalFunctions(const fullMatrix<double>& point) const;
+  void preEvaluateGradLocalFunctions(const fullMatrix<double>& point) const;
 
   const fullMatrix<double>&
     getEvaluatedLocalFunctions(const MElement& element) const;
@@ -177,39 +159,36 @@ class FunctionSpaceScalar : public FunctionSpace{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<const Polynomial*>&
-FunctionSpaceScalar::getLocalFunctions(const MElement& element) const{
-  return locBasis(element, *basisScalar);
+inline void FunctionSpaceScalar::
+preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
+  basisScalar->preEvaluateFunctions(point);
 }
 
-inline const std::vector<const std::vector<Polynomial>*>&
-FunctionSpaceScalar::getGradLocalFunctions(const MElement& element) const{
-  
-  // Got Grad Basis ? //
-  // --> mutable data 
-  //  --> Just a 'cache memory' 
-  if(!hasGrad){
-    gradBasis = new GradBasis(*basisScalar);
-    hasGrad   = true;
-  }
-  
-  return locBasis(element, *gradBasis);
+inline void FunctionSpaceScalar::
+preEvaluateGradLocalFunctions(const fullMatrix<double>& point) const{
+  basisScalar->preEvaluateGradFunctions(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
-  if(!locPreEvaluated)
+  try{
+    return basisScalar->getPreEvaluatedFunctions(element);
+  }
+  
+  catch(Exception& any){
     throw Exception("Local Basis Functions not PreEvaluated");
-
-  return locEvalBasis(element, *evalLoc);
+  }
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) const{
-  if(!gradPreEvaluated)
-    throw Exception("Gradients of Local Basis Functions not PreEvaluated");
-
-  return locEvalBasis(element, *evalGrad);
+  try{
+    return basisScalar->getPreEvaluatedGradFunctions(element);
+  }
+  
+  catch(Exception& any){
+    throw Exception("Gradient of Local Basis Functions not PreEvaluated");
+  }
 }
 
 #endif

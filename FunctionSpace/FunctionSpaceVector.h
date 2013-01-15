@@ -1,12 +1,8 @@
 #ifndef _FUNCTIONSPACEVECTOR_H_
 #define _FUNCTIONSPACEVECTOR_H_
 
-#include "fullMatrix.h"
 #include "Exception.h"
 #include "BasisVector.h"
-#include "CurlBasis.h"
-#include "DivBasis.h"
-#include "EvaluatedBasis.h"
 #include "FunctionSpace.h"
 
 /**
@@ -30,20 +26,6 @@ class FunctionSpaceVector : public FunctionSpace{
  protected:
   const BasisVector* basisVector;
 
-  mutable bool       hasCurl;
-  mutable CurlBasis* curlBasis;
-
-  mutable bool       hasDiv;
-  mutable DivBasis*  divBasis;
-
-  bool locPreEvaluated;
-  bool curlPreEvaluated;
-  bool divPreEvaluated;
-  
-  EvaluatedBasis* evalLoc;
-  EvaluatedBasis* evalCurl;
-  EvaluatedBasis* evalDiv;
-
  public:
   virtual ~FunctionSpaceVector(void);
 
@@ -57,19 +39,10 @@ class FunctionSpaceVector : public FunctionSpace{
 			  const std::vector<double>& coef,
 			  const fullVector<double>& uvw) const = 0;
 
-  const std::vector<const std::vector<Polynomial>*>&
-    getLocalFunctions(const MElement& element) const;
-
-  const std::vector<const std::vector<Polynomial>*>&
-    getCurlLocalFunctions(const MElement& element) const;
-
-  const std::vector<const Polynomial*>&
-    getDivLocalFunctions(const MElement& element) const;
-
-  void preEvaluateLocalFunctions(fullMatrix<double>& points);
-  void preEvaluateCurlLocalFunctions(fullMatrix<double>& points);
-  void preEvaluateDivLocalFunctions(fullMatrix<double>& points);
-
+  void preEvaluateLocalFunctions(const fullMatrix<double>& point) const;
+  void preEvaluateCurlLocalFunctions(const fullMatrix<double>& point) const;
+  void preEvaluateDivLocalFunctions(const fullMatrix<double>& point) const;
+ 
   const fullMatrix<double>&
     getEvaluatedLocalFunctions(const MElement& element) const;
 
@@ -220,61 +193,52 @@ class FunctionSpaceVector : public FunctionSpace{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<const std::vector<Polynomial>*>&
-FunctionSpaceVector::getLocalFunctions(const MElement& element) const{
-  return locBasis(element, *basisVector);
+inline void FunctionSpaceVector::
+preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
+  basisVector->preEvaluateFunctions(point);
 }
 
-inline const std::vector<const std::vector<Polynomial>*>&
-FunctionSpaceVector::getCurlLocalFunctions(const MElement& element) const{
-
-  // Got Curl Basis ? //
-  // --> mutable data 
-  //  --> Just a 'cache memory' 
-  if(!hasCurl){
-    curlBasis = new CurlBasis(*basisVector);
-    hasCurl   = true;
-  }
-
-  return locBasis(element, *curlBasis);
+inline void FunctionSpaceVector::
+preEvaluateCurlLocalFunctions(const fullMatrix<double>& point) const{
+  basisVector->preEvaluateCurlFunctions(point);
 }
 
-inline const std::vector<const Polynomial*>&
-FunctionSpaceVector::getDivLocalFunctions(const MElement& element) const{
-
-  // Got Div Basis ? //
-  // --> mutable data 
-  //  --> Just a 'cache memory' 
-  if(!hasDiv){
-    divBasis = new DivBasis(*basisVector);
-    hasDiv   = true;
-  }
-
-  return locBasis(element, *divBasis);
+inline void FunctionSpaceVector::
+preEvaluateDivLocalFunctions(const fullMatrix<double>& point) const{
+  basisVector->preEvaluateDivFunctions(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
-  if(!locPreEvaluated)
+  try{
+    return basisVector->getPreEvaluatedFunctions(element);
+  }
+  
+  catch(Exception& any){
     throw Exception("Local Basis Functions not PreEvaluated");
-
-  return locEvalBasis(element, *evalLoc);
+  }
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) const{
-  if(!curlPreEvaluated)
-    throw Exception("Curls of Local Basis Functions not PreEvaluated");
-
-  return locEvalBasis(element, *evalCurl);
+  try{
+    return basisVector->getPreEvaluatedCurlFunctions(element);
+  }
+  
+  catch(Exception& any){
+    throw Exception("Curl of Local Basis Functions not PreEvaluated");
+  }
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) const{
-  if(!divPreEvaluated)
-    throw Exception("Divergences of Local Basis Functions not PreEvaluated");
-
-  return locEvalBasis(element, *evalDiv);
+  try{
+    return basisVector->getPreEvaluatedFunctions(element);
+  }
+  
+  catch(Exception& any){
+    throw Exception("Divergence of Local Basis Functions not PreEvaluated");
+  }
 }
 
 #endif

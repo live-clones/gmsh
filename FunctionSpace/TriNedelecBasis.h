@@ -1,7 +1,7 @@
 #ifndef _TRINEDELECBASIS_H_
 #define _TRINEDELECBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class TriNedelecBasis
@@ -11,7 +11,7 @@
    for Triangles.@n
 */
 
-class TriNedelecBasis: public BasisVector{
+class TriNedelecBasis: public BasisHierarchicalVector{
  public:
   //! Returns a new Nedelec Basis for Triangles
   //!

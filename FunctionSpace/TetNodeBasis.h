@@ -1,7 +1,7 @@
 #ifndef _TETNODEBASIS_H_
 #define _TETNODEBASIS_H_
 
-#include "BasisScalar.h"
+#include "BasisHierarchicalScalar.h"
 
 /**
    @class TetNodeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class TetNodeBasis: public BasisScalar{
+class TetNodeBasis: public BasisHierarchicalScalar{
  public:
   //! @param order The order of the Basis
   //!

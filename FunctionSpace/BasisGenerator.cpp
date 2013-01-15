@@ -12,7 +12,7 @@
 #include "TriNodeBasis.h"
 #include "TriEdgeBasis.h"
 #include "TriNedelecBasis.h"
-#include "TriLagrangeBasis.h"
+//#include "TriLagrangeBasis.h"
 
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
@@ -34,10 +34,10 @@ Basis* BasisGenerator::generate(unsigned int elementType,
   
   if(!family.compare(std::string("zaglmayr")))
     return generateZaglmayr(elementType, basisType, order);
-
+  /*
   else if(!family.compare(std::string("lagrange")))
     return generateLagrange(elementType, basisType, order);
-
+  */
   else
     throw Exception("Unknwown Basis Family: %s", family.c_str());
 }
@@ -56,7 +56,7 @@ Basis* BasisGenerator::generateZaglmayr(unsigned int elementType,
 			   elementType);
   }
 }
-
+/*
 Basis* BasisGenerator::generateLagrange(unsigned int elementType, 
 					unsigned int basisType, 
 					unsigned int order){
@@ -76,7 +76,7 @@ Basis* BasisGenerator::generateLagrange(unsigned int elementType,
 			   elementType);
   }
 }
-
+*/
 Basis* BasisGenerator::linZaglmayrGen(unsigned int basisType, 
 				      unsigned int order){
   switch(basisType){ 

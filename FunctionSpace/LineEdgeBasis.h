@@ -1,7 +1,7 @@
 #ifndef _LINEEDGEBASIS_H_
 #define _LINEEDGEBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class LineEdgeBasis
@@ -19,7 +19,7 @@
    It also uses the following mapping: @f$x = \frac{u + 1}{2}@f$.
 */
 
-class LineEdgeBasis: public BasisVector{
+class LineEdgeBasis: public BasisHierarchicalVector{
  public:
   //! @param order The order of the Basis
   //!

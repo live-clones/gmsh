@@ -58,26 +58,26 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 
 
   // Basis //
-  basis = new vector<vector<const Polynomial*>*>(nRefSpace);
+  basis = new Polynomial**[nRefSpace];
 
   for(unsigned int s = 0; s < nRefSpace; s++)
-    (*basis)[s] = new vector<const Polynomial*>(nFunction);
+    basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
   for(unsigned int s = 0; s < nRefSpace; s++){
-    (*(*basis)[s])[0] = new Polynomial(lagrange[0]);
-    (*(*basis)[s])[1] = new Polynomial(lagrange[1]);
-    (*(*basis)[s])[2] = new Polynomial(lagrange[2]);
-    (*(*basis)[s])[3] = new Polynomial(lagrange[3]);
+    basis[s][0] = new Polynomial(lagrange[0]);
+    basis[s][1] = new Polynomial(lagrange[1]);
+    basis[s][2] = new Polynomial(lagrange[2]);
+    basis[s][3] = new Polynomial(lagrange[3]);
   }
 
   // Edge Based //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex;
 
-    for(unsigned int l = 1; l < order; l++){
-      for(int e = 0; e < 6; e++){
-	(*(*basis)[s])[i] = 
+    for(int e = 0; e < 6; e++){
+      for(unsigned int l = 1; l < order; l++){
+	basis[s][i] = 
 	  new Polynomial(intLegendre[l].compose
 			 (lagrange[(*(*edgeV[s])[e])[0]] - 
 			  lagrange[(*(*edgeV[s])[e])[1]]
@@ -93,15 +93,15 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex + nEdge;
 
-    for(int l1 = 1; l1 < orderMinus; l1++){
-      for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
-	for(int f = 0; f < 4; f++){
+    for(int f = 0; f < 4; f++){
+      for(int l1 = 1; l1 < orderMinus; l1++){
+	for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
 	  Polynomial sum = 
 	    lagrange[(*(*faceV[s])[f])[0]] + 
 	    lagrange[(*(*faceV[s])[f])[1]] + 
 	    lagrange[(*(*faceV[s])[f])[2]];	  
 	  
-	  (*(*basis)[s])[i] = 
+	  basis[s][i] = 
 	    new Polynomial(intLegendre[l1].compose
 			   (lagrange[(*(*faceV[s])[f])[0]] - 
 			    lagrange[(*(*faceV[s])[f])[1]]
@@ -135,7 +135,7 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
     for(int l1 = 1; l1 < orderMinusTwo; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
 	for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
-	  (*(*basis)[s])[i] = 
+	  basis[s][i] = 
 	    new Polynomial(intLegendre[l1].compose(sub, add)             * 
 			   lagrange[2]                                   * 		 
 			   sclLegendre[l2].compose(twoThreeOneMinusFour, 
@@ -161,10 +161,10 @@ TetNodeBasis::~TetNodeBasis(void){
   // Basis //
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++)
-      delete (*(*basis)[i])[j];
+      delete basis[i][j];
 
-    delete (*basis)[i];
+    delete[] basis[i];
   }
 
-  delete basis;
+  delete[] basis;
 }

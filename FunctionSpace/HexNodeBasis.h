@@ -1,7 +1,7 @@
 #ifndef _HEXNODEBASIS_H_
 #define _HEXNODEBASIS_H_
 
-#include "BasisScalar.h"
+#include "BasisHierarchicalScalar.h"
 
 /**
    @class HexNodeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class HexNodeBasis: public BasisScalar{
+class HexNodeBasis: public BasisHierarchicalScalar{
  public:
   //! @param order The order of the Basis
   //!

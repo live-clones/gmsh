@@ -177,32 +177,32 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   int it = 0;
   
   // Add Vertex Based Dof //
-  for(int i = 0; i < nFVertex; i++){
-    for(int j = 0; j < nVertex; j++){
-      myDof[it].setDof(mesh->getGlobalId(*vertex[j]), i);
+  for(int i = 0; i < nVertex; i++){ 
+    for(int j = 0; j < nFVertex; j++){
+      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
       it++;
     }
   }
   
   // Add Edge Based Dof //
-  for(int i = 0; i < nFEdge; i++){
-    for(int j = 0; j < nEdge; j++){
-      myDof[it].setDof(mesh->getGlobalId(edge[j]), i);
+  for(int i = 0; i < nEdge; i++){
+    for(int j = 0; j < nFEdge; j++){
+      myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
       it++;
     }
   }
   
   // Add Face Based Dof //
-  for(int i = 0; i < nFFace; i++){
-    for(int j = 0; j < nFace; j++){
-      myDof[it].setDof(mesh->getGlobalId(face[j]), i);
+  for(int i = 0; i < nFace; i++){
+    for(int j = 0; j < nFFace; j++){
+      myDof[it].setDof(mesh->getGlobalId(face[i]), j);
       it++;
     }
   }
   
   // Add Cell Based Dof //
-  for(int i = 0; i < nFCell; i++){
-    myDof[it].setDof(mesh->getGlobalId(element), i);
+  for(int j = 0; j < nFCell; j++){
+    myDof[it].setDof(mesh->getGlobalId(element), j);
     it++;
   }
 
@@ -219,8 +219,4 @@ const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) cons
 
   else
     return *(it->second); 
-}
-
-string FunctionSpace::toString(void) const{
-  return basis->toString();
 }

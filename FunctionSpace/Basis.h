@@ -1,9 +1,6 @@
 #ifndef _BASIS_H_
 #define _BASIS_H_
 
-#include <string>
-#include "ReferenceSpace.h"
-
 /**
    @interface Basis
    @brief Common Interface of all Basis
@@ -19,9 +16,7 @@
 
 class Basis{
  protected:
-  const ReferenceSpace* refSpace;
-  unsigned int    nRefSpace;
-  bool            scalar;
+  bool scalar;
 
   unsigned int order;
   unsigned int type;
@@ -38,9 +33,6 @@ class Basis{
   //! Deletes this Basis
   //!
   virtual ~Basis(void);
-
-  //! @return Returns the ReferenceSpace of this Basis
-  const ReferenceSpace& getReferenceSpace(void) const;
 
   //! @return Returns:
   //! @li @c true, if this is a 
@@ -90,9 +82,6 @@ class Basis{
   //! in this Basis
   unsigned int getNFunction(void) const;
 
-  //! @return Returns the Basis String
-  virtual std::string toString(void) const = 0;
-
  protected:
   //! @internal
   //! Instantiate a new Basis
@@ -104,11 +93,6 @@ class Basis{
 //////////////////////
 // Inline Functions //
 //////////////////////
-
-inline const ReferenceSpace& 
-Basis::getReferenceSpace(void) const{
-  return *refSpace;
-}
 
 inline bool Basis::isScalar(void) const{
   return scalar;

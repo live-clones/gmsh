@@ -1,7 +1,7 @@
 #ifndef _TRINODEBASIS_H_
 #define _TRINODEBASIS_H_
 
-#include "BasisScalar.h"
+#include "BasisHierarchicalScalar.h"
 
 /**
    @class TriNodeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class TriNodeBasis: public BasisScalar{
+class TriNodeBasis: public BasisHierarchicalScalar{
  public:
   //! @param order The order of the Basis
   //!

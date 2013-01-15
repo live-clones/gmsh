@@ -3,12 +3,10 @@
 
 #include <map>
 #include <vector>
-#include <string>
 
 #include "Basis.h"
 #include "BasisScalar.h"
 #include "BasisVector.h"
-#include "EvaluatedBasis.h"
 
 #include "Comparators.h"
 #include "Dof.h"
@@ -92,8 +90,6 @@ class FunctionSpace{
   unsigned int dofNumber(void) const;
   unsigned int groupNumber(void) const;
 
-  std::string toString(void) const;
-
  protected:
   // Init 
   FunctionSpace(void);
@@ -104,21 +100,6 @@ class FunctionSpace{
   // Dof
   void buildDof(void);
   void insertDof(Dof& d, GroupOfDof* god);    
-
-  // Local Basis
-  static 
-    const std::vector<const Polynomial*>&
-    locBasis(const MElement& element, 
-	     const BasisScalar& basis);
-  static 
-    const std::vector<const std::vector<Polynomial>*>&
-    locBasis(const MElement& element, 
-	     const BasisVector& basis);
-
-  static 
-    const fullMatrix<double>&
-    locEvalBasis(const MElement& element, 
-		 const EvaluatedBasis& evalBasis);
 };
 
 
@@ -229,10 +210,6 @@ class FunctionSpace{
    @return Returns the number of GroupOfDof%s 
    given by FunctionSpace::getAllGroups()
    **
-
-   @fn FunctionSpace::toString
-   @return Returns the FunctionSpace string
-   **
 */
 
 
@@ -286,27 +263,6 @@ inline const std::vector<const Dof*> FunctionSpace::getAllDofs(void) const{
 
 inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
   return *group;
-}
-
-inline const std::vector<const Polynomial*>&
-FunctionSpace::locBasis(const MElement& element, 
-			const BasisScalar& basis){
-  
-  return basis.getFunction(element);
-}
-
-inline const std::vector<const std::vector<Polynomial>*>&
-FunctionSpace::locBasis(const MElement& element, 
-			const BasisVector& basis){
-  
-  return basis.getFunction(element);
-}
-
-inline const fullMatrix<double>&
-FunctionSpace::locEvalBasis(const MElement& element, 
-			    const EvaluatedBasis& evalBasis){
-
-  return evalBasis.getEvaluation(element);
 }
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef _LINENODEBASIS_H_
 #define _LINENODEBASIS_H_
 
-#include "BasisScalar.h"
+#include "BasisHierarchicalScalar.h"
 
 /**
    @class LineNodeBasis
@@ -19,7 +19,7 @@
    It also uses the following mapping: @f$x = \frac{u + 1}{2}@f$.
  */
 
-class LineNodeBasis: public BasisScalar{
+class LineNodeBasis: public BasisHierarchicalScalar{
  public:
   //! @param order The order of the Basis
   //!

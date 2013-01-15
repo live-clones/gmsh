@@ -13,16 +13,13 @@ set(SRC
   TetReferenceSpace.cpp
 
   Basis.cpp
-  LagrangeBasis.cpp
   BasisScalar.cpp
   BasisVector.cpp
   BasisGenerator.cpp
 
-  GradBasis.cpp
-  CurlBasis.cpp
-  DivBasis.cpp
-
-  EvaluatedBasis.cpp
+  BasisLagrange.cpp
+  BasisHierarchicalScalar.cpp
+  BasisHierarchicalVector.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp

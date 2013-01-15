@@ -1,7 +1,7 @@
 #ifndef _HEXEDGEBASIS_H_
 #define _HEXEDGEBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class HexEdgeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class HexEdgeBasis: public BasisVector{
+class HexEdgeBasis: public BasisHierarchicalVector{
  public:
   //! @param order The order of the Basis
   //!

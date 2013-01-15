@@ -1,7 +1,7 @@
 #ifndef _QUADNODEBASIS_H_
 #define _QUADNODEBASIS_H_
 
-#include "BasisScalar.h"
+#include "BasisHierarchicalScalar.h"
 
 /**
    @class QuadNodeBasis
@@ -19,7 +19,7 @@
    @li @f$y = \frac{v + 1}{2}@f$
 */
 
-class QuadNodeBasis: public BasisScalar{
+class QuadNodeBasis: public BasisHierarchicalScalar{
  public:
   //! @param order The order of the Basis
   //!

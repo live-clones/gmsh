@@ -33,14 +33,14 @@ LineNedelecBasis::LineNedelecBasis(void){
   second[2] = Polynomial( 0  , 0, 0, 0);
 
   // Basis //
-  basis = new vector<vector<const vector<Polynomial>*>*>(nRefSpace);
+  basis = new vector<Polynomial>**[nRefSpace];
 
   for(unsigned int s = 0; s < nRefSpace; s++)
-    (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
+    basis[s] = new vector<Polynomial>*[nFunction];
 
   // Nedelec // 
-  (*(*basis)[0])[0] = new vector<Polynomial>(first);
-  (*(*basis)[1])[0] = new vector<Polynomial>(second);
+  basis[0][0] = new vector<Polynomial>(first);
+  basis[1][0] = new vector<Polynomial>(second);
 }
 
 LineNedelecBasis::~LineNedelecBasis(void){
@@ -50,10 +50,10 @@ LineNedelecBasis::~LineNedelecBasis(void){
   // Basis //
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++)
-      delete (*(*basis)[i])[j];
+      delete basis[i][j];
 
-    delete (*basis)[i];
+    delete[] basis[i];
   }
 
-  delete basis;
+  delete[] basis;
 }

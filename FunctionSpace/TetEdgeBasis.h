@@ -1,7 +1,7 @@
 #ifndef _TETEDGEBASIS_H_
 #define _TETEDGEBASIS_H_
 
-#include "BasisVector.h"
+#include "BasisHierarchicalVector.h"
 
 /**
    @class TetEdgeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
 */
 
-class TetEdgeBasis: public BasisVector{
+class TetEdgeBasis: public BasisHierarchicalVector{
  public:
   //! @param order The order of the Basis
   //!

@@ -36,10 +36,10 @@ TriNedelecBasis::TriNedelecBasis(void){
     };
 
   // Basis //
-  basis = new vector<vector<const vector<Polynomial>*>*>(nRefSpace);
+  basis = new vector<Polynomial>**[nRefSpace];
 
   for(unsigned int s = 0; s < nRefSpace; s++)
-    (*basis)[s] = new vector<const vector<Polynomial>*>(nFunction);
+    basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based (Nedelec) //
   for(unsigned int s = 0; s < nRefSpace; s++){
@@ -60,7 +60,7 @@ TriNedelecBasis::TriNedelecBasis(void){
       tmp2[1].sub(tmp1[1]);
       tmp2[2].sub(tmp1[2]);
 
-      (*(*basis)[s])[e] = new vector<Polynomial>(tmp2);
+      basis[s][e] = new vector<Polynomial>(tmp2);
     }
   }
 }
@@ -72,10 +72,10 @@ TriNedelecBasis::~TriNedelecBasis(void){
   // Basis //
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++)
-      delete (*(*basis)[i])[j];
+      delete basis[i][j];
 
-    delete (*basis)[i];
+    delete[] basis[i];
   }
 
-  delete basis;
+  delete[] basis;
 }

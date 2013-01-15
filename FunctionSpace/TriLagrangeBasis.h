@@ -1,7 +1,7 @@
 #ifndef _TRILAGRANGEBASIS_H_
 #define _TRILAGRANGEBASIS_H_
 
-#include "LagrangeBasis.h"
+#include "BasisLagrange.h"
 
 /**
    @class TriLagrangeBasis
@@ -11,13 +11,10 @@
    for a Triangle and for a given Order.@n
    
    It uses 
-   <a href="http://geuz.org/gmsh/">gmsh</a> Basis.@n
-
-   @todo
-   Add method to erase polynomialBasis in polynomialBasis
+   <a href="http://geuz.org/gmsh/">gmsh</a> Basis.
  */
 
-class TriLagrangeBasis: public LagrangeBasis{
+class TriLagrangeBasis: public BasisLagrange{
  public:
   //! @param order A natural number
   //!
@@ -30,6 +27,11 @@ class TriLagrangeBasis: public LagrangeBasis{
   virtual ~TriLagrangeBasis(void);
 
  private:  
+  //! @param order A natural number
+  //! @return Returns the @em tag of a @em Triangle of 
+  //! the given order 
+  static unsigned int getTag(unsigned int order);
+
   //! @param order A natural number 
   //! @return Returns Lagrangian Points on a Triangle
   //! for the given Order

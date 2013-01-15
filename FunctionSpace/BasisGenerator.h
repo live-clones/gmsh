@@ -40,10 +40,11 @@ class BasisGenerator{
   static Basis* generateZaglmayr(unsigned int elementType, 
 				 unsigned int basisType, 
 				 unsigned int order);
-
+  /*
   static Basis* generateLagrange(unsigned int elementType, 
 				 unsigned int basisType, 
 				 unsigned int order);  
+  */
 };
 
 
