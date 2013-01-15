@@ -64,26 +64,6 @@ public:
 
 
 
-class ParamCoordSurf : public ParamCoord
-{
-
-public:
-
-  ParamCoordSurf(GEntity *ge);
-  int nCoord(MVertex* vert) { return 2; }
-  virtual SPoint3 getUvw(MVertex* vert);
-  virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw);
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw);
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw);
-
-private:
-
-  GFace *_gf;
-
-};
-
-
-
 class ParamCoordParent : public ParamCoord
 {
 

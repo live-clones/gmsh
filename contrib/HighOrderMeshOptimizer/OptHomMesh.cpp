@@ -8,31 +8,20 @@
 
 
 
-Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFix, int method) :
-    _ge(ge)
+Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes)
 {
-  _dim = _ge->dim();
 
-  if (method & METHOD_PHYSCOORD) {
+  _dim = (*els.begin())->getDim();
+
+  if (fixBndNodes) {
     if (_dim == 2) _pc = new ParamCoordPhys2D;
     else _pc = new ParamCoordPhys3D;
-    Msg::Debug("METHOD: Using physical coordinates");
-  }
-  else if (method & METHOD_SURFCOORD)  {
-    if (_dim == 2) {
-      _pc = new ParamCoordSurf(_ge);
-      Msg::Debug("METHOD: Using surface parametric coordinates");
-    }
-    else Msg::Error("ERROR: Surface parametric coordinates only for 2D optimization");
+    Msg::Debug("METHOD: Fixing boundary nodes and using physical coordinates");
   }
   else {
     _pc = new ParamCoordParent;
-    Msg::Debug("METHOD: Using parent parametric coordinates");
+    Msg::Debug("METHOD: Freeing boundary nodes and using parent parametric coordinates");
   }
-
-  if (method & METHOD_RELAXBND)Msg::Debug("METHOD: Relaxing boundary vertices");
-  else if (method & METHOD_FIXBND) Msg::Debug("METHOD: Fixing all boundary vertices");
-  else Msg::Debug("METHOD: Fixing vertices on geometric points and \"toFix\" boundary");
 
   // Initialize elements, vertices, free vertices and element->vertices connectivity
   const int nElements = els.size();
@@ -55,8 +44,7 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
       _el2V[iEl].push_back(iV);
       const int nPCV = _pc->nCoord(vert);
       bool isFV = false;
-      if (method & METHOD_RELAXBND) isFV = true;
-      else if (method & METHOD_FIXBND) isFV = (vert->onWhat()->dim() == _dim) && (toFix.find(vert) == toFix.end());
+      if (fixBndNodes) isFV = (vert->onWhat()->dim() == _dim) && (toFix.find(vert) == toFix.end());
       else isFV = (vert->onWhat()->dim() >= 1) && (toFix.find(vert) == toFix.end());
       if (isFV) {
         int iFV = addFreeVert(vert,iV,nPCV,toFix);
@@ -87,14 +75,7 @@ Mesh::Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> &toFi
     double dumJac[3][3];
     for (int iEl = 0; iEl < nEl(); iEl++) _invStraightJac[iEl] = 1. / _el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac);
   }
-  if ((_dim == 2) && (method & METHOD_PROJJAC)) {
-    projJac = true;
-    Msg::Debug("METHOD: Using projected Jacobians");
-  }
-  else {
-    projJac = false;
-    Msg::Debug("METHOD: Using usual Jacobians");
-  }
+
 }
 
 
@@ -371,7 +352,7 @@ void Mesh::writeMSH(const char *filename)
   fprintf(f, "%d\n", nEl());
   for (int iEl = 0; iEl < nEl(); iEl++) {
 //    MElement *MEl = _el[iEl];
-    fprintf(f, "%d %d 2 0 %d", iEl+1, _el[iEl]->getTypeForMSH(), _ge->tag());
+    fprintf(f, "%d %d 2 0 0", iEl+1, _el[iEl]->getTypeForMSH());
     for (size_t iVEl = 0; iVEl < _el2V[iEl].size(); iVEl++) fprintf(f, " %d", _el2V[iEl][iVEl] + 1);
     fprintf(f, "\n");
   }

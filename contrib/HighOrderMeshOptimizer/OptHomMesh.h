@@ -17,7 +17,7 @@ class Mesh
 
 public:
 
-  Mesh(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method);
+  Mesh(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes);
 
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }
@@ -46,9 +46,6 @@ public:
   void updateGEntityPositions();
   void writeMSH(const char *filename);
 
-  enum { METHOD_RELAXBND = 1 << 0, METHOD_FIXBND = 1 << 1, METHOD_PHYSCOORD = 1 << 2,
-    METHOD_SURFCOORD = 1 << 3, METHOD_PROJJAC = 1 << 4 };
-
 //  inline double xyzDBG(int iV, int iCoord) { return _xyz[iV][iCoord]; }
 //  inline double ixyzDBG(int iV, int iCoord) { return _ixyz[iV][iCoord]; }
 //  inline double sxyzDBG(int iV, int iCoord) { return _sxyz[iV][iCoord]; }
@@ -58,7 +55,6 @@ public:
 
 private:
 
-  GEntity *_ge;
   int _dim;
   int _nPC;                                       // Total nb. of parametric coordinates
 
@@ -77,7 +73,6 @@ private:
   std::vector<std::vector<int> > _indPCEl;        // Index of parametric coord. for an el.
 
   ParamCoord *_pc;
-  bool projJac;                                   // Using "projected" Jacobians or not
 
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV, std::set<MVertex*> &toFix);

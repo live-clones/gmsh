@@ -96,17 +96,30 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
 
   if (elastic == 1){
     o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
     for (int i=3;i<=6;i++)
       o->value[i]->deactivate();
+    for (int i=9;i<=11;i++) o->value[i]->deactivate();
     //   o->push[1]->deactivate();
   }
   else {
     o->push[0]->activate();
     o->choice[0]->activate();
+    o->choice[3]->activate();
     for (int i=3;i<=6;i++)
       o->value[i]->activate();
+    for (int i=9;i<=11;i++) o->value[i]->activate();
     //    o->push[1]->activate();
   }
+#endif
+}
+
+static void chooseopti_strategy(Fl_Widget *w, void *data)
+{
+#if defined(HAVE_OPTHOM)
+  highOrderToolsWindow *o = FlGui::instance()->highordertools;
+  if (o->choice[3]->value() == 0) for (int i=9;i<=11;i++) o->value[i]->deactivate();
+  else for (int i=9;i<=11;i++) o->value[i]->activate();
 #endif
 }
 
@@ -133,8 +146,12 @@ static void highordertools_runelas_cb(Fl_Widget *w, void *data)
     p.optPassMax = (int) o->value[4]->value();
     p.weightFixed =  o->value[5]->value();
     p.weightFree =  o->value[6]->value();
-    p.DistanceFactor =  o->value[7]->value();
-    p.method =  o->CAD ? (int)o->choice[0]->value() : 2;
+    p.distanceFactor =  o->value[7]->value();
+    p.fixBndNodes = (!o->CAD) || (o->choice[0]->value() == 0);
+    p.strategy = o->choice[3]->value();
+    p.maxAdaptBlob = o->value[9]->value();
+    p.adaptBlobLayerFact = (int) o->value[10]->value();
+    p.adaptBlobDistFact = o->value[11]->value();
     HighOrderMeshOptimizer (GModel::current(),p);
     printf("CPU TIME = %4f seconds\n",p.CPU);
   }
@@ -149,7 +166,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
-  int height = 25 * BH;
+  int height = 28 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "High Order Tools");
@@ -314,6 +331,48 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->step(1);
   value[4]->align(FL_ALIGN_RIGHT);
   value[4]->value(50);
+
+  static Fl_Menu_Item menu_strategy[] = {
+    {"Connected blobs", 0, 0, 0},
+    {"Adaptive one-by-one", 0, 0, 0},
+    {0}
+  };
+
+  y += BH;
+  choice[3] = new Fl_Choice
+    (x,y, IW, BH, "Strategy");
+  choice[3]->menu(menu_strategy);
+  choice[3]->align(FL_ALIGN_RIGHT);
+  choice[3]->callback(chooseopti_strategy);
+
+  y += BH;
+  value[9] = new Fl_Value_Input
+    (x,y, IW, BH, "Max. number of blob adaptation iter.");
+  value[9]->minimum(1);
+  value[9]->maximum(100);
+  value[9]->step(1);
+  value[9]->align(FL_ALIGN_RIGHT);
+  value[9]->value(2);
+  value[9]->deactivate();
+
+  y += BH;
+  value[10] = new Fl_Value_Input
+    (x,y, IW, BH, "Num. layer adaptation factor");
+  value[10]->align(FL_ALIGN_RIGHT);
+  value[10]->minimum(1);
+  value[10]->maximum(100);
+  value[10]->step(1);
+  value[10]->value(2);
+  value[10]->deactivate();
+
+  y += BH;
+  value[11] = new Fl_Value_Input
+    (x,y, IW, BH, "Distance adaptation factor");
+  value[11]->align(FL_ALIGN_RIGHT);
+  value[11]->minimum(1.);
+  value[11]->maximum(100.);
+  value[11]->value(2.);
+  value[11]->deactivate();
 
   y += 1.5*BH;
   push[1] = new Fl_Button

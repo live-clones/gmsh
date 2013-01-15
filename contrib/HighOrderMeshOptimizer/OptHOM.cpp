@@ -42,11 +42,11 @@ static inline double compute_f1(double v, double barrier)
 
 
 // Constructor
-OptHOM::OptHOM(GEntity *ge, const std::set<MElement*> &els, std::set<MVertex*> & toFix, int method) :
-       mesh(ge, els, toFix, method)
+OptHOM::OptHOM(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes) :
+       mesh(els, toFix, fixBndNodes)
 {
   _optimizeMetricMin = false;
-};
+}
 
 
 
@@ -241,6 +241,8 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
   static int OPTMETHOD = 1;
 
   Msg::Debug("--- Optimization pass with jacBar = %12.5E",jacBar);
+  std::cout << "--- Optimization pass with initial jac. range ("
+            << minJac << "," << maxJac << "), jacBar = " << jacBar << "\n";
 
   iter = 0;
 
@@ -321,7 +323,6 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
 
   const double jacBarStart = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
   jacBar = jacBarStart;
-  setBarrierTerm(jacBarStart);
 
   _optimizeBarrierMax = false;
   // Calculate initial objective function value and gradient
@@ -337,24 +338,37 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
             << " and max. barrier = " << barrier_max << std::endl;
 
   int ITER = 0;
+  bool minJacOK = true;
   while (minJac < barrier_min) {
+    const double startMinJac = minJac;
     OptimPass(x, gradObj, itMax);
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
-    setBarrierTerm(jacBar);
-    if (ITER ++ > optPassMax) break;
+    if (ITER ++ > optPassMax) {
+      minJacOK = (minJac > barrier_min);
+      break;
+    }
+    if (fabs((minJac-startMinJac)/startMinJac) < 0.01) {
+      std::cout << "Stagnation in minJac detected, stopping optimization\n";
+      minJacOK = false;
+      break;
+    }
   }
 
-  if (!_optimizeMetricMin) {
+  ITER = 0;
+  if (minJacOK && (!_optimizeMetricMin)) {
     _optimizeBarrierMax = true;
     jacBar =  1.1 * maxJac;
-    setBarrierTerm(jacBar);
     while (maxJac > barrier_max ) {
+      const double startMaxJac = maxJac;
       OptimPass(x, gradObj, itMax);
       recalcJacDist();
       jacBar =  1.1 * maxJac;
-      setBarrierTerm(jacBar);
       if (ITER ++ > optPassMax) break;
+      if (fabs((maxJac-startMaxJac)/startMaxJac) < 0.01) {
+        std::cout << "Stagnation in maxJac detected, stopping optimization\n";
+        break;
+      }
     }
   }
 

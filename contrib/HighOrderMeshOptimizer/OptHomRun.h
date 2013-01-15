@@ -16,9 +16,14 @@ struct OptHomParameters {
   int optPassMax ; // max number of optimization passes
   double TMAX ; // max CPU time allowed
   bool onlyVisible ; // apply optimization to visible entities ONLY
-  double DistanceFactor; // filter elements such that no elements further away than
+  double distanceFactor; // filter elements such that no elements further away than
                          // DistanceFactor times the max distance to straight sided version of an element are optimized
-  int method ;  // how jacobians are computed and if points can move on boundaries
+  bool fixBndNodes;  // how jacobians are computed and if points can move on boundaries
+  int strategy;       // 0 = connected blobs, 1 = adaptive one-by-one
+  int maxAdaptBlob;   // Max. nb. of blob adaptation interations
+  int adaptBlobLayerFact;   // Growth factor in number of layers for blob adaptation
+  double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
+
   // OUTPUT ------>
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minJac, maxJac; // after optimization, range of jacobians
@@ -29,8 +34,9 @@ struct OptHomParameters {
 
   OptHomParameters ()
   // default values
-  : BARRIER_MIN_METRIC (-1.), BARRIER_MIN (0.1), BARRIER_MAX (2.0) , weightFixed (1.e6),  weightFree (1.e2),
-    nbLayers (6) , dim(3) , itMax(10000), onlyVisible(true), DistanceFactor(12), method(1)
+  : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weightFixed(1.e6), weightFree (1.e2),
+    nbLayers (6) , dim(3) , itMax(300), onlyVisible(true), distanceFactor(12), fixBndNodes(false),
+    strategy(0), maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.)
   {
   }
 };
