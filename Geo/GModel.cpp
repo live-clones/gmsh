@@ -3187,6 +3187,8 @@ void GModel::computeHomology()
   if(_homologyRequests.empty()) return;
 
 #if defined(HAVE_KBIPACK)
+  double t1 = Cpu();
+
   // find unique domain/subdomain requests
   typedef std::pair<std::vector<int>, std::vector<int> > dpair;
   typedef std::pair<std::string, std::vector<int> > tpair;
@@ -3253,6 +3255,11 @@ void GModel::computeHomology()
     _pruneMeshVertexAssociations();
     delete homology;
   }
+
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done homology and cohomology computation (%g s)",
+                 t2 - t1);
+
 #else
   Msg::Error("Homology computation requires KBIPACK");
 #endif

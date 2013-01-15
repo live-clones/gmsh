@@ -14,7 +14,18 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
+
 #if defined(HAVE_KBIPACK)
+
+void updateFltkTree()
+{
+#if defined(HAVE_FLTK)
+  FlGui::instance()->rebuildTree();
+#endif
+}
 
 std::map<GEntity*, std::set<MVertex*, MVertexLessThanNum>,
          GEntityLessThan> ElemChain::_vertexCache;
