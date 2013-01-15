@@ -12,7 +12,7 @@
 #include "TriNodeBasis.h"
 #include "TriEdgeBasis.h"
 #include "TriNedelecBasis.h"
-//#include "TriLagrangeBasis.h"
+#include "TriLagrangeBasis.h"
 
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
@@ -32,31 +32,31 @@ Basis* BasisGenerator::generate(unsigned int elementType,
 				unsigned int order,
 				std::string family){
   
-  if(!family.compare(std::string("zaglmayr")))
-    return generateZaglmayr(elementType, basisType, order);
-  /*
+  if(!family.compare(std::string("hierarchical")))
+    return generateHierarchical(elementType, basisType, order);
+  
   else if(!family.compare(std::string("lagrange")))
     return generateLagrange(elementType, basisType, order);
-  */
+  
   else
     throw Exception("Unknwown Basis Family: %s", family.c_str());
 }
 
-Basis* BasisGenerator::generateZaglmayr(unsigned int elementType, 
+Basis* BasisGenerator::generateHierarchical(unsigned int elementType, 
 					unsigned int basisType, 
 					unsigned int order){  
   switch(elementType){
-  case TYPE_LIN: return linZaglmayrGen(basisType, order);
-  case TYPE_TRI: return triZaglmayrGen(basisType, order);
-  case TYPE_QUA: return quaZaglmayrGen(basisType, order);
-  case TYPE_TET: return tetZaglmayrGen(basisType, order);
-  case TYPE_HEX: return hexZaglmayrGen(basisType, order);
+  case TYPE_LIN: return linHierarchicalGen(basisType, order);
+  case TYPE_TRI: return triHierarchicalGen(basisType, order);
+  case TYPE_QUA: return quaHierarchicalGen(basisType, order);
+  case TYPE_TET: return tetHierarchicalGen(basisType, order);
+  case TYPE_HEX: return hexHierarchicalGen(basisType, order);
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation", 
 			   elementType);
   }
 }
-/*
+
 Basis* BasisGenerator::generateLagrange(unsigned int elementType, 
 					unsigned int basisType, 
 					unsigned int order){
@@ -76,9 +76,9 @@ Basis* BasisGenerator::generateLagrange(unsigned int elementType,
 			   elementType);
   }
 }
-*/
-Basis* BasisGenerator::linZaglmayrGen(unsigned int basisType, 
-				      unsigned int order){
+
+Basis* BasisGenerator::linHierarchicalGen(unsigned int basisType, 
+					  unsigned int order){
   switch(basisType){ 
   case  0: return new LineNodeBasis(order);
   case  1: 
@@ -92,8 +92,8 @@ Basis* BasisGenerator::linZaglmayrGen(unsigned int basisType,
   }  
 }
 
-Basis* BasisGenerator::triZaglmayrGen(unsigned int basisType, 
-				      unsigned int order){
+Basis* BasisGenerator::triHierarchicalGen(unsigned int basisType, 
+					  unsigned int order){
   switch(basisType){
   case  0: return new TriNodeBasis(order);
   case  1: 
@@ -107,8 +107,8 @@ Basis* BasisGenerator::triZaglmayrGen(unsigned int basisType,
   }  
 }
 
-Basis* BasisGenerator::quaZaglmayrGen(unsigned int basisType, 
-				      unsigned int order){
+Basis* BasisGenerator::quaHierarchicalGen(unsigned int basisType, 
+					  unsigned int order){
   switch(basisType){
     //case  0: return new QuadNodeBasis(order);
     //case  1: return new QuadEdgeBasis(order);
@@ -119,8 +119,8 @@ Basis* BasisGenerator::quaZaglmayrGen(unsigned int basisType,
   }  
 }
 
-Basis* BasisGenerator::tetZaglmayrGen(unsigned int basisType, 
-				      unsigned int order){
+Basis* BasisGenerator::tetHierarchicalGen(unsigned int basisType, 
+					  unsigned int order){
   switch(basisType){
   case  0: return new TetNodeBasis(order);
   case  1: return new TetEdgeBasis(order);
@@ -131,8 +131,8 @@ Basis* BasisGenerator::tetZaglmayrGen(unsigned int basisType,
   }  
 }
 
-Basis* BasisGenerator::hexZaglmayrGen(unsigned int basisType, 
-				      unsigned int order){
+Basis* BasisGenerator::hexHierarchicalGen(unsigned int basisType, 
+					  unsigned int order){
   switch(basisType){
     //case  0: return new HexNodeBasis(order);
     //case  1: return new HexEdgeBasis(order);

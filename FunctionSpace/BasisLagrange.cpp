@@ -25,7 +25,7 @@ fullMatrix<double>* BasisLagrange::getFunctions(unsigned int permutation,
   point(0, 1) = v;
   point(0, 2) = w;
 
-  basis->f(point, tmp);
+  lBasis->f(point, tmp);
   
   *values = tmp.transpose(); // Otherwise not coherent with df !!
   
@@ -47,4 +47,54 @@ BasisLagrange::getPreEvaluatedFunctions(const MElement& element) const{
 const fullMatrix<double>& 
 BasisLagrange::getPreEvaluatedGradFunctions(const MElement& element) const{
   return fullMatrix<double>(nFunction, 1);
+}
+
+std::vector<double> BasisLagrange::
+project(const MElement& element,
+	const std::vector<double>& coef,
+	const FunctionSpaceScalar& fSpace){
+  
+  // Init New Coefs //
+  const unsigned int size = lPoint->size1();
+  std::vector<double> newCoef(size);
+  
+  // Interpolation at Lagrange Points //
+  for(unsigned int i = 0; i < size; i++){
+    fullVector<double> uvw(3);
+    uvw(0) = (*lPoint)(i, 0);
+    uvw(1) = (*lPoint)(i, 1);
+    uvw(2) = (*lPoint)(i, 2);
+    
+    newCoef[i] = fSpace.interpolateInRefSpace(element, 
+					      coef, 
+					      uvw);
+  }
+  
+  // Return ;
+  return newCoef;
+}
+
+std::vector<fullVector<double> > BasisLagrange::
+project(const MElement& element,
+	const std::vector<double>& coef,
+	const FunctionSpaceVector& fSpace){
+  
+  // Init New Coefs //
+  const unsigned int size = lPoint->size1();
+  std::vector<fullVector<double> > newCoef(size);
+  
+  // Interpolation at Lagrange Points //
+  for(unsigned int i = 0; i < size; i++){
+    fullVector<double> uvw(3);
+    uvw(0) = (*lPoint)(i, 0);
+    uvw(1) = (*lPoint)(i, 1);
+    uvw(2) = (*lPoint)(i, 2);
+    
+    newCoef[i] = fSpace.interpolateInRefSpace(element, 
+					      coef, 
+					      uvw);
+  }
+  
+  // Return ;
+  return newCoef;
 }

@@ -30,21 +30,20 @@ class BasisGenerator{
 			 unsigned int basisType, 
 			 unsigned int order);
 
-  static Basis* linZaglmayrGen(unsigned int basisType, unsigned int order);
-  static Basis* triZaglmayrGen(unsigned int basisType, unsigned int order);
-  static Basis* quaZaglmayrGen(unsigned int basisType, unsigned int order);
-  static Basis* tetZaglmayrGen(unsigned int basisType, unsigned int order);
-  static Basis* hexZaglmayrGen(unsigned int basisType, unsigned int order);
+  static Basis* linHierarchicalGen(unsigned int basisType, unsigned int order);
+  static Basis* triHierarchicalGen(unsigned int basisType, unsigned int order);
+  static Basis* quaHierarchicalGen(unsigned int basisType, unsigned int order);
+  static Basis* tetHierarchicalGen(unsigned int basisType, unsigned int order);
+  static Basis* hexHierarchicalGen(unsigned int basisType, unsigned int order);
 
  private:
-  static Basis* generateZaglmayr(unsigned int elementType, 
-				 unsigned int basisType, 
-				 unsigned int order);
-  /*
+  static Basis* generateHierarchical(unsigned int elementType, 
+				     unsigned int basisType, 
+				     unsigned int order);
+  
   static Basis* generateLagrange(unsigned int elementType, 
 				 unsigned int basisType, 
 				 unsigned int order);  
-  */
 };
 
 
@@ -88,7 +87,7 @@ class BasisGenerator{
    @li @c 3 for 3-Form
 
    @note Families are:
-   @li @c zaglmayr for 
+   @li @c hierarchical for 
    <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>
    Basis Functions
    @li @c lagrange for Lagrange's Basis Functions   
@@ -101,13 +100,13 @@ class BasisGenerator{
    @param order The order or the requested Basis
 
    Same as 
-   BasisGenerator::generate(@c elementType, @c basisType, @c order, @c zaglmayr)
+   BasisGenerator::generate(@c elementType, @c basisType, @c order, @c hierarchical)
 
    @return Returns a @em pointer to a newly 
    @em instantiated Basis
    **
 
-   @fn BasisGenerator::linZaglmayrGen
+   @fn BasisGenerator::linHierarchicalGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -123,10 +122,10 @@ class BasisGenerator{
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
 
-   @note The Basis family will be @c zaglmayr
+   @note The Basis family will be @c hierarchical
    **
 
-   @fn BasisGenerator::triZaglmayrGen
+   @fn BasisGenerator::triHierarchicalGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -142,10 +141,10 @@ class BasisGenerator{
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
 
-   @note The Basis family will be @c zaglmayr
+   @note The Basis family will be @c hierarchical
    **
 
-   @fn BasisGenerator::quaZaglmayrGen
+   @fn BasisGenerator::quaHierarchicalGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -161,10 +160,10 @@ class BasisGenerator{
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
 
-   @note The Basis family will be @c zaglmayr
+   @note The Basis family will be @c hierarchical
    **
 
-   @fn BasisGenerator::tetZaglmayrGen
+   @fn BasisGenerator::tetHierarchicalGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -180,10 +179,10 @@ class BasisGenerator{
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
 
-   @note The Basis family will be @c zaglmayr
+   @note The Basis family will be @c hierarchical
    **
 
-   @fn BasisGenerator::hexZaglmayrGen
+   @fn BasisGenerator::hexHierarchicalGen
    @param basisType The Basis type
    @param order The order or the requested Basis
 
@@ -199,7 +198,7 @@ class BasisGenerator{
    @li @c 2 for 2-Form
    @li @c 3 for 3-Form
 
-   @note The Basis family will be @c zaglmayr
+   @note The Basis family will be @c hierarchical
    **
  */
 
@@ -214,7 +213,7 @@ inline Basis* BasisGenerator::generate(unsigned int elementType,
   return BasisGenerator::generate(elementType, 
 				  basisType, 
 				  order,
-				  "zaglmayr");
+				  "hierarchical");
 }
 
 #endif

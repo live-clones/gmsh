@@ -15,11 +15,15 @@ TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //
-  basis = new polynomialBasis(getTag(order));
+  lBasis = new polynomialBasis(getTag(order));
+
+  // Init Lagrange Point //
+  lPoint = new fullMatrix<double>(triPoint(order));
 }
 
 TriLagrangeBasis::~TriLagrangeBasis(void){
-  delete basis;
+  delete lBasis;
+  delete lPoint;
 }
 
 unsigned int TriLagrangeBasis::getTag(unsigned int order){
@@ -42,7 +46,6 @@ unsigned int TriLagrangeBasis::getTag(unsigned int order){
   }
 }
 
-/*
 fullMatrix<double> TriLagrangeBasis::
 triPoint(unsigned int order){
   unsigned int       nbPoints = (order + 1) * (order + 2) / 2;
@@ -111,4 +114,3 @@ triPoint(unsigned int order){
 
   return point;
 }
-*/
