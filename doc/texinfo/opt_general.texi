@@ -980,7 +980,7 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.Stereo
-Use stereo rendering@*
+Use stereo rendering : use command line gmsh -string ``General.Stereo=1;''@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

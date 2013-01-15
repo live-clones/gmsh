@@ -102,6 +102,8 @@ std::vector<std::string> GetUsage(const std::string &name)
   s.push_back("  -fontsize int         Specify the font size for the GUI");
   s.push_back("  -theme string         Specify FLTK GUI theme");
   s.push_back("  -display string       Specify display");
+  s.push_back("  -camera               Use camera mode view;");
+  s.push_back("  -stereo               OpenGL quad-buffered stereo rendering (requires special graphic card)");
 #endif
   s.push_back("Other options:");
   s.push_back("  -                     Parse input files, then exit");
@@ -891,6 +893,15 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "nodb")) {
         CTX::instance()->db = 0;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "camera")) {
+        CTX::instance()->camera = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "stereo")) {
+        CTX::instance()->camera = 1;
+	CTX::instance()->stereo = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "fontsize")) {
