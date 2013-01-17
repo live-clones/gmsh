@@ -493,6 +493,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
+  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
   opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
@@ -509,7 +510,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   ALGO_3D_FRONTAL);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
-  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
+
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
   opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
