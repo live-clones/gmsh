@@ -578,10 +578,15 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-      Filler f;
-      f.treat_region(connected[i][0]);
+	//Additional code for hex mesh begin  
+	unsigned int j;
+	if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
+	  for(j=0;j<connected[i].size();j++){
+	    Filler f;
+        f.treat_region(connected[i][j]);
+	  }
     }
+	//Additional code for hex mesh end  
   }
 
   double t2 = Cpu();
