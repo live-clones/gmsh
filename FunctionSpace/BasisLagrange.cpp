@@ -2,9 +2,20 @@
 #include "BasisLagrange.h"
 
 BasisLagrange::BasisLagrange(void){
+  scalar = true;
 }
 
 BasisLagrange::~BasisLagrange(void){
+}
+
+unsigned int BasisLagrange::
+getNOrientation(void) const{
+  throw Exception("BasisLagrange::Not Implemented");
+}
+
+unsigned int BasisLagrange::
+getOrientation(const MElement& element) const{
+  throw Exception("BasisLagrange::Not Implemented");
 }
 
 fullMatrix<double>* BasisLagrange::
@@ -41,7 +52,7 @@ void BasisLagrange::preEvaluateFunctions(const fullMatrix<double>& point) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
-void BasisLagrange::preEvaluateGradFunctions(const fullMatrix<double>& point) const{
+void BasisLagrange::preEvaluateDerivatives(const fullMatrix<double>& point) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
@@ -51,7 +62,7 @@ BasisLagrange::getPreEvaluatedFunctions(const MElement& element) const{
 }
 
 const fullMatrix<double>&
-BasisLagrange::getPreEvaluatedGradFunctions(const MElement& element) const{
+BasisLagrange::getPreEvaluatedDerivatives(const MElement& element) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
@@ -61,17 +72,7 @@ BasisLagrange::getPreEvaluatedFunctions(unsigned int orientation) const{
 }
 
 const fullMatrix<double>&
-BasisLagrange::getPreEvaluatedGradFunctions(unsigned int orientation) const{
-  throw Exception("BasisLagrange::Not Implemented");
-}
-
-unsigned int BasisLagrange::
-getNOrientation(void) const{
-  throw Exception("BasisLagrange::Not Implemented");
-}
-
-unsigned int BasisLagrange::
-getOrientation(const MElement& element) const{
+BasisLagrange::getPreEvaluatedDerivatives(unsigned int orientation) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 

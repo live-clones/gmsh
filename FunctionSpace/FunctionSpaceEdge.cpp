@@ -1,6 +1,5 @@
 #include <vector>
 
-#include "BasisLocalVector.h"
 #include "Mapper.h"
 #include "FunctionSpaceEdge.h"
 
@@ -9,46 +8,42 @@ using namespace std;
 FunctionSpaceEdge::FunctionSpaceEdge(const GroupOfElement& goe,
 				     int order){
   // Build 1Form Basis //
-  build(goe, 1, order); 
-
-  // Init BasisVector //
-  localBasisVector = 
-    static_cast<const BasisLocalVector*>(localBasis);
+  build(goe, 1, order);
 }
-    
+
 FunctionSpaceEdge::~FunctionSpaceEdge(void){
 }
 
 fullVector<double> FunctionSpaceEdge::
-interpolate(const MElement& element, 
+interpolate(const MElement& element,
 	    const std::vector<double>& coef,
 	    const fullVector<double>& xyz) const{
 
   // Const Cast For MElement //
-  MElement& eelement = 
+  MElement& eelement =
     const_cast<MElement&>(element);
-  
+
   // Get Reference coordinate //
   double phys[3] = {xyz(0), xyz(1), xyz(2)};
   double uvw[3];
-  
+
   eelement.xyz2uvw(phys, uvw);
-  
+
   // Get Jacobian //
-  fullMatrix<double>  invJac(3, 3);        
+  fullMatrix<double>  invJac(3, 3);
   eelement.getJacobian(uvw[0], uvw[1], uvw[2], invJac);
   invJac.invertInPlace();
- 
+
   // Get Basis Functions //
-  fullMatrix<double>* fun = 
-    localBasisVector->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+  fullMatrix<double>* fun =
+    localBasis->getFunctions(element, uvw[0], uvw[1], uvw[2]);
 
   const unsigned int nFun = fun->size1();
 
   // Interpolate (in Reference Place) //
-  fullVector<double> val(3); 
-  val(0) = 0; 
-  val(1) = 0; 
+  fullVector<double> val(3);
+  val(0) = 0;
+  val(1) = 0;
   val(2) = 0;
 
   for(unsigned int i = 0; i < nFun; i++){
@@ -63,30 +58,30 @@ interpolate(const MElement& element,
 }
 
 fullVector<double> FunctionSpaceEdge::
-interpolateInRefSpace(const MElement& element, 
+interpolateInRefSpace(const MElement& element,
 		      const std::vector<double>& coef,
 		      const fullVector<double>& uvw) const{
 
   // Const Cast For MElement //
-  MElement& eelement = 
+  MElement& eelement =
     const_cast<MElement&>(element);
-  
+
   // Get Jacobian //
-  fullMatrix<double>  invJac(3, 3);        
+  fullMatrix<double>  invJac(3, 3);
   eelement.getJacobian(uvw(0), uvw(1), uvw(2), invJac);
   invJac.invertInPlace();
 
-  // Get Basis Functions // 
-  fullMatrix<double>* fun = 
-    localBasisVector->getFunctions(element, uvw(0), uvw(1), uvw(2));
+  // Get Basis Functions //
+  fullMatrix<double>* fun =
+    localBasis->getFunctions(element, uvw(0), uvw(1), uvw(2));
 
   const unsigned int nFun = fun->size1();
 
 
   // Interpolate (in Reference Place) //
-  fullVector<double> val(3); 
-  val(0) = 0; 
-  val(1) = 0; 
+  fullVector<double> val(3);
+  val(0) = 0;
+  val(1) = 0;
   val(2) = 0;
 
   for(unsigned int i = 0; i < nFun; i++){

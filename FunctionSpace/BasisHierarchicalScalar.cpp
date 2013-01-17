@@ -5,6 +5,9 @@
 using namespace std;
 
 BasisHierarchicalScalar::BasisHierarchicalScalar(void){
+  // Scalar Basis ? //
+  scalar = true;
+
   // Grad Basis //
   hasGrad = false;
   grad    = NULL;
@@ -44,6 +47,16 @@ BasisHierarchicalScalar::~BasisHierarchicalScalar(void){
 
     delete[] preEvaluatedGradFunction;
   }
+}
+
+unsigned int BasisHierarchicalScalar::
+getNOrientation(void) const{
+  return refSpace->getNPermutation();
+}
+
+unsigned int BasisHierarchicalScalar::
+getOrientation(const MElement& element) const{
+  return refSpace->getPermutation(element);
 }
 
 fullMatrix<double>* BasisHierarchicalScalar::
@@ -111,7 +124,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
 }
 
 void BasisHierarchicalScalar::
-preEvaluateGradFunctions(const fullMatrix<double>& point) const{
+preEvaluateDerivatives(const fullMatrix<double>& point) const{
   // Build Grad //
   if(!hasGrad)
     getGrad();
@@ -161,8 +174,8 @@ getPreEvaluatedFunctions(const MElement& element) const{
 }
 
 const fullMatrix<double>& BasisHierarchicalScalar::
-getPreEvaluatedGradFunctions(const MElement& element) const{
-  return getPreEvaluatedGradFunctions(refSpace->getPermutation(element));
+getPreEvaluatedDerivatives(const MElement& element) const{
+  return getPreEvaluatedDerivatives(refSpace->getPermutation(element));
 }
 
 const fullMatrix<double>& BasisHierarchicalScalar::
@@ -174,21 +187,11 @@ getPreEvaluatedFunctions(unsigned int orientation) const{
 }
 
 const fullMatrix<double>& BasisHierarchicalScalar::
-getPreEvaluatedGradFunctions(unsigned int orientation) const{
+getPreEvaluatedDerivatives(unsigned int orientation) const{
   if(!preEvaluatedGrad)
-    throw Exception("getPreEvaluatedGradFunction: gradient has not been preEvaluated");
+    throw Exception("getPreEvaluatedDerivative: gradient has not been preEvaluated");
 
   return *preEvaluatedGradFunction[orientation];
-}
-
-unsigned int BasisHierarchicalScalar::
-getNOrientation(void) const{
-  return refSpace->getNPermutation();
-}
-
-unsigned int BasisHierarchicalScalar::
-getOrientation(const MElement& element) const{
-  return refSpace->getPermutation(element);
 }
 
 void BasisHierarchicalScalar::getGrad(void) const{

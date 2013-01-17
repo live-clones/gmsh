@@ -5,22 +5,19 @@
 using namespace std;
 
 BasisHierarchicalVector::BasisHierarchicalVector(void){
+  // Scalar Basis ?//
+  scalar = false;
+
   // Curl Basis //
   hasCurl = false;
   curl    = NULL;
 
-  // Div Basis //
-  hasDiv = false;
-  div    = NULL;
-
   // PreEvaluation //
   preEvaluated     = false;
   preEvaluatedCurl = false;
-  preEvaluatedDiv  = false;
 
   preEvaluatedFunction     = NULL;
   preEvaluatedCurlFunction = NULL;
-  preEvaluatedDivFunction  = NULL;
 }
 
 BasisHierarchicalVector::~BasisHierarchicalVector(void){
@@ -34,18 +31,6 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
     }
 
     delete[] curl;
-  }
-
-  // Div Basis //
-  if(hasDiv){
-    for(unsigned int i = 0; i < nRefSpace; i++){
-      for(unsigned int j = 0; j < nFunction; j++)
-	delete div[i][j];
-
-      delete[] div[i];
-    }
-
-    delete[] div;
   }
 
   // PreEvaluation //
@@ -62,6 +47,16 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
 
     delete[] preEvaluatedCurlFunction;
   }
+}
+
+unsigned int BasisHierarchicalVector::
+getNOrientation(void) const{
+  return refSpace->getNPermutation();
+}
+
+unsigned int BasisHierarchicalVector::
+getOrientation(const MElement& element) const{
+  return refSpace->getPermutation(element);
 }
 
 fullMatrix<double>* BasisHierarchicalVector::
@@ -151,7 +146,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
 }
 
 void BasisHierarchicalVector::
-preEvaluateCurlFunctions(const fullMatrix<double>& point) const{
+preEvaluateDerivatives(const fullMatrix<double>& point) const{
   // Build Curl //
   if(!hasCurl)
     getCurl();
@@ -195,54 +190,14 @@ preEvaluateCurlFunctions(const fullMatrix<double>& point) const{
   preEvaluatedCurl = true;
 }
 
-void BasisHierarchicalVector::
-preEvaluateDivFunctions(const fullMatrix<double>& point) const{
-  // Build Div //
-  if(!hasDiv)
-    getDiv();
-
-  // Delete if older //
-  if(preEvaluatedDiv){
-    for(unsigned int i = 0; i < nRefSpace; i++)
-      delete preEvaluatedDivFunction[i];
-
-    delete[] preEvaluatedDivFunction;
-  }
-
-  // Alloc //
-  const unsigned int nPoint = point.size1();
-  preEvaluatedDivFunction   = new fullMatrix<double>*[nRefSpace];
-
-  for(unsigned int i = 0; i < nRefSpace; i++)
-    preEvaluatedDivFunction[i] =
-      new fullMatrix<double>(nFunction, nPoint);
-
-  // Fill Matrix //
-  for(unsigned int i = 0; i < nRefSpace; i++)
-    for(unsigned int j = 0; j < nFunction; j++)
-      for(unsigned int k = 0; k < nPoint; k++)
-	(*preEvaluatedDivFunction[i])(j, k) =
-	  div[i][j]->at(point(k, 0),
-			point(k, 1),
-			point(k, 2));
-
-  // PreEvaluated //
-  preEvaluatedDiv = true;
-}
-
 const fullMatrix<double>& BasisHierarchicalVector::
 getPreEvaluatedFunctions(const MElement& element) const{
   return getPreEvaluatedFunctions(refSpace->getPermutation(element));
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
-getPreEvaluatedCurlFunctions(const MElement& element) const{
-  return getPreEvaluatedCurlFunctions(refSpace->getPermutation(element));
-}
-
-const fullMatrix<double>& BasisHierarchicalVector::
-getPreEvaluatedDivFunctions(const MElement& element) const{
-  return getPreEvaluatedDivFunctions(refSpace->getPermutation(element));
+getPreEvaluatedDerivatives(const MElement& element) const{
+  return getPreEvaluatedDerivatives(refSpace->getPermutation(element));
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
@@ -254,29 +209,11 @@ getPreEvaluatedFunctions(unsigned int orientation) const{
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
-getPreEvaluatedCurlFunctions(unsigned int orientation) const{
+getPreEvaluatedDerivatives(unsigned int orientation) const{
   if(!preEvaluatedCurl)
-    throw Exception("getPreEvaluatedCurlFunction: curl has not been preEvaluated");
+    throw Exception("getPreEvaluatedDerivative: curl has not been preEvaluated");
 
   return *preEvaluatedCurlFunction[orientation];
-}
-
-const fullMatrix<double>& BasisHierarchicalVector::
-getPreEvaluatedDivFunctions(unsigned int orientation) const{
-  if(!preEvaluatedDiv)
-    throw Exception("getPreEvaluatedDivFunction: divergence has not been preEvaluated");
-
-  return *preEvaluatedDivFunction[orientation];
-}
-
-unsigned int BasisHierarchicalVector::
-getNOrientation(void) const{
-  return refSpace->getNPermutation();
-}
-
-unsigned int BasisHierarchicalVector::
-getOrientation(const MElement& element) const{
-  return refSpace->getPermutation(element);
 }
 
 void BasisHierarchicalVector::getCurl(void) const{
@@ -294,23 +231,6 @@ void BasisHierarchicalVector::getCurl(void) const{
 
   // Has Curl //
   hasCurl = true;
-}
-
-void BasisHierarchicalVector::getDiv(void) const{
-  // Alloc //
-  div = new Polynomial**[nRefSpace];
-
-  for(unsigned int s = 0; s < nRefSpace; s++)
-    div[s] = new Polynomial*[nFunction];
-
-  // Div //
-  for(unsigned int s = 0; s < nRefSpace; s++)
-    for(unsigned int f = 0 ; f < nFunction; f++)
-      div[s][f] =
-	new Polynomial(Polynomial::divergence(*basis[s][f]));
-
-  // Has Div //
-  hasDiv = true;
 }
 
 string BasisHierarchicalVector::toString(void) const{

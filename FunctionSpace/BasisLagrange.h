@@ -1,7 +1,7 @@
 #ifndef _BASISLAGRANGE_H_
 #define _BASISLAGRANGE_H_
 
-#include "BasisLocalScalar.h"
+#include "BasisLocal.h"
 #include "FunctionSpaceScalar.h"
 #include "FunctionSpaceVector.h"
 #include "fullMatrix.h"
@@ -23,7 +23,7 @@
    Add a method to get lagrange Point in polynomialBasis
 */
 
-class BasisLagrange: public BasisLocalScalar{
+class BasisLagrange: public BasisLocal{
  protected:
   polynomialBasis*    lBasis; // Lagrange Basis
   fullMatrix<double>* lPoint; // Lagrange Points
@@ -31,29 +31,29 @@ class BasisLagrange: public BasisLocalScalar{
  public:
   virtual ~BasisLagrange(void);
 
+  virtual unsigned int getNOrientation(void) const;
+  virtual unsigned int getOrientation(const MElement& element) const;
+
   virtual fullMatrix<double>* getFunctions(const MElement& element,
 					   double u, double v, double w) const;
 
   virtual fullMatrix<double>* getFunctions(unsigned int orientation,
 					   double u, double v, double w) const;
 
-  virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
-  virtual void preEvaluateGradFunctions(const fullMatrix<double>& point) const;
+  virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
+  virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(const MElement& element) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedGradFunctions(const MElement& element) const;
+    getPreEvaluatedDerivatives(const MElement& element) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(unsigned int orientation) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedGradFunctions(unsigned int orientation) const;
-
-  virtual unsigned int getNOrientation(void) const;
-  virtual unsigned int getOrientation(const MElement& element) const;
+    getPreEvaluatedDerivatives(unsigned int orientation) const;
 
   const fullMatrix<double>& getCoefficient(void) const;
   const fullMatrix<double>& getMonomial(void) const;

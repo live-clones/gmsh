@@ -13,11 +13,8 @@ set(SRC
   TetReferenceSpace.cpp
 
   Basis.cpp
-  BasisGenerator.cpp
-
   BasisLocal.cpp
-  BasisLocalScalar.cpp
-  BasisLocalVector.cpp
+  BasisGenerator.cpp
 
   BasisLagrange.cpp
   BasisHierarchicalScalar.cpp
@@ -40,7 +37,7 @@ set(SRC
 
   TetNodeBasis.cpp
   TetEdgeBasis.cpp
-  
+
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp
   FunctionSpaceVector.cpp
@@ -48,7 +45,7 @@ set(SRC
   FunctionSpaceEdge.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(FunctionSpace "${SRC};${HDR}")
 
 ## Compatibility with SmallFEM (TO BE REMOVED !!!)

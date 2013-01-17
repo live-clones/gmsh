@@ -2,7 +2,7 @@
 #define _BASISHIERARCHICALSCALAR_H_
 
 #include <string>
-#include "BasisLocalScalar.h"
+#include "BasisLocal.h"
 #include "Polynomial.h"
 #include "ReferenceSpace.h"
 
@@ -13,7 +13,7 @@
    This is an interface for Hierarchical Scalar Local Basis.@n
 */
 
-class BasisHierarchicalScalar: public BasisLocalScalar{
+class BasisHierarchicalScalar: public BasisLocal{
  protected:
   // Orientation //
   ReferenceSpace* refSpace;
@@ -36,29 +36,29 @@ class BasisHierarchicalScalar: public BasisLocalScalar{
  public:
   virtual ~BasisHierarchicalScalar(void);
 
+  virtual unsigned int getNOrientation(void) const;
+  virtual unsigned int getOrientation(const MElement& element) const;
+
   virtual fullMatrix<double>* getFunctions(const MElement& element,
 					   double u, double v, double w) const;
 
   virtual fullMatrix<double>* getFunctions(unsigned int orientation,
 					   double u, double v, double w) const;
 
-  virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
-  virtual void preEvaluateGradFunctions(const fullMatrix<double>& point) const;
+  virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
+  virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(const MElement& element) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedGradFunctions(const MElement& element) const;
+    getPreEvaluatedDerivatives(const MElement& element) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(unsigned int orientation) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedGradFunctions(unsigned int orientation) const;
-
-  virtual unsigned int getNOrientation(void) const;
-  virtual unsigned int getOrientation(const MElement& element) const;
+    getPreEvaluatedDerivatives(unsigned int orientation) const;
 
   std::string toString(void) const;
 

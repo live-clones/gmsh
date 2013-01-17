@@ -2,7 +2,6 @@
 #define _FUNCTIONSPACEVECTOR_H_
 
 #include "Exception.h"
-#include "BasisLocalVector.h"
 #include "FunctionSpace.h"
 
 /**
@@ -23,9 +22,6 @@
 
 
 class FunctionSpaceVector : public FunctionSpace{
- protected:
-  const BasisLocalVector* localBasisVector;
-
  public:
   virtual ~FunctionSpaceVector(void);
 
@@ -205,23 +201,23 @@ class FunctionSpaceVector : public FunctionSpace{
 
 inline void FunctionSpaceVector::
 preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
-  localBasisVector->preEvaluateFunctions(point);
+  localBasis->preEvaluateFunctions(point);
 }
 
 inline void FunctionSpaceVector::
 preEvaluateCurlLocalFunctions(const fullMatrix<double>& point) const{
-  localBasisVector->preEvaluateCurlFunctions(point);
+  localBasis->preEvaluateDerivatives(point);
 }
 
 inline void FunctionSpaceVector::
 preEvaluateDivLocalFunctions(const fullMatrix<double>& point) const{
-  localBasisVector->preEvaluateDivFunctions(point);
+  localBasis->preEvaluateDerivatives(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
   try{
-    return localBasisVector->getPreEvaluatedFunctions(element);
+    return localBasis->getPreEvaluatedFunctions(element);
   }
 
   catch(Exception& any){
@@ -232,7 +228,7 @@ FunctionSpaceVector::getEvaluatedLocalFunctions(const MElement& element) const{
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) const{
   try{
-    return localBasisVector->getPreEvaluatedCurlFunctions(element);
+    return localBasis->getPreEvaluatedDerivatives(element);
   }
 
   catch(Exception& any){
@@ -243,7 +239,7 @@ FunctionSpaceVector::getEvaluatedCurlLocalFunctions(const MElement& element) con
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) const{
   try{
-    return localBasisVector->getPreEvaluatedFunctions(element);
+    return localBasis->getPreEvaluatedFunctions(element);
   }
 
   catch(Exception& any){
@@ -254,7 +250,7 @@ FunctionSpaceVector::getEvaluatedDivLocalFunctions(const MElement& element) cons
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedLocalFunctions(unsigned int orientation) const{
   try{
-    return localBasisVector->getPreEvaluatedFunctions(orientation);
+    return localBasis->getPreEvaluatedFunctions(orientation);
   }
 
   catch(Exception& any){
@@ -265,7 +261,7 @@ FunctionSpaceVector::getEvaluatedLocalFunctions(unsigned int orientation) const{
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedCurlLocalFunctions(unsigned int orientation) const{
   try{
-    return localBasisVector->getPreEvaluatedCurlFunctions(orientation);
+    return localBasis->getPreEvaluatedDerivatives(orientation);
   }
 
   catch(Exception& any){
@@ -276,7 +272,7 @@ FunctionSpaceVector::getEvaluatedCurlLocalFunctions(unsigned int orientation) co
 inline const fullMatrix<double>&
 FunctionSpaceVector::getEvaluatedDivLocalFunctions(unsigned int orientation) const{
   try{
-    return localBasisVector->getPreEvaluatedFunctions(orientation);
+    return localBasis->getPreEvaluatedFunctions(orientation);
   }
 
   catch(Exception& any){

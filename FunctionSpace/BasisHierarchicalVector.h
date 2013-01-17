@@ -2,7 +2,7 @@
 #define _BASISHIERARCHICALVECTOR_H_
 
 #include <string>
-#include "BasisLocalVector.h"
+#include "BasisLocal.h"
 #include "Polynomial.h"
 #include "ReferenceSpace.h"
 
@@ -13,7 +13,7 @@
    This is an interface for Hierarchical Vectorial Local Basis.@n
 */
 
-class BasisHierarchicalVector: public BasisLocalVector{
+class BasisHierarchicalVector: public BasisLocal{
  protected:
   // Orientation //
   ReferenceSpace* refSpace;
@@ -26,21 +26,18 @@ class BasisHierarchicalVector: public BasisLocalVector{
   mutable bool hasCurl;
   mutable std::vector<Polynomial>*** curl;
 
-  // Div Basis //
-  mutable bool hasDiv;
-  mutable Polynomial*** div;
-
   // PreEvaluation //
   mutable bool preEvaluated;
   mutable bool preEvaluatedCurl;
-  mutable bool preEvaluatedDiv;
 
   mutable fullMatrix<double>** preEvaluatedFunction;
   mutable fullMatrix<double>** preEvaluatedCurlFunction;
-  mutable fullMatrix<double>** preEvaluatedDivFunction;
 
  public:
   virtual ~BasisHierarchicalVector(void);
+
+  virtual unsigned int getNOrientation(void) const;
+  virtual unsigned int getOrientation(const MElement& element) const;
 
   virtual fullMatrix<double>* getFunctions(const MElement& element,
 					   double u, double v, double w) const;
@@ -48,30 +45,20 @@ class BasisHierarchicalVector: public BasisLocalVector{
   virtual fullMatrix<double>* getFunctions(unsigned int orientation,
 					   double u, double v, double w) const;
 
-  virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
-  virtual void preEvaluateCurlFunctions(const fullMatrix<double>& point) const;
-  virtual void preEvaluateDivFunctions (const fullMatrix<double>& point) const;
+  virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
+  virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(const MElement& element) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedCurlFunctions(const MElement& element) const;
-
-  virtual const fullMatrix<double>&
-    getPreEvaluatedDivFunctions (const MElement& element)const;
+    getPreEvaluatedDerivatives(const MElement& element) const;
 
   virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(unsigned int orientation) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedCurlFunctions(unsigned int orientation) const;
-
-  virtual const fullMatrix<double>&
-    getPreEvaluatedDivFunctions(unsigned int orientation) const;
-
-  virtual unsigned int getNOrientation(void) const;
-  virtual unsigned int getOrientation(const MElement& element) const;
+    getPreEvaluatedDerivatives(unsigned int orientation) const;
 
   std::string toString(void) const;
 
@@ -80,7 +67,6 @@ class BasisHierarchicalVector: public BasisLocalVector{
 
  private:
   void getCurl(void) const;
-  void getDiv(void) const;
 };
 
 /**

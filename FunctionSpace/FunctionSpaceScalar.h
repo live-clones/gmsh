@@ -2,7 +2,6 @@
 #define _FUNCTIONSPACESCALAR_H_
 
 #include "Exception.h"
-#include "BasisLocalScalar.h"
 #include "FunctionSpace.h"
 
 /**
@@ -23,9 +22,6 @@
 
 
 class FunctionSpaceScalar : public FunctionSpace{
- protected:
-  const BasisLocalScalar* localBasisScalar;
-
  public:
   virtual ~FunctionSpaceScalar(void);
 
@@ -168,18 +164,18 @@ class FunctionSpaceScalar : public FunctionSpace{
 
 inline void FunctionSpaceScalar::
 preEvaluateLocalFunctions(const fullMatrix<double>& point) const{
-  localBasisScalar->preEvaluateFunctions(point);
+  localBasis->preEvaluateFunctions(point);
 }
 
 inline void FunctionSpaceScalar::
 preEvaluateGradLocalFunctions(const fullMatrix<double>& point) const{
-  localBasisScalar->preEvaluateGradFunctions(point);
+  localBasis->preEvaluateDerivatives(point);
 }
 
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
   try{
-    return localBasisScalar->getPreEvaluatedFunctions(element);
+    return localBasis->getPreEvaluatedFunctions(element);
   }
 
   catch(Exception& any){
@@ -190,7 +186,7 @@ FunctionSpaceScalar::getEvaluatedLocalFunctions(const MElement& element) const{
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) const{
   try{
-    return localBasisScalar->getPreEvaluatedGradFunctions(element);
+    return localBasis->getPreEvaluatedDerivatives(element);
   }
 
   catch(Exception& any){
@@ -201,7 +197,7 @@ FunctionSpaceScalar::getEvaluatedGradLocalFunctions(const MElement& element) con
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedLocalFunctions(unsigned int orientation) const{
   try{
-    return localBasisScalar->getPreEvaluatedFunctions(orientation);
+    return localBasis->getPreEvaluatedFunctions(orientation);
   }
 
   catch(Exception& any){
@@ -212,7 +208,7 @@ FunctionSpaceScalar::getEvaluatedLocalFunctions(unsigned int orientation) const{
 inline const fullMatrix<double>&
 FunctionSpaceScalar::getEvaluatedGradLocalFunctions(unsigned int orientation) const{
   try{
-    return localBasisScalar->getPreEvaluatedGradFunctions(orientation);
+    return localBasis->getPreEvaluatedDerivatives(orientation);
   }
 
   catch(Exception& any){
