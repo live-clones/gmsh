@@ -509,6 +509,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   ALGO_3D_FRONTAL);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
+  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
   opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
@@ -1281,7 +1282,7 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
-  int height = 12 * BH + 4 * WB;
+  int height = 13 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
@@ -2182,26 +2183,31 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[21]->type(FL_TOGGLE_BUTTON);
       mesh.butt[21]->callback(mesh_options_ok_cb);
 
+      mesh.butt[22] = new Fl_Check_Button
+         (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Recombine all tets into (dominant) hex meshes");
+      mesh.butt[22]->type(FL_TOGGLE_BUTTON);
+      mesh.butt[22]->callback(mesh_options_ok_cb);
+
       mesh.choice[5] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Subdivision algorithm");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Subdivision algorithm");
       mesh.choice[5]->menu(menu_subdivision_algo);
       mesh.choice[5]->align(FL_ALIGN_RIGHT);
       mesh.choice[5]->callback(mesh_options_ok_cb);
 
       mesh.choice[8] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Remeshing algorithm");
+        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Remeshing algorithm");
       mesh.choice[8]->menu(menu_remeshing_algo);
       mesh.choice[8]->align(FL_ALIGN_RIGHT);
       mesh.choice[8]->callback(mesh_options_ok_cb);
 
       mesh.choice[9] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Remeshing parametrization");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Remeshing parametrization");
       mesh.choice[9]->menu(menu_remeshing_param);
       mesh.choice[9]->align(FL_ALIGN_RIGHT);
       mesh.choice[9]->callback(mesh_options_ok_cb);
 
       mesh.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Smoothing steps");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Smoothing steps");
       mesh.value[0]->minimum(0);
       mesh.value[0]->maximum(100);
       mesh.value[0]->step(1);
@@ -2209,7 +2215,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->callback(mesh_options_ok_cb);
 
       mesh.value[2] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Element size factor");
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       mesh.value[2]->step(0.01);
@@ -2217,17 +2223,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW/2, BH);
+        (L + 2 * WB, 2 * WB + 11 * BH, IW/2, BH);
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input
-        (L + 2 * WB + IW/2, 2 * WB + 10 * BH, IW/2, BH, "Min/Max element size");
+        (L + 2 * WB + IW/2, 2 * WB + 11 * BH, IW/2, BH, "Min/Max element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH, "Element order");
+        (L + 2 * WB, 2 * WB + 12 * BH, IW / 3, BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
@@ -2235,7 +2241,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB + IW + WB / 2, 2 * WB + 11 * BH, BW, BH, "Use incomplete elements");
+        (L + 2 * WB + IW + WB / 2, 2 * WB + 12 * BH, BW, BH, "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 

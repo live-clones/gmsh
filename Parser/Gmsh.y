@@ -911,13 +911,13 @@ Affectation :
     {
       std::string tmp($5);
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
-      Free($1); Free($3); Free($5)
+      Free($1); Free($3); Free($5);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
     {
       std::string tmp($8);
       StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, tmp);
-      Free($1); Free($6); Free($8)
+      Free($1); Free($6); Free($8);
     }
 
   // Option Numbers
@@ -3682,6 +3682,45 @@ Transfinite :
             }
             else
               yymsg(1, "Unknown surface %d", (int)d);
+          }
+        }
+        List_Delete($3);
+      }
+    }
+  | tRecombine tVolume ListOfDoubleOrAll  tEND
+    {
+      if(!$3){
+	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Volume *v;
+            List_Read(tmp, i, &v);
+            v->Recombine3D = 1;
+          }
+        }
+        else{
+          for(GModel::riter it = GModel::current()->firstRegion();
+              it != GModel::current()->lastRegion(); it++){
+            (*it)->meshAttributes.recombine3D = 1;
+          }
+        }
+        List_Delete(tmp);
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          Volume *v = FindVolume((int)d);
+          if(v){
+            v->Recombine3D = 1;
+          }
+          else{
+            GRegion *gr = GModel::current()->getRegionByTag((int)d);
+            if(gr){
+              gr->meshAttributes.recombine3D = 1;
+            }
+            else
+              yymsg(1, "Unknown volume %d", (int)d);
           }
         }
         List_Delete($3);

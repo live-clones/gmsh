@@ -181,6 +181,7 @@ class Volume {
   int Typ;
   char Visible;
   int Method;
+  int Recombine3D;
   int QuadTri;
   ExtrudeParams *Extrude;
   List_T *TrsfPoints;

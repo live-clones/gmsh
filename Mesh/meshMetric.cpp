@@ -75,6 +75,7 @@ meshMetric::meshMetric(std::vector<MElement*> elements)
   }
 
   _octree = new MElementOctree(_elements);
+  buildVertexToElement (_elements,_adj);
 }
 
 void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
@@ -314,7 +315,7 @@ void meshMetric::computeHessian()
     dgrads[1][ver] = SVector3(d2udxy,d2udy2,d2udyz);
     dgrads[2][ver] = SVector3(d2udxz,d2udyz,d2udz2);
   }
-}
+ }
 
 void meshMetric::computeMetricLevelSet()
 {

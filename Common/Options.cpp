@@ -5068,6 +5068,13 @@ double opt_mesh_bunin(OPT_ARGS_NUM)
   return CTX::instance()->mesh.bunin;
 }
 
+double opt_mesh_lloyd(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.optimizeLloyd = (int)val;
+  return CTX::instance()->mesh.optimizeLloyd;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -5153,6 +5160,19 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
       (CTX::instance()->mesh.recombineAll);
 #endif
   return CTX::instance()->mesh.recombineAll;
+}
+
+double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombine3DAll = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.butt[22]->value
+      (CTX::instance()->mesh.recombine3DAll);
+#endif
+  return CTX::instance()->mesh.recombine3DAll;
 }
 
 double opt_mesh_remesh_algo(OPT_ARGS_NUM)

@@ -1092,6 +1092,7 @@ void meshGRegion::operator() (GRegion *gr)
     Ng_Exit();
 #endif
   }
+  
 }
 
 void optimizeMeshGRegionNetgen::operator() (GRegion *gr)

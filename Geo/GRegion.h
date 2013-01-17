@@ -97,6 +97,8 @@ class GRegion : public GEntity {
   GRegionCompound *getCompound() const { return compound; }
 
   struct {
+    // do we recombine the tetrahedra of the mesh into hex?
+    int recombine3D;
     // is this surface meshed using a transfinite interpolation
     char Method;
     // the extrusion parameters (if any)

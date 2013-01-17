@@ -579,7 +579,7 @@ int GModel::adaptMesh(std::vector<int> technique,
       char name[256];
       sprintf(name, "meshAdapt-%d.msh", ITER);
       writeMSH(name);
-      metric->exportInfo(name);
+      //metric->exportInfo(name);
 
       if (ITER++ >= niter)  break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;

@@ -28,7 +28,7 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
-  int algoRecombine, recombineAll;
+  int algoRecombine, recombineAll, recombine3DAll;
   int remeshParam, remeshAlgo;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;

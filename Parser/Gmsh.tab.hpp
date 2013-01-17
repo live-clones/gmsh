@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 2.6.  */
+/* A Bison parser, made by GNU Bison 2.6.5.  */
 
 /* Bison interface for Yacc-like parsers in C
    
@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef GMSH_YY_GMSH_TAB_HPP
-# define GMSH_YY_GMSH_TAB_HPP
+#ifndef YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
+# define YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
 /* Enabling traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -192,8 +192,7 @@ extern int gmsh_yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
-
-/* Line 2050 of yacc.c  */
+/* Line 2042 of yacc.c  */
 #line 92 "Gmsh.y"
 
   char *c;
@@ -205,9 +204,8 @@ typedef union YYSTYPE
   List_T *l;
 
 
-
-/* Line 2050 of yacc.c  */
-#line 211 "Gmsh.tab.hpp"
+/* Line 2042 of yacc.c  */
+#line 209 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -230,4 +228,4 @@ int gmsh_yyparse ();
 #endif
 #endif /* ! YYPARSE_PARAM */
 
-#endif /* !GMSH_YY_GMSH_TAB_HPP  */
+#endif /* !YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED  */

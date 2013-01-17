@@ -817,6 +817,8 @@ StringXNumber MeshOptions_Number[] = {
     "Write mesh files in binary format (if possible)" },
   { F|O, "Bunin" , opt_mesh_bunin , 0. ,
     "Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)" },
+  { F|O, "Lloyd" , opt_mesh_lloyd , 0. ,
+    "Apply lloyd optimization on surface meshes" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes."
@@ -1032,7 +1034,8 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh recombination algorithm (0=standard, 1=blossom)" },
   { F|O, "RecombineAll" , opt_mesh_recombine_all , 0 ,
     "Apply recombination algorithm to all surfaces, ignoring per-surface spec" },
-
+  { F|O, "Recombine3DAll" , opt_mesh_recombine3d_all , 0 ,
+    "Apply recombination3D algorithm to all volumes, ignoring per-volume spec" },
   { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
     "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" },
   { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 4 ,

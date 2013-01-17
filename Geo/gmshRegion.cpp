@@ -43,6 +43,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
 
 void gmshRegion::resetMeshAttributes()
 {
+  meshAttributes.recombine3D = v->Recombine3D;
   meshAttributes.Method = v->Method;
   meshAttributes.QuadTri = v->QuadTri;
   meshAttributes.extrude = v->Extrude;
