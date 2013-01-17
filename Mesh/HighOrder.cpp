@@ -1280,8 +1280,7 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++){
       MTetrahedron *t = (*it)->tetrahedra[i];
-      double jmin,jmax; t->scaledJacRange(jmin,jmax);
-      double disto_ = jmin;
+      double disto_ = t->distoShapeMeasure();
       minJGlob = std::min(minJGlob, disto_);
       avg += disto_; count++;
       if (disto_ < 0) bad.push_back(t);

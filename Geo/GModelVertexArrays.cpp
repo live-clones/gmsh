@@ -99,10 +99,8 @@ bool isElementVisible(MElement *ele)
   if(!ele->getVisibility()) return false;
   if(CTX::instance()->mesh.qualitySup) {
     double q;
-    if(CTX::instance()->mesh.qualityType == 3){
-      double jmin,jmax; ele->scaledJacRange(jmin,jmax);
-      q = jmin;
-    }
+    if(CTX::instance()->mesh.qualityType == 3)
+      q = ele->distoShapeMeasure();
     else if(CTX::instance()->mesh.qualityType == 2)
       q = ele->rhoShapeMeasure();
     else if(CTX::instance()->mesh.qualityType == 1)

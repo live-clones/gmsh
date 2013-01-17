@@ -189,7 +189,7 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     rhoMin = std::min(rhoMin, r);
     rhoMax = std::max(rhoMax, r);
     double jmin,jmax; ele[i]->scaledJacRange(jmin,jmax);
-    double d = std::min(jmin,1./jmax);
+    double d = jmin;
     disto += d;
     distoMin = std::min(distoMin, d);
     distoMax = std::max(distoMax, d);

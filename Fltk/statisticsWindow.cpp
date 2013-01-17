@@ -76,10 +76,8 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
 	  d[e->getNum()].push_back(e->etaShapeMeasure());
 	else if(name == "Rho3D")
 	  d[e->getNum()].push_back(e->rhoShapeMeasure());
-	else{
-	  double jmin,jmax; e->scaledJacRange(jmin,jmax);
-	  d[e->getNum()].push_back(std::min(jmin,1./jmax));
-	}
+	else
+	  d[e->getNum()].push_back(e->distoShapeMeasure());
       }
     }
     name.resize(name.size() - 2);
