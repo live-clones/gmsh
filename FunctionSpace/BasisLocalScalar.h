@@ -7,10 +7,10 @@
 
 /**
    @interface BasisLocalScalar
-   @brief Common Interface for all 
+   @brief Common Interface for all
    @em Scalar Local Basis
 
-   This class is the @em common @em interface for all 
+   This class is the @em common @em interface for all
    @em scalar Local Basis.@n
 */
 
@@ -18,20 +18,26 @@ class BasisLocalScalar: public BasisLocal{
  public:
   virtual ~BasisLocalScalar(void);
 
-  virtual fullMatrix<double>* getFunctions(const MElement& element, 
+  virtual fullMatrix<double>* getFunctions(const MElement& element,
 					   double u, double v, double w) const = 0;
 
-  virtual fullMatrix<double>* getFunctions(unsigned int orientation, 
+  virtual fullMatrix<double>* getFunctions(unsigned int orientation,
 					   double u, double v, double w) const = 0;
 
   virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const = 0;
   virtual void preEvaluateGradFunctions(const fullMatrix<double>& point) const = 0;
 
-  virtual const fullMatrix<double>& 
+  virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(const MElement& element) const = 0;
- 
-  virtual const fullMatrix<double>& 
+
+  virtual const fullMatrix<double>&
     getPreEvaluatedGradFunctions(const MElement& element) const = 0;
+
+  virtual const fullMatrix<double>&
+    getPreEvaluatedFunctions(unsigned int orientation) const = 0;
+
+  virtual const fullMatrix<double>&
+    getPreEvaluatedGradFunctions(unsigned int orientation) const = 0;
 
  protected:
   BasisLocalScalar(void);
@@ -41,13 +47,13 @@ class BasisLocalScalar: public BasisLocal{
 /**
    @internal
    @fn BasisLocalScalar::BasisLocalScalar
-  
+
    Instantiates a new BasisLocalScalar
    @endinternal
    **
 
    @fn BasisLocalScalar::~BasisLocalScalar
-   
+
    Deletes this BasisLocalScalar
    **
 
@@ -93,7 +99,7 @@ class BasisLocalScalar: public BasisLocal{
    @return Pre Evaluates every basis function @em gradient at the given points
    **
 
-   @fn BasisLocalScalar::getPreEvaluatedFunctions
+   @fn BasisLocalScalar::getPreEvaluatedFunctions(const MElement&) const
    @param element A MElement
    @return Returns a Matrix with the PreEvaluated basis functions
    (see BasisLocalFunction::preEvaluateFunctions()), with the given
@@ -108,7 +114,7 @@ class BasisLocalScalar: public BasisLocal{
    an Exception is thrown
    **
 
-   @fn BasisLocalScalar::getPreEvaluatedGradFunctions
+   @fn BasisLocalScalar::getPreEvaluatedGradFunctions(const MElement&) const
    @param element A MElement
    @return Returns a Matrix with the PreEvaluated basis functions @em gradient
    (see BasisLocalFunction::preEvaluateGradFunctions()), with the given
@@ -121,6 +127,18 @@ class BasisLocalScalar: public BasisLocal{
    @note
    If no PreEvaluation of the gradient has been done before calling this function,
    an Exception is thrown
+   **
+
+   @fn BasisLocalScalar::getPreEvaluatedFunctions(unsigned int) const
+   @param orientation A number definig the orientation of the reference space
+   @return Same as BasisLocalScalar::getPreEvaluatedFunctions(const MElement&) const
+   but the orientation is not given by en element but by a number (@c orientation)
+   **
+
+   @fn BasisLocalScalar::getPreEvaluatedGradFunctions(unsigned int) const
+   @param orientation A number definig the orientation of the reference space
+   @return Same as BasisLocalScalar::getPreEvaluatedGradFunctions(const MElement&) const
+   but the orientation is not given by en element but by a number (@c orientation)
  */
 
 #endif

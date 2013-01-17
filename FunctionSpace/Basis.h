@@ -1,13 +1,15 @@
 #ifndef _BASIS_H_
 #define _BASIS_H_
 
+#include "MElement.h"
+
 /**
    @interface Basis
    @brief Common Interface of all Basis
 
    This class is the @em common @em interface for all Basis.@n
 
-   A Basis is @em set of @em linearly @em independent Polynomial%s 
+   A Basis is @em set of @em linearly @em independent Polynomial%s
    (or Vector%s of Polynomial%s).@n
  */
 
@@ -33,23 +35,23 @@ class Basis{
   virtual ~Basis(void);
 
   //! @return Returns:
-  //! @li @c true, if this is a 
+  //! @li @c true, if this is a
   //! @em scalar Basis
   //! @li @c false, if this is a
   //! @em vectorial Basis
   //!
   //! @note
-  //! Scalar basis are sets of 
+  //! Scalar basis are sets of
   //! Polynomial%s@n
-  //! Vectorial basis are sets of 
-  //! Vector%s of Polynomial%s  
+  //! Vectorial basis are sets of
+  //! Vector%s of Polynomial%s
   bool isScalar(void) const;
 
   //! @return Returns:
-  //! @li @c true, if this is a 
-  //! @em Local Basis 
+  //! @li @c true, if this is a
+  //! @em Local Basis
   //! @li @c false, if this is a
-  //! @em Global Basis 
+  //! @em Global Basis
   bool isLocal(void) const;
 
   //! @return Returns the @em polynomial @em order of the Basis
@@ -61,8 +63,8 @@ class Basis{
   //! @li 2 for 2-form
   //! @li 3 for 3-form
   unsigned int getType(void) const;
-  
-  //! @return Returns the @em dimension 
+
+  //! @return Returns the @em dimension
   //! (1D, 2D or 3D) of the Basis
   unsigned int getDim(void) const;
 
@@ -82,10 +84,20 @@ class Basis{
   //! @em Based functions of this Basis
   unsigned int getNCellBased(void) const;
 
-  //! @return Returns the number of Polynomial%s 
-  //! (or Vector%s of Polynomial%s) Functions 
+  //! @return Returns the number of Polynomial%s
+  //! (or Vector%s of Polynomial%s) Functions
   //! in this Basis
   unsigned int getNFunction(void) const;
+
+  //! @return Returns the number of
+  //! @em orientation of this Basis
+  //! Reference Space
+  virtual unsigned int getNOrientation(void) const = 0;
+
+  //! @param element A MElement
+  //! @return Returns a number charaterizing
+  //! the @em orientation of the given element
+  virtual unsigned int getOrientation(const MElement& element) const = 0;
 
  protected:
   //! @internal

@@ -9,7 +9,7 @@
 /**
    @interface BasisHierarchicalScalar
    @brief Interface for Hierarchical Scalar Local Basis
-   
+
    This is an interface for Hierarchical Scalar Local Basis.@n
 */
 
@@ -35,8 +35,8 @@ class BasisHierarchicalScalar: public BasisLocalScalar{
 
  public:
   virtual ~BasisHierarchicalScalar(void);
-  
-  virtual fullMatrix<double>* getFunctions(const MElement& element, 
+
+  virtual fullMatrix<double>* getFunctions(const MElement& element,
 					   double u, double v, double w) const;
 
   virtual fullMatrix<double>* getFunctions(unsigned int orientation,
@@ -45,11 +45,20 @@ class BasisHierarchicalScalar: public BasisLocalScalar{
   virtual void preEvaluateFunctions    (const fullMatrix<double>& point) const;
   virtual void preEvaluateGradFunctions(const fullMatrix<double>& point) const;
 
-  virtual const fullMatrix<double>& 
+  virtual const fullMatrix<double>&
     getPreEvaluatedFunctions(const MElement& element) const;
 
-  virtual const fullMatrix<double>& 
+  virtual const fullMatrix<double>&
     getPreEvaluatedGradFunctions(const MElement& element) const;
+
+  virtual const fullMatrix<double>&
+    getPreEvaluatedFunctions(unsigned int orientation) const;
+
+  virtual const fullMatrix<double>&
+    getPreEvaluatedGradFunctions(unsigned int orientation) const;
+
+  virtual unsigned int getNOrientation(void) const;
+  virtual unsigned int getOrientation(const MElement& element) const;
 
   std::string toString(void) const;
 
@@ -63,18 +72,18 @@ class BasisHierarchicalScalar: public BasisLocalScalar{
 /**
    @internal
    @fn BasisHierarchicalScalar::BasisHierarchicalScalar
-   
+
    Instanciates an new BasisHierarchicalScalar
    @endinternal
    **
 
    @fn BasisHierarchicalScalar::~BasisHierarchicalScalar
-   
+
    Deletes this BasisHierarchicalScalar
    **
 
-   @fn BasisHierarchicalScalar::toString   
-   @return Returns a string describing this 
+   @fn BasisHierarchicalScalar::toString
+   @return Returns a string describing this
    BasisHierarchicalScalar
  */
 

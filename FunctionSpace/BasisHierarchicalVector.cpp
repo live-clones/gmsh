@@ -29,7 +29,7 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
     for(unsigned int i = 0; i < nRefSpace; i++){
       for(unsigned int j = 0; j < nFunction; j++)
 	delete curl[i][j];
-      
+
       delete[] curl[i];
     }
 
@@ -41,7 +41,7 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
     for(unsigned int i = 0; i < nRefSpace; i++){
       for(unsigned int j = 0; j < nFunction; j++)
 	delete div[i][j];
-      
+
       delete[] div[i];
     }
 
@@ -59,15 +59,15 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
   if(preEvaluatedCurl){
     for(unsigned int i = 0; i < nRefSpace; i++)
       delete preEvaluatedCurlFunction[i];
-   
+
     delete[] preEvaluatedCurlFunction;
   }
 }
 
 fullMatrix<double>* BasisHierarchicalVector::
-getFunctions(const MElement& element, 
+getFunctions(const MElement& element,
 	     double u, double v, double w) const{
-  
+
   // Alloc Memory //
   fullMatrix<double>* values = new fullMatrix<double>(nFunction, 3);
 
@@ -76,9 +76,9 @@ getFunctions(const MElement& element,
 
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
-    fullVector<double> eval = 
+    fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
-    
+
     (*values)(i, 0) = eval(0);
     (*values)(i, 1) = eval(1);
     (*values)(i, 2) = eval(2);
@@ -89,17 +89,17 @@ getFunctions(const MElement& element,
 }
 
 fullMatrix<double>* BasisHierarchicalVector::
-getFunctions(unsigned int orientation, 
+getFunctions(unsigned int orientation,
 	     double u, double v, double w) const{
-  
+
   // Alloc Memory //
   fullMatrix<double>* values = new fullMatrix<double>(nFunction, 3);
 
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
-    fullVector<double> eval = 
+    fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
-    
+
     (*values)(i, 0) = eval(0);
     (*values)(i, 1) = eval(1);
     (*values)(i, 2) = eval(2);
@@ -115,7 +115,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   if(preEvaluated){
     for(unsigned int i = 0; i < nRefSpace; i++)
       delete preEvaluatedFunction[i];
-    
+
     delete[] preEvaluatedFunction;
   }
 
@@ -125,7 +125,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   preEvaluatedFunction       = new fullMatrix<double>*[nRefSpace];
 
   for(unsigned int i = 0; i < nRefSpace; i++)
-    preEvaluatedFunction[i] = 
+    preEvaluatedFunction[i] =
       new fullMatrix<double>(nFunction, nPoint3);
 
   // Fill Matrix //
@@ -138,7 +138,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
 			     point(k, 0),
 			     point(k, 1),
 			     point(k, 2));
-	
+
 	(*preEvaluatedFunction[i])(j, 3 * k)     = tmp(0);
 	(*preEvaluatedFunction[i])(j, 3 * k + 1) = tmp(1);
 	(*preEvaluatedFunction[i])(j, 3 * k + 2) = tmp(2);
@@ -160,17 +160,17 @@ preEvaluateCurlFunctions(const fullMatrix<double>& point) const{
   if(preEvaluatedCurl){
     for(unsigned int i = 0; i < nRefSpace; i++)
       delete preEvaluatedCurlFunction[i];
-    
+
     delete[] preEvaluatedCurlFunction;
   }
 
   // Alloc //
   const unsigned int nPoint  = point.size1();
-  const unsigned int nPoint3 = nPoint * 3;  
+  const unsigned int nPoint3 = nPoint * 3;
   preEvaluatedCurlFunction   = new fullMatrix<double>*[nRefSpace];
 
   for(unsigned int i = 0; i < nRefSpace; i++)
-    preEvaluatedCurlFunction[i] = 
+    preEvaluatedCurlFunction[i] =
       new fullMatrix<double>(nFunction, nPoint3);
 
   // Fill Matrix //
@@ -183,16 +183,16 @@ preEvaluateCurlFunctions(const fullMatrix<double>& point) const{
 			     point(k, 0),
 			     point(k, 1),
 			     point(k, 2));
-	
+
 	(*preEvaluatedCurlFunction[i])(j, 3 * k)     = tmp(0);
 	(*preEvaluatedCurlFunction[i])(j, 3 * k + 1) = tmp(1);
 	(*preEvaluatedCurlFunction[i])(j, 3 * k + 2) = tmp(2);
       }
     }
   }
-  
+
   // PreEvaluated //
-  preEvaluatedCurl = true;  
+  preEvaluatedCurl = true;
 }
 
 void BasisHierarchicalVector::
@@ -205,7 +205,7 @@ preEvaluateDivFunctions(const fullMatrix<double>& point) const{
   if(preEvaluatedDiv){
     for(unsigned int i = 0; i < nRefSpace; i++)
       delete preEvaluatedDivFunction[i];
-    
+
     delete[] preEvaluatedDivFunction;
   }
 
@@ -214,44 +214,69 @@ preEvaluateDivFunctions(const fullMatrix<double>& point) const{
   preEvaluatedDivFunction   = new fullMatrix<double>*[nRefSpace];
 
   for(unsigned int i = 0; i < nRefSpace; i++)
-    preEvaluatedDivFunction[i] = 
+    preEvaluatedDivFunction[i] =
       new fullMatrix<double>(nFunction, nPoint);
 
   // Fill Matrix //
   for(unsigned int i = 0; i < nRefSpace; i++)
     for(unsigned int j = 0; j < nFunction; j++)
       for(unsigned int k = 0; k < nPoint; k++)
-	(*preEvaluatedDivFunction[i])(j, k) = 
+	(*preEvaluatedDivFunction[i])(j, k) =
 	  div[i][j]->at(point(k, 0),
 			point(k, 1),
 			point(k, 2));
-	
+
   // PreEvaluated //
-  preEvaluatedDiv = true;  
+  preEvaluatedDiv = true;
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
 getPreEvaluatedFunctions(const MElement& element) const{
-  if(!preEvaluated)
-    throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
-
-  return *preEvaluatedFunction[refSpace->getPermutation(element)];
+  return getPreEvaluatedFunctions(refSpace->getPermutation(element));
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
 getPreEvaluatedCurlFunctions(const MElement& element) const{
-  if(!preEvaluatedCurl)
-    throw Exception("getPreEvaluatedCurlFunction: curl has not been preEvaluated");
-
-  return *preEvaluatedCurlFunction[refSpace->getPermutation(element)];
+  return getPreEvaluatedCurlFunctions(refSpace->getPermutation(element));
 }
 
 const fullMatrix<double>& BasisHierarchicalVector::
 getPreEvaluatedDivFunctions(const MElement& element) const{
+  return getPreEvaluatedDivFunctions(refSpace->getPermutation(element));
+}
+
+const fullMatrix<double>& BasisHierarchicalVector::
+getPreEvaluatedFunctions(unsigned int orientation) const{
+  if(!preEvaluated)
+    throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
+
+  return *preEvaluatedFunction[orientation];
+}
+
+const fullMatrix<double>& BasisHierarchicalVector::
+getPreEvaluatedCurlFunctions(unsigned int orientation) const{
+  if(!preEvaluatedCurl)
+    throw Exception("getPreEvaluatedCurlFunction: curl has not been preEvaluated");
+
+  return *preEvaluatedCurlFunction[orientation];
+}
+
+const fullMatrix<double>& BasisHierarchicalVector::
+getPreEvaluatedDivFunctions(unsigned int orientation) const{
   if(!preEvaluatedDiv)
     throw Exception("getPreEvaluatedDivFunction: divergence has not been preEvaluated");
 
-  return *preEvaluatedDivFunction[refSpace->getPermutation(element)];
+  return *preEvaluatedDivFunction[orientation];
+}
+
+unsigned int BasisHierarchicalVector::
+getNOrientation(void) const{
+  return refSpace->getNPermutation();
+}
+
+unsigned int BasisHierarchicalVector::
+getOrientation(const MElement& element) const{
+  return refSpace->getPermutation(element);
 }
 
 void BasisHierarchicalVector::getCurl(void) const{
@@ -264,7 +289,7 @@ void BasisHierarchicalVector::getCurl(void) const{
   // Curl //
   for(unsigned int s = 0; s < nRefSpace; s++)
     for(unsigned int f = 0 ; f < nFunction; f++)
-      curl[s][f] = 
+      curl[s][f] =
 	new vector<Polynomial>(Polynomial::curl(*basis[s][f]));
 
   // Has Curl //
@@ -281,7 +306,7 @@ void BasisHierarchicalVector::getDiv(void) const{
   // Div //
   for(unsigned int s = 0; s < nRefSpace; s++)
     for(unsigned int f = 0 ; f < nFunction; f++)
-      div[s][f] = 
+      div[s][f] =
 	new Polynomial(Polynomial::divergence(*basis[s][f]));
 
   // Has Div //
@@ -302,7 +327,7 @@ string BasisHierarchicalVector::toString(void) const{
 
   stream << "Edge Based:"   << endl;
   for(; i < nVertex + nEdge; i++)
-    stream << " f("  << i + 1                               << ") = " << endl 
+    stream << " f("  << i + 1                               << ") = " << endl
 	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
 	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
 	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
@@ -313,7 +338,7 @@ string BasisHierarchicalVector::toString(void) const{
 	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
 	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
 	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
-  
+
   stream << "Cell Based:"   << endl;
   for(; i < nVertex + nEdge + nFace + nCell; i++)
     stream << " f("  << i + 1                               << ") = " << endl

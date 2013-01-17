@@ -21,19 +21,19 @@
 /**
     @interface FunctionSpace
     @brief Common Interface of all Function Spaces
-    
+
     This is the @em common @em interface of
     all Function Spaces.@n
 
-    A FunctionSpace is defined on a @em support, 
+    A FunctionSpace is defined on a @em support,
     which is a collection of MElement%s (GroupOfElement).@n
 
     Those MElement%s @em must belong to the @em same Mesh.
 
     A FunctionSpace is also responsible for the generation of all
     the Dof%s and GroupOfDof%s related to its geometrical @em Support.
-    
-    @todo 
+
+    @todo
     Allow Hybrid Mesh
 */
 
@@ -55,8 +55,8 @@ class FunctionSpace{
   std::set<const Dof*, DofComparator>*     dof;
   std::vector<GroupOfDof*>*                group;
   std::map<
-    const MElement*, 
-    const GroupOfDof*, ElementComparator>* eToGod; 
+    const MElement*,
+    const GroupOfDof*, ElementComparator>* eToGod;
 
  public:
   virtual ~FunctionSpace(void);
@@ -81,11 +81,14 @@ class FunctionSpace{
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
 
+  unsigned int getNOrientation(void) const;
+  unsigned int getOrientation(const MElement& element) const;
+
   unsigned int dofNumber(void) const;
   unsigned int groupNumber(void) const;
 
  protected:
-  // Init 
+  // Init
   FunctionSpace(void);
 
   void build(const GroupOfElement& goe,
@@ -93,7 +96,7 @@ class FunctionSpace{
 
   // Dof
   void buildDof(void);
-  void insertDof(Dof& d, GroupOfDof* god);    
+  void insertDof(Dof& d, GroupOfDof* god);
 };
 
 
@@ -109,7 +112,7 @@ class FunctionSpace{
    **
 
    @fn FunctionSpace::getSupport
-   @return Returns the support of this 
+   @return Returns the support of this
    FunctionSpace
    **
 
@@ -120,7 +123,7 @@ class FunctionSpace{
 
    @fn FunctionSpace::getType
    @return Return the @em type of
-   the Basis functions composing 
+   the Basis functions composing
    this Function Space.
    @see Basis::getType()
    **
@@ -137,19 +140,19 @@ class FunctionSpace{
    @return Returns the number of @em Vertex Based
    Basis Functions, defined on the given element
    **
-   
+
    @fn FunctionSpace::getNFunctionPerEdge
    @param element A MElement of the support
    @return Returns the number of @em Edge Based
    Basis Functions, defined on the given element
    **
-   
+
    @fn FunctionSpace::getNFunctionPerFace
    @param element A MElement of the support
    @return Returns the number of @em Face Based
    Basis Functions, defined on the given element
    **
-    
+
    @fn FunctionSpace::getNFunctionPerCell
    @param element A MElement of the support
    @return Returns the number of @em Cell Based
@@ -160,17 +163,17 @@ class FunctionSpace{
    @param element A MElement
    @return Returns all the Dof%s associated to the given MElement
    **
-   
+
    @fn vector<Dof> FunctionSpace::getKeys(const MVertex& vertex) const
    @param vertex A MVertex
    @return Returns all the Dof%s associated to the given MVertex
    **
-   
+
    @fn vector<Dof> FunctionSpace::getKeys(const MEdge& edge) const
    @param edge A MEdge
    @return Returns all the Dof%s associated to the given MEdge
    **
-   
+
    @fn vector<Dof> FunctionSpace::getKeys(const MFace& face) const
    @param face A MFace
    @return Returns all the Dof%s associated to the given MFace
@@ -188,20 +191,34 @@ class FunctionSpace{
 
    @fn FunctionSpace::getGoDFromElement
    @param element An Element of the FunctionSpace Support
-   @return Returns the @em GroupOfDof%s associated to 
+   @return Returns the @em GroupOfDof%s associated to
    the given @em Element
    @note
    If the given Element is not in the FunctionSpace Support,
    an Exception is thrown
-   **   
+   **
+
+   @fn FunctionSpace::getNOrientation
+   @return Returns the number of
+   @em orientations of the
+   FunctionSpace reference space
+   @todo Multiple basis
+   **
+
+   @fn FunctionSpace::getOrientation
+   @param element A MElement
+   @return Returns a number charaterizing
+   the @em orientation of the given element
+   @todo Multiple basis
+   **
 
    @fn FunctionSpace::dofNumber
-   @return Returns the number of Dof%s 
+   @return Returns the number of Dof%s
    given by FunctionSpace::getAllDofs()
    **
 
    @fn FunctionSpace::groupNumber
-   @return Returns the number of GroupOfDof%s 
+   @return Returns the number of GroupOfDof%s
    given by FunctionSpace::getAllGroups()
    **
 */
@@ -241,6 +258,14 @@ inline unsigned int FunctionSpace::getNFunctionPerFace(const MElement& element) 
 
 inline unsigned int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
   return fPerCell;
+}
+
+inline unsigned int FunctionSpace::getNOrientation(void) const{
+  return localBasis->getNOrientation();
+}
+
+inline unsigned int FunctionSpace::getOrientation(const MElement& element) const{
+  return localBasis->getOrientation(element);
 }
 
 inline unsigned int FunctionSpace::dofNumber(void) const{
