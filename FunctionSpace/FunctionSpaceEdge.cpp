@@ -36,7 +36,7 @@ interpolate(const MElement& element,
 
   // Get Basis Functions //
   fullMatrix<double>* fun =
-    localBasis->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+    (*basis)[0]->getFunctions(element, uvw[0], uvw[1], uvw[2]);
 
   const unsigned int nFun = fun->size1();
 
@@ -73,7 +73,7 @@ interpolateInRefSpace(const MElement& element,
 
   // Get Basis Functions //
   fullMatrix<double>* fun =
-    localBasis->getFunctions(element, uvw(0), uvw(1), uvw(2));
+    (*basis)[0]->getFunctions(element, uvw(0), uvw(1), uvw(2));
 
   const unsigned int nFun = fun->size1();
 

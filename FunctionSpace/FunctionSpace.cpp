@@ -14,7 +14,10 @@ FunctionSpace::FunctionSpace(void){
 
 FunctionSpace::~FunctionSpace(void){
   // Basis //
-  delete localBasis;
+  for(unsigned int i = 0; i < nBasis; i++)
+    delete (*basis)[i];
+
+  delete basis;
 
   // Dof //
   if(dof){
@@ -34,7 +37,7 @@ FunctionSpace::~FunctionSpace(void){
       delete (*group)[i];
     delete group;
   }
-  
+
   // Element To GoD //
   if(eToGod)
     delete eToGod;
@@ -55,28 +58,29 @@ void FunctionSpace::build(const GroupOfElement& goe,
   int nVertex     = myElement.getNumPrimaryVertices();
   int nEdge       = myElement.getNumEdges();
   int nFace       = myElement.getNumFaces();
- 
+
   // Init Struct //
-  type      = basisType;
-  localBasis = BasisGenerator::generate(elementType, 
-					basisType, 
+  nBasis      = 1;
+  basis       = new vector<const Basis*>(nBasis);
+  (*basis)[0] = BasisGenerator::generate(elementType,
+					basisType,
 					order, "hierarchical");
-  
+
   // Number of *Per* Entity functions //
-  fPerVertex = localBasis->getNVertexBased() / nVertex;
+  fPerVertex = (*basis)[0]->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
 
   if(nEdge)
-    fPerEdge = localBasis->getNEdgeBased() / nEdge;
+    fPerEdge = (*basis)[0]->getNEdgeBased() / nEdge;
   else
     fPerEdge = 0;
 
   if(nFace)
-    fPerFace = localBasis->getNFaceBased() / nFace;
+    fPerFace = (*basis)[0]->getNFaceBased() / nFace;
   else
-    fPerFace = 0;  
+    fPerFace = 0;
 
-  fPerCell = localBasis->getNCellBased(); // We always got 1 cell 
+  fPerCell = (*basis)[0]->getNCellBased(); // We always got 1 cell
 
   // Build Dof //
   buildDof();
@@ -88,10 +92,10 @@ void FunctionSpace::buildDof(void){
   const vector<const MElement*>& element = goe->getAll();
 
   // Init Struct //
-  dof      = new set<const Dof*, DofComparator>;         
+  dof      = new set<const Dof*, DofComparator>;
   group    = new vector<GroupOfDof*>(nElement);
-  eToGod   = new map<const MElement*, 
-		     const GroupOfDof*, 
+  eToGod   = new map<const MElement*,
+		     const GroupOfDof*,
 		     ElementComparator>;
 
   // Create Dofs //
@@ -101,7 +105,7 @@ void FunctionSpace::buildDof(void){
     unsigned int nDof = myDof.size();
 
     // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(nDof, *(element[i])); 
+    GroupOfDof* god = new GroupOfDof(nDof, *(element[i]));
     (*group)[i]     = god;
 
     // Add Dof
@@ -121,87 +125,79 @@ void FunctionSpace::insertDof(Dof& d, GroupOfDof* god){
   // Try to insert Dof //
   pair<set<const Dof*, DofComparator>::iterator, bool> p
     = dof->insert(tmp);
- 
+
   // If insertion is OK (Dof 'd' didn't exist) //
   //   --> Add new Dof in GoD
   if(p.second)
     god->add(*tmp);
-  
+
   // If insertion failed (Dof 'd' already exists) //
   //   --> delete 'd' and add existing Dof in GoD
   else{
-    delete tmp; 
+    delete tmp;
     god->add(*(*(p.first)));
   }
 }
 
-vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{ 
+vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
   // Get Element Data //
-  const int nVertex = element.getNumPrimaryVertices();
-  const int nEdge   = element.getNumEdges();
-  const int nFace   = element.getNumFaces(); 
+  const unsigned int nVertex = element.getNumPrimaryVertices();
+  const unsigned int nEdge   = element.getNumEdges();
+  const unsigned int nFace   = element.getNumFaces();
 
   vector<MVertex*> vertex(nVertex);
   vector<MEdge> edge(nEdge);
   vector<MFace> face(nFace);
 
-  for(int i = 0; i < nVertex; i++)
+  for(unsigned int i = 0; i < nVertex; i++)
     vertex[i] = element.getVertex(i);
 
-  for(int i = 0; i < nEdge; i++)    
+  for(unsigned int i = 0; i < nEdge; i++)
     edge[i] = element.getEdge(i);
-  
-  for(int i = 0; i < nFace; i++)
+
+  for(unsigned int i = 0; i < nFace; i++)
     face[i] = element.getFace(i);
-  
-  // Get FunctionSpace Data for this Element //
-  const int nFVertex = getNFunctionPerVertex(element);
-  const int nFEdge   = getNFunctionPerEdge(element);
-  const int nFFace   = getNFunctionPerFace(element);
-  const int nFCell   = getNFunctionPerCell(element);
 
   // Create Dof //
-  const int nDofVertex = nFVertex * nVertex; 
-  const int nDofEdge   = nFEdge   * nEdge;
-  const int nDofFace   = nFFace   * nFace;
-  const int nDofCell   = nFCell;
-
-  int nDof = 
-    nDofVertex + nDofEdge + nDofFace + nDofCell;
+  unsigned int nDof =
+    fPerVertex * nVertex +
+    fPerEdge   * nEdge   +
+    fPerFace   * nFace   +
+    fPerCell;
 
   vector<Dof> myDof(nDof);
 
-  int it = 0;
-  
+  unsigned int it = 0;
+
   // Add Vertex Based Dof //
-  for(int i = 0; i < nVertex; i++){ 
-    for(int j = 0; j < nFVertex; j++){
+  for(unsigned int i = 0; i < nVertex; i++){
+    for(unsigned int j = 0; j < fPerVertex; j++){
       myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
       it++;
     }
   }
-  
+
   // Add Edge Based Dof //
-  for(int i = 0; i < nEdge; i++){
-    for(int j = 0; j < nFEdge; j++){
+  for(unsigned int i = 0; i < nEdge; i++){
+    for(unsigned int j = 0; j < fPerEdge; j++){
       myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
       it++;
     }
   }
-  
+
   // Add Face Based Dof //
-  for(int i = 0; i < nFace; i++){
-    for(int j = 0; j < nFFace; j++){
+  for(unsigned int i = 0; i < nFace; i++){
+    for(unsigned int j = 0; j < fPerFace; j++){
       myDof[it].setDof(mesh->getGlobalId(face[i]), j);
       it++;
     }
   }
-  
+
   // Add Cell Based Dof //
-  for(int j = 0; j < nFCell; j++){
+  for(unsigned int j = 0; j < fPerCell; j++){
     myDof[it].setDof(mesh->getGlobalId(element), j);
     it++;
   }
@@ -210,13 +206,13 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 }
 
 const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) const{
-  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator it = 
+  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator it =
     eToGod->find(&element);
 
   if(it == eToGod->end())
-    throw 
+    throw
       Exception("Their is no GroupOfDof associated with the given MElement");
 
   else
-    return *(it->second); 
+    return *(it->second);
 }

@@ -6,10 +6,10 @@
 
 /**
     @class BasisGenerator
-    @brief A bunch of class method to generate a Basis
-    
-    A BasisGenerator is a bunch of @em class 
-    methods to generate a Basis.
+    @brief A bunch of class method to generate a Local Basis
+
+    A BasisGenerator is a bunch of @em class
+    methods to generate a Local Basis (BasisLocal).
 
     @note
     A BasisGenerator got @em only @em class @em methods,
@@ -21,15 +21,15 @@ class BasisGenerator{
    BasisGenerator(void);
   ~BasisGenerator(void);
 
-  static BasisLocal* generate(unsigned int elementType, 
-			      unsigned int basisType, 
+  static BasisLocal* generate(unsigned int elementType,
+			      unsigned int basisType,
 			      unsigned int order,
 			      std::string family);
-  
-  static BasisLocal* generate(unsigned int elementType, 
-			      unsigned int basisType, 
+
+  static BasisLocal* generate(unsigned int elementType,
+			      unsigned int basisType,
 			      unsigned int order);
-  
+
   static BasisLocal* linHierarchicalGen(unsigned int basisType, unsigned int order);
   static BasisLocal* triHierarchicalGen(unsigned int basisType, unsigned int order);
   static BasisLocal* quaHierarchicalGen(unsigned int basisType, unsigned int order);
@@ -37,13 +37,13 @@ class BasisGenerator{
   static BasisLocal* hexHierarchicalGen(unsigned int basisType, unsigned int order);
 
  private:
-  static BasisLocal* generateHierarchical(unsigned int elementType, 
-					  unsigned int basisType, 
+  static BasisLocal* generateHierarchical(unsigned int elementType,
+					  unsigned int basisType,
 					  unsigned int order);
-  
-  static BasisLocal* generateLagrange(unsigned int elementType, 
-				      unsigned int basisType, 
-				      unsigned int order);  
+
+  static BasisLocal* generateLagrange(unsigned int elementType,
+				      unsigned int basisType,
+				      unsigned int order);
 };
 
 
@@ -70,7 +70,7 @@ class BasisGenerator{
    This method will @em instanciate the requested Basis,
    of the requested family
 
-   @return Returns a @em pointer to a newly 
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Element types are:
@@ -87,10 +87,10 @@ class BasisGenerator{
    @li @c 3 for 3-Form
 
    @note Families are:
-   @li @c hierarchical for 
+   @li @c hierarchical for
    <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>
    Basis Functions
-   @li @c lagrange for Lagrange's Basis Functions   
+   @li @c lagrange for Lagrange's Basis Functions
    **
 
    @fn BasisGenerator::generate(unsigned int, unsigned int, unsigned int)
@@ -99,10 +99,10 @@ class BasisGenerator{
    @param basisType The Basis type
    @param order The order or the requested Basis
 
-   Same as 
+   Same as
    BasisGenerator::generate(@c elementType, @c basisType, @c order, @c hierarchical)
 
-   @return Returns a @em pointer to a newly 
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
    **
 
@@ -112,8 +112,8 @@ class BasisGenerator{
 
    This method will @em instanciate the requested Basis,
    with a @em Line for support
-   
-   @return Returns a @em pointer to a newly 
+
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Basis types are:
@@ -131,8 +131,8 @@ class BasisGenerator{
 
    This method will @em instanciate the requested Basis,
    with a @em Triangle for support
-   
-   @return Returns a @em pointer to a newly 
+
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Basis types are:
@@ -151,7 +151,7 @@ class BasisGenerator{
    This method will @em instanciate the requested Basis,
    with a @em Quadrangle for support
 
-   @return Returns a @em pointer to a newly 
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Basis types are:
@@ -169,8 +169,8 @@ class BasisGenerator{
 
    This method will @em instanciate the requested Basis,
    with a @em Tetrahedron for support
-   
-   @return Returns a @em pointer to a newly 
+
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Basis types are:
@@ -189,7 +189,7 @@ class BasisGenerator{
    This method will @em instanciate the requested Basis,
    with a @em Hexahedron for support
 
-   @return Returns a @em pointer to a newly 
+   @return Returns a @em pointer to a newly
    @em instantiated Basis
 
    @note Basis types are:
@@ -206,12 +206,12 @@ class BasisGenerator{
 // Inline Functions //
 //////////////////////
 
-inline BasisLocal* BasisGenerator::generate(unsigned int elementType, 
-					    unsigned int basisType, 
+inline BasisLocal* BasisGenerator::generate(unsigned int elementType,
+					    unsigned int basisType,
 					    unsigned int order){
-  
-  return BasisGenerator::generate(elementType, 
-				  basisType, 
+
+  return BasisGenerator::generate(elementType,
+				  basisType,
 				  order,
 				  "hierarchical");
 }

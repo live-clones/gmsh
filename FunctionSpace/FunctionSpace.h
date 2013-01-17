@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "BasisLocal.h"
+#include "Basis.h"
 
 #include "Comparators.h"
 #include "Dof.h"
@@ -44,12 +44,15 @@ class FunctionSpace{
   const GroupOfElement* goe;
 
   // Basis //
-  const BasisLocal* localBasis;
-  unsigned int      fPerVertex;
-  unsigned int      fPerEdge;
-  unsigned int      fPerFace;
-  unsigned int      fPerCell;
-  unsigned int      type;
+  std::vector<const Basis*>* basis;
+  unsigned int nBasis;
+  unsigned int fPerVertex;
+  unsigned int fPerEdge;
+  unsigned int fPerFace;
+  unsigned int fPerCell;
+
+  // Scalar Field ? //
+  bool scalar;
 
   // Dofs //
   std::set<const Dof*, DofComparator>*     dof;
@@ -61,15 +64,13 @@ class FunctionSpace{
  public:
   virtual ~FunctionSpace(void);
 
+  const std::vector<const Basis*>& getBasis(const MElement& element) const;
+  const Basis&                     getBasis(unsigned int i) const;
+  unsigned int                     getNBasis(void) const;
+
   const GroupOfElement& getSupport(void) const;
   unsigned int          getOrder(void) const;
-  unsigned int          getType(void) const;
   bool                  isScalar(void) const;
-
-  unsigned int getNFunctionPerVertex(const MElement& element) const;
-  unsigned int getNFunctionPerEdge(const MElement& element) const;
-  unsigned int getNFunctionPerFace(const MElement& element) const;
-  unsigned int getNFunctionPerCell(const MElement& element) const;
 
   std::vector<Dof> getKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MVertex& vertex) const;
@@ -80,9 +81,6 @@ class FunctionSpace{
   const std::vector<GroupOfDof*>& getAllGroups(void) const;
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
-
-  unsigned int getNOrientation(void) const;
-  unsigned int getOrientation(const MElement& element) const;
 
   unsigned int dofNumber(void) const;
   unsigned int groupNumber(void) const;
@@ -116,47 +114,10 @@ class FunctionSpace{
    FunctionSpace
    **
 
-   @fn FunctionSpace::getOrder
-   @return Return the @em order
-   of this FunctionSpace
-   **
-
-   @fn FunctionSpace::getType
-   @return Return the @em type of
-   the Basis functions composing
-   this Function Space.
-   @see Basis::getType()
-   **
-
    @fn FunctionSpace::isScalar
    @return Returns:
    @li @c true, if this FunstionSpace is scalar
    @li @c flase, otherwise
-   @see Basis::isScalar()
-   **
-
-   @fn FunctionSpace::getNFunctionPerVertex
-   @param element A MElement of the support
-   @return Returns the number of @em Vertex Based
-   Basis Functions, defined on the given element
-   **
-
-   @fn FunctionSpace::getNFunctionPerEdge
-   @param element A MElement of the support
-   @return Returns the number of @em Edge Based
-   Basis Functions, defined on the given element
-   **
-
-   @fn FunctionSpace::getNFunctionPerFace
-   @param element A MElement of the support
-   @return Returns the number of @em Face Based
-   Basis Functions, defined on the given element
-   **
-
-   @fn FunctionSpace::getNFunctionPerCell
-   @param element A MElement of the support
-   @return Returns the number of @em Cell Based
-   Basis Functions, defined on the given element
    **
 
    @fn vector<Dof> FunctionSpace::getKeys(const MElement& element) const
@@ -198,20 +159,6 @@ class FunctionSpace{
    an Exception is thrown
    **
 
-   @fn FunctionSpace::getNOrientation
-   @return Returns the number of
-   @em orientations of the
-   FunctionSpace reference space
-   @todo Multiple basis
-   **
-
-   @fn FunctionSpace::getOrientation
-   @param element A MElement
-   @return Returns a number charaterizing
-   the @em orientation of the given element
-   @todo Multiple basis
-   **
-
    @fn FunctionSpace::dofNumber
    @return Returns the number of Dof%s
    given by FunctionSpace::getAllDofs()
@@ -228,44 +175,30 @@ class FunctionSpace{
 // Inline Functions //
 //////////////////////
 
+inline const std::vector<const Basis*>&
+FunctionSpace::getBasis(const MElement& element) const{
+  return *basis;
+}
+
+inline const Basis& FunctionSpace::getBasis(unsigned int i) const{
+  return *(*basis)[i];
+}
+
+inline unsigned int FunctionSpace::getNBasis(void) const{
+  return nBasis;
+}
+
 inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
-
+#include "Exception.h"
 inline unsigned int FunctionSpace::getOrder(void) const{
-  return (unsigned int)(localBasis->getOrder());
-}
-
-inline unsigned int FunctionSpace::getType(void) const{
-  return type;
+  throw Exception("Remove me!");
+  return (unsigned int)((*basis)[0]->getOrder());
 }
 
 inline bool FunctionSpace::isScalar(void) const{
-  return localBasis->isScalar();
-}
-
-inline unsigned int FunctionSpace::getNFunctionPerVertex(const MElement& element) const{
-  return fPerVertex;
-}
-
-inline unsigned int FunctionSpace::getNFunctionPerEdge(const MElement& element) const{
-  return fPerEdge;
-}
-
-inline unsigned int FunctionSpace::getNFunctionPerFace(const MElement& element) const{
-  return fPerFace;
-}
-
-inline unsigned int FunctionSpace::getNFunctionPerCell(const MElement& element) const{
-  return fPerCell;
-}
-
-inline unsigned int FunctionSpace::getNOrientation(void) const{
-  return localBasis->getNOrientation();
-}
-
-inline unsigned int FunctionSpace::getOrientation(const MElement& element) const{
-  return localBasis->getOrientation(element);
+  return scalar;
 }
 
 inline unsigned int FunctionSpace::dofNumber(void) const{
