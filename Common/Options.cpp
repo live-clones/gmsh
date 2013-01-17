@@ -5164,6 +5164,7 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
 {
+#if defined(HAVE_FLTK)
   if(action & GMSH_SET){
     CTX::instance()->mesh.recombine3DAll = (int)val;
      //if recombine3D, then we should have 2D and 3D R-tree algo
@@ -5172,7 +5173,6 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
        FlGui::instance()->options->mesh.choice[3]->value(5);
      }  
   }
-#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->mesh.butt[22]->value
       (CTX::instance()->mesh.recombine3DAll);
