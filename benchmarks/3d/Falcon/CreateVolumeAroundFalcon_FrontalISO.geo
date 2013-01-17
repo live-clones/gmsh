@@ -1,8 +1,10 @@
 Mesh.Algorithm3D=4; //1-Delaunay, 4-Frontal, 5-Frontal Delaunay 6-Frontal hex, 7-MMG3D, 9-RTree
 
-Mesh.CharacteristicLengthFactor = 1.2;
+Mesh.CharacteristicLengthFactor = 1.2/10;
 
-Merge "SurfaceMeshAnisoCurvature.stl";
+Merge "InitialMeshFalcon.stl";
+//Merge "SurfaceMeshUniform.stl";
+//Merge "SurfaceMeshAnisoCurvature.stl";
 
 CreateTopology;
 

@@ -22,6 +22,7 @@
 #include "AnalyseCurvedMesh.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
+#include "SimplePartition.h"
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
@@ -240,8 +241,10 @@ void PluginManager::registerDefaultPlugins()
                       ("DiscretizationError", GMSH_RegisterDiscretizationErrorPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
-   allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("NewView", GMSH_RegisterNewViewPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));

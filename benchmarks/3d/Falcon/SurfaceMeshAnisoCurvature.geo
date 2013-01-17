@@ -1,5 +1,5 @@
 Mesh.RemeshParametrization=7; //0=harmonic_circle, 1=conformal, 2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square
-Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split only with metis 
+Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split only with metis
 
 Mesh.Algorithm=7; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
 
@@ -34,10 +34,10 @@ For i In {0 : #ss[]-1}
   Physical Surface(i+1) = { i+100 };
 EndFor
 
-// The trailing edge of the horizontal tail surface 
+// The trailing edge of the horizontal tail surface
 // should be an attractor
 
-//Point(100000) = {16.858,2.0482,0.018793,0.1}; 
+//Point(100000) = {16.858,2.0482,0.018793,0.1};
 Point(100000) = {-1.16411804,1.83824622,0.29113513};
 Field[1] = Attractor;
 Field[1].NodesList = { 100000 };
