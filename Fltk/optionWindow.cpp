@@ -2124,17 +2124,17 @@ optionWindow::optionWindow(int deltaFontSize)
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Delaunay for quads", 0, 0, 0},
-        {"Packing Of Parallelograms", 0, 0, 0},
+        {"Delaunay for quads (experimental)", 0, 0, 0},
+        {"Packing of parallelograms (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
-        {"Frontal Delaunay", 0, 0, 0},
-        {"Frontal Hex", 0, 0, 0},
-        {"MMG3D", 0, 0, 0},
-		{"R-tree", 0, 0, 0},
+        {"Frontal Delaunay (experimental)", 0, 0, 0},
+        {"Frontal Hex (experimental)", 0, 0, 0},
+        {"MMG3D (experimental)", 0, 0, 0},
+        {"R-tree (experimental)", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombination_algo[] = {
@@ -2294,7 +2294,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
 
       mesh.value[27] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 9 * BH, IW/2, BH, "LLoyd Smoothing steps (experimental)");
+        (L + 2 * WB, 2 * WB + 9 * BH, IW/2, BH, "LLoyd smoothing steps (experimental)");
       mesh.value[27]->minimum(0);
       mesh.value[27]->maximum(100);
       mesh.value[27]->step(1);
