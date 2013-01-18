@@ -17,8 +17,8 @@ set(SRC
   BasisGenerator.cpp
 
   BasisLagrange.cpp
-  BasisHierarchicalScalar.cpp
-  BasisHierarchicalVector.cpp
+  BasisHierarchical0From.cpp
+  BasisHierarchical1From.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp

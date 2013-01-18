@@ -1,5 +1,5 @@
-#ifndef _BASISHIERARCHICALVECTOR_H_
-#define _BASISHIERARCHICALVECTOR_H_
+#ifndef _BASISHIERARCHICAL1FROM_H_
+#define _BASISHIERARCHICAL1FROM_H_
 
 #include <string>
 #include "BasisLocal.h"
@@ -7,13 +7,13 @@
 #include "ReferenceSpace.h"
 
 /**
-   @interface BasisHierarchicalVector
-   @brief Interface for Hierarchical Vectorial Local Basis
+   @interface BasisHierarchical1From
+   @brief Interface for Hierarchical 1-Froml Local Basis
 
-   This is an interface for Hierarchical Vectorial Local Basis.@n
+   This is an interface for Hierarchical 1-Froml Local Basis.@n
 */
 
-class BasisHierarchicalVector: public BasisLocal{
+class BasisHierarchical1From: public BasisLocal{
  protected:
   // Orientation //
   ReferenceSpace* refSpace;
@@ -34,7 +34,7 @@ class BasisHierarchicalVector: public BasisLocal{
   mutable fullMatrix<double>** preEvaluatedCurlFunction;
 
  public:
-  virtual ~BasisHierarchicalVector(void);
+  virtual ~BasisHierarchical1From(void);
 
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
@@ -63,7 +63,7 @@ class BasisHierarchicalVector: public BasisLocal{
   std::string toString(void) const;
 
  protected:
-  BasisHierarchicalVector(void);
+  BasisHierarchical1From(void);
 
  private:
   void getCurl(void) const;
@@ -71,20 +71,20 @@ class BasisHierarchicalVector: public BasisLocal{
 
 /**
    @internal
-   @fn BasisHierarchicalVector::BasisHierarchicalVector
+   @fn BasisHierarchical1From::BasisHierarchical1From
 
-   Instanciates an new BasisHierarchicalVector
+   Instanciates an new BasisHierarchical1From
    @endinternal
    **
 
-   @fn BasisHierarchicalVector::~BasisHierarchicalVector
+   @fn BasisHierarchical1From::~BasisHierarchical1From
 
-   Deletes this BasisHierarchicalVector
+   Deletes this BasisHierarchical1From
    **
 
-   @fn BasisHierarchicalVector::toString
+   @fn BasisHierarchical1From::toString
    @return Returns a string describing this
-   BasisHierarchicalVector
+   BasisHierarchical1From
  */
 
 #endif

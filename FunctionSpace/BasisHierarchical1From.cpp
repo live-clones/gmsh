@@ -1,10 +1,10 @@
 #include <sstream>
 #include "Exception.h"
-#include "BasisHierarchicalVector.h"
+#include "BasisHierarchical1From.h"
 
 using namespace std;
 
-BasisHierarchicalVector::BasisHierarchicalVector(void){
+BasisHierarchical1From::BasisHierarchical1From(void){
   // Scalar Basis ?//
   scalar = false;
 
@@ -20,7 +20,7 @@ BasisHierarchicalVector::BasisHierarchicalVector(void){
   preEvaluatedCurlFunction = NULL;
 }
 
-BasisHierarchicalVector::~BasisHierarchicalVector(void){
+BasisHierarchical1From::~BasisHierarchical1From(void){
   // Curl Basis //
   if(hasCurl){
     for(unsigned int i = 0; i < nRefSpace; i++){
@@ -49,17 +49,17 @@ BasisHierarchicalVector::~BasisHierarchicalVector(void){
   }
 }
 
-unsigned int BasisHierarchicalVector::
+unsigned int BasisHierarchical1From::
 getNOrientation(void) const{
   return refSpace->getNPermutation();
 }
 
-unsigned int BasisHierarchicalVector::
+unsigned int BasisHierarchical1From::
 getOrientation(const MElement& element) const{
   return refSpace->getPermutation(element);
 }
 
-fullMatrix<double>* BasisHierarchicalVector::
+fullMatrix<double>* BasisHierarchical1From::
 getFunctions(const MElement& element,
 	     double u, double v, double w) const{
 
@@ -83,7 +83,7 @@ getFunctions(const MElement& element,
   return values;
 }
 
-fullMatrix<double>* BasisHierarchicalVector::
+fullMatrix<double>* BasisHierarchical1From::
 getFunctions(unsigned int orientation,
 	     double u, double v, double w) const{
 
@@ -104,7 +104,7 @@ getFunctions(unsigned int orientation,
   return values;
 }
 
-void BasisHierarchicalVector::
+void BasisHierarchical1From::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
   // Delete if older //
   if(preEvaluated){
@@ -145,7 +145,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   preEvaluated = true;
 }
 
-void BasisHierarchicalVector::
+void BasisHierarchical1From::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
   // Build Curl //
   if(!hasCurl)
@@ -190,17 +190,17 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   preEvaluatedCurl = true;
 }
 
-const fullMatrix<double>& BasisHierarchicalVector::
+const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedFunctions(const MElement& element) const{
   return getPreEvaluatedFunctions(refSpace->getPermutation(element));
 }
 
-const fullMatrix<double>& BasisHierarchicalVector::
+const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedDerivatives(const MElement& element) const{
   return getPreEvaluatedDerivatives(refSpace->getPermutation(element));
 }
 
-const fullMatrix<double>& BasisHierarchicalVector::
+const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedFunctions(unsigned int orientation) const{
   if(!preEvaluated)
     throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
@@ -208,7 +208,7 @@ getPreEvaluatedFunctions(unsigned int orientation) const{
   return *preEvaluatedFunction[orientation];
 }
 
-const fullMatrix<double>& BasisHierarchicalVector::
+const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedDerivatives(unsigned int orientation) const{
   if(!preEvaluatedCurl)
     throw Exception("getPreEvaluatedDerivative: curl has not been preEvaluated");
@@ -216,7 +216,7 @@ getPreEvaluatedDerivatives(unsigned int orientation) const{
   return *preEvaluatedCurlFunction[orientation];
 }
 
-void BasisHierarchicalVector::getCurl(void) const{
+void BasisHierarchical1From::getCurl(void) const{
   // Alloc //
   curl = new vector<Polynomial>**[nRefSpace];
 
@@ -233,7 +233,7 @@ void BasisHierarchicalVector::getCurl(void) const{
   hasCurl = true;
 }
 
-string BasisHierarchicalVector::toString(void) const{
+string BasisHierarchical1From::toString(void) const{
   stringstream stream;
   unsigned int i = 0;
   const unsigned int refSpace = 0;

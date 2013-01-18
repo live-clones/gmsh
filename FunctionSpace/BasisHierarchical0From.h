@@ -1,5 +1,5 @@
-#ifndef _BASISHIERARCHICALSCALAR_H_
-#define _BASISHIERARCHICALSCALAR_H_
+#ifndef _BASISHIERARCHICAL0FROM_H_
+#define _BASISHIERARCHICAL0FROM_H_
 
 #include <string>
 #include "BasisLocal.h"
@@ -7,13 +7,13 @@
 #include "ReferenceSpace.h"
 
 /**
-   @interface BasisHierarchicalScalar
-   @brief Interface for Hierarchical Scalar Local Basis
+   @interface BasisHierarchical0From
+   @brief Interface for Hierarchical 0-From Local Basis
 
-   This is an interface for Hierarchical Scalar Local Basis.@n
+   This is an interface for Hierarchical 0-From Local Basis.@n
 */
 
-class BasisHierarchicalScalar: public BasisLocal{
+class BasisHierarchical0From: public BasisLocal{
  protected:
   // Orientation //
   ReferenceSpace* refSpace;
@@ -34,7 +34,7 @@ class BasisHierarchicalScalar: public BasisLocal{
   mutable fullMatrix<double>** preEvaluatedGradFunction;
 
  public:
-  virtual ~BasisHierarchicalScalar(void);
+  virtual ~BasisHierarchical0From(void);
 
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
@@ -63,7 +63,7 @@ class BasisHierarchicalScalar: public BasisLocal{
   std::string toString(void) const;
 
  protected:
-  BasisHierarchicalScalar(void);
+  BasisHierarchical0From(void);
 
  private:
   void getGrad(void) const;
@@ -71,20 +71,20 @@ class BasisHierarchicalScalar: public BasisLocal{
 
 /**
    @internal
-   @fn BasisHierarchicalScalar::BasisHierarchicalScalar
+   @fn BasisHierarchical0From::BasisHierarchical0From
 
-   Instanciates an new BasisHierarchicalScalar
+   Instanciates an new BasisHierarchical0From
    @endinternal
    **
 
-   @fn BasisHierarchicalScalar::~BasisHierarchicalScalar
+   @fn BasisHierarchical0From::~BasisHierarchical0From
 
-   Deletes this BasisHierarchicalScalar
+   Deletes this BasisHierarchical0From
    **
 
-   @fn BasisHierarchicalScalar::toString
+   @fn BasisHierarchical0From::toString
    @return Returns a string describing this
-   BasisHierarchicalScalar
+   BasisHierarchical0From
  */
 
 #endif

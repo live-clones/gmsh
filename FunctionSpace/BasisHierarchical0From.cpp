@@ -1,10 +1,10 @@
 #include <sstream>
 #include "Exception.h"
-#include "BasisHierarchicalScalar.h"
+#include "BasisHierarchical0From.h"
 
 using namespace std;
 
-BasisHierarchicalScalar::BasisHierarchicalScalar(void){
+BasisHierarchical0From::BasisHierarchical0From(void){
   // Scalar Basis ? //
   scalar = true;
 
@@ -20,7 +20,7 @@ BasisHierarchicalScalar::BasisHierarchicalScalar(void){
   preEvaluatedGradFunction = NULL;
 }
 
-BasisHierarchicalScalar::~BasisHierarchicalScalar(void){
+BasisHierarchical0From::~BasisHierarchical0From(void){
   // Grad Basis //
   if(hasGrad){
     for(unsigned int i = 0; i < nRefSpace; i++){
@@ -49,17 +49,17 @@ BasisHierarchicalScalar::~BasisHierarchicalScalar(void){
   }
 }
 
-unsigned int BasisHierarchicalScalar::
+unsigned int BasisHierarchical0From::
 getNOrientation(void) const{
   return refSpace->getNPermutation();
 }
 
-unsigned int BasisHierarchicalScalar::
+unsigned int BasisHierarchical0From::
 getOrientation(const MElement& element) const{
   return refSpace->getPermutation(element);
 }
 
-fullMatrix<double>* BasisHierarchicalScalar::
+fullMatrix<double>* BasisHierarchical0From::
 getFunctions(const MElement& element,
 	     double u, double v, double w) const{
 
@@ -77,7 +77,7 @@ getFunctions(const MElement& element,
   return values;
 }
 
-fullMatrix<double>* BasisHierarchicalScalar::
+fullMatrix<double>* BasisHierarchical0From::
 getFunctions(unsigned int orientation,
 	     double u, double v, double w) const{
 
@@ -92,7 +92,7 @@ getFunctions(unsigned int orientation,
   return values;
 }
 
-void BasisHierarchicalScalar::
+void BasisHierarchical0From::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
   // Delete if older //
   if(preEvaluated){
@@ -123,7 +123,7 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   preEvaluated = true;
 }
 
-void BasisHierarchicalScalar::
+void BasisHierarchical0From::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
   // Build Grad //
   if(!hasGrad)
@@ -168,17 +168,17 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   preEvaluatedGrad = true;
 }
 
-const fullMatrix<double>& BasisHierarchicalScalar::
+const fullMatrix<double>& BasisHierarchical0From::
 getPreEvaluatedFunctions(const MElement& element) const{
   return getPreEvaluatedFunctions(refSpace->getPermutation(element));
 }
 
-const fullMatrix<double>& BasisHierarchicalScalar::
+const fullMatrix<double>& BasisHierarchical0From::
 getPreEvaluatedDerivatives(const MElement& element) const{
   return getPreEvaluatedDerivatives(refSpace->getPermutation(element));
 }
 
-const fullMatrix<double>& BasisHierarchicalScalar::
+const fullMatrix<double>& BasisHierarchical0From::
 getPreEvaluatedFunctions(unsigned int orientation) const{
   if(!preEvaluated)
     throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
@@ -186,7 +186,7 @@ getPreEvaluatedFunctions(unsigned int orientation) const{
   return *preEvaluatedFunction[orientation];
 }
 
-const fullMatrix<double>& BasisHierarchicalScalar::
+const fullMatrix<double>& BasisHierarchical0From::
 getPreEvaluatedDerivatives(unsigned int orientation) const{
   if(!preEvaluatedGrad)
     throw Exception("getPreEvaluatedDerivative: gradient has not been preEvaluated");
@@ -194,7 +194,7 @@ getPreEvaluatedDerivatives(unsigned int orientation) const{
   return *preEvaluatedGradFunction[orientation];
 }
 
-void BasisHierarchicalScalar::getGrad(void) const{
+void BasisHierarchical0From::getGrad(void) const{
   // Alloc //
   grad = new vector<Polynomial>**[nRefSpace];
 
@@ -211,7 +211,7 @@ void BasisHierarchicalScalar::getGrad(void) const{
   hasGrad = true;
 }
 
-string BasisHierarchicalScalar::toString(void) const{
+string BasisHierarchical0From::toString(void) const{
   stringstream stream;
   unsigned int i = 0;
   const unsigned int refSpace = 0;

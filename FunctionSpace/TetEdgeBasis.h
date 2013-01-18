@@ -1,27 +1,27 @@
 #ifndef _TETEDGEBASIS_H_
 #define _TETEDGEBASIS_H_
 
-#include "BasisHierarchicalVector.h"
+#include "BasisHierarchical1From.h"
 
 /**
    @class TetEdgeBasis
    @brief An Edge Basis for Tetrahedra
- 
-   This class can instantiate an Edge-Based Basis 
+
+   This class can instantiate an Edge-Based Basis
    (high or low order) for Tetrahedra.@n
-   
-   It uses 
-   <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>  
+
+   It uses
+   <a href="http://www.hpfem.jku.at/publications/szthesis.pdf">Zaglmayr's</a>
    Basis for @em high @em order Polynomial%s generation.@n
 */
 
-class TetEdgeBasis: public BasisHierarchicalVector{
+class TetEdgeBasis: public BasisHierarchical1From{
  public:
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Tetrahedra of the given order
   TetEdgeBasis(unsigned int order);
-  
+
   //! Deletes this Basis
   //!
   virtual ~TetEdgeBasis(void);
