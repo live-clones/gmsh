@@ -89,7 +89,7 @@ class FunctionSpace{
   FunctionSpace(void);
 
   void build(const GroupOfElement& goe,
-	     int basisType, int order);
+	     const Basis& basis);
 
   // Dof
   void buildDof(void);

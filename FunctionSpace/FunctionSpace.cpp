@@ -13,10 +13,9 @@ FunctionSpace::FunctionSpace(void){
 }
 
 FunctionSpace::~FunctionSpace(void){
-  // Basis //
-  for(unsigned int i = 0; i < nBasis; i++)
-    delete (*basis)[i];
-
+  // Delete Vector of Basis //
+  //   (FunctionSpace is not responsible for
+  //    'true' Basis Deletion)
   delete basis;
 
   // Dof //
@@ -44,7 +43,8 @@ FunctionSpace::~FunctionSpace(void){
 }
 
 void FunctionSpace::build(const GroupOfElement& goe,
-			  int basisType, int order){
+                          const Basis& basis){
+
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
@@ -54,33 +54,31 @@ void FunctionSpace::build(const GroupOfElement& goe,
   MElement& myElement =
     const_cast<MElement&>(element);
 
-  int elementType = myElement.getType();
-  int nVertex     = myElement.getNumPrimaryVertices();
-  int nEdge       = myElement.getNumEdges();
-  int nFace       = myElement.getNumFaces();
+  int nVertex = myElement.getNumPrimaryVertices();
+  int nEdge   = myElement.getNumEdges();
+  int nFace   = myElement.getNumFaces();
 
   // Init Struct //
-  nBasis      = 1;
-  basis       = new vector<const Basis*>(nBasis);
-  (*basis)[0] = BasisGenerator::generate(elementType,
-					basisType,
-					order, "hierarchical");
+  this->nBasis      = 1;
+  this->basis       = new vector<const Basis*>(nBasis);
+  (*this->basis)[0] = &basis;
 
   // Number of *Per* Entity functions //
-  fPerVertex = (*basis)[0]->getNVertexBased() / nVertex;
+  fPerVertex = (*this->basis)[0]->getNVertexBased() / nVertex;
   // NB: fPreVertex = 0 *or* 1
 
   if(nEdge)
-    fPerEdge = (*basis)[0]->getNEdgeBased() / nEdge;
+    fPerEdge = (*this->basis)[0]->getNEdgeBased() / nEdge;
   else
     fPerEdge = 0;
 
   if(nFace)
-    fPerFace = (*basis)[0]->getNFaceBased() / nFace;
+    fPerFace = (*this->basis)[0]->getNFaceBased() / nFace;
   else
     fPerFace = 0;
 
-  fPerCell = (*basis)[0]->getNCellBased(); // We always got 1 cell
+  fPerCell = (*this->basis)[0]->getNCellBased();
+  // We always got 1 cell
 
   // Build Dof //
   buildDof();

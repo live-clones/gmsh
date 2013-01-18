@@ -1,46 +1,48 @@
 #ifndef _FUNCTIONSPACEVECTOR_H_
 #define _FUNCTIONSPACEVECTOR_H_
 
-#include "Exception.h"
+#include "fullMatrix.h"
 #include "FunctionSpace.h"
 
 /**
-    @interface FunctionSpaceVector
-    @brief Common Interface of all Vectorial FunctionSpaces
+   @class FunctionSpaceVector
+   @brief A Vectorial FunctionSpaces
 
-    This is the @em common @em interface of
-    all @em Vectorial FunctionSpaces.@n
+   This class is a @em Vectorial FunctionSpaces.@n
 
-    A FunctionSpaceVector can be @em interpolated,
-    and can return a @em Local Basis associated
-    to an Element of the Support.
+   A FunctionSpaceVector can be @em interpolated.
 
-    @note
-    A VectorFunctionSpace is an @em interface, so it
-    can't be instantiated.
+   @todo
+   Allow interpolation with multiple basis
 */
 
 
 class FunctionSpaceVector : public FunctionSpace{
  public:
+  FunctionSpaceVector(const GroupOfElement& goe, const Basis& basis);
   virtual ~FunctionSpaceVector(void);
 
-  virtual fullVector<double>
+  fullVector<double>
     interpolate(const MElement& element,
 		const std::vector<double>& coef,
-		const fullVector<double>& xyz) const = 0;
+		const fullVector<double>& xyz) const;
 
-  virtual fullVector<double>
+  fullVector<double>
     interpolateInRefSpace(const MElement& element,
 			  const std::vector<double>& coef,
-			  const fullVector<double>& uvw) const = 0;
-
- protected:
-  FunctionSpaceVector(void);
+			  const fullVector<double>& uvw) const;
 };
 
 
 /**
+   @fn FunctionSpaceVector::FunctionSpaceVector
+   @param goe A GroupOfElement
+   @em of @em the @em same @em geomtrical @emtype
+   @param basis A Basis (with a meaning on @c goe)
+   Instanciates a new FunctionSpaceVector with the
+   given Basis on the given GroupOfElement
+   **
+
    @fn FunctionSpaceVector::~FunctionSpaceVector
    Deletes this FunctionSpaceVector
    **

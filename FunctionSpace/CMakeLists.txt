@@ -41,8 +41,6 @@ set(SRC
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp
   FunctionSpaceVector.cpp
-  FunctionSpaceNode.cpp
-  FunctionSpaceEdge.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

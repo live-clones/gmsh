@@ -4,42 +4,44 @@
 #include "FunctionSpace.h"
 
 /**
-    @interface FunctionSpaceScalar
-    @brief Common Interface of all Scalar FunctionSpaces
+   @class FunctionSpaceScalar
+   @brief A Scalar FunctionSpaces
 
-    This is the @em common @em interface of
-    all @em Scalar FunctionSpaces.@n
+   This class is a @em Scalar FunctionSpaces.@n
 
-    A FunctionSpaceScalar can be @em interpolated,
-    and can return a @em Local Basis associated
-    to an Element of the Support.
+   A FunctionSpaceScalar can be @em interpolated.
 
-    @note
-    A ScalarFunctionSpace is an @em interface, so it
-    can't be instantiated.
+   @todo
+   Allow interpolation with multiple basis
 */
 
 
 class FunctionSpaceScalar : public FunctionSpace{
  public:
+  FunctionSpaceScalar(const GroupOfElement& goe, const Basis& basis);
   virtual ~FunctionSpaceScalar(void);
 
-  virtual double
+  double
     interpolate(const MElement& element,
 		const std::vector<double>& coef,
-		const fullVector<double>& xyz) const = 0;
+		const fullVector<double>& xyz) const;
 
-  virtual double
+  double
     interpolateInRefSpace(const MElement& element,
 			  const std::vector<double>& coef,
-			  const fullVector<double>& uvw) const = 0;
-
- protected:
-  FunctionSpaceScalar(void);
+			  const fullVector<double>& uvw) const;
 };
 
 
 /**
+   @fn FunctionSpaceScalar::FunctionSpaceScalar
+   @param goe A GroupOfElement
+   @em of @em the @em same @em geomtrical @emtype
+   @param basis A Basis (with a meaning on @c goe)
+   Instanciates a new FunctionSpaceScalar with the
+   given Basis on the given GroupOfElement
+   **
+
    @fn FunctionSpaceScalar::~FunctionSpaceScalar
    Deletes this FunctionSpaceScalar
    **
