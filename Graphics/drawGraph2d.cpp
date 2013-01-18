@@ -556,7 +556,7 @@ void drawContext::drawGraph2d()
   //  |       my+4*ysep                         |
   //  +-----------------------------------------+
 
-  int overlay[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int overlay[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   double winw = viewport[2] - viewport[0];
   double winh = viewport[3] - viewport[1];
   for(unsigned int i = 0; i < graphs.size(); i++){
@@ -584,9 +584,10 @@ void drawContext::drawGraph2d()
         drawGraph(this, p, x, viewport[3] - y, w, h, tic);
       }
     }
-    else if(opt->autoPosition >= 2 && opt->autoPosition <= 10){
+    else if(opt->autoPosition >= 2 && opt->autoPosition <= 11){
       // top left (2), top right (3), bottom left (4), bottom right (5), top
-      // half (6), bottom half (7), left half (8), right half (9), full (10)
+      // half (6), bottom half (7), left half (8), right half (9), full (10),
+      // top third (11)
       int a = opt->autoPosition;
       double w, h;
       if(a <= 5 || a == 8 || a == 9)
@@ -595,6 +596,8 @@ void drawContext::drawGraph2d()
         w = winw - 2 * mx - 2 * xsep;
       if(a <= 5 || a == 6 || a == 7)
         h = (winh - 3 * my - 12 * ysep) / 2.;
+      else if(a == 11)
+        h = (winh - 3 * my - 12 * ysep) / 3.;
       else
         h = winh - 2 * my - 7 * ysep;
       if(a == 3 || a == 5 || a == 9) x += (w + mx + 2 * xsep);

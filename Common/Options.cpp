@@ -6761,7 +6761,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->autoPosition = (int)val;
-    if(opt->autoPosition < 0 || opt->autoPosition > 10)
+    if(opt->autoPosition < 0 || opt->autoPosition > 11)
       opt->autoPosition = 0;
   }
 #if defined(HAVE_FLTK)
