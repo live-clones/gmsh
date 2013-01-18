@@ -36,7 +36,7 @@ class FunctionSpaceScalar : public FunctionSpace{
 /**
    @fn FunctionSpaceScalar::FunctionSpaceScalar
    @param goe A GroupOfElement
-   @em of @em the @em same @em geomtrical @emtype
+   @em of @em the @em same @em geomtrical @em type
    @param basis A Basis (with a meaning on @c goe)
    Instanciates a new FunctionSpaceScalar with the
    given Basis on the given GroupOfElement

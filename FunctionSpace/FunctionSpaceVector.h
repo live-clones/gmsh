@@ -37,7 +37,7 @@ class FunctionSpaceVector : public FunctionSpace{
 /**
    @fn FunctionSpaceVector::FunctionSpaceVector
    @param goe A GroupOfElement
-   @em of @em the @em same @em geomtrical @emtype
+   @em of @em the @em same @em geomtrical @em type
    @param basis A Basis (with a meaning on @c goe)
    Instanciates a new FunctionSpaceVector with the
    given Basis on the given GroupOfElement
