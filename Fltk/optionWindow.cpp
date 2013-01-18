@@ -476,6 +476,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
   opt_mesh_light_lines(0, GMSH_SET, o->mesh.butt[20]->value());
   opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
+  opt_mesh_lloyd(0, GMSH_SET, o->mesh.value[27]->value());
   opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
   opt_mesh_lc_min(0, GMSH_SET, o->mesh.value[25]->value());
   opt_mesh_lc_max(0, GMSH_SET, o->mesh.value[26]->value());
@@ -492,9 +493,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
-  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
-  opt_mesh_algo2d(0, GMSH_SET,
+  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());  opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
                   (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
@@ -1283,7 +1283,7 @@ optionWindow::optionWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
-  int height = 13 * BH + 4 * WB;
+  int height = 14 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
   win = new paletteWindow
@@ -2215,8 +2215,16 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->align(FL_ALIGN_RIGHT);
       mesh.value[0]->callback(mesh_options_ok_cb);
 
+      mesh.value[27] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "LLoyd Smoothing steps");
+      mesh.value[27]->minimum(0);
+      mesh.value[27]->maximum(100);
+      mesh.value[27]->step(1);
+      mesh.value[27]->align(FL_ALIGN_RIGHT);
+      mesh.value[27]->callback(mesh_options_ok_cb);
+
       mesh.value[2] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Element size factor");
+        (L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
       mesh.value[2]->step(0.01);
@@ -2224,17 +2232,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[2]->callback(mesh_options_ok_cb);
 
       mesh.value[25] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 11 * BH, IW/2, BH);
+        (L + 2 * WB, 2 * WB + 12 * BH, IW/2, BH);
       mesh.value[25]->align(FL_ALIGN_RIGHT);
       mesh.value[25]->callback(mesh_options_ok_cb);
 
       mesh.value[26] = new Fl_Value_Input
-        (L + 2 * WB + IW/2, 2 * WB + 11 * BH, IW/2, BH, "Min/Max element size");
+        (L + 2 * WB + IW/2, 2 * WB + 12 * BH, IW/2, BH, "Min/Max element size");
       mesh.value[26]->align(FL_ALIGN_RIGHT);
       mesh.value[26]->callback(mesh_options_ok_cb);
 
       mesh.value[3] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 12 * BH, IW / 3, BH, "Element order");
+        (L + 2 * WB, 2 * WB + 13 * BH, IW / 3, BH, "Element order");
       mesh.value[3]->minimum(1);
       mesh.value[3]->maximum(2);
       mesh.value[3]->step(1);
@@ -2242,7 +2250,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB + IW + WB / 2, 2 * WB + 12 * BH, BW, BH, "Use incomplete elements");
+        (L + 2 * WB + IW + WB / 2, 2 * WB + 13 * BH, BW, BH, "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 

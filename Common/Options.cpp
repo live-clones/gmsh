@@ -5072,6 +5072,11 @@ double opt_mesh_lloyd(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->mesh.optimizeLloyd = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->mesh.value[27]->value
+      (CTX::instance()->mesh.optimizeLloyd);
+#endif
   return CTX::instance()->mesh.optimizeLloyd;
 }
 
@@ -5167,20 +5172,12 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET){
     CTX::instance()->mesh.recombine3DAll = (int)val;
-     //if recombine3D, then we should have 2D and 3D R-tree algo
-     if(CTX::instance()->mesh.recombine3DAll){
-       FlGui::instance()->options->mesh.choice[2]->value(4);
-       FlGui::instance()->options->mesh.choice[3]->value(5);
-     }  
+#if defined(HAVE_FLTK)
+#endif
   }
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->mesh.butt[22]->value
       (CTX::instance()->mesh.recombine3DAll);
-    //if recombine3D, then we should have 2D and 3D R-tree algo
-    if(CTX::instance()->mesh.recombine3DAll){
-      FlGui::instance()->options->mesh.choice[2]->value(4);
-      FlGui::instance()->options->mesh.choice[3]->value(5);
-    } 
   }
 #endif
   return CTX::instance()->mesh.recombine3DAll;

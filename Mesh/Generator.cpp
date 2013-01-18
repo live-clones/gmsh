@@ -579,28 +579,26 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
+   
     //Additional code for hex mesh begin  
-    unsigned int j;
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-      for(j=0;j<connected[i].size();j++){
+    for(unsigned j=0;j<connected[i].size();j++){
+      GRegion *gr = connected[i][j];
+      //R-tree
+      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
 	Filler f;
-	GRegion *gr = connected[i][j];
 	f.treat_region(gr);
-
-	//recombine into hex
-	if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
-	  Recombinator rec;
-	  rec.execute();
-	  Supplementary sup;
-	  sup.execute();
-	  PostOp post;
-	  post.execute(0);
-	}
-
+      }
+      //Recombine3D into hex
+      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
+	Recombinator rec;
+	rec.execute();
+	Supplementary sup;
+	sup.execute();
+	PostOp post;
+	post.execute(0);
       }
     }
-    //Additional code for hex mesh end  
-  
+    
   }
 
   double t2 = Cpu();

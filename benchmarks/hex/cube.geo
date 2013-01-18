@@ -1,6 +1,6 @@
-//Mesh.Algorithm = 8; //8 = delquad or 9= 2D R-tree
-//Mesh.Algorithm3D = 9; // 3D R-tree
-//Mesh.Recombine3DAll = 1; 
+Mesh.Algorithm = 8; //8 = delquad or 9= 2D R-tree
+Mesh.Algorithm3D = 9; // 3D R-tree
+Mesh.Recombine3DAll = 1; 
 
 c1 = 0.125;
 c2 = 0.25;
