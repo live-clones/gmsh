@@ -69,7 +69,6 @@ class FunctionSpace{
   unsigned int                     getNBasis(void) const;
 
   const GroupOfElement& getSupport(void) const;
-  unsigned int          getOrder(void) const;
   bool                  isScalar(void) const;
 
   std::vector<Dof> getKeys(const MElement& element) const;
@@ -190,11 +189,6 @@ inline unsigned int FunctionSpace::getNBasis(void) const{
 
 inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
-}
-#include "Exception.h"
-inline unsigned int FunctionSpace::getOrder(void) const{
-  throw Exception("Remove me!");
-  return (unsigned int)((*basis)[0]->getOrder());
 }
 
 inline bool FunctionSpace::isScalar(void) const{
