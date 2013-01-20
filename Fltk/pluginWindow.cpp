@@ -197,7 +197,10 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
         }
       }
     }
-    if(no_view_selected) pp->execute(0);
+    if(no_view_selected){
+      pp->execute(0);
+      add_scripting(pp, 0);
+    }
   }
   else{
     p->run();
