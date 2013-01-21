@@ -380,8 +380,8 @@ void Filler::treat_region(GRegion* gr){
 	fifo.push(node);
   }
   
-  std::ofstream file("nodes.pos");
-  file << "View \"test\" {\n";	
+  //std::ofstream file("nodes.pos");
+  //file << "View \"test\" {\n";	
   
   count = 1;
   while(!fifo.empty()){
@@ -420,7 +420,7 @@ void Filler::treat_region(GRegion* gr){
 			vertex = new MVertex(x,y,z,gr,0);
 			new_vertices.push_back(vertex);
 			ok2 = 1;
-			print_segment(individual->get_point(),parent->get_point(),file);
+			//print_segment(individual->get_point(),parent->get_point(),file);
 		  }
 	    }
 	  }
@@ -432,7 +432,7 @@ void Filler::treat_region(GRegion* gr){
 	count++;
   }
   
-  file << "};\n";
+  //file << "};\n";
 
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
