@@ -66,6 +66,27 @@ class Diagonal{
   bool operator<(const Diagonal&) const;
 };
 
+class Tuple{
+ private:
+  MVertex *v1,*v2,*v3;
+  MElement* element;
+  GFace* gf;
+  unsigned long long hash;
+ public:
+  Tuple();
+  Tuple(MVertex*,MVertex*,MVertex*,MElement*,GFace*);
+  Tuple(MVertex*,MVertex*,MVertex*);
+  ~Tuple();
+  MVertex* get_v1();
+  MVertex* get_v2();
+  MVertex* get_v3();
+  MElement* get_element() const;
+  GFace* get_gf() const;
+  bool same_vertices(Tuple);
+  unsigned long long get_hash() const;
+  bool operator<(const Tuple&) const;
+};
+
 class Recombinator{
  private:
   std::vector<Hex> potential;
@@ -75,6 +96,8 @@ class Recombinator{
   std::multiset<Facet> hash_tableA;
   std::multiset<Diagonal> hash_tableB;
   std::multiset<Diagonal> hash_tableC;
+  std::multiset<Tuple> tuples;
+  std::set<MElement*> triangles;
  public:
   Recombinator();
   ~Recombinator();
@@ -90,6 +113,9 @@ class Recombinator{
   void improved_merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
+  void build_tuples(GRegion*);
+  void modify_surfaces(GRegion*);
+  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
 
   bool sliver(MElement*,Hex);
   double diagonal(MElement*,int&,int&);
@@ -174,6 +200,8 @@ class Supplementary{
   std::multiset<Facet> hash_tableA;
   std::multiset<Diagonal> hash_tableB;
   std::multiset<Diagonal> hash_tableC;
+  std::multiset<Tuple> tuples;
+  std::set<MElement*> triangles;
  public:
   Supplementary();
   ~Supplementary();
@@ -186,6 +214,9 @@ class Supplementary{
   void merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
+  void build_tuples(GRegion*);
+  void modify_surfaces(GRegion*);
+  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
 
   bool four(MElement*);
   bool five(MElement*);
@@ -238,6 +269,8 @@ class PostOp{
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MElement*> > vertex_to_tetrahedra;
   std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
+  std::multiset<Tuple> tuples;
+  std::set<MElement*> triangles;
  public:
   PostOp();
   ~PostOp();
@@ -252,6 +285,9 @@ class PostOp{
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
+  void build_tuples(GRegion*);
+  void modify_surfaces(GRegion*);
+  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
 
   bool four(MElement*);
   bool five(MElement*);
