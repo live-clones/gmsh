@@ -4374,9 +4374,8 @@ FExpr_Multi :
   | FExpr tDOTS FExpr tDOTS FExpr
     {
       $$ = List_Create(2, 1, sizeof(double));
-      if(!$5 || ($1 < $3 && $5 < 0) || ($1 > $3 && $5 > 0)){
+      if(!$5){  //|| ($1 < $3 && $5 < 0) || ($1 > $3 && $5 > 0)
         yymsg(0, "Wrong increment in '%g:%g:%g'", $1, $3, $5);
-	List_Add($$, &($1));
       }
       else
 	for(double d = $1; ($5 > 0) ? (d <= $3) : (d >= $3); d += $5)
@@ -4433,6 +4432,17 @@ FExpr_Multi :
             List_Add($$, &d);
           }
         }
+        else{
+          std::map<int, std::vector<GEntity*> > groups[4];
+          GModel::current()->getPhysicalGroups(groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups[0].find((int)num);
+          if(it != groups[0].end()){
+            for(unsigned j = 0; j < it->second.size(); j++){
+              double d = it->second[j]->tag();
+              List_Add($$, &d);
+            }
+          }
+        }
       }
       List_Delete($4);
     }
@@ -4449,6 +4459,17 @@ FExpr_Multi :
             List_Read(p->Entities, j, &nume);
             double d = nume;
             List_Add($$, &d);
+          }
+        }
+        else{
+          std::map<int, std::vector<GEntity*> > groups[4];
+          GModel::current()->getPhysicalGroups(groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups[1].find((int)num);
+          if(it != groups[1].end()){
+            for(unsigned j = 0; j < it->second.size(); j++){
+              double d = it->second[j]->tag();
+              List_Add($$, &d);
+            }
           }
         }
       }
@@ -4469,6 +4490,17 @@ FExpr_Multi :
             List_Add($$, &d);
           }
         }
+        else{
+          std::map<int, std::vector<GEntity*> > groups[4];
+          GModel::current()->getPhysicalGroups(groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups[2].find((int)num);
+          if(it != groups[2].end()){
+            for(unsigned j = 0; j < it->second.size(); j++){
+              double d = it->second[j]->tag();
+              List_Add($$, &d);
+            }
+          }
+        }
       }
       List_Delete($4);
     }
@@ -4485,6 +4517,17 @@ FExpr_Multi :
             List_Read(p->Entities, j, &nume);
             double d = nume;
             List_Add($$, &d);
+          }
+        }
+        else{
+          std::map<int, std::vector<GEntity*> > groups[4];
+          GModel::current()->getPhysicalGroups(groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups[3].find((int)num);
+          if(it != groups[3].end()){
+            for(unsigned j = 0; j < it->second.size(); j++){
+              double d = it->second[j]->tag();
+              List_Add($$, &d);
+            }
           }
         }
       }
