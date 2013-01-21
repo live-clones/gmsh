@@ -372,7 +372,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS || blf){
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG  || blf ){ // CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
@@ -388,7 +388,7 @@ void meshGEdge::operator() (GEdge *ge)
       pt.xp = der.norm();
     }
     a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
-    N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
+    N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.99));
   }
 
   // force odd number of points for if blossom is used for recombination

@@ -1,8 +1,9 @@
 // original model from Zaqueu Ernesto da Silva (zaqueu at les.ufpb.br)
 // rewritten by CG
-Mesh.Algorithm = 8; //8 = delquad or 9= 2D R-tree
+Mesh.Algorithm = 9; //8 = delquad or 9= 2D R-tree
 Mesh.Algorithm3D = 9; // 3D R-tree
 Mesh.Recombine3DAll = 1; 
+Mesh.Smoothing = 0;
 
 lc = 1;
 e = 6; // thickness
@@ -71,6 +72,3 @@ Plane Surface(115) = {113,114};
 Surface Loop(116) = {47,-12,27,31,-115,64,39,112,85,90,95,100,51,-106,59,-109,-84,-72,-76,-80};
 Volume(117) = {116};
 
-//DEBUT DES AJOUTS
-//Physical Volume(1117) = {117};
-//FIN DES AJOUTS

@@ -1,8 +1,9 @@
-Mesh.Algorithm = 8; //8 = delquad or 9= 2D R-tree
+Mesh.Algorithm = 9; //8 = delquad or 9= 2D R-tree
 Mesh.Algorithm3D = 9; // 3D R-tree
 Mesh.Recombine3DAll = 1; 
+Mesh.Smoothing = 0;
 
-c1 = 0.125;
+c1 = 0.25; //125;
 c2 = 0.25;
 Point(1) = {1, 1, -1, c1};
 Point(2) = {-1, 1, -1, c1};

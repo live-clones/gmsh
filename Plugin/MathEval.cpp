@@ -66,7 +66,7 @@ std::string GMSH_MathEvalPlugin::getHelp() const
     "the time steps in the view.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(MathEval) creates one new view."
-    "If `PhysicalRegion' < 0, the plugin is run"
+    "If `PhysicalRegion' < 0, the plugin is run "
     "on all physical regions.\n\n"
     "Plugin(MathEval) creates one new view.";
 }

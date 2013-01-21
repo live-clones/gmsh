@@ -792,7 +792,7 @@ void Recombinator::improved_merge(GRegion* gr){
 	  continue;
 	}
 		
-	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
+	//printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
 	quality = quality + hex.get_quality();
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;

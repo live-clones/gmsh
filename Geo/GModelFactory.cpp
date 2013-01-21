@@ -198,6 +198,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
   Tree_Add(gm->getGEOInternals()->Volumes, &v);
   v->Typ = MSH_VOLUME;
   v->Num = numv;
+  v->Recombine3D = 0;
 
   //gmsh volume
   GRegion *gr = new gmshRegion(gm,v);

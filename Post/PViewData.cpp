@@ -97,7 +97,7 @@ void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double v
 
 GModel *PViewData::getModel(int step)
 {
-  Msg::Error("Cannot get entity from this view");
+  Msg::Error("Cannot get model from this view");
   return 0;
 }
 

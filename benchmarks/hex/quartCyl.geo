@@ -1,7 +1,8 @@
-Mesh.Algorithm = 8; //8 = delquad or 9= 2D R-tree
+Mesh.Algorithm = 9; //8 = delquad or 9= 2D R-tree
 Mesh.Algorithm3D = 9; // 3D R-tree
 Mesh.Recombine3DAll = 1; 
-//Mesh.Lloyd = 10;
+Mesh.Lloyd = 10;
+Mesh.Smoothing = 0;
 
 c1 = 0.1;
 c2 = 0.05;
@@ -40,15 +41,6 @@ Ruled Surface(22) = {21};
 Line Loop(23) = {8, -4, 11, 3};
 Ruled Surface(24) = {23};
 
-Mesh.RemeshParametrization=1; //(0) harmonic (1) conformal 
-Mesh.RemeshAlgorithm=0; //(0) nosplit (1) automatic (2) split metis
-Compound Surface(114)={14};
-Compound Surface(116)={16};
-Compound Surface(118)={18};
-Compound Surface(120)={20};
-Compound Surface(122)={22};
-Compound Surface(124)={24};
-
-Surface Loop(25) = {114, 116, 122, 120, 118, 124};
+Surface Loop(25) = {14, 16, 22, 20, 18, 24};
 Volume(26) = {25};
-Physical Volume(126)={26};
+
