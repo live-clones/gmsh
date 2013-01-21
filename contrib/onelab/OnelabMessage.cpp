@@ -18,7 +18,7 @@
 
 int OLMsg::_commRank = 0;
 int OLMsg::_commSize = 1;
-int OLMsg::_verbosity = 1;
+int OLMsg::_verbosity = 4;
 // int OLMsg::_progressMeterStep = 10;
 // int OLMsg::_progressMeterCurrent = 0;
 // std::map<std::string, double> OLMsg::_timers;

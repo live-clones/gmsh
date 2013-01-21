@@ -23,12 +23,12 @@ static std::string localFileTag("_");
 enum parseMode {REGISTER, ANALYZE, COMPUTE, EXIT};
 
 #if defined(WIN32)
-static char dirSep='\\';
+const char dirSep='\\';
 static std::string cmdSep(" & ");
 static std::string removeCmd("del ");
 static std::string lsCmd("dir ");
 #else
-static char dirSep='/';
+const char dirSep='/';
 static std::string cmdSep(" ; ");
 static std::string removeCmd("rm -rf ");
 static std::string lsCmd("ls ");

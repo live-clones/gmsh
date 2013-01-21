@@ -47,20 +47,21 @@ int metamodel(const std::string &action){
   OLMsg::hasGmsh = OLMsg::GetOnelabNumber("IsMetamodel");
   OLMsg::ResetErrorCounter();
 
-  parseMode todo;
-  if(action == "compute")
-    todo = COMPUTE;
-  else{
-    todo = ANALYZE;
-  }
-
   std::string modelName = OLMsg::GetOnelabString("Arguments/FileName");
   std::string workingDir = OLMsg::GetOnelabString("Arguments/WorkingDir");
   std::string clientName = "meta";
 
   MetaModel *myModel =
     new MetaModel("meta", workingDir, "meta", modelName);
+
+  parseMode todo;
+  if(action == "compute")
+    todo = COMPUTE;
+  else{
+    todo = ANALYZE;
+  }
   myModel->setTodo(todo);
+  if(OLMsg::GetErrorCount()) myModel->setTodo(EXIT);
 
   if(OLMsg::GetOnelabNumber("LOGFILES")){
     std::string mystdout = FixWindowsQuotes(workingDir + "stdout.txt");
@@ -71,10 +72,8 @@ int metamodel(const std::string &action){
     freopen(mystderr.c_str(),"w",stderr);
   }
 
-  if(OLMsg::GetErrorCount()) myModel->setTodo(EXIT);
-
   if( myModel->isTodo(ANALYZE)){
-    myModel->analyze();
+    //myModel->analyze(); the constructor myModel makes the analysis
   }
   else if( myModel->isTodo(COMPUTE)){
     myModel->compute();

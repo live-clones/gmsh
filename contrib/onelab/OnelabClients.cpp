@@ -482,17 +482,18 @@ void localSolverClient::addNumberChoice(std::string name, double val, bool readO
   get(ps, name);
   if(ps.size()){
     choices = ps[0].getChoices();
+    ps[0].setReadOnly(readOnly);
+    ps[0].setValue(val);
+    choices.push_back(val);
+    ps[0].setChoices(choices);
+    //ps[0].setAttribute("Highlight","Coral");
+    set(ps[0]);
   }
   else{
-    ps.resize(1);
-    ps[0].setName(name);
+    OLMsg::Error("The parameter <%s> does not exist", name.c_str());
+    // ps.resize(1);
+    // ps[0].setName(name);
   }
-  //ps[0].setAttribute("Highlight","Coral");
-  ps[0].setReadOnly(readOnly);
-  ps[0].setValue(val);
-  choices.push_back(val);
-  ps[0].setChoices(choices);
-  set(ps[0]);
 }
 
 void localSolverClient::PostArray(std::vector<std::string> choices)
@@ -504,9 +505,10 @@ void localSolverClient::PostArray(std::vector<std::string> choices)
     std::string fileName = getWorkingDir()+choices[4*i];
       //checkIfPresent or make available locally
     double val=find_in_array(lin,col,read_array(fileName,' '));
-    addNumberChoice(longName(choices[4*i+3]),val,true);
+    std::string paramName = choices[4*i+3];
+    addNumberChoice(paramName,val,true);
     OLMsg::Info("Upload parameter <%s>=%e from file <%s>",
-		choices[4*i+3].c_str(),val,fileName.c_str());
+		paramName.c_str(),val,fileName.c_str());
     i++;
   }
 }
@@ -654,7 +656,7 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 
 void MetaModel::construct()
 {
-  OLMsg::Info("Metamodel now CONSTRUCTING");
+  OLMsg::Info("===== CONSTRUCTING");
   std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   parse_onefile(fileName);
@@ -664,7 +666,7 @@ void MetaModel::construct()
 }
 
 void MetaModel::analyze() {
-  OLMsg::Info("Metamodel now ANALYZING");
+  OLMsg::Info("===== ANALYZING");
   std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
@@ -673,7 +675,7 @@ void MetaModel::analyze() {
 }
 
 void MetaModel::compute() {
-  OLMsg::Info("Metamodel now COMPUTING");
+  OLMsg::Info("===== COMPUTING");
   std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
   OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
@@ -732,7 +734,7 @@ void MetaModel::PostArray(std::vector<std::string> choices)
 void InterfacedClient::analyze() {
   std::vector<std::string> choices, split;
 
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyzes <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   setAction("check");
 
@@ -812,7 +814,7 @@ void InterfacedClient::compute(){
 // NATIVE Client
 
 void NativeClient::analyze() {
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyzes <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   setAction("check");
   if(!run())
@@ -865,7 +867,7 @@ void NativeClient::compute() {
 void EncapsulatedClient::analyze() {
   std::vector<std::string> choices, split;
 
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyzes <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   setAction("check");
 
@@ -941,8 +943,7 @@ void EncapsulatedClient::compute(){
   OLMsg::SetOnelabString(getName() + "/FullCmdLine", cmd, false);
   OLMsg::Info("Command line=<%s>",cmd.c_str());
 
-  // the encapsulating localNetworkClient is called
-  if(!run())
+  if(!run()) // localNetworkClient::run() is called
     OLMsg::Error("Invalid commandline <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
 
@@ -1059,7 +1060,7 @@ void RemoteNativeClient::analyze(){
   std::string cmd,rmcmd;
   std::vector<std::string> choices;
 
-  OLMsg::Info("Analyze <%s> changed=%d", getName().c_str(),
+  OLMsg::Info("Analyzes <%s> changed=%d", getName().c_str(),
 	      onelab::server::instance()->getChanged(getName()));
   setAction("check");
 
@@ -1176,7 +1177,7 @@ void RemoteEncapsulatedClient::compute(){
     mySystem("ssh " + getRemoteHost() + " '" + cdcmd + rmcmd + "'");
   }
 
-  // the client command line is buit and stored in a onelab parameter
+  // the client command line is built and stored in a onelab parameter
   std::string cmd;
   cmd.assign("ssh " + getRemoteHost() + " '");
   if(getRemoteDir().size())
@@ -1185,10 +1186,9 @@ void RemoteEncapsulatedClient::compute(){
   cmd.append(" " + getString("Arguments") + " '");
   OLMsg::SetOnelabString(getName()+"/FullCmdLine",cmd,false);
 
-  // the encapsulating localNetworkClient is called
   OLMsg::Info("Command line=<%s>",cmd.c_str());
 
-  if(!run())
+  if(!run())   // localNetworkClient::run() is called
     OLMsg::Error("Invalid commandline <%s> for client <%s>",
 		 getCommandLine().c_str(), getName().c_str());
 

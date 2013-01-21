@@ -66,6 +66,7 @@ class client :
   _GMSH_PARSE_STRING = 21
   _GMSH_PARAMETER = 23
   _GMSH_PARAMETER_QUERY = 24
+  _GMSH_CONNECT = 27
 
   def _receive(self) :
     def buffered_receive(l) :
@@ -109,6 +110,15 @@ class client :
     p = _parameter('number', name=name, value=value, **param)
     self._get_parameter(p)
     return p.value
+
+  def sub_client(self, name, command):
+    self._send(self._GMSH_CONNECT, name)
+    (t, msg) = self._receive()
+    print ("python receive : ", t, msg)
+    if t == self._GMSH_CONNECT and msg :
+      print "python launch : "+ command + " -onelab "+ msg
+      os.system(command + " -onelab " + name + " " + msg)
+
 
   def merge_file(self, filename) :
     if not self.socket :
