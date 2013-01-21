@@ -196,6 +196,121 @@ bool Diagonal::operator<(const Diagonal& diagonal) const{
   return hash<diagonal.get_hash();
 }
 
+/**********************************************/
+/******************class Tuple*****************/
+/**********************************************/
+
+Tuple::Tuple(){}
+
+Tuple::Tuple(MVertex* a,MVertex* b,MVertex* c,MElement* element2,GFace* gf2){
+  if(a<=b && a<=c){
+    v1 = a;
+  }
+  else if(b<=a && b<=c){
+    v1 = b;
+  }
+  else{
+    v1 = c;
+  }
+	
+  if(a>=b && a>=c){
+    v3 = a;
+  }
+  else if(b>=a && b>=c){
+    v3 = b;
+  }
+  else{
+    v3 = c;
+  }
+	
+  if(a!=v1 && a!=v3){
+    v2 = a;
+  }
+  else if(b!=v1 && b!=v3){
+    v2 = b;
+  }
+  else{
+    v2 = c;
+  }
+	
+  element = element2;
+  gf = gf2;	
+  hash = a->getNum() + b->getNum() + c->getNum();
+}
+
+Tuple::Tuple(MVertex* a,MVertex* b,MVertex* c){
+  if(a<=b && a<=c){
+    v1 = a;
+  }
+  else if(b<=a && b<=c){
+    v1 = b;
+  }
+  else{
+    v1 = c;
+  }
+	
+  if(a>=b && a>=c){
+    v3 = a;
+  }
+  else if(b>=a && b>=c){
+    v3 = b;
+  }
+  else{
+    v3 = c;
+  }
+	
+  if(a!=v1 && a!=v3){
+    v2 = a;
+  }
+  else if(b!=v1 && b!=v3){
+    v2 = b;
+  }
+  else{
+    v2 = c;
+  }
+	
+  hash = a->getNum() + b->getNum() + c->getNum();
+}
+
+Tuple::~Tuple(){}
+
+MVertex* Tuple::get_v1(){
+  return v1;
+}
+
+MVertex* Tuple::get_v2(){
+  return v2;
+}
+
+MVertex* Tuple::get_v3(){
+  return v3;
+}
+
+MElement* Tuple::get_element() const{
+  return element;
+}
+
+GFace* Tuple::get_gf() const{
+  return gf;
+}
+
+bool Tuple::same_vertices(Tuple tuple){
+  if(v1==tuple.get_v1() && v2==tuple.get_v2() && v3==tuple.get_v3()){
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+unsigned long long Tuple::get_hash() const{
+  return hash;
+}
+
+bool Tuple::operator<(const Tuple& tuple) const{
+  return hash<tuple.get_hash();
+}
+
 /**************************************************/
 /****************class Recombinator****************/
 /**************************************************/
@@ -220,6 +335,7 @@ void Recombinator::execute(){
 
 void Recombinator::execute(GRegion* gr){
   printf("................HEXAHEDRA................\n");
+  build_tuples(gr);
   init_markings(gr);
 
   build_vertex_to_vertices(gr);
@@ -244,6 +360,8 @@ void Recombinator::execute(GRegion* gr){
   rearrange(gr);
 
   statistics(gr);
+	
+  modify_surfaces(gr);
 }
 
 void Recombinator::init_markings(GRegion* gr){
@@ -571,7 +689,7 @@ void Recombinator::merge(GRegion* gr){
 	  continue;
 	}
 
-	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
+	//printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
 	quality = quality + hex.get_quality();
 	for(it=parts.begin();it!=parts.end();it++){
 	  element = *it;
@@ -740,6 +858,195 @@ void Recombinator::statistics(GRegion* gr){
 
   printf("percentage of hexahedra (number) : %.2f\n",hex_nbr*100.0/all_nbr);
   printf("percentage of hexahedra (volume) : %.2f\n",hex_volume*100.0/all_volume);
+}
+
+void Recombinator::build_tuples(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::list<GFace*>::iterator it;
+
+  tuples.clear();
+  triangles.clear();
+  faces.clear();
+
+  faces = gr->faces();
+
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+	  
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+		
+	  if(element->getNumVertices()==3){		
+		a = element->getVertex(0);
+		b = element->getVertex(1);
+		c = element->getVertex(2);
+		  
+		tuples.insert(Tuple(a,b,c,element,gf));
+	  }
+	}
+  }
+}
+
+void Recombinator::modify_surfaces(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::vector<MElement*> opt;
+  std::list<GFace*>::iterator it;
+  std::set<MElement*>::iterator it2;
+	
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+	
+	if(element->getNumVertices()==8){
+	  a = element->getVertex(0);	
+	  b = element->getVertex(1);	
+	  c = element->getVertex(2);	
+	  d = element->getVertex(3);	
+	  e = element->getVertex(4);	
+	  f = element->getVertex(5);	
+	  g = element->getVertex(6);
+	  h = element->getVertex(7);	
+		
+	  modify_surfaces(a,b,c,d);
+	  modify_surfaces(e,f,g,h);
+	  modify_surfaces(a,e,h,d);
+	  modify_surfaces(b,f,g,c);
+	  modify_surfaces(a,e,f,b);
+	  modify_surfaces(d,h,g,c);
+	}
+  }
+	
+  faces = gr->faces();
+	
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+		
+	opt.clear();  
+	  
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+			
+	  if(element->getNumVertices()==3){
+	    it2 = triangles.find(element);
+		if(it2==triangles.end()){
+		  opt.push_back(element);
+		}
+	  }
+	}
+	  
+	gf->triangles.clear();
+	  
+	for(i=0;i<opt.size();i++){
+	  gf->triangles.push_back((MTriangle*)opt[i]);
+	}
+  }	
+}
+
+void Recombinator::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  bool flag1,flag2;
+  MElement *element1,*element2;
+  GFace *gf1,*gf2;
+  Tuple tuple1,tuple2;
+  std::multiset<Tuple>::iterator it1;
+  std::multiset<Tuple>::iterator it2;
+
+  tuple1 = Tuple(a,b,c);
+  tuple2 = Tuple(c,d,a);	
+  
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+	  	  
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
+	
+  tuple1 = Tuple(a,b,d);
+  tuple2 = Tuple(b,c,d);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+      break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+		
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
 }
 
 bool Recombinator::sliver(MElement* element,Hex hex){
@@ -1907,6 +2214,7 @@ void Supplementary::execute(GRegion* gr){
   MVertex *e,*f,*g,*h;
 
   printf("................PRISMS................\n");
+  build_tuples(gr);
   init_markings(gr);
 
   build_vertex_to_vertices(gr);
@@ -1968,6 +2276,8 @@ void Supplementary::execute(GRegion* gr){
   rearrange(gr);
 
   statistics(gr);
+	
+  modify_surfaces(gr);
 }
 
 void Supplementary::init_markings(GRegion* gr){
@@ -2110,7 +2420,7 @@ void Supplementary::merge(GRegion* gr){
 	  continue;
 	}
 
-	printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
+	//printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
 	quality = quality + prism.get_quality();
 	for(it=parts.begin();it!=parts.end();it++){
       element = *it;
@@ -2176,6 +2486,190 @@ void Supplementary::statistics(GRegion* gr){
 
   printf("percentage of prisms (number) : %.2f\n",prism_nbr*100.0/all_nbr);
   printf("percentage of prisms (volume) : %.2f\n",prism_volume*100.0/all_volume);
+}
+
+void Supplementary::build_tuples(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::list<GFace*>::iterator it;
+	
+  tuples.clear();
+  triangles.clear();
+  faces.clear();
+	
+  faces = gr->faces();
+	
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+		
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+			
+	  if(element->getNumVertices()==3){		
+	    a = element->getVertex(0);
+		b = element->getVertex(1);
+		c = element->getVertex(2);
+				
+		tuples.insert(Tuple(a,b,c,element,gf));
+	  }
+	}
+  }
+}
+
+void Supplementary::modify_surfaces(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c;
+  MVertex *d,*e,*f;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::vector<MElement*> opt;
+  std::list<GFace*>::iterator it;
+  std::set<MElement*>::iterator it2;
+	
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+		
+	if(element->getNumVertices()==6){
+	  a = element->getVertex(0);	
+	  b = element->getVertex(1);	
+	  c = element->getVertex(2);	
+	  d = element->getVertex(3);	
+	  e = element->getVertex(4);	
+	  f = element->getVertex(5);	
+			
+	  modify_surfaces(a,d,e,b);
+	  modify_surfaces(a,d,f,c);
+	  modify_surfaces(b,e,f,c);
+	}
+  }
+	
+  faces = gr->faces();
+	
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+		
+	opt.clear();  
+		
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+			
+	  if(element->getNumVertices()==3){
+	    it2 = triangles.find(element);
+		if(it2==triangles.end()){
+		  opt.push_back(element);
+		}
+	  }
+	}
+		
+	gf->triangles.clear();
+		
+	for(i=0;i<opt.size();i++){
+	  gf->triangles.push_back((MTriangle*)opt[i]);
+	}
+  }	
+}
+
+void Supplementary::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  bool flag1,flag2;
+  MElement *element1,*element2;
+  GFace *gf1,*gf2;
+  Tuple tuple1,tuple2;
+  std::multiset<Tuple>::iterator it1;
+  std::multiset<Tuple>::iterator it2;
+	
+  tuple1 = Tuple(a,b,c);
+  tuple2 = Tuple(c,d,a);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+    if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+		
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
+	
+  tuple1 = Tuple(a,b,d);
+  tuple2 = Tuple(b,c,d);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+		
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
 }
 
 bool Supplementary::four(MElement* element){
@@ -2916,6 +3410,7 @@ void PostOp::execute(GRegion* gr,bool flag){
   estimate2 = 0;
   iterations = 0;
 
+  build_tuples(gr);
   init_markings(gr);
   build_vertex_to_tetrahedra(gr);
   pyramids1(gr);
@@ -2930,6 +3425,8 @@ void PostOp::execute(GRegion* gr,bool flag){
   }
 
   statistics(gr);
+	
+  modify_surfaces(gr);
 }
 
 void PostOp::init_markings(GRegion* gr){
@@ -3401,6 +3898,186 @@ void PostOp::statistics(GRegion* gr){
   printf("Total number of elements : %d\n",gr->getNumMeshElements());
   printf("Total volume : %f\n",vol);
   printf("Misc : %d %d %f\n",estimate1,estimate2,iterations/estimate2);
+}
+
+void PostOp::build_tuples(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::list<GFace*>::iterator it;
+	
+  tuples.clear();
+  triangles.clear();
+  faces.clear();
+	
+  faces = gr->faces();
+	
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+		
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+			
+	  if(element->getNumVertices()==3){		
+	    a = element->getVertex(0);
+		b = element->getVertex(1);
+		c = element->getVertex(2);
+				
+		tuples.insert(Tuple(a,b,c,element,gf));
+	  }
+	}
+  }
+}
+
+void PostOp::modify_surfaces(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c,*d,*e;
+  MElement* element;
+  GFace* gf;
+  std::list<GFace*> faces;
+  std::vector<MElement*> opt;
+  std::list<GFace*>::iterator it;
+  std::set<MElement*>::iterator it2;
+	
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+		
+	if(element->getNumVertices()==5){
+	  a = element->getVertex(0);	
+	  b = element->getVertex(1);	
+	  c = element->getVertex(2);	
+	  d = element->getVertex(3);	
+	  e = element->getVertex(4);	
+			
+	  modify_surfaces(a,b,c,d);
+	}
+  }
+	
+  faces = gr->faces();
+	
+  for(it=faces.begin();it!=faces.end();it++)
+  {
+    gf = *it;
+		
+	opt.clear();  
+		
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+			
+	  if(element->getNumVertices()==3){
+	    it2 = triangles.find(element);
+		if(it2==triangles.end()){
+		  opt.push_back(element);
+		}
+	  }
+	}
+		
+	gf->triangles.clear();
+		
+	for(i=0;i<opt.size();i++){
+	  gf->triangles.push_back((MTriangle*)opt[i]);
+	}
+  }	
+}
+
+void PostOp::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  bool flag1,flag2;
+  MElement *element1,*element2;
+  GFace *gf1,*gf2;
+  Tuple tuple1,tuple2;
+  std::multiset<Tuple>::iterator it1;
+  std::multiset<Tuple>::iterator it2;
+	
+  tuple1 = Tuple(a,b,c);
+  tuple2 = Tuple(c,d,a);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+		
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
+	
+  tuple1 = Tuple(a,b,d);
+  tuple2 = Tuple(b,c,d);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  element1 = it1->get_element();
+	  gf1 = it1->get_gf();
+	}
+		
+    it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+      flag2 = 1;
+	  element2 = it2->get_element();
+	  gf2 = it2->get_gf();
+	}
+		
+    it2++;
+  }
+	
+  if(flag1 && flag2){
+    triangles.insert(element1);
+	triangles.insert(element2);
+		
+	gf1->addQuadrangle(new MQuadrangle(a,b,c,d));
+  }
 }
 
 bool PostOp::four(MElement* element){
