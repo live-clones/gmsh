@@ -197,8 +197,10 @@ class Basis{
 
    @fn Basis::getOrientation
    @param element A MElement
-   @return Returns a number charaterizing
-   the @em orientation of the given element
+   @return Returns a number
+   (from 0 to Basis::getNOrientation() - 1)
+   charaterizing the @em orientation
+   of the given element
    **
 
    @fn Basis::getFunctions(unsigned int, double, double, double) const
