@@ -1658,7 +1658,7 @@ void MetaModel::client_sentence(const std::string &name,
       OLMsg::Error("Wrong number of arguments <%d> for <%s>",
 		 arguments.size(), action.c_str());
   }
-  else if(!action.compare("alwaysCompute")){
+  else if(!action.compare("alwaysCompute") || !action.compare("preCompute")){
     if(isTodo(REGISTER)){
       localSolverClient *c;
       if((c=findClientByName(name))){
@@ -1677,8 +1677,8 @@ void MetaModel::client_sentence(const std::string &name,
       }
       localSolverClient *c;
       if((c=findClientByName(name))) {
-	OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
 	c->GmshMerge(choices);
+	OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
       }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
@@ -1693,6 +1693,7 @@ void MetaModel::client_sentence(const std::string &name,
       localSolverClient *c;
       if((c=findClientByName(name))) {
 	c->GmshMerge(choices);
+	OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
       }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
