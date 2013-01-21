@@ -515,10 +515,10 @@ static void Mesh2D(GModel *m)
 	smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
 	m->writeMSH("beforeLLoyd.msh");
 	smm.optimize_face(*it);
-	int rec = 1;//(CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
+	//int rec = 1;//(CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine);
 	m->writeMSH("afterLLoyd.msh");
-	if(rec) recombineIntoQuads(*it);
-	m->writeMSH("afterRecombine.msh");
+	//if(rec) recombineIntoQuads(*it);
+	//m->writeMSH("afterRecombine.msh");
       }
     }
     /*
