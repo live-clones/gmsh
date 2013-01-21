@@ -518,8 +518,10 @@ void localSolverClient::GmshMerge(std::vector<std::string> choices)
   for(unsigned int i = 0; i < choices.size(); i++){
     std::string fileName=getWorkingDir()+choices[i];
     //checkIfPresent or make available locally
-    OLMsg::Info("Send merge request <%s>",fileName.c_str());
-    OLMsg::MergeFile(fileName);
+    if(checkIfPresent(fileName)){
+      OLMsg::Info("Send merge request <%s>",fileName.c_str());
+      OLMsg::MergeFile(fileName);
+    }
   }
 }
 

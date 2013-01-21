@@ -1659,7 +1659,7 @@ void MetaModel::client_sentence(const std::string &name,
 		 arguments.size(), action.c_str());
   }
   else if(!action.compare("alwaysCompute")){
-    if(isTodo(REGISTER) || isTodo(ANALYZE)){
+    if(isTodo(REGISTER)){
       localSolverClient *c;
       if((c=findClientByName(name))){
 	c->compute();
@@ -1670,7 +1670,6 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else if(!action.compare("merge")){
-    //if(isTodo(COMPUTE)  && !OLMsg::GetErrorCount() && (OLMsg::hasGmsh)){
     if( arguments.size() && isTodo(COMPUTE)  && !OLMsg::GetErrorCount() && (OLMsg::hasGmsh)){
       std::vector<std::string> choices;
       for(unsigned int i = 0; i < arguments.size(); i++){
@@ -1686,20 +1685,14 @@ void MetaModel::client_sentence(const std::string &name,
     }
   }
   else if(!action.compare("frontPage")){
-    if( arguments.size() && OLMsg::hasGmsh ){
+    if( isTodo(REGISTER) && OLMsg::hasGmsh && arguments.size() && !OLMsg::GetErrorCount()){
       std::vector<std::string> choices;
       for(unsigned int i = 0; i < arguments.size(); i++){
 	choices.push_back(resolveGetVal(arguments[i]));
       }
       localSolverClient *c;
       if((c=findClientByName(name))) {
-	if(isTodo(REGISTER) && !OLMsg::GetErrorCount())
-	  if(onelab::server::instance()->getChanged(c->getName())){
-	    //c->compute();
-	    c->GmshMerge(choices);
-	    //OLMsg::SetOnelabNumber("Gmsh/NeedReloadGeom",1,false);
-	    //onelab::server::instance()->setChanged(false, c->getName());
-	  }
+	c->GmshMerge(choices);
       }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
