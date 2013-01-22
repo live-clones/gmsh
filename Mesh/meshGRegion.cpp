@@ -678,7 +678,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
       // 	 (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else if (CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-       sprintf(opts, "-S0Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
+       sprintf(opts, "S0Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
 	       (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
