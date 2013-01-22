@@ -348,14 +348,14 @@ static bool CancelDelaunayHybrid(GModel *m)
 static void Mesh0D(GModel *m)
 {
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
-    GVertex *gv = *it;        
+    GVertex *gv = *it;
     if(gv->mesh_vertices.empty())
       gv->mesh_vertices.push_back(new MVertex(gv->x(), gv->y(), gv->z(), gv));
     if(gv->points.empty())
       gv->points.push_back(new MPoint(gv->mesh_vertices.back()));
   }
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
-    GVertex *gv = *it;        
+    GVertex *gv = *it;
     if (gv->meshMaster() != gv->tag()){
       if (gv->correspondingVertices.empty()){
 	GVertex *master = m->getVertexByTag(abs(gv->meshMaster()));
@@ -477,10 +477,10 @@ static void Mesh2D(GModel *m)
     int nIter = 0, nTot = m->getNumFaces();
     while(1){
       int nPending = 0;
-      
+
       std::vector<GFace*> _temp; _temp.insert(_temp.begin(),f.begin(),f.end());
-      
-#pragma omp parallel for schedule (dynamic) 
+
+#pragma omp parallel for schedule (dynamic)
       for(size_t K = 0 ; K < _temp.size() ; K++){
 	if (_temp[K]->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);
@@ -491,9 +491,9 @@ static void Mesh2D(GModel *m)
 	  }
 	}
       }
-#pragma omp master      
+#pragma omp master
       if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
-      
+
       for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);
@@ -579,8 +579,8 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
-   
-    //Additional code for hex mesh begin  
+
+    //Additional code for hex mesh begin
     for(unsigned j=0;j<connected[i].size();j++){
       GRegion *gr = connected[i][j];
       //R-tree
@@ -598,7 +598,7 @@ static void Mesh3D(GModel *m)
 	post.execute(0);
       }
     }
-    
+
   }
 
   double t2 = Cpu();

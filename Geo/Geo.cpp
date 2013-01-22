@@ -619,6 +619,7 @@ Volume *Create_Volume(int Num, int Typ)
   Volume *pV = new Volume;
   pV->Color.type = 0;
   pV->Visible = 1;
+  pV->Recombine3D = 0;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->MaxVolumeNum =
     std::max(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
@@ -1048,6 +1049,7 @@ static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
   if(copyMeshingMethod){
     vv->Method = v->Method;
     vv->QuadTri = v->QuadTri;
+    vv->Recombine3D = v->Recombine3D;
     if(List_Nbr(v->TrsfPoints))
       Msg::Warning("Only automatic transfinite volume specifications can be copied");
   }
