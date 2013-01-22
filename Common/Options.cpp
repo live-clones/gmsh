@@ -3833,6 +3833,13 @@ double opt_geometry_hide_compounds(OPT_ARGS_NUM)
   return CTX::instance()->geom.hideCompounds;
 }
 
+double opt_geometry_oriented_physicals(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.orientedPhysicals = (int)val;
+  return CTX::instance()->geom.orientedPhysicals;
+}
+
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

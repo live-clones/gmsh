@@ -747,6 +747,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
+  { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
+    "Use sign of elementary entity in physical definition as orientation indicator" },
   { F|O, "SnapX" , opt_geometry_snap0 , 0.1 ,
     "Snapping grid spacing along the X-axis" },
   { F|O, "SnapY" , opt_geometry_snap1 , 0.1 ,

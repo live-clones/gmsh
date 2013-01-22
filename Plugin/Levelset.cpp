@@ -23,7 +23,7 @@ static const int exn[13][12][2] = {
   {{0,1}, {0,3}, {0,4}, {1,2}, {1,4}, {2,3}, {2,4}, {3,4}}, // pyramid
   {{0,1}, {0,2}, {0,3}, {1,2}, {1,4}, {2,5}, {3,4}, {3,5}, {4,5}}, // prism
   {{}}, {{}}, // -
-  {{0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3}, 
+  {{0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3},
    {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7}} // hexa
 };
 
@@ -38,18 +38,18 @@ static int numSimplexDec(int type)
   }
 }
 
-static void getSimplexDec(int numNodes, int numEdges, int type, int i, 
+static void getSimplexDec(int numNodes, int numEdges, int type, int i,
                           int &n0, int &n1, int &n2, int &n3,
                           int &nn, int &ne)
 {
   static const int qua[2][3] = {{0,1,2}, {0,2,3}};
-  static const int hex[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, 
+  static const int hex[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7},
                                 {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
   static const int pri[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
   static const int pyr[2][4] = {{0,1,3,4}, {1,2,3,4}};
   switch(type){
   case TYPE_QUA:
-    n0 = qua[i][0]; n1 = qua[i][1]; n2 = qua[i][2]; nn = 3; ne = 3; 
+    n0 = qua[i][0]; n1 = qua[i][1]; n2 = qua[i][2]; nn = 3; ne = 3;
     break;
   case TYPE_HEX:
     n0 = hex[i][0]; n1 = hex[i][1]; n2 = hex[i][2]; n3 = hex[i][3]; nn = 4; ne = 6;
@@ -106,7 +106,7 @@ static void removeIdenticalNodes(int *np, int numComp,
   *np = npi;
 }
 
-static void reorderQuad(int numComp, double xp[12], double yp[12], double zp[12], 
+static void reorderQuad(int numComp, double xp[12], double yp[12], double zp[12],
                         double valp[12][9], int ep[12])
 {
   double xpi[1], ypi[1], zpi[1], valpi[1][9];
@@ -116,7 +116,7 @@ static void reorderQuad(int numComp, double xp[12], double yp[12], double zp[12]
   affect(xp, yp, zp, valp, ep, 2, xpi, ypi, zpi, valpi, epi, 0, numComp);
 }
 
-static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12], 
+static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12],
                          double valp[12][9], int ep[12], int nbCut)
 {
   double xpi[6], ypi[6], zpi[6], valpi[6][9];
@@ -133,7 +133,7 @@ static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12
       for(int j = 0; j < 3; j++){
         int p = -epi[j]-1;
         if(exn[9][edgecut][0] == p || exn[9][edgecut][1] == p)
-          affect(xp, yp, zp, valp, ep, 3+i, xpi, ypi, zpi, valpi, epi, j, numComp);       
+          affect(xp, yp, zp, valp, ep, 3+i, xpi, ypi, zpi, valpi, epi, j, numComp);
       }
     }
   }
@@ -177,7 +177,7 @@ static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12
       affect(xp, yp, zp, valp, ep, i, xpi, ypi, zpi, valpi, epi, i, numComp);
   }
 }
- 
+
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
   _invert = 0.;
@@ -247,7 +247,7 @@ void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
 
   // copy the elements in the output data
   if(firstStep || !_valueIndependent) {
-    for(int k = 0; k < np; k++) 
+    for(int k = 0; k < np; k++)
       list->push_back(xp[k]);
     for(int k = 0; k < np; k++)
       list->push_back(yp[k]);
@@ -261,7 +261,7 @@ void GMSH_LevelsetPlugin::_addElement(int np, int numEdges, int numComp,
 }
 
 void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
-                                             int ent, int ele, int vstep, int wstep, 
+                                             int ent, int ele, int vstep, int wstep,
                                              double x[8], double y[8], double z[8],
                                              double levels[8], double scalarValues[8],
                                              PViewDataList* out)
@@ -272,7 +272,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     stepmax = vdata->getNumTimeSteps();
   }
   if(wstep < 0) otherstep = wdata->getFirstNonEmptyTimeStep();
- 
+
   int numNodes = vdata->getNumNodes(stepmin, ent, ele);
   int numEdges = vdata->getNumEdges(stepmin, ent, ele);
   int numComp = wdata->getNumComponents(otherstep, ent, ele);
@@ -290,12 +290,15 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 
       // check which edges cut the iso and interpolate the value
       if(wstep < 0) otherstep = step;
+
+      //if(!wdata->hasTimeStep(otherstep)) continue;
+
       int np = 0;
       double xp[12], yp[12], zp[12], valp[12][9];
       for(int i = 0; i < nse; i++){
         int n0 = exn[nse][i][0], n1 = exn[nse][i][1];
         if(levels[n[n0]] * levels[n[n1]] <= 0.) {
-          double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1], 
+          double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1],
                                     &xp[np], &yp[np], &zp[np]);
           for(int comp = 0; comp < numComp; comp++){
             double v0, v1;
@@ -306,11 +309,11 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
           ep[np++] = i + 1;
         }
       }
-      
+
       // remove identical nodes (this can happen if an edge actually
       // belongs to the zero levelset, i.e., if levels[] * levels[] == 0)
       if(np > 1) removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
-      
+
       // if there are no cuts and we extract the volume, save the full
       // element if it is on the correct side of the levelset
       if(np <= 1 && _extractVolume){
@@ -342,10 +345,10 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
         continue;
       else if(np < 1 || np > 4) // can't deal with this
         continue;
-      
+
       // avoid "butterflies"
       if(np == 4) reorderQuad(numComp, xp, yp, zp, valp, ep);
-      
+
       // orient the triangles and the quads to get the normals right
       if(!_extractVolume && (np == 3 || np == 4)) {
         // compute invertion test only once for spatially-fixed views
@@ -381,7 +384,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
             affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np - k - 1, numComp);
         }
       }
-      
+
       // if we extract volumes, add the nodes on the chosen side
       // (FIXME: when cutting 2D views, the elts can have the wrong
       // orientation)
@@ -437,7 +440,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     wdata = vdata;
   }
   else if(_valueView > (int)PView::list.size() - 1){
-    Msg::Error("View[%d] does not exist: reverting to View[%d]", 
+    Msg::Error("View[%d] does not exist: reverting to View[%d]",
                _valueView, v->getIndex());
     wdata = vdata;
   }
@@ -485,6 +488,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   else{
     // create one view per timestep
     for(int step = 0; step < vdata->getNumTimeSteps(); step++){
+      //if(!vdata->hasTimeStep(step)) continue;
       PViewDataList *out = getDataList(new PView());
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
@@ -513,7 +517,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
 // On high order maps, we draw only the elements that have a cut with
 // the levelset, this is as accurate as it should be
 
-static bool recur_sign_change(adaptiveTriangle *t, 
+static bool recur_sign_change(adaptiveTriangle *t,
                               const GMSH_LevelsetPlugin *plug)
 {
   if(!t->e[0] || t->visible){
@@ -540,10 +544,10 @@ static bool recur_sign_change(adaptiveTriangle *t,
     }
     t->visible = false;
     return false;
-  }      
+  }
 }
 
-static bool recur_sign_change(adaptiveQuadrangle *q, 
+static bool recur_sign_change(adaptiveQuadrangle *q,
                               const GMSH_LevelsetPlugin *plug)
 {
   if(!q->e[0] || q->visible){
@@ -571,10 +575,10 @@ static bool recur_sign_change(adaptiveQuadrangle *q,
     }
     q->visible = false;
     return false;
-  }      
+  }
 }
 
-static bool recur_sign_change(adaptiveTetrahedron *t, 
+static bool recur_sign_change(adaptiveTetrahedron *t,
                               const GMSH_LevelsetPlugin *plug)
 {
   if(!t->e[0] || t->visible){
@@ -610,7 +614,7 @@ static bool recur_sign_change(adaptiveTetrahedron *t,
     }
     t->visible = false;
     return false;
-  }      
+  }
 }
 
 static bool recur_sign_change(adaptiveHexahedron *t,
@@ -625,7 +629,7 @@ static bool recur_sign_change(adaptiveHexahedron *t,
     double v6 = plug->levelset(t->p[5]->X, t->p[5]->Y, t->p[5]->Z, t->p[5]->val);
     double v7 = plug->levelset(t->p[6]->X, t->p[6]->Y, t->p[6]->Z, t->p[6]->val);
     double v8 = plug->levelset(t->p[7]->X, t->p[7]->Y, t->p[7]->Z, t->p[7]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 && 
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0 &&
        v1 * v6 > 0 && v1 * v7 > 0 && v1 * v8 > 0)
       t->visible = false;
     else
@@ -654,7 +658,7 @@ static bool recur_sign_change(adaptiveHexahedron *t,
     }
     t->visible = false;
     return false;
-  }      
+  }
 }
 
 static bool recur_sign_change(adaptivePrism *t,
@@ -695,7 +699,7 @@ static bool recur_sign_change(adaptivePrism *t,
     }
     t->visible = false;
     return false;
-  }      
+  }
 }
 
 void GMSH_LevelsetPlugin::assignSpecificVisibility() const

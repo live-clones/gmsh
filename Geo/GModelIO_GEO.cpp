@@ -276,13 +276,14 @@ int GModel::importGEOInternals()
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
+      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
-      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(abs(num)); break;
-      case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(abs(num)); break;
-      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(abs(num)); break;
+      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(tag); break;
+      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(tag); break;
+      case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
+      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
       }
-      int pnum = sign(num) * p->Num;
+      int pnum = CTX::instance()->geom.orientedPhysicals ? (sign(num) * p->Num) : p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
          ge->physicals.end())
         ge->physicals.push_back(pnum);
@@ -303,14 +304,14 @@ int GModel::importGEOInternals()
        it != _geo_internals->periodicFaces.end(); ++it){
     GFace *gf = getFaceByTag(abs(it->first));
     if (gf)gf->setMeshMaster(it->second * (it->first > 0 ? 1 : -1));
-  }  
+  }
 
   for (eiter it = firstEdge() ; it != lastEdge() ; ++it){
     int meshMaster = (*it)->meshMaster();
     if (meshMaster != (*it)->tag()){
       GEdge *ge_master = getEdgeByTag(abs(meshMaster));
-      if(ge_master)(*it)->getBeginVertex()->setMeshMaster ( (meshMaster > 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());  
-      if(ge_master)(*it)->getEndVertex()->setMeshMaster ( (meshMaster < 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());  
+      if(ge_master)(*it)->getBeginVertex()->setMeshMaster ( (meshMaster > 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());
+      if(ge_master)(*it)->getEndVertex()->setMeshMaster ( (meshMaster < 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());
     }
   }
 

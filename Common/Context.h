@@ -60,7 +60,7 @@ struct contextGeometryOptions {
   int occSewFaces, occConnectFaces;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
-  int hideCompounds;
+  int hideCompounds, orientedPhysicals;
 };
 
 class CTX {
