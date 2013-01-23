@@ -2578,8 +2578,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #if defined(__APPLE__)
   if(CTX::instance()->systemMenuBar) mh = 0;
 #endif
-  int sh = 2 * FL_NORMAL_SIZE - 4; // status bar height
-  int sw = FL_NORMAL_SIZE + 3; // status button width
+  int sh = 2 * FL_NORMAL_SIZE - 5; // status bar height
+  int sw = FL_NORMAL_SIZE + 2; // status button width
 
   int mheight = main ? 10 /* dummy, nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
@@ -2638,7 +2638,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   // bottom button bar
   _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
-  _bottom->box(FL_FLAT_BOX);
+  _bottom->box(GMSH_SIMPLE_TOP_BOX);
 
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
@@ -2711,9 +2711,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
-  x += 4;
+  x += 6;
   _label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
-  _label->box(FL_THIN_DOWN_BOX);
+  _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
 
