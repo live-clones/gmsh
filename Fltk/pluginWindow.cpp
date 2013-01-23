@@ -315,7 +315,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
   browser->box(FL_FLAT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
 
-  view_browser = new Fl_Multi_Browser(L1, 0, L2, height);
+  view_browser = new Fl_Multi_Browser(L1 + 1, 0, L2 - 1, height);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
   view_browser->box(FL_FLAT_BOX);

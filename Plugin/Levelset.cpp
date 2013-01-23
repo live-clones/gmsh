@@ -291,7 +291,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
       // check which edges cut the iso and interpolate the value
       if(wstep < 0) otherstep = step;
 
-      //if(!wdata->hasTimeStep(otherstep)) continue;
+      if(!wdata->hasTimeStep(otherstep)) continue;
 
       int np = 0;
       double xp[12], yp[12], zp[12], valp[12][9];
@@ -488,7 +488,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   else{
     // create one view per timestep
     for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-      //if(!vdata->hasTimeStep(step)) continue;
+      if(!vdata->hasTimeStep(step)) continue;
       PViewDataList *out = getDataList(new PView());
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){

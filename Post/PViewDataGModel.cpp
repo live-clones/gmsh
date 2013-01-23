@@ -292,8 +292,10 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 {
   if(step < 0 || _steps.empty()){
     SBoundingBox3d tmp;
-    for(unsigned int i = 0; i < _steps.size(); i++)
-      tmp += _steps[i]->getBoundingBox();
+    for(unsigned int i = 0; i < _steps.size(); i++){
+      if(!_steps[i]->getBoundingBox().empty())
+        tmp += _steps[i]->getBoundingBox();
+    }
     return tmp;
   }
   return _steps[step]->getBoundingBox();

@@ -48,10 +48,8 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
 
 void PViewDataGModel::destroyData()
 {
-  for(unsigned int i=0;i<_steps.size();i++)
-  {
+  for(unsigned int i = 0; i < _steps.size(); i++)
     _steps[i]->destroyData();
-  }
 }
 
 bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fileName,
