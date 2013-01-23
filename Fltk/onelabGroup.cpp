@@ -660,7 +660,8 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
   const char *old = 0;
   if(!c->getExecutable().empty()) old = c->getExecutable().c_str();
 
-  if(fileChooser(FILE_CHOOSER_SINGLE, "Choose executable", pattern.c_str(), old)){
+  std::string title = "Choose location of " + c->getName() + " executable";
+  if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old)){
     std::string exe = fileChooserGetName(1);
     c->setExecutable(exe);
     if(c->getIndex() >= 0 && c->getIndex() < 5)
