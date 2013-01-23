@@ -3,6 +3,8 @@
 Mesh.Algorithm = 9; //8 = delquad or 9= 2D R-tree
 Mesh.Algorithm3D = 9; // 3D R-tree
 Mesh.Recombine3DAll = 1; 
+Mesh.RecombineAll = 1; 
+//Mesh.RecombinationAlgorithm = 2;
 Mesh.Smoothing = 0;
 
 lc = 1;

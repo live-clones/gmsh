@@ -578,16 +578,18 @@ static void Mesh3D(GModel *m)
   std::vector<std::vector<GRegion*> > connected;
   FindConnectedRegions(delaunay, connected);
 
-  /*
+  // remove quads elements for volumes that are recombined
   for(unsigned int i = 0; i < connected.size(); i++){
     for(unsigned j=0;j<connected[i].size();j++){
       GRegion *gr = connected[i][j];
-      std::list<GFace*> f = gr->faces();
-      for (std::list<GFace*>::iterator it = f.begin();
-	   it != f.end() ; ++it) quadsToTriangles (*it,1000000);
+      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
+	std::list<GFace*> f = gr->faces();
+	for (std::list<GFace*>::iterator it = f.begin();
+	     it != f.end() ; ++it) quadsToTriangles (*it,1000000);
+      }
     }
   }
-  */
+  
   for(unsigned int i = 0; i < connected.size(); i++){    
     MeshDelaunayVolume(connected[i]);
 
