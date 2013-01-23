@@ -2,9 +2,11 @@ Mesh.RemeshParametrization=7; //0=harmonic_circle, 1=conformal, 2=rbf, 3=harmoni
 Mesh.RemeshAlgorithm=1; //(0) nosplit (1) automatic (2) split only with metis
 Mesh.Algorithm=6; //(1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
 
+lc = 0.3;
+
 Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthMin = 0.02;
-Mesh.CharacteristicLengthMax = 0.02;
+Mesh.CharacteristicLengthMin = lc;
+Mesh.CharacteristicLengthMax = lc;
 Mesh.LcIntegrationPrecision = 1.e-5;
 Mesh.MinimumCirclePoints = 50;
 Mesh.CharacteristicLengthExtendFromBoundary = 0;
@@ -28,3 +30,4 @@ For i In {0 : #ss[]-1}
   Compound Surface(i+100) = ss[i];
   Physical Surface(i+1) = { i+100 };
 EndFor
+

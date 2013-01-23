@@ -152,6 +152,7 @@ class Surface{
   double RecombineAngle;
   int TransfiniteSmoothing;
   List_T *Generatrices;
+  List_T *GeneratricesByTag;
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;
   List_T *TrsfPoints;

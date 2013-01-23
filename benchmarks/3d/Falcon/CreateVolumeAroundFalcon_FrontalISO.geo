@@ -1,19 +1,21 @@
-Mesh.Algorithm3D=4; //1-Delaunay, 4-Frontal, 5-Frontal Delaunay 6-Frontal hex, 7-MMG3D, 9-RTree
+//Mesh.Algorithm3D=4; //1-Delaunay, 4-Frontal, 5-Frontal Delaunay 6-Frontal hex, 7-MMG3D, 9-RTree
 
-Mesh.CharacteristicLengthFactor = 1.2/10;
+lc = 0.3;
+Mesh.CharacteristicLengthMin = lc;
+Mesh.CharacteristicLengthMax = lc;
 
-Merge "InitialMeshFalcon.stl";
-//Merge "SurfaceMeshUniform.stl";
+//Merge "InitialMeshFalcon.stl";
+Merge "SurfaceMeshUniform.stl";
 //Merge "SurfaceMeshAnisoCurvature.stl";
 
 CreateTopology;
 
 z0 = 0.272342;
-zmax = 15.0;
-xmin = -27.0;
-xmax = 10.32;
-ymin = -10.0;
-ymax = 10.0;
+zmax = 11;
+xmin = -20;
+xmax = 3;
+ymin = -3.0;
+ymax = 6.0;
 
 Point(20001) = {xmin, ymin, z0};
 Point(20002) = {xmax, ymin, z0};
@@ -54,3 +56,7 @@ Plane Surface(7) = {27};
 Surface Loop(8) = {1,2,3,4,5,6,7};
 Volume(1) = {8};
 
+Physical Surface(1) = {1};
+Physical Surface(2) = {5, 4, 3, 2, 6};
+Physical Surface(3) = {7};
+Physical Volume(4) = {1};

@@ -24,33 +24,52 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 
   edgeCounterparts = s->edgeCounterparts;
 
-  std::list<GEdge*> l_wire;
-  GVertex *first = 0;
+  std::vector<GEdge*> eds;
+  std::vector<int> nums;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->getEdgeByTag(abs(c->Num));
     if(e){
-      GVertex *start = (c->Num > 0) ? e->getBeginVertex() : e->getEndVertex();
-      GVertex *next  = (c->Num > 0) ? e->getEndVertex() : e->getBeginVertex();
-      if (!first) first = start;
-      l_wire.push_back(e);
-      if (next == first){
-        edgeLoops.push_back(GEdgeLoop(l_wire));
-        l_wire.clear();
-        first = 0;
-      }
-
-      l_edges.push_back(e);
-      e->addFace(this);
-      l_dirs.push_back((c->Num > 0) ? 1 : -1);
-      if (List_Nbr(s->Generatrices) == 2){
-        e->meshAttributes.minimumMeshSegments =
-          std::max(e->meshAttributes.minimumMeshSegments, 2);
-      }
+      eds.push_back(e);
+      nums.push_back(c->Num);
     }
     else
       Msg::Error("Unknown curve %d", c->Num);
+  }
+  for(int i = 0; i < List_Nbr(s->GeneratricesByTag); i++){
+    int j;
+    List_Read(s->GeneratricesByTag, i, &j);
+    GEdge *e = m->getEdgeByTag(abs(j));
+    if(e){
+      eds.push_back(e);
+      nums.push_back(j);
+    }
+    else
+      Msg::Error("Unknown curve %d", j);
+  }
+
+  std::list<GEdge*> l_wire;
+  GVertex *first = 0;
+  for(unsigned int i = 0; i < eds.size(); i++){
+    GEdge *e = eds[i];
+    int num = nums[i];
+    GVertex *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
+    GVertex *next  = (num > 0) ? e->getEndVertex() : e->getBeginVertex();
+    if (!first) first = start;
+    l_wire.push_back(e);
+    if (next == first){
+      edgeLoops.push_back(GEdgeLoop(l_wire));
+      l_wire.clear();
+      first = 0;
+    }
+    l_edges.push_back(e);
+    e->addFace(this);
+    l_dirs.push_back((num > 0) ? 1 : -1);
+    if (List_Nbr(s->Generatrices) == 2){
+      e->meshAttributes.minimumMeshSegments =
+        std::max(e->meshAttributes.minimumMeshSegments, 2);
+    }
   }
 
   // always compute and store the mean plane for plane surfaces (using
@@ -331,7 +350,7 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
 bool gmshFace::buildSTLTriangulation(bool force)
 {
   return false;
-  
+
   if(va_geom_triangles){
     if(force)
       delete va_geom_triangles;
@@ -355,8 +374,8 @@ bool gmshFace::buildSTLTriangulation(bool force)
     CTX::instance()->mesh.lcFactor = 1;
     CTX::instance()->mesh.order = 1;
     CTX::instance()->mesh.lcIntegrationPrecision = 1.e-3;
-    //  CTX::instance()->mesh.Algorithm = 5;    
-    model()->mesh(2);    
+    //  CTX::instance()->mesh.Algorithm = 5;
+    model()->mesh(2);
     CTX::instance()->mesh = _temp;
     fields->setBackgroundField(fields->get(BGM));
   }
@@ -400,5 +419,5 @@ bool gmshFace::buildSTLTriangulation(bool force)
   }
   va_geom_triangles->finalize();
   return true;
-  
+
 }
