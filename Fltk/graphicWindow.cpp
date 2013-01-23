@@ -2770,8 +2770,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(main){
     _browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
     _browser->box(GMSH_SIMPLE_TOP_BOX);
-    _browser->textfont(FL_COURIER);
-    _browser->textsize(FL_NORMAL_SIZE - 1);
+    _browser->textfont(FL_SCREEN);
+    _browser->textsize(FL_NORMAL_SIZE - 2);
     _browser->type(FL_MULTI_BROWSER);
     _browser->callback(message_browser_cb, this);
     _browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
