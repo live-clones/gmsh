@@ -631,6 +631,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
   pV->SurfacesByTag = List_Create(1, 2, sizeof(int));
   pV->Extrude = NULL;
+  pV->Recombine3D = 0;
   return pV;
 }
 

@@ -1067,7 +1067,12 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
 {
   setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
-    fprintf(fp, " %d", getVertex(i)->getIndex());
+    if (getTypeForMSH() == MSH_TET_10 && i == 8)
+      fprintf(fp, " %d", getVertex(9)->getIndex());
+    else if (getTypeForMSH() == MSH_TET_10 && i == 9)
+      fprintf(fp, " %d", getVertex(8)->getIndex());
+    else
+      fprintf(fp, " %d", getVertex(i)->getIndex());
   fprintf(fp, " %d\n", (elementTagType == 3) ? _partition :
           (elementTagType == 2) ? physical : elementary);
 }

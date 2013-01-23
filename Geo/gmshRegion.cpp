@@ -39,6 +39,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
       Msg::Error("Unknown surface %d", is);
   }
   resetMeshAttributes();
+
 }
 
 void gmshRegion::resetMeshAttributes()

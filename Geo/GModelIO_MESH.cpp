@@ -109,8 +109,7 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[6], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
-                 &n[3], &n[4], &n[5], &cl);
+          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &n[4], &n[5],&cl);
           for(int j = 0; j < 6; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(6, n, vertexVector, vertices)) return 0;
@@ -155,8 +154,7 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[10], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
-                 &n[3], &n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],&n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
           for(int j = 0; j < 10; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(10, n, vertexVector, vertices)) return 0;
@@ -204,7 +202,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
 
   int numVertices = indexMeshVertices(saveAll);
 
-  fprintf(fp, " MeshVersionFormatted 1\n");
+  fprintf(fp, " MeshVersionFormatted 2\n");
   fprintf(fp, " Dimension\n");
   fprintf(fp, " 3\n");
 

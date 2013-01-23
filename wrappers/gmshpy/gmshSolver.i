@@ -8,6 +8,7 @@
 #if defined(HAVE_SOLVER)
   #include "dofManager.h"
   #include "elasticitySolver.h"
+  #include "frameSolver.h"
   #include "linearSystem.h"
   #include "linearSystemCSR.h"
   #include "linearSystemFull.h"
@@ -20,6 +21,7 @@
 %include "dofManager.h"
 %template(dofManagerDouble) dofManager<double>;
 %include "elasticitySolver.h"
+%include "frameSolver.h"
 %include "linearSystem.h"
 %template(linearSystemDouble) linearSystem<double>;
 %template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;

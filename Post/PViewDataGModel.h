@@ -154,7 +154,8 @@ class PViewDataGModel : public PViewData {
     NodeData = 1,
     ElementData = 2,
     ElementNodeData = 3,
-    GaussPointData = 4
+    GaussPointData = 4,
+    BeamData = 5
   };
  private:
   // the data, indexed by time step

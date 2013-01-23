@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "MTriangle.h"
 #include "VertexArray.h"
+#include "Field.h"
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
@@ -330,7 +331,7 @@ bool gmshFace::containsPoint(const SPoint3 &pt) const
 bool gmshFace::buildSTLTriangulation(bool force)
 {
   return false;
-  /*
+  
   if(va_geom_triangles){
     if(force)
       delete va_geom_triangles;
@@ -341,31 +342,34 @@ bool gmshFace::buildSTLTriangulation(bool force)
   stl_vertices.clear();
   stl_triangles.clear();
 
-  contextMeshOptions _temp = CTX::instance()->mesh;
 
-  CTX::instance()->mesh.lcFromPoints = 0;
-  CTX::instance()->mesh.lcFromCurvature = 1;
-  CTX::instance()->mesh.lcExtendFromBoundary = 0;
-  CTX::instance()->mesh.scalingFactor = 1;
-  CTX::instance()->mesh.lcFactor = 1;
-  CTX::instance()->mesh.order = 1;
-  CTX::instance()->mesh.lcIntegrationPrecision = 1.e-5;
-  std::for_each(l_edges.begin(), l_edges.end(), meshGEdge(true));
-  meshGFace mesher (false,true);
-  mesher(this);
-  printf("%d triangles face %d\n",triangles_stl.size(),tag());
-  CTX::instance()->mesh = _temp;
+  if (!triangles.size()){
+    contextMeshOptions _temp = CTX::instance()->mesh;
+    FieldManager *fields = model()->getFields();
+    int BGM  = fields->getBackgroundField();
+    fields->setBackgroundField(0);
+    CTX::instance()->mesh.lcFromPoints = 0;
+    CTX::instance()->mesh.lcFromCurvature = 1;
+    CTX::instance()->mesh.lcExtendFromBoundary = 0;
+    CTX::instance()->mesh.scalingFactor = 1;
+    CTX::instance()->mesh.lcFactor = 1;
+    CTX::instance()->mesh.order = 1;
+    CTX::instance()->mesh.lcIntegrationPrecision = 1.e-3;
+    //  CTX::instance()->mesh.Algorithm = 5;    
+    model()->mesh(2);    
+    CTX::instance()->mesh = _temp;
+    fields->setBackgroundField(fields->get(BGM));
+  }
 
   std::map<MVertex*,int> _v;
   int COUNT =0;
-  for (int j = 0; j < triangles_stl.size(); j++){
-    int C[3];
+  for (int j = 0; j < triangles.size(); j++){
     for (int i=0;i<3;i++){
       std::map<MVertex*,int>::iterator it =
-        _v.find(triangles_stl[j]->getVertex(j));
+        _v.find(triangles[j]->getVertex(j));
       if (it != _v.end()){
         stl_triangles.push_back(COUNT);
-        _v[triangles_stl[j]->getVertex(j)] = COUNT++;
+        _v[triangles[j]->getVertex(j)] = COUNT++;
       }
       else stl_triangles.push_back(it->second);
     }
@@ -396,5 +400,5 @@ bool gmshFace::buildSTLTriangulation(bool force)
   }
   va_geom_triangles->finalize();
   return true;
-  */
+  
 }

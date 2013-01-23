@@ -18,8 +18,9 @@
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 
-static const double FACTOR = .71;
+static const double FACTOR = .81;
 static const int NUMDIR = 3;
+//static const double DIRS [NUMDIR] = {0.0};
 static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 
 /// a rectangle in the tangent plane is transformed
@@ -35,6 +36,7 @@ struct surfacePointWithExclusionRegion {
   SPoint2 _p[4][NUMDIR];
   SPoint2 _q[4];
   SMetric3 _meshMetric;
+  double _distanceSummed;
   /*
          + p3
     p4   |    
@@ -44,12 +46,23 @@ struct surfacePointWithExclusionRegion {
 
 */
 
-  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SMetric3 & meshMetric){
-    _meshMetric = meshMetric;
+  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SMetric3 & meshMetric, surfacePointWithExclusionRegion *father = 0){
     _v = v;
+    _meshMetric = meshMetric;
     _center = (p[0][0]+p[1][0]+p[2][0]+p[3][0])*.25;
     for (int i=0;i<4;i++)_q[i] = _center + (p[i][0]+p[(i+1)%4][0]-_center*2)*FACTOR;
     for (int i=0;i<4;i++)for (int j=0;j<NUMDIR;j++)_p[i][j] = p[i][j];
+
+    if (!father){
+      fullMatrix<double> V(3,3);
+      fullVector<double> S(3);
+      meshMetric.eig(V,S);
+      double l = std::max(std::max(S(0),S(1)),S(2));
+      _distanceSummed = sqrt(1/(l*l));
+    }
+    else {
+      _distanceSummed = father->_distanceSummed + distance (father->_v,_v);
+    }
   }
   bool inExclusionZone (const SPoint2 &p){
     double mat[2][2];
@@ -87,6 +100,19 @@ struct my_wrapper {
   SPoint2 _p;
   my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
 };
+
+class compareSurfacePointWithExclusionRegionPtr
+{
+ public:
+  inline bool operator () (const surfacePointWithExclusionRegion *a, const surfacePointWithExclusionRegion *b)  const
+  {
+    if(a->_distanceSummed > b->_distanceSummed) return false;
+    if(a->_distanceSummed < b->_distanceSummed) return true;
+    return a<b;
+  }
+};
+
+
 
 
 bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
@@ -294,7 +320,8 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   }
 
   // put boundary vertices in a fifo queue  
-  std::queue<surfacePointWithExclusionRegion*> fifo;
+  // std::queue<surfacePointWithExclusionRegion*> fifo;
+  std::set<surfacePointWithExclusionRegion*,  compareSurfacePointWithExclusionRegionPtr> fifo;
   std::vector<surfacePointWithExclusionRegion*> vertices;
   // put the RTREE
   RTree<surfacePointWithExclusionRegion*,double,2,double> rtree;
@@ -305,7 +332,8 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     compute4neighbors (gf, *it, false, newp, metricField);
     surfacePointWithExclusionRegion *sp = 
       new surfacePointWithExclusionRegion (*it, newp, metricField);    
-    fifo.push(sp); 
+    //    fifo.push(sp); 
+    fifo.insert(sp); 
     vertices.push_back(sp); 
     double _min[2],_max[2];
     sp->minmax(_min,_max);
@@ -319,8 +347,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
   while(!fifo.empty()){
     //surfacePointWithExclusionRegion & parent = fifo.top();
-    surfacePointWithExclusionRegion * parent = fifo.front();
-    fifo.pop();
+    //    surfacePointWithExclusionRegion * parent = fifo.front();
+    surfacePointWithExclusionRegion * parent = *fifo.begin();
+    //    fifo.pop();
+    fifo.erase(fifo.begin());
     for (int dir=0;dir<NUMDIR;dir++){
       //      printf("dir = %d\n",dir);
       int countOK = 0;
@@ -335,8 +365,9 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 	  //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
 	  compute4neighbors (gf, v, false, newp, metricField);
 	  surfacePointWithExclusionRegion *sp = 
-	    new surfacePointWithExclusionRegion (v, newp, metricField);    
-	  fifo.push(sp); 
+	    new surfacePointWithExclusionRegion (v, newp, metricField, parent);    
+	  //	  fifo.push(sp); 
+	  fifo.insert(sp); 
 	  vertices.push_back(sp); 
 	  double _min[2],_max[2];
 	  sp->minmax(_min,_max);

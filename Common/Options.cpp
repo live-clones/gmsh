@@ -5176,12 +5176,10 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
 {
-#if defined(HAVE_FLTK)
   if(action & GMSH_SET){
     CTX::instance()->mesh.recombine3DAll = (int)val;
-#if defined(HAVE_FLTK)
-#endif
   }
+#if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->mesh.butt[22]->value
       (CTX::instance()->mesh.recombine3DAll);

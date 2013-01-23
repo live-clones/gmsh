@@ -121,6 +121,8 @@ PView::PView(const std::string &name, const std::string &type,
     t = PViewDataGModel::ElementData;
   else if(type == "ElementNodeData")
     t = PViewDataGModel::ElementNodeData;
+  else if(type == "Beam")
+    t = PViewDataGModel::BeamData;
   else{
     Msg::Error("Unknown type of view to create '%s'", type.c_str());
     return;

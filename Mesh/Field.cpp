@@ -1667,20 +1667,16 @@ class AttractorField : public Field
       offset.push_back(0);
       for(std::list<int>::iterator it = faces_id.begin();
           it != faces_id.end(); ++it) {
-        Surface *s = FindSurface(*it);
-        if(!s) {
-          GFace *f = GModel::current()->getFaceByTag(*it);
-	  if (f){
-	    SBoundingBox3d bb = f->bounds();
-	    SVector3 dd = bb.max() - bb.min();
-	    double maxDist = dd.norm() / n_nodes_by_edge ;
-	    f->fillPointCloud(maxDist, &points, &uvpoints);
-	    offset.push_back(points.size());
-	  }
+	GFace *f = GModel::current()->getFaceByTag(*it);
+	if (f){
+	  SBoundingBox3d bb = f->bounds();
+	  SVector3 dd = bb.max() - bb.min();
+	  double maxDist = dd.norm() / n_nodes_by_edge ;
+	  f->fillPointCloud(maxDist, &points, &uvpoints);
+	  offset.push_back(points.size());
 	}
       }
-
-
+       
       int totpoints =
 	nodes_id.size() +
 	(n_nodes_by_edge-2) * edges_id.size() +
@@ -1697,45 +1693,25 @@ class AttractorField : public Field
       int k = 0;
       for(std::list<int>::iterator it = nodes_id.begin();
           it != nodes_id.end(); ++it) {
-        Vertex *v = FindPoint(*it);
-        if(v) {
-          getCoord(v->Pos.X, v->Pos.Y, v->Pos.Z, zeronodes[k][0],
-                   zeronodes[k][1], zeronodes[k][2]);
+	GVertex *gv = GModel::current()->getVertexByTag(*it);
+	if(gv) {
+	  getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0],
+		   zeronodes[k][1], zeronodes[k][2], gv);
 	  _infos[k++] = AttractorInfo(*it,0,0,0);
-        }
-        else {
-          GVertex *gv = GModel::current()->getVertexByTag(*it);
-          if(gv) {
-            getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0],
-                     zeronodes[k][1], zeronodes[k][2], gv);
-	    _infos[k++] = AttractorInfo(*it,0,0,0);
-          }
         }
       }
       for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
-        Curve *c = FindCurve(*it);
-        if(c) {
-          for(int i = 1; i < n_nodes_by_edge -1 ; i++) {
-            double u = (double)i / (n_nodes_by_edge - 1);
-            Vertex V = InterpolateCurve(c, u, 0);
-            getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0],
-                     zeronodes[k][1], zeronodes[k][2]);
+	GEdge *e = GModel::current()->getEdgeByTag(*it);
+	if(e) {
+	  for(int i = 1; i < n_nodes_by_edge - 1; i++) {
+	    double u = (double)i / (n_nodes_by_edge - 1);
+	    Range<double> b = e->parBounds(0);
+	    double t = b.low() + u * (b.high() - b.low());
+	    GPoint gp = e->point(t);
+	    getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
+		     zeronodes[k][1], zeronodes[k][2], e);
 	    _infos[k++] = AttractorInfo(*it,1,u,0);
-          }
-        }
-        else {
-	  GEdge *e = GModel::current()->getEdgeByTag(*it);
-          if(e) {
-            for(int i = 1; i < n_nodes_by_edge - 1; i++) {
-              double u = (double)i / (n_nodes_by_edge - 1);
-              Range<double> b = e->parBounds(0);
-              double t = b.low() + u * (b.high() - b.low());
-              GPoint gp = e->point(t);
-              getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-                       zeronodes[k][1], zeronodes[k][2], e);
-	      _infos[k++] = AttractorInfo(*it,1,u,0);
-            }
           }
         }
       }
@@ -1745,49 +1721,37 @@ class AttractorField : public Field
       int count = 0;
       for(std::list<int>::iterator it = faces_id.begin();
           it != faces_id.end(); ++it) {
-        Surface *s = FindSurface(*it);
-        if(s) {
-          for(int i = 0; i < n_nodes_by_edge; i++) {
-            for(int j = 0; j < n_nodes_by_edge; j++) {
-              double u = (double)i / (n_nodes_by_edge - 1);
-              double v = (double)j / (n_nodes_by_edge - 1);
-              Vertex V = InterpolateSurface(s, u, v, 0, 0);
-              getCoord(V.Pos.X, V.Pos.Y, V.Pos.Z, zeronodes[k][0],
-                       zeronodes[k][1], zeronodes[k][2]);
-	      _infos[k++] = AttractorInfo(*it,2,u,v);
-            }
-          }
-        }
-        else {
-          GFace *f = GModel::current()->getFaceByTag(*it);
-          if(f) {
-	    if (points.size()){
-	      for(int j = offset[count]; j < offset[count+1];j++) {
-		zeronodes[k][0] = points[j].x();
-		zeronodes[k][1] = points[j].y();
-		zeronodes[k][2] = points[j].z();
-		_infos[k++] = AttractorInfo(*it,2,uvpoints[j].x(),uvpoints[j].y());
-	      }
-	      count++;
+	GFace *f = GModel::current()->getFaceByTag(*it);
+	if(f) {
+	  if (points.size()){
+	    for(int j = offset[count]; j < offset[count+1];j++) {
+	      zeronodes[k][0] = points[j].x();
+	      zeronodes[k][1] = points[j].y();
+	      zeronodes[k][2] = points[j].z();
+	      _infos[k++] = AttractorInfo(*it,2,uvpoints[j].x(),uvpoints[j].y());
 	    }
-	    else{
-	      for(int i = 0; i < n_nodes_by_edge; i++) {
-		for(int j = 0; j < n_nodes_by_edge; j++) {
-		  double u = (double)i / (n_nodes_by_edge - 1);
-		  double v = (double)j / (n_nodes_by_edge - 1);
-		  Range<double> b1 = ge->parBounds(0);
-		  Range<double> b2 = ge->parBounds(1);
-		  double t1 = b1.low() + u * (b1.high() - b1.low());
-		  double t2 = b2.low() + v * (b2.high() - b2.low());
-		  GPoint gp = f->point(t1, t2);
-		  getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-			   zeronodes[k][1], zeronodes[k][2], f);
-		  _infos[k++] = AttractorInfo(*it,2,u,v);
-		}
+	    count++;
+	  }
+	  else{
+	    for(int i = 0; i < n_nodes_by_edge; i++) {
+	      for(int j = 0; j < n_nodes_by_edge; j++) {
+		double u = (double)i / (n_nodes_by_edge - 1);
+		double v = (double)j / (n_nodes_by_edge - 1);
+		Range<double> b1 = f->parBounds(0);
+		Range<double> b2 = f->parBounds(1);
+		double t1 = b1.low() + u * (b1.high() - b1.low());
+		double t2 = b2.low() + v * (b2.high() - b2.low());
+		GPoint gp = f->point(t1, t2);
+		getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
+			 zeronodes[k][1], zeronodes[k][2], f);
+		_infos[k++] = AttractorInfo(*it,2,u,v);
 	      }
-            }
-          }
-        }
+	    }
+	  }
+	}
+	else {
+	  printf("face %d not yet created\n",*it);
+	}
       }
       kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
       update_needed = false;
@@ -1991,24 +1955,37 @@ void BoundaryLayerField::operator() (double x, double y, double z,
 
   current_distance = 1.e22;
   current_closest = 0;
-  SMetric3 v (1./MAX_LC);
   std::vector<SMetric3> hop;
+  SMetric3 v (1./(CTX::instance()->mesh.lcMax*CTX::instance()->mesh.lcMax));
+  hop.push_back(v);
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
        it != _att_fields.end(); ++it){
     double cdist = (*(*it)) (x, y, z);
+    AttractorInfo ainfo= (*it)->getAttractorInfo().first;
     SPoint3 CLOSEST= (*it)->getAttractorInfo().second;
 
-    SMetric3 localMetric;
-    if (iIntersect){
-      (*this)(*it, cdist,x, y, z, localMetric, ge);
-      hop.push_back(localMetric);
+    bool doNotConsider = false;
+    if (ge->dim () == ainfo.dim && ge->tag() == ainfo.ent){
+      //      doNotConsider = true;
     }
-    if (cdist < current_distance){
-      if (!iIntersect)(*this)(*it, cdist,x, y, z, localMetric, ge);
-      current_distance = cdist;
-      current_closest = *it;
-      v = localMetric;
-      _closest_point = CLOSEST;
+    else if (ge->dim () == 1 && ainfo.dim == 2){
+      GFace *gf = ge->model()->getFaceByTag(ainfo.ent);
+      //     if (gf->containsEdge(ge->tag()))doNotConsider  = true;      
+    } 
+    
+    if (!doNotConsider) {
+      SMetric3 localMetric;
+      if (iIntersect){
+	(*this)(*it, cdist,x, y, z, localMetric, ge);
+	hop.push_back(localMetric);
+      }
+      if (cdist < current_distance){
+	if (!iIntersect)(*this)(*it, cdist,x, y, z, localMetric, ge);
+	current_distance = cdist;
+	current_closest = *it;
+	v = localMetric;
+	_closest_point = CLOSEST;
+      }
     }
   }
   if (iIntersect)

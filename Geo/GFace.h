@@ -93,6 +93,11 @@ class GFace : public GEntity
   // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
   virtual std::list<int> edgeOrientations() const { return l_dirs; }
+  inline bool containsEdge (int iEdge) const {
+    for (std::list<GEdge*>::const_iterator it = l_edges.begin() ; it !=l_edges.end() ; ++it)
+      if ((*it)->tag() == iEdge) return true;
+    return false;
+  }
 
   // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }

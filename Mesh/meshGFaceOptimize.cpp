@@ -2182,7 +2182,7 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 
 int untangleInvalidQuads(GFace *gf, int niter)
 {
-  //  return;
+  //  return 0;
   int N = 0;
 #if defined(HAVE_BFGS)
   v2t_cont adj;

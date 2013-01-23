@@ -16,6 +16,7 @@ elasticitySolver.cpp
   multiscaleLaplace.cpp
 functionSpace.cpp
   filters.cpp
+  frameSolver.cpp
   sparsityPattern.cpp
   STensor43.cpp
   STensor33.cpp

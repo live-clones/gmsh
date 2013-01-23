@@ -1534,8 +1534,8 @@ void bowyerWatsonParallelograms(GFace *gf)
       packed[i]->getParameter(1,newPoint[1]);
       delete packed[i];
       double metric[3];
-      buildMetric(gf, newPoint, metrics[i], metric);
-	    //buildMetric(gf, newPoint, metric);
+      //      buildMetric(gf, newPoint, metrics[i], metric);
+      buildMetric(gf, newPoint, metric);
 
       bool success = insertAPoint( gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
       if (!success) oneNewTriangle = 0;
