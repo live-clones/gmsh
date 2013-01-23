@@ -661,7 +661,8 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 {
   if(!opengl){
     static char buff[1024];
-    strncpy(buff, msg.c_str(), sizeof(buff) - 1);
+    std::string tmp = std::string(" ") + msg;
+    strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
     for(unsigned int i = 0; i < graph.size(); i++){
       graph[i]->getProgress()->label(buff);

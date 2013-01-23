@@ -2711,7 +2711,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   }
 
-  x += 6;
+  x += 4;
   _label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
