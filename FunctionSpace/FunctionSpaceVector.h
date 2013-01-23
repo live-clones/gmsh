@@ -19,7 +19,7 @@
 
 class FunctionSpaceVector : public FunctionSpace{
  public:
-  FunctionSpaceVector(const GroupOfElement& goe, const Basis& basis);
+  FunctionSpaceVector(GroupOfElement& goe, const Basis& basis);
   virtual ~FunctionSpaceVector(void);
 
   fullVector<double>

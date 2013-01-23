@@ -1,7 +1,7 @@
 #include "Mapper.h"
 #include "FunctionSpaceVector.h"
 
-FunctionSpaceVector::FunctionSpaceVector(const GroupOfElement& goe,
+FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe,
                                          const Basis& basis){
   scalar = false;
   build(goe, basis);

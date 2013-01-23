@@ -1,6 +1,6 @@
 #include "FunctionSpaceScalar.h"
 
-FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
+FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe,
                                          const Basis& basis){
   scalar = true;
   build(goe, basis);

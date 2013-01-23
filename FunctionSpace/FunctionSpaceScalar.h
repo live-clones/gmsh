@@ -18,7 +18,7 @@
 
 class FunctionSpaceScalar : public FunctionSpace{
  public:
-  FunctionSpaceScalar(const GroupOfElement& goe, const Basis& basis);
+  FunctionSpaceScalar(GroupOfElement& goe, const Basis& basis);
   virtual ~FunctionSpaceScalar(void);
 
   double

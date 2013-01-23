@@ -40,8 +40,8 @@
 class FunctionSpace{
  protected:
   // Geometry //
-  const Mesh*           mesh;
-  const GroupOfElement* goe;
+  const Mesh*     mesh;
+  GroupOfElement* goe;
 
   // Basis //
   std::vector<const Basis*>* basis;
@@ -68,8 +68,8 @@ class FunctionSpace{
   const Basis&                     getBasis(unsigned int i) const;
   unsigned int                     getNBasis(void) const;
 
-  const GroupOfElement& getSupport(void) const;
-  bool                  isScalar(void) const;
+  GroupOfElement& getSupport(void) const;
+  bool            isScalar(void) const;
 
   std::vector<Dof> getKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MVertex& vertex) const;
@@ -88,7 +88,7 @@ class FunctionSpace{
   // Init
   FunctionSpace(void);
 
-  void build(const GroupOfElement& goe,
+  void build(GroupOfElement& goe,
 	     const Basis& basis);
 
   // Dof
@@ -187,7 +187,7 @@ inline unsigned int FunctionSpace::getNBasis(void) const{
   return nBasis;
 }
 
-inline const GroupOfElement& FunctionSpace::getSupport(void) const{
+inline GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
 

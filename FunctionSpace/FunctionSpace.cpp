@@ -42,7 +42,7 @@ FunctionSpace::~FunctionSpace(void){
     delete eToGod;
 }
 
-void FunctionSpace::build(const GroupOfElement& goe,
+void FunctionSpace::build(GroupOfElement& goe,
                           const Basis& basis){
 
   // Save GroupOfElement & Mesh //
