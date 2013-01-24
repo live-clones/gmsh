@@ -660,6 +660,14 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
   const char *old = 0;
   if(!c->getExecutable().empty()) old = c->getExecutable().c_str();
 
+  if(!w){
+    const char *old = fl_close;
+    fl_close = "OK";
+    fl_message("This appears to be the first time you are trying to run %s.\n\n"
+               "Please select the path to the executable.", c->getName().c_str());
+    fl_close = old;
+  }
+
   std::string title = "Choose location of " + c->getName() + " executable";
   if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old)){
     std::string exe = fileChooserGetName(1);
@@ -1506,8 +1514,11 @@ void onelabGroup::rebuildSolverList()
 void onelabGroup::addSolver(const std::string &name, const std::string &executable,
                             const std::string &remoteLogin, int index)
 {
-  if(onelab::server::instance()->findClient(name) !=
-     onelab::server::instance()->lastClient()) return; // solver already exists
+  onelab::server::citer it = onelab::server::instance()->findClient(name);
+  if(it != onelab::server::instance()->lastClient()){
+    if(executable.empty()) onelab_choose_executable_cb(0, (void *)it->second);
+    return; // solver already exists
+  }
 
   // unregister the other non-local clients so we keep only the new one
   std::vector<onelab::client*> networkClients;
@@ -1525,8 +1536,7 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
                                                                  remoteLogin);
   c->setIndex(index);
   opt_solver_name(index, GMSH_SET, name);
-  if(executable.empty())
-    onelab_choose_executable_cb(0, (void *)c);
+  if(executable.empty()) onelab_choose_executable_cb(0, (void *)c);
   opt_solver_remote_login(index, GMSH_SET, remoteLogin);
 
   FlGui::instance()->onelab->rebuildSolverList();
