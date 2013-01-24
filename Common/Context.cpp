@@ -23,8 +23,13 @@ CTX::CTX()
   const char *tmp;
   if((tmp = GetEnvironmentVar("GMSH_HOME")))
     homeDir = tmp;
+#if defined(WIN32)
+  else if((tmp = GetEnvironmentVar("APPDATA")))
+    homeDir = tmp;
+#else
   else if((tmp = GetEnvironmentVar("HOME")))
     homeDir = tmp;
+#endif
   else if((tmp = GetEnvironmentVar("TMP")))
     homeDir = tmp;
   else if((tmp = GetEnvironmentVar("TEMP")))
