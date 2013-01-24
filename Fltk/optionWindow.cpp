@@ -30,6 +30,7 @@ typedef unsigned long intptr_t;
 #include "PViewOptions.h"
 #include "OS.h"
 #include "Context.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
@@ -167,9 +168,20 @@ static void options_browser_cb(Fl_Widget *w, void *data)
   FlGui::instance()->options->showGroup(FlGui::instance()->options->browser->value());
 }
 
+static void options_show_file_cb(Fl_Widget *w, void *data)
+{
+  std::string what((const char*)data);
+  std::string file = CTX::instance()->homeDir;
+  if(what == "session")
+    file += CTX::instance()->sessionFileName;
+  else
+    file += CTX::instance()->optionsFileName;
+  Msg::Direct("%s", file.c_str());
+  FlGui::instance()->showMessages();
+}
+
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
-  // not sure if we have to remove the file...
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
   UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
   ReInitOptions(0);
@@ -1408,14 +1420,18 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[8]->type(FL_TOGGLE_BUTTON);
       general.butt[8]->callback(general_options_ok_cb);
 
+      Fl_Button *b0 = new Fl_Button
+        (L + width - 2 * WB - BW/3, 2 * WB + 4 * BH, BW/3, BH, "Show file path");
+      b0->callback(options_show_file_cb, (void*)"session");
+
       general.butt[9] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 5 * BH, BW/2-WB, BH, "Save options on exit");
       general.butt[9]->type(FL_TOGGLE_BUTTON);
       general.butt[9]->callback(general_options_ok_cb);
 
-      Fl_Button *b0 = new Fl_Button
-        (L + width / 2, 2 * WB + 5 * BH, (int)(1.75*BB), BH, "Restore default options");
-      b0->callback(options_restore_defaults_cb);
+      Fl_Button *b1 = new Fl_Button
+        (L + width - 2 * WB - BW/3, 2 * WB + 5 * BH, BW/3, BH, "Show file path");
+      b1->callback(options_show_file_cb, (void*)"option");
 
       general.butt[14] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 6 * BH, BW, BH,
@@ -1435,6 +1451,11 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Default file name");
       general.input[0]->align(FL_ALIGN_RIGHT);
       general.input[0]->callback(general_options_ok_cb);
+
+      Fl_Button *b2 = new Fl_Button
+        (L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Restore all options to default values");
+      b2->callback(options_restore_defaults_cb);
+      b2->labelcolor(FL_DARK_RED);
 
       o->end();
     }
