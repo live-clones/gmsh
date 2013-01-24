@@ -46,7 +46,12 @@ StringXString GeneralOptions_String[] = {
   { F,   "Display" , opt_general_display , "" ,
     "X server to use (only for Unix versions)" },
 
-  { F|O, "ErrorFileName" , opt_general_error_filename , ".gmsh-errors" ,
+  { F|O, "ErrorFileName" , opt_general_error_filename ,
+#if defined(WIN32)
+    ".gmsh-errors" ,
+#else
+    "gmsh-errors" ,
+#endif
     "File into which the log is saved if a fatal error occurs" },
 
   { F,   "FileName" , opt_general_filename , "" ,
@@ -59,7 +64,12 @@ StringXString GeneralOptions_String[] = {
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
 
-  { F|S, "OptionsFileName" , opt_general_options_filename , ".gmsh-options" ,
+  { F|S, "OptionsFileName" , opt_general_options_filename ,
+#if defined(WIN32)
+    ".gmsh-options" ,
+#else
+    "gmsh-options" ,
+#endif
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
   { F|S, "RecentFile0", opt_general_recent_file0 , "untitled.geo" ,
@@ -73,7 +83,12 @@ StringXString GeneralOptions_String[] = {
   { F|S, "RecentFile4", opt_general_recent_file4 , "untitled.geo" ,
     "5th most recent opened file"},
 
-  { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
+  { 0,   "SessionFileName" , opt_general_session_filename ,
+#if defined(WIN32)
+    ".gmshrc" ,
+#else
+    "gmshrc" ,
+#endif
     "Option file into which session specific information is saved; automatically "
     "read on startup" },
 
@@ -86,7 +101,12 @@ StringXString GeneralOptions_String[] = {
     "sensible-editor '%s'" ,
 #endif
     "System command to launch a text editor" },
-  { F|S, "TmpFileName" , opt_general_tmp_filename , ".gmsh-tmp" ,
+  { F|S, "TmpFileName" , opt_general_tmp_filename ,
+#if defined(WIN32)
+    ".gmsh-tmp" ,
+#else
+    "gmsh-tmp" ,
+#endif
     "Temporary file used by the geometry module" },
 
   { F|O, "WebBrowser" , opt_general_web_browser ,
