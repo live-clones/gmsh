@@ -209,13 +209,10 @@ void GRegion::setVisibility(char val, bool recursive)
 std::string GRegion::getAdditionalInfoString()
 {
   std::ostringstream sstream;
-  if(l_faces.size() > 20){
-    sstream << "{" << l_faces.front()->tag() << ",...," << l_faces.back()->tag() << "}";
-  }
-  else if(l_faces.size()){
+  if(l_faces.size()){
     sstream << "{";
     for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
-      if(it != l_faces.begin()) sstream << ",";
+      if(it != l_faces.begin()) sstream << " ";
       sstream << (*it)->tag();
     }
     sstream << "}";
@@ -288,15 +285,15 @@ bool GRegion::edgeConnected(GRegion *r) const
   return false;
 }
 
-void GRegion::replaceFaces (std::list<GFace*> &new_faces)
+void GRegion::replaceFaces(std::list<GFace*> &new_faces)
 {
-  replaceFacesInternal (new_faces);
+  replaceFacesInternal(new_faces);
   if (l_faces.size() != new_faces.size()){
-    Msg::Fatal("impossible to replace faces in region %d (%d vs %d)",tag(),
-	       l_faces.size(),new_faces.size());
+    Msg::Error("Impossible to replace faces in region %d (%d vs %d)",
+               tag(), l_faces.size(), new_faces.size());
   }
 
-  std::list<GFace*>::iterator it  = l_faces.begin();
+  std::list<GFace*>::iterator it = l_faces.begin();
   std::list<GFace*>::iterator it2 = new_faces.begin();
   std::list<int>::iterator it3 = l_dirs.begin();
   std::list<int> newdirs;
@@ -312,18 +309,17 @@ void GRegion::replaceFaces (std::list<GFace*> &new_faces)
   l_dirs = newdirs;
 }
 
-double GRegion::computeSolidProperties (std::vector<double> cg,
-					std::vector<double> inertia)
+double GRegion::computeSolidProperties(std::vector<double> cg,
+                                       std::vector<double> inertia)
 {
   std::list<GFace*>::iterator it = l_faces.begin();
-  std::list<int>::iterator itdir =  l_dirs.begin();
+  std::list<int>::iterator itdir = l_dirs.begin();
   double volumex = 0;
   double volumey = 0;
   double volumez = 0;
   double surface = 0;
   cg[0] = cg[1] = cg[2] = 0.0;
   for ( ; it != l_faces.end(); ++it,++itdir){
-    //printf("face %d dir %d %d elements\n",(*it)->tag(),*itdir,(int)(*it)->triangles.size());
     for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *e = (*it)->triangles[i];
       int npt;
@@ -332,65 +328,65 @@ double GRegion::computeSolidProperties (std::vector<double> cg,
       for (int j=0;j<npt;j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
-	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
+	e->pnt(pts[j].pt[0], pts[j].pt[1], pts[j].pt[2], pt);
 	double jac[3][3];
 	// compute normal
-	double detJ = e->getJacobian(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],jac);
-	SVector3 n (jac[2][0],jac[2][1],jac[2][2]);
+	double detJ = e->getJacobian(pts[j].pt[0], pts[j].pt[1], pts[j].pt[2], jac);
+	SVector3 n(jac[2][0], jac[2][1], jac[2][2]);
 	n.normalize();
 	n *= (double)*itdir;
-	surface += detJ*pts[j].weight;
-	volumex += detJ*n.x()*pt.x()*pts[j].weight;
-	volumey += detJ*n.y()*pt.y()*pts[j].weight;
-	volumez += detJ*n.z()*pt.z()*pts[j].weight;
-	cg[0]  += detJ*n.x()*(pt.x()*pt.x())*pts[j].weight*0.5;
-	cg[1]  += detJ*n.y()*(pt.y()*pt.y())*pts[j].weight*0.5;
-	cg[2]  += detJ*n.z()*(pt.z()*pt.z())*pts[j].weight*0.5;
+	surface += detJ* pts[j].weight;
+	volumex += detJ * n.x() * pt.x() * pts[j].weight;
+	volumey += detJ * n.y() * pt.y() * pts[j].weight;
+	volumez += detJ * n.z() * pt.z() * pts[j].weight;
+	cg[0] += detJ * n.x() * (pt.x() * pt.x()) * pts[j].weight * 0.5;
+	cg[1] += detJ * n.y() * (pt.y() * pt.y()) * pts[j].weight * 0.5;
+	cg[2] += detJ * n.z() * (pt.z() * pt.z()) * pts[j].weight * 0.5;
       }
     }
   }
 
-  printf("%g -- %g %g %g\n",surface,volumex,volumey,volumez);
+  printf("%g -- %g %g %g\n", surface, volumex, volumey, volumez);
 
   double volume = volumex;
 
-  cg[0]/=volume;
-  cg[1]/=volume;
-  cg[2]/=volume;
+  cg[0] /= volume;
+  cg[1] /= volume;
+  cg[2] /= volume;
 
   it = l_faces.begin();
-  itdir =  l_dirs.begin();
-  inertia[0] =
-    inertia[1] =
-    inertia[2] =
-    inertia[3] =
-    inertia[4] =
-    inertia[5] = 0.0;
+  itdir = l_dirs.begin();
+  inertia[0] = inertia[1] = inertia[2] = inertia[3] = inertia[4] = inertia[5] = 0.0;
 
   for ( ; it != l_faces.end(); ++it,++itdir){
     for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i){
       MElement *e = (*it)->getMeshElement(i);
       int npt;
       IntPt *pts;
-      e->getIntegrationPoints (2*(e->getPolynomialOrder()-1)+3, &npt, &pts);
+      e->getIntegrationPoints(2 * (e->getPolynomialOrder() - 1) + 3, &npt, &pts);
       for (int j = 0; j < npt; j++){
 	SPoint3 pt;
 	// compute x,y,z of the integration point
-	e->pnt(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],pt);
+	e->pnt(pts[j].pt[0], pts[j].pt[1], pts[j].pt[2], pt);
 	double jac[3][3];
 	// compute normal
-	double detJ = e->getJacobian(pts[j].pt[0],pts[j].pt[1],pts[j].pt[2],jac);
-	SVector3 n (jac[2][0],jac[2][1],jac[2][2]);
+	double detJ = e->getJacobian(pts[j].pt[0], pts[j].pt[1], pts[j].pt[2], jac);
+	SVector3 n(jac[2][0], jac[2][1], jac[2][2]);
 	n *= (double)*itdir;
-	inertia[0]  += pts[j].weight*detJ*n.x()*(pt.x()-cg[0])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
-	inertia[1]  += pts[j].weight*detJ*n.y()*(pt.y()-cg[1])*(pt.y()-cg[1])*(pt.y()-cg[1])/3.0;
-	inertia[2]  += pts[j].weight*detJ*n.z()*(pt.z()-cg[2])*(pt.z()-cg[2])*(pt.z()-cg[2])/3.0;
-	inertia[3]  += pts[j].weight*detJ*n.x()*(pt.y()-cg[1])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
-	inertia[4]  += pts[j].weight*detJ*n.x()*(pt.z()-cg[2])*(pt.x()-cg[0])*(pt.x()-cg[0])/3.0;
-	inertia[5]  += pts[j].weight*detJ*n.y()*(pt.z()-cg[2])*(pt.y()-cg[1])*(pt.y()-cg[1])/3.0;
+	inertia[0] += pts[j].weight * detJ * n.x() *
+          (pt.x() - cg[0]) * (pt.x() - cg[0]) * (pt.x() - cg[0]) / 3.0;
+	inertia[1] += pts[j].weight * detJ * n.y() *
+          (pt.y() - cg[1]) * (pt.y() - cg[1]) * (pt.y() - cg[1]) / 3.0;
+	inertia[2] += pts[j].weight * detJ * n.z() *
+          (pt.z() - cg[2]) * (pt.z() - cg[2]) * (pt.z() - cg[2]) / 3.0;
+	inertia[3] += pts[j].weight * detJ * n.x() *
+          (pt.y() - cg[1]) * (pt.x() - cg[0]) * (pt.x() - cg[0]) / 3.0;
+	inertia[4] += pts[j].weight * detJ * n.x() *
+          (pt.z() - cg[2]) * (pt.x() - cg[0]) * (pt.x() - cg[0]) / 3.0;
+	inertia[5] += pts[j].weight * detJ * n.y() *
+          (pt.z() - cg[2]) * (pt.y() - cg[1]) * (pt.y() - cg[1]) / 3.0;
       }
     }
   }
   return volume;
 }
-

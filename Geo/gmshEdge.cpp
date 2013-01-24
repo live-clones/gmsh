@@ -77,7 +77,7 @@ std::string gmshEdge::getAdditionalInfoString()
     std::ostringstream sstream;
     sstream << "{";
     for(int i = 0; i < List_Nbr(c->Control_Points); i++){
-      if(i) sstream << ",";
+      if(i) sstream << " ";
       Vertex *v;
       List_Read(c->Control_Points, i, &v);
       sstream << v->Num;

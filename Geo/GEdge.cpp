@@ -172,7 +172,7 @@ void GEdge::setVisibility(char val, bool recursive)
 std::string GEdge::getAdditionalInfoString()
 {
   std::ostringstream sstream;
-  if(v0 && v1) sstream << "{" << v0->tag() << "," << v1->tag() << "}";
+  if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
   return sstream.str();
 }
 
