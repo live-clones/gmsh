@@ -48,9 +48,9 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "ErrorFileName" , opt_general_error_filename ,
 #if defined(WIN32)
-    ".gmsh-errors" ,
-#else
     "gmsh-errors" ,
+#else
+    ".gmsh-errors" ,
 #endif
     "File into which the log is saved if a fatal error occurs" },
 
@@ -66,9 +66,9 @@ StringXString GeneralOptions_String[] = {
 
   { F|S, "OptionsFileName" , opt_general_options_filename ,
 #if defined(WIN32)
-    ".gmsh-options" ,
-#else
     "gmsh-options" ,
+#else
+    ".gmsh-options" ,
 #endif
     "Option file created with `Tools->Options->Save'; automatically read on startup" },
 
@@ -85,9 +85,9 @@ StringXString GeneralOptions_String[] = {
 
   { 0,   "SessionFileName" , opt_general_session_filename ,
 #if defined(WIN32)
-    ".gmshrc" ,
-#else
     "gmshrc" ,
+#else
+    ".gmshrc" ,
 #endif
     "Option file into which session specific information is saved; automatically "
     "read on startup" },
@@ -103,9 +103,9 @@ StringXString GeneralOptions_String[] = {
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
 #if defined(WIN32)
-    ".gmsh-tmp" ,
-#else
     "gmsh-tmp" ,
+#else
+    ".gmsh-tmp" ,
 #endif
     "Temporary file used by the geometry module" },
 
