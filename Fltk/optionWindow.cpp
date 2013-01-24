@@ -1294,7 +1294,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
   // Selection browser
   browser = new Fl_Hold_Browser(0, 0, L, height);
-  browser->box(FL_FLAT_BOX);
+  browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
   browser->add("General");
   browser->add("Geometry");

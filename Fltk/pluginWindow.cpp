@@ -312,13 +312,13 @@ pluginWindow::pluginWindow(int deltaFontSize)
 
   browser = new Fl_Hold_Browser(0, 0, L1, height);
   browser->callback(plugin_browser_cb);
-  browser->box(FL_FLAT_BOX);
+  browser->box(GMSH_SIMPLE_RIGHT_BOX);
   browser->has_scrollbar(Fl_Browser_::VERTICAL);
 
-  view_browser = new Fl_Multi_Browser(L1 + 1, 0, L2 - 1, height);
+  view_browser = new Fl_Multi_Browser(L1, 0, L2, height);
   view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
   view_browser->callback(plugin_browser_cb);
-  view_browser->box(FL_FLAT_BOX);
+  view_browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
   for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
         instance()->begin(); it != PluginManager::instance()->end(); ++it) {

@@ -782,11 +782,14 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->color(col);
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
-  //_tree->connectorstyle(FL_TREE_CONNECTOR_NONE);
+  // _tree->marginleft(0);
+  // _tree->usericonmarginleft(0);
+  // _tree->labelmarginleft(0);
+  // _tree->connectorwidth(15);
   _tree->showroot(0);
   _tree->box(FL_FLAT_BOX);
   _tree->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2));
-  //_tree->resizable(0);
+  // _tree->resizable(0);
   _tree->end();
 
   _computeWidths();

@@ -197,7 +197,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
   browser = new Fl_Multi_Browser(0, 0, L, height);
   browser->callback(clip_update_cb);
-  browser->box(FL_FLAT_BOX);
+  browser->box(GMSH_SIMPLE_RIGHT_BOX);
 
   Fl_Tabs *o = new Fl_Tabs
     (L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);

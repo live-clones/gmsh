@@ -96,9 +96,9 @@ FlGui::FlGui(int argc, char **argv)
   //Fl::set_color(FL_SELECTION_COLOR, 50, 50, 0);
 #endif
 
-  // add new box types used in graphic window
-  Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 1, 1, 2, 2);
-  Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 1, 1, 2, 2);
+  // add new box types used in graphic window (dx dy dw dh)
+  Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
+  Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 0);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
