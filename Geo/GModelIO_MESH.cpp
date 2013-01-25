@@ -86,6 +86,21 @@ int GModel::readMESH(const std::string &name)
           elements[0][cl].push_back(new MLine(vertices));
         }
       }
+      else if(!strcmp(str, "EdgesP2")){
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d edges", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[3], cl;
+          sscanf(buffer, "%d %d %d", &n[0], &n[1], &n[2], &cl);
+          for(int j = 0; j < 3; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(3, n, vertexVector, vertices)) return 0;
+          elements[0][cl].push_back(new MLine3(vertices));
+        }
+      }
       else if(!strcmp(str, "Triangles")){
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
@@ -235,7 +250,10 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   }
 
   if(numEdges){
-    fprintf(fp, " Edges\n");
+    if(CTX::instance()->mesh.order == 2)
+      fprintf(fp, " EdgesP2\n");
+    else
+      fprintf(fp, " Edges\n");
     fprintf(fp, " %d\n", numEdges);
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
       int numPhys = (*it)->physicals.size();
