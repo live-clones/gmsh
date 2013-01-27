@@ -316,6 +316,64 @@ extern "C" {
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
 
+std::vector<std::string> medGetFieldNames(const std::string &fileName)
+{
+  std::vector<std::string> fieldNames;
+
+#if (MED_MAJOR_NUM == 3)
+  med_idt fid = MEDfileOpen(fileName.c_str(), MED_ACC_RDONLY);
+#else
+  med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
+#endif
+  if(fid < 0) {
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
+    return fieldNames;
+  }
+
+#if (MED_MAJOR_NUM == 3)
+  med_int numFields = MEDnField(fid);
+#else
+  med_int numFields = MEDnChamp(fid, 0);
+#endif
+
+  for(int index = 0; index < numFields; index++){
+
+    med_int numComp = MEDnChamp(fid, index + 1);
+    if(numComp <= 0){
+      Msg::Error("Could not get number of components for MED field");
+      return fieldNames;
+    }
+
+    char name[MED_TAILLE_NOM + 1], meshName[MED_TAILLE_NOM + 1];
+    char dtUnit[MED_TAILLE_PNOM + 1];
+    std::vector<char> compName(numComp * MED_TAILLE_PNOM + 1);
+    std::vector<char> compUnit(numComp * MED_TAILLE_PNOM + 1);
+    med_int numSteps = 0;
+    med_type_champ type;
+#if (MED_MAJOR_NUM == 3)
+    med_bool localMesh;
+    if(MEDfieldInfo(fid, index + 1, name, meshName, &localMesh, &type,
+                    &compName[0], &compUnit[0], dtUnit, &numSteps) < 0){
+#else
+    if(MEDchampInfo(fid, index + 1, name, &type, &compName[0], &compUnit[0],
+                    numComp) < 0){
+#endif
+      Msg::Error("Could not get MED field info");
+      return fieldNames;
+    }
+    fieldNames.push_back(name);
+  }
+
+#if (MED_MAJOR_NUM == 3)
+  if(MEDfileClose(fid) < 0){
+#else
+  if(MEDfermer(fid) < 0){
+#endif
+    Msg::Error("Unable to close file '%s'", fileName.c_str());
+  }
+  return fieldNames;
+}
+
 bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
@@ -350,6 +408,8 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 
   Msg::Info("Reading %d-component field <<%s>>", numComp, name);
   setName(name);
+  setFileName(fileName);
+  setFileIndex(fileIndex);
 
   int numCompMsh =
     (numComp <= 1) ? 1 : (numComp <= 3) ? 3 : (numComp <= 9) ? 9 : numComp;
@@ -531,6 +591,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
       if(std::string(profileName) != MED_NOPFL){
         med_int n = MEDnValProfil(fid, profileName);
         if(n > 0){
+          Msg::Debug("MED has full profile");
           profile.resize(n);
 #if (MED_MAJOR_NUM == 3)
           if(MEDprofileRd(fid, profileName, &profile[0]) < 0){
@@ -543,6 +604,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         }
       }
       if(profile.empty()){
+        Msg::Debug("MED profile is empty -- using continuous sequence");
         profile.resize(numVal / mult);
         for(unsigned int i = 0; i < profile.size(); i++)
           profile[i] = i + 1;
@@ -576,22 +638,30 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
 #endif
         tags.clear();
 
-      // if we don't have tags, compute the starting index (i.e., how
-      // many elements of different type are in the mesh before these
-      // ones)
+      // if we don't have tags, compute the starting index (i.e., how many
+      // elements of different type are in the mesh before these ones)
       int startIndex = 0;
-      if(!nodal && tags.empty()){
-        for(int i = 1; i < pairs[pair].second; i++){
-#if (MED_MAJOR_NUM == 3)
-          med_int n = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT,
-                                     MED_CELL, eleType[i], MED_CONNECTIVITY,
-                                     MED_NODAL, &changeOfCoord, &geoTransform);
-#else
-          med_int n = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE,
-                                 eleType[i], MED_NOD);
-#endif
-          if(n > 0) startIndex += n;
+      if(tags.empty()){
+        int maxv, maxe;
+        _steps[step]->getModel()->getCheckPointedMaxNumbers(maxv, maxe);
+        if(nodal){
+          startIndex += maxv;
         }
+        else{
+          for(int i = 1; i < pairs[pair].second; i++){
+#if (MED_MAJOR_NUM == 3)
+            med_int n = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT,
+                                       MED_CELL, eleType[i], MED_CONNECTIVITY,
+                                       MED_NODAL, &changeOfCoord, &geoTransform);
+#else
+            med_int n = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE,
+                                   eleType[i], MED_NOD);
+#endif
+            if(n > 0) startIndex += n;
+          }
+          startIndex += maxe;
+        }
+        Msg::Debug("MED has no tags -- assuming starting index %d", startIndex);
       }
 
       // compute entity numbers using profile, then fill step data
@@ -607,6 +677,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           num = tags[profile[i] - 1];
         }
+
         double *d = _steps[step]->getData(num, true, mult);
         for(int j = 0; j < mult; j++){
           // reorder nodes if we have ElementNode data

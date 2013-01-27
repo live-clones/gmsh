@@ -208,14 +208,12 @@ int GModel::readMED(const std::string &name)
   }
 
   int ret = 1;
-  MVertex::resetGlobalNumber();
-  MElement::resetGlobalNumber();
   for(unsigned int i = 0; i < meshNames.size(); i++){
-    GModel *m = findByName(meshNames[i]);
-    if(!m){
-      m = new GModel(meshNames[i]);
-      GModel::setCurrent(m);
-    }
+    // we use the filename as a kind of "partition" indicator, allowing to
+    // complete a model part by part (used e.g. in DDM, since MED does not store
+    // a partition index)
+    GModel *m = findByName(meshNames[i], name);
+    if(!m) m = new GModel(meshNames[i]);
     ret = m->readMED(name, i);
     if(!ret) return 0;
   }
@@ -235,6 +233,9 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Info("Could not find mesh %d in MED file", meshIndex);
     return 0;
   }
+
+  checkPointMaxNumbers();
+  GModel::setCurrent(this); // make sure we increment max nums in this model
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
@@ -263,6 +264,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Warning("Discarding %d last meshes in multi-step MED mesh", nStep - 1);
 
   setName(meshName);
+  setFileName(name);
   if(meshType == MED_NON_STRUCTURE){
     Msg::Info("Reading %d-D unstructured mesh <<%s>>", spaceDim, meshName);
   }

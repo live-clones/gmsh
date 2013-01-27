@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "SBoundingBox3d.h"
 #include "fullMatrix.h"
 
@@ -32,6 +33,7 @@ class PViewData {
   std::string _name;
   // name of the file the data was loaded from
   std::string _fileName;
+  std::set<std::string> _fileNames;
   // index of the view in the file
   int _fileIndex;
   // octree for rapid search
@@ -63,7 +65,15 @@ class PViewData {
 
   // get/set (the main) filename containing the data
   virtual std::string getFileName(int step=-1){ return _fileName; }
-  virtual void setFileName(const std::string &val){ _fileName = val; }
+  virtual void setFileName(const std::string &val)
+  {
+    _fileName = val;
+    _fileNames.insert(val);
+  }
+  virtual bool hasFileName(const std::string &val)
+  {
+    return _fileNames.find(val) != _fileNames.end();
+  }
 
   // get/set index of view data in file
   virtual int getFileIndex(){ return _fileIndex; }

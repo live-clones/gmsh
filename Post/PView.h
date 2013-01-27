@@ -100,12 +100,13 @@ class PView{
   // combine view
   static void combine(bool time, int how, bool remove);
 
-  // find view by name or by number (if timeStep >= 0, return view
-  // only if it does *not* contain that timestep; if partition >= 0,
-  // return view only if it does *not* contain that partition)
+  // find view by name, by fileName, or by number. If timeStep >= 0, return view
+  // only if it does *not* contain that timestep; if partition >= 0, return view
+  // only if it does *not* contain that partition, if fileName is not empty,
+  // return view only if it does *not* have that fileName.
   static PView *getViewByName(const std::string &name, int timeStep=-1,
-                              int partition=-1);
-  static PView *getViewByFileName(const std::string &name, int timeStep=-1,
+                              int partition=-1, const std::string &fileName="");
+  static PView *getViewByFileName(const std::string &fileName, int timeStep=-1,
                                   int partition=-1);
   static PView *getViewByTag(int tag, int timeStep=-1, int partition=-1);
 

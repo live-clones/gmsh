@@ -32,8 +32,6 @@ class MVertexLessThanNum{
 // A mesh vertex.
 class MVertex{
  protected:
-  // the maximum vertex id number in the mesh
-  static int _globalNum;
   // the immutable id number of the vertex (this number is unique and
   // is guaranteed never to change once a vertex has been created)
   int _num;
@@ -52,11 +50,7 @@ class MVertex{
  public:
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0);
   virtual ~MVertex(){}
-  inline void deleteLast() {if(_num == _globalNum) _globalNum--; delete this;}
-
-  // get/reset the global node number
-  static int getGlobalNumber(){ return _globalNum; }
-  static void resetGlobalNumber(){ _globalNum = 0; }
+  void deleteLast();
 
   // get/set the visibility flag
   virtual char getVisibility(){ return _visible; }

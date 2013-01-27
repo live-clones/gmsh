@@ -237,49 +237,28 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
 
 #if defined(HAVE_MED)
 
-extern "C" {
-#include <med.h>
-}
+extern std::vector<std::string> medGetFieldNames(const std::string &fileName);
 
 bool PView::readMED(const std::string &fileName, int fileIndex)
 {
-#if (MED_MAJOR_NUM == 3)
-  med_idt fid = MEDfileOpen(fileName.c_str(), MED_ACC_RDONLY);
-#else
-  med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
-#endif
-  if(fid < 0) {
-    Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return false;
-  }
+  std::vector<std::string> fieldNames = medGetFieldNames(fileName);
 
-#if (MED_MAJOR_NUM == 3)
-  med_int numFields = MEDnField(fid);
-#else
-  med_int numFields = MEDnChamp(fid, 0);
-#endif
-
-#if (MED_MAJOR_NUM == 3)
-  if(MEDfileClose(fid) < 0){
-#else
-  if(MEDfermer(fid) < 0){
-#endif
-    Msg::Error("Unable to close file '%s'", fileName.c_str());
-    return false;
-  }
-
-  for(int index = 0; index < numFields; index++){
+  for(unsigned int index = 0; index < fieldNames.size(); index++){
     if(fileIndex < 0 || index == fileIndex){
-      PViewDataGModel *d = new PViewDataGModel();
+      PViewDataGModel *d = 0;
+      // we use the filename as a kind of "partition" indicator, allowing to
+      // complete datasets provided in separate files (e.g. coming from DDM)
+      PView *p = getViewByName(fieldNames[index], -1, -1, fileName);
+      if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
+      bool create = d ? false : true;
+      if(create) d = new PViewDataGModel();
       if(!d->readMED(fileName, index)){
         Msg::Error("Could not read data in MED file");
-        delete d;
+        if(create) delete d;
         return false;
       }
       else{
-        d->setFileName(fileName);
-        d->setFileIndex(index);
-        new PView(d);
+        if(create) new PView(d);
       }
     }
   }

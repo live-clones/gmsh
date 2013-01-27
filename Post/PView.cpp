@@ -291,23 +291,25 @@ void PView::combine(bool time, int how, bool remove)
       delete *it;
 }
 
-PView *PView::getViewByName(const std::string &name, int timeStep, int partition)
+PView *PView::getViewByName(const std::string &name, int timeStep, int partition,
+                            const std::string &fileName)
 {
   // search views from most recently to least recently added
   for(int i = list.size() - 1; i >= 0; i--){
     if(list[i]->getData()->getName() == name &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
+        (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))) &&
+       (fileName.empty() || !list[i]->getData()->hasFileName(fileName)))
       return list[i];
   }
   return 0;
 }
 
-PView *PView::getViewByFileName(const std::string &name, int timeStep, int partition)
+PView *PView::getViewByFileName(const std::string &fileName, int timeStep, int partition)
 {
   // search views from most recently to least recently added
   for(int i = list.size() - 1; i >= 0; i--){
-    if(list[i]->getData()->getFileName() == name &&
+    if(list[i]->getData()->getFileName() == fileName &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
         (partition < 0 || !list[i]->getData()->hasPartition(timeStep, partition))))
       return list[i];
@@ -325,4 +327,3 @@ PView *PView::getViewByTag(int tag, int timeStep, int partition)
   }
   return 0;
 }
-

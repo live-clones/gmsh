@@ -51,12 +51,16 @@ class GModel
                  int saveSinglePartition=0,
                  bool multipleView=false);
 
+  // the maximum vertex and element id number in the mesh
+  int _maxVertexNum, _maxElementNum;
+  int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
  protected:
   // the name of the model
   std::string _name;
 
   // the name of the file the model was read from
   std::string _fileName;
+  std::set<std::string> _fileNames;
 
   // the visibility flag
   char _visible;
@@ -162,11 +166,28 @@ class GModel
   static int setCurrent(GModel *m);
   int setAsCurrent(){ return setCurrent(this); }
 
-  // find a model by name
-  static GModel *findByName(std::string name);
+  // find a model by name; if fileName is given, return model only if it does
+  // *not* have a link to the fileName
+  static GModel *findByName(const std::string &name, const std::string &fileName="");
 
   // delete everything in a GModel
   void destroy();
+
+  // get/set global vertex/element num
+  int getMaxVertexNumber(){ return _maxVertexNum; }
+  int getMaxElementNumber(){ return _maxElementNum; }
+  void setMaxVertexNumber(int num){ _maxVertexNum = num; }
+  void setMaxElementNumber(int num){ _maxElementNum = num; }
+  void checkPointMaxNumbers()
+  {
+    _checkPointedMaxVertexNum = _maxVertexNum;
+    _checkPointedMaxVertexNum = _maxVertexNum;
+  }
+  void getCheckPointedMaxNumbers(int &maxv, int &maxe)
+  {
+    maxv = _checkPointedMaxVertexNum;
+    maxe = _checkPointedMaxElementNum;
+  }
 
   // delete all the mesh-related caches (this must be called when the
   // mesh is changed)
@@ -188,8 +209,16 @@ class GModel
   std::string getName(){ return _name; }
 
   // get/set the model file name
-  void setFileName(std::string fileName){ _fileName = fileName; }
+  void setFileName(std::string fileName)
+  {
+    _fileName = fileName;
+    _fileNames.insert(fileName);
+  }
   std::string getFileName(){ return _fileName; }
+  bool hasFileName(const std::string &name)
+  {
+    return _fileNames.find(name) != _fileNames.end();
+  }
 
   // get/set the visibility flag
   char getVisibility(){ return _visible; }
@@ -461,7 +490,8 @@ class GModel
   GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                    double angle);
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
-  std::vector<GEntity*> extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers, int dir=1, int view=-1);
+  std::vector<GEntity*> extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers,
+                                             int dir=1, int view=-1);
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
 
   void addRuledFaces(std::vector<std::vector<GEdge *> > edges);

@@ -26,19 +26,21 @@
 
 #define SQU(a)      ((a)*(a))
 
-int MElement::_globalNum = 0;
 double MElement::_isInsideTolerance = 1.e-6;
 
 MElement::MElement(int num, int part) : _visible(1)
 {
 #pragma omp critical
   {
+    // we should make GModel a mandatory argument to the constructor
+    GModel *m = GModel::current();
     if(num){
       _num = num;
-      _globalNum = std::max(_globalNum, _num);
+      m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
     }
     else{
-      _num = ++_globalNum;
+      m->setMaxElementNumber(m->getMaxElementNumber() + 1);
+      _num = m->getMaxElementNumber();
     }
     _partition = (short)part;
   }
@@ -160,7 +162,7 @@ void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3]
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w, 
+void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w,
                                                 double s[][3][3][3], int o)
 {
   const nodalBasis* fs = getFunctionSpace(o);
@@ -1246,7 +1248,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_5   : if(name) *name = "Pyramid 5";        return 5;
   case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
   case MSH_PYR_14  : if(name) *name = "Pyramid 14";       return 5 + 8 + 1;
-  case MSH_PYR_30  : if(name) *name = "Pyramid 30";       return 5 + 8*2 + 4*1 + 1*4 + 1;  
+  case MSH_PYR_30  : if(name) *name = "Pyramid 30";       return 5 + 8*2 + 4*1 + 1*4 + 1;
   case MSH_PYR_55  : if(name) *name = "Pyramid 55";       return 5 + 8*3 + 4*3 + 1*9 + 5;
   case MSH_PYR_91  : if(name) *name = "Pyramid 91";       return 91;
   case MSH_PYR_140 : if(name) *name = "Pyramid 140";      return 140;
@@ -1343,7 +1345,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   return newEl;
 }
 
-// Gives the parent type corresponding to 
+// Gives the parent type corresponding to
 // any element type.
 // Ex. : MSH_TRI_3 -> TYPE_TRI
 int MElement::ParentTypeFromTag(int tag)

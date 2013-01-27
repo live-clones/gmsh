@@ -1676,7 +1676,7 @@ class AttractorField : public Field
 	  offset.push_back(points.size());
 	}
       }
-       
+
       int totpoints =
 	nodes_id.size() +
 	(n_nodes_by_edge-2) * edges_id.size() +
@@ -1895,7 +1895,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       const double b = lc_t;
       const double h = lc_n;
       double oneOverD2 = .5/(b * b) *
-        (1. + sqrt (1. + (4. * crv * crv * b * b * b * b / (h * h * beta * beta))));      
+        (1. + sqrt (1. + (4. * crv * crv * b * b * b * b / (h * h * beta * beta))));
       metr = buildMetricTangentToCurve(t1, sqrt(1. / oneOverD2), lc_n);
       return;
     }
@@ -1966,13 +1966,13 @@ void BoundaryLayerField::operator() (double x, double y, double z,
 
     bool doNotConsider = false;
     if (ge->dim () == ainfo.dim && ge->tag() == ainfo.ent){
-      //      doNotConsider = true;
+      // doNotConsider = true;
     }
     else if (ge->dim () == 1 && ainfo.dim == 2){
-      GFace *gf = ge->model()->getFaceByTag(ainfo.ent);
-      //     if (gf->containsEdge(ge->tag()))doNotConsider  = true;      
-    } 
-    
+      // GFace *gf = ge->model()->getFaceByTag(ainfo.ent);
+      // if (gf->containsEdge(ge->tag())) doNotConsider  = true;
+    }
+
     if (!doNotConsider) {
       SMetric3 localMetric;
       if (iIntersect){

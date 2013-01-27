@@ -165,9 +165,9 @@ void buildMeshGenerationDataStructures(GFace *gf,
        it != vSizesMap.end(); ++it){
     // FIXME: this vertex-stored indexing makes the optimization
     // routines not thread-safe (we cannot concurrently optimize two
-    // surfaces that share an edge)    
+    // surfaces that share an edge)
     //    it->first->setIndex(NUM++);
-    // OK, I can fix that 
+    // OK, I can fix that
     //    vSizes.push_back(it->second);
     //    vSizesBGM.push_back(it->second);
     //    vMetricsBGM.push_back(SMetric3(it->second));
@@ -175,7 +175,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     reparamMeshVertexOnFace(it->first, gf, param);
     //    Us.push_back(param[0]);
     //    Vs.push_back(param[1]);
-    data.addVertex (it->first, param[0], param[1], it->second, it->second); 
+    data.addVertex (it->first, param[0], param[1], it->second, it->second);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     double lc = 0.3333333333 * (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
@@ -668,7 +668,7 @@ static bool _isItAGoodIdeaToMoveThoseVertices (GFace *gf,
     pafter[i] = SPoint3  (gp.x(),gp.y(),gp.z());
     pbefore[i] = SPoint3(v[i]->x(),v[i]->y(),v[i]->z());
   }
-  
+
   for (unsigned int j=0;j<e1.size();++j)
     surface_old += surfaceFaceUV(e1[j],gf);
 
@@ -1803,7 +1803,7 @@ static void sort_edges (std::vector<MEdge> &eds){
   std::list<MEdge> eds_sorted;
   eds_sorted.push_back(*eds.begin());
   eds.erase(eds.begin());
-  
+
   while(!eds.empty()){
     MEdge first = (eds_sorted.front());
     MEdge last  = (eds_sorted.back());
@@ -1815,9 +1815,9 @@ static void sort_edges (std::vector<MEdge> &eds){
       if (first.getVertex(0) == v2) eds_sorted.push_front(MEdge(v1,v2));
       // v2 -- v1 -- first
       else if (first.getVertex(0) == v1) eds_sorted.push_front(MEdge(v2,v1));
-      // last -- v1 -- v2 
+      // last -- v1 -- v2
       else if (last.getVertex(1) == v1) eds_sorted.push_back(MEdge(v1,v2));
-      // last -- v2 -- v1 
+      // last -- v2 -- v1
       else if (last.getVertex(1) == v2) eds_sorted.push_back(MEdge(v2,v1));
       else found = false;
       if (found) {
@@ -1930,7 +1930,7 @@ void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x,
                                       double& func, alglib::real_1d_array& grad, void* ptr)
 {
   opti_data_vertex_relocation* w = static_cast<opti_data_vertex_relocation*>(ptr);
-  
+
   double u[4] ; for (int i=0;i<w->nv;i++)u[i] = x[2*i];
   double v[4] ; for (int i=0;i<w->nv;i++)v[i] = x[2*i+1];
   //  printf("hoplaboum !!!\n");
@@ -1950,12 +1950,12 @@ void bfgs_callback_vertex_relocation (const alglib::real_1d_array& x,
 // take all neighboring quads and move all vertices
 // when possible
 static int _untangleQuad (GFace *gf, MQuadrangle *q,v2t_cont & adj)
-{  
+{
   std::set<MElement*> all;
   for (int i=0;i<4;i++){
     std::vector<MElement*> &adji = adj[q->getVertex(i)];
     all.insert(adji.begin(),adji.end());
-    // FIXME    
+    // FIXME
     if (q->getVertex(i)->onWhat()->dim() != 2)return 0;
   }
   std::vector<MElement*> lt;
@@ -1971,12 +1971,12 @@ static int _untangleQuad (GFace *gf, MQuadrangle *q,v2t_cont & adj)
 
 
   alglib::ae_int_t dim = 8;
-  alglib::ae_int_t corr = 2; 
+  alglib::ae_int_t corr = 2;
   alglib::minlbfgsstate state;
-  alglib::real_1d_array x; 
+  alglib::real_1d_array x;
   std::vector<double> initial_conditions(8);
   opti_data_vertex_relocation data(lt,q->getVertex(0),q->getVertex(1),q->getVertex(2),q->getVertex(3),gf);
-  
+
   //  char NNN[256];
   //  sprintf(NNN,"UNTANGLE_cavity_%d_before.pos",OPTI_NUMBER);
   //  data.print_cavity (NNN);
@@ -2043,7 +2043,7 @@ static void _relocateVertexOpti(GFace *gf, MVertex *ver,
   alglib::real_1d_array x; // = "[0.5,0.5]";
   std::vector<double> initial_conditions(dim);
   opti_data_vertex_relocation data(lt,ver,gf);
-  
+
   //  char NNN[256];
   //  sprintf(NNN,"cavity_%d_before.pos",OPTI_NUMBER);
   //  data.print_cavity (NNN);
@@ -2148,7 +2148,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
     }
     else{
 #if defined(HAVE_BFGS)
-      //      _relocateVertexOpti(gf, ver, lt);
+      // _relocateVertexOpti(gf, ver, lt);
 #endif
     }
   }
@@ -2641,7 +2641,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   int i20 = data.getIndex(t2b->getVertex(0));
   int i21 = data.getIndex(t2b->getVertex(1));
   int i22 = data.getIndex(t2b->getVertex(2));
-  
+
   double lc1 = 0.3333333333 * (data.vSizes[i10] + data.vSizes[i11] + data.vSizes[i12]);
   double lcBGM1 = 0.3333333333 * (data.vSizesBGM[i10] + data.vSizesBGM[i11] + data.vSizesBGM[i12]);
 
@@ -2888,7 +2888,7 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
       }
     }
   }
-  
+
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
   std::vector<std::pair<MElement*,MElement*> > toProcess;
@@ -2907,7 +2907,7 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
         t2n[gf->triangles[i]] = i;
         n2t[i] = gf->triangles[i];
       }
-      
+
       elist = new int [2*ecount];
       //int *elist = new int [2*ecount];
       int *elen  = new int [ecount];
@@ -2946,7 +2946,7 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
           elen [CC++] =  100000;
         }
       }
-      
+
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
@@ -2984,13 +2984,13 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
                 break;
               }
             }
-            
+
             MVertex *mv[4], *v[4];
             v[0] = t1->getVertex(start);
             v[1] = t1->getVertex((start+1)%3);
             v[2] = other;
             v[3] = t1->getVertex((start+2)%3);
-            
+
             for (unsigned int i = 0; i < 4; ++i) {
               mv[i] = new MVertex(v[i]->x() + dx,
                                   v[i]->y() + dy,
@@ -3102,7 +3102,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
     if (ncount % 2 != 0) {
-      printf("strange\n"); 
+      printf("strange\n");
     }
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();

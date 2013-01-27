@@ -69,18 +69,15 @@ static int globalShortcut(int event)
 
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
-  fl_color(c);
-  fl_rectf(x, y, w, h);
-  fl_color(FL_DARK2);
-  fl_line(x + w - 1, y, x + w - 1, y + h);
+  fl_color(c); fl_rectf(x, y, w, h);
+  fl_color(FL_DARK2); fl_line(x + w - 1, y, x + w - 1, y + h);
 }
 
 static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
-  fl_color(c);
-  fl_rectf(x, y, w, h);
-  fl_color(FL_DARK2);
-  fl_line(x, y, x + w, y);
+  fl_color(c); fl_rectf(x, y, w, h);
+  fl_color(FL_DARK2); fl_line(x, y, x + w, y);
+  //fl_color(FL_LIGHT2); fl_line(x, y+1, x + w, y+1);
 }
 
 FlGui::FlGui(int argc, char **argv)

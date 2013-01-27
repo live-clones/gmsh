@@ -1090,7 +1090,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    }
 
 
-   //take xyz = closest point on boundary in case we are on 
+   //take xyz = closest point on boundary in case we are on
    //the planar IN/OUT FACES or in VOLUME
    double xyz[3] = {x,y,z};
    bool onTubularSurface = true;
@@ -1139,45 +1139,43 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    }
    double curv, cMin, cMax;
    SVector3 dMin, dMax;
-   int isAbs = 1.0; 
+   int isAbs = 1.0;
    curvature.vertexNodalValuesAndDirections(vertices[index[0]],&dMax, &dMin, &cMax, &cMin, isAbs);
    curvature.vertexNodalValues(vertices[index[0]], curv, 1);
    if (cMin == 0) cMin =1.e-12;
    if (cMax == 0) cMax =1.e-12;
    double rhoMin = 1./cMin;
    double rhoMax = 1./cMax;
-   double signMin = (rhoMin > 0.0) ? -1.0: 1.0;
-   double signMax = (rhoMax > 0.0) ? -1.0: 1.0;
-     
+   //double signMin = (rhoMin > 0.0) ? -1.0: 1.0;
+   //double signMax = (rhoMax > 0.0) ? -1.0: 1.0;
+
    //user-defined parameters
    //define h_n, h_t1, and h_t2
    double thickness = radMax/3.;
    double h_far = radMax/5.;
-   double beta = (ds <= thickness) ? 1.2 : 2.1; //CTX::instance()->mesh.smoothRatio; 
-   double dist = (ds <= thickness) ? ds: thickness; 
+   double beta = (ds <= thickness) ? 1.2 : 2.1; //CTX::instance()->mesh.smoothRatio;
+   double dist = (ds <= thickness) ? ds: thickness;
 
    double h_n_0 = thickness/20.;
-   double h_n   = std::min( (h_n_0+ds*log(beta)), h_far); 
+   double h_n   = std::min( (h_n_0+ds*log(beta)), h_far);
 
-   double betaMin = 10.0; 
-   double betaMax = 3.1; 
+   double betaMin = 10.0;
+   double betaMax = 3.1;
    double oneOverD2_min = 1./(2.*rhoMin*rhoMin*(betaMin*betaMin-1)) *
-     (sqrt(1+ (4.*rhoMin*rhoMin*(betaMin*betaMin-1))/(h_n*h_n))-1.); 
+     (sqrt(1+ (4.*rhoMin*rhoMin*(betaMin*betaMin-1))/(h_n*h_n))-1.);
    double oneOverD2_max = 1./(2.*rhoMax*rhoMax*(betaMax*betaMax-1)) *
     (sqrt(1+ (4.*rhoMax*rhoMax*(betaMax*betaMax-1))/(h_n*h_n))-1.);
-   double l_t1 = ((2 * M_PI) /(cMin*nbPoints));
-   double l_t2 = ((2 * M_PI) /(cMax*nbPoints));
    double h_t1_0 = sqrt(1./oneOverD2_min);
    double h_t2_0 = sqrt(1./oneOverD2_max);
    //double h_t1 =  h_t1_0*(rhoMin+signMin*dist)/rhoMin ;
-   //double h_t2 =  h_t2_0*(rhoMax+signMax*dist)/rhoMax ;  
+   //double h_t2 =  h_t2_0*(rhoMax+signMax*dist)/rhoMax ;
    double h_t1  = std::min( (h_t1_0+(dist*log(beta))), radMax);
    double h_t2  = std::min( (h_t2_0+(dist*log(beta))), h_far);
 
    double dCenter = radMax-ds;
    double h_a_0 = 0.5*radMax;
-   double h_a = h_a_0 - (h_a_0-h_t1_0)/(radMax)*dCenter; 
-      
+   double h_a = h_a_0 - (h_a_0-h_t1_0)/(radMax)*dCenter;
+
    //length between min and max
    double lcMin = ((2 * M_PI *radMax) /( 50*nbPoints )); //CTX::instance()->mesh.lcMin;
    double lcMax =  lcMin*2000.; //CTX::instance()->mesh.lcMax;
@@ -1197,10 +1195,10 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
        metr = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, h_n, h_t1, h_t2);
      }
      //in volume
-     else {       
+     else {
        //curvMetric = metricBasedOnSurfaceCurvature(dMin, dMax, cMin, cMax, h_n, h_t1, h_t2);
        metr = SMetric3( 1./(h_a*h_a), 1./(h_n*h_n), 1./(h_n*h_n), dir_a, dir_n, dir_cross);
-       
+
        //metr = intersection_conserveM1_bis(metr, curvMetric);
        //metr = intersection_conserveM1(metr,curvMetric);
        //metr = intersection_conserve_mostaniso(metr, curvMetric);
@@ -1213,12 +1211,12 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
 }
 
 SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dirMax,
-                                                   double cmin, double cmax, 
+                                                   double cmin, double cmax,
 						   double h_n, double h_t1, double h_t2)
 {
 
   SVector3 dirNorm = crossprod(dirMax,dirMin);
-  SMetric3 curvMetric (1./(h_t1*h_t1),1./(h_t2*h_t2),1./(h_n*h_n), dirMin, dirMax, dirNorm); 
+  SMetric3 curvMetric (1./(h_t1*h_t1),1./(h_t2*h_t2),1./(h_n*h_n), dirMin, dirMax, dirNorm);
 
   return curvMetric;
 }

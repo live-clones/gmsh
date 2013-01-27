@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include "MVertex.h"
+#include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -13,7 +14,6 @@
 #include "GmshMessage.h"
 #include "StringUtils.h"
 
-int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
 bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *v2) const
@@ -47,15 +47,26 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
 {
 #pragma omp critical
   {
+    // we should make GModel a mandatory argument to the constructor
+    GModel *m = GModel::current();
     if(num){
       _num = num;
-      _globalNum = std::max(_globalNum, _num);
+      m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
     }
     else{
-      _num = ++_globalNum;
+      m->setMaxVertexNumber(m->getMaxVertexNumber() + 1);
+      _num = m->getMaxVertexNumber();
     }
     _index = num;
   }
+}
+
+void MVertex::deleteLast()
+{
+  GModel *m = GModel::current();
+  if(_num == m->getMaxVertexNumber())
+    m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
+  delete this;
 }
 
 void MVertex::forceNum(int num)
@@ -63,7 +74,8 @@ void MVertex::forceNum(int num)
 #pragma omp critical
   {
     _num = num;
-    _globalNum = std::max(_globalNum, _num);
+    GModel::current()->setMaxVertexNumber
+      (std::max(GModel::current()->getMaxVertexNumber(), _num));
   }
 }
 

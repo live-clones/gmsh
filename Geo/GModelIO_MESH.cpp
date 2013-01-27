@@ -94,7 +94,7 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[3], cl;
-          sscanf(buffer, "%d %d %d", &n[0], &n[1], &n[2], &cl);
+          sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
           for(int j = 0; j < 3; j++) n[j]--;
           std::vector<MVertex*> vertices;
           if(!getVertices(3, n, vertexVector, vertices)) return 0;
