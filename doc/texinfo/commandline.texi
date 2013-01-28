@@ -1,0 +1,125 @@
+@c
+@c This file is generated automatically by running "gmsh -doc".
+@c Do not edit by hand!
+@c
+
+@ftable @code
+@item -0
+Output unrolled geometry, then exit
+@item -tol float
+Set geometrical tolerance
+@item -match
+Match geometries and meshes
+@item -1, -2, -3
+Perform 1D, 2D or 3D mesh generation, then exit
+@item -format string
+Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)
+@item -vmsh float
+Select msh file version
+@item -refine
+Perform uniform mesh refinement, then exit
+@item -part int
+Partition after batch mesh generation
+@item -partWeight <tri|quad|tet|prism|hex> int
+Weight of a triangle/quad/etc. during partitioning
+@item -renumber
+Renumber the mesh elements after batch mesh generation
+@item -saveall
+Save all elements (discard physical group definitions)
+@item -o file
+Specify output file name
+@item -bin
+Use binary format when available
+@item -parametric
+Save vertices with their parametric coordinates
+@item -numsubedges
+Set num of subdivisions for high order element display
+@item -algo string
+Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d)
+@item -smooth int
+Set number of mesh smoothing steps
+@item -order int
+Set mesh order (1, ..., 5)
+@item -hoOptimize
+Optimize high order meshes
+@item -hoMindisto float
+Min high-order element quality before optim (0.0->1.0)
+@item -hoNLayers int
+Number of high order element layers to optimize
+@item -hoElasticity float
+Poisson ration for elasticity analogy (-1.0 < nu < 0.5)
+@item -optimize[_netgen]
+Optimize quality of tetrahedral elements
+@item -optimize_lloyd
+Optimize 2D meshes using Lloyd algorithm
+@item -clscale float
+Set global mesh element size scaling factor
+@item -clmin float
+Set minimum mesh element size
+@item -clmax float
+Set maximum mesh element size
+@item -anisoMax float
+Set maximum anisotropy (only used in bamg for now)
+@item -smoothRatio float
+Set smoothing ration between mesh sizes at nodes of a same edge (only used in bamg)
+@item -clcurv
+Automatically compute element sizes from curvatures
+@item -epslc1d
+Set accuracy of evaluation of LCFIELD for 1D mesh
+@item -swapangle
+Set the threshold angle (in degree) between two adjacent faces below which a swap is allowed
+@item -rand float
+Set random perturbation factor
+@item -bgm file
+Load background mesh from file
+@item -check
+Perform various consistency checks on mesh
+@item -mpass int
+Do several passes on the mesh for complex backround fields
+@item -ignorePartBound
+Ignore partitions boundaries
+@item -link int
+Select link mode between views (0, 1, 2, 3, 4)
+@item -combine
+Combine views having identical names into multi-time-step views
+@item -n
+Hide all meshes and post-processing views on startup
+@item -nodb
+Disable double buffering
+@item -fontsize int
+Specify the font size for the GUI
+@item -theme string
+Specify FLTK GUI theme
+@item -display string
+Specify display
+@item -camera
+Use camera mode view;
+@item -stereo
+OpenGL quad-buffered stereo rendering (requires special graphic card)
+@item -
+Parse input files, then exit
+@item -a, -g, -m, -s, -p
+Start in automatic, geometry, mesh, solver or post-processing mode
+@item -pid
+Print process id on stdout
+@item -listen
+Always listen to incoming connection requests
+@item -watch pattern
+Pattern of files to merge as they become available
+@item -v int
+Set verbosity level
+@item -nopopup
+Don't popup dialog windows in scripts
+@item -string "string"
+Parse option string at startup
+@item -option file
+Parse option file at startup
+@item -convert files
+Convert files into latest binary formats, then exit
+@item -version
+Show version number
+@item -info
+Show detailed version information
+@item -help
+Show this message
+@end ftable

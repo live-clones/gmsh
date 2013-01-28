@@ -20,7 +20,7 @@ const char *GetGmshBuildOS();
 const char *GetGmshShortLicense();
 const char *GetGmshBuildOptions();
 
-std::vector<std::string> GetUsage(const std::string &name);
+std::vector<std::pair<std::string, std::string> > GetUsage(const std::string &name);
 std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::string &ctrl="");
 std::vector<std::pair<std::string, std::string> > GetMouseUsage();
 void PrintUsage(const std::string &name);

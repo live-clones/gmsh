@@ -43,85 +43,88 @@ const char *GetGmshBuildOS(){ return GMSH_OS; }
 const char *GetGmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 const char *GetGmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
-std::vector<std::string> GetUsage(const std::string &name)
+std::vector<std::pair<std::string, std::string> > GetUsage(const std::string &name)
 {
-  // If you make changes in this routine, please also change the texinfo
-  // documentation (doc/texinfo/gmsh.texi) and the man page (doc/gmsh.1)
-  std::vector<std::string> s;
-  s.push_back("Usage: " + name + " [options] [files]");
-  s.push_back("Geometry options:");
-  s.push_back("  -0                    Output unrolled geometry, then exit");
-  s.push_back("  -tol float            Set geometrical tolerance");
-  s.push_back("  -match                Match geometries and meshes");
-  s.push_back("Mesh options:");
-  s.push_back("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
-  s.push_back("  -format string        Select output mesh format (auto (default), msh, msh1, msh2,");
-  s.push_back("                          unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)");
-  s.push_back("  -refine               Perform uniform mesh refinement, then exit");
-  s.push_back("  -part int             Partition after batch mesh generation");
-  s.push_back("  -partWeight <tri|quad|tet|prism|hex> int");
-  s.push_back("                          Weight of a triangle/quad/etc. during partitioning");
-  s.push_back("  -renumber             Renumber the mesh elements after batch mesh generation");
-  s.push_back("  -saveall              Save all elements (discard physical group definitions)");
-  s.push_back("  -o file               Specify output file name");
-  s.push_back("  -bin                  Use binary format when available");
-  s.push_back("  -parametric           Save vertices with their parametric coordinates");
-  s.push_back("  -numsubedges          Set the number of subdivisions when displaying high order elements");
-  s.push_back("  -algo string          Select mesh algorithm (meshadapt, del2d, front2d, delquad, ");
-  s.push_back("                          del3d, front3d, mmg3d)");
-  s.push_back("  -smooth int           Set number of mesh smoothing steps");
-  s.push_back("  -order int            Set mesh order (1, ..., 5)");
-  s.push_back("  -hoOptimize           Optimize high order meshes");
-  s.push_back("  -hoMindisto float     Minimum quality for high-order elements before optimization (0.0->1.0)");
-  s.push_back("  -hoNLayers int        Number of high order element layers to optimize");
-  s.push_back("  -hoElasticity float   Poisson ration for the elasticity analogy (-1.0 < nu < 0.5)");
-  s.push_back("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
-  s.push_back("  -optimize_lloyd       Optimize 2D meshes using Lloyd algorithm");
-  s.push_back("  -clscale float        Set global mesh element size scaling factor");
-  s.push_back("  -clmin float          Set minimum mesh element size");
-  s.push_back("  -clmax float          Set maximum mesh element size");
-  s.push_back("  -anisoMax float       Set maximum anisotropy (only used in bamg for now)");
-  s.push_back("  -smoothRatio float    Set smoothing ration between mesh sizes at nodes of a same edge");
-  s.push_back("                          (only used in bamg)");
-  s.push_back("  -clcurv               Automatically compute element sizes from curvatures");
-  s.push_back("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
-  s.push_back("  -swapangle            Set the threshold angle (in degree) between two adjacent faces");
-  s.push_back("                          below which a swap is allowed");
-  s.push_back("  -rand float           Set random perturbation factor");
-  s.push_back("  -bgm file             Load background mesh from file");
-  s.push_back("  -check                Perform various consistency checks on mesh");
-  s.push_back("  -mpass int            Do several passes on the mesh for complex backround fields");
-  s.push_back("  -ignorePartBound      Ignore partitions boundaries");
+  typedef std::pair<std::string, std::string> mp;
+  std::vector<mp> s;
+  s.push_back(mp("Usage: " + name + " [options] [files]", ""));
+  s.push_back(mp("Geometry options:", ""));
+  s.push_back(mp("-0",                 "Output unrolled geometry, then exit"));
+  s.push_back(mp("-tol float",         "Set geometrical tolerance"));
+  s.push_back(mp("-match",             "Match geometries and meshes"));
+  s.push_back(mp("Mesh options:", ""));
+  s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
+  s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
+                                       "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
+                                       "p3d, diff, med, ...)"));
+  s.push_back(mp("-vmsh float",        "Select msh file version"));
+  s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-part int",          "Partition after batch mesh generation"));
+  s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
+                                                           "during partitioning"));
+  s.push_back(mp("-renumber",          "Renumber the mesh elements after batch mesh generation"));
+  s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
+  s.push_back(mp("-o file",            "Specify output file name"));
+  s.push_back(mp("-bin",               "Use binary format when available"));
+  s.push_back(mp("-parametric",        "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-numsubedges",       "Set num of subdivisions for high order element display"));
+  s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
+                                        "delquad, del3d, front3d, mmg3d)"));
+  s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
+  s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
+  s.push_back(mp("-hoOptimize",        "Optimize high order meshes"));
+  s.push_back(mp("-hoMindisto float",  "Min high-order element quality before optim (0.0->1.0)"));
+  s.push_back(mp("-hoNLayers int",     "Number of high order element layers to optimize"));
+  s.push_back(mp("-hoElasticity float","Poisson ration for elasticity analogy (nu in [-1.0,0.5])"));
+  s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
+  s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
+  s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
+  s.push_back(mp("-clmin float",       "Set minimum mesh element size"));
+  s.push_back(mp("-clmax float",       "Set maximum mesh element size"));
+  s.push_back(mp("-anisoMax float",    "Set maximum anisotropy (only used in bamg for now)"));
+  s.push_back(mp("-smoothRatio float", "Set smoothing ration between mesh sizes at nodes of "
+                                       "a same edge (only used in bamg)"));
+  s.push_back(mp("-clcurv",            "Automatically compute element sizes from curvatures"));
+  s.push_back(mp("-epslc1d",           "Set accuracy of evaluation of LCFIELD for 1D mesh"));
+  s.push_back(mp("-swapangle",         "Set the threshold angle (in degree) between two adjacent"
+                                       " faces below which a swap is allowed"));
+  s.push_back(mp("-rand float",        "Set random perturbation factor"));
+  s.push_back(mp("-bgm file",          "Load background mesh from file"));
+  s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
+  s.push_back(mp("-mpass int",         "Do several passes on the mesh for complex backround fields"));
+  s.push_back(mp("-ignorePartBound",   "Ignore partitions boundaries"));
 #if defined(HAVE_FLTK)
-  s.push_back("Post-processing options:");
-  s.push_back("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
-  s.push_back("  -combine              Combine views having identical names into multi-time-step views");
-  s.push_back("Display options:");
-  s.push_back("  -n                    Hide all meshes and post-processing views on startup");
-  s.push_back("  -nodb                 Disable double buffering");
-  s.push_back("  -fontsize int         Specify the font size for the GUI");
-  s.push_back("  -theme string         Specify FLTK GUI theme");
-  s.push_back("  -display string       Specify display");
-  s.push_back("  -camera               Use camera mode view;");
-  s.push_back("  -stereo               OpenGL quad-buffered stereo rendering (requires special graphic card)");
+  s.push_back(mp("Post-processing options:", ""));
+  s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
+  s.push_back(mp("-combine",           "Combine views having identical names into "
+                                       "multi-time-step views"));
+  s.push_back(mp("Display options:", ""));
+  s.push_back(mp("-n",                 "Hide all meshes and post-processing views on startup"));
+  s.push_back(mp("-nodb",              "Disable double buffering"));
+  s.push_back(mp("-fontsize int",      "Specify the font size for the GUI"));
+  s.push_back(mp("-theme string",      "Specify FLTK GUI theme"));
+  s.push_back(mp("-display string",    "Specify display"));
+  s.push_back(mp("-camera",            "Use camera mode view;"));
+  s.push_back(mp("-stereo",            "OpenGL quad-buffered stereo rendering (requires "
+                                       "special graphic card)"));
 #endif
-  s.push_back("Other options:");
-  s.push_back("  -                     Parse input files, then exit");
+  s.push_back(mp("Other options:", ""));
+  s.push_back(mp("-",                  "Parse input files, then exit"));
 #if defined(HAVE_FLTK)
-  s.push_back("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
+  s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
+                                       "post-processing mode"));
 #endif
-  s.push_back("  -pid                  Print process id on stdout");
-  s.push_back("  -listen               Always listen to incoming connection requests");
-  s.push_back("  -watch pattern        Pattern of files to merge as they become available");
-  s.push_back("  -v int                Set verbosity level");
-  s.push_back("  -nopopup              Don't popup dialog windows in scripts");
-  s.push_back("  -string \"string\"      Parse option string at startup");
-  s.push_back("  -option file          Parse option file at startup");
-  s.push_back("  -convert files        Convert files into latest binary formats, then exit");
-  s.push_back("  -vmsh float           Select msh file version");
-  s.push_back("  -version              Show version number");
-  s.push_back("  -info                 Show detailed version information");
-  s.push_back("  -help                 Show this message");
+  s.push_back(mp("-pid",               "Print process id on stdout"));
+  s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
+  s.push_back(mp("-watch pattern",     "Pattern of files to merge as they become available"));
+  s.push_back(mp("-v int",             "Set verbosity level"));
+  s.push_back(mp("-nopopup",           "Don't popup dialog windows in scripts"));
+  s.push_back(mp("-string \"string\"", "Parse option string at startup"));
+  s.push_back(mp("-option file",       "Parse option file at startup"));
+  s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-version",           "Show version number"));
+  s.push_back(mp("-info",              "Show detailed version information"));
+  s.push_back(mp("-help",              "Show this message"));
   return s;
 }
 
@@ -233,9 +236,17 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 
 void PrintUsage(const std::string &name)
 {
-  std::vector<std::string> s = GetUsage(name);
-  for(unsigned int i = 0; i < s.size(); i++)
-    Msg::Direct("%s", s[i].c_str());
+  std::vector<std::pair<std::string, std::string> > s = GetUsage(name);
+  for(unsigned int i = 0; i < s.size(); i++){
+    std::string a = s[i].first, b = s[i].second;
+    if(b.empty()){
+      Msg::Direct("%s", a.c_str());
+    }
+    else{
+      if(a.size() < 20) a.resize(20, ' ');
+      Msg::Direct("  %s %s", a.c_str(), b.c_str());
+    }
+  }
 }
 
 void GetOptions(int argc, char *argv[])

@@ -142,6 +142,17 @@ helpWindow::helpWindow()
     s += "For a 1 button mouse, Middle button = Shift+Left button, "
          "Right button = Alt+Left button.";
 
+
+    s += "<h3>Command Line Switches</h3>";
+    s += "<table border=1>";
+    {
+      std::vector<std::pair<std::string, std::string> > s0 = GetUsage("gmsh");
+      for(unsigned int i = 0; i < s0.size(); i++)
+        if(s0[i].first.size() && s0[i].second.size())
+          s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
+    }
+    s += "</table>";
+
     o->value(s.c_str());
 
     basic->resizable(o);
