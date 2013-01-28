@@ -746,7 +746,8 @@ typedef struct {
 void InitOptions(int num);
 void InitOptionsGUI(int num);
 void ReInitOptions(int num);
-void PrintOptions(int num, int level, int diff, int help, const char *filename);
+void PrintOptions(int num, int level, int diff, int help, const char *filename,
+                  std::vector<std::string> *vec=0);
 void PrintOptionsDoc();
 
 bool StringOption(int action, const char *category, int num,

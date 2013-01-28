@@ -7,6 +7,8 @@
 #define _COLORTABLE_H_
 
 #include <stdio.h>
+#include <vector>
+#include <string>
 
 #define COLORTABLE_NBMAX_PARAM 10
 #define COLORTABLE_NBMAX_COLOR 1024
@@ -43,7 +45,7 @@ void ColorTable_InitParam(int number, GmshColorTable *ct);
 void ColorTable_Recompute(GmshColorTable *ct);
 void ColorTable_Copy(GmshColorTable *ct);
 void ColorTable_Paste(GmshColorTable *ct);
-void ColorTable_Print(GmshColorTable *ct, FILE *fp) ;
+void ColorTable_Print(GmshColorTable *ct, FILE *fp, std::vector<std::string> *vec=0) ;
 int  ColorTable_IsAlpha(GmshColorTable *ct) ;
 int  ColorTable_Diff(GmshColorTable *ct1, GmshColorTable *ct2);
 

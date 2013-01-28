@@ -32,7 +32,7 @@ typedef unsigned long intptr_t;
 #include "manipWindow.h"
 #include "fieldWindow.h"
 #include "pluginWindow.h"
-#include "aboutWindow.h"
+#include "helpWindow.h"
 #include "onelabGroup.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
@@ -532,12 +532,12 @@ static void help_online_cb(Fl_Widget *w, void *data)
 
 static void help_basic_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->about->winhelp->show();
+  FlGui::instance()->help->basic->show();
 }
 
 void help_about_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->about->win->show();
+  FlGui::instance()->help->about->show();
 }
 
 static void geometry_edit_cb(Fl_Widget *w, void *data)
@@ -2276,8 +2276,8 @@ void status_options_cb(Fl_Widget *w, void *data)
     modelChooser();
   }
   else if(!strcmp(str, "?")){ // display options
-    PrintOptions(0, GMSH_FULLRC, 0, 1, NULL);
-    FlGui::instance()->showMessages();
+    help_options_cb(0, 0);
+    FlGui::instance()->help->options->show();
   }
   else if(!strcmp(str, "p")){ // toggle projection mode
     if(!Fl::event_state(FL_SHIFT)){

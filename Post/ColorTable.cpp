@@ -387,7 +387,7 @@ int ColorTable_Diff(GmshColorTable * ct1, GmshColorTable * ct2)
   return 0;
 }
 
-void ColorTable_Print(GmshColorTable * ct, FILE * fp)
+void ColorTable_Print(GmshColorTable * ct, FILE * fp, std::vector<std::string> *vec)
 {
   int i, r, g, b, a;
   char tmp1[1024], tmp2[1024];
@@ -401,6 +401,8 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
     if(i && !(i % 4)) {
       if(fp)
         fprintf(fp, "%s\n", tmp1);
+      else if(vec)
+        vec->push_back(tmp1);
       else
         Msg::Direct(tmp1);
       strcpy(tmp1, "");
@@ -412,6 +414,8 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
   }
   if(fp)
     fprintf(fp, "%s\n", tmp1);
+  else if(vec)
+    vec->push_back(tmp1);
   else
     Msg::Direct(tmp1);
 }

@@ -17,7 +17,7 @@ set(SRC
     clippingWindow.cpp
     manipWindow.cpp
     contextWindow.cpp
-    aboutWindow.cpp
+    helpWindow.cpp
     fileDialogs.cpp
     extraDialogs.cpp
     projectionEditor.cpp

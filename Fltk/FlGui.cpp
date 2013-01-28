@@ -28,7 +28,7 @@ typedef unsigned long intptr_t;
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "onelabGroup.h"
-#include "aboutWindow.h"
+#include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
 #include "GmshDefines.h"
@@ -186,7 +186,7 @@ FlGui::FlGui(int argc, char **argv)
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
-  about = new aboutWindow();
+  help = new helpWindow();
 
   // init solver plugin stuff
   callForSolverPlugin(-1);

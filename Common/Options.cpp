@@ -107,7 +107,8 @@ static void SetStringOptionsGUI(int num, StringXString s[])
 }
 
 static void PrintStringOptions(int num, int level, int diff, int help,
-                               StringXString s[], const char *prefix, FILE *file)
+                               StringXString s[], const char *prefix,
+                               FILE *file, std::vector<std::string> *vec=0)
 {
   int i = 0;
   while(s[i].str) {
@@ -125,7 +126,10 @@ static void PrintStringOptions(int num, int level, int diff, int help,
             if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
           // Warning: must call Msg::Direct(level, ...) here, because
           // we cannot use tmp as a format string (it can contain %s!)
-          Msg::Direct(3, "%s", tmp);
+          if(vec)
+            vec->push_back(tmp);
+          else
+            Msg::Direct(3, "%s", tmp);
         }
       }
     }
@@ -219,7 +223,8 @@ static void SetNumberOptionsGUI(int num, StringXNumber s[])
 }
 
 static void PrintNumberOptions(int num, int level, int diff, int help,
-                               StringXNumber s[], const char *prefix, FILE * file)
+                               StringXNumber s[], const char *prefix,
+                               FILE * file, std::vector<std::string> *vec=0)
 {
   int i = 0;
   char tmp[1024];
@@ -231,6 +236,8 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
                 help ? " // " : "", help ? s[i].help : "");
         if(file)
           fprintf(file, "%s\n", tmp);
+        else if(vec)
+          vec->push_back(tmp);
         else
           Msg::Direct(tmp);
       }
@@ -355,7 +362,8 @@ static void SetColorOptionsGUI(int num, StringXColor s[])
 }
 
 static void PrintColorOptions(int num, int level, int diff, int help,
-                              StringXColor s[], const char *prefix, FILE * file)
+                              StringXColor s[], const char *prefix, FILE * file,
+                              std::vector<std::string> *vec)
 {
   int i = 0;
   char tmp[1024];
@@ -385,6 +393,8 @@ static void PrintColorOptions(int num, int level, int diff, int help,
                 help ? " // " : "", help ? s[i].help : "");
         if(file)
           fprintf(file, "%s\n", tmp);
+        else if(vec)
+          vec->push_back(tmp);
         else
           Msg::Direct(tmp);
       }
@@ -482,7 +492,7 @@ void InitOptionsGUI(int num)
 }
 
 static void PrintOptionCategory(int level, int diff, int help, const char *cat,
-                                 FILE *file)
+                                FILE *file, std::vector<std::string> *vec=0)
 {
   if(diff || !help || !(level & GMSH_FULLRC))
     return;
@@ -491,7 +501,12 @@ static void PrintOptionCategory(int level, int diff, int help, const char *cat,
     fprintf(file, "// %s\n", cat);
     fprintf(file, "//\n");
   }
-  else {
+  else if(vec){
+    vec->push_back("//");
+    vec->push_back(std::string("// ") + cat);
+    vec->push_back("//");
+  }
+  else{
     Msg::Direct("//");
     Msg::Direct("// %s", cat);
     Msg::Direct("//");
@@ -515,7 +530,8 @@ GmshColorTable *GetColorTable(int num)
 #endif
 }
 
-static void PrintColorTable(int num, int diff, const char *prefix, FILE *file)
+static void PrintColorTable(int num, int diff, const char *prefix, FILE *file,
+                            std::vector<std::string> *vec)
 {
 #if defined(HAVE_POST)
   PViewOptions *opt;
@@ -542,12 +558,16 @@ static void PrintColorTable(int num, int diff, const char *prefix, FILE *file)
   sprintf(tmp, "%s = {", prefix);
   if(file)
     fprintf(file, "%s\n", tmp);
+  else if(vec)
+    vec->push_back(tmp);
   else
     Msg::Direct(tmp);
-  ColorTable_Print(&opt->colorTable, file);
+  ColorTable_Print(&opt->colorTable, file, vec);
   sprintf(tmp, "};");
   if(file)
     fprintf(file, "%s\n", tmp);
+  else if(vec)
+    vec->push_back(tmp);
   else
     Msg::Direct(tmp);
 #endif
@@ -565,7 +585,8 @@ void Sanitize_String_Texi(std::string &s)
     s.insert(i++, "@");
 }
 
-void PrintOptions(int num, int level, int diff, int help, const char *filename)
+void PrintOptions(int num, int level, int diff, int help, const char *filename,
+                  std::vector<std::string> *vec)
 {
 #if defined(HAVE_FLTK)
   if(FlGui::available())
@@ -607,76 +628,76 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename)
     fprintf(file, "//\n");
   }
 
-  PrintOptionCategory(level, diff, help, "General options (strings)", file);
-  PrintStringOptions(num, level, diff, help, GeneralOptions_String, "General.", file);
-  PrintOptionCategory(level, diff, help, "General options (numbers)", file);
-  PrintNumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file);
-  PrintOptionCategory(level, diff, help, "General options (colors)", file);
-  PrintColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file);
+  PrintOptionCategory(level, diff, help, "General options (strings)", file, vec);
+  PrintStringOptions(num, level, diff, help, GeneralOptions_String, "General.", file, vec);
+  PrintOptionCategory(level, diff, help, "General options (numbers)", file, vec);
+  PrintNumberOptions(num, level, diff, help, GeneralOptions_Number, "General.", file, vec);
+  PrintOptionCategory(level, diff, help, "General options (colors)", file, vec);
+  PrintColorOptions(num, level, diff, help, GeneralOptions_Color, "General.", file, vec);
 
-  PrintOptionCategory(level, diff, help, "Geometry options (strings)", file);
-  PrintStringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file);
-  PrintOptionCategory(level, diff, help, "Geometry options (numbers)", file);
-  PrintNumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file);
-  PrintOptionCategory(level, diff, help, "Geometry options (colors)", file);
-  PrintColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file);
+  PrintOptionCategory(level, diff, help, "Geometry options (strings)", file, vec);
+  PrintStringOptions(num, level, diff, help, GeometryOptions_String, "Geometry.", file, vec);
+  PrintOptionCategory(level, diff, help, "Geometry options (numbers)", file, vec);
+  PrintNumberOptions(num, level, diff, help, GeometryOptions_Number, "Geometry.", file, vec);
+  PrintOptionCategory(level, diff, help, "Geometry options (colors)", file, vec);
+  PrintColorOptions(num, level, diff, help, GeometryOptions_Color, "Geometry.", file, vec);
 
-  PrintOptionCategory(level, diff, help, "Mesh options (strings)", file);
-  PrintStringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file);
-  PrintOptionCategory(level, diff, help, "Mesh options (numbers)", file);
-  PrintNumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file);
-  PrintOptionCategory(level, diff, help, "Mesh options (colors)", file);
-  PrintColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file);
+  PrintOptionCategory(level, diff, help, "Mesh options (strings)", file, vec);
+  PrintStringOptions(num, level, diff, help, MeshOptions_String, "Mesh.", file, vec);
+  PrintOptionCategory(level, diff, help, "Mesh options (numbers)", file, vec);
+  PrintNumberOptions(num, level, diff, help, MeshOptions_Number, "Mesh.", file, vec);
+  PrintOptionCategory(level, diff, help, "Mesh options (colors)", file, vec);
+  PrintColorOptions(num, level, diff, help, MeshOptions_Color, "Mesh.", file, vec);
 
-  PrintOptionCategory(level, diff, help, "Solver options (strings)", file);
-  PrintStringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file);
-  PrintOptionCategory(level, diff, help, "Solver options (numbers)", file);
-  PrintNumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file);
-  PrintOptionCategory(level, diff, help, "Solver options (colors)", file);
-  PrintColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file);
+  PrintOptionCategory(level, diff, help, "Solver options (strings)", file, vec);
+  PrintStringOptions(num, level, diff, help, SolverOptions_String, "Solver.", file, vec);
+  PrintOptionCategory(level, diff, help, "Solver options (numbers)", file, vec);
+  PrintNumberOptions(num, level, diff, help, SolverOptions_Number, "Solver.", file, vec);
+  PrintOptionCategory(level, diff, help, "Solver options (colors)", file, vec);
+  PrintColorOptions(num, level, diff, help, SolverOptions_Color, "Solver.", file, vec);
 
-  PrintOptionCategory(level, diff, help, "Post-processing options (strings)", file);
+  PrintOptionCategory(level, diff, help, "Post-processing options (strings)", file, vec);
   PrintStringOptions(num, level, diff, help, PostProcessingOptions_String,
-                     "PostProcessing.", file);
-  PrintOptionCategory(level, diff, help, "Post-processing options (numbers)", file);
+                     "PostProcessing.", file, vec);
+  PrintOptionCategory(level, diff, help, "Post-processing options (numbers)", file, vec);
   PrintNumberOptions(num, level, diff, help, PostProcessingOptions_Number,
-                     "PostProcessing.", file);
-  PrintOptionCategory(level, diff, help, "Post-processing options (colors)", file);
+                     "PostProcessing.", file, vec);
+  PrintOptionCategory(level, diff, help, "Post-processing options (colors)", file, vec);
   PrintColorOptions(num, level, diff, help, PostProcessingOptions_Color,
-                    "PostProcessing.", file);
+                    "PostProcessing.", file, vec);
 
   if(level & GMSH_FULLRC) {
 #if defined(HAVE_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++) {
       char tmp[256];
       sprintf(tmp, "View[%d].", i);
-      PrintOptionCategory(level, diff, help, "View options (strings)", file);
-      PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
-      PrintOptionCategory(level, diff, help, "View options (numbers)", file);
-      PrintNumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file);
-      PrintOptionCategory(level, diff, help, "View options (colors)", file);
-      PrintColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file);
+      PrintOptionCategory(level, diff, help, "View options (strings)", file, vec);
+      PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file, vec);
+      PrintOptionCategory(level, diff, help, "View options (numbers)", file, vec);
+      PrintNumberOptions(i, level, diff, help, ViewOptions_Number, tmp, file, vec);
+      PrintOptionCategory(level, diff, help, "View options (colors)", file, vec);
+      PrintColorOptions(i, level, diff, help, ViewOptions_Color, tmp, file, vec);
       strcat(tmp, "ColorTable");
-      PrintColorTable(i, diff, tmp, file);
+      PrintColorTable(i, diff, tmp, file, vec);
     }
 #endif
   }
   else if(level & GMSH_OPTIONSRC) {
-    PrintOptionCategory(level, diff, help, "View options (strings)", file);
-    PrintStringOptions(num, level, diff, help, ViewOptions_String, "View.", file);
-    PrintOptionCategory(level, diff, help, "View options (numbers)", file);
-    PrintNumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file);
-    PrintOptionCategory(level, diff, help, "View options (colors)", file);
-    PrintColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file);
-    PrintColorTable(num, diff, "View.ColorTable", file);
+    PrintOptionCategory(level, diff, help, "View options (strings)", file, vec);
+    PrintStringOptions(num, level, diff, help, ViewOptions_String, "View.", file, vec);
+    PrintOptionCategory(level, diff, help, "View options (numbers)", file, vec);
+    PrintNumberOptions(num, level, diff, help, ViewOptions_Number, "View.", file, vec);
+    PrintOptionCategory(level, diff, help, "View options (colors)", file, vec);
+    PrintColorOptions(num, level, diff, help, ViewOptions_Color, "View.", file, vec);
+    PrintColorTable(num, diff, "View.ColorTable", file, vec);
   }
 
-  PrintOptionCategory(level, diff, help, "Print options (strings)", file);
-  PrintStringOptions(num, level, diff, help, PrintOptions_String, "Print.", file);
-  PrintOptionCategory(level, diff, help, "Print options (numbers)", file);
-  PrintNumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file);
-  PrintOptionCategory(level, diff, help, "Print options (colors)", file);
-  PrintColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file);
+  PrintOptionCategory(level, diff, help, "Print options (strings)", file, vec);
+  PrintStringOptions(num, level, diff, help, PrintOptions_String, "Print.", file, vec);
+  PrintOptionCategory(level, diff, help, "Print options (numbers)", file, vec);
+  PrintNumberOptions(num, level, diff, help, PrintOptions_Number, "Print.", file, vec);
+  PrintOptionCategory(level, diff, help, "Print options (colors)", file, vec);
+  PrintColorOptions(num, level, diff, help, PrintOptions_Color, "Print.", file, vec);
 
   if(filename) fclose(file);
 }

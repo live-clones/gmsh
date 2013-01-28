@@ -30,7 +30,7 @@ class clippingWindow;
 class manipWindow;
 class geometryContextWindow;
 class meshContextWindow;
-class aboutWindow;
+class helpWindow;
 class onelabGroup;
 class Fl_Widget;
 
@@ -62,7 +62,7 @@ class FlGui{
   manipWindow *manip;
   geometryContextWindow *geoContext;
   meshContextWindow *meshContext;
-  aboutWindow *about;
+  helpWindow *help;
   onelabGroup *onelab;
  public:
   FlGui(int argc, char **argv);
