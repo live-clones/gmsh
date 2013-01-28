@@ -44,6 +44,11 @@ Apply Bunin optimization on quad meshes (the parameter is the maximal size of a 
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Lloyd
+Apply lloyd optimization on surface meshes@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CgnsImportOrder
 Enable the creation of high-order mesh from CGNS structured meshes.(1, 2, 4, 8, ...)@*
 Default value: @code{1}@*
@@ -486,6 +491,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAll
 Apply recombination algorithm to all surfaces, ignoring per-surface spec@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DAll
+Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

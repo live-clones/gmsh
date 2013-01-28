@@ -125,116 +125,109 @@ std::vector<std::string> GetUsage(const std::string &name)
   return s;
 }
 
-std::vector<std::string> GetShortcutsUsage()
+std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::string &ctrl)
 {
-  // If you make changes in this routine, please also change the texinfo
-  // documentation (doc/texinfo/gmsh.texi)
+  std::string cc = ctrl;
 #if defined(__APPLE__)
-#  define CC(str) "Cmd+" str " "
+  if(cc.empty()) cc = "Cmd+";
 #else
-#  define CC(str) "Ctrl+" str
+  if(cc.empty()) cc = "Ctrl+";
 #endif
-  std::vector<std::string> s;
-  s.push_back("  Left arrow    Go to previous time step");
-  s.push_back("  Right arrow   Go to next time step");
-  s.push_back("  Up arrow      Make previous view visible");
-  s.push_back("  Down arrow    Make next view visible");
-  s.push_back("  0             Reload project file");
-  s.push_back("  1 or F1       Mesh lines");
-  s.push_back("  2 or F2       Mesh surfaces");
-  s.push_back("  3 or F3       Mesh volumes");
-  s.push_back("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
-  s.push_back("  g             Go to geometry module");
-  s.push_back("  m             Go to mesh module");
-  s.push_back("  p             Go to post-processing module");
-  s.push_back("  s             Go to solver module");
-  s.push_back("  Shift+a       Bring all windows to front");
-  s.push_back("  Shift+g       Show geometry options");
-  s.push_back("  Shift+m       Show mesh options");
-  s.push_back("  Shift+o       Show general options");
-  s.push_back("  Shift+p       Show post-processing options");
-  s.push_back("  Shift+s       Show solver options");
-  s.push_back("  Shift+u       Show post-processing view plugins");
-  s.push_back("  Shift+w       Show post-processing view options");
-  s.push_back("  Shift+Escape  Enable full mouse selection");
-  s.push_back("  " CC("i") "        Show statistics window");
-  s.push_back("  " CC("d") "        Attach/detach menu");
-  s.push_back("  " CC("l") "        Show message console");
+  typedef std::pair<std::string, std::string> mp;
+  std::vector<mp> s;
+  s.push_back(mp("Left arrow",     "Go to previous time step"));
+  s.push_back(mp("Right arrow",    "Go to next time step"));
+  s.push_back(mp("Up arrow",       "Make previous view visible"));
+  s.push_back(mp("Down arrow",     "Make next view visible"));
+  s.push_back(mp("0",              "Reload project file"));
+  s.push_back(mp("1 or F1",        "Mesh lines"));
+  s.push_back(mp("2 or F2",        "Mesh surfaces"));
+  s.push_back(mp("3 or F3",        "Mesh volumes"));
+  s.push_back(mp("Escape",         "Cancel lasso zoom/selection, toggle mouse selection ON/OFF"));
+  s.push_back(mp("g",              "Go to geometry module"));
+  s.push_back(mp("m",              "Go to mesh module"));
+  s.push_back(mp("p",              "Go to post-processing module"));
+  s.push_back(mp("s",              "Go to solver module"));
+  s.push_back(mp("Shift+a",        "Bring all windows to front"));
+  s.push_back(mp("Shift+g",        "Show geometry options"));
+  s.push_back(mp("Shift+m",        "Show mesh options"));
+  s.push_back(mp("Shift+o",        "Show general options"));
+  s.push_back(mp("Shift+p",        "Show post-processing options"));
+  s.push_back(mp("Shift+s",        "Show solver options"));
+  s.push_back(mp("Shift+u",        "Show post-processing view plugins"));
+  s.push_back(mp("Shift+w",        "Show post-processing view options"));
+  s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
+  s.push_back(mp(cc + "i",         "Show statistics window"));
+  s.push_back(mp(cc + "d",         "Attach/detach menu"));
+  s.push_back(mp(cc + "l",         "Show message console"));
 #if defined(__APPLE__)
-  s.push_back("  " CC("m") "        Minimize window");
+  s.push_back(mp(cc + "m",         "Minimize window"));
 #endif
-  s.push_back("  " CC("n") "        Create new project file");
-  s.push_back("  " CC("o") "        Open project file");
-  s.push_back("  " CC("q") "        Quit");
-  s.push_back("  " CC("r") "        Rename project file");
-  s.push_back("  " CC("s") "        Save file as");
-  s.push_back("  Shift+" CC("c") "  Show clipping plane window");
-  s.push_back("  Shift+" CC("m") "  Show manipulator window");
-  s.push_back("  Shift+" CC("n") "  Show option window");
-  s.push_back("  Shift+" CC("o") "  Merge file(s)");
-  s.push_back("  Shift+" CC("s") "  Save mesh in default format");
-  s.push_back("  Shift+" CC("u") "  Show plugin window");
-  s.push_back("  Shift+" CC("v") "  Show visibility window");
-  s.push_back("  Alt+a         Loop through axes modes");
-  s.push_back("  Alt+b         Hide/show bounding boxes");
-  s.push_back("  Alt+c         Loop through predefined color schemes");
-  s.push_back("  Alt+e         Hide/Show element outlines for visible post-pro views");
-  s.push_back("  Alt+f         Change redraw mode (fast/full)");
-  s.push_back("  Alt+h         Hide/show all post-processing views");
-  s.push_back("  Alt+i         Hide/show all post-processing view scales");
-  s.push_back("  Alt+l         Hide/show geometry lines");
-  s.push_back("  Alt+m         Toggle visibility of all mesh entities");
-  s.push_back("  Alt+n         Hide/show all post-processing view annotations");
-  s.push_back("  Alt+o         Change projection mode (orthographic/perspective)");
-  s.push_back("  Alt+p         Hide/show geometry points");
-  s.push_back("  Alt+r         Loop through range modes for visible post-pro views");
-  s.push_back("  Alt+s         Hide/show geometry surfaces");
-  s.push_back("  Alt+t         Loop through interval modes for visible post-pro views");
-  s.push_back("  Alt+v         Hide/show geometry volumes");
-  s.push_back("  Alt+w         Enable/disable all lighting");
-  s.push_back("  Alt+x         Set X view");
-  s.push_back("  Alt+y         Set Y view");
-  s.push_back("  Alt+z         Set Z view");
-  s.push_back("  Alt+Shift+a   Hide/show small axes");
-  s.push_back("  Alt+Shift+b   Hide/show mesh volume faces");
-  s.push_back("  Alt+Shift+d   Hide/show mesh surface faces");
-  s.push_back("  Alt+Shift+l   Hide/show mesh lines");
-  s.push_back("  Alt+Shift+o   Adjust projection parameters");
-  s.push_back("  Alt+Shift+p   Hide/show mesh points");
-  s.push_back("  Alt+Shift+s   Hide/show mesh surface edges");
-  s.push_back("  Alt+Shift+v   Hide/show mesh volume edges");
-  s.push_back("  Alt+Shift+w   Reverse all mesh normals");
-  s.push_back("  Alt+Shift+x   Set -X view");
-  s.push_back("  Alt+Shift+y   Set -Y view");
-  s.push_back("  Alt+Shift+z   Set -Z view");
+  s.push_back(mp(cc + "n",         "Create new project file"));
+  s.push_back(mp(cc + "o",         "Open project file"));
+  s.push_back(mp(cc + "q",         "Quit"));
+  s.push_back(mp(cc + "r",         "Rename project file"));
+  s.push_back(mp(cc + "s",         "Save file as"));
+  s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
+  s.push_back(mp("Shift+" + cc + "m", "Show manipulator window"));
+  s.push_back(mp("Shift+" + cc + "n", "Show option window"));
+  s.push_back(mp("Shift+" + cc + "o", "Merge file(s)"));
+  s.push_back(mp("Shift+" + cc + "s", "Save mesh in default format"));
+  s.push_back(mp("Shift+" + cc + "u", "Show plugin window"));
+  s.push_back(mp("Shift+" + cc + "v", "Show visibility window"));
+  s.push_back(mp("Alt+a",          "Loop through axes modes"));
+  s.push_back(mp("Alt+b",          "Hide/show bounding boxes"));
+  s.push_back(mp("Alt+c",          "Loop through predefined color schemes"));
+  s.push_back(mp("Alt+e",          "Hide/Show element outlines for visible post-pro views"));
+  s.push_back(mp("Alt+f",          "Change redraw mode (fast/full)"));
+  s.push_back(mp("Alt+h",          "Hide/show all post-processing views"));
+  s.push_back(mp("Alt+i",          "Hide/show all post-processing view scales"));
+  s.push_back(mp("Alt+l",          "Hide/show geometry lines"));
+  s.push_back(mp("Alt+m",          "Toggle visibility of all mesh entities"));
+  s.push_back(mp("Alt+n",          "Hide/show all post-processing view annotations"));
+  s.push_back(mp("Alt+o",          "Change projection mode (orthographic/perspective)"));
+  s.push_back(mp("Alt+p",          "Hide/show geometry points"));
+  s.push_back(mp("Alt+r",          "Loop through range modes for visible post-pro views"));
+  s.push_back(mp("Alt+s",          "Hide/show geometry surfaces"));
+  s.push_back(mp("Alt+t",          "Loop through interval modes for visible post-pro views"));
+  s.push_back(mp("Alt+v",          "Hide/show geometry volumes"));
+  s.push_back(mp("Alt+w",          "Enable/disable all lighting"));
+  s.push_back(mp("Alt+x",          "Set X view"));
+  s.push_back(mp("Alt+y",          "Set Y view"));
+  s.push_back(mp("Alt+z",          "Set Z view"));
+  s.push_back(mp("Alt+Shift+a",    "Hide/show small axes"));
+  s.push_back(mp("Alt+Shift+b",    "Hide/show mesh volume faces"));
+  s.push_back(mp("Alt+Shift+d",    "Hide/show mesh surface faces"));
+  s.push_back(mp("Alt+Shift+l",    "Hide/show mesh lines"));
+  s.push_back(mp("Alt+Shift+o",    "Adjust projection parameters"));
+  s.push_back(mp("Alt+Shift+p",    "Hide/show mesh points"));
+  s.push_back(mp("Alt+Shift+s",    "Hide/show mesh surface edges"));
+  s.push_back(mp("Alt+Shift+v",    "Hide/show mesh volume edges"));
+  s.push_back(mp("Alt+Shift+w",    "Reverse all mesh normals"));
+  s.push_back(mp("Alt+Shift+x",    "Set -X view"));
+  s.push_back(mp("Alt+Shift+y",    "Set -Y view"));
+  s.push_back(mp("Alt+Shift+z",    "Set -Z view"));
   return s;
-#undef CC
 }
 
-std::vector<std::string> GetMouseUsage()
+std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 {
-  // If you make changes in this routine, please also change the texinfo
-  // documentation (doc/texinfo/gmsh.texi)
-  std::vector<std::string> s;
-  s.push_back("  Move                - Highlight the entity under the mouse pointer");
-  s.push_back("                        and display its properties");
-  s.push_back("                      - Resize a lasso zoom or a lasso (un)selection");
-  s.push_back("  Left button         - Rotate");
-  s.push_back("                      - Select an entity");
-  s.push_back("                      - Accept a lasso zoom or a lasso selection");
-  s.push_back("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection");
-  s.push_back("  Middle button       - Zoom");
-  s.push_back("                      - Unselect an entity");
-  s.push_back("                      - Accept a lasso zoom or a lasso unselection");
-  s.push_back("  Ctrl+Middle button  Orthogonalize display");
-  s.push_back("  Right button        - Pan");
-  s.push_back("                      - Cancel a lasso zoom or a lasso (un)selection");
-  s.push_back("                      - Pop-up menu on post-processing view button");
-  s.push_back("  Ctrl+Right button   Reset to default viewpoint");
-  s.push_back(" ");
-  s.push_back("  For a 2 button mouse, Middle button = Shift+Left button");
-  s.push_back("  For a 1 button mouse, Middle button = Shift+Left button, "
-              "Right button = Alt+Left button");
+  typedef std::pair<std::string, std::string> mp;
+  std::vector<mp> s;
+  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and display its properties"));
+  s.push_back(mp("",     "- Resize a lasso zoom or a lasso (un)selection"));
+  s.push_back(mp("Left button", "- Rotate"));
+  s.push_back(mp("",            "- Select an entity"));
+  s.push_back(mp("",            "- Accept a lasso zoom or a lasso selection"));
+  s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso (un)selection"));
+  s.push_back(mp("Middle button", "- Zoom"));
+  s.push_back(mp("",              "- Unselect an entity"));
+  s.push_back(mp("",              "- Accept a lasso zoom or a lasso unselection"));
+  s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
+  s.push_back(mp("Right button", "- Pan"));
+  s.push_back(mp("",             "- Cancel a lasso zoom or a lasso (un)selection"));
+  s.push_back(mp("",             "- Pop-up menu on post-processing view button"));
+  s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
   return s;
 }
 

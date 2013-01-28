@@ -541,12 +541,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize
 Size of the font in the graphic window@*
-Default value: @code{17}@*
+Default value: @code{15}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSizeTitle
 Size of the font in the graphic window for titles@*
-Default value: @code{19}@*
+Default value: @code{18}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
@@ -980,7 +980,7 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.Stereo
-Use stereo rendering : use command line gmsh -string ``General.Stereo=1;''@*
+Use stereo rendering@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

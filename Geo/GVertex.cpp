@@ -11,7 +11,7 @@
 #include "MPoint.h"
 #include "GmshMessage.h"
 
-GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
+GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 {
 }
 
@@ -36,12 +36,12 @@ void GVertex::setPosition(GPoint &p)
 }
 
 void GVertex::addEdge(GEdge *e)
-{ 
+{
   l_edges.push_back(e);
 }
 
 void GVertex::delEdge(GEdge *e)
-{ 
+{
   l_edges.erase(std::find(l_edges.begin(), l_edges.end(), e));
 }
 
@@ -55,7 +55,7 @@ std::string GVertex::getAdditionalInfoString()
   std::ostringstream sstream;
   sstream << "{" << x() << "," << y() << "," << z() << "}";
   double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) sstream << " (cl: " << lc << ")";
+  if(lc < MAX_LC) sstream << " (mesh size: " << lc << ")";
   return sstream.str();
 }
 
@@ -74,13 +74,13 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 
 unsigned int GVertex::getNumMeshElements()
 {
-  return points.size(); 
+  return points.size();
 }
 
 MElement *GVertex::getMeshElement(unsigned int index)
-{ 
+{
   if(index < points.size())
-    return points[index]; 
+    return points[index];
   return 0;
 }
 

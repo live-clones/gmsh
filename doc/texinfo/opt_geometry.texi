@@ -179,6 +179,11 @@ Global geometry scaling factor@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OrientedPhysicals
+Use sign of elementary entity in physical definition as orientation indicator@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.SnapX
 Snapping grid spacing along the X-axis@*
 Default value: @code{0.1}@*

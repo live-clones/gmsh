@@ -22,10 +22,10 @@ static const char *help_link(Fl_Widget *w, const char *uri)
 
 aboutWindow::aboutWindow()
 {
-  int width = 28 * FL_NORMAL_SIZE;
-  int height = 18 * BH;
-
   {
+    int width = 28 * FL_NORMAL_SIZE;
+    int height = 18 * BH;
+
     win = new paletteWindow
       (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");
     win->box(GMSH_WINDOW_BOX);
@@ -62,6 +62,9 @@ aboutWindow::aboutWindow()
   }
 
   {
+    int width = 40 * FL_NORMAL_SIZE;
+    int height = 18 * BH;
+
     winhelp = new paletteWindow
       (width, height, CTX::instance()->nonModalWindows ? true : false,
        "Keyboard and Mouse Usage");
@@ -74,22 +77,24 @@ aboutWindow::aboutWindow()
 
     std::string s;
     s += "<h3>Keyboard Shortcuts</h3>";
-    s += "<pre>";
+    s += "<table border=1>";
     {
-      std::vector<std::string> s0 = GetShortcutsUsage();
+      std::vector<std::pair<std::string, std::string> > s0 = GetShortcutsUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
-        s += s0[i] + "<br>";
+        s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
-    s += "</pre>";
+    s += "</table>";
 
     s += "<h3>Mouse Actions</h3>";
-    s += "<pre>";
+    s += "<table border=1>";
     {
-      std::vector<std::string> s0 = GetMouseUsage();
+      std::vector<std::pair<std::string, std::string> > s0 = GetMouseUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
-        s += s0[i] + "<br>";
+        s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
     }
-    s += "</pre>";
+    s += "</table>";
+    s += "For a 2 button mouse, Middle button = Shift+Left button.<p>";
+    s += "For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button.";
 
     o->value(s.c_str());
 

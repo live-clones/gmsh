@@ -21,8 +21,8 @@ const char *GetGmshShortLicense();
 const char *GetGmshBuildOptions();
 
 std::vector<std::string> GetUsage(const std::string &name);
-std::vector<std::string> GetShortcutsUsage();
-std::vector<std::string> GetMouseUsage();
+std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::string &ctrl="");
+std::vector<std::pair<std::string, std::string> > GetMouseUsage();
 void PrintUsage(const std::string &name);
 void GetOptions(int argc, char *argv[]);
 

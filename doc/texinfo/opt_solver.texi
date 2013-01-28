@@ -101,7 +101,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoSaveDatabase
 Automatically save database after each computation@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoMesh

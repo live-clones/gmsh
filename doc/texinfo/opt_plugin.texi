@@ -399,6 +399,8 @@ Default value: @code{0}
 Default value: @code{0}
 @item Visible
 Default value: @code{1}
+@item Dimension
+Default value: @code{-1}
 @item View
 Default value: @code{-1}
 @end table
@@ -564,6 +566,8 @@ Default value: @code{1}
 Default value: @code{2}
 @item PostProcessSimplify
 Default value: @code{1}
+@item ReductionHeuristic
+Default value: @code{1}
 @end table
 
 @item Plugin(HomologyPostProcessing)
@@ -604,11 +608,11 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Integrate)
-Plugin(Integrate) integrates scalar fields over all the elements in the view `View', as well as the circulation/flux of vector fields over line/surface elements.
+Plugin(Integrate) integrates a scalar field over all the elements of the view `View' (if `Dimension' < 0), or over all elements of the prescribed dimension (if `Dimension' > 0). If the field is a vector field,the circulation/flux of the field over line/surface elements is calculated.
 
 If `View' < 0, the plugin is run on the current view.
 
-Plugin(Integrate) creates one new view.If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.
+If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.
 
 Plugin(Integrate) creates one new view.
 Numeric options:
@@ -616,6 +620,8 @@ Numeric options:
 @item View
 Default value: @code{-1}
 @item OverTime
+Default value: @code{-1}
+@item Dimension
 Default value: @code{-1}
 @end table
 
@@ -706,7 +712,7 @@ If `TimeStep' < 0, the plugin extracts data from all the time steps in the view.
 
 If `View' < 0, the plugin is run on the current view.
 
-Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is runon all physical regions.
+Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is run on all physical regions.
 
 Plugin(MathEval) creates one new view.
 String options:
@@ -1022,6 +1028,18 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item ViewZ
 Default value: @code{-1}
+@end table
+
+@item Plugin(SimplePartition)
+Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition boundaries if `CreateBoundaries' is set.
+Numeric options:
+@table @code
+@item NumSlices
+Default value: @code{4}
+@item Direction
+Default value: @code{0}
+@item CreateBoundaries
+Default value: @code{1}
 @end table
 
 @item Plugin(Skin)

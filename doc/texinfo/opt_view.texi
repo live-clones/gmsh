@@ -145,7 +145,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
-Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: top 1/3)@*
+Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: full, 11: top third)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

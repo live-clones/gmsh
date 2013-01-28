@@ -291,7 +291,7 @@ std::string GFace::getAdditionalInfoString()
   else if(l_edges.size()){
     sstream << "{";
     for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
-      if(it != l_edges.begin()) sstream << ",";
+      if(it != l_edges.begin()) sstream << " ";
       sstream << (*it)->tag();
     }
     sstream << "}";

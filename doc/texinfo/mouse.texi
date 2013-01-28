@@ -1,0 +1,35 @@
+@c
+@c This file is generated automatically by running "gmsh -doc".
+@c Do not edit by hand!
+@c
+
+@table @kbd
+@item Move
+- Highlight the entity under the mouse pointer and display its properties
+@item 
+- Resize a lasso zoom or a lasso (un)selection
+@item Left button
+- Rotate
+@item 
+- Select an entity
+@item 
+- Accept a lasso zoom or a lasso selection
+@item Ctrl+Left button
+Start a lasso zoom or a lasso (un)selection
+@item Middle button
+- Zoom
+@item 
+- Unselect an entity
+@item 
+- Accept a lasso zoom or a lasso unselection
+@item Ctrl+Middle button
+Orthogonalize display
+@item Right button
+- Pan
+@item 
+- Cancel a lasso zoom or a lasso (un)selection
+@item 
+- Pop-up menu on post-processing view button
+@item Ctrl+Right button
+Reset to default viewpoint
+@end table

@@ -14,6 +14,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "Colors.h"
+#include "CommandLine.h"
 #include "DefaultOptions.h"
 
 #if defined(HAVE_MESH)
@@ -688,185 +689,219 @@ void PrintOptionsDoc()
     "@c Do not edit by hand!\n"
     "@c\n\n";
 
-  FILE *file = fopen("opt_general.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_general.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(GeneralOptions_String, "General.", file);
-  PrintNumberOptionsDoc(GeneralOptions_Number, "General.", file);
-  PrintColorOptionsDoc(GeneralOptions_Color, "General.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-  file = fopen("opt_print.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_print.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(PrintOptions_String, "Print.", file);
-  PrintNumberOptionsDoc(PrintOptions_Number, "Print.", file);
-  PrintColorOptionsDoc(PrintOptions_Color, "Print.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-  file = fopen("opt_geometry.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_geometry.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(GeometryOptions_String, "Geometry.", file);
-  PrintNumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
-  PrintColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-  file = fopen("opt_mesh.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_mesh.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(MeshOptions_String, "Mesh.", file);
-  PrintNumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
-  PrintColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-  file = fopen("opt_solver.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_solver.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(SolverOptions_String, "Solver.", file);
-  PrintNumberOptionsDoc(SolverOptions_Number, "Solver.", file);
-  PrintColorOptionsDoc(SolverOptions_Color, "Solver.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-  file = fopen("opt_post.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_post.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(PostProcessingOptions_String, "PostProcessing.", file);
-  PrintNumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.", file);
-  PrintColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-
-#if defined(HAVE_POST)
-  file = fopen("opt_view.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_view.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  PrintStringOptionsDoc(ViewOptions_String, "View.", file);
-  PrintNumberOptionsDoc(ViewOptions_Number, "View.", file);
-  PrintColorOptionsDoc(ViewOptions_Color, "View.", file);
-  fprintf(file, "@item View.ColorTable\n");
-  fprintf(file, "Color table used to draw the view@*\n");
-  fprintf(file, "Saved in: @code{%s}\n\n",
-          GetOptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
-  fprintf(file, "@end ftable\n");
-  fclose(file);
-#endif
-
-#if defined(HAVE_PLUGINS)
-  file = fopen("opt_plugin.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_plugin.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
-        instance()->begin(); it != PluginManager::instance()->end(); ++it) {
-    GMSH_Plugin *p = it->second;
-    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-      fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
-      fprintf(file, "%s\n", p->getHelp().c_str());
-
-      int m = p->getNbOptionsStr();
-      if(m){
-        fprintf(file, "String options:\n");
-        fprintf(file, "@table @code\n");
-        for(int i = 0; i < m; i++) {
-          StringXString *sxs = p->getOptionStr(i);
-          fprintf(file, "@item %s\n", sxs->str);
-          fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def.c_str());
-        }
-        fprintf(file, "@end table\n");
-      }
-
-      int n = p->getNbOptions();
-      if(n){
-        fprintf(file, "Numeric options:\n");
-        fprintf(file, "@table @code\n");
-        for(int i = 0; i < n; i++) {
-          StringXNumber *sxn = p->getOption(i);
-          fprintf(file, "@item %s\n", sxn->str);
-          fprintf(file, "Default value: @code{%g}\n", sxn->def);
-        }
-        fprintf(file, "@end table\n");
-      }
-
+  {
+    FILE *file = fopen("opt_general.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_general.texi'");
+      return;
     }
-    fprintf(file, "\n");
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(GeneralOptions_String, "General.", file);
+    PrintNumberOptionsDoc(GeneralOptions_Number, "General.", file);
+    PrintColorOptionsDoc(GeneralOptions_Color, "General.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
   }
-  fprintf(file, "@end ftable\n");
-  fclose(file);
+  {
+    FILE *file = fopen("opt_print.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_print.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(PrintOptions_String, "Print.", file);
+    PrintNumberOptionsDoc(PrintOptions_Number, "Print.", file);
+    PrintColorOptionsDoc(PrintOptions_Color, "Print.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+  }
+  {
+    FILE *file = fopen("opt_geometry.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_geometry.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(GeometryOptions_String, "Geometry.", file);
+    PrintNumberOptionsDoc(GeometryOptions_Number, "Geometry.", file);
+    PrintColorOptionsDoc(GeometryOptions_Color, "Geometry.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+  }
+  {
+    FILE *file = fopen("opt_mesh.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_mesh.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(MeshOptions_String, "Mesh.", file);
+    PrintNumberOptionsDoc(MeshOptions_Number, "Mesh.", file);
+    PrintColorOptionsDoc(MeshOptions_Color, "Mesh.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+  }
+  {
+    FILE *file = fopen("opt_solver.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_solver.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(SolverOptions_String, "Solver.", file);
+    PrintNumberOptionsDoc(SolverOptions_Number, "Solver.", file);
+    PrintColorOptionsDoc(SolverOptions_Color, "Solver.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+  }
+  {
+    FILE *file = fopen("opt_post.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_post.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(PostProcessingOptions_String, "PostProcessing.", file);
+    PrintNumberOptionsDoc(PostProcessingOptions_Number, "PostProcessing.", file);
+    PrintColorOptionsDoc(PostProcessingOptions_Color, "PostProcessing.", file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+  }
+  {
+#if defined(HAVE_POST)
+    FILE *file = fopen("opt_view.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_view.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    PrintStringOptionsDoc(ViewOptions_String, "View.", file);
+    PrintNumberOptionsDoc(ViewOptions_Number, "View.", file);
+    PrintColorOptionsDoc(ViewOptions_Color, "View.", file);
+    fprintf(file, "@item View.ColorTable\n");
+    fprintf(file, "Color table used to draw the view@*\n");
+    fprintf(file, "Saved in: @code{%s}\n\n",
+            GetOptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
+    fprintf(file, "@end ftable\n");
+    fclose(file);
 #endif
+  }
+  {
+#if defined(HAVE_PLUGINS)
+    FILE *file = fopen("opt_plugin.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_plugin.texi'");
+      return;
+    }
+    fprintf(file, "%s@ftable @code\n", warn);
+    for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
+          instance()->begin(); it != PluginManager::instance()->end(); ++it) {
+      GMSH_Plugin *p = it->second;
+      if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
+        fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
+        fprintf(file, "%s\n", p->getHelp().c_str());
+        int m = p->getNbOptionsStr();
+        if(m){
+          fprintf(file, "String options:\n");
+          fprintf(file, "@table @code\n");
+          for(int i = 0; i < m; i++) {
+            StringXString *sxs = p->getOptionStr(i);
+            fprintf(file, "@item %s\n", sxs->str);
+            fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def.c_str());
+          }
+          fprintf(file, "@end table\n");
+        }
+        int n = p->getNbOptions();
+        if(n){
+          fprintf(file, "Numeric options:\n");
+          fprintf(file, "@table @code\n");
+          for(int i = 0; i < n; i++) {
+            StringXNumber *sxn = p->getOption(i);
+            fprintf(file, "@item %s\n", sxn->str);
+            fprintf(file, "Default value: @code{%g}\n", sxn->def);
+          }
+          fprintf(file, "@end table\n");
+        }
+      }
+      fprintf(file, "\n");
+    }
+    fprintf(file, "@end ftable\n");
+    fclose(file);
+#endif
+  }
 
 #if defined(HAVE_MESH)
-  file = fopen("opt_fields.texi", "w");
-  if(!file) {
-    Msg::Error("Unable to open file 'opt_fields.texi'");
-    return;
-  }
-  fprintf(file, "%s@ftable @code\n", warn);
-  FieldManager &fields = *GModel::current()->getFields();
-  for(std::map<std::string, FieldFactory*>::iterator it = fields.map_type_name.begin();
-      it != fields.map_type_name.end(); it++){
-    fprintf(file, "@item %s\n", it->first.c_str());
-    Field *f = (*it->second)();
-    std::string field_description = f->getDescription();
-    Sanitize_String_Texi(field_description);
-    fprintf(file,"%s@*\n", field_description.c_str());
-    if (!f->options.empty()) {
-      fprintf(file, "Options:@*\n");
-      fprintf(file, "@table @code\n");
-      for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
-          it2 != f->options.end(); it2++){
-        fprintf(file, "@item %s\n", it2->first.c_str());
-        std::string val;
-        it2->second->getTextRepresentation(val);
-        Sanitize_String_Texi(val);
-        fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
-            it2->second->getDescription().c_str(),
-            it2->second->getTypeName().c_str(), val.c_str());
-      }
-      fprintf(file, "@end table\n\n");
+  {
+    FILE *file = fopen("opt_fields.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'opt_fields.texi'");
+      return;
     }
-    if (!f->callbacks.empty()) {
-      fprintf(file, "Actions:@*\n");
-      fprintf(file, "@table @code\n");
-      for(std::map<std::string, FieldCallback*>::iterator it2 = f->callbacks.begin();
-          it2 != f->callbacks.end(); it2++){
-        fprintf(file, "@item %s\n", it2->first.c_str());
-        fprintf(file, "%s@*\n", it2->second->getDescription().c_str());
+    fprintf(file, "%s@ftable @code\n", warn);
+    FieldManager &fields = *GModel::current()->getFields();
+    for(std::map<std::string, FieldFactory*>::iterator it = fields.map_type_name.begin();
+        it != fields.map_type_name.end(); it++){
+      fprintf(file, "@item %s\n", it->first.c_str());
+      Field *f = (*it->second)();
+      std::string field_description = f->getDescription();
+      Sanitize_String_Texi(field_description);
+      fprintf(file,"%s@*\n", field_description.c_str());
+      if (!f->options.empty()) {
+        fprintf(file, "Options:@*\n");
+        fprintf(file, "@table @code\n");
+        for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
+            it2 != f->options.end(); it2++){
+          fprintf(file, "@item %s\n", it2->first.c_str());
+          std::string val;
+          it2->second->getTextRepresentation(val);
+          Sanitize_String_Texi(val);
+          fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
+                  it2->second->getDescription().c_str(),
+                  it2->second->getTypeName().c_str(), val.c_str());
+        }
+        fprintf(file, "@end table\n\n");
       }
-      fprintf(file, "@end table\n\n");
+      if (!f->callbacks.empty()) {
+        fprintf(file, "Actions:@*\n");
+        fprintf(file, "@table @code\n");
+        for(std::map<std::string, FieldCallback*>::iterator it2 = f->callbacks.begin();
+            it2 != f->callbacks.end(); it2++){
+          fprintf(file, "@item %s\n", it2->first.c_str());
+          fprintf(file, "%s@*\n", it2->second->getDescription().c_str());
+        }
+        fprintf(file, "@end table\n\n");
+      }
     }
-  }
-  fprintf(file, "@end ftable\n");
-  fclose(file);
+    fprintf(file, "@end ftable\n");
+    fclose(file);
 #endif
+  }
+  {
+    FILE *file = fopen("shortcuts.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'shortcuts.texi'");
+      return;
+    }
+    std::vector<std::pair<std::string, std::string> > s = GetShortcutsUsage("Ctrl+");
+    fprintf(file, "%s@table @kbd\n", warn);
+    for(unsigned int i = 0; i < s.size(); i++)
+      fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
+    fprintf(file, "@end table\n");
+    fclose(file);
+  }
+  {
+    FILE *file = fopen("mouse.texi", "w");
+    if(!file) {
+      Msg::Error("Unable to open file 'mouse.texi'");
+      return;
+    }
+    std::vector<std::pair<std::string, std::string> > s = GetMouseUsage();
+    fprintf(file, "%s@table @kbd\n", warn);
+    for(unsigned int i = 0; i < s.size(); i++)
+      fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
+    fprintf(file, "@end table\n");
+    fclose(file);
+  }
 }
 
 #define GET_VIEW(error_val)                             \
