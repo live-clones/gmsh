@@ -5,7 +5,7 @@
 
   Only the functions needed by Kbipack are available.
 
-  THIS INTERFACE IS NOT BERFORMING ANY ARBITRARY PRECISION ARITHMETIC.
+  THIS INTERFACE IS NOT PERFORMING ANY ARBITRARY PRECISION ARITHMETIC.
   You should always use the GMP library (http://gmplib.org/) when possible.
 
   Some basic techniques to detect integer overflows are implemented.
@@ -24,8 +24,8 @@
 
 void overflow()
 {
-  printf("ERROR: Integer overflow detected! Compile with GMP library to fix this. \n");
-  Msg::Error("Integer overflow detected! Compile with GMP library to fix this. \n");
+  printf("ERROR: Integer overflow detected! Compile with GMP library to fix this.\n");
+  Msg::Error("Integer overflow detected! Compile with GMP library to fix this.");
 }
 
 long int addcheck(long int a, long int b){
@@ -101,7 +101,7 @@ void mpz_neg(mpz_ptr rop, mpz_ptr op)
 }
 
 
-// division 
+// division
 void mpz_divexact(mpz_ptr q, mpz_ptr n, mpz_ptr d)
 {
   ldiv_t temp;
@@ -180,20 +180,20 @@ void extended_gcd(long int* g, long int* s, long int* t,
 {
   long int x = 0;
   long int lastx = 1;
-  long int y = 1;    
+  long int y = 1;
   long int lasty = 0;
   while (b != 0){
     ldiv_t divt = ldiv(a,b);
     long int quotient = divt.quot;
-        
+
     long int temp = b;
     b = a % b;
     a = temp;
-        
+
     temp = x;
     x = addcheck(lastx, multcheck(-quotient,x));
     lastx = temp;
-        
+
     temp = y;
     y = addcheck(lasty, multcheck(-quotient,y));
     lasty = temp;
@@ -205,9 +205,9 @@ void extended_gcd(long int* g, long int* s, long int* t,
 
 void mpz_gcdext(mpz_ptr g, mpz_ptr s, mpz_ptr t, mpz_ptr a, mpz_ptr b)
 {
-  
+
   extended_gcd(&g->z, &s->z, &t->z, a->z, b->z);
-  /*printf("g: %ld, s: %ld, t: %ld, a: %ld, b: %ld. \n", 
+  /*printf("g: %ld, s: %ld, t: %ld, a: %ld, b: %ld. \n",
     g->z, s->z, t->z, a->z, b->z); */
 }
 
