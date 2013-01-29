@@ -188,13 +188,13 @@ static void gmsh_graph(Fl_Color c)
 
 static void gmsh_search(Fl_Color col)
 {
-  double eps = 0.2;
+  double e = 0.5;
   fl_color(col);
   fl_begin_polygon();
-  vv(-.4-eps, .13+eps); vv(-1.0-eps, .73+eps); vv(-.73-eps, 1.0+eps); vv(-.13-eps, .4+eps);
+  vv(.6-e, .33); vv(1.2-e, .93); vv(.93-e, 1.2); vv(.33-e, .6);
   fl_end_polygon();
-  fl_line_style(FL_SOLID, 2, 0);
-  fl_begin_loop(); fl_circle(.2-eps, -.2+eps, .6); fl_end_loop();
+  fl_line_style(FL_SOLID, 2);
+  fl_begin_loop(); fl_circle(0-e, 0, .6); fl_end_loop();
   fl_line_style(FL_SOLID);
 }
 
