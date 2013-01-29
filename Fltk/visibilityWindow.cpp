@@ -1120,7 +1120,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int CC = (int)(1.15 * BB);
+  int CC = (int)(1.1 * BB);
 
   static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
   int width = cols[0] + cols[1] + cols[2] + cols[3] + 7 * WB;
