@@ -38,7 +38,7 @@ static void numberOrStringChooser(const std::string &category, int index,
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
   int width = 4 * BB, height = BH;
   int BB1 = (int)(3. * BB / 4.), BB2 = 2 * BB - BB1;
-  Fl_Double_Window *win = new Fl_Double_Window(width, height, "Set Value");
+  Fl_Window *win = new paletteWindow(width, height, false, "Set Value");
   win->border(0);
   win->set_modal();
   win->position(Fl::event_x_root() - BB, Fl::event_y_root() - BH / 2);
