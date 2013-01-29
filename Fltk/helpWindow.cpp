@@ -36,24 +36,25 @@ static void numberOrStringChooser(const std::string &category, int index,
     NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
-  int width = 3 * BB, height = BH;
+  int width = 4 * BB, height = BH;
+  int BB1 = (int)(3. * BB / 4.), BB2 = 2 * BB - BB1;
   Fl_Double_Window *win = new Fl_Double_Window(width, height, "Set Value");
   win->border(0);
   win->set_modal();
-  win->hotspot(win);
+  //win->hotspot(win);
+  win->position(Fl::event_x_root() - BB, Fl::event_y_root() - BH / 2);
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
   if(num){
-    number = new Fl_Value_Input(0, 0, width - BB, height);
-    number->when(FL_WHEN_ENTER_KEY_ALWAYS);
+    number = new Fl_Value_Input(0, 0, width - BB1 - BB2, height);
     number->value(valn);
   }
   else{
-    string = new Fl_Input(0, 0, width - BB, height);
-    string->when(FL_WHEN_ENTER_KEY_ALWAYS);
+    string = new Fl_Input(0, 0, width - BB1 - BB2, height);
     string->value(vals.c_str());
   }
-  Fl_Button *reset = new Fl_Button(width - BB, 0, BB, height, "Use default");
+  Fl_Button *set = new Fl_Return_Button(width - BB1 - BB2, 0, BB1, height, "Set");
+  Fl_Button *reset = new Fl_Button(width - BB2, 0, BB2, height, "Restore default");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -68,16 +69,17 @@ static void numberOrStringChooser(const std::string &category, int index,
       if (o == win) {
         done = true;
       }
-      if(o == number){
-        valn = number->value();
-        NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
-                     name.c_str(), valn);
-        done = true;
-      }
-      if(o == string){
-        vals = string->value();
-        StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
-                     name.c_str(), vals);
+      if(o == set){
+        if(num){
+          valn = number->value();
+          NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+                       name.c_str(), valn);
+        }
+        else{
+          vals = string->value();
+          StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+                       name.c_str(), vals);
+        }
         done = true;
       }
       if(o == reset){
