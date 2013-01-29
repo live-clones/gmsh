@@ -442,7 +442,10 @@ int GModel::readMED(const std::string &name, int meshIndex)
           char tmp[MED_TAILLE_LNOM + 1];
           strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
           tmp[MED_TAILLE_LNOM] = '\0';
-          ge->physicals.push_back(setPhysicalName(tmp, ge->dim()));
+          int pnum = setPhysicalName(tmp, ge->dim());
+          if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+             ge->physicals.end())
+            ge->physicals.push_back(pnum);
         }
       }
     }
