@@ -41,7 +41,6 @@ static void numberOrStringChooser(const std::string &category, int index,
   Fl_Double_Window *win = new Fl_Double_Window(width, height, "Set Value");
   win->border(0);
   win->set_modal();
-  //win->hotspot(win);
   win->position(Fl::event_x_root() - BB, Fl::event_y_root() - BH / 2);
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
@@ -68,6 +67,7 @@ static void numberOrStringChooser(const std::string &category, int index,
       if (!o) break;
       if (o == win) {
         done = true;
+        break;
       }
       if(o == set){
         if(num){
@@ -81,6 +81,7 @@ static void numberOrStringChooser(const std::string &category, int index,
                        name.c_str(), vals);
         }
         done = true;
+        break;
       }
       if(o == reset){
         if(num)
@@ -90,6 +91,7 @@ static void numberOrStringChooser(const std::string &category, int index,
           StringOption(GMSH_SET_DEFAULT|GMSH_GUI, category.c_str(), index,
                        name.c_str(), vals);
         done = true;
+        break;
       }
     }
   }
@@ -104,7 +106,7 @@ static void colorChooser(const std::string &category, int index,
   uchar r = CTX::instance()->unpackRed(col);
   uchar g = CTX::instance()->unpackGreen(col);
   uchar b = CTX::instance()->unpackBlue(col);
-  if(fl_color_chooser("Color Chooser", r, g, b)){
+  if(fl_color_chooser("Color Chooser", r, g, b, 1)){
     col = CTX::instance()->packColor(r, g, b, 255);
     ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), col);
   }
@@ -309,7 +311,6 @@ helpWindow::helpWindow()
                     Fl::y() + Fl::h()/2 - height / 2);
     basic->end();
   }
-
 
   {
     int width = 40 * FL_NORMAL_SIZE;
