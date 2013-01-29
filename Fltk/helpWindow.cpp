@@ -335,7 +335,7 @@ helpWindow::helpWindow()
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input
-      (3 * WB + 2 * BW + 25, WB + 2, BW - 27, BH - 4, "@search");
+      (3 * WB + 2 * BW + 25, WB + 2, BW - 27, BH - 4, "@gmsh_search");
     search->box(FL_FLAT_BOX);
     search->callback(help_options_cb);
     search->when(FL_WHEN_CHANGED);

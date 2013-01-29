@@ -15,6 +15,7 @@ typedef unsigned long intptr_t;
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
+#include <FL/fl_draw.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "graphicWindow.h"
@@ -80,6 +81,126 @@ static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
   //fl_color(FL_LIGHT2); fl_line(x, y+1, x + w, y+1);
 }
 
+// Icons for the satus bar
+#define vv(x,y) fl_vertex(x,y)
+#define bl fl_begin_loop()
+#define el fl_end_loop()
+
+static void gmsh_play(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.3,0.8); vv(0.5,0.0); vv(-0.3,-0.8); el;
+}
+
+static void gmsh_pause(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
+  bl; vv(0.0,-0.8); vv(0.5,-0.8); vv(0.5,0.8); vv(0.0,0.8); el;
+}
+
+static void gmsh_rewind(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
+  bl; vv(-0.3,0.0); vv(0.5,-0.8); vv(0.5,0.8); el;
+}
+
+static void gmsh_forward(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(0.0,0.8); vv(0.8,0.0); vv(0.0,-0.8); el;
+  bl; vv(-0.8,0.8); vv(-0.3,0.8); vv(-0.3,-0.8); vv(-0.8,-0.8); el;
+}
+
+static void gmsh_back(Fl_Color c)
+{
+  fl_rotate(180);
+  gmsh_forward(c);
+}
+
+static void gmsh_ortho(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,0.8); vv(0.3,0.8); vv(0.3,-0.3); vv(-0.8,-0.3); el;
+  bl; vv(-0.3,0.3); vv(0.8,0.3); vv(0.8,-0.8); vv(-0.3,-0.8); el;
+  fl_begin_line(); vv(-0.8,0.8); vv(-0.3,0.3); fl_end_line();
+  fl_begin_line(); vv(0.3,0.8); vv(0.8,0.3); fl_end_line();
+  fl_begin_line(); vv(0.3,-0.3); vv(0.8,-0.8); fl_end_line();
+  fl_begin_line(); vv(-0.8,-0.3); vv(-0.3,-0.8); fl_end_line();
+}
+
+static void gmsh_rotate(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line(); fl_arc(0.0, -0.1, 0.7, 0.0, 270.0); fl_end_line();
+  fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,0.9); vv(-0.1,0.3); fl_end_polygon();
+}
+
+static void gmsh_models(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,-0.7); vv(0.8,-0.7); el;
+  bl; vv(-0.8,-0.2); vv(0.8,-0.2); el;
+  bl; vv(-0.8,0.3); vv(0.8,0.3); el;
+  bl; vv(-0.8,0.8); vv(0.8,0.8); el;
+}
+
+static void gmsh_clscale(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,0.8); vv(-0.1,0.8); vv(-0.8,0.1); el;
+  bl; vv(-0.2,0.2); vv(0.9,0.2); vv(-0.2,-0.9); el;
+}
+
+static void gmsh_gear(Fl_Color c)
+{
+  fl_color(c);
+  double w = 0.12;
+  double h1 = 0.5;
+#if defined(WIN32)
+  double h2 = 1.0;
+#else
+  double h2 = 1.05;
+#endif
+  fl_line_style(FL_SOLID, 3);
+  fl_begin_line();
+  fl_circle(0, 0, 0.5);
+  fl_end_line();
+  fl_line_style(FL_SOLID);
+  for(int i = 0; i < 8; i++){
+    fl_rotate(45);
+    fl_begin_polygon();
+    fl_vertex(h1, -w);
+    fl_vertex(h2, -w);
+    fl_vertex(h2, w);
+    fl_vertex(h1, w);
+    fl_end_polygon();
+  }
+}
+
+static void gmsh_graph(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line(); vv(-0.8,-0.8); vv(-0.8,0.8); vv(0.8,0.8); fl_end_line();
+  fl_begin_line(); vv(-0.8,0.3); vv(-0.2,-0.2); vv(0.3,0.1); vv(0.8,-0.4); fl_end_line();
+}
+
+static void gmsh_search(Fl_Color col)
+{
+  double eps = 0.2;
+  fl_color(col);
+  fl_begin_polygon();
+  vv(-.4-eps, .13+eps); vv(-1.0-eps, .73+eps); vv(-.73-eps, 1.0+eps); vv(-.13-eps, .4+eps);
+  fl_end_polygon();
+  fl_line_style(FL_SOLID, 2, 0);
+  fl_begin_loop(); fl_circle(.2-eps, -.2+eps, .6); fl_end_loop();
+}
+
+#undef vv
+#undef bl
+#undef el
+
 FlGui::FlGui(int argc, char **argv)
 {
   // set X display
@@ -113,6 +234,20 @@ FlGui::FlGui(int argc, char **argv)
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
+
+  // add our own icons
+  fl_add_symbol("gmsh_rewind", gmsh_rewind, 1);
+  fl_add_symbol("gmsh_back", gmsh_back, 1);
+  fl_add_symbol("gmsh_play", gmsh_play, 1);
+  fl_add_symbol("gmsh_pause", gmsh_pause, 1);
+  fl_add_symbol("gmsh_forward", gmsh_forward, 1);
+  fl_add_symbol("gmsh_ortho", gmsh_ortho, 1);
+  fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_models", gmsh_models, 1);
+  fl_add_symbol("gmsh_clscale", gmsh_clscale, 1);
+  fl_add_symbol("gmsh_gear", gmsh_gear, 1);
+  fl_add_symbol("gmsh_graph", gmsh_graph, 1);
+  fl_add_symbol("gmsh_search", gmsh_search, 1);
 
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
