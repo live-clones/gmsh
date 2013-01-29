@@ -124,7 +124,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage(const std::string &na
   s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
   s.push_back(mp("-version",           "Show version number"));
   s.push_back(mp("-info",              "Show detailed version information"));
-  s.push_back(mp("-help",              "Show this message"));
+  s.push_back(mp("-help",              "Show command line usage"));
   return s;
 }
 

@@ -9,9 +9,10 @@
 #include <string>
 #include "ColorTable.h"
 
-#define GMSH_SET       (1<<0)
-#define GMSH_GET       (1<<1)
-#define GMSH_GUI       (1<<2)
+#define GMSH_SET         (1<<0)
+#define GMSH_GET         (1<<1)
+#define GMSH_GUI         (1<<2)
+#define GMSH_SET_DEFAULT (1<<3)
 
 #define GMSH_SESSIONRC (1<<0)
 #define GMSH_OPTIONSRC (1<<1)

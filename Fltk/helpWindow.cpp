@@ -8,6 +8,8 @@
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Value_Input.H>
+#include <FL/Fl_Color_Chooser.H>
 #include "FlGui.h"
 #include "helpWindow.h"
 #include "paletteWindow.h"
@@ -16,6 +18,7 @@
 #include "OS.h"
 #include "Options.h"
 #include "Context.h"
+#include "drawContext.h"
 
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
@@ -24,22 +27,156 @@ static const char *help_link(Fl_Widget *w, const char *uri)
   return 0;
 }
 
-static void copy_cb(Fl_Widget *w, void *data)
+static void numberOrStringChooser(const std::string &category, int index,
+                                  const std::string &name, bool num)
 {
-  std::string buff;
-  for(int i = 1; i <= FlGui::instance()->help->browser->size(); i++) {
-    if(FlGui::instance()->help->browser->selected(i)) {
-      const char *c = FlGui::instance()->help->browser->text(i);
-      if(strlen(c) > 5 && c[0] == '@')
-        buff += std::string(&c[5]);
-      else
-        buff += std::string(c);
-      buff += "\n";
+  double valn = 0.;
+  std::string vals = "";
+  if(num)
+    NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
+  else
+    StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
+  int width = 3 * BB, height = BH;
+  Fl_Double_Window *win = new Fl_Double_Window(width, height, "Set Value");
+  win->border(0);
+  win->set_modal();
+  win->hotspot(win);
+  Fl_Value_Input *number = 0;
+  Fl_Input *string = 0;
+  if(num){
+    number = new Fl_Value_Input(0, 0, width - BB, height);
+    number->when(FL_WHEN_ENTER_KEY_ALWAYS);
+    number->value(valn);
+  }
+  else{
+    string = new Fl_Input(0, 0, width - BB, height);
+    string->when(FL_WHEN_ENTER_KEY_ALWAYS);
+    string->value(vals.c_str());
+  }
+  Fl_Button *reset = new Fl_Button(width - BB, 0, BB, height, "Use default");
+  win->end();
+  win->show();
+  if(number) number->take_focus();
+  if(string) string->take_focus();
+  bool done = false;
+  while(win->shown()){
+    if(done) break;
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == win) {
+        done = true;
+      }
+      if(o == number){
+        valn = number->value();
+        NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+                     name.c_str(), valn);
+        done = true;
+      }
+      if(o == string){
+        vals = string->value();
+        StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
+                     name.c_str(), vals);
+        done = true;
+      }
+      if(o == reset){
+        if(num)
+          NumberOption(GMSH_SET_DEFAULT|GMSH_GUI, category.c_str(), index,
+                       name.c_str(), valn);
+        else
+          StringOption(GMSH_SET_DEFAULT|GMSH_GUI, category.c_str(), index,
+                       name.c_str(), vals);
+        done = true;
+      }
     }
   }
-  // bof bof bof
-  Fl::copy(buff.c_str(), buff.size(), 0);
-  Fl::copy(buff.c_str(), buff.size(), 1);
+  delete win;
+}
+
+static void colorChooser(const std::string &category, int index,
+                         const std::string &name)
+{
+  unsigned int col;
+  ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), col);
+  uchar r = CTX::instance()->unpackRed(col);
+  uchar g = CTX::instance()->unpackGreen(col);
+  uchar b = CTX::instance()->unpackBlue(col);
+  if(fl_color_chooser("Color Chooser", r, g, b)){
+    col = CTX::instance()->packColor(r, g, b, 255);
+    ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), col);
+  }
+}
+
+static void editOption(const std::string &type, const std::string &cat,
+                       const std::string &name)
+{
+  std::string category = cat;
+  int index = 0;
+  std::string::size_type p1 = cat.find('['), p2 = cat.find(']');
+  if(p1 != std::string::npos && p2 != std::string::npos){
+    category = cat.substr(0, p1);
+    std::string num = cat.substr(p1 + 1, p2 - p1 - 1);
+    index = atoi(num.c_str());
+  }
+
+  if(type == "number")
+    numberOrStringChooser(category, index, name, true);
+  else if(type == "string")
+    numberOrStringChooser(category, index, name, false);
+  else if(type == "color")
+    colorChooser(category, index, name);
+}
+
+static void browser_cb(Fl_Widget *w, void *data)
+{
+  if(Fl::event_clicks()){
+    // edit value
+    for(int i = 1; i <= FlGui::instance()->help->browser->size(); i++) {
+      if(FlGui::instance()->help->browser->selected(i)) {
+        const char *text = FlGui::instance()->help->browser->text(i);
+        const char *data = (const char*)FlGui::instance()->help->browser->data(i);
+        if(data){
+          std::string option(text), type(data), c1, c2;
+          std::string::size_type p1 = std::string::npos, p2 = p1;
+          p1 = option.find_first_of('.');
+          if(p1 != std::string::npos){
+            c1 = option.substr(0, p1);
+            p2 = option.find_first_of(' ', p1);
+            if(p2 != std::string::npos)
+              c2 = option.substr(p1 + 1, p2 - p1 - 1);
+          }
+          if(type == "color"){
+            if(c2.size() > 6) c2 = c2.substr(6);
+            else c2 = "";
+          }
+          editOption(type, c1, c2);
+          int top = FlGui::instance()->help->browser->topline();
+          help_options_cb(0, 0);
+          FlGui::instance()->help->browser->topline(top);
+          FlGui::instance()->help->browser->select(i);
+          drawContext::global()->draw();
+        }
+        break;
+      }
+    }
+  }
+  else{
+    // copy to clipboard
+    std::string buff;
+    for(int i = 1; i <= FlGui::instance()->help->browser->size(); i++) {
+      if(FlGui::instance()->help->browser->selected(i)) {
+        const char *c = FlGui::instance()->help->browser->text(i);
+        if(strlen(c) > 5 && c[0] == '@')
+          buff += std::string(&c[5]);
+        else
+          buff += std::string(c);
+        buff += "\n";
+      }
+    }
+    Fl::copy(buff.c_str(), buff.size(), 0);
+    Fl::copy(buff.c_str(), buff.size(), 1);
+  }
 }
 
 void help_options_cb(Fl_Widget *w, void *data)
@@ -53,14 +190,22 @@ void help_options_cb(Fl_Widget *w, void *data)
   PrintOptions(0, GMSH_FULLRC, diff, help, 0, &s0);
   FlGui::instance()->help->browser->clear();
   for(unsigned int i = 0; i < s0.size(); i++){
+    std::string::size_type sep = s0[i].rfind('\0');
+    void *data = 0;
+    if(sep != std::string::npos){
+      std::string tmp = s0[i].substr(sep + 1);
+      if(tmp == "number") data = (void*)"number";
+      else if(tmp == "string") data = (void*)"string";
+      else if(tmp == "color") data = (void*)"color";
+    }
     if(search.empty()){
-      FlGui::instance()->help->browser->add(s0[i].c_str(), 0);
+      FlGui::instance()->help->browser->add(s0[i].c_str(), data);
     }
     else{
       std::string tmp(s0[i]);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
       if(tmp.find(search) != std::string::npos)
-        FlGui::instance()->help->browser->add(s0[i].c_str(), 0);
+        FlGui::instance()->help->browser->add(s0[i].c_str(), data);
     }
   }
 }
@@ -203,7 +348,7 @@ helpWindow::helpWindow()
     browser->textfont(FL_SCREEN);
     browser->textsize(FL_NORMAL_SIZE - 2);
     browser->type(FL_MULTI_BROWSER);
-    browser->callback(copy_cb);
+    browser->callback(browser_cb);
 
     options->resizable(browser);
     options->position(Fl::x() + Fl::w()/2 - width / 2,

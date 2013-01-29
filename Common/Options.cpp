@@ -84,7 +84,10 @@ bool StringOption(int action, const char *category, int num,
     return false;
   }
 
-  val = s[i].function(num, action, val);
+  if(action & GMSH_SET_DEFAULT)
+    val = s[i].function(num, action | GMSH_SET, s[i].def);
+  else
+    val = s[i].function(num, action, val);
   return true;
 }
 
@@ -127,7 +130,7 @@ static void PrintStringOptions(int num, int level, int diff, int help,
           // Warning: must call Msg::Direct(level, ...) here, because
           // we cannot use tmp as a format string (it can contain %s!)
           if(vec)
-            vec->push_back(tmp);
+            vec->push_back(std::string(tmp) + '\0' + "string");
           else
             Msg::Direct(3, "%s", tmp);
         }
@@ -200,7 +203,12 @@ bool NumberOption(int action, const char *category, int num,
     Msg::Error("Unknown number option '%s.%s'", category, name);
     return false;
   }
-  val = s[i].function(num, action, val);
+
+  if(action & GMSH_SET_DEFAULT)
+    val = s[i].function(num, action | GMSH_SET, s[i].def);
+  else
+    val = s[i].function(num, action, val);
+
   return true;
 }
 
@@ -237,7 +245,7 @@ static void PrintNumberOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else if(vec)
-          vec->push_back(tmp);
+          vec->push_back(std::string(tmp) + '\0' + "number");
         else
           Msg::Direct(tmp);
       }
@@ -289,7 +297,12 @@ bool ColorOption(int action, const char *category, int num,
     Msg::Error("Unknown color option '%s.%s'", category, name);
     return false;
   }
-  val = s[i].function(num, action, val);
+
+  if(action & GMSH_SET_DEFAULT)
+    val = s[i].function(num, action | GMSH_SET, CTX::instance()->packColor
+                        (s[i].def1[0], s[i].def1[1], s[i].def1[2], s[i].def1[3]));
+  else
+    val = s[i].function(num, action, val);
   return true;
 }
 
@@ -394,7 +407,7 @@ static void PrintColorOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else if(vec)
-          vec->push_back(tmp);
+          vec->push_back(std::string(tmp) + '\0' + "color");
         else
           Msg::Direct(tmp);
       }
