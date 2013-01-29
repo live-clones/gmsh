@@ -195,6 +195,7 @@ static void gmsh_search(Fl_Color col)
   fl_end_polygon();
   fl_line_style(FL_SOLID, 2, 0);
   fl_begin_loop(); fl_circle(.2-eps, -.2+eps, .6); fl_end_loop();
+  fl_line_style(FL_SOLID);
 }
 
 #undef vv
