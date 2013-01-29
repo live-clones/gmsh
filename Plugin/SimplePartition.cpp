@@ -72,7 +72,7 @@ PView *GMSH_SimplePartitionPlugin::execute(PView *v)
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
     if(ge->dim() != dim) continue;
-    for(int j = 0; j < ge->getNumMeshElements(); j++){
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       double valmin = pmax;
       double valmax = pmin;
@@ -108,7 +108,7 @@ PView *GMSH_SimplePartitionPlugin::execute(PView *v)
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
     if(ge->dim() == dim) continue;
-    for(int j = 0; j < ge->getNumMeshElements(); j++){
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       if(e->getDim() == 2){
         MFace f = e->getFace(0);

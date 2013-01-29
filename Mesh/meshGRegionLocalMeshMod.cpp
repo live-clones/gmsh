@@ -19,7 +19,7 @@ static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 
 // as input, we give a tet and an edge, as return, we get
 // all tets that share this edge and all vertices that are
-// forming the outer ring of the cavity 
+// forming the outer ring of the cavity
 // we return true if the cavity is closed and false if it is open
 
 void computeNeighboringTetsOfACavity(const std::vector<MTet4*> &cavity,
@@ -49,7 +49,7 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4*> &cavity,
     }
   }
 }
-                   
+
 bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
                      std::vector<MTet4*> &cavity, std::vector<MTet4*> &outside,
                      std::vector<MVertex*> &ring)
@@ -66,13 +66,13 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
 
   // a change here for hybrid meshes
 
-  int ITER = 0;
+  //int ITER = 0;
   while (1){
     MVertex *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
     MVertex *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
     int K = ov1 == lastinring ? 1 : 0;
     lastinring = ov1 == lastinring ? ov2 : ov1;
-    // look in the 2 faces sharing this edge the one that has vertex 
+    // look in the 2 faces sharing this edge the one that has vertex
     // ov2 i.e. edges[5-iLocalEdge][1]
     int iFace;
     int iFace1 = efaces[iLocalEdge][0];
@@ -88,7 +88,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
     if (!t) return false;
     if (t->isDeleted()){ Msg::Error("Weird!!"); return false; }
     if (t == cavity[0]) break;
-    ring.push_back(lastinring);    
+    ring.push_back(lastinring);
     cavity.push_back(t);
     iLocalEdge = -1;
     for (int i = 0; i < 6; i++){
@@ -98,7 +98,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
         iLocalEdge = i;
         break;
       }
-    }  
+    }
     if (iLocalEdge == -1){
       Msg::Error("loc = %d", iLocalEdge);
       return false;
@@ -135,20 +135,20 @@ void BuildSwapPattern4(SwapPattern *sc)
 {
   static int trgl[][3] =
     { {0,1,2}, {0,2,3}, {0,1,3}, {1,2,3} };
-  static int trgul[][5] = 
+  static int trgul[][5] =
     { {0,1,-1,-1,-1}, {2,3,-1,-1,-1} };
 
   sc->nbr_triangles = 4 ;
-  sc->nbr_triangles_2 = 2 ; 
-  sc->nbr_trianguls = 2 ; 
+  sc->nbr_triangles_2 = 2 ;
+  sc->nbr_trianguls = 2 ;
   sc->triangles = trgl ;
   sc->trianguls = trgul ;
 }
 
 void BuildSwapPattern5(SwapPattern *sc)
 {
-  static int trgl[][3] = 
-    { {0,1,2}, {0,2,3}, {0,3,4}, {0,1,4}, {1,3,4}, 
+  static int trgl[][3] =
+    { {0,1,2}, {0,2,3}, {0,3,4}, {0,1,4}, {1,3,4},
       {1,2,3}, {2,3,4}, {0,2,4}, {0,1,3}, {1,2,4} };
   static int trgul[][5] =
     { {0,1,2,-1,-1}, {3,4,5,-1,-1}, {0,6,7,-1,-1}, {2,5,8,-1,-1}, {3,6,9,-1,-1} };
@@ -157,36 +157,36 @@ void BuildSwapPattern5(SwapPattern *sc)
   sc->nbr_triangles_2 = 3 ;
   sc->nbr_trianguls = 5 ;
   sc->triangles = trgl ;
-  sc->trianguls = trgul ; 
+  sc->trianguls = trgul ;
 }
 
 void BuildSwapPattern6(SwapPattern *sc)
 {
-  static int trgl[][3] = 
+  static int trgl[][3] =
     { {0,1,2}, {0,2,3}, {0,3,4}, {0,4,5}, {0,2,5}, {2,4,5}, {2,3,4}, {0,3,5},
       {3,4,5}, {0,2,4}, {2,3,5}, {1,2,3}, {0,1,3}, {0,1,5}, {1,4,5}, {1,3,4},
       {0,1,4}, {1,3,5}, {1,2,4}, {1,2,5} };
-  static int trgul[][5] = 
+  static int trgul[][5] =
     { {0,1,2,3,-1}, {0,4,5,6,-1}, {0,1,7,8,-1}, {0,3,6,9,-1}, {0,4,8,10,-1},
       {2,3,11,12,-1}, {11,13,14,15,-1}, {7,8,11,12,-1}, {3,11,15,16,-1},
-      {8,11,13,17,-1}, {6,13,14,18,-1}, {3,6,16,18,-1}, {5,6,13,19,-1}, 
+      {8,11,13,17,-1}, {6,13,14,18,-1}, {3,6,16,18,-1}, {5,6,13,19,-1},
       {8,10,13,19,-1} };
 
-  sc->nbr_triangles = 20 ; 
-  sc->nbr_triangles_2 = 4 ; 
-  sc->nbr_trianguls = 14 ; 
-  sc->triangles = trgl ; 
+  sc->nbr_triangles = 20 ;
+  sc->nbr_triangles_2 = 4 ;
+  sc->nbr_trianguls = 14 ;
+  sc->triangles = trgl ;
   sc->trianguls = trgul ;
 }
 
 void BuildSwapPattern7(SwapPattern *sc)
 {
-  static int trgl[][3] = 
+  static int trgl[][3] =
     { {0,1,2}, {0,2,3}, {0,3,4}, {0,4,5}, {0,5,6}, {0,3,6}, {3,5,6}, {3,4,5}, {0,4,6},
       {4,5,6}, {0,3,5}, {3,4,6}, {0,2,4}, {2,3,4}, {0,2,6}, {2,5,6}, {2,4,5}, {0,2,5},
       {2,4,6}, {2,3,5}, {2,3,6}, {0,1,3}, {1,2,3}, {0,1,4}, {1,3,4}, {0,1,6}, {1,5,6},
       {1,4,5}, {0,1,5}, {1,4,6}, {1,3,5}, {1,3,6}, {1,2,4}, {1,2,5}, {1,2,6} };
-  static int trgul[][5] = 
+  static int trgul[][5] =
     { {0,1,2,3,4}, {0,1,5,6,7}, {0,1,2,8,9}, {0,1,4,7,10}, {0,1,5,9,11}, {0,3,4,12,13},
       {0,13,14,15,16}, {0,8,9,12,13}, {0,4,13,16,17}, {0,9,13,14,18}, {0,7,14,15,19},
       {0,4,7,17,19}, {0,6,7,14,20}, {0,9,11,14,20}, {2,3,4,21,22}, {5,6,7,21,22},
@@ -205,7 +205,7 @@ void BuildSwapPattern7(SwapPattern *sc)
 }
 
 bool edgeSwap(std::vector<MTet4 *> &newTets,
-              MTet4 *tet, 
+              MTet4 *tet,
               int iLocalEdge,
               const qualityMeasure4Tet &cr)
 {
@@ -217,7 +217,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
 
   if (!closed) return false;
-  
+
   double volumeRef = 0.0;
   double tetQualityRef = 1;
   for(unsigned int i = 0; i < cavity.size(); i++){
@@ -244,9 +244,9 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   for (int i = 0; i < sp.nbr_triangles; i++){
     int p1 = sp.triangles[i][0];
     int p2 = sp.triangles[i][1];
-    int p3 = sp.triangles[i][2];   
+    int p3 = sp.triangles[i][2];
     tetQuality1[i] = qmTet(ring[p1], ring[p2], ring[p3], v1, cr, &(volume1[i]));
-    tetQuality2[i] = qmTet(ring[p1], ring[p2], ring[p3], v2, cr, &(volume2[i]));  
+    tetQuality2[i] = qmTet(ring[p1], ring[p2], ring[p3], v2, cr, &(volume2[i]));
   }
 
   // look for the best triangulation, i.e. the one that maximize the
@@ -278,7 +278,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
 
   // if there exist no swap that enhance the quality
   if (best <= tetQualityRef) return false;
-  
+
   // we have the best configuration, so we swap
   // printf("outside size = %d\n",outside.size());
 
@@ -289,13 +289,13 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
     int iT = sp.trianguls[iBest][j];
     int p1 = sp.triangles[iT][0];
     int p2 = sp.triangles[iT][1];
-    int p3 = sp.triangles[iT][2];  
+    int p3 = sp.triangles[iT][2];
     MVertex *pv1 = ring[p1];
     MVertex *pv2 = ring[p2];
     MVertex *pv3 = ring[p3];
     MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, pv3, v1);
     MTetrahedron *tr2 = new MTetrahedron (pv3, pv2, pv1, v2);
-    MTet4 *t41 = new MTet4(tr1, tetQuality1[iT]); 
+    MTet4 *t41 = new MTet4(tr1, tetQuality1[iT]);
     MTet4 *t42 = new MTet4(tr2, tetQuality2[iT]);
     t41->setOnWhat(cavity[0]->onWhat());
     t42->setOnWhat(cavity[0]->onWhat());
@@ -306,7 +306,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   }
 
   for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
-  
+
   connectTets(outside);
 
   return true;
@@ -322,13 +322,13 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
 
   bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
   if (!closed) return false;
-  
+
   for(unsigned int j = 0; j < ring.size(); j++){
     MVertex *pv1 = ring[j];
     MVertex *pv2 = ring[(j + 1) % ring.size()];
     MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, newVertex, v1);
     MTetrahedron *tr2 = new MTetrahedron(newVertex, pv2, pv1, v2);
-    MTet4 *t41 = new MTet4(tr1, cr); 
+    MTet4 *t41 = new MTet4(tr1, cr);
     MTet4 *t42 = new MTet4(tr2, cr);
     t41->setOnWhat(cavity[0]->onWhat());
     t42->setOnWhat(cavity[0]->onWhat());
@@ -339,7 +339,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
   }
 
   for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
-  
+
   connectTets(outside);
 
   return true;
@@ -376,7 +376,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   double q1 = t1->getQuality();
   double vol2 = fabs(t2->tet()->getVolume());
   double q2 = t2->getQuality();
-  
+
   double vol3;
   double q3 = qmTet(f1, f2, v1, v2, cr, &vol3);
   double vol4;
@@ -398,7 +398,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
         if(outside[j] == t1->getNeigh(i)) { found = true; break; }
       }
       if(!found) outside.push_back(t1->getNeigh(i));
-    }    
+    }
   }
   for(int i = 0; i < 4; i++){
     if(t2->getNeigh(i) && t2->getNeigh(i) != t1){
@@ -407,7 +407,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
         if(outside[j] == t2->getNeigh(i)) { found = true; break; }
       }
       if(!found) outside.push_back(t2->getNeigh(i));
-    }    
+    }
   }
 
   // printf("we have a face swap %d\n",outside.size());
@@ -418,9 +418,9 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   MTetrahedron *tr1 = new MTetrahedron(f1, f2, v1, v2);
   MTetrahedron *tr2 = new MTetrahedron(f2, f3, v1, v2);
   MTetrahedron *tr3 = new MTetrahedron(f3, f1, v1, v2);
-  MTet4 *t41 = new MTet4(tr1, q3); 
+  MTet4 *t41 = new MTet4(tr1, q3);
   MTet4 *t42 = new MTet4(tr2, q4);
-  MTet4 *t43 = new MTet4(tr3, q5); 
+  MTet4 *t43 = new MTet4(tr3, q5);
   t41->setOnWhat(t1->onWhat());
   t42->setOnWhat(t1->onWhat());
   t43->setOnWhat(t1->onWhat());
@@ -428,9 +428,9 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   outside.push_back(t42);
   outside.push_back(t43);
   newTets.push_back(t41);
-  newTets.push_back(t42);  
-  newTets.push_back(t43);  
-  connectTets(outside);      
+  newTets.push_back(t42);
+  newTets.push_back(t43);
+  connectTets(outside);
   return true;
 }
 
@@ -457,7 +457,7 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4*> &cavity)
       bool found = false;
       for(unsigned int j = 0; j < cavity.size(); j++){
         if(cavity[j] == neigh){
-          found = true; 
+          found = true;
           j = cavity.size();
         }
       }
@@ -474,19 +474,19 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4*> &cavity)
 // another one (of course, not the other one on the unswappable edge)
 // after that crap, the sliver is trashed
 
-bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t, 
+bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
                    const qualityMeasure4Tet &cr)
 {
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
   std::vector<MVertex*> ring;
   MVertex *v1, *v2;
-  
-  bool isClosed[6];  
+
+  bool isClosed[6];
   int nbSwappable = 0;
   int iSwappable = 0;
   for (int i = 0; i < 6; i++){
-     isClosed[i] = buildEdgeCavity(t, i, &v1, &v2, cavity, outside, ring);    
+     isClosed[i] = buildEdgeCavity(t, i, &v1, &v2, cavity, outside, ring);
      if (isClosed[i]){
        nbSwappable++;
        iSwappable = i;
@@ -494,7 +494,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
   }
 
   if (nbSwappable == 0){
-    // all edges are on model edges or model faces, which means that 
+    // all edges are on model edges or model faces, which means that
     // nothing can be done
     return false;
   }
@@ -517,7 +517,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
         smoothVertexOptimize(newTets[newTets.size() - 1], i, cr);
       }
     }
-    
+
     for (unsigned int i = 0; i < newTets.size(); i++){
       MTet4 *new_t = newTets[i];
       if (!(new_t->isDeleted())){
@@ -547,7 +547,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
 }
 
 bool collapseVertex(std::vector<MTet4 *> &newTets,
-                        MTet4 *t, 
+                        MTet4 *t,
                         int iVertex,
                         int iTarget,
                         const qualityMeasure4Tet &cr,
@@ -594,7 +594,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   v->z() = tg->z();
 
   double volume_update = 0;
-  
+
   double worstAfter = 1.0;
   double newQuals[2000];
   if (toUpdate.size() >= 2000){
@@ -624,21 +624,21 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   // ok we collapse
   computeNeighboringTetsOfACavity(cavity_v, outside);
   for (unsigned int i = 0; i < toUpdate.size(); i++){
-    MTetrahedron *tr1 = new MTetrahedron 
+    MTetrahedron *tr1 = new MTetrahedron
       (toUpdate[i]->tet()->getVertex(0) == v ? tg : toUpdate[i]->tet()->getVertex(0),
        toUpdate[i]->tet()->getVertex(1) == v ? tg : toUpdate[i]->tet()->getVertex(1),
        toUpdate[i]->tet()->getVertex(2) == v ? tg : toUpdate[i]->tet()->getVertex(2),
        toUpdate[i]->tet()->getVertex(3) == v ? tg : toUpdate[i]->tet()->getVertex(3));
-    MTet4 *t41 = new MTet4(tr1, cr); 
+    MTet4 *t41 = new MTet4(tr1, cr);
     t41->setOnWhat(cavity_v[0]->onWhat());
     t41->setQuality(newQuals[i]);
     outside.push_back(t41);
     newTets.push_back(t41);
   }
   for(unsigned int i = 0; i < cavity_v.size(); i++) cavity_v[i]->setDeleted(true);
-  
+
   connectTets(outside);
-  
+
   return true;
 }
 
@@ -653,7 +653,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
   std::vector<MTet4*> cavity;
   cavity.push_back(t);
   buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity);
-  
+
   double xcg = 0, ycg = 0, zcg = 0;
   double vTot = 0;
   double worst = 1.0;
@@ -673,7 +673,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
     zcg += 0.25 * (cavity[i]->tet()->getVertex(0)->z() +
                    cavity[i]->tet()->getVertex(1)->z() +
                    cavity[i]->tet()->getVertex(2)->z() +
-                   cavity[i]->tet()->getVertex(3)->z()) * volume;    
+                   cavity[i]->tet()->getVertex(3)->z()) * volume;
     vTot += volume;
   }
   xcg /= (vTot);
@@ -711,7 +711,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
     // restore new quality
     for(unsigned int i = 0; i < cavity.size(); i++){
       cavity[i]->setQuality(newQuals[i]);
-    }    
+    }
     return true;
   }
 }
@@ -720,9 +720,9 @@ struct smoothVertexData3D{
   MVertex *v;
   std::vector<MTet4 *> ts;
   double LC;
-}; 
+};
 
-double smoothing_objective_function_3D(double X, double Y, double Z, 
+double smoothing_objective_function_3D(double X, double Y, double Z,
                                        MVertex *v, std::vector<MTet4 *> &ts)
 {
   const double oldX = v->x();
@@ -742,7 +742,7 @@ double smoothing_objective_function_3D(double X, double Y, double Z,
   v->x() = oldX;
   v->y() = oldY;
   v->z() = oldZ;
-  return -qMin;  
+  return -qMin;
 }
 
 void deriv_smoothing_objective_function_3D(double *XYZ, double *dF,
@@ -767,13 +767,13 @@ void deriv_smoothing_objective_function_3D(double *XYZ, double *dF,
 double smooth_obj_3D(double *XYZ, void *data)
 {
   smoothVertexData3D *svd = (smoothVertexData3D*)data;
-  return smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], svd->v, svd->ts); 
+  return smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], svd->v, svd->ts);
 }
 
 bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 {
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
-  
+
   smoothVertexData3D vd;
   vd.ts.push_back(t);
   vd.v = t->tet()->getVertex(iVertex);
@@ -791,7 +791,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 
   for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume = fabs(vd.ts[i]->tet()->getVolume());
-    vTot += volume;    
+    vTot += volume;
   }
 
   double volumeAfter = 0.0;
@@ -825,14 +825,14 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
     // restore new quality
     for(unsigned int i = 0; i < vd.ts.size(); i++){
       vd.ts[i]->setQuality(newQuals[i]);
-    }    
+    }
     return true;
   }
 }
 
 // Edge split sets ...
 // Here, we only build a list of tets that are a subdivision
-// of the given 
+// of the given
 //static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 
 // the resulting triangles are 012 and 230 in vector res
@@ -843,20 +843,20 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //               MVertex* v3,
 //               MVertex* v4,
 //               MVertex* v5,
-//               MVertex* v6, 
+//               MVertex* v6,
 //               const qualityMeasure4Tet &cr,
 //               MVertex *res[4],
-//               fs_cont &search, 
+//               fs_cont &search,
 //               GFace *fakeFace){
 // }
 
-// void splitQuadFace (MVertex* newv1, 
-//                  MVertex* newv2, 
-//                  MVertex* v21, 
-//                  MVertex* v11, 
+// void splitQuadFace (MVertex* newv1,
+//                  MVertex* newv2,
+//                  MVertex* v21,
+//                  MVertex* v11,
 //                  const qualityMeasure4Tet &cr,
 //                  MVertex *res[4],
-//                  fs_cont &search, 
+//                  fs_cont &search,
 //                  GFace *fakeFace){
 //   GFace* gfound = findInFaceSearchStructure (newv1,newv2,v11,search);
 //   if (gfound){
@@ -884,8 +884,8 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      res[3] = v21;
 //      MVertex *p1 = std::min(std::min(newv1,newv2),v11);
 //      MVertex *p2 = std::min(std::min(newv2,v11),v21);
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));          
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));    
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));
 //       }
 //       else{
 //      res[0] = newv1;
@@ -894,34 +894,34 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      res[3] = v11;
 //      MVertex *p1 = std::min(std::min(newv1,newv2),v21);
 //      MVertex *p2 = std::min(std::min(newv2,v11),v21);
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));          
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));    
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));
 //       }
 //     }
-//   }    
+//   }
 // }
 // void splitQuadFace (std::vector<MTet4 *> &newTets,
 //                  std::vector<MVertex *> &steinerPoints,
-//                  MVertex* newv1, 
-//                  MVertex* newv2, 
-//                  MVertex* v21, 
-//                  MVertex* v11, 
+//                  MVertex* newv1,
+//                  MVertex* newv2,
+//                  MVertex* v21,
+//                  MVertex* v11,
 //                  MVertex* other,
 //                  const qualityMeasure4Tet &cr,
-//                  fs_cont &search, 
+//                  fs_cont &search,
 //                  GFace *fakeFace){
 //   MTetrahedron *tr3,*tr4;
 //   // now we look if there exists a face with the same vertices
 //   GFace* gfound = findInFaceSearchStructure (newv1,newv2,v11,search);
 //   if (gfound){
-//     tr3 = new MTetrahedron ( newv1,newv2,v11,other);   
-//     tr4 = new MTetrahedron ( newv2,v11,v21,other);     
+//     tr3 = new MTetrahedron ( newv1,newv2,v11,other);
+//     tr4 = new MTetrahedron ( newv2,v11,v21,other);
 //   }
 //   else{
 //     GFace* gfound = findInFaceSearchStructure (newv1,newv2,v21,search);
 //     if (gfound){
-//       tr3 = new MTetrahedron ( newv1,newv2,v21,other);         
-//       tr4 = new MTetrahedron ( newv1,v11,v21,other);   
+//       tr3 = new MTetrahedron ( newv1,newv2,v21,other);
+//       tr4 = new MTetrahedron ( newv1,v11,v21,other);
 //     }
 //     // choose the best configuration
 //     else{
@@ -929,33 +929,33 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //       double q1 = std::min(qmTet(newv1,newv2,v11,other,cr,vol),qmTet(newv2,v11,v21,other,cr,vol));
 //       double q2 = std::min(qmTet(newv1,newv2,v21,other,cr,vol),qmTet(newv1,v11,v21,other,cr,vol));
 //       if (q1 > q2){
-//      tr3 = new MTetrahedron ( newv1,newv2,v11,other);          
+//      tr3 = new MTetrahedron ( newv1,newv2,v11,other);
 //      tr4 = new MTetrahedron ( newv2,v11,v21,other);
 //      MVertex *p1 = std::min(std::min(newv1,newv2),v11);
 //      MVertex *p2 = std::min(std::min(newv2,v11),v21);
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));          
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));    
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));
 //       }
 //       else{
-//      tr3 = new MTetrahedron ( newv1,newv2,v21,other);          
-//      tr4 = new MTetrahedron ( newv1,v11,v21,other);    
+//      tr3 = new MTetrahedron ( newv1,newv2,v21,other);
+//      tr4 = new MTetrahedron ( newv1,v11,v21,other);
 //      MVertex *p1 = std::min(std::min(newv1,newv2),v21);
 //      MVertex *p2 = std::min(std::min(newv2,v11),v21);
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));          
-//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));    
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));
+//      search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));
 //       }
 //     }
-//   }    
+//   }
 // }
 
 // bool splitEdgesOfTet (std::vector<MTet4 *> &newTets,
 //                    std::vector<MVertex *> &steinerPoints,
 //                    MTet4 *t1,
 //                    int nbEdges,
-//                    int e[6], 
+//                    int e[6],
 //                    MVertex* pts[6],
 //                    const qualityMeasure4Tet &cr,
-//                    fs_cont &search, 
+//                    fs_cont &search,
 //                    GFace *fakeFace){
 //   switch(nbEdges){
 //   case 1 :
@@ -969,7 +969,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //       MVertex *o2 = t1->tet()->getVertex(e[oE][1]);
 //       MTetrahedron *tr1 = new MTetrahedron ( newv,v1,o1,o2);
 //       MTetrahedron *tr2 = new MTetrahedron ( newv,v2,o2,o1);
-//       MTet4 *t41 = new MTet4 (tr1,cr); 
+//       MTet4 *t41 = new MTet4 (tr1,cr);
 //       MTet4 *t42 = new MTet4 (tr2,cr);
 //       newTets.push_back(t41);
 //       newTets.push_back(t42);
@@ -993,9 +993,9 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      MTetrahedron *tr2 = new MTetrahedron ( newv1,newv2,v21,v12);
 //      MTetrahedron *tr3 = new MTetrahedron ( newv1,newv2,v12,v22);
 //      MTetrahedron *tr4 = new MTetrahedron ( newv1,newv2,v22,v11);
-//      MTet4 *t41 = new MTet4 (tr1,cr); 
+//      MTet4 *t41 = new MTet4 (tr1,cr);
 //      MTet4 *t42 = new MTet4 (tr2,cr);
-//      MTet4 *t43 = new MTet4 (tr3,cr); 
+//      MTet4 *t43 = new MTet4 (tr3,cr);
 //      MTet4 *t44 = new MTet4 (tr4,cr);
 //      newTets.push_back(t41);
 //      newTets.push_back(t42);
@@ -1010,8 +1010,8 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      else if (v12 == v22){vsame=v12;}
 //      else throw;
 //      for (int i=0;i<4;i++){
-//        if (vsame != t1->tet()->getVertex(i) && 
-//            v11 != t1->tet()->getVertex(i) && 
+//        if (vsame != t1->tet()->getVertex(i) &&
+//            v11 != t1->tet()->getVertex(i) &&
 //            v21 != t1->tet()->getVertex(i)){
 //          other = t1->tet->getVertex(i);
 //          break;
@@ -1022,7 +1022,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      splitQuadFace (newTets,steinerPoints,newv1,newv2,v21,v11,other,cr,search,fakeFace);
 //       }
 //     }
-//     break;    
+//     break;
 //   case 3 :
 //     {
 //       int iE1 = edges[0];
@@ -1050,28 +1050,28 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //       // the 3 edges coincide at one vertex
 //       int config;
 //       if (iE1 == 0 && iE2 == 1 && iE3 == 2){
-//      config = 1; 
+//      config = 1;
 //      v[0] = t1->tet()->getVertex(0);
 //      v[1] = t1->tet()->getVertex(1);
 //      v[2] = t1->tet()->getVertex(2);
 //      v[3] = t1->tet()->getVertex(3);
-//       }      
+//       }
 //       else if (iE1 == 0 && iE2 == 3 && iE3 == 4){
-//      config = 1; 
+//      config = 1;
 //      v[0] = t1->tet()->getVertex(1);
 //      v[1] = t1->tet()->getVertex(0);
 //      v[2] = t1->tet()->getVertex(2);
 //      v[3] = t1->tet()->getVertex(3);
-//       }      
+//       }
 //       else if (iE1 == 1 && iE2 == 3 && iE3 == 5){
-//      config = 1; 
+//      config = 1;
 //      v[0] = t1->tet()->getVertex(2);
 //      v[1] = t1->tet()->getVertex(0);
 //      v[2] = t1->tet()->getVertex(1);
 //      v[3] = t1->tet()->getVertex(3);
-//       }      
+//       }
 //       else if (iE1 == 2 && iE2 == 4 && iE3 == 5){
-//      config = 1; 
+//      config = 1;
 //      v[0] = t1->tet()->getVertex(3);
 //      v[1] = t1->tet()->getVertex(0);
 //      v[2] = t1->tet()->getVertex(1);
@@ -1083,34 +1083,34 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //      v[0] = t1->tet()->getVertex(3);
 //      v[1] = t1->tet()->getVertex(1);
 //      v[2] = t1->tet()->getVertex(0);
-//      v[3] = t1->tet()->getVertex(2);      
+//      v[3] = t1->tet()->getVertex(2);
 //       }
 //       else if (iE1 == 0 && iE2 == 2 && iE3 == 4){
 //      config = 2;
 //      v[0] = t1->tet()->getVertex(2);
 //      v[1] = t1->tet()->getVertex(1);
 //      v[2] = t1->tet()->getVertex(0);
-//      v[3] = t1->tet()->getVertex(3);      
+//      v[3] = t1->tet()->getVertex(3);
 //       }
 //       else if (iE1 == 1 && iE2 == 2 && iE3 == 5){
 //      config = 2;
 //      v[0] = t1->tet()->getVertex(1);
 //      v[1] = t1->tet()->getVertex(2);
 //      v[2] = t1->tet()->getVertex(0);
-//      v[3] = t1->tet()->getVertex(3);      
+//      v[3] = t1->tet()->getVertex(3);
 //       }
 //       else if (iE1 == 3 && iE2 == 4 && iE3 == 5){
 //      config = 2;
 //      v[0] = t1->tet()->getVertex(0);
 //      v[1] = t1->tet()->getVertex(2);
 //      v[2] = t1->tet()->getVertex(1);
-//      v[3] = t1->tet()->getVertex(3);      
+//      v[3] = t1->tet()->getVertex(3);
 //       }
 //       // the three edges for a kind of Z
 //       else if (iE1 == 0 && iE2 == 3 && iE3 == 5){
 //      config = 3;
 //       }
-      
+
 //       if (config == 1){
 //       }
 //       else if (config == 2){
@@ -1123,10 +1123,10 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
 //     throw;
 //   }
 //   t1->setDeleted(true);
-    
+
 
 // }
-  
+
 
 
 // collapse

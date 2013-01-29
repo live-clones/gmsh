@@ -244,7 +244,7 @@ bool PView::readMED(const std::string &fileName, int fileIndex)
   std::vector<std::string> fieldNames = medGetFieldNames(fileName);
 
   for(unsigned int index = 0; index < fieldNames.size(); index++){
-    if(fileIndex < 0 || index == fileIndex){
+    if(fileIndex < 0 || (int)index == fileIndex){
       PViewDataGModel *d = 0;
       // we use the filename as a kind of "partition" indicator, allowing to
       // complete datasets provided in separate files (e.g. coming from DDM)

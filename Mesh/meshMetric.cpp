@@ -396,7 +396,7 @@ void meshMetric::computeMetricHessian( )
     fullMatrix<double> V(3,3);
     fullVector<double> S(3);
     H.eig(V,S);
-    
+
 
     double lambda1 = std::min(std::max(fabs(S(0))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
     double lambda2 = std::min(std::max(fabs(S(1))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
@@ -509,7 +509,7 @@ void meshMetric::computeMetricEigenDir()
     if (signed_dist < _E && signed_dist > _E_moins && gMag != 0.0){
       const double metric_value_hmin = 1./(hmin*hmin);
       const SVector3 nVec = invGMag*gVec;                                                         // Unit normal vector
-      double lambda_n;                                                                            // Eigenvalues of metric for normal & tangential directions
+      double lambda_n = 0.;                                                                            // Eigenvalues of metric for normal & tangential directions
       if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
         const double h_dist = hmin + ((hmax-hmin)/_E)*dist;                                       // Characteristic element size in the normal direction - linear interp between hmin and hmax
         lambda_n = 1./(h_dist*h_dist);
@@ -679,8 +679,8 @@ void meshMetric::computeMetricScaledHessian()
 }
 
 
-// this function scales the mesh metric in order 
-// to reach a target number of elements 
+// this function scales the mesh metric in order
+// to reach a target number of elements
 // We know that the number of elements in the final
 // mesh will be (assuming M_e the metric at centroid of element e)
 //   N = \sum_e \sqrt {\det (M_e)} V_e
@@ -691,15 +691,15 @@ void meshMetric::computeMetricScaledHessian()
 //       =   \sum_e \sqrt {\det (K^{2/d} M_e)} V_e
 //  where d is the dimension of the problem.
 // This means that the metric should be scaled by K^{2/d} where
-// K is N_target / N 
+// K is N_target / N
 
-void meshMetric::scaleMetric( int nbElementsTarget, 
+void meshMetric::scaleMetric( int nbElementsTarget,
 			      nodalMetricTensor &nmt )
 {
   // compute N
   double N = 0;
   for (unsigned int i=0;i<_elements.size();i++){
-    MElement *e = _elements[i];    
+    MElement *e = _elements[i];
     SMetric3 m1 = nmt[e->getVertex(0)];
     SMetric3 m2 = nmt[e->getVertex(1)];
     SMetric3 m3 = nmt[e->getVertex(2)];
@@ -713,10 +713,10 @@ void meshMetric::scaleMetric( int nbElementsTarget,
       SMetric3 m =  interpolation(m1,m2,m3,m4,0.25,0.25,0.25);
       N += sqrt(m.determinant()) * e->getVolume() * 4.0;
     }
-  }  
+  }
   double scale = pow ((double)nbElementsTarget/N,2.0/_dim);
   //  printf("%d elements --- %d element target --- %12.5E elements with the present metric\n",
-  //  	 _elements.size(),nbElementsTarget,N);	 
+  //  	 _elements.size(),nbElementsTarget,N);
   //  getchar();
   for (nodalMetricTensor::iterator it = nmt.begin(); it != nmt.end() ; ++it){
     if (_dim == 3){

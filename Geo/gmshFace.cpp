@@ -361,7 +361,6 @@ bool gmshFace::buildSTLTriangulation(bool force)
   stl_vertices.clear();
   stl_triangles.clear();
 
-
   if (!triangles.size()){
     contextMeshOptions _temp = CTX::instance()->mesh;
     FieldManager *fields = model()->getFields();
@@ -382,8 +381,8 @@ bool gmshFace::buildSTLTriangulation(bool force)
 
   std::map<MVertex*,int> _v;
   int COUNT =0;
-  for (int j = 0; j < triangles.size(); j++){
-    for (int i=0;i<3;i++){
+  for (unsigned int j = 0; j < triangles.size(); j++){
+    for (int i = 0; i < 3; i++){
       std::map<MVertex*,int>::iterator it =
         _v.find(triangles[j]->getVertex(j));
       if (it != _v.end()){
