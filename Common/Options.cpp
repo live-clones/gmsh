@@ -942,11 +942,13 @@ void PrintOptionsDoc()
       Msg::Error("Unable to open file 'commandline.texi'");
       return;
     }
-    std::vector<std::pair<std::string, std::string> > s = GetUsage("gmsh");
+    std::vector<std::pair<std::string, std::string> > s = GetUsage();
     fprintf(file, "%s@ftable @code\n", warn);
     for(unsigned int i = 0; i < s.size(); i++)
       if(s[i].first.size() && s[i].second.size())
         fprintf(file, "@item %s\n%s\n", s[i].first.c_str(), s[i].second.c_str());
+      else if(s[i].first.size() && s[i].second.empty())
+        fprintf(file, "@end ftable\n %s\n@ftable @code\n", s[i].first.c_str());
     fprintf(file, "@end ftable\n");
     fclose(file);
   }

@@ -43,11 +43,10 @@ const char *GetGmshBuildOS(){ return GMSH_OS; }
 const char *GetGmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 const char *GetGmshBuildOptions(){ return GMSH_CONFIG_OPTIONS; }
 
-std::vector<std::pair<std::string, std::string> > GetUsage(const std::string &name)
+std::vector<std::pair<std::string, std::string> > GetUsage()
 {
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Usage: " + name + " [options] [files]", ""));
   s.push_back(mp("Geometry options:", ""));
   s.push_back(mp("-0",                 "Output unrolled geometry, then exit"));
   s.push_back(mp("-tol float",         "Set geometrical tolerance"));
@@ -236,7 +235,8 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 
 void PrintUsage(const std::string &name)
 {
-  std::vector<std::pair<std::string, std::string> > s = GetUsage(name);
+  Msg::Direct("Usage: %s [options] [files]", name.c_str());
+  std::vector<std::pair<std::string, std::string> > s = GetUsage();
   for(unsigned int i = 0; i < s.size(); i++){
     std::string a = s[i].first, b = s[i].second;
     if(b.empty()){

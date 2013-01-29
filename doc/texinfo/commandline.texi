@@ -4,12 +4,18 @@
 @c
 
 @ftable @code
+@end ftable
+ Geometry options:
+@ftable @code
 @item -0
 Output unrolled geometry, then exit
 @item -tol float
 Set geometrical tolerance
 @item -match
 Match geometries and meshes
+@end ftable
+ Mesh options:
+@ftable @code
 @item -1, -2, -3
 Perform 1D, 2D or 3D mesh generation, then exit
 @item -format string
@@ -20,7 +26,7 @@ Select msh file version
 Perform uniform mesh refinement, then exit
 @item -part int
 Partition after batch mesh generation
-@item -partWeight <tri|quad|tet|prism|hex> int
+@item -partWeight tri|quad|tet|prism|hex int
 Weight of a triangle/quad/etc. during partitioning
 @item -renumber
 Renumber the mesh elements after batch mesh generation
@@ -47,7 +53,7 @@ Min high-order element quality before optim (0.0->1.0)
 @item -hoNLayers int
 Number of high order element layers to optimize
 @item -hoElasticity float
-Poisson ration for elasticity analogy (-1.0 < nu < 0.5)
+Poisson ration for elasticity analogy (nu in [-1.0,0.5])
 @item -optimize[_netgen]
 Optimize quality of tetrahedral elements
 @item -optimize_lloyd
@@ -78,10 +84,16 @@ Perform various consistency checks on mesh
 Do several passes on the mesh for complex backround fields
 @item -ignorePartBound
 Ignore partitions boundaries
+@end ftable
+ Post-processing options:
+@ftable @code
 @item -link int
 Select link mode between views (0, 1, 2, 3, 4)
 @item -combine
 Combine views having identical names into multi-time-step views
+@end ftable
+ Display options:
+@ftable @code
 @item -n
 Hide all meshes and post-processing views on startup
 @item -nodb
@@ -96,6 +108,9 @@ Specify display
 Use camera mode view;
 @item -stereo
 OpenGL quad-buffered stereo rendering (requires special graphic card)
+@end ftable
+ Other options:
+@ftable @code
 @item -
 Parse input files, then exit
 @item -a, -g, -m, -s, -p
@@ -121,5 +136,5 @@ Show version number
 @item -info
 Show detailed version information
 @item -help
-Show this message
+Show command line usage
 @end ftable

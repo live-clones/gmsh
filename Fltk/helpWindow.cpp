@@ -291,10 +291,12 @@ helpWindow::helpWindow()
     s += "<h3>Command Line Switches</h3>";
     s += "<table border=1>";
     {
-      std::vector<std::pair<std::string, std::string> > s0 = GetUsage("gmsh");
+      std::vector<std::pair<std::string, std::string> > s0 = GetUsage();
       for(unsigned int i = 0; i < s0.size(); i++)
         if(s0[i].first.size() && s0[i].second.size())
           s += "<tr><td>" + s0[i].first + "</td><td>" + s0[i].second + "</td></tr>";
+        else if(s0[i].first.size() && s0[i].second.empty())
+          s += "</table>" + s0[i].first + "<table border=1>";
     }
     s += "</table>";
 
