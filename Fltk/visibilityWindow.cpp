@@ -1120,8 +1120,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  static int cols[5] = {2 * WB, BB, BB, 2 * BB, 0};
-  int width = cols[0] + cols[1] + cols[2] + cols[3] + 6 * WB;
+  int CC = (int)(1.15 * BB);
+
+  static int cols[5] = {3 * WB, CC, CC, 2 * CC, 0};
+  int width = cols[0] + cols[1] + cols[2] + cols[3] + 7 * WB;
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
@@ -1177,7 +1179,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       gg->end();
 
       Fl_Button *o5 = new Fl_Button
-        (width - 4 * WB, 2 * WB + BH, 2 * WB, BH, "+");
+        (width - 5 * WB, 2 * WB + BH, 3 * WB, BH, "+");
       o5->box(FL_THIN_UP_BOX);
       o5->tooltip("Add parameter name for first selected item");
       o5->callback(visibility_sort_cb, (void *)"+");
@@ -1210,11 +1212,11 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type->value(1);
 
     push[0] = new Fl_Button
-      (width - 2 * BB - 3 * WB, height - 2 * BH - 3 * WB, BB, BH, "Delete");
+      (width - 2 * CC - 3 * WB, height - 2 * BH - 3 * WB, CC, BH, "Delete");
     push[0]->callback(visibility_delete_cb);
 
     Fl_Return_Button *b1 = new Fl_Return_Button
-      (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
+      (width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");
     b1->callback(visibility_browser_apply_cb);
 
     g->end();
@@ -1238,7 +1240,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree_create->callback(build_tree_cb);
 
     Fl_Return_Button *b1 = new Fl_Return_Button
-      (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
+      (width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");
     b1->callback(visibility_tree_apply_cb);
 
     g->resizable(tree);
@@ -1273,10 +1275,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       input[i]->align(FL_ALIGN_LEFT);
       input[i]->value("*");
 
-      Fl_Button *o1 = new Fl_Button(width / 2 + WB / 2, yy, BB, BH, "Show");
+      Fl_Button *o1 = new Fl_Button(width / 2 + WB / 2, yy, CC, BH, "Show");
       o1->callback(visibility_number_cb, (void *)(100+i));
 
-      Fl_Button *o2 = new Fl_Button(width / 2 + WB / 2 + BB + WB, yy, BB, BH, "Hide");
+      Fl_Button *o2 = new Fl_Button(width / 2 + WB / 2 + CC + WB, yy, CC, BH, "Hide");
       o2->callback(visibility_number_cb, (void *)i);
       yy += BH;
     }
@@ -1397,7 +1399,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     per_window->callback(visibility_per_window_cb, (void*)"item");
 
     Fl_Button *b1 = new Fl_Button
-      (width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Reset all");
+      (width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Reset all");
     b1->callback(visibility_per_window_cb, (void*)"reset_all");
 
     g->resizable(per_window);
@@ -1409,7 +1411,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
   win->size_range(width, 15 * BH + 5 * WB);
 
   {
-    int aw = (int)(2.5 * FL_NORMAL_SIZE);
+    int aw = (int)(3.5 * FL_NORMAL_SIZE);
     int ww = (width - 5 * WB - aw) / 4;
 
     Fl_Group *g = new Fl_Group(WB, height - BH - WB, width - 2 * WB - 2 * ww, BH);
