@@ -36,24 +36,32 @@ static void numberOrStringChooser(const std::string &category, int index,
     NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
-  int width = 4 * BB, height = BH;
+  int width = 4 * BB + 2 * WB, height = 3 * BH + 4 * WB;
   int BB1 = (int)(3. * BB / 4.), BB2 = 2 * BB - BB1;
-  Fl_Window *win = new paletteWindow(width, height, false, "Set Value");
-  win->border(0);
+  Fl_Window *win = new paletteWindow(width, height, false, "Value Chooser");
   win->set_modal();
-  win->position(Fl::event_x_root() - BB, Fl::event_y_root() - BH / 2);
+  win->hotspot(win);
+  Fl_Box *box = new Fl_Box(WB, WB, width - 2 * WB, BH);
+  box->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT|FL_ALIGN_CLIP);
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
+  std::string l = "Enter";
   if(num){
-    number = new Fl_Value_Input(0, 0, width - BB1 - BB2, height);
+    box->copy_label((l + " number for " + category + "." + name).c_str());
+    number = new Fl_Value_Input(WB, 2 * WB + BH, width - 2 * WB, BH);
     number->value(valn);
   }
   else{
-    string = new Fl_Input(0, 0, width - BB1 - BB2, height);
+    box->copy_label((l + " string for " + category + "." + name).c_str());
+    string = new Fl_Input(WB, 2 * WB + BH, width - 2 * WB, BH);
     string->value(vals.c_str());
   }
-  Fl_Button *set = new Fl_Return_Button(width - BB1 - BB2, 0, BB1, height, "Set");
-  Fl_Button *reset = new Fl_Button(width - BB2, 0, BB2, height, "Restore default");
+  Fl_Button *set = new Fl_Return_Button
+    (width - BB1 - BB2 - BB - 3 * WB, 3 * WB + 2 * BH, BB1, BH, "Set");
+  Fl_Button *reset = new Fl_Button
+    (width - BB2 - BB - 2 * WB, 3 * WB + 2 * BH, BB2, BH, "Restore default");
+  Fl_Button *cancel = new Fl_Button
+    (width - BB - WB, 3 * WB + 2 * BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -65,7 +73,7 @@ static void numberOrStringChooser(const std::string &category, int index,
     for (;;) {
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
-      if (o == win) {
+      if (o == win || o == cancel) {
         done = true;
         break;
       }
