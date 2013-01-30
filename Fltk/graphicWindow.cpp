@@ -2452,7 +2452,6 @@ public:
       if(FlGui::available()){
         for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
           FlGui::instance()->graph[i]->showHideMessages();
-        Msg::ResetErrorCounter();
       }
       return 1;
     }
@@ -3012,6 +3011,7 @@ void graphicWindow::setMessageHeight(int h)
 void graphicWindow::showMessages()
 {
   if(!_browser || !_win->shown()) return;
+  Msg::ResetErrorCounter();
   if(_browser->h() < FL_NORMAL_SIZE){
     int height = CTX::instance()->msgSize;
     if(height < FL_NORMAL_SIZE) height = 10 * FL_NORMAL_SIZE;
