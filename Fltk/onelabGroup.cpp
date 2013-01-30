@@ -291,13 +291,13 @@ bool onelab::localNetworkClient::run()
       Msg::StatusBar(false, "%s %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_INFO:
-      Msg::Direct("%-8.8s: %s", _name.c_str(), message.c_str());
+      Msg::Direct("Info    : %s - %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_WARNING:
-      Msg::Direct(2, "%-8.8s: %s", _name.c_str(), message.c_str());
+      Msg::Warning("%s - %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_ERROR:
-      Msg::Direct(1, "%-8.8s: %s", _name.c_str(), message.c_str());
+      Msg::Error("%s - %s", _name.c_str(), message.c_str());
       break;
     case GmshSocket::GMSH_MERGE_FILE:
       if(CTX::instance()->solver.autoMergeFile){
@@ -473,7 +473,10 @@ static void loadDb(const std::string &name)
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
+  Msg::ResetErrorCounter();
+
   if(!data) return;
+
   std::string action((const char*)data);
 
   if(action == "refresh"){
@@ -579,7 +582,6 @@ void onelab_cb(Fl_Widget *w, void *data)
         OpenProject(GModel::current()->getFileName());
         drawContext::global()->draw();
       }
-      Msg::ResetErrorCounter();
 #endif
     }
     else{
@@ -1363,7 +1365,6 @@ void onelabGroup::openTreeItem(const std::string &name)
 void onelabGroup::checkForErrors(const std::string &client)
 {
   if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode){
-    Msg::ResetErrorCounter();
     std::string msg
       (client + " reported an error: do you really want to continue?\n\n"
        "(To disable this warning in the future, select `Enable expert mode'\n"
@@ -1565,8 +1566,6 @@ void onelabGroup::removeSolver(const std::string &name)
 
 void solver_cb(Fl_Widget *w, void *data)
 {
-  Msg::ResetErrorCounter();
-
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
@@ -1653,7 +1652,6 @@ void flgui_wait_cb(double time)
 int metamodel_cb(const std::string &name, const std::string &action)
 {
 #if defined(HAVE_ONELAB_METAMODEL)
-  Msg::ResetErrorCounter();
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{

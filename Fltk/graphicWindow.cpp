@@ -1643,8 +1643,6 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
             str += info[i] + "\n";
           FlGui::instance()->getCurrentOpenglWindow()->drawTooltip(str);
         }
-        else
-          FlGui::instance()->showMessages();
       }
     }
     if(ib == 'q') {
@@ -2444,6 +2442,24 @@ class mainWindowSpecialResize : public mainWindow {
   }
 };
 
+class mainWindowProgress : public Fl_Progress{
+public:
+  mainWindowProgress(int x, int y, int w, int h, const char *l=0) :
+    Fl_Progress(x, y, w, h, l){}
+  int handle(int event)
+  {
+    if(event == FL_PUSH){
+      if(FlGui::available()){
+        for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+          FlGui::instance()->graph[i]->showHideMessages();
+        Msg::ResetErrorCounter();
+      }
+      return 1;
+    }
+    return Fl_Progress::handle(event);
+  }
+};
+
 graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   : _autoScrollMessages(true)
 {
@@ -2585,7 +2601,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   x += 4;
-  _label = new Fl_Progress(x, mh + glheight + mheight + 2, width - x, sht);
+  _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
@@ -2998,7 +3014,7 @@ void graphicWindow::showMessages()
   if(!_browser || !_win->shown()) return;
   if(_browser->h() < FL_NORMAL_SIZE){
     int height = CTX::instance()->msgSize;
-    if(height < FL_NORMAL_SIZE) height = 5 * FL_NORMAL_SIZE;
+    if(height < FL_NORMAL_SIZE) height = 10 * FL_NORMAL_SIZE;
     int maxh = _win->h() - _bottom->h();
     if(height > maxh) height = maxh / 2;
     setMessageHeight(height);
@@ -3031,7 +3047,7 @@ void graphicWindow::addMessage(const char *msg)
 {
   if(!_browser) return;
   _browser->add(msg, 0);
-  if(_autoScrollMessages && _win->shown() && _browser->h() >= 10)
+  if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
     _browser->bottomline(_browser->size());
 }
 

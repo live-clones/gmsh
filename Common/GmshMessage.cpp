@@ -49,6 +49,7 @@ int Msg::_progressMeterCurrent = 0;
 std::map<std::string, double> Msg::_timers;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
+std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
@@ -222,7 +223,8 @@ void Msg::Fatal(const char *fmt, ...)
     FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::instance()->showMessages();
+    if(_firstError.empty()) _firstError = str;
+    FlGui::instance()->setLastStatus(FL_DARK_RED);
     FlGui::instance()->saveMessages
       ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
@@ -267,7 +269,8 @@ void Msg::Error(const char *fmt, ...)
     FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::instance()->showMessages();
+    if(_firstError.empty()) _firstError = str;
+    FlGui::instance()->setLastStatus(FL_DARK_RED);
   }
 #endif
 
@@ -357,19 +360,6 @@ void Msg::Direct(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  Direct(3, str);
-}
-
-void Msg::Direct(int level, const char *fmt, ...)
-{
-  if(_commRank || _verbosity < level) return;
-
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-
   if(_callback) (*_callback)("Direct", str);
   if(_client) _client->Info(str);
 
@@ -378,16 +368,8 @@ void Msg::Direct(int level, const char *fmt, ...)
   {
     if(FlGui::available()){
       FlGui::instance()->check();
-      std::string tmp;
-      if(level < 2)
-	tmp = std::string("@C1@.") + str;
-      else if(level < 3)
-	tmp = std::string("@C5@.") + str;
-      else
-	tmp = std::string("@C4@.") + str;
+      std::string tmp = std::string("@C4@.") + str;
       FlGui::instance()->addMessage(tmp.c_str());
-      if(level == 1)
-	FlGui::instance()->showMessages();
     }
   }
 #endif
@@ -536,6 +518,17 @@ void Msg::PrintTimers()
   }
 }
 
+void Msg::ResetErrorCounter()
+{
+  _warningCount = 0; _errorCount = 0;
+  _firstError.clear();
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::instance()->setLastStatus();
+  }
+#endif
+}
+
 void Msg::PrintErrorCounter(const char *title)
 {
   if(_commRank || _verbosity < 1) return;
@@ -557,10 +550,7 @@ void Msg::PrintErrorCounter(const char *title)
     FlGui::instance()->addMessage((red + prefix + err).c_str());
     FlGui::instance()->addMessage((red + prefix + help).c_str());
     FlGui::instance()->addMessage((red + prefix + line).c_str());
-    if(_errorCount){
-      FlGui::instance()->showMessages();
-      fl_beep();
-    }
+    if(_errorCount) fl_beep();
   }
 #endif
 

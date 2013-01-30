@@ -44,6 +44,7 @@ class FlGui{
  private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
+  std::string _lastStatus;
  public:
   std::vector<GVertex*> selectedVertices;
   std::vector<GEdge*> selectedEdges;
@@ -109,17 +110,17 @@ class FlGui{
   char selectEntity(int type);
   // display status message
   void setStatus(const std::string &msg, bool opengl=false);
+  // redisplay last status message
+  void setLastStatus(int col=-1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
   // set color of progress message
   void setProgressColor(int col);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
-  // add line in message console(s)
+  // add line in message console
   void addMessage(const char *msg);
-  // show the message console
-  void showMessages();
-  // add line in message console(s)
+  // save messages to file
   void saveMessages(const char *fileName);
   // rebuild the tree
   void rebuildTree();

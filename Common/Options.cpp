@@ -129,12 +129,10 @@ static void PrintStringOptions(int num, int level, int diff, int help,
           // remove \n, \t, \r
           for(unsigned int i = 0; i < strlen(tmp); i++)
             if(tmp[i] == '\n' || tmp[i] == '\t' || tmp[i] == '\r') tmp[i] = ' ';
-          // Warning: must call Msg::Direct(level, ...) here, because
-          // we cannot use tmp as a format string (it can contain %s!)
           if(vec)
             vec->push_back(std::string(tmp) + '\0' + "string");
           else
-            Msg::Direct(3, "%s", tmp);
+            Msg::Direct("%s", tmp);
         }
       }
     }

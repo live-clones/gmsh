@@ -13,6 +13,7 @@ typedef unsigned long intptr_t;
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
+#include <FL/fl_ask.H>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
@@ -176,8 +177,7 @@ static void options_show_file_cb(Fl_Widget *w, void *data)
     file += CTX::instance()->sessionFileName;
   else
     file += CTX::instance()->optionsFileName;
-  Msg::Direct("%s", file.c_str());
-  FlGui::instance()->showMessages();
+  fl_message("File path: %s", file.c_str());
 }
 
 static void options_restore_defaults_cb(Fl_Widget *w, void *data)

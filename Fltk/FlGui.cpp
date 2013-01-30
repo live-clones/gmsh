@@ -793,8 +793,11 @@ char FlGui::selectEntity(int type)
 void FlGui::setStatus(const std::string &msg, bool opengl)
 {
   if(!opengl){
+    _lastStatus = msg;
     static char buff[1024];
     std::string tmp = std::string(" ") + msg;
+    if(Msg::GetFirstError().size() && graph[0]->getMessageHeight() < FL_NORMAL_SIZE)
+      tmp += " - Click to show messages [ ... " + Msg::GetFirstError() + " ... ]";
     strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';
     for(unsigned int i = 0; i < graph.size(); i++){
@@ -816,6 +819,17 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
       gl->screenMessage[1].clear();
     drawContext::global()->draw();
   }
+}
+
+void FlGui::setLastStatus(int col)
+{
+  for(unsigned int i = 0; i < graph.size(); i++){
+    if(col >= 0)
+      graph[i]->getProgress()->labelcolor(col);
+    else
+      graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);
+  }
+  setStatus(_lastStatus);
 }
 
 void FlGui::setProgress(const std::string &msg, double val, double min, double max)
@@ -980,12 +994,6 @@ void FlGui::addMessage(const char *msg)
 {
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
     FlGui::instance()->graph[i]->addMessage(msg);
-}
-
-void FlGui::showMessages()
-{
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-    FlGui::instance()->graph[i]->showMessages();
 }
 
 void FlGui::saveMessages(const char *fileName)

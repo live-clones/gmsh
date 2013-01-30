@@ -583,6 +583,7 @@ void ClearProject()
     GModel::current()->setSelection(0);
   }
 #endif
+  Msg::ResetErrorCounter();
 }
 
 void OpenProject(const std::string &fileName)
@@ -592,6 +593,8 @@ void OpenProject(const std::string &fileName)
     return;
   }
   CTX::instance()->lock = 1;
+
+  Msg::ResetErrorCounter();
 
   if(GModel::current()->empty()){
     // if the current model is empty, make sure it's reaaally
