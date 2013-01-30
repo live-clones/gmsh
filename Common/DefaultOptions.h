@@ -526,7 +526,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
-    "Height (in pixels) of the message console" },
+    "Height (in pixels) of the message console when it is visible (should be > 0)" },
   { F,   "MinX" , opt_general_xmin , 0. ,
     "Minimum model coordinate along the X-axis (read-only)" },
   { F,   "MinY" , opt_general_ymin , 0. ,

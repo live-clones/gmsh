@@ -857,7 +857,8 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->glPosition[1] = graph[0]->getWindow()->y();
   CTX::instance()->glSize[0] = graph[0]->getGlWidth();
   CTX::instance()->glSize[1] = graph[0]->getGlHeight();
-  CTX::instance()->msgSize = graph[0]->getMessageHeight();
+  CTX::instance()->msgSize = graph[0]->getMessageHeight() ?
+    graph[0]->getMessageHeight() : CTX::instance()->msgSize;
   CTX::instance()->menuSize[0] = graph[0]->getMenuWidth();
   if(graph[0]->isMenuDetached()){
     CTX::instance()->detachedMenu = 1;

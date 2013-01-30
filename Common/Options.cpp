@@ -1909,13 +1909,8 @@ double opt_general_message_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->msgSize = (int)val;
-    if(CTX::instance()->msgSize < 0) CTX::instance()->msgSize = 0;
+    if(CTX::instance()->msgSize <= 0) CTX::instance()->msgSize = 100;
   }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->graph[0]->setMessageHeight(CTX::instance()->msgSize);
-  }
-#endif
   return CTX::instance()->msgSize;
 }
 
