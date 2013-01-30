@@ -162,12 +162,14 @@ static void browser_cb(Fl_Widget *w, void *data)
             if(c2.size() > 6) c2 = c2.substr(6);
             else c2 = "";
           }
-          editOption(type, c1, c2);
-          int top = FlGui::instance()->help->browser->topline();
-          help_options_cb(0, 0);
-          FlGui::instance()->help->browser->topline(top);
-          FlGui::instance()->help->browser->select(i);
-          drawContext::global()->draw();
+          if(c1.size() && c2.size()){
+            editOption(type, c1, c2);
+            int top = FlGui::instance()->help->browser->topline();
+            help_options_cb(0, 0);
+            FlGui::instance()->help->browser->topline(top);
+            FlGui::instance()->help->browser->select(i);
+            drawContext::global()->draw();
+          }
         }
         break;
       }
