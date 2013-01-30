@@ -473,8 +473,6 @@ static void loadDb(const std::string &name)
 
 void onelab_cb(Fl_Widget *w, void *data)
 {
-  Msg::ResetErrorCounter();
-
   if(!data) return;
 
   std::string action((const char*)data);
@@ -554,6 +552,8 @@ void onelab_cb(Fl_Widget *w, void *data)
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
+
+  Msg::ResetErrorCounter();
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
 

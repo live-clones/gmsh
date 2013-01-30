@@ -2601,7 +2601,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   x += 4;
-  _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x, sht);
+  _label = new mainWindowProgress(x, mh + glheight + mheight + 2, width - x - WB, sht);
   _label->box(FL_FLAT_BOX);
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _label->color(FL_BACKGROUND_COLOR, FL_DARK2); // FL_DARK_GREEN
