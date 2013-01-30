@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "GmshConfig.h"
 
 /* Define GL2PSDLL at compile time to build a Windows DLL */
 
