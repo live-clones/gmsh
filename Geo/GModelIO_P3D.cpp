@@ -32,8 +32,8 @@ int GModel::readP3D(const std::string &name)
       for(int i = 0; i < Ni[n]; i++)
         gf->transfinite_vertices[i].resize(Nj[n]);
       for(int coord = 0; coord < 3; coord++){
-        for(int i = 0; i < Ni[n]; i++){
-          for(int j = 0; j < Nj[n]; j++){
+        for(int j = 0; j < Nj[n]; j++){
+          for(int i = 0; i < Ni[n]; i++){
             double d;
             if(fscanf(fp, "%lf", &d) != 1) return 0;
             if(coord == 0){
@@ -69,9 +69,9 @@ int GModel::readP3D(const std::string &name)
         }
       }
       for(int coord = 0; coord < 3; coord++){
-        for(int i = 0; i < Ni[n]; i++){
+        for(int k = 0; k < Nk[n]; k++){
           for(int j = 0; j < Nj[n]; j++){
-            for(int k = 0; k < Nk[n]; k++){
+            for(int i = 0; i < Ni[n]; i++){
               double d;
               if(fscanf(fp, "%lf", &d) != 1) return 0;
               if(coord == 0){
@@ -153,8 +153,8 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
   for(unsigned int i = 0; i < faces.size(); i++){
     GFace *gf = faces[i];
     for(int coord = 0; coord < 3; coord++){
-      for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++){
-        for(unsigned int k = 0; k < gf->transfinite_vertices[j].size(); k++){
+      for(unsigned int k = 0; k < gf->transfinite_vertices[0].size(); k++){
+        for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++){
           MVertex *v = gf->transfinite_vertices[j][k];
           double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
           fprintf(fp, "%.16g ", d * scalingFactor);
@@ -167,9 +167,9 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
   for(unsigned int i = 0; i < regions.size(); i++){
     GRegion *gr = regions[i];
     for(int coord = 0; coord < 3; coord++){
-      for(unsigned int j = 0; j < gr->transfinite_vertices.size(); j++){
-        for(unsigned int k = 0; k < gr->transfinite_vertices[j].size(); k++){
-          for(unsigned int l = 0; l < gr->transfinite_vertices[j][k].size(); l++){
+      for(unsigned int l = 0; l < gr->transfinite_vertices[0][0].size(); l++){
+        for(unsigned int k = 0; k < gr->transfinite_vertices[0].size(); k++){
+          for(unsigned int j = 0; j < gr->transfinite_vertices.size(); j++){
             MVertex *v = gr->transfinite_vertices[j][k][l];
             double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
             fprintf(fp, "%.16g ", d * scalingFactor);
