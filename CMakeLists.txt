@@ -1057,6 +1057,9 @@ endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
+  set_target_properties(shared PROPERTIES 
+                        VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+                        SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
     set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
   endif(HAVE_LAPACK AND LAPACK_FLAGS)
