@@ -36,32 +36,27 @@ static void numberOrStringChooser(const std::string &category, int index,
     NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
-  int width = 4 * BB + 2 * WB, height = 3 * BH + 4 * WB;
-  int BB1 = (int)(3. * BB / 4.), BB2 = 2 * BB - BB1;
-  Fl_Window *win = new paletteWindow(width, height, false, "Value Chooser");
+  int width = 3 * BB + 4 * WB, height = 2 * BH + 3 * WB;
+  Fl_Window *win = new paletteWindow(width, height, false,
+                                     num ? "Number Chooser" : "String Chooser");
   win->set_modal();
   win->hotspot(win);
-  Fl_Box *box = new Fl_Box(WB, WB, width - 2 * WB, BH);
-  box->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT|FL_ALIGN_CLIP);
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
-  std::string l = "Enter";
   if(num){
-    box->copy_label((l + " number for " + category + "." + name).c_str());
-    number = new Fl_Value_Input(WB, 2 * WB + BH, width - 2 * WB, BH);
+    number = new Fl_Value_Input(WB, WB, width - 2 * WB, BH);
     number->value(valn);
   }
   else{
-    box->copy_label((l + " string for " + category + "." + name).c_str());
-    string = new Fl_Input(WB, 2 * WB + BH, width - 2 * WB, BH);
+    string = new Fl_Input(WB, WB, width - 2 * WB, BH);
     string->value(vals.c_str());
   }
-  Fl_Button *set = new Fl_Return_Button
-    (width - BB1 - BB2 - BB - 3 * WB, 3 * WB + 2 * BH, BB1, BH, "Set");
-  Fl_Button *reset = new Fl_Button
-    (width - BB2 - BB - 2 * WB, 3 * WB + 2 * BH, BB2, BH, "Restore default");
+  Fl_Button *ok = new Fl_Return_Button
+    (width - 3 * BB - 3 * WB, 2 * WB + BH, BB, BH, "OK");
+  Fl_Button *def = new Fl_Button
+    (width - 2 * BB - 2 * WB, 2 * WB + BH, BB, BH, "Default");
   Fl_Button *cancel = new Fl_Button
-    (width - BB - WB, 3 * WB + 2 * BH, BB, BH, "Cancel");
+    (width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -77,7 +72,7 @@ static void numberOrStringChooser(const std::string &category, int index,
         done = true;
         break;
       }
-      if(o == set){
+      if(o == ok){
         if(num){
           valn = number->value();
           NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
@@ -91,14 +86,17 @@ static void numberOrStringChooser(const std::string &category, int index,
         done = true;
         break;
       }
-      if(o == reset){
-        if(num)
-          NumberOption(GMSH_SET_DEFAULT|GMSH_GUI, category.c_str(), index,
+      if(o == def){
+        if(num){
+          NumberOption(GMSH_GET_DEFAULT, category.c_str(), index,
                        name.c_str(), valn);
-        else
-          StringOption(GMSH_SET_DEFAULT|GMSH_GUI, category.c_str(), index,
+          number->value(valn);
+        }
+        else{
+          StringOption(GMSH_GET_DEFAULT, category.c_str(), index,
                        name.c_str(), vals);
-        done = true;
+          string->value(vals.c_str());
+        }
         break;
       }
     }

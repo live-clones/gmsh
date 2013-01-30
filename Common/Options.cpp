@@ -84,7 +84,9 @@ bool StringOption(int action, const char *category, int num,
     return false;
   }
 
-  if(action & GMSH_SET_DEFAULT)
+  if(action & GMSH_GET_DEFAULT)
+    val = s[i].def;
+  else if(action & GMSH_SET_DEFAULT)
     val = s[i].function(num, action | GMSH_SET, s[i].def);
   else
     val = s[i].function(num, action, val);
@@ -204,7 +206,9 @@ bool NumberOption(int action, const char *category, int num,
     return false;
   }
 
-  if(action & GMSH_SET_DEFAULT)
+  if(action & GMSH_GET_DEFAULT)
+    val = s[i].def;
+  else if(action & GMSH_SET_DEFAULT)
     val = s[i].function(num, action | GMSH_SET, s[i].def);
   else
     val = s[i].function(num, action, val);
@@ -298,7 +302,10 @@ bool ColorOption(int action, const char *category, int num,
     return false;
   }
 
-  if(action & GMSH_SET_DEFAULT)
+  if(action & GMSH_GET_DEFAULT)
+    val = CTX::instance()->packColor
+      (s[i].def1[0], s[i].def1[1], s[i].def1[2], s[i].def1[3]);
+  else if(action & GMSH_SET_DEFAULT)
     val = s[i].function(num, action | GMSH_SET, CTX::instance()->packColor
                         (s[i].def1[0], s[i].def1[1], s[i].def1[2], s[i].def1[3]));
   else

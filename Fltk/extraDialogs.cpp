@@ -62,7 +62,7 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
     editor->window->end();
     editor->window->hotspot(editor->window);
   }
-  
+
   editor->window->label(title);
   editor->sa->value(a);
   editor->sb->value(b);
@@ -95,7 +95,7 @@ class Release_Slider : public Fl_Value_Slider {
   int handle(int event)
   {
     switch (event) {
-    case FL_RELEASE: 
+    case FL_RELEASE:
       if(window())
         window()->hide();
       return 1;
@@ -246,7 +246,7 @@ int modelChooser()
 
 class historyBrowser : public Fl_Hold_Browser {
   int handle(int event)
-  { 
+  {
     switch (event) {
     case FL_SHORTCUT:
     case FL_KEYBOARD:
@@ -281,7 +281,7 @@ class historyChooser{
   historyChooser(const std::string &prefix, const std::string &label,
                  const std::string &commandLabel, const std::string &defaultCommand,
                  const std::string &okLabel)
-    : _prefix(prefix), _label(label), _commandLabel(commandLabel), 
+    : _prefix(prefix), _label(label), _commandLabel(commandLabel),
       _defaultCommand(defaultCommand), _okLabel(okLabel)
   {
     int h = 4 * WB + 10 * BH, w = 3 * BB + 2 * WB;
@@ -296,9 +296,9 @@ class historyChooser{
     browser = new historyBrowser
       (WB, 2 * WB + 3 * BH, w - 2 * WB, h - 4 * BH - 4 * WB);
     cancel = new Fl_Button
-      (w - 2 * WB - 2 * BB, h - WB - BH, BB, BH, "Cancel");
+      (w - WB - BB, h - WB - BH, BB, BH, "Cancel");
     ok = new Fl_Return_Button
-      (w - WB - BB, h - WB - BH, BB, BH, _okLabel.c_str());
+      (w - 2 * WB - 2 * BB, h - WB - BH, BB, BH, _okLabel.c_str());
     Fl_Box *b3 = new Fl_Box(WB, h - WB - BB, WB, WB);
     b3->hide();
     window->resizable(b3);
@@ -310,7 +310,7 @@ class historyChooser{
       sprintf(name, "%s%02d", _prefix.c_str(), i);
       if(i < browser->size())
         prefs.set(name, browser->text(i + 1));
-      else if(prefs.entryExists(name)) 
+      else if(prefs.entryExists(name))
         prefs.deleteEntry(name);
     }
     prefs.set((_prefix + "PositionX").c_str(), window->x());
@@ -429,7 +429,7 @@ class cgnsImportDialog {
     window = new Fl_Double_Window(w, h);
     window->set_modal();
     window->label("CGNS import");
-    
+
     input_choice = new Fl_Input_Choice(WB + 2 * BB, WB, 1*BB, BH, "Import mesh as order");
 
     ok = new Fl_Return_Button(w - WB - BB, h - WB - BH, BB, BH, "Import");
@@ -500,7 +500,7 @@ static cgnsImportDialog* _cgnsImport = 0;
   _cgnsImport->input_choice->value("1");
 }
 */
-int cgnsImport() 
+int cgnsImport()
 {
   if (!_cgnsImport) {
     _cgnsImport = new cgnsImportDialog();
