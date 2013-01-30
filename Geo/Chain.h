@@ -508,7 +508,7 @@ void Chain<C>::addToModel(GModel* m, bool post,
 #if defined(HAVE_POST)
   if(post && CTX::instance()->batch == 0) {
     // create PView for instant visualization
-    std::string pnum = "";
+    /*std::string pnum = "";
     convert(physicalNum, pnum);
     std::string postname = pnum + ": " + _name;
     PView* view = new PView(postname, "ElementData", m, data, 0, 1);
@@ -518,7 +518,7 @@ void Chain<C>::addToModel(GModel* m, bool post,
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
     view->setOptions(opt);
-    //updateFltkTree();
+    updateFltkTree();*/
   }
 #endif
 }
