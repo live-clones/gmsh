@@ -96,8 +96,8 @@ class CTX {
   int terminal;
   // number of graphical windows/tiles
   int numWindows, numTiles;
-  // text editor and web browser command (with included '%s')
-  std::string editor, webBrowser;
+  // text editor command (with included '%s')
+  std::string editor;
   // pattern of files to watch out for
   std::string watchFilePattern;
   // show tootips in the GUI?

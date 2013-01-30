@@ -47,7 +47,6 @@ std::string opt_general_recent_file2(OPT_ARGS_STR);
 std::string opt_general_recent_file3(OPT_ARGS_STR);
 std::string opt_general_recent_file4(OPT_ARGS_STR);
 std::string opt_general_editor(OPT_ARGS_STR);
-std::string opt_general_web_browser(OPT_ARGS_STR);
 std::string opt_general_watch_file_pattern(OPT_ARGS_STR);
 std::string opt_general_gui_theme(OPT_ARGS_STR);
 std::string opt_general_graphics_font(OPT_ARGS_STR);

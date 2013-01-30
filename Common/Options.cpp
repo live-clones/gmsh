@@ -1183,18 +1183,6 @@ std::string opt_general_editor(OPT_ARGS_STR)
   return CTX::instance()->editor;
 }
 
-std::string opt_general_web_browser(OPT_ARGS_STR)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->webBrowser = val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.input[2]->value
-      (CTX::instance()->webBrowser.c_str());
-#endif
-  return CTX::instance()->webBrowser;
-}
-
 std::string opt_general_watch_file_pattern(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)

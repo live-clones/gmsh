@@ -525,8 +525,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  SystemCall(ReplaceSubString("%s", "http://geuz.org/gmsh/doc/texinfo/", prog));
+  fl_open_uri("http://geuz.org/gmsh/doc/texinfo/");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)

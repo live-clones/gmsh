@@ -109,16 +109,6 @@ StringXString GeneralOptions_String[] = {
 #endif
     "Temporary file used by the geometry module" },
 
-  { F|O, "WebBrowser" , opt_general_web_browser ,
-#if defined(WIN32)
-    "explorer.exe %s" ,
-#elif defined(__APPLE__)
-    "open %s" ,
-#else
-    "sensible-browser %s" ,
-#endif
-    "System command to launch a web browser" },
-
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
 

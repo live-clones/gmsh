@@ -22,8 +22,7 @@
 
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
-  std::string prog = FixWindowsPath(CTX::instance()->webBrowser);
-  SystemCall(ReplaceSubString("%s", uri, prog));
+  fl_open_uri(uri);
   return 0;
 }
 
