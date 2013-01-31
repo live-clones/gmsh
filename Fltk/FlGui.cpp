@@ -832,7 +832,7 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 void FlGui::setLastStatus(int col)
 {
   for(unsigned int i = 0; i < graph.size(); i++){
-    if(col >= 0)
+    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE)
       graph[i]->getProgress()->labelcolor(col);
     else
       graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);

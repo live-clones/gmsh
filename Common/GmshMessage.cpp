@@ -225,7 +225,7 @@ void Msg::Fatal(const char *fmt, ...)
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus(FL_DARK_RED);
+    FlGui::instance()->setLastStatus(FL_RED);
     FlGui::instance()->saveMessages
       ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
@@ -271,7 +271,7 @@ void Msg::Error(const char *fmt, ...)
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus(FL_DARK_RED);
+    FlGui::instance()->setLastStatus(FL_RED);
   }
 #endif
 
