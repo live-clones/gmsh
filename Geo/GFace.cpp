@@ -930,7 +930,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 {
 #if defined(HAVE_BFGS)
   // Creating the optimisation problem
-  //  printf("STARTING OPTIMIZATION\n");
+  // printf("STARTING OPTIMIZATION\n");
 
   alglib::ae_int_t dim = 2;
   alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
@@ -945,9 +945,9 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
 
-  //  FILE *F = fopen ("hop.pos","w");
-  //  fprintf(F,"View \" \" {\n");
-  //  fprintf(F,"SP(%g,%g,%g) {%g};\n",queryPoint.x(),queryPoint.y(),queryPoint.z(),0.0);
+  // FILE *F = fopen ("hop.pos","w");
+  // fprintf(F,"View \" \" {\n");
+  // fprintf(F,"SP(%g,%g,%g) {%g};\n",queryPoint.x(),queryPoint.y(),queryPoint.z(),0.0);
   double initial_guesses = 10.0;
   for(double u = uu.low(); u <= uu.high() + 1.e-5;
       u += (uu.high() - uu.low()) / initial_guesses) {
@@ -957,32 +957,31 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
       GPoint pnt = point(u, v);
       SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
       double dist = queryPoint.distance(spnt);
-      //      fprintf(F,"SP(%g,%g,%g) {%g};\n",pnt.x(), pnt.y(), pnt.z(),dist);
-      //      printf("lmocal (%12.5E %12.5E) (point) : %12.5E %12.5E %12.5E (query) : "
-      //             "%12.5E %12.5E %12.5E DSIT %12.5E\n",u,v, pnt.x(), pnt.y(), pnt.z(),
-      //              queryPoint.x(),queryPoint.y(),queryPoint.z(),
-      //	     dist);
+      // fprintf(F,"SP(%g,%g,%g) {%g};\n",pnt.x(), pnt.y(), pnt.z(),dist);
+      // printf("lmocal (%12.5E %12.5E) (point) : %12.5E %12.5E %12.5E (query) : "
+      //        "%12.5E %12.5E %12.5E DSIT %12.5E\n",u,v, pnt.x(), pnt.y(), pnt.z(),
+      //         queryPoint.x(),queryPoint.y(),queryPoint.z(), dist);
       if (dist < min_dist) {
-	//	printf("min_dist %f\n", dist);
+	// printf("min_dist %f\n", dist);
 	min_dist = dist;
 	min_u = u;
 	min_v = v;
-	//GPoint pnt = point(min_u, min_v);
+	// GPoint pnt = point(min_u, min_v);
       }
     }
   }
-  //  fprintf(F,"};\n");
-  //  fclose(F);
-  //  getchar();
+  // fprintf(F,"};\n");
+  // fclose(F);
+  // getchar();
   initial_conditions[0] = min_u;
   initial_conditions[1] = min_v;
 
-  //  printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
+  // printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
   // GPoint pnt = point(min_u, min_v);
-  //    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f DIST = %12.5E\n",
-  //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-  //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
-  //  	 min_dist);
+  // printf("Initial conditions (point) : %f %f %f local (%g %g) "
+  //        "Looking for %f %f %f DIST = %12.5E\n",
+  //         pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+  //         queryPoint.x(),queryPoint.y(),queryPoint.z(), min_dist);
 
   x.setcontent(dim, &initial_conditions[0]);
 
@@ -1010,23 +1009,23 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 
   GPoint pntF = point(x[0], x[1]);
   if (rep.terminationtype != 4){
-    //    printf("Initial conditions (point) : %f %f %f local (%g %g) "
-    //            "Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n",
-    //  	 pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-    //  	 queryPoint.x(),queryPoint.y(),queryPoint.z(),
-    //  	 min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z());
-    //    double DDD =
-    //      ( queryPoint.x() - pntF.x()) * ( queryPoint.x() - pntF.x()) +
-    //      ( queryPoint.y() - pntF.y()) * ( queryPoint.y() - pntF.y()) +
-    //      ( queryPoint.z() - pntF.z()) * ( queryPoint.z() - pntF.z());
-    //    if (sqrt(DDD) > 1.e-4)
-      /*
-      printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f "
-             "DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n",
-	     pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-	     queryPoint.x(),queryPoint.y(),queryPoint.z(),
-	     min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);
-      */
+    // printf("Initial conditions (point) : %f %f %f local (%g %g) "
+    //        "Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n",
+    //         pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+    //         queryPoint.x(),queryPoint.y(),queryPoint.z(),
+    //         min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z());
+    // double DDD =
+    //   ( queryPoint.x() - pntF.x()) * ( queryPoint.x() - pntF.x()) +
+    //   ( queryPoint.y() - pntF.y()) * ( queryPoint.y() - pntF.y()) +
+    //   ( queryPoint.z() - pntF.z()) * ( queryPoint.z() - pntF.z());
+    // if (sqrt(DDD) > 1.e-4)
+    /*
+    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f "
+           "DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n",
+           pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
+	   queryPoint.x(),queryPoint.y(),queryPoint.z(),
+	   min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);
+    */
   }
   return pntF;
 #else
