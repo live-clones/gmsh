@@ -3369,11 +3369,16 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
     return 0;
   }
 
-  // no need to do this if there are no lateral surface diagonals and if not a
-  // rotation with quadrangles.
-  if( !lat_tri_diags.size() &&
-      ( !reg_source->quadrangles.size() ||
-        (ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE) ) )
+  // return if there are no lateral surface diagonals and if not a rotation with
+  // quadrangles.
+  if( !lat_tri_diags.size() && ( !reg_source->quadrangles.size() ||
+      ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE ) )
+    return 1;
+
+  // Return if there is only one extrude layer!!!!
+  // (everything gets taken care of because all elements in top layer are divided)
+  // ( in fact, this will cause problems if performed )
+  if( ep->mesh.NbLayer <= 1 && ep->mesh.NbElmLayer[0] <= 1 )
     return 1;
 
   int j_top_start, k_top_start;
@@ -3605,13 +3610,20 @@ static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourc
 
       // do this by lowest pointer value IN THE TOP SURFACE
       for( int p = 0; p < elem_size; p++ ){
-        int ind_low = p+elem_size;
-        int ind_2 = (p+1)%elem_size;
-        if( verts[ind_2+elem_size] < verts[ind_low] ){
-          ind_low = ind_2+elem_size;
-          ind_2 = p;
+        int ind1, ind2, ind_low, ind_low_2;
+        ind1 = p+elem_size;
+        ind2 = (p+1)%elem_size+elem_size;
+        if( verts[ind1] < verts[ind2] ){
+          ind_low = ind1;
+          ind_low_2 = ind2 - elem_size;
         }
-        createEdge( verts[ind_low], verts[ind_2], quadToTri_edges );
+        else{
+          ind_low = ind2;
+          ind_low_2 = ind1 - elem_size;
+        }
+
+        if( !edgeExists( verts[ind_low-elem_size], verts[ind_low_2+elem_size], quadToTri_edges) )
+          createEdge( verts[ind_low], verts[ind_low_2], quadToTri_edges );
       }
     }
   }
