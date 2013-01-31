@@ -1489,7 +1489,7 @@ StringXNumber PrintOptions_Number[] = {
 
   { F|O, "GeoLabels" , opt_print_geo_labels , 1. ,
     "Save labels in unrolled Gmsh geometries" },
-  { F|O, "GeoOnlyPhysicals" , opt_print_geo_only_physicals , 1. ,
+  { F|O, "GeoOnlyPhysicals" , opt_print_geo_only_physicals , 0. ,
     "Only save entities that belong to physical groups" },
   { F|O, "GifDither" , opt_print_gif_dither , 0. ,
     "Apply dithering to GIF output" },
