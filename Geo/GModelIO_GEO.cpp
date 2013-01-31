@@ -370,12 +370,12 @@ class writePhysicalGroupGEO {
   {
     std::string oldName, newName;
     if(printLabels){
-      if(oldLabels.count(g.first)) {
+      if(newLabels.count(std::pair<int, int>(dim, g.first))) {
+        newName = newLabels[std::pair<int, int>(dim, g.first)];
+      }
+      else if(oldLabels.count(g.first)) {
         oldName = oldLabels[g.first];
         fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
-      }
-      else if(newLabels.count(std::pair<int, int>(dim, g.first))) {
-        newName = newLabels[std::pair<int, int>(dim, g.first)];
       }
     }
 
@@ -446,7 +446,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
     double val = (*it)->prescribedMeshSizeAtVertex();
     if(meshSizeParameters.find(val) == meshSizeParameters.end()){
       std::ostringstream paramName;
-      paramName << "cl" << ++cpt;
+      paramName << "cl__" << ++cpt;
       fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(),val);
       meshSizeParameters.insert(std::make_pair(val, paramName.str()));
     }
