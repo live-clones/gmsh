@@ -3372,7 +3372,8 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
   // return if there are no lateral surface diagonals and if not a rotation with
   // quadrangles.
   if( !lat_tri_diags.size() && ( !reg_source->quadrangles.size() ||
-      ep->geo.Type != ROTATE && ep->geo.Type != TRANSLATE_ROTATE ) )
+                                 (ep->geo.Type != ROTATE &&
+                                  ep->geo.Type != TRANSLATE_ROTATE) ) )
     return 1;
 
   // Return if there is only one extrude layer!!!!
