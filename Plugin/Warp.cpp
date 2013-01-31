@@ -62,8 +62,8 @@ PView *GMSH_WarpPlugin::execute(PView *v)
   PView *v2 = getView(otherView, v);
   if(!v2) return v;
 
-  PViewData *data1 = v1->getData();
-  PViewData *data2 = v2->getData();
+  PViewData *data1 = getPossiblyAdaptiveData(v1);
+  PViewData *data2 = getPossiblyAdaptiveData(v2);
 
   // sanity checks
   if(data1->getNumEntities() != data2->getNumEntities() ||
@@ -75,7 +75,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
     Msg::Error("Invalid TimeStep (%d) in View[%d]", TimeStep, v2->getIndex());
     return v;
   }
-  
+
   // create smooth normal field if we don't have an explicit warp field
   smooth_normals *normals = 0;
   if(otherView < 0){
@@ -106,7 +106,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
       }
     }
   }
-  
+
   // transform each "0" node: (x,y,z) += factor * mult * (valx, valy, valz)
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
@@ -143,7 +143,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
       }
     }
   }
-  
+
   if(normals) delete normals;
 
   data1->finalize();
