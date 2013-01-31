@@ -796,13 +796,15 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
     _lastStatus = msg;
     static char buff[1024];
     std::string tmp = std::string(" ") + msg;
-    if(Msg::GetErrorCount() && graph[0]->getMessageHeight() < FL_NORMAL_SIZE){
+    int ne = Msg::GetErrorCount(), nw = Msg::GetWarningCount();
+    if((ne || nw) && graph[0]->getMessageHeight() < FL_NORMAL_SIZE){
       tmp += "  -  ";
-      char nerr[128]; sprintf(nerr, "%d", Msg::GetErrorCount());
-      tmp += nerr;
-      tmp += (Msg::GetErrorCount() > 1) ? " Errors" : " Error";
-      if(Msg::GetFirstError().size())
-        tmp += " : Click to show messages [ ... " + Msg::GetFirstError() + " ... ]";
+      char n[128]; sprintf(n, "%d", ne ? ne : nw);
+      tmp += n;
+      tmp += (ne > 1) ? " Errors" : ne ? " Error" : (nw > 1) ? " Warnings" : " Warning";
+      tmp += " : Click to show messages [ ... ";
+      tmp += (ne ? Msg::GetFirstError() : Msg::GetFirstWarning());
+      tmp += " ... ]";
     }
     strncpy(buff, tmp.c_str(), sizeof(buff) - 1);
     buff[sizeof(buff) - 1] = '\0';

@@ -36,7 +36,7 @@ class Msg {
   static std::map<std::string, double> _timers;
   // counters
   static int _warningCount, _errorCount;
-  static std::string _firstError;
+  static std::string _firstWarning, _firstError;
   // callback
   static GmshMessage *_callback;
   // command-line and startup time
@@ -79,9 +79,11 @@ class Msg {
   static double &Timer(std::string str){ return _timers[str]; }
   static void PrintTimers();
   static void ResetErrorCounter();
-  static int GetErrorCount(){ return _errorCount; }
-  static std::string GetFirstError(){ return _firstError; }
   static void PrintErrorCounter(const char *title);
+  static int GetWarningCount(){ return _warningCount; }
+  static int GetErrorCount(){ return _errorCount; }
+  static std::string GetFirstWarning(){ return _firstWarning; }
+  static std::string GetFirstError(){ return _firstError; }
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,

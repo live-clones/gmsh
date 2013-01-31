@@ -49,6 +49,7 @@ int Msg::_progressMeterCurrent = 0;
 std::map<std::string, double> Msg::_timers;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
+std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
@@ -307,6 +308,8 @@ void Msg::Warning(const char *fmt, ...)
     FlGui::instance()->check();
     std::string tmp = std::string("@C5@.") + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
+    if(_firstWarning.empty()) _firstWarning = str;
+    FlGui::instance()->setLastStatus();
   }
 #endif
 
@@ -521,11 +524,9 @@ void Msg::PrintTimers()
 void Msg::ResetErrorCounter()
 {
   _warningCount = 0; _errorCount = 0;
-  _firstError.clear();
+  _firstWarning.clear(); _firstError.clear();
 #if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    FlGui::instance()->setLastStatus();
-  }
+  if(FlGui::available()) FlGui::instance()->setLastStatus();
 #endif
 }
 
