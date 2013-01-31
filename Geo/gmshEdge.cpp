@@ -249,41 +249,72 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar,int dir) const
     Curve *C[3];
     for(int i = 0; i < 3; i++)
       List_Read(s->Generatrices, i, &C[i]);
-
-    // FIXME: workaround for exact extrutions
-    bool hack = false;
-    if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
-       s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
-      hack = true;
-
     double U, V;
-    if (C[0]->Num == c->Num) {
-      U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-      V = 0;
-    }
-    else if (C[0]->Num == -c->Num) {
-      U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-      V = 0;
-    }
-    else if (C[1]->Num == c->Num) {
-      V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-      U = 1;
-    }
-    else if (C[1]->Num == -c->Num) {
-      V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-      U = 1;
-    }
-    else if (C[2]->Num == c->Num) {
-      U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = hack ? 1 : U;
-    }
-    else if (C[2]->Num == -c->Num) {
-      U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-      V = hack ? 1 : U;
+    if(CTX::instance()->geom.oldRuledSurface){
+      if (C[0]->Num == c->Num) {
+        U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+        V = 0;
+      }
+      else if (C[0]->Num == -c->Num) {
+        U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+        V = 0;
+      }
+      else if (C[1]->Num == c->Num) {
+        V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+        U = 1;
+      }
+      else if (C[1]->Num == -c->Num) {
+        V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+        U = 1;
+      }
+      else if (C[2]->Num == c->Num) {
+        U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+        V = 1;
+      }
+      else if (C[2]->Num == -c->Num) {
+        U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+        V = 1;
+      }
+      else{
+        Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
+        return GEdge::reparamOnFace(face, epar, dir);
+      }
+
     }
     else{
-      Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
-      return GEdge::reparamOnFace(face, epar, dir);
+      // FIXME: workaround for exact extrusions
+      bool hack = false;
+      if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
+         s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
+        hack = true;
+      if (C[0]->Num == c->Num) {
+        U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+        V = 0;
+      }
+      else if (C[0]->Num == -c->Num) {
+        U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+        V = 0;
+      }
+      else if (C[1]->Num == c->Num) {
+        V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+        U = 1;
+      }
+      else if (C[1]->Num == -c->Num) {
+        V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+        U = 1;
+      }
+      else if (C[2]->Num == c->Num) {
+        U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+        V = hack ? 1 : U;
+      }
+      else if (C[2]->Num == -c->Num) {
+        U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+        V = hack ? 1 : U;
+      }
+      else{
+        Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
+        return GEdge::reparamOnFace(face, epar, dir);
+      }
     }
     return SPoint2(U, V);
   }

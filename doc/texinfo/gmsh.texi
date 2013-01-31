@@ -4809,9 +4809,9 @@ information.
 @item Where does Gmsh save its configuration files?
 
 Gmsh will attempt to save temporary files and persistent configuration
-options first in the @code{$GMSH_HOME} directory, then in the
-@code{$HOME}, @code{$TMP} or @code{$TEMP} directories (in that order) if
-the @code{$GMSH_HOME} environment variable is not defined. If none of
+options first in the @code{$GMSH_HOME} directory, then in
+@code{$APPDATA} (on Windows) or @code{$HOME} (on other OSes), then in
+@code{$TMP}, and finally in @code{$TEMP}, in that order. If none of
 these variables are defined, Gmsh will try to save/load its
 configuration files from the current working directory.
 @end enumerate

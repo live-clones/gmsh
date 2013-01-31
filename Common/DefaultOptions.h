@@ -740,6 +740,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Model display offset along Z-axis (in model coordinates)" },
   { F|O, "OldCircle" , opt_geometry_old_circle , 0. ,
     "Use old circle description (compatibility option for old Gmsh geometries)" },
+  { F|O, "OldRuledSurface" , opt_geometry_old_ruled_surface , 0. ,
+    "Use old 3-sided ruled surface interpolation (compatibility option for old Gmsh geometries)" },
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. ,
     "Use old newreg definition for geometrical transformations (compatibility "
     "option for old Gmsh geometries)" },

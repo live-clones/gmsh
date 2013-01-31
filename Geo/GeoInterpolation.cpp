@@ -476,8 +476,6 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 //   +----------+
 //  s1(0,0)     s2(1,0)
 
-#if 0
-
 // Old-style: TRAN_QUA with s1=s4=c4
 //
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
@@ -505,8 +503,6 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
   return V;
 }
-
-#endif
 
 // New-style:
 //
@@ -680,20 +676,21 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
-    /*
-    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
-    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
-    T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
-    */
-    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * (u-v), 0);
-    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
-    VB[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
-    VB[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * (1-u+v), 0);
-    VB[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - v), 0);
-    T = TransfiniteTriB(V[0],VB[0], V[1],VB[1], V[2],VB[2], *S[0], *S[1], *S[2], u, v);
-
+    if(CTX::instance()->geom.oldRuledSurface){
+      V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+      V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+      V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
+      T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
+    }
+    else{
+      V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * (u-v), 0);
+      V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+      V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
+      VB[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+      VB[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * (1-u+v), 0);
+      VB[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - v), 0);
+      T = TransfiniteTriB(V[0],VB[0], V[1],VB[1], V[2],VB[2], *S[0], *S[1], *S[2], u, v);
+    }
     if(isSphere) {
       TransfiniteSph(*S[0], *O, &T);
     }

@@ -330,6 +330,7 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_connect_faces(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);
+double opt_geometry_old_ruled_surface(OPT_ARGS_NUM);
 double opt_geometry_num_sub_edges(OPT_ARGS_NUM);
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM);
 double opt_geometry_extrude_return_lateral(OPT_ARGS_NUM);

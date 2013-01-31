@@ -258,6 +258,7 @@ class drawGFace {
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
     bool tri = (f->geomType() == GEntity::RuledSurface && f->edges().size() == 3);
+    if(CTX::instance()->geom.oldRuledSurface) tri = false;
     double c = tri ? 0.75 : 0.5;
     double uav = c * (ubounds.high() + ubounds.low());
     double vav = (1-c) * (vbounds.high() + vbounds.low());

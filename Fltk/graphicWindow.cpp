@@ -549,8 +549,14 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
-  // TODO: we should probably reset the onelab DB here, too
   OpenProject(fileName);
+
+  // TODO: we should probably reset the onelab DB here, too: calling
+  // onelab_cb(reset) seems to work, but we perform OpenProject *twice* (reset,
+  // then check) -- we should fix this before enabling the onelab reset
+  //
+  // onelab_cb(0, (void*)"reset");
+
   drawContext::global()->draw();
 }
 

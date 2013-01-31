@@ -4263,6 +4263,13 @@ double opt_geometry_old_circle(OPT_ARGS_NUM)
   return CTX::instance()->geom.oldCircle;
 }
 
+double opt_geometry_old_ruled_surface(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.oldRuledSurface = (int)val;
+  return CTX::instance()->geom.oldRuledSurface;
+}
+
 double opt_geometry_old_newreg(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

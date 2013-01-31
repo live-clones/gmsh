@@ -52,7 +52,8 @@ struct contextGeometryOptions {
   int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
   double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
   int pointType, lineType, surfaceType, numSubEdges;
-  int oldCircle, extrudeSplinePoints, extrudeReturnLateral, oldNewreg;
+  int oldCircle, oldNewreg, oldRuledSurface;
+  int extrudeSplinePoints, extrudeReturnLateral;
   double normals, tangents, scalingFactor;
   int autoCoherence, highlightOrphans, clip, useTransform;
   double tolerance, snap[3], transform[3][3], offset[3];
