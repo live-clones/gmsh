@@ -3219,6 +3219,11 @@ optional sections defining the nodes (@code{$Nodes}), elements
 post-processing datasets (@code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData}).
 
+When @code{$Elements} are given, @code{$Nodes} should also be provided,
+before the @code{$Elements} section. Currently only one @code{$Nodes}
+and one @code{$Elements} section are allowed per file. (This might/will
+change in the future.) 
+
 Any section with an unrecognized header is simply ignored: you can thus
 add comments in a @file{.msh} file by putting them e.g. inside a
 @code{$Comments}/@code{$EndComments} section.
