@@ -40,28 +40,7 @@ static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r)
   for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
 }
 
-static bool computeEquidistantParameters1(GEdge *ge, double u0, double uN, int N,
-                                         double *u, double underRelax)
-{
-  GPoint p0 = ge->point(u0);
-  GPoint p1 = ge->point(uN);
-  double du = 1. / (N - 1);
-  u[0] = u0;
-  // printf("starting with %g %g %g\n",p0.x(),p0.y(),u0);
-  // printf("ending   with %g %g %g\n",p1.x(),p1.y(),uN);
-  for (int i = 1; i < N; i++){
-    SPoint3 pi (p0.x() + i * du * (p1.x()-p0.x()),
-		p0.y() + i * du * (p1.y()-p0.y()),
-		p0.z() + i * du * (p1.z()-p0.z()));
-    double t;
-    GPoint gp = ge->closestPoint(pi, t);
-    u[i] = gp.u();
-    // printf("going to %g %g u %g\n",pi.x(),pi.y(),gp.u());
-  }
-  return true;
-}
-
-static bool computeEquidistantParameters0(GEdge *ge, double u0, double uN, int N,
+static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
                                          double *u, double underRelax)
 {
   const double PRECISION = 1.e-6;
@@ -121,59 +100,11 @@ static bool computeEquidistantParameters0(GEdge *ge, double u0, double uN, int N
   return false;
 }
 
-// 1 = geodesics
-static int method_for_computing_intermediary_points = 0;
-static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
-                                         double *u, double underRelax){
-  if (method_for_computing_intermediary_points == 0) // use linear abscissa
-    return computeEquidistantParameters0(ge,u0,uN,N,u,underRelax);
-  else if (method_for_computing_intermediary_points == 1) // use projection
-    return computeEquidistantParameters1(ge,u0,uN,N,u,underRelax);
-  return false;
-}
 
-static double mylength(GFace *gf, int i, double *u, double *v)
-{
-  return gf->length(SPoint2(u[i], v[i]), SPoint2(u[i + 1], v[i + 1]), 10);
-}
-
-static void myresid(int N, GFace *gf, double *u, double *v, fullVector<double> &r)
-{
-  double L[100];
-  for (int i = 0; i < N - 1; i++) L[i] = mylength(gf, i, u, v);
-  for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
-}
-
-static bool computeEquidistantParameters1(GFace *gf, double u0, double uN,
-					  double v0, double vN, int N,
-					  double *u, double *v)
-{
-  GPoint p0 = gf->point(u0,v0);
-  GPoint p1 = gf->point(uN,vN);
-  double du = 1. / (N - 1);
-  u[0] = u0;
-  u[0] = u0;
-  v[0] = v0;
-  for (int i = 1; i < N; i++){
-    SPoint3 pi(p0.x() + i * du * (p1.x()-p0.x()),
-               p0.y() + i * du * (p1.y()-p0.y()),
-               p0.z() + i * du * (p1.z()-p0.z()));
-    SPoint2 t;
-    GPoint gp = gf->closestPoint(pi, t);
-    u[i] = gp.u();
-    v[i] = gp.v();
-  }
-  return true;
-}
-
-static bool computeEquidistantParameters0(GFace *gf, double u0, double uN,
+static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
                                          double v0, double vN, int N,
                                          double *u, double *v)
 {
-  const double PRECISION = 1.e-6;
-  const int MAX_ITER = 50;
-  const double eps = 1.e-4;
-
   double t[100];
   // initialize the points by equal subdivision of geodesics
   u[0] = u0;
@@ -191,67 +122,6 @@ static bool computeEquidistantParameters0(GFace *gf, double u0, double uN,
 
   return true;
 
-  // create the tangent matrix
-  const int M = N - 2;
-  fullMatrix<double> J(M, M);
-  fullVector<double> DU(M);
-  fullVector<double> R(M);
-  fullVector<double> Rp(M);
-
-  int iter = 1;
-
-  while (iter < MAX_ITER){
-    iter++;
-    myresid(N, gf, u, v, R);
-
-    for (int i = 0; i < M; i++){
-      t[i + 1] += eps;
-      double tempu = u[i + 1];
-      double tempv = v[i + 1];
-      SPoint2 p = gf->geodesic(SPoint2(u0, v0), SPoint2(uN, vN), t[i + 1]);
-      u[i + 1] = p.x();
-      v[i + 1] = p.y();
-      myresid(N, gf, u, v, Rp);
-      for (int j = 0; j < M; j++){
-        J(i, j) = (Rp(j) - R(j)) / eps;
-      }
-      t[i + 1] -= eps;
-      u[i + 1] = tempu;
-      v[i + 1] = tempv;
-    }
-
-    if (M == 1)
-      DU(0) = R(0) / J(0, 0);
-    else
-      J.luSolve(R, DU);
-
-    for (int i = 0; i < M; i++){
-      t[i + 1] -= DU(i);
-      SPoint2 p = gf->geodesic(SPoint2(u0, v0), SPoint2(uN, vN), t[i + 1]);
-      u[i + 1] = p.x();
-      v[i + 1] = p.y();
-    }
-    double newt_norm = DU.norm();
-    if (newt_norm < PRECISION) return true;
-  }
-  // FAILED, use equidistant in param space
-  for (int i = 1; i < N; i++){
-    t[i] = (double)i / (N - 1);
-    SPoint2 p = gf->geodesic(SPoint2(u0, v0), SPoint2(uN, vN), t[i]);
-    u[i] = p.x();
-    v[i] = p.y();
-  }
-  return false;
-}
-
-static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
-                                         double v0, double vN, int N,
-                                         double *u, double *v){
-  if (method_for_computing_intermediary_points == 0) // use linear abscissa
-    return computeEquidistantParameters0(gf,u0,uN,v0,vN,N,u,v);
-  else if (method_for_computing_intermediary_points == 1) // use projection
-    return computeEquidistantParameters1(gf,u0,uN,v0,vN,N,u,v);
-  return false;
 }
 
 static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
