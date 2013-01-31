@@ -288,11 +288,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
     ElemChain::clearVertexCache();
   }
 
-  std::string dims = "";
-  std::string nums = "";
   for(unsigned int i = 0; i < newBasis.size(); i++) {
-    convert(newBasis.at(i).getDim(), dims);
-    convert(i+1, nums);
+    std::string dims = convertInt(newBasis.at(i).getDim());
+    std::string nums = convertInt(i+1);
     newBasis.at(i).setName("C" + dims + " " + cname + nums);
     newBasis.at(i).addToModel(m);
   }

@@ -21,14 +21,7 @@
 #if defined(HAVE_KBIPACK)
 
 void updateFltkTree();
-
-template <class TTypeA, class TTypeB>
-  bool convert(const TTypeA& input, TTypeB& output ){
-  std::stringstream stream;
-  stream << input;
-  stream >> output;
-  return stream.good();
-}
+std::string convertInt(int number);
 
 // Class whose derivative classes are to have partial or total order
 template <class Type>
@@ -508,17 +501,16 @@ void Chain<C>::addToModel(GModel* m, bool post,
 #if defined(HAVE_POST)
   if(post && CTX::instance()->batch == 0) {
     // create PView for instant visualization
-    /*std::string pnum = "";
-    convert(physicalNum, pnum);
+    std::string pnum = convertInt(physicalNum);
     std::string postname = pnum + ": " + _name;
     PView* view = new PView(postname, "ElementData", m, data, 0, 1);
     // the user should be interested about the orientations
-    int size = 30;
+    /*int size = 30;
     PViewOptions* opt = view->getOptions();
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
-    view->setOptions(opt);
-    updateFltkTree();*/
+    view->setOptions(opt);*/
+    updateFltkTree();
   }
 #endif
 }

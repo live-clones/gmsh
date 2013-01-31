@@ -27,6 +27,12 @@ void updateFltkTree()
 #endif
 }
 
+std::string convertInt(int number){
+  std::stringstream stream;
+  stream << number;
+  return stream.str();
+}
+
 std::map<GEntity*, std::set<MVertex*, MVertexLessThanNum>,
          GEntityLessThan> ElemChain::_vertexCache;
 

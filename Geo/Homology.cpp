@@ -208,12 +208,10 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   _deleteChains(dim);
   for(int j = 0; j < 4; j++){
     _betti[j] = 0;
-    std::string dimension = "";
-    convert(j, dimension);
+    std::string dimension = convertInt(j);
     for(int i = 1; i <= chainComplex.getBasisSize(j, 3); i++){
 
-      std::string generator = "";
-      convert(i, generator);
+      std::string generator = convertInt(i);
 
       std::string name = "H_" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
@@ -291,13 +289,11 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   _deleteCochains(dim);
   for(int i = 0; i < 4; i++) _betti[i] = 0;
   for(int j = 3; j > -1; j--){
-    std::string dimension = "";
-    convert(j, dimension);
+    std::string dimension = convertInt(j);
 
     for(int i = 1; i <= chainComplex.getBasisSize(j, 3); i++){
 
-      std::string generator = "";
-      convert(i, generator);
+      std::string generator = convertInt(i);
 
       std::string name = "H^" + dimension + domain + generator;
       std::map<Cell*, int, Less_Cell> chain;
@@ -538,8 +534,7 @@ std::string Homology::_getDomainString(const std::vector<int>& domain,
   if(domain.empty()) domainString += "0";
   else{
     for(unsigned int i = 0; i < domain.size(); i++){
-      std::string temp = "";
-      convert(domain.at(i),temp);
+      std::string temp = convertInt(domain.at(i));
       domainString += temp;
       if (domain.size()-1 > i){
 	domainString += ", ";
@@ -551,8 +546,7 @@ std::string Homology::_getDomainString(const std::vector<int>& domain,
   if(!subdomain.empty()){
     domainString += ", {";
     for(unsigned int i = 0; i < subdomain.size(); i++){
-      std::string temp = "";
-      convert(subdomain.at(i),temp);
+      std::string temp = convertInt(subdomain.at(i));
       domainString += temp;
       if (subdomain.size()-1 > i){
         domainString += ", ";
