@@ -466,7 +466,8 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
             }
           }
           if(reparamOK){
-            GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+	    GPoint gp = gf->point(SPoint2(GUESS[0],GUESS[1]));
+	    //            GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
             if (gp.g()){
               v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
             }
