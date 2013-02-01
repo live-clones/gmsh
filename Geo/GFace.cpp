@@ -54,7 +54,8 @@ GFace::~GFace()
 
 int GFace::getCurvatureControlParameter () const
 {
-  std::map<int,int>::iterator it = CTX::instance()->mesh.curvature_control_per_face.find(tag());
+  std::map<int,int>::iterator it =
+    CTX::instance()->mesh.curvature_control_per_face.find(tag());
   return it == CTX::instance()->mesh.curvature_control_per_face.end() ?
     CTX::instance()->mesh.minCircPoints : it->second ;
 }
@@ -63,7 +64,6 @@ void GFace::setCurvatureControlParameter (int n)
 {
   CTX::instance()->mesh.curvature_control_per_face[tag()] = n;
 }
-
 
 int GFace::getMeshingAlgo () const
 {
@@ -296,6 +296,14 @@ std::string GFace::getAdditionalInfoString()
     }
     sstream << "}";
   }
+
+  if(meshAttributes.recombine)
+    sstream << " recombined";
+  if(meshAttributes.Method == MESH_TRANSFINITE)
+    sstream << " transfinite";
+  if(meshAttributes.extrude)
+    sstream << " extruded";
+
   return sstream.str();
 }
 

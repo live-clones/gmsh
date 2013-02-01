@@ -173,6 +173,12 @@ std::string GEdge::getAdditionalInfoString()
 {
   std::ostringstream sstream;
   if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
+
+  if(meshAttributes.Method == MESH_TRANSFINITE)
+    sstream << " transfinite";
+  if(meshAttributes.extrude)
+    sstream << " extruded";
+
   return sstream.str();
 }
 

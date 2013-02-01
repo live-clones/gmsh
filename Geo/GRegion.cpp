@@ -217,6 +217,12 @@ std::string GRegion::getAdditionalInfoString()
     }
     sstream << "}";
   }
+
+  if(meshAttributes.Method == MESH_TRANSFINITE)
+    sstream << " transfinite";
+  if(meshAttributes.extrude)
+    sstream << " extruded";
+
   return sstream.str();
 }
 
