@@ -501,15 +501,15 @@ void Chain<C>::addToModel(GModel* m, bool post,
 #if defined(HAVE_POST)
   if(post && CTX::instance()->batch == 0) {
     // create PView for instant visualization
-    std::string pnum = convertInt(physicalNum);
-    std::string postname = pnum + ": " + _name;
+    //std::string pnum = convertInt(physicalNum);
+    std::string postname = /*pnum + ": " +*/ _name;
     PView* view = new PView(postname, "ElementData", m, data, 0, 1);
     // the user should be interested about the orientations
-    /*int size = 30;
+    int size = 30;
     PViewOptions* opt = view->getOptions();
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
-    view->setOptions(opt);*/
+    view->setOptions(opt);
     updateFltkTree();
   }
 #endif
