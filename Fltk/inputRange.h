@@ -255,7 +255,8 @@ class inputRange : public Fl_Group {
     b->do_callback();
   }
  public:
-  inputRange(int x, int y, int w, int h, double max_number, const char *l=0)
+  inputRange(int x, int y, int w, int h, double max_number, bool readOnlyRange=false,
+             const char *l=0)
     : Fl_Group(x,y,w,h,l), _min(-max_number), _max(max_number), _step(1.),
       _max_number(max_number), _do_callback_on_values(true)
   {
@@ -273,6 +274,7 @@ class inputRange : public Fl_Group {
     _range->callback(_range_cb, this);
     _range->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
     _range->hide();
+    if(readOnlyRange) _range->deactivate();
 
     _range_butt = new Fl_Toggle_Button(x + input_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);

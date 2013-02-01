@@ -1084,7 +1084,8 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   }
 
   // general number input
-  inputRange *but = new inputRange(1, 1, ww, 1, onelab::parameter::maxNumber());
+  inputRange *but = new inputRange(1, 1, ww, 1, onelab::parameter::maxNumber(),
+                                   p.getAttribute("ReadOnlyRange") == "1");
   but->value(p.getValue());
   but->minimum(p.getMin());
   but->maximum(p.getMax());
