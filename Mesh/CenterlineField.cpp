@@ -790,14 +790,14 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
     
     //if double extruded layer
     if (nbElemSecondLayer > 0){
-      //std::vector<GEntity*> extrudedESec = current->extrudeBoundaryLayer
-      //	(eFace, nbElemSecondLayer,  hSecondLayer, dir, -5);
-      //GFace *eFaceSec = (GFace*) extrudedESec[0];
-      //eFaceSec->addPhysicalEntity(9);                    //tag 9
-      //current->setPhysicalName("outerSecondWall", 2, 9);//dim 2 tag 9
-      //GRegion *eRegionSec = (GRegion*) extrudedESec[1];
-      //eRegionSec->addPhysicalEntity(10);             //tag 10
-      //current->setPhysicalName("wallVolume", 3, 10);//dim 3 tag 10
+      std::vector<GEntity*> extrudedESec = current->extrudeBoundaryLayer
+      	(eFace, nbElemSecondLayer,  hSecondLayer, dir, -5);
+      GFace *eFaceSec = (GFace*) extrudedESec[0];
+      eFaceSec->addPhysicalEntity(9);                    //tag 9
+      current->setPhysicalName("outerSecondWall", 2, 9);//dim 2 tag 9
+      GRegion *eRegionSec = (GRegion*) extrudedESec[1];
+      eRegionSec->addPhysicalEntity(10);             //tag 10
+      current->setPhysicalName("wallVolume", 3, 10);//dim 3 tag 10
     }
 
     for (unsigned int j = 2; j < extrudedE.size(); j++){
