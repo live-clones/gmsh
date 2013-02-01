@@ -6,18 +6,21 @@ Mesh.LcIntegrationPrecision = 1.e-3;
 //Mesh.RecombineAll = 1;
 //Mesh.Bunin = 60;
 
-Merge "aorta2.stl";
+Merge "aorta.stl";
 
 Field[1] = Centerline;
 Field[1].FileName = "centerlinesAORTA.vtk";
 Field[1].nbPoints = 20; 
 
 Field[1].nbElemLayer = 4;
-Field[1].hLayer = 0.2;//percent of vessel radius
+Field[1].hLayer = 0.2;//percent of vessel radius (lumen)
+
+Field[1].nbElemSecondLayer = 4;
+Field[1].hSecondLayer = 0.2;//percent of vessel (lumen+hlayer) radius
 
 Field[1].closeVolume =1;
-//Field[1].extrudeWall =1;
-Field[1].reMesh =1;
+Field[1].extrudeWall =1;
+//Field[1].reMesh =1;
 
 Field[1].run;
 

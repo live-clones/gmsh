@@ -67,7 +67,9 @@ class Centerline : public Field{
   int NF, NV, NE, NR;
   int is_cut, is_closed, is_extruded;
   double hLayer;
+  double hSecondLayer;
   int nbElemLayer;
+  int nbElemSecondLayer;
 
   //inlet point
   SPoint3 ptin;

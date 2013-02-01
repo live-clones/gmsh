@@ -36,6 +36,8 @@
 
 static void printQuads(GFace *gf, fullMatrix<SPoint2> uv, std::vector<MQuadrangle*> quads,  int iter){
 
+  if(!CTX::instance()->mesh.saveAll) return;
+
   char name[234];
   sprintf(name,"quadUV_%d_%d.pos", gf->tag(), iter);
   FILE *f = fopen(name,"w");
@@ -66,6 +68,8 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 			   std::vector<MVertex*> e02, std::vector<MVertex*> e13,
 			   std::vector<MQuadrangle*> quads)
 {
+
+  if(!CTX::instance()->mesh.saveAll) return;
 
   std::vector<SPoint2> p1,p2;
   for (unsigned int i = 0; i< vert1.size(); i++){
@@ -429,11 +433,6 @@ static void createRegularGrid (GFace *gf,
 
   uv.resize(M+2,N+2);
  
-  char name3[234];
-  sprintf(name3,"quadParam_%d.pos", gf->tag());
-  FILE *f3 = fopen(name3,"w");
-  fprintf(f3,"View \"%s\" {\n",name3);
-
   //std::vector<std::vector<MVertex*> > tab(M+2);
   tab.resize(M+2);
   for(int i = 0; i <= M+1; i++) tab[i].resize(N+2);
@@ -493,9 +492,6 @@ static void createRegularGrid (GFace *gf,
       q.push_back(qnew);
     }
   }
-
-  fprintf(f3,"};\n");
-  fclose(f3);
 
 }
 
