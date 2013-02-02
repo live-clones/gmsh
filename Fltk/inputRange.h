@@ -16,6 +16,7 @@
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
+#include <FL/fl_ask.H>
 
 class inputValue : public Fl_Value_Input
 {
@@ -28,13 +29,13 @@ class inputValue : public Fl_Value_Input
 class inputRange : public Fl_Group {
  private:
   inputValue *_input;
-  Fl_Input *_range;
-  Fl_Toggle_Button *_range_butt, *_loop_butt;
-  Fl_Button *_graph_butt;
+  Fl_Toggle_Button *_loop_butt;
+  Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
   std::string _loop_val, _graph_val;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
+  std::string _range, _range_tooltip;
   bool _do_callback_on_values;
   double _fixStep(double step)
   {
@@ -76,11 +77,13 @@ class inputRange : public Fl_Group {
       _input->step(_fixStep(_step));
       _choices.clear();
     }
-    _range->value(tmp.str().c_str());
+    _range = tmp.str();
+    _range_tooltip = std::string("Range: ") + _range;
+    _range_butt->tooltip(_range_tooltip.c_str());
   }
   void _string2values()
   {
-    std::string str(_range->value());
+    std::string str = _range;
     if(str.find_first_of(',') != std::string::npos){
       // parse list of values
       std::string::size_type first = 0;
@@ -134,17 +137,16 @@ class inputRange : public Fl_Group {
       _choices.clear();
     }
   }
-  void _show_range()
+  void _edit_range()
   {
-    if(_range_butt->value()){
-      _input->size(_input->w() - _range->w(), _input->h());
-      _input->redraw();
-      _range->show();
-    }
-    else{
-      _input->size(_input->w() + _range->w(), _input->h());
-      _input->redraw();
-      _range->hide();
+    const char *ret = fl_input("Edit range ([min:max], [min:max:step], or "
+                               "[val1, val2, ...]):", _range.c_str());
+    if(ret){
+      _range = ret;
+      _string2values();
+      _values2string();
+      doCallbackOnValues(true);
+      do_callback();
     }
   }
   void _set_loop_value(const std::string &val)
@@ -207,17 +209,10 @@ class inputRange : public Fl_Group {
     b->doCallbackOnValues(true);
     b->do_callback();
   }
-  static void _range_cb(Fl_Widget *w, void *data)
-  {
-    inputRange *b = (inputRange*)data;
-    b->_string2values();
-    b->doCallbackOnValues(true);
-    b->do_callback();
-  }
   static void _range_butt_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange*)data;
-    b->_show_range();
+    b->_edit_range();
   }
   static void _loop_butt_cb(Fl_Widget *w, void *data)
   {
@@ -264,21 +259,15 @@ class inputRange : public Fl_Group {
 
     int dot_w = FL_NORMAL_SIZE - 2, loop_w = FL_NORMAL_SIZE + 6, graph_w = loop_w;
     int input_w = w - dot_w - loop_w - graph_w;
-    int range_w = input_w / 2;
 
     _input = new inputValue(x, y, input_w, h);
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
 
-    _range = new Fl_Input(x + input_w - range_w, y, range_w, h);
-    _range->callback(_range_cb, this);
-    _range->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
-    _range->hide();
-    if(readOnlyRange) _range->deactivate();
-
-    _range_butt = new Fl_Toggle_Button(x + input_w, y, dot_w, h, ":");
+    _range_butt = new Fl_Button(x + input_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);
-    _range_butt->tooltip("Show range");
+    _range_butt->tooltip("Edit range");
+    if(readOnlyRange) _range_butt->deactivate();
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
     _loop_butt->label("@-1gmsh_rotate");
