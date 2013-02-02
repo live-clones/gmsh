@@ -55,6 +55,13 @@ Homology::Homology(GModel* model,
 
 }
 
+std::vector<int> vecN0(int n)
+{
+  std::vector<int> v;
+  for(int i = 0; i < n; i++) v.push_back(i);
+  return v;
+}
+
 void Homology::_getEntities(const std::vector<int>& physicalGroups,
                             std::vector<GEntity*>& entities)
 {
@@ -129,13 +136,6 @@ void Homology::_createCellComplex()
 
 void Homology::_deleteChains(std::vector<int> dim)
 {
-  if(dim.empty()) {
-    std::vector<int> alldim(4);
-    for(int i = 0; i < 4; i++) alldim[i] = i;
-    _deleteChains(alldim);
-    return;
-  }
-
   for(unsigned int j = 0; j < dim.size(); j ++) {
     int d = dim.at(j);
     if(d < 0 || d > 3) continue;
@@ -149,13 +149,6 @@ void Homology::_deleteChains(std::vector<int> dim)
 
 void Homology::_deleteCochains(std::vector<int> dim)
 {
-  if(dim.empty()) {
-    std::vector<int> alldim(4);
-    for(int i = 0; i < 4; i++) alldim[i] = i;
-    _deleteCochains(alldim);
-    return;
-  }
-
   for(unsigned int j = 0; j < dim.size(); j ++) {
     int d = dim.at(j);
     if(d < 0 || d > 3) continue;
@@ -176,6 +169,11 @@ Homology::~Homology()
 
 void Homology::findHomologyBasis(std::vector<int> dim)
 {
+  if(dim.empty()) {
+    findBettiNumbers();
+    return;
+  }
+
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
   Msg::StatusBar(true, "Reducing cell complex...");
@@ -183,7 +181,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   double t1 = Cpu();
   int omitted = _cellComplex->reduceComplex(_combine, _omit);
 
-  if(!dim.empty() && _combine > 1 && !_smoothen) {
+  if(_combine > 1 && !_smoothen) {
     for(int i = 1; i <= 3;  i++) {
       if(!std::binary_search(dim.begin(), dim.end(), i)) {
         _cellComplex->cocombine(i-1);
@@ -230,7 +228,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   if(_fileName != "") writeBasisMSH();
 
-  Msg::Info("Ranks of domain %shomology spaces:", domain.c_str());
+  Msg::Info("Ranks of domain %s homology spaces:", domain.c_str());
   Msg::Info("H_0 = %d", _betti[0]);
   Msg::Info("H_1 = %d", _betti[1]);
   Msg::Info("H_2 = %d", _betti[2]);
@@ -240,18 +238,19 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   Msg::StatusBar(false, "H_0: %d, H_1: %d, H_2: %d, H_3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
-  if(dim.empty()) {
-    for(unsigned int i = 0; i < 4; i++)
-      _homologyComputed[i] = true;
-  }
-  else {
-    for(unsigned int i = 0; i < dim.size(); i++)
-      _homologyComputed[dim.at(i)] = true;
+  for(unsigned int i = 0; i < dim.size(); i++) {
+    int d = dim.at(i);
+    if(d >= 0 && d < 4) _homologyComputed[d] = true;
   }
 }
 
 void Homology::findCohomologyBasis(std::vector<int> dim)
 {
+  if(dim.empty()) {
+    findBettiNumbers();
+    return;
+  }
+
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
@@ -262,7 +261,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   int omitted = _cellComplex->coreduceComplex(_combine, _omit, _heuristic);
 
   std::sort(dim.begin(), dim.end());
-  if(!dim.empty()  && _combine > 1) {
+  if(_combine > 1) {
     for(int i = 2; i >= 0;  i--) {
       if(!std::binary_search(dim.begin(), dim.end(), i)) {
         _cellComplex->combine(i+1);
@@ -311,7 +310,7 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
 
   if(_fileName != "") writeBasisMSH();
 
-  Msg::Info("Ranks of domain %scohomology spaces:", domain.c_str());
+  Msg::Info("Ranks of domain %s cohomology spaces:", domain.c_str());
   Msg::Info("H^0 = %d", _betti[0]);
   Msg::Info("H^1 = %d", _betti[1]);
   Msg::Info("H^2 = %d", _betti[2]);
@@ -321,23 +320,23 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   Msg::StatusBar(false, "H^0: %d, H^1: %d, H^2: %d, H^3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
-  if(dim.empty()) {
-    for(unsigned int i = 0; i < 4; i++)
-      _cohomologyComputed[i] = true;
-  }
-  else {
-    for(unsigned int i = 0; i < dim.size(); i++)
-      _cohomologyComputed[dim.at(i)] = true;
+  for(unsigned int i = 0; i < dim.size(); i++) {
+    int d = dim.at(i);
+    if(d >= 0 && d < 4) _cohomologyComputed[d] = true;
   }
 }
 
-bool Homology::isHomologyComputed(std::vector<int> dim)
+bool Homology::isBettiComputed() const
 {
-  if(dim.empty()) return (_homologyComputed[0] &&
-                          _homologyComputed[1] &&
-                          _homologyComputed[2] &&
-                          _homologyComputed[3]);
+  bool computed = true;
+  for(int i = 0; i < 4; i++) {
+    if(_betti[i] == -1) computed = false;
+  }
+  return computed;
+}
 
+bool Homology::isHomologyComputed(std::vector<int> dim) const
+{
   bool computed = true;
   for(unsigned int i = 0; i < dim.size(); i++) {
     int d = dim.at(i);
@@ -347,13 +346,8 @@ bool Homology::isHomologyComputed(std::vector<int> dim)
   return computed;
 }
 
-bool Homology::isCohomologyComputed(std::vector<int> dim)
+bool Homology::isCohomologyComputed(std::vector<int> dim) const
 {
-  if(dim.empty()) return (_cohomologyComputed[0] &&
-                          _cohomologyComputed[1] &&
-                          _cohomologyComputed[2] &&
-                          _cohomologyComputed[3]);
-
   bool computed = true;
   for(unsigned int i = 0; i < dim.size(); i++) {
     int d = dim.at(i);
@@ -427,7 +421,7 @@ void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
   }
 }
 
-void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest)
+void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
 {
   int pgnum = -1;
   if(!_homologyComputed[dim])
@@ -450,7 +444,7 @@ void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest)
   }
 }
 
-void Homology::addCochainsToModel(int dim, bool post, int physicalNumRequest)
+void Homology::addCochainsToModel(int dim, bool post, int physicalNumRequest) const
 {
   int pgnum = -1;
   if(!_cohomologyComputed[dim])
@@ -493,12 +487,43 @@ void Homology::getCohomologyBasis(int dim, std::vector<Chain<int> >& coh)
     coh[i] = *_cochains[dim].at(i);
 }
 
+void Homology::findBettiNumbers()
+{
+  if(!isBettiComputed()) {
+
+    if(_cellComplex == NULL) _createCellComplex();
+    if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+
+    Msg::StatusBar(true, "Computing betti numbers...");
+
+    double t1 = Cpu();
+
+    std::vector<int> betti = _cellComplex->bettiCoreduceComplex();
+
+    double t2 = Cpu();
+
+    Msg::StatusBar(true, "Betti numbers computed (%g s)", t2 - t1);
+
+    for(int i = 0; i < 4; i++) _betti[i] = betti.at(i);
+  }
+
+  std::string domain = _getDomainString(_domain, _subdomain);
+  Msg::Info("Domain %s Betti numbers:", domain.c_str());
+  Msg::Info("b0 = %d", _betti[0]);
+  Msg::Info("b1 = %d", _betti[1]);
+  Msg::Info("b2 = %d", _betti[2]);
+  Msg::Info("b3 = %d", _betti[3]);
+
+  Msg::StatusBar(false, "b0: %d, b1: %d, b2: %d, b3: %d",
+		 _betti[0], _betti[1], _betti[2], _betti[3]);
+}
+
 int Homology::betti(int dim)
 {
   if(dim < 0 || dim > 3) return 0;
   if(_betti[dim] != -1) return _betti[dim];
 
-  findHomologyBasis();
+  findBettiNumbers();
   return _betti[dim];
 }
 
@@ -537,24 +562,24 @@ std::string Homology::_getDomainString(const std::vector<int>& domain,
       std::string temp = convertInt(domain.at(i));
       domainString += temp;
       if (domain.size()-1 > i){
-	domainString += ", ";
+	domainString += ",";
       }
     }
   }
   domainString += "}";
 
   if(!subdomain.empty()){
-    domainString += ", {";
+    domainString += ",{";
     for(unsigned int i = 0; i < subdomain.size(); i++){
       std::string temp = convertInt(subdomain.at(i));
       domainString += temp;
       if (subdomain.size()-1 > i){
-        domainString += ", ";
+        domainString += ",";
       }
     }
     domainString += "}";
   }
-  domainString += ") ";
+  domainString += ")";
   return domainString;
 }
 

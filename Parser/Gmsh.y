@@ -121,7 +121,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
-%token tHomology tCohomology
+%token tHomology tCohomology tBetti
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single
@@ -3934,12 +3934,14 @@ Coherence :
 HomologyCommand :
     tHomology { $$ = (char*)"Homology"; }
   | tCohomology { $$ = (char*)"Cohomology"; }
+  | tBetti { $$ = (char*)"Betti"; }
  ;
 
 Homology :
     HomologyCommand tEND
     {
       std::vector<int> domain, subdomain, dim;
+      for(int i = 0; i < 4; i++) dim.push_back(i);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
     }
   | HomologyCommand '{' ListOfDouble '}' tEND
@@ -3950,6 +3952,7 @@ Homology :
         List_Read($3, i, &d);
         domain.push_back((int)d);
       }
+      for(int i = 0; i < 4; i++) dim.push_back(i);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
       List_Delete($3);
     }
@@ -3966,6 +3969,7 @@ Homology :
         List_Read($5, i, &d);
         subdomain.push_back((int)d);
       }
+      for(int i = 0; i < 4; i++) dim.push_back(i);
       GModel::current()->addHomologyRequest($1, domain, subdomain, dim);
       List_Delete($3);
       List_Delete($5);

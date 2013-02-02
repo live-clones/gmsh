@@ -3216,13 +3216,14 @@ void GModel::computeHomology()
     for(std::multimap<dpair, tpair>::iterator itt = itp.first;
         itt != itp.second; itt++){
       std::string type = itt->second.first;
-      std::vector<int> dim = itt->second.second;
-      if(dim.empty()) for(int i = 0; i < 4; i++) dim.push_back(i);
+      std::vector<int> dim0 = itt->second.second;
+      std::vector<int> dim;
 
       std::stringstream ss;
-      for(unsigned int i = 0; i < dim.size(); i++) {
-        int d = dim.at(i);
+      for(unsigned int i = 0; i < dim0.size(); i++) {
+        int d = dim0.at(i);
         if(d >= 0 && d <= getDim()) {
+          dim.push_back(d);
           ss << "H";
           if(type == "Homology") ss << "_";
           if(type == "Cohomology") ss << "^";
@@ -3233,14 +3234,20 @@ void GModel::computeHomology()
       }
       std::string dims = ss.str();
 
-      if(type == "Homology" && !homology->isHomologyComputed(dim)) {
+      if(type != "Homology" && type != "Cohomology" && type != "Betti") {
+        Msg::Error("Unknown type of homology computation: %s", type.c_str());
+      }
+      else if(dim.empty() || type == "Betti") {
+        homology->findBettiNumbers();
+      }
+      else if(type == "Homology" && !homology->isHomologyComputed(dim)) {
 
         homology->findHomologyBasis(dim);
 
         Msg::Info("Homology space basis chains to save: %s.", dims.c_str());
-        for(unsigned int i = 0; i < dim.size(); i++)
-          if(dim.at(i) >= 0 && dim.at(i) <= getDim())
-            homology->addChainsToModel(dim.at(i));
+        for(unsigned int i = 0; i < dim.size(); i++) {
+          homology->addChainsToModel(dim.at(i));
+        }
 
       }
       else if(type == "Cohomology" && !homology->isCohomologyComputed(dim)) {
@@ -3248,13 +3255,12 @@ void GModel::computeHomology()
         homology->findCohomologyBasis(dim);
 
         Msg::Info("Cohomology space basis cochains to save: %s.", dims.c_str());
-        for(unsigned int i = 0; i < dim.size(); i++)
-          if(dim.at(i) >= 0 && dim.at(i) <= getDim())
-            homology->addCochainsToModel(dim.at(i));
+        for(unsigned int i = 0; i < dim.size(); i++) {
+          homology->addCochainsToModel(dim.at(i));
+        }
 
       }
-      else
-        Msg::Error("Unknown type of homology computation: %s", type.c_str());
+
     }
     _pruneMeshVertexAssociations();
     delete homology;

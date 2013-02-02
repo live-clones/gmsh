@@ -18,6 +18,8 @@
 
 #if defined(HAVE_KBIPACK)
 
+std::vector<int> vecN0(int n);
+
 // Interface class for homology computation in Gmsh
 class Homology
 {
@@ -58,6 +60,7 @@ class Homology
   // cell complex of the domain
   CellComplex* _cellComplex;
 
+  // whether representatives of (co)homology bases are available
   bool _homologyComputed[4];
   bool _cohomologyComputed[4];
 
@@ -84,8 +87,8 @@ class Homology
   void _createChain(std::map<Cell*, int, Less_Cell>& preChain,
                     std::string name, bool co);
 
-  void _deleteChains(std::vector<int> dim=std::vector<int>());
-  void _deleteCochains(std::vector<int> dim=std::vector<int>());
+  void _deleteChains(std::vector<int> dim=vecN0(4));
+  void _deleteCochains(std::vector<int> dim=vecN0(4));
 
  public:
 
@@ -102,38 +105,45 @@ class Homology
   GModel* getModel() const { return _model; }
   void setFileName(std::string fileName) { _fileName = fileName; }
 
-  void getDomain(std::vector<int>& domain) { domain = _domain; }
-  void getSubdomain(std::vector<int>& subdomain) { subdomain = _subdomain; }
+  void getDomain(std::vector<int>& domain) const { domain = _domain; }
+  void getSubdomain(std::vector<int>& subdomain) const { subdomain = _subdomain; }
 
   // find the bases of (co)homology spaces
-  // if dim is empty, find 0-,1-,2-,3-(co)homology spaces bases
+  // if dim is not provided,, find 0-,1-,2-,3-(co)homology spaces bases
   // otherwise only find those indicated in dim
-  void findHomologyBasis(std::vector<int> dim=std::vector<int>());
-  void findCohomologyBasis(std::vector<int> dim=std::vector<int>());
+  void findHomologyBasis(std::vector<int> dim=vecN0(4));
+  void findCohomologyBasis(std::vector<int> dim=vecN0(4));
 
   // find a homology and cohomology basis pair such that
   // the incidence matrix of the bases is an identity matrix
   // if master==0, homology basis determines the cohomology basis
-  // if dim is empty, find 0-,1-,2-,3-(co)homology spaces bases
+  // if dim is not provided, find 0-,1-,2-,3-(co)homology spaces bases
   // otherwise only find those indicated in dim
-  void findCompatibleBasisPair(int master=0,
-                               std::vector<int> dim=std::vector<int>());
+  void findCompatibleBasisPair(int master=0, std::vector<int> dim=vecN0(4));
 
   // is the (co)homology in given dimensions already compited
-  // if dim is empty, return true only if computed in all dimensions
-  bool isHomologyComputed(std::vector<int> dim=std::vector<int>());
-  bool isCohomologyComputed(std::vector<int> dim=std::vector<int>());
+  // if dim is not provided, return true only if computed in all dimensions
+  bool isHomologyComputed(std::vector<int> dim=vecN0(4)) const;
+  bool isCohomologyComputed(std::vector<int> dim=vecN0(4)) const;
 
   // add chains to Gmsh model
   // dim: only add dim-chains if dim != -1
   // post: create a post-processing view
   // physicalNumRequest: number the chains starting from this if available
-  void addChainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1);
-  void addCochainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1);
+  void addChainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
+  void addCochainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
 
   // get representative chains of a (co)homology space basis
   void getHomologyBasis(int dim, std::vector<Chain<int> >& hom);
   void getCohomologyBasis(int dim, std::vector<Chain<int> >& coh);
+
+
+  // find Betti numbers
+  // faster than finding bases for (co)homology spaces
+  void findBettiNumbers();
+
+  // are Betti numbers computed
+  bool isBettiComputed() const;
 
   // get a Betti number
   int betti(int dim);

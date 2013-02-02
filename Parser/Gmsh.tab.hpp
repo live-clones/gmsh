@@ -1,9 +1,8 @@
-/* A Bison parser, made by GNU Bison 2.4.3.  */
+/* A Bison parser, made by GNU Bison 2.5.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2009, 2010 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -161,22 +160,23 @@
      tGetString = 378,
      tHomology = 379,
      tCohomology = 380,
-     tGMSH_MAJOR_VERSION = 381,
-     tGMSH_MINOR_VERSION = 382,
-     tGMSH_PATCH_VERSION = 383,
-     tAFFECTDIVIDE = 384,
-     tAFFECTTIMES = 385,
-     tAFFECTMINUS = 386,
-     tAFFECTPLUS = 387,
-     tOR = 388,
-     tAND = 389,
-     tNOTEQUAL = 390,
-     tEQUAL = 391,
-     tGREATEROREQUAL = 392,
-     tLESSOREQUAL = 393,
-     UNARYPREC = 394,
-     tMINUSMINUS = 395,
-     tPLUSPLUS = 396
+     tBetti = 381,
+     tGMSH_MAJOR_VERSION = 382,
+     tGMSH_MINOR_VERSION = 383,
+     tGMSH_PATCH_VERSION = 384,
+     tAFFECTDIVIDE = 385,
+     tAFFECTTIMES = 386,
+     tAFFECTMINUS = 387,
+     tAFFECTPLUS = 388,
+     tOR = 389,
+     tAND = 390,
+     tNOTEQUAL = 391,
+     tEQUAL = 392,
+     tGREATEROREQUAL = 393,
+     tLESSOREQUAL = 394,
+     UNARYPREC = 395,
+     tMINUSMINUS = 396,
+     tPLUSPLUS = 397
    };
 #endif
 
@@ -186,7 +186,7 @@
 typedef union YYSTYPE
 {
 
-/* Line 1685 of yacc.c  */
+/* Line 2068 of yacc.c  */
 #line 92 "Gmsh.y"
 
   char *c;
@@ -199,7 +199,7 @@ typedef union YYSTYPE
 
 
 
-/* Line 1685 of yacc.c  */
+/* Line 2068 of yacc.c  */
 #line 204 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1

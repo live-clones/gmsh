@@ -607,6 +607,61 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   return count;
 }
 
+std::vector<int> CellComplex::bettiCoreduceComplex()
+{
+  Msg::Debug("Cell Complex betti coreduction:");
+  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
+            getSize(3), getSize(2), getSize(1), getSize(0));
+
+  std::vector<int> betti(4,0);
+  if(!getSize(0)) return betti;
+
+  std::vector<Cell*> empty;
+  if(relative()) {
+    removeSubdomain();
+    int count = 0;
+    for(int dim = 0; dim < 4; dim++){
+      citer cit = firstCell(dim);
+      while(cit != lastCell(dim)){
+        Cell* cell = *cit;
+        int count =+ coreduction(cell, -1, empty);
+        if(count != 0) break;
+        cit++;
+      }
+    }
+    for(int j = 1; j <= getDim(); j++) count += coreduction(j, -1, empty);
+  }
+
+  for(int i = 0; i < 4; i++) {
+    while (getSize(i) != 0){
+      citer cit = firstCell(i);
+      Cell* cell = *cit;
+
+      Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
+                 getSize(3), getSize(2), getSize(1), getSize(0));
+
+      int count = 1;
+
+      removeCell(cell, false);
+      betti.at(i)++;
+
+      count += coreduction(cell, -1, empty);
+      for(int j = 1; j <= getDim(); j++) count += coreduction(j, -1, empty);
+
+      std::string domainstr = "";
+      getDomain(cell, domainstr);
+
+      Msg::Debug("Omitted %d-cell in %s that caused %d reductions",
+                 cell->getDim(), domainstr.c_str(), count);
+      Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
+                 getSize(3), getSize(2), getSize(1), getSize(0));
+    }
+  }
+
+  _reduced = true;
+  return betti;
+}
+
 int CellComplex::combine(int dim)
 {
   //Msg::Debug("Cell complex before combining:");

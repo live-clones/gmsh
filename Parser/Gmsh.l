@@ -91,6 +91,7 @@ ArcTan                  return tAtan;
 Atan2                   return tAtan2;
 ArcTan2                 return tAtan2;
 
+Betti                   return tBetti;
 Bezier			return tBezier;
 BSpline			return tBSpline;
 BoundingBox             return tBoundingBox;
