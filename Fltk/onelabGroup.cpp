@@ -1115,6 +1115,21 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void onelab_string_input_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings, name);
+  if(strings.size()){
+    Fl_Input *o = (Fl_Input*)w;
+    onelab::string old = strings[0];
+    strings[0].setValue(o->value());
+    onelab::server::instance()->set(strings[0]);
+    autoCheck(old, strings[0]);
+  }
+}
+
 static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -1179,6 +1194,17 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   if(p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, ww, 1);
     but->value(p.getValue().c_str());
+    but->align(FL_ALIGN_RIGHT);
+    if(highlight) but->color(c);
+    return but;
+  }
+
+  // simple string (no menu)
+  if(p.getChoices().empty() && p.getKind() != "file"){
+    Fl_Input *but = new Fl_Input(1, 1, ww, 1);
+    but->value(p.getValue().c_str());
+    but->callback(onelab_string_input_cb, (void*)n);
+    but->when(FL_WHEN_ENTER_KEY);
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
     return but;
