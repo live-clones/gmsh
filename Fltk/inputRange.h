@@ -67,18 +67,22 @@ class inputRange : public Fl_Group {
         tmp << _min;
         _input->minimum(_min);
       }
-      tmp << ":";
+      tmp << " : ";
       if(_max != _max_number){
         tmp << _max;
         _input->maximum(_max);
       }
       if(_step == 0.) _step = 1.;
-      if(_step != 1.) tmp << ":" << _step;
+      if(_step != 1.) tmp << " : " << _step;
       _input->step(_fixStep(_step));
       _choices.clear();
     }
     _range = tmp.str();
-    _range_tooltip = std::string("Range: ") + _range;
+    if(_range_butt->active())
+      _range_tooltip =  "Edit range [";
+    else
+      _range_tooltip =  "Range [";
+    _range_tooltip += _range + "]";
     _range_butt->tooltip(_range_tooltip.c_str());
   }
   void _string2values()
@@ -139,7 +143,7 @@ class inputRange : public Fl_Group {
   }
   void _edit_range()
   {
-    const char *ret = fl_input("Edit range ([min:max], [min:max:step], or "
+    const char *ret = fl_input("Edit range ([min : max], [min : max : step], or "
                                "[val1, val2, ...]):", _range.c_str());
     if(ret){
       _range = ret;
