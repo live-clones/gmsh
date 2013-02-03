@@ -20,7 +20,7 @@
 
 #if defined(HAVE_KBIPACK)
 
-void updateFltkTree();
+void updateFltk();
 std::string convertInt(int number);
 
 // Class whose derivative classes are to have partial or total order
@@ -503,7 +503,7 @@ void Chain<C>::addToModel(GModel* m, bool post,
     // create PView for instant visualization
     std::string pnum = convertInt(physicalNum);
     std::string postname = pnum + "=" + _name;
-    PView* view = new PView(postname, "ElementData", m, data, 0, 1);
+    PView* view = new PView(postname, "ElementData", m, data, 0., 1);
     // the user should be interested about the orientations
     int size = 30;
     PViewOptions* opt = view->getOptions();
@@ -511,7 +511,7 @@ void Chain<C>::addToModel(GModel* m, bool post,
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
     view->setOptions(opt);
-    updateFltkTree();
+    updateFltk();
   }
 #endif
 }

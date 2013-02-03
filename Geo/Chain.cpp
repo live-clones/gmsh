@@ -20,10 +20,10 @@
 
 #if defined(HAVE_KBIPACK)
 
-void updateFltkTree()
+void updateFltk()
 {
 #if defined(HAVE_FLTK)
-  FlGui::instance()->rebuildTree();
+  if(FlGui::available()) FlGui::instance()->updateViews();
 #endif
 }
 
