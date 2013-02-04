@@ -3533,9 +3533,9 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 void sortEdgesInLoop(int num, List_T *edges, bool orient)
 {
   // This function sorts the edges in an EdgeLoop and detects any
-  // subloops. Warning: the input edges are supposed to be *oriented*
-  // (Without this sort, it is very difficult to write general
-  // scriptable surface generation in complex cases)
+  // subloops. Warning: the input edges are supposed to be *oriented* (Without
+  // this sort, it is very difficult to write general scriptable surface
+  // generation in complex cases)
   Curve *c, *c0, *c1, *c2;
   int nbEdges = List_Nbr(edges);
   List_T *temp = List_Create(nbEdges, 1, sizeof(Curve *));
@@ -3545,15 +3545,11 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
     List_Read(edges, i, &j);
     if((c = FindCurve(j))){
       List_Add(temp, &c);
-      if(c->Typ == MSH_SEGM_DISCRETE){
-        Msg::Debug("Aborting line loop sort for discrete edge: hope you know "
-		   "what you're doing ;-)");
-        return;
-      }
     }
     else{
+      Msg::Debug("Aborting line loop sort: at your own risk :-)");
+      List_Delete(temp);
       return;
-      Msg::Error("Unknown curve %d in line loop %d", j, num);
     }
   }
   List_Reset(edges);
@@ -3637,6 +3633,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
     int iLoop;
     List_Read(loops, i, &iLoop);
     EdgeLoop *el;
+    std::vector<int> fromModel;
     if(!(el = FindEdgeLoop(abs(iLoop)))) {
       Msg::Error("Unknown line loop %d", iLoop);
       List_Delete(s->Generatrices);
@@ -3652,11 +3649,8 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
           List_Read(el->Curves, j, &ic);
           ic *= sign(iLoop);
           if(i != 0) ic *= -1; // hole
-          if(!(c = FindCurve(ic))) {
-            List_Delete(s->Generatrices);
-            s->Generatrices = NULL;
-            break;
-          }
+          if(!(c = FindCurve(ic)))
+            fromModel.push_back(ic);
           else
             List_Add(s->Generatrices, &c);
         }
@@ -3666,27 +3660,21 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
           List_Read(el->Curves, j, &ic);
           ic *= sign(iLoop);
           if(i != 0) ic *= -1; // hole
-          if(!(c = FindCurve(ic))) {
-            Msg::Error("Unknown curve %d", ic);
-            List_Delete(s->Generatrices);
-            s->Generatrices = NULL;
-            break;
-          }
+          if(!(c = FindCurve(ic)))
+            fromModel.push_back(ic);
           else
             List_Add(s->Generatrices, &c);
         }
       }
-      if(!s->Generatrices){
-        for(int j = 0; j < List_Nbr(el->Curves); j++) {
-          List_Read(el->Curves, j, &ic);
-          GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
-          if(ge) {
-            List_Add(s->GeneratricesByTag, &ic);
-          }
-          else{
-            Msg::Error("Unknown curve %d", ic);
-            return;
-          }
+      for(unsigned int j = 0; j < fromModel.size(); j++) {
+        ic = fromModel[j];
+        GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
+        if(ge) {
+          List_Add(s->GeneratricesByTag, &ic);
+        }
+        else{
+          Msg::Error("Unknown curve %d", ic);
+          return;
         }
       }
     }
