@@ -47,7 +47,6 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
-
   if(_geo_internals) delete _geo_internals;
   _geo_internals = new GEO_Internals;
 
@@ -81,6 +80,7 @@ int GModel::exportDiscreteGEOInternals()
       End_Curve(c);
       Tree_Add(this->getGEOInternals()->Curves, &c);
       CreateReversedCurve(c);
+      List_Delete(points);
     }
   }
 
@@ -100,25 +100,22 @@ int GModel::exportDiscreteGEOInternals()
         }
       }
       Tree_Add(this->getGEOInternals()->Surfaces, &s);
+      List_Delete(curves);
     }
   }
 
   // TODO: create Volumes from discreteRegions
 
   Msg::Debug("Geo internal model has:");
-  List_T *points = Tree2List(_geo_internals->Points);
-  List_T *curves = Tree2List(_geo_internals->Curves);
-  List_T *surfaces = Tree2List(_geo_internals->Surfaces);
-  Msg::Debug("%d Vertices", List_Nbr(points));
-  Msg::Debug("%d Edges", List_Nbr(curves));
-  Msg::Debug("%d Faces", List_Nbr(surfaces));
+  Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
+  Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
+  Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
 
   return 1;
 }
 
 int GModel::importGEOInternals()
 {
-
   if(Tree_Nbr(_geo_internals->Points)) {
     List_T *points = Tree2List(_geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
