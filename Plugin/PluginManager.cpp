@@ -47,7 +47,6 @@
 #include "Lambda2.h"
 #include "ModifyComponent.h"
 #include "Probe.h"
-#include "GSHHS.h"
 #include "HomologyComputation.h"
 #include "HomologyPostProcessing.h"
 #include "ExtractEdges.h"
@@ -227,8 +226,6 @@ void PluginManager::registerDefaultPlugins()
                       ("Probe", GMSH_RegisterProbePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Triangulate", GMSH_RegisterTriangulatePlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

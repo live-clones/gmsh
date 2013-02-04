@@ -15,7 +15,7 @@ set(SRC
     LongitudeLatitude.cpp
   Triangulate.cpp Tetrahedralize.cpp
   Warp.cpp SphericalRaise.cpp
-  Skin.cpp GSHHS.cpp
+  Skin.cpp
   MathEval.cpp ModifyComponent.cpp ExtractElements.cpp
   MakeSimplex.cpp
   Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp
