@@ -1140,6 +1140,17 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
     Fl_Input_Choice *o = (Fl_Input_Choice*)w;
     onelab::string old = strings[0];
     strings[0].setValue(o->value());
+    std::string choices;
+    for(int i = 0; i < o->menubutton()->menu()->size(); i++){
+      if(o->menubutton()->menu()[i].flags & FL_MENU_TOGGLE){
+        if(o->menubutton()->menu()[i].flags & FL_MENU_VALUE)
+          choices += "1";
+        else
+          choices += "0";
+      }
+    }
+    if(choices.size())
+      strings[0].setAttribute("MultipleChoice", choices);
     onelab::server::instance()->set(strings[0]);
     autoCheck(old, strings[0]);
   }
@@ -1168,6 +1179,22 @@ static void onelab_input_choice_file_merge_cb(Fl_Widget *w, void *data)
   std::string file = FixWindowsPath(but->value());
   MergeFile(file);
   drawContext::global()->draw();
+}
+
+static void multiple_choice_menu_cb(Fl_Widget *w, void *data)
+{
+  Fl_Menu_Button *menu = (Fl_Menu_Button*)w;
+  std::string val;
+  for (int i = 0; i < menu->size() - 1; i++) {
+    const Fl_Menu_Item &item = menu->menu()[i];
+    if(item.value() && item.label()){
+      if(val.size()) val += ", ";
+      val += item.label();
+    }
+  }
+  Fl_Input_Choice *but = (Fl_Input_Choice*)data;
+  but->value(val.c_str());
+  but->do_callback();
 }
 
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
@@ -1212,13 +1239,19 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
 
   // general string input
   Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, ww, 1);
+  std::string multipleChoice = p.getAttribute("MultipleChoice");
+  if(multipleChoice.size())
+    but->menubutton()->callback(multiple_choice_menu_cb, but);
   std::vector<Fl_Menu_Item> menu;
   for(unsigned int j = 0; j < p.getChoices().size(); j++){
     char *str = strdup(p.getChoices()[j].c_str());
     _treeStrings.push_back(str);
     bool divider = (p.getKind() == "file" &&
                     j == p.getChoices().size() - 1);
-    Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : 0};
+    int choice = multipleChoice.size() ? FL_MENU_TOGGLE : 0;
+    if(multipleChoice.size() > j && multipleChoice[j] == '1')
+      choice |= FL_MENU_VALUE;
+    Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : choice};
     menu.push_back(it);
   }
   if(p.getKind() == "file"){
