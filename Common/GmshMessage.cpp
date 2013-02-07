@@ -544,13 +544,13 @@ void Msg::PrintErrorCounter(const char *title)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    std::string red("@C1@.");
-    FlGui::instance()->addMessage((red + prefix + line).c_str());
-    FlGui::instance()->addMessage((red + prefix + title).c_str());
-    FlGui::instance()->addMessage((red + prefix + warn).c_str());
-    FlGui::instance()->addMessage((red + prefix + err).c_str());
-    FlGui::instance()->addMessage((red + prefix + help).c_str());
-    FlGui::instance()->addMessage((red + prefix + line).c_str());
+    std::string col = _errorCount ? "@C1@." : "@C5@.";
+    FlGui::instance()->addMessage((col + prefix + line).c_str());
+    FlGui::instance()->addMessage((col + prefix + title).c_str());
+    FlGui::instance()->addMessage((col + prefix + warn).c_str());
+    FlGui::instance()->addMessage((col + prefix + err).c_str());
+    FlGui::instance()->addMessage((col + prefix + help).c_str());
+    FlGui::instance()->addMessage((col + prefix + line).c_str());
     if(_errorCount) fl_beep();
   }
 #endif
@@ -558,7 +558,8 @@ void Msg::PrintErrorCounter(const char *title)
   if(CTX::instance()->terminal){
     const char *c0 = "", *c1 = "";
     if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[31m"; c1 = "\33[0m";  // red
+      c0 = _errorCount ? "\33[1m\33[31m" : "\33[35m"; // bold red or magenta
+      c1 = "\33[0m";
     }
     fprintf(stderr, "%s%s\n%s\n%s\n%s\n%s\n%s%s\n", c0, (prefix + line).c_str(),
             (prefix + title).c_str(), (prefix + warn).c_str(),

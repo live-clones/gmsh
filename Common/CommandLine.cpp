@@ -6,6 +6,7 @@
 #include <string>
 #include <string.h>
 #include <stdlib.h>
+#include <fstream>
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshVersion.h"
@@ -17,8 +18,6 @@
 #include "GModel.h"
 #include "CreateFile.h"
 #include "OS.h"
-#include <fstream>
-#include <periodical.h>
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -31,6 +30,10 @@
 
 #if defined(HAVE_POST)
 #include "PView.h"
+#endif
+
+#if defined(HAVE_MESH)
+#include "periodical.h"
 #endif
 
 int GetGmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
@@ -472,36 +475,32 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number of lloyd iterations");
       }
-	  else if(!strcmp(argv[i] + 1, "microstructure")) {
-	    i++;
-
-		int j;
-		double number;
-		double temp;
-		std::vector<double> coordinates;
-		  
-		if(argv[i]){
-	      std::ifstream file(argv[i++]);
-		  file >> number;
-		  coordinates.clear();
-		  coordinates.resize(3*number);
-			
-		  for(j=0;j<number;j++){
-		    file >> coordinates[3*j];
-			file >> coordinates[3*j+1];
-			file >> coordinates[3*j+2];
-			file >> temp;
-		  }
-			
-		  voroMetal3D vm1;
-		  vm1.execute(coordinates,0.1);
-			
-		  GModel::current()->load("MicrostructurePolycrystal3D.geo");
-						
-		  voroMetal3D vm2;
-		  vm2.correspondance(0.00001);
-		}
+#if defined(HAVE_MESH)
+      else if(!strcmp(argv[i] + 1, "microstructure")) {
+        i++;
+        int j;
+        double number;
+        double temp;
+        std::vector<double> coordinates;
+        if(argv[i]){
+          std::ifstream file(argv[i++]);
+          file >> number;
+          coordinates.clear();
+          coordinates.resize(3*number);
+          for(j = 0; j <number; j++){
+            file >> coordinates[3*j];
+            file >> coordinates[3*j+1];
+            file >> coordinates[3*j+2];
+            file >> temp;
+          }
+          voroMetal3D vm1;
+          vm1.execute(coordinates,0.1);
+          GModel::current()->load("MicrostructurePolycrystal3D.geo");
+          voroMetal3D vm2;
+          vm2.correspondance(0.00001);
+        }
       }
+#endif
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
         i++;
