@@ -17,6 +17,8 @@
 #include "GModel.h"
 #include "CreateFile.h"
 #include "OS.h"
+#include <fstream>
+#include <periodical.h>
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -77,6 +79,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-hoElasticity float","Poisson ration for elasticity analogy (nu in [-1.0,0.5])"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
+  s.push_back(mp("-microstructure",    "Generate polycrystal Voronoi geometry"));
   s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
   s.push_back(mp("-clmin float",       "Set minimum mesh element size"));
   s.push_back(mp("-clmax float",       "Set maximum mesh element size"));
@@ -468,6 +471,36 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->mesh.optimizeLloyd = atoi(argv[i++]);
         else
           Msg::Fatal("Missing number of lloyd iterations");
+      }
+	  else if(!strcmp(argv[i] + 1, "microstructure")) {
+	    i++;
+
+		int j;
+		double number;
+		double temp;
+		std::vector<double> coordinates;
+		  
+		if(argv[i]){
+	      std::ifstream file(argv[i++]);
+		  file >> number;
+		  coordinates.clear();
+		  coordinates.resize(3*number);
+			
+		  for(j=0;j<number;j++){
+		    file >> coordinates[3*j];
+			file >> coordinates[3*j+1];
+			file >> coordinates[3*j+2];
+			file >> temp;
+		  }
+			
+		  voroMetal3D vm1;
+		  vm1.execute(coordinates,0.1);
+			
+		  GModel::current()->load("MicrostructurePolycrystal3D.geo");
+						
+		  voroMetal3D vm2;
+		  vm2.correspondance(0.00001);
+		}
       }
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
