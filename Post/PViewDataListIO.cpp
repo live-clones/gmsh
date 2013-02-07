@@ -661,7 +661,7 @@ void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
     std::vector<double> *list = 0;
     int *nbe = 0, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
-    N[i] = *nbe;
+    N[i] = *nbe; 
     V[i] = list; // copy pointer only
   }
 }

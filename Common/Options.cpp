@@ -913,8 +913,8 @@ void PrintOptionsDoc()
     }
     fprintf(file, "@end ftable\n");
     fclose(file);
-#endif
   }
+#endif
   {
     FILE *file = fopen("shortcuts.texi", "w");
     if(!file) {
