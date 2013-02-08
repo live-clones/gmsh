@@ -78,7 +78,7 @@ class Homology
 
   // create a string describing the generator
   std::string _getDomainString(const std::vector<int>& domain,
-                               const std::vector<int>& subdomain);
+                               const std::vector<int>& subdomain) const;
 
   // construct the cell complex
   void _createCellComplex();
@@ -89,6 +89,8 @@ class Homology
 
   void _deleteChains(std::vector<int> dim=vecN0(4));
   void _deleteCochains(std::vector<int> dim=vecN0(4));
+
+  void _addToModel(int dim, bool co, bool post, int physicalNumRequest) const;
 
  public:
 

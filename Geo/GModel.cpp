@@ -3228,7 +3228,7 @@ void GModel::computeHomology()
           if(type == "Homology") ss << "_";
           if(type == "Cohomology") ss << "^";
           ss << d;
-          if(i < dim.size()-1 && dim.at(i+1) >=0 && dim.at(i+1) <= getDim())
+          if(i < dim0.size()-1 && dim0.at(i+1) >=0 && dim0.at(i+1) <= getDim())
             ss << ", ";
         }
       }
@@ -3265,6 +3265,7 @@ void GModel::computeHomology()
     _pruneMeshVertexAssociations();
     delete homology;
   }
+  Msg::Info("");
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done homology and cohomology computation (%g s)",

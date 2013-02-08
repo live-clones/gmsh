@@ -232,7 +232,8 @@ public:
   // orientation and multiplicity given by elementary chain coefficient
   // (and create a post-processing view)
   // (and request a physical group number)
-  void addToModel(GModel* m, bool post=true, int physicalNumRequest=-1) const;
+  // returns physical group number of the chain
+  int addToModel(GModel* m, bool post=true, int physicalNumRequest=-1) const;
 };
 
 template <class C>
@@ -446,13 +447,13 @@ Chain<C>& Chain<C>::operator*=(const C& coeff)
 }
 
 template <class C>
-void Chain<C>::addToModel(GModel* m, bool post,
-                          int physicalNumRequest) const
+int Chain<C>::addToModel(GModel* m, bool post,
+                         int physicalNumRequest) const
 {
   if(this->isZero()) {
     Msg::Info("A chain is zero element of C%d, not added to the model",
               this->getDim());
-    return;
+    return -1;
   }
   std::vector<MElement*> elements;
   std::map<int, std::vector<double> > data;
@@ -514,6 +515,8 @@ void Chain<C>::addToModel(GModel* m, bool post,
     updateFltk();
   }
 #endif
+
+  return physicalNum;
 }
 
 #endif
