@@ -22,28 +22,6 @@ void STensor3::print (const char *s) const
          (*this)(2,0), (*this)(2,1), (*this)(2,2));
 }
 
-//// ORIGINAL CODE FROM GMSH
-/*
-SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
-{
-  SMetric3 im1 = m1.invert();
-  fullMatrix<double> V(3,3);
-  fullVector<double> S(3);
-  im1 *= m2;
-  im1.eig(V,S,true);
-  SVector3 v0(V(0,0),V(1,0),V(2,0));
-  SVector3 v1(V(0,1),V(1,1),V(2,1));
-  SVector3 v2(V(0,2),V(1,2),V(2,2));
-  double l0 = std::max(dot(v0,m1,v0),dot(v0,m2,v0));
-  double l1 = std::max(dot(v1,m1,v1),dot(v1,m2,v1));
-  double l2 = std::max(dot(v2,m1,v2),dot(v2,m2,v2));
-  SMetric3 iv(l0,l1,l2,v0,v1,v2);
-  
-  return iv;
-}
-*/
-
-//// MODIFIED INTERSECTION
 SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 {
   SMetric3 im1 = m1.invert();
@@ -58,27 +36,15 @@ SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
   double l1 = std::max(dot(v1,m1,v1),dot(v1,m2,v1));
   double l2 = std::max(dot(v2,m1,v2),dot(v2,m2,v2));
 
-
-  // Correction as explained in the PhD thesis of Frederic Alauzet p.16
-  double max_eig = std::max(l0, std::max(l1,l2));
-  double min_eig = std::min(l0, std::min(l1,l2));
-  double range_eig = (max_eig - min_eig);
-
-  if( range_eig < 1.0e-1) // Change this value if you think it's too big ...
-  {
-      if(max_eig <= 1.0)
-      {
-          return m1;
-      }
-
-      else
-      {
-          return m2;
-      }
-  }
+  // Correction from the PhD thesis of Frederic Alauzet p.16
+  // CAUTION: error in the thesis, cases alpha<=1 and alpha>1 are switched
+  static const double eps = 1.e-2;      // Tolerance to detect triple eigenvalue (i.e. proportional metrics)
+  const double max_eig = std::max(l0, std::max(l1,l2));
+  const double min_eig = std::min(l0, std::min(l1,l2));
+  const double range_eig = fabs((max_eig-min_eig)/max_eig);
+  if (range_eig < eps) return (max_eig <= 1.) ? m2 : m1;
 
   SMetric3 iv(l0,l1,l2,v0,v1,v2);
-
   return iv;
 }
 

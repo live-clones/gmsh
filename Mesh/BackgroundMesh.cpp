@@ -402,73 +402,46 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 
 // anisotropic version of the background field - for now, only works
 // with bamg in 2D, work in progress
-
 SMetric3 BGM_MeshMetric(GEntity *ge,
                         double U, double V,
                         double X, double Y, double Z)
 {
-  // default lc (mesh size == size of the model)
-  double l1 = CTX::instance()->lc;
-  const double max_lc =  CTX::instance()->mesh.lcMax;
 
-  // lc from points
-  double l2 = max_lc;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
-    l2 = LC_MVertex_PNTS(ge, U, V);
-
-  // lc from curvature
-  SMetric3 l3(1./(max_lc*max_lc));
-  if(CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3)
-    l3 = LC_MVertex_CURV_ANISO(ge, U, V);
-
-  // lc from fields
-  SMetric3 l4(1./(max_lc*max_lc));
-  FieldManager *fields = ge->model()->getFields();
-  if(fields->getBackgroundField() > 0){
-    Field *f = fields->get(fields->getBackgroundField());
-    if(f){
-      if (!f->isotropic()){
-        (*f)(X, Y, Z, l4,ge);
-      }
-      else{
-        double L = (*f)(X, Y, Z, ge);
-        l4 = SMetric3(1/(L*L));
-      }
-    }
-  }
-
-  // take the minimum, then constrain by lcMin and lcMax
-  double lc = std::min(l1, l2);
+  // Metrics based on element size
+  // Element size  = min. between default lc and lc from point (if applicable), constrained by lcMin and lcMax
+  double lc = CTX::instance()->lc;
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) lc = std::min(lc, LC_MVertex_PNTS(ge, U, V));
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
-
-
   if(lc <= 0.){
     Msg::Error("Wrong mesh element size lc = %g (lcmin = %g, lcmax = %g)",
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
-    lc = l1;
+    lc = CTX::instance()->lc;
   }
+  SMetric3 m0(1./(lc*lc));
 
-  SMetric3 LC(1./(lc*lc));
-  //SMetric3 m = intersection_conserveM1(intersection_conserveM1 (l4, LC),l3);
-  SMetric3 m = intersection(intersection (l4, LC),l3);
-  //printf("%g %g %g %g %g %g\n",m(0,0),m(1,1),m(2,2),m(0,1),m(0,2),m(1,2));
-  {
-    fullMatrix<double> V(3,3);
-    fullVector<double> S(3);
-    m.eig(V,S,true);
-    if (S(0) < 0 || S(1) < 0 || S(2) < 0){
-      printf("%g %g %g\n",S(0),S(1),S(2));
-      l3.eig(V,S,true);
-      printf("%g %g %g\n",S(0),S(1),S(2));
-      l4.eig(V,S,true);
-      printf("%g %g %g\n",S(0),S(1),S(2));
+  // Intersect with metrics from fields if applicable
+  FieldManager *fields = ge->model()->getFields();
+  SMetric3 m1 = m0;
+  if(fields->getBackgroundField() > 0){
+    Field *f = fields->get(fields->getBackgroundField());
+    if(f) {
+      SMetric3 l4;
+      if (!f->isotropic()) (*f)(X, Y, Z, l4, ge);
+      else {
+        const double L = (*f)(X, Y, Z, ge);
+        l4 = SMetric3(1/(L*L));
+      }
+      m1 = intersection(l4, m0);
     }
   }
 
+  // Intersect with metrics from curvature if applicable
+  SMetric3 m = (CTX::instance()->mesh.lcFromCurvature && ge->dim() < 3) ?
+      intersection(m1, LC_MVertex_CURV_ANISO(ge, U, V)) : m1;
 
   return m;
-  //  return lc * CTX::instance()->mesh.lcFactor;
+
 }
 
 bool Extend1dMeshIn2dSurfaces()

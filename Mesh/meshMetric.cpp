@@ -81,7 +81,7 @@ meshMetric::meshMetric(std::vector<MElement*> elements)
 void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
                            std::vector<double> parameters)
 {
-  needMetricUpdate=true;
+  needMetricUpdate = true;
   _fct = fct;
   hmin = parameters.size() >=3 ? parameters[1] : CTX::instance()->mesh.lcMin;
   hmax = parameters.size() >=3 ? parameters[2] : CTX::instance()->mesh.lcMax;
@@ -96,7 +96,7 @@ void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
   computeMetric();
 }
 
-void meshMetric::intersectMetrics()
+void meshMetric::updateMetrics()
 {
   if (!setOfMetrics.size()){
     std::cout << " meshMetric::intersectMetrics: Can't intersect metrics, no metric registered ! " << std::endl;
@@ -109,10 +109,11 @@ void meshMetric::intersectMetrics()
     _nodalMetrics[ver] = setOfMetrics[0][ver];
     //    _detMetric[ver] = setOfDetMetric[0][ver];
     _nodalSizes[ver] = setOfSizes[0][ver];
-    for (unsigned int i=1;i<setOfMetrics.size();i++){
-      _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
-      _nodalSizes[ver] = std::min(_nodalSizes[ver],setOfSizes[i][ver]);
-    }
+    if (setOfMetrics.size() > 1)
+      for (unsigned int i=1;i<setOfMetrics.size();i++){
+        _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
+        _nodalSizes[ver] = std::min(_nodalSizes[ver],setOfSizes[i][ver]);
+      }
     //    _detMetric[ver] = sqrt(_nodalMetrics[ver].determinant());
   }
   needMetricUpdate=false;
@@ -121,7 +122,7 @@ void meshMetric::intersectMetrics()
 
 void meshMetric::exportInfo(const char * fileendname)
 {
-  if (needMetricUpdate) intersectMetrics();
+  if (needMetricUpdate) updateMetrics();
   std::stringstream sg,sm,sl,sh;
   sg << "meshmetric_gradients_" << fileendname;
   sm << "meshmetric_metric_" << fileendname;
@@ -762,7 +763,7 @@ void meshMetric::computeMetric()
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge)
 {
-  if (needMetricUpdate) intersectMetrics();
+  if (needMetricUpdate) updateMetrics();
   if (!setOfMetrics.size()){
     std::cout  << "meshMetric::operator() : No metric defined ! " << std::endl;
     throw;
@@ -799,7 +800,7 @@ double meshMetric::operator() (double x, double y, double z, GEntity *ge)
 void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge)
 {
   if (needMetricUpdate) {
-    intersectMetrics();
+    updateMetrics();
   }
   if (!setOfMetrics.size()){
     std::cout  << "meshMetric::operator() : No metric defined ! " << std::endl;

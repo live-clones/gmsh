@@ -26,7 +26,7 @@ class meshMetric: public Field {
                 ISOTROPIC_LINEARINTERP_H=6, SCALED_HESSIAN=7} MetricComputationTechnique;
  private:
   // intersect all metrics added in "setOfMetrics", preserve eigendirections of the "most anisotropic" metric
-  void intersectMetrics();
+  void updateMetrics();
   int _dim;
   double _epsilon, _E, _E_moins, _Np;
   bool needMetricUpdate;
@@ -80,7 +80,7 @@ class meshMetric: public Field {
   void addMetric(int technique, simpleFunction<double> *fct, std::vector<double> parameters);
 
   inline SMetric3 metricAtVertex (MVertex* v) {
-    if (needMetricUpdate) intersectMetrics();
+    if (needMetricUpdate) updateMetrics();
     return _nodalMetrics[v];
   }
   // this function scales the mesh metric in order 
