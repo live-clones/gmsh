@@ -127,20 +127,20 @@ class drawContext {
  public:
   drawContext(drawTransform *transform=0);
   ~drawContext();
-  void copyViewAttributes(drawContext *ctx)
+  void copyViewAttributes(drawContext *other)
   {
-    camera = ctx->camera;
+    camera = other->camera;
     for(int i = 0; i < 3; i++){
-      r[i] = ctx->r[i];
-      t[i] = ctx->t[i];
-      s[i] = ctx->s[i];
-      t_init[i] = ctx->t_init[i];
+      r[i] = other->r[i];
+      t[i] = other->t[i];
+      s[i] = other->s[i];
+      t_init[i] = other->t_init[i];
     }
     for(int i = 0; i < 4; i++){
-      quaternion[i] = ctx->quaternion[i];
+      quaternion[i] = other->quaternion[i];
     }
     for(int i = 0; i < 16; i++){
-      rot[i] = ctx->rot[i];
+      rot[i] = other->rot[i];
     }
   }
   static void setGlobal(drawContextGlobal *global){ _global = global; }

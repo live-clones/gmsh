@@ -923,7 +923,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
 void onelabGroup::_addViewMenu(int num)
 {
   std::ostringstream path;
-  path << "0Gmsh modules/Post-processing/View" << num;
+  path << "0Modules/Post-processing/View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   _tree->begin();
@@ -936,7 +936,7 @@ void onelabGroup::_addViewMenu(int num)
 viewButton *onelabGroup::getViewButton(int num)
 {
   char tmp[256];
-  sprintf(tmp, "0Gmsh modules/Post-processing/View%d", num);
+  sprintf(tmp, "0Modules/Post-processing/View%d", num);
   Fl_Tree_Item *n = _tree->find_item(tmp);
   if(n) return (viewButton*)n->widget();
   return 0;

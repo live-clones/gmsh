@@ -65,6 +65,7 @@ class FlGui{
   meshContextWindow *meshContext;
   helpWindow *help;
   onelabGroup *onelab;
+  openglWindow *fullscreen;
  public:
   FlGui(int argc, char **argv);
   ~FlGui(){}

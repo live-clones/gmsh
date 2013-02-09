@@ -3306,7 +3306,7 @@ optionWindow::optionWindow(int deltaFontSize)
         view.value[63]->callback(view_options_ok_cb);
 
         view.choice[10] = new Fl_Choice
-          (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
+          (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source for vector fields");
         view.choice[10]->align(FL_ALIGN_RIGHT);
         view.choice[10]->add("Self");
         view.choice[10]->callback(view_options_ok_cb);

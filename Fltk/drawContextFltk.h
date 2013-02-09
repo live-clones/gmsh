@@ -19,13 +19,20 @@ class drawContextFltk : public drawContextGlobal{
   void draw()
   {
     if(!FlGui::available()) return;
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
-      for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
-        FlGui::instance()->graph[i]->gl[j]->make_current();
-        FlGui::instance()->graph[i]->gl[j]->redraw();
-	// to initialize the camera distance from model
-	drawContext * ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
-	ctx->camera.update();
+    if(FlGui::instance()->fullscreen->shown()){
+      FlGui::instance()->fullscreen->make_current();
+      FlGui::instance()->fullscreen->redraw();
+    }
+    else{
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
+        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
+          FlGui::instance()->graph[i]->gl[j]->make_current();
+          FlGui::instance()->graph[i]->gl[j]->redraw();
+          // FIXME: I don't think this should be done here CG
+          // to initialize the camera distance from model
+          drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
+          ctx->camera.update();
+        }
       }
     }
     FlGui::instance()->check();

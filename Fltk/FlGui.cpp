@@ -312,6 +312,11 @@ FlGui::FlGui(int argc, char **argv)
     graph.push_back(g);
   }
 
+  // create fullscreen window
+  fullscreen = new openglWindow(100, 100, 100, 100);
+  fullscreen->mode(FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE));
+  fullscreen->end();
+
   options = new optionWindow(CTX::instance()->deltaFontSize);
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
@@ -921,7 +926,8 @@ void redraw_cb(Fl_Widget *w, void *data)
 
 void window_cb(Fl_Widget *w, void *data)
 {
-  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
+  static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 0, fullscreen = 0;
+
   std::string str((const char*)data);
 
   if(str == "minimize"){
@@ -946,30 +952,37 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->stats->win->iconize();
   }
   else if(str == "zoom"){
-    if(zoom){
+    if(!zoom){
       oldx = FlGui::instance()->graph[0]->getWindow()->x();
       oldy = FlGui::instance()->graph[0]->getWindow()->y();
       oldw = FlGui::instance()->graph[0]->getWindow()->w();
       oldh = FlGui::instance()->graph[0]->getWindow()->h();
-//#define FS
-#ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(Fl::x(), Fl::y(), Fl::w(), Fl::h());
-      FlGui::instance()->graph[0]->hideMessages();
-      FlGui::instance()->check();
-#else
-      FlGui::instance()->graph[0]->getWindow()->fullscreen();
-      FlGui::instance()->graph[0]->hideMessages();
-#endif
-      zoom = 0;
+      zoom = 1;
     }
     else{
-#ifndef FS
       FlGui::instance()->graph[0]->getWindow()->resize(oldx, oldy, oldw, oldh);
-      FlGui::instance()->check();
-#else
-      FlGui::instance()->graph[0]->getWindow()->fullscreen_off();
-#endif
-      zoom = 1;
+      zoom = 0;
+    }
+  }
+  else if(str == "fullscreen"){
+    if(!fullscreen){
+      FlGui::instance()->fullscreen->show();
+      FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes
+        (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+      openglWindow::setLastHandled(FlGui::instance()->fullscreen);
+      FlGui::instance()->fullscreen->fullscreen();
+      drawContext::global()->draw();
+      fullscreen = 1;
+    }
+    else{
+      FlGui::instance()->fullscreen->fullscreen_off();
+      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes
+        (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
+      openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
+      FlGui::instance()->fullscreen->hide();
+      drawContext::global()->draw();
+      fullscreen = 0;
     }
   }
   else if(str == "front"){
@@ -1017,6 +1030,6 @@ void FlGui::rebuildTree()
 
 void FlGui::openModule(const std::string &name)
 {
-  if(!onelab->isManuallyClosed("0Gmsh modules/" + name))
-    onelab->openTreeItem("0Gmsh modules/" + name);
+  if(!onelab->isManuallyClosed("0Modules/" + name))
+    onelab->openTreeItem("0Modules/" + name);
 }

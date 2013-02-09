@@ -277,7 +277,7 @@ class inputRange : public Fl_Group {
     _loop_butt->label("@-1gmsh_rotate");
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
-    _loop_butt->tooltip("Loop over range when computing");
+    _loop_butt->tooltip("Loop over range (loop level 1, 2 or 3)");
 
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_butt->label("@-1gmsh_graph");
