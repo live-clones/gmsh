@@ -58,6 +58,8 @@ Poisson ration for elasticity analogy (nu in [-1.0,0.5])
 Optimize quality of tetrahedral elements
 @item -optimize_lloyd
 Optimize 2D meshes using Lloyd algorithm
+@item -microstructure
+Generate polycrystal Voronoi geometry
 @item -clscale float
 Set global mesh element size scaling factor
 @item -clmin float

@@ -197,10 +197,18 @@ default value: @code{0}
 Thickness (% of radius) of the extruded layer@*
 type: float@*
 default value: @code{0.3}
+@item hSecondLayer
+Thickness (% of radius) of the second extruded layer@*
+type: float@*
+default value: @code{0.3}
 @item nbElemLayer
 Number of mesh elements the extruded layer@*
 type: integer@*
 default value: @code{3}
+@item nbElemSecondLayer
+Number of mesh elements the second extruded layer@*
+type: integer@*
+default value: @code{0}
 @item nbPoints
 Number of mesh elements in a circle@*
 type: integer@*

@@ -167,6 +167,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
   s.push_back(mp(cc + "i",         "Show statistics window"));
   s.push_back(mp(cc + "d",         "Attach/detach menu"));
+  s.push_back(mp(cc + "f",         "Enter full screen"));
   s.push_back(mp(cc + "l",         "Show message console"));
 #if defined(__APPLE__)
   s.push_back(mp(cc + "m",         "Minimize window"));

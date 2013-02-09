@@ -15,7 +15,7 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Geometry.CopyMeshingMethod
-Copy meshing method when duplicating geometrical entities?@*
+Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -141,6 +141,11 @@ Saved in: @code{-}
 
 @item Geometry.OldCircle
 Use old circle description (compatibility option for old Gmsh geometries)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OldRuledSurface
+Use old 3-sided ruled surface interpolation (compatibility option for old Gmsh geometries)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

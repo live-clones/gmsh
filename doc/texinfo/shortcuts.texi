@@ -52,6 +52,8 @@ Enable full mouse selection
 Show statistics window
 @item Ctrl+d
 Attach/detach menu
+@item Ctrl+f
+Enter full screen
 @item Ctrl+l
 Show message console
 @item Ctrl+m
