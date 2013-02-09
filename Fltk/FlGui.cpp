@@ -316,6 +316,7 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen = new openglWindow(100, 100, 100, 100);
   fullscreen->mode(FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE));
   fullscreen->end();
+  fullscreen->fullscreen();
 
   options = new optionWindow(CTX::instance()->deltaFontSize);
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
@@ -977,12 +978,14 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes
         (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
-      FlGui::instance()->fullscreen->fullscreen();
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        FlGui::instance()->graph[i]->getWindow()->hide();
       drawContext::global()->draw();
       fullscreen = 1;
     }
     else{
-      FlGui::instance()->fullscreen->fullscreen_off();
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        FlGui::instance()->graph[i]->getWindow()->show();
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes
         (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
