@@ -465,19 +465,25 @@ int FlGui::testGlobalShortcuts(int event)
           Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
           Fl::test_shortcut(FL_CTRL + FL_Escape) ||
           Fl::test_shortcut(FL_ALT + FL_Escape)) {
-    bool lasso = false;
-    for(unsigned int i = 0; i < graph.size(); i++)
-      for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
-        if(graph[i]->gl[j]->lassoMode) lasso = true;
-    if(lasso){
-      for(unsigned int i = 0; i < graph.size(); i++)
-        for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
-          graph[i]->gl[j]->lassoMode = false;
-      status = 2;
+    if(fullscreen->shown()){
+      window_cb(0, (void*)"fullscreen");
+      status = 1;
     }
     else{
-      status_options_cb(0, (void *)"S");
-      status = 1;
+      bool lasso = false;
+      for(unsigned int i = 0; i < graph.size(); i++)
+        for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+          if(graph[i]->gl[j]->lassoMode) lasso = true;
+      if(lasso){
+        for(unsigned int i = 0; i < graph.size(); i++)
+          for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
+            graph[i]->gl[j]->lassoMode = false;
+        status = 2;
+      }
+      else{
+        status_options_cb(0, (void *)"S");
+        status = 1;
+      }
     }
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'a')) {
