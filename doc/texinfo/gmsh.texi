@@ -552,7 +552,12 @@ versions available on @uref{http://geuz.org/gmsh/} are linked with the
 free CAD kernel OpenCASCADE, which enables native BREP import as well as
 STEP and IGES import.)
 @item
-Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
+Gmsh's internal CAD engine is fairly limited: it only handles simple
+primitives and does not perform any complex geometrical operations
+(e.g. no calculation of intersections). For such features you should
+link Gmsh with an external CAD kernel (see above).
+@item
+Gmsh is not a multi-bloc mesh generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
 @item
 Gmsh's user interface is only exposing a limited number of the available
@@ -585,7 +590,7 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 @cindex E-mail, authors
 
 If you think you have found a bug in Gmsh, you can report it by email to
-the Gmsh mailing list at @email{gmsh@@geuz.org}, or file it directly
+the public Gmsh mailing list at @email{gmsh@@geuz.org}, or file it directly
 into our bug tracking database at @url{https://geuz.org/trac/gmsh/report} 
 (login: gmsh, password: gmsh). Please send as precise a description of
 the problem as you can, including sample input files that produce the
@@ -727,14 +732,13 @@ or type
 @end example
 
 @noindent at your shell prompt in a terminal. This will open
-the main Gmsh windows, with a tree-like menu on the left, a graphic area
+the main Gmsh window, with a tree-like menu on the left, a graphic area
 on the right, and a status bar at the bottom. (You can detach the tree
 menu using `Window->Attach/Detach Menu'.)
 
 To open the first tutorial file (@pxref{Tutorial}), select the
-`File->Open' menu, and choose @file{t1.geo} in the input field. When
-using a terminal, you can specify the file name directly on the command
-line, i.e.:
+`File->Open' menu, and choose @file{t1.geo}. When using a terminal, you
+can specify the file name directly on the command line, i.e.:
 
 @example
 > gmsh t1.geo

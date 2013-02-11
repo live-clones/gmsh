@@ -215,7 +215,7 @@ FlGui::FlGui(int argc, char **argv)
   //Fl::set_color(FL_SELECTION_COLOR, 50, 50, 0);
 #endif
 
-  // add new box types used in graphic window (dx dy dw dh)
+  // add new box types (dx dy dw dh)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
@@ -260,15 +260,11 @@ FlGui::FlGui(int argc, char **argv)
   fl_mac_set_about(help_about_cb, 0);
 #endif
 
-  // all the windows are contructed (even if some are not displayed) since the
-  // shortcuts should be valid even for hidden windows, and we don't want to
-  // test for widget existence every time
+  // create main graphic window (note that we create all the windows even if
+  // some are not displayed, since the shortcuts should be valid even for hidden
+  // windows, and we don't want to test for widget existence every time)
   graph.push_back(new graphicWindow(true, CTX::instance()->numTiles,
                                     CTX::instance()->detachedMenu ? true : false));
-
-  // FIXME: make this cleaner ;-)
-  onelab = graph.back()->getMenu();
-
 #if defined(WIN32)
   graph[0]->getWindow()->icon
     ((const void*)LoadIcon(fl_display, MAKEINTRESOURCE(IDI_ICON)));
@@ -301,6 +297,9 @@ FlGui::FlGui(int argc, char **argv)
   //graph[0]->gl[0]->take_focus();
   Fl::focus(graph[0]->gl[0]);
 
+  // get onelab tree group (FIXME: should clean this up)
+  onelab = graph.back()->getMenu();
+
   // create additional graphic windows
   for(int i = 1; i < CTX::instance()->numWindows; i++){
     graphicWindow *g = new graphicWindow(false, CTX::instance()->numTiles);
@@ -318,6 +317,7 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen->end();
   fullscreen->fullscreen();
 
+  // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);

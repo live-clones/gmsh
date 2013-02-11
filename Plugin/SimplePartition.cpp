@@ -9,6 +9,8 @@
 #include "partitionEdge.h"
 #include "MElement.h"
 #include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MFace.h"
 #include "MEdge.h"
 #if defined(HAVE_MESH)
