@@ -600,4 +600,14 @@ public:
 /*   int type2() const {return DISK;} */
 /* }; */
 
+class gLevelsetNACA00: public gLevelsetPrimitive
+{
+  double _x0, _y0, _c, _t;
+public:
+  gLevelsetNACA00(double x0, double y0, double c, double t) : _x0(x0), _y0(y0), _c(c), _t(t) {}
+  ~gLevelsetNACA00() {}
+  double operator () (const double x, const double y, const double z) const;
+  int type() const { return UNKNOWN; }
+};
+
 #endif
