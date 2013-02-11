@@ -590,6 +590,13 @@ class dofManager : public dofManagerBase{
 		}
 		else return it->second;
 	};
+	virtual void clearAllLineConstraints() {
+    constraints.clear();
+	}
+
+  std::map<Dof, DofAffineConstraint< dataVec > >& getAllLinearConstraints(){
+    return constraints;
+  };
 };
 
 #endif
