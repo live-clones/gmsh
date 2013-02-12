@@ -345,7 +345,7 @@ void Filler::treat_region(GRegion* gr){
   std::set<MVertex*> temp;
   std::set<MVertex*>::iterator it;
   RTree<Node*,double,3,double> rtree;
-
+  
   Frame_field::init_region(gr);
   Size_field::init_region(gr);
   Size_field::solve(gr);

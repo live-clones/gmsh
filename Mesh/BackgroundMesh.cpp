@@ -533,8 +533,9 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   _octree = new MElementOctree(_triangles);
 
   // compute the mesh sizes at nodes
-  if (CTX::instance()->mesh.lcFromPoints)
+  if (CTX::instance()->mesh.lcFromPoints){
     propagate1dMesh(_gf);
+  }
   else {
     std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin();
     for ( ; itv2 != _2Dto3D.end(); ++itv2){
@@ -623,7 +624,8 @@ static void propagateValuesOnFace(GFace *_gf,
   }
 
   // Solve
-  _lsys->systemSolve();
+  if (myAssembler.sizeOfR())
+    _lsys->systemSolve();
 
   // save solution
   for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){

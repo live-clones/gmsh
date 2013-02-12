@@ -1737,6 +1737,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     outputScalarField(m->triangles, name, 1);
   }
 
+
   // start mesh generation for periodic face
   if(!algoDelaunay2D(gf)){
     // need for a BGM for cross field
@@ -1766,32 +1767,46 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   /// This is a structure that we need only for periodic cases
   /// We will duplicate the vertices (MVertex) that are on seams
   /// 
-  /*
-  {
+  
+  std::map<MVertex*, MVertex*> equivalence;
+  std::map<MVertex*, SPoint2> parametricCoordinates;
+  if(algoDelaunay2D(gf)){
     std::map<MVertex*, BDS_Point*> invertMap;
-    std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
     std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
     while(it != recoverMap.end()){
       // we have twice vertex MVertex with 2 different coordinates
-      std::map<MVertex*, BDS_Point*>::iterator invIt = invertMap.find((*it)->second);
+      MVertex  * mv1  =  it->second;
+      BDS_Point* bds = it->first;
+      std::map<MVertex*, BDS_Point*>::iterator invIt = invertMap.find(mv1);
       if (invIt != invertMap.end()){
-	BDS_Point* bds1 = (*invIt)->second; 	
-	BDS_Point* bds2 = (*it)->first;
-	MVertex  * mv1  =  (*it)->second;
 	// create a new "fake" vertex that will be destroyed afterwards
-	double t;
-	mv1->getParameter(0,t);
-	MVertex  * mv2  = new MEdgeVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t);
-	(*it)->second = mv2;
-	std::map<BDS_Point*, MVertex*>::iterator itTemp = it;
-	++it;
-	recoverMap.erase(itTemp);	
+	MVertex  * mv2 ;
+	if (mv1->onWhat()->dim() == 1) {
+	  double t;
+	  mv1->getParameter(0,t);
+	  mv2  = new MEdgeVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,   ((MEdgeVertex*)mv1)->getLc());
+	}
+	else if (mv1->onWhat()->dim() == 0) {
+	  mv2  = new MVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat());
+	}
+	else
+	  Msg::Error("error in seam reconstruction");
+
+	it->second = mv2;
+	equivalence[mv2] = mv1;
+	parametricCoordinates[mv2] = SPoint2(bds->u,bds->v);
+	//	printf("new vertex created %p that replaces %p %g %g %g\n",mv2,mv1,mv2->x(),mv2->y(),mv2->z());
+	invertMap[mv2] = bds;
       }
-      else ++it;
-      invertMap[it->second] = it->first;
+      else {
+	parametricCoordinates[mv1] = SPoint2(bds->u,bds->v);
+	invertMap[mv1] = bds;
+      }
+      ++it;
     }
+    //    recoverMap.insert(new_relations.begin(), new_relations.end()); 
   }
-  */
+  Msg::Info("%d points that are duplicated for delaunay meshing",equivalence.size());
 
   // fill the small gmsh structures
   {
@@ -1847,17 +1862,29 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     outputScalarField(m->triangles, name, 1);
   }
 
+  bool infty = false;
+  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD || gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+    infty = true;
+  if (infty)
+    buildBackGroundMesh (gf, &equivalence, &parametricCoordinates);
+  // BOUNDARY LAYER
+  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
+  
+
   if(algoDelaunay2D(gf)){
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
-      bowyerWatsonFrontal(gf);
+      bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
-      bowyerWatsonFrontalLayers(gf,true);
+      bowyerWatsonFrontalLayers(gf,true, &equivalence, &parametricCoordinates);
+    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+      bowyerWatsonParallelograms(gf,&equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
-      bowyerWatson(gf);
+      bowyerWatson(gf,1000000000, &equivalence, &parametricCoordinates);
     else
       meshGFaceBamg(gf);
-    laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
+    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)) 
+      laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
 
   // delete the mesh
@@ -1872,6 +1899,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
+  gf->meshStatistics.status = GFace::DONE;
   return true;
 }
 

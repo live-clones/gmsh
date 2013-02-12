@@ -573,7 +573,8 @@ void Size_field::solve(GRegion* gr){
   //printf("number of tetrahedra = %d\n",count2);	
   //printf("volume = %f\n",volume);
 
-  system->systemSolve();
+  if (assembler.sizeOfR())
+    system->systemSolve();
 
   for(it=interior.begin();it!=interior.end();it++){
     assembler.getDofValue(*it,0,1,val);

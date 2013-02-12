@@ -158,6 +158,10 @@ struct RecombineTriangle
     else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
     else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
     
+    MQuadrangle q (n1,n3,n2,n4);
+    angle = q.etaShapeMeasure();
+
+    /*
     double a1 = 180 * angle3Vertices(n1, n4, n2) / M_PI;
     double a2 = 180 * angle3Vertices(n4, n2, n3) / M_PI;
     double a3 = 180 * angle3Vertices(n2, n3, n1) / M_PI;
@@ -166,6 +170,7 @@ struct RecombineTriangle
     angle = std::max(fabs(90. - a2),angle);
     angle = std::max(fabs(90. - a3),angle);
     angle = std::max(fabs(90. - a4),angle);
+    */
     cost_quality = 1.0 - std::max(1.0 - angle/90.0,0.0); //addition for class Temporary
     cost_alignment = Temporary::compute_alignment(me,_t1,_t2); //addition for class Temporary
     total_cost = Temporary::compute_total_cost(cost_quality,cost_alignment); //addition for class Temporary

@@ -599,7 +599,7 @@ static void Mesh3D(GModel *m)
 	f.treat_region(gr);
       }
       //Recombine3D into hex
-      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
+      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){	
 	Recombinator rec;
 	rec.execute();
 	Supplementary sup;

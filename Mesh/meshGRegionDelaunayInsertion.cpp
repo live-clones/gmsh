@@ -305,6 +305,8 @@ bool insertVertexB(std::list<faceXtet> &shell,
     ++it;
   }
   // OK, the cavity is star shaped
+  if (onePointIsTooClose)printf("One point is too close\n");
+  if (fabs(oldVolume - newVolume) > 1.e-10 * oldVolume)printf("Volume do not match %22.15E %22.15E %22.15E\n",oldVolume,newVolume,fabs(oldVolume-newVolume)/newVolume);
   if (fabs(oldVolume - newVolume) < 1.e-10 * oldVolume &&
       !onePointIsTooClose){
     connectTets_vector(new_cavity.begin(), new_cavity.end());

@@ -292,8 +292,10 @@ void addobj(void)
   else if(strstr(curobj, "TEXT")) {     /* not implemented for now */
   }
   else if(strstr(curobj, "SHAPE")) {    /* these look very hard */
+    printf("SHAPE\n");
   }
   else if(strstr(curobj, "BLOCK")) {    /* these look very hard */
+    printf("BLOCK\n");
   }
   else if(strstr(curobj, "ENDBLK")) {   /* these look very hard */
   }
@@ -304,6 +306,7 @@ void addobj(void)
   else if(strstr(curobj, "ATTRIB")) {   /* not implemented for now */
   }
   else if(strstr(curobj, "POLYLINE")) { /* these look fairly hard */
+    printf("POLYLINE\n");
   }
   else if(strstr(curobj, "VERTEX")) {   /* these look fairly hard */
     if(ints[0] == 192) {
@@ -406,6 +409,9 @@ void addobj(void)
 #endif
   }
   else if(strstr(curobj, "DIMENSION")) {        /* not implemented for now */
+  }
+  else {
+    printf("%s\n",curobj);
   }
 
 }

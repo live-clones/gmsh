@@ -24,10 +24,20 @@ struct bidimMeshData
   std::map<MVertex*,int> indices;
   std::vector<double> Us, Vs, vSizes, vSizesBGM;
   std::vector<SMetric3> vMetricsBGM;
+  std::map<MVertex* , MVertex*>* equivalence;
+  std::map<MVertex*, SPoint2> * parametricCoordinates;
   inline void addVertex (MVertex* mv, double u, double v, double size, double sizeBGM){
     int index = Us.size();
     if (mv->onWhat()->dim() == 2)mv->setIndex(index);
     else indices[mv] = index;
+    if (parametricCoordinates){
+      std::map<MVertex*, SPoint2>::iterator it =  parametricCoordinates->find(mv);
+      if (it != parametricCoordinates->end()){
+	u = it->second.x();
+	v = it->second.y();
+	//	printf("%g %g\n",u,v);
+      }
+    }
     Us.push_back(u);
     Vs.push_back(v);
     vSizes.push_back(size);
@@ -36,6 +46,17 @@ struct bidimMeshData
   inline int getIndex (MVertex *mv) {
     if (mv->onWhat()->dim() == 2)return mv->getIndex();
     return indices[mv];
+  }
+  inline MVertex * equivalent (MVertex *v1) const {
+    if (equivalence){
+      std::map<MVertex* , MVertex*>::iterator it = equivalence->find(v1);
+      if (it == equivalence->end())return 0;
+      return it->second;
+    }
+    return 0;
+  }
+  bidimMeshData (std::map<MVertex* , MVertex*>* e = 0, std::map<MVertex*, SPoint2> *p = 0) : equivalence(e), parametricCoordinates(p)  
+  {
   }
 };
 
@@ -111,11 +132,21 @@ class compareTri3Ptr
 void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
-void bowyerWatson(GFace *gf, int MAXPNT= 1000000000);
-void bowyerWatsonFrontal(GFace *gf);
-void bowyerWatsonFrontalLayers(GFace *gf, bool quad);
-void bowyerWatsonParallelograms(GFace *gf);
-void buildBackGroundMesh (GFace *gf);
+void bowyerWatson(GFace *gf, int MAXPNT= 1000000000,
+		  std::map<MVertex* , MVertex*>* equivalence= 0,  
+		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+void bowyerWatsonFrontal(GFace *gf,
+		  std::map<MVertex* , MVertex*>* equivalence= 0,  
+		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
+		  std::map<MVertex* , MVertex*>* equivalence= 0,  
+		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+void bowyerWatsonParallelograms(GFace *gf,
+		  std::map<MVertex* , MVertex*>* equivalence= 0,  
+		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+void buildBackGroundMesh (GFace *gf,
+		  std::map<MVertex* , MVertex*>* equivalence= 0,  
+		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
 
 struct edgeXface
 {

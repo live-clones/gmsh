@@ -233,6 +233,8 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 double  MQuadrangle::etaShapeMeasure()
 {
+  double AR = 1;//(minEdge()/maxEdge());
+  
   SVector3 v01 (_v[1]->x()-_v[0]->x(),_v[1]->y()-_v[0]->y(),_v[1]->z()-_v[0]->z());
   SVector3 v12 (_v[2]->x()-_v[1]->x(),_v[2]->y()-_v[1]->y(),_v[2]->z()-_v[1]->z());
   SVector3 v23 (_v[3]->x()-_v[2]->x(),_v[3]->y()-_v[2]->y(),_v[3]->z()-_v[2]->z());
@@ -262,7 +264,7 @@ double  MQuadrangle::etaShapeMeasure()
   angle = std::max(fabs(90. - a3),angle);
   angle = std::max(fabs(90. - a4),angle);
 
-  return sign*(1.-angle/90);
+  return sign*(1.-angle/90) * AR;
 }
 
 /// a shape measure for quadrangles
@@ -274,46 +276,6 @@ double  MQuadrangle::etaShapeMeasure()
 ///             1 + xi , 1 - xi ,  -(1-xi), -(1+xi)    
 double MQuadrangle::gammaShapeMeasure(){
   return etaShapeMeasure();
-  /*
-  // xi = -1 eta = -1 
-  const double dsf_corner1 [2][4] = {{0,0,-.5,.5},{0,0.5,-.5,0}};
-  // xi =  1 eta = -1 
-  const double dsf_corner2 [2][4] = {{0,0,-.5,.5},{0.5,0,0,-.5}};
-  // xi =  1 eta =  1 
-  const double dsf_corner3 [2][4] = {{.5,-.5,0,0},{0.5,0,0,-.5}};
-  // xi =  -1 eta =  1 
-  const double dsf_corner4 [2][4] = {{0,0,-.5,.5},{0.5,0,0,-.5}};
-  */
-  double QT[4] = {qmTriangle(_v[0],_v[1],_v[2],QMTRI_RHO),
-		  qmTriangle(_v[1],_v[2],_v[3],QMTRI_RHO), 
-		  qmTriangle(_v[2],_v[3],_v[0],QMTRI_RHO), 
-		  qmTriangle(_v[3],_v[0],_v[1],QMTRI_RHO)} ;
-  std::sort(QT,QT+4);
-  double quality = QT[0]*QT[1] / (QT[2] * QT[3]);
-
-  SVector3 v01 (_v[1]->x()-_v[0]->x(),_v[1]->y()-_v[0]->y(),_v[1]->z()-_v[0]->z());
-  SVector3 v12 (_v[2]->x()-_v[1]->x(),_v[2]->y()-_v[1]->y(),_v[2]->z()-_v[1]->z());
-  SVector3 v23 (_v[3]->x()-_v[2]->x(),_v[3]->y()-_v[2]->y(),_v[3]->z()-_v[2]->z());
-  SVector3 v30 (_v[0]->x()-_v[3]->x(),_v[0]->y()-_v[3]->y(),_v[0]->z()-_v[3]->z());
-
-  SVector3 a = crossprod(v01,v12);
-  SVector3 b = crossprod(v12,v23);
-  SVector3 c = crossprod(v23,v30);
-  SVector3 d = crossprod(v30,v01);
-
-  if (a.z() < 0 || b.z() < 0 || c.z() < 0 || d.z() < 0) return -quality;
-  
-  if (dot(a,b) < 0 || dot(a,c) < 0 || dot(a,d) < 0 )return -quality;
-
-  return quality;
-  /*
-  double J[3][3];
-  double detJ = getJacobian(-1,-1, J);
-  double C[2][2] = {{0,0}{0,0}};
-  for (int i=0;i<2;i++){
-    
-  }*/
-  
 }
 
 

@@ -18,7 +18,7 @@
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 
-static const double FACTOR = .81;
+static const double FACTOR = .71;
 static const int NUMDIR = 3;
 //static const double DIRS [NUMDIR] = {0.0};
 static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
@@ -133,7 +133,7 @@ bool inExclusionZone (SPoint2 &p,
   if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
 
   my_wrapper w (p);
-  double _min[2] = {p.x()-1.e-8, p.y()-1.e-8},_max[2] = {p.x()+1.e-8,p.y()+1.e-8};
+  double _min[2] = {p.x()-1.e-3, p.y()-1.e-3},_max[2] = {p.x()+1.e-3,p.y()+1.e-3};
   rtree.Search(_min,_max,rtree_callback,&w);
 
   return w._tooclose;
@@ -259,14 +259,15 @@ bool compute4neighbors (GFace *gf,   // the surface
 	   ,covar1[0],covar1[1],covar2[0],covar2[1],l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());*/
 
     // this is the rectangle in the parameter plane.
-    double r1 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r2 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r3 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r4 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r5 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r6 = 0*1.e-8*(double)rand() / RAND_MAX;
-    double r7 = 0*1.e-8* (double)rand() / RAND_MAX;
-    double r8 = 0*1.e-8*(double)rand() / RAND_MAX;
+    const double EPS = 1.e-6;
+    double r1 = EPS*(double)rand() / RAND_MAX;
+    double r2 = EPS*(double)rand() / RAND_MAX;
+    double r3 = EPS*(double)rand() / RAND_MAX;
+    double r4 = EPS*(double)rand() / RAND_MAX;
+    double r5 = EPS*(double)rand() / RAND_MAX;
+    double r6 = EPS*(double)rand() / RAND_MAX;
+    double r7 = EPS* (double)rand() / RAND_MAX;
+    double r8 = EPS*(double)rand() / RAND_MAX;
     double newPoint[4][2] = {{midpoint[0] - covar1[0] * size_param_1 +r1,
 			      midpoint[1] - covar1[1] * size_param_1 +r2},
 			     {midpoint[0] - covar2[0] * size_param_2 +r3,
