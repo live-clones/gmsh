@@ -1663,14 +1663,14 @@ void MetaModel::client_sentence(const std::string &name,
       localSolverClient *c;
       if((c=findClientByName(name))){
 	c->compute();
-	onelab::server::instance()->setChanged(false, c->getName());
+	//onelab::server::instance()->setChanged(false, c->getName());
       }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
   }
   else if(!action.compare("merge")){
-    if( arguments.size() && isTodo(COMPUTE)  && !OLMsg::GetErrorCount() && (OLMsg::hasGmsh)){
+    if( arguments.size() && isTodo(COMPUTE) && !OLMsg::GetErrorCount() && (OLMsg::hasGmsh)){
       std::vector<std::string> choices;
       for(unsigned int i = 0; i < arguments.size(); i++){
 	choices.push_back(resolveGetVal(arguments[i]));
