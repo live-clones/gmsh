@@ -1341,8 +1341,8 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_POINT:
   case MSH_POINT_FROM_GMODEL:
     {
-      if((v = FindPoint(Num))) v->Visible = Mode;
-      GVertex *gv = GModel::current()->getVertexByTag(Num);
+      if((v = FindPoint(abs(Num)))) v->Visible = Mode;
+      GVertex *gv = GModel::current()->getVertexByTag(abs(Num));
       if(gv) gv->setVisibility(Mode);
     }
     break;
@@ -1359,8 +1359,8 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_COMPOUND:
   case MSH_SEGM_FROM_GMODEL:
     {
-      if((c = FindCurve(Num))) c->Visible = Mode;
-      GEdge *ge = GModel::current()->getEdgeByTag(Num);
+      if((c = FindCurve(abs(Num)))) c->Visible = Mode;
+      GEdge *ge = GModel::current()->getEdgeByTag(abs(Num));
       if(ge) ge->setVisibility(Mode);
     }
     break;
@@ -1371,8 +1371,8 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SURF_COMPOUND:
   case MSH_SURF_FROM_GMODEL:
     {
-      if((s = FindSurface(Num))) s->Visible = Mode;
-      GFace *gf = GModel::current()->getFaceByTag(Num);
+      if((s = FindSurface(abs(Num)))) s->Visible = Mode;
+      GFace *gf = GModel::current()->getFaceByTag(abs(Num));
       if(gf) gf->setVisibility(Mode);
     }
     break;
@@ -1381,8 +1381,8 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_VOLUME_COMPOUND:
   case MSH_VOLUME_FROM_GMODEL:
     {
-      if((V = FindVolume(Num))) V->Visible = Mode;
-      GRegion *gr = GModel::current()->getRegionByTag(Num);
+      if((V = FindVolume(abs(Num)))) V->Visible = Mode;
+      GRegion *gr = GModel::current()->getRegionByTag(abs(Num));
       if(gr) gr->setVisibility(Mode);
     }
     break;
