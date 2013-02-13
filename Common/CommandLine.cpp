@@ -476,32 +476,33 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number of lloyd iterations");
       }
-#if defined(HAVE_MESH)
-      else if(!strcmp(argv[i] + 1, "microstructure")) {
-        i++;
-        int j;
-        double number;
-        double temp;
-        std::vector<double> coordinates;
-        if(argv[i]){
-          std::ifstream file(argv[i++]);
-          file >> number;
-          coordinates.clear();
-          coordinates.resize(3*number);
-          for(j = 0; j <number; j++){
-            file >> coordinates[3*j];
-            file >> coordinates[3*j+1];
-            file >> coordinates[3*j+2];
-            file >> temp;
-          }
-          voroMetal3D vm1;
-          vm1.execute(coordinates,0.1);
-          GModel::current()->load("MicrostructurePolycrystal3D.geo");
-          voroMetal3D vm2;
-          vm2.correspondance(0.00001);
-        }
-      }
-#endif
+      #if defined(HAVE_MESH)
+	  else if(!strcmp(argv[i] + 1, "microstructure")) {
+	    i++;
+		int j;
+		int radical;
+		double max;
+		std::vector<double> properties;
+		if(argv[i]){
+	      std::ifstream file(argv[i++]);
+		  file >> max;
+	      file >> radical;
+		  properties.clear();
+		  properties.resize(4*max);
+		  for(j=0;j<max;j++){
+		    file >> properties[4*j];
+			file >> properties[4*j+1];
+			file >> properties[4*j+2];
+			file >> properties[4*j+3];
+		  }
+		  voroMetal3D vm1;
+		  vm1.execute(properties,radical,0.1);
+		  GModel::current()->load("MicrostructurePolycrystal3D.geo");
+		  voroMetal3D vm2;
+		  vm2.correspondance(0.00001);
+		}
+	  }
+      #endif
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
         i++;
