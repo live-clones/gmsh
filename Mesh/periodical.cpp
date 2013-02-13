@@ -83,11 +83,17 @@ void voroMetal3D::execute(GRegion* gr,double h){
   MElement* element;
   MVertex* vertex;
   std::vector<SPoint3> vertices2;
+  std::vector<double> radii;
   std::set<MVertex*> vertices;
   std::set<MVertex*>::iterator it;
 
+  vertices2.clear();
+  radii.clear();
+  vertices.clear();
+	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
+	
 	for(j=0;j<element->getNumVertices();j++){
 	  vertex = element->getVertex(j);
 	  vertices.insert(vertex);
@@ -96,28 +102,29 @@ void voroMetal3D::execute(GRegion* gr,double h){
 
   for(it=vertices.begin();it!=vertices.end();it++){
     vertices2.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
+	radii.push_back(1.0);
   }
 
-  execute(vertices2,h);
+  execute(vertices2,radii,0,h);
 }
 
-void voroMetal3D::execute(std::vector<double>& vertices,double h){
+void voroMetal3D::execute(std::vector<double>& properties,int radical,double h){
   unsigned int i;
-  SPoint3 point;
-  std::vector<SPoint3> temp;
+  std::vector<SPoint3> vertices;
+  std::vector<double> radii;
   
-  temp.clear();	
+  vertices.clear();
+  radii.clear();
 	
-  for(i=0;i<vertices.size()/3;i++){
-	point = SPoint3(vertices[3*i],vertices[3*i+1],vertices[3*i+2]);
-    temp.push_back(point);
+  for(i=0;i<properties.size()/4;i++){	  
+	vertices.push_back(SPoint3(properties[4*i],properties[4*i+1],properties[4*i+2]));
+	radii.push_back(properties[4*i+3]);
   }
   
-  execute(temp,h);
+  execute(vertices,radii,radical,h);
 }
 
-void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
-{
+void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& radii,int radical,double h){
 #if defined(HAVE_VORO3D)
   unsigned int i;
   unsigned int j;
@@ -169,22 +176,43 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,double h)
   max_x=max_y=max_z = 1;
   delta = 0;
 
-  container cont(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
+  container contA(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
+  container_poly contB(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
 
   for(i=0;i<vertices.size();i++){
-    cont.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z());
+    if(radical==0){
+      contA.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z());
+	}
+	else{
+	  contB.put(i,vertices[i].x(),vertices[i].y(),vertices[i].z(),radii[i]);
+	}
   }
 
-  c_loop_all loop(cont);
-  loop.start();
-  do{
-    cont.compute_cell(cell,loop);
-	loop.pos(x,y,z);
-	pointer = new voronoicell_neighbor();
-	*pointer = cell;
-	pointers.push_back(pointer);
-	generators.push_back(SPoint3(x,y,z));
-  }while(loop.inc());
+  c_loop_all loopA(contA);
+  c_loop_all loopB(contB);
+	
+  if(radical==0){
+    loopA.start();
+    do{
+	  contA.compute_cell(cell,loopA);
+	  loopA.pos(x,y,z);
+	  pointer = new voronoicell_neighbor();
+	  *pointer = cell;
+	  pointers.push_back(pointer);
+	  generators.push_back(SPoint3(x,y,z));
+    }while(loopA.inc());
+  }
+  else{
+    loopB.start();
+	do{
+	  contB.compute_cell(cell,loopB);
+	  loopB.pos(x,y,z);
+	  pointer = new voronoicell_neighbor();
+	  *pointer = cell;
+	  pointers.push_back(pointer);
+	  generators.push_back(SPoint3(x,y,z));
+	}while(loopB.inc());
+  }
 
   initialize_counter();
 
