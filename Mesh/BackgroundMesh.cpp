@@ -400,8 +400,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 }
 
 
-// anisotropic version of the background field - for now, only works
-// with bamg in 2D, work in progress
+// anisotropic version of the background field
 SMetric3 BGM_MeshMetric(GEntity *ge,
                         double U, double V,
                         double X, double Y, double Z)
@@ -445,7 +444,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 }
 
 bool Extend1dMeshIn2dSurfaces()
-{
+{rm
   return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }
 

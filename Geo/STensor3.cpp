@@ -37,7 +37,7 @@ SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
   double l2 = std::max(dot(v2,m1,v2),dot(v2,m2,v2));
 
   // Correction from the PhD thesis of Frederic Alauzet p.16
-  // If m2 = alpha*m1, then take the largest metric (incoherent with definition intersection)
+  // If m2 = alpha*m1, then take the largest metric
   static const double eps = 1.e-2;                              // Tolerance to detect triple eigenvalue (i.e. proportional metrics)
   const double max_eig = std::max(S(0), std::max(S(1), S(2)));
   const double min_eig = std::min(S(0), std::min(S(1), S(2)));
