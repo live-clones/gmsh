@@ -7,6 +7,9 @@
 
 #include "CellComplex.h"
 #include "MElement.h"
+#include "OS.h"
+
+double CellComplex::_patience = 10;
 
 CellComplex::CellComplex(GModel* model,
 			 std::vector<MElement*>& domainElements,
@@ -72,7 +75,10 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
   }
   _dim = 0;
 
+  double t1 = Cpu();
+
   for(unsigned int i=0; i < elements.size(); i++){
+
     MElement* element = elements.at(i);
     int dim = element->getDim();
     int type = element->getType();
@@ -112,6 +118,15 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
   _biggestCell = biggestElement[_dim];
 
   for (int dim = 3; dim > 0; dim--){
+
+    double t2 = Cpu();
+    if(t2-t1 > CellComplex::_patience && dim > 1) {
+      if(domain == 0)
+        Msg::Info(" ... creating domain %d-cells", dim);
+      else if(domain == 1)
+        Msg::Info(" ... creating subdomain %d-cells", dim);
+    }
+
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
       for(int i = 0; i < cell->getNumBdElements(); i++){
@@ -470,13 +485,12 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(!getSize(0)) return 0;
+
+  double t1 = Cpu();
   int count = 0;
   if(relative() && !homseq) removeSubdomain();
   std::vector<Cell*> empty;
   for(int i = 3; i > 0; i--) count = count + reduction(i, -1, empty);
-
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(omit && !homseq){
 
@@ -495,14 +509,25 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
     }
   }
 
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
+  double t2 = Cpu();
+  if(t2-t1 > CellComplex::_patience) {
+    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices",
+              getSize(3), getSize(2), getSize(1), getSize(0));
+  }
 
   if(combine > 0) this->combine(3);
-  reduction(2, -1, empty);
+
+  if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
+  else reduction(2, -1, empty);
+
   if(combine > 0) this->combine(2);
-  reduction(1, -1, empty);
+
+  if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
+  else reduction(1, -1, empty);
+
   if(combine > 0) this->combine(1);
+
+  if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
 
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getSize(3), getSize(2), getSize(1), getSize(0));
@@ -542,6 +567,9 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(!getSize(0)) return 0;
+
+  double t1 = Cpu();
+
   int count = 0;
   if(relative()) removeSubdomain();
   std::vector<Cell*> empty;
@@ -556,9 +584,6 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   }
   for(int j = 1; j <= getDim(); j++)
     count += coreduction(j, -1, empty);
-
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
 
   if(omit){
 
@@ -589,15 +614,26 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
 
   }
 
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
+  double t2 = Cpu();
+  if(t2-t1 > CellComplex::_patience) {
+    Msg::Info(" .. %d volumes, %d faces, %d edges, and %d vertices",
+              getSize(3), getSize(2), getSize(1), getSize(0));
+  }
 
   if(combine > 0) this->cocombine(0);
-  coreduction(1, -1, empty);
+
+  if(combine > 2) for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
+  else coreduction(1, -1, empty);
+
   if(combine > 0) this->cocombine(1);
-  coreduction(2, -1, empty);
+
+  if(combine > 2)  for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
+  else coreduction(2, -1, empty);
+
   if(combine > 0) this->cocombine(2);
-  coreduction(3, -1, empty);
+
+  if(combine > 2) for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
+  else coreduction(3, -1, empty);
 
   coherent();
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
@@ -669,15 +705,26 @@ int CellComplex::combine(int dim)
   //           getSize(3), getSize(2), getSize(1), getSize(0));
   if(dim < 1 || dim > 3) return 0;
 
+  double t1 = Cpu();
+
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
   std::map<Cell*, short int, Less_Cell> bd_c;
   int count = 0;
 
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+
+    double t2 = Cpu();
+    if(t2-t1 > CellComplex::_patience) {
+      t1 = Cpu();
+      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+                getSize(3), getSize(2), getSize(1), getSize(0));
+    }
+
     Cell* cell = *cit;
     cell->getBoundary(bd_c);
     enqueueCells(bd_c, Q, Qset);
+
     while(Q.size() != 0){
       Cell* s = Q.front();
       Q.pop();
@@ -741,12 +788,22 @@ int CellComplex::cocombine(int dim)
 
   if(dim < 0 || dim > 2) return 0;
 
+  double t1 = Cpu();
+
   std::queue<Cell*> Q;
   std::set<Cell*, Less_Cell> Qset;
   std::map<Cell*, short int, Less_Cell> cbd_c;
   int count = 0;
 
   for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+
+    double t2 = Cpu();
+    if(t2-t1 > CellComplex::_patience) {
+      t1 = Cpu();
+      Msg::Info(" ... %d volumes, %d faces, %d edges, and %d vertices",
+                getSize(3), getSize(2), getSize(1), getSize(0));
+    }
+
     Cell* cell = *cit;
 
     cell->getCoboundary(cbd_c);

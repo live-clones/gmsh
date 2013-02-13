@@ -26,6 +26,7 @@ StringXString HomologyPostProcessingOptions_String[] = {
   {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains", NULL, "1, 2"},
   {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2", NULL, ""},
   {GMSH_FULLRC, "PhysicalGroupsToTraceResults", NULL, ""},
+  {GMSH_FULLRC, "PhysicalGroupsToProjectResults", NULL, ""},
   {GMSH_FULLRC, "NameForResultChains", NULL, "c"},
 };
 
@@ -54,7 +55,8 @@ std::string GMSH_HomologyPostProcessingPlugin::getHelp() const
     "Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.\n\n"
 
     "Options:\n"
-    "'PhysicalGroupsToTraceResults': Trace the resulting cochains to the given physical groups.\n"
+    "'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to the given physical groups.\n"
+    "'PhysicalGroupsToProjectResults': Project the resulting (co)chains to the complement of the given physical groups.\n"
     "'NameForResultChains': Post-processing view name prefix for the results.\n"
     "'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.\n";
 
@@ -139,8 +141,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::string matrixString = HomologyPostProcessingOptions_String[0].def;
   std::string opString1 = HomologyPostProcessingOptions_String[1].def;
   std::string opString2 = HomologyPostProcessingOptions_String[2].def;
-  std::string cname = HomologyPostProcessingOptions_String[4].def;
+  std::string cname = HomologyPostProcessingOptions_String[5].def;
   std::string traceString = HomologyPostProcessingOptions_String[3].def;
+  std::string projectString = HomologyPostProcessingOptions_String[4].def;
   int bd = (int)HomologyPostProcessingOptions_Number[0].def;
 
   GModel* m = GModel::current();
@@ -216,6 +219,8 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
 
   std::vector<int> tracePhysicals;
   if(!parseStringOpt(3, tracePhysicals)) return 0;
+  std::vector<int> projectPhysicals;
+  if(!parseStringOpt(4, projectPhysicals)) return 0;
 
   std::vector<Chain<int> > curBasis;
   for(unsigned int i = 0; i < basisPhysicals.size(); i++){
@@ -285,8 +290,15 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
               dim, traceString.c_str());
     for(unsigned int i = 0; i < newBasis.size(); i++)
       newBasis.at(i) = newBasis.at(i).getTrace(m, tracePhysicals);
-    ElemChain::clearVertexCache();
   }
+  if(!projectPhysicals.empty()) {
+    Msg::Info("Taking projection of result %d-chains to the complement of the domain %s", dim, projectString.c_str());
+    for(unsigned int i = 0; i < newBasis.size(); i++)
+      newBasis.at(i) = newBasis.at(i).getProject(m, projectPhysicals);
+  }
+  if(!tracePhysicals.empty() || !projectPhysicals.empty())
+    ElemChain::clearVertexCache();
+
 
   for(unsigned int i = 0; i < newBasis.size(); i++) {
     std::string dims = convertInt(newBasis.at(i).getDim());

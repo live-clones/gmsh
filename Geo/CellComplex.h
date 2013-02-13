@@ -83,6 +83,8 @@ class CellComplex
   int coreduction(Cell* startCell, int omit,
 		  std::vector<Cell*>& omittedCells);
 
+  static double _patience;
+
  public:
   CellComplex(GModel* model,
 	      std::vector<MElement*>& domainElements,

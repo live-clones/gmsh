@@ -164,6 +164,10 @@ class ElemChain : public PosetCat<ElemChain>
 
 };
 
+void findEntitiesInPhysicalGroups
+(GModel* m, const std::vector<int>& physicalGroups,
+std::vector<GEntity*>& entities);
+
 // Class to represent a chain, formal sum of elementary chains
 template <class C>
 class Chain : public VectorSpaceCat<Chain<C>, C>
@@ -175,6 +179,9 @@ private:
   std::map<ElemChain, C> _elemChains;
   // A name for the chain
   std::string _name;
+
+  Chain<C> _getTraceOrProject(const std::vector<GEntity*>& entities,
+                              bool trace) const;
 
 public:
   // Elementary chain iterators
@@ -222,10 +229,21 @@ public:
   Chain<C> getBoundary() const;
 
   // Get a chain which contains elementary chains that are
-  // fully in the given physical group or elementary entities
+  // in the given physical group or elementary entities
   Chain<C> getTrace(GModel* m, int physicalGroup) const;
   Chain<C> getTrace(GModel* m, const std::vector<int>& physicalGroups) const;
   Chain<C> getTrace(const std::vector<GEntity*>& entities) const;
+
+  // Get a chain which contains elementary chains that are *not*
+  // in the given physical group or elementary entities
+  Chain<C> getProject(GModel* m, int physicalGroup) const;
+  Chain<C> getProject(GModel* m, const std::vector<int>& physicalGroups) const;
+  Chain<C> getProject(const std::vector<GEntity*>& entities) const;
+
+  // The above two methods decompose a chain c so that
+  // (c - c.getTrace(...) - c.getProject(...)).isZero() == true
+  // holds
+
 
   // Add chain to Gmsh model as a physical group,
   // elementary chains are turned into mesh elements with
@@ -239,26 +257,13 @@ public:
 template <class C>
 Chain<C>::Chain(GModel* m, int physicalGroup)
 {
+  std::vector<int> groups(1, physicalGroup);
   std::vector<GEntity*> entities;
-  std::map<int, std::vector<GEntity*> > groups[4];
-  m->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::iterator it;
+  findEntitiesInPhysicalGroups(m, groups, entities);
 
-  for(int j = 0; j < 4; j++){
-    it = groups[j].find(physicalGroup);
-    if(it != groups[j].end()){
-      _dim = j;
-      std::vector<GEntity*> physicalGroup = it->second;
-      for(unsigned int k = 0; k < physicalGroup.size(); k++){
-        entities.push_back(physicalGroup.at(k));
-      }
-    }
-  }
-  if(entities.empty()) {
-    Msg::Error("Physical group %d does not exist", physicalGroup);
-  }
   for(unsigned int i = 0; i < entities.size(); i++) {
     GEntity* e = entities.at(i);
+    _dim = e->dim();
     for(unsigned int j = 0; j < e->getNumMeshElements(); j++) {
       this->addMeshElement(e->getMeshElement(j));
     }
@@ -357,36 +362,35 @@ Chain<C> Chain<C>::getTrace(GModel* m, int physicalGroup) const
 }
 
 template <class C>
-Chain<C> Chain<C>::getTrace(GModel* m,
-                            const std::vector<int>& physicalGroups) const
+Chain<C> Chain<C>::getProject(GModel* m, int physicalGroup) const
 {
-  std::map<int, std::vector<GEntity*> > groups[4];
-  m->getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::iterator it;
-  std::vector<GEntity*> entities;
-  for(unsigned int i = 0; i < physicalGroups.size(); i++){
-    bool found = false;
-    for(int j = 0; j < 4; j++){
-      it = groups[j].find(physicalGroups.at(i));
-      if(it != groups[j].end()){
-        found = true;
-        std::vector<GEntity*> physicalGroup = it->second;
-        for(unsigned int k = 0; k < physicalGroup.size(); k++){
-          entities.push_back(physicalGroup.at(k));
-        }
-      }
-    }
-    if(!found) {
-      Msg::Error("Physical group %d does not exist",
-                 physicalGroups.at(i));
-    }
-  }
-  if(entities.empty()) return Chain<C>();
-  return getTrace(entities);
+  std::vector<int> groups(1, physicalGroup);
+  return this->getProject(m, groups);
 }
 
 template <class C>
-Chain<C> Chain<C>::getTrace(const std::vector<GEntity*>& entities) const
+Chain<C> Chain<C>::getTrace(GModel* m,
+                            const std::vector<int>& physicalGroups) const
+{
+  std::vector<GEntity*> entities;
+  findEntitiesInPhysicalGroups(m, physicalGroups, entities);
+  if(entities.empty()) return Chain<C>();
+  return this->_getTraceOrProject(entities, true);
+}
+
+template <class C>
+Chain<C> Chain<C>::getProject(GModel* m,
+                              const std::vector<int>& physicalGroups) const
+{
+  std::vector<GEntity*> entities;
+  findEntitiesInPhysicalGroups(m, physicalGroups, entities);
+  if(entities.empty()) return Chain<C>();
+  return this->_getTraceOrProject(entities, false);
+}
+
+template <class C>
+Chain<C> Chain<C>::_getTraceOrProject
+(const std::vector<GEntity*>& entities, bool trace) const
 {
   Chain<C> result;
   for(cecit it = _elemChains.begin(); it != _elemChains.end(); it++) {
@@ -397,9 +401,22 @@ Chain<C> Chain<C>::getTrace(const std::vector<GEntity*>& entities) const
         break;
       }
     }
-    if(inDomain) result.addElemChain(it->first, it->second);
+    if(inDomain && trace) result.addElemChain(it->first, it->second);
+    if(!inDomain && !trace) result.addElemChain(it->first, it->second);
   }
   return result;
+}
+
+template <class C>
+Chain<C> Chain<C>::getTrace(const std::vector<GEntity*>& entities) const
+{
+  return this->_getTraceOrProject(entities, true);
+}
+
+template <class C>
+Chain<C> Chain<C>::getProject(const std::vector<GEntity*>& entities) const
+{
+  return this->_getTraceOrProject(entities, false);
 }
 
 template <class C>

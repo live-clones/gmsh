@@ -100,7 +100,7 @@ class Homology
 	   std::vector<int> physicalSubdomain,
            std::vector<int> physicalIm,
            bool saveOrig=true,
-	   int combine=2, bool omit=true, bool smoothen=true,
+	   int combine=3, bool omit=true, bool smoothen=true,
            int heuristic=1);
   ~Homology();
 

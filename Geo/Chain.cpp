@@ -48,6 +48,33 @@ inline void ElemChain::_sortVertexIndices()
     _si.push_back(it->second);
 }
 
+void findEntitiesInPhysicalGroups
+(GModel* m, const std::vector<int>& physicalGroups,
+std::vector<GEntity*>& entities)
+{
+  std::map<int, std::vector<GEntity*> > groups[4];
+  m->getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::iterator it;
+  for(unsigned int i = 0; i < physicalGroups.size(); i++){
+    bool found = false;
+    for(int j = 0; j < 4; j++){
+      it = groups[j].find(physicalGroups.at(i));
+      if(it != groups[j].end()){
+        found = true;
+        std::vector<GEntity*> physicalGroup = it->second;
+        for(unsigned int k = 0; k < physicalGroup.size(); k++){
+          entities.push_back(physicalGroup.at(k));
+        }
+      }
+    }
+    if(!found) {
+      Msg::Error("Physical group %d does not exist",
+                 physicalGroups.at(i));
+    }
+  }
+}
+
+
 bool ElemChain::_equalVertices(const std::vector<MVertex*>& v2) const {
   if(_v.size() != v2.size()) return false;
   for(unsigned int i = 0; i < _v.size(); i++)
