@@ -444,7 +444,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 }
 
 bool Extend1dMeshIn2dSurfaces()
-{rm
+{
   return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }
 
