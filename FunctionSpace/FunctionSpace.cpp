@@ -86,8 +86,9 @@ void FunctionSpace::build(GroupOfElement& goe,
 
 void FunctionSpace::buildDof(void){
   // Get Elements //
-  unsigned int nElement                  = goe->getNumber();
-  const vector<const MElement*>& element = goe->getAll();
+  const unsigned int nElement = goe->getNumber();
+  const vector<pair<const MElement*, ElementData> >&
+    element = goe->getAll();
 
   // Init Struct //
   dof      = new set<const Dof*, DofComparator>;
@@ -99,11 +100,11 @@ void FunctionSpace::buildDof(void){
   // Create Dofs //
   for(unsigned int i = 0; i < nElement; i++){
     // Get Dof for this Element
-    vector<Dof> myDof = getKeys(*(element[i]));
+    vector<Dof> myDof = getKeys(*(element[i].first));
     unsigned int nDof = myDof.size();
 
     // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(nDof, *(element[i]));
+    GroupOfDof* god = new GroupOfDof(nDof, *(element[i].first));
     (*group)[i]     = god;
 
     // Add Dof
@@ -112,7 +113,10 @@ void FunctionSpace::buildDof(void){
 
     // Map GOD
     eToGod->insert(pair<const MElement*, const GroupOfDof*>
-		   (element[i], god));
+		   (element[i].first, god));
+
+    // Set in ElementData
+    goe->getElementData(i).setGroupOfDof(*god);
   }
 }
 
