@@ -313,7 +313,13 @@ FlGui::FlGui(int argc, char **argv)
 
   // create fullscreen window
   fullscreen = new openglWindow(100, 100, 100, 100);
-  fullscreen->mode(FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE));
+  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+  if(CTX::instance()->stereo) {
+    mode |= FL_DOUBLE;
+    mode |= FL_STEREO;
+  }
+  fullscreen->mode(mode);
   fullscreen->end();
   fullscreen->fullscreen();
 
