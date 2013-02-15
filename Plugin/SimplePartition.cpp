@@ -13,6 +13,7 @@
 #include "MQuadrangle.h"
 #include "MFace.h"
 #include "MEdge.h"
+#include "mathEvaluator.h"
 #if defined(HAVE_MESH)
 #include "meshPartition.h"
 #endif
@@ -21,6 +22,10 @@ StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlices", NULL, 4.},
   {GMSH_FULLRC, "Direction", NULL, 0.},
   {GMSH_FULLRC, "CreateBoundaries", NULL, 1.},
+};
+
+StringXString SimplePartitionOptions_String[] = {
+  {GMSH_FULLRC, "Mapping", NULL, "t"}
 };
 
 extern "C"
@@ -49,11 +54,23 @@ StringXNumber *GMSH_SimplePartitionPlugin::getOption(int iopt)
   return &SimplePartitionOptions_Number[iopt];
 }
 
+int GMSH_SimplePartitionPlugin::getNbOptionsStr() const
+{
+  return sizeof(SimplePartitionOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_SimplePartitionPlugin::getOptionStr(int iopt)
+{
+  return &SimplePartitionOptions_String[iopt];
+}
+
 PView *GMSH_SimplePartitionPlugin::execute(PView *v)
 {
   int numSlices = (int)SimplePartitionOptions_Number[0].def;
   int direction = (int)SimplePartitionOptions_Number[1].def;
   int createBoundaries = (int)SimplePartitionOptions_Number[2].def;
+  std::vector<std::string> expr(1);
+  expr[0] = SimplePartitionOptions_String[0].def;
 
   // partition the highest dimension elements in the current model (lower
   // dimension elements on boundaries cannot be tagged a priori: there are
@@ -63,8 +80,17 @@ PView *GMSH_SimplePartitionPlugin::execute(PView *v)
   SBoundingBox3d bbox = m->bounds();
   double pmin = bbox.min()[direction], pmax = bbox.max()[direction];
   std::vector<double> pp(numSlices + 1);
-  for(int p = 0; p <= numSlices; p++)
-    pp[p] = pmin + p * (pmax - pmin) / numSlices;
+
+  std::vector<std::string> variables(1);
+  variables[0] = "t";
+  mathEvaluator f(expr, variables);
+  if(expr.empty()) return v;
+  std::vector<double> values(1), res(1);
+  for(int p = 0; p <= numSlices; p++){
+    double t = values[0] = (double)p / (double)numSlices;
+    if(f.eval(values, res)) t = res[0];
+    pp[p] = pmin + t * (pmax - pmin);
+  }
   int dim = m->getDim();
   std::vector<GEntity*> entities;
   m->getEntities(entities);

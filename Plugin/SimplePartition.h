@@ -25,6 +25,8 @@ class GMSH_SimplePartitionPlugin : public GMSH_PostPlugin
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);
+  int getNbOptionsStr() const;
+  StringXString* getOptionStr(int iopt);
   PView *execute(PView *);
 };
 
