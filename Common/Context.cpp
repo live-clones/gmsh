@@ -92,6 +92,10 @@ CTX::CTX()
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
   for (int i = 0; i < 20; i++)
     color.mesh.carousel[i] = 0;
+  // added by Gauthier Becker (these are not initialized by default 
+  // leading to valgrind error) Feel free to change the default values)
+  mesh.switchElementTags=0;
+  terminal=0;
 }
 
 CTX *CTX::_instance = NULL;
