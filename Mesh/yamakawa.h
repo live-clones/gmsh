@@ -91,8 +91,6 @@ class Recombinator{
  private:
   std::vector<Hex> potential;
   std::map<MElement*,bool> markings;
-  std::map<MVertex*,std::set<MVertex*> > vertex_to_vertices;
-  std::map<MVertex*,std::set<MElement*> > vertex_to_elements;
   std::multiset<Facet> hash_tableA;
   std::multiset<Diagonal> hash_tableB;
   std::multiset<Diagonal> hash_tableC;
@@ -101,6 +99,9 @@ class Recombinator{
  public:
   Recombinator();
   ~Recombinator();
+
+  std::map<MVertex*,std::set<MVertex*> > vertex_to_vertices;
+  std::map<MVertex*,std::set<MElement*> > vertex_to_elements;
 
   void execute();
   void execute(GRegion*);

@@ -7,6 +7,7 @@
 //   Tristan Carrier
 
 #include "GFace.h"
+#include "MEdge.h"
 #include "MElementOctree.h"
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -38,14 +39,23 @@ class Matrix{
   double get_m33();
 };
 
+
+struct lowerThan {
+  bool operator() (const std::pair<int, Matrix>& lhs, const std::pair<int, Matrix>& rhs) const
+  {return lhs.first < rhs.first;}
+};
+
 class Frame_field{
  private:
-  static std::map<MVertex*,Matrix> temp;
-  static std::vector<std::pair<MVertex*,Matrix> > field;
-  #if defined(HAVE_ANN)
+  static std::map<MVertex*, Matrix> temp;
+  static std::vector<std::pair<MVertex*, Matrix> > field;
+  //static std::set<std::pair<int, Matrix>, lowerThan> crossField;
+  static std::map<int, Matrix> crossField;
+  static std::map<MEdge, double, Less_Edge> crossDist;
+#if defined(HAVE_ANN)
   static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
-  #endif
+#endif
   Frame_field();
  public:
   static void init_region(GRegion*);
@@ -58,6 +68,12 @@ class Frame_field{
   static void print_field1();
   static void print_field2(GRegion*);
   static void print_segment(SPoint3,SPoint3,std::ofstream&);
+  static void init(GRegion* gr);
+  static double smooth(GRegion* gr);
+  static double findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, Matrix &m0);
+  static void save(GRegion* gr, const std::string &filename);
+  static void save_energy(GRegion* gr, const std::string& filename);
+  static void save_dist(const std::string& filename);
   static GRegion* test();
   static void clear();
 };
@@ -81,10 +97,10 @@ class Nearest_point{
  private:
   static std::vector<SPoint3> field;
   static std::vector<MElement*> vicinity;
-  #if defined(HAVE_ANN)
+#if defined(HAVE_ANN)
   static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
-  #endif
+#endif
   Nearest_point();
  public:
   static void init_region(GRegion*);
@@ -97,3 +113,4 @@ class Nearest_point{
   static GRegion* test();
   static void clear();
 };
+
