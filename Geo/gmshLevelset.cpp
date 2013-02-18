@@ -1159,6 +1159,8 @@ gLevelsetConrod::gLevelsetConrod(const gLevelsetConrod &lv)
   : gLevelsetImproved(lv){}
 
 
+// Level-set for NACA0012 airfoil, last coeff. modified for zero-thickness trailing edge
+// cf. http://en.wikipedia.org/wiki/NACA_airfoil
 double gLevelsetNACA00::operator() (const double x, const double y, const double z) const
 {
 
@@ -1171,7 +1173,7 @@ double gLevelsetNACA00::operator() (const double x, const double y, const double
 
   const double xt = x-_x0, yt = fabs(y-_y0);  // Point translated according to airfoil origin and symmetry
 
-  if (xt-_c > 1.16925*_t*yt)                  // Behind line normal to airfoil at trailing edge, closest
+  if (xt-_c > 1.21125*_t*yt)                  // Behind line normal to airfoil at trailing edge, closest
     distSq = (xt-_c)*(xt-_c)+yt*yt;           // boundary point is trailing edge
   else {                                      // Otherwise Newton-Raphson to find closest boundary point
     const double fact = 5.*_t*_c;
@@ -1180,8 +1182,8 @@ double gLevelsetNACA00::operator() (const double x, const double y, const double
       const double xbr = xb/_c, sxbr = sqrt(xbr), xbr32 = xbr*sxbr,
                     xbr2 = xbr*xbr, xbr3 = xbr2*xbr, xbr4 = xbr2*xbr2;
       double yb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1015*xbr4);
-      const double dyb = fact*(0.14845/sxbr-0.406*xbr3+0.8529*xbr2-0.7032*xbr-0.126)/_c;
-      const double ddyb = fact*(-0.074225/xbr32-1.218*xbr2+1.7058*xbr-0.7032)/(_c*_c);
+      const double dyb = fact*(0.14845/sxbr-0.4144*xbr3+0.8529*xbr2-0.7032*xbr-0.126)/_c;
+      const double ddyb = fact*(-0.074225/xbr32-1.2432*xbr2+1.7058*xbr-0.7032)/(_c*_c);
       const double xx = xt-xb, yy = yt-yb;
       in = (xt > 0) && (yy < 0);
       distSq = xx*xx+yy*yy;
