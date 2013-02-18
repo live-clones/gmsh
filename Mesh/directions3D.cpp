@@ -420,6 +420,7 @@ void Frame_field::init(GRegion* gr){
 
   //Recombinator crossData;
   crossData.build_vertex_to_vertices(gr);
+  std::cout << "Nb Vertices in crossData" << crossData.vertex_to_vertices.size() << std::endl;
   for(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter 
   	= crossData.vertex_to_vertices.begin(); 
       iter != crossData.vertex_to_vertices.end(); ++iter){
@@ -520,8 +521,6 @@ double Frame_field::smooth(GRegion* gr){
 	crossField[itA->first] = m;
 	enew = findBarycenter(iter, m);
       } while ((enew < eold) && (++NbIter < 10));
-      // if(NbIter > 2)
-      // 	std::cout << "This should not happen =" << NbIter << std::endl;
       energy += eold;
     }
   }
@@ -582,7 +581,7 @@ void Frame_field::save(GRegion* gr, const std::string& filename){
 void Frame_field::fillTreeVolume(GRegion* gr){
 #if defined(HAVE_ANN)
   int n = crossData.vertex_to_vertices.size();
-  std::cout << "Fillin ANN tree with " << n << " vertices" << std::endl;
+  std::cout << "Filling ANN tree with " << n << " vertices" << std::endl;
   annTreeData = annAllocPts(n,3);
   int index=0;
   for(std::map<MVertex*, std::set<MVertex*> >::iterator iter = crossData.vertex_to_vertices.begin(); 
@@ -608,10 +607,10 @@ Matrix Frame_field::findNearestCross(double x,double y,double z){
   double e = 0.0;
   annTree->annkSearch(query,1,indices,distances,e);
   annDeallocPt(query);
-  delete[] indices;
-  delete[] distances;
   std::map<int, Matrix>::const_iterator it = crossField.find(vertIndices[indices[0]]);
   //annTreeData[indices[0]] gives the coordinates
+  delete[] indices;
+  delete[] distances;
   return it->second;
 #else
   return Matrix();
