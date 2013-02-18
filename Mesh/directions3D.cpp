@@ -590,7 +590,7 @@ void Frame_field::fillTreeVolume(GRegion* gr){
     annTreeData[index][0] = pVertex->x();
     annTreeData[index][1] = pVertex->y();
     annTreeData[index][2] = pVertex->z();
-    vertIndices[index++] = pVertex->getNum();
+    vertIndices.push_back(pVertex->getNum());
   }
   annTree = new ANNkd_tree(annTreeData,n,3);
 #endif

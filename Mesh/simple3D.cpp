@@ -347,10 +347,14 @@ void Filler::treat_region(GRegion* gr){
   RTree<Node*,double,3,double> rtree;
   
   Frame_field::init_region(gr);
+
   Frame_field::init(gr);
   std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
   std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
   std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
+  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
+  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
+  Frame_field::save(gr,"smoothed.pos");
   Frame_field::fillTreeVolume(gr);
 
   Size_field::init_region(gr);
@@ -464,9 +468,10 @@ void Filler::treat_region(GRegion* gr){
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
   Matrix m2;
-
-  //m2 = Frame_field::search(x,y,z);
-  m2 = Frame_field::findNearestCross(x,y,z);
+  if(1)
+    m2 = Frame_field::search(x,y,z);
+  else
+    m2 = Frame_field::findNearestCross(x,y,z);
 
   m.set_m11(m2.get_m11());
   m.set_m21(m2.get_m21());
