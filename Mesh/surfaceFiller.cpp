@@ -93,6 +93,15 @@ struct surfacePointWithExclusionRegion {
     _max[0] = std::max(std::max(std::max(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
     _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
   }
+  void print (FILE *f, int i){
+    fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
+    fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+	    _q[0].x(),_q[0].y(),0.0,
+	    _q[1].x(),_q[1].y(),0.0,
+	    _q[2].x(),_q[2].y(),0.0,
+	    _q[3].x(),_q[3].y(),0.0,i,i,i,i);
+    
+  }
 };
 
 struct my_wrapper {
@@ -178,6 +187,7 @@ bool compute4neighbors (GFace *gf,   // the surface
   reparamMeshVertexOnFace(v_center, gf, midpoint);
 
   double L = backgroundMesh::current()->operator()(midpoint[0],midpoint[1],0.0);
+  //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1./(L*L));  
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0){
@@ -228,9 +238,13 @@ bool compute4neighbors (GFace *gf,   // the surface
     // t1 . s2 = a E + b N --> solve the 2 x 2 system
     // and get covariant coordinates a and b
     double rhs1[2] = {dot(t1,s1),dot(t1,s2)}, covar1[2];
-    sys2x2(metric,rhs1,covar1);
+    if (!sys2x2(metric,rhs1,covar1)){
+      covar1[1] = 1.0; covar1[0] = 0.0;
+    }
     double rhs2[2] = {dot(t2,s1),dot(t2,s2)}, covar2[2];
-    sys2x2(metric,rhs2,covar2);
+    if (!sys2x2(metric,rhs2,covar2)){
+	covar2[0] = 1.0; covar2[1] = 0.0;
+    }
     
     // transform the sizes with respect to the metric
     // consider a vector v of size 1 in the parameter plane
@@ -238,6 +252,7 @@ bool compute4neighbors (GFace *gf,   // the surface
     // of size1 in direction v, it should be sqrt(v^T M v) * size1
     double l1 = sqrt(covar1[0]*covar1[0]+covar1[1]*covar1[1]);
     double l2 = sqrt(covar2[0]*covar2[0]+covar2[1]*covar2[1]);
+  
     covar1[0] /= l1;covar1[1] /= l1;
     covar2[0] /= l2;covar2[1] /= l2;
 
@@ -249,6 +264,8 @@ bool compute4neighbors (GFace *gf,   // the surface
 						  2*E*covar2[1]*covar2[0]+
 						  N*covar2[1]*covar2[1]);
     
+    //    if (l1 == 0.0 || l2 == 0.0) printf("bouuuuuuuuuuuuh %g %g %g %g --- %g %g %g %g %g %g\n",l1,l2,t1.norm(),t2.norm(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
+
     /*    printf("%12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",
 	   M*covar1[0]*covar1[0]+
 	   2*E*covar1[1]*covar1[0]+
@@ -384,18 +401,20 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
   // add the vertices as additional vertices in the
   // surface mesh
-  FILE *f = fopen("points.pos","w");
+  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
+  FILE *f = fopen(ccc,"w");
   fprintf(f,"View \"\"{\n");
   for (int i=0;i<vertices.size();i++){
+    vertices[i]->print(f,i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
       SPoint2 midpoint;
       reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
-      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
-	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
-	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
-	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
+      //      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
+      //	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
+      //	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
+      //	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
 	    //fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
     }
     delete  vertices[i];
