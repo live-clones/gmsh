@@ -6,6 +6,10 @@
 // Contributor(s):
 //   Tristan Carrier
 
+#ifndef _YAMAKAWA_H_
+#define _YAMAKAWA_H_
+
+
 #include "GRegion.h"
 #include <set>
 
@@ -316,3 +320,5 @@ class PostOp{
   void build_vertex_to_pyramids(MElement*);
   void erase_vertex_to_pyramids(MElement*);
 };
+
+#endif

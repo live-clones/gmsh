@@ -1,3 +1,13 @@
+// Gmsh - Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   François Henrotte
+
+#ifndef _CROSS_3D_H_
+#define _CROSS_3D_H_
 
 #include "stat_cwmtx.h"
 #include "stat_quatern.h"
@@ -196,3 +206,4 @@ Matrix convert(const cross3D x){
 
 
 
+#endif

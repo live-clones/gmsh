@@ -6,12 +6,12 @@
 // Contributor(s):
 //   Tristan Carrier
 
-#include "directions3D.h"
+#include <fstream>
 #include "GModel.h"
 #include "BackgroundMesh.h"
 #include "meshGFaceDelaunayInsertion.h"
-#include <fstream>
 #include "MTetrahedron.h"
+#include "directions3D.h"
 
 #if defined(HAVE_PETSC)
 #include "dofManager.h"
@@ -19,94 +19,6 @@
 #include "linearSystemPETSc.h"
 #include "linearSystemFull.h"
 #endif
-
-/****************class Matrix****************/
-
-Matrix::Matrix(){
-  m11 = 1.0;
-  m21 = 0.0;
-  m31 = 0.0;
-  m12 = 0.0;
-  m22 = 1.0;
-  m32 = 0.0;
-  m13 = 0.0;
-  m23 = 0.0;
-  m33 = 1.0;
-}
-
-Matrix::~Matrix(){}
-
-void Matrix::set_m11(double new_m11){
-  m11 = new_m11;
-}
-
-void Matrix::set_m21(double new_m21){
-  m21 = new_m21;
-}
-
-void Matrix::set_m31(double new_m31){
-  m31 = new_m31;
-}
-
-void Matrix::set_m12(double new_m12){
-  m12 = new_m12;
-}
-
-void Matrix::set_m22(double new_m22){
-  m22 = new_m22;
-}
-
-void Matrix::set_m32(double new_m32){
-  m32 = new_m32;
-}
-
-void Matrix::set_m13(double new_m13){
-  m13 = new_m13;
-}
-
-void Matrix::set_m23(double new_m23){
-  m23 = new_m23;
-}
-
-void Matrix::set_m33(double new_m33){
-  m33 = new_m33;
-}
-
-double Matrix::get_m11(){
-  return m11;
-}
-
-double Matrix::get_m21(){
-  return m21;
-}
-
-double Matrix::get_m31(){
-  return m31;
-}
-
-double Matrix::get_m12(){
-  return m12;
-}
-
-double Matrix::get_m22(){
-  return m22;
-}
-
-double Matrix::get_m32(){
-  return m32;
-}
-
-double Matrix::get_m13(){
-  return m13;
-}
-
-double Matrix::get_m23(){
-  return m23;
-}
-
-double Matrix::get_m33(){
-  return m33;
-}
 
 /****************class Frame_field****************/
 
@@ -285,7 +197,6 @@ Matrix Frame_field::search(double x,double y,double z){
   delete[] indices;
   delete[] distances;
 #endif
-
   return field[index].second;
 }
 
@@ -359,11 +270,11 @@ double Frame_field::get_ratio(GFace* gf,SPoint2 point){
   return val;
 }
 
-void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
+void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,double val1, double val2, std::ofstream& file){
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
   << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
-       << "{" << p1.z() << "," << p1.z() << "};\n";
+       << "{" << val1 << "," << val2 << "};\n";
 }
 
 void Frame_field::print_field1(){
@@ -403,12 +314,13 @@ void Frame_field::print_field1(){
     p6 = SPoint3(vertex->x() - k*m.get_m13(),
 		 vertex->y() - k*m.get_m23(),
 		 vertex->z() - k*m.get_m33());
-    print_segment(p,p1,file);
-    print_segment(p,p2,file);
-    print_segment(p,p3,file);
-    print_segment(p,p4,file);
-    print_segment(p,p5,file);
-    print_segment(p,p6,file);
+    double val1=10, val2=20;
+    print_segment(p,p1,val1,val2,file);
+    print_segment(p,p2,val1,val2,file);
+    print_segment(p,p3,val1,val2,file);
+    print_segment(p,p4,val1,val2,file);
+    print_segment(p,p5,val1,val2,file);
+    print_segment(p,p6,val1,val2,file);
   }
   file << "};\n";
 }
@@ -434,8 +346,6 @@ void Frame_field::print_field2(GRegion* gr){
       vertex = element->getVertex(j);
       if(vertex->onWhat()->dim()>2){
 	m = search(vertex->x(),vertex->y(),vertex->z());
-	//m = combine(vertex->x(),vertex->y(),vertex->z());
-
 	p = SPoint3(vertex->x(),vertex->y(),vertex->z());
 	p1 = SPoint3(vertex->x() + k*m.get_m11(),
 		     vertex->y() + k*m.get_m21(),
@@ -455,12 +365,13 @@ void Frame_field::print_field2(GRegion* gr){
 	p6 = SPoint3(vertex->x() - k*m.get_m13(),
 		     vertex->y() - k*m.get_m23(),
 		     vertex->z() - k*m.get_m33());
-	print_segment(p,p1,file);
-	print_segment(p,p2,file);
-	print_segment(p,p3,file);
-	print_segment(p,p4,file);
-	print_segment(p,p5,file);
-	print_segment(p,p6,file);
+	double val1=10, val2=20;
+	print_segment(p,p1,val1,val2,file);
+	print_segment(p,p2,val1,val2,file);
+	print_segment(p,p3,val1,val2,file);
+	print_segment(p,p4,val1,val2,file);
+	print_segment(p,p5,val1,val2,file);
+	print_segment(p,p6,val1,val2,file);
       }
     }
   }
@@ -470,9 +381,7 @@ void Frame_field::print_field2(GRegion* gr){
 GRegion* Frame_field::test(){
   GRegion* gr;
   GModel* model = GModel::current();
-
   gr = *(model->firstRegion());
-
   return gr;
 }
 
@@ -480,15 +389,13 @@ void Frame_field::clear(){
   Nearest_point::clear();	
   temp.clear();
   field.clear();
-  #if defined(HAVE_ANN)
+#if defined(HAVE_ANN)
   delete duplicate;
   delete kd_tree;
   annClose();
-  #endif
+#endif
 }
 
-
-#include "yamakawa.h"
 #include "cross3D.h"
 
 CWTSSpaceVector<> convert(const SVector3 v){
@@ -504,27 +411,21 @@ ostream& operator<< (ostream &os, SVector3 &v) {
   return os;
 }
 
-void Frame_field::init(GRegion* gr){
-  // 
-  MVertex* pVertex;
-  Matrix m;
 
+void Frame_field::init(GRegion* gr){
   CWTSSpaceVector<> Ex(1,0,0), Ey(0,1,0), Ez(0,0,1);
-  cross3D x(Ez, Ex);
   CWTSSpaceVector<> v(1,2,0), w(0,1,1.3);
+  cross3D x(Ez, Ex);
   cross3D y = cross3D(v, w);
 
-  Recombinator crossData;
+  //Recombinator crossData;
   crossData.build_vertex_to_vertices(gr);
   for(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter 
   	= crossData.vertex_to_vertices.begin(); 
       iter != crossData.vertex_to_vertices.end(); ++iter){
-    pVertex = iter->first;
-    m = search(pVertex->x(), pVertex->y(), pVertex->z());
+    MVertex* pVertex = iter->first;
+    Matrix m = search(pVertex->x(), pVertex->y(), pVertex->z());
     // if(pVertex->onWhat()->dim() <= 2)
-    //   m = search(pVertex->x(), pVertex->y(), pVertex->z());
-    // else
-    //   m = convert(y);
     crossField[pVertex->getNum()] = m;
   }
 }
@@ -593,8 +494,8 @@ double Frame_field::smooth(GRegion* gr){
   Matrix m, m0;
   double enew, eold;
 
-  Recombinator crossData;
-  crossData.build_vertex_to_vertices(gr);
+  // Recombinator crossData;
+  // crossData.build_vertex_to_vertices(gr);
   //std::cout << "NbVert=  " << crossData.vertex_to_vertices.size() << std::endl ;
 
   double energy = 0;
@@ -632,8 +533,8 @@ void Frame_field::save(GRegion* gr, const std::string& filename){
   MVertex* pVertex;
   std::map<MVertex*,Matrix>::iterator it;
   Matrix m;
-  Recombinator crossData;
-  crossData.build_vertex_to_vertices(gr);
+  // Recombinator crossData;
+  // crossData.build_vertex_to_vertices(gr);
 
   double k = 0.04;
   std::ofstream file(filename.c_str());
@@ -652,30 +553,69 @@ void Frame_field::save(GRegion* gr, const std::string& filename){
     p1 = SPoint3(pVertex->x() + k*m.get_m11(),
 		 pVertex->y() + k*m.get_m21(),
 		 pVertex->z() + k*m.get_m31());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
     p1 = SPoint3(pVertex->x() - k*m.get_m11(),
 		 pVertex->y() - k*m.get_m21(),
 		 pVertex->z() - k*m.get_m31());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
     p1 = SPoint3(pVertex->x() + k*m.get_m12(),
 		 pVertex->y() + k*m.get_m22(),
 		 pVertex->z() + k*m.get_m32());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
     p1 = SPoint3(pVertex->x() - k*m.get_m12(),
 		 pVertex->y() - k*m.get_m22(),
 		 pVertex->z() - k*m.get_m32());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
     p1 = SPoint3(pVertex->x() + k*m.get_m13(),
 		 pVertex->y() + k*m.get_m23(),
 		 pVertex->z() + k*m.get_m33());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
     p1 = SPoint3(pVertex->x() - k*m.get_m13(),
 		 pVertex->y() - k*m.get_m23(),
 		 pVertex->z() - k*m.get_m33());
-    print_segment(p,p1,file);
+    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
   }
   file << "};\n";
   file.close();
+}
+
+void Frame_field::fillTreeVolume(GRegion* gr){
+#if defined(HAVE_ANN)
+  int n = crossData.vertex_to_vertices.size();
+  std::cout << "Fillin ANN tree with " << n << " vertices" << std::endl;
+  annTreeData = annAllocPts(n,3);
+  int index=0;
+  for(std::map<MVertex*, std::set<MVertex*> >::iterator iter = crossData.vertex_to_vertices.begin(); 
+      iter != crossData.vertex_to_vertices.end(); ++iter){
+    MVertex* pVertex = iter->first;
+    annTreeData[index][0] = pVertex->x();
+    annTreeData[index][1] = pVertex->y();
+    annTreeData[index][2] = pVertex->z();
+    vertIndices[index++] = pVertex->getNum();
+  }
+  annTree = new ANNkd_tree(annTreeData,n,3);
+#endif
+}
+
+Matrix Frame_field::findNearestCross(double x,double y,double z){
+#if defined(HAVE_ANN)
+  ANNpoint query = annAllocPt(3);
+  ANNidxArray indices = new ANNidx[1];
+  ANNdistArray distances = new ANNdist[1];
+  query[0] = x;
+  query[1] = y;
+  query[2] = z;
+  double e = 0.0;
+  annTree->annkSearch(query,1,indices,distances,e);
+  annDeallocPt(query);
+  delete[] indices;
+  delete[] distances;
+  std::map<int, Matrix>::const_iterator it = crossField.find(vertIndices[indices[0]]);
+  //annTreeData[indices[0]] gives the coordinates
+  return it->second;
+#else
+  return Matrix();
+#endif
 }
 
 void Frame_field::save_dist(const std::string& filename){
@@ -1291,7 +1231,8 @@ void Nearest_point::print_field(GRegion* gr){
 	  z = vertex->z();
 	  val = search(x,y,z,vec);
 	  if(val){
-	    print_segment(SPoint3(x+k*vec.x(),y+k*vec.y(),z+k*vec.z()),SPoint3(x-k*vec.x(),y-k*vec.y(),z-k*vec.z()),file);
+	    print_segment(SPoint3(x+k*vec.x(),y+k*vec.y(),z+k*vec.z()),
+			  SPoint3(x-k*vec.x(),y-k*vec.y(),z-k*vec.z()),file);
 	  }
 	}
   }
@@ -1331,10 +1272,14 @@ std::map<MVertex*,Matrix> Frame_field::temp;
 std::vector<std::pair<MVertex*,Matrix> > Frame_field::field;
 std::map<int, Matrix> Frame_field::crossField;
 std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
+Recombinator Frame_field::crossData;
 
 #if defined(HAVE_ANN)
 ANNpointArray Frame_field::duplicate;
 ANNkd_tree* Frame_field::kd_tree;
+ANNpointArray Frame_field::annTreeData;
+ANNkd_tree* Frame_field::annTree;
+std::vector<int> Frame_field::vertIndices;
 #endif
 
 std::map<MVertex*,double> Size_field::boundary;

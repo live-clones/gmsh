@@ -347,6 +347,7 @@ void Filler::treat_region(GRegion* gr){
   RTree<Node*,double,3,double> rtree;
   
   Frame_field::init_region(gr);
+  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
   Size_field::init_region(gr);
   Size_field::solve(gr);
   octree = new MElementOctree(gr->model());
