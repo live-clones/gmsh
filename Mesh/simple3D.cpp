@@ -349,7 +349,7 @@ void Filler::treat_region(GRegion* gr){
   Frame_field::init_region(gr);
 
   int NumSmooth = CTX::instance()->mesh.nbSmoothing;
-  int NumIter = 0;
+  int NumIter = 1;
   double eold;
   Frame_field::init(gr);
   double enew = Frame_field::smooth(gr);
@@ -384,6 +384,8 @@ void Filler::treat_region(GRegion* gr){
 	  boundary_vertices.push_back(*it);
 	}
   }
+  std::ofstream file("nodes.pos");
+  file << "View \"test\" {\n";	
 
   for(i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
@@ -394,10 +396,8 @@ void Filler::treat_region(GRegion* gr){
 	compute_parameters(node,gr);
 	rtree.Insert(node->min,node->max,node);
 	fifo.push(node);
+	print_node(node,file);
   }
-  
-  //std::ofstream file("nodes.pos");
-  //file << "View \"test\" {\n";	
   
   count = 1;
   while(!fifo.empty()){
@@ -448,7 +448,7 @@ void Filler::treat_region(GRegion* gr){
 	count++;
   }
   
-  //file << "};\n";
+  file << "};\n";
 
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;

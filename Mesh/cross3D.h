@@ -13,6 +13,8 @@
 #include "stat_quatern.h"
 using namespace CwMtx;
 
+#include "Matrix.h"
+
 //double max(const double a, const double b) { return (b>a)?b:a;}
 double min(const double a, const double b) { return (b<a)?b:a; }
 double squ(const double a) { return a*a; }

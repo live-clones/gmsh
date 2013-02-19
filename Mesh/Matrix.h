@@ -39,7 +39,7 @@ class Matrix{
   double get_m31(){ return m31; }
   double get_m12(){ return m12; }
   double get_m22(){ return m22; }
-  double get_m32(){ return m23; }
+  double get_m32(){ return m32; }
   double get_m13(){ return m13; }
   double get_m23(){ return m23; }
   double get_m33(){ return m33; }

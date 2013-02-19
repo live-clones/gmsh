@@ -549,30 +549,31 @@ void Frame_field::save(GRegion* gr, const std::string& filename){
       m = itA->second;
 
     p = SPoint3(pVertex->x(),pVertex->y(),pVertex->z());
+    double val1=0, val2=0;
     p1 = SPoint3(pVertex->x() + k*m.get_m11(),
 		 pVertex->y() + k*m.get_m21(),
 		 pVertex->z() + k*m.get_m31());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(pVertex->x() - k*m.get_m11(),
 		 pVertex->y() - k*m.get_m21(),
 		 pVertex->z() - k*m.get_m31());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(pVertex->x() + k*m.get_m12(),
 		 pVertex->y() + k*m.get_m22(),
 		 pVertex->z() + k*m.get_m32());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(pVertex->x() - k*m.get_m12(),
 		 pVertex->y() - k*m.get_m22(),
 		 pVertex->z() - k*m.get_m32());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(pVertex->x() + k*m.get_m13(),
 		 pVertex->y() + k*m.get_m23(),
 		 pVertex->z() + k*m.get_m33());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(pVertex->x() - k*m.get_m13(),
 		 pVertex->y() - k*m.get_m23(),
 		 pVertex->z() - k*m.get_m33());
-    print_segment(p,p1,pVertex->z(),pVertex->z(),file);
+    print_segment(p,p1,val1,val2,file);
   }
   file << "};\n";
   file.close();
@@ -584,6 +585,7 @@ void Frame_field::fillTreeVolume(GRegion* gr){
   std::cout << "Filling ANN tree with " << n << " vertices" << std::endl;
   annTreeData = annAllocPts(n,3);
   int index=0;
+  vertIndices.clear();
   for(std::map<MVertex*, std::set<MVertex*> >::iterator iter = crossData.vertex_to_vertices.begin(); 
       iter != crossData.vertex_to_vertices.end(); ++iter){
     MVertex* pVertex = iter->first;
@@ -591,6 +593,7 @@ void Frame_field::fillTreeVolume(GRegion* gr){
     annTreeData[index][1] = pVertex->y();
     annTreeData[index][2] = pVertex->z();
     vertIndices.push_back(pVertex->getNum());
+    index++;
   }
   annTree = new ANNkd_tree(annTreeData,n,3);
 #endif
