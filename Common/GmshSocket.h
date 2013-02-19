@@ -78,6 +78,7 @@ class GmshSocket{
     GMSH_PARAMETER_QUERY = 24,
     GMSH_PARAM_QUERY_ALL = 25,
     GMSH_PARAM_QUERY_END = 26,
+    GMSH_CONNECT         = 27,
     GMSH_SPEED_TEST      = 30,
     GMSH_OPTION_1        = 100,
     GMSH_OPTION_2        = 101,

@@ -5167,6 +5167,13 @@ double opt_mesh_lloyd(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeLloyd;
 }
 
+double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.smoothCrossField = (int)val;
+  return CTX::instance()->mesh.smoothCrossField;
+}
+
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

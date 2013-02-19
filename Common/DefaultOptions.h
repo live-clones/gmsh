@@ -833,6 +833,8 @@ StringXNumber MeshOptions_Number[] = {
     "Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)" },
   { F|O, "Lloyd" , opt_mesh_lloyd , 0. ,
     "Apply lloyd optimization on surface meshes" },
+  { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
+    "Apply n barycentric smoothing passes to the cross field" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes."
