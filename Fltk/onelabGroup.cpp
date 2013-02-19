@@ -1074,6 +1074,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   // check box (boolean choice)
   if(p.getChoices().size() == 2 &&
      p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
+    n->labelsize(FL_NORMAL_SIZE + 2);
     Fl_Check_Button *but = new Fl_Check_Button(1, 1, 2 * ww, 1);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
@@ -1337,6 +1338,8 @@ void onelabGroup::rebuildTree()
 
   std::set<std::string> closed = _getClosedGmshMenus();
 
+  _tree->take_focus(); // make sure we remove the focus from any widget that
+                       // will be deleted; this can crash fltk
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
