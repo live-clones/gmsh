@@ -420,7 +420,7 @@ void Frame_field::init(GRegion* gr){
 
   //Recombinator crossData;
   crossData.build_vertex_to_vertices(gr);
-  std::cout << "Nb Vertices in crossData" << crossData.vertex_to_vertices.size() << std::endl;
+  std::cout << "Vertices in crossData = " << crossData.vertex_to_vertices.size() << std::endl;
   for(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter 
   	= crossData.vertex_to_vertices.begin(); 
       iter != crossData.vertex_to_vertices.end(); ++iter){

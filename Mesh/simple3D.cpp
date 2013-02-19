@@ -348,14 +348,20 @@ void Filler::treat_region(GRegion* gr){
   
   Frame_field::init_region(gr);
 
+  int NumSmooth = CTX::instance()->mesh.nbSmoothing;
+  int NumIter = 0;
+  double eold;
   Frame_field::init(gr);
-  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
-  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
-  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
-  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
-  std::cout << "Smoothing: energy = " << Frame_field::smooth(gr) << std::endl;
-  Frame_field::save(gr,"smoothed.pos");
-  Frame_field::fillTreeVolume(gr);
+  double enew = Frame_field::smooth(gr);
+  if( NumSmooth >1){
+    do{
+      std::cout << "Smoothing: energy(" << NumIter << ") = " << enew << std::endl;
+      eold = enew;
+      enew = Frame_field::smooth(gr);
+    } while((eold > enew) && (NumIter++ < NumSmooth));
+    Frame_field::save(gr,"smoothed.pos");
+    Frame_field::fillTreeVolume(gr);
+  }
 
   Size_field::init_region(gr);
   Size_field::solve(gr);
@@ -468,7 +474,7 @@ void Filler::treat_region(GRegion* gr){
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
   Matrix m2;
-  if(1)
+  if(CTX::instance()->mesh.nbSmoothing <= 1)
     m2 = Frame_field::search(x,y,z);
   else
     m2 = Frame_field::findNearestCross(x,y,z);
