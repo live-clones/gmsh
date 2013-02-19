@@ -85,7 +85,6 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
     if(type == TYPE_PYR || type == TYPE_PRI ||
        type == TYPE_POLYG || type == TYPE_POLYH) {
       Msg::Error("Mesh element type %d not implemented in homology solver", type);
-      return false;
     }
     if(type == TYPE_QUA || type == TYPE_HEX)
       _simplicial = false;
@@ -226,26 +225,10 @@ bool CellComplex::_immunizeCells(std::vector<MElement*>& elements)
 CellComplex::~CellComplex()
 {
   for(int i = 0; i < 4; i++){
-    if(_saveorig) {
-      for(citer cit = _ocells[i].begin(); cit != _ocells[i].end(); cit++){
-        Cell* cell = *cit;
-        delete cell;
-        _deleteCount++;
-      }
-      for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
-        Cell* cell = *cit;
-        if(cell->isCombined()) {
-          delete cell;
-          _deleteCount++;
-        }
-      }
-    }
-    else {
-      for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
-        Cell* cell = *cit;
-        delete cell;
-        _deleteCount++;
-      }
+    for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){
+      Cell* cell = *cit;
+      delete cell;
+      _deleteCount++;
     }
   }
 
@@ -295,10 +278,7 @@ void CellComplex::removeCell(Cell* cell, bool other, bool del)
     else _numRelativeCells[dim] -= 1;
   }
   if(!erased) Msg::Debug("Tried to remove a cell from the cell complex \n");
-  if(!_saveorig && (!del || !cell->isCombined()))
-    _removedcells.push_back(cell);
-  else if (!del && cell->isCombined())
-    _removedcells.push_back(cell);
+  else if(!del) _removedcells.push_back(cell);
 }
 
 void CellComplex::enqueueCells(std::map<Cell*, short int, Less_Cell>& cells,
@@ -582,6 +562,7 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
       cit++;
     }
   }
+
   for(int j = 1; j <= getDim(); j++)
     count += coreduction(j, -1, empty);
 
@@ -751,8 +732,8 @@ int CellComplex::combine(int dim)
 
           CombinedCell* newCell = new CombinedCell(c1, c2, (or1 != or2));
           _createCount++;
-          removeCell(c1, true, true);
-          removeCell(c2, true, true);
+          removeCell(c1, true, c1->isCombined());
+          removeCell(c2, true, c2->isCombined());
           insertCell(newCell);
 
           cit = firstCell(dim);
@@ -835,8 +816,8 @@ int CellComplex::cocombine(int dim)
           CombinedCell* newCell = new CombinedCell(c1, c2,
 						   (or1 != or2), true );
           _createCount++;
-          removeCell(c1, true, true);
-          removeCell(c2, true, true);
+          removeCell(c1, true, c1->isCombined());
+          removeCell(c2, true, c2->isCombined());
           insertCell(newCell);
 
           cit = firstCell(dim);

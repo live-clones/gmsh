@@ -169,6 +169,7 @@ Homology::~Homology()
 
 void Homology::findHomologyBasis(std::vector<int> dim)
 {
+  double t0 = Cpu();
   std::string domain = _getDomainString(_domain, _subdomain);
   Msg::Info("");
   Msg::Info("To compute domain (%s) homology spaces", domain.c_str());
@@ -237,6 +238,9 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   Msg::Info("H_2 = %d", _betti[2]);
   Msg::Info("H_3 = %d", _betti[3]);
 
+  double t3 = Cpu();
+  Msg::Info("Done computing (%s) homology spaces (%g s)",
+            domain.c_str(), t3 - t0);
   Msg::StatusBar(false, "H_0: %d, H_1: %d, H_2: %d, H_3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
@@ -248,6 +252,7 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
 void Homology::findCohomologyBasis(std::vector<int> dim)
 {
+  double t0 = Cpu();
   std::string domain = _getDomainString(_domain, _subdomain);
   Msg::Info("");
   Msg::Info("To compute domain (%s) cohomology spaces", domain.c_str());
@@ -321,6 +326,9 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   Msg::Info("H^2 = %d", _betti[2]);
   Msg::Info("H^3 = %d", _betti[3]);
 
+  double t3 = Cpu();
+  Msg::Info("Done computing (%s) cohomology spaces (%g s)",
+               domain.c_str(), t3 - t0);
   Msg::StatusBar(false, "H^0: %d, H^1: %d, H^2: %d, H^3: %d",
 		 _betti[0], _betti[1], _betti[2], _betti[3]);
 
@@ -427,6 +435,7 @@ void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
 
 void Homology::_addToModel(int dim, bool co, bool post, int physicalNumRequest) const
 {
+  if(dim < 0 || dim > 3) return;
   int pgnum = -1;
   std::vector<int> physicals;
   if(!co) {
