@@ -1181,7 +1181,7 @@ double gLevelsetNACA00::operator() (const double x, const double y, const double
     for (int it=0; it<maxIter; it++) {
       const double xbr = xb/_c, sxbr = sqrt(xbr), xbr32 = xbr*sxbr,
                     xbr2 = xbr*xbr, xbr3 = xbr2*xbr, xbr4 = xbr2*xbr2;
-      double yb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1015*xbr4);
+      double yb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1036*xbr4);
       const double dyb = fact*(0.14845/sxbr-0.4144*xbr3+0.8529*xbr2-0.7032*xbr-0.126)/_c;
       const double ddyb = fact*(-0.074225/xbr32-1.2432*xbr2+1.7058*xbr-0.7032)/(_c*_c);
       const double xx = xt-xb, yy = yt-yb;
