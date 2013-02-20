@@ -498,16 +498,17 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
   if(combine > 0) this->combine(3);
 
   if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
-  else reduction(2, -1, empty);
+  else if(combine > 1) reduction(2, -1, empty);
 
   if(combine > 0) this->combine(2);
 
   if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
-  else reduction(1, -1, empty);
+  else if(combine > 1) reduction(1, -1, empty);
 
   if(combine > 0) this->combine(1);
 
   if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
+  else if(combine > 1) reduction(0, -1, empty);
 
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
              getSize(3), getSize(2), getSize(1), getSize(0));
@@ -604,17 +605,17 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   if(combine > 0) this->cocombine(0);
 
   if(combine > 2) for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
-  else coreduction(1, -1, empty);
+  else if(combine > 1) coreduction(1, -1, empty);
 
   if(combine > 0) this->cocombine(1);
 
   if(combine > 2)  for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
-  else coreduction(2, -1, empty);
+  else if(combine > 1) coreduction(2, -1, empty);
 
   if(combine > 0) this->cocombine(2);
 
   if(combine > 2) for(int i = 1; i < 4; i++) coreduction(i, -1, empty);
-  else coreduction(3, -1, empty);
+  else if(combine > 1) coreduction(3, -1, empty);
 
   coherent();
   Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
@@ -949,6 +950,16 @@ Cell* CellComplex::getACell(int dim, int domain)
 bool CellComplex::restoreComplex()
 {
   if(_saveorig){
+
+    for(unsigned int i = 0; i < _removedcells.size(); i++) {
+      Cell* cell = _removedcells.at(i);
+      if(cell->isCombined()) {
+        delete cell;
+        _deleteCount++;
+      }
+    }
+    _removedcells.clear();
+
     for(int i = 0; i < 4; i++){
 
       for(citer cit = _cells[i].begin(); cit != _cells[i].end(); cit++){

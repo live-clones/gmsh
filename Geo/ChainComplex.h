@@ -129,7 +129,7 @@ class ChainComplex
   // compute quotient problem for given inclusion relation j to find
   // representatives of homology group generators and possible
   // torsion coeffcients
-  void Quotient(int dim);
+  void Quotient(int dim, int setDim);
 
   // transpose the boundary operator matrices, these are boundary operator
   // matrices for the dual mesh

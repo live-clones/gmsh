@@ -290,7 +290,6 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   Msg::StatusBar(true, "Computing cohomology space bases ...");
   t1 = Cpu();
   ChainComplex chainComplex = ChainComplex(_cellComplex);
-  chainComplex.transposeHMatrices();
   chainComplex.computeHomology(true);
   t2 = Cpu();
   Msg::StatusBar(true, "Done computing cohomology space bases (%g s)", t2- t1);

@@ -256,9 +256,10 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
   destroy_gmp_normal_form(normalForm);
 }
 
-void ChainComplex::Quotient(int dim)
+void ChainComplex::Quotient(int dim, int setDim)
 {
   if(dim < 0 || dim > 4 || _JMatrix[dim] == NULL) return;
+  if(setDim < 0 || setDim > 4) return;
 
   gmp_matrix* JMatrix =
     copy_gmp_matrix(_JMatrix[dim], 1, 1,
@@ -283,10 +284,12 @@ void ChainComplex::Quotient(int dim)
       destroy_gmp_normal_form(normalForm);
       return;
     }
-    if(mpz_cmp_si(elem,1) > 0) _torsion[dim].push_back(mpz_get_si(elem));
+    if(mpz_cmp_si(elem,1) > 0) {
+      _torsion[setDim].push_back(mpz_get_si(elem));
+    }
   }
 
-  int rank = cols - _torsion[dim].size();
+  int rank = cols - _torsion[setDim].size();
   if(rows - rank > 0){
     gmp_matrix* Hbasis =
       copy_gmp_matrix(normalForm->left, 1, rank+1, rows, rows);
@@ -303,6 +306,8 @@ void ChainComplex::computeHomology(bool dual)
   int lowDim = 0;
   int highDim = 0;
   int setDim = 0;
+
+  if(dual) transposeHMatrices();
 
   for(int i=-1; i < 4; i++){
 
@@ -361,7 +366,7 @@ void ChainComplex::computeHomology(bool dual)
 		      create_gmp_matrix_identity(gmp_matrix_rows(getHMatrix(highDim))) );
       }
       Inclusion(lowDim, highDim);
-      Quotient(lowDim);
+      Quotient(lowDim, setDim);
 
       if(getCodHMatrix(highDim) == NULL){
         setHbasis(setDim,
