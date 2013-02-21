@@ -37,6 +37,9 @@
     Allow Hybrid Mesh
 */
 
+class Mesh;
+class GroupOfElement;
+
 class FunctionSpace{
  protected:
   // Geometry //
