@@ -119,7 +119,6 @@ class client :
       print "python launch : "+ command + " -onelab "+ msg
       os.system(command + " -onelab " + name + " " + msg)
 
-
   def merge_file(self, filename) :
     if not self.socket :
       return
