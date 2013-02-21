@@ -374,7 +374,18 @@ void Cell::printCell()
   printf("combined: %d. \n" , isCombined() );
 };
 
-void Cell::restoreCell(){
+void Cell::saveCellBoundary()
+{
+  for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
+    it->second.init();
+  }
+  for(biter it = firstBoundary(); it != lastBoundary(); it++){
+    it->second.init();
+  }
+}
+
+void Cell::restoreCellBoundary()
+{
   std::vector<Cell*> toRemove;
   for(biter it = firstCoboundary(true); it != lastCoboundary(); it++){
     it->second.reset();
@@ -470,6 +481,74 @@ bool Cell::hasCoboundary(Cell* cell, bool orig)
     biter it = _cbd.find(cell);
     if(it != _cbd.end() && it->second.geto() != 0) return true;
     return false;
+  }
+}
+
+Cell::biter Cell::firstBoundary(bool orig)
+{
+  biter it = _bd.begin();
+  if(!orig) while(it->second.get() == 0 && it != _bd.end()) it++;
+  else while(it->second.geto() == 0 && it != _bd.end()) it++;
+  return it;
+}
+
+Cell::biter Cell::lastBoundary()
+{
+  return _bd.end();
+}
+
+Cell::biter Cell::firstCoboundary(bool orig)
+{
+  biter it = _cbd.begin();
+  if(!orig) while(it->second.get() == 0 && it != _cbd.end()) it++;
+  else while(it->second.geto() == 0 && it != _cbd.end()) it++;
+  return it;
+}
+
+Cell::biter Cell::lastCoboundary()
+{
+  return _cbd.end();
+}
+
+int Cell::getBoundarySize(bool orig)
+{
+  int size = 0;
+  for(biter bit = _bd.begin(); bit != _bd.end(); bit++){
+    if(!orig && bit->second.get() != 0) size++;
+    else if(orig && bit->second.geto() != 0) size++;
+  }
+  return size;
+}
+
+int Cell::getCoboundarySize(bool orig)
+{
+  int size = 0;
+  for(biter bit = _cbd.begin(); bit != _cbd.end(); bit++){
+    if(!orig && bit->second.get() != 0) size++;
+    else if(orig && bit->second.geto() != 0) size++;
+  }
+  return size;
+}
+
+void Cell::getBoundary(std::map<Cell*, short int, Less_Cell>& boundary,
+                       bool orig)
+{
+  boundary.clear();
+  for(biter it = firstBoundary(); it != lastBoundary(); it++){
+    Cell* cell = it->first;
+    if(!orig && it->second.get() != 0) boundary[cell] = it->second.get();
+    if(orig && it->second.geto() != 0) boundary[cell] = it->second.geto();
+  }
+}
+
+void Cell::getCoboundary(std::map<Cell*, short int, Less_Cell>& coboundary,
+                         bool orig)
+{
+  coboundary.clear();
+  for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
+    Cell* cell = it->first;
+    if(!orig && it->second.get() != 0) coboundary[cell] = it->second.get();
+    if(orig && it->second.geto() != 0) coboundary[cell] = it->second.geto();
   }
 }
 

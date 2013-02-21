@@ -44,7 +44,7 @@ CellComplex::CellComplex(GModel* model,
       Cell* cell = *cit;
       cell->setNum(++num);
       cell->increaseGlobalNum();
-      cell->saveOriginalBd();
+      cell->saveCellBoundary();
     }
   }
 
@@ -316,7 +316,8 @@ int CellComplex::coreduction(Cell* startCell, int omit,
     Q.pop();
     Qset.erase(s);
     if(s->getBoundarySize() == 1 &&
-       inSameDomain(s, s->firstBoundary()->first)){
+       inSameDomain(s, s->firstBoundary()->first) &&
+       abs(s->firstBoundary()->second.get()) < 2){
       s->getBoundary(bd_s);
       removeCell(s);
       bd_s.begin()->first->getCoboundary(cbd_c);
@@ -341,6 +342,9 @@ int CellComplex::reduction(int dim, int omit,
 {
   if(dim < 1 || dim > 3) return 0;
 
+  int numCells[4];
+  for(int i = 0; i < 4; i++) numCells[i] = getSize(i);
+
   int count = 0;
 
   bool reduced = true;
@@ -353,7 +357,8 @@ int CellComplex::reduction(int dim, int omit,
       if(cell->getCoboundarySize() == 1 &&
          inSameDomain(cell, cell->firstCoboundary()->first) &&
          !cell->getImmune() &&
-         !cell->firstCoboundary()->first->getImmune()){
+         !cell->firstCoboundary()->first->getImmune() &&
+         abs(cell->firstCoboundary()->second.get()) < 2){
 	cit++;
 	if(dim == omit){
 	  omittedCells.push_back(cell->firstCoboundary()->first);
@@ -369,6 +374,9 @@ int CellComplex::reduction(int dim, int omit,
     }
   }
   _reduced = true;
+  Msg::Debug("Cell complex %d-reduction removed %dv, %df, %de, %dn", dim,
+             numCells[3]-getSize(3), numCells[2]-getSize(2),
+             numCells[1]-getSize(1), numCells[0]-getSize(0));
   return count;
 }
 
@@ -376,6 +384,9 @@ int CellComplex::coreduction(int dim, int omit,
 			     std::vector<Cell*>& omittedCells)
 {
   if(dim < 1 || dim > 3) return 0;
+
+  int numCells[4];
+  for(int i = 0; i < 4; i++) numCells[i] = getSize(i);
 
   int count = 0;
 
@@ -387,7 +398,8 @@ int CellComplex::coreduction(int dim, int omit,
     while(cit != lastCell(dim)){
       Cell* cell = *cit;
       if(cell->getBoundarySize() == 1 &&
-         inSameDomain(cell, cell->firstBoundary()->first)) {
+         inSameDomain(cell, cell->firstBoundary()->first) &&
+         abs(cell->firstBoundary()->second.get()) < 2) {
         ++cit;
 	if(dim-1 == omit){
 	  omittedCells.push_back(cell->firstBoundary()->first);
@@ -403,6 +415,9 @@ int CellComplex::coreduction(int dim, int omit,
     }
   }
   _reduced = true;
+  Msg::Debug("Cell complex %d-coreduction removed %dv, %df, %de, %dn", dim,
+             numCells[3]-getSize(3), numCells[2]-getSize(2),
+             numCells[1]-getSize(1), numCells[0]-getSize(0));
   return count;
 }
 
@@ -428,10 +443,14 @@ int CellComplex::getDomain(Cell* cell, std::string& str)
 
 Cell* CellComplex::_omitCell(Cell* cell, bool dual)
 {
+  Msg::Debug("Omitting %d-cell from the cell complex", cell->getDim());
   removeCell(cell, false);
   std::vector<Cell*> omittedCells;
   omittedCells.push_back(cell);
   int count = 0;
+
+  int numCells[4];
+  for(int i = 0; i < 4; i++) numCells[i] = getSize(i);
 
   if(!dual) {
     for(int j = 3; j > 0; j--)
@@ -449,8 +468,10 @@ Cell* CellComplex::_omitCell(Cell* cell, bool dual)
   std::string domainstr = "";
   int domain = getDomain(cell, domainstr);
 
-  Msg::Debug("Omitted %d-cell in %s that caused %d reductions",
-             cell->getDim(), domainstr.c_str(), count);
+  Msg::Debug("Cell complex %d-omit removed %dv, %df, %de, %dn",
+             cell->getDim(),
+             numCells[3]-getSize(3), numCells[2]-getSize(2),
+             numCells[1]-getSize(1), numCells[0]-getSize(0));
   Msg::Debug(" - number of %d-cells left in %s: %d",
              cell->getDim(), domainstr.c_str(),
              getNumCells(cell->getDim(), domain));
@@ -460,10 +481,6 @@ Cell* CellComplex::_omitCell(Cell* cell, bool dual)
 
 int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
 {
-  Msg::Debug("Cell Complex reduction:");
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
-
   if(!getSize(0)) return 0;
 
   double t1 = Cpu();
@@ -510,9 +527,6 @@ int CellComplex::reduceComplex(int combine, bool omit, bool homseq)
   if(combine > 2) for(int i = 3; i > 0; i--) reduction(i, -1, empty);
   else if(combine > 1) reduction(0, -1, empty);
 
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
-
   _reduced = true;
   return count;
 }
@@ -543,10 +557,6 @@ void CellComplex::removeCells(int dim)
 
 int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
 {
-  Msg::Debug("Cell Complex coreduction:");
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-            getSize(3), getSize(2), getSize(1), getSize(0));
-
   if(!getSize(0)) return 0;
 
   double t1 = Cpu();
@@ -618,8 +628,6 @@ int CellComplex::coreduceComplex(int combine, bool omit, int heuristic)
   else if(combine > 1) coreduction(3, -1, empty);
 
   coherent();
-  Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-             getSize(3), getSize(2), getSize(1), getSize(0));
 
   _reduced = true;
   return count;
@@ -682,10 +690,10 @@ std::vector<int> CellComplex::bettiCoreduceComplex()
 
 int CellComplex::combine(int dim)
 {
-  //Msg::Debug("Cell complex before combining:");
-  //Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-  //           getSize(3), getSize(2), getSize(1), getSize(0));
   if(dim < 1 || dim > 3) return 0;
+
+  int numCells[4];
+  for(int i = 0; i < 4; i++) numCells[i] = getSize(i);
 
   double t1 = Cpu();
 
@@ -755,20 +763,19 @@ int CellComplex::combine(int dim)
     }
   }
 
-  //Msg::Debug("Cell complex after combining:");
-  //Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-  //         getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex %d-combine removed %dv, %df, %de, %dn", dim,
+             numCells[3]-getSize(3), numCells[2]-getSize(2),
+             numCells[1]-getSize(1), numCells[0]-getSize(0));
   _reduced = true;
   return count;
 }
 
 int CellComplex::cocombine(int dim)
 {
-  //Msg::Debug("Cell complex before cocombining:");
-  //Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-  //getSize(3), getSize(2), getSize(1), getSize(0));
-
   if(dim < 0 || dim > 2) return 0;
+
+  int numCells[4];
+  for(int i = 0; i < 4; i++) numCells[i] = getSize(i);
 
   double t1 = Cpu();
 
@@ -839,9 +846,9 @@ int CellComplex::cocombine(int dim)
     }
   }
 
-  //Msg::Debug("Cell complex after cocombining:");
-  //Msg::Debug(" %d volumes, %d faces, %d edges, and %d vertices",
-  //           getSize(3), getSize(2), getSize(1), getSize(0));
+  Msg::Debug("Cell complex %d-cocombine removed %dv, %df, %de, %dn", dim,
+             numCells[3]-getSize(3), numCells[2]-getSize(2),
+             numCells[1]-getSize(1), numCells[0]-getSize(0));
   _reduced = true;
   return count;
 }
@@ -973,7 +980,7 @@ bool CellComplex::restoreComplex()
       _cells[i] = _ocells[i];
       for(citer cit = firstCell(i); cit != lastCell(i); cit++){
 	Cell* cell = *cit;
-	cell->restoreCell();
+	cell->restoreCellBoundary();
         if(relative()) {
           if(cell->inSubdomain()) _numSubdomainCells[i] += 1;
           else _numRelativeCells[i] += 1;

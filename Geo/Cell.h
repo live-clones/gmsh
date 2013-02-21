@@ -22,17 +22,16 @@ public:
 // Class to save cell boundary orientation information
 class BdInfo {
  private:
-  signed char _ori;
-  signed char _origOri;
+  signed char _ori[2];
 
  public:
-  BdInfo(int ori) { _ori = ori; _origOri = 0; }
+  BdInfo(int ori) { _ori[0] = ori; _ori[1] = 0; }
 
-  int get() const { return _ori; }
-  void reset() { _ori = _origOri; }
-  void init() { _origOri = _ori; }
-  void set(int ori) { _ori = ori; }
-  int geto() const { return _origOri; }
+  int get() const { return _ori[0]; }
+  void reset() { _ori[0] = _ori[1]; }
+  void init() { _ori[1] = _ori[0]; }
+  void set(int ori) { _ori[0] = ori; }
+  int geto() const { return _ori[1]; }
 
 };
 
@@ -100,80 +99,36 @@ class Cell {
 
   void increaseGlobalNum() { _globalNum++; }
 
-  // restores the cell information to its original state before reduction
-  void restoreCell();
+  // save/restore the original boundary information of the cell
+  void saveCellBoundary();
+  void restoreCellBoundary();
 
   // true if this cell has given vertex
   virtual bool hasVertex(int vertex) const;
 
   // (co)boundary cell iterator
   typedef std::map<Cell*, BdInfo, Less_Cell>::iterator biter;
+
   // iterators to (first/last (co)boundary cells of this cell
   // (orig: to original (co)boundary cells of this cell)
-  biter firstBoundary(bool orig=false){
-    biter it = _bd.begin();
-    if(!orig) while(it->second.get() == 0 && it != _bd.end()) it++;
-    else while(it->second.geto() == 0 && it != _bd.end()) it++;
-    return it;
-  }
-  biter lastBoundary(){ return _bd.end(); }
-  biter firstCoboundary(bool orig=false){
-    biter it = _cbd.begin();
-    if(!orig) while(it->second.get() == 0 && it != _cbd.end()) it++;
-    else while(it->second.geto() == 0 && it != _cbd.end()) it++;
-    return it;
-  }
-  biter lastCoboundary(){ return _cbd.end(); }
+  biter firstBoundary(bool orig=false);
+  biter lastBoundary();
+  biter firstCoboundary(bool orig=false);
+  biter lastCoboundary();
 
-  int getBoundarySize(bool orig=false) {
-    int size = 0;
-    for(biter bit = _bd.begin(); bit != _bd.end(); bit++){
-      if(!orig && bit->second.get() != 0) size++;
-      else if(orig && bit->second.geto() != 0) size++;
-    }
-    return size; }
-  int getCoboundarySize(bool orig=false) {
-    int size = 0;
-    for(biter bit = _cbd.begin(); bit != _cbd.end(); bit++){
-      if(!orig && bit->second.get() != 0) size++;
-      else if(orig && bit->second.geto() != 0) size++;
-    }
-    return size; }
+  int getBoundarySize(bool orig=false);
+  int getCoboundarySize(bool orig=false);
 
   // get the (orig: original) cell boundary
   void getBoundary(std::map<Cell*, short int, Less_Cell>& boundary,
-                   bool orig=false){
-    boundary.clear();
-    for(biter it = firstBoundary(); it != lastBoundary(); it++){
-      Cell* cell = it->first;
-      if(!orig && it->second.get() != 0) boundary[cell] = it->second.get();
-      if(orig && it->second.geto() != 0) boundary[cell] = it->second.geto();
-    }
-  }
+                   bool orig=false);
   void getCoboundary(std::map<Cell*, short int, Less_Cell>& coboundary,
-                     bool orig=false){
-    coboundary.clear();
-    for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
-      Cell* cell = it->first;
-      if(!orig && it->second.get() != 0) coboundary[cell] = it->second.get();
-      if(orig && it->second.geto() != 0) coboundary[cell] = it->second.geto();
-    }
-  }
-
+                     bool orig=false);
 
   // add (co)boundary cell
   // (other: reciprocally also add this cell from the other cell's (co)boundary)
   void addBoundaryCell(int orientation, Cell* cell, bool other);
   void addCoboundaryCell(int orientation, Cell* cell, bool other);
-
-  void saveOriginalBd() {
-    for(biter it = firstCoboundary(); it != lastCoboundary(); it++){
-      it->second.init();
-    }
-    for(biter it = firstBoundary(); it != lastBoundary(); it++){
-      it->second.init();
-    }
-  }
 
   // remove (co)boundary cell
   // (other: reciprocally also revove this cell from the other cell's (co)boundary)
