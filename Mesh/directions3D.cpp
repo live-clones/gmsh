@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Tristan Carrier
+//   Tristan Carrier François Henrotte
 
 #include <fstream>
 #include "GModel.h"
@@ -95,23 +95,23 @@ void Frame_field::init_face(GFace* gf){
 	  
     for(j=0;j<element->getNumVertices();j++){
       vertex = element->getVertex(j);
-      ok = translate(gf,octree,vertex,SPoint2(average_x,average_y),v1,v2);
+      ok = improved_translate(gf,vertex,v1,v2);
 
       if(ok){
-	v1.normalize();
-	v2.normalize();
-	v3 = crossprod(v1,v2);
-	v3.normalize();
-	m.set_m11(v1.x());
-	m.set_m21(v1.y());
-	m.set_m31(v1.z());
-	m.set_m12(v2.x());
-	m.set_m22(v2.y());
-	m.set_m32(v2.z());
-	m.set_m13(v3.x());
-	m.set_m23(v3.y());
-	m.set_m33(v3.z());
-	temp.insert(std::pair<MVertex*,Matrix>(vertex,m));
+	    v1.normalize();
+	    v2.normalize();
+	    v3 = crossprod(v1,v2);
+	    v3.normalize();
+	    m.set_m11(v1.x());
+	    m.set_m21(v1.y());
+	    m.set_m31(v1.z());
+	    m.set_m12(v2.x());
+	    m.set_m22(v2.y());
+ 	    m.set_m32(v2.z());
+	    m.set_m13(v3.x());
+	    m.set_m23(v3.y());
+	    m.set_m33(v3.z());
+	    temp.insert(std::pair<MVertex*,Matrix>(vertex,m));
       }
     }
   }
@@ -171,6 +171,31 @@ bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPo
     v2 = SVector3(0.0,1.0,0.0);
   }
   return ok;
+}
+
+bool Frame_field::improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& v2){
+  double x,y;
+  double angle;
+  SPoint2 point;
+  SVector3 s1,s2;
+  SVector3 normal;
+  Pair<SVector3,SVector3> derivatives;	
+	
+  reparamMeshVertexOnFace(vertex,gf,point);
+  x = point.x();
+  y = point.y();
+	
+  angle = backgroundMesh::current()->getAngle(x,y,0.0);
+  derivatives = gf->firstDer(point);
+	
+  s1 = derivatives.first();
+  s2 = derivatives.second();
+  normal = crossprod(s1,s2);
+	
+  v1 = s1*cos(angle) + s2*sin(angle);
+  v2 = crossprod(v1,normal);
+	
+  return 1;
 }
 
 Matrix Frame_field::search(double x,double y,double z){
@@ -807,8 +832,9 @@ void Size_field::solve(GRegion* gr){
   //printf("number of tetrahedra = %d\n",count2);	
   //printf("volume = %f\n",volume);
 
-  if (assembler.sizeOfR())
+  if(assembler.sizeOfR()){
     system->systemSolve();
+  }
 
   for(it=interior.begin();it!=interior.end();it++){
     assembler.getDofValue(*it,0,1,val);
