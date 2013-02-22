@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Tristan Carrier
+//   Tristan Carrier François Henrotte
 
 #include "simple3D.h"
 #include "GModel.h"
