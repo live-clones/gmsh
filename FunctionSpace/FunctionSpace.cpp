@@ -82,9 +82,6 @@ void FunctionSpace::build(GroupOfElement& goe,
 
   // Build Dof //
   buildDof();
-
-  // Link with GroupOfElement for ordering //
-  //goe.link(*this);
 }
 
 void FunctionSpace::buildDof(void){
