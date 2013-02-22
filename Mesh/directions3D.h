@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Tristan Carrier
+//   Tristan Carrier François Henrotte
 
 #ifndef _DIRECTION_3D_H_
 #define _DIRECTION_3D_H_
@@ -42,6 +42,7 @@ class Frame_field{
   static void init_region(GRegion*);
   static void init_face(GFace*);
   static bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
+  static bool improved_translate(GFace*,MVertex*,SVector3&,SVector3&);
   static Matrix search(double,double,double);
   static Matrix combine(double,double,double);
   static bool inside_domain(MElementOctree*,double,double);
