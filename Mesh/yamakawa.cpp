@@ -960,6 +960,9 @@ void Recombinator::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
+  gf1 = NULL;
+  gf2 = NULL;
+
   tuple1 = Tuple(a,b,c);
   tuple2 = Tuple(c,d,a);	
   
@@ -2583,6 +2586,9 @@ void Supplementary::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d)
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 	
+  gf1 = NULL;
+  gf2 = NULL;	
+	
   tuple1 = Tuple(a,b,c);
   tuple2 = Tuple(c,d,a);	
 	
@@ -3990,6 +3996,9 @@ void PostOp::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   Tuple tuple1,tuple2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
+	
+  gf1 = NULL;
+  gf2 = NULL;	
 	
   tuple1 = Tuple(a,b,c);
   tuple2 = Tuple(c,d,a);	
