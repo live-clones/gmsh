@@ -385,8 +385,8 @@ void Filler::treat_region(GRegion* gr){
 	  boundary_vertices.push_back(*it);
 	}
   }
-  std::ofstream file("nodes.pos");
-  file << "View \"test\" {\n";	
+  //std::ofstream file("nodes.pos");
+  //file << "View \"test\" {\n";	
 
   for(i=0;i<boundary_vertices.size();i++){
     x = boundary_vertices[i]->x();
@@ -397,7 +397,7 @@ void Filler::treat_region(GRegion* gr){
 	compute_parameters(node,gr);
 	rtree.Insert(node->min,node->max,node);
 	fifo.push(node);
-	print_node(node,file);
+	//print_node(node,file);
   }
   
   count = 1;
@@ -449,7 +449,7 @@ void Filler::treat_region(GRegion* gr){
 	count++;
   }
   
-  file << "};\n";
+  //file << "};\n";
 
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
@@ -475,7 +475,7 @@ void Filler::treat_region(GRegion* gr){
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
   Matrix m2;
-  if(CTX::instance()->mesh.smoothCrossField)
+  if(!CTX::instance()->mesh.smoothCrossField)
     m2 = Frame_field::search(x,y,z);
   else
     m2 = Frame_field::findNearestCross(x,y,z);
