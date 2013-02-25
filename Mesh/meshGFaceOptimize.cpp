@@ -2219,13 +2219,13 @@ int optiSmoothing(GFace *gf, int niter, bool infinity_norm)
     v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
       bool doit = false;
-      for (unsigned int j=0;j<it->second.size();j++){
-	if (it->second[j]->gammaShapeMeasure() < .05){
-	  doit = true;
-	}
-      }
+      for (unsigned int j=0;j<it->second.size();j++)
+        if (it->second[j]->gammaShapeMeasure() < .05)
+          doit = true;
       if (doit){
-	N += _relocateVertexOpti(gf, it->first, it->second);
+#if defined(HAVE_BFGS)
+        N += _relocateVertexOpti(gf, it->first, it->second);
+#endif
       }
       ++it;
     }
@@ -2914,8 +2914,10 @@ void _triangleSplit (GFace *gf, MElement *t, bool swop = false)
 int recombineWithBlossom(GFace *gf, double dx, double dy,
                          int *&elist, std::map<MElement*,int> &t2n)
 {
+#if defined(HAVE_BLOSSOM)
   int recur_level = 0;
   bool cubicGraph = 1;
+#endif
   int success = 1;
 
   std::set<MVertex*> emb_edgeverts;
