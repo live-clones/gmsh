@@ -495,6 +495,40 @@ Metric Filler::get_metric(double x,double y,double z){
   return m;
 }
 
+Metric Filler::get_metric(double x,double y,double z,GEntity* ge){
+  Metric m;
+  SMetric3 temp;
+  SVector3 v1,v2,v3;
+  Field* field;
+  FieldManager* manager;
+	
+  v1 = SVector3(1.0,0.0,0.0);
+  v2 = SVector3(0.0,1.0,0.0);
+  v3 = SVector3(0.0,0.0,1.0);
+	
+  manager = ge->model()->getFields();
+  if(manager->getBackgroundField()>0){
+    field = manager->get(manager->getBackgroundField());
+    if(field){
+      (*field)(x,y,z,temp,ge);
+    }
+  }
+	
+  m.set_m11(v1.x());
+  m.set_m21(v1.y());
+  m.set_m31(v1.z());
+	
+  m.set_m12(v2.x());
+  m.set_m22(v2.y());
+  m.set_m32(v2.z());
+	
+  m.set_m13(v3.x());
+  m.set_m23(v3.y());
+  m.set_m33(v3.z());
+	
+  return m;
+}
+
 double Filler::get_size(double x,double y,double z){
   return Size_field::search(x,y,z);
 }

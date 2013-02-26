@@ -18,6 +18,7 @@ class Filler{
  private:
   static std::vector<MVertex*> new_vertices;
   Metric get_metric(double,double,double);
+  Metric get_metric(double,double,double,GEntity*);
   double get_size(double,double,double);
   double get_size(double,double,double,GEntity*);
   bool inside_domain(MElementOctree*,double,double,double);
