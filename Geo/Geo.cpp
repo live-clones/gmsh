@@ -3545,9 +3545,15 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
     List_Read(edges, i, &j);
     if((c = FindCurve(j))){
       List_Add(temp, &c);
+      if(c->Typ == MSH_SEGM_DISCRETE){
+        Msg::Debug("Aborting line loop sort for discrete edge: hope you know "
+		   "what you're doing ;-)");
+        return;
+      }
     }
     else{
-      Msg::Debug("Aborting line loop sort: at your own risk :-)");
+      Msg::Debug("Unknown curve %d, aborting line loop sort: hope you know "
+                 "what you're doing ;-)", j);
       List_Delete(temp);
       return;
     }
