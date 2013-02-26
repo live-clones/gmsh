@@ -21,6 +21,7 @@ struct intersectCurveSurfaceData
     uvt(2) = newPoint[2];
     fullVector<double> res(3);
     _kaboom(uvt,res,this);
+    //    printf("start with %12.5E\n",res.norm());
     if (res.norm() < epsilon)return true;
 
     if(newton_fd(_kaboom, uvt, this)){
@@ -41,6 +42,7 @@ void _kaboom(fullVector<double> &uvt,
   res(0) = s.x() - c.x();
   res(1) = s.y() - c.y();
   res(2) = s.z() - c.z();
+  //  printf("%g %g %g vs %g %g %g \n",s.x(),s.y(),s.z(),c.x(),c.y(),c.z());
 }
 
 int intersectCurveSurface (curveFunctor &c, surfaceFunctor & s, double uvt[3], double epsilon){

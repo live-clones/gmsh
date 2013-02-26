@@ -142,7 +142,7 @@ bool inExclusionZone (SPoint2 &p,
   if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
 
   my_wrapper w (p);
-  double _min[2] = {p.x()-1.e-3, p.y()-1.e-3},_max[2] = {p.x()+1.e-3,p.y()+1.e-3};
+  double _min[2] = {p.x()-1.e-1, p.y()-1.e-1},_max[2] = {p.x()+1.e-1,p.y()+1.e-1};
   rtree.Search(_min,_max,rtree_callback,&w);
 
   return w._tooclose;
@@ -239,11 +239,13 @@ bool compute4neighbors (GFace *gf,   // the surface
     // and get covariant coordinates a and b
     double rhs1[2] = {dot(t1,s1),dot(t1,s2)}, covar1[2];
     if (!sys2x2(metric,rhs1,covar1)){
+      Msg::Info("Argh");
       covar1[1] = 1.0; covar1[0] = 0.0;
     }
     double rhs2[2] = {dot(t2,s1),dot(t2,s2)}, covar2[2];
     if (!sys2x2(metric,rhs2,covar2)){
-	covar2[0] = 1.0; covar2[1] = 0.0;
+      Msg::Info("Argh");
+      covar2[0] = 1.0; covar2[1] = 0.0;
     }
     
     // transform the sizes with respect to the metric
@@ -264,7 +266,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 						  2*E*covar2[1]*covar2[0]+
 						  N*covar2[1]*covar2[1]);
     
-    //    if (l1 == 0.0 || l2 == 0.0) printf("bouuuuuuuuuuuuh %g %g %g %g --- %g %g %g %g %g %g\n",l1,l2,t1.norm(),t2.norm(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
+    //if (l1 == 0.0 || l2 == 0.0) printf("bouuuuuuuuuuuuh %g %g %g %g --- %g %g %g %g %g %g\n",l1,l2,t1.norm(),t2.norm(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
 
     /*    printf("%12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",
 	   M*covar1[0]*covar1[0]+
@@ -296,18 +298,42 @@ bool compute4neighbors (GFace *gf,   // the surface
     // We could stop here. Yet, if the metric varies a lot, we can solve
     // a nonlinear problem in order to find a better approximation in the real
     // surface
+    double ERR[4];
+    for (int i=0;i<4;i++){                                              //
+      GPoint pp = gf->point(SPoint2(newPoint[i][0], newPoint[i][1]));
+      double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) + 
+		       (pp.y() - v_center->y())*(pp.y() - v_center->y()) + 
+		       (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
+      ERR[i] = 100*fabs(D-L)/(D+L);
+      //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
+    }
+
     if (goNonLinear){//---------------------------------------------------//
       surfaceFunctorGFace ss (gf);                                        //
-      SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1,t2};                     //
+      SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //      
       for (int i=0;i<4;i++){                                              //
-	double uvt[3] = {newPoint[i][0],newPoint[i][1],0.0};              //
-	curveFunctorCircle cf (n,dirs[i],
-			       SVector3(v_center->x(),v_center->y(),v_center->z()),
-			       (i%2==1 ?size_param_1:size_param_2)*.5);       //
-	if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-8)){          //
-	  newPoint[i][0] = uvt[0];                                        //
-	  newPoint[i][1] = uvt[1];                                        //
-	}                                                                 //
+	if (ERR[i] > 12){
+	  double uvt[3] = {newPoint[i][0],newPoint[i][1],0.0};              //
+	  //	  printf("Intersecting with circle N = %g %g %g dir = %g %g %g R = %g p = %g %g %g\n",n.x(),n.y(),n.z(),dirs[i].x(),dirs[i].y(),dirs[i].z(),L,v_center->x(),v_center->y(),v_center->z());
+	  curveFunctorCircle cf (dirs[i],n,				 
+				 SVector3(v_center->x(),v_center->y(),v_center->z()),
+				 L);
+	  if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-5)){          //
+	    GPoint pp = gf->point(SPoint2(uvt[0],uvt[1]));
+	    double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) + 
+			     (pp.y() - v_center->y())*(pp.y() - v_center->y()) + 
+			     (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
+	    double newErr = 100*fabs(D-L)/(D+L);
+	    if (newErr < 1){
+	      //	      printf("%12.5E vs %12.5E : %12.5E  %12.5E vs %12.5E  %12.5E \n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
+	      newPoint[i][0] = uvt[0];                                        //
+	      newPoint[i][1] = uvt[1];                                        //
+	    }                                                                 //
+	  }
+	  else{
+	    Msg::Warning("Cannot put a new point on Surface %d",gf->tag());
+	  }
+	}
       }                                                                   //
     } /// end non linear -------------------------------------------------//
     
@@ -324,6 +350,8 @@ bool compute4neighbors (GFace *gf,   // the surface
 // quad mesh ------------
 void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
   #if defined(HAVE_RTREE)
+
+  const bool goNonLinear = true;
 
   //  FILE *f = fopen ("parallelograms.pos","w"); 
   
@@ -347,7 +375,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   SPoint2 newp[4][NUMDIR];
   std::set<MVertex*>::iterator it =  bnd_vertices.begin() ;
   for (; it !=  bnd_vertices.end() ; ++it){
-    compute4neighbors (gf, *it, false, newp, metricField);
+    compute4neighbors (gf, *it, goNonLinear, newp, metricField);
     surfacePointWithExclusionRegion *sp = 
       new surfacePointWithExclusionRegion (*it, newp, metricField);    
     //    fifo.push(sp); 
@@ -381,7 +409,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 	  GPoint gp = gf->point(parent->_p[i][dir]);
 	  MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 	  //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
-	  compute4neighbors (gf, v, false, newp, metricField);
+	  compute4neighbors (gf, v, goNonLinear, newp, metricField);
 	  surfacePointWithExclusionRegion *sp = 
 	    new surfacePointWithExclusionRegion (v, newp, metricField, parent);    
 	  //	  fifo.push(sp); 

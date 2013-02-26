@@ -623,8 +623,9 @@ static void propagateValuesOnFace(GFace *_gf,
   }
 
   // Solve
-  if (myAssembler.sizeOfR())
+  if (myAssembler.sizeOfR()){
     _lsys->systemSolve();
+  }
 
   // save solution
   for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
@@ -653,18 +654,19 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
         MVertex *v1 = (*it)->lines[i]->getVertex(0);
         MVertex *v2 = (*it)->lines[i]->getVertex(1);
-        // printf("%g %g %g\n",v1->x(),v1->y(),v1->z());
-        double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
-                        (v1->y() - v2->y()) * (v1->y() - v2->y()) +
-                        (v1->z() - v2->z()) * (v1->z()  -v2->z()));
-        for (int k=0;k<2;k++){
-          MVertex *v = (*it)->lines[i]->getVertex(k);
-          std::map<MVertex*, double>::iterator itv = sizes.find(v);
-          if (itv == sizes.end())
-            sizes[v] = log(d);
-          else
-            itv->second = 0.5 * (itv->second + log(d));
-        }
+	if (v1 != v2){
+	  double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
+			  (v1->y() - v2->y()) * (v1->y() - v2->y()) +
+			  (v1->z() - v2->z()) * (v1->z()  -v2->z()));
+	  for (int k=0;k<2;k++){
+	    MVertex *v = (*it)->lines[i]->getVertex(k);
+	    std::map<MVertex*, double>::iterator itv = sizes.find(v);
+	    if (itv == sizes.end())
+	      sizes[v] = log(d);
+	    else
+	      itv->second = 0.5 * (itv->second + log(d));
+	  }
+	}
       }
     }
   }
@@ -711,19 +713,26 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1,p2;
         reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
-        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
-        crossField2d::normalizeAngle (angle);
+	/* a correct way of computing angles  */
+	Pair<SVector3, SVector3> der = _gf->firstDer((p1+p2)*.5);
+	SVector3 t1 = der.first();
+	SVector3 t2 (v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
+	t1.normalize();
+	t2.normalize();
+	double _angle = angle (t1,t2);	
+	//        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
+        crossField2d::normalizeAngle (_angle);
         for (int i=0;i<2;i++){
           std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
           std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
           if (itc != _cosines4.end()){
-            itc->second  = 0.5*(itc->second + cos(4*angle));
-            its->second  = 0.5*(its->second + sin(4*angle));
+            itc->second  = 0.5*(itc->second + cos(4*_angle));
+            its->second  = 0.5*(its->second + sin(4*_angle));
           }
           else {
 	    _param[v[i]] = (i==0) ? p1 : p2;
-            _cosines4[v[i]] = cos(4*angle);
-            _sines4[v[i]] = sin(4*angle);
+            _cosines4[v[i]] = cos(4*_angle);
+            _sines4[v[i]] = sin(4*_angle);
           }
         }
       }
@@ -756,6 +765,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 
 void backgroundMesh::propagatecrossField(GFace *_gf)
 {
+
   std::map<MVertex*,double> _cosines4,_sines4;
 
   std::list<GEdge*> e;
@@ -771,51 +781,27 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1,p2;
         reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
-        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
+	Pair<SVector3, SVector3> der = _gf->firstDer((p1+p2)*.5);
+	SVector3 t1 = der.first();
+	SVector3 t2 (v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
+	t1.normalize();
+	t2.normalize();
+	double _angle = angle (t1,t2);	
+	//	printf("angle = %12.5E\n",_angle);
+	//	angle_ = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
         //double angle = atan2 ( v[0]->y()-v[1]->y() , v[0]->x()- v[1]->x() );
         //double angle = atan2 ( v0->y()-v1->y() , v0->x()- v1->x() );
-        crossField2d::normalizeAngle (angle);
+        crossField2d::normalizeAngle (_angle);
         for (int i=0;i<2;i++){
           std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
           std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
           if (itc != _cosines4.end()){
-            itc->second  = 0.5*(itc->second + cos(4*angle));
-            its->second  = 0.5*(its->second + sin(4*angle));
+            itc->second  = 0.5*(itc->second + cos(4*_angle));
+            its->second  = 0.5*(its->second + sin(4*_angle));
           }
           else {
-            _cosines4[v[i]] = cos(4*angle);
-            _sines4[v[i]] = sin(4*angle);
-          }
-        }
-      }
-    }
-  }
-
-  // force smooth transition
-  const int nbSmooth = 0;
-  const double threshold_angle = 2. * M_PI/180.;
-  for (int SMOOTH_ITER = 0 ; SMOOTH_ITER < nbSmooth ; SMOOTH_ITER++){
-    it = e.begin();
-    for( ; it != e.end(); ++it ){
-      if (!(*it)->isSeam(_gf)){
-        for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){
-          MVertex *v[2];
-          v[0] = (*it)->lines[i]->getVertex(0);
-          v[1] = (*it)->lines[i]->getVertex(1);
-          double cos40 = _cosines4[v[0]];
-          double cos41 = _cosines4[v[1]];
-          double sin40 = _sines4[v[0]];
-          double sin41 = _sines4[v[1]];
-          double angle0 = atan2 (sin40,cos40)/4.;
-          double angle1 = atan2 (sin41,cos41)/4.;
-          if (fabs(angle0 - angle1) >  threshold_angle ){
-            double angle0_new = angle0 - (angle0-angle1) * 0.1;
-            double angle1_new = angle1 + (angle0-angle1) * 0.1;
-            // printf("%g %g -- %g %g\n",angle0,angle1,angle0_new,angle1_new);
-            _cosines4[v[0]] = cos(4*angle0_new);
-            _sines4[v[0]] = sin(4*angle0_new);
-            _cosines4[v[1]] = cos(4*angle1_new);
-            _sines4[v[1]] = sin(4*angle1_new);
+            _cosines4[v[i]] = cos(4*_angle);
+            _sines4[v[i]] = sin(4*_angle);
           }
         }
       }
@@ -1013,7 +999,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
       */
     }
     else {
-      /*
+      
       GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
       GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
       GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));
@@ -1021,12 +1007,13 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
               p1.x(),p1.y(),p1.z(),
               p2.x(),p2.y(),p2.z(),
               p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
-      */
+      /*
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
               v1->x(),v1->y(),v1->z(),
               v2->x(),v2->y(),v2->z(),
               v3->x(),v3->y(),v3->z(),
               itv1->second,itv2->second,itv3->second);
+      */
     }
   }
   fprintf(f,"};\n");

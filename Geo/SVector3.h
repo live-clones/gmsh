@@ -89,6 +89,13 @@ inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
                   -(a.x() * b.z() - b.x() * a.z()),
                   a.x() * b.y() - b.x() * a.y()); }
 
+inline double angle (const SVector3 &a, const SVector3 &b){
+  double cosTheta = dot(a,b);
+  double sinTheta = norm(crossprod(a,b));
+  return atan2 (sinTheta,cosTheta);  
+}
+
+
 inline SVector3 operator*(double m,const SVector3 &v)
 { return SVector3(v[0] * m, v[1] * m, v[2] * m); }
 
@@ -103,6 +110,7 @@ inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
 
 inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
 {

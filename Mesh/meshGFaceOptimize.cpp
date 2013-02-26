@@ -163,21 +163,25 @@ void buildMeshGenerationDataStructures(GFace *gf,
     }
   }
 
+  // take good care of embedded edges
+  {
+    std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+    std::list<GEdge*>::iterator ite = embedded_edges.begin();
+    while(ite != embedded_edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+	for (int i=0;i<(*ite)->lines.size();i++)
+	  data.internalEdges.insert (MEdge((*ite)->lines[i]->getVertex(0),
+					   (*ite)->lines[i]->getVertex(1)));
+      }
+      ++ite;
+    }
+  }
+
   //  int NUM = 0;
   for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
-    // FIXME: this vertex-stored indexing makes the optimization
-    // routines not thread-safe (we cannot concurrently optimize two
-    // surfaces that share an edge)
-    //    it->first->setIndex(NUM++);
-    // OK, I can fix that
-    //    vSizes.push_back(it->second);
-    //    vSizesBGM.push_back(it->second);
-    //    vMetricsBGM.push_back(SMetric3(it->second));
     SPoint2 param;
     reparamMeshVertexOnFace(it->first, gf, param);
-    //    Us.push_back(param[0]);
-    //    Vs.push_back(param[1]);
     data.addVertex (it->first, param[0], param[1], it->second, it->second);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){

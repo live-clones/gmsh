@@ -490,15 +490,18 @@ void recurFindCavityAniso(GFace *gf,
 
   for (int i = 0; i < 3; i++){
     MTri3 *neigh = t->getNeigh(i) ;
-    if (!neigh)
-      shell.push_back(edgeXface(t, i));
+    edgeXface exf (t, i);
+    // take care of untouchable internal edges
+    std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(exf.v[0],exf.v[1])); 
+    if (!neigh || it != data.internalEdges.end())
+      shell.push_back(exf);
     else  if (!neigh->isDeleted()){
       //      int circ =  inCircumCircleAniso(gf, neigh->tri(), param, metric, data);
       int circ =  inCircumCircleAniso(gf, neigh->tri(), param, metric, data);
       if (circ)
         recurFindCavityAniso(gf, shell, cavity,metric, param, neigh, data);
       else
-        shell.push_back(edgeXface(t, i));
+        shell.push_back(exf);
     }
   }
 }
@@ -791,29 +794,25 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   double uv[2];
 
   // if the point is able to break the bad triangle "worst"
-  if (1){
-    if (inCircumCircleAniso(gf, worst->tri(), center, metric, data)){
-      //      double t1 = Cpu();
-      recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
-      //      __DT1 += Cpu() - t1 ;
-      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
-	if (invMapUV((*itc)->tri(), center, data, uv, 1.e-8)) {
-	  ptin = *itc;
-	  break;
-	}
-      }
-    }
-    // else look for it
-    else {
-      //      printf("cocuou\n");
-      ptin = search4Triangle (worst, center, data, AllTris,uv, oneNewTriangle ? true : false);
-      if (ptin) {
-	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);    
+  if (inCircumCircleAniso(gf, worst->tri(), center, metric, data)){
+    //      double t1 = Cpu();
+    recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
+    //      __DT1 += Cpu() - t1 ;
+    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+      if (invMapUV((*itc)->tri(), center, data, uv, 1.e-8)) {
+	ptin = *itc;
+	break;
       }
     }
   }
-
-  //  ptin = search4Triangle (worst, center, Us, Vs, AllTris,uv, oneNewTriangle ? true : false);
+  // else look for it
+  else {
+    //      printf("cocuou\n");
+    ptin = search4Triangle (worst, center, data, AllTris,uv, oneNewTriangle ? true : false);
+      if (ptin) {
+	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);    
+      }
+  }
 
   if (ptin) {
     // we use here local coordinates as real coordinates
