@@ -147,7 +147,7 @@ PView *GMSH_HomologyComputationPlugin::execute(PView *v)
     }
   }
 
-  //delete homology;
+  delete homology;
 
   return 0;
 }

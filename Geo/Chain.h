@@ -491,8 +491,7 @@ int Chain<C>::addToModel(GModel* m, bool post,
     }
     if(dim > 0) coeff = abs(coeff);
 
-    std::vector<double> coeffs;
-    for(int j = 0; j < e->getNumVertices(); j++) coeffs.push_back(coeff);
+    std::vector<double> coeffs(1, coeff);
     data[e->getNum()] = coeffs;
   }
   int max[4];
@@ -521,7 +520,7 @@ int Chain<C>::addToModel(GModel* m, bool post,
     // create PView for instant visualization
     std::string pnum = convertInt(physicalNum);
     std::string postname = pnum + "=" + _name;
-    PView* view = new PView(postname, "ElementNodeData", m, data, 0., 1);
+    PView* view = new PView(postname, "ElementData", m, data, 0., 1);
     // the user should be interested about the orientations
     int size = 30;
     PViewOptions* opt = view->getOptions();
