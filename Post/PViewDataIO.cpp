@@ -185,7 +185,7 @@ bool PViewData::writeMSH(const std::string &fileName, double version, bool binar
 
 bool PViewData::writeMED(const std::string &fileName)
 {
-  Msg::Error("MED export onnly available for mesh-based post-processing views");
+  Msg::Error("MED export only available for mesh-based post-processing views");
   return false;
 }
 
