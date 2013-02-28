@@ -286,7 +286,6 @@ void GetStatistics(double stat[50], double quality[4][100])
       stat[17] = gamma / N ;  stat[18] = gammaMin;  stat[19] = gammaMax;
       stat[20] = eta / N ;    stat[21] = etaMin;    stat[22] = etaMax;
       stat[23] = rho / N ;    stat[24] = rhoMin;    stat[25] = rhoMax;
-      stat[45] = jmin;        stat[46] = jmax;
       stat[46] = disto / N ;  stat[47] = distoMin;  stat[48] = distoMax;
     }
   }
@@ -586,8 +585,8 @@ static void Mesh3D(GModel *m)
       }
     }
   }
-  
-  for(unsigned int i = 0; i < connected.size(); i++){    
+
+  for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
 
     //Additional code for hex mesh begin
@@ -599,7 +598,7 @@ static void Mesh3D(GModel *m)
 	f.treat_region(gr);
       }
       //Recombine3D into hex
-      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){	
+      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
 	Recombinator rec;
 	rec.execute();
 	Supplementary sup;
