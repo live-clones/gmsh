@@ -308,7 +308,7 @@ namespace onelabUtils {
     }
     else if(action == "reset"){
       setFirstComputationFlag(false);
-      OpenProject(GModel::current()->getFileName());
+      // nothing more to do: "check" will be called right afterwards
     }
     else if(action == "check"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
