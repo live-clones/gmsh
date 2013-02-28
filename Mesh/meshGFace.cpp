@@ -45,6 +45,12 @@
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
 
+inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
+  double cosTheta = dot(a,b);
+  double sinTheta = dot(crossprod(a,b),d);
+  return atan2 (sinTheta,cosTheta);  
+}
+
 struct myPlane {
   SPoint3 p;
   SVector3 n;
@@ -233,10 +239,10 @@ static void copyMesh(GFace *source, GFace *target)
       SVector3 t1 = ps - p_ps;
       SVector3 t2 = pt - p_pt;
       if (t1.norm() > 1.e-8 * dist1.norm()){
-	if (count == 0)ANGLE = angle (t1,t2);
+	if (count == 0)ANGLE = myAngle (t1,t2,LINE.t);
 	else {
-	  double ANGLE2 = angle (t1,t2);
-	  ///	  printf("ANGLE2 = %12.5E\n",ANGLE2);
+	  double ANGLE2 = myAngle (t1,t2,LINE.t);
+	  //	  printf("ANGLE2 = %12.5E\n",ANGLE2);
 	  if (fabs (ANGLE2-ANGLE) > 1.e-8)rotation = false;
 	}
 	count++;
