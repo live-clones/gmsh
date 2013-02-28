@@ -697,15 +697,15 @@ public:
   // redefinition of virtual onelab_client::sendMergeFileRequest
   void sendMergeFileRequest(const std::string &name)
   {
-    if(name.find(".geo")!= std::string::npos){
+    if(name.find(".geo") != std::string::npos){
       MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
 			      CTX::instance()->solver.autoHideNewViews, true);
       GModel::current()->setFileName(name);
     }
-    else if((name.find(".opt")!= std::string::npos)){
+    else if((name.find(".opt") != std::string::npos)){
       MergeFile(name);
     }
-    else if((name.find(".macro")!= std::string::npos)){
+    else if((name.find(".macro") != std::string::npos)){
       MergeFile(name);
     }
     else
