@@ -6108,16 +6108,17 @@ double opt_view_timestep(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEW(0.);
-  if(!data) return 0;
   if(action & GMSH_SET) {
     opt->timeStep = (int)val;
-    if(opt->timeStep > data->getNumTimeSteps() - 1)
-      opt->timeStep = 0;
-    else if(opt->timeStep < 0)
-      opt->timeStep = data->getNumTimeSteps() - 1;
-    if(data->getAdaptiveData())
-      data->getAdaptiveData()->changeResolution
-        (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+    if(data){
+      if(opt->timeStep > data->getNumTimeSteps() - 1)
+        opt->timeStep = 0;
+      else if(opt->timeStep < 0)
+        opt->timeStep = data->getNumTimeSteps() - 1;
+      if(data->getAdaptiveData())
+        data->getAdaptiveData()->changeResolution
+          (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+    }
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
