@@ -45,8 +45,75 @@
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
 
+struct myPlane {
+  SPoint3 p;
+  SVector3 n;
+  double a;
+  /// nx x + ny y + nz z + a = 0
+  myPlane(SPoint3 _p, SVector3 _n) : p(_p),n(_n) 
+  {
+    //    printf("plane passing through %12.5E %12.5E %12.5E\n",p.x(),p.y(),p.z());
+    n.normalize();
+    a = -(n.x()*p.x()+n.y()*p.y()+n.z()*p.z());
+  }
+  double eval (double x, double y, double z){
+    return n.x() * x + n.y() * y + n.z() * z + a;
+  }
+};
+
+struct myLine {
+  SPoint3 p;
+  SVector3 t;
+  myLine() : p(0,0,0) , t (0,0,1) {}
+  myLine(myPlane &p1, myPlane &p2)
+  {
+    t = crossprod(p1.n,p2.n);
+    if (t.norm() == 0.0){
+      Msg::Error("parallel planes do not intersect");
+    }
+    else
+      t.normalize();    
+    // find a point, assume z = 0
+    double a[2][2] = {{p1.n.x(),p1.n.y()},{p2.n.x(),p2.n.y()}};
+    double b[2] = {-p1.a,-p2.a},x[2];
+    if (!sys2x2(a,b,x)){
+      // assume x = 0
+      double az[2][2] = {{p1.n.y(),p1.n.z()},{p2.n.y(),p2.n.z()}};
+      double bz[2] = {-p1.a,-p2.a};
+      if (!sys2x2(az,bz,x)){
+	// assume y = 0
+	double ay[2][2] = {{p1.n.x(),p1.n.z()},{p2.n.x(),p2.n.z()}};
+	double by[2] = {-p1.a,-p2.a};
+	//	printf("%g %g %g %g\n",p1.n.y(),p1.n.z(),p2.n.y(),p2.n.z());
+	if (!sys2x2(ay,by,x)){
+	  Msg::Error("parallel planes do not intersect");
+	}
+	else {
+	  p = SPoint3(x[0],0.0,x[1]);	
+	}
+      }
+      else{
+	p = SPoint3(0.0,x[0],x[1]);	
+      }
+    }
+    else{
+      p = SPoint3(x[0],x[1],0.0);	
+    }	   
+  }
+  SPoint3 orthogonalProjection (SPoint3 &a){
+    // (x - a) * t = 0 --> 
+    // x = p + u t --> (p + ut - a) * t = 0 --> u = (a-p) * t  
+    const double u = dot(a-p,t);
+    return SPoint3(p.x() + t.x() * u,p.y() + t.y() * u,p.z() + t.z() * u);
+  }
+
+};
+
+
 static void copyMesh(GFace *source, GFace *target)
 {
+  //  printf("%d %d \n",source->tag(),target->tag());
+  
   std::map<MVertex*, MVertex*> vs2vt;
   std::list<GEdge*> edges = target->edges();
   {
@@ -81,7 +148,8 @@ static void copyMesh(GFace *source, GFace *target)
       // iterate on source vertices
       for (unsigned i = 0; i < te->mesh_vertices.size(); i++){
 	MVertex *vt = te->mesh_vertices[i];
-	MVertex *vs = 0;
+	MVertex *vs = se->mesh_vertices[source_e * sign > 0 ? i : te->mesh_vertices.size() - i - 1];
+	/*
 	MVertex *vt_on_master;
 	if (te->meshMaster() == te->tag())vt_on_master =vt;
 	else vt_on_master = te->correspondingVertices[vt];
@@ -96,31 +164,135 @@ static void copyMesh(GFace *source, GFace *target)
 	    if (vs_on_master == vt_on_master)break;
 	  }
 	}
+	*/
 	vs2vt[vs] = vt;
       }
     }
   }
+
+  bool translation = true;
+  bool rotation = false;
 
   SVector3 DX;
   int count = 0;
   for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
     MVertex *vs = it->first;
     MVertex *vt = it->second;
-    DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
-    if (count == 2) break;
+    if (count == 0)
+      DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
+    else {
+      SVector3 DX2 = DX - SVector3 (vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
+      if (DX2.norm() > DX.norm() * 1.e-8)translation = false;
+    }
+    count ++;
   }
 
+  double rot[3][3] ;
+  myLine LINE;
+  double ANGLE=0;
+  if (!translation){
+    count = 0;
+    rotation = true;
+    std::vector<SPoint3> mps,mpt;
+    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
+      MVertex *vs = it->first;
+      MVertex *vt = it->second;
+      mps.push_back(SPoint3(vs->x(),vs->y(),vs->z()));
+      //      printf("klax %d point %g %g %g\n",vs->onWhat()->tag(),vs->x(),vs->y(),vs->z());
+      mpt.push_back(SPoint3(vt->x(),vt->y(),vt->z()));
+    }
+    mean_plane mean_source,mean_target;
+    computeMeanPlaneSimple(mps,mean_source);
+    computeMeanPlaneSimple(mpt,mean_target);
+    myPlane PLANE_SOURCE (SPoint3(mean_source.x,mean_source.y,mean_source.z),
+			  SVector3(mean_source.a,mean_source.b,mean_source.c));
+    myPlane PLANE_TARGET (SPoint3(mean_target.x,mean_target.y,mean_target.z),
+			  SVector3(mean_target.a,mean_target.b,mean_target.c));
+    //    printf("%g %g %g vs %g %g %g \n",PLANE_SOURCE.n.x(),PLANE_SOURCE.n.y(),PLANE_SOURCE.n.z(),
+    //    	   PLANE_TARGET.n.x(),PLANE_TARGET.n.y(),PLANE_TARGET.n.z());
+    LINE = myLine (PLANE_SOURCE,PLANE_TARGET);
+
+    // LINE is the axis of rotation
+    // let us compute the angle of rotation
+    count = 0;
+    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
+      MVertex *vs = it->first;
+      MVertex *vt = it->second;
+      // project both points on the axis : that should be the same point !
+      SPoint3 ps = SPoint3(vs->x(),vs->y(),vs->z());
+      SPoint3 pt = SPoint3(vt->x(),vt->y(),vt->z());      
+      SPoint3 p_ps = LINE.orthogonalProjection (ps);
+      SPoint3 p_pt = LINE.orthogonalProjection (pt);
+      SVector3 dist1 = ps - pt;
+      SVector3 dist2 = p_ps - p_pt;
+      if (dist2.norm() > 1.e-8*dist1.norm()){
+	//	printf("%g %g %g vs %g %g %g\n",ps.x(),ps.y(),ps.z(),pt.x(),pt.y(),pt.z());
+	//	printf("%g %g %g vs %g %g %g\n",p_ps.x(),p_ps.y(),p_ps.z(),p_pt.x(),p_pt.y(),p_pt.z());
+	rotation = false;
+      }
+      SVector3 t1 = ps - p_ps;
+      SVector3 t2 = pt - p_pt;
+      if (t1.norm() > 1.e-8 * dist1.norm()){
+	if (count == 0)ANGLE = angle (t1,t2);
+	else {
+	  double ANGLE2 = angle (t1,t2);
+	  ///	  printf("ANGLE2 = %12.5E\n",ANGLE2);
+	  if (fabs (ANGLE2-ANGLE) > 1.e-8)rotation = false;
+	}
+	count++;
+      }
+    }
+
+    
+    if (rotation){
+      Msg::Info("COPYMESH : Rotation found AXIS (%g,%g,%g) POINT (%g %g %g) ANGLE %g",LINE.t.x(),LINE.t.y(),LINE.t.z(),LINE.p.x(),LINE.p.y(),LINE.p.z(),ANGLE*180/M_PI);
+      double ux = LINE.t.x();
+      double uy = LINE.t.y();
+      double uz = LINE.t.z();
+      rot[0][0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
+      rot[0][1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
+      rot[0][2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
+      rot[1][0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
+      rot[1][1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
+      rot[1][2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
+      rot[2][0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
+      rot[2][1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
+      rot[2][2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
+    }
+    else {
+      Msg::Error ("COPYMESH : Only rotations or translations can be taken into account for peridic faces, face %d not meshed",target->tag());
+      return;
+    }
+  }
+  else{
+    Msg::Info("COPYMESH : Translation found DX = (%g,%g,%g)",DX.x(),DX.y(),DX.z());
+  }
+
+  // now transform !!!
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
-    SPoint3 tp (vs->x() + DX.x(),vs->y() + DX.y(),vs->z() + DX.z());
-    SPoint2 XXX = target->parFromPoint(tp);
-    GPoint gp = target->point(XXX);
     
+    SPoint2 XXX;
+    if (translation) {
+      SPoint3 tp (vs->x() + DX.x(),vs->y() + DX.y(),vs->z() + DX.z());
+      XXX = target->parFromPoint(tp);
+    }
+    else if (rotation){
+      SPoint3 ps = SPoint3(vs->x(),vs->y(),vs->z());
+      SPoint3 p_ps = LINE.orthogonalProjection (ps);
+      SPoint3 P = ps - p_ps, res;
+      matvec(rot, P, res);
+      res += p_ps;
+      XXX = target->parFromPoint(res);
+    }
+    GPoint gp = target->point(XXX);
     MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target, gp.u(), gp.v());
     target->mesh_vertices.push_back(vt);
     target->correspondingVertices[vt] = vs;
     vs2vt[vs] = vt;
   }
+
+
   for (unsigned i = 0; i < source->triangles.size(); i++){
     MVertex *vt[3];
     for (int j = 0; j < 3; j++){
