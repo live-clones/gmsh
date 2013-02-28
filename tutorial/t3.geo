@@ -40,7 +40,7 @@ Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
 // can be exchanged with other codes using the ONELAB framework:
 
 DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
-                         Label "Extrusion angle", Path "Parameters"} ];
+                         Label "Twisting angle", Path "Parameters"} ];
 
 out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
   Surface{144}; Layers{10}; Recombine;
