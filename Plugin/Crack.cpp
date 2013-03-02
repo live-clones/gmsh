@@ -194,7 +194,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   crackEntity->physicals.push_back(physical);
 
   // duplicate crack vertices
-  std::map<MVertex *, MVertex*> vxv;
+  std::map<MVertex*, MVertex*> vxv;
   for(std::set<MVertex*>::iterator it = crackVertices.begin();
       it != crackVertices.end(); it++){
     MVertex *v = *it;

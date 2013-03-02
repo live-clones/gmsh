@@ -92,6 +92,16 @@ Numeric options:
 Default value: @code{0}
 @end table
 
+@item Plugin(Crack)
+Plugin(Crack) creates a crack around the physical group
+Numeric options:
+@table @code
+@item Dimension
+Default value: @code{1}
+@item PhysicalGroup
+Default value: @code{1}
+@end table
+
 @item Plugin(Curl)
 Plugin(Curl) computes the curl of the field in the view `View'.
 
@@ -494,7 +504,7 @@ Default value: @code{1}
 @item ReductionOmit
 Default value: @code{1}
 @item ReductionCombine
-Default value: @code{2}
+Default value: @code{3}
 @item PostProcessSimplify
 Default value: @code{1}
 @item ReductionHeuristic
@@ -515,7 +525,8 @@ Plugin(HomologyPostProcessing) operates on representative basis chains of homolo
 Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.
 
 Options:
-'PhysicalGroupsToTraceResults': Trace the resulting cochains to the given physical groups.
+'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to the given physical groups.
+'PhysicalGroupsToProjectResults': Project the resulting (co)chains to the complement of the given physical groups.
 'NameForResultChains': Post-processing view name prefix for the results.
 'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.
 
@@ -528,6 +539,8 @@ Default value: @code{"1, 2"}
 @item PhysicalGroupsOfOperatedChains2
 Default value: @code{""}
 @item PhysicalGroupsToTraceResults
+Default value: @code{""}
+@item PhysicalGroupsToProjectResults
 Default value: @code{""}
 @item NameForResultChains
 Default value: @code{"c"}
@@ -963,6 +976,11 @@ Default value: @code{-1}
 
 @item Plugin(SimplePartition)
 Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition boundaries if `CreateBoundaries' is set.
+String options:
+@table @code
+@item Mapping
+Default value: @code{"t"}
+@end table
 Numeric options:
 @table @code
 @item NumSlices

@@ -49,6 +49,11 @@ Apply lloyd optimization on surface meshes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SmoothCrossField
+Apply n barycentric smoothing passes to the cross field@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CgnsImportOrder
 Enable the creation of high-order mesh from CGNS structured meshes.(1, 2, 4, 8, ...)@*
 Default value: @code{1}@*
