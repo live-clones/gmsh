@@ -23,6 +23,7 @@
 #include "MathEval.h"
 #include "ExtractElements.h"
 #include "SimplePartition.h"
+#include "Crack.h"
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
@@ -242,6 +243,8 @@ void PluginManager::registerDefaultPlugins()
                       ("NewView", GMSH_RegisterNewViewPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Crack", GMSH_RegisterCrackPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));

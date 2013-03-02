@@ -31,7 +31,7 @@ set(SRC
   Scal2Vec.cpp
   CutMesh.cpp
   NewView.cpp
-  SimplePartition.cpp
+  SimplePartition.cpp Crack.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
