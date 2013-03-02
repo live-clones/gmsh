@@ -60,6 +60,7 @@ class MTetrahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
   {

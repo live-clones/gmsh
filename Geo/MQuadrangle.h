@@ -56,7 +56,7 @@ class MQuadrangle : public MElement {
   virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual void setVertex(int num, MVertex *v){_v[num]=v;}
+  virtual void setVertex(int num, MVertex *v){ _v[num] = v; }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[4] = {0, 1, 3, 2};

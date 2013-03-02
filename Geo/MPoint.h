@@ -31,6 +31,7 @@ class MPoint : public MElement {
   virtual int getDim() const { return 0; }
   virtual int getNumVertices() const { return 1; }
   virtual MVertex *getVertex(int num){ return _v[0]; }
+  virtual void setVertex(int num,  MVertex *v){ _v[0] = v; }
   virtual int getNumEdges(){ return 0; }
   virtual MEdge getEdge(int num){ return MEdge(); }
   virtual int getNumEdgesRep(){ return 0; }

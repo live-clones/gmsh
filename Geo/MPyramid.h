@@ -67,6 +67,7 @@ class MPyramid : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual int getNumEdges(){ return 8; }
@@ -244,7 +245,7 @@ class MPyramidN : public MPyramid {
   virtual int getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
-  virtual int getNumFaceVertices() const 
+  virtual int getNumFaceVertices() const
   {
     return (_order-1)*(_order-1) + 4 * ((_order - 1) * (_order - 2)) / 2;
   }
@@ -260,7 +261,7 @@ class MPyramidN : public MPyramid {
   {
     int j = 3;
     if (num == 4) {
-      j = 4; 
+      j = 4;
       v.resize(_order * _order);
     }
     else {
