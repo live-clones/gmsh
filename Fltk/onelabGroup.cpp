@@ -1296,6 +1296,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
 {
   n->labelsize(FL_NORMAL_SIZE + 5);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
+  ww /= 2;
 
   // non-editable value
   if(p.getReadOnly()){
@@ -1319,6 +1320,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n
 {
   n->labelsize(FL_NORMAL_SIZE + 5);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
+  ww /= 2;
 
   // non-editable value
   if(1 || p.getReadOnly()){
