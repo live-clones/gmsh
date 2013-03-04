@@ -181,6 +181,14 @@ class dofManager : public dofManagerBase{
     return false;
   }
 
+  virtual inline bool isConstrained(Dof key) const
+  {
+    if(constraints.find(key) != constraints.end()){
+      return true;
+    }
+    return false;
+  }
+  
   inline bool isFixed(long int ent, int type) const
   {
     return isFixed(Dof(ent, type));
@@ -543,6 +551,18 @@ class dofManager : public dofManagerBase{
     constraints[key] = affineconstraint;
     // constraints.insert(std::make_pair(key, affineconstraint));
   }
+  
+  virtual inline bool getLinearConstraint (Dof key, DofAffineConstraint<dataVec> &affineconstraint)
+  {
+    typename std::map<Dof, DofAffineConstraint< dataVec > >::const_iterator it=constraints.find(key);
+    if (it!=constraints.end())
+    {
+      affineconstraint=it->second;
+      return true;
+    }
+    return false;
+  }
+  
   virtual inline void assembleLinConst(const Dof &R, const Dof &C, const dataMat &value)
   {
     std::map<Dof, int>::iterator itR = unknown.find(R);
@@ -583,13 +603,15 @@ class dofManager : public dofManagerBase{
     }
   }
 
-  virtual int getDofNumber(const Dof& key){
-		std::map<Dof,int>::iterator it = unknown.find(key);
-		if (it == unknown.end()) {
-			return -1;
-		}
-		else return it->second;
-	};
+  virtual int getDofNumber(const Dof& key)
+  {
+    std::map<Dof,int>::iterator it = unknown.find(key);
+    if (it == unknown.end()){
+      return -1;
+    }
+    else return it->second;
+  }
+  
 	virtual void clearAllLineConstraints() {
     constraints.clear();
 	}
