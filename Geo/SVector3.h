@@ -35,6 +35,7 @@ class SVector3 {
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
   }
+  SVector3 unit() const{ SVector3 y(*this); y.normalize(); return y; }
   void negate() { P[0] = -P[0]; P[1] = -P[1]; P[2] = -P[2]; }
   // why both [] and (), why not
   double &operator[](int i){ return P[i]; }
