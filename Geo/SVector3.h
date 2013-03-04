@@ -29,9 +29,11 @@ class SVector3 {
   inline double y(void) const { return P.y(); }
   inline double z(void) const { return P.z(); }
   inline double norm() const { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
-  inline double normSq() { return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
-  double normalize()
-  {
+  inline double normSq() const{ return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
+  // Beware that " w = v.normalize() " produces the vector 
+  // w = (v.norm(), v.norm(), v.norm()), which is NOT a unit vector!
+  // Use " w = v.unit() " to affect to "w" the unit vector parallel to "v". 
+  double normalize(){
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
   }
