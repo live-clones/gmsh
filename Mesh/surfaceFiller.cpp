@@ -210,12 +210,15 @@ bool compute4neighbors (GFace *gf,   // the surface
   SVector3 n = crossprod(s1,s2);
   n.normalize();
   
+  //  printf("%d %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z());
+
   for (int DIR = 0 ; DIR < NUMDIR ; DIR ++){  
     double quadAngle  = backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0) + DIRS[DIR];
     
     // normalize vector t1 that is tangent to gf at midpoint
     SVector3 t1 = s1 * cos (quadAngle) + s2 * sin (quadAngle);
     t1.normalize();
+    //    printf("%d %g %g %g -- %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z(),t1.x(),t1.y(),t1.z());
     
     // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
     SVector3 t2 = crossprod(t1,n);
@@ -230,8 +233,7 @@ bool compute4neighbors (GFace *gf,   // the surface
     double N = dot(s2,s2);
     double E = dot(s1,s2);
     double metric[2][2] = {{M,E},{E,N}};
-    
-    
+        
     // compute covariant coordinates of t1 and t2
     // t1 = a s1 + b s2 -->
     // t1 . s1 = a M + b E

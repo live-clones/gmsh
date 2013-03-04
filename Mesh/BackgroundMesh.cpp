@@ -763,6 +763,13 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 #endif
 }
 
+inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
+  double cosTheta = dot(a,b);
+  double sinTheta = dot(crossprod(a,b),d);
+  return atan2 (sinTheta,cosTheta);  
+}
+
+
 void backgroundMesh::propagatecrossField(GFace *_gf)
 {
 
@@ -783,15 +790,24 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
         reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
 	Pair<SVector3, SVector3> der = _gf->firstDer((p1+p2)*.5);
 	SVector3 t1 = der.first();
+	SVector3 s2 = der.second();
+	SVector3 n = crossprod(t1,s2);
+	n.normalize();
 	SVector3 t2 (v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
 	t1.normalize();
 	t2.normalize();
-	double _angle = angle (t1,t2);	
+	double _angle = myAngle (t1,t2,n);	
+	//	printf("GFACE %d %g %g %g %g\n",_gf->tag(),t1.x(),t1.y(),t1.z(),_angle*180/M_PI);
 	//	printf("angle = %12.5E\n",_angle);
 	//	angle_ = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
         //double angle = atan2 ( v[0]->y()-v[1]->y() , v[0]->x()- v[1]->x() );
         //double angle = atan2 ( v0->y()-v1->y() , v0->x()- v1->x() );
         crossField2d::normalizeAngle (_angle);
+	//	SVector3 s2 = der.second();
+	//	s2.normalize();
+	//	SVector3 x = t1 * cos (_angle) + s2 * sin (_angle);
+	//	printf("%g %g %g vs %g %g %g\n",x.x(),x.y(),x.z(),t2.x(),t2.y(),t2.z());
+	//	printf("GFACE %d GEDGE %d %g %g %g %g\n",_gf->tag(),(*it)->tag(),t1.x(),t1.y(),t1.z(),_angle*180/M_PI);
         for (int i=0;i<2;i++){
           std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
           std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
