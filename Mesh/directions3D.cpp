@@ -423,25 +423,24 @@ void Frame_field::clear(){
 
 #include "cross3D.h"
 
-CWTSSpaceVector<> convert(const SVector3 v){
-  return CWTSSpaceVector<> (v.x(), v.y(), v.z());
-}
+// CWTSSpaceVector<> convert(const SVector3 v){
+//   return CWTSSpaceVector<> (v.x(), v.y(), v.z());
+// }
 
-SVector3 convert(const CWTSSpaceVector<> x){
-  return SVector3 (x[0], x[1], x[2]);
-}
+// SVector3 convert(const CWTSSpaceVector<> x){
+//   return SVector3 (x[0], x[1], x[2]);
+// }
 
-ostream& operator<< (ostream &os, SVector3 &v) {
-  os << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
-  return os;
-}
-
+// ostream& operator<< (ostream &os, SVector3 &v) {
+//   os << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+//   return os;
+// }
 
 void Frame_field::init(GRegion* gr){
-  CWTSSpaceVector<> Ex(1,0,0), Ey(0,1,0), Ez(0,0,1);
-  CWTSSpaceVector<> v(1,2,0), w(0,1,1.3);
-  cross3D x(Ez, Ex);
-  cross3D y = cross3D(v, w);
+  // SVector3 Ex(1,0,0), Ey(0,1,0), Ez(0,0,1);
+  // SVector3 v(1,2,0), w(0,1,1.3);
+  // cross3D x(Ez, Ex);
+  // cross3D y = cross3D(v, w);
 
   //Recombinator crossData;
   crossData.build_vertex_to_vertices(gr);
@@ -459,7 +458,7 @@ void Frame_field::init(GRegion* gr){
 double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, Matrix &m0){
   double theta, gradient, energy;
   Matrix m;
-  CWTSSpaceVector<> axis;
+  SVector3 axis;
   bool debug = false;
 
   MVertex* pVertex0 = iter->first;
@@ -468,7 +467,7 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
   if(debug) std::cout << "#  " << pVertex0->getNum() 
 		       << " with " << list.size() << " neighbours" << std::endl;
 
-  SVector3 T = SVector3(0.0), dT;
+  SVector3 T = SVector3(0.), dT;
   double temp = 0.;
   energy = 0;
   for (std::set<MVertex*>::const_iterator it=list.begin(); it != list.end(); ++it){
@@ -476,12 +475,12 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
     if(pVertex->getNum() == pVertex0->getNum()) 
       std::cout << "This should not happen!" << std::endl;
     std::map<int, Matrix>::const_iterator itB = crossField.find(pVertex->getNum());
-    if(itB == crossField.end())
+    if(itB == crossField.end()) // not found
       m = search(pVertex->x(), pVertex->y(), pVertex->z());
     else
       m = itB->second;
     cross3D y(m);
-    CWTSQuaternion<> Rxy = x.rotationTo(y);
+    Qtn Rxy = x.rotationTo(y);
 
     MEdge edge(pVertex0, pVertex);
     theta = eulerAngleFromQtn(Rxy);
@@ -490,7 +489,8 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
     crossDist[edge] = theta;
     if (fabs(theta) > 1e-10) {
       axis = eulerAxisFromQtn(Rxy); // undefined if theta==0
-      dT = convert(axis) * (theta / edge.length() / edge.length()) ;
+      // dT = convert(axis) * (theta / edge.length() / edge.length()) ;
+      dT = axis * (theta / edge.length() / edge.length()) ;
       T += dT;
     }
     temp += 1. / edge.length() / edge.length();
@@ -504,13 +504,13 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
   //std::cout << "xold=> " << x << std::endl;
   theta = T.norm();
   if(fabs(theta) > 1e-10){
-    axis = convert(T);
+    //axis = convert(T);
+    axis = T;
     if(debug) std::cout << "-> " << pVertex0->getNum() << " : " << T << std::endl;
-    CWTSQuaternion<> R = qtnFromEulerAxisAndAngle(axis.unit(),theta);
+    Qtn R(axis.unit(),theta);
     x.rotate(R);
     m0 = convert(x);
   }
-  //std::cout << "xnew=> " << x << std::endl << std::endl;
   return energy;
 }
 
