@@ -84,7 +84,8 @@ set(GMSH_API
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h 
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
-    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
+    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h 
+    Common/OS.h Common/StringUtils.h Common/OpenFile.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h
@@ -108,8 +109,9 @@ set(GMSH_API
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h    Solver/groupOfElements.h 
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h Post/PViewDataGModel.h
+    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h    Solver/groupOfElements.h Solver/linearSystemPETSc.h
+  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
+  Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 

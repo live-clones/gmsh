@@ -432,7 +432,7 @@ void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
   }
 }
 
-void Homology::_addToModel(int dim, bool co, bool post, int physicalNumRequest) const
+std::vector<int> Homology::_addToModel(int dim, bool co, bool post, int physicalNumRequest) const
 {
   if(dim < 0 || dim > 3) return;
   int pgnum = -1;
@@ -460,11 +460,12 @@ void Homology::_addToModel(int dim, bool co, bool post, int physicalNumRequest) 
     else Msg::Info("Span H^%d(%s) = %s",
                    dim, domain.c_str(), span.c_str());
   }
-
+  return physicals;
 }
 
 void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
 {
+  std::vector<int> physicals;
   if(!_homologyComputed[dim])
     Msg::Warning("%d-Homology is not computed", dim);
   if(dim == -1) {

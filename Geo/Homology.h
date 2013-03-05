@@ -90,7 +90,7 @@ class Homology
   void _deleteChains(std::vector<int> dim=vecN0(4));
   void _deleteCochains(std::vector<int> dim=vecN0(4));
 
-  void _addToModel(int dim, bool co, bool post, int physicalNumRequest) const;
+  std::vector<int> _addToModel(int dim, bool co, bool post, int physicalNumRequest) const;
 
  public:
 
