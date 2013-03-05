@@ -179,6 +179,7 @@ bool Frame_field::improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVec
   SPoint2 point;
   SVector3 s1,s2;
   SVector3 normal;
+  SVector3 basis_u,basis_v;
   Pair<SVector3,SVector3> derivatives;	
 	
   reparamMeshVertexOnFace(vertex,gf,point);
@@ -192,7 +193,12 @@ bool Frame_field::improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVec
   s2 = derivatives.second();
   normal = crossprod(s1,s2);
 	
-  v1 = s1*cos(angle) + s2*sin(angle);
+  basis_u = s1;
+  basis_u.normalize();
+  basis_v = crossprod(normal,basis_u);
+  basis_v.normalize();
+		
+  v1 = basis_u*cos(angle) + basis_v*sin(angle);
   v2 = crossprod(v1,normal);
 	
   return 1;
