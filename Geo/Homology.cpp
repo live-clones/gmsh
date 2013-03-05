@@ -434,9 +434,9 @@ void Homology::findCompatibleBasisPair(int master, std::vector<int> dim)
 
 std::vector<int> Homology::_addToModel(int dim, bool co, bool post, int physicalNumRequest) const
 {
-  if(dim < 0 || dim > 3) return;
-  int pgnum = -1;
   std::vector<int> physicals;
+  if(dim < 0 || dim > 3) return physicals;
+  int pgnum = -1;
   if(!co) {
     for(unsigned int i = 0; i < _chains[dim].size(); i++) {
       if(physicalNumRequest != -1) pgnum = physicalNumRequest + i;
@@ -465,7 +465,7 @@ std::vector<int> Homology::_addToModel(int dim, bool co, bool post, int physical
 
 void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
 {
-  std::vector<int> physicals;
+  //std::vector<int> physicals;
   if(!_homologyComputed[dim])
     Msg::Warning("%d-Homology is not computed", dim);
   if(dim == -1) {
