@@ -805,8 +805,8 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
         crossField2d::normalizeAngle (_angle);
 	//	SVector3 s2 = der.second();
 	//	s2.normalize();
-	//	SVector3 x = t1 * cos (_angle) + s2 * sin (_angle);
-	//	printf("%g %g %g vs %g %g %g\n",x.x(),x.y(),x.z(),t2.x(),t2.y(),t2.z());
+	SVector3 x = t1 * cos (_angle) + crossprod(n,t1) * sin (_angle);
+	//	printf("angle = %g --> %g %g %g vs %g %g %g\n",_angle,x.x(),x.y(),x.z(),t2.x(),t2.y(),t2.z());
 	//	printf("GFACE %d GEDGE %d %g %g %g %g\n",_gf->tag(),(*it)->tag(),t1.x(),t1.y(),t1.z(),_angle*180/M_PI);
         for (int i=0;i<2;i++){
           std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);

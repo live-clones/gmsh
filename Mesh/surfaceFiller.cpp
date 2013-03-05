@@ -178,7 +178,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 			MVertex *v_center, // the wertex for which we wnt to generate 4 neighbors
 			bool goNonLinear, // do we compute the position in the real surface which is nonlinear
 			SPoint2 newP[4][NUMDIR], // look into other directions 
-			SMetric3 &metricField) // the mesh metric
+			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
   // we assume that v is on surface gf
 
@@ -210,30 +210,40 @@ bool compute4neighbors (GFace *gf,   // the surface
   SVector3 n = crossprod(s1,s2);
   n.normalize();
   
+  double M = dot(s1,s1);
+  double N = dot(s2,s2);
+  double E = dot(s1,s2);
+  
+
+  // compute the first fundamental form i.e. the metric tensor at the point
+  // M_{ij} = s_i \cdot s_j 
+  double metric[2][2] = {{M,E},{E,N}};
+
   //  printf("%d %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z());
+
+  SVector3 basis_u = s1; basis_u.normalize();
+  SVector3 basis_v = crossprod(n,basis_u);
 
   for (int DIR = 0 ; DIR < NUMDIR ; DIR ++){  
     double quadAngle  = backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0) + DIRS[DIR];
     
     // normalize vector t1 that is tangent to gf at midpoint
-    SVector3 t1 = s1 * cos (quadAngle) + s2 * sin (quadAngle);
+    SVector3 t1 = basis_u * cos (quadAngle) + basis_v * sin (quadAngle) ;
     t1.normalize();
+
     //    printf("%d %g %g %g -- %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z(),t1.x(),t1.y(),t1.z());
     
     // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
-    SVector3 t2 = crossprod(t1,n);
+    SVector3 t2 = crossprod(n,t1);
     t2.normalize();
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),t1.x(),t1.y(),t1.z());
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),t2.x(),t2.y(),t2.z());
+    //    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),s1.x(),s1.y(),s1.z());
+    //    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),s2.x(),s2.y(),s2.z());
     
     double size_1 = sqrt(1. / dot(t1,metricField,t1));
     double size_2 = sqrt(1. / dot(t2,metricField,t2));
 
-    // compute the first fundamental form i.e. the metric tensor at the point
-    // M_{ij} = s_i \cdot s_j 
-    double M = dot(s1,s1);
-    double N = dot(s2,s2);
-    double E = dot(s1,s2);
-    double metric[2][2] = {{M,E},{E,N}};
-        
     // compute covariant coordinates of t1 and t2
     // t1 = a s1 + b s2 -->
     // t1 . s1 = a M + b E
@@ -280,7 +290,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 	   ,covar1[0],covar1[1],covar2[0],covar2[1],l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());*/
 
     // this is the rectangle in the parameter plane.
-    const double EPS = 1.e-6;
+    const double EPS = 1.e-12;
     double r1 = EPS*(double)rand() / RAND_MAX;
     double r2 = EPS*(double)rand() / RAND_MAX;
     double r3 = EPS*(double)rand() / RAND_MAX;
@@ -376,8 +386,11 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
   std::set<MVertex*>::iterator it =  bnd_vertices.begin() ;
+
+  FILE *crossf = 0 ; //fopen ("cross.pos","w");
+  if (crossf)fprintf(crossf,"View \"\"{\n");
   for (; it !=  bnd_vertices.end() ; ++it){
-    compute4neighbors (gf, *it, goNonLinear, newp, metricField);
+    compute4neighbors (gf, *it, goNonLinear, newp, metricField,crossf);
     surfacePointWithExclusionRegion *sp = 
       new surfacePointWithExclusionRegion (*it, newp, metricField);    
     //    fifo.push(sp); 
@@ -411,7 +424,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 	  GPoint gp = gf->point(parent->_p[i][dir]);
 	  MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 	  //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
-	  compute4neighbors (gf, v, goNonLinear, newp, metricField);
+	  compute4neighbors (gf, v, goNonLinear, newp, metricField,crossf);
 	  surfacePointWithExclusionRegion *sp = 
 	    new surfacePointWithExclusionRegion (v, newp, metricField, parent);    
 	  //	  fifo.push(sp); 
@@ -426,7 +439,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     }
     //    printf("%d\n",vertices.size());
   }  
-
+  if (crossf){
+    fprintf(crossf,"};\n");
+    fclose (crossf);
+  }
   //  printf("done\n");
 
   // add the vertices as additional vertices in the
