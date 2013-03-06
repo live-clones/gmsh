@@ -689,6 +689,10 @@ void Recombinator::merge(GRegion* gr){
 	  continue;
 	}
 
+	if(!faces_statuquo(hex)){
+	  continue;
+	}
+	  
 	//printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),hex.get_quality());
 	quality = quality + hex.get_quality();
 	for(it=parts.begin();it!=parts.end();it++){
@@ -1749,6 +1753,128 @@ bool Recombinator::conformityC(Hex hex){
   }
 }
 
+bool Recombinator::faces_statuquo(Hex hex){
+  bool c1,c2,c3,c4,c5,c6;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+	
+  a = hex.get_a();
+  b = hex.get_b();
+  c = hex.get_c();
+  d = hex.get_d();
+  e = hex.get_e();
+  f = hex.get_f();
+  g = hex.get_g();
+  h = hex.get_h();
+	
+  c1 = faces_statuquo(a,b,c,d);
+  c2 = faces_statuquo(e,f,g,h);
+  c3 = faces_statuquo(a,b,f,e);
+  c4 = faces_statuquo(b,c,g,f);
+  c5 = faces_statuquo(d,c,g,h);
+  c6 = faces_statuquo(d,a,e,h);
+	
+  return c1 && c2 && c3 && c4 && c5 && c6;
+}
+
+bool Recombinator::faces_statuquo(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  bool ok;
+  bool flag1,flag2;
+  GFace *gf1,*gf2;
+  Tuple tuple1,tuple2;
+  std::multiset<Tuple>::iterator it1;
+  std::multiset<Tuple>::iterator it2;
+	
+  ok = 1;	
+	
+  gf1 = NULL;
+  gf2 = NULL;
+	
+  tuple1 = Tuple(a,b,c);
+  tuple2 = Tuple(c,d,a);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    if(gf1!=gf2){
+	  ok = 0;
+	}
+  }
+	
+  tuple1 = Tuple(a,b,d);
+  tuple2 = Tuple(b,c,d);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    if(gf1!=gf2){
+	  ok = 0;
+	}
+  }
+	
+  return ok;
+}
+
 void Recombinator::build_vertex_to_vertices(GRegion* gr){
   size_t i;
   int j;
@@ -2423,6 +2549,10 @@ void Supplementary::merge(GRegion* gr){
 	  continue;
 	}
 
+	if(!faces_statuquo(prism)){
+	  continue;
+	}
+	  
 	//printf("%d - %d/%d - %f\n",count,i,(int)potential.size(),prism.get_quality());
 	quality = quality + prism.get_quality();
 	for(it=parts.begin();it!=parts.end();it++){
@@ -3122,6 +3252,123 @@ bool Supplementary::conformityC(Prism prism){
   else{
     return 1;
   }
+}
+
+bool Supplementary::faces_statuquo(Prism prism){
+  bool c1,c2,c3;
+  MVertex *a,*b,*c;
+  MVertex *d,*e,*f;
+	
+  a = prism.get_a();
+  b = prism.get_b();
+  c = prism.get_c();
+  d = prism.get_d();
+  e = prism.get_e();
+  f = prism.get_f();
+	
+  c1 = faces_statuquo(a,d,f,c);
+  c2 = faces_statuquo(a,d,e,b);
+  c3 = faces_statuquo(b,c,f,e);
+	
+  return c1 && c2 && c3;
+}
+
+bool Supplementary::faces_statuquo(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  bool ok;
+  bool flag1,flag2;
+  GFace *gf1,*gf2;
+  Tuple tuple1,tuple2;
+  std::multiset<Tuple>::iterator it1;
+  std::multiset<Tuple>::iterator it2;
+	
+  ok = 1;	
+	
+  gf1 = NULL;
+  gf2 = NULL;
+	
+  tuple1 = Tuple(a,b,c);
+  tuple2 = Tuple(c,d,a);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    if(gf1!=gf2){
+	  ok = 0;
+	}
+  }
+	
+  tuple1 = Tuple(a,b,d);
+  tuple2 = Tuple(b,c,d);	
+	
+  it1 = tuples.find(tuple1);
+  it2 = tuples.find(tuple2);
+	
+  flag1 = 0;
+  flag2 = 0;
+	
+  while(it1!=tuples.end()){
+    if(tuple1.get_hash()!=it1->get_hash()){
+	  break;
+	}
+		
+	if(tuple1.same_vertices(*it1)){
+	  flag1 = 1;
+	  gf1 = it1->get_gf();
+	}
+		
+	it1++;
+  }
+	
+  while(it2!=tuples.end()){
+    if(tuple2.get_hash()!=it2->get_hash()){
+	  break;
+	}
+		
+	if(tuple2.same_vertices(*it2)){
+	  flag2 = 1;
+	  gf2 = it2->get_gf();
+	}
+		
+	it2++;
+  }
+	
+  if(flag1 && flag2){
+    if(gf1!=gf2){
+	  ok = 0;
+	}
+  }
+	
+  return ok;
 }
 
 void Supplementary::build_vertex_to_vertices(GRegion* gr){

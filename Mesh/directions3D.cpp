@@ -95,8 +95,14 @@ void Frame_field::init_face(GFace* gf){
 	  
     for(j=0;j<element->getNumVertices();j++){
       vertex = element->getVertex(j);
-      ok = improved_translate(gf,vertex,v1,v2);
-
+	  	
+	  if(gf->geomType()==GEntity::CompoundSurface){
+	    ok = translate(gf,octree,vertex,SPoint2(average_x,average_y),v1,v2);
+	  }
+	  else{
+        ok = improved_translate(gf,vertex,v1,v2);
+	  }
+      
       if(ok){
 	    v1.normalize();
 	    v2.normalize();

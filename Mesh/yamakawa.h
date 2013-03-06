@@ -155,6 +155,9 @@ class Recombinator{
   bool conformityB(Hex);
   bool conformityC(Hex);
 
+  bool faces_statuquo(Hex);
+  bool faces_statuquo(MVertex*,MVertex*,MVertex*,MVertex*);
+
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_elements(GRegion*);
   void build_hash_tableA(Hex);
@@ -251,6 +254,9 @@ class Supplementary{
   bool conformityB(Prism);
   bool conformityC(Prism);
 
+  bool faces_statuquo(Prism);
+  bool faces_statuquo(MVertex*,MVertex*,MVertex*,MVertex*);	
+	
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_tetrahedra(GRegion*);
   void build_hash_tableA(Prism);
