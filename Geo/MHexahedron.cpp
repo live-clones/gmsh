@@ -93,17 +93,18 @@ void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
       sign = 1; rot = 0; return;
     }
     if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
-        v3 == face.getVertex(3) && v2 == face.getVertex(0)){
+        v2 == face.getVertex(3) && v3 == face.getVertex(0)){
       sign = 1; rot = 1; return;
     }
-    if (v0 == face.getVertex(2) && v3 == face.getVertex(3) &&
-        v1 == face.getVertex(0) && v2 == face.getVertex(1)){
+    if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
+        v2 == face.getVertex(0) && v3 == face.getVertex(1)){
       sign = 1; rot = 2; return;
     }
-    if (v0 == face.getVertex(3) && v3 == face.getVertex(0) &&
-        v1 == face.getVertex(1) && v2 == face.getVertex(2)){
+    if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
+        v2 == face.getVertex(1) && v3 == face.getVertex(2)){
       sign = 1; rot = 3; return;
     }
+    // reverse
     if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
         v2 == face.getVertex(2) && v3 == face.getVertex(1)){
       sign = -1; rot = 0; return;
