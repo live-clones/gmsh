@@ -3219,9 +3219,9 @@ cases.)
 The MSH ASCII file format contains one mandatory section giving
 information about the file (@code{$MeshFormat}), followed by several
 optional sections defining the nodes (@code{$Nodes}), elements
-(@code{$Elements}), region names (@code{$PhysicalName}) and
-post-processing datasets (@code{$NodeData}, @code{$ElementData},
-@code{$ElementNodeData}).
+(@code{$Elements}), region names (@code{$PhysicalName}), periodicity
+relations (@code{$Periodic}) and post-processing datasets
+(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
 
 When @code{$Elements} are given, @code{$Nodes} should also be provided,
 before the @code{$Elements} section. Currently only one @code{$Nodes}
@@ -3252,6 +3252,13 @@ $Elements
 @var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
 @dots{}
 $EndElements
+$Periodic
+@var{number-of-periodic-entities}
+@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
+@var{number-of-nodes}
+@var{slave-node-number master-node-number}
+@dots{}
+$EndPeriodic
 $PhysicalNames
 @var{number-of-names}
 @var{physical-dimension} @var{physical-number} "@var{physical-name}"

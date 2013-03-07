@@ -34,7 +34,7 @@ double myacos(double a)
     return acos(a);
 }
 double norm2(double a[3][3]) {
-  double norm2sq = 
+  double norm2sq =
     SQU(a[0][0])+
     SQU(a[0][1])+
     SQU(a[0][2])+
@@ -1249,7 +1249,6 @@ int intersection_segments(SPoint3 &p1, SPoint3 &p2,
 
 void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane)
 {
-
   double xm = 0., ym = 0., zm = 0.;
   int ndata = points.size();
   int na = 3;
@@ -1284,7 +1283,7 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
   res[0] = V(0, min);
   res[1] = V(1, min);
   res[2] = V(2, min);
-  
+
   double xxx = norme(res);
   res[3] /= xxx;
   double ex[3], t1[3], t2[3];

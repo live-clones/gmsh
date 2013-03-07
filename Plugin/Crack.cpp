@@ -5,18 +5,14 @@
 
 #include "Crack.h"
 #include "GModel.h"
-#include "partitionFace.h"
-#include "partitionEdge.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
 #include "MElement.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MFace.h"
 #include "MEdge.h"
-#include "mathEvaluator.h"
-#if defined(HAVE_MESH)
-#include "meshPartition.h"
-#endif
+#include "Context.h"
 
 StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "Dimension", NULL, 1.},
@@ -33,7 +29,13 @@ extern "C"
 
 std::string GMSH_CrackPlugin::getHelp() const
 {
-  return "Plugin(Crack) creates a crack around the physical group";
+  return "Plugin(Crack) creates a crack around the physical "
+    "group `PhysicalGroup' of dimension `Dimension' (1 or 2). "
+    "The plugin duplicates the vertices and the elements on "
+    "the crack and stores them in a new discrete curve "
+    "(Dimension = 1) or surface (Dimension = 2). The "
+    "elements touching the crack on the negative side "
+    "are modified to use the newly generated vertices.";
 }
 
 int GMSH_CrackPlugin::getNbOptions() const

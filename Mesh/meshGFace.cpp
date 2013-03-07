@@ -45,24 +45,25 @@
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
 
-inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
+inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d)
+{
   double cosTheta = dot(a,b);
   double sinTheta = dot(crossprod(a,b),d);
-  return atan2 (sinTheta,cosTheta);  
+  return atan2 (sinTheta,cosTheta);
 }
 
 struct myPlane {
   SPoint3 p;
   SVector3 n;
   double a;
-  /// nx x + ny y + nz z + a = 0
-  myPlane(SPoint3 _p, SVector3 _n) : p(_p),n(_n) 
+  // nx x + ny y + nz z + a = 0
+  myPlane(SPoint3 _p, SVector3 _n) : p(_p),n(_n)
   {
-    //    printf("plane passing through %12.5E %12.5E %12.5E\n",p.x(),p.y(),p.z());
     n.normalize();
     a = -(n.x()*p.x()+n.y()*p.y()+n.z()*p.z());
   }
-  double eval (double x, double y, double z){
+  double eval (double x, double y, double z)
+  {
     return n.x() * x + n.y() * y + n.z() * z + a;
   }
 };
@@ -78,48 +79,44 @@ struct myLine {
       Msg::Error("parallel planes do not intersect");
     }
     else
-      t.normalize();    
+      t.normalize();
     // find a point, assume z = 0
-    double a[2][2] = {{p1.n.x(),p1.n.y()},{p2.n.x(),p2.n.y()}};
-    double b[2] = {-p1.a,-p2.a},x[2];
-    if (!sys2x2(a,b,x)){
+    double a[2][2] = {{p1.n.x(), p1.n.y()}, {p2.n.x(), p2.n.y()}};
+    double b[2] = {-p1.a, -p2.a}, x[2];
+    if (!sys2x2(a, b, x)){
       // assume x = 0
-      double az[2][2] = {{p1.n.y(),p1.n.z()},{p2.n.y(),p2.n.z()}};
-      double bz[2] = {-p1.a,-p2.a};
-      if (!sys2x2(az,bz,x)){
+      double az[2][2] = {{p1.n.y(), p1.n.z()}, {p2.n.y(), p2.n.z()}};
+      double bz[2] = {-p1.a, -p2.a};
+      if (!sys2x2(az, bz, x)){
 	// assume y = 0
-	double ay[2][2] = {{p1.n.x(),p1.n.z()},{p2.n.x(),p2.n.z()}};
-	double by[2] = {-p1.a,-p2.a};
-	//	printf("%g %g %g %g\n",p1.n.y(),p1.n.z(),p2.n.y(),p2.n.z());
+	double ay[2][2] = {{p1.n.x(), p1.n.z()}, {p2.n.x(), p2.n.z()}};
+	double by[2] = {-p1.a, -p2.a};
 	if (!sys2x2(ay,by,x)){
 	  Msg::Error("parallel planes do not intersect");
 	}
 	else {
-	  p = SPoint3(x[0],0.0,x[1]);	
+	  p = SPoint3(x[0], 0., x[1]);
 	}
       }
       else{
-	p = SPoint3(0.0,x[0],x[1]);	
+	p = SPoint3(0., x[0], x[1]);
       }
     }
     else{
-      p = SPoint3(x[0],x[1],0.0);	
-    }	   
+      p = SPoint3(x[0], x[1], 0.);
+    }
   }
-  SPoint3 orthogonalProjection (SPoint3 &a){
-    // (x - a) * t = 0 --> 
-    // x = p + u t --> (p + ut - a) * t = 0 --> u = (a-p) * t  
-    const double u = dot(a-p,t);
+  SPoint3 orthogonalProjection (SPoint3 &a)
+  {
+    // (x - a) * t = 0 -->
+    // x = p + u t --> (p + ut - a) * t = 0 --> u = (a-p) * t
+    const double u = dot(a - p, t);
     return SPoint3(p.x() + t.x() * u,p.y() + t.y() * u,p.z() + t.z() * u);
   }
-
 };
-
 
 static void copyMesh(GFace *source, GFace *target)
 {
-  //  printf("%d %d \n",source->tag(),target->tag());
-  
   std::map<MVertex*, MVertex*> vs2vt;
   std::list<GEdge*> edges = target->edges();
   {
@@ -128,7 +125,7 @@ static void copyMesh(GFace *source, GFace *target)
       std::map<int, int>::iterator adnksd = target->edgeCounterparts.find((*it)->tag());
       int source_e;
       if(adnksd != target->edgeCounterparts.end())
-	 source_e = adnksd->second;
+        source_e = adnksd->second;
       else{
 	sign = -1;
         adnksd = target->edgeCounterparts.find(-(*it)->tag());
@@ -140,37 +137,25 @@ static void copyMesh(GFace *source, GFace *target)
           return;
         }
       }
-
       GEdge *se = source->model()->getEdgeByTag(abs(source_e));
       GEdge *te = *it;
       if (source_e * sign > 0){
-	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
-	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
+	vs2vt[se->getBeginVertex()->mesh_vertices[0]] =
+          te->getBeginVertex()->mesh_vertices[0];
+	vs2vt[se->getEndVertex()->mesh_vertices[0]] =
+          te->getEndVertex()->mesh_vertices[0];
       }
       else {
-	vs2vt[se->getBeginVertex()->mesh_vertices[0]] = te->getEndVertex()->mesh_vertices[0];
-	vs2vt[se->getEndVertex()->mesh_vertices[0]] = te->getBeginVertex()->mesh_vertices[0];
+	vs2vt[se->getBeginVertex()->mesh_vertices[0]] =
+          te->getEndVertex()->mesh_vertices[0];
+	vs2vt[se->getEndVertex()->mesh_vertices[0]] =
+          te->getBeginVertex()->mesh_vertices[0];
       }
       // iterate on source vertices
       for (unsigned i = 0; i < te->mesh_vertices.size(); i++){
 	MVertex *vt = te->mesh_vertices[i];
-	MVertex *vs = se->mesh_vertices[source_e * sign > 0 ? i : te->mesh_vertices.size() - i - 1];
-	/*
-	MVertex *vt_on_master;
-	if (te->meshMaster() == te->tag())vt_on_master =vt;
-	else vt_on_master = te->correspondingVertices[vt];
-	
-	if (se->meshMaster() == se->tag()){
-	  vs = vt_on_master;
-	}
-	else {
-	  for (unsigned j = 0; j < se->mesh_vertices.size(); j++){
-	    vs = se->mesh_vertices[j];
-	    MVertex *vs_on_master = se->correspondingVertices[vs];
-	    if (vs_on_master == vt_on_master)break;
-	  }
-	}
-	*/
+	MVertex *vs = se->mesh_vertices[source_e * sign > 0 ? i :
+                                        te->mesh_vertices.size() - i - 1];
 	vs2vt[vs] = vt;
       }
     }
@@ -181,14 +166,16 @@ static void copyMesh(GFace *source, GFace *target)
 
   SVector3 DX;
   int count = 0;
-  for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
+  for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+       it != vs2vt.end() ; ++it){
     MVertex *vs = it->first;
     MVertex *vt = it->second;
     if (count == 0)
       DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
     else {
-      SVector3 DX2 = DX - SVector3 (vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
-      if (DX2.norm() > DX.norm() * 1.e-8)translation = false;
+      SVector3 DX2 = DX - SVector3 (vt->x() - vs->x(), vt->y() - vs->y(),
+                                    vt->z() - vs->z());
+      if (DX2.norm() > DX.norm() * 1.e-8) translation = false;
     }
     count ++;
   }
@@ -200,58 +187,56 @@ static void copyMesh(GFace *source, GFace *target)
     count = 0;
     rotation = true;
     std::vector<SPoint3> mps,mpt;
-    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
+    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+         it != vs2vt.end() ; ++it){
       MVertex *vs = it->first;
       MVertex *vt = it->second;
       mps.push_back(SPoint3(vs->x(),vs->y(),vs->z()));
-      //      printf("klax %d point %g %g %g\n",vs->onWhat()->tag(),vs->x(),vs->y(),vs->z());
-      mpt.push_back(SPoint3(vt->x(),vt->y(),vt->z()));
+      mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
     }
-    mean_plane mean_source,mean_target;
-    computeMeanPlaneSimple(mps,mean_source);
-    computeMeanPlaneSimple(mpt,mean_target);
-    myPlane PLANE_SOURCE (SPoint3(mean_source.x,mean_source.y,mean_source.z),
-			  SVector3(mean_source.a,mean_source.b,mean_source.c));
-    myPlane PLANE_TARGET (SPoint3(mean_target.x,mean_target.y,mean_target.z),
-			  SVector3(mean_target.a,mean_target.b,mean_target.c));
-    //    printf("%g %g %g vs %g %g %g \n",PLANE_SOURCE.n.x(),PLANE_SOURCE.n.y(),PLANE_SOURCE.n.z(),
-    //    	   PLANE_TARGET.n.x(),PLANE_TARGET.n.y(),PLANE_TARGET.n.z());
-    LINE = myLine (PLANE_SOURCE,PLANE_TARGET);
+    mean_plane mean_source, mean_target;
+    computeMeanPlaneSimple(mps, mean_source);
+    computeMeanPlaneSimple(mpt, mean_target);
+    myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
+                         SVector3(mean_source.a,mean_source.b,mean_source.c));
+    myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
+                         SVector3(mean_target.a,mean_target.b,mean_target.c));
+    LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
 
     // LINE is the axis of rotation
     // let us compute the angle of rotation
     count = 0;
-    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin(); it != vs2vt.end() ; ++it){
+    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+         it != vs2vt.end(); ++it){
       MVertex *vs = it->first;
       MVertex *vt = it->second;
-      // project both points on the axis : that should be the same point !
-      SPoint3 ps = SPoint3(vs->x(),vs->y(),vs->z());
-      SPoint3 pt = SPoint3(vt->x(),vt->y(),vt->z());      
+      // project both points on the axis: that should be the same point !
+      SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
+      SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
       SPoint3 p_ps = LINE.orthogonalProjection (ps);
       SPoint3 p_pt = LINE.orthogonalProjection (pt);
       SVector3 dist1 = ps - pt;
       SVector3 dist2 = p_ps - p_pt;
-      if (dist2.norm() > 1.e-8*dist1.norm()){
-	//	printf("%g %g %g vs %g %g %g\n",ps.x(),ps.y(),ps.z(),pt.x(),pt.y(),pt.z());
-	//	printf("%g %g %g vs %g %g %g\n",p_ps.x(),p_ps.y(),p_ps.z(),p_pt.x(),p_pt.y(),p_pt.z());
+      if (dist2.norm() > 1.e-8 * dist1.norm()){
 	rotation = false;
       }
       SVector3 t1 = ps - p_ps;
       SVector3 t2 = pt - p_pt;
       if (t1.norm() > 1.e-8 * dist1.norm()){
-	if (count == 0)ANGLE = myAngle (t1,t2,LINE.t);
+	if (count == 0)
+          ANGLE = myAngle (t1, t2, LINE.t);
 	else {
-	  double ANGLE2 = myAngle (t1,t2,LINE.t);
-	  //	  printf("ANGLE2 = %12.5E\n",ANGLE2);
-	  if (fabs (ANGLE2-ANGLE) > 1.e-8)rotation = false;
+	  double ANGLE2 = myAngle(t1, t2, LINE.t);
+	  if (fabs (ANGLE2-ANGLE) > 1.e-8) rotation = false;
 	}
 	count++;
       }
     }
 
-    
     if (rotation){
-      Msg::Info("COPYMESH : Rotation found AXIS (%g,%g,%g) POINT (%g %g %g) ANGLE %g",LINE.t.x(),LINE.t.y(),LINE.t.z(),LINE.p.x(),LINE.p.y(),LINE.p.z(),ANGLE*180/M_PI);
+      Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
+                LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
+                ANGLE * 180 / M_PI);
       double ux = LINE.t.x();
       double uy = LINE.t.y();
       double uz = LINE.t.z();
@@ -266,18 +251,20 @@ static void copyMesh(GFace *source, GFace *target)
       rot[2][2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
     }
     else {
-      Msg::Error ("COPYMESH : Only rotations or translations can be taken into account for peridic faces, face %d not meshed",target->tag());
+      Msg::Error("Only rotations or translations can be currently taken into account "
+                 "for peridic faces: face %d not meshed", target->tag());
       return;
     }
   }
   else{
-    Msg::Info("COPYMESH : Translation found DX = (%g,%g,%g)",DX.x(),DX.y(),DX.z());
+    Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
+              DX.x(), DX.y(), DX.z());
   }
 
   // now transform !!!
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
-    
+
     SPoint2 XXX;
     if (translation) {
       SPoint3 tp (vs->x() + DX.x(),vs->y() + DX.y(),vs->z() + DX.z());
@@ -285,7 +272,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else if (rotation){
       SPoint3 ps = SPoint3(vs->x(),vs->y(),vs->z());
-      SPoint3 p_ps = LINE.orthogonalProjection (ps);
+      SPoint3 p_ps = LINE.orthogonalProjection(ps);
       SPoint3 P = ps - p_ps, res;
       matvec(rot, P, res);
       res += p_ps;
@@ -298,7 +285,6 @@ static void copyMesh(GFace *source, GFace *target)
     vs2vt[vs] = vt;
   }
 
-
   for (unsigned i = 0; i < source->triangles.size(); i++){
     MVertex *vt[3];
     for (int j = 0; j < 3; j++){
@@ -306,22 +292,22 @@ static void copyMesh(GFace *source, GFace *target)
       vt[j] = vs2vt[vs];
     }
     if (!vt[0] || !vt[1] ||!vt[2]){
-      Msg::Fatal("yet another error in the copymesh procedure %p %p %p %d %d %d",
+      Msg::Fatal("Yet another error in the copyMesh procedure %p %p %p %d %d %d",
 		 vt[0], vt[1], vt[2], source->triangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(1)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(2)->onWhat()->dim());
     }
     target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
-  
+
   for (unsigned i = 0; i < source->quadrangles.size(); i++){
     MVertex *v1 = vs2vt[source->quadrangles[i]->getVertex(0)];
     MVertex *v2 = vs2vt[source->quadrangles[i]->getVertex(1)];
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
     if (!v1 || !v2 || !v3 || !v4){
-      Msg::Fatal("yet another error in the copymesh procedure %p %p %p %p %d %d %d %d",
-		 v1, v2, v3, v4, 
+      Msg::Fatal("Yet another error in the copymesh procedure %p %p %p %p %d %d %d %d",
+		 v1, v2, v3, v4,
 		 source->quadrangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->quadrangles[i]->getVertex(1)->onWhat()->dim(),
 		 source->quadrangles[i]->getVertex(2)->onWhat()->dim(),
@@ -455,8 +441,7 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
 static bool algoDelaunay2D(GFace *gf)
 {
-
-  // FIXME  
+  // FIXME
   //  if(!noSeam(gf))
   //    return false;
 
@@ -1309,7 +1294,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatson(gf,15000);
       meshGFaceBamg(gf);
     }
-    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)) 
+    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
 
@@ -1915,10 +1900,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     //    }
   }
 
-  /// This is a structure that we need only for periodic cases
-  /// We will duplicate the vertices (MVertex) that are on seams
-  /// 
-  
+  // This is a structure that we need only for periodic cases
+  // We will duplicate the vertices (MVertex) that are on seams
+
   std::map<MVertex*, MVertex*> equivalence;
   std::map<MVertex*, SPoint2> parametricCoordinates;
   if(algoDelaunay2D(gf)){
@@ -1935,7 +1919,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 	if (mv1->onWhat()->dim() == 1) {
 	  double t;
 	  mv1->getParameter(0,t);
-	  mv2  = new MEdgeVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,   ((MEdgeVertex*)mv1)->getLc());
+	  mv2  = new MEdgeVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,
+                                  ((MEdgeVertex*)mv1)->getLc());
 	}
 	else if (mv1->onWhat()->dim() == 0) {
 	  mv2  = new MVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat());
@@ -1946,7 +1931,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 	it->second = mv2;
 	equivalence[mv2] = mv1;
 	parametricCoordinates[mv2] = SPoint2(bds->u,bds->v);
-	//	printf("new vertex created %p that replaces %p %g %g %g\n",mv2,mv1,mv2->x(),mv2->y(),mv2->z());
 	invertMap[mv2] = bds;
       }
       else {
@@ -1955,7 +1939,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       }
       ++it;
     }
-    //    recoverMap.insert(new_relations.begin(), new_relations.end()); 
+    //    recoverMap.insert(new_relations.begin(), new_relations.end());
   }
   Msg::Info("%d points that are duplicated for delaunay meshing",equivalence.size());
 
@@ -1991,7 +1975,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
           // pole
           if(v1 != v2 && v1 != v3 && v2 != v3){
 	    // we are in the periodic case. if we aim at
-	    // using delaunay mesh generation in thoses cases, 
+	    // using delaunay mesh generation in thoses cases,
 	    // we should double some of the vertices
             gf->triangles.push_back(new MTriangle(v1, v2, v3));
 	  }
@@ -2014,13 +1998,14 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 
   bool infty = false;
-  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD || gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
     infty = true;
   if (infty)
     buildBackGroundMesh (gf, &equivalence, &parametricCoordinates);
   // BOUNDARY LAYER
   modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
-  
+
 
   if(algoDelaunay2D(gf)){
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
@@ -2034,7 +2019,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       bowyerWatson(gf,1000000000, &equivalence, &parametricCoordinates);
     else
       meshGFaceBamg(gf);
-    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)) 
+    if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
 

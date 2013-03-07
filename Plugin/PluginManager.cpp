@@ -108,8 +108,11 @@ void PluginManager::action(std::string pluginName, std::string action, void *dat
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
 
-  if(action == "Run")
+  if(action == "Run"){
+    Msg::Info("Running Plugin(%s)...", pluginName.c_str());
     plugin->run();
+    Msg::Info("Done running Plugin(%s)", pluginName.c_str());
+  }
   else
     throw "Unknown plugin action";
 }
