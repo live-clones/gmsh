@@ -161,6 +161,10 @@ class MElement
   virtual int getNumChildren() const { return 0; }
   virtual MElement *getChild(int i) const { return NULL; }
   virtual bool ownsParent() const { return false; }
+  // get base element in case of MSubElement
+  virtual const MElement *getBaseElement() const { return this; }
+  virtual MElement *getBaseElement() { return this; }
+
   // get and set domain for borders
   virtual MElement *getDomain(int i) const { return NULL; }
   virtual void setDomain (MElement *e, int i) { }
@@ -239,10 +243,10 @@ class MElement
                                      int order=-1);
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
-  double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
+  virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
   // To be compatible with _vgrads of functionSpace without having to put under fullMatrix form
-  double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]);
-  double getJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]);
+  virtual double getJacobian(double u, double v, double w, double jac[3][3]);
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j){
     double JAC[3][3];
     const double detJ = getJacobian (u,v,w,JAC);
@@ -253,7 +257,7 @@ class MElement
     }
     return detJ;
   }
-  double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   double getJacobianDeterminant(double u, double v, double w)
   {
     double jac[3][3]; return getJacobian(u, v, w, jac);
