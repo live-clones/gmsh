@@ -68,7 +68,6 @@ class MSubTetrahedron : public MTetrahedron
   {
     _parents = parents; _orig = _parents[0]; _owner = owner;
   }
-
   virtual const MElement *getBaseElement() const {if(!_base) _base=new MTetrahedron(*this); return _base;}
   virtual MElement *getBaseElement() {if(!_base) _base=new MTetrahedron(*this); return _base;}
 };
@@ -116,7 +115,6 @@ class MSubTriangle : public MTriangle
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual bool ownsParent() const { return _owner; }
@@ -125,7 +123,6 @@ class MSubTriangle : public MTriangle
   {
     _parents = parents; _orig = _parents[0]; _owner = owner;
   }
-
   virtual const MElement *getBaseElement() const {if(!_base) _base=new MTriangle(*this); return _base;}
   virtual MElement *getBaseElement() {if(!_base) _base=new MTriangle(*this); return _base;}
 };
@@ -230,7 +227,6 @@ class MSubPoint : public MPoint
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
-  
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual bool ownsParent() const { return _owner; }
@@ -239,9 +235,9 @@ class MSubPoint : public MPoint
   {
     _parents = parents; _orig = _parents[0]; _owner = owner;
   }
-
   virtual const MElement *getBaseElement() const {if(!_base) _base=new MPoint(*this); return _base;}
   virtual MElement *getBaseElement() {if(!_base) _base=new MPoint(*this); return _base;}
 };
 
 #endif
+
