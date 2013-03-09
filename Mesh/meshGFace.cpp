@@ -45,11 +45,11 @@
 #include "meshGFaceLloyd.h"
 #include "meshGFaceBoundaryLayers.h"
 
-inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d)
+inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
-  double cosTheta = dot(a,b);
-  double sinTheta = dot(crossprod(a,b),d);
-  return atan2 (sinTheta,cosTheta);
+  double cosTheta = dot(a, b);
+  double sinTheta = dot(crossprod(a, b), d);
+  return atan2(sinTheta, cosTheta);
 }
 
 struct myPlane {
@@ -74,7 +74,7 @@ struct myLine {
   myLine() : p(0,0,0) , t (0,0,1) {}
   myLine(myPlane &p1, myPlane &p2)
   {
-    t = crossprod(p1.n,p2.n);
+    t = crossprod(p1.n, p2.n);
     if (t.norm() == 0.0){
       Msg::Error("parallel planes do not intersect");
     }
@@ -186,12 +186,12 @@ static void copyMesh(GFace *source, GFace *target)
   if (!translation){
     count = 0;
     rotation = true;
-    std::vector<SPoint3> mps,mpt;
+    std::vector<SPoint3> mps, mpt;
     for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
          it != vs2vt.end() ; ++it){
       MVertex *vs = it->first;
       MVertex *vt = it->second;
-      mps.push_back(SPoint3(vs->x(),vs->y(),vs->z()));
+      mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
       mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
     }
     mean_plane mean_source, mean_target;
@@ -203,6 +203,8 @@ static void copyMesh(GFace *source, GFace *target)
                          SVector3(mean_target.a,mean_target.b,mean_target.c));
     LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
 
+    // FIXME: this fails when the 2 planes have a common edge (= rotation axis)
+
     // LINE is the axis of rotation
     // let us compute the angle of rotation
     count = 0;
@@ -213,8 +215,8 @@ static void copyMesh(GFace *source, GFace *target)
       // project both points on the axis: that should be the same point !
       SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
       SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
-      SPoint3 p_ps = LINE.orthogonalProjection (ps);
-      SPoint3 p_pt = LINE.orthogonalProjection (pt);
+      SPoint3 p_ps = LINE.orthogonalProjection(ps);
+      SPoint3 p_pt = LINE.orthogonalProjection(pt);
       SVector3 dist1 = ps - pt;
       SVector3 dist2 = p_ps - p_pt;
       if (dist2.norm() > 1.e-8 * dist1.norm()){
@@ -224,10 +226,12 @@ static void copyMesh(GFace *source, GFace *target)
       SVector3 t2 = pt - p_pt;
       if (t1.norm() > 1.e-8 * dist1.norm()){
 	if (count == 0)
-          ANGLE = myAngle (t1, t2, LINE.t);
+          ANGLE = myAngle(t1, t2, LINE.t);
 	else {
 	  double ANGLE2 = myAngle(t1, t2, LINE.t);
-	  if (fabs (ANGLE2-ANGLE) > 1.e-8) rotation = false;
+	  if (fabs (ANGLE2 - ANGLE) > 1.e-8){
+            rotation = false;
+          }
 	}
 	count++;
       }
