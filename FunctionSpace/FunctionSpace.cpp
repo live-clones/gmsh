@@ -49,6 +49,9 @@ void FunctionSpace::build(GroupOfElement& goe,
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
 
+  // Orient All Elements //
+  goe.orientAllElements(basis); // NOT SEXY: TO BE REMOVED
+
   // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
   const MElement& element = goe.get(0);
   MElement& myElement =

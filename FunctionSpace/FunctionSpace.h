@@ -34,7 +34,8 @@
     the Dof%s and GroupOfDof%s related to its geometrical @em Support.
 
     @todo
-    Allow Hybrid Mesh
+    Allow Hybrid Mesh@n
+    Remove call to GroupOfElement:::orientAllElements()
 */
 
 class Mesh;
