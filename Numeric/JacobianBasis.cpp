@@ -1143,7 +1143,8 @@ JacobianBasis::JacobianBasis(int tag)
   for (int i=0; i<numPrimMapNodes; i++) {
     xBar += primMapBasis->points(i,0);
     yBar += primMapBasis->points(i,1);
-    zBar += primMapBasis->points(i,2);
+    if (primMapBasis->points.size2() > 2)
+      zBar +=  primMapBasis->points(i,2);
   }
   xBar /= numPrimMapNodes;
   yBar /= numPrimMapNodes;
