@@ -214,6 +214,7 @@ SyncModel               return tSyncModel;
 
 T2                      return tText2D;
 T3                      return tText3D;
+TextAttributes          return tTextAttributes;
 TIME                    return tTime;
 Transfinite             return tTransfinite;
 Transf[qQ]uad[tT]ri     return tTransfQuadTri;

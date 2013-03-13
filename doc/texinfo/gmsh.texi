@@ -979,6 +979,7 @@ parsing of the script file:
   @var{built-in-function} |
   @var{real-option} |
   StrFind(@var{char-expression}, @var{char-expression}) |
+  TextAttributes(@var{char-expression}<,@var{char-expression}@dots>)|
   GetValue("@var{string}", @var{expression})
 @end example
 
@@ -992,7 +993,8 @@ in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
 see @ref{Built-in functions}. The various @w{@var{real-option}s} are
 listed in @ref{Options}. @code{StrFind} searches the first
 @var{char-expression} for any occurrence of the second
-@var{char-expression}.
+@var{char-expression}. @code{TextAttributes} creates attributes for text
+strings.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter

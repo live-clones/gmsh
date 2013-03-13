@@ -107,6 +107,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrFind
+%token tTextAttributes
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -4241,6 +4242,30 @@ FExpr_Single :
       else
         $$ = 0.;
       Free($3); Free($5);
+    }
+  | tTextAttributes '(' RecursiveListOfStringExprVar ')'
+    {
+      int align = 0, font = 0, fontsize = CTX::instance()->glFontSize;
+      if(List_Nbr($3) % 2){
+        yyerror("Number of text attributes should be even");
+      }
+      else{
+        for(int i = 0 ; i < List_Nbr($3); i += 2){
+          char *s1, *s2; List_Read($3, i, &s1); List_Read($3, i + 1, &s2);
+          std::string key(s1), val(s2);
+          Free(s1); Free(s2);
+#if defined(HAVE_OPENGL)
+          if(key == "Font")
+            font = drawContext::global()->getFontIndex(val.c_str());
+          else if(key == "FontSize")
+            fontsize = atoi(val.c_str());
+          else if(key == "Align")
+            align = drawContext::global()->getFontAlign(val.c_str());
+#endif
+        }
+      }
+      List_Delete($3);
+      $$ = (double)((align<<16)|(font<<8)|(fontsize));
     }
 ;
 
