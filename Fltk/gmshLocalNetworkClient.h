@@ -7,6 +7,7 @@
 #define _GMSH_LOCAL_NETWORK_CLIENT_H_
 
 #include <vector>
+#include <algorithm>
 #include "onelab.h"
 
 class gmshLocalNetworkClient : public onelab::localNetworkClient{
