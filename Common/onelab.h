@@ -1072,10 +1072,14 @@ namespace onelab{
           // do NOT return until all parameters have been downloaded
         }
         else if(type == GmshSocket::GMSH_PARAM_QUERY_END){
+	  // all parameters have been sent
+          return true;
+        }
+        else if(type == GmshSocket::GMSH_PARAM_NOT_FOUND){
+          // parameter not found
           return true;
         }
         else if(type == GmshSocket::GMSH_INFO){
-          // parameter not found or all aparameters have been sent
           return true;
         }
         else{

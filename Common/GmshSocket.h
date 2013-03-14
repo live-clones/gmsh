@@ -79,6 +79,8 @@ class GmshSocket{
     GMSH_PARAM_QUERY_ALL = 25,
     GMSH_PARAM_QUERY_END = 26,
     GMSH_CONNECT         = 27,
+    GMSH_OLPARSE         = 28,
+    GMSH_PARAM_NOT_FOUND = 29,
     GMSH_SPEED_TEST      = 30,
     GMSH_OPTION_1        = 100,
     GMSH_OPTION_2        = 101,
