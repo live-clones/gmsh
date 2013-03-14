@@ -1006,10 +1006,8 @@ namespace onelab{
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
     void setGmshServer(GmshServer *server){ _gmshServer = server; }
-    #ifndef SWIG
-    virtual bool run();
-    virtual bool kill();
-    #endif
+    virtual bool run() = 0;
+    virtual bool kill() = 0;
   };
 
   // The remote part of a network client.
@@ -1035,7 +1033,7 @@ namespace onelab{
       std::string msg = p.toChar();
       if (name.size())
 	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
-      else //get all parameters
+      else // get all parameters
 	_gmshClient->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, msg.size(), &msg[0]);
 
       while(1){

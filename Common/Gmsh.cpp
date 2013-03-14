@@ -23,7 +23,7 @@
 #endif
 
 #if defined(HAVE_ONELAB)
-#include "onelab.h"
+#include "gmshLocalNetworkClient.h"
 #endif
 
 #if defined(HAVE_MESH)
@@ -267,7 +267,7 @@ int GmshFLTK(int argc, char **argv)
 
   // listen to external solvers
   if(CTX::instance()->solver.listen){
-    onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
+    gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
     c->run();
   }
 

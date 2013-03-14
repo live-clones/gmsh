@@ -171,7 +171,9 @@ class GmshSocket{
     FD_SET(s, &rfds);
     // select checks all IO descriptors between 0 and its first arg,
     // minus 1... hence the +1 below
-    return select(s + 1, &rfds, NULL, NULL, &tv);
+    int ret = select(s + 1, &rfds, NULL, NULL, &tv);
+    if(ret > 0 && FD_ISSET(s, &rfds)) return 1;
+    return ret;
   }
   void SendMessage(int type, int length, const void *msg)
   {

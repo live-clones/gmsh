@@ -73,7 +73,7 @@ option(ENABLE_WRAP_PYTHON "Build Python wrappers" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 7)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -109,7 +109,8 @@ set(GMSH_API
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h    Solver/groupOfElements.h Solver/linearSystemPETSc.h
+    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h
+    Solver/groupOfElements.h Solver/linearSystemPETSc.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
   Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h

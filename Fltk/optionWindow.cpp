@@ -34,7 +34,7 @@ typedef unsigned long intptr_t;
 #include "StringUtils.h"
 
 #if defined(HAVE_ONELAB)
-#include "onelab.h"
+#include "gmshLocalNetworkClient.h"
 #endif
 
 extern StringXColor GeneralOptions_Color[] ;
@@ -552,7 +552,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   if(!old_listen && o->solver.butt[0]->value()){
     onelab::server::citer it = onelab::server::instance()->findClient("Listen");
     if(it == onelab::server::instance()->lastClient()){
-      onelab::localNetworkClient *c = new onelab::localNetworkClient("Listen", "");
+      onelab::localNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
       c->run();
     }
     else

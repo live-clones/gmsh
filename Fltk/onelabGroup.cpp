@@ -13,6 +13,7 @@ typedef unsigned long intptr_t;
 
 #include "GmshMessage.h"
 #include "onelab.h"
+#include "gmshLocalNetworkClient.h"
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Choice.H>
@@ -89,18 +90,249 @@ class onelabGmshServer : public GmshServer{
       else{
         // an error happened
         _client->setPid(-1);
-        _client->setGmshServer(0);
         return 1;
       }
     }
   }
 };
 
-bool onelab::localNetworkClient::run()
+bool gmshLocalNetworkClient::receiveMessage()
+{
+  double timer = GetTimeInSeconds();
+
+  if(!getGmshServer()){
+    Msg::Error("Abnormal server termination (no valid server)");
+    return false;
+  }
+
+  int type, length, swap;
+  if(!getGmshServer()->ReceiveHeader(&type, &length, &swap)){
+    Msg::Error("Abnormal server termination (did not receive message header)");
+    return false;
+  }
+
+  std::string message(length, ' ');
+  if(!getGmshServer()->ReceiveMessage(length, &message[0])){
+    Msg::Error("Abnormal server termination (did not receive message body)");
+    return false;
+  }
+
+  switch (type) {
+  case GmshSocket::GMSH_START:
+    setPid(atoi(message.c_str()));
+    break;
+  case GmshSocket::GMSH_STOP:
+    setPid(-1);
+    break;
+  case GmshSocket::GMSH_PARAMETER:
+    {
+      std::string version, type, name;
+      onelab::parameter::getInfoFromChar(message, version, type, name);
+      if(onelab::parameter::version() != version){
+        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                   onelab::parameter::version().c_str(), version.c_str());
+      }
+      else if(type == "number"){
+        onelab::number p; p.fromChar(message); set(p);
+        if(p.getName() == getName() + "/Progress")
+          if(FlGui::available())
+            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
+                                           p.getMin(), p.getMax());
+      }
+      else if(type == "string"){
+        onelab::string p; p.fromChar(message); set(p);
+      }
+      else if(type == "region"){
+        onelab::region p; p.fromChar(message); set(p);
+      }
+      else if(type == "function"){
+        onelab::function p; p.fromChar(message); set(p);
+      }
+      else
+        Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
+    }
+    break;
+  case GmshSocket::GMSH_PARAMETER_QUERY:
+    {
+      std::string version, type, name, reply;
+      onelab::parameter::getInfoFromChar(message, version, type, name);
+      if(onelab::parameter::version() != version){
+        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                   onelab::parameter::version().c_str(), version.c_str());
+      }
+      else if(type == "number"){
+        std::vector<onelab::number> par; get(par, name);
+        if(par.size() == 1) reply = par[0].toChar();
+      }
+      else if(type == "string"){
+        std::vector<onelab::string> par; get(par, name);
+        if(par.size() == 1) reply = par[0].toChar();
+      }
+      else if(type == "region"){
+        std::vector<onelab::region> par; get(par, name);
+        if(par.size() == 1) reply = par[0].toChar();
+      }
+      else if(type == "function"){
+        std::vector<onelab::function> par; get(par, name);
+        if(par.size() == 1) reply = par[0].toChar();
+      }
+      else
+        Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+
+      if(reply.size()){
+        getGmshServer()->SendMessage
+          (GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
+      }
+      else{
+        reply = name;
+        getGmshServer()->SendMessage
+          (GmshSocket::GMSH_PARAM_NOT_FOUND, reply.size(), &reply[0]);
+      }
+    }
+    break;
+  case GmshSocket::GMSH_PARAM_QUERY_ALL:
+    {
+      std::string version, type, name, reply;
+      std::vector<std::string> replies;
+      onelab::parameter::getInfoFromChar(message, version, type, name);
+      if(onelab::parameter::version() != version){
+        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                   onelab::parameter::version().c_str(), version.c_str());
+      }
+      else if(type == "number"){
+        std::vector<onelab::number> numbers; get(numbers);
+        for(std::vector<onelab::number>::iterator it = numbers.begin();
+            it != numbers.end(); it++) replies.push_back((*it).toChar());
+      }
+      else if(type == "string"){
+        std::vector<onelab::string> strings; get(strings);
+        for(std::vector<onelab::string>::iterator it = strings.begin();
+            it != strings.end(); it++) replies.push_back((*it).toChar());
+      }
+      else if(type == "region"){
+        std::vector<onelab::region> regions; get(regions);
+        for(std::vector<onelab::region>::iterator it = regions.begin();
+            it != regions.end(); it++) replies.push_back((*it).toChar());
+      }
+      else if(type == "function"){
+        std::vector<onelab::function> functions; get(functions);
+        for(std::vector<onelab::function>::iterator it = functions.begin();
+            it != functions.end(); it++) replies.push_back((*it).toChar());
+      }
+      else
+        Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+
+      for(unsigned int i = 0; i < replies.size(); i++)
+        getGmshServer()->SendMessage
+          (GmshSocket::GMSH_PARAM_QUERY_ALL, replies[i].size(), &replies[i][0]);
+      reply = "Sent all OneLab " + type + "s";
+      getGmshServer()->SendMessage
+        (GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
+    }
+    break;
+  case GmshSocket::GMSH_PROGRESS:
+    Msg::StatusBar(false, "%s %s", _name.c_str(), message.c_str());
+    break;
+  case GmshSocket::GMSH_INFO:
+    Msg::Direct("Info    : %s - %s", _name.c_str(), message.c_str());
+    break;
+  case GmshSocket::GMSH_WARNING:
+    Msg::Warning("%s - %s", _name.c_str(), message.c_str());
+    break;
+  case GmshSocket::GMSH_ERROR:
+    Msg::Error("%s - %s", _name.c_str(), message.c_str());
+    break;
+  case GmshSocket::GMSH_MERGE_FILE:
+    if(CTX::instance()->solver.autoMergeFile){
+      unsigned int n = PView::list.size();
+      MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
+                              CTX::instance()->solver.autoHideNewViews, true);
+      drawContext::global()->draw();
+      if(FlGui::available() && n != PView::list.size()){
+        FlGui::instance()->rebuildTree();
+        FlGui::instance()->openModule("Post-processing");
+      }
+    }
+    break;
+  case GmshSocket::GMSH_PARSE_STRING:
+    ParseString(message);
+    drawContext::global()->draw();
+    break;
+  case GmshSocket::GMSH_SPEED_TEST:
+    Msg::Info("got %d Mb message in %g seconds",
+              length / 1024 / 1024, GetTimeInSeconds() - timer);
+    break;
+  case GmshSocket::GMSH_VERTEX_ARRAY:
+    {
+      int n = PView::list.size();
+      PView::fillVertexArray(this, length, &message[0], swap);
+      if(FlGui::available())
+        FlGui::instance()->updateViews(n != (int)PView::list.size());
+      drawContext::global()->draw();
+    }
+    break;
+  case GmshSocket::GMSH_CONNECT:
+    {
+      /*
+      const std::string subClientName = message;
+      onelab::localNetworkClient *subClient = dynamic_cast<onelab::localNetworkClient*>
+        (onelab::server::instance()->findClient(subClientName)->second);
+      if (! subClient) {
+        subClient = new onelab::localNetworkClient(subClientName, "");
+      }
+      //if (onelab::server::instance()->getChanged(subClientName)) {
+      std::string sockname;
+      std::ostringstream tmp;
+      if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
+        // Unix socket
+        tmp << CTX::instance()->homeDir
+            << CTX::instance()->solver.socketName << subClient->getId();
+        sockname = FixWindowsPath(tmp.str());
+      }
+      else{
+        // TCP/IP socket
+        if(CTX::instance()->solver.socketName.size() &&
+           CTX::instance()->solver.socketName[0] == ':')
+          tmp << GetHostName(); // prepend hostname if only the port number is given
+        tmp << CTX::instance()->solver.socketName << subClient->getId();
+        sockname = tmp.str();
+      }
+      server->SendString(GmshSocket::GMSH_CONNECT, sockname.c_str());
+      GmshServer *subServer = new onelabGmshServer(subClient, true);
+      subServer->Start("", sockname.c_str(), CTX::instance()->solver.timeout);
+      addClient(subClient, subServer);
+      */
+    }
+    break;
+  case GmshSocket::GMSH_OLPARSE:
+    {
+#if defined(HAVE_ONELAB_METAMODEL)
+      /*
+      localSolverClient *c = new InterfacedClient("OLParser","","");
+      std::string ofileName = message ;
+      std::ofstream outfile(ofileName.c_str());
+      if (outfile.is_open())
+        c->convert_onefile(ofileName + ".ol",outfile);
+      else
+        Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
+      outfile.close();
+      delete c;
+      */
+#endif
+    }
+    break;
+  default:
+    Msg::Warning("Received unknown message type (%d)", type);
+    break;
+  }
+
+  return true;
+}
+
+bool gmshLocalNetworkClient::run()
 {
  new_connection:
-  _pid = 0;
-  _gmshServer = 0;
+  setPid(0); // dummy pid, should be non-negative
 
   onelabGmshServer *server = new onelabGmshServer(this);
 
@@ -120,7 +352,7 @@ bool onelab::localNetworkClient::run()
     sockname = tmp.str();
   }
 
-  std::string command = FixWindowsPath(_executable);
+  std::string command = FixWindowsPath(getExecutable());
   if(command.size()){
     std::vector<std::string> args = onelabUtils::getCommandLine(this);
     for(unsigned int i = 0; i < args.size(); i++)
@@ -137,11 +369,13 @@ bool onelab::localNetworkClient::run()
                          CTX::instance()->solver.timeout);
   }
   catch(const char *err){
-    Msg::Error("%s (on socket '%s')", err, sockname.c_str());
+    Msg::Error("Abnormal server termination (%s on socket %s)", err,
+               sockname.c_str());
     sock = -1;
   }
 
   if(sock < 0){
+    // could not start the server: aborting
     server->Shutdown();
     delete server;
     return false;
@@ -149,194 +383,67 @@ bool onelab::localNetworkClient::run()
 
   Msg::StatusBar(true, "Running '%s'...", _name.c_str());
 
+  setGmshServer(server);
+
   while(1) {
-
-    if(_pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
-      break;
-
-    int stop = server->NonBlockingWait(sock, 0.001, 0.);
-
-    if(stop || _pid < 0 || (command.empty() && !CTX::instance()->solver.listen))
-      break;
-
-    double timer = GetTimeInSeconds();
-
-    int type, length, swap;
-    if(!server->ReceiveHeader(&type, &length, &swap)){
-      Msg::Error("Did not receive message header: stopping server");
-      break;
+    // loop on all the clients (usually only one, but can be more if we spawned
+    // subclients; in that case we might want to start from the one after the
+    // one we read from last, for better load balancing)
+    bool stop = false, haveData = false;
+    onelab::localNetworkClient *c = 0;
+    for(int i = 0; i < getNumClients(); i++){
+      if(command.empty() && !CTX::instance()->solver.listen){
+        // we stopped listening to the special "Listen" client
+        stop = true;
+        break;
+      }
+      c = getClient(i);
+      if(c->getPid() < 0){
+        if(c == this){ // the "master" client stopped
+          stop = true;
+          break;
+        }
+        else{ // this subclient is not active anymore
+          continue;
+        }
+      }
+      GmshServer *s = c->getGmshServer();
+      if(!s){
+        Msg::Error("Abnormal server termination (no valid server)");
+        stop = true;
+        break;
+      }
+      else if(!s->NonBlockingWait(-1, 0.001, 0.)){
+        // we have data from this particular client
+        haveData = true;
+        break;
+      }
+      else{ // an error occurred
+        stop = true;
+        break;
+      }
     }
-
-    std::string message(length, ' ');
-    if(!server->ReceiveMessage(length, &message[0])){
-      Msg::Error("Did not receive message body: stopping server");
-      break;
-    }
-
-    switch (type) {
-    case GmshSocket::GMSH_START:
-      _pid = atoi(message.c_str());
-      _gmshServer = server;
-      break;
-    case GmshSocket::GMSH_STOP:
-      _pid = -1;
-      _gmshServer = 0;
-      break;
-    case GmshSocket::GMSH_PARAMETER:
-      {
-        std::string version, type, name;
-        onelab::parameter::getInfoFromChar(message, version, type, name);
-        if(onelab::parameter::version() != version){
-          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
-                     onelab::parameter::version().c_str(), version.c_str());
-        }
-        else if(type == "number"){
-          onelab::number p; p.fromChar(message); set(p);
-          if(p.getName() == getName() + "/Progress")
-            if(FlGui::available())
-              FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
-                                             p.getMin(), p.getMax());
-        }
-        else if(type == "string"){
-          onelab::string p; p.fromChar(message); set(p);
-        }
-        else if(type == "region"){
-          onelab::region p; p.fromChar(message); set(p);
-        }
-        else if(type == "function"){
-          onelab::function p; p.fromChar(message); set(p);
-        }
-        else
-          Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
-      }
-      break;
-    case GmshSocket::GMSH_PARAMETER_QUERY:
-      {
-        std::string version, type, name, reply;
-        onelab::parameter::getInfoFromChar(message, version, type, name);
-        if(onelab::parameter::version() != version){
-          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
-                     onelab::parameter::version().c_str(), version.c_str());
-        }
-        else if(type == "number"){
-          std::vector<onelab::number> par; get(par, name);
-          if(par.size() == 1) reply = par[0].toChar();
-        }
-        else if(type == "string"){
-          std::vector<onelab::string> par; get(par, name);
-          if(par.size() == 1) reply = par[0].toChar();
-        }
-        else if(type == "region"){
-          std::vector<onelab::region> par; get(par, name);
-          if(par.size() == 1) reply = par[0].toChar();
-        }
-        else if(type == "function"){
-          std::vector<onelab::function> par; get(par, name);
-          if(par.size() == 1) reply = par[0].toChar();
-        }
-        else
-          Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
-
-        if(reply.size()){
-          server->SendMessage(GmshSocket::GMSH_PARAMETER, reply.size(), &reply[0]);
-        }
-        else{
-          // FIXME: introduce GMSH_PARAMETER_NOT_FOUND message to handle this
-          // (need to change onelab.h accordingly)
-          reply = "OneLab parameter '" + name + "' not found";
-          server->SendMessage(GmshSocket::GMSH_INFO, reply.size(), &reply[0]);
-        }
-      }
-      break;
-    case GmshSocket::GMSH_PARAM_QUERY_ALL:
-      {
-        std::string version, type, name, reply;
-        std::vector<std::string> replies;
-        onelab::parameter::getInfoFromChar(message, version, type, name);
-        if(onelab::parameter::version() != version){
-          Msg::Error("OneLab version mismatch (server: %s / client: %s)",
-                     onelab::parameter::version().c_str(), version.c_str());
-        }
-	else if(type == "number"){
-	  std::vector<onelab::number> numbers; get(numbers);
-	  for(std::vector<onelab::number>::iterator it = numbers.begin();
-              it != numbers.end(); it++) replies.push_back((*it).toChar());
-        }
-        else if(type == "string"){
-	  std::vector<onelab::string> strings; get(strings);
-	  for(std::vector<onelab::string>::iterator it = strings.begin();
-              it != strings.end(); it++) replies.push_back((*it).toChar());
-        }
-        else if(type == "region"){
-	  std::vector<onelab::region> regions; get(regions);
-	  for(std::vector<onelab::region>::iterator it = regions.begin();
-              it != regions.end(); it++) replies.push_back((*it).toChar());
-        }
-        else if(type == "function"){
-	  std::vector<onelab::function> functions; get(functions);
-	  for(std::vector<onelab::function>::iterator it = functions.begin();
-              it != functions.end(); it++) replies.push_back((*it).toChar());
-        }
-        else
-          Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
-
-        for(unsigned int i = 0; i < replies.size(); i++)
-          server->SendMessage
-            (GmshSocket::GMSH_PARAM_QUERY_ALL, replies[i].size(), &replies[i][0]);
-        reply = "Sent all OneLab " + type + "s";
-        server->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
-      }
-      break;
-    case GmshSocket::GMSH_PROGRESS:
-      Msg::StatusBar(false, "%s %s", _name.c_str(), message.c_str());
-      break;
-    case GmshSocket::GMSH_INFO:
-      Msg::Direct("Info    : %s - %s", _name.c_str(), message.c_str());
-      break;
-    case GmshSocket::GMSH_WARNING:
-      Msg::Warning("%s - %s", _name.c_str(), message.c_str());
-      break;
-    case GmshSocket::GMSH_ERROR:
-      Msg::Error("%s - %s", _name.c_str(), message.c_str());
-      break;
-    case GmshSocket::GMSH_MERGE_FILE:
-      if(CTX::instance()->solver.autoMergeFile){
-        unsigned int n = PView::list.size();
-        MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
-                                CTX::instance()->solver.autoHideNewViews, true);
-        drawContext::global()->draw();
-        if(FlGui::available() && n != PView::list.size()){
-          FlGui::instance()->rebuildTree();
-          FlGui::instance()->openModule("Post-processing");
-        }
-      }
-      break;
-    case GmshSocket::GMSH_PARSE_STRING:
-      ParseString(message);
-      drawContext::global()->draw();
-      break;
-    case GmshSocket::GMSH_SPEED_TEST:
-      Msg::Info("got %d Mb message in %g seconds",
-                length / 1024 / 1024, GetTimeInSeconds() - timer);
-      break;
-    case GmshSocket::GMSH_VERTEX_ARRAY:
-      {
-        int n = PView::list.size();
-        PView::fillVertexArray(this, length, &message[0], swap);
-        if(FlGui::available())
-          FlGui::instance()->updateViews(n != (int)PView::list.size());
-        drawContext::global()->draw();
-      }
-      break;
-    default:
-      Msg::Warning("Received unknown message type (%d)", type);
-      break;
-    }
+    if(stop) break;
+    if(haveData && !receiveMessage()) break;
+    if(c == this && c->getPid() < 0) break;
   }
 
-  _gmshServer = 0;
-  server->Shutdown();
-  delete server;
+  // we are done running the (master) client: delete the servers and the
+  // subclients, if any. We do not delete the servers when we disconnect to make
+  // sure we always delete them, even when we disconnect "uncleanly"
+  for(int i = 0; i < getNumClients(); i++){
+    onelab::localNetworkClient *c = getClient(i);
+    GmshServer *s = c->getGmshServer();
+    c->setGmshServer(0);
+    if(s){
+      s->Shutdown();
+      delete s;
+    }
+    if(c != this){
+      removeClient(c);
+      delete c;
+    }
+  }
 
   Msg::StatusBar(true, "Done running '%s'", _name.c_str());
 
@@ -348,18 +455,19 @@ bool onelab::localNetworkClient::run()
   return true;
 }
 
-bool onelab::localNetworkClient::kill()
+bool gmshLocalNetworkClient::kill()
 {
-  if(_pid > 0) {
-    if(KillProcess(_pid)){
-      Msg::Info("Killed '%s' (pid %d)", _name.c_str(), _pid);
+  // FIXME: we should kill all the clients in the list
+  if(getPid() > 0) {
+    if(KillProcess(getPid())){
+      Msg::Info("Killed '%s' (pid %d)", _name.c_str(), getPid());
       if(FlGui::available())
         FlGui::instance()->setProgress("Killed", 0, 0, 0);
-      _pid = -1;
+      setPid(-1);
       return true;
     }
   }
-  _pid = -1;
+  setPid(-1);
   return false;
 }
 
@@ -1586,20 +1694,19 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
     return; // solver already exists
   }
 
-  // unregister the other non-local clients so we keep only the new one
+  // delete the other non-local clients so we keep only the new one
   std::vector<onelab::client*> networkClients;
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++)
     if(it->second->isNetworkClient())
       networkClients.push_back(it->second);
   for(unsigned int i = 0; i < networkClients.size(); i++){
-    onelab::server::instance()->unregisterClient(networkClients[i]);
     delete networkClients[i];
   }
 
   // create and register the new client
-  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, executable,
-                                                                 remoteLogin);
+  onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, executable,
+                                                             remoteLogin);
   c->setIndex(index);
   opt_solver_name(index, GMSH_SET, name);
   if(executable.empty()) onelab_choose_executable_cb(0, (void *)c);
@@ -1617,7 +1724,6 @@ void onelabGroup::removeSolver(const std::string &name)
   if(it != onelab::server::instance()->lastClient()){
     onelab::client *c = it->second;
     if(c->isNetworkClient()){
-      onelab::server::instance()->unregisterClient(c);
       if(c->getIndex() >= 0 && c->getIndex() < 5){
         opt_solver_name(c->getIndex(), GMSH_SET, "");
         opt_solver_executable(c->getIndex(), GMSH_SET, "");
@@ -1668,7 +1774,7 @@ void solver_batch_cb(Fl_Widget *w, void *data)
   }
 
   // create client
-  onelab::localNetworkClient *c = new onelab::localNetworkClient(name, exe, host);
+  onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, exe, host);
   c->setIndex(num);
   onelab::string o(c->getName() + "/Action");
 

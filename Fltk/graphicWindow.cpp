@@ -33,6 +33,7 @@ typedef unsigned long intptr_t;
 #include "pluginWindow.h"
 #include "helpWindow.h"
 #include "onelabGroup.h"
+#include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
@@ -186,7 +187,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
   onelab::localNetworkClient *c;
   onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
   if(it == onelab::server::instance()->lastClient()){
-    c = new onelab::localNetworkClient("GmshRemote", "");
+    c = new gmshLocalNetworkClient("GmshRemote", "");
     c->setSocketSwitch("-socket");
   }
   else

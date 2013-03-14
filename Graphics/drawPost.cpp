@@ -70,14 +70,16 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       }
       else if (opt->lineType == 1)
         ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
-      else { /// 2D (for now) MNT DIAGRAMS FOR FRAMES
-	float l = sqrt ((p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]) + (p0[2]-p1[2])*(p0[2]-p1[2]) );
+      else { // 2D (for now) MNT diagrams for frames
+	float l = sqrt ((p0[0] - p1[0]) * (p0[0] - p1[0]) +
+                        (p0[1] - p1[1]) * (p0[1] - p1[1]) +
+                        (p0[2] - p1[2]) * (p0[2] - p1[2]) );
         char *n0 = va->getNormalArray(3 * i);
         char *n1 = va->getNormalArray(3 * (i + 1));
         double v0 = char2float(*n0), v1 = char2float(*n1);
-	float dir [3] = {(p1[0]-p0[0])/l , (p1[1]-p0[1])/l , (p1[2]-p0[2])/l };
-	printf("%g %g %g %g %g %g\n",v0,v1,p0[0],p0[1],p1[0],p1[1]);
-	ctx->drawVector(1, 0, 
+	float dir [3] = {(p1[0] - p0[0]) / l , (p1[1] - p0[1]) / l , (p1[2] - p0[2]) / l};
+	printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
+	ctx->drawVector(1, 0,
 			p0[0] - dir[1] * v0 , p0[1] + dir[0] * v0 , 0.0,
 			p1[0] - dir[1] * v1 , p1[1] + dir[0] * v1 , 0.0,opt->light);
       }
