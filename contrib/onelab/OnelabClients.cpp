@@ -19,7 +19,7 @@ class onelabMetaModelServer : public GmshServer{
   ~onelabMetaModelServer(){}
 
   int NonBlockingSystemCall(const char *str){ return SystemCall(str); }
-  int NonBlockingWait(int socket, double waitint, double timeout)
+  int NonBlockingWait(double waitint, double timeout, int socket)
   {
     double start = GetTimeInSeconds();
     while(1){
@@ -374,7 +374,7 @@ void localSolverClient::FixExecPath(const std::string &in)
     if (outfile.is_open()){
       outfile << "#!/bin/bash" << std::endl;
       outfile << "export ELMER_HOME=\"" << elmerHome << "\"" << std::endl;
-      outfile << "export DYLD_LIBRARY_PATH=\".:$ELMER_HOME/lib:$DYLD_LIBRARY_PATH\"" << std::endl; 
+      outfile << "export DYLD_LIBRARY_PATH=\".:$ELMER_HOME/lib:$DYLD_LIBRARY_PATH\"" << std::endl;
       outfile << in << std::endl;
     }
     else
@@ -618,7 +618,7 @@ bool remoteClient::syncInputFile(const std::string &wdir, const std::string &fil
     }
     else { //should be found remote
       if(!checkIfPresentRemote(split[1])){
-	OLMsg::Error("The remote input file <%s> is not present", 
+	OLMsg::Error("The remote input file <%s> is not present",
 		     split[1].c_str());
 	return false;
       }
@@ -639,7 +639,7 @@ bool remoteClient::syncOutputFile(const std::string &wdir, const std::string &fi
 
   if(checkIfPresentRemote(split[1])){
     if(split[0].size()){ // the file must be copied back on local host
-      cmd.assign("rsync -e ssh -auv " + _remoteHost + ":"); 
+      cmd.assign("rsync -e ssh -auv " + _remoteHost + ":");
       if(_remoteDir.size())
 	cmd.append(_remoteDir);
       cmd.append(split[1]);
@@ -671,7 +671,7 @@ void MetaModel::analyze() {
   OLMsg::Info("===== ANALYZING");
   std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
-  OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+  OLMsg::Info("Parse file <%s> %s", fileName.c_str(),
 	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
 }
@@ -680,7 +680,7 @@ void MetaModel::compute() {
   OLMsg::Info("===== COMPUTING");
   std::string fileName = getWorkingDir() + genericNameFromArgs + onelabExtension;
   openOnelabBlock();
-  OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+  OLMsg::Info("Parse file <%s> %s", fileName.c_str(),
 	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
   onelab::server::instance()->setChanged(false);
@@ -689,10 +689,10 @@ void MetaModel::compute() {
 void MetaModel::registerClient(const std::string &name, const std::string &type, const std::string &cmdl, const std::string &host, const std::string &rdir) {
   localSolverClient *c;
 
-  // Clients are assigned by default the same (local) working dir 
+  // Clients are assigned by default the same (local) working dir
   // as the MetaModel, i.e. the working dir from args
   // A working (local relative) subdir (useful to organize submodels)
-  // can be defined with the command: client.workingSubdir(subdir) 
+  // can be defined with the command: client.workingSubdir(subdir)
   if(host.empty() || !host.compare("localhost")){ //local client
     if(!type.compare(0,6,"interf"))
       c= new InterfacedClient(name,cmdl,getWorkingDir());
@@ -747,7 +747,7 @@ void InterfacedClient::analyze() {
       std::string fileName = getWorkingDir() + split[1] + split[2];
       if(!checkIfPresent(fileName))
 	OLMsg::Error("The file <%s> is not present",fileName.c_str());
-      OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+      OLMsg::Info("Parse file <%s> %s", fileName.c_str(),
 		  parse_onefile(fileName)?"done":"failed");
     }
   }
@@ -880,7 +880,7 @@ void EncapsulatedClient::analyze() {
       std::string fileName = getWorkingDir() + split[1] + split[2];
       if(!checkIfPresent(fileName))
 	OLMsg::Error("The file <%s> is not present",fileName.c_str());
-      OLMsg::Info("Parse file <%s> %s", fileName.c_str(), 
+      OLMsg::Info("Parse file <%s> %s", fileName.c_str(),
 		  parse_onefile(fileName)?"done":"failed");
     }
   }
@@ -1114,7 +1114,7 @@ void RemoteNativeClient::compute(){
     for(unsigned int i = 0; i < choices.size(); i++)
       if(syncOutputFile(getWorkingDir(), choices[i]))
 	OLMsg::Info("ok");
-  } 
+  }
 }
 
 
@@ -1346,7 +1346,7 @@ std::vector<std::string> SplitOLHostName(const std::string &in)
   std::vector<std::string> s(2);
   size_t pos = in.find(":");
   if(pos == std::string::npos){
-    s[0] = in; 
+    s[0] = in;
     s[1] = "";
   }
   else{

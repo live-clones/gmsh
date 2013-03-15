@@ -156,10 +156,10 @@ class GmshSocket{
     WSACleanup();
 #endif
   }
-  // utility function to wait for some data to read on a socket (if
-  // seconds and microseconds == 0 we check for available data and
-  // return immediately, i.e., we do polling). Returns 0 when data is
-  // available.
+  // Wait for some data to read on the socket (if seconds and microseconds == 0
+  // we check for available data and return immediately, i.e., we do
+  // polling). Returns 1 when data is available, 0 when nothing happened before
+  // the time delay, -1 on error.
   int Select(int seconds, int microseconds, int socket=-1)
   {
     int s = (socket < 0) ? _sock : socket;
@@ -169,8 +169,8 @@ class GmshSocket{
     fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(s, &rfds);
-    // select checks all IO descriptors between 0 and its first arg,
-    // minus 1... hence the +1 below
+    // select checks all IO descriptors between 0 and its first arg, minus 1;
+    // hence the +1 below
     int ret = select(s + 1, &rfds, NULL, NULL, &tv);
     if(ret > 0 && FD_ISSET(s, &rfds)) return 1;
     return ret;
@@ -327,7 +327,7 @@ class GmshServer : public GmshSocket{
   GmshServer() : GmshSocket(), _portno(-1) {}
   virtual ~GmshServer(){}
   virtual int NonBlockingSystemCall(const char *str) = 0;
-  virtual int NonBlockingWait(int socket, double waitint, double timeout) = 0;
+  virtual int NonBlockingWait(double waitint, double timeout, int socket=-1) = 0;
   // start the client by launching "command" (command is supposed to contain
   // '%s' where the socket name should appear)
   int Start(const char *command, const char *sockname, double timeout)
@@ -412,7 +412,7 @@ class GmshServer : public GmshSocket{
     }
 
     // wait until we get data
-    int ret = NonBlockingWait(tmpsock, 0.001, timeout);
+    int ret = NonBlockingWait(0.001, timeout, tmpsock);
     if(ret){
       CloseSocket(tmpsock);
       if(ret == 2){

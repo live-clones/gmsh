@@ -58,8 +58,11 @@ class onelabGmshServer : public GmshServer{
   onelabGmshServer(onelab::localNetworkClient *client)
     : GmshServer(), _client(client) {}
   ~onelabGmshServer(){}
-  int NonBlockingSystemCall(const char *str){ return SystemCall(str); }
-  int NonBlockingWait(int socket, double waitint, double timeout)
+  int NonBlockingSystemCall(const char *str)
+  {
+    return SystemCall(str);
+  }
+  int NonBlockingWait(double waitint, double timeout, int socket)
   {
     double start = GetTimeInSeconds();
     while(1){
@@ -413,7 +416,7 @@ bool gmshLocalNetworkClient::run()
         stop = true;
         break;
       }
-      else if(!s->NonBlockingWait(-1, 0.001, 0.)){
+      else if(!s->NonBlockingWait(0.001, 0.)){
         // we have data from this particular client
         haveData = true;
         break;
