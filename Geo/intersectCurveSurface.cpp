@@ -28,6 +28,7 @@ struct intersectCurveSurfaceData
       //      printf("--- CONVERGED -----------\n");
       newPoint[0] = uvt(0);
       newPoint[1] = uvt(1);
+      newPoint[2] = uvt(2);
       return true;
     }    
     return false;
