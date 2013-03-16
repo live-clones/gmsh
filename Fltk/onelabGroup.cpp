@@ -1758,8 +1758,14 @@ void solver_cb(Fl_Widget *w, void *data)
 
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
-  else
-    onelab_cb(0, (num >= 0) ? (void*)"check" : (void*)"refresh");
+  else{
+    if(CTX::instance()->launchSolverAtStartup >= 0)
+      onelab_cb(0, (void*)"reset");
+    else if(num >= 0)
+      onelab_cb(0, (void*)"check");
+    else
+      onelab_cb(0, (void*)"refresh");
+  }
 
   CTX::instance()->launchSolverAtStartup = -1;
 }

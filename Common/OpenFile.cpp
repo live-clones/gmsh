@@ -681,6 +681,8 @@ void OpenProjectMacFinder(const char *fileName)
     // Gmsh is running
     OpenProject(fileName);
     drawContext::global()->draw();
+    if(CTX::instance()->launchSolverAtStartup >= 0)
+      solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }
