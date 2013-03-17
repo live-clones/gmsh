@@ -405,8 +405,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 #if defined(HAVE_ONELAB) && defined(HAVE_FLTK)
   else if(ext == ".pro" && opt_solver_name(0, GMSH_GET, "") == "GetDP"){
     std::vector<std::string> split = SplitFileName(fileName);
-    GModel::current()->setName("");
-    status = MergeFile(split[0] + split[1] + ".geo");
+    GModel::current()->setName(split[1] + ".geo");
+    GModel::current()->setFileName(split[0] + split[1] + ".geo");
     CTX::instance()->launchSolverAtStartup = 0;
     return status;
   }
@@ -417,6 +417,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     status = metamodel_cb(fileName);
   }
   else if(ext == ".py"){
+    // FIXME: should use launchSolverAtStartup
     FlGui::instance()->onelab->addSolver("python", fileName, "", 1);
     onelab_cb(0, (void*)"check");
     status = 1;

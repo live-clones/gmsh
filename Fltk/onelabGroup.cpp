@@ -97,6 +97,50 @@ class onelabGmshServer : public GmshServer{
       }
     }
   }
+  int LaunchClient()
+  {
+    std::string sockname;
+    std::ostringstream tmp;
+    if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
+      // Unix socket
+      tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName
+          << _client->getId();
+      sockname = FixWindowsPath(tmp.str());
+    }
+    else{
+      // TCP/IP socket
+      if(CTX::instance()->solver.socketName.size() &&
+         CTX::instance()->solver.socketName[0] == ':')
+        tmp << GetHostName(); // prepend hostname if only the port number is given
+      tmp << CTX::instance()->solver.socketName << _client->getId();
+      sockname = tmp.str();
+    }
+
+    std::string command = FixWindowsPath(_client->getExecutable());
+    if(command.size()){
+      std::vector<std::string> args = onelabUtils::getCommandLine(_client);
+      for(unsigned int i = 0; i < args.size(); i++)
+        command.append(" " + args[i]);
+      command.append(" " + _client->getSocketSwitch() +
+                     " \"" + _client->getName() + "\" %s");
+    }
+    else{
+      Msg::Info("Listening on socket '%s'", sockname.c_str());
+    }
+
+    int sock;
+    try{
+      sock = Start(command.c_str(), sockname.c_str(),
+                   CTX::instance()->solver.timeout);
+    }
+    catch(const char *err){
+      Msg::Error("Abnormal server termination (%s on socket %s)", err,
+                 sockname.c_str());
+      sock = -1;
+    }
+
+    return sock;
+  }
 };
 
 bool gmshLocalNetworkClient::receiveMessage()
@@ -339,46 +383,10 @@ bool gmshLocalNetworkClient::run()
 
   onelabGmshServer *server = new onelabGmshServer(this);
 
-  std::string sockname;
-  std::ostringstream tmp;
-  if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
-    // Unix socket
-    tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName << getId();
-    sockname = FixWindowsPath(tmp.str());
-  }
-  else{
-    // TCP/IP socket
-    if(CTX::instance()->solver.socketName.size() &&
-       CTX::instance()->solver.socketName[0] == ':')
-      tmp << GetHostName(); // prepend hostname if only the port number is given
-    tmp << CTX::instance()->solver.socketName << getId();
-    sockname = tmp.str();
-  }
-
-  std::string command = FixWindowsPath(getExecutable());
-  if(command.size()){
-    std::vector<std::string> args = onelabUtils::getCommandLine(this);
-    for(unsigned int i = 0; i < args.size(); i++)
-      command.append(" " + args[i]);
-    command.append(" " + getSocketSwitch() + " \"" + getName() + "\" %s");
-  }
-  else{
-    Msg::Info("Listening on socket '%s'", sockname.c_str());
-  }
-
-  int sock;
-  try{
-    sock = server->Start(command.c_str(), sockname.c_str(),
-                         CTX::instance()->solver.timeout);
-  }
-  catch(const char *err){
-    Msg::Error("Abnormal server termination (%s on socket %s)", err,
-               sockname.c_str());
-    sock = -1;
-  }
+  int sock = server->LaunchClient();
 
   if(sock < 0){
-    // could not start the server: aborting
+    // could not establish the connection: aborting
     server->Shutdown();
     delete server;
     return false;
@@ -395,7 +403,7 @@ bool gmshLocalNetworkClient::run()
     bool stop = false, haveData = false;
     onelab::localNetworkClient *c = 0;
     for(int i = 0; i < getNumClients(); i++){
-      if(command.empty() && !CTX::instance()->solver.listen){
+      if(getExecutable().empty() && !CTX::instance()->solver.listen){
         // we stopped listening to the special "Listen" client
         stop = true;
         break;
@@ -450,7 +458,7 @@ bool gmshLocalNetworkClient::run()
 
   Msg::StatusBar(true, "Done running '%s'", _name.c_str());
 
-  if(command.empty()){
+  if(getExecutable().empty()){
     Msg::Info("Client disconnected: starting new connection");
     goto new_connection;
   }
@@ -1759,8 +1767,10 @@ void solver_cb(Fl_Widget *w, void *data)
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{
-    if(CTX::instance()->launchSolverAtStartup >= 0)
+    if(CTX::instance()->launchSolverAtStartup >= 0){
       onelab_cb(0, (void*)"reset");
+      onelabUtils::setFirstComputationFlag(true);
+    }
     else if(num >= 0)
       onelab_cb(0, (void*)"check");
     else
