@@ -2513,7 +2513,7 @@ the GUI by selecting `Apply as background mesh' in the post-processing
 view option menu.)
 @item 
 A @code{Box} field specifies the size of the elements inside and outside
-of a parallelipipedic region.
+of a parallelepipedic region.
 @item 
 A @code{Threshold} field specifies the size of the mesh according to the
 distance to some geometrical entities. These entities can for example be
