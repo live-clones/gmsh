@@ -20,15 +20,16 @@ typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MVertex*> > edgeCont
 typedef std::map<MFace, std::vector<MVertex*>, Less_Face> faceContainer;
 
 void SetOrder1(GModel *m, bool onlyVisible = false);
-void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false, bool onlyVisible = false);
-void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible);
-void SetHighOrderComplete (GModel *m, bool onlyVisible); // generate complete elements
-void SetHighOrderInComplete (GModel *m, bool onlyVisible); // generate in-complete elements
-MTriangle* setHighOrder(MTriangle *t, GFace *gf, 
-                        edgeContainer &edgeVertices, 
-                        faceContainer &faceVertices, 
+void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false,
+               bool onlyVisible=false);
+void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible);
+void SetHighOrderComplete (GModel *m, bool onlyVisible);
+void SetHighOrderInComplete (GModel *m, bool onlyVisible);
+MTriangle* setHighOrder(MTriangle *t, GFace *gf,
+                        edgeContainer &edgeVertices,
+                        faceContainer &faceVertices,
                         bool linear, bool incomplete, int nPts = 1);
-void checkHighOrderTriangles(const char* cc, GModel *m, 
+void checkHighOrderTriangles(const char* cc, GModel *m,
                              std::vector<MElement*> &bad, double &minJGlob);
 
 struct distanceFromMeshToGeometry_t {
@@ -36,5 +37,6 @@ struct distanceFromMeshToGeometry_t {
 };
 
 void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist);
-void getMeshInfoForHighOrder (GModel *gm,    int &meshOrder,   bool &complete,  bool &CAD);
+void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete, bool &CAD);
+
 #endif

@@ -35,6 +35,7 @@
 #include "Generator.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
+#include "HighOrder.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -122,7 +123,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
-%token tHomology tCohomology tBetti
+%token tHomology tCohomology tBetti tSetOrder
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single
@@ -2833,6 +2834,11 @@ Command :
     {
       GModel::current()->importGEOInternals();
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+    }
+   | tSetOrder FExpr tEND
+    {
+      SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
+                CTX::instance()->mesh.secondOrderIncomplete);
     }
 ;
 

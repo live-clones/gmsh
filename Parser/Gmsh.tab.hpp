@@ -163,22 +163,23 @@
      tHomology = 380,
      tCohomology = 381,
      tBetti = 382,
-     tGMSH_MAJOR_VERSION = 383,
-     tGMSH_MINOR_VERSION = 384,
-     tGMSH_PATCH_VERSION = 385,
-     tAFFECTDIVIDE = 386,
-     tAFFECTTIMES = 387,
-     tAFFECTMINUS = 388,
-     tAFFECTPLUS = 389,
-     tOR = 390,
-     tAND = 391,
-     tNOTEQUAL = 392,
-     tEQUAL = 393,
-     tGREATEROREQUAL = 394,
-     tLESSOREQUAL = 395,
-     UNARYPREC = 396,
-     tMINUSMINUS = 397,
-     tPLUSPLUS = 398
+     tSetOrder = 383,
+     tGMSH_MAJOR_VERSION = 384,
+     tGMSH_MINOR_VERSION = 385,
+     tGMSH_PATCH_VERSION = 386,
+     tAFFECTDIVIDE = 387,
+     tAFFECTTIMES = 388,
+     tAFFECTMINUS = 389,
+     tAFFECTPLUS = 390,
+     tOR = 391,
+     tAND = 392,
+     tNOTEQUAL = 393,
+     tEQUAL = 394,
+     tGREATEROREQUAL = 395,
+     tLESSOREQUAL = 396,
+     UNARYPREC = 397,
+     tMINUSMINUS = 398,
+     tPLUSPLUS = 399
    };
 #endif
 
@@ -189,7 +190,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1685 of yacc.c  */
-#line 92 "Gmsh.y"
+#line 93 "Gmsh.y"
 
   char *c;
   int i;
@@ -202,7 +203,7 @@ typedef union YYSTYPE
 
 
 /* Line 1685 of yacc.c  */
-#line 206 "Gmsh.tab.hpp"
+#line 207 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

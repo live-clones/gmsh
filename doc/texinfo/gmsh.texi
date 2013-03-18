@@ -1673,6 +1673,9 @@ Refines the current mesh by splitting all elements. If
 linear interpolatinon. Otherwise they are snapped on the actual
 geometry.
 
+@item SetOrder @var{expression};
+Changes the order of the elements in the current mesh.
+
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using
 the current @code{Print.Format} (@pxref{General options list}). If the

@@ -196,6 +196,7 @@ RefineMesh              return tRefineMesh;
 Return                  return tReturn;
 
 Smoother                return tSmoother;
+SetOrder                return tSetOrder;
 Sqrt                    return tSqrt;
 Sin                     return tSin;
 Sinh                    return tSinh;
