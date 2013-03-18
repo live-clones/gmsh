@@ -29,37 +29,37 @@ const JacobianBasis* MSubTetrahedron::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubTetrahedron::getShapeFunctions(double u, double v, double w, double s[], int order)
+void MSubTetrahedron::getShapeFunctions(double u, double v, double w, double s[], int order) const
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTetrahedron::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
+void MSubTetrahedron::getGradShapeFunctions(double u, double v, double w, double s[][3], int order) const
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTetrahedron::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
+void MSubTetrahedron::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order) const
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTetrahedron::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+void MSubTetrahedron::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order) const
 {
   if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
 }
 
-double MSubTetrahedron::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
+double MSubTetrahedron::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubTetrahedron::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
+double MSubTetrahedron::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubTetrahedron::getJacobian(double u, double v, double w, double jac[3][3])
+double MSubTetrahedron::getJacobian(double u, double v, double w, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
@@ -70,7 +70,7 @@ double MSubTetrahedron::getPrimaryJacobian(double u, double v, double w, double 
   return 0;
 }
 
-int MSubTetrahedron::getNumShapeFunctions()
+int MSubTetrahedron::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
@@ -82,10 +82,16 @@ int MSubTetrahedron::getNumPrimaryShapeFunctions()
   return 0;
 }
 
-MVertex* MSubTetrahedron::getShapeFunctionNode(int i)
+const MVertex* MSubTetrahedron::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return 0;
+}
+
+MVertex* MSubTetrahedron::getShapeFunctionNode(int i)
+{
+	  if(_orig) return _orig->getShapeFunctionNode(i);
+	    return 0;
 }
 
 void MSubTetrahedron::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
@@ -209,12 +215,12 @@ const JacobianBasis* MSubTriangle::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[], int order)
+void MSubTriangle::getShapeFunctions(double u, double v, double w, double s[], int order) const
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
+void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[][3], int order) const
 {
   if(!_orig)
     return;
@@ -266,28 +272,28 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[
   }
 }
 
-void MSubTriangle::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
+void MSubTriangle::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order) const
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
 }
 
-void MSubTriangle::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+void MSubTriangle::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order) const
 {
   if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
 }
 
-double MSubTriangle::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
+double MSubTriangle::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubTriangle::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
+double MSubTriangle::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
 double MSubTriangle::getJacobian(double u, double v, double w, double jac[3][3])
-{
+const{
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -297,7 +303,7 @@ double MSubTriangle::getPrimaryJacobian(double u, double v, double w, double jac
   return 0;
 }
 
-int MSubTriangle::getNumShapeFunctions()
+int MSubTriangle::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
@@ -309,11 +315,18 @@ int MSubTriangle::getNumPrimaryShapeFunctions()
   return 0;
 }
 
-MVertex* MSubTriangle::getShapeFunctionNode(int i)
+const MVertex* MSubTriangle::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return 0;
 }
+
+MVertex* MSubTriangle::getShapeFunctionNode(int i)
+{
+	  if(_orig) return _orig->getShapeFunctionNode(i);
+	    return 0;
+}
+
 
 void MSubTriangle::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {
@@ -434,12 +447,12 @@ const JacobianBasis* MSubLine::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubLine::getShapeFunctions(double u, double v, double w, double s[], int order)
+void MSubLine::getShapeFunctions(double u, double v, double w, double s[], int order) const
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
+void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3], int order) const
 {
   if(!_orig)
     return;
@@ -481,28 +494,28 @@ void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3]
   }
 }
 
-void MSubLine::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
+void MSubLine::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order) const
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
 }
 
-void MSubLine::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+void MSubLine::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order) const
 {
   if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
 }
 
-double MSubLine::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
+double MSubLine::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubLine::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
+double MSubLine::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
 double MSubLine::getJacobian(double u, double v, double w, double jac[3][3])
-{
+const{
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -512,7 +525,7 @@ double MSubLine::getPrimaryJacobian(double u, double v, double w, double jac[3][
   return 0;
 }
 
-int MSubLine::getNumShapeFunctions()
+int MSubLine::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
@@ -524,11 +537,18 @@ int MSubLine::getNumPrimaryShapeFunctions()
   return 0;
 }
 
-MVertex* MSubLine::getShapeFunctionNode(int i)
+const MVertex* MSubLine::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return 0;
 }
+
+MVertex* MSubLine::getShapeFunctionNode(int i)
+{
+	  if(_orig) return _orig->getShapeFunctionNode(i);
+	    return 0;
+}
+
 
 void MSubLine::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {
@@ -649,38 +669,38 @@ const JacobianBasis* MSubPoint::getJacobianFuncSpace(int order) const
   return 0;
 }
 
-void MSubPoint::getShapeFunctions(double u, double v, double w, double s[], int order)
+void MSubPoint::getShapeFunctions(double u, double v, double w, double s[], int order) const
 {
   if(_orig) _orig->getShapeFunctions(u, v, w, s, order);
 }
 
-void MSubPoint::getGradShapeFunctions(double u, double v, double w, double s[][3], int order)
+void MSubPoint::getGradShapeFunctions(double u, double v, double w, double s[][3], int order) const
 {
   if(_orig) _orig->getGradShapeFunctions(u, v, w, s, order);
 }
 
-void MSubPoint::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order)
+void MSubPoint::getHessShapeFunctions(double u, double v, double w, double s[][3][3], int order) const
 {
   if(_orig) _orig->getHessShapeFunctions(u, v, w, s, order);
 }
 
-void MSubPoint::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order)
+void MSubPoint::getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3], int order) const
 {
   if(_orig) _orig->getThirdDerivativeShapeFunctions(u, v, w, s, order);
 }
 
-double MSubPoint::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
+double MSubPoint::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubPoint::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
+double MSubPoint::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
 double MSubPoint::getJacobian(double u, double v, double w, double jac[3][3])
-{
+const{ 
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -690,7 +710,7 @@ double MSubPoint::getPrimaryJacobian(double u, double v, double w, double jac[3]
   return 0;
 }
 
-int MSubPoint::getNumShapeFunctions()
+int MSubPoint::getNumShapeFunctions() const
 {
   if(_orig) return _orig->getNumShapeFunctions();
   return 0;
@@ -702,11 +722,18 @@ int MSubPoint::getNumPrimaryShapeFunctions()
   return 0;
 }
 
-MVertex* MSubPoint::getShapeFunctionNode(int i)
+const MVertex* MSubPoint::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return 0;
 }
+
+MVertex* MSubPoint::getShapeFunctionNode(int i)
+{
+	  if(_orig) return _orig->getShapeFunctionNode(i);
+	    return 0;
+}
+
 
 void MSubPoint::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {

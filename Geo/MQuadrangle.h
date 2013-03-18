@@ -56,6 +56,7 @@ class MQuadrangle : public MElement {
   virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num) const{ return _v[num]; }  
   virtual void setVertex(int num, MVertex *v){ _v[num] = v; }
   virtual MVertex *getVertexDIFF(int num)
   {
@@ -63,7 +64,7 @@ class MQuadrangle : public MElement {
     return getVertex(map[num]);
   }
   virtual int getNumEdges(){ return 4; }
-  virtual MEdge getEdge(int num)
+  virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_quad(num, 0)], _v[edges_quad(num, 1)]);
   }
@@ -199,6 +200,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
@@ -285,6 +287,7 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
@@ -369,6 +372,7 @@ class MQuadrangleN : public MQuadrangle {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const {return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumFaceVertices() const
   {
     if(_order > 1 && (int)_vs.size() + 4 == (_order + 1) * (_order + 1))

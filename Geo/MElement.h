@@ -68,6 +68,7 @@ class MElement
 
   // get & set the vertices
   virtual int getNumVertices() const = 0;
+  virtual const MVertex *getVertex(int num) const= 0;
   virtual MVertex *getVertex(int num) = 0;
   void getVertices(std::vector<MVertex*> &verts)
   {
@@ -117,7 +118,7 @@ class MElement
 
   // get the edges
   virtual int getNumEdges() = 0;
-  virtual MEdge getEdge(int num) = 0;
+  virtual MEdge getEdge(int num) const= 0;
 
   // give an MEdge as input and get its local number and sign
   virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const
@@ -230,24 +231,24 @@ class MElement
   // (u,v,w) in parametric coordinates (if order == -1, use the
   // polynomial order of the element)
   virtual void getShapeFunctions(double u, double v, double w, double s[],
-                                 int order=-1);
+                                 int order=-1) const;
 
   // return the gradient of of the nodal shape functions evaluated at
   // point (u,v,w) in parametric coordinates (if order == -1, use the
   // polynomial order of the element)
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3],
-                                     int order=-1);
+                                     int order=-1) const;
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
-                                     int order=-1);
+                                     int order=-1) const;
   virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3],
-                                     int order=-1);
+                                     int order=-1) const;
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
-  virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]);
+  virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under fullMatrix form
-  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]);
-  virtual double getJacobian(double u, double v, double w, double jac[3][3]);
-  inline double getJacobian(double u, double v, double w, fullMatrix<double> &j){
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const ;
+  virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
+  inline double getJacobian(double u, double v, double w, fullMatrix<double> &j) const{
     double JAC[3][3];
     const double detJ = getJacobian (u,v,w,JAC);
     for (int i=0;i<3;i++){
@@ -264,19 +265,20 @@ class MElement
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1);
   void getNodesCoord(fullMatrix<double> &nodesXYZ);
-  virtual int getNumShapeFunctions(){ return getNumVertices(); }
-  virtual int getNumPrimaryShapeFunctions(){ return getNumPrimaryVertices(); }
-  virtual MVertex *getShapeFunctionNode(int i){ return getVertex(i); }
+  virtual int getNumShapeFunctions() const{ return getNumVertices(); }
+  virtual int getNumPrimaryShapeFunctions() { return getNumPrimaryVertices(); }
+  virtual const MVertex *getShapeFunctionNode(int i) const{ return getVertex(i); }
+  virtual MVertex *getShapeFunctionNode(int i) { return getVertex(i); }
 
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
-  virtual void pnt(const std::vector<double> &sf,SPoint3 &p); // To be compatible with functionSpace without changing form
+  virtual void pnt(double u, double v, double w, SPoint3 &p) const;
+  virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const; // To be compatible with functionSpace without changing form
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
 
   // invert the parametrisation
-  virtual void xyz2uvw(double xyz[3], double uvw[3]);
-  void xyzTouvw(fullMatrix<double> *xu);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
+  void xyzTouvw(fullMatrix<double> *xu) const;
 
   // move point between parent and element parametric spaces
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);

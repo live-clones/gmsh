@@ -90,7 +90,7 @@ double MTetrahedron::getVolume()
   return det3x3(mat) / 6.;
 }
 
-void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3])
+void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
 {
   double mat[3][3], b[3], det;
   getMat(mat);

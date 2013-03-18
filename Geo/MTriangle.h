@@ -57,8 +57,9 @@ class MTriangle : public MElement {
   virtual double angleShapeMeasure();
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
-  virtual void xyz2uvw(double xyz[3], double uvw[3]);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
   {
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
@@ -67,7 +68,7 @@ class MTriangle : public MElement {
     return 0;
   }
   virtual int getNumEdges(){ return 3; }
-  virtual MEdge getEdge(int num)
+  virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);
   }
@@ -193,12 +194,13 @@ class MTriangle6 : public MTriangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
+  virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
     return getVertex(map[num]);
   }
-  virtual void xyz2uvw(double xyz[3], double uvw[3]){ MElement::xyz2uvw(xyz, uvw); }
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const{ MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3; }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
@@ -274,6 +276,7 @@ class MTriangleN : public MTriangle {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
+  virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual int getNumFaceVertices() const
   {
     if(_order == 3 && _vs.size() == 6) return 0;
@@ -294,7 +297,7 @@ class MTriangleN : public MTriangle {
     if(_order == 10  && _vs.size() == 27) return 0;
     return 0;
   }
-  virtual void xyz2uvw(double xyz[3], double uvw[3]){ MElement::xyz2uvw(xyz, uvw); }
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const { MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }
   virtual int getNumEdgesRep();
   virtual int getNumFacesRep();

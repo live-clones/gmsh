@@ -64,9 +64,10 @@ class MPrism : public MElement {
   virtual int getNumVertices() const { return 6; }
   virtual double getInnerRadius();
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num)const{ return _v[num]; }  
   virtual void setVertex(int num,   MVertex *v){ _v[num] = v; }
   virtual int getNumEdges(){ return 9; }
-  virtual MEdge getEdge(int num)
+  virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
@@ -227,6 +228,7 @@ class MPrism15 : public MPrism {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 15; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
+  virtual const MVertex *getVertex(int num) const { return num < 6 ? _v[num] : _vs[num - 6]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[15] = {0, 6, 1, 9, 2, 7, 8, 10, 11, 3, 12, 4, 14, 5, 13};
@@ -356,6 +358,7 @@ class MPrism18 : public MPrism {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 18; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }  
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumFaceVertices() const { return 3; }
   virtual int getNumEdgesRep(){ return 18; }

@@ -60,9 +60,10 @@ class MTetrahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }  
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual int getNumEdges(){ return 6; }
-  virtual MEdge getEdge(int num)
+  virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
@@ -109,7 +110,7 @@ class MTetrahedron : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  void getMat(double mat[3][3])
+  void getMat(double mat[3][3]) const
   {
     mat[0][0] = _v[1]->x() - _v[0]->x();
     mat[0][1] = _v[2]->x() - _v[0]->x();
@@ -127,7 +128,7 @@ class MTetrahedron : public MElement {
   virtual double getInnerRadius();
   virtual double getCircumRadius();
   virtual double etaShapeMeasure();
-  void xyz2uvw(double xyz[3], double uvw[3]);
+  void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w)
@@ -216,6 +217,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[10] = {0, 4, 1, 5, 2, 6, 7, 9, 8, 3};
@@ -330,6 +332,7 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }  
   virtual int getNumEdgeVertices() const { return 6 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {

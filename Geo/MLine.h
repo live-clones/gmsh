@@ -38,6 +38,7 @@ class MLine : public MElement {
   virtual int getDim() const { return 1; }
   virtual int getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num) const{ return _v[num]; }  
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual double getInnerRadius(); // half-length of segment line
   virtual double getLength(); // length of segment line
@@ -47,7 +48,7 @@ class MLine : public MElement {
     ithVertex = _v[0] == vertex ? 0 : 1;
   }
   virtual int getNumEdges(){ return 1; }
-  virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1]); }
+  virtual MEdge getEdge(int num) const{ return MEdge(_v[0], _v[1]); }
   virtual int getNumEdgesRep(){ return 1; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -124,6 +125,7 @@ class MLine3 : public MLine {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[3] = {0, 2, 1};
@@ -184,6 +186,7 @@ class MLineN : public MLine {
   virtual int getPolynomialOrder() const { return _vs.size() + 1; }
   virtual int getNumVertices() const { return _vs.size() + 2; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual int getNumEdgeVertices() const { return _vs.size(); }
   virtual int getNumEdgesRep(){ return _vs.size() + 1; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)

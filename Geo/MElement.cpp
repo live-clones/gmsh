@@ -139,15 +139,14 @@ void MElement::getNode(int num, double &u, double &v, double &w)
   w = uvw[2];
 }
 
-void MElement::getShapeFunctions(double u, double v, double w, double s[], int o)
+void MElement::getShapeFunctions(double u, double v, double w, double s[], int o) const
 {
   const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->f(u, v, w, s);
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3],
-                                     int o)
+void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3],int o) const
 {
   const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->df(u, v, w, s);
@@ -155,7 +154,7 @@ void MElement::getGradShapeFunctions(double u, double v, double w, double s[][3]
 }
 
 void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3][3],
-                                     int o)
+                                     int o) const
 {
   const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->ddf(u, v, w, s);
@@ -163,7 +162,7 @@ void MElement::getHessShapeFunctions(double u, double v, double w, double s[][3]
 }
 
 void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w,
-                                                double s[][3][3][3], int o)
+                                                double s[][3][3][3], int o) const
 {
   const nodalBasis* fs = getFunctionSpace(o);
   if(fs) fs->dddf(u, v, w, s);
@@ -261,7 +260,7 @@ std::string MElement::getInfoString()
   return std::string(tmp);
 }
 
-static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
+static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3][3])
 {
   double dJ = 0;
 
@@ -328,7 +327,7 @@ static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
   return dJ;
 }
 
-double MElement::getJacobian(double u, double v, double w, double jac[3][3])
+double MElement::getJacobian(double u, double v, double w, double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
@@ -349,7 +348,7 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
+double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
@@ -367,7 +366,7 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3])
 }
 
 double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
-{
+const {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
@@ -424,7 +423,7 @@ void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ)
   }
 }
 
-void MElement::pnt(double u, double v, double w, SPoint3 &p)
+void MElement::pnt(double u, double v, double w, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
   double sf[1256];
@@ -438,7 +437,7 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p)
   p = SPoint3(x, y, z);
 }
 
-void MElement::pnt(const std::vector<double> &sf, SPoint3 &p)
+void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
   for (int j = 0; j < getNumShapeFunctions(); j++) {
@@ -464,7 +463,7 @@ void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
   p = SPoint3(x,y,z);
 }
 
-void MElement::xyz2uvw(double xyz[3], double uvw[3])
+void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
 {
   // general Newton routine for the nonlinear case (more efficient
   // routines are implemented for simplices, where the basis functions
@@ -480,7 +479,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
     double sf[1256];
     getShapeFunctions(uvw[0], uvw[1], uvw[2], sf);
     for (int i = 0; i < getNumShapeFunctions(); i++) {
-      MVertex *v = getShapeFunctionNode(i);
+      const MVertex *v = getShapeFunctionNode(i);
       xn += v->x() * sf[i];
       yn += v->y() * sf[i];
       zn += v->z() * sf[i];
@@ -501,7 +500,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
   }
 }
 
-void MElement::xyzTouvw(fullMatrix<double> *xu)
+void MElement::xyzTouvw(fullMatrix<double> *xu) const
 {
   double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];
   xyz2uvw(_xyz, _uvw);

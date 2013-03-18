@@ -66,8 +66,12 @@ class MPolyhedron : public MElement {
     return (num < (int)_vertices.size()) ?
       _vertices[num] : _innerVertices[num - _vertices.size()];
   }
+  virtual const MVertex *getVertex(int num) const
+  {
+    return (num < (int)_vertices.size()) ? _vertices[num] : _innerVertices[num - _vertices.size()];
+  }
   virtual int getNumEdges() { return _edges.size(); }
-  virtual MEdge getEdge(int num) { return _edges[num]; }
+  virtual MEdge getEdge(int num) const{ return _edges[num]; }
   virtual int getNumEdgesRep() { return _edges.size(); }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -125,19 +129,19 @@ class MPolyhedron : public MElement {
   {
     return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
   }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) const
   {
     if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
   }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) const
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o) const
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions()
+  virtual int getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
@@ -145,10 +149,15 @@ class MPolyhedron : public MElement {
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
+  virtual const MVertex *getShapeFunctionNode(int i) const
+  {
+    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+  }
   virtual MVertex *getShapeFunctionNode(int i)
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : 0);
   }
+
   // the parametric coordinates of the polyhedron are
   // the coordinates in the local parent element.
   virtual bool isInside(double u, double v, double w);
@@ -214,8 +223,12 @@ class MPolygon : public MElement {
     return (num < (int)_vertices.size()) ?
       _vertices[num] : _innerVertices[num - _vertices.size()];
   }
+  virtual const MVertex *getVertex(int num) const
+  {
+    return (num < (int)_vertices.size()) ? _vertices[num] : _innerVertices[num - _vertices.size()];
+  }
   virtual int getNumEdges() { return _edges.size(); }
-  virtual MEdge getEdge(int num) { return _edges[num]; }
+  virtual MEdge getEdge(int num) const{ return _edges[num]; }
   virtual int getNumEdgesRep() { return getNumEdges(); }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -266,19 +279,19 @@ class MPolygon : public MElement {
   {
     return (_orig ? _orig->getJacobianFuncSpace(order) : 0);
   }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) const
   {
     if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
   }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) const
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o) const
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }
-  virtual int getNumShapeFunctions()
+  virtual int getNumShapeFunctions() const
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
@@ -286,10 +299,15 @@ class MPolygon : public MElement {
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
+  virtual const MVertex *getShapeFunctionNode(int i) const
+  {
+    return (_orig ? _orig->getShapeFunctionNode(i) : 0);
+  }
   virtual MVertex *getShapeFunctionNode(int i)
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : 0);
   }
+
   // the parametric coordinates of the polygon are
   // the coordinates in the local parent element.
   virtual bool isInside(double u, double v, double w);
@@ -333,15 +351,15 @@ class MLineChild : public MLine {
     if(_orig) return _orig->getJacobianFuncSpace(order);
     return 0;
   }
-  virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) const
   {
     if(_orig) _orig->getShapeFunctions(u, v, w, s, o);
   }
-  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o)
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) const
   {
     if(_orig) _orig->getGradShapeFunctions(u, v, w, s, o);
   }
-  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o)
+  virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3], int o) const
   {
     if(_orig) _orig->getHessShapeFunctions(u, v, w, s, o);
   }

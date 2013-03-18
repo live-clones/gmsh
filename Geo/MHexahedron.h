@@ -57,6 +57,7 @@ class MHexahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }  
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
@@ -66,7 +67,7 @@ class MHexahedron : public MElement {
     return getVertex(map[num]);
   }
   virtual int getNumEdges(){ return 12; }
-  virtual MEdge getEdge(int num)
+  virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_hexa(num, 0)], _v[edges_hexa(num, 1)]);
   }
@@ -228,6 +229,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }  
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[20] = {0, 8, 1, 11, 2, 13, 3, 9, 10, 12,
@@ -374,6 +376,8 @@ class MHexahedron27 : public MHexahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
+
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[27] = {6, 8, 26, 24, 0, 2, 20, 18, 7, 15, 3, 17, 5, 25,
@@ -524,6 +528,8 @@ class MHexahedronN : public MHexahedron {
   virtual int getPolynomialOrder() const { return (int)_order; }
   virtual int getNumVertices() const { return 8 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
+
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
   virtual int getNumVolumeVertices() const
