@@ -149,8 +149,8 @@
 /*   which is disastrously slow.  A faster way on IEEE machines might be to  */
 /*   mask the appropriate bit, but that's difficult to do in C.              */
 
-//#define Absolute(a)  ((a) >= 0.0 ? (a) : -(a))
-#define Absolute(a)  fabs(a)
+#define Absolute(a)  ((a) >= 0.0 ? (a) : -(a))
+/* #define Absolute(a)  fabs(a) */
 
 /* Many of the operations are broken up into two pieces, a main part that    */
 /*   performs an approximate operation, and a "tail" that computes the       */
@@ -374,24 +374,6 @@ static REAL ccwerrboundA, ccwerrboundB, ccwerrboundC;
 static REAL o3derrboundA, o3derrboundB, o3derrboundC;
 static REAL iccerrboundA, iccerrboundB, iccerrboundC;
 static REAL isperrboundA, isperrboundB, isperrboundC;
-
-// Options to choose types of geometric computtaions. 
-// Added by H. Si, 2012-08-23.
-static int  _use_inexact_arith; // -X option.
-static int  _use_static_filter; // -S option.
-
-// Static filters. Added by H. Si, 2012-08-23.
-static REAL o3dstaticfilter;
-static REAL ispstaticfilter;
-
-#ifndef NDEBUG
-// Counters for counting the number of calls. Added by H. Si, 2012-08-23.
-long ori3dcount, ori3dadaptcount;
-long insphcount, insphadaptcount, insphexactcount;
-long ori4dcount, ori4dadaptcount, ori4dexactcount;
-long o3dfilterfailscount;
-long ispfilterfailscount;
-#endif // #ifndef NDEBUG
 
 /*****************************************************************************/
 /*                                                                           */
@@ -678,7 +660,7 @@ float uniformfloatrand()
 /*                                                                           */
 /*****************************************************************************/
 
-void exactinit(int noexact, int nofilter, REAL maxx, REAL maxy, REAL maxz)
+REAL exactinit()
 {
   REAL half;
   REAL check, lastcheck;
@@ -740,36 +722,7 @@ void exactinit(int noexact, int nofilter, REAL maxx, REAL maxy, REAL maxz)
   isperrboundB = (5.0 + 72.0 * epsilon) * epsilon;
   isperrboundC = (71.0 + 1408.0 * epsilon) * epsilon * epsilon;
 
-  _use_inexact_arith = noexact;
-  _use_static_filter = !nofilter;
-
-  // Sort maxx < maxy < maxz. Re-use 'half' for swapping.
-  assert(maxx > 0);
-  assert(maxy > 0);
-  assert(maxz > 0);
-
-  if (maxx > maxz) {
-    half = maxx; maxx = maxz; maxz = half;
-  }
-  if (maxy > maxz) {
-    half = maxy; maxy = maxz; maxz = half;
-  }
-  else if (maxy < maxx) {
-    half = maxy; maxy = maxx; maxx = half;
-  }
-
-  // Calculate the static filters.
-  o3dstaticfilter = 5.1107127829973299e-15 * maxx * maxy * maxz;
-  ispstaticfilter = 1.2466136531027298e-13 * maxx * maxy * maxz * (maxz * maxz);
-
-#ifndef NDEBUG
-  // Clear the counters.
-  ori3dcount = ori3dadaptcount = 0l;
-  insphcount = insphadaptcount = insphexactcount = 0l;
-  ori4dcount = ori4dadaptcount = ori4dexactcount = 0l;
-  o3dfilterfailscount = 0l;
-  ispfilterfailscount = 0l;
-#endif // #ifndef NDEBUG
+  return epsilon; /* Added by H. Si 30 Juli, 2004. */
 }
 
 /*****************************************************************************/
@@ -1916,6 +1869,16 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   REAL fin1[192], fin2[192];
   int finlength;
 
+  ////////////////////////////////////////////////////////
+  // To avoid uninitialized warnings reported by valgrind.
+  int i;
+  for (i = 0; i < 8; i++) {
+    adet[i] = bdet[i] = cdet[i] = 0.0;
+  }
+  for (i = 0; i < 16; i++) {
+    abdet[i] = 0.0;
+  }
+  ////////////////////////////////////////////////////////
 
   REAL adxtail, bdxtail, cdxtail;
   REAL adytail, bdytail, cdytail;
@@ -1952,10 +1915,6 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   REAL err1, err2, err3;
   INEXACT REAL _i, _j, _k;
   REAL _0;
-
-#ifndef NDEBUG
-  ori3dadaptcount++;
-#endif // #ifndef NDEBUG
 
   adx = (REAL) (pa[0] - pd[0]);
   bdx = (REAL) (pb[0] - pd[0]);
@@ -2304,16 +2263,37 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   return finnow[finlength - 1];
 }
 
+#ifdef INEXACT_GEOM_PRED
+
+REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
+{
+  REAL adx, bdx, cdx;
+  REAL ady, bdy, cdy;
+  REAL adz, bdz, cdz;
+
+  adx = pa[0] - pd[0];
+  bdx = pb[0] - pd[0];
+  cdx = pc[0] - pd[0];
+  ady = pa[1] - pd[1];
+  bdy = pb[1] - pd[1];
+  cdy = pc[1] - pd[1];
+  adz = pa[2] - pd[2];
+  bdz = pb[2] - pd[2];
+  cdz = pc[2] - pd[2];
+
+  return adx * (bdy * cdz - bdz * cdy)
+       + bdx * (cdy * adz - cdz * ady)
+       + cdx * (ady * bdz - adz * bdy);
+}
+
+#else
+
 REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
 {
   REAL adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
   REAL bdxcdy, cdxbdy, cdxady, adxcdy, adxbdy, bdxady;
   REAL det;
   REAL permanent, errbound;
-
-#ifndef NDEBUG
-  ori3dcount++;
-#endif // #ifndef NDEBUG
 
   adx = pa[0] - pd[0];
   bdx = pb[0] - pd[0];
@@ -2338,19 +2318,6 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
       + bdz * (cdxady - adxcdy)
       + cdz * (adxbdy - bdxady);
 
-  if (_use_inexact_arith) {
-    return det;
-  }
-
-  if (_use_static_filter) {
-    if (fabs(det) > o3dstaticfilter) return det;
-    //if (det > o3dstaticfilter) return det;
-    //if (det < minus_o3dstaticfilter) return det;
-#ifndef NDEBUG
-    o3dfilterfailscount++;
-#endif // #ifndef NDEBUG
-  }
-
   permanent = (Absolute(bdxcdy) + Absolute(cdxbdy)) * Absolute(adz)
             + (Absolute(cdxady) + Absolute(adxcdy)) * Absolute(bdz)
             + (Absolute(adxbdy) + Absolute(bdxady)) * Absolute(cdz);
@@ -2361,6 +2328,8 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
 
   return orient3dadapt(pa, pb, pc, pd, permanent);
 }
+
+#endif // ifdef INEXACT_GEOM_PRED
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3393,10 +3362,6 @@ REAL insphereexact(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   INEXACT REAL _i, _j;
   REAL _0;
 
-#ifndef NDEBUG
-  insphexactcount++;
-#endif // #ifndef NDEBUG
-
   Two_Product(pa[0], pb[1], axby1, axby0);
   Two_Product(pb[0], pa[1], bxay1, bxay0);
   Two_Two_Diff(axby1, axby0, bxay1, bxay0, ab[3], ab[2], ab[1], ab[0]);
@@ -3973,10 +3938,6 @@ REAL insphereadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe,
   INEXACT REAL _i, _j;
   REAL _0;
 
-#ifndef NDEBUG
-  insphadaptcount++;
-#endif // #ifndef NDEBUG
-
   aex = (REAL) (pa[0] - pe[0]);
   bex = (REAL) (pb[0] - pe[0]);
   cex = (REAL) (pc[0] - pe[0]);
@@ -4153,6 +4114,52 @@ REAL insphereadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe,
   return insphereexact(pa, pb, pc, pd, pe);
 }
 
+#ifdef INEXACT_GEOM_PRED
+
+REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
+{
+  REAL aex, bex, cex, dex;
+  REAL aey, bey, cey, dey;
+  REAL aez, bez, cez, dez;
+  REAL alift, blift, clift, dlift;
+  REAL ab, bc, cd, da, ac, bd;
+  REAL abc, bcd, cda, dab;
+
+  aex = pa[0] - pe[0];
+  bex = pb[0] - pe[0];
+  cex = pc[0] - pe[0];
+  dex = pd[0] - pe[0];
+  aey = pa[1] - pe[1];
+  bey = pb[1] - pe[1];
+  cey = pc[1] - pe[1];
+  dey = pd[1] - pe[1];
+  aez = pa[2] - pe[2];
+  bez = pb[2] - pe[2];
+  cez = pc[2] - pe[2];
+  dez = pd[2] - pe[2];
+
+  ab = aex * bey - bex * aey;
+  bc = bex * cey - cex * bey;
+  cd = cex * dey - dex * cey;
+  da = dex * aey - aex * dey;
+
+  ac = aex * cey - cex * aey;
+  bd = bex * dey - dex * bey;
+
+  abc = aez * bc - bez * ac + cez * ab;
+  bcd = bez * cd - cez * bd + dez * bc;
+  cda = cez * da + dez * ac + aez * cd;
+  dab = dez * ab + aez * bd + bez * da;
+
+  alift = aex * aex + aey * aey + aez * aez;
+  blift = bex * bex + bey * bey + bez * bez;
+  clift = cex * cex + cey * cey + cez * cez;
+  dlift = dex * dex + dey * dey + dez * dez;
+
+  return (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
+}
+#else
+
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 {
   REAL aex, bex, cex, dex;
@@ -4163,11 +4170,12 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   REAL alift, blift, clift, dlift;
   REAL ab, bc, cd, da, ac, bd;
   REAL abc, bcd, cda, dab;
+  REAL aezplus, bezplus, cezplus, dezplus;
+  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
+  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
+  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
   REAL det;
-
-#ifndef NDEBUG
-  insphcount++;
-#endif // #ifndef NDEBUG
+  REAL permanent, errbound;
 
   aex = pa[0] - pe[0];
   bex = pb[0] - pe[0];
@@ -4214,25 +4222,6 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 
   det = (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
 
-  if (_use_inexact_arith) {
-    return det;
-  }
-
-  if (_use_static_filter) {
-    if (fabs(det) > ispstaticfilter) return det;
-    //if (det > ispstaticfilter) return det;
-    //if (det < minus_ispstaticfilter) return det;
-#ifndef NDEBUG
-    ispfilterfailscount++;
-#endif // #ifndef NDEBUG
-  }
-
-  REAL aezplus, bezplus, cezplus, dezplus;
-  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
-  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
-  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
-  REAL permanent, errbound;
-
   aezplus = Absolute(aez);
   bezplus = Absolute(bez);
   cezplus = Absolute(cez);
@@ -4272,6 +4261,8 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 
   return insphereadapt(pa, pb, pc, pd, pe, permanent);
 }
+
+#endif // #ifdef INEXACT_GEOM_PRED
 
 /*****************************************************************************/
 /*                                                                           */
@@ -4335,10 +4326,6 @@ REAL orient4dexact(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
   REAL err1, err2, err3;
   INEXACT REAL _i, _j;
   REAL _0;
-
-#ifndef NDEBUG
-  ori4dexactcount++;
-#endif // #ifndef NDEBUG
 
   Two_Product(pa[0], pb[1], axby1, axby0);
   Two_Product(pb[0], pa[1], bxay1, bxay0);
@@ -4553,10 +4540,6 @@ REAL orient4dadapt(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
   INEXACT REAL _i, _j;
   REAL _0;
 
-#ifndef NDEBUG
-  ori4dadaptcount++;
-#endif // #ifndef NDEBUG
-
   aex = (REAL) (pa[0] - pe[0]);
   bex = (REAL) (pb[0] - pe[0]);
   cex = (REAL) (pc[0] - pe[0]);
@@ -4716,135 +4699,108 @@ REAL orient4d(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
               REAL aheight, REAL bheight, REAL cheight, REAL dheight, 
               REAL eheight)
 {
- REAL aex, bex, cex, dex;
- REAL aey, bey, cey, dey;
- REAL aez, bez, cez, dez;
- REAL aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
- REAL aexcey, cexaey, bexdey, dexbey;
- REAL aeheight, beheight, ceheight, deheight;
- REAL ab, bc, cd, da, ac, bd;
- REAL abc, bcd, cda, dab;
- REAL aezplus, bezplus, cezplus, dezplus;
- REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
- REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
- REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
- REAL det;
- REAL permanent, errbound;
+  REAL aex, bex, cex, dex;
+  REAL aey, bey, cey, dey;
+  REAL aez, bez, cez, dez;
+  REAL aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
+  REAL aexcey, cexaey, bexdey, dexbey;
+  REAL aeheight, beheight, ceheight, deheight;
+  REAL ab, bc, cd, da, ac, bd;
+  REAL abc, bcd, cda, dab;
+  REAL aezplus, bezplus, cezplus, dezplus;
+  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
+  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
+  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
+  REAL det;
+  REAL permanent, errbound;
 
-#ifndef NDEBUG
- ori4dcount++;
-#endif // #ifndef NDEBUG
+  //orient4dcount++;
 
- aex = pa[0] - pe[0];
- bex = pb[0] - pe[0];
- cex = pc[0] - pe[0];
- dex = pd[0] - pe[0];
- aey = pa[1] - pe[1];
- bey = pb[1] - pe[1];
- cey = pc[1] - pe[1];
- dey = pd[1] - pe[1];
- aez = pa[2] - pe[2];
- bez = pb[2] - pe[2];
- cez = pc[2] - pe[2];
- dez = pd[2] - pe[2];
- aeheight = aheight - eheight;
- beheight = bheight - eheight;
- ceheight = cheight - eheight;
- deheight = dheight - eheight;
+  aex = pa[0] - pe[0];
+  bex = pb[0] - pe[0];
+  cex = pc[0] - pe[0];
+  dex = pd[0] - pe[0];
+  aey = pa[1] - pe[1];
+  bey = pb[1] - pe[1];
+  cey = pc[1] - pe[1];
+  dey = pd[1] - pe[1];
+  aez = pa[2] - pe[2];
+  bez = pb[2] - pe[2];
+  cez = pc[2] - pe[2];
+  dez = pd[2] - pe[2];
+  aeheight = aheight - eheight;
+  beheight = bheight - eheight;
+  ceheight = cheight - eheight;
+  deheight = dheight - eheight;
 
- aexbey = aex * bey;
- bexaey = bex * aey;
- ab = aexbey - bexaey;
- bexcey = bex * cey;
- cexbey = cex * bey;
- bc = bexcey - cexbey;
- cexdey = cex * dey;
- dexcey = dex * cey;
- cd = cexdey - dexcey;
- dexaey = dex * aey;
- aexdey = aex * dey;
- da = dexaey - aexdey;
+  aexbey = aex * bey;
+  bexaey = bex * aey;
+  ab = aexbey - bexaey;
+  bexcey = bex * cey;
+  cexbey = cex * bey;
+  bc = bexcey - cexbey;
+  cexdey = cex * dey;
+  dexcey = dex * cey;
+  cd = cexdey - dexcey;
+  dexaey = dex * aey;
+  aexdey = aex * dey;
+  da = dexaey - aexdey;
 
- aexcey = aex * cey;
- cexaey = cex * aey;
- ac = aexcey - cexaey;
- bexdey = bex * dey;
- dexbey = dex * bey;
- bd = bexdey - dexbey;
+  aexcey = aex * cey;
+  cexaey = cex * aey;
+  ac = aexcey - cexaey;
+  bexdey = bex * dey;
+  dexbey = dex * bey;
+  bd = bexdey - dexbey;
 
- abc = aez * bc - bez * ac + cez * ab;
- bcd = bez * cd - cez * bd + dez * bc;
- cda = cez * da + dez * ac + aez * cd;
- dab = dez * ab + aez * bd + bez * da;
+  abc = aez * bc - bez * ac + cez * ab;
+  bcd = bez * cd - cez * bd + dez * bc;
+  cda = cez * da + dez * ac + aez * cd;
+  dab = dez * ab + aez * bd + bez * da;
 
- det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
+  det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
 
- aezplus = Absolute(aez);
- bezplus = Absolute(bez);
- cezplus = Absolute(cez);
- dezplus = Absolute(dez);
- aexbeyplus = Absolute(aexbey);
- bexaeyplus = Absolute(bexaey);
- bexceyplus = Absolute(bexcey);
- cexbeyplus = Absolute(cexbey);
- cexdeyplus = Absolute(cexdey);
- dexceyplus = Absolute(dexcey);
- dexaeyplus = Absolute(dexaey);
- aexdeyplus = Absolute(aexdey);
- aexceyplus = Absolute(aexcey);
- cexaeyplus = Absolute(cexaey);
- bexdeyplus = Absolute(bexdey);
- dexbeyplus = Absolute(dexbey);
- permanent = ((cexdeyplus + dexceyplus) * bezplus
-              + (dexbeyplus + bexdeyplus) * cezplus
-              + (bexceyplus + cexbeyplus) * dezplus)
-           * Absolute(aeheight)
-           + ((dexaeyplus + aexdeyplus) * cezplus
-              + (aexceyplus + cexaeyplus) * dezplus
-              + (cexdeyplus + dexceyplus) * aezplus)
-           * Absolute(beheight)
-           + ((aexbeyplus + bexaeyplus) * dezplus
-              + (bexdeyplus + dexbeyplus) * aezplus
-              + (dexaeyplus + aexdeyplus) * bezplus)
-           * Absolute(ceheight)
-           + ((bexceyplus + cexbeyplus) * aezplus
-              + (cexaeyplus + aexceyplus) * bezplus
-              + (aexbeyplus + bexaeyplus) * cezplus)
-           * Absolute(deheight);
- errbound = isperrboundA * permanent;
- if ((det > errbound) || (-det > errbound)) {
-   return det;
- }
+  if (0) { //if (noexact) {
+    return det;
+  }
 
- return orient4dadapt(pa, pb, pc, pd, pe,
-                      aheight, bheight, cheight, dheight, eheight, permanent);
+  aezplus = Absolute(aez);
+  bezplus = Absolute(bez);
+  cezplus = Absolute(cez);
+  dezplus = Absolute(dez);
+  aexbeyplus = Absolute(aexbey);
+  bexaeyplus = Absolute(bexaey);
+  bexceyplus = Absolute(bexcey);
+  cexbeyplus = Absolute(cexbey);
+  cexdeyplus = Absolute(cexdey);
+  dexceyplus = Absolute(dexcey);
+  dexaeyplus = Absolute(dexaey);
+  aexdeyplus = Absolute(aexdey);
+  aexceyplus = Absolute(aexcey);
+  cexaeyplus = Absolute(cexaey);
+  bexdeyplus = Absolute(bexdey);
+  dexbeyplus = Absolute(dexbey);
+  permanent = ((cexdeyplus + dexceyplus) * bezplus
+               + (dexbeyplus + bexdeyplus) * cezplus
+               + (bexceyplus + cexbeyplus) * dezplus)
+            * aeheight
+            + ((dexaeyplus + aexdeyplus) * cezplus
+               + (aexceyplus + cexaeyplus) * dezplus
+               + (cexdeyplus + dexceyplus) * aezplus)
+            * beheight
+            + ((aexbeyplus + bexaeyplus) * dezplus
+               + (bexdeyplus + dexbeyplus) * aezplus
+               + (dexaeyplus + aexdeyplus) * bezplus)
+            * ceheight
+            + ((bexceyplus + cexbeyplus) * aezplus
+               + (cexaeyplus + aexceyplus) * bezplus
+               + (aexbeyplus + bexaeyplus) * cezplus)
+            * deheight;
+  errbound = isperrboundA * permanent;
+  if ((det > errbound) || (-det > errbound)) {
+    return det;
+  }
+
+  return orient4dadapt(pa, pb, pc, pd, pe,
+                       aheight, bheight, cheight, dheight, eheight, permanent);
 }
-
-
-void predicates_statistics(int weighted)
-{
-#ifndef NDEBUG
-  printf("  Number of orient3d      tests: %ld\n", ori3dcount);
-  if (_use_static_filter) {
-    printf("  Number of static filter fails: %ld\n", o3dfilterfailscount);
-  }
-  if (!_use_inexact_arith) {
-    printf("  Number of orient3dadapt tests: %ld\n", ori3dadaptcount);
-  }
-  if (!weighted) {
-    printf("  Number of insphere      tests: %ld\n", insphcount);
-    if (_use_static_filter) {
-      printf("  Number of static filter fails: %ld\n", ispfilterfailscount);
-    }
-    if (!_use_inexact_arith) {
-      printf("  Number of insphereadapt tests: %ld\n", insphadaptcount);
-      printf("  Number of insphereexact tests: %ld\n", insphexactcount);
-    }
-  } else {
-    printf("  Number of orient4d      tests: %ld\n", ori4dcount);
-    printf("  Number of orient4dadapt tests: %ld\n", ori4dadaptcount);
-    printf("  Number of orient4dexact tests: %ld\n", ori4dexactcount);
-  }
-#endif // #ifndef NDEBUG
-}
-
