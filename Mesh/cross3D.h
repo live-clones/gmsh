@@ -14,9 +14,6 @@ using std::ostream;
 
 #include "Matrix.h"
 
-//double max(const double a, const double b) { return (b>a)?b:a;}
-double min(const double a, const double b) { return (b<a)?b:a; }
-double squ(const double a) { return a*a; }
 
 /* Defined in SVector3.h */
 /* double angle(const SVector3 v, const SVector3 w) { */
@@ -35,7 +32,7 @@ public:
   Qtn(){}; 
   ~Qtn(){};
   Qtn(const SVector3 axis, const double theta = M_PI ){
-    double temp = sin(0.5*theta);
+    double temp = sin(0.5 * theta);
     v[0] = axis[0] * temp; 
     v[1] = axis[1] * temp; 
     v[2] = axis[2] * temp; 
@@ -63,15 +60,18 @@ void Qtn::storeProduct(const Qtn &x, const Qtn &y) {
   v[2] = a0*b1 - a1*b0 + a2*b3 + a3*b2;
   v[3] =-a0*b0 - a1*b1 - a2*b2 + a3*b3;
 }
-Qtn Qtn::operator *(const Qtn &x) const {
-  Qtn y;
-  y.storeProduct(*this, x);
-  return y;
+Qtn Qtn::operator *(const Qtn &y) const {
+  Qtn x;
+  x.storeProduct(*this, y);
+  return x;
 }
 
 SVector3 eulerAxisFromQtn(const Qtn &x){
   double temp = sqrt(1. - x[3]*x[3]);
-  return SVector3(x[0]/temp, x[1]/temp, x[2]/temp);
+  if(temp< 1e-10)
+    return SVector3(1,0,0);
+  else
+    return SVector3(x[0]/temp, x[1]/temp, x[2]/temp);
 }
  
 double eulerAngleFromQtn(const Qtn &x){
@@ -97,11 +97,23 @@ class cross3D{
 private:
   SVector3 frst, scnd;
 public:
+  cross3D() {
+    frst = SVector3(1,0,0);
+    scnd = SVector3(0,1,0);
+  }
   cross3D(const SVector3 &a, const SVector3 &b){
     frst = a.unit();
     scnd = crossprod(crossprod(frst, b), frst).unit();
   }
-  cross3D(Matrix &m){
+  cross3D(const SVector3 &a) {
+    //if only a is given, b is an arbitrary vector not parallel to a
+    SVector3 b, Ex(1,0,0), Ey(0,1,0);
+    frst = a.unit();
+    b = (crossprod(a,Ex).norm() < 1e-2) ? Ey : Ex;
+    scnd = crossprod(crossprod(frst, b), frst).unit();
+  }
+  cross3D(const Matrix &x){
+    Matrix m = x;
     SVector3 a(m.get_m11(), m.get_m21(), m.get_m31());
     SVector3 b(m.get_m12(), m.get_m22(), m.get_m32());
     frst = a.unit();
@@ -127,7 +139,8 @@ public:
     scnd = im(R*scnd*conj(R));
     return *this;
   }
-  Qtn rotationTo(const cross3D &x) const;
+  Qtn rotationTo(const cross3D &y) const;
+  Qtn rotationToOnSurf(const cross3D &y) const;
 };
 
 ostream& operator<< (ostream &os, const cross3D &x) {
@@ -135,7 +148,7 @@ ostream& operator<< (ostream &os, const cross3D &x) {
   return os;
 }
 
-cross3D cross3D::get(const int k) const{
+cross3D cross3D::get(int k) const{
   SVector3 a, b;
   switch(k){
   case  0: a =      getFrst() ; b =      getScnd() ; break;
@@ -175,79 +188,134 @@ Qtn cross3D::rotationTo(const cross3D &y) const{
   /* x.rotationTo(y) returns a quaternion R representing the rotation 
      such that y = R x, x = conj(R) y
      eulerAngleFromQtn(R) = distance(x, y)
+     if onFace is true, only the rotation around y.frst (which is the normal) is returned
   */
-  int ind1, ind2;
-  double d, dmin, th1, th2;
-  SVector3 n, w, axis;
+  double d, dmin, jmin, kmin, th1, th2;
+  SVector3 axis;
   Qtn Rxy1, Rxy2;
 
-  cross3D xx = get(0);
-  dmin = angle(xx.frst, y.get(0).frst); ind1 = 0;
-  for(unsigned int k=4 ; k<24; k=k+4){
-    if((d = angle(xx.frst, y.get(k).frst)) < dmin) {
-      ind1 = k;
-      dmin = d;
+  cross3D xx = *this;
+  cross3D yy = y;
+
+  //ind1 = 0; jmin=0; dmin = angle(xx.get(kmin).frst, vect[jmin]); 
+  dmin = M_PI; jmin = kmin = 0;
+  for(int j=0 ; j<24; j=j+4){
+    for(int k=0 ; k<12; k=k+4){
+      if((d = angle(xx.get(j).frst, yy.get(k).frst)) < dmin) {
+	kmin = k;
+	jmin = j;
+	dmin = d;
+      }
     }
   }
-
-  // y.get(ind1) is the attitude of y whose y.first minimizes the angle with x.first
-
-  axis = crossprod(xx.frst, y.get(ind1).frst);
-  if(axis.norm() > 1e-8)
-    axis.normalize();
-  else {
-    axis = SVector3(1,0,0);
-    dmin = 0.;
-  }
+  xx = xx.get(jmin);
+  yy = yy.get(kmin);
+  // xx.frst and yy.frst now form the smallest angle among the 6^2 possible.
 
   th1 = dmin;
   if(th1 > 1.00001*acos(1./sqrt(3.))){
     std::cout << "This should not happen: th1 = " << th1 << std::endl; 
     exit(1);
   }
+  if(th1 > 1e-8)
+    axis = crossprod(xx.frst, yy.frst).unit();
+  else {
+    axis = SVector3(1,0,0);
+    th1 = 0.;
+  }
 
-  Rxy1 = Qtn(axis, dmin);
+  Rxy1 = Qtn(axis, th1);
   xx.rotate(Rxy1);
 
-  dmin = angle(xx.scnd, y.get(ind1).scnd); ind2 = ind1;
-  for(unsigned int k=1 ; k<4; k++){
-    if((d = angle(xx.scnd, y.get(ind1 + k).scnd)) < dmin) {
-      ind2 = ind1 + k;
+  dmin = M_PI;
+  for(int j=0 ; j<4; j++){
+    if((d = angle(xx.get(j).scnd, yy.scnd)) < dmin) {
+      jmin = j;
       dmin = d;
     }
   }
-
-  // y.get(ind2) is the attitude of y whose y.second minimizes the angle with xx.second
-
-  axis = crossprod(xx.scnd, y.get(ind2).scnd);
-  //axis = xx.first;
-  if(axis.norm() > 1e-8)
-    axis.normalize();
-  else {
-    axis = SVector3(1,0,0);
-    dmin = 0.;
-  }
+  xx = xx.get(jmin);
+  // xx.scnd and yy.scnd now form the smallest angle among the 4^2 possible.
 
   th2 = dmin;
-  if(th2 > M_PI/2.){
+  if(th2 > M_PI/4.){
     std::cout << "This should not happen: th2 = " << th2 << std::endl; 
     exit(1);
   }
-  Rxy2 = Qtn(axis, dmin);
+  if(th2 > 1e-8)
+    axis = crossprod(xx.scnd, yy.scnd).unit();
+  else {
+    axis = SVector3(1,0,0);
+    th2 = 0.;
+  }
 
-  xx.rotate(Rxy2);
+  Rxy2 = Qtn(axis, th2);
   Qtn R = Rxy2*Rxy1;
 
+  // test
   double theta = eulerAngleFromQtn(R);
-  if(theta > 1.11){
+  if(theta > 1.07 /*0.988*/){ //
     std::cout << "Ouch! th1 = " << th1 << " th2 = " << th2 << std::endl;
     std::cout << "x = " << *this << std::endl;
     std::cout << "y = " << y << std::endl;
-    /* std::cout << "R = " << R << std::endl; */
+    std::cout << "R = " << R << std::endl;
     std::cout << "u = " << eulerAngleFromQtn(R) << std::endl;
     std::cout << "axis = " << eulerAxisFromQtn(R) << std::endl;
   }
+
   return R;
+}
+
+Qtn cross3D::rotationToOnSurf(const cross3D &y) const{
+  /* this->frst and y.frst are assumed to be the normal to the face 
+     R1 is the rotation such that R1(this->frst) = y.frst.
+     R2 is then the rotation such that R2 o R1(this->scnd) = y.scnd
+  */
+  double d, dmin, jmin, th1, th2;
+  SVector3 axis;
+  
+  cross3D xx = *this;
+  cross3D yy = y;
+
+  th1 = angle(xx.frst, yy.frst);
+  if(th1 > 1e-8)
+    axis = crossprod(xx.frst, yy.frst).unit();
+  else {
+    axis = SVector3(1,0,0);
+    th1 = 0.;
+  }
+
+  Qtn R1 = Qtn(axis, th1);
+  xx.rotate(R1);
+  if(fabs(angle(xx.getFrst(), yy.getFrst())) > 1e-8){
+    std::cout << "This should not happen: not aligned "<< std::endl; 
+    exit(1);
+  }
+  
+  dmin = M_PI; jmin = 0;
+  for(int j=0 ; j<4; j++){
+    if((d = angle(xx.get(j).scnd, yy.scnd)) < dmin) {
+      jmin = j;
+      dmin = d;
+    }
+  }
+  xx = xx.get(jmin);
+  // xx.scnd and yy.scnd now form the smallest angle among the 4^2 possible.
+
+  th2 = dmin;
+  if(th2 > M_PI/4.){
+    std::cout << "This should not happen: th2 = " << th2 << std::endl; 
+    exit(1);
+  }
+  if(th2 > 1e-8)
+    axis = crossprod(xx.scnd, yy.scnd).unit();
+  else {
+    axis = SVector3(1,0,0);
+    th2 = 0.;
+  }
+
+  Qtn R2 = Qtn(axis, th2);
+  return R2;
 }
 
 Matrix convert(const cross3D x){

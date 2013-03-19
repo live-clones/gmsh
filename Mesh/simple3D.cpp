@@ -325,7 +325,19 @@ void Filler::treat_model(){
 }
 
 void Filler::treat_region(GRegion* gr){
-  #if defined(HAVE_RTREE)
+
+  int NumSmooth = CTX::instance()->mesh.smoothCrossField;
+  std::cout << "NumSmooth = " << NumSmooth << std::endl ;
+  if(NumSmooth && (gr->dim() == 3)){
+    double scale = gr->bounds().diag()*1e-2;
+    Frame_field::initRegion(gr,NumSmooth);
+    Frame_field::saveCrossField("cross0.pos",scale);
+
+    Frame_field::smoothRegion(gr,NumSmooth);
+    Frame_field::saveCrossField("cross1.pos",scale);
+  }
+
+#if defined(HAVE_RTREE)
   unsigned int i;
   int j;
   int count;
@@ -347,23 +359,6 @@ void Filler::treat_region(GRegion* gr){
   RTree<Node*,double,3,double> rtree;
   
   Frame_field::init_region(gr);
-
-  int NumSmooth = CTX::instance()->mesh.smoothCrossField;
-  if(NumSmooth){
-    Frame_field::init(gr);
-    Frame_field::save(gr,"cross_init.pos");
-    double enew = Frame_field::smooth(gr);
-    int NumIter = 0;
-    double eold = 0;
-    do{
-      std::cout << "Smoothing: energy(" << NumIter << ") = " << enew << std::endl;
-      eold = enew;
-      enew = Frame_field::smooth(gr);
-    } while((eold > enew) && (NumIter++ < NumSmooth));
-    Frame_field::save(gr,"cross_smooth.pos");
-    Frame_field::fillTreeVolume(gr);
-  }
-
   Size_field::init_region(gr);
   Size_field::solve(gr);
   octree = new MElementOctree(gr->model());
@@ -374,16 +369,16 @@ void Filler::treat_region(GRegion* gr){
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-	for(j=0;j<element->getNumVertices();j++){
-	  vertex = element->getVertex(j);
-	  temp.insert(vertex);
-	}
+    for(j=0;j<element->getNumVertices();j++){
+      vertex = element->getVertex(j);
+      temp.insert(vertex);
+    }
   }
 
   for(it=temp.begin();it!=temp.end();it++){
-	if((*it)->onWhat()->dim()<3){
-	  boundary_vertices.push_back(*it);
-	}
+    if((*it)->onWhat()->dim()<3){
+      boundary_vertices.push_back(*it);
+    }
   }
   //std::ofstream file("nodes.pos");
   //file << "View \"test\" {\n";	
@@ -393,11 +388,11 @@ void Filler::treat_region(GRegion* gr){
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
     
-	node = new Node(SPoint3(x,y,z));
-	compute_parameters(node,gr);
-	rtree.Insert(node->min,node->max,node);
-	fifo.push(node);
-	//print_node(node,file);
+    node = new Node(SPoint3(x,y,z));
+    compute_parameters(node,gr);
+    rtree.Insert(node->min,node->max,node);
+    fifo.push(node);
+    //print_node(node,file);
   }
   
   count = 1;
@@ -469,16 +464,17 @@ void Filler::treat_region(GRegion* gr){
   delete octree;
   Size_field::clear();
   Frame_field::clear();
-  #endif
+#endif
 }
 
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
   Matrix m2;
-  if(!CTX::instance()->mesh.smoothCrossField)
-    m2 = Frame_field::search(x,y,z);
+  if(CTX::instance()->mesh.smoothCrossField){
+    m2 = Frame_field::findCross(x,y,z);
+  }
   else
-    m2 = Frame_field::findNearestCross(x,y,z);
+    m2 = Frame_field::search(x,y,z);
 
   m.set_m11(m2.get_m11());
   m.set_m21(m2.get_m21());
