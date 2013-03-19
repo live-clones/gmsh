@@ -44,9 +44,9 @@ class GFace : public GEntity
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  GFaceCompound *compound; // this model ede belongs to a compound 
+  GFaceCompound *compound; // this model edge belongs to a compound 
 
-  // replace edges (gor gluing) for specific modelers, we have to
+  // replace edges (for gluing) for specific modelers, we have to
   // re-create internal data
   virtual void replaceEdgesInternal(std::list<GEdge*> &){}
 

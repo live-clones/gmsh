@@ -85,6 +85,7 @@ class SBoundingBox3d {
   SPoint3 min() const { return MinPt; }
   SPoint3 max() const { return MaxPt; }
   SPoint3 center() const { return (MinPt + MaxPt) * .5; }
+  double diag() const { return MinPt.distance(MaxPt); }
   void makeCube()
   {
     SVector3 len = MaxPt - MinPt;
