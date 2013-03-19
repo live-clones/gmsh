@@ -38,6 +38,7 @@ set(SRC
   TetNodeBasis.cpp
   TetEdgeBasis.cpp
   TetNedelecBasis.cpp
+  TetLagrangeBasis.cpp
 
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

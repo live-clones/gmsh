@@ -17,6 +17,7 @@
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
 #include "TetNedelecBasis.h"
+#include "TetLagrangeBasis.h"
 
 #include "HexNodeBasis.h"
 #include "HexEdgeBasis.h"
@@ -70,7 +71,7 @@ BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
   case TYPE_LIN: throw Exception("Lagrange Basis on Lines not Implemented");
   case TYPE_TRI: return new TriLagrangeBasis(order);
   case TYPE_QUA: throw Exception("Lagrange Basis on Quads not Implemented");
-  case TYPE_TET: throw Exception("Lagrange Basis on Tets not Implemented");
+  case TYPE_TET: return new TetLagrangeBasis(order);
   case TYPE_HEX: throw Exception("Lagrange Basis on Hexs not Implemented");
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation",
