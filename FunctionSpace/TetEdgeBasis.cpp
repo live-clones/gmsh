@@ -86,7 +86,7 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
 	  tmp2[1].sub(tmp1[1]);
 	  tmp2[2].sub(tmp1[2]);
 
-	  basis[s][i] = new vector<Polynomial>(tmp1);
+	  basis[s][i] = new vector<Polynomial>(tmp2);
 	}
 
 	// High Order

@@ -24,10 +24,10 @@ TriNedelecBasis::TriNedelecBasis(void){
   nFunction = 3;
 
   // Lagrange //
-  const Polynomial lagrange[3] = 
+  const Polynomial lagrange[3] =
     {
-      Polynomial(Polynomial(1, 0, 0, 0) - 
-		 Polynomial(1, 1, 0, 0) - 
+      Polynomial(Polynomial(1, 0, 0, 0) -
+		 Polynomial(1, 1, 0, 0) -
 		 Polynomial(1, 0, 1, 0)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
@@ -50,12 +50,12 @@ TriNedelecBasis::TriNedelecBasis(void){
       tmp1[0].mul(lagrange[(*(*edgeV[s])[e])[0]]);
       tmp1[1].mul(lagrange[(*(*edgeV[s])[e])[0]]);
       tmp1[2].mul(lagrange[(*(*edgeV[s])[e])[0]]);
-      
-      
+
+
       tmp2[0].mul(lagrange[(*(*edgeV[s])[e])[1]]);
       tmp2[1].mul(lagrange[(*(*edgeV[s])[e])[1]]);
-      tmp2[2].mul(lagrange[(*(*edgeV[s])[e])[1]]);      
-      
+      tmp2[2].mul(lagrange[(*(*edgeV[s])[e])[1]]);
+
       tmp2[0].sub(tmp1[0]);
       tmp2[1].sub(tmp1[1]);
       tmp2[2].sub(tmp1[2]);
