@@ -645,8 +645,10 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "reset"){
-    // clear everything except command line and model name setup
+    // clear everything except command line and model name setup (maybe we
+    // should just re-run initialize?)
     std::vector<onelab::number> useCommandLines, guessModelNames;
+    std::vector<onelab::string> fileExtensions;
     for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
       onelab::client *c = it->second;
@@ -655,6 +657,9 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(ps.size()) useCommandLines.push_back(ps[0]);
       c->get(ps, c->getName() + "/GuessModelName");
       if(ps.size()) guessModelNames.push_back(ps[0]);
+      std::vector<onelab::string> ps2;
+      c->get(ps2, c->getName() + "/FileExtension");
+      if(ps2.size()) fileExtensions.push_back(ps2[0]);
     }
     onelab::server::instance()->clear();
     if(onelab::server::instance()->findClient("Gmsh") !=
@@ -664,6 +669,8 @@ void onelab_cb(Fl_Widget *w, void *data)
       onelab::server::instance()->set(useCommandLines[i]);
     for(unsigned int i = 0; i < guessModelNames.size(); i++)
       onelab::server::instance()->set(guessModelNames[i]);
+    for(unsigned int i = 0; i < fileExtensions.size(); i++)
+      onelab::server::instance()->set(fileExtensions[i]);
     action = "check";
   }
 
