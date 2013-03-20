@@ -56,6 +56,7 @@ class MSubTetrahedron : public MTetrahedron
   virtual int getNumPrimaryShapeFunctions();
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
@@ -113,10 +114,12 @@ class MSubTriangle : public MTriangle
   virtual int getNumPrimaryShapeFunctions();
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual bool ownsParent() const { return _owner; }
@@ -169,6 +172,7 @@ class MSubLine : public MLine
   virtual int getNumPrimaryShapeFunctions();
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
@@ -182,7 +186,6 @@ class MSubLine : public MLine
   {
     _parents = parents; _orig = _parents[0]; _owner = owner;
   }
-
   virtual const MElement *getBaseElement() const {if(!_base) _base=new MLine(*this); return _base;}
   virtual MElement *getBaseElement() {if(!_base) _base=new MLine(*this); return _base;}
 };
@@ -227,10 +230,12 @@ class MSubPoint : public MPoint
   virtual int getNumPrimaryShapeFunctions();
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
   virtual bool isInside(double u, double v, double w);
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
   virtual bool ownsParent() const { return _owner; }

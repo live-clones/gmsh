@@ -90,8 +90,13 @@ const MVertex* MSubTetrahedron::getShapeFunctionNode(int i) const
 
 MVertex* MSubTetrahedron::getShapeFunctionNode(int i)
 {
-	  if(_orig) return _orig->getShapeFunctionNode(i);
-	    return 0;
+  if(_orig) return _orig->getShapeFunctionNode(i);
+  return 0;
+}
+
+void MSubTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
+{
+  if(_orig) _orig->xyz2uvw(xyz,uvw);
 }
 
 void MSubTetrahedron::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
@@ -119,22 +124,24 @@ void MSubTetrahedron::movePointFromElementSpaceToParentSpace(double &u, double &
 bool MSubTetrahedron::isInside(double u, double v, double w)
 {
   if(!_orig) return false;
-  double uvw[3] = {u, v, w};
-  double v_uvw[4][3];
-  for(int i=0; i<4; ++i)
-  {
-    MVertex *vi = getVertex(i);
-    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
-    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+
+  if (_orig->getDim()!=getDim())
+  {// projection on the base Element
+    SPoint3 p;
+    _orig->pnt(u, v, w, p);
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    double uvwE[3];
+    getBaseElement()->xyz2uvw(xyz, uvwE);
+    SPoint3 pE;
+    getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
+    double tol = _isInsideTolerance;
+    if (fabs(p.x()-pE.x())>tol) return false;
+    if (fabs(p.y()-pE.y())>tol) return false;
+    if (fabs(p.z()-pE.z())>tol) return false;
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
-  MVertex v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
-  MVertex v3(v_uvw[3][0], v_uvw[3][1], v_uvw[3][2]);
-  MTetrahedron t(&v0, &v1, &v2, &v3);
-  double ksi[3];
-  t.xyz2uvw(uvw, ksi);
-  if(t.isInside(ksi[0], ksi[1], ksi[2]))
+
+  movePointFromParentSpaceToElementSpace(u, v, w);
+  if(getBaseElement()->isInside(u, v, w))
     return true;
   return false;
 }
@@ -164,7 +171,6 @@ void MSubTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   }
 
   // work in the parametric space of the parent element
-  *npts=0;
   _pts = new IntPt[getNGQTetPts(pOrder)];
 
   // (i) get the integration points of the base element in its parametric space
@@ -185,10 +191,10 @@ void MSubTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     movePointFromElementSpaceToParentSpace(u, v, w);
     origJac = _orig->getJacobian(u, v, w, jac);
 
-    _pts[*npts + i].pt[0] = u;
-    _pts[*npts + i].pt[1] = v;
-    _pts[*npts + i].pt[2] = w;
-    _pts[*npts + i].weight = ptsb[i].weight * baseJac/origJac;
+    _pts[i].pt[0] = u;
+    _pts[i].pt[1] = v;
+    _pts[i].pt[2] = w;
+    _pts[i].weight = ptsb[i].weight * baseJac/origJac;
   }
   *npts = _npts;
   *pts = _pts;
@@ -239,11 +245,11 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[
   inv3x3(jac, invjac);
 
   MEdge edge[2];
-  edge[0]=getBaseElement()->getEdge(0);
-  edge[1]=getBaseElement()->getEdge(1);
+  edge[0] = getBaseElement()->getEdge(0);
+  edge[1] = getBaseElement()->getEdge(1);
   SVector3 tang[2];
-  tang[0]=edge[0].tangent();
-  tang[1]=edge[1].tangent();
+  tang[0] = edge[0].tangent();
+  tang[1] = edge[1].tangent();
   SVector3 vect = crossprod(tang[0],tang[1]);
   tang[1] = crossprod(vect,tang[0]);
 
@@ -259,8 +265,8 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[
     // (ii) projection of the gradient on edges in the cartesian space
     SVector3 grad(&gradxyz[0]);
     double prodscal[2];
-    prodscal[0]=dot(tang[0],grad);
-    prodscal[1]=dot(tang[1],grad);
+    prodscal[0] = dot(tang[0],grad);
+    prodscal[1] = dot(tang[1],grad);
     projgradxyz[0] = prodscal[0]*tang[0].x() + prodscal[1]*tang[1].x();
     projgradxyz[1] = prodscal[0]*tang[0].y() + prodscal[1]*tang[1].y();
     projgradxyz[2] = prodscal[0]*tang[0].z() + prodscal[1]*tang[1].z();
@@ -292,8 +298,8 @@ double MSubTriangle::getJacobian(const std::vector<SVector3> &gsf, double jac[3]
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubTriangle::getJacobian(double u, double v, double w, double jac[3][3])
-const{
+double MSubTriangle::getJacobian(double u, double v, double w, double jac[3][3]) const
+{
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -323,10 +329,14 @@ const MVertex* MSubTriangle::getShapeFunctionNode(int i) const
 
 MVertex* MSubTriangle::getShapeFunctionNode(int i)
 {
-	  if(_orig) return _orig->getShapeFunctionNode(i);
-	    return 0;
+  if(_orig) return _orig->getShapeFunctionNode(i);
+  return 0;
 }
 
+void MSubTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
+{
+  if(_orig) _orig->xyz2uvw(xyz,uvw);
+}
 
 void MSubTriangle::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {
@@ -353,21 +363,24 @@ void MSubTriangle::movePointFromElementSpaceToParentSpace(double &u, double &v, 
 bool MSubTriangle::isInside(double u, double v, double w)
 {
   if(!_orig) return false;
-  double uvw[3] = {u, v, w};
-  double v_uvw[3][3];
-  for(int i=0; i<3; ++i)
-  {
-    MVertex *vi = getVertex(i);
-    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
-    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+
+  if (_orig->getDim()!=getDim())
+  {// projection on the base Element
+    SPoint3 p;
+    _orig->pnt(u, v, w, p);
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    double uvwE[3];
+    getBaseElement()->xyz2uvw(xyz, uvwE);
+    SPoint3 pE;
+    getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
+    double tol = _isInsideTolerance;
+    if (fabs(p.x()-pE.x())>tol) return false;
+    if (fabs(p.y()-pE.y())>tol) return false;
+    if (fabs(p.z()-pE.z())>tol) return false;
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
-  MVertex v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
-  MTriangle t(&v0, &v1, &v2);
-  double ksi[3];
-  t.xyz2uvw(uvw, ksi);
-  if(t.isInside(ksi[0], ksi[1], ksi[2]))
+
+  movePointFromParentSpaceToElementSpace(u, v, w);
+  if(getBaseElement()->isInside(u, v, w))
     return true;
   return false;
 }
@@ -395,10 +408,8 @@ void MSubTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     *pts = _pts;
     return;
   }
-
   // work in the parametric space of the parent element
-  *npts=0;
-  _pts = new IntPt[getNGQTetPts(pOrder)];
+  _pts = new IntPt[getNGQTPts(pOrder)];
 
   // (i) get the integration points of the base element in its parametric space
   IntPt *ptsb;
@@ -418,14 +429,15 @@ void MSubTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     movePointFromElementSpaceToParentSpace(u, v, w);
     origJac = _orig->getJacobian(u, v, w, jac);
 
-    _pts[*npts + i].pt[0] = u;
-    _pts[*npts + i].pt[1] = v;
-    _pts[*npts + i].pt[2] = w;
-    _pts[*npts + i].weight = ptsb[i].weight * baseJac/origJac;
+    _pts[i].pt[0] = u;
+    _pts[i].pt[1] = v;
+    _pts[i].pt[2] = w;
+    _pts[i].weight = ptsb[i].weight * baseJac/origJac;
   }
   *npts = _npts;
   *pts = _pts;
 }
+
 
 // MSubLine
 
@@ -509,13 +521,13 @@ double MSubLine::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) co
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubLine::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const
+double MSubLine::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubLine::getJacobian(double u, double v, double w, double jac[3][3])
-const{
+double MSubLine::getJacobian(double u, double v, double w, double jac[3][3]) const
+{
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -545,10 +557,14 @@ const MVertex* MSubLine::getShapeFunctionNode(int i) const
 
 MVertex* MSubLine::getShapeFunctionNode(int i)
 {
-	  if(_orig) return _orig->getShapeFunctionNode(i);
-	    return 0;
+  if(_orig) return _orig->getShapeFunctionNode(i);
+  return 0;
 }
 
+void MSubLine::xyz2uvw(double xyz[3], double uvw[3]) const
+{
+  if(_orig) _orig->xyz2uvw(xyz,uvw);
+}
 
 void MSubLine::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {
@@ -575,20 +591,24 @@ void MSubLine::movePointFromElementSpaceToParentSpace(double &u, double &v, doub
 bool MSubLine::isInside(double u, double v, double w)
 {
   if(!_orig) return false;
-  double uvw[3] = {u, v, w};
-  double v_uvw[2][3];
-  for(int i=0; i<2; ++i)
-  {
-    MVertex *vi = getVertex(i);
-    double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
-    _orig->xyz2uvw(v_xyz, v_uvw[i]);
+
+  if (_orig->getDim()!=getDim())
+  {// projection on the base Element
+    SPoint3 p;
+    _orig->pnt(u, v, w, p);
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    double uvwE[3];
+    getBaseElement()->xyz2uvw(xyz, uvwE);
+    SPoint3 pE;
+    getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
+    double tol = _isInsideTolerance;
+    if (fabs(p.x()-pE.x())>tol) return false;
+    if (fabs(p.y()-pE.y())>tol) return false;
+    if (fabs(p.z()-pE.z())>tol) return false;
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
-  MLine l(&v0, &v1);
-  double ksi[3];
-  l.xyz2uvw(uvw, ksi);
-  if(l.isInside(ksi[0], ksi[1], ksi[2]))
+
+  movePointFromParentSpaceToElementSpace(u, v, w);
+  if(getBaseElement()->isInside(u, v, w))
     return true;
   return false;
 }
@@ -618,8 +638,7 @@ void MSubLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   }
 
   // work in the parametric space of the parent element
-  *npts=0;
-  _pts = new IntPt[getNGQTetPts(pOrder)];
+  _pts = new IntPt[getNGQLPts(pOrder)];
 
   // (i) get the integration points of the base element in its parametric space
   IntPt *ptsb;
@@ -639,10 +658,10 @@ void MSubLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     movePointFromElementSpaceToParentSpace(u, v, w);
     origJac = _orig->getJacobian(u, v, w, jac);
 
-    _pts[*npts + i].pt[0] = u;
-    _pts[*npts + i].pt[1] = v;
-    _pts[*npts + i].pt[2] = w;
-    _pts[*npts + i].weight = ptsb[i].weight * baseJac/origJac;
+    _pts[i].pt[0] = u;
+    _pts[i].pt[1] = v;
+    _pts[i].pt[2] = w;
+    _pts[i].weight = ptsb[i].weight * baseJac/origJac;
   }
   *npts = _npts;
   *pts = _pts;
@@ -694,13 +713,13 @@ double MSubPoint::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) c
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubPoint::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const
+double MSubPoint::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
 {
   if(_orig) return _orig->getJacobian(gsf, jac);
   return 0;
 }
-double MSubPoint::getJacobian(double u, double v, double w, double jac[3][3])
-const{ 
+double MSubPoint::getJacobian(double u, double v, double w, double jac[3][3]) const
+{
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
@@ -730,10 +749,14 @@ const MVertex* MSubPoint::getShapeFunctionNode(int i) const
 
 MVertex* MSubPoint::getShapeFunctionNode(int i)
 {
-	  if(_orig) return _orig->getShapeFunctionNode(i);
-	    return 0;
+  if(_orig) return _orig->getShapeFunctionNode(i);
+  return 0;
 }
 
+void MSubPoint::xyz2uvw(double xyz[3], double uvw[3]) const
+{
+  if(_orig) _orig->xyz2uvw(xyz,uvw);
+}
 
 void MSubPoint::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
 {
@@ -760,16 +783,25 @@ void MSubPoint::movePointFromElementSpaceToParentSpace(double &u, double &v, dou
 bool MSubPoint::isInside(double u, double v, double w)
 {
   if(!_orig) return false;
-  MVertex *v0 = getVertex(0);
-  double v_xyz[3] = {v0->x(), v0->y(), v0->z()};
-  double v_uvw[3];
-  _orig->xyz2uvw(v_xyz, v_uvw);
 
-  double d_xyz[3] = {u-v_uvw[0], v-v_uvw[1], w-v_uvw[2]};
-  double tol = _isInsideTolerance;
+  if (_orig->getDim()!=getDim())
+  {// projection on the base Element
+    SPoint3 p;
+    _orig->pnt(u, v, w, p);
+    double xyz[3] = {p.x(), p.y(), p.z()};
+    double uvwE[3];
+    getBaseElement()->xyz2uvw(xyz, uvwE);
+    SPoint3 pE;
+    getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
+    double tol = _isInsideTolerance;
+    if (fabs(p.x()-pE.x())>tol) return false;
+    if (fabs(p.y()-pE.y())>tol) return false;
+    if (fabs(p.z()-pE.z())>tol) return false;
+  }
 
-   if (d_xyz[0]*d_xyz[0]+d_xyz[1]*d_xyz[1]+d_xyz[2]*d_xyz[2]<tol*tol)
-     return true;
+  movePointFromParentSpaceToElementSpace(u, v, w);
+  if(getBaseElement()->isInside(u, v, w))
+    return true;
   return false;
 }
 
