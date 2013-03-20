@@ -175,7 +175,10 @@ static void copyMesh(GFace *source, GFace *target)
     else {
       SVector3 DX2 = DX - SVector3 (vt->x() - vs->x(), vt->y() - vs->y(),
                                     vt->z() - vs->z());
-      if (DX2.norm() > DX.norm() * 1.e-8) translation = false;
+      if (DX2.norm() > DX.norm() * 1.e-8) {
+	//	translation = false;
+	printf("%12.5E vs %12.5E\n",DX2.norm() , DX.norm());
+      }
     }
     count ++;
   }
@@ -671,7 +674,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  MEdge dv2 (v21,v22);
 
 	  //avoid convergent errors
-	  if (dv2.length() < 0.5 * dv.length())break;
+	  if (dv2.length() < 0.3 * dv.length())break;
 	  blQuads.push_back(new MQuadrangle(v11,v21,v22,v12));
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),

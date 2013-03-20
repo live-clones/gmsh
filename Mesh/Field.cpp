@@ -1704,14 +1704,24 @@ class AttractorField : public Field
           it != edges_id.end(); ++it) {
 	GEdge *e = GModel::current()->getEdgeByTag(*it);
 	if(e) {
-	  for(int i = 1; i < n_nodes_by_edge - 1; i++) {
-	    double u = (double)i / (n_nodes_by_edge - 1);
+	  if (e->mesh_vertices.size()){
+	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
+	      double u ; e->mesh_vertices[i]->getParameter(0,u);
+	      GPoint gp = e->point(u);
+	      getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
+		       zeronodes[k][1], zeronodes[k][2], e);
+	      _infos[k++] = AttractorInfo(*it,1,u,0);
+	    }
+	  }
+	  int NNN = n_nodes_by_edge - e->mesh_vertices.size();
+	  for(int i = 1; i < NNN - 1; i++) {
+	    double u = (double)i / (NNN - 1);
 	    Range<double> b = e->parBounds(0);
 	    double t = b.low() + u * (b.high() - b.low());
 	    GPoint gp = e->point(t);
 	    getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
 		     zeronodes[k][1], zeronodes[k][2], e);
-	    _infos[k++] = AttractorInfo(*it,1,u,0);
+	    _infos[k++] = AttractorInfo(*it,1,t,0);
           }
         }
       }
@@ -1944,7 +1954,7 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     }
     for(std::list<int>::iterator it = edges_id.begin();
 	it != edges_id.end(); ++it) {
-      _att_fields.push_back(new AttractorField(1,*it,100000));
+      _att_fields.push_back(new AttractorField(1,*it,10000));
     }
     for(std::list<int>::iterator it = faces_id.begin();
 	it != faces_id.end(); ++it) {

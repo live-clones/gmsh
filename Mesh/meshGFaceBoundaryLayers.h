@@ -112,6 +112,18 @@ public:
 	else
 	  return edgeColumn(getColumn (v1,0),getColumn(v2,N2-1));
       }
+      if (it2 != _fans.end() && it1 != _fans.end() ){
+	int c1, c2;
+	if (aaa(it1->second._e1,e))
+	  c1 =  0;
+	else
+	  c1 = N1-1;
+	if (aaa(it2->second._e1,e))
+	  c2 =  0;
+	else
+	  c2 = N2-1;
+	return edgeColumn(getColumn (v1,c1),getColumn(v2,c2));
+      }
 
       if (N1 == 1 || N2 == 2){
 	const BoundaryLayerData & c10 = getColumn(v1,0);
@@ -128,7 +140,7 @@ public:
 	else return edgeColumn(c11,c20);
       }
 
-      Msg::Error ("Impossible Boundary Layer Configuration : one side and no fans");
+      Msg::Error ("Impossible Boundary Layer Configuration : one side and no fans %d %d",N1,N2);
       // FIXME WRONG
       return N1 ? edgeColumn (getColumn (v1,0),getColumn(v1,0)) :
         edgeColumn (getColumn (v2,0),getColumn(v2,0));

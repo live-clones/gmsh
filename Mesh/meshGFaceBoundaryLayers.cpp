@@ -323,8 +323,8 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
 	  _close = blf->_closest_point;
 	  _current_distance = blf -> current_distance;
 	}
-	SPoint2 poffset  (p.x() + 1.e-8 * n.x(),
-			  p.y() + 1.e-8 * n.y());
+	SPoint2 poffset  (p.x() + 1.e-12 * n.x(),
+			  p.y() + 1.e-12 * n.y());
 	buildMeshMetric(gf, poffset, m, metric);
 	const double l2 = n.x()*n.x()*metric[0] + 2*n.x()*n.y()*metric[1] + n.y()*n.y()*metric[2] ;
 	l = 1./sqrt(l2);

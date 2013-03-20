@@ -158,7 +158,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()){
       MVertex *v = *((*itvx)->mesh_vertices.begin());
-      vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
+      vSizesMap[v] = std::max(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
       ++itvx;
     }
   }
