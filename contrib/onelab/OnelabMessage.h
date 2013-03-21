@@ -14,6 +14,7 @@
 
 class GmshClient;
 
+#ifndef _GMSH_MESSAGE_H_
 // the external message handler
 class GmshMessage{
  public:
@@ -21,6 +22,7 @@ class GmshMessage{
   virtual ~GmshMessage(){}
   virtual void operator()(std::string level, std::string message){}
 };
+#endif
 
 class fullNameLessThan{
 public:

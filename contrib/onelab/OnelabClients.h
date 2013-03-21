@@ -190,7 +190,7 @@ class localNetworkSolverClient : public localSolverClient{
   int _pid;
   // underlying GmshServer
   GmshServer *_gmshServer;
-  // flag indicating whether socket communication should be shown
+  // flag indicating whether socket communication should be monitored
   bool _socketMsg;
  public:
  localNetworkSolverClient(const std::string &name, const std::string &cmdl, const std::string &wdir)
@@ -204,6 +204,7 @@ class localNetworkSolverClient : public localSolverClient{
   void setPid(int pid){ _pid = pid; }
   GmshServer *getGmshServer(){ return _gmshServer; }
   void setGmshServer(GmshServer *server){ _gmshServer = server; }
+  bool receiveMessage();
 
   bool isNative() { return true; }
   virtual std::string buildCommandLine();

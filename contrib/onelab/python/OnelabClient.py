@@ -1,6 +1,14 @@
 import socket, struct, os, sys
 _VERSION = '1.05'
 
+def file_exist(filename):
+  try:
+    with open(filename) as f:
+      return True
+  except IOError:
+    return False
+    
+
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
@@ -13,7 +21,8 @@ class _parameter() :
       ('value', 'string'), ('kind', 'string', 'generic'), ('choices', ('list', 'string'), [])
     ],
     'number' : _membersbase + [
-      ('value', 'float'), ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
+      ('value', 'float'),
+      ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
       ('step', 'float', 0.), ('index', 'int', -1), ('choices', ('list', 'float'), []),
       ('labels', ('dict', 'float', 'string'), {})
     ]
@@ -67,7 +76,9 @@ class client :
   _GMSH_PARAMETER = 23
   _GMSH_PARAMETER_QUERY = 24
   _GMSH_CONNECT = 27
-
+  _GMSH_OLPARSE = 28
+  _GMSH_PARAM_NOT_FOUND = 29
+    
   def _receive(self) :
     def buffered_receive(l) :
       msg = b''
@@ -89,6 +100,28 @@ class client :
     if self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m)) == 0 :
       RuntimeError('onelab socket closed')
 
+  def _def_parameter(self, param) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER :
+      param.fromchar(msg)
+    elif t == self._GMSH_PARAM_NOT_FOUND :
+      self._send(self._GMSH_PARAMETER, param.tochar())
+
+  def def_string(self, name, value, **param):
+    param = _parameter('string', name=name, value=value, **param)
+    self._def_parameter(param)
+    return param.value
+
+  def def_number(self, name, value, **param):
+    if "labels" in param :
+      param["choices"] = param["labels"].keys()
+    p = _parameter('number', name=name, value=value, **param)
+    self._def_parameter(p)
+    return p.value
+
   def _get_parameter(self, param) :
     if not self.socket :
       return
@@ -96,27 +129,31 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       param.fromchar(msg)
-    elif t == self._GMSH_INFO :
-      self._send(self._GMSH_PARAMETER, param.tochar())
+    elif t == self._GMSH_PARAM_NOT_FOUND :
+      print 'Unknown parameter %s' %(name)
 
-  def get_string(self, name, value, **param):
-    param = _parameter('string', name=name, value=value, **param)
+  def get_number(self, name):
+    param = _parameter('number', name=name, value=0)
     self._get_parameter(param)
     return param.value
 
-  def get_number(self, name, value, **param):
-    if "labels" in param :
-      param["choices"] = param["labels"].keys()
-    p = _parameter('number', name=name, value=value, **param)
-    self._get_parameter(p)
-    return p.value
+  def get_string(self, name):
+    param = _parameter('string', name=name, value='void')
+    self._get_parameter(param)
+    return param.value
 
   def sub_client(self, name, command):
-    self._send(self._GMSH_CONNECT, name)
+    print 'Defining the subclient ' + name
+    msg = [name, command]
+    ## msg.append(name + '\0')
+    ## msg.append(command + '\0')
+    if not self.socket :
+      return
+    self._send(self._GMSH_CONNECT, '\0'.join(msg))
     (t, msg) = self._receive()
     print ("python receive : ", t, msg)
     if t == self._GMSH_CONNECT and msg :
-      print "python launch : "+ command + " -onelab "+ msg
+      print "python launch : "+ command + " -onelab " + name + " " + msg
       os.system(command + " -onelab " + name + " " + msg)
 
   def merge_file(self, filename) :
@@ -125,6 +162,13 @@ class client :
     if filename and filename[0] != '/' :
       filename = os.getcwd() + "/" + filename;
     self._send(self._GMSH_PARSE_STRING, 'Merge "'+filename+'";')
+
+  def convert_olfile(self, filename) :
+    if not self.socket :
+      return
+    if filename and filename[0] != '/' :
+      filename = os.getcwd() + "/" + filename;
+    self._send(self._GMSH_OLPARSE, filename)
 
   def __init__(self):
     self.socket = None
@@ -139,7 +183,7 @@ class client :
           self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(sys.argv[i + 2])
         self._send(self._GMSH_START, str(os.getpid))
-    self.action = self.get_string(self.name + '/Action', 'compute')
+    self.action = self.get_string('python/Action')
     if self.action == "initialize": exit(0)
   
   def __del__(self) :

@@ -5,11 +5,11 @@ import OnelabClient
 oc = OnelabClient.client()
 
 #name and default value are required
-A = oc.get_number('A', 10)
+A = oc.def_number('A', 10)
 #other attributes are optionals
-B = oc.get_number('Group/B', 0, min = -10, max = 10, step = 1)
-C = oc.get_number('Group/C', 2, choices = [0, 1, 2, 3], attributes={'Highlight':'Pink'})
-D = oc.get_number('Group/D', 2, labels = {0:'zero', 1:'un', 2:'deux', 3:'trois'}, attributes={'Highlight':'Blue'})
+B = oc.def_number('Group/B', 0, min = -10, max = 10, step = 1)
+C = oc.def_number('Group/C', 2, choices = [0, 1, 2, 3], attributes={'Highlight':'Pink'})
+D = oc.def_number('Group/D', 2, labels = {0:'zero', 1:'un', 2:'deux', 3:'trois'}, attributes={'Highlight':'Blue'})
 #utf-8 are allowed everywhere (should be prefixed by 'u' in python 2, not required in python 3)
 #Omega = oc.get_string(u'Ω', u'∫(∂φ/∂α)³dx', help=u'ask someone@universe.org', choices = ['oui', 'non', u'peut-être'])
 
@@ -17,11 +17,20 @@ modelName = 'coin'
 
 oc.merge_file(modelName + '.geo')
 
-print('Action=%s pour %s' %(oc.action,'python'))
-if oc.action != 'compute' :
-  exit(0)
+#print('Action=%s pour %s' %(oc.action,'python'))
+print('Action=%s' %(oc.get_string('python/Action')))
 
 oc.sub_client('gmsh', 'gmsh ' + modelName + '.geo -2')
 
 oc.merge_file(modelName + '.msh')
 
+oc.convert_olfile(modelName + '.txt')
+
+oc.sub_client('python', 'python ' + modelName + '.py')
+
+if oc.action != 'compute' :
+  exit(0)
+
+## insert here the client's script
+  
+exit(0)
