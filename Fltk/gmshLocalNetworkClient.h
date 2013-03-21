@@ -12,7 +12,7 @@
 
 class gmshLocalNetworkClient : public onelab::localNetworkClient{
  private:
-  std::vector<onelab::localNetworkClient*> _clients;
+  std::vector<gmshLocalNetworkClient*> _clients;
  public:
   gmshLocalNetworkClient(const std::string &name, const std::string &executable,
                          const std::string &remoteLogin="")
@@ -20,18 +20,18 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   {
     addClient(this);
   }
-  void addClient(onelab::localNetworkClient *client)
+  void addClient(gmshLocalNetworkClient *client)
   {
     _clients.push_back(client);
   }
-  void removeClient(onelab::localNetworkClient *client)
+  void removeClient(gmshLocalNetworkClient *client)
   {
-    std::vector<onelab::localNetworkClient*>::iterator it;
+    std::vector<gmshLocalNetworkClient*>::iterator it;
     it = std::find(_clients.begin(), _clients.end(), client);
     if(it != _clients.end()) _clients.erase(it);
   }
   int getNumClients(){ return _clients.size(); }
-  onelab::localNetworkClient *getClient(int i)
+  gmshLocalNetworkClient *getClient(int i)
   {
     if(i >= 0 && i < getNumClients()) return _clients[i];
     return 0;

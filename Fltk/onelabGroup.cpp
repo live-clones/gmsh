@@ -401,7 +401,7 @@ bool gmshLocalNetworkClient::run()
     // subclients; in that case we might want to start from the one after the
     // one we read from last, for better load balancing)
     bool stop = false, haveData = false;
-    onelab::localNetworkClient *c = 0;
+    gmshLocalNetworkClient *c = 0;
     for(int i = 0; i < getNumClients(); i++){
       if(getExecutable().empty() && !CTX::instance()->solver.listen){
         // we stopped listening to the special "Listen" client
@@ -435,7 +435,7 @@ bool gmshLocalNetworkClient::run()
       }
     }
     if(stop) break;
-    if(haveData && !receiveMessage()) break;
+    if(haveData && !c->receiveMessage()) break;
     if(c == this && c->getPid() < 0) break;
   }
 
@@ -443,7 +443,7 @@ bool gmshLocalNetworkClient::run()
   // subclients, if any. We do not delete the servers when we disconnect to make
   // sure we always delete them, even when we disconnect "uncleanly"
   for(int i = 0; i < getNumClients(); i++){
-    onelab::localNetworkClient *c = getClient(i);
+    gmshLocalNetworkClient *c = getClient(i);
     GmshServer *s = c->getGmshServer();
     c->setGmshServer(0);
     if(s){
