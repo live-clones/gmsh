@@ -145,27 +145,6 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
-//FH duplicate code, could be placed in onelabUtils.
-std::string getNextToken(const std::string &msg,
-                         std::string::size_type &first,
-                         char separator='\0')
-{
-  if(first == std::string::npos) return "";
-  std::string::size_type last = msg.find_first_of(separator, first);  std::string next("");
-  if(last == std::string::npos){
-    next = msg.substr(first);
-    first = last;
-  }
-  else if(first == last){
-    next = "";    first = last + 1;
-  }
-  else{
-    next = msg.substr(first, last - first);
-    first = last + 1;
-  }
-  return next;
-}
-
 bool gmshLocalNetworkClient::receiveMessage()
 {
   double timer = GetTimeInSeconds();
@@ -344,8 +323,8 @@ bool gmshLocalNetworkClient::receiveMessage()
   case GmshSocket::GMSH_CONNECT:
     {
       std::string::size_type first = 0;
-      std::string clientName = getNextToken(message, first);
-      std::string command = getNextToken(message, first);
+      std::string clientName = onelab::parameter::getNextToken(message, first);
+      std::string command = onelab::parameter::getNextToken(message, first);
       gmshLocalNetworkClient* subClient =
 	new gmshLocalNetworkClient(clientName, command);
       onelabGmshServer *server  = new onelabGmshServer(subClient);
