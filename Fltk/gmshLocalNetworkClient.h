@@ -12,6 +12,9 @@
 
 class gmshLocalNetworkClient : public onelab::localNetworkClient{
  private:
+  // a gmsh local network client can launch subclients (this is typical for a
+  // metamodel that calls several underlying models); _clients keeps track of
+  // the master (this) and the subclients.
   std::vector<gmshLocalNetworkClient*> _clients;
  public:
   gmshLocalNetworkClient(const std::string &name, const std::string &executable,

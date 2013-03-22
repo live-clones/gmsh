@@ -61,7 +61,6 @@ class onelabGmshServer : public GmshServer{
   ~onelabGmshServer(){}
   int NonBlockingSystemCall(const char *str)
   {
-    //std::cout << "System call: " << str << std::endl;
     return SystemCall(str);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
@@ -169,7 +168,6 @@ std::string getNextToken(const std::string &msg,
 
 bool gmshLocalNetworkClient::receiveMessage()
 {
-  bool showMessages = false;
   double timer = GetTimeInSeconds();
 
   if(!getGmshServer()){
@@ -182,16 +180,12 @@ bool gmshLocalNetworkClient::receiveMessage()
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
-  else if(showMessages) 
-    std::cout << "Received header: " << type << " from " << getName() << std::endl;
 
   std::string message(length, ' ');
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
     Msg::Error("Abnormal server termination (did not receive message body)");
     return false;
   }
-  // else if(showMessages)
-  //   std::cout << "Received message: " << message <<  " from " << getName() << std::endl;
 
   switch (type) {
   case GmshSocket::GMSH_START:
@@ -352,8 +346,7 @@ bool gmshLocalNetworkClient::receiveMessage()
       std::string::size_type first = 0;
       std::string clientName = getNextToken(message, first);
       std::string command = getNextToken(message, first);
-
-      gmshLocalNetworkClient* subClient = 
+      gmshLocalNetworkClient* subClient =
 	new gmshLocalNetworkClient(clientName, command);
       onelabGmshServer *server  = new onelabGmshServer(subClient);
       subClient->setPid(0);
@@ -368,8 +361,6 @@ bool gmshLocalNetworkClient::receiveMessage()
 	subClient->setGmshServer(server);
 	addClient(subClient);
 	std::cout << "Gmsh has " << getNumClients() << " clients\n";
-	// std::string reply =  "Connected !!";
-	// getGmshServer()->SendMessage(GmshSocket::GMSH_CONNECT, reply.size(), &reply[0]);
       }
     }
     break;
@@ -415,66 +406,68 @@ bool gmshLocalNetworkClient::run()
   Msg::StatusBar(true, "Running '%s'...", _name.c_str());
 
   setGmshServer(server);
-  int i = 0;
+
   while(1) {
     // loop on all the clients (usually only one, but can be more if we spawned
     // subclients; in that case we might want to start from the one after the
     // one we read from last, for better load balancing)
     bool stop = false, haveData = false;
     gmshLocalNetworkClient *c = 0;
-  
+
     if(getExecutable().empty() && !CTX::instance()->solver.listen){
       // we stopped listening to the special "Listen" client
       stop = true;
       break;
     }
 
-    c = getClient(i);
-    //std::cout << "client " << i << "/" << getNumClients() << " pid= " << c->getPid();
-
-    if(c->getPid() < 0){
-      if(c == this){ // the "master" client stopped
-	stop = true;
+    for(int i = 0; i < getNumClients(); i++){
+      if(getExecutable().empty() && !CTX::instance()->solver.listen){
+        // we stopped listening to the special "Listen" client
+        stop = true;
+        break;
       }
-      else{ // this subclient is not active anymore
-	std::string reply =  c->getName();
-	getGmshServer()->SendMessage(GmshSocket::GMSH_OPTION_1, reply.size(), &reply[0]);
-	onelab::server::instance()->unregisterClient(c);
-	removeClient(c);
-	Msg::StatusBar(true, "Done running '%s'", c->getName().c_str());
-	i=0; // start over with the only client that surely exists
-	continue;
+      c = getClient(i);
+      if(c->getPid() < 0){
+        if(c == this){ // the "master" client stopped
+          stop = true;
+          break;
+        }
+        else{ // this subclient is not active anymore
+          continue;
+        }
       }
-    }
-    GmshServer *s = c->getGmshServer();
-    if(!s){
-      Msg::Error("Abnormal server termination (no valid server)");
-      stop = true;
-    }
-    else{ 
-      int ret = s->NonBlockingWait(0.001, -1.);
-      //std::cout << " ret = " << ret <<  std::endl;
-      if(ret == 0){
-	haveData = true; // we have data from this particular client
+      GmshServer *s = c->getGmshServer();
+      if(!s){
+        Msg::Error("Abnormal server termination (no valid server)");
+        stop = true;
+        break;
       }
-      else if(ret == 3){
-	//pass on to the next client
-      }
-      else{ // an error occurred
-	stop = true;
+      else{
+        int ret = s->NonBlockingWait(0.001, -1.);
+        if(ret == 0){
+          // we have data from this particular client
+          haveData = true;
+          break;
+        }
+        else if(ret == 3){
+          // pass to the next client
+          continue;
+        }
+        else{ // an error occurred
+          stop = true;
+          break;
+        }
       }
     }
     if(stop) break;
     if(haveData && !c->receiveMessage()) break;
     if(c == this && c->getPid() < 0) break;
-
-    i++;
-    if(i >= getNumClients()) i = 0;
   }
 
   // we are done running the (master) client: delete the servers and the
-  // subclients, if any. We do not delete the servers when we disconnect to make
-  // sure we always delete them, even when we disconnect "uncleanly"
+  // subclients, if any. The servers are not deleted upon GMSH_STOP in
+  // receiveMessage() to make sure we always delete them, even when the
+  // disconnect was not clean.
   for(int i = 0; i < getNumClients(); i++){
     gmshLocalNetworkClient *c = getClient(i);
     GmshServer *s = c->getGmshServer();
