@@ -339,7 +339,6 @@ bool gmshLocalNetworkClient::receiveMessage()
 	Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
 	subClient->setGmshServer(server);
 	addClient(subClient);
-	std::cout << "Gmsh has " << getNumClients() << " clients\n";
       }
     }
     break;
