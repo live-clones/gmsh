@@ -386,31 +386,24 @@ bool gmshLocalNetworkClient::run()
   setGmshServer(server);
 
   while(1) {
+    if(getExecutable().empty() && !CTX::instance()->solver.listen){
+      // we stopped listening to the special "Listen" client
+      break;
+    }
+
     // loop on all the clients (usually only one, but can be more if we spawned
     // subclients; in that case we might want to start from the one after the
     // one we read from last, for better load balancing)
     bool stop = false, haveData = false;
     gmshLocalNetworkClient *c = 0;
-
-    if(getExecutable().empty() && !CTX::instance()->solver.listen){
-      // we stopped listening to the special "Listen" client
-      stop = true;
-      break;
-    }
-
     for(int i = 0; i < getNumClients(); i++){
-      if(getExecutable().empty() && !CTX::instance()->solver.listen){
-        // we stopped listening to the special "Listen" client
-        stop = true;
-        break;
-      }
       c = getClient(i);
       if(c->getPid() < 0){
         if(c == this){ // the "master" client stopped
           stop = true;
           break;
         }
-        else{ // this subclient is not active anymore
+        else{ // this subclient is not active anymore: pass to the next client
           continue;
         }
       }
@@ -422,13 +415,11 @@ bool gmshLocalNetworkClient::run()
       }
       else{
         int ret = s->NonBlockingWait(0.001, -1.);
-        if(ret == 0){
-          // we have data from this particular client
+        if(ret == 0){ // we have data from this particular client
           haveData = true;
           break;
         }
-        else if(ret == 3){
-          // pass to the next client
+        else if(ret == 3){ // pass to the next client
           continue;
         }
         else{ // an error occurred
