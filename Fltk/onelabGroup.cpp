@@ -44,6 +44,7 @@ typedef unsigned long intptr_t;
 #include "PView.h"
 
 #if defined(HAVE_ONELAB_METAMODEL)
+#include "OnelabClients.h"
 #include "metamodel.h"
 #endif
 
@@ -60,6 +61,7 @@ class onelabGmshServer : public GmshServer{
   ~onelabGmshServer(){}
   int NonBlockingSystemCall(const char *str)
   {
+    //std::cout << "System call: " << str << std::endl;
     return SystemCall(str);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
@@ -86,6 +88,7 @@ class onelabGmshServer : public GmshServer{
         }
         // wait at most waitint seconds and respond to FLTK events
         if(FlGui::available()) FlGui::instance()->wait(waitint);
+	if(timeout < 0) return 3;
       }
       else if(ret > 0){
         return 0; // data is there!
@@ -143,8 +146,30 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
+//FH duplicate code, could be placed in onelabUtils.
+std::string getNextToken(const std::string &msg,
+                         std::string::size_type &first,
+                         char separator='\0')
+{
+  if(first == std::string::npos) return "";
+  std::string::size_type last = msg.find_first_of(separator, first);  std::string next("");
+  if(last == std::string::npos){
+    next = msg.substr(first);
+    first = last;
+  }
+  else if(first == last){
+    next = "";    first = last + 1;
+  }
+  else{
+    next = msg.substr(first, last - first);
+    first = last + 1;
+  }
+  return next;
+}
+
 bool gmshLocalNetworkClient::receiveMessage()
 {
+  bool showMessages = false;
   double timer = GetTimeInSeconds();
 
   if(!getGmshServer()){
@@ -157,12 +182,16 @@ bool gmshLocalNetworkClient::receiveMessage()
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
+  else if(showMessages) 
+    std::cout << "Received header: " << type << " from " << getName() << std::endl;
 
   std::string message(length, ' ');
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
     Msg::Error("Abnormal server termination (did not receive message body)");
     return false;
   }
+  // else if(showMessages)
+  //   std::cout << "Received message: " << message <<  " from " << getName() << std::endl;
 
   switch (type) {
   case GmshSocket::GMSH_START:
@@ -320,41 +349,33 @@ bool gmshLocalNetworkClient::receiveMessage()
     break;
   case GmshSocket::GMSH_CONNECT:
     {
-      /*
-      const std::string subClientName = message;
-      onelab::localNetworkClient *subClient = dynamic_cast<onelab::localNetworkClient*>
-        (onelab::server::instance()->findClient(subClientName)->second);
-      if (! subClient) {
-        subClient = new onelab::localNetworkClient(subClientName, "");
-      }
-      //if (onelab::server::instance()->getChanged(subClientName)) {
-      std::string sockname;
-      std::ostringstream tmp;
-      if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
-        // Unix socket
-        tmp << CTX::instance()->homeDir
-            << CTX::instance()->solver.socketName << subClient->getId();
-        sockname = FixWindowsPath(tmp.str());
+      std::string::size_type first = 0;
+      std::string clientName = getNextToken(message, first);
+      std::string command = getNextToken(message, first);
+
+      gmshLocalNetworkClient* subClient = 
+	new gmshLocalNetworkClient(clientName, command);
+      onelabGmshServer *server  = new onelabGmshServer(subClient);
+      subClient->setPid(0);
+      int sock = server->LaunchClient();
+      if(sock < 0){ // could not establish the connection: aborting
+	server->Shutdown();
+	delete server;
+	Msg::Error("Could not connect client '%s'...", subClient->getName().c_str());
       }
       else{
-        // TCP/IP socket
-        if(CTX::instance()->solver.socketName.size() &&
-           CTX::instance()->solver.socketName[0] == ':')
-          tmp << GetHostName(); // prepend hostname if only the port number is given
-        tmp << CTX::instance()->solver.socketName << subClient->getId();
-        sockname = tmp.str();
+	Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
+	subClient->setGmshServer(server);
+	addClient(subClient);
+	std::cout << "Gmsh has " << getNumClients() << " clients\n";
+	// std::string reply =  "Connected !!";
+	// getGmshServer()->SendMessage(GmshSocket::GMSH_CONNECT, reply.size(), &reply[0]);
       }
-      server->SendString(GmshSocket::GMSH_CONNECT, sockname.c_str());
-      GmshServer *subServer = new onelabGmshServer(subClient, true);
-      subServer->Start("", sockname.c_str(), CTX::instance()->solver.timeout);
-      addClient(subClient, subServer);
-      */
     }
     break;
   case GmshSocket::GMSH_OLPARSE:
     {
 #if defined(HAVE_ONELAB_METAMODEL)
-      /*
       localSolverClient *c = new InterfacedClient("OLParser","","");
       std::string ofileName = message ;
       std::ofstream outfile(ofileName.c_str());
@@ -364,7 +385,6 @@ bool gmshLocalNetworkClient::receiveMessage()
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
       delete c;
-      */
 #endif
     }
     break;
@@ -395,48 +415,61 @@ bool gmshLocalNetworkClient::run()
   Msg::StatusBar(true, "Running '%s'...", _name.c_str());
 
   setGmshServer(server);
-
+  int i = 0;
   while(1) {
     // loop on all the clients (usually only one, but can be more if we spawned
     // subclients; in that case we might want to start from the one after the
     // one we read from last, for better load balancing)
     bool stop = false, haveData = false;
     gmshLocalNetworkClient *c = 0;
-    for(int i = 0; i < getNumClients(); i++){
-      if(getExecutable().empty() && !CTX::instance()->solver.listen){
-        // we stopped listening to the special "Listen" client
-        stop = true;
-        break;
+  
+    if(getExecutable().empty() && !CTX::instance()->solver.listen){
+      // we stopped listening to the special "Listen" client
+      stop = true;
+      break;
+    }
+
+    c = getClient(i);
+    //std::cout << "client " << i << "/" << getNumClients() << " pid= " << c->getPid();
+
+    if(c->getPid() < 0){
+      if(c == this){ // the "master" client stopped
+	stop = true;
       }
-      c = getClient(i);
-      if(c->getPid() < 0){
-        if(c == this){ // the "master" client stopped
-          stop = true;
-          break;
-        }
-        else{ // this subclient is not active anymore
-          continue;
-        }
+      else{ // this subclient is not active anymore
+	std::string reply =  c->getName();
+	getGmshServer()->SendMessage(GmshSocket::GMSH_OPTION_1, reply.size(), &reply[0]);
+	onelab::server::instance()->unregisterClient(c);
+	removeClient(c);
+	Msg::StatusBar(true, "Done running '%s'", c->getName().c_str());
+	i=0; // start over with the only client that surely exists
+	continue;
       }
-      GmshServer *s = c->getGmshServer();
-      if(!s){
-        Msg::Error("Abnormal server termination (no valid server)");
-        stop = true;
-        break;
+    }
+    GmshServer *s = c->getGmshServer();
+    if(!s){
+      Msg::Error("Abnormal server termination (no valid server)");
+      stop = true;
+    }
+    else{ 
+      int ret = s->NonBlockingWait(0.001, -1.);
+      //std::cout << " ret = " << ret <<  std::endl;
+      if(ret == 0){
+	haveData = true; // we have data from this particular client
       }
-      else if(!s->NonBlockingWait(0.001, 0.)){
-        // we have data from this particular client
-        haveData = true;
-        break;
+      else if(ret == 3){
+	//pass on to the next client
       }
       else{ // an error occurred
-        stop = true;
-        break;
+	stop = true;
       }
     }
     if(stop) break;
     if(haveData && !c->receiveMessage()) break;
     if(c == this && c->getPid() < 0) break;
+
+    i++;
+    if(i >= getNumClients()) i = 0;
   }
 
   // we are done running the (master) client: delete the servers and the
