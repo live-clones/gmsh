@@ -78,7 +78,8 @@ class client :
   _GMSH_CONNECT = 27
   _GMSH_OLPARSE = 28
   _GMSH_PARAM_NOT_FOUND = 29
-    
+  _GMSH_OPTION_1 = 100
+  
   def _receive(self) :
     def buffered_receive(l) :
       msg = b''
@@ -97,8 +98,13 @@ class client :
 
   def _send(self, t, msg) :
     m = msg.encode('utf-8')
-    if self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m)) == 0 :
-      RuntimeError('onelab socket closed')
+    try:
+      if self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m)) == 0 :
+        RuntimeError('onelab socket closed')
+    except socket.error:
+      self.socket.close()
+      self._createSocket()
+      self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
   def _def_parameter(self, param) :
     if not self.socket :
@@ -145,17 +151,23 @@ class client :
   def sub_client(self, name, command):
     print 'Defining the subclient ' + name
     msg = [name, command]
-    ## msg.append(name + '\0')
-    ## msg.append(command + '\0')
     if not self.socket :
       return
     self._send(self._GMSH_CONNECT, '\0'.join(msg))
-    (t, msg) = self._receive()
-    print ("python receive : ", t, msg)
-    if t == self._GMSH_CONNECT and msg :
-      print "python launch : "+ command + " -onelab " + name + " " + msg
-      os.system(command + " -onelab " + name + " " + msg)
+    ## (t, msg) = self._receive()
+    ## print ("python receive : ", t, msg)
+    ## if t == self._GMSH_CONNECT and msg :
+    ##   print "The client %s is now connected" %(msg)
+    ##   print "python launch : "+ command + " -onelab " + name + " " + msg
+    ##   os.system(command + " -onelab " + name + " " + msg)
 
+  def wait_on_subclient(self, name):
+    if not self.socket :
+      return
+    (t, msg) = self._receive() 
+    if t == self._GMSH_OPTION_1 :
+      print 'Client <%s> done, proceeding with the script...' %(name)
+      
   def merge_file(self, filename) :
     if not self.socket :
       return
@@ -170,19 +182,26 @@ class client :
       filename = os.getcwd() + "/" + filename;
     self._send(self._GMSH_OLPARSE, filename)
 
+  def _createSocket(self) :
+    addr = self.addr
+    if '/' in addr or '\\' in addr or ':' not in addr :
+      self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    else :
+      self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.socket.connect(addr)
+    #self.socket.setblocking(1)
+    #self.socket.settimeout(5.0)
+  
   def __init__(self):
     self.socket = None
     self.name = ""
+    self.addr = ""
     for i, v in enumerate(sys.argv) :
       if v == '-onelab':
         self.name = sys.argv[i + 1]
-        addr = sys.argv[2]
-        if '/' in addr or '\\' in addr or ':' not in addr :
-          self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        else :
-          self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(sys.argv[i + 2])
-        self._send(self._GMSH_START, str(os.getpid))
+        self.addr = sys.argv[i + 2]
+        self._createSocket()
+        self._send(self._GMSH_START, str(os.getpid()))
     self.action = self.get_string('python/Action')
     if self.action == "initialize": exit(0)
   
@@ -190,3 +209,4 @@ class client :
     if self.socket :
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
+      print 'Destructor called for %s' %(self.name)
