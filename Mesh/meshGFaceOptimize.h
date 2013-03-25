@@ -118,23 +118,6 @@ struct swapquad{
     std::sort(v, v + 4);
   }
 };
-
-class Temporary{
-  private :
-        static double w1,w2,w3;
-        static std::vector<SVector3> gradients;
-        void read_data(std::string);
-        static SVector3 compute_normal(MElement*);
-        static SVector3 compute_other_vector(MElement*);
-        static SVector3 compute_gradient(MElement*);
-  public :
-        Temporary();
-        ~Temporary();
-        void quadrilaterize(std::string,double,double,double);
-        static double compute_total_cost(double,double);
-        static void select_weights(double,double,double);
-        static double compute_alignment(const MEdge&,MElement*,MElement*);
-};
       
 struct RecombineTriangle
 {
