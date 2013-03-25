@@ -979,7 +979,7 @@ parsing of the script file:
   @var{built-in-function} |
   @var{real-option} |
   StrFind(@var{char-expression}, @var{char-expression}) |
-  TextAttributes(@var{char-expression}<,@var{char-expression}@dots>)|
+  TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>)|
   GetValue("@var{string}", @var{expression})
 @end example
 
