@@ -10,8 +10,8 @@ LineNedelecBasis::LineNedelecBasis(void){
   nRefSpace = refSpace->getNPermutation();
 
   // Set Basis Type //
-  order = 1;
-  
+  order = 0;
+
   type = 1;
   dim  = 1;
 
@@ -38,7 +38,7 @@ LineNedelecBasis::LineNedelecBasis(void){
   for(unsigned int s = 0; s < nRefSpace; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
-  // Nedelec // 
+  // Nedelec //
   basis[0][0] = new vector<Polynomial>(first);
   basis[1][0] = new vector<Polynomial>(second);
 }

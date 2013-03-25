@@ -20,8 +20,8 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
 
   nVertex   = 0;
   nEdge     = 3 * (order + 1);
-  nFace     = 0;
-  nCell     = ((order - 1) * order + order - 1);
+  nFace     = ((order - 1) * order + order - 1);
+  nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Some Space //
@@ -97,7 +97,7 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
     }
   }
 
-  // Cell Based //
+  // Face Based //
 
   // Preliminaries
   const Polynomial p = lagrange[2] * 2 - Polynomial(1, 0, 0, 0);

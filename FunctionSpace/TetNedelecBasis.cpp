@@ -12,7 +12,7 @@ TetNedelecBasis::TetNedelecBasis(void){
     edgeV = refSpace->getAllEdge();
 
   // Set Basis Type //
-  this->order = 1;
+  this->order = 0;
 
   type = 1;
   dim  = 3;

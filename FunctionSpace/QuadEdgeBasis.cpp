@@ -6,14 +6,14 @@ using namespace std;
 QuadEdgeBasis::QuadEdgeBasis(int order){
   // Set Basis Type //
   this->order = order;
-  
+
   type = 1;
   dim  = 2;
 
   nVertex = 0;
   nEdge   = 4 * (order + 1);
-  nFace   = 0;
-  nCell   = 2 * (order + 1) * order;
+  nFace   = 2 * (order + 1) * order;
+  nCell   = 0;
 
   nEdgeClosure = 2;
   nFaceClosure = 0;
@@ -41,86 +41,86 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   Legendre::legendre(legendre, order);
 
   // Vertices definig Edges & Permutations //
-  const int edgeV[2][4][2] = 
+  const int edgeV[2][4][2] =
     {
       { {0, 1}, {1, 2}, {2, 3}, {3, 0} },
       { {1, 0}, {2, 1}, {3, 2}, {0, 3} }
-    }; 
+    };
 
   // Basis //
   node = new vector<vector<Polynomial>*>(nVertex);
   edge = new vector<vector<vector<Polynomial>*>*>(2);
   face = new vector<vector<vector<Polynomial>*>*>(0);
   cell = new vector<vector<Polynomial>*>(nCell);
-  
+
   (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
   (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
 
 
-  // Lagrange // 
-  lagrange[0] = 
+  // Lagrange //
+  lagrange[0] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lagrange[1] = 
+  lagrange[1] =
     (Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lagrange[2] = 
+  lagrange[2] =
     (Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 1, 0));
 
-  lagrange[3] = 
+  lagrange[3] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
     (Polynomial(1, 0, 1, 0));
 
   // Lagrange Sum //
   for(int e = 0; e < 4; e++)
-    lagrangeSum[e] = 
-      lagrange[edgeV[0][e][0]] + 
+    lagrangeSum[e] =
+      lagrange[edgeV[0][e][0]] +
       lagrange[edgeV[0][e][1]];
-    
+
   // Lifting //
-  lifting[0] = 
+  lifting[0] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lifting[1] = 
+  lifting[1] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lifting[2] = 
+  lifting[2] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0));
 
-  lifting[3] = 
+  lifting[3] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0));
 
   // Lifting Sub //
   for(int e = 0; e < 4; e++){
-    liftingSub[0][e] = 
-      lifting[edgeV[0][e][0]] - 
+    liftingSub[0][e] =
+      lifting[edgeV[0][e][0]] -
       lifting[edgeV[0][e][1]];
 
-    liftingSub[1][e] = 
-      lifting[edgeV[1][e][0]] - 
+    liftingSub[1][e] =
+      lifting[edgeV[1][e][0]] -
       lifting[edgeV[1][e][1]];
   }
 
 
-  // Edge Based (Nedelec) // 
+  // Edge Based (Nedelec) //
   Polynomial oneHalf(0.5, 0, 0, 0);
 
   for(int c = 0; c < 2; c++){
     for(int e = 0; e < 4; e++){
-      (*(*edge)[c])[e] = 
+      (*(*edge)[c])[e] =
 	new vector<Polynomial>(liftingSub[c][e].gradient());
-    
+
       (*(*edge)[c])[e]->at(0).mul(lagrangeSum[e]);
       (*(*edge)[c])[e]->at(1).mul(lagrangeSum[e]);
       (*(*edge)[c])[e]->at(2).mul(lagrangeSum[e]);
-  
+
       (*(*edge)[c])[e]->at(0).mul(oneHalf);
       (*(*edge)[c])[e]->at(1).mul(oneHalf);
       (*(*edge)[c])[e]->at(2).mul(oneHalf);
@@ -131,19 +131,19 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   // Edge Based (High Order) //
   for(int c = 0; c < 2; c++){
     unsigned int i = 0;
-    
+
     for(int l = 1; l < orderPlus; l++){
       for(int e = 0; e < 4; e++){
-	(*(*edge)[c])[i + 4] = 
-	  new vector<Polynomial>((intLegendre[l].compose(liftingSub[c][e]) * 
+	(*(*edge)[c])[i + 4] =
+	  new vector<Polynomial>((intLegendre[l].compose(liftingSub[c][e]) *
 				  lagrangeSum[e]).gradient());
-	
+
 	i++;
       }
     }
   }
 
-  
+
   // Cell Based (Preliminary) //
   Polynomial px   = Polynomial(2, 1, 0, 0);
   Polynomial py   = Polynomial(2, 0, 1, 0);
@@ -164,13 +164,13 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   // Cell Based (Type 1) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
-      (*cell)[i] = 
+      (*cell)[i] =
 	new vector<Polynomial>((iLegendreX[l1] * iLegendreY[l2]).gradient());
 
       i++;
     }
   }
-  
+
   // Cell Based (Type 2) //
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
@@ -208,10 +208,10 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   // (x, y) = Zaglmayr Ref Quad
   // (u, v) = Gmsh     Ref Quad
 
-  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) + 
+  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) +
 		   Polynomial(0.5, 0, 0, 0));
 
-  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) + 
+  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
 		   Polynomial(0.5, 0, 0, 0));
 
   for(int i = 0; i < nEdgeClosure; i++){
@@ -242,7 +242,7 @@ QuadEdgeBasis::~QuadEdgeBasis(void){
   // Vertex Based //
   for(int i = 0; i < nVertex; i++)
     delete (*node)[i];
-  
+
   delete node;
 
 
@@ -250,10 +250,10 @@ QuadEdgeBasis::~QuadEdgeBasis(void){
   for(int c = 0; c < 2; c++){
     for(int i = 0; i < nEdge; i++)
       delete (*(*edge)[c])[i];
-    
+
     delete (*edge)[c];
   }
-  
+
   delete edge;
 
 

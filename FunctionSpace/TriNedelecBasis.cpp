@@ -12,7 +12,7 @@ TriNedelecBasis::TriNedelecBasis(void){
     edgeV = refSpace->getAllEdge();
 
   // Set Basis Type //
-  order = 1;
+  order = 0;
 
   type = 1;
   dim  = 2;

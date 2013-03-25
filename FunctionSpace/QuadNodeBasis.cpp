@@ -12,8 +12,8 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
   nVertex = 4;
   nEdge   = 4 * (order - 1);
-  nFace   = 0;
-  nCell   =     (order - 1) * (order - 1);
+  nFace   =     (order - 1) * (order - 1);
+  nCell   = 0;
 
   nEdgeClosure = 2;
   nFaceClosure = 0;
@@ -27,13 +27,13 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
   // Legendre Polynomial //
   Legendre::integrated(legendre, order);
-  
+
   // Vertices definig Edges & Permutations //
-  const int edgeV[2][4][2] = 
+  const int edgeV[2][4][2] =
     {
       { {0, 1}, {1, 2}, {2, 3}, {3, 0} },
       { {1, 0}, {2, 1}, {3, 2}, {0, 3} }
-    }; 
+    };
 
   // Basis //
   node = new vector<Polynomial*>(nVertex);
@@ -46,48 +46,48 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
 
   // Lifting //
-  lifting[0] = 
+  lifting[0] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lifting[1] = 
+  lifting[1] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
 
-  lifting[2] = 
+  lifting[2] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0));
 
-  lifting[3] = 
+  lifting[3] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0));
 
   // Lifting Sub //
   for(int e = 0; e < 4; e++){
-    liftingSub[0][e] = 
-      lifting[edgeV[0][e][0]] - 
+    liftingSub[0][e] =
+      lifting[edgeV[0][e][0]] -
       lifting[edgeV[0][e][1]];
-    
-    liftingSub[1][e] = 
-      lifting[edgeV[1][e][0]] - 
+
+    liftingSub[1][e] =
+      lifting[edgeV[1][e][0]] -
       lifting[edgeV[1][e][1]];
   }
 
 
-  // Vertex Based (Lagrange) // 
-  (*node)[0] = 
+  // Vertex Based (Lagrange) //
+  (*node)[0] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)));
 
-  (*node)[1] = 
+  (*node)[1] =
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)));
 
-  (*node)[2] = 
+  (*node)[2] =
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)));
 
-  (*node)[3] = 
+  (*node)[3] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)));
 
@@ -98,8 +98,8 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
     for(int l = 1; l < order; l++){
       for(int e = 0; e < 4; e++){
-	(*(*edge)[c])[i] = 
-	  new Polynomial(legendre[l].compose(liftingSub[c][e]) * 
+	(*(*edge)[c])[i] =
+	  new Polynomial(legendre[l].compose(liftingSub[c][e]) *
 			 (*(*node)[edgeV[c][e][0]] + *(*node)[edgeV[c][e][1]]));
 
 	i++;
@@ -119,7 +119,7 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
-      (*cell)[i] = 
+      (*cell)[i] =
 	new Polynomial(legendre[l1].compose(px) * legendre[l2].compose(py));
 
       i++;
@@ -134,10 +134,10 @@ QuadNodeBasis::QuadNodeBasis(int order){
   // (x, y) = Zaglmayr Ref Quad
   // (u, v) = Gmsh     Ref Quad
 
-  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) + 
+  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) +
 		   Polynomial(0.5, 0, 0, 0));
 
-  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) + 
+  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
 		   Polynomial(0.5, 0, 0, 0));
 
   for(int i = 0; i < nVertex; i++)
@@ -149,7 +149,7 @@ QuadNodeBasis::QuadNodeBasis(int order){
 
   for(int i = 0; i < nCell; i++)
     *(*cell)[i] = (*cell)[i]->compose(mapX, mapY);
-  
+
 
   // Free Temporary Sapce //
   delete[] legendre;
@@ -159,7 +159,7 @@ QuadNodeBasis::~QuadNodeBasis(void){
   // Vertex Based //
   for(int i = 0; i < nVertex; i++)
     delete (*node)[i];
-  
+
   delete node;
 
 
@@ -167,10 +167,10 @@ QuadNodeBasis::~QuadNodeBasis(void){
   for(int c = 0; c < 2; c++){
     for(int i = 0; i < nEdge; i++)
       delete (*(*edge)[c])[i];
-    
+
     delete (*edge)[c];
   }
-  
+
   delete edge;
 
 
