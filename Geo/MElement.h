@@ -110,7 +110,7 @@ class MElement
   virtual int getNumVolumeVertices() const { return 0; }
 
   // get the number of primary vertices (first-order element)
-  int getNumPrimaryVertices()
+  int getNumPrimaryVertices() const
   {
     return getNumVertices() - getNumEdgeVertices() - getNumFaceVertices() -
       getNumVolumeVertices();
