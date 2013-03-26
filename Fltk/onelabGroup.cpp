@@ -632,6 +632,11 @@ void onelab_cb(Fl_Widget *w, void *data)
     return;
   }
 
+  if(FlGui::instance()->onelab->isBusy()){
+    Msg::Info("I'm busy! Ask me that later...");
+    return;
+  }
+
   if(action == "load"){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
@@ -667,11 +672,6 @@ void onelab_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < fileExtensions.size(); i++)
       onelab::server::instance()->set(fileExtensions[i]);
     action = "check";
-  }
-
-  if(FlGui::instance()->onelab->isBusy()){
-    Msg::Info("I'm busy! Ask me that later...");
-    return;
   }
 
   Msg::ResetErrorCounter();
