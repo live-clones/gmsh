@@ -126,7 +126,7 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     switch(num) {
     case 0 : u = -1.; v = -1.; w = 0.; break;
@@ -137,11 +137,11 @@ class MPyramid : public MElement {
     default: u =  0.; v =  0.; w = 0.; break;
     }
   }
-  virtual SPoint3 barycenterUVW()
+  virtual SPoint3 barycenterUVW() const
   {
     return SPoint3(0., 0., .2);
   }
-  virtual bool isInside(double u, double v, double w)
+  virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
     if(u < (w - (1. + tol)) || u > ((1. + tol) - w) || v < (w - (1. + tol)) ||
@@ -325,7 +325,7 @@ class MPyramidN : public MPyramid {
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumFacesRep();
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }

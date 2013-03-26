@@ -60,7 +60,7 @@ class MFace {
     SPoint3 p(0., 0., 0.);
     int n = getNumVertices();
     for(int i = 0; i < n; i++) {
-      MVertex *v = getVertex(i);
+      const MVertex *v = getVertex(i);
       p[0] += v->x();
       p[1] += v->y();
       p[2] += v->z();

@@ -131,7 +131,7 @@ class MPrism : public MElement {
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual int getVolumeSign();
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     switch(num) {
     case 0 : u = 0.; v = 0.; w = -1.; break;
@@ -143,11 +143,11 @@ class MPrism : public MElement {
     default: u = 0.; v = 0.; w =  0.; break;
     }
   }
-  virtual SPoint3 barycenterUVW()
+  virtual SPoint3 barycenterUVW() const
   {
     return SPoint3(1/3., 1/3., 0.);
   }
-  virtual bool isInside(double u, double v, double w)
+  virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
     if(w > (1. + tol) || w < -(1. + tol) || u < (-tol)
@@ -307,7 +307,7 @@ class MPrism15 : public MPrism {
     tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
     tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
@@ -434,7 +434,7 @@ class MPrism18 : public MPrism {
     // quad face vertices
     tmp = _vs[10]; _vs[10] = _vs[11]; _vs[11] = tmp;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }

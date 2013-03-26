@@ -57,9 +57,9 @@ class MSubTetrahedron : public MTetrahedron
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
-  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
-  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
-  virtual bool isInside(double u, double v, double w);
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const;
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const;
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -115,9 +115,9 @@ class MSubTriangle : public MTriangle
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
-  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
-  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
-  virtual bool isInside(double u, double v, double w);
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const;
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const;
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -173,9 +173,9 @@ class MSubLine : public MLine
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
-  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
-  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
-  virtual bool isInside(double u, double v, double w);
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const;
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const;
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }
@@ -231,9 +231,9 @@ class MSubPoint : public MPoint
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
-  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
-  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
-  virtual bool isInside(double u, double v, double w);
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const;
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const;
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 
   virtual MElement *getParent() const { return _orig; }

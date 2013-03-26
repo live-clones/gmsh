@@ -126,7 +126,7 @@ class MTriangle : public MElement {
   }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     w = 0.;
     switch(num) {
@@ -136,11 +136,11 @@ class MTriangle : public MElement {
     default: u = 0.; v = 0.; break;
     }
   }
-  virtual SPoint3 barycenterUVW()
+  virtual SPoint3 barycenterUVW() const
   {
     return SPoint3(1/3., 1/3., 0.);
   }
-  virtual bool isInside(double u, double v, double w)
+  virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v) || fabs(w) > tol)
@@ -233,7 +233,7 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
@@ -342,7 +342,7 @@ class MTriangleN : public MTriangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }

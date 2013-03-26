@@ -138,7 +138,7 @@ int GmshOpenProject(const std::string &fileName)
   return 1;
 }
 
-int GmshWriteFile(std::string fileName)
+int GmshWriteFile(const std::string &fileName)
 {
   CreateOutputFile(fileName, FORMAT_AUTO);
   return 1;

@@ -128,7 +128,7 @@ class MHexahedron : public MElement {
     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     switch(num) {
     case 0 : u = -1.; v = -1.; w = -1.; break;
@@ -142,11 +142,11 @@ class MHexahedron : public MElement {
     default: u =  0.; v =  0.; w =  0.; break;
     }
   }
-  virtual SPoint3 barycenterUVW()
+  virtual SPoint3 barycenterUVW() const
   {
     return SPoint3(0., 0., 0.);
   }
-  virtual bool isInside(double u, double v, double w)
+  virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
     if(u < -(1. + tol) || v < -(1. + tol) || w < -(1. + tol) ||
@@ -326,7 +326,7 @@ class MHexahedron20 : public MHexahedron {
     _vs[8] = old[10]; _vs[10] = old[8];
     _vs[9] = old[11]; _vs[11] = old[9];
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
@@ -471,7 +471,7 @@ class MHexahedron27 : public MHexahedron {
     _vs[13] = old[15]; _vs[15] = old[13];
     _vs[14] = old[16]; _vs[16] = old[14];
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
@@ -606,7 +606,7 @@ class MHexahedronN : public MHexahedron {
   {
     Msg::Error("Revert not implemented yet for MHexahedronN");
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }

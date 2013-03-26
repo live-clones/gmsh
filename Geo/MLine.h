@@ -76,14 +76,14 @@ class MLine : public MElement {
   }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
-  virtual bool isInside(double u, double v, double w)
+  virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
     if(u < -(1. + tol) || u > (1. + tol) || fabs(v) > tol || fabs(w) > tol)
       return false;
     return true;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     v = w = 0.;
     switch(num) {
@@ -92,7 +92,7 @@ class MLine : public MElement {
     default: u =  0.; break;
     }
   }
-  virtual SPoint3 barycenterUVW()
+  virtual SPoint3 barycenterUVW() const
   {
     return SPoint3(0, 0, 0);
   }
@@ -152,7 +152,7 @@ class MLine3 : public MLine {
   virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "C1D3"; }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
@@ -215,7 +215,7 @@ class MLineN : public MLine {
     if(_vs.size() == 9) return MSH_LIN_11;
     return 0;
   }
-  virtual void getNode(int num, double &u, double &v, double &w)
+  virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }

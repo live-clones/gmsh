@@ -126,12 +126,12 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
 #endif
 }
 
-void MElement::getNode(int num, double &u, double &v, double &w)
+void MElement::getNode(int num, double &u, double &v, double &w) const
 {
   // only for MElements that don't have a lookup table for this
   // (currently only 1st order elements have)
   double uvw[3];
-  MVertex* ver = getVertex(num);
+  const MVertex* ver = getVertex(num);
   double xyz[3] = {ver->x(), ver->y(), ver->z()};
   xyz2uvw(xyz, uvw);
   u = uvw[0];
@@ -169,7 +169,7 @@ void MElement::getThirdDerivativeShapeFunctions(double u, double v, double w,
   else Msg::Error("Function space not implemented for this type of element");
 }
 
-SPoint3 MElement::barycenter_infty ()
+SPoint3 MElement::barycenter_infty () const
 {
   double xmin =  getVertex(0)->x();
   double xmax = xmin;
@@ -179,7 +179,7 @@ SPoint3 MElement::barycenter_infty ()
   double zmax = zmin;
   int n = getNumVertices();
   for(int i = 0; i < n; i++) {
-    MVertex *v = getVertex(i);
+    const MVertex *v = getVertex(i);
     xmin = std::min(xmin,v->x());
     xmax = std::max(xmax,v->x());
     ymin = std::min(ymin,v->y());
@@ -190,12 +190,12 @@ SPoint3 MElement::barycenter_infty ()
   return SPoint3(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax));
 }
 
-SPoint3 MElement::barycenter()
+SPoint3 MElement::barycenter() const
 {
   SPoint3 p(0., 0., 0.);
   int n = getNumVertices();
   for(int i = 0; i < n; i++) {
-    MVertex *v = getVertex(i);
+    const MVertex *v = getVertex(i);
     p[0] += v->x();
     p[1] += v->y();
     p[2] += v->z();
@@ -206,7 +206,7 @@ SPoint3 MElement::barycenter()
   return p;
 }
 
-SPoint3 MElement::barycenterUVW()
+SPoint3 MElement::barycenterUVW() const
 {
   SPoint3 p(0., 0., 0.);
   int n = getNumVertices();

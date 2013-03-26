@@ -196,10 +196,10 @@ class MElement
   virtual double getOuterRadius(){ return 0.; }
 
   // compute the barycenter
-  virtual SPoint3 barycenter();
-  virtual SPoint3 barycenterUVW();
+  virtual SPoint3 barycenter() const;
+  virtual SPoint3 barycenterUVW() const;
   // compute the barycenter in infinity norm
-  virtual SPoint3 barycenter_infty();
+  virtual SPoint3 barycenter_infty() const;
 
   // revert the orientation of the element
   virtual void revert(){}
@@ -225,7 +225,7 @@ class MElement
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const { return 0; }
 
   // return parametric coordinates (u,v,w) of a vertex
-  virtual void getNode(int num, double &u, double &v, double &w);
+  virtual void getNode(int num, double &u, double &v, double &w) const;
 
   // return the interpolating nodal shape functions evaluated at point
   // (u,v,w) in parametric coordinates (if order == -1, use the
@@ -286,7 +286,7 @@ class MElement
 
   // test if a point, given in parametric coordinates, belongs to the
   // element
-  virtual bool isInside(double u, double v, double w) = 0;
+  virtual bool isInside(double u, double v, double w) const = 0;
 
   // interpolate the given nodal data (resp. its gradient, curl and
   // divergence) at point (u,v,w) in parametric coordinates

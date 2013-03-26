@@ -99,7 +99,7 @@ void MSubTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   if(_orig) _orig->xyz2uvw(xyz,uvw);
 }
 
-void MSubTetrahedron::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+void MSubTetrahedron::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -110,7 +110,7 @@ void MSubTetrahedron::movePointFromParentSpaceToElementSpace(double &u, double &
   u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
 }
 
-void MSubTetrahedron::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+void MSubTetrahedron::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -121,7 +121,7 @@ void MSubTetrahedron::movePointFromElementSpaceToParentSpace(double &u, double &
   u = uvwP[0]; v = uvwP[1]; w = uvwP[2];
 }
 
-bool MSubTetrahedron::isInside(double u, double v, double w)
+bool MSubTetrahedron::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
 
@@ -338,7 +338,7 @@ void MSubTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   if(_orig) _orig->xyz2uvw(xyz,uvw);
 }
 
-void MSubTriangle::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+void MSubTriangle::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -349,7 +349,7 @@ void MSubTriangle::movePointFromParentSpaceToElementSpace(double &u, double &v, 
   u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
 }
 
-void MSubTriangle::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+void MSubTriangle::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -360,7 +360,7 @@ void MSubTriangle::movePointFromElementSpaceToParentSpace(double &u, double &v, 
   u = uvwP[0]; v = uvwP[1]; w = uvwP[2];
 }
 
-bool MSubTriangle::isInside(double u, double v, double w)
+bool MSubTriangle::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
 
@@ -566,7 +566,7 @@ void MSubLine::xyz2uvw(double xyz[3], double uvw[3]) const
   if(_orig) _orig->xyz2uvw(xyz,uvw);
 }
 
-void MSubLine::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+void MSubLine::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -577,7 +577,7 @@ void MSubLine::movePointFromParentSpaceToElementSpace(double &u, double &v, doub
   u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
 }
 
-void MSubLine::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+void MSubLine::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -588,7 +588,7 @@ void MSubLine::movePointFromElementSpaceToParentSpace(double &u, double &v, doub
   u = uvwP[0]; v = uvwP[1]; w = uvwP[2];
 }
 
-bool MSubLine::isInside(double u, double v, double w)
+bool MSubLine::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
 
@@ -758,7 +758,7 @@ void MSubPoint::xyz2uvw(double xyz[3], double uvw[3]) const
   if(_orig) _orig->xyz2uvw(xyz,uvw);
 }
 
-void MSubPoint::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+void MSubPoint::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -769,7 +769,7 @@ void MSubPoint::movePointFromParentSpaceToElementSpace(double &u, double &v, dou
   u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
 }
 
-void MSubPoint::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+void MSubPoint::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const
 {
   if(!_orig) return;
   SPoint3 p;
@@ -780,7 +780,7 @@ void MSubPoint::movePointFromElementSpaceToParentSpace(double &u, double &v, dou
   u = uvwP[0]; v = uvwP[1]; w = uvwP[2];
 }
 
-bool MSubPoint::isInside(double u, double v, double w)
+bool MSubPoint::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
 

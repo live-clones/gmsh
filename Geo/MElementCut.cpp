@@ -90,7 +90,7 @@ void MPolyhedron::_init()
 
 }
 
-bool MPolyhedron::isInside(double u, double v, double w)
+bool MPolyhedron::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
   double uvw[3] = {u, v, w};
@@ -255,7 +255,7 @@ void MPolygon::_initVertices()
   }
 }
 
-bool MPolygon::isInside(double u, double v, double w)
+bool MPolygon::isInside(double u, double v, double w) const
 {
   if(!getParent()) return false;
   double uvw[3] = {u, v, w};
@@ -318,13 +318,13 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //----------------------------------- MLineChild ------------------------------
 
-bool MLineChild::isInside(double u, double v, double w)
+bool MLineChild::isInside(double u, double v, double w) const
 {
   if(!_orig) return false;
   double uvw[3] = {u, v, w};
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
-    MVertex *vi = getVertex(i);
+    const MVertex *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     _orig->xyz2uvw(v_xyz, v_uvw[i]);
   }
@@ -372,13 +372,13 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //----------------------------------- MTriangleBorder ------------------------------
 
-bool MTriangleBorder::isInside(double u, double v, double w)
+bool MTriangleBorder::isInside(double u, double v, double w) const
 {
   if(!getParent()) return false;
   double uvw[3] = {u, v, w};
   double v_uvw[3][3];
   for(int i = 0; i < 3; i++) {
-    MVertex *vi = getVertex(i);
+    const MVertex *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     getParent()->xyz2uvw(v_xyz, v_uvw[i]);
   }
@@ -430,13 +430,13 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 //-------------------------------------- MLineBorder ------------------------------
 
-bool MLineBorder::isInside(double u, double v, double w)
+bool MLineBorder::isInside(double u, double v, double w) const
 {
   if(!getParent()) return false;
   double uvw[3] = {u, v, w};
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
-    MVertex *vi = getVertex(i);
+    const MVertex *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     getParent()->xyz2uvw(v_xyz, v_uvw[i]);
   }

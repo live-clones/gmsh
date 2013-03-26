@@ -160,7 +160,7 @@ class MPolyhedron : public MElement {
 
   // the parametric coordinates of the polyhedron are
   // the coordinates in the local parent element.
-  virtual bool isInside(double u, double v, double w);
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
@@ -310,7 +310,7 @@ class MPolygon : public MElement {
 
   // the parametric coordinates of the polygon are
   // the coordinates in the local parent element.
-  virtual bool isInside(double u, double v, double w);
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual int getNumVerticesForMSH() {return _parts.size() * 3;}
   virtual void getVerticesIdForMSH(std::vector<int> &verts)
@@ -365,7 +365,7 @@ class MLineChild : public MLine {
   }
   // the parametric coordinates of the LineChildren are
   // the coordinates in the local parent element.
-  virtual bool isInside(double u, double v, double w);
+  virtual bool isInside(double u, double v, double w) const;
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual MElement *getParent() const { return _orig; }
   virtual void setParent(MElement *p, bool owner = false) { _orig = p; _owner = owner; }
@@ -401,7 +401,7 @@ class MTriangleBorder : public MTriangle {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_TRI_B; }
-  virtual bool isInside(double u, double v, double w);
+  virtual bool isInside(double u, double v, double w) const;
   // the integration points of the MTriangleBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
@@ -460,7 +460,7 @@ class MLineBorder : public MLine {
     return NULL;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_B; }
-  virtual bool isInside(double u, double v, double w);
+  virtual bool isInside(double u, double v, double w) const;
   // the integration points of the MLineBorder are in the parent element space
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
 };
