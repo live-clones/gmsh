@@ -91,39 +91,51 @@ int GmshSetBoundingBox(double xmin, double xmax,
   return 1;
 }
 
-int GmshSetOption(std::string category, std::string name, std::string value, int index)
+int GmshSetOption(const std::string &category, const std::string &name,
+                  std::string value, int index)
 {
   return StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshSetOption(std::string category, std::string name, double value, int index)
+int GmshSetOption(const std::string &category, const std::string &name,
+                  double value, int index)
 {
   return NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshSetOption(std::string category, std::string name, unsigned int value, int index)
+int GmshSetOption(const std::string &category, const std::string &name,
+                  unsigned int value, int index)
 {
   return ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshGetOption(std::string category, std::string name, std::string &value, int index)
+int GmshGetOption(const std::string &category, const std::string &name,
+                  std::string &value, int index)
 {
   return StringOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshGetOption(std::string category, std::string name, double &value, int index)
+int GmshGetOption(const std::string &category, const std::string &name,
+                  double &value, int index)
 {
   return NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshGetOption(std::string category, std::string name, unsigned int &value, int index)
+int GmshGetOption(const std::string &category, const std::string &name,
+                  unsigned int &value, int index)
 {
   return ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
-int GmshMergeFile(std::string fileName)
+int GmshMergeFile(const std::string &fileName)
 {
   return MergeFile(fileName, true);
+}
+
+int GmshOpenProject(const std::string &fileName)
+{
+  OpenProject(fileName);
+  return 1;
 }
 
 int GmshWriteFile(std::string fileName)

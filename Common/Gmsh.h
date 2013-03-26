@@ -14,14 +14,21 @@ int GmshSetMessageHandler(GmshMessage *callback);
 int GmshSetBoundingBox(double xmin, double xmax,
                        double ymin, double ymax,
                        double zmin, double zmax);
-int GmshSetOption(std::string category, std::string name, std::string value, int index=0);
-int GmshSetOption(std::string category, std::string name, double value, int index=0);
-int GmshSetOption(std::string category, std::string name, unsigned int value, int index=0);
-int GmshGetOption(std::string category, std::string name, std::string &value, int index=0);
-int GmshGetOption(std::string category, std::string name, double &value, int index=0);
-int GmshGetOption(std::string category, std::string name, unsigned int &value, int index=0);
-int GmshMergeFile(std::string fileName);
-int GmshWriteFile(std::string fileName);
+int GmshSetOption(const std::string &category, const std::string &name,
+                  std::string value, int index=0);
+int GmshSetOption(const std::string &category, const std::string &name,
+                  double value, int index=0);
+int GmshSetOption(const std::string &category, const std::string &name,
+                  unsigned int value, int index=0);
+int GmshGetOption(const std::string &category, const std::string &name,
+                  std::string &value, int index=0);
+int GmshGetOption(const std::string &category, const std::string &name,
+                  double &value, int index=0);
+int GmshGetOption(const std::string &category, const std::string &name,
+                  unsigned int &value, int index=0);
+int GmshMergeFile(const std::string &fileName);
+int GmshOpenProject(const std::string &fileName);
+int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
 int GmshFLTK(int argc=0, char **argv=0);
