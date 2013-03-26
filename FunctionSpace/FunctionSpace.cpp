@@ -40,6 +40,9 @@ FunctionSpace::~FunctionSpace(void){
   // Element To GoD //
   if(eToGod)
     delete eToGod;
+
+  // Unorient GroupOfElement //
+  goe->unoriented();
 }
 
 void FunctionSpace::build(GroupOfElement& goe,
@@ -212,7 +215,8 @@ const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) cons
 
   if(it == eToGod->end())
     throw
-      Exception("Their is no GroupOfDof associated with the given MElement");
+      Exception("Their is no GroupOfDof associated with the given MElement: %d",
+                element.getNum());
 
   else
     return *(it->second);
