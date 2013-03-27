@@ -2,6 +2,10 @@
 #include "TetLagrangeBasis.h"
 
 TetLagrangeBasis::TetLagrangeBasis(unsigned int order){
+  // If order 0 (Nedelec): use order 1
+  if(order == 0)
+    order = 1;
+
   // Set Basis Type //
   this->order = order;
 
