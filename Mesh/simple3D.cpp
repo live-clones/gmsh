@@ -361,7 +361,7 @@ void Filler::treat_region(GRegion* gr){
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
-  GFace* gf;
+  //GFace* gf;
   std::queue<Node*> fifo;
   std::vector<Node*> spawns;
   std::vector<Node*> garbage;
@@ -449,6 +449,7 @@ void Filler::treat_region(GRegion* gr){
 	  if(inside_domain(octree,x,y,z)){
 		compute_parameters(individual,gr);
 		individual->set_layer(parent->get_layer()+1);
+		
 		if(far_from_boundary(octree,individual)){
 		  wrapper.set_ok(1);
 		  wrapper.set_individual(individual);
