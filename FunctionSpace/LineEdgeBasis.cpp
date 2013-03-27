@@ -14,7 +14,7 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
 
   // Set Basis Type //
   this->order = order;
-  
+
   type = 1;
   dim  = 1;
 
@@ -29,18 +29,18 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   Polynomial* intLegendre = new Polynomial[orderPlus];
 
   vector<Polynomial> first(3);
-  first[0] = Polynomial(+0.5, 0, 0, 0);
+  first[0] = Polynomial(-0.5, 0, 0, 0);
   first[1] = Polynomial( 0  , 0, 0, 0);
   first[2] = Polynomial( 0  , 0, 0, 0);
 
   vector<Polynomial> second(3);
-  second[0] = Polynomial(-0.5, 0, 0, 0);
+  second[0] = Polynomial(+0.5, 0, 0, 0);
   second[1] = Polynomial( 0  , 0, 0, 0);
   second[2] = Polynomial( 0  , 0, 0, 0);
 
   const Polynomial x[2] = {
-    Polynomial(+1, 1, 0, 0),
-    Polynomial(-1, 1, 0, 0)
+    Polynomial(-1, 1, 0, 0),
+    Polynomial(+1, 1, 0, 0)
   };
 
   // Legendre Polynomial //
@@ -52,19 +52,19 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
-  // Edge Based (Nedelec) // 
+  // Edge Based (Nedelec) //
   basis[0][0] = new vector<Polynomial>(first);
   basis[1][0] = new vector<Polynomial>(second);
 
   // Edge Based (High Order) //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = 1;
-    
+
     for(unsigned int l = 1; l < orderPlus; l++){
-      basis[s][i] = 
+      basis[s][i] =
 	new vector<Polynomial>((intLegendre[l].compose
 				(x[(*(*edgeV[s])[0])[0]])).gradient());
-      
+
       i++;
     }
   }

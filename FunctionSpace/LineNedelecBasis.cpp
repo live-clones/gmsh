@@ -23,12 +23,12 @@ LineNedelecBasis::LineNedelecBasis(void){
 
   // Alloc Temporary Space //
   vector<Polynomial> first(3);
-  first[0] = Polynomial(+0.5, 0, 0, 0);
+  first[0] = Polynomial(-0.5, 0, 0, 0);
   first[1] = Polynomial( 0  , 0, 0, 0);
   first[2] = Polynomial( 0  , 0, 0, 0);
 
   vector<Polynomial> second(3);
-  second[0] = Polynomial(-0.5, 0, 0, 0);
+  second[0] = Polynomial(+0.5, 0, 0, 0);
   second[1] = Polynomial( 0  , 0, 0, 0);
   second[2] = Polynomial( 0  , 0, 0, 0);
 

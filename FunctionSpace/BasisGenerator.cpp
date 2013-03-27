@@ -5,6 +5,7 @@
 #include "LineNodeBasis.h"
 #include "LineEdgeBasis.h"
 #include "LineNedelecBasis.h"
+#include "LineLagrangeBasis.h"
 
 #include "QuadNodeBasis.h"
 #include "QuadEdgeBasis.h"
@@ -68,7 +69,7 @@ BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
 		basisType);
 
   switch(elementType){
-  case TYPE_LIN: throw Exception("Lagrange Basis on Lines not Implemented");
+  case TYPE_LIN: return new LineLagrangeBasis(order);
   case TYPE_TRI: return new TriLagrangeBasis(order);
   case TYPE_QUA: throw Exception("Lagrange Basis on Quads not Implemented");
   case TYPE_TET: return new TetLagrangeBasis(order);

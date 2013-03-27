@@ -14,8 +14,8 @@ TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
 
   nVertex   = 3;
   nEdge     = 3 * (order - 1);
-  nFace     = 0;
-  nCell     =     (order - 1) * (order - 2) / 2;
+  nFace     =     (order - 1) * (order - 2) / 2;
+  nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //

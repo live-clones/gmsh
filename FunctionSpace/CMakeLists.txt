@@ -23,6 +23,7 @@ set(SRC
   LineNodeBasis.cpp
   LineEdgeBasis.cpp
   LineNedelecBasis.cpp
+  LineLagrangeBasis.cpp
 
 #  QuadNodeBasis.cpp
 #  QuadEdgeBasis.cpp
