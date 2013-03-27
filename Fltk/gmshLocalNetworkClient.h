@@ -39,7 +39,7 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
     if(i >= 0 && i < getNumClients()) return _clients[i];
     return 0;
   }
-  bool receiveMessage();
+  bool receiveMessage(int &type);
   bool run();
   bool kill();
 };

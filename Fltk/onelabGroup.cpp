@@ -145,7 +145,7 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
-bool gmshLocalNetworkClient::receiveMessage()
+bool gmshLocalNetworkClient::receiveMessage(int &type)
 {
   double timer = GetTimeInSeconds();
 
@@ -154,11 +154,13 @@ bool gmshLocalNetworkClient::receiveMessage()
     return false;
   }
 
-  int type, length, swap;
+  int length, swap;
   if(!getGmshServer()->ReceiveHeader(&type, &length, &swap)){
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
+  else if(false) 
+    std::cout << "Received header: " << type << " from " << getName() << std::endl;
 
   std::string message(length, ' ');
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
@@ -346,10 +348,11 @@ bool gmshLocalNetworkClient::receiveMessage()
     {
 #if defined(HAVE_ONELAB_METAMODEL)
       localSolverClient *c = new InterfacedClient("OLParser","","");
-      std::string ofileName = message ;
+      std::vector<std::string> split = SplitOLFileName(message);
+      std::string ofileName = split[0] + split[1] ;
       std::ofstream outfile(ofileName.c_str());
       if (outfile.is_open())
-        c->convert_onefile(ofileName + ".ol",outfile);
+        c->convert_onefile(message, outfile);
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
@@ -398,6 +401,10 @@ bool gmshLocalNetworkClient::run()
     gmshLocalNetworkClient *c = 0;
     for(int i = 0; i < getNumClients(); i++){
       c = getClient(i);
+
+      //std::cout << " client " << i << "/" << getNumClients() 
+      //          << " pid= " << c->getPid() << std::endl;
+
       if(c->getPid() < 0){
         if(c == this){ // the "master" client stopped
           stop = true;
@@ -428,8 +435,14 @@ bool gmshLocalNetworkClient::run()
         }
       }
     }
+    int type=0;
     if(stop) break;
-    if(haveData && !c->receiveMessage()) break;
+    if(haveData && !c->receiveMessage(type)) break;
+    if((c != this) && (type == GmshSocket::GMSH_STOP)){
+      std::string reply =  c->getName();
+      getGmshServer()->SendMessage(GmshSocket::GMSH_STOP, reply.size(), &reply[0]);
+      //onelab::server::instance()->unregisterClient(c);
+    }
     if(c == this && c->getPid() < 0) break;
   }
 
