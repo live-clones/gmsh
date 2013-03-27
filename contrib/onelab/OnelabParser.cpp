@@ -1398,7 +1398,7 @@ void localSolverClient::convert_onefile(std::string fileName, std::ofstream &out
     infile.close();
   }
   else
-    OLMsg::Error("The file %s cannot be opened",fileName.c_str());
+    OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
 }
 
 void localSolverClient::client_sentence(const std::string &name, 

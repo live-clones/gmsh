@@ -297,7 +297,7 @@ bool localNetworkSolverClient::receiveMessage(){
 
 bool localNetworkSolverClient::run()
 {
- new_connection:
+  //new_connection:
   setPid(0);
 
   // Choose socket type (Unix or TCP/IP)
@@ -345,8 +345,6 @@ bool localNetworkSolverClient::run()
     sock = -1;
   }
 
-  std::cout << "sock = " << sock << std::endl;
-
   if(sock < 0){ //could not establish connection: aborting
     socketConnection->Shutdown();
     delete socketConnection;
@@ -369,7 +367,6 @@ bool localNetworkSolverClient::run()
     }
     else if(!getGmshServer()->NonBlockingWait(0.001, 0., sock)){
       haveData = true;
-      std::cout << "Have data" << std::endl;
     }
     else{// an error occurred
       stop = true;
@@ -384,10 +381,10 @@ bool localNetworkSolverClient::run()
   setGmshServer(0);
   OLMsg::StatusBar(2, true, "Done running '%s'", _name.c_str());
 
-  if(command.empty()){
-    OLMsg::Info("Client disconnected: starting new connection");
-    goto new_connection;
-  }
+  // if(command.empty()){
+  //   OLMsg::Info("Client disconnected: starting new connection");
+  //   goto new_connection;
+  // }
 
   return true;
 }

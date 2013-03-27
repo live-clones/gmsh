@@ -106,7 +106,7 @@ class client :
       self._createSocket()
       self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
-  def _def_parameter(self, param) :
+  def _define_parameter(self, param) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
@@ -116,66 +116,57 @@ class client :
     elif t == self._GMSH_PARAM_NOT_FOUND :
       self._send(self._GMSH_PARAMETER, param.tochar())
 
-  def def_string(self, name, value, **param):
+  def setString(self, name, value, **param):
     param = _parameter('string', name=name, value=value, **param)
-    self._def_parameter(param)
+    self._define_parameter(param)
     return param.value
 
-  def def_number(self, name, value, **param):
+  def setNumber(self, name, value, **param):
     if "labels" in param :
       param["choices"] = param["labels"].keys()
     p = _parameter('number', name=name, value=value, **param)
-    self._def_parameter(p)
+    self._define_parameter(p)
     return p.value
 
-  def _get_parameter(self, param) :
+  def _get_parameter(self, param, warn_if_not_found=True) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       param.fromchar(msg)
-    elif t == self._GMSH_PARAM_NOT_FOUND :
-      print 'Unknown parameter %s' %(name)
+    elif t == self._GMSH_PARAM_NOT_FOUND and warn_if_not_found :
+      print 'Unknown parameter %s' %(param.name)
 
-  def get_number(self, name):
+  def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name, value=0)
-    self._get_parameter(param)
+    self._get_parameter(param, warn_if_not_found)
     return param.value
 
-  def get_string(self, name):
+  def getString(self, name, warn_if_not_found=True):
     param = _parameter('string', name=name, value='void')
-    self._get_parameter(param)
+    self._get_parameter(param, warn_if_not_found)
     return param.value
 
-  def sub_client(self, name, command):
-    print 'Defining the subclient ' + name
-    msg = [name, command]
-    if not self.socket :
+  def showGeometry(self, filename) :
+    if not self.socket or not filename :
       return
-    self._send(self._GMSH_CONNECT, '\0'.join(msg))
-    ## (t, msg) = self._receive()
-    ## print ("python receive : ", t, msg)
-    ## if t == self._GMSH_CONNECT and msg :
-    ##   print "The client %s is now connected" %(msg)
-    ##   print "python launch : "+ command + " -onelab " + name + " " + msg
-    ##   os.system(command + " -onelab " + name + " " + msg)
-
-  def wait_on_subclient(self, name):
-    if not self.socket :
+    if self.getString('Gmsh/MergedGeo', False) == filename :
       return
-    (t, msg) = self._receive() 
-    if t == self._GMSH_OPTION_1 :
-      print 'Client <%s> done, proceeding with the script...' %(name)
-      
-  def merge_file(self, filename) :
+    else :
+      self.setString('Gmsh/MergedGeo', filename)
+    if filename[0] != '/' :
+      filename = os.getcwd() + "/" + filename
+    self._send(self._GMSH_MERGE_FILE, filename)
+    
+  def mergeFile(self, filename) :
     if not self.socket :
       return
     if filename and filename[0] != '/' :
       filename = os.getcwd() + "/" + filename;
-    self._send(self._GMSH_PARSE_STRING, 'Merge "'+filename+'";')
+    self._send(self._GMSH_PARSE_STRING, 'Merge "' + filename + '";')
 
-  def convert_olfile(self, filename) :
+  def preProcess(self, filename) :
     if not self.socket :
       return
     if filename and filename[0] != '/' :
@@ -191,22 +182,47 @@ class client :
     self.socket.connect(addr)
     #self.socket.setblocking(1)
     #self.socket.settimeout(5.0)
-  
+
+  def _wait_on_subclients(self):
+    if not self.socket :
+      return
+    while self.NumSubClients > 0:
+      (t, msg) = self._receive() 
+      if t == self._GMSH_STOP :
+        self.NumSubClients -= 1
+
+  def run(self, name, command):
+    msg = [name, command]
+    if not self.socket :
+      return
+    self._send(self._GMSH_CONNECT, '\0'.join(msg))
+    self.NumSubClients +=1
+    self._wait_on_subclients()
+
   def __init__(self):
     self.socket = None
     self.name = ""
     self.addr = ""
+    self.NumSubClients = 0
     for i, v in enumerate(sys.argv) :
       if v == '-onelab':
         self.name = sys.argv[i + 1]
         self.addr = sys.argv[i + 2]
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
-    self.action = self.get_string('python/Action')
+    self.action = self.getString('python/Action')
     if self.action == "initialize": exit(0)
   
   def __del__(self) :
     if self.socket :
+      self._wait_on_subclients()
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
-      print 'Destructor called for %s' %(self.name)
+
+## wait_on_clients
+## a la fin de sub_client
+## envoyer GMSH_STOP seulement si les sous-clients sont termines.
+## et modif dans onelabGroup run pour interdire au main
+## de fermer les sockets de clients non-termines.
+
+      

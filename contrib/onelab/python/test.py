@@ -1,38 +1,34 @@
 #!/usr/bin/env python
 #coding=utf-8
-import OnelabClient
-
-oc = OnelabClient.client()
-
-#name and default value are required
-A = oc.def_number('A', 10)
-#other attributes are optionals
-#B = oc.def_number('Group/B', 0, min = -10, max = 10, step = 1)
-
+import OnelabClient as onelab
 
 modelName = 'coin'
 
-oc.merge_file(modelName + '.geo')
+OL = onelab.client()
+print('\nStarting METAMODEL - Action = %s' %(OL.getString('python/Action')))
 
-print('Action=%s' %(oc.get_string('python/Action')))
+#name and default value are required
+A = OL.setNumber('A', 10)
+#other attributes are optionals
+#B = oc.def_number('Group/B', 0, min = -10, max = 10, step = 1)
 
-oc.sub_client('gmsh', 'gmsh ' + modelName + '.geo -2')
+OL.showGeometry(modelName + '.geo')
 
-oc.merge_file(modelName + '.msh')
+OL.run('gmsh', 'gmsh ' + modelName + '.geo -2')
 
-oc.sub_client('subclient', 'sub.py')
-print 'script is waiting until subclient is done'
-oc.wait_on_subclient('subclient');
+OL.mergeFile(modelName + '.msh')
 
-C = oc.def_number('Group/C', 2, choices = [0, 1, 2, 3], attributes={'Highlight':'Pink'})
-D = oc.def_number('Group/D', 2, labels = {0:'zero', 1:'un', 2:'deux', 3:'trois'}, attributes={'Highlight':'Blue'})
-#utf-8 are allowed everywhere (should be prefixed by 'u' in python 2,
-#not required in python 3)
-#Omega = oc.get_string(u'Ω', u'∫(∂φ/∂α)³dx', help=u'ask someone@universe.org',
+OL.run('subclient', 'sub.py')
+
+C = OL.setNumber('Group/C', 2, choices = [0, 1, 2, 3], attributes={'Highlight':'Pink'})
+D = OL.setNumber('Group/D', 2, labels = {0:'zero', 1:'un', 2:'deux', 3:'trois'}, attributes={'Highlight':'Blue'})
+
+#utf-8 are allowed everywhere
+#(should be prefixed by 'u' in python 2, not required in python 3)
+#Omega = OL.getString(u'Ω', u'∫(∂φ/∂α)³dx', help=u'ask someone@universe.org',
 #choices = ['oui', 'non', u'peut-être'])
 
-oc.convert_olfile(modelName + '.txt')
+OL.preProcess(modelName + '.txt.ol')
 
-
-if oc.action != 'compute' :
+if OL.action != 'compute' :
   exit(0)
