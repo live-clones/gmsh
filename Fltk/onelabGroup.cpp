@@ -159,8 +159,6 @@ bool gmshLocalNetworkClient::receiveMessage(int &type)
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
-  else if(false) 
-    std::cout << "Received header: " << type << " from " << getName() << std::endl;
 
   std::string message(length, ' ');
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
@@ -394,17 +392,12 @@ bool gmshLocalNetworkClient::run()
       break;
     }
 
-    // loop on all the clients (usually only one, but can be more if we spawned
-    // subclients; in that case we might want to start from the one after the
-    // one we read from last, for better load balancing)
+    // loop over all the clients (usually only one, but can be more if we
+    // spawned subclients) and check if data is available for one of them
     bool stop = false, haveData = false;
     gmshLocalNetworkClient *c = 0;
     for(int i = 0; i < getNumClients(); i++){
       c = getClient(i);
-
-      //std::cout << " client " << i << "/" << getNumClients() 
-      //          << " pid= " << c->getPid() << std::endl;
-
       if(c->getPid() < 0){
         if(c == this){ // the "master" client stopped
           stop = true;
@@ -435,14 +428,23 @@ bool gmshLocalNetworkClient::run()
         }
       }
     }
-    int type=0;
+
+    // break the while(1) if the master client has stopped or if we encountered
+    // a problem
     if(stop) break;
+
+    // if data is available try to get the message from the corresponding
+    // client; break the while(1) if we could not receive the message
+    int type = 0;
     if(haveData && !c->receiveMessage(type)) break;
+
+    // if the client is a subclient and it stopped, notify the master
     if((c != this) && (type == GmshSocket::GMSH_STOP)){
-      std::string reply =  c->getName();
+      std::string reply = c->getName();
       getGmshServer()->SendMessage(GmshSocket::GMSH_STOP, reply.size(), &reply[0]);
-      //onelab::server::instance()->unregisterClient(c);
     }
+
+    // break the while(1) if the master client has stopped
     if(c == this && c->getPid() < 0) break;
   }
 
@@ -459,6 +461,8 @@ bool gmshLocalNetworkClient::run()
       delete s;
     }
     if(c != this){
+      if(c->getPid() > 0)
+        Msg::Error("Subclient %s was not stopped correctly", c->getName().c_str());
       removeClient(c);
       delete c;
     }
