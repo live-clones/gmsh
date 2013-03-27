@@ -56,6 +56,7 @@ class Metric{
 
 class Node{
  private:
+  int layer;
   double h;
   Metric m;
   SPoint3 point;
@@ -65,9 +66,11 @@ class Node{
   Node();
   Node(SPoint3);
   ~Node();
+  void set_layer(int);
   void set_size(double);
   void set_metric(Metric);
   void set_point(SPoint3);
+  int get_layer();
   double get_size();
   Metric get_metric();
   SPoint3 get_point();
@@ -242,6 +245,10 @@ Node::Node(SPoint3 new_point){
 
 Node::~Node(){}
 
+void Node::set_layer(int new_layer){
+  layer = new_layer;
+}
+
 void Node::set_size(double new_h){
   h = new_h;
 }
@@ -252,6 +259,10 @@ void Node::set_metric(Metric new_m){
 
 void Node::set_point(SPoint3 new_point){
   point = new_point;
+}
+
+int Node::get_layer(){
+  return layer;
 }
 
 double Node::get_size(){
@@ -350,12 +361,15 @@ void Filler::treat_region(GRegion* gr){
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
+  GFace* gf;
   std::queue<Node*> fifo;
   std::vector<Node*> spawns;
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
   std::set<MVertex*> temp;
+  std::list<GFace*> faces;
   std::set<MVertex*>::iterator it;
+  std::list<GFace*>::iterator it2;
   RTree<Node*,double,3,double> rtree;
   
   Frame_field::init_region(gr);
@@ -366,7 +380,20 @@ void Filler::treat_region(GRegion* gr){
   boundary_vertices.clear();
   temp.clear();
   new_vertices.clear();
+  faces.clear();
 
+  /*faces = gr->faces();	
+  for(it2=faces.begin();it2!=faces.end();it2++){
+    gf = *it2;
+	for(i=0;i<gf->getNumMeshElements();i++){
+	  element = gf->getMeshElement(i);
+      for(j=0;j<element->getNumVertices();j++){
+	    vertex = element->getVertex(j);
+		temp.insert(vertex);
+	  }
+	}
+  }*/
+		
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
     for(j=0;j<element->getNumVertices();j++){
@@ -390,6 +417,7 @@ void Filler::treat_region(GRegion* gr){
     
     node = new Node(SPoint3(x,y,z));
     compute_parameters(node,gr);
+	node->set_layer(0);
     rtree.Insert(node->min,node->max,node);
     fifo.push(node);
     //print_node(node,file);
@@ -420,6 +448,7 @@ void Filler::treat_region(GRegion* gr){
 	  
 	  if(inside_domain(octree,x,y,z)){
 		compute_parameters(individual,gr);
+		individual->set_layer(parent->get_layer()+1);
 		if(far_from_boundary(octree,individual)){
 		  wrapper.set_ok(1);
 		  wrapper.set_individual(individual);
@@ -462,6 +491,7 @@ void Filler::treat_region(GRegion* gr){
   for(i=0;i<new_vertices.size();i++) delete new_vertices[i];
   new_vertices.clear();
   delete octree;
+  rtree.RemoveAll();
   Size_field::clear();
   Frame_field::clear();
 #endif
