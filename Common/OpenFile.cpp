@@ -543,7 +543,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
         PView::list[i]->getOptions()->visible = 0;
     }
   }
-  else if(n != PView::list.size()){
+  else if(n < PView::list.size()){
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(unsigned int i = 0; i < n; i++){
