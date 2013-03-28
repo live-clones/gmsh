@@ -27,6 +27,7 @@
 #include "meshGRegionMMG3D.h"
 #include "simple3D.h"
 #include "Levy3D.h"
+#include "directions3D.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -205,125 +206,6 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 
 }
 
-void skeletonFromVoronoi(GRegion *gr, std::set<SPoint3> &voronoiPoles)
-{
-  std::vector<MTetrahedron*> elements = gr->tetrahedra;
-  std::list<GFace*> allFaces = gr->faces();
-
-  std::set<SPoint3> candidates;
-  std::set<SPoint3> seeds;
-
-  printf("computing box and barycenters\n");
-  double Dmax = -1.0;
-  std::list<GFace*>::iterator itf =  allFaces.begin();
-  for(; itf != allFaces.end(); itf ++){
-    SBoundingBox3d bbox = (*itf)->bounds();
-    SVector3 dd(bbox.max(), bbox.min());
-    //if( (*itf)->tag()==5904 || (*itf)->tag()==5902  || (*itf)->tag()==5906) {
-    //if( (*itf)->tag()==6 || (*itf)->tag()==28){
-    if( (*itf)->tag() !=1 ) {
-      Dmax = std::max(Dmax,norm(dd));
-      seeds.insert(bbox.center());
-    }
-  }
-  printf("Dmax =%g \n", Dmax);
-
-  printf("printing skeleton nodes \n");
-  FILE *outfile;
-  outfile = fopen("skeletonNodes.pos", "w");
-  fprintf(outfile, "View \"skeleton nodes\" {\n");
-  for(unsigned int i = 0; i < elements.size(); i++){
-    MTetrahedron *ele = elements[i];
-    SPoint3 pc = ele->circumcenter();
-    double x[3] = {pc.x(), pc.y(), pc.z()};
-    double uvw[3];
-    ele->xyz2uvw(x, uvw);
-
-    std::set<SPoint3>::const_iterator it2 = voronoiPoles.find(pc);
-
-    if(ele->isInside(uvw[0], uvw[1], uvw[2]) &&
-       it2 != voronoiPoles.end()){
-      double radius =  ele->getCircumRadius();
-      if(radius > Dmax/10.) {
-      	candidates.insert(pc);
-	fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
-		pc.x(), pc.y(), pc.z(),  radius);
-      }
-   }
-  }
-  fprintf(outfile,"};\n");
-  fclose(outfile);
-
-  printf("Ann computation of neighbours and writing edges\n");
-
-#if defined(HAVE_ANN)
-  FILE *outfile2;
-  outfile2 = fopen("skeletonEdges.pos", "w");
-  fprintf(outfile2, "View \"skeleton edges\" {\n");
-
-  ANNkd_tree *_kdtree;
-  ANNpointArray _zeronodes;
-  ANNidxArray _index;
-  ANNdistArray _dist;
-
-  std::set<SPoint3>::iterator itseed = seeds.begin();
-  SPoint3 beginPt=*itseed;
-  seeds.erase(itseed);
-  itseed = seeds.begin();
-  for(; itseed != seeds.end(); itseed++){
-    printf("seed =%g %g %g \n", (*itseed).x(), (*itseed).y(), (*itseed).z());
-    candidates.insert(*itseed);
-  }
-  printf("begin seed =%g %g %g \n", beginPt.x(), beginPt.y(), beginPt.z());
-
-  double color = 1.;
-  while(candidates.size()>0){
-
-  _zeronodes = annAllocPts(candidates.size(), 3);
-  std::set<SPoint3>::iterator itset = candidates.begin();
-  int i=0;
-  for(; itset != candidates.end(); itset++){
-    _zeronodes[i][0] = (*itset).x();
-    _zeronodes[i][1] = (*itset).y();
-    _zeronodes[i][2] = (*itset).z();
-    i++;
-  }
-  _kdtree = new ANNkd_tree(_zeronodes, candidates.size(), 3);
-  _index = new ANNidx[1];
-  _dist = new ANNdist[1];
-
-  double xyz[3] = {beginPt.x(), beginPt.y(), beginPt.z()};
-  _kdtree->annkSearch(xyz, 1, _index, _dist);
-  SPoint3 endPt( _zeronodes[_index[0]][0], _zeronodes[_index[0]][1], _zeronodes[_index[0]][2]);
-  fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-	  beginPt.x(), beginPt.y(), beginPt.z(),
-	  endPt.x(), endPt.y(), endPt.z(),
-	  color, color);
-
-   std::set<SPoint3>::iterator itse=seeds.find(endPt);
-   std::set<SPoint3>::iterator its=candidates.find(endPt);
-   if(itse != seeds.end()){
-     printf("found seed =%g %g %g \n", endPt.x(), endPt.y(), endPt.z());
-     seeds.erase(itse);
-     beginPt = *(seeds.begin());
-     std::set<SPoint3>::iterator itsee=candidates.find(beginPt);
-     if (itsee != candidates.end()) candidates.erase(itsee);
-     color=color*2.;
-   }
-   else   beginPt=endPt;
-
-   if(its != candidates.end()) candidates.erase(its);
-
-  delete _kdtree;
-  annDeallocPts(_zeronodes);
-  delete [] _index;
-  delete [] _dist;
-  }
-
-  fprintf(outfile2,"};\n");
-  fclose(outfile2);
-#endif
-}
 
 void getBoundingInfoAndSplitQuads(GRegion *gr,
                                   std::map<MFace,GEntity*,Less_Face> &allBoundingFaces,
@@ -734,14 +616,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  // EMI Voronoi for centerlines
-  if (Msg::GetVerbosity() == 20) {
-    std::set<SPoint3> candidates;
-    printVoronoi(gr, candidates);
-    skeletonFromVoronoi(gr, candidates);
-  }
-
   modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
+
 
   // now do insertion of points
  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
@@ -755,6 +631,24 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
    if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
      insertVerticesInRegion(gr);
    }
+
+  // //emi test frame field
+  // int NumSmooth = 10;//CTX::instance()->mesh.smoothCrossField
+  // std::cout << "NumSmooth = " << NumSmooth << std::endl;
+  // if(NumSmooth && (gr->dim() == 3)){
+  //   double scale = gr->bounds().diag()*1e-2;
+  //   Frame_field::initRegion(gr,NumSmooth);
+  //   Frame_field::saveCrossField("cross0.pos",scale);
+  //   Frame_field::smoothRegion(gr,NumSmooth);
+  //   Frame_field::saveCrossField("cross1.pos",scale);
+  //   GFace *gf = GModel::current()->getFaceByTag(2);
+  //   Frame_field::continuousCrossField(gr,gf);
+  //   Frame_field::saveCrossField("cross2.pos",scale);
+  // }
+  // Frame_field::init_region(gr);
+  // Frame_field::clear();
+  // exit(1);
+  // //fin test emi
 
  if (sqr.buildPyramids (gr->model())){
    // relocate vertices if pyramids

@@ -12,8 +12,6 @@
 #include <ostream>
 using std::ostream;
 
-#include "Matrix.h"
-
 
 /* Defined in SVector3.h */
 /* double angle(const SVector3 v, const SVector3 w) { */
@@ -112,8 +110,8 @@ public:
     b = (crossprod(a,Ex).norm() < 1e-2) ? Ey : Ex;
     scnd = crossprod(crossprod(frst, b), frst).unit();
   }
-  cross3D(const Matrix &x){
-    Matrix m = x;
+  cross3D(const STensor3 &x){
+    STensor3 m = x;
     SVector3 a(m.get_m11(), m.get_m21(), m.get_m31());
     SVector3 b(m.get_m12(), m.get_m22(), m.get_m32());
     frst = a.unit();
@@ -318,8 +316,8 @@ Qtn cross3D::rotationToOnSurf(const cross3D &y) const{
   return R2;
 }
 
-Matrix convert(const cross3D x){
-  Matrix m;
+STensor3 convert(const cross3D x){
+  STensor3 m;
   SVector3 v; 
   v = x.getFrst() ; m.set_m11(v[0]); m.set_m21(v[1]); m.set_m31(v[2]);
   v = x.getScnd() ; m.set_m12(v[0]); m.set_m22(v[1]); m.set_m32(v[2]);

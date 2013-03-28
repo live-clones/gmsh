@@ -500,7 +500,7 @@ void Filler::treat_region(GRegion* gr){
 
 Metric Filler::get_metric(double x,double y,double z){
   Metric m;
-  Matrix m2;
+  STensor3 m2;
   if(CTX::instance()->mesh.smoothCrossField){
     m2 = Frame_field::findCross(x,y,z);
   }

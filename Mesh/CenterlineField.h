@@ -121,6 +121,9 @@ class Centerline : public Field{
   //anisotropic operator
   void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
 
+  void computeCrossField(double x,double y,double z,
+			 SVector3 &d1, SVector3 &d2,  SVector3 &d3);
+
   //import the 1D mesh of the centerlines (in vtk format)
   //and fill the vector of lines
   void importFile(std::string fileName);

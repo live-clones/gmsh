@@ -874,9 +874,7 @@ double LpCVT::get_size(double x,double y,double z){
 
 Tensor LpCVT::get_tensor(double x,double y,double z){
   Tensor t;
-  Matrix m;
-
-  m = Frame_field::search(x,y,z);
+  STensor3 m = Frame_field::search(x,y,z);
 
   t.set_t11(m.get_m11());
   t.set_t21(m.get_m12());

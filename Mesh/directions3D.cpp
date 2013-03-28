@@ -20,6 +20,8 @@
 #include "linearSystemFull.h"
 #endif
 
+
+
 /****************class Frame_field****************/
 
 Frame_field::Frame_field(){}
@@ -31,7 +33,7 @@ void Frame_field::init_region(GRegion* gr){
   MVertex* vertex;
   GFace* gf;
   std::list<GFace*> faces;
-  Matrix m;
+  STensor3 m(1.0);
 
   Nearest_point::init_region(gr);	
 	
@@ -48,13 +50,13 @@ void Frame_field::init_region(GRegion* gr){
   duplicate = annAllocPts(temp.size(),3);
 
   index = 0;
-  for(std::map<MVertex*,Matrix>::iterator it=temp.begin(); it != temp.end(); it++){
+  for(std::map<MVertex*,STensor3>::iterator it=temp.begin(); it != temp.end(); it++){
     vertex = it->first;
     m = it->second;
     duplicate[index][0] = vertex->x();
     duplicate[index][1] = vertex->y();
     duplicate[index][2] = vertex->z();
-    field.push_back(std::pair<MVertex*,Matrix>(vertex,m));
+    field.push_back(std::pair<MVertex*,STensor3>(vertex,m));
     index++;
   }
 
@@ -63,7 +65,7 @@ void Frame_field::init_region(GRegion* gr){
 }
 
 void Frame_field::init_face(GFace* gf){
-  // Fills the auxiliary std::map "temp" with a pair <vertex, Matrix>
+  // Fills the auxiliary std::map "temp" with a pair <vertex, STensor3>
   // for each vertex of the face gf. 
   unsigned int i;
   int j;
@@ -74,7 +76,7 @@ void Frame_field::init_face(GFace* gf){
   MVertex* vertex;
   MElement* element;
   MElementOctree* octree;
-  Matrix m;
+  STensor3 m(1.0);
 
   backgroundMesh::set(gf);
   octree = backgroundMesh::current()->get_octree();
@@ -102,7 +104,7 @@ void Frame_field::init_face(GFace* gf){
 	    ok = translate(gf,octree,vertex,SPoint2(average_x,average_y),v1,v2);
 	  }
 	  else{
-        ok = improved_translate(gf,vertex,v1,v2);
+	    ok = improved_translate(gf,vertex,v1,v2);
 	  }
       
       if(ok){
@@ -119,7 +121,7 @@ void Frame_field::init_face(GFace* gf){
 	m.set_m13(v3.x());
 	m.set_m23(v3.y());
 	m.set_m33(v3.z());
-	temp.insert(std::pair<MVertex*,Matrix>(vertex,m));
+	temp.insert(std::pair<MVertex*,STensor3>(vertex,m));
       }
     }
   }
@@ -212,7 +214,7 @@ bool Frame_field::improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVec
   return 1;
 }
 
-Matrix Frame_field::search(double x,double y,double z){
+STensor3 Frame_field::search(double x,double y,double z){
   // Determines the frame/cross at location (x,y,z)
   int index=0;
 #if defined(HAVE_ANN)
@@ -239,7 +241,7 @@ Matrix Frame_field::search(double x,double y,double z){
   return field[index].second;
 }
 
-Matrix Frame_field::combine(double x,double y,double z){
+STensor3 Frame_field::combine(double x,double y,double z){
   // Determines the frame/cross at location (x,y,z)
   // Alternative to Frame_field::search
   bool ok;
@@ -247,7 +249,7 @@ Matrix Frame_field::combine(double x,double y,double z){
   SVector3 vec,other;
   SVector3 vec1,vec2,vec3;
   SVector3 final1,final2;
-  Matrix m,m2;
+  STensor3 m(1.0),m2(1.0);
 	
   m = search(x,y,z);
   m2 = m;
@@ -323,8 +325,8 @@ void Frame_field::print_field1(){
   SPoint3 p;
   SPoint3 p1,p2,p3,p4,p5,p6;
   MVertex* vertex;
-  std::map<MVertex*,Matrix>::iterator it;
-  Matrix m;
+  std::map<MVertex*,STensor3>::iterator it;
+  STensor3 m(1.0);
 
   k = 0.05;
   std::ofstream file("frame1.pos");
@@ -373,7 +375,7 @@ void Frame_field::print_field2(GRegion* gr){
   SPoint3 p1,p2,p3,p4,p5,p6;
   MVertex* vertex;
   MElement* element;
-  Matrix m;
+  STensor3 m(1.0);
 
   k = 0.05;
   std::ofstream file("frame2.pos");
@@ -456,7 +458,7 @@ int Frame_field::build_vertex_to_vertices(GEntity* gr, int onWhat, bool initiali
     unsigned int n = pElem->getNumVertices();
     for(unsigned int j=0; j<n; j++){
       MVertex* pVertex = pElem->getVertex(j);
-      if(pVertex->onWhat()->dim() != onWhat) continue;
+      if(onWhat >0 && pVertex->onWhat()->dim() != onWhat) continue;
 
       std::map<MVertex*,std::set<MVertex*> >::iterator it = vertex_to_vertices.find(pVertex);
       if(it != vertex_to_vertices.end()){
@@ -581,10 +583,10 @@ void Frame_field::initFace(GFace* gf){
       Area += crossprod(V2-V0,V1-V0);
     }
     Area.normalize(); // average normal over neighbour face elements
-    Matrix m = convert(cross3D(Area));
-    std::map<MVertex*, Matrix>::iterator iter = crossField.find(it->first);
+    STensor3 m = convert(cross3D(Area));
+    std::map<MVertex*, STensor3>::iterator iter = crossField.find(it->first);
     if(iter == crossField.end())
-      crossField.insert(std::pair<MVertex*, Matrix>(it->first,m));
+      crossField.insert(std::pair<MVertex*, STensor3>(it->first,m));
     else
       crossField[it->first] = m;
   }
@@ -594,8 +596,24 @@ void Frame_field::initFace(GFace* gf){
   // compute cumulative cross-data vertices x elements for the whole contour of gf
   std::list<GEdge*> edges = gf->edges();
   vertex_to_elements.clear();
-  for( std::list<GEdge*>::const_iterator it=edges.begin(); it!=edges.end(); it++)
+  //Replace edges by their compounds
+   std::set<GEdge*> mySet;
+   std::list<GEdge*>::iterator it = edges.begin();
+   while(it != edges.end()){
+    if((*it)->getCompound()){
+      GEdge *gec = (GEdge*)(*it)->getCompound();
+      mySet.insert(gec);
+    }
+    else{
+      mySet.insert(*it);
+    }
+    ++it;
+   }
+   edges.clear();
+   edges.insert(edges.begin(), mySet.begin(), mySet.end());
+  for( std::list<GEdge*>::const_iterator it=edges.begin(); it!=edges.end(); it++){
     build_vertex_to_elements(*it,false);
+  }
 
   // align crosses of the contour of "gf" with the tangent to the contour
   for(std::map<MVertex*, std::set<MElement*> >::const_iterator it
@@ -611,13 +629,13 @@ void Frame_field::initFace(GFace* gf){
     SVector3 tangent = edg1.scaledTangent() + edg2.scaledTangent();
     tangent.normalize();
 
-    std::map<MVertex*, Matrix>::iterator iter = crossField.find(pVertex);
+    std::map<MVertex*, STensor3>::iterator iter = crossField.find(pVertex);
     if(iter == crossField.end()) {
       std::cout << "This should not happen: cross not found 1" << std::endl; 
       exit(1);
     }
     cross3D x(cross3D((*iter).second));
-    Matrix m = convert(cross3D(x.getFrst(), tangent));
+    STensor3 m = convert(cross3D(x.getFrst(), tangent));
     crossField[pVertex] = m;
   }
 
@@ -642,7 +660,7 @@ void Frame_field::initFace(GFace* gf){
     MVertex* pVertex0 = it->first;
     if(pVertex0->onWhat()->dim() != 2) continue;
 
-    std::map<MVertex*, Matrix>::iterator iter = crossField.find(pVertex0);
+    std::map<MVertex*, STensor3>::iterator iter = crossField.find(pVertex0);
     cross3D y;
     if(iter == crossField.end()){
       std::cout << "This should not happen: cross not found 2" << std::endl;
@@ -663,9 +681,9 @@ void Frame_field::initFace(GFace* gf){
     }
     cross3D x = cross3D((*iter).second); //nearest cross on contour, x.getFrst() is the normal
 
-    //Matrix m = convert(cross3D(x.getFrst(),y.getScnd()));
+    //STensor3 m = convert(cross3D(x.getFrst(),y.getScnd()));
     SVector3 v1 = y.getFrst();
-    Matrix m = convert( y.rotate(conj(x.rotationToOnSurf(y)))); //rotation around the normal
+    STensor3 m = convert( y.rotate(conj(x.rotationToOnSurf(y)))); //rotation around the normal
     SVector3 v2 = y.getFrst();
     if(fabs(angle(v1,v2)) > 1e-8){
       std::cout << "This should not happen: rotation affected the normal" << std::endl; 
@@ -694,22 +712,22 @@ void Frame_field::initRegion(GRegion* gr, int n){
     // Find the index of the nearest cross on the contour, using annTree
     int index = findAnnIndex(pVertex0->point());
     MVertex* pVertex = listVertices[index];
-    Matrix m = crossField[pVertex];
-    crossField.insert(std::pair<MVertex*, Matrix>(pVertex0,m));
+    STensor3 m = crossField[pVertex];
+    crossField.insert(std::pair<MVertex*, STensor3>(pVertex0,m));
   }
   deleteAnnData();
   buildAnnData(gr,3);
 }
 
-Matrix Frame_field::findCross(double x, double y, double z){
+STensor3 Frame_field::findCross(double x, double y, double z){
   int index = Frame_field::findAnnIndex(SPoint3(x,y,z));
   MVertex* pVertex = Frame_field::listVertices[index];
   return crossField[pVertex];
 }
 
-double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, Matrix &m0){
+double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, STensor3 &m0){
   double theta, gradient, energy;
-  Matrix m;
+  STensor3 m;
   SVector3 axis;
   bool debug = false;
 
@@ -726,7 +744,7 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
     MVertex *pVertex = *it;
     if(pVertex->getNum() == pVertex0->getNum()) 
       std::cout << "This should not happen!" << std::endl;
-    std::map<MVertex*, Matrix>::const_iterator itB = crossField.find(pVertex);
+    std::map<MVertex*, STensor3>::const_iterator itB = crossField.find(pVertex);
     if(itB == crossField.end()){ // not found
       std::cout << "This should not happen: cross not found 4" << std::endl; exit(1);
     }
@@ -785,7 +803,7 @@ double Frame_field::smoothRegion(GRegion *gr, int n){
 }
 
 double Frame_field::smooth(){
-  Matrix m, m0;
+  STensor3 m(1.0), m0(1.0);
   double enew, eold;
 
   double energy = 0;
@@ -794,7 +812,7 @@ double Frame_field::smooth(){
 
     //MVertex* pVertex0 = iter->first;
     SVector3 T(0, 0, 0);
-    std::map<MVertex*, Matrix>::iterator itA = crossField.find(iter->first);
+    std::map<MVertex*, STensor3>::iterator itA = crossField.find(iter->first);
     if(itA == crossField.end()){
       std::cout << "This should not happen" << std::endl; exit(1);
     }
@@ -814,7 +832,7 @@ double Frame_field::smooth(){
   return energy;
 }
 
-void Frame_field::save(const std::vector<std::pair<SPoint3, Matrix> > data, 
+void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > data, 
 		       const std::string& filename){
   const cross3D origin(SVector3(1,0,0), SVector3(0,1,0));
   SPoint3 p1;
@@ -823,7 +841,7 @@ void Frame_field::save(const std::vector<std::pair<SPoint3, Matrix> > data,
   file << "View \"cross field\" {\n";
   for(unsigned int i=0; i<data.size(); i++){
     SPoint3 p = data[i].first;
-    Matrix m = data[i].second;
+    STensor3 m = data[i].second;
     double val1 = eulerAngleFromQtn(cross3D(m).rotationTo(origin)), val2=val1;
     p1 = SPoint3(p.x() + k*m.get_m11(),
 		 p.y() + k*m.get_m21(),
@@ -854,25 +872,133 @@ void Frame_field::save(const std::vector<std::pair<SPoint3, Matrix> > data,
   file.close();
 }
 
+void Frame_field::recur_connect_vert(MVertex *v,
+				     STensor3 &cross,
+				     std::multimap<MVertex*,MVertex*> &v2v,
+				     std::set<MVertex*> &touched){
+
+  if (touched.find(v) != touched.end()) return;
+  touched.insert(v);
+  //std::map<MVertex*, STensor3>::iterator iterv = crossField.find(v);
+  //STensor3 cross = iterv->second;
+
+  for (std::multimap <MVertex*,MVertex*>::iterator it = v2v.lower_bound(v);
+       it != v2v.upper_bound(v) ; ++it){
+    MVertex *nextV = it->second;
+
+    //change orientation 
+    ///------------------
+    printf("*********************** Changing orientation \n");
+
+    //compute dot product (N0,R0,A0)^T dot (Ni,Ri,Ai)
+    //where N,R,A are the normal, radial and axial direction s
+    std::map<MVertex*, STensor3>::iterator iter = crossField.find(nextV);
+    STensor3 nextCross = iter->second;
+    STensor3 crossT = cross.transpose();
+    STensor3 prod = crossT.operator*=(nextCross);
+    cross.print("cross ");
+    nextCross.print("nextCross ");
+    prod.print("product");
+    fullMatrix<double> mat(3,3); prod.getMat(mat);
+  
+    //find biggest dot product
+    fullVector<int> Id(3);
+    for (int i = 0; i < 3; i++){
+      double maxVal = 0.0;
+      for (int j = 0; j < 3; j++){
+	double val = fabs(mat(i,j));
+	if( val > maxVal ){
+	  maxVal  = val;
+	  Id(i) = j;
+	}
+      }
+    }
+  
+    if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
+      std::cout << "This should not happen: sum should be 0+1+2" << std::endl; 
+      printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
+      //exit(1); 
+      return;
+    }
+
+    //create new cross
+    fullMatrix<double> newmat(3,3); 
+    for (int i = 0; i < 3; i++){
+     for (int j = 0; j < 3; j++){
+       newmat(i,j) = nextCross(Id(j),i);
+     }
+    }
+ 
+    STensor3 newcross; 
+    newcross.setMat(newmat);
+    crossField[iter->first] = newcross;
+    newcross.print("newcross");  
+
+    //continue recursion
+    recur_connect_vert (nextV, newcross, v2v,touched); 
+  }
+
+}
+void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
+ 
+  printf("continuous cross field \n");
+  
+  //start from a vertex of a face
+  std::list<GFace*> faces = gr->faces();	
+  bool foundFace = false;
+  for(std::list<GFace*>::const_iterator iter=faces.begin(); iter!=faces.end(); iter++){
+    if (*iter == gf){
+      foundFace = true;
+      break;
+    }
+  }
+  if (!foundFace){
+    std::cout << "This should not happen: face does not belong to region" << std::endl; 
+    exit(1);
+  }
+
+  //build connectivity
+  build_vertex_to_vertices(gr, -1, true);
+  std::multimap<MVertex*,MVertex*> v2v;
+  for(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter 
+  	= vertex_to_vertices.begin(); iter != vertex_to_vertices.end(); ++iter){
+    MVertex *v = iter->first;
+    std::set<MVertex*> mySet  = iter->second;
+    for (std::set<MVertex*>::iterator it = mySet.begin(); it!=mySet.end(); ++it){
+      v2v.insert(std::make_pair(v,*it));
+    }
+  }
+
+  //recursive loop
+  MVertex *beginV = gf->getMeshVertex(0);
+  std::set<MVertex*> touched;
+  std::map<MVertex*, STensor3>::iterator iter = crossField.find(beginV);
+  STensor3 bCross = iter->second;
+  recur_connect_vert (beginV,bCross,v2v,touched);
+ 
+}
+
 void Frame_field::saveCrossField(const std::string& filename, double scale, bool full){
   const cross3D origin(SVector3(1,0,0), SVector3(0,1,0));
   SPoint3 p1;
   double k = scale;
   std::ofstream file(filename.c_str());
   file << "View \"cross field\" {\n";
-  for(std::map<MVertex*, Matrix>::const_iterator it = crossField.begin(); 
+  for(std::map<MVertex*, STensor3>::const_iterator it = crossField.begin(); 
       it != crossField.end(); it++){
     SPoint3 p = it->first->point();
-    Matrix m = it->second;
+    STensor3 m = it->second;
     double val1 = eulerAngleFromQtn(cross3D(m).rotationTo(origin))*180./M_PI, val2=val1;
+    //double val1=1.0, val2=1.0;
     p1 = SPoint3(p.x() + k*m.get_m11(),
 		 p.y() + k*m.get_m21(),
-		 p.z() + k*m.get_m31());
+		 p.z() + k*m.get_m31()); 
     print_segment(p,p1,val1,val2,file);
     p1 = SPoint3(p.x() - k*m.get_m11(),
 		 p.y() - k*m.get_m21(),
 		 p.z() - k*m.get_m31());
     if(full) print_segment(p,p1,val1,val2,file);
+    //val1=2.0; val2=2.0;
     p1 = SPoint3(p.x() + k*m.get_m12(),
 		 p.y() + k*m.get_m22(),
 		 p.z() + k*m.get_m32());
@@ -881,6 +1007,7 @@ void Frame_field::saveCrossField(const std::string& filename, double scale, bool
 		 p.y() - k*m.get_m22(),
 		 p.z() - k*m.get_m32());
     if(full) print_segment(p,p1,val1,val2,file);
+    //val1=3.0; val2=3.0;
     p1 = SPoint3(p.x() + k*m.get_m13(),
 		 p.y() + k*m.get_m23(),
 		 p.z() + k*m.get_m33());
@@ -1563,9 +1690,9 @@ void Nearest_point::clear(){
 
 /****************static declarations****************/
 
-std::map<MVertex*,Matrix> Frame_field::temp;
-std::vector<std::pair<MVertex*,Matrix> > Frame_field::field;
-std::map<MVertex*, Matrix> Frame_field::crossField;
+std::map<MVertex*,STensor3> Frame_field::temp;
+std::vector<std::pair<MVertex*,STensor3> > Frame_field::field;
+std::map<MVertex*, STensor3> Frame_field::crossField;
 std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
 std::map<MVertex*,std::set<MVertex*> > Frame_field::vertex_to_vertices;
 std::map<MVertex*,std::set<MElement*> > Frame_field::vertex_to_elements;

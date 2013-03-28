@@ -39,6 +39,8 @@
 #include "Curvature.h"
 #include "MElement.h"
 #include "Context.h"
+#include "directions3D.h"
+#include "meshGRegion.h"
 
 #if defined(HAVE_ANN)
 #include <ANN/ANN.h>
@@ -769,7 +771,7 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
   SVector3 pc(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
   SVector3 nc = ps-pc;
   if (dot(ne,nc) < 0) dir = 1;
-  if (dir ==1 && hLayer > 0 ) hLayer *= -1.0;
+  if (dir == 1 && hLayer > 0 ) hLayer *= -1.0;
 
   //int shift = 0;
   //if(is_cut) shift = NE;
@@ -791,7 +793,7 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
     //if double extruded layer
     if (nbElemSecondLayer > 0){
       std::vector<GEntity*> extrudedESec = current->extrudeBoundaryLayer
-      	(gfc, nbElemSecondLayer,  hSecondLayer, dir ? 0 : 1, -5);
+      	(eFace, nbElemSecondLayer,  hSecondLayer, dir, -5);
       GFace *eFaceSec = (GFace*) extrudedESec[0];
       eFaceSec->addPhysicalEntity(9);                    //tag 9
       current->setPhysicalName("outerSecondWall", 2, 9);//dim 2 tag 9
@@ -799,6 +801,7 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
       eRegionSec->addPhysicalEntity(10);             //tag 10
       current->setPhysicalName("wallVolume", 3, 10);//dim 3 tag 10
     }
+    //end double extrusion 
 
     for (unsigned int j = 2; j < extrudedE.size(); j++){
       GFace *elFace = (GFace*) extrudedE[j];
@@ -1147,6 +1150,12 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    SVector3 dir_a = p1-p0; dir_a.normalize();
    SVector3 dir_n(xyz[0]-p0.x(), xyz[1]-p0.y(), xyz[2]-p0.z()); dir_n.normalize();
    SVector3 dir_cross  = crossprod(dir_a,dir_n); dir_cross.normalize();
+   // if (ge->dim()==3){
+   //   printf("coucou dim ==3 !!!!!!!!!!!!!!! \n");
+   //   SVector3 d1,d2,d3;
+   //   computeCrossField(x,y,z,d1,d2,d3);
+   //   exit(1);
+   // }
 
    //find discrete curvature at closest vertex
    Curvature& curvature = Curvature::getInstance();
@@ -1237,6 +1246,20 @@ SMetric3 Centerline::metricBasedOnSurfaceCurvature(SVector3 dirMin, SVector3 dir
   SMetric3 curvMetric (1./(h_t1*h_t1),1./(h_t2*h_t2),1./(h_n*h_n), dirMin, dirMax, dirNorm);
 
   return curvMetric;
+}
+
+void Centerline::computeCrossField(double x,double y,double z,
+				   SVector3 &d1, SVector3 &d2,  SVector3 &d3)
+{
+
+  //Le code suivant permet d'obtenir les trois vecteurs orthogonaux en un point.
+  // int NumSmooth = 10;//CTX::instance()->mesh.smoothCrossField
+  // Matrix m2;
+  // if(NumSmooth)
+  //   m2 = Frame_field::findCross(x,y,z);
+  // else
+  //   m2 = Frame_field::search(x,y,z);
+  
 }
 
 void Centerline::printSplit() const

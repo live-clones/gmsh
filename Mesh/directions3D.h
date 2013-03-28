@@ -16,18 +16,18 @@
 #include <ANN/ANN.h>
 #endif
 #include "yamakawa.h"
-#include "Matrix.h"
+#include "STensor3.h"
 
 struct lowerThan {
-  bool operator() (const std::pair<int, Matrix>& lhs, const std::pair<int, Matrix>& rhs) const
+  bool operator() (const std::pair<int, STensor3>& lhs, const std::pair<int, STensor3>& rhs) const
   {return lhs.first < rhs.first;}
 };
 
 class Frame_field{
  private:
-  static std::map<MVertex*, Matrix> temp;
-  static std::vector<std::pair<MVertex*, Matrix> > field;
-  static std::map<MVertex*, Matrix> crossField;
+  static std::map<MVertex*, STensor3> temp;
+  static std::vector<std::pair<MVertex*, STensor3> > field;
+  static std::map<MVertex*, STensor3> crossField;
   static std::map<MEdge, double, Less_Edge> crossDist;
   static std::vector<MVertex*> listVertices;
 #if defined(HAVE_ANN)
@@ -42,8 +42,8 @@ class Frame_field{
   static void init_face(GFace*);
   static bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
   static bool improved_translate(GFace*,MVertex*,SVector3&,SVector3&);
-  static Matrix search(double,double,double);
-  static Matrix combine(double,double,double);
+  static STensor3 search(double,double,double);
+  static STensor3 combine(double,double,double);
   static bool inside_domain(MElementOctree*,double,double);
   static double get_ratio(GFace*,SPoint2);
   static void print_field1();
@@ -57,16 +57,18 @@ class Frame_field{
   static int buildAnnData(GEntity* ge, int dim);
   static void deleteAnnData();
   static int findAnnIndex(SPoint3 p);
-  static Matrix findCross(double x, double y, double z);
+  static STensor3 findCross(double x, double y, double z);
   static void initFace(GFace* gf);
   static void initRegion(GRegion* gr, int n);
   static double smoothFace(GFace *gf, int n);
   static double smoothRegion(GRegion *gr, int n);
   static double smooth();
-  static double findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, Matrix &m0);
-  static void save(const std::vector<std::pair<SPoint3, Matrix> > data, 
+  static double findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, STensor3 &m0);
+  static void save(const std::vector<std::pair<SPoint3, STensor3> > data, 
 		   const std::string& filename);
   static void saveCrossField(const std::string& filename, double scale, bool full=true);
+  static void continuousCrossField(GRegion *gr, GFace *gf);
+  static void recur_connect_vert(MVertex *v,STensor3 &cross, std::multimap<MVertex*,MVertex*> &v2v,  std::set<MVertex*> &touched);
   static void save_energy(GRegion* gr, const std::string& filename);
   static void save_dist(const std::string& filename);
   static void checkAnnData(GEntity* ge, const std::string& filename);

@@ -1,3 +1,4 @@
+Mesh.LcIntegrationPrecision = 1.e-2;
 lc = .033 ;
 lc2 = 2.2 ;
 lc3 = .033 ;
@@ -223,21 +224,19 @@ Line(8) = {1003,1000};
 Line Loop(9) = {6,7,8,5};
 Line Loop(10) = {2,3,4,1};
 Plane Surface(11) = {9,10};
-
-//Physical Surface(11)={11};
-//Point(9999) = {0.6,0,0,1};
+//Recombine Surface {11};
 
 Field[2] = BoundaryLayer;
 //Field[2].NodesList = {1};
 //Field[2].EdgesList = {1,2,3,4};
 Field[2].EdgesList = {1,2,3,4};
 Field[2].hfar = 1.5;
-Field[2].hwall_n = 0.001;
+Field[2].hwall_n = 0.0008;
 Field[2].hwall_t = 0.01;
-Field[2].ratio = 1.3;
+Field[2].ratio = 1.2;
 Field[2].thickness = .03;
 Field[2].IntersectMetrics = 1;
-//Background Field = 2;
+Background Field = 2;
 
 Field[1] = Box;
 Field[1].VIn = 0.01;
@@ -251,6 +250,6 @@ Field[1].ZMin = -1;
 
 Field[3] = MinAniso;
 Field[3].FieldsList = {1, 2};
-Background Field = 2;
-//BoundaryLayer Field = 2;
-//Recombine Surface {11};
+//Background Field = 2;
+BoundaryLayer Field = 2;
+
