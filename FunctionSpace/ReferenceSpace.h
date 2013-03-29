@@ -25,7 +25,7 @@ class ReferenceSpace{
     unsigned int  number;   // Number of Next Choise
     unsigned int* possible; // Possible  Next Choise
     node_s*       next;     // Next           Choise
-  
+
     unsigned int  leafId;   // If leaf: this leaf number
                             //     (from 0 to nLeaf - 1)
                             // Else: no meaning
@@ -57,12 +57,12 @@ class ReferenceSpace{
   virtual ~ReferenceSpace(void);
 
   unsigned int getNPermutation(void) const;
-  
+
   unsigned int getPermutation(const MElement& element) const;
 
   std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllEdge(void) const;
-  
+
   std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllFace(void) const ;
 
@@ -76,24 +76,24 @@ class ReferenceSpace{
   void init(void);
   void populate(node* pTreeRoot);
   void destroy(node* node);
-  
+
   void getEdge(void);
   void getFace(void);
 
-  const std::vector<unsigned int>* inOrder(unsigned int permutation, 
-					   unsigned int a, 
+  const std::vector<unsigned int>* inOrder(unsigned int permutation,
+					   unsigned int a,
 					   unsigned int b);
 
-  const std::vector<unsigned int>* inOrder(unsigned int permutation, 
-					   unsigned int a, 
+  const std::vector<unsigned int>* inOrder(unsigned int permutation,
+					   unsigned int a,
 					   unsigned int b,
 					   unsigned int c);
 
-  static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a, 
+  static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a,
 			    const std::pair<unsigned int, MVertex*>& b);
 
   static unsigned int treeLookup(const node* root,
-				 std::vector<std::pair<unsigned int, MVertex*> >& 
+				 std::vector<std::pair<unsigned int, MVertex*> >&
 				 sortedArray);
 
   std::string toString(const node* node) const;
@@ -110,7 +110,7 @@ class ReferenceSpace{
    @fn ReferenceSpace::~ReferenceSpace
    Deletes this ReferenceSpace
    **
-   
+
    @fn ReferenceSpace::getNPermutation
    @returns Returns the number of permutation of this
    ReferenceSpace
@@ -118,35 +118,35 @@ class ReferenceSpace{
 
    @fn ReferenceSpace::getPermutation
    @param element A MElement
-   @returns Returns the a natural number defining 
+   @returns Returns the a natural number defining
    the permutation of the given element
-   
+
    @note If no permutation is found (e.g. the given
-   element does not belong the @em same @em geometrical 
+   element does not belong the @em same @em geometrical
    entity as this ReferenceSpace) an Exception is thrown
    **
 
    @fn ReferenceSpace::getAllEdge
    @return Returns every Edge permutation of this ReferenceSpace
-   
+
    @note
-   @li The fisrt vector represents a particular permutation 
+   @li The fisrt vector represents a particular permutation
    (see ReferenceSpace::getPermutation())
-   @li The second vector represents a particular edge 
-   (for a given permutation) 
-   @li The last vector represents the Vertex @c IDs of 
+   @li The second vector represents a particular edge
+   (for a given permutation)
+   @li The last vector represents the Vertex @c IDs of
    the given edge (in the @em geometrical reference space)
    **
 
    @fn ReferenceSpace::getAllFace
    @return Returns every Face permutation of this ReferenceSpace
-   
+
    @note
-   @li The fisrt vector represents a particular permutation 
+   @li The fisrt vector represents a particular permutation
    (see ReferenceSpace::getPermutation())
-   @li The second vector represents a particular face 
-   (for a given permutation) 
-   @li The last vector represents the Vertex @c IDs of 
+   @li The second vector represents a particular face
+   (for a given permutation)
+   @li The last vector represents the Vertex @c IDs of
    the given face (in the @em geometrical reference space)
    **
 
@@ -155,21 +155,21 @@ class ReferenceSpace{
    **
 
    @fn ReferenceSpace::toLatex
-   @return Returns a string (of a Latex file) 
-   describing this ReferenceSpace   
+   @return Returns a string (of a Latex file)
+   describing this ReferenceSpace
  */
 
 //////////////////////
 // Inline Functions //
 //////////////////////
 
-inline 
-unsigned int 
+inline
+unsigned int
 ReferenceSpace::getNPermutation(void) const{
   return nPerm;
 }
-  
-inline 
+
+inline
 std::vector<const std::vector<const std::vector<unsigned int>*>*>&
 ReferenceSpace::getAllEdge(void) const{
   return *edge;
@@ -181,9 +181,9 @@ ReferenceSpace::getAllFace(void) const{
   return *face;
 }
 
-inline 
-bool 
-ReferenceSpace::sortPredicate(const std::pair<unsigned int, MVertex*>& a, 
+inline
+bool
+ReferenceSpace::sortPredicate(const std::pair<unsigned int, MVertex*>& a,
 			      const std::pair<unsigned int, MVertex*>& b){
   return a.second->getNum() < b.second->getNum();
 }

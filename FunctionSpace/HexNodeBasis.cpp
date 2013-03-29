@@ -33,16 +33,16 @@ HexNodeBasis::HexNodeBasis(int order){
   Legendre::integrated(legendre, order);
 
   // Vertices definig Edges & Permutations //
-  const int edgeV[2][12][2] = 
+  const int edgeV[2][12][2] =
     {
-      { {0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 5}, {2, 3}, 
+      { {0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 5}, {2, 3},
 	{2, 6},	{3, 7}, {4, 5}, {4, 7}, {5, 6}, {6, 7} },
 
-      { {1, 0}, {3, 0}, {4, 0}, {2, 1}, {5, 1}, {3, 2}, 
+      { {1, 0}, {3, 0}, {4, 0}, {2, 1}, {5, 1}, {3, 2},
 	{6, 2},	{7, 3}, {5, 4}, {7, 4}, {6, 5}, {7, 6} },
     };
 
-  const int faceV[6][4] = 
+  const int faceV[6][4] =
     {
       {0, 3, 2, 1},
       {0, 1, 5, 4},
@@ -52,44 +52,44 @@ HexNodeBasis::HexNodeBasis(int order){
       {4, 5, 6, 7}
     };
 
-  
+
   // Lifting //
-  lifting[0] = 
+  lifting[0] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
 
-  lifting[1] = 
+  lifting[1] =
     (Polynomial(1, 1, 0, 0))                          +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
 
-  lifting[2] = 
+  lifting[2] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
 
-  lifting[3] = 
+  lifting[3] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0))                          +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1));
 
-  lifting[4] = 
+  lifting[4] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) +
      Polynomial(1, 0, 0, 1);
 
-  lifting[5] = 
+  lifting[5] =
     (Polynomial(1, 1, 0, 0))                          +
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) +
      Polynomial(1, 0, 0, 1);
 
-  lifting[6] = 
+  lifting[6] =
     (Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0)) +
      Polynomial(1, 0, 0, 1);
 
-  lifting[7] = 
+  lifting[7] =
     (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
     (Polynomial(1, 0, 1, 0))                          +
      Polynomial(1, 0, 0, 1);
@@ -99,48 +99,48 @@ HexNodeBasis::HexNodeBasis(int order){
   basis = new std::vector<const Polynomial*>(size);
 
 
-  // Vertex Based (Lagrange) // 
-  (*basis)[0] = 
+  // Vertex Based (Lagrange) //
+  (*basis)[0] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
-  (*basis)[1] = 
+  (*basis)[1] =
     new Polynomial((Polynomial(1, 1, 0, 0))                          *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
-  (*basis)[2] = 
+  (*basis)[2] =
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
-  (*basis)[3] = 
+  (*basis)[3] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0))                          *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 0, 1)));
 
-  (*basis)[4] = 
+  (*basis)[4] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
 		   Polynomial(1, 0, 0, 1));
 
-  (*basis)[5] = 
+  (*basis)[5] =
     new Polynomial((Polynomial(1, 1, 0, 0))                          *
 		   (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0)) *
 		   Polynomial(1, 0, 0, 1));
 
-  (*basis)[6] = 
+  (*basis)[6] =
     new Polynomial((Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0)) *
 		   Polynomial(1, 0, 0, 1));
 
-  (*basis)[7] = 
+  (*basis)[7] =
     new Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
 		   (Polynomial(1, 0, 1, 0))                          *
 		   Polynomial(1, 0, 0, 1));
 
-  
+
   // Edge Based //
   // Keep counting
   int i = 8;
@@ -152,14 +152,14 @@ HexNodeBasis::HexNodeBasis(int order){
   for(int l = 1; l < order; l++){
     for(int e = 0; e < 12; e++){
       (*basis)[i] = new Polynomial(
-	legendre[l].compose(lifting[edge1[e]] - lifting[edge2[e]]) * 
+	legendre[l].compose(lifting[edge1[e]] - lifting[edge2[e]]) *
 	(*(*basis)[edge1[e]] + *(*basis)[edge2[e]]));
-            
+
       i++;
     }
   }
 
-  
+
   // Face Based (Preliminary) //
   // Points definig Faces
   const int face1[6] = {0, 3, 2, 1, 5, 4};
@@ -177,7 +177,7 @@ HexNodeBasis::HexNodeBasis(int order){
 
   // 'Lambda' Functions
   for(int f = 0; f < 6; f++)
-    lambda[f] = 
+    lambda[f] =
       *(*basis)[face1[f]] +
       *(*basis)[face2[f]] +
       *(*basis)[face3[f]] +
@@ -187,18 +187,18 @@ HexNodeBasis::HexNodeBasis(int order){
   // Face Based //
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
-      for(int f = 0; f < 6; f++){	
+      for(int f = 0; f < 6; f++){
 	(*basis)[i] = new Polynomial(
 	  legendre[l1].compose(xi[f])  *
 	  legendre[l2].compose(eta[f]) *
 	  lambda[f]);
-	  
+
 	i++;
       }
     }
   }
- 
-  
+
+
   // Cell Based //
   Polynomial px = Polynomial(2, 1, 0, 0);
   Polynomial py = Polynomial(2, 0, 1, 0);
@@ -211,11 +211,11 @@ HexNodeBasis::HexNodeBasis(int order){
   for(int l1 = 1; l1 < order; l1++){
     for(int l2 = 1; l2 < order; l2++){
       for(int l3 = 1; l3 < order; l3++){
-	(*basis)[i] = 
-	  new Polynomial(legendre[l1].compose(px) * 
+	(*basis)[i] =
+	  new Polynomial(legendre[l1].compose(px) *
 			 legendre[l2].compose(py) *
 			 legendre[l3].compose(pz));
-	
+
 	i++;
       }
     }
@@ -237,7 +237,7 @@ HexNodeBasis::~HexNodeBasis(void){
   // Vertex Based //
   for(int i = 0; i < nVertex; i++)
     delete (*node)[i];
-  
+
   delete node;
 
 
@@ -245,10 +245,10 @@ HexNodeBasis::~HexNodeBasis(void){
   for(int c = 0; c < 2; c++){
     for(int i = 0; i < nEdge; i++)
       delete (*(*edge)[c])[i];
-    
+
     delete (*edge)[c];
   }
-  
+
   delete edge;
 
 
@@ -256,7 +256,7 @@ HexNodeBasis::~HexNodeBasis(void){
   for(int c = 0; c < 6; c++){
     for(int i = 0; i < nFace; i++)
       delete (*(*face)[c])[i];
-    
+
     delete (*face)[c];
   }
 

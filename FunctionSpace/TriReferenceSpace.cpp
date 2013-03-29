@@ -15,13 +15,13 @@ TriReferenceSpace::TriReferenceSpace(void){
   for(unsigned int i = 0; i < nEdge; i++){
     refEdge[i]    = new unsigned int[2];
     refEdge[i][0] = MTriangle::edges_tri(i, 0);
-    refEdge[i][1] = MTriangle::edges_tri(i, 1); 
+    refEdge[i][1] = MTriangle::edges_tri(i, 1);
   }
 
   // Face Definition //
   nFace   = 0;
   refFace = NULL;
-  
+
   // Init All //
   init();
 }
@@ -30,7 +30,7 @@ TriReferenceSpace::~TriReferenceSpace(void){
   // Delete Ref Edge //
   for(unsigned int i = 0; i < nEdge; i++)
     delete[] refEdge[i];
-  
+
   delete[] refEdge;
 }
 
@@ -38,7 +38,7 @@ string TriReferenceSpace::toLatex(void) const{
   stringstream stream;
 
   stream << "\\documentclass{article}" << endl << endl
-	 
+
 	 << "\\usepackage{longtable}"  << endl
 	 << "\\usepackage{tikz}"       << endl
 	 << "\\usetikzlibrary{arrows}" << endl << endl
@@ -57,22 +57,22 @@ string TriReferenceSpace::toLatex(void) const{
 	   << "\\node[vertex] (n2) at(0, 3) {$2$};" << endl << endl;
 
     for(unsigned int i = 0; i < 3; i++)
-      stream << "\\path[line]" 
+      stream << "\\path[line]"
 	     << " (n" << (*(*(*edge)[p])[i])[0] << ")"
-	     << " -- " 
+	     << " -- "
 	     << " (n" << (*(*(*edge)[p])[i])[1] << ");"
 	     << endl;
 
     if((p + 1) % 3)
       stream << "\\end{tikzpicture} & "        << endl << endl;
-    
+
     else
       stream << "\\end{tikzpicture} \\\\ \\\\" << endl << endl;
   }
 
   stream << "\\end{longtable}" << endl
 	 << "\\end{document}"  << endl;
-  
+
   return stream.str();
 }
 
@@ -82,7 +82,7 @@ int main(void){
   TriReferenceSpace p;
 
   cout << p.toLatex() << endl;
-  
+
   return 0;
 }
 */

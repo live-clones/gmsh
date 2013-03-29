@@ -14,7 +14,7 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
 
   // Set Basis Type //
   this->order = order;
-  
+
   type = 0;
   dim  = 1;
 
@@ -43,23 +43,23 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
 
   // Vertex Based (Lagrange) //
   for(unsigned int s = 0; s < nRefSpace; s++){
-    basis[s][0] = 
-      new Polynomial(Polynomial(0.5, 0, 0, 0) - 
+    basis[s][0] =
+      new Polynomial(Polynomial(0.5, 0, 0, 0) -
 		     Polynomial(0.5, 1, 0, 0));
-    
-    basis[s][1] = 
-      new Polynomial(Polynomial(0.5, 0, 0, 0) + 
+
+    basis[s][1] =
+      new Polynomial(Polynomial(0.5, 0, 0, 0) +
 		     Polynomial(0.5, 1, 0, 0));
   }
 
   // Edge Based //
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex;
-    
+
     for(unsigned int l = 1; l < order; l++){
-      basis[s][i] = 
+      basis[s][i] =
 	new Polynomial(intLegendre[l].compose(x[(*(*edgeV[s])[0])[0]]));
-      
+
       i++;
     }
   }

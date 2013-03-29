@@ -16,7 +16,7 @@ class TetReferenceSpace: public ReferenceSpace{
   TetReferenceSpace(void);
   virtual ~TetReferenceSpace(void);
 
-  virtual std::string toLatex(void) const;  
+  virtual std::string toLatex(void) const;
 };
 
 /**

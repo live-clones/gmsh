@@ -16,7 +16,7 @@ class TriReferenceSpace: public ReferenceSpace{
   TriReferenceSpace(void);
   virtual ~TriReferenceSpace(void);
 
-  virtual std::string toLatex(void) const;  
+  virtual std::string toLatex(void) const;
 };
 
 /**

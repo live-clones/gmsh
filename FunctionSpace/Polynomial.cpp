@@ -13,16 +13,16 @@ Polynomial::Polynomial(const double coef, const int powerX,
                                           const int powerZ){
   nMon = 1;
   mon  = new monomial_t[1];
-  
+
   mon[0].coef     = coef;
   mon[0].power[0] = powerX;
   mon[0].power[1] = powerY;
   mon[0].power[2] = powerZ;
 }
- 
+
 Polynomial::Polynomial(const Polynomial& other){
   nMon = other.nMon;
-  mon  = copyMonomial(other.mon, nMon); 
+  mon  = copyMonomial(other.mon, nMon);
 }
 
 Polynomial::Polynomial(void){
@@ -35,7 +35,7 @@ Polynomial::~Polynomial(void){
     delete[] mon;
 }
 
-void Polynomial::derivative(const int dim){ 
+void Polynomial::derivative(const int dim){
   // Take derivative //
   for(int i = 0; i < nMon; i++){
     mon[i].coef *= mon[i].power[dim];
@@ -56,19 +56,19 @@ void Polynomial::derivative(const int dim){
   // If no monomial any more ---> return zero polynomial
   if(!N){
     delete[] mon;
-    
+
     mon  = zeroPolynomial();
     nMon = 1;
     return;
   }
-  
+
   // If no zero found ---> return;
-  if(N == nMon) 
+  if(N == nMon)
     return;
 
   // Else, remove them //
   monomial_t* tmp = mon;
-  
+
   mon  = new monomial_t[N];
   nMon = N;
 
@@ -79,7 +79,7 @@ void Polynomial::derivative(const int dim){
 
   delete[] tmp;
 
-  // Sort resulting monomial and return // 
+  // Sort resulting monomial and return //
   sort(mon, nMon);
 
   return;
@@ -97,7 +97,7 @@ vector<Polynomial> Polynomial::gradient(void) const{
   grad[0].derivative(0);
   grad[1].derivative(1);
   grad[2].derivative(2);
-  
+
   return grad;
 }
 
@@ -144,11 +144,11 @@ Polynomial Polynomial::divergence(const vector<Polynomial>& p){
 
 double Polynomial::at
   (const double x, const double y, const double z) const{
-  
+
   double val = 0;
   for(int i = 0; i < nMon; i++){
-    val += mon[i].coef * pow(x, mon[i].power[0]) 
-                       * pow(y, mon[i].power[1]) 
+    val += mon[i].coef * pow(x, mon[i].power[0])
+                       * pow(y, mon[i].power[1])
                        * pow(z, mon[i].power[2]);
   }
 
@@ -160,7 +160,7 @@ fullVector<double> Polynomial::at(const vector<Polynomial>& P,
 				  const double y,
 				  const double z){
   fullVector<double> val(3);
-  
+
   val(0) = P[0].at(x, y, z);
   val(1) = P[1].at(x, y, z);
   val(2) = P[2].at(x, y, z);
@@ -171,7 +171,7 @@ fullVector<double> Polynomial::at(const vector<Polynomial>& P,
 
 Polynomial Polynomial::operator+(const Polynomial& other) const{
   Polynomial newP;
-  
+
   newP.nMon = mergeMon(mon, nMon, other.mon, other.nMon, &newP.mon);
 
   return newP;
@@ -179,11 +179,11 @@ Polynomial Polynomial::operator+(const Polynomial& other) const{
 
 Polynomial Polynomial::operator-(const Polynomial& other) const{
   const int   otherNMon  = other.nMon;
-  monomial_t* otherMinus = copyMonomial(other.mon, otherNMon);   
-  
+  monomial_t* otherMinus = copyMonomial(other.mon, otherNMon);
+
   Polynomial  newP;
 
-  mult(otherMinus, otherNMon, -1); 
+  mult(otherMinus, otherNMon, -1);
   newP.nMon = mergeMon(mon, nMon, otherMinus, otherNMon, &newP.mon);
 
   delete[] otherMinus;
@@ -192,7 +192,7 @@ Polynomial Polynomial::operator-(const Polynomial& other) const{
 
 Polynomial Polynomial::operator*(const Polynomial& other) const{
   Polynomial newP;
-  
+
   newP.nMon = mult(mon, nMon, other.mon, other.nMon, &newP.mon);
 
   return newP;
@@ -200,7 +200,7 @@ Polynomial Polynomial::operator*(const Polynomial& other) const{
 
 Polynomial Polynomial::operator*(const double alpha) const{
   Polynomial newP;
-  
+
   newP.mon  = copyMonomial(mon, nMon);
   newP.nMon = nMon;
 
@@ -212,7 +212,7 @@ Polynomial Polynomial::operator*(const double alpha) const{
 
 void Polynomial::add(const Polynomial& other){
   monomial_t* tmp = mon;
-  
+
   nMon = mergeMon(mon, nMon, other.mon, other.nMon, &mon);
 
   delete[] tmp;
@@ -220,10 +220,10 @@ void Polynomial::add(const Polynomial& other){
 
 void Polynomial::sub(const Polynomial& other){
   const int   otherNMon  = other.nMon;
-  monomial_t* otherMinus = copyMonomial(other.mon, otherNMon);   
+  monomial_t* otherMinus = copyMonomial(other.mon, otherNMon);
   monomial_t* tmp        = mon;
-  
-  mult(otherMinus, otherNMon, -1); 
+
+  mult(otherMinus, otherNMon, -1);
   nMon = mergeMon(mon, nMon, otherMinus, otherNMon, &mon);
 
   delete[] otherMinus;
@@ -232,7 +232,7 @@ void Polynomial::sub(const Polynomial& other){
 
 void Polynomial::mul(const Polynomial& other){
   monomial_t* tmp = mon;
-  
+
   nMon = mult(mon, nMon, other.mon, other.nMon, &mon);
 
   delete[] tmp;
@@ -250,21 +250,21 @@ void Polynomial::power(const int n){
   switch(n){
   case 0:
     delete[] mon;
-    
+
     mon  = unitPolynomial();
     nMon = 1;
-    
+
     break;
-    
+
   case 1:
     break;
 
   default:
     Polynomial old = *this;
-    
+
     for(int i = 1; i < n; i++)
       mul(old);
-    
+
     break;
   }
 }
@@ -291,7 +291,7 @@ Polynomial Polynomial::compose(const Polynomial& otherA,
 void Polynomial::operator=(const Polynomial& other){
   if(mon)
     delete[] mon;
-  
+
   nMon = other.nMon;
   mon  = copyMonomial(other.mon, nMon);
 }
@@ -308,7 +308,7 @@ string Polynomial::toString(const Polynomial::monomial_t* mon, const bool isAbs)
   }
 
   // If we're here, we do not have a constant term
-  
+
   // If we have a coefficient of '1', we don't display it
   if(notUnitCoef && isAbs)
     stream << abs(mon->coef);
@@ -328,7 +328,7 @@ string Polynomial::toString(const Polynomial::monomial_t* mon, const bool isAbs)
 	stream << " * ";
 
       stream << coefName[i];
-      
+
       if(mon->power[i] != 1)
 	stream << "^" << mon->power[i];
 
@@ -344,7 +344,7 @@ string Polynomial::toString(void) const{
   bool isAbs = false;
 
   stream << toString(&mon[0], isAbs);
-    
+
   for(int i = 1; i < nMon; i++){
     if(mon[i].coef < 0.0){
       stream << " - ";
@@ -362,17 +362,17 @@ string Polynomial::toString(void) const{
   return stream.str();
 }
 
-bool Polynomial::isSmaller(const Polynomial::monomial_t* a, 
+bool Polynomial::isSmaller(const Polynomial::monomial_t* a,
 			   const Polynomial::monomial_t* b){
-  // GRevLex order: 
+  // GRevLex order:
   // http://www.math.uiuc.edu/Macaulay2/doc/Macaulay2-1.4/share/doc/Macaulay2/Macaulay2Doc/html/___G__Rev__Lex.html
-  
+
   int dif[3];
   int last = 0;
 
   if(isSmallerPower(a, b))
     return true;
-  
+
   if(isEqualPower(a, b)){
     for(int i = 0, j = 2; i < 3; i++, j--)
       dif[i] = b->power[j] - a->power[j];
@@ -383,11 +383,11 @@ bool Polynomial::isSmaller(const Polynomial::monomial_t* a,
 
     if(last < 0)
       return true;
-    
+
     else
       return false;
   }
-    
+
   return false;
 }
 
@@ -405,7 +405,7 @@ void Polynomial::swap(monomial_t* mon, const int i, const int j){
 }
 
 
-int Polynomial::mergeMon(monomial_t* sourceA, const int sizeA, 
+int Polynomial::mergeMon(monomial_t* sourceA, const int sizeA,
 			 monomial_t* sourceB, const int sizeB,
 			 monomial_t** dest){
   stack<monomial_t> s;
@@ -421,20 +421,20 @@ int Polynomial::mergeMon(monomial_t* sourceA, const int sizeA,
 
     else if(sourceB[j].coef == 0.0)
       j++;
-    
+
     else if(isEqual(&sourceA[i], &sourceB[j])){
       tmp       = sourceA[i];
-      tmp.coef += sourceB[j].coef; 
-      
+      tmp.coef += sourceB[j].coef;
+
       if(tmp.coef != 0.0){
 	s.push(tmp);
 	N++;
       }
-      
+
       i++;
       j++;
     }
-    
+
     else if(isSmaller(&sourceA[i], &sourceB[j])){
       s.push(sourceA[i]);
       i++;
@@ -488,11 +488,11 @@ int Polynomial::mult(const monomial_t* sourceA, const int sizeA,
 
   if(sizeA < sizeB){
     a     = sourceA;
-    b     = sourceB; 
+    b     = sourceB;
     nDist = sizeA;
     size  = sizeB;
   }
-  
+
   else{
     a     = sourceB;
     b     = sourceA;
@@ -511,7 +511,7 @@ int Polynomial::mult(const monomial_t* sourceA, const int sizeA,
 
   for(int i = 0; i < nDist; i++){
     dist[i] = copyMonomial(b, size);
-  
+
     distribute(dist[i], size, &a[i]);
   }
 
@@ -522,8 +522,8 @@ int Polynomial::mult(const monomial_t* sourceA, const int sizeA,
 
   for(int i = 1, j = 0; i < nDist; i++, j++){
     tmp[j] = dist[0];
-    
-    finalSize = mergeMon(dist[0], finalSize, 
+
+    finalSize = mergeMon(dist[0], finalSize,
 			 dist[i], size,
 			 &dist[0]);
   }
@@ -536,7 +536,7 @@ int Polynomial::mult(const monomial_t* sourceA, const int sizeA,
     delete[] dist[i];
     delete[] tmp[j];
   }
-  
+
   delete[] dist;
   delete[] tmp;
 
@@ -549,31 +549,31 @@ void Polynomial::mult(monomial_t* source, const int size, const double alpha){
 }
 
 
-void Polynomial::distribute(monomial_t* src, const int size, const monomial_t* m){ 
+void Polynomial::distribute(monomial_t* src, const int size, const monomial_t* m){
   for(int i = 0; i < size; i++){
     src[i].coef *= m->coef;
-    
+
     src[i].power[0] += m->power[0];
     src[i].power[1] += m->power[1];
-    src[i].power[2] += m->power[2];    
+    src[i].power[2] += m->power[2];
   }
 }
 
 void Polynomial::compose(const Polynomial::monomial_t* src,
 			 Polynomial comp,
 			 stack<Polynomial::monomial_t>* stk){
-  
+
   comp.power(src->power[0]);
   comp.mul(src->coef);
-  
+
   const int size = comp.nMon;
 
   for(int i = 0; i < size; i++){
     if(comp.mon[i].coef != 0){
-      
+
       comp.mon[i].power[1] += src->power[1];
       comp.mon[i].power[2] += src->power[2];
-      
+
       stk->push(comp.mon[i]);
     }
   }
@@ -585,17 +585,17 @@ void Polynomial::compose(const Polynomial::monomial_t* src,
 
   compA.power(src->power[0]);
   compB.power(src->power[1]);
-  
+
   compA.mul(compB);
   compA.mul(src->coef);
-  
+
   const int size = compA.nMon;
 
   for(int i = 0; i < size; i++){
     if(compA.mon[i].coef != 0){
-      
+
       compA.mon[i].power[2] += src->power[2];
-      
+
       stk->push(compA.mon[i]);
     }
   }
@@ -617,12 +617,12 @@ Polynomial Polynomial::polynomialFromStack(std::stack<Polynomial::monomial_t>& s
     newMon[0] = stk.top();
     newNMon   = 1;
     stk.pop();
-    
+
     while(!stk.empty()){
       tmp     = newMon;
       newNMon = mergeMon(newMon, newNMon, &stk.top(), 1, &newMon);
       stk.pop();
-      
+
       delete[] tmp;
     }
   }
@@ -648,23 +648,23 @@ Polynomial::monomial_t* Polynomial::copyMonomial(const monomial_t* src, const in
 
 Polynomial::monomial_t* Polynomial::zeroPolynomial(void){
   monomial_t* zero = new monomial_t[1];
-  
+
   zero->coef     = 0;
   zero->power[0] = 0;
   zero->power[1] = 0;
   zero->power[2] = 0;
- 
+
   return zero;
 }
 
 Polynomial::monomial_t* Polynomial::unitPolynomial(void){
   monomial_t* unit = new monomial_t[1];
-  
+
   unit->coef     = 1;
   unit->power[0] = 0;
   unit->power[1] = 0;
   unit->power[2] = 0;
- 
+
   return unit;
 }
 
@@ -705,7 +705,7 @@ int main(void){
   Polynomial p4 = p3 * p3;
   cout << "p3 = " << p3.toString() << endl;
   cout << "p4 = " << p4.toString() << endl;
-  
+
   p3.mul(p3);
   cout << "p3 = " << p3.toString() << endl;
 
@@ -715,10 +715,10 @@ int main(void){
   cout << "p5 = " << p5.toString() << endl;
   cout << "p6 = " << p6.toString() << endl;
   cout << "p7 = " << p7.toString() << endl;
-  
+
   p6.sub(p6);
   cout << "p6 = " << p6.toString() << endl;
-  
+
 
   Polynomial p8(p4);
   Polynomial p9(p4);

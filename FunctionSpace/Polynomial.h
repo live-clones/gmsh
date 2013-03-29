@@ -16,14 +16,14 @@
 
 // We suppose 3D Polynomial
 class Polynomial{
- private: 
+ private:
   static const char coefName[3];
 
   struct monomial_t{
     double coef;
     int power[3];
   };
-  
+
   int         nMon;
   monomial_t*  mon;
 
@@ -42,10 +42,10 @@ class Polynomial{
   static Polynomial divergence(const std::vector<Polynomial>& p);
 
   double operator()
-    (const double x, const double y, const double z) const;  
-  
+    (const double x, const double y, const double z) const;
+
   double at
-    (const double x, const double y, const double z) const;  
+    (const double x, const double y, const double z) const;
 
   static fullVector<double> at(const std::vector<Polynomial>& P,
 			       const double x,
@@ -65,7 +65,7 @@ class Polynomial{
   void power(const int n);
 
   Polynomial compose(const Polynomial& other) const;
-  Polynomial compose(const Polynomial& otherA, 
+  Polynomial compose(const Polynomial& otherA,
 		     const Polynomial& otherB) const;
 
   void operator=(const Polynomial& other);
@@ -75,31 +75,31 @@ class Polynomial{
  private:
   static std::string toString(const monomial_t* mon, const bool isAbs);
 
-  static bool isSmaller(const monomial_t* a, const monomial_t*b); 
-  static bool isEqual(const monomial_t* a, const monomial_t*b); 
-  static bool isSmallerPower(const monomial_t* a, const monomial_t* b);  
+  static bool isSmaller(const monomial_t* a, const monomial_t*b);
+  static bool isEqual(const monomial_t* a, const monomial_t*b);
+  static bool isSmallerPower(const monomial_t* a, const monomial_t* b);
   static bool isEqualPower(const monomial_t* a, const monomial_t* b);
-  
+
   static void sort(monomial_t* mon, const int size);
   static void swap(monomial_t* mon, const int i, const int j);
 
-  static int mergeMon(monomial_t* sourceA, const int sizeA, 
+  static int mergeMon(monomial_t* sourceA, const int sizeA,
 		      monomial_t* sourceB, const int sizeB,
 		      monomial_t** dest);
-  
+
   static int mult(const monomial_t* sourceA, const int sizeA,
 		  const monomial_t* sourceB, const int sizeB,
 		  monomial_t** dest);
-  
+
   static void mult(monomial_t* source, const int size, const double alpha);
 
   static void distribute(monomial_t* src, const int size, const monomial_t* m);
 
-  static void compose(const monomial_t* src, 
+  static void compose(const monomial_t* src,
 		      Polynomial comp,
 		      std::stack<monomial_t>* stk);
 
-  static void compose(const monomial_t* src, 
+  static void compose(const monomial_t* src,
 		      Polynomial compA, Polynomial compB,
 		      std::stack<monomial_t>* stk);
 
@@ -114,11 +114,11 @@ class Polynomial{
 /**
    @fn Polynomial::Polynomial(const double, const int, const int, const int)
    @param coef The coeficient of the futur monomial
-   @param powerX The power of the '@c x' coordinate 
+   @param powerX The power of the '@c x' coordinate
    of the futur monomial
-   @param powerY The power of the '@c y' coordinate 
+   @param powerY The power of the '@c y' coordinate
    of the futur monomial
-   @param powerZ The power of the '@c z' coordinate 
+   @param powerZ The power of the '@c z' coordinate
    of the futur monomial
    @return Returns a new Monomial with the given
    parameters
@@ -140,7 +140,7 @@ class Polynomial{
    @em with @em no @em monomials.@n
    In particular, the empty Polynomial is @em not
    the @em zero @em Polynomial.@n
-   Indeed, the @em zero @em Polynomial has one monomial, 
+   Indeed, the @em zero @em Polynomial has one monomial,
    @em @c 0.
    **
 
@@ -151,7 +151,7 @@ class Polynomial{
    @fn Polynomial::derivative
    @param dim The dimention to use for the
    derivation
-   @returns Derivates this Polynomial with 
+   @returns Derivates this Polynomial with
    respect to the given dimention
    @note
    Dimention:
@@ -161,16 +161,16 @@ class Polynomial{
    **
 
    @fn Polynomial::gradient
-   @return Returns a Vector with the gradient 
+   @return Returns a Vector with the gradient
    of this Polynomial
    **
-   
+
    @fn Polynomial::curl
    @param p A vector of Polynomial%s
    @return Returns the @em curl of the given
    vector of Polynomial%s
    **
-   
+
    @fn Polynomial::divergence
    @param p A vector of Polynomial%s
    @return Returns the @em divergence of the given
@@ -222,35 +222,35 @@ class Polynomial{
 
    @fn Polynomial Polynomial::operator*(const double) const
    @param alpha A value
-   @return Returns a @em new Polynomial, 
+   @return Returns a @em new Polynomial,
    which is this Polynomial @em multiplied by @c alpha
    **
 
    @fn Polynomial::add
    @param other An other Polynomial
-   @return The given Polynomial is 
+   @return The given Polynomial is
    @em added to this Polynomial
    @note
-   The result of this operation is stored in 
-   this Polynomial  
+   The result of this operation is stored in
+   this Polynomial
    **
 
    @fn Polynomial::sub
    @param other An other Polynomial
-   @return The given Polynomial is 
+   @return The given Polynomial is
    @em substracted to this Polynomial
    @note
-   The result of this operation is stored in 
-   this Polynomial  
+   The result of this operation is stored in
+   this Polynomial
    **
 
    @fn void Polynomial::mul(const Polynomial&)
    @param other An other Polynomial
-   @return The given Polynomial is 
+   @return The given Polynomial is
    @em multiplied with this Polynomial
    @note
-   The result of this operation is stored in 
-   this Polynomial  
+   The result of this operation is stored in
+   this Polynomial
    **
 
    @fn void Polynomial::mul(const double)
@@ -258,8 +258,8 @@ class Polynomial{
    @return This Polynomial is @em multiplied
    by the given value
    @note
-   The result of this operation is stored in 
-   this Polynomial  
+   The result of this operation is stored in
+   this Polynomial
    **
 
    @fn Polynomial::power
@@ -268,7 +268,7 @@ class Polynomial{
    **
 
    @fn Polynomial Polynomial::compose(const Polynomial&) const
-   @param other An other Polynomial, 
+   @param other An other Polynomial,
    called @c Q(x, @c y, @c z)
    @return
    Let this Polynomial be @c P(x, @c y, @c z).@n
@@ -277,13 +277,13 @@ class Polynomial{
    **
 
    @fn Polynomial Polynomial::compose(const Polynomial&, const Polynomial&) const
-   @param otherA An other Polynomial, 
+   @param otherA An other Polynomial,
    called @c Q(x, @c y, @c z)
-   @param otherB An other Polynomial, 
+   @param otherB An other Polynomial,
    called @c R(x, @c y, @c z)
    @return
    Let this Polynomial be @c P(x, @c y, @c z).@n
-   This method returns a @em new Polynomial, representing 
+   This method returns a @em new Polynomial, representing
    @c P(Q(x, @c y, @c z), @c R(x, @c y, @c z), @c z)
    **
 
@@ -301,8 +301,8 @@ class Polynomial{
 // Inline Functions //
 //////////////////////
 
-inline double Polynomial::operator() (const double x, 
-				      const double y, 
+inline double Polynomial::operator() (const double x,
+				      const double y,
 				      const double z) const{
   return at(x, y, z);
 }
@@ -316,20 +316,20 @@ inline bool Polynomial::isEqual(const Polynomial::monomial_t* a,
 
 inline bool Polynomial::isSmallerPower(const Polynomial::monomial_t* a,
 				       const Polynomial::monomial_t* b){
-  
-  return 
-    a->power[0] + a->power[1] + a->power[2] 
-    < 
-    b->power[0] + b->power[1] + b->power[2] ;    
+
+  return
+    a->power[0] + a->power[1] + a->power[2]
+    <
+    b->power[0] + b->power[1] + b->power[2] ;
 }
 
 inline bool Polynomial::isEqualPower(const Polynomial::monomial_t* a,
 				     const Polynomial::monomial_t* b){
-  
-  return 
-    a->power[0] + a->power[1] + a->power[2] 
+
+  return
+    a->power[0] + a->power[1] + a->power[2]
     ==
-    b->power[0] + b->power[1] + b->power[2] ;    
+    b->power[0] + b->power[1] + b->power[2] ;
 }
 
 #endif

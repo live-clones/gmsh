@@ -16,25 +16,25 @@ ReferenceSpace::~ReferenceSpace(void){
   // Destroy Tree //
   destroy(&pTreeRoot);
   delete[] perm;
- 
+
   // Delete Permutated Edge //
   for(unsigned int p = 0; p < nPerm; p++){
     for(unsigned int i = 0; i < nEdge; i++)
-      delete (*(*edge)[p])[i];      
-    
+      delete (*(*edge)[p])[i];
+
     delete (*edge)[p];
   }
-  
+
   delete edge;
 
   // Delete Permutated Face //
   for(unsigned int p = 0; p < nPerm; p++){
     for(unsigned int i = 0; i < nFace; i++)
-      delete (*(*face)[p])[i];      
-    
+      delete (*(*face)[p])[i];
+
     delete (*face)[p];
   }
-  
+
   delete face;
 }
 
@@ -44,11 +44,11 @@ void ReferenceSpace::init(void){
   nextLeafId = 0;
 
   pTreeRoot.depth    = 0;
-  pTreeRoot.last     = NULL; 
+  pTreeRoot.last     = NULL;
   pTreeRoot.number   = nVertex;
   pTreeRoot.possible = new unsigned int[pTreeRoot.number];
   pTreeRoot.next     = NULL;
-  
+
   for(unsigned int i = 0; i < pTreeRoot.number; i++)
     pTreeRoot.possible[i] = i;
 
@@ -64,7 +64,7 @@ void ReferenceSpace::init(void){
     perm[i] = lPerm->front();
     lPerm->pop_front();
   }
-  
+
   delete lPerm;
 
   // Get Edges & Faces //
@@ -88,12 +88,12 @@ void ReferenceSpace::populate(node* pTreeRoot){
     // Init Permutation
     pTreeRoot->next   = NULL;
     pTreeRoot->leafId = nextLeafId;
-    
+
     // Value for Next Permutation
     nextLeafId++;
     nPerm++;
-    
-    // Put this Permutation in queue 
+
+    // Put this Permutation in queue
     //                (AND IN ORDER)
     lPerm->push_back(pTreeRoot->last);
   }
@@ -103,27 +103,27 @@ void ReferenceSpace::populate(node* pTreeRoot){
     // We got 'number' child nodes
     pTreeRoot->next = new node[number];
 
-    // Init each child node 
+    // Init each child node
     for(unsigned int i = 0; i < number; i++){
       nextLast = pTreeRoot->possible[i];
       offset   = 0;
-      
+
       // Depth and Last Choices of child nodes
       pTreeRoot->next[i].depth       = nextDepth;
       pTreeRoot->next[i].last        = new unsigned int[nextDepth];
       pTreeRoot->next[i].last[depth] = nextLast;
-      
+
       for(unsigned int j = 0; j < depth; j++)
 	pTreeRoot->next[i].last[j] = pTreeRoot->last[j];
 
       // Possibilities of child node
       pTreeRoot->next[i].number   = nextNumber;
       pTreeRoot->next[i].possible = new unsigned int[nextNumber];
-      
+
       for(unsigned int j = 0; j < nextNumber; j++){
 	  if(pTreeRoot->possible[j] == nextLast)
 	    offset = 1;
-	  
+
 	  pTreeRoot->next[i].possible[j] = pTreeRoot->possible[j + offset];
       }
 
@@ -140,7 +140,7 @@ void ReferenceSpace::destroy(node* node){
     destroy(&node->next[i]);
     node->number--;
   }
-    
+
   delete[] node->possible;
   delete[] node->last;
   delete[] node->next;
@@ -154,9 +154,9 @@ void ReferenceSpace::getEdge(void){
     tmp = new vector<const vector<unsigned int>*>(nEdge);
 
     for(unsigned int i = 0; i < nEdge; i++)
-      (*tmp)[i] = inOrder(p, 
-			  refEdge[i][0], 
-			  refEdge[i][1]);   
+      (*tmp)[i] = inOrder(p,
+			  refEdge[i][0],
+			  refEdge[i][1]);
     (*edge)[p] = tmp;
   }
 }
@@ -169,57 +169,57 @@ void ReferenceSpace::getFace(void){
     tmp = new vector<const vector<unsigned int>*>(nFace);
 
     for(unsigned int i = 0; i < nFace; i++)
-      (*tmp)[i] = inOrder(p, 
-			  refFace[i][0], 
+      (*tmp)[i] = inOrder(p,
+			  refFace[i][0],
 			  refFace[i][1],
-			  refFace[i][2]);   
+			  refFace[i][2]);
     (*face)[p] = tmp;
   }
 }
 
 const vector<unsigned int>* ReferenceSpace::
-inOrder(unsigned int permutation, 
-	unsigned int a, 
+inOrder(unsigned int permutation,
+	unsigned int a,
 	unsigned int b){
-  
+
   unsigned int v;
   unsigned int k = 0;
-  vector<unsigned int>* inorder = 
+  vector<unsigned int>* inorder =
     new vector<unsigned int>(2);
 
   for(unsigned int i = 0; i < nVertex; i++){
     v = perm[permutation][i];
-    
-    if(v == a || v == b){   
+
+    if(v == a || v == b){
       (*inorder)[k] = v;
       k++;
     }
   }
-  
+
   return inorder;
 }
 
 const std::vector<unsigned int>* ReferenceSpace::
-inOrder(unsigned int permutation, 
-	unsigned int a, 
+inOrder(unsigned int permutation,
+	unsigned int a,
 	unsigned int b,
 	unsigned int c){
-  
+
   unsigned int v;
   unsigned int k = 0;
-  vector<unsigned int>* inorder = 
+  vector<unsigned int>* inorder =
     new vector<unsigned int>(3);
 
   for(unsigned int i = 0; i < nVertex; i++){
     v = perm[permutation][i];
-    
-    if(v == a || v == b || v == c){   
+
+    if(v == a || v == b || v == c){
       (*inorder)[k] = v;
       k++;
     }
   }
-  
-  return inorder;  
+
+  return inorder;
 }
 
 unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
@@ -232,12 +232,12 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
 
   for(int i = 0; i < nVertex; i++){
     vertex[i].first  = i;
-    vertex[i].second = element.getVertex(i);  
+    vertex[i].second = element.getVertex(i);
   }
-  
-  // Sort Them with repsect to Vertex Global ID // 
+
+  // Sort Them with repsect to Vertex Global ID //
   //                 (vertex[i].second->getNum) //
-  std::sort(vertex.begin(), vertex.end(), sortPredicate);  
+  std::sort(vertex.begin(), vertex.end(), sortPredicate);
 
   // Tree Lookup //
   try{
@@ -251,7 +251,7 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
 }
 
 unsigned int ReferenceSpace::treeLookup(const node* root,
-					vector<pair<unsigned int, MVertex*> >& 
+					vector<pair<unsigned int, MVertex*> >&
 					sortedArray){
   // Temp Data //
   unsigned int choice;
@@ -277,22 +277,22 @@ unsigned int ReferenceSpace::treeLookup(const node* root,
 
   // Else: Return Leaf ID //
   else
-    return root->leafId; 
+    return root->leafId;
 }
 
 string ReferenceSpace::toString(void) const{
   stringstream  stream;
-  
+
   // Tree //
   stream << "Tree:"              << endl;
   stream << toString(&pTreeRoot) << endl;
 
   // ReferenceSpaces //
   stream << "Reference Spaces:" << endl;
-  
+
   for(unsigned int i = 0; i < nPerm; i++){
     stream << "  * ";
-    
+
     for(unsigned int j = 0; j < nVertex; j++)
       stream << perm[i][j] << " ";
 
@@ -300,23 +300,23 @@ string ReferenceSpace::toString(void) const{
   }
 
   stream << "Edges Permutations:" << endl;
-  
+
   for(unsigned int i = 0; i < nPerm; i++){
     stream << "  * RefSpace #" << i + 1 << ":" << endl;
-    
+
     for(unsigned int j = 0; j < nEdge; j++)
-      stream << "      -- [" 
+      stream << "      -- ["
 	     << edge->at(i)->at(j)->at(0) << ", "
 	     << edge->at(i)->at(j)->at(1) << "]" << endl;
   }
 
   stream << "Faces Permutations:" << endl;
-  
+
   for(unsigned int i = 0; i < nPerm; i++){
     stream << "  * RefSpace #" << i + 1 << ":" << endl;
-    
+
     for(unsigned int j = 0; j < nFace; j++)
-      stream << "      -- [" 
+      stream << "      -- ["
 	     << face->at(i)->at(j)->at(0) << ", "
 	     << face->at(i)->at(j)->at(1) << ", "
 	     << face->at(i)->at(j)->at(2) << "]" << endl;
@@ -338,6 +338,6 @@ string ReferenceSpace::toString(const node* node) const{
     stream << toString(&node->next[i]);
 
   stream << ")";
-  
+
   return stream.str();
 }

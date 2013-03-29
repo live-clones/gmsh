@@ -16,7 +16,7 @@ class LineReferenceSpace: public ReferenceSpace{
   LineReferenceSpace(void);
   virtual ~LineReferenceSpace(void);
 
-  virtual std::string toLatex(void) const;  
+  virtual std::string toLatex(void) const;
 };
 
 /**

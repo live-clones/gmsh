@@ -19,7 +19,7 @@ LineReferenceSpace::LineReferenceSpace(void){
   // Face Definition //
   nFace   = 0;
   refFace = NULL;
-  
+
   // Init All //
   init();
 }
@@ -28,7 +28,7 @@ LineReferenceSpace::~LineReferenceSpace(void){
   // Delete Ref Edge //
   for(unsigned int i = 0; i < nEdge; i++)
     delete[] refEdge[i];
-  
+
   delete[] refEdge;
 }
 
@@ -36,7 +36,7 @@ string LineReferenceSpace::toLatex(void) const{
   stringstream stream;
 
   stream << "\\documentclass{article}" << endl << endl
-	 
+
 	 << "\\usepackage{longtable}"  << endl
 	 << "\\usepackage{tikz}"       << endl
 	 << "\\usetikzlibrary{arrows}" << endl << endl
@@ -52,10 +52,10 @@ string LineReferenceSpace::toLatex(void) const{
 
 	   << "\\node[vertex] (n0) at(0, 0) {$0$};" << endl
 	   << "\\node[vertex] (n1) at(3, 0) {$1$};" << endl << endl
-      
-	   << "\\path[line]" 
+
+	   << "\\path[line]"
 	   << " (n" << (*(*(*edge)[p])[0])[0] << ")"
-	   << " -- " 
+	   << " -- "
 	   << " (n" << (*(*(*edge)[p])[0])[1] << ");"
 	   << endl
 
@@ -64,6 +64,6 @@ string LineReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
 	 << "\\end{document}"  << endl;
-  
+
   return stream.str();
 }

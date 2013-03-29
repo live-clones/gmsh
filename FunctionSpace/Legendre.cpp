@@ -1,6 +1,6 @@
 #include "Legendre.h"
 
-Polynomial Legendre::legendre(const int n, const Polynomial& l, 
+Polynomial Legendre::legendre(const int n, const Polynomial& l,
 			      const Polynomial& lMinus){
   const double nPlus = n + 1;
 
@@ -8,16 +8,16 @@ Polynomial Legendre::legendre(const int n, const Polynomial& l,
     l * Polynomial(1, 1, 0, 0) * ((2 * n + 1) / nPlus) - lMinus * (n / nPlus);
 }
 
-Polynomial Legendre::scaled(const int n, const Polynomial& l, 
+Polynomial Legendre::scaled(const int n, const Polynomial& l,
 			    const Polynomial& lMinus){
   const double nPlus = n + 1;
 
   return
-    l      * Polynomial(1, 1, 0, 0) * ((2 * n + 1) / nPlus) - 
+    l      * Polynomial(1, 1, 0, 0) * ((2 * n + 1) / nPlus) -
     lMinus * Polynomial(1, 0, 2, 0) * ((    n    ) / nPlus);
 }
 
-Polynomial Legendre::integrated(const int n, const Polynomial& l, 
+Polynomial Legendre::integrated(const int n, const Polynomial& l,
 				const Polynomial& lMinus){
   const double nPlus = n + 1;
 
@@ -25,12 +25,12 @@ Polynomial Legendre::integrated(const int n, const Polynomial& l,
     l * Polynomial(1, 1, 0, 0) * ((2 * n - 1) / nPlus) - lMinus * ((n - 2) / nPlus);
 }
 
-Polynomial Legendre::intScaled(const int n, const Polynomial& l, 
+Polynomial Legendre::intScaled(const int n, const Polynomial& l,
 			       const Polynomial& lMinus){
   const double nPlus = n + 1;
 
   return
-    l      * Polynomial(1, 1, 0, 0) * ((2 * n - 1) / nPlus) - 
+    l      * Polynomial(1, 1, 0, 0) * ((2 * n - 1) / nPlus) -
     lMinus * Polynomial(1, 0, 2, 0) * ((    n - 2) / nPlus);
 }
 
@@ -41,7 +41,7 @@ void Legendre::legendre(Polynomial* polynomial, const int order){
 
   if(order >= 0)
     polynomial[0] = Polynomial(1, 0, 0, 0);
-  
+
   if(order >= 1)
     polynomial[1] = Polynomial(1, 1, 0, 0);
 
@@ -49,7 +49,7 @@ void Legendre::legendre(Polynomial* polynomial, const int order){
     for(k = 2; k <= order; k++){
       i = k - 1;
       j = k - 2;
-      
+
       polynomial[k] = legendre(i, polynomial[i], polynomial[j]);
     }
   }
@@ -68,7 +68,7 @@ void Legendre::integrated(Polynomial* polynomial, const int order){
     for(k = 2; k < order; k++){
       i = k - 1;
       j = k - 2;
-      
+
       polynomial[k] = integrated(k, polynomial[i], polynomial[j]);
     }
   }
@@ -79,7 +79,7 @@ void Legendre::scaled(Polynomial* polynomial, const int order){
 
   if(order >= 0)
     polynomial[0] = Polynomial(1, 0, 0, 0);
-  
+
   if(order >= 1)
     polynomial[1] = Polynomial(1, 1, 0, 0);
 
@@ -87,7 +87,7 @@ void Legendre::scaled(Polynomial* polynomial, const int order){
     for(k = 2; k <= order; k++){
       i = k - 1;
       j = k - 2;
-      
+
       polynomial[k] = scaled(i, polynomial[i], polynomial[j]);
     }
   }
@@ -106,7 +106,7 @@ void Legendre::intScaled(Polynomial* polynomial, const int order){
     for(k = 2; k < order; k++){
       i = k - 1;
       j = k - 2;
-      
+
       polynomial[k] = intScaled(k, polynomial[i], polynomial[j]);
     }
   }

@@ -15,17 +15,17 @@ TetReferenceSpace::TetReferenceSpace(void){
   for(unsigned int i = 0; i < nEdge; i++){
     refEdge[i]    = new unsigned int[2];
     refEdge[i][0] = MTetrahedron::edges_tetra(i, 0);
-    refEdge[i][1] = MTetrahedron::edges_tetra(i, 1); 
+    refEdge[i][1] = MTetrahedron::edges_tetra(i, 1);
   }
-  
+
   // Face Definition //
   nFace   = 4;
   refFace = new unsigned int*[nFace];
 
   for(unsigned int i = 0; i < nFace; i++){
     refFace[i]    = new unsigned int[3];
-    refFace[i][0] = MTetrahedron::faces_tetra(i, 0); 
-    refFace[i][1] = MTetrahedron::faces_tetra(i, 1); 
+    refFace[i][0] = MTetrahedron::faces_tetra(i, 0);
+    refFace[i][1] = MTetrahedron::faces_tetra(i, 1);
     refFace[i][2] = MTetrahedron::faces_tetra(i, 2);
   }
 
@@ -37,13 +37,13 @@ TetReferenceSpace::~TetReferenceSpace(void){
   // Delete Ref Edge //
   for(unsigned int i = 0; i < nEdge; i++)
     delete[] refEdge[i];
-  
+
   delete[] refEdge;
 
   // Delete Ref Face //
   for(unsigned int i = 0; i < nFace; i++)
     delete[] refFace[i];
-  
+
   delete[] refFace;
 }
 
@@ -51,7 +51,7 @@ string TetReferenceSpace::toLatex(void) const{
   stringstream stream;
 
   stream << "\\documentclass{article}" << endl << endl
-	 
+
 	 << "\\usepackage{longtable}"  << endl
 	 << "\\usepackage{tikz}"       << endl
 	 << "\\usetikzlibrary{arrows}" << endl << endl
@@ -67,26 +67,26 @@ string TetReferenceSpace::toLatex(void) const{
 
 	   << "\\node[vertex] (n0) at(0, 0) {$0$};" << endl
 	   << "\\node[vertex] (n1) at(3, 0) {$1$};" << endl
-	   << "\\node[vertex] (n2) at(0, 3) {$2$};" << endl 
+	   << "\\node[vertex] (n2) at(0, 3) {$2$};" << endl
 	   << "\\node[vertex] (n3) at(1, 1) {$3$};" << endl << endl;
 
     for(unsigned int i = 0; i < 6; i++)
-      stream << "\\path[line]" 
+      stream << "\\path[line]"
 	     << " (n" << (*(*(*edge)[p])[i])[0] << ")"
-	     << " -- " 
+	     << " -- "
 	     << " (n" << (*(*(*edge)[p])[i])[1] << ");"
 	     << endl;
 
     if((p + 1) % 3)
       stream << "\\end{tikzpicture} & "        << endl << endl;
-    
+
     else
       stream << "\\end{tikzpicture} \\\\ \\\\" << endl << endl;
   }
 
   stream << "\\end{longtable}" << endl
 	 << "\\end{document}"  << endl;
-  
+
   return stream.str();
 }
 
@@ -96,7 +96,7 @@ int main(void){
   TetReferenceSpace p;
 
   cout << p.toLatex() << endl;
-  
+
   return 0;
 }
 */
