@@ -179,6 +179,7 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
 static void file_clear_cb(Fl_Widget *w, void *data)
 {
   ClearProject();
+  onelab_cb(0, (void*)"reset"); // this will call OpenProject
   drawContext::global()->draw();
 }
 
