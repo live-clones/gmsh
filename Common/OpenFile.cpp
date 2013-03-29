@@ -408,7 +408,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     GModel::current()->setName(split[1] + ".geo");
     GModel::current()->setFileName(split[0] + split[1] + ".geo");
     CTX::instance()->launchSolverAtStartup = 0;
-    return status;
+    return 1;
   }
 #endif
 #if defined(HAVE_ONELAB_METAMODEL) && defined(HAVE_FLTK)
