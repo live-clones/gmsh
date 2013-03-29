@@ -16,12 +16,23 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   // metamodel that calls several underlying models); _clients keeps track of
   // the master (this) and the subclients.
   std::vector<gmshLocalNetworkClient*> _clients;
+  // client that launched this one (with GMSH_CONNECT); _father is zero for the
+  // master client (the one created by Gmsh).
+  gmshLocalNetworkClient *_father;
  public:
   gmshLocalNetworkClient(const std::string &name, const std::string &executable,
                          const std::string &remoteLogin="")
-    : onelab::localNetworkClient(name, executable, remoteLogin)
+    : onelab::localNetworkClient(name, executable, remoteLogin), _father(0)
   {
     addClient(this);
+  }
+  void setFather(gmshLocalNetworkClient *father)
+  {
+    _father = father;
+  }
+  gmshLocalNetworkClient *getFather()
+  {
+    return _father;
   }
   void addClient(gmshLocalNetworkClient *client)
   {
@@ -39,7 +50,15 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
     if(i >= 0 && i < getNumClients()) return _clients[i];
     return 0;
   }
-  bool receiveMessage(int &type);
+  int getNumConnectedClients()
+  {
+    int n = 0;
+    for(int i = 0; i < getNumClients(); i++){
+      if(_clients[i]->getPid() != -1) n++;
+    }
+    return n;
+  }
+  bool receiveMessage(gmshLocalNetworkClient *master);
   bool run();
   bool kill();
 };

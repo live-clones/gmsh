@@ -145,8 +145,11 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
-bool gmshLocalNetworkClient::receiveMessage(int &type)
+bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 {
+  // receive a message on the associated GmshServer; 'master' is only used when
+  // creating subclients with GMSH_CONNECT.
+
   double timer = GetTimeInSeconds();
 
   if(!getGmshServer()){
@@ -154,11 +157,13 @@ bool gmshLocalNetworkClient::receiveMessage(int &type)
     return false;
   }
 
-  int length, swap;
+  int type, length, swap;
   if(!getGmshServer()->ReceiveHeader(&type, &length, &swap)){
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
+  else if(false) // debug
+    std::cout << "Client " << getName() << " receives header: " << type << std::endl;
 
   std::string message(length, ' ');
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
@@ -172,6 +177,11 @@ bool gmshLocalNetworkClient::receiveMessage(int &type)
     break;
   case GmshSocket::GMSH_STOP:
     setPid(-1);
+    if(getFather()){
+      std::string reply = getName(); // reply is dummy
+      getFather()->getGmshServer()->SendMessage
+        (GmshSocket::GMSH_STOP, reply.size(), &reply[0]);
+    }
     break;
   case GmshSocket::GMSH_PARAMETER:
     {
@@ -327,18 +337,19 @@ bool gmshLocalNetworkClient::receiveMessage(int &type)
       std::string command = onelab::parameter::getNextToken(message, first);
       gmshLocalNetworkClient* subClient =
 	new gmshLocalNetworkClient(clientName, command);
-      onelabGmshServer *server  = new onelabGmshServer(subClient);
+      onelabGmshServer *server = new onelabGmshServer(subClient);
       subClient->setPid(0);
       int sock = server->LaunchClient();
       if(sock < 0){ // could not establish the connection: aborting
 	server->Shutdown();
 	delete server;
-	Msg::Error("Could not connect client '%s'...", subClient->getName().c_str());
+	Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
       }
       else{
 	Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
 	subClient->setGmshServer(server);
-	addClient(subClient);
+	subClient->setFather(this);
+	master->addClient(subClient);
       }
     }
     break;
@@ -428,21 +439,13 @@ bool gmshLocalNetworkClient::run()
         }
       }
     }
-
     // break the while(1) if the master client has stopped or if we encountered
     // a problem
     if(stop) break;
 
     // if data is available try to get the message from the corresponding
     // client; break the while(1) if we could not receive the message
-    int type = 0;
-    if(haveData && !c->receiveMessage(type)) break;
-
-    // if the client is a subclient and it stopped, notify the master
-    if((c != this) && (type == GmshSocket::GMSH_STOP)){
-      std::string reply = c->getName();
-      getGmshServer()->SendMessage(GmshSocket::GMSH_STOP, reply.size(), &reply[0]);
-    }
+    if(haveData && !c->receiveMessage(this)) break;
 
     // break the while(1) if the master client has stopped
     if(c == this && c->getPid() < 0) break;
@@ -452,10 +455,12 @@ bool gmshLocalNetworkClient::run()
   // subclients, if any. The servers are not deleted upon GMSH_STOP in
   // receiveMessage() to make sure we always delete them, even when the
   // disconnect was not clean.
+  std::vector<gmshLocalNetworkClient*> toDelete;
   for(int i = 0; i < getNumClients(); i++){
     gmshLocalNetworkClient *c = getClient(i);
     GmshServer *s = c->getGmshServer();
     c->setGmshServer(0);
+    c->setFather(0);
     if(s){
       s->Shutdown();
       delete s;
@@ -463,9 +468,12 @@ bool gmshLocalNetworkClient::run()
     if(c != this){
       if(c->getPid() > 0)
         Msg::Error("Subclient %s was not stopped correctly", c->getName().c_str());
-      removeClient(c);
-      delete c;
+      toDelete.push_back(c);
     }
+  }
+  for(unsigned int i = 0; i < toDelete.size(); i++){
+    removeClient(toDelete[i]);
+    delete toDelete[i];
   }
 
   Msg::StatusBar(true, "Done running '%s'", _name.c_str());
@@ -1166,7 +1174,7 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
                                             bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 5);
+  n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww /= 2;
 
@@ -1354,7 +1362,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   }
 
   ww /= 2;
-  n->labelsize(FL_NORMAL_SIZE + 5);
+  n->labelsize(FL_NORMAL_SIZE + 4);
 
   // non-editable value
   if(p.getReadOnly()){
@@ -1432,7 +1440,7 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
                                             bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 5);
+  n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww /= 2;
 
@@ -1456,7 +1464,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
                                             bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 5);
+  n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww /= 2;
 
