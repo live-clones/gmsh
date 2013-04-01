@@ -76,17 +76,25 @@ class onelabGmshServer : public GmshServer{
       // return immediately, i.e., do polling)
       int ret = Select(0, 0, socket);
       if(ret == 0){ // nothing available
-        // if asked, refresh the onelab GUI
-        std::vector<onelab::string> ps;
-        onelab::server::instance()->get(ps, "Gmsh/Action");
-        if(ps.size() && ps[0].getValue() == "refresh"){
-          ps[0].setVisible(false);
-          ps[0].setValue("");
-          onelab::server::instance()->set(ps[0]);
-          if(FlGui::available()) onelab_cb(0, (void*)"refresh");
+        if(timeout < 0){
+          // if asked, refresh the onelab GUI, but no more than every 1/4th of
+          // a second
+          static double lastRefresh = 0.;
+          if(start - lastRefresh > 0.25){
+            std::vector<onelab::string> ps;
+            onelab::server::instance()->get(ps, "Gmsh/Action");
+            if(ps.size() && ps[0].getValue() == "refresh"){
+              ps[0].setVisible(false);
+              ps[0].setValue("");
+              onelab::server::instance()->set(ps[0]);
+              if(FlGui::available()) onelab_cb(0, (void*)"refresh");
+            }
+            lastRefresh = start;
+          }
         }
         // wait at most waitint seconds and respond to FLTK events
         if(FlGui::available()) FlGui::instance()->wait(waitint);
+        // return to caller (we will be back here soon again)
 	if(timeout < 0) return 3;
       }
       else if(ret > 0){
