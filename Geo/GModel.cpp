@@ -356,7 +356,7 @@ void GModel::snapVertices()
   }
 }
 
-void GModel::getEntities(std::vector<GEntity*> &entities)
+void GModel::getEntities(std::vector<GEntity*> &entities) const
 {
   entities.clear();
   entities.insert(entities.end(), vertices.begin(), vertices.end());
@@ -706,7 +706,7 @@ int GModel::getMeshStatus(bool countDiscrete)
   return -1;
 }
 
-int GModel::getNumMeshVertices()
+int GModel::getNumMeshVertices() const
 {
   std::vector<GEntity*> entities;
   getEntities(entities);

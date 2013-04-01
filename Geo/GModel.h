@@ -280,7 +280,7 @@ class GModel
   void snapVertices();
 
   // fill a vector containing all the entities in the model
-  void getEntities(std::vector<GEntity*> &entities);
+  void getEntities(std::vector<GEntity*> &entities) const;
 
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
@@ -360,7 +360,7 @@ class GModel
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices();
+  int getNumMeshVertices() const;
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
