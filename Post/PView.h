@@ -94,6 +94,9 @@ class PView{
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
 
+  // get (approx.) memory used by the view, in Mb
+  double getMemoryInMb();
+
   // the static list of all loaded views
   static std::vector<PView*> list;
 

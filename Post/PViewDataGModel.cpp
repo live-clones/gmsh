@@ -679,6 +679,14 @@ void PViewDataGModel::smooth()
   finalize();
 }
 
+double PViewDataGModel::getMemoryInMb()
+{
+  double m = 0.;
+  for(unsigned int i = 0; i < _steps.size(); i++)
+    m += _steps[i]->getMemoryInMb();
+  return m;
+}
+
 bool PViewDataGModel::combineTime(nameData &nd)
 {
   // sanity checks

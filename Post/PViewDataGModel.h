@@ -145,6 +145,12 @@ class stepData{
     return _gaussPoints[msh];
   }
   std::set<int> &getPartitions(){ return _partitions; }
+  double getMemoryInMb()
+  {
+    double b = 0.;
+    for(int i = 0; i < getNumData(); i++) b += getMult(i);
+    return b * getNumComponents() * sizeof(Real) / 1024. / 1024.;
+  }
 };
 
 // The data container using elements from one or more GModel(s).
@@ -212,6 +218,7 @@ class PViewDataGModel : public PViewData {
   int getType(int step, int ent, int ele);
   void revertElement(int step, int ent, int ele);
   void smooth();
+  double getMemoryInMb();
   bool combineTime(nameData &nd);
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele, bool checkVisibility=false,

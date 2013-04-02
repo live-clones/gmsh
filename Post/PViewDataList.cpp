@@ -588,6 +588,24 @@ void PViewDataList::smooth()
   finalize();
 }
 
+double PViewDataList::getMemoryInMb()
+{
+  double b = 0.;
+  b += (TimeStepMin.size() + TimeStepMax.size() + Time.size()) * sizeof(double);
+  b += (SP.size() + VP.size() + TP.size()) * sizeof(double);
+  b += (SL.size() + VL.size() + TL.size()) * sizeof(double);
+  b += (ST.size() + VT.size() + TT.size()) * sizeof(double);
+  b += (SQ.size() + VQ.size() + TQ.size()) * sizeof(double);
+  b += (SG.size() + VG.size() + TG.size()) * sizeof(double);
+  b += (SS.size() + VS.size() + TS.size()) * sizeof(double);
+  b += (SH.size() + VH.size() + TH.size()) * sizeof(double);
+  b += (SI.size() + VI.size() + TI.size()) * sizeof(double);
+  b += (SY.size() + VY.size() + TY.size()) * sizeof(double);
+  b += (SD.size() + VD.size() + TD.size()) * sizeof(double);
+  b += (T2D.size() + T3D.size()) * sizeof(double);
+  return b / 1024. / 1024.;
+}
+
 static void dVecMerge(std::vector<double> &v, std::vector<double> &dest)
 {
   for(unsigned int i = 0; i < v.size(); i++) dest.push_back(v[i]);
