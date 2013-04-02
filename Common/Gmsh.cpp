@@ -158,9 +158,17 @@ int GmshBatch()
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 
   OpenProject(GModel::current()->getFileName());
-  for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+  bool open = false;
+  for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
+    if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
     if(CTX::instance()->files[i] == "-new")
       new GModel();
+    else if(CTX::instance()->files[i] == "-merge")
+      open = false;
+    else if(CTX::instance()->files[i] == "-open")
+      open = true;
+    else if(open)
+      OpenProject(CTX::instance()->files[i]);
     else
       MergeFile(CTX::instance()->files[i]);
   }
@@ -239,11 +247,19 @@ int GmshFLTK(int argc, char **argv)
   // open project file and merge all other input files
   if(FlGui::getOpenedThroughMacFinder().empty()){
     OpenProject(GModel::current()->getFileName());
-    for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
+    bool open = false;
+    for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
+      if(i == 0 && CTX::instance()->files[0][0] != '-') continue;
       if(CTX::instance()->files[i] == "-new"){
         GModel::current()->setVisibility(0);
         new GModel();
       }
+      else if(CTX::instance()->files[i] == "-merge")
+        open = false;
+      else if(CTX::instance()->files[i] == "-open")
+        open = true;
+      else if(open)
+        OpenProject(CTX::instance()->files[i]);
       else
         MergeFile(CTX::instance()->files[i]);
     }

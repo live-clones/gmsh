@@ -115,6 +115,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
 #endif
   s.push_back(mp("Other options:", ""));
   s.push_back(mp("-",                  "Parse input files, then exit"));
+  s.push_back(mp("-new",               "Create new model before merge next file"));
+  s.push_back(mp("-merge",             "Merge next files"));
+  s.push_back(mp("-open",              "Open next files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
                                        "post-processing mode"));
@@ -394,6 +397,14 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "new")) {
         CTX::instance()->files.push_back("-new");
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "open")) {
+        CTX::instance()->files.push_back("-open");
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "merge")) {
+        CTX::instance()->files.push_back("-merge");
         i++;
       }
       else if(!strcmp(argv[i] + 1, "pid")) {

@@ -115,6 +115,12 @@ OpenGL quad-buffered stereo rendering (requires special graphic card)
 @ftable @code
 @item -
 Parse input files, then exit
+@item -new
+Create new model before merge next file
+@item -merge
+Merge next files
+@item -open
+Open next files
 @item -a, -g, -m, -s, -p
 Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid

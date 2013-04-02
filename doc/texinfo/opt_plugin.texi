@@ -93,7 +93,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2). The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (Dimension = 1) or surface (Dimension = 2). The elements touching the crack on the negative side are modified to use the newly generated vertices.
 Numeric options:
 @table @code
 @item Dimension
