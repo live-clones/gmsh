@@ -133,28 +133,20 @@ static const char *input_formats =
   "Image - PNM" TT "*.pnm" NN
   "Image - PPM" TT "*.ppm" NN;
 
-static void file_open_cb(Fl_Widget *w, void *data)
+static void file_open_merge_cb(Fl_Widget *w, void *data)
 {
+  if(!data) return;
+  std::string mode((char*)data);
   int n = PView::list.size();
-  if(fileChooser(FILE_CHOOSER_SINGLE, "Open", input_formats,
-                 GModel::current()->getFileName().c_str())) {
-    OpenProject(fileChooserGetName(1));
-    drawContext::global()->draw();
-  }
-  if(n != (int)PView::list.size())
-    FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
-}
-
-static void file_merge_cb(Fl_Widget *w, void *data)
-{
-  int n = PView::list.size();
-  int f = fileChooser(FILE_CHOOSER_MULTI, "Merge", input_formats,
-                      GModel::current()->getFileName().c_str());
-  if(f) {
-    for(int i = 1; i <= f; i++)
-      MergeFile(fileChooserGetName(i));
+  int f = fileChooser(FILE_CHOOSER_MULTI, (mode == "open") ? "Open" : "Merge",
+                      input_formats, GModel::current()->getFileName().c_str());
+  if(f){
+    for(int i = 1; i <= f; i++){
+      if(mode == "open")
+        OpenProject(fileChooserGetName(i));
+      else
+        MergeFile(fileChooserGetName(i));
+    }
     drawContext::global()->draw();
   }
   if(n != (int)PView::list.size())
@@ -1917,7 +1909,7 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 static Fl_Menu_Item bar_table[] = {
   {"&File", 0, 0, 0, FL_SUBMENU},
     {"&New...",     FL_CTRL+'n', (Fl_Callback *)file_new_cb, 0},
-    {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_cb, 0},
+    {"&Open...",    FL_CTRL+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, 0, 0, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
@@ -1925,7 +1917,7 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
-    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+  {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
     {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
@@ -1981,7 +1973,7 @@ static Fl_Menu_Item bar_table[] = {
 static Fl_Menu_Item sysbar_table[] = {
   {"File", 0, 0, 0, FL_SUBMENU},
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
-    {"Open...",    FL_META+'o', (Fl_Callback *)file_open_cb, 0},
+    {"Open...",    FL_META+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, 0, 0, FL_SUBMENU},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
@@ -1989,7 +1981,7 @@ static Fl_Menu_Item sysbar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
-    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_merge_cb, 0},
+    {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0},
     {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
