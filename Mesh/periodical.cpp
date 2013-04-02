@@ -236,9 +236,10 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
   file << "View \"test\" {\n";
 
   std::ofstream file2("MicrostructurePolycrystal3D.geo");
-
+  std::ofstream file5("SET.map");
   file2 << "c=" << h << ";\n";
-		
+  int countPeriodSurf=0;
+  int countVolume=0;	
   for(i=0;i<pointers.size();i++){
 	obj = geo_cell();
 
@@ -333,6 +334,8 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
 
 	for(j=0;j<obj.line_loops2.size();j++){
 	  print_geo_face(get_counter(),obj.line_loops2[j],file2);
+	  countPeriodSurf++;
+	  file5 <<get_counter()<< "\t" <<"SURFACE"<<get_counter()<<"\t"<<"NSET\n";
 	  obj.faces2.push_back(get_counter());
 	  increase_counter();
 	}
@@ -343,8 +346,10 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
 
 	print_geo_volume(get_counter(),obj.face_loops2,file2);
 	mem = get_counter();
+	countVolume++;
+	file5 <<get_counter()<< "\t" <<"GRAIN"<<countVolume<<"\t"<<"ELSET\n";
         increase_counter();
-        print_geo_physical_volume(get_counter(),mem,file2);	
+        print_geo_physical_volume(get_counter(),mem,file2);
 	increase_counter();
   }
 
@@ -534,7 +539,7 @@ void voroMetal3D::correspondance(double e){
   std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
   
-  std::ofstream file2("vectors");
+  std::ofstream file2("PERIODIC.map");
 	
   for(i=0;i<faces.size();i++){
     for(j=0;j<faces.size();j++){
@@ -563,8 +568,110 @@ void voroMetal3D::correspondance(double e){
 			
 		  print_segment(p1,p2,file);
 		  
-		  file2 << faces[i]->tag() << " " << faces[j]->tag() << " " << p2.x()-p1.x() << " " << p2.y()-p1.y() << " " << p2.z()-p1.z() << "\n";	
-			
+		  //file2 << "PERIODIC\tSURFACE"<<faces[i]->tag() << "\tSURFACE" << faces[j]->tag() << "\t" << p2.x()-p1.x() << "\t" << p2.y()-p1.y() << "\t" << p2.z()-p1.z() << "\n";	
+		  if (abs((p2.x()-p1.x()-1.0))<0.0001){
+			if (abs((p2.y()-p1.y()))<0.0001){
+				if (abs((p2.z()-p1.z()))<0.0001){
+					file2 << "NSET\tFRONT = FRONT + SURFACE"<<faces[j]->tag()<<"\n";
+					file2 << "NSET\tBACK = BACK + SURFACE"<<faces[i]->tag()<<"\n";
+				}else if(abs((p2.z()-p1.z()-1.0))<0.0001){
+					file2 << "NSET\tFRONTTOP = FRONTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+					file2 << "NSET\tBACKBOTTOM = BACKBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+				}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+					file2 << "NSET\tFRONTBOTTOM = FRONTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKTOP = BACKTOP + SURFACE"<<faces[i]->tag()<<"\n";
+				}
+			}else if (abs((p2.y()-p1.y()-1.0))<0.0001){
+				if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tFRONTRIGHT = FRONTRIGHT + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFT = BACKLEFT + SURFACE"<<faces[i]->tag()<<"\n";
+                                }else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+				        file2 << "NSET\tFRONTRIGHTTOP = FRONTRIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFTBOTTOM = BACKLEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTRIGHTBOTTOM = FRONTRIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFTTOP = BACKLEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+				}
+			}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
+				if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tFRONTLEFT = FRONTLEFT + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHT = BACKRIGHT + SURFACE"<<faces[i]->tag()<<"\n";
+                                }else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTLEFTTOP = FRONTLEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHTBOTTOM = BACKRIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTLEFTBOTTOM = FRONTLEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHTTOP = BACKRIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+                                }
+			}
+		  }else if (abs((p1.x()-p2.x()-1.0))<0.0001){
+			if (abs((p2.y()-p1.y()))<0.0001){
+                                if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tFRONT = FRONT + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACK = BACK + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if(abs((p2.z()-p1.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTBOTTOM = FRONTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKTOP = BACKTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTTOP = FRONTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKBOTTOM = BACKBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                }
+                        }else if (abs((p2.y()-p1.y()-1.0))<0.0001){
+                                if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tFRONTLEFT = FRONTLEFT + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHT = BACKRIGHT + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTLEFTBOTTOM = FRONTLEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHTTOP = BACKRIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTLEFTTOP = FRONTLEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKRIGHTBOTTOM = BACKRIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                }
+                        }else if (abs((p1.y()-p2.y()-1.0))<0.0001){
+                                if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tFRONTRIGHT = FRONTRIGHT + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFT = BACKLEFT + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTRIGHTBOTTOM = FRONTRIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFTTOP = BACKLEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tFRONTRIGHTTOP = FRONTRIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tBACKLEFTBOTTOM = BACKLEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                }
+                        }
+		  }else if (abs((p1.x()-p2.x()))<0.0001){
+			  if (abs((p2.y()-p1.y()-1.0))<0.0001){
+				if (abs((p2.z()-p1.z()))<0.0001){
+        	                	file2 << "NSET\tRIGHT = RIGHT + SURFACE"<<faces[j]->tag()<<"\n";
+                	        	file2 << "NSET\tLEFT = LEFT + SURFACE"<<faces[i]->tag()<<"\n";
+				}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+					file2 << "NSET\tRIGHTTOP = RIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tLEFTBOTTOM = LEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+				}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+					file2 << "NSET\tRIGHTBOTTOM = RIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                        file2 << "NSET\tLEFTTOP = LEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+				}
+	                  }else if (abs((p1.y()-p2.y()-1.0))<0.0001){
+				if (abs((p2.z()-p1.z()))<0.0001){
+                                        file2 << "NSET\tRIGHT = RIGHT + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tLEFT = LEFT + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p2.z()-p1.z()-1.0))<0.0001){
+                                        file2 << "NSET\tRIGHTBOTTOM = RIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tLEFTTOP = LEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
+                                }else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+                                        file2 << "NSET\tRIGHTTOP = RIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
+                                        file2 << "NSET\tLEFTBOTTOM = LEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                                }
+	                  }else if (abs((p1.y()-p2.y()))<0.0001){
+			  	if (abs((p2.z()-p1.z()-1.0))<0.0001){
+                	        	file2 << "NSET\tTOP = TOP + SURFACE"<<faces[j]->tag()<<"\n";
+                        		file2 << "NSET\tBOTTOM = BOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
+	                  	}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
+        	                	file2 << "NSET\tTOP = TOP + SURFACE"<<faces[i]->tag()<<"\n";
+                	        	file2 << "NSET\tBOTTOM = BOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
+                  	  	}
+			  }
+		  }
 		  count++;
 		}
 	  }
