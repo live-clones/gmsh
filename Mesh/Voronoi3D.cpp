@@ -65,7 +65,7 @@ void clip::execute(GRegion* gr){
   execute(vertices2,clipped);
   printf("%d\n", (int)clipped.size());
 
-  std::ofstream file("cells.pos");
+  std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
   for(i=0;i<clipped.size();i++){
     print_segment(clipped[i].get_v1().get_point(),clipped[i].get_v2().get_point(),file);
