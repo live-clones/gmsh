@@ -156,7 +156,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   m->getEntities(allentities);
   for(unsigned int ent = 0; ent < allentities.size(); ent++){
     if(allentities[ent]->dim() != dim + 1) continue;
-    for(int i = 0; i < allentities[ent]->getNumMeshElements(); i++){
+    for(unsigned int i = 0; i < allentities[ent]->getNumMeshElements(); i++){
       MElement *e = allentities[ent]->getMeshElement(i);
       for(int j = 0; j < e->getNumVertices(); j++){
         MVertex *v = e->getVertex(j);
