@@ -27,7 +27,6 @@
 #include <io.h>
 #include <direct.h>
 #include <fcntl.h>
-#include <io.h>
 #include <iostream>
 #include <fstream>
 #endif
