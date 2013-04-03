@@ -125,13 +125,6 @@
 
 #include "tetgen.h"            // Defines the symbol REAL (float or double).
 
-#ifdef USE_CGAL_PREDICATES
-  #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-  typedef CGAL::Exact_predicates_inexact_constructions_kernel cgalEpick;
-  typedef cgalEpick::Point_3 Point;
-  cgalEpick cgal_pred_obj;
-#endif // #ifdef USE_CGAL_PREDICATES
-
 /* On some machines, the exact arithmetic routines might be defeated by the  */
 /*   use of internal extended precision floating-point registers.  Sometimes */
 /*   this problem can be fixed by defining certain values to be volatile,    */
@@ -156,8 +149,8 @@
 /*   which is disastrously slow.  A faster way on IEEE machines might be to  */
 /*   mask the appropriate bit, but that's difficult to do in C.              */
 
-//#define Absolute(a)  ((a) >= 0.0 ? (a) : -(a))
-#define Absolute(a)  fabs(a)
+#define Absolute(a)  ((a) >= 0.0 ? (a) : -(a))
+/* #define Absolute(a)  fabs(a) */
 
 /* Many of the operations are broken up into two pieces, a main part that    */
 /*   performs an approximate operation, and a "tail" that computes the       */
@@ -382,144 +375,271 @@ static REAL o3derrboundA, o3derrboundB, o3derrboundC;
 static REAL iccerrboundA, iccerrboundB, iccerrboundC;
 static REAL isperrboundA, isperrboundB, isperrboundC;
 
-// Options to choose types of geometric computtaions. 
-// Added by H. Si, 2012-08-23.
-static int  _use_inexact_arith; // -X option.
-static int  _use_static_filter; // Default option, disable it by -X1
+/*****************************************************************************/
+/*                                                                           */
+/*  doubleprint()   Print the bit representation of a double.                */
+/*                                                                           */
+/*  Useful for debugging exact arithmetic routines.                          */
+/*                                                                           */
+/*****************************************************************************/
 
-// Static filters for orient3d() and insphere(). 
-// They are pre-calcualted and set in exactinit().
-// Added by H. Si, 2012-08-23.
-static REAL o3dstaticfilter;
-static REAL ispstaticfilter;
-
-
-
-// The following codes were part of "IEEE 754 floating-point test software"
-//          http://www.math.utah.edu/~beebe/software/ieee/
-// The original program was "fpinfo2.c".
-
-double fppow2(int n)
+/*
+void doubleprint(number)
+double number;
 {
-  double x, power;
-  x = (n < 0) ? ((double)1.0/(double)2.0) : (double)2.0;
-  n = (n < 0) ? -n : n;
-  power = (double)1.0;
-  while (n-- > 0)
-	power *= x;
-  return (power);
-}
+  unsigned long long no;
+  unsigned long long sign, expo;
+  int exponent;
+  int i, bottomi;
 
-#ifdef SINGLE
-
-float fstore(float x)
-{
-  return (x);
-}
-
-int test_float(int verbose)
-{
-  float x;
-  int pass = 1;
-
-  //(void)printf("float:\n");
-
-  if (verbose) {
-    (void)printf("  sizeof(float) = %2u\n", (unsigned int)sizeof(float));
-#ifdef CPU86  // <float.h>
-    (void)printf("  FLT_MANT_DIG = %2d\n", FLT_MANT_DIG);
-#endif
-  }
-
-  x = (float)1.0;
-  while (fstore((float)1.0 + x/(float)2.0) != (float)1.0)
-    x /= (float)2.0;
-  if (verbose)
-    (void)printf("  machine epsilon = %13.5e  ", x);
-
-  if (x == (float)fppow2(-23)) {
-    if (verbose)
-      (void)printf("[IEEE 754 32-bit macheps]\n");
+  no = *(unsigned long long *) &number;
+  sign = no & 0x8000000000000000ll;
+  expo = (no >> 52) & 0x7ffll;
+  exponent = (int) expo;
+  exponent = exponent - 1023;
+  if (sign) {
+    printf("-");
   } else {
-    (void)printf("[not IEEE 754 conformant] !!\n");
-    pass = 0;
+    printf(" ");
   }
-
-  x = (float)1.0;
-  while (fstore(x / (float)2.0) != (float)0.0)
-    x /= (float)2.0;
-  if (verbose)
-    (void)printf("  smallest positive number =  %13.5e  ", x);
-
-  if (x == (float)fppow2(-149)) {
-    if (verbose)
-      (void)printf("[smallest 32-bit subnormal]\n");
-  } else if (x == (float)fppow2(-126)) {
-    if (verbose)
-      (void)printf("[smallest 32-bit normal]\n");
+  if (exponent == -1023) {
+    printf(
+      "0.0000000000000000000000000000000000000000000000000000_     (   )");
   } else {
-	(void)printf("[not IEEE 754 conformant] !!\n");
-    pass = 0;
+    printf("1.");
+    bottomi = -1;
+    for (i = 0; i < 52; i++) {
+      if (no & 0x0008000000000000ll) {
+        printf("1");
+        bottomi = i;
+      } else {
+        printf("0");
+      }
+      no <<= 1;
+    }
+    printf("_%d  (%d)", exponent, exponent - 1 - bottomi);
   }
-
-  return pass;
 }
+*/
 
-# else
+/*****************************************************************************/
+/*                                                                           */
+/*  floatprint()   Print the bit representation of a float.                  */
+/*                                                                           */
+/*  Useful for debugging exact arithmetic routines.                          */
+/*                                                                           */
+/*****************************************************************************/
 
-double dstore(double x)
+/*
+void floatprint(number)
+float number;
 {
-  return (x);
-}
+  unsigned no;
+  unsigned sign, expo;
+  int exponent;
+  int i, bottomi;
 
-int test_double(int verbose)
+  no = *(unsigned *) &number;
+  sign = no & 0x80000000;
+  expo = (no >> 23) & 0xff;
+  exponent = (int) expo;
+  exponent = exponent - 127;
+  if (sign) {
+    printf("-");
+  } else {
+    printf(" ");
+  }
+  if (exponent == -127) {
+    printf("0.00000000000000000000000_     (   )");
+  } else {
+    printf("1.");
+    bottomi = -1;
+    for (i = 0; i < 23; i++) {
+      if (no & 0x00400000) {
+        printf("1");
+        bottomi = i;
+      } else {
+        printf("0");
+      }
+      no <<= 1;
+    }
+    printf("_%3d  (%3d)", exponent, exponent - 1 - bottomi);
+  }
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  expansion_print()   Print the bit representation of an expansion.        */
+/*                                                                           */
+/*  Useful for debugging exact arithmetic routines.                          */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+void expansion_print(elen, e)
+int elen;
+REAL *e;
 {
-  double x;
-  int pass = 1;
+  int i;
 
-  // (void)printf("double:\n");
-  if (verbose) {
-    (void)printf("  sizeof(double) = %2u\n", (unsigned int)sizeof(double));
-#ifdef CPU86  // <float.h>
-    (void)printf("  DBL_MANT_DIG = %2d\n", DBL_MANT_DIG);
-#endif
+  for (i = elen - 1; i >= 0; i--) {
+    REALPRINT(e[i]);
+    if (i > 0) {
+      printf(" +\n");
+    } else {
+      printf("\n");
+    }
   }
-
-  x = 1.0;
-  while (dstore(1.0 + x/2.0) != 1.0)
-    x /= 2.0;
-  if (verbose) 
-    (void)printf("  machine epsilon = %13.5le ", x);
-
-  if (x == (double)fppow2(-52)) {
-    if (verbose)
-      (void)printf("[IEEE 754 64-bit macheps]\n");
-  } else {
-    (void)printf("[not IEEE 754 conformant] !!\n");
-    pass = 0;
-  }
-
-  x = 1.0;
-  while (dstore(x / 2.0) != 0.0)
-    x /= 2.0;
-  if (verbose)
-    (void)printf("  smallest positive number = %13.5le ", x);
-
-  if (x == (double)fppow2(-1074)) {
-    if (verbose)
-      (void)printf("[smallest 64-bit subnormal]\n");
-  } else if (x == (double)fppow2(-1022)) {
-    if (verbose)
-      (void)printf("[smallest 64-bit normal]\n");
-  } else {
-    (void)printf("[not IEEE 754 conformant] !!\n");
-    pass = 0;
-  }
-
-  return pass;
 }
+*/
 
-#endif
+/*****************************************************************************/
+/*                                                                           */
+/*  doublerand()   Generate a double with random 53-bit significand and a    */
+/*                 random exponent in [0, 511].                              */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+double doublerand()
+{
+  double result;
+  double expo;
+  long a, b, c;
+  long i;
+
+  a = random();
+  b = random();
+  c = random();
+  result = (double) (a - 1073741824) * 8388608.0 + (double) (b >> 8);
+  for (i = 512, expo = 2; i <= 131072; i *= 2, expo = expo * expo) {
+    if (c & i) {
+      result *= expo;
+    }
+  }
+  return result;
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  narrowdoublerand()   Generate a double with random 53-bit significand    */
+/*                       and a random exponent in [0, 7].                    */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+double narrowdoublerand()
+{
+  double result;
+  double expo;
+  long a, b, c;
+  long i;
+
+  a = random();
+  b = random();
+  c = random();
+  result = (double) (a - 1073741824) * 8388608.0 + (double) (b >> 8);
+  for (i = 512, expo = 2; i <= 2048; i *= 2, expo = expo * expo) {
+    if (c & i) {
+      result *= expo;
+    }
+  }
+  return result;
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  uniformdoublerand()   Generate a double with random 53-bit significand.  */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+double uniformdoublerand()
+{
+  double result;
+  long a, b;
+
+  a = random();
+  b = random();
+  result = (double) (a - 1073741824) * 8388608.0 + (double) (b >> 8);
+  return result;
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  floatrand()   Generate a float with random 24-bit significand and a      */
+/*                random exponent in [0, 63].                                */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+float floatrand()
+{
+  float result;
+  float expo;
+  long a, c;
+  long i;
+
+  a = random();
+  c = random();
+  result = (float) ((a - 1073741824) >> 6);
+  for (i = 512, expo = 2; i <= 16384; i *= 2, expo = expo * expo) {
+    if (c & i) {
+      result *= expo;
+    }
+  }
+  return result;
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  narrowfloatrand()   Generate a float with random 24-bit significand and  */
+/*                      a random exponent in [0, 7].                         */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+float narrowfloatrand()
+{
+  float result;
+  float expo;
+  long a, c;
+  long i;
+
+  a = random();
+  c = random();
+  result = (float) ((a - 1073741824) >> 6);
+  for (i = 512, expo = 2; i <= 2048; i *= 2, expo = expo * expo) {
+    if (c & i) {
+      result *= expo;
+    }
+  }
+  return result;
+}
+*/
+
+/*****************************************************************************/
+/*                                                                           */
+/*  uniformfloatrand()   Generate a float with random 24-bit significand.    */
+/*                                                                           */
+/*****************************************************************************/
+
+/*
+float uniformfloatrand()
+{
+  float result;
+  long a;
+
+  a = random();
+  result = (float) ((a - 1073741824) >> 6);
+  return result;
+}
+*/
 
 /*****************************************************************************/
 /*                                                                           */
@@ -540,8 +660,7 @@ int test_double(int verbose)
 /*                                                                           */
 /*****************************************************************************/
 
-void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy, 
-               REAL maxz)
+REAL exactinit()
 {
   REAL half;
   REAL check, lastcheck;
@@ -567,24 +686,6 @@ void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy,
 #endif /* not SINGLE */
   _FPU_SETCW(cword);
 #endif /* LINUX */
-
-  if (verbose) {
-    printf("  Initializing robust predicates.\n");
-  }
-
-#ifdef USE_CGAL_PREDICATES
-  if (cgal_pred_obj.Has_static_filters) {
-    printf("  Use static filter.\n");
-  } else {
-    printf("  No static filter.\n");
-  }
-#endif // USE_CGAL_PREDICATES
-
-#ifdef SINGLE
-  test_float(verbose);
-#else
-  test_double(verbose);
-#endif
 
   every_other = 1;
   half = 0.5;
@@ -621,31 +722,7 @@ void exactinit(int verbose, int noexact, int nofilter, REAL maxx, REAL maxy,
   isperrboundB = (5.0 + 72.0 * epsilon) * epsilon;
   isperrboundC = (71.0 + 1408.0 * epsilon) * epsilon * epsilon;
 
-  // Set TetGen options.  Added by H. Si, 2012-08-23.
-  _use_inexact_arith = noexact;
-  _use_static_filter = !nofilter;
-
-  // Calculate the two static filters for orient3d() and insphere() tests.
-  // Added by H. Si, 2012-08-23.
-
-  // Sort maxx < maxy < maxz. Re-use 'half' for swapping.
-  assert(maxx > 0);
-  assert(maxy > 0);
-  assert(maxz > 0);
-
-  if (maxx > maxz) {
-    half = maxx; maxx = maxz; maxz = half;
-  }
-  if (maxy > maxz) {
-    half = maxy; maxy = maxz; maxz = half;
-  }
-  else if (maxy < maxx) {
-    half = maxy; maxy = maxx; maxx = half;
-  }
-
-  o3dstaticfilter = 5.1107127829973299e-15 * maxx * maxy * maxz;
-  ispstaticfilter = 1.2466136531027298e-13 * maxx * maxy * maxz * (maxz * maxz);
-
+  return epsilon; /* Added by H. Si 30 Juli, 2004. */
 }
 
 /*****************************************************************************/
@@ -1792,6 +1869,16 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   REAL fin1[192], fin2[192];
   int finlength;
 
+  ////////////////////////////////////////////////////////
+  // To avoid uninitialized warnings reported by valgrind.
+  int i;
+  for (i = 0; i < 8; i++) {
+    adet[i] = bdet[i] = cdet[i] = 0.0;
+  }
+  for (i = 0; i < 16; i++) {
+    abdet[i] = 0.0;
+  }
+  ////////////////////////////////////////////////////////
 
   REAL adxtail, bdxtail, cdxtail;
   REAL adytail, bdytail, cdytail;
@@ -1828,7 +1915,6 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   REAL err1, err2, err3;
   INEXACT REAL _i, _j, _k;
   REAL _0;
-
 
   adx = (REAL) (pa[0] - pd[0]);
   bdx = (REAL) (pb[0] - pd[0]);
@@ -2177,16 +2263,27 @@ REAL orient3dadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL permanent)
   return finnow[finlength - 1];
 }
 
-#ifdef USE_CGAL_PREDICATES
+#ifdef INEXACT_GEOM_PRED
 
 REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
 {
-  return (REAL) 
-    - cgal_pred_obj.orientation_3_object()
-        (Point(pa[0], pa[1], pa[2]), 
-         Point(pb[0], pb[1], pb[2]),
-         Point(pc[0], pc[1], pc[2]),
-         Point(pd[0], pd[1], pd[2]));
+  REAL adx, bdx, cdx;
+  REAL ady, bdy, cdy;
+  REAL adz, bdz, cdz;
+
+  adx = pa[0] - pd[0];
+  bdx = pb[0] - pd[0];
+  cdx = pc[0] - pd[0];
+  ady = pa[1] - pd[1];
+  bdy = pb[1] - pd[1];
+  cdy = pc[1] - pd[1];
+  adz = pa[2] - pd[2];
+  bdz = pb[2] - pd[2];
+  cdz = pc[2] - pd[2];
+
+  return adx * (bdy * cdz - bdz * cdy)
+       + bdx * (cdy * adz - cdz * ady)
+       + cdx * (ady * bdz - adz * bdy);
 }
 
 #else
@@ -2196,16 +2293,16 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
   REAL adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
   REAL bdxcdy, cdxbdy, cdxady, adxcdy, adxbdy, bdxady;
   REAL det;
-
+  REAL permanent, errbound;
 
   adx = pa[0] - pd[0];
-  ady = pa[1] - pd[1];
-  adz = pa[2] - pd[2];
   bdx = pb[0] - pd[0];
-  bdy = pb[1] - pd[1];
-  bdz = pb[2] - pd[2];
   cdx = pc[0] - pd[0];
+  ady = pa[1] - pd[1];
+  bdy = pb[1] - pd[1];
   cdy = pc[1] - pd[1];
+  adz = pa[2] - pd[2];
+  bdz = pb[2] - pd[2];
   cdz = pc[2] - pd[2];
 
   bdxcdy = bdx * cdy;
@@ -2221,19 +2318,6 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
       + bdz * (cdxady - adxcdy)
       + cdz * (adxbdy - bdxady);
 
-  if (_use_inexact_arith) {
-    return det;
-  }
-
-  if (_use_static_filter) {
-    //if (fabs(det) > o3dstaticfilter) return det;
-    if (det > o3dstaticfilter) return det;
-    if (det < -o3dstaticfilter) return det;
-  }
-
-
-  REAL permanent, errbound;
-
   permanent = (Absolute(bdxcdy) + Absolute(cdxbdy)) * Absolute(adz)
             + (Absolute(cdxady) + Absolute(adxcdy)) * Absolute(bdz)
             + (Absolute(adxbdy) + Absolute(bdxady)) * Absolute(cdz);
@@ -2245,7 +2329,7 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
   return orient3dadapt(pa, pb, pc, pd, permanent);
 }
 
-#endif // #ifdef USE_CGAL_PREDICATES
+#endif // ifdef INEXACT_GEOM_PRED
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3278,7 +3362,6 @@ REAL insphereexact(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   INEXACT REAL _i, _j;
   REAL _0;
 
-
   Two_Product(pa[0], pb[1], axby1, axby0);
   Two_Product(pb[0], pa[1], bxay1, bxay0);
   Two_Two_Diff(axby1, axby0, bxay1, bxay0, ab[3], ab[2], ab[1], ab[0]);
@@ -3855,7 +3938,6 @@ REAL insphereadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe,
   INEXACT REAL _i, _j;
   REAL _0;
 
-
   aex = (REAL) (pa[0] - pe[0]);
   bex = (REAL) (pb[0] - pe[0]);
   cex = (REAL) (pc[0] - pe[0]);
@@ -4032,19 +4114,50 @@ REAL insphereadapt(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe,
   return insphereexact(pa, pb, pc, pd, pe);
 }
 
-#ifdef USE_CGAL_PREDICATES
+#ifdef INEXACT_GEOM_PRED
 
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 {
-  return (REAL)
-    - cgal_pred_obj.side_of_oriented_sphere_3_object()
-        (Point(pa[0], pa[1], pa[2]),
-         Point(pb[0], pb[1], pb[2]),
-         Point(pc[0], pc[1], pc[2]),
-         Point(pd[0], pd[1], pd[2]),
-         Point(pe[0], pe[1], pe[2]));
-}
+  REAL aex, bex, cex, dex;
+  REAL aey, bey, cey, dey;
+  REAL aez, bez, cez, dez;
+  REAL alift, blift, clift, dlift;
+  REAL ab, bc, cd, da, ac, bd;
+  REAL abc, bcd, cda, dab;
 
+  aex = pa[0] - pe[0];
+  bex = pb[0] - pe[0];
+  cex = pc[0] - pe[0];
+  dex = pd[0] - pe[0];
+  aey = pa[1] - pe[1];
+  bey = pb[1] - pe[1];
+  cey = pc[1] - pe[1];
+  dey = pd[1] - pe[1];
+  aez = pa[2] - pe[2];
+  bez = pb[2] - pe[2];
+  cez = pc[2] - pe[2];
+  dez = pd[2] - pe[2];
+
+  ab = aex * bey - bex * aey;
+  bc = bex * cey - cex * bey;
+  cd = cex * dey - dex * cey;
+  da = dex * aey - aex * dey;
+
+  ac = aex * cey - cex * aey;
+  bd = bex * dey - dex * bey;
+
+  abc = aez * bc - bez * ac + cez * ab;
+  bcd = bez * cd - cez * bd + dez * bc;
+  cda = cez * da + dez * ac + aez * cd;
+  dab = dez * ab + aez * bd + bez * da;
+
+  alift = aex * aex + aey * aey + aez * aez;
+  blift = bex * bex + bey * bey + bez * bez;
+  clift = cex * cex + cey * cey + cez * cez;
+  dlift = dex * dex + dey * dey + dez * dez;
+
+  return (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
+}
 #else
 
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
@@ -4057,8 +4170,12 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   REAL alift, blift, clift, dlift;
   REAL ab, bc, cd, da, ac, bd;
   REAL abc, bcd, cda, dab;
+  REAL aezplus, bezplus, cezplus, dezplus;
+  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
+  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
+  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
   REAL det;
-
+  REAL permanent, errbound;
 
   aex = pa[0] - pe[0];
   bex = pb[0] - pe[0];
@@ -4105,23 +4222,6 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 
   det = (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
 
-  if (_use_inexact_arith) {
-    return det;
-  }
-
-  if (_use_static_filter) {
-    if (fabs(det) > ispstaticfilter) return det;
-    //if (det > ispstaticfilter) return det;
-    //if (det < minus_ispstaticfilter) return det;
-
-  }
-
-  REAL aezplus, bezplus, cezplus, dezplus;
-  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
-  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
-  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
-  REAL permanent, errbound;
-
   aezplus = Absolute(aez);
   bezplus = Absolute(bez);
   cezplus = Absolute(cez);
@@ -4162,7 +4262,7 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   return insphereadapt(pa, pb, pc, pd, pe, permanent);
 }
 
-#endif // #ifdef USE_CGAL_PREDICATES
+#endif // #ifdef INEXACT_GEOM_PRED
 
 /*****************************************************************************/
 /*                                                                           */
@@ -4226,7 +4326,6 @@ REAL orient4dexact(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
   REAL err1, err2, err3;
   INEXACT REAL _i, _j;
   REAL _0;
-
 
   Two_Product(pa[0], pb[1], axby1, axby0);
   Two_Product(pb[0], pa[1], bxay1, bxay0);
@@ -4441,7 +4540,6 @@ REAL orient4dadapt(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
   INEXACT REAL _i, _j;
   REAL _0;
 
-
   aex = (REAL) (pa[0] - pe[0]);
   bex = (REAL) (pb[0] - pe[0]);
   cex = (REAL) (pc[0] - pe[0]);
@@ -4601,106 +4699,108 @@ REAL orient4d(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
               REAL aheight, REAL bheight, REAL cheight, REAL dheight, 
               REAL eheight)
 {
- REAL aex, bex, cex, dex;
- REAL aey, bey, cey, dey;
- REAL aez, bez, cez, dez;
- REAL aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
- REAL aexcey, cexaey, bexdey, dexbey;
- REAL aeheight, beheight, ceheight, deheight;
- REAL ab, bc, cd, da, ac, bd;
- REAL abc, bcd, cda, dab;
- REAL aezplus, bezplus, cezplus, dezplus;
- REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
- REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
- REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
- REAL det;
- REAL permanent, errbound;
+  REAL aex, bex, cex, dex;
+  REAL aey, bey, cey, dey;
+  REAL aez, bez, cez, dez;
+  REAL aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
+  REAL aexcey, cexaey, bexdey, dexbey;
+  REAL aeheight, beheight, ceheight, deheight;
+  REAL ab, bc, cd, da, ac, bd;
+  REAL abc, bcd, cda, dab;
+  REAL aezplus, bezplus, cezplus, dezplus;
+  REAL aexbeyplus, bexaeyplus, bexceyplus, cexbeyplus;
+  REAL cexdeyplus, dexceyplus, dexaeyplus, aexdeyplus;
+  REAL aexceyplus, cexaeyplus, bexdeyplus, dexbeyplus;
+  REAL det;
+  REAL permanent, errbound;
 
+  //orient4dcount++;
 
- aex = pa[0] - pe[0];
- bex = pb[0] - pe[0];
- cex = pc[0] - pe[0];
- dex = pd[0] - pe[0];
- aey = pa[1] - pe[1];
- bey = pb[1] - pe[1];
- cey = pc[1] - pe[1];
- dey = pd[1] - pe[1];
- aez = pa[2] - pe[2];
- bez = pb[2] - pe[2];
- cez = pc[2] - pe[2];
- dez = pd[2] - pe[2];
- aeheight = aheight - eheight;
- beheight = bheight - eheight;
- ceheight = cheight - eheight;
- deheight = dheight - eheight;
+  aex = pa[0] - pe[0];
+  bex = pb[0] - pe[0];
+  cex = pc[0] - pe[0];
+  dex = pd[0] - pe[0];
+  aey = pa[1] - pe[1];
+  bey = pb[1] - pe[1];
+  cey = pc[1] - pe[1];
+  dey = pd[1] - pe[1];
+  aez = pa[2] - pe[2];
+  bez = pb[2] - pe[2];
+  cez = pc[2] - pe[2];
+  dez = pd[2] - pe[2];
+  aeheight = aheight - eheight;
+  beheight = bheight - eheight;
+  ceheight = cheight - eheight;
+  deheight = dheight - eheight;
 
- aexbey = aex * bey;
- bexaey = bex * aey;
- ab = aexbey - bexaey;
- bexcey = bex * cey;
- cexbey = cex * bey;
- bc = bexcey - cexbey;
- cexdey = cex * dey;
- dexcey = dex * cey;
- cd = cexdey - dexcey;
- dexaey = dex * aey;
- aexdey = aex * dey;
- da = dexaey - aexdey;
+  aexbey = aex * bey;
+  bexaey = bex * aey;
+  ab = aexbey - bexaey;
+  bexcey = bex * cey;
+  cexbey = cex * bey;
+  bc = bexcey - cexbey;
+  cexdey = cex * dey;
+  dexcey = dex * cey;
+  cd = cexdey - dexcey;
+  dexaey = dex * aey;
+  aexdey = aex * dey;
+  da = dexaey - aexdey;
 
- aexcey = aex * cey;
- cexaey = cex * aey;
- ac = aexcey - cexaey;
- bexdey = bex * dey;
- dexbey = dex * bey;
- bd = bexdey - dexbey;
+  aexcey = aex * cey;
+  cexaey = cex * aey;
+  ac = aexcey - cexaey;
+  bexdey = bex * dey;
+  dexbey = dex * bey;
+  bd = bexdey - dexbey;
 
- abc = aez * bc - bez * ac + cez * ab;
- bcd = bez * cd - cez * bd + dez * bc;
- cda = cez * da + dez * ac + aez * cd;
- dab = dez * ab + aez * bd + bez * da;
+  abc = aez * bc - bez * ac + cez * ab;
+  bcd = bez * cd - cez * bd + dez * bc;
+  cda = cez * da + dez * ac + aez * cd;
+  dab = dez * ab + aez * bd + bez * da;
 
- det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
+  det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
 
- aezplus = Absolute(aez);
- bezplus = Absolute(bez);
- cezplus = Absolute(cez);
- dezplus = Absolute(dez);
- aexbeyplus = Absolute(aexbey);
- bexaeyplus = Absolute(bexaey);
- bexceyplus = Absolute(bexcey);
- cexbeyplus = Absolute(cexbey);
- cexdeyplus = Absolute(cexdey);
- dexceyplus = Absolute(dexcey);
- dexaeyplus = Absolute(dexaey);
- aexdeyplus = Absolute(aexdey);
- aexceyplus = Absolute(aexcey);
- cexaeyplus = Absolute(cexaey);
- bexdeyplus = Absolute(bexdey);
- dexbeyplus = Absolute(dexbey);
- permanent = ((cexdeyplus + dexceyplus) * bezplus
-              + (dexbeyplus + bexdeyplus) * cezplus
-              + (bexceyplus + cexbeyplus) * dezplus)
-           * Absolute(aeheight)
-           + ((dexaeyplus + aexdeyplus) * cezplus
-              + (aexceyplus + cexaeyplus) * dezplus
-              + (cexdeyplus + dexceyplus) * aezplus)
-           * Absolute(beheight)
-           + ((aexbeyplus + bexaeyplus) * dezplus
-              + (bexdeyplus + dexbeyplus) * aezplus
-              + (dexaeyplus + aexdeyplus) * bezplus)
-           * Absolute(ceheight)
-           + ((bexceyplus + cexbeyplus) * aezplus
-              + (cexaeyplus + aexceyplus) * bezplus
-              + (aexbeyplus + bexaeyplus) * cezplus)
-           * Absolute(deheight);
- errbound = isperrboundA * permanent;
- if ((det > errbound) || (-det > errbound)) {
-   return det;
- }
+  if (0) { //if (noexact) {
+    return det;
+  }
 
- return orient4dadapt(pa, pb, pc, pd, pe,
-                      aheight, bheight, cheight, dheight, eheight, permanent);
+  aezplus = Absolute(aez);
+  bezplus = Absolute(bez);
+  cezplus = Absolute(cez);
+  dezplus = Absolute(dez);
+  aexbeyplus = Absolute(aexbey);
+  bexaeyplus = Absolute(bexaey);
+  bexceyplus = Absolute(bexcey);
+  cexbeyplus = Absolute(cexbey);
+  cexdeyplus = Absolute(cexdey);
+  dexceyplus = Absolute(dexcey);
+  dexaeyplus = Absolute(dexaey);
+  aexdeyplus = Absolute(aexdey);
+  aexceyplus = Absolute(aexcey);
+  cexaeyplus = Absolute(cexaey);
+  bexdeyplus = Absolute(bexdey);
+  dexbeyplus = Absolute(dexbey);
+  permanent = ((cexdeyplus + dexceyplus) * bezplus
+               + (dexbeyplus + bexdeyplus) * cezplus
+               + (bexceyplus + cexbeyplus) * dezplus)
+            * aeheight
+            + ((dexaeyplus + aexdeyplus) * cezplus
+               + (aexceyplus + cexaeyplus) * dezplus
+               + (cexdeyplus + dexceyplus) * aezplus)
+            * beheight
+            + ((aexbeyplus + bexaeyplus) * dezplus
+               + (bexdeyplus + dexbeyplus) * aezplus
+               + (dexaeyplus + aexdeyplus) * bezplus)
+            * ceheight
+            + ((bexceyplus + cexbeyplus) * aezplus
+               + (cexaeyplus + aexceyplus) * bezplus
+               + (aexbeyplus + bexaeyplus) * cezplus)
+            * deheight;
+  errbound = isperrboundA * permanent;
+  if ((det > errbound) || (-det > errbound)) {
+    return det;
+  }
+
+  return orient4dadapt(pa, pb, pc, pd, pe,
+                       aheight, bheight, cheight, dheight, eheight, permanent);
 }
-
-
-
