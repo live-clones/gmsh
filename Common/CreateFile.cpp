@@ -303,7 +303,8 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
 
   case FORMAT_INP:
     GModel::current()->writeINP
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_P3D:

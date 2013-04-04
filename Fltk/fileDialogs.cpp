@@ -894,9 +894,9 @@ int mshFileDialog(const char *name)
   return 0;
 }
 
-// unv mesh dialog
+// unv/inp mesh dialog
 
-int unvFileDialog(const char *name)
+int unvinpFileDialog(const char *name, const char *title, int format)
 {
   struct _unvFileDialog{
     Fl_Window *window;
@@ -910,7 +910,7 @@ int unvFileDialog(const char *name)
   if(!dialog){
     dialog = new _unvFileDialog;
     int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(w, h, "UNV Options");
+    dialog->window = new Fl_Double_Window(w, h, title);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
     dialog->b[0] = new Fl_Check_Button
@@ -938,7 +938,7 @@ int unvFileDialog(const char *name)
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
                                       dialog->b[1]->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_UNV);
+        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }

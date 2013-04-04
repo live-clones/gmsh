@@ -659,7 +659,7 @@ class GModel
 
   // Abaqus
   int writeINP(const std::string &name, bool saveAll=false,
-               double scalingFactor=1.0);
+               bool saveGroupsOfNodes=false, double scalingFactor=1.0);
 
   // Geomview mesh
   int readGEOM(const std::string &name);

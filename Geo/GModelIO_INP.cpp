@@ -23,9 +23,10 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
       int np = (saveAll ? 1 : ge->physicals.size());
       for(int p = 0; p < np; p++){
         int part = (saveAll ? ge->tag() : ge->physicals[p]);
-        const char *str = (ge->dim() == 3) ? "VOLUME" : (ge->dim() == 2) ?
-          "SURFACE" : (ge->dim() == 1) ? "CURVE" : "POINT";
-        fprintf(fp, "*Element, type=%s, ELSET=%s%d\n", typ, str, part);
+        const char *str1 = (saveAll ? "Elementary" : "Physical");
+        const char *str2 = (ge->dim() == 3) ? "Volume" : (ge->dim() == 2) ?
+          "Surface" : (ge->dim() == 1) ? "Line" : "Point";
+        fprintf(fp, "*Element, type=%s, ELSET=%s%s%d\n", typ, str1, str2, part);
         for(unsigned int i = 0; i < elements.size(); i++)
           elements[i]->writeINP(fp, ne++);
       }
@@ -33,7 +34,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
   }
 }
 
-int GModel::writeINP(const std::string &name, bool saveAll,
+int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
                      double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
@@ -72,6 +73,36 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     writeElementsINP(fp, *it, (*it)->hexahedra, saveAll, ne);
     writeElementsINP(fp, *it, (*it)->prisms, saveAll, ne);
     writeElementsINP(fp, *it, (*it)->pyramids, saveAll, ne);
+  }
+
+  // groups of nodes for physical groups
+  if(saveGroupsOfNodes){
+    std::map<int, std::vector<GEntity*> > groups[4];
+    getPhysicalGroups(groups);
+    for(int dim = 1; dim <= 3; dim++){
+      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+          it != groups[dim].end(); it++){
+        std::set<MVertex*> nodes;
+        std::vector<GEntity *> &entities = it->second;
+        for(unsigned int i = 0; i < entities.size(); i++){
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            MElement *e = entities[i]->getMeshElement(j);
+            for (int k = 0; k < e->getNumVertices(); k++)
+              nodes.insert(e->getVertex(k));
+          }
+        }
+        const char *str = (dim == 3) ? "PhysicalVolume" : (dim == 2) ?
+          "PhysicalSurface" : "PhysicalLine";
+        fprintf(fp, "*NSET,NSET=%s%d\n", str, it->first);
+        int n = 0;
+        for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
+          if(n && !(n % 10)) fprintf(fp, "\n");
+          fprintf(fp, "%d, ", (*it2)->getIndex());
+          n++;
+        }
+        fprintf(fp, "\n");
+      }
+    }
   }
 
   fclose(fp);

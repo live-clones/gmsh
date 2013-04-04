@@ -255,13 +255,14 @@ static int _save_geo(const char *name){ return geoFileDialog(name); }
 static int _save_brep(const char *name){ CreateOutputFile(name, FORMAT_BREP); return 1; }
 static int _save_step(const char *name){ CreateOutputFile(name, FORMAT_STEP); return 1; }
 static int _save_cgns(const char *name){ return cgnsFileDialog(name); }
-static int _save_unv(const char *name){ return unvFileDialog(name); }
+static int _save_unv(const char *name){ return unvinpFileDialog
+    (name, "UNV Options", FORMAT_UNV); }
 static int _save_vtk(const char *name){ return genericMeshFileDialog
     (name, "VTK Options", FORMAT_VTK, true, false); }
 static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
-static int _save_inp(const char *name){ return genericMeshFileDialog
-    (name, "Abaqus INP Options", FORMAT_INP, false, false); }
+static int _save_inp(const char *name){ return unvinpFileDialog
+    (name, "Abaqus INP Options", FORMAT_INP); }
 static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
 static int _save_mesh(const char *name){ return genericMeshFileDialog
