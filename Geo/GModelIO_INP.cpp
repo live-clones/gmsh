@@ -15,21 +15,16 @@
 
 template <class T>
 static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
-                             bool saveAll, int &ne)
+                             bool saveAll)
 {
   if(elements.size() && (saveAll || ge->physicals.size())){
     const char *typ = elements[0]->getStringForINP();
     if(typ){
-      int np = (saveAll ? 1 : ge->physicals.size());
-      for(int p = 0; p < np; p++){
-        int part = (saveAll ? ge->tag() : ge->physicals[p]);
-        const char *str1 = (saveAll ? "Elementary" : "Physical");
-        const char *str2 = (ge->dim() == 3) ? "Volume" : (ge->dim() == 2) ?
-          "Surface" : (ge->dim() == 1) ? "Line" : "Point";
-        fprintf(fp, "*Element, type=%s, ELSET=%s%s%d\n", typ, str1, str2, part);
-        for(unsigned int i = 0; i < elements.size(); i++)
-          elements[i]->writeINP(fp, ne++);
-      }
+      const char *str = (ge->dim() == 3) ? "Volume" : (ge->dim() == 2) ?
+        "Surface" : (ge->dim() == 1) ? "Line" : "Point";
+      fprintf(fp, "*Element, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
+      for(unsigned int i = 0; i < elements.size(); i++)
+        elements[i]->writeINP(fp, elements[i]->getNum());
     }
   }
 }
@@ -57,28 +52,49 @@ int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNod
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
-  int ne = 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it){
-    writeElementsINP(fp, *it, (*it)->points, saveAll, ne);
+    writeElementsINP(fp, *it, (*it)->points, saveAll);
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    writeElementsINP(fp, *it, (*it)->lines, saveAll, ne);
+    writeElementsINP(fp, *it, (*it)->lines, saveAll);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    writeElementsINP(fp, *it, (*it)->triangles, saveAll, ne);
-    writeElementsINP(fp, *it, (*it)->quadrangles, saveAll, ne);
+    writeElementsINP(fp, *it, (*it)->triangles, saveAll);
+    writeElementsINP(fp, *it, (*it)->quadrangles, saveAll);
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
-    writeElementsINP(fp, *it, (*it)->tetrahedra, saveAll, ne);
-    writeElementsINP(fp, *it, (*it)->hexahedra, saveAll, ne);
-    writeElementsINP(fp, *it, (*it)->prisms, saveAll, ne);
-    writeElementsINP(fp, *it, (*it)->pyramids, saveAll, ne);
+    writeElementsINP(fp, *it, (*it)->tetrahedra, saveAll);
+    writeElementsINP(fp, *it, (*it)->hexahedra, saveAll);
+    writeElementsINP(fp, *it, (*it)->prisms, saveAll);
+    writeElementsINP(fp, *it, (*it)->pyramids, saveAll);
   }
 
-  // groups of nodes for physical groups
+  std::map<int, std::vector<GEntity*> > groups[4];
+  getPhysicalGroups(groups);
+
+  // save elements sets for each physical group
+  for(int dim = 0; dim <= 3; dim++){
+    for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+        it != groups[dim].end(); it++){
+      std::vector<GEntity *> &entities = it->second;
+      const char *str = (dim == 3) ? "PhysicalVolume" : (dim == 2) ?
+        "PhysicalSurface" : "PhysicalLine";
+      fprintf(fp, "*ELSET,ELSET=%s%d\n", str, it->first);
+      int n = 0;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+          MElement *e = entities[i]->getMeshElement(j);
+          if(n && !(n % 10)) fprintf(fp, "\n");
+          fprintf(fp, "%d, ", e->getNum());
+          n++;
+        }
+      }
+      fprintf(fp, "\n");
+    }
+  }
+
+  // save node sets for each physical group
   if(saveGroupsOfNodes){
-    std::map<int, std::vector<GEntity*> > groups[4];
-    getPhysicalGroups(groups);
     for(int dim = 1; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
@@ -108,4 +124,3 @@ int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNod
   fclose(fp);
   return 1;
 }
-
