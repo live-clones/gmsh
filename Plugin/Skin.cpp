@@ -7,9 +7,17 @@
 #include "Skin.h"
 #include "Context.h"
 #include "GmshDefines.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MLine.h"
+#include "MFace.h"
+#include "MEdge.h"
+#include "discreteFace.h"
+#include "discreteEdge.h"
 
 StringXNumber SkinOptions_Number[] = {
   {GMSH_FULLRC, "Visible", NULL, 1.},
+  {GMSH_FULLRC, "FromMesh", NULL, 0.},
   {GMSH_FULLRC, "View", NULL, -1.}
 };
 
@@ -23,11 +31,12 @@ extern "C"
 
 std::string GMSH_SkinPlugin::getHelp() const
 {
-  return "Plugin(Skin) extracts the boundary (skin) of "
-    "the view `View'. If `Visible' is set, the plugin only "
-    "extracts the skin of visible entities.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "Plugin(Skin) creates one new view.";
+  return "Plugin(Skin) extracts the boundary (skin) of the current "
+    "mesh (if `FromMesh' = 1), or from the the view `View' (in which "
+    "case it creates a new view). If `View' < 0 and `FromMesh' = 0, "
+    "the plugin is run on the current view.\n"
+    "If `Visible' is set, the plugin only extracts the skin of visible "
+    "entities.";
 }
 
 int GMSH_SkinPlugin::getNbOptions() const
@@ -74,12 +83,12 @@ class ElmData {
       else if(numComp == 3){ data->NbVL++; vec = &data->VL; break; }
       else if(numComp == 9){ data->NbTL++; vec = &data->TL; break; }
       break;
-    case 3: 
+    case 3:
       if     (numComp == 1){ data->NbST++; vec = &data->ST; break; }
       else if(numComp == 3){ data->NbVT++; vec = &data->VT; break; }
       else if(numComp == 9){ data->NbTT++; vec = &data->TT; break; }
       break;
-    case 4: 
+    case 4:
       if     (numComp == 1){ data->NbSQ++; vec = &data->SQ; break; }
       else if(numComp == 3){ data->NbVQ++; vec = &data->VQ; break; }
       else if(numComp == 9){ data->NbTQ++; vec = &data->TQ; break; }
@@ -113,17 +122,17 @@ double ElmDataLessThan::tolerance = 1.e-12;
 
 static int getBoundary(int type, const int (**boundary)[6][4])
 {
-  static const int tri[6][4] = 
+  static const int tri[6][4] =
     {{0,1,-1,-1}, {1,2,-1,-1}, {2,0,-1,-1}};
-  static const int qua[6][4] = 
+  static const int qua[6][4] =
     {{0,1,-1,-1}, {1,2,-1,-1}, {2,3,-1,-1}, {3,0,-1,-1}};
-  static const int tet[6][4] = 
+  static const int tet[6][4] =
     {{0,1,3,-1}, {0,2,1,-1}, {0,3,2,-1}, {1,2,3,-1}};
-  static const int hex[6][4] = 
+  static const int hex[6][4] =
     {{0,1,5,4}, {0,3,2,1}, {0,4,7,3}, {1,2,6,5}, {2,3,7,6}, {4,5,6,7}};
-  static const int pri[6][4] = 
+  static const int pri[6][4] =
     {{0,1,4,3}, {0,3,5,2}, {1,2,5,4}, {0,2,1,-1}, {3,4,5,-1}};
-  static const int pyr[6][4] = 
+  static const int pyr[6][4] =
     {{0,3,2,1}, {0,1,4,-1}, {0,4,3,-1}, {1,2,4,-1}, {2,3,4,-1}};
   switch(type){
   case TYPE_TRI: *boundary = &tri; return 3;
@@ -136,11 +145,76 @@ static int getBoundary(int type, const int (**boundary)[6][4])
   }
 }
 
+static void getBoundaryFromMesh(GModel *m, int visible)
+{
+  int dim = m->getDim();
+  std::vector<GEntity*> entities;
+  m->getEntities(entities);
+  std::set<MFace, Less_Face> bndFaces;
+  std::set<MEdge, Less_Edge> bndEdges;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    if(ge->dim() != dim) continue;
+    if(visible && !ge->getVisibility()) continue;
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+      MElement *e = ge->getMeshElement(j);
+      if(dim == 2){
+        for(int i = 0; i < e->getNumEdges(); i++){
+          MEdge f = e->getEdge(i);
+          if(bndEdges.find(f) == bndEdges.end())
+            bndEdges.insert(f);
+          else
+            bndEdges.erase(f);
+        }
+      }
+      else if(dim == 3){
+        for(int i = 0; i < e->getNumFaces(); i++){
+          MFace f = e->getFace(i);
+          if(bndFaces.find(f) == bndFaces.end())
+            bndFaces.insert(f);
+          else
+            bndFaces.erase(f);
+        }
+      }
+    }
+  }
+
+  if(dim == 2){
+    discreteEdge *e = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+    m->add(e);
+    for(std::set<MEdge, Less_Edge>::iterator it = bndEdges.begin();
+        it != bndEdges.end(); it++){
+      e->lines.push_back(new MLine(it->getVertex(0), it->getVertex(1)));
+    }
+  }
+  else if(dim == 3){
+    discreteFace *f = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
+    m->add(f);
+    for(std::set<MFace, Less_Face>::iterator it = bndFaces.begin();
+        it != bndFaces.end(); it++){
+      if(it->getNumVertices() == 3)
+        f->triangles.push_back(new MTriangle(it->getVertex(0), it->getVertex(1),
+                                             it->getVertex(2)));
+      else if(it->getNumVertices() == 4)
+        f->quadrangles.push_back(new MQuadrangle(it->getVertex(0), it->getVertex(1),
+                                                 it->getVertex(2), it->getVertex(3)));
+    }
+  }
+}
+
 PView *GMSH_SkinPlugin::execute(PView *v)
 {
   int visible = (int)SkinOptions_Number[0].def;
-  int iView = (int)SkinOptions_Number[1].def;
+  int fromMesh = (int)SkinOptions_Number[1].def;
+  int iView = (int)SkinOptions_Number[2].def;
 
+  // compute boundary of current mesh
+  if(fromMesh){
+    getBoundaryFromMesh(GModel::current(), visible);
+    return v;
+  }
+
+  // compute boundary of post-processing data set
   PView *v1 = getView(iView, v);
   if(!v1) return v;
   PViewData *data1 = getPossiblyAdaptiveData(v1);
@@ -149,6 +223,8 @@ PView *GMSH_SkinPlugin::execute(PView *v)
     Msg::Error("Skin plugin cannot be applied to multi-mesh views");
     return v;
   }
+
+  Msg::Info("Extracting boundary from View[%d]", v1->getIndex());
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
@@ -203,7 +279,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   for(std::set<ElmData, ElmDataLessThan>::iterator it = skin.begin();
       it != skin.end(); it++)
     it->addInView(data2);
-  
+
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     if(data1->hasTimeStep(i))
       data2->Time.push_back(data1->getTime(i));
