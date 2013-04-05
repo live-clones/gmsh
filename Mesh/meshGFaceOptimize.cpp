@@ -231,7 +231,7 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
 		    data.Us[index1], data.Vs[index1], 0.,
 		    data.Us[index2], data.Vs[index2], 0., n2);
       double pp; prosca(n1, n2, &pp);
-      if(pp < 0) t->revert();
+      if(pp < 0) t->reverse();
     }
   }
 
@@ -242,16 +242,16 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
       MVertex *v[3];
       for (int j=0;j<3;j++){
 	v[j] = t->getVertex(j);
-	std::map<MVertex* , MVertex*>::iterator it =  data.equivalence->find(v[j]);  
+	std::map<MVertex* , MVertex*>::iterator it =  data.equivalence->find(v[j]);
 	if (it != data.equivalence->end()){
 	  v[j] = it->second;
 	}
       }
       newT.push_back(new MTriangle (v[0],v[1],v[2]));
       delete t;
-    } 
+    }
     gf->triangles = newT;
-  }  
+  }
 
 
 }
@@ -661,7 +661,7 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
     surface_old += surfaceFaceUV(e1[j],gf,false);
     minq = std::min(e1[j]->etaShapeMeasure(),minq);
   }
-  
+
   v1->setParameter(0,after.x());
   v1->setParameter(1,after.y());
   v1->setXYZ(pafter.x(),pafter.y(),pafter.z());
@@ -1603,8 +1603,8 @@ static int _splitFlatQuads(GFace *gf, double minQual, std::set<MEdge,Less_Edge> 
         MVertex *v3 = e->getVertex((k+1)%4);
         MVertex *v2 = e->getVertex((k+2)%4);
         MVertex *v4 = e->getVertex((k+3)%4);
-	prioritory.insert(MEdge(v2,v3)); 
-	prioritory.insert(MEdge(v3,v4)); 
+	prioritory.insert(MEdge(v2,v3));
+	prioritory.insert(MEdge(v3,v4));
         SPoint2 pv1,pv2,pv3,pv4,pb1,pb2,pb3,pb4;
         reparamMeshEdgeOnFace (v1,v3,gf,pv1,pv3);
         reparamMeshEdgeOnFace (v1,v4,gf,pv1,pv4);
@@ -1901,7 +1901,7 @@ struct opti_data_vertex_relocation {
 
   double f() const
   {
-    
+
     double val = 1.0;
     for (unsigned int i=0;i<e.size();++i){
       MElement *el = e[i];
@@ -2032,14 +2032,14 @@ static int _untangleQuad (GFace *gf, MQuadrangle *q,v2t_cont & adj)
 
   std::vector<SPoint2> before;for(int i=0;i<4;i++)before.push_back(SPoint2(U[i],V[i]));
   std::vector<SPoint2> after;
-  for(int i=0;i<4;i++) 
+  for(int i=0;i<4;i++)
     if (q->getVertex(i)->onWhat()->dim() == 2)
       after.push_back(SPoint2(x[2*i],x[2*i+1]));
     else
       after.push_back(SPoint2(U[i],V[i]));
   std::vector<MVertex*> vs;for(int i=0;i<4;i++)vs.push_back(q->getVertex(i));
   bool success = _isItAGoodIdeaToMoveThoseVertices (gf,lt,vs,before,after);
-  
+
   if (success){
     for (int i=0;i<4;i++)data.set_(x[2*i],x[2*i+1],i);
     //    sprintf(NNN,"UNTANGLE_cavity_%d_after.pos",OPTI_NUMBER++);
@@ -2264,7 +2264,7 @@ static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3){
   reparamMeshVertexOnFace(v2,gf, p2);
   reparamMeshVertexOnFace(v3,gf, p3);
   if (robustPredicates::orient2d (p1,p2,p3) < 0)return true;
-  return false;     
+  return false;
 }
 
 static int allowSwap (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
@@ -2277,7 +2277,7 @@ static int allowSwap (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex 
       robustPredicates::orient2d (p1,p2,p4) < 0 &&
       robustPredicates::orient2d (p3,p4,p1) *
       robustPredicates::orient2d (p3,p4,p2) > 0)return true;
-  return false;     
+  return false;
 }
 
 static double myShapeMeasure(MElement *e){
@@ -2356,7 +2356,7 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf, double eps, std::set<MEdge,Less_Ed
 	bool PA = prioritory.find(MEdge(v11,v22)) == prioritory.end();
 	bool PB = prioritory.find(MEdge(v12,v21)) == prioritory.end();
 
-        double old_surface = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf) ; 
+        double old_surface = surfaceFaceUV(e1,gf) + surfaceFaceUV(e2,gf) ;
         double new_surface_A = surfaceFaceUV(q1A,gf) + surfaceFaceUV(q2A,gf) ;
         double new_surface_B = surfaceFaceUV(q1B,gf) + surfaceFaceUV(q2B,gf) ;
 
@@ -2372,9 +2372,9 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf, double eps, std::set<MEdge,Less_Ed
 
 	if(!allowSwap(gf,v1,v2,v11,v22)) doA = false;
 	if(!allowSwap(gf,v1,v2,v21,v12)) doB = false;
-	
-	if (!PA)doA = false; 
-	if (!PB)doB = false; 
+
+	if (!PA)doA = false;
+	if (!PB)doB = false;
 
 
         if (doA && SANITY_(gf,q1A,q2A)){
@@ -2497,7 +2497,7 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
 
 static MQuadrangle* buildNewQuad(MVertex *first,
 				 MVertex *newV,
-				 MElement *e, 
+				 MElement *e,
 				 const std::vector<MElement*> & E){
   int found[3] = {0,0,0};
   for (unsigned int i=0;i<E.size();i++){
@@ -2527,7 +2527,7 @@ static MQuadrangle* buildNewQuad(MVertex *first,
 			    newV,
 			    e->getVertex((start+1)%3),
 			    e->getVertex((start+2)%3));
-  }      
+  }
 }
 
 int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*> > &toProcess)
@@ -3494,7 +3494,7 @@ void recombineIntoQuads(GFace *gf,
 	  optistatus[5] = (ITERB == 1) ?untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing) : 0;
 
 	  double bad = printStats (gf, "IN OPTIMIZATION");
-	  if (bad > .1)break;	  
+	  if (bad > .1)break;
           if (ITER == 10){
 	    ITERB = 1;
 	  }

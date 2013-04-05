@@ -135,7 +135,7 @@ class MQuadrangle : public MElement {
     return SPoint3(0., 0., 0.);
   }
   virtual double getVolume();
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
   }
@@ -237,7 +237,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
   virtual const char *getStringForINP() const { return "CPS8"/*"C2D8"*/; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
@@ -318,7 +318,7 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getTypeForMSH() const { return MSH_QUA_9; }
   virtual const char *getStringForPOS() const { return "SQ2"; }
   virtual const char *getStringForDIFF() const { return "ElmB9n2D"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
@@ -418,7 +418,7 @@ class MQuadrangleN : public MQuadrangle {
     if(_order==10 && _vs.size() + 4 == 121) return MSH_QUA_121;
     return 0;
   }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;

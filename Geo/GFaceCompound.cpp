@@ -442,7 +442,7 @@ void GFaceCompound::orientFillTris(std::list<MTriangle*> loopfillTris) const
   if (invertTris){
     for (std::list<MTriangle*>::iterator it = loopfillTris.begin();
            it != loopfillTris.end(); it++ )
-	(*it)->revert();
+	(*it)->reverse();
   }
 
   fillTris.insert(fillTris.begin(),loopfillTris.begin(),loopfillTris.end());
@@ -2637,7 +2637,7 @@ void GFaceCompound::coherencePatches() const
 	      itt != mySet.end(); itt++){
 	    if (*itt != t){
 	      (*itt)->getEdgeInfo(me,iE2,si2);
-	      if(si == si2) { (*itt)->revert();}
+	      if(si == si2) { (*itt)->reverse();}
 	      touched.insert(*itt);
 	    }
 	  }
@@ -2689,7 +2689,7 @@ void GFaceCompound::coherenceNormals()
               itt != mySet.end(); itt++){
             if (*itt != t){
               (*itt)->getEdgeInfo(me,iE2,si2);
-              if(si == si2)  (*itt)->revert();
+              if(si == si2)  (*itt)->reverse();
               touched.insert(*itt);
             }
           }

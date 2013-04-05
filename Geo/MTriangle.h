@@ -120,7 +120,7 @@ class MTriangle : public MElement {
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
   virtual const char *getStringForINP() const { return "CPS3"/*"STRI3"*//*"C2D3"*/; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
@@ -227,7 +227,7 @@ class MTriangle6 : public MTriangle {
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }
   virtual const char *getStringForINP() const { return "CPS6"/*"STRI65"*//*"C2D6"*/; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -334,7 +334,7 @@ class MTriangleN : public MTriangle {
     if(_order ==10 && _vs.size() == 63) return MSH_TRI_66;
     return 0;
   }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;

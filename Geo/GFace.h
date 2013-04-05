@@ -44,7 +44,7 @@ class GFace : public GEntity
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  GFaceCompound *compound; // this model edge belongs to a compound 
+  GFaceCompound *compound; // this model edge belongs to a compound
 
   // replace edges (for gluing) for specific modelers, we have to
   // re-create internal data
@@ -66,8 +66,8 @@ class GFace : public GEntity
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
-  std::vector<MVertex*> additionalVertices;	
-	
+  std::vector<MVertex*> additionalVertices;
+
   // delete mesh data
   virtual void deleteMesh();
 
@@ -82,7 +82,7 @@ class GFace : public GEntity
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
   void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
-  
+
   // delete the edge from the face (the edge is supposed to be a free
   // edge in the face, not part of any edge loops--use with caution!)
   void delFreeEdge(GEdge *e);
@@ -123,7 +123,7 @@ class GFace : public GEntity
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
-  
+
   // retrieve surface params
   virtual surface_params getSurfaceParams() const;
 
@@ -159,10 +159,10 @@ class GFace : public GEntity
   // stereographic mappings of the sphere that is used in 2D mesh
   // generation !
   virtual double getMetricEigenvalue(const SPoint2 &);
-  
+
   // eigen values are absolute values and sorted from min to max of absolute values
   // eigen vectors are the COLUMNS of eigVec
-  virtual void getMetricEigenVectors(const SPoint2 &param, 
+  virtual void getMetricEigenVectors(const SPoint2 &param,
                                      double eigVal[2], double eigVec[4]) const;
 
   // return the parmater location on the face given a point in space
@@ -173,7 +173,7 @@ class GFace : public GEntity
   virtual bool containsParam(const SPoint2 &pt) const;
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 & queryPoint, 
+  virtual GPoint closestPoint(const SPoint3 & queryPoint,
                               const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
@@ -184,7 +184,7 @@ class GFace : public GEntity
 
   // compute the second derivates of the face at the parameter location
   // the derivates have to be allocated before calling this function
-  virtual void secondDer(const SPoint2 &param, 
+  virtual void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
@@ -259,30 +259,30 @@ class GFace : public GEntity
 
   // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart
-  bool fillPointCloud(double maxDist, 
+  bool fillPointCloud(double maxDist,
 		      std::vector<SPoint3> *points,
 		      std::vector<SPoint2> *uvpoints,
                       std::vector<SVector3> *normals=0);
 
   // apply Lloyd's algorithm to the mesh
-  void lloyd (int nIter, int infNorm = 0); 
+  void lloyd (int nIter, int infNorm = 0);
 
   // replace edges (gor gluing)
   void replaceEdges(std::list<GEdge*> &);
-  
+
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
 
   // add layers of quads
   void addLayersOfQuads (int nLayers, GVertex *start, double hmin, double factor);
-  
+
   struct {
     // do we recombine the triangles of the mesh?
     int recombine;
     // what is the treshold angle for recombination
     double recombineAngle;
     // is this surface meshed using a transfinite interpolation
-    char Method;
+    char method;
     // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
     // all diagonals of the triangulation are left (-1), right (1) or
@@ -292,7 +292,8 @@ class GFace : public GEntity
     int transfiniteSmoothing;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
-    // edge loops
+    // reverse mesh orientation
+    bool reverseMesh;
   } meshAttributes ;
 
   int getMeshingAlgo () const;

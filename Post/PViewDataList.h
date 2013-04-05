@@ -110,7 +110,7 @@ class PViewDataList : public PViewData {
                    double &x, double &y, double &style);
   void getString3D(int i, int step, std::string &str,
                    double &x, double &y, double &z, double &style);
-  void revertElement(int step, int ent, int ele);
+  void reverseElement(int step, int ent, int ele);
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);

@@ -493,7 +493,7 @@ void PViewDataList::getString3D(int i, int step, std::string &str,
   _getString(3, i, step, str, x, y, z, style);
 }
 
-void PViewDataList::revertElement(int step, int ent, int ele)
+void PViewDataList::reverseElement(int step, int ent, int ele)
 {
   if(step) return;
   if(ele != _lastElement) _setLast(ele);

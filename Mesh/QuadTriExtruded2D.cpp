@@ -150,7 +150,7 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
     adj_ep = adj_region->meshAttributes.extrude;
 
     // if Neighbor is Transfinite, go with the default, non-QuadTri recombine for this surface
-    if( adj_region && adj_region->meshAttributes.Method == MESH_TRANSFINITE )
+    if( adj_region && adj_region->meshAttributes.method == MESH_TRANSFINITE )
        (*tri_quad_flag) = 0;
     // if a neighbor
     // has no extrusion structure,
@@ -556,7 +556,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
   bool struct_root = false;
   if( root_source &&
       ( (ep_src && ep_src->mesh.ExtrudeMesh && ep_src->geo.Mode == EXTRUDED_ENTITY) ||
-        root_source->meshAttributes.Method == MESH_TRANSFINITE ) )
+        root_source->meshAttributes.method == MESH_TRANSFINITE ) )
     struct_root = true;
 
   if( !struct_root && MeshQuadToTriTopUnstructured(from, to, pos) )

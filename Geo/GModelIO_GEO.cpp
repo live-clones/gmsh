@@ -203,7 +203,7 @@ int GModel::importGEOInternals()
 
         f->meshAttributes.recombine = s->Recombine;
         f->meshAttributes.recombineAngle = s->RecombineAngle;
-        f->meshAttributes.Method = s->Method;
+        f->meshAttributes.method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
         add(f);
         if(s->EmbeddedCurves){

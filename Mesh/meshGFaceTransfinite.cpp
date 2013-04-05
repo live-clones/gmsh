@@ -49,7 +49,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners)
     GEdgeLoop el(fedges);
     for(GEdgeLoop::iter it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
-    
+
     // try reaaally hard for 3-sided faces
     if(corners.size() == 3){
       GEdge *first = 0, *last = 0;
@@ -98,7 +98,7 @@ static void computeEdgeLoops(const GFace *gf, std::vector<MVertex*> &all_mvertic
   else
     for(int i = (*it)->mesh_vertices.size() - 1; i >= 0; i--)
       all_mvertices.push_back((*it)->mesh_vertices[i]);
-  
+
   GVertex *v_start = start;
   while(1){
     ++it;
@@ -134,7 +134,7 @@ static void computeEdgeLoops(const GFace *gf, std::vector<MVertex*> &all_mvertic
 
 int MeshTransfiniteSurface(GFace *gf)
 {
-  if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
+  if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
   Msg::Info("Meshing surface %d (transfinite)", gf->tag());
 
@@ -167,17 +167,17 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // make the ordering of the list consistent with the ordering of the
   // first two corners (if the second found corner is not the second
-  // corner, just revert the list)
-  bool revert = false;
+  // corner, just reverse the list)
+  bool reverse = false;
   for(unsigned int i = 1; i < m_vertices.size(); i++){
     MVertex *v = m_vertices[i];
-    if(v == corners[1] || v == corners[2] || 
+    if(v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])){
-      if(v != corners[1]) revert = true;
+      if(v != corners[1]) reverse = true;
       break;
     }
   }
-  if(revert){
+  if(reverse){
     std::vector <MVertex *> tmp;
     tmp.push_back(m_vertices[0]);
     for(int i = m_vertices.size() - 1; i > 0; i--)
@@ -191,9 +191,9 @@ int MeshTransfiniteSurface(GFace *gf)
   std::vector<double> U, V;
   for(unsigned int i = 0; i < m_vertices.size(); i++){
     MVertex *v = m_vertices[i];
-    if(v == corners[0] || v == corners[1] || v == corners[2] || 
+    if(v == corners[0] || v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])){
-      N[iCorner++] = i;   
+      N[iCorner++] = i;
       if(iCorner > 4){
         Msg::Error("Surface %d transfinite parameters are incoherent", gf->tag());
         return 0;
@@ -210,20 +210,20 @@ int MeshTransfiniteSurface(GFace *gf)
   if(corners.size () == 4){
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo", 
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo",
                  gf->tag());
       return 0;
     }
   }
   else{
-    int Lb = m_vertices.size() - N3;      
+    int Lb = m_vertices.size() - N3;
     if(Lb != L){
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo %d != %d", 
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo %d != %d",
                  gf->tag(), L, Lb);
       return 0;
-    }      
+    }
   }
-  
+
   std::vector<double> lengths_i, lengths_j;
   double L_i = 0, L_j = 0;
   lengths_i.push_back(0.);
@@ -274,7 +274,7 @@ int MeshTransfiniteSurface(GFace *gf)
     tab[L][0] = m_vertices[L];
     tab[L][H] = m_vertices[L+H];
     // degenerated, only necessary for transfinite volume algo
-    tab[0][H] = m_vertices[0]; 
+    tab[0][H] = m_vertices[0];
     for (int i = 1; i < L; i++){
       tab[i][0] = m_vertices[i];
       tab[i][H] = m_vertices[2*L+H-i];
@@ -295,14 +295,14 @@ int MeshTransfiniteSurface(GFace *gf)
     double VC4 = V[N4];
     for(int i = 1; i < L; i++){
       double u = lengths_i[i] / L_i;
-      for(int j = 1; j < H; j++){ 
+      for(int j = 1; j < H; j++){
         double v = lengths_j[j] / L_j;
         int iP1 = N1 + i;
         int iP2 = N2 + j;
         int iP3 = N4 - i;
         int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
-        double Up = TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v); 
-        double Vp = TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v); 
+        double Up = TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v);
+        double Vp = TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v);
         GPoint gp = gf->point(SPoint2(Up, Vp));
         MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
         gf->mesh_vertices.push_back(newv);
@@ -313,7 +313,7 @@ int MeshTransfiniteSurface(GFace *gf)
   else{
     for(int i = 1; i < L; i++){
       double u = lengths_i[i] / L_i;
-      for(int j = 1; j < H; j++){ 
+      for(int j = 1; j < H; j++){
         double v = lengths_j[j] / L_j;
         int iP1 = N1 + i;
         int iP2 = N2 + j;
@@ -328,17 +328,17 @@ int MeshTransfiniteSurface(GFace *gf)
           // coords match with the (degenerate) coordinates of the
           // underlying ruled surface; so instead we just interpolate
           // in real space
-          double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),       
-                               m_vertices[iP3]->x(), m_vertices[N1]->x(),        
-                               m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);          
-          double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),       
-                               m_vertices[iP3]->y(), m_vertices[N1]->y(),        
-                               m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);          
-          double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),       
-                               m_vertices[iP3]->z(), m_vertices[N1]->z(),        
-                               m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);          
+          double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),
+                               m_vertices[iP3]->x(), m_vertices[N1]->x(),
+                               m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
+          double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),
+                               m_vertices[iP3]->y(), m_vertices[N1]->y(),
+                               m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
+          double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),
+                               m_vertices[iP3]->z(), m_vertices[N1]->z(),
+                               m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
           // xp,yp,zp can be off the surface so we cannot use parFromPoint
-          gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);   
+          gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
         }
         GPoint gp = gf->point(SPoint2(Up, Vp));
         MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
@@ -346,7 +346,7 @@ int MeshTransfiniteSurface(GFace *gf)
         tab[i][j] = newv;
       }
     }
-  }  
+  }
 
   // should we apply the elliptic smoother?
   int numSmooth = 0;
@@ -362,7 +362,7 @@ int MeshTransfiniteSurface(GFace *gf)
       v[i].resize(H + 1);
     }
     for(int i = 0; i <= L; i++){
-      for(int j = 0; j <= H; j++){ 
+      for(int j = 0; j <= H; j++){
         int iP1 = N1 + i;
         int iP2 = N2 + j;
         int iP3 = N4 - i;
@@ -384,18 +384,18 @@ int MeshTransfiniteSurface(GFace *gf)
                                  SQU(v[i][j + 1] - v[i][j - 1])) ;
           double gamma = 0.25 * (SQU(u[i + 1][j] - u[i - 1][j]) +
                                  SQU(v[i + 1][j] - v[i - 1][j]));
-          double beta = 0.0625 * 
+          double beta = 0.0625 *
             ((u[i + 1][j] - u[i - 1][j]) * (u[i][j + 1] - u[i][j - 1]) +
              (v[i + 1][j] - v[i - 1][j]) * (v[i][j + 1] - v[i][j - 1]));
-          u[i][j] = 0.5 * 
-            (alpha * (u[i + 1][j] + u[i - 1][j]) + 
+          u[i][j] = 0.5 *
+            (alpha * (u[i + 1][j] + u[i - 1][j]) +
              gamma * (u[i][j + 1] + u[i][j - 1]) -
-             2. * beta * (u[i + 1][j + 1] - u[i - 1][j + 1] - 
+             2. * beta * (u[i + 1][j + 1] - u[i - 1][j + 1] -
                           u[i + 1][j - 1] + u[i - 1][j - 1])) / (alpha + gamma);
-          v[i][j] = 0.5 * 
-            (alpha * (v[i + 1][j] + v[i - 1][j]) + 
+          v[i][j] = 0.5 *
+            (alpha * (v[i + 1][j] + v[i - 1][j]) +
              gamma * (v[i][j + 1] + v[i][j - 1]) -
-             2. * beta * (v[i + 1][j + 1] - v[i - 1][j + 1] - 
+             2. * beta * (v[i + 1][j + 1] - v[i - 1][j + 1] -
                           v[i + 1][j - 1] + v[i - 1][j - 1])) / (alpha + gamma);
         }
       }
@@ -413,7 +413,7 @@ int MeshTransfiniteSurface(GFace *gf)
   }
 
   // create elements
-  if(corners.size() == 4){ 
+  if(corners.size() == 4){
     for(int i = 0; i < L ; i++){
       for(int j = 0; j < H; j++){
         MVertex *v1 = tab[i][j];
@@ -423,20 +423,20 @@ int MeshTransfiniteSurface(GFace *gf)
         if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
           gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
         else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-                (gf->meshAttributes.transfiniteArrangement == 0 && 
+                (gf->meshAttributes.transfiniteArrangement == 0 &&
                  ((i % 2 == 0 && j % 2 == 1) ||
                   (i % 2 == 1 && j % 2 == 0)))){
           gf->triangles.push_back(new MTriangle(v1, v2, v3));
           gf->triangles.push_back(new MTriangle(v3, v4, v1));
-        }         
+        }
         else{
           gf->triangles.push_back(new MTriangle(v1, v2, v4));
           gf->triangles.push_back(new MTriangle(v4, v2, v3));
-        }         
+        }
       }
     }
   }
-  else{      
+  else{
     for(int j = 0; j < H; j++){
       MVertex *v1 = tab[0][0];
       MVertex *v2 = tab[1][j];
@@ -452,16 +452,16 @@ int MeshTransfiniteSurface(GFace *gf)
         if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
           gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
         else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-                (gf->meshAttributes.transfiniteArrangement == 0 && 
+                (gf->meshAttributes.transfiniteArrangement == 0 &&
                  ((i % 2 == 0 && j % 2 == 1) ||
                   (i % 2 == 1 && j % 2 == 0)))){
           gf->triangles.push_back(new MTriangle(v1, v2, v3));
           gf->triangles.push_back(new MTriangle(v3, v4, v1));
-        }         
+        }
         else{
           gf->triangles.push_back(new MTriangle(v1, v2, v4));
           gf->triangles.push_back(new MTriangle(v4, v2, v3));
-        }         
+        }
       }
     }
   }

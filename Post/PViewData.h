@@ -174,7 +174,7 @@ class PViewData {
                            double &x, double &y, double &z, double &style){}
 
   // change the orientation of the ele-th element
-  virtual void revertElement(int step, int ent, int ele){}
+  virtual void reverseElement(int step, int ent, int ele){}
 
   // check if the view is empty
   virtual bool empty();

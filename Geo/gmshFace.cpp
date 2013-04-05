@@ -120,9 +120,9 @@ void gmshFace::resetMeshAttributes()
 {
   meshAttributes.recombine = s->Recombine;
   meshAttributes.recombineAngle = s->RecombineAngle;
-  meshAttributes.Method = s->Method;
+  meshAttributes.method = s->Method;
   meshAttributes.extrude = s->Extrude;
-  if(meshAttributes.Method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE){
     meshAttributes.transfiniteArrangement = s->Recombine_Dir;
     meshAttributes.transfiniteSmoothing = s->TransfiniteSmoothing;
     meshAttributes.corners.clear();
@@ -136,6 +136,7 @@ void gmshFace::resetMeshAttributes()
         Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
+  meshAttributes.reverseMesh = s->ReverseMesh;
 }
 
 Range<double> gmshFace::parBounds(int i) const

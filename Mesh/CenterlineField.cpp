@@ -638,7 +638,7 @@ void Centerline::createSplitCompounds()
     Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
     /* GEdge *gec = */ current->addCompoundEdge(e_compound,num_gec);
-    //gec->meshAttributes.Method = MESH_TRANSFINITE;
+    //gec->meshAttributes.method = MESH_TRANSFINITE;
     //gec->meshAttributes.nbPointsTransfinite = nbPoints;
   }
 
@@ -801,7 +801,7 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
       eRegionSec->addPhysicalEntity(10);             //tag 10
       current->setPhysicalName("wallVolume", 3, 10);//dim 3 tag 10
     }
-    //end double extrusion 
+    //end double extrusion
 
     for (unsigned int j = 2; j < extrudedE.size(); j++){
       GFace *elFace = (GFace*) extrudedE[j];
@@ -1259,7 +1259,7 @@ void Centerline::computeCrossField(double x,double y,double z,
   //   m2 = Frame_field::findCross(x,y,z);
   // else
   //   m2 = Frame_field::search(x,y,z);
-  
+
 }
 
 void Centerline::printSplit() const

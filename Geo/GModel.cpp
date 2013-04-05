@@ -688,18 +688,18 @@ int GModel::getMeshStatus(bool countDiscrete)
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
-                          (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.method != MESH_NONE)) &&
        ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() ||
         (*it)->prisms.size() || (*it)->pyramids.size() ||
         (*it)->polyhedra.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
-                          (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.method != MESH_NONE)) &&
        ((*it)->triangles.size() || (*it)->quadrangles.size() ||
         (*it)->polygons.size())) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
-                          (*it)->meshAttributes.Method != MESH_NONE)) &&
+                          (*it)->meshAttributes.method != MESH_NONE)) &&
        (*it)->lines.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
@@ -3063,7 +3063,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 	  MVertex *v2 = (*it)->getVertex(1);
 	  if (v1 == vE || v2 == vE){
 	    segmentsForThisDiscreteEdge.push_back(*it);
-	    if (v2 == vE)(*it)->revert();
+	    if (v2 == vE) (*it)->reverse();
 	    vE = (v1 == vE) ? v2 : v1;
 	    found = true;
 	    allSegments.erase(it);
@@ -3071,7 +3071,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 	  }
 	  if (v1 == vB || v2 == vB){
 	    segmentsForThisDiscreteEdge.push_front(*it);
-	    if (v1 == vB)(*it)->revert();
+	    if (v1 == vB) (*it)->reverse();
 	    vB = (v1 == vB) ? v2 : v1;
 	    found = true;
 	    allSegments.erase(it);

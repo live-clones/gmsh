@@ -57,7 +57,7 @@ class MHexahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual const MVertex *getVertex(int num) const { return _v[num]; }  
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
@@ -121,7 +121,7 @@ class MHexahedron : public MElement {
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
   virtual const char *getStringForINP() const { return "C3D8"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
@@ -229,7 +229,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
-  virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }  
+  virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[20] = {0, 8, 1, 11, 2, 13, 3, 9, 10, 12,
@@ -313,7 +313,7 @@ class MHexahedron20 : public MHexahedron {
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForINP() const { return "C3D20"; }
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
@@ -454,7 +454,7 @@ class MHexahedron27 : public MHexahedron {
   virtual int getTypeForMSH() const { return MSH_HEX_27; }
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
@@ -602,9 +602,9 @@ class MHexahedronN : public MHexahedron {
   }
   virtual int getNumFacesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual void revert()
+  virtual void reverse()
   {
-    Msg::Error("Revert not implemented yet for MHexahedronN");
+    Msg::Error("Reverse not implemented yet for MHexahedronN");
   }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

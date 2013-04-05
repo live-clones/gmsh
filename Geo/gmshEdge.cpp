@@ -21,11 +21,12 @@ gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
 
 void gmshEdge::resetMeshAttributes()
 {
-  meshAttributes.Method = c->Method;
+  meshAttributes.method = c->Method;
   meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
   meshAttributes.typeTransfinite = c->typeTransfinite;
   meshAttributes.coeffTransfinite = c->coeffTransfinite;
   meshAttributes.extrude = c->Extrude;
+  meshAttributes.reverseMesh = c->ReverseMesh;
 }
 
 Range<double> gmshEdge::parBounds(int i) const
@@ -388,7 +389,7 @@ void gmshEdge::writeGEO(FILE *fp)
   }
   fprintf(fp, "};\n");
 
-  if(meshAttributes.Method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE){
     fprintf(fp, "Transfinite Line {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
@@ -401,4 +402,7 @@ void gmshEdge::writeGEO(FILE *fp)
     }
     fprintf(fp, ";\n");
   }
+
+  if(meshAttributes.reverseMesh)
+    fprintf(fp, "Reverse Line {%d};\n", tag());
 }

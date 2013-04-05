@@ -22,6 +22,13 @@ class deMeshGEdge {
   void operator () (GEdge *);
 };
 
+// Orient the mesh of an edge. This is necessary to comply with the orientation
+// constraints
+class orientMeshGEdge {
+ public :
+  void operator()(GEdge *);
+};
+
 int MeshExtrudedCurve(GEdge *ge);
 
 #endif

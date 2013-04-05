@@ -117,7 +117,7 @@ MElement *GRegion::getMeshElement(unsigned int index)
 void GRegion::resetMeshAttributes()
 {
   meshAttributes.recombine3D=0;
-  meshAttributes.Method = MESH_UNSTRUCTURED;
+  meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
   meshAttributes.QuadTri = NO_QUADTRI;
 }
@@ -218,7 +218,7 @@ std::string GRegion::getAdditionalInfoString()
     sstream << "}";
   }
 
-  if(meshAttributes.Method == MESH_TRANSFINITE)
+  if(meshAttributes.method == MESH_TRANSFINITE)
     sstream << " transfinite";
   if(meshAttributes.extrude)
     sstream << " extruded";
@@ -242,7 +242,7 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
 
-  if(meshAttributes.Method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE){
     fprintf(fp, "Transfinite Volume {%d}", tag());
     if(meshAttributes.corners.size()){
       fprintf(fp, " = {");

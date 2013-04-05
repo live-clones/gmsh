@@ -104,10 +104,10 @@ class MPolyhedron : public MElement {
   }
   virtual int getType() const { return TYPE_POLYH; }
   virtual int getTypeForMSH() const { return MSH_POLYH_; }
-  virtual void revert()
+  virtual void reverse()
   {
     for(unsigned int i = 0; i < _parts.size(); i++)
-      _parts[i]->revert();
+      _parts[i]->reverse();
     _vertices.clear();
     _innerVertices.clear();
     _edges.clear();
@@ -257,10 +257,10 @@ class MPolygon : public MElement {
   }
   virtual int getType() const { return TYPE_POLYG; }
   virtual int getTypeForMSH() const { return MSH_POLYG_; }
-  virtual void revert()
+  virtual void reverse()
   {
     for(unsigned int i = 0; i < _parts.size(); i++)
-      _parts[i]->revert();
+      _parts[i]->reverse();
     _vertices.clear();
     _innerVertices.clear();
     _edges.clear();

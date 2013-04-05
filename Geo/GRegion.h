@@ -100,7 +100,7 @@ class GRegion : public GEntity {
     // do we recombine the tetrahedra of the mesh into hex?
     int recombine3D;
     // is this surface meshed using a transfinite interpolation
-    char Method;
+    char method;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
     // corners of the transfinite interpolation

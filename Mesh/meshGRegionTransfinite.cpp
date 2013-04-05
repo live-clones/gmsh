@@ -308,7 +308,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
 
 int MeshTransfiniteVolume(GRegion *gr)
 {
-  if(gr->meshAttributes.Method != MESH_TRANSFINITE) return 0;
+  if(gr->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
   Msg::Info("Meshing volume %d (transfinite)", gr->tag());
 

@@ -27,7 +27,7 @@ void MPolyhedron::_init()
 
   for(unsigned int i = 0; i < _parts.size(); i++) {
     if(_parts[i]->getVolume() * _parts[0]->getVolume() < 0.)
-      _parts[i]->revert();
+      _parts[i]->reverse();
     for(int j = 0; j < 4; j++) {
       int k;
       for(k = _faces.size() - 1; k >= 0; k--)
@@ -167,7 +167,7 @@ void MPolygon::_initVertices()
   else n = _parts[0]->getFace(0).normal();
   for(unsigned int i = 0; i < _parts.size(); i++) {
     SVector3 ni = _parts[i]->getFace(0).normal();
-    if(dot(n, ni) < 0.) _parts[i]->revert();
+    if(dot(n, ni) < 0.) _parts[i]->reverse();
   }
   // select only outer edges in vector edg
   std::vector<MEdge> edg;

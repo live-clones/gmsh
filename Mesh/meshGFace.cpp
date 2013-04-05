@@ -2070,7 +2070,7 @@ void meshGFace::operator() (GFace *gf, bool print)
 
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
-  if(gf->meshAttributes.Method == MESH_NONE) return;
+  if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
 
   // destroy the mesh if it exists
@@ -2401,19 +2401,17 @@ void partitionAndRemesh(GFaceCompound *gf)
 
 void orientMeshGFace::operator()(GFace *gf)
 {
+  if(!gf->getNumMeshElements()) return;
+  if(gf->geomType() == GEntity::ProjectionFace) return;
+
   gf->model()->setCurrentMeshEntity(gf);
 
-  if(gf->geomType() == GEntity::DiscreteSurface) return;
-  if(gf->geomType() == GEntity::ProjectionFace) return;
-  if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
-
-  if(!gf->getNumMeshElements()) return;
-
-  //if(gf->geomType() == GEntity::CompoundSurface ) return;
-  //do sthg for compound face
-  if(gf->geomType() == GEntity::CompoundSurface ) {
+  if(gf->geomType() == GEntity::DiscreteSurface ||
+     gf->geomType() == GEntity::BoundaryLayerSurface){
+    // don't do anything
+  }
+  else if(gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = (GFaceCompound*) gf;
-
     std::list<GFace*> comp = gfc->getCompounds();
     MTriangle *lt = (*comp.begin())->triangles[0];
     SPoint2 c0 = gfc->getCoordinates(lt->getVertex(0));
@@ -2423,9 +2421,8 @@ void orientMeshGFace::operator()(GFace *gf)
     double p1[2] = {c1[0],c1[1]};
     double p2[2] = {c2[0],c2[1]};
     double normal =  robustPredicates::orient2d(p0, p1, p2);
-
     MElement *e = gfc->getMeshElement(0);
-    SPoint2 v1,v2,v3;
+    SPoint2 v1, v2, v3;
     reparamMeshVertexOnFace(e->getVertex(0), gf, v1, false);
     reparamMeshVertexOnFace(e->getVertex(1), gf, v2, false);
     reparamMeshVertexOnFace(e->getVertex(2), gf, v3, false);
@@ -2433,79 +2430,82 @@ void orientMeshGFace::operator()(GFace *gf)
     SVector3 C2(v2.x(), v2.y(), 0.0);
     SVector3 C3(v3.x(), v3.y(), 0.0);
     SVector3 n1 = crossprod(C2-C1,C3-C1);
-
     if(normal*n1.z() < 0){
-      Msg::Debug("Reverting orientation of mesh in compound face %d", gf->tag());
+      Msg::Debug("Reversing orientation of mesh in compound face %d", gf->tag());
       for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-    	gfc->getMeshElement(k)->revert();
-     }
-    return;
-
+    	gfc->getMeshElement(k)->reverse();
+    }
   }
+  else{
+    // in old versions we checked the orientation by comparing the orientation
+    // of a line element on the boundary w.r.t. its connected surface
+    // element. This is probably better than what follows, but
+    // * it failed when the 3D Delaunay changes the 1D mesh (since we don't
+    //    recover it yet)
+    // * it failed with OpenCASCADE geometries, where surface orientions do not
+    //   seem to be consistent with the orientation of the bounding edges
 
-
-  // In old versions we did not reorient transfinite surface meshes;
-  // we could add the following to provide backward compatibility:
-  // if(gf->meshAttributes.Method == MESH_TRANSFINITE) return;
-
-  // In old versions we checked the orientation by comparing the
-  // orientation of a line element on the boundary w.r.t. its
-  // connected surface element. This is probably better than what
-  // follows, but
-  // * it failed when the 3D Delaunay changes the 1D mesh (since we
-  //    don't recover it yet)
-  // * it failed with OpenCASCADE geometries, where surface orientions
-  //   do not seem to be consistent with the orientation of the
-  //   bounding edges
-
-  // first, try to find an element with one vertex categorized on the
-  // surface and for which we have valid surface parametric
-  // coordinates
-  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
-    MElement *e = gf->getMeshElement(i);
-    for(int j = 0; j < e->getNumVertices(); j++){
-      MVertex *v = e->getVertex(j);
-      SPoint2 param;
-      if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
-         v->getParameter(1, param[1])){
-        SVector3 nf = gf->normal(param);
-        SVector3 ne = e->getFace(0).normal();
-        if(dot(ne, nf) < 0){
-          Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
-          for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-            gf->getMeshElement(k)->revert();
+    bool done = false;
+    // first, try to find an element with one vertex categorized on the
+    // surface and for which we have valid surface parametric
+    // coordinates
+    for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+      MElement *e = gf->getMeshElement(i);
+      for(int j = 0; j < e->getNumVertices(); j++){
+        MVertex *v = e->getVertex(j);
+        SPoint2 param;
+        if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
+           v->getParameter(1, param[1])){
+          SVector3 nf = gf->normal(param);
+          SVector3 ne = e->getFace(0).normal();
+          if(dot(ne, nf) < 0){
+            Msg::Debug("Reversing orientation of mesh in face %d", gf->tag());
+            for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+              gf->getMeshElement(k)->reverse();
+          }
+          done = true;
+          break;
         }
-        return;
+      }
+      if(done) break;
+    }
+
+    if(!done){
+      // if we could not find such an element, just try to evaluate the
+      // normal at the barycenter of an element on the surface
+      for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+        MElement *e = gf->getMeshElement(i);
+        SPoint2 param(0., 0.);
+        bool ok = true;
+        for(int j = 0; j < e->getNumVertices(); j++){
+          SPoint2 p;
+          // FIXME: use inexact reparam because some vertices might not be
+          // exactly on the surface after the 3D Delaunay
+          bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p, false);
+          if(!ok) break;
+          param += p;
+        }
+        if(ok){
+          param *= 1. / e->getNumVertices();
+          SVector3 nf = gf->normal(param);
+          SVector3 ne = e->getFace(0).normal();
+          if(dot(ne, nf) < 0){
+            Msg::Debug("Reversing 2 orientation of mesh in face %d", gf->tag());
+            for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+              gf->getMeshElement(k)->reverse();
+          }
+          done = true;
+          break;
+        }
       }
     }
+
+    if(!done)
+      Msg::Warning("Could not orient mesh in face %d", gf->tag());
   }
 
-  // if we could not find such an element, just try to evaluate the
-  // normal at the barycenter of an element on the surface
-  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
-    MElement *e = gf->getMeshElement(i);
-    SPoint2 param(0., 0.);
-    bool ok = true;
-    for(int j = 0; j < e->getNumVertices(); j++){
-      SPoint2 p;
-      // FIXME: use inexact reparam because some vertices might not be
-      // exactly on the surface after the 3D Delaunay
-      bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p, false);
-      if(!ok) break;
-      param += p;
-    }
-    if(ok){
-      param *= 1. / e->getNumVertices();
-      SVector3 nf = gf->normal(param);
-      SVector3 ne = e->getFace(0).normal();
-      if(dot(ne, nf) < 0){
-        Msg::Debug("Reverting 2 orientation of mesh in face %d", gf->tag());
-        for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-          gf->getMeshElement(k)->revert();
-      }
-      return;
-    }
-  }
-
-  Msg::Warning("Could not orient mesh in face %d", gf->tag());
+  // apply user-specified mesh orientation constraints
+  if(gf->meshAttributes.reverseMesh)
+    for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
+      gf->getMeshElement(k)->reverse();
 }

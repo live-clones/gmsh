@@ -2467,7 +2467,7 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
              face_ep_tmp->geo.Mode == EXTRUDED_ENTITY ) ||
           (other_region && oth_ep && oth_ep->mesh.ExtrudeMesh &&
            (*it) == model->getFaceByTag( std::abs( oth_ep->geo.Source ) ) ) ||
-          (other_region && other_region->meshAttributes.Method == MESH_TRANSFINITE) ){
+          (other_region && other_region->meshAttributes.method == MESH_TRANSFINITE) ){
         is_fixed = true;
       }
 
@@ -5654,16 +5654,16 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
  // *** KEEP THIS COMMENTED OUT UNLESS IT IS NEEDED ***
   /*for( int i = 0; i < to->tetrahedra.size(); i++ ){
     if( to->tetrahedra[i]->getVolumeSign() > 0 )
-      to->tetrahedra[i]->revert();
+      to->tetrahedra[i]->reverse();
 
   }
   for( int i = 0; i < to->prisms.size(); i++ ){
     if( to->prisms[i]->getVolumeSign() > 0 )
-      to->prisms[i]->revert();
+      to->prisms[i]->reverse();
   }
   for( int i = 0; i < to->pyramids.size(); i++ ){
     if( to->pyramids[i]->getVolumeSign() > 0 )
-      to->pyramids[i]->revert();
+      to->pyramids[i]->reverse();
   }
   */
 

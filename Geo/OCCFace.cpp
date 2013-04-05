@@ -373,7 +373,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_vertices.push_back(SPoint2(p.X(), p.Y()));
   }
 
-  bool revert = false;
+  bool reverse = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++){
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
@@ -397,12 +397,12 @@ bool OCCFace::buildSTLTriangulation(bool force)
                     sp3.x(), sp3.y(), sp3.z(), n);
       SVector3 ne(n[0], n[1], n[2]);
       if(dot(ne, nf) < 0){
-        Msg::Debug("Reverting orientation of STL mesh in face %d", tag());
-        revert = true;
+        Msg::Debug("Reversing orientation of STL mesh in face %d", tag());
+        reverse = true;
       }
     }
 
-    if(!revert){
+    if(!reverse){
       stl_triangles.push_back(p1 - 1);
       stl_triangles.push_back(p2 - 1);
       stl_triangles.push_back(p3 - 1);

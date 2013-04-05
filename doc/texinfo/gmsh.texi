@@ -2711,6 +2711,9 @@ quadrangle and a right angle (a value of 0 would only accept quadrangles
 with right angles; a value of 90 would allow degenerate quadrangles;
 default value is 45).
 
+@item Reverse Line | Surface @{ @var{expression-list} @} ;
+Reverses the mesh of the given line(s) or surface(s).
+
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options list}). If the path in

@@ -93,7 +93,7 @@ int getTransfiniteBoundaryDiags( GRegion *gr, std::set< std::pair<MVertex*,
   // Perform some tests of the Transfinite volume
 
   // Is the region Transfinite?
-  if( gr->meshAttributes.Method != MESH_TRANSFINITE ){
+  if( gr->meshAttributes.method != MESH_TRANSFINITE ){
     Msg::Error( "In getTransfiniteBoundaryDiags(), region %d was not detected "
                 "to be a transfinite volume", gr->tag() );
     return 0;
@@ -109,7 +109,7 @@ int getTransfiniteBoundaryDiags( GRegion *gr, std::set< std::pair<MVertex*,
   // Are all the faces Transfinite?
   std::list<GFace*>::iterator itf;
   for( itf = faces.begin(); itf != faces.end(); itf++ ){
-    if( (*itf)->meshAttributes.Method != MESH_TRANSFINITE ){
+    if( (*itf)->meshAttributes.method != MESH_TRANSFINITE ){
       Msg::Error( "In getTransfiniteBoundaryDiags(), surface %d was not detected "
                   "to be transfinite", (*itf)->tag() );
       return 0;

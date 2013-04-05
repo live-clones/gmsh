@@ -480,13 +480,13 @@ int Chain<C>::addToModel(GModel* m, bool post,
     MElement* e = it->first.createMeshElement();
     C coeff = it->second;
     elements.push_back(e);
-    if(dim > 0 && coeff < 0) e->revert();
+    if(dim > 0 && coeff < 0) e->reverse();
 
     // if elementary chain coefficient is other than -1 or 1,
     // add multiple identical MElements to the physical group
     for(int i = 1; i < abs(coeff); i++) {
       MElement* ecopy = it->first.createMeshElement();
-      if(dim > 0 && coeff < 0) ecopy->revert();
+      if(dim > 0 && coeff < 0) ecopy->reverse();
       elements.push_back(ecopy);
     }
     if(dim > 0) coeff = abs(coeff);

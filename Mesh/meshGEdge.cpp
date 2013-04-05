@@ -311,7 +311,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
-  if(ge->meshAttributes.Method == MESH_NONE) return;
+  if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
 
   // look if we are doing the STL triangulation
@@ -366,7 +366,7 @@ void meshGEdge::operator() (GEdge *ge)
     a = 0.;
     N = 1;
   }
-  else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
+  else if(ge->meshAttributes.method == MESH_TRANSFINITE){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points,
                     CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
@@ -394,7 +394,7 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   // force odd number of points if blossom is used for recombination
-  if(ge->meshAttributes.Method != MESH_TRANSFINITE &&
+  if(ge->meshAttributes.method != MESH_TRANSFINITE &&
      CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
     if(/* 1 ||*/ CTX::instance()->mesh.recombineAll){
       N++;
@@ -477,4 +477,12 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   ge->meshStatistics.status = GEdge::DONE;
+}
+
+void orientMeshGEdge::operator()(GEdge *ge)
+{
+  // apply user-specified mesh orientation constraints
+  if(ge->meshAttributes.reverseMesh)
+    for(unsigned int k = 0; k < ge->getNumMeshElements(); k++)
+      ge->getMeshElement(k)->reverse();
 }

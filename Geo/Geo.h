@@ -131,8 +131,8 @@ class Curve{
   CircParam Circle;
   DrawingColor Color;
   gmshSurface *geometry;
-  int meshMaster;
   std::vector<int> compound;
+  int ReverseMesh;
 };
 
 class EdgeLoop{
@@ -168,6 +168,7 @@ class Surface{
   // the mesh master surface
   std::map<int,int> edgeCounterparts;
   std::vector<int> compound, compoundBoundary[4];
+  int ReverseMesh;
 };
 
 class SurfaceLoop{

@@ -173,10 +173,11 @@ void GFace::resetMeshAttributes()
 {
   meshAttributes.recombine = 0;
   meshAttributes.recombineAngle = 45.;
-  meshAttributes.Method = MESH_UNSTRUCTURED;
+  meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.transfiniteArrangement = 0;
   meshAttributes.transfiniteSmoothing = -1;
   meshAttributes.extrude = 0;
+  meshAttributes.reverseMesh = false;
 }
 
 SBoundingBox3d GFace::bounds() const
@@ -299,10 +300,12 @@ std::string GFace::getAdditionalInfoString()
 
   if(meshAttributes.recombine)
     sstream << " recombined";
-  if(meshAttributes.Method == MESH_TRANSFINITE)
+  if(meshAttributes.method == MESH_TRANSFINITE)
     sstream << " transfinite";
   if(meshAttributes.extrude)
     sstream << " extruded";
+  if(meshAttributes.reverseMesh)
+    sstream << " reverse";
 
   return sstream.str();
 }
@@ -346,7 +349,7 @@ void GFace::writeGEO(FILE *fp)
       it != embedded_vertices.end(); it++)
     fprintf(fp, "Point {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
-  if(meshAttributes.Method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE){
     fprintf(fp, "Transfinite Surface {%d}", tag());
     if(meshAttributes.corners.size()){
       fprintf(fp, " = {");
@@ -361,6 +364,9 @@ void GFace::writeGEO(FILE *fp)
 
   if(meshAttributes.recombine)
     fprintf(fp, "Recombine Surface {%d};\n", tag());
+
+  if(meshAttributes.reverseMesh)
+    fprintf(fp, "Reverse Surface {%d};\n", tag());
 }
 
 void GFace::computeMeanPlane()

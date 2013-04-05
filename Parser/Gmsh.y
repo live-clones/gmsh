@@ -116,7 +116,8 @@ struct doubleXstring{
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
-%token tRecombine tSmoother tSplit tDelete tCoherence tIntersect tMeshAlgorithm
+%token tRecombine tSmoother tSplit tDelete tCoherence
+%token tIntersect tMeshAlgorithm tReverse
 %token tLayers tHole tAlias tAliasWithOptions
 %token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
@@ -184,9 +185,7 @@ GeoFormatItem :
   | Colorify    { return 1; }
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
-  | Transfinite { return 1; }
-  | Periodic    { return 1; }
-  | Embedding   { return 1; }
+  | Constraints { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
   | Command     { return 1; }
@@ -3351,7 +3350,7 @@ ExtrudeParameter :
     }
 ;
 
-//  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
+//  M E S H I N G   C O N S T R A I N T S   ( T R A N S F I N I T E ,   . . . )
 
 TransfiniteType :
     {
@@ -3407,7 +3406,7 @@ RecombineAngle :
     }
 ;
 
-Transfinite :
+Constraints :
     tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
       int type = (int)$6[0];
@@ -3427,7 +3426,7 @@ Transfinite :
         else{
           for(GModel::eiter it = GModel::current()->firstEdge();
               it != GModel::current()->lastEdge(); it++){
-            (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+            (*it)->meshAttributes.method = MESH_TRANSFINITE;
             (*it)->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
             (*it)->meshAttributes.typeTransfinite = type;
             (*it)->meshAttributes.coeffTransfinite = coef;
@@ -3451,7 +3450,7 @@ Transfinite :
             else{
               GEdge *ge = GModel::current()->getEdgeByTag(sign * j);
               if(ge){
-                ge->meshAttributes.Method = MESH_TRANSFINITE;
+                ge->meshAttributes.method = MESH_TRANSFINITE;
                 ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
                 ge->meshAttributes.typeTransfinite = type * sign(d);
                 ge->meshAttributes.coeffTransfinite = coef;
@@ -3485,7 +3484,7 @@ Transfinite :
           else{
             for(GModel::fiter it = GModel::current()->firstFace();
                 it != GModel::current()->lastFace(); it++){
-              (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+              (*it)->meshAttributes.method = MESH_TRANSFINITE;
               (*it)->meshAttributes.transfiniteArrangement = $5;
             }
           }
@@ -3513,7 +3512,7 @@ Transfinite :
             else{
               GFace *gf = GModel::current()->getFaceByTag((int)d);
               if(gf){
-                gf->meshAttributes.Method = MESH_TRANSFINITE;
+                gf->meshAttributes.method = MESH_TRANSFINITE;
                 gf->meshAttributes.transfiniteArrangement = $5;
                 for(int j = 0; j < k; j++){
                   double p;
@@ -3560,7 +3559,7 @@ Transfinite :
           else{
             for(GModel::riter it = GModel::current()->firstRegion();
                 it != GModel::current()->lastRegion(); it++){
-              (*it)->meshAttributes.Method = MESH_TRANSFINITE;
+              (*it)->meshAttributes.method = MESH_TRANSFINITE;
             }
           }
           List_Delete(tmp);
@@ -3586,7 +3585,7 @@ Transfinite :
             else{
               GRegion *gr = GModel::current()->getRegionByTag((int)d);
               if(gr){
-                gr->meshAttributes.Method = MESH_TRANSFINITE;
+                gr->meshAttributes.method = MESH_TRANSFINITE;
                 for(int i = 0; i < k; i++){
                   double p;
                   List_Read($4, i, &p);
@@ -3650,7 +3649,6 @@ Transfinite :
 	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$6;
       }
     }
-
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
       if(!$3){
@@ -3753,12 +3751,7 @@ Transfinite :
       }
       List_Delete($3);
     }
-;
-
-//  P E R I O D I C   M E S H I N G   C O N S T R A I N T S
-
-Periodic :
-    tPeriodic tLine ListOfDouble tAFFECT ListOfDouble tEND
+  | tPeriodic tLine ListOfDouble tAFFECT ListOfDouble tEND
     {
       if(List_Nbr($5) != List_Nbr($3)){
 	yymsg(0, "Number of master (%d) different from number of slave (%d) lines",
@@ -3825,14 +3818,7 @@ Periodic :
       List_Delete($5);
       List_Delete($10);
     }
-;
-
-
-//  E M B E D D I N G  C U R V E S   A N D  P O I N T S   I N T O   S U R F A C E S
-//    A N D   V O L U M E S
-
-Embedding :
-    tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
+  | tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
       Surface *s = FindSurface((int)$8);
       if(s){
@@ -3880,9 +3866,89 @@ Embedding :
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
+      Msg::Error("Line in Volume not implemented yet");
     }
   | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
+      Msg::Error("Surface in Volume not implemented yet");
+    }
+  | tReverse tSurface ListOfDoubleOrAll tEND
+    {
+      if(!$3){
+	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Surface *s;
+            List_Read(tmp, i, &s);
+            s->ReverseMesh = 1;
+          }
+        }
+        else{
+          for(GModel::fiter it = GModel::current()->firstFace();
+              it != GModel::current()->lastFace(); it++){
+            (*it)->meshAttributes.reverseMesh = 1;
+          }
+        }
+        List_Delete(tmp);
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          Surface *s = FindSurface((int)d);
+          if(s){
+            s->ReverseMesh = 1;
+          }
+          else{
+            GFace *gf = GModel::current()->getFaceByTag((int)d);
+            if(gf){
+              gf->meshAttributes.reverseMesh = 1;
+            }
+            else
+              yymsg(1, "Unknown surface %d", (int)d);
+          }
+        }
+        List_Delete($3);
+      }
+    }
+  | tReverse tLine ListOfDoubleOrAll tEND
+    {
+      if(!$3){
+	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
+        if(List_Nbr(tmp)){
+          for(int i = 0; i < List_Nbr(tmp); i++){
+            Curve *c;
+            List_Read(tmp, i, &c);
+            c->ReverseMesh = 1;
+          }
+        }
+        else{
+          for(GModel::eiter it = GModel::current()->firstEdge();
+              it != GModel::current()->lastEdge(); it++){
+            (*it)->meshAttributes.reverseMesh = 1;
+          }
+        }
+        List_Delete(tmp);
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          Curve *c = FindCurve((int)d);
+          if(c){
+            c->ReverseMesh = 1;
+          }
+          else{
+            GEdge *ge = GModel::current()->getEdgeByTag((int)d);
+            if(ge){
+              ge->meshAttributes.reverseMesh = 1;
+            }
+            else
+              yymsg(1, "Unknown surface %d", (int)d);
+          }
+        }
+        List_Delete($3);
+      }
     }
 ;
 

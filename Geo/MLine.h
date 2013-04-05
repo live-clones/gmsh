@@ -70,7 +70,7 @@ class MLine : public MElement {
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual const char *getStringForINP() const { return "T3D2"/*"C1D2"*/; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }

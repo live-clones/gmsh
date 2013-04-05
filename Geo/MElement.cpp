@@ -248,7 +248,7 @@ bool MElement::setVolumePositive()
 {
   if(getDim() < 3) return true;
   int s = getVolumeSign();
-  if(s < 0) revert();
+  if(s < 0) reverse();
   if(!s) return false;
   return true;
 }
@@ -509,7 +509,7 @@ void MElement::xyzTouvw(fullMatrix<double> *xu) const
   (*xu)(1,2) = _uvw[2];
 }
 
-void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w)
+void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!getParent()) return;
   SPoint3 p;
@@ -520,7 +520,7 @@ void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, doub
   u = uvwE[0]; v = uvwE[1]; w = uvwE[2];
 }
 
-void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w)
+void MElement::movePointFromElementSpaceToParentSpace(double &u, double &v, double &w) const
 {
   if(!getParent()) return;
   SPoint3 p;
@@ -866,7 +866,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     fwrite(blob, sizeof(int), 4 + numTags, fp);
   }
 
-  if(physical < 0) revert();
+  if(physical < 0) reverse();
 
   std::vector<int> verts;
   getVerticesIdForMSH(verts);
@@ -880,7 +880,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     fwrite(&verts[0], sizeof(int), n, fp);
   }
 
-  if(physical < 0) revert();
+  if(physical < 0) reverse();
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
@@ -1050,7 +1050,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(type == 21 || type == 24) // linear beam or parabolic beam
     fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
 
-  if(physical < 0) revert();
+  if(physical < 0) reverse();
 
   for(int k = 0; k < n; k++) {
     fprintf(fp, "%10d", getVertexUNV(k)->getIndex());
@@ -1060,7 +1060,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(n - 1 % 8 != 7)
     fprintf(fp, "\n");
 
-  if(physical < 0) revert();
+  if(physical < 0) reverse();
 }
 
 void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,

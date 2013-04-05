@@ -704,7 +704,10 @@ void GenerateMesh(GModel *m, int ask)
     Mesh3D(m);
   }
 
-  // Orient the surface mesh so that it matches the geometry
+  // Orient the line and surface meshes so that they match the orientation of
+  // the geometrical entities and/or the user orientation constraints
+  if(m->getMeshStatus() >= 1)
+    std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
   if(m->getMeshStatus() >= 2)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 

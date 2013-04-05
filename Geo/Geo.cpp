@@ -480,6 +480,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->nbPointsTransfinite = 0;
   pC->typeTransfinite = 0;
   pC->coeffTransfinite = 0.;
+  pC->ReverseMesh = 0;
 
   if(Typ == MSH_SEGM_SPLN) {
     for(int i = 0; i < 4; i++)
@@ -599,6 +600,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->EmbeddedCurves = NULL;
   pS->Extrude = NULL;
   pS->geometry = NULL;
+  pS->ReverseMesh = 0;
   return (pS);
 }
 
@@ -2489,7 +2491,7 @@ int Extrude_ProtudeSurface(int type, int is,
   *pv = NULL;
 
   // 'is' can be negative, to signify that the surface orientation
-  // should be reverted. This orientation information is only used at
+  // should be reversed. This orientation information is only used at
   // the moment when creating boundary layers
   if(!(ps = FindSurface(std::abs(is))))
     return 0;
@@ -2647,7 +2649,7 @@ int Extrude_ProtudeSurface(int type, int is,
   Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
 
   chapeau->Num = NEWSURFACE();
-  //  GModel::current()->getGEOInternals()->periodicFaces[chapeau->Num] = chapeau->meshMaster;
+
   GModel::current()->getGEOInternals()->MaxSurfaceNum = chapeau->Num;
   Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
 

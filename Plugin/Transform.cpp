@@ -15,7 +15,7 @@ StringXNumber TransformOptions_Number[] = {
   {GMSH_FULLRC, "A31", NULL, 0.},
   {GMSH_FULLRC, "A32", NULL, 0.},
   {GMSH_FULLRC, "A33", NULL, 1.},
-  {GMSH_FULLRC, "Tx", NULL, 0.}, 
+  {GMSH_FULLRC, "Tx", NULL, 0.},
   {GMSH_FULLRC, "Ty", NULL, 0.}, // cannot use T2 (reserved token in parser)
   {GMSH_FULLRC, "Tz", NULL, 0.}, // cannot use T3 (reserved token in parser)
   {GMSH_FULLRC, "SwapOrientation", NULL, 0.},
@@ -85,13 +85,13 @@ PView *GMSH_TransformPlugin::execute(PView *v)
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
         if(data1->skipElement(step, ent, ele)) continue;
-        if(swap) data1->revertElement(step, ent, ele);
+        if(swap) data1->reverseElement(step, ent, ele);
         for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
           data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   }
-  
+
   // transform all "0" nodes
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){

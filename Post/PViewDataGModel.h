@@ -216,7 +216,7 @@ class PViewDataGModel : public PViewData {
   void setValue(int step, int ent, int ele, int node, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
   int getType(int step, int ent, int ele);
-  void revertElement(int step, int ent, int ele);
+  void reverseElement(int step, int ent, int ele);
   void smooth();
   double getMemoryInMb();
   bool combineTime(nameData &nd);

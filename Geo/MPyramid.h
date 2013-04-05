@@ -67,7 +67,7 @@ class MPyramid : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual const MVertex *getVertex(int num) const{ return _v[num]; }  
+  virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
@@ -121,7 +121,7 @@ class MPyramid : public MElement {
   virtual int getTypeForVTK() const { return 14; }
   virtual const char *getStringForPOS() const { return "SY"; }
   virtual const char *getStringForBDF() const { return "CPYRAM"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
@@ -308,7 +308,7 @@ class MPyramidN : public MPyramid {
     if(_order == 9 && _vs.size() + 5 == 385) return MSH_PYR_385;
     return 0;
   }
-  virtual void revert()
+  virtual void reverse()
   {
 /*    MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -318,7 +318,7 @@ class MPyramidN : public MPyramid {
       inv[i] = _vs[reverseIndices[i + 4] - 4];
     _vs = inv;*/
 
-    Msg::Error("Revert not implemented yet for MPyramidN");
+    Msg::Error("Reverse not implemented yet for MPyramidN");
 
   }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);

@@ -36,12 +36,12 @@ class deMeshGFace {
   void operator()(GFace *);
 };
 
-// Orient the mesh of a face to match the orientation of the
-// underlying geometry. This is doubly useful: 
-// 1) some surface mesh algorithms do not respect the original
-//    geometrical orientation and
-// 2) some volume algorithms need to change the surface mesh
+// Orient the mesh of a face to match the orientation of the underlying
+// geometry. This is necessary for 3 different reasons:
+// 1) some surface mesh algorithms do not respect the original geometrical
 //    orientation
+// 2) some volume algorithms need to change the surface mesh orientation
+// 3) users can choose to reverse the natural orientation
 class orientMeshGFace {
  public :
   void operator()(GFace *);
@@ -50,11 +50,11 @@ class orientMeshGFace {
 void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex*> &corners);
 int MeshTransfiniteSurface(GFace *gf);
-int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> > 
+int MeshExtrudedSurface(GFace *gf, std::set<std::pair<MVertex*, MVertex*> >
                         *constrainedEdges=0);
 void partitionAndRemesh(GFaceCompound *gf);
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges);
-bool meshGenerator(GFace *gf, int RECUR_ITER, 
+bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool repairSelfIntersecting1dMesh,
 		   bool onlyInitialMesh,
 		   bool debug = true,

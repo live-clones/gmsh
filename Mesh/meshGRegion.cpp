@@ -741,7 +741,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
     for(unsigned int i = 0; i< gr->tetrahedra.size(); i++){
       MTetrahedron *t = gr->tetrahedra[i];
       // netgen expects tet with negative volume
-      if(t->getVolumeSign() > 0) t->revert();
+      if(t->getVolumeSign() > 0) t->reverse();
       int tmp[4];
       tmp[0] = t->getVertex(0)->getIndex();
       tmp[1] = t->getVertex(1)->getIndex();
@@ -907,7 +907,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       if(nb_intersect % 2 == 1){
         // odd nb of intersections: the normal points inside the region
         for(unsigned int i = 0; i < gf->triangles.size(); i++){
-          gf->triangles[i]->revert();
+          gf->triangles[i]->reverse();
         }
       }
       ++it;
@@ -929,7 +929,7 @@ void meshGRegion::operator() (GRegion *gr)
   gr->model()->setCurrentMeshEntity(gr);
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
-  if(gr->meshAttributes.Method == MESH_NONE) return;
+  if(gr->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
@@ -991,7 +991,7 @@ void meshGRegion::operator() (GRegion *gr)
     Ng_Exit();
 #endif
   }
-  
+
 }
 
 void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
@@ -1001,7 +1001,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
   // don't optimize transfinite or extruded meshes
-  if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
+  if(gr->meshAttributes.method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
@@ -1030,7 +1030,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
   // don't optimize extruded meshes
-  if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
+  if(gr->meshAttributes.method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 

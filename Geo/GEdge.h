@@ -34,7 +34,7 @@ class GEdge : public GEntity {
   // FIXME: normals need to be mutable at the moment, because thay can
   // be created in const member functions
   mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
-  GEdgeCompound *compound; // this model edge belongs to a compound 
+  GEdgeCompound *compound; // this model edge belongs to a compound
   std::list<GFace *> l_faces;
   // for specific solid modelers that need to re-do the internal curve
   // if a topological change ending points is done (gluing)
@@ -94,7 +94,7 @@ class GEdge : public GEntity {
   // get second derivative of edge at the given parameter (default
   // implentation using central differences)
   virtual SVector3 secondDer(double par) const;
-  
+
   // get the curvature
   virtual double curvature(double par) const;
 
@@ -126,12 +126,12 @@ class GEdge : public GEntity {
 
   // true if start == end and no more than 2 segments
   void setTooSmall(bool b) { _tooSmall = b; }
-  bool isMeshDegenerated() const 
-  { 
+  bool isMeshDegenerated() const
+  {
     if (_tooSmall)
       Msg::Debug("degenerated mesh on edge %d: too small", tag());
     if (v0 == v1 && mesh_vertices.size() < 2)
-      Msg::Debug("degenerated mesh on edge %d: %d mesh vertices", tag(), 
+      Msg::Debug("degenerated mesh on edge %d: %d mesh vertices", tag(),
                  (int)mesh_vertices.size());
     return _tooSmall || (v0 == v1 && mesh_vertices.size() < 2);
   }
@@ -158,18 +158,18 @@ class GEdge : public GEntity {
 
   std::map<MVertex*, SVector3, std::less<MVertex*> > &getNormals() { return _normals; }
 
-  // get bounds of parametric coordinate 
+  // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
   inline double getLowerBound() const{ return parBounds(0).low();};
   inline double getUpperBound() const{ return parBounds(0).high();};
-  
+
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
 
   // return the parmater location on the edge given a point in space
   // that is on the edge
   virtual double parFromPoint(const SPoint3 &P) const;
-  
+
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
                       double &U, const double relax=0.5) const;
@@ -182,7 +182,7 @@ class GEdge : public GEntity {
   void replaceEndingPoints(GVertex *, GVertex *);
 
   struct {
-    char Method;
+    char method;
     double coeffTransfinite;
     double meshSize;
     int nbPointsTransfinite;
@@ -190,16 +190,18 @@ class GEdge : public GEntity {
     int minimumMeshSegments;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
+    // reverse mesh orientation
+    bool reverseMesh;
   } meshAttributes ;
 
   struct {
     mutable GEntity::MeshGenerationStatus status;
   } meshStatistics;
-  
+
   std::vector<MLine*> lines;
 
   void addLine(MLine *line){ lines.push_back(line); }
-  
+
   bool computeDistanceFromMeshToGeometry (double &d2, double &dmax);
 };
 

@@ -60,7 +60,7 @@ class MTetrahedron : public MElement {
   virtual int getDim() const { return 3; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual const MVertex *getVertex(int num) const { return _v[num]; }  
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num) const
@@ -106,7 +106,7 @@ class MTetrahedron : public MElement {
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT4n3D"; }
   virtual const char *getStringForINP() const { return "C3D4"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
@@ -217,7 +217,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }  
+  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[10] = {0, 4, 1, 5, 2, 6, 7, 9, 8, 3};
@@ -262,7 +262,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }
   virtual const char *getStringForINP() const { return "C3D10"; }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[0] ; _v[0]  = _v[1]; _v[1] = tmp;
@@ -332,7 +332,7 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }  
+  virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumEdgeVertices() const { return 6 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
@@ -385,7 +385,7 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286;
     return 0;
   }
-  virtual void revert()
+  virtual void reverse()
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;

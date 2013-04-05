@@ -49,7 +49,7 @@ void GEdge::reverse()
   v0 = v1;
   v1 = tmp;
   for(std::vector<MLine*>::iterator line = lines.begin(); line != lines.end(); line++)
-    (*line)->revert();
+    (*line)->reverse();
 }
 
 unsigned int GEdge::getNumMeshElements()
@@ -86,7 +86,7 @@ MElement *GEdge::getMeshElement(unsigned int index)
 
 void GEdge::resetMeshAttributes()
 {
-  meshAttributes.Method = MESH_UNSTRUCTURED;
+  meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.coeffTransfinite = 0.;
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;
@@ -174,7 +174,7 @@ std::string GEdge::getAdditionalInfoString()
   std::ostringstream sstream;
   if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
 
-  if(meshAttributes.Method == MESH_TRANSFINITE)
+  if(meshAttributes.method == MESH_TRANSFINITE)
     sstream << " transfinite";
   if(meshAttributes.extrude)
     sstream << " extruded";
@@ -209,7 +209,7 @@ void GEdge::writeGEO(FILE *fp)
     fprintf(fp, ", %d};\n", getEndVertex()->tag());
   }
 
-  if(meshAttributes.Method == MESH_TRANSFINITE){
+  if(meshAttributes.method == MESH_TRANSFINITE){
     fprintf(fp, "Transfinite Line {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
@@ -222,6 +222,9 @@ void GEdge::writeGEO(FILE *fp)
     }
     fprintf(fp, ";\n");
   }
+
+  if(meshAttributes.reverseMesh)
+    fprintf(fp, "Reverse Line {%d};\n", tag());
 }
 
 bool GEdge::containsParam(double pt) const

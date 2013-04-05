@@ -181,7 +181,12 @@ class MElement
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
-  virtual double distoShapeMeasure(){ double jmin,jmax; scaledJacRange(jmin,jmax); return jmin; }
+  virtual double distoShapeMeasure()
+  {
+    double jmin, jmax;
+    scaledJacRange(jmin, jmax);
+    return jmin;
+  }
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax);
 
@@ -201,8 +206,8 @@ class MElement
   // compute the barycenter in infinity norm
   virtual SPoint3 barycenter_infty() const;
 
-  // revert the orientation of the element
-  virtual void revert(){}
+  // reverse the orientation of the element
+  virtual void reverse(){}
 
   // get volume of element
   virtual double getVolume();
@@ -240,12 +245,13 @@ class MElement
                                      int order=-1) const;
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
                                      int order=-1) const;
-  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w, double s[][3][3][3],
-                                     int order=-1) const;
+  virtual void getThirdDerivativeShapeFunctions(double u, double v, double w,
+                                                double s[][3][3][3], int order=-1) const;
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
-  // To be compatible with _vgrads of functionSpace without having to put under fullMatrix form
+  // To be compatible with _vgrads of functionSpace without having to put under
+  // fullMatrix form
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const ;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j) const{
@@ -273,7 +279,8 @@ class MElement
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p) const;
-  virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const; // To be compatible with functionSpace without changing form
+  // To be compatible with functionSpace without changing form
+  virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const;
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
 
   // invert the parametrisation
@@ -281,8 +288,10 @@ class MElement
   void xyzTouvw(fullMatrix<double> *xu) const;
 
   // move point between parent and element parametric spaces
-  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v, double &w);
-  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v, double &w);
+  virtual void movePointFromParentSpaceToElementSpace(double &u, double &v,
+                                                      double &w) const;
+  virtual void movePointFromElementSpaceToParentSpace(double &u, double &v,
+                                                      double &w) const;
 
   // test if a point, given in parametric coordinates, belongs to the
   // element
