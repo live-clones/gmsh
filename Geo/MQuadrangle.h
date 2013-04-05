@@ -56,7 +56,7 @@ class MQuadrangle : public MElement {
   virtual int getDim() const { return 2; }
   virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual const MVertex *getVertex(int num) const{ return _v[num]; }  
+  virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num, MVertex *v){ _v[num] = v; }
   virtual MVertex *getVertexDIFF(int num)
   {
@@ -116,7 +116,7 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
-  virtual const char *getStringForINP() const { return "C2D4"; }
+  virtual const char *getStringForINP() const { return "CPS4"/*"C2D4"*/; }
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w) const
@@ -200,7 +200,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }  
+  virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
@@ -236,7 +236,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
-  virtual const char *getStringForINP() const { return "C2D8"; }
+  virtual const char *getStringForINP() const { return "CPS8"/*"C2D8"*/; }
   virtual void revert()
   {
     MVertex *tmp;

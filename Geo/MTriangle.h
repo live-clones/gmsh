@@ -119,7 +119,7 @@ class MTriangle : public MElement {
   virtual const char *getStringForPOS() const { return "ST"; }
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
-  virtual const char *getStringForINP() const { return "C2D3"; }
+  virtual const char *getStringForINP() const { return "CPS3"/*"STRI3"*//*"C2D3"*/; }
   virtual void revert()
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -194,7 +194,7 @@ class MTriangle6 : public MTriangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
-  virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }  
+  virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
@@ -226,7 +226,7 @@ class MTriangle6 : public MTriangle {
   virtual const char *getStringForPOS() const { return "ST2"; }
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }
-  virtual const char *getStringForINP() const { return "C2D6"; }
+  virtual const char *getStringForINP() const { return "CPS6"/*"STRI65"*//*"C2D6"*/; }
   virtual void revert()
   {
     MVertex *tmp;

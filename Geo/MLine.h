@@ -38,7 +38,7 @@ class MLine : public MElement {
   virtual int getDim() const { return 1; }
   virtual int getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual const MVertex *getVertex(int num) const{ return _v[num]; }  
+  virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual double getInnerRadius(); // half-length of segment line
   virtual double getLength(); // length of segment line
@@ -69,7 +69,7 @@ class MLine : public MElement {
   virtual int getTypeForVTK() const { return 3; }
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
-  virtual const char *getStringForINP() const { return "C1D2"; }
+  virtual const char *getStringForINP() const { return "T3D2"/*"C1D2"*/; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -125,7 +125,7 @@ class MLine3 : public MLine {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
-  virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }  
+  virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[3] = {0, 2, 1};
@@ -151,7 +151,7 @@ class MLine3 : public MLine {
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
   virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
-  virtual const char *getStringForINP() const { return "C1D3"; }
+  virtual const char *getStringForINP() const { return "T3D3"/*"C1D3"*/; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
