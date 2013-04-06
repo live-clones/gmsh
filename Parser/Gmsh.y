@@ -2836,8 +2836,10 @@ Command :
     }
    | tSetOrder FExpr tEND
     {
+#if defined(HAVE_MESH)
       SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
                 CTX::instance()->mesh.secondOrderIncomplete);
+#endif
     }
 ;
 
