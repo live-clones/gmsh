@@ -205,6 +205,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e = entities[i]->getMeshElement(j);
+      // FIXME: don't duplicate elements anymore: just save the element with
+      // their natural id
       if(saveAll)
         e->writeUNV(fp, ++num, entities[i]->tag(), 0);
       else
@@ -213,6 +215,9 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
     }
   }
   fprintf(fp, "%6d\n", -1);
+
+  // FIXME: save groups of elements for each physical
+
 
   // groups of nodes for physical groups
   if(saveGroupsOfNodes){

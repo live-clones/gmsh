@@ -630,6 +630,35 @@ namespace onelab{
     std::set<string*, parameterLessThan> _strings;
     std::set<region*, parameterLessThan> _regions;
     std::set<function*, parameterLessThan> _functions;
+    // delete a parameter from the parameter space
+    template <class T> bool _clear(const std::string &name,
+                                   const std::string &client,
+                                   std::set<T*, parameterLessThan> &ps)
+    {
+      if(name.empty() && client.size()){
+        for(typename std::set<T*, parameterLessThan>::iterator it = ps.begin();
+            it != ps.end(); it++){
+          T *p = *it;
+          if(p->hasClient(client)){
+            ps.erase(it);
+            delete p;
+          }
+        }
+      }
+      else{
+        T tmp(name);
+        typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
+        if(it != ps.end()){
+          T *p = *it;
+          if(client.empty() || p->hasClient(client)){
+            ps.erase(it);
+            delete p;
+            return true;
+          }
+        }
+      }
+      return false;
+    }
     // set a parameter in the parameter space; if it already exists, update it
     // (adding new clients if necessary). This needs to be locked to avoid race
     // conditions when several clients try to set a parameter at the same time.
@@ -682,16 +711,24 @@ namespace onelab{
   public:
     parameterSpace(){}
     ~parameterSpace(){ clear(); }
-    void clear()
+    void clear(const std::string &name="", const std::string &client="")
     {
-      std::set<parameter*> ps;
-      _getAllParameters(ps);
-      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
-        delete *it;
-      _numbers.clear();
-      _strings.clear();
-      _regions.clear();
-      _functions.clear();
+      if(name.empty() && client.empty()){
+        std::set<parameter*> ps;
+        _getAllParameters(ps);
+        for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+          delete *it;
+        _numbers.clear();
+        _strings.clear();
+        _regions.clear();
+        _functions.clear();
+      }
+      else{
+        bool done = _clear(name, client, _numbers);
+        if(!done) done = _clear(name, client, _strings);
+        if(!done) done = _clear(name, client, _regions);
+        if(!done) done = _clear(name, client, _functions);
+      }
     }
     bool set(const number &p,
              const std::string &client=""){ return _set(p, client, _numbers); }
@@ -813,6 +850,7 @@ namespace onelab{
     virtual void sendMergeFileRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
     virtual void sendVertexArray(const std::string &msg){}
+    virtual bool clear(const std::string &name) = 0;
     virtual bool set(const number &p) = 0;
     virtual bool set(const string &p) = 0;
     virtual bool set(const region &p) = 0;
@@ -889,7 +927,10 @@ namespace onelab{
       if(!_server) _server = new server(address);
       return _server;
     }
-    void clear(){ _parameterSpace.clear(); }
+    void clear(const std::string &name="", const std::string &client="")
+    {
+      _parameterSpace.clear(name, client);
+    }
     template <class T> bool set(const T &p, const std::string &client="")
     {
       return _parameterSpace.set(p, client);
@@ -961,6 +1002,11 @@ namespace onelab{
     virtual ~localClient()
     {
       server::instance()->unregisterClient(this);
+    }
+    virtual bool clear(const std::string &name="")
+    {
+      server::instance()->clear(name);
+      return true;
     }
     virtual bool set(const number &p){ return _set(p); }
     virtual bool set(const string &p){ return _set(p); }
@@ -1034,7 +1080,7 @@ namespace onelab{
       if (name.size())
 	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
       else // get all parameters
-	_gmshClient->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL, msg.size(), &msg[0]);
+	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL, msg.size(), &msg[0]);
 
       while(1){
         // stop if we have no communications for 5 minutes
@@ -1063,17 +1109,17 @@ namespace onelab{
           ps.push_back(p);
           return true;
         }
-        if(type == GmshSocket::GMSH_PARAM_QUERY_ALL){
+        if(type == GmshSocket::GMSH_PARAMETER_QUERY_ALL){
           T p;
           p.fromChar(msg);
           ps.push_back(p);
           // do NOT return until all parameters have been downloaded
         }
-        else if(type == GmshSocket::GMSH_PARAM_QUERY_END){
+        else if(type == GmshSocket::GMSH_PARAMETER_QUERY_END){
 	  // all parameters have been sent
           return true;
         }
-        else if(type == GmshSocket::GMSH_PARAM_NOT_FOUND){
+        else if(type == GmshSocket::GMSH_PARAMETER_NOT_FOUND){
           // parameter not found
           return true;
         }
@@ -1111,6 +1157,14 @@ namespace onelab{
     }
     GmshClient *getGmshClient(){ return _gmshClient; }
     virtual bool isNetworkClient(){ return true; }
+    virtual bool clear(const std::string &name="")
+    {
+      if(!_gmshClient) return false;
+      std::string msg = name;
+      if(msg.empty()) msg = "*";
+      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_CLEAR, msg.size(), &msg[0]);
+      return true;
+    }
     virtual bool set(const number &p){ return _set(p); }
     virtual bool set(const string &p){ return _set(p); }
     virtual bool set(const function &p){ return _set(p); }

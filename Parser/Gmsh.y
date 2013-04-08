@@ -110,7 +110,7 @@ struct doubleXstring{
 %token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrFind
 %token tTextAttributes
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
-%token tDistanceFunction tDefineConstant
+%token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -611,6 +611,8 @@ Affectation :
 
   // Variables
     tDefineConstant '[' DefineConstants ']' tEND
+
+  | tUndefineConstant '[' UndefineConstants ']' tEND
 
   | tSTRING NumericAffectation ListOfDouble tEND
     {
@@ -1236,6 +1238,15 @@ DefineConstants :
     }
  ;
 
+UndefineConstants :
+    /* none */
+  | UndefineConstants Comma StringExprVar
+    {
+      std::string name($3);
+      Msg::UndefineOnelabParameter(name);
+      Free($3);
+    }
+
 Enumeration :
     FExpr tAFFECT StringExpr
     {
@@ -1328,7 +1339,6 @@ CharParameterOption :
       List_Delete($4);
     }
  ;
-
 
 //  S H A P E
 

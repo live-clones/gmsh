@@ -18,9 +18,9 @@ class onelabMetaModelServer : public GmshServer{
     : GmshServer(), _client(client) {}
   ~onelabMetaModelServer(){}
 
-  int NonBlockingSystemCall(const char *str){ 
+  int NonBlockingSystemCall(const char *str){
     std::cout << "Calling now : " << str << std::endl;
-    return SystemCall(str); 
+    return SystemCall(str);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {
@@ -178,7 +178,7 @@ bool localNetworkSolverClient::receiveMessage(){
       }
     }
     break;
-  case GmshSocket::GMSH_PARAM_QUERY_ALL:
+  case GmshSocket::GMSH_PARAMETER_QUERY_ALL:
     {
       std::string version, type, name, reply;
       std::vector<std::string> replies;
@@ -212,10 +212,10 @@ bool localNetworkSolverClient::receiveMessage(){
 		     type.c_str());
 
       for(unsigned int i = 0; i < replies.size(); i++)
-	getGmshServer()->SendMessage(GmshSocket::GMSH_PARAM_QUERY_ALL,
+	getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL,
 				     replies[i].size(), &replies[i][0]);
       reply = "Sent all OneLab " + type + "s";
-      getGmshServer()->SendMessage(GmshSocket::GMSH_PARAM_QUERY_END,
+      getGmshServer()->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_END,
 				   reply.size(), &reply[0]);
     }
     break;
@@ -324,14 +324,14 @@ bool localNetworkSolverClient::run()
     sockname = tmp.str();
   }
 
-  // Build the commande line 
+  // Build the commande line
   std::string command = buildCommandLine();
-  if(command.size()) 
+  if(command.size())
     command.append(appendArguments());
-  else 
+  else
     return false;
 
-  // Create socket connection and launch client 
+  // Create socket connection and launch client
   onelabMetaModelServer *socketConnection = new onelabMetaModelServer(this);
 
   std::cout << "commandline = " << command << std::endl;

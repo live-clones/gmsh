@@ -225,6 +225,7 @@ Tanh                    return tTanh;
 Tan                     return tTan;
 Today                   return tToday;
 
+UndefineConstant        return tUndefineConstant;
 Using                   return tUsing;
 
 Volume                  return tVolume;

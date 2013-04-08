@@ -106,6 +106,7 @@ class Msg {
                                       std::string &val,
                                       std::map<std::string, std::vector<double> > &fopt,
                                       std::map<std::string, std::vector<std::string> > &copt);
+  static void UndefineOnelabParameter(const std::string &name);
   static void ImportPhysicalsAsOnelabRegions();
 };
 

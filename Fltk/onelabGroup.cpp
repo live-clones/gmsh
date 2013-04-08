@@ -253,11 +253,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       else{
         reply = name;
         getGmshServer()->SendMessage
-          (GmshSocket::GMSH_PARAM_NOT_FOUND, reply.size(), &reply[0]);
+          (GmshSocket::GMSH_PARAMETER_NOT_FOUND, reply.size(), &reply[0]);
       }
     }
     break;
-  case GmshSocket::GMSH_PARAM_QUERY_ALL:
+  case GmshSocket::GMSH_PARAMETER_QUERY_ALL:
     {
       std::string version, type, name, reply;
       std::vector<std::string> replies;
@@ -291,11 +291,14 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 
       for(unsigned int i = 0; i < replies.size(); i++)
         getGmshServer()->SendMessage
-          (GmshSocket::GMSH_PARAM_QUERY_ALL, replies[i].size(), &replies[i][0]);
+          (GmshSocket::GMSH_PARAMETER_QUERY_ALL, replies[i].size(), &replies[i][0]);
       reply = "Sent all OneLab " + type + "s";
       getGmshServer()->SendMessage
-        (GmshSocket::GMSH_PARAM_QUERY_END, reply.size(), &reply[0]);
+        (GmshSocket::GMSH_PARAMETER_QUERY_END, reply.size(), &reply[0]);
     }
+    break;
+  case GmshSocket::GMSH_PARAMETER_CLEAR:
+    clear(message == "*" ? "" : message);
     break;
   case GmshSocket::GMSH_PROGRESS:
     Msg::StatusBar(false, "%s %s", _name.c_str(), message.c_str());

@@ -957,6 +957,14 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 #endif
 }
 
+void Msg::UndefineOnelabParameter(const std::string &name)
+{
+#if defined(HAVE_ONELAB)
+  if(!_onelabClient) return;
+  _onelabClient->clear(name);
+#endif
+}
+
 void Msg::ImportPhysicalsAsOnelabRegions()
 {
 #if defined(HAVE_ONELAB)
