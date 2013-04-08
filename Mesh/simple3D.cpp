@@ -17,6 +17,8 @@
 #include <algorithm>
 #include "directions3D.h"
 #include "Context.h"
+#include <iostream>
+#include <string>
 
 #if defined(HAVE_RTREE)
 #include "rtree.h"
@@ -353,6 +355,7 @@ void Filler::treat_region(GRegion* gr){
   int j;
   int count;
   bool ok2;
+  bool val;
   double x,y,z;
   SPoint3 point;
   Node *node,*individual,*parent;
@@ -361,13 +364,14 @@ void Filler::treat_region(GRegion* gr){
   MElementOctree* octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
-  //GFace* gf;
+  GFace* gf;
   std::queue<Node*> fifo;
   std::vector<Node*> spawns;
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
   std::set<MVertex*> temp;
   std::list<GFace*> faces;
+  std::set<MVertex*> retired;
   std::set<MVertex*>::iterator it;
   std::list<GFace*>::iterator it2;
   RTree<Node*,double,3,double> rtree;
@@ -381,18 +385,23 @@ void Filler::treat_region(GRegion* gr){
   temp.clear();
   new_vertices.clear();
   faces.clear();
+  retired.clear();
 
-  /*faces = gr->faces();	
+  faces = gr->faces();	
   for(it2=faces.begin();it2!=faces.end();it2++){
     gf = *it2;
+	val = code(gf->tag());
 	for(i=0;i<gf->getNumMeshElements();i++){
 	  element = gf->getMeshElement(i);
       for(j=0;j<element->getNumVertices();j++){
 	    vertex = element->getVertex(j);
-		temp.insert(vertex);
+		if(val){
+		  retired.insert(vertex);
+		}
+		//temp.insert(vertex);
 	  }
 	}
-  }*/
+  }
 		
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
@@ -419,7 +428,9 @@ void Filler::treat_region(GRegion* gr){
     compute_parameters(node,gr);
 	node->set_layer(0);
     rtree.Insert(node->min,node->max,node);
-    fifo.push(node);
+	if(retired.find(boundary_vertices[i])==retired.end()){
+      fifo.push(node);
+	}
     //print_node(node,file);
   }
   
@@ -714,6 +725,24 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
   }
 	
   return average;
+}
+
+bool Filler::code(int x){
+  bool val;
+  std::string s;
+  std::stringstream s2;
+  
+  val = 0;
+  s2 << x;
+  s = s2.str();
+	
+  if(s.length()>=5){
+    if(s.at(0)=='1' && s.at(1)=='2' && s.at(2)=='3' && s.at(3)=='4' && s.at(4)=='5'){
+	  val = 1;
+	}
+  }
+  
+  return val;
 }
 
 int Filler::get_nbr_new_vertices(){
