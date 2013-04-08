@@ -90,6 +90,8 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   }
 
   // Face Based //
+  // TO CHECK: Are Triangles face matching tets ?
+
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex + nEdge;
 

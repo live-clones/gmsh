@@ -89,14 +89,3 @@ string TetReferenceSpace::toLatex(void) const{
 
   return stream.str();
 }
-
-/*
-#include <iostream>
-int main(void){
-  TetReferenceSpace p;
-
-  cout << p.toLatex() << endl;
-
-  return 0;
-}
-*/

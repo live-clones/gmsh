@@ -44,8 +44,10 @@ unsigned int LineLagrangeBasis::getTag(unsigned int order){
 
 fullMatrix<double> LineLagrangeBasis::
 linePoint(unsigned int order){
-  fullMatrix<double> line(order + 1, 1);
-  line(0 ,0) = 0;
+  fullMatrix<double> line(order + 1, 3);
+  line(0, 0) = 0;
+  line(0, 1) = 0;
+  line(0, 2) = 0;
 
   if(order > 0){
     line(0, 0) = -1.;

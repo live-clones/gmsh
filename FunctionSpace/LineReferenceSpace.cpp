@@ -9,12 +9,11 @@ LineReferenceSpace::LineReferenceSpace(void){
 
   // Edge Definition //
   nEdge   = 1;
-  refEdge = new unsigned int*[nEdge];
+  refEdge    = new unsigned int*[nEdge];
+  refEdge[0] = new unsigned int[2];
 
-  for(unsigned int i = 0; i < nEdge; i++)
-    refEdge[i] = new unsigned int[2];
-
-  refEdge[0][0] = 0; refEdge[0][1] = 1;
+  refEdge[0][0] = 0;
+  refEdge[0][1] = 1;
 
   // Face Definition //
   nFace   = 0;

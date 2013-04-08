@@ -12,6 +12,9 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
 
+  const vector<const vector<const vector<unsigned int>*>*>&
+    faceV = refSpace->getAllFace();
+
   // Set BasisTwo Type //
   this->order = order;
 
@@ -77,6 +80,13 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   }
 
   // Face Based //
+
+  // NB: We use (*(*faceV[s])[f])[]
+  //     where f = 0, because triangles
+  //     have only ONE face: the face '0'
+
+  // TO CHECK: Are Triangles face matching tets ?
+
   const Polynomial p = (lagrange[2] * 2) - Polynomial(1, 0, 0, 0);
   const int orderMinusTwo = order - 2;
 
@@ -86,11 +96,16 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
     for(int l1 = 1; l1 < orderMinus; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
 	basis[s][i] =
-	  new Polynomial(intLegendre[l1].compose(lagrange[1] - lagrange[0],
-						 lagrange[1] + lagrange[0])
+	  new Polynomial(intLegendre[l1].compose(lagrange[(*(*faceV[s])[0])[1]] -
+                                                 lagrange[(*(*faceV[s])[0])[0]]
+                                                 ,
+						 lagrange[(*(*faceV[s])[0])[0]] +
+                                                 lagrange[(*(*faceV[s])[0])[1]])
 			 *
-			 legendre[l2].compose(p) * lagrange[2]);
 
+			 legendre[l2].compose(lagrange[(*(*faceV[s])[0])[2]])
+                         *
+                         lagrange[(*(*faceV[s])[0])[2]]);
 	i++;
       }
     }

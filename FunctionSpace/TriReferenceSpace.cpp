@@ -19,8 +19,13 @@ TriReferenceSpace::TriReferenceSpace(void){
   }
 
   // Face Definition //
-  nFace   = 0;
-  refFace = NULL;
+  nFace   = 1;
+  refFace    = new unsigned int*[nFace];
+  refFace[0] = new unsigned int[3];
+
+  refFace[0][0] = 0;
+  refFace[0][1] = 1;
+  refFace[0][2] = 2;
 
   // Init All //
   init();
@@ -32,6 +37,12 @@ TriReferenceSpace::~TriReferenceSpace(void){
     delete[] refEdge[i];
 
   delete[] refEdge;
+
+  // Delete Ref Face //
+  for(unsigned int i = 0; i < nFace; i++)
+    delete[] refFace[i];
+
+  delete[] refFace;
 }
 
 string TriReferenceSpace::toLatex(void) const{
@@ -75,14 +86,3 @@ string TriReferenceSpace::toLatex(void) const{
 
   return stream.str();
 }
-
-/*
-#include <iostream>
-int main(void){
-  TriReferenceSpace p;
-
-  cout << p.toLatex() << endl;
-
-  return 0;
-}
-*/
