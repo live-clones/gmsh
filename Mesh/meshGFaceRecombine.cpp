@@ -36,7 +36,6 @@
   #include "Context.h"
   #include "OS.h"
 
-It''s RElement that give Blossom Qual !
 
 #define E(x) Msg::Error x
 #define F(x) Msg::Fatal x
@@ -44,6 +43,7 @@ It''s RElement that give Blossom Qual !
 #define W(x) Msg::Warning x
 #define DEBUG(x) {x}
 // TODO : regarder pour pointing
+//        It''s RElement that should give Blossom Qual !
 
 
 Recombine2D *Recombine2D::_cur = NULL;
@@ -2639,6 +2639,7 @@ void Rec2DTwoTri2Quad::_computeReward()
       return;
     
     case VertEdgeQuality :
+    {
       double valEdge = -Recombine2D::getWeightEdgeBase() * _edges[4]->getQual();
       for (int i = 0; i < 4; ++i)
         valEdge += Recombine2D::getWeightEdgeQuad() * _edges[i]->getQual();
@@ -2653,8 +2654,10 @@ void Rec2DTwoTri2Quad::_computeReward()
                  - Recombine2D::getWeightEdgeBase();
       _reward = Rec2DData::getGlobalQuality(0, _valVert, w, valEdge)
                 - Rec2DData::getGlobalQuality();
+      
       _lastUpdate = Recombine2D::getNumChange();
       return;
+    }
     
     default :
       Msg::Error("[Rec2DData] Unknown quality criterion");
@@ -2972,7 +2975,7 @@ void Rec2DCollapse::printReward() const
       
       valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
                                                   &_rec->_edges[1], 2);
-      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]); normal ? 
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]); //normal ? 
       valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
       
       for (int i = 0; i < 4; ++i) {
@@ -3439,8 +3442,8 @@ double Rec2DEdge::_straightAlignment() const
 /*******************/
 Rec2DVertex::Rec2DVertex(MVertex *v)
 : _v(v), _angle(4.*M_PI), _onWhat(1), _parity(0),
-  _lastUpdate(-1), _sumQualAngle(.0), _sumQualEdge(.0),
-  _sumAngle(0), _sumEdge(0), _pos(-1)
+  _lastUpdate(-1), _sumWQualAngle(.0), _sumWQualEdge(.0),
+  _sumWeightAngle(0), _sumWeightEdge(0), _pos(-1)
 {
   reparamMeshVertexOnFace(_v, Recombine2D::getGFace(), _param);
   reveal();
@@ -3454,8 +3457,8 @@ Rec2DVertex::Rec2DVertex(MVertex *v)
 Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 : _v(rv->_v), _angle(ang), _onWhat(-1), _parity(rv->_parity),
   _lastUpdate(rv->_lastUpdate),
-  _sumQualAngle(rv->_sumQualAngle), _sumQualEdge(rv->_sumQualEdge),
-  _sumAngle(rv->_sumAngle), _sumEdge(rv->_sumEdge), _edges(rv->_edges),
+  _sumWQualAngle(rv->_sumWQualAngle), _sumWQualEdge(rv->_sumWQualEdge),
+  _sumWeightAngle(rv->_sumWeightAngle), _sumWeightEdge(rv->_sumWeightEdge), _edges(rv->_edges),
   _elements(rv->_elements), _param(rv->_param), _pos(-1)
 {
   rv->hide(false);
@@ -3544,8 +3547,8 @@ void Rec2DVertex::add(const Rec2DEdge *re)
   double oldQual = getQual(VertQuality);
   
   _edges.push_back(const_cast<Rec2DEdge*>(re));
-  _sumQualEdge += re->getWeightedQual();
-  _sumEdge += re->getWeight();
+  _sumWQualEdge += re->getWeightedQual();
+  _sumWeightEdge += re->getWeight();
   _lastUpdate = Recombine2D::getNumChange();
   
   Rec2DData::updateVertQual(getQual(VertQuality)-oldQual, VertQuality);
@@ -3569,9 +3572,9 @@ void Rec2DVertex::rmv(const Rec2DEdge *re)
       
       _edges[i] = _edges.back();
       _edges.pop_back();
-      _sumQualEdge -= re->getWeightedQual();
-      _sumEdge -= re->getWeight();
-      if (_sumEdge < 0 || _sumQualEdge < -1e12)
+      _sumWQualEdge -= re->getWeightedQual();
+      _sumWeightEdge -= re->getWeight();
+      if (_sumWeightEdge < 0 || _sumWQualEdge < -1e12)
         Msg::Error("[Rec2DVertex] Negative sum edge");
       _lastUpdate = Recombine2D::getNumChange();
       
@@ -3596,8 +3599,8 @@ void Rec2DVertex::add(const Rec2DElement *rel)
   double oldQual2 = getQual(VertEdgeQuality);
   
   _elements.push_back(const_cast<Rec2DElement*>(rel));
-  _sumAngle += rel->getAngleWeight();
-  _sumQualAngle += rel->getWeightedAngleQual(this);
+  _sumWeightAngle += rel->getAngleWeight();
+  _sumWQualAngle += rel->getWeightedAngleQual(this);
   _lastUpdate = Recombine2D::getNumChange();
   
   Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
@@ -3624,8 +3627,8 @@ void Rec2DVertex::rmv(const Rec2DElement *rel)
       
       _elements[i] = _elements.back();
       _elements.pop_back();
-      _sumAngle -= _elements[i]->getAngleWeight();
-      _sumQualAngle -= _elements[i]->getWeightedAngleQual(this);
+      _sumWeightAngle -= _elements[i]->getAngleWeight();
+      _sumWQualAngle -= _elements[i]->getWeightedAngleQual(this);
       _lastUpdate = Recombine2D::getNumChange();
       
       Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
@@ -3806,10 +3809,10 @@ double Rec2DVertex::getQual(Rec2DQualCrit crit) const
   
   switch (crit) {
     case VertQuality :
-      return _qualVert() * _WAQualEdges();
+      return _vertQual() * _WAQualEdges();
     
     case VertEdgeQuality :
-      return _qualVert();
+      return _vertQual();
     
     default :
       Msg::Error("[Rec2DData] Unknown quality criterion");
@@ -3818,8 +3821,8 @@ double Rec2DVertex::getQual(Rec2DQualCrit crit) const
 }
 
 #ifdef REC2D_VERT_ONLY
-double Rec2DVertex::getQual(Rec2DQualCrit crit, double waQualAngles,
-                            double waQualEdges, int numElem) const
+double Rec2DVertex::getQual(double waQualAngles, double waQualEdges,
+                            int numElem, Rec2DQualCrit crit) const
 {
   if (crit < 0)
     crit = Recombine2D::getQualCrit();
@@ -3840,7 +3843,7 @@ double Rec2DVertex::getQual(Rec2DQualCrit crit, double waQualAngles,
   return -1.;
 }
 
-double Rec2DVertex::vertQual_getGainQuad(const Rec2DElement *rel,
+double Rec2DVertex::/*vertQual_*/getGainQuad(const Rec2DElement *rel,
                                          const Rec2DEdge *re0,
                                          const Rec2DEdge *re1    ) const
 {
@@ -3848,25 +3851,26 @@ double Rec2DVertex::vertQual_getGainQuad(const Rec2DElement *rel,
              - Recombine2D::getWeightAngleTri();
   double wq = Recombine2D::getWeightEdgeQuad();
   
-  double qualAngle = _sumQualAngle + wa * rel->getAngleQual(this) ;
-  int sumAngle = _sumAngle + wa;
+  double qualAngle = _sumWQualAngle + wa * rel->getAngleQual(this) ;
+  int sumAngle = _sumWeightAngle + wa;
   
-  double qualEdge = _sumQualEdge + wq * re0->getQual() + wq * re1->getQual();
-  int sumEdge = _sumEdge + 2*wq;
+  double qualEdge = _sumWQualEdge + wq * re0->getQual() + wq * re1->getQual();
+  int sumEdge = _sumWeightEdge + 2*wq;
   
-  return getQual(sumAngle, qualAngle, sumEdge, qualEdge,
-                 (int)_elements.size()                  ) - getQual();
+  return getQual(qualAngle/sumAngle, qualEdge/sumEdge,
+                 (int)_elements.size()                ) - getQual();
 }
-double Rec2DVertex::vertQual_getGainTriLess(const Rec2DEdge *re) const
+
+double Rec2DVertex::/*vertQual_*/getGainTriLess(const Rec2DEdge *re) const
 {
-  return getQual(_sumAngle - Recombine2D::getWeightAngleTri(), _sumQualAngle - quelquechose?,
-                 _sumEdge - Recombine2D::getWeightEdgeBase(),
-                 _sumQualEdge - re->getQual(),
+  return getQual(_sumWQualAngle /*!!!!*/ / (_sumWeightAngle - Recombine2D::getWeightAngleTri()),
+                 (_sumWQualEdge - re->getQual())
+                 / (_sumWeightEdge - Recombine2D::getWeightEdgeBase()),
                  (int)_elements.size() - 1)
          - getQual();
 }
 
-double Rec2DVertex::getGainRecomb(Rec2DQualCrit crit
+double Rec2DVertex::getGainRecomb(/*Rec2DQualCrit crit,*/
                                   const Rec2DElement *rel1,
                                   const Rec2DElement *rel2,
                                   const Rec2DEdge *re0,
@@ -3878,10 +3882,10 @@ double Rec2DVertex::getGainRecomb(Rec2DQualCrit crit
     return -1.;
   }
   
-  if (crit == BlossomQuality) return .0;
-  if (crit < 0) {
+  //if (crit == BlossomQuality) return .0;
+  //if (crit < 0) {
     Msg::Warning("[Rec2DVertex] Give me another criterion please.");
-  }
+  //}
   
   double swQualAngle = _sumWQualAngle, swQualEdge = _sumWQualEdge;
   int swAngle = _sumWeightAngle, swEdge = _sumWeightEdge;
@@ -3904,28 +3908,28 @@ double Rec2DVertex::getGainRecomb(Rec2DQualCrit crit
     swEdge += 2 * weq - web;
   }
   
-  return getQual(swAngle, swQualAngle, swEdge, swQualEdge,
-                 static_cast<int>(_elements.size())-1, crit)
-         - getQual(crit);
+  return getQual(swQualAngle / swAngle, swQualEdge / swEdge,
+                 static_cast<int>(_elements.size())-1/*, crit*/)
+         - getQual(/*crit*/);
          
-  vérifier que c''est bien ce qui est demandé ! (renvoie bien ce que veux apply, compute reward, ...)
+  //FIX vérifier que c''est bien ce qui est demandé ! (renvoie bien ce que veux apply, compute reward, ...)
 }
 
-void Rec2DVertex::vertQual_addEdgeQual(double val, int num)
+void Rec2DVertex::/*vertQual_*/addEdgeQual(double val, int num)
 {
   double oldQual = .0;
   if (_elements.size())
     oldQual = getQual();
-  _sumQualEdge += val;
-  _sumEdge += num;
-  if (_sumEdge < 0 || _sumQualEdge < -1e12)
+  _sumWQualEdge += val;
+  _sumWeightEdge += num;
+  if (_sumWeightEdge < 0 || _sumWQualEdge < -1e12)
     Msg::Error("[Rec2DVertex] Negative sum edge");
   if (_elements.size())
     Rec2DData::addSumVert(getQual()-oldQual);
   _lastUpdate = Recombine2D::getNumChange();
 }
 
-double Rec2DVertex::vertQual_getGainMerge(const Rec2DVertex *rv,
+double Rec2DVertex::/*vertQual_*/getGainMerge(const Rec2DVertex *rv,
                                           const Rec2DEdge *const*edges, int nEdges) const
 {
   int sumAngle = 0;
@@ -3969,19 +3973,19 @@ double Rec2DVertex::vertQual_getGainMerge(const Rec2DVertex *rv,
     sumQualEdge -= Recombine2D::getWeightEdgeBase() * edges[i]->getQual();
   }
   
-  return Rec2DVertex::getQual(sumAngle, sumQualAngle,
-                              sumEdge, sumQualEdge, numElem)
+  return Rec2DVertex::getQual(sumQualAngle/sumAngle,
+                              sumQualEdge/sumEdge, numElem)
          - getQual() - rv->getQual()                        ;
 }
 //#else
-double Rec2DVertex::vertEdgeQual_getGainOneElemLess() const
-{here element size instead of weight
-  return getGainDegree(-1) + _sumQualAngle / (_elements.size()-1) - _qualAngle();
+double Rec2DVertex::/*vertEdgeQual_*/getGainOneElemLess() const
+{//FIX here element size instead of weight
+  return getGainDegree(-1) + _sumWQualAngle / (_elements.size()-1) - _WAQualAngles();
 }
 
-double Rec2DVertex::vertEdgeQual_getGainMerge(const Rec2DVertex *rv) const
+double Rec2DVertex::/*vertEdgeQual_*/getGainMerge(const Rec2DVertex *rv) const
 {
-  double ans = .0, sumQualAngle = .0
+  double ans = .0, sumQualAngle = .0;
   int sumAngle = 0;
   ans -= getQual();
   ans -= rv->getQual();
@@ -3989,14 +3993,14 @@ double Rec2DVertex::vertEdgeQual_getGainMerge(const Rec2DVertex *rv) const
   int *angleWeight = new int[_elements.size()];
   for (unsigned int i = 0; i < _elements.size(); ++i) {
     qualAngle[i] = _elements[i]->getWeightedAngleQual(this);
-    angleWeight[i] = _elements[i]->getAngleWeight(this);
+    angleWeight[i] = _elements[i]->getAngleWeight();
   }
   for (unsigned int i = 0; i < rv->_elements.size(); ++i) {
     unsigned int j = 0;
     while (j < _elements.size() && _elements[j] != rv->_elements[i]) ++j;
     if (j >= _elements.size()) {
       sumQualAngle += rv->_elements[i]->getWeightedAngleQual(rv);
-      sumAngle += rv->_elements[i]->getAngleWeight(rv);
+      sumAngle += rv->_elements[i]->getAngleWeight();
     }
     else {
       qualAngle[j] = .0;
@@ -4008,6 +4012,7 @@ double Rec2DVertex::vertEdgeQual_getGainMerge(const Rec2DVertex *rv) const
     sumAngle += angleWeight[i];
   }
   
+  int numElem = _elements.size() + rv->_elements.size() - 4; 
   ans += getQualDegree(numElem) + sumQualAngle / sumAngle;
   return ans;
 }
@@ -4054,8 +4059,8 @@ void Rec2DVertex::printElem() const
 void Rec2DVertex::printQual() const
 {
   Msg::Info("d:%g, a:%g, e:%g (sa:%d, se:%d)",
-            getQualDegree(), _sumQualAngle/_sumAngle, _sumQualEdge / _sumEdge,
-            _sumAngle, _sumEdge);
+            getQualDegree(), _sumWQualAngle/_sumWeightAngle, _sumWQualEdge / _sumWeightEdge,
+            _sumWeightAngle, _sumWeightEdge);
 }
 
 bool Rec2DVertex::_recursiveBoundParity(const Rec2DVertex *prevRV, int p0, int p1)
@@ -4089,11 +4094,11 @@ void Rec2DVertex::_updateQualAngle()
   double oldQual1 = getQual(VertQuality);
   double oldQual2 = getQual(VertEdgeQuality);
   
-  _sumQualAngle = .0;
-  _sumAngle = 0;
+  _sumWQualAngle = .0;
+  _sumWeightAngle = 0;
   for (unsigned int i = 0; i < _elements.size(); ++i) {
-    _sumAngle += _elements[i]->getAngleWeight();
-    _sumQualAngle += _elements[i]->getWeightedAngleQual(this);
+    _sumWeightAngle += _elements[i]->getAngleWeight();
+    _sumWQualAngle += _elements[i]->getWeightedAngleQual(this);
   }
   _lastUpdate = Recombine2D::getNumChange();
   
@@ -4442,37 +4447,6 @@ void Rec2DElement::swapMVertex(Rec2DVertex *rv0, Rec2DVertex *rv1)
 }
 
 double Rec2DElement::getAngle(const Rec2DVertex *rv) const
-{
-  std::vector<Rec2DVertex*> vert;
-  getVertices(vert);
-  
-  int index = -1;
-  for (int i = 0; i < _numEdge; ++i) {
-    if (vert[i] == rv) {
-      index = i;
-      break;
-    }
-  }
-  if (index == -1) {
-    Msg::Error("[Rec2DElement] I don't have your vertex...");
-    Msg::Info("im %d, this is %d", getNum(), rv->getNum());
-    return -1.;
-  }
-  
-  int i1 = (index+_numEdge-1)%_numEdge;
-  int i0 = (index+1)%_numEdge;
-  double ang =  atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u())
-                - atan2(vert[i1]->v() - rv->v(), vert[i1]->u() - rv->u());
-  
-  static unsigned int a = 0;
-  if (++a < 2) Msg::Warning("FIXME use real angle instead of parametric angle");
-  
-  if (ang < .0)
-    return ang + 2.*M_PI;
-  return ang;
-}
-
-double Rec2DElement::getAngleQual(const Rec2DVertex *rv) const
 {
   std::vector<Rec2DVertex*> vert;
   getVertices(vert);
