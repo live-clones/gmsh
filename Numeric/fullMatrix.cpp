@@ -379,4 +379,171 @@ bool fullMatrix<double>::svd(fullMatrix<double> &V, fullVector<double> &S)
   return false;
 }
 
+#else
+
+// Provide a default implementation of the matrix inversion
+// Bad algorithms but it allows to use
+// the polynomial basis without having lapack
+template<>
+double fullMatrix<double>::determinant() const{
+
+  if(_r == 2)
+    return (*this)(0,0) * (*this)(1,1) - (*this)(0,1) * (*this)(1,0);
+  else if (_r == 3)
+  {
+    double det = ((*this)(0,0)*(*this)(1,1)*(*this)(2,2)
+                + (*this)(0,1)*(*this)(1,2)*(*this)(2,0)
+                + (*this)(0,2)*(*this)(1,0)*(*this)(2,1));
+    det -= (*this)(0,0)*(*this)(1,2)*(*this)(2,1);
+    det -= (*this)(0,1)*(*this)(1,0)*(*this)(2,2);
+    det -= (*this)(0,2)*(*this)(1,1)*(*this)(2,0);
+    return det;
+  }
+  else if (_r == 4)
+  {
+    std::vector<fullMatrix<double> > temp(4,fullMatrix<double>(3,3));
+    for(int k = 0; k < 4; k++)
+    {
+      for(int i = 1; i < 4; i++)
+      {
+        int j1 = 0;
+        for(int j = 0; j < 4; j++)
+        {
+          if(k != j)
+            temp[k](i-1,j1++) = (*this)(i,j);
+        }
+
+      }
+    }
+    return ((*this)(0,0) * temp[0].determinant() -
+            (*this)(0,1) * temp[1].determinant() +
+            (*this)(0,2) * temp[2].determinant() -
+            (*this)(0,3) * temp[3].determinant());
+    }
+   else if (_r == 5)
+   {
+    std::vector<fullMatrix<double> > temp(5,fullMatrix<double>(4,4));
+    for(int k = 0; k < 5; k++)
+    {
+      for(int i = 1; i < 5; i++)
+      {
+        int j1 = 0;
+        for(int j = 0; j < 5; j++)
+        {
+          if(k != j)
+            temp[k](i-1,j1++) = (*this)(i,j);
+        }
+      }
+    }
+    return ((*this)(0,0) * temp[0].determinant() -
+            (*this)(0,1) * temp[1].determinant() +
+            (*this)(0,2) * temp[2].determinant() -
+            (*this)(0,3) * temp[3].determinant() +
+            (*this)(0,4) * temp[4].determinant());
+    }
+   else
+   {
+    std::vector<fullMatrix<double> > temp(_r,fullMatrix<double>(_r-1,_r-1));
+    for(int k = 0; k < _r; k++)
+    {
+      for(int i = 1; i < _r; i++)
+      {
+        int j1 = 0;
+        for(int j = 0; j < _r; j++)
+        {
+          if(k != j)
+            temp[k](i-1,j1++) = (*this)(i,j);
+        }
+      }
+    }
+    double det = 0;
+    for(int k = 0; k < _r; k+=2)
+    {
+      det += (*this)(0,k) * temp[k].determinant();
+    }
+    for(int k = 1; k < _r; k+=2)
+    {
+      det -= (*this)(0,k) * temp[k].determinant();
+    }
+    return det;
+   }
+  return (*this)(0,0); // 1x1 matrix
+}
+
+template<>
+bool fullMatrix<double>::invert(fullMatrix<double> &result) const
+{
+  if(_r != _c) return false;
+
+  // Copy the matrix
+  result.resize(_r,_c);
+
+  // to find out Determinant
+  double det = this->determinant();
+
+  if(det == 0)
+    return false;
+
+  // Matrix of cofactor put this in a function?
+  fullMatrix<double> cofactor(_r,_c);
+  if(_r == 2)
+  {
+    cofactor(0,0) = (*this)(1,1);
+    cofactor(0,1) = -(*this)(1,0);
+    cofactor(1,0) = -(*this)(0,1);
+    cofactor(1,1) = (*this)(0,0);
+  }
+  else if(_r >= 3)
+  {
+    std::vector<std::vector<fullMatrix<double> > > temp(_r,std::vector<fullMatrix<double> >(_r,fullMatrix<double>(_r-1,_r-1)));
+    for(int k1 = 0; k1 < _r; k1++)
+    {
+      for(int k2 = 0; k2 < _r; k2++)
+      {
+        int i1 = 0;
+        for(int i = 0; i < _r; i++)
+        {
+          int j1 = 0;
+          for(int j = 0; j < _r; j++)
+          {
+            if(k1 != i && k2 != j)
+              temp[k1][k2](i1,j1++) = (*this)(i,j);
+          }
+          if(k1 != i)
+            i1++;
+        }
+      }
+    }
+    bool flagPositive;
+    for(int k1 = 0; k1 < _r; k1++)
+    {
+      flagPositive = (k1 % 2) == 0 ? true : false;
+      for(int k2 = 0; k2 < _r; k2++)
+      {
+        if(flagPositive)
+        {
+          cofactor(k1,k2) = temp[k1][k2].determinant();
+          flagPositive = false;
+        }
+        else
+        {
+          cofactor(k1,k2) = -temp[k1][k2].determinant();
+          flagPositive = true;
+        }
+      }
+    }
+  }
+  // end cofactor
+
+  // inv = transpose of cofactor / Determinant
+  for(int i = 0; i < _r; i++)
+  {
+    for(int j = 0; j < _c; j++)
+    {
+      result(j,i) = cofactor(i,j) / det;
+    }
+  }
+  return true;
+}
+
 #endif
