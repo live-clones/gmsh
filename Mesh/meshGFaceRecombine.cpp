@@ -7,49 +7,72 @@
 //   Amaury Johnen (a.johnen@ulg.ac.be)
 //
 
-#define REC2D_WAIT_TIME .001
+#define REC2D_WAIT_SELECTED .2
+#define REC2D_WAIT_TM_1 .001
 #define REC2D_WAIT_TM_2 .001
 #define REC2D_WAIT_TM_3 .001
 
-// #define REC2D_SMOOTH
- #define REC2D_DRAW
+
+#define REC2D_DRAW
+#ifdef REC2D_DRAW
+  //#define DRAW_ALL_SELECTED
+  //#define DRAW_WHEN_SELECTED
+  //#define DRAW_EVERY_CHANGE
+  //#define DRAW_BEST_SEQ
+  #define DRAW_IF_ERROR
+#endif
 
 #include <cmath>
 #include "meshGFaceRecombine.h"
 #include "MTriangle.h"
+#include "MVertex.h" //for angle3Vertices
 #include "MQuadrangle.h"
 #include "PView.h"
 #include "meshGFace.h"
-#ifdef REC2D_SMOOTH
-  #include "meshGFaceOptimize.h"
-#endif
 #ifdef REC2D_DRAW
   #include "drawContext.h"
   #include "FlGui.h"
+#endif
   #include "Context.h"
   #include "OS.h"
-#endif
 
-// TODO : enlever ramaining tri, regarder pour pointing
+It''s RElement that give Blossom Qual !
+
+#define E(x) Msg::Error x
+#define F(x) Msg::Fatal x
+#define I(x) Msg::Info x
+#define W(x) Msg::Warning x
+#define DEBUG(x) {x}
+// TODO : regarder pour pointing
 
 
-  #include "meshGFaceOptimize.h" // test Blossom
 Recombine2D *Recombine2D::_cur = NULL;
 Rec2DData *Rec2DData::_cur = NULL;
 double **Rec2DVertex::_qualVSnum = NULL;
 double **Rec2DVertex::_gains = NULL;
 
-static void __draw(bool atOrigin = true, double dt = REC2D_WAIT_TM_2)
+#ifdef REC2D_DRAW
+static void __draw(double dt = .0)
 {
-  if (atOrigin) Recombine2D::drawStateOrigin();
   double time = Cpu();
+  Recombine2D::drawStateOrigin();
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
   while (Cpu()-time < dt)
     FlGui::instance()->check();
 }
 
-bool edgesInOrder(Rec2DEdge **edges, int numEdges)
+//static void __drawWait(double time, double dt)
+//{
+//  Recombine2D::drawStateOrigin();
+//  CTX::instance()->mesh.changed = ENT_ALL;
+//  drawContext::global()->draw();
+//  while (Cpu()-time < dt)
+//    FlGui::instance()->check();
+//}
+#endif
+
+static bool edgesAreInOrder(Rec2DEdge const*const*const edges, const int numEdges)
 {
   Rec2DVertex **v, *v0, *v1;
   v = new Rec2DVertex*[numEdges];
@@ -89,7 +112,8 @@ bool edgesInOrder(Rec2DEdge **edges, int numEdges)
       return false;
     }
   }
-  if (v[0] == v1 && v[numEdges-1] != v0 || v[0] == v0 && v[numEdges-1] != v1) {
+  if ((v[0] == v1 && v[numEdges-1] != v0) ||
+      (v[0] == v0 && v[numEdges-1] != v1)   ) {
     Msg::Error("edges not in order (3)");
     for (int i = 0; i < numEdges; ++i) {
       edges[i]->print();
@@ -100,7 +124,7 @@ bool edgesInOrder(Rec2DEdge **edges, int numEdges)
   return true;
 }
 
-void __crash()
+static void __crash()
 {
   Msg::Info(" ");
   Recombine2D::drawStateOrigin();
@@ -110,22 +134,24 @@ void __crash()
   Msg::Info("%d",e);
 }
 
-void __wait(double dt = REC2D_WAIT_TM_3)
-{
-  Msg::Info(" ");
-  double time = Cpu();
-  while (Cpu()-time < dt)
-    FlGui::instance()->check();
-}
-
-int otherParity(int a)
+//static void __wait(double dt = REC2D_WAIT_TM_3)
+//{
+//#ifdef REC2D_DRAW
+//  Msg::Info(" ");
+//  double time = Cpu();
+//  while (Cpu()-time < dt)
+//    FlGui::instance()->check();
+//#endif
+//}
+//
+static int otherParity(const int a)
 {
   if (a % 2)
     return a - 1;
   return a + 1;
 }
 
-namespace std //swap
+namespace std // overload of std::swap(..) for Rec2DData::Action class
 {
   template <>
   void swap(Rec2DData::Action& a0, Rec2DData::Action& a1)
@@ -140,22 +166,53 @@ namespace std //swap
 
 /**  Recombine2D  **/
 /*******************/
-Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
-                                      elist(NULL)
+Recombine2D::Recombine2D(GFace *gf, bool col)
+  : _gf(gf), _bgm(NULL), _numChange(0), _collapses(col),
+    _strategy(0), _horizon(0), _qualCriterion(NoCrit),
+    _checkIfNotAllQuad(1), _avoidIfNotAllQuad(1),
+    _revertIfNotAllQuad(0), _oneActionHavePriority(1),
+    _recombineWithBlossom(1), elist(NULL)
 {
-  if (Recombine2D::_cur != NULL) {
-    Msg::Warning("[Recombine2D] An instance already in execution");
-    _data = NULL;
+  if (Recombine2D::_cur) {
+    Msg::Warning("[Recombine2D] An instance already exists. Can't create another.");
     return;
   }
+  if (Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance exists, should not !");
+    return;
+  }
+  
   Recombine2D::_cur = this;
+  construct();
+}
+
+Recombine2D::~Recombine2D()
+{
+  if (_iamCurrent()) {
+    Recombine2D::_cur = NULL;
+    if (_data)
+      delete _data;
+  }
+}
+
+bool Recombine2D::construct()
+{
+  if (!_iamCurrent()) {
+    Msg::Warning("[Recombine2D] I can't construct Û_Ú");
+    return false;
+  }
+  if (Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance exists, should not !");
+    return false;
+  }
   
   orientMeshGFace orienter;
   orienter(_gf);
   Rec2DVertex::initStaticTable();
-  backgroundMesh::set(_gf);
+  backgroundMesh::set(_gf); // this doesn't work after call 'recombineWithBlossom()'
   _bgm = backgroundMesh::current();
   _data = new Rec2DData();
+  
   
   static int po = -1;
   if (++po < 1) {
@@ -167,7 +224,7 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
   // Be able to compute geometrical angle at corners
   std::map<MVertex*, AngleData> mapCornerVert;
   {
-    std::list<GEdge*> listge = gf->edges();
+    std::list<GEdge*> listge = _gf->edges();
     std::list<GEdge*>::iterator itge = listge.begin();
     for (; itge != listge.end(); ++itge) {
       mapCornerVert[(*itge)->getBeginVertex()->getMeshElement(0)->getVertex(0)]
@@ -176,14 +233,14 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
         ._gEdges.push_back(*itge);
     }
   }
-  // Create the 'Rec2DEdge', the 'Rec2DVertex' and the 'Rec2DElement'
+  // Create the 'Rec2DVertex', the 'Rec2DEdge' and the 'Rec2DElement'
   {
     std::map<MVertex*, Rec2DVertex*> mapVert;
     std::map<MVertex*, Rec2DVertex*>::iterator itV;
     std::map<MVertex*, AngleData>::iterator itCorner;
     // triangles
-    for (unsigned int i = 0; i < gf->triangles.size(); ++i) {
-      MTriangle *t = gf->triangles[i];
+    for (unsigned int i = 0; i < _gf->triangles.size(); ++i) {
+      MTriangle *t = _gf->triangles[i];
       
       Rec2DVertex *rv[3];
       for (int j = 0; j < 3; ++j) {
@@ -211,8 +268,8 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
       new Rec2DElement(t, re, rv);
     }
     // quadrangles
-    for (unsigned int i = 0; i < gf->quadrangles.size(); ++i) {
-      MQuadrangle *q = gf->quadrangles[i];
+    for (unsigned int i = 0; i < _gf->quadrangles.size(); ++i) {
+      MQuadrangle *q = _gf->quadrangles[i];
       
       Rec2DVertex *rv[4];
       for (int j = 0; j < 4; ++j) {
@@ -251,8 +308,10 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
     }
   }
   mapCornerVert.clear();
-  // update boundary, create the 'Rec2DTwoTri2Quad'
+  // update boundary, create the 'Rec2DTwoTri2Quad' and the 'Rec2DCollapse'
   {
+    int numEd=0;
+    int numAc=0;
     Rec2DData::iter_re it = Rec2DData::firstEdge();
     for (; it != Rec2DData::lastEdge(); ++it) {
       Rec2DVertex *rv0 = (*it)->getVertex(0), *rv1 = (*it)->getVertex(1);
@@ -267,18 +326,20 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
           Msg::Error("[Recombine2D] %d elements instead of 2 for neighbour link",
                      elem.size()                                                 );
         else {
+          ++numEd;
           elem[0]->addNeighbour(*it, elem[1]);
           elem[1]->addNeighbour(*it, elem[0]);
-#ifdef REC2D_ONLY_RECO
-          new Rec2DTwoTri2Quad(elem[0], elem[1]);
-#else
-          new Rec2DCollapse(new Rec2DTwoTri2Quad(elem[0], elem[1]));
-#endif
+          if (Recombine2D::onlyRecombinations()){
+            new Rec2DTwoTri2Quad(elem[0], elem[1]);numAc++;}
+          else{
+            new Rec2DCollapse(new Rec2DTwoTri2Quad(elem[0], elem[1]));numAc++;}
         }
       }
     }
+    I(("numIntEdge = %d",numEd));
+    I(("numAc = %d",numAc));
   }
-  // set parity on boundary, create the 'Rec2DFourTri2Quad'
+  // set parity on boundary, (create the 'Rec2DFourTri2Quad')
   {
     Rec2DData::iter_rv it = Rec2DData::firstVertex();
     for (; it != Rec2DData::lastVertex(); ++it) {
@@ -297,117 +358,84 @@ Recombine2D::Recombine2D(GFace *gf) : _gf(gf), _strategy(0), _numChange(0),
   
   Rec2DData::checkObsolete();
   _data->printState();
-}
-
-Recombine2D::~Recombine2D()
-{
-  delete _data;
-  if (Recombine2D::_cur == this)
-    Recombine2D::_cur = NULL;
+  
+  I(( "tri %d, quad %d", _gf->triangles.size(), _gf->quadrangles.size() ));
+  if (_recombineWithBlossom) recombineWithBlossom(_gf, .0, .16, elist, t2n);
+  I(( "tri %d, quad %d", _gf->triangles.size(), _gf->quadrangles.size() ));
+  //
+  return true;
 }
 
 bool Recombine2D::recombine()
 {
-  static int a = -1;
-  if (++a < 1) Msg::Error("FIXME Need new definition Recombine2D::recombine()");
-  /*Rec2DAction *nextAction;
-  while ((nextAction = Rec2DData::getBestAction())) {
-#ifdef REC2D_DRAW
-    FlGui::instance()->check();
-    double time = Cpu();
-    nextAction->color(0, 0, 200);
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
-#endif
-    
-    if (false) { // if !(remain all quad)
-      delete nextAction;
-#ifdef REC2D_DRAW
-      nextAction->color(190, 0, 0);
-      while (Cpu()-time < REC2D_WAIT_TIME)
-        FlGui::instance()->check();
-#endif
-      continue;
-    }
-    ++_numChange;
-    std::vector<Rec2DVertex*> newPar;
-    nextAction->apply(newPar);
-    Recombine2D::incNumChange();
-    
-    // forall v in newPar : check obsoletes action;
-    
-#ifdef REC2D_DRAW
-    _gf->triangles = _data->_tri;
-    _gf->quadrangles = _data->_quad;
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
-    while (Cpu()-time < REC2D_WAIT_TIME)
-      FlGui::instance()->check();
-#endif
-    
-    delete nextAction;
+  if (!_iamCurrent()) {
+    Msg::Warning("[Recombine2D] If I can't construct, I can't recombine :)");
+    return false;
+  }
+  if (!Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance dosen't exist. Have you called construct() ?");
+    return false;
   }
   
-  _data->printState();
-#ifdef REC2D_SMOOTH
-    laplaceSmoothing(_gf,100);
+  I(("Recombining... #actions = %d, horizon = %d", 
+            Rec2DData::getNumAction(), _horizon ));
+  
+  double time = Cpu();
+  _checkIfNotAllQuad = _checkIfNotAllQuad && !_collapses;
+  _avoidIfNotAllQuad = _avoidIfNotAllQuad && _checkIfNotAllQuad;
+  _revertIfNotAllQuad = _revertIfNotAllQuad && _avoidIfNotAllQuad;
+  
+  Rec2DNode *root = new Rec2DNode(NULL, NULL, _horizon);
+  Rec2DNode *currentNode = Rec2DNode::selectBestNode(root);
+#ifdef DRAW_WHEN_SELECTED
+  __drawWait(time, REC2D_WAIT_SELECTED);
 #endif
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();*/
-  return 1;
+  time = Cpu();
+
+  while (currentNode) {
+    currentNode->lookahead(_horizon);
+    currentNode = Rec2DNode::selectBestNode(currentNode);
+#ifdef DRAW_WHEN_SELECTED
+    __drawWait(time, REC2D_WAIT_SELECTED);
+#endif
+    time = Cpu();
+  }
+  
+  I(( "... done recombining, in %f seconds", Cpu() - time ));
+  return true;
 }
 
 double Recombine2D::recombine(int depth)
 {
   Msg::Info("Recombining with depth %d", depth);
-  double time = Cpu();
   Rec2DData::clearChanges();
-  double bestGlobalQuality;
-#ifdef REC2D_DRAW // draw state at origin
-    _gf->triangles = _data->_tri;
-    _gf->quadrangles = _data->_quad;
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
-    while (Cpu()-time < REC2D_WAIT_TIME)
-      FlGui::instance()->check();
-    time = Cpu();
+#ifdef DRAW_ALL_SELECTED
+  double time = Cpu();
 #endif
-  drawStateOrigin();
+#ifdef DRAW_WHEN_SELECTED
+    __drawWait(time, REC2D_WAIT_SELECTED);
+#endif
   Rec2DNode *root = new Rec2DNode(NULL, NULL, depth);
-  bestGlobalQuality = root->getGlobQual();
-  Rec2DNode *currentNode = root->selectBestNode();
-  
-  //static int num = 20, i = 0;
-  //static double dx = .0, dy = .0;
+  Rec2DNode *currentNode = Rec2DNode::selectBestNode(root);
   
   while (currentNode) {
-    //Msg::Info("%d %d", Rec2DData::getNumZeroAction(), Rec2DData::getNumOneAction());
-    //_data->checkQuality();
+    I(("boucle recombine"));
+#ifdef DRAW_ALL_SELECTED
     FlGui::instance()->check();
-#if 0//def REC2D_DRAW // draw all states
     if ( !((i+1) % ((int)std::sqrt(num)+1)) ) {
-      dx = .0;
-      dy -= 1.1;
+      dx = .0; dy -= 1.1;
     }
     else
       dx += 1.1;
     drawState(dx, dy);
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
-    while (Cpu()-time < REC2D_WAIT_TIME)
+    while (Cpu()-time < REC2D_WAIT_SELECTED)
       FlGui::instance()->check();
     ++i;
     time = Cpu();
 #endif
     currentNode->lookahead(depth);
-    bestGlobalQuality = currentNode->getGlobQual();
-#ifdef REC2D_DRAW // draw state at origin
-    drawStateOrigin();
-    while (Cpu()-time < REC2D_WAIT_TIME)
-      FlGui::instance()->check();
-    time = Cpu();
-#endif
-    //currentNode = currentNode->selectBestNode();
     currentNode = Rec2DNode::selectBestNode(currentNode);
   }
   
@@ -416,111 +444,130 @@ double Recombine2D::recombine(int depth)
   //_data->printState();
 }
 
-void Recombine2D::compareWithBlossom()
+void Recombine2D::recombineSameAsBlossom() // check if quality ok
 {
-  Msg::Error("..............begin..............");
-  recombineWithBlossom(_gf, .0, 1.1, elist, t2n);
-  _data->_quad = _gf->quadrangles;
-  __draw();
-  setStrategy(3);
-  int num = 2;
-  double dx = .0, dy = .0, time = Cpu();
-  for (int d = 1; d < 7; ++d) {
-    recombine(d);
-    if ( d % ((int)std::sqrt(num)+1) ) {
-      dx += 3.3;
-    }
-    else {
-      dx = .0;
-      dy -= 1.1;
-    }
-    drawState(dx, dy, true);
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
-    //while (Cpu()-time < REC2D_WAIT_TIME)
-    //  FlGui::instance()->check();
-    time = Cpu();
+  if (!Recombine2D::blossomRec()) {
+    Msg::Warning("Cannot do anything !");
   }
-  int totalBlossom = 0;
-  for (int k = 0; k < _cur->elist[0]; ++k) totalBlossom += 100-_cur->elist[1+3*k+2];
-  Msg::Info("Blossom %d", totalBlossom);
-  delete elist;
-  t2n.clear();
+  setQualCriterion(BlossomQuality);
+  Msg::Error("..............begin..............");
+  //recombineWithBlossom(_gf, .0, 1.1, elist, t2n);
+  _data->_quad = _gf->quadrangles;
+  Recombine2D::drawStateOrigin();
   
+  std::map<int, Rec2DElement*> n2rel;
+  std::map<MElement*,int>::iterator it = t2n.begin(); 
+  for (; it != t2n.end(); ++it) {
+    n2rel[it->second] = Rec2DData::getRElement(it->first);
+  }
+  
+  int blosQual = 0;
+  for (int i = 0; i < _cur->elist[0]; ++i) {
+    Rec2DElement *tri1 = n2rel[_cur->elist[3*i+1]];
+    Rec2DElement *tri2 = n2rel[_cur->elist[3*i+2]];
+    blosQual += _cur->elist[3*i+3];
+    Rec2DAction *ra = new Rec2DTwoTri2Quad(tri1, tri2);
+    int realRew = (int) ra->getRealReward();
+    if (realRew > ra->getRealReward()+.3) --realRew;
+    if (realRew < ra->getRealReward()-.3) ++realRew;
+    if ((int) ra->getRealReward()+_cur->elist[3*i+3] != 100)
+    Msg::Info("%d(%d-%g) - %d (%d, %d) => blosQual %d",
+                  (int) ra->getRealReward(),
+                  realRew,
+                  ra->getRealReward(),
+                  _cur->elist[3*i+3],
+                  _cur->elist[3*i+2],
+                  _cur->elist[3*i+1],
+                  blosQual);
+    Rec2DDataChange *dc = Rec2DData::getNewDataChange();
+    std::vector<Rec2DAction*> *v = NULL;
+    ra->apply(dc, v);
+    drawStateOrigin();
+  }
+  
+  Msg::Info("Blossom Quality %d - %d", Rec2DData::getBlosQual(), 100*_cur->elist[0]-Rec2DData::getBlosQual());
+  Msg::Info("vs Blossom Quality %d", blosQual);
+}
+
+//bool Recombine2D::developTree()
+//{
+//  Rec2DNode root(NULL, NULL);
+//  _data->printState();
+//  
+//  Msg::Info("best global value : %g", root._getBestSequenceReward());
+//  Msg::Info("num end node : %d", Rec2DData::getNumEndNode());
+//  
+//  Rec2DData::sortEndNode();
+//  Rec2DData::drawEndNode(100);
+//  //_gf->triangles.clear();
+//  return 1;
+//}
+
+void Recombine2D::clearChanges() // revert to initial state
+{
   Rec2DData::clearChanges();
-#ifdef REC2D_DRAW // draw state at origin
-    _gf->triangles = _data->_tri;
-    _gf->quadrangles = _data->_quad;
+#ifdef REC2D_DRAW
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
-    while (Cpu()-time < REC2D_WAIT_TIME)
-      FlGui::instance()->check();
-    time = Cpu();
 #endif
-}
-
-int Recombine2D::getNumTri() const
-{
-  return _data->getNumTri();
-}
-
-void Recombine2D::clearChanges()
-{
-  Rec2DData::clearChanges();
-#if 0//def REC2D_DRAW
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
-#endif
-}
-
-bool Recombine2D::developTree()
-{
-  Rec2DNode root(NULL, NULL);
-  _data->printState();
-  
-  Msg::Info("best global value : %g", root.getBestSequenceReward());
-  Msg::Info("num end node : %d", Rec2DData::getNumEndNode());
-  
-  Rec2DData::sortEndNode();
-  Rec2DData::drawEndNode(100);
-  //_gf->triangles.clear();
-  return 1;
 }
 
 void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
                                   const std::vector<Rec2DElement*> &neighbourEl,
                                   const Rec2DNode *node                         )
 {
+//I(("imhere %d, %d", Recombine2D::onlyRecombinations(), _cur->_strategy));
   static int a = -1;
   if (++a < 1) Msg::Warning("FIXME check entities");
-  Rec2DData::checkEntities();
+  DEBUG(Rec2DData::checkEntities();)
   actions.clear();
-#ifdef REC2D_ONLY_RECO
-  if (neighbourEl.size()) {
-    for (unsigned int i = 0; i < neighbourEl.size(); ++i) {
-      if (neighbourEl[i]->getNumActions() == 1)
-        actions.push_back(neighbourEl[i]->getAction(0));
-    }
-    if (actions.size()) return;
-  }
-  else if (node) {
-    node = node->getFather();
-    while (node && node->isInSequence()) {
-      std::vector<Rec2DElement*> elem;
-      node->getAction()->getNeighbElemWithActions(elem);
-      for (unsigned int i = 0; i < elem.size(); ++i) {
-        if (elem[i]->getNumActions() == 1) {
-          actions.push_back(elem[i]->getAction(0));
-        }
+  
+  if (Recombine2D::onlyRecombinations() && Recombine2D::priorityOfOneAction()) {
+    if (neighbourEl.size()) {
+      for (unsigned int i = 0; i < neighbourEl.size(); ++i) {
+        if (neighbourEl[i]->getNumActions() == 1)
+          actions.push_back(neighbourEl[i]->getAction(0));
       }
-      if (actions.size()) return;
+      if (actions.size()) {
+        Rec2DAction *ra = (*std::max_element(actions.begin(), actions.end(), lessRec2DAction()));
+        //Rec2DAction *ra = actions[rand() % actions.size()];
+        actions.clear();
+        actions.push_back(ra);
+        //I(("uio 1"));
+        return;
+      }
+    }
+    else if (node) { // try to find one in the sequence
       node = node->getFather();
+      while (node && node->isInSequence()) {
+        std::vector<Rec2DElement*> elem;
+        node->getAction()->getNeighbElemWithActions(elem);
+        for (unsigned int i = 0; i < elem.size(); ++i) {
+          if (elem[i]->getNumActions() == 1) {
+            actions.push_back(elem[i]->getAction(0));
+          }
+        }
+        if (actions.size()) {
+          Rec2DAction *ra = actions[rand() % actions.size()];
+          actions.clear();
+          actions.push_back(ra);
+        //I(("uio 2"));
+          return;
+        }
+        node = node->getFather();
+      }
+    }
+    
+    Rec2DData::getUniqueOneActions(actions);
+    if (actions.size()) {
+      Rec2DAction *ra = actions[rand() % actions.size()];
+      actions.clear();
+      actions.push_back(ra);
+        //I(("uio 3"));
+      return;
     }
   }
   
-  Rec2DData::getUniqueOneActions(actions);
-  if (actions.size()) return;
-#endif
   if (_cur->_strategy == 4) {
     Msg::Warning("FIXME remove this part");
     Rec2DAction *action;
@@ -540,6 +587,7 @@ void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
       
     default :
     case 3 : // triangle of best neighbour action
+      //I(("3"));
       for (unsigned int i = 0; i < neighbourEl.size(); ++i)
         neighbourEl[i]->getMoreUniqueActions(actions);
       if (actions.size()) {
@@ -558,49 +606,56 @@ void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
       if (rel) break;
       
     case 2 : // random neighbour triangle
+    //I(("2"));
       if (neighbourEl.size()) {
         rel = neighbourEl[rand() % (int)neighbourEl.size()];
         break;
       }
       
     case 1 : // random triangle of best action
-#ifdef REC2D_ONLY_RECO
-      if (_cur->_strategy != 1 && node) {
-        node = node->getFather();
-        while (node && node->isInSequence()) {
-          std::vector<Rec2DElement*> elem;
-          node->getAction()->getNeighbElemWithActions(elem);
-          for (unsigned int i = 0; i < elem.size(); ++i)
-            elem[i]->getMoreUniqueActions(actions);
-          if (actions.size()) {
-            (*std::max_element(actions.begin(), actions.end(), lessRec2DAction()))
-              ->getElements(elements);
-            for (unsigned int i = 0; i < elements.size(); ++i) {
-              for (unsigned int j = 0; j < elem.size(); ++j) {
-                if (elements[i] == elem[j]) {
-                  rel = elements[i];
-                  goto end2;
+    //I(("1"));
+      if (Recombine2D::onlyRecombinations()) {
+        if (_cur->_strategy != 1 && node) {
+          node = node->getFather();
+          while (node && node->isInSequence()) {
+            std::vector<Rec2DElement*> elem;
+            node->getAction()->getNeighbElemWithActions(elem);
+            for (unsigned int i = 0; i < elem.size(); ++i)
+              elem[i]->getMoreUniqueActions(actions);
+            if (actions.size()) {
+              (*std::max_element(actions.begin(), actions.end(), lessRec2DAction()))
+                ->getElements(elements);
+              for (unsigned int i = 0; i < elements.size(); ++i) {
+                for (unsigned int j = 0; j < elem.size(); ++j) {
+                  if (elements[i] == elem[j]) {
+                    rel = elements[i];
+                    goto end2;
+                  }
                 }
               }
             }
+            actions.clear();
+            node = node->getFather();
           }
-          actions.clear();
-          node = node->getFather();
         }
+end2 :
+        if (rel) break;
       }
-    end2 :
-      if (rel) break;
-#endif
       ra = Rec2DData::getBestAction();
       if (!ra) return;
       rel = ra->getRandomElement();
       break;
   }
+#ifdef REC2D_DRAW  
+  unsigned int col = CTX::instance()->packColor(90, 128, 85, 255);
+  rel->getMElement()->setCol(col);
+#endif
   rel->getActions(actions);
   unsigned int i = 0;
   while (i < actions.size()) {
     if (actions[i]->isObsolete()) {
-#if 0//def REC2D_DRAW
+      E(("SHOULD I BE HERE ??"));
+#ifdef DRAW_IF_ERROR
       static int a = -1;
       if (++a < 1) Msg::Warning("FIXME Normal to be here ?");
       actions[i]->color(190, 0, 0);
@@ -616,30 +671,130 @@ void Recombine2D::nextTreeActions(std::vector<Rec2DAction*> &actions,
     else
       ++i;
   }
+  //I(( "get %d actions", actions.size() ));
 }
 
-void Recombine2D::drawState(double shiftx, double shifty, bool color) const
+void Recombine2D::compareWithBlossom()
 {
-  //_data->drawElements(shiftx, shifty);
-  _data->drawTriangles(shiftx, shifty);
-  _data->drawChanges(shiftx, shifty, color);
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-}
-
-void Recombine2D::drawStateOrigin()
-{
-  _cur->_gf->triangles = _cur->_data->_tri;
-  _cur->_gf->quadrangles = _cur->_data->_quad;
-  //CTX::instance()->mesh.changed = ENT_ALL;
-  //drawContext::global()->draw();
-  //FlGui::instance()->check();
+  Msg::Error("..............begin..............");
+  recombineWithBlossom(_gf, .0, 1.1, elist, t2n);
+  _data->_quad = _gf->quadrangles;
+  Recombine2D::drawStateOrigin();
+  setStrategy(3);
+  int num = 2;
+  double dx = .0, dy = .0, time = Cpu();
+  for (int d = 1; d < 7; ++d) {
+    recombine(d);
+    if ( d % ((int)std::sqrt(num)+1) ) {
+      dx += 3.3;
+    }
+    else {
+      dx = .0;
+      dy -= 1.1;
+    }
+    drawState(dx, dy, true);
+    CTX::instance()->mesh.changed = ENT_ALL;
+#ifdef REC2D_DRAW
+    drawContext::global()->draw();
+    //while (Cpu()-time < REC2D_WAIT_TIME)
+    //  FlGui::instance()->check();
+#endif
+    time = Cpu();
+  }
+  int totalBlossom = 0;
+  for (int k = 0; k < _cur->elist[0]; ++k) totalBlossom += 100-_cur->elist[1+3*k+2];
+  Msg::Info("Blossom %d", totalBlossom);
+  delete elist;
+  t2n.clear();
+  
+  Rec2DData::clearChanges();
+#ifdef DRAW_WHEN_SELECTED // draw state at origin
+    __drawWait(time, REC2D_WAIT_TIME);
+#endif
 }
 
 void Recombine2D::printState() const
 {
   _data->printState();
 }
+
+void Recombine2D::drawState(double shiftx, double shifty, bool color) const
+{
+#ifdef REC2D_DRAW
+  //_data->drawElements(shiftx, shifty);
+  _data->drawTriangles(shiftx, shifty);
+  _data->drawChanges(shiftx, shifty, color);
+  CTX::instance()->mesh.changed = ENT_ALL;
+  drawContext::global()->draw();
+#endif
+}
+
+void Recombine2D::drawStateOrigin()
+{
+#ifdef REC2D_DRAW
+  //_cur->_data->_tri.clear();
+  _cur->_gf->triangles = _cur->_data->_tri;
+  _cur->_gf->quadrangles = _cur->_data->_quad;
+  CTX::instance()->mesh.changed = ENT_ALL;
+  drawContext::global()->draw();
+#endif
+}
+
+void Recombine2D::add(MQuadrangle *q)
+{
+  _cur->_gf->quadrangles.push_back(q);
+  _cur->_data->_quad.push_back(q);
+}
+
+void Recombine2D::add(MTriangle *t)
+{
+  _cur->_gf->triangles.push_back(t);
+  _cur->_data->_tri.push_back(t);
+}
+
+
+void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
+                                   const Rec2DElement *tri2,
+                                   const Rec2DElement *quad )
+{
+#ifdef REC2D_DRAW
+  if (!_cur->elist) {
+    Msg::Error("no list");
+    return;
+  }
+  int i1 = _cur->t2n[tri1->getMElement()];
+  int i2 = _cur->t2n[tri2->getMElement()];
+  int k = -1;
+  while (++k < _cur->elist[0] &&
+         _cur->elist[1+3*k] != i1 &&
+         _cur->elist[1+3*k] != i2   );
+  if (k < _cur->elist[0] && (_cur->elist[1+3*k+1] == i1 ||
+                             _cur->elist[1+3*k+1] == i2   )) {
+    unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
+    quad->getMElement()->setCol(col);
+  }
+#endif
+}
+
+void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
+                                   const Rec2DElement *tri2,
+                                   const MElement *quad     )
+{
+  if (!_cur->elist) {
+    Msg::Error("no list");
+    return;
+  }
+  int i1 = _cur->t2n[tri1->getMElement()];
+  int i2 = _cur->t2n[tri2->getMElement()];
+  int k = -1;
+  while (++k < _cur->elist[0] && _cur->elist[1+3*k] != i1 && _cur->elist[1+3*k] != i2);
+  if (k < _cur->elist[0] &&
+      (_cur->elist[1+3*k+1] == i1 || _cur->elist[1+3*k+1] == i2)) {
+    unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
+    ((MElement*)quad)->setCol(col);
+  }
+}
+
 
 double Recombine2D::_geomAngle(const MVertex *v,
                                const std::vector<GEdge*> &gEdge,
@@ -700,55 +855,6 @@ double Recombine2D::_geomAngle(const MVertex *v,
   return angle2;
 }
 
-void Recombine2D::add(MQuadrangle *q)
-{
-  _cur->_gf->quadrangles.push_back(q);
-  _cur->_data->_quad.push_back(q);
-}
-
-void Recombine2D::add(MTriangle *t)
-{
-  _cur->_gf->triangles.push_back(t);
-  _cur->_data->_tri.push_back(t);
-}
-
-
-void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
-                                   const Rec2DElement *tri2,
-                                   const Rec2DElement *quad )
-{
-  if (!_cur->elist) {
-    Msg::Error("no list");
-    return;
-  }
-  int i1 = _cur->t2n[tri1->getMElement()];
-  int i2 = _cur->t2n[tri2->getMElement()];
-  int k = -1;
-  while (++k < _cur->elist[0] && _cur->elist[1+3*k] != i1 && _cur->elist[1+3*k] != i2);
-  if (k < _cur->elist[0] && _cur->elist[1+3*k+1] == i1 || _cur->elist[1+3*k+1] == i2) {
-    unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
-    quad->getMElement()->setCol(col);
-  }
-}
-
-void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
-                                   const Rec2DElement *tri2,
-                                   const MElement *quad     )
-{
-  if (!_cur->elist) {
-    Msg::Error("no list");
-    return;
-  }
-  int i1 = _cur->t2n[tri1->getMElement()];
-  int i2 = _cur->t2n[tri2->getMElement()];
-  int k = -1;
-  while (++k < _cur->elist[0] && _cur->elist[1+3*k] != i1 && _cur->elist[1+3*k] != i2);
-  if (k < _cur->elist[0] && _cur->elist[1+3*k+1] == i1 || _cur->elist[1+3*k+1] == i2) {
-    unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
-    ((MElement*)quad)->setCol(col);
-  }
-}
-
 
 /**  Rec2DData  **/
 /*****************/
@@ -762,7 +868,7 @@ bool Rec2DData::lessAction::operator()(const Action *ra1, const Action *ra2) con
   return *ra1->action < *ra2->action;
 }
 
-Rec2DData::Rec2DData() : _remainingTri(0)
+Rec2DData::Rec2DData()
 {
   if (Rec2DData::_cur != NULL) {
     Msg::Error("[Rec2DData] An instance in execution");
@@ -770,16 +876,35 @@ Rec2DData::Rec2DData() : _remainingTri(0)
   }
   Rec2DData::_cur = this;
   _numEdge = _numVert = 0;
-  _valEdge = _valVert = .0;
-#ifdef REC2D_RECO_BLOS
-  _valQuad = 0;
-#endif
+  _1valVert = _2valVert = _2valEdge = .0;
+  _0blossomQuality = 0;
 }
 
 Rec2DData::~Rec2DData()
 {
   if (Rec2DData::_cur == this)
     Rec2DData::_cur = NULL;
+}
+
+double Rec2DData::getValVert(Rec2DQualCrit crit)
+{
+  if (crit < 0)
+    crit = Recombine2D::getQualCrit();
+  
+  switch (crit) {
+    case BlossomQuality :
+      return -1.;
+      
+    case VertQuality :
+      return static_cast<double>(_cur->_1valVert);
+    
+    case VertEdgeQuality :
+      return static_cast<double>(_cur->_2valVert);
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
+  }
+  return -1.;
 }
 
 void Rec2DData::add(const Rec2DEdge *re)
@@ -790,6 +915,9 @@ void Rec2DData::add(const Rec2DEdge *re)
   }
   ((Rec2DEdge*)re)->_pos = _cur->_edges.size();
   _cur->_edges.push_back((Rec2DEdge*)re);
+  
+  _cur->_numEdge += re->getWeight();
+  _cur->_2valEdge +=re->getWeightedQual();
 }
 
 void Rec2DData::add(const Rec2DVertex *rv)
@@ -800,6 +928,10 @@ void Rec2DData::add(const Rec2DVertex *rv)
   }
   ((Rec2DVertex*)rv)->_pos = _cur->_vertices.size();
   _cur->_vertices.push_back((Rec2DVertex*)rv);
+  
+  ++_cur->_numVert;
+  _cur->_1valVert += rv->getQual(VertQuality);
+  _cur->_2valVert += rv->getQual(VertEdgeQuality);
 }
 
 void Rec2DData::add(const Rec2DElement *rel)
@@ -808,9 +940,9 @@ void Rec2DData::add(const Rec2DElement *rel)
     Msg::Error("[Rec2DData] elem already there");
     return;
   }
-  if (rel->isTri()) ++_cur->_remainingTri;
   ((Rec2DElement*)rel)->_pos = _cur->_elements.size();
   _cur->_elements.push_back((Rec2DElement*)rel);
+  _cur->_mel2rel[rel->getMElement()] = (Rec2DElement*)rel;
   
 #ifdef REC2D_DRAW
   MTriangle *t = rel->getMTriangle();
@@ -820,17 +952,6 @@ void Rec2DData::add(const Rec2DElement *rel)
   if (q)
     _cur->_quad.push_back(q);
 #endif
-}
-
-void Rec2DData::add(const Rec2DAction *ra)
-{
-  if (ra->_dataAction) {
-    Msg::Error("[Rec2DData] action already there");
-    ra->printIdentity();
-    return;
-  }
-  _cur->_actions.push_back(new Action(ra, _cur->_actions.size()));
-  ((Rec2DAction*)ra)->_dataAction = _cur->_actions.back();
 }
 
 void Rec2DData::rmv(const Rec2DEdge *re)
@@ -843,6 +964,9 @@ void Rec2DData::rmv(const Rec2DEdge *re)
   _cur->_edges[re->_pos] = _cur->_edges.back();
   _cur->_edges.pop_back();
   ((Rec2DEdge*)re)->_pos = -1;
+  
+  _cur->_numEdge -= re->getWeight();
+  _cur->_2valEdge -=re->getWeightedQual();
 }
 
 void Rec2DData::rmv(const Rec2DVertex *rv)
@@ -855,6 +979,10 @@ void Rec2DData::rmv(const Rec2DVertex *rv)
   _cur->_vertices[rv->_pos] = _cur->_vertices.back();
   _cur->_vertices.pop_back();
   ((Rec2DVertex*)rv)->_pos = -1;
+  
+  --_cur->_numVert;
+  _cur->_1valVert -= rv->getQual(VertQuality);
+  _cur->_2valVert -= rv->getQual(VertEdgeQuality);
 }
 
 void Rec2DData::rmv(const Rec2DElement *rel)
@@ -863,11 +991,11 @@ void Rec2DData::rmv(const Rec2DElement *rel)
     Msg::Error("[Rec2DData] vert not there");
     return;
   }
-  if (rel->isTri()) --_cur->_remainingTri;
   _cur->_elements.back()->_pos = rel->_pos;
   _cur->_elements[rel->_pos] = _cur->_elements.back();
   _cur->_elements.pop_back();
   ((Rec2DElement*)rel)->_pos = -1;
+  _cur->_mel2rel.erase(rel->getMElement());
   
 #ifdef REC2D_DRAW
   MTriangle *t = rel->getMTriangle();
@@ -895,6 +1023,17 @@ void Rec2DData::rmv(const Rec2DElement *rel)
 #endif
 }
 
+void Rec2DData::add(const Rec2DAction *ra)
+{
+  if (ra->_dataAction) {
+    Msg::Error("[Rec2DData] action already there");
+    ra->printIdentity();
+    return;
+  }
+  _cur->_actions.push_back(new Action(ra, _cur->_actions.size()));
+  ((Rec2DAction*)ra)->_dataAction = _cur->_actions.back();
+}
+
 void Rec2DData::rmv(const Rec2DAction *ra)
 {
   if (!ra->_dataAction) {
@@ -914,7 +1053,36 @@ bool Rec2DData::has(const Rec2DAction *ra)
   return false;
 }
 
-#ifdef REC2D_ONLY_RECO
+Rec2DAction* Rec2DData::getBestAction()
+{
+  if (_cur->_actions.size() == 0)
+    return NULL;
+  Action *ac = *std::max_element(_cur->_actions.begin(),
+                                 _cur->_actions.end(), lessAction());
+  
+  return const_cast<Rec2DAction*>(ac->action);
+}
+
+Rec2DAction* Rec2DData::getRandomAction()
+{
+  if (_cur->_actions.size() == 0)
+    return NULL;
+  int index = rand() % (int)_cur->_actions.size();
+  return (Rec2DAction*)_cur->_actions[index]->action;
+}
+
+void Rec2DData::checkObsolete()
+{
+  std::vector<Rec2DAction*> obsoletes;
+  for (unsigned int i = 0; i < _cur->_actions.size(); ++i) {
+    if (_cur->_actions[i]->action->isObsolete())
+      obsoletes.push_back((Rec2DAction*)_cur->_actions[i]->action);
+  }
+  
+  for (unsigned int i = 0; i < obsoletes.size(); ++i)
+    delete obsoletes[i];
+}
+
 void Rec2DData::addHasZeroAction(const Rec2DElement *rel)
 {
   std::pair<std::set<Rec2DElement*>::iterator, bool> rep;
@@ -1006,190 +1174,13 @@ void Rec2DData::getUniqueOneActions(std::vector<Rec2DAction*> &vec)
   }
 }
 
-#endif
-void Rec2DData::printState() const
-{
-  Msg::Info(" ");
-  Msg::Info("State");
-  Msg::Info("-----");
-  Msg::Info("numEdge %d (%d), valEdge %g => %g", _numEdge, _edges.size(), (double)_valEdge, (double)_valEdge/(double)_numEdge);
-  Msg::Info("numVert %d (%d), valVert %g => %g", _numVert, _vertices.size(), (double)_valVert, (double)_valVert/(double)_numVert);
-  Msg::Info("Element (%d)", _elements.size());
-  Msg::Info("global Value %g", Rec2DData::getGlobalQuality());
-  Msg::Info("num action %d", _actions.size());
-  std::map<int, std::vector<Rec2DVertex*> >::const_iterator it = _parities.begin();
-  for (; it != _parities.end(); ++it) {
-    Msg::Info("par %d, #%d", it->first, it->second.size());
-  }
-  Msg::Info(" ");
-  iter_re ite;
-  long double valEdge = .0;
-  int numEdge = 0;
-  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
-    valEdge += (long double)(*ite)->getWeightedQual();
-    numEdge += (*ite)->getWeight();
-  }
-  Msg::Info("valEdge : %g >< %g, numEdge %d >< %d (real><data)",
-            (double)valEdge, (double)_valEdge,
-            numEdge, _numEdge);
-  iter_rv itv;
-  long double valVert = .0;
-  int numVert = 0;
-  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
-    valVert += (long double)(*itv)->getQual();
-    if ((*itv)->getParity() == -1 || (*itv)->getParity() == 1)
-      Msg::Error("parity %d, I'm very angry", (*itv)->getParity());
-    ++numVert;
-  }
-  Msg::Info("valVert : %g >< %g, numVert %d >< %d (real><data)",
-            (double)valVert, (double)_valVert,
-            numVert, _numVert);
-}
-
-void Rec2DData::checkQuality() const
-{
-  iter_re ite;
-  long double valEdge = .0;
-  int numEdge = 0;
-  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
-    valEdge += (long double)(*ite)->getWeightedQual();
-    numEdge += (*ite)->getWeight();
-  }
-  iter_rv itv;
-  long double valVert = .0;
-  int numVert = 0;
-  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
-    valVert += (long double)(*itv)->getQual();
-    numVert += 2;
-  }
-  if (fabs(valVert - _valVert) > 1e-14 || fabs(valEdge - _valEdge) > 1e-14) {
-    Msg::Error("Vert : %g >< %g (%g), %d >< %d", (double)valVert, (double)_valVert, (double)(valVert-_valVert), numVert, _numVert);
-    Msg::Error("Edge : %g >< %g (%g), %d >< %d", (double)valEdge, (double)_valEdge, (double)(valEdge-_valEdge), numEdge, _numEdge);
-  }
-}
-
-bool Rec2DData::checkEntities()
-{
-  iter_rv itv;
-  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
-    if (!(*itv)->checkCoherence()) {
-      Msg::Error("Incoherence vertex");
-      //__crash();
-      return false;
-    }
-  }
-  iter_re ite;
-  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
-    if (!(*ite)->checkCoherence()) {
-      Msg::Error("Incoherence edge");
-      //__crash();
-      return false;
-    }
-  }
-  iter_rel itel;
-  for (itel = firstElement(); itel != lastElement(); ++itel) {
-    if (!(*itel)->checkCoherence()) {
-      Msg::Error("Incoherence element");
-      //__crash();
-      return false;
-    }
-  }
-#ifdef REC2D_ONLY_RECO
-  std::set<Rec2DElement*>::iterator it = _cur->_elementWithOneAction.begin();
-  while (it != _cur->_elementWithOneAction.end()) {
-    if ((*it)->getNumActions() != 1) {
-      Msg::Error("Incoherence element with one action");
-      //__crash();
-      return false;
-    }
-    ++it;
-  }
-  it = _cur->_elementWithZeroAction.begin();
-  while (it != _cur->_elementWithZeroAction.end()) {
-    if ((*it)->getNumActions() != 0) {
-      Msg::Error("Incoherence element with zero action");
-      //__crash();
-      return false;
-    }
-    ++it;
-  }
-#endif
-  for (unsigned int i = 0; i < _cur->_actions.size(); ++i) {
-    if (_cur->_actions[i]->position != (int)i ||
-        _cur->_actions[i]->action->getDataAction() != _cur->_actions[i]) {
-      Msg::Error("Wrong link Action <-> Rec2DAction");
-      //__crash();
-      //return false;
-    }
-    if (!_cur->_actions[i]->action->checkCoherence()) {
-      _cur->printState();
-      double time = Cpu();
-      while (Cpu()-time < REC2D_WAIT_TM_2)
-        FlGui::instance()->check();
-      Msg::Error("Incoherence action");
-      //__crash();
-      //return false;
-    }
-  }
-  return true;
-}
-
-void Rec2DData::printActions() const
-{
-  
-  std::map<int, std::vector<double> > data;
-  for (unsigned int i = 0; i < _actions.size(); ++i) {
-    std::vector<Rec2DElement*> tri;
-    _actions[i]->action->getElements(tri);
-    Msg::Info("action %d (%d, %d) -> reward %g",
-              _actions[i]->action,
-              tri[0]->getNum(),
-              tri[1]->getNum(),
-              ((Rec2DAction*)_actions[i]->action)->getReward());
-      //Msg::Info("action %d -> reward %g", *it, _actions[i]->getReward());
-    data[tri[0]->getNum()].resize(1);
-    data[tri[1]->getNum()].resize(1);
-    //data[tri[0]->getNum()][0] = (*it)->getReward();
-    //data[tri[1]->getNum()][0] = (*it)->getReward();
-    //(*it)->print();
-  }
-  new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
-  Msg::Info(" ");
-}
-
 int Rec2DData::getNewParity()
 {
   if (_cur->_parities.empty())
     return 2;
   std::map<int, std::vector<Rec2DVertex*> >::iterator it;
   it = _cur->_parities.end();
-  --it;
-  return (it->first/2)*2 + 2;
-}
-
-Rec2DDataChange* Rec2DData::getNewDataChange()
-{
-  _cur->_changes.push_back(new Rec2DDataChange());
-  return _cur->_changes.back();
-}
-
-bool Rec2DData::revertDataChange(Rec2DDataChange *rdc)
-{
-  if (_cur->_changes.back() != rdc)
-    return false;
-  _cur->_changes.pop_back();
-  rdc->revert();
-  delete rdc;
-  return true;
-}
-
-void Rec2DData::clearChanges()
-{
-  for (int i = (int) _cur->_changes.size() - 1; i > -1; --i) {
-    _cur->_changes[i]->revert();
-    delete _cur->_changes[i];
-  }
-  _cur->_changes.clear();
+  return ((--it)->first/2)*2 + 2;
 }
 
 void Rec2DData::removeParity(const Rec2DVertex *rv, int p)
@@ -1275,64 +1266,241 @@ void Rec2DData::associateParity(int pOld, int pNew, Rec2DDataChange *rdc)
   }
 }
 
-double Rec2DData::getGlobalQuality()
+Rec2DDataChange* Rec2DData::getNewDataChange()
 {
-#ifdef REC2D_RECO_BLOS
-  return (double)_cur->_valQuad;
-#else
-#ifdef REC2D_VERT_ONLY
-  return (double)_cur->_valVert / (double)_cur->_numVert;
-#else
-  double a = (double)_cur->_valVert / (double)_cur->_numVert;
-  return a * (double)_cur->_valEdge / (double)_cur->_numEdge;
-#endif
-#endif
+  _cur->_changes.push_back(new Rec2DDataChange());
+  return _cur->_changes.back();
+}
+
+bool Rec2DData::revertDataChange(Rec2DDataChange *rdc)
+{
+  if (_cur->_changes.back() != rdc)
+    return false;
+  _cur->_changes.pop_back();
+  rdc->revert();
+  delete rdc;
+  return true;
+}
+
+void Rec2DData::clearChanges()
+{
+  for (int i = (int) _cur->_changes.size() - 1; i > -1; --i) {
+    _cur->_changes[i]->revert();
+    delete _cur->_changes[i];
+  }
+  _cur->_changes.clear();
+}
+
+double Rec2DData::getGlobalQuality(Rec2DQualCrit crit)
+{
+  if (crit < 0)
+    crit = Recombine2D::getQualCrit();
+  
+  switch(crit) {
+    case BlossomQuality :
+      return _cur->_0blossomQuality;
+      
+    case VertQuality :
+      return static_cast<double>(_cur->_1valVert) / _cur->_numVert;
+    
+    case VertEdgeQuality :
+      return static_cast<double>(_cur->_2valVert) / _cur->_numVert
+             *static_cast<double>(_cur->_2valEdge) / _cur->_numEdge;
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
+  }
+  return -1.;
 }
 
 double Rec2DData::getGlobalQuality(int numVert, double valVert,
-                                   int numEdge, double valEdge )
+                                   int numEdge, double valEdge,
+                                   Rec2DQualCrit crit          )
 {
-#ifdef REC2D_RECO_BLOS
-  Msg::Info("Is it ok ?");
-  return (double)_cur->_valQuad;
-#else
-#ifdef REC2D_VERT_ONLY
-  return ((double)_cur->_valVert + valVert) / ((double)_cur->_numVert + numVert);
-#else
-  double a = ((double)_cur->_valVert + valVert) / (double)(_cur->_numVert + numVert);
-  return a * ((double)_cur->_valEdge + valEdge) / (double)(_cur->_numEdge + numEdge);
-#endif
-#endif
-}
-
-Rec2DAction* Rec2DData::getBestAction()
-{
-  if (_cur->_actions.size() == 0)
-    return NULL;
-  Action *ac = *std::max_element(_cur->_actions.begin(),
-                                 _cur->_actions.end(), lessAction());
+  if (crit < 0)
+    crit = Recombine2D::getQualCrit();
   
-  return (Rec2DAction*)ac->action;
-}
-
-Rec2DAction* Rec2DData::getRandomAction()
-{
-  if (_cur->_actions.size() == 0)
-    return NULL;
-  int index = rand() % (int)_cur->_actions.size();
-  return (Rec2DAction*)_cur->_actions[index]->action;
-}
-
-void Rec2DData::checkObsolete()
-{
-  std::vector<Rec2DAction*> obsoletes;
-  for (unsigned int i = 0; i < _cur->_actions.size(); ++i) {
-    if (_cur->_actions[i]->action->isObsolete())
-      obsoletes.push_back((Rec2DAction*)_cur->_actions[i]->action);
+  switch (crit) {
+    case BlossomQuality :
+      return _cur->_0blossomQuality;
+      
+    case VertQuality :
+      return (static_cast<double>(_cur->_1valVert) + valVert) / (_cur->_numVert + numVert);
+    
+    case VertEdgeQuality :
+      return (static_cast<double>(_cur->_2valVert) + valVert) / (_cur->_numVert + numVert)
+             *(static_cast<double>(_cur->_2valEdge) + valEdge) / (_cur->_numEdge + numEdge);
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
   }
-  
-  for (unsigned int i = 0; i < obsoletes.size(); ++i)
-    delete obsoletes[i];
+  return -1.;
+}
+
+void Rec2DData::updateVertQual(double val, Rec2DQualCrit crit)
+{
+  switch (crit) {
+    case VertQuality :
+      _cur->_1valVert += val;
+    
+    case VertEdgeQuality :
+      _cur->_2valVert += val;
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
+  }
+}
+
+bool Rec2DData::checkEntities()
+{
+  iter_rv itv;
+  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
+    if (!(*itv)->checkCoherence()) {
+      Msg::Error("Incoherence vertex");
+      //__crash();
+      return false;
+    }
+  }
+  iter_re ite;
+  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
+    if (!(*ite)->checkCoherence()) {
+      Msg::Error("Incoherence edge");
+      //__crash();
+      return false;
+    }
+  }
+  iter_rel itel;
+  for (itel = firstElement(); itel != lastElement(); ++itel) {
+    if (!(*itel)->checkCoherence()) {
+      Msg::Error("Incoherence element");
+      //__crash();
+      return false;
+    }
+  }
+
+  if (Recombine2D::onlyRecombinations()) {
+    std::set<Rec2DElement*>::iterator it = _cur->_elementWithOneAction.begin();
+    while (it != _cur->_elementWithOneAction.end()) {
+      if ((*it)->getNumActions() != 1) {
+        Msg::Error("Incoherence element with one action");
+        //__crash();
+        return false;
+      }
+      ++it;
+    }
+    it = _cur->_elementWithZeroAction.begin();
+    while (it != _cur->_elementWithZeroAction.end()) {
+      if ((*it)->getNumActions() != 0) {
+        Msg::Error("Incoherence element with zero action");
+        //__crash();
+        return false;
+      }
+      ++it;
+    }
+  }
+  for (unsigned int i = 0; i < _cur->_actions.size(); ++i) {
+    if (_cur->_actions[i]->position != i ||
+        _cur->_actions[i]->action->getDataAction() != _cur->_actions[i]) {
+      Msg::Error("Wrong link Action <-> Rec2DAction");
+      //__crash();
+      //return false;
+    }
+    if (!_cur->_actions[i]->action->checkCoherence()) {
+      _cur->printState();
+#ifdef REC2D_DRAW
+      double time = Cpu();
+      while (Cpu()-time < REC2D_WAIT_TM_2)
+        FlGui::instance()->check();
+#endif
+      Msg::Error("Incoherence action");
+      //__crash();
+      //return false;
+    }
+  }
+  return true;
+}
+
+void Rec2DData::checkQuality() const
+{
+  iter_re ite;
+  long double valEdge = .0;
+  int numEdge = 0;
+  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
+    valEdge += (long double)(*ite)->getWeightedQual();
+    numEdge += (*ite)->getWeight();
+  }
+  iter_rv itv;
+  long double valVert = .0;
+  int numVert = 0;
+  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
+    valVert += (long double)(*itv)->getQual();
+    numVert += 2;
+  }
+  if (fabs(valVert - _2valVert) > 1e-14 || fabs(valEdge - _2valEdge) > 1e-14) {
+    Msg::Error("Vert : %g >< %g (%g), %d >< %d", (double)valVert, (double)_2valVert, (double)(valVert-_2valVert), numVert, _numVert);
+    Msg::Error("Edge : %g >< %g (%g), %d >< %d", (double)valEdge, (double)_2valEdge, (double)(valEdge-_2valEdge), numEdge, _numEdge);
+  }
+}
+
+void Rec2DData::printState() const
+{
+  Msg::Info(" ");
+  Msg::Info("State");
+  Msg::Info("-----");
+  Msg::Info("numEdge %d (%d), valEdge %g => %g", _numEdge, _edges.size(), (double)_2valEdge, (double)_2valEdge/(double)_numEdge);
+  Msg::Info("numVert %d (%d), valVert %g => %g", _numVert, _vertices.size(), (double)_2valVert, (double)_2valVert/(double)_numVert);
+  Msg::Info("Element (%d)", _elements.size());
+  Msg::Info("global Value %g", Rec2DData::getGlobalQuality());
+  Msg::Info("num action %d", _actions.size());
+  std::map<int, std::vector<Rec2DVertex*> >::const_iterator it = _parities.begin();
+  for (; it != _parities.end(); ++it) {
+    Msg::Info("par %d, #%d", it->first, it->second.size());
+  }
+  Msg::Info(" ");
+  iter_re ite;
+  long double valEdge = .0;
+  int numEdge = 0;
+  for (ite = firstEdge(); ite != lastEdge(); ++ite) {
+    valEdge += (long double)(*ite)->getWeightedQual();
+    numEdge += (*ite)->getWeight();
+  }
+  Msg::Info("valEdge : %g >< %g, numEdge %d >< %d (real><data)",
+            (double)valEdge, (double)_2valEdge,
+            numEdge, _numEdge);
+  iter_rv itv;
+  long double valVert = .0;
+  int numVert = 0;
+  for (itv = firstVertex(); itv != lastVertex(); ++itv) {
+    valVert += (long double)(*itv)->getQual();
+    if ((*itv)->getParity() == -1 || (*itv)->getParity() == 1)
+      Msg::Error("parity %d, I'm very angry", (*itv)->getParity());
+    ++numVert;
+  }
+  Msg::Info("valVert : %g >< %g, numVert %d >< %d (real><data)",
+            (double)valVert, (double)_2valVert,
+            numVert, _numVert);
+}
+
+void Rec2DData::printActions() const
+{
+  std::map<int, std::vector<double> > data;
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
+    std::vector<Rec2DElement*> tri;
+    _actions[i]->action->getElements(tri);
+    Msg::Info("action %d (%d, %d) -> reward %g",
+              _actions[i]->action,
+              tri[0]->getNum(),
+              tri[1]->getNum(),
+              ((Rec2DAction*)_actions[i]->action)->getReward());
+      //Msg::Info("action %d -> reward %g", *it, _actions[i]->getReward());
+    data[tri[0]->getNum()].resize(1);
+    data[tri[1]->getNum()].resize(1);
+    //data[tri[0]->getNum()][0] = (*it)->getReward();
+    //data[tri[1]->getNum()][0] = (*it)->getReward();
+    //(*it)->print();
+  }
+  new PView("Jmin_bad", "ElementData", Recombine2D::getGFace()->model(), data);
+  Msg::Info(" ");
 }
 
 void Rec2DData::drawTriangles(double shiftx, double shifty) const
@@ -1386,6 +1554,13 @@ void Rec2DData::addEndNode(const Rec2DNode *rn)
   _cur->_endNodes.push_back((Rec2DNode*)rn);
 }
 
+void Rec2DData::sortEndNode()
+{
+  std::sort(_cur->_endNodes.begin(),
+            _cur->_endNodes.end(),
+            gterRec2DNode());
+}
+
 void Rec2DData::drawEndNode(int num)
 {
   double dx = .0, dy = .0;
@@ -1413,23 +1588,22 @@ void Rec2DData::drawEndNode(int num)
   }
 }
 
-void Rec2DData::sortEndNode()
+Rec2DElement* Rec2DData::getRElement(MElement *mel)
 {
-  std::sort(_cur->_endNodes.begin(),
-            _cur->_endNodes.end(),
-            gterRec2DNode()             );
+  std::map<MElement*, Rec2DElement*>::iterator it;
+  it = _cur->_mel2rel.find(mel);
+  if (it == _cur->_mel2rel.end()) return NULL;
+  return it->second;
 }
 
 /**  Rec2DChange  **/
 /*******************/
-#ifdef REC2D_RECO_BLOS
-Rec2DChange::Rec2DChange(int d) : _info(NULL)
+Rec2DChange::Rec2DChange(int a) : _info(NULL)
 {
-  _entity = new int(d);
+  _entity = new int(a);
   _type = ValQuad;
-  Rec2DData::addQuadQual(d);
+  Rec2DData::addBlosQual(a);
 }
-#endif
 
 Rec2DChange::Rec2DChange(Rec2DEdge *re, bool toHide) : _entity(re), _info(NULL)
 {
@@ -1664,11 +1838,9 @@ Rec2DChange::Rec2DChange(Rec2DEdge *re0, Rec2DEdge *re1,
 void Rec2DChange::revert()
 {
   switch (_type) {
-#ifdef REC2D_RECO_BLOS
     case ValQuad :
-      Rec2DData::addQuadQual(-*(int*)_entity);
+      Rec2DData::addBlosQual(-*(int*)_entity);
       break;
-#endif
       
     case HideEdge :
       ((Rec2DEdge*)_entity)->reveal();
@@ -1834,18 +2006,6 @@ void Rec2DChange::revert()
 
 /**  Rec2DDataChange  **/
 /***********************/
-void Rec2DDataChange::checkObsoleteActions(Rec2DVertex *const*verts, int size)
-{
-  std::vector<Rec2DAction*> actions;
-  for (int i = 0; i < size; ++i) {
-    verts[i]->getMoreUniqueActions(actions);
-  }
-  for (unsigned int i = 0; i < actions.size(); ++i) {
-    if (actions[i]->isObsolete())
-      hide(actions[i]);
-  }
-}
-
 Rec2DDataChange::~Rec2DDataChange()
 {
   for (unsigned int i = 0; i < _changes.size(); ++i)
@@ -1881,6 +2041,18 @@ void Rec2DDataChange::swapFor(Rec2DVertex *rv0, Rec2DVertex *rv1)
   _changes.push_back(new Rec2DChange(rv0, rv1, elem, SwapMVertInElement));
 }
 
+void Rec2DDataChange::checkObsoleteActions(Rec2DVertex *const*verts, int size)
+{
+  std::vector<Rec2DAction*> actions;
+  for (int i = 0; i < size; ++i) {
+    verts[i]->getMoreUniqueActions(actions);
+  }
+  for (unsigned int i = 0; i < actions.size(); ++i) {
+    if (actions[i]->isObsolete())
+      hide(actions[i]);
+  }
+}
+
 void Rec2DDataChange::revert()
 {
   for (int i = (int)_changes.size() - 1; i > -1; --i)
@@ -1905,9 +2077,27 @@ Rec2DAction::Rec2DAction()
 {
 }
 
+double Rec2DAction::getReward() const
+{
+  if (_lastUpdate < Recombine2D::getNumChange())
+    ((Rec2DAction*)this)->_computeGlobQual();
+  
+  return _globQualIfExecuted/* - Rec2DData::getGlobalQuality()*/;
+}
+
+double Rec2DAction::getRealReward() const
+{
+  if (_lastUpdate < Recombine2D::getNumChange())
+    ((Rec2DAction*)this)->_computeReward();
+  
+  return _reward;
+}
+
+
 bool Rec2DAction::operator<(const Rec2DAction &other) const
 {
-  return getReward() < other.getReward();
+  //return getReward() < other.getReward();
+  return getRealReward() < other.getRealReward();
 }
 
 void Rec2DAction::removeDuplicate(std::vector<Rec2DAction*> &actions)
@@ -1926,30 +2116,13 @@ void Rec2DAction::removeDuplicate(std::vector<Rec2DAction*> &actions)
   }
 }
 
-double Rec2DAction::getReward() const
-{
-  if (_lastUpdate < Recombine2D::getNumChange())
-    ((Rec2DAction*)this)->_computeGlobQual();
-  
-  return _globQualIfExecuted/* - Rec2DData::getGlobalQuality()*/;
-}
-
-double Rec2DAction::getRealReward() const
-{
-  if (_lastUpdate < Recombine2D::getNumChange())
-    ((Rec2DAction*)this)->_computeReward();
-  
-  return _reward;
-}
-
-
 /**  Rec2DTwoTri2Quad  **/
 /************************/
-/*(2)---0---(0)
- * | {0}   / |
- * 1    4    3
- * | /   {1} |
- *(1)---2---(3)
+/* (2)---0---(0)
+ *  | {0}   / |
+ *  1    4    3
+ *  | /   {1} |
+ * (1)---2---(3)
  */
 Rec2DTwoTri2Quad::Rec2DTwoTri2Quad(Rec2DElement *el0, Rec2DElement *el1)
 {
@@ -1957,6 +2130,7 @@ Rec2DTwoTri2Quad::Rec2DTwoTri2Quad(Rec2DElement *el0, Rec2DElement *el1)
   _triangles[1] = el1;
   _edges[4] = Rec2DElement::getCommonEdge(el0, el1);
   
+  // get edges
   std::vector<Rec2DEdge*> edges;
   el0->getMoreEdges(edges);
   el1->getMoreEdges(edges);
@@ -1979,27 +2153,26 @@ Rec2DTwoTri2Quad::Rec2DTwoTri2Quad(Rec2DElement *el0, Rec2DElement *el1)
     _edges[3] = re;
   }
   
+  // get vertices
   _vertices[0] = _edges[4]->getVertex(0);
   _vertices[1] = _edges[4]->getVertex(1);
   _vertices[2] = _triangles[0]->getOtherVertex(_vertices[0], _vertices[1]);
   _vertices[3] = _triangles[1]->getOtherVertex(_vertices[0], _vertices[1]);
+  // reorder if needed
   if (_vertices[0] == _edges[1]->getOtherVertex(_vertices[2])) {
     Rec2DVertex *rv = _vertices[0];
     _vertices[0] = _vertices[1];
     _vertices[1] = rv;
   }
   
-  _triangles[0]->add(this);
-  _triangles[1]->add(this);
-  Rec2DData::add(this);
-#ifdef REC2D_RECO_BLOS
+  //
+  reveal();
   _rt = new RecombineTriangle(MEdge(_vertices[0]->getMVertex(),
                                     _vertices[1]->getMVertex() ),
                               _triangles[0]->getMElement(),
                               _triangles[1]->getMElement()       );
-#endif
   
-  if (!edgesInOrder(_edges, 4)) Msg::Error("recomb |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum());
+  if (!edgesAreInOrder(_edges, 4)) Msg::Error("recomb |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum());
 }
 
 void Rec2DTwoTri2Quad::operator delete(void *p)
@@ -2039,6 +2212,188 @@ void Rec2DTwoTri2Quad::reveal()
   if (_triangles[1])
     _triangles[1]->add(this);
   Rec2DData::add(this);
+}
+
+bool Rec2DTwoTri2Quad::isObsolete() const
+{
+  int p[4];
+  p[0] = _vertices[0]->getParity();
+  p[1] = _vertices[1]->getParity();
+  p[2] = _vertices[2]->getParity();
+  p[3] = _vertices[3]->getParity();
+  static int a = -1;
+  if (++a < 1) Msg::Warning("p[0]/2 == p[1]/2 && p[0] != p[1]  || ...  ???");
+  return (p[0]/2 == p[1]/2 && p[0] != p[1]) ||
+         (p[2]/2 == p[3]/2 && p[2] != p[3]) ||
+         (p[0] && (p[0] == p[2] || p[0] == p[3])) ||
+         (p[1] && (p[1] == p[2] || p[1] == p[3]))   ;
+}
+
+void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
+{
+  static int a = -1;
+  if (++a < 1) Msg::Error("FIXME Need new definition Rec2DTwoTri2Quad::apply(newPar)");
+  /*if (isObsolete()) {
+    Msg::Error("[Rec2DTwoTri2Quad] No way ! I won't apply ! Find someone else...");
+    return;
+  }
+  
+  int min = Rec2DData::getNewParity(), index = -1;
+  for (int i = 0; i < 4; ++i) {
+    if (_vertices[i]->getParity() && min > _vertices[i]->getParity()) {
+      min = _vertices[i]->getParity();
+      index = i;
+    }
+  }
+  if (index == -1) {
+    _vertices[0]->setParity(min);
+    _vertices[1]->setParity(min);
+    _vertices[2]->setParity(min+1);
+    _vertices[3]->setParity(min+1);
+  }
+  else {
+    for (int i = 0; i < 4; i += 2) {
+      int par;
+      if ((index/2) * 2 == i)
+        par = min;
+      else
+        par = otherParity(min);
+      for (int j = 0; j < 2; ++j) {
+        if (!_vertices[i+j]->getParity())
+          _vertices[i+j]->setParity(par);
+        else if (_vertices[i+j]->getParity() != par &&
+                 _vertices[i+j]->getParity() != otherParity(par))
+          Rec2DData::associateParity(_vertices[i+j]->getParity(), par);
+      }
+    }
+  }
+  
+  _triangles[0]->rmv(this);
+  _triangles[1]->rmv(this);
+  // hide() instead
+  
+  std::vector<Rec2DAction*> actions;
+  _triangles[0]->getMoreUniqueActions(actions);
+  _triangles[1]->getMoreUniqueActions(actions);
+  for (unsigned int i = 0; i < actions.size(); ++i)
+    delete actions[i];
+  
+  delete _triangles[0];
+  delete _triangles[1];
+  _triangles[0] = NULL;
+  _triangles[1] = NULL;
+  delete _edges[4];
+  
+  new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges);
+  
+  Recombine2D::incNumChange();*/
+}
+
+void Rec2DTwoTri2Quad::apply(Rec2DDataChange *rdc,
+                             std::vector<Rec2DAction*> *&createdActions,
+                             bool color) const
+{
+  //I(( "applying Recombine |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum() ));
+  if (isObsolete()) {
+    printIdentity();
+    int p[4];
+    p[0] = _vertices[0]->getParity();
+    p[1] = _vertices[1]->getParity();
+    p[2] = _vertices[2]->getParity();
+    p[3] = _vertices[3]->getParity();
+    Msg::Info("%d %d %d %d", p[0], p[1], p[2], p[3]);
+    Msg::Error("[Rec2DTwoTri2Quad] I was obsolete !");
+    if (Rec2DData::checkEntities()) {
+      Msg::Error("check entities is ok. Should not have been aware of me");
+    }
+    __crash();
+  }
+#ifdef REC2D_DRAW
+  rdc->setAction(this);
+#endif
+  std::vector<Rec2DAction*> actions;
+  _triangles[0]->getMoreUniqueActions(actions);
+  _triangles[1]->getMoreUniqueActions(actions);
+  rdc->hide(actions);
+  _doWhatYouHaveToDoWithParity(rdc);
+  rdc->hide(_triangles[0]);
+  rdc->hide(_triangles[1]);
+  rdc->hide(_edges[4]);
+  Rec2DElement *rel = new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges);
+  rdc->append(rel);
+  //rdc->append(new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges));
+  rdc->add((int)_rt->total_gain);
+  if (color) Recombine2D::colorFromBlossom(_triangles[0], _triangles[1], rel);
+  static int a = -1;
+  if (++a < 1) Msg::Warning("FIXME reward is int for blossom");
+}
+
+void Rec2DTwoTri2Quad::swap(Rec2DVertex *rv0, Rec2DVertex *rv1)
+{
+  for (int i = 0; i < 4; ++i) {
+    if (_vertices[i] == rv0) {
+      _vertices[i] = rv1;
+      return;
+    }
+  }
+  Msg::Error("[Rec2DTwoTri2Quad] Can't swap your vertex (%d -> %d)", rv0->getNum(), rv1->getNum());
+  Msg::Warning("[Rec2DTwoTri2Quad] I have %d %d %d %d", _vertices[0]->getNum(), _vertices[1]->getNum(), _vertices[2]->getNum(), _vertices[3]->getNum());
+}
+
+void Rec2DTwoTri2Quad::swap(Rec2DEdge *re0, Rec2DEdge *re1)
+{
+  for (int i = 0; i < 4; ++i) {
+    if (_edges[i] == re0) {
+      _edges[i] = re1;
+      return;
+    }
+  }
+  Msg::Error("[Rec2DTwoTri2Quad] Can't swap your edge (is middle : %d)", re0 == _edges[4]);
+}
+
+bool Rec2DTwoTri2Quad::has(const Rec2DElement *rel) const
+{
+  return rel == _triangles[0] || rel == _triangles[1];
+}
+
+Rec2DElement* Rec2DTwoTri2Quad::getRandomElement() const
+{
+  return _triangles[rand() % 2];
+}
+
+void Rec2DTwoTri2Quad::getElements(std::vector<Rec2DElement*> &elem) const
+{
+  elem.clear();
+  elem.push_back(_triangles[0]);
+  elem.push_back(_triangles[1]);
+}
+
+void Rec2DTwoTri2Quad::getNeighbourElements(std::vector<Rec2DElement*> &elem) const
+{
+  elem.clear();
+  _triangles[0]->getMoreNeighbours(elem);
+  _triangles[1]->getMoreNeighbours(elem);
+  unsigned int i = 0;
+  while (i < elem.size()) {
+    if (elem[i] == _triangles[0] || elem[i] == _triangles[1]) {
+      elem[i] = elem.back();
+      elem.pop_back();
+    }
+    else ++i;
+  }
+}
+
+void Rec2DTwoTri2Quad::getNeighbElemWithActions(std::vector<Rec2DElement*> &elem) const
+{
+  getNeighbourElements(elem);
+  unsigned int i = 0;
+  while (i < elem.size()) {
+    if (!elem[i]->getNumActions()) {
+      elem[i] = elem.back();
+      elem.pop_back();
+    }
+    else ++i;
+  }
 }
 
 bool Rec2DTwoTri2Quad::checkCoherence(const Rec2DAction *action) const
@@ -2138,9 +2493,38 @@ bool Rec2DTwoTri2Quad::checkCoherence(const Rec2DAction *action) const
   return true;
 }
 
-void Rec2DTwoTri2Quad::printIdentity() const
+void Rec2DTwoTri2Quad::printReward() const
 {
-  Msg::Info("Recombine |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum());
+  if (Recombine2D::blossomQual()) {
+    Msg::Error("[Rec2DTwoTri2Quad] Don't know");
+    //?return (double)_cur->_blossomQuality;
+    return;
+  }
+  if (Recombine2D::verticesQual()) {
+    Msg::Info("reward rec : %g  %g  %g  %g",
+              _vertices[0]->getGainRecomb(_triangles[0], _triangles[1], _edges[4], _edges[0], _edges[3]),
+              _vertices[1]->getGainRecomb(_triangles[0], _triangles[1], _edges[4], _edges[1], _edges[2]),
+              _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]),
+              _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]));
+    return;
+  }
+  if (Recombine2D::vertAndEdgesQual()) {
+    double valEdge1 = _edges[4]->getQual();
+    double valEdge2 = 0;
+    for (int i = 0; i < 4; ++i)
+      valEdge2 += _edges[i]->getQual();
+    
+    double valVert;
+    valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
+    valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
+    Msg::Info("-%de%g +%de%g +0v%g -> %g", Recombine2D::getWeightEdgeBase(), valEdge1, 4 * Recombine2D::getWeightEdgeQuad(),
+              valEdge2/4, valVert/2,
+              Rec2DData::getGlobalQuality(0, valVert,
+                            4*Recombine2D::getWeightEdgeQuad() - Recombine2D::getWeightEdgeBase(),
+                            -Recombine2D::getWeightEdgeBase()*valEdge1+Recombine2D::getWeightEdgeQuad()*valEdge2));
+    return;
+  }
+  Msg::Error("[Rec2DTwoTri2Quad] Unknown quality criterion");
 }
 
 void Rec2DTwoTri2Quad::printVertices() const
@@ -2151,119 +2535,36 @@ void Rec2DTwoTri2Quad::printVertices() const
   }
 }
 
-bool Rec2DTwoTri2Quad::has(const Rec2DElement *rel) const
+void Rec2DTwoTri2Quad::printIdentity() const
 {
-  return rel == _triangles[0] || rel == _triangles[1];
+  Msg::Info("Recombine |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum());
 }
 
-//void Rec2DTwoTri2Quad::print()
-//{
-//  Msg::Info("Printing Action %d |%d|%d|...", this, _triangles[0]->getNum(), _triangles[1]->getNum());
-//  Msg::Info("edge0 %g (%g, %g)", _edges[0]->getQual(), _edges[0]->getQualL(), _edges[0]->getQualO());
-//  Msg::Info("edge1 %g (%g, %g)", _edges[1]->getQual(), _edges[1]->getQualL(), _edges[1]->getQualO());
-//  Msg::Info("edge2 %g (%g, %g)", _edges[2]->getQual(), _edges[2]->getQualL(), _edges[2]->getQualO());
-//  Msg::Info("edge3 %g (%g, %g)", _edges[3]->getQual(), _edges[3]->getQualL(), _edges[3]->getQualO());
-//  Msg::Info("edge4 %g (%g, %g)", _edges[4]->getQual(), _edges[4]->getQualL(), _edges[4]->getQualO());
-//  Msg::Info("angles %g - %g", _vertices[0]->getAngle(), _vertices[1]->getAngle());
-//  Msg::Info("merge0 %g", _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]));
-//  Msg::Info("merge1 %g", _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]));
-//  //_vertices[0]->printGainMerge(_triangles[0], _triangles[1]);
-//  //_vertices[1]->printGainMerge(_triangles[0], _triangles[1]);
-//}
-
-void Rec2DTwoTri2Quad::printReward() const
+MElement* Rec2DTwoTri2Quad::createMElement(double shiftx, double shifty)
 {
-#ifdef REC2D_VERT_ONLY
-  Msg::Info("reward rec : %g  %g  %g  %g",
-            _vertices[0]->getGainRecomb(_triangles[0], _triangles[1], _edges[4], _edges[0], _edges[3]),
-            _vertices[1]->getGainRecomb(_triangles[0], _triangles[1], _edges[4], _edges[1], _edges[2]),
-            _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]),
-            _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]));
-#else
-  double valEdge1 = _edges[4]->getQual();
-  double valEdge2 = 0;
-  for (int i = 0; i < 4; ++i)
-    valEdge2 += _edges[i]->getQual();
-  
-  double valVert;
-  valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
-  valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
-  Msg::Info("-%de%g +%de%g +0v%g -> %g", REC2D_EDGE_BASE, valEdge1, 4 * REC2D_EDGE_QUAD,
-            valEdge2/4, valVert/2,
-            Rec2DData::getGlobalQuality(0, valVert,
-                          4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE,
-                          -REC2D_EDGE_BASE*valEdge1+REC2D_EDGE_QUAD*valEdge2));
-#endif
-}
-
-void Rec2DTwoTri2Quad::_computeGlobQual()
-{
-#ifdef REC2D_RECO_BLOS
-  _globQualIfExecuted = Rec2DData::getGlobalQuality() + (int)_rt->total_gain;
-#else
-#ifdef REC2D_VERT_ONLY
-  _valVert = .0;
-  _valVert += _vertices[0]->getGainRecomb(_triangles[0], _triangles[1],
-                                          _edges[4], _edges[0], _edges[3]);
-  _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1],
-                                          _edges[4], _edges[1], _edges[2]);
-  _valVert += _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]);
-  _valVert += _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]);
-  
-  _globQualIfExecuted = Rec2DData::getGlobalQuality(0, _valVert);
-#else
-  double valEdge = -REC2D_EDGE_BASE * _edges[4]->getQual();
-  for (int i = 0; i < 4; ++i)
-    valEdge += REC2D_EDGE_QUAD * _edges[i]->getQual();
-  
-  if (_vertices[0]->getLastUpdate() > _lastUpdate ||
-      _vertices[1]->getLastUpdate() > _lastUpdate   ) {
-    _valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
-    _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
+  MQuadrangle *quad;
+  if (shiftx == .0 && shifty == .0)
+    quad = new MQuadrangle(_vertices[0]->getMVertex(),
+                           _vertices[2]->getMVertex(),
+                           _vertices[1]->getMVertex(),
+                           _vertices[3]->getMVertex());
+  else {
+    MVertex *v0 = new MVertex(_vertices[0]->getMVertex()->x() + shiftx,
+                              _vertices[0]->getMVertex()->y() + shifty,
+                              _vertices[0]->getMVertex()->z()          );
+    MVertex *v1 = new MVertex(_vertices[1]->getMVertex()->x() + shiftx,
+                              _vertices[1]->getMVertex()->y() + shifty,
+                              _vertices[1]->getMVertex()->z()          );
+    MVertex *v2 = new MVertex(_vertices[2]->getMVertex()->x() + shiftx,
+                              _vertices[2]->getMVertex()->y() + shifty,
+                              _vertices[2]->getMVertex()->z()          );
+    MVertex *v3 = new MVertex(_vertices[3]->getMVertex()->x() + shiftx,
+                              _vertices[3]->getMVertex()->y() + shifty,
+                              _vertices[3]->getMVertex()->z()          );
+    quad = new MQuadrangle(v0, v2, v1, v3);
   }
-  
-  _globQualIfExecuted =
-    Rec2DData::getGlobalQuality(0, _valVert,
-                                4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE, valEdge);
-#endif
-  _lastUpdate = Recombine2D::getNumChange();
-#endif
-}
-
-void Rec2DTwoTri2Quad::_computeReward()
-{
-#ifdef REC2D_RECO_BLOS
-  _reward = (int)_rt->total_gain;
-#else
-#ifdef REC2D_VERT_ONLY
-  _valVert = .0;
-  _valVert += _vertices[0]->getGainRecomb(_triangles[0], _triangles[1],
-                                          _edges[4], _edges[0], _edges[3]);
-  _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1],
-                                          _edges[4], _edges[1], _edges[2]);
-  _valVert += _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]);
-  _valVert += _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]);
-  
-  _reward = Rec2DData::getGlobalQuality(0, _valVert) -
-            Rec2DData::getGlobalQuality()             ;
-#else
-  double valEdge = -REC2D_EDGE_BASE * _edges[4]->getQual();
-  for (int i = 0; i < 4; ++i)
-    valEdge += REC2D_EDGE_QUAD * _edges[i]->getQual();
-  
-  if (_vertices[0]->getLastUpdate() > _lastUpdate ||
-      _vertices[1]->getLastUpdate() > _lastUpdate   ) {
-    _valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
-    _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
-  }
-  
-  _reward =
-    Rec2DData::getGlobalQuality(0, _valVert,
-                                4*REC2D_EDGE_QUAD - REC2D_EDGE_BASE, valEdge) -
-    Rec2DData::getGlobalQuality()                                              ;
-#endif
-#endif
-  _lastUpdate = Recombine2D::getNumChange();
+  Recombine2D::add(quad);
+  return quad;
 }
 
 void Rec2DTwoTri2Quad::color(int a, int b, int c) const
@@ -2275,103 +2576,129 @@ void Rec2DTwoTri2Quad::color(int a, int b, int c) const
 #endif
 }
 
-void Rec2DTwoTri2Quad::apply(std::vector<Rec2DVertex*> &newPar)
+void Rec2DTwoTri2Quad::_computeGlobQual()
 {
-  static int a = -1;
-  if (++a < 1) Msg::Error("FIXME Need new definition Rec2DTwoTri2Quad::apply(newPar)");
-  /*if (isObsolete()) {
-    Msg::Error("[Rec2DTwoTri2Quad] No way ! I won't apply ! Find someone else...");
+  if (Recombine2D::blossomQual()) {
+    _globQualIfExecuted = Rec2DData::getGlobalQuality() + (int)_rt->total_gain;
     return;
   }
-  
-  int min = Rec2DData::getNewParity(), index = -1;
-  for (int i = 0; i < 4; ++i) {
-    if (_vertices[i]->getParity() && min > _vertices[i]->getParity()) {
-      min = _vertices[i]->getParity();
-      index = i;
+  if (Recombine2D::verticesQual()) {
+    _valVert = .0;
+    _valVert += _vertices[0]->getGainRecomb(_triangles[0], _triangles[1],
+                                            _edges[4], _edges[0], _edges[3]);
+    _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1],
+                                            _edges[4], _edges[1], _edges[2]);
+    _valVert += _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]);
+    _valVert += _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]);
+    
+    _globQualIfExecuted = Rec2DData::getGlobalQuality(0, _valVert);
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  if (Recombine2D::vertAndEdgesQual()) {
+    double valEdge = -Recombine2D::getWeightEdgeBase() * _edges[4]->getQual();
+    for (int i = 0; i < 4; ++i)
+      valEdge += Recombine2D::getWeightEdgeQuad() * _edges[i]->getQual();
+    
+    if (_vertices[0]->getLastUpdate() > _lastUpdate ||
+        _vertices[1]->getLastUpdate() > _lastUpdate   ) {
+      _valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
+      _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
     }
+    
+    double w = 4*Recombine2D::getWeightEdgeQuad()
+               - Recombine2D::getWeightEdgeBase();
+    _globQualIfExecuted = Rec2DData::getGlobalQuality(0, _valVert, w, valEdge);
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
   }
-  if (index == -1) {
-    _vertices[0]->setParity(min);
-    _vertices[1]->setParity(min);
-    _vertices[2]->setParity(min+1);
-    _vertices[3]->setParity(min+1);
-  }
-  else {
-    for (int i = 0; i < 4; i += 2) {
-      int par;
-      if ((index/2) * 2 == i)
-        par = min;
-      else
-        par = otherParity(min);
-      for (int j = 0; j < 2; ++j) {
-        if (!_vertices[i+j]->getParity())
-          _vertices[i+j]->setParity(par);
-        else if (_vertices[i+j]->getParity() != par &&
-                 _vertices[i+j]->getParity() != otherParity(par))
-          Rec2DData::associateParity(_vertices[i+j]->getParity(), par);
-      }
-    }
-  }
-  
-  _triangles[0]->rmv(this);
-  _triangles[1]->rmv(this);
-  // hide() instead
-  
-  std::vector<Rec2DAction*> actions;
-  _triangles[0]->getMoreUniqueActions(actions);
-  _triangles[1]->getMoreUniqueActions(actions);
-  for (unsigned int i = 0; i < actions.size(); ++i)
-    delete actions[i];
-  
-  delete _triangles[0];
-  delete _triangles[1];
-  _triangles[0] = NULL;
-  _triangles[1] = NULL;
-  delete _edges[4];
-  
-  new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges);
-  
-  Recombine2D::incNumChange();*/
+  Msg::Error("[Rec2DTwoTri2Quad] Unknown quality criterion");
 }
 
-void Rec2DTwoTri2Quad::apply(Rec2DDataChange *rdc,
-                             std::vector<Rec2DAction*> *&createdActions,
-                             bool color) const
+void Rec2DTwoTri2Quad::_computeReward()
 {
-  //Msg::Info("applying Recombine |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum());
-  if (isObsolete()) {
-    printIdentity();
-    int p[4];
-    p[0] = _vertices[0]->getParity();
-    p[1] = _vertices[1]->getParity();
-    p[2] = _vertices[2]->getParity();
-    p[3] = _vertices[3]->getParity();
-    Msg::Info("%d %d %d %d", p[0], p[1], p[2], p[3]);
-    Msg::Error("[Rec2DTwoTri2Quad] I was obsolete !");
-    Msg::Error("check entities = %d", Rec2DData::checkEntities());
-    __crash();
+  Rec2DQualCrit  crit = Recombine2D::getQualCrit();
+
+  switch (crit) {
+    case BlossomQuality :
+      _reward = (int)_rt->total_gain;
+      return;
+      
+    case VertQuality :
+      _valVert = .0;
+      _valVert += _vertices[0]->getGainRecomb(_triangles[0], _triangles[1],
+                                              _edges[4], _edges[0], _edges[3]);
+      _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1],
+                                              _edges[4], _edges[1], _edges[2]);
+      _valVert += _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]);
+      _valVert += _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]);
+      
+      _reward = Rec2DData::getGlobalQuality(0, _valVert)
+                - Rec2DData::getGlobalQuality();
+      _lastUpdate = Recombine2D::getNumChange();
+      return;
+    
+    case VertEdgeQuality :
+      double valEdge = -Recombine2D::getWeightEdgeBase() * _edges[4]->getQual();
+      for (int i = 0; i < 4; ++i)
+        valEdge += Recombine2D::getWeightEdgeQuad() * _edges[i]->getQual();
+      
+      if (_vertices[0]->getLastUpdate() > _lastUpdate ||
+          _vertices[1]->getLastUpdate() > _lastUpdate   ) {
+        _valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
+        _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
+      }
+      
+      double w = 4*Recombine2D::getWeightEdgeQuad()
+                 - Recombine2D::getWeightEdgeBase();
+      _reward = Rec2DData::getGlobalQuality(0, _valVert, w, valEdge)
+                - Rec2DData::getGlobalQuality();
+      _lastUpdate = Recombine2D::getNumChange();
+      return;
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
   }
-#ifdef REC2D_DRAW
-  rdc->setAction(this);
-#endif
-  std::vector<Rec2DAction*> actions;
-  _triangles[0]->getMoreUniqueActions(actions);
-  _triangles[1]->getMoreUniqueActions(actions);
-  rdc->hide(actions);
-  _doWhatYouHaveToDoWithParity(rdc);
-  rdc->hide(_triangles[0]);
-  rdc->hide(_triangles[1]);
-  rdc->hide(_edges[4]);
-  Rec2DElement *rel = new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges);
-  rdc->append(rel);
-  //rdc->append(new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges));
-#ifdef REC2D_RECO_BLOS
-  rdc->add((int)_rt->total_gain);
-  if (color) Recombine2D::colorFromBlossom(_triangles[0], _triangles[1], rel);
-  static int a = -1;
-  if (++a < 1) Msg::Warning("FIXME reward is int for blossom");
-#endif
+  
+  
+  
+  if (Recombine2D::blossomQual()) {
+    _reward = (int)_rt->total_gain;
+    return;
+  }
+  if (Recombine2D::verticesQual()) {
+    _valVert = .0;
+    _valVert += _vertices[0]->getGainRecomb(_triangles[0], _triangles[1],
+                                            _edges[4], _edges[0], _edges[3]);
+    _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1],
+                                            _edges[4], _edges[1], _edges[2]);
+    _valVert += _vertices[2]->getGainQuad(_triangles[0], _edges[0], _edges[1]);
+    _valVert += _vertices[3]->getGainQuad(_triangles[1], _edges[2], _edges[3]);
+    
+    _reward = Rec2DData::getGlobalQuality(0, _valVert)
+              - Rec2DData::getGlobalQuality();
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  if (Recombine2D::vertAndEdgesQual()) {
+    double valEdge = -Recombine2D::getWeightEdgeBase() * _edges[4]->getQual();
+    for (int i = 0; i < 4; ++i)
+      valEdge += Recombine2D::getWeightEdgeQuad() * _edges[i]->getQual();
+    
+    if (_vertices[0]->getLastUpdate() > _lastUpdate ||
+        _vertices[1]->getLastUpdate() > _lastUpdate   ) {
+      _valVert = _vertices[0]->getGainRecomb(_triangles[0], _triangles[1]);
+      _valVert += _vertices[1]->getGainRecomb(_triangles[0], _triangles[1]);
+    }
+    
+    double w = 4*Recombine2D::getWeightEdgeQuad()
+               - Recombine2D::getWeightEdgeBase();
+    _reward = Rec2DData::getGlobalQuality(0, _valVert, w, valEdge)
+              - Rec2DData::getGlobalQuality();
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  Msg::Error("[Rec2DTwoTri2Quad] Unknown quality criterion");
 }
 
 void Rec2DTwoTri2Quad::_doWhatYouHaveToDoWithParity(Rec2DDataChange *rdc) const
@@ -2405,143 +2732,10 @@ void Rec2DTwoTri2Quad::_doWhatYouHaveToDoWithParity(Rec2DDataChange *rdc) const
   rdc->checkObsoleteActions(_vertices, 4);
 }
 
-bool Rec2DTwoTri2Quad::isObsolete() const
-{
-  int p[4];
-  p[0] = _vertices[0]->getParity();
-  p[1] = _vertices[1]->getParity();
-  p[2] = _vertices[2]->getParity();
-  p[3] = _vertices[3]->getParity();
-  static int a = -1;
-  if (++a < 1) Msg::Warning("p[0]/2 == p[1]/2 && p[0] != p[1]  || ...  ???");
-  return (p[0]/2 == p[1]/2 && p[0] != p[1] ||
-          p[2]/2 == p[3]/2 && p[2] != p[3] ||
-          p[0] && (p[0] == p[2] || p[0] == p[3]) ||
-          p[1] && (p[1] == p[2] || p[1] == p[3])   );
-}
-
-void Rec2DTwoTri2Quad::getElements(std::vector<Rec2DElement*> &elem) const
-{
-  elem.clear();
-  elem.push_back(_triangles[0]);
-  elem.push_back(_triangles[1]);
-}
-
-void Rec2DTwoTri2Quad::getNeighbourElements(std::vector<Rec2DElement*> &elem) const
-{
-  elem.clear();
-  _triangles[0]->getMoreNeighbours(elem);
-  _triangles[1]->getMoreNeighbours(elem);
-  unsigned int i = 0;
-  while (i < elem.size()) {
-    if (elem[i] == _triangles[0] || elem[i] == _triangles[1]) {
-      elem[i] = elem.back();
-      elem.pop_back();
-    }
-    else ++i;
-  }
-}
-
-void Rec2DTwoTri2Quad::getNeighbElemWithActions(std::vector<Rec2DElement*> &elem) const
-{
-  getNeighbourElements(elem);
-  unsigned int i = 0;
-  while (i < elem.size()) {
-    if (!elem[i]->getNumActions()) {
-      elem[i] = elem.back();
-      elem.pop_back();
-    }
-    else ++i;
-  }
-}
-
-int Rec2DTwoTri2Quad::getNum(double shiftx, double shifty)
-{
-  MQuadrangle *quad;
-  if (shiftx == .0 && shifty == .0)
-    quad = new MQuadrangle(_vertices[0]->getMVertex(),
-                           _vertices[2]->getMVertex(),
-                           _vertices[1]->getMVertex(),
-                           _vertices[3]->getMVertex());
-  else {
-    MVertex *v0 = new MVertex(_vertices[0]->getMVertex()->x() + shiftx,
-                              _vertices[0]->getMVertex()->y() + shifty,
-                              _vertices[0]->getMVertex()->z()          );
-    MVertex *v1 = new MVertex(_vertices[1]->getMVertex()->x() + shiftx,
-                              _vertices[1]->getMVertex()->y() + shifty,
-                              _vertices[1]->getMVertex()->z()          );
-    MVertex *v2 = new MVertex(_vertices[2]->getMVertex()->x() + shiftx,
-                              _vertices[2]->getMVertex()->y() + shifty,
-                              _vertices[2]->getMVertex()->z()          );
-    MVertex *v3 = new MVertex(_vertices[3]->getMVertex()->x() + shiftx,
-                              _vertices[3]->getMVertex()->y() + shifty,
-                              _vertices[3]->getMVertex()->z()          );
-    quad = new MQuadrangle(v0, v2, v1, v3);
-  }
-  Recombine2D::add(quad);
-  return quad->getNum();
-}
-
-MElement* Rec2DTwoTri2Quad::createMElement(double shiftx, double shifty)
-{
-  MQuadrangle *quad;
-  if (shiftx == .0 && shifty == .0)
-    quad = new MQuadrangle(_vertices[0]->getMVertex(),
-                           _vertices[2]->getMVertex(),
-                           _vertices[1]->getMVertex(),
-                           _vertices[3]->getMVertex());
-  else {
-    MVertex *v0 = new MVertex(_vertices[0]->getMVertex()->x() + shiftx,
-                              _vertices[0]->getMVertex()->y() + shifty,
-                              _vertices[0]->getMVertex()->z()          );
-    MVertex *v1 = new MVertex(_vertices[1]->getMVertex()->x() + shiftx,
-                              _vertices[1]->getMVertex()->y() + shifty,
-                              _vertices[1]->getMVertex()->z()          );
-    MVertex *v2 = new MVertex(_vertices[2]->getMVertex()->x() + shiftx,
-                              _vertices[2]->getMVertex()->y() + shifty,
-                              _vertices[2]->getMVertex()->z()          );
-    MVertex *v3 = new MVertex(_vertices[3]->getMVertex()->x() + shiftx,
-                              _vertices[3]->getMVertex()->y() + shifty,
-                              _vertices[3]->getMVertex()->z()          );
-    quad = new MQuadrangle(v0, v2, v1, v3);
-  }
-  Recombine2D::add(quad);
-  return quad;
-}
-
-void Rec2DTwoTri2Quad::swap(Rec2DVertex *rv0, Rec2DVertex *rv1)
-{
-  for (int i = 0; i < 4; ++i) {
-    if (_vertices[i] == rv0) {
-      _vertices[i] = rv1;
-      return;
-    }
-  }
-  Msg::Error("[Rec2DTwoTri2Quad] Can't swap your vertex (%d -> %d)", rv0->getNum(), rv1->getNum());
-  Msg::Warning("[Rec2DTwoTri2Quad] I have %d %d %d %d", _vertices[0]->getNum(), _vertices[1]->getNum(), _vertices[2]->getNum(), _vertices[3]->getNum());
-}
-
-void Rec2DTwoTri2Quad::swap(Rec2DEdge *re0, Rec2DEdge *re1)
-{
-  for (int i = 0; i < 4; ++i) {
-    if (_edges[i] == re0) {
-      _edges[i] = re1;
-      return;
-    }
-  }
-  Msg::Error("[Rec2DTwoTri2Quad] Can't swap your edge (is middle : %d)", re0 == _edges[4]);
-}
-
-Rec2DElement* Rec2DTwoTri2Quad::getRandomElement() const
-{
-  return _triangles[rand() % 2];
-}
-
 
 /**  Rec2DCollapse  **/
 /*********************/
-Rec2DCollapse::Rec2DCollapse(Rec2DTwoTri2Quad *rec) : _rec(rec)//,
-//  _triangles(rec->_triangles), _edges(_rec->_edges), _vertices(_rec->_vertices)
+Rec2DCollapse::Rec2DCollapse(Rec2DTwoTri2Quad *rec) : _rec(rec)
 {
   _rec->_col = this;
   _rec->_triangles[0]->add(this);
@@ -2583,263 +2777,18 @@ void Rec2DCollapse::reveal()
   Rec2DData::add(this);
 }
 
-void Rec2DCollapse::printReward() const
+bool Rec2DCollapse::isObsolete() const
 {
-#ifdef REC2D_VERT_ONLY
-  SPoint2 p[2];
-  _rec->_vertices[0]->getParam(&p[0]);
-  _rec->_vertices[1]->getParam(&p[1]);
-  int b0 = _rec->_vertices[0]->getOnBoundary();
-  int b1 = _rec->_vertices[1]->getOnBoundary();
-  
-  double valVert = .0;
-  if (b0 || b1) {
-    int iOK = 1, iKO = 0;
-    if (b0) {
-      iOK = 0;
-      iKO = 1;
-    }
-    double oldValVert = Rec2DData::getSumVert();
-    _rec->_vertices[iKO]->relocate(p[iOK]);
-    double qualRelocation = Rec2DData::getSumVert() - oldValVert;
-    
-    valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO],
-                                                  &_rec->_edges[1], 2  );
-    valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]);
-    valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
-    
-    for (int i = 0; i < 4; ++i) {
-      Msg::Info("vert %d : %g", _rec->_vertices[i]->getNum(), _rec->_vertices[i]->getQual());
-    }
-    
-    Msg::Info("qual col %g %g %g %g", qualRelocation,
-              _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO], &_rec->_edges[1], 2),
-              _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]),
-              _rec->_vertices[3]->getGainTriLess(_rec->_edges[2])
-             );
-    
-    _rec->_vertices[iKO]->relocate(p[iKO]);
-  }
-  else {
-    double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
-    double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
-    SPoint2 pNew(u, v);
-    double oldValVert = Rec2DData::getSumVert();
-    _rec->_vertices[0]->relocate(pNew);
-    _rec->_vertices[1]->relocate(pNew);
-    double qualRelocation = Rec2DData::getSumVert() - oldValVert;
-    
-    valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
-                                                &_rec->_edges[1], 2);
-    valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]);
-    valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
-    
-    for (int i = 0; i < 4; ++i) {
-      Msg::Info("vert %d : %g", _rec->_vertices[i]->getNum(), _rec->_vertices[i]->getQual());
-    }
-    
-    Msg::Info("qual col %g %g %g %g", qualRelocation,
-              _rec->_vertices[0]->getGainMerge(_rec->_vertices[1], &_rec->_edges[1], 2),
-              _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]),
-              _rec->_vertices[3]->getGainTriLess(_rec->_edges[2])
-             );
-    
-    _rec->_vertices[0]->relocate(p[0]);
-    _rec->_vertices[1]->relocate(p[1]);
-  }
-#else
-  std::vector<Rec2DVertex*> verts;
-  std::vector<Rec2DEdge*> edges;
-  _rec->_vertices[0]->getEdges(edges);
-  for (unsigned int i = 0; i < edges.size(); ++i) {
-    Rec2DVertex *v = edges[i]->getOtherVertex(_rec->_vertices[0]);
-    bool toAdd = true;
-    for (int j = 0; j < 4; ++j) {
-      if (v == _rec->_vertices[j]) {
-        toAdd = false;
-        break;
-      }
-    }
-    if (toAdd) verts.push_back(v);
-  }
-  _rec->_vertices[1]->getEdges(edges);
-  for (unsigned int i = 0; i < edges.size(); ++i) {
-    Rec2DVertex *v = edges[i]->getOtherVertex(_rec->_vertices[1]);
-    bool toAdd = true;
-    for (int j = 0; j < 4; ++j) {
-      if (v == _rec->_vertices[j]) {
-        toAdd = false;
-        break;
-      }
-    }
-    if (toAdd) verts.push_back(v);
-  }
-  
-  _rec->_vertices[0]->getMoreUniqueEdges(edges);
-  _rec->_vertices[1]->getMoreUniqueEdges(edges);
-  int numEdgeBef = edges.size(), weightEdgeBef = 0;
-  double valEdgeBef = 0;
-  for (unsigned int i = 0; i < edges.size(); ++i) {
-    valEdgeBef += edges[i]->getWeightedQual();
-    weightEdgeBef += edges[i]->getWeight();
-  }
-  
-  int numVertOther = verts.size();
-  double vert01Bef = 0, vert23Bef = 0, vertOtherBef = 0;
-  vert01Bef += _rec->_vertices[0]->getQual();
-  vert01Bef += _rec->_vertices[1]->getQual();
-  vert23Bef += _rec->_vertices[2]->getQual();
-  vert23Bef += _rec->_vertices[3]->getQual();
-  for (unsigned int i = 0; i < verts.size(); ++i) {
-    vertOtherBef += verts[i]->getQual();
-  }
-  
-  Rec2DNode *n = new Rec2DNode(NULL, (Rec2DAction*)this, 0);
-  n->makeChanges();
-  
-  edges.clear();
-  _rec->_vertices[0]->getMoreUniqueEdges(edges);
-  _rec->_vertices[1]->getMoreUniqueEdges(edges);
-  int numEdgeAft = edges.size(), weightEdgeAft = 0;
-  double valEdgeAft = 0;
-  for (unsigned int i = 0; i < edges.size(); ++i) {
-    valEdgeAft += edges[i]->getWeightedQual();
-    weightEdgeAft += edges[i]->getWeight();
-  }
-  
-  double vert01Aft = 0, vert23Aft = 0, vertOtherAft = 0;
-  if (_rec->_vertices[0]->getNumElements())
-    vert01Aft += _rec->_vertices[0]->getQual();
-  if (_rec->_vertices[1]->getNumElements())
-    vert01Aft += _rec->_vertices[1]->getQual();
-  vert23Aft += _rec->_vertices[2]->getQual();
-  vert23Aft += _rec->_vertices[3]->getQual();
-  for (unsigned int i = 0; i < verts.size(); ++i) {
-    vertOtherAft += verts[i]->getQual();
-  }
-  
-  n->revertChanges();
-  delete n;
-  
-  Msg::Info("-(%d)%de%g +(%d)%de%g "
-            "-4v%g +2v%g +0v%g +(%d)0v%g", numEdgeBef, weightEdgeBef, valEdgeBef/weightEdgeBef,
-                                           numEdgeAft, weightEdgeAft, valEdgeAft/weightEdgeAft,
-                                           vert01Bef/4, vert01Aft/2, (vert23Aft-vert23Bef)/2,
-                                           numVertOther, vertOtherAft-vertOtherBef);
-#endif
-}
-
-void Rec2DCollapse::_computeGlobQual()
-{
-  std::vector<Rec2DVertex*> verts;
-  _rec->_vertices[0]->getMoreNeighbourVertices(verts);
-  _rec->_vertices[1]->getMoreNeighbourVertices(verts);
-  unsigned int i = 0;
-  while (i < verts.size() && verts[i]->getLastUpdate() <= _lastUpdate) ++i;
-  if (i >= verts.size()) {
-    _lastUpdate = Recombine2D::getNumChange();
-    return;
-  }
-  
-  SPoint2 p[2];
-  _rec->_vertices[0]->getParam(&p[0]);
-  _rec->_vertices[1]->getParam(&p[1]);
-  int b0 = _rec->_vertices[0]->getOnBoundary();
-  int b1 = _rec->_vertices[1]->getOnBoundary();
-  
-#ifdef REC2D_VERT_ONLY
-  double valVert = .0;
-  if (b0 || b1) {
-    int iOK = 1, iKO = 0;
-    if (b0) {
-      iOK = 0;
-      iKO = 1;
-    }
-    _rec->_vertices[iKO]->relocate(p[iOK]);
-    
-    valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO],
-                                                  &_rec->_edges[1], 2  );
-    valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]);
-    valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
-    _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert);
-    
-    _rec->_vertices[iKO]->relocate(p[iKO]);
-  }
-  else {
-    double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
-    double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
-    SPoint2 pNew(u, v);
-    _rec->_vertices[0]->relocate(pNew);
-    _rec->_vertices[1]->relocate(pNew);
-    
-    valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
-                                                &_rec->_edges[1], 2);
-    valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]);
-    valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
-    _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert);
-    
-    _rec->_vertices[0]->relocate(p[0]);
-    _rec->_vertices[1]->relocate(p[1]);
-  }
-#else
-  int numEdge = 0;
-  double valEdge = .0, valVert = .0;
-  if (b0 || b1) {
-    int iOK = 1, iKO = 0;
-    if (b0) {
-      iOK = 0;
-      iKO = 1;
-    }
-    _rec->_vertices[iKO]->relocate(p[iOK]);
-    
-    valVert += _rec->_vertices[2]->getGainOneElemLess();
-    valVert += _rec->_vertices[3]->getGainOneElemLess();
-    valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO]);
-    valEdge -= REC2D_EDGE_BASE * _rec->_edges[1]->getQual();
-    valEdge -= REC2D_EDGE_BASE * _rec->_edges[2]->getQual();
-    numEdge -= 2 * REC2D_EDGE_BASE;
-    valEdge -= _rec->_edges[4]->getWeightedQual();
-    numEdge -= _rec->_edges[4]->getWeight();
-    
-    _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert,
-                                                      numEdge, valEdge);
-    
-    _rec->_vertices[iKO]->relocate(p[iKO]);
-  }
-  else {
-    double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
-    double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
-    SPoint2 pNew(u, v);
-    _rec->_vertices[0]->relocate(pNew);
-    _rec->_vertices[1]->relocate(pNew);
-    
-    valVert += _rec->_vertices[2]->getGainOneElemLess();
-    valVert += _rec->_vertices[3]->getGainOneElemLess();
-    valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1]);
-    valEdge -= REC2D_EDGE_BASE * _rec->_edges[1]->getQual();
-    valEdge -= REC2D_EDGE_BASE * _rec->_edges[2]->getQual();
-    numEdge -= 2 * REC2D_EDGE_BASE;
-    valEdge -= _rec->_edges[4]->getWeightedQual();
-    numEdge -= _rec->_edges[4]->getWeight();
-    
-    _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert,
-                                                      numEdge, valEdge);
-    
-    _rec->_vertices[0]->relocate(p[0]);
-    _rec->_vertices[1]->relocate(p[1]);
-  }
-#endif
-  _lastUpdate = Recombine2D::getNumChange();
-}
-
-void Rec2DCollapse::_computeReward()
-{
-  Msg::Fatal("Need definition for compute reward");
-}
-
-void Rec2DCollapse::printIdentity() const
-{
-  Msg::Info("Collapse |%d|%d|", _rec->_triangles[0]->getNum(), _rec->_triangles[1]->getNum());
+  int p[2];
+  p[0] = _rec->_vertices[0]->getParity();
+  p[1] = _rec->_vertices[1]->getParity();
+  return (p[0]/2 == p[1]/2 && p[0] != p[1]) ||
+         (_rec->_vertices[0]->getOnBoundary() &&
+          _rec->_vertices[1]->getOnBoundary())  ||
+         (!_rec->_vertices[2]->getOnBoundary() &&
+          _rec->_vertices[2]->getNumElements() < 4) ||
+         (!_rec->_vertices[3]->getOnBoundary() &&
+          _rec->_vertices[3]->getNumElements() < 4)    ;
 }
 
 void Rec2DCollapse::apply(std::vector<Rec2DVertex*> &newPar)
@@ -2960,20 +2909,6 @@ void Rec2DCollapse::apply(Rec2DDataChange *rdc,
   rdc->checkObsoleteActions(_rec->_vertices, 4);
 }
 
-bool Rec2DCollapse::isObsolete() const
-{
-  int p[2];
-  p[0] = _rec->_vertices[0]->getParity();
-  p[1] = _rec->_vertices[1]->getParity();
-  return p[0]/2 == p[1]/2 && p[0] != p[1] ||
-         _rec->_vertices[0]->getOnBoundary() &&
-         _rec->_vertices[1]->getOnBoundary()          ||
-         !_rec->_vertices[2]->getOnBoundary() &&
-         _rec->_vertices[2]->getNumElements() < 4     ||
-         !_rec->_vertices[3]->getOnBoundary() &&
-         _rec->_vertices[3]->getNumElements() < 4       ;
-}
-
 void Rec2DCollapse::getNeighbourElements(std::vector<Rec2DElement*> &elem) const
 {
   _rec->getNeighbourElements(elem);
@@ -2982,6 +2917,285 @@ void Rec2DCollapse::getNeighbourElements(std::vector<Rec2DElement*> &elem) const
 void Rec2DCollapse::getNeighbElemWithActions(std::vector<Rec2DElement*> &elem) const
 {
   _rec->getNeighbElemWithActions(elem);
+}
+
+void Rec2DCollapse::printReward() const
+{
+  if (Recombine2D::blossomQual()) {
+    Msg::Error("[Rec2DCollapse] Don't know");
+    //?return (double)_cur->_blossomQuality;
+    return;
+  }
+  if (Recombine2D::verticesQual()) {
+    SPoint2 p[2];
+    _rec->_vertices[0]->getParam(&p[0]);
+    _rec->_vertices[1]->getParam(&p[1]);
+    int b0 = _rec->_vertices[0]->getOnBoundary();
+    int b1 = _rec->_vertices[1]->getOnBoundary();
+    
+    double valVert = .0;
+    if (b0 || b1) {
+      int iOK = 1, iKO = 0;
+      if (b0) {
+        iOK = 0;
+        iKO = 1;
+      }
+      double oldValVert = Rec2DData::getSumVert();
+      _rec->_vertices[iKO]->relocate(p[iOK]);
+      double qualRelocation = Rec2DData::getSumVert() - oldValVert;
+      
+      valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO],
+                                                    &_rec->_edges[1], 2  );
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]);
+      valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
+      
+      for (int i = 0; i < 4; ++i) {
+        Msg::Info("vert %d : %g", _rec->_vertices[i]->getNum(), _rec->_vertices[i]->getQual());
+      }
+      
+      Msg::Info("qual col %g %g %g %g", qualRelocation,
+                _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO], &_rec->_edges[1], 2),
+                _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]),
+                _rec->_vertices[3]->getGainTriLess(_rec->_edges[2])
+               );
+      
+      _rec->_vertices[iKO]->relocate(p[iKO]);
+    }
+    else {
+      double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
+      double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
+      SPoint2 pNew(u, v);
+      double oldValVert = Rec2DData::getSumVert();
+      _rec->_vertices[0]->relocate(pNew);
+      _rec->_vertices[1]->relocate(pNew);
+      double qualRelocation = Rec2DData::getSumVert() - oldValVert;
+      
+      valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
+                                                  &_rec->_edges[1], 2);
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]); normal ? 
+      valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
+      
+      for (int i = 0; i < 4; ++i) {
+        Msg::Info("vert %d : %g", _rec->_vertices[i]->getNum(), _rec->_vertices[i]->getQual());
+      }
+      
+      Msg::Info("qual col %g %g %g %g", qualRelocation,
+                _rec->_vertices[0]->getGainMerge(_rec->_vertices[1], &_rec->_edges[1], 2),
+                _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]),
+                _rec->_vertices[3]->getGainTriLess(_rec->_edges[2])
+               );
+      
+      _rec->_vertices[0]->relocate(p[0]);
+      _rec->_vertices[1]->relocate(p[1]);
+    }
+    return;
+  }
+  if (Recombine2D::vertAndEdgesQual()) {
+    std::vector<Rec2DVertex*> verts;
+    std::vector<Rec2DEdge*> edges;
+    _rec->_vertices[0]->getEdges(edges);
+    for (unsigned int i = 0; i < edges.size(); ++i) {
+      Rec2DVertex *v = edges[i]->getOtherVertex(_rec->_vertices[0]);
+      bool toAdd = true;
+      for (int j = 0; j < 4; ++j) {
+        if (v == _rec->_vertices[j]) {
+          toAdd = false;
+          break;
+        }
+      }
+      if (toAdd) verts.push_back(v);
+    }
+    _rec->_vertices[1]->getEdges(edges);
+    for (unsigned int i = 0; i < edges.size(); ++i) {
+      Rec2DVertex *v = edges[i]->getOtherVertex(_rec->_vertices[1]);
+      bool toAdd = true;
+      for (int j = 0; j < 4; ++j) {
+        if (v == _rec->_vertices[j]) {
+          toAdd = false;
+          break;
+        }
+      }
+      if (toAdd) verts.push_back(v);
+    }
+    
+    _rec->_vertices[0]->getMoreUniqueEdges(edges);
+    _rec->_vertices[1]->getMoreUniqueEdges(edges);
+    int numEdgeBef = edges.size(), weightEdgeBef = 0;
+    double valEdgeBef = 0;
+    for (unsigned int i = 0; i < edges.size(); ++i) {
+      valEdgeBef += edges[i]->getWeightedQual();
+      weightEdgeBef += edges[i]->getWeight();
+    }
+    
+    int numVertOther = verts.size();
+    double vert01Bef = 0, vert23Bef = 0, vertOtherBef = 0;
+    vert01Bef += _rec->_vertices[0]->getQual();
+    vert01Bef += _rec->_vertices[1]->getQual();
+    vert23Bef += _rec->_vertices[2]->getQual();
+    vert23Bef += _rec->_vertices[3]->getQual();
+    for (unsigned int i = 0; i < verts.size(); ++i) {
+      vertOtherBef += verts[i]->getQual();
+    }
+    
+    Rec2DNode *n = new Rec2DNode(NULL, (Rec2DAction*)this, 0);
+    n->makeChanges();
+    
+    edges.clear();
+    _rec->_vertices[0]->getMoreUniqueEdges(edges);
+    _rec->_vertices[1]->getMoreUniqueEdges(edges);
+    int numEdgeAft = edges.size(), weightEdgeAft = 0;
+    double valEdgeAft = 0;
+    for (unsigned int i = 0; i < edges.size(); ++i) {
+      valEdgeAft += edges[i]->getWeightedQual();
+      weightEdgeAft += edges[i]->getWeight();
+    }
+    
+    double vert01Aft = 0, vert23Aft = 0, vertOtherAft = 0;
+    if (_rec->_vertices[0]->getNumElements())
+      vert01Aft += _rec->_vertices[0]->getQual();
+    if (_rec->_vertices[1]->getNumElements())
+      vert01Aft += _rec->_vertices[1]->getQual();
+    vert23Aft += _rec->_vertices[2]->getQual();
+    vert23Aft += _rec->_vertices[3]->getQual();
+    for (unsigned int i = 0; i < verts.size(); ++i) {
+      vertOtherAft += verts[i]->getQual();
+    }
+    
+    n->revertChanges();
+    delete n;
+    
+    Msg::Info("-(%d)%de%g +(%d)%de%g "
+              "-4v%g +2v%g +0v%g +(%d)0v%g",
+              numEdgeBef, weightEdgeBef, valEdgeBef/weightEdgeBef,
+              numEdgeAft, weightEdgeAft, valEdgeAft/weightEdgeAft,
+              vert01Bef/4, vert01Aft/2, (vert23Aft-vert23Bef)/2,
+              numVertOther, vertOtherAft-vertOtherBef);
+    return;
+  }
+  Msg::Error("[Rec2DCollapse] Unknown quality criterion");
+}
+
+void Rec2DCollapse::printIdentity() const
+{
+  Msg::Info("Collapse |%d|%d|", _rec->_triangles[0]->getNum(), _rec->_triangles[1]->getNum());
+}
+
+void Rec2DCollapse::_computeGlobQual()
+{
+  std::vector<Rec2DVertex*> verts;
+  _rec->_vertices[0]->getMoreNeighbourVertices(verts);
+  _rec->_vertices[1]->getMoreNeighbourVertices(verts);
+  unsigned int i = 0;
+  while (i < verts.size() && verts[i]->getLastUpdate() <= _lastUpdate) ++i;
+  if (i >= verts.size()) {
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  
+  SPoint2 p[2];
+  _rec->_vertices[0]->getParam(&p[0]);
+  _rec->_vertices[1]->getParam(&p[1]);
+  int b0 = _rec->_vertices[0]->getOnBoundary();
+  int b1 = _rec->_vertices[1]->getOnBoundary();
+  
+  if (Recombine2D::blossomQual()) {
+    Msg::Error("[Rec2DCollapse] Don't know");
+    //?return (double)_cur->_blossomQuality;
+    return;
+  }
+  if (Recombine2D::verticesQual()) {
+    double valVert = .0;
+    if (b0 || b1) {
+      int iOK = 1, iKO = 0;
+      if (b0) {
+        iOK = 0;
+        iKO = 1;
+      }
+      _rec->_vertices[iKO]->relocate(p[iOK]);
+      
+      valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO],
+                                                    &_rec->_edges[1], 2  );
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[1]);
+      valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
+      _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert);
+      
+      _rec->_vertices[iKO]->relocate(p[iKO]);
+    }
+    else {
+      double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
+      double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
+      SPoint2 pNew(u, v);
+      _rec->_vertices[0]->relocate(pNew);
+      _rec->_vertices[1]->relocate(pNew);
+      
+      valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
+                                                  &_rec->_edges[1], 2);
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]);
+      valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
+      _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert);
+      
+      _rec->_vertices[0]->relocate(p[0]);
+      _rec->_vertices[1]->relocate(p[1]);
+    }
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  if (Recombine2D::vertAndEdgesQual()) {
+    int numEdge = 0;
+    double valEdge = .0, valVert = .0;
+    if (b0 || b1) {
+      int iOK = 1, iKO = 0;
+      if (b0) {
+        iOK = 0;
+        iKO = 1;
+      }
+      _rec->_vertices[iKO]->relocate(p[iOK]);
+      
+      valVert += _rec->_vertices[2]->getGainOneElemLess();
+      valVert += _rec->_vertices[3]->getGainOneElemLess();
+      valVert += _rec->_vertices[iOK]->getGainMerge(_rec->_vertices[iKO]);
+      valEdge -= Recombine2D::getWeightEdgeBase() * _rec->_edges[1]->getQual();
+      valEdge -= Recombine2D::getWeightEdgeBase() * _rec->_edges[2]->getQual();
+      numEdge -= 2 * Recombine2D::getWeightEdgeBase();
+      valEdge -= _rec->_edges[4]->getWeightedQual();
+      numEdge -= _rec->_edges[4]->getWeight();
+      
+      _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert,
+                                                        numEdge, valEdge);
+      
+      _rec->_vertices[iKO]->relocate(p[iKO]);
+    }
+    else {
+      double u = (_rec->_vertices[0]->u() + _rec->_vertices[1]->u()) / 2;
+      double v = (_rec->_vertices[0]->v() + _rec->_vertices[1]->v()) / 2;
+      SPoint2 pNew(u, v);
+      _rec->_vertices[0]->relocate(pNew);
+      _rec->_vertices[1]->relocate(pNew);
+      
+      valVert += _rec->_vertices[2]->getGainOneElemLess();
+      valVert += _rec->_vertices[3]->getGainOneElemLess();
+      valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1]);
+      valEdge -= Recombine2D::getWeightEdgeBase() * _rec->_edges[1]->getQual();
+      valEdge -= Recombine2D::getWeightEdgeBase() * _rec->_edges[2]->getQual();
+      numEdge -= 2 * Recombine2D::getWeightEdgeBase();
+      valEdge -= _rec->_edges[4]->getWeightedQual();
+      numEdge -= _rec->_edges[4]->getWeight();
+      
+      _globQualIfExecuted = Rec2DData::getGlobalQuality(-1, valVert,
+                                                        numEdge, valEdge);
+      
+      _rec->_vertices[0]->relocate(p[0]);
+      _rec->_vertices[1]->relocate(p[1]);
+    }
+    _lastUpdate = Recombine2D::getNumChange();
+    return;
+  }
+  Msg::Error("[Rec2DCollapse] Unknown quality criterion");
+}
+
+void Rec2DCollapse::_computeReward()
+{
+  Msg::Fatal("Need definition for compute reward");
 }
 
 bool Rec2DCollapse::_hasIdenticalElement() const
@@ -2994,8 +3208,9 @@ bool Rec2DCollapse::_hasIdenticalElement() const
 /**  Rec2DEdge  **/
 /*****************/
 Rec2DEdge::Rec2DEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
-: _rv0(rv0), _rv1(rv1), _lastUpdate(-1),
-  _weight(REC2D_EDGE_BASE+2*REC2D_EDGE_QUAD), _pos(-1)
+: _rv0(rv0), _rv1(rv1), _weight(Recombine2D::getWeightEdgeBase()
+                                + 2*Recombine2D::getWeightEdgeQuad()),
+  _lastUpdate(-1), _pos(-1)
 {
   _computeQual();
   reveal();
@@ -3006,7 +3221,6 @@ void Rec2DEdge::hide()
   _rv0->rmv(this);
   _rv1->rmv(this);
   Rec2DData::rmv(this);
-  Rec2DData::addEdgeQual(-getWeightedQual(), -_weight);
 }
 
 void Rec2DEdge::reveal()
@@ -3014,99 +3228,16 @@ void Rec2DEdge::reveal()
   _rv0->add(this);
   _rv1->add(this);
   Rec2DData::add(this);
-  Rec2DData::addEdgeQual(getWeightedQual(), _weight);
 }
 
-bool Rec2DEdge::checkCoherence() const
+Rec2DVertex* Rec2DEdge::getOtherVertex(const Rec2DVertex *rv) const
 {
-  if (_rv0 == _rv1) return false;
-  if (!_rv0->has(this) || !_rv1->has(this)) return false;
-  return true;
-  Rec2DElement *elem[2];
-  Rec2DEdge::getElements(this, elem);
-  if (elem[1]) {
-    if (!elem[0]->has(this) || !elem[1]->has(this)) return false;
-    if (!elem[0]->isNeighbour(this, elem[1]) ||
-        !elem[1]->isNeighbour(this, elem[0])   ) return false;
-  }
-  else {
-    if (!elem[0]->has(this)) return false;
-    if (!elem[0]->isNeighbour(this, NULL)) return false;
-  }
-}
-
-void Rec2DEdge::_computeQual()
-{
-  double alignment = _straightAlignment();
-  double adimLength = _straightAdimLength();
-  if (adimLength > 1)
-    adimLength = 1./adimLength;
-#ifdef REC2D_VERT_ONLY
-  _qual = REC2D_COEF_ORIE * alignment +
-          REC2D_COEF_LENG * adimLength +
-          REC2D_COEF_ORLE * alignment * adimLength;
-#else
-  _qual = adimLength * (1 - REC2D_ALIGNMENT + REC2D_ALIGNMENT * alignment);
-#endif
-  _lastUpdate = Recombine2D::getNumChange();
-}
-
-void Rec2DEdge::print() const
-{
-  Rec2DElement *elem[2];
-  Rec2DEdge::getElements(this, elem);
-  int a, b = a = NULL;
-  if (elem[0])
-    a = elem[0]->getNum();
-  if (elem[1])
-    b = elem[1]->getNum();
-  
-  Msg::Info(" edge , %d--%d , %d/%d", _rv0->getNum(), _rv1->getNum(), a, b);
-}
-
-void Rec2DEdge::_addWeight(int w)
-{
-  _weight += w;
-  if (_weight > REC2D_EDGE_BASE + 2*REC2D_EDGE_QUAD) {
-    Rec2DElement *elem[2];
-    Rec2DEdge::getElements(this, elem);
-    int a, b = a = NULL;
-    if (elem[0])
-      a = elem[0]->getNum();
-    if (elem[1])
-      b = elem[1]->getNum();
-    Msg::Error("[Rec2DEdge] Weight too high : %d (%d max) (im %d %d)",
-               _weight, REC2D_EDGE_BASE + 2*REC2D_EDGE_QUAD, a, b     );
-  }
-  if (_weight < REC2D_EDGE_BASE)
-    Msg::Error("[Rec2DEdge] Weight too low : %d (%d min)",
-               _weight, REC2D_EDGE_BASE                   );
-#ifdef REC2D_VERT_ONLY
-  _rv0->addEdgeQual(w*getQual(), w);
-  _rv1->addEdgeQual(w*getQual(), w);
-#else
-  Rec2DData::addEdgeQual(w*getQual(), w);
-#endif
-}
-
-void Rec2DEdge::updateQual()
-{
-  double oldQual = _qual;
-  _computeQual();
-#ifdef REC2D_VERT_ONLY
-  _rv0->addEdgeQual(_weight*(_qual-oldQual));
-  _rv1->addEdgeQual(_weight*(_qual-oldQual));
-#else
-  Rec2DData::addEdgeQual(_weight*(_qual-oldQual));
-#endif
-  _lastUpdate = Recombine2D::getNumChange();
-}
-
-bool Rec2DEdge::isOnBoundary() const
-{
-  Rec2DElement *elem[2];
-  Rec2DEdge::getElements(this, elem);
-  return !elem[1];
+  if (rv == _rv0)
+    return _rv1;
+  if (rv == _rv1)
+    return _rv0;
+  Msg::Error("[Rec2DEdge] You are wrong, I don't have this vertex !");
+  return NULL;
 }
 
 Rec2DElement* Rec2DEdge::getTheOnlyElement(const Rec2DEdge *re)
@@ -3158,6 +3289,33 @@ void Rec2DEdge::getElements(const Rec2DEdge *re, Rec2DElement **elem)
   }
 }
 
+//void Rec2DEdge::getUniqueActions(std::vector<Rec2DAction*> &actions) const
+//{
+//  actions.clear();
+//  Rec2DElement *elem[2];
+//  Rec2DEdge::getElements(this, elem);
+//  if (elem[0]) elem[0]->getMoreUniqueActions(actions);
+//  if (elem[1]) elem[1]->getMoreUniqueActions(actions);
+//}
+
+void Rec2DEdge::updateQual()
+{
+  double diffQual = _qual;
+  _computeQual();
+  diffQual = _weight*(_qual-diffQual);
+  
+  _rv0->updateEdgeQual(diffQual);
+  _rv1->updateEdgeQual(diffQual);
+  Rec2DData::updateEdgeQual(diffQual);
+}
+
+bool Rec2DEdge::isOnBoundary() const
+{
+  Rec2DElement *elem[2];
+  Rec2DEdge::getElements(this, elem);
+  return !elem[1];
+}
+
 void Rec2DEdge::swap(Rec2DVertex *oldRV, Rec2DVertex *newRV, bool upVert)
 {
   if (upVert) {
@@ -3173,6 +3331,70 @@ void Rec2DEdge::swap(Rec2DVertex *oldRV, Rec2DVertex *newRV, bool upVert)
     return;
   }
   Msg::Error("[Rec2DEdge] oldRV not found");
+}
+
+bool Rec2DEdge::checkCoherence() const
+{
+  if (_rv0 == _rv1) return false;
+  if (!_rv0->has(this) || !_rv1->has(this)) return false;
+  return true;
+  Rec2DElement *elem[2];
+  Rec2DEdge::getElements(this, elem);
+  if (elem[1]) {
+    if (!elem[0]->has(this) || !elem[1]->has(this)) return false;
+    if (!elem[0]->isNeighbour(this, elem[1]) ||
+        !elem[1]->isNeighbour(this, elem[0])   ) return false;
+  }
+  else {
+    if (!elem[0]->has(this)) return false;
+    if (!elem[0]->isNeighbour(this, NULL)) return false;
+  }
+}
+
+void Rec2DEdge::print() const
+{
+  Rec2DElement *elem[2];
+  Rec2DEdge::getElements(this, elem);
+  int a, b = a = NULL;
+  if (elem[0])
+    a = elem[0]->getNum();
+  if (elem[1])
+    b = elem[1]->getNum();
+  
+  Msg::Info(" edge , %d--%d , %d/%d", _rv0->getNum(), _rv1->getNum(), a, b);
+}
+
+void Rec2DEdge::_computeQual()
+{
+  double alignment = _straightAlignment();
+  double adimLength = _straightAdimLength();
+  if (adimLength > 1)
+    adimLength = 1./adimLength;
+  
+  _qual = (Recombine2D::getCoefLengOrientQual() * alignment
+           + Recombine2D::getCoefLengthQual()              ) * adimLength
+          + Recombine2D::getCoefOrientQual() * alignment;
+  _lastUpdate = Recombine2D::getNumChange();
+}
+
+void Rec2DEdge::_addWeight(int w)
+{
+  _weight += w;
+  if (_weight > Recombine2D::getWeightEdgeBase()
+                + 2*Recombine2D::getWeightEdgeQuad()) {
+    Msg::Error("[Rec2DEdge] Weight too high : %d (%d max)",
+               _weight, Recombine2D::getWeightEdgeBase()
+                        + 2*Recombine2D::getWeightEdgeQuad());
+  }
+  if (_weight < Recombine2D::getWeightEdgeBase()) {
+    Msg::Error("[Rec2DEdge] Weight too low : %d (%d min)",
+               _weight, Recombine2D::getWeightEdgeBase()  );
+  }
+  
+  double diffQual = w*getQual();
+  _rv0->updateEdgeQual(diffQual, w);
+  _rv1->updateEdgeQual(diffQual, w);
+  Rec2DData::updateEdgeQual(diffQual, w);
 }
 
 double Rec2DEdge::_straightAdimLength() const
@@ -3212,37 +3434,16 @@ double Rec2DEdge::_straightAlignment() const
   return (alpha0/lc0 + alpha1/lc1) / (1./lc0 + 1./lc1);
 }
 
-Rec2DVertex* Rec2DEdge::getOtherVertex(const Rec2DVertex *rv) const
-{
-  if (rv == _rv0)
-    return _rv1;
-  if (rv == _rv1)
-    return _rv0;
-  Msg::Error("[Rec2DEdge] You are wrong, I don't have this vertex !");
-  return NULL;
-}
-
-//void Rec2DEdge::getUniqueActions(std::vector<Rec2DAction*> &actions) const
-//{
-//  actions.clear();
-//  Rec2DElement *elem[2];
-//  Rec2DEdge::getElements(this, elem);
-//  if (elem[0]) elem[0]->getMoreUniqueActions(actions);
-//  if (elem[1]) elem[1]->getMoreUniqueActions(actions);
-//}
-
 
 /**  Rec2DVertex  **/
 /*******************/
 Rec2DVertex::Rec2DVertex(MVertex *v)
 : _v(v), _angle(4.*M_PI), _onWhat(1), _parity(0),
-  _lastUpdate(-1), _sumQualAngle(.0), _pos(-1)
-#ifdef REC2D_VERT_ONLY
-  , _sumQualEdge(.0), _sumEdge(0), _sumAngle(0)
-#endif
+  _lastUpdate(-1), _sumQualAngle(.0), _sumQualEdge(.0),
+  _sumAngle(0), _sumEdge(0), _pos(-1)
 {
   reparamMeshVertexOnFace(_v, Recombine2D::getGFace(), _param);
-  Rec2DData::add(this);
+  reveal();
 #ifdef REC2D_DRAW
   if (_v)
     _v->setIndex(_parity);
@@ -3253,22 +3454,30 @@ Rec2DVertex::Rec2DVertex(MVertex *v)
 Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
 : _v(rv->_v), _angle(ang), _onWhat(-1), _parity(rv->_parity),
   _lastUpdate(rv->_lastUpdate),
-  _sumQualAngle(rv->_sumQualAngle), _edges(rv->_edges),
+  _sumQualAngle(rv->_sumQualAngle), _sumQualEdge(rv->_sumQualEdge),
+  _sumAngle(rv->_sumAngle), _sumEdge(rv->_sumEdge), _edges(rv->_edges),
   _elements(rv->_elements), _param(rv->_param), _pos(-1)
-#ifdef REC2D_VERT_ONLY
-  , _sumQualEdge(rv->_sumQualEdge), _sumEdge(rv->_sumEdge),
-  _sumAngle(rv->_sumAngle)
-#endif
 {
-  static int a = -1;
-  if (++a < -1) Msg::Warning("FIXME Edges really necessary ?");
+  rv->hide(false);
   
+  // swap the two vertices in edges
   for (unsigned int i = 0; i < _edges.size(); ++i) {
     _edges[i]->swap(rv, this, false);
   }
-  reveal();
-  
   rv->_edges.clear();
+  
+  // swap the two vertices in actions
+  std::vector<Rec2DAction*> actions;
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    _elements[i]->getMoreUniqueActions(actions);
+  }
+  for (unsigned int i = 0; i < actions.size(); ++i) {
+    if (actions[i]->isRecomb()) actions[i]->swap(rv, this);
+  }
+  rv->_elements.clear();
+  
+  // end
+  reveal();
   delete rv;
 #ifdef REC2D_DRAW
   if (_v)
@@ -3278,16 +3487,14 @@ Rec2DVertex::Rec2DVertex(Rec2DVertex *rv, double ang)
   _lastUpdate = Recombine2D::getNumChange();
 }
 
-void Rec2DVertex::hide()
+void Rec2DVertex::hide(bool check)
 {
-  if (_elements.size() && _edges.size())
+  if (check && _elements.size() && _edges.size())
     Msg::Error("[Rec2DVertex] I have %d elements and %d edges", _elements.size(), _edges.size());
   if (_parity)
     Rec2DData::removeParity(this, _parity);
   
   Rec2DData::rmv(this);
-  if  (_elements.size())
-    Rec2DData::addVertQual(-getQual(), -1);
 }
 
 void Rec2DVertex::reveal()
@@ -3296,25 +3503,6 @@ void Rec2DVertex::reveal()
     Rec2DData::addParity(this, _parity);
   
   Rec2DData::add(this);
-  if  (_elements.size())
-    Rec2DData::addVertQual(getQual(), 1);
-}
-
-bool Rec2DVertex::checkCoherence() const
-{
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    if (!_edges[i]->has(this)) return false;
-    for (unsigned int j = 0; j < i; ++j) {
-      if (_edges[i] == _edges[j]) return false;
-    }
-  }
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    if (!_elements[i]->has(this)) return false;
-    for (unsigned int j = 0; j < i; ++j) {
-      if (_elements[i] == _elements[j]) return false;
-    }
-  }
-  return true;
 }
 
 void Rec2DVertex::initStaticTable()
@@ -3322,13 +3510,13 @@ void Rec2DVertex::initStaticTable()
   // _qualVSnum[onWhat][numEl]; onWhat={0:edge,1:face}
   // _gains[onWhat][numEl];     onWhat={0:edge,1:face} (earning of adding an element)
   if (_qualVSnum == NULL) {
-    int nE = 20, nF = 40; //edge, face
+    int nE = 10, nF = 20; //edge, face
     
     _qualVSnum = new double*[2];
     _qualVSnum[0] = new double[nE];
     _qualVSnum[1] = new double[nF];
-    _qualVSnum[0][0] = -10.;
-    _qualVSnum[1][0] = -10.;
+    _qualVSnum[0][0] = -REC2D_BIG_NUMB;
+    _qualVSnum[1][0] = -REC2D_BIG_NUMB;
     for (int i = 1; i < nE; ++i)
       _qualVSnum[0][i] = 1. - fabs(2./i - 1.);
     for (int i = 1; i < nF; ++i)
@@ -3336,11 +3524,127 @@ void Rec2DVertex::initStaticTable()
       
     _gains = new double*[2];
     _gains[0] = new double[nE-1];
+    _gains[1] = new double[nF-1];
     for (int i = 0; i < nE-1; ++i)
       _gains[0][i] = _qualVSnum[0][i+1] - _qualVSnum[0][i];
-    _gains[1] = new double[nF-1];
     for (int i = 0; i < nF-1; ++i)
       _gains[1][i] = _qualVSnum[1][i+1] - _qualVSnum[1][i];
+  }
+}
+
+void Rec2DVertex::add(const Rec2DEdge *re)
+{
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    if (_edges[i] == re) {
+      Msg::Error("[Rec2DVertex] Edge was already there");
+      return;
+    }
+  }
+  
+  double oldQual = getQual(VertQuality);
+  
+  _edges.push_back(const_cast<Rec2DEdge*>(re));
+  _sumQualEdge += re->getWeightedQual();
+  _sumEdge += re->getWeight();
+  _lastUpdate = Recombine2D::getNumChange();
+  
+  Rec2DData::updateVertQual(getQual(VertQuality)-oldQual, VertQuality);
+}
+
+bool Rec2DVertex::has(const Rec2DEdge *re) const
+{
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    if (_edges[i] == re) return true;
+  }
+  return false;
+}
+
+void Rec2DVertex::rmv(const Rec2DEdge *re)
+{
+  unsigned int i = 0;
+  while (i < _edges.size()) {
+    if (_edges[i] == re) {
+      
+      double oldQual = getQual(VertQuality);
+      
+      _edges[i] = _edges.back();
+      _edges.pop_back();
+      _sumQualEdge -= re->getWeightedQual();
+      _sumEdge -= re->getWeight();
+      if (_sumEdge < 0 || _sumQualEdge < -1e12)
+        Msg::Error("[Rec2DVertex] Negative sum edge");
+      _lastUpdate = Recombine2D::getNumChange();
+      
+      Rec2DData::updateVertQual(getQual(VertQuality)-oldQual, VertQuality);
+      return;
+    }
+    ++i;
+  }
+  Msg::Error("[Rec2DVertex] Didn't removed edge, don't have it");
+}
+
+void Rec2DVertex::add(const Rec2DElement *rel)
+{
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    if (_elements[i] == rel) {
+      Msg::Error("[Rec2DVertex] Element was already there");
+      return;
+    }
+  }
+  
+  double oldQual1 = getQual(VertQuality);
+  double oldQual2 = getQual(VertEdgeQuality);
+  
+  _elements.push_back(const_cast<Rec2DElement*>(rel));
+  _sumAngle += rel->getAngleWeight();
+  _sumQualAngle += rel->getWeightedAngleQual(this);
+  _lastUpdate = Recombine2D::getNumChange();
+  
+  Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
+  Rec2DData::updateVertQual(getQual(VertEdgeQuality)-oldQual2, VertEdgeQuality);
+}
+
+bool Rec2DVertex::has(const Rec2DElement *rel) const
+{
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    if (_elements[i] == rel)
+      return true;
+  }
+  return false;
+}
+
+void Rec2DVertex::rmv(const Rec2DElement *rel)
+{
+  unsigned int i = 0;
+  while (i < _elements.size()) {
+    if (_elements[i] == rel) {
+      
+      double oldQual1 = getQual(VertQuality);
+      double oldQual2 = getQual(VertEdgeQuality);
+      
+      _elements[i] = _elements.back();
+      _elements.pop_back();
+      _sumAngle -= _elements[i]->getAngleWeight();
+      _sumQualAngle -= _elements[i]->getWeightedAngleQual(this);
+      _lastUpdate = Recombine2D::getNumChange();
+      
+      Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
+      Rec2DData::updateVertQual(getQual(VertEdgeQuality)-oldQual2, VertEdgeQuality);
+      return;
+    }
+    ++i;
+  }
+  Msg::Error("[Rec2DVertex] Didn't removed element, didn't have it");
+}
+
+void Rec2DVertex::getMoreUniqueEdges(std::vector<Rec2DEdge*> &edges) const
+{
+  unsigned int size = edges.size();
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    unsigned int j = -1;
+    while (++j < size && edges[j] != _edges[i]);
+    if (j == size)
+      edges.push_back(_edges[i]);
   }
 }
 
@@ -3355,6 +3659,12 @@ Rec2DEdge* Rec2DVertex::getCommonEdge(const Rec2DVertex *rv0,
   return NULL;
 }
 
+void Rec2DVertex::getMoreNeighbourVertices(std::vector<Rec2DVertex*> &verts) const
+{
+  for (unsigned int i = 0; i < _edges.size(); ++i)
+    verts.push_back(_edges[i]->getOtherVertex(this));
+}
+
 void Rec2DVertex::getCommonElements(const Rec2DVertex *rv0,
                                     const Rec2DVertex *rv1,
                                     std::vector<Rec2DElement*> &elem)
@@ -3363,6 +3673,62 @@ void Rec2DVertex::getCommonElements(const Rec2DVertex *rv0,
     if (rv1->has(rv0->_elements[i]))
       elem.push_back(rv0->_elements[i]);
   }
+}
+
+void Rec2DVertex::getMoreUniqueActions(std::vector<Rec2DAction*> &actions) const
+{
+  std::vector<Rec2DAction*> actions2;
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    _elements[i]->getMoreUniqueActions(actions2);
+  }
+  int size = (int)actions.size();
+  for (unsigned int i = 0; i < actions2.size(); ++i) {
+    int j = -1;
+    while (++j < size && actions2[i] != actions[j]);
+    if (j == size) actions.push_back(actions2[i]);
+  }
+}
+
+void Rec2DVertex::setOnBoundary()
+{
+  if (_onWhat > 0) {
+    double oldQual = getQual();
+    _onWhat = 0;
+    Rec2DData::addVertQual(getQual()-oldQual);
+    _lastUpdate = Recombine2D::getNumChange();
+  }
+}
+
+void Rec2DVertex::setParity(int p, bool tree)
+{
+  if (_parity && !tree) {
+    //Msg::Warning("[Rec2DVertex] I don't like to do it. Think about that !");
+    Rec2DData::removeParity(this, _parity);
+  }
+  
+  if ((_parity = p))
+    Rec2DData::addParity(this, _parity);
+#ifdef REC2D_DRAW
+  if (_v)
+    _v->setIndex(_parity);
+    //_v->setIndex(_onWhat);
+#endif
+}
+
+void Rec2DVertex::setParityWD(int pOld, int pNew)
+{
+  static int a = -1;
+  if (++a < 1)
+    Msg::Warning("FIXME puis-je rendre fonction utilisable uniquement par recdata ?");
+  if (pOld != _parity)
+    Msg::Error("[Rec2DVertex] Old parity was not correct");
+  _parity = pNew;
+  
+#ifdef REC2D_DRAW
+  if (_v)
+    _v->setIndex(_parity);
+    //_v->setIndex(_onWhat);
+#endif
 }
 
 bool Rec2DVertex::setBoundaryParity(int p0, int p1)
@@ -3386,6 +3752,310 @@ bool Rec2DVertex::setBoundaryParity(int p0, int p1)
     return nextRV->_recursiveBoundParity(this, p1, p0); // alternate parity
   Msg::Error("[Rec2DVertex] Have I really to say that I didn't find neighbouring vertex ?");
   return false;
+}
+
+double Rec2DVertex::getQualDegree(int numEl) const
+{
+  int nEl = numEl > -1 ? numEl : _elements.size();
+  if (nEl == 0) return -REC2D_BIG_NUMB;
+  if (_onWhat > -1) return _qualVSnum[_onWhat][nEl];
+  return std::max(1. - fabs(2./M_PI * _angle/nEl - 1.), .0);
+}
+
+double Rec2DVertex::getGainDegree(int n) const
+{
+  if (!n)
+    return .0;
+  int numElem = (int)_elements.size();
+  if (numElem + n < 0) {
+    Msg::Error("[Rec2DVertex] gain for %d elements not available",
+               numElem + n                             );
+    return .0;
+  }
+  
+  if (_onWhat > -1) {
+    switch (n) {
+      case 1 :
+        return _gains[_onWhat][numElem];
+      case -1 :
+        return - _gains[_onWhat][numElem-1];
+      default :
+        return _qualVSnum[_onWhat][numElem+n]
+               - _qualVSnum[_onWhat][numElem-1];
+    }
+  }
+  
+  if (numElem == 0) {
+    Msg::Error("[Rec2DVertex] I don't want this anymore !");
+    return 11. - fabs(2./M_PI * _angle/(double)(numElem + n) - 1.);
+  }
+  
+  if (numElem + n == 0) {
+    Msg::Error("[Rec2DVertex] I don't want this anymore !");
+    return fabs(2./M_PI * _angle/(double)numElem - 1.) - 11.;
+  }
+  
+  return fabs(2./M_PI * _angle/(double)numElem - 1.)
+         - fabs(2./M_PI * _angle/(double)(numElem + n) - 1.);
+}
+
+double Rec2DVertex::getQual(Rec2DQualCrit crit) const
+{
+  if (crit < 0)
+    crit = Recombine2D::getQualCrit();
+  
+  switch (crit) {
+    case VertQuality :
+      return _qualVert() * _WAQualEdges();
+    
+    case VertEdgeQuality :
+      return _qualVert();
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
+  }
+  return -1.;
+}
+
+#ifdef REC2D_VERT_ONLY
+double Rec2DVertex::getQual(Rec2DQualCrit crit, double waQualAngles,
+                            double waQualEdges, int numElem) const
+{
+  if (crit < 0)
+    crit = Recombine2D::getQualCrit();
+    
+  static int a = -1;
+  if (++a < 1) Msg::Warning("FIXME NoCrit==-2, ChoosedCrit==-1");
+  
+  switch (crit) {
+    case VertQuality :
+      return _vertQual(_qualDegree(numElem), waQualAngles) * waQualEdges;
+    
+    case VertEdgeQuality :
+      return _vertQual(_qualDegree(numElem), waQualAngles);
+    
+    default :
+      Msg::Error("[Rec2DData] Unknown quality criterion");
+  }
+  return -1.;
+}
+
+double Rec2DVertex::vertQual_getGainQuad(const Rec2DElement *rel,
+                                         const Rec2DEdge *re0,
+                                         const Rec2DEdge *re1    ) const
+{
+  double wa = Recombine2D::getWeightAngleQuad()
+             - Recombine2D::getWeightAngleTri();
+  double wq = Recombine2D::getWeightEdgeQuad();
+  
+  double qualAngle = _sumQualAngle + wa * rel->getAngleQual(this) ;
+  int sumAngle = _sumAngle + wa;
+  
+  double qualEdge = _sumQualEdge + wq * re0->getQual() + wq * re1->getQual();
+  int sumEdge = _sumEdge + 2*wq;
+  
+  return getQual(sumAngle, qualAngle, sumEdge, qualEdge,
+                 (int)_elements.size()                  ) - getQual();
+}
+double Rec2DVertex::vertQual_getGainTriLess(const Rec2DEdge *re) const
+{
+  return getQual(_sumAngle - Recombine2D::getWeightAngleTri(), _sumQualAngle - quelquechose?,
+                 _sumEdge - Recombine2D::getWeightEdgeBase(),
+                 _sumQualEdge - re->getQual(),
+                 (int)_elements.size() - 1)
+         - getQual();
+}
+
+double Rec2DVertex::getGainRecomb(Rec2DQualCrit crit
+                                  const Rec2DElement *rel1,
+                                  const Rec2DElement *rel2,
+                                  const Rec2DEdge *re0,
+                                  const Rec2DEdge *re1,
+                                  const Rec2DEdge *re2     ) const
+{
+  if (rel1->isQuad() || rel2->isQuad()) {
+    Msg::Error("[Rec2DVertex] Cannot compute gain of recombination if elements aren't triangles");
+    return -1.;
+  }
+  
+  if (crit == BlossomQuality) return .0;
+  if (crit < 0) {
+    Msg::Warning("[Rec2DVertex] Give me another criterion please.");
+  }
+  
+  double swQualAngle = _sumWQualAngle, swQualEdge = _sumWQualEdge;
+  int swAngle = _sumWeightAngle, swEdge = _sumWeightEdge;
+  
+  double wat = Recombine2D::getWeightAngleTri(),
+         waq = Recombine2D::getWeightAngleQuad(),
+         weq = Recombine2D::getWeightEdgeQuad(),
+         web = Recombine2D::getWeightEdgeBase();
+  
+  swQualAngle -= wat * rel1->getAngleQual(this);
+  swQualAngle -= wat * rel2->getAngleQual(this);
+  swQualAngle += waq * Recombine2D::angle2qual(rel1->getAngle(this)
+                                             + rel2->getAngle(this));
+  swAngle += waq - 2 * wat;
+  
+  if (re2) {
+    swQualEdge -= web * re0->getQual();
+    swQualEdge += weq * re1->getQual();
+    swQualEdge += weq * re2->getQual();
+    swEdge += 2 * weq - web;
+  }
+  
+  return getQual(swAngle, swQualAngle, swEdge, swQualEdge,
+                 static_cast<int>(_elements.size())-1, crit)
+         - getQual(crit);
+         
+  vérifier que c''est bien ce qui est demandé ! (renvoie bien ce que veux apply, compute reward, ...)
+}
+
+void Rec2DVertex::vertQual_addEdgeQual(double val, int num)
+{
+  double oldQual = .0;
+  if (_elements.size())
+    oldQual = getQual();
+  _sumQualEdge += val;
+  _sumEdge += num;
+  if (_sumEdge < 0 || _sumQualEdge < -1e12)
+    Msg::Error("[Rec2DVertex] Negative sum edge");
+  if (_elements.size())
+    Rec2DData::addSumVert(getQual()-oldQual);
+  _lastUpdate = Recombine2D::getNumChange();
+}
+
+double Rec2DVertex::vertQual_getGainMerge(const Rec2DVertex *rv,
+                                          const Rec2DEdge *const*edges, int nEdges) const
+{
+  int sumAngle = 0;
+  double sumQualAngle = .0;
+  int *numAngle = new int[_elements.size()];
+  double *qualAngle = new double[_elements.size()];
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    numAngle[i] = _elements[i]->getAngleWeight();
+    qualAngle[i] = _elements[i]->getWeightedAngleQual(this);
+  }
+  for (unsigned int i = 0; i < rv->_elements.size(); ++i) {
+    unsigned int j = 0;
+    while (j < _elements.size() && _elements[j] != rv->_elements[i]) ++j;
+    if (j >= _elements.size()) {
+      sumAngle += rv->_elements[i]->getAngleWeight();
+      sumQualAngle += rv->_elements[i]->getWeightedAngleQual(rv);
+    }
+    else {
+      numAngle[j] = 0;
+      qualAngle[j] = .0;
+    }
+  }
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    sumAngle += numAngle[i];
+    sumQualAngle += qualAngle[i];
+  }
+  int numElem = _elements.size() + rv->_elements.size() - 4;
+  
+  int sumEdge = 0;
+  double sumQualEdge = .0;
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    sumEdge += _edges[i]->getWeight();
+    sumQualEdge += _edges[i]->getWeightedQual();
+  }
+  for (unsigned int i = 0; i < rv->_edges.size(); ++i) {
+    sumEdge += rv->_edges[i]->getWeight();
+    sumQualEdge += rv->_edges[i]->getWeightedQual();
+  }
+  for (int i = 0; i < nEdges; ++i) {
+    sumEdge -= Recombine2D::getWeightEdgeBase();
+    sumQualEdge -= Recombine2D::getWeightEdgeBase() * edges[i]->getQual();
+  }
+  
+  return Rec2DVertex::getQual(sumAngle, sumQualAngle,
+                              sumEdge, sumQualEdge, numElem)
+         - getQual() - rv->getQual()                        ;
+}
+//#else
+double Rec2DVertex::vertEdgeQual_getGainOneElemLess() const
+{here element size instead of weight
+  return getGainDegree(-1) + _sumQualAngle / (_elements.size()-1) - _qualAngle();
+}
+
+double Rec2DVertex::vertEdgeQual_getGainMerge(const Rec2DVertex *rv) const
+{
+  double ans = .0, sumQualAngle = .0
+  int sumAngle = 0;
+  ans -= getQual();
+  ans -= rv->getQual();
+  double *qualAngle = new double[_elements.size()];
+  int *angleWeight = new int[_elements.size()];
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    qualAngle[i] = _elements[i]->getWeightedAngleQual(this);
+    angleWeight[i] = _elements[i]->getAngleWeight(this);
+  }
+  for (unsigned int i = 0; i < rv->_elements.size(); ++i) {
+    unsigned int j = 0;
+    while (j < _elements.size() && _elements[j] != rv->_elements[i]) ++j;
+    if (j >= _elements.size()) {
+      sumQualAngle += rv->_elements[i]->getWeightedAngleQual(rv);
+      sumAngle += rv->_elements[i]->getAngleWeight(rv);
+    }
+    else {
+      qualAngle[j] = .0;
+      angleWeight[j] = 0;
+    }
+  }
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    sumQualAngle += qualAngle[i];
+    sumAngle += angleWeight[i];
+  }
+  
+  ans += getQualDegree(numElem) + sumQualAngle / sumAngle;
+  return ans;
+}
+
+#endif
+void Rec2DVertex::relocate(SPoint2 p)
+{
+  _param = p;
+  GPoint gpt = Recombine2D::getGFace()->point(p);
+  _v->x() = gpt.x();
+  _v->y() = gpt.y();
+  _v->z() = gpt.z();
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    _edges[i]->updateQual();
+    _edges[i]->getOtherVertex(this)->_updateQualAngle();
+  }
+  _updateQualAngle();
+}
+
+bool Rec2DVertex::checkCoherence() const
+{
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    if (!_edges[i]->has(this)) return false;
+    for (unsigned int j = 0; j < i; ++j) {
+      if (_edges[i] == _edges[j]) return false;
+    }
+  }
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    if (!_elements[i]->has(this)) return false;
+    for (unsigned int j = 0; j < i; ++j) {
+      if (_elements[i] == _elements[j]) return false;
+    }
+  }
+  return true;
+}
+
+void Rec2DVertex::printElem() const
+{
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    Msg::Info("%d - %d", i, _elements[i]->getNum());
+  }
+}
+
+void Rec2DVertex::printQual() const
+{
+  Msg::Info("d:%g, a:%g, e:%g (sa:%d, se:%d)",
+            getQualDegree(), _sumQualAngle/_sumAngle, _sumQualEdge / _sumEdge,
+            _sumAngle, _sumEdge);
 }
 
 bool Rec2DVertex::_recursiveBoundParity(const Rec2DVertex *prevRV, int p0, int p1)
@@ -3414,488 +4084,21 @@ bool Rec2DVertex::_recursiveBoundParity(const Rec2DVertex *prevRV, int p0, int p
   return false;
 }
 
-void Rec2DVertex::setOnBoundary()
-{
-  if (_onWhat > 0) {
-    double oldQual = getQual();
-    _onWhat = 0;
-    Rec2DData::addVertQual(getQual()-oldQual);
-    _lastUpdate = Recombine2D::getNumChange();
-  }
-}
-
-void Rec2DVertex::setParity(int p, bool tree)
-{
-  if (_parity && !tree) {
-    //Msg::Warning("[Rec2DVertex] I don't like to do it. Think about that !");
-    Rec2DData::removeParity(this, _parity);
-  }
-  
-  if ((_parity = p))
-    Rec2DData::addParity(this, _parity);
-#ifdef REC2D_DRAW
-  if (_v)
-    //_v->setIndex(_parity);
-    _v->setIndex(_onWhat);
-#endif
-}
-
-void Rec2DVertex::setParityWD(int pOld, int pNew)
-{
-  static int a = -1;
-  if (++a < 1)
-    Msg::Warning("FIXME puis-je rendre fonction utilisable uniquement par recdata ?");
-  if (pOld != _parity)
-    Msg::Error("[Rec2DVertex] Old parity was not correct");
-  _parity = pNew;
-  
-#ifdef REC2D_DRAW
-  if (_v)
-    _v->setIndex(_parity);
-    //_v->setIndex(_onWhat);
-#endif
-}
-
-void Rec2DVertex::relocate(SPoint2 p)
-{
-  _param = p;
-  GPoint gpt = Recombine2D::getGFace()->point(p);
-  _v->x() = gpt.x();
-  _v->y() = gpt.y();
-  _v->z() = gpt.z();
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    _edges[i]->updateQual();
-    _edges[i]->getOtherVertex(this)->_updateQualAngle();
-  }
-  _updateQualAngle();
-}
-
 void Rec2DVertex::_updateQualAngle()
 {
-  double oldQual = getQual();
+  double oldQual1 = getQual(VertQuality);
+  double oldQual2 = getQual(VertEdgeQuality);
+  
   _sumQualAngle = .0;
-#ifdef REC2D_VERT_ONLY
   _sumAngle = 0;
-#endif
   for (unsigned int i = 0; i < _elements.size(); ++i) {
-#ifdef REC2D_VERT_ONLY
-    int n = _elements[i]->getAngleNb();
-    _sumAngle += n;
-    _sumQualAngle += n * _angle2Qual(_elements[i]->getAngle(this));
-#else
-    _sumQualAngle += _angle2Qual(_elements[i]->getAngle(this));
-#endif
+    _sumAngle += _elements[i]->getAngleWeight();
+    _sumQualAngle += _elements[i]->getWeightedAngleQual(this);
   }
-  Rec2DData::addVertQual(getQual()-oldQual);
   _lastUpdate = Recombine2D::getNumChange();
-}
-
-//void Rec2DVertex::getMoreTriangles(std::set<Rec2DElement*> &tri) const
-//{
-//  for (unsigned int i = 0; i < _elements.size(); ++i) {
-//    if (_elements[i]->isTri())
-//      tri.insert(_elements[i]);
-//  }
-//}
-
-void Rec2DVertex::getMoreNeighbourVertices(std::vector<Rec2DVertex*> &verts) const
-{
-  for (unsigned int i = 0; i < _edges.size(); ++i)
-    verts.push_back(_edges[i]->getOtherVertex(this));
-}
-
-void Rec2DVertex::getMoreUniqueEdges(std::vector<Rec2DEdge*> &edges) const
-{
-  unsigned int size = edges.size();
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    unsigned int j = -1;
-    while (++j < size && edges[j] != _edges[i]);
-    if (j == size)
-      edges.push_back(_edges[i]);
-  }
-}
-
-double Rec2DVertex::getQualDegree(int numEl) const
-{
-  int nEl = numEl > -1 ? numEl : _elements.size();
-  if (_onWhat > -1)
-    return _qualVSnum[_onWhat][nEl];
-  if (nEl == 0) {
-    Msg::Error("[Rec2DVertex] I don't want this anymore !");
-    __crash();
-    return -10.;
-  }
-  return std::max(1. - fabs(2./M_PI * _angle/(double)nEl - 1.), .0);
-}
-
-#ifdef REC2D_VERT_ONLY
-double Rec2DVertex::getQual() const
-{
-#ifdef REC2D_ONLY_RECO  
-  return _sumQualAngle/_sumAngle;
-#else
-  double qual = getQualDegree();
-  qual =   (REC2D_COEF_ANGL + REC2D_COEF_ANDE*qual) * _sumQualAngle/_sumAngle
-         + REC2D_COEF_DEGR * qual                                            ;
-  return qual * _sumQualEdge / _sumEdge;
-#endif
-}
-
-void Rec2DVertex::printQual() const
-{
-  Msg::Info("d:%g, a:%g, e:%g (sa:%d, se:%d)",
-            getQualDegree(), _sumQualAngle/_sumAngle, _sumQualEdge / _sumEdge,
-            _sumAngle, _sumEdge);
-}
-
-double Rec2DVertex::getQual(int numAngl, double valAngl,
-                            int numEdge, double valEdge, int numElem) const
-{
-#ifdef REC2D_ONLY_RECO
-  return valAngl / numAngl;
-#else
-  double qual = getQualDegree(numElem);
-  qual =   (REC2D_COEF_ANGL + REC2D_COEF_ANDE*qual) * valAngl / numAngl
-         + REC2D_COEF_DEGR * qual                                      ;
-  return qual * valEdge / numEdge;
-#endif
-}
-
-void Rec2DVertex::addEdgeQual(double val, int num)
-{
-  double oldQual = .0;
-  if (_elements.size())
-    oldQual = getQual();
-  _sumQualEdge += val;
-  _sumEdge += num;
-  if (_sumEdge < 0 || _sumQualEdge < -1e12)
-    Msg::Error("[Rec2DVertex] Negative sum edge");
-  if (_elements.size())
-    Rec2DData::addVertQual(getQual()-oldQual);
-  _lastUpdate = Recombine2D::getNumChange();
-}
-
-double Rec2DVertex::getGainQuad(const Rec2DElement *rel,
-                                const Rec2DEdge *re0,
-                                const Rec2DEdge *re1    ) const
-{
-  double qualAngle = _sumQualAngle
-                     + (REC2D_VERT_QUAD - REC2D_VERT_TRIA)
-                       * _angle2Qual(rel->getAngle(this)) ;
-  int sumAngle = _sumAngle + REC2D_VERT_QUAD - REC2D_VERT_TRIA;
-  double qualEdge = _sumQualEdge
-                    + REC2D_EDGE_QUAD * re0->getQual()
-                    + REC2D_EDGE_QUAD * re1->getQual();
-  int sumEdge = _sumEdge + 2 * REC2D_EDGE_QUAD;
   
-  return getQual(sumAngle, qualAngle, sumEdge, qualEdge,
-                 (int)_elements.size()                  ) - getQual();
-}
-#endif
-
-double Rec2DVertex::getGainDegree(int n) const
-{
-  if (!n)
-    return .0;
-  if (_elements.size() + n < 0) {
-    Msg::Error("[Rec2DVertex] gain for %d elements unavailable",
-               _elements.size() + n                             );
-    return .0;
-  }
-  
-  if (_onWhat > -1) {
-    switch (n) {
-      case 1 :
-        return _gains[_onWhat][_elements.size()];
-      case -1 :
-        return - _gains[_onWhat][_elements.size()-1];
-      default :
-        return _qualVSnum[_onWhat][_elements.size()+n]
-               - _qualVSnum[_onWhat][_elements.size()-1];
-    }
-  }
-  
-  if (_elements.size() == 0) {
-    Msg::Error("[Rec2DVertex] I don't want this anymore !");
-    return 11. - fabs(2./M_PI * _angle/(double)(_elements.size() + n) - 1.);
-  }
-  
-  if (_elements.size() + n == 0) {
-    Msg::Error("[Rec2DVertex] I don't want this anymore !");
-    return fabs(2./M_PI * _angle/(double)_elements.size() - 1.) - 11.;
-  }
-  
-  return fabs(2./M_PI * _angle/(double)_elements.size() - 1.)
-         - fabs(2./M_PI * _angle/(double)(_elements.size() + n) - 1.);
-}
-
-#ifdef REC2D_VERT_ONLY
-double Rec2DVertex::getGainRecomb(const Rec2DElement *rel1,
-                                  const Rec2DElement *rel2,
-                                  const Rec2DEdge *re0,
-                                  const Rec2DEdge *re1,
-                                  const Rec2DEdge *re2     ) const
-{
-  double qualAngle = _sumQualAngle, qualEdge = _sumQualEdge;
-  int sumAngle = _sumAngle, sumEdge = _sumEdge;
-  
-  qualAngle -= REC2D_VERT_TRIA * _angle2Qual(rel1->getAngle(this));
-  qualAngle -= REC2D_VERT_TRIA * _angle2Qual(rel2->getAngle(this));
-  qualAngle += REC2D_VERT_QUAD * (_angle2Qual(rel1->getAngle(this) +
-                                              rel2->getAngle(this)  ));
-  sumAngle += REC2D_VERT_QUAD - 2 * REC2D_VERT_TRIA;
-  qualEdge -= re0->getWeightedQual();
-  qualEdge += REC2D_EDGE_QUAD * re1->getQual();
-  qualEdge += REC2D_EDGE_QUAD * re2->getQual();
-  sumEdge += 2 * REC2D_EDGE_QUAD - REC2D_EDGE_BASE;
-  
-  return getQual(sumAngle, qualAngle, sumEdge, qualEdge,
-                 (int)_elements.size()-1                ) - getQual();
-}
-
-double Rec2DVertex::getGainTriLess(const Rec2DEdge *re) const
-{
-  return getQual(_sumAngle - REC2D_VERT_TRIA, _sumQualAngle,
-                 _sumEdge - REC2D_EDGE_BASE, _sumQualEdge - re->getQual(),
-                 (int)_elements.size() - 1)
-         - getQual();
-}
-
-double Rec2DVertex::getGainMerge(const Rec2DVertex *rv,
-                                 const Rec2DEdge *const*edges, int nEdges) const
-{
-  int sumAngle = 0;
-  double sumQualAngle = .0;
-  int *numAngle = new int[_elements.size()];
-  double *qualAngle = new double[_elements.size()];
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    int n = _elements[i]->getAngleNb();
-    numAngle[i] = n;
-    qualAngle[i] = n * _angle2Qual(_elements[i]->getAngle(this));
-  }
-  for (unsigned int i = 0; i < rv->_elements.size(); ++i) {
-    unsigned int j = 0;
-    while (j < _elements.size() && _elements[j] != rv->_elements[i]) ++j;
-    if (j >= _elements.size()) {
-      int n = rv->_elements[i]->getAngleNb();
-      sumAngle += n;
-      sumQualAngle += n * _angle2Qual(rv->_elements[i]->getAngle(rv));
-    }
-    else {
-      numAngle[j] = 0;
-      qualAngle[j] = .0;
-    }
-  }
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    sumAngle += numAngle[i];
-    sumQualAngle += qualAngle[i];
-  }
-  int numElem = _elements.size() + rv->_elements.size() - 4;
-  
-  int sumEdge = 0;
-  double sumQualEdge = .0;
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    sumEdge += _edges[i]->getWeight();
-    sumQualEdge += _edges[i]->getWeightedQual();
-  }
-  for (unsigned int i = 0; i < rv->_edges.size(); ++i) {
-    sumEdge += rv->_edges[i]->getWeight();
-    sumQualEdge += rv->_edges[i]->getWeightedQual();
-  }
-  for (int i = 0; i < nEdges; ++i) {
-    sumEdge -= REC2D_EDGE_BASE;
-    sumQualEdge -= REC2D_EDGE_BASE * edges[i]->getQual();
-  }
-  
-  return Rec2DVertex::getQual(sumAngle, sumQualAngle,
-                              sumEdge, sumQualEdge, numElem)
-         - getQual() - rv->getQual()                        ;
-}
-#else
-double Rec2DVertex::getGainRecomb(const Rec2DElement *rel1,
-                                  const Rec2DElement *rel2 ) const
-{
-  double qualAngle = _sumQualAngle;
-  qualAngle -= _angle2Qual(rel1->getAngle(this));
-  qualAngle -= _angle2Qual(rel2->getAngle(this));
-  qualAngle += _angle2Qual(rel1->getAngle(this) + rel2->getAngle(this));
-  
-  return qualAngle / (_elements.size()-1) - getQualAngle() + getGainDegree(-1);
-}
-
-double Rec2DVertex::getGainOneElemLess() const
-{
-  return getGainDegree(-1) + _sumQualAngle / (_elements.size()-1) - getQualAngle();
-}
-
-double Rec2DVertex::getGainMerge(const Rec2DVertex *rv) const
-{
-  double ans = .0, sumQualAngle = .0;
-  ans -= getQual();
-  ans -= rv->getQual();
-  double *qualAngle = new double[_elements.size()];
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    qualAngle[i] = _angle2Qual(_elements[i]->getAngle(this));
-  }
-  for (unsigned int i = 0; i < rv->_elements.size(); ++i) {
-    unsigned int j = 0;
-    while (j < _elements.size() && _elements[j] != rv->_elements[i]) ++j;
-    if (j >= _elements.size())
-      sumQualAngle += _angle2Qual(rv->_elements[i]->getAngle(rv));
-    else
-      qualAngle[j] = .0;
-  }
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    sumQualAngle += qualAngle[i];
-  }
-  int numElem = _elements.size() + rv->_elements.size() - 4;
-  ans += getQualDegree(numElem) + sumQualAngle / numElem;
-  return ans;
-}
-#endif
-
-void Rec2DVertex::add(const Rec2DEdge *re)
-{
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    if (_edges[i] == re) {
-      Msg::Error("[Rec2DVertex] Edge was already there");
-      return;
-    }
-  }
-#ifdef REC2D_VERT_ONLY
-  double oldQual = .0;
-  if (_elements.size())
-    oldQual = getQual();
-#endif
-  _edges.push_back((Rec2DEdge*)re);
-#ifdef REC2D_VERT_ONLY
-  _sumQualEdge += re->getWeightedQual();
-  _sumEdge += re->getWeight();
-  if (_elements.size())
-    Rec2DData::addVertQual(getQual()-oldQual);
-  _lastUpdate = Recombine2D::getNumChange();
-#endif
-}
-
-bool Rec2DVertex::has(const Rec2DEdge *re) const
-{
-  for (unsigned int i = 0; i < _edges.size(); ++i) {
-    if (_edges[i] == re)
-      return true;
-  }
-  return false;
-}
-
-void Rec2DVertex::rmv(const Rec2DEdge *re)
-{
-  unsigned int i = 0;
-  while (i < _edges.size()) {
-    if (_edges[i] == re) {
-#ifdef REC2D_VERT_ONLY
-      double oldQual = .0;
-      if (_elements.size())
-        oldQual = getQual();
-#endif
-      _edges[i] = _edges.back();
-      _edges.pop_back();
-#ifdef REC2D_VERT_ONLY
-      _sumQualEdge -= re->getWeightedQual();
-      _sumEdge -= re->getWeight();
-      if (_sumEdge < 0 || _sumQualEdge < -1e12)
-        Msg::Error("[Rec2DVertex] Negative sum edge");
-      if (_elements.size())
-        Rec2DData::addVertQual(getQual()-oldQual);
-      _lastUpdate = Recombine2D::getNumChange();
-#endif
-      return;
-    }
-    ++i;
-  }
-  Msg::Error("[Rec2DVertex] Didn't removed edge, didn't have it");
-}
-
-void Rec2DVertex::add(const Rec2DElement *rel)
-{
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    if (_elements[i] == rel) {
-      Msg::Error("[Rec2DVertex] Element was already there");
-      return;
-    }
-  }
-  double oldQual = .0;
-  if (_elements.size())
-    oldQual = getQual();
-  
-  _elements.push_back((Rec2DElement*)rel);
-#ifdef REC2D_VERT_ONLY
-  _sumAngle += rel->getAngleNb();
-  _sumQualAngle += rel->getAngleNb() * _angle2Qual(rel->getAngle(this));
-#else
-  _sumQualAngle += _angle2Qual(rel->getAngle(this));
-#endif
-  if (_elements.size() == 1)
-    Rec2DData::addVertQual(getQual(), 1);
-  else
-    Rec2DData::addVertQual(getQual()-oldQual);
-  _lastUpdate = Recombine2D::getNumChange();
-}
-
-bool Rec2DVertex::has(const Rec2DElement *rel) const
-{
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    if (_elements[i] == rel)
-      return true;
-  }
-  return false;
-}
-
-void Rec2DVertex::rmv(const Rec2DElement *rel)
-{
-  unsigned int i = 0;
-  while (i < _elements.size()) {
-    if (_elements[i] == rel) {
-      double oldQual = getQual();
-#ifdef REC2D_VERT_ONLY
-      double n = _elements[i]->getAngleNb();
-      _sumAngle -= n;
-      _sumQualAngle -= n * _angle2Qual(_elements[i]->getAngle(this));
-#else
-      _sumQualAngle -= _angle2Qual(_elements[i]->getAngle(this));
-#endif
-      _elements[i] = _elements.back();
-      _elements.pop_back();
-      
-      if (_elements.size())
-        Rec2DData::addVertQual(getQual()-oldQual);
-      else
-        Rec2DData::addVertQual(-oldQual, -1);
-      _lastUpdate = Recombine2D::getNumChange();
-      return;
-    }
-    ++i;
-  }
-  Msg::Error("[Rec2DVertex] Didn't removed element, didn't have it");
-}
-
-void Rec2DVertex::printElem() const
-{
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    Msg::Info("%d - %d", i, _elements[i]->getNum());
-  }
-}
-
-void Rec2DVertex::getMoreUniqueActions(std::vector<Rec2DAction*> &actions) const
-{
-  std::vector<Rec2DAction*> actions2;
-  for (unsigned int i = 0; i < _elements.size(); ++i) {
-    _elements[i]->getMoreUniqueActions(actions2);
-  }
-  int size = (int)actions.size();
-  for (unsigned int i = 0; i < actions2.size(); ++i) {
-    int j = -1;
-    while (++j < size && actions2[i] != actions[j]);
-    if (j == size) actions.push_back(actions2[i]);
-  }
+  Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
+  Rec2DData::updateVertQual(getQual(VertEdgeQuality)-oldQual2, VertEdgeQuality);
 }
 
 
@@ -3912,7 +4115,7 @@ Rec2DElement::Rec2DElement(MTriangle *t, const Rec2DEdge **re, Rec2DVertex **rv)
   _elements[3] = NULL;
   
   reveal(rv);
-  if (!edgesInOrder(_edges, 3)) Msg::Error("tri |%d|", getNum());
+  if (!edgesAreInOrder(_edges, 3)) Msg::Error("tri |%d|", getNum());
 }
 
 Rec2DElement::Rec2DElement(MQuadrangle *q, const Rec2DEdge **re, Rec2DVertex **rv)
@@ -3924,7 +4127,7 @@ Rec2DElement::Rec2DElement(MQuadrangle *q, const Rec2DEdge **re, Rec2DVertex **r
     _elements[i] = Rec2DEdge::getTheOnlyElement(_edges[i]);
   
   reveal(rv);
-  if (!edgesInOrder(_edges, 4)) Msg::Error("quad |%d|", getNum());
+  if (!edgesAreInOrder(_edges, 4)) Msg::Error("quad |%d|", getNum());
 }
 
 void Rec2DElement::hide()
@@ -3971,127 +4174,6 @@ void Rec2DElement::reveal(Rec2DVertex **rv)
   Rec2DData::add(this);
 }
 
-bool Rec2DElement::checkCoherence() const
-{
-  Rec2DVertex *v[4], *v0, *v1;
-  v0 = _edges[0]->getVertex(0);
-  v1 = _edges[0]->getVertex(1);
-  if (_edges[1]->getVertex(0) == v0 || _edges[1]->getVertex(1) == v0) {
-    v[0] = v0;
-    if (_edges[1]->getVertex(0) == v0)
-      v[1] = _edges[1]->getVertex(1);
-    else
-      v[1] = _edges[1]->getVertex(0);
-  }
-  else if (_edges[1]->getVertex(0) == v1 || _edges[1]->getVertex(1) == v1) {
-    v[0] = v1;
-    if (_edges[1]->getVertex(0) == v1)
-      v[1] = _edges[1]->getVertex(1);
-    else
-      v[1] = _edges[1]->getVertex(0);
-  }
-  else {
-    Msg::Error("not only %d vertex or edge not in order [1] (im %d)", _numEdge, getNum());
-    for (int i = 0; i < _numEdge; ++i) {
-      _edges[i]->print();
-    }
-    return false;
-  }
-  for (int i = 2; i < _numEdge; ++i) {
-    if (_edges[i]->getVertex(0) == v[i-1])
-      v[i] = _edges[i]->getVertex(1);
-    else if (_edges[i]->getVertex(1) == v[i-1])
-      v[i] = _edges[i]->getVertex(0);
-    else {
-      Msg::Error("not only %d vertex or edge not in order [2] (im %d)", _numEdge, getNum());
-      for (int i = 0; i < _numEdge; ++i) {
-        _edges[i]->print();
-      }
-      return false;
-    }
-  }
-  if (v[0] == v1 && v[_numEdge-1] != v0 || v[0] == v0 && v[_numEdge-1] != v1) {
-    Msg::Error("not only %d vertex or edge not in order [3] (im %d)", _numEdge, getNum());
-    for (int i = 0; i < _numEdge; ++i) {
-      _edges[i]->print();
-    }
-    return false;
-  }
-  
-  for (int i = 1; i < _numEdge; ++i) {
-    for (int j = 0; j < i; ++j) {
-      if (_edges[i] == _edges[j]) return false;
-      if (v[i] == v[j]) return false;
-    }
-  }
-  
-  for (int i = 0; i < _numEdge; ++i) {
-    if (!v[i]->has(this)) {
-      Msg::Error("vertex don't have me (im %d)", getNum());
-      return false;
-    }
-    if (_elements[i] && (!_elements[i]->has(this) || !_elements[i]->has(_edges[i]))) {
-      Msg::Error("does %d know me ? %d / does it know edge ? %d (im %d)",
-                 _elements[i]->getNum(),
-                 _elements[i]->has(this),
-                 _elements[i]->has(_edges[i]),
-                 getNum()                     );
-      return false;
-    }
-  }
-  
-#ifdef REC2D_ONLY_RECO
-  if (_numEdge == 3) {
-    if (_actions.size() == 1 && !Rec2DData::hasHasOneAction(this)) {
-      Msg::Error("Data doesn't know I've only 1 action(im %d)", getNum());
-      return false;
-    }
-    if (_actions.size() == 0 && !Rec2DData::hasHasZeroAction(this)) {
-      Msg::Error("Data doesn't know I've only 0 action(im %d)", getNum());
-      return false;
-    }
-  }
-#endif
-  for (unsigned int i = 0; i < _actions.size(); ++i) {
-    if (!_actions[i]->has(this)) {
-      Msg::Error("action don't have me (im %d)", getNum());
-      return false;
-    }
-  }
-  return true;
-}
-
-bool Rec2DElement::has(const Rec2DVertex *rv) const
-{
-  std::vector<Rec2DVertex*> verts;
-  getVertices(verts);
-  for (unsigned int i = 0; i < verts.size(); ++i)
-    if (verts[i] == rv) return true;
-  return false;
-}
-
-bool Rec2DElement::has(const Rec2DElement *rel) const
-{
-  for (int i = 0; i < _numEdge; ++i)
-    if (_elements[i] == rel) return true;
-  return false;
-}
-
-void Rec2DElement::print() const
-{
-  int num[4];
-  for (int i = 0; i < _numEdge; ++i) {
-    if (_elements[i])
-      num[i] = _elements[i]->getNum();
-    else
-      num[i] = 0;
-  }
-  if (_numEdge == 3)
-    Msg::Info("tri %d - %d %d %d - nRA %d", getNum(), num[0], num[1], num[2], _actions.size());
-  if (_numEdge == 4)
-    Msg::Info("quad %d - %d %d %d %d - nRA %d", getNum(), num[0], num[1], num[2], num[3], _actions.size());
-}
-
 void Rec2DElement::add(Rec2DEdge *re)
 {
   int i;
@@ -4121,60 +4203,20 @@ bool Rec2DElement::has(const Rec2DEdge *re) const
   return false;
 }
 
-void Rec2DElement::add(const Rec2DAction *ra)
+bool Rec2DElement::has(const Rec2DVertex *rv) const
 {
-  for (unsigned int i = 0; i < _actions.size(); ++i) {
-    if (_actions[i] == ra) {
-      Msg::Error("[Rec2DElement] Action was already there");
-      return;
-    }
-  }
-#ifdef REC2D_ONLY_RECO
-  switch (_actions.size()) {
-    case 0 :
-      Rec2DData::addHasOneAction(this);
-      Rec2DData::rmvHasZeroAction(this);
-      break;
-    case 1 :
-      Rec2DData::rmvHasOneAction(this);
-    default :;
-  }
-#endif
-  _actions.push_back((Rec2DAction*)ra);
-}
-
-bool Rec2DElement::has(const Rec2DAction *ra) const
-{
-  for (unsigned int i = 0; i < _actions.size(); ++i) {
-    if (_actions[i] == ra)
-      return true;
-  }
+  std::vector<Rec2DVertex*> verts;
+  getVertices(verts);
+  for (unsigned int i = 0; i < verts.size(); ++i)
+    if (verts[i] == rv) return true;
   return false;
 }
 
-void Rec2DElement::rmv(const Rec2DAction *ra)
+bool Rec2DElement::has(const Rec2DElement *rel) const
 {
-  unsigned int i = 0;
-  while (i < _actions.size()) {
-    if (_actions[i] == ra) {
-#ifdef REC2D_ONLY_RECO
-      switch (_actions.size()) {
-        case 1 :
-          Rec2DData::rmvHasOneAction(this);
-          Rec2DData::addHasZeroAction(this);
-          break;
-        case 2 :
-          Rec2DData::addHasOneAction(this);
-        default :;
-      }
-#endif
-      _actions[i] = _actions.back();
-      _actions.pop_back();
-      return;
-    }
-    ++i;
-  }
-  Msg::Error("[Rec2DElement] Didn't removed action, didn't have it");
+  for (int i = 0; i < _numEdge; ++i)
+    if (_elements[i] == rel) return true;
+  return false;
 }
 
 void Rec2DElement::addNeighbour(const Rec2DEdge *re, const Rec2DElement *rel)
@@ -4224,17 +4266,141 @@ bool Rec2DElement::isNeighbour(const Rec2DEdge *re, const Rec2DElement *rel) con
   return false;
 }
 
-bool Rec2DElement::hasIdenticalNeighbour() const
+void Rec2DElement::add(const Rec2DAction *ra)
 {
-  for (int i = 1; i < _numEdge; ++i) {
-    if (_elements[i]) {
-      for (int j = 0; j < i; ++j) {
-        if (_elements[i] == _elements[j])
-          return true;
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
+    if (_actions[i] == ra) {
+      Msg::Error("[Rec2DElement] Action was already there");
+      return;
+    }
+  }
+  if (Recombine2D::onlyRecombinations()) {
+    switch (_actions.size()) {
+      case 0 :
+        Rec2DData::addHasOneAction(this);
+        Rec2DData::rmvHasZeroAction(this);
+        break;
+      case 1 :
+        Rec2DData::rmvHasOneAction(this);
+      default :;
+    }
+  }
+  _actions.push_back((Rec2DAction*)ra);
+}
+
+void Rec2DElement::rmv(const Rec2DAction *ra)
+{
+  unsigned int i = 0;
+  while (i < _actions.size()) {
+    if (_actions[i] == ra) {
+      if (Recombine2D::onlyRecombinations()) {
+        switch (_actions.size()) {
+          case 1 :
+            Rec2DData::rmvHasOneAction(this);
+            Rec2DData::addHasZeroAction(this);
+            break;
+          case 2 :
+            Rec2DData::addHasOneAction(this);
+          default :;
+        }
+      }
+      _actions[i] = _actions.back();
+      _actions.pop_back();
+      return;
+    }
+    ++i;
+  }
+  Msg::Error("[Rec2DElement] Didn't removed action, didn't have it");
+}
+
+bool Rec2DElement::has(const Rec2DAction *ra) const
+{
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
+    if (_actions[i] == ra)
+      return true;
+  }
+  return false;
+}
+
+Rec2DEdge* Rec2DElement::getCommonEdge(const Rec2DElement *rel0,
+                                       const Rec2DElement *rel1 )
+{
+  bool foundOne = false;
+  for (int i = 0; i < rel0->_numEdge; ++i) {
+    if (rel1->has(rel0->_edges[i])) {
+      if (!foundOne) {
+        return rel0->_edges[i];
+        foundOne = true;
+      }
+      else {
+        Msg::Warning("[Rec2DElement] More than one common edge");
+        return NULL;
       }
     }
   }
-  return false;
+  Msg::Error("[Rec2DElement] didn't find edge, returning NULL");
+  return NULL;
+}
+
+void Rec2DElement::getVertices(std::vector<Rec2DVertex*> &verts) const
+{
+  verts.resize(_numEdge);
+  int i = 0, k = 0;
+  while (k < _numEdge) {
+    verts[k] = _edges[i/2]->getVertex(i%2);
+    bool itsOK = true;
+    for (int j = 0; j < k; ++j) {
+      if (verts[k] == verts[j])
+        itsOK = false;
+    }
+    if (itsOK) {
+      // make sure they are well ordered (edges are ordered)
+      if (k == 2 && _edges[i/2]->getVertex((i+1)%2) == verts[0]) {
+        Rec2DVertex *rv = verts[0];
+        verts[0] = verts[1];
+        verts[1] = rv;
+      }
+      ++k;
+    }
+    ++i;
+  }
+}
+
+Rec2DVertex* Rec2DElement::getOtherVertex(const Rec2DVertex *rv1,
+                                          const Rec2DVertex *rv2 ) const
+{
+  if (_numEdge == 4) {
+    Msg::Error("[Rec2DElement] I'm not a triangle");
+    return NULL;
+  }
+  for (int i = 0; i < 2; ++i) {
+    Rec2DVertex *rv = _edges[i]->getVertex(0);
+    if (rv != rv1 && rv != rv2)
+      return rv;
+    rv = _edges[i]->getVertex(1);
+    if (rv != rv1 && rv != rv2)
+      return rv;
+  }
+  Msg::Error("[Rec2DElement] I should not be here... Why this happen to me ?");
+  return NULL;
+}
+
+void Rec2DElement::getMoreNeighbours(std::vector<Rec2DElement*> &elem) const
+{
+  for (int i = 0; i < _numEdge; ++i) {
+    if (_elements[i]) elem.push_back(_elements[i]);
+  }
+}
+
+void Rec2DElement::getMoreUniqueActions(std::vector<Rec2DAction*> &vectRA) const
+{
+  unsigned int size = vectRA.size();
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
+    unsigned int j = -1;
+    while (++j < size && vectRA[j] != _actions[i]);
+    if (j == size)
+      vectRA.push_back(_actions[i]);
+  }
 }
 
 void Rec2DElement::swap(Rec2DEdge *re1, Rec2DEdge *re2)
@@ -4306,85 +4472,154 @@ double Rec2DElement::getAngle(const Rec2DVertex *rv) const
   return ang;
 }
 
-void Rec2DElement::getVertices(std::vector<Rec2DVertex*> &verts) const
+double Rec2DElement::getAngleQual(const Rec2DVertex *rv) const
 {
-  verts.resize(_numEdge);
-  int i = 0, k = 0;
-  while (k < _numEdge) {
-    verts[k] = _edges[i/2]->getVertex(i%2);
-    bool itsOK = true;
-    for (int j = 0; j < k; ++j) {
-      if (verts[k] == verts[j])
-        itsOK = false;
-    }
-    if (itsOK) {
-      // make sure they are well ordered (edges are ordered)
-      if (k == 2 && _edges[i/2]->getVertex((i+1)%2) == verts[0]) {
-        Rec2DVertex *rv = verts[0];
-        verts[0] = verts[1];
-        verts[1] = rv;
-      }
-      ++k;
-    }
-    ++i;
-  }
-}
-
-void Rec2DElement::getMoreNeighbours(std::vector<Rec2DElement*> &elem) const
-{
+  std::vector<Rec2DVertex*> vert;
+  getVertices(vert);
+  
+  int index = -1;
   for (int i = 0; i < _numEdge; ++i) {
-    if (_elements[i]) elem.push_back(_elements[i]);
+    if (vert[i] == rv) {
+      index = i;
+      break;
+    }
   }
+  if (index == -1) {
+    Msg::Error("[Rec2DElement] I don't have your vertex...");
+    Msg::Info("im %d, this is %d", getNum(), rv->getNum());
+    return -1.;
+  }
+  
+  int i1 = (index+_numEdge-1)%_numEdge;
+  int i0 = (index+1)%_numEdge;
+  double ang =  atan2(vert[i0]->v() - rv->v(), vert[i0]->u() - rv->u())
+                - atan2(vert[i1]->v() - rv->v(), vert[i1]->u() - rv->u());
+  
+  static unsigned int a = 0;
+  if (++a < 2) Msg::Warning("FIXME use real angle instead of parametric angle");
+  
+  if (ang < .0)
+    return ang + 2.*M_PI;
+  return ang;
 }
 
-void Rec2DElement::getMoreUniqueActions(std::vector<Rec2DAction*> &vectRA) const
+bool Rec2DElement::hasIdenticalNeighbour() const
 {
-  unsigned int size = vectRA.size();
-  for (unsigned int i = 0; i < _actions.size(); ++i) {
-    unsigned int j = -1;
-    while (++j < size && vectRA[j] != _actions[i]);
-    if (j == size)
-      vectRA.push_back(_actions[i]);
-  }
-}
-
-Rec2DEdge* Rec2DElement::getCommonEdge(const Rec2DElement *rel0,
-                                       const Rec2DElement *rel1 )
-{
-  bool foundOne = false;
-  for (int i = 0; i < rel0->_numEdge; ++i) {
-    if (rel1->has(rel0->_edges[i])) {
-      if (!foundOne) {
-        return rel0->_edges[i];
-        foundOne = true;
-      }
-      else {
-        Msg::Warning("[Rec2DElement] More than one common edge");
-        return NULL;
+  for (int i = 1; i < _numEdge; ++i) {
+    if (_elements[i]) {
+      for (int j = 0; j < i; ++j) {
+        if (_elements[i] == _elements[j])
+          return true;
       }
     }
   }
-  Msg::Error("[Rec2DElement] didn't find edge, returning NULL");
-  return NULL;
+  return false;
 }
 
-Rec2DVertex* Rec2DElement::getOtherVertex(const Rec2DVertex *rv1,
-                                          const Rec2DVertex *rv2 ) const
+bool Rec2DElement::checkCoherence() const
 {
-  if (_numEdge == 4) {
-    Msg::Error("[Rec2DElement] I'm not a triangle");
-    return NULL;
+  Rec2DVertex *v[4], *v0, *v1;
+  v0 = _edges[0]->getVertex(0);
+  v1 = _edges[0]->getVertex(1);
+  if (_edges[1]->getVertex(0) == v0 || _edges[1]->getVertex(1) == v0) {
+    v[0] = v0;
+    if (_edges[1]->getVertex(0) == v0)
+      v[1] = _edges[1]->getVertex(1);
+    else
+      v[1] = _edges[1]->getVertex(0);
   }
-  for (int i = 0; i < 2; ++i) {
-    Rec2DVertex *rv = _edges[i]->getVertex(0);
-    if (rv != rv1 && rv != rv2)
-      return rv;
-    rv = _edges[i]->getVertex(1);
-    if (rv != rv1 && rv != rv2)
-      return rv;
+  else if (_edges[1]->getVertex(0) == v1 || _edges[1]->getVertex(1) == v1) {
+    v[0] = v1;
+    if (_edges[1]->getVertex(0) == v1)
+      v[1] = _edges[1]->getVertex(1);
+    else
+      v[1] = _edges[1]->getVertex(0);
   }
-  Msg::Error("[Rec2DElement] I should not be here... Why this happen to me ?");
-  return NULL;
+  else {
+    Msg::Error("not only %d vertex or edge not in order [1] (im %d)", _numEdge, getNum());
+    for (int i = 0; i < _numEdge; ++i) {
+      _edges[i]->print();
+    }
+    return false;
+  }
+  for (int i = 2; i < _numEdge; ++i) {
+    if (_edges[i]->getVertex(0) == v[i-1])
+      v[i] = _edges[i]->getVertex(1);
+    else if (_edges[i]->getVertex(1) == v[i-1])
+      v[i] = _edges[i]->getVertex(0);
+    else {
+      Msg::Error("not only %d vertex or edge not in order [2] (im %d)", _numEdge, getNum());
+      for (int i = 0; i < _numEdge; ++i) {
+        _edges[i]->print();
+      }
+      return false;
+    }
+  }
+  if ((v[0] == v1 && v[_numEdge-1] != v0) ||
+      (v[0] == v0 && v[_numEdge-1] != v1)   ) {
+    Msg::Error("not only %d vertex or edge not in order [3] (im %d)", _numEdge, getNum());
+    for (int i = 0; i < _numEdge; ++i) {
+      _edges[i]->print();
+    }
+    return false;
+  }
+  
+  for (int i = 1; i < _numEdge; ++i) {
+    for (int j = 0; j < i; ++j) {
+      if (_edges[i] == _edges[j]) return false;
+      if (v[i] == v[j]) return false;
+    }
+  }
+  
+  for (int i = 0; i < _numEdge; ++i) {
+    if (!v[i]->has(this)) {
+      Msg::Error("vertex don't have me (im %d)", getNum());
+      return false;
+    }
+    if (_elements[i] && (!_elements[i]->has(this) || !_elements[i]->has(_edges[i]))) {
+      Msg::Error("does %d know me ? %d / does it know edge ? %d (im %d)",
+                 _elements[i]->getNum(),
+                 _elements[i]->has(this),
+                 _elements[i]->has(_edges[i]),
+                 getNum()                     );
+      return false;
+    }
+  }
+  
+  if (Recombine2D::onlyRecombinations()) {
+    if (_numEdge == 3) {
+      if (_actions.size() == 1 && !Rec2DData::hasHasOneAction(this)) {
+        Msg::Error("Data doesn't know I've only 1 action(im %d)", getNum());
+        return false;
+      }
+      if (_actions.size() == 0 && !Rec2DData::hasHasZeroAction(this)) {
+        Msg::Error("Data doesn't know I've only 0 action(im %d)", getNum());
+        return false;
+      }
+    }
+  }
+  for (unsigned int i = 0; i < _actions.size(); ++i) {
+    if (!_actions[i]->has(this)) {
+      Msg::Error("action don't have me (im %d)", getNum());
+      return false;
+    }
+  }
+  return true;
+}
+
+void Rec2DElement::print() const
+{
+  int num[4];
+  for (int i = 0; i < _numEdge; ++i) {
+    if (_elements[i])
+      num[i] = _elements[i]->getNum();
+    else
+      num[i] = 0;
+  }
+  if (_numEdge == 3)
+    Msg::Info("tri %d - %d %d %d - nRA %d", getNum(), num[0], num[1], num[2], _actions.size());
+  if (_numEdge == 4)
+    Msg::Info("quad %d - %d %d %d %d - nRA %d", getNum(), num[0], num[1], num[2], num[3], _actions.size());
 }
 
 void Rec2DElement::createElement(double shiftx, double shifty) const
@@ -4462,23 +4697,13 @@ bool gterRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
   return *rn2 < *rn1;
 }
 
-bool moreRec2DNode::operator()(Rec2DNode *rn1, Rec2DNode *rn2) const
-{
-  if (rn1->getNumTri() == rn2->getNumTri())
-    return *rn2 < *rn1;
-  return rn1->getNumTri() < rn2->getNumTri();
-}
-
-
 Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra, int depth)
-: _father(father), _ra(ra), _dataChange(NULL), _d(depth),
-  _remainingTri(Rec2DData::getNumTri()), _reward(.0),
+: _father(father), _ra(ra), _dataChange(NULL), _depth(depth),
+  _reward(.0),
   _globalQuality(Rec2DData::getGlobalQuality()), _bestSeqReward(.0),
-  _expectedSeqReward(.0), _createdActions(NULL)
-#ifdef REC2D_ONLY_RECO
-  , _notAllQuad(false)
-#endif
+  _expectedSeqReward(.0), _createdActions(NULL), _notAllQuad(false)
 {
+  //printIdentity();
   if (!depth && !ra) {
     Msg::Error("[Rec2DNode] Nothing to do");
     return;
@@ -4490,49 +4715,41 @@ Rec2DNode::Rec2DNode(Rec2DNode *father, Rec2DAction *ra, int depth)
   
   if (!depth) {
     _reward = _ra->getRealReward();
-#ifdef REC2D_ONLY_RECO // check if not all quad
-    int initialNum = Rec2DData::getNumZeroAction();
-    Rec2DDataChange *dc = Rec2DData::getNewDataChange();
-    std::vector<Rec2DAction*> *_v_;
-    _ra->apply(dc, _v_);
-    while (Rec2DData::getNumZeroAction() == initialNum &&
-           Rec2DData::getNumOneAction()                  ) {
-      Rec2DAction *ra = Rec2DData::getOneAction();
-      ra->apply(dc, _v_);
+    if (Recombine2D::checkIfNotAllQuad()) {
+      int initialNum = Rec2DData::getNumZeroAction();
+      Rec2DDataChange *dataChg = Rec2DData::getNewDataChange();
+      std::vector<Rec2DAction*> *vActions;
+      _ra->apply(dataChg, vActions);
+      while (Rec2DData::getNumZeroAction() == initialNum &&
+             Rec2DData::getNumOneAction()                  ) {
+        Rec2DAction *ra = Rec2DData::getOneAction();
+        ra->apply(dataChg, vActions);
+      }
+      if (Rec2DData::getNumZeroAction() > initialNum) _notAllQuad = true;
+      Rec2DData::revertDataChange(dataChg);
     }
-    if (Rec2DData::getNumZeroAction() > initialNum) {
-      __draw();
-      double time = Cpu();
-      while (Cpu()-time < REC2D_WAIT_TIME)
-        FlGui::instance()->check();
-      _notAllQuad = true;
-      Rec2DData::revertDataChange(dc);
-    }
-    Rec2DData::revertDataChange(dc);
-#endif
     return;
   }
   
   // Apply changes
-  std::vector<Rec2DElement*> neighbours; // for Collapses
+  std::vector<Rec2DElement*> savedNeighbours; // for Collapses
   if (_ra) {
-    _ra->getNeighbElemWithActions(neighbours);
+    _ra->getNeighbElemWithActions(savedNeighbours);
     _dataChange = Rec2DData::getNewDataChange();
     _ra->apply(_dataChange, _createdActions);
     if (_createdActions) {
       for (unsigned int i = 0; i < _createdActions->size(); ++i)
         (*_createdActions)[i]->addPointing();
     }
-    _remainingTri = Rec2DData::getNumTri();
     _reward = Rec2DData::getGlobalQuality() - _globalQuality;
   }
   
   // Create branches
   std::vector<Rec2DAction*> actions;
   Recombine2D::incNumChange();
-  Recombine2D::nextTreeActions(actions, neighbours, this);
+  Recombine2D::nextTreeActions(actions, savedNeighbours, this);
   if (actions.empty()) {
-    Msg::Error("I don't understand why I'm here o_O");
+    Msg::Error("I don't understand why I'm here o_O. Because, you know...");
     if (depth < 0) // when developping all the tree
       Rec2DData::addEndNode(this);
   }
@@ -4552,7 +4769,7 @@ Rec2DNode::~Rec2DNode()
 {
   int i = -1;
   while (++i < REC2D_NUMB_SONS && _son[i]) {
-    _son[i]->rmvFather(this);
+    _son[i]->_rmvFather(this);
     delete _son[i];
   }
   if (_createdActions) {
@@ -4567,354 +4784,98 @@ Rec2DNode::~Rec2DNode()
     _ra = NULL;
   }
   if (_father) {
-    _father->rmvSon(this);
-    if (!_father->hasSon() && _father->canBeDeleted())
+    _father->_rmvSon(this);
+    if (!_father->_hasSons() && _father->canBeDeleted())
       delete _father;
   }
 }
 
-void Rec2DNode::rmvFather(Rec2DNode *n)
+void Rec2DNode::lookahead(int depth)
 {
-  if (_father != n) {
-    Msg::Error("is not my father");
+  if (!_ra || depth < 1 || !_dataChange) {
+    Msg::Error("[Rec2DNode] should not be here (lookahead)");
     return;
   }
-  _father = NULL;
-}
-
-bool Rec2DNode::rmvSon(Rec2DNode *n)
-{
-  int indexSon = -1, i = -1;
-  while (++i < REC2D_NUMB_SONS) {
-    if (_son[i] == n) indexSon = i;
-  }
-  if (indexSon == -1) {
-    Msg::Info("im %d", this);
-    for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
-      Msg::Info("son%d %d", i, _son[i]);
-    }
-    Msg::Error("son %d not found", n);
-    __crash();
-    return false;
-  }
-  else {
-    _son[indexSon] = NULL;
-    orderSons();
-  }
-  return true;
-}
-
-void Rec2DNode::delSons()
-{
-  for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i]) _son[i]->rmvFather(this);
-    delete _son[i];
-    _son[i] = NULL;
-  }
-}
-
-void Rec2DNode::orderSons()
-{
-  bool one = false;
-  double bestReward = .0;
-  int k1 = -1;
-  for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i]) {
-      if (!one) {
-        bestReward = _son[i]->getBestSequenceReward();
-        one = true;
-      }
-      if (bestReward < _son[i]->getBestSequenceReward()) {
-        bestReward = _son[i]->getBestSequenceReward();
-        Rec2DNode *tmp = _son[0];
-        _son[0] = _son[i];
-        _son[++k1] = tmp;
-      }
-      else _son[++k1] = _son[i];
-    }
-  }
-}
-
-int Rec2DNode::getNumSon() const 
-{
-  int num = 0;
-  for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i]) ++num;
-  }
-  return num;
-}
-
-bool Rec2DNode::canBeDeleted() const
-{
-  return _father && _father->_father;
-}
-
-Rec2DNode* Rec2DNode::selectBestNode()
-{
-  if (!_son[0]) return NULL;
-  
-  _son[0]->printSequence();
-  
-  for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i]) _son[i]->delSons();
+  if (Recombine2D::revertIfNotAllQuad() && _notAllQuad) {
+    Msg::Error("[Rec2DNode] not sure if it is normal... Take a look !");
+    // should check if normal that 'new Node()' or 'selectbest()'
+    // return a notAllQuad node
+    return;
   }
   
-  if (!_son[0]->makeChanges())
-    Msg::Error("[Rec2DNode] No changes");
+  _bestSeqReward = .0;
+  _expectedSeqReward = .0;
   
-  return _son[0];
-  
-  /*Rec2DNode *_bestSon = _son[0];
-  double bestExpectedReward = _son[0]->getExpectedSeqReward();
-  
-  for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i] && _son[i]->getExpectedSeqReward() > bestExpectedReward) {
-      bestExpectedReward = _son[i]->getExpectedSeqReward();
-      _bestSon = _son[i];
-    }
+  if (_son[0]) {
+    _depth = depth;
+    _makeDevelopments(depth);
   }
-  if (_bestSon) _bestSon->printSequence();
-  for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
-    if (_son[i] && _son[i] != _bestSon) {
-      _son[i]->rmvFather(this);
-      delete _son[i];
-      _son[i] = NULL;
-    }
+  else if (depth == 1) {
+    W(("faut faire qqch si notAllQuad ?"));
+    _depth = depth;
+    std::vector<Rec2DElement*> savedNeighbours;
+    _ra->getNeighbElemWithActions(savedNeighbours);
+    std::vector<Rec2DAction*> actions;
+    Recombine2D::incNumChange();
+    Recombine2D::nextTreeActions(actions, savedNeighbours, this);
+    if (actions.size()) _createSons(actions, depth);
   }
-  if (_bestSon && !_bestSon->makeChanges())
-    Msg::Error("[Rec2DNode] No changes");
-  return _bestSon;*/
 }
 
 Rec2DNode* Rec2DNode::selectBestNode(Rec2DNode *rn)
 {
-  if (rn->_notAllQuad) {
-    __wait(1);
-    if (!Rec2DData::revertDataChange(rn->_dataChange))
-      Msg::Error(" 4 - don't reverted changes");
+  if (Recombine2D::revertIfNotAllQuad() && rn->_notAllQuad) {
+#ifdef DRAW_WHEN_SELECTED
+    __draw(.1);
+#endif
     Rec2DNode *father = rn->_father;
-    rn->rmvFather(father);
-    delete rn;
-    father->rmvSon(rn);
-    if (!father->getNumSon()) father->_notAllQuad = true;
-        static int a = 0;
-        Msg::Info("__%d", ++a);
-    return father;
+    while (father) {
+      if (!Rec2DData::revertDataChange(rn->_dataChange))
+        Msg::Error(" 4 - don't reverted changes");
+      
+      rn->_rmvFather(father);
+      father->_rmvSon(rn);
+      delete rn;
+      rn = father;
+      father = rn->_father;
+      
+      if (!rn->_getNumSon()) rn->_notAllQuad = true;
+      else {
+#ifdef DRAW_WHEN_SELECTED
+        __draw(.1);
+#endif
+        return rn;
+      }
+    }
+    return NULL;
   }
   
-  if (!rn->_son[0]) return NULL;
-  
+  if (!rn->_son[0])
+    return NULL;
+#ifdef DRAW_BEST_SEQ
   rn->_son[0]->printSequence();
+#endif
   
   for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
     if (rn->_son[i])
-      rn->_son[i]->delSons();
+      rn->_son[i]->_delSons();
   }
   
   if (!rn->_son[0]->makeChanges())
     Msg::Error("[Rec2DNode] No changes");
   
+#ifdef DRAW_WHEN_SELECTED // draw state at origin
+    double time = Cpu();
+    Recombine2D::drawStateOrigin();
+    while (Cpu()-time < REC2D_WAIT_TIME)
+      FlGui::instance()->check();
+    time = Cpu();
+#endif
+  
+  static int a = -1;
+  if (++a < 1) Msg::Warning("FIXME : if only recombines : can do all alone recombinations at beginning");
+  
   return rn->_son[0];
-}
-
-void Rec2DNode::printSequence() const
-{
-  static int denom = 3;
-  //_ra->color(183+72*(double)(_d+2)/denom, 255*(1-(double)(_d+2)/denom), 169*(1-(double)(_d+2)/denom));
-  _ra->color(255, 255*(1-(double)_d/denom), 128*(1-(double)_d/denom));
-  if (_son[0]) _son[0]->printSequence();
-  else {__draw();double time = Cpu();
-      while (Cpu()-time < REC2D_WAIT_TIME)
-        FlGui::instance()->check();
-  }
-  _ra->color(183, 255, 169);
-}
-
-void Rec2DNode::lookahead(int depth)
-{
-  _d = depth;
-  if (!_ra || depth < 1 || !_dataChange) {
-    Msg::Error("[Rec2DNode] should not be here (lookahead)");
-    return;
-  }
-  
-  _bestSeqReward = .0;
-  _expectedSeqReward = .0;
-  
-  std::vector<Rec2DElement*> neighbours;
-  if (!_son[0])
-    _ra->getNeighbElemWithActions(neighbours);
-  
-  if (_son[0]) _makeDevelopments(depth);
-  else {
-    std::vector<Rec2DAction*> actions;
-    Recombine2D::incNumChange();
-    Recombine2D::nextTreeActions(actions, neighbours, this);
-    if (actions.size()) _createSons(actions, depth);
-  }
-}
-
-void Rec2DNode::_createSons(const std::vector<Rec2DAction*> &actions, int depth)
-{
-  if (actions.empty() || _son[0]) {
-    Msg::Error("[Rec2DNode] Nothing to do");
-    return;
-  }
-  
-  double num = .0, denom = .0, more = .0;
-#ifdef REC2D_ONLY_RECO
-  int k1 = -1, k2 = REC2D_NUMB_SONS;
-  for (unsigned int i = 0; i < actions.size(); ++i) {
-    Rec2DNode *rn = new Rec2DNode(this, actions[i], depth-1);
-    if (rn->isNotAllQuad()) _son[--k2] = rn;
-    else {
-      _son[++k1] = rn;
-      num += rn->getExpectedSeqReward() * rn->getExpectedSeqReward();
-      denom += rn->getExpectedSeqReward();
-      more += rn->getExpectedSeqReward();
-      if (k1 == 0) _bestSeqReward = _son[k1]->getBestSequenceReward();
-      else if (_bestSeqReward < _son[k1]->getBestSequenceReward()) {
-        _bestSeqReward = _son[k1]->getBestSequenceReward();
-        Rec2DNode *tmp = _son[0];
-        _son[0] = _son[k1];
-        _son[k1] = tmp;
-      }
-    }
-  }
-  ++k1;
-  if (k1 > 0) more /= k1;
-  
-  for (int i = k2; i < REC2D_NUMB_SONS; ++i) {
-    _son[i]->rmvFather(this);
-    delete _son[i];
-    _son[i] = NULL;
-  }
-  
-  if (k1 == 0) {
-    _notAllQuad = true;
-  }
-#else
-  for (unsigned int i = 0; i < actions.size(); ++i) {
-    _son[i] = new Rec2DNode(this, actions[i], depth-1);
-    num += _son[i]->getExpectedSeqReward() * _son[i]->getExpectedSeqReward();
-    denom += _son[i]->getExpectedSeqReward();
-    more += _son[i]->getExpectedSeqReward();
-    if (i == 0) _bestSeqReward = _son[i]->getBestSequenceReward();
-    else if (_bestSeqReward < _son[i]->getBestSequenceReward()) {
-      _bestSeqReward = _son[i]->getBestSequenceReward();
-      Rec2DNode *tmp = _son[0];
-      _son[0] = _son[i];
-      _son[i] = tmp;
-    }
-  }
-  more /= actions.size();
-#endif
-  if (_son[0]) _expectedSeqReward = (num + more * more) / (denom + more);
-}
-
-void Rec2DNode::_makeDevelopments(int depth)
-{
-  int numSon = 0, i = -1;
-  while (++i < REC2D_NUMB_SONS && _son[i]) ++numSon;
-  double num = .0, denom = .0, more = .0;
-#ifdef REC2D_ONLY_RECO
-  i = 0;
-  int k2 = REC2D_NUMB_SONS;
-  while (i < numSon) {
-    _son[i]->_develop(depth-1);
-    if (_son[i]->isNotAllQuad()) {
-      if (_son[--k2]) {
-        Rec2DNode *tmp = _son[k2];
-        _son[k2] = _son[i];
-        _son[i] = tmp;
-        --numSon;
-      }
-      else {
-        _son[k2] = _son[i];
-        _son[i] = _son[--numSon];
-        _son[numSon] = NULL;
-      }
-    }
-    else {
-      num += _son[i]->getExpectedSeqReward() * _son[i]->getExpectedSeqReward();
-      denom += _son[i]->getExpectedSeqReward();
-      more += _son[i]->getExpectedSeqReward();
-      if (i == 0) _bestSeqReward = _son[i]->getBestSequenceReward();
-      else if (_bestSeqReward < _son[i]->getBestSequenceReward()) {
-        _bestSeqReward = _son[i]->getBestSequenceReward();
-        Rec2DNode *tmp = _son[0];
-        _son[0] = _son[i];
-        _son[i] = tmp;
-      }
-      ++i;
-    }
-  }
-  if (i != 0) more /= i;
-  
-  for (int i = k2; i < REC2D_NUMB_SONS; ++i) {
-    _son[i]->rmvFather(this);
-    delete _son[i];
-    _son[i] = NULL;
-  }
-  if (i == 0) _notAllQuad = true;
-#else
-  i = -1;
-  while (++i < numSon) {
-    _son[i]->_develop(depth-1);
-    num += _son[i]->getExpectedSeqReward() * _son[i]->getExpectedSeqReward();
-    denom += _son[i]->getExpectedSeqReward();
-    more += _son[i]->getExpectedSeqReward();
-    if (i == 0) _bestSeqReward = _son[i]->getBestSequenceReward();
-    else if (_bestSeqReward < _son[i]->getBestSequenceReward()) {
-      _bestSeqReward = _son[i]->getBestSequenceReward();
-      Rec2DNode *tmp = _son[0];
-      _son[0] = _son[i];
-      _son[i] = tmp;
-    }
-  }
-  more /= numSon;
-#endif
-  if (_son[0]) _expectedSeqReward = (num + more * more) / (denom + more);
-}
-
-void Rec2DNode::_develop(int depth)
-{
-  _d = depth;
-  if (!_ra || depth < 1) {
-    Msg::Error("[Rec2DNode] should not be here (develop)");
-    return;
-  }
-  
-  _bestSeqReward = .0;
-  _expectedSeqReward = .0;
-  
-  std::vector<Rec2DElement*> neighbours;
-  if (!_son[0])
-    _ra->getNeighbElemWithActions(neighbours);
-  
-  bool hadAction = _createdActions;
-  _dataChange = Rec2DData::getNewDataChange();
-  _ra->apply(_dataChange, _createdActions);
-  if (_createdActions && !hadAction) {
-    for (unsigned int i = 0; i < _createdActions->size(); ++i)
-      (*_createdActions)[i]->addPointing();
-  }
-  _reward = Rec2DData::getGlobalQuality() - _globalQuality;
-  _remainingTri = Rec2DData::getNumTri();
-  
-  if (_son[0]) _makeDevelopments(depth);
-  else {
-    std::vector<Rec2DAction*> actions;
-    Recombine2D::incNumChange();
-    Recombine2D::nextTreeActions(actions, neighbours, this);
-    if (actions.size()) _createSons(actions, depth);
-  }
-  
-  if (!Rec2DData::revertDataChange(_dataChange))
-    Msg::Error(" 2 - don't reverted changes");
-  else
-    Recombine2D::incNumChange();
-  _dataChange = NULL;
 }
 
 bool Rec2DNode::makeChanges()
@@ -4926,16 +4887,15 @@ bool Rec2DNode::makeChanges()
   double time = Cpu();
   _ra->color(0, 0, 200);
   //_ra->printTypeRew();
-  Msg::Info(" ");
+  //Msg::Info(" ");
   Recombine2D::drawStateOrigin();
   while (Cpu()-time < REC2D_WAIT_TIME)
     FlGui::instance()->check();
 #endif
-#ifdef REC2D_RECO_BLOS
-  _ra->apply(_dataChange, _createdActions, true);
-#else
-  _ra->apply(_dataChange, _createdActions);
-#endif
+  if (Recombine2D::blossomRec())
+    _ra->apply(_dataChange, _createdActions, true);
+  else
+    _ra->apply(_dataChange, _createdActions);
   Recombine2D::incNumChange();
   return true;
 }
@@ -4957,3 +4917,262 @@ bool Rec2DNode::operator<(Rec2DNode &other)
   return _globalQuality + _reward < other._globalQuality + other._reward;
 }
 
+bool Rec2DNode::canBeDeleted() const
+{
+  return _father && _father->_father;
+}
+
+void Rec2DNode::printIdentity() const
+{
+  Msg::Info("---- I am a node (n%d)", this);
+  
+  if (_father)
+    Msg::Info("     I have a father (n%d)", _father);
+  
+  if (_ra) {
+    Msg::Info("     My action is (ac%d)", _ra);
+    _ra->printIdentity();
+  }
+  else
+    Msg::Info("     I am the root", _father);
+}
+
+void Rec2DNode::printSequence() const
+{
+  static int denom = 3;
+  //_ra->color(183+72*(double)(_depth+2)/denom, 255*(1-(double)(_depth+2)/denom), 169*(1-(double)(_depth+2)/denom));
+  _ra->color(255, 255*(1-(double)_depth/denom), 128*(1-(double)_depth/denom));
+  if (_son[0]) _son[0]->printSequence();
+  else {
+#ifdef REC2D_DRAW
+    __draw(.01);
+#endif
+  }
+  _ra->color(183, 255, 169);
+}
+
+void Rec2DNode::_makeDevelopments(int depth)
+{
+  if (Recombine2D::revertIfNotAllQuad() && _notAllQuad)
+    Msg::Error("[Rec2DNode] Mais !");
+  
+  int numSon = 0;
+  while (numSon < REC2D_NUMB_SONS && _son[numSon]) ++numSon;
+  
+  int i = 0, k2 = REC2D_NUMB_SONS;
+  while (i < numSon) {
+    _son[i]->_develop(depth-1);
+    
+    if (Recombine2D::avoidIfNotAllQuad() && _son[i]->_isNotAllQuad()) {
+      if (_son[--k2]) {
+        Rec2DNode *tmp = _son[k2];
+        _son[k2] = _son[i];
+        _son[i] = tmp;
+        --numSon;
+      }
+      else {
+        _son[k2] = _son[i];
+        _son[i] = _son[--numSon];
+        _son[numSon] = NULL;
+      }
+    }
+    else {
+      if (i == 0) _bestSeqReward = _son[i]->_getBestSequenceReward();
+      else if (_bestSeqReward < _son[i]->_getBestSequenceReward()) {
+        _bestSeqReward = _son[i]->_getBestSequenceReward();
+        Rec2DNode *tmp = _son[0];
+        _son[0] = _son[i];
+        _son[i] = tmp;
+      }
+      ++i;
+    }
+  }
+  
+  if (numSon == 0) {
+    _notAllQuad = true;
+    if (!Recombine2D::revertIfNotAllQuad()) {
+      // If not all quad, I can't tell which son is the best...
+      Rec2DNode *tmpNode = _son[i];
+      _son[i] = _son[k2];
+      _son[k2] = tmpNode;
+      _bestSeqReward = _son[i]->_getBestSequenceReward();
+      ++k2;
+    }
+  }
+  
+  for (int j = k2; j < REC2D_NUMB_SONS; ++j) {
+    _son[j]->_rmvFather(this);
+    delete _son[j];
+    _son[j] = NULL;
+  }
+}
+
+void Rec2DNode::_createSons(const std::vector<Rec2DAction*> &actions, int depth)
+{
+  if (actions.empty() || _son[0]) {
+    Msg::Error("[Rec2DNode] Nothing to do");
+    return;
+  }
+  
+  Rec2DNode *tmpNode;
+  int k1 = -1, k2 = REC2D_NUMB_SONS;
+  for (unsigned int i = 0; i < actions.size(); ++i) {
+    Rec2DNode *rn = new Rec2DNode(this, actions[i], depth-1);
+    if (Recombine2D::avoidIfNotAllQuad() && rn->_isNotAllQuad()) {
+      _son[--k2] = rn;
+    }
+    else {
+      _son[++k1] = rn;
+      if (k1 == 0) _bestSeqReward = _son[k1]->_getBestSequenceReward();
+      else if (_bestSeqReward < _son[k1]->_getBestSequenceReward()) {
+        _bestSeqReward = _son[k1]->_getBestSequenceReward();
+        tmpNode = _son[0];
+        _son[0] = _son[k1];
+        _son[k1] = tmpNode;
+      }
+    }
+  }
+  
+  if (k1 < 0) {
+    _notAllQuad = true;
+    if (!Recombine2D::revertIfNotAllQuad()) {
+      // If not all quad, I can't tell which son is the best...
+      ++k1;
+      tmpNode = _son[k1];
+      _son[k1] = _son[k2];
+      _son[k2] = tmpNode;
+      _bestSeqReward = _son[k1]->_getBestSequenceReward();
+      ++k2;
+    }
+  }
+  
+  for (int i = k2; i < REC2D_NUMB_SONS; ++i) {
+    _son[i]->_rmvFather(this);
+    delete _son[i];
+    _son[i] = NULL;
+  }
+}
+
+void Rec2DNode::_develop(int depth)
+{
+  if (!depth || !_ra) {
+    if (!_ra) Msg::Error("[Rec2DNode] should not be here (develop)");
+    return;
+  }
+  if (Recombine2D::revertIfNotAllQuad() && _notAllQuad) {
+    Msg::Error("[Rec2DNode] No, no, no, it is not normal !");
+    // see lookahead
+    return;
+  }
+  _depth = depth;
+  
+  _bestSeqReward = .0;
+  _expectedSeqReward = .0;
+  
+  std::vector<Rec2DElement*> neighbours;
+  if (!_son[0])
+    _ra->getNeighbElemWithActions(neighbours);
+  
+  bool hadAction = _createdActions;
+  _dataChange = Rec2DData::getNewDataChange();
+  _ra->apply(_dataChange, _createdActions);
+  if (_createdActions && !hadAction) {
+    for (unsigned int i = 0; i < _createdActions->size(); ++i)
+      (*_createdActions)[i]->addPointing();
+  }
+  _reward = Rec2DData::getGlobalQuality() - _globalQuality;
+  
+  if (_son[0]) _makeDevelopments(depth);
+  else {
+    std::vector<Rec2DAction*> actions;
+    Recombine2D::incNumChange();
+    Recombine2D::nextTreeActions(actions, neighbours, this);
+    if (actions.size()) _createSons(actions, depth);
+  }
+  
+  if (!Rec2DData::revertDataChange(_dataChange))
+    Msg::Error(" 2 - don't reverted changes");
+  else
+    Recombine2D::incNumChange();
+  _dataChange = NULL;
+}
+
+int Rec2DNode::_getNumSon() const 
+{
+  int num = 0;
+  for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
+    if (_son[i]) ++num;
+  }
+  return num;
+}
+
+void Rec2DNode::_delSons()
+{
+  for (int i = 1; i < REC2D_NUMB_SONS; ++i) {
+    if (_son[i]) _son[i]->_rmvFather(this);
+    delete _son[i];
+    _son[i] = NULL;
+  }
+  if (_createdActions) {
+    for (unsigned int i = 0; i < _createdActions->size(); ++i) {
+      (*_createdActions)[i]->rmvPointing();
+      delete (*_createdActions)[i];
+    }
+    delete _createdActions;
+  }
+}
+
+void Rec2DNode::_orderSons()
+{
+  bool one = false;
+  double bestReward = .0;
+  int k = -1;
+  for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
+    if (_son[i]) {
+      _son[++k] = _son[i];
+      _son[i] = NULL;
+      if (!one) {
+        bestReward = _son[k]->_getBestSequenceReward();
+        one = true;
+      }
+      if (bestReward < _son[k]->_getBestSequenceReward()) {
+        bestReward = _son[k]->_getBestSequenceReward();
+        Rec2DNode *tmp = _son[0];
+        _son[0] = _son[k];
+        _son[k] = tmp;
+      }
+    }
+  }
+}
+
+bool Rec2DNode::_rmvSon(Rec2DNode *n)
+{
+  int i = -1;
+  while (++i < REC2D_NUMB_SONS && _son[i] != n);
+  
+  if (i == REC2D_NUMB_SONS) {
+    Msg::Info("im %d", this);
+    for (int i = 0; i < REC2D_NUMB_SONS; ++i) {
+      Msg::Info("son%d %d", i, _son[i]);
+    }
+    Msg::Error("son %d not found", n);
+    __crash();
+    return false;
+  }
+  else {
+    _son[i] = NULL;
+    _orderSons();
+  }
+  return true;
+}
+
+void Rec2DNode::_rmvFather(Rec2DNode *n)
+{
+  if (_father != n) {
+    Msg::Error("is not my father");
+    return;
+  }
+  _father = NULL;
+}
+
+//
