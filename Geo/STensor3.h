@@ -331,6 +331,13 @@ class STensor3 {
     return det;
   };
   void print(const char *) const;
+  double norm0() const{
+    double val = 0;
+    for (int i=0; i<9; i++)
+        if (fabs(_val[i])>val)
+          val = fabs(_val[i]);
+    return val;
+  };
 };
 
 // tensor product
