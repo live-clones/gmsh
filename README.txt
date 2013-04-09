@@ -90,14 +90,17 @@ Build Gmsh from the command line
     make
     make install
 
-  and static and dynamic non-graphical release libraries in a "lib" subdirectory
-  with
+  and minimal static and dynamic libraries in a "lib" subdirectory with
 
     cd lib
-    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_FLTK=0 -DENABLE_OCC=0 ..
+    cmake -DDEFAULT=0 -DENABLE_BUILD_LIB=1 -DENABLE_BUILD_SHARED=1 ..
     make lib
     make shared
     make install/fast
+
+  (Note that "make install/fast" allows you to install only the targets that you
+  just built--i.e. "lib" and "shared", and will not trigger the recompilation of
+  the default target "gmsh".)
 
 * To see a detailed compilation log use
 
