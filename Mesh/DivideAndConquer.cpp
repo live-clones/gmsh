@@ -727,14 +727,14 @@ double DocRecord::Lloyd(int type)
     PointRecord &pt = points[i];
     std::vector<SPoint2> pts;
     voronoiCell (i,pts);
-    double E, A;
+    double E = 0., A;
 
     if (!points[i].data){
       SPoint2 p (pt.where.h,pt.where.v);
       if (type == 0)
-        centroidOfPolygon (p,pts, cgs(i,0), cgs(i,1),E, A);
+        centroidOfPolygon(p,pts, cgs(i,0), cgs(i,1), E, A);
       else
-        centroidOfOrientedBox (pts, 0.0, cgs(i,0),cgs(i,1),E, A);
+        centroidOfOrientedBox(pts, 0.0, cgs(i,0), cgs(i,1), E, A);
     }
     inertia_tot += E;
   }

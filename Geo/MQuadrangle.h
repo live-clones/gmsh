@@ -447,7 +447,7 @@ void inline sort2(T &a, T &b)
 }
 
 template <class T>
-void sort4(T *t[3])
+void sort4(T *t[4])
 {
   sort2<T*>(t[0], t[1]);
   sort2<T*>(t[2], t[3]);

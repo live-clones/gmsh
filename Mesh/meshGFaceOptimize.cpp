@@ -2459,9 +2459,9 @@ static std::vector<MVertex*> computeBoundingPoints (const std::vector<MElement*>
   std::list<MVertex *> oriented;
   {
     std::list<MEdge>::iterator itsz = border.begin();
-    border.erase (itsz);
     oriented.push_back(itsz->getVertex(0));
     oriented.push_back(itsz->getVertex(1));
+    border.erase (itsz);
   }
   while (border.size()){
     std::list<MVertex*>::iterator itb = oriented.begin();

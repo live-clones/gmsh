@@ -67,7 +67,7 @@ inline double computeEdgeLinearLength_new(BDS_Point *p1, BDS_Point *p2,  GFace *
                                           double SCALINGU, double SCALINGV)
 {
   const int nbSb = 10;
-  GPoint GP[nbSb-1];
+  GPoint GP[nbSb];
 
   for (int i = 1; i < nbSb; i++){
     double xi = (double)i / nbSb;
