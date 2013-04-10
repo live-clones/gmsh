@@ -5,17 +5,15 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
- 
-#if defined(WIN32)
 
- 
+#if defined(WIN32) || defined(__APPLE__)
+
+
    #include <cstring>
    #include <string>
    #include <iostream>
    #include <stdio.h>
    #include "GamePad.h"
-   #include "Context.h"
-   #include <unistd.h>
 
    GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
      for (int i=0;i<9;i++) button_map[i]=i;
@@ -27,7 +25,7 @@
        button_map[1]=0;
        button_map[5]=6;
        button_map[6]=5;
-     } 
+     }
    }
 
    GamePad::~GamePad() {  gamepad_fd = 0;}
@@ -37,7 +35,7 @@
      if( toggle_status[_nbut] ){ res = true; toggle_status[_nbut]=false;}
      else { res=false;  }
      return res;
-   } 
+   }
 
    int GamePad::read_event() {  return 1;}
 
@@ -67,11 +65,11 @@
        std::cout << " (version " << version  << " / " ;
        std::cout << (int)axes <<" axes /" ;
        std::cout << (int)buttons <<" buttons)" << std::endl;
-       active = true;    
+       active = true;
      }
-   
+
      //    default map is "THRUSTMASTER FireStorm Dual Power"-like
-     //                                         
+     //
      //                    ######                                   ######
      //                   # but5 #                                 # but7 #
      //                 .########..                               ..#######.
@@ -113,20 +111,20 @@
      //    .......                                                                ........
      //     ....                                                                     ...
      //
-  
+
      for (int i=0;i<9;i++) button_map[i]=i;
      for (int i=0;i<7;i++)    axe_map[i]=i;
      axe_map[6]=1;
 
- 
+
      //  other recognized map "Thrustmaster Run'N' Drive Wireless PS3"
      if ( strcmp(name,"Thrustmaster Run'N' Drive Wireless PS3" ) == 0){
        button_map[0]=1;
        button_map[1]=0;
        button_map[5]=6;
        button_map[6]=5;
-     } 
- 
+     }
+
    }
 
    GamePad::~GamePad() {
@@ -139,7 +137,7 @@
      if( toggle_status[_nbut] ){ res = true; toggle_status[_nbut]=false;}
      else { res=false;  }
      return res;
-   } 
+   }
 
    int GamePad::read_event() {
      int result = read(gamepad_fd, &event, sizeof(event)) ;
@@ -155,24 +153,24 @@
 	   case JS_EVENT_INIT | JS_EVENT_BUTTON:
 	     break;
 	   case JS_EVENT_AXIS:
-	     //	std::cout<< "------"<<rawtime<<"---- " <<std::endl; 
+	     //	std::cout<< "------"<<rawtime<<"---- " <<std::endl;
 	     axe[(int)event.number]=(double)event.value/32767. ;
 	     break;
 	   case JS_EVENT_BUTTON:
-	     //	std::cout<< "------"<<rawtime<<"---- " <<std::endl; 
-	     if(button[(int)event.number]==0. && (bool)event.value) 
+	     //	std::cout<< "------"<<rawtime<<"---- " <<std::endl;
+	     if(button[(int)event.number]==0. && (bool)event.value)
 	       { toggle_status[(int)event.number]=true; }
 	     button[(int)event.number]=(bool)event.value ;
 
 	     break;
-	   default:	
+	   default:
 	     break;
 	   }
        }
-     //  std::cout<< "------"<<rawtime<<"---- " <<std::endl; 
+     //  std::cout<< "------"<<rawtime<<"---- " <<std::endl;
      //  else if (event_read){changed=false;}
      return 1;
-  
+
    }
 
 

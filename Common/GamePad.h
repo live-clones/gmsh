@@ -15,8 +15,8 @@
 
 
 
-#if defined(WIN32)
-   
+#if defined(WIN32) || defined(__APPLE__)
+
    class GamePad {
    public:
      bool active;
@@ -27,9 +27,9 @@
      ~GamePad();
      double axe[GP_AXES];
      bool button[GP_BUTTONS];
-     bool toggle(const int _nbut); 
-     int read_event(); 
-     void affiche(); 
+     bool toggle(const int _nbut);
+     int read_event();
+     void affiche();
      int button_map[10];
      int axe_map[8];
    private:
@@ -39,7 +39,7 @@
      //  __u8 axes;
      //  __u8 buttons;
      char name[256];
-   }; 
+   };
 
 
 
@@ -50,7 +50,7 @@
    #include <fcntl.h>
 
    #define GAMEPAD_DEV "/dev/input/js0"
- 
+
    class GamePad {
    public:
      bool active;
@@ -61,9 +61,9 @@
      ~GamePad();
      double axe[GP_AXES];
      bool button[GP_BUTTONS];
-     bool toggle(const int _nbut); 
-     int read_event(); 
-     void affiche(); 
+     bool toggle(const int _nbut);
+     int read_event();
+     void affiche();
      int button_map[10];
      int axe_map[8];
 
@@ -76,7 +76,7 @@
      __u8 axes;
      __u8 buttons;
      char name[256];
-   };  
+   };
 
 #endif //win32
 
