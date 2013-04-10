@@ -127,15 +127,21 @@ int GmshGetOption(const std::string &category, const std::string &name,
   return ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
+int GmshOpenProject(const std::string &fileName)
+{
+  OpenProject(fileName);
+  return 1;
+}
+
 int GmshMergeFile(const std::string &fileName)
 {
   return MergeFile(fileName, true);
 }
 
-int GmshOpenProject(const std::string &fileName)
+int GmshMergePostProcessingFile(const std::string &fileName)
 {
-  OpenProject(fileName);
-  return 1;
+  return MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowLastStep,
+                                 CTX::instance()->solver.autoHideNewViews, true);
 }
 
 int GmshWriteFile(const std::string &fileName)

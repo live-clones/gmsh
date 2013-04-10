@@ -26,8 +26,9 @@ int GmshGetOption(const std::string &category, const std::string &name,
                   double &value, int index=0);
 int GmshGetOption(const std::string &category, const std::string &name,
                   unsigned int &value, int index=0);
-int GmshMergeFile(const std::string &fileName);
 int GmshOpenProject(const std::string &fileName);
+int GmshMergeFile(const std::string &fileName);
+int GmshMergePostProcessingFile(const std::string &fileName);
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
