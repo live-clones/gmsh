@@ -11,6 +11,9 @@
 #include <string>
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
+///
+#include "GamePad.h"
+///
 
 // The interface-independent context.
 
@@ -137,11 +140,12 @@ class CTX {
   double min[3], max[3];
   // "center of mass" of the current geometry, used for graphics only
   double cg[3];
-  // characteristic length for the whole problem (never used in mesh
+ // characteristic length for the whole problem (never used in mesh
   // generation ->only for geo/post)
   double lc;
   // double buffer/antialias/stereo graphics?
-  int db, antialiasing, stereo, camera;
+  int db, antialiasing, stereo, camera ;
+  bool fileread; ;
   double eye_sep_ratio,focallength_ratio,camera_aperture;
   // orthogonal projection?
   int ortho;
@@ -256,6 +260,8 @@ class CTX {
       unsigned int tangents, normals;
     } mesh;
   } color;
+  // listen to a USB gamepad
+  GamePad gamepad;
   // is the machine big-endian?
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be

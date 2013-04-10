@@ -19,7 +19,6 @@ CTX::CTX()
   short int word = 0x0001;
   char *byte = (char*)&word;
   bigEndian = (byte[0] ? 0 : 1);
-
   const char *tmp;
   if((tmp = GetEnvironmentVar("GMSH_HOME")))
     homeDir = tmp;
@@ -59,6 +58,9 @@ CTX::CTX()
   post.draw = 1;
   post.combineTime = 0; // try to combineTime views at startup
   lock = 0; // very primitive locking
+  ///
+  fileread=false;
+  ///
 
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;

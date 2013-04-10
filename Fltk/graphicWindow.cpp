@@ -23,6 +23,7 @@ typedef unsigned long intptr_t;
 #include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
+#include "gamepadWindow.h"
 #include "statisticsWindow.h"
 #include "contextWindow.h"
 #include "visibilityWindow.h"
@@ -2886,24 +2887,18 @@ bool graphicWindow::split(openglWindow *g, char how)
   return true;
 }
 
-void graphicWindow::setStereo()
+void graphicWindow::setStereo(bool st)
 {
   openglWindow::setLastHandled(0);
   for(unsigned int i = 0; i < gl.size(); i++){
-    _tile->remove(gl[i]);
-    delete gl[i];
+    if (st) { 
+      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
+    }
+    else{  
+      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE );
+    }  
+    gl[i]->show(); 
   }
-  gl.clear();
-  openglWindow *g2 = new openglWindow
-    (_tile->x() + (_onelab && !_menuwin ? _onelab->w() : 0),
-     _tile->y(),
-     _tile->w() - (_onelab && !_menuwin ? _onelab->w() : 0),
-     _tile->h() - (_browser ? _browser->h() : 0));
-  g2->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
-  g2->end();
-  gl.push_back(g2);
-  _tile->add(g2);
-  g2->show();
   Msg::Info("new gl window for stereo vision!");
 }
 

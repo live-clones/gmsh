@@ -3143,8 +3143,7 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->stereo = (int)val;
-  if (CTX::instance()->stereo) // when stereo mode is active camera mode is obligatory
-    opt_general_camera_mode(num, action, 1.);
+  if (CTX::instance()->stereo)    opt_general_camera_mode(num, action, 1.);
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
@@ -3201,6 +3200,7 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
 #endif
   return CTX::instance()->camera ;
 }
+
 
 double opt_general_clip0a(OPT_ARGS_NUM)
 {

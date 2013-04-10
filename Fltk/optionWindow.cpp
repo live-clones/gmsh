@@ -10,6 +10,7 @@
 typedef unsigned long intptr_t;
 #endif
 #include <string.h>
+#include <FL/Fl.H>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -18,6 +19,7 @@ typedef unsigned long intptr_t;
 #include "GmshMessage.h"
 #include "FlGui.h"
 #include "optionWindow.h"
+#include "gamepadWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "paletteWindow.h"
@@ -158,6 +160,16 @@ static void view_color_cb(Fl_Widget *w, void *data)
         GMSH_SET | GMSH_GUI, CTX::instance()->packColor(r, g, b, 255));
   drawContext::global()->draw();
 }
+
+
+void general_gmpdcf_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->options->gmpdoption = new gamepadWindow;
+  FlGui::instance()->options->gmpdoption->win->show();
+}
+
+
+
 
 void options_cb(Fl_Widget *w, void *data)
 {
@@ -350,10 +362,9 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    if (CTX::instance()->stereo){
-      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-	FlGui::instance()->graph[i]->setStereo();
-    }
+    //    if (CTX::instance()->stereo){
+    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
+    //    }
   }
 
   if(CTX::instance()->fastRedraw)
@@ -1808,6 +1819,10 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[31]->step(1);
       general.value[31]->align(FL_ALIGN_RIGHT);
       general.value[31]->callback(general_options_ok_cb);
+
+      Fl_Button *gmpdcf = new Fl_Button 
+        (L + 2 * WB, 2 * WB + 6 * BH, 1.5*IW, BH, "Configure Gamepad");
+      gmpdcf->callback(general_gmpdcf_cb);
 
       o->end();
 

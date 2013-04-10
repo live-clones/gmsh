@@ -17,11 +17,13 @@
 #include "Context.h"
 #include "drawContext.h"
 
+Camera::Camera() : on(false), stereoEnable(false), Lc(1.), glFnear(0.1), glFfar(10000) {}
+
+Camera::~Camera() {}
+
 void Camera::init()
 {
-  on = true;  
-  glFnear = 0.1 ; 
-  glFfar = 10000;
+  if(CTX::instance()->fileread )    {  on = true; }
   eye_sep_ratio = CTX::instance()->eye_sep_ratio;
   aperture = CTX::instance()->camera_aperture;
   focallength = CTX::instance()->focallength_ratio * 100.;
@@ -29,44 +31,93 @@ void Camera::init()
   this->lookAtCg();
   eyesep = distance * eye_sep_ratio / 100.;
   ref_distance=distance;
+  glFnear=.0001*distance;
+  glFfar=10000*distance;
   this->update();
+   
 }
 
 void Camera::alongX()
 {
-  view.set(-1., 0., 0.);
+  front.set(-1., 0., 0.);
   up.set(0., 0., 1);
-  position = target-distance * view;
+  position = target-distance * front;
   this->update();
 }
 
 void Camera::alongY()
 {
-  view.set(0., -1., 0.);
+  front.set(0., -1., 0.);
   up.set(1., 0., 0);
-  position = target-distance * view;
+  position = target-distance * front;
   this->update();
 }
 
 void Camera::alongZ()
 {
-  view.set(0., 0., -1.);
+  front.set(0., 0., -1.);
   up.set(0., 1., 0);
-  position = target-distance * view;
+  position = target-distance * front;
   this->update();
 }
 
-void Camera::tiltHeadLeft()
+void Camera::upX()
 {
-  up = -1. * right;
-  update();
+  if( up.x > 0.){
+    if (up.x !=1.) { up.set(1.,0.,0.); }
+    else { up.set(-1.,0.,0.); right=-right; }
+  }
+  else {
+    if (up.x !=-1.) {up.set(-1.,0.,0.); }
+    else { up.set(1.,0.,0.); right=-right; }
+  }
+  front.x = up.y * right.z - up.z * right.y;
+  front.y = up.z * right.x - up.x * right.z;
+  front.z = up.x * right.y - up.y * right.x;
+  target = position + distance * front;
+  this->update();
 }
 
-void Camera::tiltHeadRight()
+void Camera::upY()
 {
-  up = right;
-  update();
+  if( up.y > 0.){
+    if (up.y !=1.) { up.set(0.,1.,0.); }
+    else { up.set(0.,-1.,0.); right=-right; }
+  }
+  else {
+    if (up.y !=-1.) {up.set(0.,-1.,0.); }
+    else { up.set(0.,1.,0.); right=-right; }
+  }
+  front.x = up.y * right.z - up.z * right.y;
+  front.y = up.z * right.x - up.x * right.z;
+  front.z = up.x * right.y - up.y * right.x;
+  target = position + distance * front;
+  this->update();
 }
+
+
+void Camera::upZ()
+{
+  if( up.z > 0.){
+    if (up.z !=1.) { up.set(0.,0.,1.); }
+    else { up.set(0.,0.,-1.); right=-right; }
+  }
+  else {
+    if (up.z !=-1.) {up.set(0.,0.,-1.); }
+    else { up.set(0.,0.,1.); right=-right; }
+  }
+  front.x = up.y * right.z - up.z * right.y;
+  front.y = up.z * right.x - up.x * right.z;
+  front.z = up.x * right.y - up.y * right.x;
+  target = position + distance * front;
+  this->update();
+}
+
+
+
+void Camera::tiltHeadLeft() { up = -1. * right;  update(); }
+
+void Camera::tiltHeadRight() { up = right; update(); }
 
 void Camera::lookAtCg()
 {
@@ -78,7 +129,7 @@ void Camera::lookAtCg()
   double P = CTX::instance()->max[2] - CTX::instance()->min[2];
   Lc = sqrt(1. * W * W + 1. * H * H + 1. * P * P);
   distance = .8 * fabs(.5 * Lc * 4. / 3. / tan(aperture * .01745329 / 2.));
-  position = target - distance * view;
+  position = target - distance * front;
   this->update();
   focallength = focallength_ratio * distance;
   ref_distance = distance;
@@ -98,13 +149,18 @@ void Camera::giveViewportDimension(const int& W,const int& H)
 
 void Camera::update()
 {
-  right.x = view.y * up.z - view.z * up.y;
-  right.y = view.z * up.x - view.x * up.z;
-  right.z = view.x * up.y - view.y * up.x;
+  right.x = front.y * up.z - front.z * up.y;
+  right.y = front.z * up.x - front.x * up.z;
+  right.z = front.x * up.y - front.y * up.x;
+    
+  up.x = right.y * front.z - right.z * front.y;
+  up.y = right.z * front.x - right.x * front.z;
+  up.z = right.x * front.y - right.y * front.x;
+   
   ref_distance = distance;
   normalize(up);
   normalize(right);
-  normalize(view);
+  normalize(front);
   aperture = CTX::instance()->camera_aperture;
   focallength_ratio = CTX::instance()->focallength_ratio;
   focallength = focallength_ratio * distance;
@@ -123,7 +179,7 @@ void Camera::affiche()
   std::cout<<"  CTX focallength ratio "<< CTX::instance()->focallength_ratio <<std::endl ;    
   std::cout<<"  ------------ CAMERA PARAMETERS ------------"   <<std::endl ;         
   std::cout<<"  position "<<  position.x<<","<<position.y<<","<<position.z <<std::endl ;    
-  std::cout<<"  view "<<  view.x<<","<<view.y<<","<<view.z <<std::endl;              
+  std::cout<<"  front "<<  front.x<<","<<front.y<<","<<front.z <<std::endl;              
   std::cout<<"  up "<< up.x<<","<<up.y<<","<<up.z <<std::endl;                 
   std::cout<<"  right "<< right.x<<","<<right.y<<","<<right.z  <<std::endl;              
   std::cout<<"  target "<<  target.x<<","<<target.y<<","<<target.z <<std::endl;   
@@ -153,7 +209,7 @@ void Camera::moveRight(double& theta)
 {
   this->update();
   position = position-distance * tan(theta) * right;
-  target = position + distance * view;
+  target = position + distance * front;
   this->update();
 }
 
@@ -161,14 +217,14 @@ void Camera::moveUp(double& theta)
 {
   this->update();
   position = position+distance * tan(theta) * up;
-  target = position+distance * view;
+  target = position+distance * front;
   this->update();
 }
 
 void Camera::zoom(double& factor)
 {
   distance = fabs(1. / factor * ref_distance);
-  position = target - distance * view;
+  position = target - distance * front;
 }
 
 void Camera::rotate(double* q)
@@ -176,41 +232,85 @@ void Camera::rotate(double* q)
   this->update();
   // rotation projection in global coordinates  
   Quaternion omega;
-  omega.x = q[0] * right.x + q[1] * up.x - q[2] * view.x;
-  omega.y = q[0] * right.y + q[1] * up.y - q[2] * view.y;
-  omega.z = q[0] * right.z + q[1] * up.z - q[2] * view.z;
+  omega.x = q[0] * right.x + q[1] * up.x - q[2] * front.x;
+  omega.y = q[0] * right.y + q[1] * up.y - q[2] * front.y;
+  omega.z = q[0] * right.z + q[1] * up.z - q[2] * front.z;
   omega.w = q[3];
-  // normalize the axe of rotation in the Quaternion omega if not null
-  double sina = sin(acos(omega.w));
-  double length;
-  if (sina != 0.){
-    length = (omega.x * omega.x + omega.y * omega.y + omega.z * omega.z) / (sina * sina);
-  }
-  else{
-    length = 0.;
-  }
-  length = sqrt(length);
-  if (length!=0.){
-    omega.x /= length;
-    omega.y /= length;
-    omega.z /= length;
-    Quaternion conj = conjugate(omega);  
-    view = omega * view * conj;
-    up = omega * up * conj;
-    right = omega * right * conj;
-    normalize(view);
-    normalize(up);
-    normalize(right);
-    //actualize camera position 
-    position = target - distance * view;
-  }
+  normalize(omega);
+  Quaternion conj = conjugate(omega);  
+  front = omega * front * conj;
+  up = omega * up * conj;
+  right = omega * right * conj;
+  normalize(front);
+  normalize(up);
+  normalize(right);
+  //actualize camera position 
+  position = target - distance * front;
   this->update();
 }
 
-// Quaternion and XYZ functions
+void Camera::move_and_look(double _movfront,double _movright,double _movup,
+		     double _thetafront,double _thetaright,double _thetaup,
+		     double _azimut,double _elevation)
+{
+  position= position + _movfront*front + _movright*right + _movup*up;
+  Quaternion omega_up;
+  omega_up.x = sin( _thetaup ) * up.x  ;
+  omega_up.y = sin( _thetaup ) * up.y  ;
+  omega_up.z = sin( _thetaup ) * up.z  ;
+  omega_up.w = cos( _thetaup  );
+  normalize(omega_up);
+  Quaternion omega_right;
+  omega_right.x = sin( _thetaright ) * right.x  ;
+  omega_right.y = sin( _thetaright ) * right.y  ;
+  omega_right.z = sin( _thetaright ) * right.z  ;
+  omega_right.w = cos( _thetaright  );
+  normalize(omega_right);
+  Quaternion omega_front;
+  omega_front.x = sin( _thetafront ) * front.x  ;
+  omega_front.y = sin( _thetafront ) * front.y  ;
+  omega_front.z = sin( _thetafront ) * front.z  ;
+  omega_front.w = cos( _thetafront  );
+  normalize(omega_front);
+  Quaternion omega;
+  omega = omega_up * omega_right * omega_front;
+  normalize(omega);
+  Quaternion conj = conjugate(omega);  
+  front = omega * front * conj;
+  up = omega * up * conj;
+  right = omega * right * conj;
+  normalize(front);
+  normalize(up);
+  normalize(right);
+  this->update();
+  // in azimuthal coordinates
+  XYZ look,newlook;
+  _elevation = std::min(_elevation,1.57);
+  _elevation = std::max(_elevation,-1.57);
+  look=cos(_azimut)*front-sin(_azimut)*right;
+  newlook=cos(_elevation)*look+sin(_elevation)*up;
+  target = position + distance * newlook;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+//                 QUATERNION and XYZ functions
+////////////////////////////////////////////////////////////////
+ 
 double length(Quaternion &q)
 { 
-  return sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w); 
+  return  sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w); 
 }
 
 double length(XYZ &p)
@@ -218,10 +318,26 @@ double length(XYZ &p)
   return sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
 }
 
-void normalize(Quaternion &quat)
+void normalize_axe(Quaternion &q)
 {
-  double L = length(quat);
-  quat.x /= L; quat.y /= L; quat.z /= L; quat.w /= L;
+  double sina = sin(acos(q.w));
+  double l;
+  if (sina != 0.){
+    l = ( q.x*q.x + q.y*q.y + q.z*q.z ) / (sina*sina);
+    l =sqrt(l) ;
+  }
+  else{
+    l = 0.;
+  }
+  if(l != 0. ){
+    q.x /= l; q.y /= l; q.z /= l; 
+   }
+}
+void normalize(Quaternion &q)
+{
+  double L = length(q);
+    q.x /= L; q.y /= L; q.z /= L; q.w /= L; 
+  
 }
 
 void normalize(XYZ &p)
@@ -233,6 +349,7 @@ void normalize(XYZ &p)
 XYZ::XYZ (const Quaternion &R) : x(R.x), y(R.y), z(R.z){} 
 
 XYZ::XYZ(double _x,double _y,double _z) : x(_x),y(_y),z(_z){}
+
 
 void XYZ::set(const double& _x, const double& _y, const double& _z){ x = _x; y =_y; z = _z; }
 
@@ -270,8 +387,26 @@ XYZ operator- (const XYZ &L, const XYZ &R)
   res.z -= R.z;
   return res;
 }
+XYZ operator- (const XYZ &R)
+{ 
+  XYZ res;
+  res.x = -R.x;
+  res.y = -R.y;
+  res.z = -R.z;
+  return res;
+}
 
 Quaternion::Quaternion(const XYZ &R) : x(R.x), y(R.y), z(R.z), w(0.) {}
+
+Quaternion::Quaternion(const XYZ &R, const double &A) {
+  x=R.x*sin(A);
+  y=R.y*sin(A);
+  z=R.z*sin(A);
+  w=cos(A); 
+}
+Quaternion::Quaternion(): x(0.), y(0.),z(0.),w(1.) {}
+
+Quaternion::~Quaternion() {}
 
 Quaternion mult(const Quaternion& A, const Quaternion& B)
 {

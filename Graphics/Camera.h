@@ -26,13 +26,15 @@ void rotate(Quaternion omega,XYZ axe) ;
 XYZ operator* (const double &a,const XYZ &T);
 XYZ operator+ (const XYZ &L,const XYZ &R);
 XYZ operator- (const XYZ &L,const XYZ &R);
+XYZ operator- (const XYZ &R);
 
 class Quaternion{
 public:
   double x,y,z,w;
-  Quaternion(){}; 
-  ~Quaternion(){};
+  Quaternion(); 
   Quaternion(const XYZ &R);
+  Quaternion(const XYZ &R, const double &A); 
+  ~Quaternion();
 };
 
 double length(Quaternion &quat);
@@ -43,9 +45,11 @@ Quaternion operator *(const Quaternion &A, const Quaternion &B);
 
 class Camera {
  public:
+  Camera();
+  ~Camera();
   bool on;
   XYZ position;           /* camera position         */
-  XYZ view;               /* View direction vector   */
+  XYZ front;              /* View direction vector   */
   XYZ up;                 /* View up direction       */
   XYZ right;              /* View right direction    */
   XYZ target;             /* center of rotation and screen   */
@@ -59,12 +63,15 @@ class Camera {
   bool stereoEnable;
   double Lc, eye_sep_ratio, closeness, ndfl, glFnear, glFfar, radians, wd2;
   double glFleft,glFright,glFtop,glFbottom;
-  Camera() : on(false), stereoEnable(false) {}
-  ~Camera(){}
   void giveViewportDimension(const int& W,const int& H);
   void lookAtCg();
   void init();
   void rotate(double* q);
+  //
+  void move_and_look(double _movfront,double _movright,double _movup,
+		     double _rotfront,double _rotright,double _rotup,
+		     double _azimut,double _elevation);
+  //
   void moveRight(double& theta);
   void moveUp(double& theta);
   void zoom(double& factor);
@@ -73,6 +80,9 @@ class Camera {
   void alongX();
   void alongY();
   void alongZ();
+  void upX();
+  void upY();
+  void upZ();
   void tiltHeadLeft();
   void tiltHeadRight();
 };  

@@ -380,6 +380,9 @@ void drawContext::drawSmallAxes()
     yy = l * fvViewMatrix[5];
     zx = l * fvViewMatrix[8];
     zy = l * fvViewMatrix[9];
+    ///
+    
+    ///
   }
   else{
     xx = l * rot[0];

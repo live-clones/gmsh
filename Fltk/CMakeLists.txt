@@ -9,6 +9,7 @@ set(SRC
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
+    gamepadWindow.cpp
     fieldWindow.cpp
     pluginWindow.cpp
     statisticsWindow.cpp
@@ -26,6 +27,7 @@ set(SRC
     onelabGroup.cpp
     inputRegion.cpp
     viewButton.cpp
+    Navigator.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 

@@ -11,6 +11,7 @@
 #include <FL/Fl_Gl_Window.H>
 #include <FL/Fl_Box.H>
 #include "drawContext.h"
+#include "Navigator.h"
 
 class GVertex;
 class GEdge;
@@ -23,6 +24,7 @@ class openglWindow : public Fl_Gl_Window {
   static openglWindow *_lastHandled;
   static void _setLastHandled(openglWindow*);
   bool _lock;
+  bool _drawn;
   mousePosition _click, _curr, _prev;
   drawContext *_ctx;
   double _point[3];
@@ -38,6 +40,9 @@ class openglWindow : public Fl_Gl_Window {
   void draw();
   int handle(int);
  public:
+  time_t  rawtime,  prev_rawtime;
+  int  ntime;
+  double response_frequency;
   bool addPointMode, lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
   std::string screenMessage[2];
@@ -51,6 +56,12 @@ class openglWindow : public Fl_Gl_Window {
   static openglWindow *getLastHandled(){ return _lastHandled; }
   static void setLastHandled(openglWindow *w){ _lastHandled = w; }
   void drawTooltip(const std::string &text);
+  ///
+  double frequency;
+  void move_with_gamepad()  ;
+  Navigator* Nautilus; 
+ ///
 };
 
 #endif
+   

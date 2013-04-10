@@ -52,7 +52,7 @@ class graphicWindow{
   void setAutoScroll(bool val){ _autoScrollMessages = val; }
   bool getAutoScroll(){ return _autoScrollMessages; }
   void setTitle(std::string str);
-  void setStereo();
+  void setStereo(bool st);
   int getGlWidth();
   void setGlWidth(int w);
   int getGlHeight();

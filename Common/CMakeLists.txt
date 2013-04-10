@@ -23,6 +23,7 @@ set(SRC
   TreeUtils.cpp avl.cpp
   MallocUtils.cpp
   onelabUtils.cpp
+  GamePad.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
