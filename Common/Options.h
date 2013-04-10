@@ -364,6 +364,7 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM);
 double opt_mesh_quality_inf(OPT_ARGS_NUM);
 double opt_mesh_quality_sup(OPT_ARGS_NUM);
 double opt_mesh_quality_type(OPT_ARGS_NUM);
+double opt_mesh_delaunay_q(OPT_ARGS_NUM);
 double opt_mesh_radius_inf(OPT_ARGS_NUM);
 double opt_mesh_radius_sup(OPT_ARGS_NUM);
 double opt_mesh_label_type(OPT_ARGS_NUM);

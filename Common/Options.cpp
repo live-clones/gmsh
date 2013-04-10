@@ -4586,6 +4586,13 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM)
   return CTX::instance()->mesh.randFactor;
 }
 
+double opt_mesh_delaunay_q(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.delaunayQ = val;
+  return CTX::instance()->mesh.delaunayQ;
+}
+
 double opt_mesh_quality_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

@@ -564,8 +564,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 	       (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
-      	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
+      sprintf(opts, "-q%gYpe%c",  CTX::instance()->mesh.delaunayQ,
+              (Msg::GetVerbosity() < 3) ? 'Q':
+              (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     try{
       tetrahedralize(opts, &in, &out);

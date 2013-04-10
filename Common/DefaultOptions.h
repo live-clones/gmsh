@@ -900,6 +900,8 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CpuTime" , opt_mesh_cpu_time , 0. ,
     "CPU time (in seconds) for the generation of the current mesh (read-only)" },
 
+  { F|O, "DelaunayQ" , opt_mesh_delaunay_q , 3.5 ,
+    "Quality factor for initial Delaunay tetrahedralization" },
   { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
     "Draw only the skin of 3D meshes?" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
