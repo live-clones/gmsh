@@ -25,7 +25,7 @@ struct GEdgeSigned
   int getSign(){ return _sign; }
 };
 
-class GEdgeLoop 
+class GEdgeLoop
 {
  private:
   std::list<GEdgeSigned> loop;
@@ -39,7 +39,7 @@ class GEdgeLoop
   inline citer end() const { return loop.end(); }
   inline void erase(iter it){ loop.erase(it); }
   int count(GEdge*) const;
-  int count() const { return loop.size(); }
+  int count() const { return (int)loop.size(); }
 };
 
 #endif

@@ -111,8 +111,8 @@ class GEntity {
   };
 
   enum MeshGenerationStatus {
-    PENDING, 
-    DONE, 
+    PENDING,
+    DONE,
     FAILED
   };
 
@@ -192,7 +192,7 @@ class GEntity {
   virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
 
   // for python, temporary solution while iterator are not binded
-  std::vector<GRegion*> bindingsGetRegions() { 
+  std::vector<GRegion*> bindingsGetRegions() {
     std::list<GRegion*> r = regions();  // NOTE : two-line to dont create two different lists with diff pointers
     return std::vector<GRegion*> (r.begin(), r.end());
   }
@@ -257,7 +257,7 @@ class GEntity {
     return physicals;
   }
 
-  // returns the tag of the entity that its master entity (for mesh) 
+  // returns the tag of the entity that its master entity (for mesh)
   int meshMaster() const;
   void setMeshMaster(int m);
 
@@ -270,7 +270,7 @@ class GEntity {
   // get/set the visibility flag
   virtual char getVisibility();
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
-  
+
   // get/set the selection flag
   virtual char getSelection(){ return _selection; }
   virtual void setSelection(char val){ _selection = val; }
@@ -310,7 +310,7 @@ class GEntity {
   void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
 
   // get the number of mesh vertices in the entity
-  unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
+  unsigned int getNumMeshVertices() { return (int)mesh_vertices.size(); }
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }

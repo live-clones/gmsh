@@ -17,13 +17,13 @@
 class MFace {
  private:
   std::vector<MVertex *> _v;
-  std::vector<char> _si; // sorted indices 
+  std::vector<char> _si; // sorted indices
 
  public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
   MFace(const std::vector<MVertex*> v);
-  inline int getNumVertices() const { return _v.size(); }
+  inline int getNumVertices() const { return (int)_v.size(); }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
   inline MEdge getEdge(const int i) const
@@ -46,7 +46,7 @@ class MFace {
   SVector3 normal() const;
   SVector3 tangent(int num) const
   {
-    SVector3 t0(_v[1]->x() - _v[0]->x(), 
+    SVector3 t0(_v[1]->x() - _v[0]->x(),
                 _v[1]->y() - _v[0]->y(),
                 _v[1]->z() - _v[0]->z());
     t0.normalize();
@@ -87,13 +87,13 @@ class MFace {
       const double ff[4] = {(1 - u) * (1. - v),
                             (1 + u) * (1. - v),
                             (1 + u) * (1. + v),
-                            (1 - u) * (1. + v)};        
+                            (1 - u) * (1. + v)};
       for(int i = 0; i < n; i++) {
         MVertex *v = getVertex(i);
         p[0] += v->x() * ff[i] * .25;
         p[1] += v->y() * ff[i] * .25;
         p[2] += v->z() * ff[i] * .25;
-      } 
+      }
     }
     else
       Msg::Error("Cannot interpolate inside a polygonal MFace with more than 4 edges");

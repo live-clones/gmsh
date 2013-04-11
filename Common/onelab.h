@@ -748,7 +748,7 @@ namespace onelab{
              const std::string &client=""){ return _get(ps, name, client, _functions); }
     unsigned int getNumParameters()
     {
-      return _numbers.size() + _strings.size() + _regions.size() + _functions.size();
+      return (int)(_numbers.size() + _strings.size() + _regions.size() + _functions.size());
     }
     // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client) const
@@ -943,7 +943,7 @@ namespace onelab{
     typedef std::map<std::string, client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
-    int getNumClients() { return _clients.size(); };
+    int getNumClients() { return (int)_clients.size(); };
     citer findClient(const std::string &name){ return _clients.find(name); }
     void registerClient(client *c)
     {
