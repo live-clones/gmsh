@@ -1266,8 +1266,8 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
               addVectorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
             else if(numComp == 9 && opt->drawTensors)
               addTensorElement(p, ent, i, 1, TYPE_PNT, xyz2, val2, preprocessNormalsOnly);
-            delete [] xyz2[0];
-            delete [] val2[0];
+            delete [] x2;
+            delete [] v2;
           }
         }
         else if(numComp == 1 && opt->drawScalars)

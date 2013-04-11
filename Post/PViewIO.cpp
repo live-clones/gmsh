@@ -92,6 +92,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
   GModel *model = GModel::current();
   if(model->empty()){
     Msg::Error("Model is empty: please load a mesh before loading the dataset");
+    fclose(fp);
     return false;
   }
 
@@ -111,14 +112,17 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       double version;
-      if(!fgets(str, sizeof(str), fp)) return false;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
       int format, size;
-      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return false;
+      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3){
+        fclose(fp);
+        return false;
+      }
       if(format){
         binary = true;
         Msg::Info("View data is in binary format");
         int one;
-        if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+        if(fread(&one, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
         if(one != 1){
           swap = true;
           Msg::Info("Swapping bytes from binary file");
@@ -127,23 +131,23 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
     }
     else if(!strncmp(&str[1], "InterpolationScheme", 19)){
       std::string name;
-      if(!fgets(str, sizeof(str), fp)) return false;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
       name = ExtractDoubleQuotedString(str, sizeof(str));
       Msg::Info("Reading interpolation scheme '%s'", name.c_str());
       PViewData::removeInterpolationScheme(name);
       int numTypes;
-      if(fscanf(fp, "%d", &numTypes) != 1) return false;
+      if(fscanf(fp, "%d", &numTypes) != 1){ fclose(fp); return false; }
       for(int i = 0; i < numTypes; i++){
         int type, numMatrices;
-        if(fscanf(fp, "%d %d", &type, &numMatrices) != 2) return false;
+        if(fscanf(fp, "%d %d", &type, &numMatrices) != 2){ fclose(fp); return false; }
         for(int j = 0; j < numMatrices; j++){
           int m, n;
-          if(fscanf(fp, "%d %d", &m, &n) != 2) return false;
+          if(fscanf(fp, "%d %d", &m, &n) != 2){ fclose(fp); return false; }
           fullMatrix<double> mat(m, n);
           for(int k = 0; k < m; k++){
             for(int l = 0; l < n; l++){
               double d;
-              if(fscanf(fp, "%lf", &d) != 1) return false;
+              if(fscanf(fp, "%lf", &d) != 1){ fclose(fp); return false; }
               mat.set(k, l, d);
             }
           }
@@ -166,10 +170,10 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
         int numTags;
         // string tags
         std::string viewName, interpolationScheme;
-        if(!fgets(str, sizeof(str), fp)) return false;
-        if(sscanf(str, "%d", &numTags) != 1) return false;
+        if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
+        if(sscanf(str, "%d", &numTags) != 1){ fclose(fp); return false; }
         for(int i = 0; i < numTags; i++){
-          if(!fgets(str, sizeof(str), fp)) return false;
+          if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
           if(i == 0)
             viewName = ExtractDoubleQuotedString(str, sizeof(str));
           else if(i == 1)
@@ -177,31 +181,31 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
         }
         // double tags
         double time = 0.;
-        if(!fgets(str, sizeof(str), fp)) return false;
-        if(sscanf(str, "%d", &numTags) != 1) return false;
+        if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
+        if(sscanf(str, "%d", &numTags) != 1){ fclose(fp); return false; }
         for(int i = 0; i < numTags; i++){
-          if(!fgets(str, sizeof(str), fp)) return false;
+          if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
           if(i == 0){
-            if(sscanf(str, "%lf", &time) != 1) return false;
+            if(sscanf(str, "%lf", &time) != 1){ fclose(fp); return false; }
           }
         }
         // integer tags
         int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
-        if(!fgets(str, sizeof(str), fp)) return false;
-        if(sscanf(str, "%d", &numTags) != 1) return false;
+        if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
+        if(sscanf(str, "%d", &numTags) != 1){ fclose(fp); return false; }
         for(int i = 0; i < numTags; i++){
-          if(!fgets(str, sizeof(str), fp)) return false;
+          if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
           if(i == 0){
-            if(sscanf(str, "%d", &timeStep) != 1) return false;
+            if(sscanf(str, "%d", &timeStep) != 1){ fclose(fp); return false; }
           }
           else if(i == 1){
-            if(sscanf(str, "%d", &numComp) != 1) return false;
+            if(sscanf(str, "%d", &numComp) != 1){ fclose(fp); return false; }
           }
           else if(i == 2){
-            if(sscanf(str, "%d", &numEnt) != 1) return false;
+            if(sscanf(str, "%d", &numEnt) != 1){ fclose(fp); return false; }
           }
           else if(i == 3){
-            if(sscanf(str, "%d", &partition) != 1) return false;
+            if(sscanf(str, "%d", &partition) != 1){ fclose(fp); return false; }
           }
         }
         // either get existing viewData, or create new one
@@ -214,6 +218,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
                        time, partition, numComp, numEnt, interpolationScheme)){
           Msg::Error("Could not read data in msh file");
           if(create) delete d;
+          fclose(fp);
           return false;
         }
         else{

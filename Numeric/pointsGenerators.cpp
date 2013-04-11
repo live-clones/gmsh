@@ -607,10 +607,10 @@ fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
 {
   int nbPoints = (order+1)*((order+1)+1)*(2*(order+1)+1)/6;
-  
+
   // Remove volume points if incomplete basis
   if (serendip && order > 2) nbPoints -= (order-2)*((order-2)+1)*(2*(order-2)+1)/6;
-  
+
   fullMatrix<double> points(nbPoints, 3);
 
   static const int edges[8][2] = {
@@ -630,13 +630,13 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
       {2, 3, 4, -1},
       {0, 3, 2, 1}
     };
-    
+
     if (order == 0) {
       points(0,0) = 0.0;
       points(0,1) = 0.0;
       points(0,2) = 0.0;
       return points;
-    } 
+    }
 
     // Principal vertices of the pyramid
     points(0,0) = -1.0; points(0,1) = -1.0; points(0,2) =  0.0;
@@ -653,7 +653,7 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
         double vec[3];
         vec[0] = points(edges[e][1],0) - points(edges[e][0],0);
         vec[1] = points(edges[e][1],1) - points(edges[e][0],1);
-        vec[2] = points(edges[e][1],2) - points(edges[e][0],2);    
+        vec[2] = points(edges[e][1],2) - points(edges[e][0],2);
         for (int i = 0; i < order - 1; i++) {
           points(p,0) = points(edges[e][0],0) + vec[0]/order * (i+1);
           points(p,1) = points(edges[e][0],1) + vec[1]/order * (i+1);
@@ -727,7 +727,7 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
         for(int k = 3*order; k < fp.size1(); k++) {
           fullVector<double> pnt(4);
           pnt(0) = fp(k,0);
-          pnt(1) = fp(k,1); 
+          pnt(1) = fp(k,1);
           pnt(2) = 0.0;
           pnt(3) = 1.0;
 
@@ -758,7 +758,7 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
       }
 
       // Volume
-      if (!serendip and order > 2) {
+      if (!serendip && order > 2) {
         fullMatrix<double> volume_points = gmshGeneratePointsPyramid(order - 3, false);
         // scale to order-3/order
         fullMatrix<double> T(3,3);

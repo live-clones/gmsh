@@ -122,7 +122,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           bnd.erase(ed);
       }
     }
-    for(std::set<EdgeData>::iterator it = bnd.begin(); it != bnd.end(); it++)
+    for(std::set<EdgeData, Less_EdgeData>::iterator it = bnd.begin(); it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
   for(std::set<MVertex*>::iterator it = bndVertices.begin();

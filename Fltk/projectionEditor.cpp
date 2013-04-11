@@ -467,12 +467,14 @@ static void load_projection_cb(Fl_Widget *w, void *data)
     int num;
     if(!fscanf(fp, "%d", &num)){
       Msg::Error("Bad projection file format");
+      fclose(fp);
       return;
     }
     for(int proj = 0; proj < num; proj++){
       char name[256], tag[256];
       if(!fscanf(fp, "%s", tag) || !fscanf(fp, "%s", name)){
         Msg::Error("Bad projection file format");
+        fclose(fp);
         return;
       }
       fourierProjectionFace *face = createProjectionFaceFromName(name);

@@ -1027,19 +1027,19 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
         remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered, facesToRemesh);
       else{
         std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
-        int *_error = new int[3 * edgesNotRecovered.size()];
+        //int *_error = new int[3 * edgesNotRecovered.size()];
         int I = 0;
         for(; itr != edgesNotRecovered.end(); ++itr){
           int p1 = itr->p1;
           int p2 = itr->p2;
           int tag = itr->ge->tag();
-	  printf("%d %d %d\n",p1,p2,tag);
-          _error[3 * I + 0] = p1;
-          _error[3 * I + 1] = p2;
-          _error[3 * I + 2] = tag;
+          Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
+          //_error[3 * I + 0] = p1;
+          //_error[3 * I + 1] = p2;
+          //_error[3 * I + 2] = tag;
           I++;
         }
-        throw _error;
+        //throw _error;
       }
 
       // delete the mesh

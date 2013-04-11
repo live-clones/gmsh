@@ -113,9 +113,12 @@ int GModel::readMSH(const std::string &name)
 
     // $MeshFormat section
     if(!strncmp(&str[1], "MeshFormat", 10)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int format, size;
-      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
+      if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3){
+        fclose(fp);
+        return 0;
+      }
       if(version < 3.){
         fclose(fp);
         return _readMSH2(name);
@@ -124,7 +127,7 @@ int GModel::readMSH(const std::string &name)
         binary = true;
         Msg::Info("Mesh is in binary format");
         int one;
-        if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+        if(fread(&one, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
         if(one != 1){
           swap = true;
           Msg::Info("Swapping bytes from binary file");
@@ -140,14 +143,14 @@ int GModel::readMSH(const std::string &name)
 
     // $PhysicalNames section
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int numNames;
-      if(sscanf(str, "%d", &numNames) != 1) return 0;
+      if(sscanf(str, "%d", &numNames) != 1){ fclose(fp); return 0; }
       for(int i = 0; i < numNames; i++) {
         int dim, num;
-        if(fscanf(fp, "%d", &dim) != 1) return 0;
-        if(fscanf(fp, "%d", &num) != 1) return 0;
-        if(!fgets(str, sizeof(str), fp)) return 0;
+        if(fscanf(fp, "%d", &dim) != 1){ fclose(fp); return 0; }
+        if(fscanf(fp, "%d", &num) != 1){ fclose(fp); return 0; }
+        if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
         std::string name = ExtractDoubleQuotedString(str, 256);
         if(name.size()) setPhysicalName(name, dim, num);
       }
@@ -155,16 +158,19 @@ int GModel::readMSH(const std::string &name)
 
     // $Entities section
     else if(!strncmp(&str[1], "Entities", 8)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int numEntities;
-      if(sscanf(str, "%d", &numEntities) != 1) return 0;
+      if(sscanf(str, "%d", &numEntities) != 1){ fclose(fp); return 0; }
       for(int i = 0; i < numEntities; i++) {
         int num, dim, numPhysicals;
-        if(fscanf(fp, "%d %d %d", &num, &dim, &numPhysicals) != 3) return 0;
+        if(fscanf(fp, "%d %d %d", &num, &dim, &numPhysicals) != 3){
+          fclose(fp);
+          return 0;
+        }
         if(numPhysicals > 0){
           std::vector<int> physicals(numPhysicals);
           for(int j = 0; j < numPhysicals; j++){
-            if(fscanf(fp, "%d", &physicals[j]) != 1) return 0;
+            if(fscanf(fp, "%d", &physicals[j]) != 1){ fclose(fp); return 0; }
           }
           entities[dim][num] = physicals;
         }
@@ -173,9 +179,9 @@ int GModel::readMSH(const std::string &name)
 
     // $Nodes section
     else if(!strncmp(&str[1], "Nodes", 5)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){  return 0; fclose(fp); }
       int numVertices;
-      if(sscanf(str, "%d", &numVertices) != 1) return 0;
+      if(sscanf(str, "%d", &numVertices) != 1){ fclose(fp); return 0; }
       Msg::Info("%d vertices", numVertices);
       Msg::ResetProgressMeter();
       _vertexMapCache.clear();
@@ -189,14 +195,15 @@ int GModel::readMSH(const std::string &name)
         if(!binary){
           if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
                     &entity) != 5)
+            fclose(fp);
             return 0;
         }
         else{
-          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&num, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&num, sizeof(int), 1);
-          if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+          if(fread(xyz, sizeof(double), 3, fp) != 3){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
-          if(fread(&entity, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&entity, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&entity, sizeof(int), 1);
         }
         if(!entity){
@@ -204,10 +211,10 @@ int GModel::readMSH(const std::string &name)
         }
         else{
           if(!binary){
-            if(fscanf(fp, "%d", &entity) != 1) return 0;
+            if(fscanf(fp, "%d", &entity) != 1){ fclose(fp); return 0; }
           }
           else{
-            if(fread(&dim, sizeof(int), 1, fp) != 1) return 0;
+            if(fread(&dim, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
             if(swap) SwapBytes((char*)&dim, sizeof(int), 1);
           }
           switch(dim){
@@ -223,10 +230,10 @@ int GModel::readMSH(const std::string &name)
               GEdge *ge = getEdgeByTag(entity);
               double u;
               if(!binary){
-                if(fscanf(fp, "%lf", &u) != 1) return 0;
+                if(fscanf(fp, "%lf", &u) != 1){ fclose(fp); return 0; }
               }
               else{
-                if(fread(&u, sizeof(double), 1, fp) != 1) return 0;
+                if(fread(&u, sizeof(double), 1, fp) != 1){ fclose(fp); return 0; }
                 if(swap) SwapBytes((char*)&u, sizeof(double), 1);
               }
               vertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, u, -1.0, num);
@@ -237,10 +244,10 @@ int GModel::readMSH(const std::string &name)
               GFace *gf = getFaceByTag(entity);
               double uv[2];
               if(!binary){
-                if(fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) return 0;
+                if(fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2){ fclose(fp); return 0; }
               }
               else{
-                if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
+                if(fread(uv, sizeof(double), 2, fp) != 2){ fclose(fp); return 0; }
                 if(swap) SwapBytes((char*)uv, sizeof(double), 2);
               }
               vertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);
@@ -251,10 +258,13 @@ int GModel::readMSH(const std::string &name)
               GRegion *gr = getRegionByTag(entity);
               double uvw[3];
               if(!binary){
-                if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 2) return 0;
+                if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 2){
+                  fclose(fp);
+                  return 0;
+                }
               }
               else{
-                if(fread(uvw, sizeof(double), 3, fp) != 3) return 0;
+                if(fread(uvw, sizeof(double), 3, fp) != 3){ fclose(fp); return 0; }
                 if(swap) SwapBytes((char*)uvw, sizeof(double), 3);
               }
               vertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
@@ -262,6 +272,7 @@ int GModel::readMSH(const std::string &name)
             break;
           default:
             Msg::Error("Wrong entity dimension for vertex %d", num);
+            fclose(fp);
             return 0;
           }
         }
@@ -293,25 +304,28 @@ int GModel::readMSH(const std::string &name)
 
     // $Elements section
     else if(!strncmp(&str[1], "Elements", 8)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int numElements;
-      if(sscanf(str, "%d", &numElements) != 1) return 0;
+      if(sscanf(str, "%d", &numElements) != 1){ fclose(fp); return 0; }
       Msg::Info("%d elements", numElements);
       Msg::ResetProgressMeter();
       _elementMapCache.clear();
       for(int i = 0; i < numElements; i++) {
         int num, type, entity, numData;
         if(!binary){
-          if(fscanf(fp, "%d %d %d %d", &num, &type, &entity, &numData) != 4) return 0;
+          if(fscanf(fp, "%d %d %d %d", &num, &type, &entity, &numData) != 4){
+            fclose(fp);
+            return 0;
+          }
         }
         else{
-          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&num, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&num, sizeof(int), 1);
-          if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&type, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&type, sizeof(int), 1);
-          if(fread(&entity, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&entity, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&entity, sizeof(int), 1);
-          if(fread(&numData, sizeof(int), 1, fp) != 1) return 0;
+          if(fread(&numData, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
           if(swap) SwapBytes((char*)&numData, sizeof(int), 1);
         }
         std::vector<int> data;
@@ -319,17 +333,20 @@ int GModel::readMSH(const std::string &name)
           data.resize(numData);
           if(!binary){
             for(int j = 0; j < numData; j++){
-              if(fscanf(fp, "%d", &data[j]) != 1) return 0;
+              if(fscanf(fp, "%d", &data[j]) != 1){ fclose(fp); return 0; }
             }
           }
           else{
-            if((int) fread(&data[0], sizeof(int), numData, fp) != numData) return 0;
+            if((int) fread(&data[0], sizeof(int), numData, fp) != numData){
+              fclose(fp);
+              return 0;
+            }
             if(swap) SwapBytes((char*)&data[0], sizeof(int), numData);
           }
         }
         MElementFactory f;
         MElement *element = f.create(num, type, data, this);
-        if(!element) return 0;
+        if(!element){ fclose(fp); return 0; }
         switch(element->getType()){
         case TYPE_PNT: elements[0][entity].push_back(element); break;
         case TYPE_LIN: elements[1][entity].push_back(element); break;

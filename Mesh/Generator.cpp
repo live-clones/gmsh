@@ -415,7 +415,10 @@ static void PrintMesh2dStatistics(GModel *m)
     fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
             "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
             "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
-    if(m->empty()) return;
+    if(m->empty()){
+      fclose(statreport);
+      return;
+    }
   }
 
   for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){

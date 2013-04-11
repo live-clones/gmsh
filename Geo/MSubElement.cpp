@@ -235,7 +235,7 @@ void MSubTriangle::getGradShapeFunctions(double u, double v, double w, double s[
     return _orig->getGradShapeFunctions(u, v, w, s, order);
 
   int nsf = getNumShapeFunctions();
-  double gradsuvw[nsf][3];
+  double gradsuvw[1256][3];
   _orig->getGradShapeFunctions(u, v, w, gradsuvw, order);
 
   // work in the parametric space of the parent element
@@ -473,7 +473,7 @@ void MSubLine::getGradShapeFunctions(double u, double v, double w, double s[][3]
     return _orig->getGradShapeFunctions(u, v, w, s, order);
 
   int nsf = _orig->getNumShapeFunctions();
-  double gradsuvw[nsf][3];
+  double gradsuvw[1256][3];
   _orig->getGradShapeFunctions(u, v, w, gradsuvw, order);
 
   double jac[3][3];

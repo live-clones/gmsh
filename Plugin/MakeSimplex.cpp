@@ -37,22 +37,21 @@ StringXNumber *GMSH_MakeSimplexPlugin::getOption(int iopt)
 }
 
 static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
-                          std::vector<double> &listIn, int *nbIn, 
+                          std::vector<double> &listIn, int *nbIn,
                           std::vector<double> &listOut, int *nbOut)
 {
+  if(!(*nbIn))  return;
+
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[data->getNumTimeSteps() * nbComp * nbNod];
   MakeSimplex dec(nbNod, nbComp, data->getNumTimeSteps());
-
-  if(!(*nbIn))
-    return;
 
   int nb = listIn.size() / (*nbIn);
   for(unsigned int i = 0; i < listIn.size(); i += nb){
     double *x = &listIn[i];
     double *y = &listIn[i + nbNod];
     double *z = &listIn[i + 2 * nbNod];
-    double *val = &listIn[i + 3 * nbNod]; 
+    double *val = &listIn[i + 3 * nbNod];
     for(int j = 0; j < dec.numSimplices(); j++){
       dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
       for(int k = 0; k < dec.numSimplexNodes(); k++)
@@ -87,18 +86,18 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
   decomposeList(data1, 4, 1, data1->SQ, &data1->NbSQ, data1->ST, &data1->NbST);
   decomposeList(data1, 4, 3, data1->VQ, &data1->NbVQ, data1->VT, &data1->NbVT);
   decomposeList(data1, 4, 9, data1->TQ, &data1->NbTQ, data1->TT, &data1->NbTT);
-                          
-  // hexas                
+
+  // hexas
   decomposeList(data1, 8, 1, data1->SH, &data1->NbSH, data1->SS, &data1->NbSS);
   decomposeList(data1, 8, 3, data1->VH, &data1->NbVH, data1->VS, &data1->NbVS);
   decomposeList(data1, 8, 9, data1->TH, &data1->NbTH, data1->TS, &data1->NbTS);
-                          
-  // prisms               
+
+  // prisms
   decomposeList(data1, 6, 1, data1->SI, &data1->NbSI, data1->SS, &data1->NbSS);
   decomposeList(data1, 6, 3, data1->VI, &data1->NbVI, data1->VS, &data1->NbVS);
   decomposeList(data1, 6, 9, data1->TI, &data1->NbTI, data1->TS, &data1->NbTS);
-                          
-  // pyramids             
+
+  // pyramids
   decomposeList(data1, 5, 1, data1->SY, &data1->NbSY, data1->SS, &data1->NbSS);
   decomposeList(data1, 5, 3, data1->VY, &data1->NbVY, data1->VS, &data1->NbVS);
   decomposeList(data1, 5, 9, data1->TY, &data1->NbTY, data1->TS, &data1->NbTS);
@@ -109,12 +108,12 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
   return v1;
 }
 
-// Utility class 
+// Utility class
 
 MakeSimplex::MakeSimplex(int numNodes, int numComponents, int numTimeSteps)
-  : _numNodes(numNodes), _numComponents(numComponents), _numTimeSteps(numTimeSteps) 
+  : _numNodes(numNodes), _numComponents(numComponents), _numTimeSteps(numTimeSteps)
 {
-  ; 
+  ;
 }
 
 int MakeSimplex::numSimplices()
@@ -150,12 +149,12 @@ void MakeSimplex::reorder(int map[4], int n,
   for(int ts = 0; ts < _numTimeSteps; ts++)
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < _numComponents; j++)
-        valn[ts*n*_numComponents + i*_numComponents + j] = 
+        valn[ts*n*_numComponents + i*_numComponents + j] =
           val[ts*_numNodes*_numComponents + map2[i]*_numComponents + j];
   }
 }
 
-void MakeSimplex::decompose(int num, 
+void MakeSimplex::decompose(int num,
                             double *x, double *y, double *z, double *val,
                             double *xn, double *yn, double *zn, double *valn)
 {
@@ -168,7 +167,7 @@ void MakeSimplex::decompose(int num,
     Msg::Error("Invalid decomposition");
     num = 0;
   }
-    
+
   switch(_numNodes) {
   case 4: reorder(quadTri[num], 3, x, y, z, val, xn, yn, zn, valn); break ;
   case 8: reorder(hexaTet[num], 4, x, y, z, val, xn, yn, zn, valn); break ;

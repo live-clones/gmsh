@@ -2508,11 +2508,13 @@ int Extrude_ProtudeSurface(int type, int is,
   for(i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c2);
     List_Read(chapeau->Generatrices, i, &c);
-    if(c->Num < 0)
-      if(!(c = FindCurve(-c->Num))) {
-        Msg::Error("Unknown curve %d", -c->Num);
+    if(c->Num < 0){
+      int nn = -c->Num;
+      if(!(c = FindCurve(nn))) {
+        Msg::Error("Unknown curve %d", nn);
         return ps->Num;
       }
+    }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
     // don't take the abs(): the sign of c2->Num is important (used

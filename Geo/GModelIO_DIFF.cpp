@@ -57,39 +57,41 @@ int GModel::readDIFF(const std::string &name)
     }
 
     int dim;
-    if(sscanf(str, "%*s %*s %*s %*s %*s %d", &dim) != 1) return 0;
+    if(sscanf(str, "%*s %*s %*s %*s %*s %d", &dim) != 1){ fclose(fp); return 0; }
     Msg::Info("dimension %d", dim);
 
     int numElements;
-    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)){ fclose(fp); return 0; }
     while(strstr(str, "Number of elements   =") == NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    if(sscanf(str, "%*s %*s %*s %*s %d", &numElements) != 1) return 0;
+    if(sscanf(str, "%*s %*s %*s %*s %d", &numElements) != 1){ fclose(fp); return 0; }
     Msg::Info("%d elements", numElements);
 
     int numVertices;
-    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)){ fclose(fp); return 0; }
     while(strstr(str, "Number of nodes      =") == NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    if(sscanf(str, "%*s %*s %*s %*s %d", &numVertices) != 1) return 0;
+    if(sscanf(str, "%*s %*s %*s %*s %d", &numVertices) != 1){ fclose(fp); return 0; }
     Msg::Info("%d vertices", numVertices);
 
     int numVerticesPerElement;
-    if(!fgets(str, sizeof(str), fp)||feof(fp)) return 0;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)){ fclose(fp); return 0; }
     while(strstr(str, "Max number of nodes in an element:")==NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1)
+    if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1){
+      fclose(fp);
       return 0;
+    }
     Msg::Info("numVerticesPerElement %d", numVerticesPerElement);
 
     bool several_subdomains;
-    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)){ fclose(fp); return 0; }
     if(!strncmp(&str[2], "Only one material", 17) ||
        !strncmp(&str[2], "Only one subdomain", 18)){
       if(!strncmp(&str[37], "dpTRUE", 6) || !strncmp(&str[37], "true", 4) ||
@@ -104,13 +106,13 @@ int GModel::readDIFF(const std::string &name)
 
     int nbi;
     std::vector<int> bi;
-    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)){ fclose(fp); return 0; }
     while(strstr(str, "Boundary indicators:") == NULL &&
           strstr(str, "boundary indicators:") == NULL){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    if(sscanf(str, "%d %*s %*s", &nbi) != 1) return 0;
+    if(sscanf(str, "%d %*s %*s", &nbi) != 1){ fclose(fp); return 0; }
     Msg::Info("nbi %d", nbi);
     if(nbi != 0)
       bi.resize(nbi);
@@ -122,7 +124,7 @@ int GModel::readDIFF(const std::string &name)
       }
       else
         format_read_bi += " %d";
-      if(sscanf(str, format_read_bi.c_str(), &bi[i]) != 1) return 0;
+      if(sscanf(str, format_read_bi.c_str(), &bi[i]) != 1){ fclose(fp); return 0; }
       Msg::Info("bi[%d]=%d", i, bi[i]);
     }
 
@@ -138,11 +140,11 @@ int GModel::readDIFF(const std::string &name)
 
     Msg::ResetProgressMeter();
     for(int i = 0; i < numVertices; i++){
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       double xyz[3];
       int tmp;
       if(sscanf(str, "%d ( %lf , %lf , %lf ) [%d]", &num,
-                &xyz[0], &xyz[1], &xyz[2], &tmp) != 5) return 0;
+                &xyz[0], &xyz[1], &xyz[2], &tmp) != 5){ fclose(fp); return 0; }
       elementary[i].resize(tmp + 1);
       elementary[i][0] = tmp;
       minVertex = std::min(minVertex, num);
@@ -179,8 +181,10 @@ int GModel::readDIFF(const std::string &name)
         }
         else
           format_read_bi += " %d";
-        if(sscanf(str, format_read_bi.c_str(), &(elementary[i][j + 1])) != 1)
+        if(sscanf(str, format_read_bi.c_str(), &(elementary[i][j + 1])) != 1){
+          fclose(fp);
           return 0;
+        }
         Msg::Info("elementary[%d][%d]=%d", i + 1, j + 1, elementary[i][j + 1]);
       }
     }
@@ -198,10 +202,10 @@ int GModel::readDIFF(const std::string &name)
     Msg::ResetProgressMeter();
     std::vector<int> mapping;
     for(int i = 1; i <= numElements; i++){
-      if(!fgets(str, sizeof(str), fp)) return 0;
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int num = 0, type, physical = 0, partition = 0;
       int indices[60];
-      if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1]) != 2) return 0;
+      if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1]) != 2){ fclose(fp); return 0; }
       eleType = std::string(eleTypec);
       int k2; // local number for the element
       int NoVertices; // number of vertices per element
@@ -268,6 +272,7 @@ int GModel::readDIFF(const std::string &name)
         type = MSH_HEX_27;
       }
       else{
+        fclose(fp);
         return 0;
       }
       std::string format_read_vertices = "%*d %*s %*d";
@@ -279,26 +284,33 @@ int GModel::readDIFF(const std::string &name)
         else
           format_read_vertices += " %d";
         k2 = mapping[k];
-        if(sscanf(str, format_read_vertices.c_str(), &ElementsNodes[i-1][k2]) != 1)
+        if(sscanf(str, format_read_vertices.c_str(), &ElementsNodes[i-1][k2]) != 1){
+          fclose(fp);
           return 0;
+        }
       }
       mapping.clear();
       for(int j = 0; j < NoVertices; j++)
         indices[j] = ElementsNodes[i - 1][j];
       std::vector<MVertex*> vertices;
       if(vertexVector.size()){
-        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices))
+        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices)){
+          fclose(fp);
           return 0;
+        }
       }
       else{
-        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices))
+        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices)){
+          fclose(fp);
           return 0;
+        }
       }
 
       MElementFactory f;
       MElement *e = f.create(type, vertices, num, partition);
       if(!e){
         Msg::Error("Unknown type of element %d", type);
+        fclose(fp);
         return 0;
       }
       int reg = elementary[i-1][1];
@@ -311,7 +323,7 @@ int GModel::readDIFF(const std::string &name)
       case TYPE_HEX : elements[5][reg].push_back(e); break;
       case TYPE_PRI : elements[6][reg].push_back(e); break;
       case TYPE_PYR : elements[7][reg].push_back(e); break;
-      default : Msg::Error("Wrong type of element"); return 0;
+      default : Msg::Error("Wrong type of element"); fclose(fp); return 0;
       }
       int dim = e->getDim();
       if(physical && (!physicals[dim].count(reg) ||

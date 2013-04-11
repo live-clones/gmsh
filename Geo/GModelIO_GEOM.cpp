@@ -31,11 +31,14 @@ int GModel::readGEOM(const std::string &name)
   }
 
   int numNodes, numElements, dummy;
-  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3)
+  if(fscanf(fp, "%d %d %d", &numNodes, &numElements, &dummy) != 3){
+    fclose(fp);
     return 0;
+  }
 
   if(!numNodes || !numElements){
     Msg::Warning("No vertices or elements found");
+    fclose(fp);
     return 0;
   }
 

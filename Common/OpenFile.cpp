@@ -274,7 +274,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   }
 
   char header[256];
-  if(!fgets(header, sizeof(header), fp)) return 0;
+  if(!fgets(header, sizeof(header), fp)){ fclose(fp); return 0; }
   fclose(fp);
 
   Msg::StatusBar(true, "Reading '%s'...", fileName.c_str());
@@ -499,7 +499,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
     return 0;
   }
   char header[256];
-  if(!fgets(header, sizeof(header), fp)) return 0;
+  if(!fgets(header, sizeof(header), fp)){ fclose(fp); return 0; }
   bool haveMesh = false;
   if(!strncmp(header, "$MeshFormat", 11)){
     while(!feof(fp) && fgets(header, sizeof(header), fp)){

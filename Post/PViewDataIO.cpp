@@ -21,6 +21,7 @@ bool PViewData::writeSTL(const std::string &fileName)
 
   if(!getNumTriangles() && !getNumQuadrangles()){
     Msg::Error("No surface elements to save");
+    fclose(fp);
     return false;
   }
 

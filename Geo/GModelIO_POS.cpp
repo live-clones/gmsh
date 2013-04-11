@@ -65,7 +65,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     names += "\"Disto\"";
   }
 
-  if(names.empty()) return 0;
+  if(names.empty()){ fclose(fp); return 0; }
 
   if(noPhysicalGroups()) saveAll = true;
 

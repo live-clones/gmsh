@@ -3,11 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-/* 
+/*
  * Warning: This code is really a dirty hack. It SHOULD be cleaned
  * (and most of all, all the static variables should be removed).
  *
- * It is based on 
+ * It is based on
  *
  * - libppm3.c - ppm utility library part 3
  * - ppmquant.c - quantize the colors in a pixmap down to a specified number
@@ -21,7 +21,7 @@
  * documentation.  This software is provided "as is" without express or
  * implied warranty.
  *
- * and 
+ * and
  *
  * - ppmtogif.c - read a portable pixmap and produce a GIF file
  *
@@ -552,6 +552,7 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
   /*
    * All done.
    */
+  free(bv);
   return colormap;
 }
 
@@ -819,7 +820,7 @@ static void output(code_int code)
 
 
 /*
- * compress 
+ * compress
  *
  * Algorithm:  use open addressing double hashing (no chaining) on the
  * prefix code / next character combination.  We do a variant of Knuth's

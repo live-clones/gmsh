@@ -83,6 +83,7 @@ int GModel::readPLY(const std::string &name)
       }
       if(!strcmp(str, "format") && strcmp(str2, "ascii")){
 	Msg::Error("Only reading of ascii PLY files implemented");
+        fclose(fp);
 	return 0;
       }
       if(!strcmp(str, "property") && strcmp(str2, "list")){
@@ -103,7 +104,7 @@ int GModel::readPLY(const std::string &name)
 	for(int i = 0; i < nbv; i++) {
 	  double x,y,z;
 	  char line[10000], *pEnd, *pEnd2, *pEnd3;
-	  if(!fgets(line, sizeof(line), fp)) return 0;
+	  if(!fgets(line, sizeof(line), fp)){ fclose(fp); return 0; }
 	  x = strtod(line, &pEnd);
 	  y = strtod(pEnd, &pEnd2);
 	  z = strtod(pEnd2, &pEnd3);
@@ -123,7 +124,7 @@ int GModel::readPLY(const std::string &name)
 	  int n[3], nbe;
 	  sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
 	  std::vector<MVertex*> vertices;
-	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	  if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
 	  elements[0][elementary].push_back(new MTriangle(vertices));
 	}
 
@@ -158,7 +159,7 @@ int GModel::readPLY(const std::string &name)
 	  n[0] = e->getVertex(0)->getNum()-1;
 	  n[1] = e->getVertex(1)->getNum()-1;
 	  n[2] = e->getVertex(2)->getNum()-1;
-	  if(!getProperties(3, n, properties[iV], props)) return 0;
+	  if(!getProperties(3, n, properties[iV], props)){ fclose(fp); return 0; }
 	  for(int nod = 0; nod < numNodes; nod++) out->push_back(props[nod]);
 	}
     }
@@ -222,7 +223,7 @@ int GModel::readPLY2(const std::string &name)
 	  sscanf(buffer, "%d",  &n[2]);
 	}
 	std::vector<MVertex*> vertices;
-	if(!getVertices(3, n, vertexVector, vertices)) return 0;
+	if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
 	elements[0][elementary].push_back(new MTriangle(vertices));
       }
     }

@@ -36,13 +36,14 @@ int GModel::readMESH(const std::string &name)
   }
 
   char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+  if(!fgets(buffer, sizeof(buffer), fp)){ fclose(fp); return 0; }
 
   char str[256];
   int format;
   sscanf(buffer, "%s %d", str, &format);
   if(format == 3){
     Msg::Error("Medit mesh import only available for ASCII files");
+    fclose(fp);
     return 0;
   }
 
@@ -82,7 +83,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d", &n[0], &n[1], &cl);
           for(int j = 0; j < 2; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(2, n, vertexVector, vertices)) return 0;
+          if(!getVertices(2, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[0][cl].push_back(new MLine(vertices));
         }
       }
@@ -97,7 +98,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
           for(int j = 0; j < 3; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(3, n, vertexVector, vertices)) return 0;
+          if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[0][cl].push_back(new MLine3(vertices));
         }
       }
@@ -112,7 +113,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
           for(int j = 0; j < 3; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(3, n, vertexVector, vertices)) return 0;
+          if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[1][cl].push_back(new MTriangle(vertices));
         }
       }
@@ -124,10 +125,11 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[6], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &n[4], &n[5],&cl);
+          sscanf(buffer, "%d %d %d %d %d %d %d",
+                 &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &cl);
           for(int j = 0; j < 6; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(6, n, vertexVector, vertices)) return 0;
+          if(!getVertices(6, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[1][cl].push_back(new MTriangle6(vertices));
         }
       }
@@ -142,7 +144,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
           for(int j = 0; j < 4; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(4, n, vertexVector, vertices)) return 0;
+          if(!getVertices(4, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[2][cl].push_back(new MQuadrangle(vertices));
         }
       }
@@ -157,7 +159,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
           for(int j = 0; j < 4; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(4, n, vertexVector, vertices)) return 0;
+          if(!getVertices(4, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[3][cl].push_back(new MTetrahedron(vertices));
         }
       }
@@ -169,10 +171,11 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[10], cl;
-          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],&n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
+                 &n[3],&n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
           for(int j = 0; j < 10; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(10, n, vertexVector, vertices)) return 0;
+          if(!getVertices(10, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[3][cl].push_back(new MTetrahedron10(vertices));
         }
       }
@@ -188,7 +191,7 @@ int GModel::readMESH(const std::string &name)
                  &n[4], &n[5], &n[6], &n[7], &cl);
           for(int j = 0; j < 8; j++) n[j]--;
           std::vector<MVertex*> vertices;
-          if(!getVertices(8, n, vertexVector, vertices)) return 0;
+          if(!getVertices(8, n, vertexVector, vertices)){ fclose(fp); return 0; }
           elements[4][cl].push_back(new MHexahedron(vertices));
         }
       }

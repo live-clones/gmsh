@@ -38,9 +38,9 @@ class GMSH_MESH_MANAGER : public MESH_MANAGER {
   GModel *_gm;
   GFace *_current;
  public:
-  GMSH_MESH_MANAGER(GModel *gm) 
+  GMSH_MESH_MANAGER(GModel *gm)
     : _gm(gm)
-  {    
+  {
   }
   virtual ~GMSH_MESH_MANAGER()
   {
@@ -48,7 +48,7 @@ class GMSH_MESH_MANAGER : public MESH_MANAGER {
   virtual void begin_mesh_output(ENTITY *entity, ENTITY *app_ref, ENTITY *format)
   {
     FACE *acisFace = dynamic_cast<FACE*>(entity);
-    if (!acisFace)return;    
+    if (!acisFace) return;
     _current = getACISFaceByNativePtr (_gm,acisFace);
   }
   virtual void announce_counts(int npoly, int nnode, int nref)
@@ -61,16 +61,16 @@ class GMSH_MESH_MANAGER : public MESH_MANAGER {
     return 1;
   }
   virtual void announce_indexed_polynode(int ipoly, int i, void *pnode);
-  virtual void *announce_indexed_node(int inode, const SPApar_pos &pos, 
+  virtual void *announce_indexed_node(int inode, const SPApar_pos &pos,
                                       const SPAposition &X, const SPAunit_vector &N)
   {
-    SPoint2 p(pos.u,pos.v); 
-    _current->stl_vertices[inode] = p; 
+    SPoint2 p(pos.u,pos.v);
+    _current->stl_vertices[inode] = p;
     //    printf("node %d pos %g %g\n",inode,p.x(),p.y());
     return (void*)inode; // bad idea, but...
   }
-  virtual void 	announce_indexed_polynode(ENTITY *E, int ipoly, int i, 
-                                          void *id, const double &edge_tpar, 
+  virtual void 	announce_indexed_polynode(ENTITY *E, int ipoly, int i,
+                                          void *id, const double &edge_tpar,
                                           const SPApar_pos &uv, const SPAposition &iX,
                                           const SPAunit_vector &N)
   {
@@ -79,7 +79,7 @@ class GMSH_MESH_MANAGER : public MESH_MANAGER {
   {
     return 0;
   }
-  virtual void	start_indexed_polygon(int polygonIndex,int _polygonNodeCount, 
+  virtual void	start_indexed_polygon(int polygonIndex,int _polygonNodeCount,
                                       int ishare = -2)
   {
   }
@@ -105,7 +105,7 @@ public:
   GMSH_MESH_MANAGER *_mm;
   ACIS_Internals(GModel *gm);
   ~ACIS_Internals();
-  void loadSAT(std::string fileName, GModel*);  
+  void loadSAT(std::string fileName, GModel*);
   void addVertices(GModel *gm, ENTITY_LIST &l);
   void addEdges(GModel *gm, ENTITY_LIST &l);
   void addFaces(GModel *gm, ENTITY_LIST &l);
@@ -123,7 +123,7 @@ ACIS_Internals::ACIS_Internals(GModel *gm)
   }
 
   option_header* seam_option = NULL;
- 
+
   seam_option = find_option("periodic_no_seam");
   if (seam_option != NULL)
     seam_option->push(FALSE);
@@ -155,7 +155,7 @@ ACIS_Internals::~ACIS_Internals()
   outcome prout = api_stop_modeller();
   if (!prout.ok()){
     Msg::Error("Unable to stop ACIS");
-  }  
+  }
   delete _mm;
 }
 
@@ -183,7 +183,7 @@ void ACIS_Internals::addEdges (GModel *gm, ENTITY_LIST &l)
       GEdge *v = getACISEdgeByNativePtr(gm, av);
       if (!v){
 	GVertex *v1 = getACISVertexByNativePtr(gm, av->start());
-	GVertex *v2 = getACISVertexByNativePtr(gm, av->end());      
+	GVertex *v2 = getACISVertexByNativePtr(gm, av->end());
 	gm->add(new ACISEdge(gm, av, gm->getMaxElementaryNumber(1) + 1, v1, v2));
       }
     }
@@ -210,14 +210,15 @@ void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
   FILE *f = fopen (fileName.c_str(), "r");
   if (!f){
     return;
-  }  
-  outcome prout = api_restore_entity_list(f,1,entities); 	
+  }
+  outcome prout = api_restore_entity_list(f,1,entities);
   if (!prout.ok()){
     Msg::Error("Unable to load ACIS FILE %d",fileName.c_str());
+    fclose(f);
     return;
-  }  
+  }
   Msg::Info("ACIS FILE %d Loaded",fileName.c_str());
-  
+
   ENTITY *e;
   entities.init();
   while((e = entities.next())){

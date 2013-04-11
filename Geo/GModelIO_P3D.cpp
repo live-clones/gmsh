@@ -18,11 +18,11 @@ int GModel::readP3D(const std::string &name)
   }
 
   int numBlocks = 0;
-  if(fscanf(fp, "%d", &numBlocks) != 1 || numBlocks <= 0) return 0;
+  if(fscanf(fp, "%d", &numBlocks) != 1 || numBlocks <= 0){ fclose(fp); return 0; }
 
   std::vector<int> Ni(numBlocks), Nj(numBlocks), Nk(numBlocks);
   for(int n = 0; n < numBlocks; n++)
-    if(fscanf(fp, "%d %d %d", &Ni[n], &Nj[n], &Nk[n]) != 3) return 0;
+    if(fscanf(fp, "%d %d %d", &Ni[n], &Nj[n], &Nk[n]) != 3){ fclose(fp); return 0; }
 
   for(int n = 0; n < numBlocks; n++){
     if(Nk[n] == 1){
@@ -35,7 +35,7 @@ int GModel::readP3D(const std::string &name)
         for(int j = 0; j < Nj[n]; j++){
           for(int i = 0; i < Ni[n]; i++){
             double d;
-            if(fscanf(fp, "%lf", &d) != 1) return 0;
+            if(fscanf(fp, "%lf", &d) != 1){ fclose(fp); return 0; }
             if(coord == 0){
               MVertex *v = new MVertex(d, 0., 0., gf);
               gf->transfinite_vertices[i][j] = v;
@@ -73,7 +73,7 @@ int GModel::readP3D(const std::string &name)
           for(int j = 0; j < Nj[n]; j++){
             for(int i = 0; i < Ni[n]; i++){
               double d;
-              if(fscanf(fp, "%lf", &d) != 1) return 0;
+              if(fscanf(fp, "%lf", &d) != 1){ fclose(fp); return 0; }
               if(coord == 0){
                 MVertex *v = new MVertex(d, 0., 0., gr);
                 gr->transfinite_vertices[i][j][k] = v;

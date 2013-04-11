@@ -935,6 +935,7 @@ void createRegularMesh (GFace *gf,
           (p34.x() && p34.y() == -1.0) ||
           (p41.x() && p41.y() == -1.0)) {
         Msg::Error("Wrong param -1");
+        fclose(f3);
         return;
       }
 

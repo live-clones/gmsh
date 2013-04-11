@@ -76,10 +76,11 @@ int GModel::readUNV(const std::string &name)
           std::vector<MVertex*> vertices(numNodes);
           for(int i = 0; i < numNodes; i++){
             int n;
-            if(!fscanf(fp, "%d", &n)) return 0;
+            if(!fscanf(fp, "%d", &n)){ fclose(fp); return 0; }
             vertices[i] = getMeshVertexByTag(n);
             if(!vertices[i]){
               Msg::Error("Wrong vertex index %d", n);
+              fclose(fp);
               return 0;
             }
           }

@@ -1,6 +1,6 @@
-/* 
-   Source file for integer-oriented matrix, relying on the arbitrary 
-   precision integers from the GNU gmp package. 
+/*
+   Source file for integer-oriented matrix, relying on the arbitrary
+   precision integers from the GNU gmp package.
 
    Copyright (C) 28.10.2003 Saku Suuriniemi TUT/CEM
 
@@ -8,7 +8,7 @@
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,8 +29,8 @@
 #include<stdlib.h>
 #include"gmp_matrix.h"
 
-gmp_matrix * 
-create_gmp_matrix(size_t r, size_t c, 
+gmp_matrix *
+create_gmp_matrix(size_t r, size_t c,
 		  mpz_t * e)
 {
   gmp_matrix * new_matrix;
@@ -61,8 +61,8 @@ create_gmp_matrix(size_t r, size_t c,
   return new_matrix;
 }
 
-gmp_matrix * 
-create_gmp_matrix_int(size_t r, size_t c, 
+gmp_matrix *
+create_gmp_matrix_int(size_t r, size_t c,
 		  const long int * e)
 {
   gmp_matrix * new_matrix;
@@ -94,7 +94,7 @@ create_gmp_matrix_int(size_t r, size_t c,
 }
 
 
-gmp_matrix * 
+gmp_matrix *
 create_gmp_matrix_identity(size_t dim)
 {
   gmp_matrix * new_matrix;
@@ -130,9 +130,9 @@ create_gmp_matrix_identity(size_t dim)
 }
 
 
-gmp_matrix * 
+gmp_matrix *
 create_gmp_matrix_zero(size_t rows, size_t cols)
-{ 
+{
   gmp_matrix * new_matrix;
   size_t       ind;
 
@@ -159,9 +159,9 @@ create_gmp_matrix_zero(size_t rows, size_t cols)
   return new_matrix;
 }
 
-gmp_matrix * 
-copy_gmp_matrix(const gmp_matrix * matrix, 
-		  const size_t start_row, const size_t start_col, 
+gmp_matrix *
+copy_gmp_matrix(const gmp_matrix * matrix,
+		  const size_t start_row, const size_t start_col,
 		  const size_t end_row, const size_t end_col)
 {
   gmp_matrix * new_matrix;
@@ -181,8 +181,12 @@ copy_gmp_matrix(const gmp_matrix * matrix,
 
   r = end_row-start_row+1;
   c = end_col-start_col+1;
-  if(r < 1 || c < 1) return NULL;
-  
+  if(r < 1 || c < 1)
+    {
+      free(new_matrix);
+      return NULL;
+    }
+
   new_matrix -> storage = (mpz_t *) calloc(r*c, sizeof(mpz_t));
   if(new_matrix -> storage == NULL)
     {
@@ -208,11 +212,11 @@ copy_gmp_matrix(const gmp_matrix * matrix,
       }
     }
   }
-     
+
   return new_matrix;
 }
 
-int 
+int
 destroy_gmp_matrix(gmp_matrix * m)
 {
   size_t       ind, nmb_storage;;
@@ -300,7 +304,7 @@ gmp_matrix_set_elem(mpz_t elem, size_t row, size_t col,
   return EXIT_SUCCESS;
 }
 
-int  
+int
 gmp_matrix_swap_rows(size_t row1, size_t row2, gmp_matrix * m)
 {
   if(m == NULL)
@@ -314,7 +318,7 @@ gmp_matrix_swap_rows(size_t row1, size_t row2, gmp_matrix * m)
 
   /* printf("Swapping rows %i %i\n", row1, row2); */
   gmp_blas_swap(m -> cols,
-		&(m -> storage[row1-1]), m -> rows, 
+		&(m -> storage[row1-1]), m -> rows,
 		&(m -> storage[row2-1]), m -> rows);
 
   return EXIT_SUCCESS;
@@ -333,8 +337,8 @@ gmp_matrix_swap_cols(size_t col1, size_t col2, gmp_matrix * m)
     }
 
   /* printf("Swapping cols %i %i\n", col1, col2); */
-  gmp_blas_swap(m -> rows, 
-		&(m -> storage[(m->rows)*(col1-1)]), 1, 
+  gmp_blas_swap(m -> rows,
+		&(m -> storage[(m->rows)*(col1-1)]), 1,
 		&(m -> storage[(m->rows)*(col2-1)]), 1);
 
   return EXIT_SUCCESS;
@@ -356,9 +360,9 @@ gmp_matrix_negate_row(size_t row, gmp_matrix * m)
 
   mpz_init(minus_one);
   mpz_set_si(minus_one, -1);
-  gmp_blas_scal(m -> cols, minus_one, (&m -> storage[row-1]), m -> rows); 
+  gmp_blas_scal(m -> cols, minus_one, (&m -> storage[row-1]), m -> rows);
   mpz_clear(minus_one);
-  return EXIT_SUCCESS; 
+  return EXIT_SUCCESS;
 }
 
 int
@@ -375,8 +379,8 @@ gmp_matrix_negate_col(size_t col, gmp_matrix * m)
     }
   mpz_init(minus_one);
   mpz_set_si(minus_one, -1);
-  gmp_blas_scal(m -> rows, minus_one, 
-		&(m -> storage[(m->rows)*(col-1)]), 1); 
+  gmp_blas_scal(m -> rows, minus_one,
+		&(m -> storage[(m->rows)*(col-1)]), 1);
   mpz_clear(minus_one);
   return EXIT_SUCCESS;
 }
@@ -395,9 +399,9 @@ gmp_matrix_add_row(mpz_t a, size_t row1, size_t row2,
       return EXIT_FAILURE;
     }
 
-  gmp_blas_axpy(m->cols, a, 
-		(mpz_t *) &(m->storage[row1-1]), m->rows, 
-		&(m->storage[row2-1]), m->rows); 
+  gmp_blas_axpy(m->cols, a,
+		(mpz_t *) &(m->storage[row1-1]), m->rows,
+		&(m->storage[row2-1]), m->rows);
 
   return EXIT_SUCCESS;
 }
@@ -415,9 +419,9 @@ gmp_matrix_add_col(mpz_t a, size_t col1, size_t col2,
       return EXIT_FAILURE;
     }
 
-  gmp_blas_axpy(m->rows, a, 
-		(mpz_t *) &(m -> storage[(m->rows)*(col1-1)]), 1, 
-		&(m -> storage[(m->rows)*(col2-1)]), 1); 
+  gmp_blas_axpy(m->rows, a,
+		(mpz_t *) &(m -> storage[(m->rows)*(col1-1)]), 1,
+		&(m -> storage[(m->rows)*(col2-1)]), 1);
 
   return EXIT_SUCCESS;
 }
@@ -438,9 +442,9 @@ gmp_matrix_row_rot(mpz_t a, mpz_t b, size_t row1,
       return EXIT_FAILURE;
     }
 
-  gmp_blas_rot(m->cols, 
-	       a, b, &(m->storage[row1-1]), m->rows, 
-	       c, d, &(m->storage[row2-1]), m->rows); 
+  gmp_blas_rot(m->cols,
+	       a, b, &(m->storage[row1-1]), m->rows,
+	       c, d, &(m->storage[row2-1]), m->rows);
 
   return EXIT_SUCCESS;
 }
@@ -465,15 +469,15 @@ gmp_matrix_col_rot(mpz_t a, mpz_t b, size_t col1,
 /* 	 mpz_get_si(d), */
 /* 	 col1, col2); */
 
-  gmp_blas_rot(m->rows, 
-	       a, b, &(m -> storage[(m->rows)*(col1-1)]), 1, 
-	       c, d, &(m -> storage[(m->rows)*(col2-1)]), 1); 
+  gmp_blas_rot(m->rows,
+	       a, b, &(m -> storage[(m->rows)*(col1-1)]), 1,
+	       c, d, &(m -> storage[(m->rows)*(col2-1)]), 1);
 
   return EXIT_SUCCESS;
 }
 
 size_t
-gmp_matrix_col_inz (size_t r1, size_t r2, size_t c, 
+gmp_matrix_col_inz (size_t r1, size_t r2, size_t c,
 		    gmp_matrix * m)
 {
   size_t result;
@@ -482,15 +486,15 @@ gmp_matrix_col_inz (size_t r1, size_t r2, size_t c,
     {
       return 0;
     }
-  if((r1 < 1) || (r1 > m->rows) || 
+  if((r1 < 1) || (r1 > m->rows) ||
      (r2 < 1) || (r2 > m->rows) ||
      (r2 < r1) || (c < 1) || (c > m->cols))
     {
       return 0;
     }
 
-  result = gmp_blas_inz(r2-r1+1, 
-			(mpz_t *) &(m->storage[(c-1)*(m->rows)+r1-1]), 
+  result = gmp_blas_inz(r2-r1+1,
+			(mpz_t *) &(m->storage[(c-1)*(m->rows)+r1-1]),
 			1);
 
   if(result > r2-r1+1)
@@ -502,7 +506,7 @@ gmp_matrix_col_inz (size_t r1, size_t r2, size_t c,
 }
 
 size_t
-gmp_matrix_row_inz (size_t r, size_t c1, size_t c2, 
+gmp_matrix_row_inz (size_t r, size_t c1, size_t c2,
 		    gmp_matrix * m)
 {
   size_t result;
@@ -511,15 +515,15 @@ gmp_matrix_row_inz (size_t r, size_t c1, size_t c2,
     {
       return 0;
     }
-  if((r  < 1) || (r  > m->rows) || 
+  if((r  < 1) || (r  > m->rows) ||
      (c1 < 1) || (c1 > m->cols) ||
      (c2 < c1) || (c2 < 1) || (c2 > m->cols))
     {
       return 0;
     }
 
-  result = gmp_blas_inz(c2-c1+1, 
-			(mpz_t *) &(m->storage[(c1-1)*(m->rows)+r-1]), 
+  result = gmp_blas_inz(c2-c1+1,
+			(mpz_t *) &(m->storage[(c1-1)*(m->rows)+r-1]),
 			m->rows);
 
   if(result > c2-c1+1)
@@ -541,7 +545,7 @@ gmp_matrix_is_diagonal(const gmp_matrix * M)
     {
       return 0;
     }
-  
+
   rows = M->rows;
   cols = M->cols;
 
@@ -549,7 +553,7 @@ gmp_matrix_is_diagonal(const gmp_matrix * M)
     {
       for(i = 1; i <= rows; i ++)
 	{
-	  if((mpz_cmp_si(M->storage[(i-1)+(j-1)*rows], 0) != 0) && 
+	  if((mpz_cmp_si(M->storage[(i-1)+(j-1)*rows], 0) != 0) &&
 	     (i != j))
 	    {
 	      return 0;
@@ -572,7 +576,7 @@ gmp_matrix_transp(gmp_matrix * M)
     {
       return EXIT_FAILURE;
     }
-  
+
   rows = M->rows;
   cols = M->cols;
 
@@ -585,15 +589,15 @@ gmp_matrix_transp(gmp_matrix * M)
   if(rows == 1){
     for(i = 1; i <= cols; i++)
     {
-      mpz_init_set(new_storage[i-1], 
+      mpz_init_set(new_storage[i-1],
 		       M-> storage[i-1]);
 	    mpz_clear(M-> storage[i-1]);
     }
-  } 
+  }
   else if(cols == 1){
     for(i = 1; i <= rows; i++)
     {
-      mpz_init_set(new_storage[i-1], 
+      mpz_init_set(new_storage[i-1],
 		       M-> storage[i-1]);
 	    mpz_clear(M-> storage[i-1]);
     }
@@ -603,13 +607,13 @@ gmp_matrix_transp(gmp_matrix * M)
     {
       for(j = 1; j <= cols; j++)
 	{
-	  mpz_init_set(new_storage[(j-1)+(i-1)*cols], 
+	  mpz_init_set(new_storage[(j-1)+(i-1)*cols],
 		       M-> storage[(i-1)+(j-1)*rows]);
 	  mpz_clear(M-> storage[(i-1)+(j-1)*rows]);
 	}
     }
   }
-  
+
   free(M->storage);
 
   M -> storage = new_storage;
@@ -631,7 +635,7 @@ gmp_matrix_right_mult(gmp_matrix * A, const gmp_matrix * B)
     {
       return EXIT_FAILURE;
     }
-  
+
   rows_A = A->rows;
   cols_A = A->cols;
   rows_B = B->rows;
@@ -687,7 +691,7 @@ gmp_matrix_left_mult(const gmp_matrix * A, gmp_matrix * B)
     {
       return EXIT_FAILURE;
     }
-  
+
   rows_A = A->rows;
   cols_A = A->cols;
   rows_B = B->rows;

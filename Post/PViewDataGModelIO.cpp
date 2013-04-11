@@ -217,6 +217,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
             if(!v){
               Msg::Error("Unknown vertex %d in data", i);
+              fclose(fp);
               return false;
             }
             int num = v->getIndex();
@@ -252,6 +253,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
             MElement *e = model->getMeshElementByTag(i);
             if(!e){
               Msg::Error("Unknown element %d in data", i);
+              fclose(fp);
               return false;
             }
             int mult = _steps[step]->getMult(i);
@@ -717,8 +719,8 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   // save the mesh
   if(!model->writeMED(fileName, true)) return false;
 
-  char *meshName = (char*)model->getName().c_str();
-  char *fieldName = (char*)getName().c_str();
+  std::string meshName(model->getName());
+  std::string fieldName(getName());
 
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE_AJOUT);
   if(fid < 0){
@@ -757,10 +759,11 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 
   int numComp = _steps[0]->getNumComponents();
 #if (MED_MAJOR_NUM == 3)
-  if(MEDfieldCr(fid, fieldName, MED_FLOAT64, (med_int)numComp, "unknown", "unknown",
-                "unknown", meshName) < 0){
+  if(MEDfieldCr(fid, (char*)fieldName.c_str(), MED_FLOAT64, (med_int)numComp,
+                "unknown", "unknown", "unknown", (char*)meshName.c_str()) < 0){
 #else
-  if(MEDchampCr(fid, fieldName, MED_FLOAT64, (char*)"unknown", (char*)"unknown",
+  if(MEDchampCr(fid, (char*)fieldName.c_str(), MED_FLOAT64,
+                (char*)"unknown", (char*)"unknown",
                 (med_int)numComp) < 0){
 #endif
     Msg::Error("Could not create MED field");
@@ -769,11 +772,12 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
 
 #if (MED_MAJOR_NUM == 3)
   med_bool changeOfCoord, geoTransform;
-  med_int numNodes = MEDmeshnEntity(fid, meshName, MED_NO_DT, MED_NO_IT, MED_NODE,
+  med_int numNodes = MEDmeshnEntity(fid, (char*)meshName.c_str(),
+                                    MED_NO_DT, MED_NO_IT, MED_NODE,
                                     MED_NO_GEOTYPE, MED_COORDINATE, MED_NO_CMODE,
                                     &changeOfCoord, &geoTransform);
 #else
-  med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD,
+  med_int numNodes = MEDnEntMaa(fid, (char*)meshName.c_str(), MED_COOR, MED_NOEUD,
                                 MED_NONE, (med_connectivite)0);
 #endif
   if(numNodes <= 0){
@@ -794,13 +798,15 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
       for(int k = 0; k < numComp; k++)
         val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
 #if (MED_MAJOR_NUM == 3)
-    if(MEDfieldValueWithProfileWr(fid, fieldName, (med_int)(step + 1), MED_NO_IT,
+    if(MEDfieldValueWithProfileWr(fid, (char*)fieldName.c_str(), (med_int)(step + 1),
+                                  MED_NO_IT,
                                   time, MED_NODE, MED_NO_GEOTYPE, MED_COMPACT_STMODE,
                                   profileName, "", MED_FULL_INTERLACE,
                                   MED_ALL_CONSTITUENT, numNodes,
                                   (unsigned char*)&val[0]) < 0){
 #else
-    if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0],
+    if(MEDchampEcr(fid, (char*)meshName.c_str(), (char*)fieldName.c_str(),
+                   (unsigned char*)&val[0],
                    MED_FULL_INTERLACE, numNodes, (char*)MED_NOGAUSS, MED_ALL,
                    profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
                    (char*)"unknown", time, MED_NONOR) < 0){

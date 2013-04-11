@@ -26,7 +26,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // "solid", or binary data header
   char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)) return 0;
+  if(!fgets(buffer, sizeof(buffer), fp)){ fclose(fp); return 0; }
 
   bool binary = strncmp(buffer, "solid", 5);
 
@@ -117,11 +117,13 @@ int GModel::readSTL(const std::string &name, double tolerance)
   for(unsigned int i = 0; i < points.size(); i++){
     if(points[i].empty()){
       Msg::Error("No facets found in STL file for solid %d", i);
+      fclose(fp);
       return 0;
     }
     if(points[i].size() % 3){
       Msg::Error("Wrong number of points (%d) in STL file for solid %d",
                  points[i].size(), i);
+      fclose(fp);
       return 0;
     }
     Msg::Info("%d facets in solid %d", points[i].size() / 3, i);
