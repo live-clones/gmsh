@@ -194,9 +194,10 @@ int GModel::readMSH(const std::string &name)
         MVertex *vertex = 0;
         if(!binary){
           if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
-                    &entity) != 5)
+                    &entity) != 5) {
             fclose(fp);
             return 0;
+          }
         }
         else{
           if(fread(&num, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
