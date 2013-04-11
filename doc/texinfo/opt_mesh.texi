@@ -184,6 +184,11 @@ CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.DelaunayQ
+Quality factor for initial Delaunay tetrahedralization@*
+Default value: @code{3.5}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
 Default value: @code{0}@*

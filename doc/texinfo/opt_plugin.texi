@@ -992,15 +992,14 @@ Default value: @code{1}
 @end table
 
 @item Plugin(Skin)
-Plugin(Skin) extracts the boundary (skin) of the view `View'. If `Visible' is set, the plugin only extracts the skin of visible entities.
-
-If `View' < 0, the plugin is run on the current view.
-
-Plugin(Skin) creates one new view.
+Plugin(Skin) extracts the boundary (skin) of the current mesh (if `FromMesh' = 1), or from the the view `View' (in which case it creates a new view). If `View' < 0 and `FromMesh' = 0, the plugin is run on the current view.
+If `Visible' is set, the plugin only extracts the skin of visible entities.
 Numeric options:
 @table @code
 @item Visible
 Default value: @code{1}
+@item FromMesh
+Default value: @code{0}
 @item View
 Default value: @code{-1}
 @end table
