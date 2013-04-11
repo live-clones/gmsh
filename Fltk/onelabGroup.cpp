@@ -219,6 +219,52 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
     }
     break;
+  case 32:     //case GmshSocket::GMSH_PARAMETER_UPDATE:
+    {
+      std::string version, type, name;
+      onelab::parameter::getInfoFromChar(message, version, type, name);
+      if(onelab::parameter::version() != version){
+        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+                   onelab::parameter::version().c_str(), version.c_str());
+      }
+      else if(type == "number"){
+	onelab::number p;
+        std::vector<onelab::number> par; get(par, name);
+        if(par.size() == 1) {
+	  p = par[0];
+	  onelab::number y; y.fromChar(message); 
+	  onelabUtils::updateNumber(p,y);
+	}
+	else
+	  p.fromChar(message);
+	set(p);
+        if(p.getName() == getName() + "/Progress")
+          if(FlGui::available())
+            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
+                                           p.getMin(), p.getMax());
+      }
+      else if(type == "string"){
+        onelab::string p; 
+	std::vector<onelab::string> par; get(par, name);
+        if(par.size() == 1){
+	  p = par[0];
+	  onelab::string y; y.fromChar(message); 
+	  onelabUtils::updateString(p,y);
+	}
+	else
+	  p.fromChar(message);
+	set(p);
+      }
+      else if(type == "region"){
+        onelab::region p; p.fromChar(message); set(p);
+      }
+      else if(type == "function"){
+        onelab::function p; p.fromChar(message); set(p);
+      }
+      else
+        Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
+    }
+    break;
   case GmshSocket::GMSH_PARAMETER_QUERY:
     {
       std::string version, type, name, reply;
@@ -716,15 +762,17 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute") initializeLoops();
 
-  // check whether we are running a metamodel
+  // check whether we are running a metamodel (.ol or .py)
   std::vector<onelab::number> n;
   onelab::server::instance()->get(n, "IsMetamodel");
   bool isMetamodel = (n.size() && n[0].getValue());
+  onelab::server::instance()->get(n, "IsPyMetamodel");
+  bool isPyMetamodel = (n.size() && n[0].getValue());
 
   do{ // enter loop
 
     // if the client is a not a metamodel, run Gmsh
-    if(!isMetamodel){
+    if(!isMetamodel && !isPyMetamodel){
       if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
         drawContext::global()->draw();
     }
