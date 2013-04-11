@@ -29,6 +29,20 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
   }
 }
 
+static std::string physicalName(GModel *m, int dim, int num)
+{
+  std::string name = m->getPhysicalName(dim, num);
+  if(name.empty()){
+    char tmp[256];
+    sprintf(tmp, "%s%d", (dim == 3) ? "PhysicalVolume" :
+            (dim == 2) ? "PhysicalSurface" : "PhysicalLine", num);
+    name = tmp;
+  }
+  for(unsigned int i = 0; i < name.size(); i++)
+    if(name[i] == ' ') name[i] = '_';
+  return name;
+}
+
 int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
                      double scalingFactor)
 {
@@ -77,9 +91,7 @@ int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNod
     for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
         it != groups[dim].end(); it++){
       std::vector<GEntity *> &entities = it->second;
-      const char *str = (dim == 3) ? "PhysicalVolume" : (dim == 2) ?
-        "PhysicalSurface" : "PhysicalLine";
-      fprintf(fp, "*ELSET,ELSET=%s%d\n", str, it->first);
+      fprintf(fp, "*ELSET,ELSET=%s\n", physicalName(this, dim, it->first).c_str());
       int n = 0;
       for(unsigned int i = 0; i < entities.size(); i++){
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
@@ -107,9 +119,7 @@ int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNod
               nodes.insert(e->getVertex(k));
           }
         }
-        const char *str = (dim == 3) ? "PhysicalVolume" : (dim == 2) ?
-          "PhysicalSurface" : "PhysicalLine";
-        fprintf(fp, "*NSET,NSET=%s%d\n", str, it->first);
+        fprintf(fp, "*NSET,NSET=%s\n", physicalName(this, dim, it->first).c_str());
         int n = 0;
         for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
           if(n && !(n % 10)) fprintf(fp, "\n");
