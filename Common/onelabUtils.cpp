@@ -352,6 +352,106 @@ namespace onelabUtils {
     return redraw;
   }
 
-}
+  // x is the parameter as on server
+  // y is the argument of set
+  // The routine updates x on basis of y. 
+  // If the parameter is not yet defined, set(y) as is
+  // If the parameter is already defined, priority must be given to the server state
+  // for all items editable from the GUI, i.e. value, range, Loop, Graph, Closed.
+  // If y.getReadOnly() is true, the value of y overrides that of x
 
+
+  double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange)
+  {
+    bool noRange = true, noChoices = true, noLoop = true;
+    bool noGraph = true, noClosed = true;
+
+    if(y.getReadOnly()){
+      x.setValue(y.getValue()); // use set value
+      x.setReadOnly(1); // makes the field "value" non-editable in the GUI
+    }
+    double val = x.getValue();
+
+    // keep track of these attributes, which can be changed server-side (unless,
+    // for the range/choices, when explicitely setting these attributes as
+    // ReadOnly)
+    if(!readOnlyRange){
+      if(x.getMin() != -onelab::parameter::maxNumber() ||
+	 x.getMax() != onelab::parameter::maxNumber() ||
+	 x.getStep() != 0.) noRange = false;
+      if(x.getChoices().size()) noChoices = false;
+    }
+    if(x.getAttribute("Loop").size()) noLoop = false;
+    if(x.getAttribute("Graph").size()) noGraph = false;
+    if(x.getAttribute("Closed").size()) noClosed = false;
+
+    // send updated parameter to server
+    if(noRange){
+      bool noRangeEither = true;
+      if(y.getMin() != -onelab::parameter::maxNumber() ||
+	 y.getMax() != onelab::parameter::maxNumber() ||
+	 y.getStep() != 0.) noRangeEither = false;
+      if(!noRangeEither){
+	x.setMin(y.getMin()); 
+	x.setMax(y.getMax());
+      }
+      else{
+	// if no range/min/max/step info is provided, try to compute a reasonnable
+	// range and step (this makes the gui much nicer to use)
+	bool isInteger = (floor(val) == val);
+	double fact = isInteger ? 5. : 20.;
+	if(val > 0){
+	  x.setMin(val / fact);
+	  x.setMax(val * fact);
+	  x.setStep((x.getMax() - x.getMin()) / 100.);
+	}
+	else if(val < 0){
+	  x.setMin(val * fact);
+	  x.setMax(val / fact);
+	  x.setStep((x.getMax() - x.getMin()) / 100.);
+	}
+	if(val && isInteger){
+	  x.setMin((int) x.getMin());
+	  x.setMax((int) x.getMax());
+	  x.setStep((int) x.getStep());
+	}
+      }
+    }
+    if(noChoices) {
+      x.setChoices(y.getChoices());
+      x.setValueLabels(y.getValueLabels());
+    }
+    if(noLoop) x.setAttribute("Loop", y.getAttribute("Loop"));
+    if(noGraph) x.setAttribute("Graph", y.getAttribute("Graph"));
+    if(noClosed) x.setAttribute("Closed",  y.getAttribute("Closed"));
+
+    return val;
+  }
+
+
+  std::string updateString(onelab::string &x, onelab::string &y)
+  {
+    bool noChoices = true, noClosed = true, noMultipleSelection = true;
+
+    if(y.getReadOnly()){
+      x.setValue(y.getValue()); // use set value
+      x.setReadOnly(1); // makes the field "value" non-editable in the GUI
+    }
+    std::string val = x.getValue();
+
+    // keep track of these attributes, which can be changed server-side
+    if(x.getChoices().size()) noChoices = false;
+    if(x.getAttribute("Closed").size()) noClosed = false;
+    if(x.getAttribute("MultipleSelection").size()) noMultipleSelection = false;
+
+    //if(copt.count("Kind")) ps[0].setKind(copt["Kind"][0]);
+    if(noChoices) x.setChoices(y.getChoices());
+    if(noClosed) x.setAttribute("Closed", y.getAttribute("Closed"));
+    if(noMultipleSelection)
+      x.setAttribute("MultipleSelection", y.getAttribute("MultipleSelection"));
+
+    return val;
+  }
+
+}
 #endif

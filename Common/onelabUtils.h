@@ -22,6 +22,9 @@ namespace onelabUtils {
   bool runGmshClient(const std::string &action, bool meshAuto);
   bool getFirstComputationFlag();
   void setFirstComputationFlag(bool val);
+
+  double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange=false);
+  std::string updateString(onelab::string &x, onelab::string &y);
 }
 
 #endif
