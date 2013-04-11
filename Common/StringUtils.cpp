@@ -91,8 +91,8 @@ std::string FixRelativePath(const std::string &reference, const std::string &in)
 std::vector<std::string> SplitFileName(const std::string &fileName)
 {
   // returns [path, baseName, extension]
-  int idot = fileName.find_last_of('.');
-  int islash = fileName.find_last_of("/\\");
+  int idot = (int)fileName.find_last_of('.');
+  int islash = (int)fileName.find_last_of("/\\");
   if(idot == (int)std::string::npos) idot = -1;
   if(islash == (int)std::string::npos) islash = -1;
   std::vector<std::string> s(3);
@@ -125,7 +125,7 @@ void ReplaceSubStringInPlace(const std::string &olds, const std::string &news,
                              std::string &str)
 {
   while(1){
-    int pos = str.find(olds.c_str());
+    int pos = (int)str.find(olds.c_str());
     if(pos == (int)std::string::npos) break;
     str.replace(pos, olds.size(), news.c_str());
   }

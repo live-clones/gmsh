@@ -160,7 +160,7 @@ include(CheckCXXCompilerFlag)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
-  set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800)")
+  set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800 4244 4267)")
   if(ENABLE_MSVC_STATIC_RUNTIME)
     foreach(VAR
             CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
@@ -975,12 +975,12 @@ endif(NOOPT)
 
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
-if(WALL)
+if(WALL AND NOT MSVC)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
        Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp contrib/onelab/*.cpp)
   set_source_files_properties(${WALL_SRC} COMPILE_FLAGS "-Wall")
-endif(WALL)
+endif(WALL AND NOT MSVC)
 
 list(SORT CONFIG_OPTIONS)
 set(GMSH_CONFIG_OPTIONS "")

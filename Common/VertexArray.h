@@ -118,7 +118,7 @@ class BarycenterHash {
  public:
   std::size_t operator()(const Barycenter &b) const
   {
-    return b.x()+b.y()+b.z();
+    return (std::size_t)(b.x() + b.y() + b.z());
   }
 };
 
@@ -155,11 +155,11 @@ class VertexArray{
   VertexArray(int numVerticesPerElement, int numElements);
   ~VertexArray(){}
   // return the number of vertices in the array
-  int getNumVertices() { return _vertices.size() / 3; }
+  int getNumVertices() { return (int)_vertices.size() / 3; }
   // return the number of vertices per element
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
   // return the number of element pointers
-  int getNumElementPointers() { return _elements.size(); }
+  int getNumElementPointers() { return (int)_elements.size(); }
   // return a pointer to the raw vertex array (warning: 1) we don't
   // range check 2) calling this if _vertices.size() == 0 will cause
   // some compilers to throw an exception)
