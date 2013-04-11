@@ -13,15 +13,15 @@ class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
     ('neverChanged', 'int', 0), ('changed', 'int', 1), ('visible', 'int', 1),
-    ('read_only', 'int', 0), ('attributes', ('dict', 'string', 'string'), {}),
+    ('readOnly', 'int', 0), ('attributes', ('dict', 'string', 'string'), {}),
     ('clients', ('list', 'string'), [])
   ]
   _members = {
     'string' : _membersbase + [
-      ('value', 'string'), ('kind', 'string', 'generic'), ('choices', ('list', 'string'), [])
+      ('value', 'string',''), ('kind', 'string', 'generic'), ('choices', ('list', 'string'), [])
     ],
     'number' : _membersbase + [
-      ('value', 'float'),
+      ('value', 'float',0),
       ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
       ('step', 'float', 0.), ('index', 'int', -1), ('choices', ('list', 'float'), []),
       ('labels', ('dict', 'float', 'string'), {})
@@ -66,7 +66,14 @@ class _parameter() :
       print('onelab parameter type mismatch')
     for p in  _parameter._members[self.type]:
       setattr(self, p[0], fromcharitem(l, p[1]))
-    
+    return self
+
+  def modify(self, **param) :
+    for i in _parameter._members[self.type] :
+      if i[0] in param :
+        setattr(self, i[0], param[i[0]]) #NB: no else statement => update
+
+
 class client :
   _GMSH_START = 1
   _GMSH_STOP = 2
@@ -77,9 +84,10 @@ class client :
   _GMSH_PARAMETER_QUERY = 24
   _GMSH_CONNECT = 27
   _GMSH_OLPARSE = 28
-  _GMSH_PARAM_NOT_FOUND = 29
-  _GMSH_OPTION_1 = 100
-  
+  _GMSH_PARAMETER_NOT_FOUND = 29
+  _GMSH_PARAMETER_CLEAR = 31
+  _GMSH_PARAMETER_UPDATE = 32
+
   def _receive(self) :
     def buffered_receive(l) :
       msg = b''
@@ -106,28 +114,63 @@ class client :
       self._createSocket()
       self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
-  def _define_parameter(self, param) :
+  def _declare_parameter(self, param) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      param.fromchar(msg)
-    elif t == self._GMSH_PARAM_NOT_FOUND :
-      self._send(self._GMSH_PARAMETER, param.tochar())
-
-  def setString(self, name, value, **param):
-    param = _parameter('string', name=name, value=value, **param)
-    self._define_parameter(param)
-    return param.value
-
-  def setNumber(self, name, value, **param):
-    if "labels" in param :
+      self._send(self._GMSH_PARAMETER_UPDATE, param.tochar()) #enrich a previous decl.
+    elif t == self._GMSH_PARAMETER_NOT_FOUND :
+      self._send(self._GMSH_PARAMETER, param.tochar()) #declaration
+    #print param.tochar()
+    
+  def declareNumber(self, name, **param):
+    if 'labels' in param :
       param["choices"] = param["labels"].keys()
-    p = _parameter('number', name=name, value=value, **param)
-    self._define_parameter(p)
+    p = _parameter('number', name=name, **param)
+    if 'value' not in param : #make the parameter readOnly
+      p.readOnly = 1
+      p.attributes={'Highlight':'Orchid'}
+    self._declare_parameter(p)
     return p.value
 
+  def declareString(self, name, **param):
+    p = _parameter('string', name=name, **param)
+    if 'value' not in param : #make the parameter readOnly
+      p.readOnly = 1
+      p.attributes={'Highlight':'Orchid'}
+    self._declare_parameter(p)
+    return p.value
+  
+  def setNumber(self, name, **param):
+    if not self.socket :
+      return
+    p = _parameter('number', name=name)
+    self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER :
+      p.fromchar(msg).modify(**param)
+      self._send(self._GMSH_PARAMETER, p.tochar())
+    elif t == self._GMSH_PARAMETER_NOT_FOUND :
+      p.modify(**param)
+      self._send(self._GMSH_PARAMETER, p.tochar())
+    return p.value
+
+  def setString(self, name, **param):
+    if not self.socket :
+      return
+    p = _parameter('string', name=name)
+    self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER : #modify an existing parameter
+      p.fromchar(msg).modify(**param)
+      self._send(self._GMSH_PARAMETER, p.tochar())
+    elif t == self._GMSH_PARAMETER_NOT_FOUND : #create a new parameter
+      p.modify(**param)
+      self._send(self._GMSH_PARAMETER, p.tochar())
+    return p.value
+  
   def _get_parameter(self, param, warn_if_not_found=True) :
     if not self.socket :
       return
@@ -135,29 +178,35 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       param.fromchar(msg)
-    elif t == self._GMSH_PARAM_NOT_FOUND and warn_if_not_found :
+    elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
       print 'Unknown parameter %s' %(param.name)
 
   def getNumber(self, name, warn_if_not_found=True):
-    param = _parameter('number', name=name, value=0)
+    param = _parameter('number', name=name)
     self._get_parameter(param, warn_if_not_found)
     return param.value
 
   def getString(self, name, warn_if_not_found=True):
-    param = _parameter('string', name=name, value='void')
+    param = _parameter('string', name=name)
     self._get_parameter(param, warn_if_not_found)
     return param.value
 
-  def showGeometry(self, filename) :
+  def geometry(self, filename) :
     if not self.socket or not filename :
       return
+    #if self.action == 'compute' and self.getString('Gmsh/MergedGeo', False) == filename :
     if self.getString('Gmsh/MergedGeo', False) == filename :
       return
     else :
-      self.setString('Gmsh/MergedGeo', filename)
+      self.setString('Gmsh/MergedGeo', value=filename)
     if filename[0] != '/' :
       filename = os.getcwd() + "/" + filename
     self._send(self._GMSH_MERGE_FILE, filename)
+
+  def mesh(self, filename) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + '";')
     
   def mergeFile(self, filename) :
     if not self.socket :
@@ -191,13 +240,16 @@ class client :
       if t == self._GMSH_STOP :
         self.NumSubClients -= 1
 
-  def run(self, name, command):
-    msg = [name, command]
+  def run(self, name, command, arguments):
     if not self.socket :
       return
+    if self.action == "check":
+      msg = [name, command]
+    else:
+      msg = [name, command + ' ' + arguments]
     self._send(self._GMSH_CONNECT, '\0'.join(msg))
     self.NumSubClients +=1
-    self._wait_on_subclients()
+    self._wait_on_subclients() # makes the subclient blocking
 
   def __init__(self):
     self.socket = None
@@ -211,18 +263,16 @@ class client :
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
     self.action = self.getString('python/Action')
+    self.setNumber('IsPyMetamodel',value=1,visible=0)
     if self.action == "initialize": exit(0)
   
   def __del__(self) :
+    self._wait_on_subclients()
+    #print "Calling destructor of %s with %d subclients" %(self.name, self.NumSubClients)
     if self.socket :
-      self._wait_on_subclients()
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
 
-## wait_on_clients
-## a la fin de sub_client
-## envoyer GMSH_STOP seulement si les sous-clients sont termines.
-## et modif dans onelabGroup run pour interdire au main
-## de fermer les sockets de clients non-termines.
+
 
       
