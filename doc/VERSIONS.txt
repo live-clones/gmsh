@@ -1,3 +1,6 @@
+2.7.1: updated onelab; better Abaqus and UNV export; small bug and compilation
+fixes.
+
 2.7.0 (March 9, 2013): new single-window GUI, with dynamically customizable
 widget tree; faster STEP/BRep import; arbitrary size image export; faster 2D
 Delaunay/Frontal algorithms; full option viewer/editor; many bug fixes.

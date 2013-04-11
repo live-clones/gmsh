@@ -175,6 +175,20 @@ int GModel::readUNV(const std::string &name)
   return 1;
 }
 
+static std::string physicalName(GModel *m, int dim, int num)
+{
+  std::string name = m->getPhysicalName(dim, num);
+  if(name.empty()){
+    char tmp[256];
+    sprintf(tmp, "%s%d", (dim == 3) ? "PhysicalVolume" :
+            (dim == 2) ? "PhysicalSurface" : "PhysicalLine", num);
+    name = tmp;
+  }
+  for(unsigned int i = 0; i < name.size(); i++)
+    if(name[i] == ' ') name[i] = '_';
+  return name;
+}
+
 int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
                      double scalingFactor)
 {
@@ -202,36 +216,30 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
   // elements
   fprintf(fp, "%6d\n", -1);
   fprintf(fp, "%6d\n", 2412);
-  int num = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-      MElement *e = entities[i]->getMeshElement(j);
-      // FIXME: don't duplicate elements anymore: just save the element with
-      // their natural id
-      if(saveAll)
-        e->writeUNV(fp, ++num, entities[i]->tag(), 0);
-      else
-        for(unsigned int k = 0; k < entities[i]->physicals.size(); k++)
-          e->writeUNV(fp, ++num, entities[i]->tag(), entities[i]->physicals[k]);
+    if(saveAll || entities[i]->physicals.size()){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        MElement *e = entities[i]->getMeshElement(j);
+        e->writeUNV(fp, e->getNum(), entities[i]->tag(), 0);
+      }
     }
   }
   fprintf(fp, "%6d\n", -1);
 
-  // FIXME: save groups of elements for each physical
+  std::map<int, std::vector<GEntity*> > groups[4];
+  getPhysicalGroups(groups);
 
+  // save groups of elements (and groups of nodes if requested) for each
+  // physical
+  fprintf(fp, "%6d\n", -1);
+  fprintf(fp, "%6d\n", 2477);
+  for(int dim = 0; dim <= 3; dim++){
+    for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+        it != groups[dim].end(); it++){
+      std::vector<GEntity *> &entities = it->second;
 
-  // groups of nodes for physical groups
-  if(saveGroupsOfNodes){
-    fprintf(fp, "%6d\n", -1);
-    fprintf(fp, "%6d\n", 2477);
-    std::map<int, std::vector<GEntity*> > groups[4];
-    getPhysicalGroups(groups);
-    int gr = 1;
-    for(int dim = 1; dim <= 3; dim++){
-      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
-          it != groups[dim].end(); it++){
-        std::set<MVertex*> nodes;
-        std::vector<GEntity *> &entities = it->second;
+      std::set<MVertex*> nodes;
+      if(saveGroupsOfNodes){
         for(unsigned int i = 0; i < entities.size(); i++){
           for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
             MElement *e = entities[i]->getMeshElement(j);
@@ -239,9 +247,17 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
               nodes.insert(e->getVertex(k));
           }
         }
-        fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n",
-                gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
-        fprintf(fp, "PERMANENT GROUP%d\n", gr++);
+      }
+
+      int nele = 0;
+      for(unsigned int i = 0; i < entities.size(); i++)
+        nele += entities[i]->getNumMeshElements();
+
+      fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n",
+              it->first, 0, 0, 0, 0, 0, 0, (int)nodes.size() + nele);
+      fprintf(fp, "%s\n", physicalName(this, dim, it->first).c_str());
+
+      if(saveGroupsOfNodes){
         int row = 0;
         for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
           if(row == 2) {
@@ -250,6 +266,22 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
           }
           fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getIndex(), 0, 0);
           row++;
+        }
+        fprintf(fp, "\n");
+      }
+
+      {
+        int row = 0;
+        for(unsigned int i = 0; i < entities.size(); i++){
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            MElement *e = entities[i]->getMeshElement(j);
+            if(row == 2) {
+              fprintf(fp, "\n");
+              row = 0;
+            }
+            fprintf(fp, "%10d%10d%10d%10d", 8, e->getNum(), 0, 0);
+            row++;
+          }
         }
         fprintf(fp, "\n");
       }
