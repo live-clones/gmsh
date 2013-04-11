@@ -41,7 +41,10 @@ endif(NOT CDASH_MODEL)
 
 ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 ctest_start(${CDASH_MODEL})
-ctest_update()
+# update from SVN only for nightly builds
+if(CDASH_MODEL MATCHES "Nightly")
+  ctest_update()
+endif(CDASH_MODEL MATCHES "Nightly")
 ctest_configure()
 ctest_build(TARGET html)
 ctest_build(TARGET package NUMBER_ERRORS ERR)
