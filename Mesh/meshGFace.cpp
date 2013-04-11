@@ -2481,7 +2481,7 @@ void orientMeshGFace::operator()(GFace *gf)
           SPoint2 p;
           // FIXME: use inexact reparam because some vertices might not be
           // exactly on the surface after the 3D Delaunay
-          bool ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p, false);
+          ok = reparamMeshVertexOnFace(e->getVertex(j), gf, p, false);
           if(!ok) break;
           param += p;
         }
