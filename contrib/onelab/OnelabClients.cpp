@@ -1317,7 +1317,11 @@ bool chmod(std::string fileName){
   struct stat info;
   stat(fileName.c_str(), &info);
   // chmod u=rwx
-  if (chmod(fileName.c_str(), 0000700) != 0){
+#if defined(WIN32)
+  if (_chmod(fileName.c_str(), _S_IREAD | _S_IWRITE) != 0){
+#else
+  if (chmod(fileName.c_str(), S_IRWXU) != 0){
+#endif
     perror("chmod() error");
     return false;
   }
