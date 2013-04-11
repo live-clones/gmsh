@@ -1306,6 +1306,10 @@ int mySystem(std::string commandLine){
 
 #include <sys/stat.h>
 #include <ctime>
+#if defined(WIN32)
+#include <io.h>
+#endif
+
 bool checkIfPresent(std::string fileName){
   struct stat buf;
   if (!stat(fileName.c_str(), &buf))
