@@ -768,7 +768,7 @@ double gLevelsetPopcorn::operator() (const double x, const double y, const doubl
   return val;
 }
 
-gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag)
+gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag) 
   : gLevelsetPrimitive(tag)
 {
     std::vector<std::string> expressions(1, f);
@@ -787,6 +787,74 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
     values[2] = z;
     if(_expr->eval(values, res)) return res[0];
     return 1.;
+}
+
+gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions, int tag) 
+  : gLevelsetPrimitive(tag)
+{
+  _hasDerivatives = true;
+  std::vector<std::string> variables(3);
+  variables[0] = "x";
+  variables[1] = "y";
+  variables[2] = "z";
+  _expr = new mathEvaluator(expressions, variables);
+}
+double gLevelsetMathEvalAll::operator() (const double x, const double y, const double z) const
+{
+    std::vector<double> values(3), res(13);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    if(_expr->eval(values, res)) return res[0];
+    return 1.;
+}
+std::vector<double> gLevelsetMathEvalAll::getValueAndGradients (const double x, const double y, const double z) const
+{
+    std::vector<double> values(3), res(13);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    if(_expr->eval(values, res)) return res;
+    return res;
+}
+
+void gLevelsetMathEvalAll::gradient (double x, double y, double z,
+				     double & dfdx, double & dfdy, double & dfdz) const
+{
+
+    std::vector<double> values(3), res(13);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    if(_expr->eval(values, res)){
+      dfdx = res[1];
+      dfdy = res[2];
+      dfdz = res[3];
+    }
+    
+}
+
+void gLevelsetMathEvalAll::hessian (double x, double y, double z,
+				    double & dfdxx, double & dfdxy, double & dfdxz, 
+				    double & dfdyx, double & dfdyy, double & dfdyz,
+				    double & dfdzx, double & dfdzy, double & dfdzz) const
+{
+
+   std::vector<double> values(3), res(13);
+    values[0] = x;
+    values[1] = y;
+    values[2] = z;
+    if(_expr->eval(values, res)){
+      dfdxx = res[4];
+      dfdxy = res[5];
+      dfdxz = res[6];
+      dfdyx = res[7];
+      dfdyy = res[8];
+      dfdyz = res[9];
+      dfdzx = res[10];
+      dfdzy = res[11];
+      dfdzz = res[12];
+    }
 }
 
 gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)

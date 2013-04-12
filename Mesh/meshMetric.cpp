@@ -222,6 +222,14 @@ void meshMetric::computeValues()
   while (it != _adj.end()) {
     std::vector<MElement*> lt = it->second;
     MVertex *ver = it->first;
+    //check if function is analytical
+    if (_fct->hasDerivatives()) {
+      printf("YOUPIE WE HAVE DERIVATIVES \n");
+      //int metricNumber = setOfMetrics.size();
+      //setOfMetrics[metricNumber].RECOMPUTE_METRIC = true;
+      exit(1);
+      //COMPUTE_ON_THE_FLY = true;
+    }
     vals[ver]= (*_fct)(ver->x(),ver->y(),ver->z());
     it++;
   }
@@ -808,6 +816,99 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
     throw;
   }
   metr = SMetric3(1.e-22);
+  
+  //test linh
+  //if (RECOMPUTE_METRIC)‘{
+  // do computation
+  // call the fgradient function and the hessioan function
+  // _fct->gradient(x,y,z,dfdx,dfdy,dfdz);
+  // _fct->hessian(x,y,z,...);
+  //}
+
+  // //test emi
+  // double signed_dist = sqrt(x*x+y*y)-0.5;
+  // double dist = fabs(signed_dist);
+  // SMetric3 hessian;
+  // hessian(0,0) = y*y/pow(x*x+y*y,1.5);   hessian(0,1) = -x*y/pow(x*x+y*y,1.5); hessian(0,2) = 0.0;
+  // hessian(1,0) =  -x*y/pow(x*x+y*y,1.5); hessian(1,1) = x*x/pow(x*x+y*y,1.5); hessian(1,2) = 0.0;
+  // hessian(2,0) = 0.0; hessian(2,1) = 0.0; hessian(2,2) = 0.0;
+
+  // SVector3 gVec(x/sqrt(x*x+y*y), y/sqrt(x*x+y*y), 0.0);
+  // const double metric_value_hmax = 1./(hmax*hmax);                                                        // Gradient vector
+  // const double gMag = gVec.norm(), invGMag = 1./gMag;
+  // SMetric3 metric;
+
+  // if (signed_dist < _E && signed_dist > _E_moins && gMag != 0.0){
+  //   const double metric_value_hmin = 1./(hmin*hmin);
+  //   const SVector3 nVec = invGMag*gVec;                                                         // Unit normal vector
+  //   double lambda_n = 0.;                                                                            // Eigenvalues of metric for normal & tangential directions
+  //   if (_technique==meshMetric::EIGENDIRECTIONS_LINEARINTERP_H){
+  //     const double h_dist = hmin + ((hmax-hmin)/_E)*dist;
+  //     double beta = CTX::instance()->mesh.smoothRatio;
+  //     double h_dista  = std::min( (hmin+(dist*log(beta))), hmax);                                    
+  //     lambda_n = 1./(h_dista*h_dista);
+  //   }
+  //   else if(_technique==meshMetric::EIGENDIRECTIONS){
+  //     const double maximum_distance = (signed_dist>0.) ? _E : fabs(_E_moins);                   // ... or linear interpolation between 1/h_min^2 and 1/h_max^2
+  //     lambda_n = metric_value_hmin + ((metric_value_hmax-metric_value_hmin)/maximum_distance)*dist;
+  //   }
+  //   std::vector<SVector3> tVec;                                                                 // Unit tangential vectors
+  //   std::vector<double> kappa;                                                                  // Curvatures
+  //   if (_dim == 2) {                                                                            // 2D curvature formula: cf. R. Goldman, "Curvature formulas for implicit curves and surfaces", Computer Aided Geometric Design 22 (2005), pp. 632–658
+  //       kappa.resize(2);
+  //       kappa[0] = fabs(-gVec(1)*(-gVec(1)*hessian(0,0)+gVec(0)*hessian(0,1))+
+  //           gVec(0)*(-gVec(1)*hessian(1,0)+gVec(0)*hessian(1,1)))*pow(invGMag,3);
+  //       kappa[1] = 1.;
+  //       tVec.resize(2);
+  //       tVec[0] = SVector3(-nVec(1),nVec(0),0.);
+  //       tVec[1] = SVector3(0.,0.,1.);
+  //     }
+  //     else {                                                                                      // 3D curvature formula: cf. A.G. Belyaev, A.A. Pasko and T.L. Kunii, "Ridges and Ravines on Implicit Surfaces," CGI, pp.530-535, Computer Graphics International 1998 (CGI'98), 1998
+  //       fullMatrix<double> ImGG(3,3);
+  //       ImGG(0,0) = 1.-gVec(0)*gVec(0); ImGG(0,1) = -gVec(0)*gVec(1); ImGG(0,2) = -gVec(0)*gVec(2);
+  //       ImGG(1,0) = -gVec(1)*gVec(0); ImGG(1,1) = 1.-gVec(1)*gVec(1); ImGG(1,2) = -gVec(1)*gVec(2);
+  //       ImGG(2,0) = -gVec(2)*gVec(0); ImGG(2,1) = -gVec(2)*gVec(1); ImGG(2,2) = 1.-gVec(2)*gVec(2);
+  //       fullMatrix<double> hess(3,3);
+  //       hessian.getMat(hess);
+  //       fullMatrix<double> gN(3,3);                                                               // Gradient of unit normal
+  //       gN.gemm(ImGG,hess,1.,0.);
+  //       gN.scale(invGMag);
+  //       fullMatrix<double> eigVecL(3,3), eigVecR(3,3);
+  //       fullVector<double> eigValRe(3), eigValIm(3);
+  //       gN.eig(eigValRe,eigValIm,eigVecL,eigVecR,false);                                          // Eigendecomp. of gradient of unit normal
+  //       kappa.resize(3);                                                                          // Store abs. val. of eigenvalues (= principal curvatures only in non-normal directions)
+  //       kappa[0] = fabs(eigValRe(0));
+  //       kappa[1] = fabs(eigValRe(1));
+  //       kappa[2] = fabs(eigValRe(2));
+  //       tVec.resize(3);                                                                           // Store normalized eigenvectors (= principal directions only in non-normal directions)
+  //       tVec[0] = SVector3(eigVecR(0,0),eigVecR(1,0),eigVecR(2,0));
+  //       tVec[0].normalize();
+  //       tVec[1] = SVector3(eigVecR(0,1),eigVecR(1,1),eigVecR(2,1));
+  //       tVec[1].normalize();
+  //       tVec[2] = SVector3(eigVecR(0,2),eigVecR(1,2),eigVecR(2,2));
+  //       tVec[2].normalize();
+  //       std::vector<double> tVecDotNVec(3);                                                       // Store dot products with normal vector to look for normal direction
+  //       tVecDotNVec[0] = fabs(dot(tVec[0],nVec));
+  //       tVecDotNVec[1] = fabs(dot(tVec[1],nVec));
+  //       tVecDotNVec[2] = fabs(dot(tVec[2],nVec));
+  //       const int i_N = max_element(tVecDotNVec.begin(),tVecDotNVec.end())-tVecDotNVec.begin();   // Index of normal dir. = max. dot products (close to 0. in tangential dir.)
+  //       kappa.erase(kappa.begin()+i_N);                                                           // Remove normal dir.
+  //       tVec.erase(tVec.begin()+i_N);
+  //     }
+  //     const double invh_t0 = (_Np*kappa[0])/6.283185307, invh_t1 = (_Np*kappa[1])/6.283185307;    // Inverse of tangential size 0
+  //     const double lambda_t0 = invh_t0*invh_t0, lambda_t1 = invh_t1*invh_t1;
+  //     const double lambdaP_n = std::min(std::max(lambda_n,metric_value_hmax),metric_value_hmin);  // Truncate eigenvalues
+  //     const double lambdaP_t0 = std::min(std::max(lambda_t0,metric_value_hmax),metric_value_hmin);
+  //     const double lambdaP_t1 = (_dim == 2) ? 1. : std::min(std::max(lambda_t1,metric_value_hmax),metric_value_hmin);
+  //     metric = SMetric3(lambdaP_n,lambdaP_t0,lambdaP_t1,nVec,tVec[0],tVec[1]);
+  // }
+  // else{// isotropic metric !
+  //     SMetric3 mymetric(metric_value_hmax);
+  //     metric = mymetric;
+  // }
+  // metr = metric;
+  // //end test emi
+
   SPoint3 xyz(x,y,z), uvw;
   double initialTol = MElement::getTolerance();
   MElement::setTolerance(1.e-4);
@@ -825,8 +926,6 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
       SMetric3 m4 = _nodalMetrics[e->getVertex(3)];
       metr =  interpolation(m1,m2,m3,m4,uvw[0],uvw[1],uvw[2]);
     }
-    //if recomputeAnalyticalValues
-    //then compute exact metric
 
   }
   else{
@@ -840,6 +939,8 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
       }
     }
   }
+
+
 }
 
 double meshMetric::getLaplacian (MVertex *v) {

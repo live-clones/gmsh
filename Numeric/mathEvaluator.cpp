@@ -60,7 +60,16 @@ bool mathEvaluator::eval(std::vector<double> &values, std::vector<double> &res)
     }
     catch(smlib::mathex::error e) {
       Msg::Error(e.what());
-      return false;
+      double eps = 1.e-20;
+      for(unsigned int j = 0; j < values.size(); j++)
+	_variables[j] = values[j] + eps;
+      try {
+	res[i] = _expressions[i]->eval();
+      }
+      catch(smlib::mathex::error e2) {
+	  Msg::Error(e2.what());
+	  return false;
+      }
     }
   }
   return true;

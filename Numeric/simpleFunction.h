@@ -13,13 +13,22 @@ template <class scalar>
 class simpleFunction {
  protected:
   scalar _val;
+  bool _hasDerivatives;
  public :
-  simpleFunction(scalar val=0.0) : _val(val) {}
+ simpleFunction(scalar val=0.0) : _val(val), _hasDerivatives(false){}
   virtual ~simpleFunction(){}
+  virtual bool hasDerivatives() {return _hasDerivatives;};
   virtual scalar operator () (double x, double y, double z) const { return _val; }
   virtual void gradient (double x, double y, double z,
 			 scalar & dfdx, scalar & dfdy, scalar & dfdz) const
   { dfdx = dfdy = dfdz = 0.0; }
+  virtual void hessian (double x, double y, double z,
+			scalar & dfdxx, scalar & dfdxy, scalar & dfdxz, 
+			scalar & dfdyx, scalar & dfdyy, scalar & dfdyz,
+			scalar & dfdzx, scalar & dfdzy, scalar & dfdzz	) const
+  { dfdxx = dfdxy = dfdxz = 0.0;
+    dfdyx = dfdyy = dfdyz = 0.0;
+    dfdzx = dfdzy = dfdzz = 0.0; }
 };
 
 template <class scalar>

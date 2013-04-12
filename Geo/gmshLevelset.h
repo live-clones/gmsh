@@ -293,6 +293,23 @@ public:
   int type() const { return UNKNOWN; }
 };
 
+class gLevelsetMathEvalAll: public gLevelsetPrimitive
+{
+  mathEvaluator *_expr;
+public:
+  gLevelsetMathEvalAll(std::vector<std::string> f, int tag=1); 
+  ~gLevelsetMathEvalAll(){ if (_expr) delete _expr; }
+  double operator() (const double x, const double y, const double z) const;
+  std::vector<double> getValueAndGradients(const double x, const double y, const double z) const;
+  void gradient (double x, double y, double z,
+		double & dfdx, double & dfdy, double & dfdz) const;
+  void hessian (double x, double y, double z,
+		double & dfdxx, double & dfdxy, double & dfdxz, 
+		double & dfdyx, double & dfdyy, double & dfdyz,
+		double & dfdzx, double & dfdzy, double & dfdzz	) const;
+  int type() const { return UNKNOWN; }
+};
+
 class gLevelsetSimpleFunction: public gLevelsetPrimitive
 {
   simpleFunction<double> *_f;

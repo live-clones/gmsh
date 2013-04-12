@@ -2088,7 +2088,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
   getTriangle(par1, par2, &lt, U,V);
   if(!lt && _mapping != RBF){
     printf("ARRG POINT NOT FOUND--> should improve octree search \n");
-    exit(1);
+    //exit(1);
     //printf("POINT no success %d tris %d quad \n", triangles.size(), quadrangles.size());
     GPoint gp = pointInRemeshedOctree(par1,par2);
     gp.setNoSuccess();

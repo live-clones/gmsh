@@ -216,7 +216,7 @@ void meshGFaceBamg(GFace *gf){
   }
 
   Mesh2 *refinedBamgMesh = 0;
-  int iterMax = 11;
+  int iterMax = 41;
   for (int  k= 0; k < iterMax; k++){
 
     int nbVert = bamgMesh->nv;
