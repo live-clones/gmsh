@@ -114,7 +114,7 @@ class client :
       self._createSocket()
       self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
-  def _declare_parameter(self, param) :
+  def _define_parameter(self, param) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
@@ -125,22 +125,22 @@ class client :
       self._send(self._GMSH_PARAMETER, param.tochar()) #declaration
     #print param.tochar()
     
-  def declareNumber(self, name, **param):
+  def defineNumber(self, name, **param):
     if 'labels' in param :
       param["choices"] = param["labels"].keys()
     p = _parameter('number', name=name, **param)
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
       p.attributes={'Highlight':'Orchid'}
-    self._declare_parameter(p)
+    self._define_parameter(p)
     return p.value
 
-  def declareString(self, name, **param):
+  def defineString(self, name, **param):
     p = _parameter('string', name=name, **param)
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
       p.attributes={'Highlight':'Orchid'}
-    self._declare_parameter(p)
+    self._define_parameter(p)
     return p.value
   
   def setNumber(self, name, **param):
@@ -155,7 +155,7 @@ class client :
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       p.modify(**param)
       self._send(self._GMSH_PARAMETER, p.tochar())
-    return p.value
+    #return p.value What for?
 
   def setString(self, name, **param):
     if not self.socket :
@@ -169,7 +169,6 @@ class client :
     elif t == self._GMSH_PARAMETER_NOT_FOUND : #create a new parameter
       p.modify(**param)
       self._send(self._GMSH_PARAMETER, p.tochar())
-    return p.value
   
   def _get_parameter(self, param, warn_if_not_found=True) :
     if not self.socket :
@@ -191,7 +190,7 @@ class client :
     self._get_parameter(param, warn_if_not_found)
     return param.value
 
-  def geometry(self, filename) :
+  def openGeometry(self, filename) :
     if not self.socket or not filename :
       return
     #if self.action == 'compute' and self.getString('Gmsh/MergedGeo', False) == filename :
@@ -207,6 +206,11 @@ class client :
     if not self.socket :
       return
     self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + '";')
+
+  def sendCommand(self, command) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARSE_STRING, command + ' ;')
     
   def mergeFile(self, filename) :
     if not self.socket :
