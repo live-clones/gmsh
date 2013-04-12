@@ -66,9 +66,9 @@ struct faceXtet{
     v[2] = t1->tet()->getVertex(faces[iFac][2]);
     std::sort(v, v + 3);
   }
- 
+
   inline MVertex * getVertex (int i) const { return t1->tet()->getVertex(faces[i1][i]);}
-  
+
  inline bool operator < (const faceXtet & other) const
   {
     if (v[0] < other.v[0]) return true;
@@ -106,7 +106,7 @@ void connectTets_vector(ITER beg, ITER end)
     if (!(*beg)->isDeleted()){
       for (int i = 0; i < 4; i++){
         faceXtet fxt(*beg, i);
-	std::vector<faceXtet>::iterator found  = std::find(conn.begin(), conn.end(), fxt); 
+	std::vector<faceXtet>::iterator found  = std::find(conn.begin(), conn.end(), fxt);
 	//        std::set<faceXtet>::iterator found = conn.find(fxt);
         if (found == conn.end())
 	  conn.push_back(fxt);
@@ -184,16 +184,16 @@ static void removeFromCavity (std::list<faceXtet> & shell,
 			      faceXtet &toRemove)
 {
   toRemove.t1->setDeleted(false);
-  cavity.erase(std::remove_if(cavity.begin(),cavity.end(), 
-			      std::bind2nd(std::equal_to<MTet4*>(), toRemove.t1))); 
+  cavity.erase(std::remove_if(cavity.begin(),cavity.end(),
+			      std::bind2nd(std::equal_to<MTet4*>(), toRemove.t1)));
   for (int i=0;i<4;i++){
-    faceXtet fxt2(toRemove.t1,i); 
-    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt2); 
+    faceXtet fxt2(toRemove.t1,i);
+    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt2);
     if (it == shell.end()){
       MTet4 *opposite = toRemove.t1->getNeigh(toRemove.i1);
       if (opposite){
 	for (int j=0;j<4;j++){
-	  faceXtet fxt3(opposite,j); 
+	  faceXtet fxt3(opposite,j);
 	  if (fxt3 == fxt2){
 	    shell.push_back(fxt3);
 	  }
@@ -211,9 +211,9 @@ static void extendCavity (std::list<faceXtet> & shell,
   MTet4 *t = toExtend.t1;
   MTet4 *opposite = t->getNeigh(toExtend.i1);
   for (int i=0;i<4;i++){
-    faceXtet fxt(opposite,i); 
-    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt); 
-    if (it == shell.end()) shell.push_back(fxt);    
+    faceXtet fxt(opposite,i);
+    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt);
+    if (it == shell.end()) shell.push_back(fxt);
     else shell.erase(it);
   }
   cavity.push_back(opposite);
@@ -244,7 +244,7 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
 			   MVertex *v ){
   std::list<faceXtet> wrong;
   for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end() ;++it) {
-    faceXtet &fxt = *it; 
+    faceXtet &fxt = *it;
     bool starShaped = fxt.visible(v);
     if (!starShaped){
       wrong.push_back(fxt);
@@ -253,10 +253,10 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   if (wrong.empty()) return 0;
   //  printf ("cavity %p (shell size %d cavity size %d)is not star shaped (%d faces not visible), correcting it\n",
   //	  v,shell.size(),cavity.size(),wrong.size());
-  
+
   //  bool doneNothing = true;
   while (!wrong.empty()){
-    faceXtet &fxt = *(wrong.begin()); 
+    faceXtet &fxt = *(wrong.begin());
     std::list<faceXtet>::iterator its = std::find(shell.begin(),shell.end(),fxt);
     if (its != shell.end()){
       if (fxt.t1->getNeigh(fxt.i1) && fxt.t1->getNeigh(fxt.i1)->onWhat() == fxt.t1->onWhat() && verifyShell(v,fxt.t1->getNeigh(fxt.i1),shell)){
@@ -335,7 +335,7 @@ void nonrecurFindCavity(std::list<faceXtet> & shell,
     // the cavity that has to be removed
     // because it violates delaunay criterion
     cavity.push_back(t);
-    
+
     for (int i = 0; i < 4; i++){
       MTet4 *neigh = t->getNeigh(i) ;
       if (!neigh)
@@ -352,7 +352,7 @@ void nonrecurFindCavity(std::list<faceXtet> & shell,
   //  printf("cavity size %d\n",cavity.size());
 }
 
-void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false ) 
+void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 {
   FILE *f = fopen (fn,"w");
   fprintf(f,"View \"\"{\n");
@@ -467,8 +467,8 @@ bool insertVertexB(std::list<faceXtet> &shell,
     //    printf("hola %d %g %g %22.15E\n",onePointIsTooClose, oldVolume, newVolume, 100.*fabs(oldVolume - newVolume) / oldVolume);
     //    new_cavity.clear();
     //    for (unsigned int i = 0; i <shell.size(); i++) new_cavity.push_back(newTets[i]);
-    //    printTets ("oldCavity.pos",cavity,true); 
-    //    printTets ("newCavity.pos",new_cavity); 
+    //    printTets ("oldCavity.pos",cavity,true);
+    //    printTets ("newCavity.pos",new_cavity);
     //    Msg::Fatal("");
     for (unsigned int i = 0; i <shell.size(); i++) myFactory.Free(newTets[i]);
     delete [] newTets;
@@ -496,7 +496,7 @@ bool insertVertex(MVertex *v,
   recurFindCavity(shell, cavity, v, t);
 
   return insertVertexB(shell,cavity,v,t,myFactory,allTets,vSizes,vSizesBGM,activeTets);
-  
+
 }
 
 
@@ -1177,7 +1177,7 @@ void insertVerticesInRegion (GRegion *gr)
   int COUNT_MISS_1 = 0;
   int COUNT_MISS_2 = 0;
 
-  clock_t t1 = clock();
+  double t1 = Cpu();
   while(1){
     if(allTets.empty()){
       Msg::Error("No tetrahedra in region %d %d", gr->tag(), allTets.size());
@@ -1221,23 +1221,23 @@ void insertVerticesInRegion (GRegion *gr)
       recurFindCavity(shell, cavity, &vv, worst);
 
       bool FOUND = false;
-      for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){	  
+      for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
 	MTetrahedron *toto = (*itc)->tet();
 	//	(*itc)->setDeleted(false);
 	toto->xyz2uvw(center,uvw);
 	if (toto->isInside(uvw[0], uvw[1], uvw[2])){
 	  worst = (*itc);
 	  FOUND = true;
-	  break;	  
+	  break;
 	}
       }
       /// END TETS
-      
+
       if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
 
-	//	printTets ("before.pos", cavity, true); 
+	//	printTets ("before.pos", cavity, true);
 	bool starShaped = true;
 	bool correctCavity = false;
 	while (1){
@@ -1247,7 +1247,7 @@ void insertVerticesInRegion (GRegion *gr)
 	  else if (k == 1) correctCavity = true;
 	}
 	if (correctCavity && starShaped) NB_CORRECTION_OF_CAVITY ++;
-	//	    printTets ("after.pos", cavity, true); 
+	//	    printTets ("after.pos", cavity, true);
 	//}
 
         double lc1 =
@@ -1285,10 +1285,10 @@ void insertVerticesInRegion (GRegion *gr)
       memoryCleanup(myFactory, allTets);
     }
   }
-  
+
   memoryCleanup(myFactory, allTets);
-  clock_t t2 = clock();
-  double dt = (double)(t2-t1)/CLOCKS_PER_SEC;
+  double t2 = Cpu();
+  double dt = (t2-t1);
   int COUNT_MISS = COUNT_MISS_1+COUNT_MISS_2;
   Msg::Info("3D Point Insertion Terminated : %9d Delaunay cavities modified for star shapeness",NB_CORRECTION_OF_CAVITY);
   Msg::Info("                              : %9d points could not be inserted among %d",COUNT_MISS,vSizes.size() - COUNT_MISS);

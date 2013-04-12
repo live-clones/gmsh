@@ -11,9 +11,7 @@
 #include <string>
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
-///
 #include "GamePad.h"
-///
 
 // The interface-independent context.
 

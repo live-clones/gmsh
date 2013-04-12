@@ -13,18 +13,15 @@
 #define GP_BUTTONS 32
 #define GP_AXES 6
 
-
 #if defined(WIN32)
-#include <windows.h>   
+#include <windows.h>
 #include <mmsystem.h>
-#else
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
 // ??
 #else // LINUX
 #include <linux/joystick.h>
 #include <fcntl.h>
 #define GAMEPAD_DEV "/dev/input/js0"
-#endif
 #endif
 
 class GamePad {
@@ -37,9 +34,9 @@ class GamePad {
   ~GamePad();
   double axe[GP_AXES];
   bool button[GP_BUTTONS];
-  bool toggle(const int _nbut); 
-  int read_event(); 
-  void affiche(); 
+  bool toggle(const int _nbut);
+  int read_event();
+  void affiche();
   int button_map[10];
   int axe_map[8];
  private:
@@ -56,10 +53,11 @@ class GamePad {
   int axes;
   int buttons;
 
-#else
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
 
   // ??
+  int axes;
+  int buttons;
 
 #else // LINUX
 
@@ -69,7 +67,6 @@ class GamePad {
   __u8 buttons;
 
 #endif
-#endif
-};  
+};
 
-#endif // _GAMEPAD_H_
+#endif

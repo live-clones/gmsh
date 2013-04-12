@@ -5,7 +5,7 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 //    default map is "THRUSTMASTER FireStorm Dual Power"-like
-//                                         
+//
 //                    ######                                   ######
 //                   # but5 #                                 # but7 #
 //                 .########..                               ..#######.
@@ -48,29 +48,28 @@
 //     ....                                                                     ...
 //
 
+#include <math.h>
 #include <cstring>
 #include <string>
 #include <iostream>
 #include <stdio.h>
 #include "GamePad.h"
 #include "Context.h"
+
+#if !defined(WIN32)
 #include <unistd.h>
-
-
-#if defined(WIN32)
-#include <math.h>
 #endif
-      
+
 GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
 
 #if defined(WIN32)
- 
+
   for (int i = JOYSTICKID1 ; i < JOYSTICKID2 ; i++)  {
-    if(JOYERR_NOERROR == joyGetDevCaps(i, &caps, sizeof(JOYCAPS)) ) { 
+    if(JOYERR_NOERROR == joyGetDevCaps(i, &caps, sizeof(JOYCAPS)) ) {
       /*
       std::cout << "Joystick/Gamepad detected: "<< name ;
       std::cout << " ( "  << (int)caps.wNumAxes <<" axes /" ;
-      std::cout << (int)caps.wNumButtons <<" buttons)" << std::endl;    
+      std::cout << (int)caps.wNumButtons <<" buttons)" << std::endl;
       std::cout << "  Driver name ....... " << caps.szPname << std::endl;
       std::cout << "  Manufacturer ID ... " << caps.wMid << std::endl;
       std::cout << "  Product ID ........ " << caps.wPid << std::endl;
@@ -93,24 +92,23 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
       */
       if(( 1./frequency <(double)caps.wPeriodMin ) ||( 1./frequency >(double)caps.wPeriodMax )){
 	   frequency=.1/(double)caps.wPeriodMin;
-	}     
+	}
       gamepad_fd =i;
       axes=std::min(GP_AXES,(int)caps.wNumAxes +2);
       buttons=std::min(GP_BUTTONS,(int)caps.wNumButtons);
       for (int i=0;i<buttons;i++) button[i]=false;
-      for (int i=0;i<axes;i++)    axe[i]=0.;    
-      active = true;    
-      
-      
+      for (int i=0;i<axes;i++)    axe[i]=0.;
+      active = true;
+
+
     }
-  }     
+  }
   for (int i=0;i<buttons;i++) button[i]=0;
   for (int i=0;i<axes;i++)	  axe[i]=0;
-  joyGetPosEx( gamepad_fd,&infoex)   ;      
+  joyGetPosEx( gamepad_fd,&infoex)   ;
   infoex.dwFlags = JOY_RETURNALL;
 
-#else
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
 
   // ??
 
@@ -126,10 +124,9 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
     std::cout << " (version " << version  << " / " ;
     std::cout << (int)axes <<" axes /" ;
     std::cout << (int)buttons <<" buttons)" << std::endl;
-    active = true;    
+    active = true;
   }
-#endif //(__APPLE__)
-#endif //(WIN32)
+#endif
 
   for (int i=0;i<std::min(9,(int)buttons);i++) button_map[i]=i;
   for (int i=0;i<std::min(7,(int)axes);i++)    axe_map[i]=i;
@@ -141,41 +138,34 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
     button_map[1]=0;
     button_map[5]=6;
     button_map[6]=5;
-  } 
+  }
 }
 
-
 GamePad::~GamePad() {
-  active = false; 
+  active = false;
   gamepad_fd = 0;
 
-#if !defined(WIN32) 
-#if !defined(__APPLE__)
+#if !defined(WIN32) && !defined(__APPLE__)
 
   close(gamepad_fd);
 
-#endif //!(__APPLE__)
-#endif //!(WIN32)
+#endif
 }
-
-
 
 bool GamePad::toggle(const int _nbut) {
   bool res;
   if( toggle_status[_nbut] ){ res = true; toggle_status[_nbut]=false;}
   else { res=false;  }
   return res;
-} 
-
-
+}
 
 int GamePad::read_event() {
 
 #if defined(WIN32)
 
   infoex.dwFlags = JOY_RETURNALL;
-  joyGetPosEx( gamepad_fd,&infoex) ;   
-    
+  joyGetPosEx( gamepad_fd,&infoex) ;
+
     axe[0]=(double)(( 1.*infoex.dwXpos-32767.)/32767.);
     axe[1]=(double)(( 1.*infoex.dwYpos-32767.)/32767.);
     axe[2]=(double)(( 1.*infoex.dwRpos-32767.)/32767.);
@@ -184,25 +174,25 @@ int GamePad::read_event() {
       double alpha = 3.14159/18000.* infoex.dwPOV;
       axe[4]=1.001*sin(alpha);	 axe[5]=-1.001*cos(alpha);
     }
-    else{ 
+    else{
       axe[4]= axe[5]=0.;
     }
     for (int i=0;i<6;i++)  if ( fabs( axe[i]) < .01)  axe[i]=0.;
-   
+
     bool event=false;
     int  event_num;
     bool event_value;
     for (int i=0;i<buttons;i++){
-      int bin=pow(2,i);	 
+      int bin=pow(2,i);
       if( button[i] != (bool)(infoex.dwButtons & bin) ) {
 	event=true;
 	event_num=i;
 	event_value=(bool)(infoex.dwButtons & bin);
-      } 
-    }  
+      }
+    }
     if(event){
       if( button[event_num]==0 && event_value  ) {  toggle_status[event_num]=true; 	}
-      button[event_num]= event_value; 
+      button[event_num]= event_value;
     }
   /*
     std::cout<< "--------------------" << std::endl;
@@ -216,8 +206,7 @@ int GamePad::read_event() {
     std::cout<< infoex.dwButtonNumber << std::endl;
     std::cout<< infoex.dwPOV << std::endl;
   */
-#else
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
 
   // ??
 
@@ -225,7 +214,7 @@ int GamePad::read_event() {
 
   int result = read(gamepad_fd, &event, sizeof(event)) ;
   if (result > 0)    {
-    
+
     switch (event.type)  {
     case JS_EVENT_INIT:
       break;
@@ -245,18 +234,15 @@ int GamePad::read_event() {
       button[(int)event.number]=(bool)event.value ;
       break;
 
-    default:	
+    default:
       break;
     }
   }
-  
-#endif //(__APPLE__)
-#endif //(WIN32)
+
+#endif
 
   return 1;
 }
-
-
 
 void GamePad::affiche() {
   for (int i=0;i<6;i++)  std::cout<<("_________");
@@ -264,7 +250,7 @@ void GamePad::affiche() {
   for (int i=0;i<6;i++)  std::cout<<" | "<<i;
   std::cout<<std::endl;  std::cout<<"       ";
   for (int i=0;i<6;i++)  std::cout<<" | "<< axe[i] ;
-  std::cout<<std::endl;   
+  std::cout<<std::endl;
   for (int i=0;i<10;i++) std::cout<< ("_____");
   std::cout<<std::endl;  std::cout<<" b.";
   for (int i=0;i<10;i++) std::cout<<" | "<<i;
@@ -273,6 +259,5 @@ void GamePad::affiche() {
   std::cout<<std::endl;
   for (int i=0;i<10;i++) std::cout<< ("_____");
   std::cout<<std::endl;
-  
-}
 
+}
