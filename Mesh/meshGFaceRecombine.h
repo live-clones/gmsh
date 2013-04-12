@@ -68,7 +68,8 @@ struct gterRec2DNode {
 };
 
 enum Rec2DQualCrit {
-  NoCrit = -2, ChoosedCrit = -1,
+  NoCrit = -2,
+  ChoosedCrit = -1,
   BlossomQuality = 0,
   VertQuality = 1,
   VertEdgeQuality = 2
@@ -130,8 +131,12 @@ class Recombine2D {
     // Get/Set methods
     inline void setHorizon(int h) {_horizon = h;}
     inline void setStrategy(int s) {_strategy = s;}
-    inline void setQualCriterion(Rec2DQualCrit c) {_qualCriterion = c;}
-    inline void setQualCriterion(int a) {_qualCriterion = (Rec2DQualCrit)a;} /////////////
+    inline void setQualCriterion(Rec2DQualCrit c) {
+      Msg::Info("--3--%d----- %d", c, _qualCriterion);_qualCriterion = c;
+      Msg::Info("--4--%d----- %d", c, _qualCriterion);}
+    inline void setQualCriterion(int a) {
+      Msg::Info("--1--%d----- %d", a, _qualCriterion);_qualCriterion = (Rec2DQualCrit)a;
+      Msg::Info("--2--%d----- %d", a, _qualCriterion);} /////////////
     static inline GFace const *const getGFace() {return _cur->_gf;}
     static inline backgroundMesh const *const bgm() {return _cur->_bgm;}
     static inline int getNumChange() {return _cur->_numChange;}
@@ -348,19 +353,11 @@ class Rec2DData {
     static double getGlobalQuality(int numVert, double valVert,
                                    int numEdge = 0, double valEdge = .0,
                                    Rec2DQualCrit c = ChoosedCrit);
-    static inline void addVertQual(double val, int num = 0) {
-      //_cur->_numVert += num;
-      //_cur->_valVert += (long double)val;
-    }
-    static inline void addEdgeQual(double val, int num = 0) {
-      //_cur->_numEdge += num;
-      //_cur->_valEdge += (long double)val;
-    }
-    static inline void addSumVert(double val) {
-      //_cur->_valVert2 += (long double)val;
-    }
     static void updateVertQual(double, Rec2DQualCrit);
-    static void updateEdgeQual(double d, int a = 0) {Msg::Fatal("need definition");}
+    static void updateEdgeQual(double d, int a = 0) {
+      _cur->_2valEdge += d;
+      _cur->_numEdge += a;
+    }
 #ifdef REC2D_RECO_BLOS
     static inline void addBlosQual(int val) {_cur->_0blossomQuality += val;}
 #endif
@@ -867,7 +864,10 @@ class Rec2DVertex {
                          const Rec2DEdge *adjacent1 = NULL,
                          const Rec2DEdge *adjacent2 = NULL) const;
 #endif
-    void updateEdgeQual(double d, int a = 0) {Msg::Fatal("need definition");}
+    inline void updateWAQualEdges(double d, int a = 0) {
+      _sumWQualEdge += d;
+      _sumWeightEdge += a;
+    }
     
     // Miscellaneous
     void relocate(SPoint2 p);
@@ -875,6 +875,7 @@ class Rec2DVertex {
     
     // Check errors
     bool checkCoherence() const;
+    bool checkQuality() const;
     
     // Debug
     void printElem() const;
@@ -886,8 +887,8 @@ class Rec2DVertex {
     void _updateQualAngle();
     //inline double _angle2Qual(double ang) const {
     //  return std::max(1. - fabs(ang*2./M_PI - 1.), .0); 
-    //}
-    inline double _qualDegree(int numEl = -1) const {Msg::Fatal("need definition");}
+    // }
+    double _qualDegree(int numEl = -1) const;
     inline double _WAQualAngles() const {return _sumWQualAngle / _sumWeightAngle;}
     inline double _WAQualEdges() const {return _sumWQualEdge / _sumWeightEdge;}
     inline double _vertQual() const {

@@ -16,7 +16,7 @@
 #define REC2D_DRAW
 #ifdef REC2D_DRAW
   //#define DRAW_ALL_SELECTED
-  //#define DRAW_WHEN_SELECTED
+  #define DRAW_WHEN_SELECTED
   //#define DRAW_EVERY_CHANGE
   //#define DRAW_BEST_SEQ
   #define DRAW_IF_ERROR
@@ -41,7 +41,7 @@
 #define F(x) Msg::Fatal x
 #define I(x) Msg::Info x
 #define W(x) Msg::Warning x
-#define DEBUG(x) {x}
+#define DEBUG(x) //{x}
 // TODO : regarder pour pointing
 //        It''s RElement that should give Blossom Qual !
 
@@ -62,14 +62,14 @@ static void __draw(double dt = .0)
     FlGui::instance()->check();
 }
 
-//static void __drawWait(double time, double dt)
-//{
-//  Recombine2D::drawStateOrigin();
-//  CTX::instance()->mesh.changed = ENT_ALL;
-//  drawContext::global()->draw();
-//  while (Cpu()-time < dt)
-//    FlGui::instance()->check();
-//}
+static void __drawWait(double time, double dt)
+{
+  Recombine2D::drawStateOrigin();
+  CTX::instance()->mesh.changed = ENT_ALL;
+  drawContext::global()->draw();
+  while (Cpu()-time < dt)
+    FlGui::instance()->check();
+}
 #endif
 
 static bool edgesAreInOrder(Rec2DEdge const*const*const edges, const int numEdges)
@@ -171,6 +171,14 @@ Recombine2D::Recombine2D(GFace *gf, bool col)
     _strategy(0), _horizon(0), _qualCriterion(NoCrit),
     _checkIfNotAllQuad(1), _avoidIfNotAllQuad(1),
     _revertIfNotAllQuad(0), _oneActionHavePriority(1),
+    _weightEdgeBase(2),
+    _weightEdgeQuad(1),
+    _weightAngleTri(1),
+    _weightAngleQuad(2),
+    _coefAngleQual(.5),
+    _coefDegreeQual(.5),
+    _coefLengthQual(.5),
+    _coefOrientQual(.5),
     _recombineWithBlossom(1), elist(NULL)
 {
   if (Recombine2D::_cur) {
@@ -413,7 +421,7 @@ double Recombine2D::recombine(int depth)
   double time = Cpu();
 #endif
 #ifdef DRAW_WHEN_SELECTED
-    __drawWait(time, REC2D_WAIT_SELECTED);
+    __draw(REC2D_WAIT_SELECTED);
 #endif
   Rec2DNode *root = new Rec2DNode(NULL, NULL, depth);
   Rec2DNode *currentNode = Rec2DNode::selectBestNode(root);
@@ -709,7 +717,7 @@ void Recombine2D::compareWithBlossom()
   
   Rec2DData::clearChanges();
 #ifdef DRAW_WHEN_SELECTED // draw state at origin
-    __drawWait(time, REC2D_WAIT_TIME);
+    __drawWait(time, REC2D_WAIT_SELECTED);
 #endif
 }
 
@@ -888,8 +896,7 @@ Rec2DData::~Rec2DData()
 
 double Rec2DData::getValVert(Rec2DQualCrit crit)
 {
-  if (crit < 0)
-    crit = Recombine2D::getQualCrit();
+  if (crit == ChoosedCrit) crit = Recombine2D::getQualCrit();
   
   switch (crit) {
     case BlossomQuality :
@@ -902,7 +909,7 @@ double Rec2DData::getValVert(Rec2DQualCrit crit)
       return static_cast<double>(_cur->_2valVert);
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DData:getValVert] Unknown quality criterion");
   }
   return -1.;
 }
@@ -1293,8 +1300,7 @@ void Rec2DData::clearChanges()
 
 double Rec2DData::getGlobalQuality(Rec2DQualCrit crit)
 {
-  if (crit < 0)
-    crit = Recombine2D::getQualCrit();
+  if (crit == ChoosedCrit) crit = Recombine2D::getQualCrit();
   
   switch(crit) {
     case BlossomQuality :
@@ -1308,7 +1314,7 @@ double Rec2DData::getGlobalQuality(Rec2DQualCrit crit)
              *static_cast<double>(_cur->_2valEdge) / _cur->_numEdge;
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DData:getGlobalQuality] Unknown quality criterion");
   }
   return -1.;
 }
@@ -1317,8 +1323,7 @@ double Rec2DData::getGlobalQuality(int numVert, double valVert,
                                    int numEdge, double valEdge,
                                    Rec2DQualCrit crit          )
 {
-  if (crit < 0)
-    crit = Recombine2D::getQualCrit();
+  if (crit == ChoosedCrit) crit = Recombine2D::getQualCrit();
   
   switch (crit) {
     case BlossomQuality :
@@ -1332,7 +1337,7 @@ double Rec2DData::getGlobalQuality(int numVert, double valVert,
              *(static_cast<double>(_cur->_2valEdge) + valEdge) / (_cur->_numEdge + numEdge);
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DData:getGlobalQuality] Unknown quality criterion");
   }
   return -1.;
 }
@@ -1342,21 +1347,30 @@ void Rec2DData::updateVertQual(double val, Rec2DQualCrit crit)
   switch (crit) {
     case VertQuality :
       _cur->_1valVert += val;
+      return;
     
     case VertEdgeQuality :
       _cur->_2valVert += val;
+      return;
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DData:updateVertQual] Unknown quality criterion");
   }
 }
 
 bool Rec2DData::checkEntities()
 {
+  Msg::Error("Need redefinition");
+  __crash();
   iter_rv itv;
   for (itv = firstVertex(); itv != lastVertex(); ++itv) {
     if (!(*itv)->checkCoherence()) {
       Msg::Error("Incoherence vertex");
+      //__crash();
+      return false;
+    }
+    if (!(*itv)->checkQuality()) {
+      Msg::Error("Wrong qualities vertex");
       //__crash();
       return false;
     }
@@ -1422,6 +1436,8 @@ bool Rec2DData::checkEntities()
 
 void Rec2DData::checkQuality() const
 {
+  Msg::Error("need redefinition");
+  __crash();
   iter_re ite;
   long double valEdge = .0;
   int numEdge = 0;
@@ -1471,7 +1487,7 @@ void Rec2DData::printState() const
   long double valVert = .0;
   int numVert = 0;
   for (itv = firstVertex(); itv != lastVertex(); ++itv) {
-    valVert += (long double)(*itv)->getQual();
+    valVert += (long double)(*itv)->getQual(VertEdgeQuality);
     if ((*itv)->getParity() == -1 || (*itv)->getParity() == 1)
       Msg::Error("parity %d, I'm very angry", (*itv)->getParity());
     ++numVert;
@@ -2660,7 +2676,7 @@ void Rec2DTwoTri2Quad::_computeReward()
     }
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DTwoTri2Quad:_computeReward] Unknown quality criterion");
   }
   
   
@@ -2975,7 +2991,7 @@ void Rec2DCollapse::printReward() const
       
       valVert += _rec->_vertices[0]->getGainMerge(_rec->_vertices[1],
                                                   &_rec->_edges[1], 2);
-      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]); //normal ? 
+      valVert += _rec->_vertices[2]->getGainTriLess(_rec->_edges[0]); //FIX normal ? 
       valVert += _rec->_vertices[3]->getGainTriLess(_rec->_edges[2]);
       
       for (int i = 0; i < 4; ++i) {
@@ -3307,8 +3323,8 @@ void Rec2DEdge::updateQual()
   _computeQual();
   diffQual = _weight*(_qual-diffQual);
   
-  _rv0->updateEdgeQual(diffQual);
-  _rv1->updateEdgeQual(diffQual);
+  _rv0->updateWAQualEdges(diffQual);
+  _rv1->updateWAQualEdges(diffQual);
   Rec2DData::updateEdgeQual(diffQual);
 }
 
@@ -3340,7 +3356,7 @@ bool Rec2DEdge::checkCoherence() const
 {
   if (_rv0 == _rv1) return false;
   if (!_rv0->has(this) || !_rv1->has(this)) return false;
-  return true;
+  
   Rec2DElement *elem[2];
   Rec2DEdge::getElements(this, elem);
   if (elem[1]) {
@@ -3352,6 +3368,7 @@ bool Rec2DEdge::checkCoherence() const
     if (!elem[0]->has(this)) return false;
     if (!elem[0]->isNeighbour(this, NULL)) return false;
   }
+  return true;
 }
 
 void Rec2DEdge::print() const
@@ -3385,18 +3402,15 @@ void Rec2DEdge::_addWeight(int w)
   _weight += w;
   if (_weight > Recombine2D::getWeightEdgeBase()
                 + 2*Recombine2D::getWeightEdgeQuad()) {
-    Msg::Error("[Rec2DEdge] Weight too high : %d (%d max)",
-               _weight, Recombine2D::getWeightEdgeBase()
-                        + 2*Recombine2D::getWeightEdgeQuad());
+    Msg::Error("[Rec2DEdge] Weight too high");
   }
   if (_weight < Recombine2D::getWeightEdgeBase()) {
-    Msg::Error("[Rec2DEdge] Weight too low : %d (%d min)",
-               _weight, Recombine2D::getWeightEdgeBase()  );
+    Msg::Error("[Rec2DEdge] Weight too low");
   }
   
   double diffQual = w*getQual();
-  _rv0->updateEdgeQual(diffQual, w);
-  _rv1->updateEdgeQual(diffQual, w);
+  _rv0->updateWAQualEdges(diffQual, w);
+  _rv1->updateWAQualEdges(diffQual, w);
   Rec2DData::updateEdgeQual(diffQual, w);
 }
 
@@ -3537,6 +3551,9 @@ void Rec2DVertex::initStaticTable()
 
 void Rec2DVertex::add(const Rec2DEdge *re)
 {
+  static int a = -1; ++a;
+  if (!checkQuality()) Msg::Info("add-%d (%d)", a, this);
+  
   for (unsigned int i = 0; i < _edges.size(); ++i) {
     if (_edges[i] == re) {
       Msg::Error("[Rec2DVertex] Edge was already there");
@@ -3552,6 +3569,7 @@ void Rec2DVertex::add(const Rec2DEdge *re)
   _lastUpdate = Recombine2D::getNumChange();
   
   Rec2DData::updateVertQual(getQual(VertQuality)-oldQual, VertQuality);
+  if (!checkQuality()) Msg::Info("add-%d (%d)", a, this);
 }
 
 bool Rec2DVertex::has(const Rec2DEdge *re) const
@@ -3564,6 +3582,9 @@ bool Rec2DVertex::has(const Rec2DEdge *re) const
 
 void Rec2DVertex::rmv(const Rec2DEdge *re)
 {
+  static int a = -1; ++a;
+  if (!checkQuality()) Msg::Info("rmv-%d (%d)", a, this);
+  
   unsigned int i = 0;
   while (i < _edges.size()) {
     if (_edges[i] == re) {
@@ -3575,9 +3596,10 @@ void Rec2DVertex::rmv(const Rec2DEdge *re)
       _sumWQualEdge -= re->getWeightedQual();
       _sumWeightEdge -= re->getWeight();
       if (_sumWeightEdge < 0 || _sumWQualEdge < -1e12)
-        Msg::Error("[Rec2DVertex] Negative sum edge");
+        Msg::Error("[Rec2DVertex] Negative sum edge %d %g", _sumWeightEdge, _sumWQualEdge);
       _lastUpdate = Recombine2D::getNumChange();
       
+  if (!checkQuality()) Msg::Info("rmv-%d (%d)", a, this);
       Rec2DData::updateVertQual(getQual(VertQuality)-oldQual, VertQuality);
       return;
     }
@@ -3695,11 +3717,14 @@ void Rec2DVertex::getMoreUniqueActions(std::vector<Rec2DAction*> &actions) const
 void Rec2DVertex::setOnBoundary()
 {
   if (_onWhat > 0) {
-    double oldQual = getQual();
+    double oldQual1 = getQual(VertQuality);
+    double oldQual2 = getQual(VertEdgeQuality);
     _onWhat = 0;
-    Rec2DData::addVertQual(getQual()-oldQual);
+    Rec2DData::updateVertQual(getQual(VertQuality)-oldQual1, VertQuality);
+    Rec2DData::updateVertQual(getQual(VertEdgeQuality)-oldQual2, VertEdgeQuality);
     _lastUpdate = Recombine2D::getNumChange();
   }
+  
 }
 
 void Rec2DVertex::setParity(int p, bool tree)
@@ -3769,7 +3794,7 @@ double Rec2DVertex::getGainDegree(int n) const
 {
   if (!n)
     return .0;
-  int numElem = (int)_elements.size();
+  int numElem = (int)_elements.size();  
   if (numElem + n < 0) {
     Msg::Error("[Rec2DVertex] gain for %d elements not available",
                numElem + n                             );
@@ -3804,8 +3829,7 @@ double Rec2DVertex::getGainDegree(int n) const
 
 double Rec2DVertex::getQual(Rec2DQualCrit crit) const
 {
-  if (crit < 0)
-    crit = Recombine2D::getQualCrit();
+  if (crit == ChoosedCrit) crit = Recombine2D::getQualCrit();
   
   switch (crit) {
     case VertQuality :
@@ -3815,7 +3839,9 @@ double Rec2DVertex::getQual(Rec2DQualCrit crit) const
       return _vertQual();
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DVertex:getQual-1] Unknown quality criterion %d", crit);
+      Msg::Error("");
+      __crash();
   }
   return -1.;
 }
@@ -3824,8 +3850,7 @@ double Rec2DVertex::getQual(Rec2DQualCrit crit) const
 double Rec2DVertex::getQual(double waQualAngles, double waQualEdges,
                             int numElem, Rec2DQualCrit crit) const
 {
-  if (crit < 0)
-    crit = Recombine2D::getQualCrit();
+  if (crit == ChoosedCrit) crit = Recombine2D::getQualCrit();
     
   static int a = -1;
   if (++a < 1) Msg::Warning("FIXME NoCrit==-2, ChoosedCrit==-1");
@@ -3838,7 +3863,7 @@ double Rec2DVertex::getQual(double waQualAngles, double waQualEdges,
       return _vertQual(_qualDegree(numElem), waQualAngles);
     
     default :
-      Msg::Error("[Rec2DData] Unknown quality criterion");
+      Msg::Error("[Rec2DVertex:getQual-2] Unknown quality criterion %d", crit);
   }
   return -1.;
 }
@@ -3885,7 +3910,7 @@ double Rec2DVertex::getGainRecomb(/*Rec2DQualCrit crit,*/
   //if (crit == BlossomQuality) return .0;
   //if (crit < 0) {
     Msg::Warning("[Rec2DVertex] Give me another criterion please.");
-  //}
+  // }
   
   double swQualAngle = _sumWQualAngle, swQualEdge = _sumWQualEdge;
   int swAngle = _sumWeightAngle, swEdge = _sumWeightEdge;
@@ -3917,6 +3942,8 @@ double Rec2DVertex::getGainRecomb(/*Rec2DQualCrit crit,*/
 
 void Rec2DVertex::/*vertQual_*/addEdgeQual(double val, int num)
 {
+  Msg::Error("old function, need redefinition");
+  __crash();
   double oldQual = .0;
   if (_elements.size())
     oldQual = getQual();
@@ -3924,8 +3951,10 @@ void Rec2DVertex::/*vertQual_*/addEdgeQual(double val, int num)
   _sumWeightEdge += num;
   if (_sumWeightEdge < 0 || _sumWQualEdge < -1e12)
     Msg::Error("[Rec2DVertex] Negative sum edge");
-  if (_elements.size())
-    Rec2DData::addSumVert(getQual()-oldQual);
+  if (_elements.size()) {
+    Msg::Fatal("[Rec2DVertex:addEdgeQual] Need redefinition");
+    //Rec2DData::addSumVert(getQual()-oldQual);
+  }
   _lastUpdate = Recombine2D::getNumChange();
 }
 
@@ -4049,6 +4078,38 @@ bool Rec2DVertex::checkCoherence() const
   return true;
 }
 
+bool Rec2DVertex::checkQuality() const
+{
+  double wQualAngle = .0, wQualEdge = .0;
+  int weightAngle = 0, weightEdge = 0;
+  
+  for (unsigned int i = 0; i < _elements.size(); ++i) {
+    wQualAngle += _elements[i]->getWeightedAngleQual(this);
+    weightAngle += _elements[i]->getAngleWeight();
+  }
+  for (unsigned int i = 0; i < _edges.size(); ++i) {
+    wQualEdge += _edges[i]->getWeightedQual();
+    weightEdge += _edges[i]->getWeight();
+  }
+  
+  if (wQualAngle < _sumWQualAngle - 1e12 ||
+      wQualAngle > _sumWQualAngle + 1e12 ||
+      weightAngle != _sumWeightAngle) {
+    Msg::Error("wrong angle qual, stored %g/%d, computed %g/%d",
+               _sumWQualAngle, _sumWeightAngle, wQualAngle, weightAngle);
+    return false;
+  }
+  if (wQualEdge < _sumWQualEdge - 1e12 ||
+      wQualEdge > _sumWQualEdge + 1e12 ||
+      weightEdge != _sumWeightEdge) {
+    Msg::Error("wrong edge qual, stored %g/%d, computed %g/%d",
+               _sumWQualEdge, _sumWeightEdge, wQualEdge, weightEdge);
+    return false;
+  }
+  
+  return true;
+}
+
 void Rec2DVertex::printElem() const
 {
   for (unsigned int i = 0; i < _elements.size(); ++i) {
@@ -4089,7 +4150,7 @@ bool Rec2DVertex::_recursiveBoundParity(const Rec2DVertex *prevRV, int p0, int p
   return false;
 }
 
-void Rec2DVertex::_updateQualAngle()
+void Rec2DVertex::_updateQualAngle() pourquoi ?
 {
   double oldQual1 = getQual(VertQuality);
   double oldQual2 = getQual(VertEdgeQuality);
@@ -4106,6 +4167,14 @@ void Rec2DVertex::_updateQualAngle()
   Rec2DData::updateVertQual(getQual(VertEdgeQuality)-oldQual2, VertEdgeQuality);
 }
 
+
+double Rec2DVertex::_qualDegree(int numEl) const
+{
+  int nEl = numEl > -1 ? numEl : _elements.size();
+  if (nEl == 0) return -REC2D_BIG_NUMB;
+  if (_onWhat > -1) return _qualVSnum[_onWhat][nEl];
+  return std::max(1. - fabs(2./M_PI * _angle/nEl - 1.), .0);
+}
 
 /**  Rec2DElement  **/
 /********************/
@@ -4510,7 +4579,7 @@ bool Rec2DElement::checkCoherence() const
       v[1] = _edges[1]->getVertex(0);
   }
   else {
-    Msg::Error("not only %d vertex or edge not in order [1] (im %d)", _numEdge, getNum());
+    Msg::Error("not only %d vertices or edge not in order [1] (im %d)", _numEdge, getNum());
     for (int i = 0; i < _numEdge; ++i) {
       _edges[i]->print();
     }
@@ -4522,7 +4591,7 @@ bool Rec2DElement::checkCoherence() const
     else if (_edges[i]->getVertex(1) == v[i-1])
       v[i] = _edges[i]->getVertex(0);
     else {
-      Msg::Error("not only %d vertex or edge not in order [2] (im %d)", _numEdge, getNum());
+      Msg::Error("not only %d vertices or edge not in order [2] (im %d)", _numEdge, getNum());
       for (int i = 0; i < _numEdge; ++i) {
         _edges[i]->print();
       }
@@ -4531,7 +4600,7 @@ bool Rec2DElement::checkCoherence() const
   }
   if ((v[0] == v1 && v[_numEdge-1] != v0) ||
       (v[0] == v0 && v[_numEdge-1] != v1)   ) {
-    Msg::Error("not only %d vertex or edge not in order [3] (im %d)", _numEdge, getNum());
+    Msg::Error("not only %d vertices or edge not in order [3] (im %d)", _numEdge, getNum());
     for (int i = 0; i < _numEdge; ++i) {
       _edges[i]->print();
     }
@@ -4574,7 +4643,7 @@ bool Rec2DElement::checkCoherence() const
   }
   for (unsigned int i = 0; i < _actions.size(); ++i) {
     if (!_actions[i]->has(this)) {
-      Msg::Error("action don't have me (im %d)", getNum());
+      Msg::Error("action doesn't have me (im %d)", getNum());
       return false;
     }
   }
@@ -4841,7 +4910,7 @@ Rec2DNode* Rec2DNode::selectBestNode(Rec2DNode *rn)
 #ifdef DRAW_WHEN_SELECTED // draw state at origin
     double time = Cpu();
     Recombine2D::drawStateOrigin();
-    while (Cpu()-time < REC2D_WAIT_TIME)
+    while (Cpu()-time < REC2D_WAIT_SELECTED)
       FlGui::instance()->check();
     time = Cpu();
 #endif
