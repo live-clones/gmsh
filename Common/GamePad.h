@@ -14,70 +14,62 @@
 #define GP_AXES 6
 
 
+#if defined(WIN32)
+#include <windows.h>   
+#include <mmsystem.h>
+#else
+#if defined(__APPLE__)
+// ??
+#else // LINUX
+#include <linux/joystick.h>
+#include <fcntl.h>
+#define GAMEPAD_DEV "/dev/input/js0"
+#endif
+#endif
 
-#if defined(WIN32) || defined(__APPLE__)
+class GamePad {
+ public:
+  bool active;
+  bool toggle_status[GP_BUTTONS];
+  bool event_read;
+  double frequency;
+  GamePad();
+  ~GamePad();
+  double axe[GP_AXES];
+  bool button[GP_BUTTONS];
+  bool toggle(const int _nbut); 
+  int read_event(); 
+  void affiche(); 
+  int button_map[10];
+  int axe_map[8];
+ private:
+  int axe_min[8];
+  int axe_max[8];
+  int gamepad_fd;
+  char name[256];
 
-   class GamePad {
-   public:
-     bool active;
-     bool toggle_status[GP_BUTTONS];
-     bool event_read;
-     double frequency;
-     GamePad();
-     ~GamePad();
-     double axe[GP_AXES];
-     bool button[GP_BUTTONS];
-     bool toggle(const int _nbut);
-     int read_event();
-     void affiche();
-     int button_map[10];
-     int axe_map[8];
-   private:
-     int gamepad_fd;
-     //  js_event event;
-     //  __u32 version;
-     //  __u8 axes;
-     //  __u8 buttons;
-     char name[256];
-   };
+#if defined(WIN32)
 
+  JOYCAPS caps;
+  JOYINFOEX infoex;
+  JOYINFO info;
+  int axes;
+  int buttons;
 
+#else
+#if defined(__APPLE__)
 
-#else // !win32 => linux/apple
+  // ??
 
+#else // LINUX
 
-   #include <linux/joystick.h>
-   #include <fcntl.h>
+  js_event event;
+  __u32 version;
+  __u8 axes;
+  __u8 buttons;
 
-   #define GAMEPAD_DEV "/dev/input/js0"
-
-   class GamePad {
-   public:
-     bool active;
-     bool toggle_status[GP_BUTTONS];
-     bool event_read;
-     double frequency;
-     GamePad();
-     ~GamePad();
-     double axe[GP_AXES];
-     bool button[GP_BUTTONS];
-     bool toggle(const int _nbut);
-     int read_event();
-     void affiche();
-     int button_map[10];
-     int axe_map[8];
-
-
-   private:
-     //  time_t  rawtime;
-     int gamepad_fd;
-     js_event event;
-     __u32 version;
-     __u8 axes;
-     __u8 buttons;
-     char name[256];
-   };
-
-#endif //win32
+#endif
+#endif
+};  
 
 #endif // _GAMEPAD_H_

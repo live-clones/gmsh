@@ -59,7 +59,7 @@ void Navigator::drawIcons()
   glPushMatrix();
   glLineWidth( (float)CTX::instance()->lineWidth);
   gl2psLineWidth((float)(CTX::instance()->lineWidth *
-			 CTX::instance()->print.epsLineWidthFactor));
+  			 CTX::instance()->print.epsLineWidthFactor));
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
     
@@ -601,6 +601,7 @@ void Navigator::drawIcons()
   
 
   glDisable (GL_BLEND);
+  glDisable (GL_LINE_SMOOTH);
   glPopMatrix();
   
 }

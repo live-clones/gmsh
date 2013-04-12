@@ -43,7 +43,7 @@ static  void gamepadWindow_handler(void *data)
     gamepadWindow* gmpd_win = (gamepadWindow*)data;
     GamePad* pad  = &(CTX::instance()->gamepad);
     for (int i=0; i<std::min(13,GP_BUTTONS);i++) gmpd_win->gamepad.butt[i]->value(pad->button[i]);
-    for (int i=0; i<std::min(9,GP_AXES);i++)     gmpd_win->gamepad.axe[i]->value(pad->axe[i]);
+    for (int i=0; i<std::min(9,GP_AXES);i++)     gmpd_win->gamepad.axe[i]->value( pad->axe[i]   );
     Fl::add_timeout(gmpd_win->frequency,  gamepadWindow_handler,data); 
     gmpd_win->gamepad.mapping[16]->value(pad->axe_map[1]);
   }
