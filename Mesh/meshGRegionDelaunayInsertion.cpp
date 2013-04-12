@@ -191,10 +191,12 @@ static void removeFromCavity (std::list<faceXtet> & shell,
     std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt2); 
     if (it == shell.end()){
       MTet4 *opposite = toRemove.t1->getNeigh(toRemove.i1);
-      for (int j=0;j<4;j++){
-	faceXtet fxt3(opposite,j); 
-	if (fxt3 == fxt2){
-	  shell.push_back(fxt3);
+      if (opposite){
+	for (int j=0;j<4;j++){
+	  faceXtet fxt3(opposite,j); 
+	  if (fxt3 == fxt2){
+	    shell.push_back(fxt3);
+	  }
 	}
       }
     }
@@ -1082,7 +1084,7 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
 }
 
 static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4Ptr> &allTets){
-  int n1 = allTets.size();
+  //  int n1 = allTets.size();
   std::set<MTet4*,compareTet4Ptr>::iterator itd = allTets.begin();
   while(itd != allTets.end()){
     if((*itd)->isDeleted()){
