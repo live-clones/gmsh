@@ -455,6 +455,7 @@ static bool algoDelaunay2D(GFace *gf)
   if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
+     gf->getMeshingAlgo() == ALGO_2D_RUPPERT ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG)
@@ -674,7 +675,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  MEdge dv2 (v21,v22);
 
 	  //avoid convergent errors
-	  if (dv2.length() < 0.3 * dv.length())break;
+	  if (dv2.length() < 0.03 * dv.length())break;
 	  blQuads.push_back(new MQuadrangle(v11,v21,v22,v12));
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
@@ -1297,6 +1298,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf);
+    else if(gf->getMeshingAlgo() == ALGO_2D_RUPPERT)
+      gmshRuppert(gf,.5);
     else {
       bowyerWatson(gf,15000);
       meshGFaceBamg(gf);
@@ -2024,6 +2027,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf,1000000000, &equivalence, &parametricCoordinates);
+    else if(gf->getMeshingAlgo() == ALGO_2D_RUPPERT)
+      gmshRuppert(gf,.4,10000, &equivalence, &parametricCoordinates);
     else
       meshGFaceBamg(gf);
     if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
@@ -2105,6 +2110,7 @@ void meshGFace::operator() (GFace *gf, bool print)
   case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
   case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
   case ALGO_2D_BAMG : algo = "Bamg"; break;
+  case ALGO_2D_RUPPERT : algo = "Ruppert"; break;
   case ALGO_2D_PACK_PRLGRMS : algo = "Square Packing"; break;
   case ALGO_2D_AUTO :
     algo = (gf->geomType() == GEntity::Plane) ? "Delaunay" : "MeshAdapt";

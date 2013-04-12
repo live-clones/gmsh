@@ -316,7 +316,10 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
     {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
 
   if (!metric){
-    if (radiusNorm == 2){
+    if (radiusNorm == 3){
+      circum_radius = 1./base->gammaShapeMeasure();
+    }
+    else if (radiusNorm == 2){
       circumCenterXYZ(pa, pb, pc, center);
       const double dx = base->getVertex(0)->x() - center[0];
       const double dy = base->getVertex(0)->y() - center[1];
@@ -867,6 +870,56 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
 }
 
+void gmshRuppert(GFace *gf,  double minqual, int MAXPNT,
+		 std::map<MVertex* , MVertex*>* equivalence,  
+		 std::map<MVertex*, SPoint2> * parametricCoordinates){
+  MTri3::radiusNorm =3;
+
+  std::set<MTri3*,compareTri3Ptr> AllTris;
+  bidimMeshData DATA(equivalence,parametricCoordinates);
+
+  buildMeshGenerationDataStructures(gf, AllTris, DATA);
+
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+
+  if(AllTris.empty()){
+    Msg::Error("No triangles in initial mesh");
+    return;
+  }
+
+  int ITER = 0;
+  int NBDELETED = 0;
+  while (1){
+    MTri3 *worst = *AllTris.begin();
+    if (worst->isDeleted()){
+      delete worst->tri();
+      delete worst;
+      AllTris.erase(AllTris.begin());
+      NBDELETED ++;
+    }
+    else{
+      double center[2],metric[3],r2;
+      //      printf("%12.5E\n",worst->getRadius() );
+      if (1./worst->getRadius() > minqual || (int) DATA.vSizes.size() > MAXPNT) break;
+      circUV(worst->tri(), DATA, center, gf);
+      MTriangle *base = worst->tri();
+      int index0 = DATA.getIndex( base->getVertex(0) );
+      int index1 = DATA.getIndex( base->getVertex(1) );
+      int index2 = DATA.getIndex( base->getVertex(2) );
+      double pa[2] = {(DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2])/ 3.,
+                      (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2])/ 3.};
+      buildMetric(gf, pa,  metric);
+      circumCenterMetric(worst->tri(), metric, DATA, center, r2);
+      insertAPoint(gf, AllTris.begin(), center, metric, DATA, AllTris);
+    }
+  }
+  MTri3::radiusNorm =2;
+  transferDataStructure(gf, AllTris, DATA);
+}
+
+
 void bowyerWatson(GFace *gf, int MAXPNT,
 		  std::map<MVertex* , MVertex*>* equivalence,  
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
@@ -1357,7 +1410,7 @@ void buildBackGroundMesh (GFace *gf,
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     //  Do a background mesh
-    bowyerWatson(gf,4000, equivalence,parametricCoordinates);
+    gmshRuppert(gf,0.3,4000, equivalence,parametricCoordinates);
     //  Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM

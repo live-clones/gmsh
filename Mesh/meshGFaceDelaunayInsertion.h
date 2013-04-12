@@ -84,7 +84,7 @@ class MTri3
   MTri3 *neigh[3];
 
  public :
-  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm  
+  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm  , 3 quality
   bool isDeleted() const { return deleted; }
   void forceRadius(double r) { circum_radius = r; }
   inline double getRadius() const { return circum_radius; }
@@ -133,6 +133,9 @@ class compareTri3Ptr
 void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
+void gmshRuppert(GFace *gf, double minqual = 0.2, int MAXPNT= 1000000000,
+		 std::map<MVertex* , MVertex*>* equivalence = 0,  
+		 std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
 void bowyerWatson(GFace *gf, int MAXPNT= 1000000000,
 		  std::map<MVertex* , MVertex*>* equivalence= 0,  
 		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);

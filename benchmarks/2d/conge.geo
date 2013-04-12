@@ -79,4 +79,4 @@ Physical Surface(26) = {24,22};
 Physical Line(27) = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11};
 Physical Line(28) = {17, 16, 20, 19, 18, 15};
 Recombine Surface {24, 22};
-Mesh.RecombinationAlgorithm=1;
+Mesh.Algorithm=8;
