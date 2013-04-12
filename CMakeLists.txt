@@ -1208,6 +1208,16 @@ if(UNIX AND NOT CYGWIN)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/gmsh.1 DESTINATION ${GMSH_MAN})
 endif(UNIX AND NOT CYGWIN)
 
+add_custom_target(getHeaders
+  COMMAND ${CMAKE_COMMAND} -E remove_directory Headers
+  COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  foreach(FILE ${GMSH_API})
+    add_custom_command(TARGET getHeaders POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endforeach(FILE)
+
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.info DEPENDS ${TEX_SRC} 
