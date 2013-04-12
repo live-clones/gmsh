@@ -294,7 +294,7 @@ static void cutTriangle(MTriangle *tri,
 
 Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), nodesR(0)
 {
-  recombine = CTX::instance()->mesh.recombineAll;
+  recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
 
   index = new ANNidx[1];
   dist = new ANNdist[1];
@@ -320,7 +320,7 @@ Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0)
   index = new ANNidx[1];
   dist = new ANNdist[1];
 
-  recombine = CTX::instance()->mesh.recombineAll;
+  recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
   fileName = "centerlines.vtk";//default
   nbPoints = 25;
   hLayer = 0.3;
@@ -892,7 +892,7 @@ void Centerline::cutMesh()
     double AR = L/D;
     // printf("*** Centerline branch %d (AR=%.1f) \n", edges[i].tag, AR);
 
-    int nbSplit = (int)floor(AR/2 + 0.9); //AR/2 + 0.9
+    int nbSplit = (int)floor(AR/2 + 1.9); //AR/2 + 0.9
     if( nbSplit > 1 ){
       //printf("->> cut branch in %d parts \n",  nbSplit);
       double li  = L/nbSplit;

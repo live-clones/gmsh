@@ -109,6 +109,7 @@ void meshMetric::updateMetrics()
     _nodalMetrics[ver] = setOfMetrics[0][ver];
     //    _detMetric[ver] = setOfDetMetric[0][ver];
     _nodalSizes[ver] = setOfSizes[0][ver];
+
     if (setOfMetrics.size() > 1)
       for (unsigned int i=1;i<setOfMetrics.size();i++){
         _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
@@ -824,6 +825,9 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
       SMetric3 m4 = _nodalMetrics[e->getVertex(3)];
       metr =  interpolation(m1,m2,m3,m4,uvw[0],uvw[1],uvw[2]);
     }
+    //if recomputeAnalyticalValues
+    //then compute exact metric
+
   }
   else{
     Msg::Warning("point %g %g %g not found, looking for nearest node",x,y,z);

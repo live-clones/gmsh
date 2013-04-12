@@ -1608,7 +1608,7 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
     center = dynamic_cast<Centerline*> (myField);
   }
 
-  bool recombine =  (CTX::instance()->mesh.recombineAll);
+  bool recombine =  (CTX::instance()->mesh.recombineAll) ;
   int nbBoundaries = gf->edges().size();
 
   if (center && recombine && nbBoundaries == 2) {

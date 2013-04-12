@@ -349,7 +349,7 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
   }
 
   if(start>0.0 && !error1 && !error2 && !error3){
-    printf("%d %.3f\n",iteration,100.0*(start-energy)/start);
+    printf("Lloyd: %d %.3f\n",iteration,100.0*(start-energy)/start);
 	w->set_iteration(iteration+1);
   }
   else if(!error1 && !error2 && !error3){

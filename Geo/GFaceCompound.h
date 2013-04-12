@@ -86,6 +86,7 @@ class GFaceCompound : public GFace {
   mutable v2t_cont adjv;
   mutable bool mapv2Tri;
   mutable std::map<MVertex*, SPoint3> coordinates;
+  mutable std::map<MVertex*, Pair<SVector3,SVector3> > firstDerivatives;
   mutable std::map<MVertex*, SVector3> xuu;
   mutable std::map<MVertex*, SVector3> xvv;
   mutable std::map<MVertex*, SVector3> xuv;

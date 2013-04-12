@@ -67,7 +67,7 @@ class backgroundMesh : public simpleFunction<double>
   static void unset();
   static backgroundMesh *current () { return _current; }
   void propagate1dMesh(GFace *);
-  void propagatecrossField(GFace *);
+  void propagateCrossField(GFace *);
   void propagateCrossFieldByDistance(GFace *);
   void updateSizes(GFace *);
   double operator () (double u, double v, double w) const; // returns mesh size

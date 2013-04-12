@@ -545,7 +545,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   updateSizes(_gf);
 
   // compute optimal mesh orientations
-  propagatecrossField(_gf);
+  propagateCrossField(_gf);
 
   _3Dto2D.clear();
   _2Dto3D.clear();
@@ -770,7 +770,7 @@ inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
 }
 
 
-void backgroundMesh::propagatecrossField(GFace *_gf)
+void backgroundMesh::propagateCrossField(GFace *_gf)
 {
 
   std::map<MVertex*,double> _cosines4,_sines4;
@@ -790,24 +790,14 @@ void backgroundMesh::propagatecrossField(GFace *_gf)
         reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
 	Pair<SVector3, SVector3> der = _gf->firstDer((p1+p2)*.5);
 	SVector3 t1 = der.first();
-	SVector3 s2 = der.second();
-	SVector3 n = crossprod(t1,s2);
+	SVector3 t2 = der.second(); 
+	SVector3 n = crossprod(t1,t2);
 	n.normalize();
-	SVector3 t2 (v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
+	SVector3 d1(v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z()); 
 	t1.normalize();
-	t2.normalize();
-	double _angle = myAngle (t1,t2,n);	
-	//	printf("GFACE %d %g %g %g %g\n",_gf->tag(),t1.x(),t1.y(),t1.z(),_angle*180/M_PI);
-	//	printf("angle = %12.5E\n",_angle);
-	//	angle_ = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
-        //double angle = atan2 ( v[0]->y()-v[1]->y() , v[0]->x()- v[1]->x() );
-        //double angle = atan2 ( v0->y()-v1->y() , v0->x()- v1->x() );
+	d1.normalize();
+	double _angle = myAngle (t1,d1,n);
         crossField2d::normalizeAngle (_angle);
-	//	SVector3 s2 = der.second();
-	//	s2.normalize();
-	SVector3 x = t1 * cos (_angle) + crossprod(n,t1) * sin (_angle);
-	//	printf("angle = %g --> %g %g %g vs %g %g %g\n",_angle,x.x(),x.y(),x.z(),t2.x(),t2.y(),t2.z());
-	//	printf("GFACE %d GEDGE %d %g %g %g %g\n",_gf->tag(),(*it)->tag(),t1.x(),t1.y(),t1.z(),_angle*180/M_PI);
         for (int i=0;i<2;i++){
           std::map<MVertex*,double>::iterator itc = _cosines4.find(v[i]);
           std::map<MVertex*,double>::iterator its = _sines4.find(v[i]);
@@ -1004,15 +994,6 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
               v1->x(),v1->y(),v1->z(),
               v2->x(),v2->y(),v2->z(),
               v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
-      /*
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-              v1->x(),v1->y(),v1->z(),
-              v2->x(),v2->y(),v2->z(),
-              v3->x(),v3->y(),v3->z(),
-	      getAngle(v1->x(),v1->y(),v1->z()),
-	      getAngle(v2->x(),v2->y(),v2->z()),
-	      getAngle(v3->x(),v3->y(),v3->z()));
-      */
     }
     else {
       
@@ -1023,13 +1004,6 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
               p1.x(),p1.y(),p1.z(),
               p2.x(),p2.y(),p2.z(),
               p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
-      /*
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-              v1->x(),v1->y(),v1->z(),
-              v2->x(),v2->y(),v2->z(),
-              v3->x(),v3->y(),v3->z(),
-              itv1->second,itv2->second,itv3->second);
-      */
     }
   }
   fprintf(f,"};\n");

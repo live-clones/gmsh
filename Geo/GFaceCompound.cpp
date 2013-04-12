@@ -913,10 +913,6 @@ bool GFaceCompound::parametrize() const
     parametrize(ITERV,CONVEX);
     if (_type==MEANPLANE){
       checkOrientation(0, true);
-      // _type = ALREADYFIXED;
-      // parametrize(ITERU,CONVEX);
-      // parametrize(ITERV,CONVEX);
-      // checkOrientation(0, true);
     }
   }
   // Laplace parametrization
@@ -1934,7 +1930,6 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 {
-  //printf("in remeshed oct for par =%g %g\n", par1,par2);
 
   //if not meshed yet
   if (meshStatistics.status != GFace::DONE || triangles.size()+quadrangles.size() == 0) {
@@ -2092,6 +2087,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
   GFaceCompoundTriangle *lt;
   getTriangle(par1, par2, &lt, U,V);
   if(!lt && _mapping != RBF){
+    printf("ARRG POINT NOT FOUND--> should improve octree search \n");
+    exit(1);
     //printf("POINT no success %d tris %d quad \n", triangles.size(), quadrangles.size());
     GPoint gp = pointInRemeshedOctree(par1,par2);
     gp.setNoSuccess();
@@ -2171,42 +2168,73 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
+  
+  if(trivial()){
+    return (*(_compound.begin()))->firstDer(param);
+  }
+
   if(!oct) parametrize();
 
-  if(trivial())
-    return (*(_compound.begin()))->firstDer(param);
-
-  double U, V;
+  double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
-  if(!lt && _mapping != RBF)
+  if(!lt){
+    printf("ARRG FIRSTDER POINT NOT FOUND --> should improve octree search \n");
+    exit(1);
     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
-  else if (!lt && _mapping == RBF){
-    double x, y, z;
-    SVector3 dXdu, dXdv  ;
-    _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
-    return Pair<SVector3, SVector3>(dXdu, dXdv);
   }
 
-  double mat[2][2] = {{lt->p2.x() - lt->p1.x(), lt->p3.x() - lt->p1.x()},
-                      {lt->p2.y() - lt->p1.y(), lt->p3.y() - lt->p1.y()}};
-  double inv[2][2];
-  double det = inv2x2(mat,inv);
-  if (!det && _mapping == RBF){
-    double x, y, z;
-    SVector3 dXdu, dXdv  ;
-    _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
-    return Pair<SVector3, SVector3>(dXdu, dXdv);
-  }
-
-  SVector3 dXdxi(lt->v2 - lt->v1);
-  SVector3 dXdeta(lt->v3 - lt->v1);
-
-  SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
-  SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
-
-  return Pair<SVector3, SVector3>(dXdu, dXdv);
+  MTriangle *tri = lt->tri;
+  SVector3 dXdu1 = firstDerivatives[tri->getVertex(0)].first();
+  SVector3 dXdu2 = firstDerivatives[tri->getVertex(1)].first();
+  SVector3 dXdu3 = firstDerivatives[tri->getVertex(2)].first();
+  SVector3 dXdv1 = firstDerivatives[tri->getVertex(0)].second();
+  SVector3 dXdv2 = firstDerivatives[tri->getVertex(1)].second();
+  SVector3 dXdv3 = firstDerivatives[tri->getVertex(2)].second();
+  SVector3 dXdu = dXdu1*(1.-U-V) + dXdu2*U + dXdu3*V;
+  SVector3 dXdv = dXdv1*(1.-U-V) + dXdv2*U + dXdv3*V;
+  return Pair<SVector3, SVector3>(dXdu,dXdv);
+   
 }
+
+// Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
+// {
+//   if(!oct) parametrize();
+
+//   if(trivial())
+//     return (*(_compound.begin()))->firstDer(param);
+
+//   double U, V;
+//   GFaceCompoundTriangle *lt;
+//   getTriangle(param.x(), param.y(), &lt, U,V);
+//   if(!lt && _mapping != RBF)
+//     return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
+//   else if (!lt && _mapping == RBF){
+//     double x, y, z;
+//     SVector3 dXdu, dXdv  ;
+//     _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
+//     return Pair<SVector3, SVector3>(dXdu, dXdv);
+//   }
+
+//   double mat[2][2] = {{lt->p2.x() - lt->p1.x(), lt->p3.x() - lt->p1.x()},
+//                       {lt->p2.y() - lt->p1.y(), lt->p3.y() - lt->p1.y()}};
+//   double inv[2][2];
+//   double det = inv2x2(mat,inv);
+//   if (!det && _mapping == RBF){
+//     double x, y, z;
+//     SVector3 dXdu, dXdv  ;
+//     _rbf->UVStoXYZ(param.x(), param.y(), x, y, z, dXdu, dXdv);
+//     return Pair<SVector3, SVector3>(dXdu, dXdv);
+//   }
+
+//   SVector3 dXdxi(lt->v2 - lt->v1);
+//   SVector3 dXdeta(lt->v3 - lt->v1);
+
+//   SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
+//   SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
+
+//   return Pair<SVector3, SVector3>(dXdu, dXdv);
+// }
 
 void GFaceCompound::secondDer(const SPoint2 &param,
                               SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
@@ -2339,30 +2367,8 @@ void GFaceCompound::getTriangle(double u, double v,
                                 double &_u, double &_v) const
 {
   double uv[3] = {u, v, 0};
-  // if (_mapping == RBF){
-  //   std::list<void*> l;
-  //   Octree_SearchAll(uv, oct, &l);
-  //   if (l.size() > 1 || l.size() == 0){
-  //     GFaceCompoundTriangle *gfct = NULL;
-  //     *lt = gfct;
-  //     return;
-  //   }
-  //   else{
-  //     std::list<void*>::iterator it = l.begin();
-  //     *lt = (GFaceCompoundTriangle*)(*it);
-  //   }
-  // }
-
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
 
-  // if(!(*lt)) {
-  //     for(int i=0;i<nbT;i++){
-  //       if(GFaceCompoundInEle (&_gfct[i],uv)){
-  //      *lt = &_gfct[i];
-  //      break;
-  //       }
-  //     }
-  // }
   if(!(*lt)){
     return;
   }
@@ -2391,6 +2397,7 @@ void GFaceCompound::buildOct() const
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
+      //create bounding box
       for(int j = 0; j < 3; j++){
         std::map<MVertex*,SPoint3>::const_iterator itj = coordinates.find(t->getVertex(j));
         _coordPoints.insert(std::make_pair(t->getVertex(j)->point(), itj->second));
@@ -2414,6 +2421,7 @@ void GFaceCompound::buildOct() const
   const int maxElePerBucket = 15;
   oct = Octree_Create(maxElePerBucket, origin, ssize, GFaceCompoundBB,
                       GFaceCompoundCentroid, GFaceCompoundInEle);
+  std::map<MElement*, Pair<SVector3,SVector3> > firstElemDerivatives;
 
   it = _compound.begin();
   count = 0;
@@ -2430,7 +2438,7 @@ void GFaceCompound::buildOct() const
       _gfct[count].p1 = it0->second;
       _gfct[count].p2 = it1->second;
       _gfct[count].p3 = it2->second;
-      if((*it)->geomType() != GEntity::DiscreteSurface){
+       if((*it)->geomType() != GEntity::DiscreteSurface){
 	// take care of the seam !!!!
 	if (t->getVertex(0)->onWhat()->dim() == 2){
 	  reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(1), *it,
@@ -2464,12 +2472,49 @@ void GFaceCompound::buildOct() const
                                 t->getVertex(2)->z());
       _gfct[count].gf = *it;
       _gfct[count].tri = t;
+
+      //compute first derivatives for every triangle
+      double mat[2][2] = {{_gfct[count].p2.x() - _gfct[count].p1.x(),
+			   _gfct[count].p3.x() - _gfct[count].p1.x()},
+			  {_gfct[count].p2.y() - _gfct[count].p1.y(),
+			   _gfct[count].p3.y() - _gfct[count].p1.y()}};
+      double inv[2][2];
+      double det = inv2x2(mat,inv);
+      SVector3 dXdxi (_gfct[count].v2 - _gfct[count].v1);
+      SVector3 dXdeta(_gfct[count].v3 - _gfct[count].v1);
+      SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
+      SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
+      firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdu,dXdv);
+      
       Octree_Insert(&_gfct[count], oct);
       count++;
     }
   }
   nbT = count;
   Octree_Arrange(oct);
+
+  //smooth first derivatives at vertices
+  if(adjv.size() == 0){
+    std::vector<MTriangle*> allTri;
+    std::list<GFace*>::const_iterator it = _compound.begin();
+    for( ; it != _compound.end(); ++it){
+      allTri.insert(allTri.end(), (*it)->triangles.begin(), (*it)->triangles.end() );
+    }
+    buildVertexToTriangle(allTri, adjv);
+  }
+  for(v2t_cont::iterator it = adjv.begin(); it!= adjv.end(); ++it){
+    MVertex *v = it->first;
+    std::vector<MElement*> vTri = it->second;
+    SVector3 dXdu(0.0), dXdv(0.0);
+    int nbTri = vTri.size();
+    for (unsigned int j = 0; j < nbTri; j++){
+      dXdu += firstElemDerivatives[vTri[j]].first();
+      dXdv += firstElemDerivatives[vTri[j]].second();
+    }
+    dXdu*= 1./nbTri;
+    dXdv*= 1./nbTri;
+    firstDerivatives[v] = Pair<SVector3, SVector3>(dXdu, dXdv);
+  }
 
   printStuff();
 }
