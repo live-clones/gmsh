@@ -357,7 +357,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     numberedV.push_back(v);
   }
 
-  Msg::Info("%d points %d edges and %d faces in the final mesh",
+  Msg::Info("%d points %d edges and %d faces in the initial mesh",
             out.numberofpoints, out.numberofedges, out.numberoftrifaces);
 
   // Tetgen modifies both surface & edge mesh, so we need to re-create
@@ -555,7 +555,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
        CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
       sprintf(opts, "Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
 	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
-      // removed -q because mesh sizes at vertices were wrong...
+      // removed -q because mesh sizes at new vertices are wrong
       // sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
       // 	 (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
@@ -564,12 +564,12 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 	       (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "-Ype%c",  
+      sprintf(opts, "-Ype%c",
               (Msg::GetVerbosity() < 3) ? 'Q':
               (Msg::GetVerbosity() > 6) ? 'V': '\0');
-      /*      sprintf(opts, "-q%gYpe%c",  CTX::instance()->mesh.delaunayQ,
-              (Msg::GetVerbosity() < 3) ? 'Q':
-              (Msg::GetVerbosity() > 6) ? 'V': '\0');*/
+      // removed -q because mesh sizes at new vertices are wrong
+      // sprintf(opts, "-q3.5Ype%c", (Msg::GetVerbosity() < 3) ? 'Q':
+      //        (Msg::GetVerbosity() > 6) ? 'V': '\0');*/
     }
     try{
       tetrahedralize(opts, &in, &out);
@@ -621,7 +621,6 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
-
 
   // now do insertion of points
  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)

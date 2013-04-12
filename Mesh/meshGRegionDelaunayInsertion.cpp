@@ -1150,7 +1150,7 @@ void insertVerticesInRegion (GRegion *gr)
       Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
                  theRegion.size(), faces_bound.size(), _t2 - _t1);
       GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
-       Msg::Info("a region is found %p",myGRegion);
+      Msg::Info("Found region %d", myGRegion->tag());
       if(myGRegion) // a geometrical region associated to the list of faces has been found
         for(std::list<MTet4*>::iterator it2 = theRegion.begin();
             it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
@@ -1192,7 +1192,7 @@ void insertVerticesInRegion (GRegion *gr)
     }
     else{
       if(ITER++ % 5000 == 0)
-        Msg::Info("%9d points created -- Worst tet radius is %8.3f (PTS removed %4d %4d)",
+        Msg::Info("%d points created - Worst tet radius is %g (PTS removed %d %d)",
                   vSizes.size(), worst->getRadius(), COUNT_MISS_1,COUNT_MISS_2);
       if(worst->getRadius() < 1) break;
       double center[3];
@@ -1290,11 +1290,16 @@ void insertVerticesInRegion (GRegion *gr)
   double t2 = Cpu();
   double dt = (t2-t1);
   int COUNT_MISS = COUNT_MISS_1+COUNT_MISS_2;
-  Msg::Info("3D Point Insertion Terminated : %9d Delaunay cavities modified for star shapeness",NB_CORRECTION_OF_CAVITY);
-  Msg::Info("                              : %9d points could not be inserted among %d",COUNT_MISS,vSizes.size() - COUNT_MISS);
-  Msg::Info("                              : %9d tetrahedra created in %8.2f sec. (%d tets/sec.)",allTets.size(),dt,(int)(allTets.size()/dt));
+  Msg::Info("3D point insertion terminated (%d points created):",
+            (int)vSizes.size());
+  Msg::Info(" - %d Delaunay cavities modified for star shapeness",
+            NB_CORRECTION_OF_CAVITY);
+  Msg::Info(" - %d points could not be inserted",
+            COUNT_MISS);
+  Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/sec.)",
+            allTets.size(), dt, (int)(allTets.size() / dt));
 
-    // relocate vertices
+  // relocate vertices
   int nbReloc = 0;
   for (int SM=0;SM<CTX::instance()->mesh.nbSmoothing;SM++){
     for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
@@ -1307,7 +1312,6 @@ void insertVerticesInRegion (GRegion *gr)
       }
     }
   }
-
 
   while(1){
     if(allTets.begin() == allTets.end()) break;

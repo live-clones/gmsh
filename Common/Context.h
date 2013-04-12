@@ -46,7 +46,6 @@ struct contextMeshOptions {
   std::map<int,int> curvature_control_per_face;
   int bunin;
   int ignorePartBound;
-  double delaunayQ;
 };
 
 struct contextGeometryOptions {
