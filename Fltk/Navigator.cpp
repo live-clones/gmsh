@@ -638,7 +638,8 @@ void Navigator::move()
   }
   // head movement is damped to avoid nausea
   if(pad->button[ pad->button_map[4] ] ){
-    ax0 = int(pad->axe[ pad->axe_map[0] ]*10)/10.; ax1 =int( pad->axe[ pad->axe_map[1] ]*10)/10.;
+    ax0 = int(pad->axe[ pad->axe_map[0] ]*10)/10.;
+    ax1 =int( pad->axe[ pad->axe_map[1] ]*10)/10.;
     if(ax1 >0.) ax0=-ax0;
   }
   else     {
@@ -687,7 +688,8 @@ void Navigator::move()
     else{
       speed= -4.0 * (pad->axe[ pad->axe_map[3] ]) *reference_speed ;
     }
-    ctx->camera.move_and_look(speed,lateral,lift,0.,0.,angular_lat,azimut,elevation);
+    ctx->camera.move_and_look(speed, lateral, lift, 0., 0.,
+                              angular_lat, azimut, elevation);
     //-------------------------------------
 
     break; // end of mode PESDESTRIAN
@@ -722,7 +724,8 @@ void Navigator::move()
     angular_lat= -1.0 * (pad->axe[ pad->axe_map[2] ]) *reference_angle;
     angular_up =  1.0 * (pad->axe[ pad->axe_map[3] ]) *reference_angle;
 
-    ctx->camera.move_and_look(speed,lateral,lift,angular_fr,angular_up,angular_lat,azimut,elevation);
+    ctx->camera.move_and_look(speed, lateral, lift, angular_fr, angular_up,
+                              angular_lat, azimut, elevation);
     //-------------------------------------
     break; // end of mode DIVER
 

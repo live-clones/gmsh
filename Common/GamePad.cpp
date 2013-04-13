@@ -54,7 +54,6 @@
 #include <iostream>
 #include <stdio.h>
 #include "GamePad.h"
-#include "Context.h"
 
 #if !defined(WIN32)
 #include <unistd.h>
@@ -105,11 +104,7 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0)
   for(int i = 0; i < axes; i++) axe[i] = 0;
   joyGetPosEx(gamepad_fd, &infoex);
   infoex.dwFlags = JOY_RETURNALL;
-#elif defined(__APPLE__)
-
-  // ??
-
-#else // LINUX
+#elif defined(HAVE_LINUX_JOYSTICK)
   gamepad_fd = open(GAMEPAD_DEV, O_RDONLY | O_NONBLOCK);
   if (gamepad_fd > 0) {
     ioctl(gamepad_fd, JSIOCGNAME(256), name);
@@ -141,7 +136,7 @@ GamePad::~GamePad()
 {
   active = false;
   gamepad_fd = 0;
-#if !defined(WIN32) && !defined(__APPLE__)
+#if defined(HAVE_LINUX_JOYSTICK)
   close(gamepad_fd);
 #endif
 }
@@ -199,11 +194,7 @@ int GamePad::read_event()
     std::cout<< infoex.dwButtonNumber << std::endl;
     std::cout<< infoex.dwPOV << std::endl;
   */
-#elif defined(__APPLE__)
-
-  // ??
-
-#else // LINUX
+#elif defined(HAVE_LINUX_JOYSTICK)
   int result = read(gamepad_fd, &event, sizeof(event));
   if (result > 0){
     switch (event.type){
@@ -232,18 +223,18 @@ int GamePad::read_event()
 
 void GamePad::affiche()
 {
-  for (int i = 0; i < 6; i++) std::cout<<("_________");
-  std::cout<<std::endl; std::cout<<"  axis ";
-  for (int i = 0; i < 6; i++) std::cout<<" | "<<i;
-  std::cout<<std::endl;  std::cout<<"       ";
-  for (int i = 0; i < 6; i++) std::cout<<" | "<< axe[i] ;
-  std::cout<<std::endl;
-  for (int i = 0; i < 10; i++) std::cout<< ("_____");
-  std::cout<<std::endl;  std::cout<<" b.";
-  for (int i = 0; i < 10; i++) std::cout<<" | "<<i;
-  std::cout<<std::endl;  std::cout<<"   ";
-  for (int i = 0; i < 10; i++) std::cout<<" | "<<button[i];
-  std::cout<<std::endl;
-  for (int i = 0; i < 10; i++) std::cout<< ("_____");
-  std::cout<<std::endl;
+  for (int i = 0; i < 6; i++) std::cout << "_________";
+  std::cout << std::endl; std::cout << "  axis ";
+  for (int i = 0; i < 6; i++) std::cout << " | "<<i;
+  std::cout << std::endl;  std::cout << "       ";
+  for (int i = 0; i < 6; i++) std::cout << " | "<< axe[i] ;
+  std::cout << std::endl;
+  for (int i = 0; i < 10; i++) std::cout << "_____";
+  std::cout << std::endl;  std::cout << " b.";
+  for (int i = 0; i < 10; i++) std::cout << " | " << i;
+  std::cout << std::endl;  std::cout << "   ";
+  for (int i = 0; i < 10; i++) std::cout << " | " << button[i];
+  std::cout << std::endl;
+  for (int i = 0; i < 10; i++) std::cout << "_____";
+  std::cout << std::endl;
 }

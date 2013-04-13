@@ -955,6 +955,11 @@ if(DLFCN_H)
   list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIBS})
 endif(DLFCN_H)
 
+check_include_file(linux/joystick.h LINUX_JOYSTICK_H)
+if(LINUX_JOYSTICK_H)
+  set_config_option(HAVE_LINUX_JOYSTICK "LinuxJoystick")
+endif(LINUX_JOYSTICK_H)
+
 if(MSVC)
   add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX 
                   -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)

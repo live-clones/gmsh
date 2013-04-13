@@ -13,12 +13,12 @@
 #define GP_BUTTONS 32
 #define GP_AXES 6
 
+#include "GmshConfig.h"
+
 #if defined(WIN32)
 #include <windows.h>
 #include <mmsystem.h>
-#elif defined(__APPLE__)
-// ??
-#else // LINUX
+#elif defined(HAVE_LINUX_JOYSTICK)
 #include <linux/joystick.h>
 #include <fcntl.h>
 #define GAMEPAD_DEV "/dev/input/js0"
@@ -44,28 +44,20 @@ class GamePad {
   int axe_max[8];
   int gamepad_fd;
   char name[256];
-
 #if defined(WIN32)
-
   JOYCAPS caps;
   JOYINFOEX infoex;
   JOYINFO info;
   int axes;
   int buttons;
-
-#elif defined(__APPLE__)
-
-  // ??
-  int axes;
-  int buttons;
-
-#else // LINUX
-
+#elif defined(HAVE_LINUX_JOYSTICK)
   js_event event;
   __u32 version;
   __u8 axes;
   __u8 buttons;
-
+#else
+  int axes;
+  int buttons;
 #endif
 };
 
