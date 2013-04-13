@@ -31,6 +31,10 @@
 
 //--Prototype for Chaco interface
 
+#ifdef interface
+#undef interface
+#endif
+
 extern "C" int interface
 (int nvtxs, int *start, int *adjacency, int *vwgts, float *ewgts,
  float *x, float *y, float *z,

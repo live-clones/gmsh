@@ -64,6 +64,8 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
 
 #if defined(WIN32)
 
+  return; // FIXME the gamepad code crashes
+
   for (int i = JOYSTICKID1 ; i < JOYSTICKID2 ; i++)  {
     if(JOYERR_NOERROR == joyGetDevCaps(i, &caps, sizeof(JOYCAPS)) ) {
       /*
