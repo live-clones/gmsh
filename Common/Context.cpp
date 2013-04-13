@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "OS.h"
+#include "GamePad.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
