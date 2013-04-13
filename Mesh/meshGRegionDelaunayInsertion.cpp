@@ -1150,10 +1150,11 @@ void insertVerticesInRegion (GRegion *gr)
       Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
                  theRegion.size(), faces_bound.size(), _t2 - _t1);
       GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
-      Msg::Info("Found region %d", myGRegion->tag());
-      if(myGRegion) // a geometrical region associated to the list of faces has been found
+      if(myGRegion){ // a geometrical region associated to the list of faces has been found
+        Msg::Info("Found region %d", myGRegion->tag());
         for(std::list<MTet4*>::iterator it2 = theRegion.begin();
             it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
+      }
       else // the tets are in the void
         for(std::list<MTet4*>::iterator it2 = theRegion.begin();
             it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
