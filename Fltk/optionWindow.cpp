@@ -1818,7 +1818,8 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[31]->callback(general_options_ok_cb);
 
       Fl_Button *gmpdcf = new Fl_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, 1.5*IW, BH, "Configure Gamepad");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Configure Gamepad");
+
       gmpdcf->callback(general_gmpdcf_cb);
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
         gmpdcf->activate();
