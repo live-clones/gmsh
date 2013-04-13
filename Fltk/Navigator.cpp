@@ -5,8 +5,6 @@
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
 
- 
-
 #include <string>
 #include <iostream>
 #include <stdio.h>
@@ -17,43 +15,45 @@
 #include "drawContext.h"
 #include "gl2ps.h"
 
-Navigator::Navigator(double _freq, drawContext* _ctx): 
-  ax0(0.),ax1(0.),ax0_cur(0.),ax1_cur(0.),speed(0.),awake(true)
-  ,ctx(_ctx),frequency(_freq) 
+Navigator::Navigator(double _freq, drawContext* _ctx):
+  ax0(0.), ax1(0.), ax0_cur(0.), ax1_cur(0.), speed(0.), awake(true),
+  ctx(_ctx), frequency(_freq)
 {
   ctx->camera.init();
-  pad  = &(CTX::instance()->gamepad);
-  along=AXE_Z;
+  pad = CTX::instance()->gamepad;
+  along = AXE_Z;
   mode = PEDESTRIAN;
-  reference_angle = 3.14*frequency/5.;
-  reference_speed = 1.5*frequency*(ctx->camera.Lc)/25.;
+  reference_angle = 3.14 * frequency / 5.;
+  reference_speed = 1.5 * frequency * (ctx->camera.Lc) / 25.;
 }
 
-Navigator::~Navigator() {} ;
+Navigator::~Navigator(){};
 
-void Navigator::setDrawContext( drawContext* _ctx) {
+void Navigator::setDrawContext( drawContext* _ctx)
+{
   ctx = _ctx;
   ctx->camera.init();
 }
 
-void Navigator::setFrequency(double _freq) {
+void Navigator::setFrequency(double _freq)
+{
   frequency = _freq;
   reference_angle = 3.14*frequency/5.;
   reference_speed = 1.5*frequency*(ctx->camera.Lc)/100.;
 }
 
-void Navigator::setResponseFrequency(double _freq) {
+void Navigator::setResponseFrequency(double _freq)
+{
   reference_angle = 3.14*frequency/5.*(_freq/.01);
   reference_speed = 1.5*frequency*(ctx->camera.Lc)/100.*(_freq/.01);
 }
-
 
 void Navigator::drawIcons()
 {
   double l = CTX::instance()->smallAxesSize ;
   double dx = CTX::instance()->smallAxesPos[0]+.5*l  ;
-  double dy =  1.25*l;
- 
+  double dy = 1.25*l;
+
   ctx->fix2dCoordinates(&dx, &dy);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -62,13 +62,12 @@ void Navigator::drawIcons()
   			 CTX::instance()->print.epsLineWidthFactor));
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.smallAxes);
-    
+
   double scale=l/100.;
   glEnable (GL_BLEND);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable (GL_LINE_SMOOTH);
 
-  
   switch(mode){
   case PEDESTRIAN :
     glBegin(GL_LINES);
@@ -596,71 +595,61 @@ void Navigator::drawIcons()
     glVertex2d(dx+scale*3.55498581E+01,dy+scale*  5.91182632E+01);
     glEnd();
     break;
-  default: break;  
+  default: break;
   }
-  
 
   glDisable (GL_BLEND);
   glDisable (GL_LINE_SMOOTH);
   glPopMatrix();
-  
 }
 
-
-
-
-
-
-void Navigator::move(){
-  if(pad->toggle( pad->button_map[3]) )
-    {   
-      switch (mode)	 
-	{
-	case PEDESTRIAN : mode = DIVER      ; break;
-	case DIVER      : mode = PEDESTRIAN ; break;
-	default: break;  
-	}
+void Navigator::move()
+{
+  if(pad->toggle( pad->button_map[3])){
+    switch (mode){
+    case PEDESTRIAN : mode = DIVER      ; break;
+    case DIVER      : mode = PEDESTRIAN ; break;
+    default: break;
     }
+  }
   // reset 1:1
-  if(pad->toggle( pad->button_map[8]) )
-    { 
-      ctx->camera.lookAtCg();
-      reference_speed=  1.5*frequency*(ctx->camera.Lc)/100.;
+  if(pad->toggle( pad->button_map[8]) ){
+    ctx->camera.lookAtCg();
+    reference_speed=  1.5*frequency*(ctx->camera.Lc)/100.;
+  }
+  // change the plane
+  if(pad->toggle( pad->button_map[0]) ) ctx->camera.lookAtCg();
+  if(pad->toggle( pad->button_map[1]) ){
+    switch(along){
+    case AXE_X : along=AXE_Y; ctx->camera.alongY(); break;
+    case AXE_Y : along=AXE_Z; ctx->camera.alongZ(); break;
+    case AXE_Z : along=AXE_X; ctx->camera.alongX(); break;
+    default: break;
     }
-  // change the plane 
-  if(pad->toggle( pad->button_map[0]) )       ctx->camera.lookAtCg();
-  if(pad->toggle( pad->button_map[1]) ) 
-    { 
-      switch(along){
-      case AXE_X : along=AXE_Y; ctx->camera.alongY(); break;
-      case AXE_Y : along=AXE_Z; ctx->camera.alongZ(); break;
-      case AXE_Z : along=AXE_X; ctx->camera.alongX(); break;
-      default: break; 
-      }  
-    }
-  // reset vertical axe or invers it 
-  if(pad->toggle( pad->button_map[2] ) )     { 
+  }
+  // reset vertical axe or invers it
+  if(pad->toggle( pad->button_map[2] ) ){
     switch(along){
     case AXE_X : ctx->camera.upZ(); break;
     case AXE_Y : ctx->camera.upX(); break;
     case AXE_Z : ctx->camera.upY(); break;
-    default: break; 
-    }  
+    default: break;
+    }
   }
   // head movement is damped to avoid nausea
-  if(pad->button[ pad->button_map[4] ] )     {   
+  if(pad->button[ pad->button_map[4] ] ){
     ax0 = int(pad->axe[ pad->axe_map[0] ]*10)/10.; ax1 =int( pad->axe[ pad->axe_map[1] ]*10)/10.;
-    if(ax1 >0.) ax0=-ax0; 
+    if(ax1 >0.) ax0=-ax0;
   }
   else     {
     ax0 =0.; ax1 =0. ;
   }
   if( (ax0-ax0_cur)>0. ) { ax0_cur=ax0_cur + std::min((ax0-ax0_cur),0.005); }
-  else{ ax0_cur=ax0_cur + std::max((ax0-ax0_cur), -0.005);     }  
+  else{ ax0_cur=ax0_cur + std::max((ax0-ax0_cur), -0.005);     }
 
-  if( (ax1-ax1_cur) >0.) {  ax1_cur=ax1_cur + std::min((ax1-ax1_cur),0.005); }  
-  else{ ax1_cur=ax1_cur + std::max((ax1-ax1_cur), -0.005); }   
- 
+  if( (ax1-ax1_cur) >0.) {  ax1_cur=ax1_cur + std::min((ax1-ax1_cur),0.005); }
+  else{ ax1_cur=ax1_cur + std::max((ax1-ax1_cur), -0.005); }
+
   azimut   = -(ax0_cur) *(2.*ctx->camera.aperture*0.01745329 ) ;
   elevation = (ax1_cur) *(2.*ctx->camera.aperture*0.01745329 );
 
@@ -670,75 +659,64 @@ void Navigator::move(){
   case PEDESTRIAN :
     //------------------------------------------
     // accelaration
-    if(!pad->button[ pad->button_map[4] ] )
-      {
-	if(pad->axe[ pad->axe_map[1] ]!=0.)
-	  {
-	    acc=-pad->axe[ pad->axe_map[1] ] * ctx->camera.Lc / 500. * frequency ;
-	    if (acc>0.)
-	      {	
-		speed =  reference_speed +acc;
-	      }
-	    else
-	      { 
-		speed = reference_speed + 2.*acc;
-	      }
-	    speed = std::max(speed,(frequency * ctx->camera.Lc / 1000.));
-	    reference_speed = std::min(speed,(frequency*(ctx->camera.Lc)));
-	    /*
-	      std::cout<<"acc: "<< acc << std::endl;
-	      std::cout<<"lc: "<< ctx->camera.Lc << std::endl;
-	      std::cout<<"vitesse: "<< reference_speed << std::endl;
-	    */	 
-	  }
+    if(!pad->button[ pad->button_map[4] ] ){
+      if(pad->axe[ pad->axe_map[1] ]!=0.){
+        acc=-pad->axe[ pad->axe_map[1] ] * ctx->camera.Lc / 500. * frequency ;
+        if (acc>0.){
+          speed =  reference_speed +acc;
+        }
+        else{
+          speed = reference_speed + 2.*acc;
+        }
+        speed = std::max(speed,(frequency * ctx->camera.Lc / 1000.));
+        reference_speed = std::min(speed,(frequency*(ctx->camera.Lc)));
+        /*
+          std::cout<<"acc: "<< acc << std::endl;
+          std::cout<<"lc: "<< ctx->camera.Lc << std::endl;
+          std::cout<<"vitesse: "<< reference_speed << std::endl;
+        */
       }
+    }
     lift = -.25 *pad->axe[ pad->axe_map[5] ] *reference_speed ;
     lateral= 0.25* pad->axe[ pad->axe_map[4] ] *reference_speed ;
     angular_lat= -1.0 * (pad->axe[ pad->axe_map[2] ]) *reference_angle;
     // walk else run
-    if(pad->button[ pad->button_map[6]] ) 
-      {
-	speed  = -1.0 * pad->axe[ pad->axe_map[3] ] *reference_speed ; 
-      } 
-    else
-      {
-	speed= -4.0 * (pad->axe[ pad->axe_map[3] ]) *reference_speed ;     
-      }	
+    if(pad->button[ pad->button_map[6]] ){
+      speed  = -1.0 * pad->axe[ pad->axe_map[3] ] *reference_speed ;
+    }
+    else{
+      speed= -4.0 * (pad->axe[ pad->axe_map[3] ]) *reference_speed ;
+    }
     ctx->camera.move_and_look(speed,lateral,lift,0.,0.,angular_lat,azimut,elevation);
     //-------------------------------------
- 
+
     break; // end of mode PESDESTRIAN
-
-
-
 
   case DIVER :
     //-------------------------------------
     // accelaration
-    //    pad->affiche(); 
+    //    pad->affiche();
     if(!pad->button[ pad->button_map[4] ]) {
       angular_fr =  1.0 * (pad->axe[ pad->axe_map[0] ]) *reference_angle;
-      if(pad->axe[ pad->axe_map[1] ]!=0.   )
-	{
-	  acc=-pad->axe[ pad->axe_map[1] ] * ctx->camera.Lc / 1000. * frequency ;
-	  if (acc>0.)	  {	
-	    speed =  reference_speed +acc;
-	  }
-	  else	  { 
-	    speed = reference_speed + 2.*acc;
-	  }
-	  speed = std::max(speed,(frequency * ctx->camera.Lc / 1000.));
-	  reference_speed = std::min(speed,(frequency*(ctx->camera.Lc)));
-	}
-     
+      if(pad->axe[ pad->axe_map[1] ]!=0.){
+        acc=-pad->axe[ pad->axe_map[1] ] * ctx->camera.Lc / 1000. * frequency ;
+        if (acc>0.)	  {
+          speed =  reference_speed +acc;
+        }
+        else	  {
+          speed = reference_speed + 2.*acc;
+        }
+        speed = std::max(speed,(frequency * ctx->camera.Lc / 1000.));
+        reference_speed = std::min(speed,(frequency*(ctx->camera.Lc)));
+      }
       if(pad->button[ pad->button_map[6] ] ) 	{
-	speed  =  reference_speed ; 
-      } 
-      else    {   
+	speed  =  reference_speed ;
+      }
+      else    {
 	speed  = 0.;
-      }	
+      }
     }
-   
+
     lift   = -.25 *pad->axe[ pad->axe_map[5] ] *reference_speed ;
     lateral= 0.25* pad->axe[ pad->axe_map[4] ] *reference_speed ;
     angular_lat= -1.0 * (pad->axe[ pad->axe_map[2] ]) *reference_angle;
@@ -746,20 +724,16 @@ void Navigator::move(){
 
     ctx->camera.move_and_look(speed,lateral,lift,angular_fr,angular_up,angular_lat,azimut,elevation);
     //-------------------------------------
-
-    
     break; // end of mode DIVER
 
   case PLANE :
     break; // end of mode PLANE
- 
+
   case CAR :
     break; // end of mode CAR
-
 
   default:    break;
 
   } // end of switch(mode)
 
 }
- 

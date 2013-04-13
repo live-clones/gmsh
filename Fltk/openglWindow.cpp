@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <FL/Fl_Tooltip.H>
 #include "openglWindow.h"
 #include "graphicWindow.h"
 #include "manipWindow.h"
@@ -18,19 +19,18 @@
 #include "FlGui.h"
 #include "drawContext.h"
 #include "Context.h"
-#include <FL/Fl_Tooltip.H>
-
 #include "Trackball.h"
 #include "GamePad.h"
 
-///// Navigator handler (listen to gamepad or other names pipes) /////////
-static  void navigator_handler(void *data)
+// Navigator handler (listen to gamepad or other names pipes)
+static void navigator_handler(void *data)
 {
-  openglWindow* gl_win = (openglWindow*)data;
-  if (CTX::instance()->gamepad.active) gl_win->move_with_gamepad();
-  Fl::add_timeout(gl_win->frequency, navigator_handler,data); 
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
+    openglWindow* gl_win = (openglWindow*)data;
+    gl_win->moveWithGamepad();
+    Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler, data);
+  }
 }
-///
 
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
@@ -52,13 +52,8 @@ static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &cl
 }
 
 openglWindow::openglWindow(int x, int y, int w, int h)
-  :  Fl_Gl_Window(x, y, w, h, "gl"), _lock(false)
-  , _drawn(false) 
-  , _selection(ENT_NONE)  , _trySelection(0) 
- , ntime(0)
-  , frequency(CTX::instance()->gamepad.frequency)
- 
-
+  :  Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
+     _selection(ENT_NONE), _trySelection(0), Nautilus(0)
 {
   _ctx = new drawContext();
   for(int i = 0; i < 3; i++) _point[i] = 0.;
@@ -67,21 +62,17 @@ openglWindow::openglWindow(int x, int y, int w, int h)
 
   addPointMode = lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
- 
-  
-  //// add external reader for gamepad events
-  if (CTX::instance()->gamepad.active) {
+
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
     Nautilus = new Navigator(frequency,_ctx);
-    Fl::add_timeout(frequency, navigator_handler, (void*)this);
+    Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler, (void*)this);
   }
-  ////
-  
 }
 
 openglWindow::~openglWindow()
 {
   delete _ctx;
-  delete Nautilus;
+  if(Nautilus) delete Nautilus;
 }
 
 void openglWindow::_drawScreenMessage()
@@ -146,10 +137,9 @@ void openglWindow::draw()
   // that we don't fire draw() while we are already drawing, e.g. due to an
   // impromptu Fl::check(). The same lock is also used in _select to guarantee
   // that we don't mix GL_RENDER and GL_SELECT rendering passes.
-  _drawn=true;
+  _drawn = true;
   if(_lock) return;
   _lock = true;
-
 
   Msg::Debug("openglWindow::draw()");
 
@@ -246,10 +236,10 @@ void openglWindow::draw()
       cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
-        
+
       glFrustum(cam->glFleft, cam->glFright, cam->glFbottom,
                 cam->glFtop, cam->glFnear , cam->glFfar*cam->Lc );
-      
+
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
       glDrawBuffer(GL_BACK);
@@ -260,9 +250,9 @@ void openglWindow::draw()
 		cam->up.x,cam->up.y,cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
-    ///
-          if (CTX::instance()->gamepad.active){ Nautilus->drawIcons();}
-      ///
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus){
+        Nautilus->drawIcons();
+      }
       _drawScreenMessage();
       _drawBorder();
     }
@@ -745,21 +735,13 @@ void openglWindow::drawTooltip(const std::string &text)
   if(!enabled) Fl_Tooltip::disable();
 }
 
-
-
-
-////
-void openglWindow::move_with_gamepad() {
-  if (CTX::instance()->gamepad.active)    {
-
-    if( !(_ctx->camera.on)) _ctx->camera.init();
-
-    if (_drawn && (_lastHandled == this || _lastHandled == 0 ) )   {
-      Nautilus->move();   
-      this->flush(); 
-    }     
+void openglWindow::moveWithGamepad()
+{
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus){
+    if(!(_ctx->camera.on)) _ctx->camera.init();
+    if(_drawn && (_lastHandled == this || _lastHandled == 0)){
+      Nautilus->move();
+      this->flush();
+    }
   }
-
 }
-
-/////

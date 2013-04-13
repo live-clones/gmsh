@@ -15,6 +15,7 @@
 #include "Options.h"
 #include "Colors.h"
 #include "CommandLine.h"
+#include "GamePad.h"
 #include "DefaultOptions.h"
 
 #if defined(HAVE_MESH)
@@ -3104,6 +3105,20 @@ double opt_general_trackball_hyperbolic_sheet(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->trackballHyperbolicSheet = (int)val;
   return CTX::instance()->trackballHyperbolicSheet;
+}
+
+double opt_general_gamepad(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(val){
+      if(!CTX::instance()->gamepad)
+        CTX::instance()->gamepad = new GamePad();
+    }
+    else{
+      if(CTX::instance()->gamepad) delete CTX::instance()->gamepad;
+    }
+  }
+  return CTX::instance()->gamepad ? 1 : 0;
 }
 
 double opt_general_rotation_center_cg(OPT_ARGS_NUM)

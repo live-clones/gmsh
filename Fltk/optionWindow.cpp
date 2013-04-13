@@ -168,9 +168,6 @@ void general_gmpdcf_cb(Fl_Widget *w, void *data)
   FlGui::instance()->options->gmpdoption->win->show();
 }
 
-
-
-
 void options_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->options->win->show();
@@ -1820,12 +1817,15 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[31]->align(FL_ALIGN_RIGHT);
       general.value[31]->callback(general_options_ok_cb);
 
-      Fl_Button *gmpdcf = new Fl_Button 
+      Fl_Button *gmpdcf = new Fl_Button
         (L + 2 * WB, 2 * WB + 6 * BH, 1.5*IW, BH, "Configure Gamepad");
       gmpdcf->callback(general_gmpdcf_cb);
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
+        gmpdcf->activate();
+      else
+        gmpdcf->deactivate();
 
       o->end();
-
     }
     //end of new menu for stereo
     o->end();

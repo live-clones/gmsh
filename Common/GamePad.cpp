@@ -60,12 +60,9 @@
 #include <unistd.h>
 #endif
 
-GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
-
+GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0)
+{
 #if defined(WIN32)
-
-  return; // FIXME the gamepad code crashes
-
   for (int i = JOYSTICKID1 ; i < JOYSTICKID2 ; i++)  {
     if(JOYERR_NOERROR == joyGetDevCaps(i, &caps, sizeof(JOYCAPS)) ) {
       /*
@@ -92,30 +89,27 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
       std::cout << "  wVmin ............. " << caps.wVmin << std::endl;
       std::cout << "  wVmax ............. " << caps.wVmax << std::endl;
       */
-      if(( 1./frequency <(double)caps.wPeriodMin ) ||( 1./frequency >(double)caps.wPeriodMax )){
-	   frequency=.1/(double)caps.wPeriodMin;
-	}
-      gamepad_fd =i;
-      axes=std::min(GP_AXES,(int)caps.wNumAxes +2);
-      buttons=std::min(GP_BUTTONS,(int)caps.wNumButtons);
-      for (int i=0;i<buttons;i++) button[i]=false;
-      for (int i=0;i<axes;i++)    axe[i]=0.;
+      if((1./frequency < (double)caps.wPeriodMin) ||
+         (1./frequency > (double)caps.wPeriodMax)){
+        frequency=.1/(double)caps.wPeriodMin;
+      }
+      gamepad_fd = i;
+      axes = std::min(GP_AXES,(int)caps.wNumAxes + 2);
+      buttons = std::min(GP_BUTTONS,(int)caps.wNumButtons);
+      for (int i = 0; i < buttons; i++) button[i] = false;
+      for (int i = 0; i < axes; i++) axe[i] = 0.;
       active = true;
-
-
     }
   }
-  for (int i=0;i<buttons;i++) button[i]=0;
-  for (int i=0;i<axes;i++)	  axe[i]=0;
-  joyGetPosEx( gamepad_fd,&infoex)   ;
+  for(int i = 0; i < buttons; i++) button[i] = 0;
+  for(int i = 0; i < axes; i++) axe[i] = 0;
+  joyGetPosEx(gamepad_fd, &infoex);
   infoex.dwFlags = JOY_RETURNALL;
-
 #elif defined(__APPLE__)
 
   // ??
 
 #else // LINUX
-
   gamepad_fd = open(GAMEPAD_DEV, O_RDONLY | O_NONBLOCK);
   if (gamepad_fd > 0) {
     ioctl(gamepad_fd, JSIOCGNAME(256), name);
@@ -130,72 +124,69 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0) {
   }
 #endif
 
-  for (int i=0;i<std::min(9,(int)buttons);i++) button_map[i]=i;
-  for (int i=0;i<std::min(7,(int)axes);i++)    axe_map[i]=i;
+  for (int i = 0; i < std::min(9, (int)buttons); i++) button_map[i] = i;
+  for (int i = 0; i < std::min(7, (int)axes); i++) axe_map[i] = i;
   axe_map[6]=1;
   // another recognized map "Thrustmaster Run'N' Drive Wireless PS3"
   // warning :: on Windows we dont have the human-friendly Model Name of the Gamepad
-  if ( strcmp(name,"Thrustmaster Run'N' Drive Wireless PS3" ) == 0){
-    button_map[0]=1;
-    button_map[1]=0;
-    button_map[5]=6;
-    button_map[6]=5;
+  if(strcmp(name, "Thrustmaster Run'N' Drive Wireless PS3") == 0){
+    button_map[0] = 1;
+    button_map[1] = 0;
+    button_map[5] = 6;
+    button_map[6] = 5;
   }
 }
 
-GamePad::~GamePad() {
+GamePad::~GamePad()
+{
   active = false;
   gamepad_fd = 0;
-
 #if !defined(WIN32) && !defined(__APPLE__)
-
   close(gamepad_fd);
-
 #endif
 }
 
-bool GamePad::toggle(const int _nbut) {
+bool GamePad::toggle(const int _nbut)
+{
   bool res;
-  if( toggle_status[_nbut] ){ res = true; toggle_status[_nbut]=false;}
-  else { res=false;  }
+  if(toggle_status[_nbut]){ res = true; toggle_status[_nbut] = false; }
+  else{ res = false; }
   return res;
 }
 
-int GamePad::read_event() {
-
+int GamePad::read_event()
+{
 #if defined(WIN32)
-
   infoex.dwFlags = JOY_RETURNALL;
-  joyGetPosEx( gamepad_fd,&infoex) ;
-
-    axe[0]=(double)(( 1.*infoex.dwXpos-32767.)/32767.);
-    axe[1]=(double)(( 1.*infoex.dwYpos-32767.)/32767.);
-    axe[2]=(double)(( 1.*infoex.dwRpos-32767.)/32767.);
-    axe[3]=(double)(( 1.*infoex.dwZpos-32767.)/32767.);
-    if (infoex.dwPOV < 38000. ) {
-      double alpha = 3.14159/18000.* infoex.dwPOV;
-      axe[4]=1.001*sin(alpha);	 axe[5]=-1.001*cos(alpha);
+  joyGetPosEx(gamepad_fd, &infoex) ;
+  axe[0] = (double)((1. * infoex.dwXpos - 32767.) / 32767.);
+  axe[1] = (double)((1. * infoex.dwYpos - 32767.) / 32767.);
+  axe[2] = (double)((1. * infoex.dwRpos - 32767.) / 32767.);
+  axe[3] = (double)((1. * infoex.dwZpos - 32767.) / 32767.);
+  if(infoex.dwPOV < 38000.) {
+    double alpha = 3.14159 / 18000. * infoex.dwPOV;
+    axe[4] = 1.001 * sin(alpha);
+    axe[5] = -1.001 * cos(alpha);
+  }
+  else{
+    axe[4] = axe[5] = 0.;
+  }
+  for (int i = 0; i < 6; i++) if(fabs(axe[i]) < .01) axe[i] = 0.;
+  bool event = false;
+  int event_num;
+  bool event_value;
+  for (int i = 0; i < buttons; i++){
+    int bin = pow(2, i);
+    if(button[i] != (bool)(infoex.dwButtons & bin)) {
+      event = true;
+      event_num = i;
+      event_value = (bool)(infoex.dwButtons & bin);
     }
-    else{
-      axe[4]= axe[5]=0.;
-    }
-    for (int i=0;i<6;i++)  if ( fabs( axe[i]) < .01)  axe[i]=0.;
-
-    bool event=false;
-    int  event_num;
-    bool event_value;
-    for (int i=0;i<buttons;i++){
-      int bin=pow(2,i);
-      if( button[i] != (bool)(infoex.dwButtons & bin) ) {
-	event=true;
-	event_num=i;
-	event_value=(bool)(infoex.dwButtons & bin);
-      }
-    }
-    if(event){
-      if( button[event_num]==0 && event_value  ) {  toggle_status[event_num]=true; 	}
-      button[event_num]= event_value;
-    }
+  }
+  if(event){
+    if(button[event_num] == 0 && event_value){ toggle_status[event_num] = true; }
+    button[event_num] = event_value;
+  }
   /*
     std::cout<< "--------------------" << std::endl;
     std::cout<< infoex.dwXpos << std::endl;
@@ -213,53 +204,46 @@ int GamePad::read_event() {
   // ??
 
 #else // LINUX
-
-  int result = read(gamepad_fd, &event, sizeof(event)) ;
-  if (result > 0)    {
-
-    switch (event.type)  {
+  int result = read(gamepad_fd, &event, sizeof(event));
+  if (result > 0){
+    switch (event.type){
     case JS_EVENT_INIT:
       break;
-
     case JS_EVENT_INIT | JS_EVENT_AXIS:
       break;
-
     case JS_EVENT_INIT | JS_EVENT_BUTTON:
       break;
-
     case JS_EVENT_AXIS:
-      axe[(int)event.number]=(double)event.value/32767. ;
+      axe[(int)event.number] = (double)event.value / 32767.;
       break;
-
     case JS_EVENT_BUTTON:
-      if(button[(int)event.number]==0. && (bool)event.value) { toggle_status[(int)event.number]=true; }
-      button[(int)event.number]=(bool)event.value ;
+      if(button[(int)event.number] == 0. && (bool)event.value) {
+        toggle_status[(int)event.number] = true;
+      }
+      button[(int)event.number] = (bool)event.value ;
       break;
-
     default:
       break;
     }
   }
-
 #endif
-
   return 1;
 }
 
-void GamePad::affiche() {
-  for (int i=0;i<6;i++)  std::cout<<("_________");
-  std::cout<<std::endl;  std::cout<<"  axis ";
-  for (int i=0;i<6;i++)  std::cout<<" | "<<i;
+void GamePad::affiche()
+{
+  for (int i = 0; i < 6; i++) std::cout<<("_________");
+  std::cout<<std::endl; std::cout<<"  axis ";
+  for (int i = 0; i < 6; i++) std::cout<<" | "<<i;
   std::cout<<std::endl;  std::cout<<"       ";
-  for (int i=0;i<6;i++)  std::cout<<" | "<< axe[i] ;
+  for (int i = 0; i < 6; i++) std::cout<<" | "<< axe[i] ;
   std::cout<<std::endl;
-  for (int i=0;i<10;i++) std::cout<< ("_____");
+  for (int i = 0; i < 10; i++) std::cout<< ("_____");
   std::cout<<std::endl;  std::cout<<" b.";
-  for (int i=0;i<10;i++) std::cout<<" | "<<i;
+  for (int i = 0; i < 10; i++) std::cout<<" | "<<i;
   std::cout<<std::endl;  std::cout<<"   ";
-  for (int i=0;i<10;i++) std::cout<<" | "<<button[i];
+  for (int i = 0; i < 10; i++) std::cout<<" | "<<button[i];
   std::cout<<std::endl;
-  for (int i=0;i<10;i++) std::cout<< ("_____");
+  for (int i = 0; i < 10; i++) std::cout<< ("_____");
   std::cout<<std::endl;
-
 }

@@ -41,7 +41,6 @@ class openglWindow : public Fl_Gl_Window {
   int handle(int);
  public:
   time_t  rawtime,  prev_rawtime;
-  int  ntime;
   double response_frequency;
   bool addPointMode, lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
@@ -58,10 +57,9 @@ class openglWindow : public Fl_Gl_Window {
   void drawTooltip(const std::string &text);
   ///
   double frequency;
-  void move_with_gamepad()  ;
-  Navigator* Nautilus; 
- ///
+  void moveWithGamepad();
+  Navigator *Nautilus;
 };
 
 #endif
-   
+

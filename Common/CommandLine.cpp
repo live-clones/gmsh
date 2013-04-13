@@ -112,6 +112,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-camera",            "Use camera mode view;"));
   s.push_back(mp("-stereo",            "OpenGL quad-buffered stereo rendering (requires "
                                        "special graphic card)"));
+  s.push_back(mp("-gamepad",           "Use gamepad controller if available"));
 #endif
   s.push_back(mp("Other options:", ""));
   s.push_back(mp("-",                  "Parse input files, then exit"));
@@ -957,6 +958,10 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "stereo")) {
         CTX::instance()->camera = 1;
 	CTX::instance()->stereo = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "gamepad")) {
+        opt_general_gamepad(0, GMSH_SET, 1.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "fontsize")) {

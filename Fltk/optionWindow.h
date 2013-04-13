@@ -103,5 +103,5 @@ void solver_options_cb(Fl_Widget *w, void *data);
 void post_options_cb(Fl_Widget *w, void *data);
 void view_options_cb(Fl_Widget *w, void *data);
 void general_gmpdcf_cb(Fl_Widget *w, void *data);
-#endif
 
+#endif

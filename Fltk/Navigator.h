@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
 // Contributed by Gilles Marckmann <gilles.marckmann@ec-nantes.fr>
-// 
+//
 
 #ifndef _NAVIGATOR_H_
 #define _NAVIGATOR_H_
@@ -12,8 +12,6 @@
 #include "drawContext.h"
 #include "Camera.h"
 #include "GamePad.h"
-
-
 
 typedef enum {  AXE_X, AXE_Y, AXE_Z } AXE ;
 typedef enum {  PLANE, PEDESTRIAN, DIVER, CAR } NAV_MODE ;
@@ -44,16 +42,14 @@ class Navigator {
   double lift;
   int ncount;
  public:
-  Navigator( double _freq, drawContext* _ctx);
+  Navigator(double _freq, drawContext* _ctx);
   Navigator();
   ~Navigator();
-  void setFrequency(double _freq) ;
-  void setResponseFrequency(double _freq) ;
-  void setDrawContext( drawContext* _ctx) ;
+  void setFrequency(double _freq);
+  void setResponseFrequency(double _freq);
+  void setDrawContext( drawContext* _ctx);
   void move();
   void drawIcons();
-};  
+};
 
-   
-
-#endif // _NAVIGATOR_H_
+#endif

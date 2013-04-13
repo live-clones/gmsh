@@ -11,7 +11,8 @@
 #include <string>
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
-#include "GamePad.h"
+
+class GamePad;
 
 // The interface-independent context.
 
@@ -70,7 +71,7 @@ class CTX {
   static CTX *_instance;
  public:
   CTX();
-  ~CTX(){}
+  ~CTX();
   static CTX *instance();
  public:
   // files on the command line and various file names
@@ -130,6 +131,8 @@ class CTX {
   double displayBorderFactor;
   // do or do not use the trackball for rotations
   int useTrackball, trackballHyperbolicSheet;
+  // use gamepad controller?
+  GamePad *gamepad;
   // point around which to rotate the scene
   double rotationCenter[3];
   // rotate around the center of mass instead of rotationCenter[]
@@ -258,8 +261,6 @@ class CTX {
       unsigned int tangents, normals;
     } mesh;
   } color;
-  // listen to a USB gamepad
-  GamePad gamepad;
   // is the machine big-endian?
   int bigEndian;
   // how RGBA values are packed and unpacked into/from an unsigned integer to be

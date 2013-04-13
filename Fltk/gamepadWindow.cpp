@@ -11,63 +11,49 @@ typedef unsigned long intptr_t;
 #endif
 #include <string.h>
 #include <FL/Fl.H>
-#include <FL/Fl_Tabs.H>
-#include <FL/Fl_Scroll.H>
-#include <FL/Fl_Color_Chooser.H>
 #include <FL/fl_ask.H>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
+#include "paletteWindow.h"
 #include "optionWindow.h"
 #include "GamePad.h"
 #include "gamepadWindow.h"
-#include "graphicWindow.h"
-#include "openglWindow.h"
-#include "paletteWindow.h"
-#include "extraDialogs.h"
-#include "drawContext.h"
-#include "Options.h"
-#include "GModel.h"
-#include "MElement.h"
-#include "PView.h"
-#include "PViewData.h"
-#include "PViewOptions.h"
-#include "OS.h"
 #include "Context.h"
-#include "StringUtils.h"
 
-///// handler (listen to gamepad or other names pipes) /////////
+// handler (listen to gamepad or other names pipes
 static  void gamepadWindow_handler(void *data)
 {
-  if (CTX::instance()->gamepad.active) {
+  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
     gamepadWindow* gmpd_win = (gamepadWindow*)data;
-    GamePad* pad  = &(CTX::instance()->gamepad);
+    GamePad* pad  = CTX::instance()->gamepad;
     for (int i=0; i<std::min(13,GP_BUTTONS);i++) gmpd_win->gamepad.butt[i]->value(pad->button[i]);
     for (int i=0; i<std::min(9,GP_AXES);i++)     gmpd_win->gamepad.axe[i]->value( pad->axe[i]   );
-    Fl::add_timeout(gmpd_win->frequency,  gamepadWindow_handler,data); 
+    Fl::add_timeout(gmpd_win->frequency, gamepadWindow_handler, data);
     gmpd_win->gamepad.mapping[16]->value(pad->axe_map[1]);
   }
 }
-///
 
 static void gamepad_update_cb(Fl_Widget *w)
 {
   gamepadWindow* gmpd_win =  FlGui::instance()->options->gmpdoption;
-  GamePad* pad  = &(CTX::instance()->gamepad);
+  GamePad* pad = CTX::instance()->gamepad;
   for (int i=0; i<std::min(8,GP_BUTTONS) ;i++) pad->button_map[i] = gmpd_win->gamepad.mapping[i]->value();
   for (int i=0; i<std::min(7,GP_AXES);i++)     pad->axe_map[i] = gmpd_win->gamepad.mapping[10+i]->value();
 }
 
-gamepadWindow::gamepadWindow() :
-frequency(CTX::instance()->gamepad.frequency)
+gamepadWindow::gamepadWindow()
 {
+  if(!CTX::instance()->gamepad) return;
+
+  frequency = CTX::instance()->gamepad->frequency;
+
   //  FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 34 * FL_NORMAL_SIZE + WB;
   int height = 15 * BH + 4 * WB;
   int L =  FL_NORMAL_SIZE;
   //  int BW = width - 4 * WB;
-
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false);
@@ -91,10 +77,10 @@ frequency(CTX::instance()->gamepad.frequency)
   gamepad.butt[11] = new Fl_Check_Button(L +11*BB*.35 , L+BH , BH, WB, "11" );
   gamepad.butt[12] = new Fl_Check_Button(L +12*BB*.35 , L+BH , BH, WB, "12" );
   for (int i=0; i<13;i++)    gamepad.butt[i]->deactivate();
- 
+
   Fl_Box *bta = new Fl_Box(FL_NO_BOX, L , L+1.7*BH , IW, BH, "Gamepad axes:");
   bta->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
- 
+
   gamepad.axe[0] = new Fl_Check_Button(L          , L+3.*BH , BH, WB, "0" );
   gamepad.axe[1] = new Fl_Check_Button(L +1*BB*.4 , L+3.*BH , BH, WB, "1" );
   gamepad.axe[2] = new Fl_Check_Button(L +2*BB*.4 , L+3.*BH , BH, WB, "2" );
@@ -105,7 +91,7 @@ frequency(CTX::instance()->gamepad.frequency)
   gamepad.axe[7] = new Fl_Check_Button(L +7*BB*.4 , L+3.*BH , BH, WB, "7" );
   gamepad.axe[8] = new Fl_Check_Button(L +8*BB*.4 , L+3.*BH , BH, WB, "8" );
   for (int i=0; i<9;i++)    gamepad.axe[i]->deactivate();
- 
+
   Fl_Box *btt1 = new Fl_Box(FL_NO_BOX, L , L+4.*BH , IW, BH, "Preferences:");
   btt1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
   Fl_Box *btt2 = new Fl_Box(FL_NO_BOX, L , L+5.*BH , IW, BH, "Action Axes:");
@@ -113,7 +99,7 @@ frequency(CTX::instance()->gamepad.frequency)
   Fl_Box *btt3 = new Fl_Box(FL_NO_BOX, L +width/2, L+5.*BH , IW, BH, "Action buttons:");
   btt3->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
-  GamePad* pad  = &(CTX::instance()->gamepad);
+  GamePad* pad = CTX::instance()->gamepad;
 
   gamepad.mapping[0] = new Fl_Value_Input( L+width/2, L+6.*BH , IW/5,BH, "1:1");
   gamepad.mapping[1] = new Fl_Value_Input( L+width/2, L+7.*BH , IW/5,BH, "permute axes");
@@ -127,9 +113,9 @@ frequency(CTX::instance()->gamepad.frequency)
 
   for (int i=0; i<9;i++) {
     //    gamepad.mapping[i]->deactivate();
-    gamepad.mapping[i]->align(FL_ALIGN_RIGHT); 
+    gamepad.mapping[i]->align(FL_ALIGN_RIGHT);
     gamepad.mapping[i]->callback(gamepad_update_cb);
-    gamepad.mapping[i]->value( pad->button_map[i] );
+    gamepad.mapping[i]->value(pad->button_map[i]);
    }
 
   gamepad.mapping[10] = new Fl_Value_Input( L, L+6.*BH , IW/5, BH, "head right/left (with button)");
@@ -140,21 +126,17 @@ frequency(CTX::instance()->gamepad.frequency)
   gamepad.mapping[15] = new Fl_Value_Input( L, L+11.*BH, IW/5, BH, "move up/down");
   gamepad.mapping[16] = new Fl_Value_Input( L, L+12.*BH , IW/5, BH, "speed up/slow down");
 
-  for (int i=0; i<7;i++) { 
+  for (int i=0; i<7;i++) {
     gamepad.mapping[10+i]->align(FL_ALIGN_RIGHT);
     gamepad.mapping[10+i]->callback(gamepad_update_cb);
-    gamepad.mapping[10+i]->value( pad->axe_map[i] );
+    gamepad.mapping[10+i]->value(pad->axe_map[i]);
   }
- 
-  //// add external reader for gamepad events
-  if (CTX::instance()->gamepad.active) {
+
+  // add external reader for gamepad events
+  if (CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
     Fl::add_timeout(frequency, gamepadWindow_handler, (void*)this);
   }
-  ////
 
   win->position(CTX::instance()->optPosition[0], CTX::instance()->optPosition[1]);
   win->end();
-
 }
-
-
