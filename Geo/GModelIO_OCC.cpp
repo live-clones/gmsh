@@ -987,7 +987,7 @@ int GModel::readOCCBREP(const std::string &fn)
   _occ_internals = new OCC_Internals;
   _occ_internals->loadBREP(fn.c_str());
   _occ_internals->buildGModel(this);
-  snapVertices();
+  //snapVertices();
   return 1;
 }
 
@@ -996,6 +996,7 @@ int GModel::readOCCSTEP(const std::string &fn)
   _occ_internals = new OCC_Internals;
   _occ_internals->loadSTEP(fn.c_str());
   _occ_internals->buildGModel(this);
+  //snapVertices();
   return 1;
 }
 
@@ -1034,7 +1035,7 @@ int GModel::importOCCShape(const void *shape)
   _occ_internals = new OCC_Internals;
   _occ_internals->loadShape((TopoDS_Shape*)shape);
   _occ_internals->buildGModel(this);
-  snapVertices();
+  //snapVertices();
   SetBoundingBox();
   return 1;
 }

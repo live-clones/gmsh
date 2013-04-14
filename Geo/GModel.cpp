@@ -348,8 +348,8 @@ void GModel::snapVertices()
                       (gp.z() - (*vit)->z()) * (gp.z() - (*vit)->z()));
       if (d > tol){
         (*vit)->setPosition(gp);
-        Msg::Warning("Geom Vertex %d Corrupted (%12.5E)... Snap performed",
-                     (*vit)->tag(), d);
+        Msg::Info("Snapping geometry vertex %d to curve control point (dist = %g)",
+                  (*vit)->tag(), d);
       }
     }
     vit++;
