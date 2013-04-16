@@ -1935,7 +1935,7 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 {
-  
+
   //create new octree with new mesh elements
   if(!octNew){
     std::vector<MElement *> myElems;
@@ -2019,7 +2019,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     SPoint3  p2(uv_nodes[index[1]][0], uv_nodes[index[1]][1], uv_nodes[index[1]][2]);
     SPoint3 pnew; double d;
     signedDistancePointLine(p1,p2, SPoint3(par1,par2,0.0), d, pnew);
- 
+
     double uvw[3]={pnew.x(),pnew.y(), 0.0};
     double UV[3];
     MElement *e = octNew->find(pnew.x(), pnew.y(), 0.0,-1,true);
@@ -2072,7 +2072,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
       double pt[3] = {par1,par2, 0.0};
       kdtree->annkSearch(pt, 1, index, dist);
       lt = &(_gfct[index[0]]);
-      
+
       SPoint3 pnew_a, pnew_b, pnew_c; double d_a, d_b, d_c;
       signedDistancePointLine(lt->p1,lt->p2, SPoint3(par1,par2,0.0), d_a, pnew_a);
       signedDistancePointLine(lt->p1,lt->p3, SPoint3(par1,par2,0.0), d_b, pnew_b);
@@ -2093,7 +2093,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
       R[1] = (v - p0.y());
       sys2x2(M, R, X);
       U = X[0];
-      V = X[1]; 
+      V = X[1];
       //printf("found closest point (%g %g) U V =%g %g \n", u,v, U,V);
     }
     else{
@@ -2166,7 +2166,7 @@ GPoint GFaceCompound::point(double par1, double par2) const
 
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
-  
+
   if(trivial()){
     return (*(_compound.begin()))->firstDer(param);
   }
@@ -2195,7 +2195,7 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   SVector3 dXdu = dXdu1*(1.-U-V) + dXdu2*U + dXdu3*V;
   SVector3 dXdv = dXdv1*(1.-U-V) + dXdv2*U + dXdv3*V;
   return Pair<SVector3, SVector3>(dXdu,dXdv);
-   
+
 }
 
 // Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
@@ -2392,6 +2392,7 @@ void GFaceCompound::getTriangle(double u, double v,
 
 void GFaceCompound::buildOct() const
 {
+#if defined(HAVE_MESH)
   SBoundingBox3d bb;
   int count = 0;
   std::list<GFace*>::const_iterator it = _compound.begin();
@@ -2413,7 +2414,7 @@ void GFaceCompound::buildOct() const
   std::set<MVertex*> allVS;
   nodes = annAllocPts(count, 3);
 
-  // make bounding box 
+  // make bounding box
   SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double origin[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double ssize[3] = {bbmax.x() - bbmin.x(),
@@ -2488,7 +2489,7 @@ void GFaceCompound::buildOct() const
       SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
       SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
       firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdu,dXdv);
-      
+
       // build ANN kdtree
       nodes[count][0] = (it0->second.x() + it1->second.x() + it2->second.x())/3.0 ;
       nodes[count][1] = (it0->second.y() + it1->second.y() + it2->second.y())/3.0 ;
@@ -2529,6 +2530,7 @@ void GFaceCompound::buildOct() const
   kdtree = new ANNkd_tree(nodes, count, 3);
 
   printStuff();
+#endif
 }
 
 bool GFaceCompound::checkTopology() const
