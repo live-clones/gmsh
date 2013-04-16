@@ -13,7 +13,7 @@
 #include "GEdgeCompound.h"
 #include "intersectCurveSurface.h"
 
-#if defined(HAVE_SOLVER)
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
 #include "Options.h"
 #include "MLine.h"
@@ -45,9 +45,7 @@
 #include "MPoint.h"
 #include "Numeric.h"
 #include "meshGFace.h"
-#if defined(HAVE_ANN)
 #include <ANN/ANN.h>
-#endif
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {
@@ -1217,14 +1215,12 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   nbSplit = 0;
   fillTris.clear();
 
-#if defined(HAVE_ANN)
   kdtree = NULL;
   uv_kdtree = NULL;
   uv_nodes = NULL;
   nodes = NULL;
   index = new ANNidx[2];
   dist  = new ANNdist[2];
-#endif
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -1272,14 +1268,12 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   nbSplit = 0;
   fillTris.clear();
 
-#if defined(HAVE_ANN)
   uv_kdtree = NULL;
   kdtree = NULL;
   uv_nodes = NULL;
   nodes = NULL;
   index = new ANNidx[2];
   dist  = new ANNdist[2];
-#endif
 }
 
 GFaceCompound::~GFaceCompound()
@@ -1295,15 +1289,12 @@ GFaceCompound::~GFaceCompound()
   if (_lsys)delete _lsys;
   delete ONE;
   delete MONE;
-#if defined(HAVE_ANN)
   if(uv_kdtree) delete uv_kdtree;
   if(kdtree) delete kdtree;
   if(uv_nodes) annDeallocPts(uv_nodes);
   if(nodes) annDeallocPts(nodes);
   delete[]index;
   delete[]dist;
-#endif
-
 }
 
 SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
@@ -1972,7 +1963,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
-#if defined(HAVE_ANN)
     uv_nodes = annAllocPts(myBCNodes.size(), 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
     int ind = 0;
@@ -1984,7 +1974,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       itp++; ind++;
     }
     uv_kdtree = new ANNkd_tree(uv_nodes, myBCNodes.size(), 3);
-#endif
   }
 
   //now use new octree to find point
@@ -2012,7 +2001,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
   //if element not found in new octree find closest point
   else{
     GPoint gp(50,50,50);
-#if defined(HAVE_ANN)
     double pt[3] = {par1,par2,0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3  p1(uv_nodes[index[0]][0], uv_nodes[index[0]][1], uv_nodes[index[0]][2]);
@@ -2040,9 +2028,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     else{
       gp.setNoSuccess();
     }
-#else
-    gp.setNoSuccess();
-#endif
 
     if (gp.succeeded()) return gp;
     else{
@@ -2274,7 +2259,6 @@ void GFaceCompound::secondDer(const SPoint2 &param,
 
 void GFaceCompound::computeHessianMapping() const
 {
-
 #if defined(HAVE_MESH)
   unsigned int sysDim = 6; //for 2D
   unsigned int minNbPtBlob = 3*sysDim;
