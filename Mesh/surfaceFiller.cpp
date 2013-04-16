@@ -192,13 +192,13 @@ bool compute4neighbors (GFace *gf,   // the surface
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0){
     Field *f = fields->get(fields->getBackgroundField());
-    if (!f->isotropic()){
-      (*f)(v_center->x(),v_center->y(),v_center->z(), metricField,gf);
-    }
-    else {
+     if (!f->isotropic()){
+       (*f)(v_center->x(),v_center->y(),v_center->z(), metricField,gf);
+     }
+     else {
       L = (*f)(v_center->x(),v_center->y(),v_center->z(), gf);
       metricField = SMetric3(1./(L*L));  
-    }    
+     }    
   }
 
     
@@ -229,8 +229,6 @@ bool compute4neighbors (GFace *gf,   // the surface
     // normalize vector t1 that is tangent to gf at midpoint
     SVector3 t1 = basis_u * cos (quadAngle) + basis_v * sin (quadAngle) ;
     t1.normalize();
-
-    //    printf("%d %g %g %g -- %g %g %g\n",gf->tag(),s1.x(),s1.y(),s1.z(),t1.x(),t1.y(),t1.z());
     
     // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
     SVector3 t2 = crossprod(n,t1);
@@ -239,9 +237,7 @@ bool compute4neighbors (GFace *gf,   // the surface
     if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),t2.x(),t2.y(),t2.z());
     if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),-t1.x(),-t1.y(),-t1.z());
     if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),-t2.x(),-t2.y(),-t2.z());
-    //    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),s1.x(),s1.y(),s1.z());
-    //    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),s2.x(),s2.y(),s2.z());
-    
+      
     double size_1 = sqrt(1. / dot(t1,metricField,t1));
     double size_2 = sqrt(1. / dot(t2,metricField,t2));
 

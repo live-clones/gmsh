@@ -635,15 +635,15 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
      insertVerticesInRegion(gr);
    }
 
-  // //emi test frame field
+  //emi test frame field
   // int NumSmooth = 10;//CTX::instance()->mesh.smoothCrossField
   // std::cout << "NumSmooth = " << NumSmooth << std::endl;
   // if(NumSmooth && (gr->dim() == 3)){
   //   double scale = gr->bounds().diag()*1e-2;
   //   Frame_field::initRegion(gr,NumSmooth);
   //   Frame_field::saveCrossField("cross0.pos",scale);
-  //   Frame_field::smoothRegion(gr,NumSmooth);
-  //   Frame_field::saveCrossField("cross1.pos",scale);
+  //   //Frame_field::smoothRegion(gr,NumSmooth);
+  //   //Frame_field::saveCrossField("cross1.pos",scale);
   //   GFace *gf = GModel::current()->getFaceByTag(2);
   //   Frame_field::continuousCrossField(gr,gf);
   //   Frame_field::saveCrossField("cross2.pos",scale);
@@ -651,7 +651,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   // Frame_field::init_region(gr);
   // Frame_field::clear();
   // exit(1);
-  // //fin test emi
+  //fin test emi
 
  if (sqr.buildPyramids (gr->model())){
    // relocate vertices if pyramids

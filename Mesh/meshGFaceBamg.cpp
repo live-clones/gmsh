@@ -190,29 +190,6 @@ void meshGFaceBamg(GFace *gf){
   MElementOctree *_octree = NULL;
   if (hasCompounds){
     _octree = new MElementOctree(myParamElems);
-    // //EMI PRINT TRIS
-    // FILE * fi = fopen("TRIS.pos","w");
-    // fprintf(fi, "View \"\"{\n");
-    // for( int i =0; i< gf->triangles.size(); i++){
-    //   int nodes [3] = {gf->triangles[i]->getVertex(0)->getIndex(),
-    // 		       gf->triangles[i]->getVertex(1)->getIndex(),
-    // 		       gf->triangles[i]->getVertex(2)->getIndex()};
-    // double u1(bamgVertices[nodes[0]][0]);
-    // double u2(bamgVertices[nodes[1]][0]);
-    // double u3(bamgVertices[nodes[2]][0]);
-    // double v1(bamgVertices[nodes[0]][1]);
-    // double v2(bamgVertices[nodes[1]][1]);
-    // double v3(bamgVertices[nodes[2]][1]);
-    //   fprintf(fi, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
-    // 	      "%22.15E,%22.15E){%d,%d,%d};\n",
-    // 	      u1, v1, 0.0,
-    // 	      u2, v2, 0.0,
-    // 	      u3, v3, 0.0,
-    // 	      i, i, i);
-    // }
-    // fprintf(fi,"};\n");
-    // fclose(fi);
-    // //END EMI PRINT TRIS
   }
 
   Mesh2 *refinedBamgMesh = 0;

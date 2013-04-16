@@ -103,6 +103,8 @@ class GFaceCompound : public GFace {
   linearSystem <double> *_lsys;
 #if defined(HAVE_ANN)
    mutable ANNkd_tree *uv_kdtree;
+   mutable ANNkd_tree *kdtree;
+   mutable ANNpointArray uv_nodes;
    mutable ANNpointArray nodes;
    ANNidxArray index;
    ANNdistArray dist;

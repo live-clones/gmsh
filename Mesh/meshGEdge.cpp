@@ -379,7 +379,7 @@ void meshGEdge::operator() (GEdge *ge)
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
     else{
-      a = Integration(ge, t_begin, t_end, F_Lc, Points,
+       a = Integration(ge, t_begin, t_end, F_Lc, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
 
@@ -391,7 +391,8 @@ void meshGEdge::operator() (GEdge *ge)
     }
     a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.99));
-  }
+   
+}
 
   // force odd number of points if blossom is used for recombination
   if(ge->meshAttributes.method != MESH_TRANSFINITE &&

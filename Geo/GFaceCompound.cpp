@@ -1196,7 +1196,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   getBoundingEdges();
 
-
   _mapping = HARMONIC;
   _type = UNITCIRCLE;
   if(toc == RADIAL_BASIS)   _mapping = RBF;
@@ -1219,7 +1218,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   fillTris.clear();
 
 #if defined(HAVE_ANN)
+  kdtree = NULL;
   uv_kdtree = NULL;
+  uv_nodes = NULL;
   nodes = NULL;
   index = new ANNidx[2];
   dist  = new ANNdist[2];
@@ -1273,6 +1274,8 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
 #if defined(HAVE_ANN)
   uv_kdtree = NULL;
+  kdtree = NULL;
+  uv_nodes = NULL;
   nodes = NULL;
   index = new ANNidx[2];
   dist  = new ANNdist[2];
@@ -1294,6 +1297,8 @@ GFaceCompound::~GFaceCompound()
   delete MONE;
 #if defined(HAVE_ANN)
   if(uv_kdtree) delete uv_kdtree;
+  if(kdtree) delete kdtree;
+  if(uv_nodes) annDeallocPts(uv_nodes);
   if(nodes) annDeallocPts(nodes);
   delete[]index;
   delete[]dist;
@@ -1930,19 +1935,9 @@ SPoint2 GFaceCompound::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 {
-
-  //if not meshed yet
-  if (meshStatistics.status != GFace::DONE || triangles.size()+quadrangles.size() == 0) {
-    GPoint gp (3,3,0,this);
-    gp.setNoSuccess();
-    return gp;
-  }
-
+  
   //create new octree with new mesh elements
   if(!octNew){
-    //FILE * of = fopen("myOCTREE.pos","w");
-    //fprintf(of, "View \"\"{\n");
-
     std::vector<MElement *> myElems;
     for (unsigned int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (unsigned int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
@@ -1971,12 +1966,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
   	myParamElems.push_back(new MTriangle(news[0],news[1],news[2],e->getNum()));
       else if (e->getType() == TYPE_QUA) {
   	myParamElems.push_back(new MQuadrangle(news[0],news[1],news[2],news[3],e->getNum()));
-	// fprintf(of, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	// 	news[0]->x(), news[0]->y(), news[0]->z(),
-	// 	news[1]->x(), news[1]->y(), news[1]->z(),
-	// 	news[2]->x(), news[2]->y(), news[2]->z(),
-	// 	news[3]->x(), news[3]->y(), news[3]->z(),
-	// 	(double)e->getNum(), (double)e->getNum(), (double)e->getNum(), (double)e->getNum());
       }
     }
 
@@ -1984,21 +1973,18 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 
     //build kdtree boundary nodes in parametric space
 #if defined(HAVE_ANN)
-    nodes = annAllocPts(myBCNodes.size(), 3);
+    uv_nodes = annAllocPts(myBCNodes.size(), 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
     int ind = 0;
     while (itp != myBCNodes.end()){
       SPoint2 pt = *itp;
-      //fprintf(of, "SP(%g,%g,%g){%g};\n", pt.x(), pt.y(), 0.0, 10000);
-      nodes[ind][0] = pt.x();
-      nodes[ind][1] = pt.y();
-      nodes[ind][2] = 0.0;
+      uv_nodes[ind][0] = pt.x();
+      uv_nodes[ind][1] = pt.y();
+      uv_nodes[ind][2] = 0.0;
       itp++; ind++;
     }
-    uv_kdtree = new ANNkd_tree(nodes, myBCNodes.size(), 3);
+    uv_kdtree = new ANNkd_tree(uv_nodes, myBCNodes.size(), 3);
 #endif
-    //fprintf(of,"};\n");
-    //fclose(of);
   }
 
   //now use new octree to find point
@@ -2021,23 +2007,19 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
     gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
     gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-    //printf("found point in new octree (UV=%g %g) %g %g %g (E=%D)\n",par1, par2, gp.x(), gp.y(), gp.z(), e->getNum());
     return gp;
   }
   //if element not found in new octree find closest point
   else{
-    //printf("point not found on octnew --> look closest point with kdtree \n");
     GPoint gp(50,50,50);
 #if defined(HAVE_ANN)
     double pt[3] = {par1,par2,0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
-    SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
-    SPoint3  p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
+    SPoint3  p1(uv_nodes[index[0]][0], uv_nodes[index[0]][1], uv_nodes[index[0]][2]);
+    SPoint3  p2(uv_nodes[index[1]][0], uv_nodes[index[1]][1], uv_nodes[index[1]][2]);
     SPoint3 pnew; double d;
     signedDistancePointLine(p1,p2, SPoint3(par1,par2,0.0), d, pnew);
-    //printf("p1=%g %g p2=%g %g \n", p1.x(), p1.y(), p2.x(), p2.y());
-    //printf("UV=%g %g UVnew =%g %g \n", par1,par2, pnew.x(), pnew.y());
-
+ 
     double uvw[3]={pnew.x(),pnew.y(), 0.0};
     double UV[3];
     MElement *e = octNew->find(pnew.x(), pnew.y(), 0.0,-1,true);
@@ -2054,10 +2036,8 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
       gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
       gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-      //printf("found closest point (UV=%g %g) %g %g %g \n",pnew.x(), pnew.y(), gp.y(), gp.z());
     }
     else{
-      Msg::Error("Point not found in kdtree");
       gp.setNoSuccess();
     }
 #else
@@ -2086,24 +2066,42 @@ GPoint GFaceCompound::point(double par1, double par2) const
   double par[2] = {par1,par2};
   GFaceCompoundTriangle *lt;
   getTriangle(par1, par2, &lt, U,V);
-  if(!lt && _mapping != RBF){
-    printf("ARRG POINT NOT FOUND--> should improve octree search \n");
-    //exit(1);
-    //printf("POINT no success %d tris %d quad \n", triangles.size(), quadrangles.size());
-    GPoint gp = pointInRemeshedOctree(par1,par2);
-    gp.setNoSuccess();
-    return gp;
-  }
-  else if (!lt && _mapping == RBF){
-    if (fabs(par1) > 1 || fabs(par2) > 1){
-      GPoint gp (0,0,0,this);
+  if(!lt){
+    //printf("POINT (%g %g) NOT FOUND --> find closest \n", par1,par2);
+    if (meshStatistics.status != GFace::DONE ) {
+      double pt[3] = {par1,par2, 0.0};
+      kdtree->annkSearch(pt, 1, index, dist);
+      lt = &(_gfct[index[0]]);
+      
+      SPoint3 pnew_a, pnew_b, pnew_c; double d_a, d_b, d_c;
+      signedDistancePointLine(lt->p1,lt->p2, SPoint3(par1,par2,0.0), d_a, pnew_a);
+      signedDistancePointLine(lt->p1,lt->p3, SPoint3(par1,par2,0.0), d_b, pnew_b);
+      signedDistancePointLine(lt->p2,lt->p3, SPoint3(par1,par2,0.0), d_c, pnew_c);
+      double u,v;
+      if (d_a <= d_b && d_a <= d_c)      {  u = pnew_a.x(); v= pnew_a.y();}
+      else if (d_b <= d_a && d_b <= d_c) {  u = pnew_b.x(); v= pnew_b.y();}
+      else                               {  u = pnew_c.x(); v= pnew_c.y();}
+      double M[2][2],X[2],R[2];
+      const SPoint3 p0 = (lt)->p1;
+      const SPoint3 p1 = (lt)->p2;
+      const SPoint3 p2 = (lt)->p3;
+      M[0][0] = p1.x() - p0.x();
+      M[0][1] = p2.x() - p0.x();
+      M[1][0] = p1.y() - p0.y();
+      M[1][1] = p2.y() - p0.y();
+      R[0] = (u - p0.x());
+      R[1] = (v - p0.y());
+      sys2x2(M, R, X);
+      U = X[0];
+      V = X[1]; 
+      //printf("found closest point (%g %g) U V =%g %g \n", u,v, U,V);
+    }
+    else{
+      //printf("look in remeshed octree \n");
+      GPoint gp = pointInRemeshedOctree(par1,par2);
       gp.setNoSuccess();
       return gp;
     }
-    double x, y, z;
-    SVector3 dXdu, dXdv;
-    _rbf->UVStoXYZ(par1, par2,x,y,z, dXdu, dXdv);
-    return GPoint(x,y,z);
   }
 
   if (lt->gf->geomType() != GEntity::DiscreteSurface){
@@ -2178,13 +2176,16 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
-  if(!lt){
-    printf("ARRG FIRSTDER POINT NOT FOUND --> should improve octree search \n");
-    exit(1);
-    return Pair<SVector3, SVector3>(SVector3(1, 0, 0), SVector3(0, 1, 0));
+  MTriangle *tri;
+  if (lt) tri = lt->tri;
+  else {
+    //printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
+    //printf("uv=%g %g \n", param.x(), param.y());
+    double pt[3] = {param.x(), param.y(), 0.0};
+    kdtree->annkSearch(pt, 1, index, dist);
+    tri = (&_gfct[index[0]])->tri;
   }
 
-  MTriangle *tri = lt->tri;
   SVector3 dXdu1 = firstDerivatives[tri->getVertex(0)].first();
   SVector3 dXdu2 = firstDerivatives[tri->getVertex(1)].first();
   SVector3 dXdu3 = firstDerivatives[tri->getVertex(2)].first();
@@ -2370,6 +2371,7 @@ void GFaceCompound::getTriangle(double u, double v,
   *lt = (GFaceCompoundTriangle*)Octree_Search(uv, oct);
 
   if(!(*lt)){
+    _u = 0.0; _v = 0.0;
     return;
   }
 
@@ -2407,11 +2409,12 @@ void GFaceCompound::buildOct() const
     }
   }
 
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = 0.0; //CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  //ANN octree
+  std::set<MVertex*> allVS;
+  nodes = annAllocPts(count, 3);
+
+  // make bounding box 
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double origin[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double ssize[3] = {bbmax.x() - bbmin.x(),
                      bbmax.y() - bbmin.y(),
@@ -2486,12 +2489,18 @@ void GFaceCompound::buildOct() const
       SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]);
       firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdu,dXdv);
       
+      // build ANN kdtree
+      nodes[count][0] = (it0->second.x() + it1->second.x() + it2->second.x())/3.0 ;
+      nodes[count][1] = (it0->second.y() + it1->second.y() + it2->second.y())/3.0 ;
+      nodes[count][2] = 0.0;
+
       Octree_Insert(&_gfct[count], oct);
       count++;
     }
   }
   nbT = count;
   Octree_Arrange(oct);
+
 
   //smooth first derivatives at vertices
   if(adjv.size() == 0){
@@ -2515,6 +2524,9 @@ void GFaceCompound::buildOct() const
     dXdv*= 1./nbTri;
     firstDerivatives[v] = Pair<SVector3, SVector3>(dXdu, dXdv);
   }
+
+  //build ANN kdtree
+  kdtree = new ANNkd_tree(nodes, count, 3);
 
   printStuff();
 }
@@ -3028,9 +3040,6 @@ GPoint GFaceCompound::intersectionWithCircle(const SVector3 &n1, const SVector3 
 	  ct->p1 * ( 1.-uv[0]-uv[1] ) +
 	  ct->p2 *uv[0] +
 	  ct->p3 *uv[1] ;
-	//	GPoint ttt = point(pp.x(),pp.y());
-	//	printf("%g %g %g vs %g %g %g\n",ttt.x(),ttt.y(),ttt.z(),s.x(),s.y(),s.z());
-	//	printf("%d/%d\n",i,nbT);
 	return GPoint(s.x(),s.y(),s.z(),this,pp);
       }
     }

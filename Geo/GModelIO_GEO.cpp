@@ -136,7 +136,7 @@ int GModel::importGEOInternals()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0){
-        GEdge *e = getEdgeByTag(c->Num);
+	GEdge *e = getEdgeByTag(c->Num);
         if(!e && c->Typ == MSH_SEGM_COMPOUND){
           std::vector<GEdge*> comp;
           for(unsigned int j = 0; j < c->compound.size(); j++){
@@ -144,6 +144,12 @@ int GModel::importGEOInternals()
             if(ge) comp.push_back(ge);
           }
           e = new GEdgeCompound(this, c->Num, comp);
+	  e->meshAttributes.method = c->Method;
+	  e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
+	  e->meshAttributes.typeTransfinite = c->typeTransfinite;
+	  e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
+	  e->meshAttributes.extrude = c->Extrude;
+	  e->meshAttributes.reverseMesh = c->ReverseMesh;
           add(e);
         }
         else if(!e && c->beg && c->end){
@@ -156,8 +162,8 @@ int GModel::importGEOInternals()
           e = new gmshEdge(this, c, 0, 0);
           add(e);
         }
-        else
-          e->resetMeshAttributes();
+  
+
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) {

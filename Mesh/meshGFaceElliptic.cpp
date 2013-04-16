@@ -611,7 +611,8 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
   N = ge1->mesh_vertices.size() + 1;
   int N2 = ge2->mesh_vertices.size() + 1;
   if (N != N2 || N%2 != 0){
-    Msg::Error("You should have an equal pair number of points in centerline field N=%d N2=%d ", N, N2);
+    Msg::Error("You should an even number nbPoints in centerline =%d \n", N);
+    exit(1);
     return false;
   }
 

@@ -637,9 +637,11 @@ void Centerline::createSplitCompounds()
     int num_gec = NE+i+1;
     Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
-    /* GEdge *gec = */ current->addCompoundEdge(e_compound,num_gec);
-    //gec->meshAttributes.method = MESH_TRANSFINITE;
-    //gec->meshAttributes.nbPointsTransfinite = nbPoints;
+    GEdge *gec =  current->addCompoundEdge(e_compound,num_gec);
+    gec->meshAttributes.method = MESH_TRANSFINITE;
+    gec->meshAttributes.nbPointsTransfinite = nbPoints+1;
+    gec->meshAttributes.typeTransfinite = 0;
+    gec->meshAttributes.coeffTransfinite = 1.0;
   }
 
   // Parametrize Compound surfaces
@@ -892,7 +894,7 @@ void Centerline::cutMesh()
     double AR = L/D;
     // printf("*** Centerline branch %d (AR=%.1f) \n", edges[i].tag, AR);
 
-    int nbSplit = (int)floor(AR/2 + 1.9); //AR/2 + 0.9
+    int nbSplit = (int)floor(AR/2 + 0.9); //AR/2 + 0.9
     if( nbSplit > 1 ){
       //printf("->> cut branch in %d parts \n",  nbSplit);
       double li  = L/nbSplit;

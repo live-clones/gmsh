@@ -93,3 +93,4 @@ void Octree_SearchAll(double *pt, Octree *myOctree, std::vector<void*> *output)
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
                     myOctree->function_inElement, output);      
 }
+

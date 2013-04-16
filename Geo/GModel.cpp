@@ -2339,9 +2339,6 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
     Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
     for(unsigned int i= 0; i < edges.size(); i++)
       c->compound.push_back(edges[i]->tag());
-
-    // Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 1,
-    // 			    NULL, NULL, -1, -1, 0., 1.);
      List_T *points = Tree2List(getGEOInternals()->Points);
      GVertex *gvb = gec->getBeginVertex();
      GVertex *gve = gec->getEndVertex();
@@ -2363,6 +2360,14 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
     End_Curve(c);
     Tree_Add(getGEOInternals()->Curves, &c);
     CreateReversedCurve(c);
+
+    // c->Method  =  gec->meshAttributes.method;
+    // c->nbPointsTransfinite = gec->meshAttributes.nbPointsTransfinite;
+    // c->typeTransfinite =  gec->meshAttributes.typeTransfinite ;
+    // c->coeffTransfinite =  gec->meshAttributes.coeffTransfinite ;
+    // c->Extrude =   gec->meshAttributes.extrude ;
+    // c->ReverseMesh =  gec->meshAttributes.reverseMesh ;
+
   }
 
   return gec;

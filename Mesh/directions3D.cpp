@@ -879,8 +879,6 @@ void Frame_field::recur_connect_vert(MVertex *v,
 
   if (touched.find(v) != touched.end()) return;
   touched.insert(v);
-  //std::map<MVertex*, STensor3>::iterator iterv = crossField.find(v);
-  //STensor3 cross = iterv->second;
 
   for (std::multimap <MVertex*,MVertex*>::iterator it = v2v.lower_bound(v);
        it != v2v.upper_bound(v) ; ++it){
@@ -914,22 +912,27 @@ void Frame_field::recur_connect_vert(MVertex *v,
       }
     }
 
-    if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
-      std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
-      printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
-      //exit(1);
-      return;
-    }
+    // if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
+    //   std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
+    //   printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
+    //   Id(0) = 0; Id(1) = 1; Id(2) = 2;
+    //   //break;
+    //   //exit(1);
+    //   return;
+    // }
+   
+    Id(0) = 0; Id(1) = 1; Id(2) = 2;
 
     //create new cross
+    printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
     fullMatrix<double> newmat(3,3);
     for (int i = 0; i < 3; i++){
      for (int j = 0; j < 3; j++){
-       newmat(i,j) = nextCross(Id(j),i);
+       newmat(i,j) = nextCross(i,Id(j)) ;
      }
     }
 
-    STensor3 newcross;
+    STensor3 newcross(0.0);
     newcross.setMat(newmat);
     crossField[iter->first] = newcross;
     newcross.print("newcross");
@@ -975,6 +978,8 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   std::map<MVertex*, STensor3>::iterator iter = crossField.find(beginV);
   STensor3 bCross = iter->second;
   recur_connect_vert (beginV,bCross,v2v,touched);
+  
+  printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
 
 }
 
@@ -988,8 +993,8 @@ void Frame_field::saveCrossField(const std::string& filename, double scale, bool
       it != crossField.end(); it++){
     SPoint3 p = it->first->point();
     STensor3 m = it->second;
-    double val1 = eulerAngleFromQtn(cross3D(m).rotationTo(origin))*180./M_PI, val2=val1;
-    //double val1=1.0, val2=1.0;
+    //double val1 = eulerAngleFromQtn(cross3D(m).rotationTo(origin))*180./M_PI, val2=val1;
+    double val1=1.0, val2=1.0;
     p1 = SPoint3(p.x() + k*m.get_m11(),
 		 p.y() + k*m.get_m21(),
 		 p.z() + k*m.get_m31());
@@ -998,7 +1003,7 @@ void Frame_field::saveCrossField(const std::string& filename, double scale, bool
 		 p.y() - k*m.get_m21(),
 		 p.z() - k*m.get_m31());
     if(full) print_segment(p,p1,val1,val2,file);
-    //val1=2.0; val2=2.0;
+    val1=2.0; val2=2.0;
     p1 = SPoint3(p.x() + k*m.get_m12(),
 		 p.y() + k*m.get_m22(),
 		 p.z() + k*m.get_m32());
@@ -1007,7 +1012,7 @@ void Frame_field::saveCrossField(const std::string& filename, double scale, bool
 		 p.y() - k*m.get_m22(),
 		 p.z() - k*m.get_m32());
     if(full) print_segment(p,p1,val1,val2,file);
-    //val1=3.0; val2=3.0;
+    val1=3.0; val2=3.0;
     p1 = SPoint3(p.x() + k*m.get_m13(),
 		 p.y() + k*m.get_m23(),
 		 p.z() + k*m.get_m33());
