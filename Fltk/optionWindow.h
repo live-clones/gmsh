@@ -39,6 +39,7 @@ class optionWindow{
     Fl_Button *color[50];
     Fl_Input *input[20];
     Fl_Choice *choice[20];
+    Fl_Button *gamepadconfig;
     spherePositionWidget *sphere;
   } general;
   struct{

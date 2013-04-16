@@ -11,9 +11,6 @@ typedef unsigned long intptr_t;
 #endif
 #include <string.h>
 #include <FL/Fl.H>
-#include <FL/fl_ask.H>
-#include "GmshDefines.h"
-#include "GmshMessage.h"
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "optionWindow.h"
@@ -53,8 +50,7 @@ gamepadWindow::gamepadWindow()
   int width = 34 * FL_NORMAL_SIZE + WB;
   int height = 15 * BH + 4 * WB;
   int L =  FL_NORMAL_SIZE;
-  //  int BW = width - 4 * WB;
-
+ 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false);
   win->box(GMSH_WINDOW_BOX);
@@ -92,39 +88,38 @@ gamepadWindow::gamepadWindow()
   gamepad.axe[8] = new Fl_Check_Button(L +8*BB*.4 , L+3.*BH , BH, WB, "8" );
   for (int i=0; i<9;i++)    gamepad.axe[i]->deactivate();
 
-  Fl_Box *btt1 = new Fl_Box(FL_NO_BOX, L , L+4.*BH , IW, BH, "Preferences:");
+  Fl_Box *btt1 = new Fl_Box(FL_NO_BOX, L , L+3.7*BH , IW, BH, "Preferences:");
   btt1->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
-  Fl_Box *btt2 = new Fl_Box(FL_NO_BOX, L , L+5.*BH , IW, BH, "Action Axes:");
+  Fl_Box *btt2 = new Fl_Box(FL_NO_BOX, L , L+4.7*BH , IW, BH, "Action Axes:");
   btt2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
-  Fl_Box *btt3 = new Fl_Box(FL_NO_BOX, L +width/2, L+5.*BH , IW, BH, "Action buttons:");
+  Fl_Box *btt3 = new Fl_Box(FL_NO_BOX, L +width/2+BH/2, L+4.7*BH , IW, BH, "Action buttons:");
   btt3->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
   GamePad* pad = CTX::instance()->gamepad;
 
-  gamepad.mapping[0] = new Fl_Value_Input( L+width/2, L+6.*BH , IW/5,BH, "1:1");
-  gamepad.mapping[1] = new Fl_Value_Input( L+width/2, L+7.*BH , IW/5,BH, "permute axes");
-  gamepad.mapping[2] = new Fl_Value_Input( L+width/2, L+8.*BH , IW/5,BH, "reset/invers up axis");
-  gamepad.mapping[3] = new Fl_Value_Input( L+width/2, L+9.*BH , IW/5,BH, "change nav-mode");
-  gamepad.mapping[4] = new Fl_Value_Input( L+width/2, L+10.*BH, IW/5,BH, "move head (with axes)");
-  gamepad.mapping[5] = new Fl_Value_Input( L+width/2, L+11.*BH, IW/5,BH, " ");
-  gamepad.mapping[6] = new Fl_Value_Input( L+width/2, L+12.*BH, IW/5,BH, "walk / swimm");
-  gamepad.mapping[7] = new Fl_Value_Input( L+width/2, L+13.*BH, IW/5,BH, " ");
-  gamepad.mapping[8] = new Fl_Value_Input( L+width/2, L+14.*BH, IW/5,BH, "1:1 ; reset speed");
+  gamepad.mapping[0] = new Fl_Value_Input( L+width/2+BH/2, L+5.7*BH , IW/5,BH, "1:1");
+  gamepad.mapping[1] = new Fl_Value_Input( L+width/2+BH/2, L+6.7*BH , IW/5,BH, "permute axes");
+  gamepad.mapping[2] = new Fl_Value_Input( L+width/2+BH/2, L+7.7*BH , IW/5,BH, "reset/invers up axis");
+  gamepad.mapping[3] = new Fl_Value_Input( L+width/2+BH/2, L+8.7*BH , IW/5,BH, "change nav-mode");
+  gamepad.mapping[4] = new Fl_Value_Input( L+width/2+BH/2, L+9.7*BH, IW/5,BH, "(*) move head");
+  gamepad.mapping[5] = new Fl_Value_Input( L+width/2+BH/2, L+10.7*BH, IW/5,BH, " ");
+  gamepad.mapping[6] = new Fl_Value_Input( L+width/2+BH/2, L+11.7*BH, IW/5,BH, "walk / swimm");
+  gamepad.mapping[7] = new Fl_Value_Input( L+width/2+BH/2, L+12.7*BH, IW/5,BH, " ");
+  gamepad.mapping[8] = new Fl_Value_Input( L+width/2+BH/2, L+13.7*BH, IW/5,BH, "1:1 ; reset speed");
 
   for (int i=0; i<9;i++) {
-    //    gamepad.mapping[i]->deactivate();
     gamepad.mapping[i]->align(FL_ALIGN_RIGHT);
     gamepad.mapping[i]->callback(gamepad_update_cb);
     gamepad.mapping[i]->value(pad->button_map[i]);
    }
 
-  gamepad.mapping[10] = new Fl_Value_Input( L, L+6.*BH , IW/5, BH, "head right/left (with button)");
-  gamepad.mapping[11] = new Fl_Value_Input( L, L+7.*BH , IW/5, BH, "head up/down (with button)");
-  gamepad.mapping[12] = new Fl_Value_Input( L, L+8.*BH , IW/5, BH, "turn left/right");
-  gamepad.mapping[13] = new Fl_Value_Input( L, L+9.*BH, IW/5, BH, "for/backward or up/down ");
-  gamepad.mapping[14] = new Fl_Value_Input( L, L+10.*BH, IW/5, BH, "move aside left/right");
-  gamepad.mapping[15] = new Fl_Value_Input( L, L+11.*BH, IW/5, BH, "move up/down");
-  gamepad.mapping[16] = new Fl_Value_Input( L, L+12.*BH , IW/5, BH, "speed up/slow down");
+  gamepad.mapping[10] = new Fl_Value_Input( L, L+5.7*BH , IW/5, BH, "head right/left with button (*)");
+  gamepad.mapping[11] = new Fl_Value_Input( L, L+6.7*BH , IW/5, BH, "head up/down with button (*)");
+  gamepad.mapping[12] = new Fl_Value_Input( L, L+7.7*BH , IW/5, BH, "turn left/right");
+  gamepad.mapping[13] = new Fl_Value_Input( L, L+8.7*BH, IW/5, BH, "for/backward or up/down ");
+  gamepad.mapping[14] = new Fl_Value_Input( L, L+9.7*BH, IW/5, BH, "move aside left/right");
+  gamepad.mapping[15] = new Fl_Value_Input( L, L+10.7*BH, IW/5, BH, "move up/down");
+  gamepad.mapping[16] = new Fl_Value_Input( L, L+11.7*BH , IW/5, BH, "speed up/slow down");
 
   for (int i=0; i<7;i++) {
     gamepad.mapping[10+i]->align(FL_ALIGN_RIGHT);

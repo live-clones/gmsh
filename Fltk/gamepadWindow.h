@@ -7,15 +7,8 @@
 #define _GAMEPAD_WINDOW_H_
 
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Menu_Button.H>
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Choice.H>
-#include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Box.H>
 

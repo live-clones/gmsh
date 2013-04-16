@@ -202,12 +202,18 @@ static void gmsh_search(Fl_Color col)
 #undef bl
 #undef el
 
-static void gp_handler(void *data)
+// question presence of gamepad every 3. seconds
+static void gamepad_handler(void *data)
 {
-  GamePad *gp_ptr = CTX::instance()->gamepad;
-  gp_ptr->read_event();
-  Fl::add_timeout(gp_ptr->frequency, gp_handler, data);
+  if (CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
+    CTX::instance()->gamepad->read_event();
+    Fl::add_timeout(CTX::instance()->gamepad->frequency, gamepad_handler, data);
+  }
+  else{
+    Fl::add_timeout(.5, gamepad_handler, data);
+  }
 }
+
 
 FlGui::FlGui(int argc, char **argv)
 {
@@ -226,11 +232,7 @@ FlGui::FlGui(int argc, char **argv)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
-  // add external reader for gamepad events
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
-    CTX::instance()->camera = 1;
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, gp_handler, (void*)0);
-  }
+  if(CTX::instance()->gamepad)   Fl::add_timeout(5.,gamepad_handler , (void*)0);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);

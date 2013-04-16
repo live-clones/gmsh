@@ -353,16 +353,31 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
 
+  
+  if( (opt_general_gamepad(0, GMSH_GET, 0) !=  o->general.butt[19]->value() ) 
+      || ( opt_general_camera_mode(0, GMSH_GET, 0) !=  o->general.butt[18]->value() )){    
+    if((opt_general_gamepad(0, GMSH_GET, 0) == 1 ) 
+       && (o->general.butt[18]->value() == 0) ) {
+      o->general.butt[19]->value(0) ;
+    }   
+    if((opt_general_camera_mode(0, GMSH_GET, 0) == 0 ) 
+       && ( o->general.butt[19]->value() ==1) ) {
+      o->general.butt[18]->value(1);
+    }
+  }
+  opt_general_gamepad(0, GMSH_SET, o->general.butt[19]->value() );
+  opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
+  o->activate((const char*)data);
+  
+
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
-  opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    //    if (CTX::instance()->stereo){
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
-    //    }
   }
+  
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -1786,11 +1801,13 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[18] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable camera (experimental)");
       general.butt[18]->type(FL_TOGGLE_BUTTON);
+      general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
       general.butt[18]->callback(general_options_ok_cb, (void*)"general_camera");
 
       general.butt[17] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable stereo rendering (experimental)");
       general.butt[17]->type(FL_TOGGLE_BUTTON);
+      general.butt[17]->value(opt_general_stereo_mode(0, GMSH_GET, 0));
       general.butt[17]->callback(general_options_ok_cb);
 
       general.value[29] = new Fl_Value_Input
@@ -1798,6 +1815,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[29]->minimum(0.1);
       general.value[29]->maximum(10.);
       general.value[29]->step(.1);
+      general.value[29]->value(CTX::instance()->eye_sep_ratio);
       general.value[29]->align(FL_ALIGN_RIGHT);
       general.value[29]->callback(general_options_ok_cb);
 
@@ -1806,6 +1824,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[30]->minimum(0.1);
       general.value[30]->maximum(10.);
       general.value[30]->step(.1);
+      general.value[30]->value(CTX::instance()->focallength_ratio);
       general.value[30]->align(FL_ALIGN_RIGHT);
       general.value[30]->callback(general_options_ok_cb);
 
@@ -1814,21 +1833,39 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[31]->minimum(10.);
       general.value[31]->maximum(120.);
       general.value[31]->step(1);
+      general.value[31]->value(CTX::instance()->camera_aperture);
       general.value[31]->align(FL_ALIGN_RIGHT);
       general.value[31]->callback(general_options_ok_cb);
 
-      Fl_Button *gmpdcf = new Fl_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Configure Gamepad");
+      general.butt[19] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH , "Enable gamepad (experimental)");
+      general.butt[19]->type(FL_TOGGLE_BUTTON);
+      general.butt[19]->value(opt_general_gamepad(0, GMSH_GET, 0));
+      general.butt[19]->callback(general_options_ok_cb,(void*)"general_camera");
 
-      gmpdcf->callback(general_gmpdcf_cb);
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
-        gmpdcf->activate();
-      else
-        gmpdcf->deactivate();
+      general.gamepadconfig = new Fl_Button
+        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Configure Gamepad");
+      general.gamepadconfig->callback(general_gmpdcf_cb);
 
+  
+      if( opt_general_camera_mode(0, GMSH_GET, 0) == 0 ){
+	general.value[30]->deactivate();
+	general.value[31]->deactivate();
+      }
+
+      if( opt_general_stereo_mode(0, GMSH_GET, 0) == 0 )
+	general.value[29]->deactivate();
+       
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)  {
+	general.gamepadconfig->activate();
+	opt_general_camera_mode(0, GMSH_SET, 1);
+	general.butt[18]->value(opt_general_camera_mode(0, GMSH_GET, 0));
+      }
+      else{
+	general.gamepadconfig->deactivate();
+      }
       o->end();
     }
-    //end of new menu for stereo
     o->end();
   }
 
@@ -3798,19 +3835,31 @@ void optionWindow::activate(const char *what)
     }
   }
   else if(!strcmp(what, "general_camera")){
-    if(general.butt[18]->value()){
-      general.butt[17]->activate();
-      general.value[29]->activate();
-      general.value[30]->activate();
-      general.value[31]->activate();
+    if(general.butt[19]->value()){
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active ) general.gamepadconfig->activate();
     }
     else{
-      general.butt[17]->deactivate();
+      general.gamepadconfig->deactivate();
+    }
+   
+    if(general.butt[17]->value()==0){
       general.value[29]->deactivate();
+    }
+    else{
+      general.value[29]->activate();
+    } 
+    
+    if(general.butt[18]->value()==0 ){
       general.value[30]->deactivate();
       general.value[31]->deactivate();
+    } 
+    else{
+      general.value[30]->activate();
+      general.value[31]->activate();   
     }
+    
   }
+   
   else if(!strcmp(what, "geo_transform")){
     if(geo.choice[3]->value() == 1){
       for(int i = 7; i <= 18; i++)

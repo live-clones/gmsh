@@ -118,26 +118,31 @@ GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0)
     active = true;
   }
 #endif
-
-  for (int i = 0; i < std::min(9, (int)buttons); i++) button_map[i] = i;
-  for (int i = 0; i < std::min(7, (int)axes); i++) axe_map[i] = i;
-  axe_map[6]=1;
-  // another recognized map "Thrustmaster Run'N' Drive Wireless PS3"
-  // warning :: on Windows we dont have the human-friendly Model Name of the Gamepad
-  if(strcmp(name, "Thrustmaster Run'N' Drive Wireless PS3") == 0){
-    button_map[0] = 1;
-    button_map[1] = 0;
-    button_map[5] = 6;
-    button_map[6] = 5;
+  if(active){
+    for (int i = 0; i < std::min(9, (int)buttons); i++) {
+      button[i] = false;toggle_status[i] = false;
+    }
+    for (int i = 0; i < std::min(7, (int)axes); i++) axe[i] = 0.;
+    for (int i = 0; i < std::min(9, (int)buttons); i++) button_map[i] = i;
+    for (int i = 0; i < std::min(7, (int)axes); i++) axe_map[i] = i;
+    axe_map[6]=1;
+    // another recognized map "Thrustmaster Run'N' Drive Wireless PS3"
+    // warning :: on Windows we dont have the human-friendly Model Name of the Gamepad
+    if(strcmp(name, "Thrustmaster Run'N' Drive Wireless PS3") == 0){
+      button_map[0] = 1;
+      button_map[1] = 0;
+      button_map[5] = 6;
+      button_map[6] = 5;
+    }
   }
 }
 
 GamePad::~GamePad()
 {
-  active = false;
-  gamepad_fd = 0;
+   active = false;
 #if defined(HAVE_LINUX_JOYSTICK)
-  close(gamepad_fd);
+  if (gamepad_fd)  close(gamepad_fd);
+   gamepad_fd = 0;
 #endif
 }
 

@@ -131,7 +131,7 @@ class CTX {
   double displayBorderFactor;
   // do or do not use the trackball for rotations
   int useTrackball, trackballHyperbolicSheet;
-  // use gamepad controller?
+  // gamepad controller
   GamePad *gamepad;
   // point around which to rotate the scene
   double rotationCenter[3];

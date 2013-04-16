@@ -22,15 +22,23 @@
 #include "Trackball.h"
 #include "GamePad.h"
 
-// Navigator handler (listen to gamepad or other names pipes)
+// Navigator handler (read gamepad event if gamepad exists or question presence of gamepad)
 static void navigator_handler(void *data)
 {
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
-    openglWindow* gl_win = (openglWindow*)data;
+  openglWindow* gl_win = (openglWindow*)data;
+  if (CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
+    if (gl_win->Nautilus ==0){
+      gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,gl_win->getDrawContext());
+    }
     gl_win->moveWithGamepad();
     Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler, data);
   }
+  else{
+    if (gl_win->Nautilus){ delete      gl_win->Nautilus;  gl_win->Nautilus=0; }
+    Fl::add_timeout(3., navigator_handler, data);
+  }
 }
+
 
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
@@ -63,10 +71,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   addPointMode = lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
 
-  if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
-    Nautilus = new Navigator(frequency,_ctx);
-    Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler, (void*)this);
-  }
+  if(CTX::instance()->gamepad)   Fl::add_timeout(.5, navigator_handler, (void*)this);
 }
 
 openglWindow::~openglWindow()
@@ -250,9 +255,8 @@ void openglWindow::draw()
 		cam->up.x,cam->up.y,cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus){
-        Nautilus->drawIcons();
-      }
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus) Nautilus->drawIcons();
+     
       _drawScreenMessage();
       _drawBorder();
     }

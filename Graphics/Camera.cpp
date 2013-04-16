@@ -17,7 +17,7 @@
 #include "Context.h"
 #include "drawContext.h"
 
-Camera::Camera() : on(false), stereoEnable(false), Lc(1.), glFnear(0.1), glFfar(10000) {}
+Camera::Camera() : on(false), stereoEnable(false), Lc(1.), glFnear(0.0001), glFfar(10000) {}
 
 Camera::~Camera() {}
 

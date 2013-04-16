@@ -952,12 +952,14 @@ void GetOptions(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "camera")) {
-        CTX::instance()->camera = 1;
+        opt_general_camera_mode(0, GMSH_SET, 1.);
+	//        CTX::instance()->camera = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "stereo")) {
-        CTX::instance()->camera = 1;
-	CTX::instance()->stereo = 1;
+        opt_general_stereo_mode(0, GMSH_SET, 1.);
+	//        CTX::instance()->camera = 1;
+	//	CTX::instance()->stereo = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "gamepad")) {
