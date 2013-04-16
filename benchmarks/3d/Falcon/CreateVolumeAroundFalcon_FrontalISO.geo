@@ -1,6 +1,6 @@
 Mesh.Algorithm3D=4; //1-Delaunay, 4-Frontal, 5-Frontal Delaunay 6-Frontal hex, 7-MMG3D, 9-RTree
 
-lc = 0.3;
+lc = 2;
 Mesh.CharacteristicLengthMin = lc;
 Mesh.CharacteristicLengthMax = lc;
 
