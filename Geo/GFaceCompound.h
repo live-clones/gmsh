@@ -204,7 +204,7 @@ class GFaceCompound : public GFace {
   typedef enum {HARMONIC=0,CONFORMAL=1, RBF=2, CONVEX=3} typeOfMapping;
   typedef enum {UNITCIRCLE, MEANPLANE, SQUARE, ALREADYFIXED,SPECTRAL, FE} typeOfIsomorphism;
   GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
-                std::list<GEdge*> &U0, typeOfMapping typ = HARMONIC,
+                std::list<GEdge*> &U0, typeOfCompound typ = HARMONIC_CIRCLE,
                 int allowPartition=1,
                 linearSystem<double>* lsys =0)
     : GFace(m, tag)
