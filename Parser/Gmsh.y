@@ -3263,12 +3263,15 @@ ExtrudeParameters :
 ExtrudeParameter :
     tLayers '{' FExpr '}' tEND
     {
-      extr.mesh.ExtrudeMesh = true;
-      extr.mesh.NbLayer = 1;
-      extr.mesh.NbElmLayer.clear();
-      extr.mesh.hLayer.clear();
-      extr.mesh.NbElmLayer.push_back((int)fabs($3));
-      extr.mesh.hLayer.push_back(1.);
+      int n = (int)fabs($3);
+      if(n){ // we accept n==0 to easily disable layers
+        extr.mesh.ExtrudeMesh = true;
+        extr.mesh.NbLayer = 1;
+        extr.mesh.NbElmLayer.clear();
+        extr.mesh.hLayer.clear();
+        extr.mesh.NbElmLayer.push_back((int)fabs($3));
+        extr.mesh.hLayer.push_back(1.);
+      }
     }
   | tLayers '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
