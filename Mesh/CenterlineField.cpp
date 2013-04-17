@@ -638,10 +638,12 @@ void Centerline::createSplitCompounds()
     Msg::Info("Create Compound Line (%d) = %d discrete edge",
               num_gec, pe->tag());
     GEdge *gec =  current->addCompoundEdge(e_compound,num_gec);
-    gec->meshAttributes.method = MESH_TRANSFINITE;
-    gec->meshAttributes.nbPointsTransfinite = nbPoints+1;
-    gec->meshAttributes.typeTransfinite = 0;
-    gec->meshAttributes.coeffTransfinite = 1.0;
+    if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG){
+      gec->meshAttributes.method = MESH_TRANSFINITE;
+      gec->meshAttributes.nbPointsTransfinite = nbPoints+1;
+      gec->meshAttributes.typeTransfinite = 0;
+      gec->meshAttributes.coeffTransfinite = 1.0;
+    }
   }
 
   // Parametrize Compound surfaces

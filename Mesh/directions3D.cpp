@@ -872,73 +872,82 @@ void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > data,
   file.close();
 }
 
-void Frame_field::recur_connect_vert(MVertex *v,
+void Frame_field::recur_connect_vert(FILE *fi, int count, 
+				     MVertex *v,
 				     STensor3 &cross,
 				     std::multimap<MVertex*,MVertex*> &v2v,
 				     std::set<MVertex*> &touched){
 
   if (touched.find(v) != touched.end()) return;
   touched.insert(v);
+  
+  count++;
 
   for (std::multimap <MVertex*,MVertex*>::iterator it = v2v.lower_bound(v);
        it != v2v.upper_bound(v) ; ++it){
+   
     MVertex *nextV = it->second;
-
-    //change orientation
-    ///------------------
-    printf("*********************** Changing orientation \n");
-
-    //compute dot product (N0,R0,A0)^T dot (Ni,Ri,Ai)
-    //where N,R,A are the normal, radial and axial direction s
+    if (touched.find(nextV) == touched.end()){
+      
+    //compute dot product (N0,R0,A0) dot (Ni,Ri,Ai)^T
+    //where N,R,A are the 3 directions
     std::map<MVertex*, STensor3>::iterator iter = crossField.find(nextV);
     STensor3 nextCross = iter->second;
-    STensor3 crossT = cross.transpose();
-    STensor3 prod = crossT.operator*=(nextCross);
-    cross.print("cross ");
-    nextCross.print("nextCross ");
-    prod.print("product");
+    STensor3 nextCrossT = nextCross.transpose();
+    STensor3 prod = cross.operator*=(nextCrossT);
     fullMatrix<double> mat(3,3); prod.getMat(mat);
-
+   
     //find biggest dot product
     fullVector<int> Id(3);
-    for (int i = 0; i < 3; i++){
+    Id(0) = Id(1) = Id(2) = 0; 
+    for (int j = 0; j < 3; j++){
       double maxVal = 0.0;
-      for (int j = 0; j < 3; j++){
+      for (int i = 0; i < 3; i++){
 	double val = fabs(mat(i,j));
 	if( val > maxVal ){
 	  maxVal  = val;
-	  Id(i) = j;
+	  Id(j) = i;
 	}
       }
     }
 
-    // if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
-    //   std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
-    //   printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
-    //   Id(0) = 0; Id(1) = 1; Id(2) = 2;
-    //   //break;
-    //   //exit(1);
-    //   return;
-    // }
-   
-    Id(0) = 0; Id(1) = 1; Id(2) = 2;
-
+   //check
+    if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
+      std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
+      printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
+      return;
+    }
+    
     //create new cross
-    printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
     fullMatrix<double> newmat(3,3);
     for (int i = 0; i < 3; i++){
      for (int j = 0; j < 3; j++){
-       newmat(i,j) = nextCross(i,Id(j)) ;
+       newmat(i,j) = nextCross(Id(i),j) ;
      }
     }
 
     STensor3 newcross(0.0);
     newcross.setMat(newmat);
     crossField[iter->first] = newcross;
-    newcross.print("newcross");
+
+    //print info
+    printf("************** COUNT = %d \n", count);
+   if (Id(0) == 0 && Id(1) == 1 && Id(2) == 2)
+     printf("orient OK Id=%d %d %d\n", Id(0), Id(1), Id(2));
+   else{
+     printf("change orientation  Id=%d %d %d \n",  Id(0), Id(1), Id(2));
+     cross.print("cross ");
+     nextCross.print("nextCross ");
+     prod.print("product");
+     newcross.print("newcross");
+   }
+   
+   fprintf(fi,"SP(%g,%g,%g) {%g};\n",nextV->x(),nextV->y(),nextV->z(), (double)count);
 
     //continue recursion
-    recur_connect_vert (nextV, newcross, v2v,touched);
+    recur_connect_vert (fi, count, nextV, newcross, v2v,touched);
+    }
+    
   }
 
 }
@@ -977,8 +986,16 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   std::set<MVertex*> touched;
   std::map<MVertex*, STensor3>::iterator iter = crossField.find(beginV);
   STensor3 bCross = iter->second;
-  recur_connect_vert (beginV,bCross,v2v,touched);
+
+  FILE *fi = fopen ("cross_recur.pos","w");
+  fprintf(fi,"View \"\"{\n");
+  fprintf(fi,"SP(%g,%g,%g) {%g};\n",beginV->x(),beginV->y(),beginV->z(), 0.0);
+  int count = 0;
+
+  recur_connect_vert (fi, count, beginV,bCross,v2v,touched);
   
+  fprintf(fi,"};\n");
+  fclose (fi);
   printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
 
 }

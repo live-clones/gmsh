@@ -68,7 +68,7 @@ class Frame_field{
 		   const std::string& filename);
   static void saveCrossField(const std::string& filename, double scale, bool full=true);
   static void continuousCrossField(GRegion *gr, GFace *gf);
-  static void recur_connect_vert(MVertex *v,STensor3 &cross, std::multimap<MVertex*,MVertex*> &v2v,  std::set<MVertex*> &touched);
+  static void recur_connect_vert(FILE*fi, int count, MVertex *v,STensor3 &cross, std::multimap<MVertex*,MVertex*> &v2v,  std::set<MVertex*> &touched);
   static void save_energy(GRegion* gr, const std::string& filename);
   static void save_dist(const std::string& filename);
   static void checkAnnData(GEntity* ge, const std::string& filename);

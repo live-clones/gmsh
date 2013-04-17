@@ -1929,6 +1929,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 
   //create new octree with new mesh elements
   if(!octNew){
+    printf("create new octrre \n");
     std::vector<MElement *> myElems;
     for (unsigned int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (unsigned int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
@@ -1960,10 +1961,13 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       }
     }
 
+    printf("size octrre new = %d \n", myParamElems.size());
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
-    uv_nodes = annAllocPts(myBCNodes.size(), 3);
+    printf("build bc kdtree \n");
+    int nbBCNodes  = myBCNodes.size();
+    uv_nodes = annAllocPts(nbBCNodes, 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
     int ind = 0;
     while (itp != myBCNodes.end()){
@@ -1973,16 +1977,13 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       uv_nodes[ind][2] = 0.0;
       itp++; ind++;
     }
-    uv_kdtree = new ANNkd_tree(uv_nodes, myBCNodes.size(), 3);
+    uv_kdtree = new ANNkd_tree(uv_nodes, nbBCNodes, 3);
   }
 
   //now use new octree to find point
   double uvw[3]={par1,par2, 0.0};
   double UV[3];
-  double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-2);
   MElement *e = octNew->find(par1,par2, 0.0,-1,false);
-  MElement::setTolerance(initialTol);
   if (e){
     e->xyz2uvw(uvw,UV);
     double valX[8], valY[8], valZ[8];
@@ -2000,6 +2001,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
   }
   //if element not found in new octree find closest point
   else{
+    printf("not found in new octree \n");
     GPoint gp(50,50,50);
     double pt[3] = {par1,par2,0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
@@ -2053,7 +2055,14 @@ GPoint GFaceCompound::point(double par1, double par2) const
   getTriangle(par1, par2, &lt, U,V);
   if(!lt){
     //printf("POINT (%g %g) NOT FOUND --> find closest \n", par1,par2);
-    if (meshStatistics.status != GFace::DONE ) {
+    if (meshStatistics.status == GFace::DONE && triangles.size()+quadrangles.size() != 0) {
+      //printf("look in remeshed octree \n");
+      GPoint gp = pointInRemeshedOctree(par1,par2);
+      gp.setNoSuccess();
+      return gp;
+    }
+    else{
+      //printf("look in kdtree \n");
       double pt[3] = {par1,par2, 0.0};
       kdtree->annkSearch(pt, 1, index, dist);
       lt = &(_gfct[index[0]]);
@@ -2080,12 +2089,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
       U = X[0];
       V = X[1];
       //printf("found closest point (%g %g) U V =%g %g \n", u,v, U,V);
-    }
-    else{
-      //printf("look in remeshed octree \n");
-      GPoint gp = pointInRemeshedOctree(par1,par2);
-      gp.setNoSuccess();
-      return gp;
     }
   }
 
@@ -2164,8 +2167,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   MTriangle *tri;
   if (lt) tri = lt->tri;
   else {
-    //printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
-    //printf("uv=%g %g \n", param.x(), param.y());
+    printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
+    printf("uv=%g %g \n", param.x(), param.y());
     double pt[3] = {param.x(), param.y(), 0.0};
     kdtree->annkSearch(pt, 1, index, dist);
     tri = (&_gfct[index[0]])->tri;
