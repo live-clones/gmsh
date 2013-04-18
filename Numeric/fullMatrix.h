@@ -264,8 +264,7 @@ class fullMatrix
     if(resetValue)
       setAll(scalar(0.));
     return false; // no reallocation
-  }
-  void setAsProxy(const fullMatrix<scalar> &original)
+  }  void setAsProxy(const fullMatrix<scalar> &original)
   {
     if(_data && _own_data)
       delete [] _data;
