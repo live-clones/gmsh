@@ -241,42 +241,16 @@ class MPrism15 : public MPrism {
   }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
-  virtual int getNumEdgesRep(){ return 18; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[18][2] = {
-      {0, 6}, {6, 1},
-      {0, 7}, {7, 2},
-      {0, 8}, {8, 3},
-      {1, 9}, {9, 2},
-      {1, 10}, {10, 4},
-      {2, 11}, {11, 5},
-      {3, 12}, {12, 4},
-      {3, 13}, {13, 5},
-      {4, 14}, {14, 5}
-    };
-    static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 26; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[26][3] = {
-      {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
-      {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
-      {0, 6, 8}, {1, 10, 6}, {4, 12, 10}, {3, 8, 12}, {6, 10, 12}, {6, 12, 8},
-      {0, 8, 7}, {3, 13, 8}, {5, 11, 13}, {2, 7, 11}, {7, 8, 13}, {7, 13, 11},
-      {1, 9, 10}, {2, 11, 9}, {5, 14, 11}, {4, 10, 14}, {9, 11, 14}, {9, 14, 10}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 6 : 8);
@@ -361,45 +335,16 @@ class MPrism18 : public MPrism {
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumFaceVertices() const { return 3; }
-  virtual int getNumEdgesRep(){ return 18; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[18][2] = {
-      {0, 6}, {6, 1},
-      {0, 7}, {7, 2},
-      {0, 8}, {8, 3},
-      {1, 9}, {9, 2},
-      {1, 10}, {10, 4},
-      {2, 11}, {11, 5},
-      {3, 12}, {12, 4},
-      {3, 13}, {13, 5},
-      {4, 14}, {14, 5}
-    };
-    static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 32; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[32][3] = {
-      {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
-      {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
-      {0, 6, 15}, {0, 15, 8}, {1, 10, 15}, {1, 15, 6},
-      {4, 12, 15}, {4, 15, 10}, {3, 8, 15}, {3, 15, 12},
-      {0, 8, 16}, {0, 16, 7}, {3, 13, 16}, {3, 16, 8},
-      {5, 11, 16}, {5, 16, 13}, {2, 7, 16}, {2, 16, 11},
-      {1, 9, 17}, {1, 17, 10}, {2, 11, 17}, {2, 17, 9},
-      {5, 14, 17}, {5, 17, 11}, {4, 10, 17}, {4, 17, 14}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 6 : 9);
