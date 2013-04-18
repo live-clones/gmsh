@@ -250,46 +250,16 @@ class MHexahedron20 : public MHexahedron {
     return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 12; }
-  virtual int getNumEdgesRep(){ return 24; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[24][2] = {
-      {0, 8}, {8, 1},
-      {0, 9}, {9, 3},
-      {0, 10}, {10, 4},
-      {1, 11}, {11, 2},
-      {1, 12}, {12, 5},
-      {2, 13}, {13, 3},
-      {2, 14}, {14, 6},
-      {3, 15}, {15, 7},
-      {4, 16}, {16, 5},
-      {4, 17}, {17, 7},
-      {5, 18}, {18, 6},
-      {6, 19}, {19, 7}
-    };
-    static const int f[12] = {0, 0, 1, 0, 1, 0, 3, 2, 1, 2, 3, 4};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MHexahedron::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 36; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[36][3] = {
-      {0, 9, 8}, {3, 13, 9}, {2, 11, 13}, {1, 8, 11}, {8, 9, 13}, {8, 13, 11},
-      {0, 8, 10}, {1, 12, 8}, {5, 16, 12}, {4, 10, 16}, {8, 12, 16}, {8, 16, 10},
-      {0, 10, 9}, {4, 17, 10}, {7, 15, 17}, {3, 9, 7}, {9, 10, 17}, {9, 17, 15},
-      {1, 11, 12}, {2, 14, 11}, {6, 18, 14}, {5, 12, 18}, {11, 14, 18}, {11, 18, 12},
-      {2, 13, 14}, {3, 15, 13}, {7, 19, 15}, {6, 14, 19}, {13, 15, 19}, {13, 19, 14},
-      {4, 16, 17}, {5, 18, 16}, {6, 19, 18}, {7, 17, 19}, {16, 18, 19}, {16, 19, 17}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(8);
@@ -387,52 +357,16 @@ class MHexahedron27 : public MHexahedron {
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
   virtual int getNumVolumeVertices() const { return 1; }
-  virtual int getNumEdgesRep(){ return 24; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[24][2] = {
-      {0, 8}, {8, 1},
-      {0, 9}, {9, 3},
-      {0, 10}, {10, 4},
-      {1, 11}, {11, 2},
-      {1, 12}, {12, 5},
-      {2, 13}, {13, 3},
-      {2, 14}, {14, 6},
-      {3, 15}, {15, 7},
-      {4, 16}, {16, 5},
-      {4, 17}, {17, 7},
-      {5, 18}, {18, 6},
-      {6, 19}, {19, 7}
-    };
-    static const int f[12] = {0, 0, 1, 0, 1, 0, 3, 2, 1, 2, 3, 4};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MHexahedron::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 48; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[48][3] = {
-      {0, 9, 20}, {0, 20, 8}, {3, 13, 20}, {3, 20, 9},
-      {2, 11, 20}, {2, 20, 13}, {1, 8, 20}, {1, 20, 11},
-      {0, 8, 21}, {0, 21, 10}, {1, 12, 21}, {1, 21, 8},
-      {5, 16, 21}, {5, 21, 12}, {4, 10, 21}, {4, 21, 16},
-      {0, 10, 22}, {0, 22, 9}, {4, 17, 22}, {4, 22, 10},
-      {7, 15, 22}, {7, 22, 17}, {3, 9, 22}, {3, 22, 15},
-      {1, 11, 23}, {1, 23, 12}, {2, 14, 23}, {2, 23, 11},
-      {6, 18, 23}, {6, 23, 14}, {5, 12, 23}, {5, 23, 18},
-      {2, 13, 24}, {2, 24, 14}, {3, 15, 24}, {3, 24, 13},
-      {7, 19, 24}, {7, 24, 15}, {6, 14, 24}, {6, 24, 19},
-      {4, 16, 25}, {4, 25, 17}, {5, 18, 25}, {5, 25, 16},
-      {6, 19, 25}, {6, 25, 18}, {7, 17, 25}, {7, 25, 19}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(9);

@@ -125,9 +125,10 @@ void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
   Msg::Error("Could not get face information for hexahedron %d", getNum());
 }
 
-void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-{
-  const int numSubEdges = CTX::instance()->mesh.numSubEdges;
+static void _myGetEdgeRep(MHexahedron *hex, int num, double *x, double *y, double *z,
+                          SVector3 *n, int numSubEdges) {
+
+  //const int numSubEdges = CTX::instance()->mesh.numSubEdges;
   static double pp[8][3] = {
     {-1,-1,-1},{1,-1,-1},{1,1,-1},{-1,1,-1},
     {-1,-1,1},{1,-1,1},{1,1,1},{-1,1,1} };
@@ -151,8 +152,8 @@ void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3
   double w2 = pp[iVertex1][2] * (1.-t2) + pp[iVertex2][2] * t2;
 
   SPoint3 pnt1, pnt2;
-  pnt(u1, v1, w1, pnt1);
-  pnt(u2, v2, w2, pnt2);
+  hex->pnt(u1, v1, w1, pnt1);
+  hex->pnt(u2, v2, w2, pnt2);
   x[0] = pnt1.x(); x[1] = pnt2.x();
   y[0] = pnt1.y(); y[1] = pnt2.y();
   z[0] = pnt1.z(); z[1] = pnt2.z();
@@ -160,6 +161,28 @@ void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3
   // not great, but better than nothing
   //static const int f[6] = {0, 0, 0, 1, 2, 3};
   n[0] = n[1] = 1 ;
+}
+
+void MHexahedron20::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) {
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+void MHexahedron27::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) {
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+void MHexahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n) {
+  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+int MHexahedron20::getNumEdgesRep()
+{
+  return 12 * CTX::instance()->mesh.numSubEdges;
+}
+
+int MHexahedron27::getNumEdgesRep()
+{
+  return 12 * CTX::instance()->mesh.numSubEdges;
 }
 
 int MHexahedronN::getNumEdgesRep()
@@ -245,7 +268,9 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
   return 0;
 }
 
-static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
+
+
+void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {
   static double pp[8][3] = {
@@ -411,9 +436,31 @@ static void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, doubl
   n[2] = n[0];
 }
 
+
+void MHexahedron20::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+void MHexahedron27::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
 void MHexahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
   _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+}
+
+int MHexahedron20::getNumFacesRep()
+{
+  return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2);
+}
+
+
+int MHexahedron27::getNumFacesRep()
+{
+  return 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2);
 }
 
 int MHexahedronN::getNumFacesRep()
