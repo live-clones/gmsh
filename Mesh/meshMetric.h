@@ -30,6 +30,7 @@ class meshMetric: public Field {
   int _dim;
   double _epsilon, _E, _E_moins, _Np;
   bool needMetricUpdate;
+  bool hasAnalyticalMetric;
   meshMetric::MetricComputationTechnique _technique;
   double hmin, hmax;
   simpleFunction<double> *_fct;
@@ -51,7 +52,11 @@ class meshMetric: public Field {
 
   std::map<int,nodalMetricTensor> setOfMetrics;
   std::map<int,nodalField> setOfSizes;
-  //  std::map<int,nodalField> setOfDetMetric;
+  std::map<int,bool> setOfRecomputeBoolean;  
+  std::map<int,simpleFunction<double>* > setOfFcts;
+  std::map<int,std::vector<double> > setOfParameters;
+  std::map<int,int > setOfTechniques;
+ //  std::map<int,nodalField> setOfDetMetric;
 
  public:
   meshMetric(std::vector<MElement*> elements);
@@ -88,13 +93,13 @@ class meshMetric: public Field {
   void scaleMetric( int nbElementsTarget, 
 		    nodalMetricTensor &nmt );
 
-  void computeMetric();
-  void computeMetricLevelSet();
-  void computeMetricHessian();
-  void computeMetricFrey();
-  void computeMetricEigenDir();
-  void computeMetricIsoLinInterp();
-  void computeMetricScaledHessian();
+  void computeMetric(int metricNumber);
+  void computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
+  void computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
+  void computeMetricFrey(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
+  void computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
+  void computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
+  void computeMetricScaledHessian(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
 
   void computeValues();
   void computeHessian();
