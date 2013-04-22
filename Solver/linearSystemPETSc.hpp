@@ -278,7 +278,7 @@ void linearSystemPETSc<scalar>::zeroMatrix()
       int value = _entriesPreAllocated ? 1 : 0;
       int sumValue = 0;
       MPI_Allreduce((void*)&value, (void*)&sumValue, 1, MPI_INT, MPI_SUM, _comm);
-      if ((sumValue > 0) &&(sumValue < Msg::GetCommSize()) && !_entriesPreAllocated){
+      if ((sumValue >= 0) &&(sumValue < Msg::GetCommSize()) && !_entriesPreAllocated){
         preAllocateEntries();
       }
     }
