@@ -621,10 +621,20 @@ class gLevelsetNACA00: public gLevelsetPrimitive
 {
   double _x0, _y0, _c, _t;
 public:
-  gLevelsetNACA00(double x0, double y0, double c, double t) : _x0(x0), _y0(y0), _c(c), _t(t) {}
+  gLevelsetNACA00(double x0, double y0, double c, double t);
   ~gLevelsetNACA00() {}
   double operator () (const double x, const double y, const double z) const;
+//  std::vector<double> getValueAndGradients(const double x, const double y, const double z) const;
+  void gradient (double x, double y, double z,
+    double & dfdx, double & dfdy, double & dfdz) const;
+  void hessian (double x, double y, double z,
+    double & dfdxx, double & dfdxy, double & dfdxz,
+    double & dfdyx, double & dfdyy, double & dfdyz,
+    double & dfdzx, double & dfdzy, double & dfdzz  ) const;
   int type() const { return UNKNOWN; }
+private:
+  void getClosestBndPoint(const double x, const double y, const double z,
+                          double &xb, double &yb, double &curvRad, bool &in) const;
 };
 
 #endif

@@ -1229,41 +1229,114 @@ gLevelsetConrod::gLevelsetConrod(const gLevelsetConrod &lv)
 
 // Level-set for NACA0012 airfoil, last coeff. modified for zero-thickness trailing edge
 // cf. http://en.wikipedia.org/wiki/NACA_airfoil
-double gLevelsetNACA00::operator() (const double x, const double y, const double z) const
+gLevelsetNACA00::gLevelsetNACA00(double x0, double y0, double c, double t)
+  : _x0(x0), _y0(y0), _c(c), _t(t)
+{
+  _hasDerivatives = true;
+}
+
+
+void gLevelsetNACA00::getClosestBndPoint(const double x, const double y, const double z,
+                                         double &xb, double &yb, double &curvRad, bool &in) const
 {
 
   static const int maxIter = 100;
   static const double tol = 1.e-8;
 
   const double tolr = tol/_c;                 // Tolerance (scaled bu chord)
-  double distSq;                              // Square of dist. between point and boundary
-  bool in = false;                            // Whether the point is inside the airfoil
+  in = false;                                 // Whether the point is inside the airfoil
 
   const double xt = x-_x0, yt = fabs(y-_y0);  // Point translated according to airfoil origin and symmetry
 
-  if (xt-_c > 1.21125*_t*yt)                  // Behind line normal to airfoil at trailing edge, closest
-    distSq = (xt-_c)*(xt-_c)+yt*yt;           // boundary point is trailing edge
-  else {                                      // Otherwise Newton-Raphson to find closest boundary point
+  if (xt-_c > 1.21125*_t*yt) {                // Behind line normal to airfoil at trailing edge, closest
+    xb = _x0+_c;                              // boundary point is trailing edge...
+    yb = _y0;
+    curvRad = 0.;
+  }
+  else {                                      // ...otherwise Newton-Raphson to find closest boundary point
     const double fact = 5.*_t*_c;
-    double xb = std::max(xt,tolr);
+    double xtb = std::max(xt,tolr), ytb;
+    double dyb, ddyb;
     for (int it=0; it<maxIter; it++) {
-      const double xbr = xb/_c, sxbr = sqrt(xbr), xbr32 = xbr*sxbr,
+      const double xbr = xtb/_c, sxbr = sqrt(xbr), xbr32 = xbr*sxbr,
                     xbr2 = xbr*xbr, xbr3 = xbr2*xbr, xbr4 = xbr2*xbr2;
-      double yb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1036*xbr4);
-      const double dyb = fact*(0.14845/sxbr-0.4144*xbr3+0.8529*xbr2-0.7032*xbr-0.126)/_c;
-      const double ddyb = fact*(-0.074225/xbr32-1.2432*xbr2+1.7058*xbr-0.7032)/(_c*_c);
-      const double xx = xt-xb, yy = yt-yb;
+      ytb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1036*xbr4);
+      dyb = fact*(0.14845/sxbr-0.4144*xbr3+0.8529*xbr2-0.7032*xbr-0.126)/_c;
+      ddyb = fact*(-0.074225/xbr32-1.2432*xbr2+1.7058*xbr-0.7032)/(_c*_c);
+      const double xx = xt-xtb, yy = yt-ytb;
       in = (xt > 0) && (yy < 0);
-      distSq = xx*xx+yy*yy;
       const double dDistSq = -2.*(xx+dyb*yy);
       const double ddDistSq = 2.*(1.-ddyb*yy+dyb*dyb);
       const double mIncr = dDistSq/ddDistSq;
       if (fabs(mIncr) < tolr) break;
-      else xb -= mIncr;
-      if (xb < tolr) xb = tolr;
+      else xtb -= mIncr;
+      if (xtb < tolr) xtb = tolr;
     }
+    xb = _x0+xtb;
+    yb = (y >= _y0) ? _y0+ytb : -(_y0+ytb);
+    const double norm = sqrt(1.+dyb*dyb);
+    curvRad = norm*norm*norm/fabs(ddyb);
   }
 
+}
+
+
+double gLevelsetNACA00::operator() (const double x, const double y, const double z) const
+{
+
+  double xb, yb, curvRadb;
+  bool in;
+
+  getClosestBndPoint(x, y, z, xb, yb, curvRadb, in);
+  const double xx = x-xb, yy = y-yb, distSq = xx*xx+yy*yy;
+
   return in ? -sqrt(distSq) : sqrt(distSq);
+
+}
+
+
+void gLevelsetNACA00::gradient (double x, double y, double z,
+             double & dfdx, double & dfdy, double & dfdz) const
+{
+
+  double xb, yb, curvRadb;
+  bool in;
+
+  getClosestBndPoint(x, y, z, xb, yb, curvRadb, in);
+  const double xx = x-xb, yy = y-yb, distSq = xx*xx+yy*yy;
+  const double dist = in ? -sqrt(distSq) : sqrt(distSq);
+
+  dfdx = xx/dist;
+  dfdy = yy/dist;
+  dfdz = 0.;
+
+}
+
+
+void gLevelsetNACA00::hessian (double x, double y, double z,
+            double & dfdxx, double & dfdxy, double & dfdxz,
+            double & dfdyx, double & dfdyy, double & dfdyz,
+            double & dfdzx, double & dfdzy, double & dfdzz) const
+{
+
+
+  double xb, yb, curvRadb;
+  bool in;
+
+  getClosestBndPoint(x, y, z, xb, yb, curvRadb, in);
+
+  const double xx = x-xb, yy = y-yb, distSq = xx*xx+yy*yy;
+  const double dist = in ? -sqrt(distSq) : sqrt(distSq);
+  const double oneOverCurvRad = 1./(curvRadb+dist);
+
+  dfdxx = yy*yy*oneOverCurvRad;
+  dfdxy = -xx*yy*oneOverCurvRad;
+  dfdxz = 0.;
+  dfdyx = dfdxy;
+  dfdyy = xx*xx*oneOverCurvRad;
+  dfdyz = 0.;
+  dfdzx = 0.;
+  dfdzy = 0.;
+  dfdzz = 0.;
 
 }
