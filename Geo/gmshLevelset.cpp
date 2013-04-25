@@ -1367,13 +1367,13 @@ void gLevelsetNACA00::hessian (double x, double y, double z,
 
   const double xx = x-xb, yy = y-yb, distSq = xx*xx+yy*yy;
   const double dist = in ? -sqrt(distSq) : sqrt(distSq);
-  const double oneOverCurvRad = 1./(curvRadb+dist);
+  const double curvRad = curvRadb+dist, fact = 1./(curvRad*curvRad*curvRad);
 
-  dfdxx = yy*yy*oneOverCurvRad;
-  dfdxy = -xx*yy*oneOverCurvRad;
+  dfdxx = yy*yy*fact;
+  dfdxy = -xx*yy*fact;
   dfdxz = 0.;
   dfdyx = dfdxy;
-  dfdyy = xx*xx*oneOverCurvRad;
+  dfdyy = xx*xx*fact;
   dfdyz = 0.;
   dfdzx = 0.;
   dfdzy = 0.;
