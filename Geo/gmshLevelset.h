@@ -128,12 +128,18 @@ class gLevelsetSphere : public gLevelsetPrimitive
 protected:
   double xc, yc, zc, r;
 public:
-  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1) : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R) {}
+  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag);
   virtual double operator () (const double x, const double y, const double z) const{
     if(r >= 0.)
       return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;
     return (- r - sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)));
   }
+  void gradient (double x, double y, double z,
+    double & dfdx, double & dfdy, double & dfdz) const;
+  void hessian (double x, double y, double z,
+    double & dfdxx, double & dfdxy, double & dfdxz,
+    double & dfdyx, double & dfdyy, double & dfdyz,
+    double & dfdzx, double & dfdzy, double & dfdzz  ) const;
   int type() const {return SPHERE;}
 };
 

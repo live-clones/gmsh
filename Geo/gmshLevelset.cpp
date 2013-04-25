@@ -314,6 +314,46 @@ gLevelset::gLevelset(const gLevelset &lv)
   tag_ = lv.tag_;
 }
 
+gLevelsetSphere::gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1)
+  : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R)
+{
+_hasDerivatives = true;
+}
+
+void gLevelsetSphere::gradient (double x, double y, double z,
+           double & dfdx, double & dfdy, double & dfdz) const
+{
+
+  const double xx = x-xc, yy = y-yc, zz = z-zc, dist = sqrt(xx*xx+yy*yy+zz*zz);
+
+  dfdx = xx/dist;
+  dfdy = yy/dist;
+  dfdz = zz/dist;
+
+}
+
+void gLevelsetSphere::hessian (double x, double y, double z,
+          double & dfdxx, double & dfdxy, double & dfdxz,
+          double & dfdyx, double & dfdyy, double & dfdyz,
+          double & dfdzx, double & dfdzy, double & dfdzz) const
+{
+
+  const double xx = x-xc, yy = y-yc, zz = z-zc;
+  const double distSq = xx*xx+yy*yy, fact = 1./(distSq*sqrt(distSq));
+
+  dfdxx = (zz*zz+yy*yy)*fact;
+  dfdxy = -xx*yy*fact;
+  dfdxz = -xx*zz*fact;
+  dfdyx = dfdxy;
+  dfdyy = (xx*xx+zz*zz)*fact;
+  dfdyz = -yy*zz*fact;
+  dfdzx = dfdxz;
+  dfdzy = dfdyz;
+  dfdzz = (xx*xx+yy*yy)*fact;
+
+}
+
+
 gLevelsetPlane::gLevelsetPlane(const std::vector<double>  &pt,
                                const std::vector<double> &norm, int tag)
   : gLevelsetPrimitive(tag)
