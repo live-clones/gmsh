@@ -72,6 +72,18 @@ endif(ENABLE_PYTHON_LIB_API)
 include(${SWIG_USE_FILE})
 include_directories(${PYTHON_INCLUDE_PATH})
 
+IF(HAVE_MPI)
+  # this hack is only required for openmpi compiled with dynamic modules
+  # unfortunately I do not know how to detect this situation => I always enable it
+  set(GMSH_PYTHON_MODULES_INCLUDE_CODE "import ctypes\n")
+  FOREACH (lib ${MPI_C_LIBRARIES})
+    IF (${lib} MATCHES ".*libmpi.*")
+      set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
+        "${GMSH_PYTHON_MODULES_INCLUDE_CODE}ctypes.CDLL(\"${lib}\", mode = ctypes.RTLD_GLOBAL)\n")
+    ENDIF (${lib} MATCHES ".*libmpi.*")
+  ENDFOREACH (lib)
+ENDIF(HAVE_MPI)
+
 foreach(module ${SWIG_MODULES})
   set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
 
