@@ -1555,6 +1555,17 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
   MTri3::radiusNorm = 2;
   LIMIT_ = 0.5 * sqrt(2.0) * 1;
   backgroundMesh::unset();
+#if defined(HAVE_ANN)
+  {
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+    }
+  }
+#endif
 }
 
 void bowyerWatsonParallelograms(GFace *gf,
@@ -1628,4 +1639,15 @@ void bowyerWatsonParallelograms(GFace *gf,
   //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
+#if defined(HAVE_ANN)
+  {
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+    }
+  }
+#endif
 }
