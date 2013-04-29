@@ -80,7 +80,7 @@ class ReferenceSpace{
  protected:
   ReferenceSpace(void);
 
-  void init(void);
+  void init(unsigned int faceType);
   void populate(node* pTreeRoot);
   void destroy(node* node);
 
@@ -89,7 +89,8 @@ class ReferenceSpace{
   void unconnect(void);                   // Unconnects leafs marked before
 
   void getEdge(void);
-  void getFace(void);
+  void getTriFace(void);
+  void getQuaFace(void);
 
   const std::vector<unsigned int>* inOrder(unsigned int permutation,
 					   unsigned int a,
@@ -99,6 +100,12 @@ class ReferenceSpace{
 					   unsigned int a,
 					   unsigned int b,
 					   unsigned int c);
+
+  const std::vector<unsigned int>* inOrder(unsigned int permutation,
+					   unsigned int a,
+					   unsigned int b,
+					   unsigned int c,
+                                           unsigned int d);
 
   static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a,
 			    const std::pair<unsigned int, MVertex*>& b);

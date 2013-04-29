@@ -26,21 +26,21 @@ set(SRC
   LineNedelecBasis.cpp
   LineLagrangeBasis.cpp
 
-#  QuadNodeBasis.cpp
-#  QuadEdgeBasis.cpp
-
   TriNodeBasis.cpp
   TriEdgeBasis.cpp
   TriNedelecBasis.cpp
   TriLagrangeBasis.cpp
 
-#  HexNodeBasis.cpp
-#  HexEdgeBasis.cpp
+  QuadNodeBasis.cpp
+#  QuadEdgeBasis.cpp
 
   TetNodeBasis.cpp
   TetEdgeBasis.cpp
   TetNedelecBasis.cpp
   TetLagrangeBasis.cpp
+
+#  HexNodeBasis.cpp
+#  HexEdgeBasis.cpp
 
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

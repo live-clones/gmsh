@@ -7,13 +7,13 @@
 #include "LineNedelecBasis.h"
 #include "LineLagrangeBasis.h"
 
-#include "QuadNodeBasis.h"
-#include "QuadEdgeBasis.h"
-
 #include "TriNodeBasis.h"
 #include "TriEdgeBasis.h"
 #include "TriNedelecBasis.h"
 #include "TriLagrangeBasis.h"
+
+#include "QuadNodeBasis.h"
+#include "QuadEdgeBasis.h"
 
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
@@ -113,8 +113,11 @@ BasisLocal* BasisGenerator::triHierarchicalGen(unsigned int basisType,
 BasisLocal* BasisGenerator::quaHierarchicalGen(unsigned int basisType,
 					       unsigned int order){
   switch(basisType){
-    //case  0: return new QuadNodeBasis(order);
-    //case  1: return new QuadEdgeBasis(order);
+  case  0: return new QuadNodeBasis(order);
+  case  1:
+    if (order == 0) throw Exception("Nedelec not implemented on Quads");
+    else            throw Exception("1-form not implemented on Quads");
+
   case  2: throw Exception("2-form not implemented on Quads");
   case  3: throw Exception("3-form not implemented on Quads");
 

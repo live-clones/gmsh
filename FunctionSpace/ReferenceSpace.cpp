@@ -36,7 +36,12 @@ ReferenceSpace::ReferenceSpace(void){
 
   // Defining Ref Edge and Face in //
   // Dervived Class                //
-  // And CALL INIT()               //
+  // And CALL init(faceType)       //
+  //                               //
+  // faceType is:                  //
+  //  * 0 if triangular faces      //
+  //  * 1 if quadragular faces     //
+  //  * 3 if NOT IMPLEMENTED       //
 }
 
 ReferenceSpace::~ReferenceSpace(void){
@@ -65,7 +70,13 @@ ReferenceSpace::~ReferenceSpace(void){
   delete face;
 }
 
-void ReferenceSpace::init(void){
+void ReferenceSpace::init(unsigned int faceType){
+  if(faceType > 3)
+    throw Exception("ReferenceSpace: unknown face type");
+
+  if(faceType == 3)
+    throw Exception("ReferenceSpace: prism not implemented");
+
   // Init Root //
   nPerm      = 0;
   nextLeafId = 0;
@@ -96,7 +107,13 @@ void ReferenceSpace::init(void){
 
   // Get Edges & Faces //
   getEdge();
-  getFace();
+
+  switch(faceType){
+  case 0: getTriFace(); break;
+  case 1: getQuaFace(); break;
+
+  default: throw Exception("ReferenceSpace: impossible error");
+  }
 }
 
 void ReferenceSpace::populate(node* pTreeRoot){
@@ -188,7 +205,7 @@ void ReferenceSpace::getEdge(void){
   }
 }
 
-void ReferenceSpace::getFace(void){
+void ReferenceSpace::getTriFace(void){
   vector<const vector<unsigned int>*>* tmp;
   face = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
 
@@ -200,6 +217,23 @@ void ReferenceSpace::getFace(void){
 			  refFace[i][0],
 			  refFace[i][1],
 			  refFace[i][2]);
+    (*face)[p] = tmp;
+  }
+}
+
+void ReferenceSpace::getQuaFace(void){
+  vector<const vector<unsigned int>*>* tmp;
+  face = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
+
+  for(unsigned int p = 0; p < nPerm; p++){
+    tmp = new vector<const vector<unsigned int>*>(nFace);
+
+    for(unsigned int i = 0; i < nFace; i++)
+      (*tmp)[i] = inOrder(p,
+			  refFace[i][0],
+			  refFace[i][1],
+			  refFace[i][2],
+                          refFace[i][3]);
     (*face)[p] = tmp;
   }
 }
@@ -241,6 +275,30 @@ inOrder(unsigned int permutation,
     v = perm[permutation][i];
 
     if(v == a || v == b || v == c){
+      (*inorder)[k] = v;
+      k++;
+    }
+  }
+
+  return inorder;
+}
+
+const std::vector<unsigned int>* ReferenceSpace::
+inOrder(unsigned int permutation,
+	unsigned int a,
+	unsigned int b,
+	unsigned int c,
+        unsigned int d){
+
+  unsigned int v;
+  unsigned int k = 0;
+  vector<unsigned int>* inorder =
+    new vector<unsigned int>(4);
+
+  for(unsigned int i = 0; i < nVertex; i++){
+    v = perm[permutation][i];
+
+    if(v == a || v == b || v == c || v == d){
       (*inorder)[k] = v;
       k++;
     }

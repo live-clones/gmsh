@@ -27,13 +27,12 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
-  // Alloc Some Space //
+  // Legendre Polynomial //
   const int orderMinus = order - 1;
 
   Polynomial* legendre    = new Polynomial[order];
   Polynomial* intLegendre = new Polynomial[order];
 
-  // Legendre Polynomial //
   Legendre::legendre(legendre, orderMinus);
   Legendre::intScaled(intLegendre, order);
 
@@ -66,7 +65,7 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = nVertex;
 
-    for(int e = 0; e < 3; e++){
+    for(unsigned int e = 0; e < 3; e++){
       for(unsigned int l = 1; l < order; l++){
 	basis[s][i] =
 	  new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
@@ -84,10 +83,6 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   // NB: We use (*(*faceV[s])[f])[]
   //     where f = 0, because triangles
   //     have only ONE face: the face '0'
-
-  // TO CHECK: Are Triangles face matching tets ?
-
-  const Polynomial p = (lagrange[2] * 2) - Polynomial(1, 0, 0, 0);
   const int orderMinusTwo = order - 2;
 
   for(unsigned int s = 0; s < nRefSpace; s++){
@@ -103,8 +98,11 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
                                                  lagrange[(*(*faceV[s])[0])[1]])
 			 *
 
-			 legendre[l2].compose(lagrange[(*(*faceV[s])[0])[2]])
+			 legendre[l2].compose((lagrange[(*(*faceV[s])[0])[2]] * 2)
+                                              -
+                                              Polynomial(1, 0, 0, 0))
                          *
+
                          lagrange[(*(*faceV[s])[0])[2]]);
 	i++;
       }

@@ -28,8 +28,8 @@ QuadReferenceSpace::QuadReferenceSpace(void){
   refFace[0][2] = 2;
   refFace[0][3] = 3;
 
-  // Init All //
-  init();
+  // Init All (Quad Face) //
+  init(1);
 }
 
 QuadReferenceSpace::~QuadReferenceSpace(void){

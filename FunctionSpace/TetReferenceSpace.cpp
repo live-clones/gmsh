@@ -29,8 +29,8 @@ TetReferenceSpace::TetReferenceSpace(void){
     refFace[i][2] = MTetrahedron::faces_tetra(i, 2);
   }
 
-  // Init All //
-  init();
+  // Init All (Tri Face) //
+  init(0);
 }
 
 TetReferenceSpace::~TetReferenceSpace(void){

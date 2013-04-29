@@ -24,7 +24,7 @@ class QuadNodeBasis: public BasisHierarchical0From{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Quads of the given order
-  QuadNodeBasis(int order);
+  QuadNodeBasis(unsigned int order);
 
   //! @return Deletes this Basis
   //!

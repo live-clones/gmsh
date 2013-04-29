@@ -27,8 +27,8 @@ TriReferenceSpace::TriReferenceSpace(void){
   refFace[0][1] = 1;
   refFace[0][2] = 2;
 
-  // Init All //
-  init();
+  // Init All (Tri Face) //
+  init(0);
 }
 
 TriReferenceSpace::~TriReferenceSpace(void){
