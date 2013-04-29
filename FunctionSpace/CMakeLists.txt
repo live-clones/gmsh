@@ -10,6 +10,7 @@ set(SRC
   ReferenceSpace.cpp
   LineReferenceSpace.cpp
   TriReferenceSpace.cpp
+  QuadReferenceSpace.cpp
   TetReferenceSpace.cpp
 
   Basis.cpp

@@ -1,37 +1,38 @@
 #include <sstream>
-#include "TriReferenceSpace.h"
-#include "MTriangle.h"
+#include "QuadReferenceSpace.h"
+#include "MQuadrangle.h"
 
 using namespace std;
 
-TriReferenceSpace::TriReferenceSpace(void){
+QuadReferenceSpace::QuadReferenceSpace(void){
   // Vertex Definition //
-  nVertex = 3;
+  nVertex = 4;
 
   // Edge Definition //
-  nEdge   = 3;
+  nEdge   = 4;
   refEdge = new unsigned int*[nEdge];
 
   for(unsigned int i = 0; i < nEdge; i++){
     refEdge[i]    = new unsigned int[2];
-    refEdge[i][0] = MTriangle::edges_tri(i, 0);
-    refEdge[i][1] = MTriangle::edges_tri(i, 1);
+    refEdge[i][0] = MQuadrangle::edges_quad(i, 0);
+    refEdge[i][1] = MQuadrangle::edges_quad(i, 1);
   }
 
   // Face Definition //
   nFace      = 1;
   refFace    = new unsigned int*[nFace];
-  refFace[0] = new unsigned int[3];
+  refFace[0] = new unsigned int[4];
 
   refFace[0][0] = 0;
   refFace[0][1] = 1;
   refFace[0][2] = 2;
+  refFace[0][3] = 3;
 
   // Init All //
   init();
 }
 
-TriReferenceSpace::~TriReferenceSpace(void){
+QuadReferenceSpace::~QuadReferenceSpace(void){
   // Delete Ref Edge //
   for(unsigned int i = 0; i < nEdge; i++)
     delete[] refEdge[i];
@@ -45,7 +46,7 @@ TriReferenceSpace::~TriReferenceSpace(void){
   delete[] refFace;
 }
 
-string TriReferenceSpace::toLatex(void) const{
+string QuadReferenceSpace::toLatex(void) const{
   stringstream stream;
 
   stream << "\\documentclass{article}" << endl << endl
@@ -65,10 +66,11 @@ string TriReferenceSpace::toLatex(void) const{
 
 	   << "\\node[vertex] (n0) at(0, 0) {$" << perm[p][0] << "$};" << endl
 	   << "\\node[vertex] (n1) at(3, 0) {$" << perm[p][1] << "$};" << endl
-	   << "\\node[vertex] (n2) at(0, 3) {$" << perm[p][2] << "$};" << endl
+	   << "\\node[vertex] (n2) at(3, 3) {$" << perm[p][2] << "$};" << endl
+	   << "\\node[vertex] (n3) at(0, 3) {$" << perm[p][3] << "$};" << endl
            << endl;
 
-    for(unsigned int i = 0; i < 3; i++)
+    for(unsigned int i = 0; i < 4; i++)
       stream << "\\path[line]"
 	     << " (n" << (*(*(*edge)[p])[i])[0] << ")"
 	     << " -- "

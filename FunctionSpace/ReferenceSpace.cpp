@@ -7,6 +7,33 @@
 using namespace std;
 
 ReferenceSpace::ReferenceSpace(void){
+  // Init to NULL                  //
+  nVertex    = 0;
+  nextLeafId = 0;
+
+  nPerm = 0;
+  perm  = NULL;
+  lPerm = NULL;
+
+  nUnconnected    = 0;
+  unconnected     = NULL;
+  toBeUnconnected = NULL;
+  reduceBy        = 0;
+
+  pTreeRoot.depth    = 0;
+  pTreeRoot.last     = NULL;
+  pTreeRoot.number   = 0;
+  pTreeRoot.possible = NULL;
+  pTreeRoot.next     = NULL;
+
+  nEdge   = 0;
+  refEdge = NULL;
+  edge    = NULL;
+
+  nFace   = 0;
+  refFace = NULL;
+  face    = NULL;
+
   // Defining Ref Edge and Face in //
   // Dervived Class                //
   // And CALL INIT()               //
@@ -238,6 +265,24 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   // Sort Them with repsect to Vertex Global ID //
   //                 (vertex[i].second->getNum) //
   std::sort(vertex.begin(), vertex.end(), sortPredicate);
+
+
+  /*****************************************************************
+   * What does that do ?                                           *
+   *  Tree lookup needs vertices in the range [0 .. nVertex[.      *
+   *                                                               *
+   *  So we need to convert the node ID from 'element.getVertex()' *
+   *  to a number between [0 .. nVertex[.                          *
+   *                                                               *
+   *  The convertion is such that the smallest node ID             *
+   *  gets the converted ID '0'.                                   *
+   *  Then the second smallest the ID '1'.                         *
+   *  And so on...                                                 *
+   *                                                               *
+   *  The sorting of the vector 'vertex' with respect              *
+   *  to the element.getVertex() IDs does that job                 *
+   *****************************************************************/
+
 
   // Tree Lookup //
   try{

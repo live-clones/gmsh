@@ -65,10 +65,11 @@ string TetReferenceSpace::toLatex(void) const{
   for(unsigned int p = 0; p < nPerm; p++){
     stream << "\\begin{tikzpicture}" << endl
 
-	   << "\\node[vertex] (n0) at(0, 0) {$0$};" << endl
-	   << "\\node[vertex] (n1) at(3, 0) {$1$};" << endl
-	   << "\\node[vertex] (n2) at(0, 3) {$2$};" << endl
-	   << "\\node[vertex] (n3) at(1, 1) {$3$};" << endl << endl;
+	   << "\\node[vertex] (n0) at(0, 0) {$" << perm[p][0] << "$};" << endl
+	   << "\\node[vertex] (n1) at(3, 0) {$" << perm[p][1] << "$};" << endl
+	   << "\\node[vertex] (n2) at(0, 3) {$" << perm[p][2] << "$};" << endl
+	   << "\\node[vertex] (n3) at(1, 1) {$" << perm[p][3] << "$};" << endl
+           << endl;
 
     for(unsigned int i = 0; i < 6; i++)
       stream << "\\path[line]"

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <list>
+#include <stack>
 #include <string>
 #include "MElement.h"
 
@@ -35,13 +36,19 @@ class ReferenceSpace{
 
  protected:
   // Permutation (Tree + Leaf) //
-  unsigned int   nextLeafId;
-  unsigned int   nVertex;
-  unsigned int   nPerm;
-  unsigned int** perm;
-  node pTreeRoot;
+  unsigned int    nVertex;
+  unsigned int nextLeafId;
 
-  mutable std::list<unsigned int*>* lPerm;
+  unsigned int              nPerm;
+  unsigned int**             perm;
+  std::list<unsigned int*>* lPerm;
+
+  unsigned int                           nUnconnected;
+  std::pair<unsigned int, unsigned int>*  unconnected;
+  std::stack<node*>*                  toBeUnconnected;
+  unsigned int                               reduceBy;
+
+  node pTreeRoot;
 
   // Edge Permutation //
   unsigned int    nEdge;
@@ -76,6 +83,10 @@ class ReferenceSpace{
   void init(void);
   void populate(node* pTreeRoot);
   void destroy(node* node);
+
+  void unconnectWalk(node* pTreeRoot);    // Find wrong permutations
+  void markAsUnconnect(node* pTreeRoot);  // Mark leafs, with pTreeRoot as root, to be 'unconnected'
+  void unconnect(void);                   // Unconnects leafs marked before
 
   void getEdge(void);
   void getFace(void);
