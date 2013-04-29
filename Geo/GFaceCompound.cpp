@@ -2155,16 +2155,15 @@ GPoint GFaceCompound::point(double par1, double par2) const
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
 
-  if(trivial()){
-    return (*(_compound.begin()))->firstDer(param);
-  }
-
   if(!oct) parametrize();
+
+  if(trivial())
+    return (*(_compound.begin()))->firstDer(param);
 
   double U,V;
   GFaceCompoundTriangle *lt;
   getTriangle(param.x(), param.y(), &lt, U,V);
-  MTriangle *tri;
+  MTriangle *tri=NULL;
   if (lt) tri = lt->tri;
   else {
     printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
@@ -2379,6 +2378,7 @@ void GFaceCompound::getTriangle(double u, double v,
 
 void GFaceCompound::buildOct() const
 {
+
 #if defined(HAVE_MESH)
   SBoundingBox3d bb;
   int count = 0;
@@ -2488,7 +2488,6 @@ void GFaceCompound::buildOct() const
   }
   nbT = count;
   Octree_Arrange(oct);
-
 
   //smooth first derivatives at vertices
   if(adjv.size() == 0){
@@ -2806,17 +2805,12 @@ void GFaceCompound::printStuff(int iNewton) const
   FILE * uvz = fopen(name3,"w");
   FILE * xyzu = fopen(name4,"w");
   FILE * xyzv = fopen(name5,"w");
-  //FILE * xyzc = fopen(name6,"w");
-  //FILE * uvm = fopen(name7,"w");
 
-  //fprintf(uva, "View \"\"{\n");
   fprintf(uvx, "View \"\"{\n");
   fprintf(uvy, "View \"\"{\n");
   fprintf(uvz, "View \"\"{\n");
   fprintf(xyzu, "View \"\"{\n");
   fprintf(xyzv, "View \"\"{\n");
-  //fprintf(xyzc, "View \"\"{\n");
-  //fprintf(uvm, "View \"\"{\n");
 
   for( ; it != _compound.end() ; ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); ++i){
@@ -2838,72 +2832,6 @@ void GFaceCompound::printStuff(int iNewton) const
               t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
               t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
               it0->second.x(),it1->second.x(),it2->second.x());
-      // double K1 = locCurvature(t,it0->second.x(),it0->second.y());
-      // double K2 = locCurvature(t,it1->second.x(),it1->second.y());
-      // double K3 = locCurvature(t,it2->second.x(),it2->second.y());
-      // fprintf(xyzc,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-      //         t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-      //         t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-      //         t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-      //         K1, K2, K3);
-
-      // double p0[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
-      // double p1[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
-      // double p2[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
-      // double a_3D = fabs(triangle_area(p0, p1, p2));
-      // double q0[3] = {it0->second.x(), it0->second.y(), 0.0};
-      // double q1[3] = {it1->second.x(), it1->second.y(), 0.0};
-      // double q2[3] = {it2->second.x(), it2->second.y(), 0.0};
-      // double a_2D = fabs(triangle_area(q0, q1, q2));
-      // double area = (a_3D/a_2D); //*(a_3D/a_2D);
-      // Pair<SVector3, SVector3> der = this->firstDer(SPoint2(it0->second.x(),
-      //                                                       it0->second.y()));
-      // double metric0e = dot(der.first(), der.first());
-      // double metric0f = dot(der.second()*(1./norm(der.second())),
-      //                       der.first()*(1./norm(der.first())));
-      // double metric0g = dot(der.second(), der.second());
-      // Pair<SVector3, SVector3> der1 = this->firstDer(SPoint2(it1->second.x(),
-      //                                                        it1->second.y()));
-      // double metric1e = dot(der1.first(), der1.first());
-      // double metric1f = dot(der1.second()*(1/norm(der1.second())),
-      //                       der1.first()*(1./norm(der1.first())));
-      // double metric1g = dot(der1.second(), der1.second());
-      // Pair<SVector3, SVector3> der2 = this->firstDer(SPoint2(it2->second.x(),
-      //                                                        it2->second.y()));
-      // double metric2e = dot(der2.first(),  der2.first());
-      // double metric2f = dot(der2.second()*(1./norm(der2.second())),
-      //                       der2.first()*(1./norm(der2.first())));
-      // double metric2g = dot(der2.second(), der2.second());
-
-      // double mat0[2][2], eig0[2];
-      // double mat1[2][2], eig1[2];
-      // double mat2[2][2], eig2[2];
-      // mat0[0][0]  = metric0e;  mat0[0][1]  =  metric0f;
-      // mat0[1][0]  =  metric0f;  mat0[1][1]  =  metric0g;
-      // eigenvalue2x2(mat0, eig0);
-      // mat1[0][0]  = metric1e;  mat1[0][1]  = metric1f;
-      // mat1[1][0]  = metric1f;  mat1[1][1]  = metric1g;
-      // eigenvalue2x2(mat1, eig1);
-      // mat2[0][0]  = metric2e;  mat2[0][1]  = metric2f;
-      // mat2[1][0]  = metric2f;  mat2[1][1]  = metric2g;
-      // eigenvalue2x2(mat2, eig2);
-
-      // double disp0 = sqrt(.5*(eig0[0]*eig0[0]+ (eig0[1]*eig0[1])));
-      // double disp1 = sqrt(.5*(eig1[0]*eig1[0]+ (eig1[1]*eig1[1])));
-      // double disp2 = sqrt(.5*(eig2[0]*eig2[0]+ (eig2[1]*eig2[1])));
-      // double mdisp = .333*(disp0+disp1+disp2);
-      // fprintf(uva, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-      //         it0->second.x(), it0->second.y(), 0.0,
-      //         it1->second.x(), it1->second.y(), 0.0,
-      //         it2->second.x(), it2->second.y(), 0.0,
-      //         area, area, area);
-
-      // fprintf(uvm, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-      //         it0->second.x(), it0->second.y(), 0.0,
-      //         it1->second.x(), it1->second.y(), 0.0,
-      //         it2->second.x(), it2->second.y(), 0.0,
-      // 	      mdisp, mdisp, mdisp);
-
       fprintf(uvx, "ST(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,"
               "%22.15E,%22.15E){%22.15E,%22.15E,%22.15E};\n",
               it0->second.x(), it0->second.y(), 0.0,
@@ -2922,8 +2850,6 @@ void GFaceCompound::printStuff(int iNewton) const
               t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z());
     }
   }
-  // fprintf(uva,"};\n");
-  // fclose(uva);
   fprintf(uvx,"};\n");
   fclose(uvx);
   fprintf(uvy,"};\n");
@@ -2934,10 +2860,7 @@ void GFaceCompound::printStuff(int iNewton) const
   fclose(xyzu);
   fprintf(xyzv,"};\n");
   fclose(xyzv);
-  // fprintf(xyzc,"};\n");
-  // fclose(xyzc);
-  // fprintf(uvm,"};\n");
-  // fclose(uvm);
+
 }
 
 // useful for mesh generators ----------------------------------------

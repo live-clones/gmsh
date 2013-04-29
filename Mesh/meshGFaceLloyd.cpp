@@ -420,14 +420,15 @@ smoothing::smoothing(int param1,int param2){
 void smoothing::optimize_face(GFace* gf){
   std::set<MVertex*> all;
 
+  //do not optimize face if it has a compound
+  if(gf->getCompound()) return;
+
   // get all the points of the face ...
   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     for (int j = 0;j<e->getNumVertices(); j++){
       MVertex *v = e->getVertex(j);
-      //if (v->onWhat()->dim() < 2){
-	all.insert(v);
-	//}
+      all.insert(v);
     }
   }
 
