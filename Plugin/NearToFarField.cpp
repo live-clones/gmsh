@@ -23,6 +23,7 @@ StringXNumber NearToFarFieldOptions_Number[] = {
   {GMSH_FULLRC, "Normalize",        NULL, 1},
   {GMSH_FULLRC, "dB",               NULL, 1},
   {GMSH_FULLRC, "NegativeTime",     NULL, 0.},
+  {GMSH_FULLRC, "RFar",             NULL, 0},
 };
 
 StringXString NearToFarFieldOptions_String[] = {
@@ -169,8 +170,8 @@ double GMSH_NearToFarFieldPlugin::getFarFieldJin(std::vector<element*> &allElems
   E_phi[1]   =  k0_over_4pir * ( (Ls[0][1] - Z0 * Ns[0][2]) * cos_k0r +
                                  (Ls[1][1] - Z0 * Ns[1][2]) * sin_k0r ) ;
 
-  double farF =  1./2./Z0 * ( (E_theta[0]*E_theta[0] + E_theta[1]*E_theta[1]) +
-                              (E_phi[0]*E_phi[0]+E_phi[1] *E_phi[1]) ) ;
+  double farF =  1./2./Z0 * ( (E_theta[0] * E_theta[0] + E_theta[1] * E_theta[1]) +
+                              (E_phi[0] * E_phi[0] + E_phi[1] * E_phi[1]) ) ;
 
   return farF ;
 }
@@ -264,6 +265,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   bool _normalize = (bool)NearToFarFieldOptions_Number[9].def;
   bool _dB = (bool)NearToFarFieldOptions_Number[10].def;
   int _negativeTime = (int)NearToFarFieldOptions_Number[11].def;
+  double _rfar = (int)NearToFarFieldOptions_Number[12].def;
 
   std::string _outFile = NearToFarFieldOptions_String[0].def;
 
@@ -409,9 +411,11 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
         farField2i[i][j] = farFieldVec[1][1];
         farField3i[i][j] = farFieldVec[2][1];
       }
-      else
-        farField[i][j] = getFarFieldJin(allElems, js, ms, _k0, 10 * lc,
+      else{
+        double rfar = (_rfar ? _rfar : 10 * lc);
+        farField[i][j] = getFarFieldJin(allElems, js, ms, _k0, rfar,
                                         theta[i][j], phi[i][j]);
+      }
       ffmin = std::min(ffmin, farField[i][j]);
       ffmax = std::max(ffmax, farField[i][j]);
     }
