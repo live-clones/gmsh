@@ -231,10 +231,11 @@ class GFaceCompound : public GFace {
   void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{}
   virtual SPoint2 getCoordinates(MVertex *v) const { return SPoint2(); }
-  void parametrize() const {}
+  bool parametrize() const {return false;}
   virtual std::list<GFace*> getCompounds() const { return std::list<GFace*>(); }
   GPoint intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p,
 				 const double &d, double uv[2]) const { return GPoint(); }
+  int allowPartition() const{ return 1; }
 };
 
 #endif
