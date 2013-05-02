@@ -3459,7 +3459,8 @@ entity to which the element belongs; the second is the number of the
 elementary geometrical entity to which the element belongs; the third is
 the number of mesh partitions to which the element belongs, followed by
 the partition ids (negative partition ids indicate ghost cells). A zero
-tag is equivalent to no tag.
+tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
+require at least the first two tags (physical and elementary tags).
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of
