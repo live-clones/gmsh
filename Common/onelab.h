@@ -701,7 +701,7 @@ namespace onelab{
       }
       return true;
     }
-    void _getAllParameters(std::set<parameter*> &ps) const
+    void _getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
     {
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
@@ -714,7 +714,7 @@ namespace onelab{
     void clear(const std::string &name="", const std::string &client="")
     {
       if(name.empty() && client.empty()){
-        std::set<parameter*> ps;
+        std::set<parameter*, parameterLessThan> ps;
         _getAllParameters(ps);
         for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
           delete *it;
@@ -753,7 +753,7 @@ namespace onelab{
     // check if at least one parameter depends on the given client
     bool hasClient(const std::string &client) const
     {
-      std::set<parameter*> ps;
+      std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
@@ -763,7 +763,7 @@ namespace onelab{
     // parameters that depend on a given client)
     bool getChanged(const std::string &client="") const
     {
-      std::set<parameter*> ps;
+      std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++){
         if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged()){
@@ -776,7 +776,7 @@ namespace onelab{
     // parameters that depend on a given client)
     bool setChanged(bool changed, const std::string &client="")
     {
-      std::set<parameter*> ps;
+      std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client))
@@ -788,7 +788,7 @@ namespace onelab{
     std::vector<std::string> toChar(const std::string &client="") const
     {
       std::vector<std::string> s;
-      std::set<parameter*> ps;
+      std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*>::const_iterator it = ps.begin(); it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client))
