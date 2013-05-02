@@ -1084,6 +1084,7 @@ void Frame_field::checkAnnData(GEntity* ge, const std::string& filename){
 #include "PView.h"
 #include "PViewDataList.h"
 void Frame_field::save_energy(GRegion* gr, const std::string& filename){
+#ifdef HAVE_POST
   MElement* pElem;
   const int order = 1;
   const int NumNodes = 4;
@@ -1136,6 +1137,7 @@ void Frame_field::save_energy(GRegion* gr, const std::string& filename){
   data->writePOS(filename + ".pos");
   data->writeMSH(filename + ".msh");
   data->finalize();
+#endif
 }
 
 /****************class Size_field****************/
