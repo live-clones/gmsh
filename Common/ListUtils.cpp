@@ -115,8 +115,10 @@ int List_Nbr(List_T * liste)
 
 void List_Read(List_T * liste, int index, void *data)
 {
-  if((index < 0) || (index >= liste->n))
-    Msg::Fatal("Wrong list index (read)");
+  if((index < 0) || (index >= liste->n)){
+    Msg::Error("Wrong list index (read)");
+    index = 0;
+  }
   memcpy(data, &liste->array[index * liste->size], liste->size);
 }
 
@@ -138,18 +140,20 @@ void List_Pop(List_T * liste)
 
 void *List_Pointer(List_T * liste, int index)
 {
-  if((index < 0) || (index >= liste->n))
-    Msg::Fatal("Wrong list index (pointer)");
-
+  if((index < 0) || (index >= liste->n)){
+    Msg::Error("Wrong list index (pointer)");
+    index = 0;
+  }
   liste->isorder = 0;
   return (&liste->array[index * liste->size]);
 }
 
 void *List_Pointer_NoChange(List_T * liste, int index)
 {
-  if((index < 0) || (index >= liste->n))
-    Msg::Fatal("Wrong list index (pointer)");
-
+  if((index < 0) || (index >= liste->n)){
+    Msg::Error("Wrong list index (pointer)");
+    index = 0;
+  }
   return (&liste->array[index * liste->size]);
 }
 
@@ -273,7 +277,7 @@ void List_Copy(List_T * a, List_T * b)
 
 void List_Remove(List_T *a, int i)
 {
-  memcpy(&a->array[i * a->size], &a->array[(i + 1) * a->size], 
+  memcpy(&a->array[i * a->size], &a->array[(i + 1) * a->size],
          a->size * (a->n - i - 1));
   a->n--;
 }
@@ -293,7 +297,7 @@ void List_Insert_In_List(List_T *a, int i, List_T *b)
 
 List_T *ListOfDouble2ListOfInt(List_T *dList)
 {
-  int n = List_Nbr(dList); 
+  int n = List_Nbr(dList);
   List_T *iList = List_Create(n, n, sizeof(int));
   for(int i = 0; i < n; i++){
     double d;

@@ -2808,7 +2808,8 @@ static void glueFacesInRegions(GModel *model,
     for (std::list<GFace*>::iterator fit = old.begin(); fit != old.end(); fit++){
       std::map<GFace*, GFace*>::iterator itR = Duplicates2Unique.find(*fit);
       if (itR == Duplicates2Unique.end()){
-        Msg::Fatal("Error in the gluing process");
+        Msg::Error("Error in the gluing process");
+        return;
       }
       GFace *temp = itR->second;;
       fnew.push_back(temp);

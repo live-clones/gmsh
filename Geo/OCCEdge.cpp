@@ -76,8 +76,11 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     }
 
     if(c2d.IsNull()){
-      Msg::Fatal("Reparam on face failed: curve %d is not on surface %d",
+      Msg::Error("Reparam on face failed: curve %d is not on surface %d",
 		 tag(), face->tag());
+      const GPoint pt = point(epar);
+      SPoint3 sp(pt.x(), pt.y(), pt.z());
+      return face->parFromPoint(sp);
     }
 
     double u, v;

@@ -70,11 +70,9 @@ GFace *GEntity::cast2Face() { return dynamic_cast<GFace*>(this); }
 GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
 
 // sets the entity m from which the mesh will be copied
-void GEntity::setMeshMaster(int m_signed){
-
+void GEntity::setMeshMaster(int m_signed)
+{
   if(m_signed == tag()){ _meshMaster = m_signed; return; }
-
-  //  printf("setting mesh master %d to mesh entity %d\n",m_signed,tag());
 
   GEntity *gMaster = 0;
   int m = abs(m_signed);
@@ -85,7 +83,9 @@ void GEntity::setMeshMaster(int m_signed){
   case 3 : gMaster = model()->getRegionByTag(m); break;
   }
   if (!gMaster){
-    Msg::Fatal("Model entity %d of dimension %d cannot be the mesh master of model entity %d",m,dim(), tag());
+    Msg::Error("Model entity %d of dimension %d cannot be the mesh master of entity %d",
+               m, dim(), tag());
+    return;
   }
   int masterOfMaster = gMaster->meshMaster();
 
@@ -93,14 +93,13 @@ void GEntity::setMeshMaster(int m_signed){
     _meshMaster = m_signed;
   }
   else {
-    //    printf("mesh entity %d has already a master %d\n",m,masterOfMaster);
     setMeshMaster ( masterOfMaster * ((m_signed > 0) ? 1 : -1));
   }
 }
 
 // gets the entity from which the mesh will be copied
-int GEntity::meshMaster() const{
-
+int GEntity::meshMaster() const
+{
   if (_meshMaster == tag()) return tag();
 
   GEntity *gMaster = 0;
@@ -111,7 +110,8 @@ int GEntity::meshMaster() const{
   case 3 : gMaster = model()->getRegionByTag(abs(_meshMaster)); break;
   }
   if (!gMaster){
-    Msg::Fatal("meshMaster : Model entity %d of dimension %d cannot be the mesh master of model entity %d",_meshMaster,dim(),tag());
+    Msg::Error("Could not find mesh master entity %d",_meshMaster);
+    return tag();
   }
   int masterOfMaster = gMaster->meshMaster();
 
@@ -122,4 +122,3 @@ int GEntity::meshMaster() const{
     return gMaster->meshMaster() * ((_meshMaster > 0) ? 1 : -1);
   }
 }
-
