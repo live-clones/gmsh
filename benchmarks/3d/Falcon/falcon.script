@@ -32,10 +32,10 @@ For i In {0 : #ss[]-1}
 EndFor
 
 Mesh 2;
-Save "SurfaceMeshUniform.stl";
+Save "tmp.stl";
 Delete All;
 
-Merge "SurfaceMeshUniform.stl";
+Merge "tmp.stl";
 
 CreateTopology;
 

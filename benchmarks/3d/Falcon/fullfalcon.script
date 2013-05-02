@@ -1,0 +1,129 @@
+Include "param.geo";
+
+Mesh.RemeshParametrization=7;
+Mesh.RemeshAlgorithm=1;
+Mesh.Algorithm=6;
+
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthMin = lc;
+Mesh.CharacteristicLengthMax = lc;
+Mesh.LcIntegrationPrecision = 1.e-5;
+Mesh.MinimumCirclePoints = 50;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.CharacteristicLengthFromCurvature = 0;
+Mesh.CharacteristicLengthFromPoints = 0;
+
+Merge "FullInitialMeshFalcon.msh";
+
+CreateTopology;
+
+// Make all lines compound:
+ll[] = Line "*";
+For j In {0 : #ll[]-1}
+  Compound Line(1000+j) = ll[j];
+  Physical Line(1000+j) = (1000+j);
+EndFor
+
+// Make all surfaces compound and physical:
+ss[] = Surface "*";
+For i In {0 : #ss[]-1}
+  Compound Surface(i+1000) = ss[i];
+  Physical Surface(i+1) = { i+1000 };
+EndFor
+
+Mesh 2;
+Save "SurfaceMeshUniform.stl";
+
+If(TWO_PLANES)
+Plugin(NewView).Run;
+x = -Pi/10;
+y = -Pi/10;
+z = -Pi/10;
+A = Cos(x); B = Sin(x); C = Cos(y); D = Sin(y); E = Cos(z); F = Sin(z);
+AD = A * D; BD = B * D;
+Plugin(Transform).A11 = C*E; 
+Plugin(Transform).A12 = BD*E+A*F;
+Plugin(Transform).A13 =-AD*E+B*F;
+Plugin(Transform).A21 =-C*F;
+Plugin(Transform).A22 =-BD*F+A*E;
+Plugin(Transform).A23 = AD*F+B*E;
+Plugin(Transform).A31 = D;
+Plugin(Transform).A32 =-B*C;
+Plugin(Transform).A33 = A*C;
+Plugin(Transform).Tx = 11;
+Plugin(Transform).Ty = 1;
+Plugin(Transform).Tz = -1;
+Plugin(Transform).Run;
+Save "SurfaceMeshUniform2.stl";
+EndIf
+
+Delete All;
+
+Include "param.geo";
+
+Merge "SurfaceMeshUniform.stl";
+If(TWO_PLANES)
+  Merge "SurfaceMeshUniform2.stl";
+EndIf
+
+zmin = General.MinZ-dd;
+zmax = General.MaxZ+dd;
+xmin = General.MinX-dd;
+xmax = General.MaxX+dd;
+ymin = General.MinY-dd;
+ymax = General.MaxY+dd;
+
+Point(20001) = {xmin, ymin, zmin};
+Point(20002) = {xmax, ymin, zmin};
+Point(20003) = {xmax, ymax, zmin};
+Point(20004) = {xmin, ymax, zmin};
+Point(20005) = {xmin, ymin, zmax};
+Point(20006) = {xmax, ymin, zmax};
+Point(20007) = {xmax, ymax, zmax};
+Point(20008) = {xmin, ymax, zmax};
+
+Line(10) = {20001, 20002};
+Line(11) = {20002, 20003};
+Line(12) = {20003, 20004};
+Line(13) = {20004, 20001};
+Line(14) = {20005, 20006};
+Line(15) = {20006, 20007};
+Line(16) = {20007, 20008};
+Line(17) = {20008, 20005};
+Line(18) = {20001, 20005};
+Line(19) = {20002, 20006};
+Line(20) = {20003, 20007};
+Line(21) = {20004, 20008};
+
+Line Loop(22) = {10,19,-14,-18};
+Line Loop(23) = {11,20,-15,-19};
+Line Loop(24) = {12,21,-16,-20};
+Line Loop(25) = {13,18,-17,-21};
+Line Loop(26) = {14,15,16,17};
+Line Loop(27) = {10,11,12,13};
+
+Plane Surface(22) = {22};
+Plane Surface(23) = {23};
+Plane Surface(24) = {24};
+Plane Surface(25) = {25};
+Plane Surface(26) = {26};
+Plane Surface(27) = {27};
+
+Surface Loop(20) = {22,23,24,25,26,27};
+Surface Loop(1) = {1};
+
+If(!TWO_PLANES)
+  Volume(1) = {20,1};
+  Physical Surface(1) = {1};
+EndIf
+If(TWO_PLANES)
+  Surface Loop(2) = {2};
+  Volume(1) = {20,1,2};
+  Physical Surface(1) = {1,2};
+EndIf
+
+Physical Surface(20) = {22:27};
+Physical Volume(40) = {1};
+
+Mesh 3;
+Save "fullfalcon.msh";
