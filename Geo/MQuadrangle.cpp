@@ -294,6 +294,7 @@ double MQuadrangle::getOuterRadius()
 }
 double MQuadrangle::getInnerRadius()
 {
+#if defined(HAVE_LAPACK)
   // get the coordinates (x, y, z) of the 4 points defining the Quad
   double x[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
   double y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
@@ -364,4 +365,30 @@ double MQuadrangle::getInnerRadius()
     }
   }
   return R;
+#else // HAVE_LAPACK
+  // Default implementation. Not sure that the following give exactly 
+  // the same value as the HAVE_LAPACK case !
+  // but same value for a square
+  
+  // Mid-point of each edge of the quadrangle
+  SPoint3 A(_v[0]->x()+_v[1]->x(),_v[0]->y()+_v[1]->y(),_v[0]->z()+_v[1]->z());
+  SPoint3 B(_v[1]->x()+_v[2]->x(),_v[1]->y()+_v[2]->y(),_v[1]->z()+_v[2]->z());
+  SPoint3 C(_v[2]->x()+_v[3]->x(),_v[2]->y()+_v[3]->y(),_v[2]->z()+_v[3]->z());
+  SPoint3 D(_v[3]->x()+_v[0]->x(),_v[3]->y()+_v[0]->y(),_v[3]->z()+_v[0]->z());
+  A*=0.5; B*=0.5; C*=0.5; D*=0.5;
+
+  // compute the length of the side
+  double a = A.distance(B);
+  double b = B.distance(C);
+  double c = C.distance(D);
+  double d = D.distance(A);
+
+  // perimeter
+  double s = a+b+c+d;
+  double halfs = 0.5*s;
+
+  return 0.25*sqrt( (a*c+b*d)*(a*d+b*c)*(a*b+c*d)/
+                   ((halfs-a)*(halfs-b)*(halfs-c)*(halfs-d))
+                  );
+#endif // HAVE_LAPACK
 }
