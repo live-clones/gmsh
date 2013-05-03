@@ -1461,7 +1461,10 @@ void GModel::checkMeshCoherence(double tolerance)
     std::vector<MVertex*> vertices;
     for(unsigned int i = 0; i < entities.size(); i++)
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-        SPoint3 p = entities[i]->getMeshElement(j)->barycenter();
+        MElement *e = entities[i]->getMeshElement(j);
+        if(e->getVolumeSign() < 0)
+          Msg::Warning("Element %d has egative volume", e->getNum());
+        SPoint3 p = e->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
       }
     MVertexPositionSet pos(vertices);
