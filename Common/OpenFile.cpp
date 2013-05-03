@@ -402,7 +402,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     status = readFile3M(fileName);
   }
 #endif
-#if defined(HAVE_ONELAB) && defined(HAVE_FLTK)
+#if defined(HAVE_ONELAB)
   else if(ext == ".pro" && opt_solver_name(0, GMSH_GET, "") == "GetDP"){
     std::vector<std::string> split = SplitFileName(fileName);
     GModel::current()->setName(split[1] + ".geo");

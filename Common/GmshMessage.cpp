@@ -352,6 +352,10 @@ void Msg::Info(const char *fmt, ...)
     fflush(stdout);
   }
 }
+void Msg::RequestRender()
+{
+  if(_callback) (*_callback)("RequestRender", "");
+}
 
 void Msg::Direct(const char *fmt, ...)
 {
@@ -487,7 +491,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif
-
+    if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
       fprintf(stdout, "%s                                          \r",
               (n > N - 1) ? "" : str2);
