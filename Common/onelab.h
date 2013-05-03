@@ -716,7 +716,8 @@ namespace onelab{
       if(name.empty() && client.empty()){
         std::set<parameter*, parameterLessThan> ps;
         _getAllParameters(ps);
-        for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+        for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
+            it != ps.end(); it++)
           delete *it;
         _numbers.clear();
         _strings.clear();
@@ -755,7 +756,8 @@ namespace onelab{
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
-      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+      for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
+          it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
       return false;
     }
@@ -765,7 +767,8 @@ namespace onelab{
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
-      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++){
+      for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
+          it != ps.end(); it++){
         if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged()){
           return true;
         }
@@ -778,7 +781,8 @@ namespace onelab{
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
-      for(std::set<parameter*>::iterator it = ps.begin(); it != ps.end(); it++)
+      for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
+          it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client))
           (*it)->setChanged(changed);
       return true;
@@ -790,7 +794,8 @@ namespace onelab{
       std::vector<std::string> s;
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
-      for(std::set<parameter*>::const_iterator it = ps.begin(); it != ps.end(); it++)
+      for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
+          it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client))
           s.push_back((*it)->toChar());
       return s;
