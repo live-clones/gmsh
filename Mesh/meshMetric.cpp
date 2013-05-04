@@ -95,7 +95,9 @@ void meshMetric::updateMetrics()
 
     if (setOfMetrics.size() > 1)
       for (unsigned int i=1;i<setOfMetrics.size();i++){
-        _nodalMetrics[ver] = intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]);
+        _nodalMetrics[ver] = (_dim == 3) ?
+          intersection_conserve_mostaniso(_nodalMetrics[ver],setOfMetrics[i][ver]) :
+          intersection_conserve_mostaniso_2d(_nodalMetrics[ver],setOfMetrics[i][ver]);
         _nodalSizes[ver] = std::min(_nodalSizes[ver],setOfSizes[i][ver]);
       }
   }
@@ -105,19 +107,22 @@ void meshMetric::updateMetrics()
 void meshMetric::exportInfo(const char * fileendname)
 {
   if (needMetricUpdate) updateMetrics();
-  std::stringstream sg,sm,sl,sh;
+  std::stringstream sg,sm,sl,sh,shm;
   sg << "meshmetric_gradients_" << fileendname;
   sm << "meshmetric_metric_" << fileendname;
   sl << "meshmetric_levelset_" << fileendname;
   sh << "meshmetric_hessian_" << fileendname;
+  shm << "meshmetric_hessianmat_" << fileendname;
   std::ofstream out_grad(sg.str().c_str());
   std::ofstream out_metric(sm.str().c_str());
   std::ofstream out_ls(sl.str().c_str());
   std::ofstream out_hess(sh.str().c_str());
+  std::ofstream out_hessmat(shm.str().c_str());
   out_grad << "View \"ls_gradient\"{" << std::endl;
   out_metric << "View \"metric\"{" << std::endl;
   out_ls << "View \"ls\"{" << std::endl;
   out_hess << "View \"hessian\"{" << std::endl;
+  out_hessmat << "View \"hessian_mat\"{" << std::endl;
   std::vector<MElement*>::iterator itelem = _elements.begin();
   std::vector<MElement*>::iterator itelemen = _elements.end();
   for (;itelem!=itelemen;itelem++){
@@ -127,12 +132,14 @@ void meshMetric::exportInfo(const char * fileendname)
       out_grad << "VT(";
       out_ls << "ST(";
       out_hess << "ST(";
+      out_hessmat << "TT(";
     }
     else {
       out_metric << "TS(";
       out_grad << "VS(";
       out_ls << "SS(";
       out_hess << "SS(";
+      out_hessmat << "TS(";
     }
     for ( int i = 0; i < e->getNumVertices(); i++) {
       MVertex *ver = e->getVertex(i);
@@ -140,17 +147,20 @@ void meshMetric::exportInfo(const char * fileendname)
       out_grad << ver->x() << "," << ver->y() << "," << ver->z();
       out_ls << ver->x() << "," << ver->y() << "," << ver->z();
       out_hess << ver->x() << "," << ver->y() << "," << ver->z();
+      out_hessmat << ver->x() << "," << ver->y() << "," << ver->z();
       if (i!=e->getNumVertices()-1){
         out_metric << ",";
         out_grad << ",";
         out_ls << ",";
         out_hess << ",";
+        out_hessmat << ",";
       }
       else{
         out_metric << "){";
         out_grad << "){";
         out_ls << "){";
-	out_hess << "){";
+        out_hess << "){";
+        out_hessmat << "){";
       }
     }
     for ( int i = 0; i < e->getNumVertices(); i++) {
@@ -161,12 +171,12 @@ void meshMetric::exportInfo(const char * fileendname)
       SVector3 gradudz = dgrads[2][ver];
       out_hess << (gradudx(0) + gradudy(1) + gradudz(2));
       if (i == (e->getNumVertices() - 1)){
-	out_ls << "};" << std::endl;
-	out_hess << "};" << std::endl;
+        out_ls << "};" << std::endl;
+        out_hess << "};" << std::endl;
       }
       else {
-	out_ls << ",";
-	out_hess << ",";
+        out_ls << ",";
+        out_hess << ",";
       }
       for (int k=0;k<3;k++){
         out_grad << grads[ver](k);
@@ -174,8 +184,15 @@ void meshMetric::exportInfo(const char * fileendname)
         else out_grad << ",";
         for (int l=0;l<3;l++){
           out_metric << _nodalMetrics[ver](k,l);
-          if ((k == 2) && (l == 2) && (i == (e->getNumVertices() - 1))) out_metric << "};" << std::endl;
-          else out_metric << ",";
+          out_hessmat << dgrads[k][ver](l);
+          if ((k == 2) && (l == 2) && (i == (e->getNumVertices() - 1))) {
+            out_metric << "};" << std::endl;
+            out_hessmat << "};" << std::endl;
+          }
+          else {
+            out_metric << ",";
+            out_hessmat << ",";
+          }
         }
       }
     }
@@ -184,10 +201,12 @@ void meshMetric::exportInfo(const char * fileendname)
   out_metric << "};" << std::endl;
   out_ls << "};" << std::endl;
   out_hess << "};" << std::endl;
+  out_hessmat << "};" << std::endl;
   out_grad.close();
   out_metric.close();
   out_ls.close();
   out_hess.close();
+  out_hessmat.close();
 }
 
 meshMetric::~meshMetric()
@@ -360,10 +379,9 @@ void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,  SMetric
 
 void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
 {
-  double signed_dist;
+
   SVector3 gradudx, gradudy,gradudz,gr;
   if(ver != NULL){
-    signed_dist = vals[ver];
     gr = grads[ver];
     gradudx = dgrads[0][ver];
     gradudy = dgrads[1][ver];
@@ -373,7 +391,6 @@ void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3
     hessian(2,0) = gradudz(0); hessian(2,1) = gradudz(1); hessian(2,2) = gradudz(2);
   }
   else if (ver == NULL){
-    signed_dist = (*_fct)(x,y,z); 
     _fct->gradient(x,y,z,gr(0),gr(1),gr(2));
     _fct->hessian(x,y,z, hessian(0,0),hessian(0,1),hessian(0,2),
 		  hessian(1,0),hessian(1,1),hessian(1,2),
@@ -394,7 +411,7 @@ void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3
   
   SVector3 t1 (V(0,0),V(1,0),V(2,0));
   SVector3 t2 (V(0,1),V(1,1),V(2,1));
-  SVector3 t3 (V(0,2),V(1,2),V(2,2));
+  SVector3 t3  = (_dim == 3) ? SVector3(V(0,2),V(1,2),V(2,2)) : SVector3(0.,0.,1.);
   
   size =  std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3));
   metric = SMetric3(lambda1,lambda2,lambda3,t1,t2,t3);

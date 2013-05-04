@@ -169,6 +169,7 @@ SMetric3 intersection_conserveM1 (const SMetric3 &m1,
 
 // preserve orientation of the most anisotropic metric
 SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2);
+SMetric3 intersection_conserve_mostaniso_2d (const SMetric3 &m1, const SMetric3 &m2);
 // compute the largest inscribed ellipsoid...
 SMetric3 intersection (const SMetric3 &m1,
                        const SMetric3 &m2);

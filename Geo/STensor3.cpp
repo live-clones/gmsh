@@ -64,22 +64,76 @@ SMetric3 intersection_conserveM1 (const SMetric3 &m1, const SMetric3 &m2)
   return iv;
 }
 
+namespace {
+
+double anisoRatio2D (double v0x, double v0y, double v0z,
+                     double v1x, double v1y, double v1z,
+                     double v2x, double v2y, double v2z,
+                     double s0, double s1, double s2) {
+
+  static const double eps = 1.e-8;
+
+  double ratio;
+  if (v0x*v0x+v0y*v0y+(v0z-1.)*(v0z-1.) < eps)        // If 1st eigenvect corresponds to z dir. ...
+    ratio = std::min(fabs(s1/s2),fabs(s2/s1));        // ... consider ratio of 2nd and 3rd eigenval.
+  else if (v1x*v1x+v1y*v1y+(v1z-1.)*(v1z-1.) < eps)   // If 2nd eigenvect corresponds to z dir. ...
+    ratio = std::min(fabs(s0/s2),fabs(s2/s0));        // ... consider ratio of 1st and 3rd eigenval.
+  else if (v2x*v2x+v2y*v2y+(v2z-1.)*(v2z-1.) < eps)   // If 3rd eigenvect corresponds to z dir. ...
+    ratio = std::min(fabs(s0/s1),fabs(s1/s0));        // ... consider ratio of 1st and 2nd eigenval.
+  else {
+    printf("Error in anisoRatio2D: z direction not found!\n");
+    ratio = 0.;
+  }
+
+  return ratio;
+
+}
+
+}
+
 // preserve orientation of the most anisotropic metric !!!
 SMetric3 intersection_conserve_mostaniso (const SMetric3 &m1, const SMetric3 &m2)
 {
   fullMatrix<double> V1(3,3);
   fullVector<double> S1(3);
   m1.eig(V1,S1,true);
-  double lambda1_min = std::min(std::min(fabs(S1(0)),fabs(S1(1))),fabs(S1(2)));
+  double ratio1 = fabs(S1(0)/S1(2));  // Minimum ratio because we take sorted eigenvalues
   fullMatrix<double> V2(3,3);
   fullVector<double> S2(3);
   m2.eig(V2,S2,true);
-  double lambda2_min = std::min(std::min(fabs(S2(0)),fabs(S2(1))),fabs(S2(2)));
-  
-  if (lambda1_min < lambda2_min)
+  double ratio2 = fabs(S2(0)/S2(2));  // Minimum ratio because we take sorted eigenvalues
+
+  if (ratio1 < ratio2)
     return intersection_conserveM1(m1, m2);
   else
     return intersection_conserveM1(m2, m1);
+}
+
+// preserve orientation of the most anisotropic metric in 2D!!!
+SMetric3 intersection_conserve_mostaniso_2d (const SMetric3 &m1, const SMetric3 &m2)
+{
+
+  fullMatrix<double> V1(3,3);
+  fullVector<double> S1(3);
+  m1.eig(V1,S1,false);
+  double ratio1 = anisoRatio2D(V1(0,0),V1(1,0),V1(2,0),
+                               V1(0,1),V1(1,1),V1(2,1),
+                               V1(0,2),V1(1,2),V1(2,2),
+                               S1(0),S1(1),S1(2));
+
+  fullMatrix<double> V2(3,3);
+  fullVector<double> S2(3);
+  m2.eig(V2,S2,false);
+  double ratio2 = anisoRatio2D(V2(0,0),V2(1,0),V2(2,0),
+                               V2(0,1),V2(1,1),V2(2,1),
+                               V2(0,2),V2(1,2),V2(2,2),
+                               S2(0),S2(1),S2(2));
+
+  if (ratio1 < ratio2)
+    return intersection_conserveM1(m1, m2);
+  else
+    return intersection_conserveM1(m2, m1);
+
 }
 
 // (1-t) * m1 + t * m2
