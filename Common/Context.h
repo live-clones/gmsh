@@ -79,6 +79,7 @@ class CTX {
   std::string bgmFileName, outputFileName, defaultFileName, tmpFileName;
   std::string sessionFileName, optionsFileName, errorFileName;
   std::string meshStatReportFileName;
+  std::string argv0;
   // the home directory
   std::string homeDir;
   // file history

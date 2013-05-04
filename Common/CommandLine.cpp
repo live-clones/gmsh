@@ -268,6 +268,7 @@ void GetOptions(int argc, char *argv[])
 
 #if defined(HAVE_PARSER)
   if(argc && argv){
+    CTX::instance()->argv0 = std::string(argv[0]);
     // parse session and option file (if argc/argv is not provided skip this
     // step: this is usually what is expected when using Gmsh as a library)
     ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);

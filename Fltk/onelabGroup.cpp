@@ -11,6 +11,7 @@
 typedef unsigned long intptr_t;
 #endif
 
+#include <ctype.h>
 #include "GmshMessage.h"
 #include "onelab.h"
 #include "gmshLocalNetworkClient.h"
@@ -232,7 +233,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         std::vector<onelab::number> par; get(par, name);
         if(par.size() == 1) {
 	  p = par[0];
-	  onelab::number y; y.fromChar(message); 
+	  onelab::number y; y.fromChar(message);
 	  onelabUtils::updateNumber(p,y);
 	}
 	else
@@ -244,11 +245,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
                                            p.getMin(), p.getMax());
       }
       else if(type == "string"){
-        onelab::string p; 
+        onelab::string p;
 	std::vector<onelab::string> par; get(par, name);
         if(par.size() == 1){
 	  p = par[0];
-	  onelab::string y; y.fromChar(message); 
+	  onelab::string y; y.fromChar(message);
 	  onelabUtils::updateString(p,y);
 	}
 	else
@@ -864,20 +865,47 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 #if defined(WIN32)
   pattern += ".exe";
 #endif
-  const char *old = 0;
-  if(!c->getExecutable().empty()) old = c->getExecutable().c_str();
 
-  if(!w){
-    const char *old = fl_close;
-    fl_close = "OK";
-    fl_message("This appears to be the first time you are trying to run %s.\n\n"
-               "Please select the path to the executable.", c->getName().c_str());
-    fl_close = old;
+  std::string exe = "";
+
+  if(!w){ // we entered here automatically because no executable is given
+
+    // try to find an executable automatically (this is really useful for
+    // beginners)
+    if(CTX::instance()->argv0.size()){
+      std::vector<std::string> split = SplitFileName(CTX::instance()->argv0);
+      std::string name = c->getName();
+      for(unsigned int i = 0; i < name.size(); i++)
+        name[i] = tolower(name[i]);
+      std::string path = split[0] + name;
+#if defined(WIN32)
+      path += ".exe";
+#endif
+      if(!StatFile(path)){
+        exe = path;
+        Msg::Info("Automatically found %s executable: %s", c->getName().c_str(),
+                  exe.c_str());
+      }
+    }
+
+    if(exe.empty()){
+      const char *o = fl_close;
+      fl_close = "OK";
+      fl_message("This appears to be the first time you are trying to run %s.\n\n"
+                 "Please select the path to the executable.", c->getName().c_str());
+      fl_close = o;
+    }
   }
 
-  std::string title = "Choose location of " + c->getName() + " executable";
-  if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old)){
-    std::string exe = fileChooserGetName(1);
+  if(exe.empty()){
+    const char *old = 0;
+    if(c->getExecutable().size()) old = c->getExecutable().c_str();
+    std::string title = "Choose location of " + c->getName() + " executable";
+    if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old))
+      exe = fileChooserGetName(1);
+  }
+
+  if(exe.size()){
     c->setExecutable(exe);
     if(c->getIndex() >= 0 && c->getIndex() < 5)
       opt_solver_executable(c->getIndex(), GMSH_SET, exe);
