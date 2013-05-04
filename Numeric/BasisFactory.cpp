@@ -42,6 +42,7 @@ const nodalBasis* BasisFactory::create(int elementType) {
       return 0;
   }
 
+  // FIXME: check if already exists to deallocate if necessary
   fs.insert(std::make_pair(elementType, B));
 
   return fs[elementType];

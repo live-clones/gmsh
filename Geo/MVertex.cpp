@@ -502,7 +502,7 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
   return true;
 }
 
-bool reparamMeshVertexOnEdge( MVertex *v, const GEdge *ge, double &param)
+bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param)
 {
   param = 1.e6;
   Range<double> bounds = ge->parBounds(0);
