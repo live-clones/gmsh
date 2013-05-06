@@ -232,9 +232,11 @@ class client :
     addr = self.addr
     if '/' in addr or '\\' in addr or ':' not in addr :
       self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+      self.socket.connect(addr)
     else :
       self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(addr)
+      s = addr.split(':')
+      self.socket.connect((s[0], int(s[1])))
     #self.socket.setblocking(1)
     #self.socket.settimeout(5.0)
 
