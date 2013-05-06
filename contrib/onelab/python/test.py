@@ -21,7 +21,7 @@ if OL.action == 'compute' :
 #OL.run('gmsh', 'gmsh ' + modelName + '.geo -2')
 #OL.mergeFile(modelName + '.msh')
 
-OL.run('subclient', 'sub.py','')
+OL.run('subclient', './sub.py','')
 
 
 #B = oc.defineNumber('Group/B', 0, min = -10, max = 10, step = 1)
