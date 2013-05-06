@@ -59,9 +59,7 @@ CTX::CTX() : gamepad(0)
   post.draw = 1;
   post.combineTime = 0; // try to combineTime views at startup
   lock = 0; // very primitive locking
-  ///
   fileread=false;
-  ///
 
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;

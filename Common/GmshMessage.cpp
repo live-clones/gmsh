@@ -17,6 +17,7 @@
 #include "Options.h"
 #include "Context.h"
 #include "OpenFile.h"
+#include "StringUtils.h"
 #include "OS.h"
 
 #if defined(HAVE_ONELAB)
@@ -112,6 +113,25 @@ void Msg::Init(int argc, char **argv)
     if(i) _commandLine += " ";
     _commandLine += argv[i];
   }
+
+  if(argc && argv){
+    CTX::instance()->argv0 = std::string(argv[0]);
+    std::vector<std::string> split = SplitFileName(CTX::instance()->argv0);
+
+    // add the directory where the binary is installed to the path where Python
+    // looks for modules
+    std::string path;
+    char *tmp = getenv("PYTHONPATH");
+    if(tmp){
+      path = tmp;
+      path += ":" + split[0];
+    }
+    else
+      path = split[0];
+    setenv("PYTHONPATH", path.c_str(), 1);
+    printf("pythonpath = %s\n", path.c_str());
+  }
+
   InitializeOnelab("Gmsh");
 }
 
