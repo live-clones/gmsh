@@ -1,10 +1,10 @@
-#include "QuadNodeBasis.h"
+#include "QuadNedelecBasis.h"
 #include "QuadReferenceSpace.h"
 #include "Legendre.h"
 
 using namespace std;
 
-QuadNodeBasis::QuadNodeBasis(unsigned int order){
+QuadNedelecBasis::QuadNedelecBasis(void){
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
   nRefSpace = refSpace->getNPermutation();
@@ -12,24 +12,17 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    faceV = refSpace->getAllFace();
-
   // Set Basis Type //
-  this->order = order;
+  order = 0;
 
-  type = 0;
+  type = 1;
   dim  = 2;
 
-  nVertex   = 4;
-  nEdge     = 4 * (order - 1);
-  nFace     =     (order - 1) * (order - 1);
+  nVertex   = 0;
+  nEdge     = 4;
+  nFace     = 0;
   nCell     = 0;
-  nFunction = nVertex + nEdge + nFace + nCell;
-
-  // Legendre Polynomial //
-  Polynomial* legendre = new Polynomial[order];
-  Legendre::integrated(legendre, order);
+  nFunction = 4;
 
   // Lagrange & Lifting //
   const Polynomial lagrange[4] =
@@ -63,58 +56,25 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
     };
 
   // Basis //
-  basis = new Polynomial**[nRefSpace];
+  basis = new vector<Polynomial>**[nRefSpace];
 
   for(unsigned int s = 0; s < nRefSpace; s++)
-    basis[s] = new Polynomial*[nFunction];
+    basis[s] = new vector<Polynomial>*[nFunction];
 
-  // Vertex Based //
+  // Edge Based (Nedelec) //
   for(unsigned int s = 0; s < nRefSpace; s++){
-    basis[s][0] = new Polynomial(lagrange[0]);
-    basis[s][1] = new Polynomial(lagrange[1]);
-    basis[s][2] = new Polynomial(lagrange[2]);
-    basis[s][3] = new Polynomial(lagrange[3]);
-  }
-
-  // Edge Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex;
-
     for(unsigned int e = 0; e < 4; e++){
-      for(unsigned int l = 1; l < order; l++){
-	basis[s][i] =
-	  new Polynomial(legendre[l].compose(lifting[(*(*edgeV[s])[e])[1]] -
-                                             lifting[(*(*edgeV[s])[e])[0]])
-                         *
-			 (lagrange[(*(*edgeV[s])[e])[0]] +
-                          lagrange[(*(*edgeV[s])[e])[1]]));
 
-	i++;
-      }
-    }
-  }
+      Polynomial lambda = (lagrange[(*(*edgeV[s])[e])[0]] +
+                           lagrange[(*(*edgeV[s])[e])[1]]) * 0.5;
 
-  // Face Based //
+      basis[s][e] =
+        new vector<Polynomial>((lifting[(*(*edgeV[s])[e])[1]] -
+                                lifting[(*(*edgeV[s])[e])[0]]).gradient());
 
-  // NB: We use (*(*faceV[s])[f])[]
-  //     where f = 0, because triangles
-  //     have only ONE face: the face '0'
-
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex + nEdge;
-
-    for(unsigned int l1 = 1; l1 < order; l1++){
-      for(unsigned int l2 = 1; l2 < order; l2++){
-       basis[s][i] =
-         new Polynomial(legendre[l1].compose(lifting[(*(*faceV[s])[0])[0]] -
-                                             lifting[(*(*faceV[s])[0])[1]])
-                         *
-
-                        legendre[l2].compose(lifting[(*(*faceV[s])[0])[0]] -
-                                             lifting[(*(*faceV[s])[0])[3]]));
-
-        i++;
-      }
+      basis[s][e]->at(0).mul(lambda);
+      basis[s][e]->at(1).mul(lambda);
+      basis[s][e]->at(2).mul(lambda);
     }
   }
 
@@ -133,18 +93,21 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
 
   for(unsigned int s = 0; s < nRefSpace; s++){
     for(unsigned int i = 0; i < nFunction; i++){
-      Polynomial* tmp;
-      tmp = basis[s][i];
-      basis[s][i] = new Polynomial(tmp->compose(mapX, mapY));
-      delete tmp;
+      vector<Polynomial>* old;
+      vector<Polynomial>  nxt(3);
+
+      old    = basis[s][i];
+      nxt[0] = (*old)[0].compose(mapX, mapY);
+      nxt[1] = (*old)[1].compose(mapX, mapY);
+      nxt[2] = (*old)[2].compose(mapX, mapY);
+
+      basis[s][i] = new vector<Polynomial>(nxt);
+      delete old;
     }
   }
-
-  // Free Temporary Sapce //
-  delete[] legendre;
 }
 
-QuadNodeBasis::~QuadNodeBasis(void){
+QuadNedelecBasis::~QuadNedelecBasis(void){
   // ReferenceSpace //
   delete refSpace;
 

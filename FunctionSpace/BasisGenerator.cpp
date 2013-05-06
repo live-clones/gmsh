@@ -14,6 +14,7 @@
 
 #include "QuadNodeBasis.h"
 #include "QuadEdgeBasis.h"
+#include "QuadNedelecBasis.h"
 #include "QuadLagrangeBasis.h"
 
 #include "TetNodeBasis.h"
@@ -116,8 +117,8 @@ BasisLocal* BasisGenerator::quaHierarchicalGen(unsigned int basisType,
   switch(basisType){
   case  0: return new QuadNodeBasis(order);
   case  1:
-    if (order == 0) throw Exception("Nedelec not implemented on Quads");
-    else            throw Exception("1-form not implemented on Quads");
+    if (order == 0) return new QuadNedelecBasis();
+    else            return new QuadEdgeBasis(order);
 
   case  2: throw Exception("2-form not implemented on Quads");
   case  3: throw Exception("3-form not implemented on Quads");

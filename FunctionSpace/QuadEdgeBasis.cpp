@@ -1,205 +1,211 @@
 #include "QuadEdgeBasis.h"
+#include "QuadReferenceSpace.h"
 #include "Legendre.h"
 
 using namespace std;
 
-QuadEdgeBasis::QuadEdgeBasis(int order){
+QuadEdgeBasis::QuadEdgeBasis(unsigned int order){
+  // Reference Space //
+  refSpace  = new QuadReferenceSpace;
+  nRefSpace = refSpace->getNPermutation();
+
+  const vector<const vector<const vector<unsigned int>*>*>&
+    edgeV = refSpace->getAllEdge();
+
+  const vector<const vector<const vector<unsigned int>*>*>&
+    faceV = refSpace->getAllFace();
+
   // Set Basis Type //
   this->order = order;
 
   type = 1;
   dim  = 2;
 
-  nVertex = 0;
-  nEdge   = 4 * (order + 1);
-  nFace   = 2 * (order + 1) * order;
-  nCell   = 0;
+  nVertex   = 0;
+  nEdge     = 4 * (order + 1);
+  nFace     = 2 * (order + 1) * order;
+  nCell     = 0;
+  nFunction = nVertex + nEdge + nFace + nCell;
 
-  nEdgeClosure = 2;
-  nFaceClosure = 0;
-
-  size = nVertex + nEdge + nFace + nCell;
-
-  // Alloc Temporary Space //
-  const int  orderPlus = order + 1;
+  // Legendre Polynomial //
+  const unsigned int orderPlus = order + 1;
 
   Polynomial* legendre    = new Polynomial[orderPlus];
   Polynomial* intLegendre = new Polynomial[orderPlus];
 
-  Polynomial* iLegendreX  = new Polynomial[orderPlus];
-  Polynomial* iLegendreY  = new Polynomial[orderPlus];
-  Polynomial* legendreX   = new Polynomial[orderPlus];
-  Polynomial* legendreY   = new Polynomial[orderPlus];
-
-  Polynomial  lagrange[4];
-  Polynomial  lifting[4];
-  Polynomial  lagrangeSum[4];
-  Polynomial  liftingSub[2][4];
-
-  // Legendre Polynomial //
   Legendre::integrated(intLegendre, orderPlus);
   Legendre::legendre(legendre, order);
 
-  // Vertices definig Edges & Permutations //
-  const int edgeV[2][4][2] =
+  // Lagrange & Lifting //
+  const Polynomial lagrange[4] =
     {
-      { {0, 1}, {1, 2}, {2, 3}, {3, 0} },
-      { {1, 0}, {2, 1}, {3, 2}, {0, 3} }
+      Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+                 (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 1, 0, 0)) *
+                 (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 1, 0, 0)) *
+                 (Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
+                 (Polynomial(1, 0, 1, 0)))
+    };
+
+  const Polynomial lifting[4] =
+    {
+      Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
+                 (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 1, 0, 0)) +
+                 (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 1, 0, 0)) +
+                 (Polynomial(1, 0, 1, 0))),
+
+      Polynomial((Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
+                 (Polynomial(1, 0, 1, 0)))
     };
 
   // Basis //
-  node = new vector<vector<Polynomial>*>(nVertex);
-  edge = new vector<vector<vector<Polynomial>*>*>(2);
-  face = new vector<vector<vector<Polynomial>*>*>(0);
-  cell = new vector<vector<Polynomial>*>(nCell);
+  basis = new vector<Polynomial>**[nRefSpace];
 
-  (*edge)[0] = new vector<vector<Polynomial>*>(nEdge);
-  (*edge)[1] = new vector<vector<Polynomial>*>(nEdge);
+  for(unsigned int s = 0; s < nRefSpace; s++)
+    basis[s] = new vector<Polynomial>*[nFunction];
 
-
-  // Lagrange //
-  lagrange[0] =
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
-
-  lagrange[1] =
-    (Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
-
-  lagrange[2] =
-    (Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0));
-
-  lagrange[3] =
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) *
-    (Polynomial(1, 0, 1, 0));
-
-  // Lagrange Sum //
-  for(int e = 0; e < 4; e++)
-    lagrangeSum[e] =
-      lagrange[edgeV[0][e][0]] +
-      lagrange[edgeV[0][e][1]];
-
-  // Lifting //
-  lifting[0] =
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
-
-  lifting[1] =
-    (Polynomial(1, 1, 0, 0)) +
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 0, 1, 0));
-
-  lifting[2] =
-    (Polynomial(1, 1, 0, 0)) +
-    (Polynomial(1, 0, 1, 0));
-
-  lifting[3] =
-    (Polynomial(1, 0, 0, 0) - Polynomial(1, 1, 0, 0)) +
-    (Polynomial(1, 0, 1, 0));
-
-  // Lifting Sub //
-  for(int e = 0; e < 4; e++){
-    liftingSub[0][e] =
-      lifting[edgeV[0][e][0]] -
-      lifting[edgeV[0][e][1]];
-
-    liftingSub[1][e] =
-      lifting[edgeV[1][e][0]] -
-      lifting[edgeV[1][e][1]];
-  }
-
-
-  // Edge Based (Nedelec) //
-  Polynomial oneHalf(0.5, 0, 0, 0);
-
-  for(int c = 0; c < 2; c++){
-    for(int e = 0; e < 4; e++){
-      (*(*edge)[c])[e] =
-	new vector<Polynomial>(liftingSub[c][e].gradient());
-
-      (*(*edge)[c])[e]->at(0).mul(lagrangeSum[e]);
-      (*(*edge)[c])[e]->at(1).mul(lagrangeSum[e]);
-      (*(*edge)[c])[e]->at(2).mul(lagrangeSum[e]);
-
-      (*(*edge)[c])[e]->at(0).mul(oneHalf);
-      (*(*edge)[c])[e]->at(1).mul(oneHalf);
-      (*(*edge)[c])[e]->at(2).mul(oneHalf);
-    }
-  }
-
-
-  // Edge Based (High Order) //
-  for(int c = 0; c < 2; c++){
+  // Edge Based //
+  for(unsigned int s = 0; s < nRefSpace; s++){
     unsigned int i = 0;
 
-    for(int l = 1; l < orderPlus; l++){
-      for(int e = 0; e < 4; e++){
-	(*(*edge)[c])[i + 4] =
-	  new vector<Polynomial>((intLegendre[l].compose(liftingSub[c][e]) *
-				  lagrangeSum[e]).gradient());
+    for(unsigned int e = 0; e < 4; e++){
+      for(unsigned int l = 0; l < orderPlus; l++){
+        // Nedelec
+        if(l == 0){
+          Polynomial lambda = (lagrange[(*(*edgeV[s])[e])[0]] +
+                               lagrange[(*(*edgeV[s])[e])[1]]) * 0.5;
+
+          basis[s][i] =
+            new vector<Polynomial>((lifting[(*(*edgeV[s])[e])[1]] -
+                                    lifting[(*(*edgeV[s])[e])[0]]).gradient());
+
+          basis[s][i]->at(0).mul(lambda);
+          basis[s][i]->at(1).mul(lambda);
+          basis[s][i]->at(2).mul(lambda);
+        }
+
+        // High Order
+        else{
+          basis[s][i] =
+            new vector<Polynomial>
+            ((intLegendre[l].compose(lifting[(*(*edgeV[s])[e])[1]] -
+                                     lifting[(*(*edgeV[s])[e])[0]])
+              *
+              (lagrange[(*(*edgeV[s])[e])[0]] +
+               lagrange[(*(*edgeV[s])[e])[1]])).gradient());
+        }
 
 	i++;
       }
     }
   }
 
+  // Face Based //
 
-  // Cell Based (Preliminary) //
-  Polynomial px   = Polynomial(2, 1, 0, 0);
-  Polynomial py   = Polynomial(2, 0, 1, 0);
-  Polynomial zero = Polynomial(0, 0, 0, 0);
+  // NB: We use (*(*faceV[s])[f])[]
+  //     where f = 0, because triangles
+  //     have only ONE face: the face '0'
 
-  px = px - Polynomial(1, 0, 0, 0);
-  py = py - Polynomial(1, 0, 0, 0);
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    unsigned int i = nEdge;
 
-  unsigned int i = 0;
+    // Type 1
+    for(unsigned int l1 = 1; l1 < orderPlus; l1++){
+      for(unsigned int l2 = 1; l2 < orderPlus; l2++){
+        basis[s][i] =
+          new vector<Polynomial>
+          ((intLegendre[l1].compose(lifting[(*(*faceV[s])[0])[0]] -
+                                    lifting[(*(*faceV[s])[0])[1]])
+            *
 
-  for(int l = 0; l < orderPlus; l++){
-    iLegendreX[l] = intLegendre[l].compose(px);
-    iLegendreY[l] = intLegendre[l].compose(py);
-     legendreX[l] =    legendre[l].compose(px);
-     legendreY[l] =    legendre[l].compose(py);
-  }
+            intLegendre[l2].compose(lifting[(*(*faceV[s])[0])[0]] -
+                                    lifting[(*(*faceV[s])[0])[3]])).gradient());
 
-  // Cell Based (Type 1) //
-  for(int l1 = 1; l1 < orderPlus; l1++){
-    for(int l2 = 1; l2 < orderPlus; l2++){
-      (*cell)[i] =
-	new vector<Polynomial>((iLegendreX[l1] * iLegendreY[l2]).gradient());
+        i++;
+      }
+    }
+
+    // Type 2
+    for(unsigned int l1 = 1; l1 < orderPlus; l1++){
+      for(unsigned int l2 = 1; l2 < orderPlus; l2++){
+        Polynomial pOne = lifting[(*(*faceV[s])[0])[0]] -
+                          lifting[(*(*faceV[s])[0])[1]];
+
+        Polynomial pTwo = lifting[(*(*faceV[s])[0])[0]] -
+                          lifting[(*(*faceV[s])[0])[3]];
+
+        Polynomial lOne =    legendre[l1].compose(pOne) *
+                          intLegendre[l2].compose(pTwo);
+
+        Polynomial lTwo =    legendre[l2].compose(pTwo) *
+                          intLegendre[l1].compose(pOne);
+
+        vector<Polynomial> gradOne = pOne.gradient();
+        vector<Polynomial> gradTwo = pTwo.gradient();
+
+        gradOne[0].mul(lOne);
+        gradOne[1].mul(lOne);
+        gradOne[2].mul(lOne);
+
+        gradTwo[0].mul(lTwo);
+        gradTwo[1].mul(lTwo);
+        gradTwo[2].mul(lTwo);
+
+        basis[s][i] = new vector<Polynomial>(gradOne);
+
+        basis[s][i]->at(0).sub(gradTwo[0]);
+        basis[s][i]->at(1).sub(gradTwo[1]);
+        basis[s][i]->at(2).sub(gradTwo[2]);
+
+        i++;
+      }
+    }
+
+    // Type 3.1
+    for(unsigned int l1 = 1; l1 < orderPlus; l1++){
+      Polynomial tmp =
+        intLegendre[l1].compose(lifting[(*(*faceV[s])[0])[0]] -
+                                lifting[(*(*faceV[s])[0])[3]]);
+
+
+      basis[s][i] =
+        new vector<Polynomial>((lifting[(*(*faceV[s])[0])[0]] -
+                                lifting[(*(*faceV[s])[0])[1]]).gradient());
+
+      basis[s][i]->at(0).mul(tmp);
+      basis[s][i]->at(1).mul(tmp);
+      basis[s][i]->at(2).mul(tmp);
+
+      i++;
+    }
+
+    // Type 3.2
+    for(unsigned int l1 = 1; l1 < orderPlus; l1++){
+      Polynomial tmp =
+        intLegendre[l1].compose(lifting[(*(*faceV[s])[0])[0]] -
+                                lifting[(*(*faceV[s])[0])[1]]);
+
+
+      basis[s][i] =
+        new vector<Polynomial>((lifting[(*(*faceV[s])[0])[0]] -
+                                lifting[(*(*faceV[s])[0])[3]]).gradient());
+
+      basis[s][i]->at(0).mul(tmp);
+      basis[s][i]->at(1).mul(tmp);
+      basis[s][i]->at(2).mul(tmp);
 
       i++;
     }
   }
-
-  // Cell Based (Type 2) //
-  for(int l1 = 1; l1 < orderPlus; l1++){
-    for(int l2 = 1; l2 < orderPlus; l2++){
-      (*cell)[i] = new vector<Polynomial>(3);
-
-      (*cell)[i]->at(0) =  legendreX[l1] * iLegendreY[l2];
-      (*cell)[i]->at(1) = iLegendreX[l1] *  legendreY[l2] * -1;
-      (*cell)[i]->at(2) = zero;
-
-      i++;
-    }
-  }
-
-  // Cell Based (Type 3) //
-  for(int l = 1, iPlus = i + order; l < orderPlus; l++, iPlus++){
-    (*cell)[i]     = new vector<Polynomial>(3);
-    (*cell)[iPlus] = new vector<Polynomial>(3);
-
-    (*cell)[i]->at(0) = iLegendreY[l];
-    (*cell)[i]->at(1) = zero;
-    (*cell)[i]->at(2) = zero;
-
-    (*cell)[iPlus]->at(0) = zero;
-    (*cell)[iPlus]->at(1) = iLegendreX[l];
-    (*cell)[iPlus]->at(2) = zero;
-
-    i++;
-  }
-
 
   // Mapping to Gmsh Quad //
   // x = (u + 1) / 2
@@ -214,56 +220,37 @@ QuadEdgeBasis::QuadEdgeBasis(int order){
   Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
 		   Polynomial(0.5, 0, 0, 0));
 
-  for(int i = 0; i < nEdgeClosure; i++){
-    for(int j = 0; j < nEdge; j++){
-      (*(*edge)[i])[j]->at(0) = (*(*edge)[i])[j]->at(0).compose(mapX, mapY);
-      (*(*edge)[i])[j]->at(1) = (*(*edge)[i])[j]->at(1).compose(mapX, mapY);
-      (*(*edge)[i])[j]->at(2) = (*(*edge)[i])[j]->at(2).compose(mapX, mapY);
-    }
-  }
+  for(unsigned int s = 0; s < nRefSpace; s++){
+    for(unsigned int i = 0; i < nFunction; i++){
+      vector<Polynomial>* old;
+      vector<Polynomial>  nxt(3);
 
-  for(int i = 0; i < nCell; i++){
-    (*cell)[i]->at(0) = (*cell)[i]->at(0).compose(mapX, mapY);
-    (*cell)[i]->at(1) = (*cell)[i]->at(1).compose(mapX, mapY);
-    (*cell)[i]->at(2) = (*cell)[i]->at(2).compose(mapX, mapY);
+      old    = basis[s][i];
+      nxt[0] = (*old)[0].compose(mapX, mapY);
+      nxt[1] = (*old)[1].compose(mapX, mapY);
+      nxt[2] = (*old)[2].compose(mapX, mapY);
+
+      basis[s][i] = new vector<Polynomial>(nxt);
+      delete old;
+    }
   }
 
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
-
-  delete[] iLegendreX;
-  delete[] iLegendreY;
-  delete[] legendreX;
-  delete[] legendreY;
 }
 
 QuadEdgeBasis::~QuadEdgeBasis(void){
-  // Vertex Based //
-  for(int i = 0; i < nVertex; i++)
-    delete (*node)[i];
+  // ReferenceSpace //
+  delete refSpace;
 
-  delete node;
+  // Basis //
+  for(unsigned int i = 0; i < nRefSpace; i++){
+    for(unsigned int j = 0; j < nFunction; j++)
+      delete basis[i][j];
 
-
-  // Edge Based //
-  for(int c = 0; c < 2; c++){
-    for(int i = 0; i < nEdge; i++)
-      delete (*(*edge)[c])[i];
-
-    delete (*edge)[c];
+    delete[] basis[i];
   }
 
-  delete edge;
-
-
-  // Face Based //
-  delete face;
-
-
-  // Cell Based //
-  for(int i = 0; i < nCell; i++)
-    delete (*cell)[i];
-
-  delete cell;
+  delete[] basis;
 }
