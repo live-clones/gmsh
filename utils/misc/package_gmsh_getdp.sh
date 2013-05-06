@@ -21,6 +21,7 @@ unzip -q -o /tmp/gmsh-svn-Windows64.zip -d /tmp
 unzip -q -o /tmp/getdp-svn-Windows64c.zip -d /tmp
 cp /tmp/README.txt gmsh-getdp-Windows64
 mv /tmp/gmsh-*-svn-Windows/gmsh.exe gmsh-getdp-Windows64
+mv /tmp/gmsh-*-svn-Windows/onelab.py gmsh-getdp-Windows64
 mv /tmp/getdp-*-svn-Windows/getdp.exe gmsh-getdp-Windows64
 mv /tmp/gmsh-*-svn-Windows/LICENSE.txt gmsh-getdp-Windows64/LICENSE_Gmsh.txt
 mv /tmp/getdp-*-svn-Windows/LICENSE.txt gmsh-getdp-Windows64/LICENSE_GetDP.txt
@@ -41,6 +42,7 @@ unzip -q -o /tmp/gmsh-svn-Windows.zip -d /tmp
 unzip -q -o /tmp/getdp-svn-Windows32c.zip -d /tmp
 cp /tmp/README.txt gmsh-getdp-Windows32
 mv /tmp/gmsh-*-svn-Windows/gmsh.exe gmsh-getdp-Windows32
+mv /tmp/gmsh-*-svn-Windows/onelab.py gmsh-getdp-Windows32
 mv /tmp/getdp-*-svn-Windows/getdp.exe gmsh-getdp-Windows32
 mv /tmp/gmsh-*-svn-Windows/LICENSE.txt gmsh-getdp-Windows32/LICENSE_Gmsh.txt
 mv /tmp/getdp-*-svn-Windows/LICENSE.txt gmsh-getdp-Windows32/LICENSE_GetDP.txt
@@ -61,6 +63,7 @@ tar zxvf /tmp/gmsh-svn-Linux.tgz -C /tmp
 tar zxvf /tmp/getdp-svn-Linux32c.tgz -C /tmp
 cp /tmp/README.txt gmsh-getdp-Linux32
 mv /tmp/gmsh-*-svn-Linux/bin/gmsh gmsh-getdp-Linux32
+mv /tmp/gmsh-*-svn-Linux/bin/onelab.py gmsh-getdp-Linux32
 mv /tmp/getdp-*-svn-Linux/bin/getdp gmsh-getdp-Linux32
 mv /tmp/gmsh-*-svn-Linux/share/doc/gmsh/LICENSE.txt gmsh-getdp-Linux32/LICENSE_Gmsh.txt
 mv /tmp/getdp-*-svn-Linux/share/doc/getdp/LICENSE.txt gmsh-getdp-Linux32/LICENSE_GetDP.txt
@@ -81,6 +84,7 @@ tar zxvf /tmp/gmsh-svn-Linux64.tgz -C /tmp
 tar zxvf /tmp/getdp-svn-Linux64c.tgz -C /tmp
 cp /tmp/README.txt gmsh-getdp-Linux64
 mv /tmp/gmsh-*-svn-Linux/bin/gmsh gmsh-getdp-Linux64
+mv /tmp/gmsh-*-svn-Linux/bin/onelab.py gmsh-getdp-Linux64
 mv /tmp/getdp-*-svn-Linux/bin/getdp gmsh-getdp-Linux64
 mv /tmp/gmsh-*-svn-Linux/share/doc/gmsh/LICENSE.txt gmsh-getdp-Linux64/LICENSE_Gmsh.txt
 mv /tmp/getdp-*-svn-Linux/share/doc/getdp/LICENSE.txt gmsh-getdp-Linux64/LICENSE_GetDP.txt
