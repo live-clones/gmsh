@@ -205,6 +205,8 @@ class client :
   def mesh(self, filename) :
     if not self.socket :
       return
+    if filename[0] != '/' :
+      filename = os.getcwd() + "/" + filename
     self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + '";')
 
   def sendCommand(self, command) :
