@@ -124,12 +124,15 @@ void Msg::Init(int argc, char **argv)
     char *tmp = getenv("PYTHONPATH");
     if(tmp){
       path = tmp;
+#if defined(WIN32)
+      path += ";" + split[0];
+#else
       path += ":" + split[0];
+#endif
     }
     else
       path = split[0];
-    setenv("PYTHONPATH", path.c_str(), 1);
-    printf("pythonpath = %s\n", path.c_str());
+    SetEnvironmentVar("PYTHONPATH", path.c_str());
   }
 
   InitializeOnelab("Gmsh");

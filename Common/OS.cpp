@@ -53,6 +53,15 @@ const char *GetEnvironmentVar(const char *var)
 #endif
 }
 
+const void SetEnvironmentVar(const char *var, const char *val)
+{
+#if !defined(WIN32)
+  setenv(var, val, 1);
+#else
+  _putenv((std::string(var) + "=" + std::string(val)).c_str());
+#endif
+}
+
 double GetTimeInSeconds()
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -197,27 +206,47 @@ int KillProcess(int pid)
 int SystemCall(const std::string &command, bool blocking)
 {
 #if defined(WIN32)
-  STARTUPINFO suInfo;
-  PROCESS_INFORMATION prInfo;
-  memset(&suInfo, 0, sizeof(suInfo));
-  suInfo.cb = sizeof(suInfo);
-  Msg::Info("Calling '%s'", command.c_str());
-  if(blocking){
-    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                  NORMAL_PRIORITY_CLASS, NULL, NULL,
-                  &suInfo, &prInfo);
-    // wait until child process exits.
-    WaitForSingleObject(prInfo.hProcess, INFINITE);
-    // close process and thread handles.
-    CloseHandle(prInfo.hProcess);
-    CloseHandle(prInfo.hThread);
+  // check if we are trying to execute a Python script
+  std::string exe, args;
+  std::string::size_type pos = command.find_first_of(" ");
+  if(pos != std::string::npos){
+    exe = command.substr(0, pos);
+    args = command.substr(pos, command.size() - pos);
+  }
+  else exe = command;
+  int s = exe.size();
+  if(s > 3 && 
+     (exe[s-3] == '.') &&
+     (exe[s-2] == 'p' || exe[s-2] == 'P') &&
+     (exe[s-1] == 'y' || exe[s-1] == 'Y')){
+    Msg::Info("Shell opening '%s' with arguments '%s'", 
+	      exe.c_str(), args.c_str());
+    ShellExecute(NULL, (char*)"open", (char*)exe.c_str(), 
+		 (char*)args.c_str(), NULL, 0);
   }
   else{
-    // DETACHED_PROCESS removes the console (useful if the program to launch is
-    // a console-mode exe)
-    CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
-                  NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
-                  &suInfo, &prInfo);
+    STARTUPINFO suInfo;
+    PROCESS_INFORMATION prInfo;
+    memset(&suInfo, 0, sizeof(suInfo));
+    suInfo.cb = sizeof(suInfo);
+    Msg::Info("Calling '%s'", command.c_str());
+    if(blocking){
+      CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+		    NORMAL_PRIORITY_CLASS, NULL, NULL,
+		    &suInfo, &prInfo);
+      // wait until child process exits.
+      WaitForSingleObject(prInfo.hProcess, INFINITE);
+      // close process and thread handles.
+      CloseHandle(prInfo.hProcess);
+      CloseHandle(prInfo.hThread);
+    }
+    else{
+      // DETACHED_PROCESS removes the console (useful if the program to launch is
+      // a console-mode exe)
+      CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+		    NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
+		    &suInfo, &prInfo);
+    }
   }
   return 0;
 #else
