@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-import OnelabClient as onelab
+import onelab
 
 OL = onelab.client()
 
