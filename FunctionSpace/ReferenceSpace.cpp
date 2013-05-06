@@ -290,11 +290,14 @@ inOrder(unsigned int permutation,
 	unsigned int c,
         unsigned int d){
 
+  unsigned int opposite;
+
   unsigned int v;
   unsigned int k = 0;
   vector<unsigned int>* inorder =
     new vector<unsigned int>(4);
 
+  // Take nodes in order //
   for(unsigned int i = 0; i < nVertex; i++){
     v = perm[permutation][i];
 
@@ -302,6 +305,26 @@ inOrder(unsigned int permutation,
       (*inorder)[k] = v;
       k++;
     }
+  }
+
+  // We need node at inoder[2] to be       //
+  // opposite to node at inorder[0]        //
+  //  --> if not make a permutation such   //
+  //      that node opposite at inorder[2] //
+  //      is at inorder[0]                 //
+
+  opposite = ((*inorder)[0] + 2) % 4;
+  if((*inorder)[2] != opposite){
+    // Find opposite node index
+    unsigned int tmp;
+    unsigned int idx = 1;
+    while((*inorder)[idx] != opposite)
+      idx++;
+
+    // Swap inorder[2] and inorder[idx]
+    tmp = (*inorder)[2];
+    (*inorder)[2]   = opposite;
+    (*inorder)[idx] = tmp;
   }
 
   return inorder;
@@ -323,24 +346,6 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   // Sort Them with repsect to Vertex Global ID //
   //                 (vertex[i].second->getNum) //
   std::sort(vertex.begin(), vertex.end(), sortPredicate);
-
-
-  /*****************************************************************
-   * What does that do ?                                           *
-   *  Tree lookup needs vertices in the range [0 .. nVertex[.      *
-   *                                                               *
-   *  So we need to convert the node ID from 'element.getVertex()' *
-   *  to a number between [0 .. nVertex[.                          *
-   *                                                               *
-   *  The convertion is such that the smallest node ID             *
-   *  gets the converted ID '0'.                                   *
-   *  Then the second smallest the ID '1'.                         *
-   *  And so on...                                                 *
-   *                                                               *
-   *  The sorting of the vector 'vertex' with respect              *
-   *  to the element.getVertex() IDs does that job                 *
-   *****************************************************************/
-
 
   // Tree Lookup //
   try{

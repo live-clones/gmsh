@@ -1,8 +1,8 @@
 #include "Exception.h"
-#include "LineLagrangeBasis.h"
+#include "QuadLagrangeBasis.h"
 #include "pointsGenerators.h"
 
-LineLagrangeBasis::LineLagrangeBasis(unsigned int order){
+QuadLagrangeBasis::QuadLagrangeBasis(unsigned int order){
   // If order 0 (Nedelec): use order 1
   if(order == 0)
     order = 1;
@@ -11,11 +11,11 @@ LineLagrangeBasis::LineLagrangeBasis(unsigned int order){
   this->order = order;
 
   type = 0;
-  dim  = 1;
+  dim  = 2;
 
-  nVertex   = 2;
-  nEdge     = (order - 1);
-  nFace     = 0;
+  nVertex   = 4;
+  nEdge     = 4 * (order - 1);
+  nFace     =     (order - 1) * (order - 1);
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
@@ -24,22 +24,22 @@ LineLagrangeBasis::LineLagrangeBasis(unsigned int order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>
-    (gmshGeneratePointsLine(order));
+    (gmshGeneratePointsQuadrangle(order, false));
 }
 
-LineLagrangeBasis::~LineLagrangeBasis(void){
+QuadLagrangeBasis::~QuadLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
 }
 
-unsigned int LineLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = nodalBasis::getTag(TYPE_LIN, order, false);
+unsigned int QuadLagrangeBasis::getTag(unsigned int order){
+  unsigned int tag = nodalBasis::getTag(TYPE_QUA, order, false);
 
   if(tag)
     return tag;
 
   else
     throw Exception
-      ("Can't instanciate an order %d Lagrangian Basis for a Line",
+      ("Can't instanciate an order %d Lagrangian Basis for a Quadrangle",
        order);
 }

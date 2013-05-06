@@ -31,11 +31,6 @@ class LineLagrangeBasis: public BasisLagrange{
   //! @return Returns the @em tag of a @em Line of
   //! the given order
   static unsigned int getTag(unsigned int order);
-
-  //! @param order A natural number
-  //! @return Returns Lagrangian Points on a Line
-  //! for the given Order
-  static fullMatrix<double> linePoint(unsigned int order);
 };
 
 #endif

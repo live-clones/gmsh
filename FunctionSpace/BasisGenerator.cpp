@@ -14,6 +14,7 @@
 
 #include "QuadNodeBasis.h"
 #include "QuadEdgeBasis.h"
+#include "QuadLagrangeBasis.h"
 
 #include "TetNodeBasis.h"
 #include "TetEdgeBasis.h"
@@ -71,7 +72,7 @@ BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
   switch(elementType){
   case TYPE_LIN: return new LineLagrangeBasis(order);
   case TYPE_TRI: return new TriLagrangeBasis(order);
-  case TYPE_QUA: throw Exception("Lagrange Basis on Quads not Implemented");
+  case TYPE_QUA: return new QuadLagrangeBasis(order);
   case TYPE_TET: return new TetLagrangeBasis(order);
   case TYPE_HEX: throw Exception("Lagrange Basis on Hexs not Implemented");
 

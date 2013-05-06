@@ -31,30 +31,6 @@ class TetLagrangeBasis: public BasisLagrange{
   //! @return Returns the @em tag of a @em Tetrahedron of
   //! the given order
   static unsigned int getTag(unsigned int order);
-
-  //! @param order A natural number
-  //! @return Returns Lagrangian Points on a Tetrahedron
-  //! for the given Order
-  static fullMatrix<double> tetPoint(unsigned int order);
-
-  //! Unknown gmsh function
-  static unsigned int nbdoftriangle(unsigned int order);
-
-  //! Unknown gmsh function
-  static void nodepositionface0(unsigned int order,
-                                double *u, double *v, double *w);
-
-  //! Unknown gmsh function
-  static void nodepositionface1(unsigned int order,
-                                double *u, double *v, double *w);
-
-  //! Unknown gmsh function
-  static void nodepositionface2(unsigned int order,
-                                double *u, double *v, double *w);
-
-  //! Unknown gmsh function
-  static void nodepositionface3(unsigned int order,
-                                double *u, double *v, double *w);
 };
 
 #endif
