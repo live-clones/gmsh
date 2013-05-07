@@ -429,7 +429,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     FlGui::instance()->onelab->addSolver("python", fileName, "", 1);
     onelab_cb(0, (void*)"check");
     status = 1;
-    /*
+    /* tester ceci:
     int num = defineSolver("python");
     opt_solver_name(num, GMSH_SET, "python");
     opt_solver_executable(num, GMSH_SET, fileName);
