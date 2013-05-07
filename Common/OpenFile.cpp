@@ -240,14 +240,6 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 #endif
 }
 
-static int defineSolver(const std::string &name)
-{
-  for(int i = 0; i < 5; i++){
-    if(opt_solver_name(i, GMSH_GET, "") == name) return i;
-  }
-  return 4;
-}
-
 void ParseString(const std::string &str)
 {
   if(str.empty()) return;
@@ -258,6 +250,15 @@ void ParseString(const std::string &str)
     fclose(fp);
     GModel::readGEO(fileName);
   }
+}
+
+static int defineSolver(const std::string &name)
+{
+  for(int i = 0; i < 5; i++){
+    if(opt_solver_name(i, GMSH_GET, "") == name) return i;
+  }
+  opt_solver_name(4, GMSH_SET|GMSH_GUI, name);
+  return 4;
 }
 
 int MergeFile(const std::string &fileName, bool warnIfMissing)
@@ -431,7 +432,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     status = 1;
     /* tester ceci:
     int num = defineSolver("python");
-    opt_solver_name(num, GMSH_SET, "python");
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
     return 1;
