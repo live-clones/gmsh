@@ -51,6 +51,8 @@ SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 // preserve orientation of m1 !!!
 SMetric3 intersection_conserveM1 (const SMetric3 &m1, const SMetric3 &m2)
 {
+  // we should do
+  // return intersection (m1,m2);
   fullMatrix<double> V(3,3);
   fullVector<double> S(3);
   m1.eig(V,S,true);

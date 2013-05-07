@@ -402,19 +402,19 @@ bool insertVertexB(std::list<faceXtet> &shell,
   while (it != shell.end()){
     MTetrahedron *tr = new MTetrahedron(it->getVertex(0), it->getVertex(1), it->getVertex(2), v);
 
-    double lc = .25 * (vSizes[tr->getVertex(0)->getIndex()] +
-		       vSizes[tr->getVertex(1)->getIndex()] +
-		       vSizes[tr->getVertex(2)->getIndex()] +
-		       vSizes[tr->getVertex(3)->getIndex()]);
-    double lcBGM = .25 * (vSizesBGM[tr->getVertex(0)->getIndex()] +
-			  vSizesBGM[tr->getVertex(1)->getIndex()] +
-			  vSizesBGM[tr->getVertex(2)->getIndex()] +
-			  vSizesBGM[tr->getVertex(3)->getIndex()]);
-    double LL = std::min(lc, lcBGM);
+    //    double lc = .25 * (vSizes[tr->getVertex(0)->getIndex()] +
+    //		       vSizes[tr->getVertex(1)->getIndex()] +
+    //		       vSizes[tr->getVertex(2)->getIndex()] +
+    //		       vSizes[tr->getVertex(3)->getIndex()]);
+    //    double lcBGM = .25 * (vSizesBGM[tr->getVertex(0)->getIndex()] +
+    //			  vSizesBGM[tr->getVertex(1)->getIndex()] +
+    //			  vSizesBGM[tr->getVertex(2)->getIndex()] +
+    //			  vSizesBGM[tr->getVertex(3)->getIndex()]);
+    //    double LL = std::min(lc, lcBGM);
 
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM);
     t4->setOnWhat(t->onWhat());
-
+    /*
     double d1 = sqrt((it->v[0]->x() - v->x()) * (it->v[0]->x() - v->x()) +
                      (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
                      (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
@@ -426,6 +426,7 @@ bool insertVertexB(std::list<faceXtet> &shell,
                      (it->v[2]->z() - v->z()) * (it->v[2]->z() - v->z()));
 
     if (d1 < LL * .25 || d2 < LL * .25 || d3 < LL * .25) onePointIsTooClose = true;
+    */
     newTets[k++] = t4;
     // all new tets are pushed front in order to ba able to destroy
     // them if the cavity is not star shaped around the new vertex.
@@ -1282,7 +1283,7 @@ void insertVerticesInRegion (GRegion *gr)
     // Normally, a tet mesh contains about 6 times more tets than
     // vertices. This allows to clean up the set of tets when lots of
     // deleted ones are present in the mesh
-    if(allTets.size() > 7 * vSizes.size() && ITER > 20000){
+    if(allTets.size() > 7 * vSizes.size() && ITER > 1000){
       memoryCleanup(myFactory, allTets);
     }
   }

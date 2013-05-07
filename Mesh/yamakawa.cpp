@@ -338,17 +338,17 @@ void Recombinator::execute(GRegion* gr){
   build_tuples(gr);
   init_markings(gr);
 
+  Msg::Info("Building Connectivity...");
   build_vertex_to_vertices(gr);
   build_vertex_to_elements(gr);
-  printf("connectivity\n");
 
   potential.clear();
   patern1(gr);
-  printf("patern no. 1\n");
+  Msg::Info("Hex-merging patern nb. 1...");
   patern2(gr);
-  printf("patern no. 2\n");
+  Msg::Info("Hex-merging patern nb. 2...");
   patern3(gr);
-  printf("patern no. 3\n");
+  Msg::Info("Hex-merging patern nb. 3...");
 
   std::sort(potential.begin(),potential.end());
 

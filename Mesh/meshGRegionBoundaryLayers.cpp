@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include "meshGFaceBoundaryLayers.h"
+#include "boundaryLayersData.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "MTriangle.h"

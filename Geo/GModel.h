@@ -17,6 +17,7 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "boundaryLayersData.h"
 template <class scalar> class simpleFunction;
 
 class FM_Internals;
@@ -151,9 +152,14 @@ class GModel
   std::set<int> meshPartitions;
   int partitionSize[2];
 
+  // boundary layer columns i.e. list of vertices that form columns
+  // in boundary layers
+  BoundaryLayerColumns _columns; 
+
  public:
   GModel(std::string name="");
   virtual ~GModel();
+
 
   // the static list of all loaded models
   static std::vector<GModel*> list;
@@ -265,6 +271,9 @@ class GModel
   std::vector<GFace*> bindingsGetFaces();
   std::vector<GEdge*> bindingsGetEdges();
   std::vector<GVertex*> bindingsGetVertices();
+
+  // get the boundary layer columns
+  BoundaryLayerColumns *getColumns () {return &_columns;}
 
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }

@@ -9,6 +9,7 @@
 #include "GEdge.h"
 #include "MLine.h"
 #include "BackgroundMesh.h"
+#include "boundaryLayersData.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -96,6 +97,16 @@ static double F_Lc(GEdge *ge, double t)
 
 static double F_Lc_aniso(GEdge *ge, double t)
 {
+#if defined(HAVE_ANN)
+  FieldManager *fields = ge->model()->getFields();
+  BoundaryLayerField *blf = 0;
+  Field *bl_field = fields->get(fields->getBoundaryLayerField());
+  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+#else
+  bool blf = false;
+#endif
+  
+
   GPoint p = ge->point(t);
   SMetric3 lc_here;
 
@@ -109,6 +120,14 @@ static double F_Lc_aniso(GEdge *ge, double t)
     lc_here = BGM_MeshMetric(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
   else
     lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
+
+#if defined(HAVE_ANN)
+  if (blf && !blf->isEdgeBL(ge->tag())){
+    SMetric3 lc_bgm;
+    blf->computeFor1dMesh ( p.x(), p.y(), p.z() , lc_bgm );
+    lc_here = intersection_conserveM1 (lc_here, lc_bgm );			    
+  }
+#endif
 
   SVector3 der = ge->firstDer(t);
   double lSquared = dot(der, lc_here, der);
@@ -294,15 +313,17 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 }
 */
 
+void createBoundaryLayerPointsForGEdge (GEdge *ge, double &t_begin, double &t_end)
+{
+}
+
 void meshGEdge::operator() (GEdge *ge)
 {
 #if defined(HAVE_ANN)
   FieldManager *fields = ge->model()->getFields();
   BoundaryLayerField *blf = 0;
-  if(fields->getBackgroundField() > 0){
-    Field *bl_field = fields->get(fields->getBoundaryLayerField());
-    blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  }
+  Field *bl_field = fields->get(fields->getBoundaryLayerField());
+  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
 #else
   bool blf = false;
 #endif
@@ -372,9 +393,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG
-	//	|| CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
-	|| blf){
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || blf){
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
@@ -391,8 +410,7 @@ void meshGEdge::operator() (GEdge *ge)
     }
     a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.99));
-   
-}
+  }
 
   // force odd number of points if blossom is used for recombination
   if(ge->meshAttributes.method != MESH_TRANSFINITE &&
@@ -477,6 +495,32 @@ void meshGEdge::operator() (GEdge *ge)
     v0->z() = beg_p.z();
   }
 
+  if (blf && !blf->isEdgeBL(ge->tag()))
+    {      
+      GVertex *g0 = ge->getBeginVertex();
+      GVertex *g1 = ge->getEndVertex();
+      BoundaryLayerColumns* _columns = ge->model()->getColumns();
+      MVertex * v0 = g0->mesh_vertices[0];
+      MVertex * v1 = g1->mesh_vertices[0];
+      std::vector<MVertex*> invert;
+      std::vector<SMetric3> _metrics;
+      for(unsigned int i = 0; i < mesh_vertices.size() ; i++)
+	{
+	  invert.push_back(mesh_vertices[mesh_vertices.size() - i - 1]);
+	  _metrics.push_back(SMetric3(1.0));
+	}
+      SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
+      t.normalize();
+      if (blf->isVertexBL(g0->tag())){
+	  _columns->addColumn(t, v0, mesh_vertices,_metrics);
+	  //	  printf ("coucou %d %d %g %g %d\n",ge->tag(),g1->tag(),t.x(),t.y(),mesh_vertices.size());
+      }
+      if (blf->isVertexBL(g1->tag())){
+	  _columns->addColumn(t*-1.0, v1,invert,_metrics);
+	  //	  printf ("coucou %d %d\n",ge->tag(),g0->tag());
+
+      }      
+    }
   ge->meshStatistics.status = GEdge::DONE;
 }
 

@@ -684,9 +684,12 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
       func(x, feps, data);
       for (int i = 0; i < N; i++){
         J(i, j) = (feps(i) - f(i)) / h;
+	//	printf("J(%d,%d) = %12.5E \n",i,j,J(i,j));
       }
       x(j) -= h;
     }
+
+    //    printf("done\n");
 
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
@@ -697,6 +700,7 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
 
+    //    printf("dx = %12.5E\n",dx.norm());
     if(dx.norm() < tolx) return true;
   }
   return false;

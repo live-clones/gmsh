@@ -9,7 +9,7 @@
 #include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "meshGFaceOptimize.h"
-#include "meshGFaceBoundaryLayers.h"
+#include "boundaryLayersData.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -484,7 +484,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
-  buildAdditionalPoints3D (gr);
+  //  buildAdditionalPoints3D (gr);
 }
 
 void _relocateVertex(MVertex *ver,
@@ -959,7 +959,7 @@ void meshGRegion::operator() (GRegion *gr)
   }
 
   // replace discreteFaces by their compounds
-  if(gr->geomType() == GEntity::CompoundVolume){
+  if( 1 || gr->geomType() == GEntity::CompoundVolume){
     std::set<GFace*> mySet;
     std::list<GFace*>::iterator it = faces.begin();
     while(it != faces.end()){

@@ -43,7 +43,7 @@
 #include "Context.h"
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
-#include "meshGFaceBoundaryLayers.h"
+#include "boundaryLayersData.h"
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
@@ -622,7 +622,7 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
       }
     }
     if (intersection){
-      printf("intersection found\n");
+      //      printf("intersection found\n");
       einter.push_back(el);
     }
     else {
@@ -633,9 +633,9 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
 
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
-  BoundaryLayerColumns *_columns = buildAdditionalPoints2D (gf);
+  BoundaryLayerColumns* _columns = gf->model()->getColumns();
+  if (!buildAdditionalPoints2D (gf, _columns))return;
 
-  if (!_columns)return;
 
   std::set<MEdge,Less_Edge> bedges;
 

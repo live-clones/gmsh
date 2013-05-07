@@ -12,7 +12,7 @@ set(SRC
       meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
       meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp 
       meshGFaceLloyd.cpp meshGFaceOptimize.cpp 
-      meshGFaceQuadrilateralize.cpp meshGFaceBoundaryLayers.cpp
+      meshGFaceQuadrilateralize.cpp 
     meshGRegion.cpp meshGRegionBoundaryLayers.cpp
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 

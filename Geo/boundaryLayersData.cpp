@@ -9,7 +9,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MEdge.h"
-#include "meshGFaceBoundaryLayers.h"
+#include "boundaryLayersData.h"
 #include "Field.h"
 
 SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
@@ -90,11 +90,105 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
   metric[2] = res[1][1];
 }
 
-BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
+edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
 {
-  //  return 0;
+  Equal_Edge aaa;
+  MEdge e(v1, v2);
+  std::map<MVertex*,BoundaryLayerFan>::const_iterator it1 = _fans.find(v1);
+  std::map<MVertex*,BoundaryLayerFan>::const_iterator it2 = _fans.find(v2);
+  int N1 = getNbColumns(v1) ;
+  int N2 = getNbColumns(v2) ;
+  
+  
+  int nbSides = _normals.count(e);
+  
+  // if (nbSides != 1)printf("I'm here %d sides\n",nbSides);
+  // Standard case, only two extruded columns from the two vertices
+  if (N1 == 1 && N2 == 1) return edgeColumn(getColumn(v1,0),getColumn(v2,0));
+  // one fan on
+  if (nbSides == 1){
+    if (it1 != _fans.end() && it2 == _fans.end() ){
+      if (aaa(it1->second._e1,e))
+	return edgeColumn(getColumn (v1,0),getColumn(v2,0));
+      else
+	return edgeColumn(getColumn (v1,N1-1),getColumn(v2,0));
+    }
+    if (it2 != _fans.end() && it1 == _fans.end() ){
+      if (aaa(it2->second._e1,e))
+	return edgeColumn(getColumn (v1,0),getColumn(v2,0));
+      else
+	return edgeColumn(getColumn (v1,0),getColumn(v2,N2-1));
+    }
+    if (it2 != _fans.end() && it1 != _fans.end() ){
+      int c1, c2;
+      if (aaa(it1->second._e1,e))
+	c1 =  0;
+      else
+	c1 = N1-1;
+      if (aaa(it2->second._e1,e))
+	c2 =  0;
+      else
+	c2 = N2-1;
+      return edgeColumn(getColumn (v1,c1),getColumn(v2,c2));
+    }
+    // fan on the right
+    if (N1 == 1 || N2 == 2){
+      const BoundaryLayerData & c10 = getColumn(v1,0);
+      const BoundaryLayerData & c20 = getColumn(v2,0);
+      const BoundaryLayerData & c21 = getColumn(v2,1);
+      if (dot(c10._n,c20._n) > dot(c10._n,c21._n) ) return edgeColumn(c10,c20);
+      else return edgeColumn(c10,c21);
+    }
+    // fan on the left
+    if (N1 == 2 || N2 == 1){
+      const BoundaryLayerData & c10 = getColumn(v1,0);
+      const BoundaryLayerData & c11 = getColumn(v1,1);
+      const BoundaryLayerData & c20 = getColumn(v2,0);
+      if (dot(c10._n,c20._n) > dot(c11._n,c20._n) ) return edgeColumn(c10,c20);
+      else return edgeColumn(c11,c20);
+    }
+    
+    //      Msg::Error ("Impossible Boundary Layer Configuration : one side and no fans %d %d",N1,N2);
+    // FIXME WRONG
+    return N1 ? edgeColumn (getColumn (v1,0),getColumn(v1,0)) :
+      edgeColumn (getColumn (v2,0),getColumn(v2,0));
+  }
+  else if (nbSides == 2){
+    int i1=0,i2=1,j1=0,j2=1;
+    if (it1 != _fans.end()){
+      i1 =  aaa(it1->second._e1,e) ? 0 : N1-1;
+      i2 = !aaa(it1->second._e1,e) ? 0 : N1-1;
+    }
+    if (it2 != _fans.end()){
+      j1 =  aaa(it2->second._e1,e) ? 0 : N2-1;
+      j2 = !aaa(it2->second._e1,e) ? 0 : N2-1;
+    }
+    const BoundaryLayerData & c10 = getColumn(v1,i1);
+    const BoundaryLayerData & c11 = getColumn(v1,i2);
+    const BoundaryLayerData & c20 = getColumn(v2,j1);
+    const BoundaryLayerData & c21 = getColumn(v2,j2);
+    
+    if (side == 0){
+      if (dot(c10._n,c20._n) > dot(c10._n,c21._n) ) return edgeColumn(c10,c20);
+      else return edgeColumn(c10,c21);
+    }
+    if (side == 1){
+      if (dot(c11._n,c20._n) > dot(c11._n,c21._n) ) return edgeColumn(c11,c20);
+      else return edgeColumn(c11,c21);
+    }
+  }
+  
+  Msg::Error("Not yet Done in BoundaryLayerData nbSides = %d, ",nbSides );
+  static BoundaryLayerData error;
+  static edgeColumn error2(error, error);
+  return error2;
+}
+
+
+bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
+{
 #if !defined(HAVE_ANN)
-  return 0;
+  return false;
 #else
 
   FieldManager *fields = gf->model()->getFields();
@@ -104,11 +198,11 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
 
-  if (!blf)return 0;
+  if (!blf)return false;
 
   double _treshold = blf->fan_angle * M_PI / 180 ;
 
-  BoundaryLayerColumns * _columns = new BoundaryLayerColumns;
+  //  BoundaryLayerColumns * _columns = new BoundaryLayerColumns;
 
   // assume a field that i) gives us the closest point on one of the BL components
   // ii) Gives us mesh sizes in the 3 directions.
@@ -120,18 +214,19 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
   std::list<GEdge*>::iterator ite = edges.begin();
   std::set<MVertex*> _vertices;
   while(ite != edges.end()){
-    for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
-      MVertex *v1 = (*ite)->lines[i]->getVertex(0);
-      MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-      _columns->_non_manifold_edges.insert(std::make_pair(v1,v2));
-      _columns->_non_manifold_edges.insert(std::make_pair(v2,v1));
-      _vertices.insert(v1);
-      _vertices.insert(v2);
+    if (blf->isEdgeBL ((*ite)->tag())){
+      for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
+	MVertex *v1 = (*ite)->lines[i]->getVertex(0);
+	MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+	_columns->_non_manifold_edges.insert(std::make_pair(v1,v2));
+	_columns->_non_manifold_edges.insert(std::make_pair(v2,v1));
+	_vertices.insert(v1);
+	  _vertices.insert(v2);
+      }
     }
     ++ite;
   }
-
-  //  printf("%d boundary points\n",_vertices.size());
+  if (!_vertices.size())return false;
 
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define
@@ -215,12 +310,12 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
       _dirs.push_back(x1);
       x2.normalize();
       _dirs.push_back(x2);
-      printf("%g %g vs %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
-      printf("%g %g vs %g %g\n",N2[0].x(),N2[0].y(),N3[0].x(),N3[0].y());
-      printf("%g %g vs %g %g\n",x1.x(),x1.y(),x2.x(),x2.y());
+      //      printf("%g %g vs %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+      //      printf("%g %g vs %g %g\n",N2[0].x(),N2[0].y(),N3[0].x(),N3[0].y());
+      //      printf("%g %g vs %g %g\n",x1.x(),x1.y(),x2.x(),x2.y());
     }
     // STANDARD CASE, one vertex connected to two neighboring vertices
-    if (_connections.size() == 2){
+    else if (_connections.size() == 2){
       MEdge e1 (*it,_connections[0]);
       MEdge e2 (*it,_connections[1]);
       //LL = 0.5 * (e1.length() + e2.length());
@@ -286,6 +381,48 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
 	      _dirs.push_back(x);
 	    }
 	  }
+	}
+      }
+    }    
+    else if (_connections.size() == 1){
+      MEdge e1 (*it,_connections[0]);
+      SPoint2 p0,p1;
+      reparamMeshEdgeOnFace(*it,_connections[0], gf, p0, p1);
+      std::vector<SVector3> N1;
+      for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
+             _columns->_normals.lower_bound(e1);
+	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
+      // two sides at that point : end point of one embedded edge       
+      // the fan angle is equal to PI
+      
+      if (N1.size() == 2){
+	int fanSize = M_PI /  _treshold;
+	printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
+	       e1.getVertex(1)->x(),e1.getVertex(1)->y());
+	printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+
+	double alpha1 = atan2(N1[0].y(),N1[0].x());
+	double alpha2 = atan2(N1[1].y(),N1[1].x());
+	double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
+	double AMAX = std::max(alpha1,alpha2);
+	double AMIN = std::min(alpha1,alpha2);
+	if (alpha3 > AMAX){
+	  AMIN += M_PI;
+	  AMAX += M_PI;
+	} 
+	if ( AMAX - AMIN >= M_PI){
+	  double temp = AMAX;
+	  AMAX = AMIN + 2*M_PI;
+	  AMIN = temp;
+	}
+	_columns->addFan (*it,e1,e1,true);
+	for (int i=-1; i<=fanSize; i++){
+	  double t = (double)(i+1)/ (fanSize+1);
+	  double alpha = t * AMAX + (1.-t)* AMIN;
+	  SVector3 x (cos(alpha),sin(alpha),0);
+	  printf("%d %g %g %g\n",i,x.x(),x.y(),alpha);
+	  x.normalize();
+	  _dirs.push_back(x);
 	}
       }
     }
@@ -389,7 +526,7 @@ BoundaryLayerColumns* buildAdditionalPoints2D (GFace *gf)
 
   // END OF DEBUG STUFF
 
-  return _columns;
+  return 1;
 #endif
 }
 

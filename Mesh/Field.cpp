@@ -1859,6 +1859,42 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
   return std::min (hfar,lc);
 }
 
+// assume that the closest point is one of the model vertices
+void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
+					   SMetric3 &metr)
+{
+  double xpk,ypk,zpk;
+  double distk = 1.e22;
+  for(std::list<int>::iterator it = nodes_id.begin();
+      it != nodes_id.end(); ++it) {
+    GVertex *v = GModel::current()->getVertexByTag(*it);    
+    double xp = v->x();
+    double yp = v->y();
+    double zp = v->z();
+    const double dist = sqrt ((x-xp)*(x-xp)+
+			      (y-yp)*(y-yp)+
+			      (z-zp)*(z-zp));
+    if (dist < distk){
+      distk = dist;
+      xpk=xp;
+      ypk=yp;
+      zpk=zp;
+    }
+  }
+
+  const double ll1   = (distk*(ratio-1) + hwall_n) / (1. + 0.5 * (ratio - 1));
+    //const double ll1   = (distk*(ratio-1) + hwall_n) / (1.);
+  double lc_n  = std::min(ll1,hfar);
+
+  if (distk > thickness) lc_n = hfar;
+  lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
+  lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
+  SVector3 t1= SVector3(x-xpk,y-ypk,z-zpk);
+  t1.normalize();
+  metr = buildMetricTangentToCurve(t1,lc_n,lc_n);  
+}
+
+
 void BoundaryLayerField::operator() (AttractorField *cc, double dist,
                                      double x, double y, double z,
                                      SMetric3 &metr, GEntity *ge)

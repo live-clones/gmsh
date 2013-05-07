@@ -181,6 +181,10 @@ bool compute4neighbors (GFace *gf,   // the surface
 			SPoint2 newP[4][NUMDIR], // look into other directions 
 			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
+
+  Range<double> rangeU = gf->parBounds(0);
+  Range<double> rangeV = gf->parBounds(1);
+
   // we assume that v is on surface gf
 
   // get the parameter of the point on the surface
@@ -247,14 +251,17 @@ bool compute4neighbors (GFace *gf,   // the surface
     // t1 . s2 = a E + b N --> solve the 2 x 2 system
     // and get covariant coordinates a and b
     double rhs1[2] = {dot(t1,s1),dot(t1,s2)}, covar1[2];
+    bool singular = false;
     if (!sys2x2(metric,rhs1,covar1)){
-      Msg::Info("Argh");
+      Msg::Info("Argh surface %d %g %g %g -- %g %g %g -- %g %g",gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z(),size_1,size_2);
       covar1[1] = 1.0; covar1[0] = 0.0;
+      singular = true;
     }
     double rhs2[2] = {dot(t2,s1),dot(t2,s2)}, covar2[2];
     if (!sys2x2(metric,rhs2,covar2)){
-      Msg::Info("Argh");
+      Msg::Info("Argh surface %d %g %g %g -- %g %g %g",gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
       covar2[0] = 1.0; covar2[1] = 0.0;
+      singular = true;
     }
     
     // transform the sizes with respect to the metric
@@ -263,18 +270,22 @@ bool compute4neighbors (GFace *gf,   // the surface
     // of size1 in direction v, it should be sqrt(v^T M v) * size1
     double l1 = sqrt(covar1[0]*covar1[0]+covar1[1]*covar1[1]);
     double l2 = sqrt(covar2[0]*covar2[0]+covar2[1]*covar2[1]);
-
   
     covar1[0] /= l1;covar1[1] /= l1;
     covar2[0] /= l2;covar2[1] /= l2;
 
-
-    const double size_param_1  = size_1 / sqrt (  M*covar1[0]*covar1[0]+
+    double size_param_1  = size_1 / sqrt (  M*covar1[0]*covar1[0]+
 						  2*E*covar1[1]*covar1[0]+
 						  N*covar1[1]*covar1[1]);
-    const double size_param_2  = size_2 / sqrt (  M*covar2[0]*covar2[0]+
-						  2*E*covar2[1]*covar2[0]+
+    double size_param_2  = size_2 / sqrt (  M*covar2[0]*covar2[0]+
+						  2*E*covar2[1]*covar2[0]+					    
 						  N*covar2[1]*covar2[1]);
+    if (singular){
+      size_param_1 = size_param_2 = std::min (size_param_1,size_param_2);
+    }
+
+    //    printf("%12.5E %12.5E\n", size_param_1, size_param_2);
+
     
     //    if (v_center->onWhat() != gf && gf->tag() == 3)
     //      printf("M = (%g %g %g) L = %g %g LP = %g %g\n",metricField(0,0),metricField(1,1),metricField(0,1),l1,l2,size_param_1,size_param_2);
@@ -312,6 +323,10 @@ bool compute4neighbors (GFace *gf,   // the surface
     // surface
     double ERR[4];
     for (int i=0;i<4;i++){                                              //
+      //      if (newPoint[i][0] < rangeU.low())newPoint[i][0] = rangeU.low(); 
+      //      if (newPoint[i][0] > rangeU.high())newPoint[i][0] = rangeU.high(); 
+      //      if (newPoint[i][1] < rangeV.low())newPoint[i][1] = rangeV.low(); 
+      //      if (newPoint[i][1] > rangeV.high())newPoint[i][1] = rangeV.high(); 
       GPoint pp = gf->point(SPoint2(newPoint[i][0], newPoint[i][1]));
       double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) + 
 		       (pp.y() - v_center->y())*(pp.y() - v_center->y()) + 
@@ -320,7 +335,7 @@ bool compute4neighbors (GFace *gf,   // the surface
       //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
     }
 
-    if (0 && goNonLinear){//---------------------------------------------------//
+    if (1 && goNonLinear){//---------------------------------------------------//
       surfaceFunctorGFace ss (gf);                                        //
       SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //      
       for (int i=0;i<4;i++){                                              //
@@ -330,7 +345,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 	  curveFunctorCircle cf (dirs[i],n,				 
 				 SVector3(v_center->x(),v_center->y(),v_center->z()),
 				 L);
-	  if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-5)){          //
+	  if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-3)){          //
 	    GPoint pp = gf->point(SPoint2(uvt[0],uvt[1]));
 	    double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) + 
 			     (pp.y() - v_center->y())*(pp.y() - v_center->y()) + 
@@ -346,10 +361,12 @@ bool compute4neighbors (GFace *gf,   // the surface
 	      //	      printf("%12.5E vs %12.5E : %12.5E  %12.5E vs %12.5E  %12.5E \n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
 	      newPoint[i][0] = uvt[0];                                        //
 	      newPoint[i][1] = uvt[1];                                        //
-	    }                                                                 //
+	    }                                                                 //	    
+	    //	    printf("OK\n");
 	  }
 	  else{
 	    Msg::Debug("Cannot put a new point on Surface %d",gf->tag());
+	    //	    printf("NOT OK\n");
 	  }
 	}
       }                                                                   //

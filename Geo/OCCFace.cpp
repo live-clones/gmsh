@@ -163,8 +163,30 @@ void OCCFace::secondDer(const SPoint2 &param,
 GPoint OCCFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
-  gp_Pnt val = occface->Value(par1, par2);
-  return GPoint(val.X(), val.Y(), val.Z(), this, pp);
+  double umin2, umax2, vmin2, vmax2;
+  ShapeAnalysis::GetFaceUVBounds(s, umin2, umax2, vmin2, vmax2);
+  
+  double du = umax2 - umin2;
+  double dv = vmax2 - vmin2;
+
+  if (par1 > (umax2+.1*du) || par1 < (umin2-.1*du) ||
+      par2 > (vmax2+.1*dv) || par2 < (vmin2-.1*dv))
+    {
+      GPoint p(0,0,0, this, pp);
+      p.setNoSuccess();
+      return p;
+    }
+
+  try{
+    gp_Pnt val;
+    val = occface->Value(par1, par2);
+    return GPoint(val.X(), val.Y(), val.Z(), this, pp);
+  }
+  catch(Standard_OutOfRange){
+    GPoint p(0,0,0, this, pp);
+    p.setNoSuccess();
+    return p;
+  }
 }
 
 GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) const

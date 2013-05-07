@@ -15,7 +15,7 @@ class simpleFunction {
   scalar _val;
   bool _hasDerivatives;
  public :
- simpleFunction(scalar val=0.0) : _val(val), _hasDerivatives(false){}
+ simpleFunction(scalar val =0.0) : _val(val), _hasDerivatives(false){}
   virtual ~simpleFunction(){}
   virtual bool hasDerivatives() {return _hasDerivatives;};
   virtual scalar operator () (double x, double y, double z) const { return _val; }
