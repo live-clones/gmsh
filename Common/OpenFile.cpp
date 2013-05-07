@@ -240,6 +240,14 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 #endif
 }
 
+static int defineSolver(const std::string &name)
+{
+  for(int i = 0; i < 5; i++){
+    if(opt_solver_name(i, GMSH_GET, "") == name) return i;
+  }
+  return 4;
+}
+
 void ParseString(const std::string &str)
 {
   if(str.empty()) return;
@@ -403,11 +411,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   }
 #endif
 #if defined(HAVE_ONELAB)
-  else if(ext == ".pro" && opt_solver_name(0, GMSH_GET, "") == "GetDP"){
+  else if(ext == ".pro"){
+    int num = defineSolver("GetDP");
     std::vector<std::string> split = SplitFileName(fileName);
     GModel::current()->setName(split[1] + ".geo");
     GModel::current()->setFileName(split[0] + split[1] + ".geo");
-    CTX::instance()->launchSolverAtStartup = 0;
+    CTX::instance()->launchSolverAtStartup = num;
     return 1;
   }
 #endif
@@ -417,10 +426,16 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     status = metamodel_cb(fileName);
   }
   else if(ext == ".py"){
-    // FIXME: should use launchSolverAtStartup
     FlGui::instance()->onelab->addSolver("python", fileName, "", 1);
     onelab_cb(0, (void*)"check");
     status = 1;
+    /*
+    int num = defineSolver("python");
+    opt_solver_name(num, GMSH_SET, "python");
+    opt_solver_executable(num, GMSH_SET, fileName);
+    CTX::instance()->launchSolverAtStartup = num;
+    return 1;
+    */
   }
 #endif
   else {
