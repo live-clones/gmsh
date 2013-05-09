@@ -22,7 +22,9 @@
 #include "cartesian.h"
 #include "simpleFunction.h"
 
-
+#if defined(HAVE_ANN)
+#include "ANN/ANN.h"
+#endif 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -306,7 +308,6 @@ public:
   gLevelsetMathEvalAll(std::vector<std::string> f, int tag=1); 
   ~gLevelsetMathEvalAll(){ if (_expr) delete _expr; }
   double operator() (const double x, const double y, const double z) const;
-  std::vector<double> getValueAndGradients(const double x, const double y, const double z) const;
   void gradient (double x, double y, double z,
 		double & dfdx, double & dfdy, double & dfdz) const;
   void hessian (double x, double y, double z,
@@ -331,20 +332,28 @@ public:
   int type() const { return UNKNOWN; }
 };
 
-class gLevelsetDistGeom: public gLevelsetPrimitive
+class gLevelsetDistMesh: public gLevelsetPrimitive
 {
-  cartesianBox<double> *_box;
-  GModel *modelBox, *modelGeom;
-public:
-  gLevelsetDistGeom(std::string g, std::string f, int tag=1);
-  ~gLevelsetDistGeom(){
-    delete modelBox;
-    delete modelGeom;
-    if (_box) delete _box;
-  }
+  GModel * _gm;
+  const int _nbClose;
+#if defined(HAVE_ANN)
+  std::vector<GEntity*> _entities;
+  std::vector<MVertex*> _vertices;
+  std::multimap<MVertex*,MElement*> _v2e;
+  ANNkd_tree *_kdtree;
+  ANNpointArray _nodes;
+  ANNidxArray _index;
+  ANNdistArray _dist;
+#endif
+public :
+  gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5);
   double operator () (const double x, const double y, const double z) const;
+#if defined(HAVE_ANN)
+  ~gLevelsetDistMesh();
+#endif
   int type() const { return UNKNOWN; }
 };
+
 
 #if defined(HAVE_POST)
 class gLevelsetPostView : public gLevelsetPrimitive
@@ -630,7 +639,6 @@ public:
   gLevelsetNACA00(double x0, double y0, double c, double t);
   ~gLevelsetNACA00() {}
   double operator () (const double x, const double y, const double z) const;
-//  std::vector<double> getValueAndGradients(const double x, const double y, const double z) const;
   void gradient (double x, double y, double z,
     double & dfdx, double & dfdy, double & dfdz) const;
   void hessian (double x, double y, double z,

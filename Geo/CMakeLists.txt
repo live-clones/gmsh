@@ -5,7 +5,6 @@
 
 set(SRC
   boundaryLayersData.cpp
-  distanceToMesh.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp

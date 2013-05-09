@@ -707,12 +707,12 @@ void meshMetric::scaleMetric( int nbElementsTarget,
     SMetric3 m3 = nmt[e->getVertex(2)];
     if (_dim == 2){
       SMetric3 m =  interpolation(m1,m2,m3,0.3333,0.3333);
-      N += sqrt(m.determinant()) * e->getVolume()  * 3.0;
+      N += sqrt(m.determinant()) * e->getVolume()  * 4./sqrt(3.0); //3.0
     }
     else{
       SMetric3 m4 = nmt[e->getVertex(3)];
       SMetric3 m =  interpolation(m1,m2,m3,m4,0.25,0.25,0.25);
-      N += sqrt(m.determinant()) * e->getVolume() * 4.0;
+      N += sqrt(m.determinant()) * e->getVolume() * 12./sqrt(2.0); //4.0;
     }
   }
   double scale = pow ((double)nbElementsTarget/N,2.0/_dim);

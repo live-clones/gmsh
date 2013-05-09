@@ -37,7 +37,6 @@
   #include "SBoundingBox3d.h"
   #include "Curvature.h"
   #include "simpleFunction.h"
-  #include "distanceToMesh.h"
   #include "GeomMeshMatcher.h"
 %}
 
@@ -96,7 +95,6 @@ namespace std {
 %include "SBoundingBox3d.h"
 %include "Curvature.h"
 %include "gmshLevelset.h"
-%include "distanceToMesh.h"
 %include "GeomMeshMatcher.h"
 
 

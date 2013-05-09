@@ -110,12 +110,17 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax=1., double tolx=1.e-6);
 double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
                         fullVector<double> &x, void *data);
+
+void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoint3 &p3,
+				 const SPoint3 &p, double &d, SPoint3 &closePt);
+
 void signedDistancesPointsTriangle(std::vector<double> &distances,
                                    std::vector<SPoint3> &closePts,
                                    const std::vector<SPoint3> &pts,
                                    const SPoint3 &p1,
                                    const SPoint3 &p2,
                                    const SPoint3 &p3);
+
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p,
                              double &distance, SPoint3 &closePt);
 void signedDistancesPointsLine (std::vector<double>&distances,

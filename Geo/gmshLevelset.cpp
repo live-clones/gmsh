@@ -16,6 +16,7 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "cartesian.h"
+#include <ANN/ANN.h>
 
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
@@ -848,16 +849,6 @@ double gLevelsetMathEvalAll::operator() (const double x, const double y, const d
     if(_expr->eval(values, res)) return res[0];
     return 1.;
 }
-std::vector<double> gLevelsetMathEvalAll::getValueAndGradients (const double x, const double y, const double z) const
-{
-    std::vector<double> values(3), res(13);
-    values[0] = x;
-    values[1] = y;
-    values[2] = z;
-    if(_expr->eval(values, res)) return res;
-    return res;
-}
-
 void gLevelsetMathEvalAll::gradient (double x, double y, double z,
 				     double & dfdx, double & dfdy, double & dfdz) const
 {
@@ -897,123 +888,108 @@ void gLevelsetMathEvalAll::hessian (double x, double y, double z,
     }
 }
 
-gLevelsetDistGeom::gLevelsetDistGeom(std::string box, std::string geom, int tag)
-  : gLevelsetPrimitive(tag), _box(NULL)
+gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose)
+  :  _gm(gm), _nbClose(nbClose)
 {
-  modelBox = new GModel();
-  modelBox->load(box+std::string(".msh"));
-  modelGeom = new GModel();
-  modelGeom->load(geom);
-
-  //EMI FIXME THIS
-  int levels = 3;
-  // double rmax = 0.1;
-  // double sampling = std::min(rmax, std::min(lx, std::min(ly, lz)));
-
-  //FILLING POINTS FROM GEOMBOX
-  std::vector<SPoint3> points;
-  std::vector<SPoint3> refinePoints;
-  for(GModel::viter vit = modelBox->firstVertex(); vit != modelBox->lastVertex(); vit++){
-    for(unsigned int k = 0; k < (*vit)->getNumMeshVertices(); k++){
-      MVertex  *v = (*vit)->getMeshVertex(k);
-       SPoint3 p(v->x(), v->y(), v->z());
-      points.push_back(p);
+  std::map<int, std::vector<GEntity*> > groups [4];
+  gm->getPhysicalGroups(groups);
+  for (GModel::piter it = gm->firstPhysicalName() ;
+       it != gm->lastPhysicalName() ; ++it){
+    if (it->second == physical){
+      _entities = groups[it->first.first][it->first.second];
     }
   }
-  for (GModel::eiter eit = modelBox->firstEdge(); eit != modelBox->lastEdge(); eit++){
-    for(unsigned int k = 0; k < (*eit)->getNumMeshVertices(); k++){
-      MVertex  *ve = (*eit)->getMeshVertex(k);
-      SPoint3 pe(ve->x(), ve->y(), ve->z());
-      points.push_back(pe);
-    }
+  if (_entities.size() == 0){
+    Msg::Error("distanceToMesh: the physical name '%s' does not exist in the GModel", physical.c_str());
   }
 
-  //FILLING POINTS FROM STL
-  for (GModel::fiter fit = modelGeom->firstFace(); fit != modelGeom->lastFace(); fit++){
-    for(unsigned int k = 0; k < (*fit)->getNumMeshVertices(); k++){
-      MVertex  *vf = (*fit)->getMeshVertex(k);
-      SPoint3 pf(vf->x(), vf->y(), vf->z());
-      points.push_back(pf);
-    }
-    for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){
-      MElement *e =  (*fit)->getMeshElement(k);
-      if (e->getType() == TYPE_TRI){
-  	MVertex *v1 = e->getVertex(0);
-  	MVertex *v2 = e->getVertex(1);
-  	MVertex *v3 = e->getVertex(2);
-  	SPoint3 cg( (v1->x()+v2->x()+v3->x())/3.,
-  		    (v1->y()+v2->y()+v3->y())/3.,
-  		    (v1->z()+v2->z()+v3->z())/3.);
-  	refinePoints.push_back(cg);
+  //setup
+  std::set<MVertex *> _all;
+  for (unsigned int i=0;i<_entities.size();i++){
+    for (unsigned int k = 0; k < _entities[i]->getNumMeshElements(); k++) {
+      MElement *e = _entities[i]->getMeshElement(k);
+      for (int j = 0; j<  e->getNumVertices();j++){
+	MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
+	_all.insert(v);
+	_v2e.insert (std::make_pair(v,e));
       }
     }
   }
-  //FOR CAD
-  //for (GModel::fiter fit = modelGeom->firstFace(); fit != modelGeom->lastFace(); fit++)
-  //   (*fit)->fillPointCloud(sampling, &points);
-
-  if (points.size() == 0) {Msg::Fatal("No points on surfaces \n"); };
-
-  SBoundingBox3d bb;
-  for(unsigned int i = 0; i < points.size(); i++) bb += points[i];
-  for(unsigned int i = 0; i < refinePoints.size(); i++) bb += refinePoints[i];
-  //bb.scale(1.01, 1.01, 1.01);
-  SVector3 range = bb.max() - bb.min();
-  double minLength = std::min( range.x(), std::min(range.y(), range.z()));
-  double hmin = minLength / 5;
-  int NX = range.x() / hmin;
-  int NY = range.y() / hmin;
-  int NZ = range.z() / hmin;
-  if(NX < 2) NX = 2;
-  if(NY < 2) NY = 2;
-  if(NZ < 2) NZ = 2;
-  double rtube = 2.*hmin; //std::max(lx, std::max(ly, lz))*2.;
-
-  Msg::Info("  bounding box min: %g %g %g -- max: %g %g %g",
-            bb.min().x(), bb.min().y(), bb.min().z(),
-            bb.max().x(), bb.max().y(), bb.max().z());
-  Msg::Info("  Nx=%d Ny=%d Nz=%d", NX, NY, NZ);
-
-  _box = new cartesianBox<double>(bb.min().x(), bb.min().y(), bb.min().z(),
-  				 SVector3(range.x(), 0, 0),
-  				 SVector3(0, range.y(), 0),
-  				 SVector3(0, 0, range.z()),
-  				 NX, NY, NZ, levels);
-   for (int i = 0; i < NX; i++)
-    for (int j = 0; j < NY; j++)
-      for (int k = 0; k < NZ; k++)
-        _box->insertActiveCell(_box->getCellIndex(i, j, k));
-
-  cartesianBox<double> *parent = _box, *child;
-  while((child = parent->getChildBox())){
-    //Msg::Info("  level %d ", child->getLevel());
-    for(unsigned int i = 0; i < refinePoints.size(); i++)
-      insertActiveCells(refinePoints[i].x(), refinePoints[i].y(), refinePoints[i].z(),
-                         rtube / pow(2., (levels - child->getLevel())), *child);
-    parent = child;
+  _nodes = annAllocPts(_all.size(), 3);
+  std::set<MVertex*>::iterator itp = _all.begin();
+  int ind = 0;
+  while (itp != _all.end()){
+    MVertex* pt = *itp;
+    _nodes[ind][0] = pt->x();
+    _nodes[ind][1] = pt->y();
+    _nodes[ind][2] = pt->z();
+    _vertices.push_back(pt);
+    itp++; ind++;
   }
+  _kdtree = new ANNkd_tree(_nodes, _all.size(), 3);  
+  _index = new ANNidx[_nbClose];
+  _dist  = new ANNdist[_nbClose];
 
-  //Msg::Info("Removing cells to match mesh topology constraints");
-  removeBadChildCells(_box);
-  removeParentCellsWithChildren(_box);
 
-  //Msg::Info("Initializing nodal values in the cartesian grid");
-  _box->createNodalValues();
-
-  //Msg::Info("Computing levelset on the cartesian grid");
-  computeLevelset(modelGeom, *_box);
-
-  //Msg::Info("Renumbering mesh vertices across levels");
-  _box->renumberNodes();
-
-  _box->writeMSH("yeah.msh", false);
 }
 
-double gLevelsetDistGeom::operator() (const double x, const double y, const double z) const
+#if defined(HAVE_ANN)
+gLevelsetDistMesh::~gLevelsetDistMesh()
 {
-  double dist = _box->getValueContainingPoint(x,y,z);
-  return dist;
+  delete [] _index;
+  delete [] _dist;
+  if (_kdtree) delete _kdtree;
+  if (_nodes) annDeallocPts (_nodes); 
+
 }
+
+double gLevelsetDistMesh::operator () (const double x, const double y, const double z) const
+{
+  double point[3] = {x,y,z};
+  _kdtree->annkSearch(point, _nbClose, _index, _dist);
+  std::set<MElement*> elements;
+  for (int i=0;i<_nbClose;i++){
+    int iVertex = _index [i];
+    MVertex *v = _vertices[iVertex];
+    for (std::multimap<MVertex*,MElement*>::const_iterator itm =
+           _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
+      elements.insert (itm->second);    
+  }
+  double minDistance = 1.e22;
+  SPoint3 closest;
+  for (std::set<MElement*>::iterator it = elements.begin();
+       it != elements.end();++it){
+    double distance;
+    MVertex *v1 = (*it)->getVertex(0);
+    MVertex *v2 = (*it)->getVertex(1);
+    SPoint3 p1(v1->x(), v1->y(), v1->z());
+    SPoint3 p2(v2->x(), v2->y(), v2->z());
+    SPoint3 pt;
+    if ((*it)->getDim() == 1){
+       signedDistancePointLine(p1, p2,SPoint3(x,y,z),distance,pt);
+    }
+    else if ((*it)->getDim() == 2){
+      MVertex *v3 = (*it)->getVertex(2);
+      SPoint3 p3(v3->x(), v3->y(), v3->z());
+      signedDistancePointTriangle(p1, p2, p3,SPoint3(x,y,z),distance,pt);
+    }
+    else if  ((*it)->getDim() == 2){
+      Msg::Error("Cannot compute a dsitance to an entity of dim \n");
+    }
+    if (fabs(distance) < fabs(minDistance)){
+      minDistance=distance;
+    }
+  }
+  return -1.0*minDistance;
+}
+#else
+double gLevelsetDistMesh::operator () (double x, double y, double z)
+{
+  Msg::Fatal ("impossible to compute distance to a mesh without ANN");  
+}
+#endif
+
+
 
 #if defined (HAVE_POST)
 gLevelsetPostView::gLevelsetPostView(int index, int tag)
