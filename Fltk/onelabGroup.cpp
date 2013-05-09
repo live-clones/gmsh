@@ -1810,12 +1810,26 @@ void onelabGroup::rebuildSolverList()
   rebuildTree();
 }
 
+static bool needToChooseExe(const std::string &exe)
+{
+  // no exe given
+  if(exe.empty()) return true;
+
+  // exe is given with absolute path to non-existing file
+  if(exe[0] == '/' || exe[0] == '\\' || (exe.size() > 2 && exe[1] == ':')){
+    if(StatFile(exe)) return true;
+  }
+
+  return false;
+}
+
 void onelabGroup::addSolver(const std::string &name, const std::string &executable,
                             const std::string &remoteLogin, int index)
 {
   onelab::server::citer it = onelab::server::instance()->findClient(name);
   if(it != onelab::server::instance()->lastClient()){
-    if(executable.empty()) onelab_choose_executable_cb(0, (void *)it->second);
+    if(needToChooseExe(executable))
+      onelab_choose_executable_cb(0, (void *)it->second);
     return; // solver already exists
   }
 
@@ -1834,7 +1848,8 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
                                                              remoteLogin);
   c->setIndex(index);
   opt_solver_name(index, GMSH_SET, name);
-  if(executable.empty()) onelab_choose_executable_cb(0, (void *)c);
+  if(needToChooseExe(executable))
+    onelab_choose_executable_cb(0, (void *)c);
   opt_solver_remote_login(index, GMSH_SET, remoteLogin);
 
   FlGui::instance()->onelab->rebuildSolverList();
