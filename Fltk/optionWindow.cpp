@@ -189,14 +189,17 @@ static void options_show_file_cb(Fl_Widget *w, void *data)
   fl_message("File path: %s", file.c_str());
 }
 
-static void options_restore_defaults_cb(Fl_Widget *w, void *data)
+void options_restore_defaults_cb(Fl_Widget *w, void *data)
 {
-  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
-  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
-  ReInitOptions(0);
-  InitOptionsGUI(0);
-  FlGui::instance()->rebuildTree();
-  drawContext::global()->draw();
+  if(fl_choice("Do you really want to reset all options to their default values?",
+               "Cancel", "Restore", 0)){
+    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
+    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+    ReInitOptions(0);
+    InitOptionsGUI(0);
+    FlGui::instance()->rebuildTree();
+    drawContext::global()->draw();
+  }
 }
 
 void general_options_cb(Fl_Widget *w, void *data)
@@ -353,14 +356,14 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
 
-  
-  if( (opt_general_gamepad(0, GMSH_GET, 0) !=  o->general.butt[19]->value() ) 
-      || ( opt_general_camera_mode(0, GMSH_GET, 0) !=  o->general.butt[18]->value() )){    
-    if((opt_general_gamepad(0, GMSH_GET, 0) == 1 ) 
+
+  if( (opt_general_gamepad(0, GMSH_GET, 0) !=  o->general.butt[19]->value() )
+      || ( opt_general_camera_mode(0, GMSH_GET, 0) !=  o->general.butt[18]->value() )){
+    if((opt_general_gamepad(0, GMSH_GET, 0) == 1 )
        && (o->general.butt[18]->value() == 0) ) {
       o->general.butt[19]->value(0) ;
-    }   
-    if((opt_general_camera_mode(0, GMSH_GET, 0) == 0 ) 
+    }
+    if((opt_general_camera_mode(0, GMSH_GET, 0) == 0 )
        && ( o->general.butt[19]->value() ==1) ) {
       o->general.butt[18]->value(1);
     }
@@ -368,7 +371,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_gamepad(0, GMSH_SET, o->general.butt[19]->value() );
   opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
   o->activate((const char*)data);
-  
+
 
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
@@ -377,7 +380,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
   }
-  
+
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -1469,7 +1472,7 @@ optionWindow::optionWindow(int deltaFontSize)
       b1->callback(options_show_file_cb, (void*)"option");
 
       Fl_Button *b2 = new Fl_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Restore all options to default values");
+        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
       b2->labelcolor(FL_DARK_RED);
 
@@ -1847,7 +1850,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Configure Gamepad");
       general.gamepadconfig->callback(general_gmpdcf_cb);
 
-  
+
       if( opt_general_camera_mode(0, GMSH_GET, 0) == 0 ){
 	general.value[30]->deactivate();
 	general.value[31]->deactivate();
@@ -1855,7 +1858,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       if( opt_general_stereo_mode(0, GMSH_GET, 0) == 0 )
 	general.value[29]->deactivate();
-       
+
       if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)  {
 	general.gamepadconfig->activate();
 	opt_general_camera_mode(0, GMSH_SET, 1);
@@ -3841,25 +3844,25 @@ void optionWindow::activate(const char *what)
     else{
       general.gamepadconfig->deactivate();
     }
-   
+
     if(general.butt[17]->value()==0){
       general.value[29]->deactivate();
     }
     else{
       general.value[29]->activate();
-    } 
-    
+    }
+
     if(general.butt[18]->value()==0 ){
       general.value[30]->deactivate();
       general.value[31]->deactivate();
-    } 
+    }
     else{
       general.value[30]->activate();
-      general.value[31]->activate();   
+      general.value[31]->activate();
     }
-    
+
   }
-   
+
   else if(!strcmp(what, "geo_transform")){
     if(geo.choice[3]->value() == 1){
       for(int i = 7; i <= 18; i++)

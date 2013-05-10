@@ -1960,8 +1960,9 @@ static Fl_Menu_Item bar_table[] = {
     {0},
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"&Keyboard and Mouse Usage",    0, (Fl_Callback *)help_basic_cb, 0},
-    {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", FL_MENU_DIVIDER},
+    {"&Keyboard and Mouse Usage",    0, (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
+    {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0, FL_MENU_DIVIDER},
     {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
   {0}
@@ -2023,8 +2024,9 @@ static Fl_Menu_Item sysbar_table[] = {
     {0},
   {"Help", 0, 0, 0, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
-    {"Keyboard and Mouse Usage",        0, (Fl_Callback *)help_basic_cb, 0},
+    {"Keyboard and Mouse Usage",        0, (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
     {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?"},
+    {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0},
     {0},
   {0}
 };
@@ -2891,13 +2893,13 @@ void graphicWindow::setStereo(bool st)
 {
   openglWindow::setLastHandled(0);
   for(unsigned int i = 0; i < gl.size(); i++){
-    if (st) { 
+    if (st) {
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
     }
-    else{  
+    else{
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE );
-    }  
-    gl[i]->show(); 
+    }
+    gl[i]->show();
   }
   Msg::Info("new gl window for stereo vision!");
 }
