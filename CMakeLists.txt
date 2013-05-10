@@ -1159,21 +1159,25 @@ else(HAVE_FLTK)
 endif(HAVE_FLTK)
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-# increase stack to 16Mb on Windows to avoid overflows in recursive
-# tet classification for large 3D Delaunay grids + force static
-# linking of system libraries with cygwin/mingw (to ease distribution 
-# andspeed up app startup time)
+# Windows specific linker options
 if(WIN32 AND NOT MSVC OR CYGWIN)
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,--stack,16777216 -mwindows")
   if(HAVE_64BIT_SIZE_T)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-      "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res -mwindows -static")
+      "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res")
   else(HAVE_64BIT_SIZE_T)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-      "-Wl,--stack,16777216 ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res -mwindows -static")
+      "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
   endif(HAVE_64BIT_SIZE_T)
-  # remove stupid -Wl,-Bdynamic flags
-  set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
-  set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
+  if(ENABLE_BUILD_DYNAMIC)
+    set_target_properties(shared PROPERTIES LINK_FLAGS "-Wl,--export-all-symbols")
+    set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,--enable-auto-import")
+  else(ENABLE_BUILD_DYNAMIC)
+    set_target_properties(gmsh PROPERTIES LINK_FLAGS "-static")
+    # remove -Wl,-Bdynamic flags
+    set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
+    set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
+  endif(ENABLE_BUILD_DYNAMIC)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
