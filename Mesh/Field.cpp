@@ -371,6 +371,58 @@ class LonLatField : public Field
   }
 };
 
+class XY2d2LonLatField : public Field
+{
+  int iField;
+  double R, phiP, thetaP;
+ public:
+  std::string getDescription()
+  {
+    return "Evaluate Field[IField] in geographic coordinates (longitude, latitude) from x and y projected on a plane\n\n";
+  }
+  XY2d2LonLatField()
+  {
+    iField = 1;
+    options["IField"] = new FieldOptionInt
+      (iField, "Index of the field to evaluate.");
+    R = 6371e3;
+    phiP = 0;
+    thetaP = 0;
+
+    options["Radius"] = new FieldOptionDouble
+      (R, "radius of the sphere");
+    options["Phi"] = new FieldOptionDouble
+      (phiP, "longitude of the projection point (in degrees)");
+    options["Theta"] = new FieldOptionDouble
+      (thetaP, "latitude of the projection point (in degrees)");
+  }
+  const char *getName()
+  {
+    return "XY2d2LonLat";
+  }
+  double operator() (double x2d, double y2d, double z2d, GEntity *ge=0)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+    if(!field || iField == id) return MAX_LC;
+    double phi = phiP*M_PI/180;
+    double theta = thetaP*M_PI/180;
+    double pOx = cos(theta)*cos(phi)*R;
+    double pOy = cos(theta)*sin(phi)*R;
+    double pOz = sin(theta)*R;
+    double pPhiX = -sin(phi);
+    double pPhiY = cos(phi);
+    double pPhiZ = 0;
+    double pThetaX = -sin(theta)*cos(phi);
+    double pThetaY = -sin(theta)*sin(phi);
+    double pThetaZ = cos(theta);
+    
+    double x = pPhiX * x2d + pThetaX * y2d + pOx;
+		double y = pPhiY * x2d + pThetaY * y2d + pOy;
+		double z = pPhiZ * x2d + pThetaZ * y2d + pOz;
+    return (*field)(atan2(y, x), asin(z / R), 0);
+  }
+};
+
 class BoxField : public Field
 {
   double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
@@ -2063,6 +2115,7 @@ FieldManager::FieldManager()
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
   map_type_name["Frustum"] = new FieldFactoryT<FrustumField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
+  map_type_name["XY2d2LonLat"] = new FieldFactoryT<XY2d2LonLatField>();
 #if defined(HAVE_POST)
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
 #endif
