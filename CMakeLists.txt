@@ -274,6 +274,10 @@ if(ENABLE_BLAS_LAPACK)
         if(LAPACK_LIBRARIES)
           set_config_option(HAVE_BLAS "Blas")
           set_config_option(HAVE_LAPACK "Lapack")
+          find_library(GFORTRAN_LIB gfortran)
+          if(GFORTRAN_LIB)
+            list(APPEND LAPACK_LIBRARIES ${GFORTRAN_LIB})
+          endif(GFORTRAN_LIB)
         endif(LAPACK_LIBRARIES)
       endif(LAPACK_LIBRARIES)
     endif(LAPACK_LIBRARIES)
@@ -1072,6 +1076,21 @@ else(HAVE_FLTK)
   set(LINK_LIBRARIES ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
 endif(HAVE_FLTK)
 
+# try to use static gfortran on static Linux builds
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  if(NOT ENABLE_BUILD_DYNAMIC)
+    find_library(GFORTRAN_STATIC libgfortran.a)
+    if(GFORTRAN_STATIC)
+      message(STATUS "Using static libgfortran")
+      foreach(STR ${LINK_LIBRARIES})
+        string(REPLACE "-lgfortran" ${GFORTRAN_STATIC} STR2 ${STR})
+        list(APPEND LINK_LIBRARIES2 ${STR2})
+      endforeach(STR)
+      set(LINK_LIBRARIES ${LINK_LIBRARIES2})
+    endif(GFORTRAN_STATIC)
+  endif(NOT ENABLE_BUILD_DYNAMIC)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
   Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
@@ -1079,7 +1098,7 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE 
     STRING "External include directories" FORCE)
-set(GMSH_EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} CACHE 
+set(GMSH_EXTERNAL_LIBRARIES ${LINK_LIBRARIES} CACHE 
     STRING "External libraries" FORCE)
 
 # group sources for easier navigation in IDEs
