@@ -495,6 +495,7 @@ void meshGEdge::operator() (GEdge *ge)
     v0->z() = beg_p.z();
   }
 
+#if defined(HAVE_ANN)
   if (blf && !blf->isEdgeBL(ge->tag()))
     {      
       GVertex *g0 = ge->getBeginVertex();
@@ -521,6 +522,7 @@ void meshGEdge::operator() (GEdge *ge)
 
       }      
     }
+#endif
   ge->meshStatistics.status = GEdge::DONE;
 }
 
