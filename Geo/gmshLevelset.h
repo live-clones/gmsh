@@ -24,7 +24,7 @@
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
-#endif 
+#endif
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -102,7 +102,7 @@ public:
 
 // ----------------------------------------------------------------------------------------------------------
 // PRIMITIVES
-class gLevelsetPrimitive : public gLevelset  
+class gLevelsetPrimitive : public gLevelset
 {
 public:
   gLevelsetPrimitive() : gLevelset() {}
@@ -122,7 +122,7 @@ public:
   }
   virtual int type() const = 0;
   bool isPrimitive() const {return true;}
-  
+
 };
 
 class gLevelsetSphere : public gLevelsetPrimitive
@@ -162,7 +162,7 @@ public:
   virtual gLevelset * clone() const{return new gLevelsetPlane(*this);}
   // return negative value inward and positive value outward
   virtual double operator() (const double x, const double y, const double z) const
-    {return a * x + b * y + c * z + d;} 
+    {return a * x + b * y + c * z + d;}
   int type() const {return PLANE;}
 };
 
@@ -179,23 +179,23 @@ protected:
   fullMatrix<double> generateRbfMat(int p, int index,
 				    const fullMatrix<double> &nodes1,
 				    const fullMatrix<double> &nodes2) const;
-  void RbfOp(int p, int index, 
+  void RbfOp(int p, int index,
 	     const fullMatrix<double> &cntrs,
-	     const fullMatrix<double> &nodes, 
-	     fullMatrix<double> &D, 
+	     const fullMatrix<double> &nodes,
+	     fullMatrix<double> &D,
 	     bool isLocal = false) const;
   void evalRbfDer(int p, int index,
 		  const fullMatrix<double> &cntrs,
 		  const fullMatrix<double> &nodes,
-		  const fullMatrix<double> &fValues, 
+		  const fullMatrix<double> &fValues,
 		fullMatrix<double> &fApprox, bool isLocal = false) const;
   void setup_level_set(const fullMatrix<double> &cntrs,
-		       fullMatrix<double> &level_set_nodes, 
+		       fullMatrix<double> &level_set_nodes,
 		       fullMatrix<double> &level_set_funvals);
 
 public:
   // define the data points
-  gLevelsetPoints(fullMatrix<double> &_centers, int tag=1); 
+  gLevelsetPoints(fullMatrix<double> &_centers, int tag=1);
   // copy constructor
   gLevelsetPoints(const gLevelsetPoints &lv);
   virtual gLevelset * clone() const{return new gLevelsetPoints(*this);}
@@ -210,9 +210,9 @@ class gLevelsetQuadric : public gLevelsetPrimitive
 protected:
   double A[3][3], B[3], C;
   void translate (const double transl[3]);
-  void rotate (const double rotate[3][3]);  
-  void computeRotationMatrix (const double dir[3], double t[3][3]); 
-  void computeRotationMatrix (const double dir1[3], const double dir2[3] , double t[3][3]); 
+  void rotate (const double rotate[3][3]);
+  void computeRotationMatrix (const double dir[3], double t[3][3]);
+  void computeRotationMatrix (const double dir1[3], const double dir2[3] , double t[3][3]);
   void Ax (const double x[3], double res[3], double fact=1.0);
   void xAx (const double x[3], double &res, double fact=1.0);
   void init ();
@@ -276,7 +276,7 @@ public:
 };
 
 // creates the 2D (-approximate- signed distance !) level set
-// corresponding to the "shamrock-like" iso-zero from 
+// corresponding to the "shamrock-like" iso-zero from
 // Dobrzynski and Frey, "Anisotropic delaunay mesh adaptation for unsteady simulations",
 // 17th International Meshing Rountable (2008)(177–194)
 class gLevelsetShamrock: public gLevelsetPrimitive
@@ -305,13 +305,13 @@ class gLevelsetMathEvalAll: public gLevelsetPrimitive
 {
   mathEvaluator *_expr;
 public:
-  gLevelsetMathEvalAll(std::vector<std::string> f, int tag=1); 
+  gLevelsetMathEvalAll(std::vector<std::string> f, int tag=1);
   ~gLevelsetMathEvalAll(){ if (_expr) delete _expr; }
   double operator() (const double x, const double y, const double z) const;
   void gradient (double x, double y, double z,
 		double & dfdx, double & dfdy, double & dfdz) const;
   void hessian (double x, double y, double z,
-		double & dfdxx, double & dfdxy, double & dfdxz, 
+		double & dfdxx, double & dfdxy, double & dfdxz,
 		double & dfdyx, double & dfdyy, double & dfdyz,
 		double & dfdzx, double & dfdzy, double & dfdzz	) const;
   int type() const { return UNKNOWN; }
@@ -322,7 +322,7 @@ class gLevelsetSimpleFunction: public gLevelsetPrimitive
   simpleFunction<double> *_f;
 public:
   gLevelsetSimpleFunction(simpleFunction<double> *f, int tag=1){
-    _f = f; 
+    _f = f;
   }
   ~gLevelsetSimpleFunction(){}
   double operator () (const double x, const double y, const double z) const
@@ -332,11 +332,11 @@ public:
   int type() const { return UNKNOWN; }
 };
 
+#if defined(HAVE_ANN)
 class gLevelsetDistMesh: public gLevelsetPrimitive
 {
   GModel * _gm;
   const int _nbClose;
-#if defined(HAVE_ANN)
   std::vector<GEntity*> _entities;
   std::vector<MVertex*> _vertices;
   std::multimap<MVertex*,MElement*> _v2e;
@@ -344,16 +344,13 @@ class gLevelsetDistMesh: public gLevelsetPrimitive
   ANNpointArray _nodes;
   ANNidxArray _index;
   ANNdistArray _dist;
-#endif
 public :
   gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5);
   double operator () (const double x, const double y, const double z) const;
-#if defined(HAVE_ANN)
   ~gLevelsetDistMesh();
-#endif
   int type() const { return UNKNOWN; }
 };
-
+#endif
 
 #if defined(HAVE_POST)
 class gLevelsetPostView : public gLevelsetPrimitive
@@ -451,7 +448,7 @@ public:
   gLevelsetUnion (std::vector<gLevelset *> p, bool delC=false) : gLevelsetTools(p,delC) { }
   gLevelsetUnion(const gLevelsetUnion &lv):gLevelsetTools(lv){}
   virtual gLevelset * clone() const{return new gLevelsetUnion(*this);}
-  
+
   double choose (double d1, double d2) const {
     return (d1 < d2) ? d1 : d2; // lesser of d1 and d2
   }
@@ -525,7 +522,7 @@ public:
   //                         face normal to dir1 and     including pt : tag+5
   gLevelsetBox(const double *pt, const double *dir1, const double *dir2, const double *dir3,
                const double &a, const double &b, const double &c, int tag=1);
-  // create a box with the 8 vertices (pt1,...,pt8). 
+  // create a box with the 8 vertices (pt1,...,pt8).
   // check if the faces are planar.
   // tags of the faces are : face(pt5,pt6,pt7,pt8) : tag+0
   //                         face(pt1,pt4,pt3,pt2) : tag+1

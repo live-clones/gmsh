@@ -16,7 +16,6 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "cartesian.h"
-#include <ANN/ANN.h>
 
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
@@ -809,7 +808,7 @@ double gLevelsetPopcorn::operator() (const double x, const double y, const doubl
   return val;
 }
 
-gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag) 
+gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag)
   : gLevelsetPrimitive(tag)
 {
     std::vector<std::string> expressions(1, f);
@@ -830,7 +829,7 @@ double gLevelsetMathEval::operator() (const double x, const double y, const doub
     return 1.;
 }
 
-gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions, int tag) 
+gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions, int tag)
   : gLevelsetPrimitive(tag)
 {
   _hasDerivatives = true;
@@ -862,11 +861,11 @@ void gLevelsetMathEvalAll::gradient (double x, double y, double z,
       dfdy = res[2];
       dfdz = res[3];
     }
-    
+
 }
 
 void gLevelsetMathEvalAll::hessian (double x, double y, double z,
-				    double & dfdxx, double & dfdxy, double & dfdxz, 
+				    double & dfdxx, double & dfdxy, double & dfdxz,
 				    double & dfdyx, double & dfdyy, double & dfdyz,
 				    double & dfdzx, double & dfdzy, double & dfdzz) const
 {
@@ -888,6 +887,7 @@ void gLevelsetMathEvalAll::hessian (double x, double y, double z,
     }
 }
 
+#if defined(HAVE_ANN)
 gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose)
   :  _gm(gm), _nbClose(nbClose)
 {
@@ -926,20 +926,17 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
     _vertices.push_back(pt);
     itp++; ind++;
   }
-  _kdtree = new ANNkd_tree(_nodes, _all.size(), 3);  
+  _kdtree = new ANNkd_tree(_nodes, _all.size(), 3);
   _index = new ANNidx[_nbClose];
   _dist  = new ANNdist[_nbClose];
-
-
 }
 
-#if defined(HAVE_ANN)
 gLevelsetDistMesh::~gLevelsetDistMesh()
 {
   delete [] _index;
   delete [] _dist;
   if (_kdtree) delete _kdtree;
-  if (_nodes) annDeallocPts (_nodes); 
+  if (_nodes) annDeallocPts (_nodes);
 
 }
 
@@ -953,7 +950,7 @@ double gLevelsetDistMesh::operator () (const double x, const double y, const dou
     MVertex *v = _vertices[iVertex];
     for (std::multimap<MVertex*,MElement*>::const_iterator itm =
            _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
-      elements.insert (itm->second);    
+      elements.insert (itm->second);
   }
   double minDistance = 1.e22;
   SPoint3 closest;
@@ -981,11 +978,6 @@ double gLevelsetDistMesh::operator () (const double x, const double y, const dou
     }
   }
   return -1.0*minDistance;
-}
-#else
-double gLevelsetDistMesh::operator () (double x, double y, double z)
-{
-  Msg::Fatal ("impossible to compute distance to a mesh without ANN");  
 }
 #endif
 
