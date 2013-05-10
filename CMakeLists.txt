@@ -1158,16 +1158,19 @@ target_link_libraries(gmsh ${LINK_LIBRARIES})
 
 # Windows specific linker options
 if(WIN32 AND NOT MSVC OR CYGWIN)
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,--stack,16777216 -mwindows")
+  set_target_properties(gmsh shared PROPERTIES 
+                        LINK_FLAGS "-Wl,--stack,16777216 -mwindows")
   if(HAVE_64BIT_SIZE_T)
-    set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-      "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res")
+    set_target_properties(gmsh PROPERTIES 
+                          LINK_FLAGS "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res")
   else(HAVE_64BIT_SIZE_T)
-    set_target_properties(gmsh PROPERTIES LINK_FLAGS 
-      "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
+    set_target_properties(gmsh PROPERTIES 
+                          LINK_FLAGS "${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
   endif(HAVE_64BIT_SIZE_T)
   if(ENABLE_BUILD_DYNAMIC)
-    set_target_properties(shared PROPERTIES LINK_FLAGS "-Wl,--export-all-symbols")
+    set_target_properties(shared PROPERTIES 
+                          PREFIX "lib"
+                          LINK_FLAGS "-Wl,--export-all-symbols")
     set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,--enable-auto-import")
   else(ENABLE_BUILD_DYNAMIC)
     set_target_properties(gmsh PROPERTIES LINK_FLAGS "-static")
