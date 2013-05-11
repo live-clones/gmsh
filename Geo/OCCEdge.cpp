@@ -24,7 +24,7 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Conic.hxx>
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
 #include <BOPTools_Tools.hxx>
 #else
 #include <BOPTools_AlgoTools.hxx>
@@ -335,7 +335,7 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
     _replacement=E;
   }
   else {
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
     BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
 #else
     BOPTools_AlgoTools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
