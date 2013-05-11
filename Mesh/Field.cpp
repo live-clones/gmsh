@@ -1915,7 +1915,7 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
 void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
 					   SMetric3 &metr)
 {
-  double xpk,ypk,zpk;
+  double xpk = 0., ypk = 0., zpk = 0.;
   double distk = 1.e22;
   for(std::list<int>::iterator it = nodes_id.begin();
       it != nodes_id.end(); ++it) {
@@ -1923,19 +1923,19 @@ void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
     double xp = v->x();
     double yp = v->y();
     double zp = v->z();
-    const double dist = sqrt ((x-xp)*(x-xp)+
-			      (y-yp)*(y-yp)+
-			      (z-zp)*(z-zp));
+    const double dist = sqrt ((x - xp) *(x - xp)+
+			      (y - yp) *(y - yp)+
+			      (z - zp) *(z - zp));
     if (dist < distk){
       distk = dist;
-      xpk=xp;
-      ypk=yp;
-      zpk=zp;
+      xpk = xp;
+      ypk = yp;
+      zpk = zp;
     }
   }
 
   const double ll1   = (distk*(ratio-1) + hwall_n) / (1. + 0.5 * (ratio - 1));
-    //const double ll1   = (distk*(ratio-1) + hwall_n) / (1.);
+  // const double ll1   = (distk*(ratio-1) + hwall_n) / (1.);
   double lc_n  = std::min(ll1,hfar);
 
   if (distk > thickness) lc_n = hfar;
@@ -1945,7 +1945,6 @@ void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
   t1.normalize();
   metr = buildMetricTangentToCurve(t1,lc_n,lc_n);  
 }
-
 
 void BoundaryLayerField::operator() (AttractorField *cc, double dist,
                                      double x, double y, double z,

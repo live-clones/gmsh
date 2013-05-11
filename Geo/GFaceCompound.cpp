@@ -1961,7 +1961,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       }
     }
 
-    printf("size octrre new = %d \n", myParamElems.size());
+    //printf("size octrre new = %d \n", myParamElems.size());
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
@@ -2470,7 +2470,7 @@ void GFaceCompound::buildOct() const
 			  {_gfct[count].p2.y() - _gfct[count].p1.y(),
 			   _gfct[count].p3.y() - _gfct[count].p1.y()}};
       double inv[2][2];
-      double det = inv2x2(mat,inv);
+      inv2x2(mat, inv);
       SVector3 dXdxi (_gfct[count].v2 - _gfct[count].v1);
       SVector3 dXdeta(_gfct[count].v3 - _gfct[count].v1);
       SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]);
@@ -2503,7 +2503,7 @@ void GFaceCompound::buildOct() const
     std::vector<MElement*> vTri = it->second;
     SVector3 dXdu(0.0), dXdv(0.0);
     int nbTri = vTri.size();
-    for (unsigned int j = 0; j < nbTri; j++){
+    for (int j = 0; j < nbTri; j++){
       dXdu += firstElemDerivatives[vTri[j]].first();
       dXdv += firstElemDerivatives[vTri[j]].second();
     }

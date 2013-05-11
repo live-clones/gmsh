@@ -169,9 +169,9 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::list<GEdge*>::iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()){
       if(!(*ite)->isMeshDegenerated()){
-	for (int i=0;i<(*ite)->lines.size();i++)
-	  data.internalEdges.insert (MEdge((*ite)->lines[i]->getVertex(0),
-					   (*ite)->lines[i]->getVertex(1)));
+	for (unsigned int i = 0; i < (*ite)->lines.size(); i++)
+	  data.internalEdges.insert(MEdge((*ite)->lines[i]->getVertex(0),
+					  (*ite)->lines[i]->getVertex(1)));
       }
       ++ite;
     }
@@ -2238,11 +2238,9 @@ int optiSmoothing(GFace *gf, int niter, bool infinity_norm)
   return N;
 }
 
-
-
 int untangleInvalidQuads(GFace *gf, int niter)
 {
-  //  return 0;
+  // return 0;
   int N = 0;
 #if defined(HAVE_BFGS)
   v2t_cont adj;
@@ -2259,32 +2257,34 @@ int untangleInvalidQuads(GFace *gf, int niter)
   return N;
 }
 
-static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3){
-  SPoint2 p1,p2,p3;
-  reparamMeshVertexOnFace(v1,gf, p1);
-  reparamMeshVertexOnFace(v2,gf, p2);
-  reparamMeshVertexOnFace(v3,gf, p3);
-  if (robustPredicates::orient2d (p1,p2,p3) < 0)return true;
+static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
+{
+  SPoint2 p1, p2, p3;
+  reparamMeshVertexOnFace(v1, gf, p1);
+  reparamMeshVertexOnFace(v2, gf, p2);
+  reparamMeshVertexOnFace(v3, gf, p3);
+  if (robustPredicates::orient2d(p1, p2, p3) < 0) return true;
   return false;
 }
 
-static int allowSwap (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
+static int allowSwap (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
+{
   SPoint2 p1,p2,p3,p4;
-  reparamMeshVertexOnFace(v1,gf, p1);
-  reparamMeshVertexOnFace(v2,gf, p2);
-  reparamMeshVertexOnFace(v3,gf, p3);
-  reparamMeshVertexOnFace(v4,gf, p4);
-  if (robustPredicates::orient2d (p1,p2,p3) *
-      robustPredicates::orient2d (p1,p2,p4) < 0 &&
-      robustPredicates::orient2d (p3,p4,p1) *
-      robustPredicates::orient2d (p3,p4,p2) > 0)return true;
+  reparamMeshVertexOnFace(v1, gf, p1);
+  reparamMeshVertexOnFace(v2, gf, p2);
+  reparamMeshVertexOnFace(v3, gf, p3);
+  reparamMeshVertexOnFace(v4, gf, p4);
+  if (robustPredicates::orient2d(p1, p2, p3) *
+      robustPredicates::orient2d(p1, p2, p4) < 0 &&
+      robustPredicates::orient2d(p3, p4, p1) *
+      robustPredicates::orient2d(p3, p4, p2) > 0) return true;
   return false;
 }
 
-static double myShapeMeasure(MElement *e){
+static double myShapeMeasure(MElement *e)
+{
   return e->etaShapeMeasure();
 }
-
 
 int _edgeSwapQuadsForBetterQuality(GFace *gf, double eps, std::set<MEdge,Less_Edge> &prioritory)
 {

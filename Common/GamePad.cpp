@@ -173,8 +173,8 @@ int GamePad::read_event()
   }
   for (int i = 0; i < 6; i++) if(fabs(axe[i]) < .01) axe[i] = 0.;
   bool event = false;
-  int event_num;
-  bool event_value;
+  int event_num = 0;
+  bool event_value = false;
   for (int i = 0; i < buttons; i++){
     int bin = pow(2, i);
     if(button[i] != (bool)(infoex.dwButtons & bin)) {

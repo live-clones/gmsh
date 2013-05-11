@@ -889,7 +889,6 @@ void gmshRuppert(GFace *gf,  double minqual, int MAXPNT,
     return;
   }
 
-  int ITER = 0;
   int NBDELETED = 0;
   while (1){
     MTri3 *worst = *AllTris.begin();

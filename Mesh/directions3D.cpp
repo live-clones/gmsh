@@ -996,8 +996,7 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   
   fprintf(fi,"};\n");
   fclose (fi);
-  printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
-
+  //printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
 }
 
 void Frame_field::saveCrossField(const std::string& filename, double scale, bool full){

@@ -397,9 +397,9 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
       
       if (N1.size() == 2){
 	int fanSize = M_PI /  _treshold;
-	printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
-	       e1.getVertex(1)->x(),e1.getVertex(1)->y());
-	printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+	//printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
+	//        e1.getVertex(1)->x(),e1.getVertex(1)->y());
+	//printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
 
 	double alpha1 = atan2(N1[0].y(),N1[0].x());
 	double alpha2 = atan2(N1[1].y(),N1[1].x());
@@ -469,10 +469,10 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	  break;
 	}
 	//	printf("%g %g %g \n",current->x(),current->y(),blf->current_distance);
-	if (0 && blf->current_closest != catt || blf -> current_distance <  _current_distance){
+	if (0 && (blf->current_closest != catt || blf -> current_distance <  _current_distance)){
 	  SVector3 aaa (_close- blf->_closest_point);
 	  if (aaa.norm() > 8*blf->hwall_n || blf -> current_distance <  _current_distance){
-	    printf("reaching the skelton %d %g %g\n", (int) _column.size(), aaa.norm(),blf->hwall_n);
+	    // printf("reaching the skelton %d %g %g\n", (int) _column.size(), aaa.norm(),blf->hwall_n);
 	    delete _column[_column.size()-1];
 	    _column.erase(--_column.end());
 	    _metrics.erase(--_metrics.end());

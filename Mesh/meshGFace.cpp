@@ -1920,28 +1920,29 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
     while(it != recoverMap.end()){
       // we have twice vertex MVertex with 2 different coordinates
-      MVertex  * mv1  =  it->second;
-      BDS_Point* bds = it->first;
+      MVertex *mv1 = it->second;
+      BDS_Point *bds = it->first;
       std::map<MVertex*, BDS_Point*>::iterator invIt = invertMap.find(mv1);
       if (invIt != invertMap.end()){
 	// create a new "fake" vertex that will be destroyed afterwards
-	MVertex  * mv2 ;
+	MVertex *mv2 = 0;
 	if (mv1->onWhat()->dim() == 1) {
 	  double t;
 	  mv1->getParameter(0,t);
-	  mv2  = new MEdgeVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,
-                                  ((MEdgeVertex*)mv1)->getLc());
+	  mv2 = new MEdgeVertex(mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,
+				((MEdgeVertex*)mv1)->getLc());
 	}
 	else if (mv1->onWhat()->dim() == 0) {
-	  mv2  = new MVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat());
+	  mv2 = new MVertex (mv1->x(),mv1->y(),mv1->z(),mv1->onWhat());
 	}
 	else
-	  Msg::Error("error in seam reconstruction");
-
-	it->second = mv2;
-	equivalence[mv2] = mv1;
-	parametricCoordinates[mv2] = SPoint2(bds->u,bds->v);
-	invertMap[mv2] = bds;
+	  Msg::Error("Could not reconstruct seam");
+	if(mv2){
+	  it->second = mv2;
+	  equivalence[mv2] = mv1;
+	  parametricCoordinates[mv2] = SPoint2(bds->u,bds->v);
+	  invertMap[mv2] = bds;
+	}
       }
       else {
 	parametricCoordinates[mv1] = SPoint2(bds->u,bds->v);
@@ -1949,9 +1950,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       }
       ++it;
     }
-    //    recoverMap.insert(new_relations.begin(), new_relations.end());
+    // recoverMap.insert(new_relations.begin(), new_relations.end());
   }
-  Msg::Info("%d points that are duplicated for delaunay meshing",equivalence.size());
+  Msg::Info("%d points that are duplicated for Delaunay meshing", equivalence.size());
 
   // fill the small gmsh structures
   {
