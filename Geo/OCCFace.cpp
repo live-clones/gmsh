@@ -26,9 +26,16 @@
 #include <Geom_Plane.hxx>
 #include <gp_Pln.hxx>
 #include <BRepMesh_FastDiscret.hxx>
+
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+#include <BOPInt_Context.hxx>
+#include <BOPTools_AlgoTools2D.hxx>
+#include <BOPTools_AlgoTools.hxx>
+#else
 #include <IntTools_Context.hxx>
 #include <BOPTools_Tools2D.hxx>
 #include <BOPTools_Tools3D.hxx>
+#endif
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
@@ -165,7 +172,7 @@ GPoint OCCFace::point(double par1, double par2) const
   double pp[2] = {par1, par2};
   double umin2, umax2, vmin2, vmax2;
   ShapeAnalysis::GetFaceUVBounds(s, umin2, umax2, vmin2, vmax2);
-  
+
   double du = umax2 - umin2;
   double dv = vmax2 - vmin2;
 
@@ -441,7 +448,10 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
 void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 {
-#if defined(OCC_VERSION_HEX) && OCC_VERSION_HEX >= 0x060503
+
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+  Handle(BOPInt_Context) myContext = new BOPInt_Context;
+#elif defined(OCC_VERSION_HEX) && OCC_VERSION_HEX >= 0x060503
   Handle(IntTools_Context) myContext = new IntTools_Context;
 #else
   IntTools_Context myContext;
@@ -505,7 +515,11 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	      continue;
 	    }
 	    else{
-	      aTx=BOPTools_Tools2D::IntermediatePoint(aT1, aT2);
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+	      aTx = BOPTools_AlgoTools2D::IntermediatePoint(aT1, aT2);
+#else
+	      aTx = BOPTools_Tools2D::IntermediatePoint(aT1, aT2);
+#endif
 	      gp_Pnt2d aP2D;
 	      aC2D->D0(aTx, aP2D);
 	      aUx=aP2D.X();
@@ -517,11 +531,18 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	    }
 	  }
 	}
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+	BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
+#else
 	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
-
+#endif
 	// orient image
 	Standard_Boolean bIsToReverse =
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+          BOPTools_AlgoTools::IsSplitToReverse(aER, aE, myContext);
+#else
           BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
+#endif
 	if (bIsToReverse) {
 	  aER.Reverse();
 	}

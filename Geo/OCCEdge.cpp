@@ -13,6 +13,7 @@
 
 #if defined(HAVE_OCC)
 #include "GModelIO_OCC.h"
+#include <Standard_Version.hxx>
 #include <Geom2dLProp_CLProps2d.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_OffsetCurve.hxx>
@@ -23,7 +24,11 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Conic.hxx>
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
 #include <BOPTools_Tools.hxx>
+#else
+#include <BOPTools_AlgoTools.hxx>
+#endif
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(m, num, v1, v2), c(edge), trimmed(0)
@@ -330,7 +335,11 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
     _replacement=E;
   }
   else {
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
     BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
+#else
+    BOPTools_AlgoTools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
+#endif
   }
   TopoDS_Edge temp = c;
   c = _replacement;
