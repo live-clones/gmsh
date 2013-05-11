@@ -127,7 +127,7 @@ public:
   static double t;
 };
 
-class BDS_Point 
+class BDS_Point
 {
   // the first size is the one dictated by the Background Mesh the
   // second one is dictated by charecteristic lengths at points and is
@@ -181,9 +181,9 @@ class BDS_Edge
   {
     return _length;
   }
-  inline int numfaces() const 
+  inline int numfaces() const
   {
-    return _faces.size();
+    return (int)_faces.size();
   }
   int numTriangles() const ;
   inline BDS_Point *commonvertex(const BDS_Edge *other) const
@@ -223,19 +223,19 @@ class BDS_Edge
   }
   inline void del(BDS_Face *t)
   {
-    _faces.erase(std::remove_if(_faces.begin(),_faces.end(), 
-                                std::bind2nd(std::equal_to<BDS_Face*>(), t)), 
+    _faces.erase(std::remove_if(_faces.begin(),_faces.end(),
+                                std::bind2nd(std::equal_to<BDS_Face*>(), t)),
                  _faces.end());
   }
-  void oppositeof(BDS_Point * oface[2]) const; 
+  void oppositeof(BDS_Point * oface[2]) const;
   void update()
   {
-    _length = sqrt((p1->X - p2->X) * (p1->X - p2->X) + 
-                   (p1->Y - p2->Y) * (p1->Y - p2->Y) + 
+    _length = sqrt((p1->X - p2->X) * (p1->X - p2->X) +
+                   (p1->Y - p2->Y) * (p1->Y - p2->Y) +
                    (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
   BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
-  {         
+  {
     if(*A < *B){
       p1 = A;
       p2 = B;
@@ -272,7 +272,7 @@ class BDS_Face
   inline BDS_Point *oppositeVertex (BDS_Edge *e)
   {
     if (e4){
-      Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad", 
+      Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad",
                  e->p1->iD, e->p2->iD);
       return 0;
     }
@@ -300,7 +300,7 @@ class BDS_Face
   }
   BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C,BDS_Edge *D = 0)
     : deleted(false), e1(A), e2(B), e3(C), e4(D), g(0)
-  {     
+  {
     e1->addface(this);
     e2->addface(this);
     e3->addface(this);
@@ -354,11 +354,11 @@ class BDS_SwapEdgeTest
 {
  public:
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2,
-                           BDS_Point *q1, BDS_Point *q2) const = 0; 
+                           BDS_Point *q1, BDS_Point *q2) const = 0;
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
                            BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
                            BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
-                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const = 0; 
+                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const = 0;
   virtual ~BDS_SwapEdgeTest(){}
 };
 
@@ -368,15 +368,15 @@ class BDS_SwapEdgeTestQuality : public BDS_SwapEdgeTest
  public:
   BDS_SwapEdgeTestQuality(bool a, bool b=true) : testQuality(a), testSmallTriangles(b) {}
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2,
-                           BDS_Point *q1, BDS_Point *q2) const ; 
+                           BDS_Point *q1, BDS_Point *q2) const ;
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
                            BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
                            BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
-                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const ; 
+                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const ;
   virtual ~BDS_SwapEdgeTestQuality(){}
 };
 
-struct EdgeToRecover 
+struct EdgeToRecover
 {
   int p1,p2;
   GEdge *ge;
@@ -392,7 +392,7 @@ struct EdgeToRecover
     }
   }
   bool operator < (const EdgeToRecover &other) const
-  {    
+  {
     if(p1 < other.p1) return true;
     if(p1 > other.p1) return false;
     if(p2 < other.p2) return true;
@@ -400,22 +400,22 @@ struct EdgeToRecover
   }
 };
 
-class BDS_Mesh 
-{    
+class BDS_Mesh
+{
  public:
   int MAXPOINTNUMBER, SNAP_SUCCESS, SNAP_FAILURE;
   double Min[3], Max[3], LC;
   double scalingU, scalingV;
   BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER(_MAXX),scalingU(1),scalingV(1){}
-  void load(GVertex *gv); // load in BDS all the meshes of the vertex 
-  void load(GEdge *ge); // load in BDS all the meshes of the edge 
-  void load(GFace *gf); // load in BDS all the meshes of the surface 
+  void load(GVertex *gv); // load in BDS all the meshes of the vertex
+  void load(GEdge *ge); // load in BDS all the meshes of the edge
+  void load(GFace *gf); // load in BDS all the meshes of the surface
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
-  std::set<BDS_GeomEntity*, GeomLessThan> geom; 
-  std::set<BDS_Point*, PointLessThan> points; 
-  std::list<BDS_Edge*> edges; 
-  std::list<BDS_Face*> triangles; 
+  std::set<BDS_GeomEntity*, GeomLessThan> geom;
+  std::set<BDS_Point*, PointLessThan> points;
+  std::list<BDS_Edge*> edges;
+  std::list<BDS_Face*> triangles;
   // Points
   BDS_Point *add_point(int num, double x, double y, double z);
   BDS_Point *add_point(int num, double u, double v, GFace *gf);
@@ -430,7 +430,7 @@ class BDS_Mesh
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
   // Triangles & Quadrangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
-  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4); 
+  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
   BDS_Face *add_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3, BDS_Edge *e4);
   void del_face(BDS_Face *t);
@@ -457,8 +457,8 @@ class BDS_Mesh
   void cleanup();
 };
 
-void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
-void swap_config(BDS_Edge *e, 
+void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
+void swap_config(BDS_Edge *e,
                  BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
                  BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
                  BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,

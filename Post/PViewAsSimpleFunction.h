@@ -15,7 +15,7 @@ class PViewEvaluator : public simpleFunction<double> {
   int _step;
  public:
   PViewEvaluator (PView *pv) : _pv(pv), _step(0) {}
-  double operator() (const double x, const double y, const double z) const;
+  double operator() (double x, double y, double z) const;
   void setStep (int s) { _step = s; }
 };
 

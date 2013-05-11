@@ -250,13 +250,13 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   Vertex V;
 
   if(derivee==1) {
-    switch (c->Typ) {
-      //    case MSH_SEGM_BSPLN:
-      //    case MSH_SEGM_BEZIER:
-      //      V = InterpolateUBS(c, u, 1);
-      //      V.u = u;
-      //      break;
-    default :
+    // switch (c->Typ) {
+    // case MSH_SEGM_BSPLN:
+    // case MSH_SEGM_BEZIER:
+    //   V = InterpolateUBS(c, u, 1);
+    //   V.u = u;
+    //   break;
+    // default :
       double eps1 = (u == 0) ? 0 : 1.e-5;
       double eps2 = (u == 1) ? 0 : 1.e-5;
       Vertex D[2];
@@ -266,8 +266,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1 + eps2);
       V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1 + eps2);
       V.u = u;
-      break;
-    }
+    //   break;
+    // }
     return V;
   }
 

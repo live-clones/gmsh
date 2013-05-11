@@ -7,7 +7,7 @@
 #include "PViewData.h"
 #include "PViewAsSimpleFunction.h"
 
-double PViewEvaluator::operator() (const double x, const double y, const double z) const
+double PViewEvaluator::operator() (double x, double y, double z) const
 {
   PViewData * pvd = _pv->getData();
   double value;

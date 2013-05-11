@@ -214,14 +214,14 @@ int SystemCall(const std::string &command, bool blocking)
     args = command.substr(pos, command.size() - pos);
   }
   else exe = command;
-  int s = exe.size();
-  if(s > 3 && 
+  int s = (int)exe.size();
+  if(s > 3 &&
      (exe[s-3] == '.') &&
      (exe[s-2] == 'p' || exe[s-2] == 'P') &&
      (exe[s-1] == 'y' || exe[s-1] == 'Y')){
-    Msg::Info("Shell opening '%s' with arguments '%s'", 
+    Msg::Info("Shell opening '%s' with arguments '%s'",
 	      exe.c_str(), args.c_str());
-    ShellExecute(NULL, (char*)"open", (char*)exe.c_str(), 
+    ShellExecute(NULL, (char*)"open", (char*)exe.c_str(),
 		 (char*)args.c_str(), NULL, 0);
   }
   else{

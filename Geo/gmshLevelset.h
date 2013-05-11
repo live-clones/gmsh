@@ -61,10 +61,19 @@ public:
   gLevelset(const gLevelset &);
   virtual ~gLevelset(){}
   virtual gLevelset * clone() const{printf("Error virtual fct called gLevelset::clone()"); return 0;}
-  virtual double operator() (const double x, const double y, const double z) const = 0;
-  bool isInsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain > 0.;}
-  bool isOutsideDomain (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) * insideDomain < 0.;}
-  bool isOnBorder      (const double &x, const double &y, const double &z) const {return this->operator()(x,y,z) == 0.;}
+  virtual double operator() (double x, double y, double z) const = 0;
+  bool isInsideDomain(const double &x, const double &y, const double &z) const
+  {
+    return this->operator()(x,y,z) * insideDomain > 0.;
+  }
+  bool isOutsideDomain(const double &x, const double &y, const double &z) const
+  {
+    return this->operator()(x,y,z) * insideDomain < 0.;
+  }
+  bool isOnBorder(const double &x, const double &y, const double &z) const
+  {
+    return this->operator()(x,y,z) == 0.;
+  }
   virtual std::vector<gLevelset *> getChildren() const = 0;
   virtual double choose (double d1, double d2) const = 0;
   virtual int type() const = 0;
@@ -114,7 +123,7 @@ public:
     }
     tag_ = tag;
   }
-  virtual double operator () (const double x, const double y, const double z) const = 0;
+  virtual double operator () (double x, double y, double z) const = 0;
   std::vector<gLevelset *> getChildren() const { std::vector<gLevelset *> p; return p; }
   double choose (double d1, double d2) const {
     printf("Cannot use function \"choose\" with a primitive!\n");
@@ -131,7 +140,8 @@ protected:
   double xc, yc, zc, r;
 public:
   gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag);
-  virtual double operator () (const double x, const double y, const double z) const{
+  virtual double operator () (double x, double y, double z) const
+  {
     if(r >= 0.)
       return sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)) - r;
     return (- r - sqrt((xc - x) * (xc - x) + (yc - y) * (yc - y) + (zc - z) * (zc - z)));
@@ -151,7 +161,8 @@ protected:
   double a, b, c, d;
 public:
   // define the plane _a*x+_b*y+_c*z+_d, with outward normal (a,b,c)
-  gLevelsetPlane (const double _a, const double _b, const double _c, const double _d, int tag=1) : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
+  gLevelsetPlane (const double _a, const double _b, const double _c, const double _d, int tag=1)
+    : gLevelsetPrimitive(tag), a(_a), b(_b), c(_c), d(_d) {}
   // define the plane passing through the point pt and with outward normal norm
   gLevelsetPlane (const std::vector<double> &pt, const std::vector<double> &norm, int tag=1);
   gLevelsetPlane (const double *pt, const double *norm, int tag=1);
@@ -161,12 +172,9 @@ public:
   gLevelsetPlane(const gLevelsetPlane &lv);
   virtual gLevelset * clone() const{return new gLevelsetPlane(*this);}
   // return negative value inward and positive value outward
-  virtual double operator() (const double x, const double y, const double z) const
-    {return a * x + b * y + c * z + d;}
+  virtual double operator() (double x, double y, double z) const { return a * x + b * y + c * z + d; }
   int type() const {return PLANE;}
 };
-
-
 
 class gLevelsetPoints : public gLevelsetPrimitive
 {
@@ -200,7 +208,7 @@ public:
   gLevelsetPoints(const gLevelsetPoints &lv);
   virtual gLevelset * clone() const{return new gLevelsetPoints(*this);}
   // return negative value inward and positive value outward
-  virtual double operator() (const double x, const double y, const double z) const;
+  virtual double operator() (double x, double y, double z) const;
   void computeLS(std::vector<MVertex*> &vert);
   int type() const {return LSPOINTS;}
 };
@@ -221,7 +229,7 @@ public:
   gLevelsetQuadric(int tag=1) : gLevelsetPrimitive(tag) {init(); }
   gLevelsetQuadric(const gLevelsetQuadric &);
   virtual ~gLevelsetQuadric() {}
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   virtual int type() const = 0;
 };
 
@@ -271,7 +279,7 @@ class gLevelsetPopcorn: public gLevelsetPrimitive
 public:
   gLevelsetPopcorn(double xc, double yc, double zc, double r0, double A, double sigma, int tag=1);
   ~gLevelsetPopcorn(){}
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   int type() const { return UNKNOWN; }
 };
 
@@ -287,7 +295,7 @@ class gLevelsetShamrock: public gLevelsetPrimitive
 public:
   gLevelsetShamrock(double xmid, double ymid, double zmid, double a, double b, int c=3, int tag=1);
   ~gLevelsetShamrock(){}
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   int type() const { return UNKNOWN; }
 };
 
@@ -297,7 +305,7 @@ class gLevelsetMathEval: public gLevelsetPrimitive
 public:
   gLevelsetMathEval(std::string f, int tag=1);
   ~gLevelsetMathEval(){ if (_expr) delete _expr; }
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   int type() const { return UNKNOWN; }
 };
 
@@ -307,7 +315,7 @@ class gLevelsetMathEvalAll: public gLevelsetPrimitive
 public:
   gLevelsetMathEvalAll(std::vector<std::string> f, int tag=1);
   ~gLevelsetMathEvalAll(){ if (_expr) delete _expr; }
-  double operator() (const double x, const double y, const double z) const;
+  double operator() (double x, double y, double z) const;
   void gradient (double x, double y, double z,
 		double & dfdx, double & dfdy, double & dfdz) const;
   void hessian (double x, double y, double z,
@@ -325,7 +333,7 @@ public:
     _f = f;
   }
   ~gLevelsetSimpleFunction(){}
-  double operator () (const double x, const double y, const double z) const
+  double operator () (double x, double y, double z) const
   {
     return (*_f)(x,y,z);
   }
@@ -346,7 +354,7 @@ class gLevelsetDistMesh: public gLevelsetPrimitive
   ANNdistArray _dist;
 public :
   gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5);
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   ~gLevelsetDistMesh();
   int type() const { return UNKNOWN; }
 };
@@ -360,7 +368,7 @@ class gLevelsetPostView : public gLevelsetPrimitive
 public:
   gLevelsetPostView(int index, int tag=1) ;
   ~gLevelsetPostView(){ if(_octree) delete _octree;}
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   int type() const { return UNKNOWN; }
 };
 #endif
@@ -383,7 +391,7 @@ public:
 	delete children[i];
     }
   }
-  double operator () (const double x, const double y, const double z) const {
+  double operator () (double x, double y, double z) const {
     double d = (*children[0])(x, y, z);
     for (int i = 1; i < (int)children.size(); i++){
       double dt = (*children[i])(x, y, z);
@@ -417,7 +425,7 @@ protected:
   gLevelset *ls;
 public:
   gLevelsetReverse (gLevelset *p) : ls(p){}
-  double operator () (const double x, const double y, const double z) const {
+  double operator () (double x, double y, double z) const {
     return -(*ls)(x, y, z);
   }
   std::vector<gLevelset *> getChildren() const {return ls->getChildren();}
@@ -497,7 +505,7 @@ protected:
 public:
   gLevelsetImproved(){}
   gLevelsetImproved(const gLevelsetImproved &lv);
-  double operator() (const double x, const double y, const double z) const {return (*Ls)(x, y, z);}
+  double operator() (double x, double y, double z) const {return (*Ls)(x, y, z);}
   std::vector<gLevelset *> getChildren() const { return Ls->getChildren(); }
   double choose (double d1, double d2) const { return Ls->choose(d1, d2); }
   virtual int type() const = 0;
@@ -635,7 +643,7 @@ class gLevelsetNACA00: public gLevelsetPrimitive
 public:
   gLevelsetNACA00(double x0, double y0, double c, double t);
   ~gLevelsetNACA00() {}
-  double operator () (const double x, const double y, const double z) const;
+  double operator () (double x, double y, double z) const;
   void gradient (double x, double y, double z,
     double & dfdx, double & dfdy, double & dfdz) const;
   void hessian (double x, double y, double z,
