@@ -1361,9 +1361,9 @@ void GFace::lloyd(int nbiter, int infn)
 #endif
 }
 
-void GFace::replaceEdges (std::list<GEdge*> &new_edges)
+void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
-  replaceEdgesInternal (new_edges);
+  replaceEdgesInternal(new_edges);
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
   std::list<int>::iterator it3 = l_dirs.begin();

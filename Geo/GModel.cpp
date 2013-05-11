@@ -2740,7 +2740,7 @@ static void glueEdgesInFaces(GModel *model,
     }
     if (aDifferenceExists){
       Msg::Debug("Model Face %d is re-build", f->tag());
-      f->replaceEdges (enew);
+      f->replaceEdges(enew);
     }
   }
 }

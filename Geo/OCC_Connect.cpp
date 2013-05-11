@@ -41,8 +41,6 @@
 #include <BRep_Tool.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 
-#include <IntTools_Context.hxx>
-
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepOffsetAPI_NormalProjection.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
