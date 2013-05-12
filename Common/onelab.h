@@ -1,4 +1,4 @@
-// OneLab - Copyright (C) 2011-2012 ULg-UCL
+// OneLab - Copyright (C) 2011-2013 ULg-UCL
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -22,7 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
+// Please report all bugs and problems to the public mailing list
+// <gmsh@geuz.org>.
 
 #ifndef _ONELAB_H_
 #define _ONELAB_H_

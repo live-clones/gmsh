@@ -18,6 +18,7 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "boundaryLayersData.h"
+
 template <class scalar> class simpleFunction;
 
 class FM_Internals;
@@ -154,7 +155,7 @@ class GModel
 
   // boundary layer columns i.e. list of vertices that form columns
   // in boundary layers
-  BoundaryLayerColumns _columns; 
+  BoundaryLayerColumns _columns;
 
  public:
   GModel(std::string name="");
