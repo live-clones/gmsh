@@ -14,6 +14,7 @@ PViewOptions::PViewOptions() : genRaiseEvaluator(0)
 {
   ColorTable_InitParam(2, &colorTable);
   ColorTable_Recompute(&colorTable);
+  currentTime = 0.;
 }
 
 PViewOptions::~PViewOptions()
@@ -107,7 +108,8 @@ unsigned int PViewOptions::getColor(int i, int nb)
 void PViewOptions::createGeneralRaise()
 {
   const char *names[] =
-    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"};
+    { "x", "y", "z", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
+      "s", "t"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> expressions(3), variables(numVariables);
   expressions[0] = genRaiseX;

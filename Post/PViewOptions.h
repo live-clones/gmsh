@@ -79,6 +79,7 @@ class PViewOptions {
   int scaleType, rangeType, abscissaRangeType;
   int vectorType, tensorType, glyphLocation, centerGlyphs;
   int timeStep;
+  double currentTime;
   int drawStrings;
   int drawPoints, drawLines, drawTriangles, drawQuadrangles, drawPolygons;
   int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawPolyhedra;

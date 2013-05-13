@@ -3164,14 +3164,14 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->stereo = (int)val;
   if (CTX::instance()->stereo)    opt_general_camera_mode(num, action, 1.);
-  
+
 #if defined(HAVE_FLTK)
   /*
   if(FlGui::available() && (action & GMSH_GUI))
   FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
 */
 #endif
-  
+
   return CTX::instance()->stereo ;
 }
 
@@ -3223,7 +3223,7 @@ double opt_general_camera_mode(OPT_ARGS_NUM)
     FlGui::instance()->options->general.butt[18]->value
       (CTX::instance()->camera);
     FlGui::instance()->options->activate("general_camera");
-  
+
   }
   */
 #endif
@@ -6147,6 +6147,7 @@ double opt_view_timestep(OPT_ARGS_NUM)
       if(data->getAdaptiveData())
         data->getAdaptiveData()->changeResolution
           (opt->timeStep, opt->maxRecursionLevel, opt->targetError);
+      opt->currentTime = data->getTime(opt->timeStep);
     }
     if(view) view->setChanged(true);
   }

@@ -180,10 +180,12 @@ static void applyGeneralRaise(PView *p, int numNodes, int numComp,
   PViewOptions *opt = p->getOptions();
   if(!opt->genRaiseEvaluator) return;
 
-  std::vector<double> values(12, 0.), res(3);
+  std::vector<double> values(14, 0.), res(3);
   for(int k = 0; k < numNodes; k++) {
     for(int i = 0; i < 3; i++) values[i] = xyz[k][i];
     for(int i = 0; i < std::min(numComp, 9); i++) values[3 + i] = vals[k][i];
+    values[12] = p->getOptions()->timeStep;
+    values[13] = p->getOptions()->currentTime;
     if(opt->genRaiseEvaluator->eval(values, res))
       for(int i = 0; i < 3; i++)
         xyz[k][i] += opt->genRaiseFactor * res[i];
