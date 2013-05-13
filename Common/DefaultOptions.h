@@ -195,11 +195,14 @@ StringXString ViewOptions_String[] = {
     "Number format (in standard C form)" },
 
   { F|O, "GeneralizedRaiseX" , opt_view_gen_raise0 , "v0" ,
-    "Generalized elevation of the view along X-axis (in model coordinates)" },
+    "Generalized elevation of the view along X-axis (in model coordinates, "
+    "using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v9)" },
   { F|O, "GeneralizedRaiseY" , opt_view_gen_raise1 , "v1" ,
-    "Generalized elevation of the view along Y-axis (in model coordinates)" },
+    "Generalized elevation of the view along Y-axis (in model coordinates, "
+    "using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v9)" },
   { F|O, "GeneralizedRaiseZ" , opt_view_gen_raise2 , "v2" ,
-    "Generalized elevation of the view along Z-axis (in model coordinates)" },
+    "Generalized elevation of the view along Z-axis (in model coordinates, "
+    "using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v9)" },
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
