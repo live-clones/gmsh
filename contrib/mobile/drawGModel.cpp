@@ -71,7 +71,7 @@ drawGModel::drawGModel(std::string name="None")
 
 static void checkGlError(const char* op) {
 	for (GLint error = glGetError(); error; error	= glGetError())
-		Msg::Debug("%s: glError (0x%x)",op,error);
+		Msg::Error("%s: glError (0x%x)",op,error);
 }
 
 static bool locked = false;

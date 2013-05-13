@@ -21,7 +21,6 @@ onelab::server *getOnelab() {return onelab::server::instance();}
 static JavaVM *gJavaVM;
 static JNIEnv *env;
 static jobject gCallbackObject = NULL;
-static jclass jClass;
 
 class MobileMessage : public GmshMessage
 {
@@ -31,7 +30,6 @@ class MobileMessage : public GmshMessage
 	~MobileMessage(){}
 	void operator()(std::string level, std::string message)
 	{
-
 		if(level == "Error")
 		{
 			if(message.size() <= 26 || message.substr(message.size()-25,25) != "check the log for details")
@@ -41,7 +39,7 @@ class MobileMessage : public GmshMessage
 			if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
 				return;
 			jstring jstr = env->NewStringUTF(message.c_str());
-			jclass jClass = env->FindClass("com/example/testlibc/Gmsh"); 
+			jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 			if(jClass == 0)
 				return;
 			jmethodID mid = env->GetMethodID(jClass, "ShowPopup", "(Ljava/lang/String;)V");
@@ -60,7 +58,7 @@ class MobileMessage : public GmshMessage
 			if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
 				return;
 			jstring jstr = env->NewStringUTF(message.c_str());
-			jclass jClass = env->FindClass("com/example/testlibc/Gmsh"); 
+			jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 			if(jClass == 0)
 				return;
 			jmethodID mid = env->GetMethodID(jClass, "SetLoading", "(Ljava/lang/String;)V");
@@ -85,7 +83,7 @@ void requestRender()
 		return;
 	if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
 		return;
-	jclass jClass = env->FindClass("com/example/testlibc/Gmsh"); 
+	jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 	if(jClass == 0)
 		return;
 	jmethodID mid = env->GetMethodID(jClass, "RequestRender", "()V");
@@ -97,10 +95,10 @@ void requestRender()
 
 extern "C" {
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-    gJavaVM = vm;
-    return JNI_VERSION_1_6;
+	gJavaVM = vm;
+	return JNI_VERSION_1_6;
 }
-JNIEXPORT jlong JNICALL Java_com_example_testlibc_Gmsh_init
+JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
   (JNIEnv *env, jobject obj, jstring jname)
 {
 	gCallbackObject = env->NewGlobalRef(obj);
@@ -110,38 +108,38 @@ JNIEXPORT jlong JNICALL Java_com_example_testlibc_Gmsh_init
 	const char*  name = env->GetStringUTFChars(jname, NULL);
 	return reinterpret_cast<jlong>(new drawGModel(name));
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_loadFile
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_loadFile
   (JNIEnv *env, jobject obj, jlong jptr, jstring jname)
 {
 	const char*  filename = env->GetStringUTFChars(jname, NULL);
 	((drawGModel *)jptr)->load(filename);
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_initView
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_initView
   (JNIEnv *env, jobject obj, jlong jptr, jint w, jint h)
 {
 	((drawGModel *)jptr)->initView(w,h);
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_drawView
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_drawView
   (JNIEnv *env, jobject obj, jlong jptr)
 {
 	((drawGModel *)jptr)->drawView();
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setTranslation
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setTranslation
   (JNIEnv *env, jobject obj, jlong jptr, jfloat tx, jfloat ty, jfloat tz)
 {
 	((drawGModel *)jptr)->setTranslation(tx, ty, tz);
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setScale
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setScale
   (JNIEnv *env, jobject obj, jlong jptr, jfloat sx, jfloat sy, jfloat sz)
 {
 	((drawGModel *)jptr)->setScale(sx, sy, sz);
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setRotate
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setRotate
   (JNIEnv *env, jobject obj, jlong jptr, jfloat rx, jfloat ry, jfloat rz)
 {
 	((drawGModel *)jptr)->setRotation(rx, ry, rz);
 }
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setShow
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
   (JNIEnv *env, jobject obj, jlong jptr, jstring jwhat, jboolean value)
 {
 	const char*  what = env->GetStringUTFChars(jwhat, NULL);
@@ -150,13 +148,13 @@ JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setShow
 	else if(strcmp(what, "geom") == 0)
 		((drawGModel *)jptr)->showGeom(value);
 }
-JNIEXPORT jlong JNICALL Java_com_example_testlibc_Gmsh_getOnelabInstance
+JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
   (JNIEnv *env , jobject obj)
 {
 	return reinterpret_cast<jlong>(getOnelab());
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_example_testlibc_Gmsh_getParams
+JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
   (JNIEnv *env, jobject obj)
 {
 	jclass stringClass = env->FindClass( "java/lang/String" );
@@ -172,7 +170,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_example_testlibc_Gmsh_getParams
 	return params;
 }
 
-JNIEXPORT jint JNICALL Java_com_example_testlibc_Gmsh_setParam
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
   (JNIEnv *env, jobject obj, jstring jtype, jstring jname, jstring jvalue)
 {
 	const char *type = env->GetStringUTFChars(jtype, NULL);
@@ -191,7 +189,7 @@ JNIEXPORT jint JNICALL Java_com_example_testlibc_Gmsh_setParam
 	}
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_example_testlibc_Gmsh_getPView
+JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
   (JNIEnv *env, jobject obj)
 {
 	jclass stringClass = env->FindClass( "java/lang/String" );
@@ -208,7 +206,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_example_testlibc_Gmsh_getPView
 	return jPView;
 }
 
-JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setPView
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
   (JNIEnv *env, jobject, jint pos, jint intervalsType, jint visible, jint nIntervals)
 {
 	if(intervalsType > 0 && intervalsType < 4) PView::list[pos]->getOptions()->intervalsType = intervalsType;
@@ -217,7 +215,7 @@ JNIEXPORT void JNICALL Java_com_example_testlibc_Gmsh_setPView
 	PView::list[pos]->setChanged(true);
 }
 
-JNIEXPORT jint JNICALL Java_com_example_testlibc_Gmsh_onelabCB
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
   (JNIEnv *env, jobject obj, jstring jaction)
 {
 	const char*  action = env->GetStringUTFChars(jaction, NULL);
