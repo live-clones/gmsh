@@ -150,8 +150,11 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       self._send(self._GMSH_PARAMETER_UPDATE, param.tochar()) #enrich a previous decl.
+      value = param.fromchar(msg).value # use value from server
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       self._send(self._GMSH_PARAMETER, param.tochar()) #declaration
+      value = param.value
+    return value
     #print param.tochar()
     
   def defineNumber(self, name, **param):
@@ -160,15 +163,15 @@ class client :
     p = _parameter('number', name=name, **param)
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
-      p.attributes={'Highlight':'Orchid'}
-    self._define_parameter(p)
-    return p.value
+      p.attributes={'Highlight':'AliceBlue'}
+    value = self._define_parameter(p)
+    return value
 
   def defineString(self, name, **param):
     p = _parameter('string', name=name, **param)
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
-      p.attributes={'Highlight':'Orchid'}
+      p.attributes={'Highlight':'AliceBlue'}
     self._define_parameter(p)
     return p.value
   
@@ -180,10 +183,11 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       p.fromchar(msg).modify(**param)
-      self._send(self._GMSH_PARAMETER, p.tochar())
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       p.modify(**param)
-      self._send(self._GMSH_PARAMETER, p.tochar())
+    p.readOnly = 1
+    p.attributes={'Highlight':'AliceBlue'}   
+    self._send(self._GMSH_PARAMETER, p.tochar())
     #return p.value What for?
 
   def setString(self, name, **param):
@@ -194,10 +198,11 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER : #modify an existing parameter
       p.fromchar(msg).modify(**param)
-      self._send(self._GMSH_PARAMETER, p.tochar())
     elif t == self._GMSH_PARAMETER_NOT_FOUND : #create a new parameter
       p.modify(**param)
-      self._send(self._GMSH_PARAMETER, p.tochar())
+    p.readOnly = 1
+    p.attributes={'Highlight':'AliceBlue'}   
+    self._send(self._GMSH_PARAMETER, p.tochar())
   
   def _get_parameter(self, param, warn_if_not_found=True) :
     if not self.socket :
