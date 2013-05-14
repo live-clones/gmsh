@@ -101,7 +101,7 @@ void drawGModel::setTranslation(float tx, float ty, float tz)
 		_translation[0] = _translation[1] = _translation[2] = 0;
 	else
 	{
-		_translation[0] += tx * (this->right - this->left); 
+		_translation[0] += tx * (this->right - this->left);
 		_translation[1] += ty * (this->right - this->left);
 		_translation[2] += tz * (this->right - this->left);
 	}
