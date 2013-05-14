@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
 #include "MVertex.h"
@@ -98,10 +99,10 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
   std::map<MVertex*,BoundaryLayerFan>::const_iterator it2 = _fans.find(v2);
   int N1 = getNbColumns(v1) ;
   int N2 = getNbColumns(v2) ;
-  
-  
+
+
   int nbSides = _normals.count(e);
-  
+
   // if (nbSides != 1)printf("I'm here %d sides\n",nbSides);
   // Standard case, only two extruded columns from the two vertices
   if (N1 == 1 && N2 == 1) return edgeColumn(getColumn(v1,0),getColumn(v2,0));
@@ -147,7 +148,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
       if (dot(c10._n,c20._n) > dot(c11._n,c20._n) ) return edgeColumn(c10,c20);
       else return edgeColumn(c11,c20);
     }
-    
+
     //      Msg::Error ("Impossible Boundary Layer Configuration : one side and no fans %d %d",N1,N2);
     // FIXME WRONG
     return N1 ? edgeColumn (getColumn (v1,0),getColumn(v1,0)) :
@@ -167,7 +168,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
     const BoundaryLayerData & c11 = getColumn(v1,i2);
     const BoundaryLayerData & c20 = getColumn(v2,j1);
     const BoundaryLayerData & c21 = getColumn(v2,j2);
-    
+
     if (side == 0){
       if (dot(c10._n,c20._n) > dot(c10._n,c21._n) ) return edgeColumn(c10,c20);
       else return edgeColumn(c10,c21);
@@ -177,7 +178,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
       else return edgeColumn(c11,c21);
     }
   }
-  
+
   Msg::Error("Not yet Done in BoundaryLayerData nbSides = %d, ",nbSides );
   static BoundaryLayerData error;
   static edgeColumn error2(error, error);
@@ -187,7 +188,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
 
 bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 {
-#if !defined(HAVE_ANN)
+#if !defined(HAVE_ANN) || !defined(HAVE_MESH)
   return false;
 #else
 
@@ -383,7 +384,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	  }
 	}
       }
-    }    
+    }
     else if (_connections.size() == 1){
       MEdge e1 (*it,_connections[0]);
       SPoint2 p0,p1;
@@ -392,9 +393,9 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
       for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
              _columns->_normals.lower_bound(e1);
 	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-      // two sides at that point : end point of one embedded edge       
+      // two sides at that point : end point of one embedded edge
       // the fan angle is equal to PI
-      
+
       if (N1.size() == 2){
 	int fanSize = M_PI /  _treshold;
 	//printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
@@ -409,7 +410,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	if (alpha3 > AMAX){
 	  AMIN += M_PI;
 	  AMAX += M_PI;
-	} 
+	}
 	if ( AMAX - AMIN >= M_PI){
 	  double temp = AMAX;
 	  AMAX = AMIN + 2*M_PI;
