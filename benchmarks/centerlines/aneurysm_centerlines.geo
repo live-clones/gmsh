@@ -17,7 +17,7 @@ Field[1].hLayer = 0.2;//percent of vessel radius
 
 Field[1].closeVolume =1;
 //Field[1].extrudeWall =1;
-Field[1].reMesh =1;
+//Field[1].reMesh =1;
 
 Field[1].run;
 

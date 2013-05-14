@@ -353,7 +353,7 @@ class gLevelsetDistMesh: public gLevelsetPrimitive
   ANNidxArray _index;
   ANNdistArray _dist;
 public :
-  gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5);
+  gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5, int tag=1);
   double operator () (double x, double y, double z) const;
   ~gLevelsetDistMesh();
   int type() const { return UNKNOWN; }

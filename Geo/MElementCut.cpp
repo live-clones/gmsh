@@ -598,6 +598,7 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
 			     std::map<int, int> borderPhysTags[2],
 			     int gLsTag)
 {
+
   int elementary = ge->tag();
   int eType = e->getType();
   std::vector<int> gePhysicals = ge->physicals;
@@ -615,11 +616,9 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
   bool splitElem = false;
   double eps = 1.e-9;
   int lsTag =  (verticesLs(0, e->getVertex(0)->getIndex()) > eps) ? -1 : 1;
-  //printf("*** elementsplit %g(%d) \n", verticesLs(0, e->getVertex(0)->getIndex()) , e->getVertex(0)->getIndex());
-  for(int k = 1; k < e->getNumVertices(); k++){
+   for(int k = 1; k < e->getNumVertices(); k++){
     int lsTag2 = (verticesLs(0, e->getVertex(k)->getIndex()) > eps) ? -1: 1;
-    //printf("elementsplit %g(%d) \n", verticesLs(0, e->getVertex(k)->getIndex()) , e->getVertex(k)->getIndex());
-    if (lsTag*lsTag2 < 0.0) {
+     if (lsTag*lsTag2 < 0.0) {
       lsTag = -1;
       splitElem = true;
       break;
@@ -699,7 +698,6 @@ static void elementSplitMesh(MElement *e, fullMatrix<double> &verticesLs,
       MVertex *v1N = vertexMap[v1->getNum()];
       double val0 = verticesLs(0, v0->getIndex()) - eps;
       double val1 = verticesLs(0, v1->getIndex()) - eps;
-      //printf("splitedge v0= (%g,%g) v1= (%g,%g) val0= %g(%d) val1= %g(%d) nums (%d %d)\n", v0->x(), v0->y(), v1->x(), v1->y(), val0, v0->getIndex(),  val1, v1->getIndex(), vertexMap[v0->getNum()]->getIndex(), vertexMap[v1->getNum()]->getIndex());
       if(val0*val1 > 0.0 && val0 < 0.0) {
         getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
         int c = elements[1].count(gLsTag);
