@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?> 
+
+<models>
+    <model>
+        <title>Magnet</title>
+        <summary>Simple magnet example</summary>
+        <file type="geo">magnet.geo</file>
+    </model>
+    
+    <model>
+        <title>Eight-pole permanent magnet synchronous machine</title>
+        <summary></summary>
+        <file type="geo">pmsm.geo</file>
+    </model>
+
+    <model>
+        <title>Test</title>
+        <summary>test all parameters of onelab</summary>
+        <file type="geo">test.geo</file>
+    </model>
+</models>

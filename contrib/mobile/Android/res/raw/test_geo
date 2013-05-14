@@ -1,0 +1,64 @@
+Point(1) = {0,0,0};
+
+DefineConstant
+[
+ n0 = {3,
+       Label "Number",
+       Path "Test widgets/Numbers"}
+ n01 = {3, Min 1, Max 4, Step 1,
+       Label "Number (with range)",
+       Path "Test widgets/Numbers"}
+ n1 = {3, ReadOnly 1,
+       Label "Number (read only)",
+       Path "Test widgets/Numbers"}
+ n12 = {3, ReadOnlyRange 1, Min 1, Max 4, Step 1,
+       Label "Number (read only range)",
+       Path "Test widgets/Numbers"}
+ n2 = {3, Choices{1, 2, 3, 4},
+       Label "Number (with choices)",
+       Path "Test widgets/Numbers"}
+ n3 = {1, Choices{0,1},
+       Label "Number (with binary choice) - Show String Options?",
+       Path "Test widgets/Numbers"},
+ n4 = {3, Choices{1 = "One",
+                  2 = "Two",
+                  3 = "Three",
+                  4 = "Go!!"},
+       Label "Number (with enumeration)",
+       Path "Test widgets/Numbers"}
+];
+
+Printf("N3 = %g", n3);
+
+If(n3) // test define/undefine
+Printf("N3 IS SET");
+DefineConstant[
+ s0 = {"a",
+       Label "String",
+       Path "Test widgets/Strings"}
+ s1 = {"a", ReadOnly 1,
+       Label "String (read only)",
+       Path "Test widgets/Strings"}
+ s2 = {"a", Choices {"a","b","c"},
+       Label "String with choices",
+       Path "Test widgets/Strings"}
+ s20 = {"a, c", Choices {"a","b","c"}, MultipleSelection "101",
+       Label "String with multiple selection",
+       Path "Test widgets/Strings"}
+ s3 = {"a.txt", Choices{"a.txt","b.txt","c.txt"}, Kind "file",
+       Label "File",
+       Path "Test widgets/Strings"}
+ s4 = {"a.txt", Kind "file", Macro "Gmsh",
+       Label "Macro",
+       Path "Test widgets/Strings"}
+];
+EndIf
+If(!n3)
+  Printf("N3 IS **NOT** SET");
+UndefineConstant[ "Test widgets/Strings/s0",
+                  "Test widgets/Strings/s1",
+                  "Test widgets/Strings/s2",
+                  "Test widgets/Strings/s20",
+                  "Test widgets/Strings/s3",
+                  "Test widgets/Strings/s4"];
+EndIf
