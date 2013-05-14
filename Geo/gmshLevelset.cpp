@@ -880,9 +880,10 @@ void gLevelsetMathEvalAll::hessian(double x, double y, double z,
     dfdzz = res[12];
   }
 }
-#if defined(HAVE_ANN) 
+
+#if defined(HAVE_ANN)
 gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose, int tag)
-  : _gm(gm), _nbClose(nbClose), gLevelsetPrimitive(tag)
+  : gLevelsetPrimitive(tag), _gm(gm), _nbClose(nbClose)
 {
   std::map<int, std::vector<GEntity*> > groups [4];
   gm->getPhysicalGroups(groups);
