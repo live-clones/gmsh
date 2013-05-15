@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 function checkError {
-        if [ $# == 3 ]; then
-                if [$1 == 0]; then return; fi
+        if [ $# == 2 ]; then
+                if [ $1 == 0 ]; then return; fi
                 echo -e "\033[31m[-] $2 \033[0m"
                 exit $1
         fi
@@ -28,8 +28,9 @@ if [ ! -d "getdp" ]; then mkdir svn --username gmsh --password gmsh co https://g
 if [ ! -d "gmsh.android" ]; then mkdir gmsh.android; fi
 if [ ! -d "getdp.android" ]; then mkdir getdp.android; fi
 if [ ! -d "onelab.android" ]; then mkdir onelab.android; fi
-if [ ! -f "petsc.android/lib/libpetsc.so" ] || [ ! -f "petsc.android/libs/libf2clapack.so" ] || [ ! -f "petsc.android/libs/libf2cblas.so" ]; then 
+if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ]; then 
 	echo "ERROR: petsc.android/lib do not exist or is incomplete (need blas, lapack and petsc)"
+	exit 1
 fi
 
 cd gmsh.android
@@ -65,9 +66,9 @@ checkError $? "Copy android support v4 fail (Android)"
 cp ../../../../gmsh.android/libs/libGmsh.so libs/armeabi-v7a/
 cp ../../../../getdp.android/libs/libGetDP.so libs/armeabi-v7a/
 cp ../../../../onelab.android/libs/libOnelab.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libs/libpetsc.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libs/libf2clapack.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libs/libf2cblas.so libs/armeabi-v7a/
+cp ../../../../petsc.android/libpetsc.so libs/armeabi-v7a/
+cp ../../../../petsc.android/libf2clapack.so libs/armeabi-v7a/
+cp ../../../../petsc.android/libf2cblas.so libs/armeabi-v7a/
 target=1
 count=0
 while read line; do
