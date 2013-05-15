@@ -25,6 +25,7 @@ import android.app.ProgressDialog;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
@@ -94,7 +95,7 @@ public class MainActivity extends Activity {
     	dialogBuilder = new AlertDialog.Builder(this);
 
     	Intent intent = getIntent();
-    	
+
     	gmsh = new Gmsh("", mainHandler);
     	modelList = new Models();
     	getModels();
@@ -107,7 +108,7 @@ public class MainActivity extends Activity {
     		model = 0;
 	    	String tmp = getFilesDir()+ "/" + modelList.getFile(model);
 	    	gmsh.load(tmp);
-    	}    	
+    	}
     	setContentView(layout);
     }
     

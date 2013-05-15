@@ -3,9 +3,11 @@
 
 #include <string>
 
+#if defined(BUILD_IOS)
 #include <Gmsh/PView.h>
 #include <Gmsh/PViewOptions.h>
 #include <Gmsh/Context.h>
+#endif
 
 int onelab_cb(const std::string);
 

@@ -4,12 +4,12 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 set(DEFAULT ON CACHE INTERNAL "Default value for enabled-by-default options")
 
-option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
 if(APPLE)
  option(ENABLE_BUILD_IOS "Build library for iOS (ARM)" OFF)
  option(ENABLE_BUILD_IOS_EMULATOR "Build library for iOS emulator (x86)" ON)
+ option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
 else(APPLE)
-  set(ENABLE_BUILD_ANDROID ON)
+option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
 endif(APPLE)
 
 macro(set_config_option VARNAME STRING)
