@@ -443,7 +443,7 @@ static fullMatrix<double> generateExponentsHex(int order)
 {
   int nbPoints = (order+1) * (order+1) * (order+1);
   fullMatrix<double> exponents(nbPoints, 3);
-  
+
   if (order == 0) {
     exponents(0, 0) = .0;
     return exponents;
@@ -462,7 +462,7 @@ static fullMatrix<double> generateExponentsHex(int order)
       }
     }
   }
-  
+
   for (int i = 2; i < lineExp.size1(); ++i) {
     for (int j = 0; j < 2; ++j) {
       for (int k = 0; k < 2; ++k) {
@@ -615,10 +615,10 @@ static fullMatrix<double> generatePointsHex(int order, bool serendip)
 {
   int nbPoints = (order+1) * (order+1) * (order+1);
   fullMatrix<double> point(nbPoints, 3);
-  
+
   fullMatrix<double> linePoints = generate1DPoints(order);
   int index = 0;
-    
+
   for (int i = 0; i < linePoints.size1(); ++i) {
     for (int j = 0; j < linePoints.size1(); ++j) {
       for (int k = 0; k < linePoints.size1(); ++k) {
@@ -637,7 +637,7 @@ static fullMatrix<double> generatePointsHex(int order, bool serendip)
 static std::vector< fullMatrix<double> > generateSubPointsLine(int order)
 {
   std::vector< fullMatrix<double> > subPoints(2);
-  
+
   subPoints[0] = generate1DPoints(order);
   subPoints[0].scale(.5);
 
@@ -651,7 +651,7 @@ static std::vector< fullMatrix<double> > generateSubPointsTriangle(int order)
 {
   std::vector< fullMatrix<double> > subPoints(4);
   fullMatrix<double> prox;
-  
+
   subPoints[0] = gmshGeneratePointsTriangle(order, false);
   subPoints[0].scale(.5);
 
@@ -674,7 +674,7 @@ static std::vector< fullMatrix<double> > generateSubPointsQuad(int order)
 {
   std::vector< fullMatrix<double> > subPoints(4);
   fullMatrix<double> prox;
-  
+
   subPoints[0] = generatePointsQuad(order, false);
   subPoints[0].scale(.5);
 
@@ -698,7 +698,7 @@ static std::vector< fullMatrix<double> > generateSubPointsTetrahedron(int order)
   std::vector< fullMatrix<double> > subPoints(8);
   fullMatrix<double> prox1;
   fullMatrix<double> prox2;
-  
+
   subPoints[0] = gmshGeneratePointsTetrahedron(order, false);
   subPoints[0].scale(.5);
 
@@ -767,7 +767,7 @@ static std::vector< fullMatrix<double> > generateSubPointsPrism(int order)
 {
   std::vector< fullMatrix<double> > subPoints(8);
   fullMatrix<double> prox;
-  
+
   subPoints[0] = generatePointsPrism(order, false);
   subPoints[0].scale(.5);
 
@@ -807,7 +807,7 @@ static std::vector< fullMatrix<double> > generateSubPointsHex(int order)
 {
   std::vector< fullMatrix<double> > subPoints(8);
   fullMatrix<double> prox;
-  
+
   subPoints[0] = generatePointsHex(order, false);
   subPoints[0].scale(.5);
 
@@ -866,7 +866,7 @@ static fullMatrix<double> generateBez2LagMatrix
   (const fullMatrix<double> &exponent, const fullMatrix<double> &point,
    int order, int dimSimplex)
 {
-  
+
   if(exponent.size1() != point.size1() || exponent.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Bezier coefficients generation %d %d -- %d %d",
       exponent.size1(),point.size1(),
@@ -881,7 +881,7 @@ static fullMatrix<double> generateBez2LagMatrix
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
       double dd = 1.;
-      
+
       {
         double pointCompl = 1.;
         int exponentCompl = order;
@@ -893,12 +893,12 @@ static fullMatrix<double> generateBez2LagMatrix
         }
         dd *= pow(pointCompl, exponentCompl);
       }
-      
+
       for (int k = dimSimplex; k < dim; k++)
         dd *= nChoosek(order, (int) exponent(i, k))
             * pow(point(j, k), exponent(i, k))
             * pow(1. - point(j, k), order - exponent(i, k));
-      
+
       bez2Lag(j, i) = dd;
     }
   }
@@ -938,6 +938,9 @@ static fullMatrix<double> generateSubDivisor
 // Convert Bezier points to Lagrange points
 static fullMatrix<double> bez2LagPoints(bool dim1, bool dim2, bool dim3, const fullMatrix<double> &bezierPoints)
 {
+
+  // FIXME BUG for 2nd order quads we seem to try to access bezierPoints(i, 2);
+  // but bezierPoints only has 2 columns
 
   const int numPt = bezierPoints.size1();
   fullMatrix<double> lagPoints(numPt,3);
