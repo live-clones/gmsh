@@ -9,7 +9,7 @@ if(APPLE)
  option(ENABLE_BUILD_IOS_EMULATOR "Build library for iOS emulator (x86)" ON)
  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
 else(APPLE)
-option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
+  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
 endif(APPLE)
 
 macro(set_config_option VARNAME STRING)
