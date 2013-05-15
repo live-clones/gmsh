@@ -89,7 +89,7 @@ void drawGModel::load(std::string filename)
     
 	// run getdp witout parameter
 	onelab_cb("check");
-
+    
 	// to allow the firs run
 	onelab::server::instance()->setChanged(true, "Gmsh");
 	onelab::server::instance()->setChanged(true, "GetDP");
@@ -132,7 +132,7 @@ void drawGModel::OrthofFromGModel()
 	double modelh = bb.max().y() - bb.min().y(), modelw = bb.max().x() - bb.min().x();
 	double modelratio = (modelw ? modelw : 1.) / (modelh ? modelh : 1.);
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
-  xmin = bb.min().x();
+    xmin = bb.min().x();
 	xmax = bb.max().x();
 	ymin = bb.min().x() / ratio;
 	ymax = bb.max().x() / ratio;
@@ -160,7 +160,7 @@ void drawGModel::initView(int w, int h)
 	glViewport(0, 0, w, h);
     
 	this->OrthofFromGModel();
-
+    
 	glClearColor(.83,.85,.98,1.);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
@@ -194,24 +194,24 @@ void drawVector(double x, double y, double z, double dx, double dy, double dz)
 {
 	double l = sqrt(dx * dx + dy * dy + dz * dz), lt;
 	double n[3], t[3], u[3];
-
+    
 	if(l == 0.0) return;
-
+    
 	GLfloat line[] = {
-		x, y, z,
-		x+dx, y+dy, z+dz,
-  };
-  glVertexPointer(3, GL_FLOAT, 0, line);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glDrawArrays(GL_LINES, 0, 2);
+		(GLfloat)x, (GLfloat)y, (GLfloat)z,
+		(GLfloat)(x+dx), (GLfloat)(y+dy), (GLfloat)(z+dz),
+    };
+    glVertexPointer(3, GL_FLOAT, 0, line);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDrawArrays(GL_LINES, 0, 2);
 	glDisableClientState(GL_VERTEX_ARRAY);
-
+    
 	n[0] = dx / l;
 	n[1] = dy / l;
 	n[2] = dz / l;
-
+    
 	if((fabs(n[0]) >= fabs(n[1]) && fabs(n[0]) >= fabs(n[2])) ||
-		(fabs(n[1]) >= fabs(n[0]) && fabs(n[1]) >= fabs(n[2]))) {
+       (fabs(n[1]) >= fabs(n[0]) && fabs(n[1]) >= fabs(n[2]))) {
 		t[0] = n[1];
 		t[1] = -n[0];
 		t[2] = 0.;
@@ -221,40 +221,40 @@ void drawVector(double x, double y, double z, double dx, double dy, double dz)
 		t[1] = n[2];
 		t[2] = -n[1];
 	}
-
+    
 	lt = sqrt(t[0] * t[0] + t[1] * t[1] + t[2] * t[2]);
 	t[0] /= lt;
 	t[1] /= lt;
 	t[2] /= lt;
-
+    
 	u[0] = n[1] * t[2] - n[2] * t[1];
 	u[1] = n[2] * t[0] - n[0] * t[2];
 	u[2] = n[0] * t[1] - n[1] * t[0];
-
+    
 	lt = sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]);
 	u[0] /= lt;
 	u[1] /= lt;
 	u[2] /= lt;
-
+    
 	double f1 = 0.75; // Stem lenght
 	double b = 0.1 * l;
 	
 	GLfloat arrow[] = {
-		x + dx, y + dy, z + dz,
-		x + f1 * dx + b * (t[0]), y + f1 * dy + b * (t[1]), z + f1 * dz + b * (t[2]),
-		x + f1 * dx + b * (-t[0]), y + f1 * dy + b * (-t[1]), z + f1 * dz + b * (-t[2]),
-
-		x + dx, y + dy, z + dz,
-		x + f1 * dx + b * (-u[0]), y + f1 * dy + b * (-u[1]), z + f1 * dz + b * (-u[2]),
-		x + f1 * dx + b * (u[0]), y + f1 * dy + b * (u[1]), z + f1 * dz + b * (u[2]),
+		(GLfloat)(x + dx), (GLfloat)(y + dy), (GLfloat)(z + dz),
+		(GLfloat)(x + f1 * dx + b * (t[0])), (GLfloat)(y + f1 * dy + b * (t[1])), (GLfloat)(z + f1 * dz + b * (t[2])),
+		(GLfloat)(x + f1 * dx + b * (-t[0])), (GLfloat)(y + f1 * dy + b * (-t[1])), (GLfloat)(z + f1 * dz + b * (-t[2])),
+        
+		(GLfloat)(x + dx), (GLfloat)(y + dy), (GLfloat)(z + dz),
+		(GLfloat)(x + f1 * dx + b * (-u[0])), (GLfloat)(y + f1 * dy + b * (-u[1])), (GLfloat)(z + f1 * dz + b * (-u[2])),
+		(GLfloat)(x + f1 * dx + b * (u[0])), (GLfloat)(y + f1 * dy + b * (u[1])), (GLfloat)(z + f1 * dz + b * (u[2])),
 	};
-  glVertexPointer(3, GL_FLOAT, 0, arrow);
-  glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, arrow);
+    glEnableClientState(GL_VERTEX_ARRAY);
 	glEnable(GL_LINE_SMOOTH);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisable(GL_LINE_SMOOTH);
-
+    
 }
 
 void drawGModel::drawVectorArray(PViewOptions *opt, VertexArray *va)
@@ -318,7 +318,7 @@ void drawGModel::drawScale()
 	double box = width / (opt->nbIso ? opt->nbIso : 1);
 	double xmin = this->left + (this->right - this->left -width)/2.;
 	double ymin = this->bottom + height;
-
+    
     GLfloat *vertex = (GLfloat *)malloc(opt->nbIso*3*4*sizeof(GLfloat));
     GLubyte *color = (GLubyte *)malloc(opt->nbIso*4*4*sizeof(GLubyte));
 	for(int i = 0; i < opt->nbIso; i++){
@@ -393,16 +393,16 @@ void drawGModel::drawScale()
 	}
 	
 	{
-    glVertexPointer(3, GL_FLOAT, 0, vertex);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
-    glEnableClientState(GL_COLOR_ARRAY);
-    if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric || opt->intervalsType == PViewOptions::Continuous)
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, opt->nbIso*4);
-    else
-        glDrawArrays(GL_LINES, 0, opt->nbIso*4);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, vertex);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+        glEnableClientState(GL_COLOR_ARRAY);
+        if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric || opt->intervalsType == PViewOptions::Continuous)
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, opt->nbIso*4);
+        else
+            glDrawArrays(GL_LINES, 0, opt->nbIso*4);
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
 	}
 	free(vertex);
 	free(color);
@@ -467,7 +467,7 @@ void drawGModel::drawAxes(double x0, double y0, double z0, double h)
 	glRotatef(this->_rotate[1], 0, 1, 0);
 	glRotatef(this->_rotate[2], 0, 0, 1);
 	glTranslatef(-x0, -y0, -z0);
-
+    
     const GLfloat axes[] = {
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
 		(GLfloat)(x0+h), (GLfloat)y0, (GLfloat)z0,
@@ -498,7 +498,7 @@ void drawGModel::drawAxes(double x0, double y0, double z0, double h)
 void drawGModel::drawView()
 {
 	this->OrthofFromGModel();
-
+    
 	glMatrixMode(GL_MODELVIEW);
 	// fill the background
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -535,7 +535,7 @@ void drawGModel::drawView()
 	glTranslatef(this->_translation[0]/this->height,this->_translation[1]/this->width,0);
 	glScalef(this->_scale[0], this->_scale[1], this->_scale[2]);
 	checkGlError("glTranslatef");
-
+    
 	this->drawAxes(this->right - (this->top - this->bottom)/9.0, this->bottom + (this->top - this->bottom)/9.0, 0, (this->top - this->bottom)/10.);
 	this->drawPost();
 	if(_showGeom) this->drawGeom();
@@ -598,7 +598,7 @@ int onelab_cb(std::string action)
 			redraw = 1;
         
 		if(redraw == 0 && !onelab::server::instance()->getChanged("GetDP"))continue;
-
+        
 		std::vector<onelab::string> ps;
 		onelab::server::instance()->get(ps, "GetDP/1ModelName");
 		if(ps.empty()){
@@ -612,7 +612,7 @@ int onelab_cb(std::string action)
 		o.setVisible(false);
 		o.setNeverChanged(true);
 		onelab::server::instance()->set(o);
-
+        
 		if(action == "compute")
 		{
 			std::string filename = GModel::current()->getFileName();
@@ -641,11 +641,10 @@ int onelab_cb(std::string action)
 			args.push_back("GetDP");
 			GetDP(args, onelab::server::instance());
 		}
-		requestRender();
 	} while(action == "compute" && (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") || onelabUtils::incrementLoop("1")));
-
+    
 	locked = false;
-
+    
 	return redraw;
 }
 

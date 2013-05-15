@@ -4,9 +4,13 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 set(DEFAULT ON CACHE INTERNAL "Default value for enabled-by-default options")
 
-option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
-option(ENABLE_BUILD_IOS "Build library for iOS (ARM)" OFF)
-option(ENABLE_BUILD_IOS_EMULATOR "Build library for iOS emulator (x86)" OFF)
+option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
+if(APPLE)
+ option(ENABLE_BUILD_IOS "Build library for iOS (ARM)" OFF)
+ option(ENABLE_BUILD_IOS_EMULATOR "Build library for iOS emulator (x86)" ON)
+else(APPLE)
+  set(ENABLE_BUILD_ANDROID ON)
+endif(APPLE)
 
 macro(set_config_option VARNAME STRING)
   set(${VARNAME} TRUE)
@@ -21,9 +25,39 @@ macro(append_src FILES)
   set(ONELAB_SRC ${ONELAB_SRC};${LIST})
 endmacro(append_src)
 
-append_src(drawGModel.cpp)
+if(ENABLE_BUILD_IOS_EMULATOR)
+  # we need getdp framework
+  find_path(GETDP_FRAMEWORK "GetDP" GetDP.framework)
+  if(NOT GETDP_FRAMEWORK)
+    message(SEND_ERROR "Cannot compile onelab for iOS without GetDP")
+  endif(NOT GETDP_FRAMEWORK)
+  # we also need gmsh framework
+  find_path(GMSH_FRAMEWORK "Gmsh" Gmsh.framework)
+  if(NOT GMSH_FRAMEWORK)
+    message(SEND_ERROR "Cannot compile onelab for iOS without Gmsh")
+  endif(NOT GMSH_FRAMEWORK)
+  # and we also need PETSc
+  find_path(PETSC_FRAMEWORK "petsc" petsc.framework)
+  if(NOT PETSC_FRAMEWORK)
+    message(SEND_ERROR "Cannot compile onelab for iOS without PETSc")
+  endif(NOT PETSC_FRAMEWORK)
+  # add target
+  add_custom_target(xcodeProject
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawGModel.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawGModel.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosGModel.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    # FIXME preserve links ???
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GETDP_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GMSH_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PETSC_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
+  )
+endif(ENABLE_BUILD_IOS_EMULATOR)
 
 if(ENABLE_BUILD_ANDROID)
+  append_src(drawGModel.cpp)
   append_src(androidGModel.cpp)
   # user must specify the android-cmake toolchain
   find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")

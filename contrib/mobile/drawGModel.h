@@ -3,10 +3,14 @@
 
 #include <string>
 
+#include <Gmsh/PView.h>
+#include <Gmsh/PViewOptions.h>
+#include <Gmsh/Context.h>
+
 int onelab_cb(const std::string);
 
 class drawGModel{
- private:
+private:
 	float _translation[3];
 	float _scale[3];
 	int width, height;
@@ -14,15 +18,15 @@ class drawGModel{
 	float ratio;
 	float _rotate[3];
 	bool _gradiant, // show the background gradiant
-		_showGeom, // show the Geometry
-		_showMesh, // show the Mesh
-		_fillMesh; // fill the Mesh
-
+    _showGeom, // show the Geometry
+    _showMesh, // show the Mesh
+    _fillMesh; // fill the Mesh
+    
 	void OrthofFromGModel(void);
 	void drawPView(PView *p);
 	void drawVectorArray(PViewOptions *opt, VertexArray *va);
-
- public:
+    
+public:
 	drawGModel();
 	drawGModel(std::string name);
 	~drawGModel(){}
@@ -37,11 +41,13 @@ class drawGModel{
 	void drawMesh();
 	void drawPost();
 	void drawScale();
-
+    
 	void useGradiant(bool gradiant=true) {_gradiant = gradiant;}
 	void showGeom(bool show=true) {_showGeom = show;}
 	void showMesh(bool show=true) {_showMesh = show;}
 	void fillMesh(bool show=true) {_fillMesh = show;}
+    bool isShowedMesh(){return _showMesh;}
+    bool isShowedGeom(){return _showGeom;}
 };
- 
+
 #endif
