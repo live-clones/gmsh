@@ -76,8 +76,8 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
 		    {der.second().x(),der.second().y(),der.second().z()}};
 
 
-  for (int i=0;i<3;i++){
-    for (int l=0;l<3;l++){
+  for (int i=0;i<2;i++){
+    for (int l=0;l<2;l++){
       res[i][l] = 0;
       for (int j=0;j<3;j++){
 	for (int k=0;k<3;k++){
