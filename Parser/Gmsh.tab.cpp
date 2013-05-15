@@ -988,31 +988,31 @@ static const yytype_uint16 yyrline[] =
     2109,  2132,  2160,  2181,  2204,  2225,  2247,  2267,  2379,  2398,
     2436,  2545,  2554,  2560,  2575,  2603,  2620,  2634,  2640,  2646,
     2655,  2669,  2714,  2731,  2746,  2765,  2777,  2801,  2805,  2810,
-    2817,  2823,  2828,  2834,  2838,  2842,  2847,  2859,  2876,  2893,
-    2914,  2935,  2970,  2978,  2984,  2991,  2995,  3004,  3012,  3020,
-    3029,  3028,  3042,  3041,  3055,  3054,  3068,  3067,  3080,  3087,
-    3094,  3101,  3108,  3115,  3122,  3129,  3136,  3144,  3143,  3156,
-    3155,  3168,  3167,  3180,  3179,  3192,  3191,  3204,  3203,  3216,
-    3215,  3228,  3227,  3240,  3239,  3255,  3258,  3264,  3276,  3296,
-    3319,  3323,  3327,  3331,  3335,  3339,  3358,  3371,  3374,  3390,
-    3393,  3406,  3409,  3415,  3418,  3425,  3481,  3551,  3556,  3623,
-    3659,  3667,  3710,  3749,  3769,  3796,  3836,  3859,  3882,  3886,
-    3890,  3929,  3974,  3978,  3988,  4023,  4024,  4025,  4029,  4035,
-    4047,  4065,  4093,  4094,  4095,  4096,  4097,  4098,  4099,  4100,
-    4101,  4108,  4109,  4110,  4111,  4112,  4113,  4114,  4115,  4116,
-    4117,  4118,  4119,  4120,  4121,  4122,  4123,  4124,  4125,  4126,
-    4127,  4128,  4129,  4130,  4131,  4132,  4133,  4134,  4135,  4136,
-    4137,  4138,  4139,  4142,  4143,  4144,  4145,  4146,  4147,  4148,
-    4149,  4150,  4151,  4152,  4153,  4154,  4155,  4156,  4157,  4158,
-    4159,  4160,  4161,  4162,  4171,  4172,  4173,  4174,  4175,  4176,
-    4177,  4181,  4202,  4221,  4239,  4251,  4268,  4289,  4294,  4299,
-    4309,  4319,  4324,  4333,  4360,  4364,  4368,  4372,  4376,  4383,
-    4387,  4391,  4395,  4402,  4407,  4414,  4419,  4423,  4428,  4432,
-    4440,  4451,  4455,  4467,  4475,  4483,  4490,  4500,  4520,  4524,
-    4528,  4532,  4536,  4565,  4594,  4623,  4652,  4662,  4672,  4685,
-    4697,  4709,  4728,  4749,  4754,  4758,  4762,  4774,  4778,  4790,
-    4797,  4807,  4811,  4826,  4831,  4838,  4842,  4855,  4863,  4874,
-    4878,  4886,  4894,  4902,  4910,  4924,  4938,  4942,  4964,  4969
+    2817,  2823,  2828,  2834,  2838,  2842,  2847,  2860,  2877,  2894,
+    2915,  2936,  2971,  2979,  2985,  2992,  2996,  3005,  3013,  3021,
+    3030,  3029,  3043,  3042,  3056,  3055,  3069,  3068,  3081,  3088,
+    3095,  3102,  3109,  3116,  3123,  3130,  3137,  3145,  3144,  3157,
+    3156,  3169,  3168,  3181,  3180,  3193,  3192,  3205,  3204,  3217,
+    3216,  3229,  3228,  3241,  3240,  3256,  3259,  3265,  3277,  3297,
+    3320,  3324,  3328,  3332,  3336,  3340,  3359,  3372,  3375,  3391,
+    3394,  3407,  3410,  3416,  3419,  3426,  3482,  3552,  3557,  3624,
+    3660,  3668,  3711,  3750,  3770,  3797,  3837,  3860,  3883,  3887,
+    3891,  3930,  3975,  3979,  3989,  4024,  4025,  4026,  4030,  4036,
+    4048,  4066,  4094,  4095,  4096,  4097,  4098,  4099,  4100,  4101,
+    4102,  4109,  4110,  4111,  4112,  4113,  4114,  4115,  4116,  4117,
+    4118,  4119,  4120,  4121,  4122,  4123,  4124,  4125,  4126,  4127,
+    4128,  4129,  4130,  4131,  4132,  4133,  4134,  4135,  4136,  4137,
+    4138,  4139,  4140,  4143,  4144,  4145,  4146,  4147,  4148,  4149,
+    4150,  4151,  4152,  4153,  4154,  4155,  4156,  4157,  4158,  4159,
+    4160,  4161,  4162,  4163,  4172,  4173,  4174,  4175,  4176,  4177,
+    4178,  4182,  4203,  4222,  4240,  4252,  4269,  4290,  4295,  4300,
+    4310,  4320,  4325,  4334,  4361,  4365,  4369,  4373,  4377,  4384,
+    4388,  4392,  4396,  4403,  4408,  4415,  4420,  4424,  4429,  4433,
+    4441,  4452,  4456,  4468,  4476,  4484,  4491,  4501,  4521,  4525,
+    4529,  4533,  4537,  4566,  4595,  4624,  4653,  4663,  4673,  4686,
+    4698,  4710,  4729,  4750,  4755,  4759,  4763,  4775,  4779,  4791,
+    4798,  4808,  4812,  4827,  4832,  4839,  4843,  4856,  4864,  4875,
+    4879,  4887,  4895,  4903,  4911,  4925,  4939,  4943,  4965,  4970
 };
 #endif
 
@@ -7594,7 +7594,8 @@ yyreduce:
     {
 #if defined(HAVE_MESH)
       SetOrderN(GModel::current(), (yyvsp[(2) - (3)].d), CTX::instance()->mesh.secondOrderLinear,
-                CTX::instance()->mesh.secondOrderIncomplete);
+                CTX::instance()->mesh.secondOrderIncomplete,
+                CTX::instance()->mesh.meshOnlyVisible);
 #endif
     ;}
     break;
@@ -7602,7 +7603,7 @@ yyreduce:
   case 207:
 
 /* Line 1464 of yacc.c  */
-#line 2860 "Gmsh.y"
+#line 2861 "Gmsh.y"
     {
       LoopControlVariablesTab[ImbricatedLoop][0] = (yyvsp[(3) - (6)].d);
       LoopControlVariablesTab[ImbricatedLoop][1] = (yyvsp[(5) - (6)].d);
@@ -7624,7 +7625,7 @@ yyreduce:
   case 208:
 
 /* Line 1464 of yacc.c  */
-#line 2877 "Gmsh.y"
+#line 2878 "Gmsh.y"
     {
       LoopControlVariablesTab[ImbricatedLoop][0] = (yyvsp[(3) - (8)].d);
       LoopControlVariablesTab[ImbricatedLoop][1] = (yyvsp[(5) - (8)].d);
@@ -7646,7 +7647,7 @@ yyreduce:
   case 209:
 
 /* Line 1464 of yacc.c  */
-#line 2894 "Gmsh.y"
+#line 2895 "Gmsh.y"
     {
       LoopControlVariablesTab[ImbricatedLoop][0] = (yyvsp[(5) - (8)].d);
       LoopControlVariablesTab[ImbricatedLoop][1] = (yyvsp[(7) - (8)].d);
@@ -7672,7 +7673,7 @@ yyreduce:
   case 210:
 
 /* Line 1464 of yacc.c  */
-#line 2915 "Gmsh.y"
+#line 2916 "Gmsh.y"
     {
       LoopControlVariablesTab[ImbricatedLoop][0] = (yyvsp[(5) - (10)].d);
       LoopControlVariablesTab[ImbricatedLoop][1] = (yyvsp[(7) - (10)].d);
@@ -7698,7 +7699,7 @@ yyreduce:
   case 211:
 
 /* Line 1464 of yacc.c  */
-#line 2936 "Gmsh.y"
+#line 2937 "Gmsh.y"
     {
       if(ImbricatedLoop <= 0){
 	yymsg(0, "Invalid For/EndFor loop");
@@ -7738,7 +7739,7 @@ yyreduce:
   case 212:
 
 /* Line 1464 of yacc.c  */
-#line 2971 "Gmsh.y"
+#line 2972 "Gmsh.y"
     {
       if(!FunctionManager::Instance()->createFunction
          ((yyvsp[(2) - (2)].c), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -7751,7 +7752,7 @@ yyreduce:
   case 213:
 
 /* Line 1464 of yacc.c  */
-#line 2979 "Gmsh.y"
+#line 2980 "Gmsh.y"
     {
       if(!FunctionManager::Instance()->leaveFunction
          (&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -7762,7 +7763,7 @@ yyreduce:
   case 214:
 
 /* Line 1464 of yacc.c  */
-#line 2985 "Gmsh.y"
+#line 2986 "Gmsh.y"
     {
       if(!FunctionManager::Instance()->enterFunction
          ((yyvsp[(2) - (3)].c), &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -7774,7 +7775,7 @@ yyreduce:
   case 215:
 
 /* Line 1464 of yacc.c  */
-#line 2992 "Gmsh.y"
+#line 2993 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (4)].d)) skip_until("If", "EndIf");
     ;}
@@ -7783,7 +7784,7 @@ yyreduce:
   case 216:
 
 /* Line 1464 of yacc.c  */
-#line 2996 "Gmsh.y"
+#line 2997 "Gmsh.y"
     {
     ;}
     break;
@@ -7791,7 +7792,7 @@ yyreduce:
   case 217:
 
 /* Line 1464 of yacc.c  */
-#line 3005 "Gmsh.y"
+#line 3006 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(TRANSLATE, (yyvsp[(4) - (5)].l),
@@ -7804,7 +7805,7 @@ yyreduce:
   case 218:
 
 /* Line 1464 of yacc.c  */
-#line 3013 "Gmsh.y"
+#line 3014 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(ROTATE, (yyvsp[(10) - (11)].l),
@@ -7817,7 +7818,7 @@ yyreduce:
   case 219:
 
 /* Line 1464 of yacc.c  */
-#line 3021 "Gmsh.y"
+#line 3022 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(TRANSLATE_ROTATE, (yyvsp[(12) - (13)].l),
@@ -7830,7 +7831,7 @@ yyreduce:
   case 220:
 
 /* Line 1464 of yacc.c  */
-#line 3029 "Gmsh.y"
+#line 3030 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -7840,7 +7841,7 @@ yyreduce:
   case 221:
 
 /* Line 1464 of yacc.c  */
-#line 3034 "Gmsh.y"
+#line 3035 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(TRANSLATE, (yyvsp[(4) - (7)].l),
@@ -7853,7 +7854,7 @@ yyreduce:
   case 222:
 
 /* Line 1464 of yacc.c  */
-#line 3042 "Gmsh.y"
+#line 3043 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -7863,7 +7864,7 @@ yyreduce:
   case 223:
 
 /* Line 1464 of yacc.c  */
-#line 3047 "Gmsh.y"
+#line 3048 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(ROTATE, (yyvsp[(10) - (13)].l),
@@ -7876,7 +7877,7 @@ yyreduce:
   case 224:
 
 /* Line 1464 of yacc.c  */
-#line 3055 "Gmsh.y"
+#line 3056 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -7886,7 +7887,7 @@ yyreduce:
   case 225:
 
 /* Line 1464 of yacc.c  */
-#line 3060 "Gmsh.y"
+#line 3061 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(TRANSLATE_ROTATE, (yyvsp[(12) - (15)].l),
@@ -7899,7 +7900,7 @@ yyreduce:
   case 226:
 
 /* Line 1464 of yacc.c  */
-#line 3068 "Gmsh.y"
+#line 3069 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -7909,7 +7910,7 @@ yyreduce:
   case 227:
 
 /* Line 1464 of yacc.c  */
-#line 3073 "Gmsh.y"
+#line 3074 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShapes(BOUNDARY_LAYER, (yyvsp[(3) - (6)].l), 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -7921,7 +7922,7 @@ yyreduce:
   case 228:
 
 /* Line 1464 of yacc.c  */
-#line 3081 "Gmsh.y"
+#line 3082 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_POINT, (int)(yyvsp[(4) - (8)].d),
@@ -7933,7 +7934,7 @@ yyreduce:
   case 229:
 
 /* Line 1464 of yacc.c  */
-#line 3088 "Gmsh.y"
+#line 3089 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (8)].d),
@@ -7945,7 +7946,7 @@ yyreduce:
   case 230:
 
 /* Line 1464 of yacc.c  */
-#line 3095 "Gmsh.y"
+#line 3096 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (8)].d),
@@ -7957,7 +7958,7 @@ yyreduce:
   case 231:
 
 /* Line 1464 of yacc.c  */
-#line 3102 "Gmsh.y"
+#line 3103 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_POINT, (int)(yyvsp[(4) - (12)].d),
@@ -7969,7 +7970,7 @@ yyreduce:
   case 232:
 
 /* Line 1464 of yacc.c  */
-#line 3109 "Gmsh.y"
+#line 3110 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (12)].d),
@@ -7981,7 +7982,7 @@ yyreduce:
   case 233:
 
 /* Line 1464 of yacc.c  */
-#line 3116 "Gmsh.y"
+#line 3117 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (12)].d),
@@ -7993,7 +7994,7 @@ yyreduce:
   case 234:
 
 /* Line 1464 of yacc.c  */
-#line 3123 "Gmsh.y"
+#line 3124 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_POINT, (int)(yyvsp[(4) - (14)].d),
@@ -8005,7 +8006,7 @@ yyreduce:
   case 235:
 
 /* Line 1464 of yacc.c  */
-#line 3130 "Gmsh.y"
+#line 3131 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (14)].d),
@@ -8017,7 +8018,7 @@ yyreduce:
   case 236:
 
 /* Line 1464 of yacc.c  */
-#line 3137 "Gmsh.y"
+#line 3138 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (14)].d),
@@ -8029,7 +8030,7 @@ yyreduce:
   case 237:
 
 /* Line 1464 of yacc.c  */
-#line 3144 "Gmsh.y"
+#line 3145 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8039,7 +8040,7 @@ yyreduce:
   case 238:
 
 /* Line 1464 of yacc.c  */
-#line 3149 "Gmsh.y"
+#line 3150 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_POINT, (int)(yyvsp[(4) - (12)].d),
@@ -8051,7 +8052,7 @@ yyreduce:
   case 239:
 
 /* Line 1464 of yacc.c  */
-#line 3156 "Gmsh.y"
+#line 3157 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8061,7 +8062,7 @@ yyreduce:
   case 240:
 
 /* Line 1464 of yacc.c  */
-#line 3161 "Gmsh.y"
+#line 3162 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (12)].d),
@@ -8073,7 +8074,7 @@ yyreduce:
   case 241:
 
 /* Line 1464 of yacc.c  */
-#line 3168 "Gmsh.y"
+#line 3169 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8083,7 +8084,7 @@ yyreduce:
   case 242:
 
 /* Line 1464 of yacc.c  */
-#line 3173 "Gmsh.y"
+#line 3174 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (12)].d),
@@ -8095,7 +8096,7 @@ yyreduce:
   case 243:
 
 /* Line 1464 of yacc.c  */
-#line 3180 "Gmsh.y"
+#line 3181 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8105,7 +8106,7 @@ yyreduce:
   case 244:
 
 /* Line 1464 of yacc.c  */
-#line 3185 "Gmsh.y"
+#line 3186 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_POINT, (int)(yyvsp[(4) - (16)].d),
@@ -8117,7 +8118,7 @@ yyreduce:
   case 245:
 
 /* Line 1464 of yacc.c  */
-#line 3192 "Gmsh.y"
+#line 3193 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8127,7 +8128,7 @@ yyreduce:
   case 246:
 
 /* Line 1464 of yacc.c  */
-#line 3197 "Gmsh.y"
+#line 3198 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (16)].d),
@@ -8139,7 +8140,7 @@ yyreduce:
   case 247:
 
 /* Line 1464 of yacc.c  */
-#line 3204 "Gmsh.y"
+#line 3205 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8149,7 +8150,7 @@ yyreduce:
   case 248:
 
 /* Line 1464 of yacc.c  */
-#line 3209 "Gmsh.y"
+#line 3210 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(ROTATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (16)].d),
@@ -8161,7 +8162,7 @@ yyreduce:
   case 249:
 
 /* Line 1464 of yacc.c  */
-#line 3216 "Gmsh.y"
+#line 3217 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8171,7 +8172,7 @@ yyreduce:
   case 250:
 
 /* Line 1464 of yacc.c  */
-#line 3221 "Gmsh.y"
+#line 3222 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_POINT, (int)(yyvsp[(4) - (18)].d),
@@ -8183,7 +8184,7 @@ yyreduce:
   case 251:
 
 /* Line 1464 of yacc.c  */
-#line 3228 "Gmsh.y"
+#line 3229 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8193,7 +8194,7 @@ yyreduce:
   case 252:
 
 /* Line 1464 of yacc.c  */
-#line 3233 "Gmsh.y"
+#line 3234 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_SEGM_LINE, (int)(yyvsp[(4) - (18)].d),
@@ -8205,7 +8206,7 @@ yyreduce:
   case 253:
 
 /* Line 1464 of yacc.c  */
-#line 3240 "Gmsh.y"
+#line 3241 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
@@ -8215,7 +8216,7 @@ yyreduce:
   case 254:
 
 /* Line 1464 of yacc.c  */
-#line 3245 "Gmsh.y"
+#line 3246 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
       ExtrudeShape(TRANSLATE_ROTATE, MSH_SURF_PLAN, (int)(yyvsp[(4) - (18)].d),
@@ -8227,7 +8228,7 @@ yyreduce:
   case 255:
 
 /* Line 1464 of yacc.c  */
-#line 3256 "Gmsh.y"
+#line 3257 "Gmsh.y"
     {
     ;}
     break;
@@ -8235,7 +8236,7 @@ yyreduce:
   case 256:
 
 /* Line 1464 of yacc.c  */
-#line 3259 "Gmsh.y"
+#line 3260 "Gmsh.y"
     {
     ;}
     break;
@@ -8243,7 +8244,7 @@ yyreduce:
   case 257:
 
 /* Line 1464 of yacc.c  */
-#line 3265 "Gmsh.y"
+#line 3266 "Gmsh.y"
     {
       int n = (int)fabs((yyvsp[(3) - (5)].d));
       if(n){ // we accept n==0 to easily disable layers
@@ -8260,7 +8261,7 @@ yyreduce:
   case 258:
 
 /* Line 1464 of yacc.c  */
-#line 3277 "Gmsh.y"
+#line 3278 "Gmsh.y"
     {
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr((yyvsp[(3) - (7)].l));
@@ -8285,7 +8286,7 @@ yyreduce:
   case 259:
 
 /* Line 1464 of yacc.c  */
-#line 3297 "Gmsh.y"
+#line 3298 "Gmsh.y"
     {
       yymsg(0, "Explicit region numbers in layers are deprecated");
       extr.mesh.ExtrudeMesh = true;
@@ -8313,7 +8314,7 @@ yyreduce:
   case 260:
 
 /* Line 1464 of yacc.c  */
-#line 3320 "Gmsh.y"
+#line 3321 "Gmsh.y"
     {
       extr.mesh.Recombine = true;
     ;}
@@ -8322,7 +8323,7 @@ yyreduce:
   case 261:
 
 /* Line 1464 of yacc.c  */
-#line 3324 "Gmsh.y"
+#line 3325 "Gmsh.y"
     {
       extr.mesh.QuadToTri = QUADTRI_DBL_1;
     ;}
@@ -8331,7 +8332,7 @@ yyreduce:
   case 262:
 
 /* Line 1464 of yacc.c  */
-#line 3328 "Gmsh.y"
+#line 3329 "Gmsh.y"
     {
       extr.mesh.QuadToTri = QUADTRI_DBL_1_RECOMB;
     ;}
@@ -8340,7 +8341,7 @@ yyreduce:
   case 263:
 
 /* Line 1464 of yacc.c  */
-#line 3332 "Gmsh.y"
+#line 3333 "Gmsh.y"
     {
       extr.mesh.QuadToTri = QUADTRI_SNGL_1;
     ;}
@@ -8349,7 +8350,7 @@ yyreduce:
   case 264:
 
 /* Line 1464 of yacc.c  */
-#line 3336 "Gmsh.y"
+#line 3337 "Gmsh.y"
     {
       extr.mesh.QuadToTri = QUADTRI_SNGL_1_RECOMB;
     ;}
@@ -8358,7 +8359,7 @@ yyreduce:
   case 265:
 
 /* Line 1464 of yacc.c  */
-#line 3340 "Gmsh.y"
+#line 3341 "Gmsh.y"
     {
       int num = (int)(yyvsp[(3) - (9)].d);
       if(FindSurface(num)){
@@ -8382,7 +8383,7 @@ yyreduce:
   case 266:
 
 /* Line 1464 of yacc.c  */
-#line 3359 "Gmsh.y"
+#line 3360 "Gmsh.y"
     {
       if(!strcmp((yyvsp[(2) - (6)].c), "Index"))
         extr.mesh.BoundaryLayerIndex = (yyvsp[(4) - (6)].d);
@@ -8395,7 +8396,7 @@ yyreduce:
   case 267:
 
 /* Line 1464 of yacc.c  */
-#line 3371 "Gmsh.y"
+#line 3372 "Gmsh.y"
     {
       (yyval.v)[0] = (yyval.v)[1] = 1.;
     ;}
@@ -8404,7 +8405,7 @@ yyreduce:
   case 268:
 
 /* Line 1464 of yacc.c  */
-#line 3375 "Gmsh.y"
+#line 3376 "Gmsh.y"
     {
       if(!strcmp((yyvsp[(2) - (3)].c), "Progression") || !strcmp((yyvsp[(2) - (3)].c), "Power"))
         (yyval.v)[0] = 1.;
@@ -8422,7 +8423,7 @@ yyreduce:
   case 269:
 
 /* Line 1464 of yacc.c  */
-#line 3390 "Gmsh.y"
+#line 3391 "Gmsh.y"
     {
       (yyval.i) = -1; // left
     ;}
@@ -8431,7 +8432,7 @@ yyreduce:
   case 270:
 
 /* Line 1464 of yacc.c  */
-#line 3394 "Gmsh.y"
+#line 3395 "Gmsh.y"
     {
       if(!strcmp((yyvsp[(1) - (1)].c), "Right"))
         (yyval.i) = 1;
@@ -8446,7 +8447,7 @@ yyreduce:
   case 271:
 
 /* Line 1464 of yacc.c  */
-#line 3406 "Gmsh.y"
+#line 3407 "Gmsh.y"
     {
      (yyval.l) = List_Create(1, 1, sizeof(double));
    ;}
@@ -8455,7 +8456,7 @@ yyreduce:
   case 272:
 
 /* Line 1464 of yacc.c  */
-#line 3410 "Gmsh.y"
+#line 3411 "Gmsh.y"
     {
      (yyval.l) = (yyvsp[(2) - (2)].l);
    ;}
@@ -8464,7 +8465,7 @@ yyreduce:
   case 273:
 
 /* Line 1464 of yacc.c  */
-#line 3415 "Gmsh.y"
+#line 3416 "Gmsh.y"
     {
       (yyval.i) = 45;
     ;}
@@ -8473,7 +8474,7 @@ yyreduce:
   case 274:
 
 /* Line 1464 of yacc.c  */
-#line 3419 "Gmsh.y"
+#line 3420 "Gmsh.y"
     {
       (yyval.i) = (int)(yyvsp[(2) - (2)].d);
     ;}
@@ -8482,7 +8483,7 @@ yyreduce:
   case 275:
 
 /* Line 1464 of yacc.c  */
-#line 3426 "Gmsh.y"
+#line 3427 "Gmsh.y"
     {
       int type = (int)(yyvsp[(6) - (7)].v)[0];
       double coef = fabs((yyvsp[(6) - (7)].v)[1]);
@@ -8543,7 +8544,7 @@ yyreduce:
   case 276:
 
 /* Line 1464 of yacc.c  */
-#line 3482 "Gmsh.y"
+#line 3483 "Gmsh.y"
     {
       int k = List_Nbr((yyvsp[(4) - (6)].l));
       if(k != 0 && k != 3 && k != 4){
@@ -8618,7 +8619,7 @@ yyreduce:
   case 277:
 
 /* Line 1464 of yacc.c  */
-#line 3552 "Gmsh.y"
+#line 3553 "Gmsh.y"
     {
       yymsg(1, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
       List_Delete((yyvsp[(7) - (8)].l));
@@ -8628,7 +8629,7 @@ yyreduce:
   case 278:
 
 /* Line 1464 of yacc.c  */
-#line 3557 "Gmsh.y"
+#line 3558 "Gmsh.y"
     {
       int k = List_Nbr((yyvsp[(4) - (5)].l));
       if(k != 0 && k != 6 && k != 8){
@@ -8700,7 +8701,7 @@ yyreduce:
   case 279:
 
 /* Line 1464 of yacc.c  */
-#line 3624 "Gmsh.y"
+#line 3625 "Gmsh.y"
     {
       if(!(yyvsp[(2) - (3)].l)){
   	  List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
@@ -8741,7 +8742,7 @@ yyreduce:
   case 280:
 
 /* Line 1464 of yacc.c  */
-#line 3660 "Gmsh.y"
+#line 3661 "Gmsh.y"
     {
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (7)].l)); i++){
 	double d;
@@ -8754,7 +8755,7 @@ yyreduce:
   case 281:
 
 /* Line 1464 of yacc.c  */
-#line 3668 "Gmsh.y"
+#line 3669 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (5)].l)){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
@@ -8802,7 +8803,7 @@ yyreduce:
   case 282:
 
 /* Line 1464 of yacc.c  */
-#line 3711 "Gmsh.y"
+#line 3712 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (4)].l)){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
@@ -8846,7 +8847,7 @@ yyreduce:
   case 283:
 
 /* Line 1464 of yacc.c  */
-#line 3750 "Gmsh.y"
+#line 3751 "Gmsh.y"
     {
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (6)].l)); i++){
 	double d;
@@ -8871,7 +8872,7 @@ yyreduce:
   case 284:
 
 /* Line 1464 of yacc.c  */
-#line 3770 "Gmsh.y"
+#line 3771 "Gmsh.y"
     {
       if(List_Nbr((yyvsp[(5) - (6)].l)) != List_Nbr((yyvsp[(3) - (6)].l))){
 	yymsg(0, "Number of master (%d) different from number of slave (%d) lines",
@@ -8903,7 +8904,7 @@ yyreduce:
   case 285:
 
 /* Line 1464 of yacc.c  */
-#line 3798 "Gmsh.y"
+#line 3799 "Gmsh.y"
     {
       if (List_Nbr((yyvsp[(5) - (12)].l)) != List_Nbr((yyvsp[(10) - (12)].l))){
 	yymsg(0, "Number of master surface edges (%d) different from number of "
@@ -8947,7 +8948,7 @@ yyreduce:
   case 286:
 
 /* Line 1464 of yacc.c  */
-#line 3837 "Gmsh.y"
+#line 3838 "Gmsh.y"
     {
       Surface *s = FindSurface((int)(yyvsp[(8) - (10)].d));
       if(s){
@@ -8975,7 +8976,7 @@ yyreduce:
   case 287:
 
 /* Line 1464 of yacc.c  */
-#line 3860 "Gmsh.y"
+#line 3861 "Gmsh.y"
     {
       Surface *s = FindSurface((int)(yyvsp[(8) - (10)].d));
       if(s){
@@ -9003,7 +9004,7 @@ yyreduce:
   case 288:
 
 /* Line 1464 of yacc.c  */
-#line 3883 "Gmsh.y"
+#line 3884 "Gmsh.y"
     {
       Msg::Error("Line in Volume not implemented yet");
     ;}
@@ -9012,7 +9013,7 @@ yyreduce:
   case 289:
 
 /* Line 1464 of yacc.c  */
-#line 3887 "Gmsh.y"
+#line 3888 "Gmsh.y"
     {
       Msg::Error("Surface in Volume not implemented yet");
     ;}
@@ -9021,7 +9022,7 @@ yyreduce:
   case 290:
 
 /* Line 1464 of yacc.c  */
-#line 3891 "Gmsh.y"
+#line 3892 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (4)].l)){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
@@ -9065,7 +9066,7 @@ yyreduce:
   case 291:
 
 /* Line 1464 of yacc.c  */
-#line 3930 "Gmsh.y"
+#line 3931 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (4)].l)){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
@@ -9109,7 +9110,7 @@ yyreduce:
   case 292:
 
 /* Line 1464 of yacc.c  */
-#line 3975 "Gmsh.y"
+#line 3976 "Gmsh.y"
     {
       ReplaceAllDuplicates();
     ;}
@@ -9118,7 +9119,7 @@ yyreduce:
   case 293:
 
 /* Line 1464 of yacc.c  */
-#line 3979 "Gmsh.y"
+#line 3980 "Gmsh.y"
     {
       if(!strcmp((yyvsp[(2) - (3)].c), "Geometry"))
         ReplaceAllDuplicates();
@@ -9133,7 +9134,7 @@ yyreduce:
   case 294:
 
 /* Line 1464 of yacc.c  */
-#line 3989 "Gmsh.y"
+#line 3990 "Gmsh.y"
     {
       if(List_Nbr((yyvsp[(4) - (6)].l)) >= 2){
         double d;
@@ -9168,28 +9169,28 @@ yyreduce:
   case 295:
 
 /* Line 1464 of yacc.c  */
-#line 4023 "Gmsh.y"
+#line 4024 "Gmsh.y"
     { (yyval.c) = (char*)"Homology"; ;}
     break;
 
   case 296:
 
 /* Line 1464 of yacc.c  */
-#line 4024 "Gmsh.y"
+#line 4025 "Gmsh.y"
     { (yyval.c) = (char*)"Cohomology"; ;}
     break;
 
   case 297:
 
 /* Line 1464 of yacc.c  */
-#line 4025 "Gmsh.y"
+#line 4026 "Gmsh.y"
     { (yyval.c) = (char*)"Betti"; ;}
     break;
 
   case 298:
 
 /* Line 1464 of yacc.c  */
-#line 4030 "Gmsh.y"
+#line 4031 "Gmsh.y"
     {
       std::vector<int> domain, subdomain, dim;
       for(int i = 0; i < 4; i++) dim.push_back(i);
@@ -9200,7 +9201,7 @@ yyreduce:
   case 299:
 
 /* Line 1464 of yacc.c  */
-#line 4036 "Gmsh.y"
+#line 4037 "Gmsh.y"
     {
       std::vector<int> domain, subdomain, dim;
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (5)].l)); i++){
@@ -9217,7 +9218,7 @@ yyreduce:
   case 300:
 
 /* Line 1464 of yacc.c  */
-#line 4048 "Gmsh.y"
+#line 4049 "Gmsh.y"
     {
       std::vector<int> domain, subdomain, dim;
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (7)].l)); i++){
@@ -9240,7 +9241,7 @@ yyreduce:
   case 301:
 
 /* Line 1464 of yacc.c  */
-#line 4066 "Gmsh.y"
+#line 4067 "Gmsh.y"
     {
       std::vector<int> domain, subdomain, dim;
       for(int i = 0; i < List_Nbr((yyvsp[(6) - (10)].l)); i++){
@@ -9268,63 +9269,63 @@ yyreduce:
   case 302:
 
 /* Line 1464 of yacc.c  */
-#line 4093 "Gmsh.y"
+#line 4094 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (1)].d);           ;}
     break;
 
   case 303:
 
 /* Line 1464 of yacc.c  */
-#line 4094 "Gmsh.y"
+#line 4095 "Gmsh.y"
     { (yyval.d) = (yyvsp[(2) - (3)].d);           ;}
     break;
 
   case 304:
 
 /* Line 1464 of yacc.c  */
-#line 4095 "Gmsh.y"
+#line 4096 "Gmsh.y"
     { (yyval.d) = -(yyvsp[(2) - (2)].d);          ;}
     break;
 
   case 305:
 
 /* Line 1464 of yacc.c  */
-#line 4096 "Gmsh.y"
+#line 4097 "Gmsh.y"
     { (yyval.d) = (yyvsp[(2) - (2)].d);           ;}
     break;
 
   case 306:
 
 /* Line 1464 of yacc.c  */
-#line 4097 "Gmsh.y"
+#line 4098 "Gmsh.y"
     { (yyval.d) = !(yyvsp[(2) - (2)].d);          ;}
     break;
 
   case 307:
 
 /* Line 1464 of yacc.c  */
-#line 4098 "Gmsh.y"
+#line 4099 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) - (yyvsp[(3) - (3)].d);      ;}
     break;
 
   case 308:
 
 /* Line 1464 of yacc.c  */
-#line 4099 "Gmsh.y"
+#line 4100 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) + (yyvsp[(3) - (3)].d);      ;}
     break;
 
   case 309:
 
 /* Line 1464 of yacc.c  */
-#line 4100 "Gmsh.y"
+#line 4101 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) * (yyvsp[(3) - (3)].d);      ;}
     break;
 
   case 310:
 
 /* Line 1464 of yacc.c  */
-#line 4102 "Gmsh.y"
+#line 4103 "Gmsh.y"
     {
       if(!(yyvsp[(3) - (3)].d))
 	yymsg(0, "Division by zero in '%g / %g'", (yyvsp[(1) - (3)].d), (yyvsp[(3) - (3)].d));
@@ -9336,427 +9337,427 @@ yyreduce:
   case 311:
 
 /* Line 1464 of yacc.c  */
-#line 4108 "Gmsh.y"
+#line 4109 "Gmsh.y"
     { (yyval.d) = (int)(yyvsp[(1) - (3)].d) % (int)(yyvsp[(3) - (3)].d);  ;}
     break;
 
   case 312:
 
 /* Line 1464 of yacc.c  */
-#line 4109 "Gmsh.y"
+#line 4110 "Gmsh.y"
     { (yyval.d) = pow((yyvsp[(1) - (3)].d), (yyvsp[(3) - (3)].d));  ;}
     break;
 
   case 313:
 
 /* Line 1464 of yacc.c  */
-#line 4110 "Gmsh.y"
+#line 4111 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) < (yyvsp[(3) - (3)].d);      ;}
     break;
 
   case 314:
 
 /* Line 1464 of yacc.c  */
-#line 4111 "Gmsh.y"
+#line 4112 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) > (yyvsp[(3) - (3)].d);      ;}
     break;
 
   case 315:
 
 /* Line 1464 of yacc.c  */
-#line 4112 "Gmsh.y"
+#line 4113 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) <= (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 316:
 
 /* Line 1464 of yacc.c  */
-#line 4113 "Gmsh.y"
+#line 4114 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) >= (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 317:
 
 /* Line 1464 of yacc.c  */
-#line 4114 "Gmsh.y"
+#line 4115 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) == (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 318:
 
 /* Line 1464 of yacc.c  */
-#line 4115 "Gmsh.y"
+#line 4116 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) != (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 319:
 
 /* Line 1464 of yacc.c  */
-#line 4116 "Gmsh.y"
+#line 4117 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) && (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 320:
 
 /* Line 1464 of yacc.c  */
-#line 4117 "Gmsh.y"
+#line 4118 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (3)].d) || (yyvsp[(3) - (3)].d);     ;}
     break;
 
   case 321:
 
 /* Line 1464 of yacc.c  */
-#line 4118 "Gmsh.y"
+#line 4119 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (5)].d) ? (yyvsp[(3) - (5)].d) : (yyvsp[(5) - (5)].d); ;}
     break;
 
   case 322:
 
 /* Line 1464 of yacc.c  */
-#line 4119 "Gmsh.y"
+#line 4120 "Gmsh.y"
     { (yyval.d) = exp((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 323:
 
 /* Line 1464 of yacc.c  */
-#line 4120 "Gmsh.y"
+#line 4121 "Gmsh.y"
     { (yyval.d) = log((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 324:
 
 /* Line 1464 of yacc.c  */
-#line 4121 "Gmsh.y"
+#line 4122 "Gmsh.y"
     { (yyval.d) = log10((yyvsp[(3) - (4)].d));    ;}
     break;
 
   case 325:
 
 /* Line 1464 of yacc.c  */
-#line 4122 "Gmsh.y"
+#line 4123 "Gmsh.y"
     { (yyval.d) = sqrt((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 326:
 
 /* Line 1464 of yacc.c  */
-#line 4123 "Gmsh.y"
+#line 4124 "Gmsh.y"
     { (yyval.d) = sin((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 327:
 
 /* Line 1464 of yacc.c  */
-#line 4124 "Gmsh.y"
+#line 4125 "Gmsh.y"
     { (yyval.d) = asin((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 328:
 
 /* Line 1464 of yacc.c  */
-#line 4125 "Gmsh.y"
+#line 4126 "Gmsh.y"
     { (yyval.d) = cos((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 329:
 
 /* Line 1464 of yacc.c  */
-#line 4126 "Gmsh.y"
+#line 4127 "Gmsh.y"
     { (yyval.d) = acos((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 330:
 
 /* Line 1464 of yacc.c  */
-#line 4127 "Gmsh.y"
+#line 4128 "Gmsh.y"
     { (yyval.d) = tan((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 331:
 
 /* Line 1464 of yacc.c  */
-#line 4128 "Gmsh.y"
+#line 4129 "Gmsh.y"
     { (yyval.d) = atan((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 332:
 
 /* Line 1464 of yacc.c  */
-#line 4129 "Gmsh.y"
+#line 4130 "Gmsh.y"
     { (yyval.d) = atan2((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d));;}
     break;
 
   case 333:
 
 /* Line 1464 of yacc.c  */
-#line 4130 "Gmsh.y"
+#line 4131 "Gmsh.y"
     { (yyval.d) = sinh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 334:
 
 /* Line 1464 of yacc.c  */
-#line 4131 "Gmsh.y"
+#line 4132 "Gmsh.y"
     { (yyval.d) = cosh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 335:
 
 /* Line 1464 of yacc.c  */
-#line 4132 "Gmsh.y"
+#line 4133 "Gmsh.y"
     { (yyval.d) = tanh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 336:
 
 /* Line 1464 of yacc.c  */
-#line 4133 "Gmsh.y"
+#line 4134 "Gmsh.y"
     { (yyval.d) = fabs((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 337:
 
 /* Line 1464 of yacc.c  */
-#line 4134 "Gmsh.y"
+#line 4135 "Gmsh.y"
     { (yyval.d) = floor((yyvsp[(3) - (4)].d));    ;}
     break;
 
   case 338:
 
 /* Line 1464 of yacc.c  */
-#line 4135 "Gmsh.y"
+#line 4136 "Gmsh.y"
     { (yyval.d) = ceil((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 339:
 
 /* Line 1464 of yacc.c  */
-#line 4136 "Gmsh.y"
+#line 4137 "Gmsh.y"
     { (yyval.d) = fmod((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 340:
 
 /* Line 1464 of yacc.c  */
-#line 4137 "Gmsh.y"
+#line 4138 "Gmsh.y"
     { (yyval.d) = fmod((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 341:
 
 /* Line 1464 of yacc.c  */
-#line 4138 "Gmsh.y"
+#line 4139 "Gmsh.y"
     { (yyval.d) = sqrt((yyvsp[(3) - (6)].d) * (yyvsp[(3) - (6)].d) + (yyvsp[(5) - (6)].d) * (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 342:
 
 /* Line 1464 of yacc.c  */
-#line 4139 "Gmsh.y"
+#line 4140 "Gmsh.y"
     { (yyval.d) = (yyvsp[(3) - (4)].d) * (double)rand() / (double)RAND_MAX; ;}
     break;
 
   case 343:
 
 /* Line 1464 of yacc.c  */
-#line 4142 "Gmsh.y"
+#line 4143 "Gmsh.y"
     { (yyval.d) = exp((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 344:
 
 /* Line 1464 of yacc.c  */
-#line 4143 "Gmsh.y"
+#line 4144 "Gmsh.y"
     { (yyval.d) = log((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 345:
 
 /* Line 1464 of yacc.c  */
-#line 4144 "Gmsh.y"
+#line 4145 "Gmsh.y"
     { (yyval.d) = log10((yyvsp[(3) - (4)].d));    ;}
     break;
 
   case 346:
 
 /* Line 1464 of yacc.c  */
-#line 4145 "Gmsh.y"
+#line 4146 "Gmsh.y"
     { (yyval.d) = sqrt((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 347:
 
 /* Line 1464 of yacc.c  */
-#line 4146 "Gmsh.y"
+#line 4147 "Gmsh.y"
     { (yyval.d) = sin((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 348:
 
 /* Line 1464 of yacc.c  */
-#line 4147 "Gmsh.y"
+#line 4148 "Gmsh.y"
     { (yyval.d) = asin((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 349:
 
 /* Line 1464 of yacc.c  */
-#line 4148 "Gmsh.y"
+#line 4149 "Gmsh.y"
     { (yyval.d) = cos((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 350:
 
 /* Line 1464 of yacc.c  */
-#line 4149 "Gmsh.y"
+#line 4150 "Gmsh.y"
     { (yyval.d) = acos((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 351:
 
 /* Line 1464 of yacc.c  */
-#line 4150 "Gmsh.y"
+#line 4151 "Gmsh.y"
     { (yyval.d) = tan((yyvsp[(3) - (4)].d));      ;}
     break;
 
   case 352:
 
 /* Line 1464 of yacc.c  */
-#line 4151 "Gmsh.y"
+#line 4152 "Gmsh.y"
     { (yyval.d) = atan((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 353:
 
 /* Line 1464 of yacc.c  */
-#line 4152 "Gmsh.y"
+#line 4153 "Gmsh.y"
     { (yyval.d) = atan2((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d));;}
     break;
 
   case 354:
 
 /* Line 1464 of yacc.c  */
-#line 4153 "Gmsh.y"
+#line 4154 "Gmsh.y"
     { (yyval.d) = sinh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 355:
 
 /* Line 1464 of yacc.c  */
-#line 4154 "Gmsh.y"
+#line 4155 "Gmsh.y"
     { (yyval.d) = cosh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 356:
 
 /* Line 1464 of yacc.c  */
-#line 4155 "Gmsh.y"
+#line 4156 "Gmsh.y"
     { (yyval.d) = tanh((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 357:
 
 /* Line 1464 of yacc.c  */
-#line 4156 "Gmsh.y"
+#line 4157 "Gmsh.y"
     { (yyval.d) = fabs((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 358:
 
 /* Line 1464 of yacc.c  */
-#line 4157 "Gmsh.y"
+#line 4158 "Gmsh.y"
     { (yyval.d) = floor((yyvsp[(3) - (4)].d));    ;}
     break;
 
   case 359:
 
 /* Line 1464 of yacc.c  */
-#line 4158 "Gmsh.y"
+#line 4159 "Gmsh.y"
     { (yyval.d) = ceil((yyvsp[(3) - (4)].d));     ;}
     break;
 
   case 360:
 
 /* Line 1464 of yacc.c  */
-#line 4159 "Gmsh.y"
+#line 4160 "Gmsh.y"
     { (yyval.d) = fmod((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 361:
 
 /* Line 1464 of yacc.c  */
-#line 4160 "Gmsh.y"
+#line 4161 "Gmsh.y"
     { (yyval.d) = fmod((yyvsp[(3) - (6)].d), (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 362:
 
 /* Line 1464 of yacc.c  */
-#line 4161 "Gmsh.y"
+#line 4162 "Gmsh.y"
     { (yyval.d) = sqrt((yyvsp[(3) - (6)].d) * (yyvsp[(3) - (6)].d) + (yyvsp[(5) - (6)].d) * (yyvsp[(5) - (6)].d)); ;}
     break;
 
   case 363:
 
 /* Line 1464 of yacc.c  */
-#line 4162 "Gmsh.y"
+#line 4163 "Gmsh.y"
     { (yyval.d) = (yyvsp[(3) - (4)].d) * (double)rand() / (double)RAND_MAX; ;}
     break;
 
   case 364:
 
 /* Line 1464 of yacc.c  */
-#line 4171 "Gmsh.y"
+#line 4172 "Gmsh.y"
     { (yyval.d) = (yyvsp[(1) - (1)].d); ;}
     break;
 
   case 365:
 
 /* Line 1464 of yacc.c  */
-#line 4172 "Gmsh.y"
+#line 4173 "Gmsh.y"
     { (yyval.d) = 3.141592653589793; ;}
     break;
 
   case 366:
 
 /* Line 1464 of yacc.c  */
-#line 4173 "Gmsh.y"
+#line 4174 "Gmsh.y"
     { (yyval.d) = Msg::GetCommRank(); ;}
     break;
 
   case 367:
 
 /* Line 1464 of yacc.c  */
-#line 4174 "Gmsh.y"
+#line 4175 "Gmsh.y"
     { (yyval.d) = Msg::GetCommSize(); ;}
     break;
 
   case 368:
 
 /* Line 1464 of yacc.c  */
-#line 4175 "Gmsh.y"
+#line 4176 "Gmsh.y"
     { (yyval.d) = GetGmshMajorVersion(); ;}
     break;
 
   case 369:
 
 /* Line 1464 of yacc.c  */
-#line 4176 "Gmsh.y"
+#line 4177 "Gmsh.y"
     { (yyval.d) = GetGmshMinorVersion(); ;}
     break;
 
   case 370:
 
 /* Line 1464 of yacc.c  */
-#line 4177 "Gmsh.y"
+#line 4178 "Gmsh.y"
     { (yyval.d) = GetGmshPatchVersion(); ;}
     break;
 
   case 371:
 
 /* Line 1464 of yacc.c  */
-#line 4182 "Gmsh.y"
+#line 4183 "Gmsh.y"
     {
       if(!gmsh_yysymbols.count((yyvsp[(1) - (1)].c))){
 	yymsg(0, "Unknown variable '%s'", (yyvsp[(1) - (1)].c));
@@ -9778,7 +9779,7 @@ yyreduce:
   case 372:
 
 /* Line 1464 of yacc.c  */
-#line 4203 "Gmsh.y"
+#line 4204 "Gmsh.y"
     {
       char tmpstring[1024];
       sprintf(tmpstring, "%s_%d", (yyvsp[(1) - (5)].c), (int)(yyvsp[(4) - (5)].d)) ;
@@ -9802,7 +9803,7 @@ yyreduce:
   case 373:
 
 /* Line 1464 of yacc.c  */
-#line 4222 "Gmsh.y"
+#line 4223 "Gmsh.y"
     {
       int index = (int)(yyvsp[(3) - (4)].d);
       if(!gmsh_yysymbols.count((yyvsp[(1) - (4)].c))){
@@ -9825,7 +9826,7 @@ yyreduce:
   case 374:
 
 /* Line 1464 of yacc.c  */
-#line 4240 "Gmsh.y"
+#line 4241 "Gmsh.y"
     {
       if(!gmsh_yysymbols.count((yyvsp[(2) - (4)].c))){
 	yymsg(0, "Unknown variable '%s'", (yyvsp[(2) - (4)].c));
@@ -9842,7 +9843,7 @@ yyreduce:
   case 375:
 
 /* Line 1464 of yacc.c  */
-#line 4252 "Gmsh.y"
+#line 4253 "Gmsh.y"
     {
       if(!gmsh_yysymbols.count((yyvsp[(1) - (2)].c))){
 	yymsg(0, "Unknown variable '%s'", (yyvsp[(1) - (2)].c));
@@ -9864,7 +9865,7 @@ yyreduce:
   case 376:
 
 /* Line 1464 of yacc.c  */
-#line 4269 "Gmsh.y"
+#line 4270 "Gmsh.y"
     {
       int index = (int)(yyvsp[(3) - (5)].d);
       if(!gmsh_yysymbols.count((yyvsp[(1) - (5)].c))){
@@ -9887,7 +9888,7 @@ yyreduce:
   case 377:
 
 /* Line 1464 of yacc.c  */
-#line 4290 "Gmsh.y"
+#line 4291 "Gmsh.y"
     {
       NumberOption(GMSH_GET, (yyvsp[(1) - (3)].c), 0, (yyvsp[(3) - (3)].c), (yyval.d));
       Free((yyvsp[(1) - (3)].c)); Free((yyvsp[(3) - (3)].c));
@@ -9897,7 +9898,7 @@ yyreduce:
   case 378:
 
 /* Line 1464 of yacc.c  */
-#line 4295 "Gmsh.y"
+#line 4296 "Gmsh.y"
     {
       NumberOption(GMSH_GET, (yyvsp[(1) - (6)].c), (int)(yyvsp[(3) - (6)].d), (yyvsp[(6) - (6)].c), (yyval.d));
       Free((yyvsp[(1) - (6)].c)); Free((yyvsp[(6) - (6)].c));
@@ -9907,7 +9908,7 @@ yyreduce:
   case 379:
 
 /* Line 1464 of yacc.c  */
-#line 4300 "Gmsh.y"
+#line 4301 "Gmsh.y"
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, (yyvsp[(1) - (4)].c), 0, (yyvsp[(3) - (4)].c), d)){
@@ -9922,7 +9923,7 @@ yyreduce:
   case 380:
 
 /* Line 1464 of yacc.c  */
-#line 4310 "Gmsh.y"
+#line 4311 "Gmsh.y"
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, (yyvsp[(1) - (7)].c), (int)(yyvsp[(3) - (7)].d), (yyvsp[(6) - (7)].c), d)){
@@ -9937,7 +9938,7 @@ yyreduce:
   case 381:
 
 /* Line 1464 of yacc.c  */
-#line 4320 "Gmsh.y"
+#line 4321 "Gmsh.y"
     {
       (yyval.d) = Msg::GetValue((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].d));
       Free((yyvsp[(3) - (6)].c));
@@ -9947,7 +9948,7 @@ yyreduce:
   case 382:
 
 /* Line 1464 of yacc.c  */
-#line 4325 "Gmsh.y"
+#line 4326 "Gmsh.y"
     {
       std::string s((yyvsp[(3) - (6)].c)), substr((yyvsp[(5) - (6)].c));
       if(s.find(substr) != std::string::npos)
@@ -9961,7 +9962,7 @@ yyreduce:
   case 383:
 
 /* Line 1464 of yacc.c  */
-#line 4334 "Gmsh.y"
+#line 4335 "Gmsh.y"
     {
       int align = 0, font = 0, fontsize = CTX::instance()->glFontSize;
       if(List_Nbr((yyvsp[(3) - (4)].l)) % 2){
@@ -9990,7 +9991,7 @@ yyreduce:
   case 384:
 
 /* Line 1464 of yacc.c  */
-#line 4361 "Gmsh.y"
+#line 4362 "Gmsh.y"
     {
       memcpy((yyval.v), (yyvsp[(1) - (1)].v), 5*sizeof(double));
     ;}
@@ -9999,7 +10000,7 @@ yyreduce:
   case 385:
 
 /* Line 1464 of yacc.c  */
-#line 4365 "Gmsh.y"
+#line 4366 "Gmsh.y"
     {
       for(int i = 0; i < 5; i++) (yyval.v)[i] = -(yyvsp[(2) - (2)].v)[i];
     ;}
@@ -10008,7 +10009,7 @@ yyreduce:
   case 386:
 
 /* Line 1464 of yacc.c  */
-#line 4369 "Gmsh.y"
+#line 4370 "Gmsh.y"
     {
       for(int i = 0; i < 5; i++) (yyval.v)[i] = (yyvsp[(2) - (2)].v)[i];
     ;}
@@ -10017,7 +10018,7 @@ yyreduce:
   case 387:
 
 /* Line 1464 of yacc.c  */
-#line 4373 "Gmsh.y"
+#line 4374 "Gmsh.y"
     {
       for(int i = 0; i < 5; i++) (yyval.v)[i] = (yyvsp[(1) - (3)].v)[i] - (yyvsp[(3) - (3)].v)[i];
     ;}
@@ -10026,7 +10027,7 @@ yyreduce:
   case 388:
 
 /* Line 1464 of yacc.c  */
-#line 4377 "Gmsh.y"
+#line 4378 "Gmsh.y"
     {
       for(int i = 0; i < 5; i++) (yyval.v)[i] = (yyvsp[(1) - (3)].v)[i] + (yyvsp[(3) - (3)].v)[i];
     ;}
@@ -10035,7 +10036,7 @@ yyreduce:
   case 389:
 
 /* Line 1464 of yacc.c  */
-#line 4384 "Gmsh.y"
+#line 4385 "Gmsh.y"
     {
       (yyval.v)[0] = (yyvsp[(2) - (11)].d);  (yyval.v)[1] = (yyvsp[(4) - (11)].d);  (yyval.v)[2] = (yyvsp[(6) - (11)].d);  (yyval.v)[3] = (yyvsp[(8) - (11)].d); (yyval.v)[4] = (yyvsp[(10) - (11)].d);
     ;}
@@ -10044,7 +10045,7 @@ yyreduce:
   case 390:
 
 /* Line 1464 of yacc.c  */
-#line 4388 "Gmsh.y"
+#line 4389 "Gmsh.y"
     {
       (yyval.v)[0] = (yyvsp[(2) - (9)].d);  (yyval.v)[1] = (yyvsp[(4) - (9)].d);  (yyval.v)[2] = (yyvsp[(6) - (9)].d);  (yyval.v)[3] = (yyvsp[(8) - (9)].d); (yyval.v)[4] = 1.0;
     ;}
@@ -10053,7 +10054,7 @@ yyreduce:
   case 391:
 
 /* Line 1464 of yacc.c  */
-#line 4392 "Gmsh.y"
+#line 4393 "Gmsh.y"
     {
       (yyval.v)[0] = (yyvsp[(2) - (7)].d);  (yyval.v)[1] = (yyvsp[(4) - (7)].d);  (yyval.v)[2] = (yyvsp[(6) - (7)].d);  (yyval.v)[3] = 0.0; (yyval.v)[4] = 1.0;
     ;}
@@ -10062,7 +10063,7 @@ yyreduce:
   case 392:
 
 /* Line 1464 of yacc.c  */
-#line 4396 "Gmsh.y"
+#line 4397 "Gmsh.y"
     {
       (yyval.v)[0] = (yyvsp[(2) - (7)].d);  (yyval.v)[1] = (yyvsp[(4) - (7)].d);  (yyval.v)[2] = (yyvsp[(6) - (7)].d);  (yyval.v)[3] = 0.0; (yyval.v)[4] = 1.0;
     ;}
@@ -10071,7 +10072,7 @@ yyreduce:
   case 393:
 
 /* Line 1464 of yacc.c  */
-#line 4403 "Gmsh.y"
+#line 4404 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(List_T*));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].l)));
@@ -10081,7 +10082,7 @@ yyreduce:
   case 394:
 
 /* Line 1464 of yacc.c  */
-#line 4408 "Gmsh.y"
+#line 4409 "Gmsh.y"
     {
       List_Add((yyval.l), &((yyvsp[(3) - (3)].l)));
     ;}
@@ -10090,7 +10091,7 @@ yyreduce:
   case 395:
 
 /* Line 1464 of yacc.c  */
-#line 4415 "Gmsh.y"
+#line 4416 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].d)));
@@ -10100,7 +10101,7 @@ yyreduce:
   case 396:
 
 /* Line 1464 of yacc.c  */
-#line 4420 "Gmsh.y"
+#line 4421 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(1) - (1)].l);
     ;}
@@ -10109,7 +10110,7 @@ yyreduce:
   case 397:
 
 /* Line 1464 of yacc.c  */
-#line 4424 "Gmsh.y"
+#line 4425 "Gmsh.y"
     {
       // creates an empty list
       (yyval.l) = List_Create(2, 1, sizeof(double));
@@ -10119,7 +10120,7 @@ yyreduce:
   case 398:
 
 /* Line 1464 of yacc.c  */
-#line 4429 "Gmsh.y"
+#line 4430 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(2) - (3)].l);
     ;}
@@ -10128,7 +10129,7 @@ yyreduce:
   case 399:
 
 /* Line 1464 of yacc.c  */
-#line 4433 "Gmsh.y"
+#line 4434 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(3) - (4)].l);
       for(int i = 0; i < List_Nbr((yyval.l)); i++){
@@ -10141,7 +10142,7 @@ yyreduce:
   case 400:
 
 /* Line 1464 of yacc.c  */
-#line 4441 "Gmsh.y"
+#line 4442 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(4) - (5)].l);
       for(int i = 0; i < List_Nbr((yyval.l)); i++){
@@ -10154,7 +10155,7 @@ yyreduce:
   case 401:
 
 /* Line 1464 of yacc.c  */
-#line 4452 "Gmsh.y"
+#line 4453 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(1) - (1)].l);
     ;}
@@ -10163,7 +10164,7 @@ yyreduce:
   case 402:
 
 /* Line 1464 of yacc.c  */
-#line 4456 "Gmsh.y"
+#line 4457 "Gmsh.y"
     {
       if(!strcmp((yyvsp[(1) - (1)].c), "*") || !strcmp((yyvsp[(1) - (1)].c), "all"))
         (yyval.l) = 0;
@@ -10177,7 +10178,7 @@ yyreduce:
   case 403:
 
 /* Line 1464 of yacc.c  */
-#line 4468 "Gmsh.y"
+#line 4469 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(2) - (2)].l);
       for(int i = 0; i < List_Nbr((yyval.l)); i++){
@@ -10190,7 +10191,7 @@ yyreduce:
   case 404:
 
 /* Line 1464 of yacc.c  */
-#line 4476 "Gmsh.y"
+#line 4477 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(3) - (3)].l);
       for(int i = 0; i < List_Nbr((yyval.l)); i++){
@@ -10203,7 +10204,7 @@ yyreduce:
   case 405:
 
 /* Line 1464 of yacc.c  */
-#line 4484 "Gmsh.y"
+#line 4485 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       for(double d = (yyvsp[(1) - (3)].d); ((yyvsp[(1) - (3)].d) < (yyvsp[(3) - (3)].d)) ? (d <= (yyvsp[(3) - (3)].d)) : (d >= (yyvsp[(3) - (3)].d));
@@ -10215,7 +10216,7 @@ yyreduce:
   case 406:
 
 /* Line 1464 of yacc.c  */
-#line 4491 "Gmsh.y"
+#line 4492 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!(yyvsp[(5) - (5)].d)){  //|| ($1 < $3 && $5 < 0) || ($1 > $3 && $5 > 0)
@@ -10230,7 +10231,7 @@ yyreduce:
   case 407:
 
 /* Line 1464 of yacc.c  */
-#line 4501 "Gmsh.y"
+#line 4502 "Gmsh.y"
     {
       // Returns the coordinates of a point and fills a list with it.
       // This allows to ensure e.g. that relative point positions are
@@ -10255,7 +10256,7 @@ yyreduce:
   case 408:
 
 /* Line 1464 of yacc.c  */
-#line 4521 "Gmsh.y"
+#line 4522 "Gmsh.y"
     {
       (yyval.l) = GetAllEntityNumbers(0);
     ;}
@@ -10264,7 +10265,7 @@ yyreduce:
   case 409:
 
 /* Line 1464 of yacc.c  */
-#line 4525 "Gmsh.y"
+#line 4526 "Gmsh.y"
     {
       (yyval.l) = GetAllEntityNumbers(1);
     ;}
@@ -10273,7 +10274,7 @@ yyreduce:
   case 410:
 
 /* Line 1464 of yacc.c  */
-#line 4529 "Gmsh.y"
+#line 4530 "Gmsh.y"
     {
       (yyval.l) = GetAllEntityNumbers(2);
     ;}
@@ -10282,7 +10283,7 @@ yyreduce:
   case 411:
 
 /* Line 1464 of yacc.c  */
-#line 4533 "Gmsh.y"
+#line 4534 "Gmsh.y"
     {
       (yyval.l) = GetAllEntityNumbers(3);
     ;}
@@ -10291,7 +10292,7 @@ yyreduce:
   case 412:
 
 /* Line 1464 of yacc.c  */
-#line 4537 "Gmsh.y"
+#line 4538 "Gmsh.y"
     {
       (yyval.l) = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (5)].l)); i++){
@@ -10325,7 +10326,7 @@ yyreduce:
   case 413:
 
 /* Line 1464 of yacc.c  */
-#line 4566 "Gmsh.y"
+#line 4567 "Gmsh.y"
     {
       (yyval.l) = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (5)].l)); i++){
@@ -10359,7 +10360,7 @@ yyreduce:
   case 414:
 
 /* Line 1464 of yacc.c  */
-#line 4595 "Gmsh.y"
+#line 4596 "Gmsh.y"
     {
       (yyval.l) = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (5)].l)); i++){
@@ -10393,7 +10394,7 @@ yyreduce:
   case 415:
 
 /* Line 1464 of yacc.c  */
-#line 4624 "Gmsh.y"
+#line 4625 "Gmsh.y"
     {
       (yyval.l) = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (5)].l)); i++){
@@ -10427,7 +10428,7 @@ yyreduce:
   case 416:
 
 /* Line 1464 of yacc.c  */
-#line 4653 "Gmsh.y"
+#line 4654 "Gmsh.y"
     {
       (yyval.l) = List_Create(List_Nbr((yyvsp[(1) - (1)].l)), 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(1) - (1)].l)); i++){
@@ -10442,7 +10443,7 @@ yyreduce:
   case 417:
 
 /* Line 1464 of yacc.c  */
-#line 4663 "Gmsh.y"
+#line 4664 "Gmsh.y"
     {
       (yyval.l) = List_Create(List_Nbr((yyvsp[(1) - (1)].l)), 1, sizeof(double));
       for(int i = 0; i < List_Nbr((yyvsp[(1) - (1)].l)); i++){
@@ -10457,7 +10458,7 @@ yyreduce:
   case 418:
 
 /* Line 1464 of yacc.c  */
-#line 4673 "Gmsh.y"
+#line 4674 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count((yyvsp[(1) - (3)].c)))
@@ -10474,7 +10475,7 @@ yyreduce:
   case 419:
 
 /* Line 1464 of yacc.c  */
-#line 4686 "Gmsh.y"
+#line 4687 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count((yyvsp[(1) - (3)].c)))
@@ -10491,7 +10492,7 @@ yyreduce:
   case 420:
 
 /* Line 1464 of yacc.c  */
-#line 4698 "Gmsh.y"
+#line 4699 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count((yyvsp[(3) - (4)].c)))
@@ -10508,7 +10509,7 @@ yyreduce:
   case 421:
 
 /* Line 1464 of yacc.c  */
-#line 4710 "Gmsh.y"
+#line 4711 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count((yyvsp[(1) - (6)].c)))
@@ -10531,7 +10532,7 @@ yyreduce:
   case 422:
 
 /* Line 1464 of yacc.c  */
-#line 4729 "Gmsh.y"
+#line 4730 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count((yyvsp[(1) - (6)].c)))
@@ -10554,7 +10555,7 @@ yyreduce:
   case 423:
 
 /* Line 1464 of yacc.c  */
-#line 4750 "Gmsh.y"
+#line 4751 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(double));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].d)));
@@ -10564,7 +10565,7 @@ yyreduce:
   case 424:
 
 /* Line 1464 of yacc.c  */
-#line 4755 "Gmsh.y"
+#line 4756 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(1) - (1)].l);
     ;}
@@ -10573,7 +10574,7 @@ yyreduce:
   case 425:
 
 /* Line 1464 of yacc.c  */
-#line 4759 "Gmsh.y"
+#line 4760 "Gmsh.y"
     {
       List_Add((yyval.l), &((yyvsp[(3) - (3)].d)));
     ;}
@@ -10582,7 +10583,7 @@ yyreduce:
   case 426:
 
 /* Line 1464 of yacc.c  */
-#line 4763 "Gmsh.y"
+#line 4764 "Gmsh.y"
     {
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (3)].l)); i++){
 	double d;
@@ -10596,7 +10597,7 @@ yyreduce:
   case 427:
 
 /* Line 1464 of yacc.c  */
-#line 4775 "Gmsh.y"
+#line 4776 "Gmsh.y"
     {
       (yyval.u) = CTX::instance()->packColor((int)(yyvsp[(2) - (9)].d), (int)(yyvsp[(4) - (9)].d), (int)(yyvsp[(6) - (9)].d), (int)(yyvsp[(8) - (9)].d));
     ;}
@@ -10605,7 +10606,7 @@ yyreduce:
   case 428:
 
 /* Line 1464 of yacc.c  */
-#line 4779 "Gmsh.y"
+#line 4780 "Gmsh.y"
     {
       (yyval.u) = CTX::instance()->packColor((int)(yyvsp[(2) - (7)].d), (int)(yyvsp[(4) - (7)].d), (int)(yyvsp[(6) - (7)].d), 255);
     ;}
@@ -10614,7 +10615,7 @@ yyreduce:
   case 429:
 
 /* Line 1464 of yacc.c  */
-#line 4791 "Gmsh.y"
+#line 4792 "Gmsh.y"
     {
       int flag;
       (yyval.u) = GetColorForString(-1, (yyvsp[(1) - (1)].c), &flag);
@@ -10626,7 +10627,7 @@ yyreduce:
   case 430:
 
 /* Line 1464 of yacc.c  */
-#line 4798 "Gmsh.y"
+#line 4799 "Gmsh.y"
     {
       unsigned int val = 0;
       ColorOption(GMSH_GET, (yyvsp[(1) - (5)].c), 0, (yyvsp[(5) - (5)].c), val);
@@ -10638,7 +10639,7 @@ yyreduce:
   case 431:
 
 /* Line 1464 of yacc.c  */
-#line 4808 "Gmsh.y"
+#line 4809 "Gmsh.y"
     {
       (yyval.l) = (yyvsp[(2) - (3)].l);
     ;}
@@ -10647,7 +10648,7 @@ yyreduce:
   case 432:
 
 /* Line 1464 of yacc.c  */
-#line 4812 "Gmsh.y"
+#line 4813 "Gmsh.y"
     {
       (yyval.l) = List_Create(256, 10, sizeof(unsigned int));
       GmshColorTable *ct = GetColorTable((int)(yyvsp[(3) - (6)].d));
@@ -10664,7 +10665,7 @@ yyreduce:
   case 433:
 
 /* Line 1464 of yacc.c  */
-#line 4827 "Gmsh.y"
+#line 4828 "Gmsh.y"
     {
       (yyval.l) = List_Create(256, 10, sizeof(unsigned int));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].u)));
@@ -10674,7 +10675,7 @@ yyreduce:
   case 434:
 
 /* Line 1464 of yacc.c  */
-#line 4832 "Gmsh.y"
+#line 4833 "Gmsh.y"
     {
       List_Add((yyval.l), &((yyvsp[(3) - (3)].u)));
     ;}
@@ -10683,7 +10684,7 @@ yyreduce:
   case 435:
 
 /* Line 1464 of yacc.c  */
-#line 4839 "Gmsh.y"
+#line 4840 "Gmsh.y"
     {
       (yyval.c) = (yyvsp[(1) - (1)].c);
     ;}
@@ -10692,7 +10693,7 @@ yyreduce:
   case 436:
 
 /* Line 1464 of yacc.c  */
-#line 4843 "Gmsh.y"
+#line 4844 "Gmsh.y"
     {
       if(!gmsh_yystringsymbols.count((yyvsp[(1) - (1)].c))){
 	yymsg(0, "Unknown string variable '%s'", (yyvsp[(1) - (1)].c));
@@ -10710,7 +10711,7 @@ yyreduce:
   case 437:
 
 /* Line 1464 of yacc.c  */
-#line 4856 "Gmsh.y"
+#line 4857 "Gmsh.y"
     {
       std::string out;
       StringOption(GMSH_GET, (yyvsp[(1) - (3)].c), 0, (yyvsp[(3) - (3)].c), out);
@@ -10723,7 +10724,7 @@ yyreduce:
   case 438:
 
 /* Line 1464 of yacc.c  */
-#line 4864 "Gmsh.y"
+#line 4865 "Gmsh.y"
     {
       std::string out;
       StringOption(GMSH_GET, (yyvsp[(1) - (6)].c), (int)(yyvsp[(3) - (6)].d), (yyvsp[(6) - (6)].c), out);
@@ -10736,7 +10737,7 @@ yyreduce:
   case 439:
 
 /* Line 1464 of yacc.c  */
-#line 4875 "Gmsh.y"
+#line 4876 "Gmsh.y"
     {
       (yyval.c) = (yyvsp[(1) - (1)].c);
     ;}
@@ -10745,7 +10746,7 @@ yyreduce:
   case 440:
 
 /* Line 1464 of yacc.c  */
-#line 4879 "Gmsh.y"
+#line 4880 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc(32 * sizeof(char));
       time_t now;
@@ -10758,7 +10759,7 @@ yyreduce:
   case 441:
 
 /* Line 1464 of yacc.c  */
-#line 4887 "Gmsh.y"
+#line 4888 "Gmsh.y"
     {
       const char *env = GetEnvironmentVar((yyvsp[(3) - (4)].c));
       if(!env) env = "";
@@ -10771,7 +10772,7 @@ yyreduce:
   case 442:
 
 /* Line 1464 of yacc.c  */
-#line 4895 "Gmsh.y"
+#line 4896 "Gmsh.y"
     {
       std::string s = Msg::GetString((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].c));
       (yyval.c) = (char *)Malloc((s.size() + 1) * sizeof(char));
@@ -10784,7 +10785,7 @@ yyreduce:
   case 443:
 
 /* Line 1464 of yacc.c  */
-#line 4903 "Gmsh.y"
+#line 4904 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (6)].c)) + strlen((yyvsp[(5) - (6)].c)) + 1) * sizeof(char));
       strcpy((yyval.c), (yyvsp[(3) - (6)].c));
@@ -10797,7 +10798,7 @@ yyreduce:
   case 444:
 
 /* Line 1464 of yacc.c  */
-#line 4911 "Gmsh.y"
+#line 4912 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (4)].c)) + 1) * sizeof(char));
       int i;
@@ -10816,7 +10817,7 @@ yyreduce:
   case 445:
 
 /* Line 1464 of yacc.c  */
-#line 4925 "Gmsh.y"
+#line 4926 "Gmsh.y"
     {
       (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (4)].c)) + 1) * sizeof(char));
       int i;
@@ -10835,7 +10836,7 @@ yyreduce:
   case 446:
 
 /* Line 1464 of yacc.c  */
-#line 4939 "Gmsh.y"
+#line 4940 "Gmsh.y"
     {
       (yyval.c) = (yyvsp[(3) - (4)].c);
     ;}
@@ -10844,7 +10845,7 @@ yyreduce:
   case 447:
 
 /* Line 1464 of yacc.c  */
-#line 4943 "Gmsh.y"
+#line 4944 "Gmsh.y"
     {
       char tmpstring[5000];
       int i = PrintListOfDouble((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].l), tmpstring);
@@ -10868,7 +10869,7 @@ yyreduce:
   case 448:
 
 /* Line 1464 of yacc.c  */
-#line 4965 "Gmsh.y"
+#line 4966 "Gmsh.y"
     {
       (yyval.l) = List_Create(20,20,sizeof(char*));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].c)));
@@ -10878,14 +10879,14 @@ yyreduce:
   case 449:
 
 /* Line 1464 of yacc.c  */
-#line 4970 "Gmsh.y"
+#line 4971 "Gmsh.y"
     { List_Add((yyval.l), &((yyvsp[(3) - (3)].c))); ;}
     break;
 
 
 
 /* Line 1464 of yacc.c  */
-#line 10889 "Gmsh.tab.cpp"
+#line 10890 "Gmsh.tab.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -11097,7 +11098,7 @@ yyreturn:
 
 
 /* Line 1684 of yacc.c  */
-#line 4973 "Gmsh.y"
+#line 4974 "Gmsh.y"
 
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer)

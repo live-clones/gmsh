@@ -2848,7 +2848,8 @@ Command :
     {
 #if defined(HAVE_MESH)
       SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
-                CTX::instance()->mesh.secondOrderIncomplete);
+                CTX::instance()->mesh.secondOrderIncomplete,
+                CTX::instance()->mesh.meshOnlyVisible);
 #endif
     }
 ;
