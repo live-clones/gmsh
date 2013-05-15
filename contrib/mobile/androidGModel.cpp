@@ -48,6 +48,8 @@ class MobileMessage : public GmshMessage
 			env->CallVoidMethod(gCallbackObject, mid, jstr);
 			env->DeleteLocalRef(jstr);
 			env->DeleteLocalRef(jClass);
+	 		LOGE("%s", message.c_str());
+			return;
 		}
 		else if(level == "Progress")
 		{
@@ -67,6 +69,7 @@ class MobileMessage : public GmshMessage
 			env->CallVoidMethod(gCallbackObject, mid, jstr);
 			env->DeleteLocalRef(jstr);
 			env->DeleteLocalRef(jClass);
+			return;
 		}
 		else if(level == "RequestRender")
 		{

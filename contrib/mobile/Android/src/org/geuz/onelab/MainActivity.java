@@ -92,16 +92,22 @@ public class MainActivity extends Activity {
     	pager.setCurrentItem(0);
     	layout.addView(pager);
     	dialogBuilder = new AlertDialog.Builder(this);
+
+    	Intent intent = getIntent();
     	
     	gmsh = new Gmsh("", mainHandler);
     	modelList = new Models();
     	getModels();
     	loadNative();
-    	if(modelList.size() > 0){
+    	if(intent.getAction().equals(Intent.ACTION_VIEW)) {
+    		String tmp = intent.getData().getPath();
+    		gmsh.load(tmp);
+    	}
+    	else if(modelList.size() > 0){
     		model = 0;
 	    	String tmp = getFilesDir()+ "/" + modelList.getFile(model);
 	    	gmsh.load(tmp);
-    	}
+    	}    	
     	setContentView(layout);
     }
     
