@@ -17,7 +17,6 @@ private:
 	float _scale[3];
 	int width, height;
 	double left, right, top, bottom;
-	float ratio;
 	float _rotate[3];
 	bool _gradiant, // show the background gradiant
     _showGeom, // show the Geometry
@@ -30,7 +29,6 @@ private:
     
 public:
 	drawGModel();
-	drawGModel(std::string name);
 	~drawGModel(){}
 	void load(std::string filename);
 	void setTranslation(float tx, float ty, float tz=0);

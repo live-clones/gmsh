@@ -29,7 +29,7 @@ if [ ! -d "gmsh.android" ]; then mkdir gmsh.android; fi
 if [ ! -d "getdp.android" ]; then mkdir getdp.android; fi
 if [ ! -d "onelab.android" ]; then mkdir onelab.android; fi
 if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ]; then 
-	echo "ERROR: petsc.android/lib do not exist or is incomplete (need blas, lapack and petsc)"
+	echo "ERROR: petsc.android do not exist or is incomplete (need blas, lapack and petsc)"
 	exit 1
 fi
 

@@ -109,7 +109,7 @@ JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
 	Msg::SetCallback(new MobileMessage());
 	
 	const char*  name = env->GetStringUTFChars(jname, NULL);
-	return reinterpret_cast<jlong>(new drawGModel(name));
+	return reinterpret_cast<jlong>(new drawGModel());
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_loadFile
   (JNIEnv *env, jobject obj, jlong jptr, jstring jname)

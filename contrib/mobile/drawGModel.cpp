@@ -49,7 +49,7 @@
 
 #include "drawGModel.h"
 
-drawGModel::drawGModel(std::string name="None")
+drawGModel::drawGModel()
 {
 	new GModel();
 	GmshInitialize();

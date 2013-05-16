@@ -363,7 +363,7 @@ public class MainActivity extends Activity {
 				StringBuilder tmp = new StringBuilder(androidName);
 				tmp.setCharAt(androidName.lastIndexOf('_'), '.');
 				String nativeName = tmp.toString();
-				String nativeExtension = nativeName.substring(nativeName.lastIndexOf('.'));
+				//String nativeExtension = nativeName.substring(nativeName.lastIndexOf('.'));
 				/*if(new File(getFilesDir().toString()+"/"+nativeName).exists()){
 					//TODO check if the files are the same
 					continue;
