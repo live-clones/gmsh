@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
     	modelList = new Models();
     	getModels();
     	loadNative();
-    	if(intent.getAction().equals(Intent.ACTION_VIEW)) {
+    	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		gmsh.load(tmp);
     	}
