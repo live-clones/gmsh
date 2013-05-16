@@ -11,13 +11,14 @@ public class SplashScreen extends Activity{
 	private static final int STOPSPLASH = 0;
 	private static final int EXITAPP = 1;
 	
+	private Intent newIntent;
+	
 	private final Handler handler = new Handler()
 	{
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case STOPSPLASH:
-				final Intent intent = new Intent(SplashScreen.this, MainActivity.class);
-				startActivity(intent);
+				startActivity(newIntent);
 				finish();
 				break;
 			case EXITAPP:
@@ -32,6 +33,12 @@ public class SplashScreen extends Activity{
 	protected void onCreate(android.os.Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.splash);
+		newIntent = new Intent(SplashScreen.this, MainActivity.class);
+		Intent oldIntent = this.getIntent();
+		if(oldIntent != null && oldIntent.getAction() != null && oldIntent.getAction().equals(Intent.ACTION_VIEW)){
+			newIntent.setAction(oldIntent.getAction());
+			newIntent.setData(oldIntent.getData());
+		}
 		final Message msg = new Message();
         msg.what = STOPSPLASH;
         handler.sendMessageDelayed(msg, SPLASHTIME);

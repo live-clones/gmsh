@@ -102,6 +102,7 @@ public class MainActivity extends Activity {
     	loadNative();
     	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
+    		pager.setCurrentItem(1);
     		gmsh.load(tmp);
     	}
     	else if(modelList.size() > 0){
