@@ -304,7 +304,7 @@ FlGui::FlGui(int argc, char **argv)
                                         gmsh32x32, 32, 32));
 #endif
 
-  graph[0]->getWindow()->show(1, argv);
+  graph[0]->getWindow()->show(argc >0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
