@@ -4940,7 +4940,32 @@ StringExpr :
     {
       $$ = $3;
     }
+  // for compatibility with GetDP
+  | tSprintf '[' StringExprVar ']'
+    {
+      $$ = $3;
+    }
   | tSprintf '(' StringExprVar ',' RecursiveListOfDouble ')'
+    {
+      char tmpstring[5000];
+      int i = PrintListOfDouble($3, $5, tmpstring);
+      if(i < 0){
+	yymsg(0, "Too few arguments in Sprintf");
+	$$ = $3;
+      }
+      else if(i > 0){
+	yymsg(0, "%d extra argument%s in Sprintf", i, (i > 1) ? "s" : "");
+	$$ = $3;
+      }
+      else{
+	$$ = (char*)Malloc((strlen(tmpstring) + 1) * sizeof(char));
+	strcpy($$, tmpstring);
+	Free($3);
+      }
+      List_Delete($5);
+    }
+  // for compatibility with GetDP
+  | tSprintf '[' StringExprVar ',' RecursiveListOfDouble ']'
     {
       char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
