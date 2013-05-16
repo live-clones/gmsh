@@ -278,4 +278,9 @@ class FieldCallbackGeneric : public FieldCallback {
   }
 };
 
+template<class F> class FieldFactoryT : public FieldFactory {
+ public:
+  Field * operator()() { return new F; }
+};
+
 #endif
