@@ -72,18 +72,7 @@ endif(ENABLE_PYTHON_LIB_API)
 include(${SWIG_USE_FILE})
 include_directories(${PYTHON_INCLUDE_PATH})
 
-IF(HAVE_MPI)
-  # this hack is only required for openmpi compiled with dynamic modules
-  # unfortunately I do not know how to detect this situation => I always enable it
-  set(GMSH_PYTHON_MODULES_INCLUDE_CODE "import ctypes\n")
-  FOREACH (lib ${MPI_C_LIBRARIES})
-    IF (${lib} MATCHES ".*libmpi.*")
-      set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
-        "${GMSH_PYTHON_MODULES_INCLUDE_CODE}ctypes.CDLL(\"${lib}\", mode = ctypes.RTLD_GLOBAL)\n")
-    ENDIF (${lib} MATCHES ".*libmpi.*")
-  ENDFOREACH (lib)
-ENDIF(HAVE_MPI)
-
+set(GMSH_PYTHON_MODULES_INCLUDE_CODE "")
 foreach(module ${SWIG_MODULES})
   set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
 
@@ -95,13 +84,81 @@ foreach(module ${SWIG_MODULES})
   swig_link_libraries(${module} ${PYTHON_LIBRARIES} shared)
   set(GMSH_PYTHON_MODULES_INCLUDE_CODE 
       "${GMSH_PYTHON_MODULES_INCLUDE_CODE}from gmshpy.${module} import *\n")
-  list(APPEND GMSHPY_DEPENDS "_${module}")
+  list(APPEND GMSHPY_DEPENDS "${module}PYTHON_wrap.cxx")
   if(APPLE)
     set_target_properties("_${module}" PROPERTIES LINK_FLAGS "-undefined suppress -flat_namespace")
   endif(APPLE)
 endforeach(module)
 
-add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in ${CMAKE_CURRENT_BINARY_DIR}/__init__.py.orig)
+IF(HAVE_MPI)
+  # this hack is only required for openmpi compiled with dynamic modules
+  # unfortunately I do not know how to detect this situation => I always enable it
+  set(GMSH_PYTHON_OPENMPI_HACK "import ctypes\n")
+  FOREACH (lib ${MPI_C_LIBRARIES})
+    IF (${lib} MATCHES ".*libmpi.*")
+      set(GMSH_PYTHON_OPENMPI_HACK 
+        "${GMSH_PYTHON_OPENMPI_HACK}ctypes.CDLL(\"${lib}\", mode = ctypes.RTLD_GLOBAL)\n")
+    ENDIF (${lib} MATCHES ".*libmpi.*")
+  ENDFOREACH (lib)
+ENDIF(HAVE_MPI)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in 
-               ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
+string(REPLACE ";" "\", \"" GMSH_PYTHON_MODULES "${SWIG_MODULES}")
+set(GMSH_PYTHON_MODULES "\"${GMSH_PYTHON_MODULES}\"")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
+
+add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
+add_custom_command(TARGET _gmshpy POST_BUILD 
+  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy"
+  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy/extra_include"
+  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy/src")
+add_custom_command(TARGET _gmshpy POST_BUILD 
+  COMMAND ${CMAKE_COMMAND} -E copy __init__.py.orig "gmshpy/src/__init__.py"
+  COMMAND ${CMAKE_COMMAND} -E copy setup.py "gmshpy/setup.py")
+foreach(module ${SWIG_MODULES})
+  add_custom_command(TARGET _gmshpy POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy ${module}PYTHON_wrap.cxx "gmshpy/src"
+    COMMAND ${CMAKE_COMMAND} -E copy ${module}.py "gmshpy/src")
+endforeach(module)
+
+set (GMSH_PYTHON_EXTRA_INCLUDE 
+  Numeric/BasisFactory.h
+  Numeric/BergotBasis.h
+  Mesh/CenterlineField.h
+  Geo/Curvature.h
+  Mesh/directions3D.h
+  Mesh/DivideAndConquer.h
+  projects/riemann/Field.h
+  Mesh/Field.h
+  Fltk/FlGui.h
+  Solver/frameSolver.h
+  Solver/functionSpace.h
+  Mesh/Generator.h
+  Geo/GeomMeshMatcher.h
+  Geo/GFaceCompound.h
+  Geo/gmshLevelset.h
+  Mesh/highOrderTools.h
+  Numeric/jacobiPolynomials.h
+  Numeric/legendrePolynomials.h
+  Solver/linearSystemPETSc.h
+  Mesh/meshGFaceLloyd.h
+  contrib/HighOrderMeshOptimizer/OptHomRun.h
+  Post/PViewAsSimpleFunction.h
+  Post/PViewFactory.h
+  Numeric/pyramidalBasis.h
+  Solver/SElement.h
+  Numeric/simpleFunctionPython.h
+  Solver/STensor33.h
+  Solver/STensor43.h
+)
+
+foreach (file ${GMSH_PYTHON_EXTRA_INCLUDE})
+  add_custom_command(TARGET _gmshpy POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/../../${file}"  "gmshpy/extra_include")
+endforeach(file)
+
+add_custom_command(TARGET _gmshpy POST_BUILD 
+  COMMAND ${CMAKE_COMMAND} -E tar cfz gmshpy.tar.gz "gmshpy"
+  COMMAND ${CMAKE_COMMAND} -E remove_directory "gmshpy")
+
