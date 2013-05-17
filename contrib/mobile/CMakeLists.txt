@@ -25,7 +25,14 @@ macro(append_src FILES)
   set(ONELAB_SRC ${ONELAB_SRC};${LIST})
 endmacro(append_src)
 
-if(ENABLE_BUILD_IOS_EMULATOR)
+macro(copy_headers SOURCE DEST)
+  file(GLOB hfiles "${SOURCE}/*.h")
+  foreach(file ${hfiles})
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${file} ${DEST})
+  endforeach(file ${hfiles})
+endmacro(copy_headers)
+
+if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   # we need getdp framework
   find_path(GETDP_FRAMEWORK "GetDP" GetDP.framework)
   if(NOT GETDP_FRAMEWORK)
@@ -49,12 +56,17 @@ if(ENABLE_BUILD_IOS_EMULATOR)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawGModel.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawGModel.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosGModel.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
-    # FIXME preserve links ???
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GETDP_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GMSH_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PETSC_FRAMEWORK} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_FRAMEWORK}/GetDP ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_FRAMEWORK}/Gmsh ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_FRAMEWORK}/petsc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
   )
-endif(ENABLE_BUILD_IOS_EMULATOR)
+  copy_headers(${GETDP_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/)
+  copy_headers(${GMSH_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/)
+  copy_headers(${PETSC_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/)
+endif(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
 
 if(ENABLE_BUILD_ANDROID)
   append_src(drawGModel.cpp)
