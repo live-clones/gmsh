@@ -108,18 +108,11 @@ string(REPLACE ";" "\", \"" GMSH_PYTHON_MODULES "${SWIG_MODULES}")
 set(GMSH_PYTHON_MODULES "\"${GMSH_PYTHON_MODULES}\"")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
 
-add_custom_target("_gmshpy" DEPENDS ${GMSHPY_DEPENDS})
-add_custom_command(TARGET _gmshpy POST_BUILD 
-  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy"
-  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy/extra_include"
-  COMMAND ${CMAKE_COMMAND} -E make_directory "gmshpy/src")
-add_custom_command(TARGET _gmshpy POST_BUILD 
-  COMMAND ${CMAKE_COMMAND} -E copy __init__.py.orig "gmshpy/src/__init__.py"
-  COMMAND ${CMAKE_COMMAND} -E copy setup.py "gmshpy/setup.py")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py.orig DESTINATION gmshpy/src RENAME __init__.py)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.py DESTINATION gmshpy)
 foreach(module ${SWIG_MODULES})
-  add_custom_command(TARGET _gmshpy POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy ${module}PYTHON_wrap.cxx "gmshpy/src"
-    COMMAND ${CMAKE_COMMAND} -E copy ${module}.py "gmshpy/src")
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx DESTINATION gmshpy/src)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${module}.py DESTINATION gmshpy/src)
 endforeach(module)
 
 set (GMSH_PYTHON_EXTRA_INCLUDE 
@@ -154,11 +147,5 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
 )
 
 foreach (file ${GMSH_PYTHON_EXTRA_INCLUDE})
-  add_custom_command(TARGET _gmshpy POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/../../${file}"  "gmshpy/extra_include")
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../${file} DESTINATION gmshpy/extra_include)
 endforeach(file)
-
-add_custom_command(TARGET _gmshpy POST_BUILD 
-  COMMAND ${CMAKE_COMMAND} -E tar cfz gmshpy.tar.gz "gmshpy"
-  COMMAND ${CMAKE_COMMAND} -E remove_directory "gmshpy")
-
