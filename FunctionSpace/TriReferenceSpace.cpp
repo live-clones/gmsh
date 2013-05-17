@@ -50,30 +50,30 @@ string TriReferenceSpace::toLatex(void) const{
 
   stream << "\\documentclass{article}" << endl << endl
 
-	 << "\\usepackage{longtable}"  << endl
-	 << "\\usepackage{tikz}"       << endl
-	 << "\\usetikzlibrary{arrows}" << endl << endl
+         << "\\usepackage{longtable}"  << endl
+         << "\\usepackage{tikz}"       << endl
+         << "\\usetikzlibrary{arrows}" << endl << endl
 
-	 << "\\begin{document}"                                   << endl
-	 << "\\tikzstyle{vertex} = [circle, fill = black!25]"     << endl
-	 << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl << endl
+         << "\\begin{document}"                                   << endl
+         << "\\tikzstyle{vertex} = [circle, fill = black!25]"     << endl
+         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl << endl
 
-	 << "\\begin{longtable}{ccc}" << endl << endl;
+         << "\\begin{longtable}{ccc}" << endl << endl;
 
   for(unsigned int p = 0; p < nPerm; p++){
     stream << "\\begin{tikzpicture}" << endl
 
-	   << "\\node[vertex] (n0) at(0, 0) {$" << perm[p][0] << "$};" << endl
-	   << "\\node[vertex] (n1) at(3, 0) {$" << perm[p][1] << "$};" << endl
-	   << "\\node[vertex] (n2) at(0, 3) {$" << perm[p][2] << "$};" << endl
+           << "\\node[vertex] (n0) at(0, 0) {$" << perm[p][0] << "$};" << endl
+           << "\\node[vertex] (n1) at(3, 0) {$" << perm[p][1] << "$};" << endl
+           << "\\node[vertex] (n2) at(0, 3) {$" << perm[p][2] << "$};" << endl
            << endl;
 
     for(unsigned int i = 0; i < 3; i++)
       stream << "\\path[line]"
-	     << " (n" << (*(*(*edge)[p])[i])[0] << ")"
-	     << " -- "
-	     << " (n" << (*(*(*edge)[p])[i])[1] << ");"
-	     << endl;
+             << " (n" << (*(*(*edge)[p])[i])[0] << ")"
+             << " -- "
+             << " (n" << (*(*(*edge)[p])[i])[1] << ");"
+             << endl;
 
     if((p + 1) % 3)
       stream << "\\end{tikzpicture} & "        << endl << endl;
@@ -83,7 +83,7 @@ string TriReferenceSpace::toLatex(void) const{
   }
 
   stream << "\\end{longtable}" << endl
-	 << "\\end{document}"  << endl;
+         << "\\end{document}"  << endl;
 
   return stream.str();
 }

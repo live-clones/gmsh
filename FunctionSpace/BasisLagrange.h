@@ -6,6 +6,7 @@
 #include "FunctionSpaceVector.h"
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
+#include "ReferenceSpaceLagrange.h"
 
 /**
    @interface BasisLagrange
@@ -25,8 +26,9 @@
 
 class BasisLagrange: public BasisLocal{
  protected:
-  polynomialBasis*    lBasis; // Lagrange Basis
-  fullMatrix<double>* lPoint; // Lagrange Points
+  polynomialBasis*        lBasis;   // Lagrange Basis
+  fullMatrix<double>*     lPoint;   // Lagrange Points
+  ReferenceSpaceLagrange* refSpace; // Reference Space
 
  public:
   virtual ~BasisLagrange(void);
@@ -35,10 +37,10 @@ class BasisLagrange: public BasisLocal{
   virtual unsigned int getOrientation(const MElement& element) const;
 
   virtual fullMatrix<double>* getFunctions(const MElement& element,
-					   double u, double v, double w) const;
+                                           double u, double v, double w) const;
 
   virtual fullMatrix<double>* getFunctions(unsigned int orientation,
-					   double u, double v, double w) const;
+                                           double u, double v, double w) const;
 
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
   virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;
@@ -60,16 +62,19 @@ class BasisLagrange: public BasisLocal{
 
   std::vector<double>
     project(const MElement& element,
-	    const std::vector<double>& coef,
-	    const FunctionSpaceScalar& fSpace);
+            const std::vector<double>& coef,
+            const FunctionSpaceScalar& fSpace);
 
   std::vector<fullVector<double> >
     project(const MElement& element,
-	    const std::vector<double>& coef,
-	    const FunctionSpaceVector& fSpace);
+            const std::vector<double>& coef,
+            const FunctionSpaceVector& fSpace);
 
  protected:
   BasisLagrange(void);
+
+  fullMatrix<double>* inorder(unsigned int orientation,
+                              fullMatrix<double>& mat) const;
 };
 
 

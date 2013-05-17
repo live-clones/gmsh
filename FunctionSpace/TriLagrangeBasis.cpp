@@ -1,6 +1,9 @@
 #include "Exception.h"
 #include "TriLagrangeBasis.h"
 #include "pointsGenerators.h"
+#include "TriLagrangeReferenceSpace.h"
+
+#include <iostream>
 
 TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
   // If order 0 (Nedelec): use order 1
@@ -25,11 +28,16 @@ TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>
     (gmshGeneratePointsTriangle(order, false));
+
+  // ReferenceSpace //
+  refSpace = new TriLagrangeReferenceSpace(order);
+  std::cout << refSpace->toString() << std::endl;
 }
 
 TriLagrangeBasis::~TriLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }
 
 unsigned int TriLagrangeBasis::getTag(unsigned int order){

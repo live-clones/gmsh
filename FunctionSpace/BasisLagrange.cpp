@@ -1,6 +1,8 @@
 #include "Exception.h"
 #include "BasisLagrange.h"
 
+using namespace std;
+
 BasisLagrange::BasisLagrange(void){
   scalar = true;
 }
@@ -10,30 +12,20 @@ BasisLagrange::~BasisLagrange(void){
 
 unsigned int BasisLagrange::
 getNOrientation(void) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return refSpace->getNPermutation();
 }
 
 unsigned int BasisLagrange::
 getOrientation(const MElement& element) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return refSpace->getPermutation(element);
 }
 
 fullMatrix<double>* BasisLagrange::
 getFunctions(const MElement& element,
-	     double u, double v, double w) const{
-  throw Exception("BasisLagrange::Not Implemented");
-}
-
-fullMatrix<double>* BasisLagrange::getFunctions(unsigned int orientation,
-						double u, double v, double w) const{
-
-  throw Exception("BasisLagrange::Not Implemented");
-  /*
-  // Alloc Memory //
-  fullMatrix<double>  tmp(nFunction, 1);
-  fullMatrix<double>* values = new fullMatrix<double>(nFunction, 1);
+             double u, double v, double w) const{
 
   // Fill Matrix //
+  fullMatrix<double> tmp;
   fullMatrix<double> point(1, 3);
   point(0, 0) = u;
   point(0, 1) = v;
@@ -41,18 +33,39 @@ fullMatrix<double>* BasisLagrange::getFunctions(unsigned int orientation,
 
   lBasis->f(point, tmp);
 
-  *values = tmp.transpose(); // Otherwise not coherent with df !!
+  // Transpose 'tmp': otherwise not coherent with df !!
+  fullMatrix<double> values = tmp.transpose();
 
-  // Return //
-  return values;
-  */
+  // Get Inorder & Return //
+  return inorder(refSpace->getPermutation(element), values);
+}
+
+fullMatrix<double>* BasisLagrange::
+getFunctions(unsigned int orientation,
+             double u, double v, double w) const{
+
+  // Fill Matrix //
+  fullMatrix<double> tmp;
+  fullMatrix<double> point(1, 3);
+  point(0, 0) = u;
+  point(0, 1) = v;
+  point(0, 2) = w;
+
+  lBasis->f(point, tmp);
+
+  // Transpose 'tmp': otherwise not coherent with df !!
+  fullMatrix<double> values = tmp.transpose();
+
+  // Get Inorder & Return //
+  return inorder(orientation, values);
 }
 
 void BasisLagrange::preEvaluateFunctions(const fullMatrix<double>& point) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
-void BasisLagrange::preEvaluateDerivatives(const fullMatrix<double>& point) const{
+void BasisLagrange::
+preEvaluateDerivatives(const fullMatrix<double>& point) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
@@ -76,14 +89,14 @@ BasisLagrange::getPreEvaluatedDerivatives(unsigned int orientation) const{
   throw Exception("BasisLagrange::Not Implemented");
 }
 
-std::vector<double> BasisLagrange::
+vector<double> BasisLagrange::
 project(const MElement& element,
-	const std::vector<double>& coef,
-	const FunctionSpaceScalar& fSpace){
+        const vector<double>& coef,
+        const FunctionSpaceScalar& fSpace){
 
   // Init New Coefs //
   const unsigned int size = lPoint->size1();
-  std::vector<double> newCoef(size);
+  vector<double> newCoef(size);
 
   // Interpolation at Lagrange Points //
   for(unsigned int i = 0; i < size; i++){
@@ -93,22 +106,22 @@ project(const MElement& element,
     uvw(2) = (*lPoint)(i, 2);
 
     newCoef[i] = fSpace.interpolateInRefSpace(element,
-					      coef,
-					      uvw);
+                                              coef,
+                                              uvw);
   }
 
   // Return ;
   return newCoef;
 }
 
-std::vector<fullVector<double> > BasisLagrange::
+vector<fullVector<double> > BasisLagrange::
 project(const MElement& element,
-	const std::vector<double>& coef,
-	const FunctionSpaceVector& fSpace){
+        const vector<double>& coef,
+        const FunctionSpaceVector& fSpace){
 
   // Init New Coefs //
   const unsigned int size = lPoint->size1();
-  std::vector<fullVector<double> > newCoef(size);
+  vector<fullVector<double> > newCoef(size);
 
   // Interpolation at Lagrange Points //
   for(unsigned int i = 0; i < size; i++){
@@ -118,10 +131,32 @@ project(const MElement& element,
     uvw(2) = (*lPoint)(i, 2);
 
     newCoef[i] = fSpace.interpolateInRefSpace(element,
-					      coef,
-					      uvw);
+                                              coef,
+                                              uvw);
   }
 
   // Return ;
   return newCoef;
+}
+
+fullMatrix<double>* BasisLagrange::inorder(unsigned int orientation,
+                                           fullMatrix<double>& mat) const{
+  // Matrix Size //
+  const int nRow = mat.size1();
+  const int nCol = mat.size2();
+
+  // Order //
+  const vector<unsigned int>* order =
+    refSpace->getAllLagrangeNode()[orientation];
+
+  // Alloc new matrix //
+  fullMatrix<double>* ret = new fullMatrix<double>(nRow, nCol);
+
+  // Populate //
+  for(int i = 0; i < nRow; i++)
+    for(int j = 0; j < nCol; j++)
+      (*ret)(i, j) = mat((*order)[i], j);
+
+  // Return //
+  return ret;
 }

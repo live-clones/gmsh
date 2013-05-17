@@ -67,15 +67,15 @@ class ReferenceSpace{
 
   unsigned int getPermutation(const MElement& element) const;
 
-  std::vector<const std::vector<const std::vector<unsigned int>*>*>&
+  const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllEdge(void) const;
 
-  std::vector<const std::vector<const std::vector<unsigned int>*>*>&
+  const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllFace(void) const ;
 
-  std::string toString(void) const;
+  virtual std::string toString(void) const;
 
-  virtual std::string toLatex(void) const = 0;
+  virtual std::string toLatex(void) const;
 
  protected:
   ReferenceSpace(void);
@@ -93,26 +93,26 @@ class ReferenceSpace{
   void getQuaFace(void);
 
   const std::vector<unsigned int>* inOrder(unsigned int permutation,
-					   unsigned int a,
-					   unsigned int b);
+                                           unsigned int a,
+                                           unsigned int b);
 
   const std::vector<unsigned int>* inOrder(unsigned int permutation,
-					   unsigned int a,
-					   unsigned int b,
-					   unsigned int c);
+                                           unsigned int a,
+                                           unsigned int b,
+                                           unsigned int c);
 
   const std::vector<unsigned int>* inOrder(unsigned int permutation,
-					   unsigned int a,
-					   unsigned int b,
-					   unsigned int c,
+                                           unsigned int a,
+                                           unsigned int b,
+                                           unsigned int c,
                                            unsigned int d);
 
   static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a,
-			    const std::pair<unsigned int, MVertex*>& b);
+                            const std::pair<unsigned int, MVertex*>& b);
 
   static unsigned int treeLookup(const node* root,
-				 std::vector<std::pair<unsigned int, MVertex*> >&
-				 sortedArray);
+                                 std::vector<std::pair<unsigned int, MVertex*> >&
+                                 sortedArray);
 
   std::string toString(const node* node) const;
 };
@@ -188,13 +188,13 @@ ReferenceSpace::getNPermutation(void) const{
 }
 
 inline
-std::vector<const std::vector<const std::vector<unsigned int>*>*>&
+const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
 ReferenceSpace::getAllEdge(void) const{
   return *edge;
 }
 
 inline
-std::vector<const std::vector<const std::vector<unsigned int>*>*>&
+const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
 ReferenceSpace::getAllFace(void) const{
   return *face;
 }
@@ -202,7 +202,7 @@ ReferenceSpace::getAllFace(void) const{
 inline
 bool
 ReferenceSpace::sortPredicate(const std::pair<unsigned int, MVertex*>& a,
-			      const std::pair<unsigned int, MVertex*>& b){
+                              const std::pair<unsigned int, MVertex*>& b){
   return a.second->getNum() < b.second->getNum();
 }
 

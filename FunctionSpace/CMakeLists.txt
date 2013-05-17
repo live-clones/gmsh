@@ -13,6 +13,9 @@ set(SRC
   QuadReferenceSpace.cpp
   TetReferenceSpace.cpp
 
+  ReferenceSpaceLagrange.cpp
+  TriLagrangeReferenceSpace.cpp
+
   Basis.cpp
   BasisLocal.cpp
   BasisGenerator.cpp

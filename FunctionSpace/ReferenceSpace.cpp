@@ -158,17 +158,17 @@ void ReferenceSpace::populate(node* pTreeRoot){
       pTreeRoot->next[i].last[depth] = nextLast;
 
       for(unsigned int j = 0; j < depth; j++)
-	pTreeRoot->next[i].last[j] = pTreeRoot->last[j];
+        pTreeRoot->next[i].last[j] = pTreeRoot->last[j];
 
       // Possibilities of child node
       pTreeRoot->next[i].number   = nextNumber;
       pTreeRoot->next[i].possible = new unsigned int[nextNumber];
 
       for(unsigned int j = 0; j < nextNumber; j++){
-	  if(pTreeRoot->possible[j] == nextLast)
-	    offset = 1;
+        if(pTreeRoot->possible[j] == nextLast)
+          offset = 1;
 
-	  pTreeRoot->next[i].possible[j] = pTreeRoot->possible[j + offset];
+        pTreeRoot->next[i].possible[j] = pTreeRoot->possible[j + offset];
       }
 
       // Populate each child node (until a leaf is found)
@@ -199,8 +199,8 @@ void ReferenceSpace::getEdge(void){
 
     for(unsigned int i = 0; i < nEdge; i++)
       (*tmp)[i] = inOrder(p,
-			  refEdge[i][0],
-			  refEdge[i][1]);
+                          refEdge[i][0],
+                          refEdge[i][1]);
     (*edge)[p] = tmp;
   }
 }
@@ -214,9 +214,9 @@ void ReferenceSpace::getTriFace(void){
 
     for(unsigned int i = 0; i < nFace; i++)
       (*tmp)[i] = inOrder(p,
-			  refFace[i][0],
-			  refFace[i][1],
-			  refFace[i][2]);
+                          refFace[i][0],
+                          refFace[i][1],
+                          refFace[i][2]);
     (*face)[p] = tmp;
   }
 }
@@ -230,9 +230,9 @@ void ReferenceSpace::getQuaFace(void){
 
     for(unsigned int i = 0; i < nFace; i++)
       (*tmp)[i] = inOrder(p,
-			  refFace[i][0],
-			  refFace[i][1],
-			  refFace[i][2],
+                          refFace[i][0],
+                          refFace[i][1],
+                          refFace[i][2],
                           refFace[i][3]);
     (*face)[p] = tmp;
   }
@@ -240,8 +240,8 @@ void ReferenceSpace::getQuaFace(void){
 
 const vector<unsigned int>* ReferenceSpace::
 inOrder(unsigned int permutation,
-	unsigned int a,
-	unsigned int b){
+        unsigned int a,
+        unsigned int b){
 
   unsigned int v;
   unsigned int k = 0;
@@ -262,9 +262,9 @@ inOrder(unsigned int permutation,
 
 const std::vector<unsigned int>* ReferenceSpace::
 inOrder(unsigned int permutation,
-	unsigned int a,
-	unsigned int b,
-	unsigned int c){
+        unsigned int a,
+        unsigned int b,
+        unsigned int c){
 
   unsigned int v;
   unsigned int k = 0;
@@ -285,9 +285,9 @@ inOrder(unsigned int permutation,
 
 const std::vector<unsigned int>* ReferenceSpace::
 inOrder(unsigned int permutation,
-	unsigned int a,
-	unsigned int b,
-	unsigned int c,
+        unsigned int a,
+        unsigned int b,
+        unsigned int c,
         unsigned int d){
 
   unsigned int opposite;
@@ -354,13 +354,13 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
 
   catch(...){
     throw Exception("Cannot Find Reference Space for Element %d",
-		    element.getNum());
+                    element.getNum());
   }
 }
 
 unsigned int ReferenceSpace::treeLookup(const node* root,
-					vector<pair<unsigned int, MVertex*> >&
-					sortedArray){
+                                        vector<pair<unsigned int, MVertex*> >&
+                                        sortedArray){
   // Temp Data //
   unsigned int choice;
   unsigned int i;
@@ -414,8 +414,8 @@ string ReferenceSpace::toString(void) const{
 
     for(unsigned int j = 0; j < nEdge; j++)
       stream << "      -- ["
-	     << edge->at(i)->at(j)->at(0) << ", "
-	     << edge->at(i)->at(j)->at(1) << "]" << endl;
+             << edge->at(i)->at(j)->at(0) << ", "
+             << edge->at(i)->at(j)->at(1) << "]" << endl;
   }
 
   stream << "Faces Permutations:" << endl;
@@ -425,9 +425,9 @@ string ReferenceSpace::toString(void) const{
 
     for(unsigned int j = 0; j < nFace; j++)
       stream << "      -- ["
-	     << face->at(i)->at(j)->at(0) << ", "
-	     << face->at(i)->at(j)->at(1) << ", "
-	     << face->at(i)->at(j)->at(2) << "]" << endl;
+             << face->at(i)->at(j)->at(0) << ", "
+             << face->at(i)->at(j)->at(1) << ", "
+             << face->at(i)->at(j)->at(2) << "]" << endl;
   }
 
   return stream.str();
@@ -446,6 +446,19 @@ string ReferenceSpace::toString(const node* node) const{
     stream << toString(&node->next[i]);
 
   stream << ")";
+
+  return stream.str();
+}
+
+string ReferenceSpace::toLatex(void) const{
+  stringstream stream;
+
+  stream << "\\documentclass{article}" << endl << endl
+         << "\\begin{document}"        << endl
+
+         << "\texttt{toLatex} not implemented" << endl
+
+         << "\\end{document}"          << endl;
 
   return stream.str();
 }

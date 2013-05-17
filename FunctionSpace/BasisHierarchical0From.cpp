@@ -25,7 +25,7 @@ BasisHierarchical0From::~BasisHierarchical0From(void){
   if(hasGrad){
     for(unsigned int i = 0; i < nRefSpace; i++){
       for(unsigned int j = 0; j < nFunction; j++)
-	delete grad[i][j];
+        delete grad[i][j];
 
       delete[] grad[i];
     }
