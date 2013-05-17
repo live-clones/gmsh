@@ -41,12 +41,17 @@
 #include "fullMatrix.h"
 #include <vector>
 #if defined(HAVE_PETSC)
+#ifndef SWIG
 #include "petsc.h"
-#include <petscksp.h>
+#else
+typedef struct _p_Mat* Mat;
+typedef struct _p_Vec* Vec;
+typedef struct _p_KSP* KSP;
+#endif
+
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:
-  MPI_Comm _comm;
   int _blockSize; // for block Matrix
   bool _isAllocated, _kspAllocated, _entriesPreAllocated, _matrixModified;
   Mat _a;
@@ -55,8 +60,10 @@ class linearSystemPETSc : public linearSystem<scalar> {
   int _localRowStart, _localRowEnd, _localSize, _globalSize;
   sparsityPattern _sparsity;
   void _kspCreate();
+  #ifndef SWIG
+  MPI_Comm _comm;
+  #endif
  public:
-  linearSystemPETSc(MPI_Comm com = PETSC_COMM_WORLD);
   virtual ~linearSystemPETSc();
   void insertInSparsityPattern (int i, int j);
   virtual bool isAllocated() const { return _isAllocated; }
@@ -79,7 +86,11 @@ class linearSystemPETSc : public linearSystem<scalar> {
   std::vector<scalar> getData();
   std::vector<int> getRowPointers();
   std::vector<int> getColumnsIndices();
+  #ifndef SWIG
+  linearSystemPETSc(MPI_Comm com);
   MPI_Comm& getComm() {return _comm;}
+  #endif
+  linearSystemPETSc();
 };
 
 class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {

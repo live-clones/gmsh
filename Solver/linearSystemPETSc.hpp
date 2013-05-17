@@ -44,6 +44,16 @@ linearSystemPETSc<scalar>::linearSystemPETSc(MPI_Comm com)
 }
 
 template <class scalar>
+linearSystemPETSc<scalar>::linearSystemPETSc()
+{
+  _comm = PETSC_COMM_WORLD;
+  _isAllocated = false;
+  _blockSize = 0;
+  _kspAllocated = false;
+  _matrixModified=true;
+}
+
+template <class scalar>
 linearSystemPETSc<scalar>::~linearSystemPETSc()
 {
   clear();
