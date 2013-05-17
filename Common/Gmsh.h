@@ -11,6 +11,7 @@
 
 int GmshInitialize(int argc=0, char **argv=0);
 int GmshSetMessageHandler(GmshMessage *callback);
+GmshMessage *GmshGetMessageHandler();
 int GmshSetBoundingBox(double xmin, double xmax,
                        double ymin, double ymax,
                        double zmin, double zmax);

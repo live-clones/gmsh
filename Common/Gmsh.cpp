@@ -45,6 +45,10 @@
 
 int GmshInitialize(int argc, char **argv)
 {
+  static bool isInitialized = false;
+  if(isInitialized) return 1;
+  isInitialized = true;
+
 #if defined(HAVE_FLTK)
   RedirectIOToConsole();
 #endif
@@ -81,6 +85,11 @@ int GmshSetMessageHandler(GmshMessage *callback)
 {
   Msg::SetCallback(callback);
   return 1;
+}
+
+GmshMessage *GmshGetMessageHandler()
+{
+  return Msg::GetCallback();
 }
 
 int GmshSetBoundingBox(double xmin, double xmax,

@@ -56,6 +56,7 @@ class Msg {
   static void SetCommRank(int val){ _commRank = val; }
   static void SetCommSize(int val){ _commSize = val; }
   static void SetCallback(GmshMessage *callback){ _callback = callback; }
+  static GmshMessage *GetCallback(){ return _callback; }
   static void Barrier();
   static int GetNumThreads();
   static int GetMaxThreads();
