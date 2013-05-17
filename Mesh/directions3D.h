@@ -13,7 +13,7 @@
 #include "MEdge.h"
 #include "MElementOctree.h"
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
+class ANNkd_tree;
 #endif
 #include "yamakawa.h"
 #include "STensor3.h"
@@ -31,9 +31,7 @@ class Frame_field{
   static std::map<MEdge, double, Less_Edge> crossDist;
   static std::vector<MVertex*> listVertices;
 #if defined(HAVE_ANN)
-  static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
-  static ANNpointArray annTreeData;
   static ANNkd_tree* annTree;
 #endif
   Frame_field();
@@ -96,7 +94,6 @@ class Nearest_point{
   static std::vector<SPoint3> field;
   static std::vector<MElement*> vicinity;
 #if defined(HAVE_ANN)
-  static ANNpointArray duplicate;
   static ANNkd_tree* kd_tree;
 #endif
   Nearest_point();

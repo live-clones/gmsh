@@ -16,6 +16,10 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "cartesian.h"
+#include "GmshConfig.h"
+#if defined(HAVE_ANN)
+#include "ANN/ANN.h"
+#endif
 
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
@@ -909,33 +913,35 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
       }
     }
   }
-  _nodes = annAllocPts(_all.size(), 3);
+  ANNpointArray nodes;
+  nodes = annAllocPts(_all.size(), 3);
   std::set<MVertex*>::iterator itp = _all.begin();
   int ind = 0;
   while (itp != _all.end()){
     MVertex* pt = *itp;
-    _nodes[ind][0] = pt->x();
-    _nodes[ind][1] = pt->y();
-    _nodes[ind][2] = pt->z();
+    nodes[ind][0] = pt->x();
+    nodes[ind][1] = pt->y();
+    nodes[ind][2] = pt->z();
     _vertices.push_back(pt);
     itp++; ind++;
   }
-  _kdtree = new ANNkd_tree(_nodes, _all.size(), 3);
-  _index = new ANNidx[_nbClose];
-  _dist  = new ANNdist[_nbClose];
+  _kdtree = new ANNkd_tree(nodes, _all.size(), 3);
 }
 
 gLevelsetDistMesh::~gLevelsetDistMesh()
 {
-  delete [] _index;
-  delete [] _dist;
-  if (_kdtree) delete _kdtree;
-  if (_nodes) annDeallocPts (_nodes);
+  if (_kdtree) {
+    ANNpointArray nodes = _kdtree->thePoints();
+    annDeallocPts(nodes);
+   delete _kdtree; 
+  }
 
 }
 
 double gLevelsetDistMesh::operator () (double x, double y, double z) const
 {
+  ANNidx _index[_nbClose];
+  ANNdist _dist[_nbClose];
   double point[3] = {x,y,z};
   _kdtree->annkSearch(point, _nbClose, _index, _dist);
   std::set<MElement*> elements;

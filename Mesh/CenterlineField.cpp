@@ -292,12 +292,9 @@ static void cutTriangle(MTriangle *tri,
   }
 }
 
-Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), nodesR(0)
+Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0) 
 {
   recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
-
-  index = new ANNidx[1];
-  dist = new ANNdist[1];
 
   printf("centerline filename =%s \n", fileName.c_str());
   importFile(fileName);
@@ -315,10 +312,8 @@ Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0), nodes(0), n
 
 }
 
-Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0)
+Centerline::Centerline(): kdtree(0), kdtreeR(0)
 {
-  index = new ANNidx[1];
-  dist = new ANNdist[1];
 
   recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
   fileName = "centerlines.vtk";//default
@@ -358,12 +353,16 @@ Centerline::Centerline(): kdtree(0), kdtreeR(0), nodes(0), nodesR(0)
 Centerline::~Centerline()
 {
   if (mod) delete mod;
-  if(kdtree) delete kdtree;
-  if(kdtreeR) delete kdtreeR;
-  if(nodes) annDeallocPts(nodes);
-  if(nodesR) annDeallocPts(nodesR);
-  delete[]index;
-  delete[]dist;
+  if(kdtree){
+    ANNpointArray nodes = kdtree->thePoints();
+    if(nodes) annDeallocPts(nodes);
+    delete kdtree; 
+  }
+  if(kdtreeR){
+    ANNpointArray nodesR = kdtreeR->thePoints();
+    if(nodesR) annDeallocPts(nodesR);
+    delete kdtreeR; 
+  }
 }
 
 void Centerline::importFile(std::string fileName)
@@ -531,7 +530,7 @@ void Centerline::distanceToSurface()
   for(unsigned int j = 0; j < triangles.size(); j++)
     for(int k = 0; k<3; k++) allVS.insert(triangles[j]->getVertex(k));
   int nbSNodes = allVS.size();
-  nodesR = annAllocPts(nbSNodes, 3);
+  ANNpointArray nodesR = annAllocPts(nbSNodes, 3);
   vertices.resize(nbSNodes);
   int ind = 0;
   std::set<MVertex*>::iterator itp = allVS.begin();
@@ -550,6 +549,8 @@ void Centerline::distanceToSurface()
     MVertex *v1 = l->getVertex(0);
     MVertex *v2 = l->getVertex(1);
     double midp[3] = {0.5*(v1->x()+v2->x()), 0.5*(v1->y()+v1->y()),0.5*(v1->z()+v2->z())};
+    ANNidx index[1];
+    ANNdist dist[1];
     kdtreeR->annkSearch(midp, 1, index, dist);
     double minRad = sqrt(dist[0]);
     radiusl.insert(std::make_pair(lines[i], minRad));
@@ -583,7 +584,7 @@ void Centerline::buildKdTree()
   //int nbNodes  = (lines.size()+1) + (nbPL*lines.size());
   int nbNodes  = (colorp.size()) + (nbPL*lines.size());
 
-  nodes = annAllocPts(nbNodes, 3);
+  ANNpointArray nodes = annAllocPts(nbNodes, 3);
   int ind = 0;
   std::map<MVertex*, int>::iterator itp = colorp.begin();
   while (itp != colorp.end()){
@@ -771,7 +772,10 @@ void Centerline::extrudeBoundaryLayerWall(GEdge* gin, std::vector<GEdge*> boundE
   SVector3 ne = e->getFace(0).normal();
   SVector3 ps(e->getVertex(0)->x(), e->getVertex(0)->y(), e->getVertex(0)->z());
   double xyz[3] = {ps.x(), ps.y(), ps.z()};
+  ANNidx index[1];
+  ANNdist dist[1];
   kdtree->annkSearch(xyz, 1, index, dist);
+  ANNpointArray nodes = kdtree->thePoints();
   SVector3 pc(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
   SVector3 nc = ps-pc;
   if (dot(ne,nc) < 0) dir = 1;
@@ -1077,7 +1081,10 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
      if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
 	  (isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
        int num_neighbours = 1;
+       ANNidx index[num_neighbours];
+       ANNdist dist[num_neighbours];
        kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
+       ANNpointArray nodesR = kdtreeR->thePoints();
        xyz[0] = nodesR[index[0]][0];
        xyz[1] = nodesR[index[0]][1];
        xyz[2] = nodesR[index[0]][2];
@@ -1085,6 +1092,8 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
    }
 
    int num_neighbours = 1;
+   ANNidx index[num_neighbours];
+   ANNdist dist[num_neighbours];
    kdtree->annkSearch(xyz, num_neighbours, index, dist);
    double rad = sqrt(dist[0]);
 
@@ -1130,23 +1139,24 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
      onTubularSurface = false;
    }
 
+   ANNidx index[1];
+   ANNdist dist[1];
    kdtreeR->annkSearch(xyz, 1, index, dist);
    if (! onTubularSurface){
+     ANNpointArray nodesR = kdtreeR->thePoints();
      ds = sqrt(dist[0]);
      xyz[0] = nodesR[index[0]][0];
      xyz[1] = nodesR[index[0]][1];
      xyz[2] = nodesR[index[0]][2];
    }
 
-   ANNidxArray index2 = new ANNidx[2];
-   ANNdistArray dist2 = new ANNdist[2];
+   ANNidx index2[2];
+   ANNdist dist2[2];
    kdtree->annkSearch(xyz, 2, index2, dist2);
    double radMax = sqrt(dist2[0]);
+   ANNpointArray nodes = kdtree->thePoints();
    SVector3  p0(nodes[index2[0]][0], nodes[index2[0]][1], nodes[index2[0]][2]);
    SVector3  p1(nodes[index2[1]][0], nodes[index2[1]][1], nodes[index2[1]][2]);
-
-   delete[]index2;
-   delete[]dist2;
 
    //dir_a = direction along the centerline
    //dir_n = normal direction of the disk
@@ -1185,7 +1195,7 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
    double thickness = radMax/3.;
    double h_far = radMax/5.;
    double beta = (ds <= thickness) ? 1.2 : 2.1; //CTX::instance()->mesh.smoothRatio;
-   double dist = (ds <= thickness) ? ds: thickness;
+   double ddist = (ds <= thickness) ? ds: thickness;
 
    double h_n_0 = thickness/20.;
    double h_n   = std::min( (h_n_0+ds*log(beta)), h_far);
@@ -1198,10 +1208,10 @@ void  Centerline::operator() (double x, double y, double z, SMetric3 &metr, GEnt
     (sqrt(1+ (4.*rhoMax*rhoMax*(betaMax*betaMax-1))/(h_n*h_n))-1.);
    double h_t1_0 = sqrt(1./oneOverD2_min);
    double h_t2_0 = sqrt(1./oneOverD2_max);
-   //double h_t1 =  h_t1_0*(rhoMin+signMin*dist)/rhoMin ;
-   //double h_t2 =  h_t2_0*(rhoMax+signMax*dist)/rhoMax ;
-   double h_t1  = std::min( (h_t1_0+(dist*log(beta))), radMax);
-   double h_t2  = std::min( (h_t2_0+(dist*log(beta))), h_far);
+   //double h_t1 =  h_t1_0*(rhoMin+signMin*ddist)/rhoMin ;
+   //double h_t2 =  h_t2_0*(rhoMax+signMax*ddist)/rhoMax ;
+   double h_t1  = std::min( (h_t1_0+(ddist*log(beta))), radMax);
+   double h_t2  = std::min( (h_t2_0+(ddist*log(beta))), h_far);
 
    double dCenter = radMax-ds;
    double h_a_0 = 0.5*radMax;

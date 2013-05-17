@@ -1217,10 +1217,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   kdtree = NULL;
   uv_kdtree = NULL;
-  uv_nodes = NULL;
-  nodes = NULL;
-  index = new ANNidx[2];
-  dist  = new ANNdist[2];
 }
 
 GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
@@ -1270,10 +1266,6 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 
   uv_kdtree = NULL;
   kdtree = NULL;
-  uv_nodes = NULL;
-  nodes = NULL;
-  index = new ANNidx[2];
-  dist  = new ANNdist[2];
 }
 
 GFaceCompound::~GFaceCompound()
@@ -1289,12 +1281,16 @@ GFaceCompound::~GFaceCompound()
   if (_lsys)delete _lsys;
   delete ONE;
   delete MONE;
-  if(uv_kdtree) delete uv_kdtree;
-  if(kdtree) delete kdtree;
-  if(uv_nodes) annDeallocPts(uv_nodes);
-  if(nodes) annDeallocPts(nodes);
-  delete[]index;
-  delete[]dist;
+  if(uv_kdtree) {
+    ANNpointArray uv_nodes = uv_kdtree->thePoints();
+    if(uv_nodes) annDeallocPts(uv_nodes);
+    delete uv_kdtree;
+  }
+  if(kdtree){
+    ANNpointArray nodes = kdtree->thePoints();
+    if(nodes) annDeallocPts(nodes);
+    delete kdtree; 
+  }
 }
 
 SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
@@ -1967,7 +1963,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     //build kdtree boundary nodes in parametric space
     printf("build bc kdtree \n");
     int nbBCNodes  = myBCNodes.size();
-    uv_nodes = annAllocPts(nbBCNodes, 3);
+    ANNpointArray uv_nodes = annAllocPts(nbBCNodes, 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
     int ind = 0;
     while (itp != myBCNodes.end()){
@@ -2004,7 +2000,10 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     printf("not found in new octree \n");
     GPoint gp(50,50,50);
     double pt[3] = {par1,par2,0.0};
+    ANNidx index[2];
+    ANNdist dist[2];
     uv_kdtree->annkSearch(pt, 2, index, dist);
+    ANNpointArray uv_nodes = uv_kdtree->thePoints();
     SPoint3  p1(uv_nodes[index[0]][0], uv_nodes[index[0]][1], uv_nodes[index[0]][2]);
     SPoint3  p2(uv_nodes[index[1]][0], uv_nodes[index[1]][1], uv_nodes[index[1]][2]);
     SPoint3 pnew; double d;
@@ -2064,6 +2063,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
     else{
       //printf("look in kdtree \n");
       double pt[3] = {par1,par2, 0.0};
+      ANNidx index[2];
+      ANNdist dist[2];
       kdtree->annkSearch(pt, 1, index, dist);
       lt = &(_gfct[index[0]]);
 
@@ -2169,6 +2170,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
     printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
     printf("uv=%g %g \n", param.x(), param.y());
     double pt[3] = {param.x(), param.y(), 0.0};
+    ANNidx index[2];
+    ANNdist dist[2];
     kdtree->annkSearch(pt, 1, index, dist);
     tri = (&_gfct[index[0]])->tri;
   }
@@ -2399,7 +2402,7 @@ void GFaceCompound::buildOct() const
 
   //ANN octree
   std::set<MVertex*> allVS;
-  nodes = annAllocPts(count, 3);
+  ANNpointArray nodes = annAllocPts(count, 3);
 
   // make bounding box
   SPoint3 bbmin = bb.min(), bbmax = bb.max();

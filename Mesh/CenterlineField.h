@@ -41,7 +41,6 @@ struct Branch{
 };
 
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
 class ANNkd_tree;
 
 // This class takes as input A 1D mesh which is the centerline
@@ -58,9 +57,6 @@ class Centerline : public Field{
   GModel *mod; //centerline GModel
   GModel *split; //split GModel
   ANNkd_tree *kdtree, *kdtreeR; 
-  ANNpointArray nodes, nodesR;
-  ANNidxArray index;
-  ANNdistArray dist;
   std::string fileName;
   int nbPoints;
   double recombine;

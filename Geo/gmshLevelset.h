@@ -23,7 +23,7 @@
 #include "simpleFunction.h"
 
 #if defined(HAVE_ANN)
-#include "ANN/ANN.h"
+class ANNkd_tree;
 #endif
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -349,9 +349,6 @@ class gLevelsetDistMesh: public gLevelsetPrimitive
   std::vector<MVertex*> _vertices;
   std::multimap<MVertex*,MElement*> _v2e;
   ANNkd_tree *_kdtree;
-  ANNpointArray _nodes;
-  ANNidxArray _index;
-  ANNdistArray _dist;
 public :
   gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose = 5, int tag=1);
   double operator () (double x, double y, double z) const;

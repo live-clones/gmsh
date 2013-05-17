@@ -47,7 +47,7 @@ void Frame_field::init_region(GRegion* gr){
     init_face(gf);
   }
 
-  duplicate = annAllocPts(temp.size(),3);
+  ANNpointArray duplicate = annAllocPts(temp.size(),3);
 
   index = 0;
   for(std::map<MVertex*,STensor3>::iterator it=temp.begin(); it != temp.end(); it++){
@@ -431,12 +431,12 @@ void Frame_field::clear(){
   temp.clear();
   field.clear();
 #if defined(HAVE_ANN)
-  delete duplicate;
+  delete kd_tree->thePoints();
   delete kd_tree;
   annClose();
 #endif
 #if defined(HAVE_ANN)
-  if(annTreeData) delete annTreeData;
+  if(annTree && annTree->thePoints()) delete annTree->thePoints();
   if(annTree) delete annTree;
 #endif
 }
@@ -517,7 +517,7 @@ int Frame_field::buildAnnData(GEntity* ge, int dim){
   build_listVertices(ge,dim);
   int n = listVertices.size();
 #if defined(HAVE_ANN)
-  annTreeData = annAllocPts(n,3);
+  ANNpointArray annTreeData = annAllocPts(n,3);
   for(int i=0; i<n; i++){
     MVertex* pVertex = listVertices[i];
     annTreeData[i][0] = pVertex->x();
@@ -532,9 +532,8 @@ int Frame_field::buildAnnData(GEntity* ge, int dim){
 
 void Frame_field::deleteAnnData(){
 #if defined(HAVE_ANN)
-  if(annTreeData) delete annTreeData;
+  if(annTree && annTree->thePoints()) delete annTree->thePoints();
   if(annTree) delete annTree;
-  annTreeData = NULL;
   annTree = NULL;
 #endif
 }
@@ -1486,7 +1485,7 @@ void Nearest_point::init_region(GRegion* gr){
 	//vicinity.push_back(NULL);
   }
 
-  duplicate = annAllocPts(field.size(),3);
+  ANNpointArray duplicate = annAllocPts(field.size(),3);
 
   for(i=0;i<field.size();i++){
 	duplicate[i][0] = field[i].x();
@@ -1706,7 +1705,7 @@ void Nearest_point::clear(){
   field.clear();
   vicinity.clear();
   #if defined(HAVE_ANN)
-  delete duplicate;
+  delete kd_tree->thePoints();
   delete kd_tree;
   annClose();
   #endif
@@ -1722,9 +1721,7 @@ std::map<MVertex*,std::set<MVertex*> > Frame_field::vertex_to_vertices;
 std::map<MVertex*,std::set<MElement*> > Frame_field::vertex_to_elements;
 std::vector<MVertex*> Frame_field::listVertices;
 #if defined(HAVE_ANN)
-ANNpointArray Frame_field::duplicate;
 ANNkd_tree* Frame_field::kd_tree;
-ANNpointArray Frame_field::annTreeData;
 ANNkd_tree* Frame_field::annTree;
 #endif
 
@@ -1734,6 +1731,5 @@ MElementOctree* Size_field::octree;
 std::vector<SPoint3> Nearest_point::field;
 std::vector<MElement*> Nearest_point::vicinity;
 #if defined(HAVE_ANN)
-ANNpointArray Nearest_point::duplicate;
 ANNkd_tree* Nearest_point::kd_tree;
 #endif

@@ -21,7 +21,6 @@ template <class scalar> class simpleFunction;
 #include "linearSystem.h"
 #include "GRbf.h"
 #include "MElementOctree.h"
-#include <ANN/ANN.h>
 class ANNkd_tree;
 
 #define AR_MAX 5 //maximal geometrical aspect ratio
@@ -100,10 +99,6 @@ class GFaceCompound : public GFace {
   linearSystem <double> *_lsys;
   mutable ANNkd_tree *uv_kdtree;
   mutable ANNkd_tree *kdtree;
-  mutable ANNpointArray uv_nodes;
-  mutable ANNpointArray nodes;
-  ANNidxArray index;
-  ANNdistArray dist;
   void buildOct() const ;
   void buildAllNodes() const;
 
