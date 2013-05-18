@@ -420,22 +420,17 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     CTX::instance()->launchSolverAtStartup = num;
     return 1;
   }
+  else if(ext == ".py"){
+    int num = defineSolver("python");
+    opt_solver_executable(num, GMSH_SET, fileName);
+    CTX::instance()->launchSolverAtStartup = num;
+    return 1;
+  }
 #endif
 #if defined(HAVE_ONELAB_METAMODEL) && defined(HAVE_FLTK)
   else if(ext == ".ol"){
     // FIXME: this is a hack -- think about a better way
     status = metamodel_cb(fileName);
-  }
-  else if(ext == ".py"){
-    FlGui::instance()->onelab->addSolver("python", fileName, "", 1);
-    //onelab_cb(0, (void*)"check");
-    status = 1;
-    /* tester ceci:*/
-    int num = defineSolver("python");
-    opt_solver_executable(num, GMSH_SET, fileName);
-    CTX::instance()->launchSolverAtStartup = num;
-    return 1;
-    /**/
   }
 #endif
   else {
