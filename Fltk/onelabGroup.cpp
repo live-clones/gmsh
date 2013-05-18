@@ -423,6 +423,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
+
+      std::string reply = "done"; // reply is dummy
+      getGmshServer()->SendMessage
+        (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
+
       delete c;
 #endif
     }
