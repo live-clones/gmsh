@@ -43,6 +43,7 @@
 #if defined(HAVE_PETSC)
 #ifndef SWIG
 #include "petsc.h"
+#include "petscksp.h"
 #else
 typedef struct _p_Mat* Mat;
 typedef struct _p_Vec* Vec;
