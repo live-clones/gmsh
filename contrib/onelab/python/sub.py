@@ -6,6 +6,7 @@ import onelab
 OL = onelab.client()
 
 A = OL.getNumber('A')
-B = OL.setNumber('Group/B', 20)
+print 'A= %f' %(A)
+OL.setNumber('Group/B', value=20)
 
-print 'A= %f B = %f' %(A, B)
+

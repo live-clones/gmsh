@@ -36,7 +36,12 @@ def file_exist(filename):
       return True
   except IOError:
     return False
-    
+
+def path(ref,inp):
+  if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
+     return inp # do nothing, inp is an absolute path
+  else: # append inp to the path of the reference file
+     return os.path.dirname(ref) + os.sep + inp
 
 class _parameter() :
   _membersbase = [
@@ -145,17 +150,15 @@ class client :
 
   def _define_parameter(self, param) :
     if not self.socket :
-      return
+      return param.value
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
       self._send(self._GMSH_PARAMETER_UPDATE, param.tochar()) #enrich a previous decl.
-      value = param.fromchar(msg).value # use value from server
+      return param.fromchar(msg).value # use value from server
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       self._send(self._GMSH_PARAMETER, param.tochar()) #declaration
-      value = param.value
-    return value
-    #print param.tochar()
+      return param.value
     
   def defineNumber(self, name, **param):
     if 'labels' in param :
@@ -185,10 +188,7 @@ class client :
       p.fromchar(msg).modify(**param)
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       p.modify(**param)
-    p.readOnly = 1
-    p.attributes={'Highlight':'AliceBlue'}   
     self._send(self._GMSH_PARAMETER, p.tochar())
-    #return p.value What for?
 
   def setString(self, name, **param):
     if not self.socket :
@@ -203,7 +203,19 @@ class client :
     p.readOnly = 1
     p.attributes={'Highlight':'AliceBlue'}   
     self._send(self._GMSH_PARAMETER, p.tochar())
-  
+
+  def addNumberChoice(self, name, value):
+    if not self.socket :
+      return
+    p = _parameter('number', name=name)
+    self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER :
+      p.fromchar(msg).choices.append(value)
+    elif t == self._GMSH_PARAMETER_NOT_FOUND :
+      print 'Unknown parameter %s' %(param.name)
+    self._send(self._GMSH_PARAMETER, p.tochar())
+
   def _get_parameter(self, param, warn_if_not_found=True) :
     if not self.socket :
       return
@@ -224,6 +236,17 @@ class client :
     self._get_parameter(param, warn_if_not_found)
     return param.value
 
+  def show(self, name) :
+    if not self.socket :
+      return
+    param = _parameter('number', name=name)
+    self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER :
+      print msg
+    elif t == self._GMSH_PARAMETER_NOT_FOUND :
+      print 'Unknown parameter %s' %(name)
+
   def openGeometry(self, filename) :
     if not self.socket or not filename :
       return
@@ -232,8 +255,8 @@ class client :
       return
     else :
       self.setString('Gmsh/MergedGeo', value=filename)
-    if filename[0] != '/' :
-      filename = os.getcwd() + "/" + filename
+#    if filename[0] != '/' :
+#      filename = os.getcwd() + "/" + filename
     self._send(self._GMSH_MERGE_FILE, filename)
 
   def mesh(self, filename) :
@@ -251,17 +274,17 @@ class client :
   def mergeFile(self, filename) :
     if not self.socket :
       return
-    if filename and filename[0] != '/' :
-      filename = os.getcwd() + "/" + filename;
-    self._send(self._GMSH_PARSE_STRING, 'Merge "' + filename + '";')
+    #self._send(self._GMSH_PARSE_STRING, 'Merge "' + filename + '";')
+    self._send(self._GMSH_MERGE_FILE,filename)
 
   def preProcess(self, filename) :
     if not self.socket :
       return
-    if filename and filename[0] != '/' :
-      filename = os.getcwd() + "/" + filename;
     self._send(self._GMSH_OLPARSE, filename)
-
+    (t, msg) = self._receive() 
+    if t == self._GMSH_OLPARSE :
+      print msg
+        
   def _createSocket(self) :
     addr = self.addr
     if '/' in addr or '\\' in addr or ':' not in addr :
@@ -271,8 +294,6 @@ class client :
       self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       s = addr.split(':')
       self.socket.connect((s[0], int(s[1])))
-    #self.socket.setblocking(1)
-    #self.socket.settimeout(5.0)
 
   def _wait_on_subclients(self):
     if not self.socket :
@@ -310,7 +331,6 @@ class client :
   
   def __del__(self) :
     self._wait_on_subclients()
-    #print "Calling destructor of %s with %d subclients" %(self.name, self.NumSubClients)
     if self.socket :
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
