@@ -1,11 +1,8 @@
 package org.geuz.onelab;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -29,10 +27,12 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -99,7 +99,6 @@ public class MainActivity extends Activity {
     	gmsh = new Gmsh("", mainHandler);
     	modelList = new Models();
     	getModels();
-    	loadNative();
     	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		pager.setCurrentItem(1);
@@ -113,11 +112,27 @@ public class MainActivity extends Activity {
     	setContentView(layout);
     }
     
+    public double screenInch()
+    {
+    	String inputSystem;
+        inputSystem = android.os.Build.ID;
+        Log.d("hai",inputSystem);
+        Point size = new Point();
+		getWindowManager().getDefaultDisplay().getSize(size);
+		int width = size.x;
+		int height = size.y;
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        double x = Math.pow(width/dm.xdpi,2);
+        double y = Math.pow(height/dm.ydpi,2);
+        return Math.sqrt(x+y);
+    }
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
     	MenuItem listitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_list);
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT || screenInch() < 7)
         {
         	MenuItem paramitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_settings);
         	paramitem.setIcon(R.drawable.ic_settings);
@@ -188,7 +203,6 @@ public class MainActivity extends Activity {
 		@Override
 		public boolean onInterceptTouchEvent(MotionEvent arg0) {
 			return false;
-			//return super.onInterceptTouchEvent(arg0);
 		}
     	
     }
@@ -235,32 +249,21 @@ public class MainActivity extends Activity {
 		
 		@Override
 		public float getPageWidth(int position) {
-			getResources().getConfiguration();
 			if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
 			{
+				if(screenInch() < 7)
+					return 1f;
 				switch (position) {
 				case 1:
-					if((MainActivity.this).getWindowManager().getDefaultDisplay().getWidth() < 500 )
-						return 1f;
 					return 0.25f;
 				case 2:
-					if((MainActivity.this).getWindowManager().getDefaultDisplay().getWidth() < 500 )
-						return 1f;
 					return 0.75f;
 				default:
 					return 1f;
 				}
 			}
-			switch (position) {
-			case 1:
-				if((MainActivity.this).getWindowManager().getDefaultDisplay().getWidth() < 500 )
-					return 1f;
-				return 0.5f;
-			case 2:
-				return 1f;
-			default:
-				return 1f;
-			}
+			
+			return 1f;
 		}
 
 		@Override
@@ -352,42 +355,6 @@ public class MainActivity extends Activity {
 
     }
     
-    /**
-     * Load file from res/raw/ directory to the files directory of the application.
-     */
-    private void loadNative()
-    {
-    	for( Field f : R.raw.class.getFields()) {
-    		try {
-				int Msh = f.getInt(null), i;
-				String androidName = getResources().getResourceEntryName(Msh);
-				StringBuilder tmp = new StringBuilder(androidName);
-				tmp.setCharAt(androidName.lastIndexOf('_'), '.');
-				String nativeName = tmp.toString();
-				//String nativeExtension = nativeName.substring(nativeName.lastIndexOf('.'));
-				/*if(new File(getFilesDir().toString()+"/"+nativeName).exists()){
-					//TODO check if the files are the same
-					continue;
-				}*/
-				InputStream mshFile = getResources().openRawResource(Msh);
-		    	
-		    	FileOutputStream outputStream = openFileOutput(nativeName, Context.MODE_WORLD_READABLE);
-		    	byte[] buffer = new byte[2048];
-		    	
-		    	while ((i = mshFile.read(buffer, 0, buffer.length)) > 0) 
-					outputStream.write(buffer,0,i);
-
-			} catch (IllegalArgumentException e) {
-				Log.e("Load files", "Error " + e.toString());
-				
-			} catch (IllegalAccessException e) {
-				Log.e("Load files", "Error " + e.toString());
-				
-			} catch (IOException e) {
-				Log.e("Load files", "Error " + e.toString());
-			}
-    	}
-    }
     
     private View postproView() {
     	ScrollView scroll = new ScrollView(this);
@@ -501,15 +468,10 @@ public class MainActivity extends Activity {
     private View paramView(Context ctx) {
     	LinearLayout layout = new LinearLayout(this);
     	layout.setOrientation(LinearLayout.VERTICAL);
-    	/*TextView title = new TextView(ctx);
-    	title.setText(R.string.title_parameter);
-    	title.setTextAppearance(ctx, android.R.style.TextAppearance_DeviceDefault_Large);
-    	title.setTextColor(Color.BLACK);*/
     	run = new Button(ctx);
     	reset = new Button(ctx);
     	run.setText("Run");
     	reset.setText("Reset");
-    	//reset.setEnabled(false);
     	run.setOnClickListener(new OnClickListener() {public void onClick(View v) {
     		if(run.getText().equals("Show step"))
     		{
@@ -525,8 +487,6 @@ public class MainActivity extends Activity {
 			}
 			if(changed){
 				new Run().execute();
-				//gmsh.onelabCB("compute");
-				
 			}
 			getAvailableParam();
 				
@@ -572,17 +532,6 @@ public class MainActivity extends Activity {
     		paramListView.addItem(p.getName().split("/")[0].equals("Parameters")? p.getName().split("/")[0] + " > " + p.getName().split("/")[1]: p.getName().split("/")[0], p.getView());
     		p.setList(paramListView);
     	}
-    	/*LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-    	layoutParams.weight = 1;
-    	layout.addView(paramListView, layoutParams);
-    	layoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-    	layoutParams.weight = 0;
-    	layoutParams.gravity = Gravity.BOTTOM;
-    	layout.addView(onelabBtns,layoutParams);
-    	return layout;*/
-    	//layout.addView(onelabBtns);
-    	//layout.addView(paramListView);
-    	//return layout;
     	return paramListView;
     }
     
@@ -746,16 +695,12 @@ public class MainActivity extends Activity {
         	loading.setButton(DialogInterface.BUTTON_NEGATIVE, "Stop", new DialogInterface.OnClickListener() {
     			
     			public void onClick(DialogInterface dialog, int which) {
-    				//loading.dismiss();
-    				//run.setText("Run");
     				gmsh.onelabCB("stop");
     				run.setEnabled(false);
-    				//cancel(true);
     			}
     		});
     		loading.setMessage("...");
     		loading.show();
-    		//run.setEnabled(false);
     		run.setText("Show progress");
     		super.onPreExecute();
     	}
@@ -769,8 +714,9 @@ public class MainActivity extends Activity {
 		@Override
 		protected void onPostExecute(Integer[] result) {
 			loading.dismiss();
-			//run.setEnabled(true);
 			run.setText("Run");
+			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+			v.vibrate(500);
 			run.setEnabled(true);
 			glView.requestRender();
 			super.onPostExecute(result);

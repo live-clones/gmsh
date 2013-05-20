@@ -12,10 +12,4 @@
         <summary></summary>
         <file type="geo">pmsm.geo</file>
     </model>
-
-    <model>
-        <title>Test</title>
-        <summary>test all parameters of onelab</summary>
-        <file type="geo">test.geo</file>
-    </model>
 </models>

@@ -298,10 +298,11 @@ void drawGModel::drawPView(PView *p)
 	drawArray(p->va_points, GL_POINTS,true);
 	drawArray(p->va_lines, GL_LINES,true);
 	drawArray(p->va_triangles, GL_TRIANGLES,true);
-    
-	drawVectorArray(p->getOptions(), p->va_vectors);
+
 	glLineWidth(1);
 	glPointSize(1);
+    
+	drawVectorArray(p->getOptions(), p->va_vectors);
 }
 
 void drawGModel::drawScale()

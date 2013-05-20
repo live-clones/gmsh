@@ -90,6 +90,7 @@ while read line; do
                 	cp bin/Onelab-release-unsigned.apk ../../../../Onelab-unsigned-$(echo $target_name)_$(echo $target_version).apk
 		fi
 		count=$(($count+1))
+		break # build only for the first target
         fi
         read line # HACK
         target=$(($target+1))
