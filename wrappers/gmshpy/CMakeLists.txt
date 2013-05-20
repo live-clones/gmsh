@@ -122,7 +122,6 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Geo/Curvature.h
   Mesh/directions3D.h
   Mesh/DivideAndConquer.h
-  projects/riemann/Field.h
   Mesh/Field.h
   Fltk/FlGui.h
   Solver/frameSolver.h
