@@ -113,6 +113,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/setup.py DESTINATION gmshpy)
 foreach(module ${SWIG_MODULES})
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${module}PYTHON_wrap.cxx DESTINATION gmshpy/src)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${module}.py DESTINATION gmshpy/src)
+  install(TARGETS _${module} DESTINATION gmshpy/src)
 endforeach(module)
 
 set (GMSH_PYTHON_EXTRA_INCLUDE 
