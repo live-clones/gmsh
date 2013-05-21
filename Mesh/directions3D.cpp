@@ -871,7 +871,7 @@ void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > data,
   file.close();
 }
 
-void Frame_field::recur_connect_vert(FILE *fi, int count, 
+void Frame_field::recur_connect_vert(FILE *fi, int count,
 				     MVertex *v,
 				     STensor3 &cross,
 				     std::multimap<MVertex*,MVertex*> &v2v,
@@ -879,15 +879,15 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
 
   if (touched.find(v) != touched.end()) return;
   touched.insert(v);
-  
+
   count++;
 
   for (std::multimap <MVertex*,MVertex*>::iterator it = v2v.lower_bound(v);
        it != v2v.upper_bound(v) ; ++it){
-   
+
     MVertex *nextV = it->second;
     if (touched.find(nextV) == touched.end()){
-      
+
     //compute dot product (N0,R0,A0) dot (Ni,Ri,Ai)^T
     //where N,R,A are the 3 directions
     std::map<MVertex*, STensor3>::iterator iter = crossField.find(nextV);
@@ -895,10 +895,10 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
     STensor3 nextCrossT = nextCross.transpose();
     STensor3 prod = cross.operator*=(nextCrossT);
     fullMatrix<double> mat(3,3); prod.getMat(mat);
-   
+
     //find biggest dot product
     fullVector<int> Id(3);
-    Id(0) = Id(1) = Id(2) = 0; 
+    Id(0) = Id(1) = Id(2) = 0;
     for (int j = 0; j < 3; j++){
       double maxVal = 0.0;
       for (int i = 0; i < 3; i++){
@@ -916,7 +916,7 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
       printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
       return;
     }
-    
+
     //create new cross
     fullMatrix<double> newmat(3,3);
     for (int i = 0; i < 3; i++){
@@ -940,13 +940,13 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
      prod.print("product");
      newcross.print("newcross");
    }
-   
+
    fprintf(fi,"SP(%g,%g,%g) {%g};\n",nextV->x(),nextV->y(),nextV->z(), (double)count);
 
     //continue recursion
     recur_connect_vert (fi, count, nextV, newcross, v2v,touched);
     }
-    
+
   }
 
 }
@@ -992,7 +992,7 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   int count = 0;
 
   recur_connect_vert (fi, count, beginV,bCross,v2v,touched);
-  
+
   fprintf(fi,"};\n");
   fclose (fi);
   //printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
@@ -1045,7 +1045,7 @@ void Frame_field::save_dist(const std::string& filename){
   std::ofstream file(filename.c_str());
   file << "View \"Distance\" {\n";
 
-  for(std::map<MEdge, double>::iterator it = crossDist.begin();
+  for(std::map<MEdge, double, Less_Edge>::iterator it = crossDist.begin();
       it != crossDist.end(); it++){
     MVertex* pVerta = it->first.getVertex(0);
     MVertex* pVertb = it->first.getVertex(1);
@@ -1119,7 +1119,7 @@ void Frame_field::save_energy(GRegion* gr, const std::string& filename){
 	matvec(inv, gsf[nod1], grd1);
 	matvec(inv, gsf[nod2], grd2);
 	SVector3 esf = sf[nod1] * SVector3(grd2) - sf[nod2] * SVector3(grd1);
-	std::map<MEdge, double>::iterator it = crossDist.find(pTet->getEdge(k));
+	std::map<MEdge, double, Less_Edge>::iterator it = crossDist.find(pTet->getEdge(k));
 	sum += it->second * esf;
 	//sum += (pTet->getVertex(nod2)->z() - pTet->getVertex(nod1)->z()) * esf;
       }

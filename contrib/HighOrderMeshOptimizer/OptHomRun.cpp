@@ -1,6 +1,7 @@
 //#include <fenv.h>
 #include <stdio.h>
 #include <sstream>
+#include <iterator>
 #include <string.h>
 #include "OptHomRun.h"
 #include "GModel.h"

@@ -176,7 +176,7 @@ int GamePad::read_event()
   int event_num = 0;
   bool event_value = false;
   for (int i = 0; i < buttons; i++){
-    int bin = pow(2, i);
+    int bin = pow(2.0, i);
     if(button[i] != (bool)(infoex.dwButtons & bin)) {
       event = true;
       event_num = i;

@@ -292,7 +292,7 @@ static void cutTriangle(MTriangle *tri,
   }
 }
 
-Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0) 
+Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0)
 {
   recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
 
@@ -356,12 +356,12 @@ Centerline::~Centerline()
   if(kdtree){
     ANNpointArray nodes = kdtree->thePoints();
     if(nodes) annDeallocPts(nodes);
-    delete kdtree; 
+    delete kdtree;
   }
   if(kdtreeR){
     ANNpointArray nodesR = kdtreeR->thePoints();
     if(nodesR) annDeallocPts(nodesR);
-    delete kdtreeR; 
+    delete kdtreeR;
   }
 }
 
@@ -1080,7 +1080,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
      if (isCompound) cFaces = ((GFaceCompound*)ge)->getCompounds();
      if ( ge->dim() == 3 || (ge->dim() == 2 && ge->geomType() == GEntity::Plane) ||
 	  (isCompound && (*cFaces.begin())->geomType() == GEntity::Plane) ){
-       int num_neighbours = 1;
+       const int num_neighbours = 1;
        ANNidx index[num_neighbours];
        ANNdist dist[num_neighbours];
        kdtreeR->annkSearch(xyz, num_neighbours, index, dist);
@@ -1091,7 +1091,7 @@ double Centerline::operator() (double x, double y, double z, GEntity *ge)
      }
    }
 
-   int num_neighbours = 1;
+   const int num_neighbours = 1;
    ANNidx index[num_neighbours];
    ANNdist dist[num_neighbours];
    kdtree->annkSearch(xyz, num_neighbours, index, dist);

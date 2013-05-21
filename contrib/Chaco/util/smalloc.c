@@ -33,7 +33,7 @@ unsigned int n;				/* number of bytes to be allocated */
     if (n == 0) {
 	printf("ERROR: Non-positive argument to smalloc (%u).\n", n);
 	if (Output_File != NULL) {
-	    fprintf(Output_File, 
+	    fprintf(Output_File,
 		"ERROR: Non-positive argument to smalloc (%u).\n", n);
 	}
 	bail((char *) NULL, 1);
@@ -44,7 +44,7 @@ unsigned int n;				/* number of bytes to be allocated */
     if (ptr == NULL) {
 	printf("Program out of space while attempting to allocate %u.  Sorry!\n", n);
 	if (Output_File != NULL) {
-	    fprintf(Output_File, 
+	    fprintf(Output_File,
 	        "Program out of space while attempting to allocate %u.  Sorry!\n", n);
 	}
 	bail((char *) NULL, 1);
@@ -201,7 +201,7 @@ unsigned int n;			/* desired size of new allocation */
     if (p == NULL) {
 	printf("Program out of space while attempting to reallocate %u.\n", n);
 	if (Output_File != NULL) {
-	    fprintf(Output_File, 
+	    fprintf(Output_File,
 	        "Program out of space while attempting to reallocate %u.\n", n);
 	}
 	bail((char *) NULL, 1);
@@ -258,7 +258,7 @@ unsigned int n;			/* desired size of new allocation */
     if (p == NULL && DEBUG_MEMORY > 0) {
 	printf("WARNING: Program out of space while attempting to reallocate %u.\n", n);
 	if (Output_File != NULL) {
-	    fprintf(Output_File, 
+	    fprintf(Output_File,
 	        "WARNING: Program out of space while attempting to reallocate %u.\n", n);
 	}
     }
@@ -291,7 +291,8 @@ char     *ptr;
 	    }
 	    else {
 		*prev = dbptr->next;
-		bytes_used =- dbptr->size;
+		//bytes_used =- dbptr->size;
+                bytes_used -= dbptr->size; // ??? GMSH ???
 		free((char *) dbptr);
 	    }
 	}

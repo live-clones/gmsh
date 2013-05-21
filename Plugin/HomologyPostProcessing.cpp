@@ -107,7 +107,7 @@ bool GMSH_HomologyPostProcessingPlugin::parseStringOpt
 int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix
 (std::vector<int>& matrix)
 {
-  int n = sqrt(matrix.size());
+  int n = sqrt((double)matrix.size());
   fullMatrix<double> m(n,n);
   for(int i = 0; i < n; i++)
     for(int j = 0; j < n; j++)
@@ -119,7 +119,7 @@ int GMSH_HomologyPostProcessingPlugin::detIntegerMatrix
 bool GMSH_HomologyPostProcessingPlugin::invertIntegerMatrix
 (std::vector<int>& matrix)
 {
-  int n = sqrt(matrix.size());
+  int n = sqrt((double)matrix.size());
   fullMatrix<double> m(n,n);
   for(int i = 0; i < n; i++)
     for(int j = 0; j < n; j++)

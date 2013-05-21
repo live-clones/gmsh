@@ -446,7 +446,7 @@ void localSolverClient::FixExecPath(const std::string &in)
     setCommandLine(cmd);
   }
 
-#if not defined(WIN32)
+#if !defined(WIN32)
   //if(split[0].find("elmerfem") != std::string::npos){
   if(!split[1].compare("ElmerSolver") && split[2].empty() && split[0].size()){
     std::string fileName = getWorkingDir() + getName() + ".sh";
@@ -504,7 +504,7 @@ bool localSolverClient::checkCommandLine(){
       success = checkIfPresent(getCommandLine());
 
       // resolve a possible linux link
-#if not defined(WIN32)
+#if !defined(WIN32)
       if(!success){
 	char cbuf [1024];
 	FILE *fp;
@@ -619,7 +619,7 @@ bool remoteClient::checkCommandLine(const std::string &commandLine){
   success=checkIfPresentRemote(commandLine);
 
   // resolve a possible linux link
-#if not defined(WIN32)
+#if !defined(WIN32)
   if(!success){
     char cbuf [1024];
     FILE *fp;
@@ -1334,7 +1334,7 @@ bool chmod(std::string fileName){
 
 #include <sys/types.h>
 
-#if not defined WIN32
+#if !defined(WIN32)
 #include <unistd.h>
 #include <pwd.h>
 std::string getUserHomedir(){

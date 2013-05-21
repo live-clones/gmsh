@@ -933,20 +933,20 @@ gLevelsetDistMesh::~gLevelsetDistMesh()
   if (_kdtree) {
     ANNpointArray nodes = _kdtree->thePoints();
     annDeallocPts(nodes);
-   delete _kdtree; 
+   delete _kdtree;
   }
 
 }
 
 double gLevelsetDistMesh::operator () (double x, double y, double z) const
 {
-  ANNidx _index[_nbClose];
-  ANNdist _dist[_nbClose];
+  std::vector<ANNidx> _index(_nbClose);
+  std::vector<ANNdist> _dist(_nbClose);
   double point[3] = {x,y,z};
-  _kdtree->annkSearch(point, _nbClose, _index, _dist);
+  _kdtree->annkSearch(point, _nbClose, &_index[0], &_dist[0]);
   std::set<MElement*> elements;
   for (int i=0;i<_nbClose;i++){
-    int iVertex = _index [i];
+    int iVertex = _index[i];
     MVertex *v = _vertices[iVertex];
     for (std::multimap<MVertex*,MElement*>::const_iterator itm =
            _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)

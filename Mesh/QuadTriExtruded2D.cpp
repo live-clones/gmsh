@@ -443,7 +443,7 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
     return 0;
 
   ExtrudeParams *ep = to->meshAttributes.extrude;
-  if( !ep || !ep->mesh.ExtrudeMesh || !ep->geo.Mode == COPIED_ENTITY ){
+  if( !ep || !ep->mesh.ExtrudeMesh || !(ep->geo.Mode == COPIED_ENTITY) ){
     Msg::Error("In MeshQuadToTriTopSurface(), incomplete or no "
                "extrude information for top face %d.", to->tag() );
     return 0;

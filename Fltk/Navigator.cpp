@@ -8,7 +8,6 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
-#include <unistd.h>
 #include <Navigator.h>
 #include "Trackball.h"
 #include "Context.h"
