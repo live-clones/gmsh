@@ -3209,7 +3209,7 @@ void GModel::computeHomology()
   typedef std::pair<std::vector<int>, std::vector<int> > dpair;
   typedef std::pair<std::string, std::vector<int> > tpair;
   std::set<dpair> domains;
-  for(std::map<dpair, tpair>::iterator it = _homologyRequests.begin();
+  for(std::multimap<dpair, tpair>::iterator it = _homologyRequests.begin();
       it != _homologyRequests.end(); it++)
     domains.insert(it->first);
   Msg::Info("Number of cell complexes to construct: %d", domains.size());
