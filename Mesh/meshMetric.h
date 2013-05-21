@@ -23,7 +23,7 @@ class STensor3;
 class meshMetric: public Field {
  public:
   typedef enum {LEVELSET=1,HESSIAN=2, FREY=3, EIGENDIRECTIONS=4, EIGENDIRECTIONS_LINEARINTERP_H=5,
-                ISOTROPIC_LINEARINTERP_H=6, SCALED_HESSIAN=7} MetricComputationTechnique;
+                ISOTROPIC_LINEARINTERP_H=6} MetricComputationTechnique;
  private:
   // intersect all metrics added in "setOfMetrics", preserve eigendirections of the "most anisotropic" metric
   void updateMetrics();
@@ -41,13 +41,14 @@ class meshMetric: public Field {
   std::map<int, MVertex*> _vertexMap;
 
   std::map<MVertex*,double> vals;
-  std::map<MVertex*,SVector3> grads,dgrads[3];
+  std::map<MVertex*,SVector3> grads;
+  std::map<MVertex*,SMetric3> hessians;
 
  public:
   typedef std::map<MVertex*,SMetric3> nodalMetricTensor;
   typedef std::map<MVertex*,double> nodalField;
  private:
-  nodalMetricTensor _nodalMetrics,_hessian;
+  nodalMetricTensor _nodalMetrics;
   nodalField _nodalSizes, _detMetric;
 
   std::map<int,nodalMetricTensor> setOfMetrics;
@@ -99,7 +100,6 @@ class meshMetric: public Field {
   void computeMetricFrey(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
   void computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
   void computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
-  void computeMetricScaledHessian(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x=0.0, double y = 0.0, double z = 0.0);
 
   void computeValues();
   void computeHessian();
