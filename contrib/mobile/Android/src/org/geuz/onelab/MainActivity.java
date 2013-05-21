@@ -112,22 +112,6 @@ public class MainActivity extends Activity {
     	setContentView(layout);
     }
     
-    public double screenInch()
-    {
-    	String inputSystem;
-        inputSystem = android.os.Build.ID;
-        Log.d("hai",inputSystem);
-        Point size = new Point();
-		getWindowManager().getDefaultDisplay().getSize(size);
-		int width = size.x;
-		int height = size.y;
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        double x = Math.pow(width/dm.xdpi,2);
-        double y = Math.pow(height/dm.ydpi,2);
-        return Math.sqrt(x+y);
-    }
-    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
@@ -271,6 +255,19 @@ public class MainActivity extends Activity {
 			return(view == object);
 		}
    	
+    }
+    
+    public double screenInch()
+    {
+        Point size = new Point();
+		getWindowManager().getDefaultDisplay().getSize(size);
+		int width = size.x;
+		int height = size.y;
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        double x = Math.pow(width/dm.xdpi,2);
+        double y = Math.pow(height/dm.ydpi,2);
+        return Math.sqrt(x+y);
     }
     
     private void getAvailableParam(){
