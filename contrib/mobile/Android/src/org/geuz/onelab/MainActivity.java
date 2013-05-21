@@ -33,7 +33,6 @@ import android.support.v4.view.ViewPager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SubMenu;
@@ -470,22 +469,13 @@ public class MainActivity extends Activity {
     	run.setText("Run");
     	reset.setText("Reset");
     	run.setOnClickListener(new OnClickListener() {public void onClick(View v) {
-    		if(run.getText().equals("Show step"))
+    		if(run.getText().equals("Show progress"))
     		{
     			loading.show();
     			return;
     		}
-    		boolean changed = false;
-			for(Parameter p : params){
-				if(p.changed()){
-					changed = true;
-					break;
-				}
-			}
-			if(changed){
+    		else
 				new Run().execute();
-			}
-			getAvailableParam();
 				
 			pager.setCurrentItem(2, true);
 		}});
@@ -699,6 +689,7 @@ public class MainActivity extends Activity {
     		loading.setMessage("...");
     		loading.show();
     		run.setText("Show progress");
+    		reset.setEnabled(false);
     		super.onPreExecute();
     	}
     	
@@ -713,8 +704,9 @@ public class MainActivity extends Activity {
 			loading.dismiss();
 			run.setText("Run");
 			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-			v.vibrate(500);
+			v.vibrate(350);
 			run.setEnabled(true);
+			reset.setEnabled(true);
 			glView.requestRender();
 			super.onPostExecute(result);
 		}

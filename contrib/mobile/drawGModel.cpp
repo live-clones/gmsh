@@ -541,7 +541,7 @@ void drawGModel::drawView()
 	this->drawPost();
 	if(_showGeom) this->drawGeom();
 	if(_showMesh) this->drawMesh();
-	this->drawScale();
+	//this->drawScale();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
 	glDisable(GL_DEPTH_TEST);
