@@ -1286,10 +1286,11 @@ if(ENABLE_BUILD_LIB)
   install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
 endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS shared RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
   if(WIN32 AND NOT MSVC OR CYGWIN)
     # install .def file
-    install(FILES ${LIBGMSH_DEF} DESTINATION ${GMSH_LIB})
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF} 
+            DESTINATION ${GMSH_LIB})
     # install these DLLs until we figure out how to link them in statically
     find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     find_program(GFORTRAN_DLL libgfortran-3.dll)
