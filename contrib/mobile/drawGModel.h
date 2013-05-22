@@ -1,6 +1,10 @@
 #ifndef _DRAW_GMODEL_H_
 #define _DRAW_GMODEL_H_
 
+#if !defined(BUILD_ANDROID)
+#define BUILD_IOS 1
+#endif
+
 #include <string>
 
 #if defined(BUILD_IOS)

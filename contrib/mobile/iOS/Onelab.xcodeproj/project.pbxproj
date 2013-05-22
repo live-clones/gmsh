@@ -41,6 +41,8 @@
 		9C99753F17379C440036EC24 /* pmsm.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753517379C440036EC24 /* pmsm.geo */; };
 		9C9975411737A4840036EC24 /* pmsm.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C9975401737A4840036EC24 /* pmsm.pro */; };
 		9C9975431737B55E0036EC24 /* pmsm_8p_circuit.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */; };
+		9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */; };
+		9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCE174B5A23004332C5 /* ic_launcher.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +98,8 @@
 		9C9975401737A4840036EC24 /* pmsm.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm.pro; path = files/pmsm.pro; sourceTree = "<group>"; };
 		9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm_8p_circuit.pro; path = files/pmsm_8p_circuit.pro; sourceTree = "<group>"; };
 		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; };
+		9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher_retina.png; sourceTree = "<group>"; };
+		9C9F8BCE174B5A23004332C5 /* ic_launcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +135,8 @@
 		9C96082B1712C16300E1D4A0 = {
 			isa = PBXGroup;
 			children = (
+				9C9F8BCE174B5A23004332C5 /* ic_launcher.png */,
+				9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */,
 				9C9608401712C16300E1D4A0 /* Onelab */,
 				9C9608611712C16400E1D4A0 /* OnelabTests */,
 				9C9608391712C16300E1D4A0 /* Frameworks */,
@@ -308,6 +314,8 @@
 				9C99753F17379C440036EC24 /* pmsm.geo in Resources */,
 				9C9975411737A4840036EC24 /* pmsm.pro in Resources */,
 				9C9975431737B55E0036EC24 /* pmsm_8p_circuit.pro in Resources */,
+				9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */,
+				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,7 +454,8 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_OBJCPP_ARC_ABI = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../getdp-iOS\"",
@@ -459,11 +468,12 @@
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../petsc-3.3-p6/arch-darwin-cxx-opt/lib\"",
-					"\"$(SRCROOT)/../../petsc-3.3-p6/arch-darwin-cxx-opt/lib/openmpi\"",
 				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				TARGETED_DEVICE_FAMILY = 2;
 				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
@@ -474,7 +484,8 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_OBJCPP_ARC_ABI = YES;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../getdp-iOS\"",
@@ -487,10 +498,11 @@
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../petsc-3.3-p6/arch-darwin-cxx-opt/lib\"",
-					"\"$(SRCROOT)/../../petsc-3.3-p6/arch-darwin-cxx-opt/lib/openmpi\"",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
+				TARGETED_DEVICE_FAMILY = 2;
 				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};

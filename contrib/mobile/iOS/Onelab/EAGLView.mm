@@ -45,7 +45,7 @@
         NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
         NSString *startupModel = [ressourcePath stringByAppendingPathComponent:@"pmsm.geo"];
 
-        mGModel = new drawGModel("");
+        mGModel = new drawGModel();
         mGModel->load(*new std::string([startupModel fileSystemRepresentation]));
     }
     return self;
@@ -67,7 +67,7 @@
 {
     NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
     NSString *msh = [ressourcePath stringByAppendingPathComponent: file];
-    mGModel = new drawGModel([msh UTF8String]);
+    mGModel = new drawGModel();
     mGModel->load(*new std::string([msh fileSystemRepresentation]));
     [self drawView];
 }
