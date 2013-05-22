@@ -22,13 +22,13 @@ if [ -z "$ANDROID_TOOLCHAIN" ] && [ -f "$ANDROID_TOOLCHAIN" ]; then
 fi
 
 echo -e "\033[1m[+] Take the last version of Gmsh and GetDP from svn\033[0m"
-if [ ! -d "gmsh" ]; then mkdir svn --username gmsh --password gmsh co https://geuz.org/svn/gmsh/trunk gmsh; else svn up gmsh; fi
-if [ ! -d "getdp" ]; then mkdir svn --username gmsh --password gmsh co https://geuz.org/svn/getdp/trunk getdp; else svn up getdp; fi
+if [ ! -d "gmsh" ]; then svn --username gmsh --password gmsh co https://geuz.org/svn/gmsh/trunk gmsh; else svn up gmsh; fi
+if [ ! -d "getdp" ]; then svn --username gmsh --password gmsh co https://geuz.org/svn/getdp/trunk getdp; else svn up getdp; fi
 
 if [ ! -d "gmsh.android" ]; then mkdir gmsh.android; fi
 if [ ! -d "getdp.android" ]; then mkdir getdp.android; fi
 if [ ! -d "onelab.android" ]; then mkdir onelab.android; fi
-if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ]; then 
+if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ] || [ ! -d "petsc.android/inclue/" ]; then 
 	echo "ERROR: petsc.android do not exist or is incomplete (need blas, lapack and petsc)"
 	exit 1
 fi
