@@ -132,7 +132,7 @@ void drawGModel::OrthofFromGModel()
 	double modelh = bb.max().y() - bb.min().y(), modelw = bb.max().x() - bb.min().x();
 	double modelratio = (modelw ? modelw : 1.) / (modelh ? modelh : 1.);
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
-    xmin = bb.min().x();
+	xmin = bb.min().x();
 	xmax = bb.max().x();
 	ymin = bb.min().x() / ratio;
 	ymax = bb.max().x() / ratio;
@@ -148,8 +148,11 @@ void drawGModel::OrthofFromGModel()
 	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrthof(xmin, xmax, ymin, ymax, -clip, clip);
-	this->left = xmin; this->right = xmax; this->top = ymax; this->bottom = ymin;
+	this->left = (xmin != 0 || xmax != 0)? xmin : -ratio;
+	this->right = (xmin != 0 || xmax != 0)? xmax : ratio;
+	this->top = (xmin != 0 || xmax != 0)? ymax : 1.0;
+	this->bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
+	glOrthof(this->left, this->right, this->bottom, this->top, -clip, clip);
     
 	glMatrixMode(GL_MODELVIEW);
 }
