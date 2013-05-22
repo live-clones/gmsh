@@ -221,7 +221,7 @@ static void calcVertex2Elements(int dim, GEntity *entity, std::map<MVertex*, std
 
 static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedBlobs(
                                 const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-                                const std::set<MElement*> &badElements, int depth, const double distFactor)
+                                const std::set<MElement*> &badElements, int depth, const double distFactor, bool weakMerge = false)
 {
 
   OptHomMessage("Starting blob generation from %i bad elements...",badElements.size());
@@ -242,7 +242,7 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
     std::set<MElement*> &blob = primBlobs[iB];
     for(std::set<MElement*>::iterator itEl = blob.begin(); itEl != blob.end(); ++itEl) {
       std::set<int> &blobInd = tags[*itEl];
-      if (!blobInd.empty()) {
+      if (!blobInd.empty() && (badElements.find(*itEl) != badElements.end()  || !weakMerge)) {
         for (std::set<int>::iterator itBS = blobInd.begin(); itBS != blobInd.end(); ++itBS) blobConnect[*itBS].insert(iB);
         blobConnect[iB].insert(blobInd.begin(), blobInd.end());
       }
@@ -288,7 +288,7 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 
 static void optimizeConnectedBlobs(const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
                                    std::set<MElement*> &badasses,
-                                   OptHomParameters &p, int samples)
+                                   OptHomParameters &p, int samples, bool weakMerge = false)
 {
 
   p.SUCCESS = 1;
@@ -296,7 +296,7 @@ static void optimizeConnectedBlobs(const std::map<MVertex*, std::vector<MElement
   p.maxJac = -1.e100;
 
   std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize =
-      getConnectedBlobs(vertex2elements, badasses, p.nbLayers, p.distanceFactor);
+      getConnectedBlobs(vertex2elements, badasses, p.nbLayers, p.distanceFactor, weakMerge);
 
   //#pragma omp parallel for schedule(dynamic, 1)
   for (int i = 0; i < toOptimize.size(); ++i) {
@@ -515,6 +515,11 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
 //opt->mesh.writeMSH(ossI1.str().c_str());
           success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
                                   false, samples, p.itMax, p.optPassMax);
+          if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
+            OptHomMessage("Jacobian optimization succeed, starting svd optimization");
+            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
+                true, samples, p.itMax, p.optPassMax);
+          }
         }
         else {
           OptHomMessage("Primary blob %i did not break new elements, no correction needed", iBadEl);
@@ -775,7 +780,8 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
     }
   }
 
-  if (p.strategy == 0) optimizeConnectedBlobs(vertex2elements, badasses, p, samples);
+  if (p.strategy == 0) optimizeConnectedBlobs(vertex2elements, badasses, p, samples, false);
+  else if (p.strategy == 2) optimizeConnectedBlobs(vertex2elements, badasses, p, samples, true);
   else optimizeOneByOne(vertex2elements, badasses, p, samples);
 
   double DTF = Cpu()-tf1;

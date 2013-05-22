@@ -15,7 +15,6 @@
 #if defined(HAVE_SLEPC)
 
 #include "linearSystemPETSc.h"
-#include <slepc.h>
 
 class eigenSolver{
  private:

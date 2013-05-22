@@ -2,6 +2,7 @@
 %module gmshSolver
 %include std_string.i
 %include std_vector.i
+%include std_complex.i
 
 %{
   #include "GmshConfig.h"
@@ -13,6 +14,7 @@
   #include "linearSystemCSR.h"
   #include "linearSystemFull.h"
   #include "linearSystemPETSc.h"
+  #include "eigenSolver.h"
 #endif
 %}
 
@@ -34,4 +36,5 @@
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
 #endif
+%include "eigenSolver.h"
 #endif

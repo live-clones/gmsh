@@ -127,6 +127,7 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Fltk/FlGui.h
   Solver/frameSolver.h
   Solver/functionSpace.h
+  Solver/eigenSolver.h
   Mesh/Generator.h
   Geo/GeomMeshMatcher.h
   Geo/GFaceCompound.h
