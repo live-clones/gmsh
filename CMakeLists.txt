@@ -1180,9 +1180,9 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   if(ENABLE_BUILD_DYNAMIC)
     set_target_properties(gmsh PROPERTIES 
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
-    set(GMSHDEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
+    set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
     set_target_properties(shared PROPERTIES PREFIX "lib"
-      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${GMSHDEF}")
+      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC)
     set_target_properties(gmsh PROPERTIES 
       LINK_FLAGS "${FLAGS} -static")
@@ -1287,17 +1287,18 @@ if(ENABLE_BUILD_LIB)
 endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
-  if(WIN32 OR CYGWIN)
+  if(WIN32 AND NOT MSVC OR CYGWIN)
+    # install .def file
+    install(FILES ${LIBGMSH_DEF} DESTINATION ${GMSH_LIB})
     # install these DLLs until we figure out how to link them in statically
     find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     find_program(GFORTRAN_DLL libgfortran-3.dll)
     find_program(STDC_DLL libstdc++-6.dll)
     if(GCC_DLL AND GFORTRAN_DLL AND STDC_DLL)
       message(STATUS "Will install extra DLLs for Windows")
-      install(FILES ${GCC_DLL} ${GFORTRAN_DLL} ${STDC_DLL}
-              DESTINATION ${GMSH_LIB} OPTIONAL)
+      install(FILES ${GCC_DLL} ${GFORTRAN_DLL} ${STDC_DLL} DESTINATION ${GMSH_LIB})
     endif(GCC_DLL AND GFORTRAN_DLL AND STDC_DLL)
-  endif(WIN32 OR CYGWIN)
+  endif(WIN32 AND NOT MSVC OR CYGWIN)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
