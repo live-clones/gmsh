@@ -1179,13 +1179,13 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   endif(HAVE_64BIT_SIZE_T)
   if(ENABLE_BUILD_DYNAMIC)
     set_target_properties(gmsh PROPERTIES 
-                          LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
-    set_target_properties(shared PROPERTIES 
-                          PREFIX "lib"
-                          LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols")
+      LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
+    set(GMSHDEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
+    set_target_properties(shared PROPERTIES PREFIX "lib"
+      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${GMSHDEF}")
   else(ENABLE_BUILD_DYNAMIC)
     set_target_properties(gmsh PROPERTIES 
-                          LINK_FLAGS "${FLAGS} -static")
+      LINK_FLAGS "${FLAGS} -static")
     # remove -Wl,-Bdynamic flags
     set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
     set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
