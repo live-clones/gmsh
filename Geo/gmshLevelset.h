@@ -139,7 +139,7 @@ class gLevelsetSphere : public gLevelsetPrimitive
 protected:
   double xc, yc, zc, r;
 public:
-  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag);
+  gLevelsetSphere (const double &x, const double &y, const double &z, const double &R, int tag=1);
   virtual double operator () (double x, double y, double z) const
   {
     if(r >= 0.)

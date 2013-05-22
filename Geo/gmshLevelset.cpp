@@ -319,7 +319,7 @@ gLevelset::gLevelset(const gLevelset &lv)
 }
 
 gLevelsetSphere::gLevelsetSphere(const double &x, const double &y, const double &z,
-                                 const double &R, int tag=1)
+                                 const double &R, int tag)
   : gLevelsetPrimitive(tag), xc(x), yc(y), zc(z), r(R)
 {
   _hasDerivatives = true;

@@ -2167,8 +2167,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   MTriangle *tri=NULL;
   if (lt) tri = lt->tri;
   else {
-    printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
-    printf("uv=%g %g \n", param.x(), param.y());
+    //printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
+    //printf("uv=%g %g \n", param.x(), param.y());
     double pt[3] = {param.x(), param.y(), 0.0};
     ANNidx index[2];
     ANNdist dist[2];

@@ -900,7 +900,7 @@ void Centerline::cutMesh()
     double AR = L/D;
     // printf("*** Centerline branch %d (AR=%.1f) \n", edges[i].tag, AR);
 
-    int nbSplit = (int)floor(AR/2 + 0.9); //AR/2 + 0.9
+    int nbSplit = (int)ceil(AR/2 + 1.1); //AR/2 + 0.9
     if( nbSplit > 1 ){
       //printf("->> cut branch in %d parts \n",  nbSplit);
       double li  = L/nbSplit;
