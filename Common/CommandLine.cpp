@@ -169,9 +169,10 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+u",        "Show post-processing view plugins"));
   s.push_back(mp("Shift+w",        "Show post-processing view options"));
   s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
-  s.push_back(mp(cc + "i",         "Show statistics window"));
   s.push_back(mp(cc + "d",         "Attach/detach menu"));
   s.push_back(mp(cc + "f",         "Enter full screen"));
+  s.push_back(mp(cc + "i",         "Show statistics window"));
+  s.push_back(mp(cc + "j",         "Save model options"));
   s.push_back(mp(cc + "l",         "Show message console"));
 #if defined(__APPLE__)
   s.push_back(mp(cc + "m",         "Minimize window"));
@@ -182,6 +183,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp(cc + "r",         "Rename project file"));
   s.push_back(mp(cc + "s",         "Save file as"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
+  s.push_back(mp("Shift+" + cc + "j", "Save options as default"));
   s.push_back(mp("Shift+" + cc + "m", "Show manipulator window"));
   s.push_back(mp("Shift+" + cc + "n", "Show option window"));
   s.push_back(mp("Shift+" + cc + "o", "Merge file(s)"));
