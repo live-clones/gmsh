@@ -107,7 +107,8 @@ struct doubleXstring{
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
-%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrFind
+%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
+%tokem tStrFind tStrCmp
 %token tTextAttributes
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
@@ -4331,6 +4332,11 @@ FExpr_Single :
         $$ = 0.;
       Free($3); Free($5);
     }
+  | tStrCmp '(' StringExprVar ',' StringExprVar ')'
+    {
+      $$ = strcmp($3, $5);
+      Free($3); Free($5);
+    }
   | tTextAttributes '(' RecursiveListOfStringExprVar ')'
     {
       int align = 0, font = 0, fontsize = CTX::instance()->glFontSize;
@@ -4936,6 +4942,19 @@ StringExpr :
 	strcpy($$, &$3[i+1]);
       Free($3);
     }
+  | tStrReplace '(' StringExprVar ',' StringExprVar ',' StringExprVar ')'
+    {
+      std::string input = $3;
+      std::string substr_old = $5;
+      std::string substr_new = $7;
+      std::string ret = ReplaceSubString(substr_old, substr_new, input);
+      $$ = (char *)Malloc((ret.size() + 1) * sizeof(char));
+      strcpy($$, ret.c_str());
+      Free($3);
+      Free($5);
+      Free($7);
+    }
+
   | tSprintf '(' StringExprVar ')'
     {
       $$ = $3;

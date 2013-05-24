@@ -979,7 +979,8 @@ parsing of the script file:
   @var{built-in-function} |
   @var{real-option} |
   StrFind(@var{char-expression}, @var{char-expression}) |
-  TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>)|
+  StrCmp(@var{char-expression}, @var{char-expression}) |
+  TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
   GetValue("@var{string}", @var{expression})
 @end example
 
@@ -993,8 +994,10 @@ in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
 see @ref{Built-in functions}. The various @w{@var{real-option}s} are
 listed in @ref{Options}. @code{StrFind} searches the first
 @var{char-expression} for any occurrence of the second
-@var{char-expression}. @code{TextAttributes} creates attributes for text
-strings.
+@var{char-expression}. @code{StrCmp} compares the two strings (returns
+an integer greater than, equal to, or less than 0, according as the
+first string is greater than, equal to, or less than the second string).
+@code{TextAttributes} creates attributes for text strings.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
@@ -1081,7 +1084,8 @@ Character expressions are defined as:
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
   GetEnv ( @var{char-expression} ) |
-  GetString ( @var{char-expression} , @var{char-expression} )
+  GetString ( @var{char-expression} , @var{char-expression} ) | 
+  StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} ) 
 @end example
 
 @noindent The third and fourth cases in this definition permit to take the
@@ -1094,7 +1098,8 @@ etc.). The eigth case permits to use the value of a @var{char-option} as
 a @var{char-expression}. The ninth case gets the value of an environment
 variable from the operating system. The last case in the definition
 allows to ask the user for a value interactively. The various
-@w{@var{char-option}s} are listed in @ref{Options}.
+@w{@var{char-option}s} are listed in @ref{Options}.  @code{StrReplace}'s
+arguments are: input string, old substring, new substring.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
