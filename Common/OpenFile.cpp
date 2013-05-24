@@ -624,17 +624,21 @@ void OpenProject(const std::string &fileName)
   Msg::ResetErrorCounter();
 
   if(GModel::current()->empty()){
-    // if the current model is empty, make sure it's reaaally
-    // cleaned-up, and reuse it (don't clear the parser variables: if
-    // the model is empty we probably just launched gmsh, and we don't
-    // want to delete variables set e.g. using the -string command
-    // line option)
+    // if the current model is empty, make sure it's reaaally cleaned-up, and
+    // reuse it
     GModel::current()->destroy();
     GModel::current()->getGEOInternals()->destroy();
+    // don't clear the parser variables if we just launched gmsh with the
+    // -string command line option
+#if defined(HAVE_PARSER)
+    std::string c = Msg::GetCommandLineArgs();
+    if(c.find("-string") == std::string::npos)
+      gmsh_yysymbols.clear();
+#endif
   }
   else{
-    // if the current model is not empty make it invisible, clear the
-    // parser variables and add a new model
+    // if the current model is not empty make it invisible, clear the parser
+    // variables and add a new model
 #if defined(HAVE_PARSER)
     gmsh_yysymbols.clear();
 #endif
@@ -642,8 +646,7 @@ void OpenProject(const std::string &fileName)
     GModel::current(GModel::list.size() - 1);
   }
 
-  // temporary hack until we fill the current GModel on the fly during
-  // parsing
+  // temporary hack until we fill the current GModel on the fly during parsing
   ResetTemporaryBoundingBox();
 
   // merge the file
