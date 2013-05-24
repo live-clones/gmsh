@@ -956,8 +956,10 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     opt->tmpMax = max;
 
     // add point trajectories
+    // FIXME: this should be optional
     if(!pre && numNodes == 1 && opt->timeStep > 0 && opt->lineWidth){
       for(int ts = 0; ts < opt->timeStep; ts++){
+        if(!data->hasTimeStep(ts)) continue;
         int numComp = data->getNumComponents(ts, ient, iele);
         double xyz0[3], dxyz[3][2] = {{0., 0.}, {0., 0.}, {0., 0.}};
         data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
