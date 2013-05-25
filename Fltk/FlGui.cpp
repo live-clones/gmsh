@@ -820,8 +820,8 @@ void FlGui::splitCurrentOpenglWindow(char how)
 void FlGui::copyCurrentOpenglWindowToClipboard()
 {
 #if defined(WIN32)
-  GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
-  GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
+  GLint width = getCurrentOpenglWindow()->w();
+  GLint height = getCurrentOpenglWindow()->h();
 
   // lines have to be 32 bytes aligned, suppose 24 bits per pixel; just crop it
   width -= width % 4;
