@@ -49,6 +49,7 @@ typedef unsigned long intptr_t;
 #include "Generator.h"
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
+#include "PixelBuffer.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -814,6 +815,63 @@ void FlGui::splitCurrentOpenglWindow(char how)
     if(graph[i]->split(g, how))
       break;
   }
+}
+
+void FlGui::copyCurrentOpenglWindowToClipboard()
+{
+#if defined(WIN32)
+  GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
+  GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
+
+  // lines have to be 32 bytes aligned, suppose 24 bits per pixel; just crop it
+  width -= width % 4;
+
+  // get pixels
+  PixelBuffer *buffer = new PixelBuffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+  buffer->fill(0);
+  unsigned char *pixels = (unsigned char*)buffer->getPixels();
+
+  // swap R and B since Windows bitmap format is BGR
+  int nBytes = 3 * width * height;
+  for(int i = 0; i < nBytes; i += 3){
+    unsigned char tmp = pixels[i];
+    pixels[i] = pixels[i + 2];
+    pixels[i + 2] = tmp;
+  }
+
+  // fill header
+  BITMAPINFOHEADER header;
+  header.biWidth = width;
+  header.biHeight = height;
+  header.biSizeImage = nBytes;
+  header.biSize = 40;
+  header.biPlanes = 1;
+  header.biBitCount = 3 * 8;
+  header.biCompression = BI_RGB;
+  header.biXPelsPerMeter = 0;
+  header.biYPelsPerMeter = 0;
+  header.biClrUsed = 0;
+  header.biClrImportant = 0;
+
+  // generate handle
+  HANDLE handle = (HANDLE)::GlobalAlloc(GHND, sizeof(BITMAPINFOHEADER) + nBytes);
+  if(handle != NULL){
+    // lock handle
+    char *pData = (char *)::GlobalLock((HGLOBAL)handle);
+    // copy header and data
+    memcpy(pData, &header, sizeof(BITMAPINFOHEADER));
+    memcpy(pData + sizeof(BITMAPINFOHEADER), pixels, nBytes);
+    // unlock
+    ::GlobalUnlock((HGLOBAL)handle);
+    // push DIB in clipboard
+    OpenClipboard(NULL);
+    EmptyClipboard();
+    SetClipboardData(CF_DIB, handle);
+    CloseClipboard();
+  }
+
+  delete buffer;
+#endif
 }
 
 char FlGui::selectEntity(int type)

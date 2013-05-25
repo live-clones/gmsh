@@ -107,6 +107,8 @@ class FlGui{
   openglWindow *getCurrentOpenglWindow();
   // split the current opengl window
   void splitCurrentOpenglWindow(char how);
+  // copy the current opengl window to the clipboard
+  void copyCurrentOpenglWindowToClipboard();
   // select an entity in the most recent graphic window
   char selectEntity(int type);
   // display status message

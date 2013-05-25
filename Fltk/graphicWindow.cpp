@@ -246,6 +246,9 @@ static void file_window_cb(Fl_Widget *w, void *data)
   else if(str == "split_u"){
     FlGui::instance()->splitCurrentOpenglWindow('u');
   }
+  else if(str == "copy"){
+    FlGui::instance()->copyCurrentOpenglWindowToClipboard();
+  }
   drawContext::global()->draw();
 }
 
@@ -1949,6 +1952,9 @@ static Fl_Menu_Item bar_table[] = {
     {0},
   {"&Window", 0, 0, 0, FL_SUBMENU},
     {"New Window", 0, (Fl_Callback *)file_window_cb, (void*)"new", FL_MENU_DIVIDER},
+#if defined(WIN32)
+    {"Copy to Clipboard",  FL_CTRL+'c', (Fl_Callback *)file_window_cb, (void*)"copy", FL_MENU_DIVIDER},
+#endif
     {"Split Horizontally", 0, (Fl_Callback *)file_window_cb, (void*)"split_h"},
     {"Split Vertically",   0, (Fl_Callback *)file_window_cb, (void*)"split_v"},
     {"Unsplit",            0, (Fl_Callback *)file_window_cb, (void*)"split_u", FL_MENU_DIVIDER},
