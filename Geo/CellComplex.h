@@ -170,8 +170,8 @@ class CellComplex
   int reduceComplex(int combine=1, bool omit=true, bool homseq=false);
   int coreduceComplex(int combine=1, bool omit=true, int heuristic=0);
 
-  // compute Betti numbers of the cell complex using coreduction
-  std::vector<int> bettiCoreduceComplex();
+  // reduce cell complex for Betti number computation
+  void bettiReduceComplex();
 
   bool isReduced() const { return _reduced; }
 

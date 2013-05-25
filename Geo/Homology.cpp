@@ -519,17 +519,27 @@ void Homology::findBettiNumbers()
     if(_cellComplex == NULL) _createCellComplex();
     if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
-    Msg::StatusBar(true, "Computing betti numbers...");
-
+    Msg::StatusBar(true, "Reducing cell complex...");
     double t1 = Cpu();
 
-    std::vector<int> betti = _cellComplex->bettiCoreduceComplex();
+    _cellComplex->bettiReduceComplex();
 
     double t2 = Cpu();
+    Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
+    Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
+              _cellComplex->getSize(3), _cellComplex->getSize(2),
+              _cellComplex->getSize(1), _cellComplex->getSize(0));
 
+
+    Msg::StatusBar(true, "Computing betti numbers...");
+    t1 = Cpu();
+    ChainComplex chainComplex = ChainComplex(_cellComplex);
+    chainComplex.computeHomology();
+
+    for(int i = 0; i < 4; i++) _betti[i] = chainComplex.getBasisSize(i, 3);
+
+    t2 = Cpu();
     Msg::StatusBar(true, "Betti numbers computed (%g s)", t2 - t1);
-
-    for(int i = 0; i < 4; i++) _betti[i] = betti.at(i);
   }
 
   std::string domain = _getDomainString(_domain, _subdomain);

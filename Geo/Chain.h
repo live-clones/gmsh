@@ -257,6 +257,7 @@ public:
 template <class C>
 Chain<C>::Chain(GModel* m, int physicalGroup)
 {
+  _dim = 0;
   std::vector<int> groups(1, physicalGroup);
   std::vector<GEntity*> entities;
   findEntitiesInPhysicalGroups(m, groups, entities);
