@@ -329,13 +329,14 @@ class client :
     self.setNumber('IsPyMetamodel',value=1,visible=0)
     if self.action == "initialize": exit(0)
 
-  def finalize(self) : #code aster python interpreter does not call the destructor at exit, it is necessary to call finalize() epxlicitely
+  def finalize(self):
+    # code aster python interpreter does not call the destructor at exit, it is
+    # necessary to call finalize() epxlicitely
     if self.socket :
       self._wait_on_subclients()
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
       self.socket = None
     
-  
-  def __del__(self) :
-    finalize()
+  def __del__(self):
+    self.finalize()
