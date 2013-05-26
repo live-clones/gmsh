@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <time.h>
 #include <math.h>
+#include "StringUtils.h"
 
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <unistd.h>
@@ -205,20 +206,21 @@ int KillProcess(int pid)
 
 int SystemCall(const std::string &command, bool blocking)
 {
-#if defined(WIN32)
-  // check if we are trying to execute a Python script
+  // separate executable from arguments
   std::string exe, args;
   std::string::size_type pos = command.find_first_of(" ");
   if(pos != std::string::npos){
     exe = command.substr(0, pos);
     args = command.substr(pos, command.size() - pos);
   }
-  else exe = command;
-  int s = (int)exe.size();
-  if(s > 3 &&
-     (exe[s-3] == '.') &&
-     (exe[s-2] == 'p' || exe[s-2] == 'P') &&
-     (exe[s-1] == 'y' || exe[s-1] == 'Y')){
+  else
+    exe = command;
+
+  // get executable extension
+  std::vector<std::string> split = SplitFileName(exe);
+
+#if defined(WIN32)
+  if(split[2] == ".py" || split[2] == ".PY"){
     Msg::Info("Shell opening '%s' with arguments '%s'",
 	      exe.c_str(), args.c_str());
     ShellExecute(NULL, (char*)"open", (char*)exe.c_str(),
@@ -250,11 +252,19 @@ int SystemCall(const std::string &command, bool blocking)
   }
   return 0;
 #else
+  std::string cmd(command);
+  if(split[2] == ".py" || split[2] == ".PY"){
+    if(split[0].empty()) cmd = "./" + cmd;
+    if(access(exe.c_str(), X_OK)){
+      Msg::Info("Script '%s' is not executable: running with python",
+                exe.c_str());
+      cmd = "python " + cmd;
+    }
+  }
   if(!system(NULL)) {
     Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }
-  std::string cmd(command);
   if(!blocking) cmd += " &";
   Msg::Info("Calling '%s'", cmd.c_str());
   system(cmd.c_str());
