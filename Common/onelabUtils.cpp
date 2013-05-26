@@ -352,23 +352,16 @@ namespace onelabUtils {
     return redraw;
   }
 
-  // x is the parameter as on server
-  // y is the argument of set
-  // The routine updates x on basis of y. 
-  // If the parameter is not yet defined, set(y) as is
-  // If the parameter is already defined, priority must be given to the server state
-  // for all items editable from the GUI, i.e. value, range, Loop, Graph, Closed.
-  // If y.getReadOnly() is true, the value of y overrides that of x
-
-
+  // update x using y, giving priority to any settings in x that can be set in
+  // the GUI. The value of x is only changed if y is read-only.
   double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange)
   {
     bool noRange = true, noChoices = true, noLoop = true;
     bool noGraph = true, noClosed = true;
 
     if(y.getReadOnly()){
-      x.setValue(y.getValue()); // use set value
-      x.setReadOnly(1); // makes the field "value" non-editable in the GUI
+      x.setValue(y.getValue());
+      x.setReadOnly(true);
     }
     double val = x.getValue();
 
@@ -385,19 +378,18 @@ namespace onelabUtils {
     if(x.getAttribute("Graph").size()) noGraph = false;
     if(x.getAttribute("Closed").size()) noClosed = false;
 
-    // send updated parameter to server
     if(noRange){
       bool noRangeEither = true;
       if(y.getMin() != -onelab::parameter::maxNumber() ||
 	 y.getMax() != onelab::parameter::maxNumber() ||
 	 y.getStep() != 0.) noRangeEither = false;
       if(!noRangeEither){
-	x.setMin(y.getMin()); 
+	x.setMin(y.getMin());
 	x.setMax(y.getMax());
       }
       else{
 	// if no range/min/max/step info is provided, try to compute a reasonnable
-	// range and step (this makes the gui much nicer to use)
+	// range and step (this makes the GUI much nicer to use)
 	bool isInteger = (floor(val) == val);
 	double fact = isInteger ? 5. : 20.;
 	if(val > 0){
@@ -424,18 +416,18 @@ namespace onelabUtils {
     if(noLoop) x.setAttribute("Loop", y.getAttribute("Loop"));
     if(noGraph) x.setAttribute("Graph", y.getAttribute("Graph"));
     if(noClosed) x.setAttribute("Closed",  y.getAttribute("Closed"));
-
     return val;
   }
 
-
+  // update x using y, giving priority to any settings in x that can be set in
+  // the GUI. The value of x is only changed if y is read-only.
   std::string updateString(onelab::string &x, onelab::string &y)
   {
     bool noChoices = true, noClosed = true, noMultipleSelection = true;
 
     if(y.getReadOnly()){
-      x.setValue(y.getValue()); // use set value
-      x.setReadOnly(1); // makes the field "value" non-editable in the GUI
+      x.setValue(y.getValue());
+      x.setReadOnly(true);
     }
     std::string val = x.getValue();
 

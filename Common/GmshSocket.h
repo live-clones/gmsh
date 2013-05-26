@@ -83,6 +83,7 @@ class GmshSocket{
     GMSH_PARAMETER_NOT_FOUND = 29,
     GMSH_SPEED_TEST          = 30,
     GMSH_PARAMETER_CLEAR     = 31,
+    GMSH_PARAMETER_UPDATE    = 32,
     GMSH_OPTION_1            = 100,
     GMSH_OPTION_2            = 101,
     GMSH_OPTION_3            = 102,

@@ -193,105 +193,74 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     }
     break;
   case GmshSocket::GMSH_PARAMETER:
+  case GmshSocket::GMSH_PARAMETER_UPDATE:
     {
-      std::string version, type, name;
-      onelab::parameter::getInfoFromChar(message, version, type, name);
+      std::string version, ptype, name;
+      onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
         Msg::Error("OneLab version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
-      else if(type == "number"){
-        onelab::number p; p.fromChar(message); set(p);
+      else if(ptype == "number"){
+        onelab::number p; p.fromChar(message);
+        if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
+          std::vector<onelab::number> par; get(par, name);
+          if(par.size()) {
+            onelab::number y = p; p = par[0]; onelabUtils::updateNumber(p, y);
+          }
+        }
+        set(p);
         if(p.getName() == getName() + "/Progress")
           if(FlGui::available())
             FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
                                            p.getMin(), p.getMax());
       }
-      else if(type == "string"){
-        onelab::string p; p.fromChar(message); set(p);
+      else if(ptype == "string"){
+        onelab::string p; p.fromChar(message);
+        if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
+          std::vector<onelab::string> par; get(par, name);
+          if(par.size()){
+            onelab::string y = p; p = par[0]; onelabUtils::updateString(p,y);
+          }
+	}
+        set(p);
       }
-      else if(type == "region"){
+      else if(ptype == "region"){
         onelab::region p; p.fromChar(message); set(p);
       }
-      else if(type == "function"){
+      else if(ptype == "function"){
         onelab::function p; p.fromChar(message); set(p);
       }
       else
-        Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
-    }
-    break;
-  case 32:     //case GmshSocket::GMSH_PARAMETER_UPDATE:
-    {
-      std::string version, type, name;
-      onelab::parameter::getInfoFromChar(message, version, type, name);
-      if(onelab::parameter::version() != version){
-        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
-                   onelab::parameter::version().c_str(), version.c_str());
-      }
-      else if(type == "number"){
-	onelab::number p;
-        std::vector<onelab::number> par; get(par, name);
-        if(par.size() == 1) {
-	  p = par[0];
-	  onelab::number y; y.fromChar(message);
-	  onelabUtils::updateNumber(p,y);
-	}
-	else
-	  p.fromChar(message);
-	set(p);
-        if(p.getName() == getName() + "/Progress")
-          if(FlGui::available())
-            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
-                                           p.getMin(), p.getMax());
-      }
-      else if(type == "string"){
-        onelab::string p;
-	std::vector<onelab::string> par; get(par, name);
-        if(par.size() == 1){
-	  p = par[0];
-	  onelab::string y; y.fromChar(message);
-	  onelabUtils::updateString(p,y);
-	}
-	else
-	  p.fromChar(message);
-	set(p);
-      }
-      else if(type == "region"){
-        onelab::region p; p.fromChar(message); set(p);
-      }
-      else if(type == "function"){
-        onelab::function p; p.fromChar(message); set(p);
-      }
-      else
-        Msg::Error("Unknown OneLab parameter type: %s", type.c_str());
+        Msg::Error("Unknown OneLab parameter type: %s", ptype.c_str());
     }
     break;
   case GmshSocket::GMSH_PARAMETER_QUERY:
     {
-      std::string version, type, name, reply;
-      onelab::parameter::getInfoFromChar(message, version, type, name);
+      std::string version, ptype, name, reply;
+      onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
         Msg::Error("OneLab version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
-      else if(type == "number"){
+      else if(ptype == "number"){
         std::vector<onelab::number> par; get(par, name);
         if(par.size() == 1) reply = par[0].toChar();
       }
-      else if(type == "string"){
+      else if(ptype == "string"){
         std::vector<onelab::string> par; get(par, name);
         if(par.size() == 1) reply = par[0].toChar();
       }
-      else if(type == "region"){
+      else if(ptype == "region"){
         std::vector<onelab::region> par; get(par, name);
         if(par.size() == 1) reply = par[0].toChar();
       }
-      else if(type == "function"){
+      else if(ptype == "function"){
         std::vector<onelab::function> par; get(par, name);
         if(par.size() == 1) reply = par[0].toChar();
       }
       else
-        Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+        Msg::Error("Unknown OneLab parameter type in query: %s", ptype.c_str());
 
       if(reply.size()){
         getGmshServer()->SendMessage
@@ -306,40 +275,40 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_PARAMETER_QUERY_ALL:
     {
-      std::string version, type, name, reply;
+      std::string version, ptype, name, reply;
       std::vector<std::string> replies;
-      onelab::parameter::getInfoFromChar(message, version, type, name);
+      onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
         Msg::Error("OneLab version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
-      else if(type == "number"){
+      else if(ptype == "number"){
         std::vector<onelab::number> numbers; get(numbers);
         for(std::vector<onelab::number>::iterator it = numbers.begin();
             it != numbers.end(); it++) replies.push_back((*it).toChar());
       }
-      else if(type == "string"){
+      else if(ptype == "string"){
         std::vector<onelab::string> strings; get(strings);
         for(std::vector<onelab::string>::iterator it = strings.begin();
             it != strings.end(); it++) replies.push_back((*it).toChar());
       }
-      else if(type == "region"){
+      else if(ptype == "region"){
         std::vector<onelab::region> regions; get(regions);
         for(std::vector<onelab::region>::iterator it = regions.begin();
             it != regions.end(); it++) replies.push_back((*it).toChar());
       }
-      else if(type == "function"){
+      else if(ptype == "function"){
         std::vector<onelab::function> functions; get(functions);
         for(std::vector<onelab::function>::iterator it = functions.begin();
             it != functions.end(); it++) replies.push_back((*it).toChar());
       }
       else
-        Msg::Error("Unknown OneLab parameter type in query: %s", type.c_str());
+        Msg::Error("Unknown OneLab parameter type in query: %s", ptype.c_str());
 
       for(unsigned int i = 0; i < replies.size(); i++)
         getGmshServer()->SendMessage
           (GmshSocket::GMSH_PARAMETER_QUERY_ALL, replies[i].size(), &replies[i][0]);
-      reply = "Sent all OneLab " + type + "s";
+      reply = "Sent all OneLab " + ptype + "s";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_PARAMETER_QUERY_END, reply.size(), &reply[0]);
     }
