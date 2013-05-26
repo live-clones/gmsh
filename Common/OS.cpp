@@ -254,11 +254,13 @@ int SystemCall(const std::string &command, bool blocking)
 #else
   std::string cmd(command);
   if(split[2] == ".py" || split[2] == ".PY"){
-    if(split[0].empty()) cmd = "./" + cmd;
     if(access(exe.c_str(), X_OK)){
-      Msg::Info("Script '%s' is not executable: running with python",
-                exe.c_str());
+      Msg::Info("Script '%s' is not executable: running with python", exe.c_str());
       cmd = "python " + cmd;
+    }
+    else if(split[0].empty()){
+      // workaround if pwd is not in PATH
+      cmd = "./" + cmd;
     }
   }
   if(!system(NULL)) {
