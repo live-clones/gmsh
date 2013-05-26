@@ -51,7 +51,7 @@ manipWindow::manipWindow(int deltaFontSize)
   left[0] = new Fl_Box(WB + 0 * BB, 1 * WB + 1 * BH, BB, BH, "Rotation");
   left[1] = new Fl_Box(WB + 0 * BB, 1 * WB + 2 * BH, BB, BH, "Translation");
   left[2] = new Fl_Box(WB + 0 * BB, 1 * WB + 3 * BH, BB, BH, "Scale");
-  for(int i = 0; i < 3; i++){  
+  for(int i = 0; i < 3; i++){
     top[i]->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
     left[i]->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
   }
@@ -82,7 +82,7 @@ manipWindow::manipWindow(int deltaFontSize)
   }
 
   {
-    Fl_Return_Button *o = new Fl_Return_Button
+    Fl_Button *o = new Fl_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Reset");
     o->callback(status_xyz1p_cb, (void *)"reset");
   }
@@ -97,7 +97,7 @@ void manipWindow::update(bool force)
 {
   if(force || win->shown()){
     double val1 = CTX::instance()->lc;
-    
+
     double r0 = opt_general_rotation0(0, GMSH_GET, 0);
     double r1 = opt_general_rotation1(0, GMSH_GET, 0);
     double r2 = opt_general_rotation2(0, GMSH_GET, 0);
