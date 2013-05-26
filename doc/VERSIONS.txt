@@ -1,3 +1,5 @@
+2.7.2: small improvements, compilation and bug fixes.
+
 2.7.1 (May 11, 2013): improved Delaunay point insertion; updated onelab; better
 Abaqus and UNV export; small bug and compilation fixes.
 
