@@ -171,12 +171,15 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     Msg::Error("Abnormal server termination (did not receive message header)");
     return false;
   }
-  else if(false) // debug
-    std::cout << "Client " << getName() << " receives header: " << type << std::endl;
 
-  std::string message(length, ' ');
+  std::string message(length, ' '), blank = message;
   if(!getGmshServer()->ReceiveMessage(length, &message[0])){
     Msg::Error("Abnormal server termination (did not receive message body)");
+    return false;
+  }
+
+  if(message == blank){
+    Msg::Error("Abnormal server termination (blank message: client not stopped?)");
     return false;
   }
 
