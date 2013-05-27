@@ -197,7 +197,7 @@ void options_restore_defaults_cb(Fl_Widget *w, void *data)
     UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
     ReInitOptions(0);
     InitOptionsGUI(0);
-    FlGui::instance()->rebuildTree();
+    FlGui::instance()->rebuildTree(true);
     drawContext::global()->draw();
   }
 }

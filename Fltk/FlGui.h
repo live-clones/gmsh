@@ -126,7 +126,7 @@ class FlGui{
   // save messages to file
   void saveMessages(const char *fileName);
   // rebuild the tree
-  void rebuildTree();
+  void rebuildTree(bool deleteWidgets);
   // open module in tree
   void openModule(const std::string &name);
 };

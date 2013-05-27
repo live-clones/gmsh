@@ -46,7 +46,7 @@ class onelabGroup : public Fl_Group{
  public:
   onelabGroup(int x, int y, int w, int h, const char *l=0);
   void rebuildSolverList();
-  void rebuildTree();
+  void rebuildTree(bool deleteWidgets);
   void redrawTree(){ _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void setButtonVisibility();

@@ -338,7 +338,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
                               CTX::instance()->solver.autoHideNewViews, true);
       drawContext::global()->draw();
       if(FlGui::available() && n != PView::list.size()){
-        FlGui::instance()->rebuildTree();
+        FlGui::instance()->rebuildTree(true);
         FlGui::instance()->openModule("Post-processing");
       }
     }
@@ -544,7 +544,7 @@ static void initializeLoops()
   onelabUtils::initializeLoop("3");
 
   if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree();
+    FlGui::instance()->rebuildTree(false);
 }
 
 static bool incrementLoops()
@@ -555,7 +555,7 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
   if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree();
+    FlGui::instance()->rebuildTree(false);
 
   return ret;
 }
@@ -633,7 +633,7 @@ static void archiveOutputFiles(const std::string &fileName)
     saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
   }
 
-  FlGui::instance()->rebuildTree();
+  FlGui::instance()->rebuildTree(true);
 }
 
 static void loadDb(const std::string &name)
@@ -653,7 +653,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh"){
     updateGraphs();
-    FlGui::instance()->rebuildTree();
+    FlGui::instance()->rebuildTree(true);
     return;
   }
 
@@ -791,7 +791,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
     if(action != "initialize"){
       updateGraphs();
-      FlGui::instance()->rebuildTree();
+      FlGui::instance()->rebuildTree(action == "compute");
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
@@ -1165,7 +1165,7 @@ static void setGmshOption(onelab::number &n)
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
@@ -1181,7 +1181,7 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
 static void onelab_number_choice_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
@@ -1198,7 +1198,7 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
 static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
@@ -1224,7 +1224,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
 static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, name);
   if(numbers.size()){
@@ -1242,10 +1242,13 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww /= 2;
 
+  char *path = strdup(getPath(n).c_str());
+  _treeStrings.push_back(path);
+
   // non-editable value
   if(p.getReadOnly()){
     outputRange *but = new outputRange(1, 1, ww, 1);
-    but->callback(onelab_number_output_range_cb, (void*)n);
+    but->callback(onelab_number_output_range_cb, (void*)path);
     but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
     but->graph(p.getAttribute("Graph"));
@@ -1276,7 +1279,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
         break;
       }
     }
-    but->callback(onelab_number_choice_cb, (void*)n);
+    but->callback(onelab_number_choice_cb, (void*)path);
     but->align(FL_ALIGN_RIGHT);
     return but;
   }
@@ -1289,7 +1292,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
     but->value(p.getValue());
-    but->callback(onelab_number_check_button_cb, (void*)n);
+    but->callback(onelab_number_check_button_cb, (void*)path);
     if(highlight) but->color(c);
     return but;
   }
@@ -1304,7 +1307,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   but->choices(p.getChoices());
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));
-  but->callback(onelab_number_input_range_cb, (void*)n);
+  but->callback(onelab_number_input_range_cb, (void*)path);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
   if(highlight) but->color(c);
@@ -1314,7 +1317,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
 static void onelab_string_button_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
@@ -1329,7 +1332,7 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
 static void onelab_string_input_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
@@ -1344,7 +1347,7 @@ static void onelab_string_input_cb(Fl_Widget *w, void *data)
 static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
@@ -1413,6 +1416,9 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
 {
   int ww = _baseWidth - (n->depth() + 1) * _indent;
 
+  char *path = strdup(getPath(n).c_str());
+  _treeStrings.push_back(path);
+
   // macro button
   if(p.getAttribute("Macro") == "Gmsh"){
     Fl_Button *but = new Fl_Button(1, 1, ww, 1);
@@ -1420,7 +1426,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
     but->color(_tree->color());
     but->selection_color(_tree->color());
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    but->callback(onelab_string_button_cb, (void*)n);
+    but->callback(onelab_string_button_cb, (void*)path);
     if(highlight) but->color(c);
     return but;
   }
@@ -1441,7 +1447,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   if(p.getChoices().empty() && p.getKind() != "file"){
     Fl_Input *but = new Fl_Input(1, 1, ww, 1);
     but->value(p.getValue().c_str());
-    but->callback(onelab_string_input_cb, (void*)n);
+    but->callback(onelab_string_input_cb, (void*)path);
     but->when(FL_WHEN_ENTER_KEY);
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
@@ -1479,7 +1485,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   menu.push_back(it);
   but->menubutton()->copy(&menu[0]);
   but->value(p.getValue().c_str());
-  but->callback(onelab_string_input_choice_cb, (void*)n);
+  but->callback(onelab_string_input_choice_cb, (void*)path);
   but->input()->when(FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
   if(highlight) but->input()->color(c);
@@ -1489,7 +1495,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
 static void onelab_region_input_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  std::string name = FlGui::instance()->onelab->getPath((Fl_Tree_Item*)data);
+  std::string name((char*)data);
   std::vector<onelab::region> regions;
   onelab::server::instance()->get(regions, name);
   if(regions.size()){
@@ -1508,6 +1514,9 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww /= 2;
 
+  char *path = strdup(getPath(n).c_str());
+  _treeStrings.push_back(path);
+
   // non-editable value
   if(p.getReadOnly()){
     inputRegion *but = new inputRegion(1, 1, ww, 1, true);
@@ -1520,7 +1529,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
   inputRegion *but = new inputRegion(1, 1, ww, 1, false);
   but->value(p.getValue());
   but->align(FL_ALIGN_RIGHT);
-  but->callback(onelab_region_input_cb, (void*)n);
+  but->callback(onelab_region_input_cb, (void*)path);
   if(highlight) but->color(c);
   return but;
 }
@@ -1542,7 +1551,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n
   }
 }
 
-void onelabGroup::rebuildTree()
+void onelabGroup::rebuildTree(bool deleteWidgets)
 {
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
 
@@ -1552,16 +1561,23 @@ void onelabGroup::rebuildTree()
 
   _tree->take_focus(); // make sure we remove the focus from any widget that
                        // will be deleted; this can crash fltk
+
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
 
-  for(unsigned int i = 0; i < _treeWidgets.size(); i++)
-    Fl::delete_widget(_treeWidgets[i]);
-  _treeWidgets.clear();
-  for(unsigned int i = 0; i < _treeStrings.size(); i++)
-    free(_treeStrings[i]);
-  _treeStrings.clear();
+  if(deleteWidgets){
+    // we don't delete all the widgets everytime the tree is rebuilt to minimize
+    // potential race conditions (e.g. during heavy user interaction with
+    // autoCheck, with risks to call handle() or focus() on deleted widgets)
+    Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
+    for(unsigned int i = 0; i < _treeWidgets.size(); i++)
+      Fl::delete_widget(_treeWidgets[i]);
+    _treeWidgets.clear();
+    for(unsigned int i = 0; i < _treeStrings.size(); i++)
+      free(_treeStrings[i]);
+    _treeStrings.clear();
+  }
 
   _addGmshMenus();
 
@@ -1784,7 +1800,7 @@ void onelabGroup::rebuildSolverList()
   }
 
   setButtonVisibility();
-  rebuildTree();
+  rebuildTree(true);
 }
 
 static bool needToChooseExe(const std::string &exe)
