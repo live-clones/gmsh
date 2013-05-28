@@ -1,4 +1,4 @@
-lc = 0.01;
+lc = 0.02;
 nn = 40; // mesh subdivisions per turn
 
 DefineConstant

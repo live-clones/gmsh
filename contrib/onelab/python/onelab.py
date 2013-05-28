@@ -112,6 +112,9 @@ class client :
   _GMSH_START = 1
   _GMSH_STOP = 2
   _GMSH_INFO = 10
+  _GMSH_WARNING = 11
+  _GMSH_ERROR = 12
+  _GMSH_PROGRESS = 13
   _GMSH_MERGE_FILE = 20
   _GMSH_PARSE_STRING = 21
   _GMSH_PARAMETER = 23
@@ -276,6 +279,24 @@ class client :
       return
     #self._send(self._GMSH_PARSE_STRING, 'Merge "' + filename + '";')
     self._send(self._GMSH_MERGE_FILE,filename)
+
+  def sendInfo(self, msg) :
+    if not self.socket :
+      print msg
+      return
+    self._send(self._GMSH_INFO, msg)
+
+  def sendWarning(self, msg) :
+    if not self.socket :
+      print msg
+      return
+    self._send(self._GMSH_WARNING, msg)
+
+  def sendError(self, msg) :
+    if not self.socket :
+      print msg
+      return
+    self._send(self._GMSH_ERROR, msg)
 
   def preProcess(self, filename) :
     if not self.socket :
