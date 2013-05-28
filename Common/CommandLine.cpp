@@ -491,31 +491,31 @@ void GetOptions(int argc, char *argv[])
           Msg::Fatal("Missing number of lloyd iterations");
       }
       #if defined(HAVE_MESH)
-	  else if(!strcmp(argv[i] + 1, "microstructure")) {
-	    i++;
-		int j;
-		int radical;
-		double max;
-		std::vector<double> properties;
-		if(argv[i]){
-	      std::ifstream file(argv[i++]);
-		  file >> max;
-	      file >> radical;
-		  properties.clear();
-		  properties.resize(4*max);
-		  for(j=0;j<max;j++){
-		    file >> properties[4*j];
-			file >> properties[4*j+1];
-			file >> properties[4*j+2];
-			file >> properties[4*j+3];
-		  }
-		  voroMetal3D vm1;
-		  vm1.execute(properties,radical,0.1);
-		  GModel::current()->load("MicrostructurePolycrystal3D.geo");
-		  voroMetal3D vm2;
-		  vm2.correspondance(0.00001);
-		}
-	  }
+      else if(!strcmp(argv[i] + 1, "microstructure")) {
+        i++;
+        int j;
+        int radical;
+        double max;
+        std::vector<double> properties;
+        if(argv[i]){
+          std::ifstream file(argv[i++]);
+          file >> max;
+          file >> radical;
+          properties.clear();
+          properties.resize(4*max);
+          for(j=0;j<max;j++){
+            file >> properties[4*j];
+            file >> properties[4*j+1];
+            file >> properties[4*j+2];
+            file >> properties[4*j+3];
+          }
+          voroMetal3D vm1;
+          vm1.execute(properties,radical,0.1);
+          GModel::current()->load("MicrostructurePolycrystal3D.geo");
+          voroMetal3D vm2;
+          vm2.correspondance(0.00001);
+        }
+      }
       #endif
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
@@ -820,6 +820,31 @@ void GetOptions(int argc, char *argv[])
         }
         else
           Msg::Fatal("Missing algorithm");
+      }
+      else if(!strcmp(argv[i] + 1, "rec")) {
+        i++;
+        if(argv[i]) {
+          CTX::instance()->mesh.doRecombinationTest = 1;
+          CTX::instance()->mesh.recTestName = argv[i];
+          i++;
+        }
+        else
+          Msg::Fatal("Missing file name for recomb");
+      }
+      else if(!strcmp(argv[i] + 1, "beg")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->mesh.recombinationTestStart = atoi(argv[i++]);
+        else
+          Msg::Fatal("Missing number for begin recTest");
+      }
+      else if(!strcmp(argv[i] + 1, "nogreedy")) {
+        i++;
+        CTX::instance()->mesh.recombinationTestNoGreedyStrat = 1;
+      }
+      else if(!strcmp(argv[i] + 1, "newstrat")) {
+        i++;
+        CTX::instance()->mesh.recombinationTestNewStrat = 1;
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;

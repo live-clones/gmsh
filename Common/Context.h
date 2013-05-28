@@ -31,6 +31,11 @@ struct contextMeshOptions {
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
   int algoRecombine, recombineAll, recombine3DAll;
+  //-- for recombination test (amaury) --
+    int doRecombinationTest, recombinationTestStart;
+    int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
+    std::string recTestName;
+  //-------------------------------------
   int remeshParam, remeshAlgo;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;

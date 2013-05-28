@@ -5304,6 +5304,38 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DAll;
 }
 
+double opt_mesh_do_recombination_test(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.doRecombinationTest = (int)val;
+  }
+  return CTX::instance()->mesh.doRecombinationTest;
+}
+
+double opt_mesh_recombination_test_start(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombinationTestStart = (int)val;
+  }
+  return CTX::instance()->mesh.recombinationTestStart;
+}
+
+double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombinationTestNoGreedyStrat = (int)val;
+  }
+  return CTX::instance()->mesh.recombinationTestNoGreedyStrat;
+}
+
+double opt_mesh_recombination_new_strat(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombinationTestNewStrat = (int)val;
+  }
+  return CTX::instance()->mesh.recombinationTestNewStrat;
+}
+
 double opt_mesh_remesh_algo(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

@@ -41,6 +41,7 @@
 #ifdef REC2D_RECO_BLOS
   #include "meshGFaceOptimize.h"
 #endif
+#include <fstream>
 
 
 class Rec2DNode;
@@ -83,6 +84,8 @@ class Recombine2D {
     backgroundMesh *_bgm;
     static Recombine2D *_cur;
     int _numChange;
+    double _lastRunTime;
+    Rec2DNode *_curNode;
     
     // Parameter :
     const bool _collapses;
@@ -126,24 +129,26 @@ class Recombine2D {
                                 const Rec2DNode *node = NULL);
     
     // Revert recombinations
-    static void clearChanges();
+    void clearChanges();
+    
+    // Save mesh & stats
+    void saveMesh(std::string);
+    void saveStats(std::fstream*);
     
     // Get/Set methods
-    inline void setHorizon(int h) {_horizon = h;}
-    inline void setStrategy(int s) {_strategy = s;}
-    inline void setQualCriterion(Rec2DQualCrit c) {
-      Msg::Info("--3--%d----- %d", c, _qualCriterion);_qualCriterion = c;
-      Msg::Info("--4--%d----- %d", c, _qualCriterion);}
-    inline void setQualCriterion(int a) {
-      Msg::Info("--1--%d----- %d", a, _qualCriterion);_qualCriterion = (Rec2DQualCrit)a;
-      Msg::Info("--2--%d----- %d", a, _qualCriterion);} /////////////
+    inline void setHorizon(int h) {_horizon = h;} //1
+    inline void setStrategy(int s) {_strategy = s;} //0->6
+    inline void setQualCriterion(Rec2DQualCrit c) {_qualCriterion = c;}
+    inline void setQualCriterion(int a) {_qualCriterion = (Rec2DQualCrit)a;} //0
     static inline GFace const *const getGFace() {return _cur->_gf;}
     static inline backgroundMesh const *const bgm() {return _cur->_bgm;}
     static inline int getNumChange() {return _cur->_numChange;}
     static inline void incNumChange() {++_cur->_numChange;}
     static inline Rec2DQualCrit getQualCrit() {return _cur->_qualCriterion;}
+    static inline void setNewTreeNode(Rec2DNode *rn) {_cur->_curNode = rn;}
     
     // What is asked ?
+    static inline bool dynamicTree() {return _cur->_strategy == 6;}
     static inline bool blossomRec() {return _cur->_recombineWithBlossom;}
     static inline bool blossomQual() {return _cur->_qualCriterion == 0;}
     static inline bool verticesQual() {return _cur->_qualCriterion == 1;}
@@ -182,6 +187,8 @@ class Recombine2D {
     
     // Miscellaneous
     void compareWithBlossom();
+    int computeQualBlossom() const;
+    inline int getNumElemBlossom() const {return elist[0];}
     static void add(MQuadrangle *q);
     static void add(MTriangle *t);
     static void colorFromBlossom(const Rec2DElement *tri1,
@@ -286,6 +293,7 @@ class Rec2DData {
 #ifdef REC2D_RECO_BLOS
     static inline int getBlosQual() {return _cur->_0blossomQuality;}
 #endif
+    static inline unsigned int getNumElements() {return _cur->_elements.size();}
     
     // Add/Remove Entities
     static void add(const Rec2DEdge*);
@@ -864,10 +872,7 @@ class Rec2DVertex {
                          const Rec2DEdge *adjacent1 = NULL,
                          const Rec2DEdge *adjacent2 = NULL) const;
 #endif
-    inline void updateWAQualEdges(double d, int a = 0) {
-      _sumWQualEdge += d;
-      _sumWeightEdge += a;
-    }
+    void updateWAQualEdges(double d, int a = 0);
     
     // Miscellaneous
     void relocate(SPoint2 p);
@@ -986,7 +991,7 @@ class Rec2DElement {
     inline bool isQuad() const {return _numEdge == 4;}
     inline MElement* getMElement() const {return _mEl;}
     bool hasIdenticalNeighbour() const;
-#ifdef REC2D_DRAW
+#if 1//def REC2D_DRAW
     MTriangle* getMTriangle() const {
       if (_numEdge == 3) {
         if (_mEl)
@@ -1052,6 +1057,9 @@ class Rec2DNode {
     bool operator<(Rec2DNode&);
     bool canBeDeleted() const;
     inline bool isInSequence() const {return _father && _father->_depth != _depth;}
+    inline bool notInSubTree() const {return hasOneSon() && _son[0]->_depth == _depth;}
+    inline bool hasOneSon() const {return _son[0] && !_son[1];}
+    inline Rec2DNode* getSon() const {return _son[0];}
     
     // Debug
     void draw(double dx, double dy) {
@@ -1081,7 +1089,7 @@ class Rec2DNode {
       return i < REC2D_NUMB_SONS;
     }*/
     inline int _getNumSon() const;
-    void _delSons();
+    void _delSons(bool alsoFirst);
     void _orderSons();
     bool _rmvSon(Rec2DNode *n);
     
