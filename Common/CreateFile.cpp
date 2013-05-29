@@ -152,11 +152,10 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
       (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
     newg->show();
     openglWindow::setLastHandled(newg);
-    //waiting for the os to really make the window visible and to call the "draw" function
-    //on (some ?) linux if we do not wait here, the window is not ready
-    //and the picture cannot be generated
-    while(!newg->valid())
-      Fl::wait();
+    // waiting for the OS to really make the window visible and to call the
+    // draw() function on (some ?) linux; if we do not wait here, the window is
+    // not ready and the picture cannot be generated
+    while(!newg->valid()) Fl::wait();
   }
 
   PixelBuffer *buffer;
