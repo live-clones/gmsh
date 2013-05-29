@@ -148,28 +148,24 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
     else if(in[pos] == ')') 
       count--;
     else if(in[pos] == ',') {
-      if(count == 1)
+      if(count == 1){
 	arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
-      else{
-	OLMsg::Error("Syntax error: mismatched parenthesis <%s>",in.c_str());
-	return 0;
+	cursor=pos+1; // skips ','
       }
-      cursor=pos+1; // skips ','
+      else{
+	// ignore this comma
+      }
     }
     pos++;
   } while( count && (pos < in.size()) );
 
   // count is 0 when the closing brace has been found. 
-  if(count){
+  if(count && pos == in.size()){
     OLMsg::Error("Syntax error: <%s>",in.c_str());
     return 0;
   }
-  else if (pos!=std::string::npos)
+  else 
     arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
-  else{
-    OLMsg::Error("weirdo: <%s>",in.c_str());
-    return 0;
-  }
   end=pos;
   return arguments.size();
 }
@@ -1641,11 +1637,11 @@ void MetaModel::client_sentence(const std::string &name,
 	bool changed = onelab::server::instance()->getChanged(c->getName());
 	bool started = isStarted(changed);
 
-	if(OLMsg::GetVerbosity())
-	  std::cout << c->getName() << " active=" 
-		    << c->getActive() << " changed=" 
-		    << changed << " started=" 
-		    << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
+	// if(OLMsg::GetVerbosity())
+	//   std::cout << c->getName() << " active=" 
+	// 	    << c->getActive() << " changed=" 
+	// 	    << changed << " started=" 
+	// 	    << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
 	if(c->getActive() || started) c->compute();
       }
     }
