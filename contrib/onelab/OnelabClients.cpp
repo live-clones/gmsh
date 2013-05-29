@@ -10,6 +10,18 @@
 #define PCLOSE pclose
 #endif
 
+#if defined(WIN32)
+static char dirSep='\\';
+static std::string cmdSep(" & ");
+static std::string removeCmd("del ");
+static std::string lsCmd("dir ");
+#else
+static char dirSep='/';
+static std::string cmdSep(" ; ");
+static std::string removeCmd("rm -rf ");
+static std::string lsCmd("ls ");
+#endif
+
 class onelabMetaModelServer : public GmshServer{
  private:
   localNetworkSolverClient *_client;

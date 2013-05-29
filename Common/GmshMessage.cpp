@@ -360,7 +360,9 @@ void Msg::Info(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
+#if defined(_OPENMP)
   #pragma omp critical
+#endif
   {
     if(FlGui::available()){
       FlGui::instance()->check();
@@ -394,7 +396,9 @@ void Msg::Direct(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
+#if defined(_OPENMP)
 #pragma omp master
+#endif
   {
     if(FlGui::available()){
       FlGui::instance()->check();
@@ -428,7 +432,9 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
+#if defined(_OPENMP)
 #pragma omp master
+#endif
   {
     if(FlGui::available()){
       if(log) FlGui::instance()->check();

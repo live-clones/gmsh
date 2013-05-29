@@ -297,7 +297,7 @@ class GEntity {
   // get the number of mesh elements (total and by type) in the entity
   virtual unsigned int getNumMeshElements() { return 0; }
   virtual unsigned int getNumMeshParentElements() { return 0; }
-  virtual void getNumMeshElements(unsigned *const c) const { };
+  virtual void getNumMeshElements(unsigned *const c) const { }
 
   // get the start of the array of a type of element
   virtual MElement *const *getStartElementType(int type) const { return 0; }

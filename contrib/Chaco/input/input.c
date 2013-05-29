@@ -53,7 +53,7 @@ int      *ndims;		/* number of divisions at each stage */
     while (*fin == NULL) {
 	if (PROMPT)
 	    printf("Graph input file: ");
-	scanf("%s", inname);
+	if(scanf("%s", inname) != 1) return;
 
 	*fin = fopen(inname, "r");
 	if (*fin == NULL) {
@@ -65,14 +65,14 @@ int      *ndims;		/* number of divisions at each stage */
     if (OUTPUT_ASSIGN && !SEQUENCE) {
 	if (PROMPT)
 	    printf("Assignment output file: ");
-	scanf("%s", outassignname);
+	if(scanf("%s", outassignname) != 1) return;
     }
 
     /* Name output results file. */
     if (ECHO < 0) {
 	if (PROMPT)
 	    printf("File name for saving run results: ");
-	scanf("%s", outfilename);
+	if(scanf("%s", outfilename) != 1) return;
     }
 
     /* Initialize the method flags */
@@ -105,7 +105,7 @@ int      *ndims;		/* number of divisions at each stage */
 	while (*finassign == NULL) {
 	    if (PROMPT)
 		printf("Assignment input file: ");
-	    scanf("%s", inassignname);
+	    if(scanf("%s", inassignname) != 1) return;
 
 	    *finassign = fopen(inassignname, "r");
 	    if (*finassign == NULL) {
@@ -118,7 +118,7 @@ int      *ndims;		/* number of divisions at each stage */
 	while (*fingeom == NULL) {
 	    if (PROMPT)
 		printf("Geometry input file name: ");
-	    scanf("%s", geomname);
+	    if(scanf("%s", geomname) != 1) return;
 
 	    *fingeom = fopen(geomname, "r");
 	    if (*fingeom == NULL) {
@@ -141,7 +141,7 @@ int      *ndims;		/* number of divisions at each stage */
                 while (*fingeom == NULL) {
                     if (PROMPT)
                         printf("Geometry input file name: ");
-                    scanf("%s", geomname);
+                    if(scanf("%s", geomname) != 1) return;
  
                     *fingeom = fopen(geomname, "r");
                     if (*fingeom == NULL) {
@@ -163,7 +163,7 @@ int      *ndims;		/* number of divisions at each stage */
             while (*fingeom == NULL) {
                 if (PROMPT)
                     printf("Geometry input file name: ");
-                scanf("%s", geomname);
+                if(scanf("%s", geomname) != 1) return;
  
                 *fingeom = fopen(geomname, "r");
                 if (*fingeom == NULL) {

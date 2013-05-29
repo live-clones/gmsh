@@ -480,19 +480,25 @@ static void Mesh2D(GModel *m)
     while(1){
       int nPending = 0;
       std::vector<GFace*> _temp; _temp.insert(_temp.begin(), f.begin(), f.end());
+#if defined(_OPENMP)
 #pragma omp parallel for schedule (dynamic)
+#endif
       for(size_t K = 0 ; K < _temp.size() ; K++){
 	if (_temp[K]->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);
 	  mesher(_temp[K]);
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
 	  {
 	    nPending++;
 	  }
 	}
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
+#if defined(_OPENMP)
 #pragma omp master
+#endif
       for(std::set<GFace*>::iterator it = cf.begin(); it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
 	  meshGFace mesher (true, CTX::instance()->mesh.multiplePasses);

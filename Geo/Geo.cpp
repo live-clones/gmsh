@@ -2287,6 +2287,9 @@ int Extrude_ProtudePoint(int type, int ip,
     }
     c->end = chapeau;
     break;
+//  case ANALYTICAL:
+//    
+//    break;
   default:
     Msg::Error("Unknown extrusion type");
     return pv->Num;

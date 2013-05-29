@@ -963,13 +963,14 @@ void   skipline(void);
 
 #define YY_INPUT(buf,result,max_size)					\
      {									\
-       int c = '*', n;							\
+       int c = '*';							\
+       unsigned int n;                                                  \
        for ( n = 0; n < max_size &&					\
-	       (c = getc( gmsh_yyin )) != EOF && c != '\n'; ++n )		\
+	       (c = getc( gmsh_yyin )) != EOF && c != '\n'; ++n )       \
 	 buf[n] = (char) c;						\
        if ( c == '\n' ){						\
 	 buf[n++] = (char) c;						\
-	 gmsh_yylineno++;							\
+	 gmsh_yylineno++;						\
        }								\
        if ( c == EOF && ferror( gmsh_yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\

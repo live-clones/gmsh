@@ -836,7 +836,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
     //   for triangle, 4 for quad) and the fourth is the index of the element in
     //   the vertex array
     GLuint names = *ptr++;
-    *ptr++; // mindepth
+    ptr++; // mindepth
     GLuint maxdepth = *ptr++;
     if(names == 2){
       GLuint depth = maxdepth;

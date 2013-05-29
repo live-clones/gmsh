@@ -182,8 +182,8 @@ bool compute4neighbors (GFace *gf,   // the surface
 			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
 
-  Range<double> rangeU = gf->parBounds(0);
-  Range<double> rangeV = gf->parBounds(1);
+  //Range<double> rangeU = gf->parBounds(0);
+  //Range<double> rangeV = gf->parBounds(1);
 
   // we assume that v is on surface gf
 
@@ -476,7 +476,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
   FILE *f = fopen(ccc,"w");
   fprintf(f,"View \"\"{\n");
-  for (int i=0;i<vertices.size();i++){
+  for (unsigned int i=0;i<vertices.size();i++){
     //    if(vertices[i]->_v->onWhat() != gf) 
       vertices[i]->print(f,i);
     if(vertices[i]->_v->onWhat() == gf) {

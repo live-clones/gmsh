@@ -2257,7 +2257,7 @@ int untangleInvalidQuads(GFace *gf, int niter)
   return N;
 }
 
-static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
+/*static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
 {
   SPoint2 p1, p2, p3;
   reparamMeshVertexOnFace(v1, gf, p1);
@@ -2265,7 +2265,7 @@ static int orientationOK (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
   reparamMeshVertexOnFace(v3, gf, p3);
   if (robustPredicates::orient2d(p1, p2, p3) < 0) return true;
   return false;
-}
+}*/
 
 static int allowSwap (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 {

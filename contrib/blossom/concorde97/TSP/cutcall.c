@@ -1375,17 +1375,23 @@ int *tour;
             fprintf (stderr, "out of memory in CCtsp_file_cuts\n");
             rval = 1; goto CLEANUP;
         }
-        fscanf (in, "%d", &nhandles);
+        if (fscanf (in, "%d", &nhandles) != 1) {
+            rval = 1; goto CLEANUP;
+        }
         c->handlecount = nhandles;
         for (i = 0; i < ncliques; i++) {
-            fscanf (in, "%d", &size);
+            if (fscanf (in, "%d", &size) != 1) {
+                rval = 1; goto CLEANUP;
+            }
             icliq = CC_SAFE_MALLOC (size, int);
             if (!icliq) {
                 fprintf (stderr, "out of memory in CCtsp_file_cuts\n");
                 rval = 1; goto CLEANUP;
             }
             for (j = 0; j < size; j++) {
-                fscanf (in, "%d", &k);
+                if (fscanf (in, "%d", &k) != 1) {
+                    rval = 1; goto CLEANUP;
+                }
                 icliq[j] = inv[k];
             }
             rval = CCtsp_array_to_lpclique (icliq, size, &(c->cliques[i]));
@@ -1395,7 +1401,9 @@ int *tour;
             }
             CC_FREE (icliq, int);
         }
-        fscanf (in, "%d", &(c->rhs));
+        if (fscanf (in, "%d", &(c->rhs)) != 1) {
+            rval = 1; goto CLEANUP;
+        }
         c->sense = 'G';
         c->branch = 0;
         c->next = *cuts;

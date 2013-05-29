@@ -44,10 +44,10 @@ gmp_matrix * gmp_matrix_read_coord(char* filename)
 
   /* Matlab and Octave typically include comments on ascii files. */
   /* They start with # */
-  fgets(buffer, 999, p_file);
+  if(!fgets(buffer, 999, p_file)) return NULL;
   while(strncmp(buffer, "#",1) == 0)
     {
-      fgets(buffer, 999, p_file);
+      if(!fgets(buffer, 999, p_file)) return NULL;
     }
 
   /* First read the size of the matrix */

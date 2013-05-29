@@ -45,7 +45,9 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
 MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
   {
     // we should make GModel a mandatory argument to the constructor
     GModel *m = GModel::current();
@@ -71,7 +73,9 @@ void MVertex::deleteLast()
 
 void MVertex::forceNum(int num)
 {
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
   {
     _num = num;
     GModel::current()->setMaxVertexNumber

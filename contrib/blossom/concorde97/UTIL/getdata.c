@@ -270,42 +270,49 @@ CCdatagroup *dat;
                     return 1;
                 }
             } else {
-                FILE *datin = fopen (datname, "r");
-                if (datin == (FILE *) NULL) {
-                    perror (datname);
-                    fprintf (stderr, "Unable to open %s for input\n", datname);
-                    return 1;
+              FILE *datin = fopen (datname, "r");
+              if (datin == (FILE *) NULL) {
+                perror (datname);
+                fprintf (stderr, "Unable to open %s for input\n", datname);
+                return 1;
+              }
+              if (fscanf (datin, "%d", ncount) != 1) { fclose(datin); return 1; }
+              printf ("nnodes = %d\n", *ncount);
+              dat->x = CC_SAFE_MALLOC (*ncount, double);
+              if (!dat->x) {
+                fclose (datin);
+                return 1;
+              }
+              dat->y = CC_SAFE_MALLOC (*ncount, double);
+              if (!dat->y) {
+                fclose (datin);
+                CCutil_freedatagroup (*ncount, dat);
+                return 1;
+              }
+              if ((innorm & CC_NORM_SIZE_BITS) == CC_D3_NORM_SIZE) {
+                dat->z = CC_SAFE_MALLOC (*ncount, double);
+                if (!dat->z) {
+                  fclose (datin);
+                  CCutil_freedatagroup (*ncount, dat);
+                  return 1;
                 }
-                fscanf (datin, "%d", ncount);
-                printf ("nnodes = %d\n", *ncount);
-                dat->x = CC_SAFE_MALLOC (*ncount, double);
-                if (!dat->x) {
-                    fclose (datin);
-                    return 1;
-                }
-                dat->y = CC_SAFE_MALLOC (*ncount, double);
-                if (!dat->y) {
-                    fclose (datin);
+                for (i = 0; i < *ncount; i++) {
+                  if (fscanf (datin, "%lf %lf %lf", &(dat->x[i]), &(dat->y[i]), &(dat->z[i])) != 1) {
+                    fclose(datin);
                     CCutil_freedatagroup (*ncount, dat);
                     return 1;
+                  }
                 }
-                if ((innorm & CC_NORM_SIZE_BITS) == CC_D3_NORM_SIZE) {
-                    dat->z = CC_SAFE_MALLOC (*ncount, double);
-                    if (!dat->z) {
-                        fclose (datin);
-                        CCutil_freedatagroup (*ncount, dat);
-                        return 1;
-                    }
-                    for (i = 0; i < *ncount; i++) {
-                        fscanf (datin, "%lf %lf %lf",
-                             &(dat->x[i]), &(dat->y[i]), &(dat->z[i]));
-                    }
-                } else {
-                    for (i = 0; i < *ncount; i++) {
-                        fscanf (datin, "%lf %lf", &(dat->x[i]), &(dat->y[i]));
-                    }
+              } else {
+                for (i = 0; i < *ncount; i++) {
+                  if (fscanf (datin, "%lf %lf", &(dat->x[i]), &(dat->y[i])) != 1) {
+                    fclose(datin);
+                    CCutil_freedatagroup (*ncount, dat);
+                    return 1;
+                  }
                 }
-                fclose (datin);
+              }
+              fclose (datin);
             }
         } else {
             printf ("Random %d point set\n", *ncount);
@@ -505,8 +512,8 @@ CCdatagroup *dat;
                 fprintf (stderr, "Unable to open %s for input\n", datname);
                 return 1;
             }
-            fscanf (datin, "%d", &seed);
-            fscanf (datin, "%d", &maxdist);
+            if (fscanf (datin, "%d", &seed) != 1) { fclose(datin); return 1; }
+            if (fscanf (datin, "%d", &maxdist) != 1) { fclose(datin); return 1; }
             fclose (datin);
         } else {
             seed = 1;
@@ -811,20 +818,28 @@ double **wcoord;
     if (weightname != (char *) NULL) {
         FILE *weightin = fopen (weightname, "r");
         if (weightin == (FILE *) NULL) {
-            perror (weightname);
-            fprintf (stderr, "Unable to open %s for input\n", weightname);
-            CC_FREE (*wcoord, double);
-            return 1;
+          perror (weightname);
+          fprintf (stderr, "Unable to open %s for input\n", weightname);
+          CC_FREE (*wcoord, double);
+          return 1;
         }
-        fscanf (weightin, "%d", &k);
+        if (fscanf (weightin, "%d", &k) != 1) {
+          fclose(weightin);
+          CC_FREE (*wcoord, double);
+          return 1;
+        }
         if (k != ncount) {
-            fprintf (stderr, "Weight file does not match node file\n");
-            fclose (weightin);
-            CC_FREE (*wcoord, double);
-            return 1;
+          fprintf (stderr, "Weight file does not match node file\n");
+          fclose (weightin);
+          CC_FREE (*wcoord, double);
+          return 1;
         }
         for (i = 0; i < k; i++) {
-            fscanf (weightin, "%lf", &((*wcoord)[i]));
+          if (fscanf (weightin, "%lf", &((*wcoord)[i])) != 1) {
+            fclose(weightin);
+            CC_FREE (*wcoord, double);
+            return 1;
+          }
         }
         make_weights_nonnegative (ncount, *wcoord);
         fclose (weightin);
@@ -991,7 +1006,10 @@ CCdatagroup *dat;
                         return 1;
                     }
                     for (i = 0; i < *ncount; i++) {
-                        fscanf (in, "%*d %lf %lf", &(dat->x[i]), &(dat->y[i]));
+                      if (fscanf (in, "%*d %lf %lf", &(dat->x[i]), &(dat->y[i])) != 2) {
+                        CCutil_freedatagroup (*ncount, dat);
+                        return 1;
+                      }
                     }
                 } else if (((dat->norm) & CC_NORM_SIZE_BITS) ==
                                             CC_D3_NORM_SIZE) {
@@ -1011,8 +1029,11 @@ CCdatagroup *dat;
                         return 1;
                     }
                     for (i = 0; i < *ncount; i++) {
-                        fscanf (in, "%*d %lf %lf %lf",
-                               &(dat->x[i]), &(dat->y[i]), &(dat->z[i]));
+                      if (fscanf (in, "%*d %lf %lf %lf",
+                               &(dat->x[i]), &(dat->y[i]), &(dat->z[i])) != 3) {
+                        CCutil_freedatagroup (*ncount, dat);
+                        return 1;
+                      }
                     }
                 } else {
                     fprintf (stderr, "ERROR: Node coordinates with norm %d?\n",
@@ -1043,8 +1064,12 @@ CCdatagroup *dat;
                                 CCutil_freedatagroup (*ncount, dat);
                                 return 1;
                             }
-                            for (j = 0; j <= i; j++)
-                                fscanf (in, "%d", &(dat->adj[i][j]));
+                            for (j = 0; j <= i; j++){
+                              if (fscanf (in, "%d", &(dat->adj[i][j])) != 1) {
+                                CCutil_freedatagroup (*ncount, dat);
+                                return 1;
+                              }
+                            }
                         }
                     } else if (matrixform == MATRIX_UPPER_ROW ||
                                matrixform == MATRIX_UPPER_DIAG_ROW ||
@@ -1066,14 +1091,33 @@ CCdatagroup *dat;
                             }
                             if (matrixform == MATRIX_UPPER_ROW) {
                                 tempadj[i][i] = 0;
-                                for (j = i + 1; j < *ncount; j++)
-                                    fscanf (in, "%d", &(tempadj[i][j]));
+                                for (j = i + 1; j < *ncount; j++) {
+                                    if (fscanf (in, "%d", &(tempadj[i][j])) != 1) {
+                                        CCutil_freedatagroup (*ncount, dat);
+                                        for (j = 0; j < i; j++)
+                                            CC_FREE (tempadj[j], int);
+                                        CC_FREE (tempadj, int *);
+                                        return 1;
+                                    }
+                                }
                             } else if (matrixform == MATRIX_UPPER_DIAG_ROW) {
-                                for (j = i; j < *ncount; j++)
-                                    fscanf (in, "%d", &(tempadj[i][j]));
+                                for (j = i; j < *ncount; j++) {
+                                    if (fscanf (in, "%d", &(tempadj[i][j])) != 1) {
+                                        CCutil_freedatagroup (*ncount, dat);
+                                        for (j = 0; j < i; j++)
+                                            CC_FREE (tempadj[j], int);
+                                        CC_FREE (tempadj, int *);
+                                    }
+                                }
                             } else {
-                                for (j = 0; j < *ncount; j++)
-                                    fscanf (in, "%d", &(tempadj[i][j]));
+                                for (j = 0; j < *ncount; j++) {
+                                    if (fscanf (in, "%d", &(tempadj[i][j])) != 1) {
+                                        CCutil_freedatagroup (*ncount, dat);
+                                        for (j = 0; j < i; j++)
+                                            CC_FREE (tempadj[j], int);
+                                        CC_FREE (tempadj, int *);
+                                    }
+                                }
                             }
                         }
                         for (i = 0; i < *ncount; i++) {
@@ -1291,7 +1335,11 @@ int *outcycle;
         return 1;
     }
 
-    fscanf (cycin, "%d %d", &i, &k);
+    if (fscanf (cycin, "%d %d", &i, &k) != 2) {
+        CC_FREE (elist, int);
+        fclose (cycin);
+        return 1;
+    }
     if (i != ncount || k != ncount) {
         fprintf (stderr, "file is not a cycle-edge file for this problem\n");
         CC_FREE (elist, int);
@@ -1299,8 +1347,13 @@ int *outcycle;
         return 1;
     }
 
-    for (i = 0; i < ncount; i++)
-        fscanf (cycin, "%d %d %*d", &(elist[2 * i]), &(elist[(2 * i) + 1]));
+    for (i = 0; i < ncount; i++) {
+        if (fscanf (cycin, "%d %d %*d", &(elist[2 * i]), &(elist[(2 * i) + 1])) != 2) {
+            CC_FREE (elist, int);
+            fclose (cycin);
+            return 1;
+        }
+    }
 
     if (CCutil_edge_to_cycle (ncount, elist, outcycle)) {
         fprintf (stderr, "CCutil_edge_to_cycle failed\n");
@@ -1720,13 +1773,22 @@ CCdatagroup *dat;
 
         for (i = 0; i < 3; i++) {
             for (j = 0; j < 3; j++) {
-                fscanf (datin, "%lf", &orient[i][j]);
+                if (fscanf (datin, "%lf", &orient[i][j]) != 1) {
+                    fclose (datin);
+                    return 1;
+                }
             }
         }
-        fscanf (datin, "%lf", &lambda);
+        if (fscanf (datin, "%lf", &lambda) != 1) {
+            fclose (datin);
+            return 1;
+        }
         for (i = 0; i < 3; i++) {
             for (j = 0; j < 2; j++) {
-                fscanf (datin, "%d", &(bounds[i][j]));
+                if (fscanf (datin, "%d", &(bounds[i][j])) != 1) {
+                    fclose (datin);
+                    return 1;
+                }
             }
         }
         fclose (datin);

@@ -159,10 +159,10 @@ void Specifics_Init()
   FILE *specificsFP;
   
   sprintf(command, "/bin/rm -f %s.cpp", specificsFile);
-  system(command);
+  if(system(command));
   sprintf(command, "%s -P %s %s %s.cpp",
 	  CPP_LOC, specificsDefines, specificsFile, specificsFile);
-  system(command);
+  if(system(command));
   strcat(specificsFile, ".cpp");
   if ((specificsFP = fopen(specificsFile, "r")) == NULL) {
     throw "Cannot open specifics file";
@@ -170,7 +170,7 @@ void Specifics_Init()
   printf("Specifics file: %s\n", specificsFile);
   Parse_Specifics_File(specificsFP);
   sprintf(command, "/bin/rm -f %s.cpp", specificsFile);
-  system(command);
+  if(system(command));
 
 }
 

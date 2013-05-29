@@ -51,11 +51,11 @@ void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities)
 void readMSHPeriodicNodes (FILE *fp, GModel *gm)
 {
   int count;
-  fscanf(fp, "%d", &count);
+  if(fscanf(fp, "%d", &count) != 1) return;
   for(int i = 0; i < count; i++){
-    int dim,slave,master;
-    fscanf(fp, "%d %d %d", &dim, &slave, &master);
-    GEntity *s=0,*m=0;
+    int dim, slave, master;
+    if(fscanf(fp, "%d %d %d", &dim, &slave, &master) != 3) continue;
+    GEntity *s = 0, *m = 0;
     switch(dim){
     case 0 : s = gm->getVertexByTag(slave); m = gm->getVertexByTag(master); break;
     case 1 : s = gm->getEdgeByTag(slave); m = gm->getEdgeByTag(master); break;
@@ -64,10 +64,10 @@ void readMSHPeriodicNodes (FILE *fp, GModel *gm)
     if (s && m){
       s->setMeshMaster(m->tag());
       int numv;
-      fscanf(fp, "%d", &numv);
+      if(fscanf(fp, "%d", &numv) != 1) numv = 0;
       for(int j = 0; j < numv; j++){
-	int v1,v2;
-	fscanf(fp,"%d %d", &v1, &v2);
+	int v1, v2;
+	if(fscanf(fp,"%d %d", &v1, &v2) != 2) continue;
 	MVertex *mv1 = gm->getMeshVertexByTag(v1);
 	MVertex *mv2 = gm->getMeshVertexByTag(v2);
 	s->correspondingVertices[mv1] = mv2;
@@ -87,7 +87,7 @@ int GModel::readMSH(const std::string &name)
   char str[256] = "";
 
   // detect prehistoric MSH files
-  fgets(str, sizeof(str), fp);
+  if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
   if(!strncmp(&str[1], "NOD", 3) || !strncmp(&str[1], "NOE", 3)){
     fclose(fp);
     return _readMSH2(name);

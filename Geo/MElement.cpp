@@ -30,7 +30,9 @@ double MElement::_isInsideTolerance = 1.e-6;
 
 MElement::MElement(int num, int part) : _visible(1)
 {
-#pragma omp critical
+#if defined(_OPENMP)
+  #pragma omp critical
+#endif
   {
     // we should make GModel a mandatory argument to the constructor
     GModel *m = GModel::current();

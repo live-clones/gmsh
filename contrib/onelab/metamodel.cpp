@@ -68,8 +68,8 @@ int metamodel(const std::string &action){
     std::string mystderr = FixWindowsQuotes(workingDir + "stderr.txt");
     OLMsg::Info("Redirecting stdout into <%s>",mystdout.c_str());
     OLMsg::Info("Redirecting stderr into <%s>",mystderr.c_str());
-    freopen(mystdout.c_str(),"w",stdout);
-    freopen(mystderr.c_str(),"w",stderr);
+    if(!freopen(mystdout.c_str(),"w",stdout)) return 0;
+    if(!freopen(mystderr.c_str(),"w",stderr)) return 0;
   }
 
   if( myModel->isTodo(ANALYZE)){

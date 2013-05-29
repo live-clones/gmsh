@@ -642,16 +642,16 @@ CCtsp_lp *lp;
 
     printf ("Enter the (integer) id's for the two child nodes: ");
     fflush (stdout);
-    scanf ("%d %d", &ch0, &ch1);
+    if (scanf ("%d %d", &ch0, &ch1) != 2) { rval = 1; goto CLEANUP; }
 
     printf ("Enter 0 if edge-branch and 1 if clique-branch: ");
     fflush (stdout);
-    scanf ("%d", &tbran);
+    if (scanf ("%d", &tbran) != 1) { rval = 1; goto CLEANUP; }
 
     if (!tbran) {
         printf ("Enter ends of branching edge (use neg if original): ");
         fflush (stdout);
-        scanf ("%d %d", &bend0, &bend1);
+        if (scanf ("%d %d", &bend0, &bend1) != 2) { rval = 1; goto CLEANUP; }
         if (bend0 < 0) {
             if (bend1 >= 0) {
                 fprintf (stderr, "both ends must be from the same order\n");
@@ -670,7 +670,7 @@ CCtsp_lp *lp;
     } else {
         printf ("Enter the number of segments in clique: ");
         fflush (stdout);
-        scanf ("%d", &nseg);
+        if (scanf ("%d", &nseg) != 1) { rval = 1; goto CLEANUP; }
         slist = CC_SAFE_MALLOC (2*nseg, int);
         if (!slist) {
             fprintf (stderr, "out of memory\n");
@@ -679,7 +679,7 @@ CCtsp_lp *lp;
         printf ("Enter the ends of the segments: ");
         fflush (stdout);
         for (i = 0; i < nseg; i++) {
-            scanf ("%d %d", &slist[2*i], &slist[2*i+1]);
+            if (scanf ("%d %d", &slist[2*i], &slist[2*i+1]) != 2) { rval = 1; goto CLEANUP; }
         }
         c = CC_SAFE_MALLOC (1, CCtsp_lpclique);
         if (!c) {
