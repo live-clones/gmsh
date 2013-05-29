@@ -364,30 +364,40 @@ std::string OLMsg::GetOnelabAttributeNumber(std::string name,std::string attrib)
 
 int fullNameLessThan::compareFullNames(const std::string a, const std::string b) const{
   std::string::const_iterator ita, itb;
-  ita=a.begin(); itb=b.begin();
-  if( (*ita >= '0') && (*ita <= '9')) ita++;
-  if( (*itb >= '0') && (*itb <= '9')) itb++;
 
-  while( (ita<a.end()) && (itb<b.end()) && (*ita == *itb) ){
-    if(*ita == '/'){
-      ita++;
-      if( (*ita >= '0') && (*ita <= '9')) ita++;
-    }
-    else
-      ita++;
+  // Compares the strings a and b
+  // One-digit numbers at the beginning of the string
+  // or directly following the separator '/' are ignored
 
-    if(*itb == '/'){
-      itb++;
-      if( (*itb >= '0') && (*itb <= '9')) itb++;
+  ita = a.begin(); itb = b.begin();
+
+  // ignore a possible initial one-digit number
+  if( (ita < a.end()) && (*ita >= '0') && (*ita <= '9')) ita++;
+  if( (itb < b.end()) && (*itb >= '0') && (*itb <= '9')) itb++;
+
+  while( (ita < a.end()) && (itb < b.end())) { 
+    if(*ita == *itb){
+      if(*ita == '/'){ // hence *itb == '/'
+	ita++; if( (ita < a.end()) && (*ita >= '0') && (*ita <= '9')) ita++;
+	itb++; if( (itb < b.end()) && (*itb >= '0') && (*itb <= '9')) itb++;
+      }
+      else{
+	ita++;
+	itb++;
+      }
     }
-    else
-      itb++;
+    else { // mismatched character found
+      return *ita < *itb ;
+    }
   }
-  return *ita < *itb ;
+  // either string is at end()
+  return !(itb == b.end());
 }
+
 void OLMsg::recordFullName(const std::string &name){
   OLMsg::_fullNameDict.insert(name);
 }
+
 std::string OLMsg::obtainFullName(const std::string &name){
   std::set<std::string, fullNameLessThan>::iterator it;
 
@@ -435,25 +445,3 @@ void OLMsg::FinalizeOnelab(){
     _client = 0;
   }
 }
-
-
-
-// void OLMsg::AddOnelabNumberChoice(std::string name, double val)
-// {
-//   if(_onelabClient){
-//     std::vector<double> choices;
-//     std::vector<onelab::number> ps;
-//     _onelabClient->get(ps, name);
-//     if(ps.size()){
-//       choices = ps[0].getChoices();
-//     }
-//     else{
-//       ps.resize(1);
-//       ps[0].setName(name);
-//     }
-//     ps[0].setVisible(false);
-//     choices.push_back(val);
-//     ps[0].setChoices(choices);
-//     _onelabClient->set(ps[0]);
-//   }
-// }
