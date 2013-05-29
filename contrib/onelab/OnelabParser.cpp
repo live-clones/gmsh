@@ -130,37 +130,46 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
 	     size_t &end){
   // syntax: (arguments[Ø], arguments[1], ... , arguments[n])
   // arguments[i] may contain parenthesis
+
   size_t pos, cursor;
   arguments.resize(0);
-  cursor=0;
-  if ( (pos=in.find("(",cursor)) == std::string::npos ){
-     OLMsg::Error("Syntax error: <%s>",in.c_str());
-     return 0;
-  }
-  if (pos>0){
-    std::cout << pos << in << std::endl;
+
+  pos=0;
+  if(in[pos] != '(') {
     OLMsg::Error("Syntax error: <%s>",in.c_str());
+    return 0;
   }
-  unsigned int count=1;
   pos++; // skips '('
+  int count=1;
   cursor = pos; 
   do{
-    if(in[pos]=='(') count++;
-    else if(in[pos]==')') count--;
-    else if(in[pos]==',' && (count==1)) {
-      arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
-      if(count!=1)
+    if(in[pos] == '(') 
+      count++;
+    else if(in[pos] == ')') 
+      count--;
+    else if(in[pos] == ',') {
+      if(count == 1)
+	arguments.push_back(removeBlanks(in.substr(cursor,pos-cursor)));
+      else{
 	OLMsg::Error("Syntax error: mismatched parenthesis <%s>",in.c_str());
+	return 0;
+      }
       cursor=pos+1; // skips ','
     }
     pos++;
-  } while( count && (pos!=std::string::npos) );
-  // count is 0 when the closing brace is found. 
+  } while( count && (pos < in.size()) );
 
-  if(count)
-     OLMsg::Error("Syntax error: <%s>",in.c_str());
-  else
+  // count is 0 when the closing brace has been found. 
+  if(count){
+    OLMsg::Error("Syntax error: <%s>",in.c_str());
+    return 0;
+  }
+  else if (pos!=std::string::npos)
     arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
+  else{
+    OLMsg::Error("weirdo: <%s>",in.c_str());
+    return 0;
+  }
   end=pos;
   return arguments.size();
 }
@@ -189,9 +198,12 @@ int extract(const std::string &in, std::string &paramName,
   int NumArg = enclosed(in.substr(cursor),arguments,pos);
   //std::cout << "FHF=" << in.substr(cursor+pos) << std::endl;
   if((in.find_first_not_of(" \t",cursor+pos)) != std::string::npos){
-    OLMsg::Error("Ghost command in <%s> (forgot a %s ?)",
+    OLMsg::Error("Syntax error in <%s> (forgot a %s ?)",
   		 in.c_str(),olkey::separator.c_str());
+    return 0;
   }
+  if(!NumArg)
+    OLMsg::Error("Syntax error: <%s>",in.c_str());
   return NumArg;
 }
 
@@ -407,7 +419,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
     cursor=pos0+buff.length();
   }
 
-  // Check now wheter the line contains OL.mathex and resolve them
+  // Check now wheter the line contains OL.eval's and resolve them
   cursor=0;
   while ( (pos=line.find(olkey::mathex,cursor)) != std::string::npos){
     size_t pos0=pos;
@@ -530,27 +542,30 @@ void localSolverClient::parse_sentence(std::string line) {
   cursor = 0;
   while ( (pos=line.find(olkey::separator,cursor)) != std::string::npos){
     std::string name, action;
-    extract(line.substr(cursor,pos-cursor),name,action,arguments);
 
+    extract(line.substr(cursor,pos-cursor),name,action,arguments);
     if(!action.compare("number")) { 
-      double val;
       // syntax: paramName.number(val,path,help,range(optional))
+      double val=0.0;
       if(arguments.size()>1)
 	name.assign(FixOLPath(arguments[1]) + name);
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(numbers, name);
       if(numbers.empty()){ 
-	numbers.resize(1);
-	numbers[0].setName(name);
-	if(arguments[0].empty()){
-	  val=0;
-	  numbers[0].setReadOnly(true);
-	}
-	else
-	  val=atof(resolveGetVal(arguments[0]).c_str());
-	numbers[0].setValue(val);
+      	numbers.resize(1);
+      	numbers[0].setName(name);
+      	if(arguments[0].empty()){
+      	  numbers[0].setReadOnly(true);
+      	  numbers[0].setNeverChanged(true);
+      	}
+      	else
+      	  val=atof(resolveGetVal(arguments[0]).c_str());
+      	numbers[0].setValue(val);
       }
+      else if(arguments[0].empty()) // resets read only parameters
+      	  numbers[0].setValue(val);
+
       if(arguments.size()>2)
 	numbers[0].setLabel(unquote(arguments[2]));
       if(arguments.size()>3){
@@ -1037,9 +1052,10 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   else if ( (pos=line.find(olkey::dump)) != std::string::npos) { 
     // onelab.dump 
     cursor = pos+olkey::dump.length();
-    if(enclosed(line.substr(cursor),arguments,pos)<1)
+    if(enclosed(line.substr(cursor),arguments,pos)<1){
       OLMsg::Error("Misformed <%s> statement: (%s)",
-		 olkey::dump.c_str(),line.c_str());
+      		 olkey::dump.c_str(),line.c_str());
+    }
     else
       onelab::server::instance()->toFile(resolveGetVal(arguments[0]));
   }
@@ -1066,13 +1082,18 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       else
 	cmd.assign(line.substr(posa,posb-posa));
 
-      cmds.append(cmd);
-      //std::cout << "cmds=<" << cmds << ">" << std::endl;
+      // check whether "cmd" contains "olkey::separator"
+      posb=cmd.find(olkey::separator);
+      if(posb == std::string::npos){
+	cmds.append(cmd);
+	terminated = false;
+      }
+      else{
+        cmds.append(cmd.substr(0,posb+1)); // ignore trailing code FIXME
+	terminated=true;
+      }
 
-      // check whether "cmd" ends now with "olkey::separator"
-      posb=cmd.find_last_not_of(" \t")-olkey::separator.length()+1;
-      if(posb<0) posb=0;
-      terminated = !cmd.compare(posb,olkey::separator.length(),olkey::separator);
+      //std::cout << "cmds=<" << cmds << ">" << terminated << std::endl;
 
       if(!terminated){
 	// not found olkey::separator => append the next line
@@ -1091,12 +1112,16 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   
     if(terminated)
       parse_sentence(cmds);
-    else if(err)
-      OLMsg::Error("Block ended within multiline command <%s>",
-		   cmds.c_str());
-    else if(NbLines >= 20)
-      OLMsg::Error("Command <%s> should not span over more than 20 lines",
-		   cmds.c_str());
+    else{
+      if(err)
+	OLMsg::Error("Unterminated command in block<%s>", cmds.c_str());
+      else if(NbLines >= 20)
+	OLMsg::Error("Command <%s> should not span over more than 20 lines",
+		     cmds.c_str());
+      else
+	OLMsg::Error("Unterminated command <%s>", cmds.c_str());
+      return;
+    }
   }
   else if ( (pos=line.find(olkey::getValue)) != std::string::npos) {
     // onelab.getValue: nothing to do
@@ -1533,7 +1558,7 @@ void MetaModel::client_sentence(const std::string &name,
     if(arguments[0].size()){
       if((c=findClientByName(name))){
 	c->setActive(atof( resolveGetVal(arguments[0]).c_str() ));
-	onelab::server::instance()->setChanged(true, c->getName());
+	//onelab::server::instance()->setChanged(true, c->getName());
       }
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
@@ -1611,15 +1636,17 @@ void MetaModel::client_sentence(const std::string &name,
     else if(isTodo(COMPUTE)){
       localSolverClient *c;
       if((c=findClientByName(name))){
-	if(c->getActive()){
 
-	  bool changed = onelab::server::instance()->getChanged(c->getName());
-	  bool started = isStarted(changed);
+	//onelab::server::instance()->setChanged(false, getName());
+	bool changed = onelab::server::instance()->getChanged(c->getName());
+	bool started = isStarted(changed);
 
-	  if(OLMsg::GetVerbosity())
-	    std::cout << c->getName() << " active=" << c->getActive() << " changed=" << changed << " started=" << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
-	  if(started) c->compute();
-	}
+	if(OLMsg::GetVerbosity())
+	  std::cout << c->getName() << " active=" 
+		    << c->getActive() << " changed=" 
+		    << changed << " started=" 
+		    << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
+	if(c->getActive() || started) c->compute();
       }
     }
   }
@@ -1698,6 +1725,9 @@ void MetaModel::client_sentence(const std::string &name,
       else
 	OLMsg::Error("Unknown client <%s>", name.c_str());
     }
+  }
+  else if(!action.compare("clientStatus")){
+    showClientStatus();
   }
   else
     OLMsg::Error("Unknown action <%s>", action.c_str());

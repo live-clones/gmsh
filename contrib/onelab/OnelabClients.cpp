@@ -481,7 +481,6 @@ void localSolverClient::FixExecPath(const std::string &in)
 
 bool localSolverClient::checkCommandLine(){
   bool success=true;
-  if(!isActive()) return success;
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
 
@@ -577,13 +576,10 @@ void localSolverClient::addNumberChoice(std::string name, double val, bool readO
     ps[0].setValue(val);
     choices.push_back(val);
     ps[0].setChoices(choices);
-    //ps[0].setAttribute("Highlight","Coral");
     set(ps[0]);
   }
   else{
     OLMsg::Error("The parameter <%s> does not exist", name.c_str());
-    // ps.resize(1);
-    // ps[0].setName(name);
   }
 }
 
@@ -775,6 +771,7 @@ void MetaModel::compute() {
 	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
   onelab::server::instance()->setChanged(false);
+  showClientStatus();
 }
 
 void MetaModel::registerClient(const std::string &name, const std::string &type, const std::string &cmdl, const std::string &host, const std::string &rdir) {
@@ -1054,7 +1051,6 @@ void EncapsulatedClient::compute(){
 
 bool RemoteInterfacedClient::checkCommandLine(){
   bool success;
-  if(!isActive()) return true;
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
   if(getCommandLine().empty())
@@ -1130,7 +1126,6 @@ std::string RemoteNativeClient::buildCommandLine(){
 
 bool RemoteNativeClient::checkCommandLine(){
   bool success;
-  if(!isActive()) return true;
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
   if(getCommandLine().empty())
@@ -1217,7 +1212,6 @@ void RemoteNativeClient::compute(){
 
 bool RemoteEncapsulatedClient::checkCommandLine(){
   bool success;
-  if(!isActive()) return true;
   OLMsg::Info("Check command line <%s> for client <%s>",
 	      getCommandLine().c_str(), getName().c_str());
   if(getCommandLine().empty())
