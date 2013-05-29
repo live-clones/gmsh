@@ -338,6 +338,9 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen->mode(mode);
   fullscreen->end();
   fullscreen->fullscreen();
+  #if not defined (__APPLE__)
+  fullscreen->icon(graph[0]->getWindow()->icon());
+  #endif
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -1053,7 +1056,12 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(str == "fullscreen"){
     if(!fullscreen){
+      int x,y,w,h;
+      Fl::screen_xywh(x, y, w, h);
+      FlGui::instance()->fullscreen->resize(x, y, w, h);
+      FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
+      while (!FlGui::instance()->fullscreen->valid()) FlGui::wait();
       FlGui::instance()->fullscreen->getDrawContext()->copyViewAttributes
         (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->fullscreen);
@@ -1064,7 +1072,11 @@ void window_cb(Fl_Widget *w, void *data)
     }
     else{
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        FlGui::instance()->graph[i]->gl[0]->valid(0);
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         FlGui::instance()->graph[i]->getWindow()->show();
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        while(!FlGui::instance()->graph[i]->gl[0]->valid()) FlGui::wait();
       FlGui::instance()->graph[0]->gl[0]->getDrawContext()->copyViewAttributes
         (FlGui::instance()->getCurrentOpenglWindow()->getDrawContext());
       openglWindow::setLastHandled(FlGui::instance()->graph[0]->gl[0]);
