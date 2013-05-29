@@ -16,7 +16,7 @@
 #include "meshGFace.h"
 
 #define REC2D_WAIT_SELECTED .01
-#define REC2D_WAIT_BEST_SEQ .01
+#define REC2D_WAIT_BEST_SEQ .1
 #define REC2D_WAIT_TM_1 .001
 #define REC2D_WAIT_TM_2 .001
 #define REC2D_WAIT_TM_3 .001
@@ -395,7 +395,6 @@ bool Recombine2D::recombine()
   Rec2DNode *root = new Rec2DNode(NULL, NULL, _horizon);
   Rec2DNode *currentNode = Rec2DNode::selectBestNode(root);
   
-  int i = 0;
   while (currentNode) {
     currentNode->lookahead(_horizon);
     currentNode = Rec2DNode::selectBestNode(currentNode);
@@ -516,7 +515,7 @@ void Recombine2D::clearChanges() // revert to initial state
   Rec2DData::clearChanges();
   _cur->_gf->triangles = _cur->_data->_tri;
   _cur->_gf->quadrangles = _cur->_data->_quad;
-#ifdef REC2D_DRAW
+#ifdef REC2D_DRAW_WHEN_CLEARED
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
 #endif
