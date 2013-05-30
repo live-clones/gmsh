@@ -356,7 +356,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       int n = PView::list.size();
       PView::fillVertexArray(this, length, &message[0], swap);
       if(FlGui::available())
-        FlGui::instance()->updateViews(n != (int)PView::list.size());
+        FlGui::instance()->updateViews(n != (int)PView::list.size(), true);
       drawContext::global()->draw();
     }
     break;
@@ -570,7 +570,7 @@ static void updateGraphs()
     redraw = redraw || ret;
   }
   if(redraw){
-    FlGui::instance()->updateViews();
+    FlGui::instance()->updateViews(true, true);
     drawContext::global()->draw();
   }
 }
@@ -1566,16 +1566,15 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
 
+  // we don't delete widgets everytime the tree is rebuilt to minimize potential
+  // race conditions (e.g. during heavy user interaction with autoCheck, with
+  // risks to call handle() or focus() on deleted widgets)
+  std::vector<Fl_Widget*> delWidgets;
+  std::vector<char*> delStrings;
   if(deleteWidgets){
-    // we don't delete all the widgets everytime the tree is rebuilt to minimize
-    // potential race conditions (e.g. during heavy user interaction with
-    // autoCheck, with risks to call handle() or focus() on deleted widgets)
-    Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
-    for(unsigned int i = 0; i < _treeWidgets.size(); i++)
-      Fl::delete_widget(_treeWidgets[i]);
+    delWidgets = _treeWidgets;
+    delStrings = _treeStrings;
     _treeWidgets.clear();
-    for(unsigned int i = 0; i < _treeStrings.size(); i++)
-      free(_treeStrings[i]);
     _treeStrings.clear();
   }
 
@@ -1642,6 +1641,15 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
 
   FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
+
+  if(deleteWidgets){
+    // this needs to be performed after FlGui::check()
+    Msg::Debug("Deleting onelabGroup widgets (%d)", (int)_treeWidgets.size());
+    for(unsigned int i = 0; i < delWidgets.size(); i++)
+      Fl::delete_widget(delWidgets[i]);
+    for(unsigned int i = 0; i < delStrings.size(); i++)
+      free(delStrings[i]);
+  }
 }
 
 void onelabGroup::openTreeItem(const std::string &name)

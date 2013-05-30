@@ -214,7 +214,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_PARSE_STRING, "Delete All;");
       for(int i = PView::list.size() - 1; i >= 0; i--)
         if(PView::list[i]->getData()->isRemote()) delete PView::list[i];
-      FlGui::instance()->updateViews();
+      FlGui::instance()->updateViews(true, true);
       drawContext::global()->draw();
     }
     else if(str == "test"){

@@ -23,7 +23,7 @@
 void updateFltk()
 {
 #if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews();
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 }
 

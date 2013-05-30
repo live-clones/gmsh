@@ -84,7 +84,7 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     new PView(name, "ElementData", GModel::current(), d);
   }
 
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 

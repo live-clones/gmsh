@@ -76,7 +76,7 @@ static void field_put_on_view_cb(Fl_Widget *w, void *data)
     field->putOnNewView();
   else if(mb->value() - 1 < (int)PView::list.size())
     field->putOnView(PView::list[mb->value() - 1]);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(mb->value() == 0, true);
   drawContext::global()->draw();
 }
 
@@ -102,7 +102,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   int width0 = 34 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
-  int width = (CTX::instance()->fieldSize[0] < width0) ? width0 : 
+  int width = (CTX::instance()->fieldSize[0] < width0) ? width0 :
     CTX::instance()->fieldSize[0];
   int height = (CTX::instance()->fieldSize[1] < height0) ? height0 :
     CTX::instance()->fieldSize[1];
@@ -125,7 +125,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   browser = new Fl_Hold_Browser(x, y + WB, w, h - 2 * WB);
   browser->callback(field_browser_cb);
 
-  y += h; 
+  y += h;
   delete_btn = new Fl_Button(x, y, w, BH, "Delete");
   delete_btn->callback(field_delete_cb, this);
 
@@ -146,7 +146,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   title = new Fl_Box(x, y, w, BH, "field_name");
   title->labelfont(FL_BOLD);
   title->labelsize(FL_NORMAL_SIZE + 3);
-  
+
   y += BH + WB;
   h -= BH + WB;
   Fl_Tabs *tabs = new Fl_Tabs(x, y , w, h);
@@ -156,14 +156,14 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
   w -= 2 * WB;
 
   Fl_Group *options_tab = new Fl_Group(x, y, w, h, "Options");
-  
+
   options_scroll = new Fl_Scroll(x, y + WB, w, h - BH - 3 * WB);
   options_scroll->end();
-  
+
   Fl_Button *apply_btn = new Fl_Return_Button
     (x + w - BB, y + h - BH - WB, BB, BH, "Apply");
   apply_btn->callback(field_apply_cb, this);
-  
+
   background_btn = new Fl_Round_Button
     (x, y + h - BH - WB, w - BB - WB, BH, "Set as background field");
   background_btn->tooltip("Only a single field can be set as background field.\n"
@@ -180,13 +180,13 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
   editor_group->end();
 
-  win->resizable(new Fl_Box((int)(1.5 * BB) + 2 * WB, BH + 2 * WB, 
+  win->resizable(new Fl_Box((int)(1.5 * BB) + 2 * WB, BH + 2 * WB,
                             width - 3 * WB - (int)(1.5 * BB),
                             height - 3 * BH - 5 * WB));
   editor_group->resizable(tabs);
   tabs->resizable(options_tab);
   options_tab->resizable(new Fl_Box(3 * BB + 4 * WB, BH + 2 * WB,
-                                    width - 9 * WB - 5 * BB, 
+                                    width - 9 * WB - 5 * BB,
                                     height - 3 * BH - 5 * WB));
   win->size_range(width0, height0);
   win->position(CTX::instance()->fieldPosition[0], CTX::instance()->fieldPosition[1]);
@@ -359,7 +359,7 @@ void fieldWindow::editField(Field *f)
   ConvertToHTML(help);
   if (! f->options.empty())
     help += std::string("<p><center><b>Options</b></center>");
-  for(std::map<std::string, FieldOption*>::iterator it = f->options.begin(); 
+  for(std::map<std::string, FieldOption*>::iterator it = f->options.begin();
       it != f->options.end(); it++){
     Fl_Widget *input;
     help += std::string("<p><b>") + it->first + "</b>";
@@ -399,7 +399,7 @@ void fieldWindow::editField(Field *f)
   }
   if (! f->callbacks.empty())
     help += std::string("<p><center><b>Actions</b></center>");
-  for(std::map<std::string, FieldCallback*>::iterator it = f->callbacks.begin(); 
+  for(std::map<std::string, FieldCallback*>::iterator it = f->callbacks.begin();
       it != f->callbacks.end(); it++){
     Fl_Widget *btn;
     help += std::string("<p><b>") + it->first + "</b>: ";

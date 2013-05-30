@@ -219,12 +219,19 @@ int SystemCall(const std::string &command, bool blocking)
   // get executable extension
   std::vector<std::string> split = SplitFileName(exe);
 
+  // do we try to run a python script?
+  bool script = (split[2] == ".py" || split[2] == ".PY");
+  if(script && StatFile(exe)){
+    Msg::Error("Unable to open file '%s'", exe.c_str());
+    return 1;
+  }
+
 #if defined(WIN32)
-  if(split[2] == ".py" || split[2] == ".PY"){
-    Msg::Info("Shell opening '%s' with arguments '%s'",
-	      exe.c_str(), args.c_str());
+  if(script){
+    Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
+              args.c_str());
     ShellExecute(NULL, (char*)"open", (char*)exe.c_str(),
-		 (char*)args.c_str(), NULL, 0);
+                 (char*)args.c_str(), NULL, 0);
   }
   else{
     STARTUPINFO suInfo;
@@ -250,10 +257,9 @@ int SystemCall(const std::string &command, bool blocking)
 		    &suInfo, &prInfo);
     }
   }
-  return 0;
 #else
   std::string cmd(command);
-  if(split[2] == ".py" || split[2] == ".PY"){
+  if(script){
     if(access(exe.c_str(), X_OK)){
       Msg::Info("Script '%s' is not executable: running with python", exe.c_str());
       cmd = "python " + cmd;
@@ -270,8 +276,8 @@ int SystemCall(const std::string &command, bool blocking)
   if(!blocking) cmd += " &";
   Msg::Info("Calling '%s'", cmd.c_str());
   if(!system(cmd.c_str())) return 1;
-  return 0;
 #endif
+  return 0;
 }
 
 std::string GetCurrentWorkdir()

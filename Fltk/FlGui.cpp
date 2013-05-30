@@ -338,9 +338,9 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen->mode(mode);
   fullscreen->end();
   fullscreen->fullscreen();
-  #if not defined (__APPLE__)
+#if not defined (__APPLE__)
   fullscreen->icon(graph[0]->getWindow()->icon());
-  #endif
+#endif
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
@@ -778,12 +778,12 @@ void FlGui::setGraphicTitle(std::string title)
   }
 }
 
-void FlGui::updateViews(bool numberOfViewsHasChanged)
+void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 {
   for(unsigned int i = 0; i < graph.size(); i++)
     graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged){
-    onelab->rebuildTree(true);
+    onelab->rebuildTree(deleteWidgets);
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();

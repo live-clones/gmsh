@@ -285,7 +285,7 @@ int GmshFLTK(int argc, char **argv)
 
   if(CTX::instance()->post.combineTime){
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
-    FlGui::instance()->updateViews();
+    FlGui::instance()->updateViews(true, true);
   }
 
   // init first context

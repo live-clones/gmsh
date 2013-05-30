@@ -57,7 +57,7 @@ static void view_reload(int index)
       if(p->getOptions()->timeStep > p->getData()->getNumTimeSteps() - 1)
         p->getOptions()->timeStep = 0;
       p->setChanged(true);
-      FlGui::instance()->updateViews();
+      FlGui::instance()->updateViews(true, true);
     }
   }
 }
@@ -88,7 +88,7 @@ static void view_remove_other_cb(Fl_Widget *w, void *data)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(i != (intptr_t)data) delete PView::list[i];
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
@@ -118,14 +118,14 @@ static void view_remove_all_cb(Fl_Widget *w, void *data)
       if(PView::list[i]->getData()->getName() == name) delete PView::list[i];
   }
 
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_remove_cb(Fl_Widget *w, void *data)
 {
   delete PView::list[(intptr_t)data];
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
@@ -179,56 +179,56 @@ static void view_save_cb(Fl_Widget *w, void *data)
 static void view_alias_cb(Fl_Widget *w, void *data)
 {
   new PView(PView::list[(intptr_t)data], false);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_alias_with_options_cb(Fl_Widget *w, void *data)
 {
   new PView(PView::list[(intptr_t)data], true);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 1, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 0, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_space_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(false, 2, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_all_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 1, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_visible_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 0, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 
 static void view_combine_time_by_name_cb(Fl_Widget *w, void *data)
 {
   PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   drawContext::global()->draw();
 }
 

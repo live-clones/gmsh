@@ -206,7 +206,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     p->run();
   }
 
-  FlGui::instance()->updateViews();
+  FlGui::instance()->updateViews(true, true);
   GMSH_Plugin::draw = 0;
   drawContext::global()->draw();
 }
