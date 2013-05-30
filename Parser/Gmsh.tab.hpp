@@ -80,110 +80,111 @@
      tStrRelative = 296,
      tStrReplace = 297,
      tStrFind = 298,
-     tTextAttributes = 299,
-     tBoundingBox = 300,
-     tDraw = 301,
-     tToday = 302,
-     tSyncModel = 303,
-     tCreateTopology = 304,
-     tCreateTopologyNoHoles = 305,
-     tDistanceFunction = 306,
-     tDefineConstant = 307,
-     tUndefineConstant = 308,
-     tPoint = 309,
-     tCircle = 310,
-     tEllipse = 311,
-     tLine = 312,
-     tSphere = 313,
-     tPolarSphere = 314,
-     tSurface = 315,
-     tSpline = 316,
-     tVolume = 317,
-     tCharacteristic = 318,
-     tLength = 319,
-     tParametric = 320,
-     tElliptic = 321,
-     tRefineMesh = 322,
-     tPlane = 323,
-     tRuled = 324,
-     tTransfinite = 325,
-     tComplex = 326,
-     tPhysical = 327,
-     tCompound = 328,
-     tPeriodic = 329,
-     tUsing = 330,
-     tPlugin = 331,
-     tDegenerated = 332,
-     tRotate = 333,
-     tTranslate = 334,
-     tSymmetry = 335,
-     tDilate = 336,
-     tExtrude = 337,
-     tLevelset = 338,
-     tRecombine = 339,
-     tSmoother = 340,
-     tSplit = 341,
-     tDelete = 342,
-     tCoherence = 343,
-     tIntersect = 344,
-     tMeshAlgorithm = 345,
-     tReverse = 346,
-     tLayers = 347,
-     tHole = 348,
-     tAlias = 349,
-     tAliasWithOptions = 350,
-     tQuadTriDbl = 351,
-     tQuadTriSngl = 352,
-     tRecombLaterals = 353,
-     tTransfQuadTri = 354,
-     tText2D = 355,
-     tText3D = 356,
-     tInterpolationScheme = 357,
-     tTime = 358,
-     tCombine = 359,
-     tBSpline = 360,
-     tBezier = 361,
-     tNurbs = 362,
-     tNurbsOrder = 363,
-     tNurbsKnots = 364,
-     tColor = 365,
-     tColorTable = 366,
-     tFor = 367,
-     tIn = 368,
-     tEndFor = 369,
-     tIf = 370,
-     tEndIf = 371,
-     tExit = 372,
-     tAbort = 373,
-     tField = 374,
-     tReturn = 375,
-     tCall = 376,
-     tFunction = 377,
-     tShow = 378,
-     tHide = 379,
-     tGetValue = 380,
-     tGetEnv = 381,
-     tGetString = 382,
-     tHomology = 383,
-     tCohomology = 384,
-     tBetti = 385,
-     tSetOrder = 386,
-     tGMSH_MAJOR_VERSION = 387,
-     tGMSH_MINOR_VERSION = 388,
-     tGMSH_PATCH_VERSION = 389,
-     tAFFECTDIVIDE = 390,
-     tAFFECTTIMES = 391,
-     tAFFECTMINUS = 392,
-     tAFFECTPLUS = 393,
-     tOR = 394,
-     tAND = 395,
-     tNOTEQUAL = 396,
-     tEQUAL = 397,
-     tGREATEROREQUAL = 398,
-     tLESSOREQUAL = 399,
-     UNARYPREC = 400,
-     tMINUSMINUS = 401,
-     tPLUSPLUS = 402
+     tStrCmp = 299,
+     tTextAttributes = 300,
+     tBoundingBox = 301,
+     tDraw = 302,
+     tToday = 303,
+     tSyncModel = 304,
+     tCreateTopology = 305,
+     tCreateTopologyNoHoles = 306,
+     tDistanceFunction = 307,
+     tDefineConstant = 308,
+     tUndefineConstant = 309,
+     tPoint = 310,
+     tCircle = 311,
+     tEllipse = 312,
+     tLine = 313,
+     tSphere = 314,
+     tPolarSphere = 315,
+     tSurface = 316,
+     tSpline = 317,
+     tVolume = 318,
+     tCharacteristic = 319,
+     tLength = 320,
+     tParametric = 321,
+     tElliptic = 322,
+     tRefineMesh = 323,
+     tPlane = 324,
+     tRuled = 325,
+     tTransfinite = 326,
+     tComplex = 327,
+     tPhysical = 328,
+     tCompound = 329,
+     tPeriodic = 330,
+     tUsing = 331,
+     tPlugin = 332,
+     tDegenerated = 333,
+     tRotate = 334,
+     tTranslate = 335,
+     tSymmetry = 336,
+     tDilate = 337,
+     tExtrude = 338,
+     tLevelset = 339,
+     tRecombine = 340,
+     tSmoother = 341,
+     tSplit = 342,
+     tDelete = 343,
+     tCoherence = 344,
+     tIntersect = 345,
+     tMeshAlgorithm = 346,
+     tReverse = 347,
+     tLayers = 348,
+     tHole = 349,
+     tAlias = 350,
+     tAliasWithOptions = 351,
+     tQuadTriDbl = 352,
+     tQuadTriSngl = 353,
+     tRecombLaterals = 354,
+     tTransfQuadTri = 355,
+     tText2D = 356,
+     tText3D = 357,
+     tInterpolationScheme = 358,
+     tTime = 359,
+     tCombine = 360,
+     tBSpline = 361,
+     tBezier = 362,
+     tNurbs = 363,
+     tNurbsOrder = 364,
+     tNurbsKnots = 365,
+     tColor = 366,
+     tColorTable = 367,
+     tFor = 368,
+     tIn = 369,
+     tEndFor = 370,
+     tIf = 371,
+     tEndIf = 372,
+     tExit = 373,
+     tAbort = 374,
+     tField = 375,
+     tReturn = 376,
+     tCall = 377,
+     tFunction = 378,
+     tShow = 379,
+     tHide = 380,
+     tGetValue = 381,
+     tGetEnv = 382,
+     tGetString = 383,
+     tHomology = 384,
+     tCohomology = 385,
+     tBetti = 386,
+     tSetOrder = 387,
+     tGMSH_MAJOR_VERSION = 388,
+     tGMSH_MINOR_VERSION = 389,
+     tGMSH_PATCH_VERSION = 390,
+     tAFFECTDIVIDE = 391,
+     tAFFECTTIMES = 392,
+     tAFFECTMINUS = 393,
+     tAFFECTPLUS = 394,
+     tOR = 395,
+     tAND = 396,
+     tNOTEQUAL = 397,
+     tEQUAL = 398,
+     tGREATEROREQUAL = 399,
+     tLESSOREQUAL = 400,
+     UNARYPREC = 401,
+     tMINUSMINUS = 402,
+     tPLUSPLUS = 403
    };
 #endif
 /* Tokens.  */
@@ -228,110 +229,111 @@
 #define tStrRelative 296
 #define tStrReplace 297
 #define tStrFind 298
-#define tTextAttributes 299
-#define tBoundingBox 300
-#define tDraw 301
-#define tToday 302
-#define tSyncModel 303
-#define tCreateTopology 304
-#define tCreateTopologyNoHoles 305
-#define tDistanceFunction 306
-#define tDefineConstant 307
-#define tUndefineConstant 308
-#define tPoint 309
-#define tCircle 310
-#define tEllipse 311
-#define tLine 312
-#define tSphere 313
-#define tPolarSphere 314
-#define tSurface 315
-#define tSpline 316
-#define tVolume 317
-#define tCharacteristic 318
-#define tLength 319
-#define tParametric 320
-#define tElliptic 321
-#define tRefineMesh 322
-#define tPlane 323
-#define tRuled 324
-#define tTransfinite 325
-#define tComplex 326
-#define tPhysical 327
-#define tCompound 328
-#define tPeriodic 329
-#define tUsing 330
-#define tPlugin 331
-#define tDegenerated 332
-#define tRotate 333
-#define tTranslate 334
-#define tSymmetry 335
-#define tDilate 336
-#define tExtrude 337
-#define tLevelset 338
-#define tRecombine 339
-#define tSmoother 340
-#define tSplit 341
-#define tDelete 342
-#define tCoherence 343
-#define tIntersect 344
-#define tMeshAlgorithm 345
-#define tReverse 346
-#define tLayers 347
-#define tHole 348
-#define tAlias 349
-#define tAliasWithOptions 350
-#define tQuadTriDbl 351
-#define tQuadTriSngl 352
-#define tRecombLaterals 353
-#define tTransfQuadTri 354
-#define tText2D 355
-#define tText3D 356
-#define tInterpolationScheme 357
-#define tTime 358
-#define tCombine 359
-#define tBSpline 360
-#define tBezier 361
-#define tNurbs 362
-#define tNurbsOrder 363
-#define tNurbsKnots 364
-#define tColor 365
-#define tColorTable 366
-#define tFor 367
-#define tIn 368
-#define tEndFor 369
-#define tIf 370
-#define tEndIf 371
-#define tExit 372
-#define tAbort 373
-#define tField 374
-#define tReturn 375
-#define tCall 376
-#define tFunction 377
-#define tShow 378
-#define tHide 379
-#define tGetValue 380
-#define tGetEnv 381
-#define tGetString 382
-#define tHomology 383
-#define tCohomology 384
-#define tBetti 385
-#define tSetOrder 386
-#define tGMSH_MAJOR_VERSION 387
-#define tGMSH_MINOR_VERSION 388
-#define tGMSH_PATCH_VERSION 389
-#define tAFFECTDIVIDE 390
-#define tAFFECTTIMES 391
-#define tAFFECTMINUS 392
-#define tAFFECTPLUS 393
-#define tOR 394
-#define tAND 395
-#define tNOTEQUAL 396
-#define tEQUAL 397
-#define tGREATEROREQUAL 398
-#define tLESSOREQUAL 399
-#define UNARYPREC 400
-#define tMINUSMINUS 401
-#define tPLUSPLUS 402
+#define tStrCmp 299
+#define tTextAttributes 300
+#define tBoundingBox 301
+#define tDraw 302
+#define tToday 303
+#define tSyncModel 304
+#define tCreateTopology 305
+#define tCreateTopologyNoHoles 306
+#define tDistanceFunction 307
+#define tDefineConstant 308
+#define tUndefineConstant 309
+#define tPoint 310
+#define tCircle 311
+#define tEllipse 312
+#define tLine 313
+#define tSphere 314
+#define tPolarSphere 315
+#define tSurface 316
+#define tSpline 317
+#define tVolume 318
+#define tCharacteristic 319
+#define tLength 320
+#define tParametric 321
+#define tElliptic 322
+#define tRefineMesh 323
+#define tPlane 324
+#define tRuled 325
+#define tTransfinite 326
+#define tComplex 327
+#define tPhysical 328
+#define tCompound 329
+#define tPeriodic 330
+#define tUsing 331
+#define tPlugin 332
+#define tDegenerated 333
+#define tRotate 334
+#define tTranslate 335
+#define tSymmetry 336
+#define tDilate 337
+#define tExtrude 338
+#define tLevelset 339
+#define tRecombine 340
+#define tSmoother 341
+#define tSplit 342
+#define tDelete 343
+#define tCoherence 344
+#define tIntersect 345
+#define tMeshAlgorithm 346
+#define tReverse 347
+#define tLayers 348
+#define tHole 349
+#define tAlias 350
+#define tAliasWithOptions 351
+#define tQuadTriDbl 352
+#define tQuadTriSngl 353
+#define tRecombLaterals 354
+#define tTransfQuadTri 355
+#define tText2D 356
+#define tText3D 357
+#define tInterpolationScheme 358
+#define tTime 359
+#define tCombine 360
+#define tBSpline 361
+#define tBezier 362
+#define tNurbs 363
+#define tNurbsOrder 364
+#define tNurbsKnots 365
+#define tColor 366
+#define tColorTable 367
+#define tFor 368
+#define tIn 369
+#define tEndFor 370
+#define tIf 371
+#define tEndIf 372
+#define tExit 373
+#define tAbort 374
+#define tField 375
+#define tReturn 376
+#define tCall 377
+#define tFunction 378
+#define tShow 379
+#define tHide 380
+#define tGetValue 381
+#define tGetEnv 382
+#define tGetString 383
+#define tHomology 384
+#define tCohomology 385
+#define tBetti 386
+#define tSetOrder 387
+#define tGMSH_MAJOR_VERSION 388
+#define tGMSH_MINOR_VERSION 389
+#define tGMSH_PATCH_VERSION 390
+#define tAFFECTDIVIDE 391
+#define tAFFECTTIMES 392
+#define tAFFECTMINUS 393
+#define tAFFECTPLUS 394
+#define tOR 395
+#define tAND 396
+#define tNOTEQUAL 397
+#define tEQUAL 398
+#define tGREATEROREQUAL 399
+#define tLESSOREQUAL 400
+#define UNARYPREC 401
+#define tMINUSMINUS 402
+#define tPLUSPLUS 403
 
 
 
@@ -349,7 +351,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 353 "Gmsh.tab.hpp"
+#line 355 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

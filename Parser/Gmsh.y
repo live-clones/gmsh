@@ -108,7 +108,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%tokem tStrFind tStrCmp
+%token tStrFind tStrCmp
 %token tTextAttributes
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
