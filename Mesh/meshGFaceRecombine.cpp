@@ -48,6 +48,7 @@
 #define DEBUG(x) // {x}
 // TODO : regarder pour pointing
 //        It''s RElement that should give Blossom Qual !
+//        test
 
 
 Recombine2D *Recombine2D::_cur = NULL;
