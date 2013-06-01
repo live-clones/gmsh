@@ -1559,9 +1559,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   std::set<std::string> closed = _getClosedGmshMenus();
 
-  _tree->take_focus(); // make sure we remove the focus from any widget that
-                       // will be deleted; this can crash fltk
-
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
@@ -1576,6 +1573,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     delStrings = _treeStrings;
     _treeWidgets.clear();
     _treeStrings.clear();
+    // make sure we remove the focus from any widget that will be deleted
+    _tree->take_focus();
   }
 
   _addGmshMenus();
