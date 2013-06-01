@@ -141,12 +141,8 @@ namespace onelabUtils {
       }
     }
 
-    // force this to make sure that we remesh, even if a mesh exists and we did
-    // not actually change a Gmsh parameter
-    if(changed){
-      setFirstComputationFlag(false);
-      onelab::server::instance()->setChanged(true, "Gmsh");
-    }
+    // force this to make sure that we remesh, even if a mesh exists on disk
+    if(changed) setFirstComputationFlag(false);
   }
 
   bool incrementLoop(const std::string &level)
