@@ -84,7 +84,7 @@ void OLMsg::Fatal(const char *fmt, ...)
   //if(_callback) (*_callback)("Fatal", str);
   //if(_client) _client->Error(str);
 
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendError(str);
 
   if(ALWAYS_TRUE){
@@ -114,7 +114,7 @@ void OLMsg::Error(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Error", str);
   //if(_client) _client->Error(str);
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendError(str);
 
   if(ALWAYS_TRUE){
@@ -140,7 +140,7 @@ void OLMsg::Warning(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Warning", str);
   //if(_client) _client->Warning(str);
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendWarning(str);
 
   if(ALWAYS_TRUE){
@@ -161,7 +161,7 @@ void OLMsg::Info(const char *fmt, ...)
 
   //if(_callback) (*_callback)("Info", str);
   //if(_client) _client->Info(str);
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendInfo(str);
 
   if(ALWAYS_TRUE){
@@ -195,7 +195,7 @@ void OLMsg::Direct(int level, const char *fmt, ...)
 
   //if(_callback) (*_callback)("Direct", str);
   //if(_client) _client->Info(str);
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendInfo(str);
 
   if(ALWAYS_TRUE){
@@ -218,7 +218,7 @@ void OLMsg::StatusBar(int num, bool log, const char *fmt, ...)
   //if(_callback && log) (*_callback)("Info", str);
   //if(_client && log) _client->Info(str);
 
-  if(_onelabClient && OLMsg::hasGmsh) 
+  if(_onelabClient && OLMsg::hasGmsh)
     _onelabClient->sendInfo(str);
 
   if(log && ALWAYS_TRUE){
@@ -375,7 +375,7 @@ int fullNameLessThan::compareFullNames(const std::string a, const std::string b)
   if( (ita < a.end()) && (*ita >= '0') && (*ita <= '9')) ita++;
   if( (itb < b.end()) && (*itb >= '0') && (*itb <= '9')) itb++;
 
-  while( (ita < a.end()) && (itb < b.end())) { 
+  while( (ita < a.end()) && (itb < b.end())) {
     if(*ita == *itb){
       if(*ita == '/'){ // hence *itb == '/'
 	ita++; if( (ita < a.end()) && (*ita >= '0') && (*ita <= '9')) ita++;
