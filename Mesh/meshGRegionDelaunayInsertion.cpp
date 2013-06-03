@@ -22,6 +22,16 @@
 int MTet4::radiusNorm = 2;
 static double LIMIT_ = 1;
 
+static void createAllEmbeddedFaces (GRegion *gr, std::set<MFace, Less_Face> &allEmbeddedFaces)
+{
+  std::list<GFace*> f = gr->embeddedFaces();
+  for (std::list<GFace*>::iterator it = f.begin() ; it != f.end(); ++it){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
+      allEmbeddedFaces.insert ((*it)->triangles[i]->getFace(0));
+    }
+  }
+}
+
 static bool isActive(MTet4 *t, double limit_, int &active)
 {
   if (t->isDeleted()) return false;
@@ -122,20 +132,25 @@ void connectTets_vector(ITER beg, ITER end)
 }
 
 template <class ITER>
-void connectTets(ITER beg, ITER end)
+void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFaces = 0)
 {
   std::set<faceXtet> conn;
   while (beg != end){
     if (!(*beg)->isDeleted()){
       for (int i = 0; i < 4; i++){
         faceXtet fxt(*beg, i);
-	std::set<faceXtet>::iterator found = conn.find(fxt);
-        if (found == conn.end())
-	  conn.insert(fxt);
-        else if (found->t1 != *beg){
-          found->t1->setNeigh(found->i1, *beg);
-          (*beg)->setNeigh(i, found->t1);
-        }
+	// if a face is embedded, do not connect tets on both sides !
+	if (!allEmbeddedFaces || 
+	    allEmbeddedFaces->find (MFace(fxt.v[0],fxt.v[1],fxt.v[2])) == 
+	    allEmbeddedFaces->end()){
+	  std::set<faceXtet>::iterator found = conn.find(fxt);
+	  if (found == conn.end())
+	    conn.insert(fxt);
+	  else if (found->t1 != *beg){
+	    found->t1->setNeigh(found->i1, *beg);
+	    (*beg)->setNeigh(i, found->t1);
+	  }
+	}
       }
     }
     ++beg;
@@ -252,8 +267,7 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   }
   if (wrong.empty()) return 0;
   //  printf ("cavity %p (shell size %d cavity size %d)is not star shaped (%d faces not visible), correcting it\n",
-  //	  v,shell.size(),cavity.size(),wrong.size());
-
+  //  	  v,shell.size(),cavity.size(),wrong.size());
   //  bool doneNothing = true;
   while (!wrong.empty()){
     faceXtet &fxt = *(wrong.begin());
@@ -261,11 +275,10 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
     if (its != shell.end()){
       if (fxt.t1->getNeigh(fxt.i1) && fxt.t1->getNeigh(fxt.i1)->onWhat() == fxt.t1->onWhat() && verifyShell(v,fxt.t1->getNeigh(fxt.i1),shell)){
 	extendCavity (shell,cavity,fxt);
-	//	doneNothing = false;
       }
       else if (verifyShell(v,fxt.t1,shell)){
-	removeFromCavity (shell,cavity,fxt);
-	//	doneNothing = false;
+	return -1;
+      	removeFromCavity (shell,cavity,fxt);
       }
       else {
 	return -1;
@@ -297,10 +310,10 @@ void recurFindCavity(std::list<faceXtet> & shell,
 
   for (int i = 0; i < 4; i++){
     MTet4 *neigh = t->getNeigh(i) ;
+    faceXtet fxt (t, i);
     if (!neigh)
-      shell.push_back(faceXtet(t, i));
+      shell.push_back(fxt);
     else  if (!neigh->isDeleted()){
-      faceXtet fxt (t, i);
       int circ = neigh->inCircumSphere(v);
       if (circ && (neigh->onWhat() == t->onWhat()))
         recurFindCavity(shell, cavity, v, neigh);
@@ -658,7 +671,9 @@ void adaptMeshGRegion::operator () (GRegion *gr)
   }
   gr->tetrahedra.clear();
 
-  connectTets(allTets.begin(),allTets.end());
+  std::set<MFace, Less_Face> allEmbeddedFaces;
+  createAllEmbeddedFaces (gr, allEmbeddedFaces);
+  connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
 
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
@@ -841,7 +856,9 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
   }
   gr->tetrahedra.clear();
 
-  connectTets(allTets.begin(), allTets.end());
+  std::set<MFace, Less_Face> allEmbeddedFaces;
+  createAllEmbeddedFaces (gr, allEmbeddedFaces);
+  connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
 
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
@@ -1098,6 +1115,7 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
   //  Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
 }
 
+
 void insertVerticesInRegion (GRegion *gr)
 {
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
@@ -1119,9 +1137,6 @@ void insertVerticesInRegion (GRegion *gr)
       it->first->setIndex(NUM++);
       vSizes.push_back(it->second);
       vSizesBGM.push_back(it->second);
-      //      it->first->x() += (double)rand()/RAND_MAX * 1.e-8;
-      //      it->first->y() += (double)rand()/RAND_MAX * 1.e-8;
-      //      it->first->z() += (double)rand()/RAND_MAX * 1.e-8;
     }
   }
 
@@ -1169,7 +1184,10 @@ void insertVerticesInRegion (GRegion *gr)
     (*it)->setNeigh(2, 0);
     (*it)->setNeigh(3, 0);
   }
-  connectTets(allTets.begin(), allTets.end());
+  // store all embedded faces
+  std::set<MFace, Less_Face> allEmbeddedFaces;
+  createAllEmbeddedFaces (gr, allEmbeddedFaces);
+  connectTets(allTets.begin(), allTets.end(),&allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
 
   // here the classification should be done
@@ -1266,6 +1284,8 @@ void insertVerticesInRegion (GRegion *gr)
 	  COUNT_MISS_1++;
 	  //	  printf("coucou 1 %d\n",ITER);
           myFactory.changeTetRadius(allTets.begin(), 0.);
+	  for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
+	    (*itc)->setDeleted(false);
           delete v;
         }
         else
@@ -1430,7 +1450,9 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
     (*it)->setNeigh(2, 0);
     (*it)->setNeigh(3, 0);
   }
-  connectTets(allTets.begin(), allTets.end());
+  std::set<MFace, Less_Face> allEmbeddedFaces;
+  createAllEmbeddedFaces (gr, allEmbeddedFaces);
+  connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
 
   int ITER = 0, active_face;
 
