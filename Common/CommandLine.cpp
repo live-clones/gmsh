@@ -115,7 +115,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-gamepad",           "Use gamepad controller if available"));
 #endif
   s.push_back(mp("Other options:", ""));
-  s.push_back(mp("-",                  "Parse input files, then exit"));
+  s.push_back(mp("-, -parse_and_exit", "Parse input files, then exit"));
   s.push_back(mp("-new",               "Create new model before merge next file"));
   s.push_back(mp("-merge",             "Merge next files"));
   s.push_back(mp("-open",              "Open next files"));
