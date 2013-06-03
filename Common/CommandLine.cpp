@@ -285,7 +285,8 @@ void GetOptions(int argc, char *argv[])
 
     if(argv[i][0] == '-') {
 
-      if(!strcmp(argv[i] + 1, "")) {
+      if(!strcmp(argv[i] + 1, "") ||
+         !strcmp(argv[i] + 1, "parse_and_exit")) {
         CTX::instance()->batch = -99;
         i++;
       }
