@@ -37,6 +37,7 @@ struct BoundaryLayerFan
     : _e1(e1),_e2(e2) , sense (s){}
 };
 
+
 struct edgeColumn {
   const BoundaryLayerData &_c1, &_c2;
   edgeColumn(const BoundaryLayerData &c1, const BoundaryLayerData &c2)

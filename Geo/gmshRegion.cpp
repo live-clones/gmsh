@@ -38,6 +38,17 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     else
       Msg::Error("Unknown surface %d", is);
   }
+  if(v->EmbeddedSurfaces){
+    for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
+      Surface *s;
+      List_Read(v->EmbeddedSurfaces, i, &s);
+      GFace *gf = m->getFaceByTag(abs(s->Num));
+      if(gf)
+	addEmbeddedFace(gf);
+      else
+	Msg::Error("Unknown surface %d", s->Num);
+    }
+  }
   resetMeshAttributes();
 }
 

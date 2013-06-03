@@ -313,10 +313,6 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 }
 */
 
-void createBoundaryLayerPointsForGEdge (GEdge *ge, double &t_begin, double &t_end)
-{
-}
-
 void meshGEdge::operator() (GEdge *ge)
 {
 #if defined(HAVE_ANN)
@@ -513,13 +509,10 @@ void meshGEdge::operator() (GEdge *ge)
       SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
       t.normalize();
       if (blf->isVertexBL(g0->tag())){
-	  _columns->addColumn(t, v0, mesh_vertices,_metrics);
-	  //	  printf ("coucou %d %d %g %g %d\n",ge->tag(),g1->tag(),t.x(),t.y(),mesh_vertices.size());
+	_columns->addColumn(t, v0, mesh_vertices,_metrics);
       }
       if (blf->isVertexBL(g1->tag())){
 	  _columns->addColumn(t*-1.0, v1,invert,_metrics);
-	  //	  printf ("coucou %d %d\n",ge->tag(),g0->tag());
-
       }      
     }
 #endif

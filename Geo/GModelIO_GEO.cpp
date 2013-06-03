@@ -259,6 +259,17 @@ int GModel::importGEOInternals()
           if(gr) comp.push_back(gr);
         }
         r = new GRegionCompound(this, v->Num, comp);
+        if(v->EmbeddedSurfaces){
+          for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
+            Surface *s;
+            List_Read(v->EmbeddedSurfaces, i, &s);
+            GFace *gf = getFaceByTag(abs(s->Num));
+            if(gf)
+              r->addEmbeddedFace(gf);
+            else
+              Msg::Error("Unknown surface %d", s->Num);
+          }
+        }
         add(r);
       }
       else if(!r){

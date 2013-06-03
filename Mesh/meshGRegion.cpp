@@ -533,6 +533,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   for(unsigned int i = 0; i < regions.size(); i++){
     std::list<GFace*> f = regions[i]->faces();
     allFacesSet.insert(f.begin(), f.end());
+    f = regions[i]->embeddedFaces();
+    allFacesSet.insert(f.begin(), f.end());
   }
   std::list<GFace*> allFaces;
   for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++){

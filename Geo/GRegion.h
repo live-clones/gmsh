@@ -25,6 +25,7 @@ class GRegionCompound;
 class GRegion : public GEntity {
  protected:
   std::list<GFace*> l_faces;
+  std::list<GFace *> embedded_faces;
   std::list<int> l_dirs;
   GRegionCompound *compound; // this model ede belongs to a compound
 
@@ -45,10 +46,16 @@ class GRegion : public GEntity {
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
+  // add embedded vertices/edges
+  void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
+
   // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
+
+  // faces that are embedded in the region
+  virtual std::list<GFace*> embeddedFaces() const { return embedded_faces; }
 
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;

@@ -3887,7 +3887,26 @@ Constraints :
     }
   | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Msg::Error("Surface in Volume not implemented yet");
+      Volume *v = FindVolume((int)$8);
+      if(v){
+	setVolumeEmbeddedSurfaces(v, $3);
+      }
+      else{
+        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
+        if(gr){
+          for(int i = 0; i < List_Nbr($3); i++){
+            int iSurface;
+            List_Read($3, i, &iSurface);
+            GFace *gf = GModel::current()->getFaceByTag(iSurface);
+            if(gf)
+              gr->addEmbeddedFace(gf);
+            else
+              yymsg(0, "Unknown surface %d", iSurface);
+          }
+        }
+        else
+          yymsg(0, "Unknown region %d", (int)$8);
+      }
     }
   | tReverse tSurface ListOfDoubleOrAll tEND
     {
