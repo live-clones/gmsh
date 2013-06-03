@@ -584,7 +584,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   //save periodic nodes
   writeMSHPeriodicNodes (fp,entities);
 
-
   fclose(fp);
 
   return 1;
