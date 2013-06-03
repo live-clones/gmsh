@@ -16,7 +16,7 @@
 #include "MPyramid.h"
 #include "StringUtils.h"
 
-void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities)
+void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
 {
   int count = 0;
   for (unsigned int i = 0; i < entities.size(); i++)
@@ -48,7 +48,7 @@ void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities)
   fprintf(fp, "$EndPeriodic\n");
 }
 
-void readMSHPeriodicNodes (FILE *fp, GModel *gm)
+void readMSHPeriodicNodes(FILE *fp, GModel *gm)
 {
   int count;
   if(fscanf(fp, "%d", &count) != 1) return;
@@ -310,7 +310,6 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%d", &numElements) != 1){ fclose(fp); return 0; }
       Msg::Info("%d elements", numElements);
       Msg::ResetProgressMeter();
-      _elementMapCache.clear();
       for(int i = 0; i < numElements; i++) {
         int num, type, entity, numData;
         if(!binary){
@@ -360,7 +359,6 @@ int GModel::readMSH(const std::string &name)
         case TYPE_POLYG: elements[8][entity].push_back(element); break;
         case TYPE_POLYH: elements[9][entity].push_back(element); break;
         }
-        _elementMapCache[num] = element;
         if(numElements > 100000)
           Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
       }
@@ -376,7 +374,6 @@ int GModel::readMSH(const std::string &name)
     else if(!strncmp(&str[1], "Periodical", 10)) {
       readMSHPeriodicNodes (fp, this);
     }
-
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
