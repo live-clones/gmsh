@@ -9,6 +9,7 @@ set(SRC
       openglWindow.cpp
     optionWindow.cpp
       colorbarWindow.cpp
+    drawContextFltkCairo.cpp
     gamepadWindow.cpp
     fieldWindow.cpp
     pluginWindow.cpp

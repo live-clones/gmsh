@@ -18,6 +18,7 @@ typedef unsigned long intptr_t;
 #include <FL/fl_draw.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
+#include "drawContextFltkCairo.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
 #include "fieldWindow.h"
@@ -239,7 +240,11 @@ FlGui::FlGui(int argc, char **argv)
   Fl::add_handler(globalShortcut);
 
   // set global fltk-dependent drawing functions
+#if defined(HAVE_CAIRO)
+  drawContext::setGlobal(new drawContextFltkCairo);
+#else
   drawContext::setGlobal(new drawContextFltk);
+#endif
 
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
