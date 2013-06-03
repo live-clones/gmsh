@@ -144,7 +144,7 @@ drawContextFltkCairo::~drawContextFltkCairo()
 {
   cairo_destroy(_cr);
   cairo_surface_destroy(_surface);
-  glDeleteTextures(1, &_textureId);
+  if(_textureId) glDeleteTextures(1, &_textureId);
 }
 
 drawContextFltkCairo::drawContextFltkCairo()
