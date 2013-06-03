@@ -37,6 +37,7 @@ static void _data2gl (int width, int height, unsigned char *data,
   glDisable (GL_DEPTH_TEST);
   glEnable (GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   glBindTexture (GL_TEXTURE_RECTANGLE_ARB, _textureId);
   glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, width, height, 0,
                 GL_ALPHA, GL_UNSIGNED_BYTE, data);
@@ -111,6 +112,9 @@ void drawContextFltkCairo::drawString(const char *str)
   cairo_move_to(cr, 1-extent.x_bearing, 1-extent.y_bearing);
 	cairo_set_source_rgba(cr, 1, 1, 1, 1);
   cairo_show_text(cr, str);
+
+  if(!_textureId) glGenTextures (1, &_textureId);
+
   _data2gl(cairo_image_surface_get_width(surface),
            cairo_image_surface_get_height(surface),
            cairo_image_surface_get_data(surface),
@@ -147,7 +151,7 @@ drawContextFltkCairo::drawContextFltkCairo()
 {
   _surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 100, 100);
   _cr = cairo_create(_surface);
-  glGenTextures (1, &_textureId);
+  _textureId = 0;
   _currentFontId = -1;
 }
 
