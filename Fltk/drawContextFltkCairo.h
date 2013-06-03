@@ -1,10 +1,21 @@
+// Gmsh - Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by Jonathan Lambrechts
+
 #ifndef _DRAW_CONTEXT_FLTK_CAIRO_H_
 #define _DRAW_CONTEXT_FLTK_CAIRO_H_
+
 #include "GmshConfig.h"
+
 #if defined(HAVE_CAIRO)
 #include "drawContextFltk.h"
+
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
+
 class drawContextFltkCairo : public drawContextFltk {
   cairo_surface_t *_surface;
   cairo_t *_cr;
@@ -22,5 +33,7 @@ class drawContextFltkCairo : public drawContextFltk {
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
 };
+
 #endif
+
 #endif
