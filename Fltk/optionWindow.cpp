@@ -352,6 +352,7 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_vector_type(0, GMSH_SET, o->general.choice[0]->value() + 1);
   opt_general_graphics_font(0, GMSH_SET, o->general.choice[1]->text());
   opt_general_graphics_font_title(0, GMSH_SET, o->general.choice[6]->text());
+  opt_general_graphics_font_engine(0, GMSH_SET, o->general.choice[7]->text());
   opt_general_orthographic(0, GMSH_SET, !o->general.choice[2]->value());
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
@@ -1674,25 +1675,39 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Edit arrow");
       b->callback(general_arrow_param_cb);
 
+      static Fl_Menu_Item menu_font_engine[] = {
+        {"Native",   0, 0, 0},
+        {"Cairo",    0, 0, 0},
+        {0}
+      };
+      general.choice[7] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Font rendering engine");
+      general.choice[7]->menu(menu_font_engine);
+      general.choice[7]->align(FL_ALIGN_RIGHT);
+      general.choice[7]->callback(general_options_ok_cb);
+#if !defined(HAVE_CAIRO)
+      general.choice[7]->deactivate();
+#endif
+
       int w1 = (int)(4. * IW / 5.), w2 = IW - w1;
-      general.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, w1, BH);
+      general.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH);
       general.choice[1]->menu(menu_font_names);
       general.choice[1]->align(FL_ALIGN_RIGHT);
       general.choice[1]->callback(general_options_ok_cb);
       general.value[12] = new Fl_Value_Input
-        (L + 2 * WB + w1, 2 * WB + 9 * BH, w2, BH, "Default font");
+        (L + 2 * WB + w1, 2 * WB + 10 * BH, w2, BH, "Default font");
       general.value[12]->minimum(5);
       general.value[12]->maximum(40);
       general.value[12]->step(1);
       general.value[12]->align(FL_ALIGN_RIGHT);
       general.value[12]->callback(general_options_ok_cb);
 
-      general.choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH);
+      general.choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, w1, BH);
       general.choice[6]->menu(menu_font_names);
       general.choice[6]->align(FL_ALIGN_RIGHT);
       general.choice[6]->callback(general_options_ok_cb);
       general.value[28] = new Fl_Value_Input
-        (L + 2 * WB + w1, 2 * WB + 10 * BH, w2, BH, "Title font");
+        (L + 2 * WB + w1, 2 * WB + 11 * BH, w2, BH, "Title font");
       general.value[28]->minimum(5);
       general.value[28]->maximum(40);
       general.value[28]->step(1);

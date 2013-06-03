@@ -32,6 +32,7 @@ class drawContextFltkCairo : public drawContextFltk {
   //int getStringDescent();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
+  std::string getName(){ return "Cairo"; }
 };
 
 #endif

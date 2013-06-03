@@ -51,6 +51,7 @@ std::string opt_general_watch_file_pattern(OPT_ARGS_STR);
 std::string opt_general_gui_theme(OPT_ARGS_STR);
 std::string opt_general_graphics_font(OPT_ARGS_STR);
 std::string opt_general_graphics_font_title(OPT_ARGS_STR);
+std::string opt_general_graphics_font_engine(OPT_ARGS_STR);
 std::string opt_solver_socket_name(OPT_ARGS_STR);
 std::string opt_solver_name(OPT_ARGS_STR);
 std::string opt_solver_name0(OPT_ARGS_STR);

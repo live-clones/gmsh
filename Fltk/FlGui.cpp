@@ -234,17 +234,16 @@ FlGui::FlGui(int argc, char **argv)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
   Fl::set_boxtype(GMSH_SIMPLE_TOP_BOX, simple_top_box_draw, 0, 1, 0, 1);
 
-  if(CTX::instance()->gamepad)   Fl::add_timeout(5.,gamepad_handler , (void*)0);
+  // add gamepad handler
+  if(CTX::instance()->gamepad)
+    Fl::add_timeout(5.,gamepad_handler, (void*)0);
 
   // add global shortcuts
   Fl::add_handler(globalShortcut);
 
-  // set global fltk-dependent drawing functions
-#if defined(HAVE_CAIRO)
-  drawContext::setGlobal(new drawContextFltkCairo);
-#else
-  drawContext::setGlobal(new drawContextFltk);
-#endif
+  // make sure a global drawing context is setup
+  if(!drawContext::global())
+    drawContext::setGlobal(new drawContextFltk);
 
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();

@@ -149,6 +149,7 @@ class drawContextFltk : public drawContextGlobal{
     gl_texture_pile_height(1); // force font texture recomputation
 #endif
   }
+  std::string getName(){ return "Fltk"; }
 };
 
 #endif

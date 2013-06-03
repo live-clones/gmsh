@@ -51,6 +51,7 @@
 #include "clippingWindow.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
+#include "drawContextFltkCairo.h"
 #endif
 
 // General routines for string options
@@ -1230,6 +1231,36 @@ std::string opt_general_graphics_font_title(OPT_ARGS_STR)
   }
 #endif
   return CTX::instance()->glFontTitle;
+}
+
+std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->glFontEngine = val;
+
+#if defined(HAVE_FLTK)
+  if(action & GMSH_SET){
+    drawContextGlobal *old = drawContext::global();
+    if(!old || old->getName() != CTX::instance()->glFontEngine){
+#if defined(HAVE_CAIRO)
+      if(CTX::instance()->glFontEngine == "Cairo")
+        drawContext::setGlobal(new drawContextFltkCairo);
+      else
+#endif
+        drawContext::setGlobal(new drawContextFltk);
+      if(old) delete old;
+    }
+  }
+  if(FlGui::available() && (action & GMSH_GUI)){
+    int index = 0;
+#if defined(HAVE_CAIRO)
+    if(CTX::instance()->glFontEngine == "Cairo") index = 1;
+#endif
+    FlGui::instance()->options->general.choice[7]->value(index);
+  }
+#endif
+
+  return CTX::instance()->glFontEngine;
 }
 
 std::string opt_solver_socket_name(OPT_ARGS_STR)

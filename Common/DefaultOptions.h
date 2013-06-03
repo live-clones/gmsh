@@ -61,6 +61,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" },
+  { F|O, "GraphicsFontEngine" , opt_general_graphics_font_engine , "Native" ,
+    "Set graphics font engine (Native, Cairo)" },
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
 
