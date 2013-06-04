@@ -314,7 +314,6 @@ FlGui::FlGui(int argc, char **argv)
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
-  //graph[0]->gl[0]->take_focus();
   Fl::focus(graph[0]->gl[0]);
 
   // get onelab tree group (FIXME: should clean this up)
