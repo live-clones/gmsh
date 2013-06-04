@@ -25,6 +25,7 @@
 #if defined(WIN32)
 #include <windows.h>
 #include <process.h>
+#include <psapi.h>
 #include <io.h>
 #include <direct.h>
 #include <fcntl.h>
@@ -94,14 +95,20 @@ static void GetResources(double *s, long *mem)
   static struct rusage r;
   getrusage(RUSAGE_SELF, &r);
   *s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
+#if defined(__APPLE__)
   *mem = (long)r.ru_maxrss;
+#else
+  *mem = (long)(r.ru_maxrss * 1024L);
+#endif
 #else
   FILETIME creation, exit, kernel, user;
   if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)){
     *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
          1.e-7 * (double)user.dwLowDateTime;
   }
-  *mem = 0;
+  PROCESS_MEMORY_COUNTERS info;
+  GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+  *mem = (long)info.PeakWorkingSetSize;
 #endif
 }
 
