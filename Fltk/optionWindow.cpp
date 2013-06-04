@@ -1677,7 +1677,11 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_font_engine[] = {
         {"Native",   0, 0, 0},
-        {"Cairo",    0, 0, 0},
+        {"Cairo",    0, 0, 0
+#if !defined(HAVE_CAIRO)
+         , FL_MENU_INACTIVE
+#endif
+        },
         {"StringTexture",    0, 0, 0},
         {0}
       };
@@ -1686,9 +1690,6 @@ optionWindow::optionWindow(int deltaFontSize)
       general.choice[7]->menu(menu_font_engine);
       general.choice[7]->align(FL_ALIGN_RIGHT);
       general.choice[7]->callback(general_options_ok_cb);
-#if !defined(HAVE_CAIRO)
-      general.choice[7]->deactivate();
-#endif
 
       int w1 = (int)(4. * IW / 5.), w2 = IW - w1;
       general.choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, w1, BH);
