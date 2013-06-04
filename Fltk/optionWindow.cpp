@@ -1678,6 +1678,7 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_font_engine[] = {
         {"Native",   0, 0, 0},
         {"Cairo",    0, 0, 0},
+        {"StringTexture",    0, 0, 0},
         {0}
       };
       general.choice[7] = new Fl_Choice

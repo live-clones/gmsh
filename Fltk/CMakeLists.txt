@@ -10,6 +10,7 @@ set(SRC
     optionWindow.cpp
       colorbarWindow.cpp
     drawContextFltkCairo.cpp
+    drawContextFltkStringTexture.cpp
     gamepadWindow.cpp
     fieldWindow.cpp
     pluginWindow.cpp

@@ -52,6 +52,7 @@
 #include "onelabGroup.h"
 #include "viewButton.h"
 #include "drawContextFltkCairo.h"
+#include "drawContextFltkStringTexture.h"
 #endif
 
 // General routines for string options
@@ -1247,6 +1248,9 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
         drawContext::setGlobal(new drawContextFltkCairo);
       else
 #endif
+      if(CTX::instance()->glFontEngine == "StringTexture")
+        drawContext::setGlobal(new drawContextFltkStringTexture);
+      else
         drawContext::setGlobal(new drawContextFltk);
       if(old) delete old;
     }
@@ -1256,6 +1260,7 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
 #if defined(HAVE_CAIRO)
     if(CTX::instance()->glFontEngine == "Cairo") index = 1;
 #endif
+    if(CTX::instance()->glFontEngine == "StringTexture") index = 2;
     FlGui::instance()->options->general.choice[7]->value(index);
   }
 #endif
