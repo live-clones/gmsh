@@ -10,6 +10,11 @@
 #if defined(HAVE_CAIRO)
 #include <cairo/cairo.h>
 
+// FIXME: hack for current version of mingw
+#if defined(WIN32) && !defined(GL_TEXTURE_RECTANGLE_EXT)
+#define GL_TEXTURE_RECTANGLE_EXT 0x84F5
+#endif
+
 class drawContextFltkCairo::queueString {
   public :
   typedef struct {
