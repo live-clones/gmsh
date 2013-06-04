@@ -312,6 +312,7 @@ void openglWindow::draw()
       _drawBorder();
     }
   }
+  drawContext::global()->flushString();
   _lock = false;
 }
 

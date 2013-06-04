@@ -98,6 +98,7 @@ class drawContextGlobal {
   virtual int getStringDescent(){ return 3; }
   virtual void drawString(const char *str){}
   virtual void resetFontTextures(){}
+  virtual void flushString(){}
   virtual std::string getName(){ return "None"; }
 };
 

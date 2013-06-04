@@ -17,12 +17,12 @@ typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo cairo_t;
 
 class drawContextFltkCairo : public drawContextFltk {
+  class queueString;
+  queueString *_queue;
   cairo_surface_t *_surface;
   cairo_t *_cr;
-  unsigned int _textureId;
   int _currentFontId;
   int _currentFontSize;
-  void _resizeSurface(int w, int h);
  public:
   void draw();
   drawContextFltkCairo();
@@ -30,6 +30,7 @@ class drawContextFltkCairo : public drawContextFltk {
   double getStringWidth(const char *str);
   //int getStringHeight();
   //int getStringDescent();
+  void flushString();
   void drawString(const char *str);
   void setFont(int fontid, int fontsize);
   std::string getName(){ return "Cairo"; }
