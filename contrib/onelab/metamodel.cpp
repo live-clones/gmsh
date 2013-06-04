@@ -51,16 +51,18 @@ int metamodel(const std::string &action){
   std::string workingDir = OLMsg::GetOnelabString("Arguments/WorkingDir");
   std::string clientName = "meta";
 
-  MetaModel *myModel =
-    new MetaModel("meta", workingDir, "meta", modelName);
-
   parseMode todo;
   if(action == "compute")
     todo = COMPUTE;
   else{
     todo = ANALYZE;
   }
+  OLMsg::SetOnelabNumber("Metamodel/Action",todo,false);
+
+  MetaModel *myModel =
+    new MetaModel("meta", workingDir, "meta", modelName);
   myModel->setTodo(todo);
+
   if(OLMsg::GetErrorCount()) myModel->setTodo(EXIT);
 
   if(OLMsg::GetOnelabNumber("LOGFILES")){

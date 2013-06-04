@@ -771,7 +771,6 @@ void MetaModel::compute() {
 	      parse_onefile(fileName)?"done":"failed");
   closeOnelabBlock();
   onelab::server::instance()->setChanged(false);
-  showClientStatus();
 }
 
 void MetaModel::registerClient(const std::string &name, const std::string &type, const std::string &cmdl, const std::string &host, const std::string &rdir) {
