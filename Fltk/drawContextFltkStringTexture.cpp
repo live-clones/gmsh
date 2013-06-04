@@ -75,15 +75,15 @@ class drawContextFltkStringTexture::queueString {
     glScalef (2.0f / winw, 2.0f /  winh, 1.0f);
     glTranslatef (-winw / 2.0f, -winh / 2.0f, 0.0f);
     //write the texture on screen
-    glEnable (GL_TEXTURE_RECTANGLE_ARB);
+    glEnable (GL_TEXTURE_RECTANGLE_EXT);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
     glDisable (GL_DEPTH_TEST);
     glEnable (GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures (1, &textureId);
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0,
+    glBindTexture (GL_TEXTURE_RECTANGLE_EXT, textureId);
+    glTexImage2D (GL_TEXTURE_RECTANGLE_EXT, 0, GL_ALPHA, w, h, 0,
         GL_ALPHA, GL_UNSIGNED_BYTE, data);
     //glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
     //printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
