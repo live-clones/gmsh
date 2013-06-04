@@ -1028,7 +1028,7 @@ if(MSVC)
 endif(MSVC)
 
 if(WIN32 OR CYGWIN)
-  list(APPEND EXTERNAL_LIBRARIES winmm wsock32 ws2_32)
+  list(APPEND EXTERNAL_LIBRARIES winmm wsock32 ws2_32 psapi)
 endif(WIN32 OR CYGWIN)
 
 # disable compile optimization on some known problematic files
