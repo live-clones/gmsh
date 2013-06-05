@@ -11,8 +11,8 @@
 #include <cairo/cairo.h>
 
 // FIXME: hack for current version of mingw
-#if defined(WIN32) && !defined(GL_TEXTURE_RECTANGLE_EXT)
-#define GL_TEXTURE_RECTANGLE_EXT 0x84F5
+#if defined(WIN32) && !defined(GL_TEXTURE_RECTANGLE_ARB)
+#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
 #endif
 
 class drawContextFltkCairo::queueString {
@@ -89,15 +89,15 @@ class drawContextFltkCairo::queueString {
     glScalef (2.0f / winw, 2.0f /  winh, 1.0f);
     glTranslatef (-winw / 2.0f, -winh / 2.0f, 0.0f);
     //write the texture on screen
-    glEnable (GL_TEXTURE_RECTANGLE_EXT);
+    glEnable (GL_TEXTURE_RECTANGLE_ARB);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
     glDisable (GL_DEPTH_TEST);
     glEnable (GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glGenTextures (1, &textureId);
-    glBindTexture (GL_TEXTURE_RECTANGLE_EXT, textureId);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_EXT, 0, GL_ALPHA,
+    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, textureId);
+    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA,
                   cairo_image_surface_get_width(surface),
                   cairo_image_surface_get_height(surface), 0,
                   GL_ALPHA, GL_UNSIGNED_BYTE, cairo_image_surface_get_data(surface));
