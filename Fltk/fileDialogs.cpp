@@ -107,7 +107,18 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
   fc->title(message);
   fc->filter(filter);
   fc->filter_value(thefilterindex);
-  if(fname) fc->preset_file(fname);
+
+  static bool first = true;
+  if(fname && first){
+    // preset the path and the file only the first time in a given
+    // session. Afterwards, always reuse the last directory
+    fc->preset_file(fname);
+    first = false;
+  }
+  else{
+    fc->preset_file(0);
+  }
+
   int ret = 0;
   switch(fc->show()) {
   case -1: break; // error
@@ -141,7 +152,16 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
   fc->label(message);
   fc->filter(thefilter);
   fc->filter_value(thefilterindex);
-  if(fname) fc->value(fname);
+  static bool first = true;
+  if(fname && first){
+    // preset the path and the file only the first time in a given
+    // session. Afterwards, always reuse the last directory
+    fc->value(fname);
+    first = false;
+  }
+  else{
+    fc->value(0);
+  }
   fc->show();
   while(fc->shown()) Fl::wait();
   thefilterindex = fc->filter_value();

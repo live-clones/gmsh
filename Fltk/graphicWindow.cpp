@@ -120,7 +120,7 @@ static const char *input_formats =
   "Mesh - PLY2 Surface" TT "*.ply2" NN
   "Post-processing - Gmsh POS" TT "*.pos" NN
 #if defined(HAVE_MED)
-  "Post-processing - MED" TT "*.{rmed}" NN
+  "Post-processing - MED" TT "*.rmed" NN
 #endif
   "Image - BMP" TT "*.bmp" NN
 #if defined(HAVE_LIBJPEG)
