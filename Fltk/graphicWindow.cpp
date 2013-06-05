@@ -62,8 +62,7 @@ typedef unsigned long intptr_t;
 static void file_new_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "New", "",
-                 GModel::current()->getFileName().c_str())) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "New", "")) {
     std::string name = fileChooserGetName(1);
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
@@ -140,7 +139,7 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
   std::string mode((char*)data);
   int n = PView::list.size();
   int f = fileChooser(FILE_CHOOSER_MULTI, (mode == "open") ? "Open" : "Merge",
-                      input_formats, GModel::current()->getFileName().c_str());
+                      input_formats);
   if(f){
     for(int i = 1; i <= f; i++){
       if(mode == "open")
@@ -421,8 +420,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   }
 
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", pat,
-                 GModel::current()->getFileName().c_str())) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", pat)) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -461,8 +459,7 @@ static void file_options_save_cb(Fl_Widget *w, void *data)
 static void file_rename_cb(Fl_Widget *w, void *data)
 {
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "",
-                 GModel::current()->getFileName().c_str())) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Rename", "")) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
