@@ -412,16 +412,16 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   }
 #endif
 #if defined(HAVE_ONELAB)
-  else if(ext == ".pro"){
+  else if(ext == ".pro" || ext == ".PRO"){
     int num = defineSolver("GetDP");
-    std::vector<std::string> split = SplitFileName(fileName);
     GModel::current()->setName(split[1] + ".geo");
     GModel::current()->setFileName(split[0] + split[1] + ".geo");
     CTX::instance()->launchSolverAtStartup = num;
     return 1;
   }
-  else if(ext == ".py"){
-    int num = defineSolver("python");
+  else if(ext == ".py" || ext == ".PY" ||
+          ext == ".exe" || ext == ".EXE"){
+    int num = defineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
     return 1;

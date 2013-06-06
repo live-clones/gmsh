@@ -213,7 +213,7 @@ int KillProcess(int pid)
 
 int SystemCall(const std::string &command, bool blocking)
 {
-  // separate executable from arguments
+  // separate (potential) executable from arguments
   std::string exe, args;
   std::string::size_type pos = command.find_first_of(" ");
   if(pos != std::string::npos){
@@ -226,15 +226,19 @@ int SystemCall(const std::string &command, bool blocking)
   // get executable extension
   std::vector<std::string> split = SplitFileName(exe);
 
-  // do we try to run a python script?
-  bool script = (split[2] == ".py" || split[2] == ".PY");
-  if(script && StatFile(exe)){
-    Msg::Error("Unable to open file '%s'", exe.c_str());
-    return 1;
+  // do we try to run a .py script or a .exe?
+  bool isPython = (split[2] == ".py" || split[2] == ".PY");
+  bool isExe = (split[2] == ".exe" || split[2] == ".EXE");
+
+  if(isPython || isExe){
+    if(StatFile(exe)){
+      Msg::Error("Unable to open file '%s'", exe.c_str());
+      return 1;
+    }
   }
 
 #if defined(WIN32)
-  if(script){
+  if(isPython){
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
               args.c_str());
     ShellExecute(NULL, (char*)"open", (char*)exe.c_str(),
@@ -257,8 +261,8 @@ int SystemCall(const std::string &command, bool blocking)
       CloseHandle(prInfo.hThread);
     }
     else{
-      // DETACHED_PROCESS removes the console (useful if the program to launch is
-      // a console-mode exe)
+      // DETACHED_PROCESS removes the console (useful if the program to launch
+      // is a console-mode exe)
       CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
 		    NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
 		    &suInfo, &prInfo);
@@ -266,10 +270,14 @@ int SystemCall(const std::string &command, bool blocking)
   }
 #else
   std::string cmd(command);
-  if(script){
+  if(isPython || isExe){
     if(access(exe.c_str(), X_OK)){
-      Msg::Info("Script '%s' is not executable: running with python", exe.c_str());
-      cmd = "python " + cmd;
+      if(isPython){
+        Msg::Info("Script '%s' is not executable: running with python", exe.c_str());
+        cmd = "python " + cmd;
+      }
+      else
+        Msg::Warning("File '%s' is not executable", exe.c_str());
     }
     else if(split[0].empty()){
       // workaround if pwd is not in PATH
