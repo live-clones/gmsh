@@ -296,8 +296,12 @@ bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 {
   int M = size1(), N = size2(), lda = size1(), info;
   int *ipiv = new int[std::min(M, N)];
-  if (result._own_data)
-    result.resize(M,N,false);
+  if (result.size2() != M || result.size1() != N) {
+    if (result._own_data || !result._data)
+      result.resize(M,N,false);
+    else
+      Msg::Fatal("FullMatrix: Bad dimension, I cannot write in proxy");
+  }
   result.setAll(*this);
   F77NAME(dgetrf)(&M, &N, result._data, &lda, ipiv, &info);
   if(info == 0){
