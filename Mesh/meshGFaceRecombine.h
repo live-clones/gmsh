@@ -416,7 +416,7 @@ class Rec2DChange {
     void *_info;
   
   public :
-    Rec2DChange() {Msg::Error("[Rec2DChange] I should not be created in this manner");}
+    Rec2DChange() {Msg::Fatal("[Rec2DChange] I should not be created in this manner");}
     Rec2DChange(int);
     Rec2DChange(Rec2DEdge*, bool toHide = false);
     Rec2DChange(Rec2DVertex*, bool toHide = false);

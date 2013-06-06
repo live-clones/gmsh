@@ -8,28 +8,12 @@
 
 #include <map>
 #include <vector>
+#include "bezierBasis.h"
 #include "fullMatrix.h"
 
-class MElement;
-
-class bezierBasis {
- private :
-  static std::map<int, bezierBasis> _bbs;
- public :
-  int dim, order;
-  int numLagPts;
-  int numDivisions;
-  // the 'numLagPts' first exponents are related to 'Lagrangian' values
-  fullMatrix<double> exponents; // exponents of Bezier FF
-  fullMatrix<double> bezierPoints, lagPoints; // sampling point
-  fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
-  fullMatrix<double> subDivisor;
-  static const bezierBasis *find(int);
-};
 
 class JacobianBasis {
  private:
-  static std::map<int, JacobianBasis*> _fs;
   const bezierBasis *bezier;
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
   fullVector<double> primGradShapeBarX, primGradShapeBarY, primGradShapeBarZ;
@@ -37,7 +21,6 @@ class JacobianBasis {
   int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
   inline const fullMatrix<double> &getPoints() const { return bezier->lagPoints; }
  public :
-  static const JacobianBasis *find(int);
   JacobianBasis(int tag);
   inline int getNumJacNodes() const { return numJacNodes; }
   inline int getNumMapNodes() const { return numMapNodes; }

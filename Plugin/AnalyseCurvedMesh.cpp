@@ -6,7 +6,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "GmshMessage.h"
-#include "JacobianBasis.h"
+
 #include "polynomialBasis.h"
 #include "AnalyseCurvedMesh.h"
 #include "Context.h"

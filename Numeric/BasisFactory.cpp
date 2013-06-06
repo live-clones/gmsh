@@ -11,9 +11,11 @@
 #include "BasisFactory.h"
 
 std::map<int, nodalBasis*> BasisFactory::fs;
+std::map<int, JacobianBasis*> BasisFactory::js;
+std::map<int, bezierBasis*> BasisFactory::bs;
 
-const nodalBasis* BasisFactory::create(int elementType) {
-
+const nodalBasis* BasisFactory::getNodalBasis(int elementType)
+{
   // If the Basis has already been built, return it.
   std::map<int, nodalBasis*>::const_iterator it = fs.find(elementType);
   if (it != fs.end()) {
@@ -22,7 +24,7 @@ const nodalBasis* BasisFactory::create(int elementType) {
   // Get the parent type to see which kind of basis
   // we want to create
   int parentType = MElement::ParentTypeFromTag(elementType);
-  nodalBasis* B = 0;
+  nodalBasis* F = NULL;
 
   switch(parentType) {
     case(TYPE_PNT):
@@ -32,19 +34,40 @@ const nodalBasis* BasisFactory::create(int elementType) {
     case(TYPE_PRI):
     case(TYPE_TET):
     case(TYPE_HEX):
-      B = new polynomialBasis(elementType);
+      F = new polynomialBasis(elementType);
       break;
     case(TYPE_PYR):
-      B = new pyramidalBasis(elementType);
+      F = new pyramidalBasis(elementType);
       break;
     default:
       Msg::Error("Unknown type of element.");
-      return 0;
+      return NULL;
   }
 
   // FIXME: check if already exists to deallocate if necessary
-  fs.insert(std::make_pair(elementType, B));
+  fs.insert(std::make_pair(elementType, F));
 
   return fs[elementType];
+}
 
+const bezierBasis* BasisFactory::getBezierBasis(int elementType)
+{
+  std::map<int, bezierBasis*>::const_iterator it = bs.find(elementType);
+  if (it != bs.end())
+    return it->second;
+
+  bezierBasis* B = new bezierBasis(elementType);
+  if (B) bs.insert(std::make_pair(elementType, B));
+  return B;
+}
+
+const JacobianBasis* BasisFactory::getJacobianBasis(int elementType)
+{
+  std::map<int, JacobianBasis*>::const_iterator it = js.find(elementType);
+  if (it != js.end())
+    return it->second;
+
+  JacobianBasis* J = new JacobianBasis(elementType);
+  if (J) js.insert(std::make_pair(elementType, J));
+  return J;
 }

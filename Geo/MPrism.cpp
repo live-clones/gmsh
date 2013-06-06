@@ -40,17 +40,17 @@ const nodalBasis* MPrism::getFunctionSpace(int o) const
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 0: return BasisFactory::create(MSH_PRI_1);
-    case 1: return BasisFactory::create(MSH_PRI_6);
-    case 2: return BasisFactory::create(MSH_PRI_18);
+    case 0: return BasisFactory::getNodalBasis(MSH_PRI_1);
+    case 1: return BasisFactory::getNodalBasis(MSH_PRI_6);
+    case 2: return BasisFactory::getNodalBasis(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
   else {
     switch (order) {
-    case 0: return BasisFactory::create(MSH_PRI_1);
-    case 1: return BasisFactory::create(MSH_PRI_6);
-    case 2: return BasisFactory::create(MSH_PRI_18);
+    case 0: return BasisFactory::getNodalBasis(MSH_PRI_1);
+    case 1: return BasisFactory::getNodalBasis(MSH_PRI_6);
+    case 2: return BasisFactory::getNodalBasis(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
@@ -65,15 +65,15 @@ const JacobianBasis* MPrism::getJacobianFuncSpace(int o) const
   
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 1: return JacobianBasis::find(MSH_PRI_6);
-    case 2: return JacobianBasis::find(MSH_PRI_18);
+    case 1: return BasisFactory::getJacobianBasis(MSH_PRI_6);
+    case 2: return BasisFactory::getJacobianBasis(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }
   else { 
     switch (order) {
-    case 1: return JacobianBasis::find(MSH_PRI_6);
-    case 2: return JacobianBasis::find(MSH_PRI_18);
+    case 1: return BasisFactory::getJacobianBasis(MSH_PRI_6);
+    case 2: return BasisFactory::getJacobianBasis(MSH_PRI_18);
     default: Msg::Error("Order %d prism function space not implemented", order);
     }
   }

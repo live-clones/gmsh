@@ -9,16 +9,21 @@
 #include "MElement.h"
 #include "MPyramid.h"
 #include "nodalBasis.h"
+#include "JacobianBasis.h"
+
 
 class BasisFactory
 {
   private:
     static std::map<int, nodalBasis*> fs;
+    static std::map<int, bezierBasis*> bs;
+    static std::map<int, JacobianBasis*> js;
 
   public:
-    // Caution: the returned pointer should be
-    // checked against 0.
-    static const nodalBasis* create(int elementType);
+    // Caution: the returned pointer can be NULL
+    static const nodalBasis* getNodalBasis(int elementType);
+    static const bezierBasis* getBezierBasis(int elementType);
+    static const JacobianBasis* getJacobianBasis(int elementType);
 };
 
 #endif

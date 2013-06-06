@@ -1141,7 +1141,7 @@ static void generateFaceClosureHex(nodalBasis::clCont &closure, int order,
                                    bool serendip, const fullMatrix<double> &points)
 {
   closure.clear();
-  const nodalBasis &fsFace = *BasisFactory::create(nodalBasis::getTag(TYPE_QUA, order, serendip));
+  const nodalBasis &fsFace = *BasisFactory::getNodalBasis(nodalBasis::getTag(TYPE_QUA, order, serendip));
   for (int iRotate = 0; iRotate < 4; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 6; iFace++) {

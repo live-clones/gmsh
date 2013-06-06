@@ -501,7 +501,7 @@ double discreteEdge::curvature(double par) const
   double c0, c1;
   Curvature& curvature  = Curvature::getInstance();
   if( !Curvature::valueAlreadyComputed() ) {
-    std::cout << "Need to compute discrete curvature (in discreteEdge)" << std::endl;
+    Msg::Warning("Need to compute discrete curvature (in discreteEdge)");
     Curvature::typeOfCurvature type = Curvature::RUSIN; //RUSIN; //RBF
     curvature.computeCurvature(model(), type); 
   }

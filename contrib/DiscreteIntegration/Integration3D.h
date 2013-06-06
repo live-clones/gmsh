@@ -49,7 +49,7 @@ class DI_Point
             const std::vector<gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
   virtual ~DI_Point(){}
   virtual const nodalBasis* getFunctionSpace(int o) const
-  { return BasisFactory::create(MSH_PNT); }
+  { return BasisFactory::getNodalBasis(MSH_PNT); }
   virtual void getShapeFunctions(double u, double v, double w, double s[], int o)
   {
     s[0] = 1.;

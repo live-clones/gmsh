@@ -11,7 +11,7 @@
 class LegendrePolynomials {
 
  public:
-  LegendrePolynomials() {};
+  LegendrePolynomials() : n(0) {};
   LegendrePolynomials(int o);
   ~LegendrePolynomials();
 

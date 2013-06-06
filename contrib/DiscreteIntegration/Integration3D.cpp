@@ -1045,7 +1045,7 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
 const nodalBasis* DI_Line::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_LIN, order);
-  return BasisFactory::create(tag);
+  return BasisFactory::getNodalBasis(tag);
 }
 
 void DI_Line::computeIntegral() {
@@ -1066,7 +1066,7 @@ const nodalBasis* DI_Triangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_TRI, order);
-  return BasisFactory::create(tag);
+  return BasisFactory::getNodalBasis(tag);
 }
 void DI_Triangle::computeIntegral() {
   integral_ = TriSurf(pt(0), pt(1), pt(2));
@@ -1090,7 +1090,7 @@ double DI_Triangle::quality() const {
 const nodalBasis* DI_Quad::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_QUA, order);
-  return BasisFactory::create(tag);
+  return BasisFactory::getNodalBasis(tag);
 }
 
 void DI_Quad::computeIntegral() {
@@ -1114,7 +1114,7 @@ void DI_Quad::computeIntegral() {
 const nodalBasis* DI_Tetra::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_TET, order);
-  return BasisFactory::create(tag);
+  return BasisFactory::getNodalBasis(tag);
 }
 
 void DI_Tetra::computeIntegral() {
@@ -1129,7 +1129,7 @@ double DI_Tetra::quality() const {
 const nodalBasis* DI_Hexa::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
   int tag = polynomialBasis::getTag(TYPE_HEX, order);
-  return BasisFactory::create(tag);
+  return BasisFactory::getNodalBasis(tag);
 }
 void DI_Hexa::computeIntegral() {
     integral_ = TetraVol(pt(0), pt(1), pt(3), pt(4)) + TetraVol(pt(1), pt(4), pt(5), pt(7))

@@ -35,31 +35,31 @@ const nodalBasis* MPyramid::getFunctionSpace(int o) const
 
   if ((nv == 0) && (o == -1)) {
     switch (order) {
-    case 1: return BasisFactory::create(MSH_PYR_5);
-    case 2: return BasisFactory::create(MSH_PYR_14);
-    case 0: return BasisFactory::create(MSH_PYR_1);
-    case 3: return BasisFactory::create(MSH_PYR_29);
-    case 4: return BasisFactory::create(MSH_PYR_50);
-    case 5: return BasisFactory::create(MSH_PYR_77);
-    case 6: return BasisFactory::create(MSH_PYR_110);
-    case 7: return BasisFactory::create(MSH_PYR_149);
-    case 8: return BasisFactory::create(MSH_PYR_194);
-    case 9: return BasisFactory::create(MSH_PYR_245);
+    case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
+    case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
+    case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
+    case 3: return BasisFactory::getNodalBasis(MSH_PYR_29);
+    case 4: return BasisFactory::getNodalBasis(MSH_PYR_50);
+    case 5: return BasisFactory::getNodalBasis(MSH_PYR_77);
+    case 6: return BasisFactory::getNodalBasis(MSH_PYR_110);
+    case 7: return BasisFactory::getNodalBasis(MSH_PYR_149);
+    case 8: return BasisFactory::getNodalBasis(MSH_PYR_194);
+    case 9: return BasisFactory::getNodalBasis(MSH_PYR_245);
     default: Msg::Error("Order %d pyramid function space not implemented", order);
     }
   }
   else {
     switch (order) {
-    case 0: return BasisFactory::create(MSH_PYR_1);
-    case 1: return BasisFactory::create(MSH_PYR_5);
-    case 2: return BasisFactory::create(MSH_PYR_14);
-    case 3: return BasisFactory::create(MSH_PYR_30);
-    case 4: return BasisFactory::create(MSH_PYR_55);
-    case 5: return BasisFactory::create(MSH_PYR_91);
-    case 6: return BasisFactory::create(MSH_PYR_140);
-    case 7: return BasisFactory::create(MSH_PYR_204);
-    case 8: return BasisFactory::create(MSH_PYR_285);
-    case 9: return BasisFactory::create(MSH_PYR_385);
+    case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
+    case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
+    case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
+    case 3: return BasisFactory::getNodalBasis(MSH_PYR_30);
+    case 4: return BasisFactory::getNodalBasis(MSH_PYR_55);
+    case 5: return BasisFactory::getNodalBasis(MSH_PYR_91);
+    case 6: return BasisFactory::getNodalBasis(MSH_PYR_140);
+    case 7: return BasisFactory::getNodalBasis(MSH_PYR_204);
+    case 8: return BasisFactory::getNodalBasis(MSH_PYR_285);
+    case 9: return BasisFactory::getNodalBasis(MSH_PYR_385);
     default: Msg::Error("Order %d pyramid function space not implemented", order);
     }
   }
@@ -71,9 +71,9 @@ const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   switch (order) {
-    case 1: return JacobianBasis::find(MSH_PYR_5);
-    case 2: return JacobianBasis::find(MSH_PYR_14);
-    case 3: return JacobianBasis::find(MSH_PYR_30);
+    case 1: return BasisFactory::getJacobianBasis(MSH_PYR_5);
+    case 2: return BasisFactory::getJacobianBasis(MSH_PYR_14);
+    case 3: return BasisFactory::getJacobianBasis(MSH_PYR_30);
     default: Msg::Error("Order %d pyramid function space not implemented", order); break;
   }
 

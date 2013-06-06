@@ -63,11 +63,11 @@ class MPoint : public MElement {
   }
   virtual const nodalBasis* getFunctionSpace(int o) const
   {
-    return BasisFactory::create(MSH_PNT);
+    return BasisFactory::getNodalBasis(MSH_PNT);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int o) const
   {
-    return JacobianBasis::find(MSH_PNT);
+    return BasisFactory::getJacobianBasis(MSH_PNT);
   }
   virtual bool isInside(double u, double v, double w) const
   {

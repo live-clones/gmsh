@@ -472,14 +472,14 @@ static int getNewFacePoints(int numPrimaryFacePoints, int nPts, fullMatrix<doubl
     switch (nPts){
     case 0 : break;
     case 1 : break;
-    case 2 : points = BasisFactory::create(MSH_TRI_10)->points; start = 9; break;
-    case 3 : points = BasisFactory::create(MSH_TRI_15)->points; start = 12; break;
-    case 4 : points = BasisFactory::create(MSH_TRI_21)->points; start = 15; break;
-    case 5 : points = BasisFactory::create(MSH_TRI_28)->points; start = 18; break;
-    case 6 : points = BasisFactory::create(MSH_TRI_36)->points; start = 21; break;
-    case 7 : points = BasisFactory::create(MSH_TRI_45)->points; start = 24; break;
-    case 8 : points = BasisFactory::create(MSH_TRI_55)->points; start = 27; break;
-    case 9 : points = BasisFactory::create(MSH_TRI_66)->points; start = 30; break;
+    case 2 : points = BasisFactory::getNodalBasis(MSH_TRI_10)->points; start = 9; break;
+    case 3 : points = BasisFactory::getNodalBasis(MSH_TRI_15)->points; start = 12; break;
+    case 4 : points = BasisFactory::getNodalBasis(MSH_TRI_21)->points; start = 15; break;
+    case 5 : points = BasisFactory::getNodalBasis(MSH_TRI_28)->points; start = 18; break;
+    case 6 : points = BasisFactory::getNodalBasis(MSH_TRI_36)->points; start = 21; break;
+    case 7 : points = BasisFactory::getNodalBasis(MSH_TRI_45)->points; start = 24; break;
+    case 8 : points = BasisFactory::getNodalBasis(MSH_TRI_55)->points; start = 27; break;
+    case 9 : points = BasisFactory::getNodalBasis(MSH_TRI_66)->points; start = 30; break;
     default :
       Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
       break;
@@ -488,14 +488,14 @@ static int getNewFacePoints(int numPrimaryFacePoints, int nPts, fullMatrix<doubl
   case 4:
     switch (nPts){
     case 0 : break;
-    case 1 : points = BasisFactory::create(MSH_QUA_9)->points; break;
-    case 2 : points = BasisFactory::create(MSH_QUA_16)->points; break;
-    case 3 : points = BasisFactory::create(MSH_QUA_25)->points; break;
-    case 4 : points = BasisFactory::create(MSH_QUA_36)->points; break;
-    case 5 : points = BasisFactory::create(MSH_QUA_49)->points; break;
-    case 6 : points = BasisFactory::create(MSH_QUA_64)->points; break;
-    case 7 : points = BasisFactory::create(MSH_QUA_81)->points; break;
-    case 8 : points = BasisFactory::create(MSH_QUA_100)->points; break;
+    case 1 : points = BasisFactory::getNodalBasis(MSH_QUA_9)->points; break;
+    case 2 : points = BasisFactory::getNodalBasis(MSH_QUA_16)->points; break;
+    case 3 : points = BasisFactory::getNodalBasis(MSH_QUA_25)->points; break;
+    case 4 : points = BasisFactory::getNodalBasis(MSH_QUA_36)->points; break;
+    case 5 : points = BasisFactory::getNodalBasis(MSH_QUA_49)->points; break;
+    case 6 : points = BasisFactory::getNodalBasis(MSH_QUA_64)->points; break;
+    case 7 : points = BasisFactory::getNodalBasis(MSH_QUA_81)->points; break;
+    case 8 : points = BasisFactory::getNodalBasis(MSH_QUA_100)->points; break;
     default :
       Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
       break;
@@ -599,15 +599,15 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     case 0: return;
     case 1: return;
     case 2:
-      BasisFactory::create(MSH_TET_20)->points.print();
-      points = BasisFactory::create(MSH_TET_20)->points; break;
-    case 3: points = BasisFactory::create(MSH_TET_35)->points; break;
-    case 4: points = BasisFactory::create(MSH_TET_56)->points; break;
-    case 5: points = BasisFactory::create(MSH_TET_84)->points; break;
-    case 6: points = BasisFactory::create(MSH_TET_120)->points; break;
-    case 7: points = BasisFactory::create(MSH_TET_165)->points; break;
-    case 8: points = BasisFactory::create(MSH_TET_220)->points; break;
-    case 9: points = BasisFactory::create(MSH_TET_286)->points; break;
+      BasisFactory::getNodalBasis(MSH_TET_20)->points.print();
+      points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
+    case 3: points = BasisFactory::getNodalBasis(MSH_TET_35)->points; break;
+    case 4: points = BasisFactory::getNodalBasis(MSH_TET_56)->points; break;
+    case 5: points = BasisFactory::getNodalBasis(MSH_TET_84)->points; break;
+    case 6: points = BasisFactory::getNodalBasis(MSH_TET_120)->points; break;
+    case 7: points = BasisFactory::getNodalBasis(MSH_TET_165)->points; break;
+    case 8: points = BasisFactory::getNodalBasis(MSH_TET_220)->points; break;
+    case 9: points = BasisFactory::getNodalBasis(MSH_TET_286)->points; break;
     default:
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;
@@ -617,14 +617,14 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
   case TYPE_HEX :
     switch (nPts){
     case 0: return;
-    case 1: points = BasisFactory::create(MSH_HEX_27)->points; break;
-    case 2: points = BasisFactory::create(MSH_HEX_64)->points; break;
-    case 3: points = BasisFactory::create(MSH_HEX_125)->points; break;
-    case 4: points = BasisFactory::create(MSH_HEX_216)->points; break;
-    case 5: points = BasisFactory::create(MSH_HEX_343)->points; break;
-    case 6: points = BasisFactory::create(MSH_HEX_512)->points; break;
-    case 7: points = BasisFactory::create(MSH_HEX_729)->points; break;
-    case 8: points = BasisFactory::create(MSH_HEX_1000)->points; break;
+    case 1: points = BasisFactory::getNodalBasis(MSH_HEX_27)->points; break;
+    case 2: points = BasisFactory::getNodalBasis(MSH_HEX_64)->points; break;
+    case 3: points = BasisFactory::getNodalBasis(MSH_HEX_125)->points; break;
+    case 4: points = BasisFactory::getNodalBasis(MSH_HEX_216)->points; break;
+    case 5: points = BasisFactory::getNodalBasis(MSH_HEX_343)->points; break;
+    case 6: points = BasisFactory::getNodalBasis(MSH_HEX_512)->points; break;
+    case 7: points = BasisFactory::getNodalBasis(MSH_HEX_729)->points; break;
+    case 8: points = BasisFactory::getNodalBasis(MSH_HEX_1000)->points; break;
     default :
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;
@@ -635,13 +635,13 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     switch (nPts){
     case 0:
     case 1: return;
-    case 2: points = BasisFactory::create(MSH_PYR_30)->points; break;
-    case 3: points = BasisFactory::create(MSH_PYR_55)->points; break;
-    case 4: points = BasisFactory::create(MSH_PYR_91)->points; break;
-    case 5: points = BasisFactory::create(MSH_PYR_140)->points; break;
-    case 6: points = BasisFactory::create(MSH_PYR_204)->points; break;
-    case 7: points = BasisFactory::create(MSH_PYR_285)->points; break;
-    case 8: points = BasisFactory::create(MSH_PYR_385)->points; break;
+    case 2: points = BasisFactory::getNodalBasis(MSH_PYR_30)->points; break;
+    case 3: points = BasisFactory::getNodalBasis(MSH_PYR_55)->points; break;
+    case 4: points = BasisFactory::getNodalBasis(MSH_PYR_91)->points; break;
+    case 5: points = BasisFactory::getNodalBasis(MSH_PYR_140)->points; break;
+    case 6: points = BasisFactory::getNodalBasis(MSH_PYR_204)->points; break;
+    case 7: points = BasisFactory::getNodalBasis(MSH_PYR_285)->points; break;
+    case 8: points = BasisFactory::getNodalBasis(MSH_PYR_385)->points; break;
     default :
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;

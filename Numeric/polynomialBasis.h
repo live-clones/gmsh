@@ -30,8 +30,7 @@ inline double pow_int(const double &a, const int &n)
   case 5 :
     {
       const double a2 = a*a;
-      const double a3 = a*a*a;
-      return a2*a3;
+      return a2*a2*a;
     }
   case 6 :
     {
@@ -51,9 +50,8 @@ inline double pow_int(const double &a, const int &n)
     }
   case 9 :
     {
-      const double a2 = a*a;
-      const double a4 = a2*a2;
-      return a4*a4*a;
+      const double a3 = a*a*a;
+      return a3*a3*a3;
     }
   case 10 :
     {
@@ -93,7 +91,7 @@ class polynomialBasis : public nodalBasis
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
   virtual void ddf(double u, double v, double w, double hess[][3][3]) const;
-  virtual  void dddf(double u, double v, double w, double third[][3][3][3]) const;
+  virtual void dddf(double u, double v, double w, double third[][3][3][3]) const;
 
   virtual int getNumShapeFunctions() const;
 
