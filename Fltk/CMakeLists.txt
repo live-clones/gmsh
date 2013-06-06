@@ -28,7 +28,7 @@ set(SRC
     partitionDialog.cpp
     onelabGroup.cpp
     inputRegion.cpp
-    viewButton.cpp
+    viewButton.cpp solverButton.cpp
     Navigator.cpp
 )
 

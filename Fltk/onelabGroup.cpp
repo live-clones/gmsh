@@ -25,6 +25,7 @@ typedef unsigned long intptr_t;
 #include "inputRange.h"
 #include "outputRange.h"
 #include "inputRegion.h"
+#include "solverButton.h"
 #include "viewButton.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
@@ -889,16 +890,10 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void onelab_remove_solver_cb(Fl_Widget *w, void *data)
-{
-  onelab::client *c = (onelab::client*)data;
-  FlGui::instance()->onelab->removeSolver(c->getName());
-}
-
 static void onelab_add_solver_cb(Fl_Widget *w, void *data)
 {
   for(int i = 0; i < 5; i++){
-    if(opt_solver_name(i, GMSH_GET, "").empty()){
+    if(opt_solver_name(i, GMSH_GET, "").empty() || i == 4){
       const char *name = fl_input("Client name:", "");
       if(name){
         FlGui::instance()->onelab->addSolver(name, "", "", i);
@@ -1032,6 +1027,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
+  _gear->add("_Add new solver...", 0, onelab_add_solver_cb);
 
   _minWindowWidth = 3 * BB2 + 4 * WB;
   _minWindowHeight = 2 * BH + 3 * WB;
@@ -1050,7 +1046,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
              FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
              FL_MENU_TOGGLE);
-  _gear->add("_Always show last step", 0, onelab_option_cb, (void*)"step",
+  _gear->add("Always show last step", 0, onelab_option_cb, (void*)"step",
              FL_MENU_TOGGLE);
 
   _gearOptionsEnd = _gear->menu()->size();
@@ -1126,6 +1122,19 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
   std::string::size_type last = path.find_last_of('/');
   if(last != std::string::npos) label = path.substr(last + 1);
   but->copy_label(label.c_str());
+  n->widget(but);
+  _tree->end();
+}
+
+void onelabGroup::_addSolverMenu(int num)
+{
+  std::ostringstream path;
+  path << "0Modules/Solver/Solver" << num;
+  Fl_Tree_Item *n = _tree->add(path.str().c_str());
+  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  _tree->begin();
+  solverButton *but = new solverButton(1, 1, ww, 1, num, _tree->color());
+  _treeWidgets.push_back(but);
   n->widget(but);
   _tree->end();
 }
@@ -1748,8 +1757,7 @@ bool onelabGroup::isBusy()
 
 void onelabGroup::rebuildSolverList()
 {
-  // update OneLab window title and gear menu
-  _title = "OneLab";
+  // update gear menu
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
   int values[7] = {CTX::instance()->solver.autoSaveDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
@@ -1765,23 +1773,6 @@ void onelabGroup::rebuildSolverList()
     else
       menu[idx].clear();
   }
-  for(int i = menu->size(); i >= _gearOptionsEnd - 1; i--)
-    _gear->remove(i);
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    if(it == onelab::server::instance()->firstClient()) _title += " -";
-    if(it->second->isNetworkClient()){
-      onelab::localNetworkClient *c = (onelab::localNetworkClient*)it->second;
-      char tmp[256];
-      sprintf(tmp, "%s/Choose executable", c->getName().c_str());
-      _gear->add(tmp, 0, onelab_choose_executable_cb, (void*)c);
-      sprintf(tmp, "%s/Remove", c->getName().c_str());
-      _gear->add(tmp, 0, onelab_remove_solver_cb, (void*)c);
-    }
-    _title += " " + it->second->getName();
-  }
-  _gear->add("Add new client...", 0, onelab_add_solver_cb);
-  //label(_title.c_str());
 
   // update Gmsh solver menu
   std::vector<std::string> names, exes, hosts;
@@ -1858,23 +1849,6 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
 
   // initialize the client
   onelab_cb(0, (void*)"initialize");
-}
-
-void onelabGroup::removeSolver(const std::string &name)
-{
-  onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()){
-    onelab::client *c = it->second;
-    if(c->isNetworkClient()){
-      if(c->getIndex() >= 0 && c->getIndex() < 5){
-        opt_solver_name(c->getIndex(), GMSH_SET, "");
-        opt_solver_executable(c->getIndex(), GMSH_SET, "");
-        opt_solver_remote_login(c->getIndex(), GMSH_SET, "");
-      }
-      delete c;
-    }
-  }
-  FlGui::instance()->onelab->rebuildSolverList();
 }
 
 void solver_cb(Fl_Widget *w, void *data)

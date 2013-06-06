@@ -3328,7 +3328,7 @@ void onelabGroup::_addGmshMenus()
   // add dynamic solver module items
   for(int i = 0; i < 5; i++){
     std::string name = opt_solver_name(i, GMSH_GET, "");
-    if(name.size()) _addMenu("0Modules/Solver/" + name, solver_cb, (void*)i);
+    if(name.size()) _addSolverMenu(i);
   }
 
   // add dynamic post-processing module items
