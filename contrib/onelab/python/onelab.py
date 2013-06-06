@@ -346,7 +346,7 @@ class client :
         self.addr = sys.argv[i + 2]
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
-    self.action = self.getString('python/Action')
+    self.action = self.getString(self.name + '/Action')
     self.setNumber('IsPyMetamodel',value=1,visible=0)
     if self.action == "initialize": exit(0)
 

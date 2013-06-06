@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 #coding=utf-8
 
+# 1) launch "gmsh pend.py"
+# 2) there is no 2... :-)
+
 import onelab
 import math, os
 
@@ -32,7 +35,7 @@ g = 9.8	# acceleration of gravity
 m = 0.3 # mass of pendulum balls
 
 l = OL.defineNumber('Geom/Length', value=1.0, label='Arm length [m]')
-time = OL.defineNumber('Dyna/time', label='time [s]')
+time = OL.defineNumber('Dyna/time', value=0.0, label='time [s]')
 dt = OL.defineNumber('Dyna/dt', value=0.001, label='time step [s]')
 tmax = OL.defineNumber('Dyna/tmax', value=20, label='max time [s]')
 refresh = OL.defineNumber('Dyna/refresh', value=0.05, label='refresh interval [s]')
@@ -53,9 +56,9 @@ theta = theta0 / 180.*math.pi;
 phi = phi0 / 180.*math.pi;
 theta_dot = 0.0
 phi_dot = 0.0
-time = 0.0
 refr = 0.0
 iter = 0
+time = 0.0
 
 while (time < tmax):
    delta = phi - theta
@@ -91,25 +94,30 @@ while (time < tmax):
 
    if refr >= refresh:
       refr = 0
-      OL.setNumber('python/Progress', value=time, min=0, max=tmax, visible=0)
+      OL.setNumber(OL.name + '/Progress', value=time, min=0, max=tmax, visible=0)
       OL.setNumber('Dyna/time', value=time)
       OL.setNumber('Solu/phi', value=phi)
-      OL.setNumber('Solu/theta', value=theta)
       OL.addNumberChoice('Solu/phi', phi)
+      OL.setNumber('Solu/theta', value=theta)
       OL.addNumberChoice('Solu/theta', theta)
       OL.setNumber('Solu/phi_dot', value=phi_dot)
-      OL.setNumber('Solu/theta_dot', value=theta_dot)
       OL.addNumberChoice('Solu/phi_dot', phi_dot)
+      OL.setNumber('Solu/theta_dot', value=theta_dot)
       OL.addNumberChoice('Solu/theta_dot', theta_dot)
+
+      # ask Gmsh to refresh
       OL.setString('Gmsh/Action', value='refresh')
-      if(OL.getString('python/Action') == 'stop'):
+
+      # stop if we are asked to (by Gmsh)
+      if(OL.getString(OL.name + '/Action') == 'stop'):
          break;
+
       exportMsh(l1, l2)
       exportIter(iter, time, x1, y1+l1, x2, y2+l1+l2)
       OL.mergeFile(onelab.path(__file__, 'pend.msh'))
       iter += 1
 
-OL.setNumber('python/Progress', value=0)
+OL.setNumber(OL.name + '/Progress', value=0)
 
 # comment the following lines out if you do not have gnuplot on your system
 # OL.preProcess(onelab.path(__file__,'pend.plt.ol'))
