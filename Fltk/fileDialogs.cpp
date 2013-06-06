@@ -128,7 +128,8 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
     first = false;
   }
   else{
-    fc->preset_file(0);
+    std::string name = split[1] + split[2];
+    fc->preset_file(name.c_str());
   }
 
   int ret = 0;
@@ -172,7 +173,8 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
     first = false;
   }
   else{
-    fc->value(0);
+    std::string name = split[1] + split[2];
+    fc->value(name.c_str());
   }
   fc->show();
   while(fc->shown()) Fl::wait();
