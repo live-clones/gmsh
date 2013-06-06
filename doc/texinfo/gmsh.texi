@@ -1678,6 +1678,9 @@ Refines the current mesh by splitting all elements. If
 linear interpolatinon. Otherwise they are snapped on the actual
 geometry.
 
+@item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
+Performs adaptive mesh generation. Documentation not yet available.
+
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
 

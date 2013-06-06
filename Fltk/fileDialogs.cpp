@@ -95,8 +95,7 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
   }
 
   // determine where to start
-  static std::string thepath;
-
+  std::string thepath;
   if(fname)
     thepath = std::string(fname);
   else

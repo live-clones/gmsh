@@ -113,7 +113,7 @@ struct doubleXstring{
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tCharacteristic tLength tParametric tElliptic tRefineMesh
+%token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
@@ -2196,10 +2196,13 @@ LevelSet :
 	    centers(i,j) = (double)(*(double*)List_Pointer(l, j));
 	  }
 	}
-	 gLevelset *ls = new gLevelsetPoints(centers, t);
-	 LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-	 Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        gLevelset *ls = new gLevelsetPoints(centers, t);
+        LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+        Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
       }
+      for(int i = 0; i < List_Nbr($8); i++)
+        List_Delete(*(List_T**)List_Pointer($8, i));
+      List_Delete($8);
 #endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
@@ -2844,6 +2847,61 @@ Command :
     {
       GModel::current()->importGEOInternals();
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+    }
+  | tAdaptMesh '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
+               '{' RecursiveListOfListOfDouble '}' '{' FExpr ',' FExpr '}' tEND
+    {
+      int lock = CTX::instance()->lock;
+      CTX::instance()->lock = 0;
+      std::vector<int> technique;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        technique.push_back((int)d);
+      }
+      if(technique.empty()){
+        yyerror("Need at least one adaptation technique");
+      }
+      else{
+        std::vector<simpleFunction<double>*> f;
+        for(int i = 0; i < List_Nbr($6); i++){
+          double d;
+          List_Read($6, i, &d);
+          LevelSet *l = FindLevelSet((int)d);
+          if(l) f.push_back(l->ls);
+          else yymsg(0, "Unknown Levelset %d", (int)d);
+        }
+        if(technique.size() != f.size()){
+          yyerror("Number of techniques != number of levelsets");
+        }
+        else{
+          if(List_Nbr($9) != f.size()){
+            yyerror("Number of parameters != number of levelsets");
+          }
+          else{
+            std::vector<std::vector<double> > parameters;
+            parameters.resize(List_Nbr($9));
+            for(int i = 0; i < List_Nbr($9); i++){
+              List_T *l = *(List_T**)List_Pointer($9, i);
+              for(int j = 0; j < List_Nbr(l); j++){
+                double d;
+                List_Read(l, j, &d);
+                parameters[i].push_back(d);
+              }
+            }
+            int niter = (int)$12;
+            bool meshAll = ($14 == 0) ? false : true;
+            GModel::current()->importGEOInternals();
+            GModel::current()->adaptMesh(technique, f, parameters, niter, meshAll);
+          }
+        }
+      }
+      List_Delete($3);
+      List_Delete($6);
+      for(int i = 0; i < List_Nbr($9); i++)
+        List_Delete(*(List_T**)List_Pointer($9, i));
+      List_Delete($9);
+      CTX::instance()->lock = lock;
     }
    | tSetOrder FExpr tEND
     {
