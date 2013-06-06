@@ -111,9 +111,9 @@ class Recombinator{
   void execute(GRegion*);
 
   void init_markings(GRegion*);
-  void patern1(GRegion*);
-  void patern2(GRegion*);
-  void patern3(GRegion*);
+  void pattern1(GRegion*);
+  void pattern2(GRegion*);
+  void pattern3(GRegion*);
   void merge(GRegion*);
   void improved_merge(GRegion*);
   void rearrange(GRegion*);
@@ -218,7 +218,7 @@ class Supplementary{
   void execute(GRegion*);
 
   void init_markings(GRegion*);
-  void patern(GRegion*);
+  void pattern(GRegion*);
   void merge(GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);

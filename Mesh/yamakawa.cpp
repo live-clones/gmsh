@@ -344,12 +344,12 @@ void Recombinator::execute(GRegion* gr){
   build_vertex_to_elements(gr);
 
   potential.clear();
-  patern1(gr);
-  Msg::Info("Hex-merging patern nb. 1...");
-  patern2(gr);
-  Msg::Info("Hex-merging patern nb. 2...");
-  patern3(gr);
-  Msg::Info("Hex-merging patern nb. 3...");
+  pattern1(gr);
+  Msg::Info("Hex-merging pattern nb. 1...");
+  pattern2(gr);
+  Msg::Info("Hex-merging pattern nb. 2...");
+  pattern3(gr);
+  Msg::Info("Hex-merging pattern nb. 3...");
 
   std::sort(potential.begin(),potential.end());
 
@@ -377,7 +377,7 @@ void Recombinator::init_markings(GRegion* gr){
   }
 }
 
-void Recombinator::patern1(GRegion* gr){
+void Recombinator::pattern1(GRegion* gr){
   size_t i;
   int index;
   double quality;
@@ -449,7 +449,7 @@ void Recombinator::patern1(GRegion* gr){
   }
 }
 
-void Recombinator::patern2(GRegion* gr){
+void Recombinator::pattern2(GRegion* gr){
   size_t i;
   int index1,index2,index3,index4;
   double quality;
@@ -497,7 +497,7 @@ void Recombinator::patern2(GRegion* gr){
   }
 }
 
-void Recombinator::patern3(GRegion* gr){
+void Recombinator::pattern3(GRegion* gr){
   size_t i;
   int index1,index2,index3,index4;
   bool c1,c2,c3,c4,c5;
@@ -2352,8 +2352,8 @@ void Supplementary::execute(GRegion* gr){
   printf("connectivity\n");
 
   potential.clear();
-  patern(gr);
-  printf("patern\n");
+  pattern(gr);
+  printf("pattern\n");
 
   hash_tableA.clear();
   hash_tableB.clear();
@@ -2424,7 +2424,7 @@ void Supplementary::init_markings(GRegion* gr){
   }
 }
 
-void Supplementary::patern(GRegion* gr){
+void Supplementary::pattern(GRegion* gr){
   size_t i;
   int j,k;
   double quality;
@@ -3876,7 +3876,7 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   for(it=bin2.begin();it!=bin2.end();it++){
     bin.insert(*it);
   }
-
+	
   if(bin.size()==2){
     it = bin.begin();
     it1 = markings.find(*it);
