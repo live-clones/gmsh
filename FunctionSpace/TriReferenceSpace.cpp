@@ -19,7 +19,14 @@ TriReferenceSpace::TriReferenceSpace(void){
   }
 
   // Face Definition //
-  nFace      = 1;
+  // Number of face
+  nFace = 1;
+
+  // Number of node per face
+  nNodeInFace    = new unsigned int[nFace];
+  nNodeInFace[0] = 3;
+
+  // Reference Face
   refFace    = new unsigned int*[nFace];
   refFace[0] = new unsigned int[3];
 
@@ -27,8 +34,8 @@ TriReferenceSpace::TriReferenceSpace(void){
   refFace[0][1] = 1;
   refFace[0][2] = 2;
 
-  // Init All (Tri Face) //
-  init(0);
+  // Init All //
+  init();
 }
 
 TriReferenceSpace::~TriReferenceSpace(void){
@@ -43,6 +50,7 @@ TriReferenceSpace::~TriReferenceSpace(void){
     delete[] refFace[i];
 
   delete[] refFace;
+  delete[] nNodeInFace;
 }
 
 string TriReferenceSpace::toLatex(void) const{

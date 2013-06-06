@@ -19,10 +19,8 @@ LineReferenceSpace::LineReferenceSpace(void){
   nFace   = 0;
   refFace = NULL;
 
-  // Init All (Use Tri Face --     //
-  //           unused --           //
-  //           just for interface) //
-  init(0);
+  // Init All //
+  init();
 }
 
 LineReferenceSpace::~LineReferenceSpace(void){

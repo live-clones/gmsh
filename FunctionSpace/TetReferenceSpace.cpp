@@ -19,7 +19,16 @@ TetReferenceSpace::TetReferenceSpace(void){
   }
 
   // Face Definition //
-  nFace   = 4;
+  // Number of face
+  nFace = 4;
+
+  // Number of node per face
+  nNodeInFace = new unsigned int[nFace];
+
+  for(unsigned int f = 0; f < nFace; f++)
+    nNodeInFace[f] = 3;
+
+  // Reference Face
   refFace = new unsigned int*[nFace];
 
   for(unsigned int i = 0; i < nFace; i++){
@@ -29,8 +38,8 @@ TetReferenceSpace::TetReferenceSpace(void){
     refFace[i][2] = MTetrahedron::faces_tetra(i, 2);
   }
 
-  // Init All (Tri Face) //
-  init(0);
+  // Init All //
+  init();
 }
 
 TetReferenceSpace::~TetReferenceSpace(void){
@@ -45,6 +54,7 @@ TetReferenceSpace::~TetReferenceSpace(void){
     delete[] refFace[i];
 
   delete[] refFace;
+  delete[] nNodeInFace;
 }
 
 string TetReferenceSpace::toLatex(void) const{

@@ -23,8 +23,8 @@ class ReferenceSpace{
   struct node_s{
     unsigned int  depth;    // Depth
     unsigned int* last;     // Last           Choises
-    unsigned int  number;   // Number of Next Choise
-    unsigned int* possible; // Possible  Next Choise
+    unsigned int  number;   // Number of Next Choises
+    unsigned int* possible; // Possible  Next Choises
     node_s*       next;     // Next           Choise
 
     unsigned int  leafId;   // If leaf: this leaf number
@@ -43,21 +43,19 @@ class ReferenceSpace{
   unsigned int**             perm;
   std::list<unsigned int*>* lPerm;
 
-  unsigned int                           nUnconnected;
-  std::pair<unsigned int, unsigned int>*  unconnected;
-  std::stack<node*>*                  toBeUnconnected;
-  unsigned int                               reduceBy;
-
   node pTreeRoot;
 
   // Edge Permutation //
   unsigned int    nEdge;
   unsigned int**  refEdge;
+  unsigned int*** permutedRefEdge;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* edge;
 
   // Face Permutation //
   unsigned int    nFace;
+  unsigned int*   nNodeInFace;
   unsigned int**  refFace;
+  unsigned int*** permutedRefFace;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* face;
 
  public:
@@ -80,39 +78,46 @@ class ReferenceSpace{
  protected:
   ReferenceSpace(void);
 
-  void init(unsigned int faceType);
+  void init(void);
   void populate(node* pTreeRoot);
   void destroy(node* node);
 
-  void unconnectWalk(node* pTreeRoot);    // Find wrong permutations
-  void markAsUnconnect(node* pTreeRoot);  // Mark leafs, with pTreeRoot as root, to be 'unconnected'
-  void unconnect(void);                   // Unconnects leafs marked before
-
   void getEdge(void);
-  void getTriFace(void);
-  void getQuaFace(void);
+  void getFace(void);
 
-  const std::vector<unsigned int>* inOrder(unsigned int permutation,
-                                           unsigned int a,
-                                           unsigned int b);
+  void getPermutedRefEntity(unsigned int**** permutedRefEntity,
+                            unsigned int**   refEntity,
+                            unsigned int*    nNodeInEntity,
+                            unsigned int     nEntity);
 
-  const std::vector<unsigned int>* inOrder(unsigned int permutation,
-                                           unsigned int a,
-                                           unsigned int b,
-                                           unsigned int c);
+  const std::vector<unsigned int>* getOrderedEdge(unsigned int permutation,
+                                                  unsigned int edge);
 
-  const std::vector<unsigned int>* inOrder(unsigned int permutation,
-                                           unsigned int a,
-                                           unsigned int b,
-                                           unsigned int c,
-                                           unsigned int d);
+  const std::vector<unsigned int>* getOrderedTriFace(unsigned int permutation,
+                                                     unsigned int face);
 
-  static bool sortPredicate(const std::pair<unsigned int, MVertex*>& a,
-                            const std::pair<unsigned int, MVertex*>& b);
+  const std::vector<unsigned int>* getOrderedQuadFace(unsigned int permutation,
+                                                      unsigned int face);
+
+  static void sortAndSwap(unsigned int* srcSort,
+                          unsigned int* srcSwap,
+                          std::vector<unsigned int>& dest);
+
+  static unsigned int whereIsIncluded(unsigned int  elem,
+                                      unsigned int* vec,
+                                      unsigned int  size);
+
+  static void getIndex(unsigned int   sizeRef,
+                       unsigned int*  ref,
+                       unsigned int   sizeVec,
+                       unsigned int*  vec,
+                       unsigned int** idx);
+
+  static bool sortPredicate(const std::pair<unsigned int, unsigned int>& a,
+                            const std::pair<unsigned int, unsigned int>& b);
 
   static unsigned int treeLookup(const node* root,
-                                 std::vector<std::pair<unsigned int, MVertex*> >&
-                                 sortedArray);
+                                 std::vector<unsigned int>& vertexReducedId);
 
   std::string toString(const node* node) const;
 };
@@ -200,10 +205,33 @@ ReferenceSpace::getAllFace(void) const{
 }
 
 inline
+void ReferenceSpace::getIndex(unsigned int   sizeRef,
+                              unsigned int*  ref,
+                              unsigned int   sizeVec,
+                              unsigned int*  vec,
+                              unsigned int** idx){
+
+  for(unsigned int i = 0; i < sizeRef; i++)
+    (*idx)[i] = whereIsIncluded(ref[i], vec, sizeVec);
+}
+
+inline
+unsigned int ReferenceSpace::whereIsIncluded(unsigned int  elem,
+                                             unsigned int* vec,
+                                             unsigned int  size){
+
+  for(unsigned int i = 0; i < size; i++)
+    if(vec[i] == elem)
+      return i;
+
+  return -1;
+}
+
+inline
 bool
-ReferenceSpace::sortPredicate(const std::pair<unsigned int, MVertex*>& a,
-                              const std::pair<unsigned int, MVertex*>& b){
-  return a.second->getNum() < b.second->getNum();
+ReferenceSpace::sortPredicate(const std::pair<unsigned int, unsigned int>& a,
+                              const std::pair<unsigned int, unsigned int>& b){
+  return a.second < b.second;
 }
 
 #endif

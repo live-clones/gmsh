@@ -99,8 +99,8 @@ void FunctionSpace::buildDof(void){
   dof      = new set<const Dof*, DofComparator>;
   group    = new vector<GroupOfDof*>(nElement);
   eToGod   = new map<const MElement*,
-		     const GroupOfDof*,
-		     ElementComparator>;
+                     const GroupOfDof*,
+                     ElementComparator>;
 
   // Create Dofs //
   for(unsigned int i = 0; i < nElement; i++){
@@ -118,7 +118,7 @@ void FunctionSpace::buildDof(void){
 
     // Map GOD
     eToGod->insert(pair<const MElement*, const GroupOfDof*>
-		   (element[i], god));
+                   (element[i], god));
   }
 }
 

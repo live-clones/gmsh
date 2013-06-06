@@ -13,8 +13,8 @@ FunctionSpaceVector::~FunctionSpaceVector(void){
 
 fullVector<double> FunctionSpaceVector::
 interpolate(const MElement& element,
-	    const std::vector<double>& coef,
-	    const fullVector<double>& xyz) const{
+            const std::vector<double>& coef,
+            const fullVector<double>& xyz) const{
 
   // Const Cast For MElement //
   MElement& eelement =
@@ -59,8 +59,8 @@ interpolate(const MElement& element,
 
 fullVector<double> FunctionSpaceVector::
 interpolateInRefSpace(const MElement& element,
-		      const std::vector<double>& coef,
-		      const fullVector<double>& uvw) const{
+                      const std::vector<double>& coef,
+                      const fullVector<double>& uvw) const{
 
   // Const Cast For MElement //
   MElement& eelement =

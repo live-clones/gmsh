@@ -30,14 +30,14 @@ TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
     (gmshGeneratePointsTriangle(order, false));
 
   // ReferenceSpace //
-  refSpace = new TriLagrangeReferenceSpace(order);
-  std::cout << refSpace->toString() << std::endl;
+  //  refSpace = new TriLagrangeReferenceSpace(order);
+  //  std::cout << refSpace->toString() << std::endl;
 }
 
 TriLagrangeBasis::~TriLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-  delete refSpace;
+  // delete refSpace;
 }
 
 unsigned int TriLagrangeBasis::getTag(unsigned int order){

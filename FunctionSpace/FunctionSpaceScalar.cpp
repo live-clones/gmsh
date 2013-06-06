@@ -12,8 +12,8 @@ FunctionSpaceScalar::~FunctionSpaceScalar(void){
 
 double FunctionSpaceScalar::
 interpolate(const MElement& element,
-	    const std::vector<double>& coef,
-	    const fullVector<double>& xyz) const{
+            const std::vector<double>& coef,
+            const fullVector<double>& xyz) const{
 
   // Const Cast For MElement //
   MElement& eelement =
@@ -44,8 +44,8 @@ interpolate(const MElement& element,
 
 double FunctionSpaceScalar::
 interpolateInRefSpace(const MElement& element,
-		      const std::vector<double>& coef,
-		      const fullVector<double>& uvw) const{
+                      const std::vector<double>& coef,
+                      const fullVector<double>& uvw) const{
 
   // Get Basis Functions //
   fullMatrix<double>* fun =

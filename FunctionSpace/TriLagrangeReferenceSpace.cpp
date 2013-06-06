@@ -26,8 +26,8 @@ TriLagrangeReferenceSpace::TriLagrangeReferenceSpace(unsigned int order){
   refFace[0][1] = 1;
   refFace[0][2] = 2;
 
-  // Init ReferenceSpace (Tri Face) //
-  init(0);
+  // Init ReferenceSpace //
+  init();
 
   // Get Lagrange Node //
   nNodePerEdge = 3 * (order - 1) / nEdge;
