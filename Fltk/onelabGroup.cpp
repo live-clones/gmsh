@@ -1027,7 +1027,6 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
   _gear->add("Save database...", 0, onelab_cb, (void*)"save");
   _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
-  _gear->add("_Add new solver...", 0, onelab_add_solver_cb);
 
   _minWindowWidth = 3 * BB2 + 4 * WB;
   _minWindowHeight = 2 * BH + 3 * WB;
@@ -1046,10 +1045,12 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
              FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
              FL_MENU_TOGGLE);
-  _gear->add("Always show last step", 0, onelab_option_cb, (void*)"step",
+  _gear->add("_Always show last step", 0, onelab_option_cb, (void*)"step",
              FL_MENU_TOGGLE);
 
   _gearOptionsEnd = _gear->menu()->size();
+
+  _gear->add("Add new solver...", 0, onelab_add_solver_cb);
 
   end();
 
