@@ -9,7 +9,7 @@
 
 #if defined(HAVE_ONELAB) && defined(HAVE_POST)
 
-#include "GmshSocket.h"
+#include "onelab.h"
 #include "OpenFile.h"
 #include "OS.h"
 #include "VertexArray.h"

@@ -9,7 +9,6 @@
 #include <vector>
 #include <string>
 #include "GmshMessage.h"
-#include "GmshSocket.h"
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
 #include "onelab.h"
