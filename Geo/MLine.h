@@ -133,14 +133,8 @@ class MLine3 : public MLine {
   }
   virtual MVertex *getVertexINP(int num){ return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
-  virtual int getNumEdgesRep(){ return 2; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[2][2] = {
-      {0, 2}, {2, 1}
-    };
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
@@ -188,13 +182,8 @@ class MLineN : public MLine {
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual int getNumEdgeVertices() const { return _vs.size(); }
-  virtual int getNumEdgesRep(){ return _vs.size() + 1; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    _getEdgeRep(getVertex((num == 0) ? 0 : num + 1),
-                getVertex((num == getNumEdgesRep() - 1) ? 1 : num + 2),
-                x, y, z, n);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2 + _vs.size());
