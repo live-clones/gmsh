@@ -52,7 +52,6 @@ class drawContextFltkCairo::queueString {
     _elements.push_back(elem);
     _totalWidth += elem.width;
     _maxHeight = std::max(_maxHeight, (int)elem.height + 1);
-    printf("%s : %g %i\n", elem.text.c_str(), elem.yBearing, elem.height);
   }
 
   void flush()
@@ -64,6 +63,13 @@ class drawContextFltkCairo::queueString {
     cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
     cairo_paint(cr);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+    cairo_font_options_t *fontOptions = cairo_font_options_create();
+    cairo_get_font_options(cr, fontOptions);
+    cairo_font_options_set_hint_style(fontOptions, CAIRO_HINT_STYLE_FULL);
+    cairo_font_options_set_antialias(fontOptions, CAIRO_ANTIALIAS_GRAY);
+    cairo_set_font_options(cr, fontOptions);
+    cairo_font_options_destroy(fontOptions);
+
     cairo_set_source_rgba(cr, 1, 1, 1, 1);
     for(std::vector<element>::iterator it = _elements.begin(); it != _elements.end();  ++it) {
       cairo_move_to(cr, pos - it->xBearing, -it->yBearing);
@@ -167,8 +173,8 @@ void drawContextFltkCairo::drawString(const char *str)
   cairo_text_extents_t extent;
   cairo_text_extents(_cr, str, &extent);
   queueString::element elem = {str, pos[0], pos[1], pos[2], color[0], color[1], color[2], color[3],
-    _currentFontSize, cairo_get_font_face(_cr), (int)ceil(extent.width), (int)ceil(extent.height),
-    extent.x_bearing, extent.y_bearing};
+    _currentFontSize, cairo_get_font_face(_cr), (int)ceil(extent.width) + 2, (int)ceil(extent.height) + 2,
+    extent.x_bearing - 1, extent.y_bearing - 1};
   cairo_font_face_reference(elem.fontFace);
   _queue->append(elem);
 }
@@ -185,6 +191,12 @@ drawContextFltkCairo::drawContextFltkCairo()
   _surface = cairo_image_surface_create(CAIRO_FORMAT_A8, 1, 1);
   _queue = new queueString;
   _cr = cairo_create(_surface);
+  cairo_font_options_t *fontOptions = cairo_font_options_create();
+  cairo_get_font_options(_cr, fontOptions);
+  cairo_font_options_set_hint_style(fontOptions, CAIRO_HINT_STYLE_FULL);
+  cairo_font_options_set_antialias(fontOptions, CAIRO_ANTIALIAS_GRAY);
+  cairo_set_font_options(_cr, fontOptions);
+  cairo_font_options_destroy(fontOptions);
   _currentFontId = -1;
 }
 
