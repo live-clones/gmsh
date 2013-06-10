@@ -10,7 +10,7 @@ using namespace voro;
 const double pi=3.1415926535897932384626433832795;
 
 // The total number of points to create as degenerate vertices
-const int points=100;
+const int voro_points=100;
 
 // The number of planes that will be cut around each point
 const int n=64;
@@ -32,7 +32,7 @@ int main() {
 	v.init(-1,1,-1,1,-1,1);
 
 	// Plane cutting
-	while(n<points) {
+	while(n<voro_points) {
 
 		// Choose a random point
 		x=2*rnd()-1;

@@ -343,7 +343,7 @@ class MQuadrangle9 : public MQuadrangle {
  *   |                  |    N = total number of vertices
  * 4+3E                3+2E
  *   |                  |    Interior vertex numbers
- *  ...  4+4e to N-1   ...    for edge 0 <= i <= 3: 4+i*E to 3+(i+1)*E
+ *  ...  4+4E to N-1   ...    for edge 0 <= i <= 3: 4+i*E to 3+(i+1)*E
  *   |                  |     in volume           : 4+4*E to N-1
  * 3+4E                4+E
  *   |                  |

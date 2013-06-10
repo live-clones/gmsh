@@ -4,6 +4,10 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "pointsGenerators.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
 
 /* --- Lines --- */
 
@@ -779,3 +783,309 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
     }
     return points;
 }
+
+
+
+
+fullMatrix<int> gmshGenerateMonomialsLine(int order)
+{
+  fullMatrix<int> monomials(order + 1, 1);
+  monomials(0,0) = 0;
+  if (order > 0) {
+    monomials(1, 0) = order;
+    for (int i = 2; i < order + 1; i++) monomials(i, 0) = i-1;
+  }
+  return monomials;
+}
+fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
+{
+  int nbMonomials = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
+  fullMatrix<int> monomials(nbMonomials, 2);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+
+  if (order > 0) {
+    monomials(1, 0) = order;
+    monomials(1, 1) = 0;
+
+    monomials(2, 0) = 0;
+    monomials(2, 1) = order;
+
+    if (order > 1) {
+      int index = 3;
+      for (int iedge = 0; iedge < 3; ++iedge) {
+        int i0 = MTriangle::edges_tri(iedge, 0);
+        int i1 = MTriangle::edges_tri(iedge, 1);
+
+        int u_0 = (monomials(i1,0)-monomials(i0,0)) / order;
+        int u_1 = (monomials(i1,1)-monomials(i0,1)) / order;
+
+        for (int i = 1; i < order; ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + u_0 * i;
+          monomials(index, 1) = monomials(i0, 1) + u_1 * i;
+        }
+      }
+      fullMatrix<int> inner = gmshGenerateMonomialsQuadrangle(order-2);
+      inner.add(1);
+      monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
+    }
+  }
+  return monomials;
+}
+fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order)
+{
+  int nbMonomials = (order+1)*(order+1);
+  fullMatrix<int> monomials(nbMonomials, 2);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+
+  if (order > 0) {
+    monomials(1, 0) = order;
+    monomials(1, 1) = 0;
+
+    monomials(2, 0) = order;
+    monomials(2, 1) = order;
+
+    monomials(3, 0) = 0;
+    monomials(3, 1) = order;
+
+    if (order > 1) {
+      int index = 4;
+      for (int iedge = 0; iedge < 4; ++iedge) {
+        int i0 = MQuadrangle::edges_quad(iedge, 0);
+        int i1 = MQuadrangle::edges_quad(iedge, 1);
+
+        int u_0 = (monomials(i1,0)-monomials(i0,0)) / order;
+        int u_1 = (monomials(i1,1)-monomials(i0,1)) / order;
+
+        for (int i = 1; i < order; ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + u_0 * i;
+          monomials(index, 1) = monomials(i0, 1) + u_1 * i;
+        }
+      }
+      fullMatrix<int> inner = gmshGenerateMonomialsQuadrangle(order-2);
+      inner.add(1);
+      monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
+    }
+  }
+  return monomials;
+}
+//KH : caveat : node coordinates are not yet coherent with node numbering associated
+//              to numbering of principal vertices of face !!!!
+fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
+{
+  int nbMonomials =
+    (serendip ?
+     4 +  6 * std::max(0, order - 1) + 4 * std::max(0, (order - 2) * (order - 1) / 2) :
+     (order + 1) * (order + 2) * (order + 3) / 6);
+
+  fullMatrix<int> monomials(nbMonomials, 3);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+  monomials(0, 2) = 0;
+
+  if (order > 0) {
+    monomials(1, 0) = order;
+    monomials(1, 1) = 0;
+    monomials(1, 2) = 0;
+
+    monomials(2, 0) = 0;
+    monomials(2, 1) = order;
+    monomials(2, 2) = 0;
+
+    monomials(3, 0) = 0;
+    monomials(3, 1) = 0;
+    monomials(3, 2) = order;
+
+    // the template has been defined in table edges_tetra and faces_tetra (MElement.h)
+
+    if (order > 1) {
+      int index = 4;
+      for (int iedge = 0; iedge < 6; ++iedge) {
+        int i0 = MTetrahedron::edges_tetra(iedge, 0);
+        int i1 = MTetrahedron::edges_tetra(iedge, 1);
+
+        int u[3];
+        u[0] = (monomials(i1,0)-monomials(i0,0)) / order;
+        u[1] = (monomials(i1,1)-monomials(i0,1)) / order;
+        u[2] = (monomials(i1,2)-monomials(i0,2)) / order;
+
+        for (int i = 1; i < order; ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + u[0] * i;
+          monomials(index, 1) = monomials(i0, 1) + u[1] * i;
+          monomials(index, 2) = monomials(i0, 2) + u[2] * i;
+        }
+      }
+
+      if (order > 2) {
+        fullMatrix<int> dudv = gmshGenerateMonomialsTriangle(order - 3);
+
+        for (int iface = 0; iface < 4; ++iface) {
+          int i0 = MTetrahedron::faces_tetra(iface, 0);
+          int i1 = MTetrahedron::faces_tetra(iface, 1);
+          int i2 = MTetrahedron::faces_tetra(iface, 2);
+
+          int u[3];
+          u[0] = (monomials(i1, 0) - monomials(i0, 0)) / order;
+          u[1] = (monomials(i1, 1) - monomials(i0, 1)) / order;
+          u[2] = (monomials(i1, 2) - monomials(i0, 2)) / order;
+          int v[3];
+          v[0] = (monomials(i2, 0) - monomials(i0, 0)) / order;
+          v[1] = (monomials(i2, 1) - monomials(i0, 1)) / order;
+          v[2] = (monomials(i2, 2) - monomials(i0, 2)) / order;
+
+          for (int i = 0; i < dudv.size1(); ++i, ++index) {
+            monomials(index, 0) = monomials(i0, 0) + u[0] * dudv(i, 0) + v[0] * dudv(i, 1);
+            monomials(index, 1) = monomials(i0, 1) + u[1] * dudv(i, 0) + v[1] * dudv(i, 1);
+            monomials(index, 2) = monomials(i0, 2) + u[2] * dudv(i, 0) + v[2] * dudv(i, 1);
+          }
+        }
+
+        if (!serendip && order > 3) {
+          fullMatrix<int> inner = gmshGenerateMonomialsTetrahedron(order - 4);
+          inner.add(1);
+          monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
+        }
+      }
+    }
+  }
+  return monomials;
+}
+/*
+fullMatrix<int> gmshGenerateMonomialsPrism(int order)
+{
+  const int prism18Pts[18][3] = {
+    {0, 0, 0}, // 0
+    {2, 0, 0}, // 1
+    {0, 2, 0}, // 2
+    {0, 0, 2},  // 3
+    {2, 0, 2},  // 4
+    {0, 2, 2},  // 5
+    {1, 0, 0},  // 6
+    {0, 1, 0},  // 7
+    {0, 0, 1},  // 8
+    {1, 1, 0},  // 9
+    {2, 0, 1},  // 10
+    {0, 2, 1},  // 11
+    {1, 0, 2},  // 12
+    {0, 1, 2},  // 13
+    {1, 1, 2},  // 14
+    {1, 0, 1},  // 15
+    {0, 1, 1},  // 16
+    {1, 1, 1},  // 17
+  };
+
+  int nbMonomials = (order + 1)*(order + 1)*(order + 2)/2;
+  fullMatrix<int> monomials(nbMonomials, 3);
+
+  int index = 0;
+  fullMatrix<int> triMonomials = gmshGenerateMonomialsTriangle(order,false);
+  fullMatrix<int> lineMonomials = gmshGenerateMonomialsLine(order);
+
+  if (order == 2)
+    for (int i =0; i<18; i++)
+      for (int j=0; j<3;j++)
+        monomials(i,j) = prism18Pts[i][j];
+  else
+    for (int j = 0; j <lineMonomials.size1() ; j++) {
+      for (int i = 0; i < triMonomials.size1(); i++) {
+        monomials(index,0) = triMonomials(i,0);
+        monomials(index,1) = triMonomials(i,1);
+        monomials(index,2) = lineMonomials(j,0);
+        index++;
+      }
+    }
+
+  return monomials;
+
+}
+*/
+fullMatrix<int> gmshGenerateMonomialsHexahedron(int order)
+{
+  int nbMonomials = (order+1)*(order+1)*(order+1);
+  fullMatrix<int> monomials(nbMonomials, 3);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+  monomials(0, 2) = 0;
+
+  if (order > 0) {
+    monomials(1, 0) = order;
+    monomials(1, 1) = 0;
+    monomials(1, 2) = 0;
+
+    monomials(2, 0) = order;
+    monomials(2, 1) = order;
+    monomials(2, 2) = 0;
+
+    monomials(3, 0) = 0;
+    monomials(3, 1) = order;
+    monomials(3, 2) = 0;
+
+    monomials(4, 0) = 0;
+    monomials(4, 1) = 0;
+    monomials(4, 2) = order;
+
+    monomials(5, 0) = order;
+    monomials(5, 1) = 0;
+    monomials(5, 2) = order;
+
+    monomials(6, 0) = order;
+    monomials(6, 1) = order;
+    monomials(6, 2) = order;
+
+    monomials(7, 0) = 0;
+    monomials(7, 1) = order;
+    monomials(7, 2) = order;
+
+    if (order > 1) {
+      int index = 8;
+      for (int iedge = 0; iedge < 12; ++iedge) {
+        int i0 = MHexahedron::edges_hexa(iedge, 0);
+        int i1 = MHexahedron::edges_hexa(iedge, 1);
+
+        int u_1 = (monomials(i1,0)-monomials(i0,0)) / order;
+        int u_2 = (monomials(i1,1)-monomials(i0,1)) / order;
+        int u_3 = (monomials(i1,2)-monomials(i0,2)) / order;
+
+        for (int i = 1; i < order; ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + i * u_1;
+          monomials(index, 1) = monomials(i0, 1) + i * u_2;
+          monomials(index, 2) = monomials(i0, 2) + i * u_3;
+        }
+      }
+
+      fullMatrix<int> dudv = gmshGenerateMonomialsQuadrangle(order - 3);
+
+      for (int iface = 0; iface < 6; ++iface) {
+        int i0 = MHexahedron::faces_hexa(iface, 0);
+        int i1 = MHexahedron::faces_hexa(iface, 1);
+        int i3 = MHexahedron::faces_hexa(iface, 3);
+
+        int u[3];
+        u[0] = (monomials(i1, 0) - monomials(i0, 0)) / order;
+        u[1] = (monomials(i1, 1) - monomials(i0, 1)) / order;
+        u[2] = (monomials(i1, 2) - monomials(i0, 2)) / order;
+        int v[3];
+        v[0] = (monomials(i3, 0) - monomials(i0, 0)) / order;
+        v[1] = (monomials(i3, 1) - monomials(i0, 1)) / order;
+        v[2] = (monomials(i3, 2) - monomials(i0, 2)) / order;
+
+        for (int i = 0; i < dudv.size1(); ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + u[0] * dudv(i, 0) + v[0] * dudv(i, 1);
+          monomials(index, 1) = monomials(i0, 1) + u[1] * dudv(i, 0) + v[1] * dudv(i, 1);
+          monomials(index, 2) = monomials(i0, 2) + u[2] * dudv(i, 0) + v[2] * dudv(i, 1);
+        }
+      }
+
+      fullMatrix<int> inner = gmshGenerateMonomialsHexahedron(order - 2);
+      inner.add(1);
+      monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
+    }
+  }
+  return monomials;
+}
+

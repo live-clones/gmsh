@@ -1372,9 +1372,8 @@ static void generateClosureOrder0(nodalBasis::clCont &closure, int nb)
 
 nodalBasis::nodalBasis(int tag)
 {
-
   type = tag;
-
+  
   switch (tag) {
   case MSH_PNT     : parentType = TYPE_PNT; order = 0; serendip = false; break;
   case MSH_LIN_1   : parentType = TYPE_LIN; order = 0; serendip = false; break;
