@@ -40,7 +40,7 @@ const nodalBasis* BasisFactory::getNodalBasis(int elementType)
       F = new pyramidalBasis(elementType);
       break;
     default:
-      Msg::Error("Unknown type of element.");
+      Msg::Error("Unknown type of element %d (in BasisFactory)", elementType);
       return NULL;
   }
 

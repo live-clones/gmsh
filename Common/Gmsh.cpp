@@ -244,7 +244,7 @@ int GmshBatch()
   solver_batch_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
 #endif
 
-  if (false) {
+  if (true) {
   // 11/06/13 : This will be removed later !
     for (int i = 1; i < MSH_NUM_TYPE+1; ++i) {
       if (i == 76 || i == 77 || i == 78)
@@ -253,24 +253,24 @@ int GmshBatch()
         Msg::Warning("ignoring unknown %d", i);
         continue;
       }
-      if (MElement::ParentTypeFromTag(i) == TYPE_PRI) {
-        Msg::Info("ignoring prism %d", i);
+      if (MElement::ParentTypeFromTag(i) == TYPE_PRI && MElement::OrderFromTag(i) > 2) {
+        Msg::Warning("ignoring prism %d (different implementation)", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_PYR) {
-        Msg::Info("ignoring pyramid %d", i);
+        Msg::Warning("ignoring pyramid %d", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_POLYG) {
-        Msg::Info("ignoring polygone %d", i);
+        Msg::Warning("ignoring polygone %d", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_POLYH) {
-        Msg::Info("ignoring polyhèdre %d", i);
+        Msg::Warning("ignoring polyhèdre %d", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_XFEM) {
-        Msg::Info("ignoring xfem %d", i);
+        Msg::Warning("ignoring xfem %d", i);
         continue;
       }
       const nodalBasis *fs = BasisFactory::getNodalBasis(i);

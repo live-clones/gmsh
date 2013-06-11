@@ -388,40 +388,57 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
 
   // TEST NEW ALGO POINTS / MONOMIALS
 
-  bool centered = false;
+  int rescale = 0;
   switch (parentType) {
   case TYPE_PNT :
     monomials_newAlgo = gmshGenerateMonomialsLine(0);
     break;
   case TYPE_LIN :
     monomials_newAlgo = gmshGenerateMonomialsLine(order);
-    centered = true;
+    rescale = 1;
     break;
   case TYPE_TRI :
     monomials_newAlgo = gmshGenerateMonomialsTriangle(order, serendip);
     break;
   case TYPE_QUA :
-    if (serendip) return;
-    monomials_newAlgo = gmshGenerateMonomialsQuadrangle(order);
-    centered = true;
+    monomials_newAlgo = gmshGenerateMonomialsQuadrangle(order, serendip);
+    rescale = 1;
     break;
   case TYPE_TET :
     monomials_newAlgo = gmshGenerateMonomialsTetrahedron(order, serendip);
     break;
   case TYPE_HEX :
-    if (serendip) return;
-    monomials_newAlgo = gmshGenerateMonomialsHexahedron(order);
-    centered = true;
+    monomials_newAlgo = gmshGenerateMonomialsHexahedron(order, serendip);
+    rescale = 1;
+    break;
+  case TYPE_PRI :
+    monomials_newAlgo = gmshGenerateMonomialsPrism(order, serendip);
+    rescale = 2;
     break;
   }
   copy(monomials_newAlgo, points_newAlgo);
   if (order == 0) return;
-  if (centered) {
-    points_newAlgo.scale(2./order);
-    points_newAlgo.add(-1.);
-  }
-  else {
-    points_newAlgo.scale(1./order);
+  switch (rescale) {
+    case 0 :
+      points_newAlgo.scale(1./order);
+      break;
+    case 1 :
+      points_newAlgo.scale(2./order);
+      points_newAlgo.add(-1.);
+      break;
+    case 2 :
+    {
+      fullMatrix<double> tmp;
+      tmp.setAsProxy(points_newAlgo, 0, 2);
+      tmp.scale(1./order);
+
+      tmp.setAsProxy(points_newAlgo, 2, 1);
+      tmp.scale(2./order);
+      tmp.add(-1.);
+      break;
+    }
+    default :
+      break;
   }
 }
 

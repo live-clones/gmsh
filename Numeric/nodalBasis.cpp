@@ -20,6 +20,7 @@ int nodalBasis::compareNewAlgoPointsWithOld() const
   }
   if (points_newAlgo.size1() != points.size1()) {
     Msg::Error("%d: pas meme taille (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+    Msg::Error(" |--> points[%d, %d] vs newPoints[%d, %d]", points.size1(), points.size2(), points_newAlgo.size1(), points_newAlgo.size2());
     return 2;
   }
   for (int i = 0; i < points.size1(); ++i) {
@@ -1247,8 +1248,8 @@ static void generateFaceClosureHexFull(nodalBasis::clCont &closure,
 static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
                                 nodalBasis::closure &closure, int order)
 {
-  if (order > 2)
-    Msg::Error("FaceClosure not implemented for prisms of order %d",order);
+  //if (order > 2)
+  //  Msg::Error("FaceClosure not implemented for prisms of order %d",order);
   bool isTriangle = iFace<2;
   int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
   closure.clear();
@@ -1285,6 +1286,8 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
 
 static void generateFaceClosurePrism(nodalBasis::clCont &closure, int order)
 {
+  if (order > 2)
+    Msg::Error("FaceClosure not implemented for prisms of order %d",order);
   closure.clear();
   for (int iRotate = 0; iRotate < 4; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
@@ -1603,7 +1606,7 @@ nodalBasis::nodalBasis(int tag)
       closureRef.resize(48, 0);
     }
     else {
-      generateFaceClosurePrism(closures, order);
+      if (order < 2) generateFaceClosurePrism(closures, order);
       generateFaceClosurePrismFull(fullClosures, closureRef, order);
     }
     break;

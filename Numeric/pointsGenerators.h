@@ -35,12 +35,14 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip);
 fullMatrix<int> gmshGenerateMonomialsLine(int order);
 
 fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip = false);
-fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order);
-//fullMatrix<int> gmshGenerateMonomialsQuadSerendipity(int order);
+fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoints = false);
+//fullMatrix<int> gmshGenerateMonomialsQuadSerendipity(int order); //FIXME
 
 fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip = false);
-fullMatrix<int> gmshGenerateMonomialsHexahedron(int order);
-//fullMatrix<int> gmshGenerateMonomialsPrism(int order);
+fullMatrix<int> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoints = false);
+//fullMatrix<int> gmshGenerateMonomialsHexaSerendipity(int order); //FIXME
+fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints = false);
+//fullMatrix<int> gmshGenerateMonomialsPrismSerendipity(int order); //FIXME
 
 //fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool serendip);
 
