@@ -71,19 +71,21 @@ class polynomialBasis : public nodalBasis
   // basis, we use the type of the corresponding gmsh element as type
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
-  
+
   polynomialBasis(int tag);
   ~polynomialBasis();
-  
-  virtual int getNumShapeFunctions() const;
-  
+
+  int compareNewAlgoPointsWithOld() const;
+
+  virtual inline int getNumShapeFunctions() const {return coefficients.size1();}
+
   virtual void f(double u, double v, double w, double *sf) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
   virtual void ddf(double u, double v, double w, double hess[][3][3]) const;
   virtual void dddf(double u, double v, double w, double third[][3][3][3]) const;
-  
+
   inline void evaluateMonomials(double u, double v, double w, double p[]) const {
     for (int j = 0; j < monomials.size1(); j++) {
       p[j] = pow_int(u, (int)monomials(j, 0));

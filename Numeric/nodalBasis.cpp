@@ -4,11 +4,46 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <limits>
+#include <cmath>
 #include "nodalBasis.h"
 #include "BasisFactory.h"
 //#include "pointsGenerators.h"
 
 
+int nodalBasis::compareNewAlgoPointsWithOld() const
+{
+  const char **name = new const char*[1];
+  MElement::getInfoMSH(type, name);
+  if (points_newAlgo.size1() == 0) {
+    Msg::Warning("%d: pas de points (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+    return 1;
+  }
+  if (points_newAlgo.size1() != points.size1()) {
+    Msg::Error("%d: pas meme taille (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+    return 2;
+  }
+  for (int i = 0; i < points.size1(); ++i) {
+    for (int j = 0; j < points.size2(); ++j) {
+      //Msg::Info("(i, j) = (%d, %d)", i, j);
+      //Msg::Info(" ");
+      if (std::abs(points(i, j) - points_newAlgo(i, j)) > 1e-15) {
+        Msg::Error("%d: correspond pas (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+        for (int i = 0; i < points.size1(); ++i) {
+          for (int j = 0; j < points.size2(); ++j) {
+            if(std::abs(points(i, j) - points_newAlgo(i, j)) <= 1e-15)
+              Msg::Info("(%d,%d) : points %f / %f newPoints (mon %d)", i, j, points(i, j), points_newAlgo(i, j), monomials_newAlgo(i, j));
+            else
+              Msg::Error("(%d,%d) : points %f / %f newPoints (mon %d)", i, j, points(i, j), points_newAlgo(i, j), monomials_newAlgo(i, j));
+          }
+          Msg::Info(" ");
+        }
+        return 3;
+      }
+    }
+  }
+  Msg::Info("%d: ok (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+  return 0;
+}
 
 static int nbdoftriangle(int order) { return (order + 1) * (order + 2) / 2; }
 
@@ -1373,7 +1408,7 @@ static void generateClosureOrder0(nodalBasis::clCont &closure, int nb)
 nodalBasis::nodalBasis(int tag)
 {
   type = tag;
-  
+
   switch (tag) {
   case MSH_PNT     : parentType = TYPE_PNT; order = 0; serendip = false; break;
   case MSH_LIN_1   : parentType = TYPE_LIN; order = 0; serendip = false; break;
@@ -1472,7 +1507,7 @@ nodalBasis::nodalBasis(int tag)
   case MSH_HEX_512 : parentType = TYPE_HEX; order = 7; serendip = false; break;
   case MSH_HEX_729 : parentType = TYPE_HEX; order = 8; serendip = false; break;
   case MSH_HEX_1000: parentType = TYPE_HEX; order = 9; serendip = false; break;
-  case MSH_HEX_20  : parentType = TYPE_HEX; order = 2; serendip = false; break;
+  case MSH_HEX_20  : parentType = TYPE_HEX; order = 2; serendip = true; break;
   case MSH_HEX_56  : parentType = TYPE_HEX; order = 3; serendip = true; break;
   case MSH_HEX_98  : parentType = TYPE_HEX; order = 4; serendip = true; break;
   case MSH_HEX_152 : parentType = TYPE_HEX; order = 5; serendip = true; break;

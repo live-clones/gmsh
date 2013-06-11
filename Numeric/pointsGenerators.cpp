@@ -784,9 +784,6 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
     return points;
 }
 
-
-
-
 fullMatrix<int> gmshGenerateMonomialsLine(int order)
 {
   fullMatrix<int> monomials(order + 1, 1);
@@ -797,6 +794,7 @@ fullMatrix<int> gmshGenerateMonomialsLine(int order)
   }
   return monomials;
 }
+
 fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
 {
   int nbMonomials = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
@@ -826,13 +824,14 @@ fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
           monomials(index, 1) = monomials(i0, 1) + u_1 * i;
         }
       }
-      fullMatrix<int> inner = gmshGenerateMonomialsQuadrangle(order-2);
+      fullMatrix<int> inner = gmshGenerateMonomialsTriangle(order-3);
       inner.add(1);
       monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
     }
   }
   return monomials;
 }
+
 fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order)
 {
   int nbMonomials = (order+1)*(order+1);
@@ -872,6 +871,7 @@ fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order)
   }
   return monomials;
 }
+
 //KH : caveat : node coordinates are not yet coherent with node numbering associated
 //              to numbering of principal vertices of face !!!!
 fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
@@ -922,6 +922,7 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
 
       if (order > 2) {
         fullMatrix<int> dudv = gmshGenerateMonomialsTriangle(order - 3);
+        dudv.add(1);
 
         for (int iface = 0; iface < 4; ++iface) {
           int i0 = MTetrahedron::faces_tetra(iface, 0);
@@ -954,6 +955,7 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
   }
   return monomials;
 }
+
 /*
 fullMatrix<int> gmshGenerateMonomialsPrism(int order)
 {
@@ -1003,6 +1005,7 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order)
 
 }
 */
+
 fullMatrix<int> gmshGenerateMonomialsHexahedron(int order)
 {
   int nbMonomials = (order+1)*(order+1)*(order+1);
@@ -1058,7 +1061,8 @@ fullMatrix<int> gmshGenerateMonomialsHexahedron(int order)
         }
       }
 
-      fullMatrix<int> dudv = gmshGenerateMonomialsQuadrangle(order - 3);
+      fullMatrix<int> dudv = gmshGenerateMonomialsQuadrangle(order - 2);
+      dudv.add(1);
 
       for (int iface = 0; iface < 6; ++iface) {
         int i0 = MHexahedron::faces_hexa(iface, 0);

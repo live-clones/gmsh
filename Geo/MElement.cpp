@@ -1167,6 +1167,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){
   case MSH_PNT     : if(name) *name = "Point";            return 1;
+  case MSH_LIN_1   : if(name) *name = "Line 1";           return 1;
   case MSH_LIN_2   : if(name) *name = "Line 2";           return 2;
   case MSH_LIN_3   : if(name) *name = "Line 3";           return 2 + 1;
   case MSH_LIN_4   : if(name) *name = "Line 4";           return 2 + 2;
@@ -1179,6 +1180,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_LIN_11  : if(name) *name = "Line 11";          return 2 + 9;
   case MSH_LIN_B   : if(name) *name = "Line Border";      return 2;
   case MSH_LIN_C   : if(name) *name = "Line Child";       return 2;
+  case MSH_TRI_1   : if(name) *name = "Triangle 1";       return 1;
   case MSH_TRI_3   : if(name) *name = "Triangle 3";       return 3;
   case MSH_TRI_6   : if(name) *name = "Triangle 6";       return 3 + 3;
   case MSH_TRI_9   : if(name) *name = "Triangle 9";       return 3 + 6;
@@ -1198,6 +1200,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TRI_27  : if(name) *name = "Triangle 27";      return 3 + 24;
   case MSH_TRI_30  : if(name) *name = "Triangle 30";      return 3 + 27;
   case MSH_TRI_B   : if(name) *name = "Triangle Border";  return 3;
+  case MSH_QUA_1   : if(name) *name = "Quadrilateral 1";  return 1;
   case MSH_QUA_4   : if(name) *name = "Quadrilateral 4";  return 4;
   case MSH_QUA_8   : if(name) *name = "Quadrilateral 8";  return 4 + 4;
   case MSH_QUA_9   : if(name) *name = "Quadrilateral 9";  return 9;
@@ -1212,8 +1215,14 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_QUA_12  : if(name) *name = "Quadrilateral 12"; return 12;
   case MSH_QUA_16I : if(name) *name = "Quadrilateral 16I";return 16;
   case MSH_QUA_20  : if(name) *name = "Quadrilateral 20"; return 20;
+  case MSH_QUA_24  : if(name) *name = "Quadrilateral 24"; return 24;
+  case MSH_QUA_28  : if(name) *name = "Quadrilateral 28"; return 28;
+  case MSH_QUA_32  : if(name) *name = "Quadrilateral 32"; return 32;
+  case MSH_QUA_36I : if(name) *name = "Quadrilateral 36I";return 36;
+  case MSH_QUA_40  : if(name) *name = "Quadrilateral 40"; return 40;
   case MSH_POLYG_  : if(name) *name = "Polygon";          return 0;
   case MSH_POLYG_B : if(name) *name = "Polygon Border";   return 0;
+  case MSH_TET_1   : if(name) *name = "Tetrahedron 1";    return 1;
   case MSH_TET_4   : if(name) *name = "Tetrahedron 4";    return 4;
   case MSH_TET_10  : if(name) *name = "Tetrahedron 10";   return 4 + 6;
   case MSH_TET_20  : if(name) *name = "Tetrahedron 20";   return 4 + 12 + 4;
@@ -1226,6 +1235,12 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_TET_165 : if(name) *name = "Tetrahedron 165";  return (9*10*11)/6;
   case MSH_TET_220 : if(name) *name = "Tetrahedron 220";  return (10*11*12)/6;
   case MSH_TET_286 : if(name) *name = "Tetrahedron 286";  return (11*12*13)/6;
+  case MSH_TET_74  : if(name) *name = "Tetrahedron 74";   return 74;
+  case MSH_TET_100 : if(name) *name = "Tetrahedron 100";  return 100;
+  case MSH_TET_130 : if(name) *name = "Tetrahedron 130";  return 130;
+  case MSH_TET_164 : if(name) *name = "Tetrahedron 164";  return 164;
+  case MSH_TET_202 : if(name) *name = "Tetrahedron 202";  return 202;
+  case MSH_HEX_1   : if(name) *name = "Hexahedron 1";     return 1;
   case MSH_HEX_8   : if(name) *name = "Hexahedron 8";     return 8;
   case MSH_HEX_20  : if(name) *name = "Hexahedron 20";    return 8 + 12;
   case MSH_HEX_27  : if(name) *name = "Hexahedron 27";    return 8 + 12 + 6 + 1;
@@ -1243,9 +1258,11 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_HEX_296 : if(name) *name = "Hexahedron 296";   return 296;
   case MSH_HEX_386 : if(name) *name = "Hexahedron 386";   return 386;
   case MSH_HEX_488 : if(name) *name = "Hexahedron 488";   return 488;
+  case MSH_PRI_1   : if(name) *name = "Prism 1";          return 1;
   case MSH_PRI_6   : if(name) *name = "Prism 6";          return 6;
   case MSH_PRI_15  : if(name) *name = "Prism 15";         return 6 + 9;
   case MSH_PRI_18  : if(name) *name = "Prism 18";         return 6 + 9 + 3;
+  case MSH_PYR_1   : if(name) *name = "Pyramid 1";        return 1;
   case MSH_PYR_5   : if(name) *name = "Pyramid 5";        return 5;
   case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
   case MSH_PYR_14  : if(name) *name = "Pyramid 14";       return 5 + 8 + 1;
@@ -1424,10 +1441,13 @@ int MElement::ParentTypeFromTag(int tag)
     case(MSH_HEX_218):  case(MSH_HEX_296):
     case(MSH_HEX_386):  case(MSH_HEX_488):
       return TYPE_HEX;
-    case(MSH_POLYG_): case(MSH_POLYG_B):
+    case(MSH_POLYG_):   case(MSH_POLYG_B):
       return TYPE_POLYG;
     case(MSH_POLYH_):
       return TYPE_POLYH;
+    case(MSH_PNT_SUB):  case(MSH_LIN_SUB):
+    case(MSH_TRI_SUB):  case(MSH_TET_SUB):
+      return TYPE_XFEM;
     default:
       Msg::Error("Unknown type %i, assuming tetrahedron.", tag);
       return TYPE_TET;

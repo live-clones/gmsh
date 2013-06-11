@@ -22,6 +22,9 @@
 #include "PView.h"
 #endif
 
+//test new algo generation points
+#include "BasisFactory.h"
+
 #if defined(HAVE_ONELAB)
 #include "gmshLocalNetworkClient.h"
 #endif
@@ -240,6 +243,40 @@ int GmshBatch()
   // launch solver (if requested)
   solver_batch_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
 #endif
+
+  if (false) {
+  // 11/06/13 : This will be removed later !
+    for (int i = 1; i < MSH_NUM_TYPE+1; ++i) {
+      if (i == 76 || i == 77 || i == 78)
+        continue;
+      if (i == 67 || i == 68 || i == 70) {
+        Msg::Warning("ignoring unknown %d", i);
+        continue;
+      }
+      if (MElement::ParentTypeFromTag(i) == TYPE_PRI) {
+        Msg::Info("ignoring prism %d", i);
+        continue;
+      }
+      if (MElement::ParentTypeFromTag(i) == TYPE_PYR) {
+        Msg::Info("ignoring pyramid %d", i);
+        continue;
+      }
+      if (MElement::ParentTypeFromTag(i) == TYPE_POLYG) {
+        Msg::Info("ignoring polygone %d", i);
+        continue;
+      }
+      if (MElement::ParentTypeFromTag(i) == TYPE_POLYH) {
+        Msg::Info("ignoring polyhdre %d", i);
+        continue;
+      }
+      if (MElement::ParentTypeFromTag(i) == TYPE_XFEM) {
+        Msg::Info("ignoring xfem %d", i);
+        continue;
+      }
+      const nodalBasis *fs = BasisFactory::getNodalBasis(i);
+      if (fs) fs->compareNewAlgoPointsWithOld();
+    }
+  }
 
   time_t now;
   time(&now);

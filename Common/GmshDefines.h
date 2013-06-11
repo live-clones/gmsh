@@ -59,6 +59,7 @@
 #define TYPE_HEX     8
 #define TYPE_POLYG   9
 #define TYPE_POLYH   10
+#define TYPE_XFEM    11
 
 // Element types in .msh file format (numbers should not be changed)
 #define MSH_LIN_2    1

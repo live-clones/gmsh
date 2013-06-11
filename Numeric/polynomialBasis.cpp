@@ -13,6 +13,7 @@
 #include "GmshMessage.h"
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
+#include "pointsGenerators.h"
 #include <limits>
 
 /*
@@ -342,7 +343,15 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
   return coefficient;
 }
 
-
+static void copy(const fullMatrix<int> &orig, fullMatrix<double> &b)
+{
+  b.resize(orig.size1(), orig.size2());
+  for (int i = 0; i < orig.size1(); ++i) {
+    for (int j = 0; j < orig.size2(); ++j) {
+      b(i, j) = static_cast<double>(orig(i, j));
+    }
+  }
+}
 
 polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
 {
@@ -376,6 +385,44 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
 
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
 
+
+  // TEST NEW ALGO POINTS / MONOMIALS
+
+  bool centered = false;
+  switch (parentType) {
+  case TYPE_PNT :
+    monomials_newAlgo = gmshGenerateMonomialsLine(0);
+    break;
+  case TYPE_LIN :
+    monomials_newAlgo = gmshGenerateMonomialsLine(order);
+    centered = true;
+    break;
+  case TYPE_TRI :
+    monomials_newAlgo = gmshGenerateMonomialsTriangle(order, serendip);
+    break;
+  case TYPE_QUA :
+    if (serendip) return;
+    monomials_newAlgo = gmshGenerateMonomialsQuadrangle(order);
+    centered = true;
+    break;
+  case TYPE_TET :
+    monomials_newAlgo = gmshGenerateMonomialsTetrahedron(order, serendip);
+    break;
+  case TYPE_HEX :
+    if (serendip) return;
+    monomials_newAlgo = gmshGenerateMonomialsHexahedron(order);
+    centered = true;
+    break;
+  }
+  copy(monomials_newAlgo, points_newAlgo);
+  if (order == 0) return;
+  if (centered) {
+    points_newAlgo.scale(2./order);
+    points_newAlgo.add(-1.);
+  }
+  else {
+    points_newAlgo.scale(1./order);
+  }
 }
 
 
@@ -386,7 +433,6 @@ polynomialBasis::~polynomialBasis()
 
 
 
-int polynomialBasis::getNumShapeFunctions() const { return coefficients.size1(); }
 
 
 

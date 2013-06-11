@@ -17,6 +17,7 @@
   */
 
 // Points
+
 fullMatrix<double> gmshGeneratePointsLine(int order);
 
 fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip);
@@ -28,7 +29,9 @@ fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip);
 
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip);
 
+
 // Monomial exponents
+
 fullMatrix<int> gmshGenerateMonomialsLine(int order);
 
 fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip = false);
