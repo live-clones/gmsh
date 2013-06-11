@@ -244,7 +244,7 @@ int GmshBatch()
   solver_batch_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
 #endif
 
-  if (true) {
+  if (false) {
   // 11/06/13 : This will be removed later !
     for (int i = 1; i < MSH_NUM_TYPE+1; ++i) {
       if (i == 76 || i == 77 || i == 78)
