@@ -315,6 +315,7 @@ void OLMsg::SetOnelabString(std::string name, std::string val, bool visible)
     }
     strings[0].setValue(val);
     strings[0].setVisible(visible);
+    strings[0].setAttribute("notInDb","True");
     _onelabClient->set(strings[0]);
   }
 }

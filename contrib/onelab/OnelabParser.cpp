@@ -560,8 +560,8 @@ void localSolverClient::parse_sentence(std::string line) {
       	  val=atof(resolveGetVal(arguments[0]).c_str());
       	numbers[0].setValue(val);
       }
-      else if(arguments[0].empty()) // resets read only parameters
-      	  numbers[0].setValue(val);
+      // else if(arguments[0].empty()) // resets read only parameters
+      // 	  numbers[0].setValue(val);
 
       if(arguments.size()>2)
 	numbers[0].setLabel(unquote(arguments[2]));
@@ -577,6 +577,7 @@ void localSolverClient::parse_sentence(std::string line) {
     }
     else if(!action.compare("string")) { 
       // syntax: paramName.string(val,path,help)
+      std::string val = "";
       if(arguments.size()>1)
 	name.assign(FixOLPath(arguments[1]) + name); // append path
       _parameters.insert(name);
@@ -585,7 +586,12 @@ void localSolverClient::parse_sentence(std::string line) {
       if(strings.empty()){
 	strings.resize(1);
 	strings[0].setName(name);
-	std::string val=resolveGetVal(arguments[0]);
+      	if(arguments[0].empty()){
+      	  strings[0].setReadOnly(true);
+      	  strings[0].setNeverChanged(true);
+      	}
+	else
+	  std::string val=resolveGetVal(arguments[0]);
 	strings[0].setValue(val);
       }
       // choices list is reset

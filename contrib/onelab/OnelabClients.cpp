@@ -1406,8 +1406,8 @@ std::string QuoteExecPath(const std::string &in)
 
 std::string removeBlanks(const std::string &in)
 {
-  size_t pos0=in.find_first_not_of(" ");
-  size_t pos=in.find_last_not_of(" ");
+  size_t pos0=in.find_first_not_of(" \t");
+  size_t pos=in.find_last_not_of(" \t");
   if( (pos0 != std::string::npos) && (pos != std::string::npos))
     return in.substr(pos0, pos-pos0+1);
   else
