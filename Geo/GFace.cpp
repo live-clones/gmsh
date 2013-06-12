@@ -805,14 +805,15 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 {
   const double Precision = onSurface ? 1.e-8 : 1.e-3;
   const int MaxIter = onSurface ? 25 : 10;
-  const int NumInitGuess = 11;
+  const int NumInitGuess = 9;
 
   double Unew = 0., Vnew = 0., err, err2;
   int iter;
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
-  double initu[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 1., 0.};
-  double initv[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 1., 0.};
+  // don't use 0.9, 0.1 it fails with ruled surfaces
+  double initu[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0.};
+  double initv[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0.};
 
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
@@ -821,10 +822,10 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   vmin = rv.low();
   vmax = rv.high();
 
-  const double tol = Precision*(SQU(umax-umin)+SQU(vmax-vmin));
+  const double tol = Precision * (SQU(umax - umin) + SQU(vmax-vmin));
   for(int i = 0; i < NumInitGuess; i++) {
-    initu[i] = umin + initu[i]*(umax-umin);
-    initv[i] = vmin + initv[i]*(vmax-vmin);
+    initu[i] = umin + initu[i] * (umax - umin);
+    initv[i] = vmin + initv[i] * (vmax - vmin);
   }
 
   for(int i = 0; i < NumInitGuess; i++){
