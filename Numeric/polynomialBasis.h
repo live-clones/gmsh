@@ -75,8 +75,6 @@ class polynomialBasis : public nodalBasis
   polynomialBasis(int tag);
   ~polynomialBasis();
 
-  //int compareNewAlgoPointsWithOld() const;
-
   virtual inline int getNumShapeFunctions() const {return coefficients.size1();}
 
   virtual void f(double u, double v, double w, double *sf) const;

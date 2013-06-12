@@ -1606,7 +1606,7 @@ nodalBasis::nodalBasis(int tag)
       closureRef.resize(48, 0);
     }
     else {
-      if (order < 2) generateFaceClosurePrism(closures, order);
+      generateFaceClosurePrism(closures, order);
       generateFaceClosurePrismFull(fullClosures, closureRef, order);
     }
     break;

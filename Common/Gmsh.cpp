@@ -244,7 +244,7 @@ int GmshBatch()
   solver_batch_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
 #endif
 
-  if (false) {
+  if (true) {
   // 11/06/13 : This will be removed later !
     for (int i = 1; i < MSH_NUM_TYPE+1; ++i) {
       if (i == 76 || i == 77 || i == 78)
@@ -258,8 +258,10 @@ int GmshBatch()
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_PYR) {
-        Msg::Warning("ignoring pyramid %d", i);
-        continue;
+        if (i > 124 && i < 132) {
+          Msg::Warning("ignoring serendipity pyramid %d (bug in Bergot implementation)", i);
+          continue;
+        }
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_POLYG) {
         Msg::Warning("ignoring polygone %d", i);

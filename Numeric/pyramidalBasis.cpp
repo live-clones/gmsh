@@ -7,6 +7,15 @@
 #include "pointsGenerators.h"
 
 
+static void copy(const fullMatrix<int> &orig, fullMatrix<double> &b)
+{
+  b.resize(orig.size1(), orig.size2());
+  for (int i = 0; i < orig.size1(); ++i) {
+    for (int j = 0; j < orig.size2(); ++j) {
+      b(i, j) = static_cast<double>(orig(i, j));
+    }
+  }
+}
 
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 {
@@ -28,6 +37,21 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 
   delete[] fval;
 
+
+  // TEST NEW ALGO POINTS / MONOMIAL
+
+  monomials_newAlgo = gmshGenerateMonomialsPyramid(order, serendip);
+  copy(monomials_newAlgo, points_newAlgo);
+  if (order == 0) return;
+
+  for (int i = 0; i < points_newAlgo.size1(); ++i) {
+    points_newAlgo(i, 2) = points_newAlgo(i, 2) / order;
+    if (i != 4) {
+      const double duv = -1. + points_newAlgo(i, 2);
+      points_newAlgo(i, 0) = duv + points_newAlgo(i, 0) * 2. / order;
+      points_newAlgo(i, 1) = duv + points_newAlgo(i, 1) * 2. / order;
+    }
+  }
 }
 
 
@@ -55,7 +79,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
     val[i] = 0.;
     for (int j = 0; j < N; j++) val[i] += VDMinv(i,j)*fval[j];
   }
-  
+
   delete[] fval;
 
 }
@@ -77,7 +101,7 @@ void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) 
       for (int j = 0; j < N; j++) sf(iPt,i) += VDMinv(i,j)*fval[j];
     }
   }
-  
+
   delete[] fval;
 
 }
