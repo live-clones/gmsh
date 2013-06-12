@@ -687,9 +687,24 @@ void onelab_cb(Fl_Widget *w, void *data)
         if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
       Msg::Direct("%s", db[i].c_str());
     }
-    std::string s = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str()))
+
+    std::vector<onelab::string> ps;
+    onelab::server::instance()->get(ps,"TAGSIMU");
+    std::string dbName, s;
+    if(ps.size())
+      dbName.assign("onelab" + ps[0].getValue() + ".db");
+    else
+      dbName = "onelab.db";
+    s.assign(SplitFileName(GModel::current()->getFileName())[0] + dbName);
+    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str())){
       saveDb(fileChooserGetName(1));
+      if(ps.size()){
+      	ps[0].setValue("");
+      	onelab::server::instance()->set(ps[0]);
+      	FlGui::instance()->rebuildTree(true);
+      }
+    }
+
     return;
   }
 
@@ -1960,6 +1975,7 @@ int metamodel_cb(const std::string &name, const std::string &action)
     onelab::string s1("Arguments/WorkingDir",
 		      split[0].size() ? split[0] : GetCurrentWorkdir());
     s1.setVisible(false);
+    s1.setAttribute("notInDb","True");
     onelab::server::instance()->set(s1);
     onelab::string s2("Arguments/FileName", split[1]);
     s2.setVisible(false);
