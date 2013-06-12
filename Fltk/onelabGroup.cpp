@@ -885,15 +885,14 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 
   if(exe.size()){
     c->setExecutable(exe);
-    if(c->getIndex() >= 0 && c->getIndex() < 5)
-      opt_solver_executable(c->getIndex(), GMSH_SET, exe);
+    opt_solver_executable(c->getIndex(), GMSH_SET, exe);
   }
 }
 
 static void onelab_add_solver_cb(Fl_Widget *w, void *data)
 {
-  for(int i = 0; i < 5; i++){
-    if(opt_solver_name(i, GMSH_GET, "").empty() || i == 4){
+  for(int i = 0; i < NUM_SOLVERS; i++){
+    if(opt_solver_name(i, GMSH_GET, "").empty() || i == (NUM_SOLVERS - 1)){
       const char *name = fl_input("Client name:", "");
       if(name){
         FlGui::instance()->onelab->addSolver(name, "", "", i);
@@ -1777,14 +1776,14 @@ void onelabGroup::rebuildSolverList()
 
   // update Gmsh solver menu
   std::vector<std::string> names, exes, hosts;
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < NUM_SOLVERS; i++){
     if(opt_solver_name(i, GMSH_GET, "").size()){
       names.push_back(opt_solver_name(i, GMSH_GET, ""));
       exes.push_back(opt_solver_executable(i, GMSH_GET, ""));
       hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
     }
   }
-  for(unsigned int i = 0; i < 5; i++){
+  for(unsigned int i = 0; i < NUM_SOLVERS; i++){
     if(i < names.size()){
       onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
       if(it != onelab::server::instance()->lastClient())

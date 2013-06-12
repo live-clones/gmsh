@@ -254,11 +254,12 @@ void ParseString(const std::string &str)
 
 static int defineSolver(const std::string &name)
 {
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < NUM_SOLVERS; i++){
     if(opt_solver_name(i, GMSH_GET, "") == name) return i;
   }
-  opt_solver_name(4, GMSH_SET|GMSH_GUI, name);
-  return 4;
+  // overwrite last one
+  opt_solver_name(NUM_SOLVERS - 1, GMSH_SET|GMSH_GUI, name);
+  return NUM_SOLVERS - 1;
 }
 
 int MergeFile(const std::string &fileName, bool warnIfMissing)

@@ -12,6 +12,8 @@
 #include "CGNSOptions.h"
 #include "meshPartitionOptions.h"
 
+#define NUM_SOLVERS 10
+
 class GamePad;
 
 // The interface-independent context.
@@ -235,7 +237,7 @@ class CTX {
     int plugins, listen;
     double timeout;
     std::string socketName;
-    std::string name[5], executable[5], remoteLogin[5];
+    std::string name[NUM_SOLVERS], executable[NUM_SOLVERS], remoteLogin[NUM_SOLVERS];
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoHideNewViews, autoShowLastStep, autoCheck;
   }solver;
