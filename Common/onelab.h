@@ -797,8 +797,10 @@ namespace onelab{
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++)
-        if(client.empty() || (*it)->hasClient(client))
-          s.push_back((*it)->toChar());
+        if(client.empty() || (*it)->hasClient(client)){
+	  if((*it)->getAttribute("NotInDb") != "True")
+	    s.push_back((*it)->toChar());
+	}
       return s;
     }
     // unserialize the parameter space
