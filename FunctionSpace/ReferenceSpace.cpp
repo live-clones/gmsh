@@ -102,6 +102,30 @@ void ReferenceSpace::init(void){
   // Get Edges & Faces //
   getEdge();
   getFace();
+
+  for(unsigned int p = 0; p < nPerm; p++){
+    cout << "Permutation " << p << ":" << endl;
+
+    for(unsigned int e = 0; e < nEdge; e++){
+      cout << "  " << "Edge " << e << ": [";
+
+      for(unsigned int n = 0; n < 2 - 1; n++)
+        cout << permutedRefEdge[p][e][n] << ", ";
+
+      cout << permutedRefEdge[p][e][2 - 1] << "]"
+           << endl;
+    }
+
+    for(unsigned int f = 0; f < nFace; f++){
+      cout << "  " << "Face " << f << ": [";
+
+      for(unsigned int n = 0; n < nNodeInFace[f] - 1; n++)
+        cout << permutedRefFace[p][f][n] << ", ";
+
+      cout << permutedRefFace[p][f][nNodeInFace[f] - 1] << "]"
+           << endl;
+    }
+  }
 }
 
 void ReferenceSpace::populate(node* pTreeRoot){
@@ -427,33 +451,33 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   }
 }
 
-unsigned int ReferenceSpace::treeLookup(const node* root,
+unsigned int ReferenceSpace::treeLookup(const node* node,
                                         vector<unsigned int>& vertexReducedId){
   // Temp Data //
   unsigned int choice;
   unsigned int i;
 
-  // If Root is *not* a Leaf: Lookup //
-  if(root->number){
+  // If Node is *not* a Leaf: Lookup //
+  if(node->number){
     // Get This Choice
-    choice = vertexReducedId[root->depth];
+    choice = vertexReducedId[node->depth];
 
     // Look for next node corresponding to this Choice
     i = 0;
-    while(root->possible[i] != choice)
+    while(node->possible[i] != choice)
       i++;
 
     // Look if a this Choice has been found
-    if(i == root->number)
+    if(i == node->number)
       throw Exception();
 
     // Go to next Node
-    return treeLookup(&root->next[i], vertexReducedId);
+    return treeLookup(&node->next[i], vertexReducedId);
   }
 
   // Else: Return Leaf ID //
   else
-    return root->leafId;
+    return node->leafId;
 }
 
 string ReferenceSpace::toString(void) const{

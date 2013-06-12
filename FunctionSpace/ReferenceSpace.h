@@ -69,7 +69,7 @@ class ReferenceSpace{
     getAllEdge(void) const;
 
   const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
-    getAllFace(void) const ;
+    getAllFace(void) const;
 
   virtual std::string toString(void) const;
 
@@ -116,7 +116,7 @@ class ReferenceSpace{
   static bool sortPredicate(const std::pair<unsigned int, unsigned int>& a,
                             const std::pair<unsigned int, unsigned int>& b);
 
-  static unsigned int treeLookup(const node* root,
+  static unsigned int treeLookup(const node* node,
                                  std::vector<unsigned int>& vertexReducedId);
 
   std::string toString(const node* node) const;
