@@ -5,6 +5,7 @@
 
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
+#include <cmath>
 
 
 static void copy(const fullMatrix<int> &orig, fullMatrix<double> &b)
@@ -15,6 +16,55 @@ static void copy(const fullMatrix<int> &orig, fullMatrix<double> &b)
       b(i, j) = static_cast<double>(orig(i, j));
     }
   }
+}
+
+static fullMatrix<double> generateLagrangeMonomialCoefficientsPyr
+  (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
+{
+  if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
+    Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
+         monomial.size1(),point.size1(),
+         monomial.size2(),point.size2() );
+    return fullMatrix<double>(1, 1);
+  }
+
+  int ndofs = monomial.size1();
+  int dim = monomial.size2();
+  fullMatrix<double> ppoint(point.size1(), point.size2());
+
+  for (int i = 0; i < ndofs; ++i) {
+    ppoint(i, 2) = 1. - point(i, 2);
+    if (ppoint(i, 2) != .0) {
+      ppoint(i, 0) = point(i, 0) / ppoint(i, 2);
+      ppoint(i, 1) = point(i, 1) / ppoint(i, 2);
+    }
+  }
+
+  fullMatrix<double> Vandermonde(ndofs, ndofs);
+  for (int i = 0; i < ndofs; i++) {
+    for (int j = 0; j < ndofs; j++) {
+      double dd = 1.;
+      for (int k = 0; k < dim; k++) dd *= pow(ppoint(j, k), monomial(i, k));
+      Vandermonde(i, j) = dd;
+    }
+  }
+
+  fullMatrix<double> coefficient(ndofs, ndofs);
+  Vandermonde.invert(coefficient);
+
+  fullMatrix<double> unity(ndofs, ndofs);
+  Vandermonde.mult(coefficient, unity);
+  double max = .0;
+  for (int i = 0; i < ndofs; i++) {
+    for (int j = 0; j < ndofs; j++) {
+      if (i == j) unity(i, j) -= 1.;
+      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
+      max = std::max(max, std::abs(unity(i, j)));
+    }
+  }
+  if (max > 1e-10) Msg::Info("mon   max unity = %.3e", max);
+
+  return coefficient;
 }
 
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
@@ -38,6 +88,19 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
   delete[] fval;
 
 
+  fullMatrix<double> unity(num_points, num_points);
+  VDM.mult(VDMinv, unity);
+  double max = .0;
+  for (int i = 0; i < num_points; i++) {
+    for (int j = 0; j < num_points; j++) {
+      if (i == j) unity(i, j) -= 1.;
+      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
+      max = std::max(max, std::abs(unity(i, j)));
+    }
+  }
+  if (max > 1e-10) Msg::Info("leg   max unity = %.3e", max);
+
+
   // TEST NEW ALGO POINTS / MONOMIAL
 
   monomials_newAlgo = gmshGenerateMonomialsPyramid(order, serendip);
@@ -52,6 +115,10 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
       points_newAlgo(i, 1) = duv + points_newAlgo(i, 1) * 2. / order;
     }
   }
+
+  fullMatrix<double> monDouble;
+  copy(monomials_newAlgo, monDouble);
+  coefficients_newAlgo = generateLagrangeMonomialCoefficientsPyr(monDouble, points_newAlgo);
 }
 
 
@@ -82,6 +149,17 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
   delete[] fval;
 
+}
+void pyramidalBasis::fnew(double u, double v, double w, double *sf) const
+{
+  double p[1256];
+  evaluateMonomialsNew(u, v, w, p);
+  for (int i = 0; i < coefficients_newAlgo.size1(); i++) {
+    sf[i] = 0.0;
+    for (int j = 0; j < coefficients_newAlgo.size2(); j++) {
+      sf[i] += coefficients_newAlgo(i, j) * p[j];
+    }
+  }
 }
 
 

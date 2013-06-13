@@ -16,6 +16,7 @@ class nodalBasis {
   fullMatrix<double> points;
   fullMatrix<double> points_newAlgo;
   fullMatrix<int> monomials_newAlgo;
+  fullMatrix<double> coefficients_newAlgo;
 
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
@@ -24,6 +25,7 @@ class nodalBasis {
 
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
+  virtual void fnew(double u, double v, double w, double *sf) const = 0;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;
@@ -31,6 +33,7 @@ class nodalBasis {
   virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");};
 
   int compareNewAlgoPointsWithOld() const;
+  int compareNewAlgoBaseFunctionsWithOld() const;
 
   // closures is the list of the nodes of each face, in the order of
   // the polynomialBasis of the face; fullClosures is mapping of the

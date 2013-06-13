@@ -78,6 +78,7 @@ class polynomialBasis : public nodalBasis
   virtual inline int getNumShapeFunctions() const {return coefficients.size1();}
 
   virtual void f(double u, double v, double w, double *sf) const;
+  virtual void fnew(double u, double v, double w, double *sf) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
@@ -91,6 +92,7 @@ class polynomialBasis : public nodalBasis
       if (monomials.size2() > 2) p[j] *= pow_int(w, (int)monomials(j, 2));
     }
   }
+  inline void evaluateMonomialsNew(double u, double v, double w, double p[]) const;
 };
 
 #endif

@@ -275,8 +275,12 @@ int GmshBatch()
         Msg::Warning("ignoring xfem %d", i);
         continue;
       }
+
       const nodalBasis *fs = BasisFactory::getNodalBasis(i);
-      if (fs) fs->compareNewAlgoPointsWithOld();
+
+      if (fs && !fs->compareNewAlgoPointsWithOld() && !fs->serendip) {
+        fs->compareNewAlgoBaseFunctionsWithOld();
+      }
     }
   }
 

@@ -826,9 +826,11 @@ fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
           monomials(index, 1) = monomials(i0, 1) + u_1 * i;
         }
       }
-      fullMatrix<int> inner = gmshGenerateMonomialsTriangle(order-3);
-      inner.add(1);
-      monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
+      if (!serendip) {
+        fullMatrix<int> inner = gmshGenerateMonomialsTriangle(order-3);
+        inner.add(1);
+        monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
+      }
     }
   }
   return monomials;

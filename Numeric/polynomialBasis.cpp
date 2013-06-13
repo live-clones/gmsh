@@ -9,6 +9,7 @@
 //
 
 #include <stdlib.h>
+#include <cmath>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "polynomialBasis.h"
@@ -137,6 +138,87 @@ static fullMatrix<double> generatePascalQuad(int order)
 
 static fullMatrix<double> generatePascalHex(int order, bool serendip)
 {
+  if (false && serendip) {
+    fullMatrix<double> monomials( 8+(order-1)*12, 3);
+    monomials(0,0)=0.;
+    monomials(0,1)=0.;
+    monomials(0,2)=0.;
+    monomials(1,0)=1.;
+    monomials(1,1)=0.;
+    monomials(1,2)=0.;
+    monomials(2,0)=0.;
+    monomials(2,1)=1.;
+    monomials(2,2)=0.;
+    monomials(3,0)=1.;
+    monomials(3,1)=1.;
+    monomials(3,2)=0.;
+
+    monomials(4,0)=0.;
+    monomials(4,1)=0.;
+    monomials(4,2)=1.;
+    monomials(5,0)=1.;
+    monomials(5,1)=0.;
+    monomials(5,2)=1.;
+    monomials(6,0)=0.;
+    monomials(6,1)=1.;
+    monomials(6,2)=1.;
+    monomials(7,0)=1.;
+    monomials(7,1)=1.;
+    monomials(7,2)=1.;
+    int index = 8;
+    for (int p = 2; p <= order; p++) {
+      monomials(index, 0) = p;
+      monomials(index, 1) = 0;
+      monomials(index, 2) = 0;
+      index++;
+      monomials(index, 0) = p;
+      monomials(index, 1) = 1;
+      monomials(index, 2) = 0;
+      index++;
+      monomials(index, 0) = p;
+      monomials(index, 1) = 1;
+      monomials(index, 2) = 1;
+      index++;
+      monomials(index, 0) = p;
+      monomials(index, 1) = 0;
+      monomials(index, 2) = 1;
+      index++;
+      monomials(index, 0) = 0;
+      monomials(index, 1) = p;
+      monomials(index, 2) = 0;
+      index++;
+      monomials(index, 0) = 1;
+      monomials(index, 1) = p;
+      monomials(index, 2) = 0;
+      index++;
+      monomials(index, 0) = 1;
+      monomials(index, 1) = p;
+      monomials(index, 2) = 1;
+      index++;
+      monomials(index, 0) = 0;
+      monomials(index, 1) = p;
+      monomials(index, 2) = 1;
+      index++;
+      monomials(index, 0) = 0;
+      monomials(index, 1) = 0;
+      monomials(index, 2) = p;
+      index++;
+      monomials(index, 0) = 1;
+      monomials(index, 1) = 0;
+      monomials(index, 2) = p;
+      index++;
+      monomials(index, 0) = 1;
+      monomials(index, 1) = 1;
+      monomials(index, 2) = p;
+      index++;
+      monomials(index, 0) = 0;
+      monomials(index, 1) = 1;
+      monomials(index, 2) = p;
+      index++;
+    }
+    return monomials;
+  }
+
   int siz = (order+1)*(order+1)*(order+1);
   if (serendip) siz -= (order-1)*(order-1)*(order-1);
   fullMatrix<double> monomials( siz, 3);
@@ -340,6 +422,19 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
 
   fullMatrix<double> coefficient(ndofs, ndofs);
   Vandermonde.invert(coefficient);
+
+  fullMatrix<double> unity(ndofs, ndofs);
+  Vandermonde.mult(coefficient, unity);
+  double max = .0;
+  for (int i = 0; i < ndofs; i++) {
+    for (int j = 0; j < ndofs; j++) {
+      if (i == j) unity(i, j) -= 1.;
+      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
+      max = std::max(max, std::abs(unity(i, j)));
+    }
+  }
+  if (max > 1e-10) Msg::Info("   max unity = %.3e", max);
+
   return coefficient;
 }
 
@@ -417,7 +512,7 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
     break;
   }
   copy(monomials_newAlgo, points_newAlgo);
-  if (order == 0) return;
+  //if (order == 0) return;
   switch (rescale) {
     case 0 :
       points_newAlgo.scale(1./order);
@@ -440,6 +535,23 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
     default :
       break;
   }
+
+  fullMatrix<double> monDouble;
+  switch (parentType) {
+  case TYPE_PNT :
+  case TYPE_LIN :
+  case TYPE_TRI :
+  case TYPE_TET :
+    copy(monomials_newAlgo, monDouble);
+    break;
+  case TYPE_QUA :
+  case TYPE_HEX :
+  case TYPE_PRI :
+    //if (serendip) monDouble = monomials;
+    /*else*/ copy(monomials_newAlgo, monDouble);
+    break;
+  }
+  coefficients_newAlgo = generateLagrangeMonomialCoefficients(monDouble, points_newAlgo);
 }
 
 
@@ -451,6 +563,23 @@ polynomialBasis::~polynomialBasis()
 
 
 
+inline void polynomialBasis::evaluateMonomialsNew(double u, double v, double w, double p[]) const
+{
+  for (int j = 0; j < monomials_newAlgo.size1(); ++j) {
+    p[j] = 1.;
+    switch (dimension) {
+    case 3 :
+      p[j] *= pow_int(w, monomials_newAlgo(j, 2));
+    case 2 :
+      p[j] *= pow_int(v, monomials_newAlgo(j, 1));
+    case 1 :
+      p[j] *= pow_int(u, monomials_newAlgo(j, 0));
+    default :
+      break;
+    }
+  }
+}
+
 
 
 void polynomialBasis::f(double u, double v, double w, double *sf) const
@@ -461,6 +590,17 @@ void polynomialBasis::f(double u, double v, double w, double *sf) const
     sf[i] = 0.0;
     for (int j = 0; j < coefficients.size2(); j++) {
       sf[i] += coefficients(i, j) * p[j];
+    }
+  }
+}
+void polynomialBasis::fnew(double u, double v, double w, double *sf) const
+{
+  double p[1256];
+  evaluateMonomialsNew(u, v, w, p);
+  for (int i = 0; i < coefficients_newAlgo.size1(); i++) {
+    sf[i] = 0.0;
+    for (int j = 0; j < coefficients_newAlgo.size2(); j++) {
+      sf[i] += coefficients_newAlgo(i, j) * p[j];
     }
   }
 }

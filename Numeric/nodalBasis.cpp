@@ -15,11 +15,11 @@ int nodalBasis::compareNewAlgoPointsWithOld() const
   const char **name = new const char*[1];
   MElement::getInfoMSH(type, name);
   if (points_newAlgo.size1() == 0) {
-    Msg::Warning("%d: pas de points (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+    Msg::Warning("%d: pas de points (%d, %d, %d) %s", type, parentType, serendip, order, *name);
     return 1;
   }
   if (points_newAlgo.size1() != points.size1()) {
-    Msg::Error("%d: pas meme taille (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+    Msg::Error("%d: pas meme taille (%d, %d, %d) %s", type, parentType, serendip, order, *name);
     Msg::Error(" |--> points[%d, %d] vs newPoints[%d, %d]", points.size1(), points.size2(), points_newAlgo.size1(), points_newAlgo.size2());
     return 2;
   }
@@ -28,7 +28,7 @@ int nodalBasis::compareNewAlgoPointsWithOld() const
       //Msg::Info("(i, j) = (%d, %d)", i, j);
       //Msg::Info(" ");
       if (std::abs(points(i, j) - points_newAlgo(i, j)) > 1e-15) {
-        Msg::Error("%d: correspond pas (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+        Msg::Error("%d: correspond pas (%d, %d, %d) %s", type, parentType, serendip, order, *name);
         for (int i = 0; i < points.size1(); ++i) {
           for (int j = 0; j < points.size2(); ++j) {
             if(std::abs(points(i, j) - points_newAlgo(i, j)) <= 1e-15)
@@ -42,7 +42,73 @@ int nodalBasis::compareNewAlgoPointsWithOld() const
       }
     }
   }
-  Msg::Info("%d: ok (%d, %d, %d) %s", type, parentType, order, serendip, *name);
+  Msg::Info("%d: ok (%d, %d, %d) %s", type, parentType, serendip, order, *name);
+  return 0;
+}
+
+int nodalBasis::compareNewAlgoBaseFunctionsWithOld() const
+{
+  const char **name = new const char*[1];
+  MElement::getInfoMSH(type, name);
+  int ndof = points.size1();
+  int P[3];
+  double oldVal[ndof], newVal[ndof];
+  for (int i = 0; i < 10; ++i) {
+    if (i == 0) {
+      P[0] = 0;
+      P[1] = 0;
+      P[2] = 0;
+    }
+    else if (i == 1) {
+      P[0] = 0;
+      P[1] = 0;
+      P[2] = 1000;
+    }
+    else if (i == 2) {
+      P[0] = 1000;
+      P[1] = 0;
+      P[2] = 0;
+    }
+    else {
+      P[0] = std::rand() % 1001;
+      P[1] = std::rand() % (1001 - P[0]);
+      P[2] = std::rand() % (1001 - P[0] - P[1]);
+    }
+
+    f(P[0] / 1000., P[1] / 1000., P[2] / 1000., oldVal);
+    fnew(P[0] / 1000., P[1] / 1000., P[2] / 1000., newVal);
+
+    double sumError = .0;
+    double sumOne[2];
+    sumOne[0] = .0;
+    sumOne[1] = .0;
+    for (int j = 0; j < ndof; ++j) {
+      double diff = std::abs(oldVal[j] - newVal[j]);
+      //double mean = std::sqrt(.5 * (oldVal[j]*oldVal[j] + newVal[j]*newVal[j]));
+      //double error = diff/(mean + 1e-15);
+      double error = diff;
+      sumError += error*error;
+      sumOne[0] += oldVal[j];
+      sumOne[1] += newVal[j];
+    }
+    sumError = std::sqrt(sumError/ndof);
+    /*if (sumError > 1e-4) {
+      Msg::Error("(%.2f, %.2f, %.2f) -> fold=%.2e / fnew=%.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumOne[0], sumOne[1]);
+      //for (int j = 0; j < ndof; ++j) {
+      //  Msg::Info("old %.3e vs %.3e new", oldVal[j], newVal[j]);
+      //}
+    }*/
+    if (sumError > 1e-13) {
+      if (type < 10)       Msg::Warning("   f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
+      else if (type < 100) Msg::Warning("    f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
+      else                 Msg::Warning("     f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
+      return 1;
+    }
+    /*else if (type < 10)  Msg::Info("   f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
+    else if (type < 100) Msg::Info("    f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
+    else                 Msg::Info("     f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
+    */
+  }
   return 0;
 }
 
