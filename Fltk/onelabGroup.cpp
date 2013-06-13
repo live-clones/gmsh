@@ -1975,7 +1975,7 @@ int metamodel_cb(const std::string &name, const std::string &action)
     onelab::string s1("Arguments/WorkingDir",
 		      split[0].size() ? split[0] : GetCurrentWorkdir());
     s1.setVisible(false);
-    s1.setAttribute("notInDb","True");
+    s1.setAttribute("NotInDb","True");
     onelab::server::instance()->set(s1);
     onelab::string s2("Arguments/FileName", split[1]);
     s2.setVisible(false);
