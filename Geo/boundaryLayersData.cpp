@@ -503,7 +503,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	//      printf("start with point %g %g (%g %g)\n",current->x(),current->y(),p.x(),p.y());
 	AttractorField *catt = 0;
 	SPoint3 _close;
-	double _current_distance = 0.;
+	//double _current_distance = 0.;
 	while(1){
 	  
 	  SMetric3 m;
@@ -513,7 +513,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	  if (!catt){
 	    catt = blf->current_closest;
 	    _close = blf->_closest_point;
-	    _current_distance = blf -> current_distance;
+	    //_current_distance = blf -> current_distance;
 	  }
 	  SPoint2 poffset  (p.x() + 1.e-12 * n.x(),
 			    p.y() + 1.e-12 * n.y());
@@ -526,7 +526,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	  if (blf -> current_distance > blf->thickness) break;
 	  catt = blf->current_closest;
 	  _close = blf->_closest_point;
-	  _current_distance = blf -> current_distance;
+	  //_current_distance = blf -> current_distance;
 	  SPoint2 pnew  (p.x() + l * n.x(),
 			 p.y() + l * n.y());
 	  GPoint gp = gf->point (pnew);
