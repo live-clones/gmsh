@@ -23,13 +23,13 @@ ReferenceSpace::ReferenceSpace(void){
 
   nEdge           = 0;
   refEdge         = NULL;
-  permutedRefEdge = NULL;
+  //permutedRefEdge = NULL;
   edge            = NULL;
 
   nFace           = 0;
   nNodeInFace     = NULL;
   refFace         = NULL;
-  permutedRefFace = NULL;
+  //permutedRefFace = NULL;
   face            = NULL;
 
   // Defining Ref Edge and Face in //
@@ -44,29 +44,29 @@ ReferenceSpace::~ReferenceSpace(void){
   // Delete Permutated Edge //
   for(unsigned int p = 0; p < nPerm; p++){
     for(unsigned int i = 0; i < nEdge; i++){
-      delete[] permutedRefEdge[p][i];
+      //delete[] permutedRefEdge[p][i];
       delete   (*(*edge)[p])[i];
     }
 
-    delete[] permutedRefEdge[p];
+    //delete[] permutedRefEdge[p];
     delete   (*edge)[p];
   }
 
-  delete[] permutedRefEdge;
+  //delete[] permutedRefEdge;
   delete   edge;
 
   // Delete Permutated Face //
   for(unsigned int p = 0; p < nPerm; p++){
     for(unsigned int i = 0; i < nFace; i++){
-      delete[] permutedRefFace[p][i];
+      //delete[] permutedRefFace[p][i];
       delete (*(*face)[p])[i];
     }
 
-    delete[] permutedRefFace[p];
+    //delete[] permutedRefFace[p];
     delete (*face)[p];
   }
 
-  delete[] permutedRefFace;
+  //delete[] permutedRefFace;
   delete face;
 }
 
@@ -102,30 +102,6 @@ void ReferenceSpace::init(void){
   // Get Edges & Faces //
   getEdge();
   getFace();
-
-  for(unsigned int p = 0; p < nPerm; p++){
-    cout << "Permutation " << p << ":" << endl;
-
-    for(unsigned int e = 0; e < nEdge; e++){
-      cout << "  " << "Edge " << e << ": [";
-
-      for(unsigned int n = 0; n < 2 - 1; n++)
-        cout << permutedRefEdge[p][e][n] << ", ";
-
-      cout << permutedRefEdge[p][e][2 - 1] << "]"
-           << endl;
-    }
-
-    for(unsigned int f = 0; f < nFace; f++){
-      cout << "  " << "Face " << f << ": [";
-
-      for(unsigned int n = 0; n < nNodeInFace[f] - 1; n++)
-        cout << permutedRefFace[p][f][n] << ", ";
-
-      cout << permutedRefFace[p][f][nNodeInFace[f] - 1] << "]"
-           << endl;
-    }
-  }
 }
 
 void ReferenceSpace::populate(node* pTreeRoot){
@@ -205,7 +181,7 @@ void ReferenceSpace::getEdge(void){
   // Alloc
   vector<const vector<unsigned int>*>* tmp;
   edge = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
-
+  /*
   // All Edges have two nodes
   unsigned int* nNodeInEdge = new unsigned int[nEdge];
 
@@ -221,7 +197,7 @@ void ReferenceSpace::getEdge(void){
                        nEdge);
 
   delete[] nNodeInEdge;
-
+  */
   // Populate Edge
   for(unsigned int p = 0; p < nPerm; p++){
     tmp = new vector<const vector<unsigned int>*>(nEdge);
@@ -237,7 +213,7 @@ void ReferenceSpace::getFace(void){
   // Alloc
   vector<const vector<unsigned int>*>* tmp;
   face = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
-
+  /*
   // Get Face nodes depending on the orientation
   //    (face 1 = [1 2 3 4] for orientation 1)
   //    (       = [4 1 2 3] for orientation 2)
@@ -245,7 +221,7 @@ void ReferenceSpace::getFace(void){
                        refFace,
                        nNodeInFace,
                        nFace);
-
+  */
   // Populate Face
   for(unsigned int p = 0; p < nPerm; p++){
     tmp = new vector<const vector<unsigned int>*>(nFace);
@@ -267,7 +243,7 @@ void ReferenceSpace::getFace(void){
     (*face)[p] = tmp;
   }
 }
-
+/*
 void ReferenceSpace::getPermutedRefEntity(unsigned int**** permutedRefEntity,
                                           unsigned int**   refEntity,
                                           unsigned int*    nNodeInEntity,
@@ -282,52 +258,33 @@ void ReferenceSpace::getPermutedRefEntity(unsigned int**** permutedRefEntity,
       (*permutedRefEntity)[p][e] = new unsigned int[nNodeInEntity[e]];
   }
 
-  // Alloc Idx
-  unsigned int** idx = new unsigned int*[nEntity];
-
-  for(unsigned int e = 0; e < nEntity; e++)
-    idx[e] = new unsigned int[nNodeInEntity[e]];
-
-  // Get Reference Index
-  //  Use refEntity and perm[0] as reference element
-  for(unsigned int e = 0; e < nEntity; e++)
-    getIndex(nNodeInEntity[e], refEntity[e], nVertex, perm[0], &idx[e]);
-
   // Generate Permuted Ref Entity
   for(unsigned int p = 0; p < nPerm; p++){
     for(unsigned int e = 0; e < nEntity; e++){
       for(unsigned int n = 0; n < nNodeInEntity[e]; n++)
-        (*permutedRefEntity)[p][e][n] = perm[p][idx[e][n]];
+        (*permutedRefEntity)[p][e][n] = perm[p][refEntity[e][n]];
     }
   }
-
-  // Delete Temp
-  for(unsigned int e = 0; e < nEntity; e++)
-    delete[] idx[e];
-
-  delete[] idx;
 }
-
+*/
 const vector<unsigned int>* ReferenceSpace::
 getOrderedEdge(unsigned int permutation,
                unsigned int edge){
 
-  /*************************************************************************
-   * Let say we have we have permutedRefEdge[4][2] = [0 1].                *
-   * I want to get back to same node ID than refEdge[2] = [2 0].           *
-   * That is, I want to return [0 2].                                      *
-   *                                                                       *
-   * I need to sort permutedRefEdge and keep the index swaping.            *
-   * I can use this index swaping to get the right permutation of refEdge. *
-   *************************************************************************/
+  /**************************************************************************
+   * I want to know how I need to take the values of refEdge[edge]          *
+   * (i.e the node *index* of a given edge) so that the corresponding       *
+   * values in permutation (i.e perm[permutation][refEdge[edge]]) are going *
+   * from the smallest value to the biggest.                                *
+   **************************************************************************/
 
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(2);
 
-  // Sort & Swap
-  sortAndSwap(permutedRefEdge[permutation][edge],
-              refEdge[edge],
-              *ordered);
+  // Order refEdge
+  orderRefEntityForGivenPermutation(refEdge[edge],
+                                    perm[permutation],
+                                    *ordered);
 
   // Return ordered
   return ordered;
@@ -337,17 +294,17 @@ const std::vector<unsigned int>* ReferenceSpace::
 getOrderedTriFace(unsigned int permutation,
                   unsigned int face){
 
-  /******************************************************
-   * Same as getOrderedEdge, but I need to use 3 nodes. *
-   ******************************************************/
+  /***********************************************
+   * Same as getOrderedEdge, but I with refFace. *
+   ***********************************************/
 
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(3);
 
-  // Sort & Swap
-  sortAndSwap(permutedRefFace[permutation][face],
-              refFace[face],
-              *ordered);
+  // Order refFace
+  orderRefEntityForGivenPermutation(refFace[face],
+                                    perm[permutation],
+                                    *ordered);
 
   // Return ordered
   return ordered;
@@ -358,9 +315,9 @@ getOrderedQuadFace(unsigned int permutation,
                    unsigned int face){
 
   /*********************************************************************
-   * Same as getOrderedEdge, but I need to use 4 nodes.                *
+   * Same as getOrderedFace, but refFace has 4 nodes.                  *
    *                                                                   *
-   * Moreover,                                                         *
+   * In that case,                                                     *
    * I need node at ordered[2] to be *opposite* to node at ordered[0]. *
    *  --> If not make a permutation such                               *
    *      that node opposite at ordered[2]                             *
@@ -370,10 +327,10 @@ getOrderedQuadFace(unsigned int permutation,
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(4);
 
-  // Sort & Swap
-  sortAndSwap(permutedRefFace[permutation][face],
-              refFace[face],
-              *ordered);
+  // Order refFace
+  orderRefEntityForGivenPermutation(refFace[face],
+                                    perm[permutation],
+                                    *ordered);
 
   // Get ordered[2] opposite to ordered[0]
   unsigned int opposite = ((*ordered)[0] + 2) % 4;
@@ -395,18 +352,19 @@ getOrderedQuadFace(unsigned int permutation,
   return ordered;
 }
 
-void ReferenceSpace::sortAndSwap(unsigned int* srcSort,
-                                 unsigned int* srcSwap,
-                                 vector<unsigned int>& dest){
+void ReferenceSpace::
+orderRefEntityForGivenPermutation(unsigned int* refEntity,
+                                  unsigned int* permutation,
+                                  vector<unsigned int>& orderedEntity){
   // Get Size
-  const unsigned int size = dest.size();
+  const unsigned int size = orderedEntity.size();
 
   // Copy srcSort in sorted
   vector<pair<unsigned int, unsigned int> > sorted(size);
 
   for(unsigned int i = 0; i < size; i++){
     sorted[i].first  = i;
-    sorted[i].second = srcSort[i];
+    sorted[i].second = permutation[refEntity[i]];
   }
 
   // Sort it with repsect to second entry
@@ -414,7 +372,7 @@ void ReferenceSpace::sortAndSwap(unsigned int* srcSort,
 
   // Swap with respect to srcSwap
   for(unsigned int i = 0; i < size; i++)
-    dest[i] = srcSwap[sorted[i].first];
+    orderedEntity[i] = refEntity[sorted[i].first];
 }
 
 unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{

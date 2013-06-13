@@ -35,7 +35,7 @@ class ReferenceSpace{
   typedef node_s node;
 
  protected:
-  // Permutation (Tree + Leaf) //
+  // Permutation (Tree + Leaf) of Reduced IDs //
   unsigned int    nVertex;
   unsigned int nextLeafId;
 
@@ -45,17 +45,44 @@ class ReferenceSpace{
 
   node pTreeRoot;
 
+  //////////////////////////////////////////////////////////////////////////
+  // !!! CHANGE VARIABLES NAME !!!                                        //
+  //                                                                      //
+  // perm              = nodeReducedGlobalId                              //
+  // refEntity         = entityNodeIndex                                  //
+  // entity            = orientedEntityNodeIndex                          //
+  //                                                                      //
+  // !!! I'm Working on *BOTH* indexes and global IDs !!!                 //
+  //                                                                      //
+  // 16 +                                                                 //
+  //    |\        ---> NodeIndex       = [v0 v1 v2]                       //
+  //    | \       ---> GlobalID        = [17 42 16]                       //
+  //    |  \      ---> ReducedGlobalId = [1  2  0 ] ---> Permutation = 3  //
+  // 17 +---+ 42                                                          //
+  //                                                                      //
+  // *  refEdge[e][i] = ith INDEX of edge[e]                              //
+  //    For example refEdge[1] = [1 2] because edge[1]                    //
+  //                              - -                                     //
+  //                                           is made of nodes v1 and v2 //
+  //                                                             -      - //
+  //                                                                      //
+  // *  edge[p][e][i] = ith INDEX of edge[e] in orientation[p]            //
+  //          such that GlobalID[edge[p][e][0]] > GlobalId[edge[p][e][0]] //
+  //    For example edge[3][1] = [2 1] because edge[1] goes from v2 to v1 //
+  //                              - -                             -     - //
+  //////////////////////////////////////////////////////////////////////////
+
   // Edge Permutation //
   unsigned int    nEdge;
   unsigned int**  refEdge;
-  unsigned int*** permutedRefEdge;
+  //unsigned int*** permutedRefEdge;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* edge;
 
   // Face Permutation //
   unsigned int    nFace;
   unsigned int*   nNodeInFace;
   unsigned int**  refFace;
-  unsigned int*** permutedRefFace;
+  //unsigned int*** permutedRefFace;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* face;
 
  public:
@@ -84,12 +111,12 @@ class ReferenceSpace{
 
   void getEdge(void);
   void getFace(void);
-
+  /*
   void getPermutedRefEntity(unsigned int**** permutedRefEntity,
                             unsigned int**   refEntity,
                             unsigned int*    nNodeInEntity,
                             unsigned int     nEntity);
-
+  */
   const std::vector<unsigned int>* getOrderedEdge(unsigned int permutation,
                                                   unsigned int edge);
 
@@ -99,19 +126,10 @@ class ReferenceSpace{
   const std::vector<unsigned int>* getOrderedQuadFace(unsigned int permutation,
                                                       unsigned int face);
 
-  static void sortAndSwap(unsigned int* srcSort,
-                          unsigned int* srcSwap,
-                          std::vector<unsigned int>& dest);
-
-  static unsigned int whereIsIncluded(unsigned int  elem,
-                                      unsigned int* vec,
-                                      unsigned int  size);
-
-  static void getIndex(unsigned int   sizeRef,
-                       unsigned int*  ref,
-                       unsigned int   sizeVec,
-                       unsigned int*  vec,
-                       unsigned int** idx);
+  static void
+    orderRefEntityForGivenPermutation(unsigned int* refEntity,
+                                      unsigned int* permutation,
+                                      std::vector<unsigned int>& orderedEntity);
 
   static bool sortPredicate(const std::pair<unsigned int, unsigned int>& a,
                             const std::pair<unsigned int, unsigned int>& b);
@@ -204,28 +222,6 @@ ReferenceSpace::getAllFace(void) const{
   return *face;
 }
 
-inline
-void ReferenceSpace::getIndex(unsigned int   sizeRef,
-                              unsigned int*  ref,
-                              unsigned int   sizeVec,
-                              unsigned int*  vec,
-                              unsigned int** idx){
-
-  for(unsigned int i = 0; i < sizeRef; i++)
-    (*idx)[i] = whereIsIncluded(ref[i], vec, sizeVec);
-}
-
-inline
-unsigned int ReferenceSpace::whereIsIncluded(unsigned int  elem,
-                                             unsigned int* vec,
-                                             unsigned int  size){
-
-  for(unsigned int i = 0; i < size; i++)
-    if(vec[i] == elem)
-      return i;
-
-  return -1;
-}
 
 inline
 bool
