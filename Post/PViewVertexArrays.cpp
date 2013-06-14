@@ -1021,24 +1021,25 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   }
 
   if(opt->glyphLocation == PViewOptions::COG){
+    // compute value by averaging the norm and averaging the directions (this
+    // allows to preserve the min/max)
     SPoint3 pc(0., 0., 0.);
     double d[3] = {0., 0., 0.};
-    double d2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-
+    double v2 = 0.;
     for(int i = 0; i < numNodes; i++){
       pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
+      v2 += opt->saturateValues ?
+        saturateVector(val[i], numComp2, val2[i], opt->externalMin, opt->externalMax) :
+        ComputeScalarRep(numComp2, val2[i]);
       for(int j = 0; j < 3; j++) d[j] += val[i][j];
-      for(int j = 0; j < numComp2; j++) d2[j] += val2[i][j];
     }
     pc /= (double)numNodes;
-    for(int j = 0; j < 3; j++) d[j] /= (double)numNodes;
-    for(int j = 0; j < numComp2; j++) d2[j] /= (double)numNodes;
+    v2 /= (double)numNodes;
+    norme(d);
+    for(int i = 0; i < 3; i++) d[i] *= v2;
 
     // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
-    double v2 = opt->saturateValues ?
-      saturateVector(d, numComp2, d2, opt->externalMin, opt->externalMax) :
-      ComputeScalarRep(numComp2, d2);
     if(v2 >= opt->externalMin * (1. - 1.e-15) &&
        v2 <= opt->externalMax * (1. + 1.e-15)){
       unsigned int color = opt->getColor(v2, opt->externalMin, opt->externalMax, false,
