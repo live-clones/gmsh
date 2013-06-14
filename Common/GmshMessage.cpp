@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "GmshSocket.h"
 #include "Gmsh.h"
 #include "GModel.h"
 #include "Options.h"
