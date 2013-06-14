@@ -24,6 +24,8 @@ class BasisFactory
     static const nodalBasis* getNodalBasis(int elementType);
     static const bezierBasis* getBezierBasis(int elementType);
     static const JacobianBasis* getJacobianBasis(int elementType);
+
+    static void clearAll();
 };
 
 #endif

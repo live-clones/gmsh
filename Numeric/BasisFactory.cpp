@@ -71,3 +71,24 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int elementType)
   if (J) js.insert(std::make_pair(elementType, J));
   return J;
 }
+
+void BasisFactory::clearAll()
+{
+  std::map<int, nodalBasis*>::iterator itF = fs.begin();
+  while (itF != fs.end()) {
+    delete itF->second;
+  }
+  fs.clear();
+
+  std::map<int, JacobianBasis*>::iterator itJ = js.begin();
+  while (itJ != js.end()) {
+    delete itJ->second;
+  }
+  js.clear();
+
+  std::map<int, bezierBasis*>::iterator itB = bs.begin();
+  while (itB != bs.end()) {
+    delete itB->second;
+  }
+  bs.clear();
+}
