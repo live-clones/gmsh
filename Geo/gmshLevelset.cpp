@@ -1284,7 +1284,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
       if (xtb < tolr) xtb = tolr;
     }
     xb = _x0+xtb;
-    yb = (y >= _y0) ? _y0+ytb : -(_y0+ytb);
+    yb = (y >= _y0) ? _y0+ytb : _y0-ytb;
     const double norm = sqrt(1.+dyb*dyb);
     curvRad = norm*norm*norm/fabs(ddyb);
   }
