@@ -48,12 +48,10 @@ ChainComplex::ChainComplex(CellComplex* cellComplex, int domain)
     lastCols = cols;
 
     if(cols == 0){ // no dim-cells, no map
-      //_HMatrix[dim] = create_gmp_matrix_zero(rows, 1);
       _HMatrix[dim] = NULL;
     }
     else if(rows == 0){ // no dim-1-cells, maps everything to zero
       _HMatrix[dim] = create_gmp_matrix_zero(1, cols);
-      //_HMatrix[dim] = NULL;
     }
     else{
       mpz_t elem;
@@ -315,15 +313,12 @@ void ChainComplex::computeHomology(bool dual)
       lowDim = getDim()+1-i;
       highDim = getDim()+1-(i+1);
       setDim = highDim;
-      //KerCod(lowDim);
     }
     else{
       lowDim = i;
       highDim = i+1;
       setDim = lowDim;
-      //KerCod(highDim);
     }
-
 
     KerCod(highDim);
 
@@ -342,7 +337,7 @@ void ChainComplex::computeHomology(bool dual)
     }
 
     // 2) this dimension is empty
-    else if(getHMatrix(lowDim) == NULL && getHMatrix(highDim) == NULL){
+    else if(getHMatrix(lowDim) == NULL){
       setHbasis(setDim, NULL);
     }
     // 3) No higher dimension cells -> none of the cycles are boundaries
@@ -387,13 +382,9 @@ void ChainComplex::computeHomology(bool dual)
       }
     }
 
-    //destroy_gmp_matrix(getKerHMatrix(lowDim));
-    //destroy_gmp_matrix(getCodHMatrix(lowDim));
     destroy_gmp_matrix(getJMatrix(lowDim));
     destroy_gmp_matrix(getQMatrix(lowDim));
 
-    //setKerHMatrix(lowDim, NULL);
-    //setCodHMatrix(lowDim, NULL);
     setJMatrix(lowDim, NULL);
     setQMatrix(lowDim, NULL);
   }
@@ -465,8 +456,6 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   if(basisMatrix == NULL
      || (int)gmp_matrix_cols(basisMatrix) < num) return;
 
-  //int rows = gmp_matrix_rows(basisMatrix);
-
   int elemi;
   long int elemli;
   mpz_t elem;
@@ -508,7 +497,8 @@ int ChainComplex::getBasisSize(int dim, int basis)
     else if(basis == 3) basisMatrix = getBasis(dim, 3);
     else return 0;
 
-    if(basisMatrix != NULL) return gmp_matrix_cols(basisMatrix);
+    if(basisMatrix != NULL && gmp_matrix_rows(basisMatrix) != 0)
+      return gmp_matrix_cols(basisMatrix);
     else return 0;
 }
 
@@ -645,7 +635,7 @@ bool ChainComplex::deformChain(std::map<Cell*, int, Less_Cell>& cells,
 
 void ChainComplex::smoothenChain(std::map<Cell*, int, Less_Cell>& cells)
 {
-  if(!_cellComplex->simplicial() || cells.empty()) return;
+  if(!_cellComplex->simplicial() || cells.size() < 2) return;
   int dim = cells.begin()->first->getDim();
   int start = cells.size();
 
@@ -653,10 +643,8 @@ void ChainComplex::smoothenChain(std::map<Cell*, int, Less_Cell>& cells)
   for(int i = 0; i < 20; i++){
     int size = cells.size();
     for(citer cit = cells.begin(); cit != cells.end(); cit++){
-      //if(!deformChain(*cit, false) && getDim() == 2) deformChain(*cit, true);
       if(dim == 2) deformChain(cells, *cit, true);
       deformChain(cells, *cit, false);
-
     }
 
     deImmuneCells(cells);
