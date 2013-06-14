@@ -105,6 +105,7 @@ class meshMetric: public Field {
   void computeHessian();
 
   double getLaplacian (MVertex *v);
+  SVector3 getGradient (MVertex *v) ;
   virtual bool isotropic () const {return false;}
   virtual const char *getName()
   {

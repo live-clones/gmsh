@@ -642,6 +642,10 @@ int GModel::adaptMesh(std::vector<int> technique,
         }
       }
 
+      char name[256];
+      sprintf(name, "meshAdapt-%d.msh", ITER);
+      writeMSH(name);
+
       nbElems = getNumMeshElements();
       if (++ITER >= niter) break;
       if (ITER > 3 && fabs((double)(nbElems - nbElemsOld)) < 0.01 * nbElemsOld) break;
@@ -1512,6 +1516,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   for(unsigned int i = 0; i < vertices.size(); i++)
     if(!vertices[i]->getIndex()) num++;
 
+  Msg::Info("Found %d duplicate vertices ", num);
+
   if(!num){
     for(unsigned int i = 0; i < vertices.size(); i++)
       delete vertices[i];
@@ -1591,7 +1597,7 @@ static void recurConnectMElementsByMFace(const MFace &f,
       }
     }
   }
-  printf("group pf %d elements found\n",(int)group.size());
+  //printf("group pf %d elements found\n",(int)group.size());
 }
 
 /*

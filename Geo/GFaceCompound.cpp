@@ -1997,7 +1997,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
   }
   //if element not found in new octree find closest point
   else{
-    printf("not found in new octree \n");
+    //printf("not found in new octree \n");
     GPoint gp(50,50,50);
     double pt[3] = {par1,par2,0.0};
     ANNidx index[2];

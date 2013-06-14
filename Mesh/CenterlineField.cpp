@@ -25,6 +25,7 @@
 #include "MTriangle.h"
 #include "MVertex.h"
 #include "MLine.h"
+#include "StringUtils.h"
 #include "GEntity.h"
 #include "Field.h"
 #include "GFace.h"
@@ -838,9 +839,12 @@ void Centerline::run()
   double t1 = Cpu();
   if (update_needed){
     std::ifstream input;
+    //std::string pattern = FixRelativePath(fileName, "./");
+    //Msg::StatusBar(true, "Reading TEST '%s'...", pattern.c_str());
+    //input.open(pattern.c_str());
     input.open(fileName.c_str());
     if(StatFile(fileName))
-      Msg::Fatal("Centerline file '%s' does not exist", fileName.c_str());
+      Msg::Fatal("Centerline file '%s' does not exist ", fileName.c_str());
     importFile(fileName);
     buildKdTree();
     update_needed = false;

@@ -605,17 +605,18 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
   int gLsTag = RPN[RPN.size() - 1]->getTag();
 
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
-
+  double eps = 0.0; //-1.e-6;
+  bool splitElem = false;
+ 
   //split acording to center of gravity
-  // double lsMean = 0.;
+  // double lsMean = 0.0;
+  // int lsTag = 1;
   // for(int k = 0; k < e->getNumVertices(); k++)
-  //   lsMean += verticesLs(iLs, e->getVertex(k)->getIndex());
-  // int lsTag = (lsMean < 0) ? 1 : -1;
+  //   lsMean += verticesLs(iLs, e->getVertex(k)->getIndex()) - eps;
+  // if (lsMean > 0) lsTag = -1;
 
   //EMI : better for embedded dirichlet with smoothed properties
   //split according to values of vertices (keep +)
-  bool splitElem = false;
-  double eps = 1.e-9;
   int lsTag = (verticesLs(iLs, e->getVertex(0)->getIndex()) > eps) ? -1 : 1;
   int ils = 0;
   for(int k = 1; k < e->getNumVertices(); k++){
@@ -636,11 +637,13 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
       break;
     }
   }
-  // int lsTag = 1; //negative ls
-  // for(int k = 0; k < e->getNumVertices(); k++){
+  
+  //invert tag
+  //lsTag = 1; //negative ls
+  //for(int k = 0; k < e->getNumVertices(); k++){
   //  double val = verticesLs(iLs, e->getVertex(k)->getIndex());
   //  if (val > 0.0) { lsTag = -1; break; }
-  // }
+  //}
 
   switch (eType) {
   case TYPE_TET :

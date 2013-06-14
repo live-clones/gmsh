@@ -837,6 +837,14 @@ double meshMetric::getLaplacian (MVertex *v) {
   return h(0,0)+h(1,1)+h(2,2);
 }
 
+SVector3 meshMetric::getGradient (MVertex *v) {
+  MVertex *vNew = _vertexMap[v->getNum()];
+  std::map<MVertex*,SVector3>::const_iterator it = grads.find(vNew);
+  SVector3 gr = it->second;
+  return gr;
+}
+
+
 /*void meshMetric::curvatureContributionToMetric (){
   std::map<MVertex*,SMetric3>::iterator it = _nodalMetrics.begin();
   std::map<MVertex*,double>::iterator its = _nodalSizes.begin();
