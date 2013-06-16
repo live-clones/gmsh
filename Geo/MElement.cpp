@@ -1585,6 +1585,7 @@ int MElement::OrderFromTag(int tag)
   case MSH_HEX_296 : return 7;
   case MSH_HEX_386 : return 8;
   case MSH_HEX_488 : return 9;
+  case MSH_PYR_1   : return 0;
   case MSH_PYR_5   : return 1;
   case MSH_PYR_14  : return 2;
   case MSH_PYR_30  : return 3;
@@ -1609,6 +1610,199 @@ int MElement::OrderFromTag(int tag)
 
 }
 
+// Gives > 0 if element type is in Serendipity Family.
+// Gives < 2 if element type is in Not Serendipity Family.
+int MElement::SerendipityFromTag(int tag)
+{
+  switch (tag) {
+  case MSH_PNT     : case MSH_LIN_1   :
+  case MSH_LIN_2   : case MSH_LIN_3   :
+  case MSH_LIN_4   : case MSH_LIN_5   :
+  case MSH_LIN_6   : case MSH_LIN_7   :
+  case MSH_LIN_8   : case MSH_LIN_9   :
+  case MSH_LIN_10  : case MSH_LIN_11  :
+
+  case MSH_TRI_1   : case MSH_TRI_3   :
+  case MSH_TRI_6   :
+
+  case MSH_QUA_1   : case MSH_QUA_4   :
+
+  case MSH_TET_1   : case MSH_TET_4   :
+  case MSH_TET_10  : case MSH_TET_20  :
+
+  case MSH_PRI_1   : case MSH_PRI_6   :
+
+  case MSH_HEX_1   : case MSH_HEX_8   :
+
+  case MSH_PYR_1   : case MSH_PYR_5   :
+
+    return 1; // Serendipity or not
+
+
+  case MSH_TRI_10  : case MSH_TRI_15  :
+  case MSH_TRI_21  : case MSH_TRI_28  :
+  case MSH_TRI_36  : case MSH_TRI_45  :
+  case MSH_TRI_55  : case MSH_TRI_66  :
+
+  case MSH_QUA_9   : case MSH_QUA_16  :
+  case MSH_QUA_25  : case MSH_QUA_36  :
+  case MSH_QUA_49  : case MSH_QUA_64  :
+  case MSH_QUA_81  : case MSH_QUA_100 :
+  case MSH_QUA_121 :
+
+  case MSH_TET_35  : case MSH_TET_56  :
+  case MSH_TET_84  : case MSH_TET_120 :
+  case MSH_TET_165 : case MSH_TET_220 :
+  case MSH_TET_286 :
+
+  case MSH_PRI_18  : case MSH_PRI_40  :
+  case MSH_PRI_75  : case MSH_PRI_126 :
+  case MSH_PRI_196 : case MSH_PRI_288 :
+  case MSH_PRI_405 : case MSH_PRI_550 :
+
+  case MSH_HEX_27  : case MSH_HEX_64  :
+  case MSH_HEX_125 : case MSH_HEX_216 :
+  case MSH_HEX_343 : case MSH_HEX_512 :
+  case MSH_HEX_729 : case MSH_HEX_1000:
+
+  case MSH_PYR_14  : case MSH_PYR_30  :
+  case MSH_PYR_55  : case MSH_PYR_91  :
+  case MSH_PYR_140 : case MSH_PYR_204 :
+  case MSH_PYR_285 : case MSH_PYR_385 :
+
+    return 0; // Not Serendipity
+
+
+  case MSH_TRI_9   : case MSH_TRI_12  :
+  case MSH_TRI_15I : case MSH_TRI_18  :
+  case MSH_TRI_21I : case MSH_TRI_24  :
+  case MSH_TRI_27  : case MSH_TRI_30  :
+
+  case MSH_QUA_8   : case MSH_QUA_12  :
+  case MSH_QUA_16I : case MSH_QUA_20  :
+  case MSH_QUA_24  : case MSH_QUA_28  :
+  case MSH_QUA_32  : case MSH_QUA_36I :
+  case MSH_QUA_40  :
+
+  case MSH_TET_34  : case MSH_TET_52  :
+  case MSH_TET_74  : case MSH_TET_100 :
+  case MSH_TET_130 : case MSH_TET_164 :
+  case MSH_TET_202 :
+
+  case MSH_PRI_15  : case MSH_PRI_38  :
+  case MSH_PRI_66  : case MSH_PRI_102 :
+  case MSH_PRI_146 : case MSH_PRI_198 :
+  case MSH_PRI_258 : case MSH_PRI_326 :
+
+  case MSH_HEX_20  : case MSH_HEX_56  :
+  case MSH_HEX_98  : case MSH_HEX_152 :
+  case MSH_HEX_218 : case MSH_HEX_296 :
+  case MSH_HEX_386 : case MSH_HEX_488 :
+
+  case MSH_PYR_13  : case MSH_PYR_29  :
+  case MSH_PYR_50  : case MSH_PYR_77  :
+  case MSH_PYR_110 : case MSH_PYR_149 :
+  case MSH_PYR_194 : case MSH_PYR_245 :
+
+    return 2; // Only Serendipity
+
+  default :
+    Msg::Error("Unknown element type %d: assuming not serendipity",tag);
+    return 0;
+  }
+}
+
+// Gives the dimension corresponding to any element type.
+int MElement::DimensionFromTag(int tag)
+{
+  switch(tag) {
+    case(MSH_PNT):      case(MSH_PNT_SUB):
+      return 0;
+
+    case(MSH_LIN_2):    case(MSH_LIN_3):
+    case(MSH_LIN_4):    case(MSH_LIN_5):
+    case(MSH_LIN_6):    case(MSH_LIN_7):
+    case(MSH_LIN_8):    case(MSH_LIN_9):
+    case(MSH_LIN_10):   case(MSH_LIN_11):
+    case(MSH_LIN_B):    case(MSH_LIN_C):
+    case(MSH_LIN_1):    case(MSH_LIN_SUB):
+      return 1;
+
+    case(MSH_TRI_3):    case(MSH_TRI_6):
+    case(MSH_TRI_9):    case(MSH_TRI_10):
+    case(MSH_TRI_12):   case(MSH_TRI_15):
+    case(MSH_TRI_15I):  case(MSH_TRI_21):
+    case(MSH_TRI_28):   case(MSH_TRI_36):
+    case(MSH_TRI_45):   case(MSH_TRI_55):
+    case(MSH_TRI_66):   case(MSH_TRI_18):
+    case(MSH_TRI_21I):  case(MSH_TRI_24):
+    case(MSH_TRI_27):   case(MSH_TRI_30):
+    case(MSH_TRI_B):    case(MSH_TRI_1):
+    case(MSH_TRI_SUB):
+
+    case(MSH_QUA_4):    case(MSH_QUA_9):
+    case(MSH_QUA_8):    case(MSH_QUA_16):
+    case(MSH_QUA_25):   case(MSH_QUA_36):
+    case(MSH_QUA_12):   case(MSH_QUA_16I):
+    case(MSH_QUA_20):   case(MSH_QUA_49):
+    case(MSH_QUA_64):   case(MSH_QUA_81):
+    case(MSH_QUA_100):  case(MSH_QUA_121):
+    case(MSH_QUA_24):   case(MSH_QUA_28):
+    case(MSH_QUA_32):   case(MSH_QUA_36I):
+    case(MSH_QUA_40):   case(MSH_QUA_1):
+
+    case(MSH_POLYG_):   case(MSH_POLYG_B):
+      return 2;
+
+    case(MSH_TET_4):    case(MSH_TET_10):
+    case(MSH_TET_20):   case(MSH_TET_35):
+    case(MSH_TET_56):   case(MSH_TET_34):
+    case(MSH_TET_52):   case(MSH_TET_84):
+    case(MSH_TET_120):  case(MSH_TET_165):
+    case(MSH_TET_220):  case(MSH_TET_286):
+    case(MSH_TET_74):   case(MSH_TET_100):
+    case(MSH_TET_130):  case(MSH_TET_164):
+    case(MSH_TET_202):  case(MSH_TET_1):
+    case(MSH_TET_SUB):
+
+    case(MSH_PYR_5):    case(MSH_PYR_14):
+    case(MSH_PYR_13):   case(MSH_PYR_30):
+    case(MSH_PYR_55):   case(MSH_PYR_91):
+    case(MSH_PYR_140):  case(MSH_PYR_204):
+    case(MSH_PYR_285):  case(MSH_PYR_385):
+    case(MSH_PYR_29):   case(MSH_PYR_50):
+    case(MSH_PYR_77):   case(MSH_PYR_110):
+    case(MSH_PYR_149):  case(MSH_PYR_194):
+    case(MSH_PYR_245):  case(MSH_PYR_1):
+
+    case(MSH_PRI_6):    case(MSH_PRI_18):
+    case(MSH_PRI_15):   case(MSH_PRI_1):
+    case(MSH_PRI_40):   case(MSH_PRI_75):
+    case(MSH_PRI_126):  case(MSH_PRI_196):
+    case(MSH_PRI_288):  case(MSH_PRI_405):
+    case(MSH_PRI_550):  case(MSH_PRI_38):
+    case(MSH_PRI_66):   case(MSH_PRI_102):
+    case(MSH_PRI_146):  case(MSH_PRI_198):
+    case(MSH_PRI_258):  case(MSH_PRI_326):
+
+    case(MSH_HEX_8):    case(MSH_HEX_27):
+    case(MSH_HEX_20):   case(MSH_HEX_1):
+    case(MSH_HEX_64):   case(MSH_HEX_125):
+    case(MSH_HEX_216):  case(MSH_HEX_343):
+    case(MSH_HEX_512):  case(MSH_HEX_729):
+    case(MSH_HEX_1000): case(MSH_HEX_56):
+    case(MSH_HEX_98):   case(MSH_HEX_152):
+    case(MSH_HEX_218):  case(MSH_HEX_296):
+    case(MSH_HEX_386):  case(MSH_HEX_488):
+
+    case(MSH_POLYH_):
+      return 3;
+
+    default:
+      Msg::Error("Unknown type %i, assuming tetrahedron.", tag);
+      return 3;
+  }
+}
 
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
                                   int num, int part, bool owner, MElement *parent,
