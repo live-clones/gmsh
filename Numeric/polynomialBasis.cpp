@@ -563,7 +563,7 @@ polynomialBasis::~polynomialBasis()
 
 
 
-inline void polynomialBasis::evaluateMonomialsNew(double u, double v, double w, double p[]) const
+void polynomialBasis::evaluateMonomialsNew(double u, double v, double w, double p[]) const
 {
   for (int j = 0; j < monomials_newAlgo.size1(); ++j) {
     p[j] = 1.;

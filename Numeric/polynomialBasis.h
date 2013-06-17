@@ -92,7 +92,7 @@ class polynomialBasis : public nodalBasis
       if (monomials.size2() > 2) p[j] *= pow_int(w, (int)monomials(j, 2));
     }
   }
-  inline void evaluateMonomialsNew(double u, double v, double w, double p[]) const;
+  void evaluateMonomialsNew(double u, double v, double w, double p[]) const;
 };
 
 #endif
