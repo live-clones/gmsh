@@ -453,6 +453,38 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeCylinder.hxx>
+#include <GeomLProp_SLProps.hxx>
+
+#include <BRepAlgoAPI_Section.hxx>
+#include <GProp_GProps.hxx>
+#include <BRepGProp.hxx> 
+#include <TopoDS_Shape.hxx>
+#include <BRepTools.hxx>
+#include <BRepBndLib.hxx>
+#include <gp.hxx>
+#include <gp_Ax1.hxx>
+#include <gp_Ax2.hxx>
+#include <gp_Ax2d.hxx>
+#include <gp_Dir.hxx>
+#include <gp_Dir2d.hxx>
+#include <gp_Pnt2d.hxx>
+#include <gp_Trsf.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Wire.hxx>
+#include <TopoDS_Compound.hxx>
+#include <TopTools_ListOfShape.hxx>
+#include "OCC_Connect.h"
+#if defined(HAVE_SALOME)
+	#include "Partition_Spliter.hxx"
+#endif
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -616,6 +648,52 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
     Msg::Error("%s", err.GetMessageString());
   }
   return 0;
+}
+
+/* add2Drect: rectangluar face, given lower left point and width/height (in X-Y plane)*/
+GFace *OCCFactory::add2Drect(GModel *gm,double x0, double y0, double dx, double dy)
+{
+	Msg::Info("Default working plane is XY in add2D* functions...");
+	
+	if (!gm->_occ_internals)
+		gm->_occ_internals = new OCC_Internals;
+
+	TopoDS_Vertex occv1 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0   , 0.) );
+	TopoDS_Vertex occv2 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0   , 0.) );
+	TopoDS_Vertex occv3 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0+dy, 0.) );
+	TopoDS_Vertex occv4 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0+dy, 0.) );
+
+	TopoDS_Edge occEdge1 = BRepBuilderAPI_MakeEdge(occv1,occv2);
+	TopoDS_Edge occEdge2 = BRepBuilderAPI_MakeEdge(occv2,occv3);
+	TopoDS_Edge occEdge3 = BRepBuilderAPI_MakeEdge(occv3,occv4);
+	TopoDS_Edge occEdge4 = BRepBuilderAPI_MakeEdge(occv4,occv1);
+
+	TopoDS_Wire rectWire = BRepBuilderAPI_MakeWire(occEdge1 , occEdge2 , occEdge3, occEdge4);
+	TopoDS_Face rectFace = BRepBuilderAPI_MakeFace(rectWire);
+
+	return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(rectFace));
+}
+
+/* add2Dellips: ellips face, given lower left point and width/height (in X-Y plane)*/
+GFace *OCCFactory::add2Dellips(GModel *gm, double xc, double yc, double rx, double ry)
+{
+	Msg::Info("Default working plane is XY in add2D* functions...");
+	
+	if (!gm->_occ_internals)
+		gm->_occ_internals = new OCC_Internals;
+ 	
+	gp_Dir N_dir(0., 0., 1.); 
+	gp_Dir x_dir(1., 0., 0.); 
+	gp_Pnt center(xc, yc, 0.); 
+	gp_Ax2 axis(center, N_dir, x_dir);  
+	gp_Elips ellipse = gp_Elips(axis, rx, ry);  
+	// gp_Ax2(gp_Pnt(xc,yc;0),gp_Dir(0.,0.,1.)),rx,ry
+	TopoDS_Edge ellipsEdge = BRepBuilderAPI_MakeEdge(ellipse);
+	TopoDS_Wire ellipsWire = BRepBuilderAPI_MakeWire(ellipsEdge);
+	TopoDS_Face ellipsFace = BRepBuilderAPI_MakeFace(ellipsWire);
+	// TopoDS_Edge ellipsEdge = BRepBuilderAPI_MakeEdge( gp_Elips2d(gp_Ax22d(gp_Pnt2d(xc,yc),gp_Dir2d(1.,0.), gp_Dir2d(0.,1.)),rx,ry) );
+	
+	return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(ellipsFace));
 }
 
 /*
@@ -854,6 +932,27 @@ GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
   return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
 }
 
+GEntity *OCCFactory::add3DBlock(GModel *gm,std::vector<double> p1, 
+																					 double dx, double dy, double dz)
+{
+	if (!gm->_occ_internals)
+		gm->_occ_internals = new OCC_Internals;
+    
+	gp_Pnt P1(p1[0], p1[1], p1[2]);
+	BRepPrimAPI_MakeBox MB(P1, dx, dy, dz);
+	MB.Build();
+	if (!MB.IsDone()) {
+		Msg::Error("Box can not be computed from the given point");
+		return 0;
+	}
+	TopoDS_Shape shape = MB.Shape();
+	gm->_occ_internals->buildShapeFromLists(shape);
+	gm->destroy();
+	gm->_occ_internals->buildLists();
+	gm->_occ_internals->buildGModel(gm);
+	return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+}
+
 GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
                                         int createNewModel)
 {
@@ -934,6 +1033,329 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
     Msg::Error("%s", err.GetMessageString());
   }
   return obj;
+}
+
+/* same as checkbox GUI - works a bit better than occconnect... */
+void OCCFactory::salomeconnect(GModel *gm)
+{
+#if defined(HAVE_SALOME)
+	Msg::Info("- cutting and connecting faces with Salome's Partition_Spliter");
+	TopExp_Explorer e2;
+	Partition_Spliter ps;
+	TopoDS_Shape shape = gm->_occ_internals->getShape();
+	for (e2.Init(shape, TopAbs_SOLID); e2.More(); e2.Next())
+		ps.AddShape(e2.Current());
+	try{
+		ps.Compute();
+		shape = ps.Shape();
+		gm->destroy();
+		gm->_occ_internals->loadShape(&shape);
+		gm->_occ_internals->buildLists();
+		gm->_occ_internals->buildGModel(gm);
+	}
+	catch(Standard_Failure &err){
+		Msg::Error("%s", err.GetMessageString());
+	}
+#else
+	Msg::Info("You need to recompile with Salome support to use Salome's Partition_Spliter");
+#endif
+}
+
+/* same as checkbox GUI - does not work at all, though!*/
+void OCCFactory::occconnect(GModel *gm)
+{
+	Msg::Info("- cutting and connecting faces with OCC_Connect");
+	OCC_Connect connect(1);
+	TopoDS_Shape shape = gm->_occ_internals->getShape();
+	for(TopExp_Explorer p(shape, TopAbs_SOLID); p.More(); p.Next())
+		connect.Add(p.Current());
+	connect.Connect();
+	shape = connect;
+	gm->destroy();
+	gm->_occ_internals->loadShape(&shape);
+	gm->_occ_internals->buildLists();
+	gm->_occ_internals->buildGModel(gm);
+}
+
+
+/* IsEqualG : a tolerance function for setPeriodicAllFaces */
+bool IsEqualG(double x, double y);
+bool IsEqualG(double x, double y)
+{
+	const double epsilon = 0.00000000001;
+	return fabs(x - y) <= epsilon * (std::max(fabs(x),fabs(y)));
+}
+
+/* setPeriodicAllFaces: detects T-periodic pair of faces and 
+uses setPeriodicPairOfFaces to make them all periodic */
+void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector) 
+{	
+	Msg::Info("Experimental: search for 'translated' faces and calls setPeriodicPairOfFaces automatically");
+	TopoDS_Shape shape = gm->_occ_internals->getShape();
+	gp_Trsf theTransformation;
+	gp_Vec theVectorOfTranslation(FaceTranslationVector[0], FaceTranslationVector[1], FaceTranslationVector[2]);	
+	int               numFaceMaster   , numFaceSlave;
+	std::list<GEdge*> ListOfEdgeMaster, ListOfEdgeSlave;
+	for(TopExp_Explorer aFaceExplorer(shape, TopAbs_FACE); aFaceExplorer.More(); aFaceExplorer.Next())
+	{
+		TopoDS_Face aFace1 = TopoDS::Face(aFaceExplorer.Current());		
+		for(TopExp_Explorer aFaceExplorer2(shape, TopAbs_FACE); aFaceExplorer2.More(); aFaceExplorer2.Next())
+		{
+			TopoDS_Face aFace2 = TopoDS::Face(aFaceExplorer2.Current());
+			// Get number of Edges
+			int NumberOfEdgesInFace1=0;
+			int NumberOfEdgesInFace2=0;
+			for (TopExp_Explorer aEdgeExplorer1(aFace1,TopAbs_EDGE); aEdgeExplorer1.More(); aEdgeExplorer1.Next()) {NumberOfEdgesInFace1++;}
+			for (TopExp_Explorer aEdgeExplorer2(aFace2,TopAbs_EDGE); aEdgeExplorer2.More(); aEdgeExplorer2.Next()) {NumberOfEdgesInFace2++;}
+			// Get Surfaces of Faces (occtopo=>occgeom)
+			Handle(Geom_Surface) Surf1=BRep_Tool::Surface(aFace1);
+			Handle(Geom_Surface) Surf2=BRep_Tool::Surface(aFace2);
+			// Get barycenter and area
+			GProp_GProps FaceProps1;
+			GProp_GProps FaceProps2;
+			BRepGProp::SurfaceProperties(aFace1,FaceProps1);
+			BRepGProp::SurfaceProperties(aFace2,FaceProps2);
+			gp_Pnt BarycenterFace1 = FaceProps1.CentreOfMass ();
+			gp_Pnt BarycenterFace2 = FaceProps2.CentreOfMass ();
+			Standard_Real Area1 = FaceProps1.Mass();
+			Standard_Real Area2 = FaceProps2.Mass();		
+			// Get surface normal	
+			Standard_Real umin, vmin;//umax,vmax
+			GeomLProp_SLProps props1(Surf1, umin, vmin, 1, 0.01);
+			GeomLProp_SLProps props2(Surf2, umin, vmin, 1, 0.01);
+			gp_Dir norm1=props1.Normal();
+			gp_Dir norm2=props2.Normal();
+
+			if(  NumberOfEdgesInFace1==NumberOfEdgesInFace2 
+				&& IsEqualG(Area1,Area2)
+					&& IsEqualG(BarycenterFace1.X()+FaceTranslationVector[0],BarycenterFace2.X()) 
+						&& IsEqualG(BarycenterFace1.Y()+FaceTranslationVector[1],BarycenterFace2.Y()) 
+							&& IsEqualG(BarycenterFace1.Z()+FaceTranslationVector[2],BarycenterFace2.Z()) 
+			){
+				numFaceMaster = gm->getOCCInternals()->getGTagOfOCCFaceByNativePtr(gm,aFace1); 
+				numFaceSlave  = gm->getOCCInternals()->getGTagOfOCCFaceByNativePtr(gm,aFace2);
+				//Msg::Info("Face %d (slave) is most likely Face %d (master) translated by (%.2e,%.2e,%.2e)!", 
+				//           numFaceSlave,numFaceMaster,FaceTranslationVector[0],FaceTranslationVector[1],FaceTranslationVector[2]);
+
+				std::vector<int>  EdgeListMaster(NumberOfEdgesInFace1);
+				std::vector<int>  EdgeListSlave(NumberOfEdgesInFace2);
+				int i1=0,i2=0;
+				
+				// ici il faut imbriquer la seconde boucle pour fournir des edges qui match slave/master
+				for (TopExp_Explorer aEdgeExplorer1(aFace1,TopAbs_EDGE); aEdgeExplorer1.More(); aEdgeExplorer1.Next()) {
+					TopoDS_Edge aEdge1 = TopoDS::Edge(aEdgeExplorer1.Current());
+					int numEdgeMaster  = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge1);
+					EdgeListMaster[i1] = numEdgeMaster;
+					i2=0;
+					for (TopExp_Explorer aEdgeExplorer2(aFace2,TopAbs_EDGE); aEdgeExplorer2.More(); aEdgeExplorer2.Next()) {
+						TopoDS_Edge aEdge2 = TopoDS::Edge(aEdgeExplorer2.Current());
+						GProp_GProps EdgeProps1;
+						GProp_GProps EdgeProps2;
+						BRepGProp::LinearProperties(aEdge1, EdgeProps1);
+						BRepGProp::LinearProperties(aEdge2, EdgeProps2);
+						gp_Pnt BarycenterEdge1 = EdgeProps1.CentreOfMass ();
+						gp_Pnt BarycenterEdge2 = EdgeProps2.CentreOfMass ();
+						Standard_Real Length1 = EdgeProps1.Mass();
+						Standard_Real Length2 = EdgeProps2.Mass();		
+						if(     IsEqualG(Length1,Length2)
+							&& IsEqualG(BarycenterEdge1.X()+FaceTranslationVector[0],BarycenterEdge2.X()) 
+								&& IsEqualG(BarycenterEdge1.Y()+FaceTranslationVector[1],BarycenterEdge2.Y()) 
+									&& IsEqualG(BarycenterEdge1.Z()+FaceTranslationVector[2],BarycenterEdge2.Z()) 
+						){
+							int numEdgeSlave   = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge2);
+							EdgeListSlave[i1]  = numEdgeSlave;
+						}
+					}
+					i1++;											
+				}
+				if(NumberOfEdgesInFace1==4)
+					Msg::Info("Setting Periodic : Face %d  {%d,%d,%d,%d} (slave) and Face %d  {%d,%d,%d,%d} (master)",
+				numFaceSlave ,EdgeListSlave[0] ,EdgeListSlave[1] ,EdgeListSlave[2] ,EdgeListSlave[3] ,
+				numFaceMaster,EdgeListMaster[0],EdgeListMaster[1],EdgeListMaster[2],EdgeListMaster[3]);
+				setPeriodicPairOfFaces(gm, numFaceMaster, EdgeListMaster, numFaceSlave, EdgeListSlave);
+			}
+			else ;
+		}
+	}
+}
+
+/* setPeriodicPairOfFaces: set periodic given a 
+Slave/Master pair of numFace-Edgelist */
+void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave)
+{
+	int NEdges=EdgeListMaster.size();
+	if (EdgeListMaster.size() != EdgeListSlave.size())
+	{
+		Msg::Error("Slave/Master faces don't have the same number of edges!");
+	}
+	else
+	{
+		Surface *s_slave = FindSurface(abs(numFaceSlave));
+		if(s_slave)
+		{	
+			GModel::current()->getGEOInternals()->periodicFaces[numFaceSlave] = numFaceMaster;
+			for (int i = 0; i < NEdges; i++)
+			{
+				GModel::current()->getGEOInternals()->periodicEdges[EdgeListSlave[i]] = EdgeListMaster[i];
+				s_slave->edgeCounterparts[EdgeListSlave[i]] = EdgeListMaster[i];
+			}
+		}
+		else
+		{
+			GFace *gf = GModel::current()->getFaceByTag(abs(numFaceSlave));
+			if(gf)
+			{
+				gf->setMeshMaster(numFaceMaster);
+				for (int i = 0; i < NEdges; i++)
+				{
+					gf->edgeCounterparts[EdgeListSlave[i]] = EdgeListMaster[i];
+					GEdge *ges = GModel::current()->getEdgeByTag(abs(EdgeListSlave[i]));
+					ges->setMeshMaster(EdgeListMaster[i]);
+				}
+			}
+			else Msg::Error("Slave surface %d not found", numFaceSlave);
+		}
+	}
+}
+
+/* setPhysicalNumToEntitiesInBox allows to set a physical number to all entities 
+of a given type (0:vertex, 1:edge, 2:face, 3:volume) lying inside a 3D box 
+defined by 2 points */
+void OCCFactory::setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber, std::vector<double> p1, std::vector<double> p2)
+{
+	std::vector<int> ListOfGVerticeTagsInbox;
+	std::vector<int> ListOfGEdgesTagsInbox;
+	std::vector<int> ListOfGFacesTagsInbox;
+	std::vector<int> ListOfGRegionsTagsInbox;
+
+	Standard_Real aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
+	TopoDS_Shape shape = gm->_occ_internals->getShape();
+	switch (EntityType) {
+		case 0 :
+		for(TopExp_Explorer aVertexExplorer(shape, TopAbs_VERTEX); aVertexExplorer.More(); aVertexExplorer.Next())
+		{
+			TopoDS_Vertex aVertex = TopoDS::Vertex(aVertexExplorer.Current());
+			Bnd_Box VertexBB;
+			BRepBndLib::Add(aVertex,VertexBB);
+			VertexBB.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+			if(     aXmin>p1[0]
+				&& aYmin>p1[1]
+					&& aZmin>p1[2]
+						&& aXmax<p2[0]
+							&& aYmax<p2[1]
+								&& aZmax<p2[2]
+			){
+				int GVertexTag = gm->getOCCInternals()->getGTagOfOCCVertexByNativePtr(gm,aVertex);
+				//Msg::Info("This volume %d (xmin,ymin,zmin)=(%lf,%lf,%lf)  (xmax,ymax,zmax)=(%lf,%lf,%lf)",GVertexTag);
+				ListOfGVerticeTagsInbox.push_back(GVertexTag);
+			}
+		}
+		Msg::Info("These edges have OCC bounding boxes inside the given box!");
+		for (std::vector<int>::iterator it = ListOfGVerticeTagsInbox.begin() ; it != ListOfGVerticeTagsInbox.end(); ++it)
+		{
+			Msg::Info("- %d",*it);
+			GVertex *gv = gm->getVertexByTag(*it);
+			if(gv)
+			{
+				gv->addPhysicalEntity(PhysicalGroupNumber);
+			}
+		}
+		break;
+		case 1 :
+		for(TopExp_Explorer aEdgeExplorer(shape, TopAbs_EDGE); aEdgeExplorer.More(); aEdgeExplorer.Next())
+		{
+			TopoDS_Edge aEdge = TopoDS::Edge(aEdgeExplorer.Current());
+			Bnd_Box EdgeBB;
+			BRepBndLib::Add(aEdge,EdgeBB);
+			EdgeBB.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+		
+			if(     aXmin>p1[0]
+				&& aYmin>p1[1]
+					&& aZmin>p1[2]
+						&& aXmax<p2[0]
+							&& aYmax<p2[1]
+								&& aZmax<p2[2]
+			){
+				int GEdgeTag = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge);
+				//Msg::Info("This edge %d (xmin,ymin,zmin)=(%lf,%lf,%lf)  (xmax,ymax,zmax)=(%lf,%lf,%lf)",GEdgeTag);
+				ListOfGEdgesTagsInbox.push_back(GEdgeTag);
+			}
+		}
+		Msg::Info("These edges have OCC bounding boxes inside the given box!");
+		for (std::vector<int>::iterator it = ListOfGEdgesTagsInbox.begin() ; it != ListOfGEdgesTagsInbox.end(); ++it)
+		{
+			Msg::Info("- %d",*it);
+			GEdge *ge = gm->getEdgeByTag(*it);
+			if(ge)
+			{
+				ge->addPhysicalEntity(PhysicalGroupNumber);
+			}
+		}
+		break;
+		case 2 :
+		for(TopExp_Explorer aFaceExplorer(shape, TopAbs_FACE); aFaceExplorer.More(); aFaceExplorer.Next())
+		{
+			TopoDS_Face aFace = TopoDS::Face(aFaceExplorer.Current());
+			Bnd_Box FaceBB;
+			BRepBndLib::Add(aFace,FaceBB);
+			FaceBB.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+		
+			if(     aXmin>p1[0]
+				&& aYmin>p1[1]
+					&& aZmin>p1[2]
+						&& aXmax<p2[0]
+							&& aYmax<p2[1]
+								&& aZmax<p2[2]
+			){
+				int GFaceTag = gm->getOCCInternals()->getGTagOfOCCFaceByNativePtr(gm,aFace);
+				//Msg::Info("This face %d (xmin,ymin,zmin)=(%lf,%lf,%lf)  (xmax,ymax,zmax)=(%lf,%lf,%lf)",GFaceTag);
+				ListOfGFacesTagsInbox.push_back(GFaceTag);
+			}
+		}
+		Msg::Info("This faces have OCC bounding boxes inside the given box!");
+		for (std::vector<int>::iterator it = ListOfGFacesTagsInbox.begin() ; it != ListOfGFacesTagsInbox.end(); ++it)
+		{
+			Msg::Info("- %d",*it);
+			GFace *gf = gm->getFaceByTag(*it);
+			if(gf)
+			{
+				gf->addPhysicalEntity(PhysicalGroupNumber);
+			}
+		}
+		break;
+		case 3 :
+		for(TopExp_Explorer aSolidExplorer(shape, TopAbs_SOLID); aSolidExplorer.More(); aSolidExplorer.Next())
+		{
+			TopoDS_Solid aSolid = TopoDS::Solid(aSolidExplorer.Current());
+			Bnd_Box SolidBB;
+			BRepBndLib::Add(aSolid,SolidBB);
+			SolidBB.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+			if(     aXmin>p1[0]
+				&& aYmin>p1[1]
+					&& aZmin>p1[2]
+						&& aXmax<p2[0]
+							&& aYmax<p2[1]
+								&& aZmax<p2[2]
+			){
+				int GSolidTag = gm->getOCCInternals()->getGTagOfOCCSolidByNativePtr(gm,aSolid);
+				//Msg::Info("This volume %d (xmin,ymin,zmin)=(%lf,%lf,%lf)  (xmax,ymax,zmax)=(%lf,%lf,%lf)",GSolidTag);
+				ListOfGRegionsTagsInbox.push_back(GSolidTag);
+			}
+		}
+		Msg::Info("These edges have OCC bounding boxes inside the given box!");
+		for (std::vector<int>::iterator it = ListOfGRegionsTagsInbox.begin() ; it != ListOfGRegionsTagsInbox.end(); ++it)
+		{
+			Msg::Info("- %d",*it);
+			GRegion *gr = gm->getRegionByTag(*it);
+			if(gr)
+			{
+				gr->addPhysicalEntity(PhysicalGroupNumber);
+			}
+		}
+		break;
+		default: 
+		Msg::Error("First argument of setPhysicalNumToEntitiesInBox should be 0,1,2 or 3 (Vertice, Edge, Surface or Volume)");
+	}
 }
 
 void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)

@@ -512,6 +512,9 @@ class GModel
   void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
+  GFace *add2Drect(double x0, double y0, double dx, double dy);
+  GFace *add2Dellips(double xc, double yc, double rx, double ry);
+
   GEdge *addCompoundEdge(std::vector<GEdge*> edges, int num=-1);
   GFace *addCompoundFace(std::vector<GFace*> faces, int type, int split, int num=-1);
   GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
@@ -522,6 +525,7 @@ class GModel
   GEntity *addTorus(std::vector<double> p1, std::vector<double> p2, double radius1,
                     double radius2);
   GEntity *addBlock(std::vector<double> p1, std::vector<double> p2);
+  GEntity *add3DBlock(std::vector<double> p1, double dx, double dy , double dz);
   GEntity *addCone(std::vector<double> p1, std::vector<double> p2, double radius1,
                    double radius2);
 
@@ -529,6 +533,16 @@ class GModel
   GModel *computeBooleanUnion(GModel *tool, int createNewModel=0);
   GModel *computeBooleanIntersection(GModel *tool, int createNewModel=0);
   GModel *computeBooleanDifference(GModel *tool, int createNewModel=0);
+  void    salomeconnect(); 
+  void    occconnect();
+	
+	// do stuff for all entities inside a bounding box
+  void    setPeriodicAllFaces(std::vector<double> FaceTranslationVector);
+  void    setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster, 
+																 int numFaceSlave, std::vector<int> EdgeListSlave);
+  void    setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber, 
+																				std::vector<double> p1,std::vector<double> p2);
+	
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

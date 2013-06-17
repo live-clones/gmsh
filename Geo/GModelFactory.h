@@ -76,6 +76,16 @@ class GModelFactory {
     Msg::Error("addFace not implemented yet");
     return 0;
   }
+  virtual GFace *add2Drect(GModel *gm,double x0, double y0, double dx, double dy)
+  {
+    Msg::Error("add2Drect not implemented yet");
+    return 0;
+  }  
+  virtual GFace *add2Dellips(GModel *gm,double xc, double yc, double rx, double ry)
+  {
+    Msg::Error("add2Dellips not implemented yet");
+    return 0;
+  }  
 
   // sweep stuff
   virtual GEntity *revolve(GModel *gm, GEntity*, std::vector<double> p1,
@@ -121,11 +131,17 @@ class GModelFactory {
   {
     Msg::Error("addTorus not implemented yet");
     return 0;
-  }
+  } 
   virtual GEntity *addBlock(GModel *gm, std::vector<double> p1,
                             std::vector<double> p2)
   {
     Msg::Error("addBlock not implemented yet");
+    return 0;
+  }
+  virtual GEntity *add3DBlock(GModel *gm, std::vector<double> p1,
+                            double dx, double dy, double dz)
+  {
+    Msg::Error("add3DBlock not implemented yet");
     return 0;
   }
   virtual GEntity *addCone(GModel *gm, std::vector<double> p1,
@@ -172,6 +188,29 @@ class GModelFactory {
     Msg::Error("computeBooleanDifference not implemented yet");
     return 0;
   }
+  
+	virtual void salomeconnect(GModel *gm)
+  {
+    Msg::Error("salomeconnect not implemented yet");
+  }
+  virtual void occconnect(GModel *gm)
+  {
+    Msg::Error("occconnect not implemented yet");
+  }
+  virtual void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector)
+  {
+    Msg::Error("findperiodic not implemented yet");
+  }  
+  virtual void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave)
+  {
+    Msg::Error("setPeriodicPairOfFaces not implemented yet");
+  }  
+  ;
+  virtual void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber, std::vector<double> p1,std::vector<double> p2)
+  {
+    Msg::Error("setPhysicalNumToEntitiesInBox not implemented yet");
+  }  
+
 };
 
 class GeoFactory : public GModelFactory {
@@ -218,10 +257,13 @@ class OCCFactory : public GModelFactory {
   GFace *addFace(GModel *gm, std::vector<GEdge *> edges,
                  std::vector< std::vector<double > > points);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GFace *add2Drect(GModel *gm,double x0, double y0, double dx, double dy);
+  GFace *add2Dellips(GModel *gm,double xc, double yc, double rx, double ry);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
   GEntity *addTorus(GModel *gm,std::vector<double> p1, std::vector<double> p2,
                     double radius1, double radius2);
   GEntity *addBlock(GModel *gm,std::vector<double> p1, std::vector<double> p2);
+  GEntity *add3DBlock(GModel *gm,std::vector<double> p1, double dx, double dy, double dz);
   GEntity *addCone(GModel *gm,std::vector<double> p1, std::vector<double> p2,
                    double radius1, double radius2);
   void translate(GModel *gm, std::vector<double> dx, int addToTheModel);
@@ -230,6 +272,13 @@ class OCCFactory : public GModelFactory {
   GModel *computeBooleanUnion(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);
+  void    salomeconnect(GModel *gm);
+  void    occconnect(GModel *gm);
+	
+  void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector);
+  void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave);
+  void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber, std::vector<double> p1, std::vector<double> p2);
+	
   void fillet(GModel *gm, std::vector<int> edges, double radius);
 };
 

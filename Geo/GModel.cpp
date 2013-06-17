@@ -2668,6 +2668,20 @@ GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces){
   return 0;
 }
 
+GFace *GModel::add2Drect(double x0, double y0, double dx, double dy)
+{
+  if(_factory) 
+	return _factory->add2Drect(this, x0, y0, dx, dy);
+  return 0;
+}
+
+GFace *GModel::add2Dellips(double xc, double yc, double rx, double ry)
+{
+  if(_factory) 
+	return _factory->add2Dellips(this, xc, yc, rx, ry);
+  return 0;
+}
+
 GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                          double angle)
 {
@@ -2724,6 +2738,13 @@ GEntity *GModel::addBlock(std::vector<double> p1, std::vector<double> p2)
   return 0;
 }
 
+GEntity *GModel::add3DBlock(std::vector<double> p1, double dx, double dy, double dz )
+{
+  if(_factory) 
+	return _factory->add3DBlock(this, p1, dx, dy, dz);
+  return 0;
+}
+
 GEntity *GModel::addCone(std::vector<double> p1, std::vector<double> p2,
                          double radius1, double radius2)
 {
@@ -2750,6 +2771,36 @@ GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
   if(_factory)
     return _factory->computeBooleanDifference(this, tool, createNewModel);
   return 0;
+}
+
+void GModel::salomeconnect()
+{
+  if(_factory) 
+	_factory->salomeconnect(this);
+}
+
+void GModel::occconnect()
+{
+  if(_factory)
+	_factory->occconnect(this);
+}
+
+void GModel::setPeriodicAllFaces(std::vector<double> FaceTranslationVector)
+{
+  if(_factory) 
+	_factory->setPeriodicAllFaces(this, FaceTranslationVector);
+}
+
+void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave)
+{
+  if(_factory) 
+	_factory->setPeriodicPairOfFaces(this, numFaceMaster, EdgeListMaster, numFaceSlave, EdgeListSlave);
+}
+
+void GModel::setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber, std::vector<double> p1, std::vector<double> p2)
+{
+  if(_factory) 
+	_factory->setPhysicalNumToEntitiesInBox(this,EntityType,PhysicalGroupNumber,p1,p2);
 }
 
 static void computeDuplicates(GModel *model,

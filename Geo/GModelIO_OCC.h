@@ -57,6 +57,11 @@ class OCC_Internals {
   GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
   void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
   void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
+	
+  int getGTagOfOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
+  int getGTagOfOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
+  int getGTagOfOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
+  int getGTagOfOCCSolidByNativePtr(GModel *model, TopoDS_Solid toFind);
 };
 
 #endif
