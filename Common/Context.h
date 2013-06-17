@@ -154,7 +154,7 @@ class CTX {
   double lc;
   // double buffer/antialias/stereo graphics?
   int db, antialiasing, stereo, camera ;
-  bool fileread; ;
+  bool fileread;
   double eye_sep_ratio,focallength_ratio,camera_aperture;
   // orthogonal projection?
   int ortho;
