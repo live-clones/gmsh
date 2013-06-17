@@ -14,9 +14,8 @@ class nodalBasis {
   int type, parentType, order, dimension, numFaces;
   bool serendip;
   fullMatrix<double> points;
-  fullMatrix<double> points_newAlgo;
-  fullMatrix<int> monomials_newAlgo;
-  fullMatrix<double> coefficients_newAlgo;
+  fullMatrix<int> monomials;
+  fullMatrix<double> coefficients;
 
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
@@ -25,7 +24,6 @@ class nodalBasis {
 
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
-  virtual void fnew(double u, double v, double w, double *sf) const = 0;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;

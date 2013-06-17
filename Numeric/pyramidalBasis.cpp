@@ -7,54 +7,6 @@
 #include "pointsGenerators.h"
 #include <cmath>
 
-
-static void copy(const fullMatrix<int> &orig, fullMatrix<double> &b)
-{
-  b.resize(orig.size1(), orig.size2());
-  for (int i = 0; i < orig.size1(); ++i) {
-    for (int j = 0; j < orig.size2(); ++j) {
-      b(i, j) = static_cast<double>(orig(i, j));
-    }
-  }
-}
-
-static fullMatrix<double> generateLagrangeMonomialCoefficientsPyr
-  (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
-{
-  if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
-    Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
-         monomial.size1(),point.size1(),
-         monomial.size2(),point.size2() );
-    return fullMatrix<double>(1, 1);
-  }
-
-  int ndofs = monomial.size1();
-  int dim = monomial.size2();
-  fullMatrix<double> ppoint(point.size1(), point.size2());
-
-  for (int i = 0; i < ndofs; ++i) {
-    ppoint(i, 2) = 1. - point(i, 2);
-    if (ppoint(i, 2) != .0) {
-      ppoint(i, 0) = point(i, 0) / ppoint(i, 2);
-      ppoint(i, 1) = point(i, 1) / ppoint(i, 2);
-    }
-  }
-
-  fullMatrix<double> Vandermonde(ndofs, ndofs);
-  for (int i = 0; i < ndofs; i++) {
-    for (int j = 0; j < ndofs; j++) {
-      double dd = 1.;
-      for (int k = 0; k < dim; k++) dd *= pow(ppoint(j, k), monomial(i, k));
-      Vandermonde(i, j) = dd;
-    }
-  }
-
-  fullMatrix<double> coefficient(ndofs, ndofs);
-  Vandermonde.invert(coefficient);
-
-  return coefficient;
-}
-
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 {
 
@@ -62,7 +14,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 
   int num_points = points.size1();
 
-  VDMinv.resize(num_points, num_points);
+  coefficients.resize(num_points, num_points);
   double *fval = new double[num_points];
 
   // Invert the Vandermonde matrix
@@ -71,19 +23,9 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
     bergot->f(points(j,0), points(j,1), points(j, 2), fval);
     for (int i = 0; i < num_points; i++) VDM(i,j) = fval[i];
   }
-  VDM.invert(VDMinv);
+  VDM.invert(coefficients);
 
   delete[] fval;
-
-
-  // TEST NEW ALGO POINTS / MONOMIAL
-
-  monomials_newAlgo = gmshGenerateMonomialsPyramid(order, serendip);
-  points_newAlgo = gmshGeneratePointsPyramid(order, serendip);
-
-  fullMatrix<double> monDouble;
-  copy(monomials_newAlgo, monDouble);
-  coefficients_newAlgo = generateLagrangeMonomialCoefficientsPyr(monDouble, points_newAlgo);
 }
 
 
@@ -109,22 +51,11 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
   for (int i = 0; i < N; i++) {
     val[i] = 0.;
-    for (int j = 0; j < N; j++) val[i] += VDMinv(i,j)*fval[j];
+    for (int j = 0; j < N; j++) val[i] += coefficients(i,j)*fval[j];
   }
 
   delete[] fval;
 
-}
-void pyramidalBasis::fnew(double u, double v, double w, double *sf) const
-{
-  double p[1256];
-  evaluateMonomialsNew(u, v, w, p);
-  for (int i = 0; i < coefficients_newAlgo.size1(); i++) {
-    sf[i] = 0.0;
-    for (int j = 0; j < coefficients_newAlgo.size2(); j++) {
-      sf[i] += coefficients_newAlgo(i, j) * p[j];
-    }
-  }
 }
 
 
@@ -141,7 +72,7 @@ void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) 
     bergot->f(coord(iPt,0), coord(iPt,1), coord(iPt,2), fval);
     for (int i = 0; i < N; i++) {
       sf(iPt,i) = 0.;
-      for (int j = 0; j < N; j++) sf(iPt,i) += VDMinv(i,j)*fval[j];
+      for (int j = 0; j < N; j++) sf(iPt,i) += coefficients(i,j)*fval[j];
     }
   }
 
@@ -162,9 +93,9 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
   for (int i = 0; i < N; i++) {
     grads[i][0] = 0.; grads[i][1] = 0.; grads[i][2] = 0.;
     for (int j = 0; j < N; j++) {
-      grads[i][0] += VDMinv(i,j)*dfval[j][0];
-      grads[i][1] += VDMinv(i,j)*dfval[j][1];
-      grads[i][2] += VDMinv(i,j)*dfval[j][2];
+      grads[i][0] += coefficients(i,j)*dfval[j][0];
+      grads[i][1] += coefficients(i,j)*dfval[j][1];
+      grads[i][2] += coefficients(i,j)*dfval[j][2];
     }
   }
 

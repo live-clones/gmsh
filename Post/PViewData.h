@@ -206,9 +206,22 @@ class PViewData {
                                 const fullMatrix<double> &expVal);
   void setInterpolationMatrices(int type,
                                 const fullMatrix<double> &coefVal,
+                                const fullMatrix<int> &expVal);
+  void setInterpolationMatrices(int type,
+                                const fullMatrix<double> &coefVal,
                                 const fullMatrix<double> &expVal,
                                 const fullMatrix<double> &coefGeo,
                                 const fullMatrix<double> &expGeo);
+  void setInterpolationMatrices(int type,
+                                const fullMatrix<double> &coefVal,
+                                const fullMatrix<int> &expVal,
+                                const fullMatrix<double> &coefGeo,
+                                const fullMatrix<int> &expGeo);
+  void setInterpolationMatrices(int type,
+                                const fullMatrix<double> &coefVal,
+                                const fullMatrix<double> &expVal,
+                                const fullMatrix<double> &coefGeo,
+                                const fullMatrix<int> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
   bool haveInterpolationMatrices(int type=0);
 

@@ -475,6 +475,12 @@ class fullMatrix
       setAll(scalar(0.));
     return false; // no reallocation
   }
+  void reshape(int nbRows, int nbColumns){
+    if (nbRows*nbColumns != size1()*size2())
+      Msg::Error("Invalid reshape, total number of entries must be equal");
+    _r = nbRows;
+    _c = nbColumns;
+  }
   void setAsProxy(const fullMatrix<scalar> &original)
   {
     if(_data && _own_data)
@@ -787,13 +793,6 @@ class fullMatrix
   }
 #endif
   ;
-
-  void reshape(int nbRows, int nbColumns){
-    if (nbRows*nbColumns != size1()*size2())
-      Msg::Error("Invalid reshape, total number of entries must be equal");
-    _r = nbRows;
-    _c = nbColumns;
-  }
 
 };
 #endif

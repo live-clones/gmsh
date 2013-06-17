@@ -45,7 +45,7 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints = f
 fullMatrix<int> gmshGenerateMonomialsPrismSerendipity(int order);
 
 fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints = false);
-//fullMatrix<int> gmshGenerateMonomialsPyramidSerendipity(int order); //FIXME
+//fullMatrix<int> gmshGenerateMonomialsPyramidSerendipity(int order); //TODO
 
 
 

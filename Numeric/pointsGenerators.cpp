@@ -218,6 +218,15 @@ fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoint
   return monomials;
 }
 
+/*
+00 10 20 30 40 â..
+01 11 21 31 41 â..
+02 12
+03 13
+04 14
+â. â.
+*/
+
 fullMatrix<int> gmshGenerateMonomialsQuadSerendipity(int order)
 {
   int nbMonomials = order ? order*4 : 1;
