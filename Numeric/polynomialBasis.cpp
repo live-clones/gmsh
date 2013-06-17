@@ -423,18 +423,6 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
   fullMatrix<double> coefficient(ndofs, ndofs);
   Vandermonde.invert(coefficient);
 
-  fullMatrix<double> unity(ndofs, ndofs);
-  Vandermonde.mult(coefficient, unity);
-  double max = .0;
-  for (int i = 0; i < ndofs; i++) {
-    for (int j = 0; j < ndofs; j++) {
-      if (i == j) unity(i, j) -= 1.;
-      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
-      max = std::max(max, std::abs(unity(i, j)));
-    }
-  }
-  //if (max > 1e-10) Msg::Info("   max unity = %.3e", max);
-
   return coefficient;
 }
 

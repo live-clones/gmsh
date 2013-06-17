@@ -32,10 +32,6 @@ class nodalBasis {
   virtual void ddf(double u, double v, double w, double grads[][3][3]) const {Msg::Fatal("Not implemented");};
   virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");};
 
-  int compareNewAlgoPointsWithOld() const;
-  int compareNewAlgoBaseFunctionsWithOld() const;
-  int testNewAlgoBaseFunctions() const;
-
   // closures is the list of the nodes of each face, in the order of
   // the polynomialBasis of the face; fullClosures is mapping of the
   // nodes of the element that rotates the element so that the

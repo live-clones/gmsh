@@ -52,18 +52,6 @@ static fullMatrix<double> generateLagrangeMonomialCoefficientsPyr
   fullMatrix<double> coefficient(ndofs, ndofs);
   Vandermonde.invert(coefficient);
 
-  fullMatrix<double> unity(ndofs, ndofs);
-  Vandermonde.mult(coefficient, unity);
-  double max = .0;
-  for (int i = 0; i < ndofs; i++) {
-    for (int j = 0; j < ndofs; j++) {
-      if (i == j) unity(i, j) -= 1.;
-      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
-      max = std::max(max, std::abs(unity(i, j)));
-    }
-  }
-  //if (max > 1e-14) Msg::Info("mon   max unity = %.3e", max);
-
   return coefficient;
 }
 
@@ -86,19 +74,6 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
   VDM.invert(VDMinv);
 
   delete[] fval;
-
-
-  fullMatrix<double> unity(num_points, num_points);
-  VDM.mult(VDMinv, unity);
-  double max = .0;
-  for (int i = 0; i < num_points; i++) {
-    for (int j = 0; j < num_points; j++) {
-      if (i == j) unity(i, j) -= 1.;
-      //Msg::Info("   unity(%d, %d) = %.3e", i, j, unity(i, j));
-      max = std::max(max, std::abs(unity(i, j)));
-    }
-  }
-  //if (max > 1e-14) Msg::Info("leg   max unity = %.3e", max);
 
 
   // TEST NEW ALGO POINTS / MONOMIAL
