@@ -38,13 +38,13 @@ const nodalBasis* MPyramid::getFunctionSpace(int o) const
     case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
     case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
     case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
-    case 3: return BasisFactory::getNodalBasis(MSH_PYR_29);
-    case 4: return BasisFactory::getNodalBasis(MSH_PYR_50);
-    case 5: return BasisFactory::getNodalBasis(MSH_PYR_77);
-    case 6: return BasisFactory::getNodalBasis(MSH_PYR_110);
-    case 7: return BasisFactory::getNodalBasis(MSH_PYR_149);
-    case 8: return BasisFactory::getNodalBasis(MSH_PYR_194);
-    case 9: return BasisFactory::getNodalBasis(MSH_PYR_245);
+    case 3: return BasisFactory::getNodalBasis(MSH_PYR_21);
+    case 4: return BasisFactory::getNodalBasis(MSH_PYR_29);
+    case 5: return BasisFactory::getNodalBasis(MSH_PYR_37);
+    case 6: return BasisFactory::getNodalBasis(MSH_PYR_45);
+    case 7: return BasisFactory::getNodalBasis(MSH_PYR_53);
+    case 8: return BasisFactory::getNodalBasis(MSH_PYR_61);
+    case 9: return BasisFactory::getNodalBasis(MSH_PYR_69);
     default: Msg::Error("Order %d pyramid function space not implemented", order);
     }
   }

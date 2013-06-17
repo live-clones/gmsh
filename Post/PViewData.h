@@ -201,6 +201,7 @@ class PViewData {
   adaptiveData *getAdaptiveData(){ return _adaptive; }
 
   // set/get the interpolation matrices for elements with type "type"
+  // FIXME : too much overload :(
   void setInterpolationMatrices(int type,
                                 const fullMatrix<double> &coefVal,
                                 const fullMatrix<double> &expVal);

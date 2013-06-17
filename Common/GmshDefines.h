@@ -159,13 +159,13 @@
 #define MSH_HEX_729  97
 #define MSH_HEX_1000 98
 // HEXES INCOMPLETE (3->9)
-#define MSH_HEX_56   99
-#define MSH_HEX_98  100
-#define MSH_HEX_152 101
-#define MSH_HEX_218 102
-#define MSH_HEX_296 103
-#define MSH_HEX_386 104
-#define MSH_HEX_488 105
+#define MSH_HEX_32   99
+#define MSH_HEX_44  100
+#define MSH_HEX_56 101
+#define MSH_HEX_68 102
+#define MSH_HEX_80 103
+#define MSH_HEX_92 104
+#define MSH_HEX_104 105
 // PRISMS COMPLETE (5->9)
 #define MSH_PRI_126 106
 #define MSH_PRI_196 107
@@ -173,13 +173,13 @@
 #define MSH_PRI_405 109
 #define MSH_PRI_550 110
 // PRISMS INCOMPLETE (3->9)
-#define MSH_PRI_38  111
-#define MSH_PRI_66  112
-#define MSH_PRI_102 113
-#define MSH_PRI_146 114
-#define MSH_PRI_198 115
-#define MSH_PRI_258 116
-#define MSH_PRI_326 117
+#define MSH_PRI_24  111
+#define MSH_PRI_33  112
+#define MSH_PRI_42 113
+#define MSH_PRI_51 114
+#define MSH_PRI_60 115
+#define MSH_PRI_69 116
+#define MSH_PRI_78 117
 // PYRAMIDS COMPLETE (3->9)
 #define MSH_PYR_30  118
 #define MSH_PYR_55  119
@@ -189,13 +189,13 @@
 #define MSH_PYR_285 123
 #define MSH_PYR_385 124
 // PYRAMIDS INCOMPLETE (3->9)
-#define MSH_PYR_29  125
-#define MSH_PYR_50  126
-#define MSH_PYR_77  127
-#define MSH_PYR_110 128
-#define MSH_PYR_149 129
-#define MSH_PYR_194 130
-#define MSH_PYR_245 131
+#define MSH_PYR_21  125
+#define MSH_PYR_29  126
+#define MSH_PYR_37  127
+#define MSH_PYR_45 128
+#define MSH_PYR_53 129
+#define MSH_PYR_61 130
+#define MSH_PYR_69 131
 // Additional types
 #define MSH_PYR_1   132
 #define MSH_PNT_SUB 133

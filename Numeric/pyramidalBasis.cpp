@@ -9,6 +9,10 @@
 
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 {
+  if (serendip) {
+    Msg::Error("Serendipity Pyramid not implemented");
+    return;
+  }
 
   bergot = new BergotBasis(order);
 

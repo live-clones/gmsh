@@ -1251,13 +1251,13 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_HEX_512 : if(name) *name = "Hexahedron 512";   return 512;
   case MSH_HEX_729 : if(name) *name = "Hexahedron 729";   return 729;
   case MSH_HEX_1000: if(name) *name = "Hexahedron 1000";  return 1000;
-  case MSH_HEX_56  : if(name) *name = "Hexahedron 56";    return 56;
-  case MSH_HEX_98  : if(name) *name = "Hexahedron 98";    return 98;
-  case MSH_HEX_152 : if(name) *name = "Hexahedron 152";   return 152;
-  case MSH_HEX_218 : if(name) *name = "Hexahedron 218";   return 218;
-  case MSH_HEX_296 : if(name) *name = "Hexahedron 296";   return 296;
-  case MSH_HEX_386 : if(name) *name = "Hexahedron 386";   return 386;
-  case MSH_HEX_488 : if(name) *name = "Hexahedron 488";   return 488;
+  case MSH_HEX_32  : if(name) *name = "Hexahedron 32";    return 8 + 12*2;
+  case MSH_HEX_44  : if(name) *name = "Hexahedron 44";    return 8 + 12*3;
+  case MSH_HEX_56  : if(name) *name = "Hexahedron 56";    return 8 + 12*4;
+  case MSH_HEX_68  : if(name) *name = "Hexahedron 68";    return 8 + 12*5;
+  case MSH_HEX_80  : if(name) *name = "Hexahedron 80";    return 8 + 12*6;
+  case MSH_HEX_92  : if(name) *name = "Hexahedron 92";    return 8 + 12*7;
+  case MSH_HEX_104 : if(name) *name = "Hexahedron 104";   return 8 + 12*8;
   case MSH_PRI_1   : if(name) *name = "Prism 1";          return 1;
   case MSH_PRI_6   : if(name) *name = "Prism 6";          return 6;
   case MSH_PRI_15  : if(name) *name = "Prism 15";         return 6 + 9;
@@ -1268,14 +1268,14 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PRI_196 : if(name) *name = "Prism 196";        return 6 + 45 + 75+20 + 5*10;
   case MSH_PRI_288 : if(name) *name = "Prism 288";        return 6 + 54 + 108+30 + 6*15;
   case MSH_PRI_405 : if(name) *name = "Prism 405";        return 6 + 63 + 147+42 + 7*21;
-  case MSH_PRI_550 : if(name) *name = "Prism 550";        return 6 + 72 + 196+56 + 8*28;
-  case MSH_PRI_38  : if(name) *name = "Prism 38";         return 6 + 18 + 12+2;
-  case MSH_PRI_66  : if(name) *name = "Prism 66";         return 6 + 27 + 27+6;
-  case MSH_PRI_102 : if(name) *name = "Prism 102";        return 6 + 36 + 48+12;
-  case MSH_PRI_146 : if(name) *name = "Prism 146";        return 6 + 45 + 75+20;
-  case MSH_PRI_198 : if(name) *name = "Prism 198";        return 6 + 54 + 108+30;
-  case MSH_PRI_258 : if(name) *name = "Prism 258";        return 6 + 63 + 147+42;
-  case MSH_PRI_326 : if(name) *name = "Prism 326";        return 6 + 72 + 196+56;
+  case MSH_PRI_550 : if(name) *name = "Prism 550";        return 6 + 72 + 192+56 + 8*28;
+  case MSH_PRI_24  : if(name) *name = "Prism 24";         return 6 + 9*2;
+  case MSH_PRI_33  : if(name) *name = "Prism 33";         return 6 + 9*3;
+  case MSH_PRI_42  : if(name) *name = "Prism 42";         return 6 + 9*4;
+  case MSH_PRI_51  : if(name) *name = "Prism 51";         return 6 + 9*5;
+  case MSH_PRI_60  : if(name) *name = "Prism 60";         return 6 + 9*6;
+  case MSH_PRI_69  : if(name) *name = "Prism 69";         return 6 + 9*7;
+  case MSH_PRI_78  : if(name) *name = "Prism 78";         return 6 + 9*8;
   case MSH_PYR_1   : if(name) *name = "Pyramid 1";        return 1;
   case MSH_PYR_5   : if(name) *name = "Pyramid 5";        return 5;
   case MSH_PYR_13  : if(name) *name = "Pyramid 13";       return 5 + 8;
@@ -1287,13 +1287,13 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_204 : if(name) *name = "Pyramid 204";      return 5 + 8*6 + 4*15 + 1*36 + 55;
   case MSH_PYR_285 : if(name) *name = "Pyramid 285";      return 5 + 8*7 + 4*21 + 1*49 + 91;
   case MSH_PYR_385 : if(name) *name = "Pyramid 385";      return 5 + 8*8 + 4*28 + 1*64 + 140;
-  case MSH_PYR_29  : if(name) *name = "Pyramid 29";       return 5 + 8*2 + 4*1  + 1*4;
-  case MSH_PYR_50  : if(name) *name = "Pyramid 50";       return 5 + 8*3 + 4*3  + 1*9;
-  case MSH_PYR_77  : if(name) *name = "Pyramid 77";       return 5 + 8*4 + 4*6  + 1*16;
-  case MSH_PYR_110 : if(name) *name = "Pyramid 110";      return 5 + 8*5 + 4*10 + 1*25;
-  case MSH_PYR_149 : if(name) *name = "Pyramid 149";      return 5 + 8*6 + 4*15 + 1*36;
-  case MSH_PYR_194 : if(name) *name = "Pyramid 194";      return 5 + 8*7 + 4*21 + 1*49;
-  case MSH_PYR_245 : if(name) *name = "Pyramid 245";      return 5 + 8*8 + 4*28 + 1*64;
+  case MSH_PYR_21  : if(name) *name = "Pyramid 21";       return 5 + 8*2;
+  case MSH_PYR_29  : if(name) *name = "Pyramid 29";       return 5 + 8*3;
+  case MSH_PYR_37  : if(name) *name = "Pyramid 37";       return 5 + 8*4;
+  case MSH_PYR_45  : if(name) *name = "Pyramid 45";       return 5 + 8*5;
+  case MSH_PYR_53  : if(name) *name = "Pyramid 53";       return 5 + 8*6;
+  case MSH_PYR_61  : if(name) *name = "Pyramid 61";       return 5 + 8*7;
+  case MSH_PYR_69  : if(name) *name = "Pyramid 69";       return 5 + 8*8;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
   case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;
@@ -1437,30 +1437,30 @@ int MElement::ParentTypeFromTag(int tag)
     case(MSH_PYR_55):   case(MSH_PYR_91):
     case(MSH_PYR_140):  case(MSH_PYR_204):
     case(MSH_PYR_285):  case(MSH_PYR_385):
-    case(MSH_PYR_29):   case(MSH_PYR_50):
-    case(MSH_PYR_77):   case(MSH_PYR_110):
-    case(MSH_PYR_149):  case(MSH_PYR_194):
-    case(MSH_PYR_245):  case(MSH_PYR_1):
+    case(MSH_PYR_21):   case(MSH_PYR_29):
+    case(MSH_PYR_37):   case(MSH_PYR_45):
+    case(MSH_PYR_53):  case(MSH_PYR_61):
+    case(MSH_PYR_69):  case(MSH_PYR_1):
       return TYPE_PYR;
     case(MSH_PRI_6):    case(MSH_PRI_18):
     case(MSH_PRI_15):   case(MSH_PRI_1):
     case(MSH_PRI_40):   case(MSH_PRI_75):
     case(MSH_PRI_126):  case(MSH_PRI_196):
     case(MSH_PRI_288):  case(MSH_PRI_405):
-    case(MSH_PRI_550):  case(MSH_PRI_38):
-    case(MSH_PRI_66):   case(MSH_PRI_102):
-    case(MSH_PRI_146):  case(MSH_PRI_198):
-    case(MSH_PRI_258):  case(MSH_PRI_326):
+    case(MSH_PRI_550):  case(MSH_PRI_24):
+    case(MSH_PRI_33):   case(MSH_PRI_42):
+    case(MSH_PRI_51):  case(MSH_PRI_60):
+    case(MSH_PRI_69):  case(MSH_PRI_78):
       return TYPE_PRI;
     case(MSH_HEX_8):    case(MSH_HEX_27):
     case(MSH_HEX_20):   case(MSH_HEX_1):
     case(MSH_HEX_64):   case(MSH_HEX_125):
     case(MSH_HEX_216):  case(MSH_HEX_343):
     case(MSH_HEX_512):  case(MSH_HEX_729):
-    case(MSH_HEX_1000): case(MSH_HEX_56):
-    case(MSH_HEX_98):   case(MSH_HEX_152):
-    case(MSH_HEX_218):  case(MSH_HEX_296):
-    case(MSH_HEX_386):  case(MSH_HEX_488):
+    case(MSH_HEX_1000): case(MSH_HEX_32):
+    case(MSH_HEX_44):   case(MSH_HEX_56):
+    case(MSH_HEX_68):  case(MSH_HEX_80):
+    case(MSH_HEX_92):  case(MSH_HEX_104):
       return TYPE_HEX;
     case(MSH_POLYG_):   case(MSH_POLYG_B):
       return TYPE_POLYG;
@@ -1560,13 +1560,13 @@ int MElement::OrderFromTag(int tag)
   case MSH_PRI_405 : return 8;
   case MSH_PRI_550 : return 9;
   case MSH_PRI_15  : return 2;
-  case MSH_PRI_38  : return 3;
-  case MSH_PRI_66  : return 4;
-  case MSH_PRI_102 : return 5;
-  case MSH_PRI_146 : return 6;
-  case MSH_PRI_198 : return 7;
-  case MSH_PRI_258 : return 8;
-  case MSH_PRI_326 : return 9;
+  case MSH_PRI_24  : return 3;
+  case MSH_PRI_33  : return 4;
+  case MSH_PRI_42 : return 5;
+  case MSH_PRI_51 : return 6;
+  case MSH_PRI_60 : return 7;
+  case MSH_PRI_69 : return 8;
+  case MSH_PRI_78 : return 9;
   case MSH_HEX_1   : return 0;
   case MSH_HEX_8   : return 1;
   case MSH_HEX_27  : return 2;
@@ -1578,13 +1578,13 @@ int MElement::OrderFromTag(int tag)
   case MSH_HEX_729 : return 8;
   case MSH_HEX_1000: return 9;
   case MSH_HEX_20  : return 2;
-  case MSH_HEX_56  : return 3;
-  case MSH_HEX_98  : return 4;
-  case MSH_HEX_152 : return 5;
-  case MSH_HEX_218 : return 6;
-  case MSH_HEX_296 : return 7;
-  case MSH_HEX_386 : return 8;
-  case MSH_HEX_488 : return 9;
+  case MSH_HEX_32  : return 3;
+  case MSH_HEX_44  : return 4;
+  case MSH_HEX_56 : return 5;
+  case MSH_HEX_68 : return 6;
+  case MSH_HEX_80 : return 7;
+  case MSH_HEX_92 : return 8;
+  case MSH_HEX_104 : return 9;
   case MSH_PYR_1   : return 0;
   case MSH_PYR_5   : return 1;
   case MSH_PYR_14  : return 2;
@@ -1596,13 +1596,13 @@ int MElement::OrderFromTag(int tag)
   case MSH_PYR_285 : return 8;
   case MSH_PYR_385 : return 9;
   case MSH_PYR_13  : return 2;
-  case MSH_PYR_29  : return 3;
-  case MSH_PYR_50  : return 4;
-  case MSH_PYR_77  : return 5;
-  case MSH_PYR_110 : return 6;
-  case MSH_PYR_149 : return 7;
-  case MSH_PYR_194 : return 8;
-  case MSH_PYR_245 : return 9;
+  case MSH_PYR_21  : return 3;
+  case MSH_PYR_29  : return 4;
+  case MSH_PYR_37  : return 5;
+  case MSH_PYR_45 : return 6;
+  case MSH_PYR_53 : return 7;
+  case MSH_PYR_61 : return 8;
+  case MSH_PYR_69 : return 9;
   default :
     Msg::Error("Unknown element type %d: reverting to order 1",tag);
     return 1;
@@ -1689,20 +1689,20 @@ int MElement::SerendipityFromTag(int tag)
   case MSH_TET_130 : case MSH_TET_164 :
   case MSH_TET_202 :
 
-  case MSH_PRI_15  : case MSH_PRI_38  :
-  case MSH_PRI_66  : case MSH_PRI_102 :
-  case MSH_PRI_146 : case MSH_PRI_198 :
-  case MSH_PRI_258 : case MSH_PRI_326 :
+  case MSH_PRI_15  : case MSH_PRI_24  :
+  case MSH_PRI_33  : case MSH_PRI_42 :
+  case MSH_PRI_51 : case MSH_PRI_60 :
+  case MSH_PRI_69 : case MSH_PRI_78 :
 
-  case MSH_HEX_20  : case MSH_HEX_56  :
-  case MSH_HEX_98  : case MSH_HEX_152 :
-  case MSH_HEX_218 : case MSH_HEX_296 :
-  case MSH_HEX_386 : case MSH_HEX_488 :
+  case MSH_HEX_20  : case MSH_HEX_32  :
+  case MSH_HEX_44  : case MSH_HEX_56 :
+  case MSH_HEX_68 : case MSH_HEX_80 :
+  case MSH_HEX_92 : case MSH_HEX_104 :
 
-  case MSH_PYR_13  : case MSH_PYR_29  :
-  case MSH_PYR_50  : case MSH_PYR_77  :
-  case MSH_PYR_110 : case MSH_PYR_149 :
-  case MSH_PYR_194 : case MSH_PYR_245 :
+  case MSH_PYR_13  : case MSH_PYR_21  :
+  case MSH_PYR_29  : case MSH_PYR_37  :
+  case MSH_PYR_45 : case MSH_PYR_53 :
+  case MSH_PYR_61 : case MSH_PYR_69 :
 
     return 2; // Only Serendipity
 
@@ -1770,30 +1770,30 @@ int MElement::DimensionFromTag(int tag)
     case(MSH_PYR_55):   case(MSH_PYR_91):
     case(MSH_PYR_140):  case(MSH_PYR_204):
     case(MSH_PYR_285):  case(MSH_PYR_385):
-    case(MSH_PYR_29):   case(MSH_PYR_50):
-    case(MSH_PYR_77):   case(MSH_PYR_110):
-    case(MSH_PYR_149):  case(MSH_PYR_194):
-    case(MSH_PYR_245):  case(MSH_PYR_1):
+    case(MSH_PYR_21):   case(MSH_PYR_29):
+    case(MSH_PYR_37):   case(MSH_PYR_45):
+    case(MSH_PYR_53):  case(MSH_PYR_61):
+    case(MSH_PYR_69):  case(MSH_PYR_1):
 
     case(MSH_PRI_6):    case(MSH_PRI_18):
     case(MSH_PRI_15):   case(MSH_PRI_1):
     case(MSH_PRI_40):   case(MSH_PRI_75):
     case(MSH_PRI_126):  case(MSH_PRI_196):
     case(MSH_PRI_288):  case(MSH_PRI_405):
-    case(MSH_PRI_550):  case(MSH_PRI_38):
-    case(MSH_PRI_66):   case(MSH_PRI_102):
-    case(MSH_PRI_146):  case(MSH_PRI_198):
-    case(MSH_PRI_258):  case(MSH_PRI_326):
+    case(MSH_PRI_550):  case(MSH_PRI_24):
+    case(MSH_PRI_33):   case(MSH_PRI_42):
+    case(MSH_PRI_51):  case(MSH_PRI_60):
+    case(MSH_PRI_69):  case(MSH_PRI_78):
 
     case(MSH_HEX_8):    case(MSH_HEX_27):
     case(MSH_HEX_20):   case(MSH_HEX_1):
     case(MSH_HEX_64):   case(MSH_HEX_125):
     case(MSH_HEX_216):  case(MSH_HEX_343):
     case(MSH_HEX_512):  case(MSH_HEX_729):
-    case(MSH_HEX_1000): case(MSH_HEX_56):
-    case(MSH_HEX_98):   case(MSH_HEX_152):
-    case(MSH_HEX_218):  case(MSH_HEX_296):
-    case(MSH_HEX_386):  case(MSH_HEX_488):
+    case(MSH_HEX_1000): case(MSH_HEX_32):
+    case(MSH_HEX_44):   case(MSH_HEX_56):
+    case(MSH_HEX_68):  case(MSH_HEX_80):
+    case(MSH_HEX_92):  case(MSH_HEX_104):
 
     case(MSH_POLYH_):
       return 3;
@@ -1878,13 +1878,13 @@ int MElement::getTag(int parentTag, int order, bool serendip)
     case 0 : return MSH_HEX_1;
     case 1 : return MSH_HEX_8;
     case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
-    case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
-    case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
-    case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
-    case 6 : return serendip ? MSH_HEX_218: MSH_HEX_343;
-    case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
-    case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
-    case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;
+    case 3 : return serendip ? MSH_HEX_32 : MSH_HEX_64;
+    case 4 : return serendip ? MSH_HEX_44 : MSH_HEX_125;
+    case 5 : return serendip ? MSH_HEX_56: MSH_HEX_216;
+    case 6 : return serendip ? MSH_HEX_68: MSH_HEX_343;
+    case 7 : return serendip ? MSH_HEX_80: MSH_HEX_512;
+    case 8 : return serendip ? MSH_HEX_92: MSH_HEX_729;
+    case 9 : return serendip ? MSH_HEX_104: MSH_HEX_1000;
     default : Msg::Error("hexahedron order %i unknown", order); return 0;
     }
     break;
@@ -1893,13 +1893,13 @@ int MElement::getTag(int parentTag, int order, bool serendip)
     case 0 : return MSH_PRI_1;
     case 1 : return MSH_PRI_6;
     case 2 : return serendip ? MSH_PRI_15 : MSH_PRI_18;
-    case 3 : return serendip ? MSH_PRI_38 : MSH_PRI_40;
-    case 4 : return serendip ? MSH_PRI_66 : MSH_PRI_75;
-    case 5 : return serendip ? MSH_PRI_102 : MSH_PRI_126;
-    case 6 : return serendip ? MSH_PRI_146 : MSH_PRI_196;
-    case 7 : return serendip ? MSH_PRI_198 : MSH_PRI_288;
-    case 8 : return serendip ? MSH_PRI_258 : MSH_PRI_405;
-    case 9 : return serendip ? MSH_PRI_326 : MSH_PRI_550;
+    case 3 : return serendip ? MSH_PRI_24 : MSH_PRI_40;
+    case 4 : return serendip ? MSH_PRI_33 : MSH_PRI_75;
+    case 5 : return serendip ? MSH_PRI_42 : MSH_PRI_126;
+    case 6 : return serendip ? MSH_PRI_51 : MSH_PRI_196;
+    case 7 : return serendip ? MSH_PRI_60 : MSH_PRI_288;
+    case 8 : return serendip ? MSH_PRI_69 : MSH_PRI_405;
+    case 9 : return serendip ? MSH_PRI_78 : MSH_PRI_550;
     default : Msg::Error("prism order %i unknown", order); return 0;
     }
     break;
@@ -1908,13 +1908,13 @@ int MElement::getTag(int parentTag, int order, bool serendip)
     case 0 : return MSH_PYR_1;
     case 1 : return MSH_PYR_5;
     case 2 : return serendip ? MSH_PYR_13 : MSH_PYR_14;
-    case 3: return serendip ? MSH_PYR_29 : MSH_PYR_30;
-    case 4: return serendip ? MSH_PYR_50 : MSH_PYR_55;
-    case 5: return serendip ? MSH_PYR_77 : MSH_PYR_91;
-    case 6: return serendip ? MSH_PYR_110 : MSH_PYR_140;
-    case 7: return serendip ? MSH_PYR_149 : MSH_PYR_204;
-    case 8: return serendip ? MSH_PYR_194 : MSH_PYR_285;
-    case 9: return serendip ? MSH_PYR_245 : MSH_PYR_385;
+    case 3: return serendip ? MSH_PYR_21 : MSH_PYR_30;
+    case 4: return serendip ? MSH_PYR_29 : MSH_PYR_55;
+    case 5: return serendip ? MSH_PYR_37 : MSH_PYR_91;
+    case 6: return serendip ? MSH_PYR_45 : MSH_PYR_140;
+    case 7: return serendip ? MSH_PYR_53 : MSH_PYR_204;
+    case 8: return serendip ? MSH_PYR_61 : MSH_PYR_285;
+    case 9: return serendip ? MSH_PYR_69 : MSH_PYR_385;
     default : Msg::Error("pyramid order %i unknown", order); return 0;
     }
     break;
@@ -1987,7 +1987,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_220: return new MTetrahedronN(v, 9, num, part);
   case MSH_TET_286: return new MTetrahedronN(v, 10, num, part);
   case MSH_POLYH_:  return new MPolyhedron(v, num, part, owner, parent);
-  case MSH_HEX_56:  return new MHexahedronN(v, 3, num, part);
+  case MSH_HEX_32:  return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_64:  return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_125: return new MHexahedronN(v, 4, num, part);
   case MSH_HEX_216: return new MHexahedronN(v, 5, num, part);

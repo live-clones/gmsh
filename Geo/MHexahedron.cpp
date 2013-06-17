@@ -202,12 +202,12 @@ const nodalBasis* MHexahedron::getFunctionSpace(int o) const
     case 1: return BasisFactory::getNodalBasis(MSH_HEX_8);
     case 2: return BasisFactory::getNodalBasis(MSH_HEX_20);
     case 3: return BasisFactory::getNodalBasis(MSH_HEX_56);
-    case 4: return BasisFactory::getNodalBasis(MSH_HEX_98);
-    case 5: return BasisFactory::getNodalBasis(MSH_HEX_152);
-    case 6: return BasisFactory::getNodalBasis(MSH_HEX_218);
-    case 7: return BasisFactory::getNodalBasis(MSH_HEX_296);
-    case 8: return BasisFactory::getNodalBasis(MSH_HEX_386);
-    case 9: return BasisFactory::getNodalBasis(MSH_HEX_488);
+    case 4: return BasisFactory::getNodalBasis(MSH_HEX_44);
+    case 5: return BasisFactory::getNodalBasis(MSH_HEX_56);
+    case 6: return BasisFactory::getNodalBasis(MSH_HEX_68);
+    case 7: return BasisFactory::getNodalBasis(MSH_HEX_80);
+    case 8: return BasisFactory::getNodalBasis(MSH_HEX_92);
+    case 9: return BasisFactory::getNodalBasis(MSH_HEX_104);
     default: Msg::Error("Order %d hex function space not implemented", order); break;
     }
   }
@@ -241,12 +241,12 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
     case 1: return BasisFactory::getJacobianBasis(MSH_HEX_8);
     case 2: return BasisFactory::getJacobianBasis(MSH_HEX_20);
     case 3: return BasisFactory::getJacobianBasis(MSH_HEX_56);
-    case 4: return BasisFactory::getJacobianBasis(MSH_HEX_98);
-    case 5: return BasisFactory::getJacobianBasis(MSH_HEX_152);
-    case 6: return BasisFactory::getJacobianBasis(MSH_HEX_218);
-    case 7: return BasisFactory::getJacobianBasis(MSH_HEX_296);
-    case 8: return BasisFactory::getJacobianBasis(MSH_HEX_386);
-    case 9: return BasisFactory::getJacobianBasis(MSH_HEX_488);
+    case 4: return BasisFactory::getJacobianBasis(MSH_HEX_44);
+    case 5: return BasisFactory::getJacobianBasis(MSH_HEX_56);
+    case 6: return BasisFactory::getJacobianBasis(MSH_HEX_68);
+    case 7: return BasisFactory::getJacobianBasis(MSH_HEX_80);
+    case 8: return BasisFactory::getJacobianBasis(MSH_HEX_92);
+    case 9: return BasisFactory::getJacobianBasis(MSH_HEX_104);
     default: Msg::Error("Order %d hex incomplete Jacobian function space not implemented", order); break;
     }
   }
