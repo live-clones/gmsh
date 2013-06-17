@@ -433,7 +433,7 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
       max = std::max(max, std::abs(unity(i, j)));
     }
   }
-  if (max > 1e-10) Msg::Info("   max unity = %.3e", max);
+  //if (max > 1e-10) Msg::Info("   max unity = %.3e", max);
 
   return coefficient;
 }
@@ -481,59 +481,46 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
 
 
-  // TEST NEW ALGO POINTS / MONOMIALS
+  // NEW ALGO POINTS / MONOMIALS
 
-  int rescale = 0;
   switch (parentType) {
   case TYPE_PNT :
+    points_newAlgo = gmshGeneratePointsLine(0);
     monomials_newAlgo = gmshGenerateMonomialsLine(0);
     break;
   case TYPE_LIN :
+    points_newAlgo = gmshGeneratePointsLine(order);
     monomials_newAlgo = gmshGenerateMonomialsLine(order);
-    rescale = 1;
     break;
   case TYPE_TRI :
+    points_newAlgo = gmshGeneratePointsTriangle(order, serendip);
     monomials_newAlgo = gmshGenerateMonomialsTriangle(order, serendip);
     break;
   case TYPE_QUA :
-    monomials_newAlgo = gmshGenerateMonomialsQuadrangle(order, serendip);
-    rescale = 1;
+    points_newAlgo = gmshGeneratePointsQuadrangle(order, serendip);
+    if (!serendip)
+      monomials_newAlgo = gmshGenerateMonomialsQuadrangle(order);
+    else
+      monomials_newAlgo = gmshGenerateMonomialsQuadSerendipity(order);
     break;
   case TYPE_TET :
+    points_newAlgo = gmshGeneratePointsTetrahedron(order, serendip);
     monomials_newAlgo = gmshGenerateMonomialsTetrahedron(order, serendip);
     break;
   case TYPE_HEX :
-    monomials_newAlgo = gmshGenerateMonomialsHexahedron(order, serendip);
-    rescale = 1;
+    points_newAlgo = gmshGeneratePointsHexahedron(order, serendip);
+    if (!serendip)
+      monomials_newAlgo = gmshGenerateMonomialsHexahedron(order);
+    else
+      monomials_newAlgo = gmshGenerateMonomialsHexaSerendipity(order);
     break;
   case TYPE_PRI :
-    monomials_newAlgo = gmshGenerateMonomialsPrism(order, serendip);
-    rescale = 2;
+    points_newAlgo = gmshGeneratePointsPrism(order, serendip);
+    if (!serendip)
+      monomials_newAlgo = gmshGenerateMonomialsPrism(order);
+    else
+      monomials_newAlgo = gmshGenerateMonomialsPrismSerendipity(order);
     break;
-  }
-  copy(monomials_newAlgo, points_newAlgo);
-  //if (order == 0) return;
-  switch (rescale) {
-    case 0 :
-      points_newAlgo.scale(1./order);
-      break;
-    case 1 :
-      points_newAlgo.scale(2./order);
-      points_newAlgo.add(-1.);
-      break;
-    case 2 :
-    {
-      fullMatrix<double> tmp;
-      tmp.setAsProxy(points_newAlgo, 0, 2);
-      tmp.scale(1./order);
-
-      tmp.setAsProxy(points_newAlgo, 2, 1);
-      tmp.scale(2./order);
-      tmp.add(-1.);
-      break;
-    }
-    default :
-      break;
   }
 
   fullMatrix<double> monDouble;
@@ -551,6 +538,7 @@ polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
     /*else*/ copy(monomials_newAlgo, monDouble);
     break;
   }
+
   coefficients_newAlgo = generateLagrangeMonomialCoefficients(monDouble, points_newAlgo);
 }
 

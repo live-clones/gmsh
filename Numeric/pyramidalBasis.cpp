@@ -62,7 +62,7 @@ static fullMatrix<double> generateLagrangeMonomialCoefficientsPyr
       max = std::max(max, std::abs(unity(i, j)));
     }
   }
-  if (max > 1e-10) Msg::Info("mon   max unity = %.3e", max);
+  //if (max > 1e-14) Msg::Info("mon   max unity = %.3e", max);
 
   return coefficient;
 }
@@ -98,23 +98,13 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
       max = std::max(max, std::abs(unity(i, j)));
     }
   }
-  if (max > 1e-10) Msg::Info("leg   max unity = %.3e", max);
+  //if (max > 1e-14) Msg::Info("leg   max unity = %.3e", max);
 
 
   // TEST NEW ALGO POINTS / MONOMIAL
 
   monomials_newAlgo = gmshGenerateMonomialsPyramid(order, serendip);
-  copy(monomials_newAlgo, points_newAlgo);
-  if (order == 0) return;
-
-  for (int i = 0; i < points_newAlgo.size1(); ++i) {
-    points_newAlgo(i, 2) = points_newAlgo(i, 2) / order;
-    if (i != 4) {
-      const double duv = -1. + points_newAlgo(i, 2);
-      points_newAlgo(i, 0) = duv + points_newAlgo(i, 0) * 2. / order;
-      points_newAlgo(i, 1) = duv + points_newAlgo(i, 1) * 2. / order;
-    }
-  }
+  points_newAlgo = gmshGeneratePointsPyramid(order, serendip);
 
   fullMatrix<double> monDouble;
   copy(monomials_newAlgo, monDouble);

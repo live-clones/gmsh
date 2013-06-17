@@ -34,6 +34,7 @@ class nodalBasis {
 
   int compareNewAlgoPointsWithOld() const;
   int compareNewAlgoBaseFunctionsWithOld() const;
+  int testNewAlgoBaseFunctions() const;
 
   // closures is the list of the nodes of each face, in the order of
   // the polynomialBasis of the face; fullClosures is mapping of the

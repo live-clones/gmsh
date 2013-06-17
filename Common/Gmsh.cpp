@@ -246,40 +246,84 @@ int GmshBatch()
 
   if (false) {
   // 11/06/13 : This will be removed later !
+    std::vector<int> compare;
+    std::vector<int> test;
     for (int i = 1; i < MSH_NUM_TYPE+1; ++i) {
       if (i == 76 || i == 77 || i == 78)
         continue;
+
+      const char **name = new const char*[1];
+      MElement::getInfoMSH(i, name);
+
       if (i == 67 || i == 68 || i == 70) {
-        Msg::Warning("ignoring unknown %d", i);
+        Msg::Info("ignoring unknown %d", i);
         continue;
-      }
-      if (MElement::ParentTypeFromTag(i) == TYPE_PRI && MElement::OrderFromTag(i) > 2) {
-        Msg::Warning("ignoring prism %d (different implementation)", i);
-        continue;
-      }
-      if (MElement::ParentTypeFromTag(i) == TYPE_PYR) {
-        if (i > 124 && i < 132) {
-          Msg::Warning("ignoring serendipity pyramid %d (bug in Bergot implementation)", i);
-          continue;
-        }
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_POLYG) {
-        Msg::Warning("ignoring polygone %d", i);
+        Msg::Info("ignoring polygone %d", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_POLYH) {
-        Msg::Warning("ignoring polyhdre %d", i);
+        Msg::Info("ignoring polyhedre %d", i);
         continue;
       }
       if (MElement::ParentTypeFromTag(i) == TYPE_XFEM) {
-        Msg::Warning("ignoring xfem %d", i);
+        Msg::Info("ignoring xfem %d", i);
         continue;
       }
 
-      const nodalBasis *fs = BasisFactory::getNodalBasis(i);
-
-      if (fs && !fs->compareNewAlgoPointsWithOld() && !fs->serendip) {
-        fs->compareNewAlgoBaseFunctionsWithOld();
+      if (MElement::ParentTypeFromTag(i) == TYPE_PRI && MElement::OrderFromTag(i) > 2) {
+        Msg::Warning("%d:ignoring %s (different node order)", i, *name);
+        test.push_back(i);
+      }
+      else if (MElement::ParentTypeFromTag(i) == TYPE_PYR && MElement::SerendipityFromTag(i) > 1) {
+        Msg::Warning("%d:ignoring Serendipity %s (bug in Bergot implementation & new Basis function not implemented)", i, *name);
+      }
+      else if (MElement::DimensionFromTag(i) == 3 && MElement::SerendipityFromTag(i) > 1) {
+        Msg::Warning("%d:ignoring 3D Serendipity : %s (different definition)", i, *name);
+        test.push_back(i);
+      }
+      else {
+        const nodalBasis *fs = BasisFactory::getNodalBasis(i);
+        if (fs && !fs->compareNewAlgoPointsWithOld()) {
+          compare.push_back(i);
+        }
+      }
+    }
+    Msg::Info(" ");
+    for (int parent = 1; parent < 12; ++parent) {
+      for (unsigned int i = 0; i < compare.size(); ++i) {
+        if (MElement::ParentTypeFromTag(compare[i]) == parent) {
+          if (parent == TYPE_PYR) {
+            const char **name = new const char*[1];
+            MElement::getInfoMSH(compare[i], name);
+            Msg::Warning("%d, %s: ignoring, old implementation much better and will be kept", compare[i], *name);
+          }
+          else {
+            const nodalBasis *fs = BasisFactory::getNodalBasis(compare[i]);
+            fs->compareNewAlgoBaseFunctionsWithOld();
+          }
+        }
+      }
+    }
+    Msg::Info(" ");
+    Msg::Info("---------------------------");
+    for (unsigned int i = 0; i < test.size(); ++i) {
+      const char **name = new const char*[1];
+      MElement::getInfoMSH(test[i], name);
+      //Msg::Info("%d, %s:", test[i], *name);
+      const nodalBasis *fs = BasisFactory::getNodalBasis(test[i]);
+    }
+    Msg::Info("---------------------------");
+    for (int parent = 1; parent < 12; ++parent) {
+      for (unsigned int i = 0; i < test.size(); ++i) {
+        if (MElement::ParentTypeFromTag(test[i]) == parent) {
+          const nodalBasis *fs = BasisFactory::getNodalBasis(test[i]);
+          /*const char **name = new const char*[1];
+          MElement::getInfoMSH(test[i], name);
+          Msg::Warning("%d, %s: untested !", test[i], *name);*/
+          fs->testNewAlgoBaseFunctions();
+        }
       }
     }
   }

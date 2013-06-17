@@ -15,7 +15,7 @@ int nodalBasis::compareNewAlgoPointsWithOld() const
   const char **name = new const char*[1];
   MElement::getInfoMSH(type, name);
   if (points_newAlgo.size1() == 0) {
-    Msg::Warning("%d: pas de points (%d, %d, %d) %s", type, parentType, serendip, order, *name);
+    Msg::Error("%d: pas de points (%d, %d, %d) %s", type, parentType, serendip, order, *name);
     return 1;
   }
   if (points_newAlgo.size1() != points.size1()) {
@@ -92,23 +92,70 @@ int nodalBasis::compareNewAlgoBaseFunctionsWithOld() const
       sumOne[1] += newVal[j];
     }
     sumError = std::sqrt(sumError/ndof);
-    /*if (sumError > 1e-4) {
+    /*if (sumError > 1e-5) {
       Msg::Error("(%.2f, %.2f, %.2f) -> fold=%.2e / fnew=%.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumOne[0], sumOne[1]);
       //for (int j = 0; j < ndof; ++j) {
       //  Msg::Info("old %.3e vs %.3e new", oldVal[j], newVal[j]);
       //}
     }*/
-    if (sumError > 1e-13) {
-      if (type < 10)       Msg::Warning("   f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
-      else if (type < 100) Msg::Warning("    f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
-      else                 Msg::Warning("     f(%.2f, %.2f, %.2f) bad precision diff %.2e", P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
+    if (sumError > 1e-5) {
+      Msg::Error("%d, %s: f(%.2f, %.2f, %.2f) bad precision diff %.2e", type, *name, P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
       return 1;
     }
-    /*else if (type < 10)  Msg::Info("   f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
-    else if (type < 100) Msg::Info("    f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
-    else                 Msg::Info("     f(%.2f, %.2f, %.2f) ok", P[0] / 1000., P[1] / 1000., P[2] / 1000.);
-    */
+    else if (sumError > 1e-13) {
+      Msg::Warning("%d, %s: f(%.2f, %.2f, %.2f) bad precision diff %.2e", type, *name, P[0] / 1000., P[1] / 1000., P[2] / 1000., sumError);
+      return 1;
+    }
   }
+  return 0;
+}
+
+int nodalBasis::testNewAlgoBaseFunctions() const
+{
+  const char **name = new const char*[1];
+  MElement::getInfoMSH(type, name);
+  int ndof = points_newAlgo.size1();
+  int P[3];
+  bool noproblem = true;
+  for (int i = 0; i < 10; ++i) {
+    if (i == 0) {
+      P[0] = 0;
+      P[1] = 0;
+      P[2] = 0;
+    }
+    else if (i == 1) {
+      P[0] = 0;
+      P[1] = 0;
+      P[2] = 1000;
+    }
+    else if (i == 2) {
+      P[0] = 1000;
+      P[1] = 0;
+      P[2] = 0;
+    }
+    else {
+      P[0] = std::rand() % 1001;
+      P[1] = std::rand() % (1001 - P[0]);
+      P[2] = std::rand() % (1001 - P[0] - P[1]);
+    }
+
+    double newVal[ndof];
+    fnew(P[0] / 1000., P[1] / 1000., P[2] / 1000., newVal);
+
+    double sumOne = 0;
+    for (int j = 0; j < ndof; ++j) {
+      sumOne += newVal[j];
+    }
+    if (sumOne > 1. + 1e-12 || sumOne < 1. - 1e-12) {
+      noproblem = false;
+      Msg::Warning("%d, %s: bad precision (%.2f, %.2f, %.2f) -> sum = %.2e (1 + %.2e)", type, *name, P[0] / 1000., P[1] / 1000., P[2] / 1000., sumOne, sumOne-1.);
+      //for (int j = 0; j < ndof; ++j) {
+      //  Msg::Info(" %d : %.3e", j, newVal[j]);
+      //}
+      return 1;
+    }
+  }
+  if (noproblem) Msg::Info("%d, %s: no problem", type, *name);
   return 0;
 }
 
@@ -1477,7 +1524,10 @@ static void generateClosureOrder0(nodalBasis::clCont &closure, int nb)
 nodalBasis::nodalBasis(int tag)
 {
   type = tag;
-
+  parentType = MElement::ParentTypeFromTag(tag);
+  order = MElement::OrderFromTag(tag);
+  serendip = MElement::SerendipityFromTag(tag) > 1;
+  /*
   switch (tag) {
   case MSH_PNT     : parentType = TYPE_PNT; order = 0; serendip = false; break;
   case MSH_LIN_1   : parentType = TYPE_LIN; order = 0; serendip = false; break;
@@ -1584,6 +1634,7 @@ nodalBasis::nodalBasis(int tag)
   case MSH_HEX_296 : parentType = TYPE_HEX; order = 7; serendip = true; break;
   case MSH_HEX_386 : parentType = TYPE_HEX; order = 8; serendip = true; break;
   case MSH_HEX_488 : parentType = TYPE_HEX; order = 9; serendip = true; break;
+  case MSH_PYR_1   : parentType = TYPE_PYR; order = 0; serendip = false; break;
   case MSH_PYR_5   : parentType = TYPE_PYR; order = 1; serendip = false; break;
   case MSH_PYR_14  : parentType = TYPE_PYR; order = 2; serendip = false; break;
   case MSH_PYR_30  : parentType = TYPE_PYR; order = 3; serendip = false; break;
@@ -1605,7 +1656,7 @@ nodalBasis::nodalBasis(int tag)
     Msg::Error("Unknown function space %d: reverting to TET_4", tag);
     parentType = TYPE_TET; order = 1; serendip = false; break;
   }
-
+  */
 
   switch (parentType) {
   case TYPE_PNT :
