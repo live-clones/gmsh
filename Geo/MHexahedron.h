@@ -516,7 +516,6 @@ class MHexahedronN : public MHexahedron {
   {
     // (p+1)^3
     if(_order == 1 && _vs.size() + 8 == 8)   return MSH_HEX_8;
-    if(_order == 2 && _vs.size() + 8 == 20)  return MSH_HEX_20;
     if(_order == 2 && _vs.size() + 8 == 27)  return MSH_HEX_27;
     if(_order == 3 && _vs.size() + 8 == 64 ) return MSH_HEX_64;
     if(_order == 4 && _vs.size() + 8 == 125) return MSH_HEX_125;
@@ -525,13 +524,15 @@ class MHexahedronN : public MHexahedron {
     if(_order == 7 && _vs.size() + 8 == 512) return MSH_HEX_512;
     if(_order == 8 && _vs.size() + 8 == 729) return MSH_HEX_729;
     if(_order == 9 && _vs.size() + 8 == 1000) return MSH_HEX_1000;
+
+    if(_order == 2 && _vs.size() + 8 == 20)  return MSH_HEX_20;
     if(_order == 3 && _vs.size() + 8 == 56 ) return MSH_HEX_56;
-    if(_order == 4 && _vs.size() + 8 == 98) return MSH_HEX_44;
-    if(_order == 5 && _vs.size() + 8 == 152) return MSH_HEX_56;
-    if(_order == 6 && _vs.size() + 8 == 222) return MSH_HEX_68;
-    if(_order == 7 && _vs.size() + 8 == 296) return MSH_HEX_80;
-    if(_order == 8 && _vs.size() + 8 == 386) return MSH_HEX_92;
-    if(_order == 9 && _vs.size() + 8 == 488) return MSH_HEX_104;
+    if(_order == 4 && _vs.size() + 8 == 44)  return MSH_HEX_44;
+    if(_order == 5 && _vs.size() + 8 == 56)  return MSH_HEX_56;
+    if(_order == 6 && _vs.size() + 8 == 68)  return MSH_HEX_68;
+    if(_order == 7 && _vs.size() + 8 == 80)  return MSH_HEX_80;
+    if(_order == 8 && _vs.size() + 8 == 92)  return MSH_HEX_92;
+    if(_order == 9 && _vs.size() + 8 == 104) return MSH_HEX_104;
     return 0;
   }
   virtual int getNumFacesRep();
