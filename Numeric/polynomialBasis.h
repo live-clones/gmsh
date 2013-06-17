@@ -82,7 +82,7 @@ class polynomialBasis : public nodalBasis
   virtual void ddf(double u, double v, double w, double hess[][3][3]) const;
   virtual void dddf(double u, double v, double w, double third[][3][3][3]) const;
 
-  inline void evaluateMonomials(double u, double v, double w, double p[]) const;
+  void evaluateMonomials(double u, double v, double w, double p[]) const;
 };
 
 #endif
