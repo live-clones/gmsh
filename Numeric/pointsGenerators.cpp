@@ -11,6 +11,22 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 
+void getDoubleMonomials(fullMatrix<double>& doubleMon,
+                        fullMatrix<int> (*genIntMonomials)(int, bool),
+                        int order, bool serendip )
+{
+  fullMatrix<int> mon;
+  mon = (*genIntMonomials)(order, serendip);
+
+  doubleMon.resize(mon.size1(), mon.size2());
+
+  for (int i = 0; i < mon.size1(); ++i) {
+    for (int j = 0; j < mon.size2(); ++j) {
+      doubleMon(i, j) = static_cast<double>(mon(i, j));
+    }
+  }
+}
+
 /* --- Lines --- */
 
 fullMatrix<double> gmshGeneratePointsLine(int order)
