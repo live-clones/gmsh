@@ -55,8 +55,6 @@ class nodalBasis {
   virtual const std::vector<int> &getFullClosure(int id) const { return fullClosures[id]; }
   inline int getClosureId(int iFace, int iSign=1, int iRot=0) const;
   inline void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const;
-
-  static inline int getTag(int parentTag, int order, bool serendip = false);
 };
 
 
@@ -74,126 +72,6 @@ inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign, int &iRot)
   i = (i - iFace)/numFaces;
   iSign = i % 2;
   iRot = (i - iSign) / 2;
-}
-
-
-
-inline int nodalBasis::getTag(int parentTag, int order, bool serendip)
-{
-  switch (parentTag) {
-  case TYPE_PNT :
-    return MSH_PNT;
-  case TYPE_LIN :
-    switch(order) {
-    case 0 : return MSH_LIN_1;
-    case 1 : return MSH_LIN_2;
-    case 2 : return MSH_LIN_3;
-    case 3 : return MSH_LIN_4;
-    case 4 : return MSH_LIN_5;
-    case 5 : return MSH_LIN_6;
-    case 6 : return MSH_LIN_7;
-    case 7 : return MSH_LIN_8;
-    case 8 : return MSH_LIN_9;
-    case 9 : return MSH_LIN_10;
-    case 10: return MSH_LIN_11;
-    default : Msg::Error("line order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_TRI :
-    switch(order) {
-    case 0 : return MSH_TRI_1;
-    case 1 : return MSH_TRI_3;
-    case 2 : return MSH_TRI_6;
-    case 3 : return serendip ? MSH_TRI_9  : MSH_TRI_10;
-    case 4 : return serendip ? MSH_TRI_12 : MSH_TRI_15;
-    case 5 : return serendip ? MSH_TRI_15I: MSH_TRI_21;
-    case 6 : return serendip ? MSH_TRI_18 : MSH_TRI_28;
-    case 7 : return serendip ? MSH_TRI_21I: MSH_TRI_36;
-    case 8 : return serendip ? MSH_TRI_24 : MSH_TRI_45;
-    case 9 : return serendip ? MSH_TRI_27 : MSH_TRI_55;
-    case 10: return serendip ? MSH_TRI_30 : MSH_TRI_66;
-    default : Msg::Error("triangle order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_QUA :
-    switch(order) {
-    case 0 : return MSH_QUA_1;
-    case 1 : return MSH_QUA_4;
-    case 2 : return serendip ? MSH_QUA_8  : MSH_QUA_9;
-    case 3 : return serendip ? MSH_QUA_12 : MSH_QUA_16;
-    case 4 : return serendip ? MSH_QUA_16I: MSH_QUA_25;
-    case 5 : return serendip ? MSH_QUA_20 : MSH_QUA_36;
-    case 6 : return serendip ? MSH_QUA_24 : MSH_QUA_49;
-    case 7 : return serendip ? MSH_QUA_28 : MSH_QUA_64;
-    case 8 : return serendip ? MSH_QUA_32 : MSH_QUA_81;
-    case 9 : return serendip ? MSH_QUA_36I: MSH_QUA_100;
-    case 10: return serendip ? MSH_QUA_40 : MSH_QUA_121;
-    default : Msg::Error("quad order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_TET :
-    switch(order) {
-    case 0 : return MSH_TET_1;
-    case 1 : return MSH_TET_4;
-    case 2 : return MSH_TET_10;
-    case 3 : return MSH_TET_20;
-    case 4 : return serendip ? MSH_TET_34 : MSH_TET_35;
-    case 5 : return serendip ? MSH_TET_52 : MSH_TET_56;
-    case 6 : return serendip ? MSH_TET_74 : MSH_TET_84;
-    case 7 : return serendip ? MSH_TET_100: MSH_TET_120;
-    case 8 : return serendip ? MSH_TET_130: MSH_TET_165;
-    case 9 : return serendip ? MSH_TET_164: MSH_TET_220;
-    case 10: return serendip ? MSH_TET_202: MSH_TET_286;
-    default : Msg::Error("terahedron order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_HEX :
-    switch(order) {
-    case 0 : return MSH_HEX_1;
-    case 1 : return MSH_HEX_8;
-    case 2 : return serendip ? MSH_HEX_20 : MSH_HEX_27;
-    case 3 : return serendip ? MSH_HEX_56 : MSH_HEX_64;
-    case 4 : return serendip ? MSH_HEX_98 : MSH_HEX_125;
-    case 5 : return serendip ? MSH_HEX_152: MSH_HEX_216;
-    case 6 : return serendip ? MSH_HEX_218: MSH_HEX_343;
-    case 7 : return serendip ? MSH_HEX_296: MSH_HEX_512;
-    case 8 : return serendip ? MSH_HEX_386: MSH_HEX_729;
-    case 9 : return serendip ? MSH_HEX_488: MSH_HEX_1000;
-    default : Msg::Error("hexahedron order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_PRI :
-    switch(order) {
-    case 0 : return MSH_PRI_1;
-    case 1 : return MSH_PRI_6;
-    case 2 : return serendip ? MSH_PRI_15 : MSH_PRI_18;
-    case 3 : return serendip ? MSH_PRI_38 : MSH_PRI_40;
-    case 4 : return serendip ? MSH_PRI_66 : MSH_PRI_75;
-    case 5 : return serendip ? MSH_PRI_102 : MSH_PRI_126;
-    case 6 : return serendip ? MSH_PRI_146 : MSH_PRI_196;
-    case 7 : return serendip ? MSH_PRI_198 : MSH_PRI_288;
-    case 8 : return serendip ? MSH_PRI_258 : MSH_PRI_405;
-    case 9 : return serendip ? MSH_PRI_326 : MSH_PRI_550;
-    default : Msg::Error("prism order %i unknown", order); return 0;
-    }
-    break;
-  case TYPE_PYR :
-    switch(order) {
-    case 0 : return MSH_PYR_1;
-    case 1 : return MSH_PYR_5;
-    case 2 : return serendip ? MSH_PYR_13 : MSH_PYR_14;
-    case 3: return serendip ? MSH_PYR_29 : MSH_PYR_30;
-    case 4: return serendip ? MSH_PYR_50 : MSH_PYR_55;
-    case 5: return serendip ? MSH_PYR_77 : MSH_PYR_91;
-    case 6: return serendip ? MSH_PYR_110 : MSH_PYR_140;
-    case 7: return serendip ? MSH_PYR_149 : MSH_PYR_204;
-    case 8: return serendip ? MSH_PYR_194 : MSH_PYR_285;
-    case 9: return serendip ? MSH_PYR_245 : MSH_PYR_385;
-    default : Msg::Error("pyramid order %i unknown", order); return 0;
-    }
-    break;
-  default : Msg::Error("unknown element type %i", parentTag); return 0;
-  }
 }
 
 

@@ -369,6 +369,7 @@ class MElement
   static int OrderFromTag(int tag);
   static int SerendipityFromTag(int tag);
   static int DimensionFromTag(int tag);
+  static int getTag(int parentTag, int order, bool serendip = false);
 };
 
 class MElementFactory{

@@ -33,7 +33,7 @@ TetLagrangeBasis::~TetLagrangeBasis(void){
 }
 
 unsigned int TetLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = nodalBasis::getTag(TYPE_TET, order, false);
+  unsigned int tag = MElement::getTag(TYPE_TET, order, false);
 
   if(tag)
     return tag;

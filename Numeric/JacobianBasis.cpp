@@ -46,8 +46,8 @@ JacobianBasis::JacobianBasis(int tag)
         jacobianOrder = 0;
         break;
     }
-    jacType = polynomialBasis::getTag(parentType, jacobianOrder, false);
-    primJacType = polynomialBasis::getTag(parentType, primJacobianOrder, false);
+    jacType = MElement::getTag(parentType, jacobianOrder, false);
+    primJacType = MElement::getTag(parentType, primJacobianOrder, false);
   }
 
   // Store Bezier basis
@@ -77,7 +77,7 @@ JacobianBasis::JacobianBasis(int tag)
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
-  const int primMapType = polynomialBasis::getTag(parentType, 1, false);
+  const int primMapType = MElement::getTag(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   numPrimMapNodes = primMapBasis->getNumShapeFunctions();
   double xBar = 0., yBar = 0., zBar = 0.;
