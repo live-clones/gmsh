@@ -1671,7 +1671,7 @@ static int connectedSurfaces(std::vector<MElement*> &elements,
     std::set<MElement*> group;
     std::set<MEdge, Less_Edge> touched;
     recurConnectMElementsByMEdge(e2e.begin()->first, e2e, group, touched);
-    printf("group pe %d elements found\n",(int)group.size());
+    //printf("group pe %d elements found\n",(int)group.size());
     std::vector<MElement*> temp;
     temp.insert(temp.begin(), group.begin(), group.end());
     faces.push_back(temp);
