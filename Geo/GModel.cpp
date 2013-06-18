@@ -2304,42 +2304,52 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
     for(unsigned int j = 0; j < elements[4][ri].size(); j++)
       allElements.push_back(elements[4][ri][j]);
     std::vector<std::vector<MElement*> > conRegions;
-    int nbRegions = connectedVolumes(allElements, conRegions);
-    printf("%d regions (%d)\n",nbRegions,ri);
-    for(int j = 0; j < nbRegions; j++){
+    int nbConRegions = connectedVolumes(allElements, conRegions);
+    for(int j = 0; j < nbConRegions; j++){
       if(conRegions[j].size() < 3){ //remove conRegions containing 1 or 2 elements
+        //find adjacent region
+        int r2 = ri;
+        if(regs.size() == 2)
+          r2 = (ri + 1) % 2;
+        else{
+          for(unsigned int k = 0; k < conRegions[j].size(); k++){
+            MElement *el = conRegions[j][k];
+            for(int l = 0; l < el->getNumFaces(); l++){
+              MFace mf = el->getFace(l);
+              std::multimap<MFace, MElement*, Less_Face>::iterator itl = f2e.lower_bound(mf);
+              for(; itl != f2e.upper_bound(mf); itl++){
+                if(itl->second != el) break;
+              }
+              MElement *el2 = itl->second;
+              bool sameRegion = false;
+              for(unsigned int m = 0; m < conRegions[j].size(); m++)
+                if(conRegions[j][m] == el2) {
+                  sameRegion = true; break;
+                }
+              if(sameRegion) continue;
+              for(unsigned int m = 0; m < regs.size(); m++){
+                int rm = regs[m];
+                if(rm == ri) continue;
+                for(unsigned int n = 0; n < elements[4][rm].size(); n++)
+                  if(elements[4][rm][n] == el2){
+                    r2 = rm;
+                    break;
+                  }
+                if(r2 != ri) break;
+              }
+              if(r2 != ri) break;
+            }
+            if(r2 != ri) break;
+          }
+          if(r2 == ri) Msg::Warning("Element not found for simply connected regions");
+        }
+
         for(unsigned int k = 0; k < conRegions[j].size(); k++){
           MElement *el = conRegions[j][k];
           unsigned int l = 0;
           for(; l < elements[4][ri].size(); l++)
             if(elements[4][ri][l] == el) break;
           elements[4][ri].erase(elements[4][ri].begin() + l);
-          //find adjacent region
-          int r2 = ri;
-          if(regs.size() == 2)
-            r2 = (ri + 1) % 2;
-          else{
-            MFace mf = el->getFace(0);
-            std::multimap<MFace, MElement*, Less_Face>::iterator itl = f2e.lower_bound(mf);
-            for(; itl != f2e.upper_bound(mf); itl++){
-              if(itl->second != el) break;
-            }
-            if(itl == f2e.upper_bound(mf)) printf("adjacent 3d element not found\n");
-            MElement *el2 = itl->second;
-            bool found = false;
-            for(unsigned int m = 0; m < regs.size(); m++){
-              int rm = regs[m];
-              if(rm == ri) continue;
-              for(unsigned int n = 0; n < elements[4][rm].size(); n++)
-                if(elements[4][rm][n] == el2){
-                  r2 = rm;
-                  found = true;
-                  break;
-                }
-              if(found) break;
-            }
-            if(r2 == ri) Msg::Warning("Element not found for simply connected regions");
-          }
           elements[4][r2].push_back(el);
         }
       }
@@ -2367,41 +2377,50 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
       allElements.push_back(elements[2][fi][j]);
     std::vector<std::vector<MElement*> > conSurfaces;
     int nbSurfaces = connectedSurfaces(allElements, conSurfaces);
-    printf("%d consurfaces (reg=%d)\n",nbSurfaces,fi);
     for(int j = 0; j < nbSurfaces; j++){
       if(conSurfaces[j].size() < 3){ //remove conSurfaces containing 1 or 2 elements
+        //find adjacent surface
+        int f2 = fi;
+        if(faces.size() == 2)
+          f2 = (fi + 1) % 2;
+        else{
+          for(unsigned int k = 0; k < conSurfaces[j].size(); k++){
+            MElement *el = conSurfaces[j][k];
+            for(int l = 0; l < el->getNumEdges(); l++){
+              MEdge me = el->getEdge(l);
+              std::multimap<MEdge, MElement*, Less_Edge>::iterator itl = e2e.lower_bound(me);
+              for(; itl != e2e.upper_bound(me); itl++){
+                if(itl->second != el) break;
+              }
+              MElement *el2 = itl->second;
+              bool sameSurface = false;
+              for(unsigned int m = 0; m < conSurfaces[j].size(); m++)
+                if(conSurfaces[j][m] == el2) {
+                  sameSurface = true; break;
+                }
+              if(sameSurface) continue;
+              for(unsigned int m = 0; m < faces.size(); m++){
+                int fm = faces[m];
+                if(fm == fi) continue;
+                for(unsigned int n = 0; n < elements[2][fm].size(); n++)
+                  if(elements[2][fm][n] == el2){
+                    f2 = fm;
+                    break;
+                  }
+                if(f2 != fi) break;
+              }
+              if(f2 != fi) break;
+            }
+            if(f2 != fi) break;
+          }
+          if(f2 == fi) Msg::Warning("Element not found for simply connected surfaces");
+        }
         for(unsigned int k = 0; k < conSurfaces[j].size(); k++){
           MElement *el = conSurfaces[j][k];
           unsigned int l = 0;
           for(; l < elements[2][fi].size(); l++)
             if(elements[2][fi][l] == el) break;
           elements[2][fi].erase(elements[2][fi].begin() + l);
-          //find adjacent surface
-          int f2 = fi;
-          if(faces.size() == 2)
-            f2 = (fi + 1) % 2;
-          else{
-            MEdge me = el->getEdge(0);
-            std::multimap<MEdge, MElement*, Less_Edge>::iterator itl = e2e.lower_bound(me);
-            for(; itl != e2e.upper_bound(me); itl++){
-              if(itl->second != el) break;
-            }
-            if(itl == e2e.upper_bound(me)) printf("adjacent 2d element not found\n");
-            MElement *el2 = itl->second;
-            bool found = false;
-            for(unsigned int m = 0; m < faces.size(); m++){
-              int fm = faces[m];
-              if(fm == fi) continue;
-              for(unsigned int n = 0; n < elements[2][fm].size(); n++)
-                if(elements[2][fm][n] == el2){
-                  f2 = fm;
-                  found = true;
-                  break;
-                }
-              if(found) break;
-            }
-            if(f2 == fi) Msg::Warning("Element not found for simply connected surfaces");
-          }
           elements[2][f2].push_back(el);
         }
       }
@@ -2427,7 +2446,8 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   GModel *cutGM = buildCutMesh(this, ls, elements, vertexMap, physicals, cutElem);
 
-  makeSimplyConnected(elements);
+  if(!cutElem)
+    makeSimplyConnected(elements);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     cutGM->_storeElementsInEntities(elements[i]);
@@ -2670,15 +2690,15 @@ GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces){
 
 GFace *GModel::add2Drect(double x0, double y0, double dx, double dy)
 {
-  if(_factory) 
-	return _factory->add2Drect(this, x0, y0, dx, dy);
+  if(_factory)
+    return _factory->add2Drect(this, x0, y0, dx, dy);
   return 0;
 }
 
 GFace *GModel::add2Dellips(double xc, double yc, double rx, double ry)
 {
-  if(_factory) 
-	return _factory->add2Dellips(this, xc, yc, rx, ry);
+  if(_factory)
+    return _factory->add2Dellips(this, xc, yc, rx, ry);
   return 0;
 }
 
@@ -2740,8 +2760,7 @@ GEntity *GModel::addBlock(std::vector<double> p1, std::vector<double> p2)
 
 GEntity *GModel::add3DBlock(std::vector<double> p1, double dx, double dy, double dz )
 {
-  if(_factory) 
-	return _factory->add3DBlock(this, p1, dx, dy, dz);
+  if(_factory) return _factory->add3DBlock(this, p1, dx, dy, dz);
   return 0;
 }
 
@@ -2775,32 +2794,32 @@ GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
 
 void GModel::salomeconnect()
 {
-  if(_factory) 
-	_factory->salomeconnect(this);
+  if(_factory) _factory->salomeconnect(this);
 }
 
 void GModel::occconnect()
 {
-  if(_factory)
-	_factory->occconnect(this);
+  if(_factory) _factory->occconnect(this);
 }
 
 void GModel::setPeriodicAllFaces(std::vector<double> FaceTranslationVector)
 {
-  if(_factory) 
-	_factory->setPeriodicAllFaces(this, FaceTranslationVector);
+  if(_factory) _factory->setPeriodicAllFaces(this, FaceTranslationVector);
 }
 
-void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave)
+void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,
+                                    int numFaceSlave, std::vector<int> EdgeListSlave)
 {
-  if(_factory) 
-	_factory->setPeriodicPairOfFaces(this, numFaceMaster, EdgeListMaster, numFaceSlave, EdgeListSlave);
+  if(_factory)
+    _factory->setPeriodicPairOfFaces(this, numFaceMaster, EdgeListMaster,
+                                     numFaceSlave, EdgeListSlave);
 }
 
-void GModel::setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber, std::vector<double> p1, std::vector<double> p2)
+void GModel::setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber,
+                                           std::vector<double> p1, std::vector<double> p2)
 {
-  if(_factory) 
-	_factory->setPhysicalNumToEntitiesInBox(this,EntityType,PhysicalGroupNumber,p1,p2);
+  if(_factory)
+    _factory->setPhysicalNumToEntitiesInBox(this, EntityType, PhysicalGroupNumber, p1, p2);
 }
 
 static void computeDuplicates(GModel *model,
