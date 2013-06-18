@@ -46,7 +46,7 @@ static void printClosure(polynomialBasis::clCont &fullClosure,
 
 
 static fullMatrix<double> generateLagrangeMonomialCoefficients
-  (const fullMatrix<int>& monomial, const fullMatrix<double>& point)
+  (const fullMatrix<double>& monomial, const fullMatrix<double>& point)
 {
   if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
     Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
@@ -75,32 +75,39 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
 
 polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
 {
-
+  fullMatrix<int> monom;
   switch (parentType) {
   case TYPE_PNT :
-    monomials = gmshGenerateMonomialsLine(0);
+    monom = gmshGenerateMonomialsLine(0);
     break;
   case TYPE_LIN :
-    monomials = gmshGenerateMonomialsLine(order);
+    monom = gmshGenerateMonomialsLine(order);
     break;
   case TYPE_TRI :
-    monomials = gmshGenerateMonomialsTriangle(order, serendip);
+    monom = gmshGenerateMonomialsTriangle(order, serendip);
     break;
   case TYPE_QUA :
-    monomials = serendip ? gmshGenerateMonomialsQuadSerendipity(order) :
+    monom = serendip ? gmshGenerateMonomialsQuadSerendipity(order) :
     gmshGenerateMonomialsQuadrangle(order);
     break;
   case TYPE_TET :
-    monomials = gmshGenerateMonomialsTetrahedron(order, serendip);
+    monom = gmshGenerateMonomialsTetrahedron(order, serendip);
     break;
   case TYPE_PRI :
-    monomials = serendip ? gmshGenerateMonomialsPrismSerendipity(order) :
+    monom = serendip ? gmshGenerateMonomialsPrismSerendipity(order) :
     gmshGenerateMonomialsPrism(order);
     break;
   case TYPE_HEX :
-    monomials = serendip ? gmshGenerateMonomialsHexaSerendipity(order) :
+    monom = serendip ? gmshGenerateMonomialsHexaSerendipity(order) :
     gmshGenerateMonomialsHexahedron(order);
     break;
+  }
+
+  monomials.resize(monom.size1(), monom.size2());
+  for (int i = 0; i < monom.size1(); ++i) {
+    for (int j = 0; j < monom.size2(); ++j) {
+      monomials(i, j) = static_cast<double>(monom(i, j));
+    }
   }
 
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);
@@ -187,7 +194,7 @@ void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 0)
           grads[i][0] += coefficients(i, j) *
-            pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0);
+            pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0);
       }
     }
     break;
@@ -199,12 +206,12 @@ void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 0)
           grads[i][0] += coefficients(i, j) *
-            pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0) *
-            pow_int(v, (int)monomials(j, 1));
+            pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
+            pow_int(v, monomials(j, 1));
         if (monomials(j, 1) > 0)
           grads[i][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)(monomials(j, 1) - 1)) * monomials(j, 1);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1);
       }
     }
     break;
@@ -216,19 +223,19 @@ void polynomialBasis::df(double u, double v, double w, double grads[][3]) const
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 0)
           grads[i][0] += coefficients(i, j) *
-            pow_int(u, (int)(monomials(j, 0) - 1)) * monomials(j, 0) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, (monomials(j, 0) - 1)) * monomials(j, 0) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, monomials(j, 2));
         if (monomials(j, 1) > 0)
           grads[i][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)(monomials(j, 1) - 1)) * monomials(j, 1) *
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, (monomials(j, 1) - 1)) * monomials(j, 1) *
+            pow_int(w, monomials(j, 2));
         if (monomials(j, 2) > 0)
           grads[i][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)(monomials(j, 2) - 1)) * monomials(j, 2);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, (monomials(j, 2) - 1)) * monomials(j, 2);
       }
     }
     break;
@@ -248,7 +255,7 @@ void polynomialBasis::ddf(double u, double v, double w, double hess[][3][3]) con
 
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 1) // second derivative !=0
-          hess[i][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 2)) *
+          hess[i][0][0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 2)) *
             monomials(j, 0) * (monomials(j, 0) - 1);
       }
     }
@@ -260,16 +267,16 @@ void polynomialBasis::ddf(double u, double v, double w, double hess[][3][3]) con
       hess[i][2][0] = hess[i][2][1] = hess[i][2][2] = 0;
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 1) // second derivative !=0
-          hess[i][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 2)) *
-            monomials(j, 0) * (monomials(j, 0) - 1) * pow_int(v, (int)monomials(j, 1));
+          hess[i][0][0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 2)) *
+            monomials(j, 0) * (monomials(j, 0) - 1) * pow_int(v, monomials(j, 1));
         if ((monomials(j, 1) > 0) && (monomials(j, 0) > 0))
           hess[i][0][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-            pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1);
+            pow_int(u, monomials(j, 0) - 1) * monomials(j, 0) *
+            pow_int(v, monomials(j, 1) - 1) * monomials(j, 1);
         if (monomials(j, 1) > 1)
           hess[i][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
       }
       hess[i][1][0] = hess[i][0][1];
     }
@@ -282,35 +289,35 @@ void polynomialBasis::ddf(double u, double v, double w, double hess[][3][3]) con
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 1)
           hess[i][0][0] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0) * (monomials(j, 0)-1) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0) - 2) * monomials(j, 0) * (monomials(j, 0)-1) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 0) > 0) && (monomials(j, 1) > 0))
           hess[i][0][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-            pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1) *
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0) - 1) * monomials(j, 0) *
+            pow_int(v, monomials(j, 1) - 1) * monomials(j, 1) *
+            pow_int(w, monomials(j, 2));
         if ((monomials(j, 0) > 0) && (monomials(j, 2) > 0))
           hess[i][0][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) * monomials(j, 0) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)monomials(j, 2) - 1) * monomials(j, 2);
+            pow_int(u, monomials(j, 0) - 1) * monomials(j, 0) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, monomials(j, 2) - 1) * monomials(j, 2);
         if (monomials(j, 1) > 1)
           hess[i][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1)-1) *
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1)-1) *
+            pow_int(w, monomials(j, 2));
         if ((monomials(j, 1) > 0) && (monomials(j, 2) > 0))
           hess[i][1][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1) *
-            pow_int(w, (int)monomials(j, 2) - 1) * monomials(j, 2);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1) - 1) * monomials(j, 1) *
+            pow_int(w, monomials(j, 2) - 1) * monomials(j, 2);
         if (monomials(j, 2) > 1)
           hess[i][2][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
       }
       hess[i][1][0] = hess[i][0][1];
       hess[i][2][0] = hess[i][0][2];
@@ -334,7 +341,7 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
 
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 2) // third derivative !=0
-          third[i][0][0][0] += coefficients(i, j) * pow_int(u, (int)(monomials(j, 0) - 3)) *
+          third[i][0][0][0] += coefficients(i, j) * pow_int(u, (monomials(j, 0) - 3)) *
             monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2);
       }
     }
@@ -348,20 +355,20 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 2) // second derivative !=0
           third[i][0][0][0] += coefficients(i, j) *
-            pow_int(u, (int)(monomials(j, 0) - 3))*monomials(j, 0) * (monomials(j, 0) - 1) *(monomials(j, 0) - 2) *
-            pow_int(v, (int)monomials(j, 1));
+            pow_int(u, (monomials(j, 0) - 3))*monomials(j, 0) * (monomials(j, 0) - 1) *(monomials(j, 0) - 2) *
+            pow_int(v, monomials(j, 1));
         if ((monomials(j, 0) > 1) && (monomials(j, 1) > 0))
           third[i][0][0][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-            pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1);
+            pow_int(u, monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
+            pow_int(v, monomials(j, 1) - 1) * monomials(j, 1);
         if ((monomials(j, 0) > 0) && (monomials(j, 1) > 1))
           third[i][0][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-            pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
+            pow_int(u, monomials(j, 0) - 1) *monomials(j, 0)*
+            pow_int(v, monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1);
         if (monomials(j, 1) > 2)
           third[i][1][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1) - 3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1) - 3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2);
       }
       third[i][0][1][0] = third[i][0][0][1];
       third[i][1][0][0] = third[i][0][0][1];
@@ -378,62 +385,62 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 2) // second derivative !=0
           third[i][0][0][0] += coefficients(i, j) *
-            pow_int(u, (int)(monomials(j, 0) - 3)) *monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2) *
-            pow_int(v, (int)monomials(j, 1))*
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, (monomials(j, 0) - 3)) *monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2) *
+            pow_int(v, monomials(j, 1))*
+            pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 0) > 1) && (monomials(j, 1) > 0))
           third[i][0][0][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-            pow_int(v, (int)monomials(j, 1) - 1) * monomials(j, 1)*
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
+            pow_int(v, monomials(j, 1) - 1) * monomials(j, 1)*
+            pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 0) > 1) && (monomials(j, 2) > 0))
           third[i][0][0][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
-            pow_int(v, (int)monomials(j, 1)) *
-            pow_int(w, (int)monomials(j, 2) - 1)* monomials(j, 2);
+            pow_int(u, monomials(j, 0) - 2) * monomials(j, 0)*(monomials(j, 0) - 1) *
+            pow_int(v, monomials(j, 1)) *
+            pow_int(w, monomials(j, 2) - 1)* monomials(j, 2);
 
         if ((monomials(j, 0) > 0) && (monomials(j, 1) > 1))
           third[i][0][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-            pow_int(v, (int)monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1)*
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0) - 1) *monomials(j, 0)*
+            pow_int(v, monomials(j, 1) - 2) * monomials(j, 1) * (monomials(j, 1) - 1)*
+            pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 0) > 0) && (monomials(j, 1) > 0)&& (monomials(j, 2) > 0))
           third[i][0][1][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-            pow_int(v, (int)monomials(j, 1) - 1) *monomials(j, 1) *
-            pow_int(w, (int)monomials(j, 2) - 1) *monomials(j, 2);
+            pow_int(u, monomials(j, 0) - 1) *monomials(j, 0)*
+            pow_int(v, monomials(j, 1) - 1) *monomials(j, 1) *
+            pow_int(w, monomials(j, 2) - 1) *monomials(j, 2);
 
         if ((monomials(j, 0) > 0) && (monomials(j, 2) > 1))
           third[i][0][2][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0) - 1) *monomials(j, 0)*
-            pow_int(v, (int)monomials(j, 1))*
-            pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
+            pow_int(u, monomials(j, 0) - 1) *monomials(j, 0)*
+            pow_int(v, monomials(j, 1))*
+            pow_int(w, monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1);
         if ((monomials(j, 1) > 2))
           third[i][1][1][1] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1)-3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2)*
-            pow_int(w, (int)monomials(j, 2));
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1)-3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2)*
+            pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 1) > 1) && (monomials(j, 2) > 0))
           third[i][1][1][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1)-2) * monomials(j, 1) * (monomials(j, 1) - 1)*
-            pow_int(w, (int)monomials(j, 2) - 1) *monomials(j, 2) ;
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1)-2) * monomials(j, 1) * (monomials(j, 1) - 1)*
+            pow_int(w, monomials(j, 2) - 1) *monomials(j, 2) ;
 
         if ((monomials(j, 1) > 0) && (monomials(j, 2) > 1))
           third[i][1][2][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1)-1) *monomials(j, 1)*
-            pow_int(w, (int)monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1) ;
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1)-1) *monomials(j, 1)*
+            pow_int(w, monomials(j, 2) - 2) * monomials(j, 2) * (monomials(j, 2) - 1) ;
 
         if ((monomials(j, 2) > 2))
           third[i][2][2][2] += coefficients(i, j) *
-            pow_int(u, (int)monomials(j, 0)) *
-            pow_int(v, (int)monomials(j, 1))*
-            pow_int(w, (int)monomials(j, 2) - 3) * monomials(j, 2) * (monomials(j, 2) - 1)*(monomials(j, 2) - 2);
+            pow_int(u, monomials(j, 0)) *
+            pow_int(v, monomials(j, 1))*
+            pow_int(w, monomials(j, 2) - 3) * monomials(j, 2) * (monomials(j, 2) - 1)*(monomials(j, 2) - 2);
 
 
       }

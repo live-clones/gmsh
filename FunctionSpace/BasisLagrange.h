@@ -58,7 +58,7 @@ class BasisLagrange: public BasisLocal{
     getPreEvaluatedDerivatives(unsigned int orientation) const;
 
   const fullMatrix<double>& getCoefficient(void) const;
-  const fullMatrix<int>& getMonomial(void) const;
+  const fullMatrix<double>& getMonomial(void) const;
 
   std::vector<double>
     project(const MElement& element,
@@ -126,7 +126,7 @@ getCoefficient(void) const{
   return lBasis->coefficients;
 }
 
-inline const fullMatrix<int>& BasisLagrange::
+inline const fullMatrix<double>& BasisLagrange::
 getMonomial(void) const{
   return lBasis->monomials;
 }

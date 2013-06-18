@@ -14,8 +14,6 @@ class nodalBasis {
   int type, parentType, order, dimension, numFaces;
   bool serendip;
   fullMatrix<double> points;
-  fullMatrix<int> monomials;
-  fullMatrix<double> coefficients;
 
   nodalBasis(int tag);
   virtual ~nodalBasis() {}

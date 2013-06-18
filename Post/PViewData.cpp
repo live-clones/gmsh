@@ -124,23 +124,6 @@ void PViewData::setInterpolationMatrices(int type,
 
 void PViewData::setInterpolationMatrices(int type,
                                          const fullMatrix<double> &coefVal,
-                                         const fullMatrix<int> &expVal)
-{
-  if(!type || _interpolation[type].size()) return;
-
-  fullMatrix<double> *dExpVal;
-  dExpVal = new fullMatrix<double>(expVal.size1(), expVal.size2());
-  for (int i = 0; i < expVal.size1(); ++i) {
-    for (int j = 0; i < expVal.size2(); ++j) {
-      (*dExpVal)(i, j) = static_cast<double>(expVal(i, j));
-    }
-  }
-  _interpolation[type].push_back(new fullMatrix<double>(coefVal));
-  _interpolation[type].push_back(dExpVal);
-}
-
-void PViewData::setInterpolationMatrices(int type,
-                                         const fullMatrix<double> &coefVal,
                                          const fullMatrix<double> &expVal,
                                          const fullMatrix<double> &coefGeo,
                                          const fullMatrix<double> &expGeo)
@@ -150,53 +133,6 @@ void PViewData::setInterpolationMatrices(int type,
   _interpolation[type].push_back(new fullMatrix<double>(expVal));
   _interpolation[type].push_back(new fullMatrix<double>(coefGeo));
   _interpolation[type].push_back(new fullMatrix<double>(expGeo));
-}
-void PViewData::setInterpolationMatrices(int type,
-                                         const fullMatrix<double> &coefVal,
-                                         const fullMatrix<int> &expVal,
-                                         const fullMatrix<double> &coefGeo,
-                                         const fullMatrix<int> &expGeo)
-{
-  if(!type || _interpolation[type].size()) return;
-
-  fullMatrix<double> *dExpVal, *dExpGeo;
-  dExpVal = new fullMatrix<double>(expVal.size1(), expVal.size2());
-  dExpGeo = new fullMatrix<double>(expGeo.size1(), expGeo.size2());
-
-  for (int i = 0; i < expVal.size1(); ++i) {
-    for (int j = 0; i < expVal.size2(); ++j) {
-      (*dExpVal)(i, j) = static_cast<double>(expVal(i, j));
-    }
-  }
-  for (int i = 0; i < expGeo.size1(); ++i) {
-    for (int j = 0; i < expGeo.size2(); ++j) {
-      (*dExpGeo)(i, j) = static_cast<double>(expGeo(i, j));
-    }
-  }
-  _interpolation[type].push_back(new fullMatrix<double>(coefVal));
-  _interpolation[type].push_back(dExpVal);
-  _interpolation[type].push_back(new fullMatrix<double>(coefGeo));
-  _interpolation[type].push_back(dExpGeo);
-}
-void PViewData::setInterpolationMatrices(int type,
-                                         const fullMatrix<double> &coefVal,
-                                         const fullMatrix<double> &expVal,
-                                         const fullMatrix<double> &coefGeo,
-                                         const fullMatrix<int> &expGeo)
-{
-  if(!type || _interpolation[type].size()) return;
-
-  fullMatrix<double> *dExpGeo;
-  dExpGeo = new fullMatrix<double>(expGeo.size1(), expGeo.size2());
-  for (int i = 0; i < expGeo.size1(); ++i) {
-    for (int j = 0; i < expGeo.size2(); ++j) {
-      (*dExpGeo)(i, j) = static_cast<double>(expGeo(i, j));
-    }
-  }
-  _interpolation[type].push_back(new fullMatrix<double>(coefVal));
-  _interpolation[type].push_back(new fullMatrix<double>(expVal));
-  _interpolation[type].push_back(new fullMatrix<double>(coefGeo));
-  _interpolation[type].push_back(dExpGeo);
 }
 
 int PViewData::getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p)

@@ -60,8 +60,15 @@ inline double pow_int(const double &a, const int &n)
       return a4*a4*a2;
     }
   default :
-    return pow_int(a,n-1)*a;
+    return pow_int(a, n-9) * pow_int(a, 9);
   }
+}
+
+inline double pow_int(const double &a, const double &d)
+{
+  // Round double !
+  int n = static_cast<int>(d + .5);
+  return pow_int(a, n);
 }
 
 class polynomialBasis : public nodalBasis
@@ -69,6 +76,8 @@ class polynomialBasis : public nodalBasis
  public:
   // for now the only implemented polynomial basis are nodal poly
   // basis, we use the type of the corresponding gmsh element as type
+  fullMatrix<double> monomials;
+  fullMatrix<double> coefficients;
 
   polynomialBasis(int tag);
   ~polynomialBasis();
