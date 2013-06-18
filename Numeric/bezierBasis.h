@@ -9,20 +9,38 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
+#include "ElementType.h"
+
+class MElement;
 
 class bezierBasis {
- private :
- public :
+ public:
+ //private :
+  // the 'numLagPts' first exponents are related to 'Lagrangian' values
   int dim, order;
   int numLagPts;
   int numDivisions;
-  // the 'numLagPts' first exponents are related to 'Lagrangian' values
-  bezierBasis() {Msg::Fatal("Should not be created this way");};
-  bezierBasis(int tag);
-  fullMatrix<double> exponents; // exponents of Bezier FF
-  fullMatrix<double> bezierPoints, lagPoints; // sampling point
-  fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
   fullMatrix<double> subDivisor;
+
+ public :
+  fullMatrix<double> lagPoints; // sampling point
+  fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
+
+  inline bezierBasis(int tag) {
+    _construct(ElementType::ParentTypeFromTag(tag), ElementType::OrderFromTag(tag));
+  }
+  inline bezierBasis(int parendtType, int order) {
+    _construct(parendtType, order);
+  }
+
+  // get methods
+  inline int getDim() {return dim;}
+  inline int getOrder() {return order;}
+  inline int getNumLagPts() {return numLagPts;}
+  inline int getNumDivision() {return numDivisions;}
+
+ private :
+  void _construct(int parendtType, int order);
 };
 
 #endif

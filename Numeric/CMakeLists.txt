@@ -15,7 +15,8 @@ set(SRC
 	legendrePolynomials.cpp
     bezierBasis.cpp
     JacobianBasis.cpp
-  pointsGenerators.cpp
+    pointsGenerators.cpp
+  ElementType.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp
     GaussQuadratureTri.cpp

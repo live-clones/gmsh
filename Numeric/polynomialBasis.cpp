@@ -75,39 +75,31 @@ static fullMatrix<double> generateLagrangeMonomialCoefficients
 
 polynomialBasis::polynomialBasis(int tag) : nodalBasis(tag)
 {
-  fullMatrix<int> monom;
   switch (parentType) {
   case TYPE_PNT :
-    monom = gmshGenerateMonomialsLine(0);
+    monomials = gmshGenerateMonomialsLine(0);
     break;
   case TYPE_LIN :
-    monom = gmshGenerateMonomialsLine(order);
+    monomials = gmshGenerateMonomialsLine(order);
     break;
   case TYPE_TRI :
-    monom = gmshGenerateMonomialsTriangle(order, serendip);
+    monomials = gmshGenerateMonomialsTriangle(order, serendip);
     break;
   case TYPE_QUA :
-    monom = serendip ? gmshGenerateMonomialsQuadSerendipity(order) :
+    monomials = serendip ? gmshGenerateMonomialsQuadSerendipity(order) :
     gmshGenerateMonomialsQuadrangle(order);
     break;
   case TYPE_TET :
-    monom = gmshGenerateMonomialsTetrahedron(order, serendip);
+    monomials = gmshGenerateMonomialsTetrahedron(order, serendip);
     break;
   case TYPE_PRI :
-    monom = serendip ? gmshGenerateMonomialsPrismSerendipity(order) :
+    monomials = serendip ? gmshGenerateMonomialsPrismSerendipity(order) :
     gmshGenerateMonomialsPrism(order);
     break;
   case TYPE_HEX :
-    monom = serendip ? gmshGenerateMonomialsHexaSerendipity(order) :
+    monomials = serendip ? gmshGenerateMonomialsHexaSerendipity(order) :
     gmshGenerateMonomialsHexahedron(order);
     break;
-  }
-
-  monomials.resize(monom.size1(), monom.size2());
-  for (int i = 0; i < monom.size1(); ++i) {
-    for (int j = 0; j < monom.size2(); ++j) {
-      monomials(i, j) = static_cast<double>(monom(i, j));
-    }
   }
 
   coefficients = generateLagrangeMonomialCoefficients(monomials, points);

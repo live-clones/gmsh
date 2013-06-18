@@ -33,7 +33,7 @@ LineLagrangeBasis::~LineLagrangeBasis(void){
 }
 
 unsigned int LineLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = MElement::getTag(TYPE_LIN, order, false);
+  unsigned int tag = ElementType::getTag(TYPE_LIN, order, false);
 
   if(tag)
     return tag;

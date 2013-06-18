@@ -16,11 +16,12 @@
 
 JacobianBasis::JacobianBasis(int tag)
 {
+  const int parentType = ElementType::ParentTypeFromTag(tag);
+  const int order = ElementType::OrderFromTag(tag);
 
-  const int parentType = MElement::ParentTypeFromTag(tag);
   int jacType = 0, primJacType = 0;
 
-  if (parentType == TYPE_PYR) {
+  /*if (parentType == TYPE_PYR) {
     switch (tag) {
     case MSH_PYR_5 : jacType = MSH_PYR_14; primJacType = MSH_PYR_14; break;   // TODO: Order 1, Jac. "order" 2, check this
     case MSH_PYR_14 : jacType = MSH_PYR_91; primJacType = MSH_PYR_14; break;  // TODO: Order 2, Jac. "order" 5, check this
@@ -30,8 +31,7 @@ JacobianBasis::JacobianBasis(int tag)
       break;
     }
   }
-  else {
-    const int order = MElement::OrderFromTag(tag);
+  else {*/
     int jacobianOrder, primJacobianOrder;
     switch (parentType) {
       case TYPE_PNT : jacobianOrder = 0; primJacobianOrder = 0; break;
@@ -46,9 +46,9 @@ JacobianBasis::JacobianBasis(int tag)
         jacobianOrder = 0;
         break;
     }
-    jacType = MElement::getTag(parentType, jacobianOrder, false);
-    primJacType = MElement::getTag(parentType, primJacobianOrder, false);
-  }
+    jacType = ElementType::getTag(parentType, jacobianOrder, false);
+    primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
+  //}
 
   // Store Bezier basis
   bezier = BasisFactory::getBezierBasis(jacType);
@@ -77,7 +77,7 @@ JacobianBasis::JacobianBasis(int tag)
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
-  const int primMapType = MElement::getTag(parentType, 1, false);
+  const int primMapType = ElementType::getTag(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   numPrimMapNodes = primMapBasis->getNumShapeFunctions();
   double xBar = 0., yBar = 0., zBar = 0.;
@@ -103,8 +103,6 @@ JacobianBasis::JacobianBasis(int tag)
   delete[] barDPsi;
 
 }
-
-
 
 // Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)
 double JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const
@@ -137,8 +135,6 @@ double JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullM
 
 }
 
-
-
 // Computes (unit) normal to straight surface element at barycenter (with norm as return value)
 double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const
 {
@@ -163,8 +159,6 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMa
 
 }
 
-
-
 static inline double calcDet3D(double dxdX, double dydX, double dzdX,
                                double dxdY, double dydY, double dzdY,
                                double dxdZ, double dydZ, double dzdZ)
@@ -172,8 +166,6 @@ static inline double calcDet3D(double dxdX, double dydX, double dzdX,
   return dxdX*dydY*dzdZ + dxdY*dydZ*dzdX + dydX*dzdY*dxdZ
        - dxdZ*dydY*dzdX - dxdY*dydX*dzdZ - dydZ*dzdY*dxdX;
 }
-
-
 
 // Returns absolute value of Jacobian of straight volume element at barycenter
 double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
@@ -195,8 +187,6 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
   return fabs(calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ));
 
 }
-
-
 
 // Calculate (signed) Jacobian at mapping's nodes for one element, with normal vectors to
 // straight element for regularization
@@ -229,8 +219,6 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVe
   }
 
 }
-
-
 
 // Calculate scaled (signed) Jacobian at mapping's nodes for one element, with normal vectors to
 // straight element for regularization and scaling
@@ -267,8 +255,6 @@ void JacobianBasis::getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVe
   }
 
 }
-
-
 
 // Calculate (signed) Jacobian at mapping's nodes for one element, given vectors for regularization
 // of line and surface Jacobians in 3D
@@ -325,8 +311,6 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ,
   }
 
 }
-
-
 
 // Calculate (signed) Jacobian at mapping's nodes for one element, given vectors for regularization
 // of line and surface Jacobians in 3D
@@ -430,8 +414,6 @@ void JacobianBasis::getSignedJacAndGradients(const fullMatrix<double> &nodesXYZ,
 
 }
 
-
-
 void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
                                              const fullMatrix<double> &nodesXYZStraight,
                                              fullVector<double> &lambdaJ , fullMatrix<double> &gradLambdaJ) const
@@ -484,8 +466,6 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
   }
 
 }
-
-
 
 // Calculate (signed) Jacobian at mapping's nodes for several elements
 // TODO: Optimize and test 1D & 2D

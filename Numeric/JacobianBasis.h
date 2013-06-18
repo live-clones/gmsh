@@ -20,8 +20,11 @@ class JacobianBasis {
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
   int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
   inline const fullMatrix<double> &getPoints() const { return bezier->lagPoints; }
+
  public :
   JacobianBasis(int tag);
+
+  // get methods
   inline int getNumJacNodes() const { return numJacNodes; }
   inline int getNumMapNodes() const { return numMapNodes; }
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
@@ -29,6 +32,8 @@ class JacobianBasis {
   inline int getNumDivisions() const { return bezier->numDivisions; }
   inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
   inline int getNumLagPts() const { return bezier->numLagPts; }
+
+  //
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
   double getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
   double getPrimJac3D(const fullMatrix<double> &nodesXYZ) const;
@@ -43,6 +48,8 @@ class JacobianBasis {
   void getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                          const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const;
   void getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const;
+
+  //
   inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
     bezier->matrixLag2Bez.mult(jac,bez);
   }

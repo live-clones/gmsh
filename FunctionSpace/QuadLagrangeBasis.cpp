@@ -33,7 +33,7 @@ QuadLagrangeBasis::~QuadLagrangeBasis(void){
 }
 
 unsigned int QuadLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = MElement::getTag(TYPE_QUA, order, false);
+  unsigned int tag = ElementType::getTag(TYPE_QUA, order, false);
 
   if(tag)
     return tag;

@@ -49,7 +49,7 @@ static void getFaceClosureTet(int iFace, int iSign, int iRotate,
 {
   closure.clear();
   closure.resize((order + 1) * (order + 2) / 2);
-  closure.type = MElement::getTag(TYPE_TRI, order, false);
+  closure.type = ElementType::getTag(TYPE_TRI, order, false);
 
   switch (order){
   case 0:
@@ -146,7 +146,7 @@ static void generate2dEdgeClosureFull(nodalBasis::clCont &closure,
     if (serendip) break;
   }
   for (int r = 0; r < nNod*2 ; r++) {
-    closure[r].type = MElement::getTag(TYPE_LIN, order);
+    closure[r].type = ElementType::getTag(TYPE_LIN, order);
     closureRef[r] = 0;
   }
 }
@@ -362,7 +362,7 @@ static void generateFaceClosureHex(nodalBasis::clCont &closure, int order,
                                    bool serendip, const fullMatrix<double> &points)
 {
   closure.clear();
-  const nodalBasis &fsFace = *BasisFactory::getNodalBasis(MElement::getTag(TYPE_QUA, order, serendip));
+  const nodalBasis &fsFace = *BasisFactory::getNodalBasis(ElementType::getTag(TYPE_QUA, order, serendip));
   for (int iRotate = 0; iRotate < 4; iRotate++){
     for (int iSign = 1; iSign >= -1; iSign -= 2){
       for (int iFace = 0; iFace < 6; iFace++) {
@@ -451,7 +451,7 @@ static void getFaceClosurePrism(int iFace, int iSign, int iRotate,
   // int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8},
   //                         {8, 13, 11, 7}, {9, 11, 14, 10}};
   int nVertex = isTriangle ? 3 : 4;
-  closure.type = MElement::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+  closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
   for (int i = 0; i < nVertex; ++i){
     int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
     closure[i] = order1node[iFace][k];
@@ -575,7 +575,7 @@ static void generate2dEdgeClosure(nodalBasis::clCont &closure, int order, int nN
       closure[j].push_back( nNod + (order-1)*j + i );
       closure[nNod+j].push_back(nNod + (order-1)*(j+1) -i -1);
     }
-    closure[j].type = closure[nNod+j].type = MElement::getTag(TYPE_LIN, order);
+    closure[j].type = closure[nNod+j].type = ElementType::getTag(TYPE_LIN, order);
   }
 }
 
@@ -596,10 +596,10 @@ static void generateClosureOrder0(nodalBasis::clCont &closure, int nb)
 nodalBasis::nodalBasis(int tag)
 {
   type = tag;
-  parentType = MElement::ParentTypeFromTag(tag);
-  order = MElement::OrderFromTag(tag);
-  serendip = MElement::SerendipityFromTag(tag) > 1;
-  dimension = MElement::DimensionFromTag(tag);
+  parentType = ElementType::ParentTypeFromTag(tag);
+  order = ElementType::OrderFromTag(tag);
+  serendip = ElementType::SerendipityFromTag(tag) > 1;
+  dimension = ElementType::DimensionFromTag(tag);
 
   switch (parentType) {
   case TYPE_PNT :

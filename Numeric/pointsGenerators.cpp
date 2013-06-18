@@ -11,29 +11,12 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 
-void getDoubleMonomials(fullMatrix<double>& doubleMon,
-                        fullMatrix<int> (*genIntMonomials)(int, bool),
-                        int order, bool serendip )
-{
-  fullMatrix<int> mon;
-  mon = (*genIntMonomials)(order, serendip);
-
-  doubleMon.resize(mon.size1(), mon.size2());
-
-  for (int i = 0; i < mon.size1(); ++i) {
-    for (int j = 0; j < mon.size2(); ++j) {
-      doubleMon(i, j) = static_cast<double>(mon(i, j));
-    }
-  }
-}
 
 // Points Generators
 
 fullMatrix<double> gmshGeneratePointsLine(int order)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsLine, order, false);
-
+  fullMatrix<double> points = gmshGenerateMonomialsLine(order);
   if (order == 0) return points;
 
   points.scale(2./order);
@@ -43,9 +26,7 @@ fullMatrix<double> gmshGeneratePointsLine(int order)
 
 fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsTriangle, order, serendip);
-
+  fullMatrix<double> points = gmshGenerateMonomialsTriangle(order, serendip);
   if (order == 0) return points;
 
   points.scale(1./order);
@@ -54,8 +35,7 @@ fullMatrix<double> gmshGeneratePointsTriangle(int order, bool serendip)
 
 fullMatrix<double> gmshGeneratePointsQuadrangle(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsQuadrangle, order, serendip);
+  fullMatrix<double> points = gmshGenerateMonomialsQuadrangle(order, serendip);
 
   if (order == 0) return points;
 
@@ -66,8 +46,7 @@ fullMatrix<double> gmshGeneratePointsQuadrangle(int order, bool serendip)
 
 fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsTetrahedron, order, serendip);
+  fullMatrix<double> points = gmshGenerateMonomialsTetrahedron(order, serendip);
 
   if (order == 0) return points;
 
@@ -77,8 +56,7 @@ fullMatrix<double> gmshGeneratePointsTetrahedron(int order, bool serendip)
 
 fullMatrix<double> gmshGeneratePointsHexahedron(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsHexahedron, order, serendip);
+  fullMatrix<double> points = gmshGenerateMonomialsHexahedron(order, serendip);
 
   if (order == 0) return points;
 
@@ -89,8 +67,7 @@ fullMatrix<double> gmshGeneratePointsHexahedron(int order, bool serendip)
 
 fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsPrism, order, serendip);
+  fullMatrix<double> points = gmshGenerateMonomialsPrism(order, serendip);
 
   if (order == 0) return points;
 
@@ -107,8 +84,7 @@ fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip)
 
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
 {
-  fullMatrix<double> points;
-  getDoubleMonomials(points, gmshGenerateMonomialsPyramid, order, serendip);
+  fullMatrix<double> points = gmshGenerateMonomialsPyramid(order, serendip);
 
   if (order == 0) return points;
 
@@ -123,9 +99,9 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
 
 // Monomials Generators
 
-fullMatrix<int> gmshGenerateMonomialsLine(int order, bool serendip)
+fullMatrix<double> gmshGenerateMonomialsLine(int order, bool serendip)
 {
-  fullMatrix<int> monomials(order + 1, 1);
+  fullMatrix<double> monomials(order + 1, 1);
   monomials(0,0) = 0;
   if (order > 0) {
     monomials(1, 0) = order;
@@ -134,11 +110,11 @@ fullMatrix<int> gmshGenerateMonomialsLine(int order, bool serendip)
   return monomials;
 }
 
-fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
+fullMatrix<double> gmshGenerateMonomialsTriangle(int order, bool serendip)
 {
   int nbMonomials = serendip ? 3 * order : (order + 1) * (order + 2) / 2;
   if (serendip && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 2);
+  fullMatrix<double> monomials(nbMonomials, 2);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -165,7 +141,7 @@ fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
         }
       }
       if (!serendip) {
-        fullMatrix<int> inner = gmshGenerateMonomialsTriangle(order-3);
+        fullMatrix<double> inner = gmshGenerateMonomialsTriangle(order-3);
         inner.add(1);
         monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
       }
@@ -174,11 +150,11 @@ fullMatrix<int> gmshGenerateMonomialsTriangle(int order, bool serendip)
   return monomials;
 }
 
-fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoints)
+fullMatrix<double> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoints)
 {
   int nbMonomials = forSerendipPoints ? order*4 : (order+1)*(order+1);
   if (forSerendipPoints && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 2);
+  fullMatrix<double> monomials(nbMonomials, 2);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -209,7 +185,7 @@ fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoint
       }
 
       if (!forSerendipPoints) {
-        fullMatrix<int> inner = gmshGenerateMonomialsQuadrangle(order-2);
+        fullMatrix<double> inner = gmshGenerateMonomialsQuadrangle(order-2);
         inner.add(1);
         monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
       }
@@ -227,10 +203,10 @@ fullMatrix<int> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPoint
 â. â.
 */
 
-fullMatrix<int> gmshGenerateMonomialsQuadSerendipity(int order)
+fullMatrix<double> gmshGenerateMonomialsQuadSerendipity(int order)
 {
   int nbMonomials = order ? order*4 : 1;
-  fullMatrix<int> monomials(nbMonomials, 2);
+  fullMatrix<double> monomials(nbMonomials, 2);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -267,7 +243,7 @@ fullMatrix<int> gmshGenerateMonomialsQuadSerendipity(int order)
 
 //KH : caveat : node coordinates are not yet coherent with node numbering associated
 //              to numbering of principal vertices of face !!!!
-fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
+fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
 {
   int nbMonomials =
     (serendip ?
@@ -275,7 +251,7 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
      (order + 1) * (order + 2) * (order + 3) / 6);
 
   if (serendip && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -315,7 +291,7 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
       }
 
       if (order > 2) {
-        fullMatrix<int> dudv = gmshGenerateMonomialsTriangle(order - 3);
+        fullMatrix<double> dudv = gmshGenerateMonomialsTriangle(order - 3);
         dudv.add(1);
 
         for (int iface = 0; iface < 4; ++iface) {
@@ -340,7 +316,7 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
         }
 
         if (!serendip && order > 3) {
-          fullMatrix<int> inner = gmshGenerateMonomialsTetrahedron(order - 4);
+          fullMatrix<double> inner = gmshGenerateMonomialsTetrahedron(order - 4);
           inner.add(1);
           monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
         }
@@ -350,12 +326,12 @@ fullMatrix<int> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
   return monomials;
 }
 
-fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
+fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
 {
   int nbMonomials = forSerendipPoints ? 6 + (order-1)*9 :
                                         (order + 1) * (order + 1)*(order + 2)/2;
   if (forSerendipPoints && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -400,10 +376,10 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
       }
 
       if (!forSerendipPoints) {
-        fullMatrix<int> dudvQ = gmshGenerateMonomialsQuadrangle(order - 2);
+        fullMatrix<double> dudvQ = gmshGenerateMonomialsQuadrangle(order - 2);
         dudvQ.add(1);
 
-        fullMatrix<int> dudvT;
+        fullMatrix<double> dudvT;
         if (order > 2)  dudvT = gmshGenerateMonomialsTriangle(order - 3);
         dudvT.add(1);
 
@@ -411,7 +387,7 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
           int i0, i1, i2;
           i0 = MPrism::faces_prism(iface, 0);
           i1 = MPrism::faces_prism(iface, 1);
-          fullMatrix<int> dudv;
+          fullMatrix<double> dudv;
           if (MPrism::faces_prism(iface, 3) != -1) {
             i2 = MPrism::faces_prism(iface, 3);
             dudv.setAsProxy(dudvQ);
@@ -439,8 +415,8 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
         }
 
         if (order > 2) {
-          fullMatrix<int> triMonomials  = gmshGenerateMonomialsTriangle(order - 3);
-          fullMatrix<int> lineMonomials = gmshGenerateMonomialsLine(order - 2);
+          fullMatrix<double> triMonomials  = gmshGenerateMonomialsTriangle(order - 3);
+          fullMatrix<double> lineMonomials = gmshGenerateMonomialsLine(order - 2);
 
           for (int i = 0; i < triMonomials.size1(); ++i) {
             for (int j = 0; j < lineMonomials.size1(); ++j, ++index) {
@@ -456,10 +432,10 @@ fullMatrix<int> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
   return monomials;
 }
 
-fullMatrix<int> gmshGenerateMonomialsPrismSerendipity(int order)
+fullMatrix<double> gmshGenerateMonomialsPrismSerendipity(int order)
 {
   int nbMonomials = order ? 6 + (order-1) * 9 : 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -528,13 +504,12 @@ fullMatrix<int> gmshGenerateMonomialsPrismSerendipity(int order)
   return monomials;
 }
 
-
-fullMatrix<int> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoints)
+fullMatrix<double> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoints)
 {
   int nbMonomials = forSerendipPoints ? 8 + (order-1)*12 :
                                         (order+1)*(order+1)*(order+1);
   if (forSerendipPoints && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -587,7 +562,7 @@ fullMatrix<int> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoint
       }
 
       if (!forSerendipPoints) {
-        fullMatrix<int> dudv = gmshGenerateMonomialsQuadrangle(order - 2);
+        fullMatrix<double> dudv = gmshGenerateMonomialsQuadrangle(order - 2);
         dudv.add(1);
 
         for (int iface = 0; iface < 6; ++iface) {
@@ -611,7 +586,7 @@ fullMatrix<int> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoint
           }
         }
 
-        fullMatrix<int> inner = gmshGenerateMonomialsHexahedron(order - 2);
+        fullMatrix<double> inner = gmshGenerateMonomialsHexahedron(order - 2);
         inner.add(1);
         monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
       }
@@ -620,11 +595,10 @@ fullMatrix<int> gmshGenerateMonomialsHexahedron(int order, bool forSerendipPoint
   return monomials;
 }
 
-
-fullMatrix<int> gmshGenerateMonomialsHexaSerendipity(int order)
+fullMatrix<double> gmshGenerateMonomialsHexaSerendipity(int order)
 {
   int nbMonomials = order ? 8 + (order-1) * 12 : 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -691,13 +665,12 @@ fullMatrix<int> gmshGenerateMonomialsHexaSerendipity(int order)
   return monomials;
 }
 
-
-fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints)
+fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints)
 {
   int nbMonomials = forSerendipPoints ? 5 + (order-1)*8 :
                                         (order+1)*((order+1)+1)*(2*(order+1)+1)/6;
   if (forSerendipPoints && !order) nbMonomials = 1;
-  fullMatrix<int> monomials(nbMonomials, 3);
+  fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
@@ -738,10 +711,10 @@ fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints)
       }
 
       if (!forSerendipPoints) {
-        fullMatrix<int> dudvQ = gmshGenerateMonomialsQuadrangle(order - 2);
+        fullMatrix<double> dudvQ = gmshGenerateMonomialsQuadrangle(order - 2);
         dudvQ.add(1);
 
-        fullMatrix<int> dudvT;
+        fullMatrix<double> dudvT;
         if (order > 2)  dudvT = gmshGenerateMonomialsTriangle(order - 3);
         dudvT.add(1);
 
@@ -749,7 +722,7 @@ fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints)
           int i0, i1, i2;
           i0 = MPyramid::faces_pyramid(iface, 0);
           i1 = MPyramid::faces_pyramid(iface, 1);
-          fullMatrix<int> dudv;
+          fullMatrix<double> dudv;
           if (MPyramid::faces_pyramid(iface, 3) != -1) {
             i2 = MPyramid::faces_pyramid(iface, 3);
             dudv.setAsProxy(dudvQ);
@@ -777,7 +750,7 @@ fullMatrix<int> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints)
         }
 
         if (order > 2) {
-          fullMatrix<int> inner = gmshGenerateMonomialsPyramid(order - 3);
+          fullMatrix<double> inner = gmshGenerateMonomialsPyramid(order - 3);
           inner.add(1);
           monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
         }

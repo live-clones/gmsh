@@ -41,7 +41,7 @@ TriLagrangeBasis::~TriLagrangeBasis(void){
 }
 
 unsigned int TriLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = MElement::getTag(TYPE_TRI, order, false);
+  unsigned int tag = ElementType::getTag(TYPE_TRI, order, false);
 
   if(tag)
     return tag;
