@@ -2,6 +2,7 @@
 #include "TriLagrangeBasis.h"
 #include "pointsGenerators.h"
 #include "TriLagrangeReferenceSpace.h"
+#include "ElementType.h"
 
 #include <iostream>
 

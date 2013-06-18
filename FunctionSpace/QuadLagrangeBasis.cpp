@@ -1,6 +1,7 @@
 #include "Exception.h"
 #include "QuadLagrangeBasis.h"
 #include "pointsGenerators.h"
+#include "ElementType.h"
 
 QuadLagrangeBasis::QuadLagrangeBasis(unsigned int order){
   // If order 0 (Nedelec): use order 1

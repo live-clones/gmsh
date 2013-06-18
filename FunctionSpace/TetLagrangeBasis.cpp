@@ -1,6 +1,7 @@
 #include "Exception.h"
 #include "TetLagrangeBasis.h"
 #include "pointsGenerators.h"
+#include "ElementType.h"
 
 TetLagrangeBasis::TetLagrangeBasis(unsigned int order){
   // If order 0 (Nedelec): use order 1
