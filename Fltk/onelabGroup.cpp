@@ -589,9 +589,13 @@ static std::string timeStamp()
 
 static void saveDb(const std::string &fileName)
 {
-  Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
-  if(onelab::server::instance()->toFile(fileName))
+  FILE *fp = fopen(fileName.c_str(), "wb");
+  if(fp){
+    Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
+    onelab::server::instance()->toFile(fp);
+    fclose(fp);
     Msg::StatusBar(true, "Done saving database '%s'", fileName.c_str());
+  }
   else
     Msg::Error("Could not save database '%s'", fileName.c_str());
 }
@@ -640,8 +644,12 @@ static void archiveOutputFiles(const std::string &fileName)
 static void loadDb(const std::string &name)
 {
   Msg::StatusBar(true, "Loading database '%s'...", name.c_str());
-  if(onelab::server::instance()->fromFile(name))
+  FILE *fp = fopen(name.c_str(), "rb");
+  if(fp){
+    onelab::server::instance()->fromFile(fp);
+    fclose(fp);
     Msg::StatusBar(true, "Done loading database '%s'", name.c_str());
+  }
   else
     Msg::Error("Could not load database '%s'", name.c_str());
 }

@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <time.h>
 #include <math.h>
+#include "GmshConfig.h"
 #include "StringUtils.h"
 
 #if !defined(WIN32) || defined(__CYGWIN__)
@@ -31,6 +32,10 @@
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
+#endif
+
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H> // for fl_fopen
 #endif
 
 #if defined(__APPLE__)
@@ -365,5 +370,15 @@ void RedirectIOToConsole()
   // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to console
   // as well
   std::ios::sync_with_stdio();
+#endif
+}
+
+FILE *Fopen(const char* f, const char *mode)
+{
+#if defined(HAVE_FLTK)
+  // this handles non-ASCII characters correctly on Windows
+  return fl_fopen(f, mode);
+#else
+  return fopen(f, mode);
 #endif
 }

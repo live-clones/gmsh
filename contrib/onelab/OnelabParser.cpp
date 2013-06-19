@@ -4,7 +4,7 @@
 
 // reserved keywords for the onelab parser
 
-namespace olkey{ 
+namespace olkey{
   static std::string deflabel("onelab.tags");
   static std::string label("OL."), comment("#"), separator(";");
   static std::string line(label+"line");
@@ -23,13 +23,13 @@ namespace olkey{
   static std::string getRegion(label+"region");
 }
 
-// Client member functions defined here because they use parser commands 
+// Client member functions defined here because they use parser commands
 
 bool MetaModel::findCommandLine(const std::string &client, const std::string &host){
   std::string fileName;
   size_t pos;
 
-  //std::cout << "FHF search cmdl: " << client << " , " << host << std::endl; 
+  //std::cout << "FHF search cmdl: " << client << " , " << host << std::endl;
 
   fileName = getWorkingDir() + genericNameFromArgs + onelabExtension + ".save";
 
@@ -45,7 +45,7 @@ bool MetaModel::findCommandLine(const std::string &client, const std::string &ho
 	// (name, action, args) = client.commandLine(cmdl{,rhost{,rdir}})
 	std::string cmdl="", rhost="localhost", rdir="";
 	cmdl = args[0];
-	if(args.size() > 1) rhost= args[1]; 
+	if(args.size() > 1) rhost= args[1];
 	if(args.size() > 2) rdir = args[2];
 
 	if(name == client){
@@ -141,11 +141,11 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
   }
   pos++; // skips '('
   int count=1;
-  cursor = pos; 
+  cursor = pos;
   do{
-    if(in[pos] == '(') 
+    if(in[pos] == '(')
       count++;
-    else if(in[pos] == ')') 
+    else if(in[pos] == ')')
       count--;
     else if(in[pos] == ',') {
       if(count == 1){
@@ -159,19 +159,19 @@ int enclosed(const std::string &in, std::vector<std::string> &arguments,
     pos++;
   } while( count && (pos < in.size()) );
 
-  // count is 0 when the closing brace has been found. 
+  // count is 0 when the closing brace has been found.
   if(count && pos == in.size()){
     OLMsg::Error("Syntax error: <%s>",in.c_str());
     return 0;
   }
-  else 
+  else
     arguments.push_back(removeBlanks(in.substr(cursor,pos-1-cursor)));
   end=pos;
   return arguments.size();
 }
 
 
-int extract(const std::string &in, std::string &paramName, 
+int extract(const std::string &in, std::string &paramName,
 	    std::string &action, std::vector<std::string> &arguments){
   // syntax: paramName.action( arg1, arg2, ... )
   size_t pos, cursor;
@@ -215,7 +215,7 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
 
   unsigned int count=1;
   pos++; // skips '('
-  cursor=pos; 
+  cursor=pos;
   do{
     if(in[pos]=='(') count++;
     if(in[pos]==')') count--;
@@ -235,7 +235,7 @@ int extractLogic(const std::string &in, std::vector<std::string> &arguments){
     }
     pos++;
   } while( count && (pos!=std::string::npos) );
-  // count is 0 when the closing brace is found. 
+  // count is 0 when the closing brace is found.
 
   if(count)
     OLMsg::Error("Syntax error: mismatched parenthesis in <%s>",in.c_str());
@@ -253,12 +253,12 @@ std::string extractExpandPattern(const std::string& str){
   posb=str.find_last_of("\"\'>");
   std::string pattern=str.substr(posa+1,posb-posa-1);
   posa=pattern.find("comma");
-  if(posa!=std::string::npos) 
+  if(posa!=std::string::npos)
     pattern.replace(posa,5,",");
   if(pattern.size()!=3)
     OLMsg::Error("Incorrect expand pattern <%s>",
 	       str.c_str());
-  return pattern; 
+  return pattern;
 }
 
 std::string localSolverClient::longName(const std::string name){
@@ -300,7 +300,7 @@ std::string localSolverClient::resolveString(const std::string &line) {
 std::string localSolverClient::resolveGetVal(std::string line) {
   //looks for OL.get() statements, substitute values from server
   //then evaluate the resulting string with mathex.
-  //OL.get(name 
+  //OL.get(name
   //        {, {choices|range}.{size|comp|expand|index}|attributes.get(args)})
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
@@ -330,7 +330,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	std::string name, action;
 	std::vector<std::string> args;
 	extract(arguments[1],name,action,args);
-	if(!name.compare("choices")) { 
+	if(!name.compare("choices")) {
 	  std::vector<double> choices=numbers[0].getChoices();
 	  if(!action.compare("size")) {
 	    buff.assign(ftoa(choices.size()));
@@ -359,7 +359,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 		buff.append(1,pattern[1]);
 	      buff.append(ftoa(*it));
 	    }
-	    buff.append(1,pattern[2]);	  
+	    buff.append(1,pattern[2]);
 	  }
 	  else if(!action.compare("index")) {
 	    Num << numbers[0].getIndex();
@@ -411,7 +411,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	return "??";
       }
     }
-    line.replace(pos0,cursor+pos-pos0,buff); 
+    line.replace(pos0,cursor+pos-pos0,buff);
     cursor=pos0+buff.length();
   }
 
@@ -427,7 +427,7 @@ std::string localSolverClient::resolveGetVal(std::string line) {
     }
     //std::cout << "MathEx evaluates now <"<< arguments[0]<< "> " << std::endl;
     smlib::mathex* mathExp = new smlib::mathex();
-    mathExp->expression(arguments[0]); 
+    mathExp->expression(arguments[0]);
     double val=mathExp->eval();
     //std::cout << "MathEx <" << arguments[0] << "> ="<< val << std::endl;
     line.replace(pos0,cursor+pos-pos0,ftoa(val));
@@ -460,7 +460,7 @@ bool localSolverClient::resolveLogicExpr(std::vector<std::string> arguments) {
     str2.assign(resolveString(arguments[2]));
     if(str1.size() && str2.size()){
       if (!arguments[1].compare("=="))
-	condition = !str1.compare(str2);   
+	condition = !str1.compare(str2);
       else if (!arguments[1].compare("!="))
 	condition = str1.compare(str2);
       else
@@ -479,7 +479,7 @@ bool localSolverClient::resolveLogicExpr(std::vector<std::string> arguments) {
       else if (!arguments[1].compare(">="))
 	condition = (val1>=val2);
       else if (!arguments[1].compare("=="))
-	condition = (val1==val2);   
+	condition = (val1==val2);
       else if (!arguments[1].compare("!="))
 	condition = (val1!=val2);
       else
@@ -528,7 +528,7 @@ bool localSolverClient::resolveRange(const std::string &in, std::vector<double> 
   return (arguments.size()==3);
 }
 
-void localSolverClient::parse_sentence(std::string line) { 
+void localSolverClient::parse_sentence(std::string line) {
   size_t pos,cursor;
   std::string name,action,path;
   std::vector<std::string> arguments;
@@ -541,7 +541,7 @@ void localSolverClient::parse_sentence(std::string line) {
     //std::cout << "line=" << line << std::endl;
 
     extract(line.substr(cursor,pos-cursor),name,action,arguments);
-    if(!action.compare("number")) { 
+    if(!action.compare("number")) {
       // syntax: paramName.number(val,path,help,range(optional))
       double val=0.0;
       if(arguments.size()>1)
@@ -549,7 +549,7 @@ void localSolverClient::parse_sentence(std::string line) {
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(numbers, name);
-      if(numbers.empty()){ 
+      if(numbers.empty()){
       	numbers.resize(1);
       	numbers[0].setName(name);
       	if(arguments[0].empty()){
@@ -575,7 +575,7 @@ void localSolverClient::parse_sentence(std::string line) {
       }
       set(numbers[0]);
     }
-    else if(!action.compare("string")) { 
+    else if(!action.compare("string")) {
       // syntax: paramName.string(val,path,help)
       std::string val = "";
       if(arguments.size()>1)
@@ -601,7 +601,7 @@ void localSolverClient::parse_sentence(std::string line) {
       if(arguments.size()>2) strings[0].setLabel(unquote(arguments[2]));
       set(strings[0]);
     }
-    else if(!action.compare("radioButton")) { 
+    else if(!action.compare("radioButton")) {
       // syntax: paramName.radioButton(val,path,label)
       double val=0;
       if(arguments[0].empty())
@@ -613,7 +613,7 @@ void localSolverClient::parse_sentence(std::string line) {
       _parameters.insert(name);
       OLMsg::recordFullName(name);
       get(numbers, name);
-      if(numbers.size()){ 
+      if(numbers.size()){
 	val = numbers[0].getValue(); // use value from server
       }
       else{
@@ -629,7 +629,7 @@ void localSolverClient::parse_sentence(std::string line) {
       numbers[0].setChoices(choices);
       set(numbers[0]);
     }
-    else if(!action.compare("range")){ 
+    else if(!action.compare("range")){
       // set the range of an existing number
       // syntax: paramName.range({a:b:c|a:b#n|min,max,step})
       if(arguments[0].empty())
@@ -660,7 +660,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	  OLMsg::Error("The parameter <%s> does not exist",name.c_str());
       }
     }
-    else if(!action.compare("withinRange")){ 
+    else if(!action.compare("withinRange")){
       // ensure the value is in the prescribed range
       name.assign(longName(name));
       get(numbers,name);
@@ -676,11 +676,11 @@ void localSolverClient::parse_sentence(std::string line) {
       else
 	OLMsg::Error("The parameter <%s> does not exist",name.c_str());
     }
-    else if(!action.compare("setValue")){ 
-      // a set request together with a setReadOnly(1) forces 
-      // the value on server to be changed.  
+    else if(!action.compare("setValue")){
+      // a set request together with a setReadOnly(1) forces
+      // the value on server to be changed.
       name.assign(longName(name));
-      get(numbers,name); 
+      get(numbers,name);
       if(numbers.size()){
 	if(arguments[0].size())
 	  numbers[0].setValue(atof(resolveGetVal(arguments[0]).c_str()));
@@ -688,7 +688,7 @@ void localSolverClient::parse_sentence(std::string line) {
 	set(numbers[0]);
       }
       else{
-	get(strings,name); 
+	get(strings,name);
 	if(strings.size()){
 	  if(arguments[0].empty())  // resets an empty string
 	    strings[0].setValue("");
@@ -781,13 +781,13 @@ void localSolverClient::parse_sentence(std::string line) {
 	OLMsg::Error("Missing argument SetVisible <%s>",name.c_str());
       else{
 	name.assign(longName(name));
-	get(numbers,name); 
-	if(numbers.size()){ 
+	get(numbers,name);
+	if(numbers.size()){
 	  numbers[0].setVisible(atof(resolveGetVal(arguments[0]).c_str()));
 	  set(numbers[0]);
 	}
 	else{
-	  get(strings,name); 
+	  get(strings,name);
 	  if(strings.size()){
 	    strings[0].setVisible(atof(resolveGetVal(arguments[0]).c_str()));
 	    set(strings[0]);
@@ -803,13 +803,13 @@ void localSolverClient::parse_sentence(std::string line) {
 	OLMsg::Error("Missing argument SetReadOnly <%s>",name.c_str());
       else{
 	name.assign(longName(name));
-	get(numbers,name); 
-	if(numbers.size()){ 
+	get(numbers,name);
+	if(numbers.size()){
 	  numbers[0].setReadOnly(atof(resolveGetVal(arguments[0]).c_str()));
 	  set(numbers[0]);
 	}
 	else{
-	  get(strings,name); 
+	  get(strings,name);
 	  if(strings.size()){
 	    strings[0].setReadOnly(atof(resolveGetVal(arguments[0]).c_str()));
 	    set(strings[0]);
@@ -822,14 +822,14 @@ void localSolverClient::parse_sentence(std::string line) {
     }
     else if(!action.compare("layout")){
       name.assign(longName(name));
-      get(numbers,name); 
-      if(numbers.size()){ 
+      get(numbers,name);
+      if(numbers.size()){
 	numbers[0].setReadOnly(0);
 	numbers[0].setAttribute("Highlight","Ivory");
 	set(numbers[0]);
       }
       else{
-	get(strings,name); 
+	get(strings,name);
 	if(strings.size()){
 	  strings[0].setReadOnly(0);
 	  strings[0].setAttribute("Highlight","Ivory");
@@ -842,18 +842,18 @@ void localSolverClient::parse_sentence(std::string line) {
     }
     else if(!action.compare("setAttribute")){
       if(arguments.size() !=2 )
-	OLMsg::Error("SetAttribute <%s> needs two arguments %d", 
+	OLMsg::Error("SetAttribute <%s> needs two arguments %d",
 		   name.c_str(), arguments.size());
       else{
 	name.assign(longName(name));
-	get(numbers,name); 
-	if(numbers.size()){ 
+	get(numbers,name);
+	if(numbers.size()){
 	  numbers[0].setAttribute(arguments[0].c_str(),
 				  resolveGetVal(arguments[1]).c_str());
 	  set(numbers[0]);
 	}
 	else{
-	  get(strings,name); 
+	  get(strings,name);
 	  if(strings.size()){
 	    strings[0].setAttribute(arguments[0].c_str(),arguments[1].c_str());
 	    set(strings[0]);
@@ -891,7 +891,7 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
     olkey::dump.assign(olkey::label+"dump");
     olkey::ifcond.assign(olkey::label+"if");
     olkey::iftrue.assign(olkey::label+"iftrue");
-    olkey::ifntrue.assign(olkey::label+"ifntrue"); 
+    olkey::ifntrue.assign(olkey::label+"ifntrue");
     olkey::olelse.assign(olkey::label+"else");
     olkey::olendif.assign(olkey::label+"endif");
     olkey::getValue.assign(olkey::label+"get");
@@ -908,7 +908,7 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
 	      olkey::label.c_str(), olkey::comment.c_str());
 }
 
-void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) { 
+void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   size_t pos,cursor;
   std::vector<std::string> arguments;
   std::vector<onelab::number> numbers;
@@ -994,11 +994,11 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
     extractLogic(line.substr(cursor),arguments);
     bool condition= resolveLogicExpr(arguments);
     if (!parse_ifstatement(infile,condition)){
-      OLMsg::Error("Misformed %s statement: <%s>", 
+      OLMsg::Error("Misformed %s statement: <%s>",
 		 olkey::ifcond.c_str(), line.c_str());
     }
   }
-  else if ( (pos=line.find(olkey::include)) != std::string::npos) { 
+  else if ( (pos=line.find(olkey::include)) != std::string::npos) {
     // onelab.include
     cursor = pos+olkey::include.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
@@ -1006,11 +1006,11 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 		 olkey::include.c_str(),line.c_str());
     else{
       std::string filename = getWorkingDir() + resolveGetVal(arguments[0]);
-      OLMsg::Info("Parse file <%s> %s", filename.c_str(), 
+      OLMsg::Info("Parse file <%s> %s", filename.c_str(),
 		  parse_onefile(filename)?"done":"failed");
     }
   }
-  else if ( (pos=line.find(olkey::message)) != std::string::npos) { 
+  else if ( (pos=line.find(olkey::message)) != std::string::npos) {
     // onelab.message
     cursor = pos+olkey::message.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
@@ -1021,7 +1021,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Info("%s",msg.c_str());
     }
   }
-  else if ( (pos=line.find(olkey::showParam)) != std::string::npos) { 
+  else if ( (pos=line.find(olkey::showParam)) != std::string::npos) {
     // onelab.showParam
     cursor = pos+olkey::showParam.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
@@ -1046,7 +1046,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::Info("%s",msg.c_str());
     }
   }
-  else if ( (pos=line.find(olkey::showGmsh)) != std::string::npos) { 
+  else if ( (pos=line.find(olkey::showGmsh)) != std::string::npos) {
     // onelab.showGmsh
     cursor = pos+olkey::showGmsh.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
@@ -1057,20 +1057,25 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
       OLMsg::MergeFile(getWorkingDir() + fileName);
     }
   }
-  else if ( (pos=line.find(olkey::dump)) != std::string::npos) { 
-    // onelab.dump 
+  else if ( (pos=line.find(olkey::dump)) != std::string::npos) {
+    // onelab.dump
     cursor = pos+olkey::dump.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1){
       OLMsg::Error("Misformed <%s> statement: (%s)",
       		 olkey::dump.c_str(),line.c_str());
     }
-    else
-      onelab::server::instance()->toFile(resolveGetVal(arguments[0]));
+    else{
+      FILE *fp = fopen(resolveGetVal(arguments[0]).c_str(), "wb");
+      if(fp){
+        onelab::server::instance()->toFile(fp);
+        fclose(fp);
+      }
+    }
   }
   else if( isOnelabBlock() ||
 	 ( !isOnelabBlock() &&
 	   ((pos=line.find(olkey::line)) != std::string::npos)) ){
-    // either any line with no "OL." within a onelabBlock or a line 
+    // either any line with no "OL." within a onelabBlock or a line
     // introduced by a "onelab.line" tag not within a onelabBlock
     std::string cmds="",cmd;
     size_t posa, posb;
@@ -1084,7 +1089,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	posa=0;
 
       // skip trailing comments if any
-      posb=line.find(olkey::comment); 
+      posb=line.find(olkey::comment);
       if(posb==std::string::npos)
 	cmd.assign(line.substr(posa));
       else
@@ -1125,7 +1130,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
 	}
       }
     } while (infile.good() && !err && !terminated && NbLines <= 20);
-  
+
     if(!terminated){
       if(NbLines >= 20)
 	OLMsg::Error("Command <%s> should not span over more than 20 lines",
@@ -1154,7 +1159,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   }
 }
 
-bool localSolverClient::parse_block(std::ifstream  &infile) { 
+bool localSolverClient::parse_block(std::ifstream  &infile) {
   size_t pos;
   std::string line;
   openOnelabBlock();
@@ -1169,37 +1174,37 @@ bool localSolverClient::parse_block(std::ifstream  &infile) {
     parse_oneline(line,infile);
   }
   return false;
-} 
+}
 
-bool localSolverClient::parse_ifstatement(std::ifstream &infile, 
-					  bool condition) { 
+bool localSolverClient::parse_ifstatement(std::ifstream &infile,
+					  bool condition) {
   int level;
   size_t pos;
   std::string line;
 
-  bool trueclause=true; 
+  bool trueclause=true;
   level=1;
   while ( infile.good() && level) {
     getline (infile,line);
-    if ( ((pos=line.find(olkey::olelse)) != std::string::npos) && (level==1) ) 
+    if ( ((pos=line.find(olkey::olelse)) != std::string::npos) && (level==1) )
       trueclause=false;
-    else if ( (pos=line.find(olkey::olendif)) != std::string::npos) 
+    else if ( (pos=line.find(olkey::olendif)) != std::string::npos)
       level--;
     else if ( !(trueclause ^ condition) ) // xor bitwise operator
       parse_oneline(line,infile);
     else { // check for opening if statements
-      if ( (pos=line.find(olkey::iftrue)) != std::string::npos) 
-	level++; 
-      else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos) 
-	level++; 
-      else if ( (pos=line.find(olkey::ifcond)) != std::string::npos) 
-	level++; 
+      if ( (pos=line.find(olkey::iftrue)) != std::string::npos)
+	level++;
+      else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos)
+	level++;
+      else if ( (pos=line.find(olkey::ifcond)) != std::string::npos)
+	level++;
     }
   }
   return level?false:true ;
-} 
+}
 
-bool localSolverClient::parse_onefile(std::string fileName, bool mandatory) { 
+bool localSolverClient::parse_onefile(std::string fileName, bool mandatory) {
   std::ifstream infile(fileName.c_str());
   if (infile.is_open()){
     while (infile.good()){
@@ -1217,36 +1222,36 @@ bool localSolverClient::parse_onefile(std::string fileName, bool mandatory) {
     // else
     //   OLMsg::Warning("The file <%s> does not exist",fileName.c_str());
   }
-} 
+}
 
-bool localSolverClient::convert_ifstatement(std::ifstream &infile, std::ofstream &outfile, bool condition) { 
+bool localSolverClient::convert_ifstatement(std::ifstream &infile, std::ofstream &outfile, bool condition) {
   int level;
   size_t pos;
   std::string line;
 
-  bool trueclause=true; 
+  bool trueclause=true;
   level=1;
   while ( infile.good() && level) {
     getline (infile,line);
-    if ( ((pos=line.find(olkey::olelse)) != std::string::npos) && (level==1) ) 
+    if ( ((pos=line.find(olkey::olelse)) != std::string::npos) && (level==1) )
       trueclause=false;
-    else if ( (pos=line.find(olkey::olendif)) != std::string::npos) 
+    else if ( (pos=line.find(olkey::olendif)) != std::string::npos)
      level--;
     else if ( !(trueclause ^ condition) ) // xor bitwise operator
       convert_oneline(line,infile,outfile);
     else { // check for opening if statements
-      if ( (pos=line.find(olkey::iftrue)) != std::string::npos) 
-	level++; 
-      else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos) 
-	level++; 
-      else if ( (pos=line.find(olkey::ifcond)) != std::string::npos) 
-	level++; 
+      if ( (pos=line.find(olkey::iftrue)) != std::string::npos)
+	level++;
+      else if ( (pos=line.find(olkey::ifntrue)) != std::string::npos)
+	level++;
+      else if ( (pos=line.find(olkey::ifcond)) != std::string::npos)
+	level++;
     }
   }
   return level?false:true ;
-} 
+}
 
-void localSolverClient::convert_oneline(std::string line, std::ifstream &infile, std::ofstream &outfile) { 
+void localSolverClient::convert_oneline(std::string line, std::ifstream &infile, std::ofstream &outfile) {
   size_t pos,cursor;
   std::vector<std::string> arguments;
   std::vector<onelab::number> numbers;
@@ -1255,7 +1260,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 
   if((pos=line.find_first_not_of(" \t"))==std::string::npos){
     // empty line, we keep them
-    outfile << line << std::endl;  
+    outfile << line << std::endl;
   }
   else if(!line.compare(pos,olkey::comment.size(),olkey::comment)){
     // commented out, skip the line
@@ -1327,7 +1332,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       }
       if (!convert_ifstatement(infile,outfile,!condition))
 	OLMsg::Error("Misformed <%s> statement: %s",
-		     olkey::ifntrue.c_str(),arguments[0].c_str()); 
+		     olkey::ifntrue.c_str(),arguments[0].c_str());
     }
   }
   else if ( (pos=line.find(olkey::ifcond)) != std::string::npos) {
@@ -1336,7 +1341,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     extractLogic(line.substr(cursor),arguments);
     bool condition= resolveLogicExpr(arguments);
     if (!convert_ifstatement(infile,outfile,condition))
-      OLMsg::Error("Misformed %s statement: <%s>", 
+      OLMsg::Error("Misformed %s statement: <%s>",
 		   olkey::ifcond.c_str(),line.c_str());
   }
   else if ( (pos=line.find(olkey::include)) != std::string::npos) {
@@ -1350,7 +1355,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       convert_onefile(filename, outfile);
     }
   }
-  else if ( (pos=line.find(olkey::message)) != std::string::npos) { 
+  else if ( (pos=line.find(olkey::message)) != std::string::npos) {
     // onelab.message
     cursor = pos+olkey::message.length();
     if(enclosed(line.substr(cursor),arguments,pos)<1)
@@ -1417,13 +1422,13 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       line.replace(pos0,cursor+pos-pos0,buff);
       cursor=pos0+buff.length();
     }
-    outfile << line << std::endl; 
+    outfile << line << std::endl;
   }
   else if ( (pos=line.find(olkey::label)) != std::string::npos){
     OLMsg::Error("Unidentified onelab command in <%s>",line.c_str());
   }
   else{
-    outfile << line << std::endl; 
+    outfile << line << std::endl;
   }
 }
 
@@ -1442,14 +1447,14 @@ void localSolverClient::convert_onefile(std::string fileName, std::ofstream &out
     OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
 }
 
-void localSolverClient::client_sentence(const std::string &name, 
-					const std::string &action, 
+void localSolverClient::client_sentence(const std::string &name,
+					const std::string &action,
 		       const std::vector<std::string> &arguments) {
   OLMsg::Error("The action <%s> is unknown in this context",action.c_str());
 }
 
-void MetaModel::client_sentence(const std::string &name, 
-				const std::string &action, 
+void MetaModel::client_sentence(const std::string &name,
+				const std::string &action,
 		 const std::vector<std::string> &arguments){
   std::vector<onelab::string> strings;
 
@@ -1461,11 +1466,11 @@ void MetaModel::client_sentence(const std::string &name,
 	OLMsg::Info("Define client <%s>", name.c_str());
 	if(arguments.size()>=1) type.assign(resolveGetVal(arguments[0]));
 	if(arguments.size()>=2) cmdl.assign(resolveGetVal(arguments[1]));
-	if(arguments.size()>=3) 
+	if(arguments.size()>=3)
 	  OLMsg::Warning("Unused arguments for client <%s>", name.c_str());
 
 	// if argument 'cmdl' is empty,
-	// 1. look on server for one remote host cmdl 
+	// 1. look on server for one remote host cmdl
 	//    defined by a previous .remote() sentence
 	// 2. look in the .save file for a local host cmdl
 	// 3. create an empty parameter restore control to the GUI
@@ -1508,7 +1513,7 @@ void MetaModel::client_sentence(const std::string &name,
       std::string host="",rdir="";
       if(arguments.size()>=1) host.assign(resolveGetVal(arguments[0]));
       if(arguments.size()>=2) rdir.assign(resolveGetVal(arguments[1]));
-      if(arguments.size()>=3) 
+      if(arguments.size()>=3)
 	  OLMsg::Warning("Unused arguments for client <%s>", name.c_str());
 
       if(host.size()){
@@ -1521,7 +1526,7 @@ void MetaModel::client_sentence(const std::string &name,
 	if(in.size()){
 	  std::vector<std::string> split = SplitOLHostName(in);
 	  host = split[0];
-	  rdir = split[1]; 
+	  rdir = split[1];
 	  OLMsg::SetOnelabString(name + "/HostName", host, false);
 	  if(rdir.size())
 	    OLMsg::SetOnelabString(name + "/RemoteDir", rdir, false);
@@ -1550,7 +1555,7 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
   }
-/* else if(!action.compare("commandLine")){ 
+/* else if(!action.compare("commandLine")){
     if(isTodo(REGISTER)){
       if(arguments[0].size() >= 1)
 	OLMsg::SetOnelabString(name + "/CommandLine", arguments[0], false);
@@ -1658,9 +1663,9 @@ void MetaModel::client_sentence(const std::string &name,
 	bool started = isStarted(changed);
 
 	// if(OLMsg::GetVerbosity())
-	//   std::cout << c->getName() << " active=" 
-	// 	    << c->getActive() << " changed=" 
-	// 	    << changed << " started=" 
+	//   std::cout << c->getName() << " active="
+	// 	    << c->getActive() << " changed="
+	// 	    << changed << " started="
 	// 	    << started << " errors=" << OLMsg::GetErrorCount() << std::endl;
 	if(c->getActive() || started) c->compute();
       }

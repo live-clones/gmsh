@@ -233,11 +233,9 @@ namespace onelab{
       name = getNextToken(msg, first);
     }
     static bool fromFile(std::vector<std::string> &msg,
-                         const std::string &fileName)
+                         FILE *fp)
     {
       msg.clear();
-      FILE *fp = fopen(fileName.c_str(), "rb");
-      if(!fp) return false;
       char tmp[1000];
       if(!fgets(tmp, sizeof(tmp), fp)) return false; // first line is comment
       while(!feof(fp)){
@@ -249,15 +247,12 @@ namespace onelab{
           msg.back() += fgetc(fp);
         if(!fgets(tmp, sizeof(tmp), fp)) break; // end of line
       }
-      fclose(fp);
       return true;
     }
     static bool toFile(const std::vector<std::string> &msg,
-                       const std::string &fileName,
+                       FILE *fp,
                        const std::string &creator)
     {
-      FILE *fp = fopen(fileName.c_str(), "wb");
-      if(!fp) return false;
       time_t now;
       time(&now);
       fprintf(fp, "OneLab database created by %s on %s",
@@ -268,7 +263,6 @@ namespace onelab{
           fputc(msg[i][j], fp);
         fputc('\n', fp);
       }
-      fclose(fp);
       return true;
     }
   };
@@ -903,14 +897,14 @@ namespace onelab{
       }
       return true;
     }
-    bool toFile(const std::string &fileName)
+    bool toFile(FILE *fp)
     {
-      return parameter::toFile(toChar(), fileName, getName());
+      return parameter::toFile(toChar(), fp, getName());
     }
-    bool fromFile(const std::string &fileName)
+    bool fromFile(FILE *fp)
     {
       std::vector<std::string> msg;
-      if(parameter::fromFile(msg, fileName)) return fromChar(msg);
+      if(parameter::fromFile(msg, fp)) return fromChar(msg);
       return false;
     }
   };
@@ -976,14 +970,14 @@ namespace onelab{
     {
       return _parameterSpace.fromChar(msg, client);
     }
-    bool toFile(const std::string &fileName, const std::string &client="")
+    bool toFile(FILE *fp, const std::string &client="")
     {
-      return parameter::toFile(toChar(client), fileName, "onelab server");
+      return parameter::toFile(toChar(client), fp, "onelab server");
     }
-    bool fromFile(const std::string &fileName, const std::string &client="")
+    bool fromFile(FILE *fp, const std::string &client="")
     {
       std::vector<std::string> msg;
-      if(parameter::fromFile(msg, fileName)) return fromChar(msg, client);
+      if(parameter::fromFile(msg, fp)) return fromChar(msg, client);
       return false;
     }
   };

@@ -7,6 +7,7 @@
 #define _OS_H_
 
 #include <string>
+#include <stdio.h>
 
 const char *GetEnvironmentVar(const char *var);
 void SetEnvironmentVar(const char *var, const char *val);
@@ -24,5 +25,6 @@ int CreateDirectory(const std::string &dirName);
 int SystemCall(const std::string &command, bool blocking=false);
 std::string GetCurrentWorkdir();
 void RedirectIOToConsole();
+FILE *Fopen(const char* f, const char *mode);
 
 #endif
