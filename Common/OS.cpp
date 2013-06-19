@@ -325,7 +325,7 @@ void RedirectIOToConsole()
   // redirect unbuffered stdout, stdin and stderr to the console
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
-    if(lStdHandle != INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
       if(hConHandle >= 0){
         FILE *fp = _fdopen(hConHandle, "w");
@@ -338,7 +338,7 @@ void RedirectIOToConsole()
   }
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
-    if(lStdHandle != INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
       if(hConHandle >= 0){
         FILE *fp = _fdopen(hConHandle, "r");
@@ -351,7 +351,7 @@ void RedirectIOToConsole()
   }
   {
     intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
-    if(lStdHandle != INVALID_HANDLE_VALUE){
+    if(lStdHandle != (intptr_t)INVALID_HANDLE_VALUE){
       int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
       if(hConHandle >= 0){
         FILE *fp = _fdopen(hConHandle, "w");
