@@ -95,7 +95,7 @@ set(GMSH_API
     Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h 
     Common/OS.h Common/StringUtils.h Common/OpenFile.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
-    Numeric/JacobianBasis.h Numeric/fullMatrix.h
+    Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
