@@ -318,28 +318,52 @@ void RedirectIOToConsole()
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   // Win32 GUI apps do not write to the DOS console; make it work again by
-  // attaching to parent console, which allows to use the DOS shell to work
-  // with Gmsh on the command line (without this hack, you need to either use
-  // a better shell (e.g. bash), or compile a /subsystem:console version
+  // attaching to parent console, which allows to use the DOS shell to work with
+  // Gmsh on the command line (without this hack, you need to either use a
+  // better shell (e.g. bash), or compile a /subsystem:console version
   if(!AttachConsole(ATTACH_PARENT_PROCESS)) return;
   // redirect unbuffered stdout, stdin and stderr to the console
-  intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
-  int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  FILE *fp = _fdopen(hConHandle, "w");
-  *stdout = *fp;
-  setvbuf(stdout, NULL, _IONBF, 0);
-  lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
-  hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  fp = _fdopen(hConHandle, "r");
-  *stdin = *fp;
-  setvbuf(stdin, NULL, _IONBF, 0);
-  lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
-  hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-  fp = _fdopen(hConHandle, "w");
-  *stderr = *fp;
-  setvbuf(stderr, NULL, _IONBF, 0);
-  // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to
-  // console as well
+  {
+    intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_OUTPUT_HANDLE);
+    if(lStdHandle != INVALID_HANDLE_VALUE){
+      int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+      if(hConHandle >= 0){
+        FILE *fp = _fdopen(hConHandle, "w");
+        if(fp){
+          *stdout = *fp;
+          setvbuf(stdout, NULL, _IONBF, 0);
+        }
+      }
+    }
+  }
+  {
+    intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_INPUT_HANDLE);
+    if(lStdHandle != INVALID_HANDLE_VALUE){
+      int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+      if(hConHandle >= 0){
+        FILE *fp = _fdopen(hConHandle, "r");
+        if(fp){
+          *stdin = *fp;
+          setvbuf(stdin, NULL, _IONBF, 0);
+        }
+      }
+    }
+  }
+  {
+    intptr_t lStdHandle = (intptr_t)GetStdHandle(STD_ERROR_HANDLE);
+    if(lStdHandle != INVALID_HANDLE_VALUE){
+      int hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+      if(hConHandle >= 0){
+        FILE *fp = _fdopen(hConHandle, "w");
+        if(fp){
+          *stderr = *fp;
+          setvbuf(stderr, NULL, _IONBF, 0);
+        }
+      }
+    }
+  }
+  // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to console
+  // as well
   std::ios::sync_with_stdio();
 #endif
 }

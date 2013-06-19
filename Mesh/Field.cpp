@@ -25,7 +25,7 @@
 #include "BackgroundMesh.h"
 #include "CenterlineField.h"
 #include "STensor3.h"
-
+#include "meshMetric.h"
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -1868,7 +1868,7 @@ void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
   double distk = 1.e22;
   for(std::list<int>::iterator it = nodes_id.begin();
       it != nodes_id.end(); ++it) {
-    GVertex *v = GModel::current()->getVertexByTag(*it);    
+    GVertex *v = GModel::current()->getVertexByTag(*it);
     double xp = v->x();
     double yp = v->y();
     double zp = v->z();
@@ -1892,7 +1892,7 @@ void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
   lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
   SVector3 t1= SVector3(x-xpk,y-ypk,z-zpk);
   t1.normalize();
-  metr = buildMetricTangentToCurve(t1,lc_n,lc_n);  
+  metr = buildMetricTangentToCurve(t1,lc_n,lc_n);
 }
 
 void BoundaryLayerField::operator() (AttractorField *cc, double dist,
