@@ -19,7 +19,8 @@ JacobianBasis::JacobianBasis(int tag)
   const int parentType = ElementType::ParentTypeFromTag(tag);
   const int order = ElementType::OrderFromTag(tag);
 
-  int jacType = 0, primJacType = 0;
+  //int jacType = 0,
+  int primJacType = 0;
 
   /*if (parentType == TYPE_PYR) {
     switch (tag) {
@@ -33,31 +34,59 @@ JacobianBasis::JacobianBasis(int tag)
   }
   else {*/
     int jacobianOrder, primJacobianOrder;
+
     switch (parentType) {
-      case TYPE_PNT : jacobianOrder = 0; primJacobianOrder = 0; break;
-      case TYPE_LIN : jacobianOrder = order - 1; primJacobianOrder = 0; break;
-      case TYPE_TRI : jacobianOrder = 2 * (order - 1); primJacobianOrder = 0; break;
-      case TYPE_QUA : jacobianOrder = 2 * order - 1; primJacobianOrder = 1; break;
-      case TYPE_TET : jacobianOrder = 3 * (order - 1); primJacobianOrder = 0; break;
-      case TYPE_PRI : jacobianOrder = 3 * order - 1; primJacobianOrder = 2; break;
-      case TYPE_HEX : jacobianOrder = 3 * order - 1; primJacobianOrder = 2; break;
+      case TYPE_PNT :
+        primJacobianOrder = 0;
+        jacobianOrder = 0;
+        lagPoints = gmshGeneratePointsLine(0);
+        break;
+      case TYPE_LIN :
+        primJacobianOrder = 0;
+        jacobianOrder = order - 1;
+        lagPoints = gmshGeneratePointsLine(order);
+        break;
+      case TYPE_TRI :
+        primJacobianOrder = 0;
+        jacobianOrder = 2*order - 2;
+        lagPoints = gmshGeneratePointsTriangle(order);
+        break;
+      case TYPE_QUA :
+        primJacobianOrder = 1;
+        jacobianOrder = 2*order - 1;
+        lagPoints = gmshGeneratePointsQuadrangle(order);
+        break;
+      case TYPE_TET :
+        primJacobianOrder = 0;
+        jacobianOrder = 3*order - 3;
+        lagPoints = gmshGeneratePointsTetrahedron(order);
+        break;
+      case TYPE_PRI :
+        primJacobianOrder = 2;
+        jacobianOrder = 3*order - 1;
+        lagPoints = gmshGeneratePointsPrism(order);
+        break;
+      case TYPE_HEX :
+        primJacobianOrder = 2;
+        jacobianOrder = 3*order - 1;
+        lagPoints = gmshGeneratePointsHexahedron(order);
+        break;
       default :
         Msg::Error("Unknown Jacobian function space for element type %d", tag);
         jacobianOrder = 0;
         break;
     }
-    jacType = ElementType::getTag(parentType, jacobianOrder, false);
     primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
   //}
 
   // Store Bezier basis
-  bezier = BasisFactory::getBezierBasis(jacType);
+  bezier = BasisFactory::getBezierBasis(parentType, jacobianOrder);
 
   // Store shape function gradients of mapping at Jacobian nodes
   const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
   fullMatrix<double> allDPsi;
-  mapBasis->df(getPoints(), allDPsi);
-  numJacNodes = getPoints().size1();
+  mapBasis->df(lagPoints, allDPsi);
+  numJacNodes = lagPoints.size1();
   numMapNodes = allDPsi.size1();
   gradShapeMatX.resize(numJacNodes,numMapNodes);
   gradShapeMatY.resize(numJacNodes,numMapNodes);
@@ -73,7 +102,7 @@ JacobianBasis::JacobianBasis(int tag)
   const nodalBasis *primJacBasis = BasisFactory::getNodalBasis(primJacType);
   numPrimJacNodes = primJacBasis->getNumShapeFunctions();
   matrixPrimJac2Jac.resize(numJacNodes,numPrimJacNodes);
-  primJacBasis->f(getPoints(),matrixPrimJac2Jac);
+  primJacBasis->f(lagPoints, matrixPrimJac2Jac); //FIXME not too much sampling points ??
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
@@ -193,7 +222,7 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
 void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
 
-  switch (bezier->dim) {
+  switch (bezier->getDim()) {
 
     case 1 : {
       fullMatrix<double> normals(2,3);
@@ -225,7 +254,7 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVe
 void JacobianBasis::getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
 
-  switch (bezier->dim) {
+  switch (bezier->getDim()) {
 
     case 1 : {
       fullMatrix<double> normals(2,3);
@@ -262,7 +291,7 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ,
                                       const fullMatrix<double> &normals, fullVector<double> &jacobian) const
 {
 
-  switch (bezier->dim) {
+  switch (bezier->getDim()) {
 
     case 0 : {
       for (int i = 0; i < numJacNodes; i++) jacobian(i) = 1.;
@@ -270,7 +299,7 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesXYZ,
     }
 
     case 1 : {
-      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3);
+      fullMatrix<double> dxyzdX(numJacNodes,3);
       gradShapeMatX.mult(nodesXYZ, dxyzdX);
       for (int i = 0; i < numJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
@@ -319,7 +348,7 @@ void JacobianBasis::getSignedJacAndGradients(const fullMatrix<double> &nodesXYZ,
                                              fullMatrix<double> &JDJ) const
 {
 
-  switch (bezier->dim) {
+  switch (bezier->getDim()) {
 
     case 0 : {
       for (int i = 0; i < numJacNodes; i++) {
@@ -473,7 +502,7 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesX, const fu
                                       const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
 {
 
-  switch (bezier->dim) {
+  switch (bezier->getDim()) {
 
     case 0 : {
       const int numEl = nodesX.size2();

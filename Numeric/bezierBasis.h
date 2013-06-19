@@ -14,18 +14,18 @@
 class MElement;
 
 class bezierBasis {
- public:
- //private :
-  // the 'numLagPts' first exponents are related to 'Lagrangian' values
+ private :
+  // the 'numLagCoeff' first exponents are related to 'Lagrangian' values
+  int numLagCoeff;
   int dim, order;
-  int numLagPts;
   int numDivisions;
-  fullMatrix<double> subDivisor;
 
  public :
-  fullMatrix<double> lagPoints; // sampling point
-  fullMatrix<double> matrixLag2Bez, matrixBez2Lag;
+  fullMatrix<double> matrixLag2Bez;
+  fullMatrix<double> matrixBez2Lag;
+  fullMatrix<double> subDivisor;
 
+  // Constructors
   inline bezierBasis(int tag) {
     _construct(ElementType::ParentTypeFromTag(tag), ElementType::OrderFromTag(tag));
   }
@@ -34,10 +34,10 @@ class bezierBasis {
   }
 
   // get methods
-  inline int getDim() {return dim;}
-  inline int getOrder() {return order;}
-  inline int getNumLagPts() {return numLagPts;}
-  inline int getNumDivision() {return numDivisions;}
+  inline int getDim() const {return dim;}
+  inline int getOrder() const {return order;}
+  inline int getNumLagCoeff() const {return numLagCoeff;}
+  inline int getNumDivision() const {return numDivisions;}
 
  private :
   void _construct(int parendtType, int order);

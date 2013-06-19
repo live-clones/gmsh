@@ -15,11 +15,11 @@
 class JacobianBasis {
  private:
   const bezierBasis *bezier;
+  fullMatrix<double> lagPoints; // sampling point
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
   fullVector<double> primGradShapeBarX, primGradShapeBarY, primGradShapeBarZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
   int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
-  inline const fullMatrix<double> &getPoints() const { return bezier->lagPoints; }
 
  public :
   JacobianBasis(int tag);
@@ -29,9 +29,9 @@ class JacobianBasis {
   inline int getNumMapNodes() const { return numMapNodes; }
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
-  inline int getNumDivisions() const { return bezier->numDivisions; }
+  inline int getNumDivisions() const { return bezier->getNumDivision(); }
   inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
-  inline int getNumLagPts() const { return bezier->numLagPts; }
+  inline int getNumLagCoeff() const { return bezier->getNumLagCoeff(); }
 
   //
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;

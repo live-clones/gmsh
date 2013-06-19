@@ -339,7 +339,7 @@ int GMSH_AnalyseCurvedMeshPlugin::subDivision(const JacobianBasis *jb,
   jb->subDivisor(jacobian, newJacobian);
 
   for (int i = 0; i < jb->getNumDivisions(); i++)
-  for (int j = 0; j < jb->getNumLagPts(); j++)
+  for (int j = 0; j < jb->getNumLagCoeff(); j++)
   if (newJacobian(i * jb->getNumJacNodes() + j) <= _jacBreak)
     return -1;
 
@@ -727,7 +727,7 @@ BezierJacobian::BezierJacobian(fullVector<double> &v, const JacobianBasis *jfs, 
 
   _minJ = _maxJ = v(0);
   int i = 1;
-  for (; i < jfs->getNumLagPts(); i++) {
+  for (; i < jfs->getNumLagCoeff(); i++) {
     if (_minJ > v(i)) _minJ = v(i);
     if (_maxJ < v(i)) _maxJ = v(i);
   }

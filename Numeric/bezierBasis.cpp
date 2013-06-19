@@ -336,62 +336,55 @@ void bezierBasis::_construct(int parentType, int p)
     switch (parentType) {
       case TYPE_PNT :
         dim = 0;
-        numLagPts = 1;
+        numLagCoeff = 1;
         dimSimplex = 0;
         exponents = gmshGenerateMonomialsLine(0);
-        lagPoints = gmshGeneratePointsLine(0);
         break;
       case TYPE_LIN : {
         dim = 1;
-        numLagPts = 2;
+        numLagCoeff = 2;
         dimSimplex = 0;
         exponents = gmshGenerateMonomialsLine(order);
-        lagPoints = gmshGeneratePointsLine(order);
         subPoints = generateSubPointsLine(order);
         break;
       }
       case TYPE_TRI : {
         dim = 2;
-        numLagPts = 3;
+        numLagCoeff = 3;
         dimSimplex = 2;
         exponents = gmshGenerateMonomialsTriangle(order);
-        lagPoints = gmshGeneratePointsTriangle(order);
         subPoints = generateSubPointsTriangle(order);
         break;
       }
       case TYPE_QUA : {
         dim = 2;
-        numLagPts = 4;
+        numLagCoeff = 4;
         dimSimplex = 0;
         exponents = gmshGenerateMonomialsQuadrangle(order);
-        lagPoints = gmshGeneratePointsQuadrangle(order);
         subPoints = generateSubPointsQuad(order);
         break;
       }
       case TYPE_TET : {
         dim = 3;
-        numLagPts = 4;
+        numLagCoeff = 4;
         dimSimplex = 3;
         exponents = gmshGenerateMonomialsTetrahedron(order);
-        lagPoints = gmshGeneratePointsTetrahedron(order);
         subPoints = generateSubPointsTetrahedron(order);
         break;
       }
       case TYPE_PRI : {
         dim = 3;
-        numLagPts = 6;
+        numLagCoeff = 6;
         dimSimplex = 2;
         exponents = gmshGenerateMonomialsPrism(order);
-        lagPoints = gmshGeneratePointsPrism(order);
         subPoints = generateSubPointsPrism(order);
         break;
       }
       case TYPE_HEX : {
         dim = 3;
-        numLagPts = 8;
+        numLagCoeff = 8;
         dimSimplex = 0;
         exponents = gmshGenerateMonomialsHexahedron(order);
-        lagPoints = gmshGeneratePointsHexahedron(order);
         subPoints = generateSubPointsHex(order);
         break;
       }
@@ -400,10 +393,9 @@ void bezierBasis::_construct(int parentType, int p)
             "reverting to TET_1", parentType);
         dim = 3;
         order = 0;
-        numLagPts = 4;
+        numLagCoeff = 4;
         dimSimplex = 3;
         exponents = gmshGenerateMonomialsTetrahedron(order);
-        lagPoints = gmshGeneratePointsTetrahedron(order);
         subPoints = generateSubPointsTetrahedron(order);
         break;
       }
