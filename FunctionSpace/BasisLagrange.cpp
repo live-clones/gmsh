@@ -96,14 +96,28 @@ project(const MElement& element,
 
   // Init New Coefs //
   const unsigned int size = lPoint->size1();
+  const unsigned int dim  = lPoint->size2();
+
   vector<double> newCoef(size);
 
   // Interpolation at Lagrange Points //
   for(unsigned int i = 0; i < size; i++){
     fullVector<double> uvw(3);
-    uvw(0) = (*lPoint)(i, 0);
-    uvw(1) = (*lPoint)(i, 1);
-    uvw(2) = (*lPoint)(i, 2);
+
+    if(dim > 0)
+      uvw(0) = (*lPoint)(i, 0);
+    else
+      uvw(0) = 0;
+
+    if(dim > 1)
+      uvw(1) = (*lPoint)(i, 1);
+    else
+      uvw(1) = 0;
+
+    if(dim > 2)
+      uvw(2) = (*lPoint)(i, 2);
+    else
+      uvw(2) = 0;
 
     newCoef[i] = fSpace.interpolateInRefSpace(element,
                                               coef,
@@ -126,9 +140,21 @@ project(const MElement& element,
   // Interpolation at Lagrange Points //
   for(unsigned int i = 0; i < size; i++){
     fullVector<double> uvw(3);
-    uvw(0) = (*lPoint)(i, 0);
-    uvw(1) = (*lPoint)(i, 1);
-    uvw(2) = (*lPoint)(i, 2);
+
+    if(dim > 0)
+      uvw(0) = (*lPoint)(i, 0);
+    else
+      uvw(0) = 0;
+
+    if(dim > 1)
+      uvw(1) = (*lPoint)(i, 1);
+    else
+      uvw(1) = 0;
+
+    if(dim > 2)
+      uvw(2) = (*lPoint)(i, 2);
+    else
+      uvw(2) = 0;
 
     newCoef[i] = fSpace.interpolateInRefSpace(element,
                                               coef,
