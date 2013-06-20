@@ -139,25 +139,26 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
   return count;
 }
 
-static wchar_t *wbuf = NULL;
-static wchar_t *wbuf1 = NULL;
+static wchar_t *wbuf[2] = {NULL, NULL};
+
+static void setwbuf(int i, const char *f)
+{
+  if(i != 0 || i != 1) return;
+  size_t l = strlen(f);
+  unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
+  wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf[i], wn);
+  wbuf[i][wn] = 0;
+}
 
 #endif
 
 FILE *Fopen(const char* f, const char *mode)
 {
 #if defined (WIN32) && !defined(__CYGWIN__)
-  size_t l = strlen(f);
-  unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
-  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf, wn);
-  wbuf[wn] = 0;
-  l = strlen(mode);
-  wn = utf8toUtf16(mode, (unsigned) l, NULL, 0) + 1;
-  wbuf1 = (wchar_t*)realloc(wbuf1, sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(mode, (unsigned) l, (unsigned short *)wbuf1, wn);
-  wbuf1[wn] = 0;
-  return _wfopen(wbuf, wbuf1);
+  setwbuf(0, f);
+  setwbuf(1, mode);
+  return _wfopen(wbuf[0], wbuf[1]);
 #else
   return fopen(f, mode);
 #endif
@@ -288,12 +289,8 @@ std::string GetHostName()
 int UnlinkFile(const std::string &fileName)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
-  size_t l = strlen(fileName.c_str());
-  unsigned wn = utf8toUtf16(fileName.c_str(), (unsigned) l, NULL, 0) + 1;
-  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(fileName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
-  wbuf[wn] = 0;
-  return _wunlink(wbuf);
+  setwbuf(0, fileName.c_str());
+  return _wunlink(wbuf[0]);
 #else
   return unlink(fileName.c_str());
 #endif
@@ -303,12 +300,8 @@ int StatFile(const std::string &fileName)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   struct _stat buf;
-  size_t l = strlen(fileName.c_str());
-  unsigned wn = utf8toUtf16(fileName.c_str(), (unsigned) l, NULL, 0) + 1;
-  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(fileName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
-  wbuf[wn] = 0;
-  int ret = _wstat(wbuf, &buf);
+  setwbuf(0, fileName.c_str());
+  int ret = _wstat(wbuf[0], &buf);
 #else
   struct stat buf;
   int ret = stat(fileName.c_str(), &buf);
@@ -319,12 +312,8 @@ int StatFile(const std::string &fileName)
 int CreateDirectory(const std::string &dirName)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
-  size_t l = strlen(dirName.c_str());
-  unsigned wn = utf8toUtf16(dirName.c_str(), (unsigned) l, NULL, 0) + 1;
-  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
-  wn = utf8toUtf16(dirName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
-  wbuf[wn] = 0;
-  if(_wmkdir(wbuf)) return 0;
+  setwbuf(0, dirName.c_str());
+  if(_wmkdir(wbuf[0])) return 0;
 #else
   if(mkdir(dirName.c_str(), 0777)) return 0;
 #endif
