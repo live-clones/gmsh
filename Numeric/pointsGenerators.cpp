@@ -245,11 +245,7 @@ fullMatrix<double> gmshGenerateMonomialsQuadSerendipity(int order)
 //              to numbering of principal vertices of face !!!!
 fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
 {
-  int nbMonomials =
-    (serendip ?
-     4 +  6 * std::max(0, order - 1) + 4 * std::max(0, (order - 2) * (order - 1) / 2) :
-     (order + 1) * (order + 2) * (order + 3) / 6);
-
+  int nbMonomials = serendip ? 4 + (order - 1)*6 : (order + 1)*(order + 2)*(order + 3)/6;
   if (serendip && !order) nbMonomials = 1;
   fullMatrix<double> monomials(nbMonomials, 3);
 
@@ -329,7 +325,7 @@ fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
 fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
 {
   int nbMonomials = forSerendipPoints ? 6 + (order-1)*9 :
-                                        (order + 1) * (order + 1)*(order + 2)/2;
+                                        (order + 1)*(order + 1)*(order + 2)/2;
   if (forSerendipPoints && !order) nbMonomials = 1;
   fullMatrix<double> monomials(nbMonomials, 3);
 
