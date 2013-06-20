@@ -12,6 +12,7 @@
 #include "MEdge.h"
 #include "boundaryLayersData.h"
 #include "Field.h"
+#include "OS.h"
 
 SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
 {
@@ -256,7 +257,7 @@ static void treat3Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
 	 _columns->_normals.lower_bound(e3);
        itm != _columns->_normals.upper_bound(e3); ++itm) N3.push_back(itm->second);
-  
+
   SVector3 x1,x2;
   if (N1.size() == 2){
   }
@@ -369,7 +370,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
       SVector3 v02 = interiorNormal (p0,p2,p1);
       _columns->_normals.insert(std::make_pair(me02,v02));
     }
-    
+
     MEdge me21(v2,v1);
     if (allEdges.find(me21) != allEdges.end()){
       SVector3 v21 = interiorNormal (p2,p1,p0);
@@ -388,7 +389,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
     std::vector<SVector3> _dirs;
     // get all vertices that are connected  to that
     // vertex among all boundary layer vertices !
-    
+
     for (std::multimap<MVertex*,MVertex*>::iterator itm =
            _columns->_non_manifold_edges.lower_bound(*it);
          itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
@@ -496,7 +497,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
       else {
 	MVertex *current = *it;
 	reparamMeshVertexOnFace(current,gf,p);
-	
+
 	int nbCol = 100;
 	std::vector<MVertex*> _column;
 	std::vector<SMetric3> _metrics;
@@ -505,7 +506,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
 	SPoint3 _close;
 	//double _current_distance = 0.;
 	while(1){
-	  
+
 	  SMetric3 m;
 	  double metric[3];
 	  double l;
@@ -547,7 +548,7 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
   }
   // DEBUG STUFF
 
-  FILE *f = fopen ("test.pos","w");
+  FILE *f = Fopen ("test.pos","w");
   fprintf(f,"View \"\" {\n");
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
     MVertex *v = *it;

@@ -57,7 +57,7 @@ int GModel::readPLY(const std::string &name)
   // this is crazy!?
   replaceCommaByDot(name);
 
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -177,7 +177,7 @@ int GModel::readPLY(const std::string &name)
 
 int GModel::readPLY2(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -240,7 +240,7 @@ int GModel::readPLY2(const std::string &name)
 
 int GModel::writePLY2(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

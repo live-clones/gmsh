@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "MQuadrangle.h"
 #include "MHexahedron.h"
 #include "discreteFace.h"
@@ -11,7 +12,7 @@
 
 int GModel::readP3D(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -110,7 +111,7 @@ int GModel::readP3D(const std::string &name)
 
 int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

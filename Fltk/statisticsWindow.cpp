@@ -269,7 +269,7 @@ void statisticsWindow::compute(bool elementQuality)
   //   int nbEdges = edges.size();
   //   printf("nb edges =%d \n", nbEdges);
   //   if(system("rm qualEdges.txt"));
-  //   FILE *fp = fopen("qualEdges.txt", "w");
+  //   FILE *fp = Fopen("qualEdges.txt", "w");
   //   std::vector<int> qualE;
   //   int nbS = 50;
   //   qualE.resize(nbS);
@@ -347,7 +347,7 @@ void statisticsWindow::compute(bool elementQuality)
   //   Field *f = fields->get(fields.getBackgroundField());
   //   int nbEdges = edges.size();
   //   if(system("rm qualEdges.txt"));
-  //   FILE *fp = fopen("qualEdges.txt", "w");
+  //   FILE *fp = Fopen("qualEdges.txt", "w");
   //   std::vector<int> qualE;
   //   int nbS = 50;
   //   qualE.resize(nbS);

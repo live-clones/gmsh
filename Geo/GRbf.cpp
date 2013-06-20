@@ -5,10 +5,11 @@
 //
 // Contributed by Cecile Piret
 
-#include "GmshConfig.h"
-#include "GRbf.h"
 #include <math.h>
 #include <vector>
+#include "GmshConfig.h"
+#include "GRbf.h"
+#include "OS.h"
 #include "fullMatrix.h"
 #include "Octree.h"
 #include "SPoint3.h"
@@ -59,19 +60,19 @@ static int SphereInEle(void *a, double*c)
 
 static void printNodes(std::set<MVertex *> myNodes)
 {
-  FILE * xyz = fopen("myNodes.pos","w");
+  FILE * xyz = Fopen("myNodes.pos","w");
   fprintf(xyz,"View \"\"{\n");
- for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end(); ++itv){
-   MVertex *v = *itv;
-   fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), v->getNum());
- }
- fprintf(xyz,"};\n");
- fclose(xyz);
+  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end(); ++itv){
+    MVertex *v = *itv;
+    fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), v->getNum());
+  }
+  fprintf(xyz,"};\n");
+  fclose(xyz);
 }
 
 static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes)
 {
-  FILE *f = fopen ("UV.pos", "w");
+  FILE *f = Fopen ("UV.pos", "w");
   fprintf(f,"View  \" uv \" {\n");
 
   Msg::Info("*** RBF exporting 'UV.pos' ");
@@ -238,8 +239,8 @@ void GRbf::buildOctree(double radius)
 void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
 			fullMatrix<double> &curvature)
 {
-	
-	
+
+
   fullMatrix<double> extX, surf, sx,sy,sz, sxx,syy,szz, sxy,sxz,syz,sLap;
   setup_level_set(cntrs,normals,extX, surf);
 
@@ -253,9 +254,9 @@ void GRbf::curvatureRBF(const fullMatrix<double> &cntrs,
     double curv = -sLap(i,0)/norm_grad_s;
     curvature(i,0) = 0.5*fabs(curv)/sBox;
   }
-	
-	
-	
+
+
+
 }
 
 void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
@@ -267,7 +268,7 @@ void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
   evalRbfDer(1,extX,extX,surf,sx);
   evalRbfDer(2,extX,extX,surf,sy);
   evalRbfDer(3,extX,extX,surf,sz);
-  
+
   for (int i = 0; i < extX.size1(); i++) {
     double norm_grad_s = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     sx(i,0) = sx(i,0)/norm_grad_s;
@@ -296,7 +297,7 @@ void GRbf::computeCurvature(const fullMatrix<double> &cntrs,
 void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
 				 std::map<MVertex*, double> &rbf_curv)
 {
-  fullMatrix<double> extX, surf;  
+  fullMatrix<double> extX, surf;
   int numNodes = cntrs.size1();
   int numExtNodes = 3*numNodes;
   setup_level_set(cntrs,normals,extX, surf);
@@ -309,7 +310,7 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
     std::vector<int> &pts = nodesInSphere[i];
     int cluster_size = pts.size();
     fullMatrix<double> nodes_in_sph(3*cluster_size,3);
-    
+
     cluster_center(0,0) = extX(i,0);
     cluster_center(0,1) = extX(i,1);
     cluster_center(0,2) = extX(i,2);
@@ -345,11 +346,11 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
 	Dx(i+j*numNodes,pts[k]) = tempX(j,k);
 	Dy(i+j*numNodes,pts[k]) = tempY(j,k);
 	Dz(i+j*numNodes,pts[k]) = tempZ(j,k);
-	
+
 	Dx(i+j*numNodes,pts[k]+numNodes) = tempX(j,k+cluster_size);
 	Dy(i+j*numNodes,pts[k]+numNodes) = tempY(j,k+cluster_size);
 	Dz(i+j*numNodes,pts[k]+numNodes) = tempZ(j,k+cluster_size);
-	
+
 	Dx(i+j*numNodes,pts[k]+2*numNodes) = tempX(j,k+2*cluster_size);
 	Dy(i+j*numNodes,pts[k]+2*numNodes) = tempY(j,k+2*cluster_size);
 	Dz(i+j*numNodes,pts[k]+2*numNodes) = tempZ(j,k+2*cluster_size);
@@ -369,7 +370,7 @@ void GRbf::computeLocalCurvature(const fullMatrix<double> &cntrs,
     }
     sx.gemm(Dx,sx, 1.0, 0.0);
     sy.gemm(Dy,sy, 1.0, 0.0);
-    sz.gemm(Dz,sz, 1.0, 0.0); 
+    sz.gemm(Dz,sz, 1.0, 0.0);
 
     printf("sBox = %g ",sBox);
     for (int i = 0; i < numNodes; i++) {
@@ -506,7 +507,7 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
     cntrsPlus(i,0) = cntrs(i,0);
     cntrsPlus(i,1) = cntrs(i,1);
     cntrsPlus(i,2) = cntrs(i,2);
-  }	
+  }
   //Specifies the additional node position and its function value
   ONES(numNodes,0) = 1.0;
   cntrsPlus(numNodes,0) = cntrs(0,0)+10.*sBox;
@@ -514,7 +515,7 @@ void GRbf::setup_level_set(const fullMatrix<double> &cntrs,
   cntrsPlus(numNodes,2) = cntrs(0,2)+10.*sBox;
 
   //printf("%g,%g,%g,%g;\n",sBox, cntrs(0,0), cntrs(0,1), cntrs(0,2));
-	
+
   evalRbfDer(1,cntrsPlus,cntrs,ONES,sx);
   evalRbfDer(2,cntrsPlus,cntrs,ONES,sy);
   evalRbfDer(3,cntrsPlus,cntrs,ONES,sz);
@@ -590,23 +591,23 @@ void GRbf::RbfLapSurface_local_projection(const fullMatrix<double> &cntrs,
 void GRbf::RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
 										const fullMatrix<double> &normals,
 										fullMatrix<double> &Oper) {
-	
+
 	int numNodes = cntrs.size1();
 	int nnTot = 3*numNodes;
 	Oper.resize(numNodes,numNodes);
-	
+
 	fullMatrix<double> Dx(numNodes,numNodes),Dy(numNodes,numNodes),Dz(numNodes,numNodes),
     PDx(numNodes,numNodes),PDy(numNodes,numNodes),PDz(numNodes,numNodes),
     PDxx(numNodes,numNodes),PDyy(numNodes,numNodes),PDzz(numNodes,numNodes);
-	
-	fullMatrix<double> sx(nnTot,1),sy(nnTot,1),sz(nnTot,1); 
+
+	fullMatrix<double> sx(nnTot,1),sy(nnTot,1),sz(nnTot,1);
 	fullMatrix<double> extX(nnTot,3), surf(nnTot,1);
-	
+
 	//Stage 1 : The Arbitrary surface
 	setup_level_set(cntrs,normals,extX,surf);
 	if (!isLocal) extendedX = extX;
 	if (!isLocal) surfInterp = surf;
-	
+
 	//Computes the normal vectors to the surface at each node
 	evalRbfDer(1,extX,extX,surf,sx);
 	evalRbfDer(2,extX,extX,surf,sy);
@@ -621,7 +622,7 @@ void GRbf::RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
 	RbfOp(1,cntrs,cntrs,Dx);
 	RbfOp(2,cntrs,cntrs,Dy);
 	RbfOp(3,cntrs,cntrs,Dz);
-	
+
 	// Fills up the operator matrix
 	for (int i=0;i<numNodes ; ++i){
 		for (int j=0;j<numNodes ; ++j){
@@ -638,8 +639,8 @@ void GRbf::RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
 			Oper(i,j) = PDxx(i,j)+PDyy(i,j)+PDzz(i,j);
 		}
 	}
-	
-	
+
+
 }
 
 
@@ -723,7 +724,7 @@ void GRbf::RbfLapSurface_local_CPM(bool isLow,
     LocalOper.setAll(0.0);
     if (isLow) RbfLapSurface_global_CPM_low(nodes_in_sph,local_normals,LocalOper);
     else       RbfLapSurface_global_CPM_high_2(nodes_in_sph,local_normals,LocalOper);
-	  
+
     for (int j = 0; j < nbp; j++){
       Oper(i,pts[j])=LocalOper(0,j);
       Oper(i,pts[j]+numNodes)=LocalOper(0,j+nbp);

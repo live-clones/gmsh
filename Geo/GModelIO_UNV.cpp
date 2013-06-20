@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
+#include "OS.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -16,7 +17,7 @@
 
 int GModel::readUNV(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -192,7 +193,7 @@ static std::string physicalName(GModel *m, int dim, int num)
 int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
                      double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

@@ -401,9 +401,9 @@ static void PrintMesh2dStatistics(GModel *m)
 
   FILE *statreport = 0;
   if(CTX::instance()->createAppendMeshStatReport == 1)
-    statreport = fopen(CTX::instance()->meshStatReportFileName.c_str(), "w");
+    statreport = Fopen(CTX::instance()->meshStatReportFileName.c_str(), "w");
   else if(CTX::instance()->createAppendMeshStatReport == 2)
-    statreport = fopen(CTX::instance()->meshStatReportFileName.c_str(), "a");
+    statreport = Fopen(CTX::instance()->meshStatReportFileName.c_str(), "a");
   else return;
 
   double worst = 1, best = 0, avg = 0;

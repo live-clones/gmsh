@@ -11,6 +11,7 @@
 
 #if defined(HAVE_SOLVER)
 
+#include "OS.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -49,7 +50,7 @@ static double shapeMeasure(MElement *e)
   return d1;
 }
 
-void highOrderSmoother::moveTo(MVertex *v,  
+void highOrderSmoother::moveTo(MVertex *v,
                                    const std::map<MVertex*, SVector3> &m) const
 {
   std::map<MVertex*,SVector3>::const_iterator it = m.find(v);
@@ -58,7 +59,7 @@ void highOrderSmoother::moveTo(MVertex *v,
     v->y() = it->second.y();
     v->z() = it->second.z();
   }
-} 
+}
 
 void highOrderSmoother::moveToStraightSidedLocation(MVertex *v) const
 {
@@ -82,7 +83,7 @@ void highOrderSmoother::moveToTargetLocation(MElement *e) const
     moveToTargetLocation(e->getVertex(i));
 }
 
-void highOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3, 
+void highOrderSmoother::updateTargetLocation(MVertex*v, const SPoint3 &p3,
                                                  const SPoint2 &p2)
 {
   v->x() = p3.x();
@@ -99,7 +100,7 @@ struct p2data{
   MVertex *n12;
   fullMatrix<double> *m1, *m2;
   highOrderSmoother *s;
-  p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12, 
+  p2data(GFace *_gf, MTriangle *_t1, MTriangle *_t2, MVertex *_n12,
          highOrderSmoother *_s)
     : gf(_gf), t1(_t1), t2(_t2), n12(_n12), s(_s)
   {
@@ -109,7 +110,7 @@ struct p2data{
     m1 = new fullMatrix<double>(3 * t1->getNumVertices(),
                                 3 * t1->getNumVertices());
     m2 = new fullMatrix<double>(3 * t2->getNumVertices(),
-                                3 * t2->getNumVertices()); 
+                                3 * t2->getNumVertices());
     SElement se1(t1), se2(t2);
     el.elementMatrix(&se1, *m1);
     el.elementMatrix(&se2, *m2);
@@ -139,7 +140,7 @@ struct pNdata{
     m1 = new  fullMatrix<double>(3 * t1->getNumVertices(),
                                  3 * t1->getNumVertices());
     m2 = new  fullMatrix<double>(3 * t2->getNumVertices(),
-                                 3 * t2->getNumVertices()); 
+                                 3 * t2->getNumVertices());
     SElement se1(t1), se2(t2);
     el.elementMatrix(&se1, *m1);
     el.elementMatrix(&se2, *m2);
@@ -153,7 +154,7 @@ struct pNdata{
   }
 };
 
-static double _DeformationEnergy(MElement *e, 
+static double _DeformationEnergy(MElement *e,
                                  fullMatrix<double> *K,
                                  highOrderSmoother *s)
 {
@@ -183,13 +184,13 @@ static double _DeformationEnergy(MElement *e,
 
 static double _DeformationEnergy(p2data *p)
 {
-  return _DeformationEnergy(p->t1, p->m1, p->s) + 
+  return _DeformationEnergy(p->t1, p->m1, p->s) +
     _DeformationEnergy(p->t2, p->m2, p->s);
 }
 
 static double _DeformationEnergy(pNdata *p)
 {
-  return _DeformationEnergy(p->t1, p->m1, p->s) + 
+  return _DeformationEnergy(p->t1, p->m1, p->s) +
     _DeformationEnergy(p->t2, p->m2, p->s);
 }
 
@@ -207,7 +208,7 @@ static double _function_p2tB(fullVector<double> &x, void *data)
   double E = _DeformationEnergy(p);
   p->n12->x() = xx;
   p->n12->y() = yy;
-  p->n12->z() = zz;  
+  p->n12->z() = zz;
   return E;
 }
 
@@ -221,10 +222,10 @@ static double _function_p2t(fullVector<double> &x, void *data)
   p->n12->x() = gp12.x();
   p->n12->y() = gp12.y();
   p->n12->z() = gp12.z();
-  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));      
+  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));
   p->n12->x() = xx;
   p->n12->y() = yy;
-  p->n12->z() = zz;  
+  p->n12->z() = zz;
   return -q;
 }
 
@@ -243,12 +244,12 @@ static double _function_pNt(fullVector<double> &x, void *data)
     p->n[i]->y() = gp12.y();
     p->n[i]->z() = gp12.z();
   }
-  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));      
+  double q = std::min(shapeMeasure(p->t1), shapeMeasure(p->t2));
   for (unsigned int i = 0; i < p->n.size(); i++){
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
-  }  
+  }
   return -q;
 }
 
@@ -272,7 +273,7 @@ static double _function_pNtB(fullVector<double> &x, void *data)
     p->n[i]->x() = xx[i];
     p->n[i]->y() = yy[i];
     p->n[i]->z() = zz[i];
-  }  
+  }
   return E;
 }
 
@@ -291,7 +292,7 @@ void getDistordedElements(const std::vector<MElement*> &v,
   }
 }
 
-void addOneLayer(const std::vector<MElement*> &v, 
+void addOneLayer(const std::vector<MElement*> &v,
                  std::vector<MElement*> &d,
                  std::vector<MElement*> &layer)
 {
@@ -327,7 +328,7 @@ void addOneLayer(const std::vector<MElement*> &v,
 
 void _printJacobiansAtNodes (const char * name, std::vector<MElement*> &v)
 {
-  FILE *fd = fopen (name,"w");
+  FILE *fd = Fopen (name,"w");
   fprintf(fd,"$MeshFormat\n2 0 8\n$EndMeshFormat\n$ElementNodeData\n1\n\"det J\"\n1\n0.0\n3\n1\n1\n%d\n", (int) v.size());
   for (int i=0; i<v.size(); i++){
     const polynomialBasis* pb = v[i]->getFunctionSpace();
@@ -338,9 +339,9 @@ void _printJacobiansAtNodes (const char * name, std::vector<MElement*> &v)
       const double _w = pb->points(j,2);
       double jac[3][3];
       double J = v[i]->getJacobian (_u,_v,_w, jac);
-      fprintf(fd," %g",J);    
+      fprintf(fd," %g",J);
     }
-    fprintf(fd,"\n");    
+    fprintf(fd,"\n");
   }
   fprintf(fd,"$EndElementNodeData\n");
   fclose(fd);
@@ -384,14 +385,14 @@ void highOrderSmoother::smooth(GRegion *gr)
 
 
 
-void highOrderSmoother::optimize(GFace * gf, 
+void highOrderSmoother::optimize(GFace * gf,
 				 edgeContainer &edgeVertices,
 				 faceContainer &faceVertices)
 {
   //  if (gf->geomType() != GEntity::Plane) return;
 
     std::vector<MElement*> bad;
-    
+
 
   while (1) {
     // relocate the vertices using elliptic smoother
@@ -400,17 +401,17 @@ void highOrderSmoother::optimize(GFace * gf,
     //      findOptimalLocationsPN(gf,this);
     //      findOptimalLocationsPN(gf,this);
     //    }
-    // then try to swap for better configurations  
+    // then try to swap for better configurations
 
     //smooth(gf, !CTX::instance()->mesh.highOrderNoMetric);
-    
-    
+
+
     //    for (int i=0;i<100;i++){
-      //      int nbSwap = 
+      //      int nbSwap =
 	//	swapHighOrderTriangles(gf,edgeVertices,faceVertices,this);
 	//      printf("%d swaps\n",nbSwap);
     //    }
-    
+
      smooth(gf,true);
     // smooth(gf,true);
     // smooth(gf,true);
@@ -429,8 +430,8 @@ void highOrderSmoother::optimize(GFace * gf,
   }
 }
 
-void highOrderSmoother::computeMetricVector(GFace *gf, 
-                                                MElement *e, 
+void highOrderSmoother::computeMetricVector(GFace *gf,
+                                                MElement *e,
                                                 fullMatrix<double> &J,
                                                 fullMatrix<double> &JT,
                                                 fullVector<double> &D)
@@ -438,8 +439,8 @@ void highOrderSmoother::computeMetricVector(GFace *gf,
   int nbNodes = e->getNumVertices();
   for (int j = 0; j < nbNodes; j++){
     SPoint2 param;
-    reparamMeshVertexOnFace(e->getVertex(j), gf, param);  
-    Pair<SVector3,SVector3> der = gf->firstDer(param);    
+    reparamMeshVertexOnFace(e->getVertex(j), gf, param);
+    Pair<SVector3,SVector3> der = gf->firstDer(param);
     int XJ = j;
     int YJ = j + nbNodes;
     int ZJ = j + 2 * nbNodes;
@@ -451,7 +452,7 @@ void highOrderSmoother::computeMetricVector(GFace *gf,
     J(XJ,VJ) = der.second().x();
     J(YJ,VJ) = der.second().y();
     J(ZJ,VJ) = der.second().z();
-    
+
     JT(UJ,XJ) = der.first().x();
     JT(UJ,YJ) = der.first().y();
     JT(UJ,ZJ) = der.first().z();
@@ -459,12 +460,12 @@ void highOrderSmoother::computeMetricVector(GFace *gf,
     JT(VJ,YJ) = der.second().y();
     JT(VJ,ZJ) = der.second().z();
 
-    GPoint gp = gf->point(param);    
+    GPoint gp = gf->point(param);
     SVector3 ss = getSSL(e->getVertex(j));
     D(XJ) = gp.x() - ss.x();
     D(YJ) = gp.y() - ss.y();
     D(ZJ) = gp.z() - ss.z();
-  } 
+  }
 }
 
 void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
@@ -479,10 +480,10 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 #endif
   dofManager<double> myAssembler(lsys);
   elasticityTerm El(0, 1.0, .33, getTag());
-  
+
   std::vector<MElement*> layer, v;
   double minD;
-  
+
   getDistordedElements(all, 0.99, v, minD);
 
   const int nbLayers = 3; //2, originally :)
@@ -519,10 +520,10 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
       // printf("%d %d %d v\n", i, j, v[i]->getNumVertices());
       its = _straightSidedLocation.find(vert);
       if (its == _straightSidedLocation.end()){
-        _straightSidedLocation[vert] = 
-          SVector3(vert->x(), vert->y(), vert->z());     
-        _targetLocation[vert] = 
-          SVector3(vert->x(), vert->y(), vert->z());     
+        _straightSidedLocation[vert] =
+          SVector3(vert->x(), vert->y(), vert->z());
+        _targetLocation[vert] =
+          SVector3(vert->x(), vert->y(), vert->z());
       }
       else{
         vert->x() = its->second.x();
@@ -535,7 +536,7 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
       }
     }
   }
-  
+
   // number the other DOFs
   for (unsigned int i = 0; i < v.size(); i++){
     for (int j = 0; j < v[i]->getNumVertices(); j++){
@@ -543,9 +544,9 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
       myAssembler.numberVertex(vert, 0, getTag());
       myAssembler.numberVertex(vert, 1, getTag());
       verticesToMove.insert(vert);
-    } 
+    }
   }
-  
+
   double dx0 = smooth_metric_(v, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
   Msg::Debug(" dx0 = %12.5E", dx0);
@@ -560,8 +561,8 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
 
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     SPoint2 param;
-    reparamMeshVertexOnFace(*it, gf, param);  
-    GPoint gp = gf->point(param);    
+    reparamMeshVertexOnFace(*it, gf, param);
+    GPoint gp = gf->point(param);
     if ((*it)->onWhat()->dim() == 2){
       (*it)->x() = gp.x();
       (*it)->y() = gp.y();
@@ -572,14 +573,14 @@ void highOrderSmoother::smooth_metric(std::vector<MElement*>  & all, GFace *gf)
       SVector3 p =  _targetLocation[(*it)];
       (*it)->x() = p.x();
       (*it)->y() = p.y();
-      (*it)->z() = p.z();      
+      (*it)->z() = p.z();
     }
   }
   delete lsys;
 }
 
-double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v, 
-                                         GFace *gf, 
+double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
+                                         GFace *gf,
                                          dofManager<double> &myAssembler,
                                          std::set<MVertex*> &verticesToMove,
                                          elasticityTerm &El)
@@ -624,11 +625,11 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
     myAssembler.systemSolve();
     // for all element, compute detJ at integration points --> material law
     // end while convergence -------------------------------------------------------
-  
+
     for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
       if ((*it)->onWhat()->dim() == 2){
 	SPoint2 param;
-	reparamMeshVertexOnFace((*it), gf, param);  
+	reparamMeshVertexOnFace((*it), gf, param);
 	SPoint2 dparam;
 	myAssembler.getDofValue((*it), 0, getTag(), dparam[0]);
 	myAssembler.getDofValue((*it), 1, getTag(), dparam[1]);
@@ -637,10 +638,10 @@ double highOrderSmoother::smooth_metric_(std::vector<MElement*>  & v,
 	(*it)->setParameter(0, newp.x());
 	(*it)->setParameter(1, newp.y());
       }
-    }    
+    }
     myAssembler.systemClear();
   }
-  
+
   return dx;
 }
 
@@ -654,7 +655,7 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
 {
 #ifdef HAVE_PETSC
   // assume that the mesh is OK, yet already curved
-  linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;    
+  linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;
   dofManager<double> myAssembler(lsys);
   elasticityMixedTerm El_mixed (0, 1.0, .333, getTag());
   elasticityTerm El (0, 1.0, .333, getTag());
@@ -662,8 +663,8 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
   std::set<MVertex*> _vertices;
 
   //+++++++++ Boundary Conditions & Numbering +++++++++++++++++++++++++++++++
-  // fix all dof that correspond to vertices on the boundary 
-  // the value is equal 
+  // fix all dof that correspond to vertices on the boundary
+  // the value is equal
   for (unsigned int i = 0; i < v.size(); i++){
     for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
@@ -699,7 +700,7 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
       }
     }
     if (_dim == 2)myAssembler.fixVertex(vert, 2, getTag(), 0);
-    // number vertices 
+    // number vertices
     myAssembler.numberVertex(vert, 0, getTag());
     myAssembler.numberVertex(vert, 1, getTag());
     myAssembler.numberVertex(vert, 2, getTag());
@@ -720,15 +721,15 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
     // solve the system
     lsys->systemSolve();
   }
-  
+
   //+++++++++ Move vertices @ maximum ++++++++++++++++++++++++++++++++++++
-  FILE *fd = fopen ("d.msh","w");
+  FILE *fd = Fopen ("d.msh","w");
   fprintf(fd,"$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n", (int) _vertices.size());
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
     double ax, ay, az;
     myAssembler.getDofValue(*it, 0, getTag(), ax);
     myAssembler.getDofValue(*it, 1, getTag(), ay);
-    myAssembler.getDofValue(*it, 2, getTag(), az);    
+    myAssembler.getDofValue(*it, 2, getTag(), az);
     (*it)->x() += max_incr*ax;
     (*it)->y() += max_incr*ay;
     (*it)->z() += max_incr*az;
@@ -744,7 +745,7 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
   /*
     std::map<MVertex*,double> facts;
     while(1){
-    int count = 0; 
+    int count = 0;
     for (unsigned int i = 0; i < v.size(); i++){
     double disto = v[i]->distoShapeMeasure();
     if (disto < thres){
@@ -758,7 +759,7 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
     double ax, ay, az;
     myAssembler.getDofValue(vert, 0, getTag(), ax);
     myAssembler.getDofValue(vert, 1, getTag(), ay);
-    myAssembler.getDofValue(vert, 2, getTag(), az);    
+    myAssembler.getDofValue(vert, 2, getTag(), az);
     vert->x() -= .1*ax;
     vert->y() -= .1*ay;
     vert->z() -= .1*az;
@@ -774,14 +775,14 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
   while(1){
     std::vector<MElement*> disto;
     double minD;
-    getDistordedElements(v, 0.5, disto, minD);    
+    getDistordedElements(v, 0.5, disto, minD);
     if (minD < thres){
       percentage -= 10.;
       for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
 	double ax, ay, az;
 	myAssembler.getDofValue(*it, 0, getTag(), ax);
 	myAssembler.getDofValue(*it, 1, getTag(), ay);
-	myAssembler.getDofValue(*it, 2, getTag(), az);    
+	myAssembler.getDofValue(*it, 2, getTag(), az);
 	(*it)->x() -= .1*ax;
 	(*it)->y() -= .1*ay;
 	(*it)->z() -= .1*az;
@@ -789,14 +790,14 @@ double highOrderSmoother::apply_incremental_displacement (double max_incr,
     }
     else break;
   }
-    
+
   delete lsys;
   return percentage;
 #endif
   return 0.0;
 }
 
-int highOrderSmoother::smooth_with_mixed_formulation (std::vector<MElement*> &all, 
+int highOrderSmoother::smooth_with_mixed_formulation (std::vector<MElement*> &all,
 						      double alpha)
 {
   int ITER = 0;
@@ -818,18 +819,18 @@ int highOrderSmoother::smooth_with_mixed_formulation (std::vector<MElement*> &al
     else if (percentage_of_what_is_left == 100.)break;
   }
 
-  getDistordedElements(all, 0.3, disto, minD);    
+  getDistordedElements(all, 0.3, disto, minD);
   Msg::Info("iter %d : %d elements / %d distorted  min Disto = %g ",ITER,
-	    all.size(), disto.size(), minD);       
+	    all.size(), disto.size(), minD);
 
   if (0 && percentage < 0.99){
     char NN[256];
     sprintf(NN,"smoothing-%d.msh",ITER++);
-    double percentage_of_what_is_left = apply_incremental_displacement (1.0,all, true, alpha,NN,disto);    
+    double percentage_of_what_is_left = apply_incremental_displacement (1.0,all, true, alpha,NN,disto);
     percentage += (1.-percentage) * percentage_of_what_is_left/100.;
     Msg::Info("The mixed smoother was able to do %3d percent of the motion",(int)(percentage*100.));
   }
-  
+
   return 1;
 }
 
@@ -839,7 +840,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_PETSC)
-  linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;    
+  linearSystemPETSc<double> *lsys = new  linearSystemPETSc<double>;
 #else
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
@@ -848,7 +849,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 #endif
   dofManager<double> myAssembler(lsys);
   elasticityTerm El(0, 1.0, .333, getTag());
-  
+
   std::vector<MElement*> layer, v;
   double minD;
 
@@ -909,7 +910,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
 
   for (unsigned int i = 0; i < v.size(); i++)
     moveToStraightSidedLocation(v[i]);
-  
+
   // number the other DOFs
   for (unsigned int i = 0; i < v.size(); i++){
     for (int j = 0; j < v[i]->getNumVertices(); j++){
@@ -919,7 +920,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
       myAssembler.numberVertex(vert, 2, getTag());
       // gather all vertices that are supposed to move
       verticesToMove[vert] = SVector3(0.0, 0.0, 0.0);
-    } 
+    }
   }
 
   //  Msg::Info("%d vertices FIXED %d NUMBERED", myAssembler.sizeOfF()
@@ -936,7 +937,7 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
     // solve the system
     lsys->systemSolve();
   }
-  
+
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     double ax, ay, az;
     myAssembler.getDofValue(it->first, 0, getTag(), ax);
@@ -948,14 +949,14 @@ void highOrderSmoother::smooth(std::vector<MElement*> &all)
   }
 
   // delete matrices and vectors
-  
+
   delete lsys;
 }
 
 void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
                                       std::vector<MElement*>& old_elems,
                                       GFace* gf) {
- 
+
   //  printf("Smoothing a cavity...\n");
   //  printf("Old elems : %d and %d\n", old_elems[0]->getNum(), old_elems[1]->getNum());
   //  printf("Cavity elems : %d and %d\n", cavity[0]->getNum(), cavity[1]->getNum());
@@ -996,7 +997,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       }
     }
   }
-  
+
   //printf("%d vertices \n", _displ.size());
 
   std::set<MVertex*>::iterator it;
@@ -1014,9 +1015,9 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       its = _straightSidedLocation.find(vert);
       if (its == _straightSidedLocation.end()) {
 	//printf("SETTING LOCATIONS for %d\n",vert->getNum());
-        _straightSidedLocation[vert] = 
-          SVector3(vert->x(), vert->y(), vert->z());     
-        _targetLocation[vert] = 
+        _straightSidedLocation[vert] =
+          SVector3(vert->x(), vert->y(), vert->z());
+        _targetLocation[vert] =
           SVector3(vert->x(), vert->y(), vert->z());
       }else {
         vert->x() = its->second.x();
@@ -1039,12 +1040,12 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       myAssembler.numberVertex(vert, 0, getTag());
       myAssembler.numberVertex(vert, 1, getTag());
       verticesToMove.insert(vert);
-    } 
+    }
   }
 
   //Msg::Info("%d vertices FIXED %d NUMBERED\n", myAssembler.sizeOfF()
   //          , myAssembler.sizeOfR());
-  
+
   double dx0 = smooth_metric_(cavity, gf, myAssembler, verticesToMove, El);
   double dx = dx0;
   //printf(" dx0 = %12.5E\n", dx0);
@@ -1059,8 +1060,8 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
 
   for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
     SPoint2 param;
-    reparamMeshVertexOnFace(*it, gf, param);  
-    GPoint gp = gf->point(param);    
+    reparamMeshVertexOnFace(*it, gf, param);
+    GPoint gp = gf->point(param);
     if ((*it)->onWhat()->dim() == 2){
       (*it)->x() = gp.x();
       (*it)->y() = gp.y();
@@ -1071,7 +1072,7 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
       SVector3 p =  _targetLocation[(*it)];
       (*it)->x() = p.x();
       (*it)->y() = p.y();
-      (*it)->z() = p.z();      
+      (*it)->z() = p.z();
     }
     //printf("  Moving %d to %g %g %g\n", (*it)->getNum(),_targetLocation[(*it)][0], _targetLocation[(*it)][1],_targetLocation[(*it)][2] );
   }
@@ -1095,8 +1096,8 @@ void highOrderSmoother::smooth_cavity(std::vector<MElement*>& cavity,
 */
 
 /*
-  n34 is the new vertex, we'd like to put it at the 
-  best place i.e. at a place where it maximizes the 
+  n34 is the new vertex, we'd like to put it at the
+  best place i.e. at a place where it maximizes the
   minimal smoothness of the neighboring elements.
 
   One can actually maximize this value or one can use
@@ -1110,8 +1111,8 @@ static void getNodesP2(const MEdge &me, MTriangle *t1, MTriangle *t2,
                        MVertex * &n13){
 
   n1 = me.getVertex(0);
-  n2 = me.getVertex(1);    
-  
+  n2 = me.getVertex(1);
+
   if (t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
   else if (t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
   else if (t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
@@ -1129,7 +1130,7 @@ static void getNodesP2(const MEdge &me, MTriangle *t1, MTriangle *t2,
     n23 = t1->getVertex((iStart+1)%3 + 3);
     n12 = t1->getVertex((iStart+2)%3 + 3);
   }
-  
+
   if (t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
   else if (t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
   else if (t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
@@ -1156,8 +1157,8 @@ static void getNodesPN (const MEdge &me, MTriangle *t1, MTriangle *t2,
                         std::vector<MVertex *> &n13){
 
   n1 = me.getVertex(0);
-  n2 = me.getVertex(1);    
-  
+  n2 = me.getVertex(1);
+
   int order = t1->getPolynomialOrder();
 
   if (t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
@@ -1183,7 +1184,7 @@ static void getNodesPN (const MEdge &me, MTriangle *t1, MTriangle *t2,
     int start12 = 3 + ((iStart+2)%3) * (order-1);
     for (int i=order-2;i>=0;i--)n12.push_back(t1->getVertex(start12+i));
   }
-  
+
   if (t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
   else if (t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
   else if (t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
@@ -1206,7 +1207,7 @@ static void getNodesPN (const MEdge &me, MTriangle *t1, MTriangle *t2,
   }
 }
 
-static double surfaceTriangleUV(SPoint2 &v1, SPoint2 &v2, SPoint2 &v3)           
+static double surfaceTriangleUV(SPoint2 &v1, SPoint2 &v2, SPoint2 &v3)
 {
   const double v12[2] = {v2.x() - v1.x(),v2.y() - v1.y()};
   const double v13[2] = {v3.x() - v1.x(),v3.y() - v1.y()};
@@ -1227,7 +1228,7 @@ struct swap_triangles_p2
   double evalConfiguration (GFace *gf, SPoint2 & p) const
   {
     GPoint gp34 = gf->point(p);
-    MFaceVertex _test (gp34.x(),gp34.y(),gp34.z(),gf,p.x(),p.y());        
+    MFaceVertex _test (gp34.x(),gp34.y(),gp34.z(),gf,p.x(),p.y());
     std::vector<MVertex *>vv;
     vv.push_back(n13);vv.push_back(&_test);vv.push_back(n14);
     MTriangleN t3_test (n1,n3,n4,vv,2,t1->getNum(),t1->getPartition());
@@ -1239,15 +1240,15 @@ struct swap_triangles_p2
     return std::min(q3,q4);
   }
 
-  MVertex *optimalLocation (GFace *gf, 
+  MVertex *optimalLocation (GFace *gf,
                             SPoint2 &p3,
                             SPoint2 &p4) const
   {
     SPoint2 p34_linear = (p3+p4)*.5;
-    
+
     GPoint gp34 = gf->point(p34_linear);
     MFaceVertex *_test = new MFaceVertex (gp34.x(),gp34.y(),gp34.z(),
-                                          gf,p34_linear.x(),p34_linear.y());        
+                                          gf,p34_linear.x(),p34_linear.y());
     std::vector<MVertex *>vv;
     vv.push_back(n13);vv.push_back(_test);vv.push_back(n14);
     MTriangleN t3_test (n1,n3,n4,vv,2,t1->getNum(),t1->getPartition());
@@ -1312,7 +1313,7 @@ struct swap_triangles_p2
            n2->getNum(),n3->getNum(),n4->getNum(),
            n12->getNum(),n23->getNum(),n13->getNum(),n24->getNum(),n14->getNum());
   }
-  
+
 };
 
 struct swap_triangles_pN
@@ -1335,7 +1336,7 @@ struct swap_triangles_pN
     std::pair<MVertex*, MVertex*> _temp2(_temp.getMinVertex(), _temp.getMaxVertex());
     edgeVertices.erase(_temp2);
     // do the same for internal vertices !!
-  } 
+  }
 
   swap_triangles_pN(const MEdge &me, MTriangle *_t1, MTriangle *_t2, GFace *gf,
                     edgeContainer &_edgeVertices,
@@ -1372,7 +1373,7 @@ struct swap_triangles_pN
     old_elems.push_back(t1);
     old_elems.push_back(t2);
     //s->smooth_cavity(cavity, old_elems, gf);
-      
+
     const double qnew1 = shapeMeasure(t3);
     const double qnew2 = shapeMeasure(t4);
 
@@ -1389,15 +1390,15 @@ struct swap_triangles_pN
   }
 };
 
-static int optimalLocationP2_(GFace *gf, 
+static int optimalLocationP2_(GFace *gf,
                               const MEdge &me,
-                              MTriangle *t1, MTriangle *t2, 
+                              MTriangle *t1, MTriangle *t2,
                               highOrderSmoother *s)
 {
   double qini = std::min(shapeMeasure(t1),shapeMeasure(t2));
 
   if (qini > 0.6) return 0;
-  
+
   MVertex *n1,*n2,*n3=0,*n4=0,*n12,*n14,*n24,*n23,*n13;
   getNodesP2 (me,t1,t2,n1,n2,n3,n4,n12,n14,n24,n23,n13);
   SPoint2 p1,p2,p3,p4,p12;
@@ -1423,8 +1424,8 @@ static int optimalLocationP2_(GFace *gf,
   double u1 = gf->parBounds(0).high();
   double v0 = gf->parBounds(1).low();
   double v1 = gf->parBounds(1).high();
-  if (pp(0) < u0 || pp(0) > u1 || pp(1) < v0 || pp(1) > v1)return 0;   
-  
+  if (pp(0) < u0 || pp(0) > u1 || pp(1) < v0 || pp(1) > v1)return 0;
+
   GPoint gp12 = gf->point(SPoint2(pp(0),pp(1)));
   n12->x() = gp12.x();
   n12->y() = gp12.y();
@@ -1510,7 +1511,7 @@ static int findOptimalLocationsPN(GFace *gf,highOrderSmoother *s)
   e2t_cont adj;
   buildEdgeToTriangle(gf->triangles, adj);
   int N=0;
-  
+
   for (e2t_cont::iterator it = adj.begin(); it!= adj.end(); ++it){
     if (it->second.second)
       N += optimalLocationPN_(gf,it->first, dynamic_cast<MTriangle*>(it->second.first),
@@ -1519,7 +1520,7 @@ static int findOptimalLocationsPN(GFace *gf,highOrderSmoother *s)
   return N;
 }
 
-static int swapHighOrderTriangles(GFace *gf, 
+static int swapHighOrderTriangles(GFace *gf,
                                   edgeContainer &edgeVertices,
                                   faceContainer &faceVertices,
                                   highOrderSmoother *s)
@@ -1613,7 +1614,7 @@ static int swapHighOrderTriangles(GFace *gf,
           v_removed.insert(*vit);
 	  //delete  *vit;
       }
-      
+
       swap_triangles_pN &sw = (swap_triangles_pN &) *itp;
       sw.cleanupDeletedEdge (false);
 
@@ -1626,7 +1627,7 @@ static int swapHighOrderTriangles(GFace *gf,
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
-    } 
+    }
   }
 
   gf->mesh_vertices.clear();
@@ -1638,7 +1639,7 @@ static int swapHighOrderTriangles(GFace *gf,
     }
     else {
       delete gf->triangles[i];
-    }    
+    }
   }
   gf->triangles.clear();
   gf->triangles = triangles2;
@@ -1700,14 +1701,14 @@ static int swapHighOrderTriangles(GFace *gf)
     }
     ++itp;
   }
-    
+
   for (unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if (v_removed.find(gf->mesh_vertices[i]) == v_removed.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
     }
     else {
       delete gf->mesh_vertices[i];
-    }    
+    }
   }
   gf->mesh_vertices = mesh_vertices2;
 
@@ -1717,14 +1718,14 @@ static int swapHighOrderTriangles(GFace *gf)
     }
     else {
       delete gf->triangles[i];
-    }    
+    }
   }
   //  printf("replacing %d by %d\n",gf->triangles.size(),triangles2.size());
   gf->triangles = triangles2;
   return nbSwap;
 }
 
-void  highOrderSmoother::swap(GFace *gf, 
+void  highOrderSmoother::swap(GFace *gf,
                                   edgeContainer &edgeVertices,
                                   faceContainer &faceVertices)
 {
@@ -1758,10 +1759,10 @@ highOrderSmoother::highOrderSmoother (GModel *gm)
 {
   _clean();
   // compute straigh sided positions that are actually X,Y,Z positions
-  // that are NOT always on curves and surfaces 
+  // that are NOT always on curves and surfaces
 
   // compute stright sided positions of vertices that are classified on model edges
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){    
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
     for (int i=0;i<(*it)->lines.size();i++){
       MLine *l = (*it)->lines[i];
       int N = l->getNumVertices()-2;
@@ -1790,8 +1791,8 @@ highOrderSmoother::highOrderSmoother (GModel *gm)
 	  const double t1 = fs->points(j, 0);
 	  const double t2 = fs->points(j, 1);
 	  SPoint3 pc = face.interpolate(t1, t2);
-	  _straightSidedLocation [t->getVertex(j)] = 
-	    SVector3(pc.x(),pc.y(),pc.z()); 
+	  _straightSidedLocation [t->getVertex(j)] =
+	    SVector3(pc.x(),pc.y(),pc.z());
 	}
       }
     }
@@ -1804,8 +1805,8 @@ highOrderSmoother::highOrderSmoother (GModel *gm)
 	  const double t1 = fs->points(j, 0);
 	  const double t2 = fs->points(j, 1);
 	  SPoint3 pc = face.interpolate(t1, t2);
-	  _straightSidedLocation [q->getVertex(j)] = 
-	    SVector3(pc.x(),pc.y(),pc.z()); 
+	  _straightSidedLocation [q->getVertex(j)] =
+	    SVector3(pc.x(),pc.y(),pc.z());
 	}
       }
     }

@@ -888,7 +888,7 @@ void createRegularMesh (GFace *gf,
 
  char name3[234];
   sprintf(name3,"quadParam_%d.pos", gf->tag());
-  FILE *f3 = fopen(name3,"w");
+  FILE *f3 = Fopen(name3,"w");
   fprintf(f3,"View \"%s\" {\n",name3);
 
   //create points using transfinite interpolation
@@ -1216,7 +1216,7 @@ struct  quadBlob {
     if (!CTX::instance()->mesh.saveAll) return;
     char name[234];
     sprintf(name,"blob%d_%d_%d.pos", iBlob, iter, method);
-    FILE *f = fopen(name,"w");
+    FILE *f = Fopen(name,"w");
     fprintf(f,"View \"%s\" {\n",name);
     for (unsigned int i = 0; i < quads.size(); i++){
       quads[i]->writePOS(f,true,false,false,false,false,false);
@@ -1888,7 +1888,7 @@ struct opti_data_vertex_relocation {
   }
 
   void print_cavity (char *name){
-    FILE *f = fopen(name,"w");
+    FILE *f = Fopen(name,"w");
     fprintf(f,"View \"\"{\n");
     for (unsigned int i=0;i<e.size();++i){
       MElement *el = e[i];
@@ -3586,157 +3586,157 @@ void quadsToTriangles(GFace *gf, double minqual)
 
 double Temporary::w1,Temporary::w2,Temporary::w3;
 
-std::vector<SVector3> Temporary::gradients; 	 	 
+std::vector<SVector3> Temporary::gradients;
 
-Temporary::Temporary(){} 	 	 
+Temporary::Temporary(){}
 
-Temporary::~Temporary(){} 	 	 
+Temporary::~Temporary(){}
 
-SVector3 Temporary::compute_gradient(MElement*element) 	 	 
-{ 	 	 
-  /*double x1,y1,z1; 	 	 
-  double x2,y2,z2; 	 	 
-  double x3,y3,z3; 	 	 
-  double x,y,z; 	 	 
-  MVertex*vertex1 = element->getVertex(0); 	 	 
-  MVertex*vertex2 = element->getVertex(1); 	 	 
-  MVertex*vertex3 = element->getVertex(2); 	 	 
-  x1 = vertex1->x(); 	 	 
-  y1 = vertex1->y(); 	 	 
-  z1 = vertex1->z(); 	 	 
-  x2 = vertex2->x(); 	 	 
-  y2 = vertex2->y(); 	 	 
-  z2 = vertex2->z(); 	 	 
-  x3 = vertex3->x(); 	 	 
-  y3 = vertex3->y(); 	 	 
-  z3 = vertex3->z(); 	 	 
-  x = (x1+x2+x3)/3.0; 	 	 
-  y = (y1+y2+y3)/3.0; 	 	 
-  z = (z1+z2+z3)/3.0;*/ 	 	 
-  return SVector3(0.0,1.0,0.0); 	 	 
-} 	 	 
+SVector3 Temporary::compute_gradient(MElement*element)
+{
+  /*double x1,y1,z1;
+  double x2,y2,z2;
+  double x3,y3,z3;
+  double x,y,z;
+  MVertex*vertex1 = element->getVertex(0);
+  MVertex*vertex2 = element->getVertex(1);
+  MVertex*vertex3 = element->getVertex(2);
+  x1 = vertex1->x();
+  y1 = vertex1->y();
+  z1 = vertex1->z();
+  x2 = vertex2->x();
+  y2 = vertex2->y();
+  z2 = vertex2->z();
+  x3 = vertex3->x();
+  y3 = vertex3->y();
+  z3 = vertex3->z();
+  x = (x1+x2+x3)/3.0;
+  y = (y1+y2+y3)/3.0;
+  z = (z1+z2+z3)/3.0;*/
+  return SVector3(0.0,1.0,0.0);
+}
 
-void Temporary::select_weights(double new_w1,double new_w2,double new_w3) 	 	 
-{ 	 	 
-  w1 = new_w1; 	 	 
-  w2 = new_w2; 	 	 
-  w3 = new_w3; 	 	 
-} 	 	 
+void Temporary::select_weights(double new_w1,double new_w2,double new_w3)
+{
+  w1 = new_w1;
+  w2 = new_w2;
+  w3 = new_w3;
+}
 
-double Temporary::compute_total_cost(double f1,double f2) 	 	 
-{ 	 	 
-  double cost; 	 	 
-  cost = w1*f1 + w2*f2 + w3*f1*f2; 	 	 
-  return cost; 	 	 
-} 	 	 
+double Temporary::compute_total_cost(double f1,double f2)
+{
+  double cost;
+  cost = w1*f1 + w2*f2 + w3*f1*f2;
+  return cost;
+}
 
-SVector3 Temporary::compute_normal(MElement*element) 	 	 
-{ 	 	 
-  double x1,y1,z1; 	 	 
-  double x2,y2,z2; 	 	 
-  double x3,y3,z3; 	 	 
-  double length; 	 	 
-  SVector3 vectorA; 	 	 
-  SVector3 vectorB; 	 	 
-  SVector3 normal; 	 	 
-  MVertex*vertex1 = element->getVertex(0); 	 	 
-  MVertex*vertex2 = element->getVertex(1); 	 	 
-  MVertex*vertex3 = element->getVertex(2); 	 	 
-  x1 = vertex1->x(); 	 	 
-  y1 = vertex1->y(); 	 	 
-  z1 = vertex1->z(); 	 	 
-  x2 = vertex2->x(); 	 	 
-  y2 = vertex2->y(); 	 	 
-  z2 = vertex2->z(); 	 	 
-  x3 = vertex3->x(); 	 	 
-  y3 = vertex3->y(); 	 	 
-  z3 = vertex3->z(); 	 	 
-  vectorA = SVector3(x2-x1,y2-y1,z2-z1); 	 	 
-  vectorB = SVector3(x3-x1,y3-y1,z3-z1); 	 	 
-  normal = crossprod(vectorA,vectorB); 	 	 
-  length = norm(normal); 	 	 
-  return SVector3(normal.x()/length,normal.y()/length,normal.z()/length); 	 	 
-} 	 	 
+SVector3 Temporary::compute_normal(MElement*element)
+{
+  double x1,y1,z1;
+  double x2,y2,z2;
+  double x3,y3,z3;
+  double length;
+  SVector3 vectorA;
+  SVector3 vectorB;
+  SVector3 normal;
+  MVertex*vertex1 = element->getVertex(0);
+  MVertex*vertex2 = element->getVertex(1);
+  MVertex*vertex3 = element->getVertex(2);
+  x1 = vertex1->x();
+  y1 = vertex1->y();
+  z1 = vertex1->z();
+  x2 = vertex2->x();
+  y2 = vertex2->y();
+  z2 = vertex2->z();
+  x3 = vertex3->x();
+  y3 = vertex3->y();
+  z3 = vertex3->z();
+  vectorA = SVector3(x2-x1,y2-y1,z2-z1);
+  vectorB = SVector3(x3-x1,y3-y1,z3-z1);
+  normal = crossprod(vectorA,vectorB);
+  length = norm(normal);
+  return SVector3(normal.x()/length,normal.y()/length,normal.z()/length);
+}
 
-SVector3 Temporary::compute_other_vector(MElement*element) 	 	 
-{ 	 	 
-  //int number; 	 	 
-  double length; 	 	 
-  SVector3 normal; 	 	 
-  SVector3 gradient; 	 	 
-  SVector3 other_vector; 	 	 
-  //number = element->getNum(); 	 	 
-  normal = Temporary::compute_normal(element); 	 	 
-  gradient = Temporary::compute_gradient(element);//gradients[number]; 	 	 
-  other_vector = crossprod(gradient,normal); 	 	 
-  length = norm(other_vector); 	 	 
-  return SVector3(other_vector.x()/length,other_vector.y()/length,other_vector.z()/length); 	 	 
-} 	 	 
+SVector3 Temporary::compute_other_vector(MElement*element)
+{
+  //int number;
+  double length;
+  SVector3 normal;
+  SVector3 gradient;
+  SVector3 other_vector;
+  //number = element->getNum();
+  normal = Temporary::compute_normal(element);
+  gradient = Temporary::compute_gradient(element);//gradients[number];
+  other_vector = crossprod(gradient,normal);
+  length = norm(other_vector);
+  return SVector3(other_vector.x()/length,other_vector.y()/length,other_vector.z()/length);
+}
 
-double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2) 	 	 
-{ 	 	 
-  //int number; 	 	 
-  double scalar_productA,scalar_productB; 	 	 
-  double alignment; 	 	 
-  SVector3 gradient; 	 	 
-  SVector3 other_vector; 	 	 
-  SVector3 edge; 	 	 
-  MVertex*vertexA; 	 	 
-  MVertex*vertexB; 	 	 
-  //number = element1->getNum(); 	 	 
-  gradient = Temporary::compute_gradient(element1);//gradients[number]; 	 	 
-  other_vector = Temporary::compute_other_vector(element1); 	 	 
-  vertexA = _edge.getVertex(0); 	 	 
-  vertexB = _edge.getVertex(1); 	 	 
-  edge = SVector3(vertexB->x()-vertexA->x(),vertexB->y()-vertexA->y(),vertexB->z()-vertexA->z()); 	 	 
-  edge = edge * (1/norm(edge)); 	 	 
-  scalar_productA = fabs(dot(gradient,edge)); 	 	 
-  scalar_productB = fabs(dot(other_vector,edge)); 	 	 
-  alignment = std::max(scalar_productA,scalar_productB) - sqrt(2.0)/2.0; 	 	 
-  alignment = alignment/(1.0-sqrt(2.0)/2.0); 	 	 
-  return alignment; 	 	 
-} 	 	 
+double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2)
+{
+  //int number;
+  double scalar_productA,scalar_productB;
+  double alignment;
+  SVector3 gradient;
+  SVector3 other_vector;
+  SVector3 edge;
+  MVertex*vertexA;
+  MVertex*vertexB;
+  //number = element1->getNum();
+  gradient = Temporary::compute_gradient(element1);//gradients[number];
+  other_vector = Temporary::compute_other_vector(element1);
+  vertexA = _edge.getVertex(0);
+  vertexB = _edge.getVertex(1);
+  edge = SVector3(vertexB->x()-vertexA->x(),vertexB->y()-vertexA->y(),vertexB->z()-vertexA->z());
+  edge = edge * (1/norm(edge));
+  scalar_productA = fabs(dot(gradient,edge));
+  scalar_productB = fabs(dot(other_vector,edge));
+  alignment = std::max(scalar_productA,scalar_productB) - sqrt(2.0)/2.0;
+  alignment = alignment/(1.0-sqrt(2.0)/2.0);
+  return alignment;
+}
 
-void Temporary::read_data(std::string file_name) 	 	 
-{ 	 	 
-  #if defined(HAVE_POST) 	 	 
-  int i,j,number; 	 	 
-  double x,y,z; 	 	 
-  MElement*element; 	 	 
-  PViewData*data; 	 	 
-  PView::readMSH(file_name,-1); 	 	 
-  data = PView::list[0]->getData(); 	 	 
-  for(i = 0;i < data->getNumEntities(0);i++) 	 	 
-  { 	 	 
-    if(data->skipEntity(0,i)) continue; 	 	 
-	for(j = 0;j < data->getNumElements(0,i);j++){ 	 	 
-	  if(data->skipElement(0,i,j)) continue; 	 	 
-	  element = data->getElement(0,i,j); 	 	 
-	  number = element->getNum(); 	 	 
-	  data->getValue(0,i,j,0,x); 	 	 
-	  data->getValue(0,i,j,1,y); 	 	 
-	  data->getValue(0,i,j,2,z); 	 	 
-	  gradients[number] = SVector3(x,y,z); 	 	 
-	} 	 	 
-  } 	 	 
-  #endif 	 	 
-} 	 	 
+void Temporary::read_data(std::string file_name)
+{
+  #if defined(HAVE_POST)
+  int i,j,number;
+  double x,y,z;
+  MElement*element;
+  PViewData*data;
+  PView::readMSH(file_name,-1);
+  data = PView::list[0]->getData();
+  for(i = 0;i < data->getNumEntities(0);i++)
+  {
+    if(data->skipEntity(0,i)) continue;
+	for(j = 0;j < data->getNumElements(0,i);j++){
+	  if(data->skipElement(0,i,j)) continue;
+	  element = data->getElement(0,i,j);
+	  number = element->getNum();
+	  data->getValue(0,i,j,0,x);
+	  data->getValue(0,i,j,1,y);
+	  data->getValue(0,i,j,2,z);
+	  gradients[number] = SVector3(x,y,z);
+	}
+  }
+  #endif
+}
 
-void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3) 	 	 
-{ 	 	 
-  GFace*face; 	 	 
-  GModel*model = GModel::current(); 	 	 
-  GModel::fiter iterator; 	 	 
-  gradients.resize(model->getNumMeshElements() + 1); 	 	 
-  w1 = _w1; 	 	 
-  w2 = _w2; 	 	 
-  w3 = _w3; 	 	 
-  Temporary::read_data(file_name); 	 	 
-  for(iterator = model->firstFace();iterator != model->lastFace();iterator++) 	 	 
-  { 	 	 
-    face = *iterator; 	 	 
-	_recombineIntoQuads(face,1,1); 	 	 
-  } 	 	 
+void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3)
+{
+  GFace*face;
+  GModel*model = GModel::current();
+  GModel::fiter iterator;
+  gradients.resize(model->getNumMeshElements() + 1);
+  w1 = _w1;
+  w2 = _w2;
+  w3 = _w3;
+  Temporary::read_data(file_name);
+  for(iterator = model->firstFace();iterator != model->lastFace();iterator++)
+  {
+    face = *iterator;
+	_recombineIntoQuads(face,1,1);
+  }
 }
 
 /***************************************************/

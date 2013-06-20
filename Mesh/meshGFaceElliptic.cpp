@@ -33,14 +33,14 @@
 #define TRAN_QUAD(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
     (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
-
-static void printQuads(GFace *gf, fullMatrix<SPoint2> uv, std::vector<MQuadrangle*> quads,  int iter){
+static void printQuads(GFace *gf, fullMatrix<SPoint2> uv,
+                       std::vector<MQuadrangle*> quads,  int iter){
 
   if(!CTX::instance()->mesh.saveAll) return;
 
   char name[234];
   sprintf(name,"quadUV_%d_%d.pos", gf->tag(), iter);
-  FILE *f = fopen(name,"w");
+  FILE *f = Fopen(name,"w");
   fprintf(f,"View \"%s\" {\n",name);
 
   for (int i = 1; i < uv.size1()-1; i++)
@@ -52,7 +52,7 @@ static void printQuads(GFace *gf, fullMatrix<SPoint2> uv, std::vector<MQuadrangl
 
   char name3[234];
   sprintf(name3,"quadXYZ_%d_%d.pos", gf->tag(), iter);
-  FILE *f3 = fopen(name3,"w");
+  FILE *f3 = Fopen(name3,"w");
   fprintf(f3,"View \"%s\" {\n",name3);
   for (unsigned int i = 0; i < quads.size(); i++){
     quads[i]->writePOS(f3,true,false,false,false,false,false);
@@ -86,7 +86,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 
   char name[234];
   sprintf(name,"paramGrid_%d.pos", gf->tag());
-  FILE *f = fopen(name,"w");
+  FILE *f = Fopen(name,"w");
   fprintf(f,"View \"%s\" {\n",name);
 
   // for (unsigned int i = 0; i < p1.size(); i++)
@@ -106,7 +106,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 
   char name2[234];
   sprintf(name2,"paramEdges_%d.pos", gf->tag());
-  FILE *f2 = fopen(name2,"w");
+  FILE *f2 = Fopen(name2,"w");
   fprintf(f2,"View \"%s\" {\n",name2);
 
   for (unsigned int i = 0; i < e01.size(); i++){
@@ -143,7 +143,7 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 
   char name3[234];
   sprintf(name3,"quadXYZ_%d.pos", gf->tag());
-  FILE *f3 = fopen(name3,"w");
+  FILE *f3 = Fopen(name3,"w");
   fprintf(f3,"View \"%s\" {\n",name3);
   for (unsigned int i = 0; i < quads.size(); i++){
     quads[i]->writePOS(f3,true,false,false,false,false,false);
@@ -155,8 +155,8 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
 
 }
 
-static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv, 
-			      std::vector<std::vector<MVertex*> > &tab, 
+static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,
+			      std::vector<std::vector<MVertex*> > &tab,
 			      std::vector<MQuadrangle*> &newq,  std::vector<MVertex*> &newv){
 
   newq.clear();
@@ -164,17 +164,17 @@ static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,
 
   int M = uv.size1();
   int N = uv.size2();
- 
+
   for (int i = 1; i < M-1; i++){
     for (int j = 0; j < N-1; j++){
       GPoint gp = gf->point(uv(i,j));
-      if (!gp.succeeded()){ 
+      if (!gp.succeeded()){
   	printf("** QUADS FROM UV new vertex not created p=%g %g \n", uv(i,j).x(), uv(i,j).y()); //exit(1);
       }
       tab[i][j] = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
     }
   }
-  for (int i = 1; i < M-1; i++) tab[i][N-1] =  tab[i][0]; 
+  for (int i = 1; i < M-1; i++) tab[i][N-1] =  tab[i][0];
 
   //create vertices
   for (int i = 1; i < M-1; i++)
@@ -188,7 +188,7 @@ static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,
       newq.push_back(qnew);
     }
   }
-  
+
   return;
 
 }
@@ -235,10 +235,10 @@ static std::vector<MVertex*> saturateEdgeHarmonic (GFace *gf, SPoint2 p1, SPoint
 }
 
 static void transfiniteSmoother(GFace* gf,
-				fullMatrix<SPoint2> &uv, 
+				fullMatrix<SPoint2> &uv,
 				std::vector<std::vector<MVertex*> > &tab,
 				std::vector<MQuadrangle*> &newq,
-				std::vector<MVertex*> &newv, 
+				std::vector<MVertex*> &newv,
 				bool isPeriodic=false){
 
    int M = uv.size1();
@@ -257,18 +257,18 @@ static void transfiniteSmoother(GFace* gf,
   			       SQU(uv(i,jp1).y() - uv(i,jm1).y())) ;
   	double gamma = 0.25 * (SQU(uv(i+1,j).x() - uv(i-1,j).x()) +
   			       SQU(uv(i+1,j).y() - uv(i-1,j).y()));
-  	double beta = 0.0625 * 
+  	double beta = 0.0625 *
   	  ((uv(i+1,j).x() - uv(i-1,j).x()) * (uv(i,jp1).x() - uv(i,jm1).x()) +
   	   (uv(i+1,j).y() - uv(i-1,j).y()) * (uv(i,jp1).y() - uv(i,jm1).y()));
-  	double uk = 0.5 * 
-  	  (alpha * (uv(i+1,j).x() + uv(i-1,j).x()) + 
+  	double uk = 0.5 *
+  	  (alpha * (uv(i+1,j).x() + uv(i-1,j).x()) +
   	   gamma * (uv(i,jp1).x() + uv(i,jm1).x()) -
-  	   2. * beta * (uv(i+1,jp1).x() - uv(i-1,jp1).x() - 
+  	   2. * beta * (uv(i+1,jp1).x() - uv(i-1,jp1).x() -
   			uv(i+1,jm1).x() + uv(i-1,jm1).x())) / (alpha + gamma);
-  	double vk = 0.5 * 
-  	  (alpha * (uv(i+1,j).y() + uv(i-1,j).y()) + 
+  	double vk = 0.5 *
+  	  (alpha * (uv(i+1,j).y() + uv(i-1,j).y()) +
   	   gamma * (uv(i,jp1).y()+ uv(i,jm1).y()) -
-  	   2. * beta * (uv(i+1,jp1).y() - uv(i-1,jp1).y() - 
+  	   2. * beta * (uv(i+1,jp1).y() - uv(i-1,jp1).y() -
   			uv(i+1,jm1).y() + uv(i-1,jm1).y())) / (alpha + gamma);
   	uvold(i,j) = uv(i,j);
   	norm += sqrt((uv(i,j).x()-uk)*(uv(i,j).x()-uk)+(uv(i,j).y()-vk)*(uv(i,j).y()-vk));
@@ -293,7 +293,7 @@ static void transfiniteSmoother(GFace* gf,
   //final print
   createQuadsFromUV(gf, uv, tab, newq, newv);
   printQuads(gf, uv, newq, numSmooth);
- 
+
 }
 
 //elliptic surface grid generator
@@ -302,7 +302,7 @@ static void ellipticSmoother( GFace* gf,
 			      fullMatrix<SPoint2> &uv,
 			      std::vector<std::vector<MVertex*> > &tab,
 			      std::vector<MQuadrangle*> &newq,
-			      std::vector<MVertex*> &newv, 
+			      std::vector<MVertex*> &newv,
 			      bool isPeriodic=false){
 
   printQuads(gf, uv, newq, 0);
@@ -333,8 +333,8 @@ static void ellipticSmoother( GFace* gf,
 	double g11_bar = dot(xu,xu);
 	double g12_bar = dot(xu,xv);
 	double g22_bar = dot(xv,xv);
-	double dxsi = 1.; 
-	double deta = 1.; 
+	double dxsi = 1.;
+	double deta = 1.;
 	double u_xsi = (uv(i,jp1).x()-uv(i,j).x())/dxsi;
 	double u_eta = (uv(i+1,j).x()-uv(i,j).x())/deta;
 	double v_xsi = (uv(i,jp1).y()-uv(i,j).y())/dxsi;
@@ -342,7 +342,7 @@ static void ellipticSmoother( GFace* gf,
 	double g11 = g11_bar*u_xsi*u_xsi+2.*g12_bar*u_xsi*v_xsi+g22_bar*v_xsi*v_xsi;
 	double g12 = g11_bar*u_xsi*u_eta+g12_bar*(u_xsi*v_eta+u_eta*v_xsi)+g22_bar*v_xsi*v_eta;
 	double g22 = g11_bar*u_eta*u_eta+2.*g12_bar*u_eta*v_eta+g22_bar*v_eta*v_eta;
-	double jac = u_xsi*v_eta-u_eta*v_xsi; //sqrt(g11*g22-g12*g12);	
+	double jac = u_xsi*v_eta-u_eta*v_xsi; //sqrt(g11*g22-g12*g12);
 	double jac_bar = sqrt(g11_bar*g22_bar-g12_bar*g12_bar);
 	double g11_bar_u = 2.*dot(xu,xuu);
 	double g11_bar_v = 2.*dot(xu,xuv);
@@ -374,12 +374,12 @@ static void ellipticSmoother( GFace* gf,
 	uvold(i,N-1) = uvold(i,0);
       }
     }
-    
+
     //under-relaxation
     // double omega = 0.8;
     // for (int i=0; i<M; i++){
     //   for (int j = 0; j<N; j++){
-    // 	uv(i,j) = SPoint2(omega*uv(i,j).x() + (1.-omega)*uvold(i,j).x(), 
+    // 	uv(i,j) = SPoint2(omega*uv(i,j).x() + (1.-omega)*uvold(i,j).x(),
     // 			  omega*uv(i,j).y() + (1.-omega)*uvold(i,j).y());
     //   }
     // }
@@ -424,15 +424,15 @@ static void createRegularGrid (GFace *gf,
 			       std::vector<MVertex*> &e41, std::vector<SPoint2> &pe41,int sign41,
 			       std::vector<MQuadrangle*> &q,
 			       std::vector<MVertex*> &newv,
-			       fullMatrix<SPoint2> &uv, 
+			       fullMatrix<SPoint2> &uv,
 			       std::vector<std::vector<MVertex*> > &tab)
 {
- 
+
   int M = e23.size();
   int N = e12.size();
 
   uv.resize(M+2,N+2);
- 
+
   //std::vector<std::vector<MVertex*> > tab(M+2);
   tab.resize(M+2);
   for(int i = 0; i <= M+1; i++) tab[i].resize(N+2);
@@ -441,7 +441,7 @@ static void createRegularGrid (GFace *gf,
   tab[0][N+1] = v2;    uv(0,N+1) = c2;
   tab[M+1][N+1] = v3;  uv(M+1,N+1) = c3;
   tab[M+1][0] = v4;    uv(M+1,0) = c4;
- 
+
   for (int i=0;i<N;i++){
     tab[0][i+1]   = sign12 > 0 ? e12 [i] : e12 [N-i-1];
     tab[M+1][i+1] = sign34 < 0 ? e34 [i] : e34 [N-i-1];
@@ -511,15 +511,15 @@ static void createRegularGrid (GFace *gf,
 static void createRegularGridPeriodic  (GFace *gf,int sign2,
 					MVertex *v0, SPoint2 &c0,
 					MVertex *v2, SPoint2 &c2,
-					std::vector<MVertex*> &e02, std::vector<SPoint2> &pe02, 
-					std::vector<MVertex*> &e00, std::vector<SPoint2> &pe00, 
-					std::vector<MVertex*> &e22, std::vector<SPoint2> &pe22, 
+					std::vector<MVertex*> &e02, std::vector<SPoint2> &pe02,
+					std::vector<MVertex*> &e00, std::vector<SPoint2> &pe00,
+					std::vector<MVertex*> &e22, std::vector<SPoint2> &pe22,
 					std::vector<MQuadrangle*> &q,
 					std::vector<MVertex*> &newv,
-					fullMatrix<SPoint2> &uv, 
+					fullMatrix<SPoint2> &uv,
 					std::vector<std::vector<MVertex*> > &tab)
 {
- 
+
   int M = e02.size();
   int N = e00.size();
 
@@ -527,7 +527,7 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
 
   char name3[234];
   sprintf(name3,"quadParam_%d.pos", gf->tag());
-  FILE *f3 = fopen(name3,"w");
+  FILE *f3 = Fopen(name3,"w");
   fprintf(f3,"View \"%s\" {\n",name3);
 
   tab.resize(M+2);
@@ -539,8 +539,8 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
   tab[M+1][N+1] = v2;  uv(M+1,N+1) = c2;
   tab[M+1][0] = v2;    uv(M+1,0) = c2;
   for (int i=0;i<N;i++){
-    tab[0][i+1]   =   e00 [i];  uv(0,i+1) = pe00 [i]  ; 
-    tab[M+1][i+1] = (sign2 > 0) ?    e22 [i]  : e22 [N-i-1]  ;  
+    tab[0][i+1]   =   e00 [i];  uv(0,i+1) = pe00 [i]  ;
+    tab[M+1][i+1] = (sign2 > 0) ?    e22 [i]  : e22 [N-i-1]  ;
     uv(M+1,i+1)  =  (sign2 > 0) ?    pe22 [i] : pe22 [N-i-1] ;
   }
   for (int i=0;i<M;i++){
@@ -550,12 +550,12 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
 
   //interior mesh_vertices
   for (int i=0;i<N;i++){
-    SPoint2 p0 =  pe00[i]  ; 
+    SPoint2 p0 =  pe00[i]  ;
     SPoint2 p2 =  (sign2>0) ?    pe22[i] : pe22 [N-i-1] ;
     std::vector<SPoint2> pei;
     std::vector<MVertex*> ei = saturateEdgeRegular(gf,p0,p2,M+1,pei);//M+1
     for (int j=0;j<M;j++){
-      SPoint2 pij = pei[j]; 
+      SPoint2 pij = pei[j];
       GPoint gp = gf->point(pij);
       if (!gp.succeeded()) printf("** INITIAL GRID new vertex not created p=%g %g \n", pij.x(), pij.y());
       tab[j+1][i+1] = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
@@ -567,7 +567,7 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
   for (int i=0;i<N+1;i++)
     for (int j=1;j<M+1;j++)
       newv.push_back(tab[j][i]);
-      
+
   // create quads
   for (int i=0;i<=N;i++){
     for (int j=0;j<=M;j++){
@@ -594,12 +594,12 @@ static void updateFaceQuads(GFace *gf, std::vector<MQuadrangle*> &quads, std::ve
   for(unsigned int i = 0; i < newv.size(); i++){
     gf->mesh_vertices.push_back(newv[i]);
   }
-  
+
 }
 
-static bool computeRingVertices(GFace *gf, Centerline *center, 
-				std::vector<MVertex*> &vert1, std::vector<MVertex*> &vert2, 
-				int &N, int &M, int &close_ind, int &sign2, 
+static bool computeRingVertices(GFace *gf, Centerline *center,
+				std::vector<MVertex*> &vert1, std::vector<MVertex*> &vert2,
+				int &N, int &M, int &close_ind, int &sign2,
 				double &arc, double &length){
 
 #if defined(HAVE_ANN)
@@ -662,10 +662,10 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
 
   SPoint2 p1; reparamMeshVertexOnFace(vert1[0], gf, p1);
   SPoint2 p2; reparamMeshVertexOnFace(vert2[close_ind], gf, p2);
-  GPoint gp_i(vert1[0]->x(), vert1[0]->y(), vert1[0]->z()); 
+  GPoint gp_i(vert1[0]->x(), vert1[0]->y(), vert1[0]->z());
   SPoint2 p1b; reparamMeshVertexOnFace(vert1[N/2], gf, p1b);
   SPoint2 p2b; reparamMeshVertexOnFace(vert2[(close_ind+N/2)%N], gf, p2b);
-  GPoint gp_ib(vert1[N/2]->x(), vert1[N/2]->y(), vert1[N/2]->z()); 
+  GPoint gp_ib(vert1[N/2]->x(), vert1[N/2]->y(), vert1[N/2]->z());
   length = 0.0;
   double lengthb = 0.0;
   int nb = 100;
@@ -674,8 +674,8 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
     GPoint gp_ii = gf->point(pii);
     SPoint2 piib(p1b.x() + (double)(i+1)/nb*(p2b.x()-p1b.x()), p1b.y() + (double)(i+1)/nb*(p2b.y()-p1b.y()));
     GPoint gp_iib = gf->point(piib);
-    length  += gp_i.distance(gp_ii); 
-    lengthb += gp_ib.distance(gp_iib); 
+    length  += gp_i.distance(gp_ii);
+    lengthb += gp_ib.distance(gp_iib);
     gp_i = gp_ii;
     gp_ib = gp_iib;
   }
@@ -683,7 +683,7 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
   arc = 2*M_PI*rad;
   double lc =  arc/N;
   M = (int)(0.5*(length+lengthb)/lc) ;
-  
+
   delete kdtree;
   delete[]index;
   delete[]dist;
@@ -720,7 +720,7 @@ bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
   std::vector<MVertex*> e00,e22;//edges without first and last vertex
   for (int i=1;i<N;i++) e00.push_back(vert1[i]);
   for (int i=1;i<N;i++) e22.push_back(vert2[(close_ind+i)%N]);
- 
+
   std::vector<SPoint2> pe00, pe22;
   for (unsigned int i = 0; i < e00.size(); i++){
      SPoint2 p00; reparamMeshVertexOnFace(e00[i], gf, p00);
@@ -742,7 +742,7 @@ bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
   			     v2, p2,
   			     e02, pe02,
   			     e00, pe00,
-  			     e22, pe22, 
+  			     e22, pe22,
   			     quads, newv, uv, tab);
 
   printQuads(gf, uv, quads, 0);

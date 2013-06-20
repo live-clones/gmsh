@@ -1183,7 +1183,7 @@ void printJacobians(GModel *m, const char *nm)
   const int n = 100;
   double D[n][n], X[n][n], Y[n][n], Z[n][n];
 
-  FILE *f = fopen(nm,"w");
+  FILE *f = Fopen(nm,"w");
   fprintf(f,"View \"\"{\n");
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     for(unsigned int j = 0; j < (*it)->triangles.size(); j++){

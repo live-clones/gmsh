@@ -51,7 +51,7 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
               return;
           }
         }
-        FILE *fp = fopen(newFileName.c_str(), "w");
+        FILE *fp = Fopen(newFileName.c_str(), "w");
         if(!fp) {
           Msg::Error("Unable to open file '%s'", newFileName.c_str());
           return;
@@ -69,14 +69,14 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
 #if defined(HAVE_PARSER)
   std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *gmsh_yyin_old = gmsh_yyin;
-  if(!(gmsh_yyin = fopen(tmpFileName.c_str(), "w"))) {
+  if(!(gmsh_yyin = Fopen(tmpFileName.c_str(), "w"))) {
     Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
     gmsh_yyin = gmsh_yyin_old;
     return;
   }
   fprintf(gmsh_yyin, "%s\n", text.c_str());
   fclose(gmsh_yyin);
-  gmsh_yyin = fopen(tmpFileName.c_str(), "r");
+  gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
   while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
@@ -91,7 +91,7 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
   GModel::current()->importGEOInternals();
   CTX::instance()->mesh.changed = ENT_ALL;
 
-  FILE *fp = fopen(fileName.c_str(), "a");
+  FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return;

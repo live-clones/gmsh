@@ -13,6 +13,7 @@
 #include "GFace.h"
 #include "GFaceCompound.h"
 #include "GModel.h"
+#include "OS.h"
 #include "Field.h"
 #include "MElement.h"
 #include "MElementOctree.h"
@@ -719,7 +720,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 	SVector3 t2 (v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
 	t1.normalize();
 	t2.normalize();
-	double _angle = angle (t1,t2);	
+	double _angle = angle (t1,t2);
 	//        double angle = atan2 ( p1.y()-p2.y() , p1.x()-p2.x() );
         crossField2d::normalizeAngle (_angle);
         for (int i=0;i<2;i++){
@@ -766,7 +767,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   double cosTheta = dot(a,b);
   double sinTheta = dot(crossprod(a,b),d);
-  return atan2 (sinTheta,cosTheta);  
+  return atan2 (sinTheta,cosTheta);
 }
 
 
@@ -790,10 +791,10 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
         reparamMeshEdgeOnFace(v[0],v[1],_gf,p1,p2);
 	Pair<SVector3, SVector3> der = _gf->firstDer((p1+p2)*.5);
 	SVector3 t1 = der.first();
-	SVector3 t2 = der.second(); 
+	SVector3 t2 = der.second();
 	SVector3 n = crossprod(t1,t2);
 	n.normalize();
-	SVector3 d1(v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z()); 
+	SVector3 d1(v[1]->x()-v[0]->x(),v[1]->y()-v[0]->y(),v[1]->z()-v[0]->z());
 	t1.normalize();
 	d1.normalize();
 	double _angle = myAngle (t1,d1,n);
@@ -980,7 +981,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 void backgroundMesh::print(const std::string &filename, GFace *gf,
                            const std::map<MVertex*,double> &_whatToPrint) const
 {
-  FILE *f = fopen (filename.c_str(),"w");
+  FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
   for(unsigned int i=0;i<_triangles.size();i++){
     MVertex *v1 = _triangles[i]->getVertex(0);
@@ -996,7 +997,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
               v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
     }
     else {
-      
+
       GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
       GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
       GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));

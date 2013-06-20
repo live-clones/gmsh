@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
+#include "OS.h"
 #include "MElement.h"
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
@@ -38,7 +39,7 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 
 int GModel::readDIFF(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -366,7 +367,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     return 0;
   }
 
-  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

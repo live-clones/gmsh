@@ -12,6 +12,7 @@
 #include "linearSystemFull.h"
 #include "Numeric.h"
 #include "GModel.h"
+#include "OS.h"
 #include "functionSpace.h"
 #include "terms.h"
 #include "solverAlgorithms.h"
@@ -70,8 +71,7 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
 
 void elasticitySolver::exportKb()
 {
-
-  FILE *f = fopen ( "K.txt", "w" );
+  FILE *f = Fopen ( "K.txt", "w" );
   double valeur;
   std::string sysname = "A";
   for ( int i = 0 ; i < pAssembler->sizeOfR() ; i ++ )
@@ -86,7 +86,7 @@ void elasticitySolver::exportKb()
 
   fclose ( f );
 
-  f = fopen ( "b.txt", "w" );
+  f = Fopen ( "b.txt", "w" );
   for ( int i = 0 ; i < pAssembler->sizeOfR() ; i ++ )
   {
     pAssembler->getLinearSystem ( sysname )->getFromRightHandSide ( i,valeur );
@@ -94,7 +94,6 @@ void elasticitySolver::exportKb()
   }
 
   fclose ( f );
-
 }
 
 void elasticitySolver::solve()
@@ -139,14 +138,15 @@ void elasticitySolver::postSolve()
     SolverField<SVector3> Field(pAssembler, LagSpace);
     IsotropicElasticTerm Eterm(Field,elasticFields[i]._E,elasticFields[i]._nu);
     BilinearTermToScalarTerm Elastic_Energy_Term(Eterm);
-    Assemble(Elastic_Energy_Term,elasticFields[i].g->begin(),elasticFields[i].g->end(),Integ_Bulk,energ);
+    Assemble(Elastic_Energy_Term, elasticFields[i].g->begin(),
+             elasticFields[i].g->end(), Integ_Bulk, energ);
   }
   printf("elastic energy=%f\n",energ);
 }
 
 void elasticitySolver::readInputFile(const std::string &fn)
 {
-  FILE *f = fopen(fn.c_str(), "r");
+  FILE *f = Fopen(fn.c_str(), "r");
   char what[256];
   while(!feof(f)){
     if(fscanf(f, "%s", what) != 1) return;

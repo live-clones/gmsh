@@ -12,6 +12,7 @@
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
 #include "intersectCurveSurface.h"
+#include "OS.h"
 
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
@@ -19,7 +20,6 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "Numeric.h"
-#include "OS.h"
 #include "Octree.h"
 #include "SBoundingBox3d.h"
 #include "SPoint3.h"
@@ -61,7 +61,7 @@ static void printBound(std::vector<MVertex*> &l, int tag)
 {
   char name[256];
   sprintf(name, "myBOUND%d.pos", tag);
-  FILE * xyz = fopen(name,"w");
+  FILE * xyz = Fopen(name,"w");
   fprintf(xyz,"View \"\"{\n");
   for(unsigned int i = 0; i < l.size(); i++){
     MVertex *v = l[i];
@@ -454,7 +454,7 @@ void GFaceCompound::printFillTris() const
     char name[256];
     //std::list<GFace*>::const_iterator itf = _compound.begin();
     sprintf(name, "fillTris-%d.pos", tag());
-    FILE * ftri = fopen(name,"w");
+    FILE * ftri = Fopen(name,"w");
     fprintf(ftri,"View \"\"{\n");
     for (std::list<MTriangle*>::iterator it2 = fillTris.begin();
 	 it2 !=fillTris.end(); it2++ ){
@@ -1289,7 +1289,7 @@ GFaceCompound::~GFaceCompound()
   if(kdtree){
     ANNpointArray nodes = kdtree->thePoints();
     if(nodes) annDeallocPts(nodes);
-    delete kdtree; 
+    delete kdtree;
   }
 }
 
@@ -2802,12 +2802,12 @@ void GFaceCompound::printStuff(int iNewton) const
 
   sprintf(name7, "UVM-%d.pos", (*it)->tag());
 
-  //FILE * uva = fopen(name0,"w");
-  FILE * uvx = fopen(name1,"w");
-  FILE * uvy = fopen(name2,"w");
-  FILE * uvz = fopen(name3,"w");
-  FILE * xyzu = fopen(name4,"w");
-  FILE * xyzv = fopen(name5,"w");
+  //FILE * uva = Fopen(name0,"w");
+  FILE * uvx = Fopen(name1,"w");
+  FILE * uvy = Fopen(name2,"w");
+  FILE * uvz = Fopen(name3,"w");
+  FILE * xyzu = Fopen(name4,"w");
+  FILE * xyzv = Fopen(name5,"w");
 
   fprintf(uvx, "View \"\"{\n");
   fprintf(uvy, "View \"\"{\n");

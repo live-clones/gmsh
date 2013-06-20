@@ -10,6 +10,7 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "StringUtils.h"
+#include "OS.h"
 
 bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> > &data,
                               int step, double time, int partition, int numComp)
@@ -149,7 +150,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
     if(!model->writeMSH(fileName, version, binary, false, false, 1.0, 0,
                         0, multipleView)) return false;
     // append data
-    fp = fopen(fileName.c_str(), binary ? "ab" : "a");
+    fp = Fopen(fileName.c_str(), binary ? "ab" : "a");
     if(!fp){
       Msg::Error("Unable to open file '%s'", fileName.c_str());
       return false;
@@ -157,14 +158,14 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
   }
   else{
     if(multipleView){
-      fp = fopen(fileName.c_str(), binary ? "ab" : "a");
+      fp = Fopen(fileName.c_str(), binary ? "ab" : "a");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         return false;
       }
     }
     else{
-      fp = fopen(fileName.c_str(), binary ? "wb" : "w");
+      fp = Fopen(fileName.c_str(), binary ? "wb" : "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", fileName.c_str());
         return false;

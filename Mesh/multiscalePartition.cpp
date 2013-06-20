@@ -16,6 +16,7 @@
 #include "GFaceCompound.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "OS.h"
 
 static void recur_connect(MVertex *v,
                           std::multimap<MVertex*,MEdge> &v2e,
@@ -273,7 +274,7 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
   }
 
   bool binary = false;
-  FILE *fp = fopen (fn, "w");
+  FILE *fp = Fopen (fn, "w");
   fprintf(fp, "$MeshFormat\n");
   fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
   fprintf(fp, "$EndMeshFormat\n");

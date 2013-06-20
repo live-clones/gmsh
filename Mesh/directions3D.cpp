@@ -12,6 +12,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "MTetrahedron.h"
 #include "directions3D.h"
+#include "OS.h"
 
 #if defined(HAVE_PETSC)
 #include "dofManager.h"
@@ -986,7 +987,7 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   std::map<MVertex*, STensor3>::iterator iter = crossField.find(beginV);
   STensor3 bCross = iter->second;
 
-  FILE *fi = fopen ("cross_recur.pos","w");
+  FILE *fi = Fopen ("cross_recur.pos","w");
   fprintf(fi,"View \"\"{\n");
   fprintf(fi,"SP(%g,%g,%g) {%g};\n",beginV->x(),beginV->y(),beginV->z(), 0.0);
   int count = 0;

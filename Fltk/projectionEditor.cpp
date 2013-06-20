@@ -21,6 +21,7 @@
 #include "fourierFace.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include "OS.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
@@ -419,7 +420,7 @@ static void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   if(fileChooser(FILE_CHOOSER_CREATE, "Save Selection", "*.{geo,msh}")){
-    FILE *fp = fopen(fileChooserGetName(1).c_str(), "w");
+    FILE *fp = Fopen(fileChooserGetName(1).c_str(), "w");
     if(!fp){
       Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
       return;
@@ -459,7 +460,7 @@ static void load_projection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   if(fileChooser(FILE_CHOOSER_SINGLE, "Load Projection", "*.pro")){
-    FILE *fp = fopen(fileChooserGetName(1).c_str(), "r");
+    FILE *fp = Fopen(fileChooserGetName(1).c_str(), "r");
     if(!fp){
       Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
       return;
@@ -506,7 +507,7 @@ static void save_projection_cb(Fl_Widget *w, void *data)
     FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     if(fileChooser(FILE_CHOOSER_CREATE, "Save Projection", "*.pro")){
       std::string name = fileChooserGetName(1);
-      FILE *fp = fopen(name.c_str(), "w");
+      FILE *fp = Fopen(name.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file `%s'", name.c_str());
         return;
@@ -691,7 +692,7 @@ static void action_cb(Fl_Widget *w, void *data)
   }
   else{
     if(fileChooser(FILE_CHOOSER_CREATE, "Save Fourier Model", "*.fm")){
-      FILE *fp = fopen(fileChooserGetName(1).c_str(), "w");
+      FILE *fp = Fopen(fileChooserGetName(1).c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file `%s'", fileChooserGetName(1).c_str());
         return;

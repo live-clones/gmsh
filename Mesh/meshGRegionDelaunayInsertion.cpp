@@ -140,8 +140,8 @@ void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFace
       for (int i = 0; i < 4; i++){
         faceXtet fxt(*beg, i);
 	// if a face is embedded, do not connect tets on both sides !
-	if (!allEmbeddedFaces || 
-	    allEmbeddedFaces->find (MFace(fxt.v[0],fxt.v[1],fxt.v[2])) == 
+	if (!allEmbeddedFaces ||
+	    allEmbeddedFaces->find (MFace(fxt.v[0],fxt.v[1],fxt.v[2])) ==
 	    allEmbeddedFaces->end()){
 	  std::set<faceXtet>::iterator found = conn.find(fxt);
 	  if (found == conn.end())
@@ -367,7 +367,7 @@ void nonrecurFindCavity(std::list<faceXtet> & shell,
 
 void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 {
-  FILE *f = fopen (fn,"w");
+  FILE *f = Fopen (fn,"w");
   fprintf(f,"View \"\"{\n");
   std::list<MTet4*>::iterator ittet = cavity.begin();
   std::list<MTet4*>::iterator ittete = cavity.end();

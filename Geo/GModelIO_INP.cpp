@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -46,7 +47,7 @@ static std::string physicalName(GModel *m, int dim, int num)
 int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNodes,
                      double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

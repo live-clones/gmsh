@@ -6,13 +6,14 @@
 #include <stdio.h>
 #include "SmoothData.h"
 #include "Numeric.h"
+#include "OS.h"
 
 // Basic coordinate-based floting point value averager
 
 double xyzv::eps = 1.e-12;
 
 xyzv::xyzv(const xyzv &other)
-{ 
+{
   x = other.x;
   y = other.y;
   z = other.z;
@@ -42,7 +43,7 @@ xyzv &xyzv::operator = (const xyzv &other)
   return *this;
 }
 
-void xyzv::update(int n, double *v) 
+void xyzv::update(int n, double *v)
 {
   if(!vals) {
     vals = new double[n];
@@ -97,14 +98,14 @@ void smooth_data::normalize()
 
 bool smooth_data::exportview(std::string filename)
 {
-  FILE *fp = fopen(filename.c_str(), "w");
+  FILE *fp = Fopen(filename.c_str(), "w");
   if(!fp) return false;
   fprintf(fp, "View \"data\" {\n");
   std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
   while(it != c.end()){
     switch(it->nbvals){
-    case 1: 
-      fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n", 
+    case 1:
+      fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n",
               it->x, it->y, it->z, it->vals[0]);
       break;
     case 3:
@@ -127,17 +128,17 @@ float xyzn::angle(int i, char nx, char ny, char nz)
 {
   // returns the angle (in [-180,180]) between the ith normal stored
   // at point xyz and the new normal nx,ny,nz
-  double a[3] = {char2float(n[i].nx), 
-                 char2float(n[i].ny), 
+  double a[3] = {char2float(n[i].nx),
+                 char2float(n[i].ny),
                  char2float(n[i].nz)};
-  double b[3] = {char2float(nx), 
-                 char2float(ny), 
+  double b[3] = {char2float(nx),
+                 char2float(ny),
                  char2float(nz)};
   norme(a);
   norme(b);
   double c[3];
   prodve(a, b, c);
-  double cosc; 
+  double cosc;
   prosca(a, b, &cosc);
   double sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
   double angplan = myatan2(sinc, cosc);
@@ -181,7 +182,7 @@ void smooth_normals::add(double x, double y, double z,
   xyzn xyz((float)x, (float)y, (float)z);
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update(float2char((float)nx), 
+    xyz.update(float2char((float)nx),
                float2char((float)ny),
                float2char((float)nz), tol);
     c.insert(xyz);
@@ -190,23 +191,23 @@ void smooth_normals::add(double x, double y, double z,
     // we can do this because we know that it will not destroy the set
     // ordering
     xyzn *p = (xyzn *) & (*it);
-    p->update(float2char((float)nx), 
-              float2char((float)ny), 
+    p->update(float2char((float)nx),
+              float2char((float)ny),
               float2char((float)nz), tol);
-  }    
+  }
 }
 
 bool smooth_normals::get(double x, double y, double z,
                          double &nx, double &ny, double &nz)
 {
-  std::set<xyzn, lessthanxyzn>::const_iterator it = 
+  std::set<xyzn, lessthanxyzn>::const_iterator it =
     c.find(xyzn((float)x, (float)y, (float)z));
 
   if(it == c.end()) return false;
 
   xyzn *p = (xyzn *) & (*it);
   for(unsigned int i = 0; i < p->n.size(); i++){
-    if(fabs(p->angle(i, float2char((float)nx), 
+    if(fabs(p->angle(i, float2char((float)nx),
                      float2char((float)ny),
                      float2char((float)nz))) < tol) {
       nx = char2float(p->n[i].nx);

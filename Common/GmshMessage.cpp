@@ -758,7 +758,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
   if(sockname.empty()){
     _onelabClient = new localGmsh();
     if(name != "Gmsh"){ // load db from file:
-      FILE *fp = fopen(name.c_str(), "rb");
+      FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
         _onelabClient->fromFile(fp);
         fclose(fp);

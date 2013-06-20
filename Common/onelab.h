@@ -929,6 +929,7 @@ namespace onelab{
       if(!_server) _server = new server(address);
       return _server;
     }
+    static void setInstance(server *s) { _server = s; }
     void clear(const std::string &name="", const std::string &client="")
     {
       _parameterSpace.clear(name, client);

@@ -10,7 +10,7 @@
 #include "MTetrahedron.h"
 #include "MVertex.h"
 #include "Field.h"
-
+#include "OS.h"
 
 /*
                ^  ni
@@ -189,7 +189,7 @@ BoundaryLayerColumns* buildAdditionalPoints3D (GRegion *gr)
 
   // DEBUG STUFF
 
-  FILE *f = fopen ("test3D.pos","w");
+  FILE *f = Fopen ("test3D.pos","w");
   fprintf(f,"View \"\" {\n");
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
     MVertex *v = *it;

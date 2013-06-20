@@ -7,6 +7,7 @@
 #include "Gmsh.h"
 #include "GmshConfig.h"
 #include "GModel.h"
+#include "OS.h"
 #include "Distance.h"
 #include "distanceTerm.h"
 #include "Context.h"
@@ -108,7 +109,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
   }
 
   Msg::Info("Writing %s", _fileName.c_str());
-  FILE *fName = fopen(_fileName.c_str(),"w");
+  FILE *fName = Fopen(_fileName.c_str(),"w");
   fprintf(fName, "View \"distance \"{\n");
 
   for (unsigned int ii=0; ii<_entities.size(); ii++) {
@@ -500,7 +501,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     data2->setName("ortogonal field");
 
     Msg::Info("Writing  orthogonal.pos");
-    FILE * f5 = fopen("orthogonal.pos","w");
+    FILE * f5 = Fopen("orthogonal.pos","w");
     fprintf(f5,"View \"orthogonal\"{\n");
     for (std::vector<MElement* >::iterator it = allElems.begin();
          it != allElems.end(); it++){

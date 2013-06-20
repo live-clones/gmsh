@@ -34,10 +34,6 @@
 #include <fstream>
 #endif
 
-#if defined(HAVE_FLTK)
-#include <FL/Fl.H> // for fl_fopen
-#endif
-
 #if defined(__APPLE__)
 #define RUSAGE_SELF      0
 #define RUSAGE_CHILDREN -1
@@ -45,11 +41,131 @@
 
 #include "GmshMessage.h"
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+
+// UTF8 utility routines borrowed from FLTK
+
+static unsigned utf8decode(const char* p, const char* end, int* len)
+{
+  static unsigned short cp1252[32] = {
+    0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
+    0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
+    0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
+    0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x009d, 0x017e, 0x0178
+  };
+  unsigned char c = *(unsigned char*)p;
+  if (c < 0x80) {
+    if (len) *len = 1;
+    return c;
+  } else if (c < 0xa0) {
+    if (len) *len = 1;
+    return cp1252[c-0x80];
+  } else if (c < 0xc2) {
+    goto FAIL;
+  }
+  if ( (end && p+1 >= end) || (p[1]&0xc0) != 0x80) goto FAIL;
+  if (c < 0xe0) {
+    if (len) *len = 2;
+    return
+      ((p[0] & 0x1f) << 6) +
+      ((p[1] & 0x3f));
+  } else if (c == 0xe0) {
+    if (((unsigned char*)p)[1] < 0xa0) goto FAIL;
+    goto UTF8_3;
+  } else if (c < 0xf0) {
+  UTF8_3:
+    if ( (end && p+2 >= end) || (p[2]&0xc0) != 0x80) goto FAIL;
+    if (len) *len = 3;
+    return
+      ((p[0] & 0x0f) << 12) +
+      ((p[1] & 0x3f) << 6) +
+      ((p[2] & 0x3f));
+  } else if (c == 0xf0) {
+    if (((unsigned char*)p)[1] < 0x90) goto FAIL;
+    goto UTF8_4;
+  } else if (c < 0xf4) {
+  UTF8_4:
+    if ( (end && p+3 >= end) || (p[2]&0xc0) != 0x80 || (p[3]&0xc0) != 0x80) goto FAIL;
+    if (len) *len = 4;
+    return
+      ((p[0] & 0x07) << 18) +
+      ((p[1] & 0x3f) << 12) +
+      ((p[2] & 0x3f) << 6) +
+      ((p[3] & 0x3f));
+  } else if (c == 0xf4) {
+    if (((unsigned char*)p)[1] > 0x8f) goto FAIL; /* after 0x10ffff */
+    goto UTF8_4;
+  } else {
+  FAIL:
+    if (len) *len = 1;
+    return c;
+  }
+}
+
+static unsigned utf8toUtf16(const char* src, unsigned srclen,
+                            unsigned short* dst, unsigned dstlen)
+{
+  const char* p = src;
+  const char* e = src+srclen;
+  unsigned count = 0;
+  if (dstlen) for (;;) {
+    if (p >= e) {dst[count] = 0; return count;}
+    if (!(*p & 0x80)) { /* ascii */
+      dst[count] = *p++;
+    } else {
+      int len; unsigned ucs = utf8decode(p,e,&len);
+      p += len;
+      if (ucs < 0x10000) {
+	dst[count] = ucs;
+      } else {
+	/* make a surrogate pair: */
+	if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
+	dst[count] = (((ucs-0x10000u)>>10)&0x3ff) | 0xd800;
+	dst[++count] = (ucs&0x3ff) | 0xdc00;
+      }
+    }
+    if (++count == dstlen) {dst[count-1] = 0; break;}
+  }
+  /* we filled dst, measure the rest: */
+  while (p < e) {
+    if (!(*p & 0x80)) p++;
+    else {
+      int len; unsigned ucs = utf8decode(p,e,&len);
+      p += len;
+      if (ucs >= 0x10000) ++count;
+    }
+    ++count;
+  }
+  return count;
+}
+
+static wchar_t *wbuf = NULL;
+static wchar_t *wbuf1 = NULL;
+
+#endif
+
+FILE *Fopen(const char* f, const char *mode)
+{
+#if defined (WIN32) && !defined(__CYGWIN__)
+  size_t l = strlen(f);
+  unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
+  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf, wn);
+  wbuf[wn] = 0;
+  l = strlen(mode);
+  wn = utf8toUtf16(mode, (unsigned) l, NULL, 0) + 1;
+  wbuf1 = (wchar_t*)realloc(wbuf1, sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(mode, (unsigned) l, (unsigned short *)wbuf1, wn);
+  wbuf1[wn] = 0;
+  return _wfopen(wbuf, wbuf1);
+#else
+  return fopen(f, mode);
+#endif
+}
+
 const char *GetEnvironmentVar(const char *var)
 {
-#if !defined(WIN32)
-  return getenv(var);
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   const char *tmp = getenv(var);
   // Don't accept top dir or anything partially expanded like
   // c:\Documents and Settings\%USERPROFILE%, etc.
@@ -57,55 +173,48 @@ const char *GetEnvironmentVar(const char *var)
     return 0;
   else
     return tmp;
+#else
+  return getenv(var);
 #endif
 }
 
 const void SetEnvironmentVar(const char *var, const char *val)
 {
-#if !defined(WIN32)
-  setenv(var, val, 1);
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   _putenv((std::string(var) + "=" + std::string(val)).c_str());
+#else
+  setenv(var, val, 1);
 #endif
 }
 
 double GetTimeInSeconds()
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  struct timeval tp;
-  gettimeofday(&tp, (struct timezone *)0);
-  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
-  return t;
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
   double t =  1.e-7 * 4294967296. * (double)ft.dwHighDateTime +
               1.e-7 * (double)ft.dwLowDateTime;
+  return t;
+#else
+  struct timeval tp;
+  gettimeofday(&tp, (struct timezone *)0);
+  double t = (double)tp.tv_sec + 1.e-6 * (double)tp.tv_usec;
   return t;
 #endif
 }
 
 void SleepInSeconds(double s)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  usleep((long)(1.e6 * s));
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   Sleep((long)(1.e3 * s));
+#else
+  usleep((long)(1.e6 * s));
 #endif
 }
 
 static void GetResources(double *s, long *mem)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  static struct rusage r;
-  getrusage(RUSAGE_SELF, &r);
-  *s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
-#if defined(__APPLE__)
-  *mem = (long)r.ru_maxrss;
-#else
-  *mem = (long)(r.ru_maxrss * 1024L);
-#endif
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME creation, exit, kernel, user;
   if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)){
     *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
@@ -114,6 +223,15 @@ static void GetResources(double *s, long *mem)
   PROCESS_MEMORY_COUNTERS info;
   GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
   *mem = (long)info.PeakWorkingSetSize;
+#else
+  static struct rusage r;
+  getrusage(RUSAGE_SELF, &r);
+  *s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
+#if defined(__APPLE__)
+  *mem = (long)r.ru_maxrss;
+#else
+  *mem = (long)(r.ru_maxrss * 1024L);
+#endif
 #endif
 }
 
@@ -153,10 +271,10 @@ long GetMemoryUsage()
 
 int GetProcessId()
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  return getpid();
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   return _getpid();
+#else
+  return getpid();
 #endif
 }
 
@@ -169,49 +287,61 @@ std::string GetHostName()
 
 int UnlinkFile(const std::string &fileName)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  return unlink(fileName.c_str());
+#if defined(WIN32) && !defined(__CYGWIN__)
+  size_t l = strlen(fileName.c_str());
+  unsigned wn = utf8toUtf16(fileName.c_str(), (unsigned) l, NULL, 0) + 1;
+  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(fileName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
+  wbuf[wn] = 0;
+  return _wunlink(wbuf);
 #else
-  return _unlink(fileName.c_str());
+  return unlink(fileName.c_str());
 #endif
 }
 
 int StatFile(const std::string &fileName)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32) && !defined(__CYGWIN__)
+  struct _stat buf;
+  size_t l = strlen(fileName.c_str());
+  unsigned wn = utf8toUtf16(fileName.c_str(), (unsigned) l, NULL, 0) + 1;
+  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(fileName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
+  wbuf[wn] = 0;
+  int ret = _wstat(wbuf, &buf);
+#else
   struct stat buf;
   int ret = stat(fileName.c_str(), &buf);
-  // could get file modification time from buf
-#else
-  struct _stat buf;
-  int ret = _stat(fileName.c_str(), &buf);
 #endif
   return ret;
 }
 
 int CreateDirectory(const std::string &dirName)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  if(mkdir(dirName.c_str(), 0777))
-    return 0;
+#if defined(WIN32) && !defined(__CYGWIN__)
+  size_t l = strlen(dirName.c_str());
+  unsigned wn = utf8toUtf16(dirName.c_str(), (unsigned) l, NULL, 0) + 1;
+  wbuf = (wchar_t*)realloc(wbuf, sizeof(wchar_t)*wn);
+  wn = utf8toUtf16(dirName.c_str(), (unsigned) l, (unsigned short *)wbuf, wn);
+  wbuf[wn] = 0;
+  if(_wmkdir(wbuf)) return 0;
 #else
-  if(_mkdir(dirName.c_str()))
-    return 0;
+  if(mkdir(dirName.c_str(), 0777)) return 0;
 #endif
   return 1;
 }
 
 int KillProcess(int pid)
 {
-#if !defined(WIN32) || defined(__CYGWIN__)
-  if(kill(pid, 9))
-    return 0;
-#else
+#if defined(WIN32) && !defined(__CYGWIN__)
   HANDLE hProc = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
   if(!TerminateProcess(hProc, 0)){
     CloseHandle(hProc);
     return 0;
   }
+#else
+  if(kill(pid, 9))
+    return 0;
 #endif
   return 1;
 }
@@ -242,7 +372,7 @@ int SystemCall(const std::string &command, bool blocking)
     }
   }
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(__CYGWIN__)
   if(isPython){
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
               args.c_str());
@@ -303,11 +433,13 @@ int SystemCall(const std::string &command, bool blocking)
 std::string GetCurrentWorkdir()
 {
   char path[1024];
-#if defined(WIN32)
+
+#if defined(WIN32) && !defined(__CYGWIN__)
   if(!_getcwd(path, sizeof(path))) return "";
 #else
   if(!getcwd(path, sizeof(path))) return "";
 #endif
+
   std::string str(path);
   // match the convention of SplitFileName that delivers directory path
   // ending with a directory separator
@@ -370,15 +502,5 @@ void RedirectIOToConsole()
   // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to console
   // as well
   std::ios::sync_with_stdio();
-#endif
-}
-
-FILE *Fopen(const char* f, const char *mode)
-{
-#if defined(HAVE_FLTK)
-  // this handles non-ASCII characters correctly on Windows
-  return fl_fopen(f, mode);
-#else
-  return fopen(f, mode);
 #endif
 }

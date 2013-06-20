@@ -71,7 +71,7 @@ static void file_new_cb(Fl_Widget *w, void *data)
       else
         goto test;
     }
-    FILE *fp = fopen(name.c_str(), "w");
+    FILE *fp = Fopen(name.c_str(), "w");
     if(!fp){
       Msg::Error("Unable to open file '%s'", name.c_str());
       return;
@@ -3061,7 +3061,7 @@ void graphicWindow::saveMessages(const char *filename)
 {
   if(!_browser) return;
 
-  FILE *fp = fopen(filename, "w");
+  FILE *fp = Fopen(filename, "w");
 
   if(!fp) {
     Msg::Error("Unable to open file '%s'", filename);

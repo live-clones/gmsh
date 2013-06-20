@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "OS.h"
 #include "Geo.h"
 #include "OpenFile.h"
 #include "Numeric.h"
@@ -162,7 +163,7 @@ int GModel::importGEOInternals()
           e = new gmshEdge(this, c, 0, 0);
           add(e);
         }
-  
+
 
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
@@ -452,7 +453,7 @@ static bool skipVertex(GVertex *gv)
 
 int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysicals)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
 
   std::map<double, std::string> meshSizeParameters;
   int cpt = 0;

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GModel.h"
+#include "OS.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -29,7 +30,7 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 
 int GModel::readMESH(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -210,7 +211,7 @@ int GModel::readMESH(const std::string &name)
 int GModel::writeMESH(const std::string &name, int elementTagType,
                       bool saveAll, double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

@@ -185,7 +185,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   FILE *fp;
-  if(!(fp = fopen(fileName.c_str(), "rb"))){
+  if(!(fp = Fopen(fileName.c_str(), "rb"))){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
@@ -244,7 +244,7 @@ void ParseString(const std::string &str)
 {
   if(str.empty()) return;
   std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
-  FILE *fp = fopen(fileName.c_str(), "w");
+  FILE *fp = Fopen(fileName.c_str(), "w");
   if(fp){
     fprintf(fp, "%s\n", str.c_str());
     fclose(fp);
@@ -276,7 +276,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
-  FILE *fp = fopen(fileName.c_str(), "rb");
+  FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
@@ -504,7 +504,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
 {
 #if defined(HAVE_POST)
   // check if there is a mesh in the file
-  FILE *fp = fopen(fileName.c_str(), "rb");
+  FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp){
     if(warnIfMissing) Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;

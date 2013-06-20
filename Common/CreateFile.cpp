@@ -358,7 +358,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(name.c_str(), "wb");
+      FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
@@ -395,7 +395,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(name.c_str(), "wb");
+      FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
@@ -466,7 +466,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
     {
       if(!FlGui::available()) break;
 
-      FILE *fp = fopen(name.c_str(), "w");
+      FILE *fp = Fopen(name.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", name.c_str());
         error = true;
@@ -498,7 +498,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
   case FORMAT_MPEG:
     {
       std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
-      FILE *fp = fopen(parFileName.c_str(), "w");
+      FILE *fp = Fopen(parFileName.c_str(), "w");
       if(!fp){
         Msg::Error("Unable to open file '%s'", parFileName.c_str());
         error = true;

@@ -17,6 +17,7 @@
 #include "Numeric.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
+#include "OS.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFaceOptimize.h"
@@ -966,7 +967,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
     printf("dist = %12.5E\n",dist);
   }
 
-  // FILE *F = fopen ("hop.pos","w");
+  // FILE *F = Fopen ("hop.pos","w");
   // fprintf(F,"View \" \" {\n");
   // fprintf(F,"SP(%g,%g,%g) {%g};\n",queryPoint.x(),queryPoint.y(),queryPoint.z(),0.0);
   double initial_guesses = 10.0;
@@ -1406,7 +1407,7 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 {
   SVector3 ez (0, 0, 1);
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
-  FILE *f = fopen ("coucou.pos","w");
+  FILE *f = Fopen ("coucou.pos","w");
   fprintf(f,"View \"\"{\n");
   for (; it != edgeLoops.end(); ++it){
     bool found = false;

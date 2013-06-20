@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "MTriangle.h"
 
 static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
@@ -24,7 +25,7 @@ int GModel::readGEOM(const std::string &name)
 {
   // this is a format (from geomview?) that Bruno Levy's Graphite code
   // can write
-  FILE *fp = fopen(name.c_str(), "r");
+  FILE *fp = Fopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

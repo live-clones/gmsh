@@ -967,7 +967,7 @@ void CellComplex::printComplex(int dim)
 
 int CellComplex::saveComplex(std::string filename)
 {
-  /*FILE *fp = fopen (filename.c_str(), "w");
+  /*FILE *fp = Fopen (filename.c_str(), "w");
   if(!fp){
     printf("\nUnable to open file '%s' \n", filename.c_str());
     return 0;
@@ -1008,7 +1008,7 @@ int CellComplex::saveComplex(std::string filename)
 
 int CellComplex::loadComplex(std::string filename)
 {
-  /*  FILE *fp = fopen (filename.c_str(), "r");
+  /*  FILE *fp = Fopen (filename.c_str(), "r");
   if(!fp){
     printf("\nUnable to open file '%s' \n", filename.c_str());
     return 0;

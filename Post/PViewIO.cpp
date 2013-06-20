@@ -10,10 +10,11 @@
 #include "PViewDataGModel.h"
 #include "StringUtils.h"
 #include "Context.h"
+#include "OS.h"
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
-  FILE *fp = fopen(fileName.c_str(), "rb");
+  FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
@@ -83,7 +84,7 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
 
 bool PView::readMSH(const std::string &fileName, int fileIndex)
 {
-  FILE *fp = fopen(fileName.c_str(), "rb");
+  FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;

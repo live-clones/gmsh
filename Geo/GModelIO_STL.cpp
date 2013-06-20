@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "GModel.h"
+#include "OS.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -14,7 +15,7 @@
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
-  FILE *fp = fopen(name.c_str(), "rb");
+  FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -176,7 +177,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
                      double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

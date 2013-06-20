@@ -578,7 +578,7 @@ void Centerline::computeRadii()
 
 void Centerline::buildKdTree()
 {
-  FILE * f = fopen("myPOINTS.pos","w");
+  FILE * f = Fopen("myPOINTS.pos","w");
   fprintf(f, "View \"\"{\n");
 
   int nbPL = 3;  //10 points per line
@@ -1033,7 +1033,7 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
       // // theCut.insert(newCut.begin(),newCut.end());
       // char name[256];
       // sprintf(name, "myCUT-%d.pos", step);
-      // FILE * f2 = fopen(name,"w");
+      // FILE * f2 = Fopen(name,"w");
       // fprintf(f2, "View \"\"{\n");
       // std::set<MEdge,Less_Edge>::iterator itp =  newCut.begin();
       // while (itp != newCut.end()){
@@ -1282,7 +1282,7 @@ void Centerline::computeCrossField(double x,double y,double z,
 
 void Centerline::printSplit() const
 {
-  FILE * f = fopen("mySPLIT.pos","w");
+  FILE * f = Fopen("mySPLIT.pos","w");
   fprintf(f, "View \"\"{\n");
   for(unsigned int i = 0; i < edges.size(); ++i){
     std::vector<MLine*> lines = edges[i].lines;
@@ -1297,7 +1297,7 @@ void Centerline::printSplit() const
   fprintf(f,"};\n");
   fclose(f);
 
-  // FILE * f3 = fopen("myJUNCTIONS.pos","w");
+  // FILE * f3 = Fopen("myJUNCTIONS.pos","w");
   // fprintf(f3, "View \"\"{\n");
   //  std::set<MVertex*>::const_iterator itj = junctions.begin();
   //  while (itj != junctions.end()){
@@ -1310,7 +1310,7 @@ void Centerline::printSplit() const
   // fprintf(f3,"};\n");
   // fclose(f3);
 
-  FILE * f4 = fopen("myRADII.pos","w");
+  FILE * f4 = Fopen("myRADII.pos","w");
   fprintf(f4, "View \"\"{\n");
   for(unsigned int i = 0; i < lines.size(); ++i){
     MLine *l = lines[i];

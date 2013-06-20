@@ -644,7 +644,7 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
   }
 
   //+++++++++ Move vertices @ maximum ++++++++++++++++++++++++++++++++++++
-  FILE *fd = fopen ("d.msh","w");
+  FILE *fd = Fopen ("d.msh","w");
   fprintf(fd,"$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n", (int) _vertices.size());
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
     double ax, ay, az;

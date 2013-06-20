@@ -9,6 +9,7 @@
 
 #include <complex>
 #include "NearToFarField.h"
+#include "OS.h"
 
 StringXNumber NearToFarFieldOptions_Number[] = {
   {GMSH_FULLRC, "Wavenumber",       NULL, 1.},
@@ -460,7 +461,7 @@ PView *GMSH_NearToFarFieldPlugin::execute(PView * v)
   }
 
   if(_outFile.size()){
-    FILE *fp = fopen(_outFile.c_str(), "w");
+    FILE *fp = Fopen(_outFile.c_str(), "w");
     if(fp){
       printVector(fp, "phi", phi);
       printVector(fp, "theta", theta);

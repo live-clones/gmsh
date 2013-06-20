@@ -631,7 +631,7 @@ static void printCut(std::map<MEdge,MVertex*,Less_Edge> &cutEdges,
 {
    printf("Writing points.pos \n");
    std::map<MEdge,MVertex*,Less_Edge>::iterator ite = cutEdges.begin();
-   FILE *f1 = fopen("points.pos","w");
+   FILE *f1 = Fopen("points.pos","w");
    fprintf(f1,"View\"\"{\n");
    for ( ; ite != cutEdges.end();++ite){
      fprintf(f1,"SP(%g,%g,%g){1.0};\n",ite->second->x(),ite->second->y(),ite->second->z());
@@ -645,7 +645,7 @@ static void printCut(std::map<MEdge,MVertex*,Less_Edge> &cutEdges,
 
    printf("Writing edges.pos \n");
    std::set<MEdge,Less_Edge>::iterator itc = theCut.begin();
-   FILE *f2 = fopen("edges.pos","w");
+   FILE *f2 = Fopen("edges.pos","w");
    fprintf(f2,"View\"\"{\n");
    for ( ; itc != theCut.end();++itc){
      fprintf(f2,"SL(%g,%g,%g,%g,%g,%g){1.0,1.0};\n",itc->getVertex(0)->x(),
@@ -670,7 +670,7 @@ static void printLevel(const char* fn,
       vs.insert(elements[i]->getVertex(j));
 
   bool binary = false;
-  FILE *fp = fopen (fn, "w");
+  FILE *fp = Fopen (fn, "w");
   fprintf(fp, "$MeshFormat\n");
   fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
   fprintf(fp, "$EndMeshFormat\n");

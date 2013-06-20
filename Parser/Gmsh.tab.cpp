@@ -4455,7 +4455,7 @@ yyreduce:
 #line 220 "Gmsh.y"
     {
       std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(6) - (7)].c));
-      FILE *fp = fopen(tmp.c_str(), (yyvsp[(5) - (7)].c));
+      FILE *fp = Fopen(tmp.c_str(), (yyvsp[(5) - (7)].c));
       if(!fp){
 	yymsg(0, "Unable to open file '%s'", tmp.c_str());
       }
@@ -4511,7 +4511,7 @@ yyreduce:
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else{
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(8) - (9)].c));
-	FILE *fp = fopen(tmp.c_str(), (yyvsp[(7) - (9)].c));
+	FILE *fp = Fopen(tmp.c_str(), (yyvsp[(7) - (9)].c));
 	if(!fp){
 	  yymsg(0, "Unable to open file '%s'", tmp.c_str());
 	}

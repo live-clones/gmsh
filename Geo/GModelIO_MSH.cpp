@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "GmshMessage.h"
 #include "MElement.h"
 #include "MPoint.h"
@@ -78,7 +79,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
 
 int GModel::readMSH(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "rb");
+  FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -472,9 +473,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   FILE *fp;
   if(multipleView)
-    fp = fopen(name.c_str(), binary ? "ab" : "a");
+    fp = Fopen(name.c_str(), binary ? "ab" : "a");
   else
-    fp = fopen(name.c_str(), binary ? "wb" : "w");
+    fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

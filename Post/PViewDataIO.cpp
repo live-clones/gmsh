@@ -10,10 +10,11 @@
 #include "Numeric.h"
 #include "PViewData.h"
 #include "adaptiveData.h"
+#include "OS.h"
 
 bool PViewData::writeSTL(const std::string &fileName)
 {
-  FILE *fp = fopen(fileName.c_str(), "w");
+  FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
@@ -73,7 +74,7 @@ bool PViewData::writeSTL(const std::string &fileName)
 
 bool PViewData::writeTXT(const std::string &fileName)
 {
-  FILE *fp = fopen(fileName.c_str(), "w");
+  FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
@@ -119,7 +120,7 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
   if(binary || !parsed)
     Msg::Warning("Only parsed .pos files can be exported for this view type");
 
-  FILE *fp = fopen(fileName.c_str(), append ? "a" : "w");
+  FILE *fp = Fopen(fileName.c_str(), append ? "a" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;

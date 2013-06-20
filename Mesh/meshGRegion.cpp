@@ -22,6 +22,7 @@
 #include "MTetrahedron.h"
 #include "MPyramid.h"
 #include "BDS.h"
+#include "OS.h"
 #include "Context.h"
 #include "GFaceCompound.h"
 #include "meshGRegionMMG3D.h"
@@ -147,7 +148,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   //print voronoi poles
   FILE *outfile;
   //smooth_normals *snorm = gr->model()->normals;
-  outfile = fopen("nodes.pos", "w");
+  outfile = Fopen("nodes.pos", "w");
   fprintf(outfile, "View \"Voronoi poles\" {\n");
   std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.begin();
   for(; itmap != node2Tet.end(); itmap++){
@@ -186,7 +187,7 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
 
   //print scalar lines
   FILE *outfile2;
-  outfile2 = fopen("edges.pos", "w");
+  outfile2 = Fopen("edges.pos", "w");
   fprintf(outfile2, "View \"Voronoi edges\" {\n");
   std::map<MFace, std::vector<MTetrahedron*> , Less_Face >::iterator itmap2 = face2Tet.begin();
   for(; itmap2 != face2Tet.end(); itmap2++){
@@ -584,7 +585,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
         tetrahedralize(opts, &in, &out);
         Msg::Info("%d intersecting faces have been saved into 'intersect.pos'",
                   out.numberoftrifaces);
-        FILE *fp = fopen("intersect.pos", "w");
+        FILE *fp = Fopen("intersect.pos", "w");
         if(fp){
           fprintf(fp, "View \"intersections\" {\n");
           for(int i = 0; i < out.numberoftrifaces; i++){
@@ -919,7 +920,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
     }
   }
 
-  // FILE *fp = fopen("debug.pos", "w");
+  // FILE *fp = Fopen("debug.pos", "w");
   // fprintf(fp, "View \"debug\" {\n");
   // for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
   //   for(unsigned int i = 0; i < (*it)->triangles.size(); i++)

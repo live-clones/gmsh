@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GmshMessage.h"
+#include "OS.h"
 #include "GModelIO_ACIS.h"
 #include "ACISVertex.h"
 #include "ACISEdge.h"
@@ -207,7 +208,7 @@ void ACIS_Internals::addFaces (GModel *gm, ENTITY_LIST &l)
 
 void ACIS_Internals::loadSAT(std::string fileName, GModel *gm)
 {
-  FILE *f = fopen (fileName.c_str(), "r");
+  FILE *f = Fopen (fileName.c_str(), "r");
   if (!f){
     return;
   }

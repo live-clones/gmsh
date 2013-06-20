@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "GmshMessage.h"
+#include "OS.h"
 #include "robustPredicates.h"
 #include "Numeric.h"
 #include "BDS.h"
@@ -16,7 +17,7 @@
 
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
-  FILE *f = fopen(iii, "w");
+  FILE *f = Fopen(iii, "w");
   if(!f) return;
   fprintf(f, "View \"scalar\" {\n");
   std::list<BDS_Face*>::iterator tit = t.begin();
@@ -533,7 +534,7 @@ void recur_tag(BDS_Face *t, BDS_GeomEntity *g)
 	//	recur_tag(t->e2->otherFace(t), g);
       }
       if(!t->e3->g && t->e3->numfaces() == 2) {
-	_stack.push(t->e3->otherFace(t));	
+	_stack.push(t->e3->otherFace(t));
 	//	recur_tag(t->e3->otherFace(t), g);
       }
     }

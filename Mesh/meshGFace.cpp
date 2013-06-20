@@ -645,7 +645,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
-  FILE *ff2 = fopen ("tato.pos","w");
+  FILE *ff2 = Fopen ("tato.pos","w");
   fprintf(ff2,"View \" \"{\n");
   std::set<MVertex*> verts;
   while(ite != edges.end()){
@@ -762,7 +762,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   std::list<GEdge*> hop;
   std::set<MEdge,Less_Edge>::iterator it =  bedges.begin();
 
-  FILE *ff = fopen ("toto.pos","w");
+  FILE *ff = Fopen ("toto.pos","w");
   fprintf(ff,"View \" \"{\n");
   for (; it != bedges.end(); ++it){
     ne.lines.push_back(new MLine (it->getVertex(0),it->getVertex(1)));

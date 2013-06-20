@@ -31,6 +31,7 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "GeoStringInterface.h"
 #include "StringUtils.h"
+#include "OS.h"
 
 #define MAX_PLUGIN_OPTIONS 50
 class PluginDialogBox{
@@ -132,7 +133,7 @@ static void add_scripting(GMSH_PostPlugin *p, PView *view)
     fileName = GModel::current()->getFileName();
 
   fileName += ".opt";
-  FILE *fp = fopen(fileName.c_str(), "a");
+  FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp){
     Msg::Error("Could not open file '%s'", fileName.c_str());
   }

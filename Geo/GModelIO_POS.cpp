@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "GModel.h"
+#include "OS.h"
 #include "MElement.h"
 
 int GModel::writePOS(const std::string &name, bool printElementary,
@@ -12,7 +13,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
                      bool printRho, bool printDisto,
                      bool saveAll, double scalingFactor)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

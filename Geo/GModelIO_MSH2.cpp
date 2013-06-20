@@ -11,6 +11,7 @@
 #include <cassert>
 #include <iomanip>
 #include "GModel.h"
+#include "OS.h"
 #include "GmshDefines.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -180,7 +181,7 @@ static void getDomains(int dom1Num, int dom2Num, int type,
 
 int GModel::_readMSH2(const std::string &name)
 {
-  FILE *fp = fopen(name.c_str(), "rb");
+  FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -842,9 +843,9 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 {
   FILE *fp;
   if(multipleView)
-    fp = fopen(name.c_str(), binary ? "ab" : "a");
+    fp = Fopen(name.c_str(), binary ? "ab" : "a");
   else
-    fp = fopen(name.c_str(), binary ? "wb" : "w");
+    fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -1069,7 +1070,7 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
 #if 0
   if(_ghostCells.size()){
     Msg::Info("Writing ghost cells in debug file 'ghosts.pos'");
-    FILE *fp = fopen("ghosts.pos", "w");
+    FILE *fp = Fopen("ghosts.pos", "w");
     fprintf(fp, "View \"ghosts\"{\n");
     for(std::multimap<MElement*, short>::iterator it = _ghostCells.begin();
         it != _ghostCells.end(); it++)

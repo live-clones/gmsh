@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "MTriangle.h"
 
 int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFactor)
@@ -11,7 +12,7 @@ int GModel::writeMAIL(const std::string &name, bool saveAll, double scalingFacto
   // CEA triangulation (.mail format) for Eric Darrigrand. Note that
   // we currently don't save the edges of the triangulation (the last
   // part of the file).
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = Fopen(name.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

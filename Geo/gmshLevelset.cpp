@@ -13,6 +13,7 @@
 #include "gmshLevelset.h"
 #include "fullMatrix.h"
 #include "GModel.h"
+#include "OS.h"
 #include "MElement.h"
 #include "Numeric.h"
 #include "cartesian.h"
@@ -223,7 +224,7 @@ inline double evalRadialFnDer(int p, int index, double dx, double dy, double dz,
 
 inline void printNodes(fullMatrix<double> &myNodes, fullMatrix<double> &surf)
 {
-  FILE * xyz = fopen("myNodes.pos","w");
+  FILE * xyz = Fopen("myNodes.pos","w");
   fprintf(xyz,"View \"\"{\n");
   for(int itv = 1; itv != myNodes.size1(); ++itv){
     fprintf(xyz,"SP(%g,%g,%g){%g};\n", myNodes(itv,0), myNodes(itv,1),

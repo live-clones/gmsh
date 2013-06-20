@@ -45,7 +45,7 @@ static bool isBoundary(MTri3 *t, double limit_, int &active)
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData & data, bool param=true)
 {
-  FILE *ff = fopen (name,"w");
+  FILE *ff = Fopen (name,"w");
   fprintf(ff,"View\"test\"{\n");
   while ( it != end ){
     MTri3 *worst = *it;
@@ -211,9 +211,9 @@ void circumCenterMetric(MTriangle *base, const double *metric, bidimMeshData & d
                         double *x, double &Radius2)
 {
   // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1
-  int index0 = data.getIndex (base->getVertex(0)); 
-  int index1 = data.getIndex (base->getVertex(1)); 
-  int index2 = data.getIndex (base->getVertex(2)); 
+  int index0 = data.getIndex (base->getVertex(0));
+  int index1 = data.getIndex (base->getVertex(1));
+  int index2 = data.getIndex (base->getVertex(2));
   double pa[2] = {data.Us[index0], data.Vs[index0] };
   double pb[2] = {data.Us[index1], data.Vs[index1] };
   double pc[2] = {data.Us[index2], data.Vs[index2] };
@@ -283,9 +283,9 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
   double x[2], Radius2;
   double metric[3];
   if (!metricb){
-    int index0 = data.getIndex (base->getVertex(0)); 
-    int index1 = data.getIndex (base->getVertex(1)); 
-    int index2 = data.getIndex (base->getVertex(2)); 
+    int index0 = data.getIndex (base->getVertex(0));
+    int index1 = data.getIndex (base->getVertex(1));
+    int index2 = data.getIndex (base->getVertex(2));
     double pa[2] = {(data.Us[index0] +data.Us[index1] + data.Us[index2]) / 3.,
   		  (data.Vs[index0] +data.Vs[index1] + data.Vs[index2]) / 3.};
     buildMetric(gf, pa, metric);
@@ -330,9 +330,9 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
     }
     else {
 
-      int index0 = data->getIndex (base->getVertex(0)); 
-      int index1 = data->getIndex (base->getVertex(1)); 
-      int index2 = data->getIndex (base->getVertex(2)); 
+      int index0 = data->getIndex (base->getVertex(0));
+      int index1 = data->getIndex (base->getVertex(1));
+      int index2 = data->getIndex (base->getVertex(2));
       double p1[2] = {data->Us[index0], data->Vs[index0] };
       double p2[2] = {data->Us[index1], data->Vs[index1] };
       double p3[2] = {data->Us[index2], data->Vs[index2] };
@@ -386,9 +386,9 @@ int MTri3::inCircumCircle(const double *p) const
 int inCircumCircle(MTriangle *base,
                    const double *p, const double *param , bidimMeshData & data)
 {
-  int index0 = data.getIndex (base->getVertex(0)); 
-  int index1 = data.getIndex (base->getVertex(1)); 
-  int index2 = data.getIndex (base->getVertex(2)); 
+  int index0 = data.getIndex (base->getVertex(0));
+  int index1 = data.getIndex (base->getVertex(1));
+  int index2 = data.getIndex (base->getVertex(2));
   double pa[2] = {data.Us[index0], data.Vs[index0] };
   double pb[2] = {data.Us[index1], data.Vs[index1] };
   double pc[2] = {data.Us[index2], data.Vs[index2] };
@@ -495,7 +495,7 @@ void recurFindCavityAniso(GFace *gf,
     MTri3 *neigh = t->getNeigh(i) ;
     edgeXface exf (t, i);
     // take care of untouchable internal edges
-    std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(exf.v[0],exf.v[1])); 
+    std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(exf.v[0],exf.v[1]));
     if (!neigh || it != data.internalEdges.end())
       shell.push_back(exf);
     else  if (!neigh->isDeleted()){
@@ -511,9 +511,9 @@ void recurFindCavityAniso(GFace *gf,
 
 bool circUV(MTriangle *t, bidimMeshData & data, double *res, GFace *gf)
 {
-  int index0 = data.getIndex (t->getVertex(0)); 
-  int index1 = data.getIndex (t->getVertex(1)); 
-  int index2 = data.getIndex (t->getVertex(2)); 
+  int index0 = data.getIndex (t->getVertex(0));
+  int index1 = data.getIndex (t->getVertex(1));
+  int index2 = data.getIndex (t->getVertex(2));
   double u1[3] = {data.Us[index0], data.Vs[index0], 0 };
   double u2[3] = {data.Us[index1], data.Vs[index1], 0 };
   double u3[3] = {data.Us[index2], data.Vs[index2], 0 };
@@ -527,9 +527,9 @@ bool invMapUV(MTriangle *t, double *p, bidimMeshData & data,
   double mat[2][2];
   double b[2];
 
-  int index0 = data.getIndex (t->getVertex(0)); 
-  int index1 = data.getIndex (t->getVertex(1)); 
-  int index2 = data.getIndex (t->getVertex(2)); 
+  int index0 = data.getIndex (t->getVertex(0));
+  int index1 = data.getIndex (t->getVertex(1));
+  int index2 = data.getIndex (t->getVertex(2));
 
   double u0 = data.Us[index0];
   double v0 = data.Vs[index0];
@@ -559,9 +559,9 @@ bool invMapUV(MTriangle *t, double *p, bidimMeshData & data,
 
 inline double getSurfUV(MTriangle *t, bidimMeshData & data)
 {
-  int index0 = data.getIndex (t->getVertex(0)); 
-  int index1 = data.getIndex (t->getVertex(1)); 
-  int index2 = data.getIndex (t->getVertex(2)); 
+  int index0 = data.getIndex (t->getVertex(0));
+  int index1 = data.getIndex (t->getVertex(1));
+  int index2 = data.getIndex (t->getVertex(2));
 
   double u1 = data.Us[index0];
   double v1 = data.Vs[index0];
@@ -607,9 +607,9 @@ bool insertVertexB (std::list<edgeXface> &shell,
   bool onePointIsTooClose = false;
   while (it != shell.end()){
     MTriangle *t = new MTriangle(it->v[0], it->v[1], v);
-    int index0 = data.getIndex (t->getVertex(0)); 
-    int index1 = data.getIndex (t->getVertex(1)); 
-    int index2 = data.getIndex (t->getVertex(2)); 
+    int index0 = data.getIndex (t->getVertex(0));
+    int index1 = data.getIndex (t->getVertex(1));
+    int index2 = data.getIndex (t->getVertex(2));
     const double ONE_THIRD = 1./3.;
     double lc = ONE_THIRD * (data.vSizes[index0] +data.vSizes[index1] +data.vSizes[index2]);
     double lcBGM = ONE_THIRD * (data.vSizesBGM[index0] +data.vSizesBGM[index1] +data.vSizesBGM[index2]);
@@ -734,9 +734,9 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
   int ITER = 0;
   while (1){
     N_SEARCH ++ ;
-    int index0 = data.getIndex (t->tri()->getVertex(0)); 
-    int index1 = data.getIndex (t->tri()->getVertex(1)); 
-    int index2 = data.getIndex (t->tri()->getVertex(2)); 
+    int index0 = data.getIndex (t->tri()->getVertex(0));
+    int index1 = data.getIndex (t->tri()->getVertex(1));
+    int index2 = data.getIndex (t->tri()->getVertex(2));
     SPoint3 q2((data.Us[index0] +data.Us[index1] +data.Us[index2])/ 3.0,
 	       (data.Vs[index0] +data.Vs[index1] +data.Vs[index2])/ 3.0,
 	       0);
@@ -813,7 +813,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     //      printf("cocuou\n");
     ptin = search4Triangle (worst, center, data, AllTris,uv, oneNewTriangle ? true : false);
       if (ptin) {
-	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);    
+	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);
       }
   }
 
@@ -832,11 +832,11 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     int index2 = data.getIndex(ptin->tri()->getVertex(2));
     lc1 = (1. - uv[0] - uv[1]) * data.vSizes[index0] + uv[0] * data.vSizes[index1] + uv[1] * data.vSizes[index2];
     lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
-    
+
     //SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(), p.z());
     //                               vMetricsBGM.push_back(metr);
-    data.addVertex ( v ,  center[0], center[1], lc1, lc ); 
-    
+    data.addVertex ( v ,  center[0], center[1], lc1, lc );
+
     //    double t1 = Cpu();
 
     if(!p.succeeded() || !insertVertexB
@@ -871,7 +871,7 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 }
 
 void gmshRuppert(GFace *gf,  double minqual, int MAXPNT,
-		 std::map<MVertex* , MVertex*>* equivalence,  
+		 std::map<MVertex* , MVertex*>* equivalence,
 		 std::map<MVertex*, SPoint2> * parametricCoordinates){
   MTri3::radiusNorm =3;
 
@@ -920,7 +920,7 @@ void gmshRuppert(GFace *gf,  double minqual, int MAXPNT,
 
 
 void bowyerWatson(GFace *gf, int MAXPNT,
-		  std::map<MVertex* , MVertex*>* equivalence,  
+		  std::map<MVertex* , MVertex*>* equivalence,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
@@ -993,7 +993,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
     }
   }
 #endif
-  transferDataStructure(gf, AllTris, DATA);  
+  transferDataStructure(gf, AllTris, DATA);
 }
 
 /*
@@ -1206,7 +1206,7 @@ void optimalPointFrontalB (GFace *gf,
 }
 
 void bowyerWatsonFrontal(GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence,  
+		  std::map<MVertex* , MVertex*>* equivalence,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
@@ -1381,7 +1381,7 @@ void optimalPointFrontalQuadB (GFace *gf,
 }
 
 void buildBackGroundMesh (GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence,  
+		  std::map<MVertex* , MVertex*>* equivalence,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   //  printf("build bak mesh\n");
@@ -1430,7 +1430,7 @@ void buildBackGroundMesh (GFace *gf,
 }
 
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
-		  std::map<MVertex* , MVertex*>* equivalence,  
+		  std::map<MVertex* , MVertex*>* equivalence,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
 
@@ -1568,7 +1568,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
 }
 
 void bowyerWatsonParallelograms(GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence,  
+		  std::map<MVertex* , MVertex*>* equivalence,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;

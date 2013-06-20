@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "OS.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -17,7 +18,7 @@
 int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
                      double scalingFactor, bool bigEndian)
 {
-  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  FILE *fp = Fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -98,7 +99,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
 
 int GModel::readVTK(const std::string &name, bool bigEndian)
 {
-  FILE *fp = fopen(name.c_str(), "rb");
+  FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;

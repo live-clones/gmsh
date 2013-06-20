@@ -13,6 +13,7 @@
 #include "GModel.h"
 #include "Context.h"
 #include "Options.h"
+#include "OS.h"
 #include "Colors.h"
 #include "CommandLine.h"
 #include "GamePad.h"
@@ -617,7 +618,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
   FILE *file;
 
   if(filename) {
-    file = fopen(filename, "w");
+    file = Fopen(filename, "w");
     if(!file) {
       Msg::Error("Unable to open file '%s'", filename);
       return;
@@ -732,7 +733,7 @@ void PrintOptionsDoc()
     "@c\n\n";
 
   {
-    FILE *file = fopen("opt_general.texi", "w");
+    FILE *file = Fopen("opt_general.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_general.texi'");
       return;
@@ -745,7 +746,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("opt_print.texi", "w");
+    FILE *file = Fopen("opt_print.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_print.texi'");
       return;
@@ -758,7 +759,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("opt_geometry.texi", "w");
+    FILE *file = Fopen("opt_geometry.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_geometry.texi'");
       return;
@@ -771,7 +772,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("opt_mesh.texi", "w");
+    FILE *file = Fopen("opt_mesh.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_mesh.texi'");
       return;
@@ -784,7 +785,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("opt_solver.texi", "w");
+    FILE *file = Fopen("opt_solver.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_solver.texi'");
       return;
@@ -797,7 +798,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("opt_post.texi", "w");
+    FILE *file = Fopen("opt_post.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_post.texi'");
       return;
@@ -811,7 +812,7 @@ void PrintOptionsDoc()
   }
   {
 #if defined(HAVE_POST)
-    FILE *file = fopen("opt_view.texi", "w");
+    FILE *file = Fopen("opt_view.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_view.texi'");
       return;
@@ -830,7 +831,7 @@ void PrintOptionsDoc()
   }
   {
 #if defined(HAVE_PLUGINS)
-    FILE *file = fopen("opt_plugin.texi", "w");
+    FILE *file = Fopen("opt_plugin.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_plugin.texi'");
       return;
@@ -874,7 +875,7 @@ void PrintOptionsDoc()
 
 #if defined(HAVE_MESH)
   {
-    FILE *file = fopen("opt_fields.texi", "w");
+    FILE *file = Fopen("opt_fields.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'opt_fields.texi'");
       return;
@@ -919,7 +920,7 @@ void PrintOptionsDoc()
   }
 #endif
   {
-    FILE *file = fopen("shortcuts.texi", "w");
+    FILE *file = Fopen("shortcuts.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'shortcuts.texi'");
       return;
@@ -932,7 +933,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("mouse.texi", "w");
+    FILE *file = Fopen("mouse.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'mouse.texi'");
       return;
@@ -945,7 +946,7 @@ void PrintOptionsDoc()
     fclose(file);
   }
   {
-    FILE *file = fopen("commandline.texi", "w");
+    FILE *file = Fopen("commandline.texi", "w");
     if(!file) {
       Msg::Error("Unable to open file 'commandline.texi'");
       return;

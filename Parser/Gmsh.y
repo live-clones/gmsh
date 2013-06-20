@@ -219,7 +219,7 @@ Printf :
   | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
     {
       std::string tmp = FixRelativePath(gmsh_yyname, $6);
-      FILE *fp = fopen(tmp.c_str(), $5);
+      FILE *fp = Fopen(tmp.c_str(), $5);
       if(!fp){
 	yymsg(0, "Unable to open file '%s'", tmp.c_str());
       }
@@ -266,7 +266,7 @@ Printf :
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else{
         std::string tmp = FixRelativePath(gmsh_yyname, $8);
-	FILE *fp = fopen(tmp.c_str(), $7);
+	FILE *fp = Fopen(tmp.c_str(), $7);
 	if(!fp){
 	  yymsg(0, "Unable to open file '%s'", tmp.c_str());
 	}

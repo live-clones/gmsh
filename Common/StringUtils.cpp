@@ -7,9 +7,9 @@
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
 #endif
-
 #include "StringUtils.h"
 #include "GmshMessage.h"
+#include "OS.h"
 
 void SwapBytes(char *array, int size, int n)
 {
@@ -112,7 +112,7 @@ std::string GetFileNameWithoutPath(const std::string &fileName)
 
 std::string ConvertFileToString(const std::string &fileName)
 {
-  FILE *fp = fopen(fileName.c_str(), "r");
+  FILE *fp = Fopen(fileName.c_str(), "r");
   if(!fp) return "";
   std::string out;
   char str[256];
@@ -121,7 +121,7 @@ std::string ConvertFileToString(const std::string &fileName)
   return out;
 }
 
-void ReplaceSubStringInPlace(const std::string &olds, const std::string &news, 
+void ReplaceSubStringInPlace(const std::string &olds, const std::string &news,
                              std::string &str)
 {
   while(1){
@@ -131,7 +131,7 @@ void ReplaceSubStringInPlace(const std::string &olds, const std::string &news,
   }
 }
 
-std::string ReplaceSubString(const std::string &olds, const std::string &news, 
+std::string ReplaceSubString(const std::string &olds, const std::string &news,
                              const std::string &str)
 {
   std::string copy(str);

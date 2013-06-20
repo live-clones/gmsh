@@ -20,7 +20,7 @@
 #include "Numeric.h"
 #include "robustPredicates.h"
 #include "BackgroundMesh.h"
-
+#include "OS.h"
 #include "GPoint.h"
 #include "GFace.h"
 #include "GEdgeCompound.h"
@@ -569,7 +569,7 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
 
 void DocRecord::makePosView(std::string fileName, GFace *gf)
 {
-  FILE *f = fopen(fileName.c_str(),"w");
+  FILE *f = Fopen(fileName.c_str(),"w");
    if (_adjacencies){
     fprintf(f,"View \"voronoi\" {\n");
     for(PointNumero i = 0; i < numPoints; i++) {
@@ -605,7 +605,7 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
 
 void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
 {
-  FILE *f = fopen(fileName.c_str(),"w");
+  FILE *f = Fopen(fileName.c_str(),"w");
    if (_adjacencies){
     fprintf(f,"View \"medial axis\" {\n");
     for(PointNumero i = 0; i < numPoints; i++) {

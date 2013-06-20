@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "STensor3.h"
 #include "Field.h"
+#include "OS.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -105,7 +106,7 @@ static double F_Lc_aniso(GEdge *ge, double t)
 #else
   bool blf = false;
 #endif
-  
+
 
   GPoint p = ge->point(t);
   SMetric3 lc_here;
@@ -125,7 +126,7 @@ static double F_Lc_aniso(GEdge *ge, double t)
   if (blf && !blf->isEdgeBL(ge->tag())){
     SMetric3 lc_bgm;
     blf->computeFor1dMesh ( p.x(), p.y(), p.z() , lc_bgm );
-    lc_here = intersection_conserveM1 (lc_here, lc_bgm );			    
+    lc_here = intersection_conserveM1 (lc_here, lc_bgm );
   }
 #endif
 
@@ -301,7 +302,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 {
   char name[256];
   sprintf(name, "line%d.dat", tag);
-  FILE *f = fopen(name, "w");
+  FILE *f = Fopen(name, "w");
   if(!f) return;
   double l = 0;
   for (unsigned int i = 0; i < Points.size(); i++){
@@ -493,7 +494,7 @@ void meshGEdge::operator() (GEdge *ge)
 
 #if defined(HAVE_ANN)
   if (blf && !blf->isEdgeBL(ge->tag()))
-    {      
+    {
       GVertex *g0 = ge->getBeginVertex();
       GVertex *g1 = ge->getEndVertex();
       BoundaryLayerColumns* _columns = ge->model()->getColumns();
@@ -513,7 +514,7 @@ void meshGEdge::operator() (GEdge *ge)
       }
       if (blf->isVertexBL(g1->tag())){
 	  _columns->addColumn(t*-1.0, v1,invert,_metrics);
-      }      
+      }
     }
 #endif
   ge->meshStatistics.status = GEdge::DONE;

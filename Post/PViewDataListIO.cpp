@@ -14,6 +14,7 @@
 #include "MVertexPositionSet.h"
 #include "Context.h"
 #include "adaptiveData.h"
+#include "OS.h"
 
 static void dVecRead(std::vector<double> &v, int n, FILE *fp,
                      bool binary, int swap)
@@ -356,7 +357,7 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary, bool pars
     return false;
   }
 
-  FILE *fp = fopen(fileName.c_str(),
+  FILE *fp = Fopen(fileName.c_str(),
                    append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
@@ -533,7 +534,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     return _adaptive->getData()->writeMSH(fileName, version, binary);
   }
 
-  FILE *fp = fopen(fileName.c_str(), "w");
+  FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
@@ -661,7 +662,7 @@ void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
     std::vector<double> *list = 0;
     int *nbe = 0, nbc, nbn;
     _getRawData(i, &list, &nbe, &nbc, &nbn);
-    N[i] = *nbe; 
+    N[i] = *nbe;
     V[i] = list; // copy pointer only
   }
 }

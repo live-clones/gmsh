@@ -9,6 +9,7 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Bubbles.h"
+#include "OS.h"
 
 StringXNumber BubblesOptions_Number[] = {
   {GMSH_FULLRC, "ShrinkFactor", NULL, 0.},
@@ -60,8 +61,8 @@ static double myangle(double c[3], double p[3])
 {
   double v[3] = {1, 0, 0};
   double n[3] = {0, 0, 1};
-  if(fabs(c[0] - p[0]) < 1e-12 && 
-     fabs(c[1] - p[1]) < 1e-12 && 
+  if(fabs(c[0] - p[0]) < 1e-12 &&
+     fabs(c[1] - p[1]) < 1e-12 &&
      fabs(c[2] - p[2]) < 1e-12)
     return 0.;
   return angle_plan(c, v, p, n);
@@ -88,12 +89,12 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
   double shrink = (double)BubblesOptions_Number[0].def;
   std::string fileName = BubblesOptions_String[0].def;
 
-  FILE *fp = fopen(fileName.c_str(), "w");
+  FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Could not open output file '%s'", fileName.c_str());
     return v;
   }
-  
+
   GModel *m = GModel::current();
 
   int p = m->getMaxElementaryNumber(0) + 1;
@@ -131,7 +132,7 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
       if(v->onWhat() && v->onWhat()->dim() < 2)
         it->second.push_back(SPoint3(it->first->x(), it->first->y(), it->first->z()));
     }
- 
+
     for(std::map<MVertex*, std::vector<SPoint3> >::iterator it = v2t.begin();
         it != v2t.end(); it++){
       if(it->second.size() > 2){
@@ -145,8 +146,8 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
         // shrink cells
         if(shrink){
           for(unsigned int i = 0; i < it->second.size(); i++){
-            double dir[3] = {it->second[i].x() - bc.x(), 
-                             it->second[i].y() - bc.y(), 
+            double dir[3] = {it->second[i].x() - bc.x(),
+                             it->second[i].y() - bc.y(),
                              it->second[i].z() - bc.z()};
             it->second[i][0] -= shrink * dir[0];
             it->second[i][1] -= shrink * dir[1];
