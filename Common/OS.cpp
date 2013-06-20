@@ -143,7 +143,7 @@ static wchar_t *wbuf[2] = {NULL, NULL};
 
 static void setwbuf(int i, const char *f)
 {
-  if(i != 0 || i != 1) return;
+  if(i != 0 && i != 1) return;
   size_t l = strlen(f);
   unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
   wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
