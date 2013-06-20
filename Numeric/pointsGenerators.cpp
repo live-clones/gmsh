@@ -140,7 +140,7 @@ fullMatrix<double> gmshGenerateMonomialsTriangle(int order, bool serendip)
           monomials(index, 1) = monomials(i0, 1) + u_1 * i;
         }
       }
-      if (!serendip) {
+      if (!serendip && order > 2) {
         fullMatrix<double> inner = gmshGenerateMonomialsTriangle(order-3);
         inner.add(1);
         monomials.copy(inner, 0, nbMonomials - index, 0, 2, index, 0);
@@ -380,8 +380,10 @@ fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints)
         dudvQ.add(1);
 
         fullMatrix<double> dudvT;
-        if (order > 2)  dudvT = gmshGenerateMonomialsTriangle(order - 3);
-        dudvT.add(1);
+        if (order > 2) {
+          dudvT = gmshGenerateMonomialsTriangle(order - 3);
+          dudvT.add(1);
+        }
 
         for (int iface = 0; iface < 5; ++iface) {
           int i0, i1, i2;
@@ -715,8 +717,10 @@ fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoint
         dudvQ.add(1);
 
         fullMatrix<double> dudvT;
-        if (order > 2)  dudvT = gmshGenerateMonomialsTriangle(order - 3);
-        dudvT.add(1);
+        if (order > 2) {
+          dudvT = gmshGenerateMonomialsTriangle(order - 3);
+          dudvT.add(1);
+        }
 
         for (int iface = 0; iface < 5; ++iface) {
           int i0, i1, i2;
