@@ -19,118 +19,113 @@ JacobianBasis::JacobianBasis(int tag)
   const int parentType = ElementType::ParentTypeFromTag(tag);
   const int order = ElementType::OrderFromTag(tag);
 
-  //int jacType = 0,
-  int primJacType = 0;
-
-  /*if (parentType == TYPE_PYR) {
-    switch (tag) {
-    case MSH_PYR_5 : jacType = MSH_PYR_14; primJacType = MSH_PYR_14; break;   // TODO: Order 1, Jac. "order" 2, check this
-    case MSH_PYR_14 : jacType = MSH_PYR_91; primJacType = MSH_PYR_14; break;  // TODO: Order 2, Jac. "order" 5, check this
-    case MSH_PYR_30 : jacType = MSH_PYR_285; primJacType = MSH_PYR_14; break; // TODO: Order 3, Jac. "order" 8, check this
+  int jacobianOrder, primJacobianOrder;
+  switch (parentType) {
+    case TYPE_PNT :
+      primJacobianOrder = 0;
+      jacobianOrder = 0;
+      lagPoints = gmshGeneratePointsLine(0);
+      break;
+    case TYPE_LIN :
+      primJacobianOrder = 0;
+      jacobianOrder = order - 1;
+      lagPoints = gmshGeneratePointsLine(jacobianOrder);
+      break;
+    case TYPE_TRI :
+      primJacobianOrder = 0;
+      jacobianOrder = 2*order - 2;
+      lagPoints = gmshGeneratePointsTriangle(jacobianOrder);
+      break;
+    case TYPE_QUA :
+      primJacobianOrder = 1;
+      jacobianOrder = 2*order - 1;
+      lagPoints = gmshGeneratePointsQuadrangle(jacobianOrder);
+      break;
+    case TYPE_TET :
+      primJacobianOrder = 0;
+      jacobianOrder = 3*order - 3;
+      lagPoints = gmshGeneratePointsTetrahedron(jacobianOrder);
+      break;
+    case TYPE_PRI :
+      primJacobianOrder = 2;
+      jacobianOrder = 3*order - 1;
+      lagPoints = gmshGeneratePointsPrism(jacobianOrder);
+      break;
+    case TYPE_HEX :
+      primJacobianOrder = 2;
+      jacobianOrder = 3*order - 1;
+      lagPoints = gmshGeneratePointsHexahedron(jacobianOrder);
+      break;
+    case TYPE_PYR :
+      primJacobianOrder = 0;
+      jacobianOrder = 3*order - 3;
+      lagPoints = generateJacPointsPyramid(jacobianOrder);
+      break;
     default :
       Msg::Error("Unknown Jacobian function space for element type %d", tag);
+      jacobianOrder = 0;
       break;
-    }
   }
-  else {*/
-    int jacobianOrder, primJacobianOrder;
-
-    switch (parentType) {
-      case TYPE_PNT :
-        primJacobianOrder = 0;
-        jacobianOrder = 0;
-        lagPoints = gmshGeneratePointsLine(0);
-        break;
-      case TYPE_LIN :
-        primJacobianOrder = 0;
-        jacobianOrder = order - 1;
-        lagPoints = gmshGeneratePointsLine(order);
-        break;
-      case TYPE_TRI :
-        primJacobianOrder = 0;
-        jacobianOrder = 2*order - 2;
-        lagPoints = gmshGeneratePointsTriangle(order);
-        break;
-      case TYPE_QUA :
-        primJacobianOrder = 1;
-        jacobianOrder = 2*order - 1;
-        lagPoints = gmshGeneratePointsQuadrangle(order);
-        break;
-      case TYPE_TET :
-        primJacobianOrder = 0;
-        jacobianOrder = 3*order - 3;
-        lagPoints = gmshGeneratePointsTetrahedron(order);
-        break;
-      case TYPE_PRI :
-        primJacobianOrder = 2;
-        jacobianOrder = 3*order - 1;
-        lagPoints = gmshGeneratePointsPrism(order);
-        break;
-      case TYPE_HEX :
-        primJacobianOrder = 2;
-        jacobianOrder = 3*order - 1;
-        lagPoints = gmshGeneratePointsHexahedron(order);
-        break;
-      default :
-        Msg::Error("Unknown Jacobian function space for element type %d", tag);
-        jacobianOrder = 0;
-        break;
-    }
-    primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
-  //}
+  numJacNodes = lagPoints.size1();
 
   // Store Bezier basis
   bezier = BasisFactory::getBezierBasis(parentType, jacobianOrder);
 
   // Store shape function gradients of mapping at Jacobian nodes
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
   fullMatrix<double> allDPsi;
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
+
   mapBasis->df(lagPoints, allDPsi);
-  numJacNodes = lagPoints.size1();
   numMapNodes = allDPsi.size1();
-  gradShapeMatX.resize(numJacNodes,numMapNodes);
-  gradShapeMatY.resize(numJacNodes,numMapNodes);
-  gradShapeMatZ.resize(numJacNodes,numMapNodes);
-  for (int i=0; i<numJacNodes; i++)
+
+  gradShapeMatX.resize(numJacNodes, numMapNodes);
+  gradShapeMatY.resize(numJacNodes, numMapNodes);
+  gradShapeMatZ.resize(numJacNodes, numMapNodes);
+  for (int i=0; i<numJacNodes; i++) {
     for (int j=0; j<numMapNodes; j++) {
-      gradShapeMatX(i,j) = allDPsi(j,3*i);
-      gradShapeMatY(i,j) = allDPsi(j,3*i+1);
-      gradShapeMatZ(i,j) = allDPsi(j,3*i+2);
+      gradShapeMatX(i, j) = allDPsi(j, 3*i);
+      gradShapeMatY(i, j) = allDPsi(j, 3*i+1);
+      gradShapeMatZ(i, j) = allDPsi(j, 3*i+2);
     }
+  }
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
+  int primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
   const nodalBasis *primJacBasis = BasisFactory::getNodalBasis(primJacType);
   numPrimJacNodes = primJacBasis->getNumShapeFunctions();
+
   matrixPrimJac2Jac.resize(numJacNodes,numPrimJacNodes);
-  primJacBasis->f(lagPoints, matrixPrimJac2Jac); //FIXME not too much sampling points ??
+  primJacBasis->f(lagPoints, matrixPrimJac2Jac);
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
   const int primMapType = ElementType::getTag(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   numPrimMapNodes = primMapBasis->getNumShapeFunctions();
+
   double xBar = 0., yBar = 0., zBar = 0.;
-  for (int i=0; i<numPrimMapNodes; i++) {
-    xBar += primMapBasis->points(i,0);
-    yBar += primMapBasis->points(i,1);
-    if (primMapBasis->points.size2() > 2)
-      zBar +=  primMapBasis->points(i,2);
+  double barycenter[3] = {0., 0., 0.};
+  for (int i = 0; i < numPrimMapNodes; i++) {
+    for (int j = 0; i < primMapBasis->points.size2(); ++i) {
+      barycenter[j] += primMapBasis->points(i, j);
+    }
   }
-  xBar /= numPrimMapNodes;
-  yBar /= numPrimMapNodes;
-  zBar /= numPrimMapNodes;
+  barycenter[0] /= numPrimMapNodes;
+  barycenter[1] /= numPrimMapNodes;
+  barycenter[2] /= numPrimMapNodes;
+
   double (*barDPsi)[3] = new double[numPrimMapNodes][3];
   primMapBasis->df(xBar, yBar, zBar, barDPsi);
-  primGradShapeBarX.resize(numPrimMapNodes);
-  primGradShapeBarY.resize(numPrimMapNodes);
-  primGradShapeBarZ.resize(numPrimMapNodes);
+
+  primGradShapeBarycenterX.resize(numPrimMapNodes);
+  primGradShapeBarycenterY.resize(numPrimMapNodes);
+  primGradShapeBarycenterZ.resize(numPrimMapNodes);
   for (int j=0; j<numPrimMapNodes; j++) {
-    primGradShapeBarX(j) = barDPsi[j][0];
-    primGradShapeBarY(j) = barDPsi[j][1];
-    primGradShapeBarZ(j) = barDPsi[j][2];
+    primGradShapeBarycenterX(j) = barDPsi[j][0];
+    primGradShapeBarycenterY(j) = barDPsi[j][1];
+    primGradShapeBarycenterZ(j) = barDPsi[j][2];
   }
   delete[] barDPsi;
-
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)
@@ -139,9 +134,9 @@ double JacobianBasis::getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullM
 
   fullVector<double> dxyzdXbar(3);
   for (int j=0; j<numPrimMapNodes; j++) {
-    dxyzdXbar(0) += primGradShapeBarX(j)*nodesXYZ(j,0);
-    dxyzdXbar(1) += primGradShapeBarX(j)*nodesXYZ(j,1);
-    dxyzdXbar(2) += primGradShapeBarX(j)*nodesXYZ(j,2);
+    dxyzdXbar(0) += primGradShapeBarycenterX(j)*nodesXYZ(j,0);
+    dxyzdXbar(1) += primGradShapeBarycenterX(j)*nodesXYZ(j,1);
+    dxyzdXbar(2) += primGradShapeBarycenterX(j)*nodesXYZ(j,2);
   }
 
   if((fabs(dxyzdXbar(0)) >= fabs(dxyzdXbar(1)) && fabs(dxyzdXbar(0)) >= fabs(dxyzdXbar(2))) ||
@@ -170,12 +165,12 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMa
 
   fullVector<double> dxyzdXbar(3), dxyzdYbar(3);
   for (int j=0; j<numPrimMapNodes; j++) {
-    dxyzdXbar(0) += primGradShapeBarX(j)*nodesXYZ(j,0);
-    dxyzdXbar(1) += primGradShapeBarX(j)*nodesXYZ(j,1);
-    dxyzdXbar(2) += primGradShapeBarX(j)*nodesXYZ(j,2);
-    dxyzdYbar(0) += primGradShapeBarY(j)*nodesXYZ(j,0);
-    dxyzdYbar(1) += primGradShapeBarY(j)*nodesXYZ(j,1);
-    dxyzdYbar(2) += primGradShapeBarY(j)*nodesXYZ(j,2);
+    dxyzdXbar(0) += primGradShapeBarycenterX(j)*nodesXYZ(j,0);
+    dxyzdXbar(1) += primGradShapeBarycenterX(j)*nodesXYZ(j,1);
+    dxyzdXbar(2) += primGradShapeBarycenterX(j)*nodesXYZ(j,2);
+    dxyzdYbar(0) += primGradShapeBarycenterY(j)*nodesXYZ(j,0);
+    dxyzdYbar(1) += primGradShapeBarycenterY(j)*nodesXYZ(j,1);
+    dxyzdYbar(2) += primGradShapeBarycenterY(j)*nodesXYZ(j,2);
   }
 
   result(0,2) = dxyzdXbar(0) * dxyzdYbar(1) - dxyzdXbar(1) * dxyzdYbar(0);
@@ -202,15 +197,15 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
 
   double dxdX = 0, dydX = 0, dzdX = 0, dxdY = 0, dydY = 0, dzdY = 0, dxdZ = 0, dydZ = 0, dzdZ = 0;
   for (int j=0; j<numPrimMapNodes; j++) {
-    dxdX += primGradShapeBarX(j)*nodesXYZ(j,0);
-    dydX += primGradShapeBarX(j)*nodesXYZ(j,1);
-    dzdX += primGradShapeBarX(j)*nodesXYZ(j,2);
-    dxdY += primGradShapeBarY(j)*nodesXYZ(j,0);
-    dydY += primGradShapeBarY(j)*nodesXYZ(j,1);
-    dzdY += primGradShapeBarY(j)*nodesXYZ(j,2);
-    dxdZ += primGradShapeBarZ(j)*nodesXYZ(j,0);
-    dydZ += primGradShapeBarZ(j)*nodesXYZ(j,1);
-    dzdZ += primGradShapeBarZ(j)*nodesXYZ(j,2);
+    dxdX += primGradShapeBarycenterX(j)*nodesXYZ(j,0);
+    dydX += primGradShapeBarycenterX(j)*nodesXYZ(j,1);
+    dzdX += primGradShapeBarycenterX(j)*nodesXYZ(j,2);
+    dxdY += primGradShapeBarycenterY(j)*nodesXYZ(j,0);
+    dydY += primGradShapeBarycenterY(j)*nodesXYZ(j,1);
+    dzdY += primGradShapeBarycenterY(j)*nodesXYZ(j,2);
+    dxdZ += primGradShapeBarycenterZ(j)*nodesXYZ(j,0);
+    dydZ += primGradShapeBarycenterZ(j)*nodesXYZ(j,1);
+    dzdZ += primGradShapeBarycenterZ(j)*nodesXYZ(j,2);
   }
 
   return fabs(calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ));
@@ -576,4 +571,112 @@ void JacobianBasis::getSignedJacobian(const fullMatrix<double> &nodesX, const fu
 
   }
 
+}
+
+fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
+{
+  int nbMonomials = (order+3)*((order+3)+1)*(2*(order+3)+1)/6 - 5;
+  fullMatrix<double> monomials(nbMonomials, 3);
+
+  if (order == 0) {
+    fullMatrix<double> prox, quad = gmshGenerateMonomialsQuadrangle(2);
+    prox.setAsProxy(monomials, 0, 2);
+    prox.setAll(quad);
+    return monomials;
+  }
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+  monomials(0, 2) = 0;
+
+  monomials(1, 0) = order+2;
+  monomials(1, 1) = 0;
+  monomials(1, 2) = 0;
+
+  monomials(2, 0) = order+2;
+  monomials(2, 1) = order+2;
+  monomials(2, 2) = 0;
+
+  monomials(3, 0) = 0;
+  monomials(3, 1) = order+2;
+  monomials(3, 2) = 0;
+
+  monomials(4, 0) = 0;
+  monomials(4, 1) = 0;
+  monomials(4, 2) = order;
+
+  monomials(5, 0) = 2;
+  monomials(5, 1) = 0;
+  monomials(5, 2) = order;
+
+  monomials(6, 0) = 2;
+  monomials(6, 1) = 2;
+  monomials(6, 2) = order;
+
+  monomials(7, 0) = 0;
+  monomials(7, 1) = 2;
+  monomials(7, 2) = order;
+
+  int index = 8;
+
+  static const int bottom_edges[8][2] = {
+    {0, 1},
+    {1, 2},
+    {2, 3},
+    {3, 0}
+  };
+
+  // bottom "edges"
+  for (int iedge = 0; iedge < 4; ++iedge) {
+    int i0 = bottom_edges[iedge][0];
+    int i1 = bottom_edges[iedge][1];
+
+    int u_1 = (monomials(i1,0)-monomials(i0,0)) / (order + 2);
+    int u_2 = (monomials(i1,1)-monomials(i0,1)) / (order + 2);
+
+    for (int i = 1; i < order + 2; ++i, ++index) {
+      monomials(index, 0) = monomials(i0, 0) + i * u_1;
+      monomials(index, 1) = monomials(i0, 1) + i * u_2;
+      monomials(index, 2) = 0;
+    }
+  }
+
+  // top "edges"
+  for (int iedge = 0; iedge < 4; ++iedge, ++index) {
+    int i0 = bottom_edges[iedge][0] + 4;
+    int i1 = bottom_edges[iedge][1] + 4;
+
+    int u_1 = (monomials(i1,0)-monomials(i0,0)) / 2;
+    int u_2 = (monomials(i1,1)-monomials(i0,1)) / 2;
+
+    monomials(index, 0) = monomials(i0, 0) + u_1;
+    monomials(index, 1) = monomials(i0, 1) + u_2;
+    monomials(index, 2) = monomials(i0, 2);
+  }
+
+  // bottom "face"
+  fullMatrix<double> uv = gmshGenerateMonomialsQuadrangle(order);
+  uv.add(1);
+  for (int i = 0; i < uv.size1(); ++i, ++index) {
+    monomials(index, 0) = uv(i, 0);
+    monomials(index, 1) = uv(i, 1);
+    monomials(index, 2) = 0;
+  }
+
+  // top "face"
+  monomials(index, 0) = 1;
+  monomials(index, 1) = 1;
+  monomials(index, 2) = order;
+  ++index;
+
+  // other monomials
+  for (int k = 1; k < order; ++k) {
+    fullMatrix<double> uv = gmshGenerateMonomialsQuadrangle(order + 2 - k);
+    for (int i = 0; i < uv.size1(); ++i, ++index) {
+      monomials(index, 0) = uv(i, 0);
+      monomials(index, 1) = uv(i, 1);
+      monomials(index, 2) = k;
+    }
+  }
+  return monomials;
 }

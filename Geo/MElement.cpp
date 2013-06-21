@@ -123,8 +123,8 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
   fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
   jac->getScaledJacobian(nodesXYZ,SJi);
   jac->lag2Bez(SJi,Bi);
-  jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
-  jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmin = 0;//*std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmax = 0;//*std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
 #endif
 }
 

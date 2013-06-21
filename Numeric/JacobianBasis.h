@@ -15,11 +15,14 @@
 class JacobianBasis {
  private:
   const bezierBasis *bezier;
+
   fullMatrix<double> lagPoints; // sampling point
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
-  fullVector<double> primGradShapeBarX, primGradShapeBarY, primGradShapeBarZ;
+  fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY, primGradShapeBarycenterZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
-  int numJacNodes, numMapNodes, numPrimJacNodes, numPrimMapNodes;
+
+  int numJacNodes, numPrimJacNodes;
+  int numMapNodes, numPrimMapNodes;
 
  public :
   JacobianBasis(int tag);
@@ -61,6 +64,17 @@ class JacobianBasis {
   }
   inline void subDivisor(const fullVector<double> &bez, fullVector<double> &result) const {
     bezier->subDivisor.mult(bez,result);
+  }
+
+  //
+  static fullMatrix<double> generateJacMonomialsPyramid(int order);
+  static inline fullMatrix<double> generateJacPointsPyramid(int order) {
+    fullMatrix<double> points = generateJacMonomialsPyramid(order);
+
+    if (order == 0) return points;
+
+    points.scale(1. / (order+2.));
+    return points;
   }
 };
 
