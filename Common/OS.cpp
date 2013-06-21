@@ -43,7 +43,7 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 
-// UTF8 utility routines borrowed from FLTK
+// Unicode utility routines borrowed from FLTK
 
 static unsigned utf8decode(const char* p, const char* end, int* len)
 {
@@ -93,7 +93,7 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
       ((p[2] & 0x3f) << 6) +
       ((p[3] & 0x3f));
   } else if (c == 0xf4) {
-    if (((unsigned char*)p)[1] > 0x8f) goto FAIL; /* after 0x10ffff */
+    if (((unsigned char*)p)[1] > 0x8f) goto FAIL; // after 0x10ffff
     goto UTF8_4;
   } else {
   FAIL:
@@ -110,7 +110,7 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
   unsigned count = 0;
   if (dstlen) for (;;) {
     if (p >= e) {dst[count] = 0; return count;}
-    if (!(*p & 0x80)) { /* ascii */
+    if (!(*p & 0x80)) { // ascii
       dst[count] = *p++;
     } else {
       int len; unsigned ucs = utf8decode(p,e,&len);
@@ -118,7 +118,7 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
       if (ucs < 0x10000) {
 	dst[count] = ucs;
       } else {
-	/* make a surrogate pair: */
+	// make a surrogate pair:
 	if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
 	dst[count] = (((ucs-0x10000u)>>10)&0x3ff) | 0xd800;
 	dst[++count] = (ucs&0x3ff) | 0xdc00;
@@ -126,7 +126,7 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
     }
     if (++count == dstlen) {dst[count-1] = 0; break;}
   }
-  /* we filled dst, measure the rest: */
+  // we filled dst, measure the rest:
   while (p < e) {
     if (!(*p & 0x80)) p++;
     else {
@@ -143,6 +143,9 @@ static wchar_t *wbuf[2] = {NULL, NULL};
 
 static void setwbuf(int i, const char *f)
 {
+  // all strings in Gmsh are supposed to be UTF8-encoded, which is natively
+  // supported by Mac and Linux. Windows does not support UTF-8, but UTF-16
+  // (through wchar_t), so we need to convert.
   if(i != 0 && i != 1) return;
   size_t l = strlen(f);
   unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
@@ -153,7 +156,7 @@ static void setwbuf(int i, const char *f)
 
 #endif
 
-FILE *Fopen(const char* f, const char *mode)
+FILE *Fopen(const char *f, const char *mode)
 {
 #if defined (WIN32) && !defined(__CYGWIN__)
   setwbuf(0, f);

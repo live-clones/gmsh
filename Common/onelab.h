@@ -46,13 +46,12 @@ namespace onelab{
     // the name of the parameter, including its '/'-separated path in the
     // parameter hierarchy. Parameters or subpaths can start with numbers to
     // force their relative ordering (such numbers are automatically hidden in
-    // the interface).
+    // the interface). All strings in onelab are supposed to be UTF8-encoded.
     std::string _name;
     // the parameter label: if provided it serves as a better way to display the
-    // parameter in the interface (richer encoding (UTF? HTML?) might be used in
-    // the future)
+    // parameter in the interface
     std::string _label;
-    // a help string (richer encoding (UTF? HTML?) might be used in the future)
+    // a help string
     std::string _help;
     // clients that use this parameter
     std::set<std::string> _clients;
