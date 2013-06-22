@@ -18,53 +18,37 @@ JacobianBasis::JacobianBasis(int tag)
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
   const int order = ElementType::OrderFromTag(tag);
+  const int jacobianOrder =  JacobianBasis::jacobianOrder(parentType, order);
+  const int primJacobianOrder =  JacobianBasis::jacobianOrder(parentType, 1);
 
-  int jacobianOrder, primJacobianOrder;
   switch (parentType) {
     case TYPE_PNT :
-      primJacobianOrder = 0;
-      jacobianOrder = 0;
       lagPoints = gmshGeneratePointsLine(0);
       break;
     case TYPE_LIN :
-      primJacobianOrder = 0;
-      jacobianOrder = order - 1;
       lagPoints = gmshGeneratePointsLine(jacobianOrder);
       break;
     case TYPE_TRI :
-      primJacobianOrder = 0;
-      jacobianOrder = 2*order - 2;
       lagPoints = gmshGeneratePointsTriangle(jacobianOrder);
       break;
     case TYPE_QUA :
-      primJacobianOrder = 1;
-      jacobianOrder = 2*order - 1;
       lagPoints = gmshGeneratePointsQuadrangle(jacobianOrder);
       break;
     case TYPE_TET :
-      primJacobianOrder = 0;
-      jacobianOrder = 3*order - 3;
       lagPoints = gmshGeneratePointsTetrahedron(jacobianOrder);
       break;
     case TYPE_PRI :
-      primJacobianOrder = 2;
-      jacobianOrder = 3*order - 1;
       lagPoints = gmshGeneratePointsPrism(jacobianOrder);
       break;
     case TYPE_HEX :
-      primJacobianOrder = 2;
-      jacobianOrder = 3*order - 1;
       lagPoints = gmshGeneratePointsHexahedron(jacobianOrder);
       break;
     case TYPE_PYR :
-      primJacobianOrder = 0;
-      jacobianOrder = 3*order - 3;
       lagPoints = generateJacPointsPyramid(jacobianOrder);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element type %d", tag);
-      jacobianOrder = 0;
-      break;
+      return;
   }
   numJacNodes = lagPoints.size1();
 
@@ -679,4 +663,37 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
     }
   }
   return monomials;
+}
+
+fullMatrix<double> JacobianBasis::generateJacPointsPyramid(int order)
+{
+  fullMatrix<double> points = generateJacMonomialsPyramid(order);
+
+  const double p = order + 2;
+  for (int i = 0; i < points.size1(); ++i) {
+    points(i, 2) = points(i, 2) * 1. / p;
+    const double duv = -1. + points(i, 2);
+    points(i, 0) = duv + points(i, 0) * 2. / p;
+    points(i, 1) = duv + points(i, 1) * 2. / p;
+  }
+
+  return points;
+}
+
+int JacobianBasis::jacobianOrder(int parentType, int order) {
+  switch (parentType) {
+    case TYPE_PNT : return 0;
+    case TYPE_LIN : return order - 1;
+    case TYPE_TRI : return 2*order - 2;
+    case TYPE_QUA : return 2*order - 1;
+    case TYPE_TET : return 3*order - 3;
+    case TYPE_PRI : return 3*order - 1;
+    case TYPE_HEX : return 3*order - 1;
+    case TYPE_PYR : return 3*order - 3;
+    // note : for the pyramid, the jacobian space is
+    // different from the space of the mapping
+    default :
+      Msg::Error("Unknown element type %d, return order 0", parentType);
+      return 0;
+  }
 }

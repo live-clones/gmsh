@@ -67,15 +67,9 @@ class JacobianBasis {
   }
 
   //
+  static int jacobianOrder(int parentType, int order);
   static fullMatrix<double> generateJacMonomialsPyramid(int order);
-  static inline fullMatrix<double> generateJacPointsPyramid(int order) {
-    fullMatrix<double> points = generateJacMonomialsPyramid(order);
-
-    if (order == 0) return points;
-
-    points.scale(1. / (order+2.));
-    return points;
-  }
+  static fullMatrix<double> generateJacPointsPyramid(int order);
 };
 
 #endif
