@@ -1,4 +1,6 @@
-lc = .2;
+Mesh.Algorithm = 6;
+
+lc = .55;
 Point(1) = {0.0,0.0,0.0,lc};
 Point(2) = {1,0.0,0.0,lc};
 Point(3) = {0,1,0.0,lc};
@@ -37,5 +39,5 @@ Ruled Surface(28) = {27};
 Surface Loop(29) = {28,26,16,14,20,24,22,18};
 Volume(30) = {29};
 
-// try also netgen:
-// Mesh.Algorithm3D = 4;
+Physical Surface(1) = {28,26,16,14,20,24,22,18};
+Physical Volume(2) = 30;
