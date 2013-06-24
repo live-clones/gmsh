@@ -1277,17 +1277,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
 
-  // non-editable value
-  if(p.getReadOnly()){
-    outputRange *but = new outputRange(1, 1, ww, 1);
-    but->callback(onelab_number_output_range_cb, (void*)path);
-    but->value(p.getValue());
-    but->align(FL_ALIGN_RIGHT);
-    but->graph(p.getAttribute("Graph"));
-    if(highlight) but->color(c);
-    return but;
-  }
-
   // enumeration (display choices as value labels, not numbers)
   if(p.getChoices().size() &&
      p.getChoices().size() == p.getValueLabels().size()){
@@ -1313,6 +1302,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
     }
     but->callback(onelab_number_choice_cb, (void*)path);
     but->align(FL_ALIGN_RIGHT);
+    if(p.getReadOnly()) but->deactivate();
     return but;
   }
 
@@ -1325,6 +1315,18 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
     but->color(_tree->color());
     but->value(p.getValue());
     but->callback(onelab_number_check_button_cb, (void*)path);
+    if(highlight) but->color(c);
+    if(p.getReadOnly()) but->deactivate();
+    return but;
+  }
+
+  // non-editable value
+  if(p.getReadOnly()){
+    outputRange *but = new outputRange(1, 1, ww, 1);
+    but->callback(onelab_number_output_range_cb, (void*)path);
+    but->value(p.getValue());
+    but->align(FL_ALIGN_RIGHT);
+    but->graph(p.getAttribute("Graph"));
     if(highlight) but->color(c);
     return but;
   }
