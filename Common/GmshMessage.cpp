@@ -943,7 +943,12 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setChoices(fopt["Choices"]);
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);
   }
-  if(noLoop && copt.count("Loop")) ps[0].setAttribute("Loop", copt["Loop"][0]);
+  if(noLoop && copt.count("Loop")) // for backward compatibity
+    ps[0].setAttribute("Loop", copt["Loop"][0]);
+  if(noLoop && fopt.count("Loop"))
+    ps[0].setAttribute("Loop", (fopt["Loop"][0] == 3.) ? "3" :
+                       (fopt["Loop"][0] == 2.) ? "2" :
+                       (fopt["Loop"][0] == 1.) ? "1" : "");
   if(noGraph && copt.count("Graph")) ps[0].setAttribute("Graph", copt["Graph"][0]);
   if(noClosed && copt.count("Closed")) // for backward compatibility
     ps[0].setAttribute("Closed", copt["Closed"][0]);
