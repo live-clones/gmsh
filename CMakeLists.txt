@@ -1365,7 +1365,7 @@ endif(MAKEINFO)
 find_program(TEXI2PDF texi2pdf)
 if(TEXI2PDF)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.pdf DEPENDS ${TEX_SRC} 
-                     COMMAND ${TEXI2PDF} ARGS ${TEX_DIR}/gmsh.texi 
+                     COMMAND ${TEXI2PDF} ARGS gmsh.texi 
                      WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(pdf DEPENDS ${TEX_DIR}/gmsh.pdf)
   install(FILES ${TEX_DIR}/gmsh.pdf DESTINATION ${GMSH_DOC} OPTIONAL)
