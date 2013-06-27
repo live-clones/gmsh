@@ -82,11 +82,12 @@ bool CellComplex::_insertCells(std::vector<MElement*>& elements,
     MElement* element = elements.at(i);
     int dim = element->getDim();
     int type = element->getType();
-    if(type == TYPE_PYR || type == TYPE_PRI ||
+    if(//type == TYPE_PYR || type == TYPE_PRI ||
        type == TYPE_POLYG || type == TYPE_POLYH) {
       Msg::Error("Mesh element type %d not implemented in homology solver", type);
     }
-    if(type == TYPE_QUA || type == TYPE_HEX)
+    if(type == TYPE_QUA || type == TYPE_HEX ||
+       type == TYPE_PYR || type == TYPE_PRI)
       _simplicial = false;
     std::pair<Cell*, bool> maybeCell = Cell::createCell(element, domain);
     if(!maybeCell.second) {

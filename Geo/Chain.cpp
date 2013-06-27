@@ -222,16 +222,12 @@ void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
         vertices.push_back(v[MTetrahedron::faces_tetra(i, j)]);
       return;
     case 5:
-      if(i < 3) {
-      for(int j = 0; j < 3; j++)
-        vertices.push_back(v[MPyramid::faces_pyramid(i, j)]);
-      }
-      else {
-        vertices.push_back(v[0]);
-        vertices.push_back(v[3]);
-        vertices.push_back(v[2]);
-        vertices.push_back(v[1]);
-      }
+      if(i < 3)
+        for(int j = 0; j < 3; j++)
+          vertices.push_back(v[MPyramid::faces_pyramid(i, j)]);
+      else
+        for(int j = 0; j < 4; j++)
+          vertices.push_back(v[MPyramid::faces_pyramid(i, j)]);
       return;
     case 6:
       if(i < 2)

@@ -337,7 +337,7 @@ void ChainComplex::computeHomology(bool dual)
     }
 
     // 2) this dimension is empty
-    else if(getHMatrix(lowDim) == NULL){
+    else if(getHMatrix(setDim) == NULL){
       setHbasis(setDim, NULL);
     }
     // 3) No higher dimension cells -> none of the cycles are boundaries

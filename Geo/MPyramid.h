@@ -149,6 +149,7 @@ class MPyramid : public MElement {
       return false;
     return true;
   }
+  void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   static int edges_pyramid(const int edge, const int vert)
   {
     static const int e[8][2] = {

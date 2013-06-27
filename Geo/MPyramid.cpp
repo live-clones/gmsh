@@ -27,6 +27,12 @@ int MPyramid::getVolumeSign()
   else return 0;
 }
 
+void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
+{
+  *npts = getNGQPyrPts(pOrder);
+  *pts = getGQPyrPts(pOrder);
+}
+
 const nodalBasis* MPyramid::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
