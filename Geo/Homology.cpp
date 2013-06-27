@@ -181,9 +181,11 @@ void Homology::findHomologyBasis(std::vector<int> dim)
 
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
+
   Msg::StatusBar(true, "Reducing cell complex...");
 
   double t1 = Cpu();
+  double size1 = _cellComplex->getSize(-1);
   _cellComplex->reduceComplex(_combine, _omit);
 
   if(_combine > 1 && !_smoothen) {
@@ -195,7 +197,9 @@ void Homology::findHomologyBasis(std::vector<int> dim)
   }
 
   double t2 = Cpu();
-  Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
+  double size2 = _cellComplex->getSize(-1);
+  Msg::StatusBar(true, "Done reducing cell complex (%g s, %g \%)",
+                 t2 - t1, (1.-size2/size1)*100.);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
 	    _cellComplex->getSize(1), _cellComplex->getSize(0));
@@ -265,9 +269,10 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   if(_cellComplex == NULL) _createCellComplex();
   if(_cellComplex->isReduced()) _cellComplex->restoreComplex();
 
-  Msg::StatusBar(true, "Reducing cell complex...");
+    Msg::StatusBar(true, "Reducing cell complex...");
 
   double t1 = Cpu();
+  double size1 = _cellComplex->getSize(-1);
 
   _cellComplex->coreduceComplex(_combine, _omit, _heuristic);
 
@@ -281,8 +286,10 @@ void Homology::findCohomologyBasis(std::vector<int> dim)
   }
 
   double t2 = Cpu();
+  double size2 = _cellComplex->getSize(-1);
 
-  Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
+  Msg::StatusBar(true, "Done reducing cell complex (%g s, %g \%)",
+                 t2 - t1, (1.-size2/size1)*100.);
   Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
             _cellComplex->getSize(3), _cellComplex->getSize(2),
 	    _cellComplex->getSize(1), _cellComplex->getSize(0));
@@ -521,11 +528,15 @@ void Homology::findBettiNumbers()
 
     Msg::StatusBar(true, "Reducing cell complex...");
     double t1 = Cpu();
+    double size1 = _cellComplex->getSize(-1);
 
     _cellComplex->bettiReduceComplex();
 
     double t2 = Cpu();
-    Msg::StatusBar(true, "Done reducing cell complex (%g s)", t2 - t1);
+    double size2 = _cellComplex->getSize(-1);
+
+    Msg::StatusBar(true, "Done reducing cell complex (%g s, %g \%)",
+                 t2 - t1, (1.-size2/size1)*100.);
     Msg::Info("%d volumes, %d faces, %d edges, and %d vertices",
               _cellComplex->getSize(3), _cellComplex->getSize(2),
               _cellComplex->getSize(1), _cellComplex->getSize(0));

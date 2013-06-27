@@ -101,12 +101,9 @@ class CellComplex
   bool simplicial() const { return _simplicial; }
   bool relative() const { return _relative; }
 
-
-
   // get the number of certain dimensional cells
-  int getSize(int dim, bool orig=false){
-    if(!orig) return _cells[dim].size();
-    else return _ocells[dim].size(); }
+  // if dim = -1 return the number of all cells
+  int getSize(int dim, bool orig=false);
 
   // get domain of a cell
   // cell in domain relative to subdomain  -> domain = 0

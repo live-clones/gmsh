@@ -421,6 +421,17 @@ int CellComplex::coreduction(int dim, int omit,
   return count;
 }
 
+int CellComplex::getSize(int dim, bool orig) {
+  if(dim == -1) {
+    unsigned int size = 0;
+    if(!orig) for(int i = 0; i < 4; i++) size += _cells[i].size();
+    else for(int i = 0; i < 4; i++) size += _ocells[i].size();
+    return size;
+  }
+  if(!orig) return _cells[dim].size();
+  else return _ocells[dim].size();
+}
+
 int CellComplex::getDomain(Cell* cell, std::string& str)
 {
   int domain = 0;
