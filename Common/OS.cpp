@@ -376,7 +376,7 @@ int SystemCall(const std::string &command, bool blocking)
     ShellExecuteW(NULL, wbuf[0], wbuf[1], wbuf[2], NULL, 0);
   }
   else{
-    STARTUPINFO suInfo;
+    STARTUPINFOW suInfo;
     PROCESS_INFORMATION prInfo;
     memset(&suInfo, 0, sizeof(suInfo));
     suInfo.cb = sizeof(suInfo);
