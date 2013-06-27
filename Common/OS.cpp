@@ -139,14 +139,14 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
   return count;
 }
 
-static wchar_t *wbuf[2] = {NULL, NULL};
+static wchar_t *wbuf[3] = {NULL, NULL, NULL};
 
 static void setwbuf(int i, const char *f)
 {
   // all strings in Gmsh are supposed to be UTF8-encoded, which is natively
   // supported by Mac and Linux. Windows does not support UTF-8, but UTF-16
   // (through wchar_t), so we need to convert.
-  if(i != 0 && i != 1) return;
+  if(i < 0 || i > 2) return;
   size_t l = strlen(f);
   unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
   wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
@@ -170,6 +170,7 @@ FILE *Fopen(const char *f, const char *mode)
 const char *GetEnvironmentVar(const char *var)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
+  // Should probably use the Unicode version
   const char *tmp = getenv(var);
   // Don't accept top dir or anything partially expanded like
   // c:\Documents and Settings\%USERPROFILE%, etc.
@@ -185,6 +186,7 @@ const char *GetEnvironmentVar(const char *var)
 const void SetEnvironmentVar(const char *var, const char *val)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
+  // should probably use Unicode version here
   _putenv((std::string(var) + "=" + std::string(val)).c_str());
 #else
   setenv(var, val, 1);
@@ -368,8 +370,10 @@ int SystemCall(const std::string &command, bool blocking)
   if(isPython){
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
               args.c_str());
-    ShellExecute(NULL, (char*)"open", (char*)exe.c_str(),
-                 (char*)args.c_str(), NULL, 0);
+    setwbuf(0, "open");
+    setwbuf(1, exe.c_str());
+    setwbuf(2, args.c_str());
+    ShellExecuteW(NULL, wbuf[0], wbuf[1], wbuf[2], NULL, 0);
   }
   else{
     STARTUPINFO suInfo;
@@ -377,8 +381,9 @@ int SystemCall(const std::string &command, bool blocking)
     memset(&suInfo, 0, sizeof(suInfo));
     suInfo.cb = sizeof(suInfo);
     Msg::Info("Calling '%s'", command.c_str());
+    setwbuf(0, command.c_str());
     if(blocking){
-      CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE,
 		    NORMAL_PRIORITY_CLASS, NULL, NULL,
 		    &suInfo, &prInfo);
       // wait until child process exits.
@@ -390,7 +395,7 @@ int SystemCall(const std::string &command, bool blocking)
     else{
       // DETACHED_PROCESS removes the console (useful if the program to launch
       // is a console-mode exe)
-      CreateProcess(NULL, (char*)command.c_str(), NULL, NULL, FALSE,
+      CreateProcessW(NULL, wbuf[0], NULL, NULL, FALSE,
 		    NORMAL_PRIORITY_CLASS|DETACHED_PROCESS, NULL, NULL,
 		    &suInfo, &prInfo);
     }
@@ -400,7 +405,8 @@ int SystemCall(const std::string &command, bool blocking)
   if(isPython || isExe){
     if(access(exe.c_str(), X_OK)){
       if(isPython){
-        Msg::Info("Script '%s' is not executable: running with python", exe.c_str());
+        Msg::Info("Script '%s' is not executable: running with python", 
+		  exe.c_str());
         cmd = "python " + cmd;
       }
       else
@@ -427,6 +433,7 @@ std::string GetCurrentWorkdir()
   char path[1024];
 
 #if defined(WIN32) && !defined(__CYGWIN__)
+  // should use Unicode version
   if(!_getcwd(path, sizeof(path))) return "";
 #else
   if(!getcwd(path, sizeof(path))) return "";
