@@ -916,7 +916,7 @@ static void onelab_add_solver_cb(Fl_Widget *w, void *data)
 {
   for(int i = 0; i < NUM_SOLVERS; i++){
     if(opt_solver_name(i, GMSH_GET, "").empty() || i == (NUM_SOLVERS - 1)){
-      const char *name = fl_input("Client name:", "");
+      const char *name = fl_input("Solver name:", "");
       if(name){
         FlGui::instance()->onelab->addSolver(name, "", "", i);
       }

@@ -25,7 +25,8 @@ SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
   return n*(-1.);
 }
 
-double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2, SVector3 &n1, SVector3 &n2)
+double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2,
+                     SVector3 &n1, SVector3 &n2)
 {
   double cosa = dot(n1,n2);
   SPoint2 p0,p1,p2;
@@ -150,7 +151,8 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
       else return edgeColumn(c11,c20);
     }
 
-    //      Msg::Error ("Impossible Boundary Layer Configuration : one side and no fans %d %d",N1,N2);
+    // Msg::Error ("Impossible Boundary Layer Configuration : "
+    //             "one side and no fans %d %d", N1, N2);
     // FIXME WRONG
     return N1 ? edgeColumn (getColumn (v1,0),getColumn(v1,0)) :
       edgeColumn (getColumn (v2,0),getColumn(v2,0));
@@ -191,7 +193,9 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
 
 
 */
-static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2, double _treshold, BoundaryLayerColumns *_columns, std::vector<SVector3> &_dirs, bool test = false)
+static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
+                               double _treshold, BoundaryLayerColumns *_columns,
+                               std::vector<SVector3> &_dirs, bool test = false)
 {
   std::vector<SVector3> N1,N2;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
@@ -200,12 +204,12 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
 	 _columns->_normals.lower_bound(e2);
        itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-  if (test)printf("%d %d\n",N1.size(),N2.size());
+  if (test) printf("%d %d\n", (int)N1.size(), (int)N2.size());
   if (N1.size() == N2.size()){
     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
       // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
       double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
-      if (test)printf("angle %12.5E\n",180*angle/M_PI);
+      if (test) printf("angle %12.5E\n", 180*angle/M_PI);
       if (angle < _treshold /*&& angle > - _treshold*/){
 	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
 	x.normalize();
@@ -245,7 +249,10 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
   }
 }
 
-static void treat3Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2, MEdge &e3, double _treshold, BoundaryLayerColumns *_columns, std::vector<SVector3> &_dirs)
+static void treat3Connections (GFace *gf, MVertex *_myVert, MEdge &e1,
+                               MEdge &e2, MEdge &e3, double _treshold,
+                               BoundaryLayerColumns *_columns,
+                               std::vector<SVector3> &_dirs)
 {
   std::vector<SVector3> N1,N2,N3;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
@@ -489,7 +496,8 @@ bool buildAdditionalPoints2D (GFace *gf, BoundaryLayerColumns *_columns)
       // < ------------------------------- > //
 
       if (endOfTheBL){
-	printf("%g %g %d %d %g\n",(*it)->x(),(*it)->y(),DIR,_dirs.size(),dot(n,dirEndOfBL));
+	printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR, (int)_dirs.size(),
+               dot(n, dirEndOfBL));
       }
       if (endOfTheBL && dot(n,dirEndOfBL) > .99){
 	printf( "coucou c'est moi\n");
