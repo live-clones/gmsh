@@ -25,7 +25,7 @@ BasisHierarchical1From::~BasisHierarchical1From(void){
   if(hasCurl){
     for(unsigned int i = 0; i < nRefSpace; i++){
       for(unsigned int j = 0; j < nFunction; j++)
-	delete curl[i][j];
+        delete curl[i][j];
 
       delete[] curl[i];
     }
@@ -59,12 +59,15 @@ getOrientation(const MElement& element) const{
   return refSpace->getPermutation(element);
 }
 
-fullMatrix<double>* BasisHierarchical1From::
-getFunctions(const MElement& element,
-	     double u, double v, double w) const{
+void BasisHierarchical1From::
+getFunctionPermutation(const MElement& element,
+                       unsigned int* indexPermutation) const{
+}
 
-  // Alloc Memory //
-  fullMatrix<double>* values = new fullMatrix<double>(nFunction, 3);
+void BasisHierarchical1From::
+getFunctions(fullMatrix<double>& retValues,
+             const MElement& element,
+             double u, double v, double w) const{
 
   // Define Orientation //
   unsigned int orientation = refSpace->getPermutation(element);
@@ -74,34 +77,26 @@ getFunctions(const MElement& element,
     fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
 
-    (*values)(i, 0) = eval(0);
-    (*values)(i, 1) = eval(1);
-    (*values)(i, 2) = eval(2);
+    retValues(i, 0) = eval(0);
+    retValues(i, 1) = eval(1);
+    retValues(i, 2) = eval(2);
   }
-
-  // Return //
-  return values;
 }
 
-fullMatrix<double>* BasisHierarchical1From::
-getFunctions(unsigned int orientation,
-	     double u, double v, double w) const{
-
-  // Alloc Memory //
-  fullMatrix<double>* values = new fullMatrix<double>(nFunction, 3);
+void BasisHierarchical1From::
+getFunctions(fullMatrix<double>& retValues,
+             unsigned int orientation,
+             double u, double v, double w) const{
 
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
     fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
 
-    (*values)(i, 0) = eval(0);
-    (*values)(i, 1) = eval(1);
-    (*values)(i, 2) = eval(2);
+    retValues(i, 0) = eval(0);
+    retValues(i, 1) = eval(1);
+    retValues(i, 2) = eval(2);
   }
-
-  // Return //
-  return values;
 }
 
 void BasisHierarchical1From::
@@ -129,14 +124,14 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++){
       for(unsigned int k = 0; k < nPoint; k++){
-	tmp = Polynomial::at(*basis[i][j],
-			     point(k, 0),
-			     point(k, 1),
-			     point(k, 2));
+        tmp = Polynomial::at(*basis[i][j],
+                             point(k, 0),
+                             point(k, 1),
+                             point(k, 2));
 
-	(*preEvaluatedFunction[i])(j, 3 * k)     = tmp(0);
-	(*preEvaluatedFunction[i])(j, 3 * k + 1) = tmp(1);
-	(*preEvaluatedFunction[i])(j, 3 * k + 2) = tmp(2);
+        (*preEvaluatedFunction[i])(j, 3 * k)     = tmp(0);
+        (*preEvaluatedFunction[i])(j, 3 * k + 1) = tmp(1);
+        (*preEvaluatedFunction[i])(j, 3 * k + 2) = tmp(2);
       }
     }
   }
@@ -174,14 +169,14 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++){
       for(unsigned int k = 0; k < nPoint; k++){
-	tmp = Polynomial::at(*curl[i][j],
-			     point(k, 0),
-			     point(k, 1),
-			     point(k, 2));
+        tmp = Polynomial::at(*curl[i][j],
+                             point(k, 0),
+                             point(k, 1),
+                             point(k, 2));
 
-	(*preEvaluatedCurlFunction[i])(j, 3 * k)     = tmp(0);
-	(*preEvaluatedCurlFunction[i])(j, 3 * k + 1) = tmp(1);
-	(*preEvaluatedCurlFunction[i])(j, 3 * k + 2) = tmp(2);
+        (*preEvaluatedCurlFunction[i])(j, 3 * k)     = tmp(0);
+        (*preEvaluatedCurlFunction[i])(j, 3 * k + 1) = tmp(1);
+        (*preEvaluatedCurlFunction[i])(j, 3 * k + 2) = tmp(2);
       }
     }
   }
@@ -227,7 +222,7 @@ void BasisHierarchical1From::getCurl(void) const{
   for(unsigned int s = 0; s < nRefSpace; s++)
     for(unsigned int f = 0 ; f < nFunction; f++)
       curl[s][f] =
-	new vector<Polynomial>(Polynomial::curl(*basis[s][f]));
+        new vector<Polynomial>(Polynomial::curl(*basis[s][f]));
 
   // Has Curl //
   hasCurl = true;
@@ -241,30 +236,30 @@ string BasisHierarchical1From::toString(void) const{
   stream << "Vertex Based:" << endl;
   for(; i < nVertex; i++)
     stream << "f("   << i + 1                               << ") = " << endl
-	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
+           << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
 
   stream << "Edge Based:"   << endl;
   for(; i < nVertex + nEdge; i++)
     stream << " f("  << i + 1                               << ") = " << endl
-	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
+           << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
 
   stream << "Face Based:"   << endl;
   for(; i < nVertex + nEdge + nFace; i++)
     stream << " f("  << i + 1                               << ") = " << endl
-	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
+           << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
 
   stream << "Cell Based:"   << endl;
   for(; i < nVertex + nEdge + nFace + nCell; i++)
     stream << " f("  << i + 1                               << ") = " << endl
-	   << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
-	   << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
+           << "\t[ " << (*basis[refSpace][i])[0].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[1].toString() << " ]"   << endl
+           << "\t[ " << (*basis[refSpace][i])[2].toString() << " ]"   << endl;
 
   return stream.str();
 }

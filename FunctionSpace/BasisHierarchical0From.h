@@ -39,11 +39,16 @@ class BasisHierarchical0From: public BasisLocal{
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
 
-  virtual fullMatrix<double>* getFunctions(const MElement& element,
-					   double u, double v, double w) const;
+  virtual void getFunctionPermutation(const MElement& element,
+                                      unsigned int* indexPermutation) const;
 
-  virtual fullMatrix<double>* getFunctions(unsigned int orientation,
-					   double u, double v, double w) const;
+  virtual void getFunctions(fullMatrix<double>& retValues,
+                            const MElement& element,
+                            double u, double v, double w) const;
+
+  virtual void getFunctions(fullMatrix<double>& retValues,
+                            unsigned int orientation,
+                            double u, double v, double w) const;
 
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
   virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;

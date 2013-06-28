@@ -81,12 +81,18 @@ class Basis{
   virtual unsigned int getNOrientation(void) const = 0;
   virtual unsigned int getOrientation(const MElement& element) const = 0;
 
-  // Direct Access to Evaluated Functions //
-  virtual fullMatrix<double>* getFunctions(const MElement& element,
-                                           double u, double v, double w) const = 0;
+  // Functions Permutation //
+  virtual void getFunctionPermutation(const MElement& element,
+                                      unsigned int* indexPermutation) const = 0;
 
-  virtual fullMatrix<double>* getFunctions(unsigned int orientation,
-                                           double u, double v, double w) const = 0;
+  // Direct Access to Evaluated Functions //
+  virtual void getFunctions(fullMatrix<double>& retValues,
+                            const MElement& element,
+                            double u, double v, double w) const = 0;
+
+  virtual void getFunctions(fullMatrix<double>& retValues,
+                            unsigned int orientation,
+                            double u, double v, double w) const = 0;
 
   // Precompute Functions //
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const = 0;

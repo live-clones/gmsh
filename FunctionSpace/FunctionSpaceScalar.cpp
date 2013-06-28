@@ -26,19 +26,18 @@ interpolate(const MElement& element,
   eelement.xyz2uvw(phys, uvw);
 
   // Get Basis Functions //
-  fullMatrix<double>* fun =
-    (*basis)[0]->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+  const unsigned int nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double>  fun(nFun, 1);
 
-  const unsigned int nFun = fun->size1();
+  (*basis)[0]->getFunctions(fun, element, uvw[0], uvw[1], uvw[2]);
 
   // Interpolate (in Reference Place) //
   double val = 0;
 
   for(unsigned int i = 0; i < nFun; i++)
-    val += (*fun)(i, 0) * coef[i];
+    val += fun(i, 0) * coef[i];
 
   // Return Interpolated Value //
-  delete fun;
   return val;
 }
 
@@ -48,18 +47,17 @@ interpolateInRefSpace(const MElement& element,
                       const fullVector<double>& uvw) const{
 
   // Get Basis Functions //
-  fullMatrix<double>* fun =
-    (*basis)[0]->getFunctions(element, uvw(0), uvw(1), uvw(2));
+  const unsigned int nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double>  fun(nFun, 1);
 
-  const unsigned int nFun = fun->size1();
+  (*basis)[0]->getFunctions(fun, element, uvw(0), uvw(1), uvw(2));
 
   // Interpolate (in Reference Place) //
   double val = 0;
 
   for(unsigned int i = 0; i < nFun; i++)
-    val += (*fun)(i, 0) * coef[i];
+    val += fun(i, 0) * coef[i];
 
   // Return Interpolated Value //
-  delete fun;
   return val;
 }

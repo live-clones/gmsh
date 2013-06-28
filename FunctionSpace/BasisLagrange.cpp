@@ -12,16 +12,22 @@ BasisLagrange::~BasisLagrange(void){
 
 unsigned int BasisLagrange::
 getNOrientation(void) const{
-  return refSpace->getNPermutation();
+  return 1;
 }
 
 unsigned int BasisLagrange::
 getOrientation(const MElement& element) const{
-  return refSpace->getPermutation(element);
+  return 0;
 }
 
-fullMatrix<double>* BasisLagrange::
-getFunctions(const MElement& element,
+void BasisLagrange::
+getFunctionPermutation(const MElement& element,
+                       unsigned int* indexPermutation) const{
+}
+
+void BasisLagrange::
+getFunctions(fullMatrix<double>& retValues,
+             const MElement& element,
              double u, double v, double w) const{
 
   // Fill Matrix //
@@ -34,14 +40,12 @@ getFunctions(const MElement& element,
   lBasis->f(point, tmp);
 
   // Transpose 'tmp': otherwise not coherent with df !!
-  fullMatrix<double> values = tmp.transpose();
-
-  // Get Inorder & Return //
-  return inorder(refSpace->getPermutation(element), values);
+  retValues = tmp.transpose();
 }
 
-fullMatrix<double>* BasisLagrange::
-getFunctions(unsigned int orientation,
+void BasisLagrange::
+getFunctions(fullMatrix<double>& retValues,
+             unsigned int orientation,
              double u, double v, double w) const{
 
   // Fill Matrix //
@@ -54,10 +58,7 @@ getFunctions(unsigned int orientation,
   lBasis->f(point, tmp);
 
   // Transpose 'tmp': otherwise not coherent with df !!
-  fullMatrix<double> values = tmp.transpose();
-
-  // Get Inorder & Return //
-  return inorder(orientation, values);
+  retValues = tmp.transpose();
 }
 
 void BasisLagrange::preEvaluateFunctions(const fullMatrix<double>& point) const{
@@ -163,26 +164,4 @@ project(const MElement& element,
 
   // Return ;
   return newCoef;
-}
-
-fullMatrix<double>* BasisLagrange::inorder(unsigned int orientation,
-                                           fullMatrix<double>& mat) const{
-  // Matrix Size //
-  const int nRow = mat.size1();
-  const int nCol = mat.size2();
-
-  // Order //
-  const vector<unsigned int>* order =
-    refSpace->getAllLagrangeNode()[orientation];
-
-  // Alloc new matrix //
-  fullMatrix<double>* ret = new fullMatrix<double>(nRow, nCol);
-
-  // Populate //
-  for(int i = 0; i < nRow; i++)
-    for(int j = 0; j < nCol; j++)
-      (*ret)(i, j) = mat((*order)[i], j);
-
-  // Return //
-  return ret;
 }

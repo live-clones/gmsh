@@ -59,37 +59,32 @@ getOrientation(const MElement& element) const{
   return refSpace->getPermutation(element);
 }
 
-fullMatrix<double>* BasisHierarchical0From::
-getFunctions(const MElement& element,
-	     double u, double v, double w) const{
+void BasisHierarchical0From::
+getFunctionPermutation(const MElement& element,
+                       unsigned int* indexPermutation) const{
+}
 
-  // Alloc Memory //
-  fullMatrix<double>* values = new fullMatrix<double>(nFunction, 1);
+void BasisHierarchical0From::
+getFunctions(fullMatrix<double>& retValues,
+             const MElement& element,
+             double u, double v, double w) const{
 
   // Define Orientation //
   unsigned int orientation = refSpace->getPermutation(element);
 
   // Fill Matrix //
   for(unsigned int i = 0; i < nFunction; i++)
-    (*values)(i, 0) = basis[orientation][i]->at(u, v, w);
-
-  // Return //
-  return values;
+    retValues(i, 0) = basis[orientation][i]->at(u, v, w);
 }
 
-fullMatrix<double>* BasisHierarchical0From::
-getFunctions(unsigned int orientation,
-	     double u, double v, double w) const{
-
-  // Alloc Memory //
-  fullMatrix<double>* values = new fullMatrix<double>(nFunction, 1);
+void BasisHierarchical0From::
+getFunctions(fullMatrix<double>& retValues,
+             unsigned int orientation,
+             double u, double v, double w) const{
 
   // Fill Matrix //
   for(unsigned int i = 0; i < nFunction; i++)
-    (*values)(i, 0) = basis[orientation][i]->at(u, v, w);
-
-  // Return //
-  return values;
+    retValues(i, 0) = basis[orientation][i]->at(u, v, w);
 }
 
 void BasisHierarchical0From::
@@ -114,10 +109,10 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   for(unsigned int i = 0; i < nRefSpace; i++)
     for(unsigned int j = 0; j < nFunction; j++)
       for(unsigned int k = 0; k < nPoint; k++)
-	(*preEvaluatedFunction[i])(j, k) =
-	  basis[i][j]->at(point(k, 0),
-			  point(k, 1),
-			  point(k, 2));
+        (*preEvaluatedFunction[i])(j, k) =
+          basis[i][j]->at(point(k, 0),
+                          point(k, 1),
+                          point(k, 2));
 
   // PreEvaluated //
   preEvaluated = true;
@@ -152,14 +147,14 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   for(unsigned int i = 0; i < nRefSpace; i++){
     for(unsigned int j = 0; j < nFunction; j++){
       for(unsigned int k = 0; k < nPoint; k++){
-	tmp = Polynomial::at(*grad[i][j],
-			     point(k, 0),
-			     point(k, 1),
-			     point(k, 2));
+        tmp = Polynomial::at(*grad[i][j],
+                             point(k, 0),
+                             point(k, 1),
+                             point(k, 2));
 
-	(*preEvaluatedGradFunction[i])(j, 3 * k)     = tmp(0);
-	(*preEvaluatedGradFunction[i])(j, 3 * k + 1) = tmp(1);
-	(*preEvaluatedGradFunction[i])(j, 3 * k + 2) = tmp(2);
+        (*preEvaluatedGradFunction[i])(j, 3 * k)     = tmp(0);
+        (*preEvaluatedGradFunction[i])(j, 3 * k + 1) = tmp(1);
+        (*preEvaluatedGradFunction[i])(j, 3 * k + 2) = tmp(2);
       }
     }
   }
@@ -205,7 +200,7 @@ void BasisHierarchical0From::getGrad(void) const{
   for(unsigned int s = 0; s < nRefSpace; s++)
     for(unsigned int f = 0 ; f < nFunction; f++)
       grad[s][f] =
-	new vector<Polynomial>(basis[s][f]->gradient());
+        new vector<Polynomial>(basis[s][f]->gradient());
 
   // Has Grad //
   hasGrad = true;
@@ -219,22 +214,22 @@ string BasisHierarchical0From::toString(void) const{
   stream << "Vertex Based:" << endl;
   for(; i < nVertex; i++)
     stream << "f("  << i + 1                 << ") = "
-	   << basis[refSpace][i]->toString() << endl;
+           << basis[refSpace][i]->toString() << endl;
 
   stream << "Edge Based:"   << endl;
   for(; i < nVertex + nEdge; i++)
     stream << "f(" << i + 1                  << ") = "
-	   << basis[refSpace][i]->toString() << endl;
+           << basis[refSpace][i]->toString() << endl;
 
   stream << "Face Based:"   << endl;
   for(; i < nVertex + nEdge + nFace; i++)
     stream << "f(" << i + 1                  << ") = "
-	   << basis[refSpace][i]->toString() << endl;
+           << basis[refSpace][i]->toString() << endl;
 
   stream << "Cell Based:"   << endl;
   for(; i < nVertex + nEdge + nFace + nCell; i++)
     stream << "f("  << i + 1                 << ") = "
-	   << basis[refSpace][i]->toString() << endl;
+           << basis[refSpace][i]->toString() << endl;
 
   return stream.str();
 }

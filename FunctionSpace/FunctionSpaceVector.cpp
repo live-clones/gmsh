@@ -32,10 +32,10 @@ interpolate(const MElement& element,
   invJac.invertInPlace();
 
   // Get Basis Functions //
-  fullMatrix<double>* fun =
-    (*basis)[0]->getFunctions(element, uvw[0], uvw[1], uvw[2]);
+  const unsigned int nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double>  fun(nFun, 3);
 
-  const unsigned int nFun = fun->size1();
+  (*basis)[0]->getFunctions(fun, element, uvw[0], uvw[1], uvw[2]);
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);
@@ -44,14 +44,12 @@ interpolate(const MElement& element,
   val(0, 2) = 0;
 
   for(unsigned int i = 0; i < nFun; i++){
-    val(0, 0) += (*fun)(i, 0) * coef[i];
-    val(0, 1) += (*fun)(i, 1) * coef[i];
-    val(0, 2) += (*fun)(i, 2) * coef[i];
+    val(0, 0) += fun(i, 0) * coef[i];
+    val(0, 1) += fun(i, 1) * coef[i];
+    val(0, 2) += fun(i, 2) * coef[i];
   }
 
   // Return Interpolated Value //
-  delete fun;
-
   fullVector<double> map(3);
   Mapper::hCurl(val, 0, 0, invJac, map);
   return map;
@@ -72,11 +70,10 @@ interpolateInRefSpace(const MElement& element,
   invJac.invertInPlace();
 
   // Get Basis Functions //
-  fullMatrix<double>* fun =
-    (*basis)[0]->getFunctions(element, uvw(0), uvw(1), uvw(2));
+  const unsigned int nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double>  fun(nFun, 3);
 
-  const unsigned int nFun = fun->size1();
-
+  (*basis)[0]->getFunctions(fun, element, uvw(0), uvw(1), uvw(2));
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);
@@ -85,14 +82,12 @@ interpolateInRefSpace(const MElement& element,
   val(0, 2) = 0;
 
   for(unsigned int i = 0; i < nFun; i++){
-    val(0, 0) += (*fun)(i, 0) * coef[i];
-    val(0, 1) += (*fun)(i, 1) * coef[i];
-    val(0, 2) += (*fun)(i, 2) * coef[i];
+    val(0, 0) += fun(i, 0) * coef[i];
+    val(0, 1) += fun(i, 1) * coef[i];
+    val(0, 2) += fun(i, 2) * coef[i];
   }
 
   // Return Interpolated Value //
-  delete fun;
-
   fullVector<double> map(3);
   Mapper::hCurl(val, 0, 0, invJac, map);
   return map;
