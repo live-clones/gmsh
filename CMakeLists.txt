@@ -1037,22 +1037,37 @@ if(WIN32 OR CYGWIN)
   list(APPEND EXTERNAL_LIBRARIES winmm wsock32 ws2_32 psapi)
 endif(WIN32 OR CYGWIN)
 
-# disable compile optimization on some known problematic files
-check_cxx_compiler_flag("-O0" NOOPT)
-if(NOOPT)
-  file(GLOB_RECURSE NON_OPTIMIZED_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
-       Parser/Gmsh.tab.cpp contrib/Tetgen*/*.cxx)
-  set_source_files_properties(${NON_OPTIMIZED_SRC} COMPILE_FLAGS "-O0")
-endif(NOOPT)
-
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL AND NOT MSVC)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
-       Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp contrib/onelab/*.cpp)
-  set_source_files_properties(${WALL_SRC} COMPILE_FLAGS "-Wall")
+       Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp)
+  set_source_files_properties(${WALL_SRC} PROPERTIES COMPILE_FLAGS "-Wall")
 endif(WALL AND NOT MSVC)
+
+# don't issue warnings for contributed libraries
+check_cxx_compiler_flag("-w" NOWARN)
+if(NOWARN)
+  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx
+                               contrib/*.c)
+  set_source_files_properties(${NOWARN_SRC} PROPERTIES COMPILE_FLAGS "-w")
+endif(NOWARN)
+
+# disable compile optimization on some known problematic files
+check_cxx_compiler_flag("-O0" NOOPT)
+if(NOOPT)
+  file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
+                              Parser/Gmsh.tab.cpp contrib/Tetgen*/*.cxx)
+  foreach(FILE ${NOOPT_SRC})
+    get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
+    if(PROP)
+      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${PROP} -O0")
+    else(PROP)
+      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "-O0")
+    endif(PROP)
+  endforeach(FILE)
+endif(NOOPT)
 
 list(SORT CONFIG_OPTIONS)
 set(GMSH_CONFIG_OPTIONS "")
