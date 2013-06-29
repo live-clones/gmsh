@@ -72,7 +72,7 @@ private:
 public:
   BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
   void subDivisions(fullVector<double> &vect) const
-    {_jfs->subDivisor(_jacBez, vect);}
+    {_jfs->subdivideBezierCoeff(_jacBez, vect);}
   
   inline int depth() const {return _depthSub;}
   inline double minJ() const {return _minJ;}

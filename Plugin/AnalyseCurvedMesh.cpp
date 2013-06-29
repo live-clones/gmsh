@@ -336,7 +336,7 @@ int GMSH_AnalyseCurvedMeshPlugin::subDivision(const JacobianBasis *jb,
                                               int depth)
 {
   fullVector<double> newJacobian(jb->getNumSubNodes());
-  jb->subDivisor(jacobian, newJacobian);
+  jb->subdivideBezierCoeff(jacobian, newJacobian);
 
   for (int i = 0; i < jb->getNumDivisions(); i++)
   for (int j = 0; j < jb->getNumLagCoeff(); j++)

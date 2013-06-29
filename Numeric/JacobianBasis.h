@@ -62,7 +62,7 @@ class JacobianBasis {
   inline void primJac2Jac(const fullVector<double> &primJac, fullVector<double> &jac) const {
     matrixPrimJac2Jac.mult(primJac,jac);
   }
-  inline void subDivisor(const fullVector<double> &bez, fullVector<double> &result) const {
+  inline void subdivideBezierCoeff(const fullVector<double> &bez, fullVector<double> &result) const {
     bezier->subDivisor.mult(bez,result);
   }
 
