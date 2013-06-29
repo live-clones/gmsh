@@ -287,14 +287,6 @@ static std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
   prox.add(.5);
 
   for (int i = 0; i < 8; ++i) {
-    if (i == 0) {
-      for (int j = 0; j < nPts; ++j) {
-        const double factor = (1. - 2*subPoints[i](j, 2));
-        subPoints[i](j, 0) = subPoints[i](j, 0) * factor;
-        subPoints[i](j, 1) = subPoints[i](j, 1) * factor;
-      }
-      continue;
-    }
     for (int j = 0; j < nPts; ++j) {
       const double factor = (1. - subPoints[i](j, 2));
       subPoints[i](j, 0) = subPoints[i](j, 0) * factor;
