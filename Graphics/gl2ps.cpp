@@ -428,7 +428,7 @@ static int gl2psPrintf(const char* fmt, ...)
 #if !defined(GL2PS_HAVE_NO_VSNPRINTF)
   /* Try writing the string to a 1024 byte buffer. If it is too small to fit,
      keep trying larger sizes until it does. */
-  size_t bufsize = sizeof(buf);
+  int bufsize = sizeof(buf);
 #endif
   if(gl2ps->options & GL2PS_COMPRESS){
     va_start(args, fmt);
