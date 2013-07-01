@@ -28,7 +28,7 @@ public class ParameterString extends Parameter{
 		_choices = new ArrayList<String>();
 		_choices.add("-"); // Default choice
 	}
-	
+
 	private void createSpinner()
 	{
 		if(_spinner != null) return;

@@ -1,31 +1,21 @@
 package org.geuz.onelab;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.ProgressDialog;
 
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.support.v4.view.PagerAdapter;
@@ -45,14 +35,12 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TableLayout;
@@ -65,8 +53,6 @@ public class MainActivity extends Activity {
 	private GLESRender renderer;
 	private ProgressDialog loading;
 	private AlertDialog.Builder dialogBuilder;
-	private Models modelList;
-	private int model;
 	private Gmsh gmsh;
 	private Button run, reset;
 	private UndragableViewPager pager;
@@ -96,18 +82,23 @@ public class MainActivity extends Activity {
     	Intent intent = getIntent();
 
     	gmsh = new Gmsh("", mainHandler);
-    	modelList = new Models();
-    	getModels();
+    	Bundle extras = getIntent().getExtras(); 
     	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		pager.setCurrentItem(1);
     		gmsh.load(tmp);
+    	}    		
+    	else if(extras != null) {
+    		pager.setCurrentItem(0);
+    		//extras.getInt("model");
+    		//extras.getString("name");
+    		String tmp = extras.getString("file");
+    		gmsh.load(tmp);
+			getAvailableParam();
+			if(params.size()>0)params.get(params.size() - 1)._changed = true; // Hack for the first run
     	}
-    	else if(modelList.size() > 0){
-    		model = 0;
-	    	String tmp = getFilesDir()+ "/" + modelList.getFile(model);
-	    	gmsh.load(tmp);
-    	}
+    	else
+    		this.finish();
     	setContentView(layout);
     }
     
@@ -142,11 +133,11 @@ public class MainActivity extends Activity {
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
     	if(item.getTitle().equals(getString(R.string.menu_settings)))
-    		pager.setCurrentItem(1, true);
-    	else if(item.getTitle().equals(getString(R.string.menu_list)))
     		pager.setCurrentItem(0, true);
+    	else if(item.getTitle().equals(getString(R.string.menu_list)))
+    		this.finish();
     	else if (item.getTitle().equals(getString(R.string.menu_model)))
-    		pager.setCurrentItem(2, true);
+    		pager.setCurrentItem(1, true);
     	else if(item.getTitle().equals(getString(R.string.menu_postpro))){
     		dialogBuilder.setTitle("Post proccessing")
     			.setView(postproView())
@@ -183,6 +174,12 @@ public class MainActivity extends Activity {
 		public UndragableViewPager(Context context) {
 			super(context);
 		}
+		
+		@Override
+		public boolean onTouchEvent(MotionEvent arg0) {
+			return true;
+		}
+		
 		@Override
 		public boolean onInterceptTouchEvent(MotionEvent arg0) {
 			return false;
@@ -195,26 +192,20 @@ public class MainActivity extends Activity {
     	@Override
     	public Object instantiateItem(ViewGroup container, int position) {
     		switch (position) {
-			case 0: // Select a model
-				View listView = listView(container.getContext());
-				container.addView(listView);
-				listView.setPadding(15, 10, 10, 5);
-				listView.setBackgroundColor(Color.argb(255, 67, 67, 67));
-				return listView;
-			case 1: // Parameters
+			case 0: // Parameters
 				(MainActivity.this).getAvailableParam();
 				View paramView = (MainActivity.this).paramView(container.getContext());
 				container.addView(paramView);
 				paramView.setPadding(15, 10, 10, 5);
 				return paramView;
-			case 2: // OpenGL ES view
+			case 1: // OpenGL ES view
 				renderer = new GLESRender(gmsh);
 				glView = new mGLSurfaceView(container.getContext(), renderer);
 				//TODO the glView seems break the ViewPager (black square appear ...)
 				glView.setEGLContextClientVersion(1);
 				glView.setRenderer(renderer);
 				glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-
+				glView.requestRender();
 				container.addView(glView);
 				return glView;
 			default: // ???
@@ -271,7 +262,7 @@ public class MainActivity extends Activity {
     
     private void getAvailableParam(){
     	String[] tmp = gmsh.getParams();
-		for(String s : tmp){ // for each parameters in onelab
+		for(String s : tmp){ // for each parameters in ONEALB
 			boolean found = false;
 			for(Parameter p : params){ // for each parameters
 				if(s.split("\n")[2].equals(p.getName())){ // the parameter already exist, just refresh it
@@ -303,54 +294,6 @@ public class MainActivity extends Activity {
 			}
 		}
     }
-
-    private void getModels()
-    {
-    	XmlResourceParser parser =  getResources().getXml(R.xml.models);
-    	int eventType;
-		try {
-			eventType = parser.getEventType();
-    	while (eventType != XmlPullParser.END_DOCUMENT) {
-            if(eventType == XmlPullParser.START_DOCUMENT){
-            	eventType = parser.next();
-            	continue;
-            }
-            else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("model")) {
-            	String title = "", file = "", summary = "";
-            	while(eventType != XmlPullParser.END_TAG || !parser.getName().equals("model"))
-            	{
-            		
-            		eventType = parser.next();
-            		if(eventType == XmlPullParser.START_TAG && parser.getName().equals("title")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				title = parser.getText();
-            		}
-            		else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("summary")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				summary = parser.getText();
-            		}
-            		else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("file")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				file = parser.getText();
-            		}
-            	}
-            	if(title.length() > 0) modelList.addModel(title, summary, file);
-            }
-            eventType = parser.next();
-           }
-		} catch (XmlPullParserException e) {
-			// TODO Error in XML file
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Error in XML file
-			e.printStackTrace();
-		}
-
-    }
-    
     
     private View postproView() {
     	ScrollView scroll = new ScrollView(this);
@@ -477,14 +420,14 @@ public class MainActivity extends Activity {
     		else
 				new Run().execute();
 				
-			pager.setCurrentItem(2, true);
+			pager.setCurrentItem(1, true);
 		}});
     	reset.setOnClickListener(new OnClickListener() {public void onClick(View v) {
     		if(gmsh.onelabCB("reset") == 1){
     			getAvailableParam();
 				glView.requestRender();
 			}
-			pager.setCurrentItem(1, true);
+			pager.setCurrentItem(0, true);
 		}});
     	LinearLayout onelabBtns = new LinearLayout(this);
     	onelabBtns.setOrientation(LinearLayout.HORIZONTAL);
@@ -520,152 +463,6 @@ public class MainActivity extends Activity {
     		p.setList(paramListView);
     	}
     	return paramListView;
-    }
-    
-    private View listView(Context ctx) {
-    	LinearLayout layout = new LinearLayout(ctx);
-    	layout.setOrientation(LinearLayout.VERTICAL);
-    	ListView list = new ListView(ctx);
-    	list.setAdapter( new ModeleArrayAdapter(ctx, modelList));
-    	list.setOnItemClickListener(new OnItemClickListener() {
-
-			public void onItemClick(AdapterView<?> parent, View view, int position,
-					long id) {
-				model = (position < modelList.size())? position : 0;
-				String tmp = getFilesDir() + "/" + modelList.getFile(model);
-				gmsh.load(tmp);
-				
-				params.clear();
-				paramListView.clear();
-				getAvailableParam();
-				if(params.size()>0)params.get(params.size() - 1)._changed = true; // Hack for the first run
-				glView.requestRender();
-				pager.setCurrentItem(1);
-			}
-		});
-    	layout.addView(list);
-    	Button loadSD = new Button(ctx);
-    	loadSD.setText(R.string.button_open_external_file);
-    	loadSD.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-    	loadSD.setOnClickListener(new OnClickListener() {
-			
-			public void onClick(View v) {
-				@SuppressWarnings("unused")
-				SDFileChooser f = new SDFileChooser();
-			}
-		});
-    	layout.addView(loadSD);
-    	return layout;
-    }
-
-    private class SDFileChooser{
-    	File curentPath;
-    	FileDialog dialog;
-    	
-    	public SDFileChooser() {
-    		String state = Environment.getExternalStorageState();
-    		if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-    			curentPath = Environment.getExternalStorageDirectory();
-
-    			showList(getFile(curentPath));
-    		}
-    		else
-    			showMessage(R.string.error_nosdcard);
-    	}
-    	
-    	public void setPath(String newPath) {
-    		curentPath = new File(newPath);
-    		showList(getFile(curentPath));
-    		
-    	}
-    	public String getPath() {
-    		return curentPath.toString();
-    	}
-    	
-    	private void showList(String[] list) {
-    		if(!curentPath.toString().equals(Environment.getExternalStorageDirectory().toString())){
-    			String[] newList = new String[list.length + 1];
-    			for(int i=0;i<list.length;i++)
-    				newList[i+1] = list[i];
-    			newList[0] = "..";
-    			list = newList;
-    		}	
-    		if(list.length < 1){
-    			showMessage(R.string.error_nomshfile);
-    			return;
-    		}
-    		if(dialog != null) dialog.dismiss();
-    		dialog = new FileDialog(this, list);
-    		dialog.show(getFragmentManager(), "files");
-    	}
-    	
-    	private void showMessage(int msg) {
-    		dialog = new FileDialog(this, msg);
-    		dialog.show(getFragmentManager(), "msg");
-    	}
-    	
-    	private String[] getFile(File path) {
-    		return path.list(new FilenameFilter() {
-    			
-    			public boolean accept(File dir, String filename) {
-    				String ext = filename.substring(filename.lastIndexOf(".") + 1, filename.length());
-    				File curent = new File(dir.toString()+"/"+filename);
-    				if(curent.isHidden())
-    					return false;
-    				else if(curent.isDirectory())
-    					return true;
-    				else if(ext.equals("MSH") || ext.equals("msh"))
-    					return true;
-    				else
-    					return false;
-    			}
-    		});
-    	}
-    	private class FileDialog extends DialogFragment {
-    		
-    		String[] list;
-    		int msg = -1;
-    		SDFileChooser parent;
-    		
-    		public FileDialog(SDFileChooser p, String[] l) {
-    			list = l;
-    			parent = p;
-    		}
-    		public FileDialog(SDFileChooser p, int m) {
-    			msg = m;
-    			parent = p;
-    		}
-    		
-    		@Override
-    		public Dialog onCreateDialog(Bundle savedInstanceState) {
-    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    			if(msg > 0) {
-    				builder.setMessage(R.string.error_nomshfile)
-    				.setPositiveButton(R.string.button_ok, null);
-    			}
-    			else {
-    				builder.setTitle(R.string.dialog_title_choosefile);
-	        		builder.setItems(list, new DialogInterface.OnClickListener() {
-						
-						public void onClick(DialogInterface dialog, int which) {
-							if(list[which].equals(".."))
-								parent.setPath(curentPath.getParentFile().toString());
-							else if( new File(parent.getPath() + "/" + list[which]).isDirectory())
-								parent.setPath(parent.getPath() + "/" + list[which]);
-							else {
-								String ext = list[which].substring(list[which].lastIndexOf(".") + 1, list[which].length());
-			    				if(ext.equals("MSH") || ext.equals("msh")) {
-			    					gmsh.load(curentPath+"/"+getFile(curentPath)[which]);
-			    					glView.requestRender();
-			    				}
-							}
-						}
-					});
-    			}
-    			return builder.create();
-    		};
-    	}
-    	
     }
     
     private class Run extends AsyncTask<Void, Void, Integer[]> {

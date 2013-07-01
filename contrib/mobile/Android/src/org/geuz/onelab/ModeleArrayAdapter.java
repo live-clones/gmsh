@@ -1,7 +1,6 @@
 package org.geuz.onelab;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,13 +40,13 @@ public class ModeleArrayAdapter extends ArrayAdapter<String> {
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		View rowView = inflater.inflate(R.layout.model, parent, false);
-		TextView Titre = (TextView) rowView.findViewById(R.id.titre);
+		TextView Title = (TextView) rowView.findViewById(R.id.title);
 		TextView Description = (TextView) rowView.findViewById(R.id.description);
-		ImageView Icone = (ImageView) rowView.findViewById(R.id.icone);
-		if(this.titres != null) Titre.setText(this.titres[position]);
+		ImageView Icon = (ImageView) rowView.findViewById(R.id.icon);
+		if(this.titres != null) Title.setText(this.titres[position]);
 		if(this.descriptions != null) Description.setText(this.descriptions[position]);
-		if(Icone != null) Icone.setImageResource(R.drawable.ic_launcher);
-		Icone.setPadding(10, 10, 10, 10);
+		if(Icon != null) Icon.setImageResource(R.drawable.ic_launcher);
+		Icon.setPadding(10, 10, 10, 10);
 		
 		return rowView;
 	}
