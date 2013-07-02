@@ -1607,10 +1607,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     delStrings = _treeStrings;
     _treeWidgets.clear();
     _treeStrings.clear();
-    // make sure we remove the focus from any widget that will be deleted; not
-    // sure if this is still necessary; if it is, we should only do it if the
-    // focus is not in the graphical window:
-    // _tree->take_focus();
   }
 
   _addGmshMenus();

@@ -1081,7 +1081,7 @@ Character expressions are defined as:
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
-  Sprintf ( @var{char-expression} ) |
+  Sprintf|Str ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
   GetEnv ( @var{char-expression} ) |
   GetString ( @var{char-expression} , @var{char-expression} ) | 

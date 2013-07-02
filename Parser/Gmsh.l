@@ -206,6 +206,7 @@ Sphere                  return tSphere;
 Spline                  return tSpline;
 Split                   return tSplit;
 Surface                 return tSurface;
+Str                     return tStr;
 Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrReplace              return tStrReplace;

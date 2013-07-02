@@ -107,7 +107,7 @@ struct doubleXstring{
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot tList
-%token tPrintf tError tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
+%token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
 %token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
@@ -1293,7 +1293,7 @@ FloatParameterOption :
       List_Delete($4);
     }
 
-  | ',' tSTRING tBIGSTR
+  | ',' tSTRING StringExpr
     {
       std::string key($2);
       std::string val($3);
@@ -1317,7 +1317,7 @@ CharParameterOption :
       Free($2);
     }
 
-  | ',' tSTRING tBIGSTR
+  | ',' tSTRING StringExpr
     {
       std::string key($2);
       std::string val($3);
@@ -5030,6 +5030,11 @@ StringExpr :
       Free($3);
       Free($5);
       Free($7);
+    }
+
+  | tStr '[' StringExprVar ']'
+    {
+      $$ = $3;
     }
 
   | tSprintf '(' StringExprVar ')'
