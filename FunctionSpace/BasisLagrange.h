@@ -6,7 +6,7 @@
 #include "FunctionSpaceVector.h"
 #include "fullMatrix.h"
 #include "polynomialBasis.h"
-#include "ReferenceSpaceLagrange.h"
+// #include "ReferenceSpace.h"
 
 /**
    @interface BasisLagrange
@@ -28,7 +28,14 @@ class BasisLagrange: public BasisLocal{
  protected:
   polynomialBasis*        lBasis;   // Lagrange Basis
   fullMatrix<double>*     lPoint;   // Lagrange Points
-  ReferenceSpaceLagrange* refSpace; // Reference Space
+  // ReferenceSpace*         refSpace; // RefSpace
+
+  // PreEvaluation //
+  mutable bool preEvaluated;
+  mutable bool preEvaluatedGrad;
+
+  mutable fullMatrix<double>* preEvaluatedFunction;
+  mutable fullMatrix<double>* preEvaluatedGradFunction;
 
  public:
   virtual ~BasisLagrange(void);
@@ -36,8 +43,8 @@ class BasisLagrange: public BasisLocal{
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
 
-  virtual void getFunctionPermutation(const MElement& element,
-                                      unsigned int* indexPermutation) const;
+  virtual std::vector<size_t>
+    getFunctionOrdering(const MElement& element) const;
 
   virtual void getFunctions(fullMatrix<double>& retValues,
                             const MElement& element,

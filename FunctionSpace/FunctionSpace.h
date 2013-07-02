@@ -93,11 +93,13 @@ class FunctionSpace{
   FunctionSpace(void);
 
   void build(GroupOfElement& goe,
-	     const Basis& basis);
+             const Basis& basis);
 
   // Dof
   void buildDof(void);
-  void insertDof(Dof& d, GroupOfDof* god);
+  void insertDof(Dof& d,
+                 std::vector<const Dof*>& trueDof,
+                 size_t index);
 };
 
 

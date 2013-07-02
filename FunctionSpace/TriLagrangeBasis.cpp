@@ -1,10 +1,7 @@
-#include "Exception.h"
 #include "TriLagrangeBasis.h"
 #include "pointsGenerators.h"
-#include "TriLagrangeReferenceSpace.h"
+//#include "TriReferenceSpace.h"
 #include "ElementType.h"
-
-#include <iostream>
 
 TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
   // If order 0 (Nedelec): use order 1
@@ -24,13 +21,14 @@ TriLagrangeBasis::TriLagrangeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //
-  lBasis = new polynomialBasis(getTag(order));
+  lBasis = new polynomialBasis(ElementType::getTag(TYPE_TRI, order, false));
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>
     (gmshGeneratePointsTriangle(order, false));
 
   // ReferenceSpace //
+  // refSpace = new TriReferenceSpace;
   //  refSpace = new TriLagrangeReferenceSpace(order);
   //  std::cout << refSpace->toString() << std::endl;
 }
@@ -39,16 +37,4 @@ TriLagrangeBasis::~TriLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
   // delete refSpace;
-}
-
-unsigned int TriLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = ElementType::getTag(TYPE_TRI, order, false);
-
-  if(tag)
-    return tag;
-
-  else
-    throw Exception
-      ("Can't instanciate an order %d Lagrangian Basis for a Triangle",
-       order);
 }

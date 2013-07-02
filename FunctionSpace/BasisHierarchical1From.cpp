@@ -59,9 +59,14 @@ getOrientation(const MElement& element) const{
   return refSpace->getPermutation(element);
 }
 
-void BasisHierarchical1From::
-getFunctionPermutation(const MElement& element,
-                       unsigned int* indexPermutation) const{
+vector<size_t> BasisHierarchical1From::
+getFunctionOrdering(const MElement& element) const{
+  vector<size_t> ordering(nFunction);
+
+  for(size_t i = 0; i < nFunction; i++)
+    ordering[i] = i;
+
+  return ordering;
 }
 
 void BasisHierarchical1From::

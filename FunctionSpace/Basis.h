@@ -77,13 +77,13 @@ class Basis{
   unsigned int getNCellBased(void) const;
   unsigned int getNFunction(void) const;
 
-  // Orientations //
+  // Reference Element //
   virtual unsigned int getNOrientation(void) const = 0;
   virtual unsigned int getOrientation(const MElement& element) const = 0;
 
-  // Functions Permutation //
-  virtual void getFunctionPermutation(const MElement& element,
-                                      unsigned int* indexPermutation) const = 0;
+  // Functions Ordering //
+  virtual std::vector<size_t>
+    getFunctionOrdering(const MElement& element) const = 0;
 
   // Direct Access to Evaluated Functions //
   virtual void getFunctions(fullMatrix<double>& retValues,

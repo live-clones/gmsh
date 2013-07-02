@@ -108,13 +108,18 @@ void FunctionSpace::buildDof(void){
     vector<Dof> myDof = getKeys(*(element[i]));
     unsigned int nDof = myDof.size();
 
-    // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(nDof, *(element[i]));
-    (*group)[i]     = god;
-
     // Add Dof
+    vector<const Dof*> trueDof(nDof);
+
     for(unsigned int j = 0; j < nDof; j++)
-      insertDof(myDof[j], god);
+      insertDof(myDof[j], trueDof, j);
+
+    // Dof Orderning
+    vector<size_t> dofOrder = (*basis)[0]->getFunctionOrdering(*(element[i]));
+
+    // Create new GroupOfDof
+    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDof, dofOrder);
+    (*group)[i]     = god;
 
     // Map GOD
     eToGod->insert(pair<const MElement*, const GroupOfDof*>
@@ -122,7 +127,9 @@ void FunctionSpace::buildDof(void){
   }
 }
 
-void FunctionSpace::insertDof(Dof& d, GroupOfDof* god){
+void FunctionSpace::insertDof(Dof& d,
+                              vector<const Dof*>& trueDof,
+                              size_t index){
   // Copy 'd'
   const Dof* tmp = new Dof(d);
 
@@ -133,13 +140,13 @@ void FunctionSpace::insertDof(Dof& d, GroupOfDof* god){
   // If insertion is OK (Dof 'd' didn't exist) //
   //   --> Add new Dof in GoD
   if(p.second)
-    god->add(*tmp);
+    trueDof[index] = tmp;
 
   // If insertion failed (Dof 'd' already exists) //
-  //   --> delete 'd' and add existing Dof in GoD
+  //   --> delete 'tmp' and add existing Dof in GoD
   else{
     delete tmp;
-    god->add(*(*(p.first)));
+    trueDof[index] = *(p.first);
   }
 }
 

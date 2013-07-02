@@ -1,13 +1,23 @@
-#include "Exception.h"
 #include "BasisLagrange.h"
 
 using namespace std;
 
 BasisLagrange::BasisLagrange(void){
   scalar = true;
+
+  preEvaluated     = false;
+  preEvaluatedGrad = false;
+
+  preEvaluatedFunction     = NULL;
+  preEvaluatedGradFunction = NULL;
 }
 
 BasisLagrange::~BasisLagrange(void){
+  if(preEvaluated)
+    delete preEvaluatedFunction;
+
+  if(preEvaluatedGrad)
+    delete preEvaluatedGradFunction;
 }
 
 unsigned int BasisLagrange::
@@ -20,9 +30,67 @@ getOrientation(const MElement& element) const{
   return 0;
 }
 
-void BasisLagrange::
-getFunctionPermutation(const MElement& element,
-                       unsigned int* indexPermutation) const{
+static bool
+sortPredicate(const std::pair<size_t, size_t>& a,
+              const std::pair<size_t, size_t>& b){
+  return a.second < b.second;
+}
+
+static vector<int> reducedNodeId(const MElement& element){
+  const size_t nVertex = element.getNumPrimaryVertices();
+  vector<pair<size_t, size_t> > vertexGlobalId(nVertex);
+
+  for(size_t i = 0; i < nVertex; i++){
+    vertexGlobalId[i].first  = i;
+    vertexGlobalId[i].second = element.getVertex(i)->getNum();
+  }
+
+  std::sort(vertexGlobalId.begin(), vertexGlobalId.end(), sortPredicate);
+
+  vector<int> vertexReducedId(nVertex);
+
+  for(size_t i = 0; i < nVertex; i++)
+    vertexReducedId[vertexGlobalId[i].first] = i;
+
+  return vertexReducedId;
+}
+
+static size_t matchClosure(vector<int>& reduced,
+                           nodalBasis::clCont& closures){
+
+  const size_t nNode = reduced.size();
+  const size_t nPerm = closures.size();
+
+  size_t i = 0;
+  bool   match = false;
+
+  while(i < nPerm && !match){
+    match = true;
+
+    for(size_t j = 0; j < nNode && match; j++)
+      if(reduced[j] != closures[i][j])
+         match = false;
+
+    if(!match)
+      i++;
+  }
+
+  return i;
+}
+
+vector<size_t> BasisLagrange::
+getFunctionOrdering(const MElement& element) const{
+  vector<int> rNodeId = reducedNodeId(element);
+  const size_t closureId = matchClosure(rNodeId, lBasis->fullClosures);
+
+  vector<int>& closure = lBasis->fullClosures[closureId];
+
+  vector<size_t> myClosure(closure.size());
+
+  for(size_t i = 0; i < closure.size(); i++)
+    myClosure[i] = closure[i];
+
+  return myClosure;
 }
 
 void BasisLagrange::
@@ -62,32 +130,55 @@ getFunctions(fullMatrix<double>& retValues,
 }
 
 void BasisLagrange::preEvaluateFunctions(const fullMatrix<double>& point) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  // Delete if older //
+  if(preEvaluated)
+    delete preEvaluatedFunction;
+
+  // Fill Matrix //
+  fullMatrix<double> tmp;
+  lBasis->f(point, tmp);
+
+  // Transpose 'tmp': otherwise not coherent with df !!
+  preEvaluatedFunction = new fullMatrix<double>(tmp.transpose());
+
+  // PreEvaluated //
+  preEvaluated = true;
 }
 
 void BasisLagrange::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  // Delete if older //
+  if(preEvaluatedGrad)
+    delete preEvaluatedGradFunction;
+
+  // Alloc //
+  preEvaluatedGradFunction = new fullMatrix<double>;
+
+  // Fill Matrix //
+  lBasis->df(point, *preEvaluatedGradFunction);
+
+  // PreEvaluated //
+  preEvaluatedGrad = true;
 }
 
 const fullMatrix<double>&
 BasisLagrange::getPreEvaluatedFunctions(const MElement& element) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return *preEvaluatedFunction;
 }
 
 const fullMatrix<double>&
 BasisLagrange::getPreEvaluatedDerivatives(const MElement& element) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return *preEvaluatedGradFunction;
 }
 
 const fullMatrix<double>&
 BasisLagrange::getPreEvaluatedFunctions(unsigned int orientation) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return *preEvaluatedFunction;
 }
 
 const fullMatrix<double>&
 BasisLagrange::getPreEvaluatedDerivatives(unsigned int orientation) const{
-  throw Exception("BasisLagrange::Not Implemented");
+  return *preEvaluatedGradFunction;
 }
 
 vector<double> BasisLagrange::
