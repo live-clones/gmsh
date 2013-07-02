@@ -200,6 +200,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
+	  printf("%d\n",loopA.pid());
     }while(loopA.inc());
   }
   else{
@@ -211,6 +212,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
+	  printf("%d\n",loopB.pid());
     }while(loopB.inc());
   }
 
