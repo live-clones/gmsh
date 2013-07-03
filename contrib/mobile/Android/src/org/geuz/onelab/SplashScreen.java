@@ -1,9 +1,10 @@
 package org.geuz.onelab;
 
+import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
 import android.content.Context;
@@ -59,34 +60,19 @@ public class SplashScreen extends Activity{
      */
     private void loadNative()
     {
-    	for( Field f : R.raw.class.getFields()) {
-    		try {
-				int Msh = f.getInt(null), i;
-				String androidName = getResources().getResourceEntryName(Msh);
-				StringBuilder tmp = new StringBuilder(androidName);
-				tmp.setCharAt(androidName.lastIndexOf('_'), '.');
-				String nativeName = tmp.toString();
-				/*if(new File(getFilesDir().toString()+"/"+nativeName).exists()){
-					//TODO check if the files are the same
-					continue;
-				}*/
-				InputStream mshFile = getResources().openRawResource(Msh);
-		    	
-		    	FileOutputStream outputStream = openFileOutput(nativeName, Context.MODE_WORLD_READABLE);
-		    	byte[] buffer = new byte[2048];
-		    	
-		    	while ((i = mshFile.read(buffer, 0, buffer.length)) > 0) 
+    	try {
+    		ZipInputStream zipStream = new ZipInputStream(new BufferedInputStream(getResources().openRawResource(R.raw.models)));
+			ZipEntry entry;
+		     while ((entry = zipStream.getNextEntry()) != null) {
+				FileOutputStream outputStream = openFileOutput(entry.getName(), Context.MODE_PRIVATE);
+				byte[] buffer = new byte[2048];
+				for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;i = zipStream.read(buffer, 0, buffer.length)) 
 					outputStream.write(buffer,0,i);
-
-			} catch (IllegalArgumentException e) {
-				Log.e("Load files", "Error " + e.toString());
-				
-			} catch (IllegalAccessException e) {
-				Log.e("Load files", "Error " + e.toString());
-				
-			} catch (IOException e) {
-				Log.e("Load files", "Error " + e.toString());
-			}
-    	}
+				Log.d("Load files", "Add " + entry.getName() + " from the zip file");
+		     }
+		     zipStream.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
     }
 }

@@ -41,7 +41,7 @@ public class ModelList extends Activity {
     	ListView list = new ListView(this);
     	Button loadSD = new Button(this);
     	loadSD.setText(R.string.button_open_external_file);
-    	loadSD.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+    	loadSD.setLayoutParams(new ListView.LayoutParams(LayoutParams.MATCH_PARENT, ListView.LayoutParams.WRAP_CONTENT));
     	loadSD.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
