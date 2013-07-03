@@ -1080,26 +1080,27 @@ Character expressions are defined as:
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
+  Str [ @var{char-expression} , @dots{} ] |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
-  Sprintf|Str ( @var{char-expression} ) |
+  Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
   GetEnv ( @var{char-expression} ) |
   GetString ( @var{char-expression} , @var{char-expression} ) | 
   StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} ) 
 @end example
 
-@noindent The third and fourth cases in this definition permit to take the
-prefix (e.g. to remove the extension) or the relative path of a
-string. The fifth case permits to concatenate two character expressions,
-and the sixth and seventh are equivalent to the @code{sprintf} C
+@noindent @code{StrPrefix} and @code{StrRelative} permit to take the
+prefix (e.g. to remove the extension) or the relative path of a file
+name. @code{StrCat} and @code{Str} permit to concatenate character
+expressions (@code{Str} adds a newline character after each string
+except the last). @code{Sprintf} is equivalent to the @code{sprintf} C
 function (where @var{char-expression} is a format string that can
 contain floating point formatting characters: @code{%e}, @code{%g},
-etc.). The eigth case permits to use the value of a @var{char-option} as
-a @var{char-expression}. The ninth case gets the value of an environment
-variable from the operating system. The last case in the definition
-allows to ask the user for a value interactively. The various
-@w{@var{char-option}s} are listed in @ref{Options}.  @code{StrReplace}'s
-arguments are: input string, old substring, new substring.
+etc.) The various @w{@var{char-option}s} are listed in
+@ref{Options}. @code{GetEnvThe} gets the value of an environment
+variable from the operating system. @code{GetString} allows to ask the
+user for a value interactively. @code{StrReplace}'s arguments are: input
+string, old substring, new substring.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of

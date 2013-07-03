@@ -1125,6 +1125,12 @@ void onelabGroup::_addParameter(T &p)
   Fl_Widget *widget = _addParameterWidget(p, n, highlight, c);
   _treeWidgets.push_back(widget);
   widget->copy_label(p.getShortName().c_str());
+  if(p.getLabel().size()){
+    std::string help = p.getLabel();
+    if(p.getHelp().size())
+      help += ":\n" + p.getHelp();
+    widget->copy_tooltip(help.c_str());
+  }
   n->widget(widget);
   _tree->end();
 }
@@ -1665,7 +1671,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   }
 
   for(std::set<std::string>::iterator it = closed.begin(); it != closed.end(); it++)
-    _tree->close(it->c_str(), 0);
+    if(it->size()) _tree->close(it->c_str(), 0);
 
   _tree->redraw();
 
