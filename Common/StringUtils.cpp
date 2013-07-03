@@ -77,7 +77,8 @@ std::string FixRelativePath(const std::string &reference, const std::string &in)
 {
   if(in.empty()) return "";
 
-  if(in[0] == '/' || in[0] == '\\' || (in.size() > 2 && in[1] == ':')){
+  if(in[0] == '/' || in[0] == '\\' ||
+     (in.size() > 3 && in[1] == ':' && (in[2] == '/' || in[2] == '\\'))){
     // do nothing: 'in' is an absolute path
     return in;
   }
