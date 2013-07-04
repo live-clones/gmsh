@@ -216,7 +216,7 @@ class client :
     if t == self._GMSH_PARAMETER :
       p.fromchar(msg).choices.append(value)
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
-      print 'Unknown parameter %s' %(param.name)
+      print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
 
   def _get_parameter(self, param, warn_if_not_found=True) :
@@ -227,7 +227,7 @@ class client :
     if t == self._GMSH_PARAMETER :
       param.fromchar(msg)
     elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
-      print 'Unknown parameter %s' %(param.name)
+      print ('Unknown parameter %s' %(param.name))
 
   def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
@@ -246,9 +246,9 @@ class client :
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      print msg
+      print (msg)
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
-      print 'Unknown parameter %s' %(name)
+      print ('Unknown parameter %s' %(name))
 
   def openGeometry(self, filename) :
     if not self.socket or not filename :
@@ -282,19 +282,19 @@ class client :
 
   def sendInfo(self, msg) :
     if not self.socket :
-      print msg
+      print (msg)
       return
     self._send(self._GMSH_INFO, msg)
 
   def sendWarning(self, msg) :
     if not self.socket :
-      print msg
+      print (msg)
       return
     self._send(self._GMSH_WARNING, msg)
 
   def sendError(self, msg) :
     if not self.socket :
-      print msg
+      print (msg)
       return
     self._send(self._GMSH_ERROR, msg)
 
@@ -304,7 +304,7 @@ class client :
     self._send(self._GMSH_OLPARSE, filename)
     (t, msg) = self._receive() 
     if t == self._GMSH_OLPARSE :
-      print msg
+      print (msg)
         
   def _createSocket(self) :
     addr = self.addr
