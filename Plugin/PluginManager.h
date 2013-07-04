@@ -33,7 +33,7 @@ class PluginManager
   void addPlugin(std::string fileName);
 
   // Uninstall a given plugin
-  void uninstallPlugin(std::string pluginName);
+  void uninstallPlugin(std::string pluginName){};
 
   // Set an option to a value in plugin named pluginName
   void setPluginOption(std::string pluginName, std::string option, 
