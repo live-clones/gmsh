@@ -84,7 +84,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual void zeroSolution();
   virtual int systemSolve();
   Mat &getMatrix(){ return _a; }
-  std::vector<scalar> getData();
+  //std::vector<scalar> getData();
   std::vector<int> getRowPointers();
   std::vector<int> getColumnsIndices();
   #ifndef SWIG
@@ -122,6 +122,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   double normInfRightHandSide() const;
   void insertInSparsityPattern (int i, int j);
   linearSystemPETScBlockDouble(bool sequential = false);
+  ~linearSystemPETScBlockDouble();
 };
 
 #else

@@ -27,6 +27,18 @@ void linearSystemPETScBlockDouble::_kspCreate()
   _kspAllocated = true;
 }
 
+linearSystemPETScBlockDouble::~linearSystemPETScBlockDouble()
+{
+  if (_isAllocated) {
+    MatDestroy(&_a);
+    VecDestroy(&_b);
+    VecDestroy(&_x);
+  }
+  if (_kspAllocated) {
+    KSPDestroy(&_ksp);
+  }
+}
+
 void linearSystemPETScBlockDouble::addToMatrix(int row, int col,
                                                const fullMatrix<double> &val)
 {

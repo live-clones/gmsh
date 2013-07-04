@@ -349,7 +349,7 @@ int linearSystemPETSc<scalar>::systemSolve()
   return 1;
 }
 
-template <class scalar>
+/*template <class scalar>
 std::vector<scalar> linearSystemPETSc<scalar>::getData()
 {
   _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
@@ -369,15 +369,15 @@ std::vector<scalar> linearSystemPETSc<scalar>::getData()
 #endif
   _try(MatRestoreArray(_a,&v));
   return data;
-}
+}*/
 
 template <class scalar>
 std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
 {
   _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
-  PetscInt *rows;
-  PetscInt *columns;
+  const PetscInt *rows;
+  const PetscInt *columns;
   PetscInt n;
   PetscTruth done;
   _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
@@ -393,8 +393,8 @@ std::vector<int> linearSystemPETSc<scalar>::getColumnsIndices()
 {
   _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
-  PetscInt *rows;
-  PetscInt *columns;
+  const PetscInt *rows;
+  const PetscInt *columns;
   PetscInt n;
   PetscTruth done;
   _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
