@@ -370,7 +370,7 @@ std::vector<scalar> linearSystemPETSc<scalar>::getData()
   _try(MatRestoreArray(_a,&v));
   return data;
 }*/
-
+/* 
 template <class scalar>
 std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
 {
@@ -406,4 +406,5 @@ std::vector<int> linearSystemPETSc<scalar>::getColumnsIndices()
   _try(MatRestoreRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));
   return columnIndices;
 }
+*/
 #endif

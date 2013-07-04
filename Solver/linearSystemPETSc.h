@@ -85,8 +85,8 @@ class linearSystemPETSc : public linearSystem<scalar> {
   virtual int systemSolve();
   Mat &getMatrix(){ return _a; }
   //std::vector<scalar> getData();
-  std::vector<int> getRowPointers();
-  std::vector<int> getColumnsIndices();
+  //std::vector<int> getRowPointers();
+  //std::vector<int> getColumnsIndices();
   #ifndef SWIG
   linearSystemPETSc(MPI_Comm com);
   MPI_Comm& getComm() {return _comm;}
