@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
 	private UndragableViewPager pager;
 	private List<Parameter> params = new ArrayList<Parameter>();
 	private SeparatedListView paramListView;
+	private boolean compute = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,8 +66,7 @@ public class MainActivity extends Activity {
     	
     	getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-    	//this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-    	
+
     	LinearLayout layout = new LinearLayout(this);
     	loading = new ProgressDialog(this);
     	layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
     	pager = new UndragableViewPager(this);
     	pager.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	pager.setAdapter(new AdaptedPager());
-    	pager.setOffscreenPageLimit(3);
+    	pager.setOffscreenPageLimit(2);
     	pager.setCurrentItem(0);
     	layout.addView(pager);
     	dialogBuilder = new AlertDialog.Builder(this);
@@ -85,11 +85,11 @@ public class MainActivity extends Activity {
     	Bundle extras = getIntent().getExtras(); 
     	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
-    		pager.setCurrentItem(1);
+    		pager.setCurrentItem(1, true);
     		gmsh.load(tmp);
     	}    		
     	else if(extras != null) {
-    		pager.setCurrentItem(0);
+    		pager.setCurrentItem(0, true);
     		//extras.getInt("model");
     		//extras.getString("name");
     		String tmp = extras.getString("file");
@@ -201,7 +201,6 @@ public class MainActivity extends Activity {
 			case 1: // OpenGL ES view
 				renderer = new GLESRender(gmsh);
 				glView = new mGLSurfaceView(container.getContext(), renderer);
-				//TODO the glView seems break the ViewPager (black square appear ...)
 				glView.setEGLContextClientVersion(1);
 				glView.setRenderer(renderer);
 				glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -411,17 +410,17 @@ public class MainActivity extends Activity {
     	reset = new Button(ctx);
     	run.setText("Run");
     	reset.setText("Reset");
-    	run.setOnClickListener(new OnClickListener() {public void onClick(View v) {
-    		if(run.getText().equals("Show progress"))
-    		{
-    			loading.show();
-    			return;
+    	run.setOnClickListener(new OnClickListener() {
+    		public void onClick(View v) {
+	    		if(compute) {
+	    			loading.show();
+	    		}
+	    		else {
+	    			new Run().execute();
+	    			pager.setCurrentItem(1, true);
+	    		}
     		}
-    		else
-				new Run().execute();
-				
-			pager.setCurrentItem(1, true);
-		}});
+    	});
     	reset.setOnClickListener(new OnClickListener() {public void onClick(View v) {
     		if(gmsh.onelabCB("reset") == 1){
     			getAvailableParam();
@@ -469,6 +468,7 @@ public class MainActivity extends Activity {
 
     	@Override
     	protected void onPreExecute() {
+    		compute = true;
     		loading.setTitle("Please wait");
         	loading.setButton(DialogInterface.BUTTON_NEUTRAL, "Hide", new DialogInterface.OnClickListener() {
     			
@@ -485,7 +485,7 @@ public class MainActivity extends Activity {
     		});
     		loading.setMessage("...");
     		loading.show();
-    		run.setText("Show progress");
+    		//run.setText("Show progress");
     		reset.setEnabled(false);
     		super.onPreExecute();
     	}
@@ -498,14 +498,16 @@ public class MainActivity extends Activity {
 
 		@Override
 		protected void onPostExecute(Integer[] result) {
-			loading.dismiss();
-			run.setText("Run");
 			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 			v.vibrate(350);
-			run.setEnabled(true);
 			reset.setEnabled(true);
+			run.setEnabled(true);
+			//run.setText("Run"); // TODO this seems break the ViewPager
+			pager.postInvalidate();
 			glView.requestRender();
 			super.onPostExecute(result);
+			loading.dismiss();
+			compute = false;
 		}
     	
     }
