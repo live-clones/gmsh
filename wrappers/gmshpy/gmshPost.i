@@ -9,6 +9,8 @@
   #include "GmshConfig.h"
   #include "fullMatrix.h"
 #if defined(HAVE_POST)
+  #include "PluginManager.h"
+  #include "Plugin.h"
   #include "PView.h"
   #include "PViewFactory.h"
   #include "PViewData.h"
@@ -31,5 +33,7 @@ namespace std {
 %include "simpleFunction.h"
 %template(simpleFunctionDouble) simpleFunction<double>;
 %include "PViewAsSimpleFunction.h"
+%include "Plugin.h"
+%include "PluginManager.h"
 #endif
 
