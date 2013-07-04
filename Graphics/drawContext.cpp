@@ -161,8 +161,7 @@ void drawContext::addQuaternion(double p1x, double p1y, double p2x, double p2y)
   double quat[4];
   trackball(quat, p1x, p1y, p2x, p2y);
   add_quats(quat, quaternion, quaternion);
-  if (CTX::instance()->camera)   camera.rotate(quat);
-
+  if (CTX::instance()->camera) camera.rotate(quat);
 }
 
 void drawContext::addQuaternionFromAxisAndAngle(double axis[3], double angle)

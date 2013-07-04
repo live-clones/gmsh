@@ -89,10 +89,10 @@ class drawContextFltkStringTexture::queueString {
     glGenTextures (1, &textureId);
     glBindTexture (GL_TEXTURE_RECTANGLE_ARB, textureId);
     glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0,
-        GL_ALPHA, GL_UNSIGNED_BYTE, data);
+                  GL_ALPHA, GL_UNSIGNED_BYTE, data);
     //glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
     //printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     pos = 0;
     for(std::vector<element>::iterator it = _elements.begin(); it != _elements.end();  ++it) {

@@ -3,12 +3,12 @@
 DATE=`date "+%d/%m/%Y"`
 
 echo "This archive was built on ${DATE} with the latest nightly snapshots of
-Gmsh (http://geuz.org/gmsh) and GetDP (http://geuz.org/getdp).
+Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 
 Both Gmsh and GetDP are distributed under the terms of the GNU General Public
-License. See the LICENSE_*.txt and CREDITS_*.txt files for more information. 
+License. See the LICENSE and CREDITS files for more information. 
 
-See the official websites http://geuz.org/gmsh and http://geuz.org/getdp for
+See the official websites http://gmsh.info and http://getdp.info for
 up-to-date versions, documentation and examples." > /tmp/README.txt
 
 rm -rf gmsh-getdp-Windows64
