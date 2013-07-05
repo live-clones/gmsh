@@ -7,6 +7,8 @@ set(SRC
   Polynomial.cpp
   Legendre.cpp
 
+  PermutationTree.cpp
+
   ReferenceSpace.cpp
   LineReferenceSpace.cpp
   TriReferenceSpace.cpp

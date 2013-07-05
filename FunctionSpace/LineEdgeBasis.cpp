@@ -7,7 +7,7 @@ using namespace std;
 LineEdgeBasis::LineEdgeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -62,8 +62,8 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
 
     for(unsigned int l = 1; l < orderPlus; l++){
       basis[s][i] =
-	new vector<Polynomial>((intLegendre[l].compose
-				(x[(*(*edgeV[s])[0])[0]])).gradient());
+        new vector<Polynomial>((intLegendre[l].compose
+                                (x[(*(*edgeV[s])[0])[0]])).gradient());
 
       i++;
     }

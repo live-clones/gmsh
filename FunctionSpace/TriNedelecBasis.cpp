@@ -6,7 +6,7 @@ using namespace std;
 TriNedelecBasis::TriNedelecBasis(void){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -27,8 +27,8 @@ TriNedelecBasis::TriNedelecBasis(void){
   const Polynomial lagrange[3] =
     {
       Polynomial(Polynomial(1, 0, 0, 0) -
-		 Polynomial(1, 1, 0, 0) -
-		 Polynomial(1, 0, 1, 0)),
+                 Polynomial(1, 1, 0, 0) -
+                 Polynomial(1, 0, 1, 0)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
 

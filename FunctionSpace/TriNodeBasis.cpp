@@ -7,7 +7,7 @@ using namespace std;
 TriNodeBasis::TriNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -40,8 +40,8 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   const Polynomial lagrange[3] =
     {
       Polynomial(Polynomial(1, 0, 0, 0) -
-		 Polynomial(1, 1, 0, 0) -
-		 Polynomial(1, 0, 1, 0)),
+                 Polynomial(1, 1, 0, 0) -
+                 Polynomial(1, 0, 1, 0)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
 
@@ -67,13 +67,13 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
 
     for(unsigned int e = 0; e < 3; e++){
       for(unsigned int l = 1; l < order; l++){
-	basis[s][i] =
-	  new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
-						lagrange[(*(*edgeV[s])[e])[0]]
-						,
-						lagrange[(*(*edgeV[s])[e])[0]] +
-						lagrange[(*(*edgeV[s])[e])[1]]));
-	i++;
+        basis[s][i] =
+          new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
+                                                lagrange[(*(*edgeV[s])[e])[0]]
+                                                ,
+                                                lagrange[(*(*edgeV[s])[e])[0]] +
+                                                lagrange[(*(*edgeV[s])[e])[1]]));
+        i++;
       }
     }
   }
@@ -90,21 +90,21 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
 
     for(int l1 = 1; l1 < orderMinus; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
-	basis[s][i] =
-	  new Polynomial(intLegendre[l1].compose(lagrange[(*(*faceV[s])[0])[1]] -
+        basis[s][i] =
+          new Polynomial(intLegendre[l1].compose(lagrange[(*(*faceV[s])[0])[1]] -
                                                  lagrange[(*(*faceV[s])[0])[0]]
                                                  ,
-						 lagrange[(*(*faceV[s])[0])[0]] +
+                                                 lagrange[(*(*faceV[s])[0])[0]] +
                                                  lagrange[(*(*faceV[s])[0])[1]])
-			 *
+                         *
 
-			 legendre[l2].compose((lagrange[(*(*faceV[s])[0])[2]] * 2)
+                         legendre[l2].compose((lagrange[(*(*faceV[s])[0])[2]] * 2)
                                               -
                                               Polynomial(1, 0, 0, 0))
                          *
 
                          lagrange[(*(*faceV[s])[0])[2]]);
-	i++;
+        i++;
       }
     }
   }

@@ -7,7 +7,7 @@ using namespace std;
 TriEdgeBasis::TriEdgeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -42,8 +42,8 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   const Polynomial lagrange[3] =
     {
       Polynomial(Polynomial(1, 0, 0, 0) -
-		 Polynomial(1, 1, 0, 0) -
-		 Polynomial(1, 0, 1, 0)),
+                 Polynomial(1, 1, 0, 0) -
+                 Polynomial(1, 0, 1, 0)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
 
@@ -62,38 +62,38 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
 
     for(int e = 0; e < 3; e++){
       for(int l = 0; l < orderPlus; l++){
-	// Nedelec
-	if(l == 0){
-	  vector<Polynomial> tmp1 = lagrange[(*(*edgeV[s])[e])[1]].gradient();
-	  vector<Polynomial> tmp2 = lagrange[(*(*edgeV[s])[e])[0]].gradient();
+        // Nedelec
+        if(l == 0){
+          vector<Polynomial> tmp1 = lagrange[(*(*edgeV[s])[e])[1]].gradient();
+          vector<Polynomial> tmp2 = lagrange[(*(*edgeV[s])[e])[0]].gradient();
 
-	  tmp1[0].mul(lagrange[(*(*edgeV[s])[e])[0]]);
-	  tmp1[1].mul(lagrange[(*(*edgeV[s])[e])[0]]);
-	  tmp1[2].mul(lagrange[(*(*edgeV[s])[e])[0]]);
+          tmp1[0].mul(lagrange[(*(*edgeV[s])[e])[0]]);
+          tmp1[1].mul(lagrange[(*(*edgeV[s])[e])[0]]);
+          tmp1[2].mul(lagrange[(*(*edgeV[s])[e])[0]]);
 
 
-	  tmp2[0].mul(lagrange[(*(*edgeV[s])[e])[1]]);
-	  tmp2[1].mul(lagrange[(*(*edgeV[s])[e])[1]]);
-	  tmp2[2].mul(lagrange[(*(*edgeV[s])[e])[1]]);
+          tmp2[0].mul(lagrange[(*(*edgeV[s])[e])[1]]);
+          tmp2[1].mul(lagrange[(*(*edgeV[s])[e])[1]]);
+          tmp2[2].mul(lagrange[(*(*edgeV[s])[e])[1]]);
 
-	  tmp2[0].sub(tmp1[0]);
-	  tmp2[1].sub(tmp1[1]);
-	  tmp2[2].sub(tmp1[2]);
+          tmp2[0].sub(tmp1[0]);
+          tmp2[1].sub(tmp1[1]);
+          tmp2[2].sub(tmp1[2]);
 
-	  basis[s][i] = new vector<Polynomial>(tmp2);
-	}
+          basis[s][i] = new vector<Polynomial>(tmp2);
+        }
 
-	// High Order
-	else{
-	  basis[s][i] =
-	    new vector<Polynomial>
-	    ((intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[0]] -
-				     lagrange[(*(*edgeV[s])[e])[1]]
-				     ,
-				     lagrange[(*(*edgeV[s])[e])[1]] +
-				     lagrange[(*(*edgeV[s])[e])[0]])).gradient());
-	}
-	i++;
+        // High Order
+        else{
+          basis[s][i] =
+            new vector<Polynomial>
+            ((intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[0]] -
+                                     lagrange[(*(*edgeV[s])[e])[1]]
+                                     ,
+                                     lagrange[(*(*edgeV[s])[e])[1]] +
+                                     lagrange[(*(*edgeV[s])[e])[0]])).gradient());
+        }
+        i++;
       }
     }
   }
@@ -160,48 +160,48 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
     // Type 1
     for(unsigned int l1 = 1; l1 < order; l1++){
       for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
-	vector<Polynomial> tmp1 = v[s][l2].gradient();
-	vector<Polynomial> tmp2 = u[s][l1].gradient();
+        vector<Polynomial> tmp1 = v[s][l2].gradient();
+        vector<Polynomial> tmp2 = u[s][l1].gradient();
 
-	tmp1[0].mul(u[s][l1]);
-	tmp1[1].mul(u[s][l1]);
-	tmp1[2].mul(u[s][l1]);
+        tmp1[0].mul(u[s][l1]);
+        tmp1[1].mul(u[s][l1]);
+        tmp1[2].mul(u[s][l1]);
 
-	tmp2[0].mul(v[s][l2]);
-	tmp2[1].mul(v[s][l2]);
-	tmp2[2].mul(v[s][l2]);
+        tmp2[0].mul(v[s][l2]);
+        tmp2[1].mul(v[s][l2]);
+        tmp2[2].mul(v[s][l2]);
 
-	tmp2[0].add(tmp1[0]);
-	tmp2[1].add(tmp1[1]);
-	tmp2[2].add(tmp1[2]);
+        tmp2[0].add(tmp1[0]);
+        tmp2[1].add(tmp1[1]);
+        tmp2[2].add(tmp1[2]);
 
-	basis[s][i] = new vector<Polynomial>(tmp2);
+        basis[s][i] = new vector<Polynomial>(tmp2);
 
-	i++;
+        i++;
       }
     }
 
     // Type 2
     for(unsigned int l1 = 1; l1 < order; l1++){
       for(int l2 = 0; l2 + (int)l1 - 1 < orderMinus; l2++){
-	vector<Polynomial> tmp1 = v[s][l2].gradient();
-	vector<Polynomial> tmp2 = u[s][l1].gradient();
+        vector<Polynomial> tmp1 = v[s][l2].gradient();
+        vector<Polynomial> tmp2 = u[s][l1].gradient();
 
-	tmp1[0].mul(u[s][l1]);
-	tmp1[1].mul(u[s][l1]);
-	tmp1[2].mul(u[s][l1]);
+        tmp1[0].mul(u[s][l1]);
+        tmp1[1].mul(u[s][l1]);
+        tmp1[2].mul(u[s][l1]);
 
-	tmp2[0].mul(v[s][l2]);
-	tmp2[1].mul(v[s][l2]);
-	tmp2[2].mul(v[s][l2]);
+        tmp2[0].mul(v[s][l2]);
+        tmp2[1].mul(v[s][l2]);
+        tmp2[2].mul(v[s][l2]);
 
-	tmp2[0].sub(tmp1[0]);
-	tmp2[1].sub(tmp1[1]);
-	tmp2[2].sub(tmp1[2]);
+        tmp2[0].sub(tmp1[0]);
+        tmp2[1].sub(tmp1[1]);
+        tmp2[2].sub(tmp1[2]);
 
-	basis[s][i] = new vector<Polynomial>(tmp2);
+        basis[s][i] = new vector<Polynomial>(tmp2);
 
-	i++;
+        i++;
       }
     }
 

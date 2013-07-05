@@ -80,9 +80,25 @@ static size_t matchClosure(vector<int>& reduced,
 
 vector<size_t> BasisLagrange::
 getFunctionOrdering(const MElement& element) const{
+  /*
+  static bool once = true;
+
+  if(once){
+    for(size_t i = 0; i < lBasis->fullClosures.size(); i++){
+      vector<int>& closure = lBasis->fullClosures[i];
+
+      for(size_t j =0; j < closure.size(); j++)
+        cout << closure[j] << "\t";
+      cout << endl;
+    }
+
+    once = false;
+  }
+  */
+
   vector<int> rNodeId = reducedNodeId(element);
   const size_t closureId = matchClosure(rNodeId, lBasis->fullClosures);
-
+  /*
   vector<int>& closure = lBasis->fullClosures[closureId];
 
   vector<size_t> myClosure(closure.size());
@@ -91,6 +107,36 @@ getFunctionOrdering(const MElement& element) const{
     myClosure[i] = closure[i];
 
   return myClosure;
+  */
+  vector<size_t> c(10);
+
+  if(closureId == 0){
+    c[0] = 0;
+    c[1] = 1;
+    c[2] = 2;
+    c[3] = 3;
+    c[4] = 4;
+    c[5] = 5;
+    c[6] = 6;
+    c[7] = 8; // 7;
+    c[8] = 7; // 8;
+    c[9] = 9;
+  }
+
+  else{
+    c[0] = 2;
+    c[1] = 0;
+    c[2] = 1;
+    c[3] = 8; // 7;
+    c[4] = 7; // 8;
+    c[5] = 3;
+    c[6] = 4;
+    c[7] = 5;
+    c[8] = 6;
+    c[9] = 9;
+  }
+
+  return c;
 }
 
 void BasisLagrange::

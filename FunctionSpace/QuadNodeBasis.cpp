@@ -7,7 +7,7 @@ using namespace std;
 QuadNodeBasis::QuadNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -82,14 +82,14 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
 
     for(unsigned int e = 0; e < 4; e++){
       for(unsigned int l = 1; l < order; l++){
-	basis[s][i] =
-	  new Polynomial(legendre[l].compose(lifting[(*(*edgeV[s])[e])[1]] -
+        basis[s][i] =
+          new Polynomial(legendre[l].compose(lifting[(*(*edgeV[s])[e])[1]] -
                                              lifting[(*(*edgeV[s])[e])[0]])
                          *
-			 (lagrange[(*(*edgeV[s])[e])[0]] +
+                         (lagrange[(*(*edgeV[s])[e])[0]] +
                           lagrange[(*(*edgeV[s])[e])[1]]));
 
-	i++;
+        i++;
       }
     }
   }
@@ -126,10 +126,10 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
   // (u, v) = Gmsh     Ref Quad
 
   Polynomial  mapX(Polynomial(0.5, 1, 0, 0) +
-		   Polynomial(0.5, 0, 0, 0));
+                   Polynomial(0.5, 0, 0, 0));
 
   Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
-		   Polynomial(0.5, 0, 0, 0));
+                   Polynomial(0.5, 0, 0, 0));
 
   for(unsigned int s = 0; s < nRefSpace; s++){
     for(unsigned int i = 0; i < nFunction; i++){

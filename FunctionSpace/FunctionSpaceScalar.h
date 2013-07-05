@@ -23,13 +23,13 @@ class FunctionSpaceScalar : public FunctionSpace{
 
   double
     interpolate(const MElement& element,
-		const std::vector<double>& coef,
-		const fullVector<double>& xyz) const;
+                const std::vector<double>& coef,
+                const fullVector<double>& xyz) const;
 
   double
     interpolateInRefSpace(const MElement& element,
-			  const std::vector<double>& coef,
-			  const fullVector<double>& uvw) const;
+                          const std::vector<double>& coef,
+                          const fullVector<double>& uvw) const;
 };
 
 

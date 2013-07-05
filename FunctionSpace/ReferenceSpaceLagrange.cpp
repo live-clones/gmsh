@@ -9,9 +9,11 @@ ReferenceSpaceLagrange::ReferenceSpaceLagrange(void){
 }
 
 ReferenceSpaceLagrange::~ReferenceSpaceLagrange(void){
+  const size_t nPerm = pTree->getNPermutation();
+
   // If 'node' allocated //
   if(node){
-    for(unsigned int p = 0; p < nPerm; p++)
+    for(size_t p = 0; p < nPerm; p++)
       delete (*node)[p];
 
     delete node;
@@ -19,6 +21,8 @@ ReferenceSpaceLagrange::~ReferenceSpaceLagrange(void){
 }
 
 void ReferenceSpaceLagrange::getLagrangeNode(void){
+  const size_t nPerm = pTree->getNPermutation();
+
   // Alloc //
   vector<unsigned int>* tmp;
   node = new vector<const vector<unsigned int>*>(nPerm);
@@ -60,7 +64,7 @@ void ReferenceSpaceLagrange::edgeSeq(vector<unsigned int>& vec,
                                      unsigned int  startIdx,
                                      unsigned int  startVal,
                                      unsigned int  stopVal,
-                                     unsigned int* refEdge,
+                                     size_t* refEdge,
                                      const vector<unsigned int>& edge){
 
   // Is reverted ? //
@@ -93,7 +97,7 @@ void ReferenceSpaceLagrange::faceSeq(vector<unsigned int>& vec,
                                      unsigned int  startIdx,
                                      unsigned int  startVal,
                                      unsigned int  stopVal,
-                                     unsigned int* refFace,
+                                     size_t*       refFace,
                                      const vector<unsigned int>& face,
                                      unsigned int  nNodePerEdge){
   // Index //
@@ -108,6 +112,7 @@ void ReferenceSpaceLagrange::faceSeq(vector<unsigned int>& vec,
 }
 
 string ReferenceSpaceLagrange::toString(void) const{
+  const size_t       nPerm      = pTree->getNPermutation();
   const unsigned int nNodeMinus = nNode - 1;
   stringstream       stream;
 

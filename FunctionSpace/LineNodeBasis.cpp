@@ -7,7 +7,7 @@ using namespace std;
 LineNodeBasis::LineNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -45,11 +45,11 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
   for(unsigned int s = 0; s < nRefSpace; s++){
     basis[s][0] =
       new Polynomial(Polynomial(0.5, 0, 0, 0) -
-		     Polynomial(0.5, 1, 0, 0));
+                     Polynomial(0.5, 1, 0, 0));
 
     basis[s][1] =
       new Polynomial(Polynomial(0.5, 0, 0, 0) +
-		     Polynomial(0.5, 1, 0, 0));
+                     Polynomial(0.5, 1, 0, 0));
   }
 
   // Edge Based //
@@ -58,7 +58,7 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
 
     for(unsigned int l = 1; l < order; l++){
       basis[s][i] =
-	new Polynomial(intLegendre[l].compose(x[(*(*edgeV[s])[0])[0]]));
+        new Polynomial(intLegendre[l].compose(x[(*(*edgeV[s])[0])[0]]));
 
       i++;
     }

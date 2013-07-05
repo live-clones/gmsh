@@ -9,18 +9,18 @@ TriLagrangeReferenceSpace::TriLagrangeReferenceSpace(unsigned int order){
 
   // Edge Definition //
   nEdge   = 3;
-  refEdge = new unsigned int*[nEdge];
+  refEdge = new size_t*[nEdge];
 
-  for(unsigned int i = 0; i < nEdge; i++){
-    refEdge[i]    = new unsigned int[2];
+  for(size_t i = 0; i < nEdge; i++){
+    refEdge[i]    = new size_t[2];
     refEdge[i][0] = MTriangle::edges_tri(i, 0);
     refEdge[i][1] = MTriangle::edges_tri(i, 1);
   }
 
   // Face Definition //
   nFace      = 1;
-  refFace    = new unsigned int*[nFace];
-  refFace[0] = new unsigned int[3];
+  refFace    = new size_t*[nFace];
+  refFace[0] = new size_t[3];
 
   refFace[0][0] = 0;
   refFace[0][1] = 1;
@@ -45,13 +45,13 @@ TriLagrangeReferenceSpace::TriLagrangeReferenceSpace(unsigned int order){
 
 TriLagrangeReferenceSpace::~TriLagrangeReferenceSpace(void){
   // Delete Ref Edge //
-  for(unsigned int i = 0; i < nEdge; i++)
+  for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
 
   delete[] refEdge;
 
   // Delete Ref Face //
-  for(unsigned int i = 0; i < nFace; i++)
+  for(size_t i = 0; i < nFace; i++)
     delete[] refFace[i];
 
   delete[] refFace;

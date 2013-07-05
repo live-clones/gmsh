@@ -8,19 +8,6 @@ using namespace std;
 
 ReferenceSpace::ReferenceSpace(void){
   // Init to NULL                  //
-  nVertex    = 0;
-  nextLeafId = 0;
-
-  nPerm = 0;
-  perm  = NULL;
-  lPerm = NULL;
-
-  pTreeRoot.depth    = 0;
-  pTreeRoot.last     = NULL;
-  pTreeRoot.number   = 0;
-  pTreeRoot.possible = NULL;
-  pTreeRoot.next     = NULL;
-
   nEdge           = 0;
   refEdge         = NULL;
   //permutedRefEdge = NULL;
@@ -33,17 +20,18 @@ ReferenceSpace::ReferenceSpace(void){
   face            = NULL;
 
   // Defining Ref Edge and Face in //
-  // Dervived Class                //
+  // Derived Class                 //
 }
 
 ReferenceSpace::~ReferenceSpace(void){
+  const size_t nPerm = pTree->getNPermutation();
+
   // Destroy Tree //
-  destroy(&pTreeRoot);
-  delete[] perm;
+  delete pTree;
 
   // Delete Permutated Edge //
-  for(unsigned int p = 0; p < nPerm; p++){
-    for(unsigned int i = 0; i < nEdge; i++){
+  for(size_t p = 0; p < nPerm; p++){
+    for(size_t i = 0; i < nEdge; i++){
       //delete[] permutedRefEdge[p][i];
       delete   (*(*edge)[p])[i];
     }
@@ -56,8 +44,8 @@ ReferenceSpace::~ReferenceSpace(void){
   delete   edge;
 
   // Delete Permutated Face //
-  for(unsigned int p = 0; p < nPerm; p++){
-    for(unsigned int i = 0; i < nFace; i++){
+  for(size_t p = 0; p < nPerm; p++){
+    for(size_t i = 0; i < nFace; i++){
       //delete[] permutedRefFace[p][i];
       delete (*(*face)[p])[i];
     }
@@ -71,113 +59,233 @@ ReferenceSpace::~ReferenceSpace(void){
 }
 
 void ReferenceSpace::init(void){
-  // Init Root //
-  nPerm      = 0;
-  nextLeafId = 0;
+  // Tree //
+  vector<size_t> vertexSeq(nVertex);
 
-  pTreeRoot.depth    = 0;
-  pTreeRoot.last     = NULL;
-  pTreeRoot.number   = nVertex;
-  pTreeRoot.possible = new unsigned int[pTreeRoot.number];
-  pTreeRoot.next     = NULL;
+  for(size_t i = 0; i < nVertex; i++)
+    vertexSeq[i] = i;
 
-  for(unsigned int i = 0; i < pTreeRoot.number; i++)
-    pTreeRoot.possible[i] = i;
+  pTree = new PermutationTree(vertexSeq);
 
-  // Populate Tree //
-  lPerm = new list<unsigned int*>;
-  populate(&pTreeRoot);
-
-  // Get Permutation //
-  perm = new unsigned int*[nPerm];
-  for(unsigned int i = 0; i < nPerm; i++){
-    // Take Permutation for queue
-    //             (AND IN ORDER)
-    perm[i] = lPerm->front();
-    lPerm->pop_front();
-  }
-
-  delete lPerm;
-
-  // Get Edges & Faces //
+  // Edges & Faces //
   getEdge();
   getFace();
+
+  // Cyclic Permutation //
+  findCyclicPermutation();
 }
 
-void ReferenceSpace::populate(node* pTreeRoot){
-  // Get Some Data on this Root //
-  const unsigned int number     = pTreeRoot->number;
-  const unsigned int nextNumber = number - 1;
-  const unsigned int depth      = pTreeRoot->depth;
-  const unsigned int nextDepth  = depth + 1;
+void ReferenceSpace::findCyclicPermutation(void){
+  // Alloc Some Data //
+  const size_t nPerm = pTree->getNPermutation();
 
-  // Temp Data //
-  unsigned int offset;
+  list<size_t>          listOfTrueReferenceSpace;
+  list<vector<size_t> > listOfRefNodeIndexPermutation;
+  list<vector<size_t> > listOfReverseNodeIndexPermutation;
 
-  // If Leaf : a new permutation is found //
-  if(!number){
-    // Init Permutation
-    pTreeRoot->next   = NULL;
-    pTreeRoot->leafId = nextLeafId;
+  vector<size_t> pTest(nVertex);
+  vector<size_t> pRef(nVertex);
 
-    // Value for Next Permutation
-    nextLeafId++;
-    nPerm++;
+  list<size_t>::iterator it;
+  list<size_t>::iterator end;
+  triple match;
 
-    // Put this Permutation in queue
-    //                (AND IN ORDER)
-    lPerm->push_back(pTreeRoot->last);
-  }
+  vector<size_t> unPermutedIndex(nVertex);
 
-  // Else: continue to build the tree //
-  else{
-    // We got 'number' child nodes
-    pTreeRoot->next = new node[number];
+  for(size_t i = 0; i < nVertex; i++)
+    unPermutedIndex[i] = i;
 
-    // Init each child node
-    for(unsigned int i = 0; i < number; i++){
-      // Reset offset
-      offset = 0;
+  // Find Cyclic Permutation
+  for(size_t i = 0; i < nPerm; i++){
+    // No match
+    match.first = false;
 
-      // Depth and Last Choices of child nodes
-      pTreeRoot->next[i].depth       = nextDepth;
-      pTreeRoot->next[i].last        = new unsigned int[nextDepth];
-      pTreeRoot->next[i].last[depth] = pTreeRoot->possible[i];
+    // Get Permutation 'i'
+    pTree->fillWithPermutation(i, pTest);
 
-      for(unsigned int j = 0; j < depth; j++)
-        pTreeRoot->next[i].last[j] = pTreeRoot->last[j];
+    // Test it with already found Reference Space
+    it  = listOfTrueReferenceSpace.begin();
+    end = listOfTrueReferenceSpace.end();
 
-      // Possibilities of child node
-      pTreeRoot->next[i].number   = nextNumber;
-      pTreeRoot->next[i].possible = new unsigned int[nextNumber];
+    while(it != end && !match.first){
+      // Take Reference Space 'it'
+      pTree->fillWithPermutation(*it, pRef);
 
-      for(unsigned int j = 0; j < nextNumber; j++){
-        if(pTreeRoot->possible[j] == pTreeRoot->possible[i])
-          offset = 1;
+      // Look if it matches
+      match = isCyclicPermutation(pTest, pRef);
 
-        pTreeRoot->next[i].possible[j] = pTreeRoot->possible[j + offset];
-      }
+      // If not, go to next Reference Space
+      if(!match.first)
+        it++;
+    }
 
-      // Populate each child node (until a leaf is found)
-      populate(&pTreeRoot->next[i]);
+    // If no Reference Space is found
+    //   --> this Permutation is a new Reference Space
+    if(!match.first){
+      listOfTrueReferenceSpace.push_back(i);
+      listOfRefNodeIndexPermutation.push_back(unPermutedIndex);
+      listOfReverseNodeIndexPermutation.push_back(unPermutedIndex);
+
+      pTree->addTagToPermutation(i, i);
+    }
+
+    // If a ReferenceSpace is found, and the index permutations
+    else{
+      listOfRefNodeIndexPermutation.push_back(match.second);
+      listOfReverseNodeIndexPermutation.push_back(match.third);
+      pTree->addTagToPermutation(i, *it);
     }
   }
 }
 
-void ReferenceSpace::destroy(node* node){
-  const unsigned int number = node->number;
+static bool isFacePermutation(vector<size_t>& refNode,
+                              vector<size_t>& testNode){
+  const size_t size = refNode.size();
+  bool match = false;
 
-  for(unsigned int i = 0; i < number; i++){
-    destroy(&node->next[i]);
-    node->number--;
+  if(size != testNode.size())
+    return false;
+
+  for(size_t i = 0; i < size && !match; i++){
+    bool submatch = true;
+
+    for(size_t j = 0; j < size && submatch; j++)
+      if(refNode[j] != testNode[j])
+        submatch = false;
+
+    if(!submatch){
+      size_t tmp0 = testNode[0];
+      size_t tmp1 = testNode[1];
+
+      for(size_t k = 1; k < size + 1; k++){
+        testNode[k % size] = tmp0;
+        tmp0 = tmp1;
+        tmp1 = testNode[(k + 1) % size];
+      }
+    }
+
+    else
+      match = true;
   }
 
-  delete[] node->possible;
-  delete[] node->last;
-  delete[] node->next;
+  return match;
+}
+
+static bool haveSameNode(vector<size_t>& face0,
+                         vector<size_t>& face1){
+  const size_t size = face0.size();
+  bool matchIsPossible = true;
+
+  for(size_t i = 0; i < size && matchIsPossible; i++){
+    bool submatch = false;
+
+    for(size_t j = 0; j < size && !submatch; j++){
+      if(face0[i] == face1[j])
+        submatch = true;
+    }
+
+    matchIsPossible = submatch;
+  }
+
+  return matchIsPossible;
+}
+
+size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
+                                             vector<size_t>& node){
+  // Init Stuff //
+  const size_t faceSize = face.size();
+  bool match = false;
+  size_t f = 0;
+
+  vector<size_t> testFace(faceSize);
+
+  // Test All Face until match
+  while(!match && f < nFace){
+
+    if(nNodeInFace[f] == faceSize){
+      // Get face f nodes
+      for(size_t i = 0; i < faceSize; i++)
+        testFace[i] = node[refFace[f][i]];
+
+      // Look if match
+      match = haveSameNode(testFace, face);
+    }
+
+    if(!match)
+      f++;
+  }
+
+  return f;
+}
+
+static vector<size_t> getRefIndexPermutation(vector<size_t>& ref,
+                                             vector<size_t>& test){
+  const size_t size = ref.size();
+  vector<size_t> idxVec(ref.size());
+  size_t idx;
+
+  for(size_t i = 0; i < size; i++){
+    idx = 0;
+
+    while(test[i] != ref[idx])
+      idx++;
+
+    idxVec[i] = idx;
+  }
+
+  return idxVec;
+}
+
+static vector<size_t> getReverseIndexPermutation(vector<size_t>& ref,
+                                                 vector<size_t>& test){
+  const size_t size = ref.size();
+  vector<size_t> idxVec(ref.size());
+  size_t idx;
+
+  for(size_t i = 0; i < size; i++){
+    idx = 0;
+
+    while(test[idx] != ref[i])
+      idx++;
+
+    idxVec[i] = idx;
+  }
+
+  return idxVec;
+}
+
+ReferenceSpace::triple ReferenceSpace::
+isCyclicPermutation(vector<size_t>& pTest,
+                    vector<size_t>& pRef){
+
+  // Node IDs of Reference Space first Face
+  vector<size_t> refNode(nNodeInFace[0]);
+
+  for(size_t i = 0; i < nNodeInFace[0]; i++)
+    refNode[i] = pRef[refFace[0][i]];
+
+  // Corresponding Face in Test Permutation
+  size_t testFaceId = findCorrespondingFace(refNode, pTest);
+
+  // Node IDs of Test Permutation correspnding Face
+  vector<size_t> testNode(nNodeInFace[testFaceId]);
+
+  for(size_t i = 0; i < nNodeInFace[testFaceId]; i++)
+    testNode[i] = pTest[refFace[testFaceId][i]];
+
+  // Return Triple //
+  triple tri = {
+    isFacePermutation(refNode, testNode),
+    getRefIndexPermutation(pRef, pTest),
+    getReverseIndexPermutation(pRef, pTest)
+  };
+
+  return tri;
 }
 
 void ReferenceSpace::getEdge(void){
+  const size_t nPerm = pTree->getNPermutation();
+
   // Alloc
   vector<const vector<unsigned int>*>* tmp;
   edge = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
@@ -199,10 +307,10 @@ void ReferenceSpace::getEdge(void){
   delete[] nNodeInEdge;
   */
   // Populate Edge
-  for(unsigned int p = 0; p < nPerm; p++){
+  for(size_t p = 0; p < nPerm; p++){
     tmp = new vector<const vector<unsigned int>*>(nEdge);
 
-    for(unsigned int e = 0; e < nEdge; e++)
+    for(size_t e = 0; e < nEdge; e++)
       (*tmp)[e] = getOrderedEdge(p, e);
 
     (*edge)[p] = tmp;
@@ -210,6 +318,8 @@ void ReferenceSpace::getEdge(void){
 }
 
 void ReferenceSpace::getFace(void){
+  const size_t nPerm = pTree->getNPermutation();
+
   // Alloc
   vector<const vector<unsigned int>*>* tmp;
   face = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
@@ -223,10 +333,10 @@ void ReferenceSpace::getFace(void){
                        nFace);
   */
   // Populate Face
-  for(unsigned int p = 0; p < nPerm; p++){
+  for(size_t p = 0; p < nPerm; p++){
     tmp = new vector<const vector<unsigned int>*>(nFace);
 
-    for(unsigned int f = 0; f < nFace; f++){
+    for(size_t f = 0; f < nFace; f++){
       // Dending on the number of node per face
       // The ordering strategy is different
 
@@ -281,9 +391,13 @@ getOrderedEdge(unsigned int permutation,
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(2);
 
+  // Permutation
+  vector<size_t> perm(nVertex);
+  pTree->fillWithPermutation(permutation, perm);
+
   // Order refEdge
   orderRefEntityForGivenPermutation(refEdge[edge],
-                                    perm[permutation],
+                                    perm,
                                     *ordered);
 
   // Return ordered
@@ -301,9 +415,13 @@ getOrderedTriFace(unsigned int permutation,
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(3);
 
+  // Permutation
+  vector<size_t> perm(nVertex);
+  pTree->fillWithPermutation(permutation, perm);
+
   // Order refFace
   orderRefEntityForGivenPermutation(refFace[face],
-                                    perm[permutation],
+                                    perm,
                                     *ordered);
 
   // Return ordered
@@ -327,9 +445,13 @@ getOrderedQuadFace(unsigned int permutation,
   // Alloc
   vector<unsigned int>* ordered = new vector<unsigned int>(4);
 
+  // Permutation
+  vector<size_t> perm(nVertex);
+  pTree->fillWithPermutation(permutation, perm);
+
   // Order refFace
   orderRefEntityForGivenPermutation(refFace[face],
-                                    perm[permutation],
+                                    perm,
                                     *ordered);
 
   // Get ordered[2] opposite to ordered[0]
@@ -353,8 +475,8 @@ getOrderedQuadFace(unsigned int permutation,
 }
 
 void ReferenceSpace::
-orderRefEntityForGivenPermutation(unsigned int* refEntity,
-                                  unsigned int* permutation,
+orderRefEntityForGivenPermutation(size_t* refEntity,
+                                  vector<size_t>& permutation,
                                   vector<unsigned int>& orderedEntity){
   // Get Size
   const unsigned int size = orderedEntity.size();
@@ -375,7 +497,7 @@ orderRefEntityForGivenPermutation(unsigned int* refEntity,
     orderedEntity[i] = refEntity[sorted[i].first];
 }
 
-unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
+size_t ReferenceSpace::getReferenceSpace(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -393,14 +515,14 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   std::sort(vertexGlobalId.begin(), vertexGlobalId.end(), sortPredicate);
 
   // Reduce Vertex Global ID //
-  vector<unsigned int> vertexReducedId(nVertex);
+  vector<size_t> vertexReducedId(nVertex);
 
   for(int i = 0; i < nVertex; i++)
     vertexReducedId[vertexGlobalId[i].first] = i;
 
   // Tree Lookup //
   try{
-    return treeLookup(&pTreeRoot, vertexReducedId);
+    return pTree->getPermutationId(vertexReducedId);
   }
 
   catch(...){
@@ -409,60 +531,20 @@ unsigned int ReferenceSpace::getPermutation(const MElement& elem) const{
   }
 }
 
-unsigned int ReferenceSpace::treeLookup(const node* node,
-                                        vector<unsigned int>& vertexReducedId){
-  // Temp Data //
-  unsigned int choice;
-  unsigned int i;
-
-  // If Node is *not* a Leaf: Lookup //
-  if(node->number){
-    // Get This Choice
-    choice = vertexReducedId[node->depth];
-
-    // Look for next node corresponding to this Choice
-    i = 0;
-    while(node->possible[i] != choice)
-      i++;
-
-    // Look if a this Choice has been found
-    if(i == node->number)
-      throw Exception();
-
-    // Go to next Node
-    return treeLookup(&node->next[i], vertexReducedId);
-  }
-
-  // Else: Return Leaf ID //
-  else
-    return node->leafId;
-}
-
 string ReferenceSpace::toString(void) const{
-  stringstream  stream;
-
-  // Tree //
-  stream << "Tree:"              << endl;
-  stream << toString(&pTreeRoot) << endl;
+  const size_t nPerm = pTree->getNPermutation();
+  stringstream stream;
 
   // ReferenceSpaces //
-  stream << "Reference Spaces:" << endl;
-
-  for(unsigned int i = 0; i < nPerm; i++){
-    stream << "  * ";
-
-    for(unsigned int j = 0; j < nVertex; j++)
-      stream << perm[i][j] << " ";
-
-    stream << " (# " << i + 1 << ")" << endl;
-  }
+  stream << "Reference Spaces:" << endl
+         << pTree->toString()   << endl;
 
   stream << "Edges Permutations:" << endl;
 
-  for(unsigned int i = 0; i < nPerm; i++){
+  for(size_t i = 0; i < nPerm; i++){
     stream << "  * RefSpace #" << i + 1 << ":" << endl;
 
-    for(unsigned int j = 0; j < nEdge; j++)
+    for(size_t j = 0; j < nEdge; j++)
       stream << "      -- ["
              << edge->at(i)->at(j)->at(0) << ", "
              << edge->at(i)->at(j)->at(1) << "]" << endl;
@@ -470,32 +552,15 @@ string ReferenceSpace::toString(void) const{
 
   stream << "Faces Permutations:" << endl;
 
-  for(unsigned int i = 0; i < nPerm; i++){
+  for(size_t i = 0; i < nPerm; i++){
     stream << "  * RefSpace #" << i + 1 << ":" << endl;
 
-    for(unsigned int j = 0; j < nFace; j++)
+    for(size_t j = 0; j < nFace; j++)
       stream << "      -- ["
              << face->at(i)->at(j)->at(0) << ", "
              << face->at(i)->at(j)->at(1) << ", "
              << face->at(i)->at(j)->at(2) << "]" << endl;
   }
-
-  return stream.str();
-}
-
-string ReferenceSpace::toString(const node* node) const{
-  const unsigned int number = node->number;
-  stringstream       stream;
-
-  if(node->last)
-    stream << "(" << node->last[node->depth - 1] << " ";
-  else
-    stream << "(root ";
-
-  for(unsigned int i = 0; i < number; i++)
-    stream << toString(&node->next[i]);
-
-  stream << ")";
 
   return stream.str();
 }

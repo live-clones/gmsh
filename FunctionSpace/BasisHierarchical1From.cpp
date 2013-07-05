@@ -51,12 +51,12 @@ BasisHierarchical1From::~BasisHierarchical1From(void){
 
 unsigned int BasisHierarchical1From::
 getNOrientation(void) const{
-  return refSpace->getNPermutation();
+  return refSpace->getNReferenceSpace();
 }
 
 unsigned int BasisHierarchical1From::
 getOrientation(const MElement& element) const{
-  return refSpace->getPermutation(element);
+  return refSpace->getReferenceSpace(element);
 }
 
 vector<size_t> BasisHierarchical1From::
@@ -75,7 +75,7 @@ getFunctions(fullMatrix<double>& retValues,
              double u, double v, double w) const{
 
   // Define Orientation //
-  unsigned int orientation = refSpace->getPermutation(element);
+  unsigned int orientation = refSpace->getReferenceSpace(element);
 
   // Fill Vector //
   for(unsigned int i = 0; i < nFunction; i++){
@@ -192,12 +192,12 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
 
 const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedFunctions(const MElement& element) const{
-  return getPreEvaluatedFunctions(refSpace->getPermutation(element));
+  return getPreEvaluatedFunctions(refSpace->getReferenceSpace(element));
 }
 
 const fullMatrix<double>& BasisHierarchical1From::
 getPreEvaluatedDerivatives(const MElement& element) const{
-  return getPreEvaluatedDerivatives(refSpace->getPermutation(element));
+  return getPreEvaluatedDerivatives(refSpace->getReferenceSpace(element));
 }
 
 const fullMatrix<double>& BasisHierarchical1From::

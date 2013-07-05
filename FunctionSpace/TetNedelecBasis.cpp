@@ -6,7 +6,7 @@ using namespace std;
 TetNedelecBasis::TetNedelecBasis(void){
   // Reference Space //
   refSpace  = new TetReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -27,9 +27,9 @@ TetNedelecBasis::TetNedelecBasis(void){
   const Polynomial lagrange[4] =
     {
       Polynomial(Polynomial(1, 0, 0, 0) -
-		 Polynomial(1, 1, 0, 0) -
-		 Polynomial(1, 0, 1, 0) -
-		 Polynomial(1, 0, 0, 1)),
+                 Polynomial(1, 1, 0, 0) -
+                 Polynomial(1, 0, 1, 0) -
+                 Polynomial(1, 0, 0, 1)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
 

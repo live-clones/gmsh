@@ -116,9 +116,17 @@ void FunctionSpace::buildDof(void){
 
     // Dof Orderning
     vector<size_t> dofOrder = (*basis)[0]->getFunctionOrdering(*(element[i]));
+    vector<const Dof*> trueDofOrdered(nDof);
 
+    for(size_t j = 0; j < nDof; j++)
+      trueDofOrdered[dofOrder[j]] = trueDof[j];
+    /*
+    for(size_t j = 0; j < nDof; j++)
+      cout << dofOrder[j] << "\t";
+    cout << endl;
+    */
     // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDof, dofOrder);
+    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDofOrdered);
     (*group)[i]     = god;
 
     // Map GOD

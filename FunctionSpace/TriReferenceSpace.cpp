@@ -10,10 +10,10 @@ TriReferenceSpace::TriReferenceSpace(void){
 
   // Edge Definition //
   nEdge   = 3;
-  refEdge = new unsigned int*[nEdge];
+  refEdge = new size_t*[nEdge];
 
-  for(unsigned int i = 0; i < nEdge; i++){
-    refEdge[i]    = new unsigned int[2];
+  for(size_t i = 0; i < nEdge; i++){
+    refEdge[i]    = new size_t[2];
     refEdge[i][0] = MTriangle::edges_tri(i, 0);
     refEdge[i][1] = MTriangle::edges_tri(i, 1);
   }
@@ -23,12 +23,12 @@ TriReferenceSpace::TriReferenceSpace(void){
   nFace = 1;
 
   // Number of node per face
-  nNodeInFace    = new unsigned int[nFace];
+  nNodeInFace    = new size_t[nFace];
   nNodeInFace[0] = 3;
 
   // Reference Face
-  refFace    = new unsigned int*[nFace];
-  refFace[0] = new unsigned int[3];
+  refFace    = new size_t*[nFace];
+  refFace[0] = new size_t[3];
 
   refFace[0][0] = 0;
   refFace[0][1] = 1;
@@ -40,13 +40,13 @@ TriReferenceSpace::TriReferenceSpace(void){
 
 TriReferenceSpace::~TriReferenceSpace(void){
   // Delete Ref Edge //
-  for(unsigned int i = 0; i < nEdge; i++)
+  for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
 
   delete[] refEdge;
 
   // Delete Ref Face //
-  for(unsigned int i = 0; i < nFace; i++)
+  for(size_t i = 0; i < nFace; i++)
     delete[] refFace[i];
 
   delete[] refFace;
@@ -54,7 +54,9 @@ TriReferenceSpace::~TriReferenceSpace(void){
 }
 
 string TriReferenceSpace::toLatex(void) const{
-  stringstream stream;
+  const size_t   nPerm = pTree->getNPermutation();
+  stringstream   stream;
+  vector<size_t> perm(nVertex);
 
   stream << "\\documentclass{article}" << endl << endl
 
@@ -68,15 +70,17 @@ string TriReferenceSpace::toLatex(void) const{
 
          << "\\begin{longtable}{ccc}" << endl << endl;
 
-  for(unsigned int p = 0; p < nPerm; p++){
+  for(size_t p = 0; p < nPerm; p++){
+    pTree->fillWithPermutation(p, perm);
+
     stream << "\\begin{tikzpicture}" << endl
 
-           << "\\node[vertex] (n0) at(0, 0) {$" << perm[p][0] << "$};" << endl
-           << "\\node[vertex] (n1) at(3, 0) {$" << perm[p][1] << "$};" << endl
-           << "\\node[vertex] (n2) at(0, 3) {$" << perm[p][2] << "$};" << endl
+           << "\\node[vertex] (n0) at(0, 0) {$" << perm[0] << "$};" << endl
+           << "\\node[vertex] (n1) at(3, 0) {$" << perm[1] << "$};" << endl
+           << "\\node[vertex] (n2) at(0, 3) {$" << perm[2] << "$};" << endl
            << endl;
 
-    for(unsigned int i = 0; i < 3; i++)
+    for(size_t i = 0; i < 3; i++)
       stream << "\\path[line]"
              << " (n" << (*(*(*edge)[p])[i])[0] << ")"
              << " -- "

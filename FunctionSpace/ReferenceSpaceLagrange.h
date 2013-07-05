@@ -50,14 +50,14 @@ class ReferenceSpaceLagrange: public ReferenceSpace{
                       unsigned int  startIdx,
                       unsigned int  startVal,
                       unsigned int  stopVal,
-                      unsigned int* refEdge,
+                      size_t*       refEdge,
                       const std::vector<unsigned int>& edge);
 
   static void faceSeq(std::vector<unsigned int>& vec,
                       unsigned int  startIdx,
                       unsigned int  startVal,
                       unsigned int  stopVal,
-                      unsigned int* refFace,
+                      size_t*       refFace,
                       const std::vector<unsigned int>& face,
                       unsigned int  nNodePerEdge);
 };

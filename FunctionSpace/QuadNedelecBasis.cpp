@@ -7,7 +7,7 @@ using namespace std;
 QuadNedelecBasis::QuadNedelecBasis(void){
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -86,10 +86,10 @@ QuadNedelecBasis::QuadNedelecBasis(void){
   // (u, v) = Gmsh     Ref Quad
 
   Polynomial  mapX(Polynomial(0.5, 1, 0, 0) +
-		   Polynomial(0.5, 0, 0, 0));
+                   Polynomial(0.5, 0, 0, 0));
 
   Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
-		   Polynomial(0.5, 0, 0, 0));
+                   Polynomial(0.5, 0, 0, 0));
 
   for(unsigned int s = 0; s < nRefSpace; s++){
     for(unsigned int i = 0; i < nFunction; i++){

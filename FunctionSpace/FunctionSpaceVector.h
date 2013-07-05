@@ -24,13 +24,13 @@ class FunctionSpaceVector : public FunctionSpace{
 
   fullVector<double>
     interpolate(const MElement& element,
-		const std::vector<double>& coef,
-		const fullVector<double>& xyz) const;
+                const std::vector<double>& coef,
+                const fullVector<double>& xyz) const;
 
   fullVector<double>
     interpolateInRefSpace(const MElement& element,
-			  const std::vector<double>& coef,
-			  const fullVector<double>& uvw) const;
+                          const std::vector<double>& coef,
+                          const fullVector<double>& uvw) const;
 };
 
 

@@ -5,7 +5,9 @@
 #include <list>
 #include <stack>
 #include <string>
+
 #include "MElement.h"
+#include "PermutationTree.h"
 
 /**
    @interface ReferenceSpace
@@ -19,31 +21,15 @@
 
 class ReferenceSpace{
  private:
-  // Permuation Tree Structure //
-  struct node_s{
-    unsigned int  depth;    // Depth
-    unsigned int* last;     // Last           Choises
-    unsigned int  number;   // Number of Next Choises
-    unsigned int* possible; // Possible  Next Choises
-    node_s*       next;     // Next           Choise
-
-    unsigned int  leafId;   // If leaf: this leaf number
-                            //     (from 0 to nLeaf - 1)
-                            // Else: no meaning
-  };
-
-  typedef node_s node;
+  typedef struct{
+    bool                first;
+    std::vector<size_t> second;
+    std::vector<size_t> third;
+  } triple;
 
  protected:
-  // Permutation (Tree + Leaf) of Reduced IDs //
-  unsigned int    nVertex;
-  unsigned int nextLeafId;
-
-  unsigned int              nPerm;
-  unsigned int**             perm;
-  std::list<unsigned int*>* lPerm;
-
-  node pTreeRoot;
+  // Permutation Tree //
+  PermutationTree* pTree;
 
   //////////////////////////////////////////////////////////////////////////
   // !!! CHANGE VARIABLES NAME !!!                                        //
@@ -72,26 +58,32 @@ class ReferenceSpace{
   //                              - -                             -     - //
   //////////////////////////////////////////////////////////////////////////
 
+  // Number of Vertices //
+  size_t nVertex;
+
   // Edge Permutation //
-  unsigned int    nEdge;
-  unsigned int**  refEdge;
+  size_t    nEdge;
+  size_t**  refEdge;
   //unsigned int*** permutedRefEdge;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* edge;
 
   // Face Permutation //
-  unsigned int    nFace;
-  unsigned int*   nNodeInFace;
-  unsigned int**  refFace;
+  size_t    nFace;
+  size_t*   nNodeInFace;
+  size_t**  refFace;
   //unsigned int*** permutedRefFace;
   std::vector<const std::vector<const std::vector<unsigned int>*>*>* face;
 
  public:
   virtual ~ReferenceSpace(void);
 
-  unsigned int getNPermutation(void) const;
+  size_t getNReferenceSpace(void) const;
 
-  unsigned int getPermutation(const MElement& element) const;
-
+  size_t getReferenceSpace(const MElement& element) const;
+  /*
+  std::vector<std::vector<size_t> > getEdgeIndex(size_t referenceSpaceId) const;
+  std::vector<std::vector<size_t> > getFaceIndex(size_t referenceSpaceId) const;
+  */
   const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
     getAllEdge(void) const;
 
@@ -106,11 +98,17 @@ class ReferenceSpace{
   ReferenceSpace(void);
 
   void init(void);
-  void populate(node* pTreeRoot);
-  void destroy(node* node);
 
   void getEdge(void);
   void getFace(void);
+
+  void   findCyclicPermutation(void);
+  triple isCyclicPermutation(std::vector<size_t>& pTest,
+                             std::vector<size_t>& pRef);
+
+  size_t findCorrespondingFace(std::vector<size_t>& face,
+                               std::vector<size_t>& node);
+
   /*
   void getPermutedRefEntity(unsigned int**** permutedRefEntity,
                             unsigned int**   refEntity,
@@ -127,17 +125,12 @@ class ReferenceSpace{
                                                       unsigned int face);
 
   static void
-    orderRefEntityForGivenPermutation(unsigned int* refEntity,
-                                      unsigned int* permutation,
+    orderRefEntityForGivenPermutation(size_t* refEntity,
+                                      std::vector<size_t>& permutation,
                                       std::vector<unsigned int>& orderedEntity);
 
   static bool sortPredicate(const std::pair<unsigned int, unsigned int>& a,
                             const std::pair<unsigned int, unsigned int>& b);
-
-  static unsigned int treeLookup(const node* node,
-                                 std::vector<unsigned int>& vertexReducedId);
-
-  std::string toString(const node* node) const;
 };
 
 
@@ -152,12 +145,12 @@ class ReferenceSpace{
    Deletes this ReferenceSpace
    **
 
-   @fn ReferenceSpace::getNPermutation
+   @fn ReferenceSpace::getNReferenceSpace
    @returns Returns the number of permutation of this
    ReferenceSpace
    **
 
-   @fn ReferenceSpace::getPermutation
+   @fn ReferenceSpace::getReferenceSpace
    @param element A MElement
    @returns Returns the a natural number defining
    the permutation of the given element
@@ -172,7 +165,7 @@ class ReferenceSpace{
 
    @note
    @li The fisrt vector represents a particular permutation
-   (see ReferenceSpace::getPermutation())
+   (see ReferenceSpace::getReferenceSpace())
    @li The second vector represents a particular edge
    (for a given permutation)
    @li The last vector represents the Vertex @c IDs of
@@ -184,7 +177,7 @@ class ReferenceSpace{
 
    @note
    @li The fisrt vector represents a particular permutation
-   (see ReferenceSpace::getPermutation())
+   (see ReferenceSpace::getReferenceSpace())
    @li The second vector represents a particular face
    (for a given permutation)
    @li The last vector represents the Vertex @c IDs of
@@ -204,10 +197,8 @@ class ReferenceSpace{
 // Inline Functions //
 //////////////////////
 
-inline
-unsigned int
-ReferenceSpace::getNPermutation(void) const{
-  return nPerm;
+inline size_t ReferenceSpace::getNReferenceSpace(void) const{
+  return pTree->getNPermutation();
 }
 
 inline

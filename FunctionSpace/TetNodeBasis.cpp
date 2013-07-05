@@ -7,7 +7,7 @@ using namespace std;
 TetNodeBasis::TetNodeBasis(unsigned int order){
   // Reference Space //
   refSpace  = new TetReferenceSpace;
-  nRefSpace = refSpace->getNPermutation();
+  nRefSpace = refSpace->getNReferenceSpace();
 
   const vector<const vector<const vector<unsigned int>*>*>&
     edgeV = refSpace->getAllEdge();
@@ -45,9 +45,9 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   const Polynomial lagrange[4] =
     {
       Polynomial(Polynomial(1, 0, 0, 0) -
-		 Polynomial(1, 1, 0, 0) -
-		 Polynomial(1, 0, 1, 0) -
-		 Polynomial(1, 0, 0, 1)),
+                 Polynomial(1, 1, 0, 0) -
+                 Polynomial(1, 0, 1, 0) -
+                 Polynomial(1, 0, 0, 1)),
 
       Polynomial(Polynomial(1, 1, 0, 0)),
 
@@ -77,14 +77,14 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 
     for(int e = 0; e < 6; e++){
       for(unsigned int l = 1; l < order; l++){
-	basis[s][i] =
-	  new Polynomial(intLegendre[l].compose
-			 (lagrange[(*(*edgeV[s])[e])[0]] -
-			  lagrange[(*(*edgeV[s])[e])[1]]
-			  ,
-			  lagrange[(*(*edgeV[s])[e])[0]] +
-			  lagrange[(*(*edgeV[s])[e])[1]]));
-	i++;
+        basis[s][i] =
+          new Polynomial(intLegendre[l].compose
+                         (lagrange[(*(*edgeV[s])[e])[0]] -
+                          lagrange[(*(*edgeV[s])[e])[1]]
+                          ,
+                          lagrange[(*(*edgeV[s])[e])[0]] +
+                          lagrange[(*(*edgeV[s])[e])[1]]));
+        i++;
       }
     }
   }
@@ -97,28 +97,28 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 
     for(int f = 0; f < 4; f++){
       for(int l1 = 1; l1 < orderMinus; l1++){
-	for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
-	  Polynomial sum =
-	    lagrange[(*(*faceV[s])[f])[0]] +
-	    lagrange[(*(*faceV[s])[f])[1]] +
-	    lagrange[(*(*faceV[s])[f])[2]];
+        for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
+          Polynomial sum =
+            lagrange[(*(*faceV[s])[f])[0]] +
+            lagrange[(*(*faceV[s])[f])[1]] +
+            lagrange[(*(*faceV[s])[f])[2]];
 
-	  basis[s][i] =
-	    new Polynomial(intLegendre[l1].compose
-			   (lagrange[(*(*faceV[s])[f])[0]] -
-			    lagrange[(*(*faceV[s])[f])[1]]
-			    ,
-			    lagrange[(*(*faceV[s])[f])[0]] +
-			    lagrange[(*(*faceV[s])[f])[1]])
+          basis[s][i] =
+            new Polynomial(intLegendre[l1].compose
+                           (lagrange[(*(*faceV[s])[f])[0]] -
+                            lagrange[(*(*faceV[s])[f])[1]]
+                            ,
+                            lagrange[(*(*faceV[s])[f])[0]] +
+                            lagrange[(*(*faceV[s])[f])[1]])
 
-			   *
+                           *
 
-			   lagrange[(*(*faceV[s])[f])[2]]
-			   *
-			   sclLegendre[l2].compose
-			   (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum));
-	  i++;
-	}
+                           lagrange[(*(*faceV[s])[f])[2]]
+                           *
+                           sclLegendre[l2].compose
+                           (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum));
+          i++;
+        }
       }
     }
   }
@@ -136,16 +136,16 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
 
     for(int l1 = 1; l1 < orderMinusTwo; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
-	for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
-	  basis[s][i] =
-	    new Polynomial(intLegendre[l1].compose(sub, add)             *
-			   lagrange[2]                                   *
-			   sclLegendre[l2].compose(twoThreeOneMinusFour,
-						   oneMinusFour)         *
-			   lagrange[3]                                   *
-			   legendre[l3].compose(twoFourMinusOne));
-	  i++;
-	}
+        for(int l3 = 0; l3 + l2 + l1 - 1 < orderMinusThree; l3++){
+          basis[s][i] =
+            new Polynomial(intLegendre[l1].compose(sub, add)             *
+                           lagrange[2]                                   *
+                           sclLegendre[l2].compose(twoThreeOneMinusFour,
+                                                   oneMinusFour)         *
+                           lagrange[3]                                   *
+                           legendre[l3].compose(twoFourMinusOne));
+          i++;
+        }
       }
     }
   }
