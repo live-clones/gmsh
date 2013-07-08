@@ -813,8 +813,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   double mat[3][3], jac[3][3];
   double umin, umax, vmin, vmax;
   // don't use 0.9, 0.1 it fails with ruled surfaces
-  double initu[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0.};
-  double initv[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0.};
+  double initu[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.5, 0.5, 0.5};
+  double initv[NumInitGuess] = {0.5, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.5, 0.5};
 
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
@@ -862,10 +862,13 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
           (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
            jac[2][1] * (Z - P.z()));
 
-        //if(Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin) break;
+        // don't remove this test: it is important
+        if((Unew > umax+tol || Unew < umin-tol) &&
+           (Vnew > vmax+tol || Vnew < vmin-tol)) break;
 
         err = SQU(Unew - U) + SQU(Vnew - V);
         err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
+
         iter++;
         U = Unew;
         V = Vnew;
