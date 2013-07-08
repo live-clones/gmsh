@@ -5,6 +5,7 @@
 #ifndef _Included_org_geuz_onelab_Gmsh
 #define _Included_org_geuz_onelab_Gmsh
 void requestRender();
+unsigned char *getBitmapFromString(const char *text);
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,27 +43,11 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_drawView
 
 /*
  * Class:     org_geuz_onelab_Gmsh
- * Method:    setTranslation
- * Signature: (JFFF)V
+ * Method:    eventHandler
+ * Signature: (JIFF)V
  */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setTranslation
-  (JNIEnv *, jobject, jlong, jfloat, jfloat, jfloat);
-
-/*
- * Class:     org_geuz_onelab_Gmsh
- * Method:    setScale
- * Signature: (JFFF)V
- */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setScale
-  (JNIEnv *, jobject, jlong, jfloat, jfloat, jfloat);
-
-/*
- * Class:     org_geuz_onelab_Gmsh
- * Method:    setRotate
- * Signature: (JFFF)V
- */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setRotate
-  (JNIEnv *, jobject, jlong, jfloat, jfloat, jfloat);
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_eventHandler
+  (JNIEnv *, jobject, jlong, jint, jfloat, jfloat);
 
 /*
  * Class:     org_geuz_onelab_Gmsh

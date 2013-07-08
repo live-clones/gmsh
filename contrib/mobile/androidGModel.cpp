@@ -14,7 +14,7 @@
 #include <gmsh/PViewOptions.h>
 
 #include "androidGModel.h"
-#include "drawGModel.h"
+#include "drawContext.h"
 
 onelab::server *getOnelab() {return onelab::server::instance();}
 
@@ -32,6 +32,7 @@ class MobileMessage : public GmshMessage
 	{
 		if(level == "Error")
 		{
+	 		LOGE("%s", message.c_str());
 			if(message.size() <= 26 || message.substr(message.size()-25,25) != "check the log for details")
 				return;
 			if(!gCallbackObject)
@@ -48,15 +49,12 @@ class MobileMessage : public GmshMessage
 			env->CallVoidMethod(gCallbackObject, mid, jstr);
 			env->DeleteLocalRef(jstr);
 			env->DeleteLocalRef(jClass);
-	 		LOGE("%s", message.c_str());
 			return;
 		}
 		else if(level == "Progress")
 		{
 			if(!gCallbackObject)
 				return;
-			//if ((gJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6)) < 0) 
-			//	return;
 			if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
 				return;
 			jstring jstr = env->NewStringUTF(message.c_str());
@@ -76,7 +74,7 @@ class MobileMessage : public GmshMessage
 			requestRender();
 			return;
 		}
-	 	LOGI("%s", message.c_str());
+	 	LOGI("%s:\t%s", level.c_str(), message.c_str());
 	}
 };
 
@@ -109,47 +107,37 @@ JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
 	Msg::SetCallback(new MobileMessage());
 	
 	const char*  name = env->GetStringUTFChars(jname, NULL);
-	return reinterpret_cast<jlong>(new drawGModel());
+	return reinterpret_cast<jlong>(new drawContext());
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_loadFile
   (JNIEnv *env, jobject obj, jlong jptr, jstring jname)
 {
 	const char*  filename = env->GetStringUTFChars(jname, NULL);
-	((drawGModel *)jptr)->load(filename);
+	((drawContext *)jptr)->load(filename);
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_initView
   (JNIEnv *env, jobject obj, jlong jptr, jint w, jint h)
 {
-	((drawGModel *)jptr)->initView(w,h);
+	((drawContext *)jptr)->initView(w,h);
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_drawView
   (JNIEnv *env, jobject obj, jlong jptr)
 {
-	((drawGModel *)jptr)->drawView();
+	((drawContext *)jptr)->drawView();
 }
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setTranslation
-  (JNIEnv *env, jobject obj, jlong jptr, jfloat tx, jfloat ty, jfloat tz)
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_eventHandler
+  (JNIEnv *env, jobject obj, jlong jptr, jint jevent, jfloat jx, jfloat jy)
 {
-	((drawGModel *)jptr)->setTranslation(tx, ty, tz);
-}
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setScale
-  (JNIEnv *env, jobject obj, jlong jptr, jfloat sx, jfloat sy, jfloat sz)
-{
-	((drawGModel *)jptr)->setScale(sx, sy, sz);
-}
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setRotate
-  (JNIEnv *env, jobject obj, jlong jptr, jfloat rx, jfloat ry, jfloat rz)
-{
-	((drawGModel *)jptr)->setRotation(rx, ry, rz);
+	((drawContext *)jptr)->eventHandler(jevent, jx, jy);
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
   (JNIEnv *env, jobject obj, jlong jptr, jstring jwhat, jboolean value)
 {
 	const char*  what = env->GetStringUTFChars(jwhat, NULL);
 	if(strcmp(what, "mesh") == 0)
-		((drawGModel *)jptr)->showMesh(value);
+		((drawContext *)jptr)->showMesh(value);
 	else if(strcmp(what, "geom") == 0)
-		((drawGModel *)jptr)->showGeom(value);
+		((drawContext *)jptr)->showGeom(value);
 }
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
   (JNIEnv *env , jobject obj)
