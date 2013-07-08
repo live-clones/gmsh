@@ -163,27 +163,40 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
 
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     norme(n);
-    double angle = 0.;
     GPoint pt = point(param.x(), param.y());
     double v[3] = {pt.x(), pt.y(), pt.z()};
-    for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
-      Curve *c;
-      List_Read(s->Generatrices, i, &c);
-      int N = (c->Typ == MSH_SEGM_LINE) ? 1 : 3;
-      for(int j = 0; j < N; j++) {
-        double u1 = (double)j / (double)N;
-        double u2 = (double)(j + 1) / (double)N;
-        Vertex p1 = InterpolateCurve(c, u1, 0);
-        Vertex p2 = InterpolateCurve(c, u2, 0);
-        double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
-        double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
-        angle += angle_plan(v, v1, v2, n);
+    int NP = 10, tries = 0;
+    while(1){
+      tries++;
+      double angle = 0.;
+      for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+        Curve *c;
+        List_Read(s->Generatrices, i, &c);
+        int N = (c->Typ == MSH_SEGM_LINE) ? 1 : NP;
+        for(int j = 0; j < N; j++) {
+          double u1 = (double)j / (double)N;
+          double u2 = (double)(j + 1) / (double)N;
+          Vertex p1 = InterpolateCurve(c, u1, 0);
+          Vertex p2 = InterpolateCurve(c, u2, 0);
+          double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
+          double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
+          angle += angle_plan(v, v1, v2, n);
+        }
       }
+      if(fabs(angle) < 0.5){
+        NP *= 2;
+        Msg::Debug("Could not compute normal of surface %d - retrying with %d points",
+                   tag(), NP);
+        if(tries > 10){
+          Msg::Error("Could not compute normal of surface %d", tag());
+          return SVector3(n[0], n[1], n[2]);
+        }
+      }
+      else if(angle > 0)
+        return SVector3(n[0], n[1], n[2]);
+      else
+        return SVector3(-n[0], -n[1], -n[2]);
     }
-    if(angle > 0)
-      return SVector3(n[0], n[1], n[2]);
-    else
-      return SVector3(-n[0], -n[1], -n[2]);
   }
 }
 

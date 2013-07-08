@@ -2466,7 +2466,7 @@ void orientMeshGFace::operator()(GFace *gf)
           SVector3 nf = gf->normal(param);
           SVector3 ne = e->getFace(0).normal();
           if(dot(ne, nf) < 0){
-            Msg::Debug("Reversing orientation of mesh in face %d", gf->tag());
+            Msg::Debug("Reversing orientation of mesh in face %d (param)", gf->tag());
             for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
               gf->getMeshElement(k)->reverse();
           }
@@ -2497,7 +2497,7 @@ void orientMeshGFace::operator()(GFace *gf)
           SVector3 nf = gf->normal(param);
           SVector3 ne = e->getFace(0).normal();
           if(dot(ne, nf) < 0){
-            Msg::Debug("Reversing 2 orientation of mesh in face %d", gf->tag());
+            Msg::Debug("Reversing 2 orientation of mesh in face %d (cog)", gf->tag());
             for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
               gf->getMeshElement(k)->reverse();
           }
