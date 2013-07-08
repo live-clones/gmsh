@@ -110,10 +110,12 @@ Specify display
 Use camera mode view;
 @item -stereo
 OpenGL quad-buffered stereo rendering (requires special graphic card)
+@item -gamepad
+Use gamepad controller if available
 @end ftable
  Other options:
 @ftable @code
-@item -
+@item -, -parse_and_exit
 Parse input files, then exit
 @item -new
 Create new model before merge next file

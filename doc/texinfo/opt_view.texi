@@ -50,17 +50,17 @@ Default value: @code{"%.3g"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseX
-Generalized elevation of the view along X-axis (in model coordinates)@*
+Generalized elevation of the view along X-axis (in model coordinates, using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v8)@*
 Default value: @code{"v0"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseY
-Generalized elevation of the view along Y-axis (in model coordinates)@*
+Generalized elevation of the view along Y-axis (in model coordinates, using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v8)@*
 Default value: @code{"v1"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.GeneralizedRaiseZ
-Generalized elevation of the view along Z-axis (in model coordinates)@*
+Generalized elevation of the view along Z-axis (in model coordinates, using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v8)@*
 Default value: @code{"v2"}@*
 Saved in: @code{General.OptionsFileName}
 

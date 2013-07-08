@@ -648,22 +648,4 @@ type: boolean@*
 default value: @code{0}
 @end table
 
-@item UTM
-Evaluate Field[IField] in Universal Transverse Mercator coordinates.@*
-@*
-The formulas for the coordinates transformation are taken from:@*
-@*
-  http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM@*
-Options:@*
-@table @code
-@item IField
-Index of the field to evaluate@*
-type: integer@*
-default value: @code{1}
-@item Zone
-Zone of the UTM projection@*
-type: integer@*
-default value: @code{0}
-@end table
-
 @end ftable

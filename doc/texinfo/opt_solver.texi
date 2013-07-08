@@ -29,6 +29,31 @@ System command to launch solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.Executable5
+System command to launch solver 5@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Executable6
+System command to launch solver 6@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Executable7
+System command to launch solver 7@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Executable8
+System command to launch solver 8@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Executable9
+System command to launch solver 9@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.Name0
 Name of solver 0@*
 Default value: @code{"GetDP"}@*
@@ -54,6 +79,31 @@ Name of solver 4@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.Name5
+Name of solver 5@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Name6
+Name of solver 6@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Name7
+Name of solver 7@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Name8
+Name of solver 8@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Name9
+Name of solver 9@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.RemoteLogin0
 Command to login to a remote host to launch solver 0@*
 Default value: @code{""}@*
@@ -76,6 +126,31 @@ Saved in: @code{General.SessionFileName}
 
 @item Solver.RemoteLogin4
 Command to login to a remote host to launch solver 4@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin5
+Command to login to a remote host to launch solver 5@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin6
+Command to login to a remote host to launch solver 6@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin7
+Command to login to a remote host to launch solver 7@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin8
+Command to login to a remote host to launch solver 8@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.RemoteLogin9
+Command to login to a remote host to launch solver 9@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 

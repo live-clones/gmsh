@@ -69,6 +69,11 @@ Font used in the graphic window@*
 Default value: @code{"Helvetica"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.GraphicsFontEngine
+Set graphics font engine (Native, Cairo)@*
+Default value: @code{"Native"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.GraphicsFontTitle
 Font used in the graphic window for titles@*
 Default value: @code{"Helvetica"}@*
@@ -1071,7 +1076,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Color.BackgroundGradient
 Background gradient color@*
-Default value: @code{@{128,147,255@}}@*
+Default value: @code{@{208,215,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Foreground

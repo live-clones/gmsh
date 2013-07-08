@@ -821,6 +821,8 @@ Default value: @code{1}
 Default value: @code{1}
 @item NegativeTime
 Default value: @code{0}
+@item RFar
+Default value: @code{0}
 @end table
 
 @item Plugin(NearestNeighbor)

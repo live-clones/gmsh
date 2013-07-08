@@ -48,12 +48,14 @@ Show post-processing view plugins
 Show post-processing view options
 @item Shift+Escape
 Enable full mouse selection
-@item Ctrl+i
-Show statistics window
 @item Ctrl+d
 Attach/detach menu
 @item Ctrl+f
 Enter full screen
+@item Ctrl+i
+Show statistics window
+@item Ctrl+j
+Save model options
 @item Ctrl+l
 Show message console
 @item Ctrl+m
@@ -70,6 +72,8 @@ Rename project file
 Save file as
 @item Shift+Ctrl+c
 Show clipping plane window
+@item Shift+Ctrl+j
+Save options as default
 @item Shift+Ctrl+m
 Show manipulator window
 @item Shift+Ctrl+n

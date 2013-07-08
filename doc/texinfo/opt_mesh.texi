@@ -184,11 +184,6 @@ CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.DelaunayQ
-Quality factor for initial Delaunay tetrahedralization@*
-Default value: @code{3.5}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
 Default value: @code{0}@*
@@ -506,6 +501,26 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
 Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.DoRecombinationTest
+Apply recombination algorithm for test@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombinationTestHorizStart
+Depth start@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombinationTestNoGreedyStrat
+No greedy (global) strategies@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombinationTestNewStrat
+New strategies@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
