@@ -183,12 +183,12 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
           angle += angle_plan(v, v1, v2, n);
         }
       }
-      if(fabs(angle) < 0.5){
+      if(fabs(angle) < 0.5){ // we're outside
         NP *= 2;
         Msg::Debug("Could not compute normal of surface %d - retrying with %d points",
                    tag(), NP);
         if(tries > 10){
-          Msg::Error("Could not compute normal of surface %d", tag());
+          Msg::Warning("Could not compute normal of surface %d", tag());
           return SVector3(n[0], n[1], n[2]);
         }
       }
