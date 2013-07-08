@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.7
+@set GMSH-VERSION 2.8
 @set COPYRIGHT @copyright{} 1997-2013 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -541,7 +541,7 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-As of version 2.7, here are some known weaknesses of Gmsh:
+As of version 2.8, here are some known weaknesses of Gmsh:
 
 @itemize @bullet
 @item
@@ -2365,7 +2365,7 @@ algorithm should be tried. For very large meshes of plane surfaces the
 ``Delaunay'' algorithm is the fastest.
 
 The ``Automatic'' algorithm tries to select the best algorithm
-automatically for each surface in the model. As of Gmsh 2.7, the
+automatically for each surface in the model. As of Gmsh 2.8, the
 ``Automatic'' algorithm selects ``Delaunay'' for plane surfaces and
 ``MeshAdapt'' for all other surfaces.
 

@@ -1,4 +1,4 @@
-2.7.2: improved Delaunay point insertion; fixed mesh orientation of plane
+2.8.0: improved Delaunay point insertion; fixed mesh orientation of plane
 surfaces; fixed mesh size prescribed at embedded points; improved display of
 vectors at COG; new experimental text string display engines; improved
 fullscreen mode; access time/step in transformations; new experimental features:
