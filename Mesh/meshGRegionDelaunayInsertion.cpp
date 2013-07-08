@@ -513,8 +513,28 @@ bool insertVertex(MVertex *v,
 
 }
 
+static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes,
+                   std::set<MVertex*> &bndVertices)
+{
+  for(int i = 0; i < 3; i++){
+    bndVertices.insert(t->getVertex(i));
+    MEdge e = t->getEdge(i);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
+    double dx = vi->x()-vj->x();
+    double dy = vi->y()-vj->y();
+    double dz = vi->z()-vj->z();
+    double l = sqrt(dx * dx + dy * dy + dz * dz);
+    std::map<MVertex*,double>::iterator iti = vSizes.find(vi);
+    std::map<MVertex*,double>::iterator itj = vSizes.find(vj);
+    // use largest edge length
+    if (iti == vSizes.end() || iti->second < l) vSizes[vi] = l;
+    if (itj == vSizes.end() || itj->second < l) vSizes[vj] = l;
+  }
+}
 
-static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes)
+static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes,
+                   std::set<MVertex*> &bndVertices)
 {
   for (int i = 0; i < 4; i++){
     for (int j = i + 1; j < 4; j++){
@@ -526,8 +546,13 @@ static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes)
       double l = sqrt(dx * dx + dy * dy + dz * dz);
       std::map<MVertex*,double>::iterator iti = vSizes.find(vi);
       std::map<MVertex*,double>::iterator itj = vSizes.find(vj);
-      if (iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
-      if (itj == vSizes.end() || itj->second > l) vSizes[vj] = l;
+      std::set<MVertex*>::iterator itvi = bndVertices.find(vi);
+      std::set<MVertex*>::iterator itvj = bndVertices.find(vj);
+      // smallest tet edge
+      if (itvi == bndVertices.end() &&
+          (iti == vSizes.end() || iti->second > l)) vSizes[vi] = l;
+      if (itvj == bndVertices.end() &&
+          (itj == vSizes.end() || itj->second > l)) vSizes[vj] = l;
     }
   }
 }
@@ -1130,8 +1155,15 @@ void insertVerticesInRegion (GRegion *gr)
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
+    std::set<MVertex*> bndVertices;
+    for(GModel::fiter it = gr->model()->firstFace(); it != gr->model()->lastFace(); ++it){
+      GFace *gf = *it;
+      for(unsigned int i = 0; i < gf->triangles.size(); i++){
+        setLcs(gf->triangles[i], vSizesMap, bndVertices);
+      }
+    }
     for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-      setLcs(gr->tetrahedra[i], vSizesMap);
+      setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
     for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
         it != vSizesMap.end(); ++it){
       it->first->setIndex(NUM++);
@@ -1402,8 +1434,15 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
+    std::set<MVertex*> bndVertices;
+    for(GModel::fiter it = gr->model()->firstFace(); it != gr->model()->lastFace(); ++it){
+      GFace *gf = *it;
+      for(unsigned int i = 0; i < gf->triangles.size(); i++){
+        setLcs(gf->triangles[i], vSizesMap, bndVertices);
+      }
+    }
     for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-      setLcs(gr->tetrahedra[i], vSizesMap);
+      setLcs(gr->tetrahedra[i], vSizesMap, bndVertices);
     for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
         it != vSizesMap.end(); ++it){
       it->first->setIndex(NUM++);
