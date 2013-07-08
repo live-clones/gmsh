@@ -15,7 +15,7 @@
 
 #include "movePosition.h"
 
-int onelab_cb(const std::string);
+int onelab_cb(std::string);
 
 class drawContext{
 private:

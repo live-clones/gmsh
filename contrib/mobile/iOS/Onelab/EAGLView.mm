@@ -45,8 +45,8 @@
         NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
         NSString *startupModel = [ressourcePath stringByAppendingPathComponent:@"pmsm.geo"];
 
-        mGModel = new drawGModel();
-        mGModel->load(*new std::string([startupModel fileSystemRepresentation]));
+        mContext = new drawContext();
+        mContext->load(*new std::string([startupModel fileSystemRepresentation]));
     }
     return self;
 }
@@ -57,8 +57,8 @@
     
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glViewport(0, 0, backingWidth, backingHeight); // need this ...??
-    mGModel->initView(backingWidth, backingHeight);
-    mGModel->drawView();
+    mContext->initView(backingWidth, backingHeight);
+    mContext->drawView();
     
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context presentRenderbuffer:GL_RENDERBUFFER_OES];
@@ -67,8 +67,8 @@
 {
     NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
     NSString *msh = [ressourcePath stringByAppendingPathComponent: file];
-    mGModel = new drawGModel();
-    mGModel->load(*new std::string([msh fileSystemRepresentation]));
+    //mContext = new drawContext();
+    mContext->load(*new std::string([msh fileSystemRepresentation]));
     [self drawView];
 }
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
@@ -81,12 +81,12 @@
     {
         case 1:
         {
-            mGModel->setTranslation(position.x-lastPosition.x, -(position.y-lastPosition.y));
+            mContext->eventHandler(1,position.x,position.y);
         }
             break;
         case 2:
         {
-            mGModel->setRotation(position.y-lastPosition.y, position.x-lastPosition.x,0);
+            mContext->eventHandler(3,position.x,position.y);
         }
             break;
         default:

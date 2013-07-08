@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 
-#include "drawGModel.h"
+#include "drawContext.h"
 void messageFromCpp (void *self, std::string level, std::string msg);
 
 class MobileMessage : GmshMessage

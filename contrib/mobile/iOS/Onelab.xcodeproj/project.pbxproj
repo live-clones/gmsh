@@ -7,10 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9C93C44A1743780900312E2E /* GetDP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C93C4471743780900312E2E /* GetDP.framework */; };
-		9C93C44B1743780900312E2E /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C93C4481743780900312E2E /* Gmsh.framework */; };
-		9C93C44C1743780900312E2E /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C93C4491743780900312E2E /* petsc.framework */; };
-		9C93C44F174378C200312E2E /* drawGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C93C44D174378C200312E2E /* drawGModel.cpp */; };
 		9C95B7F61726C88E00C0CCE2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.m */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
 		9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083C1712C16300E1D4A0 /* Foundation.framework */; };
@@ -43,6 +39,15 @@
 		9C9975431737B55E0036EC24 /* pmsm_8p_circuit.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */; };
 		9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */; };
 		9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCE174B5A23004332C5 /* ic_launcher.png */; };
+		9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0D178AEB1600A83B4B /* GetDP.framework */; };
+		9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* Gmsh.framework */; };
+		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
+		9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E01178AE6BE00A83B4B /* drawContext.cpp */; };
+		9CE08E14178AEC5F00A83B4B /* drawContext.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E02178AE6BE00A83B4B /* drawContext.h */; };
+		9CE08E15178AEC5F00A83B4B /* iosGModel.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C99754C17390DEE0036EC24 /* iosGModel.h */; };
+		9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E03178AE6BE00A83B4B /* movePosition.h */; };
+		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
+		9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,11 +61,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		9C93C4471743780900312E2E /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
-		9C93C4481743780900312E2E /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
-		9C93C4491743780900312E2E /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
-		9C93C44D174378C200312E2E /* drawGModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawGModel.cpp; sourceTree = "<group>"; };
-		9C93C44E174378C200312E2E /* drawGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawGModel.h; sourceTree = "<group>"; };
 		9C95B7F51726C88E00C0CCE2 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		9C9608361712C16300E1D4A0 /* Onelab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Onelab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C96083A1712C16300E1D4A0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -100,6 +100,14 @@
 		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; };
 		9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher_retina.png; sourceTree = "<group>"; };
 		9C9F8BCE174B5A23004332C5 /* ic_launcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher.png; sourceTree = "<group>"; };
+		9CE08E01178AE6BE00A83B4B /* drawContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawContext.cpp; sourceTree = "<group>"; };
+		9CE08E02178AE6BE00A83B4B /* drawContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawContext.h; sourceTree = "<group>"; };
+		9CE08E03178AE6BE00A83B4B /* movePosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = movePosition.h; sourceTree = "<group>"; };
+		9CE08E04178AE6BE00A83B4B /* Trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Trackball.cpp; sourceTree = "<group>"; };
+		9CE08E05178AE6BE00A83B4B /* Trackball.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trackball.h; sourceTree = "<group>"; };
+		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
+		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
+		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,9 +121,9 @@
 				9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */,
 				9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */,
 				9C96083F1712C16300E1D4A0 /* CoreGraphics.framework in Frameworks */,
-				9C93C44A1743780900312E2E /* GetDP.framework in Frameworks */,
-				9C93C44B1743780900312E2E /* Gmsh.framework in Frameworks */,
-				9C93C44C1743780900312E2E /* petsc.framework in Frameworks */,
+				9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */,
+				9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */,
+				9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,9 +164,9 @@
 		9C9608391712C16300E1D4A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				9C93C4471743780900312E2E /* GetDP.framework */,
-				9C93C4481743780900312E2E /* Gmsh.framework */,
-				9C93C4491743780900312E2E /* petsc.framework */,
+				9CE08E0D178AEB1600A83B4B /* GetDP.framework */,
+				9CE08E0E178AEB1600A83B4B /* Gmsh.framework */,
+				9CE08E0F178AEB1600A83B4B /* petsc.framework */,
 				9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */,
 				9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */,
 				9C9608981712C7B600E1D4A0 /* Accelerate.framework */,
@@ -176,10 +184,13 @@
 				9C9608781712C5FE00E1D4A0 /* files */,
 				9C95B7F51726C88E00C0CCE2 /* main.m */,
 				9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */,
-				9C99754C17390DEE0036EC24 /* iosGModel.h */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
-				9C93C44D174378C200312E2E /* drawGModel.cpp */,
-				9C93C44E174378C200312E2E /* drawGModel.h */,
+				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
+				9CE08E02178AE6BE00A83B4B /* drawContext.h */,
+				9C99754C17390DEE0036EC24 /* iosGModel.h */,
+				9CE08E03178AE6BE00A83B4B /* movePosition.h */,
+				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
+				9CE08E05178AE6BE00A83B4B /* Trackball.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9C96084F1712C16400E1D4A0 /* MasterViewController.h */,
 				9C9608501712C16400E1D4A0 /* MasterViewController.mm */,
@@ -350,13 +361,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */,
+				9CE08E14178AEC5F00A83B4B /* drawContext.h in Sources */,
+				9CE08E15178AEC5F00A83B4B /* iosGModel.h in Sources */,
+				9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */,
+				9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */,
+				9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */,
 				9C96084B1712C16400E1D4A0 /* AppDelegate.mm in Sources */,
 				9C9608511712C16400E1D4A0 /* MasterViewController.mm in Sources */,
 				9C9608541712C16400E1D4A0 /* DetailViewController.mm in Sources */,
 				9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */,
 				9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */,
 				9C95B7F61726C88E00C0CCE2 /* main.m in Sources */,
-				9C93C44F174378C200312E2E /* drawGModel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,9 +482,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -496,9 +510,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";

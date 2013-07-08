@@ -57,17 +57,34 @@
 {
     scaleFactor *= [sender scale];
     scaleFactor = MAX(0.1, scaleFactor);
-    glView->mGModel->setScale(scaleFactor);
+    glView->mContext->eventHandler(2,scaleFactor);
     [glView drawView];
 }
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchPoint = [touch locationInView:self.view];
+    glView->mContext->eventHandler(0, touchPoint.x, touchPoint.y);
+}
+
+-(void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    [self touchesEnded:touches withEvent:event];
+}
+
+-(void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint touchPoint = [touch locationInView:self.view];
+    glView->mContext->eventHandler(4, touchPoint.x, touchPoint.y);
+}
+
 - (IBAction)tap:(UITapGestureRecognizer *)sender
 {
     sender.numberOfTapsRequired = 2;
     if(sender.state == UIGestureRecognizerStateEnded){
         scaleFactor = 1;
-        glView->mGModel->setScale(scaleFactor);
-        glView->mGModel->setTranslation(0, 0);
-        glView->mGModel->setRotation(0, 0, 0);
+        glView->mContext->eventHandler(5);
         [glView drawView];
     }
 }
@@ -274,8 +291,8 @@
 -(void)showMore: (UIBarButtonItem*)sender
 {
     UIActionSheet *popupMore = [[UIActionSheet alloc] initWithTitle:@"Other settings" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:
-                                (glView->mGModel->isShowedMesh())?@"Hide mesh":@"Show mesh",
-                                (glView->mGModel->isShowedGeom())?@"Hide geometry" :@"Show geometry",
+                                (glView->mContext->isShowedMesh())?@"Hide mesh":@"Show mesh",
+                                (glView->mContext->isShowedGeom())?@"Hide geometry" :@"Show geometry",
                                 @"Set X view",
                                 @"Set Y view",
                                 @"Set Z view",
@@ -288,22 +305,22 @@
 {
     NSString *text = [actionSheet buttonTitleAtIndex:buttonIndex];
     if([text isEqualToString:@"Hide mesh"])
-        glView->mGModel->showMesh(false);
+        glView->mContext->showMesh(false);
     else if([text isEqualToString:@"Show mesh"])
-        glView->mGModel->showMesh();
+        glView->mContext->showMesh();
     else if([text isEqualToString:@"Hide geometry"])
-        glView->mGModel->showGeom(false);
+        glView->mContext->showGeom(false);
     else if([text isEqualToString:@"Show geometry"])
-        glView->mGModel->showGeom();
+        glView->mContext->showGeom();
     else if([text isEqualToString:@"Set X view"]){
-        glView->mGModel->setRotation(0, 0, 0);
-        glView->mGModel->setRotation(90, 0, 0);
+        /*glView->mContext->setRotation(0, 0, 0);
+        glView->mContext->setRotation(90, 0, 0);*/
     }
     else if([text isEqualToString:@"Set Y view"]){
-        glView->mGModel->setRotation(0, 90, 0);
+        //glView->mContext->setRotation(0, 90, 0);
     }
     else if([text isEqualToString:@"Set Z view"]){
-        glView->mGModel->setRotation(0, 0, 0);
+        //glView->mContext->setRotation(0, 0, 0);
     }
     [glView drawView];
 }
@@ -356,7 +373,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 {
      NSString *modelName = [models objectAtIndex:indexPath.row];
      NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-    glView->mGModel->load([[NSString stringWithFormat:@"%@%@%@%@",ressourcePath,@"/",modelName,@".geo"] UTF8String]);
+    glView->mContext->load([[NSString stringWithFormat:@"%@%@%@%@",ressourcePath,@"/",modelName,@".geo"] UTF8String]);
     [self hideModelsList];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     return indexPath;
