@@ -237,6 +237,7 @@ Tutorial
 * t12.geo::                     
 * t13.geo::                     
 * t14.geo::                     
+* t15.geo::                     
 
 Options
 
@@ -2690,8 +2691,11 @@ Here is a list of all other mesh commands currently available:
 @ftable @code
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or lines(s). Note that embedded
-lines only work with the MeshAdapt 2-D algorithm.
+will conform to the mesh of the point(s) or lines(s). 
+
+@item Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
+Embed the surface in the given volume. The volume mesh will conform to
+the mesh of the surface. 
 
 @item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @};
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
@@ -4277,6 +4281,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t12.geo::                     
 * t13.geo::                     
 * t14.geo::                     
+* t15.geo::                     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4400,10 +4405,19 @@ system}. Screencasts that show how to use the GUI are available on
 @c t14.geo
 @c -------------------------------------------------------------------------
 
-@node t14.geo,  , t13.geo, Tutorial
+@node t14.geo, t15.geo, t13.geo, Tutorial
 @section @file{t14.geo}
 
 @verbatiminclude ../../tutorial/t14.geo
+
+@c -------------------------------------------------------------------------
+@c t15.geo
+@c -------------------------------------------------------------------------
+
+@node t15.geo,  , t14.geo, Tutorial
+@section @file{t15.geo}
+
+@verbatiminclude ../../tutorial/t15.geo
 
 @c =========================================================================
 @c Options
