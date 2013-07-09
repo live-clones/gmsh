@@ -17,7 +17,7 @@ class viewButton : public Fl_Group {
   Fl_Check_Button *_toggle;
   Fl_Button *_butt;
   Fl_Menu_Button *_popup;
-  char _tooltip[256], _arrow[32];
+  char _tooltip[256];
  public:
   viewButton(int x, int y, int w, int h, int num, Fl_Color col);
   double value() { return _toggle->value(); }
