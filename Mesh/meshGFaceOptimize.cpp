@@ -2137,7 +2137,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
 
   if(ver->onWhat()->dim() != 2) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
-  if(fv->bl_data) return;
+  if(fv && fv->bl_data) return;
 
   double initu,initv;
   ver->getParameter(0, initu);
