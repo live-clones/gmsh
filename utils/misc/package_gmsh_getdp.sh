@@ -107,16 +107,18 @@ curl -O http://geuz.org/gmsh/bin/MacOSX/gmsh-${GMSH}-MacOSX.dmg
 curl -O http://geuz.org/getdp/bin/MacOSX/getdp-${GETDP}-MacOSX64c.tgz
 mv gmsh-${GMSH}-MacOSX.dmg /tmp
 mv getdp-${GETDP}-MacOSX64c.tgz /tmp
-open -W /tmp/gmsh-${GMSH}-MacOSX.dmg
+# open -W /tmp/gmsh-${GMSH}-MacOSX.dmg
+hdiutil convert /tmp/gmsh-${GMSH}-MacOSX.dmg -format UDTO -o /tmp/gmsh-tmp.cdr
+hdiutil attach -nobrowse -noverify -noautoopen -mountpoint gmsh_mount /tmp/gmsh-tmp.cdr
 tar zxvf /tmp/getdp-${GETDP}-MacOSX64c.tgz -C /tmp
 cp /tmp/README.txt gmsh-getdp-MacOSX
-cp -R /Volumes/gmsh-*${GMSH}-MacOSX/Gmsh.app gmsh-getdp-MacOSX
+cp -R gmsh_mount/Gmsh.app gmsh-getdp-MacOSX
 mv /tmp/getdp-*${GETDP}-MacOSX/bin/getdp gmsh-getdp-MacOSX/Gmsh.app/Contents/MacOS/
-cp /Volumes/gmsh-*${GMSH}-MacOSX/LICENSE.txt gmsh-getdp-MacOSX/LICENSE_Gmsh.txt
+cp gmsh_mount/LICENSE.txt gmsh-getdp-MacOSX/LICENSE_Gmsh.txt
 mv /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/LICENSE.txt gmsh-getdp-MacOSX/LICENSE_GetDP.txt
-cp /Volumes/gmsh-*${GMSH}-MacOSX/CREDITS.txt gmsh-getdp-MacOSX/CREDITS_Gmsh.txt
+cp gmsh_mount/CREDITS.txt gmsh-getdp-MacOSX/CREDITS_Gmsh.txt
 mv /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/CREDITS.txt gmsh-getdp-MacOSX/CREDITS_GetDP.txt
-umount /Volumes/gmsh-*${GMSH}-MacOSX
+umount gmsh_mount
 rm -rf /tmp/gmsh-*
 rm -rf /tmp/getdp-*
 zip -r gmsh-getdp-MacOSX.zip gmsh-getdp-MacOSX
