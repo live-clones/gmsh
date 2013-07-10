@@ -3127,6 +3127,9 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
 
 static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 {
+  // never recombine a face that is part of a compound!
+  if(gf->getCompound()) return 0;
+
   int success = 1;
 
   std::set<MVertex*> emb_edgeverts;
