@@ -942,12 +942,12 @@ bool GFaceCompound::parametrize() const
     oriented = checkOrientation(0);
     //printStuff(77);
     if (_type==SPECTRAL &&  (!oriented || overlap) ){
-      Msg::Warning("!!! parametrization switched to 'FE conformal' map");
+      Msg::Warning("Parametrization switched to 'FE conformal' map");
       overlap = parametrize_conformal(0, NULL, NULL);
       oriented = checkOrientation(0);
     }
     if (!oriented || overlap){
-      Msg::Warning("$$$ parametrization switched to 'convex' map");
+      Msg::Warning("Parametrization switched to 'convex' map");
       _type  = UNITCIRCLE;
       parametrize(ITERU,CONVEX);
       parametrize(ITERV,CONVEX);
@@ -2543,7 +2543,7 @@ bool GFaceCompound::checkTopology() const
   if (G != 0 || Nb < 1){
     correctTopo = false;
     nbSplit = std::max(G+2, 2);
-    Msg::Warning("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%g", G, Nb, H/D);
+    Msg::Info("Wrong topology: Genus=%d, Nb boundaries=%d, AR=%g", G, Nb, H/D);
     if (_allowPartition){
       Msg::Info("-----------------------------------------------------------");
       Msg::Info("--- Split surface %d in %d parts with Multilevel Mesh partitioner",
@@ -2557,8 +2557,8 @@ bool GFaceCompound::checkTopology() const
   }
   else if (G == 0 && AR > AR_MAX){
     correctTopo = false;
-    Msg::Warning("Wrong topology: Aspect ratio is too high AR=%d (AR1=%d AR2=%d)",
-                 AR, AR1, AR2);
+    Msg::Info("Wrong topology: Aspect ratio is too high AR=%d (AR1=%d AR2=%d)",
+              AR, AR1, AR2);
     if (_allowPartition == 1){
       nbSplit = -2;
       Msg::Info("-----------------------------------------------------------");

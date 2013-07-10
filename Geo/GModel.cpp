@@ -93,13 +93,23 @@ GModel::~GModel()
 {
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
+
+  if(getVisibility()){
+    // if no other model is visible, make the last one visible
+    bool othervisible = false;
+    for(unsigned int i = 0; i < list.size(); i++){
+      if(list[i]->getVisibility()) othervisible = true;
+    }
+    if(!othervisible && list.size())
+      list.back()->setVisibility(1);
+  }
+
   destroy();
   _deleteGEOInternals();
   _deleteOCCInternals();
 #if defined(HAVE_MESH)
   delete _fields;
 #endif
-
   if(_factory)
     delete _factory;
 }
