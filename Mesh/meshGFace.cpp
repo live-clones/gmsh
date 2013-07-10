@@ -2256,8 +2256,6 @@ void partitionAndRemesh(GFaceCompound *gf)
               num_gec, pe->tag());
     GEdgeCompound *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
     gf->model()->add(gec);
-
-    gec->parametrize();
   }
 
   // Parametrize Compound surfaces
@@ -2353,6 +2351,16 @@ void partitionAndRemesh(GFaceCompound *gf)
     gf->mesh_vertices.push_back(*it);
   }
 
+  // FIXME: This horrible hack is necessary to remove vertices that might belong
+  // to a GVertex.  The true fix is rewrite this part of the code: it's far too
+  // complex and error prone.
+  for(GModel::viter it = gf->model()->firstVertex(); it != gf->model()->lastVertex(); it++){
+    std::vector<MVertex*>::iterator itve = std::find
+      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), (*it)->mesh_vertices[0]);
+    if(itve != gf->mesh_vertices.end())
+      gf->mesh_vertices.erase(itve);
+  }
+
   // Remove mesh_vertices that belong to l_edges
   std::list<GEdge*> l_edges = gf->edges();
   for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
@@ -2411,34 +2419,9 @@ void orientMeshGFace::operator()(GFace *gf)
   gf->model()->setCurrentMeshEntity(gf);
 
   if(gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface){
+     gf->geomType() == GEntity::BoundaryLayerSurface ||
+     gf->geomType() == GEntity::CompoundSurface){
     // don't do anything
-  }
-  else if(gf->geomType() == GEntity::CompoundSurface){
-    GFaceCompound *gfc = (GFaceCompound*) gf;
-    std::list<GFace*> comp = gfc->getCompounds();
-    MTriangle *lt = (*comp.begin())->triangles[0];
-    SPoint2 c0 = gfc->getCoordinates(lt->getVertex(0));
-    SPoint2 c1 = gfc->getCoordinates(lt->getVertex(1));
-    SPoint2 c2 = gfc->getCoordinates(lt->getVertex(2));
-    double p0[2] = {c0[0],c0[1]};
-    double p1[2] = {c1[0],c1[1]};
-    double p2[2] = {c2[0],c2[1]};
-    double normal =  robustPredicates::orient2d(p0, p1, p2);
-    MElement *e = gfc->getMeshElement(0);
-    SPoint2 v1, v2, v3;
-    reparamMeshVertexOnFace(e->getVertex(0), gf, v1, false);
-    reparamMeshVertexOnFace(e->getVertex(1), gf, v2, false);
-    reparamMeshVertexOnFace(e->getVertex(2), gf, v3, false);
-    SVector3 C1(v1.x(), v1.y(), 0.0);
-    SVector3 C2(v2.x(), v2.y(), 0.0);
-    SVector3 C3(v3.x(), v3.y(), 0.0);
-    SVector3 n1 = crossprod(C2-C1,C3-C1);
-    if(normal*n1.z() < 0){
-      Msg::Debug("Reversing orientation of mesh in compound face %d", gf->tag());
-      for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
-    	gfc->getMeshElement(k)->reverse();
-    }
   }
   else{
     // in old versions we checked the orientation by comparing the orientation
