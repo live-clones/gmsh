@@ -23,9 +23,8 @@
 #include "FlGui.h"
 #endif
 
-
-
-void OptHomMessage (const char *s, ...) {
+void OptHomMessage (const char *s, ...)
+{
   char str[1024];
   va_list args;
   va_start(args, s);
@@ -37,7 +36,8 @@ void OptHomMessage (const char *s, ...) {
     FlGui::instance()->highordertools->messages->add(str, 0);
     if(FlGui::instance()->highordertools->win->shown() &&
        FlGui::instance()->highordertools->messages->h() >= 10){
-      FlGui::instance()->highordertools->messages->bottomline(FlGui::instance()->highordertools->messages->size());
+      FlGui::instance()->highordertools->messages->bottomline
+        (FlGui::instance()->highordertools->messages->size());
       FlGui::instance()->highordertools->messages->show();
     }
   }
@@ -47,8 +47,6 @@ void OptHomMessage (const char *s, ...) {
   fprintf(stdout,"%s\n", str);
 #endif
 }
-
-
 
 double distMaxStraight (MElement *el)
 {
@@ -62,7 +60,8 @@ double distMaxStraight (MElement *el)
   }
   for (int i = nV1; i < nV; ++i) {
     double f[256];
-    lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1), lagrange->points(i, 2), f);
+    lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1),
+                 lagrange->points(i, 2), f);
     for (int j = 0; j < nV1; ++j)
       sxyz[i] += sxyz[j] * f[j];
   }
@@ -75,12 +74,10 @@ double distMaxStraight (MElement *el)
   }
 
   return maxdx;
-
 }
 
-
-
-void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
+void exportMeshToDassault (GModel *gm, const std::string &fn, int dim)
+{
   FILE *f = fopen(fn.c_str(),"w");
 
   int numVertices = gm->indexMeshVertices(true);
@@ -90,8 +87,11 @@ void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
-      if (dim == 2)fprintf(f,"%d %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
-      else if (dim == 3)fprintf(f,"%d %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(), v->y(), v->z());
+      if (dim == 2)
+        fprintf(f,"%d %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
+      else if (dim == 3)
+        fprintf(f,"%d %22.15E %22.15E %22.5E\n", v->getIndex(), v->x(),
+                v->y(), v->z());
     }
 
   if (dim == 2){
@@ -137,15 +137,15 @@ void exportMeshToDassault (GModel *gm, const std::string &fn, int dim){
   fclose(f);
 }
 
-
-
-static std::set<MVertex *> getAllBndVertices(std::set<MElement*> &elements,
-            const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+static std::set<MVertex *> getAllBndVertices
+  (std::set<MElement*> &elements,
+   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
 {
   std::set<MVertex*> bnd;
   for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
     for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find((*itE)->getVertex(i))->second;
+      const std::vector<MElement*> &neighbours = vertex2elements.find
+        ((*itE)->getVertex(i))->second;
       for (size_t k = 0; k < neighbours.size(); ++k) {
         if (elements.find(neighbours[k]) == elements.end()) {
           for (int j = 0; j < neighbours[k]->getNumVertices(); ++j) {
@@ -158,11 +158,10 @@ static std::set<MVertex *> getAllBndVertices(std::set<MElement*> &elements,
   return bnd;
 }
 
-
-
-static std::set<MElement*> getSurroundingBlob(MElement *el, int depth,
-                                              const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-                                              const double distFactor, int forceDepth = 0)
+static std::set<MElement*> getSurroundingBlob
+   (MElement *el, int depth,
+    const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
+    const double distFactor, int forceDepth = 0)
 {
 
   const SPoint3 p = el->barycenter_infty();
@@ -175,26 +174,30 @@ static std::set<MElement*> getSurroundingBlob(MElement *el, int depth,
   lastLayer.push_back(el);
   for (int d = 0; d < depth; ++d) {
     currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin(); it != lastLayer.end(); ++it) {
+    for (std::list<MElement*>::iterator it = lastLayer.begin();
+         it != lastLayer.end(); ++it) {
       for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements.find((*it)->getVertex(i))->second;
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN)
-          if ((d < forceDepth) || (p.distance((*itN)->barycenter_infty()) < limDist))
-            if (blob.insert(*itN).second) currentLayer.push_back(*itN);       // Assume that if an el is too far, its neighbours are too far as well
+        const std::vector<MElement*> &neighbours = vertex2elements.find
+          ((*it)->getVertex(i))->second;
+        for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
+             itN != neighbours.end(); ++itN){
+          if ((d < forceDepth) || (p.distance((*itN)->barycenter_infty()) < limDist)){
+            // Assume that if an el is too far, its neighbours are too far as wella
+            if (blob.insert(*itN).second) currentLayer.push_back(*itN);
+          }
+        }
       }
     }
     lastLayer = currentLayer;
   }
 
   return blob;
-
 }
 
-
-
-static void addBlobChaintoGroup(std::set<int> &group, const std::vector<std::set<int> > &groupConnect, std::vector<bool> &todoPB, int iB)
+static void addBlobChaintoGroup(std::set<int> &group,
+                                const std::vector<std::set<int> > &groupConnect,
+                                std::vector<bool> &todoPB, int iB)
 {
-
   if (todoPB[iB]) {
     todoPB[iB] = false;
     group.insert(iB);
@@ -202,12 +205,10 @@ static void addBlobChaintoGroup(std::set<int> &group, const std::vector<std::set
     for (std::set<int>::const_iterator itBC = connect.begin(); itBC != connect.end(); ++itBC)
       addBlobChaintoGroup(group, groupConnect, todoPB, *itBC);
   }
-
 }
 
-
-
-static void calcVertex2Elements(int dim, GEntity *entity, std::map<MVertex*, std::vector<MElement *> > &vertex2elements)
+static void calcVertex2Elements(int dim, GEntity *entity,
+                                std::map<MVertex*, std::vector<MElement *> > &vertex2elements)
 {
   for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
     MElement *element = entity->getMeshElement(i);
@@ -217,11 +218,10 @@ static void calcVertex2Elements(int dim, GEntity *entity, std::map<MVertex*, std
   }
 }
 
-
-
-static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedBlobs(
-                                const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-                                const std::set<MElement*> &badElements, int depth, const double distFactor, bool weakMerge = false)
+static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedBlobs
+  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+   const std::set<MElement*> &badElements, int depth, const double distFactor,
+   bool weakMerge = false)
 {
 
   OptHomMessage("Starting blob generation from %i bad elements...",badElements.size());
@@ -230,9 +230,9 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   std::cout << "Constructing " << badElements.size() << " primary blobs...\n";
   std::vector<std::set<MElement*> > primBlobs;
   primBlobs.reserve(badElements.size());
-  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it)
+  for (std::set<MElement*>::const_iterator it = badElements.begin();
+       it != badElements.end(); ++it)
     primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements, distFactor));
-
 
   // Compute blob connectivity
   std::cout << "Computing blob connectivity...\n";
@@ -242,8 +242,10 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
     std::set<MElement*> &blob = primBlobs[iB];
     for(std::set<MElement*>::iterator itEl = blob.begin(); itEl != blob.end(); ++itEl) {
       std::set<int> &blobInd = tags[*itEl];
-      if (!blobInd.empty() && (badElements.find(*itEl) != badElements.end()  || !weakMerge)) {
-        for (std::set<int>::iterator itBS = blobInd.begin(); itBS != blobInd.end(); ++itBS) blobConnect[*itBS].insert(iB);
+      if (!blobInd.empty() && (badElements.find(*itEl) != badElements.end() ||
+                               !weakMerge)) {
+        for (std::set<int>::iterator itBS = blobInd.begin();
+             itBS != blobInd.end(); ++itBS) blobConnect[*itBS].insert(iB);
         blobConnect[iB].insert(blobInd.begin(), blobInd.end());
       }
       blobInd.insert(iB);
@@ -264,7 +266,8 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   // Merge primary blobs according to groups
   std::cout << "Merging primary blobs into " << groups.size() << " blobs...\n";
   std::list<std::set<MElement*> > blobs;
-  for (std::list<std::set<int> >::iterator itG = groups.begin(); itG != groups.end(); ++itG) {
+  for (std::list<std::set<int> >::iterator itG = groups.begin();
+       itG != groups.end(); ++itG) {
     blobs.push_back(std::set<MElement*>());
     for (std::set<int>::iterator itB = itG->begin(); itB != itG->end(); ++itB) {
       std::set<MElement*> primBlob = primBlobs[*itB];
@@ -275,22 +278,21 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   // Store and compute blob boundaries
   std::cout << "Computing boundaries for " << blobs.size() << " blobs...\n";
   std::vector<std::pair<std::set<MElement *>, std::set<MVertex*> > > result;
-  for (std::list<std::set<MElement*> >::iterator itB = blobs.begin(); itB != blobs.end(); ++itB)
-    result.push_back(std::pair<std::set<MElement*>, std::set<MVertex*> >(*itB, getAllBndVertices(*itB, vertex2elements)));
+  for (std::list<std::set<MElement*> >::iterator itB = blobs.begin();
+       itB != blobs.end(); ++itB)
+    result.push_back(std::pair<std::set<MElement*>, std::set<MVertex*> >
+                     (*itB, getAllBndVertices(*itB, vertex2elements)));
 
   OptHomMessage("Generated %i blobs",blobs.size());
 
   return result;
-
 }
 
-
-
-static void optimizeConnectedBlobs(const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-                                   std::set<MElement*> &badasses,
-                                   OptHomParameters &p, int samples, bool weakMerge = false)
+static void optimizeConnectedBlobs
+  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+   std::set<MElement*> &badasses,
+   OptHomParameters &p, int samples, bool weakMerge = false)
 {
-
   p.SUCCESS = 1;
   p.minJac = 1.e100;
   p.maxJac = -1.e100;
@@ -303,9 +305,9 @@ static void optimizeConnectedBlobs(const std::map<MVertex*, std::vector<MElement
     OptHomMessage("Optimizing a blob %i/%i composed of %4d elements", i+1, toOptimize.size(), toOptimize[i].first.size());
     fflush(stdout);
     OptHOM temp(toOptimize[i].first, toOptimize[i].second, p.fixBndNodes);
-//std::ostringstream ossI1;
-//ossI1 << "initial_ITER_" << i << ".msh";
-//temp.mesh.writeMSH(ossI1.str().c_str());
+    //std::ostringstream ossI1;
+    //ossI1 << "initial_ITER_" << i << ".msh";
+    //temp.mesh.writeMSH(ossI1.str().c_str());
     int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
                                 false, samples, p.itMax, p.optPassMax);
     if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
@@ -330,10 +332,8 @@ static void optimizeConnectedBlobs(const std::map<MVertex*, std::vector<MElement
 
 }
 
-
-
-static MElement *getWorstElement(const std::set<MElement*> &badasses, OptHomParameters &p){
-
+static MElement *getWorstElement(std::set<MElement*> &badasses, OptHomParameters &p)
+{
   double worst = 1.e300;
   MElement *worstEl = 0;
 
@@ -348,18 +348,17 @@ static MElement *getWorstElement(const std::set<MElement*> &badasses, OptHomPara
   }
 
   return worstEl;
-
 }
 
-
-
-static std::set<MVertex *> getPrimBndVertices(std::set<MElement*> &elements,
-            const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+static std::set<MVertex *> getPrimBndVertices
+  (std::set<MElement*> &elements,
+   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
 {
   std::set<MVertex*> bnd;
   for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
     for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find((*itE)->getVertex(i))->second;
+      const std::vector<MElement*> &neighbours = vertex2elements.find
+        ((*itE)->getVertex(i))->second;
       for (size_t k = 0; k < neighbours.size(); ++k) {
         if (elements.find(neighbours[k]) == elements.end()) {
             bnd.insert((*itE)->getVertex(i));
@@ -370,13 +369,11 @@ static std::set<MVertex *> getPrimBndVertices(std::set<MElement*> &elements,
   return bnd;
 }
 
-
-
-static std::set<MElement*> getSurroundingBlob3D(MElement *el, int depth,
-                                                const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-                                                const double distFactor)
+static std::set<MElement*> getSurroundingBlob3D
+  (MElement *el, int depth,
+   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
+   const double distFactor)
 {
-
   const double limDist = distMaxStraight(el)*distFactor;
 
   std::set<MElement*> blob;
@@ -388,24 +385,32 @@ static std::set<MElement*> getSurroundingBlob3D(MElement *el, int depth,
   lastLayer.push_back(el);
   for (int d = 0; d < depth; ++d) {
     currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin(); it != lastLayer.end(); ++it) {
+    for (std::list<MElement*>::iterator it = lastLayer.begin();
+         it != lastLayer.end(); ++it) {
       for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements.find((*it)->getVertex(i))->second;
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN) {
-          SPoint3 pt = (*itN)->barycenter_infty();                            // Check distance from all seed points
+        const std::vector<MElement*> &neighbours = vertex2elements.find
+          ((*it)->getVertex(i))->second;
+        for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
+             itN != neighbours.end(); ++itN) {
+          // Check distance from all seed points
+          SPoint3 pt = (*itN)->barycenter_infty();
           bool nearSeed = false;
-          for (std::list<SPoint3>::const_iterator itS = seedPts.begin(); itS != seedPts.end(); ++itS)
+          for (std::list<SPoint3>::const_iterator itS = seedPts.begin();
+               itS != seedPts.end(); ++itS)
             if (itS->distance(pt) < limDist) {
               nearSeed = true;
               break;
             }
-          if ((d == 0) || nearSeed)
-            if (blob.insert(*itN).second) currentLayer.push_back(*itN);       // Assume that if an el is too far, its neighbours are too far as well
+          if ((d == 0) || nearSeed){
+            // Assume that if an el is too far, its neighbours are too far as well
+            if (blob.insert(*itN).second) currentLayer.push_back(*itN);
+          }
         }
       }
     }
-    if (d == 0)                                                               // Elts of 1st layer are seed points
-      for (std::list<MElement*>::iterator itL = currentLayer.begin(); itL != currentLayer.end(); ++itL)
+    if (d == 0) // Elts of 1st layer are seed points
+      for (std::list<MElement*>::iterator itL = currentLayer.begin();
+           itL != currentLayer.end(); ++itL)
         seedPts.push_back((*itL)->barycenter_infty());
     lastLayer = currentLayer;
   }
@@ -414,48 +419,42 @@ static std::set<MElement*> getSurroundingBlob3D(MElement *el, int depth,
 
 }
 
-
-
-static std::set<MElement*> addBlobLayer(std::set<MElement*> &blob,
-                                        const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+static std::set<MElement*> addBlobLayer
+  (std::set<MElement*> &blob,
+   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
 {
-
   std::set<MElement*> layer;
   const std::set<MElement*> initBlob = blob;
 
-  for (std::set<MElement*>::const_iterator it = initBlob.begin(); it != initBlob.end(); ++it)
+  for (std::set<MElement*>::const_iterator it = initBlob.begin();
+       it != initBlob.end(); ++it)
     for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find((*it)->getVertex(i))->second;
-      for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN)
-          if (blob.insert(*itN).second) layer.insert(*itN);
+      const std::vector<MElement*> &neighbours = vertex2elements.find
+        ((*it)->getVertex(i))->second;
+      for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
+           itN != neighbours.end(); ++itN)
+        if (blob.insert(*itN).second) layer.insert(*itN);
     }
-
   return layer;
-
 }
 
-
-
-static bool detectNewBrokenElement(const std::set<MElement*> &layer,
-                                   const std::set<MElement*> &badasses, OptHomParameters &p){
-
+static bool detectNewBrokenElement(std::set<MElement*> &layer,
+                                   std::set<MElement*> &badasses,
+                                   OptHomParameters &p)
+{
   for (std::set<MElement*>::iterator it=layer.begin(); it!=layer.end(); it++)
     if (badasses.find(*it) == badasses.end()) {
       double jmin, jmax, val;
       (*it)->scaledJacRange(jmin,jmax);
       if ((jmin < p.BARRIER_MIN) || (jmax > p.BARRIER_MAX)) return true;
     }
-
   return false;
-
 }
 
-
-
-static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-                             std::set<MElement*> badElts, OptHomParameters &p, int samples)
+static void optimizeOneByOne
+  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+   std::set<MElement*> badElts, OptHomParameters &p, int samples)
 {
-
   p.SUCCESS = 1;
   p.minJac = 1.e100;
   p.maxJac = -1.e100;
@@ -480,23 +479,27 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
 
       OptHOM *opt;
 
-      // First step: small blob with unsafe optimization (only 1st-order bnd. vertices fixed)
-      std::set<MElement*> toOptimizePrim = getSurroundingBlob(worstEl, nbLayers, vertex2elements, distanceFactor, 0);
+      // First step: small blob with unsafe optimization (only 1st-order
+      // bnd. vertices fixed)
+      std::set<MElement*> toOptimizePrim = getSurroundingBlob
+        (worstEl, nbLayers, vertex2elements, distanceFactor, 0);
       std::set<MVertex*> toFix1 = getPrimBndVertices(toOptimizePrim, vertex2elements);
       std::set<MElement*> toOptimize1;
-      std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),badElts.begin(),badElts.end(),    // Do not optimize badElts
+      std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
+                          badElts.begin(),badElts.end(), // Do not optimize badElts
                           std::inserter(toOptimize1, toOptimize1.end()));
-      OptHomMessage("Optimizing primary blob %i (max. %i remaining) composed of %4d elements", iBadEl,
-                    badElts.size(), toOptimize1.size());
+      OptHomMessage("Optimizing primary blob %i (max. %i remaining) composed of"
+                    " %4d elements", iBadEl, badElts.size(), toOptimize1.size());
       fflush(stdout);
       opt = new OptHOM(toOptimize1, toFix1, p.fixBndNodes);
-//std::ostringstream ossI1;
-//ossI1 << "initial_primary_" << iter << ".msh";
-//opt->mesh.writeMSH(ossI1.str().c_str());
+      //std::ostringstream ossI1;
+      //ossI1 << "initial_primary_" << iter << ".msh";
+      //opt->mesh.writeMSH(ossI1.str().c_str());
       success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
                               false, samples, p.itMax, p.optPassMax);
 
-      // Second step: add external layer, check it and optimize it safely (all bnd. vertices fixed) if new broken element
+      // Second step: add external layer, check it and optimize it safely (all
+      // bnd. vertices fixed) if new broken element
       if (success > 0) {
         opt->mesh.updateGEntityPositions();
         std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
@@ -504,25 +507,28 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
           delete opt;
           std::set<MVertex*> toFix2 = getAllBndVertices(toOptimizePrim, vertex2elements);
           std::set<MElement*> toOptimize2;
-          std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),badElts.begin(),badElts.end(),
+          std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
+                              badElts.begin(),badElts.end(),
                               std::inserter(toOptimize2, toOptimize2.end()));
-          OptHomMessage("Optimizing corrective blob %i (max. %i remaining) composed of %4d elements", iBadEl,
-                        badElts.size(), toOptimize2.size());
+          OptHomMessage("Optimizing corrective blob %i (max. %i remaining) "
+                        "composed of %4d elements", iBadEl, badElts.size(),
+                        toOptimize2.size());
           fflush(stdout);
           opt = new OptHOM(toOptimize2, toFix2, p.fixBndNodes);
-//std::ostringstream ossI1;
-//ossI1 << "initial_corrective_" << iter << ".msh";
-//opt->mesh.writeMSH(ossI1.str().c_str());
-          success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
-                                  false, samples, p.itMax, p.optPassMax);
+          //std::ostringstream ossI1;
+          //ossI1 << "initial_corrective_" << iter << ".msh";
+          //opt->mesh.writeMSH(ossI1.str().c_str());
+          success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
+                                  p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
           if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
             OptHomMessage("Jacobian optimization succeed, starting svd optimization");
-            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
-                true, samples, p.itMax, p.optPassMax);
+            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
+                                    p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
           }
         }
         else {
-          OptHomMessage("Primary blob %i did not break new elements, no correction needed", iBadEl);
+          OptHomMessage("Primary blob %i did not break new elements, "
+                        "no correction needed", iBadEl);
           fflush(stdout);
         }
       }
@@ -537,13 +543,14 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
         opt->mesh.updateGEntityPositions();
       }
 
-//std::ostringstream ossI2;
-//ossI2 << "final_ITER_" << iter << ".msh";
-//temp.mesh.writeMSH(ossI2.str().c_str());
+      //std::ostringstream ossI2;
+      //ossI2 << "final_ITER_" << iter << ".msh";
+      //temp.mesh.writeMSH(ossI2.str().c_str());
       if (success <= 0) {
         distanceFactor *= p.adaptBlobDistFact;
         nbLayers *= p.adaptBlobLayerFact;
-        OptHomMessage("Blob %i failed (adapt #%i), adapting with increased size", iBadEl, iterBlob);
+        OptHomMessage("Blob %i failed (adapt #%i), adapting with increased size",
+                      iBadEl, iterBlob);
         if (iterBlob == p.maxAdaptBlob-1) {
           std::ostringstream ossI2;
           ossI2 << "final_" << iBadEl << ".msh";
@@ -551,17 +558,13 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
         }
       }
       else break;
-
     }
 
     //#pragma omp critical
     p.SUCCESS = std::min(p.SUCCESS, success);
 
   }
-
 }
-
-
 
 //static void optimizeOneByOneTest(const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
 //                                 std::set<MElement*> badasses, OptHomParameters &p, int method, int samples)
@@ -745,11 +748,8 @@ static void optimizeOneByOne(const std::map<MVertex*, std::vector<MElement *> > 
 //
 //}
 
-
-
 void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
 {
-
   double t1 = Cpu();
 
   int samples = 30;
@@ -765,11 +765,12 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
-    std::cout << "Computing connectivity and bad elements for entity " << entity->tag() << " ...\n";
-    calcVertex2Elements(p.dim,entity,vertex2elements);                       // Compute vert. -> elt. connectivity
-//std::cout << " -> " << entity->getNumMeshElements()
-//            << " elements, vertex2elements.size() = " << vertex2elements.size() << "\n";
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {                  // Detect bad elements
+    std::cout << "Computing connectivity and bad elements for entity "
+              << entity->tag() << " ...\n";
+    calcVertex2Elements(p.dim,entity,vertex2elements); // Compute vert. -> elt. connectivity
+    //std::cout << " -> " << entity->getNumMeshElements()
+    //            << " elements, vertex2elements.size() = " << vertex2elements.size() << "\n";
+    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
       if (el->getDim() == p.dim) {
@@ -780,19 +781,22 @@ void HighOrderMeshOptimizer (GModel *gm, OptHomParameters &p)
     }
   }
 
-  if (p.strategy == 0) optimizeConnectedBlobs(vertex2elements, badasses, p, samples, false);
-  else if (p.strategy == 2) optimizeConnectedBlobs(vertex2elements, badasses, p, samples, true);
-  else optimizeOneByOne(vertex2elements, badasses, p, samples);
+  if (p.strategy == 0)
+    optimizeConnectedBlobs(vertex2elements, badasses, p, samples, false);
+  else if (p.strategy == 2)
+    optimizeConnectedBlobs(vertex2elements, badasses, p, samples, true);
+  else
+    optimizeOneByOne(vertex2elements, badasses, p, samples);
 
   double DTF = Cpu()-tf1;
   if (p.SUCCESS == 1)
     OptHomMessage("Optimization succeeded (CPU %g sec)", DTF);
   else if (p.SUCCESS == 0)
-    OptHomMessage("Warning : All jacobians positive but not all in the range (CPU %g sec)", DTF);
+    OptHomMessage("Warning : All jacobians positive but not all in the range"
+                  " (CPU %g sec)", DTF);
   else if (p.SUCCESS == -1)
     OptHomMessage("Error : Still negative jacobians (CPU %g sec)", DTF);
 
   double t2 = Cpu();
   p.CPU = t2-t1;
-
 }
