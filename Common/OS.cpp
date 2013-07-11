@@ -405,7 +405,7 @@ int SystemCall(const std::string &command, bool blocking)
   if(isPython || isExe){
     if(access(exe.c_str(), X_OK)){
       if(isPython){
-        Msg::Info("Script '%s' is not executable: running with python", 
+        Msg::Info("Script '%s' is not executable: running with python",
 		  exe.c_str());
         cmd = "python " + cmd;
       }

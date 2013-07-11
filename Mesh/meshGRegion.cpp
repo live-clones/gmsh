@@ -567,7 +567,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 	       (Msg::GetVerbosity() > 6) ? 'V': '\0');
     }
     else {
-      sprintf(opts, "-Ype%c",
+      sprintf(opts, "Ype%c",
               (Msg::GetVerbosity() < 3) ? 'Q':
               (Msg::GetVerbosity() > 6) ? 'V': '\0');
       // removed -q because mesh sizes at new vertices are wrong
