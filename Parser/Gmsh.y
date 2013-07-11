@@ -3455,9 +3455,13 @@ TransfiniteArrangement :
       if(!strcmp($1, "Right"))
         $$ = 1;
       else if(!strcmp($1, "Left"))
-        $$ = -1;
-      else // alternated
-        $$ = 0;
+	$$ = -1;
+      else if(!strcmp($1, "AlternateRight"))
+	$$ = 2;
+      else if(!strcmp($1, "AlternateLeft"))
+	$$ = -2;
+      else // "Alternate" -> "Alternate Right"
+	$$ = 2;
       Free($1);
     }
 ;

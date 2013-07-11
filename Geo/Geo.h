@@ -148,7 +148,7 @@ class Surface{
   char Visible;
   int Method;
   int Recombine;
-  int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
+  int Recombine_Dir; // -1 is left, +1 is right, -2/2 is alternated left/right
   double RecombineAngle;
   int TransfiniteSmoothing;
   List_T *Generatrices;

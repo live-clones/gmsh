@@ -286,7 +286,7 @@ class GFace : public GEntity
     // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
     // all diagonals of the triangulation are left (-1), right (1) or
-    // alternated (0)
+    // alternated starting at right (2) or left (-2)
     int transfiniteArrangement;
     // do we smooth (transfinite) mesh? (<0 to use default smoothing)
     int transfiniteSmoothing;
