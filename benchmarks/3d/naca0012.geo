@@ -1,21 +1,17 @@
-lc1=0.1;
-lc2=0.001;
-        
-// Cubo
+lc1=1;
+lc2=0.01;
+
 Point(1)={-2, -2, 0, lc1};
 Point(2)={3, -2, 0, lc1};
 Point(3)={3, 2, 0, lc1};
 Point(4)={-2, 2, 0, lc1};
-    
-Spline(1)={1,2};
-Spline(2)={2,3};
-Spline(3)={3,4};
-Spline(4)={4,1};
-    
-    
-    
-// NACA 0012 - Perfil da Raiz da Asa;
-    
+
+Line(1)={1,2};
+Line(2)={2,3};
+Line(3)={3,4};
+Line(4)={4,1};
+
+// NACA 0012
 Point(101)={+1.0000000000000000e+000,+0.0000000000000000e+000,+0.0000000000000000e+000,lc2};
 Point(102)={+9.9199000000000004e-001,-1.3209999999999999e-003,+0.0000000000000000e+000,lc2};
 Point(103)={+9.8340000000000005e-001,-2.7246000000000002e-003,+0.0000000000000000e+000,lc2};
@@ -208,74 +204,13 @@ Point(289)={+9.6453999999999995e-001,+5.7619000000000004e-003,+0.000000000000000
 Point(290)={+9.7423999999999999e-001,+4.2063999999999999e-003,+0.0000000000000000e+000,lc2};
 Point(291)={+9.8340000000000005e-001,+2.7246000000000002e-003,+0.0000000000000000e+000,lc2};
 Point(292)={+9.9199000000000004e-001,+1.3209999999999999e-003,+0.0000000000000000e+000,lc2};
-    
-// Loop das Splines para formar o perfil - Intradorso;
-    
-    
-i=0;
-j=0;
-end=84;
-For i In {0:end}
-j=i+101;
-a[i]=j;
-EndFor
-    
-Spline(1001)={a[]};
-    
-    
-    
-// Loop das Splines para formar o perfil - Intradorso;
-    
-    
-i=0;
-j=0;
-end=24;
-For i In {0:end}
-j=i+185;
-b[i]=j;
-EndFor
-    
-Spline(1002)={b[]};
-    
-    
-    
-// Loop das Splines para formar o perfil - Extradorso;
-    
-    
-i=0;
-j=0;
-end=84;
-For i In {0:end}
-j=i+209;
-c[i]=j;
-EndFor
-    
-    
-c[84]=101;
-Spline(1003)={c[]};
-    
-    
+
+Spline(1001)={101 : 101+84};
+Spline(1002)={185 : 185+24};
+Spline(1003)={209 : 209+83, 101};
+
 Line Loop(2001)={1,2,3,4};
-    
 Line Loop(2002)={1001,1002,1003};
-    
 Plane Surface(3001)={2001,2002};
-    
-    
-Extrude Surface { 3001, {0, 0, 0.3} };
-    
-Surface Loop(1)={3001,3013,3017,3021,3025,3029,3033,3037,3038};
-    
-Volume(2)={1};
-    
-// Flag das Arestas geométricas
-Physical Line(1) = {1001,1002,1003,3007,3008,3009,3027,3028,3032};
-Physical Line(2) = {4,3006,3011,3020};    
-    
-//Flag das Superfícies    
-Physical Surface(3) = {3001,3013,3017,3021,3038};    
-Physical Surface(1) = {3029,3033,3037};
-Physical Surface(2) = {3025};
-Physical Volume(3) = {1};
-    
-    
+
+Extrude {0, 0, 0.3}{ Surface {3001}; }
