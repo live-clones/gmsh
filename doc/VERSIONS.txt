@@ -1,4 +1,4 @@
-2.8.1 (July ?, 2013): improved compound surfaces.
+2.8.1 (July 11, 2013): improved compound surfaces and transfinite arrangements.
 
 2.8.0 (July 8, 2013): improved Delaunay point insertion; fixed mesh orientation
 of plane surfaces; fixed mesh size prescribed at embedded points; improved

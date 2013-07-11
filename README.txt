@@ -10,36 +10,8 @@ is located in doc/texinfo/. See the demos/ directory and the web site
 http://geuz.org/gmsh for additional examples.
 
 Building Gmsh from its source code requires a C++ compiler and CMake
-(http://cmake.org).  Building the graphical user interface requires FLTK 1.3
+(http://cmake.org).  Building the graphical user interface requires FLTK 1.3.2
 (http://fltk.org), configured with OpenGL support.
-
-
-Build Gmsh using CMake's graphical user interface
--------------------------------------------------
-
-* Launch CMake and fill-in the two top input fields (telling where the Gmsh
-  source directory is located and where you want the Gmsh binary to be created).
-
-* Click on "Add entry" and define the variable CMAKE_PREFIX_PATH, of type
-  "PATH", pointing to the location(s) of any external package(s) (FLTK,
-  BLAS/LAPACK, etc.) installed in non-standard directories.
-
-  (If you are using our pre-compiled "gmsh dependencies" package
-  (http://geuz.org/gmsh/bin/Windows/gmsh-dep-msvc2008-release.zip) with Visual
-  Studio on Windows simply point CMAKE_PREFIX_PATH to the "gmsh-dep" directory.)
-
-* Click on "Configure" and choose your compiler (e.g. Visual Studio).
-
-* Optionally change some configuration options (re-run "Configure" every time
-  you change some options).
-
-* Once you are happy with all the configuration options, click on "Generate".
-
-* Go to the build directory and build Gmsh using your chosen compiler.
-
-  (With Visual Studio double-click on "gmsh.sln". If you are using our
-  pre-compiled "gmsh dependencies" package you must use the "Release" or
-  "RelWithDebInfo" build type.)
 
 
 Build Gmsh from the command line
@@ -105,3 +77,24 @@ Build Gmsh from the command line
 * To see a detailed compilation log use
 
     make VERBOSE=1
+
+
+Build Gmsh using CMake's graphical user interface
+-------------------------------------------------
+
+* Launch CMake and fill-in the two top input fields (telling where the Gmsh
+  source directory is located and where you want the Gmsh binary to be created).
+
+* Click on "Add entry" and define the variable CMAKE_PREFIX_PATH, of type
+  "PATH", pointing to the location(s) of any external package(s) (FLTK,
+  BLAS/LAPACK, etc.) installed in non-standard directories.
+
+* Click on "Configure" and choose your compiler.
+
+* Optionally change some configuration options (re-run "Configure" every time
+  you change some options).
+
+* Once you are happy with all the configuration options, click on "Generate".
+
+* Go to the build directory and build Gmsh using your chosen compiler.
+
