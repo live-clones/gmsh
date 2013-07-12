@@ -56,9 +56,19 @@
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
     if([sender numberOfTouches] != 2) return;
-    scaleFactor *= [sender scale];
-    scaleFactor = MAX(0.1, scaleFactor);
-    glView->mContext->eventHandler(2,scaleFactor);
+    float mScale;
+    if (sender.state == UIGestureRecognizerStateBegan)
+        mScale = scaleFactor;
+    else if(sender.state == UIGestureRecognizerStateChanged)
+        mScale = scaleFactor * [sender scale];
+    else if(sender.state == UIGestureRecognizerStateEnded){
+        scaleFactor *= [sender scale];
+        mScale = scaleFactor;
+    }
+    else
+        mScale = 1.0f;
+    mScale = MAX(0.1, mScale);
+    glView->mContext->eventHandler(2,mScale);
     [glView drawView];
 }
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
