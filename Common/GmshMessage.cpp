@@ -885,18 +885,20 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
       ps[0].setValue(val[0]); // use local value
     else
       val[0] = ps[0].getValue(); // use value from server
-    // keep track of these attributes, which can be changed server-side (unless,
-    // for the range/choices, when explicitely setting these attributes as
-    // ReadOnly)
-    if(!(fopt.count("ReadOnlyRange") && fopt["ReadOnlyRange"][0])){
-      if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
-         ps[0].getMax() != onelab::parameter::maxNumber() ||
-         ps[0].getStep() != 0.) noRange = false;
-      if(ps[0].getChoices().size()) noChoices = false;
+    // keep track of these attributes, which can be changed server-side (unless
+    // they are not visible or, for the range/choices, when explicitely setting
+    // these attributes as ReadOnly)
+    if(ps[0].getVisible()){
+      if(!(fopt.count("ReadOnlyRange") && fopt["ReadOnlyRange"][0])){
+        if(ps[0].getMin() != -onelab::parameter::maxNumber() ||
+           ps[0].getMax() != onelab::parameter::maxNumber() ||
+           ps[0].getStep() != 0.) noRange = false;
+        if(ps[0].getChoices().size()) noChoices = false;
+      }
+      if(ps[0].getAttribute("Loop").size()) noLoop = false;
+      if(ps[0].getAttribute("Graph").size()) noGraph = false;
+      if(ps[0].getAttribute("Closed").size()) noClosed = false;
     }
-    if(ps[0].getAttribute("Loop").size()) noLoop = false;
-    if(ps[0].getAttribute("Graph").size()) noGraph = false;
-    if(ps[0].getAttribute("Closed").size()) noClosed = false;
   }
   else{
     ps.resize(1);
@@ -977,10 +979,13 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
       ps[0].setValue(val); // use local value
     else
       val = ps[0].getValue(); // use value from server
-    // keep track of these attributes, which can be changed server-side
-    if(ps[0].getChoices().size()) noChoices = false;
-    if(ps[0].getAttribute("Closed").size()) noClosed = false;
-    if(ps[0].getAttribute("MultipleSelection").size()) noMultipleSelection = false;
+    // keep track of these attributes, which can be changed server-side (unless
+    // they are not visible)
+    if(ps[0].getVisible()){
+      if(ps[0].getChoices().size()) noChoices = false;
+      if(ps[0].getAttribute("Closed").size()) noClosed = false;
+      if(ps[0].getAttribute("MultipleSelection").size()) noMultipleSelection = false;
+    }
   }
   else{
     ps.resize(1);
