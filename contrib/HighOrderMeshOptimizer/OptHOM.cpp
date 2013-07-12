@@ -6,7 +6,7 @@
 #include "GmshMessage.h"
 #include "GmshConfig.h"
 
-#ifdef HAVE_BFGS
+#if defined(HAVE_BFGS)
 
 #include "ap.h"
 #include "alglibinternal.h"
@@ -22,9 +22,9 @@ static inline double compute_f(double v, double barrier)
     return l * l + m * m;
   }
   else return 1.e300;
-//  if (v < 1.) return pow(1.-v,powM);
-//  if (v < 1.) return exp((long double)pow(1.-v,3));
-//  else return pow(v-1.,powP);
+  // if (v < 1.) return pow(1.-v,powM);
+  // if (v < 1.) return exp((long double)pow(1.-v,3));
+  // else return pow(v-1.,powP);
 }
 
 static inline double compute_f1(double v, double barrier)
@@ -33,35 +33,32 @@ static inline double compute_f1(double v, double barrier)
     return 2 * (v - 1) + 2 * log((v - barrier) / (1 - barrier)) / (v - barrier);
   }
   else return barrier < 1 ? -1.e300 : 1e300;
-//  if (v < 1.) return -powM*pow(1.-v,powM-1.);
-//  if (v < 1.) return -3.*pow(1.-v,2)*exp((long double)pow(1.-v,3));
-//  else return powP*pow(v-1.,powP-1.);
+  // if (v < 1.) return -powM*pow(1.-v,powM-1.);
+  // if (v < 1.) return -3.*pow(1.-v,2)*exp((long double)pow(1.-v,3));
+  // else return powP*pow(v-1.,powP-1.);
 }
 
-
-
-
-// Constructor
-OptHOM::OptHOM(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes) :
-       mesh(els, toFix, fixBndNodes)
+OptHOM::OptHOM(const std::set<MElement*> &els, std::set<MVertex*> & toFix,
+               bool fixBndNodes) :
+  mesh(els, toFix, fixBndNodes)
 {
   _optimizeMetricMin = false;
 }
 
-
-
-// Contribution of the element Jacobians to the objective function value and gradients (2D version)
+// Contribution of the element Jacobians to the objective function value and
+// gradients (2D version)
 bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 {
-
   minJac = 1.e300;
   maxJac = -1.e300;
 
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
-    std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
-    std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));  // Gradients of scaled Jacobians
+    // Scaled Jacobians
+    std::vector<double> sJ(mesh.nBezEl(iEl));
+    // Gradients of scaled Jacobians
+    std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));
     mesh.scaledJacAndGradients (iEl,sJ,gSJ);
-    
+
     for (int l = 0; l < mesh.nBezEl(iEl); l++) {
       double f1 = compute_f1(sJ[l], jacBar);
       Obj += compute_f(sJ[l], jacBar);
@@ -77,7 +74,6 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
   }
 
   return true;
-
 }
 
 bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
@@ -87,10 +83,12 @@ bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
   maxJac = -1.e300;
 
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
-    std::vector<double> sJ(mesh.nBezEl(iEl));                   // Scaled Jacobians
-    std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));  // Gradients of scaled Jacobians
+    // Scaled Jacobians
+    std::vector<double> sJ(mesh.nBezEl(iEl));
+    // Gradients of scaled Jacobians
+    std::vector<double> gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));
     mesh.metricMinAndGradients (iEl,sJ,gSJ);
-    
+
     for (int l = 0; l < mesh.nBezEl(iEl); l++) {
       Obj += compute_f(sJ[l], jacBar);
       const double f1 = compute_f1(sJ[l], jacBar);
@@ -103,12 +101,11 @@ bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
   return true;
 }
 
-
-
-// Contribution of the vertex distance to the objective function value and gradients (2D version)
-bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj, alglib::real_1d_array &gradObj)
+// Contribution of the vertex distance to the objective function value and
+// gradients (2D version)
+bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
+                            alglib::real_1d_array &gradObj)
 {
-
   maxDist = 0;
   avgDist = 0;
   int nbBnd = 0;
@@ -119,7 +116,8 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj, alglib::real
     Obj += Factor * dSq;
     std::vector<double> gDSq(mesh.nPCFV(iFV));
     mesh.gradDistSq(iFV,gDSq);
-    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) gradObj[mesh.indPCFV(iFV,iPC)] += Factor*gDSq[iPC];
+    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++)
+      gradObj[mesh.indPCFV(iFV,iPC)] += Factor*gDSq[iPC];
     maxDist = std::max(maxDist, dist);
     avgDist += dist;
     nbBnd++;
@@ -127,14 +125,11 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj, alglib::real
   if (nbBnd != 0) avgDist /= nbBnd;
 
   return true;
-
 }
 
-
-
-void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj)
+void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj,
+                         alglib::real_1d_array &gradObj)
 {
-
   mesh.updateMesh(x.getcontent());
 
   Obj = 0.;
@@ -145,25 +140,21 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj, alglib::re
   if(_optimizeMetricMin)
     addMetricMinObjGrad(Obj, gradObj);
   if ((minJac > barrier_min) && (maxJac < barrier_max || !_optimizeBarrierMax)) {
-    printf("INFO: reached %s (%g %g) requirements, setting null gradient\n", _optimizeMetricMin ? "svd" : "jacobian", minJac, maxJac);
+    Msg::Info("Reached %s (%g %g) requirements, setting null gradient",
+              _optimizeMetricMin ? "svd" : "jacobian", minJac, maxJac);
     Obj = 0.;
     for (int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
   }
-
 }
 
-
-
-void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj, alglib::real_1d_array &gradObj, void *HOInst)
+void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
+                     alglib::real_1d_array &gradObj, void *HOInst)
 {
   (static_cast<OptHOM*>(HOInst))->evalObjGrad(x, Obj, gradObj);
 }
 
-
-
 void OptHOM::recalcJacDist()
- {
-
+{
   maxDist = 0;
   avgDist = 0;
   int nbBnd = 0;
@@ -181,8 +172,10 @@ void OptHOM::recalcJacDist()
   minJac = 1.e300;
   maxJac = -1.e300;
   for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
-    std::vector<double> sJ(mesh.nBezEl(iEl));                       // Scaled Jacobians
-    std::vector<double> dumGSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));   // (Dummy) gradients of scaled Jacobians
+    // Scaled Jacobians
+    std::vector<double> sJ(mesh.nBezEl(iEl));
+    // (Dummy) gradients of scaled Jacobians
+    std::vector<double> dumGSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));
     mesh.scaledJacAndGradients (iEl,sJ,dumGSJ);
     if(_optimizeMetricMin)
       mesh.metricMinAndGradients (iEl,sJ,dumGSJ);
@@ -193,56 +186,45 @@ void OptHOM::recalcJacDist()
   }
 }
 
-
-
 void OptHOM::printProgress(const alglib::real_1d_array &x, double Obj)
 {
-
   iter++;
 
   if (iter % progressInterv == 0) {
-    printf("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E\n", iter, Obj, Obj/initObj, minJac, maxJac, maxDist, avgDist);
-    Msg::Debug("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) -- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E", iter, Obj, Obj/initObj, minJac, maxJac, maxDist, avgDist);
+    Msg::Info("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E) "
+              "-- minJ = %12.5E  maxJ = %12.5E Max D = %12.5E Avg D = %12.5E",
+              iter, Obj, Obj/initObj, minJac, maxJac, maxDist, avgDist);
   }
-
 }
-
-
 
 void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *HOInst)
 {
   ((OptHOM*)HOInst)->printProgress(x,Obj);
 }
 
-
-
 void OptHOM::calcScale(alglib::real_1d_array &scale)
 {
-
   scale.setlength(mesh.nPC());
 
   // Calculate scale
   for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
     std::vector<double> scaleFV(mesh.nPCFV(iFV),1.);
     mesh.pcScale(iFV,scaleFV);
-    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++) scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
+    for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++)
+      scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
   }
-
 }
 
-
-
-void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &initGradObj, int itMax)
+void OptHOM::OptimPass(alglib::real_1d_array &x,
+                       const alglib::real_1d_array &initGradObj, int itMax)
 {
-
   static const double EPSG = 0.;
   static const double EPSF = 0.;
   static const double EPSX = 0.;
   static int OPTMETHOD = 1;
 
-  Msg::Debug("--- Optimization pass with jacBar = %12.5E",jacBar);
-  std::cout << "--- Optimization pass with initial jac. range ("
-            << minJac << "," << maxJac << "), jacBar = " << jacBar << "\n";
+  Msg::Info("--- Optimization pass with initial jac. range (%g, %g), jacBar = %g",
+            minJac, maxJac, jacBar);
 
   iter = 0;
 
@@ -279,23 +261,21 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, const alglib::real_1d_array &in
     terminationtype = rep.terminationtype;
   }
 
-  std::cout << "Optimization finalized after " << iterationscount << " iterations (" << nfev << " functions evaluations)";
+  Msg::Info("Optimization finalized after %d iterations (%d function evaluations),",
+            iterationscount, nfev);
   switch(int(terminationtype)) {
-  case 1: std::cout << ", because relative function improvement is no more than EpsF"; break;
-  case 2: std::cout << ", because relative step is no more than EpsX"; break;
-  case 4: std::cout << ", because gradient norm is no more than EpsG"; break;
-  case 5: std::cout << ", because the maximum number of steps was taken"; break;
-  default: std::cout << " with code " << int(terminationtype); break;
+  case 1: Msg::Info("because relative function improvement is no more than EpsF"); break;
+  case 2: Msg::Info("because relative step is no more than EpsX"); break;
+  case 4: Msg::Info("because gradient norm is no more than EpsG"); break;
+  case 5: Msg::Info("because the maximum number of steps was taken"); break;
+  default: Msg::Info("with code %d", int(terminationtype)); break;
   }
-  std::cout << "." << std::endl;
-
 }
 
-
-
-int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double b_max, bool optimizeMetricMin, int pInt, int itMax, int optPassMax)
+int OptHOM::optimize(double weightFixed, double weightFree, double b_min,
+                     double b_max, bool optimizeMetricMin, int pInt,
+                     int itMax, int optPassMax)
 {
-
   barrier_min = b_min;
   barrier_max = b_max;
   progressInterv = pInt;
@@ -332,10 +312,9 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
   for (int i = 0; i < mesh.nPC(); i++) gradObj[i] = 0.;
   evalObjGrad(x, initObj, gradObj);
 
-
-  std::cout << "Start optimizing " << mesh.nEl() << " elements (" << mesh.nVert() << " vertices, "
-            << mesh.nFV() << " free vertices, " << mesh.nPC() << " variables) with min. barrier = " << barrier_min
-            << " and max. barrier = " << barrier_max << std::endl;
+  Msg::Info("Start optimizing %d elements (%d vertices, %d free vertices, %d variables) "
+            "with min barrier %g and max. barrier %g", mesh.nEl(), mesh.nVert(),
+            mesh.nFV(), mesh.nPC(), barrier_min, barrier_max);
 
   int ITER = 0;
   bool minJacOK = true;
@@ -349,7 +328,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
       break;
     }
     if (fabs((minJac-startMinJac)/startMinJac) < 0.01) {
-      std::cout << "Stagnation in minJac detected, stopping optimization\n";
+      Msg::Info("Stagnation in minJac detected, stopping optimization");
       minJacOK = false;
       break;
     }
@@ -366,20 +345,17 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min, double
       jacBar =  1.1 * maxJac;
       if (ITER ++ > optPassMax) break;
       if (fabs((maxJac-startMaxJac)/startMaxJac) < 0.01) {
-        std::cout << "Stagnation in maxJac detected, stopping optimization\n";
+        Msg::Info("Stagnation in maxJac detected, stopping optimization");
         break;
       }
     }
   }
 
-  OptHomMessage("Optimization done Range (%g,%g)",minJac,maxJac);
+  Msg::Info("Optimization done Range (%g,%g)", minJac, maxJac);
 
   if (minJac > barrier_min && maxJac < barrier_max) return 1;
   if (minJac > 0.0) return 0;
   return -1;
-
 }
-
-
 
 #endif

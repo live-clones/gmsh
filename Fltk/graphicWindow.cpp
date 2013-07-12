@@ -3289,7 +3289,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_degree_cb, (void*)2},
   {"0Modules/Mesh/Set order 3",
    (Fl_Callback *)mesh_degree_cb, (void*)3},
-  {"0Modules/Mesh/Optimize high order",
+  {"0Modules/Mesh/High order tools",
    (Fl_Callback *)highordertools_cb},
   {"0Modules/Mesh/Inspect",
    (Fl_Callback *)mesh_inspect_cb} ,
