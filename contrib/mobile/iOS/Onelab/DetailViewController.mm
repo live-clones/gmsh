@@ -55,6 +55,7 @@
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
+    if([sender numberOfTouches] != 2) return;
     scaleFactor *= [sender scale];
     scaleFactor = MAX(0.1, scaleFactor);
     glView->mContext->eventHandler(2,scaleFactor);
@@ -332,7 +333,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
         //[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
     else if(level == "Error")
-        [(__bridge id)self showAlert:msg title:level];
+        ;//[(__bridge id)self showAlert:msg title:level];
 }
 
 #pragma mark - tableView
@@ -372,8 +373,9 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 -(NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
      NSString *modelName = [models objectAtIndex:indexPath.row];
-     NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-    glView->mContext->load([[NSString stringWithFormat:@"%@%@%@%@",ressourcePath,@"/",modelName,@".geo"] UTF8String]);
+     //NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
+    [glView loadMsh:[NSString stringWithFormat:@"%@%@%@",@"/",modelName,@".geo"]];
+    //glView->mContext->load([[NSString stringWithFormat:@"%@%@%@%@",ressourcePath,@"/",modelName,@".geo"] UTF8String]);
     [self hideModelsList];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     return indexPath;

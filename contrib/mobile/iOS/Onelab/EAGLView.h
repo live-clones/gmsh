@@ -24,6 +24,8 @@
 	
 	/* OpenGL name for the depth buffer that is attached to viewFramebuffer, if it exists (0 if it does not exist) */
 	GLuint depthRenderbuffer;
+    
+    NSString *docPath;
 @public
 	/* our GModel drawing class */
     drawContext *mContext;

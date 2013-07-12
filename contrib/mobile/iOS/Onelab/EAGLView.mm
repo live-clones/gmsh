@@ -42,13 +42,29 @@
             //[self release];
             return nil;
         }
-        NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-        NSString *startupModel = [ressourcePath stringByAppendingPathComponent:@"pmsm.geo"];
+        [self copyRes];
+        //NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
+        NSString *startupModel = [docPath stringByAppendingPathComponent:@"pmsm.geo"];
 
         mContext = new drawContext();
         mContext->load(*new std::string([startupModel fileSystemRepresentation]));
     }
     return self;
+}
+
+- (void) copyRes
+{
+    NSString *resPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"files"];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    docPath = [paths objectAtIndex:0]; //Get the docs directory
+    
+    NSArray *resContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resPath error:NULL];
+    
+    for (NSString* obj in resContents){
+        NSError* error;
+        if (![[NSFileManager defaultManager] copyItemAtPath:[resPath stringByAppendingPathComponent:obj] toPath:[docPath stringByAppendingPathComponent:obj] error:&error])
+            NSLog(@"Error: %@", error);;
+    }
 }
 
 - (void)drawView
@@ -65,8 +81,7 @@
 }
 - (void)loadMsh:(NSString*) file
 {
-    NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-    NSString *msh = [ressourcePath stringByAppendingPathComponent: file];
+    NSString *msh = [docPath stringByAppendingPathComponent: file];
     //mContext = new drawContext();
     mContext->load(*new std::string([msh fileSystemRepresentation]));
     [self drawView];
@@ -84,7 +99,7 @@
             mContext->eventHandler(1,position.x,position.y);
         }
             break;
-        case 2:
+        case 3:
         {
             mContext->eventHandler(3,position.x,position.y);
         }

@@ -25,20 +25,9 @@
 		9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */; };
 		9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */; };
 		9C9608AC1712EF0900E1D4A0 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */; };
-		9C99753617379C440036EC24 /* BH.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C99752C17379C440036EC24 /* BH.pro */; };
-		9C99753717379C440036EC24 /* machine_magstadyn_a.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C99752D17379C440036EC24 /* machine_magstadyn_a.pro */; };
-		9C99753817379C440036EC24 /* magnet_data.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C99752E17379C440036EC24 /* magnet_data.pro */; };
-		9C99753917379C440036EC24 /* magnet.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99752F17379C440036EC24 /* magnet.geo */; };
-		9C99753A17379C440036EC24 /* magnet.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753017379C440036EC24 /* magnet.pro */; };
-		9C99753B17379C440036EC24 /* Magnetostatics.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753117379C440036EC24 /* Magnetostatics.pro */; };
-		9C99753C17379C440036EC24 /* pmsm_data.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753217379C440036EC24 /* pmsm_data.geo */; };
-		9C99753D17379C440036EC24 /* pmsm_rotor.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753317379C440036EC24 /* pmsm_rotor.geo */; };
-		9C99753E17379C440036EC24 /* pmsm_stator.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753417379C440036EC24 /* pmsm_stator.geo */; };
-		9C99753F17379C440036EC24 /* pmsm.geo in Resources */ = {isa = PBXBuildFile; fileRef = 9C99753517379C440036EC24 /* pmsm.geo */; };
-		9C9975411737A4840036EC24 /* pmsm.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C9975401737A4840036EC24 /* pmsm.pro */; };
-		9C9975431737B55E0036EC24 /* pmsm_8p_circuit.pro in Resources */ = {isa = PBXBuildFile; fileRef = 9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */; };
 		9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */; };
 		9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCE174B5A23004332C5 /* ic_launcher.png */; };
+		9CC85C021790286C00F241C4 /* files in Resources */ = {isa = PBXBuildFile; fileRef = 9CC85C011790286C00F241C4 /* files */; };
 		9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0D178AEB1600A83B4B /* GetDP.framework */; };
 		9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* Gmsh.framework */; };
 		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
@@ -85,21 +74,10 @@
 		9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; };
 		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard.storyboard; sourceTree = "<group>"; };
-		9C99752C17379C440036EC24 /* BH.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = BH.pro; path = files/BH.pro; sourceTree = "<group>"; };
-		9C99752D17379C440036EC24 /* machine_magstadyn_a.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = machine_magstadyn_a.pro; path = files/machine_magstadyn_a.pro; sourceTree = "<group>"; };
-		9C99752E17379C440036EC24 /* magnet_data.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = magnet_data.pro; path = files/magnet_data.pro; sourceTree = "<group>"; };
-		9C99752F17379C440036EC24 /* magnet.geo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = magnet.geo; path = files/magnet.geo; sourceTree = "<group>"; };
-		9C99753017379C440036EC24 /* magnet.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = magnet.pro; path = files/magnet.pro; sourceTree = "<group>"; };
-		9C99753117379C440036EC24 /* Magnetostatics.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Magnetostatics.pro; path = files/Magnetostatics.pro; sourceTree = "<group>"; };
-		9C99753217379C440036EC24 /* pmsm_data.geo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm_data.geo; path = files/pmsm_data.geo; sourceTree = "<group>"; };
-		9C99753317379C440036EC24 /* pmsm_rotor.geo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm_rotor.geo; path = files/pmsm_rotor.geo; sourceTree = "<group>"; };
-		9C99753417379C440036EC24 /* pmsm_stator.geo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm_stator.geo; path = files/pmsm_stator.geo; sourceTree = "<group>"; };
-		9C99753517379C440036EC24 /* pmsm.geo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm.geo; path = files/pmsm.geo; sourceTree = "<group>"; };
-		9C9975401737A4840036EC24 /* pmsm.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm.pro; path = files/pmsm.pro; sourceTree = "<group>"; };
-		9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pmsm_8p_circuit.pro; path = files/pmsm_8p_circuit.pro; sourceTree = "<group>"; };
 		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; };
 		9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher_retina.png; sourceTree = "<group>"; };
 		9C9F8BCE174B5A23004332C5 /* ic_launcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher.png; sourceTree = "<group>"; };
+		9CC85C011790286C00F241C4 /* files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = files; sourceTree = "<group>"; };
 		9CE08E01178AE6BE00A83B4B /* drawContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawContext.cpp; sourceTree = "<group>"; };
 		9CE08E02178AE6BE00A83B4B /* drawContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawContext.h; sourceTree = "<group>"; };
 		9CE08E03178AE6BE00A83B4B /* movePosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = movePosition.h; sourceTree = "<group>"; };
@@ -181,7 +159,7 @@
 		9C9608401712C16300E1D4A0 /* Onelab */ = {
 			isa = PBXGroup;
 			children = (
-				9C9608781712C5FE00E1D4A0 /* files */,
+				9CC85C011790286C00F241C4 /* files */,
 				9C95B7F51726C88E00C0CCE2 /* main.m */,
 				9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
@@ -220,25 +198,6 @@
 				9C9608641712C16400E1D4A0 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		9C9608781712C5FE00E1D4A0 /* files */ = {
-			isa = PBXGroup;
-			children = (
-				9C9975421737B55E0036EC24 /* pmsm_8p_circuit.pro */,
-				9C9975401737A4840036EC24 /* pmsm.pro */,
-				9C99752C17379C440036EC24 /* BH.pro */,
-				9C99752D17379C440036EC24 /* machine_magstadyn_a.pro */,
-				9C99752E17379C440036EC24 /* magnet_data.pro */,
-				9C99752F17379C440036EC24 /* magnet.geo */,
-				9C99753017379C440036EC24 /* magnet.pro */,
-				9C99753117379C440036EC24 /* Magnetostatics.pro */,
-				9C99753217379C440036EC24 /* pmsm_data.geo */,
-				9C99753317379C440036EC24 /* pmsm_rotor.geo */,
-				9C99753417379C440036EC24 /* pmsm_stator.geo */,
-				9C99753517379C440036EC24 /* pmsm.geo */,
-			);
-			name = files;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -313,20 +272,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* MainStoryboard.storyboard in Resources */,
-				9C99753617379C440036EC24 /* BH.pro in Resources */,
-				9C99753717379C440036EC24 /* machine_magstadyn_a.pro in Resources */,
-				9C99753817379C440036EC24 /* magnet_data.pro in Resources */,
-				9C99753917379C440036EC24 /* magnet.geo in Resources */,
-				9C99753A17379C440036EC24 /* magnet.pro in Resources */,
-				9C99753B17379C440036EC24 /* Magnetostatics.pro in Resources */,
-				9C99753C17379C440036EC24 /* pmsm_data.geo in Resources */,
-				9C99753D17379C440036EC24 /* pmsm_rotor.geo in Resources */,
-				9C99753E17379C440036EC24 /* pmsm_stator.geo in Resources */,
-				9C99753F17379C440036EC24 /* pmsm.geo in Resources */,
-				9C9975411737A4840036EC24 /* pmsm.pro in Resources */,
-				9C9975431737B55E0036EC24 /* pmsm_8p_circuit.pro in Resources */,
 				9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */,
 				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
+				9CC85C021790286C00F241C4 /* files in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
