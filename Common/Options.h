@@ -446,7 +446,7 @@ double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_multiple_passes(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
-double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM);
+double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);
 double opt_mesh_ho_mindisto(OPT_ARGS_NUM);
 double opt_mesh_ho_poisson(OPT_ARGS_NUM);

@@ -5590,16 +5590,16 @@ double opt_mesh_order(OPT_ARGS_NUM)
   return CTX::instance()->mesh.order;
 }
 
-double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM)
+double opt_mesh_ho_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.smoothInternalEdges = (int)val;
+    CTX::instance()->mesh.hoOptimize = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->mesh.butt[3]->value
-      (CTX::instance()->mesh.smoothInternalEdges);
+      (CTX::instance()->mesh.hoOptimize);
 #endif
-  return CTX::instance()->mesh.smoothInternalEdges;
+  return CTX::instance()->mesh.hoOptimize;
 }
 
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM)

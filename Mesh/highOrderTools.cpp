@@ -174,19 +174,6 @@ void highOrderTools::ensureMinimumDistorsion (double threshold)
   ensureMinimumDistorsion(v,threshold);
 }
 
-/*
-void highOrderTools::applySmoothingTo(GRegion *gr)
-{
-   std::vector<MElement*> v;
-   v.insert(v.begin(), gr->tetrahedra.begin(),gr->tetrahedra.end());
-   v.insert(v.begin(), gr->hexahedra.begin(),gr->hexahedra.end());
-   v.insert(v.begin(), gr->prisms.begin(),gr->prisms.end());
-   Msg::Info("Smoothing high order mesh : model region %d (%d elements)", gr->tag(),
-   v.size());
-   applySmoothingTo(v,gr);
-}
-*/
-
 void highOrderTools::computeMetricInfo(GFace *gf,
                                        MElement *e,
                                        fullMatrix<double> &J,
@@ -260,7 +247,8 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   }
 
   if (!v.size()) return;
-  Msg::Info("Smoothing high order mesh : model face %d (%d elements considered in the elastic analogy, worst mapping %12.5E, %3d bad elements)", gf->tag(),
+  Msg::Info("Smoothing high order mesh : model face %d (%d elements considered in "
+            "the elastic analogy, worst mapping %12.5E, %3d bad elements)", gf->tag(),
             v.size(),minD,numBad);
 
   addOneLayer(all, v, layer);
@@ -323,7 +311,6 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
     }
     else{
       SVector3 p =  getTL(*it);
-      //      printf("%12.5E %12.5E %12.5E %d %d\n",p.x(),p.y(),p.z(),(*it)->onWhat()->dim(),(*it)->onWhat()->tag());
       (*it)->x() = p.x();
       (*it)->y() = p.y();
       (*it)->z() = p.z();
@@ -416,7 +403,7 @@ highOrderTools::highOrderTools (GModel *gm, GModel *mesh, int order)
   computeStraightSidedPositions();
 }
 
-void highOrderTools::computeStraightSidedPositions ()
+void highOrderTools::computeStraightSidedPositions()
 {
   _clean();
   // compute straigh sided positions that are actually X,Y,Z positions
@@ -552,12 +539,12 @@ void highOrderTools::computeStraightSidedPositions ()
 
 // apply a displacement that does not create elements that are
 // distorted over a value "thres"
-double highOrderTools::apply_incremental_displacement (double max_incr,
-                                                       std::vector<MElement*> & v,
-                                                       bool mixed,
-                                                       double thres,
-                                                       char *meshName,
-                                                       std::vector<MElement*> & disto)
+double highOrderTools::apply_incremental_displacement(double max_incr,
+                                                      std::vector<MElement*> & v,
+                                                      bool mixed,
+                                                      double thres,
+                                                      char *meshName,
+                                                      std::vector<MElement*> & disto)
 {
 #ifdef HAVE_PETSC
   // assume that the mesh is OK, yet already curved
@@ -592,16 +579,11 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
     }
   }
 
-  printf("coucou1\n");
-
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
     MVertex *vert = *it;
     std::map<MVertex*,SVector3>::iterator itt = _targetLocation.find(vert);
     // impose displacement @ boundary
-    //    if (!(vert->onWhat()->geomType()  == GEntity::Line
-    //	  && vert->onWhat()->tag()  == 2)){
     if (itt != _targetLocation.end() && vert->onWhat()->dim() < _dim){
-      //		printf("fixing motion of vertex %d to %g %g\n",vert->getNum(),itt->second.x()-vert->x(),itt->second.y()-vert->y());
       myAssembler.fixVertex(vert, 0, _tag, itt->second.x()-vert->x());
       myAssembler.fixVertex(vert, 1, _tag, itt->second.y()-vert->y());
       myAssembler.fixVertex(vert, 2, _tag, itt->second.z()-vert->z());
@@ -624,28 +606,21 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
     }
   }
 
-  printf("coucou2\n");
-
-  //+++++++++ Assembly  & Solve ++++++++++++++++++++++++++++++++++++
   if (myAssembler.sizeOfR()){
     // assembly of the elasticity term on the
-    double t1 = Cpu();
     for (unsigned int i = 0; i < v.size(); i++){
       SElement se(v[i]);
-      if (mixed)El_mixed.addToMatrix(myAssembler, &se);
+      if (mixed) El_mixed.addToMatrix(myAssembler, &se);
       else El.addToMatrix(myAssembler, &se);
     }
-    double t2 = Cpu();
     // solve the system
-    printf("coucou3 %12.5E\n", t2-t1);
     lsys->systemSolve();
-    double t3 = Cpu();
-    printf("coucou4 %12.5E\n", t3-t2);
   }
 
-  //+++++++++ Move vertices @ maximum ++++++++++++++++++++++++++++++++++++
+  // Move vertices @ maximum
   FILE *fd = Fopen ("d.msh","w");
-  fprintf(fd,"$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n", (int) _vertices.size());
+  fprintf(fd,"$MeshFormat\n2 0 8\n$EndMeshFormat\n$NodeData\n1\n"
+          "\"tr(sigma)\"\n1\n0.0\n3\n1\n3\n%d\n", (int) _vertices.size());
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end(); ++it){
     double ax, ay, az;
     myAssembler.getDofValue(*it, 0, _tag, ax);
@@ -659,11 +634,9 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
   fprintf(fd,"$EndNodeData\n");
   fclose(fd);
 
-  //+------------------- Check now if elements are ok ---------------+++++++
+  // Check now if elements are ok
 
   (*_vertices.begin())->onWhat()->model()->writeMSH(meshName);
-
-  printf("coucou5\n");
 
   double percentage = max_incr * 100.;
   while(1){
@@ -684,7 +657,6 @@ double highOrderTools::apply_incremental_displacement (double max_incr,
     }
     else break;
   }
-  printf("coucou6\n");
 
   delete lsys;
   return percentage;
@@ -708,8 +680,8 @@ void highOrderTools::ensureMinimumDistorsion(std::vector<MElement*> &all,
   }
 }
 
-double highOrderTools::applySmoothingTo (std::vector<MElement*> &all,
-					 double threshold, bool mixed)
+double highOrderTools::applySmoothingTo(std::vector<MElement*> &all,
+                                        double threshold, bool mixed)
 {
   int ITER = 0;
   double minD;

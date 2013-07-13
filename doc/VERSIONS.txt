@@ -1,3 +1,5 @@
+2.8.2 (July x, 2013): improved high order tools.
+
 2.8.1 (July 11, 2013): improved compound surfaces and transfinite arrangements.
 
 2.8.0 (July 8, 2013): improved Delaunay point insertion; fixed mesh orientation

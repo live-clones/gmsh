@@ -41,7 +41,7 @@ struct contextMeshOptions {
   int remeshParam, remeshAlgo;
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
-  int smoothInternalEdges, minCircPoints, minCurvPoints;
+  int hoOptimize, minCircPoints, minCurvPoints;
   int smoothNLayers;
   double smoothDistoThreshold, smoothPoissonRatio;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;

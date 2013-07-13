@@ -492,7 +492,9 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_remove_4_triangles(0,GMSH_SET, o->mesh.butt[25]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
-  opt_mesh_smooth_internal_edges(0, GMSH_SET, o->mesh.butt[3]->value());
+
+  opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value());
+
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
   opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());

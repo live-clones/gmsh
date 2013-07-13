@@ -960,12 +960,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
   { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 3.,
-    "Number of high order mesh elements to consider for optimization."},
-  { F|O, "HighOrderOptimize" , opt_mesh_smooth_internal_edges , 0.,
-    "Number of smoothing steps of internal edges for high order meshes" },
+    "Number of high order mesh elements to consider for optimization"},
+  { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
+    "Optimize high order meshes?" },
   { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
     "Poisson ratio of the material used in the elastic smoother for high order meshes."
-    "Must be between -1.0 and 0.5, excluded."},
+    "Must be between -1.0 and 0.5, excluded"},
   { F|O, "HighOrderSmoothingThreshold", opt_mesh_ho_mindisto, 0.5,
     "Distorition threshold when choosing which high order element to optimize."},
 

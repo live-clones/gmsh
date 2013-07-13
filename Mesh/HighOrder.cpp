@@ -1252,7 +1252,7 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
   }
 }
 
-void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible)
+void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
 {
   bool CAD, complete;
   int meshOrder;
@@ -1266,15 +1266,14 @@ void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible)
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
   {
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-      if (onlyVisible && !(*it)->getVisibility())continue;
+      if (onlyVisible && !(*it)->getVisibility()) continue;
       std::vector<MElement*> v;
       v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
       v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      if (CAD)hot.applySmoothingTo(v, (*it));
+      if (CAD) hot.applySmoothingTo(v, (*it));
       else hot.applySmoothingTo(v, 1.e32, false);
     }
   }
-  //    hot.ensureMinimumDistorsion(0.1);
   checkHighOrderTriangles("Final surface mesh", m, bad, worst);
 
   checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
@@ -1288,10 +1287,8 @@ void ElasticAnalogy ( GModel *m, double threshold, bool onlyVisible)
       hot.applySmoothingTo(v,1.e32,false);
     }
   }
-
-  // m->writeMSH("CORRECTED.msh");
+  checkHighOrderTetrahedron("File volume Mesh", m, bad, worst);
 }
-
 
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisible)
 {
@@ -1346,16 +1343,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   }
 
-  //  highOrderTools hot(m);
-
-  // now we smooth mesh the internal vertices of the faces
-  // we do that model face by model face
-  std::vector<MElement*> bad;
-  double worst;
-
-  // printJacobians(m, "smoothness_b.pos");
-  // m->writeMSH("RAW.msh");
-
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, nTot, false, msg);
@@ -1365,23 +1352,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
 
   double t2 = Cpu();
 
-  // printJacobians(m, "smoothness.pos");
-
+  std::vector<MElement*> bad;
+  double worst;
   checkHighOrderTriangles("Surface mesh", m, bad, worst);
-  if (!linear && CTX::instance()->mesh.smoothInternalEdges){
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-      if (onlyVisible && !(*it)->getVisibility())continue;
-      std::vector<MElement*> v;
-      v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
-      v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      //hot.applySmoothingTo(v, (*it));
-      // hot.applySmoothingTo(v, .1,0);
-    }
-    // hot.ensureMinimumDistorsion(0.1);
-    checkHighOrderTriangles("Final surface mesh", m, bad, worst);
-  }
   checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
-  // m->writeMSH("CORRECTED.msh");
 
   Msg::StatusBar(true, "Done meshing order %d (%g s)", order, t2 - t1);
 }

@@ -756,9 +756,6 @@ static void printLevel_onlysmall(const char* fn,
 multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
                                       std::map<MVertex*, SPoint3> &allCoordinates)
 {
-  //To go through this execute gmsh with the option -optimize_hom
-  //if (!CTX::instance()->mesh.smoothInternalEdges)return;
-
   //Find the boundary loops
   //The loop with the largest equivalent radius is the Dirichlet boundary
   std::vector<std::pair<MVertex*,double> > boundaryNodes;

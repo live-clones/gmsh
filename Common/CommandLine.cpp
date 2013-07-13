@@ -76,11 +76,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                                         "delquad, del3d, front3d, mmg3d)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
-  s.push_back(mp("-hoOptimize",        "Optimize high order meshes"));
-  s.push_back(mp("-hoMindisto float",  "Min high-order element quality before optim (0.0->1.0)"));
-  s.push_back(mp("-hoNLayers int",     "Number of high order element layers to optimize"));
-  s.push_back(mp("-hoElasticity float","Poisson ration for elasticity analogy (nu in [-1.0,0.5])"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
+  s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
   s.push_back(mp("-microstructure",    "Generate polycrystal Voronoi geometry"));
   s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
@@ -459,25 +456,29 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->mesh.optimizeNetgen = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "hoOptimize")) {
+      else if(!strcmp(argv[i] + 1, "optimize_ho") ||
+              !strcmp(argv[i] + 1, "hoOptimize")) {
         i++;
-        opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
+        opt_mesh_ho_optimize(0, GMSH_SET, 1);
       }
-      else if(!strcmp(argv[i] + 1, "hoMindisto")) {
+      else if(!strcmp(argv[i] + 1, "ho_mindisto") ||
+              !strcmp(argv[i] + 1, "hoMindisto")) {
         i++;
         if(argv[i])
           opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "hoElasticity")) {
+      else if(!strcmp(argv[i] + 1, "ho_poisson") ||
+              !strcmp(argv[i] + 1, "hoElasticity")) {
         i++;
         if(argv[i])
           opt_mesh_ho_poisson(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "hoNlayers")) {
+      else if(!strcmp(argv[i] + 1, "ho_nlayers") ||
+              !strcmp(argv[i] + 1, "hoNlayers")) {
         i++;
         if(argv[i])
           opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
