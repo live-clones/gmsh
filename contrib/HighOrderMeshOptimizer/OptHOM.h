@@ -4,12 +4,11 @@
 #include <string>
 #include <math.h>
 #include "GmshConfig.h"
+#include "OptHomMesh.h"
 
 #if defined(HAVE_BFGS)
 
 #include "ap.h"
-
-class Mesh;
 
 class OptHOM
 {

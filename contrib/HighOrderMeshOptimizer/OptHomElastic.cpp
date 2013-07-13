@@ -253,14 +253,6 @@ void highOrderTools::computeMetricInfo(GFace *gf,
     D(XJ) = (gp.x() - ss.x());
     D(YJ) = (gp.y() - ss.y());
     D(ZJ) = (gp.z() - ss.z());
-    /*
-    printf("point %d on %d %d dx = %g %g %g --> %g %g %g --> %g %g %g \n",e->getVertex(j)->getIndex(),
-	   e->getVertex(j)->onWhat()->dim(),e->getVertex(j)->onWhat()->tag(),
-	   D(XJ),D(YJ),D(ZJ),
-	   ss.x(),ss.y(),ss.z(),
-	   e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
-    */
-
   }
 }
 
@@ -367,11 +359,9 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
   std::set<MVertex*>::iterator it;
   double dx = 0.0;
 
-  //  printf("size %d\n",myAssembler.sizeOfR());
-
   if (myAssembler.sizeOfR()){
 
-    // while convergence -------------------------------------------------------
+    // while convergence
     for (unsigned int i = 0; i < v.size(); i++){
       MElement *e = v[i];
       int nbNodes = e->getNumVertices();
@@ -391,10 +381,7 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
       computeMetricInfo(gf, e, J32, J23, D3);
       J23K33.gemm(J23, K33, 1, 0);
       K22.gemm(J23K33, J32, 1, 0);
-      //      K33.print("K33");
-      //            K22.print("K22");
       J23K33.mult(D3, R2);
-      //      R2.print("hopla");
       for (int j = 0; j < n2; j++){
         Dof RDOF = El.getLocalDofR(&se, j);
         myAssembler.assemble(RDOF, -R2(j));
@@ -405,8 +392,8 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
       }
     }
     myAssembler.systemSolve();
-    // for all element, compute detJ at integration points --> material law
-    // end while convergence -------------------------------------------------------
+    // for all element, compute detJ at integration points --> material law end
+    // while convergence
 
     for (it = verticesToMove.begin(); it != verticesToMove.end(); ++it){
       if ((*it)->onWhat()->dim() == 2){
@@ -415,7 +402,6 @@ double highOrderTools::smooth_metric_(std::vector<MElement*>  & v,
 	SPoint2 dparam;
 	myAssembler.getDofValue((*it), 0, _tag, dparam[0]);
 	myAssembler.getDofValue((*it), 1, _tag, dparam[1]);
-	//      printf("%g %g -- %g %g\n",dparam[0],dparam[1],param[0],param[1]);
 	SPoint2 newp = param+dparam;
 	dx += newp.x() * newp.x() + newp.y() * newp.y();
 	(*it)->setParameter(0, newp.x());

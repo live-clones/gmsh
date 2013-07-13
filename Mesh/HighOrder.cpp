@@ -22,8 +22,6 @@
 #include "fullMatrix.h"
 #include "BasisFactory.h"
 
-#define SQU(a)      ((a)*(a))
-
 // The aim here is to build a polynomial representation that consist
 // in polynomial segments of equal length
 

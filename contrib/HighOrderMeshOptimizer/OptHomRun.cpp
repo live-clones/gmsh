@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iterator>
 #include <string.h>
+#include "OptHOM.h"
 #include "OptHomRun.h"
 #include "GModel.h"
 #include "Gmsh.h"
@@ -11,8 +12,6 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MLine.h"
-#include "OptHomMesh.h"
-#include "OptHOM.h"
 #include "OS.h"
 #include <stack>
 

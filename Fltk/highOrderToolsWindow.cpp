@@ -137,7 +137,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.maxAdaptBlob = o->value[9]->value();
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
-    HighOrderMeshOptimizer (GModel::current(),p);
+    HighOrderMeshOptimizer(GModel::current(), p);
   }
 #else
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
