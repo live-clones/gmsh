@@ -27,6 +27,7 @@
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
+#include "OptHomElastic.h"
 #endif
 
 static void change_completeness_cb(Fl_Widget *w, void *data)
@@ -115,11 +116,11 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   int nbLayers = (int) o->value[2]->value();
   double threshold_max = o->value[8]->value();
 
+#if defined(HAVE_OPTHOM)
   if(elastic){
     ElasticAnalogy(GModel::current(), threshold_min, onlyVisible);
   }
-  else  {
-#if defined(HAVE_OPTHOM)
+  else{
     OptHomParameters p;
     p.nbLayers = nbLayers;
     p.BARRIER_MIN = threshold_min;
@@ -137,8 +138,10 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     HighOrderMeshOptimizer (GModel::current(),p);
-#endif
   }
+#else
+  Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
 
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();

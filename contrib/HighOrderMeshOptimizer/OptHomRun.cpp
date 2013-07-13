@@ -11,16 +11,10 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MLine.h"
-#include "highOrderTools.h"
 #include "OptHomMesh.h"
 #include "OptHOM.h"
 #include "OS.h"
 #include <stack>
-
-#ifdef HAVE_FLTK
-#include "highOrderToolsWindow.h"
-#include "FlGui.h"
-#endif
 
 double distMaxStraight(MElement *el)
 {

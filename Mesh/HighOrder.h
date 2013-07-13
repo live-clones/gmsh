@@ -22,15 +22,14 @@ typedef std::map<MFace, std::vector<MVertex*>, Less_Face> faceContainer;
 void SetOrder1(GModel *m, bool onlyVisible = false);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false,
                bool onlyVisible=false);
-void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible);
-void SetHighOrderComplete (GModel *m, bool onlyVisible);
-void SetHighOrderInComplete (GModel *m, bool onlyVisible);
-MTriangle* setHighOrder(MTriangle *t, GFace *gf,
-                        edgeContainer &edgeVertices,
-                        faceContainer &faceVertices,
-                        bool linear, bool incomplete, int nPts = 1);
+
+void SetHighOrderComplete(GModel *m, bool onlyVisible);
+void SetHighOrderInComplete(GModel *m, bool onlyVisible);
+
 void checkHighOrderTriangles(const char* cc, GModel *m,
                              std::vector<MElement*> &bad, double &minJGlob);
+void checkHighOrderTetrahedron(const char* cc, GModel *m,
+                               std::vector<MElement*> &bad, double &minJGlob);
 
 struct distanceFromMeshToGeometry_t {
   std::map<GEntity*, double> d_max, d2;

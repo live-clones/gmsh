@@ -3,14 +3,16 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#ifndef _HIGH_ORDER_TOOLS_H_
-#define _HIGH_ORDER_TOOLS_H_
+#ifndef _OPT_HOM_ELASTIC_H_
+#define _OPT_HOM_ELASTIC_H_
 
 #include <map>
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+
+void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible);
 
 #if defined(HAVE_SOLVER)
 
@@ -80,22 +82,6 @@ class highOrderTools
     else return SVector3(v->x(),v->y(),v->z());
   }
   void makePosViewWithJacobians(const char *nm);
-};
-
-#else
-
-class highOrderTools
-{
- public:
-  highOrderTools(GModel *gm)
-  {
-    Msg::Error("Gmsh has to be compiled with solver support to use highOrderSmoother");
-  }
-  void applyGlobalSmoothing (){}
-  void ensureMinimumDistorsion (double threshold){}
-  double applySmoothingTo (GFace *gf, double tres = 0.1, bool mixed = false){ return 0.; }
-  void applySmoothingTo(std::vector<MElement*> & all, GFace *gf){}
-  double applySmoothingTo (std::vector<MElement*> &all,  double threshold, bool mixed){ return 0.; }
 };
 
 #endif

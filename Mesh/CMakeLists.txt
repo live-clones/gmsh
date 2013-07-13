@@ -23,7 +23,6 @@ set(SRC
     BoundaryLayers.cpp 
     BDS.cpp 
     HighOrder.cpp 
-      highOrderTools.cpp 
     meshPartition.cpp
     meshRefine.cpp
     multiscalePartition.cpp

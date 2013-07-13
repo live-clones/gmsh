@@ -7,6 +7,8 @@
 //   Koen Hillewaert
 //
 
+#include "OptHomElastic.h"
+#include "GModel.h"
 #include "GmshConfig.h"
 
 #if defined(HAVE_SOLVER)
@@ -21,7 +23,6 @@
 #include "MPoint.h"
 #include "HighOrder.h"
 #include "meshGFaceOptimize.h"
-#include "highOrderTools.h"
 #include "GFace.h"
 #include "GRegion.h"
 #include "GeomMeshMatcher.h"
@@ -35,6 +36,44 @@
 #include "OS.h"
 
 #define SQU(a)      ((a)*(a))
+
+void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
+{
+  bool CAD, complete;
+  int meshOrder;
+
+  getMeshInfoForHighOrder(m, meshOrder, complete, CAD);
+  highOrderTools hot(m);
+  // now we smooth mesh the internal vertices of the faces
+  // we do that model face by model face
+  std::vector<MElement*> bad;
+  double worst;
+  checkHighOrderTriangles("Surface mesh", m, bad, worst);
+  {
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+      if (onlyVisible && !(*it)->getVisibility()) continue;
+      std::vector<MElement*> v;
+      v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
+      v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+      if (CAD) hot.applySmoothingTo(v, (*it));
+      else hot.applySmoothingTo(v, 1.e32, false);
+    }
+  }
+  checkHighOrderTriangles("Final surface mesh", m, bad, worst);
+
+  checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
+  {
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      if (onlyVisible && !(*it)->getVisibility())continue;
+      std::vector<MElement*> v;
+      v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+      v.insert(v.end(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+      v.insert(v.end(), (*it)->prisms.begin(), (*it)->prisms.end());
+      hot.applySmoothingTo(v,1.e32,false);
+    }
+  }
+  checkHighOrderTetrahedron("File volume Mesh", m, bad, worst);
+}
 
 void highOrderTools::moveToStraightSidedLocation(MElement *e) const
 {
@@ -718,11 +757,66 @@ double highOrderTools::applySmoothingTo(std::vector<MElement*> &all,
   return percentage;
 }
 
-extern void printJacobians(GModel *m, const char *nm);
+void printJacobians(GModel *m, const char *nm)
+{
+  const int n = 100;
+  double D[n][n], X[n][n], Y[n][n], Z[n][n];
+
+  FILE *f = Fopen(nm,"w");
+  fprintf(f,"View \"\"{\n");
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+    for(unsigned int j = 0; j < (*it)->triangles.size(); j++){
+      MTriangle *t = (*it)->triangles[j];
+      for(int i = 0; i < n; i++){
+        for(int k = 0; k < n - i; k++){
+          SPoint3 pt;
+          double u = (double)i / (n - 1);
+          double v = (double)k / (n - 1);
+          t->pnt(u, v, 0, pt);
+          D[i][k] = 0.; //mesh_functional_distorsion_2D(t, u, v);
+          //X[i][k] = u;
+          //Y[i][k] = v;
+          //Z[i][k] = 0.0;
+          X[i][k] = pt.x();
+          Y[i][k] = pt.y();
+          Z[i][k] = pt.z();
+        }
+      }
+      for(int i= 0; i < n -1; i++){
+        for(int k = 0; k < n - i -1; k++){
+          fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                  X[i][k],Y[i][k],Z[i][k],
+                  X[i+1][k],Y[i+1][k],Z[i+1][k],
+                  X[i][k+1],Y[i][k+1],Z[i][k+1],
+                  D[i][k],
+                  D[i+1][k],
+                  D[i][k+1]);
+          if (i != n-2 && k != n - i -2)
+            fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                    X[i+1][k],Y[i+1][k],Z[i+1][k],
+                    X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
+                    X[i][k+1],Y[i][k+1],Z[i][k+1],
+                    D[i+1][k],
+                    D[i+1][k+1],
+                    D[i][k+1]);
+        }
+      }
+    }
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+}
 
 void highOrderTools::makePosViewWithJacobians (const char *fn)
 {
   printJacobians(_gm,fn);
+}
+
+#else
+
+void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
+{
+  Msg::Error("Elastic analogy high-order optimzer requires the solver module");
 }
 
 #endif

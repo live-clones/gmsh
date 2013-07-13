@@ -8,7 +8,6 @@
 //
 
 #include "HighOrder.h"
-#include "highOrderTools.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -100,7 +99,6 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   return false;
 }
 
-
 static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
                                          double v0, double vN, int N,
                                          double *u, double *v)
@@ -121,7 +119,6 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   t[N] = 1.0;
 
   return true;
-
 }
 
 static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
@@ -685,10 +682,10 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   ge->deleteVertexArrays();
 }
 
-MTriangle *setHighOrder(MTriangle *t, GFace *gf,
-                        edgeContainer &edgeVertices,
-                        faceContainer &faceVertices,
-                        bool linear, bool incomplete, int nPts)
+static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
+                               edgeContainer &edgeVertices,
+                               faceContainer &faceVertices,
+                               bool linear, bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf;
   getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts);
@@ -898,36 +895,28 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   }
   gr->prisms = prisms2;
 
-/* * * * * * * * * * * * * * * * * PYRAMIDS * * * * * * * * * * * * * * * * * */
-
   std::vector<MPyramid*> pyramids2;
-
   for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf, vr;
     getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
-
     getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
-
     ve.insert(ve.end(), vf.begin(), vf.end());
-
     vr.reserve((nPts-1)*(nPts)*(2*(nPts-1)+1)/6);
-
     int verts_lvl3[12] = {37,40,38,43,46,44,49,52,50,55,58,56};
-
     int verts_lvl2[8];
     if (nPts == 4) {
       verts_lvl2[0] = 42; verts_lvl2[1] = 41;
       verts_lvl2[2] = 48; verts_lvl2[3] = 47;
       verts_lvl2[4] = 54; verts_lvl2[5] = 53;
       verts_lvl2[6] = 60; verts_lvl2[7] = 59;
-    } else {
+    }
+    else {
       verts_lvl2[0] = 29; verts_lvl2[1] = 30;
       verts_lvl2[2] = 35; verts_lvl2[3] = 36;
       verts_lvl2[4] = 38; verts_lvl2[5] = 39;
       verts_lvl2[6] = 32; verts_lvl2[7] = 33;
     }
-
     int verts_lvl1[4];
     switch(nPts) {
       case(4):
@@ -949,7 +938,6 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         verts_lvl1[3] = 22;
         break;
     }
-
     for (int q = 0; q < nPts - 1; q++) {
       std::vector<MVertex*> vq, veq;
       vq.push_back(ve[2*nPts + q]);
@@ -980,16 +968,15 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         vr.insert(cursor, v);
       }
       else if (nPts-q == 3) {
-
         MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 3);
         int offsets[4] = {nPts == 4 ? 7 : 0,
                           nPts == 4 ? 9 : 1,
                           nPts == 4 ? 11 : 2,
                           nPts == 4 ? 12 : 3};
         double quad_v [4][2] = {{-1.0/3.0, -1.0/3.0},
-                             { 1.0/3.0, -1.0/3.0},
-                             { 1.0/3.0,  1.0/3.0},
-                             {-1.0/3.0,  1.0/3.0}};
+                                { 1.0/3.0, -1.0/3.0},
+                                { 1.0/3.0,  1.0/3.0},
+                                {-1.0/3.0,  1.0/3.0}};
         SPoint3 pointz;
         for (int k = 0; k<4; k++) {
           incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
@@ -1004,16 +991,16 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
         MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 4);
         int offsets[9] = {0, 1, 2, 3, 5, 8, 10, 6, 13};
         double quad_v [9][2] = {
-                             { -0.5, -0.5},
-                             {  0.5, -0.5},
-                             {  0.5,  0.5},
-                             { -0.5,  0.5},
-                             {  0.0, -0.5},
-                             {  0.5,  0.0},
-                             {  0.0,  0.5},
-                             { -0.5,  0.0},
-                             {  0.0,  0.0}
-                               };
+          { -0.5, -0.5},
+          {  0.5, -0.5},
+          {  0.5,  0.5},
+          { -0.5,  0.5},
+          {  0.0, -0.5},
+          {  0.5,  0.0},
+          {  0.0,  0.5},
+          { -0.5,  0.0},
+          {  0.0,  0.0}
+        };
         SPoint3 pointz;
         for (int k = 0; k<9; k++) {
           incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
@@ -1024,24 +1011,20 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
           vr.insert(cursor, v);
         }
       }
-
     }
     ve.insert(ve.end(), vr.begin(), vr.end());
     MPyramid *n = new MPyramidN(p->getVertex(0), p->getVertex(1),
                                 p->getVertex(2), p->getVertex(3),
                                 p->getVertex(4), ve, nPts + 1,
-			                          0, p->getPartition());
+                                0, p->getPartition());
     pyramids2.push_back(n);
     SPoint3 test_pnt;
     n->pnt(-1,-1,0, test_pnt);
-
     delete p;
   }
   gr->pyramids = pyramids2;
   gr->deleteVertexArrays();
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 template<class T>
 static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisible)
@@ -1148,8 +1131,8 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
                  minGGlob, avg / (count ? count : 1));
 }
 
-static void checkHighOrderTetrahedron(const char* cc, GModel *m,
-                                      std::vector<MElement*> &bad, double &minJGlob)
+void checkHighOrderTetrahedron(const char* cc, GModel *m,
+                               std::vector<MElement*> &bad, double &minJGlob)
 {
   bad.clear();
   minJGlob = 1.0;
@@ -1176,58 +1159,6 @@ static void checkHighOrderTetrahedron(const char* cc, GModel *m,
                  avg / (count ? count : 1));
 }
 
-extern double mesh_functional_distorsion_2D(MElement *t, double u, double v);
-
-void printJacobians(GModel *m, const char *nm)
-{
-  const int n = 100;
-  double D[n][n], X[n][n], Y[n][n], Z[n][n];
-
-  FILE *f = Fopen(nm,"w");
-  fprintf(f,"View \"\"{\n");
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    for(unsigned int j = 0; j < (*it)->triangles.size(); j++){
-      MTriangle *t = (*it)->triangles[j];
-      for(int i = 0; i < n; i++){
-        for(int k = 0; k < n - i; k++){
-          SPoint3 pt;
-          double u = (double)i / (n - 1);
-          double v = (double)k / (n - 1);
-          t->pnt(u, v, 0, pt);
-          D[i][k] = 0.; //mesh_functional_distorsion_2D(t, u, v);
-          //X[i][k] = u;
-          //Y[i][k] = v;
-          //Z[i][k] = 0.0;
-          X[i][k] = pt.x();
-          Y[i][k] = pt.y();
-          Z[i][k] = pt.z();
-        }
-      }
-      for(int i= 0; i < n -1; i++){
-        for(int k = 0; k < n - i -1; k++){
-          fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-                  X[i][k],Y[i][k],Z[i][k],
-                  X[i+1][k],Y[i+1][k],Z[i+1][k],
-                  X[i][k+1],Y[i][k+1],Z[i][k+1],
-                  D[i][k],
-                  D[i+1][k],
-                  D[i][k+1]);
-          if (i != n-2 && k != n - i -2)
-            fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-                    X[i+1][k],Y[i+1][k],Z[i+1][k],
-                    X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
-                    X[i][k+1],Y[i][k+1],Z[i][k+1],
-                    D[i+1][k],
-                    D[i+1][k+1],
-                    D[i][k+1]);
-        }
-      }
-    }
-  }
-  fprintf(f,"};\n");
-  fclose(f);
-}
-
 void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
                              bool &CAD)
 {
@@ -1250,44 +1181,6 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
       }
     }
   }
-}
-
-void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
-{
-  bool CAD, complete;
-  int meshOrder;
-
-  getMeshInfoForHighOrder (m,meshOrder, complete, CAD);
-  highOrderTools hot(m);
-  // now we smooth mesh the internal vertices of the faces
-  // we do that model face by model face
-  std::vector<MElement*> bad;
-  double worst;
-  checkHighOrderTriangles("Surface mesh", m, bad, worst);
-  {
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-      if (onlyVisible && !(*it)->getVisibility()) continue;
-      std::vector<MElement*> v;
-      v.insert(v.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
-      v.insert(v.end(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      if (CAD) hot.applySmoothingTo(v, (*it));
-      else hot.applySmoothingTo(v, 1.e32, false);
-    }
-  }
-  checkHighOrderTriangles("Final surface mesh", m, bad, worst);
-
-  checkHighOrderTetrahedron("Volume Mesh", m, bad, worst);
-  {
-    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
-      if (onlyVisible && !(*it)->getVisibility())continue;
-      std::vector<MElement*> v;
-      v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-      v.insert(v.end(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-      v.insert(v.end(), (*it)->prisms.begin(), (*it)->prisms.end());
-      hot.applySmoothingTo(v,1.e32,false);
-    }
-  }
-  checkHighOrderTetrahedron("File volume Mesh", m, bad, worst);
 }
 
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisible)
@@ -1364,7 +1257,7 @@ void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t 
 {
   for (GModel::eiter itEdge = m->firstEdge(); itEdge != m->lastEdge(); ++itEdge) {
     double d2,dmax;
-    (*itEdge)->computeDistanceFromMeshToGeometry (d2,dmax);
+    (*itEdge)->computeDistanceFromMeshToGeometry(d2, dmax);
     dist.d2[*itEdge] = d2;
     dist.d_max[*itEdge] = dmax;
   }
