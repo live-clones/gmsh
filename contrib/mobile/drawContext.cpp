@@ -49,15 +49,8 @@ static bool locked = false;
 
 drawContext::drawContext()
 {
-	new GModel();
 	GmshInitialize();
-	GmshSetOption("Mesh", "SurfaceFaces", 1.);
-	GmshSetOption("General", "Terminal", 1.);
-#ifdef DEBUG
-	GmshSetOption("General", "Verbosity", 99.);
-#else	
-	GmshSetOption("General", "Verbosity", 10.);
-#endif
+    GmshSetOption("General", "Terminal", 1.0);
 	onelabUtils::setFirstComputationFlag(false);
 	for(int i = 0; i < 3; i++){
 		_translate[i] = 0.;
@@ -191,6 +184,7 @@ void drawContext::OrthofFromGModel()
     
 	glMatrixMode(matrixMode);
 }
+
 void drawContext::initView(int w, int h)
 {
 	this->_height = h;
@@ -213,8 +207,7 @@ void drawArray(VertexArray *va, GLint type, bool colorArray=false)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glNormalPointer(GL_BYTE, 0, va->getNormalArray());
 	glEnableClientState(GL_NORMAL_ARRAY);
-	if(colorArray)
-	{
+	if(colorArray){
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
 		glEnableClientState(GL_COLOR_ARRAY);
 	}
@@ -448,11 +441,12 @@ void drawContext::drawScale()
 void drawContext::drawMesh()
 {
 	GModel::current()->fillVertexArrays();
-	glColor4f(0,0,0,1.);
+    glColor4f(0,0,0,1.);
 	for(GModel::fiter it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); it++){
 		if(_fillMesh) drawArray((*it)->va_triangles, GL_TRIANGLES);
 		else drawArray((*it)->va_lines, GL_LINES);
 	}
+    CTX::instance()->mesh.changed = 0;
 }
 
 void drawContext::drawPost()
@@ -467,8 +461,12 @@ void drawContext::drawPost()
 
 void drawContext::drawGeom()
 {
-	glColor4f(0,0,1.,1.);
-	glLineWidth(3);
+    unsigned int col = CTX::instance()->color.geom.line;
+	glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
+               (GLubyte)CTX::instance()->unpackGreen(col),
+               (GLubyte)CTX::instance()->unpackBlue(col),
+               (GLubyte)CTX::instance()->unpackAlpha(col));
+	glLineWidth(CTX::instance()->geom.lineWidth);
 	for(GModel::eiter it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); it++){
 		GEdge *e = *it;
 		int N = e->minimumDrawSegments() + 1;
@@ -495,7 +493,7 @@ void drawContext::drawGeom()
 
 void drawContext::drawAxes(double x0, double y0, double z0, double h)
 {
-	glLineWidth(5);
+	glLineWidth(1.);
 	glPushMatrix();
 	glLoadIdentity();
 	glTranslatef(x0, y0, z0);
@@ -573,7 +571,9 @@ void drawContext::drawView()
 	checkGlError("Initialize position");
 
 	//
-	this->drawAxes(this->_right - (this->_top - this->_bottom)/9.0, this->_bottom + (this->_top - this->_bottom)/9.0, 0, (this->_top - this->_bottom)/10.);
+	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
+                   this->_bottom + (this->_top - this->_bottom)/15.0,
+                    0, (this->_top - this->_bottom)/20.);
 	this->drawPost();
 	if(_showGeom) this->drawGeom();
 	if(_showMesh) this->drawMesh();
@@ -597,8 +597,7 @@ std::vector<std::string> commandToVector(const std::string cmd)
 int onelab_cb(std::string action)
 {
 	Msg::Debug("Ask onlab to %s", action.c_str());
-	if(action == "stop")
-	{
+	if(action == "stop"){
 		onelab::string o("GetDP/Action", "stop");
 		o.setVisible(false);
 		o.setNeverChanged(true);
@@ -608,8 +607,7 @@ int onelab_cb(std::string action)
 	if(locked) return -1;
 	locked = true;
 	int redraw = 0;
-	if(action == "reset")
-	{
+	if(action == "reset"){
         onelab::server::instance()->clear();
         onelabUtils::runGmshClient(action, true);
 		action = "check";
@@ -617,15 +615,13 @@ int onelab_cb(std::string action)
     
 	Msg::ResetErrorCounter();
     
-	if(action == "compute")
-	{
+	if(action == "compute"){
 		onelabUtils::initializeLoop("1");
 		onelabUtils::initializeLoop("2");
 		onelabUtils::initializeLoop("3");
 	}
     
-	do
-	{
+	do{
 		if(onelabUtils::runGmshClient(action, true))
 			redraw = 1;
         
@@ -645,8 +641,7 @@ int onelab_cb(std::string action)
 		o.setNeverChanged(true);
 		onelab::server::instance()->set(o);
         
-		if(action == "compute" && (onelab::server::instance()->getChanged("Gmsh") || onelab::server::instance()->getChanged("GetDP")))
-		{
+		if(action == "compute" && (onelab::server::instance()->getChanged("Gmsh") || onelab::server::instance()->getChanged("GetDP"))){
 			std::string filename = GModel::current()->getFileName();
 			std::vector<std::string> args;
 			args.push_back("getdp");
@@ -660,8 +655,7 @@ int onelab_cb(std::string action)
 			args.push_back("GetDP");
 			GetDP(args, onelab::server::instance());
 		}
-		if(action == "check" && (onelab::server::instance()->getChanged("Gmsh") || onelab::server::instance()->getChanged("GetDP")))
-		{
+		if(action == "check" && (onelab::server::instance()->getChanged("Gmsh") || onelab::server::instance()->getChanged("GetDP"))){
 			std::string filename = GModel::current()->getFileName();
 			std::vector<std::string> args;
 			args.push_back("getdp");
