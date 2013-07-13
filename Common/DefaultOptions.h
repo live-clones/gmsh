@@ -467,6 +467,13 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "GraphicsWidth" , opt_general_graphics_size0 , 800. ,
     "Width (in pixels) of the graphic window" },
 
+  { F|S, "HighOrderToolsPositionX" , opt_general_hot_position0 , 650. ,
+    "Horizontal position (in pixels) of the upper left corner of the high order "
+    "tools window" },
+  { F|S, "HighOrderToolsPositionY" , opt_general_hot_position1 , 150. ,
+    "Vertical position (in pixels) of the upper left corner of the high order "
+    "tools window" },
+
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "
     "4=post-processing) " },

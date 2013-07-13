@@ -2241,6 +2241,20 @@ double opt_general_manip_position1(OPT_ARGS_NUM)
   return CTX::instance()->manipPosition[1];
 }
 
+double opt_general_hot_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->hotPosition[0] = (int)val;
+  return CTX::instance()->hotPosition[0];
+}
+
+double opt_general_hot_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->hotPosition[1] = (int)val;
+  return CTX::instance()->hotPosition[1];
+}
+
 double opt_general_session_save(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
