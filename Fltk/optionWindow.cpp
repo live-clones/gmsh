@@ -492,9 +492,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_optimize_netgen(0, GMSH_SET, o->mesh.butt[24]->value());
   opt_mesh_remove_4_triangles(0,GMSH_SET, o->mesh.butt[25]->value());
   opt_mesh_order(0, GMSH_SET, o->mesh.value[3]->value());
-
   opt_mesh_ho_optimize(0, GMSH_SET, o->mesh.butt[3]->value());
-
   opt_mesh_second_order_incomplete(0, GMSH_SET, o->mesh.butt[4]->value());
   opt_mesh_points(0, GMSH_SET, o->mesh.butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, o->mesh.butt[7]->value());
@@ -2368,7 +2366,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[24]->callback(mesh_options_ok_cb);
 
       mesh.butt[3] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order 2D planar meshes (experimental)");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order meshes (experimental)");
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 
