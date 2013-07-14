@@ -8,7 +8,6 @@
 #if defined(HAVE_MESH)
   #include "Generator.h"
   #include "DivideAndConquer.h"
-  #include "highOrderTools.h"
 #if defined(HAVE_BFGS)
   #include "meshGFaceLloyd.h"
 #endif
@@ -16,6 +15,7 @@
   #include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
   #include "OptHomRun.h"
+  #include "OptHomElastic.h"
 #endif
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   #include "meshPartition.h"
@@ -45,7 +45,6 @@ namespace std {
 #if defined(HAVE_MESH)
 %include "Generator.h"
 %include "DivideAndConquer.h"
-%include "highOrderTools.h"
 #if defined(HAVE_BFGS)
 %include "meshGFaceLloyd.h"
 #endif
@@ -53,6 +52,7 @@ namespace std {
 %include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
 %include "OptHomRun.h"
+%include "OptHomElastic.h"
 #endif
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 %include "meshPartition.h"
