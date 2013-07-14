@@ -216,7 +216,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderNumLayers
 Number of high order mesh elements to consider for optimization@*
-Default value: @code{3}@*
+Default value: @code{6}@*
 Saved in: @code{-}
 
 @item Mesh.HighOrderOptimize
@@ -231,7 +231,7 @@ Saved in: @code{-}
 
 @item Mesh.HighOrderThresholdMin
 Minimum threshold for high order element optimization@*
-Default value: @code{0.2}@*
+Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderThresholdMax

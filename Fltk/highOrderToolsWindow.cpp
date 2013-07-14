@@ -245,7 +245,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[1]->maximum(1);
   value[1]->step(.01);
   value[1]->align(FL_ALIGN_RIGHT);
-  value[1]->value(0.1);
+  value[1]->value(CTX::instance()->mesh.hoThresholdMin);
 
   value[8] = new Fl_Value_Input
     (x+IW/2.0,y, IW/2.0, BH, "Target Jacobian range");
@@ -253,7 +253,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[8]->maximum(10);
   value[8]->step(.01);
   value[8]->align(FL_ALIGN_RIGHT);
-  value[8]->value(2);
+  value[8]->value(CTX::instance()->mesh.hoThresholdMax);
 
   y += BH;
   value[2] = new Fl_Value_Input
@@ -262,7 +262,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[2]->maximum(20);
   value[2]->step(1);
   value[2]->align(FL_ALIGN_RIGHT);
-  value[2]->value(6);
+  value[2]->value(CTX::instance()->mesh.hoNLayers);
 
   y += BH;
   value[7] = new Fl_Value_Input
