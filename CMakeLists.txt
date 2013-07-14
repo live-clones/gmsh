@@ -36,7 +36,6 @@ option(ENABLE_BUILD_SHARED "Build shared Gmsh library" OFF)
 option(ENABLE_BUILD_DYNAMIC "Build dynamically linked Gmsh binary" OFF)
 option(ENABLE_BUILD_ANDROID "Build Gmsh library for Android NDK" OFF)
 option(ENABLE_BUILD_IOS "Build Gmsh library for iOS (ARM)" OFF)
-option(ENABLE_BUILD_IOS_EMULATOR "Build Gmsh library for iOS emulator (x86)" OFF)
 option(ENABLE_CGNS "Enable CGNS mesh export" OFF)
 option(ENABLE_CAIRO "Enable Cairo to render fonts" ${DEFAULT})
 option(ENABLE_CHACO "Enable Chaco mesh partitioner" ${DEFAULT})
@@ -95,6 +94,7 @@ set(GMSH_API
   Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
     Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h 
     Common/OS.h Common/StringUtils.h Common/OpenFile.h
+    Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
@@ -466,16 +466,11 @@ if(ENABLE_ONELAB)
   endif(ENABLE_ONELAB_METAMODEL)
 endif(ENABLE_ONELAB)
 
-if(ENABLE_BUILD_IOS_EMULATOR)
-  set(GMSH_API ${GMSH_API} Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h)
-endif(ENABLE_BUILD_IOS_EMULATOR)
-
 if(ENABLE_BUILD_IOS)
   find_file(CMAKE_TOOLCHAIN_FILE "ios.cmake")
   if(NOT CMAKE_TOOLCHAIN_FILE)
     message(SEND_ERROR "Cannot compile Gmsh for iOS without a toolchain")
   endif(NOT CMAKE_TOOLCHAIN_FILE)
-  set(GMSH_API ${GMSH_API} Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h)
 endif(ENABLE_BUILD_IOS)
 
 if(ENABLE_BUILD_ANDROID)
@@ -483,7 +478,6 @@ if(ENABLE_BUILD_ANDROID)
   if(NOT CMAKE_TOOLCHAIN_FILE)
     message(SEND_ERROR "Cannot compile Gmsh for android without android-cmake")
   endif(NOT CMAKE_TOOLCHAIN_FILE)
-  set(GMSH_API ${GMSH_API} Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h)
   set(CMAKE_BUILD_TYPE Release)
   set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
   set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
