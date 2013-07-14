@@ -55,7 +55,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes.(1, 2, 4, 8, ...)@*
+Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -215,23 +215,28 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderNumLayers
-Number of high order mesh elements to consider for optimization.@*
+Number of high order mesh elements to consider for optimization@*
 Default value: @code{3}@*
 Saved in: @code{-}
 
 @item Mesh.HighOrderOptimize
-Number of smoothing steps of internal edges for high order meshes@*
+Optimize high order meshes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderPoissonRatio
-Poisson ratio of the material used in the elastic smoother for high order meshes.Must be between -1.0 and 0.5, excluded.@*
+Poisson ratio of the material used in the elastic smoother for high order meshesMust be between -1.0 and 0.5, excluded@*
 Default value: @code{0.33}@*
 Saved in: @code{-}
 
-@item Mesh.HighOrderSmoothingThreshold
-Distorition threshold when choosing which high order element to optimize.@*
-Default value: @code{0.5}@*
+@item Mesh.HighOrderThresholdMin
+Minimum threshold for high order element optimization@*
+Default value: @code{0.2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderThresholdMax
+Maximum threshold for high order element optimization@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelSampling

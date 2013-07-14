@@ -757,7 +757,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display width of lines (in pixels)" },
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
-    "Matches geometries and meshes." },
+    "Matches geometries and meshes" },
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
@@ -879,7 +879,7 @@ StringXNumber MeshOptions_Number[] = {
     "Apply n barycentric smoothing passes to the cross field" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
-   "Enable the creation of high-order mesh from CGNS structured meshes."
+   "Enable the creation of high-order mesh from CGNS structured meshes"
    "(1, 2, 4, 8, ...)" },
   { F|O, "ChacoArchitecture" , opt_mesh_partition_chaco_architecture, 1. ,
     "(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh "
@@ -964,10 +964,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderOptimize" , opt_mesh_ho_optimize , 0.,
     "Optimize high order meshes?" },
   { F|0, "HighOrderPoissonRatio", opt_mesh_ho_poisson, 0.33,
-    "Poisson ratio of the material used in the elastic smoother for high order meshes."
+    "Poisson ratio of the material used in the elastic smoother for high order meshes"
     "Must be between -1.0 and 0.5, excluded"},
-  { F|O, "HighOrderSmoothingThreshold", opt_mesh_ho_mindisto, 0.5,
-    "Distorition threshold when choosing which high order element to optimize."},
+  { F|O, "HighOrderThresholdMin", opt_mesh_ho_threshold_min, 0.2,
+    "Minimum threshold for high order element optimization"},
+  { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
+    "Maximum threshold for high order element optimization"},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },

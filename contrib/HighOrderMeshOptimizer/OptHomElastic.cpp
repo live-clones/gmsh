@@ -69,7 +69,7 @@ void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
       v.insert(v.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
       v.insert(v.end(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
       v.insert(v.end(), (*it)->prisms.begin(), (*it)->prisms.end());
-      hot.applySmoothingTo(v,1.e32,false);
+      hot.applySmoothingTo(v, 1.e32, false);
     }
   }
   checkHighOrderTetrahedron("File volume Mesh", m, bad, worst);
@@ -190,8 +190,7 @@ double highOrderTools::applySmoothingTo(GFace *gf, double tres, bool mixed)
   std::vector<MElement*> v;
   v.insert(v.begin(), gf->triangles.begin(),gf->triangles.end());
   v.insert(v.begin(), gf->quadrangles.begin(),gf->quadrangles.end());
-  //  applySmoothingTo(v,gf);
-  return applySmoothingTo(v,tres, mixed);
+  return applySmoothingTo(v, tres, mixed);
 }
 
 void highOrderTools::ensureMinimumDistorsion (double threshold)
@@ -256,7 +255,7 @@ void highOrderTools::computeMetricInfo(GFace *gf,
   }
 }
 
-void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
+void highOrderTools::applySmoothingTo(std::vector<MElement*> &all, GFace *gf)
 {
 #ifdef HAVE_TAUCS
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
@@ -266,12 +265,12 @@ void highOrderTools::applySmoothingTo(std::vector<MElement*> & all, GFace *gf)
   // compute the straight sided positions of high order nodes that are
   // on the edges of the face in the UV plane
   dofManager<double> myAssembler(lsys);
-  elasticityTerm El(0, 1.0, CTX::instance()->mesh.smoothPoissonRatio, _tag);
+  elasticityTerm El(0, 1.0, CTX::instance()->mesh.hoPoissonRatio, _tag);
   std::vector<MElement*> layer, v;
   double minD;
-  getDistordedElements(all, CTX::instance()->mesh.smoothDistoThreshold, v, minD);
+  getDistordedElements(all, CTX::instance()->mesh.hoThresholdMin, v, minD);
   int numBad = v.size();
-  const int nbLayers = CTX::instance()->mesh.smoothNLayers;
+  const int nbLayers = CTX::instance()->mesh.hoNLayers;
   for (int i = 0; i < nbLayers; i++){
     addOneLayer(all, v, layer);
     v.insert(v.end(), layer.begin(), layer.end());

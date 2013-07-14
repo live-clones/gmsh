@@ -35,6 +35,11 @@
 #include "simple3D.h"
 #include "yamakawa.h"
 
+#if defined(HAVE_OPTHOM)
+#include "OptHomRun.h"
+#include "OptHomElastic.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -745,6 +750,25 @@ void GenerateMesh(GModel *m, int ask)
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
     SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
+
+  // Optimize high order elements
+  if(CTX::instance()->mesh.hoOptimize){
+#if defined(HAVE_OPTHOM)
+    if(CTX::instance()->mesh.hoOptimize < 0){
+      ElasticAnalogy(GModel::current(), CTX::instance()->mesh.hoThresholdMin, false);
+    }
+    else{
+      OptHomParameters p;
+      p.nbLayers = CTX::instance()->mesh.hoNLayers;
+      p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
+      p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
+      p.dim = GModel::current()->getDim();
+      HighOrderMeshOptimizer(GModel::current(), p);
+    }
+#else
+    Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+  }
 
   Msg::Info("%d vertices %d elements",
             m->getNumMeshVertices(), m->getNumMeshElements());

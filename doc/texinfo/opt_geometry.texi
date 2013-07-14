@@ -85,7 +85,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.MatchGeomAndMesh
-Matches geometries and meshes.@*
+Matches geometries and meshes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

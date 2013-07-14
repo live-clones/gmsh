@@ -46,16 +46,12 @@ Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d
 Set number of mesh smoothing steps
 @item -order int
 Set mesh order (1, ..., 5)
-@item -hoOptimize
-Optimize high order meshes
-@item -hoMindisto float
-Min high-order element quality before optim (0.0->1.0)
-@item -hoNLayers int
-Number of high order element layers to optimize
-@item -hoElasticity float
-Poisson ration for elasticity analogy (nu in [-1.0,0.5])
 @item -optimize[_netgen]
 Optimize quality of tetrahedral elements
+@item -optimize_ho
+Optimize high order meshes
+@item -ho_[min,max,nlayers]
+High-order optimization parameters
 @item -optimize_lloyd
 Optimize 2D meshes using Lloyd algorithm
 @item -microstructure

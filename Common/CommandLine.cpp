@@ -78,6 +78,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
   s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
+  s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
   s.push_back(mp("-microstructure",    "Generate polycrystal Voronoi geometry"));
   s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
@@ -445,13 +446,6 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->mesh.optimize = 1;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "bunin")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.bunin = atoi(argv[i++]);
-        else
-          Msg::Fatal("Missing cavity size in bunin optimization");
-      }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
         CTX::instance()->mesh.optimizeNetgen = 1;
         i++;
@@ -461,24 +455,21 @@ void GetOptions(int argc, char *argv[])
         i++;
         opt_mesh_ho_optimize(0, GMSH_SET, 1);
       }
-      else if(!strcmp(argv[i] + 1, "ho_mindisto") ||
-              !strcmp(argv[i] + 1, "hoMindisto")) {
+      else if(!strcmp(argv[i] + 1, "ho_min")) {
         i++;
         if(argv[i])
-          opt_mesh_ho_mindisto(0, GMSH_SET, atof(argv[i++]));
+          opt_mesh_ho_threshold_min(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "ho_poisson") ||
-              !strcmp(argv[i] + 1, "hoElasticity")) {
+      else if(!strcmp(argv[i] + 1, "ho_max")) {
         i++;
         if(argv[i])
-          opt_mesh_ho_poisson(0, GMSH_SET, atof(argv[i++]));
+          opt_mesh_ho_threshold_max(0, GMSH_SET, atof(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "ho_nlayers") ||
-              !strcmp(argv[i] + 1, "hoNlayers")) {
+      else if(!strcmp(argv[i] + 1, "ho_nlayers")) {
         i++;
         if(argv[i])
           opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
@@ -492,7 +483,14 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number of lloyd iterations");
       }
-      #if defined(HAVE_MESH)
+      else if(!strcmp(argv[i] + 1, "bunin")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->mesh.bunin = atoi(argv[i++]);
+        else
+          Msg::Fatal("Missing cavity size in bunin optimization");
+      }
+#if defined(HAVE_MESH)
       else if(!strcmp(argv[i] + 1, "microstructure")) {
         i++;
         int j;
@@ -518,7 +516,7 @@ void GetOptions(int argc, char *argv[])
           vm2.correspondance(0.00001);
         }
       }
-      #endif
+#endif
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
         i++;
