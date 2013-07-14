@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iterator>
 #include <string.h>
+#include "GmshConfig.h"
 #include "OptHOM.h"
 #include "OptHomRun.h"
 #include "GModel.h"
@@ -14,6 +15,8 @@
 #include "MLine.h"
 #include "OS.h"
 #include <stack>
+
+#if defined(HAVE_BFGS)
 
 double distMaxStraight(MElement *el)
 {
@@ -534,8 +537,11 @@ static void optimizeOneByOne
   }
 }
 
+#endif
+
 void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 {
+#if defined(HAVE_BFGS)
   double t1 = Cpu();
 
   int samples = 30;
@@ -583,4 +589,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   p.CPU = t2-t1;
 
   Msg::StatusBar(true, "Done optimizing high order mesh (%g s)", p.CPU);
+#else
+  Msg::Error("High-order mesh optimizer requires BFGS");
+#endif
 }

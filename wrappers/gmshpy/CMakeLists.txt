@@ -62,7 +62,7 @@ ENDMACRO(SWIG_GET_WRAPPER_DEPENDENCIES)
 
 option(ENABLE_PYTHON_LIB_API "Export all C header files needed to build the python library" OFF)
 if(ENABLE_PYTHON_LIB_API)
-  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h Mesh/highOrderTools.h
+  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h 
       Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
       Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h
       Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h
@@ -132,12 +132,12 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Geo/GeomMeshMatcher.h
   Geo/GFaceCompound.h
   Geo/gmshLevelset.h
-  Mesh/highOrderTools.h
   Numeric/jacobiPolynomials.h
   Numeric/legendrePolynomials.h
   Solver/linearSystemPETSc.h
   Mesh/meshGFaceLloyd.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h
+  contrib/HighOrderMeshOptimizer/OptHomElastic.h
   Post/PViewAsSimpleFunction.h
   Post/PViewFactory.h
   Numeric/pyramidalBasis.h
