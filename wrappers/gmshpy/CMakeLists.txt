@@ -121,6 +121,7 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Numeric/BergotBasis.h
   Mesh/CenterlineField.h
   Geo/Curvature.h
+  Common/Options.h
   Mesh/directions3D.h
   Mesh/DivideAndConquer.h
   Mesh/Field.h
@@ -134,11 +135,13 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Geo/gmshLevelset.h
   Numeric/jacobiPolynomials.h
   Numeric/legendrePolynomials.h
+  Plugin/Plugin.h
   Solver/linearSystemPETSc.h
   Mesh/meshGFaceLloyd.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h
   contrib/HighOrderMeshOptimizer/OptHomElastic.h
   Post/PViewAsSimpleFunction.h
+  Post/PViewDataList.h
   Post/PViewFactory.h
   Numeric/pyramidalBasis.h
   Solver/SElement.h

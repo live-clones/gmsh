@@ -10,6 +10,11 @@
 
 #include <slepceps.h>
 
+void eigenSolver::_try(int ierr) const
+{
+  CHKERRABORT(PETSC_COMM_WORLD, ierr);
+}
+
 eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
                          std::string B, bool hermitian)
   : _A(0), _B(0), _hermitian(hermitian)

@@ -22,7 +22,7 @@ class eigenSolver{
   bool _hermitian;
   std::vector<std::complex<double> > _eigenValues;
   std::vector<std::vector<std::complex<double> > > _eigenVectors;
-  void _try(int ierr) const { CHKERRABORT(PETSC_COMM_WORLD, ierr); }
+  void _try(int ierr) const;
  public:
   eigenSolver(dofManager<double> *manager, std::string A,
               std::string B="", bool hermitian=true);
