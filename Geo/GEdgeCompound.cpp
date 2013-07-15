@@ -14,12 +14,33 @@
 #include "Numeric.h"
 #include "Curvature.h"
 
+static bool looksOk(int tag, std::vector<GEdge*> &compound)
+{
+  if(compound.empty()){
+    Msg::Error("Empty edge compound %d", tag);
+    return false;
+  }
+  for(unsigned int i = 0; i < compound.size(); i++){
+    if(!compound[i]->getBeginVertex() || !compound[i]->getEndVertex()){
+      Msg::Error("Edge compound %d with missing begin/end vertex", tag);
+      return false;
+    }
+    if(compound.size() > 1 && compound[i]->getBeginVertex() == compound[i]->getEndVertex()){
+      Msg::Error("Edge compound %d with subloop", tag);
+      return false;
+    }
+  }
+  return true;
+}
+
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
                              std::vector<int> &orientation)
   : GEdge(m, tag, 0, 0), _compound(compound), _orientation(orientation)
 {
+  if(!looksOk(tag, compound)) return;
+
   int N = _compound.size();
-  if(N && N == _orientation.size()){
+  if(N == _orientation.size()){
     v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
     v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
     v0->addEdge(this);
@@ -46,9 +67,11 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
   : GEdge(m, tag, 0 , 0), _compound(compound)
 {
+  if(!looksOk(tag, compound)) return;
+
   orderEdges();
   int N = _compound.size();
-  if(N){
+  if(N == _orientation.size()){
     v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
     v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :  _compound[N-1]->getBeginVertex();
     v0->addEdge(this);
@@ -58,6 +81,7 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
     Msg::Error("Wrong input data for compound edge %d", tag);
     return;
   }
+
   for (unsigned int i = 0; i < _compound.size(); i++)
     _compound[i]->setCompound(this);
   parametrize();
@@ -73,10 +97,18 @@ void GEdgeCompound::orderEdges()
   }
 
   // find a lonely edge
-  std::map<GVertex*,GEdge*> tempv;
+  std::map<GVertex*, GEdge*> tempv;
   for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
     GVertex *v1 = (*it)->getBeginVertex();
     GVertex *v2 = (*it)->getEndVertex();
+    if(!v1 || !v2){
+      Msg::Error("Compounds don't support curves without two bounding vertices");
+      return;
+    }
+    if(v1 == v2){
+      Msg::Error("Compounds do not support periodic curves");
+      return;
+    }
     std::map<GVertex*, GEdge*>::iterator it1 = tempv.find(v1);
     if (it1 == tempv.end()) {
       tempv.insert(std::make_pair(v1, *it));
@@ -173,7 +205,7 @@ int GEdgeCompound::minimumMeshSegments() const
 {
   // int N = 0;
   // for (unsigned int i = 0; i < _compound.size(); i++)
-  //   N +=_compound[i]->minimumMeshSegments();
+  //   N += _compound[i]->minimumMeshSegments();
   return 3;
 }
 
@@ -191,6 +223,10 @@ GEdgeCompound::~GEdgeCompound()
 
 Range<double> GEdgeCompound::parBounds(int i) const
 {
+  if(_pars.empty()){
+    Msg::Error("Edge compound has no parametrization");
+    return Range<double>(0, 1);
+  }
   return Range<double>(0, _pars[_compound.size()]);
 }
 
@@ -200,10 +236,14 @@ Range<double> GEdgeCompound::parBounds(int i) const
 
 */
 
-void GEdgeCompound::getLocalParameter(const double &t,
+bool GEdgeCompound::getLocalParameter(const double &t,
                                       int &iEdge,
-                                      double & tLoc) const
+                                      double &tLoc) const
 {
+  if(_pars.empty()){
+    Msg::Error("Edge compound has no parametrization");
+    return false;
+  }
   for (iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
     double tmin = _pars[iEdge];
     double tmax = _pars[iEdge+1];
@@ -212,15 +252,20 @@ void GEdgeCompound::getLocalParameter(const double &t,
       tLoc = _orientation[iEdge] ?
         b.low()  + (t-tmin)/(tmax-tmin) * (b.high()-b.low()) :
         b.high() - (t-tmin)/(tmax-tmin) * (b.high()-b.low()) ;
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 void GEdgeCompound::getCompoundParameter(GEdge *ge,
                                          const double &tLoc,
                                          double &t) const
 {
+  if(_pars.empty()){
+    Msg::Error("Edge compound has no parametrization");
+    return;
+  }
   for (int iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
     if (ge == _compound[iEdge]){
       double tmin = _pars[iEdge];
@@ -236,10 +281,11 @@ void GEdgeCompound::getCompoundParameter(GEdge *ge,
 
 void GEdgeCompound::parametrize()
 {
+  _pars.clear();
   _pars.push_back(0.0);
   for (unsigned int i = 0; i < _compound.size(); i++){
     Range<double> b = _compound[i]->parBounds(0);
-    _pars.push_back(_pars[_pars.size()-1]+(b.high() - b.low()));
+    _pars.push_back(_pars[_pars.size()-1] + (b.high() - b.low()));
   }
 }
 
@@ -247,27 +293,26 @@ double GEdgeCompound::curvature(double par) const
 {
   double tLoc;
   int iEdge;
-  getLocalParameter(par,iEdge,tLoc);
-
+  if(!getLocalParameter(par, iEdge, tLoc))
+    return 0.;
   return _compound[iEdge]->curvature(tLoc);
 }
 
 double GEdgeCompound::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
                                  double *curvMax, double *curvMin) const
 {
-    double tLoc = -1.0;
-    int iEdge;
-    getLocalParameter(par,iEdge,tLoc);
+  double tLoc = -1.0;
+  int iEdge;
+  if(!getLocalParameter(par, iEdge, tLoc))
+    return 0;
 
-    if( _compound[iEdge]->geomType() == GEntity::DiscreteCurve)
-    {
+  if( _compound[iEdge]->geomType() == GEntity::DiscreteCurve){
     Curvature& curvature = Curvature::getInstance();
-    if( !Curvature::valueAlreadyComputed() )
-        {
-            Msg::Info("Need to compute discrete curvature for anisotropic remesh (in GFace)");
-            Curvature::typeOfCurvature type = Curvature::RUSIN; //RBF
-            curvature.computeCurvature(model(), type);
-        }
+    if( !Curvature::valueAlreadyComputed() ){
+      Msg::Info("Need to compute discrete curvature for anisotropic remesh (in GFace)");
+      Curvature::typeOfCurvature type = Curvature::RUSIN; //RBF
+      curvature.computeCurvature(model(), type);
+    }
     double tLocMLine;
     int iMLine;
     discreteEdge* ptrEdge = dynamic_cast<discreteEdge*>(_compound[iEdge]);
@@ -288,20 +333,19 @@ double GEdgeCompound::curvatures(const double par, SVector3 *dirMax, SVector3 *d
     *curvMin = (1-tLocMLine)*cMin[0] + tLocMLine*cMin[1];
 
     return *curvMax;
-
-    }
-    else
-    {
-        Msg::Error("Case of CAD Geometry, don't know what to do here...");
-    }
-    return 0.0;
+  }
+  else{
+    Msg::Error("Case of CAD Geometry, don't know what to do here...");
+  }
+  return 0.0;
 }
 
 GPoint GEdgeCompound::point(double par) const
 {
   double tLoc;
   int iEdge;
-  getLocalParameter(par,iEdge,tLoc);
+  if(!getLocalParameter(par, iEdge, tLoc))
+    return GPoint();
   return _compound[iEdge]->point(tLoc);
 }
 
@@ -309,7 +353,8 @@ SVector3 GEdgeCompound::firstDer(double par) const
 {
   double tLoc;
   int iEdge;
-  getLocalParameter(par,iEdge,tLoc);
+  if(!getLocalParameter(par, iEdge, tLoc))
+    return SVector3();
   return _compound[iEdge]->firstDer(tLoc);
 }
 
