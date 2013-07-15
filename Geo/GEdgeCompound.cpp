@@ -18,12 +18,17 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
                              std::vector<int> &orientation)
   : GEdge(m, tag, 0, 0), _compound(compound), _orientation(orientation)
 {
-
   int N = _compound.size();
-  v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
-  v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
-  v0->addEdge(this);
-  v1->addEdge(this);
+  if(N && N == _orientation.size()){
+    v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
+    v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
+    v0->addEdge(this);
+    v1->addEdge(this);
+  }
+  else{
+    Msg::Error("Wrong input data for compound edge %d", tag);
+    return;
+  }
 
   for (unsigned int i = 0; i < _compound.size(); i++)
     _compound[i]->setCompound(this);
@@ -35,7 +40,7 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
     }
   }
 
- parametrize();
+  parametrize();
 }
 
 GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
@@ -43,20 +48,23 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
 {
   orderEdges();
   int N = _compound.size();
-  v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
-  v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :  _compound[N-1]->getBeginVertex();
-  v0->addEdge(this);
-  v1->addEdge(this);
-
+  if(N){
+    v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
+    v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :  _compound[N-1]->getBeginVertex();
+    v0->addEdge(this);
+    v1->addEdge(this);
+  }
+  else{
+    Msg::Error("Wrong input data for compound edge %d", tag);
+    return;
+  }
   for (unsigned int i = 0; i < _compound.size(); i++)
     _compound[i]->setCompound(this);
-
   parametrize();
 }
 
 void GEdgeCompound::orderEdges()
 {
-
   std::vector<GEdge*> _c ;
   std::list<GEdge*> edges ;
 
@@ -69,21 +77,21 @@ void GEdgeCompound::orderEdges()
   for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
     GVertex *v1 = (*it)->getBeginVertex();
     GVertex *v2 = (*it)->getEndVertex();
-    std::map<GVertex*,GEdge*>::iterator it1 = tempv.find(v1);
-    if (it1==tempv.end()) {
-      tempv.insert(std::make_pair(v1,*it));
+    std::map<GVertex*, GEdge*>::iterator it1 = tempv.find(v1);
+    if (it1 == tempv.end()) {
+      tempv.insert(std::make_pair(v1, *it));
     }
     else tempv.erase(it1);
-    std::map<GVertex*,GEdge*>::iterator it2 = tempv.find(v2);
-    if (it2==tempv.end()){
-      tempv.insert(std::make_pair(v2,*it));
+    std::map<GVertex*, GEdge*>::iterator it2 = tempv.find(v2);
+    if (it2 == tempv.end()){
+      tempv.insert(std::make_pair(v2, *it));
     }
     else tempv.erase(it2);
   }
 
-  //find the first GEdge and erase it from the list edges
+  // find the first GEdge and erase it from the list edges
   GEdge *firstEdge;
-  if (tempv.size() == 2){   // non periodic
+  if (tempv.size() == 2){ // non periodic
     firstEdge = (tempv.begin())->second;
     for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end() ; ++it){
       if (*it == firstEdge){
@@ -97,7 +105,7 @@ void GEdgeCompound::orderEdges()
     edges.erase(edges.begin());
   }
   else{
-    Msg::Error("EdgeCompound %d is wrong (it has %d end points)",tag(),tempv.size());
+    Msg::Error("EdgeCompound %d is wrong (it has %d end points)", tag(), tempv.size());
     return;
   }
 
@@ -151,8 +159,8 @@ void GEdgeCompound::orderEdges()
   //edges is now a list of ordered GEdges
   _compound = _c;
 
-  //special case reverse orientation
-  if (_compound.size() < 2)return;
+  // special case reverse orientation
+  if (_compound.size() < 2) return;
   if (_orientation[0] && _compound[0]->getEndVertex() != _compound[1]->getEndVertex()
       && _compound[0]->getEndVertex() != _compound[1]->getBeginVertex()){
     for (unsigned int i = 0; i < _compound.size(); i++){
