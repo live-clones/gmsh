@@ -22,7 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
+// Please report all bugs and problems to the public mailing list
+// <gmsh@geuz.org>.
 
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_
