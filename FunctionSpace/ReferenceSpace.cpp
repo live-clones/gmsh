@@ -7,55 +7,12 @@
 using namespace std;
 
 ReferenceSpace::ReferenceSpace(void){
-  // Init to NULL                  //
-  nEdge           = 0;
-  refEdge         = NULL;
-  //permutedRefEdge = NULL;
-  edge            = NULL;
-
-  nFace           = 0;
-  nNodeInFace     = NULL;
-  refFace         = NULL;
-  //permutedRefFace = NULL;
-  face            = NULL;
-
   // Defining Ref Edge and Face in //
   // Derived Class                 //
 }
 
 ReferenceSpace::~ReferenceSpace(void){
-  const size_t nPerm = pTree->getNPermutation();
-
-  // Destroy Tree //
   delete pTree;
-
-  // Delete Permutated Edge //
-  for(size_t p = 0; p < nPerm; p++){
-    for(size_t i = 0; i < nEdge; i++){
-      //delete[] permutedRefEdge[p][i];
-      delete   (*(*edge)[p])[i];
-    }
-
-    //delete[] permutedRefEdge[p];
-    delete   (*edge)[p];
-  }
-
-  //delete[] permutedRefEdge;
-  delete   edge;
-
-  // Delete Permutated Face //
-  for(size_t p = 0; p < nPerm; p++){
-    for(size_t i = 0; i < nFace; i++){
-      //delete[] permutedRefFace[p][i];
-      delete (*(*face)[p])[i];
-    }
-
-    //delete[] permutedRefFace[p];
-    delete (*face)[p];
-  }
-
-  //delete[] permutedRefFace;
-  delete face;
 }
 
 void ReferenceSpace::init(void){
@@ -67,21 +24,50 @@ void ReferenceSpace::init(void){
 
   pTree = new PermutationTree(vertexSeq);
 
-  // Edges & Faces //
-  getEdge();
-  getFace();
-
   // Cyclic Permutation //
-  findCyclicPermutation();
-}
-
-void ReferenceSpace::findCyclicPermutation(void){
-  // Alloc Some Data //
-  const size_t nPerm = pTree->getNPermutation();
-
   list<size_t>          listOfTrueReferenceSpace;
   list<vector<size_t> > listOfRefNodeIndexPermutation;
   list<vector<size_t> > listOfReverseNodeIndexPermutation;
+
+  findCyclicPermutation(listOfTrueReferenceSpace,
+                        listOfRefNodeIndexPermutation,
+                        listOfReverseNodeIndexPermutation);
+
+  // Iterators //
+  list<size_t>::iterator refSpaceIt  = listOfTrueReferenceSpace.begin();
+
+  // Reference Spaces Node Id //
+  const size_t nRefSpace = listOfTrueReferenceSpace.size();
+  refSpaceNodeId.resize(nRefSpace);
+
+  for(size_t i = 0; i < nRefSpace; i++, refSpaceIt++){
+    refSpaceNodeId[i].resize(nVertex);
+
+    pTree->fillWithPermutation(*refSpaceIt, refSpaceNodeId[i]);
+  }
+
+  // ABC space to UVW space shape function index mapping //
+  const size_t nPermutation = pTree->getNPermutation();
+  ABCtoUVWIndex.resize(nPermutation);
+  ABCtoUVWIndex.assign(listOfReverseNodeIndexPermutation.begin(),
+                       listOfReverseNodeIndexPermutation.end());
+
+  // UVW space to ABC space shape function index mapping //
+  UVWtoABCIndex.resize(nPermutation);
+  UVWtoABCIndex.assign(listOfRefNodeIndexPermutation.begin(),
+                       listOfRefNodeIndexPermutation.end());
+
+  // Ordered Edges & Faces Node Index//
+  getOrderedEdge();
+  getOrderedFace();
+}
+
+void ReferenceSpace::
+findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
+                      list<vector<size_t> >& listOfRefNodeIndexPermutation,
+                      list<vector<size_t> >& listOfReverseNodeIndexPermutation){
+  // Alloc Some Data //
+  const size_t nPerm = pTree->getNPermutation();
 
   vector<size_t> pTest(nVertex);
   vector<size_t> pRef(nVertex);
@@ -90,12 +76,13 @@ void ReferenceSpace::findCyclicPermutation(void){
   list<size_t>::iterator end;
   triple match;
 
+  // Values For unPermutedIndex //
   vector<size_t> unPermutedIndex(nVertex);
 
   for(size_t i = 0; i < nVertex; i++)
     unPermutedIndex[i] = i;
 
-  // Find Cyclic Permutation
+  // Find Cyclic Permutation //
   for(size_t i = 0; i < nPerm; i++){
     // No match
     match.first = false;
@@ -193,19 +180,22 @@ static bool haveSameNode(vector<size_t>& face0,
 size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
                                              vector<size_t>& node){
   // Init Stuff //
+  const size_t nFace    = refFaceNodeIdx.size();
   const size_t faceSize = face.size();
   bool match = false;
   size_t f = 0;
 
   vector<size_t> testFace(faceSize);
+  size_t         nNodeInFace;
 
   // Test All Face until match
   while(!match && f < nFace){
+    nNodeInFace = refFaceNodeIdx[f].size();
 
-    if(nNodeInFace[f] == faceSize){
+    if(nNodeInFace == faceSize){
       // Get face f nodes
       for(size_t i = 0; i < faceSize; i++)
-        testFace[i] = node[refFace[f][i]];
+        testFace[i] = node[refFaceNodeIdx[f][i]];
 
       // Look if match
       match = haveSameNode(testFace, face);
@@ -259,19 +249,21 @@ isCyclicPermutation(vector<size_t>& pTest,
                     vector<size_t>& pRef){
 
   // Node IDs of Reference Space first Face
-  vector<size_t> refNode(nNodeInFace[0]);
+  const size_t   nNodeInFaceZero = refFaceNodeIdx[0].size();
+  vector<size_t> refNode(nNodeInFaceZero);
 
-  for(size_t i = 0; i < nNodeInFace[0]; i++)
-    refNode[i] = pRef[refFace[0][i]];
+  for(size_t i = 0; i < nNodeInFaceZero; i++)
+    refNode[i] = pRef[refFaceNodeIdx[0][i]];
 
   // Corresponding Face in Test Permutation
   size_t testFaceId = findCorrespondingFace(refNode, pTest);
 
   // Node IDs of Test Permutation correspnding Face
-  vector<size_t> testNode(nNodeInFace[testFaceId]);
+  const size_t   nNodeInFaceTest = refFaceNodeIdx[testFaceId].size();
+  vector<size_t> testNode(nNodeInFaceTest);
 
-  for(size_t i = 0; i < nNodeInFace[testFaceId]; i++)
-    testNode[i] = pTest[refFace[testFaceId][i]];
+  for(size_t i = 0; i < nNodeInFaceTest; i++)
+    testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
 
   // Return Triple //
   triple tri = {
@@ -283,229 +275,125 @@ isCyclicPermutation(vector<size_t>& pTest,
   return tri;
 }
 
-void ReferenceSpace::getEdge(void){
-  const size_t nPerm = pTree->getNPermutation();
+void ReferenceSpace::getOrderedEdge(void){
+  // Fill orderedEdgeNodeIdx[s][e]                         //
+  // (for all reference space 's' and edge 'e') such that: //
+  //                                                       //
+  // refSpaceNodeId[s][orderedEdgeNodeIdx[s][e][0]] <      //
+  // refSpaceNodeId[s][orderedEdgeNodeIdx[s][e][1]]        //
 
   // Alloc
-  vector<const vector<unsigned int>*>* tmp;
-  edge = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
-  /*
-  // All Edges have two nodes
-  unsigned int* nNodeInEdge = new unsigned int[nEdge];
+  const size_t nEdge     = refEdgeNodeIdx.size();
+  const size_t nRefSpace = refSpaceNodeId.size();
 
-  for(unsigned int e = 0; e < nEdge; e++)
-    nNodeInEdge[e] = 2;
+  orderedEdgeNodeIdx.resize(nRefSpace);
 
-  // Get Edge nodes depending on the orientation
-  //    (edge 1 = [1 2] for orientation 1)
-  //    (       = [4 1] for orientation 2)
-  getPermutedRefEntity(&permutedRefEdge,
-                       refEdge,
-                       nNodeInEdge,
-                       nEdge);
-
-  delete[] nNodeInEdge;
-  */
   // Populate Edge
-  for(size_t p = 0; p < nPerm; p++){
-    tmp = new vector<const vector<unsigned int>*>(nEdge);
+  for(size_t s = 0; s < nRefSpace; s++){
+    orderedEdgeNodeIdx[s].resize(nEdge);
 
-    for(size_t e = 0; e < nEdge; e++)
-      (*tmp)[e] = getOrderedEdge(p, e);
+    for(size_t e = 0; e < nEdge; e++){
+      orderedEdgeNodeIdx[s][e].resize(2);
 
-    (*edge)[p] = tmp;
+      orderRefEntityForGivenRefSpace(refEdgeNodeIdx[e],
+                                     refSpaceNodeId[s],
+                                     orderedEdgeNodeIdx[s][e]);
+    }
   }
 }
 
-void ReferenceSpace::getFace(void){
-  const size_t nPerm = pTree->getNPermutation();
+void ReferenceSpace::getOrderedFace(void){
+  // Fill orderedEdgeNodeIdx[s][f]                                //
+  // (for all reference space 's' and face 'f') such that:        //
+  //                                                              //
+  // refSpaceNodeId[s][orderedFaceNodeIdx[s][f][0]] <             //
+  // refSpaceNodeId[s][orderedFaceNodeIdx[s][f][1]] <             //
+  // refSpaceNodeId[s][orderedFaceNodeIdx[s][f][2]] <             //
+  // (refSpaceNodeId[s][orderedFaceNodeIdx[s][f][3]]) (Quad Face) //
+  //                                                              //
+  // If we have a Quad face, a correction is needed such that:    //
+  //                                                              //
+  // orderedFaceNodeIdx[s][f][2]                                  //
+  // is *opposite* to                                             //
+  // orderedFaceNodeIdx[s][f][0]                                  //
 
   // Alloc
-  vector<const vector<unsigned int>*>* tmp;
-  face = new vector<const vector<const vector<unsigned int>*>*>(nPerm);
-  /*
-  // Get Face nodes depending on the orientation
-  //    (face 1 = [1 2 3 4] for orientation 1)
-  //    (       = [4 1 2 3] for orientation 2)
-  getPermutedRefEntity(&permutedRefFace,
-                       refFace,
-                       nNodeInFace,
-                       nFace);
-  */
+  const size_t nFace     = refFaceNodeIdx.size();
+  const size_t nRefSpace = refSpaceNodeId.size();
+
+  orderedFaceNodeIdx.resize(nRefSpace);
+
   // Populate Face
-  for(size_t p = 0; p < nPerm; p++){
-    tmp = new vector<const vector<unsigned int>*>(nFace);
+  for(size_t s = 0; s < nRefSpace; s++){
+    orderedFaceNodeIdx[s].resize(nFace);
 
     for(size_t f = 0; f < nFace; f++){
-      // Dending on the number of node per face
-      // The ordering strategy is different
+      size_t nNodeInFace = refFaceNodeIdx[f].size();
 
-      switch(nNodeInFace[f]){
-      case 3: (*tmp)[f] = getOrderedTriFace(p, f);  break;
-      case 4: (*tmp)[f] = getOrderedQuadFace(p, f); break;
+      orderedFaceNodeIdx[s][f].resize(nNodeInFace);
 
-      default:
-        throw Exception("I can handle face with %d nodes",
-                        nNodeInFace[f]);
-      }
-    }
-
-    (*face)[p] = tmp;
-  }
-}
-/*
-void ReferenceSpace::getPermutedRefEntity(unsigned int**** permutedRefEntity,
-                                          unsigned int**   refEntity,
-                                          unsigned int*    nNodeInEntity,
-                                          unsigned int     nEntity){
-  // Alloc PermutedRefEntity
-  (*permutedRefEntity) = new unsigned int**[nPerm];
-
-  for(unsigned int p = 0; p < nPerm; p++){
-    (*permutedRefEntity)[p] = new unsigned int*[nEntity];
-
-    for(unsigned int e = 0; e < nEntity; e++)
-      (*permutedRefEntity)[p][e] = new unsigned int[nNodeInEntity[e]];
-  }
-
-  // Generate Permuted Ref Entity
-  for(unsigned int p = 0; p < nPerm; p++){
-    for(unsigned int e = 0; e < nEntity; e++){
-      for(unsigned int n = 0; n < nNodeInEntity[e]; n++)
-        (*permutedRefEntity)[p][e][n] = perm[p][refEntity[e][n]];
+      orderRefEntityForGivenRefSpace(refFaceNodeIdx[f],
+                                     refSpaceNodeId[s],
+                                     orderedFaceNodeIdx[s][f]);
+      if(nNodeInFace == 4)
+        correctQuadFaceNodeIdx(orderedFaceNodeIdx[s][f]);
     }
   }
-}
-*/
-const vector<unsigned int>* ReferenceSpace::
-getOrderedEdge(unsigned int permutation,
-               unsigned int edge){
-
-  /**************************************************************************
-   * I want to know how I need to take the values of refEdge[edge]          *
-   * (i.e the node *index* of a given edge) so that the corresponding       *
-   * values in permutation (i.e perm[permutation][refEdge[edge]]) are going *
-   * from the smallest value to the biggest.                                *
-   **************************************************************************/
-
-  // Alloc
-  vector<unsigned int>* ordered = new vector<unsigned int>(2);
-
-  // Permutation
-  vector<size_t> perm(nVertex);
-  pTree->fillWithPermutation(permutation, perm);
-
-  // Order refEdge
-  orderRefEntityForGivenPermutation(refEdge[edge],
-                                    perm,
-                                    *ordered);
-
-  // Return ordered
-  return ordered;
-}
-
-const std::vector<unsigned int>* ReferenceSpace::
-getOrderedTriFace(unsigned int permutation,
-                  unsigned int face){
-
-  /***********************************************
-   * Same as getOrderedEdge, but I with refFace. *
-   ***********************************************/
-
-  // Alloc
-  vector<unsigned int>* ordered = new vector<unsigned int>(3);
-
-  // Permutation
-  vector<size_t> perm(nVertex);
-  pTree->fillWithPermutation(permutation, perm);
-
-  // Order refFace
-  orderRefEntityForGivenPermutation(refFace[face],
-                                    perm,
-                                    *ordered);
-
-  // Return ordered
-  return ordered;
-}
-
-const std::vector<unsigned int>* ReferenceSpace::
-getOrderedQuadFace(unsigned int permutation,
-                   unsigned int face){
-
-  /*********************************************************************
-   * Same as getOrderedFace, but refFace has 4 nodes.                  *
-   *                                                                   *
-   * In that case,                                                     *
-   * I need node at ordered[2] to be *opposite* to node at ordered[0]. *
-   *  --> If not make a permutation such                               *
-   *      that node opposite at ordered[2]                             *
-   *      is at ordered[0]                                             *
-   *********************************************************************/
-
-  // Alloc
-  vector<unsigned int>* ordered = new vector<unsigned int>(4);
-
-  // Permutation
-  vector<size_t> perm(nVertex);
-  pTree->fillWithPermutation(permutation, perm);
-
-  // Order refFace
-  orderRefEntityForGivenPermutation(refFace[face],
-                                    perm,
-                                    *ordered);
-
-  // Get ordered[2] opposite to ordered[0]
-  unsigned int opposite = ((*ordered)[0] + 2) % 4;
-
-  if((*ordered)[2] != opposite){
-    // Find opposite node index
-    unsigned int tmp;
-    unsigned int idx = 1;
-    while((*ordered)[idx] != opposite)
-      idx++;
-
-    // Swap ordered[2] and ordered[idx]
-    tmp = (*ordered)[2];
-    (*ordered)[2]   = opposite;
-    (*ordered)[idx] = tmp;
-  }
-
-  // Return
-  return ordered;
 }
 
 void ReferenceSpace::
-orderRefEntityForGivenPermutation(size_t* refEntity,
-                                  vector<size_t>& permutation,
-                                  vector<unsigned int>& orderedEntity){
+orderRefEntityForGivenRefSpace(vector<size_t>& refEntityNodeIdx,
+                               vector<size_t>& refSpaceNodeId,
+                               vector<size_t>& orderedEntityNodeIdx){
   // Get Size
-  const unsigned int size = orderedEntity.size();
+  const size_t size = orderedEntityNodeIdx.size();
 
-  // Copy srcSort in sorted
-  vector<pair<unsigned int, unsigned int> > sorted(size);
+  // Ref Entity Node *ID*
+  vector<pair<size_t, size_t> > refEntityNodeId(size);
 
-  for(unsigned int i = 0; i < size; i++){
-    sorted[i].first  = i;
-    sorted[i].second = permutation[refEntity[i]];
+  for(size_t i = 0; i < size; i++){
+    refEntityNodeId[i].first  = i;                             // Node Id INDEX
+    refEntityNodeId[i].second = refSpaceNodeId[refEntityNodeIdx[i]]; // Node Id
   }
 
-  // Sort it with repsect to second entry
-  std::sort(sorted.begin(), sorted.end(), sortPredicate);
+  // Sort it with repsect to second entry (Node ID)
+  std::sort(refEntityNodeId.begin(), refEntityNodeId.end(), sortPredicate);
 
-  // Swap with respect to srcSwap
-  for(unsigned int i = 0; i < size; i++)
-    orderedEntity[i] = refEntity[sorted[i].first];
+  // Populate orderedEntityNodeIdx (Usign sorted Node ID old Index)
+  for(size_t i = 0; i < size; i++)
+    orderedEntityNodeIdx[i] = refEntityNodeIdx[refEntityNodeId[i].first];
 }
 
-size_t ReferenceSpace::getReferenceSpace(const MElement& elem) const{
-  // Const_Cast //
-  MElement& element = const_cast<MElement&>(elem);
+void ReferenceSpace::
+correctQuadFaceNodeIdx(vector<size_t>& correctedQuadFaceNodeIdx){
 
+  // Get :                       //
+  // correctedQuadFaceNodeIdx[2] //
+  // is *opposite* to            //
+  // correctedQuadFaceNodeIdx[0] //
+
+  size_t opposite = (correctedQuadFaceNodeIdx[0] + 2) % 4;
+
+  if(correctedQuadFaceNodeIdx[2] != opposite){
+    // Find opposite node index
+    size_t tmp;
+    size_t idx = 1;
+
+    while(correctedQuadFaceNodeIdx[idx] != opposite)
+      idx++;
+
+    // Swap correctedQuadFaceNodeIdx[2] and correctedQuadFaceNodeIdx[idx]
+    tmp = correctedQuadFaceNodeIdx[2];
+    correctedQuadFaceNodeIdx[2]   = opposite;
+    correctedQuadFaceNodeIdx[idx] = tmp;
+  }
+}
+
+size_t ReferenceSpace::getPermutationIdx(const MElement& element) const{
   // Get Primary Vertices Global ID //
-  const int nVertex = element.getNumPrimaryVertices();
-  vector<pair<unsigned int, unsigned int> > vertexGlobalId(nVertex);
+  vector<pair<size_t, size_t> > vertexGlobalId(nVertex);
 
-  for(int i = 0; i < nVertex; i++){
+  for(size_t i = 0; i < nVertex; i++){
     vertexGlobalId[i].first  = i;
     vertexGlobalId[i].second = element.getVertex(i)->getNum();
   }
@@ -517,7 +405,7 @@ size_t ReferenceSpace::getReferenceSpace(const MElement& elem) const{
   // Reduce Vertex Global ID //
   vector<size_t> vertexReducedId(nVertex);
 
-  for(int i = 0; i < nVertex; i++)
+  for(size_t i = 0; i < nVertex; i++)
     vertexReducedId[vertexGlobalId[i].first] = i;
 
   // Tree Lookup //
@@ -531,36 +419,113 @@ size_t ReferenceSpace::getReferenceSpace(const MElement& elem) const{
   }
 }
 
+void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
+                                     const fullVector<double>& xyz,
+                                     double abc[3]){
+  // Get UVW coordinate //
+  double phys[3] = {xyz(0), xyz(1), xyz(2)};
+  double uvw[3];
+
+  element.xyz2uvw(phys, uvw);
+
+  // Compute coordinate in ABC Space //
+  // ABC node coordinate
+  double** abcMat = new double*[nVertex];
+
+  for(size_t i = 0; i < nVertex; i++)
+    abcMat[i] = new double[3];
+
+  for(size_t i = 0; i < nVertex; i++)
+    element.getNode(i, abcMat[i][0], abcMat[i][1], abcMat[i][2]);
+
+  // UVW (order 1) shape functions
+  double* phiUVW = new double[nVertex];
+  element.getShapeFunctions(uvw[0], uvw[1], uvw[2], phiUVW, 1);
+
+  // Element Permutation Index //
+  const size_t permutationIdx = getPermutationIdx(element);
+
+  // Map From UVW to ABC //
+  abc[0] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    abc[0] += abcMat[i][0] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+
+  abc[1] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    abc[1] += abcMat[i][1] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+
+  abc[2] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    abc[2] += abcMat[i][2] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+
+  // Free //
+  delete[] phiUVW;
+
+  for(size_t i = 0; i < nVertex; i++)
+    delete[] abcMat[i];
+
+  delete[] abcMat;
+}
+
+void ReferenceSpace::getJacobian(const MElement& element,
+                                 const fullVector<double>& xyz,
+                                 fullMatrix<double>& jac) const{
+}
+
 string ReferenceSpace::toString(void) const{
-  const size_t nPerm = pTree->getNPermutation();
+  const size_t nRefSpace = refSpaceNodeId.size();
+  const size_t nEdge     = refEdgeNodeIdx.size();
+  const size_t nFace     = refFaceNodeIdx.size();
   stringstream stream;
 
-  // ReferenceSpaces //
-  stream << "Reference Spaces:" << endl
+  // Permutation Tree //
+  stream << "Permutation Tree:" << endl
          << pTree->toString()   << endl;
 
-  stream << "Edges Permutations:" << endl;
+  // Reference Space //
+  stream << "Reference Space Node IDs:" << endl;
 
-  for(size_t i = 0; i < nPerm; i++){
-    stream << "  * RefSpace #" << i + 1 << ":" << endl;
+  for(size_t s = 0; s < nRefSpace; s++){
+    stream << "  ** Reference Space #" << s + 1 << ": [";
 
-    for(size_t j = 0; j < nEdge; j++)
-      stream << "      -- ["
-             << edge->at(i)->at(j)->at(0) << ", "
-             << edge->at(i)->at(j)->at(1) << "]" << endl;
+    for(size_t v = 0; v < nVertex - 1; v++)
+      stream << refSpaceNodeId[s][v] << ", ";
+
+    stream << refSpaceNodeId[s][nVertex - 1] << "]" << endl;
   }
 
-  stream << "Faces Permutations:" << endl;
+  stream << endl << "Ordered Edge Node Index:" << endl;
 
-  for(size_t i = 0; i < nPerm; i++){
-    stream << "  * RefSpace #" << i + 1 << ":" << endl;
+  for(size_t s = 0; s < nRefSpace; s++){
+    stream << "  ** Reference Space #" << s + 1 << ":"
+           << endl;
 
-    for(size_t j = 0; j < nFace; j++)
+    for(size_t e = 0; e < nEdge; e++)
       stream << "      -- ["
-             << face->at(i)->at(j)->at(0) << ", "
-             << face->at(i)->at(j)->at(1) << ", "
-             << face->at(i)->at(j)->at(2) << "]" << endl;
+             << orderedEdgeNodeIdx[s][e][0] << ", "
+             << orderedEdgeNodeIdx[s][e][1] << "]"
+             << endl;
   }
+
+  stream << endl << "Ordered Face Node Index:" << endl;
+
+  for(size_t s = 0; s < nRefSpace; s++){
+    stream << "  ** Reference Space #" << s + 1 << ":"
+           << endl;
+
+    for(size_t f = 0; f < nFace; f++){
+      const size_t nNodeInFace = orderedFaceNodeIdx[s][f].size();
+      stream << "      -- [";
+
+      for(size_t n = 0; n < nNodeInFace - 1; n++)
+        stream << orderedFaceNodeIdx[s][f][n] << ", ";
+
+      stream << orderedFaceNodeIdx[s][f][nNodeInFace - 1] << "]"
+             << endl;
+    }
+  }
+
+  stream << endl;
 
   return stream.str();
 }

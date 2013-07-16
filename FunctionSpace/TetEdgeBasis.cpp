@@ -5,6 +5,7 @@
 using namespace std;
 
 TetEdgeBasis::TetEdgeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new TetReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -321,9 +322,11 @@ TetEdgeBasis::TetEdgeBasis(unsigned int order){
   delete[] legendre;
   delete[] sclLegendre;
   delete[] intLegendre;
+  */
 }
 
 TetEdgeBasis::~TetEdgeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -336,4 +339,5 @@ TetEdgeBasis::~TetEdgeBasis(void){
   }
 
   delete[] basis;
+  */
 }

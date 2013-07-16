@@ -4,6 +4,7 @@
 using namespace std;
 
 TriNedelecBasis::TriNedelecBasis(void){
+  /*
   // Reference Space //
   refSpace  = new TriReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -63,9 +64,11 @@ TriNedelecBasis::TriNedelecBasis(void){
       basis[s][e] = new vector<Polynomial>(tmp2);
     }
   }
+  */
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -78,4 +81,5 @@ TriNedelecBasis::~TriNedelecBasis(void){
   }
 
   delete[] basis;
+  */
 }

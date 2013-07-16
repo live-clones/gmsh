@@ -4,6 +4,7 @@
 using namespace std;
 
 LineReferenceSpace::LineReferenceSpace(void){
+  /*
   // Vertex Definition //
   nVertex = 2;
 
@@ -21,20 +22,23 @@ LineReferenceSpace::LineReferenceSpace(void){
 
   // Init All //
   init();
+  */
 }
 
 LineReferenceSpace::~LineReferenceSpace(void){
+  /*
   // Delete Ref Edge //
   for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
 
   delete[] refEdge;
+  */
 }
 
 string LineReferenceSpace::toLatex(void) const{
-  const size_t nPerm = pTree->getNPermutation();
+  //const size_t nPerm = pTree->getNPermutation();
   stringstream stream;
-
+  /*
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl
@@ -64,6 +68,6 @@ string LineReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
          << "\\end{document}"  << endl;
-
+  */
   return stream.str();
 }

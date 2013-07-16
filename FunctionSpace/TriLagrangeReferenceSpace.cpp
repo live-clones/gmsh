@@ -4,6 +4,7 @@
 using namespace std;
 
 TriLagrangeReferenceSpace::TriLagrangeReferenceSpace(unsigned int order){
+  /*
   // Vertex Definition //
   nVertex = 3;
 
@@ -41,9 +42,11 @@ TriLagrangeReferenceSpace::TriLagrangeReferenceSpace(unsigned int order){
     nNodePerCell;
 
   getLagrangeNode();
+  */
 }
 
 TriLagrangeReferenceSpace::~TriLagrangeReferenceSpace(void){
+  /*
   // Delete Ref Edge //
   for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
@@ -55,4 +58,5 @@ TriLagrangeReferenceSpace::~TriLagrangeReferenceSpace(void){
     delete[] refFace[i];
 
   delete[] refFace;
+  */
 }

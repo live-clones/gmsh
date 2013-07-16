@@ -5,6 +5,7 @@
 using namespace std;
 
 QuadNodeBasis::QuadNodeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -142,9 +143,11 @@ QuadNodeBasis::QuadNodeBasis(unsigned int order){
 
   // Free Temporary Sapce //
   delete[] legendre;
+  */
 }
 
 QuadNodeBasis::~QuadNodeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -157,4 +160,5 @@ QuadNodeBasis::~QuadNodeBasis(void){
   }
 
   delete[] basis;
+  */
 }

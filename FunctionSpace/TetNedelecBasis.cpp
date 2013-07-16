@@ -4,6 +4,7 @@
 using namespace std;
 
 TetNedelecBasis::TetNedelecBasis(void){
+  /*
   // Reference Space //
   refSpace  = new TetReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -66,9 +67,11 @@ TetNedelecBasis::TetNedelecBasis(void){
       basis[s][e] = new vector<Polynomial>(tmp2);
     }
   }
+  */
 }
 
 TetNedelecBasis::~TetNedelecBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -81,4 +84,5 @@ TetNedelecBasis::~TetNedelecBasis(void){
   }
 
   delete[] basis;
+  */
 }

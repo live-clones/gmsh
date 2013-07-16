@@ -5,6 +5,7 @@
 using namespace std;
 
 QuadReferenceSpace::QuadReferenceSpace(void){
+  /*
   // Vertex Definition //
   nVertex = 4;
 
@@ -37,9 +38,11 @@ QuadReferenceSpace::QuadReferenceSpace(void){
 
   // Init All //
   init();
+  */
 }
 
 QuadReferenceSpace::~QuadReferenceSpace(void){
+  /*
   // Delete Ref Edge //
   for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
@@ -52,13 +55,14 @@ QuadReferenceSpace::~QuadReferenceSpace(void){
 
   delete[] refFace;
   delete[] nNodeInFace;
+  */
 }
 
 string QuadReferenceSpace::toLatex(void) const{
-  const size_t   nPerm = pTree->getNPermutation();
+  //const size_t   nPerm = pTree->getNPermutation();
   stringstream   stream;
-  vector<size_t> perm(nVertex);
-
+  //vector<size_t> perm(nVertex);
+  /*
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl
@@ -98,6 +102,6 @@ string QuadReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
          << "\\end{document}"  << endl;
-
+  */
   return stream.str();
 }

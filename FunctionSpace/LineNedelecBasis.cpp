@@ -5,6 +5,7 @@
 using namespace std;
 
 LineNedelecBasis::LineNedelecBasis(void){
+  /*
   // Reference Space //
   refSpace  = new LineReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -41,9 +42,11 @@ LineNedelecBasis::LineNedelecBasis(void){
   // Nedelec //
   basis[0][0] = new vector<Polynomial>(first);
   basis[1][0] = new vector<Polynomial>(second);
+  */
 }
 
 LineNedelecBasis::~LineNedelecBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -56,4 +59,5 @@ LineNedelecBasis::~LineNedelecBasis(void){
   }
 
   delete[] basis;
+  */
 }

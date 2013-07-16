@@ -5,6 +5,7 @@
 using namespace std;
 
 QuadEdgeBasis::QuadEdgeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -238,9 +239,11 @@ QuadEdgeBasis::QuadEdgeBasis(unsigned int order){
   // Free Temporary Sapce //
   delete[] legendre;
   delete[] intLegendre;
+  */
 }
 
 QuadEdgeBasis::~QuadEdgeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -253,4 +256,5 @@ QuadEdgeBasis::~QuadEdgeBasis(void){
   }
 
   delete[] basis;
+  */
 }

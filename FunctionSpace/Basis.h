@@ -81,6 +81,10 @@ class Basis{
   virtual unsigned int getNOrientation(void) const = 0;
   virtual unsigned int getOrientation(const MElement& element) const = 0;
 
+  virtual void mapFromXYZtoABC(const MElement& element,
+                               const fullVector<double>& xyz,
+                               double abc[3]) const = 0;
+
   // Functions Ordering //
   virtual std::vector<size_t>
     getFunctionOrdering(const MElement& element) const = 0;

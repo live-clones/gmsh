@@ -5,6 +5,7 @@
 using namespace std;
 
 TetReferenceSpace::TetReferenceSpace(void){
+  /*
   // Vertex Definition //
   nVertex = 4;
 
@@ -40,9 +41,11 @@ TetReferenceSpace::TetReferenceSpace(void){
 
   // Init All //
   init();
+  */
 }
 
 TetReferenceSpace::~TetReferenceSpace(void){
+  /*
   // Delete Ref Edge //
   for(size_t i = 0; i < nEdge; i++)
     delete[] refEdge[i];
@@ -55,13 +58,14 @@ TetReferenceSpace::~TetReferenceSpace(void){
 
   delete[] refFace;
   delete[] nNodeInFace;
+  */
 }
 
 string TetReferenceSpace::toLatex(void) const{
-  const size_t   nPerm = pTree->getNPermutation();
+  //const size_t   nPerm = pTree->getNPermutation();
   stringstream   stream;
-  vector<size_t> perm;
-
+  //vector<size_t> perm;
+  /*
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl
@@ -101,6 +105,6 @@ string TetReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
          << "\\end{document}"  << endl;
-
+  */
   return stream.str();
 }

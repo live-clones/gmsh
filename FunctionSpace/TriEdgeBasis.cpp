@@ -5,6 +5,7 @@
 using namespace std;
 
 TriEdgeBasis::TriEdgeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new TriReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -235,9 +236,11 @@ TriEdgeBasis::TriEdgeBasis(unsigned int order){
   delete[] u;
   delete[] v;
   delete[] subGrad;
+  */
 }
 
 TriEdgeBasis::~TriEdgeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -250,4 +253,5 @@ TriEdgeBasis::~TriEdgeBasis(void){
   }
 
   delete[] basis;
+  */
 }

@@ -14,7 +14,7 @@ double FunctionSpaceScalar::
 interpolate(const MElement& element,
             const std::vector<double>& coef,
             const fullVector<double>& xyz) const{
-
+  /*
   // Const Cast For MElement //
   MElement& eelement =
     const_cast<MElement&>(element);
@@ -34,11 +34,11 @@ interpolate(const MElement& element,
   element.getNode(0, abcPnt[0][0], abcPnt[0][1], abcPnt[0][2]);
   element.getNode(1, abcPnt[1][0], abcPnt[1][1], abcPnt[1][2]);
   element.getNode(2, abcPnt[2][0], abcPnt[2][1], abcPnt[2][2]);
-  /*
+
   std::cout << order[0] << " | "
             << order[1] << " | "
             << order[2] << std::endl;
-  */
+
   abcMat[0][0] = abcPnt[0][0];
   abcMat[0][1] = abcPnt[1][0];
   abcMat[0][2] = abcPnt[2][0];
@@ -50,14 +50,14 @@ interpolate(const MElement& element,
   abcMat[2][0] = abcPnt[0][2];
   abcMat[2][1] = abcPnt[1][2];
   abcMat[2][2] = abcPnt[2][2];
-  /*
+
   for(size_t i = 0; i < 3; i++){
     for(size_t j = 0; j < 3; j++)
       std::cout << abcMat[i][j] << "\t";
     std::cout << std::endl;
   }
   std::cout << std::endl;
-  */
+
   double phiUVW[3];
   element.getShapeFunctions(uvw[0], uvw[1], uvw[2], phiUVW);
 
@@ -90,12 +90,17 @@ interpolate(const MElement& element,
   uvw[0] = abc[0];
   uvw[1] = abc[1];
   uvw[2] = abc[2];
+  */
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  (*basis)[0]->mapFromXYZtoABC(element, xyz, abc);
 
   // Get Basis Functions //
   const unsigned int nFun = (*basis)[0]->getNFunction();
   fullMatrix<double>  fun(nFun, 1);
 
-  (*basis)[0]->getFunctions(fun, element, uvw[0], uvw[1], uvw[2]);
+  (*basis)[0]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
   // Interpolate (in Reference Place) //
   double val = 0;

@@ -78,6 +78,11 @@ static size_t matchClosure(vector<int>& reduced,
   return i;
 }
 
+void BasisLagrange::mapFromXYZtoABC(const MElement& element,
+                                    const fullVector<double>& xyz,
+                                    double abc[3]) const{
+}
+
 vector<size_t> BasisLagrange::
 getFunctionOrdering(const MElement& element) const{
   /*

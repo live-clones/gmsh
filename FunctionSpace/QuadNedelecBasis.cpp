@@ -5,6 +5,7 @@
 using namespace std;
 
 QuadNedelecBasis::QuadNedelecBasis(void){
+  /*
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -105,9 +106,11 @@ QuadNedelecBasis::QuadNedelecBasis(void){
       delete old;
     }
   }
+  */
 }
 
 QuadNedelecBasis::~QuadNedelecBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -120,4 +123,5 @@ QuadNedelecBasis::~QuadNedelecBasis(void){
   }
 
   delete[] basis;
+  */
 }

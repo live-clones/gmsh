@@ -9,54 +9,33 @@ TriReferenceSpace::TriReferenceSpace(void){
   nVertex = 3;
 
   // Edge Definition //
-  nEdge   = 3;
-  refEdge = new size_t*[nEdge];
+  const size_t nEdge = 3;
+  refEdgeNodeIdx.resize(nEdge);
 
   for(size_t i = 0; i < nEdge; i++){
-    refEdge[i]    = new size_t[2];
-    refEdge[i][0] = MTriangle::edges_tri(i, 0);
-    refEdge[i][1] = MTriangle::edges_tri(i, 1);
+    refEdgeNodeIdx[i].resize(2); // Two Nodes per Edge
+    refEdgeNodeIdx[i][0] = MTriangle::edges_tri(i, 0);
+    refEdgeNodeIdx[i][1] = MTriangle::edges_tri(i, 1);
   }
 
   // Face Definition //
-  // Number of face
-  nFace = 1;
+  refFaceNodeIdx.resize(1);    // One Face per Triangle
+  refFaceNodeIdx[0].resize(3); // Three Nodes per Face
 
-  // Number of node per face
-  nNodeInFace    = new size_t[nFace];
-  nNodeInFace[0] = 3;
-
-  // Reference Face
-  refFace    = new size_t*[nFace];
-  refFace[0] = new size_t[3];
-
-  refFace[0][0] = 0;
-  refFace[0][1] = 1;
-  refFace[0][2] = 2;
+  refFaceNodeIdx[0][0] = 0;
+  refFaceNodeIdx[0][1] = 1;
+  refFaceNodeIdx[0][2] = 2;
 
   // Init All //
   init();
 }
 
 TriReferenceSpace::~TriReferenceSpace(void){
-  // Delete Ref Edge //
-  for(size_t i = 0; i < nEdge; i++)
-    delete[] refEdge[i];
-
-  delete[] refEdge;
-
-  // Delete Ref Face //
-  for(size_t i = 0; i < nFace; i++)
-    delete[] refFace[i];
-
-  delete[] refFace;
-  delete[] nNodeInFace;
 }
 
 string TriReferenceSpace::toLatex(void) const{
-  const size_t   nPerm = pTree->getNPermutation();
+  const size_t   nRefSpace = refSpaceNodeId.size();
   stringstream   stream;
-  vector<size_t> perm(nVertex);
 
   stream << "\\documentclass{article}" << endl << endl
 
@@ -70,24 +49,25 @@ string TriReferenceSpace::toLatex(void) const{
 
          << "\\begin{longtable}{ccc}" << endl << endl;
 
-  for(size_t p = 0; p < nPerm; p++){
-    pTree->fillWithPermutation(p, perm);
-
+  for(size_t s = 0; s < nRefSpace; s++){
     stream << "\\begin{tikzpicture}" << endl
 
-           << "\\node[vertex] (n0) at(0, 0) {$" << perm[0] << "$};" << endl
-           << "\\node[vertex] (n1) at(3, 0) {$" << perm[1] << "$};" << endl
-           << "\\node[vertex] (n2) at(0, 3) {$" << perm[2] << "$};" << endl
+           << "\\node[vertex] (n0) at(0, 0) {$" << refSpaceNodeId[s][0] << "$};"
+           << endl
+           << "\\node[vertex] (n1) at(3, 0) {$" << refSpaceNodeId[s][1] << "$};"
+           << endl
+           << "\\node[vertex] (n2) at(0, 3) {$" << refSpaceNodeId[s][2] << "$};"
+           << endl
            << endl;
 
-    for(size_t i = 0; i < 3; i++)
+    for(size_t e = 0; e < 3; e++)
       stream << "\\path[line]"
-             << " (n" << (*(*(*edge)[p])[i])[0] << ")"
+             << " (n" << orderedEdgeNodeIdx[s][e][0] << ")"
              << " -- "
-             << " (n" << (*(*(*edge)[p])[i])[1] << ");"
+             << " (n" << orderedEdgeNodeIdx[s][e][1] << ");"
              << endl;
 
-    if((p + 1) % 3)
+    if((s + 1) % 3)
       stream << "\\end{tikzpicture} & "        << endl << endl;
 
     else

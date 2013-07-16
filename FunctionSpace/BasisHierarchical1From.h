@@ -39,6 +39,10 @@ class BasisHierarchical1From: public BasisLocal{
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
 
+  virtual void mapFromXYZtoABC(const MElement& element,
+                               const fullVector<double>& xyz,
+                               double abc[3]) const;
+
   virtual std::vector<size_t>
     getFunctionOrdering(const MElement& element) const;
 

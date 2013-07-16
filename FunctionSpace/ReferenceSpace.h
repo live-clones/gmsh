@@ -3,10 +3,10 @@
 
 #include <vector>
 #include <list>
-#include <stack>
 #include <string>
 
 #include "MElement.h"
+#include "fullMatrix.h"
 #include "PermutationTree.h"
 
 /**
@@ -28,70 +28,51 @@ class ReferenceSpace{
   } triple;
 
  protected:
+  // Element Definition //
+  size_t nVertex;
+  std::vector<std::vector<size_t> > refEdgeNodeIdx;
+  std::vector<std::vector<size_t> > refFaceNodeIdx;
+
   // Permutation Tree //
   PermutationTree* pTree;
 
-  //////////////////////////////////////////////////////////////////////////
-  // !!! CHANGE VARIABLES NAME !!!                                        //
-  //                                                                      //
-  // perm              = nodeReducedGlobalId                              //
-  // refEntity         = entityNodeIndex                                  //
-  // entity            = orientedEntityNodeIndex                          //
-  //                                                                      //
-  // !!! I'm Working on *BOTH* indexes and global IDs !!!                 //
-  //                                                                      //
-  // 16 +                                                                 //
-  //    |\        ---> NodeIndex       = [v0 v1 v2]                       //
-  //    | \       ---> GlobalID        = [17 42 16]                       //
-  //    |  \      ---> ReducedGlobalId = [1  2  0 ] ---> Permutation = 3  //
-  // 17 +---+ 42                                                          //
-  //                                                                      //
-  // *  refEdge[e][i] = ith INDEX of edge[e]                              //
-  //    For example refEdge[1] = [1 2] because edge[1]                    //
-  //                              - -                                     //
-  //                                           is made of nodes v1 and v2 //
-  //                                                             -      - //
-  //                                                                      //
-  // *  edge[p][e][i] = ith INDEX of edge[e] in orientation[p]            //
-  //          such that GlobalID[edge[p][e][0]] > GlobalId[edge[p][e][0]] //
-  //    For example edge[3][1] = [2 1] because edge[1] goes from v2 to v1 //
-  //                              - -                             -     - //
-  //////////////////////////////////////////////////////////////////////////
+  // Reference Spaces Node Ids //
+  std::vector<std::vector<size_t> > refSpaceNodeId;
 
-  // Number of Vertices //
-  size_t nVertex;
+  // ABC space to UVW space shape function index mapping //
+  std::vector<std::vector<size_t> > ABCtoUVWIndex;
 
-  // Edge Permutation //
-  size_t    nEdge;
-  size_t**  refEdge;
-  //unsigned int*** permutedRefEdge;
-  std::vector<const std::vector<const std::vector<unsigned int>*>*>* edge;
+  // UVW space to ABC space shape function index mapping //
+  std::vector<std::vector<size_t> > UVWtoABCIndex;
 
-  // Face Permutation //
-  size_t    nFace;
-  size_t*   nNodeInFace;
-  size_t**  refFace;
-  //unsigned int*** permutedRefFace;
-  std::vector<const std::vector<const std::vector<unsigned int>*>*>* face;
+  // Ordered Edge & Face Node Index //
+  std::vector<std::vector<std::vector<size_t> > > orderedEdgeNodeIdx;
+  std::vector<std::vector<std::vector<size_t> > > orderedFaceNodeIdx;
 
  public:
   virtual ~ReferenceSpace(void);
 
   size_t getNReferenceSpace(void) const;
-
   size_t getReferenceSpace(const MElement& element) const;
-  /*
-  std::vector<std::vector<size_t> > getEdgeIndex(size_t referenceSpaceId) const;
-  std::vector<std::vector<size_t> > getFaceIndex(size_t referenceSpaceId) const;
-  */
-  const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
-    getAllEdge(void) const;
 
-  const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
-    getAllFace(void) const;
+  const std::vector<std::vector<size_t> >&
+    getNodeId(void) const;
+
+  const std::vector<std::vector<std::vector<size_t> > >&
+    getEdgeNodeIndex(void) const;
+
+  const std::vector<std::vector<std::vector<size_t> > >&
+    getFaceNodeIndex(void) const;
+
+  void mapFromXYZtoABC(const MElement& element,
+                       const fullVector<double>& xyz,
+                       double abc[3]);
+
+  void getJacobian(const MElement& element,
+                   const fullVector<double>& xyz,
+                   fullMatrix<double>& jac) const;
 
   virtual std::string toString(void) const;
-
   virtual std::string toLatex(void) const;
 
  protected:
@@ -99,38 +80,32 @@ class ReferenceSpace{
 
   void init(void);
 
-  void getEdge(void);
-  void getFace(void);
+  void getOrderedEdge(void);
+  void getOrderedFace(void);
 
-  void   findCyclicPermutation(void);
+  void findCyclicPermutation
+    (std::list<size_t>&               listOfTrueReferenceSpace,
+     std::list<std::vector<size_t> >& listOfRefNodeIndexPermutation,
+     std::list<std::vector<size_t> >& listOfReverseNodeIndexPermutation);
+
   triple isCyclicPermutation(std::vector<size_t>& pTest,
                              std::vector<size_t>& pRef);
 
   size_t findCorrespondingFace(std::vector<size_t>& face,
                                std::vector<size_t>& node);
 
-  /*
-  void getPermutedRefEntity(unsigned int**** permutedRefEntity,
-                            unsigned int**   refEntity,
-                            unsigned int*    nNodeInEntity,
-                            unsigned int     nEntity);
-  */
-  const std::vector<unsigned int>* getOrderedEdge(unsigned int permutation,
-                                                  unsigned int edge);
-
-  const std::vector<unsigned int>* getOrderedTriFace(unsigned int permutation,
-                                                     unsigned int face);
-
-  const std::vector<unsigned int>* getOrderedQuadFace(unsigned int permutation,
-                                                      unsigned int face);
+  static void
+    orderRefEntityForGivenRefSpace(std::vector<size_t>& refEntityNodeIdx,
+                                   std::vector<size_t>& refSpaceNodeId,
+                                   std::vector<size_t>& orderedEntityNodeIdx);
 
   static void
-    orderRefEntityForGivenPermutation(size_t* refEntity,
-                                      std::vector<size_t>& permutation,
-                                      std::vector<unsigned int>& orderedEntity);
+    correctQuadFaceNodeIdx(std::vector<size_t>& correctedQuadFaceNodeIdx);
 
-  static bool sortPredicate(const std::pair<unsigned int, unsigned int>& a,
-                            const std::pair<unsigned int, unsigned int>& b);
+  size_t getPermutationIdx(const MElement& element) const;
+
+  static bool sortPredicate(const std::pair<size_t, size_t>& a,
+                            const std::pair<size_t, size_t>& b);
 };
 
 
@@ -198,26 +173,30 @@ class ReferenceSpace{
 //////////////////////
 
 inline size_t ReferenceSpace::getNReferenceSpace(void) const{
-  return pTree->getNPermutation();
+  return refSpaceNodeId.size();
 }
 
 inline
-const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
-ReferenceSpace::getAllEdge(void) const{
-  return *edge;
+const std::vector<std::vector<std::vector<size_t> > >&
+ReferenceSpace::getEdgeNodeIndex(void) const{
+  return orderedEdgeNodeIdx;
 }
 
 inline
-const std::vector<const std::vector<const std::vector<unsigned int>*>*>&
-ReferenceSpace::getAllFace(void) const{
-  return *face;
+const std::vector<std::vector<std::vector<size_t> > >&
+ReferenceSpace::getFaceNodeIndex(void) const{
+  return orderedFaceNodeIdx;
 }
 
+inline
+size_t ReferenceSpace::getReferenceSpace(const MElement& element) const{
+  return pTree->getTagFromPermutation(getPermutationIdx(element));
+}
 
 inline
 bool
-ReferenceSpace::sortPredicate(const std::pair<unsigned int, unsigned int>& a,
-                              const std::pair<unsigned int, unsigned int>& b){
+ReferenceSpace::sortPredicate(const std::pair<size_t, size_t>& a,
+                              const std::pair<size_t, size_t>& b){
   return a.second < b.second;
 }
 

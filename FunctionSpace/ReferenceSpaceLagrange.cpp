@@ -21,6 +21,7 @@ ReferenceSpaceLagrange::~ReferenceSpaceLagrange(void){
 }
 
 void ReferenceSpaceLagrange::getLagrangeNode(void){
+  /*
   const size_t nPerm = pTree->getNPermutation();
 
   // Alloc //
@@ -58,6 +59,7 @@ void ReferenceSpaceLagrange::getLagrangeNode(void){
     // Insert in node
     (*node)[p] = tmp;
   }
+  */
 }
 
 void ReferenceSpaceLagrange::edgeSeq(vector<unsigned int>& vec,

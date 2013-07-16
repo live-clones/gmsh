@@ -5,6 +5,7 @@
 using namespace std;
 
 LineNodeBasis::LineNodeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new LineReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -66,9 +67,11 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
 
   // Free Temporary Sapce //
   delete[] intLegendre;
+  */
 }
 
 LineNodeBasis::~LineNodeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -81,4 +84,5 @@ LineNodeBasis::~LineNodeBasis(void){
   }
 
   delete[] basis;
+  */
 }

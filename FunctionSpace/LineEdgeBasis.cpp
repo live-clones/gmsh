@@ -5,6 +5,7 @@
 using namespace std;
 
 LineEdgeBasis::LineEdgeBasis(unsigned int order){
+  /*
   // Reference Space //
   refSpace  = new LineReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
@@ -71,9 +72,11 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
 
   // Free Temporary Space //
   delete[] intLegendre;
+  */
 }
 
 LineEdgeBasis::~LineEdgeBasis(void){
+  /*
   // ReferenceSpace //
   delete refSpace;
 
@@ -86,4 +89,5 @@ LineEdgeBasis::~LineEdgeBasis(void){
   }
 
   delete[] basis;
+  */
 }

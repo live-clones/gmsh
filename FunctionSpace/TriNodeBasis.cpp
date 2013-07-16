@@ -4,16 +4,16 @@
 
 using namespace std;
 
-TriNodeBasis::TriNodeBasis(unsigned int order){
+TriNodeBasis::TriNodeBasis(size_t order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    edgeV = refSpace->getAllEdge();
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = refSpace->getEdgeNodeIndex();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    faceV = refSpace->getAllFace();
+  const vector<vector<vector<size_t> > >&
+    faceIdx = refSpace->getFaceNodeIndex();
 
   // Set BasisTwo Type //
   this->order = order;
@@ -51,28 +51,28 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
   // Basis //
   basis = new Polynomial**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nRefSpace; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
     basis[s][2] = new Polynomial(lagrange[2]);
   }
 
   // Edge Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex;
 
-    for(unsigned int e = 0; e < 3; e++){
-      for(unsigned int l = 1; l < order; l++){
+    for(size_t e = 0; e < 3; e++){
+      for(size_t l = 1; l < order; l++){
         basis[s][i] =
-          new Polynomial(intLegendre[l].compose(lagrange[(*(*edgeV[s])[e])[1]] -
-                                                lagrange[(*(*edgeV[s])[e])[0]]
+          new Polynomial(intLegendre[l].compose(lagrange[edgeIdx[s][e][1]] -
+                                                lagrange[edgeIdx[s][e][0]]
                                                 ,
-                                                lagrange[(*(*edgeV[s])[e])[0]] +
-                                                lagrange[(*(*edgeV[s])[e])[1]]));
+                                                lagrange[edgeIdx[s][e][0]] +
+                                                lagrange[edgeIdx[s][e][1]]));
         i++;
       }
     }
@@ -80,30 +80,30 @@ TriNodeBasis::TriNodeBasis(unsigned int order){
 
   // Face Based //
 
-  // NB: We use (*(*faceV[s])[f])[]
+  // NB: We use (*(*faceIdx[s])[f])[]
   //     where f = 0, because triangles
   //     have only ONE face: the face '0'
   const int orderMinusTwo = order - 2;
 
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex + nEdge;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex + nEdge;
 
     for(int l1 = 1; l1 < orderMinus; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusTwo; l2++){
         basis[s][i] =
-          new Polynomial(intLegendre[l1].compose(lagrange[(*(*faceV[s])[0])[1]] -
-                                                 lagrange[(*(*faceV[s])[0])[0]]
+          new Polynomial(intLegendre[l1].compose(lagrange[faceIdx[s][0][1]] -
+                                                 lagrange[faceIdx[s][0][0]]
                                                  ,
-                                                 lagrange[(*(*faceV[s])[0])[0]] +
-                                                 lagrange[(*(*faceV[s])[0])[1]])
+                                                 lagrange[faceIdx[s][0][0]] +
+                                                 lagrange[faceIdx[s][0][1]])
                          *
 
-                         legendre[l2].compose((lagrange[(*(*faceV[s])[0])[2]] * 2)
+                         legendre[l2].compose((lagrange[faceIdx[s][0][2]] * 2)
                                               -
                                               Polynomial(1, 0, 0, 0))
                          *
 
-                         lagrange[(*(*faceV[s])[0])[2]]);
+                         lagrange[faceIdx[s][0][2]]);
         i++;
       }
     }
@@ -119,8 +119,8 @@ TriNodeBasis::~TriNodeBasis(void){
   delete refSpace;
 
   // Basis //
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++)
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 
     delete[] basis[i];
