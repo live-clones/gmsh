@@ -283,19 +283,19 @@ class client :
     if not self.socket :
       print (msg)
       return
-    self._send(self._GMSH_INFO, msg)
+    self._send(self._GMSH_INFO, str(msg))
 
   def sendWarning(self, msg) :
     if not self.socket :
       print (msg)
       return
-    self._send(self._GMSH_WARNING, msg)
+    self._send(self._GMSH_WARNING, str(msg))
 
   def sendError(self, msg) :
     if not self.socket :
       print (msg)
       return
-    self._send(self._GMSH_ERROR, msg)
+    self._send(self._GMSH_ERROR, str(msg))
 
   def preProcess(self, filename) :
     if not self.socket :
