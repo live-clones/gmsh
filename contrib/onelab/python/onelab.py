@@ -272,13 +272,12 @@ class client :
   def sendCommand(self, command) :
     if not self.socket :
       return
-    self._send(self._GMSH_PARSE_STRING, command + ' ;')
+    self._send(self._GMSH_PARSE_STRING, command)
     
   def mergeFile(self, filename) :
     if not self.socket :
       return
-    #self._send(self._GMSH_PARSE_STRING, 'Merge "' + filename + '";')
-    self._send(self._GMSH_MERGE_FILE,filename)
+    self._send(self._GMSH_MERGE_FILE, filename)
 
   def sendInfo(self, msg) :
     if not self.socket :
