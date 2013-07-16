@@ -323,13 +323,15 @@ class client :
       if t == self._GMSH_STOP :
         self.NumSubClients -= 1
 
-  def run(self, name, command, arguments):
-    if not self.socket :
-      return
+  def run(self, name, command, arguments=''):
+    # create command line
     if self.action == "check":
-      msg = [name, command]
+      cmd = command
     else:
-      msg = [name, command + ' ' + arguments]
+      cmd = command + ' ' + arguments
+    if not self.socket :
+      return os.system(cmd);
+    msg = [name, cmd]
     self._send(self._GMSH_CONNECT, '\0'.join(msg))
     self.NumSubClients +=1
     self._wait_on_subclients() # makes the subclient blocking
