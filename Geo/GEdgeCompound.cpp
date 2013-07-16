@@ -26,8 +26,8 @@ static bool looksOk(int tag, std::vector<GEdge*> &compound)
       return false;
     }
     if(compound.size() > 1 && compound[i]->getBeginVertex() == compound[i]->getEndVertex()){
-      Msg::Error("Edge compound %d with subloop", tag);
-      return false;
+      Msg::Warning("Edge compound %d with subloop", tag);
+      return true;
     }
   }
   return true;
@@ -105,10 +105,6 @@ void GEdgeCompound::orderEdges()
       Msg::Error("Compounds don't support curves without two bounding vertices");
       return;
     }
-    if(v1 == v2){
-      Msg::Error("Compounds do not support periodic curves");
-      return;
-    }
     std::map<GVertex*, GEdge*>::iterator it1 = tempv.find(v1);
     if (it1 == tempv.end()) {
       tempv.insert(std::make_pair(v1, *it));
@@ -182,7 +178,7 @@ void GEdgeCompound::orderEdges()
         _orientation[0] = 0;
       }
       else {
-        Msg::Error("Compound Edge %d is wrong",tag());
+        Msg::Error("Compound Edge %d is wrong", tag());
         return;
       }
     }

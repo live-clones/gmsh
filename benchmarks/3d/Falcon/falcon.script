@@ -10,8 +10,6 @@ Mesh.CharacteristicLengthMax = lc;
 Mesh.LcIntegrationPrecision = 1.e-5;
 Mesh.MinimumCirclePoints = 50;
 Mesh.CharacteristicLengthExtendFromBoundary = 0;
-Mesh.CharacteristicLengthFromCurvature = 0;
-Mesh.CharacteristicLengthFromPoints = 0;
 
 Merge "InitialMeshFalcon.msh";
 
