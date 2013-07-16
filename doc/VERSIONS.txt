@@ -1,4 +1,4 @@
-2.8.2 (July x, 2013): improved high order tools.
+2.8.2 (July 16, 2013): improved high order tools interface; minor bug fixes.
 
 2.8.1 (July 11, 2013): improved compound surfaces and transfinite arrangements.
 
