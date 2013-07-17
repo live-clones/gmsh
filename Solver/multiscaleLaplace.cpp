@@ -788,9 +788,15 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   recur_compute_centers_ (1.0, M_PI, 0.0, root, nbElems);
 
   //Split the mesh in left and right
-  //or Cut the mesh in left and right
-  splitElems(elements);
-  //cutElems(elements);
+  //or Cut the mesh in left and right (of bamg)
+  if ( CTX::instance()->mesh.algo2d ==  ALGO_2D_BAMG){ 
+    printf("-------------> EXACT CUTTING \n");
+    cutElems(elements);
+  } 
+  else {
+    splitElems(elements);
+  }
+ 
 }
 
 void multiscaleLaplace::fillCoordinates (multiscaleLaplaceLevel & level,
