@@ -5,67 +5,41 @@
 using namespace std;
 
 TetReferenceSpace::TetReferenceSpace(void){
-  /*
   // Vertex Definition //
   nVertex = 4;
 
   // Edge Definition //
-  nEdge   = 6;
-  refEdge = new size_t*[nEdge];
+  const size_t nEdge = 6;
+  refEdgeNodeIdx.resize(nEdge);
 
   for(size_t i = 0; i < nEdge; i++){
-    refEdge[i]    = new size_t[2];
-    refEdge[i][0] = MTetrahedron::edges_tetra(i, 0);
-    refEdge[i][1] = MTetrahedron::edges_tetra(i, 1);
+    refEdgeNodeIdx[i].resize(2); // Two Nodes per Edge
+    refEdgeNodeIdx[i][0] = MTetrahedron::edges_tetra(i, 0);
+    refEdgeNodeIdx[i][1] = MTetrahedron::edges_tetra(i, 1);
   }
 
   // Face Definition //
-  // Number of face
-  nFace = 4;
-
-  // Number of node per face
-  nNodeInFace = new size_t[nFace];
-
-  for(size_t f = 0; f < nFace; f++)
-    nNodeInFace[f] = 3;
-
-  // Reference Face
-  refFace = new size_t*[nFace];
+  size_t nFace = 4;
+  refFaceNodeIdx.resize(nFace);
 
   for(size_t i = 0; i < nFace; i++){
-    refFace[i]    = new size_t[3];
-    refFace[i][0] = MTetrahedron::faces_tetra(i, 0);
-    refFace[i][1] = MTetrahedron::faces_tetra(i, 1);
-    refFace[i][2] = MTetrahedron::faces_tetra(i, 2);
+    refFaceNodeIdx[i].resize(3);  // Three Nodes per Face
+    refFaceNodeIdx[i][0] = MTetrahedron::faces_tetra(i, 0);
+    refFaceNodeIdx[i][1] = MTetrahedron::faces_tetra(i, 1);
+    refFaceNodeIdx[i][2] = MTetrahedron::faces_tetra(i, 2);
   }
 
   // Init All //
   init();
-  */
 }
 
 TetReferenceSpace::~TetReferenceSpace(void){
-  /*
-  // Delete Ref Edge //
-  for(size_t i = 0; i < nEdge; i++)
-    delete[] refEdge[i];
-
-  delete[] refEdge;
-
-  // Delete Ref Face //
-  for(size_t i = 0; i < nFace; i++)
-    delete[] refFace[i];
-
-  delete[] refFace;
-  delete[] nNodeInFace;
-  */
 }
 
 string TetReferenceSpace::toLatex(void) const{
-  //const size_t   nPerm = pTree->getNPermutation();
-  stringstream   stream;
-  //vector<size_t> perm;
-  /*
+  const size_t nRefSpace = refSpaceNodeId.size();
+  stringstream stream;
+
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl
@@ -74,29 +48,32 @@ string TetReferenceSpace::toLatex(void) const{
 
          << "\\begin{document}"                                   << endl
          << "\\tikzstyle{vertex} = [circle, fill = black!25]"     << endl
-         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl << endl
+         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl
+         << endl
 
          << "\\begin{longtable}{ccc}" << endl << endl;
 
-  for(size_t p = 0; p < nPerm; p++){
-    pTree->fillWithPermutation(p, perm);
-
+  for(size_t s = 0; s < nRefSpace; s++){
     stream << "\\begin{tikzpicture}" << endl
 
-           << "\\node[vertex] (n0) at(0, 0) {$" << perm[0] << "$};" << endl
-           << "\\node[vertex] (n1) at(3, 0) {$" << perm[1] << "$};" << endl
-           << "\\node[vertex] (n2) at(0, 3) {$" << perm[2] << "$};" << endl
-           << "\\node[vertex] (n3) at(1, 1) {$" << perm[3] << "$};" << endl
+           << "\\node[vertex] (n0) at(0, 0) {$" << refSpaceNodeId[s][0] << "$};"
+           << endl
+           << "\\node[vertex] (n1) at(3, 0) {$" << refSpaceNodeId[s][1] << "$};"
+           << endl
+           << "\\node[vertex] (n2) at(0, 3) {$" << refSpaceNodeId[s][2] << "$};"
+           << endl
+           << "\\node[vertex] (n3) at(1, 1) {$" << refSpaceNodeId[s][3] << "$};"
+           << endl
            << endl;
 
-    for(size_t i = 0; i < 6; i++)
+    for(size_t e = 0; e < 6; e++)
       stream << "\\path[line]"
-             << " (n" << (*(*(*edge)[p])[i])[0] << ")"
+             << " (n" << orderedEdgeNodeIdx[s][e][0] << ")"
              << " -- "
-             << " (n" << (*(*(*edge)[p])[i])[1] << ");"
+             << " (n" << orderedEdgeNodeIdx[s][e][1] << ");"
              << endl;
 
-    if((p + 1) % 3)
+    if((s + 1) % 3)
       stream << "\\end{tikzpicture} & "        << endl << endl;
 
     else
@@ -105,6 +82,6 @@ string TetReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
          << "\\end{document}"  << endl;
-  */
+
   return stream.str();
 }

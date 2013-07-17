@@ -29,7 +29,7 @@ unsigned int BasisLagrange::
 getOrientation(const MElement& element) const{
   return 0;
 }
-
+/*
 static bool
 sortPredicate(const std::pair<size_t, size_t>& a,
               const std::pair<size_t, size_t>& b){
@@ -85,7 +85,7 @@ void BasisLagrange::mapFromXYZtoABC(const MElement& element,
 
 vector<size_t> BasisLagrange::
 getFunctionOrdering(const MElement& element) const{
-  /*
+
   static bool once = true;
 
   if(once){
@@ -99,11 +99,11 @@ getFunctionOrdering(const MElement& element) const{
 
     once = false;
   }
-  */
+
 
   vector<int> rNodeId = reducedNodeId(element);
   const size_t closureId = matchClosure(rNodeId, lBasis->fullClosures);
-  /*
+
   vector<int>& closure = lBasis->fullClosures[closureId];
 
   vector<size_t> myClosure(closure.size());
@@ -112,7 +112,7 @@ getFunctionOrdering(const MElement& element) const{
     myClosure[i] = closure[i];
 
   return myClosure;
-  */
+
   vector<size_t> c(10);
 
   if(closureId == 0){
@@ -143,7 +143,7 @@ getFunctionOrdering(const MElement& element) const{
 
   return c;
 }
-
+*/
 void BasisLagrange::
 getFunctions(fullMatrix<double>& retValues,
              const MElement& element,
@@ -306,4 +306,8 @@ project(const MElement& element,
 
   // Return ;
   return newCoef;
+}
+
+std::string BasisLagrange::toString(void) const{
+  return std::string("BasisLagrange::toString() not Implemented");
 }

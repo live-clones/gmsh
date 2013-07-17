@@ -2,6 +2,7 @@
 #define _BASIS_H_
 
 #include "MElement.h"
+#include "ReferenceSpace.h"
 
 /**
    @interface Basis
@@ -43,6 +44,8 @@
 
 class Basis{
  protected:
+  ReferenceSpace* refSpace;
+
   bool scalar;
   bool local;
 
@@ -78,16 +81,10 @@ class Basis{
   unsigned int getNFunction(void) const;
 
   // Reference Element //
+  const ReferenceSpace& getReferenceSpace(void) const;
+
   virtual unsigned int getNOrientation(void) const = 0;
   virtual unsigned int getOrientation(const MElement& element) const = 0;
-
-  virtual void mapFromXYZtoABC(const MElement& element,
-                               const fullVector<double>& xyz,
-                               double abc[3]) const = 0;
-
-  // Functions Ordering //
-  virtual std::vector<size_t>
-    getFunctionOrdering(const MElement& element) const = 0;
 
   // Direct Access to Evaluated Functions //
   virtual void getFunctions(fullMatrix<double>& retValues,
@@ -114,6 +111,8 @@ class Basis{
 
   virtual const fullMatrix<double>&
     getPreEvaluatedDerivatives(unsigned int orientation) const = 0;
+
+  virtual std::string toString(void) const = 0;
 
  protected:
   // 'Constructor' //
@@ -325,6 +324,10 @@ inline unsigned int Basis::getNCellBased(void) const{
 
 inline unsigned int Basis::getNFunction(void) const{
   return nFunction;
+}
+
+inline const ReferenceSpace& Basis::getReferenceSpace(void) const{
+  return *refSpace;
 }
 
 #endif

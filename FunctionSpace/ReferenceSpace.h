@@ -55,18 +55,22 @@ class ReferenceSpace{
   size_t getNReferenceSpace(void) const;
   size_t getReferenceSpace(const MElement& element) const;
 
-  const std::vector<std::vector<size_t> >&
-    getNodeId(void) const;
-
   const std::vector<std::vector<std::vector<size_t> > >&
     getEdgeNodeIndex(void) const;
 
   const std::vector<std::vector<std::vector<size_t> > >&
     getFaceNodeIndex(void) const;
 
+  const std::vector<size_t>&
+    getNodeIndexFromABCtoUVW(const MElement& element) const;
+
+  void mapFromUVWtoABC(const MElement& element,
+                       const fullVector<double>& xyz,
+                       double abc[3]) const;
+
   void mapFromXYZtoABC(const MElement& element,
                        const fullVector<double>& xyz,
-                       double abc[3]);
+                       double abc[3]) const;
 
   void getJacobian(const MElement& element,
                    const fullVector<double>& xyz,
@@ -80,6 +84,7 @@ class ReferenceSpace{
 
   void init(void);
 
+ private:
   void getOrderedEdge(void);
   void getOrderedFace(void);
 
@@ -94,6 +99,20 @@ class ReferenceSpace{
   size_t findCorrespondingFace(std::vector<size_t>& face,
                                std::vector<size_t>& node);
 
+  static bool isFacePermutation(std::vector<size_t>& refNode,
+                                std::vector<size_t>& testNode);
+
+  std::vector<size_t> getRefIndexPermutation(std::vector<size_t>& ref,
+                                             std::vector<size_t>& test);
+
+  std::vector<size_t> getReverseIndexPermutation(std::vector<size_t>& ref,
+                                                 std::vector<size_t>& test);
+
+  static bool haveSameNode(std::vector<size_t>& face0,
+                           std::vector<size_t>& face1);
+
+  size_t getPermutationIdx(const MElement& element) const;
+
   static void
     orderRefEntityForGivenRefSpace(std::vector<size_t>& refEntityNodeIdx,
                                    std::vector<size_t>& refSpaceNodeId,
@@ -101,8 +120,6 @@ class ReferenceSpace{
 
   static void
     correctQuadFaceNodeIdx(std::vector<size_t>& correctedQuadFaceNodeIdx);
-
-  size_t getPermutationIdx(const MElement& element) const;
 
   static bool sortPredicate(const std::pair<size_t, size_t>& a,
                             const std::pair<size_t, size_t>& b);
@@ -186,6 +203,12 @@ inline
 const std::vector<std::vector<std::vector<size_t> > >&
 ReferenceSpace::getFaceNodeIndex(void) const{
   return orderedFaceNodeIdx;
+}
+
+inline
+const std::vector<size_t>&
+ReferenceSpace::getNodeIndexFromABCtoUVW(const MElement& element) const{
+  return ABCtoUVWIndex[getPermutationIdx(element)];
 }
 
 inline

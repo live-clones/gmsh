@@ -114,19 +114,8 @@ void FunctionSpace::buildDof(void){
     for(unsigned int j = 0; j < nDof; j++)
       insertDof(myDof[j], trueDof, j);
 
-    // Dof Orderning
-    vector<size_t> dofOrder = (*basis)[0]->getFunctionOrdering(*(element[i]));
-    vector<const Dof*> trueDofOrdered(nDof);
-
-    for(size_t j = 0; j < nDof; j++)
-      trueDofOrdered[dofOrder[j]] = trueDof[j];
-    /*
-    for(size_t j = 0; j < nDof; j++)
-      cout << dofOrder[j] << "\t";
-    cout << endl;
-    */
     // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDofOrdered);
+    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDof);
     (*group)[i]     = god;
 
     // Map GOD
@@ -162,26 +151,39 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
-  // Get Element Data //
-  const unsigned int nVertex = element.getNumPrimaryVertices();
-  const unsigned int nEdge   = element.getNumEdges();
-  const unsigned int nFace   = element.getNumFaces();
+  // Create New Element With Permuted Vertices //
+  // Permutation
+  const vector<size_t>& vPerm =
+    (*this->basis)[0]->getReferenceSpace().getNodeIndexFromABCtoUVW(elem);
 
+  // Permuted Vertices
+  const size_t nVertex = element.getNumPrimaryVertices();
   vector<MVertex*> vertex(nVertex);
+
+  for(size_t i = 0; i < nVertex; i++)
+    vertex[i] = element.getVertex(vPerm[i]);
+
+  // New Element
+  MElementFactory factory;
+  MElement* permElement = factory.create(elem.getTypeForMSH(), vertex);
+
+  // Edge & Face from Permuted Element //
+  const size_t nEdge = permElement->getNumEdges();
+  const size_t nFace = permElement->getNumFaces();
+
   vector<MEdge> edge(nEdge);
   vector<MFace> face(nFace);
 
-  for(unsigned int i = 0; i < nVertex; i++)
-    vertex[i] = element.getVertex(i);
+  for(size_t i = 0; i < nEdge; i++)
+    edge[i] = permElement->getEdge(i);
 
-  for(unsigned int i = 0; i < nEdge; i++)
-    edge[i] = element.getEdge(i);
+  for(size_t i = 0; i < nFace; i++)
+    face[i] = permElement->getFace(i);
 
-  for(unsigned int i = 0; i < nFace; i++)
-    face[i] = element.getFace(i);
+  delete permElement;
 
   // Create Dof //
-  unsigned int nDof =
+  size_t nDof =
     fPerVertex * nVertex +
     fPerEdge   * nEdge   +
     fPerFace   * nFace   +
@@ -189,34 +191,34 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 
   vector<Dof> myDof(nDof);
 
-  unsigned int it = 0;
+  size_t it = 0;
 
   // Add Vertex Based Dof //
-  for(unsigned int i = 0; i < nVertex; i++){
-    for(unsigned int j = 0; j < fPerVertex; j++){
+  for(size_t i = 0; i < nVertex; i++){
+    for(size_t j = 0; j < fPerVertex; j++){
       myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
       it++;
     }
   }
 
   // Add Edge Based Dof //
-  for(unsigned int i = 0; i < nEdge; i++){
-    for(unsigned int j = 0; j < fPerEdge; j++){
+  for(size_t i = 0; i < nEdge; i++){
+    for(size_t j = 0; j < fPerEdge; j++){
       myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
       it++;
     }
   }
 
   // Add Face Based Dof //
-  for(unsigned int i = 0; i < nFace; i++){
-    for(unsigned int j = 0; j < fPerFace; j++){
+  for(size_t i = 0; i < nFace; i++){
+    for(size_t j = 0; j < fPerFace; j++){
       myDof[it].setDof(mesh->getGlobalId(face[i]), j);
       it++;
     }
   }
 
   // Add Cell Based Dof //
-  for(unsigned int j = 0; j < fPerCell; j++){
+  for(size_t j = 0; j < fPerCell; j++){
     myDof[it].setDof(mesh->getGlobalId(element), j);
     it++;
   }
@@ -224,9 +226,11 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   return myDof;
 }
 
-const GroupOfDof& FunctionSpace::getGoDFromElement(const MElement& element) const{
-  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator it =
-    eToGod->find(&element);
+const GroupOfDof& FunctionSpace::
+getGoDFromElement(const MElement& element) const{
+
+  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator
+    it = eToGod->find(&element);
 
   if(it == eToGod->end())
     throw

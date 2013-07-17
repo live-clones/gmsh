@@ -59,22 +59,6 @@ getOrientation(const MElement& element) const{
   return refSpace->getReferenceSpace(element);
 }
 
-void BasisHierarchical1From::mapFromXYZtoABC(const MElement& element,
-                                             const fullVector<double>& xyz,
-                                             double abc[3]) const{
-  return refSpace->mapFromXYZtoABC(element, xyz, abc);
-}
-
-vector<size_t> BasisHierarchical1From::
-getFunctionOrdering(const MElement& element) const{
-  vector<size_t> ordering(nFunction);
-
-  for(size_t i = 0; i < nFunction; i++)
-    ordering[i] = i;
-
-  return ordering;
-}
-
 void BasisHierarchical1From::
 getFunctions(fullMatrix<double>& retValues,
              const MElement& element,

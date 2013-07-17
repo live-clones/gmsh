@@ -20,7 +20,7 @@ class TetNodeBasis: public BasisHierarchical0From{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Tetrahedra of the given order
-  TetNodeBasis(unsigned int order);
+  TetNodeBasis(size_t order);
 
   //! Deletes this Basis
   //!

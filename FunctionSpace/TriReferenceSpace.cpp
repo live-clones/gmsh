@@ -34,8 +34,8 @@ TriReferenceSpace::~TriReferenceSpace(void){
 }
 
 string TriReferenceSpace::toLatex(void) const{
-  const size_t   nRefSpace = refSpaceNodeId.size();
-  stringstream   stream;
+  const size_t nRefSpace = refSpaceNodeId.size();
+  stringstream stream;
 
   stream << "\\documentclass{article}" << endl << endl
 
@@ -45,7 +45,8 @@ string TriReferenceSpace::toLatex(void) const{
 
          << "\\begin{document}"                                   << endl
          << "\\tikzstyle{vertex} = [circle, fill = black!25]"     << endl
-         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl << endl
+         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl
+         << endl
 
          << "\\begin{longtable}{ccc}" << endl << endl;
 

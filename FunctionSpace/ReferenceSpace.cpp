@@ -125,56 +125,35 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
   }
 }
 
-static bool isFacePermutation(vector<size_t>& refNode,
-                              vector<size_t>& testNode){
-  const size_t size = refNode.size();
-  bool match = false;
+ReferenceSpace::triple ReferenceSpace::
+isCyclicPermutation(vector<size_t>& pTest,
+                    vector<size_t>& pRef){
 
-  if(size != testNode.size())
-    return false;
+  // Node IDs of Reference Space first Face
+  const size_t   nNodeInFaceZero = refFaceNodeIdx[0].size();
+  vector<size_t> refNode(nNodeInFaceZero);
 
-  for(size_t i = 0; i < size && !match; i++){
-    bool submatch = true;
+  for(size_t i = 0; i < nNodeInFaceZero; i++)
+    refNode[i] = pRef[refFaceNodeIdx[0][i]];
 
-    for(size_t j = 0; j < size && submatch; j++)
-      if(refNode[j] != testNode[j])
-        submatch = false;
+  // Corresponding Face in Test Permutation
+  size_t testFaceId = findCorrespondingFace(refNode, pTest);
 
-    if(!submatch){
-      size_t tmp0 = testNode[0];
-      size_t tmp1 = testNode[1];
+  // Node IDs of Test Permutation correspnding Face
+  const size_t   nNodeInFaceTest = refFaceNodeIdx[testFaceId].size();
+  vector<size_t> testNode(nNodeInFaceTest);
 
-      for(size_t k = 1; k < size + 1; k++){
-        testNode[k % size] = tmp0;
-        tmp0 = tmp1;
-        tmp1 = testNode[(k + 1) % size];
-      }
-    }
+  for(size_t i = 0; i < nNodeInFaceTest; i++)
+    testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
 
-    else
-      match = true;
-  }
+  // Return Triple //
+  triple tri = {
+    isFacePermutation(refNode, testNode),
+    getRefIndexPermutation(pRef, pTest),
+    getReverseIndexPermutation(pRef, pTest)
+  };
 
-  return match;
-}
-
-static bool haveSameNode(vector<size_t>& face0,
-                         vector<size_t>& face1){
-  const size_t size = face0.size();
-  bool matchIsPossible = true;
-
-  for(size_t i = 0; i < size && matchIsPossible; i++){
-    bool submatch = false;
-
-    for(size_t j = 0; j < size && !submatch; j++){
-      if(face0[i] == face1[j])
-        submatch = true;
-    }
-
-    matchIsPossible = submatch;
-  }
-
-  return matchIsPossible;
+  return tri;
 }
 
 size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
@@ -208,8 +187,41 @@ size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
   return f;
 }
 
-static vector<size_t> getRefIndexPermutation(vector<size_t>& ref,
-                                             vector<size_t>& test){
+bool ReferenceSpace::isFacePermutation(vector<size_t>& refNode,
+                                       vector<size_t>& testNode){
+  const size_t size = refNode.size();
+  bool match = false;
+
+  if(size != testNode.size())
+    return false;
+
+  for(size_t i = 0; i < size && !match; i++){
+    bool submatch = true;
+
+    for(size_t j = 0; j < size && submatch; j++)
+      if(refNode[j] != testNode[j])
+        submatch = false;
+
+    if(!submatch){
+      size_t tmp0 = testNode[0];
+      size_t tmp1 = testNode[1];
+
+      for(size_t k = 1; k < size + 1; k++){
+        testNode[k % size] = tmp0;
+        tmp0 = tmp1;
+        tmp1 = testNode[(k + 1) % size];
+      }
+    }
+
+    else
+      match = true;
+  }
+
+  return match;
+}
+
+vector<size_t> ReferenceSpace::getRefIndexPermutation(vector<size_t>& ref,
+                                                      vector<size_t>& test){
   const size_t size = ref.size();
   vector<size_t> idxVec(ref.size());
   size_t idx;
@@ -226,8 +238,8 @@ static vector<size_t> getRefIndexPermutation(vector<size_t>& ref,
   return idxVec;
 }
 
-static vector<size_t> getReverseIndexPermutation(vector<size_t>& ref,
-                                                 vector<size_t>& test){
+vector<size_t> ReferenceSpace::getReverseIndexPermutation(vector<size_t>& ref,
+                                                          vector<size_t>& test){
   const size_t size = ref.size();
   vector<size_t> idxVec(ref.size());
   size_t idx;
@@ -244,35 +256,23 @@ static vector<size_t> getReverseIndexPermutation(vector<size_t>& ref,
   return idxVec;
 }
 
-ReferenceSpace::triple ReferenceSpace::
-isCyclicPermutation(vector<size_t>& pTest,
-                    vector<size_t>& pRef){
+bool ReferenceSpace::haveSameNode(vector<size_t>& face0,
+                                  vector<size_t>& face1){
+  const size_t size = face0.size();
+  bool matchIsPossible = true;
 
-  // Node IDs of Reference Space first Face
-  const size_t   nNodeInFaceZero = refFaceNodeIdx[0].size();
-  vector<size_t> refNode(nNodeInFaceZero);
+  for(size_t i = 0; i < size && matchIsPossible; i++){
+    bool submatch = false;
 
-  for(size_t i = 0; i < nNodeInFaceZero; i++)
-    refNode[i] = pRef[refFaceNodeIdx[0][i]];
+    for(size_t j = 0; j < size && !submatch; j++){
+      if(face0[i] == face1[j])
+        submatch = true;
+    }
 
-  // Corresponding Face in Test Permutation
-  size_t testFaceId = findCorrespondingFace(refNode, pTest);
+    matchIsPossible = submatch;
+  }
 
-  // Node IDs of Test Permutation correspnding Face
-  const size_t   nNodeInFaceTest = refFaceNodeIdx[testFaceId].size();
-  vector<size_t> testNode(nNodeInFaceTest);
-
-  for(size_t i = 0; i < nNodeInFaceTest; i++)
-    testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
-
-  // Return Triple //
-  triple tri = {
-    isFacePermutation(refNode, testNode),
-    getRefIndexPermutation(pRef, pTest),
-    getReverseIndexPermutation(pRef, pTest)
-  };
-
-  return tri;
+  return matchIsPossible;
 }
 
 void ReferenceSpace::getOrderedEdge(void){
@@ -421,13 +421,25 @@ size_t ReferenceSpace::getPermutationIdx(const MElement& element) const{
 
 void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
                                      const fullVector<double>& xyz,
-                                     double abc[3]){
+                                     double abc[3]) const{
   // Get UVW coordinate //
   double phys[3] = {xyz(0), xyz(1), xyz(2)};
   double uvw[3];
 
   element.xyz2uvw(phys, uvw);
 
+  // Get ABC coordinate //
+  fullVector<double> uuvw(3);
+  uuvw(0) = uvw[0];
+  uuvw(1) = uvw[1];
+  uuvw(2) = uvw[2];
+
+  mapFromUVWtoABC(element, uuvw, abc);
+}
+
+void ReferenceSpace::mapFromUVWtoABC(const MElement& element,
+                                     const fullVector<double>& uvw,
+                                     double abc[3]) const{
   // Compute coordinate in ABC Space //
   // ABC node coordinate
   double** abcMat = new double*[nVertex];
@@ -440,7 +452,7 @@ void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
 
   // UVW (order 1) shape functions
   double* phiUVW = new double[nVertex];
-  element.getShapeFunctions(uvw[0], uvw[1], uvw[2], phiUVW, 1);
+  element.getShapeFunctions(uvw(0), uvw(1), uvw(2), phiUVW, 1);
 
   // Element Permutation Index //
   const size_t permutationIdx = getPermutationIdx(element);

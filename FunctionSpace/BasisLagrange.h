@@ -43,13 +43,6 @@ class BasisLagrange: public BasisLocal{
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
 
-  virtual void mapFromXYZtoABC(const MElement& element,
-                               const fullVector<double>& xyz,
-                               double abc[3]) const;
-
-  virtual std::vector<size_t>
-    getFunctionOrdering(const MElement& element) const;
-
   virtual void getFunctions(fullMatrix<double>& retValues,
                             const MElement& element,
                             double u, double v, double w) const;
@@ -85,6 +78,8 @@ class BasisLagrange: public BasisLocal{
     project(const MElement& element,
             const std::vector<double>& coef,
             const FunctionSpaceVector& fSpace);
+
+  virtual std::string toString(void) const;
 
  protected:
   BasisLagrange(void);

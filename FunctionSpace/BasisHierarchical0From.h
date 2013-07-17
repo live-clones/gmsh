@@ -16,8 +16,7 @@
 class BasisHierarchical0From: public BasisLocal{
  protected:
   // Orientation //
-  ReferenceSpace* refSpace;
-  unsigned int    nRefSpace;
+  unsigned int nRefSpace;
 
   // Basis //
   Polynomial*** basis;
@@ -38,13 +37,6 @@ class BasisHierarchical0From: public BasisLocal{
 
   virtual unsigned int getNOrientation(void) const;
   virtual unsigned int getOrientation(const MElement& element) const;
-
-  virtual void mapFromXYZtoABC(const MElement& element,
-                               const fullVector<double>& xyz,
-                               double abc[3]) const;
-
-  virtual std::vector<size_t>
-    getFunctionOrdering(const MElement& element) const;
 
   virtual void getFunctions(fullMatrix<double>& retValues,
                             const MElement& element,

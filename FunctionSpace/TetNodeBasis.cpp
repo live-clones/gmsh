@@ -4,17 +4,16 @@
 
 using namespace std;
 
-TetNodeBasis::TetNodeBasis(unsigned int order){
-  /*
+TetNodeBasis::TetNodeBasis(size_t order){
   // Reference Space //
   refSpace  = new TetReferenceSpace;
   nRefSpace = refSpace->getNReferenceSpace();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    edgeV = refSpace->getAllEdge();
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = refSpace->getEdgeNodeIndex();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    faceV = refSpace->getAllFace();
+  const vector<vector<vector<size_t> > >&
+    faceIdx = refSpace->getFaceNodeIndex();
 
   // Set Basis Type //
   this->order = order;
@@ -61,11 +60,11 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   // Basis //
   basis = new Polynomial**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nRefSpace; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
     basis[s][2] = new Polynomial(lagrange[2]);
@@ -73,18 +72,18 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   }
 
   // Edge Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex;
 
     for(int e = 0; e < 6; e++){
-      for(unsigned int l = 1; l < order; l++){
+      for(size_t l = 1; l < order; l++){
         basis[s][i] =
           new Polynomial(intLegendre[l].compose
-                         (lagrange[(*(*edgeV[s])[e])[0]] -
-                          lagrange[(*(*edgeV[s])[e])[1]]
+                         (lagrange[edgeIdx[s][e][0]] -
+                          lagrange[edgeIdx[s][e][1]]
                           ,
-                          lagrange[(*(*edgeV[s])[e])[0]] +
-                          lagrange[(*(*edgeV[s])[e])[1]]));
+                          lagrange[edgeIdx[s][e][0]] +
+                          lagrange[edgeIdx[s][e][1]]));
         i++;
       }
     }
@@ -93,31 +92,31 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   // Face Based //
   // TO CHECK: Are Triangles face matching tets ?
 
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex + nEdge;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex + nEdge;
 
     for(int f = 0; f < 4; f++){
       for(int l1 = 1; l1 < orderMinus; l1++){
         for(int l2 = 0; l1 + l2 - 1 < orderMinusTwo; l2++){
           Polynomial sum =
-            lagrange[(*(*faceV[s])[f])[0]] +
-            lagrange[(*(*faceV[s])[f])[1]] +
-            lagrange[(*(*faceV[s])[f])[2]];
+            lagrange[faceIdx[s][f][0]] +
+            lagrange[faceIdx[s][f][1]] +
+            lagrange[faceIdx[s][f][2]];
 
           basis[s][i] =
             new Polynomial(intLegendre[l1].compose
-                           (lagrange[(*(*faceV[s])[f])[0]] -
-                            lagrange[(*(*faceV[s])[f])[1]]
+                           (lagrange[faceIdx[s][f][0]] -
+                            lagrange[faceIdx[s][f][1]]
                             ,
-                            lagrange[(*(*faceV[s])[f])[0]] +
-                            lagrange[(*(*faceV[s])[f])[1]])
+                            lagrange[faceIdx[s][f][0]] +
+                            lagrange[faceIdx[s][f][1]])
 
                            *
 
-                           lagrange[(*(*faceV[s])[f])[2]]
+                           lagrange[faceIdx[s][f][2]]
                            *
                            sclLegendre[l2].compose
-                           (lagrange[(*(*faceV[s])[f])[2]] * 2 - sum, sum));
+                           (lagrange[faceIdx[s][f][2]] * 2 - sum, sum));
           i++;
         }
       }
@@ -132,8 +131,8 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   const Polynomial sub = lagrange[0] - lagrange[1];
   const Polynomial add = lagrange[0] + lagrange[1];
 
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex + nEdge + nFace;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex + nEdge + nFace;
 
     for(int l1 = 1; l1 < orderMinusTwo; l1++){
       for(int l2 = 0; l2 + l1 - 1 < orderMinusThree; l2++){
@@ -155,22 +154,19 @@ TetNodeBasis::TetNodeBasis(unsigned int order){
   delete[] legendre;
   delete[] sclLegendre;
   delete[] intLegendre;
-  */
 }
 
 TetNodeBasis::~TetNodeBasis(void){
-  /*
   // ReferenceSpace //
   delete refSpace;
 
   // Basis //
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++)
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 
     delete[] basis[i];
   }
 
   delete[] basis;
-  */
 }
