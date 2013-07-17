@@ -38,6 +38,7 @@ int GModel::readUNV(const std::string &name)
       int record = 0;
       sscanf(buffer, "%d", &record);
       if(record == 2411){ // nodes
+        Msg::Info("Reading nodes");
         while(fgets(buffer, sizeof(buffer), fp)){
           if(!strncmp(buffer, "    -1", 6)) break;
           int num, dum;
@@ -51,6 +52,8 @@ int GModel::readUNV(const std::string &name)
         }
       }
       else if(record == 2412){ // elements
+        Msg::Info("Reading elements");
+        std::map<int, int> warn;
         while(fgets(buffer, sizeof(buffer), fp)){
           if(strlen(buffer) < 3) continue; // possible line ending after last fscanf
           if(!strncmp(buffer, "    -1", 6)) break;
@@ -153,6 +156,10 @@ int GModel::readUNV(const std::string &name)
                             vertices[6], vertices[3], vertices[7], vertices[8],
                             vertices[10], vertices[14], vertices[12], num));
             dim = 3;
+            break;
+          default:
+            if(warn[type]++ == 1)
+              Msg::Warning("Skipping unknown type of element %d", type);
             break;
           }
 
