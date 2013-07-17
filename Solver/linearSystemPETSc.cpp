@@ -341,4 +341,20 @@ double linearSystemPETScBlockDouble::normInfRightHandSide() const
   return nor;
 }
 
+void linearSystemPETScBlockDouble::printMatlab(const char *filename) const
+{
+  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _try(VecAssemblyBegin(_b));
+  _try(VecAssemblyEnd(_b));
+
+  PetscViewer viewer;
+  PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename, &viewer);
+  PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
+  printf("export mat to %s\n", filename);
+  MatView(_a, viewer);
+  PetscViewerDestroy(&viewer);
+  return;
+}
+
 #endif // HAVE_PETSC

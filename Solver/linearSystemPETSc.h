@@ -105,6 +105,7 @@ class linearSystemPETScBlockDouble : public linearSystem<fullMatrix<double> > {
   public:
   void _kspCreate();
   void print();
+  void printMatlab(const char *filename) const;
   virtual void addToMatrix(int row, int col, const fullMatrix<double> &val);
   virtual void addToRightHandSide(int row, const fullMatrix<double> &val);
   virtual void addToSolution(int row,  const fullMatrix<double> &val);
