@@ -523,18 +523,21 @@ static void Mesh2D(GModel *m)
   //lloyd optimization
   if(CTX::instance()->mesh.optimizeLloyd){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-	  if((*it)->geomType()==GEntity::CompoundSurface || (*it)->geomType()==GEntity::Plane){
-		if((*it)->meshAttributes.method != MESH_TRANSFINITE){
-	      smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
-		  //m->writeMSH("beforeLLoyd.msh");
-		  smm.optimize_face(*it);
-		  int rec = ((CTX::instance()->mesh.recombineAll || (*it)->meshAttributes.recombine) && !CTX::instance()->mesh.recombine3DAll);
-		  //m->writeMSH("afterLLoyd.msh");
-		  if(rec) recombineIntoQuads(*it);
-		  //m->writeMSH("afterRecombine.msh");
-		}
-	  }
-	}
+      if((*it)->geomType()==GEntity::CompoundSurface ||
+         (*it)->geomType()==GEntity::Plane){
+        if((*it)->meshAttributes.method != MESH_TRANSFINITE){
+          smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
+          //m->writeMSH("beforeLLoyd.msh");
+          smm.optimize_face(*it);
+          int rec = ((CTX::instance()->mesh.recombineAll ||
+                      (*it)->meshAttributes.recombine) &&
+                     !CTX::instance()->mesh.recombine3DAll);
+          //m->writeMSH("afterLLoyd.msh");
+          if(rec) recombineIntoQuads(*it);
+          //m->writeMSH("afterRecombine.msh");
+        }
+      }
+    }
     /*
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
       GFace *gf = *it;
