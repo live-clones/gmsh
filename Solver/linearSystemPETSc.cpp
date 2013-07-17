@@ -353,7 +353,11 @@ void linearSystemPETScBlockDouble::printMatlab(const char *filename) const
   PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
   printf("export mat to %s\n", filename);
   MatView(_a, viewer);
+#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   PetscViewerDestroy(&viewer);
+#else
+  PetscViewerDestroy(viewer);
+#endif
   return;
 }
 
