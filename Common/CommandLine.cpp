@@ -66,7 +66,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
-  s.push_back(mp("-renumber",          "Renumber the mesh elements after batch mesh generation"));
+  //buggy: s.push_back(mp("-renumber",          "Renumber the mesh elements after batch mesh generation"));
   s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-bin",               "Use binary format when available"));
