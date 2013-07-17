@@ -1546,4 +1546,45 @@ GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wir
   return ret;
 }
 
+//Prepare SGEOM integration
+#if defined(HAVE_SGEOM) && defined(HAVE_OCC)
+
+#include "SGEOMIncludes.h"
+
+GVertex* SGEOMFactory::addVertex(GModel *gm,double x, double y, double z, double lc)
+{
+  //if (!gm->_sgeom_internals)
+  //  gm->_sgeom_internals = new SGEOM_Internals;
+
+  //gp_Pnt aPnt;
+  //aPnt = gp_Pnt(x, y, z);
+  //BRepBuilderAPI_MakeVertex mkVertex(aPnt);
+  //TopoDS_Vertex occv = mkVertex.Vertex();
+
+  //return gm->_occ_internals->addVertexToModel(gm, occv);
+
+  Msg::Error("addVertex not implemented yet for SGEOMFactory");
+  return 0;
+}
+
+GEdge* SGEOMFactory::addLine(GModel *gm,GVertex *v1, GVertex *v2)
+{
+  Msg::Error("addLine not implemented yet for SGEOMFactory");
+  return 0;
+}
+
+GFace* SGEOMFactory::addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges)
+{
+  Msg::Error("addPlanarFace not implemented yet for SGEOMFactory");
+  return 0;
+}
+
+GRegion* SGEOMFactory::addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces)
+{
+  Msg::Error("addVolume not implemented yet for SGEOMFactory");
+  return 0;
+}
+
+#endif
+
 #endif

@@ -80,12 +80,12 @@ class GModelFactory {
   {
     Msg::Error("add2Drect not implemented yet");
     return 0;
-  }  
+  }
   virtual GFace *add2Dellips(GModel *gm,double xc, double yc, double rx, double ry)
   {
     Msg::Error("add2Dellips not implemented yet");
     return 0;
-  }  
+  }
 
   // sweep stuff
   virtual GEntity *revolve(GModel *gm, GEntity*, std::vector<double> p1,
@@ -100,7 +100,9 @@ class GModelFactory {
     Msg::Error("extrude not implemented yet");
     return 0;
   }
-  virtual std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view)
+  virtual std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e,
+                                                     int nbLayers, double hLayers,
+                                                     int dir, int view)
   {
     Msg::Error("extrude normals not implemented yet");
     std::vector<GEntity*> empty;
@@ -131,7 +133,7 @@ class GModelFactory {
   {
     Msg::Error("addTorus not implemented yet");
     return 0;
-  } 
+  }
   virtual GEntity *addBlock(GModel *gm, std::vector<double> p1,
                             std::vector<double> p2)
   {
@@ -188,7 +190,7 @@ class GModelFactory {
     Msg::Error("computeBooleanDifference not implemented yet");
     return 0;
   }
-  
+
 	virtual void salomeconnect(GModel *gm)
   {
     Msg::Error("salomeconnect not implemented yet");
@@ -200,16 +202,20 @@ class GModelFactory {
   virtual void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector)
   {
     Msg::Error("findperiodic not implemented yet");
-  }  
-  virtual void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave)
+  }
+  virtual void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster,
+                                      std::vector<int> EdgeListMaster,
+                                      int numFaceSlave, std::vector<int> EdgeListSlave)
   {
     Msg::Error("setPeriodicPairOfFaces not implemented yet");
-  }  
+  }
   ;
-  virtual void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber, std::vector<double> p1,std::vector<double> p2)
+  virtual void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType,
+                                             int PhysicalGroupNumber,
+                                             std::vector<double> p1,std::vector<double> p2)
   {
     Msg::Error("setPhysicalNumToEntitiesInBox not implemented yet");
-  }  
+  }
 
 };
 
@@ -222,9 +228,9 @@ class GeoFactory : public GModelFactory {
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
   GEdge *addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVertex *end);
   std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges);
-  std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers, double hLayers, int dir, int view);
+  std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers,
+                                             double hLayers, int dir, int view);
 };
-
 
 #if defined(HAVE_OCC)
 
@@ -274,14 +280,30 @@ class OCCFactory : public GModelFactory {
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);
   void    salomeconnect(GModel *gm);
   void    occconnect(GModel *gm);
-	
+
   void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector);
-  void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster, int numFaceSlave, std::vector<int> EdgeListSlave);
-  void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber, std::vector<double> p1, std::vector<double> p2);
-	
+  void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster,
+                              int numFaceSlave, std::vector<int> EdgeListSlave);
+  void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber,
+                                     std::vector<double> p1, std::vector<double> p2);
+
   void fillet(GModel *gm, std::vector<int> edges, double radius);
 };
 
 #endif
+
+#if defined(HAVE_SGEOM) && defined(HAVE_OCC)
+
+class SGEOMFactory : public GModelFactory {
+ public:
+  SGEOMFactory(){}
+  GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
+  GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
+  GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
+};
+
+#endif
+
 
 #endif
