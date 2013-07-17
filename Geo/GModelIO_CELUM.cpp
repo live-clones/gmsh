@@ -31,6 +31,8 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
     return 0;
   }
 
+  if(noPhysicalGroups()) saveAll = true;
+
   // count faces and vertices; the CELUM format duplicates vertices on the
   // boundary of CAD patches
   int numf = 0, nums = 0;
