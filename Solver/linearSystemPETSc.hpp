@@ -3,10 +3,6 @@
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
 
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
-#define PetscTruth PetscBool
-#define PetscOptionsGetTruth PetscOptionsGetBool
-#endif
 
 static void  _try(int ierr)
 {
@@ -58,11 +54,7 @@ linearSystemPETSc<scalar>::~linearSystemPETSc()
 {
   clear();
   if(_kspAllocated)
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
     _try(KSPDestroy(&_ksp));
-#else
-    _try(KSPDestroy(_ksp));
-#endif
 }
 
 template <class scalar>
@@ -80,7 +72,7 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
   if (!_isAllocated) Msg::Fatal("system must be allocated first");
   if (_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300;
-    PetscTruth set;
+    PetscBool set;
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
     if (_blockSize == 0) {
       _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
@@ -195,15 +187,9 @@ template <class scalar>
 void linearSystemPETSc<scalar>::clear()
 {
   if(_isAllocated){
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
     _try(MatDestroy(&_a));
     _try(VecDestroy(&_x));
     _try(VecDestroy(&_b));
-#else
-    _try(MatDestroy(_a));
-    _try(VecDestroy(_x));
-    _try(VecDestroy(_b));
-#endif
   }
   _isAllocated = false;
 }
@@ -379,7 +365,7 @@ std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
   const PetscInt *rows;
   const PetscInt *columns;
   PetscInt n;
-  PetscTruth done;
+  PetscBool done;
   _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
   std::vector<int> rowPointers; // Maybe I should reserve or resize (SAM)
   for (int i = 0; i <= n; i++)
@@ -396,7 +382,7 @@ std::vector<int> linearSystemPETSc<scalar>::getColumnsIndices()
   const PetscInt *rows;
   const PetscInt *columns;
   PetscInt n;
-  PetscTruth done;
+  PetscBool done;
   _try(MatGetRowIJ(_a,0,PETSC_FALSE,PETSC_FALSE,&n,&rows,&columns,&done));        //case done == PETSC_FALSE should be handled
   MatInfo info;
   _try(MatGetInfo(_a,MAT_LOCAL,&info));

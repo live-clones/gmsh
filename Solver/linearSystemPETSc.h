@@ -41,6 +41,7 @@
 #include "fullMatrix.h"
 #include <vector>
 #if defined(HAVE_PETSC)
+
 #ifndef SWIG
 #include "petsc.h"
 #include "petscksp.h"
@@ -49,6 +50,17 @@ typedef struct _p_Mat* Mat;
 typedef struct _p_Vec* Vec;
 typedef struct _p_KSP* KSP;
 #endif
+
+//support old PETSc version, try to avoid using PETSC_VERSION somewhere else
+#if PETSC_VERSION_RELEASE != 0 && (PETSC_VERSION_MAJOR < 3  || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 2))
+#define KSPDestroy(k) KSPDestroy(*(k))
+#define MatDestroy(m) MatDestroy(*(m))
+#define VecDestroy(v) VecDestroy(*(v))
+#define PetscViewerDestroy(v) PetscViewerDestroy(*(v))
+#define PetscBool PetscTruth
+#define PetscOptionsGetBool PetscOptionsGetTruth
+#endif
+
 
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {

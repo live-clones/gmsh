@@ -29,7 +29,6 @@ void linearSystemPETScBlockDouble::_kspCreate()
 
 linearSystemPETScBlockDouble::~linearSystemPETScBlockDouble()
 {
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   if (_isAllocated) {
     MatDestroy(&_a);
     VecDestroy(&_b);
@@ -38,16 +37,6 @@ linearSystemPETScBlockDouble::~linearSystemPETScBlockDouble()
   if (_kspAllocated) {
     KSPDestroy(&_ksp);
   }
-#else
-  if (_isAllocated) {
-    MatDestroy(_a);
-    VecDestroy(_b);
-    VecDestroy(_x);
-  }
-  if (_kspAllocated) {
-    KSPDestroy(_ksp);
-  }
-#endif
 }
 
 void linearSystemPETScBlockDouble::addToMatrix(int row, int col,
@@ -202,15 +191,9 @@ bool linearSystemPETScBlockDouble::isAllocated() const
 void linearSystemPETScBlockDouble::clear()
 {
   if(_isAllocated){
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
     MatDestroy(&_a);
     VecDestroy(&_x);
     VecDestroy(&_b);
-#else
-    MatDestroy(_a);
-    VecDestroy(_x);
-    VecDestroy(_b);
-#endif
   }
   _isAllocated = false;
 }
@@ -265,7 +248,7 @@ void linearSystemPETScBlockDouble::preAllocateEntries()
   if (!_isAllocated) Msg::Fatal("system must be allocated first");
   if (_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300;
-    PetscTruth set;
+    PetscBool set;
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
     if (_blockSize == 0) {
       MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL);
@@ -351,13 +334,8 @@ void linearSystemPETScBlockDouble::printMatlab(const char *filename) const
   PetscViewer viewer;
   PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename, &viewer);
   PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
-  printf("export mat to %s\n", filename);
   MatView(_a, viewer);
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   PetscViewerDestroy(&viewer);
-#else
-  PetscViewerDestroy(viewer);
-#endif
   return;
 }
 

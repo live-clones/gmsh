@@ -9,6 +9,9 @@
 #if defined(HAVE_SLEPC)
 
 #include <slepceps.h>
+#if SLEPC_VERSION_RELEASE != 0 && (SLEPC_VERSION_MAJOR < 3  || (SLEPC_VERSION_MAJOR == 3 && SLEPC_VERSION_MINOR < 2))
+#define EPSDestroy(e) EPSDestroy(*(e))
+#endif
 
 void eigenSolver::_try(int ierr) const
 {
@@ -80,7 +83,11 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
 
   // print info
+  #if (SLEPC_VERSION_RELEASE == 0 || (SLEPC_VERSION_MAJOR > 3 || (SLEPC_VERSION_MAJOR == 3 && SLEPC_VERSION_MINOR >= 4)))
+  EPSType type;
+  #else
   const EPSType type;
+  #endif
   _try(EPSGetType(eps, &type));
   Msg::Debug("SLEPc solution method: %s", type);
 
@@ -110,7 +117,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     Msg::Error("SLEPc diverged after %d iterations", its);
   else if(reason == EPS_DIVERGED_BREAKDOWN)
     Msg::Error("SLEPc generic breakdown in method");
-#if !(PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
+#if (SLEPC_VERSION_MAJOR < 3 || (SLEPC_VERSION_MAJOR == 3 && SLEPC_VERSION_MINOR < 2))
   else if(reason == EPS_DIVERGED_NONSYMMETRIC)
     Msg::Error("The operator is nonsymmetric");
 #endif
@@ -159,20 +166,11 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       }
        _eigenVectors.push_back(ev);
     }
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
     _try(VecDestroy(&xr));
     _try(VecDestroy(&xi));
-#else
-    _try(VecDestroy(xr));
-    _try(VecDestroy(xi));
-#endif
   }
 
-#if (PETSC_VERSION_RELEASE == 0 || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 2)))
   _try(EPSDestroy(&eps));
-#else
-  _try(EPSDestroy(eps));
-#endif
 
   if(reason == EPS_CONVERGED_TOL){
     Msg::Debug("SLEPc done");
