@@ -31,6 +31,12 @@ class FunctionSpaceVector : public FunctionSpace{
     interpolateInRefSpace(const MElement& element,
                           const std::vector<double>& coef,
                           const fullVector<double>& uvw) const;
+
+ private:
+  fullVector<double>
+    interpolateInABC(const MElement& element,
+                     const std::vector<double>& coef,
+                     double abc[3]) const;
 };
 
 
@@ -84,5 +90,38 @@ class FunctionSpaceVector : public FunctionSpace{
    @c element @em Bad @em Things may happend
    ---> check
 */
+
+
+//////////////////////
+// Inline Functions //
+//////////////////////
+
+inline fullVector<double> FunctionSpaceVector::
+interpolate(const MElement& element,
+            const std::vector<double>& coef,
+            const fullVector<double>& xyz) const{
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  (*basis)[0]->getReferenceSpace().mapFromXYZtoABC(element,
+                                                   xyz(0), xyz(1), xyz(2),
+                                                   abc);
+  // Interpolate in ABC //
+  return interpolateInABC(element, coef, abc);
+}
+
+inline fullVector<double> FunctionSpaceVector::
+interpolateInRefSpace(const MElement& element,
+                      const std::vector<double>& coef,
+                      const fullVector<double>& uvw) const{
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  (*basis)[0]->getReferenceSpace().mapFromUVWtoABC(element,
+                                                   uvw(0), uvw(1), uvw(2),
+                                                   abc);
+  // Interpolate in ABC //
+  return interpolateInABC(element, coef, abc);
+}
 
 #endif

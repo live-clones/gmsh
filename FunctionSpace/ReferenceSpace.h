@@ -64,17 +64,21 @@ class ReferenceSpace{
   const std::vector<size_t>&
     getNodeIndexFromABCtoUVW(const MElement& element) const;
 
+  void mapFromABCtoUVW(const MElement& element,
+                       double a, double b, double c,
+                       double uvw[3]) const;
+
   void mapFromUVWtoABC(const MElement& element,
-                       const fullVector<double>& xyz,
+                       double u, double v, double w,
                        double abc[3]) const;
 
   void mapFromXYZtoABC(const MElement& element,
-                       const fullVector<double>& xyz,
+                       double x, double y, double z,
                        double abc[3]) const;
 
-  void getJacobian(const MElement& element,
-                   const fullVector<double>& xyz,
-                   fullMatrix<double>& jac) const;
+  double getJacobian(const MElement& element,
+                     double a, double b, double c,
+                     fullMatrix<double>& jac) const;
 
   virtual std::string toString(void) const;
   virtual std::string toLatex(void) const;
@@ -123,6 +127,8 @@ class ReferenceSpace{
 
   static bool sortPredicate(const std::pair<size_t, size_t>& a,
                             const std::pair<size_t, size_t>& b);
+
+  static void regularize(size_t dim, fullMatrix<double>& jac);
 };
 
 

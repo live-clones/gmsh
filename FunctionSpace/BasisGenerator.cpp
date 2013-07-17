@@ -33,9 +33,9 @@ BasisGenerator::~BasisGenerator(void){
 }
 
 BasisLocal* BasisGenerator::generate(unsigned int elementType,
-				     unsigned int basisType,
-				     unsigned int order,
-				     std::string family){
+                                     unsigned int basisType,
+                                     unsigned int order,
+                                     std::string family){
 
   if(!family.compare(std::string("hierarchical")))
     return generateHierarchical(elementType, basisType, order);
@@ -48,8 +48,8 @@ BasisLocal* BasisGenerator::generate(unsigned int elementType,
 }
 
 BasisLocal* BasisGenerator::generateHierarchical(unsigned int elementType,
-						 unsigned int basisType,
-						 unsigned int order){
+                                                 unsigned int basisType,
+                                                 unsigned int order){
   switch(elementType){
   case TYPE_LIN: return linHierarchicalGen(basisType, order);
   case TYPE_TRI: return triHierarchicalGen(basisType, order);
@@ -58,17 +58,17 @@ BasisLocal* BasisGenerator::generateHierarchical(unsigned int elementType,
   case TYPE_HEX: return hexHierarchicalGen(basisType, order);
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation",
-			   elementType);
+                           elementType);
   }
 }
 
 BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
-					     unsigned int basisType,
-					     unsigned int order){
+                                             unsigned int basisType,
+                                             unsigned int order){
   if(basisType != 0)
     throw
       Exception("Cannot Have a %d-Form Lagrange Basis (0-Form only)",
-		basisType);
+                basisType);
 
   switch(elementType){
   case TYPE_LIN: return new LineLagrangeBasis(order);
@@ -78,12 +78,12 @@ BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
   case TYPE_HEX: throw Exception("Lagrange Basis on Hexs not Implemented");
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation",
-			   elementType);
+                           elementType);
   }
 }
 
 BasisLocal* BasisGenerator::linHierarchicalGen(unsigned int basisType,
-					       unsigned int order){
+                                               unsigned int order){
   switch(basisType){
   case  0: return new LineNodeBasis(order);
   case  1:
@@ -98,7 +98,7 @@ BasisLocal* BasisGenerator::linHierarchicalGen(unsigned int basisType,
 }
 
 BasisLocal* BasisGenerator::triHierarchicalGen(unsigned int basisType,
-					       unsigned int order){
+                                               unsigned int order){
   switch(basisType){
   case  0: return new TriNodeBasis(order);
   case  1:
@@ -113,7 +113,7 @@ BasisLocal* BasisGenerator::triHierarchicalGen(unsigned int basisType,
 }
 
 BasisLocal* BasisGenerator::quaHierarchicalGen(unsigned int basisType,
-					       unsigned int order){
+                                               unsigned int order){
   switch(basisType){
   case  0: return new QuadNodeBasis(order);
   case  1:
@@ -128,7 +128,7 @@ BasisLocal* BasisGenerator::quaHierarchicalGen(unsigned int basisType,
 }
 
 BasisLocal* BasisGenerator::tetHierarchicalGen(unsigned int basisType,
-					       unsigned int order){
+                                               unsigned int order){
   switch(basisType){
   case  0: return new TetNodeBasis(order);
   case  1:
@@ -143,10 +143,12 @@ BasisLocal* BasisGenerator::tetHierarchicalGen(unsigned int basisType,
 }
 
 BasisLocal* BasisGenerator::hexHierarchicalGen(unsigned int basisType,
-					       unsigned int order){
+                                               unsigned int order){
   switch(basisType){
     //case  0: return new HexNodeBasis(order);
     //case  1: return new HexEdgeBasis(order);
+  case  0: throw Exception("0-form not implemented on Hexs");
+  case  1: throw Exception("1-form not implemented on Hexs");
   case  2: throw Exception("2-form not implemented on Hexs");
   case  3: throw Exception("3-form not implemented on Hexs");
 

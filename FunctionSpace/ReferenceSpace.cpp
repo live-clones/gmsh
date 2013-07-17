@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "Exception.h"
+#include "Numeric.h"
 #include "ReferenceSpace.h"
 
 using namespace std;
@@ -419,69 +420,231 @@ size_t ReferenceSpace::getPermutationIdx(const MElement& element) const{
   }
 }
 
+void ReferenceSpace::mapFromABCtoUVW(const MElement& element,
+                                     double a, double b, double c,
+                                     double uvw[3]) const{
+ // Get Index Permutation
+  const size_t permutationIdx = getPermutationIdx(element);
+
+  // UVW node coordinate
+  double** uvwNode = new double*[nVertex];
+
+  for(size_t i = 0; i < nVertex; i++)
+    uvwNode[i] = new double[3];
+
+  for(size_t i = 0; i < nVertex; i++)
+    element.getNode(i,
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][0],
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][1],
+                    uvwNode[UVWtoABCIndex[permutationIdx][0]][2]);
+
+  // ABC (order 1) grad shape functions
+  double* phiABC = new double[nVertex];
+  element.getShapeFunctions(a, b, c, phiABC, 1);
+
+  // Map From UVW to UVW //
+  uvw[0] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    uvw[0] += uvwNode[i][0] * phiABC[i];
+
+  uvw[1] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    uvw[1] += uvwNode[i][1] * phiABC[i];
+
+  uvw[2] = 0;
+  for(size_t i = 0; i < nVertex; i++)
+    uvw[2] += uvwNode[i][2] * phiABC[i];
+
+  // Free //
+  delete[] phiABC;
+
+  for(size_t i = 0; i < nVertex; i++)
+    delete[] uvwNode[i];
+
+  delete[] uvwNode;
+}
+
 void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
-                                     const fullVector<double>& xyz,
+                                     double x, double y, double z,
                                      double abc[3]) const{
   // Get UVW coordinate //
-  double phys[3] = {xyz(0), xyz(1), xyz(2)};
+  double xyz[3] = {x, y, z};
   double uvw[3];
 
-  element.xyz2uvw(phys, uvw);
+  element.xyz2uvw(xyz, uvw);
 
   // Get ABC coordinate //
-  fullVector<double> uuvw(3);
-  uuvw(0) = uvw[0];
-  uuvw(1) = uvw[1];
-  uuvw(2) = uvw[2];
-
-  mapFromUVWtoABC(element, uuvw, abc);
+  mapFromUVWtoABC(element, uvw[0], uvw[1], uvw[2], abc);
 }
 
 void ReferenceSpace::mapFromUVWtoABC(const MElement& element,
-                                     const fullVector<double>& uvw,
+                                     double u, double v, double w,
                                      double abc[3]) const{
-  // Compute coordinate in ABC Space //
-  // ABC node coordinate
-  double** abcMat = new double*[nVertex];
+   // ABC node coordinate
+  double** abcNode = new double*[nVertex];
 
   for(size_t i = 0; i < nVertex; i++)
-    abcMat[i] = new double[3];
+    abcNode[i] = new double[3];
 
   for(size_t i = 0; i < nVertex; i++)
-    element.getNode(i, abcMat[i][0], abcMat[i][1], abcMat[i][2]);
+    element.getNode(i, abcNode[i][0], abcNode[i][1], abcNode[i][2]);
 
   // UVW (order 1) shape functions
   double* phiUVW = new double[nVertex];
-  element.getShapeFunctions(uvw(0), uvw(1), uvw(2), phiUVW, 1);
+  element.getShapeFunctions(u, v, w, phiUVW, 1);
 
-  // Element Permutation Index //
+  // Element Permutation Index
   const size_t permutationIdx = getPermutationIdx(element);
 
-  // Map From UVW to ABC //
+  // Map From UVW to ABC
   abc[0] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[0] += abcMat[i][0] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[0] += abcNode[i][0] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
 
   abc[1] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[1] += abcMat[i][1] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[1] += abcNode[i][1] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
 
   abc[2] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[2] += abcMat[i][2] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[2] += abcNode[i][2] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
 
-  // Free //
+  // Free
   delete[] phiUVW;
 
   for(size_t i = 0; i < nVertex; i++)
-    delete[] abcMat[i];
+    delete[] abcNode[i];
 
-  delete[] abcMat;
+  delete[] abcNode;
 }
 
-void ReferenceSpace::getJacobian(const MElement& element,
-                                 const fullVector<double>& xyz,
-                                 fullMatrix<double>& jac) const{
+double ReferenceSpace::getJacobian(const MElement& element,
+                                   double a, double b, double c,
+                                   fullMatrix<double>& jac) const{
+  // ABC to UVW Jacobian //
+  // Get Index Permutation
+  const size_t permutationIdx = getPermutationIdx(element);
+
+  // UVW node coordinate
+  double** uvwNode = new double*[nVertex];
+
+  for(size_t i = 0; i < nVertex; i++)
+    uvwNode[i] = new double[3];
+
+  for(size_t i = 0; i < nVertex; i++)
+    element.getNode(i,
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][0],
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][1],
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][2]);
+
+  // ABC (order 1) grad shape functions
+  double phiABC[1256][3]; // Cannot be dynamicaly allocated since
+                          // GMSH wants a double[][3] for phiABC !!!
+
+  element.getGradShapeFunctions(a, b, c, phiABC, 1);
+
+  // Jacobian
+  fullMatrix<double> jacABCtoUVW(3, 3);
+  jacABCtoUVW.setAll(0);
+
+  for(size_t i = 0; i < nVertex; i++){
+    jacABCtoUVW(0, 0) += uvwNode[i][0] * phiABC[i][0];
+    jacABCtoUVW(0, 1) += uvwNode[i][1] * phiABC[i][0];
+    jacABCtoUVW(0, 2) += uvwNode[i][2] * phiABC[i][0];
+  }
+
+  for(size_t i = 0; i < nVertex; i++){
+    jacABCtoUVW(1, 0) += uvwNode[i][0] * phiABC[i][1];
+    jacABCtoUVW(1, 1) += uvwNode[i][1] * phiABC[i][1];
+    jacABCtoUVW(1, 2) += uvwNode[i][2] * phiABC[i][1];
+  }
+
+  for(size_t i = 0; i < nVertex; i++){
+    jacABCtoUVW(2, 0) += uvwNode[i][0] * phiABC[i][2];
+    jacABCtoUVW(2, 1) += uvwNode[i][1] * phiABC[i][2];
+    jacABCtoUVW(2, 2) += uvwNode[i][2] * phiABC[i][2];
+  }
+
+  // Regularize Jacobian
+  regularize(element.getDim(), jacABCtoUVW);
+
+  // Free
+  for(size_t i = 0; i < nVertex; i++)
+    delete[] uvwNode[i];
+
+  delete[] uvwNode;
+
+  // Map ABC coordinate to UVW point //
+  double uvw[3];
+  mapFromABCtoUVW(element, a, b, c, uvw);
+
+  // UVW to XYZ Jacobian + Determinant                      //
+  //  NB: Volume is not modified when we go from ABC to UVW //
+  //       --> Determinant unchanged                        //
+  fullMatrix<double> jacUVWtoXYZ(3, 3);
+  double det = element.getJacobian(uvw[0], uvw[1], uvw[2], jacUVWtoXYZ);
+
+  // Product of the two Jacobians & Return //
+  jac.gemm(jacABCtoUVW, jacUVWtoXYZ, 1, 0);
+  return det;
+}
+
+void ReferenceSpace::regularize(size_t dim, fullMatrix<double>& jac){
+  double a[3];
+  double b[3];
+  double c[3];
+
+  switch(dim){
+  case 0:
+    jac(0, 0) = jac(1, 1) = jac(2, 2) = 1.0;
+    jac(0, 1) = jac(1, 0) = jac(2, 0) = 0.0;
+    jac(0, 2) = jac(1, 2) = jac(2, 1) = 0.0;
+    break;
+
+  case 1:
+    a[0] = jac(0, 0);
+    a[1] = jac(0, 1);
+    a[2] = jac(0, 2);
+
+   if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+       (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))){
+      b[0] =  a[1];
+      b[1] = -a[0];
+      b[2] =  0.;
+    }
+
+    else{
+      b[0] =  0.;
+      b[1] =  a[2];
+      b[2] = -a[1];
+    }
+
+    norme(b);
+    prodve(a, b, c);
+    norme(c);
+
+    jac(1, 0) = b[0]; jac(1, 1) = b[1]; jac(1, 2) = b[2];
+    jac(2, 0) = c[0]; jac(2, 1) = c[1]; jac(2, 2) = c[2];
+    break;
+
+  case 2:
+    a[0] = jac(0, 0);
+    a[1] = jac(0, 1);
+    a[2] = jac(0, 2);
+
+    b[0] = jac(1, 0);
+    b[1] = jac(1, 1);
+    b[2] = jac(1, 2);
+
+    prodve(a, b, c);
+    norme(c);
+
+    jac(2, 0) = c[0]; jac(2, 1) = c[1]; jac(2, 2) = c[2];
+    break;
+
+  case 3:
+    break;
+  }
 }
 
 string ReferenceSpace::toString(void) const{
