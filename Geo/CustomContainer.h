@@ -327,7 +327,9 @@ class FaceAllocator
   // Allocate the array
   void allocate(const unsigned short nCapacity, T *&faces)
   {
+#if defined (_OPENMP)
 #pragma omp critical (FaceAllocator_allocate)
+#endif
     {
       switch(nCapacity) {
       case 0:
@@ -372,7 +374,9 @@ class FaceAllocator
   // arrays with size 2, 6, and 8.
   void grow(unsigned short &nCapacity, T *&faces)
   {
+#if defined (_OPENMP)
 #pragma omp critical (FaceAllocator_grow)
+#endif
     {
       switch(nCapacity) {
       case 0:
@@ -440,7 +444,9 @@ class FaceAllocator
   // Deallocate an array
   void deallocate(unsigned short &nCapacity, T *const faces)
   {
+#if defined (_OPENMP)
 #pragma omp critical (FaceAllocator_deallocate)
+#endif
     {
       switch(nCapacity) {
       case 0:
@@ -546,6 +552,11 @@ template <typename T>
 class FaceVector : public FaceAllocator<T>
 {
 
+ protected:
+  
+  using FaceAllocator<T>::deallocate;
+  using FaceAllocator<T>::grow;
+  
  public:
 
   // Constructor
@@ -557,7 +568,7 @@ class FaceVector : public FaceAllocator<T>
       _capacity = valid_capacity(n);
       allocate(_capacity, faces);
   }
-
+  
   // Destructor
   ~FaceVector() { deallocate(_capacity, faces); }
 
