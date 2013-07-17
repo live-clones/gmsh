@@ -47,6 +47,7 @@
 #define FORMAT_IR3   38
 #define FORMAT_INP   39
 #define FORMAT_PLY2  40
+#define FORMAT_CELUM 41
 
 // Element types
 #define TYPE_PNT     1

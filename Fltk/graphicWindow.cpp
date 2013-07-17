@@ -270,6 +270,8 @@ static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
 static int _save_inp(const char *name){ return unvinpFileDialog
     (name, "Abaqus INP Options", FORMAT_INP); }
+static int _save_celum(const char *name){ return genericMeshFileDialog
+    (name, "CELUM Options", FORMAT_CELUM, false, false); }
 static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
 static int _save_mesh(const char *name){ return genericMeshFileDialog
@@ -332,6 +334,7 @@ static int _save_auto(const char *name)
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
+  case FORMAT_CELUM: return _save_celum(name);
   case FORMAT_P3D  : return _save_p3d(name);
   case FORMAT_IR3  : return _save_ir3(name);
   case FORMAT_STL  : return _save_stl(name);
@@ -371,6 +374,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 #endif
     {"Mesh - Gmsh MSH" TT "*.msh", _save_msh},
     {"Mesh - Abaqus INP" TT "*.inp", _save_inp},
+    {"Mesh - CELUM" TT "*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
     {"Mesh - CGNS (Experimental)" TT "*.cgns", _save_cgns},
 #endif

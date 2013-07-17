@@ -46,6 +46,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".bdf")  return FORMAT_BDF;
   else if(ext == ".diff") return FORMAT_DIFF;
   else if(ext == ".inp")  return FORMAT_INP;
+  else if(ext == ".celum")return FORMAT_CELUM;
   else if(ext == ".nas")  return FORMAT_BDF;
   else if(ext == ".p3d")  return FORMAT_P3D;
   else if(ext == ".wrl")  return FORMAT_VRML;
@@ -99,6 +100,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_BDF:  name += ".bdf"; break;
   case FORMAT_DIFF: name += ".diff"; break;
   case FORMAT_INP:  name += ".inp"; break;
+  case FORMAT_CELUM:name += ".celum"; break;
   case FORMAT_P3D:  name += ".p3d"; break;
   case FORMAT_VRML: name += ".wrl"; break;
   case FORMAT_PLY2: name += ".ply2"; break;
@@ -309,6 +311,11 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
     GModel::current()->writeINP
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_CELUM:
+    GModel::current()->writeCELUM
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_P3D:

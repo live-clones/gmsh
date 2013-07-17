@@ -188,7 +188,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
         Msg::Debug("Could not compute normal of surface %d - retrying with %d points",
                    tag(), NP);
         if(tries > 10){
-          Msg::Warning("Could not compute normal of surface %d", tag());
+          Msg::Warning("Could not orient normal of surface %d", tag());
           return SVector3(n[0], n[1], n[2]);
         }
       }
