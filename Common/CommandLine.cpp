@@ -58,20 +58,17 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-match",             "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
   s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
+  s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
                                        "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
                                        "p3d, diff, med, ...)"));
-  s.push_back(mp("-vmsh float",        "Select msh file version"));
+  s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
-  s.push_back(mp("-renumber",          "Renumber the mesh elements after batch mesh generation"));
   s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
-  s.push_back(mp("-o file",            "Specify output file name"));
-  s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-parametric",        "Save vertices with their parametric coordinates"));
-  s.push_back(mp("-numsubedges",       "Set num of subdivisions for high order element display"));
   s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
                                         "delquad, del3d, front3d, mmg3d)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
@@ -80,7 +77,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
-  s.push_back(mp("-microstructure",    "Generate polycrystal Voronoi geometry"));
   s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
   s.push_back(mp("-clmin float",       "Set minimum mesh element size"));
   s.push_back(mp("-clmax float",       "Set maximum mesh element size"));
@@ -104,6 +100,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("Display options:", ""));
   s.push_back(mp("-n",                 "Hide all meshes and post-processing views on startup"));
   s.push_back(mp("-nodb",              "Disable double buffering"));
+  s.push_back(mp("-numsubedges",       "Set num of subdivisions for high order element display"));
   s.push_back(mp("-fontsize int",      "Specify the font size for the GUI"));
   s.push_back(mp("-theme string",      "Specify FLTK GUI theme"));
   s.push_back(mp("-display string",    "Specify display"));
