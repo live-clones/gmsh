@@ -20,7 +20,7 @@ class TetEdgeBasis: public BasisHierarchical1From{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Tetrahedra of the given order
-  TetEdgeBasis(unsigned int order);
+  TetEdgeBasis(size_t order);
 
   //! Deletes this Basis
   //!

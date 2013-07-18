@@ -24,7 +24,7 @@ class QuadEdgeBasis: public BasisHierarchical1From{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Quads of the given order
-  QuadEdgeBasis(unsigned int order);
+  QuadEdgeBasis(size_t order);
 
   //! Deletes this Basis
   //!
