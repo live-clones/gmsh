@@ -6,7 +6,7 @@ using namespace std;
 TriNedelecBasis::TriNedelecBasis(void){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -65,6 +65,8 @@ TriNedelecBasis::TriNedelecBasis(void){
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // ReferenceSpace //
   delete refSpace;
 

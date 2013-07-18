@@ -23,8 +23,8 @@ set(SRC
   BasisGenerator.cpp
 
   BasisLagrange.cpp
-  BasisHierarchical0From.cpp
-  BasisHierarchical1From.cpp
+  BasisHierarchical0Form.cpp
+  BasisHierarchical1Form.cpp
 
   LineNodeBasis.cpp
   LineEdgeBasis.cpp
@@ -46,8 +46,8 @@ set(SRC
   TetNedelecBasis.cpp
   TetLagrangeBasis.cpp
 
-#  HexNodeBasis.cpp
-#  HexEdgeBasis.cpp
+  HexNodeBasis.cpp
+  HexEdgeBasis.cpp
 
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

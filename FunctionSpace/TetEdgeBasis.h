@@ -1,7 +1,7 @@
 #ifndef _TETEDGEBASIS_H_
 #define _TETEDGEBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class TetEdgeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
 */
 
-class TetEdgeBasis: public BasisHierarchical1From{
+class TetEdgeBasis: public BasisHierarchical1Form{
  public:
   //! @param order The order of the Basis
   //!

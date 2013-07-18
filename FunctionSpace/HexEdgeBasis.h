@@ -1,7 +1,7 @@
 #ifndef _HEXEDGEBASIS_H_
 #define _HEXEDGEBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class HexEdgeBasis
@@ -15,12 +15,12 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class HexEdgeBasis: public BasisHierarchical1From{
+class HexEdgeBasis: public BasisHierarchical1Form{
  public:
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Hexahedra of the given order
-  HexEdgeBasis(int order);
+  HexEdgeBasis(size_t order);
 
   //! Deletes this Basis
   //!

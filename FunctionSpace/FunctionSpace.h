@@ -49,11 +49,11 @@ class FunctionSpace{
 
   // Basis //
   std::vector<const Basis*>* basis;
-  unsigned int nBasis;
-  unsigned int fPerVertex;
-  unsigned int fPerEdge;
-  unsigned int fPerFace;
-  unsigned int fPerCell;
+  size_t nBasis;
+  size_t fPerVertex;
+  size_t fPerEdge;
+  size_t fPerFace;
+  size_t fPerCell;
 
   // Scalar Field ? //
   bool scalar;
@@ -69,8 +69,8 @@ class FunctionSpace{
   virtual ~FunctionSpace(void);
 
   const std::vector<const Basis*>& getBasis(const MElement& element) const;
-  const Basis&                     getBasis(unsigned int i) const;
-  unsigned int                     getNBasis(void) const;
+  const Basis&                     getBasis(size_t i) const;
+  size_t                           getNBasis(void) const;
 
   GroupOfElement& getSupport(void) const;
   bool            isScalar(void) const;
@@ -85,8 +85,8 @@ class FunctionSpace{
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
 
-  unsigned int dofNumber(void) const;
-  unsigned int groupNumber(void) const;
+  size_t dofNumber(void) const;
+  size_t groupNumber(void) const;
 
  protected:
   // Init
@@ -185,11 +185,11 @@ FunctionSpace::getBasis(const MElement& element) const{
   return *basis;
 }
 
-inline const Basis& FunctionSpace::getBasis(unsigned int i) const{
+inline const Basis& FunctionSpace::getBasis(size_t i) const{
   return *(*basis)[i];
 }
 
-inline unsigned int FunctionSpace::getNBasis(void) const{
+inline size_t FunctionSpace::getNBasis(void) const{
   return nBasis;
 }
 
@@ -201,11 +201,11 @@ inline bool FunctionSpace::isScalar(void) const{
   return scalar;
 }
 
-inline unsigned int FunctionSpace::dofNumber(void) const{
+inline size_t FunctionSpace::dofNumber(void) const{
   return dof->size();
 }
 
-inline unsigned int FunctionSpace::groupNumber(void) const{
+inline size_t FunctionSpace::groupNumber(void) const{
   return group->size();
 }
 

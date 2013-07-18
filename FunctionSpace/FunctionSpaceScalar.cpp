@@ -16,15 +16,15 @@ interpolateInABC(const MElement& element,
                  double abc[3]) const{
 
   // Get Basis Functions //
-  const unsigned int nFun = (*basis)[0]->getNFunction();
-  fullMatrix<double>  fun(nFun, 1);
+  const size_t nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double> fun(nFun, 1);
 
   (*basis)[0]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
   // Interpolate (in Reference Place) //
   double val = 0;
 
-  for(unsigned int i = 0; i < nFun; i++)
+  for(size_t i = 0; i < nFun; i++)
     val += fun(i, 0) * coef[i];
 
   // Return Interpolated Value //

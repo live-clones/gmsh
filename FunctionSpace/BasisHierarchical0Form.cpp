@@ -1,10 +1,10 @@
 #include <sstream>
 #include "Exception.h"
-#include "BasisHierarchical0From.h"
+#include "BasisHierarchical0Form.h"
 
 using namespace std;
 
-BasisHierarchical0From::BasisHierarchical0From(void){
+BasisHierarchical0Form::BasisHierarchical0Form(void){
   // Scalar Basis ? //
   scalar = true;
 
@@ -20,11 +20,13 @@ BasisHierarchical0From::BasisHierarchical0From(void){
   preEvaluatedGradFunction = NULL;
 }
 
-BasisHierarchical0From::~BasisHierarchical0From(void){
+BasisHierarchical0Form::~BasisHierarchical0Form(void){
   // Grad Basis //
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   if(hasGrad){
-    for(unsigned int i = 0; i < nRefSpace; i++){
-      for(unsigned int j = 0; j < nFunction; j++)
+    for(size_t i = 0; i < nRefSpace; i++){
+      for(size_t j = 0; j < nFunction; j++)
         delete grad[i][j];
 
       delete[] grad[i];
@@ -35,75 +37,67 @@ BasisHierarchical0From::~BasisHierarchical0From(void){
 
   // PreEvaluation //
   if(preEvaluated){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedFunction[i];
 
     delete[] preEvaluatedFunction;
   }
 
   if(preEvaluatedGrad){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedGradFunction[i];
 
     delete[] preEvaluatedGradFunction;
   }
 }
 
-unsigned int BasisHierarchical0From::
-getNOrientation(void) const{
-  return refSpace->getNReferenceSpace();
-}
-
-unsigned int BasisHierarchical0From::
-getOrientation(const MElement& element) const{
-  return refSpace->getReferenceSpace(element);
-}
-
-void BasisHierarchical0From::
+void BasisHierarchical0Form::
 getFunctions(fullMatrix<double>& retValues,
              const MElement& element,
              double u, double v, double w) const{
 
   // Define Orientation //
-  unsigned int orientation = refSpace->getReferenceSpace(element);
+  const size_t orientation = refSpace->getReferenceSpace(element);
 
   // Fill Matrix //
-  for(unsigned int i = 0; i < nFunction; i++)
+  for(size_t i = 0; i < nFunction; i++)
     retValues(i, 0) = basis[orientation][i]->at(u, v, w);
 }
 
-void BasisHierarchical0From::
+void BasisHierarchical0Form::
 getFunctions(fullMatrix<double>& retValues,
-             unsigned int orientation,
+             size_t orientation,
              double u, double v, double w) const{
 
   // Fill Matrix //
-  for(unsigned int i = 0; i < nFunction; i++)
+  for(size_t i = 0; i < nFunction; i++)
     retValues(i, 0) = basis[orientation][i]->at(u, v, w);
 }
 
-void BasisHierarchical0From::
+void BasisHierarchical0Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Delete if older //
   if(preEvaluated){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedFunction[i];
 
     delete[] preEvaluatedFunction;
   }
 
   // Alloc //
-  const unsigned int nPoint = point.size1();
+  const size_t nPoint = point.size1();
   preEvaluatedFunction      = new fullMatrix<double>*[nRefSpace];
 
-  for(unsigned int i = 0; i < nRefSpace; i++)
+  for(size_t i = 0; i < nRefSpace; i++)
     preEvaluatedFunction[i] =
       new fullMatrix<double>(nFunction, nPoint);
 
   // Fill Matrix //
-  for(unsigned int i = 0; i < nRefSpace; i++)
-    for(unsigned int j = 0; j < nFunction; j++)
-      for(unsigned int k = 0; k < nPoint; k++)
+  for(size_t i = 0; i < nRefSpace; i++)
+    for(size_t j = 0; j < nFunction; j++)
+      for(size_t k = 0; k < nPoint; k++)
         (*preEvaluatedFunction[i])(j, k) =
           basis[i][j]->at(point(k, 0),
                           point(k, 1),
@@ -113,35 +107,37 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   preEvaluated = true;
 }
 
-void BasisHierarchical0From::
+void BasisHierarchical0Form::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Build Grad //
   if(!hasGrad)
     getGrad();
 
   // Delete if older //
   if(preEvaluatedGrad){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedGradFunction[i];
 
     delete[] preEvaluatedGradFunction;
   }
 
   // Alloc //
-  const unsigned int nPoint  = point.size1();
-  const unsigned int nPoint3 = nPoint * 3;
+  const size_t nPoint  = point.size1();
+  const size_t nPoint3 = nPoint * 3;
   preEvaluatedGradFunction   = new fullMatrix<double>*[nRefSpace];
 
-  for(unsigned int i = 0; i < nRefSpace; i++)
+  for(size_t i = 0; i < nRefSpace; i++)
     preEvaluatedGradFunction[i] =
       new fullMatrix<double>(nFunction, nPoint3);
 
   // Fill Matrix //
   fullVector<double> tmp(3);
 
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++){
-      for(unsigned int k = 0; k < nPoint; k++){
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++){
+      for(size_t k = 0; k < nPoint; k++){
         tmp = Polynomial::at(*grad[i][j],
                              point(k, 0),
                              point(k, 1),
@@ -158,42 +154,44 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   preEvaluatedGrad = true;
 }
 
-const fullMatrix<double>& BasisHierarchical0From::
+const fullMatrix<double>& BasisHierarchical0Form::
 getPreEvaluatedFunctions(const MElement& element) const{
   return getPreEvaluatedFunctions(refSpace->getReferenceSpace(element));
 }
 
-const fullMatrix<double>& BasisHierarchical0From::
+const fullMatrix<double>& BasisHierarchical0Form::
 getPreEvaluatedDerivatives(const MElement& element) const{
   return getPreEvaluatedDerivatives(refSpace->getReferenceSpace(element));
 }
 
-const fullMatrix<double>& BasisHierarchical0From::
-getPreEvaluatedFunctions(unsigned int orientation) const{
+const fullMatrix<double>& BasisHierarchical0Form::
+getPreEvaluatedFunctions(size_t orientation) const{
   if(!preEvaluated)
     throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
 
   return *preEvaluatedFunction[orientation];
 }
 
-const fullMatrix<double>& BasisHierarchical0From::
-getPreEvaluatedDerivatives(unsigned int orientation) const{
+const fullMatrix<double>& BasisHierarchical0Form::
+getPreEvaluatedDerivatives(size_t orientation) const{
   if(!preEvaluatedGrad)
     throw Exception("getPreEvaluatedDerivative: gradient has not been preEvaluated");
 
   return *preEvaluatedGradFunction[orientation];
 }
 
-void BasisHierarchical0From::getGrad(void) const{
+void BasisHierarchical0Form::getGrad(void) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Alloc //
   grad = new vector<Polynomial>**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     grad[s] = new vector<Polynomial>*[nFunction];
 
   // Grad //
-  for(unsigned int s = 0; s < nRefSpace; s++)
-    for(unsigned int f = 0 ; f < nFunction; f++)
+  for(size_t s = 0; s < nRefSpace; s++)
+    for(size_t f = 0 ; f < nFunction; f++)
       grad[s][f] =
         new vector<Polynomial>(basis[s][f]->gradient());
 
@@ -201,10 +199,10 @@ void BasisHierarchical0From::getGrad(void) const{
   hasGrad = true;
 }
 
-string BasisHierarchical0From::toString(void) const{
+string BasisHierarchical0Form::toString(void) const{
   stringstream stream;
-  unsigned int i = 0;
-  const unsigned int refSpace = 0;
+  size_t i = 0;
+  const size_t refSpace = 0;
 
   stream << "Vertex Based:" << endl;
   for(; i < nVertex; i++)

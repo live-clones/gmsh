@@ -20,15 +20,6 @@ BasisLagrange::~BasisLagrange(void){
     delete preEvaluatedGradFunction;
 }
 
-unsigned int BasisLagrange::
-getNOrientation(void) const{
-  return 1;
-}
-
-unsigned int BasisLagrange::
-getOrientation(const MElement& element) const{
-  return 0;
-}
 /*
 static bool
 sortPredicate(const std::pair<size_t, size_t>& a,
@@ -164,7 +155,7 @@ getFunctions(fullMatrix<double>& retValues,
 
 void BasisLagrange::
 getFunctions(fullMatrix<double>& retValues,
-             unsigned int orientation,
+             size_t orientation,
              double u, double v, double w) const{
 
   // Fill Matrix //
@@ -223,12 +214,12 @@ BasisLagrange::getPreEvaluatedDerivatives(const MElement& element) const{
 }
 
 const fullMatrix<double>&
-BasisLagrange::getPreEvaluatedFunctions(unsigned int orientation) const{
+BasisLagrange::getPreEvaluatedFunctions(size_t orientation) const{
   return *preEvaluatedFunction;
 }
 
 const fullMatrix<double>&
-BasisLagrange::getPreEvaluatedDerivatives(unsigned int orientation) const{
+BasisLagrange::getPreEvaluatedDerivatives(size_t orientation) const{
   return *preEvaluatedGradFunction;
 }
 
@@ -238,13 +229,13 @@ project(const MElement& element,
         const FunctionSpaceScalar& fSpace){
 
   // Init New Coefs //
-  const unsigned int size = lPoint->size1();
-  const unsigned int dim  = lPoint->size2();
+  const size_t size = lPoint->size1();
+  const size_t dim  = lPoint->size2();
 
   vector<double> newCoef(size);
 
   // Interpolation at Lagrange Points //
-  for(unsigned int i = 0; i < size; i++){
+  for(size_t i = 0; i < size; i++){
     fullVector<double> uvw(3);
 
     if(dim > 0)
@@ -277,11 +268,11 @@ project(const MElement& element,
         const FunctionSpaceVector& fSpace){
 
   // Init New Coefs //
-  const unsigned int size = lPoint->size1();
+  const size_t size = lPoint->size1();
   vector<fullVector<double> > newCoef(size);
 
   // Interpolation at Lagrange Points //
-  for(unsigned int i = 0; i < size; i++){
+  for(size_t i = 0; i < size; i++){
     fullVector<double> uvw(3);
 
     if(dim > 0)

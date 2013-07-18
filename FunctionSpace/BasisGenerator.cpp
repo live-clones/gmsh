@@ -32,9 +32,9 @@ BasisGenerator::BasisGenerator(void){
 BasisGenerator::~BasisGenerator(void){
 }
 
-BasisLocal* BasisGenerator::generate(unsigned int elementType,
-                                     unsigned int basisType,
-                                     unsigned int order,
+BasisLocal* BasisGenerator::generate(size_t elementType,
+                                     size_t basisType,
+                                     size_t order,
                                      std::string family){
 
   if(!family.compare(std::string("hierarchical")))
@@ -47,9 +47,9 @@ BasisLocal* BasisGenerator::generate(unsigned int elementType,
     throw Exception("Unknwown Basis Family: %s", family.c_str());
 }
 
-BasisLocal* BasisGenerator::generateHierarchical(unsigned int elementType,
-                                                 unsigned int basisType,
-                                                 unsigned int order){
+BasisLocal* BasisGenerator::generateHierarchical(size_t elementType,
+                                                 size_t basisType,
+                                                 size_t order){
   switch(elementType){
   case TYPE_LIN: return linHierarchicalGen(basisType, order);
   case TYPE_TRI: return triHierarchicalGen(basisType, order);
@@ -62,9 +62,9 @@ BasisLocal* BasisGenerator::generateHierarchical(unsigned int elementType,
   }
 }
 
-BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
-                                             unsigned int basisType,
-                                             unsigned int order){
+BasisLocal* BasisGenerator::generateLagrange(size_t elementType,
+                                             size_t basisType,
+                                             size_t order){
   if(basisType != 0)
     throw
       Exception("Cannot Have a %d-Form Lagrange Basis (0-Form only)",
@@ -82,75 +82,75 @@ BasisLocal* BasisGenerator::generateLagrange(unsigned int elementType,
   }
 }
 
-BasisLocal* BasisGenerator::linHierarchicalGen(unsigned int basisType,
-                                               unsigned int order){
+BasisLocal* BasisGenerator::linHierarchicalGen(size_t basisType,
+                                               size_t order){
   switch(basisType){
-  case  0: return new LineNodeBasis(order);
-  case  1:
+  case 0: return new LineNodeBasis(order);
+  case 1:
     if (order == 0) return new LineNedelecBasis();
     else            return new LineEdgeBasis(order);
 
-  case  2: throw Exception("2-form not implemented on Lines");
-  case  3: throw Exception("3-form not implemented on Lines");
+  case 2: throw Exception("2-form not implemented on Lines");
+  case 3: throw Exception("3-form not implemented on Lines");
 
   default: throw Exception("There is no %d-form", basisType);
   }
 }
 
-BasisLocal* BasisGenerator::triHierarchicalGen(unsigned int basisType,
-                                               unsigned int order){
+BasisLocal* BasisGenerator::triHierarchicalGen(size_t basisType,
+                                               size_t order){
   switch(basisType){
-  case  0: return new TriNodeBasis(order);
-  case  1:
+  case 0: return new TriNodeBasis(order);
+  case 1:
     if (order == 0) return new TriNedelecBasis();
     else            return new TriEdgeBasis(order);
 
-  case  2: throw Exception("2-form not implemented on Triangles");
-  case  3: throw Exception("3-form not implemented on Triangles");
+  case 2: throw Exception("2-form not implemented on Triangles");
+  case 3: throw Exception("3-form not implemented on Triangles");
 
   default: throw Exception("There is no %d-form", basisType);
   }
 }
 
-BasisLocal* BasisGenerator::quaHierarchicalGen(unsigned int basisType,
-                                               unsigned int order){
+BasisLocal* BasisGenerator::quaHierarchicalGen(size_t basisType,
+                                               size_t order){
   switch(basisType){
-  case  0: return new QuadNodeBasis(order);
-  case  1:
+  case 0: return new QuadNodeBasis(order);
+  case 1:
     if (order == 0) return new QuadNedelecBasis();
     else            return new QuadEdgeBasis(order);
 
-  case  2: throw Exception("2-form not implemented on Quads");
-  case  3: throw Exception("3-form not implemented on Quads");
+  case 2: throw Exception("2-form not implemented on Quads");
+  case 3: throw Exception("3-form not implemented on Quads");
 
   default: throw Exception("There is no %d-form", basisType);
   }
 }
 
-BasisLocal* BasisGenerator::tetHierarchicalGen(unsigned int basisType,
-                                               unsigned int order){
+BasisLocal* BasisGenerator::tetHierarchicalGen(size_t basisType,
+                                               size_t order){
   switch(basisType){
-  case  0: return new TetNodeBasis(order);
-  case  1:
+  case 0: return new TetNodeBasis(order);
+  case 1:
     if (order == 0) return new TetNedelecBasis();
     else            return new TetEdgeBasis(order);
 
-  case  2: throw Exception("2-form not implemented on Tetrahedrons");
-  case  3: throw Exception("3-form not implemented on Tetrahedrons");
+  case 2: throw Exception("2-form not implemented on Tetrahedrons");
+  case 3: throw Exception("3-form not implemented on Tetrahedrons");
 
   default: throw Exception("There is no %d-form", basisType);
   }
 }
 
-BasisLocal* BasisGenerator::hexHierarchicalGen(unsigned int basisType,
-                                               unsigned int order){
+BasisLocal* BasisGenerator::hexHierarchicalGen(size_t basisType,
+                                               size_t order){
   switch(basisType){
-    //case  0: return new HexNodeBasis(order);
-    //case  1: return new HexEdgeBasis(order);
-  case  0: throw Exception("0-form not implemented on Hexs");
-  case  1: throw Exception("1-form not implemented on Hexs");
-  case  2: throw Exception("2-form not implemented on Hexs");
-  case  3: throw Exception("3-form not implemented on Hexs");
+    //case 0: return new HexNodeBasis(order);
+    //case 1: return new HexEdgeBasis(order);
+  case 0: throw Exception("0-form not implemented on Hexs");
+  case 1: throw Exception("1-form not implemented on Hexs");
+  case 2: throw Exception("2-form not implemented on Hexs");
+  case 3: throw Exception("3-form not implemented on Hexs");
 
   default: throw Exception("There is no %d-form", basisType);
   }

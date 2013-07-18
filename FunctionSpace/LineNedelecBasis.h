@@ -1,7 +1,7 @@
 #ifndef _LINENEDELECBASIS_H_
 #define _LINENEDELECBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class LineNedelecBasis
@@ -11,7 +11,7 @@
    for Lines.@n
 */
 
-class LineNedelecBasis: public BasisHierarchical1From{
+class LineNedelecBasis: public BasisHierarchical1Form{
  public:
   //! Returns a new Nedelec Basis for Lines
   //!

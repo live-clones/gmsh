@@ -1,7 +1,7 @@
 #ifndef _TRINEDELECBASIS_H_
 #define _TRINEDELECBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class TriNedelecBasis
@@ -11,7 +11,7 @@
    for Triangles.@n
 */
 
-class TriNedelecBasis: public BasisHierarchical1From{
+class TriNedelecBasis: public BasisHierarchical1Form{
  public:
   //! Returns a new Nedelec Basis for Triangles
   //!

@@ -26,17 +26,17 @@
 class ReferenceSpaceLagrange: public ReferenceSpace{
  protected:
   // Lagrange Node Permutation //
-  unsigned int nNode;
-  unsigned int nNodePerEdge;
-  unsigned int nNodePerFace;
-  unsigned int nNodePerCell;
+  size_t nNode;
+  size_t nNodePerEdge;
+  size_t nNodePerFace;
+  size_t nNodePerCell;
 
-  std::vector<const std::vector<unsigned int>*>* node;
+  std::vector<const std::vector<size_t>*>* node;
 
  public:
   virtual ~ReferenceSpaceLagrange(void);
 
-  const std::vector<const std::vector<unsigned int>*>&
+  const std::vector<const std::vector<size_t>*>&
     getAllLagrangeNode(void) const;
 
   virtual std::string toString(void) const;
@@ -46,20 +46,20 @@ class ReferenceSpaceLagrange: public ReferenceSpace{
 
   void getLagrangeNode(void);
 
-  static void edgeSeq(std::vector<unsigned int>& vec,
-                      unsigned int  startIdx,
-                      unsigned int  startVal,
-                      unsigned int  stopVal,
-                      size_t*       refEdge,
-                      const std::vector<unsigned int>& edge);
+  static void edgeSeq(std::vector<size_t>& vec,
+                      size_t  startIdx,
+                      size_t  startVal,
+                      size_t  stopVal,
+                      size_t* refEdge,
+                      const std::vector<size_t>& edge);
 
-  static void faceSeq(std::vector<unsigned int>& vec,
-                      unsigned int  startIdx,
-                      unsigned int  startVal,
-                      unsigned int  stopVal,
-                      size_t*       refFace,
-                      const std::vector<unsigned int>& face,
-                      unsigned int  nNodePerEdge);
+  static void faceSeq(std::vector<size_t>& vec,
+                      size_t  startIdx,
+                      size_t  startVal,
+                      size_t  stopVal,
+                      size_t* refFace,
+                      const std::vector<size_t>& face,
+                      size_t  nNodePerEdge);
 };
 
 
@@ -68,7 +68,7 @@ class ReferenceSpaceLagrange: public ReferenceSpace{
 /////////////////////
 
 inline
-const std::vector<const std::vector<unsigned int>*>&
+const std::vector<const std::vector<size_t>*>&
 ReferenceSpaceLagrange::getAllLagrangeNode(void) const{
   return *node;
 }

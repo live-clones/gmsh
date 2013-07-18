@@ -30,9 +30,9 @@ FunctionSpace::~FunctionSpace(void){
 
   // Group //
   if(group){
-    unsigned int nElement = group->size();
+    size_t nElement = group->size();
 
-    for(unsigned int i = 0; i < nElement; i++)
+    for(size_t i = 0; i < nElement; i++)
       delete (*group)[i];
     delete group;
   }
@@ -92,7 +92,7 @@ void FunctionSpace::build(GroupOfElement& goe,
 
 void FunctionSpace::buildDof(void){
   // Get Elements //
-  const unsigned int nElement = goe->getNumber();
+  const size_t nElement = goe->getNumber();
   const vector<const MElement*>& element = goe->getAll();
 
   // Init Struct //
@@ -103,15 +103,15 @@ void FunctionSpace::buildDof(void){
                      ElementComparator>;
 
   // Create Dofs //
-  for(unsigned int i = 0; i < nElement; i++){
+  for(size_t i = 0; i < nElement; i++){
     // Get Dof for this Element
     vector<Dof> myDof = getKeys(*(element[i]));
-    unsigned int nDof = myDof.size();
+    size_t nDof       = myDof.size();
 
     // Add Dof
     vector<const Dof*> trueDof(nDof);
 
-    for(unsigned int j = 0; j < nDof; j++)
+    for(size_t j = 0; j < nDof; j++)
       insertDof(myDof[j], trueDof, j);
 
     // Create new GroupOfDof

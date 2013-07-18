@@ -1,7 +1,7 @@
 #ifndef _TETNEDELECBASIS_H_
 #define _TETNEDELECBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class TetNedelecBasis
@@ -11,7 +11,7 @@
    a Nedelec Basis for Tetrahedra.
 */
 
-class TetNedelecBasis: public BasisHierarchical1From{
+class TetNedelecBasis: public BasisHierarchical1Form{
  public:
   //! @param order The order of the Basis
   //!

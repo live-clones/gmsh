@@ -4,7 +4,7 @@
 
 using namespace std;
 
-HexEdgeBasis::HexEdgeBasis(int order){
+HexEdgeBasis::HexEdgeBasis(size_t order){
   /*
   // Set Basis Type //
   this->order = order;
@@ -180,7 +180,7 @@ HexEdgeBasis::HexEdgeBasis(int order){
   for(int l = 1; l < orderPlus; l++){
     for(int e = 0; e < 12; e++){
       basis[i] =
-	new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient());
+      new std::vector<Polynomial>((intLegendre[l].compose(liftingSub[e]) * lagrangeSum[e]).gradient());
 
       i++;
     }
@@ -238,11 +238,10 @@ HexEdgeBasis::HexEdgeBasis(int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int f = 0; f < 6; f++){
-	basis[i] = new std::vector<Polynomial>((iLegendreXi[l1][f]   *
-						iLegendreEta[l2][f]  *
-						lambda[f]).gradient());
-
-	 i++;
+      basis[i] = new std::vector<Polynomial>((iLegendreXi[l1][f]   *
+                                              iLegendreEta[l2][f]  *
+                                              lambda[f]).gradient());
+      i++;
       }
     }
   }
@@ -252,31 +251,31 @@ HexEdgeBasis::HexEdgeBasis(int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int f = 0; f < 6; f++){
-	basis[i] = new std::vector<Polynomial>(3);
+      basis[i] = new std::vector<Polynomial>(3);
 
-	Polynomial tmp1 =
-	  legendreXi[l1][f]   *
-	  iLegendreEta[l2][f];
+      Polynomial tmp1 =
+        legendreXi[l1][f]   *
+        iLegendreEta[l2][f];
 
-	Polynomial tmp2 =
-	  iLegendreXi[l1][f] *
-	  legendreEta[l2][f];
+      Polynomial tmp2 =
+        iLegendreXi[l1][f] *
+        legendreEta[l2][f];
 
-	vector<Polynomial> gr1 = grXi[f];
-	gr1[0].mul(tmp1);
-	gr1[1].mul(tmp1);
-	gr1[2].mul(tmp1);
+      vector<Polynomial> gr1 = grXi[f];
+      gr1[0].mul(tmp1);
+      gr1[1].mul(tmp1);
+      gr1[2].mul(tmp1);
 
-	vector<Polynomial> gr2 = grEta[f];
-	gr2[0].mul(tmp2);
-	gr2[1].mul(tmp2);
-	gr2[2].mul(tmp2);
+      vector<Polynomial> gr2 = grEta[f];
+      gr2[0].mul(tmp2);
+      gr2[1].mul(tmp2);
+      gr2[2].mul(tmp2);
 
-	basis[i]->at(0) = (gr1[0] - gr2[0]) * lambda[f];
-	basis[i]->at(1) = (gr1[1] - gr2[1]) * lambda[f];
-	basis[i]->at(2) = (gr1[2] - gr2[2]) * lambda[f];
+      basis[i]->at(0) = (gr1[0] - gr2[0]) * lambda[f];
+      basis[i]->at(1) = (gr1[1] - gr2[1]) * lambda[f];
+      basis[i]->at(2) = (gr1[2] - gr2[2]) * lambda[f];
 
-	i++;
+      i++;
       }
     }
   }
@@ -338,12 +337,12 @@ HexEdgeBasis::HexEdgeBasis(int order){
   for(int l1 = 1; l1 < orderPlus; l1++){
     for(int l2 = 1; l2 < orderPlus; l2++){
       for(int l3 = 1; l3 < orderPlus; l3++){
-	basis[i] = new std::vector<Polynomial>((iLegendreX[l1] *
-						iLegendreY[l2] *
-						iLegendreZ[l3]).gradient());
+        basis[i] = new std::vector<Polynomial>((iLegendreX[l1] *
+                                                iLegendreY[l2] *
+                                                iLegendreZ[l3]).gradient());
 
-	i++;
-	cellNumber++;
+        i++;
+        cellNumber++;
       }
     }
   }

@@ -1,6 +1,7 @@
 #ifndef _BASIS_H_
 #define _BASIS_H_
 
+#include <string>
 #include "MElement.h"
 #include "ReferenceSpace.h"
 
@@ -49,16 +50,16 @@ class Basis{
   bool scalar;
   bool local;
 
-  unsigned int order;
-  unsigned int type;
-  unsigned int dim;
+  size_t order;
+  size_t type;
+  size_t dim;
 
-  unsigned int nVertex;
-  unsigned int nEdge;
-  unsigned int nFace;
-  unsigned int nCell;
+  size_t nVertex;
+  size_t nEdge;
+  size_t nFace;
+  size_t nCell;
 
-  unsigned int nFunction;
+  size_t nFunction;
 
  public:
   // Destructor //
@@ -69,22 +70,19 @@ class Basis{
   bool isLocal(void) const;
 
   // Type of Basis //
-  unsigned int getOrder(void) const;
-  unsigned int getType(void) const;
-  unsigned int getDim(void) const;
+  size_t getOrder(void) const;
+  size_t getType(void) const;
+  size_t getDim(void) const;
 
   // Number of Functions //
-  unsigned int getNVertexBased(void) const;
-  unsigned int getNEdgeBased(void) const;
-  unsigned int getNFaceBased(void) const;
-  unsigned int getNCellBased(void) const;
-  unsigned int getNFunction(void) const;
+  size_t getNVertexBased(void) const;
+  size_t getNEdgeBased(void) const;
+  size_t getNFaceBased(void) const;
+  size_t getNCellBased(void) const;
+  size_t getNFunction(void) const;
 
   // Reference Element //
   const ReferenceSpace& getReferenceSpace(void) const;
-
-  virtual unsigned int getNOrientation(void) const = 0;
-  virtual unsigned int getOrientation(const MElement& element) const = 0;
 
   // Direct Access to Evaluated Functions //
   virtual void getFunctions(fullMatrix<double>& retValues,
@@ -92,7 +90,7 @@ class Basis{
                             double u, double v, double w) const = 0;
 
   virtual void getFunctions(fullMatrix<double>& retValues,
-                            unsigned int orientation,
+                            size_t orientation,
                             double u, double v, double w) const = 0;
 
   // Precompute Functions //
@@ -107,10 +105,10 @@ class Basis{
     getPreEvaluatedDerivatives(const MElement& element) const = 0;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedFunctions(unsigned int orientation) const = 0;
+    getPreEvaluatedFunctions(size_t orientation) const = 0;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedDerivatives(unsigned int orientation) const = 0;
+    getPreEvaluatedDerivatives(size_t orientation) const = 0;
 
   virtual std::string toString(void) const = 0;
 
@@ -212,7 +210,7 @@ class Basis{
    of the given element
    **
 
-   @fn Basis::getFunctions(unsigned int, double, double, double) const
+   @fn Basis::getFunctions(size_t, double, double, double) const
    @param orientation A natural number defining the reference space @em orientation
    @param u A @c u coordinate in the reference space of this Basis
    @param v A @c v coordinate in the reference space of this Basis
@@ -254,7 +252,7 @@ class Basis{
    (does it exists -- discontinous field nope ?) ?
    **
 
-   @fn Basis::getPreEvaluatedFunctions(unsigned int) const
+   @fn Basis::getPreEvaluatedFunctions(size_t) const
    @param orientation A natural number defining the reference space @em orientation
    @return Returns a Matrix with the PreEvaluated basis functions
    (see Basis::preEvaluateFunctions()), with the given @em orientation
@@ -264,7 +262,7 @@ class Basis{
    an Exception is thrown
    **
 
-   @fn Basis::getPreEvaluatedDerivatives(unsigned int) const
+   @fn Basis::getPreEvaluatedDerivatives(size_t) const
    @param orientation A natural number defining the reference space @em orientation
    @return Returns a Matrix with the PreEvaluated basis functions @em derivatives
    (see Basis::preEvaluateDerivatives()), with the given @em orientation
@@ -294,35 +292,35 @@ inline bool Basis::isLocal(void) const{
   return local;
 }
 
-inline unsigned int Basis::getOrder(void) const{
+inline size_t Basis::getOrder(void) const{
   return order;
 }
 
-inline unsigned int Basis::getType(void) const{
+inline size_t Basis::getType(void) const{
   return type;
 }
 
-inline unsigned int Basis::getDim(void) const{
+inline size_t Basis::getDim(void) const{
   return dim;
 }
 
-inline unsigned int Basis::getNVertexBased(void) const{
+inline size_t Basis::getNVertexBased(void) const{
   return nVertex;
 }
 
-inline unsigned int Basis::getNEdgeBased(void) const{
+inline size_t Basis::getNEdgeBased(void) const{
   return nEdge;
 }
 
-inline unsigned int Basis::getNFaceBased(void) const{
+inline size_t Basis::getNFaceBased(void) const{
   return nFace;
 }
 
-inline unsigned int Basis::getNCellBased(void) const{
+inline size_t Basis::getNCellBased(void) const{
   return nCell;
 }
 
-inline unsigned int Basis::getNFunction(void) const{
+inline size_t Basis::getNFunction(void) const{
   return nFunction;
 }
 

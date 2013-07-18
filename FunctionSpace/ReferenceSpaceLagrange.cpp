@@ -25,20 +25,20 @@ void ReferenceSpaceLagrange::getLagrangeNode(void){
   const size_t nPerm = pTree->getNPermutation();
 
   // Alloc //
-  vector<unsigned int>* tmp;
-  node = new vector<const vector<unsigned int>*>(nPerm);
+  vector<size_t>* tmp;
+  node = new vector<const vector<size_t>*>(nPerm);
 
   // Populate //
-  for(unsigned int p = 0; p < nPerm; p++){
+  for(size_t p = 0; p < nPerm; p++){
     // Alloc Temp //
-    tmp = new vector<unsigned int>(nNode);
+    tmp = new vector<size_t>(nNode);
 
     // Vertex based node
-    for(unsigned int i = 0; i < nVertex; i++)
+    for(size_t i = 0; i < nVertex; i++)
       (*tmp)[i] = i;
 
     // Edge based node
-    for(unsigned int e = 0; e < nEdge; e++)
+    for(size_t e = 0; e < nEdge; e++)
       edgeSeq(*tmp,
               nVertex + nNodePerEdge *  e,
               nVertex + nNodePerEdge *  e,
@@ -47,7 +47,7 @@ void ReferenceSpaceLagrange::getLagrangeNode(void){
               *(*(*edge)[p])[e]);
 
     // Face based node
-    for(unsigned int f = 0; f < nFace; f++)
+    for(size_t f = 0; f < nFace; f++)
       faceSeq(*tmp,
               nVertex + nNodePerEdge * nEdge + nNodePerFace *  f,
               nVertex + nNodePerEdge * nEdge + nNodePerFace *  f,
@@ -62,19 +62,19 @@ void ReferenceSpaceLagrange::getLagrangeNode(void){
   */
 }
 
-void ReferenceSpaceLagrange::edgeSeq(vector<unsigned int>& vec,
-                                     unsigned int  startIdx,
-                                     unsigned int  startVal,
-                                     unsigned int  stopVal,
+void ReferenceSpaceLagrange::edgeSeq(vector<size_t>& vec,
+                                     size_t  startIdx,
+                                     size_t  startVal,
+                                     size_t  stopVal,
                                      size_t* refEdge,
-                                     const vector<unsigned int>& edge){
+                                     const vector<size_t>& edge){
 
   // Is reverted ? //
   const bool isRevert = (edge[0] != refEdge[0]);
 
   // Index //
-  unsigned int val = startVal;
-  unsigned int idx;
+  size_t val = startVal;
+  size_t idx;
 
   // Depending if edge is reverted ...
   if(isRevert)
@@ -95,16 +95,16 @@ void ReferenceSpaceLagrange::edgeSeq(vector<unsigned int>& vec,
   }
 }
 
-void ReferenceSpaceLagrange::faceSeq(vector<unsigned int>& vec,
-                                     unsigned int  startIdx,
-                                     unsigned int  startVal,
-                                     unsigned int  stopVal,
-                                     size_t*       refFace,
-                                     const vector<unsigned int>& face,
-                                     unsigned int  nNodePerEdge){
+void ReferenceSpaceLagrange::faceSeq(vector<size_t>& vec,
+                                     size_t  startIdx,
+                                     size_t  startVal,
+                                     size_t  stopVal,
+                                     size_t* refFace,
+                                     const vector<size_t>& face,
+                                     size_t  nNodePerEdge){
   // Index //
-  unsigned int val = startVal;
-  unsigned int idx = startIdx;
+  size_t val = startVal;
+  size_t idx = startIdx;
 
   // Populate //
   for(; val < stopVal; val++){
@@ -114,19 +114,19 @@ void ReferenceSpaceLagrange::faceSeq(vector<unsigned int>& vec,
 }
 
 string ReferenceSpaceLagrange::toString(void) const{
-  const size_t       nPerm      = pTree->getNPermutation();
-  const unsigned int nNodeMinus = nNode - 1;
-  stringstream       stream;
+  const size_t nPerm      = pTree->getNPermutation();
+  const size_t nNodeMinus = nNode - 1;
+  stringstream stream;
 
   stream << ReferenceSpace::toString();
 
   stream << "Lagrange Nodes Permutations:" << endl;
 
-  for(unsigned int i = 0; i < nPerm; i++){
+  for(size_t i = 0; i < nPerm; i++){
     stream << "  * RefSpace #" << i + 1 << ":" << endl
            << "      -- [";
 
-    for(unsigned int j = 0; j < nNodeMinus; j++)
+    for(size_t j = 0; j < nNodeMinus; j++)
       stream << node->at(i)->at(j) << ", ";
 
     stream << node->at(i)->at(nNodeMinus) << "]" << endl;

@@ -24,8 +24,8 @@ interpolateInABC(const MElement& element,
   invJac.invertInPlace();
 
   // Get Basis Functions //
-  const unsigned int nFun = (*basis)[0]->getNFunction();
-  fullMatrix<double>  fun(nFun, 3);
+  const size_t nFun = (*basis)[0]->getNFunction();
+  fullMatrix<double> fun(nFun, 3);
 
   (*basis)[0]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
@@ -35,7 +35,7 @@ interpolateInABC(const MElement& element,
   val(0, 1) = 0;
   val(0, 2) = 0;
 
-  for(unsigned int i = 0; i < nFun; i++){
+  for(size_t i = 0; i < nFun; i++){
     val(0, 0) += fun(i, 0) * coef[i];
     val(0, 1) += fun(i, 1) * coef[i];
     val(0, 2) += fun(i, 2) * coef[i];

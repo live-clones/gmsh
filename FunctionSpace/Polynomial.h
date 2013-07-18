@@ -28,45 +28,46 @@ class Polynomial{
   monomial_t*  mon;
 
  public:
-   Polynomial(const double coef, const int powerX,
- 	                         const int powerY,
-                                 const int powerZ);
+   Polynomial(double coef,
+              int powerX,
+              int powerY,
+              int powerZ);
 
    Polynomial(const Polynomial& other);
    Polynomial(void);
   ~Polynomial(void);
 
-  void derivative(const int dim);
+  void derivative(int dim);
   std::vector<Polynomial> gradient(void) const;
   static std::vector<Polynomial> curl(const std::vector<Polynomial>& p);
   static Polynomial divergence(const std::vector<Polynomial>& p);
 
   double operator()
-    (const double x, const double y, const double z) const;
+    (double x, double y, double z) const;
 
   double at
-    (const double x, const double y, const double z) const;
+    (double x, double y, double z) const;
 
   static fullVector<double> at(const std::vector<Polynomial>& P,
-			       const double x,
-			       const double y,
-			       const double z);
+                               double x,
+                               double y,
+                               double z);
 
   Polynomial operator+(const Polynomial& other) const;
   Polynomial operator-(const Polynomial& other) const;
   Polynomial operator*(const Polynomial& other) const;
-  Polynomial operator*(const double alpha) const;
+  Polynomial operator*(double alpha) const;
 
   void add(const Polynomial& other);
   void sub(const Polynomial& other);
   void mul(const Polynomial& other);
-  void mul(const double alpha);
+  void mul(double alpha);
 
-  void power(const int n);
+  void power(int n);
 
   Polynomial compose(const Polynomial& other) const;
   Polynomial compose(const Polynomial& otherA,
-		     const Polynomial& otherB) const;
+                     const Polynomial& otherB) const;
 
   void operator=(const Polynomial& other);
 
@@ -80,39 +81,39 @@ class Polynomial{
   static bool isSmallerPower(const monomial_t* a, const monomial_t* b);
   static bool isEqualPower(const monomial_t* a, const monomial_t* b);
 
-  static void sort(monomial_t* mon, const int size);
-  static void swap(monomial_t* mon, const int i, const int j);
+  static void sort(monomial_t* mon, int size);
+  static void swap(monomial_t* mon, int i, int j);
 
-  static int mergeMon(monomial_t* sourceA, const int sizeA,
-		      monomial_t* sourceB, const int sizeB,
-		      monomial_t** dest);
+  static int mergeMon(monomial_t* sourceA, int sizeA,
+                      monomial_t* sourceB, int sizeB,
+                      monomial_t** dest);
 
-  static int mult(const monomial_t* sourceA, const int sizeA,
-		  const monomial_t* sourceB, const int sizeB,
-		  monomial_t** dest);
+  static int mult(const monomial_t* sourceA, int sizeA,
+                  const monomial_t* sourceB, int sizeB,
+                  monomial_t** dest);
 
-  static void mult(monomial_t* source, const int size, const double alpha);
+  static void mult(monomial_t* source, int size, double alpha);
 
-  static void distribute(monomial_t* src, const int size, const monomial_t* m);
-
-  static void compose(const monomial_t* src,
-		      Polynomial comp,
-		      std::stack<monomial_t>* stk);
+  static void distribute(monomial_t* src, int size, const monomial_t* m);
 
   static void compose(const monomial_t* src,
-		      Polynomial compA, Polynomial compB,
-		      std::stack<monomial_t>* stk);
+                      Polynomial comp,
+                      std::stack<monomial_t>* stk);
+
+  static void compose(const monomial_t* src,
+                      Polynomial compA, Polynomial compB,
+                      std::stack<monomial_t>* stk);
 
   static Polynomial polynomialFromStack(std::stack<monomial_t>& stk);
 
-  static monomial_t* copyMonomial(const monomial_t* src, const int size);
+  static monomial_t* copyMonomial(const monomial_t* src, int size);
 
   static monomial_t* zeroPolynomial(void);
   static monomial_t* unitPolynomial(void);
 };
 
 /**
-   @fn Polynomial::Polynomial(const double, const int, const int, const int)
+   @fn Polynomial::Polynomial(double, int, int, int)
    @param coef The coeficient of the futur monomial
    @param powerX The power of the '@c x' coordinate
    of the futur monomial
@@ -177,7 +178,7 @@ class Polynomial{
    vector of Polynomial%s
    **
 
-   @fn double Polynomial::operator()(const double, const double, const double)
+   @fn double Polynomial::operator()(double, double, double)
    @param x A value
    @param y A value
    @param z A value
@@ -185,7 +186,7 @@ class Polynomial{
    Polynomial at (@c x, @c y, @c z)
    **
 
-   @fn double Polynomial::at(const double, const double, const double) const
+   @fn double Polynomial::at(double, double, double) const
    @param x A value
    @param y A value
    @param z A value
@@ -193,7 +194,7 @@ class Polynomial{
    Polynomial at (@c x, @c y, @c z)
    **
 
-   @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, const double, const double, const double)
+   @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, double, double, double)
    @param P A vector of Polynomial%s
    @param x A value
    @param y A value
@@ -220,7 +221,7 @@ class Polynomial{
    @em product of this Polynomial and the given one
    **
 
-   @fn Polynomial Polynomial::operator*(const double) const
+   @fn Polynomial Polynomial::operator*(double) const
    @param alpha A value
    @return Returns a @em new Polynomial,
    which is this Polynomial @em multiplied by @c alpha
@@ -253,7 +254,7 @@ class Polynomial{
    this Polynomial
    **
 
-   @fn void Polynomial::mul(const double)
+   @fn void Polynomial::mul(double)
    @param alpha A value
    @return This Polynomial is @em multiplied
    by the given value
@@ -301,21 +302,21 @@ class Polynomial{
 // Inline Functions //
 //////////////////////
 
-inline double Polynomial::operator() (const double x,
-				      const double y,
-				      const double z) const{
+inline double Polynomial::operator() (double x,
+                                      double y,
+                                      double z) const{
   return at(x, y, z);
 }
 
 inline bool Polynomial::isEqual(const Polynomial::monomial_t* a,
-				const Polynomial::monomial_t* b){
+                                const Polynomial::monomial_t* b){
   return a->power[0] == b->power[0] &&
          a->power[1] == b->power[1] &&
          a->power[2] == b->power[2];
 }
 
 inline bool Polynomial::isSmallerPower(const Polynomial::monomial_t* a,
-				       const Polynomial::monomial_t* b){
+                                       const Polynomial::monomial_t* b){
 
   return
     a->power[0] + a->power[1] + a->power[2]
@@ -324,7 +325,7 @@ inline bool Polynomial::isSmallerPower(const Polynomial::monomial_t* a,
 }
 
 inline bool Polynomial::isEqualPower(const Polynomial::monomial_t* a,
-				     const Polynomial::monomial_t* b){
+                                     const Polynomial::monomial_t* b){
 
   return
     a->power[0] + a->power[1] + a->power[2]

@@ -1,7 +1,7 @@
 #ifndef _HEXNODEBASIS_H_
 #define _HEXNODEBASIS_H_
 
-#include "BasisHierarchical0From.h"
+#include "BasisHierarchical0Form.h"
 
 /**
    @class HexNodeBasis
@@ -15,12 +15,12 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class HexNodeBasis: public BasisHierarchical0From{
+class HexNodeBasis: public BasisHierarchical0Form{
  public:
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Hexahedra of the given order
-  HexNodeBasis(int order);
+  HexNodeBasis(size_t order);
 
   //! @return Deletes this Basis
   //!

@@ -1,10 +1,10 @@
 #include <sstream>
 #include "Exception.h"
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 using namespace std;
 
-BasisHierarchical1From::BasisHierarchical1From(void){
+BasisHierarchical1Form::BasisHierarchical1Form(void){
   // Scalar Basis ?//
   scalar = false;
 
@@ -20,11 +20,13 @@ BasisHierarchical1From::BasisHierarchical1From(void){
   preEvaluatedCurlFunction = NULL;
 }
 
-BasisHierarchical1From::~BasisHierarchical1From(void){
+BasisHierarchical1Form::~BasisHierarchical1Form(void){
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Curl Basis //
   if(hasCurl){
-    for(unsigned int i = 0; i < nRefSpace; i++){
-      for(unsigned int j = 0; j < nFunction; j++)
+    for(size_t i = 0; i < nRefSpace; i++){
+      for(size_t j = 0; j < nFunction; j++)
         delete curl[i][j];
 
       delete[] curl[i];
@@ -35,40 +37,30 @@ BasisHierarchical1From::~BasisHierarchical1From(void){
 
   // PreEvaluation //
   if(preEvaluated){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedFunction[i];
 
     delete[] preEvaluatedFunction;
   }
 
   if(preEvaluatedCurl){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedCurlFunction[i];
 
     delete[] preEvaluatedCurlFunction;
   }
 }
 
-unsigned int BasisHierarchical1From::
-getNOrientation(void) const{
-  return refSpace->getNReferenceSpace();
-}
-
-unsigned int BasisHierarchical1From::
-getOrientation(const MElement& element) const{
-  return refSpace->getReferenceSpace(element);
-}
-
-void BasisHierarchical1From::
+void BasisHierarchical1Form::
 getFunctions(fullMatrix<double>& retValues,
              const MElement& element,
              double u, double v, double w) const{
 
   // Define Orientation //
-  unsigned int orientation = refSpace->getReferenceSpace(element);
+  size_t orientation = refSpace->getReferenceSpace(element);
 
   // Fill Vector //
-  for(unsigned int i = 0; i < nFunction; i++){
+  for(size_t i = 0; i < nFunction; i++){
     fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
 
@@ -78,13 +70,13 @@ getFunctions(fullMatrix<double>& retValues,
   }
 }
 
-void BasisHierarchical1From::
+void BasisHierarchical1Form::
 getFunctions(fullMatrix<double>& retValues,
-             unsigned int orientation,
+             size_t orientation,
              double u, double v, double w) const{
 
   // Fill Vector //
-  for(unsigned int i = 0; i < nFunction; i++){
+  for(size_t i = 0; i < nFunction; i++){
     fullVector<double> eval =
       Polynomial::at(*basis[orientation][i], u, v, w);
 
@@ -94,31 +86,33 @@ getFunctions(fullMatrix<double>& retValues,
   }
 }
 
-void BasisHierarchical1From::
+void BasisHierarchical1Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Delete if older //
   if(preEvaluated){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedFunction[i];
 
     delete[] preEvaluatedFunction;
   }
 
   // Alloc //
-  const unsigned int nPoint  = point.size1();
-  const unsigned int nPoint3 = nPoint * 3;
+  const size_t nPoint  = point.size1();
+  const size_t nPoint3 = nPoint * 3;
   preEvaluatedFunction       = new fullMatrix<double>*[nRefSpace];
 
-  for(unsigned int i = 0; i < nRefSpace; i++)
+  for(size_t i = 0; i < nRefSpace; i++)
     preEvaluatedFunction[i] =
       new fullMatrix<double>(nFunction, nPoint3);
 
   // Fill Matrix //
   fullVector<double> tmp(3);
 
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++){
-      for(unsigned int k = 0; k < nPoint; k++){
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++){
+      for(size_t k = 0; k < nPoint; k++){
         tmp = Polynomial::at(*basis[i][j],
                              point(k, 0),
                              point(k, 1),
@@ -135,35 +129,37 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
   preEvaluated = true;
 }
 
-void BasisHierarchical1From::
+void BasisHierarchical1Form::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Build Curl //
   if(!hasCurl)
     getCurl();
 
   // Delete if older //
   if(preEvaluatedCurl){
-    for(unsigned int i = 0; i < nRefSpace; i++)
+    for(size_t i = 0; i < nRefSpace; i++)
       delete preEvaluatedCurlFunction[i];
 
     delete[] preEvaluatedCurlFunction;
   }
 
   // Alloc //
-  const unsigned int nPoint  = point.size1();
-  const unsigned int nPoint3 = nPoint * 3;
+  const size_t nPoint  = point.size1();
+  const size_t nPoint3 = nPoint * 3;
   preEvaluatedCurlFunction   = new fullMatrix<double>*[nRefSpace];
 
-  for(unsigned int i = 0; i < nRefSpace; i++)
+  for(size_t i = 0; i < nRefSpace; i++)
     preEvaluatedCurlFunction[i] =
       new fullMatrix<double>(nFunction, nPoint3);
 
   // Fill Matrix //
   fullVector<double> tmp(3);
 
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++){
-      for(unsigned int k = 0; k < nPoint; k++){
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++){
+      for(size_t k = 0; k < nPoint; k++){
         tmp = Polynomial::at(*curl[i][j],
                              point(k, 0),
                              point(k, 1),
@@ -180,42 +176,44 @@ preEvaluateDerivatives(const fullMatrix<double>& point) const{
   preEvaluatedCurl = true;
 }
 
-const fullMatrix<double>& BasisHierarchical1From::
+const fullMatrix<double>& BasisHierarchical1Form::
 getPreEvaluatedFunctions(const MElement& element) const{
   return getPreEvaluatedFunctions(refSpace->getReferenceSpace(element));
 }
 
-const fullMatrix<double>& BasisHierarchical1From::
+const fullMatrix<double>& BasisHierarchical1Form::
 getPreEvaluatedDerivatives(const MElement& element) const{
   return getPreEvaluatedDerivatives(refSpace->getReferenceSpace(element));
 }
 
-const fullMatrix<double>& BasisHierarchical1From::
-getPreEvaluatedFunctions(unsigned int orientation) const{
+const fullMatrix<double>& BasisHierarchical1Form::
+getPreEvaluatedFunctions(size_t orientation) const{
   if(!preEvaluated)
     throw Exception("getPreEvaluatedFunction: function has not been preEvaluated");
 
   return *preEvaluatedFunction[orientation];
 }
 
-const fullMatrix<double>& BasisHierarchical1From::
-getPreEvaluatedDerivatives(unsigned int orientation) const{
+const fullMatrix<double>& BasisHierarchical1Form::
+getPreEvaluatedDerivatives(size_t orientation) const{
   if(!preEvaluatedCurl)
     throw Exception("getPreEvaluatedDerivative: curl has not been preEvaluated");
 
   return *preEvaluatedCurlFunction[orientation];
 }
 
-void BasisHierarchical1From::getCurl(void) const{
+void BasisHierarchical1Form::getCurl(void) const{
+  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+
   // Alloc //
   curl = new vector<Polynomial>**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     curl[s] = new vector<Polynomial>*[nFunction];
 
   // Curl //
-  for(unsigned int s = 0; s < nRefSpace; s++)
-    for(unsigned int f = 0 ; f < nFunction; f++)
+  for(size_t s = 0; s < nRefSpace; s++)
+    for(size_t f = 0 ; f < nFunction; f++)
       curl[s][f] =
         new vector<Polynomial>(Polynomial::curl(*basis[s][f]));
 
@@ -223,10 +221,10 @@ void BasisHierarchical1From::getCurl(void) const{
   hasCurl = true;
 }
 
-string BasisHierarchical1From::toString(void) const{
+string BasisHierarchical1Form::toString(void) const{
   stringstream stream;
-  unsigned int i = 0;
-  const unsigned int refSpace = 0;
+  size_t i = 0;
+  const size_t refSpace = 0;
 
   stream << "Vertex Based:" << endl;
   for(; i < nVertex; i++)

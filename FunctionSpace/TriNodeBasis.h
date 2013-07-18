@@ -1,7 +1,7 @@
 #ifndef _TRINODEBASIS_H_
 #define _TRINODEBASIS_H_
 
-#include "BasisHierarchical0From.h"
+#include "BasisHierarchical0Form.h"
 
 /**
    @class TriNodeBasis
@@ -15,7 +15,7 @@
    Basis for @em high @em order Polynomial%s generation.@n
  */
 
-class TriNodeBasis: public BasisHierarchical0From{
+class TriNodeBasis: public BasisHierarchical0Form{
  public:
   //! @param order The order of the Basis
   //!

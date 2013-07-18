@@ -21,29 +21,29 @@ class BasisGenerator{
    BasisGenerator(void);
   ~BasisGenerator(void);
 
-  static BasisLocal* generate(unsigned int elementType,
-			      unsigned int basisType,
-			      unsigned int order,
-			      std::string family);
+  static BasisLocal* generate(size_t elementType,
+                              size_t basisType,
+                              size_t order,
+                              std::string family);
 
-  static BasisLocal* generate(unsigned int elementType,
-			      unsigned int basisType,
-			      unsigned int order);
+  static BasisLocal* generate(size_t elementType,
+                              size_t basisType,
+                              size_t order);
 
-  static BasisLocal* linHierarchicalGen(unsigned int basisType, unsigned int order);
-  static BasisLocal* triHierarchicalGen(unsigned int basisType, unsigned int order);
-  static BasisLocal* quaHierarchicalGen(unsigned int basisType, unsigned int order);
-  static BasisLocal* tetHierarchicalGen(unsigned int basisType, unsigned int order);
-  static BasisLocal* hexHierarchicalGen(unsigned int basisType, unsigned int order);
+  static BasisLocal* linHierarchicalGen(size_t basisType, size_t order);
+  static BasisLocal* triHierarchicalGen(size_t basisType, size_t order);
+  static BasisLocal* quaHierarchicalGen(size_t basisType, size_t order);
+  static BasisLocal* tetHierarchicalGen(size_t basisType, size_t order);
+  static BasisLocal* hexHierarchicalGen(size_t basisType, size_t order);
 
  private:
-  static BasisLocal* generateHierarchical(unsigned int elementType,
-					  unsigned int basisType,
-					  unsigned int order);
+  static BasisLocal* generateHierarchical(size_t elementType,
+                                          size_t basisType,
+                                          size_t order);
 
-  static BasisLocal* generateLagrange(unsigned int elementType,
-				      unsigned int basisType,
-				      unsigned int order);
+  static BasisLocal* generateLagrange(size_t elementType,
+                                      size_t basisType,
+                                      size_t order);
 };
 
 
@@ -60,7 +60,7 @@ class BasisGenerator{
    Deletes this BasisGenerator
    **
 
-   @fn BasisGenerator::generate(unsigned int, unsigned int, unsigned int, std::string)
+   @fn BasisGenerator::generate(size_t, size_t, size_t, std::string)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type
@@ -93,7 +93,7 @@ class BasisGenerator{
    @li @c lagrange for Lagrange's Basis Functions
    **
 
-   @fn BasisGenerator::generate(unsigned int, unsigned int, unsigned int)
+   @fn BasisGenerator::generate(size_t, size_t, size_t)
    @param elementType The type of the element,
    on which the requested Basis will be created
    @param basisType The Basis type
@@ -206,14 +206,14 @@ class BasisGenerator{
 // Inline Functions //
 //////////////////////
 
-inline BasisLocal* BasisGenerator::generate(unsigned int elementType,
-					    unsigned int basisType,
-					    unsigned int order){
+inline BasisLocal* BasisGenerator::generate(size_t elementType,
+                                            size_t basisType,
+                                            size_t order){
 
   return BasisGenerator::generate(elementType,
-				  basisType,
-				  order,
-				  "hierarchical");
+                                  basisType,
+                                  order,
+                                  "hierarchical");
 }
 
 #endif

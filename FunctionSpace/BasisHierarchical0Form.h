@@ -1,23 +1,18 @@
-#ifndef _BASISHIERARCHICAL0FROM_H_
-#define _BASISHIERARCHICAL0FROM_H_
+#ifndef _BASISHIERARCHICAL0FORM_H_
+#define _BASISHIERARCHICAL0FORM_H_
 
-#include <string>
 #include "BasisLocal.h"
 #include "Polynomial.h"
-#include "ReferenceSpace.h"
 
 /**
-   @interface BasisHierarchical0From
-   @brief Interface for Hierarchical 0-From Local Basis
+   @interface BasisHierarchical0Form
+   @brief Interface for Hierarchical 0-Form Local Basis
 
-   This is an interface for Hierarchical 0-From Local Basis.@n
+   This is an interface for Hierarchical 0-Form Local Basis.@n
 */
 
-class BasisHierarchical0From: public BasisLocal{
+class BasisHierarchical0Form: public BasisLocal{
  protected:
-  // Orientation //
-  unsigned int nRefSpace;
-
   // Basis //
   Polynomial*** basis;
 
@@ -33,17 +28,14 @@ class BasisHierarchical0From: public BasisLocal{
   mutable fullMatrix<double>** preEvaluatedGradFunction;
 
  public:
-  virtual ~BasisHierarchical0From(void);
-
-  virtual unsigned int getNOrientation(void) const;
-  virtual unsigned int getOrientation(const MElement& element) const;
+  virtual ~BasisHierarchical0Form(void);
 
   virtual void getFunctions(fullMatrix<double>& retValues,
                             const MElement& element,
                             double u, double v, double w) const;
 
   virtual void getFunctions(fullMatrix<double>& retValues,
-                            unsigned int orientation,
+                            size_t orientation,
                             double u, double v, double w) const;
 
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
@@ -56,15 +48,15 @@ class BasisHierarchical0From: public BasisLocal{
     getPreEvaluatedDerivatives(const MElement& element) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedFunctions(unsigned int orientation) const;
+    getPreEvaluatedFunctions(size_t orientation) const;
 
   virtual const fullMatrix<double>&
-    getPreEvaluatedDerivatives(unsigned int orientation) const;
+    getPreEvaluatedDerivatives(size_t orientation) const;
 
   std::string toString(void) const;
 
  protected:
-  BasisHierarchical0From(void);
+  BasisHierarchical0Form(void);
 
  private:
   void getGrad(void) const;
@@ -72,20 +64,20 @@ class BasisHierarchical0From: public BasisLocal{
 
 /**
    @internal
-   @fn BasisHierarchical0From::BasisHierarchical0From
+   @fn BasisHierarchical0Form::BasisHierarchical0Form
 
-   Instanciates an new BasisHierarchical0From
+   Instanciates an new BasisHierarchical0Form
    @endinternal
    **
 
-   @fn BasisHierarchical0From::~BasisHierarchical0From
+   @fn BasisHierarchical0Form::~BasisHierarchical0Form
 
-   Deletes this BasisHierarchical0From
+   Deletes this BasisHierarchical0Form
    **
 
-   @fn BasisHierarchical0From::toString
+   @fn BasisHierarchical0Form::toString
    @return Returns a string describing this
-   BasisHierarchical0From
+   BasisHierarchical0Form
  */
 
 #endif

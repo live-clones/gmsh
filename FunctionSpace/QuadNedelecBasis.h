@@ -1,7 +1,7 @@
 #ifndef _QUADNEDELECBASIS_H_
 #define _QUADNEDELECBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class QuadNedelecBasis
@@ -11,7 +11,7 @@
    for Quadrangles.@n
 */
 
-class QuadNedelecBasis: public BasisHierarchical1From{
+class QuadNedelecBasis: public BasisHierarchical1Form{
  public:
   //! Returns a new Nedelec Basis for Quadrangles
   //!

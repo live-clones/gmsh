@@ -1,7 +1,7 @@
 #ifndef _QUADEDGEBASIS_H_
 #define _QUADEDGEBASIS_H_
 
-#include "BasisHierarchical1From.h"
+#include "BasisHierarchical1Form.h"
 
 /**
    @class QuadEdgeBasis
@@ -19,7 +19,7 @@
    @li @f$y = \frac{v + 1}{2}@f$
 */
 
-class QuadEdgeBasis: public BasisHierarchical1From{
+class QuadEdgeBasis: public BasisHierarchical1Form{
  public:
   //! @param order The order of the Basis
   //!
