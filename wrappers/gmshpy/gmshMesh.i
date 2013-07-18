@@ -21,6 +21,7 @@
   #include "meshPartition.h"
 #endif
   #include "Field.h"
+  #include "FieldPython.h"
   #include "meshMetric.h"
 #if defined(HAVE_ANN)
   #include "CenterlineField.h"
@@ -58,6 +59,21 @@ namespace std {
 %include "meshPartition.h"
 #endif
 %include "Field.h"
+%extend FieldManager {
+  int addPythonField(PyObject *callback, int id = -1) {
+    if (id == -1) {
+      id = $self->newId();
+    }
+    if($self->find(id) != $self->end()) {
+      Msg::Error("Field id %i is already defined", id);
+      return -1;
+    }
+    Field *f = new FieldPython(callback);
+    f->id = id;
+    $self->operator[](id) = f;
+    return id;
+  }
+}
 %include "meshMetric.h"
 #if defined(HAVE_ANN)
 %include "CenterlineField.h"
