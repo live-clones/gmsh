@@ -125,6 +125,7 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Mesh/directions3D.h
   Mesh/DivideAndConquer.h
   Mesh/Field.h
+  Mesh/PythonField.h
   Fltk/FlGui.h
   Solver/frameSolver.h
   Solver/functionSpace.h
