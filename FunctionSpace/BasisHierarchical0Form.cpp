@@ -22,8 +22,6 @@ BasisHierarchical0Form::BasisHierarchical0Form(void){
 
 BasisHierarchical0Form::~BasisHierarchical0Form(void){
   // Grad Basis //
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   if(hasGrad){
     for(size_t i = 0; i < nRefSpace; i++){
       for(size_t j = 0; j < nFunction; j++)
@@ -76,8 +74,6 @@ getFunctions(fullMatrix<double>& retValues,
 
 void BasisHierarchical0Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Delete if older //
   if(preEvaluated){
     for(size_t i = 0; i < nRefSpace; i++)
@@ -109,8 +105,6 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
 
 void BasisHierarchical0Form::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Build Grad //
   if(!hasGrad)
     getGrad();
@@ -181,8 +175,6 @@ getPreEvaluatedDerivatives(size_t orientation) const{
 }
 
 void BasisHierarchical0Form::getGrad(void) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Alloc //
   grad = new vector<Polynomial>**[nRefSpace];
 

@@ -24,7 +24,7 @@ class LineNodeBasis: public BasisHierarchical0Form{
   //! @param order The order of the Basis
   //!
   //! Returns a new Node-Basis for Lines of the given order
-  LineNodeBasis(unsigned int order);
+  LineNodeBasis(size_t order);
 
   //! Deletes this Basis
   //!

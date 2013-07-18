@@ -4,14 +4,13 @@
 
 using namespace std;
 
-LineNodeBasis::LineNodeBasis(unsigned int order){
-  /*
+LineNodeBasis::LineNodeBasis(size_t order){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    edgeV = refSpace->getAllEdge();
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = refSpace->getEdgeNodeIndex();
 
   // Set Basis Type //
   this->order = order;
@@ -39,11 +38,11 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
   // Basis //
   basis = new Polynomial**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based (Lagrange) //
-  for(unsigned int s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nRefSpace; s++){
     basis[s][0] =
       new Polynomial(Polynomial(0.5, 0, 0, 0) -
                      Polynomial(0.5, 1, 0, 0));
@@ -54,12 +53,12 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
   }
 
   // Edge Based //
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = nVertex;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex;
 
-    for(unsigned int l = 1; l < order; l++){
+    for(size_t l = 1; l < order; l++){
       basis[s][i] =
-        new Polynomial(intLegendre[l].compose(x[(*(*edgeV[s])[0])[0]]));
+        new Polynomial(intLegendre[l].compose(x[edgeIdx[s][0][0]]));
 
       i++;
     }
@@ -67,22 +66,19 @@ LineNodeBasis::LineNodeBasis(unsigned int order){
 
   // Free Temporary Sapce //
   delete[] intLegendre;
-  */
 }
 
 LineNodeBasis::~LineNodeBasis(void){
-  /*
   // ReferenceSpace //
   delete refSpace;
 
   // Basis //
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++)
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 
     delete[] basis[i];
   }
 
   delete[] basis;
-  */
 }

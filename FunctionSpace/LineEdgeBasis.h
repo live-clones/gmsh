@@ -24,7 +24,7 @@ class LineEdgeBasis: public BasisHierarchical1Form{
   //! @param order The order of the Basis
   //!
   //! Returns a new Edge-Basis for Lines of the given order
-  LineEdgeBasis(unsigned int order);
+  LineEdgeBasis(size_t order);
 
   //! Deletes this Basis
   //!

@@ -4,14 +4,13 @@
 
 using namespace std;
 
-LineEdgeBasis::LineEdgeBasis(unsigned int order){
-  /*
+LineEdgeBasis::LineEdgeBasis(size_t order){
   // Reference Space //
   refSpace  = new LineReferenceSpace;
-  nRefSpace = refSpace->getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
-  const vector<const vector<const vector<unsigned int>*>*>&
-    edgeV = refSpace->getAllEdge();
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = refSpace->getEdgeNodeIndex();
 
   // Set Basis Type //
   this->order = order;
@@ -26,7 +25,7 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Alloc Temporary Space //
-  const unsigned int orderPlus = order + 1;
+  const size_t orderPlus = order + 1;
   Polynomial* intLegendre = new Polynomial[orderPlus];
 
   vector<Polynomial> first(3);
@@ -50,7 +49,7 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   // Basis //
   basis = new vector<Polynomial>**[nRefSpace];
 
-  for(unsigned int s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based (Nedelec) //
@@ -58,13 +57,13 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
   basis[1][0] = new vector<Polynomial>(second);
 
   // Edge Based (High Order) //
-  for(unsigned int s = 0; s < nRefSpace; s++){
-    unsigned int i = 1;
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = 1;
 
-    for(unsigned int l = 1; l < orderPlus; l++){
+    for(size_t l = 1; l < orderPlus; l++){
       basis[s][i] =
         new vector<Polynomial>((intLegendre[l].compose
-                                (x[(*(*edgeV[s])[0])[0]])).gradient());
+                                (x[edgeIdx[s][0][0]])).gradient());
 
       i++;
     }
@@ -72,22 +71,19 @@ LineEdgeBasis::LineEdgeBasis(unsigned int order){
 
   // Free Temporary Space //
   delete[] intLegendre;
-  */
 }
 
 LineEdgeBasis::~LineEdgeBasis(void){
-  /*
   // ReferenceSpace //
   delete refSpace;
 
   // Basis //
-  for(unsigned int i = 0; i < nRefSpace; i++){
-    for(unsigned int j = 0; j < nFunction; j++)
+  for(size_t i = 0; i < nRefSpace; i++){
+    for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 
     delete[] basis[i];
   }
 
   delete[] basis;
-  */
 }

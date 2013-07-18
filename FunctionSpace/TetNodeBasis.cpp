@@ -7,7 +7,7 @@ using namespace std;
 TetNodeBasis::TetNodeBasis(size_t order){
   // Reference Space //
   refSpace  = new TetReferenceSpace;
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -157,8 +157,6 @@ TetNodeBasis::TetNodeBasis(size_t order){
 }
 
 TetNodeBasis::~TetNodeBasis(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // ReferenceSpace //
   delete refSpace;
 

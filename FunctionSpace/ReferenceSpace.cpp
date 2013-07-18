@@ -130,6 +130,17 @@ ReferenceSpace::triple ReferenceSpace::
 isCyclicPermutation(vector<size_t>& pTest,
                     vector<size_t>& pRef){
 
+  // If no Face, we have no Cyclic Permutation
+  if(!refFaceNodeIdx.size()){
+    triple tri = {
+      false,
+      vector<size_t>(0),
+      vector<size_t>(0)
+    };
+
+    return tri;
+  }
+
   // Node IDs of Reference Space first Face
   const size_t   nNodeInFaceZero = refFaceNodeIdx[0].size();
   vector<size_t> refNode(nNodeInFaceZero);
@@ -147,7 +158,7 @@ isCyclicPermutation(vector<size_t>& pTest,
   for(size_t i = 0; i < nNodeInFaceTest; i++)
     testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
 
-  // Return Triple //
+  // Return Triple
   triple tri = {
     isFacePermutation(refNode, testNode),
     getRefIndexPermutation(pRef, pTest),
@@ -464,17 +475,20 @@ void ReferenceSpace::mapFromABCtoUVW(const MElement& element,
   delete[] uvwNode;
 }
 
-void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
-                                     double x, double y, double z,
-                                     double abc[3]) const{
-  // Get UVW coordinate //
-  double xyz[3] = {x, y, z};
+void ReferenceSpace::mapFromABCtoXYZ(const MElement& element,
+                                     double a, double b, double c,
+                                     double xyz[3]) const{
+  // Map From ABC to UVW
   double uvw[3];
+  mapFromABCtoUVW(element, a, b, c, uvw);
 
-  element.xyz2uvw(xyz, uvw);
+  // Map From UVW to XYZ
+  SPoint3 pxyz;
+  element.pnt(uvw[0], uvw[1], uvw[2], pxyz);
 
-  // Get ABC coordinate //
-  mapFromUVWtoABC(element, uvw[0], uvw[1], uvw[2], abc);
+  xyz[0] = pxyz.x();
+  xyz[1] = pxyz.y();
+  xyz[2] = pxyz.z();
 }
 
 void ReferenceSpace::mapFromUVWtoABC(const MElement& element,
@@ -516,6 +530,19 @@ void ReferenceSpace::mapFromUVWtoABC(const MElement& element,
     delete[] abcNode[i];
 
   delete[] abcNode;
+}
+
+void ReferenceSpace::mapFromXYZtoABC(const MElement& element,
+                                     double x, double y, double z,
+                                     double abc[3]) const{
+  // Get UVW coordinate //
+  double xyz[3] = {x, y, z};
+  double uvw[3];
+
+  element.xyz2uvw(xyz, uvw);
+
+  // Get ABC coordinate //
+  mapFromUVWtoABC(element, uvw[0], uvw[1], uvw[2], abc);
 }
 
 double ReferenceSpace::getJacobian(const MElement& element,

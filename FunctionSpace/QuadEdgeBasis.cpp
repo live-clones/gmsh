@@ -7,7 +7,7 @@ using namespace std;
 QuadEdgeBasis::QuadEdgeBasis(size_t order){
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -241,8 +241,6 @@ QuadEdgeBasis::QuadEdgeBasis(size_t order){
 }
 
 QuadEdgeBasis::~QuadEdgeBasis(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // ReferenceSpace //
   delete refSpace;
 

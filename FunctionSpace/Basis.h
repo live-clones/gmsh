@@ -46,6 +46,7 @@
 class Basis{
  protected:
   ReferenceSpace* refSpace;
+  size_t         nRefSpace;
 
   bool scalar;
   bool local;

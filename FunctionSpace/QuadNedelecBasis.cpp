@@ -7,7 +7,7 @@ using namespace std;
 QuadNedelecBasis::QuadNedelecBasis(void){
   // Reference Space //
   refSpace  = new QuadReferenceSpace;
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -108,8 +108,6 @@ QuadNedelecBasis::QuadNedelecBasis(void){
 }
 
 QuadNedelecBasis::~QuadNedelecBasis(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // ReferenceSpace //
   delete refSpace;
 

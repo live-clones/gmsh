@@ -7,7 +7,7 @@ using namespace std;
 TriNodeBasis::TriNodeBasis(size_t order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -115,8 +115,6 @@ TriNodeBasis::TriNodeBasis(size_t order){
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // ReferenceSpace //
   delete refSpace;
 

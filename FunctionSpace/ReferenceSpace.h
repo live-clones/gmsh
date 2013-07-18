@@ -68,6 +68,10 @@ class ReferenceSpace{
                        double a, double b, double c,
                        double uvw[3]) const;
 
+  void mapFromABCtoXYZ(const MElement& element,
+                       double a, double b, double c,
+                       double xyz[3]) const;
+
   void mapFromUVWtoABC(const MElement& element,
                        double u, double v, double w,
                        double abc[3]) const;

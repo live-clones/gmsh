@@ -21,8 +21,6 @@ BasisHierarchical1Form::BasisHierarchical1Form(void){
 }
 
 BasisHierarchical1Form::~BasisHierarchical1Form(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Curl Basis //
   if(hasCurl){
     for(size_t i = 0; i < nRefSpace; i++){
@@ -88,8 +86,6 @@ getFunctions(fullMatrix<double>& retValues,
 
 void BasisHierarchical1Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Delete if older //
   if(preEvaluated){
     for(size_t i = 0; i < nRefSpace; i++)
@@ -131,8 +127,6 @@ preEvaluateFunctions(const fullMatrix<double>& point) const{
 
 void BasisHierarchical1Form::
 preEvaluateDerivatives(const fullMatrix<double>& point) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Build Curl //
   if(!hasCurl)
     getCurl();
@@ -203,8 +197,6 @@ getPreEvaluatedDerivatives(size_t orientation) const{
 }
 
 void BasisHierarchical1Form::getCurl(void) const{
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // Alloc //
   curl = new vector<Polynomial>**[nRefSpace];
 

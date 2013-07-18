@@ -7,7 +7,7 @@ using namespace std;
 TriEdgeBasis::TriEdgeBasis(size_t order){
   // Reference Space //
   refSpace  = new TriReferenceSpace;
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 
   const vector<vector<vector<size_t> > >&
     edgeIdx = refSpace->getEdgeNodeIndex();
@@ -237,8 +237,6 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
 }
 
 TriEdgeBasis::~TriEdgeBasis(void){
-  const size_t nRefSpace = getReferenceSpace().getNReferenceSpace();
-
   // ReferenceSpace //
   delete refSpace;
 
