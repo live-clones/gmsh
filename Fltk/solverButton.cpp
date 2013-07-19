@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "GmshMessage.h"
 #include "FlGui.h"
 #include "Options.h"
 #include "onelabGroup.h"
@@ -10,6 +11,11 @@
 
 static void solver_remove_cb(Fl_Widget *w, void *data)
 {
+  if(FlGui::instance()->onelab->isBusy()){
+    Msg::Warning("Cannot remove client while solver is running");
+    return;
+  }
+
   int num = (intptr_t)data;
 
   std::string name = opt_solver_name(num, GMSH_GET, "");
