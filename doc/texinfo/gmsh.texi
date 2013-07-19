@@ -121,7 +121,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Tutorial::                    A step-by-step tutorial
 * Options::                     List of all available options
 * Compiling the source code::   Information on how to comile Gmsh from source
-* Information for developers::  Info for Gmsh developers
+* Information for developers::  Information for Gmsh developers
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
 * Copyright and credits::       Copyright information and list of contributors
