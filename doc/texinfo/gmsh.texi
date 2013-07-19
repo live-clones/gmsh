@@ -120,6 +120,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * File formats::                Input and output file formats
 * Tutorial::                    A step-by-step tutorial
 * Options::                     List of all available options
+* Compiling the source code::   Information on how to comile Gmsh from source
 * Information for developers::  Info for Gmsh developers
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
@@ -249,7 +250,6 @@ Options
 
 Information for developers
 
-* Getting the source::          
 * Source code structure::       
 * Coding style::                
 * Adding a new option::         
@@ -519,9 +519,10 @@ formats (@pxref{General options list}), and can generate complex
 animations (see @ref{General tools}, and @ref{t8.geo});
 @item
 run on low end machines and/or machines with no graphical
-interface. Gmsh can be compiled with or without the GUI, and all
-versions can be used either interactively or directly from the command
-line (@pxref{Running Gmsh on your system});
+interface. Gmsh can be compiled with or without the GUI
+(@pxref{Compiling the source code}), and all versions can be used either
+interactively or directly from the command line (@pxref{Running Gmsh on
+your system});
 @item
 configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
@@ -654,11 +655,9 @@ Application Programming Interface (API). No complete documentation of
 this API is available yet; a good starting point is @ref{Source code
 structure}, which gives a short introduction to Gmsh's internal source
 code structure. Then have a look e.g. at the examples in the
-@file{utils/api_demos/} directory in the source code. Due to the many
-possible configuration options (and associated external dependencies),
-we currently do not distibute precompiled versions of the Gmsh
-library. To build the library see the instructions in the top-level
-@file{README.txt} file in the source distribution.
+@file{utils/api_demos/} directory in the source code.  To build the
+library see the instructions in @ref{Compiling the source code} and in
+the top-level @file{README.txt} file in the source distribution.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -817,9 +816,9 @@ menu.
 @cindex Non-interactive mode
 
 Gmsh can be run non-interactively in `batch' mode, without
-GUI@footnote{If you compile Gmsh without the GUI, this is the only mode
-you have access to.}. For example, to mesh the first tutorial in batch
-mode, just type:
+GUI@footnote{If you compile Gmsh without the GUI (@pxref{Compiling the
+source code}), this is the only mode you have access to.}. For example,
+to mesh the first tutorial in batch mode, just type:
 
 @example
 > gmsh t1.geo -2
@@ -1480,8 +1479,9 @@ Returns Gmsh's minor version number.
 Returns Gmsh's patch version number.
 
 @item MPI_Size
-Returns the number of processors on which Gmsh is running (always 1, except
-if you compiled Gmsh's parallel extensions).
+Returns the number of processors on which Gmsh is running. It is always
+1, except if you compiled Gmsh with @code{ENABLE_MPI}
+(@pxref{Compiling the source code}).
 
 @item MPI_Rank
 Returns the rank of the current processor.
@@ -3705,7 +3705,7 @@ for(i = 0; i < number_of_triangles; i++)@{
 
 @cindex Nodes, ordering
 
-Historically, Gmsh developpers have started by implementing linear elements (lines,
+Historically, Gmsh developers have started by implementing linear elements (lines,
 triangles, quads, tets, prisms and hexes). Then, second and sometimes third
 order elements have been hardcoded. We here distinguish ``low order elements'' that
 have been hardcoded initially and ``high order elements'' that have been coded in
@@ -4424,7 +4424,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c Options
 @c =========================================================================
 
-@node Options, Information for developers, Tutorial, Top
+@node Options, Compiling the source code, Tutorial, Top
 @appendix Options
 
 This appendix lists all the available options.  Gmsh's default behavior
@@ -4510,41 +4510,15 @@ by hand.
 @c The @code{ColorTable} is defined as a list...
 
 @c =========================================================================
-@c Information for developers
+@c Compiling the source code
 @c =========================================================================
 
-@node Information for developers, Frequently asked questions, Options, Top
-@appendix Information for developers
-
-@cindex Developer, information
-@cindex Programming, notes
-
-Gmsh is written in C++, the scripting language is parsed using Lex and
-Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
-graphics and FLTK (@uref{http://www.fltk.org}) for the widget
-set. Gmsh's build system is based on CMake
-(@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
-source code are included in the distribution. See @ref{Frequently asked
-questions}, for more information.
-
-@menu
-* Getting the source::          
-* Source code structure::       
-* Coding style::                
-* Adding a new option::         
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Getting the source
-@c -------------------------------------------------------------------------
-
-@node Getting the source, Source code structure, Information for developers, Information for developers
-@section Getting the source
+@node Compiling the source code, Information for developers, Options, Top
+@appendix Compiling the source code
 
 Stable releases and nightly source snapshots are available from
-@uref{http://geuz.org/gmsh/src/}.
-
-You can also access the subversion repository directly:
+@uref{http://geuz.org/gmsh/src/}. You can also access the subversion
+repository directly:
 
 @enumerate
 @item
@@ -4575,11 +4549,47 @@ svn commit
 
 @end enumerate
 
+Once you have the source code, you need to run CMake to configure your
+build (see the @file{README.txt} file in the top-level source directory
+for detailed information on how to run CMake). Each build can be
+configured using a series of options, to selectively enable optional
+modules or features. Here is the list of CMake options:
+
+@ftable @code
+
+@include cmake_options.texi
+
+@end ftable
+
+@c =========================================================================
+@c Information for developers
+@c =========================================================================
+
+@node Information for developers, Frequently asked questions, Compiling the source code, Top
+@appendix Information for developers
+
+@cindex Developer, information
+@cindex Programming, notes
+
+Gmsh is written in C++, the scripting language is parsed using Lex and
+Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
+graphics and FLTK (@uref{http://www.fltk.org}) for the widget
+set. Gmsh's build system is based on CMake
+(@uref{http://www.cmake.org}). Practical notes on how to compile Gmsh's
+source code is provided in @ref{Compiling the source code} (see also
+@ref{Frequently asked questions}).
+
+@menu
+* Source code structure::       
+* Coding style::                
+* Adding a new option::         
+@end menu
+
 @c -------------------------------------------------------------------------
 @c Source code structure
 @c -------------------------------------------------------------------------
 
-@node Source code structure, Coding style, Getting the source, Information for developers
+@node Source code structure, Coding style, Information for developers, Information for developers
 @section Source code structure
 
 Gmsh's code is structured in several subdirectories, roughly separated
@@ -4866,9 +4876,9 @@ found at @url{http://www.mesa3d.org}.
 
 @item How do I compile Gmsh from the source code?
 
-You need cmake (@url{http://www.cmake.org}) and a C++ compiler. See the
-@file{README.txt} file in the top-level source directory for more
-information.
+You need cmake (@url{http://www.cmake.org}) and a C++ compiler. See
+@ref{Compiling the source code} and the @file{README.txt} file in the
+top-level source directory for more information.
 
 @item Where does Gmsh save its configuration files?
 

@@ -51,7 +51,8 @@ Build Gmsh from the command line
 
     cmake -DENABLE_FLTK=0 ..
 
-  to build a version of Gmsh without the FLTK graphical interface.
+  to build a version of Gmsh without the FLTK graphical interface. The list of
+  all available configuration options is given in the reference manual.
 
 * You can keep multiple builds with different build options at the same
   time. For example, you could configure a debug graphical build in a "bin"

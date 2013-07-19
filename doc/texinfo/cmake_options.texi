@@ -1,0 +1,111 @@
+
+@item ENABLE_3M
+Enable 3M extension (experimental) (default: OFF)
+@item ENABLE_ACIS
+Enable ACIS geometrical models (experimental) (default: ON)
+@item ENABLE_ANN
+Enable ANN (used for fast point search in mesh/post) (default: ON)
+@item ENABLE_BAMG
+Enable Bamg 2D anisotropic mesh generator (default: ON)
+@item ENABLE_BFGS
+Enable BFGS (used by some mesh optimizers) (default: ON)
+@item ENABLE_BLAS_LAPACK
+Enable BLAS/Lapack for linear algebra (required for meshing) (default: ON)
+@item ENABLE_BLOSSOM
+Enable Blossom algorithm (needed for full quad meshing) (default: ON)
+@item ENABLE_BUILD_LIB
+Enable 'lib' target for buildin static Gmsh library (default: OFF)
+@item ENABLE_BUILD_SHARED
+Enable 'shared' target for building shared Gmsh library (default: OFF)
+@item ENABLE_BUILD_DYNAMIC
+Enable dynamic Gmsh executable (linked with shared lib) (default: OFF)
+@item ENABLE_BUILD_ANDROID
+Enable Android NDK library target (experimental) (default: OFF)
+@item ENABLE_BUILD_IOS
+Enable iOS (ARM) library target (experimental) (default: OFF)
+@item ENABLE_CGNS
+Enable CGNS mesh export (experimental) (default: OFF)
+@item ENABLE_CAIRO
+Enable Cairo to render fonts (experimental) (default: ON)
+@item ENABLE_CHACO
+Enable Chaco mesh partitioner (alternative to Metis) (default: ON)
+@item ENABLE_DINTEGRATION
+Enable discrete integration (needed for levelsets) (default: ON)
+@item ENABLE_FLTK
+Enable FLTK graphical user interface (requires mesh/post) (default: ON)
+@item ENABLE_FOURIER_MODEL
+Enable Fourier geometrical models (experimental) (default: OFF)
+@item ENABLE_GMM
+Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
+@item ENABLE_GRAPHICS
+Enable building graphics lib even without GUI (advanced) (default: OFF)
+@item ENABLE_KBIPACK
+Enable Kbipack (neeeded by homology solver) (default: ON)
+@item ENABLE_MATHEX
+Enable math expression parser (used by plugins and options) (default: ON)
+@item ENABLE_MED
+Enable MED mesh and post file formats (default: ON)
+@item ENABLE_MESH
+Enable mesh module (default: ON)
+@item ENABLE_METIS
+Enable Metis mesh partitioner (default: ON)
+@item ENABLE_MMG3D
+Enable MMG3D 3D anisotropic mesh refinement (default: ON)
+@item ENABLE_MPEG_ENCODE
+Enable built-in MPEG movie encoder (default: ON)
+@item ENABLE_MPI
+Enable MPI (mostly for parser and solver - mesh generation is sequential) (default: OFF)
+@item ENABLE_MSVC_STATIC_RUNTIME
+Enable static Visual C++ runtime (default: OFF)
+@item ENABLE_NATIVE_FILE_CHOOSER
+Enable native file chooser in GUI (default: ON)
+@item ENABLE_NETGEN
+Enable Netgen 3D frontal mesh generator (default: ON)
+@item ENABLE_OCC
+Enable Open CASCADE geometrical models (default: ON)
+@item ENABLE_ONELAB
+Enable OneLab solver interface (default: ON)
+@item ENABLE_ONELAB_METAMODEL
+Enable OneLab metamodels (experimental) (default: ON)
+@item ENABLE_OPENMP
+Enable OpenMP (experimental) (default: OFF)
+@item ENABLE_OPTHOM
+Enable high-order mesh optimization tools (default: ON)
+@item ENABLE_OS_SPECIFIC_INSTALL
+Enable OS-specific (e.g. app bundle) installation (default: ON)
+@item ENABLE_OSMESA
+Enable OSMesa for offscreen rendering (experimental) (default: OFF)
+@item ENABLE_PARSER
+Enable GEO file parser (required for .geo/.pos files) (default: ON)
+@item ENABLE_PETSC
+Enable PETSc linear solvers (required for SLEPc) (default: ON)
+@item ENABLE_PLUGINS
+Enable post-processing plugins (default: ON)
+@item ENABLE_POST
+Enable post-processing module (default: ON)
+@item ENABLE_POPPLER
+Enable Poppler for displaying PDF documents (experimental) (default: OFF)
+@item ENABLE_QT
+Enable dummy QT graphical interface proof-of-concept (default: OFF)
+@item ENABLE_RTREE
+Enable RTREE (used for quad/hex mesh generation) (default: ON)
+@item ENABLE_SALOME
+Enable Salome routines for CAD healing (default: ON)
+@item ENABLE_SGEOM
+Enable SGEOM interface to OCC (experimental) (default: OFF)
+@item ENABLE_SLEPC
+Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
+@item ENABLE_SOLVER
+Enable solver components (required e.g. for compounds) (default: ON)
+@item ENABLE_TAUCS
+Enable Taucs linear solver (alternative to PETSc) (default: ON)
+@item ENABLE_TETGEN
+Enable Tetgen 3D initial mesh generator (default: ON)
+@item ENABLE_TETGEN_OLD
+Enable older version of Tetgen (default: OFF)
+@item ENABLE_VORO3D
+Enable Voro3D (experimental) (default: ON)
+@item ENABLE_WRAP_JAVA
+Enable building of Java wrappers (default: OFF)
+@item ENABLE_WRAP_PYTHON
+Enable building of Python wrappers (default: OFF)
