@@ -19,9 +19,9 @@ endif(DEFINED CMAKE_BUILD_TYPE)
 
 project(gmsh CXX C)
 
-# this variable controls the default value of the "ENABLE_XXX" options which are
-# normally set to ON (useful if you want to configure a minimal version of Gmsh:
-# e.g. "cmake -DDEFAULT=0 -DENABLE_POST=1 -DENABLE_PARSER=1")
+# this variable controls the default value of the options which are normally set
+# to ON (useful if you want to configure a minimal version of Gmsh: e.g. "cmake
+# -DDEFAULT=0 -DENABLE_POST=1 -DENABLE_PARSER=1")
 set(DEFAULT ON CACHE INTERNAL "Default value for enabled-by-default options")
 
 macro(opt OPTION HELP VALUE)

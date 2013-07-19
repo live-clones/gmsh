@@ -4551,9 +4551,10 @@ svn commit
 
 Once you have the source code, you need to run CMake to configure your
 build (see the @file{README.txt} file in the top-level source directory
-for detailed information on how to run CMake). Each build can be
-configured using a series of options, to selectively enable optional
-modules or features. Here is the list of CMake options:
+for detailed information on how to run CMake). 
+
+Each build can be configured using a series of options, to selectively
+enable optional modules or features. Here is the list of CMake options:
 
 @ftable @code
 
