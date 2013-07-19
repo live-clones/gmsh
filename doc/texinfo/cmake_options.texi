@@ -1,6 +1,6 @@
 
 @item ENABLE_3M
-Enable 3M extension (experimental) (default: OFF)
+Enable proprietary 3M extension (default: OFF)
 @item ENABLE_ACIS
 Enable ACIS geometrical models (experimental) (default: ON)
 @item ENABLE_ANN
@@ -14,7 +14,7 @@ Enable BLAS/Lapack for linear algebra (required for meshing) (default: ON)
 @item ENABLE_BLOSSOM
 Enable Blossom algorithm (needed for full quad meshing) (default: ON)
 @item ENABLE_BUILD_LIB
-Enable 'lib' target for buildin static Gmsh library (default: OFF)
+Enable 'lib' target for building static Gmsh library (default: OFF)
 @item ENABLE_BUILD_SHARED
 Enable 'shared' target for building shared Gmsh library (default: OFF)
 @item ENABLE_BUILD_DYNAMIC
@@ -86,7 +86,7 @@ Enable post-processing module (default: ON)
 @item ENABLE_POPPLER
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_QT
-Enable dummy QT graphical interface proof-of-concept (default: OFF)
+Enable dummy QT graphical interface proof-of-concept (experimental) (default: OFF)
 @item ENABLE_RTREE
 Enable RTREE (used for quad/hex mesh generation) (default: ON)
 @item ENABLE_SALOME
@@ -96,7 +96,7 @@ Enable SGEOM interface to OCC (experimental) (default: OFF)
 @item ENABLE_SLEPC
 Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 @item ENABLE_SOLVER
-Enable solver components (required e.g. for compounds) (default: ON)
+Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_TAUCS
 Enable Taucs linear solver (alternative to PETSc) (default: ON)
 @item ENABLE_TETGEN
@@ -106,6 +106,6 @@ Enable older version of Tetgen (default: OFF)
 @item ENABLE_VORO3D
 Enable Voro3D (experimental) (default: ON)
 @item ENABLE_WRAP_JAVA
-Enable building of Java wrappers (default: OFF)
+Enable generation of Java wrappers (default: OFF)
 @item ENABLE_WRAP_PYTHON
-Enable building of Python wrappers (default: OFF)
+Enable generation of Python wrappers (default: OFF)
