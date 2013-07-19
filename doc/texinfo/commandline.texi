@@ -18,28 +18,22 @@ Match geometries and meshes
 @ftable @code
 @item -1, -2, -3
 Perform 1D, 2D or 3D mesh generation, then exit
+@item -o file
+Specify output file name
 @item -format string
 Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)
-@item -vmsh float
-Select msh file version
+@item -bin
+Use binary format when available
 @item -refine
 Perform uniform mesh refinement, then exit
 @item -part int
 Partition after batch mesh generation
 @item -partWeight tri|quad|tet|prism|hex int
 Weight of a triangle/quad/etc. during partitioning
-@item -renumber
-Renumber the mesh elements after batch mesh generation
 @item -saveall
 Save all elements (discard physical group definitions)
-@item -o file
-Specify output file name
-@item -bin
-Use binary format when available
 @item -parametric
 Save vertices with their parametric coordinates
-@item -numsubedges
-Set num of subdivisions for high order element display
 @item -algo string
 Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d)
 @item -smooth int
@@ -54,8 +48,6 @@ Optimize high order meshes
 High-order optimization parameters
 @item -optimize_lloyd
 Optimize 2D meshes using Lloyd algorithm
-@item -microstructure
-Generate polycrystal Voronoi geometry
 @item -clscale float
 Set global mesh element size scaling factor
 @item -clmin float
@@ -96,6 +88,8 @@ Combine views having identical names into multi-time-step views
 Hide all meshes and post-processing views on startup
 @item -nodb
 Disable double buffering
+@item -numsubedges
+Set num of subdivisions for high order element display
 @item -fontsize int
 Specify the font size for the GUI
 @item -theme string
