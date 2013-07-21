@@ -135,6 +135,32 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   }
   return p;
 }
+// Bezier
+static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
+{
+  int NbCurves = (List_Nbr(Curve->Control_Points) - 1) / 3;
+  int iCurve = (int)floor(u * (double)NbCurves);
+  if(iCurve == NbCurves) iCurve -= 1; // u = 1
+  double t1 = (double)(iCurve) / (double)(NbCurves);
+  double t2 = (double)(iCurve+1) / (double)(NbCurves);
+  double t = (u - t1) / (t2 - t1);
+  Vertex *v[4];
+  for(int i = 0; i < 4; i++) {
+    List_Read(Curve->Control_Points, iCurve * 3 + i , &v[i]);
+  }
+
+  if(Curve->geometry){
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2, Curve->geometry,derivee);
+    SPoint3 pt = Curve->geometry->point(pp);
+    Vertex V;
+    V.Pos.X = pt.x();
+    V.Pos.Y = pt.y();
+    V.Pos.Z = pt.z();
+    return V;
+  }
+  else
+    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+}
 
 // Uniform BSplines
 static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
@@ -274,8 +300,11 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   if(derivee==2) {
     switch (c->Typ) {
     case MSH_SEGM_BSPLN:
-    case MSH_SEGM_BEZIER:
       V = InterpolateUBS(c, u, 2);
+      V.u = u;
+      break;
+    case MSH_SEGM_BEZIER:
+      V = InterpolateBezier(c, u, 2);
       V.u = u;
       break;
     default :
@@ -358,8 +387,10 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
     V = InterpolateUBS(c, u, 0);
+    break;
+  case MSH_SEGM_BEZIER:
+    V = InterpolateBezier(c, u, 0);
     break;
 
   case MSH_SEGM_NURBS:
