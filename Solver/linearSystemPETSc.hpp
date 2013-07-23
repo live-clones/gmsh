@@ -280,8 +280,12 @@ void linearSystemPETSc<scalar>::zeroMatrix()
     }
   }
   if (_isAllocated && _entriesPreAllocated) {
-    _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-    _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    PetscBool assembled;
+    _try(MatAssembled(_a, &assembled));
+    if (!assembled) {
+      _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+      _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    }
     _try(MatZeroEntries(_a));
     _matrixModified = true;
   }
