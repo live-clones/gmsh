@@ -1162,6 +1162,7 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 {
   meshOrder = -1;
   CAD = true;
+  complete = 1;
   for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
     if ((*itr)->getNumMeshElements()){
       meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();

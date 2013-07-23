@@ -149,6 +149,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
+  getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
