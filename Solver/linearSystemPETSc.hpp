@@ -111,29 +111,38 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
     }
     _sparsity.clear();
   }
-  _try(MatXAIJSetPreallocation(_a, blockSize, &nByRowDiag[0], &nByRowOffDiag[0], NULL, NULL));
+  //MatXAIJSetPreallocation is not available in petsc < 3.3
+  int commSize = 1;
+  MPI_Comm_size(_comm, &commSize);
+  if (commSize == 1){
+    if (blockSize == 1)
+      _try(MatSeqAIJSetPreallocation(_a, 0,  &nByRowDiag[0]));
+    else
+      _try(MatSeqBAIJSetPreallocation(_a, blockSize, 0, &nByRowDiag[0]));
+  }
+  else {
+    if (blockSize == 1)
+      _try(MatMPIAIJSetPreallocation(_a, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
+    else
+      _try(MatMPIBAIJSetPreallocation(_a, blockSize, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
+  }
   _entriesPreAllocated = true;
 }
 
 template <class scalar>
 void linearSystemPETSc<scalar>::allocate(int nbRows)
 {
-  #ifdef HAVE_MPI
-  PetscMPIInt commSize;
-  MPI_Comm_size(_comm,&commSize);
-  #endif
+  int commSize;
+  MPI_Comm_size(_comm, &commSize);
   int blockSize = _getBlockSizeFromParameters();
   clear();
   _try(MatCreate(_comm, &_a));
   _try(MatSetSizes(_a, blockSize * nbRows, blockSize * nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
   if (blockSize > 1) {
-    #ifdef HAVE_MPI
     if (commSize > 1) {
       MatSetType(_a, MATMPIBAIJ);
     }
-    else
-    #endif
-    {
+    else {
       MatSetType(_a, MATSEQBAIJ);
     }
   }
