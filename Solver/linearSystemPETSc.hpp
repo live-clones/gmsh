@@ -36,7 +36,8 @@ linearSystemPETSc<scalar>::linearSystemPETSc(MPI_Comm com)
   _isAllocated = false;
   _blockSize = 0;
   _kspAllocated = false;
-  _matrixModified=true;
+  _matrixChangedSinceLastSolve = true;
+  _valuesNotAssembled = false;
 }
 
 template <class scalar>
@@ -46,7 +47,8 @@ linearSystemPETSc<scalar>::linearSystemPETSc()
   _isAllocated = false;
   _blockSize = 0;
   _kspAllocated = false;
-  _matrixModified=true;
+  _matrixChangedSinceLastSolve = true;
+  _valuesNotAssembled = false;
 }
 
 template <class scalar>
@@ -55,6 +57,18 @@ linearSystemPETSc<scalar>::~linearSystemPETSc()
   clear();
   if(_kspAllocated)
     _try(KSPDestroy(&_ksp));
+}
+
+template <class scalar>
+void linearSystemPETSc<scalar>::_assembleMatrixIfNeeded()
+{
+  // avoid to assemble the matrix when not needed since it destroy preallocation (e.g. in zeroMatrix)
+  if (_valuesNotAssembled) {
+    _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+    _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+    _matrixChangedSinceLastSolve = true;
+    _valuesNotAssembled = false;
+  }
 }
 
 template <class scalar>
@@ -159,8 +173,7 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
 template <class scalar>
 void linearSystemPETSc<scalar>::print()
 {
-  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _assembleMatrixIfNeeded();
   _try(VecAssemblyBegin(_b));
   _try(VecAssemblyEnd(_b));
 
@@ -241,7 +254,7 @@ void linearSystemPETSc<scalar>::addToMatrix(int row, int col, const scalar &val)
   PetscInt i = row, j = col;
   PetscScalar s = val;
   _try(MatSetValues(_a, 1, &i, 1, &j, &s, ADD_VALUES));
-  _matrixModified=true;
+  _valuesNotAssembled = true;
 }
 
 template <class scalar>
@@ -280,14 +293,8 @@ void linearSystemPETSc<scalar>::zeroMatrix()
     }
   }
   if (_isAllocated && _entriesPreAllocated) {
-    PetscBool assembled;
-    _try(MatAssembled(_a, &assembled));
-    if (!assembled) {
-      _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-      _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
-    }
+    _assembleMatrixIfNeeded();
     _try(MatZeroEntries(_a));
-    _matrixModified = true;
   }
 }
 
@@ -317,15 +324,14 @@ int linearSystemPETSc<scalar>::systemSolve()
 {
   if (!_kspAllocated)
     _kspCreate();
-  if (!_matrixModified || linearSystem<scalar>::_parameters["matrix_reuse"] == "same_matrix")
+  _assembleMatrixIfNeeded();
+  if (!_matrixChangedSinceLastSolve || linearSystem<scalar>::_parameters["matrix_reuse"] == "same_matrix")
     _try(KSPSetOperators(_ksp, _a, _a, SAME_PRECONDITIONER));
   else if (linearSystem<scalar>::_parameters["matrix_reuse"] == "same_sparsity")
     _try(KSPSetOperators(_ksp, _a, _a, SAME_NONZERO_PATTERN));
   else
     _try(KSPSetOperators(_ksp, _a, _a, DIFFERENT_NONZERO_PATTERN));
-  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
-  _matrixModified=false;
+  _matrixChangedSinceLastSolve = false;
   /*MatInfo info;
     MatGetInfo(_a, MAT_LOCAL, &info);
     printf("mallocs %.0f    nz_allocated %.0f    nz_used %.0f    nz_unneeded %.0f\n", info.mallocs, info.nz_allocated, info.nz_used, info.nz_unneeded);*/
@@ -342,8 +348,7 @@ int linearSystemPETSc<scalar>::systemSolve()
 /*template <class scalar>
 std::vector<scalar> linearSystemPETSc<scalar>::getData()
 {
-  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _assembleMatrixIfNeeded();
   PetscScalar *v;
   _try(MatGetArray(_a,&v));
   MatInfo info;
@@ -364,8 +369,7 @@ std::vector<scalar> linearSystemPETSc<scalar>::getData()
 template <class scalar>
 std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
 {
-  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _assembleMatrixIfNeeded();
   const PetscInt *rows;
   const PetscInt *columns;
   PetscInt n;
@@ -381,8 +385,7 @@ std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
 template <class scalar>
 std::vector<int> linearSystemPETSc<scalar>::getColumnsIndices()
 {
-  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
-  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _assembleMatrixIfNeeded();
   const PetscInt *rows;
   const PetscInt *columns;
   PetscInt n;

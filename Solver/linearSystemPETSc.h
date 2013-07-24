@@ -51,7 +51,7 @@ typedef struct _p_Vec* Vec;
 typedef struct _p_KSP* KSP;
 #endif
 
-//support old PETSc version, try to avoid using PETSC_VERSION somewhere else
+//support old PETSc version, try to avoid using PETSC_VERSION in other places
 #if PETSC_VERSION_RELEASE != 0 && (PETSC_VERSION_MAJOR < 3  || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 2))
 #define KSPDestroy(k) KSPDestroy(*(k))
 #define MatDestroy(m) MatDestroy(*(m))
@@ -66,13 +66,16 @@ template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:
   int _blockSize; // for block Matrix
-  bool _isAllocated, _kspAllocated, _entriesPreAllocated, _matrixModified;
+  bool _isAllocated, _kspAllocated, _entriesPreAllocated;
+  bool _matrixChangedSinceLastSolve;
+  bool _valuesNotAssembled; //cannot use MatAssembled since MatAssembled return false for an empty matrix
   Mat _a;
   Vec _b, _x;
   KSP _ksp;
   int _localRowStart, _localRowEnd, _localSize, _globalSize;
   sparsityPattern _sparsity;
   void _kspCreate();
+  void _assembleMatrixIfNeeded();
   #ifndef SWIG
   MPI_Comm _comm;
   #endif
