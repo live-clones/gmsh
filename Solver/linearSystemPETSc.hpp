@@ -10,6 +10,12 @@ static void  _try(int ierr)
 }
 
 template <class scalar>
+int linearSystemPETSc<scalar>::_getBlockSizeFromParameters() const
+{
+  return 1;
+}
+
+template <class scalar>
 void linearSystemPETSc<scalar>::_kspCreate()
 {
   _try(KSPCreate(_comm, &_ksp));
@@ -34,10 +40,10 @@ linearSystemPETSc<scalar>::linearSystemPETSc(MPI_Comm com)
 {
   _comm = com;
   _isAllocated = false;
-  _blockSize = 0;
   _kspAllocated = false;
   _matrixChangedSinceLastSolve = true;
   _valuesNotAssembled = false;
+  _entriesPreAllocated = false;
 }
 
 template <class scalar>
@@ -45,10 +51,10 @@ linearSystemPETSc<scalar>::linearSystemPETSc()
 {
   _comm = PETSC_COMM_WORLD;
   _isAllocated = false;
-  _blockSize = 0;
   _kspAllocated = false;
   _matrixChangedSinceLastSolve = true;
   _valuesNotAssembled = false;
+  _entriesPreAllocated = false;
 }
 
 template <class scalar>
@@ -84,17 +90,15 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
 {
   if (_entriesPreAllocated) return;
   if (!_isAllocated) Msg::Fatal("system must be allocated first");
+  int blockSize = _getBlockSizeFromParameters();
+  std::vector<int> nByRowDiag (_localSize), nByRowOffDiag (_localSize);
   if (_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300;
     PetscBool set;
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
-    if (_blockSize == 0) {
-      _try(MatSeqAIJSetPreallocation(_a, prealloc, PETSC_NULL));
-    } else {
-      _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 5, PETSC_NULL));
-    }
+    nByRowDiag.resize(0);
+    nByRowDiag.resize(_localSize, prealloc);
   } else {
-    std::vector<int> nByRowDiag (_localSize), nByRowOffDiag (_localSize);
     for (int i = 0; i < _localSize; i++) {
       int n;
       const int *r = _sparsity.getRow(i, n);
@@ -105,24 +109,34 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
           nByRowOffDiag[i] ++;
       }
     }
-    if (_blockSize == 0) {
-      _try(MatSeqAIJSetPreallocation(_a, 0, &nByRowDiag[0]));
-      _try(MatMPIAIJSetPreallocation(_a, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
-    } else {
-      _try(MatSeqBAIJSetPreallocation(_a, _blockSize, 0, &nByRowDiag[0]));
-      _try(MatMPIBAIJSetPreallocation(_a, _blockSize, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
-    }
     _sparsity.clear();
   }
+  _try(MatXAIJSetPreallocation(_a, blockSize, &nByRowDiag[0], &nByRowOffDiag[0], NULL, NULL));
   _entriesPreAllocated = true;
 }
 
 template <class scalar>
 void linearSystemPETSc<scalar>::allocate(int nbRows)
 {
+  #ifdef HAVE_MPI
+  PetscMPIInt commSize;
+  MPI_Comm_size(_comm,&commSize);
+  #endif
+  int blockSize = _getBlockSizeFromParameters();
   clear();
   _try(MatCreate(_comm, &_a));
-  _try(MatSetSizes(_a, nbRows, nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
+  _try(MatSetSizes(_a, blockSize * nbRows, blockSize * nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
+  if (blockSize > 1) {
+    #ifdef HAVE_MPI
+    if (commSize > 1) {
+      MatSetType(_a, MATMPIBAIJ);
+    }
+    else
+    #endif
+    {
+      MatSetType(_a, MATSEQBAIJ);
+    }
+  }
   // override the default options with the ones from the option
   // database (if any)
   if (this->_parameters.count("petscOptions"))
@@ -133,8 +147,6 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   //since PETSc 3.3 GetOwnershipRange and MatGetSize cannot be called before MatXXXSetPreallocation
   _localSize = nbRows;
   #ifdef HAVE_MPI
-  PetscMPIInt commSize;
-  MPI_Comm_size(_comm,&commSize);
   if (commSize>1){
     _localRowStart = 0;
     if (Msg::GetCommRank() != 0) {
@@ -159,7 +171,7 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   #endif
   // preallocation option must be set after other options
   _try(VecCreate(_comm, &_x));
-  _try(VecSetSizes(_x, nbRows, PETSC_DETERMINE));
+  _try(VecSetSizes(_x, blockSize * nbRows, PETSC_DETERMINE));
   // override the default options with the ones from the option
   // database (if any)
   if (this->_parameters.count("petscPrefix"))
@@ -343,6 +355,22 @@ int linearSystemPETSc<scalar>::systemSolve()
   //_try(KSPGetIterationNumber(ksp, &its));
   //Msg::Info("%d iterations", its);
   return 1;
+}
+
+template <class scalar>
+void linearSystemPETSc<scalar>::printMatlab(const char *filename) const
+{
+  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _try(VecAssemblyBegin(_b));
+  _try(VecAssemblyEnd(_b));
+
+  PetscViewer viewer;
+  PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename, &viewer);
+  PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
+  MatView(_a, viewer);
+  PetscViewerDestroy(&viewer);
+  return;
 }
 
 /*template <class scalar>

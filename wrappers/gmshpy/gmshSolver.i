@@ -35,6 +35,7 @@
 #if defined(HAVE_PETSC)
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
+%template(linearSystemPETScBlockDouble) linearSystemPETSc<fullMatrix<double> >;
 #endif
 %include "eigenSolver.h"
 #endif
