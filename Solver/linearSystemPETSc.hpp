@@ -68,7 +68,17 @@ linearSystemPETSc<scalar>::~linearSystemPETSc()
 template <class scalar>
 void linearSystemPETSc<scalar>::_assembleMatrixIfNeeded()
 {
-  // avoid to assemble the matrix when not needed since it destroy preallocation (e.g. in zeroMatrix)
+  if (_comm == PETSC_COMM_WORLD){
+    if (Msg::GetCommSize()>1){
+      int value = _valuesNotAssembled ? 1 : 0;
+      int sumValue = 0;
+      MPI_Allreduce((void*)&value, (void*)&sumValue, 1, MPI_INT, MPI_SUM, _comm);
+      if ((sumValue > 0) &&(sumValue < Msg::GetCommSize())){
+        _valuesNotAssembled= 1;
+      }
+    }
+  }
+
   if (_valuesNotAssembled) {
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
@@ -402,7 +412,7 @@ std::vector<scalar> linearSystemPETSc<scalar>::getData()
   _try(MatRestoreArray(_a,&v));
   return data;
 }*/
-/* 
+/*
 template <class scalar>
 std::vector<int> linearSystemPETSc<scalar>::getRowPointers()
 {
