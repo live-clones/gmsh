@@ -457,12 +457,16 @@ void drawContext::drawScale()
 void drawContext::drawMesh()
 {
 	GModel::current()->fillVertexArrays();
-    glColor4f(0,0,0,1.);
+	unsigned int col = CTX::instance()->color.mesh.line;
+	glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
+               (GLubyte)CTX::instance()->unpackGreen(col),
+               (GLubyte)CTX::instance()->unpackBlue(col),
+               (GLubyte)CTX::instance()->unpackAlpha(col));
 	for(GModel::fiter it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); it++){
 		if(_fillMesh) drawArray((*it)->va_triangles, GL_TRIANGLES);
-		else drawArray((*it)->va_lines, GL_LINES);
+		else drawArray((*it)->va_lines, GL_LINES, true);
 	}
-    CTX::instance()->mesh.changed = 0;
+	CTX::instance()->mesh.changed = 0;
 }
 
 void drawContext::drawPost()
@@ -477,7 +481,7 @@ void drawContext::drawPost()
 
 void drawContext::drawGeom()
 {
-    unsigned int col = CTX::instance()->color.geom.line;
+	unsigned int col = CTX::instance()->color.geom.line;
 	glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
                (GLubyte)CTX::instance()->unpackGreen(col),
                (GLubyte)CTX::instance()->unpackBlue(col),

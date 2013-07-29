@@ -10,6 +10,7 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 
 import android.content.Context;
@@ -53,6 +54,8 @@ public class MainActivity extends Activity {
 	private GLESRender renderer;
 	private ProgressDialog loading;
 	private AlertDialog.Builder dialogBuilder;
+	private ArrayList<String> errors;
+	private Dialog errorDialog;
 	private Gmsh gmsh;
 	private Button run, reset;
 	private UndragableViewPager pager;
@@ -66,7 +69,7 @@ public class MainActivity extends Activity {
     	
     	getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
+    	errors = new ArrayList<String>();
     	LinearLayout layout = new LinearLayout(this);
     	loading = new ProgressDialog(this);
     	layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -522,21 +525,36 @@ public class MainActivity extends Activity {
     	
     }
 
+    private void showError(){
+    	if(errors.size()>0){
+    		if(errorDialog != null && errorDialog.isShowing()) errorDialog.dismiss();
+	    	errorDialog = dialogBuilder
+		    .setTitle("Gmsh/GetDP Error(s)")
+		    .setMessage(errors.get(errors.size()-1))
+		    .setNegativeButton("Stop", new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) {
+		        	errors.clear();
+		            errorDialog.dismiss();
+		        }
+		     })
+		    .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) {
+		        	errors.remove(errors.size()-1);
+		        	errorDialog.dismiss();
+		            showError();
+		        }
+		     })
+		     .show();
+    	}
+    }
     private final Handler mainHandler = new Handler(){
     	public void handleMessage(android.os.Message msg) {
     		switch (msg.what) {
 			case 0: // we get a message from gmsh library
+				//get(size() - 1)
 				String message =(String) msg.obj;
-				dialogBuilder
-			    .setTitle("Erreur Gmsh/GetDP")
-			    .setMessage(message)
-			    .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
-			        public void onClick(DialogInterface dialog, int which) { 
-			            dialog.dismiss();
-			        }
-			     })
-			     .show();
-
+				errors.add(message);
+				showError();
 				break;
 			case 1: // request render from gmsh library
 				if(glView != null)

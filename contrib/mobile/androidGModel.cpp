@@ -33,9 +33,7 @@ class MobileMessage : public GmshMessage
 	{
 		if(level == "Error")
 		{
-	 		LOGE("%s", message.c_str());
-			if(message.size() <= 26 || message.substr(message.size()-25,25) != "check the log for details")
-				return;
+	 		LOGE("Error:\t%s", message.c_str());
 			JNIEnv *env;
 			if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
 			jstring jstr = env->NewStringUTF(message.c_str());
