@@ -347,7 +347,6 @@ class MElement
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
-  virtual int getLowOrderTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }

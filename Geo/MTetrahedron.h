@@ -100,7 +100,6 @@ class MTetrahedron : public MElement {
   }
   virtual int getType() const { return TYPE_TET; }
   virtual int getTypeForMSH() const { return MSH_TET_4; }
-  virtual int getLowOrderTypeForMSH() const { return MSH_TET_4; }
   virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
   virtual int getTypeForVTK() const { return 10; }
   virtual const char *getStringForPOS() const { return "SS"; }

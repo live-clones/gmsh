@@ -65,7 +65,6 @@ class MLine : public MElement {
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getType() const { return TYPE_LIN; }
   virtual int getTypeForMSH() const { return MSH_LIN_2; }
-  virtual int getLowOrderTypeForMSH() const { return MSH_LIN_2; }
   virtual int getTypeForUNV() const { return 21; } // linear beam
   virtual int getTypeForVTK() const { return 3; }
   virtual const char *getStringForPOS() const { return "SL"; }

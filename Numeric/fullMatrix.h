@@ -745,25 +745,6 @@ class fullMatrix
     printf("};\n");
   }
 
-
-  void printMatlab(const std::string name = "A") const
-  {
-    int ni = size1();
-    int nj = size2();
-
-    printf("%s = [", name.c_str());
-
-    for(int I = 0; I < ni; I++){
-      for(int J = 0; J < nj; J++){
-        printf("%+e,", (*this)(I, J));
-      }
-
-      printf(";");
-    }
-
-    printf("]\n");
-  }
-
   // specific functions for dgshell
   void mult_naiveBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
                        const int alpha, const int beta, fullVector<scalar> &c,

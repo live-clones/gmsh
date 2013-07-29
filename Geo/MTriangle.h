@@ -114,7 +114,6 @@ class MTriangle : public MElement {
   }
   virtual int getType() const { return TYPE_TRI; }
   virtual int getTypeForMSH() const { return MSH_TRI_3; }
-  virtual int getLowOrderTypeForMSH() const { return MSH_TRI_3; }
   virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
   virtual int getTypeForVTK() const { return 5; }
   virtual const char *getStringForPOS() const { return "ST"; }
