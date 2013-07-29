@@ -20,7 +20,6 @@ onelab::server *getOnelab() {return onelab::server::instance();}
 extern "C"
 {
 static JavaVM *gJavaVM;
-static JNIEnv *env;
 static jobject gCallbackObject = NULL;
 };
 
@@ -37,10 +36,8 @@ class MobileMessage : public GmshMessage
 	 		LOGE("%s", message.c_str());
 			if(message.size() <= 26 || message.substr(message.size()-25,25) != "check the log for details")
 				return;
-			if(!gCallbackObject)
-				return;
-			if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
-				return;
+			JNIEnv *env;
+			if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
 			jstring jstr = env->NewStringUTF(message.c_str());
 			jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 			if(jClass == 0)
@@ -55,10 +52,8 @@ class MobileMessage : public GmshMessage
 		}
 		else if(level == "Progress")
 		{
-			if(!gCallbackObject)
-				return;
-			if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
-				return;
+			JNIEnv *env;
+			if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
 			jstring jstr = env->NewStringUTF(message.c_str());
 			jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 			if(jClass == 0)
@@ -82,10 +77,8 @@ class MobileMessage : public GmshMessage
 
 void requestRender()
 {
-	if(!gCallbackObject)
-		return;
-	if ((gJavaVM->AttachCurrentThread(&env, NULL)) < 0)
-		return;
+	JNIEnv *env;
+	if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
 	jclass jClass = env->FindClass("org/geuz/onelab/Gmsh"); 
 	if(jClass == 0)
 		return;
@@ -98,7 +91,8 @@ void requestRender()
 
 void getBitmapFromString(const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
-	if(!gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
+	JNIEnv *env;
+	if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK || !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
 	jclass jClass = env->FindClass("org/geuz/onelab/StringTexture"); 
 	if(jClass == 0)
 		return;
@@ -106,7 +100,7 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map, in
 	jmethodID mid = env->GetStaticMethodID(jClass, "getHeightFromString", "(Ljava/lang/String;I)I");
 	*height = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
 	mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
-	*width = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+	*width =env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
 	if(realWidth != NULL){
 		mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
 		*realWidth = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
@@ -117,6 +111,7 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map, in
 	*map = (unsigned char *) malloc((*height)*(*width));
 	env->GetByteArrayRegion(*jarray, 0, (*height)*(*width), (jbyte*)*map);
 	env->DeleteLocalRef(jClass);
+	env->DeleteLocalRef(jtext);
 }
 
 extern "C" {
@@ -127,6 +122,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
   (JNIEnv *env, jobject obj, jstring jname)
 {
+	if(gCallbackObject != NULL) env->DeleteGlobalRef(gCallbackObject);
 	gCallbackObject = env->NewGlobalRef(obj);
 	gJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
 	Msg::SetCallback(new MobileMessage());
@@ -182,6 +178,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
 	for(int i=0; i<tmp.size();i++){
 		jstring s = env->NewStringUTF(tmp[i].c_str());
 		env->SetObjectArrayElement(params, i, s);
+		env->DeleteLocalRef(s);
 	}
 	return params;
 }
@@ -218,6 +215,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
 			<< "\n"  << PView::list[i]->getOptions()->nbIso;
 		jstring s = env->NewStringUTF(sstream.str().c_str());
 		env->SetObjectArrayElement(jPView, i, s);
+		env->DeleteLocalRef(s);
 	}
 	return jPView;
 }
