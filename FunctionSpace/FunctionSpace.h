@@ -59,8 +59,8 @@ class FunctionSpace{
   bool scalar;
 
   // Dofs //
-  std::set<const Dof*, DofComparator>*     dof;
-  std::vector<GroupOfDof*>*                group;
+  std::set<Dof>*            dof;
+  std::vector<GroupOfDof*>* group;
   std::map<
     const MElement*,
     const GroupOfDof*, ElementComparator>* eToGod;
@@ -80,7 +80,7 @@ class FunctionSpace{
   std::vector<Dof> getKeys(const MEdge& edge) const;
   std::vector<Dof> getKeys(const MFace& face) const;
 
-  const std::vector<const Dof*>   getAllDofs(void) const;
+  const std::vector<Dof>          getAllDofs(void) const;
   const std::vector<GroupOfDof*>& getAllGroups(void) const;
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
@@ -209,8 +209,8 @@ inline size_t FunctionSpace::groupNumber(void) const{
   return group->size();
 }
 
-inline const std::vector<const Dof*> FunctionSpace::getAllDofs(void) const{
-  return std::vector<const Dof*>(dof->begin(), dof->end());
+inline const std::vector<Dof> FunctionSpace::getAllDofs(void) const{
+  return std::vector<Dof>(dof->begin(), dof->end());
 }
 
 inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{

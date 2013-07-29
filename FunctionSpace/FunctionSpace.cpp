@@ -19,14 +19,8 @@ FunctionSpace::~FunctionSpace(void){
   delete basis;
 
   // Dof //
-  if(dof){
-    set<const Dof*>::iterator dStop = dof->end();
-    set<const Dof*>::iterator dIt   = dof->begin();
-
-    for(; dIt != dStop; dIt++)
-      delete *dIt;
+  if(dof)
     delete dof;
-  }
 
   // Group //
   if(group){
@@ -96,7 +90,7 @@ void FunctionSpace::buildDof(void){
   const vector<const MElement*>& element = goe->getAll();
 
   // Init Struct //
-  dof      = new set<const Dof*, DofComparator>;
+  dof      = new set<Dof>;
   group    = new vector<GroupOfDof*>(nElement);
   eToGod   = new map<const MElement*,
                      const GroupOfDof*,
@@ -109,13 +103,15 @@ void FunctionSpace::buildDof(void){
     size_t nDof       = myDof.size();
 
     // Add Dof
-    vector<const Dof*> trueDof(nDof);
-
     for(size_t j = 0; j < nDof; j++)
-      insertDof(myDof[j], trueDof, j);
+      dof->insert(myDof[j]);
+    //vector<Dof> trueDof(nDof);
+
+    //for(size_t j = 0; j < nDof; j++)
+    //insertDof(myDof[j], trueDof, j);
 
     // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(*(element[i]), trueDof);
+    GroupOfDof* god = new GroupOfDof(*(element[i]), myDof);
     (*group)[i]     = god;
 
     // Map GOD
@@ -123,7 +119,7 @@ void FunctionSpace::buildDof(void){
                    (element[i], god));
   }
 }
-
+/*
 void FunctionSpace::insertDof(Dof& d,
                               vector<const Dof*>& trueDof,
                               size_t index){
@@ -146,7 +142,7 @@ void FunctionSpace::insertDof(Dof& d,
     trueDof[index] = *(p.first);
   }
 }
-
+*/
 vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
@@ -165,6 +161,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 
   // New Element
   MElementFactory factory;
+  //MElement* permElement = factory.create(elem.getLowOrderTypeForMSH(), vertex);
   MElement* permElement = factory.create(elem.getTypeForMSH(), vertex);
 
   // Edge & Face from Permuted Element //

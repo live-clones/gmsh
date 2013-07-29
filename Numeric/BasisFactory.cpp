@@ -46,9 +46,17 @@ const nodalBasis* BasisFactory::getNodalBasis(int tag)
   }
 
   // FIXME: check if already exists to deallocate if necessary
-  fs.insert(std::make_pair(tag, F));
+  std::pair<std::map<int, nodalBasis*>::const_iterator, bool> inserted;
 
-  return F;
+  #pragma omp critical
+    {
+      inserted = fs.insert(std::make_pair(tag, F));
+
+      if (!inserted.second)
+        delete F;
+    }
+
+  return inserted.first->second;
 }
 
 const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
