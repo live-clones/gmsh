@@ -107,11 +107,11 @@ public class ParameterString extends Parameter{
 
 				public void onItemSelected(AdapterView<?> parent, View view,
 						int pos, long id) {
-					if(_listView != null) _listView.refresh();
 					setValue(pos);
 					_gmsh.setParam(getType(), getName(), String.valueOf(getValue()));
 					if(_gmsh.onelabCB("check") == 1 && _glView != null)
 						_glView.requestRender();
+					if(_listView != null) _listView.refresh();
 				}
 
 			});

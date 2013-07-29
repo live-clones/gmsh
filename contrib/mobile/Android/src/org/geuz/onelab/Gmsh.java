@@ -17,9 +17,7 @@ public class Gmsh {
 	private native void loadFile(long ptr, String name); // load a file(OpenProjet)
 	private native void initView(long ptr, int w, int h); // Called each time the GLView change
 	private native void drawView(long ptr); // Called each time the GLView request a render
-	private native void setTranslation(long ptr, float tx, float ty, float tz); // translate the current GModel
-	private native void setScale(long ptr, float sx, float sy, float sz); // scale the current GModel
-	private native void setRotate(long ptr, float rx, float ry, float rz); // rotate the current GModel
+	private native void eventHandler(long ptr, int event, float x, float y);
 	private native void setShow(long ptr, String what, boolean show); // select what to show / hide
 	private native long getOnelabInstance(); // return the singleton of the onelab server
 	public native String[] getParams(); // return the parameters for onelab
@@ -51,18 +49,29 @@ public class Gmsh {
 		this.loadFile(ptr, filename);
 	}
 
-	public void translation(float tx, float ty, float tz)
+	public void startEvent(float x, float y)
 	{
-		this.setTranslation(ptr, tx, ty, tz);
+		this.eventHandler(ptr, 0, x, y);
 	}
-
-	public void scale(float sx, float sy, float sz)
+	public void translate(float x, float y)
 	{
-		this.setScale(ptr, sx, sy, sz);
+		this.eventHandler(ptr, 1, x, y);
 	}
-
-	public void rotate(float rx, float ry, float rz) {
-		this.setRotate(ptr, rx, ry, rz);
+	public void scale(float s)
+	{
+		this.eventHandler(ptr, 2, s, 0);
+	}
+	public void rotate(float x, float y)
+	{
+		this.eventHandler(ptr, 3, x, y);
+	}
+	public void endEvent(float x, float y)
+	{
+		this.eventHandler(ptr, 4, x, y);
+	}
+	public void resetPosition()
+	{
+		this.eventHandler(ptr, 5, 0, 0);
 	}
 	public void showGeom(boolean show)
 	{

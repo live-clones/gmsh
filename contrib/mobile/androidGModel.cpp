@@ -17,10 +17,12 @@
 #include "drawContext.h"
 
 onelab::server *getOnelab() {return onelab::server::instance();}
-
+extern "C"
+{
 static JavaVM *gJavaVM;
 static JNIEnv *env;
 static jobject gCallbackObject = NULL;
+};
 
 class MobileMessage : public GmshMessage
 {
@@ -91,6 +93,29 @@ void requestRender()
 	if (mid == 0)
 		return;
 	env->CallVoidMethod(gCallbackObject, mid);
+	env->DeleteLocalRef(jClass);
+}
+
+void getBitmapFromString(const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
+{
+	if(!gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
+	jclass jClass = env->FindClass("org/geuz/onelab/StringTexture"); 
+	if(jClass == 0)
+		return;
+	jstring jtext = env->NewStringUTF(text);
+	jmethodID mid = env->GetStaticMethodID(jClass, "getHeightFromString", "(Ljava/lang/String;I)I");
+	*height = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+	mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
+	*width = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+	if(realWidth != NULL){
+		mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
+		*realWidth = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+	}
+	mid = env->GetStaticMethodID(jClass, "getBytesFromString", "(Ljava/lang/String;I)[B");
+	jobject jbuffer = env->CallObjectMethod(gCallbackObject, mid, jtext, textsize);
+	jbyteArray *jarray = reinterpret_cast<jbyteArray*>(&jbuffer);
+	*map = (unsigned char *) malloc((*height)*(*width));
+	env->GetByteArrayRegion(*jarray, 0, (*height)*(*width), (jbyte*)*map);
 	env->DeleteLocalRef(jClass);
 }
 

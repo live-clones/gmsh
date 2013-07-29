@@ -103,6 +103,12 @@ public class MainActivity extends Activity {
     }
     
     @Override
+    protected void onDestroy() {
+    	// TODO Unload library ?
+    	super.onDestroy();
+    }
+    
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
     	MenuItem listitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_list);
@@ -134,8 +140,12 @@ public class MainActivity extends Activity {
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
     	if(item.getTitle().equals(getString(R.string.menu_settings)))
     		pager.setCurrentItem(0, true);
-    	else if(item.getTitle().equals(getString(R.string.menu_list)))
-    		this.finish();
+    	else if(item.getTitle().equals(getString(R.string.menu_list))) {
+    		if(this.compute)
+    			loading.show();
+    		else
+    			this.finish();
+    	}
     	else if (item.getTitle().equals(getString(R.string.menu_model)))
     		pager.setCurrentItem(1, true);
     	else if(item.getTitle().equals(getString(R.string.menu_postpro))){
@@ -144,7 +154,7 @@ public class MainActivity extends Activity {
 				.setPositiveButton("Ok", null)
 				.show();
     	}
-    	else if(item.getTitle().equals(getString(R.string.menu_view_x))){
+    	/*else if(item.getTitle().equals(getString(R.string.menu_view_x))){
     		renderer.rotate(0, 0, 0);
     		renderer.rotate(90, 0, 0);
     		glView.requestRender();
@@ -165,7 +175,7 @@ public class MainActivity extends Activity {
 		else if(item.getTitle().equals(getString(R.string.menu_view_translation))){
 			renderer.translate(0, 0, 0);
 			glView.requestRender();
-		}
+		}*/ // TODO
     	return super.onMenuItemSelected(featureId, item);
     }
     
@@ -499,11 +509,11 @@ public class MainActivity extends Activity {
 		@Override
 		protected void onPostExecute(Integer[] result) {
 			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-			v.vibrate(350);
+			if(!v.hasVibrator()) // TODO Do not commit this line !
+				v.vibrate(350);
 			reset.setEnabled(true);
 			run.setEnabled(true);
 			//run.setText("Run"); // TODO this seems break the ViewPager
-			pager.postInvalidate();
 			glView.requestRender();
 			super.onPostExecute(result);
 			loading.dismiss();

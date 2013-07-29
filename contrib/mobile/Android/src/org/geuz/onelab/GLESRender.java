@@ -19,14 +19,23 @@ public class GLESRender implements Renderer{
 		mGModel.load(filename);
 	}
 	
-	public void translate(float tx, float ty, float tz){
-		mGModel.translation(tx, ty, tz);
+	public void startInteraction(float x, float y) {
+		mGModel.startEvent(x, y);
 	}
-	public void scale(float sx, float sy, float sz){
-		mGModel.scale(sx, sy, sz);
+	public void endInteraction(float x, float y) {
+		mGModel.endEvent(x, y);
 	}
-	public void rotate(float rx, float ry, float rz){
-		mGModel.rotate(rx, ry, rz);
+	public void rotateModel(float x, float y) {
+		mGModel.rotate(x, y);
+	}
+	public void scaleModel(float s) {
+		mGModel.scale(s);
+	}
+	public void translateModel(float x, float y) {
+		mGModel.translate(x, y);
+	}
+	public void resetModelPosition() {
+		mGModel.resetPosition();
 	}
 	
 	// OpenGL ES methods

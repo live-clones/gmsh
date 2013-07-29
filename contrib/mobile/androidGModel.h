@@ -5,7 +5,7 @@
 #ifndef _Included_org_geuz_onelab_Gmsh
 #define _Included_org_geuz_onelab_Gmsh
 void requestRender();
-unsigned char *getBitmapFromString(const char *text);
+void getBitmapFromString(const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth=NULL);
 #ifdef __cplusplus
 extern "C" {
 #endif

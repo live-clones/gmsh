@@ -49,7 +49,7 @@ public:
 	float getScale(int i) {if(i>=0 && i<3) return this->_scale[i]; return 0;}
 	void initView(int w, int h);
 	void drawView();
-	void drawAxes(double x0=0., double y0=0., double z0=0., double h=0.5);
+	void drawAxes(float x0=0., float y0=0., float z0=0., float h=0.5);
 	void drawGeom();
 	void drawMesh();
 	void drawPost();

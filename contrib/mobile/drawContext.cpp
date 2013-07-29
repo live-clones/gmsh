@@ -34,6 +34,7 @@
 #include <gmsh/onelabUtils.h>
 #include <gmsh/PView.h>
 #include <gmsh/PViewOptions.h>
+#include <gmsh/PViewData.h>
 #include <gmsh/Context.h>
 #include <gmsh/StringUtils.h>
 
@@ -43,6 +44,7 @@
 #endif
 
 #include "drawContext.h"
+#include "drawString.h"
 #include "Trackball.h"
 
 static bool locked = false;
@@ -340,101 +342,115 @@ void drawContext::drawScale()
 	glPushMatrix();
 	glLoadIdentity();
 	// Draw the scale bar
-	if(PView::list.size() < 1) return;
-	PView *p = PView::list[PView::list.size()-1];
-	PViewOptions *opt = p->getOptions();
+	int nPview = 0;
+	for(int i=0; i<PView::list.size();i++){
+		PView *p = PView::list[i];
+		PViewOptions *opt = p->getOptions();
+		if(!opt->visible) continue;
     
-	double width = 6*(this->_right -this->_left) / 10.;
-	double height = (this->_top - this->_bottom) / 20.;
-	double box = width / (opt->nbIso ? opt->nbIso : 1);
-	double xmin = this->_left + (this->_right - this->_left -width)/2.;
-	double ymin = this->_bottom + height;
+		double width = 6*(this->_right -this->_left) / 10.;
+		double height = (this->_top - this->_bottom) / 20.;
+		double box = width / (opt->nbIso ? opt->nbIso : 1);
+		double xmin = this->_left + (this->_right - this->_left -width)/2.;
+		double ymin = this->_bottom + height + 2*height*nPview;
     
-    GLfloat *vertex = (GLfloat *)malloc(opt->nbIso*3*4*sizeof(GLfloat));
-    GLubyte *color = (GLubyte *)malloc(opt->nbIso*4*4*sizeof(GLubyte));
-	for(int i = 0; i < opt->nbIso; i++){
-		if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric)
-		{
-			unsigned int col = opt->getColor(i, opt->nbIso);
-			color[i*4*4+0] = color[i*4*4+4] = color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col);
-			color[i*4*4+1] = color[i*4*4+5] = color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col);
-			color[i*4*4+2] = color[i*4*4+6] = color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col);
-			color[i*4*4+3] = color[i*4*4+7] = color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col);
-			vertex[i*3*4+0] = xmin + i * box;
-			vertex[i*3*4+1] = ymin;
-			vertex[i*3*4+2] = 0.;
-			vertex[i*3*4+3] = xmin + i * box;
-			vertex[i*3*4+4] = ymin + height;
-			vertex[i*3*4+5] = 0.;
-			vertex[i*3*4+6] = xmin + (i + 1) * box;
-			vertex[i*3*4+7] = ymin;
-			vertex[i*3*4+8] = 0.;
-			vertex[i*3*4+9] = xmin + (i + 1) * box;
-			vertex[i*3*4+10] = ymin + height;
-			vertex[i*3*4+11] = 0.;
+		GLfloat *vertex = (GLfloat *)malloc(opt->nbIso*3*4*sizeof(GLfloat));
+		GLubyte *color = (GLubyte *)malloc(opt->nbIso*4*4*sizeof(GLubyte));
+		for(int i = 0; i < opt->nbIso; i++){
+			if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric)
+			{
+				unsigned int col = opt->getColor(i, opt->nbIso);
+				color[i*4*4+0] = color[i*4*4+4] = color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col);
+				color[i*4*4+1] = color[i*4*4+5] = color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col);
+				color[i*4*4+2] = color[i*4*4+6] = color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col);
+				color[i*4*4+3] = color[i*4*4+7] = color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col);
+				vertex[i*3*4+0] = xmin + i * box;
+				vertex[i*3*4+1] = ymin;
+				vertex[i*3*4+2] = 0.;
+				vertex[i*3*4+3] = xmin + i * box;
+				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+5] = 0.;
+				vertex[i*3*4+6] = xmin + (i + 1) * box;
+				vertex[i*3*4+7] = ymin;
+				vertex[i*3*4+8] = 0.;
+				vertex[i*3*4+9] = xmin + (i + 1) * box;
+				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+11] = 0.;
+			}
+			else if(opt->intervalsType == PViewOptions::Continuous)
+			{
+				double dv = (opt->tmpMax - opt->tmpMin) / (opt->nbIso ? opt->nbIso : 1);
+				double v1 = opt->tmpMin + i * dv;
+				unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
+				color[i*4*4+0] = color[i*4*4+4] = (GLubyte)CTX::instance()->unpackRed(col1);
+				color[i*4*4+1] = color[i*4*4+5] = (GLubyte)CTX::instance()->unpackGreen(col1);
+				color[i*4*4+2] = color[i*4*4+6] = (GLubyte)CTX::instance()->unpackBlue(col1);
+				color[i*4*4+3] = color[i*4*4+7] = (GLubyte)CTX::instance()->unpackAlpha(col1);
+				vertex[i*3*4+0] = xmin + i * box;
+				vertex[i*3*4+1] = ymin;
+				vertex[i*3*4+2] = 0.;
+				vertex[i*3*4+3] = xmin + i * box;
+				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+5] = 0.;
+				double v2 = opt->tmpMin + (i + 1) * dv;
+				unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
+				color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col2);
+				color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col2);
+				color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col2);
+				color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col2);
+				vertex[i*3*4+6] = xmin + (i + 1) * box;
+				vertex[i*3*4+7] = ymin;
+				vertex[i*3*4+8] = 0.;
+				vertex[i*3*4+9] = xmin + (i + 1) * box;
+				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+11] = 0.;
+			}
+			else
+			{
+				unsigned int col = opt->getColor(i, opt->nbIso);
+				color[i*4*4+0] = color[i*4*4+4] = color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col);
+				color[i*4*4+1] = color[i*4*4+5] = color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col);
+				color[i*4*4+2] = color[i*4*4+6] = color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col);
+				color[i*4*4+3] = color[i*4*4+7] = color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col);
+				vertex[i*3*4+0] = xmin + i * box;
+				vertex[i*3*4+1] = ymin;
+				vertex[i*3*4+2] = 0.;
+				vertex[i*3*4+3] = xmin + i * box;
+				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+5] = 0.;
+				vertex[i*3*4+6] = xmin + (i + 1) * box;
+				vertex[i*3*4+7] = ymin;
+				vertex[i*3*4+8] = 0.;
+				vertex[i*3*4+9] = xmin + (i + 1) * box;
+				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+11] = 0.;
+			}
 		}
-		else if(opt->intervalsType == PViewOptions::Continuous)
-		{
-			double dv = (opt->tmpMax - opt->tmpMin) / (opt->nbIso ? opt->nbIso : 1);
-			double v1 = opt->tmpMin + i * dv;
-			unsigned int col1 = opt->getColor(v1, opt->tmpMin, opt->tmpMax, true);
-			color[i*4*4+0] = color[i*4*4+4] = (GLubyte)CTX::instance()->unpackRed(col1);
-			color[i*4*4+1] = color[i*4*4+5] = (GLubyte)CTX::instance()->unpackGreen(col1);
-			color[i*4*4+2] = color[i*4*4+6] = (GLubyte)CTX::instance()->unpackBlue(col1);
-			color[i*4*4+3] = color[i*4*4+7] = (GLubyte)CTX::instance()->unpackAlpha(col1);
-			vertex[i*3*4+0] = xmin + i * box;
-			vertex[i*3*4+1] = ymin;
-			vertex[i*3*4+2] = 0.;
-			vertex[i*3*4+3] = xmin + i * box;
-			vertex[i*3*4+4] = ymin + height;
-			vertex[i*3*4+5] = 0.;
-			double v2 = opt->tmpMin + (i + 1) * dv;
-            unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
-			color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col2);
-			color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col2);
-			color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col2);
-			color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col2);
-			vertex[i*3*4+6] = xmin + (i + 1) * box;
-			vertex[i*3*4+7] = ymin;
-			vertex[i*3*4+8] = 0.;
-			vertex[i*3*4+9] = xmin + (i + 1) * box;
-			vertex[i*3*4+10] = ymin + height;
-			vertex[i*3*4+11] = 0.;
-		}
-		else
-		{
-			unsigned int col = opt->getColor(i, opt->nbIso);
-			color[i*4*4+0] = color[i*4*4+4] = color[i*4*4+8] = color[i*4*4+12] = (GLubyte)CTX::instance()->unpackRed(col);
-			color[i*4*4+1] = color[i*4*4+5] = color[i*4*4+9] = color[i*4*4+13] = (GLubyte)CTX::instance()->unpackGreen(col);
-			color[i*4*4+2] = color[i*4*4+6] = color[i*4*4+10] = color[i*4*4+14] = (GLubyte)CTX::instance()->unpackBlue(col);
-			color[i*4*4+3] = color[i*4*4+7] = color[i*4*4+11] = color[i*4*4+15] = (GLubyte)CTX::instance()->unpackAlpha(col);
-			vertex[i*3*4+0] = xmin + i * box;
-			vertex[i*3*4+1] = ymin;
-			vertex[i*3*4+2] = 0.;
-			vertex[i*3*4+3] = xmin + i * box;
-			vertex[i*3*4+4] = ymin + height;
-			vertex[i*3*4+5] = 0.;
-			vertex[i*3*4+6] = xmin + (i + 1) * box;
-			vertex[i*3*4+7] = ymin;
-			vertex[i*3*4+8] = 0.;
-			vertex[i*3*4+9] = xmin + (i + 1) * box;
-			vertex[i*3*4+10] = ymin + height;
-			vertex[i*3*4+11] = 0.;
-		}
-	}
 	
-	glVertexPointer(3, GL_FLOAT, 0, vertex);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
-	glEnableClientState(GL_COLOR_ARRAY);
-	if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric || opt->intervalsType == PViewOptions::Continuous)
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, opt->nbIso*4);
-	else
-		glDrawArrays(GL_LINES, 0, opt->nbIso*4);
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	free(vertex);
-	free(color);
+		glVertexPointer(3, GL_FLOAT, 0, vertex);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+		glEnableClientState(GL_COLOR_ARRAY);
+		if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric || opt->intervalsType == PViewOptions::Continuous)
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, opt->nbIso*4);
+		else
+			glDrawArrays(GL_LINES, 0, opt->nbIso*4);
+		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		free(vertex);
+		free(color);
+		char label[1024];
+		drawString *lbl = new drawString(p->getData()->getName().c_str(), 16);
+		lbl->draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+		drawString *val = new drawString(p->getData()->getName().c_str(), 14);
+		for(int i = 0; i < 3; i++) {
+			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
+			sprintf(label, opt->format.c_str(), v);
+			val->setText(label);
+			val->draw(xmin+i*width/2, ymin+height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+		}
+		nPview++;
+	}
 	glPopMatrix();
 }
 
@@ -491,7 +507,7 @@ void drawContext::drawGeom()
 	glLineWidth(1);
 }
 
-void drawContext::drawAxes(double x0, double y0, double z0, double h)
+void drawContext::drawAxes(float x0, float y0, float z0, float h)
 {
 	glLineWidth(1.);
 	glPushMatrix();
@@ -500,7 +516,7 @@ void drawContext::drawAxes(double x0, double y0, double z0, double h)
 	glMultMatrixf(_rotatef);
 	glTranslatef(-x0, -y0, -z0);
     
-    const GLfloat axes[] = {
+  const GLfloat axes[] = {
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
 		(GLfloat)(x0+h), (GLfloat)y0, (GLfloat)z0,
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
@@ -508,21 +524,27 @@ void drawContext::drawAxes(double x0, double y0, double z0, double h)
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)(z0+h),
 	};
-    const GLubyte colors[] = {
-        255, 0, 0, 255,
-        255, 0, 0, 255,
-        0, 0, 255, 255,
-        0, 0, 255, 255,
-        0, 255, 0, 255,
-        0, 255, 0, 255,
-    };
+  GLfloat colors[] = {
+		1., 0, 0, 1.,
+		1., 0, 0, 1.,
+		0, 0, 1., 1.,
+		0, 0, 1., 1.,
+		0, 1., 0, 1.,
+		0, 1., 0, 1.,
+	};
 	glVertexPointer(3, GL_FLOAT, 0, axes);
 	glEnableClientState(GL_VERTEX_ARRAY);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-    glEnableClientState(GL_COLOR_ARRAY);
+	glColorPointer(4, GL_FLOAT, 0, colors);
+	glEnableClientState(GL_COLOR_ARRAY);
 	glDrawArrays(GL_LINES, 0, 6);
 	glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	drawString *x = new drawString("X", 16,colors);
+	x->draw(x0+h, y0, z0, _width/(_right-_left), _height/(_top-_bottom));
+	drawString *y = new drawString("Y", 16,colors+8);
+	y->draw(x0, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom));
+	drawString *z = new drawString("Z", 16,colors+16);
+	z->draw(x0, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom));
 	glPopMatrix();
 	glLineWidth(1);
 }
@@ -577,7 +599,7 @@ void drawContext::drawView()
 	this->drawPost();
 	if(_showGeom) this->drawGeom();
 	if(_showMesh) this->drawMesh();
-	//this->drawScale();
+	this->drawScale();
 	checkGlError("Draw model,post-pro,...");
 }
 

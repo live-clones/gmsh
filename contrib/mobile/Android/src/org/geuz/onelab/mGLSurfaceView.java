@@ -6,7 +6,6 @@ import android.support.v4.view.MotionEventCompat;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.View;
 import android.view.GestureDetector.OnDoubleTapListener;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
@@ -15,22 +14,26 @@ class mGLSurfaceView extends GLSurfaceView {
 	private float scaleFactor = 1f;
 	private GestureDetector gesture;
 	private ScaleGestureDetector scaleGesture;
-	private float lastX, lastY;
 	private GLESRender _renderer;
 	public mGLSurfaceView(Context context, GLESRender renderer) {
 		super(context);
 		_renderer = renderer;
-		gesture = new GestureDetector(context, new GestureListener(this));
+		gesture = new GestureDetector(context, new GestureListener());
 		scaleGesture = new ScaleGestureDetector(context, new OnScaleGestureListener() {
 			
-			public void onScaleEnd(ScaleGestureDetector detector) {}// UNUSED Auto-generated method stub
+			public void onScaleEnd(ScaleGestureDetector detector) {
+				_renderer.endInteraction(detector.getFocusX(), detector.getFocusY());
+			}
 			
-			public boolean onScaleBegin(ScaleGestureDetector detector) {return true;}// UNUSED Auto-generated method stub
+			public boolean onScaleBegin(ScaleGestureDetector detector) {
+				_renderer.startInteraction(detector.getFocusX(), detector.getFocusY());
+				return true;
+			}
 			
 			public boolean onScale(ScaleGestureDetector detector) {
 				scaleFactor *= detector.getScaleFactor();
-				scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 50.0f)); 
-				_renderer.scale(scaleFactor, scaleFactor, scaleFactor);
+				scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 50.0f)); // limit the scale factor
+				_renderer.scaleModel(scaleFactor);
 				requestRender();
 				return true;
 				
@@ -49,17 +52,14 @@ class mGLSurfaceView extends GLSurfaceView {
 	        int action = MotionEventCompat.getActionMasked(event);
 	        
 	        if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_1_DOWN){
-	        	lastX = x;
-	        	lastY = y;
+	        	_renderer.startInteraction(x,y);
 	        }
 	        else if(action == MotionEvent.ACTION_MOVE){
-	        	float dx = x - lastX,
-	        			dy = y - lastY;
-	        	if(dx != 0 || dy != 0)
-	        		_renderer.rotate(dy, dx, 0);
+	        	_renderer.rotateModel(x, y);
 	        	requestRender();
-	        	lastX = x;
-	        	lastY = y;
+	        }
+	        else if(action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_1_UP){
+	        	_renderer.endInteraction(x, y);
 	        }
 
 			return true;
@@ -72,12 +72,8 @@ class mGLSurfaceView extends GLSurfaceView {
 	}
 	
 	private class GestureListener implements OnGestureListener, OnDoubleTapListener{
-		//private View view;
-		public GestureListener(View view) {
-			//this.view = view;
-		}
 		public boolean onDown(MotionEvent e) {
-			// UNUSED Auto-generated method stub
+			_renderer.startInteraction(e.getX(),e.getY());
 			return true;
 		}
 
@@ -94,7 +90,7 @@ class mGLSurfaceView extends GLSurfaceView {
 
 		public boolean onScroll(MotionEvent e1, MotionEvent e2,
 				float distanceX, float distanceY) {
-			_renderer.translate(-distanceX, distanceY, 0f);
+			_renderer.translateModel(e2.getX(), e2.getY());
 			requestRender();
 			return false;
 		}
@@ -113,10 +109,8 @@ class mGLSurfaceView extends GLSurfaceView {
 			return false;
 		}
 		public boolean onDoubleTapEvent(MotionEvent e) {
-			_renderer.translate(0f, 0f, 0f);
 			scaleFactor = 1f;
-			_renderer.scale(scaleFactor, scaleFactor, scaleFactor);
-			_renderer.rotate(0, 0, 0);
+			_renderer.resetModelPosition();
 			requestRender();
 			return false;
 		}
@@ -128,6 +122,6 @@ class mGLSurfaceView extends GLSurfaceView {
 	}
 	public void resetScale(){
 		scaleFactor = 1f;
-		_renderer.scale(scaleFactor, scaleFactor, scaleFactor);
+		_renderer.scaleModel(scaleFactor);
 	}	
 }
