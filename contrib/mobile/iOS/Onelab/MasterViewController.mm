@@ -32,7 +32,6 @@
     runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
     [runButton setTitle:@"Run"]; // ?? do nothink ??
     self.navigationItem.leftBarButtonItem = runButton;
-    
 
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refreshObject:)];
     self.navigationItem.rightBarButtonItem = addButton;
@@ -157,6 +156,7 @@
                     }
                     else if([v isKindOfClass:UIPickerView.class]){
                         UIView *picker = (UISlider*)v;
+                        [(UIPickerView *)picker reloadAllComponents];
                         int index=0;
                         for(int i=0;i<number[0].getChoices().size();i++)
                             if(number[0].getChoices()[i] == number[0].getValue()){index = i; break;}
@@ -176,6 +176,7 @@
             if(string.size() > 0) {
                 UIView *picker = [self.tableView viewWithTag:(1000*i+n)];
                 if([picker isKindOfClass:UIPickerView.class]){
+                    [(UIPickerView *)picker reloadAllComponents];
                     int index = -1;
                     for(int i=0;i<string[0].getChoices().size();i++)
                         if(string[0].getChoices()[i] == string[0].getValue()){index = i; break;}
@@ -191,7 +192,7 @@
 
 - (void)runWithNewParameter
 {
-    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{ // TODO fix Run/Stop for iPhone
         [runButton setTitle:@"Stop"];
         [self refreshControl];
         [runButton setAction:@selector(stopRunning)];
@@ -201,6 +202,8 @@
         [runButton setAction:@selector(runWithNewParameter)];
         [self getAvailableParam];
     });
+    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+        [self.navigationController popViewControllerAnimated:YES];
 }
 
 - (void)stopRunning

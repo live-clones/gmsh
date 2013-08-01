@@ -39,7 +39,7 @@
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
 		9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
-		9CF1C1EA17AA39ED002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */; };
+		9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,7 +93,7 @@
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
 		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; };
 		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; };
-		9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
+		9CF1C1EC17AA6E7E002CD2E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -170,7 +170,7 @@
 				9CC85C011790286C00F241C4 /* files */,
 				9C95B7F51726C88E00C0CCE2 /* main.m */,
 				9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
-				9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */,
+				9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
@@ -288,7 +288,7 @@
 				9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */,
 				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
-				9CF1C1EA17AA39ED002CD2E3 /* iPhoneStoryboard.storyboard in Resources */,
+				9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,6 +373,14 @@
 				9C9608AB1712EF0900E1D4A0 /* en */,
 			);
 			name = iPadStoryboard.storyboard;
+			sourceTree = "<group>";
+		};
+		9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				9CF1C1EC17AA6E7E002CD2E3 /* en */,
+			);
+			name = iPhoneStoryboard.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

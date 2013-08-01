@@ -11,6 +11,7 @@
 #import "iosGModel.h"
 
 #import "ModelListController.h"
+#import "MasterViewController.h"
 
 @interface DetailViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
@@ -53,6 +54,15 @@
     [self configureView];
     scaleFactor = 1.;
     setObjCBridge((__bridge void*) self);
+    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+        UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
+        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
+        UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
+        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
+        NSArray *btns = [[NSArray alloc] initWithObjects:settings, postpro, more, nil];
+    [self.navigationItem setLeftBarButtonItems:btns];
+    [self.navigationItem setRightBarButtonItem:model];
+    }
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
@@ -73,6 +83,7 @@
     glView->mContext->eventHandler(2,mScale);
     [glView drawView];
 }
+
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     UITouch *touch = [[event allTouches] anyObject];
@@ -107,6 +118,12 @@
     ModelListController *modelListController = [[ModelListController alloc] init];
     modelListController.glView = glView;
     [self.navigationController pushViewController:modelListController animated:true];
+}
+    
+- (void) showSettings
+{
+    MasterViewController *masterViewController = [[MasterViewController alloc] init];
+    [self.navigationController pushViewController:masterViewController animated:true];
 }
 
 - (void) showPostpro
@@ -223,6 +240,7 @@
 
 - (void)viewDidUnload
 {
+    [self setGlView:nil];
     [self setGlView:nil];
     [self setGlView:nil];
     [super viewDidUnload];
