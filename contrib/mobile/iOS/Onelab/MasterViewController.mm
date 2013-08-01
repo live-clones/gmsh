@@ -146,7 +146,6 @@
             onelab::server::instance()->get(number,[paramName UTF8String]);
             if(number.size() > 0){
                 UITableViewCell *cell = [self.tableView cellForRowAtIndexPath: [NSIndexPath indexPathForRow:n inSection:i]];
-                UISlider *slider;
                 for(UIView *v in cell.subviews)
                 {
                     if ([v isKindOfClass:UISlider.class]){

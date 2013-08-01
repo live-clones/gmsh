@@ -91,7 +91,6 @@
     NSUInteger ntouch = [[event allTouches] count];
     UITouch* touch = [touches anyObject];
     CGPoint position = [touch locationInView:self];
-    CGPoint lastPosition = [touch previousLocationInView:self];
     switch(ntouch)
     {
         case 1:

@@ -40,6 +40,7 @@
 		9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
 		9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */; };
+		9CF1C1EF17AA8997002CD2E3 /* Onelab-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -94,6 +95,8 @@
 		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; };
 		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; };
 		9CF1C1EC17AA6E7E002CD2E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
+		9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Onelab-Info.plist"; sourceTree = "<group>"; };
+		9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Onelab-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,7 +171,6 @@
 			isa = PBXGroup;
 			children = (
 				9CC85C011790286C00F241C4 /* files */,
-				9C95B7F51726C88E00C0CCE2 /* main.m */,
 				9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
 				9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
@@ -190,6 +192,7 @@
 				9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */,
 				9CEAECC517A91CD20014D229 /* ModelListController.h */,
 				9CEAECC617A91CD20014D229 /* ModelListController.mm */,
+				9CF1C1F017AA8A46002CD2E3 /* Supporting Files */,
 			);
 			path = Onelab;
 			sourceTree = "<group>";
@@ -209,6 +212,16 @@
 			children = (
 				9C9608631712C16400E1D4A0 /* OnelabTests-Info.plist */,
 				9C9608641712C16400E1D4A0 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		9CF1C1F017AA8A46002CD2E3 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */,
+				9C95B7F51726C88E00C0CCE2 /* main.m */,
+				9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -289,6 +302,7 @@
 				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */,
+				9CF1C1EF17AA8997002CD2E3 /* Onelab-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

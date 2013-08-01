@@ -68,7 +68,7 @@ drawContext::drawContext()
 }
 
 static void checkGlError(const char* op) {
-	for (GLint error = glGetError(); error; error	= glGetError())
+	for (GLint error = glGetError(); error; error = glGetError())
 		Msg::Error("%s: glError (0x%x)",op,error);
 }
 
@@ -158,8 +158,6 @@ void drawContext::OrthofFromGModel()
 {
 	SBoundingBox3d bb = GModel::current()->bounds();
 	double ratio = (double)(this->_width ? this->_width : 1.) / (double)(this->_height ? this->_height : 1.);
-	double modelh = bb.max().y() - bb.min().y(), modelw = bb.max().x() - bb.min().x();
-	double modelratio = (modelw ? modelw : 1.) / (modelh ? modelh : 1.);
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
 	xmin = bb.min().x();
 	xmax = bb.max().x();
@@ -322,7 +320,6 @@ void drawContext::drawVectorArray(PViewOptions *opt, VertexArray *va)
 void drawContext::drawPView(PView *p)
 {
 	PViewOptions *opt = p->getOptions();
-	PViewData *data = p->getData(true);
 	if(!opt->visible) return;
     
 	glPointSize((GLfloat)opt->pointSize);
@@ -487,7 +484,7 @@ void drawContext::drawGeom()
                (GLubyte)CTX::instance()->unpackGreen(col),
                (GLubyte)CTX::instance()->unpackBlue(col),
                (GLubyte)CTX::instance()->unpackAlpha(col));
-	glLineWidth(CTX::instance()->geom.lineWidth);
+	//glLineWidth((GLfloat)CTX::instance()->geom.lineWidth); OpenGL Error -> GL_INVALID_VALUE​, 0x0501
 	for(GModel::eiter it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); it++){
 		GEdge *e = *it;
 		int N = e->minimumDrawSegments() + 1;
@@ -496,7 +493,7 @@ void drawContext::drawGeom()
 		double t_max = t_bounds.high();
         
 		// Create a VA for this edge
-		GLfloat edge[N*3];
+		GLfloat *edge = (GLfloat *) malloc(N*3*sizeof(GLfloat));
         
 		for(unsigned int i=0; i < N; i++) {
 			double t = t_min + (double)i / (double)(N-1) * (t_max - t_min);
@@ -508,6 +505,7 @@ void drawContext::drawGeom()
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glDrawArrays(GL_LINE_STRIP, 0, N);
 		glDisableClientState(GL_VERTEX_ARRAY);
+        free(edge);
 	}
 	glLineWidth(1);
 }
@@ -601,11 +599,15 @@ void drawContext::drawView()
 	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
                    this->_bottom + (this->_top - this->_bottom)/15.0,
                     0, (this->_top - this->_bottom)/20.);
+    checkGlError("Draw axes");
 	this->drawPost();
+    checkGlError("Draw post-pro");
 	if(_showGeom) this->drawGeom();
+    checkGlError("Draw geometry");
 	if(_showMesh) this->drawMesh();
+    checkGlError("Draw mesh");
 	this->drawScale();
-	checkGlError("Draw model,post-pro,...");
+	checkGlError("Draw scales");
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)

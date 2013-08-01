@@ -219,17 +219,17 @@
 
 -(IBAction)PViewIntervalType:(id)sender
 {
-    if( [((UIButton *)sender) titleForState:UIControlStateNormal] == @"Use Iso-values")
+    if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Iso-values"])
     {
         [((UIButton *)sender) setTitle:@"Use Continous map" forState:UIControlStateNormal];
         PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 1;
     }
-    else if( [((UIButton *)sender) titleForState:UIControlStateNormal] == @"Use Continous map")
+    else if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Continous map"])
     {
         [((UIButton *)sender) setTitle:@"Use Filled iso-values" forState:UIControlStateNormal];
         PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 2;
     }
-    else if( [((UIButton *)sender) titleForState:UIControlStateNormal] == @"Use Filled iso-values")
+    else if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Filled iso-values"])
     {
         [((UIButton *)sender) setTitle:@"Use Iso-values" forState:UIControlStateNormal];
         PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 3;
@@ -240,8 +240,6 @@
 
 - (void)viewDidUnload
 {
-    [self setGlView:nil];
-    [self setGlView:nil];
     [self setGlView:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.

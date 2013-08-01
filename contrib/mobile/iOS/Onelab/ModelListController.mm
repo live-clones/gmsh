@@ -33,37 +33,23 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell;
-    //NSString *modelName = [models objectAtIndex:indexPath.row];
+    if(indexPath.row >= [models count])
+        return cell;
+    NSString *modelName = [models objectAtIndex:indexPath.row];
+    cell = [tableView dequeueReusableCellWithIdentifier:modelName];
+    if(cell != nil) return cell;
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:modelName];
     switch (indexPath.row) {
         case 0:
-            cell = [tableView dequeueReusableCellWithIdentifier:@"magnet"];
-            if(cell == nil)
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"magnet"];
-            else
-                return cell;
             [cell.textLabel setText:@"Magnet"];
             [cell.detailTextLabel setText:@"A simple magnet example"];
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            return cell;
             break;
         case 1:
-            cell = [tableView dequeueReusableCellWithIdentifier:@"pmsm"];
-            if(cell == nil)
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"pmsm"];
-            else
-                return cell;
             [cell.textLabel setText:@"Eight-pole permanent magnet synchronous machine"];
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-            return cell;
-            break;
-        default:
-            cell = [tableView dequeueReusableCellWithIdentifier:@"Default"];
-            if(cell == nil)
-                return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Default"];
-            else
-                return cell;
             break;
     }
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    return cell;
 }
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
