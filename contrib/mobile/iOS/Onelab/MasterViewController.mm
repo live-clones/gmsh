@@ -193,9 +193,11 @@
 {
     dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [runButton setTitle:@"Stop"];
+        [self refreshControl];
         [runButton setAction:@selector(stopRunning)];
         onelab_cb("compute");
         [runButton setTitle:@"Run"];
+        [self refreshControl];
         [runButton setAction:@selector(runWithNewParameter)];
         [self getAvailableParam];
     });

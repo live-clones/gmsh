@@ -1,6 +1,16 @@
 #include <string>
 
+#if !defined(BUILD_ANDROID)
+#define BUILD_IOS 1
+#endif
+
+#if defined(BUILD_IOS)
+#include "iosGModel.h"
+#endif
+
+#if defined(BUILD_ANDROID)
 #include "androidGModel.h"
+#endif
 
 class drawString
 {

@@ -8,6 +8,9 @@
 #import <QuartzCore/QuartzCore.h>
 
 #import "DetailViewController.h"
+#import "iosGModel.h"
+
+#import "ModelListController.h"
 
 @interface DetailViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
@@ -49,8 +52,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
     [self configureView];
     scaleFactor = 1.;
-    mIosGModel = new iosGModel((__bridge void*) self);
-    models = [NSArray arrayWithObjects:@"pmsm", @"magnet", nil];
+    setObjCBridge((__bridge void*) self);
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
@@ -102,29 +104,9 @@
 
 - (void) showModelsList
 {
-    
-    for(UIView *v in self.view.subviews)
-        if(v.tag ==-2)
-        {
-            [self hideModelsList];
-            return;
-        }
-    UITableView *modelsList = [[UITableView alloc] initWithFrame:CGRectMake(20,20,self.view.bounds.size.width-40,self.view.bounds.size.height - 2 * 40)];
-    [modelsList setBackgroundColor: [UIColor colorWithRed:0.6 green:0.6 blue:0.6 alpha:.75]];
-    [modelsList.layer setBorderWidth:1.];
-    [modelsList.layer setBorderColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1].CGColor];
-    modelsList.tag = -2;
-    [modelsList setDataSource:self];
-    [modelsList setDelegate:self];
-    [self.view addSubview:modelsList];
-    [self.view bringSubviewToFront:modelsList];
-}
-
-- (void) hideModelsList
-{
-    for(UIView *v in self.view.subviews)
-        if(v.tag == -2)
-            [v removeFromSuperview];
+    ModelListController *modelListController = [[ModelListController alloc] init];
+    modelListController.glView = glView;
+    [self.navigationController pushViewController:modelListController animated:true];
 }
 
 - (void) showPostpro
@@ -343,52 +325,49 @@ void messageFromCpp (void *self, std::string level, std::string msg)
         //[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
     else if(level == "Error")
-        ;//[(__bridge id)self showAlert:msg title:level];
+        [(__bridge id)self showAlert:msg title:level];
 }
-
-#pragma mark - tableView
-
--(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
-    return 1;
+    [(__bridge id)self getBitmapFromStringObjC:text withTextSize:textsize inMap:map inHeight:height inWidth:width inRealWidth:realWidth];
 }
-
--(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+-(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
 {
-    return [models count];
-}
+    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 25, textsize)];
+    [lbl setText:[NSString stringWithCString:text  encoding:[NSString defaultCStringEncoding]]];
+    [lbl setBackgroundColor:[UIColor clearColor]];
+    UIGraphicsBeginImageContextWithOptions(lbl.bounds.size, NO, 0.0);
+    [lbl.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
 
--(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    NSString *modelName = [models objectAtIndex:indexPath.row];
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:modelName];
-    if(cell == nil)
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:modelName];
-    else
-        return cell;
-    [cell.textLabel setText:modelName];
-    return cell;
-}
+    CGImageRef bitmap = [img CGImage];
+    *width = CGImageGetWidth(bitmap);
+    *realWidth = *width;
+    *height = CGImageGetHeight(bitmap);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    unsigned char *rawData = (unsigned char*) calloc(*height * *width * 4, sizeof(unsigned char));
+    *map = (unsigned char*) calloc(*height * *width, sizeof(unsigned char));
+    NSUInteger bytesPerPixel = 4;
+    NSUInteger bytesPerRow = bytesPerPixel * *width;
+    NSUInteger bitsPerComponent = 8;
+    CGContextRef context = CGBitmapContextCreate(rawData, *width, *height,
+                                                 bitsPerComponent, bytesPerRow, colorSpace,
+                                                 kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(colorSpace);
+    
+    CGContextDrawImage(context, CGRectMake(0, 0, *width, *height), bitmap);
+    CGContextRelease(context);
 
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
-{
-    return @"Select a model";
-}
+    // rawData contains the image data in the RGBA8888 pixel format.
+    for (int byteIndex = 0 ; byteIndex < *width * *height * 4 ; byteIndex+=4)
+        *(*map+byteIndex/4) = (rawData[byteIndex + 3] == 0x00)? 0x00 : 0xFF;
+    free(rawData);
 
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return 30;
+    /*for(int y=0;y<*height;y++){
+        for(int x=0;x<=*width;x++){
+            printf("%c", (*(*map+y**width+x) == 0x00)? ' ' : '#');
+        }
+        printf("\n");
+    }*/
 }
-
--(NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-     NSString *modelName = [models objectAtIndex:indexPath.row];
-     //NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-    [glView loadMsh:[NSString stringWithFormat:@"%@%@%@",@"/",modelName,@".geo"]];
-    //glView->mContext->load([[NSString stringWithFormat:@"%@%@%@%@",ressourcePath,@"/",modelName,@".geo"] UTF8String]);
-    [self hideModelsList];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
-    return indexPath;
-}
-
 @end

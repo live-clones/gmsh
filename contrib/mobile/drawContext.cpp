@@ -16,6 +16,7 @@
 #include <Gmsh/onelabUtils.h>
 #include <Gmsh/PView.h>
 #include <Gmsh/PViewOptions.h>
+#include <Gmsh/PViewData.h>
 #include <Gmsh/Context.h>
 #include <Gmsh/StringUtils.h>
 

@@ -13,7 +13,16 @@
 #include <string>
 
 #include "drawContext.h"
+
+static void * objc;
+
 void messageFromCpp (void *self, std::string level, std::string msg);
+void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth=NULL);
+//void getBitmapFromString(const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth=NULL);
+void getBitmapFromString(const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
+{
+    getBitmap(objc, text, textsize, map, height, width, realWidth);
+}
 
 class MobileMessage : GmshMessage
 {
@@ -27,18 +36,10 @@ public:
         messageFromCpp(_objcObject, level, message);
     }
 };
-
-class iosGModel
+void setObjCBridge(void *objcObject)
 {
-private:
-    void* _objcObject;
-public:
-    iosGModel(void* objcObject)
-    {
-        _objcObject = objcObject;
-        Msg::SetCallback((GmshMessage*)new MobileMessage(objcObject));
-    }
-    ~iosGModel(){}
-};
+    objc = objcObject;
+    Msg::SetCallback((GmshMessage*)new MobileMessage(objcObject));
+}
 
 #endif /* defined(__Onelab__iosGModel__) */

@@ -14,14 +14,10 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
 
-#import "iosGModel.h"
-
-@interface DetailViewController : UIViewController <UISplitViewControllerDelegate, UITextFieldDelegate, UIActionSheetDelegate, UITableViewDelegate, UITableViewDataSource>
+@interface DetailViewController : UIViewController <UISplitViewControllerDelegate, UITextFieldDelegate, UIActionSheetDelegate>
 {
     @private
     double scaleFactor;
-    iosGModel *mIosGModel;
-    NSArray *models;
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender;

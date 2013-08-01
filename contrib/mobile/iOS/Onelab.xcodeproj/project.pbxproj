@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645617A7C3DB00DEDAFC /* drawString.cpp */; };
 		9C95B7F61726C88E00C0CCE2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.m */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
 		9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083C1712C16300E1D4A0 /* Foundation.framework */; };
@@ -24,7 +25,7 @@
 		9C96089B1712C7BE00E1D4A0 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */; };
 		9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */; };
 		9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */; };
-		9C9608AC1712EF0900E1D4A0 /* MainStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */; };
+		9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */; };
 		9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */; };
 		9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C9F8BCE174B5A23004332C5 /* ic_launcher.png */; };
 		9CC85C021790286C00F241C4 /* files in Resources */ = {isa = PBXBuildFile; fileRef = 9CC85C011790286C00F241C4 /* files */; };
@@ -37,6 +38,8 @@
 		9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E03178AE6BE00A83B4B /* movePosition.h */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
 		9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
+		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
+		9CF1C1EA17AA39ED002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +53,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9C6A645617A7C3DB00DEDAFC /* drawString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawString.cpp; sourceTree = "<group>"; };
+		9C6A645717A7C3DB00DEDAFC /* drawString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawString.h; sourceTree = "<group>"; };
 		9C95B7F51726C88E00C0CCE2 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		9C9608361712C16300E1D4A0 /* Onelab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Onelab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C96083A1712C16300E1D4A0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -73,7 +78,7 @@
 		9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; };
-		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/MainStoryboard.storyboard; sourceTree = "<group>"; };
+		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPadStoryboard.storyboard; sourceTree = "<group>"; };
 		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; };
 		9C9F8BCC174B5A1B004332C5 /* ic_launcher_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher_retina.png; sourceTree = "<group>"; };
 		9C9F8BCE174B5A23004332C5 /* ic_launcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ic_launcher.png; sourceTree = "<group>"; };
@@ -86,6 +91,9 @@
 		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
 		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
+		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; };
+		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; };
+		9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,15 +169,18 @@
 			children = (
 				9CC85C011790286C00F241C4 /* files */,
 				9C95B7F51726C88E00C0CCE2 /* main.m */,
-				9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */,
+				9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
+				9CF1C1E917AA39ED002CD2E3 /* iPhoneStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
+				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
 				9CE08E02178AE6BE00A83B4B /* drawContext.h */,
+				9C6A645617A7C3DB00DEDAFC /* drawString.cpp */,
+				9C6A645717A7C3DB00DEDAFC /* drawString.h */,
 				9C99754C17390DEE0036EC24 /* iosGModel.h */,
 				9CE08E03178AE6BE00A83B4B /* movePosition.h */,
 				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE08E05178AE6BE00A83B4B /* Trackball.h */,
-				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9C96084F1712C16400E1D4A0 /* MasterViewController.h */,
 				9C9608501712C16400E1D4A0 /* MasterViewController.mm */,
 				9C9608521712C16400E1D4A0 /* DetailViewController.h */,
@@ -177,6 +188,8 @@
 				9C9608721712C47200E1D4A0 /* EAGLView.h */,
 				9C9608731712C47200E1D4A0 /* EAGLView.mm */,
 				9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */,
+				9CEAECC517A91CD20014D229 /* ModelListController.h */,
+				9CEAECC617A91CD20014D229 /* ModelListController.mm */,
 			);
 			path = Onelab;
 			sourceTree = "<group>";
@@ -271,10 +284,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9C9608AC1712EF0900E1D4A0 /* MainStoryboard.storyboard in Resources */,
+				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
 				9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */,
 				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
+				9CF1C1EA17AA39ED002CD2E3 /* iPhoneStoryboard.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +335,8 @@
 				9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */,
 				9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */,
 				9C95B7F61726C88E00C0CCE2 /* main.m in Sources */,
+				9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */,
+				9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,12 +367,12 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		9C9608AA1712EF0900E1D4A0 /* MainStoryboard.storyboard */ = {
+		9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
 				9C9608AB1712EF0900E1D4A0 /* en */,
 			);
-			name = MainStoryboard.storyboard;
+			name = iPadStoryboard.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -435,7 +451,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
@@ -462,7 +478,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
-				TARGETED_DEVICE_FAMILY = 2;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
