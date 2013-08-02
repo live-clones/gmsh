@@ -13,8 +13,6 @@
 }
 @end
 
-// TODO Get model list from "Documents"
-
 @implementation ModelListController
 -(void)viewDidLoad
 {
@@ -91,8 +89,7 @@
     NSXMLParser *parser;
     parser = [[NSXMLParser alloc] initWithData:xmlFile];
     [parser setDelegate:self];
-    
-    // You may need to turn some of these on depending on the type of XML file you are parsing
+
     [parser setShouldProcessNamespaces:NO];
     [parser setShouldReportNamespacePrefixes:NO];
     [parser setShouldResolveExternalEntities:NO];

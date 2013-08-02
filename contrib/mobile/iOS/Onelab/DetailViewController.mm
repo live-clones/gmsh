@@ -349,17 +349,20 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
 }
 -(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
 {
-    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 25, textsize)];
+    UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, textsize)];
     [lbl setText:[NSString stringWithCString:text  encoding:[NSString defaultCStringEncoding]]];
     [lbl setBackgroundColor:[UIColor clearColor]];
-    UIGraphicsBeginImageContextWithOptions(lbl.bounds.size, NO, 0.0);
+    CGSize lblSize = [[lbl text] sizeWithFont:[lbl font]];
+    *realWidth = lblSize.width;
+    int i;
+    for(i=2;i<*realWidth;i*=2); *width = i;
+    *height = lblSize.height;
+    for(i=2;i<*height;i*=2); *height = i;
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(*width, *height), NO, 0.0);
     [lbl.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
 
     CGImageRef bitmap = [img CGImage];
-    *width = CGImageGetWidth(bitmap);
-    *realWidth = *width;
-    *height = CGImageGetHeight(bitmap);
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     unsigned char *rawData = (unsigned char*) calloc(*height * *width * 4, sizeof(unsigned char));
     *map = (unsigned char*) calloc(*height * *width, sizeof(unsigned char));
@@ -378,12 +381,5 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
     for (int byteIndex = 0 ; byteIndex < *width * *height * 4 ; byteIndex+=4)
         *(*map+byteIndex/4) = (rawData[byteIndex + 3] == 0x00)? 0x00 : 0xFF;
     free(rawData);
-
-    /*for(int y=0;y<*height;y++){
-        for(int x=0;x<=*width;x++){
-            printf("%c", (*(*map+y**width+x) == 0x00)? ' ' : '#');
-        }
-        printf("\n");
-    }*/
 }
 @end
