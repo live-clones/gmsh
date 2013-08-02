@@ -43,8 +43,7 @@
             return nil;
         }
         [self copyRes];
-        //NSString *ressourcePath = [[NSBundle mainBundle] resourcePath];
-        NSString *startupModel = [docPath stringByAppendingPathComponent:@"pmsm.geo"];
+        NSString *startupModel = [docPath stringByAppendingPathComponent:@"pmsm/pmsm.geo"];
 
         mContext = new drawContext();
         mContext->load(*new std::string([startupModel fileSystemRepresentation]));
@@ -81,9 +80,7 @@
 }
 - (void)loadMsh:(NSString*) file
 {
-    NSString *msh = [docPath stringByAppendingPathComponent: file];
-    //mContext = new drawContext();
-    mContext->load(*new std::string([msh fileSystemRepresentation]));
+    mContext->load(*new std::string([file fileSystemRepresentation]));
     [self drawView];
 }
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event

@@ -11,10 +11,12 @@
 #import "AppDelegate.h"
 #import "EAGLView.h"
 
-@interface ModelListController : UITableViewController
+@interface ModelListController : UITableViewController <NSXMLParserDelegate>
 {
     @private
-    NSArray *models;
+    NSMutableArray *models, *modelsName, *modelsDescription;
+    NSString *currentElement;
+    NSMutableString *currentElementValue;
 }
 @property (nonatomic, retain) EAGLView *glView;
 @end
