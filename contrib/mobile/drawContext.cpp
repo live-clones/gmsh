@@ -438,7 +438,7 @@ void drawContext::drawScale()
 		free(vertex);
 		free(color);
 		char label[1024];
-		drawString *lbl = new drawString(p->getData()->getName().c_str(), 16);
+		drawString *lbl = new drawString(p->getData()->getName().c_str(), 20);
 		lbl->draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
 		drawString *val = new drawString(p->getData()->getName().c_str(), 14);
 		for(int i = 0; i < 3; i++) {

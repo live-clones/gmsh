@@ -63,6 +63,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Trackball.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/movePosition.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosGModel.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosGModel.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/

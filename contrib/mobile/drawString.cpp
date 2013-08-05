@@ -28,7 +28,6 @@ void drawString::setText(std::string text)
 {
 	this->_text = text;
 	getBitmapFromString(this->_text.c_str(), _size, &this->_map, &this->_height, &this->_width, &this->_realWidth);
-    //printf("\n%s\n", _text.c_str());for(int i=0; i<_height*_width;i++) printf("0x%x ", _map[i]);printf("\n");
 }
 
 void drawString::setColor(float color[4])
@@ -73,14 +72,14 @@ void drawString::draw(float x, float y, float z, float w, float h, bool center)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnableClientState(GL_VERTEX_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 0, texture);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, vertex);
-	glTexCoordPointer(2, GL_FLOAT, 0, texture);
+	glEnableClientState(GL_VERTEX_ARRAY);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
 	glDeleteTextures(1, &textureId);
 }

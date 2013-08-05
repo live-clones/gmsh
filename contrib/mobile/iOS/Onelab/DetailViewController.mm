@@ -341,7 +341,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
         //[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
     else if(level == "Error")
-        [(__bridge id)self showAlert:msg title:level];
+        ;//[(__bridge id)self showAlert:msg title:level];
 }
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
@@ -350,6 +350,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
 -(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
 {
     UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, textsize)];
+    lbl.font = [UIFont systemFontOfSize:textsize];
     [lbl setText:[NSString stringWithCString:text  encoding:[NSString defaultCStringEncoding]]];
     [lbl setBackgroundColor:[UIColor clearColor]];
     CGSize lblSize = [[lbl text] sizeWithFont:[lbl font]];
@@ -379,7 +380,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
 
     // rawData contains the image data in the RGBA8888 pixel format.
     for (int byteIndex = 0 ; byteIndex < *width * *height * 4 ; byteIndex+=4)
-        *(*map+byteIndex/4) = (rawData[byteIndex + 3] == 0x00)? 0x00 : 0xFF;
+        *(*map+byteIndex/4) = rawData[byteIndex + 3];
     free(rawData);
 }
 @end

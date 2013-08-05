@@ -30,7 +30,7 @@
 	// Do any additional setup after loading the view, typically from a nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshObject:) name:@"refreshParameters" object:nil];
     runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
-    [runButton setTitle:@"Run"]; // ?? do nothink ??
+    [runButton setTitle:@"Run"];
     self.navigationItem.leftBarButtonItem = runButton;
 
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(refreshObject:)];

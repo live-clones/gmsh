@@ -38,6 +38,7 @@
 		9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E03178AE6BE00A83B4B /* movePosition.h */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
 		9CE08E18178AEC5F00A83B4B /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
+		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
 		9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */; };
 		9CF1C1EF17AA8997002CD2E3 /* Onelab-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */; };
@@ -92,6 +93,7 @@
 		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
 		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
+		9CEAE86D17AF824B00813524 /* iosGModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosGModel.cpp; sourceTree = "<group>"; };
 		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; };
 		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; };
 		9CF1C1EC17AA6E7E002CD2E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
@@ -175,14 +177,15 @@
 				9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
-				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
-				9CE08E02178AE6BE00A83B4B /* drawContext.h */,
-				9C6A645617A7C3DB00DEDAFC /* drawString.cpp */,
-				9C6A645717A7C3DB00DEDAFC /* drawString.h */,
 				9C99754C17390DEE0036EC24 /* iosGModel.h */,
+				9CEAE86D17AF824B00813524 /* iosGModel.cpp */,
+				9CE08E02178AE6BE00A83B4B /* drawContext.h */,
+				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
+				9C6A645717A7C3DB00DEDAFC /* drawString.h */,
+				9C6A645617A7C3DB00DEDAFC /* drawString.cpp */,
 				9CE08E03178AE6BE00A83B4B /* movePosition.h */,
-				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE08E05178AE6BE00A83B4B /* Trackball.h */,
+				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9C96084F1712C16400E1D4A0 /* MasterViewController.h */,
 				9C9608501712C16400E1D4A0 /* MasterViewController.mm */,
 				9C9608521712C16400E1D4A0 /* DetailViewController.h */,
@@ -351,6 +354,7 @@
 				9C95B7F61726C88E00C0CCE2 /* main.m in Sources */,
 				9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */,
 				9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */,
+				9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -468,6 +472,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -496,6 +501,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
