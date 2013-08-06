@@ -86,7 +86,7 @@ void drawContext::load(std::string filename)
 	// run getdp witout parameter
 	onelab_cb("check");
     
-	// to allow the firs run
+	// to allow the first run
 	onelab::server::instance()->setChanged(true, "Gmsh");
 	onelab::server::instance()->setChanged(true, "GetDP");
 }
@@ -487,7 +487,7 @@ void drawContext::drawGeom()
 	//glLineWidth((GLfloat)CTX::instance()->geom.lineWidth); OpenGL Error -> GL_INVALID_VALUE​, 0x0501
 	for(GModel::eiter it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); it++){
 		GEdge *e = *it;
-		int N = e->minimumDrawSegments() + 1;
+		int N = e->minimumDrawSegments() + 1; // e is sometime incorrect (e.g. 0x0000004f) when compute
 		Range<double> t_bounds = e->parBounds(0);
 		double t_min = t_bounds.low();
 		double t_max = t_bounds.high();
@@ -591,8 +591,6 @@ void drawContext::drawView()
 	glTranslatef(_translate[0], _translate[1], _translate[2]);
 	this->buildRotationMatrix();
 	glMultMatrixf(_rotatef);
-	//glTranslatef(this->_translate[0]/this->_height,this->_translate[1]/this->_width,0);
-	//glScalef(this->_scale[0], this->_scale[1], this->_scale[2]);
 	checkGlError("Initialize position");
 
 	//

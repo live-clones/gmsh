@@ -9,8 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <Gmsh/onelab.h>
 
-#import "AppDelegate.h"
-
 @class DetailViewController;
 
 @interface MasterViewController : UITableViewController <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>

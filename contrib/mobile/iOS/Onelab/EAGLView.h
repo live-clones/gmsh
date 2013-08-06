@@ -26,6 +26,7 @@
 	GLuint depthRenderbuffer;
     
     NSString *docPath;
+    BOOL rendering;
 @public
 	/* our GModel drawing class */
     drawContext *mContext;
@@ -33,6 +34,6 @@
 
 - (void)drawView;
 
-- (void)loadMsh:(NSString*) file;
+- (void)load:(NSString*) file;
 
 @end

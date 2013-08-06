@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-#import "AppDelegate.h"
 #import "EAGLView.h"
 
 @interface ModelListController : UITableViewController <NSXMLParserDelegate>

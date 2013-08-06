@@ -6,7 +6,10 @@
 //  Copyright (c) 2013 Maxime Graulich. All rights reserved.
 //
 
+#import "AppDelegate.h"
 #import "ModelListController.h"
+
+#import "Utils.h"
 
 @interface ModelListController () {
     
@@ -19,9 +22,9 @@
     models = [[NSMutableArray alloc] init];
     modelsName = [[NSMutableArray alloc] init];
     modelsDescription = [[NSMutableArray alloc] init];
-    NSString *docsPath = [ModelListController getApplicationDocumentsDirectory];
+    NSString *docsPath = [Utils getApplicationDocumentsDirectory];
     
-    
+    [Utils copyRes];
     NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
     for(NSString* doc in docs){
         NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];
@@ -72,16 +75,21 @@
 }
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSString *modelName = [models objectAtIndex:indexPath.row];
-    [_glView loadMsh:[NSString stringWithFormat:@"%@/%@/%@.geo",[ModelListController getApplicationDocumentsDirectory],modelName,modelName]];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
-    [self.navigationController popViewControllerAnimated:YES];
-}
-+ (NSString *) getApplicationDocumentsDirectory
-{
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *basePath = ([paths count] > 0) ? [paths objectAtIndex:0] : nil;
-    return basePath;
+    if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        appDelegate.splitViewController.initialModel = [NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[models objectAtIndex:indexPath.row], [models objectAtIndex:indexPath.row]];
+        [UIView transitionWithView:appDelegate.window
+                          duration:0.5
+                           options:UIViewAnimationOptionTransitionFlipFromLeft
+                        animations:^{ appDelegate.window.rootViewController = appDelegate.splitViewController; }
+                        completion:nil];
+    }
+    else
+    {
+        DetailViewController *detailVIewController = [[DetailViewController alloc] init];
+        [detailVIewController.glView load:[NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[modelsName objectAtIndex:indexPath.row], [modelsName objectAtIndex:indexPath.row]]];
+        [self.navigationController pushViewController:detailVIewController animated:YES];
+    }
 }
 - (BOOL) parseInfosFile:(NSString *)file
 {

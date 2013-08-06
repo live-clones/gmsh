@@ -42,32 +42,16 @@
             //[self release];
             return nil;
         }
-        [self copyRes];
-        NSString *startupModel = [docPath stringByAppendingPathComponent:@"pmsm/pmsm.geo"];
-
         mContext = new drawContext();
-        mContext->load(*new std::string([startupModel fileSystemRepresentation]));
     }
+    rendering = NO;
     return self;
-}
-
-- (void) copyRes
-{
-    NSString *resPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"files"];
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    docPath = [paths objectAtIndex:0]; //Get the docs directory
-    
-    NSArray *resContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resPath error:NULL];
-    
-    for (NSString* obj in resContents){
-        NSError* error;
-        if (![[NSFileManager defaultManager] copyItemAtPath:[resPath stringByAppendingPathComponent:obj] toPath:[docPath stringByAppendingPathComponent:obj] error:&error])
-            NSLog(@"Error: %@", error);;
-    }
 }
 
 - (void)drawView
 {
+    if(rendering) return;
+    rendering = YES;
     [EAGLContext setCurrentContext:context];
     
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
@@ -77,11 +61,13 @@
     
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context presentRenderbuffer:GL_RENDERBUFFER_OES];
+    rendering = NO;
 }
-- (void)loadMsh:(NSString*) file
+- (void)load:(NSString*) file
 {
     mContext->load(*new std::string([file fileSystemRepresentation]));
     [self drawView];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
 }
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {

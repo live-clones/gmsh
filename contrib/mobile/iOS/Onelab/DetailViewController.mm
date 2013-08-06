@@ -10,8 +10,7 @@
 #import "DetailViewController.h"
 #import "iosGModel.h"
 
-#import "ModelListController.h"
-#import "MasterViewController.h"
+#import "AppDelegate.h"
 
 @interface DetailViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
@@ -60,8 +59,16 @@
         UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
         UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
         NSArray *btns = [[NSArray alloc] initWithObjects:settings, postpro, more, nil];
-    [self.navigationItem setLeftBarButtonItems:btns];
-    [self.navigationItem setRightBarButtonItem:model];
+        [self.navigationController.navigationItem setLeftBarButtonItems:btns];
+        [self.navigationController.navigationItem setRightBarButtonItem:model];
+    }
+    else {
+        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
+        UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
+        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
+        NSArray *btns = [[NSArray alloc] initWithObjects:postpro, more, nil];
+        self.navigationItem.rightBarButtonItem = model;
+        self.navigationItem.leftBarButtonItems = btns;
     }
 }
 
@@ -115,9 +122,15 @@
 
 - (void) showModelsList
 {
-    ModelListController *modelListController = [[ModelListController alloc] init];
-    modelListController.glView = glView;
-    [self.navigationController pushViewController:modelListController animated:true];
+    if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        [UIView transitionWithView:appDelegate.window
+                          duration:0.5
+                           options:UIViewAnimationOptionTransitionFlipFromRight
+                        animations:^{ appDelegate.window.rootViewController = appDelegate.modelListController; }
+                        completion:nil];
+    }
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
     
 - (void) showSettings
@@ -264,8 +277,8 @@
     UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
     UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
     NSArray *btns = [[NSArray alloc] initWithObjects:barButtonItem, postpro, more, nil];
-    [self.navigationItem setLeftBarButtonItems:btns];
-    [self.navigationItem setRightBarButtonItem:model];
+    [self.navigationController.navigationItem setLeftBarButtonItems:btns];
+    [self.navigationController.navigationItem setRightBarButtonItem:model];
     self.masterPopoverController = popoverController;
 }
 

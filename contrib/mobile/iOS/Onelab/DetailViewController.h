@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "EAGLView.h"
-#import "AppDelegate.h"
 
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
