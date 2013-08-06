@@ -26,7 +26,6 @@
 {
     if (_detailItem != newDetailItem) {
         _detailItem = newDetailItem;
-        
         // Update the view.
         [self configureView];
     }
@@ -39,17 +38,20 @@
 - (void)configureView
 {
     // Update the user interface for the detail item.
-
     if (self.detailItem) {
         self.detailDescriptionLabel.text = [self.detailItem description];
     }
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    if(self.initialModel != nil) [self.glView load:self.initialModel];
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
     [self configureView];
     scaleFactor = 1.;
     setObjCBridge((__bridge void*) self);
@@ -59,16 +61,16 @@
         UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
         UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
         NSArray *btns = [[NSArray alloc] initWithObjects:settings, postpro, more, nil];
-        [self.navigationController.navigationItem setLeftBarButtonItems:btns];
-        [self.navigationController.navigationItem setRightBarButtonItem:model];
+        [self.navigationItem setLeftBarButtonItems:btns];
+        [self.navigationItem setRightBarButtonItem:model];
     }
     else {
+        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
         UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
         UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
-        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
         NSArray *btns = [[NSArray alloc] initWithObjects:postpro, more, nil];
-        self.navigationItem.rightBarButtonItem = model;
-        self.navigationItem.leftBarButtonItems = btns;
+        [self.navigationItem setLeftBarButtonItem:model];
+        [self.navigationItem setRightBarButtonItems:btns];
     }
 }
 
@@ -335,14 +337,13 @@
     else if([text isEqualToString:@"Show geometry"])
         glView->mContext->showGeom();
     else if([text isEqualToString:@"Set X view"]){
-        /*glView->mContext->setRotation(0, 0, 0);
-        glView->mContext->setRotation(90, 0, 0);*/
+        glView->mContext->eventHandler(5);
     }
     else if([text isEqualToString:@"Set Y view"]){
-        //glView->mContext->setRotation(0, 90, 0);
+        glView->mContext->eventHandler(6);
     }
     else if([text isEqualToString:@"Set Z view"]){
-        //glView->mContext->setRotation(0, 0, 0);
+        glView->mContext->eventHandler(7);
     }
     [glView drawView];
 }
