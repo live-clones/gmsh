@@ -35,21 +35,12 @@
 		9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E01178AE6BE00A83B4B /* drawContext.cpp */; };
 		9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E03178AE6BE00A83B4B /* movePosition.h */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
+		9CE18C2017B27EDB009BA06E /* parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* parameter.mm */; };
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
+		9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */; };
 		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
-		9CEAE86F17AFCFCB00813524 /* AppDelegate.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608491712C16300E1D4A0 /* AppDelegate.h */; };
-		9CEAE87017AFCFCB00813524 /* iosGModel.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C99754C17390DEE0036EC24 /* iosGModel.h */; };
-		9CEAE87117AFCFCB00813524 /* drawContext.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E02178AE6BE00A83B4B /* drawContext.h */; };
-		9CEAE87217AFCFCB00813524 /* drawString.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645717A7C3DB00DEDAFC /* drawString.h */; };
-		9CEAE87317AFCFCB00813524 /* Trackball.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E05178AE6BE00A83B4B /* Trackball.h */; };
-		9CEAE87417AFCFCB00813524 /* MasterViewController.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C96084F1712C16400E1D4A0 /* MasterViewController.h */; };
-		9CEAE87517AFCFCB00813524 /* DetailViewController.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608521712C16400E1D4A0 /* DetailViewController.h */; };
-		9CEAE87617AFCFCB00813524 /* EAGLView.h in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608721712C47200E1D4A0 /* EAGLView.h */; };
-		9CEAE87717AFCFCB00813524 /* ModelListController.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC517A91CD20014D229 /* ModelListController.h */; };
 		9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
-		9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */; };
-		9CF1C1EF17AA8997002CD2E3 /* Onelab-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,14 +92,16 @@
 		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
 		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
+		9CE18C1E17B27EDB009BA06E /* parameter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parameter.h; sourceTree = "<group>"; };
+		9CE18C1F17B27EDB009BA06E /* parameter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parameter.mm; sourceTree = "<group>"; };
 		9CE1A65517B0F39C00E5152F /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 		9CE1A65617B0F39D00E5152F /* Utils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Utils.mm; sourceTree = "<group>"; };
+		9CE1A65917B0FB9700E5152F /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
 		9CEAE86D17AF824B00813524 /* iosGModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosGModel.cpp; sourceTree = "<group>"; };
 		9CEAE87B17AFD5BB00813524 /* SplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitViewController.h; sourceTree = "<group>"; };
 		9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SplitViewController.mm; sourceTree = "<group>"; };
 		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; };
 		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; };
-		9CF1C1EC17AA6E7E002CD2E3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneStoryboard.storyboard; sourceTree = "<group>"; };
 		9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Onelab-Info.plist"; sourceTree = "<group>"; };
 		9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Onelab-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -186,7 +179,7 @@
 			children = (
 				9CC85C011790286C00F241C4 /* files */,
 				9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */,
-				9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */,
+				9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
 				9C99754C17390DEE0036EC24 /* iosGModel.h */,
@@ -200,6 +193,8 @@
 				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE1A65517B0F39C00E5152F /* Utils.h */,
 				9CE1A65617B0F39D00E5152F /* Utils.mm */,
+				9CE18C1E17B27EDB009BA06E /* parameter.h */,
+				9CE18C1F17B27EDB009BA06E /* parameter.mm */,
 				9C96084F1712C16400E1D4A0 /* MasterViewController.h */,
 				9C9608501712C16400E1D4A0 /* MasterViewController.mm */,
 				9C9608521712C16400E1D4A0 /* DetailViewController.h */,
@@ -290,7 +285,7 @@
 		9C96082D1712C16300E1D4A0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0440;
+				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Maxime Graulich";
 			};
 			buildConfigurationList = 9C9608301712C16300E1D4A0 /* Build configuration list for PBXProject "Onelab" */;
@@ -320,8 +315,7 @@
 				9C9F8BCD174B5A1B004332C5 /* ic_launcher_retina.png in Resources */,
 				9C9F8BCF174B5A23004332C5 /* ic_launcher.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
-				9CF1C1ED17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard in Resources */,
-				9CF1C1EF17AA8997002CD2E3 /* Onelab-Info.plist in Resources */,
+				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,15 +350,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9CEAE86F17AFCFCB00813524 /* AppDelegate.h in Sources */,
-				9CEAE87017AFCFCB00813524 /* iosGModel.h in Sources */,
-				9CEAE87117AFCFCB00813524 /* drawContext.h in Sources */,
-				9CEAE87217AFCFCB00813524 /* drawString.h in Sources */,
-				9CEAE87317AFCFCB00813524 /* Trackball.h in Sources */,
-				9CEAE87417AFCFCB00813524 /* MasterViewController.h in Sources */,
-				9CEAE87517AFCFCB00813524 /* DetailViewController.h in Sources */,
-				9CEAE87617AFCFCB00813524 /* EAGLView.h in Sources */,
-				9CEAE87717AFCFCB00813524 /* ModelListController.h in Sources */,
 				9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */,
 				9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */,
 				9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */,
@@ -379,6 +364,7 @@
 				9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */,
 				9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */,
 				9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */,
+				9CE18C2017B27EDB009BA06E /* parameter.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -417,12 +403,12 @@
 			name = iPadStoryboard.storyboard;
 			sourceTree = "<group>";
 		};
-		9CF1C1EB17AA6E7E002CD2E3 /* iPhoneStoryboard.storyboard */ = {
+		9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
-				9CF1C1EC17AA6E7E002CD2E3 /* en */,
+				9CE1A65917B0FB9700E5152F /* en */,
 			);
-			name = iPhoneStoryboard.storyboard;
+			name = iPhoneiPodStoryboard.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -435,6 +421,9 @@
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
@@ -463,6 +452,9 @@
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
@@ -483,7 +475,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_OBJCPP_ARC_ABI = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -512,7 +503,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_OBJCPP_ARC_ABI = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
