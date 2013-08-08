@@ -55,6 +55,7 @@
     [self configureView];
     scaleFactor = 1.;
     setObjCBridge((__bridge void*) self);
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
     if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
         UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
@@ -117,7 +118,7 @@
     sender.numberOfTapsRequired = 2;
     if(sender.state == UIGestureRecognizerStateEnded){
         scaleFactor = 1;
-        glView->mContext->eventHandler(5);
+        glView->mContext->eventHandler(10);
         [glView drawView];
     }
 }
@@ -352,7 +353,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 {
     if(level == "RequestRender"){
         [(__bridge id)self requestRender];
-        //[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
     else if(level == "Error")
         ;//[(__bridge id)self showAlert:msg title:level];

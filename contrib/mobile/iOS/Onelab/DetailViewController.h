@@ -27,4 +27,6 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;
 
+@property (nonatomic, retain) NSString *initialModel;
+
 @end

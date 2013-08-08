@@ -11,7 +11,7 @@
 
 @class DetailViewController;
 
-@interface MasterViewController : UITableViewController <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
+@interface MasterViewController : UITableViewController
 {
     @private
     NSMutableArray *_sections;
@@ -22,5 +22,7 @@
 }
 
 @property (strong, nonatomic) DetailViewController *detailViewController;
+
+- (void)resetParameters:(id)sender;
 
 @end
