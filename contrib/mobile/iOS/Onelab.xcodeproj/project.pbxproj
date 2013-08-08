@@ -33,7 +33,6 @@
 		9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* Gmsh.framework */; };
 		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
 		9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E01178AE6BE00A83B4B /* drawContext.cpp */; };
-		9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E03178AE6BE00A83B4B /* movePosition.h */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
 		9CE18C2017B27EDB009BA06E /* parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* parameter.mm */; };
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
@@ -351,7 +350,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */,
-				9CE08E16178AEC5F00A83B4B /* movePosition.h in Sources */,
 				9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */,
 				9C96084B1712C16400E1D4A0 /* AppDelegate.mm in Sources */,
 				9C9608511712C16400E1D4A0 /* MasterViewController.mm in Sources */,
@@ -479,9 +477,6 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../getdp-iOS\"",
-					"\"$(SRCROOT)/../../gmsh-iOS\"",
-					"\"$(SRCROOT)/../..\"",
 					"\"$(SRCROOT)/Onelab/frameworks\"",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
