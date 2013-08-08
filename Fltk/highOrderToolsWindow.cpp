@@ -28,6 +28,7 @@
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
 #include "OptHomElastic.h"
+#include "OptHomFastCurving.h"
 #endif
 
 static void change_completeness_cb(Fl_Widget *w, void *data)
@@ -75,25 +76,36 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
 static void chooseopti_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  int elastic = o->choice[2]->value();
+  const int algo = o->choice[2]->value();
 
-  if (elastic == 1){
-    o->choice[0]->deactivate();
-    o->choice[3]->deactivate();
-    for (int i=3;i<=6;i++)
-      o->value[i]->deactivate();
-    for (int i=9;i<=11;i++) o->value[i]->deactivate();
-    //   o->push[1]->deactivate();
-  }
-  else {
+  switch(algo) {
+  case 0: {                                           // Optimization
     o->push[0]->activate();
     o->choice[0]->activate();
     o->choice[3]->activate();
-    for (int i=3;i<=6;i++)
-      o->value[i]->activate();
-    for (int i=9;i<=11;i++) o->value[i]->activate();
+    for (int i=2;i<=11;i++) o->value[i]->activate();
     //    o->push[1]->activate();
+    break;
   }
+  case 1: {                                           // Elastic analogy
+    o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
+    for (int i=2;i<=11;i++) o->value[i]->deactivate();
+    //   o->push[1]->deactivate();
+    break;
+  }
+  case 2: {                                           // Fast curving
+    o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
+    for (int i=2;i<=6;i++)
+      o->value[i]->deactivate();
+    for (int i=9;i<=11;i++) o->value[i]->deactivate();
+    for (int i=7;i<=8;i++) o->value[i]->activate();
+    //   o->push[1]->deactivate();
+    break;
+  }
+  }
+
 }
 
 static void chooseopti_strategy(Fl_Widget *w, void *data)
@@ -110,17 +122,15 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   if(o->butt[3]->value())
     FlGui::instance()->graph[0]->showMessages();
 
-  bool elastic = o->choice[2]->value() == 1;
+  const int algo = o->choice[2]->value();
   double threshold_min = o->value[1]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
   int nbLayers = (int) o->value[2]->value();
   double threshold_max = o->value[8]->value();
 
 #if defined(HAVE_OPTHOM)
-  if(elastic){
-    ElasticAnalogy(GModel::current(), threshold_min, onlyVisible);
-  }
-  else{
+  switch(algo) {
+  case 0: {                                                               // Optimization
     OptHomParameters p;
     p.nbLayers = nbLayers;
     p.BARRIER_MIN = threshold_min;
@@ -138,6 +148,22 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     HighOrderMeshOptimizer(GModel::current(), p);
+    break;
+  }
+  case 1: {                                                               // Elastic analogy
+    ElasticAnalogy(GModel::current(), threshold_min, onlyVisible);
+    break;
+  }
+  case 2: {                                                               // Fast curving
+    FastCurvingParameters p;
+    p.BARRIER_MIN = threshold_min;
+    p.BARRIER_MAX = threshold_max;
+    p.onlyVisible = onlyVisible;
+    p.dim = GModel::current()->getDim();
+    p.distanceFactor =  o->value[7]->value();
+    HighOrderMeshFastCurving(GModel::current(), p);
+    break;
+  }
   }
 #else
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
@@ -276,7 +302,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   static Fl_Menu_Item menu_method[] = {
     {"Optimization", 0, 0, 0},
-    {"ElasticAnalogy", 0, 0, 0},
+    {"Elastic Analogy", 0, 0, 0},
+    {"Fast Curving", 0, 0, 0},
     {0}
   };
 

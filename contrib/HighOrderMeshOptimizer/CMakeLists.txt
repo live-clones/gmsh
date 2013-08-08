@@ -8,7 +8,9 @@ set(SRC
   OptHOM.cpp 
   OptHomRun.cpp 
   ParamCoord.cpp 
+  SuperEl.cpp 
   OptHomElastic.cpp
+  OptHomFastCurving.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hpp)
