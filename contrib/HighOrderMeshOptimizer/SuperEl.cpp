@@ -146,7 +146,7 @@ void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector
   const int Nv = prismBasis->getNumShapeFunctions();                        // Number of vertices in HO prism
 
   // Store/create all vertices for super-element
-  if (badEl->getTypeForMSH() == MSH_PRI_18) {
+  if (p == 2) {
     _superVert.resize(18);
     _superVert[0] = v0;                                                     // First-order vertices
     _superVert[1] = v1;
@@ -167,7 +167,7 @@ void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector
     _superEl = new MPrism18(_superVert);
   }
   else {
-    std::cout << "ERROR: Type of prism not supported for bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Prismatic superEl. of order " << p << " not supported for bad. el. " << badEl->getNum() << "\n";
     _superEl = 0;
     _superEl0 = 0;
     return;
@@ -212,7 +212,7 @@ void SuperEl::createSuperElHex(MElement *badEl, double dist, const std::vector<M
   const int Nv = prismBasis->getNumShapeFunctions();                         // Number of vertices in HO hex
 
   // Store/create all vertices for super-element
-  if (badEl->getTypeForMSH() == MSH_HEX_27) {
+  if (p == 2) {
     _superVert.resize(27);
     _superVert[0] = v0;                                                      // First-order vertices
     _superVert[1] = v1;
@@ -237,7 +237,7 @@ void SuperEl::createSuperElHex(MElement *badEl, double dist, const std::vector<M
     _superEl = new MHexahedron27(_superVert);
   }
   else {
-    std::cout << "ERROR: Type of prism not supported for bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Hex. superEl. of order " << p << " not supported for bad. el. " << badEl->getNum() << "\n";
     _superEl = 0;
     _superEl0 = 0;
     return;
@@ -274,30 +274,6 @@ bool SuperEl::straightToCurved(double *xyzS, double *xyzC) const {
   return true;
 
 }
-
-
-
-//std::string SuperEl::printPOS() {
-//
-//  std::vector<MVertex*> verts;
-//  _superEl0->getVertices(verts);
-//  std::string posStr(_superEl0->getStringForPOS());
-//  int n = _superEl0->getNumVertices();
-//
-//  std::ostringstream oss;
-//
-//  oss << posStr << "(";
-//  for(int i = 0; i < n; i++){
-//    if(i) oss << ",";
-//    oss << _superVert[i]->x() << "," <<  _superVert[i]->y() << "," <<  _superVert[i]->z();
-//  }
-//  oss << "){0";
-//  for(int i = 0; i < n; i++) oss << ",0.";
-//  oss << "};\n";
-//
-//  return oss.str();
-//
-//}
 
 
 
