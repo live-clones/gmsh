@@ -8,6 +8,7 @@
 
 #import "MasterViewController.h"
 #import "DetailViewController.h"
+#import "AppDelegate.h"
 #import "parameter.h"
 
 @interface MasterViewController () {
@@ -30,8 +31,16 @@
 	// Do any additional setup after loading the view, typically from a nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshParameters:) name:@"refreshParameters" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetParameters:) name:@"resetParameters" object:nil];
-    runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
-    [runButton setTitle:@"Run"];
+    if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute){ // Only on iPhone/iPod
+        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Stop" style:UIBarButtonItemStyleBordered target:self action:@selector(stopRunning)];
+        [runButton setTitle:@"Stop"];
+        
+    }
+    else {
+        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
+        [runButton setTitle:@"Run"];
+    }
+    self.navigationItem.leftItemsSupplementBackButton = YES; // Only on iPhone/iPod
     self.navigationItem.leftBarButtonItem = runButton;
 
     UIBarButtonItem *refresh = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(resetParameters:)];
@@ -175,17 +184,21 @@
 
 - (void)runWithNewParameter
 {
-    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{ // TODO fix Run/Stop for iPhone
+    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        appDelegate->compute = YES;
         [runButton setTitle:@"Stop"];
         [self.view setNeedsDisplay];
         [runButton setAction:@selector(stopRunning)];
         self.navigationItem.rightBarButtonItem.enabled = NO;
         onelab_cb("compute");
-        [runButton setTitle:@"Run"];
-        [self.view setNeedsDisplay];
-        [runButton setAction:@selector(runWithNewParameter)];
-        self.navigationItem.rightBarButtonItem.enabled = YES;
-        //[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
+        if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+            [runButton setTitle:@"Run"];
+            [self.view setNeedsDisplay];
+            [runButton setAction:@selector(runWithNewParameter)];
+            self.navigationItem.rightBarButtonItem.enabled = YES;
+        }
+        appDelegate->compute = NO;
     });
     if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
         [self.navigationController popViewControllerAnimated:YES];
@@ -194,6 +207,10 @@
 - (void)stopRunning
 {
     onelab_cb("stop");
+    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+       ((AppDelegate *)[UIApplication sharedApplication].delegate)->compute = NO;
+        [self.navigationController popViewControllerAnimated:YES];
+    }
 }
 
 #pragma mark - Table View

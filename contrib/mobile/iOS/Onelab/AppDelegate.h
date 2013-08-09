@@ -12,6 +12,7 @@
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>{
     @public
+    bool compute;
 }
 
 @property (strong, nonatomic) UIWindow *window;

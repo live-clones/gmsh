@@ -125,6 +125,12 @@
 
 - (void) showModelsList
 {
+    if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
+        UIAlertView *alert;
+        alert = [[UIAlertView alloc] initWithTitle:@"Can't show the models list" message:@"The compute have to be finished before you can select an other model." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+        [alert show];
+        return;
+    }
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
         AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
         [UIView transitionWithView:appDelegate.window
