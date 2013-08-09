@@ -38,7 +38,7 @@
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UIMainStoryboardFile</key>
-	<string>iPhoneStoryboard</string>
+	<string>iPhoneiPodStoryboard</string>
 	<key>UIMainStoryboardFile~ipad</key>
 	<string>iPadStoryboard</string>
 	<key>UIRequiredDeviceCapabilities</key>

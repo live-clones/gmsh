@@ -11,11 +11,6 @@
 
 #import "Utils.h"
 
-@interface ModelListController () {
-    
-}
-@end
-
 @implementation ModelListController
 -(void)viewDidLoad
 {
@@ -75,9 +70,10 @@
 }
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+    selectedModel = [NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[models objectAtIndex:indexPath.row], [models objectAtIndex:indexPath.row]];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-        appDelegate.splitViewController.initialModel = [NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[models objectAtIndex:indexPath.row], [models objectAtIndex:indexPath.row]];
+        appDelegate.splitViewController.initialModel = selectedModel;
         [UIView transitionWithView:appDelegate.window
                           duration:0.5
                            options:UIViewAnimationOptionTransitionFlipFromLeft
@@ -86,9 +82,7 @@
     }
     else
     {
-        DetailViewController *detailVIewController = [[DetailViewController alloc] init];
-        [detailVIewController.glView load:[NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[modelsName objectAtIndex:indexPath.row], [modelsName objectAtIndex:indexPath.row]]];
-        [self.navigationController pushViewController:detailVIewController animated:YES];
+        [self performSegueWithIdentifier:@"showModelSegue" sender:self];
     }
 }
 - (BOOL) parseInfosFile:(NSString *)file
@@ -122,5 +116,13 @@
     else if([elementName isEqual:@"description"] && models.count > modelsDescription.count) [modelsDescription addObject:currentElementValue];
     //[currentElementValue release];
     currentElementValue = nil;
+}
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([[segue identifier] isEqualToString:@"showModelSegue"])
+    {
+        DetailViewController *detailViewControler = [segue destinationViewController];
+        detailViewControler.initialModel = selectedModel;
+    }
 }
 @end

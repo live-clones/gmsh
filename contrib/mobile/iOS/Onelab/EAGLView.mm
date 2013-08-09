@@ -55,7 +55,6 @@
     [EAGLContext setCurrentContext:context];
     
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
-    glViewport(0, 0, backingWidth, backingHeight); // need this ...??
     mContext->initView(backingWidth, backingHeight);
     mContext->drawView();
     
@@ -66,8 +65,8 @@
 - (void)load:(NSString*) file
 {
     mContext->load(*new std::string([file fileSystemRepresentation]));
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"resetParameters" object:nil];
     [self drawView];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
 }
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {

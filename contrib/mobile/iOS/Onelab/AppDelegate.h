@@ -16,7 +16,7 @@
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) UITableViewController *modelListController;
-@property (strong, nonatomic) SplitViewController *splitViewController;
+@property (strong, nonatomic) SplitViewController *splitViewController; // iPad
 
 @end
 

@@ -16,6 +16,7 @@
     NSMutableArray *models, *modelsName, *modelsDescription;
     NSString *currentElement;
     NSMutableString *currentElementValue;
+    NSString *selectedModel;
 }
 @property (nonatomic, retain) EAGLView *glView;
 @end

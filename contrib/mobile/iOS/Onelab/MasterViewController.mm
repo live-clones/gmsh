@@ -86,7 +86,10 @@
             {
                 NSMutableArray *section = [_sections objectAtIndex:j];
                 for(int k=0; k<[section count];k++)
-                    if([[(parameter*)[section objectAtIndex: k] getName] isEqualToString:name]){found = true; break;}
+                    if([[[section objectAtIndex: k] getName] isEqualToString:name]) {
+                        found = true;
+                        break;
+                    }
                 if(!found)
                     [self addParameterNumber:number[i] inSection:section];
                 found = true;
@@ -117,7 +120,10 @@
             {
                 NSMutableArray *section = [_sections objectAtIndex:j];
                 for(int k=0; k<[section count];k++)
-                    if([[(parameter*)[section objectAtIndex: k] getName] isEqualToString:name]){found = true; break;} // the parameters is already in the section
+                    if([[(parameter*)[section objectAtIndex: k] getName] isEqualToString:name]) {
+                        found = true;
+                        break;
+                    } // the parameters is already in the section
                 if(!found)
                     [self addParameterString:string[i] inSection:section];
                 found = true;

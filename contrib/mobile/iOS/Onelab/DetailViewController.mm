@@ -58,12 +58,12 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
     if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
-        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
+        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post-pro" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
         UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
-        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
+        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
         NSArray *btns = [[NSArray alloc] initWithObjects:settings, postpro, more, nil];
-        [self.navigationItem setLeftBarButtonItems:btns];
-        [self.navigationItem setRightBarButtonItem:model];
+        [self.navigationItem setLeftBarButtonItem:model];
+        [self.navigationItem setRightBarButtonItems:btns];
     }
     else {
         UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
@@ -138,8 +138,7 @@
     
 - (void) showSettings
 {
-    MasterViewController *masterViewController = [[MasterViewController alloc] init];
-    [self.navigationController pushViewController:masterViewController animated:true];
+    [self performSegueWithIdentifier:@"showSettingsSegue" sender:self];
 }
 
 - (void) showPostpro
