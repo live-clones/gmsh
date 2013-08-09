@@ -192,10 +192,10 @@ SPoint3 MElement::barycenter_infty () const
   return SPoint3(0.5*(xmin+xmax),0.5*(ymin+ymax),0.5*(zmin+zmax));
 }
 
-SPoint3 MElement::barycenter() const
+SPoint3 MElement::barycenter(bool primary) const
 {
   SPoint3 p(0., 0., 0.);
-  int n = getNumVertices();
+  int n = primary ? getNumPrimaryVertices() : getNumVertices();
   for(int i = 0; i < n; i++) {
     const MVertex *v = getVertex(i);
     p[0] += v->x();

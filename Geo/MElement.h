@@ -201,7 +201,7 @@ class MElement
   virtual double getOuterRadius(){ return 0.; }
 
   // compute the barycenter
-  virtual SPoint3 barycenter() const;
+  virtual SPoint3 barycenter(bool primary = false) const;
   virtual SPoint3 barycenterUVW() const;
   // compute the barycenter in infinity norm
   virtual SPoint3 barycenter_infty() const;
