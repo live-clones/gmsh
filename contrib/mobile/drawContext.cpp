@@ -62,8 +62,6 @@ drawContext::drawContext()
 	setQuaternion(0., 0., 0., 1.);
     
 	_fillMesh = false;
-	_showMesh = false;
-	_showGeom = true;
 	_gradiant = true;
 }
 
@@ -113,7 +111,7 @@ void drawContext::eventHandler(int event, float x, float y)
 		case 2: // fingers move (scale)
 			// in this case we don't care about previous and current position, x represent the scale
 			this->_scale[0] = this->_scale[1] = this->_scale[2] = x;
-			this->_start.recenter(this->_scale, this->_translate); // FIXME somethink change the value of win
+			this->_start.recenter(this->_scale, this->_translate);
 			break;
 		case 3: // fingers move (rotate)
 			this->addQuaternion((2. * this->_previous.win[0] - this->_width) / this->_width,
@@ -170,6 +168,7 @@ void drawContext::buildRotationMatrix()
 
 void drawContext::OrthofFromGModel()
 {
+	if(locked) return;
 	SBoundingBox3d bb = GModel::current()->bounds();
 	double ratio = (double)(this->_width ? this->_width : 1.) / (double)(this->_height ? this->_height : 1.);
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
@@ -611,13 +610,17 @@ void drawContext::drawView()
 	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
                    this->_bottom + (this->_top - this->_bottom)/15.0,
                     0, (this->_top - this->_bottom)/20.);
-    checkGlError("Draw axes");
+	checkGlError("Draw axes");
 	this->drawPost();
-    checkGlError("Draw post-pro");
-	if(_showGeom) this->drawGeom();
-    checkGlError("Draw geometry");
-	if(_showMesh) this->drawMesh();
-    checkGlError("Draw mesh");
+	checkGlError("Draw post-pro");
+	if(CTX::instance()->geom.draw){
+		this->drawGeom();
+		checkGlError("Draw geometry");
+	}
+	if(CTX::instance()->mesh.draw){
+		this->drawMesh();
+		checkGlError("Draw mesh");
+	}
 	this->drawScale();
 	checkGlError("Draw scales");
 }

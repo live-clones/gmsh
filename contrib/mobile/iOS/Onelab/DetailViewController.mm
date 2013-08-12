@@ -65,14 +65,14 @@
         [self.navigationItem setLeftBarButtonItem:model];
         [self.navigationItem setRightBarButtonItems:btns];
     }
-    else {
-        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
-        UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
-        NSArray *btns = [[NSArray alloc] initWithObjects:postpro, more, nil];
-        [self.navigationItem setLeftBarButtonItem:model];
-        [self.navigationItem setRightBarButtonItems:btns];
-    }
+	else
+	{
+		UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
+		UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
+		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
+		NSArray *btns = [[NSArray alloc] initWithObjects:model, postpro, more, nil];
+		[self.navigationItem setRightBarButtonItems:btns];
+	}
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
@@ -281,12 +281,7 @@
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
     barButtonItem.title = NSLocalizedString(@"Settings", @"Settings");
-    UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
-    UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
-    UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Load model" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-    NSArray *btns = [[NSArray alloc] initWithObjects:barButtonItem, postpro, more, nil];
-    [self.navigationController.navigationItem setLeftBarButtonItems:btns];
-    [self.navigationController.navigationItem setRightBarButtonItem:model];
+	[self.navigationItem setLeftBarButtonItem:barButtonItem];
     self.masterPopoverController = popoverController;
 }
 
@@ -327,7 +322,6 @@
                                 @"Set Y view",
                                 @"Set Z view",
                                 nil];
-    //[popupMore showFromBarButtonItem:sender animated:true];
     [popupMore showInView:self.view];
 }
 
@@ -361,7 +355,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
         [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
     else if(level == "Error")
-        ;//[(__bridge id)self showAlert:msg title:level];
+        [(__bridge id)self showAlert:msg title:level];
 }
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {

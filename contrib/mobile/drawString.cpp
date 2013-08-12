@@ -47,11 +47,9 @@ void drawString::setColor(float r, float g, float b, float a)
 }
 void drawString::draw(float x, float y, float z, float w, float h, bool center)
 {
-    // TODO fix on iOS
 	GLuint textureId;
 	glGenTextures(1, &textureId);
 	glBindTexture(GL_TEXTURE_2D, textureId);
-    //printf("\n%s\n", _text.c_str());for(int i=0; i<_height*_width;i++) printf("0x%x ", _map[i]);printf("\n");
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, _width, _height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, _map);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glColor4f(_color[0], _color[1], _color[2], _color[3]);

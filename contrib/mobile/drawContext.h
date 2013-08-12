@@ -1,6 +1,10 @@
 #ifndef _DRAW_GMODEL_H_
 #define _DRAW_GMODEL_H_
 
+#ifndef __cplusplus
+#error You need a Cpp compiler!
+#endif
+
 #if !defined(BUILD_ANDROID)
 #define BUILD_IOS 1
 #endif
@@ -27,8 +31,6 @@ private:
 	int _width, _height; // size of OpenGL context in pixel
 	float _left, _right, _top, _bottom; // value of "border"
 	bool _gradiant, // show the background gradiant
-	_showGeom, // show the Geometry
-	_showMesh, // show the Mesh
 	_fillMesh; // fill the Mesh
     
 	void OrthofFromGModel(void);
@@ -55,11 +57,11 @@ public:
 	void drawPost();
 	void drawScale();
 	void useGradiant(bool gradiant=true) {_gradiant = gradiant;}
-	void showGeom(bool show=true) {_showGeom = show;}
-	void showMesh(bool show=true) {_showMesh = show;}
+	void showGeom(bool show=true) {CTX::instance()->geom.draw = show;}
+	void showMesh(bool show=true) {CTX::instance()->mesh.draw = show;}
 	void fillMesh(bool show=true) {_fillMesh = show;}
-    bool isShowedMesh(){return _showMesh;}
-    bool isShowedGeom(){return _showGeom;}
+    bool isShowedMesh(){return CTX::instance()->mesh.draw;}
+    bool isShowedGeom(){return CTX::instance()->geom.draw;}
 };
 
 #endif

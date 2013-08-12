@@ -188,13 +188,13 @@
         AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
         appDelegate->compute = YES;
         [runButton setTitle:@"Stop"];
-        [self.view setNeedsDisplay];
+        [self.navigationController.view setNeedsDisplay];
         [runButton setAction:@selector(stopRunning)];
         self.navigationItem.rightBarButtonItem.enabled = NO;
         onelab_cb("compute");
         if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
             [runButton setTitle:@"Run"];
-            [self.view setNeedsDisplay];
+            [self.navigationController.view setNeedsDisplay];
             [runButton setAction:@selector(runWithNewParameter)];
             self.navigationItem.rightBarButtonItem.enabled = YES;
         }
@@ -207,10 +207,8 @@
 - (void)stopRunning
 {
     onelab_cb("stop");
-    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-       ((AppDelegate *)[UIApplication sharedApplication].delegate)->compute = NO;
+    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
         [self.navigationController popViewControllerAnimated:YES];
-    }
 }
 
 #pragma mark - Table View

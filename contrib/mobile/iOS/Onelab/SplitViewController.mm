@@ -13,19 +13,7 @@
 @end
 
 @implementation SplitViewController
-
--(void)viewDidAppear:(BOOL)animated
-{
-    //UINavigationController *left = [self.viewControllers objectAtIndex:0]; // left UINavigationController (Master)
-    UINavigationController *right = [self.viewControllers objectAtIndex:1]; // right UINavigationController (Detail)
-    for(UIViewController *v in right.viewControllers){
-        if ([v isKindOfClass:[DetailViewController class]]) {
-            detailViewController = (DetailViewController *)v;
-        }
-    }
-    if(self.initialModel != nil) [detailViewController.glView load:self.initialModel];
-}
-
+	 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
@@ -39,6 +27,24 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
+	UINavigationController *right = [self.viewControllers objectAtIndex:1]; // right UINavigationController (Detail)
+    for(UIViewController *v in right.viewControllers){
+        if ([v isKindOfClass:[DetailViewController class]]) {
+            detailViewController = (DetailViewController *)v;
+        }
+    }
+    /*UINavigationController *left = [self.viewControllers objectAtIndex:0]; // left UINavigationController (Master)
+	 for(UIViewController *v in left.viewControllers){
+	 if ([v isKindOfClass:[MasterViewController class]]) {
+	 masterViewController = (MasterViewController *)v;
+	 }
+	 }*/
+	self.delegate = detailViewController;
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+	if(self.initialModel != nil) [detailViewController.glView load:self.initialModel];
 }
 
 - (void)didReceiveMemoryWarning
