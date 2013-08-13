@@ -9,11 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "EAGLView.h"
 
-#include <gmsh/PView.h>
-#include <gmsh/PViewData.h>
-#include <gmsh/PViewOptions.h>
-
-@interface DetailViewController : UIViewController <UISplitViewControllerDelegate, UITextFieldDelegate, UIActionSheetDelegate>
+@interface DetailViewController : UIViewController <UISplitViewControllerDelegate, UIActionSheetDelegate>
 {
     @private
     double scaleFactor;

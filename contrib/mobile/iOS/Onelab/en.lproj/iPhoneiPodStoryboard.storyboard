@@ -9,7 +9,7 @@
             <objects>
                 <tableViewController id="aNd-kg-MlN" customClass="ModelListController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="E1y-UA-Su2">
-                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -38,7 +38,7 @@
             <objects>
                 <viewController storyboardIdentifier="DetailViewController" id="NyB-7w-cP0" customClass="DetailViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="zrj-Dd-WPc" customClass="EAGLView">
-                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
@@ -47,12 +47,11 @@
                             <outletCollection property="gestureRecognizers" destination="qCm-Ub-mO2" appends="YES" id="yww-Ed-CcX"/>
                         </connections>
                     </view>
-                    <navigationItem key="navigationItem" id="WX3-lU-bHf">
-                        <barButtonItem key="backBarButtonItem" title="Model" id="ed6-hv-E3j"/>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="WX3-lU-bHf"/>
                     <connections>
                         <outlet property="glView" destination="zrj-Dd-WPc" id="sIP-YC-fg2"/>
                         <segue destination="0h7-h3-thM" kind="push" identifier="showSettingsSegue" id="cJz-7s-fgZ"/>
+                        <segue destination="tLo-wG-spu" kind="push" identifier="showPostProSegue" id="qtP-1F-3QF"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aSF-6U-E6q" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -89,7 +88,7 @@
             <objects>
                 <tableViewController id="0h7-h3-thM" customClass="MasterViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="XKe-Ex-Vcl">
-                        <rect key="frame" x="0.0" y="64" width="320" height="416"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -116,13 +115,41 @@
             </objects>
             <point key="canvasLocation" x="642" y="160"/>
         </scene>
+        <!--Post Pro View Controller - Post-processing-->
+        <scene sceneID="hN1-wg-Dof">
+            <objects>
+                <tableViewController id="tLo-wG-spu" customClass="PostProViewController" sceneMemberID="viewController">
+                    <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="AUf-bU-fWv">
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="postProCell" id="7gg-dw-9nK">
+                                <rect key="frame" x="0.0" y="22" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="tLo-wG-spu" id="pkx-eg-H3n"/>
+                            <outlet property="delegate" destination="tLo-wG-spu" id="XDV-ze-ULa"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Post-processing" id="qUi-6A-krJ"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WwS-KQ-5Gs" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="642" y="882"/>
+        </scene>
     </scenes>
     <classes>
         <class className="DetailViewController" superclassName="UIViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/DetailViewController.h"/>
             <relationships>
-                <relationship kind="action" name="PViewIntervalType:"/>
-                <relationship kind="action" name="PViewVisible:"/>
                 <relationship kind="action" name="pinch:" candidateClass="UIPinchGestureRecognizer"/>
                 <relationship kind="action" name="tap:" candidateClass="UITapGestureRecognizer"/>
                 <relationship kind="outlet" name="detailDescriptionLabel" candidateClass="UILabel"/>
@@ -137,10 +164,13 @@
         <class className="ModelListController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelListController.h"/>
         </class>
+        <class className="PostProViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/PostProViewController.h"/>
+        </class>
     </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar"/>
         <simulatedOrientationMetrics key="orientation"/>
-        <simulatedScreenMetrics key="destination"/>
+        <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
 </document>

@@ -46,6 +46,8 @@
 -(void)viewDidAppear:(BOOL)animated
 {
     if(self.initialModel != nil) [self.glView load:self.initialModel];
+	//[self.initialModel release];
+	self.initialModel = nil;
 }
 
 - (void)viewDidLoad
@@ -156,66 +158,7 @@
         [alert show];
         return;
     }
-    for(UIView *v in self.view.subviews)
-        if(v.tag == -1){
-            [self hidePostpro];
-            return;
-        }
-    int maxPView = (self.view.bounds.size.height - 2 * 40)/30;
-    int height = 2 * 40 + ((PView::list.size() <= maxPView)? PView::list.size() : maxPView) * 30;
-    UIView *postpro = [[UIView alloc] initWithFrame: CGRectMake(20,20,self.view.bounds.size.width-40,height)];
-    [postpro setBackgroundColor: [UIColor colorWithRed:0.6 green:0.6 blue:0.6 alpha:.75]];
-    [postpro.layer setBorderWidth:1.];
-    [postpro.layer setBorderColor:[UIColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1].CGColor];
-    UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, postpro.bounds.size.width - 20, 30)];
-    [title setBackgroundColor: [UIColor clearColor]];
-    [title setText:@"Post processing"];
-    [postpro addSubview:title];
-    UIButton *ok = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    ok.frame = CGRectMake(10, postpro.bounds.size.height-40, postpro.bounds.size.width - 20, 30);
-    [ok setTitle:@"OK" forState:UIControlStateNormal];
-    int i0 = PView::list.size()-1;
-    for(int i=i0; i >= 0 && i >= i0-maxPView; i--)
-    {
-        UISwitch *showHide = [[UISwitch alloc] initWithFrame: CGRectMake(10, 40 + (i0-i)*30, 100, 30)];
-        UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(10 + (showHide.frame.size.width), 40 + (i0-i)*30, (postpro.bounds.size.width - 20)/5, 30)];
-        UIButton *intervalType = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-        intervalType.frame = CGRectMake(10 + showHide.frame.size.width + lbl.frame.size.width, 40 + (i0-i)*30, (postpro.bounds.size.width - 20)/3, 30);
-        UITextField *nbIso = [[UITextField alloc] initWithFrame:CGRectMake(10 + showHide.frame.size.width + lbl.frame.size.width + intervalType.frame.size.width, 40 + (i0-i)*30, (postpro.bounds.size.width - 20)/3, 30)];
-        [showHide setOn:(PView::list[i]->getOptions()->visible == 1)];
-        [showHide setTag:i];
-        [showHide addTarget:self action:@selector(PViewVisible:) forControlEvents:UIControlEventValueChanged];
-        [lbl setBackgroundColor: [UIColor clearColor]];
-        [lbl setText:[NSString stringWithCString:PView::list[i]->getData()->getName().c_str() encoding:[NSString defaultCStringEncoding]]];
-        [intervalType setTag:i];
-        switch (PView::list[i]->getOptions()->intervalsType) {
-            case 3: // ISO
-                [intervalType setTitle:@"Use Iso-values" forState:UIControlStateNormal];
-                break;
-            case 1: // CONTINIOUS
-                [intervalType setTitle:@"Use Continous map" forState:UIControlStateNormal];
-                break;
-            case 2: // DISCRETE
-                [intervalType setTitle:@"Use Filled iso-values" forState:UIControlStateNormal];
-                break;
-        }
-        [intervalType addTarget:self action:@selector(PViewIntervalType:) forControlEvents:UIControlEventTouchDown];
-        [nbIso setBorderStyle:UITextBorderStyleRoundedRect];
-        [nbIso setText:[NSString stringWithFormat:@"%d",PView::list[i]->getOptions()->nbIso]];
-        [nbIso setKeyboardType:UIKeyboardTypeNumberPad];
-        [nbIso addTarget:self action:@selector(PViewNbIso:) forControlEvents:UIControlEventValueChanged];
-        [nbIso setTag:i];
-        [nbIso setDelegate:self];
-        [postpro addSubview:nbIso];
-        [postpro addSubview:intervalType];
-        [postpro addSubview:showHide];
-        [postpro addSubview:lbl];
-    }
-    [ok addTarget:self action:@selector(hidePostpro) forControlEvents:UIControlEventTouchDown];
-    [postpro addSubview:ok];
-    postpro.tag = -1;
-    [self.view addSubview:postpro];
-    [self.view bringSubviewToFront:postpro];
+    [self performSegueWithIdentifier:@"showPostProSegue" sender:self];
 }
 
 -(void)hidePostpro
@@ -230,33 +173,6 @@
     UIAlertView *alert;
     alert = [[UIAlertView alloc] initWithTitle:[NSString stringWithCString:title.c_str() encoding:[NSString defaultCStringEncoding]] message:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]] delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
     [alert show];
-}
-
--(IBAction)PViewVisible:(id)sender
-{
-    PView::list[((UISwitch*)sender).tag]->getOptions()->visible = (((UISwitch*)sender).on)? 1 : 0;
-    [self requestRender];
-}
-
--(IBAction)PViewIntervalType:(id)sender
-{
-    if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Iso-values"])
-    {
-        [((UIButton *)sender) setTitle:@"Use Continous map" forState:UIControlStateNormal];
-        PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 1;
-    }
-    else if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Continous map"])
-    {
-        [((UIButton *)sender) setTitle:@"Use Filled iso-values" forState:UIControlStateNormal];
-        PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 2;
-    }
-    else if( [[((UIButton *)sender) titleForState:UIControlStateNormal] isEqual: @"Use Filled iso-values"])
-    {
-        [((UIButton *)sender) setTitle:@"Use Iso-values" forState:UIControlStateNormal];
-        PView::list[((UIButton *)sender).tag]->getOptions()->intervalsType = 3;
-    }
-    PView::list[((UIButton *)sender).tag]->setChanged(true);
-    [self requestRender];
 }
 
 - (void)viewDidUnload
@@ -291,26 +207,6 @@
     [self.navigationItem setLeftBarButtonItem:nil animated:YES];
     self.masterPopoverController = nil;
 }
-
-#pragma mark - textfield
-
--(BOOL)textFieldShouldEndEditing:(UITextField *)textField
-{
-    NSInteger val = [textField.text integerValue];
-    val = (val > 0)? val : 1;
-    val = (val < 1000)? val : 1000;
-    [textField setText:[NSString stringWithFormat:@"%d",val]];
-    PView::list[textField.tag]->getOptions()->nbIso = val;
-    PView::list[textField.tag]->setChanged(true);
-    [self requestRender];
-    return YES;
-}
--(BOOL)textFieldShouldReturn:(UITextField *)textField
-{
-    [textField endEditing:YES];
-    return YES;
-}
-
 #pragma mark - actionsheet
 
 -(void)showMore: (UIBarButtonItem*)sender

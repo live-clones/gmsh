@@ -40,7 +40,7 @@
         runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
         [runButton setTitle:@"Run"];
     }
-    self.navigationItem.leftItemsSupplementBackButton = YES; // Only on iPhone/iPod
+    self.navigationItem.leftItemsSupplementBackButton = YES; // Only for iPhone/iPod
     self.navigationItem.leftBarButtonItem = runButton;
 
     UIBarButtonItem *refresh = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(resetParameters:)];
@@ -130,6 +130,8 @@
                 NSMutableArray *section = [_sections objectAtIndex:j];
                 for(int k=0; k<[section count];k++)
                     if([[(parameter*)[section objectAtIndex: k] getName] isEqualToString:name]) {
+						parameterStringList * p = (parameterStringList *)[section objectAtIndex: k];
+						[p reload];
                         found = true;
                         break;
                     } // the parameters is already in the section

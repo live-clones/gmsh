@@ -39,6 +39,7 @@
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="glView" destination="26" id="i7d-I7-Zhz"/>
+                        <segue destination="89M-FT-oxV" kind="push" identifier="showPostProSegue" id="KRo-ZG-16Y"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="15" sceneMemberID="firstResponder"/>
@@ -54,6 +55,37 @@
                 </pinchGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="1144" y="330"/>
+        </scene>
+        <!--Post Pro View Controller - Post-processing-->
+        <scene sceneID="i13-tZ-4on">
+            <objects>
+                <tableViewController storyboardIdentifier="PostProViewController" id="89M-FT-oxV" customClass="PostProViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="4WQ-dq-nwm">
+                        <rect key="frame" x="0.0" y="64" width="703" height="660"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="postProCell" id="rgB-ht-LVb">
+                                <rect key="frame" x="0.0" y="22" width="703" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
+                                    <rect key="frame" x="0.0" y="0.0" width="703" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                </view>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="89M-FT-oxV" id="elT-4a-yV2"/>
+                            <outlet property="delegate" destination="89M-FT-oxV" id="arL-SY-mlu"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Post-processing" id="Zld-KM-OS3"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="3Aw-Tm-Dq6" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2000" y="340"/>
         </scene>
         <!--Split View Controller-->
         <scene sceneID="18">
@@ -188,6 +220,13 @@
         </class>
         <class className="ModelListController" superclassName="UITableViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelListController.h"/>
+        </class>
+        <class className="PostProViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/PostProViewController.h"/>
+            <relationships>
+                <relationship kind="action" name="PViewIntervalType:"/>
+                <relationship kind="action" name="PViewVisible:"/>
+            </relationships>
         </class>
         <class className="SplitViewController" superclassName="UISplitViewController">
             <source key="sourceIdentifier" type="project" relativePath="./Classes/SplitViewController.h"/>
