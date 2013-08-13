@@ -40,6 +40,7 @@
 	 }
 	 }*/
 	self.delegate = detailViewController;
+	[self setPresentsWithGesture:NO];
 }
 
 -(void)viewDidAppear:(BOOL)animated

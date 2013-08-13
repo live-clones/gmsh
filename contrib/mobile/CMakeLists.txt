@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 set(DEFAULT ON CACHE INTERNAL "Default value for enabled-by-default options")
 
 if(APPLE)
- option(ENABLE_BUILD_IOS "Build library for iOS (ARM)" OFF)
- option(ENABLE_BUILD_IOS_EMULATOR "Build library for iOS emulator (x86)" ON)
+ option(ENABLE_BUILD_IOS "Build XCode project for iOS (ARM)" OFF)
+ option(ENABLE_BUILD_IOS_EMULATOR "Build XCode project for iOS emulator (x86)" ON)
  option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" OFF)
 else(APPLE)
   option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
@@ -57,6 +57,8 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iOS/ic_launcher_retina.png ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawContext.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawContext.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawGeom.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawMesh.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawString.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawString.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Trackball.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/

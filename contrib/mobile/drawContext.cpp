@@ -211,7 +211,7 @@ void drawContext::initView(int w, int h)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void drawArray(VertexArray *va, GLint type, bool colorArray=false)
+void drawArray(VertexArray *va, GLint type, bool colorArray)
 {
 	if(!va) return;
 	glEnable(GL_BLEND);
@@ -465,21 +465,6 @@ void drawContext::drawScale()
 	glPopMatrix();
 }
 
-void drawContext::drawMesh()
-{
-	GModel::current()->fillVertexArrays();
-	unsigned int col = CTX::instance()->color.mesh.line;
-	glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
-               (GLubyte)CTX::instance()->unpackGreen(col),
-               (GLubyte)CTX::instance()->unpackBlue(col),
-               (GLubyte)CTX::instance()->unpackAlpha(col));
-	for(GModel::fiter it = GModel::current()->firstFace(); it != GModel::current()->lastFace(); it++){
-		if(_fillMesh) drawArray((*it)->va_triangles, GL_TRIANGLES);
-		else drawArray((*it)->va_lines, GL_LINES, true);
-	}
-	CTX::instance()->mesh.changed = 0;
-}
-
 void drawContext::drawPost()
 {
 	if(PView::list.empty()) return ;
@@ -488,39 +473,6 @@ void drawContext::drawPost()
 		PView::list[i]->fillVertexArrays();
 		drawPView(PView::list[i]);
 	}
-}
-
-void drawContext::drawGeom()
-{
-	unsigned int col = CTX::instance()->color.geom.line;
-	glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
-               (GLubyte)CTX::instance()->unpackGreen(col),
-               (GLubyte)CTX::instance()->unpackBlue(col),
-               (GLubyte)CTX::instance()->unpackAlpha(col));
-	//glLineWidth((GLfloat)CTX::instance()->geom.lineWidth); OpenGL Error -> GL_INVALID_VALUE​, 0x0501
-	for(GModel::eiter it = GModel::current()->firstEdge(); it != GModel::current()->lastEdge(); it++){
-		GEdge *e = *it;
-		int N = e->minimumDrawSegments() + 1; // e is sometime incorrect (e.g. 0x0000004f) when compute
-		Range<double> t_bounds = e->parBounds(0);
-		double t_min = t_bounds.low();
-		double t_max = t_bounds.high();
-        
-		// Create a VA for this edge
-		GLfloat *edge = (GLfloat *) malloc(N*3*sizeof(GLfloat));
-        
-		for(unsigned int i=0; i < N; i++) {
-			double t = t_min + (double)i / (double)(N-1) * (t_max - t_min);
-			GPoint p = e->point(t);
-			edge[i*3] = p.x(); edge[i*3+1] = p.y(); edge[i*3+2] = p.z();
-		}
-		// Then print the VA
-		glVertexPointer(3, GL_FLOAT, 0, edge);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glDrawArrays(GL_LINE_STRIP, 0, N);
-		glDisableClientState(GL_VERTEX_ARRAY);
-        free(edge);
-	}
-	glLineWidth(1);
 }
 
 void drawContext::drawAxes(float x0, float y0, float z0, float h)
