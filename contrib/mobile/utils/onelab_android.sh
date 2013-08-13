@@ -13,10 +13,10 @@ if [ -z "$ANDROID_NDK" ]; then
         exit 1
 fi
 if [ -z "$ANDROID_SDK" ]; then
-        echo "ERROR: You must specify android SDK path: export ANDROID_NDK=/path/to/android-sdk/"
+        echo "ERROR: You must specify android SDK path: export ANDROID_SDK=/path/to/android-sdk/"
         exit 1
 fi
-if [ -z "$ANDROID_TOOLCHAIN" ] && [ -f "$ANDROID_TOOLCHAIN" ]; then
+if [ -z "$ANDROID_TOOLCHAIN" ] || [ ! -f "$ANDROID_TOOLCHAIN" ]; then
         echo "ERROR: You must specify a valid android toolchain: export ANDROID_TOOLCHAIN=/path/to/android.toolchain.cmake"
         exit 1
 fi
@@ -28,7 +28,7 @@ if [ ! -d "getdp" ]; then svn --username gmsh --password gmsh co https://geuz.or
 if [ ! -d "gmsh.android" ]; then mkdir gmsh.android; fi
 if [ ! -d "getdp.android" ]; then mkdir getdp.android; fi
 if [ ! -d "onelab.android" ]; then mkdir onelab.android; fi
-if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ] || [ ! -d "petsc.android/inclue/" ]; then 
+if [ ! -f "petsc.android/libpetsc.so" ] || [ ! -f "petsc.android/libf2clapack.so" ] || [ ! -f "petsc.android/libf2cblas.so" ] || [ ! -d "petsc.android/include/" ]; then 
 	echo "ERROR: petsc.android do not exist or is incomplete (need blas, lapack and petsc)"
 	exit 1
 fi
@@ -53,22 +53,18 @@ checkError $? "make getHeaders fail (GetDP)"
 
 cd ../onelab.android
 echo -e "\033[1m[+] Make Onelab interface library\033[0m"
-cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_TOOLCHAIN -DENABLE_BUILD_ANDROID=1 -DGETDP_LIB=../getdp.android/libs/libGetDP.so -DGETDP_INC=../getdp.android/Headers/ -DGMSH_LIB=../gmsh.android/libs/libGmsh.so -DGMSH_INC=../gmsh.android/Headers/ ../gmsh/contrib/mobile/
+cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_TOOLCHAIN -DENABLE_BUILD_ANDROID=1 -DGETDP_LIB=../getdp.android/libs/libGetDP.so -DGETDP_INC=../getdp.android/Headers/ -DGMSH_LIB=../gmsh.android/libs/libGmsh.so -DGMSH_INC=../gmsh.android/Headers/ -DPETSC_LIB=../petsc.android/libpetsc.so -DBLAS_LIB=../petsc.android/libf2cblas.so -DLAPACK_LIB=../petsc.android/libf2clapack.so ../gmsh/contrib/mobile/
 checkError $? "CMake fail (Onelab)"
 make androidOnelab -j3
 checkError $? "make fail (Onelab)"
+make androidProject
+checkError $? "make Android project fail (Onelab)"
 
 echo -e "\033[1m[+] Build Android application (java)\033[0m"
-cd ../gmsh/contrib/mobile/Android
+cd Onelab/
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi
 cp $ANDROID_SDK/extras/android/support/v4/android-support-v4.jar libs/
 checkError $? "Copy android support v4 fail (Android)"
-cp ../../../../gmsh.android/libs/libGmsh.so libs/armeabi-v7a/
-cp ../../../../getdp.android/libs/libGetDP.so libs/armeabi-v7a/
-cp ../../../../onelab.android/libs/libOnelab.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libpetsc.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libf2clapack.so libs/armeabi-v7a/
-cp ../../../../petsc.android/libf2cblas.so libs/armeabi-v7a/
 target=1
 count=0
 while read line; do

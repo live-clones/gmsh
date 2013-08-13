@@ -24,6 +24,7 @@
 #include <gmsh/GFaceCompound.h>
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
+#include <gmsh/Context.h>
 #endif
 
 #include "drawContext.h"

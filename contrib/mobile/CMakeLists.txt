@@ -2,8 +2,6 @@
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-set(DEFAULT ON CACHE INTERNAL "Default value for enabled-by-default options")
-
 if(APPLE)
  option(ENABLE_BUILD_IOS "Build XCode project for iOS (ARM)" OFF)
  option(ENABLE_BUILD_IOS_EMULATOR "Build XCode project for iOS emulator (x86)" ON)
@@ -79,8 +77,13 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
 endif(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
 
 if(ENABLE_BUILD_ANDROID)
-  append_src(drawGModel.cpp)
+  append_src(drawContext.cpp)
+  append_src(movePosition.h)
+  append_src(Trackball.cpp)
   append_src(androidGModel.cpp)
+  append_src(drawString.cpp)
+  append_src(drawGeom.cpp)
+  append_src(drawMesh.cpp)
   # user must specify the android-cmake toolchain
   find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
   if(NOT CMAKE_TOOLCHAIN_FILE)
@@ -116,4 +119,23 @@ if(ENABLE_BUILD_ANDROID)
   set( LIBRARY_DEPS GLESv1_CM log)
   set_target_properties(androidOnelab PROPERTIES OUTPUT_NAME Onelab)
   target_link_libraries(androidOnelab ${LIBRARY_DEPS}  ${EXTERNAL_LIBRARIES})
+  find_library(PETSC_LIB petsc PATH_SUFFIXES lib)
+  find_library(BLAS_LIB f2cblas PATH_SUFFIXES lib)
+  find_library(LAPACK_LIB f2clapack PATH_SUFFIXES lib)
+  set(ONELAB_LIB ${CMAKE_CURRENT_BINARY_DIR}/libs/libOnelab.so)
+  if(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
+    add_custom_target(androidProject
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+      COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+  )
+  else(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
+    message(STATUS "Cannot make Android project without PETSc or without BLAS or without LAPACK or without \"Onelab library\"")
+  endif(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
 endif(ENABLE_BUILD_ANDROID)

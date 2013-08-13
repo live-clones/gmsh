@@ -19,6 +19,7 @@
 
 #include "movePosition.h"
 
+void drawArray(VertexArray *va, int type, bool colorArray=false);
 int onelab_cb(std::string);
 
 class drawContext{

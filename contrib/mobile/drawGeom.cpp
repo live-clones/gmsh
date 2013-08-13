@@ -16,6 +16,8 @@
 
 #include <gmsh/Gmsh.h>
 #include <gmsh/GModel.h>
+#include <gmsh/PView.h>
+#include <gmsh/Context.h>
 #endif
 
 #include "drawContext.h"
