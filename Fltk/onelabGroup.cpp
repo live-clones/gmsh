@@ -179,7 +179,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     return false;
   }
 
-  if(message == blank){
+  if(message == blank && !(type == GmshSocket::GMSH_PROGRESS ||
+                           type == GmshSocket::GMSH_INFO ||
+                           type == GmshSocket::GMSH_WARNING ||
+                           type == GmshSocket::GMSH_ERROR)){
+    // we should still allow blank msg strings to be sent
     Msg::Error("Abnormal server termination (blank message: client not stopped?)");
     return false;
   }
