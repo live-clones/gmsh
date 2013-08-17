@@ -13,6 +13,7 @@
 #include "MTetrahedron.h"
 #include "directions3D.h"
 #include "OS.h"
+#include "GFaceCompound.h"
 
 #if defined(HAVE_PETSC)
 #include "dofManager.h"
@@ -79,6 +80,10 @@ void Frame_field::init_face(GFace* gf){
   MElementOctree* octree;
   STensor3 m(1.0);
 
+  if(gf->geomType()==GEntity::CompoundSurface){
+    ((GFaceCompound*)gf)->deleteInternals();
+    ((GFaceCompound*)gf)->parametrize();
+  }
   backgroundMesh::set(gf);
   octree = backgroundMesh::current()->get_octree();
 

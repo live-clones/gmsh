@@ -1279,6 +1279,10 @@ GFaceCompound::~GFaceCompound()
  _deleteInternals();
 }
 
+void GFaceCompound::deleteInternals(){
+  _deleteInternals();
+}
+
 void GFaceCompound::_deleteInternals()
 {
   for (unsigned int i = 0; i < myParamVert.size(); i++)
