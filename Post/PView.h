@@ -113,6 +113,9 @@ class PView{
                                   int partition=-1);
   static PView *getViewByTag(int tag, int timeStep=-1, int partition=-1);
 
+  // sort views in ::list by name
+  static void sortByName();
+
   // IO read routines (these are global: they can create multiple
   // views)
   static bool readPOS(const std::string &fileName, int fileIndex=-1);

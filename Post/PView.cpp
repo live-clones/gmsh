@@ -291,6 +291,20 @@ void PView::combine(bool time, int how, bool remove)
       delete *it;
 }
 
+class PViewLessThanName {
+public:
+  bool operator()(PView *v1, PView *v2) const
+  {
+    return v1->getData()->getName() < v2->getData()->getName();
+  }
+};
+
+void PView::sortByName()
+{
+  std::sort(list.begin(), list.end(), PViewLessThanName());
+  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+}
+
 PView *PView::getViewByName(const std::string &name, int timeStep, int partition,
                             const std::string &fileName)
 {
