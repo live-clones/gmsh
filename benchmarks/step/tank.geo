@@ -1,12 +1,17 @@
+Geometry.OCCFixDegenerated=1;
+Geometry.OCCFixSmallEdges=1;
+Geometry.OCCFixSmallFaces=1;
+Geometry.OCCSewFaces=1;
+
 Merge "tank.brep";
 
-n = 1;
+n = 2;
 
-Transfinite Line {55, 56, 13, 12, 36, 32, 95, 94, 97, 105, 
+Transfinite Line {55, 56, 13, 12, 36, 32, 95, 94, 97, 105,
     80, 61, 64, 78, 50, 48} = 5*n; // indep.
 
-Transfinite Line {54, 26, 24, 2, 16, 9, 4, 69, 91, 73, 71, 
-    81, 51, 79, 52, 77, 98, 100, 62, 86, 102, 63, 87, 103, 
+Transfinite Line {54, 26, 24, 2, 16, 9, 4, 69, 91, 73, 71,
+    81, 51, 79, 52, 77, 98, 100, 62, 86, 102, 63, 87, 103,
     84, 60, 38, 40, 65, 89, 75, 49} = 10*n; // indep.
 
 Transfinite Line {5, 7, 17, 18, 28, 45, 46, 66, 47, 43, 67, 34, 58,
@@ -37,4 +42,4 @@ Transfinite Surface {14} = {21,25,26,18};
 Mesh.Smoothing = 10;
 
 Recombine Surface{1:52};
-Mesh.SubdivisionAlgorithm=3;
+//Mesh.SubdivisionAlgorithm=3;
