@@ -110,7 +110,8 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tToday tSyncModel tCreateTopology tCreateTopologyNoHoles
+%token tBoundingBox tDraw tToday tCpu tSyncModel
+%token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
@@ -206,17 +207,17 @@ SendToFile :
 ;
 
 Printf :
-    tPrintf '(' tBIGSTR ')' tEND
+    tPrintf '(' StringExprVar ')' tEND
     {
       Msg::Direct($3);
       Free($3);
     }
-  | tError '(' tBIGSTR ')' tEND
+  | tError '(' StringExprVar ')' tEND
     {
       Msg::Error($3);
       Free($3);
     }
-  | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
+  | tPrintf '(' StringExprVar ')' SendToFile StringExprVar tEND
     {
       std::string tmp = FixRelativePath(gmsh_yyname, $6);
       FILE *fp = Fopen(tmp.c_str(), $5);
@@ -230,7 +231,7 @@ Printf :
       Free($3);
       Free($6);
     }
-  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
+  | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
       char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
@@ -243,7 +244,7 @@ Printf :
       Free($3);
       List_Delete($5);
     }
-  | tError '(' tBIGSTR ',' RecursiveListOfDouble ')' tEND
+  | tError '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
       char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
@@ -256,7 +257,7 @@ Printf :
       Free($3);
       List_Delete($5);
     }
-  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
+  | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
     {
       char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
@@ -284,7 +285,7 @@ Printf :
 // V I E W
 
 View :
-    tSTRING tBIGSTR '{' Views '}' tEND
+    tSTRING StringExprVar '{' Views '}' tEND
     {
 #if defined(HAVE_POST)
       if(!strcmp($1, "View") && ViewData->finalize()){
@@ -4970,6 +4971,11 @@ StringExpr :
       time(&now);
       strcpy($$, ctime(&now));
       $$[strlen($$) - 1] = '\0';
+    }
+  | tCpu
+    {
+      $$ = (char *)Malloc(128 * sizeof(char));
+      sprintf($$, "%g", Cpu());
     }
   | tGetEnv '(' StringExprVar ')'
     {

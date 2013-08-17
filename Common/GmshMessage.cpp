@@ -263,7 +263,7 @@ void Msg::Fatal(const char *fmt, ...)
       c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
-      fprintf(stderr, "%sFatal   : [On processor %d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stderr, "%sFatal   : [rank %3d] %s%s\n", c0, _commRank, str, c1);
     else
       fprintf(stderr, "%sFatal   : %s%s\n", c0, str, c1);
     fflush(stderr);
@@ -304,7 +304,7 @@ void Msg::Error(const char *fmt, ...)
       c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
-      fprintf(stderr, "%sError   : [On processor %d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, _commRank, str, c1);
     else
       fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
     fflush(stderr);
@@ -490,7 +490,7 @@ void Msg::Debug(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Debug   : [On processor %d] %s\n", _commRank, str);
+      fprintf(stdout, "Debug   : [rank %3d] %s\n", _commRank, str);
     else
       fprintf(stdout, "Debug   : %s\n", str);
     fflush(stdout);
@@ -547,7 +547,7 @@ void Msg::PrintTimers()
 
   if(CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Timers  : [On processor %d] %s\n", _commRank, str.c_str());
+      fprintf(stdout, "Timers  : [rank %3d] %s\n", _commRank, str.c_str());
     else
       fprintf(stdout, "Timers  : %s\n", str.c_str());
     fflush(stdout);

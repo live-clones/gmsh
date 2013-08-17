@@ -114,6 +114,7 @@ CatmullRom		return tSpline;
 Call                    return tCall;
 CreateTopology          return tCreateTopology;
 CreateTopologyNoHoles   return tCreateTopologyNoHoles;
+Cpu                     return tCpu;
 
 DefineConstant          return tDefineConstant;
 Delete                  return tDelete;

@@ -1076,7 +1076,7 @@ Character expressions are defined as:
 @example
 @var{char-expression}:
   "@var{string}" |
-  Today |
+  Today | Cpu |
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
