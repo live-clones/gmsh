@@ -3210,11 +3210,13 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
     if (ncount % 2 != 0) {
-      printf("strange\n");
+      Msg::Warning("Cannot apply Blosson: odd number of triangles (%d) in surface %d",
+                   ncount, gf->tag());
     }
     if (ncount % 2 == 0) {
       int ecount =  cubicGraph ? pairs.size() + makeGraphPeriodic.size() : pairs.size();
-      Msg::Info("Blossom: %d internal %d closed",(int)pairs.size(), (int)makeGraphPeriodic.size());
+      Msg::Info("Blossom: %d internal %d closed",
+                (int)pairs.size(), (int)makeGraphPeriodic.size());
       //Msg::Info("Cubic Graph should have ne (%d) = 3 x nv (%d) ",ecount,ncount);
       Msg::Debug("Perfect Match Starts %d edges %d nodes",ecount,ncount);
       std::map<MElement*,int> t2n;
@@ -3227,83 +3229,56 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
       int *elist = new int [2*ecount];
       int *elen  = new int [ecount];
       for (unsigned int i = 0; i < pairs.size(); ++i){
-        elist[2*i]   = t2n[pairs[i].t1];
+        elist[2*i] = t2n[pairs[i].t1];
         elist[2*i+1] = t2n[pairs[i].t2];
         elen [i] =  (int) 1000*exp(-pairs[i].angle);
-	//        double angle = atan2(pairs[i].n1->y()-pairs[i].n2->y(),
-	//                             pairs[i].n1->x()-pairs[i].n2->x());
-
-        //double x = .5*(pairs[i].n1->x()+pairs[i].n2->x());
-        //double y = .5*(pairs[i].n1->y()+pairs[i].n2->y());
-        //double opti = atan2(y,x);
-        //angle -= opti;
-	//        while (angle < 0 || angle > M_PI/2){
-	//          if (angle < 0) angle += M_PI/2;
-	//          if (angle > M_PI/2) angle -= M_PI/2;
-	//        }
-        //elen [i] =  (int) 180. * fabs(angle-M_PI/4)/M_PI;
-
         int NB = 0;
-        if (pairs[i].n1->onWhat()->dim() < 2)NB++;
-        if (pairs[i].n2->onWhat()->dim() < 2)NB++;
-        if (pairs[i].n3->onWhat()->dim() < 2)NB++;
-        if (pairs[i].n4->onWhat()->dim() < 2)NB++;
-	//if (NB > 2)printf("%d %d\n",elen[i],NB);
-	if (elen[i] >  (int)1000*exp(.1) && NB > 2) {elen[i] = 5000;}
-	else if (elen[i] >=  1000 && NB > 2) {elen[i] = 10000;}
+        if (pairs[i].n1->onWhat()->dim() < 2) NB++;
+        if (pairs[i].n2->onWhat()->dim() < 2) NB++;
+        if (pairs[i].n3->onWhat()->dim() < 2) NB++;
+        if (pairs[i].n4->onWhat()->dim() < 2) NB++;
+	if (elen[i] > (int)1000*exp(.1) && NB > 2) { elen[i] = 5000; }
+	else if (elen[i] >= 1000 && NB > 2) { elen[i] = 10000; }
       }
 
       if (cubicGraph){
-        std::map<MVertex*,std::pair<MElement*,MElement*> > :: iterator itv = makeGraphPeriodic.begin();
+        std::map<MVertex*, std::pair<MElement*, MElement*> >::iterator itv =
+          makeGraphPeriodic.begin();
         int CC = pairs.size();
         for ( ; itv != makeGraphPeriodic.end(); ++itv){
-          elist[2*CC]   = t2n[itv->second.first];
+          elist[2*CC] = t2n[itv->second.first];
           elist[2*CC+1] = t2n[itv->second.second];
-          elen [CC++] =  100000;
+          elen [CC++] = 100000;
         }
       }
 
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
-      if (perfect_match (ncount,
-                         NULL,
-                         ecount,
-                         &elist,
-                         &elen,
-                         NULL,
-                         MATCHFILE,
-                         0,
-                         0,
-                         0,
-                         0,
-                         &matzeit)){
+      if(perfect_match(ncount, NULL, ecount, &elist, &elen, NULL, MATCHFILE,
+                       0, 0, 0, 0, &matzeit)){
         if (recur_level < 20){
           Msg::Warning("Perfect Match Failed in Quadrangulation, Applying Graph Splits");
           std::set<MElement*> removed;
           std::vector<MTriangle*> triangles2;
           for (unsigned int i=0;i<pairs.size();++i){
             RecombineTriangle &rt = pairs[i];
-            if ((rt.n1->onWhat()->dim() < 2 &&
-                 rt.n2->onWhat()->dim() < 2) ||
-                (recur_level > 10 && i < 10)
-                ){
+            if ((rt.n1->onWhat()->dim() < 2 && rt.n2->onWhat()->dim() < 2) ||
+                (recur_level > 10 && i < 10)){
               if (removed.find(rt.t1) == removed.end() &&
                   removed.find(rt.t2) == removed.end() ){
                 removed.insert(rt.t1);
                 removed.insert(rt.t2);
                 SPoint2 p1,p2;
-                reparamMeshEdgeOnFace(rt.n1,rt.n2, gf, p1,p2);
+                reparamMeshEdgeOnFace(rt.n1, rt.n2, gf, p1,p2);
                 SPoint2 np = (p1+p2)*(1./2.0);
                 GPoint gp = gf->point(np);
-                MFaceVertex *newv = new MFaceVertex(gp.x(),gp.y(),gp.z(),
-                                                    gf,np.x(),np.y());
-                MTriangle *t1 = new MTriangle(rt.n1,rt.n4,newv);
-                MTriangle *t2 = new MTriangle(rt.n4,rt.n2,newv);
-                MTriangle *t3 = new MTriangle(rt.n2,rt.n3,newv);
-                MTriangle *t4 = new MTriangle(rt.n3,rt.n1,newv);
-                //MTriangle *t1 = new MTriangle(rt.n1,rt.n4,rt.n3);
-                //              MTriangle *t2 = new MTriangle(rt.n4,rt.n2,rt.n3);
+                MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(),
+                                                    gf, np.x(), np.y());
+                MTriangle *t1 = new MTriangle(rt.n1, rt.n4, newv);
+                MTriangle *t2 = new MTriangle(rt.n4, rt.n2, newv);
+                MTriangle *t3 = new MTriangle(rt.n2, rt.n3, newv);
+                MTriangle *t4 = new MTriangle(rt.n3, rt.n1, newv);
                 gf->mesh_vertices.push_back(newv);
                 triangles2.push_back(t1);
                 triangles2.push_back(t2);
@@ -3319,22 +3294,20 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
             else delete gf->triangles[i];
           }
           gf->triangles=triangles2;
-          //        for (int i=0;i<tos.size();i++)_triangleSplit (gf,tos[i]);
-          //          gf->model()->writeMSH("chplit.msh");
           free(elist);
           return _recombineIntoQuads(gf, recur_level+1);
         }
         else {
-          Msg::Error("Perfect Match Finally Failed in Quadrangulation, Try Something Else");
+          Msg::Error("Perfect Match failed in Quadrangulation, try something else");
           free(elist);
           pairs.clear();
         }
       }
       else{
         // TEST
-        for (int k=0;k<elist[0];k++){
-          int i1 = elist[1+3*k],i2 = elist[1+3*k+1],an=elist[1+3*k+2];
-          // FIXME !!
+        for (int k = 0; k < elist[0]; k++){
+          int i1 = elist[1+3*k], i2 = elist[1+3*k+1], an=elist[1+3*k+2];
+          // FIXME !
           if (an == 100000 /*|| an == 1000*/){
             toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
             Msg::Warning("Extra edge found in blossom algorithm, optimization will be required");
@@ -3369,7 +3342,6 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
             gf->quadrangles.push_back(q);
           }
         }
-        //fclose(f);
         free(elist);
         pairs.clear();
         if (recur_level == 0)
@@ -3436,8 +3408,8 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   return success;
 }
 
-
-static double printStats(GFace *gf,const char *message){
+static double printStats(GFace *gf,const char *message)
+{
   int nbBad=0;
   int nbInv=0;
   double Qav=0;
@@ -3449,7 +3421,9 @@ static double printStats(GFace *gf,const char *message){
     Qav += Q;
     Qmin = std::min(Q,Qmin);
   }
-  Msg::Info("%s : %5d quads %4d invalid quads %4d quads with Q < 0.1 Avg Q = %12.5E Min %12.5E",message, gf->quadrangles.size(), nbInv, nbBad,Qav/gf->quadrangles.size(),Qmin);
+  Msg::Info("%s : %5d quads %4d invalid quads %4d quads with Q < 0.1 "
+            "Avg Q = %12.5E Min %12.5E", message, gf->quadrangles.size(),
+            nbInv, nbBad, Qav/gf->quadrangles.size(), Qmin);
   return Qmin;
 }
 
@@ -3457,7 +3431,6 @@ void recombineIntoQuads(GFace *gf,
                         bool topologicalOpti,
                         bool nodeRepositioning)
 {
-
   double t1 = Cpu();
 
   bool haveParam = true;
@@ -3495,40 +3468,37 @@ void recombineIntoQuads(GFace *gf,
 	  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
 	  optistatus[3] = edgeSwapQuadsForBetterQuality(gf,.01, prioritory);
 	  optistatus[5] = optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
-	  optistatus[5] = (ITERB == 1) ?untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing) : 0;
-
-	  double bad = printStats (gf, "IN OPTIMIZATION");
-	  if (bad > .1)break;
+	  optistatus[5] = (ITERB == 1) ?
+            untangleInvalidQuads(gf, CTX::instance()->mesh.nbSmoothing) : 0;
+	  double bad = printStats(gf, "IN OPTIMIZATION");
+	  if (bad > .1) break;
           if (ITER == 10){
 	    ITERB = 1;
 	  }
-	  if (ITER > 20)break;
+	  if (ITER > 20) break;
 	  int nb = 0;
-	  for (int i=0;i<6;i++)nb += optistatus[i];
-	  if (!nb && ITERB == 0)ITERB = 1;
-	  else if (!nb )break;
-	  //	  printf("%d %d %d %d %d %d\n",optistatus[0],optistatus[1],optistatus[2],optistatus[3],optistatus[4],optistatus[5]);
+	  for (int i=0;i<6;i++) nb += optistatus[i];
+	  if (!nb && ITERB == 0) ITERB = 1;
+	  else if (!nb) break;
 	  ITER ++;
         }
       }
-
       if(haveParam) {
 	laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing, true);
 	optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
       }
-      //      untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing);
+      // untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing);
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
     quadsToTriangles(gf, .01);
     if(haveParam) {
       laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
-      //      optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
+      // optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
     }
-    //    removeDiamonds(gf);
-    //    removeTwoQuadsNodes(gf);
+    // removeDiamonds(gf);
+    // removeTwoQuadsNodes(gf);
     printStats (gf, "AFTER OPTIMIZATION");
-
     return;
   }
 
@@ -3583,9 +3553,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   gf->quadrangles = qds;
 }
 
-/***************************************************/
-/******************class Temporary******************/
-/***************************************************/
+// class Temporary
 
 double Temporary::w1,Temporary::w2,Temporary::w3;
 
@@ -3619,21 +3587,21 @@ SVector3 Temporary::compute_gradient(MElement*element)
   return SVector3(0.0,1.0,0.0);
 }
 
-void Temporary::select_weights(double new_w1,double new_w2,double new_w3)
+void Temporary::select_weights(double new_w1, double new_w2, double new_w3)
 {
   w1 = new_w1;
   w2 = new_w2;
   w3 = new_w3;
 }
 
-double Temporary::compute_total_cost(double f1,double f2)
+double Temporary::compute_total_cost(double f1, double f2)
 {
   double cost;
   cost = w1*f1 + w2*f2 + w3*f1*f2;
   return cost;
 }
 
-SVector3 Temporary::compute_normal(MElement*element)
+SVector3 Temporary::compute_normal(MElement *element)
 {
   double x1,y1,z1;
   double x2,y2,z2;
@@ -3661,7 +3629,7 @@ SVector3 Temporary::compute_normal(MElement*element)
   return SVector3(normal.x()/length,normal.y()/length,normal.z()/length);
 }
 
-SVector3 Temporary::compute_other_vector(MElement*element)
+SVector3 Temporary::compute_other_vector(MElement *element)
 {
   //int number;
   double length;
@@ -3676,7 +3644,8 @@ SVector3 Temporary::compute_other_vector(MElement*element)
   return SVector3(other_vector.x()/length,other_vector.y()/length,other_vector.z()/length);
 }
 
-double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MElement*element2)
+double Temporary::compute_alignment(const MEdge &_edge, MElement *element1,
+                                    MElement *element2)
 {
   //int number;
   double scalar_productA,scalar_productB;
@@ -3691,7 +3660,8 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
   other_vector = Temporary::compute_other_vector(element1);
   vertexA = _edge.getVertex(0);
   vertexB = _edge.getVertex(1);
-  edge = SVector3(vertexB->x()-vertexA->x(),vertexB->y()-vertexA->y(),vertexB->z()-vertexA->z());
+  edge = SVector3(vertexB->x()-vertexA->x(), vertexB->y()-vertexA->y(),
+                  vertexB->z()-vertexA->z());
   edge = edge * (1/norm(edge));
   scalar_productA = fabs(dot(gradient,edge));
   scalar_productB = fabs(dot(other_vector,edge));
@@ -3702,7 +3672,7 @@ double Temporary::compute_alignment(const MEdge&_edge, MElement*element1, MEleme
 
 void Temporary::read_data(std::string file_name)
 {
-  #if defined(HAVE_POST)
+#if defined(HAVE_POST)
   int i,j,number;
   double x,y,z;
   MElement*element;
@@ -3722,10 +3692,10 @@ void Temporary::read_data(std::string file_name)
 	  gradients[number] = SVector3(x,y,z);
 	}
   }
-  #endif
+#endif
 }
 
-void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,double _w3)
+void Temporary::quadrilaterize(std::string file_name, double _w1, double _w2, double _w3)
 {
   GFace*face;
   GModel*model = GModel::current();
@@ -3735,13 +3705,8 @@ void Temporary::quadrilaterize(std::string file_name,double _w1,double _w2,doubl
   w2 = _w2;
   w3 = _w3;
   Temporary::read_data(file_name);
-  for(iterator = model->firstFace();iterator != model->lastFace();iterator++)
-  {
+  for(iterator = model->firstFace();iterator != model->lastFace(); iterator++){
     face = *iterator;
-	_recombineIntoQuads(face,1,1);
+    _recombineIntoQuads(face,1,1);
   }
 }
-
-/***************************************************/
-/***************************************************/
-/***************************************************/
