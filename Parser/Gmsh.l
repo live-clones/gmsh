@@ -171,6 +171,7 @@ MeshAlgorithm           return tMeshAlgorithm;
 Modulo                  return tModulo;
 MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
+Memory                  return tMemory;
 
 Nurbs			return tNurbs;
 

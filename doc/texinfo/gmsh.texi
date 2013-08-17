@@ -1076,7 +1076,7 @@ Character expressions are defined as:
 @example
 @var{char-expression}:
   "@var{string}" |
-  Today | Cpu |
+  Today |
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
@@ -1485,6 +1485,12 @@ Returns the number of processors on which Gmsh is running. It is always
 
 @item MPI_Rank
 Returns the rank of the current processor.
+
+@item Cpu
+Returns the current CPU time (in seconds).
+
+@item Memory
+Returns the current memory usage (in Mb).
 
 @item newp
 Returns the next available point number. As explained in @ref{Geometry

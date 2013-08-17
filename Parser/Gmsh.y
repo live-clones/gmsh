@@ -110,7 +110,7 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tToday tCpu tSyncModel
+%token tBoundingBox tDraw tToday tCpu tMemory tSyncModel
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -4259,6 +4259,8 @@ FExpr_Single :
   | tGMSH_MAJOR_VERSION { $$ = GetGmshMajorVersion(); }
   | tGMSH_MINOR_VERSION { $$ = GetGmshMinorVersion(); }
   | tGMSH_PATCH_VERSION { $$ = GetGmshPatchVersion(); }
+  | tCpu { $$ = Cpu(); }
+  | tMemory { $$ = GetMemoryUsage()/1024./1024.; }
 
   // Variables
 
@@ -4971,11 +4973,6 @@ StringExpr :
       time(&now);
       strcpy($$, ctime(&now));
       $$[strlen($$) - 1] = '\0';
-    }
-  | tCpu
-    {
-      $$ = (char *)Malloc(128 * sizeof(char));
-      sprintf($$, "%g", Cpu());
     }
   | tGetEnv '(' StringExprVar ')'
     {
