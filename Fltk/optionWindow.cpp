@@ -2682,7 +2682,7 @@ optionWindow::optionWindow(int deltaFontSize)
           (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
         solver.input[0] = new Fl_Input
-          (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Socket name");
+          (L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Base socket name");
         solver.input[0]->align(FL_ALIGN_RIGHT);
         solver.input[0]->callback(solver_options_ok_cb);
 

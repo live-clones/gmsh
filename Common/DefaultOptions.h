@@ -195,7 +195,9 @@ StringXString SolverOptions_String[] = {
 #else
     ".gmshsock" , // otherwise use Unix sockets by default
 #endif
-    "Base name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)" },
+    "Base name of socket (UNIX socket if the name does not contain a colon, TCP/IP "
+    "otherwise, in the form 'host:baseport'; the actual name/port is constructed "
+    "by appending the unique client id)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
