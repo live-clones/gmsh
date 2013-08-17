@@ -68,6 +68,16 @@ int GModel::readUNV(const std::string &name)
 	  }
           if(elementary < 0) elementary = getMaxElementaryNumber(-1) + 1;
           if(physical < 0) physical = 0;
+          if(!type){
+            if(warn[type]++ == 1)
+              Msg::Warning("No element type: guessing from number of nodes");
+            switch(numNodes){
+            case 2: type = 11; break; // line
+            case 3: type = 41; break; // tri
+            case 4: type = 111; break; // tet
+            }
+          }
+
           switch(type){
           case 11: case 21: case 22: case 31:
           case 23: case 24: case 32:
