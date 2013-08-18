@@ -103,9 +103,10 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
   int blockSize = _getBlockSizeFromParameters();
   std::vector<int> nByRowDiag (_localSize), nByRowOffDiag (_localSize);
   if (_sparsity.getNbRows() == 0) {
-    PetscInt prealloc = std::min(300,_localSize);
+    PetscInt prealloc = 300;
     PetscBool set;
     PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
+    prealloc = std::min(prealloc, _localSize);
     nByRowDiag.resize(0);
     nByRowDiag.resize(_localSize, prealloc);
   } else {

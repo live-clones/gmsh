@@ -399,9 +399,9 @@ namespace onelabUtils {
 	  x.setStep((x.getMax() - x.getMin()) / 100.);
 	}
 	if(val && isInteger){
-	  x.setMin((int) x.getMin());
-	  x.setMax((int) x.getMax());
-	  x.setStep((int) x.getStep());
+	  x.setMin((int)x.getMin());
+	  x.setMax((int)x.getMax());
+	  x.setStep((int)x.getStep());
 	}
       }
     }
