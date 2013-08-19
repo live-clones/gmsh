@@ -19,6 +19,10 @@
     }
     return self;
 }
+-(void)refresh
+{
+	return;
+}
 -(NSString *)getName
 {
     return name;
@@ -58,10 +62,20 @@
         picker.showsSelectionIndicator = YES;
         [picker setDataSource:self];
         [picker setDelegate:self];
-        for(int row=0;row<string.getChoices().size();row++)
-            if(string.getValue() == string.getChoices()[row])[picker selectRow:row inComponent:0 animated:NO];
+		bool valueInChoices = true;
+        for(int row=0;row<string.getChoices().size();row++){
+            if(string.getValue() == string.getChoices()[row]) {
+				[picker selectRow:row inComponent:0 animated:NO];
+				valueInChoices = false;
+			}
+		}
+		if(valueInChoices) [picker selectRow:string.getChoices().size() inComponent:0 animated:YES];
     }
     return self;
+}
+-(void)refresh
+{
+	[picker reloadAllComponents];
 }
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
@@ -72,6 +86,9 @@
     std::vector<onelab::string> string;
     onelab::server::instance()->get(string,[name UTF8String]);
     if(string.size() < 1) return 0;
+	bool valueInChoices = true;
+	for(int row=0;row<string[0].getChoices().size();row++) if(string[0].getValue() == string[0].getChoices()[row])valueInChoices=false;
+	if(valueInChoices) return string[0].getChoices().size()+1;
     return string[0].getChoices().size();
 }
 -(NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
@@ -79,6 +96,7 @@
     std::vector<onelab::string> string;
     onelab::server::instance()->get(string,[name UTF8String]);
     if(string.size() < 1) return @"NULL";
+	if(row >= string[0].getChoices().size()) return [NSString stringWithCString:string[0].getValue().c_str() encoding:[NSString defaultCStringEncoding]];
     return [NSString stringWithCString:string[0].getChoices()[row].c_str() encoding:[NSString defaultCStringEncoding]];
 }
 -(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
@@ -109,7 +127,7 @@
 }
 +(double)getHeight
 {
-    return 200.0f;
+    return 210.0f;
 }
 @end
 
@@ -130,6 +148,10 @@
             if(number.getValue() == number.getChoices()[row])[picker selectRow:row inComponent:0 animated:NO];
     }
     return self;
+}
+-(void)refresh
+{
+	[picker reloadAllComponents];
 }
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
@@ -177,7 +199,7 @@
 }
 +(double)getHeight
 {
-    return 200.0f;
+    return 210.0f;
 }
 @end
 
@@ -195,6 +217,12 @@
         [checkbox addTarget:self action:@selector(valueChange:) forControlEvents:UIControlEventValueChanged];
     }
     return self;
+}
+-(void)refresh
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+    [checkbox setSelected:(number[0].getValue() == 1)];
 }
 -(void) valueChange:(UISwitch *)sender
 {
@@ -246,6 +274,15 @@
     }
     return self;
 }
+-(void)refresh
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+    if(number.size() < 1) return;
+	[slider setMaximumValue:number[0].getMax()];
+	[slider setMinimumValue:number[0].getMin()];
+	[slider setValue:number[0].getValue()];
+}
 -(void)sliderValueChanged:(UISlider *)sender
 {
     std::vector<onelab::number> number;
@@ -292,8 +329,23 @@
         [textbox setKeyboardType:UIKeyboardTypeNumberPad];
         [textbox setText:[NSString stringWithFormat:@"%f", number.getValue()]];
         [textbox setDelegate:self];
+        UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
+        numberToolbar.barStyle = UIBarStyleBlackTranslucent;
+        numberToolbar.items = [NSArray arrayWithObjects:
+                               [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
+                               [[UIBarButtonItem alloc]initWithTitle:@"Apply" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithNumberPad)],
+                               nil];
+        [numberToolbar sizeToFit];
+        textbox.inputAccessoryView = numberToolbar;
     }
     return self;
+}
+-(void)refresh
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+    if(number.size() < 1) return;
+	[textbox setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
 }
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
@@ -307,6 +359,10 @@
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     return [textField endEditing:YES];
+}
+-(void)doneWithNumberPad
+{
+    [textbox endEditing:YES];
 }
 -(void)setFrame:(CGRect)frame
 {

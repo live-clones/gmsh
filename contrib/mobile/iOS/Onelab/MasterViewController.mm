@@ -37,9 +37,10 @@
         
     }
     else {
-        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter)];
+        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter:)];
         [runButton setTitle:@"Run"];
     }
+	runButton.possibleTitles = [NSSet setWithObjects:@"Run", @"Stop", nil];
     self.navigationItem.leftItemsSupplementBackButton = YES; // Only for iPhone/iPod
     self.navigationItem.leftBarButtonItem = runButton;
 
@@ -184,20 +185,18 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 
-- (void)runWithNewParameter
+- (void)runWithNewParameter:(UIBarButtonItem *)sender
 {
     dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
         appDelegate->compute = YES;
-        [runButton setTitle:@"Stop"];
-        [self.navigationController.view setNeedsDisplay];
-        [runButton setAction:@selector(stopRunning)];
+        [sender setTitle:@"Stop"];
+		[sender setAction:@selector(stopRunning)];
         self.navigationItem.rightBarButtonItem.enabled = NO;
         onelab_cb("compute");
         if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-            [runButton setTitle:@"Run"];
-            [self.navigationController.view setNeedsDisplay];
-            [runButton setAction:@selector(runWithNewParameter)];
+            [sender setTitle:@"Run"];
+            [sender setAction:@selector(runWithNewParameter:)];
             self.navigationItem.rightBarButtonItem.enabled = YES;
         }
         appDelegate->compute = NO;
@@ -249,12 +248,12 @@
     [cell addSubview:[tmp getLabel]];
     if([tmp isKindOfClass:[parameterStringList class]]) {
         parameterStringList *param = (parameterStringList *)tmp;
-        [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, cell.frame.size.width - 40, cell.frame.size.height/2)];
+        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
         [cell addSubview:[param getList]];
     }
     else if([tmp isKindOfClass:[parameterNumberList class]]) {
         parameterNumberList *param = (parameterNumberList *)tmp;
-        [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, cell.frame.size.width - 40, cell.frame.size.height/2)];
+        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
         [cell addSubview:[param getList]];
     }
     else if([tmp isKindOfClass:[parameterNumberCheckbox class]]) {

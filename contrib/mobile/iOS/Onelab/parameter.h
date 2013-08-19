@@ -24,6 +24,7 @@
 -(UILabel *)getLabel;
 -(bool)isReadOnly;
 +(double)getHeight;
+-(void)refresh;
 @end
 
 @interface parameterStringList : parameter <UIPickerViewDataSource, UIPickerViewDelegate>
