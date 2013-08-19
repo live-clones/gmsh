@@ -97,4 +97,21 @@ namespace std {
 %include "gmshLevelset.h"
 %include "GeomMeshMatcher.h"
 
-
+%extend GModel {
+  %apply std::vector<double> &OUTPUT {std::vector<double> &paramCoord}
+  std::vector<MElement*> getMeshElementsByCoords(const std::vector<double> &p, std::vector<double> &paramCoord, int dim = -1, bool strict_ = true)
+  {
+    std::vector<MElement*> elements;
+    for (unsigned int i = 0; i < p.size()/3; i++){
+      SPoint3 P(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
+      MElement *e =  $self->getMeshElementByCoord(P, dim, strict_);
+      double xyz[3] = {P.x(), P.y(), P.z()}, uvw[3] = {0., 0., 0.};
+      e->xyz2uvw(xyz, uvw);
+      elements.push_back(e);
+      paramCoord.push_back(uvw[0]);
+      paramCoord.push_back(uvw[1]);
+      paramCoord.push_back(uvw[2]);
+    }
+    return elements;
+  }
+}
