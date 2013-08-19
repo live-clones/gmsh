@@ -157,21 +157,19 @@ public class MainActivity extends Activity {
 				.setPositiveButton("Ok", null)
 				.show();
     	}
-    	/*else if(item.getTitle().equals(getString(R.string.menu_view_x))){
-    		renderer.rotate(0, 0, 0);
-    		renderer.rotate(90, 0, 0);
+    	else if(item.getTitle().equals(getString(R.string.menu_view_x))){
+    		renderer.viewX();
     		glView.requestRender();
     	}
 		else if(item.getTitle().equals(getString(R.string.menu_view_y))){
-			renderer.rotate(0, 0, 0);
-			renderer.rotate(0, 90, 0);
+			renderer.viewY();
 			glView.requestRender();
 		}
 		else if(item.getTitle().equals(getString(R.string.menu_view_z))){
-			renderer.rotate(0, 0, 0);
+			renderer.viewZ();
 			glView.requestRender();
 		}
-		else if(item.getTitle().equals(getString(R.string.menu_view_scale))){
+		/*else if(item.getTitle().equals(getString(R.string.menu_view_scale))){
 			glView.resetScale();
 			glView.requestRender();
 		}
@@ -449,7 +447,7 @@ public class MainActivity extends Activity {
     	onelabBtns.addView(run, lp);
     	CheckBox showMesh = new CheckBox(ctx);
     	showMesh.setText("Show the mesh");
-    	showMesh.setChecked(false);
+    	showMesh.setChecked(gmsh.showMesh());
     	showMesh.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -459,7 +457,7 @@ public class MainActivity extends Activity {
 		});
     	CheckBox showGeom = new CheckBox(ctx);
     	showGeom.setText("Show the geometry");
-    	showGeom.setChecked(true);
+    	showGeom.setChecked(gmsh.showGeom());
     	showGeom.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {

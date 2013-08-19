@@ -59,6 +59,14 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
 
 /*
  * Class:     org_geuz_onelab_Gmsh
+ * Method:    isShow
+ * Signature: (JLjava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_geuz_onelab_Gmsh_isShow
+  (JNIEnv *, jobject, jlong, jstring);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
  * Method:    getOnelabInstance
  * Signature: ()J
  */

@@ -158,6 +158,14 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
 	else if(strcmp(what, "geom") == 0)
 		((drawContext *)jptr)->showGeom(value);
 }
+JNIEXPORT jboolean JNICALL Java_org_geuz_onelab_Gmsh_isShow
+  (JNIEnv *env, jobject obj, jlong jptr, jstring jwhat)
+{
+	const char*  what = env->GetStringUTFChars(jwhat, NULL);
+	if(strcmp(what, "mesh") == 0) return ((drawContext *)jptr)->isShowedMesh();
+	else if(strcmp(what, "geom") == 0) return ((drawContext *)jptr)->isShowedGeom();
+	else return false;
+}
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
   (JNIEnv *env , jobject obj)
 {

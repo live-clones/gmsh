@@ -37,6 +37,9 @@ public class GLESRender implements Renderer{
 	public void resetModelPosition() {
 		mGModel.resetPosition();
 	}
+	public void viewX() { mGModel.viewX();}
+	public void viewY() { mGModel.viewY();}
+	public void viewZ() { mGModel.viewZ();}
 	
 	// OpenGL ES methods
 	public void onDrawFrame(GL10 gl) {

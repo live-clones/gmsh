@@ -122,17 +122,17 @@ void drawContext::eventHandler(int event, float x, float y)
 		case 4: // release the finger(s)
 			// Do nothink ?
 			break;
-        case 5: // X view
-            axis_to_quat(xx, M_PI/2, q);
-            setQuaternion(q[0], q[1], q[2], q[3]);
-            break;
-        case 6: // Y view
-            axis_to_quat(yy, M_PI/2, q);
-            setQuaternion(q[0], q[1], q[2], q[3]);
-            break;
-        case 7: // Z view
-            setQuaternion(0., 0., 0., 1.);
-            break;
+		case 5: // X view
+			axis_to_quat(xx, M_PI/2, q);
+			setQuaternion(q[0], q[1], q[2], q[3]);
+			break;
+		case 6: // Y view
+			axis_to_quat(yy, M_PI/2, q);
+			setQuaternion(q[0], q[1], q[2], q[3]);
+			break;
+		case 7: // Z view
+			setQuaternion(0., 0., 0., 1.);
+			break;
 		default: // all other reset the position
 			setQuaternion(0., 0., 0., 1.);
 			for(int i = 0; i < 3; i++){
