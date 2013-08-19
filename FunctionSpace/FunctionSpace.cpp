@@ -1,6 +1,7 @@
 #include <sstream>
 #include "FunctionSpace.h"
 #include "BasisGenerator.h"
+#include "ElementType.h"
 #include "Exception.h"
 
 using namespace std;
@@ -161,8 +162,10 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 
   // New Element
   MElementFactory factory;
-  //MElement* permElement = factory.create(elem.getLowOrderTypeForMSH(), vertex);
-  MElement* permElement = factory.create(elem.getTypeForMSH(), vertex);
+  int parentTag   = ElementType::ParentTypeFromTag(elem.getTypeForMSH());
+  int lowOrderTag = ElementType::getTag(parentTag, 1, false);
+
+  MElement* permElement = factory.create(lowOrderTag, vertex);
 
   // Edge & Face from Permuted Element //
   const size_t nEdge = permElement->getNumEdges();

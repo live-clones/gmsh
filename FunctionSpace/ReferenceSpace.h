@@ -25,7 +25,7 @@ class ReferenceSpace{
     bool                first;
     std::vector<size_t> second;
     std::vector<size_t> third;
-  } triple;
+  } triplet;
 
  protected:
   // Element Definition //
@@ -101,8 +101,8 @@ class ReferenceSpace{
      std::list<std::vector<size_t> >& listOfRefNodeIndexPermutation,
      std::list<std::vector<size_t> >& listOfReverseNodeIndexPermutation);
 
-  triple isCyclicPermutation(std::vector<size_t>& pTest,
-                             std::vector<size_t>& pRef);
+  triplet isCyclicPermutation(std::vector<size_t>& pTest,
+                              std::vector<size_t>& pRef);
 
   size_t findCorrespondingFace(std::vector<size_t>& face,
                                std::vector<size_t>& node);
@@ -116,8 +116,8 @@ class ReferenceSpace{
   std::vector<size_t> getReverseIndexPermutation(std::vector<size_t>& ref,
                                                  std::vector<size_t>& test);
 
-  static bool haveSameNode(std::vector<size_t>& face0,
-                           std::vector<size_t>& face1);
+  static bool haveSameNode(std::vector<size_t> face0,
+                           std::vector<size_t> face1);
 
   size_t getPermutationIdx(const MElement& element) const;
 

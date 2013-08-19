@@ -75,7 +75,7 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
 
   list<size_t>::iterator it;
   list<size_t>::iterator end;
-  triple match;
+  triplet match;
 
   // Values For unPermutedIndex //
   vector<size_t> unPermutedIndex(nVertex);
@@ -126,13 +126,13 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
   }
 }
 
-ReferenceSpace::triple ReferenceSpace::
+ReferenceSpace::triplet ReferenceSpace::
 isCyclicPermutation(vector<size_t>& pTest,
                     vector<size_t>& pRef){
 
   // If no Face, we have no Cyclic Permutation
   if(!refFaceNodeIdx.size()){
-    triple tri = {
+    triplet tri = {
       false,
       vector<size_t>(0),
       vector<size_t>(0)
@@ -151,6 +151,17 @@ isCyclicPermutation(vector<size_t>& pTest,
   // Corresponding Face in Test Permutation
   size_t testFaceId = findCorrespondingFace(refNode, pTest);
 
+  // If no corresponding face found, we have no Cyclic Permutation
+  if(testFaceId == (size_t)(-1)){
+    triplet tri = {
+      false,
+      vector<size_t>(0),
+      vector<size_t>(0)
+    };
+
+    return tri;
+  }
+
   // Node IDs of Test Permutation correspnding Face
   const size_t   nNodeInFaceTest = refFaceNodeIdx[testFaceId].size();
   vector<size_t> testNode(nNodeInFaceTest);
@@ -158,8 +169,8 @@ isCyclicPermutation(vector<size_t>& pTest,
   for(size_t i = 0; i < nNodeInFaceTest; i++)
     testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
 
-  // Return Triple
-  triple tri = {
+  // Return Triplet
+  triplet tri = {
     isFacePermutation(refNode, testNode),
     getRefIndexPermutation(pRef, pTest),
     getReverseIndexPermutation(pRef, pTest)
@@ -196,38 +207,38 @@ size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
       f++;
   }
 
-  return f;
+  // If a valid face is found return it
+  if(f < nFace)
+    return f;
+
+  // Else return (size_t)(-1)
+  else
+    return -1;
 }
 
 bool ReferenceSpace::isFacePermutation(vector<size_t>& refNode,
                                        vector<size_t>& testNode){
+  // Check Size
   const size_t size = refNode.size();
-  bool match = false;
 
   if(size != testNode.size())
     return false;
 
-  for(size_t i = 0; i < size && !match; i++){
-    bool submatch = true;
+  // Find refNode[0] in testNode
+  size_t offset = 0;
 
-    for(size_t j = 0; j < size && submatch; j++)
-      if(refNode[j] != testNode[j])
-        submatch = false;
+  while(refNode[0] != testNode[offset] && offset < size)
+    offset++;
 
-    if(!submatch){
-      size_t tmp0 = testNode[0];
-      size_t tmp1 = testNode[1];
+  // If refNode[0] not found in testNode, there is no face permutation
+  if(offset == size)
+    return false;
 
-      for(size_t k = 1; k < size + 1; k++){
-        testNode[k % size] = tmp0;
-        tmp0 = tmp1;
-        tmp1 = testNode[(k + 1) % size];
-      }
-    }
+  // Check refNode[i] and testNode[(i + offset) % size]
+  bool match = true;
 
-    else
-      match = true;
-  }
+  for(size_t i = 0; i < size && match; i++)
+    match = (refNode[i] == testNode[(i + offset) % size]);
 
   return match;
 }
@@ -268,23 +279,25 @@ vector<size_t> ReferenceSpace::getReverseIndexPermutation(vector<size_t>& ref,
   return idxVec;
 }
 
-bool ReferenceSpace::haveSameNode(vector<size_t>& face0,
-                                  vector<size_t>& face1){
+bool ReferenceSpace::haveSameNode(vector<size_t> face0,
+                                  vector<size_t> face1){
+  // Check Sizes
   const size_t size = face0.size();
-  bool matchIsPossible = true;
 
-  for(size_t i = 0; i < size && matchIsPossible; i++){
-    bool submatch = false;
+  if(size != face1.size())
+    return false;
 
-    for(size_t j = 0; j < size && !submatch; j++){
-      if(face0[i] == face1[j])
-        submatch = true;
-    }
+  // Sort both vectors
+  sort(face0.begin(), face0.end());
+  sort(face1.begin(), face1.end());
 
-    matchIsPossible = submatch;
-  }
+  // Check if elements are the same and at same position
+  bool match = true;
 
-  return matchIsPossible;
+  for(size_t i = 0; i < size && match; i++)
+    match = (face0[i] == face1[i]);
+
+  return match;
 }
 
 void ReferenceSpace::getOrderedEdge(void){
