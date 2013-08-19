@@ -134,7 +134,7 @@ set(GMSH_API
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
-  contrib/HighOrderMeshOptimizer/OptHOMRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
+  contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
   contrib/HighOrderMeshOptimizer/OptHOMFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
   contrib/MathEx/mathex.h)
 
