@@ -364,9 +364,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
     if(status > 1) status = PView::readMED(fileName);
 #endif
   }
-  else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS" ||
-          ext == ".dat" || ext == ".DAT"){
+  else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS"){
     status = GModel::current()->readBDF(fileName);
+  }
+  else if(ext == ".dat" || ext == ".DAT"){
+    if(!strncmp(header, "BEGIN ACTRAN", 12))
+      status = GModel::current()->readACTRAN(fileName);
+    else
+      status = GModel::current()->readBDF(fileName);
   }
   else if(ext == ".p3d" || ext == ".P3D"){
     status = GModel::current()->readP3D(fileName);

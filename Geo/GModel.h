@@ -662,6 +662,9 @@ class GModel
   int writeBDF(const std::string &name, int format=0, int elementTagType=1,
                bool saveAll=false, double scalingFactor=1.0);
 
+  // Actran mesh
+  int readACTRAN(const std::string &name);
+
   // Plot3D structured mesh format
   int readP3D(const std::string &name);
   int writeP3D(const std::string &name,
