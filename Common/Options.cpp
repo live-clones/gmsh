@@ -5433,6 +5433,14 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DAll;
 }
 
+double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.flexibleTransfinite = (int)val;
+  }
+  return CTX::instance()->mesh.flexibleTransfinite;
+}
+
 double opt_mesh_do_recombination_test(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

@@ -149,6 +149,9 @@ static double F_Transfinite(GEdge *ge, double t_)
   int type = ge->meshAttributes.typeTransfinite;
   int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
+  if(CTX::instance()->mesh.flexibleTransfinite && CTX::instance()->mesh.lcFactor)
+    nbpt /= CTX::instance()->mesh.lcFactor;
+
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
   double t_end = bounds.high();
@@ -388,6 +391,8 @@ void meshGEdge::operator() (GEdge *ge)
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points,
                     CTX::instance()->mesh.lcIntegrationPrecision);
     N = ge->meshAttributes.nbPointsTransfinite;
+    if(CTX::instance()->mesh.flexibleTransfinite && CTX::instance()->mesh.lcFactor)
+      N /= CTX::instance()->mesh.lcFactor;
   }
   else{
     if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || blf){
@@ -410,9 +415,10 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   // force odd number of points if blossom is used for recombination
-  if(ge->meshAttributes.method != MESH_TRANSFINITE &&
+  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
+      CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
-    if(/* 1 ||*/ CTX::instance()->mesh.recombineAll){
+    if(CTX::instance()->mesh.recombineAll){
       N++;
     }
     else{

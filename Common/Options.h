@@ -433,6 +433,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_algo_recombine(OPT_ARGS_NUM);
 double opt_mesh_recombine_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
+double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_do_recombination_test(OPT_ARGS_NUM);
 double opt_mesh_recombination_test_start(OPT_ARGS_NUM);
 double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM);
