@@ -173,8 +173,10 @@ class MTet4
 
 void connectTets(std::list<MTet4*> &);
 void connectTets(std::vector<MTet4*> &);
-void insertVerticesInRegion(GRegion *gr);
+void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000, bool _classify = true);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
+GRegion *getRegionFromBoundingFaces(GModel *model,
+                                    std::set<GFace *> &faces_bound);
 
 class compareTet4Ptr
 {

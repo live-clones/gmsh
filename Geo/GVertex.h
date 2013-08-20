@@ -45,8 +45,14 @@ class GVertex : public GEntity
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
 
+  // regions that bound this entity or that this entity bounds.
+  virtual std::list<GRegion*> regions() const;
+
   // get the edges that this vertex bounds
   virtual std::list<GEdge*> edges() const{ return l_edges; }
+
+  // faces that bound this entity or that this entity bounds.
+  virtual std::list<GFace*> faces() const;
 
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }

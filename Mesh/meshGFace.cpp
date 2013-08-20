@@ -630,8 +630,8 @@ void filterOverlappingElements(int dim, std::vector<MElement*> &e,
 
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
-  BoundaryLayerColumns* _columns = gf->model()->getColumns();
-  if (!buildAdditionalPoints2D (gf, _columns))return;
+  if (!buildAdditionalPoints2D (gf))return;
+  BoundaryLayerColumns* _columns = gf->getColumns();
 
 
   std::set<MEdge,Less_Edge> bedges;
@@ -687,41 +687,43 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
     ++ite;
   }
 
-  for (BoundaryLayerColumns::iterf itf = _columns->beginf();
-       itf != _columns->endf() ; ++itf){
-    MVertex *v = itf->first;
-    int nbCol = _columns->getNbColumns(v);
-
-    for (int i=0;i<nbCol-1;i++){
-      const BoundaryLayerData & c1 = _columns->getColumn(v,i);
-      const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
-      int N = std::min(c1._column.size(),c2._column.size());
-      for (int l=0;l < N ;++l){
-	MVertex *v11,*v12,*v21,*v22;
-	v21 = c1._column[l];
-	v22 = c2._column[l];
-	if (l == 0){
-	  v11 = v;
-	  v12 = v;
-	}
-	else {
-	  v11 = c1._column[l-1];
-	  v12 = c2._column[l-1];
-	}
-	if (v11 != v12){
-	  blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
-	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		  v11->x(),v11->y(),v11->z(),
+  if (USEFANS__){
+    for (BoundaryLayerColumns::iterf itf = _columns->beginf();
+	 itf != _columns->endf() ; ++itf){
+      MVertex *v = itf->first;
+      int nbCol = _columns->getNbColumns(v);
+      
+      for (int i=0;i<nbCol-1;i++){
+	const BoundaryLayerData & c1 = _columns->getColumn(v,i);
+	const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
+	int N = std::min(c1._column.size(),c2._column.size());
+	for (int l=0;l < N ;++l){
+	  MVertex *v11,*v12,*v21,*v22;
+	  v21 = c1._column[l];
+	  v22 = c2._column[l];
+	  if (l == 0){
+	    v11 = v;
+	    v12 = v;
+	  }
+	  else {
+	    v11 = c1._column[l-1];
+	    v12 = c2._column[l-1];
+	  }
+	  if (v11 != v12){
+	    blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
+	    fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		    v11->x(),v11->y(),v11->z(),
 		    v12->x(),v12->y(),v12->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v21->x(),v21->y(),v21->z());
-	}
-	else {
-	  blTris.push_back(new MTriangle(v,v22,v21));
-	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		  v->x(),v->y(),v->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v21->x(),v21->y(),v21->z());
+		    v22->x(),v22->y(),v22->z(),
+		    v21->x(),v21->y(),v21->z());
+	  }
+	  else {
+	    blTris.push_back(new MTriangle(v,v22,v21));
+	    fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		    v->x(),v->y(),v->z(),
+		    v22->x(),v22->y(),v22->z(),
+		    v21->x(),v21->y(),v21->z());
+	  }
 	}
       }
     }

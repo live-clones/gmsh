@@ -17,7 +17,6 @@
 #include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "boundaryLayersData.h"
 
 template <class scalar> class simpleFunction;
 
@@ -280,8 +279,6 @@ class GModel
   std::vector<GEdge*> bindingsGetEdges();
   std::vector<GVertex*> bindingsGetVertices();
 
-  // get the boundary layer columns
-  BoundaryLayerColumns *getColumns () {return &_columns;}
 
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }

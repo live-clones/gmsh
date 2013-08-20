@@ -27,6 +27,7 @@ struct bidimMeshData
   std::map<MVertex* , MVertex*>* equivalence;
   std::map<MVertex*, SPoint2> * parametricCoordinates;
   std::set<MEdge,Less_Edge> internalEdges; // embedded edges 
+  //  std::set<MVertex*> internalVertices; // embedded vertices 
   inline void addVertex (MVertex* mv, double u, double v, double size, double sizeBGM){
     int index = Us.size();
     if (mv->onWhat()->dim() == 2)mv->setIndex(index);

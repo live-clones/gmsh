@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshGRegion.h"
+#include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "boundaryLayersData.h"
 #include "meshGRegionDelaunayInsertion.h"
@@ -21,6 +22,8 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "MPyramid.h"
+#include "MPrism.h"
+#include "MHexahedron.h"
 #include "BDS.h"
 #include "OS.h"
 #include "Context.h"
@@ -29,6 +32,7 @@
 #include "simple3D.h"
 #include "Levy3D.h"
 #include "directions3D.h"
+#include "discreteFace.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -350,6 +354,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // SHOULD be classified on the model face and get the right set of parametric
   // coordinates.
 
+  const unsigned int initialSize =  numberedV.size();
+
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
                              out.pointlist[i * 3 + 1],
@@ -363,6 +369,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
   // Tetgen modifies both surface & edge mesh, so we need to re-create
   // everything
+
   gr->model()->destroyMeshCaches();
   std::list<GFace*> faces = gr->faces();
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
@@ -375,6 +382,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     gf->quadrangles.clear();
     gf->deleteVertexArrays();
   }
+
 
   // TODO: re-create 1D mesh
   /*for(int i = 0; i < out.numberofedges; i++){
@@ -389,6 +397,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // re-create the triangular meshes FIXME: this can lead to hanging nodes for
   // non manifold geometries (single surface connected to volume)
   for(int i = 0; i < out.numberoftrifaces; i++){
+    //    printf("%d %d %d\n",i,out.numberoftrifaces,needParam);
+
     if (out.trifacemarkerlist[i] > 0) {
       MVertex *v[3];
       v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
@@ -438,7 +448,9 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
       }
 
       for(int j = 0; j < 3; j++){
-	if(v[j]->onWhat()->dim() == 3){
+	if (out.trifacelist[i * 3 + j] - 1 >= initialSize){
+	  printf("aaaaaaaaaaaaaaargh\n");
+	  //	if(v[j]->onWhat()->dim() == 3){
 	  v[j]->onWhat()->mesh_vertices.erase
 	    (std::find(v[j]->onWhat()->mesh_vertices.begin(),
 		       v[j]->onWhat()->mesh_vertices.end(),
@@ -461,17 +473,20 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  else{
 	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
 	  }
-
+	  
 	  gf->mesh_vertices.push_back(v1b);
 	  numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
 	  delete v[j];
 	  v[j] = v1b;
 	}
       }
+      //      printf("new triangle %d %d %d\n",v[0]->onWhat()->dim(), v[1]->onWhat()->dim(), v[2]->onWhat()->dim());
       MTriangle *t = new MTriangle(v[0], v[1], v[2]);
       gf->triangles.push_back(t);
     }// do not do anything with prismatic faces
   }
+
+
   for(int i = 0; i < out.numberoftetrahedra; i++){
     MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] - 1];
     MVertex *v2 = numberedV[out.tetrahedronlist[i * 4 + 1] - 1];
@@ -483,9 +498,543 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 }
 #endif
 
-static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
+static void addOrRemove(const MFace &f,
+			MElement *e,
+			std::map<MFace,MElement*,Less_Face> & bfaces)
 {
-  //  buildAdditionalPoints3D (gr);
+  std::map<MFace,MElement*,Less_Face>::iterator it = bfaces.find(f);
+  if (it == bfaces.end())bfaces.insert(std::make_pair(f,e));
+  else bfaces.erase(it);
+}
+
+
+/*
+  here, we have a list of elements that actually do not form a mesh
+  --> a set boundary layer elements (prism, hexes, pyramids (and soon tets)
+  --> a set of tetrahedra that respect the external boundary of the BL mesh, 
+  yet possiblty containing elements that are on the other side of the boundary
+  and therefore overlapping those elements. We have to extract the good ones !
+
+  
+
+*/
+
+bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr, 
+						       std::vector<MTetrahedron*> &tets,
+						       std::vector<MHexahedron*> &hexes,
+						       std::vector<MPrism*> &prisms,
+						       std::vector<MPyramid*> &pyramids) 
+{  
+  std::set<MElement*> all;
+  all.insert(hexes.begin(),hexes.end());
+  all.insert(prisms.begin(),prisms.end());
+  all.insert(pyramids.begin(),pyramids.end());
+  // start with one BL element !
+  MElement *FIRST = all.size() ? *(all.begin()) : 0;
+  if (!FIRST) return true;
+  all.insert(tets.begin(),tets.end());
+
+  //  printf("coucou1 %d eleemnts\n",all.size());
+  fs_cont search;
+  buildFaceSearchStructure(gr->model(), search);
+
+  // create the graph face 2 elements for the region
+  std::map<MFace,std::pair<MElement*,MElement*> ,Less_Face> myGraph;
+  
+  for (std::set<MElement*>::iterator it = all.begin(); it != all.end(); ++it){
+    MElement *t = *it;
+    const int nbf = t->getNumFaces();
+    for (int j=0;j<nbf;j++){
+      MFace f = t->getFace(j);      
+      std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator itf = myGraph.find(f);
+      if (itf == myGraph.end())myGraph.insert (std::make_pair (f, std::make_pair (t,(MElement*)0)));
+      else {
+	// what to do ??????
+	// two tets and one prism --> the prism should be 
+	// geometrically on the other side of the 
+	if (itf->second.second) {
+	  MElement *prism=0, *t1=0, *t2=0;
+	  if (itf->second.second->getType () == TYPE_PRI || itf->second.second->getType () == TYPE_PYR) {
+	    prism = itf->second.second;
+	    t1 =  itf->second.first;
+	    t2 = t;
+	  }
+	  else if (itf->second.first->getType () == TYPE_PRI || itf->second.first->getType () == TYPE_PYR) {
+	    prism = itf->second.first;
+	    t1 =  itf->second.second;
+	    t2 = t;
+	  }
+	  else if (t->getType () == TYPE_PRI || t->getType () == TYPE_PYR) {
+	    prism = t;
+	    t1 =  itf->second.second;
+	    t2 = itf->second.first;
+	  }
+	  else {
+	    printf("types %d %d %d\n",t->getType () ,itf->second.first->getType (),itf->second.second->getType () );
+	  }
+	  if (!t1 || !t2 || !prism){
+	    gr->model()->writeMSH("ooops.msh");
+	    Msg::Error ("Wrong BL configuration");
+	    return false;
+	  }
+	  SVector3 n = f.normal();
+	  SPoint3 c = f.barycenter();
+	  MVertex *v_prism,*v_t1,*v_t2;
+	  for (int i=0;i<4;i++){
+	    if (t1->getVertex(i) != f.getVertex(0) && 
+		t1->getVertex(i) != f.getVertex(1) && 
+		t1->getVertex(i) != f.getVertex(2))v_t1 = t1->getVertex(i);
+	    if (t2->getVertex(i) != f.getVertex(0) && 
+		t2->getVertex(i) != f.getVertex(1) && 
+		t2->getVertex(i) != f.getVertex(2))v_t2 = t2->getVertex(i);
+	  }
+	  for (int i=0;i<prism->getNumVertices();i++){
+	    if (prism->getVertex(i) != f.getVertex(0) && 
+		prism->getVertex(i) != f.getVertex(1) && 
+		prism->getVertex(i) != f.getVertex(2))v_prism = prism->getVertex(i);
+	  }
+	  SVector3 vf1 (v_t1->x() - c.x(),v_t1->y() - c.y(),v_t1->z() - c.z());
+	  SVector3 vf2 (v_t2->x() - c.x(),v_t2->y() - c.y(),v_t2->z() - c.z());
+	  SVector3 vfp (v_prism->x() - c.x(),v_prism->y() - c.y(),v_prism->z() - c.z());
+	  //	  printf("%12.5E %12.5E%12.5E\n",dot(vf1,n),dot(vf2,n),dot(vfp,n));
+	  if (dot (vf1,n) * dot (vfp,n) > 0){itf->second.first = prism;itf->second.second=t2; /*delete t1;*/}
+	  else if (dot (vf2,n) * dot (vfp,n) > 0){itf->second.first = prism;itf->second.second=t1; /*delete t2;*/}
+	  //	  else if (dot (vf2,vfp) > 0){itf->second.first = prism;itf->second.second=t2;}
+	  else Msg::Fatal("Impossible Geom Config");
+	}
+	else itf->second.second = t;      
+      }
+    }
+  }
+
+  std::stack<MElement*> myStack;
+  std::set<MElement*> connected;
+  std::set<GFace*> faces_bound;
+  myStack.push(FIRST);
+  while (!myStack.empty()){
+    FIRST = myStack.top();
+    myStack.pop();
+    connected.insert(FIRST);
+    for (int i=0;i<FIRST->getNumFaces();i++){
+      MFace f = FIRST->getFace(i);
+      GFace* gfound = findInFaceSearchStructure (f.getVertex(0),
+						 f.getVertex(1),
+						 f.getVertex(2),
+						 search);
+      if (!gfound){
+	std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator 
+	  itf = myGraph.find(f);
+	MElement *t_neigh = itf->second.first == FIRST ?  
+	  itf->second.second :  itf->second.first;
+	if (connected.find(t_neigh) == connected.end())myStack.push(t_neigh);
+      }
+      else {
+	//	if (faces_bound.find(gfound) == faces_bound.end())printf("face %d\n",gfound->tag());
+	faces_bound.insert(gfound);
+      }
+    }
+  }
+  //  printf ("found a set of %d elements that are connected with %d bounding faces\n",connected.size(),faces_bound.size()); 
+  GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
+  //  printf("REGION %d %d\n",myGRegion->tag(),gr->tag());
+  if (myGRegion == gr){
+    //    printf("one region %d is found : %d elements\n",myGRegion->tag(),connected.size());
+    myGRegion->tetrahedra.clear();
+    for (std::set<MElement*>::iterator it = connected.begin(); it != connected.end(); ++it){
+      MElement *t = *it;
+      std::set<MVertex*> _mesh_vertices;
+      for (int i=0;i<t->getNumVertices();i++){
+	MVertex *_v = t->getVertex(i);
+	if (_v->onWhat() == gr){
+	  _mesh_vertices.insert(_v);
+	}
+      }
+      //      myGRegion->mesh_vertices.insert(myGRegion->mesh_vertices.end(),_mesh_vertices.begin(),_mesh_vertices.end());
+
+      if (t->getType() == TYPE_TET)
+	myGRegion->tetrahedra.push_back((MTetrahedron*)t);
+      else if (t->getType() == TYPE_HEX)
+	myGRegion->hexahedra.push_back((MHexahedron*)t);
+      else if (t->getType() == TYPE_PRI)
+	myGRegion->prisms.push_back((MPrism*)t);
+      else if (t->getType() == TYPE_PYR)
+	myGRegion->pyramids.push_back((MPyramid*)t);
+    }
+  }
+  else {
+    return false;
+  }
+  return true;
+}
+
+
+static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
+{
+  if (getBLField(gr->model())) insertVerticesInRegion(gr,-1);
+  BoundaryLayerColumns* _columns = buildAdditionalPoints3D (gr);
+  if (!_columns)return false;
+  std::map<MFace,MElement*,Less_Face> bfaces;
+
+  std::vector<MPrism*> blPrisms;
+  std::vector<MHexahedron*> blHexes;
+  std::vector<MPyramid*> blPyrs;
+  std::list<GFace*> faces = gr->faces();
+
+
+
+  std::list<GFace*> embedded_faces = gr->embeddedFaces();
+  faces.insert(faces.begin(), embedded_faces.begin(),embedded_faces.end());
+  FILE *ff2 = fopen ("tato3D.pos","w");
+  fprintf(ff2,"View \" \"{\n");
+  std::set<MVertex*> verts;
+
+  std::list<GFace*>::iterator itf = faces.begin();
+  while(itf != faces.end()){
+    for(unsigned int i = 0; i< (*itf)->triangles.size(); i++){
+      MVertex *v1 = (*itf)->triangles[i]->getVertex(0);
+      MVertex *v2 = (*itf)->triangles[i]->getVertex(1);
+      MVertex *v3 = (*itf)->triangles[i]->getVertex(2);
+      MFace dv(v1,v2,v3);
+      addOrRemove (dv,0,bfaces);
+      for (unsigned int SIDE = 0 ; SIDE < _columns->_normals3D.count(dv); SIDE ++){
+	faceColumn fc =  _columns->getColumns(*itf,v1, v2, v3, SIDE);
+	const BoundaryLayerData & c1 = fc._c1;
+	const BoundaryLayerData & c2 = fc._c2;
+	const BoundaryLayerData & c3 = fc._c3;
+	int N = std::min(c1._column.size(),std::min(c2._column.size(),c3._column.size()));
+	//	printf("%d Layers\n",N);
+	for (int l=0;l < N ;++l){
+	  MVertex *v11,*v12,*v13,*v21,*v22,*v23;
+	  v21 = c1._column[l];
+	  v22 = c2._column[l];
+	  v23 = c3._column[l];
+	  if (l == 0){
+	    v11 = v1;
+	    v12 = v2;
+	    v13 = v3;
+	  }
+	  else {
+	    v11 = c1._column[l-1];
+	    v12 = c2._column[l-1];
+	    v13 = c3._column[l-1];
+	  }
+	  //	  printf("coucoucouc %p %p %p %p %p %p\n",v11,v12,v13,v21,v22,v23);
+	  blPrisms.push_back(new MPrism(v11,v12,v13,v21,v22,v23));
+	  fprintf(ff2,"SI (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1,1,1};\n",
+		  v11->x(),v11->y(),v11->z(),
+		  v12->x(),v12->y(),v12->z(),
+		  v13->x(),v13->y(),v13->z(),
+		  v21->x(),v21->y(),v21->z(),
+		  v22->x(),v22->y(),v22->z(),
+		  v23->x(),v23->y(),v23->z());
+	  //	  printf("done %d\n",l);
+	}
+      }
+    }
+    ++itf;
+  }
+
+  std::set<MEdge,Less_Edge> edges; 
+  {
+    std::list<GEdge*> gedges = gr->edges();
+    for (std::list<GEdge*>::iterator it = gedges.begin(); it != gedges.end() ; ++it){
+      for (unsigned int i=0;i<(*it)->lines.size();++i){
+	edges.insert(MEdge((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)));
+      }
+    }
+  }
+
+  // now treat the Wedges
+  // we have to know the two target GFaces that are concerned with a GEdge
+  std::set<MEdge>::iterator ite =  edges.begin();
+  while(ite != edges.end()){
+    MEdge e = *ite;
+    MVertex *v1 = e.getVertex(0);
+    MVertex *v2 = e.getVertex(1);
+    bool onWedge1 = _columns->isOnWedge(v1);
+    bool onWedge2 = _columns->isOnWedge(v2);
+    bool onCorner1 = _columns->isCorner(v1);
+    bool onCorner2 = _columns->isCorner(v2);
+    if ((onWedge1 || onCorner1) && (onWedge2 || onCorner2)){
+      int N1=0,N2=0;
+      std::vector<GFace *>gfs1,gfs2;
+      BoundaryLayerFanWedge3d w1,w2;
+      BoundaryLayerFanCorner3d c1,c2;
+      if (onWedge1) {
+	N1 = _columns->getNbColumns(v1);
+	w1 = _columns->getWedge(v1);
+	gfs1 = w1._gf1;
+	gfs2 = w1._gf2;
+      }
+      else {
+	c1 = _columns->getCorner(v1);
+	N1 = c1._fanSize;
+      }
+      if (onWedge2) {
+	N2 = _columns->getNbColumns(v2);
+	w2 = _columns->getWedge(v2);
+	gfs1 = w2._gf1;
+	gfs2 = w2._gf2;
+      }
+      else {
+	c2 = _columns->getCorner(v2);
+	N2 = c2._fanSize;
+      }
+
+      // have to go from gf1 to gf2 to be aware of the sense!!!
+      if (N1 == N2){
+	for (unsigned int i=0;i<N1-1;i++){
+
+	  unsigned int i11=i, i12=i+1, i21=i,i22=i+1;
+	  
+	  if (onWedge1){
+	    //	    if (w1.isLeft(gfs1)){i11=i;i12=i+1;}
+	    //	    else if (w1.isRight(gfs1)){i11=N1-1-i;i12=N1-2-i;}
+	    //	    printf("%d %d %d\n",w1.isLeft(gfs1),gfs1[0] == w1._gf1[0],gfs1.size());
+	    //	    printf("%d %d %d\n",w1.isRight(gfs1),gfs1[0] == w1._gf2[0],gfs1.size());
+	    if (gfs1[0] == w1._gf1[0]){i11=i;i12=i+1;}
+	    else if (gfs1[0] == w1._gf2[0]){i11=N1-1-i;i12=N1-2-i;}
+	  }
+	  else {
+	    /*
+
+
+
+                             | 0 --> column 0
+                             |
+                             |    fan with N1 columns
+                 gf.size     |
+	         ----------  + ---------- 1 --> column N1-1
+                             |
+                             |
+                             |
+                             | 2 --> column 2*(N1-1)
+
+	      0 1 2 3  --> 0 -> 4-1
+	      3 4 5 6  --> 4-1 -> 2 (4-1)
+	      6 7 8 0
+
+	      1 --> 0 ==> 
+	      
+	     */
+	    int K1=-1,K2=-1;
+	    for (unsigned int s=0;s < c1._gf.size();s++){
+	      if (w2.isLeft(c1._gf[s]))K1 = s;
+	      if (w2.isRight(c1._gf[s]))K2 = s;
+	    }
+	    if (K1==-1)Msg::Error("K1 = -1");
+	    if (K2==-1)Msg::Error("K2 = -1");
+	    if (K1+1==K2){i11=K1*(N1-1)+i;i12=i11+1;}
+	    else if (K2+1 == K1){i11=K1*(N1-1)-i;i12=i11-1;}
+	    else if (K2 == 0 && K1 ==  c1._gf.size() - 1){i11=K1*(N1-1)+i;i12=i11+1;}
+	    else if (K1 == 0 && K2 ==  c1._gf.size() - 1){i11=(K2+1)*(N1-1)-i;i12=i11-1;}
+	    else Msg::Error("KROUPOUK 1 %d %d !",K1,K2);
+	    if (i12 == (c1._gf.size()) * (N1-1))i12=0;
+	    if (i11 == (c1._gf.size()) * (N1-1))i11=0;
+	  }
+	  if (onWedge2){
+	    if (w2.isLeft(gfs1)){i21=i;i22=i+1;}
+	    else if (w2.isRight(gfs1)){i21=N1-1-i;i22=N1-2-i;}
+	  }
+	  else {
+	    int K1,K2;
+	    for (unsigned int s=0;s<c2._gf.size();s++){
+	      if (w1.isLeft(c2._gf[s]))K1 = s;
+	      if (w1.isRight(c2._gf[s]))K2 = s;
+	    }
+	    if (K1+1 == K2){i21=K1*(N1-1)+i;i22=i21+1;}
+	    else if (K2+1 == K1){i21=K1*(N1-1)-i;i22=i21-1;}
+	    else if (K2 == 0 && K1 ==  c2._gf.size()-1 ){i21=K1*(N1-1)+i;i22=i21+1;}
+	    else if (K1 == 0 && K2 ==  c2._gf.size()-1){i21=(K2+1)*(N1-1)-i;i22=i21-1;}
+	    else Msg::Error("KROUPOUK 2 %d %d !",K1,K2);
+	    if (i22 == (c2._gf.size()) * (N1-1))i22=0;
+	    if (i21 == (c2._gf.size()) * (N1-1))i21=0;
+	  }
+
+	  BoundaryLayerData c11 = _columns->getColumn(v1,i11);
+	  BoundaryLayerData c12 = _columns->getColumn(v1,i12);
+	  BoundaryLayerData c21 = _columns->getColumn(v2,i21);
+	  BoundaryLayerData c22 = _columns->getColumn(v2,i22);
+	  int N = std::min(c11._column.size(),std::min(c12._column.size(), std::min(c21._column.size(),c22._column.size())));
+	  for (int l=0;l < N ;++l){
+	    MVertex *v11,*v12,*v13,*v14;
+	    MVertex *v21,*v22,*v23,*v24;
+	    v21 = c11._column[l];
+	    v22 = c12._column[l];
+	    v23 = c22._column[l];
+	    v24 = c21._column[l];
+	    if (l == 0){
+	      v11 = v12 = v1;
+	      v13 = v14 = v2;
+	    }
+	    else {
+	      v11 = c11._column[l-1];
+	      v12 = c12._column[l-1];
+	      v13 = c22._column[l-1];
+	      v14 = c21._column[l-1];
+	    }
+
+	    if (l == 0){
+	      blPrisms.push_back(new MPrism(v12,v21,v22,v13,v24,v23));
+	      fprintf(ff2,"SI (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3,3,3};\n",
+		      v12->x(),v12->y(),v12->z(),
+		      v21->x(),v21->y(),v21->z(),
+		      v22->x(),v22->y(),v22->z(),
+		      v13->x(),v13->y(),v13->z(),
+		      v24->x(),v24->y(),v24->z(),
+		      v23->x(),v23->y(),v23->z());
+	    }
+	    else {	      
+	      blHexes.push_back(new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24));
+	      fprintf(ff2,"SH (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2,2,2,2,2,2};\n",
+		      v11->x(),v11->y(),v11->z(),
+		      v12->x(),v12->y(),v12->z(),
+		      v13->x(),v13->y(),v13->z(),
+		      v14->x(),v14->y(),v14->z(),
+		      v21->x(),v21->y(),v21->z(),
+		      v22->x(),v22->y(),v22->z(),
+		      v23->x(),v23->y(),v23->z(),
+		      v24->x(),v24->y(),v24->z());
+	    }
+	  }	  
+	}
+      }
+      else{
+	Msg::Error("cannot create 3D BL FAN %d %d -- %d %d %d %d",N1,N2,onWedge1,onWedge1,onCorner1,onCorner2);
+      }
+    }     
+    ++ite;
+  }
+
+  fprintf(ff2,"};\n");
+  fclose(ff2);
+
+
+  for (unsigned int i = 0; i < blPrisms.size();i++){
+    for (unsigned int j=0;j<5;j++)
+      addOrRemove(blPrisms[i]->getFace(j),blPrisms[i],bfaces);
+    for (int j = 0; j < 6; j++)
+      if(blPrisms[i]->getVertex(j)->onWhat() == gr)verts.insert(blPrisms[i]->getVertex(j));
+  }
+  for (unsigned int i = 0; i < blHexes.size();i++){
+    for (unsigned int j=0;j<6;j++)
+      addOrRemove(blHexes[i]->getFace(j),blHexes[i],bfaces);
+    for (int j = 0; j < 8; j++)
+      if(blHexes[i]->getVertex(j)->onWhat() == gr)verts.insert(blHexes[i]->getVertex(j));
+  }
+
+  discreteFace *nf = new discreteFace(gr->model(), 444444);
+  gr->model()->add (nf);
+  std::list<GFace*> hop;
+  std::map<MFace,MElement*,Less_Face>::iterator it =  bfaces.begin();
+
+  FILE *ff = fopen ("toto3D.pos","w");
+  fprintf(ff,"View \" \"{\n");
+  for (; it != bfaces.end(); ++it){
+    if (it->first.getNumVertices() == 3){
+      nf->triangles.push_back(new MTriangle (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2)));
+      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
+	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z());
+    }
+    else {
+
+      // we have a quad face --> create a pyramid
+      
+      MElement *e = it->second;
+
+      // compute the center of the face;      
+      SPoint3 center (0.25*(it->first.getVertex(0)->x()+it->first.getVertex(1)->x()+it->first.getVertex(2)->x()+it->first.getVertex(3)->x()),
+		      0.25*(it->first.getVertex(0)->y()+it->first.getVertex(1)->y()+it->first.getVertex(2)->y()+it->first.getVertex(3)->y()),
+		      0.25*(it->first.getVertex(0)->z()+it->first.getVertex(1)->z()+it->first.getVertex(2)->z()+it->first.getVertex(3)->z()));
+      // compute the center of the opposite face;      
+      SPoint3 opposite (0,0,0);
+      int counter=0;
+      for (int i=0;i<e->getNumVertices();i++){
+	MVertex *vv = e->getVertex(i); 
+	bool found = false;
+	for (int j=0;j<4;j++){
+	  MVertex *ww = it->first.getVertex(j);
+	  if (ww == vv)found = true;
+	}
+	if (!found){
+	  counter ++;
+	  opposite += SPoint3(vv->x(),vv->y(),vv->z());
+	}
+      }
+      //      printf("counter = %d\n",counter);
+      opposite /= (double)counter;
+
+      SVector3 dir = center - opposite;
+      MTriangle temp (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2));
+      double D = temp.minEdge();
+      dir.normalize();
+      const double eps = D*1.e-2;
+      MVertex *newv = new MVertex (center.x() + eps * dir.x(),center.y() + eps * dir.y(), center.z() + eps * dir.z(), gr);
+      
+      MPyramid *pyr = new MPyramid (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2),it->first.getVertex(3),newv);
+      verts.insert(newv);
+      blPyrs.push_back(pyr);            
+
+      nf->triangles.push_back(new MTriangle (it->first.getVertex(0),it->first.getVertex(1),newv));
+      nf->triangles.push_back(new MTriangle (it->first.getVertex(1),it->first.getVertex(2),newv));
+      nf->triangles.push_back(new MTriangle (it->first.getVertex(2),it->first.getVertex(3),newv));
+      nf->triangles.push_back(new MTriangle (it->first.getVertex(3),it->first.getVertex(0),newv));
+      
+      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+	      newv->x(),newv->y(),newv->z());
+      
+      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+	      newv->x(),newv->y(),newv->z());
+      
+      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
+	      newv->x(),newv->y(),newv->z());
+      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
+	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+	      newv->x(),newv->y(),newv->z());
+      
+      fprintf(ff,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3};\n",
+	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z());
+    }
+  }
+  fprintf(ff,"};\n");
+  fclose(ff);
+
+  printf("discrete face with %d %d elems\n",nf->triangles.size(),nf->quadrangles.size());
+  hop.push_back(nf);
+
+  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
+  gr->tetrahedra.clear();
+
+  gr->set(hop);
+  CreateAnEmptyVolumeMesh(gr);
+  printf("%d tets\n",gr->tetrahedra.size());
+  deMeshGFace _kill;
+  _kill (nf);
+  delete nf;
+  gr->model()->remove(nf);
+
+  gr->set(faces);
+  gr->mesh_vertices.insert(gr->mesh_vertices.begin(),verts.begin(),verts.end());
+
+  gr->model()->writeMSH("BL_start.msh");
+
+  AssociateElementsToModelRegionWithBoundaryLayers (gr, gr->tetrahedra , blHexes, blPrisms, blPyrs);
+
+  gr->model()->writeMSH("BL_start2.msh");
+
+  return true;
 }
 
 void _relocateVertex(MVertex *ver,
@@ -514,6 +1063,30 @@ void _relocateVertex(MVertex *ver,
     ver->z() = z / N;
   }
 }
+
+bool CreateAnEmptyVolumeMesh(GRegion *gr){
+  printf("creating an empty volume mesh\n");
+  splitQuadRecovery sqr;
+  tetgenio in, out;
+  std::vector<MVertex*> numberedV;
+  char opts[128];
+  buildTetgenStructure(gr, in, numberedV, sqr);
+  printf("tetgen structure created\n");
+  sprintf(opts, "-Ype%c",
+	  (Msg::GetVerbosity() < 3) ? 'Q':
+	  (Msg::GetVerbosity() > 6) ? 'V': '\0');
+  try{
+    tetrahedralize(opts, &in, &out);
+  }
+  catch (int error){
+    Msg::Error("Self intersecting surface mesh");
+    return false;
+  }
+  printf("creating an empty volume mesh done\n");
+  TransferTetgenMesh(gr, in, out, numberedV);    
+  return true;
+}
+
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
@@ -612,6 +1185,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     TransferTetgenMesh(gr, in, out, numberedV);
   }
 
+
    // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();
   while(itf != allFaces.end()){
@@ -623,21 +1197,21 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
+  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
 
   // now do insertion of points
- if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
-   bowyerWatsonFrontalLayers(gr, false);
- else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
-   bowyerWatsonFrontalLayers(gr, true);
- else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
-   refineMeshMMG(gr);
- }
- else
-   if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
-     insertVerticesInRegion(gr);
-   }
-
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
+    bowyerWatsonFrontalLayers(gr, false);
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
+    bowyerWatsonFrontalLayers(gr, true);
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
+    refineMeshMMG(gr);
+  }
+  else
+    if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
+      insertVerticesInRegion(gr,2000000000,!_BL);
+    }
+  
   //emi test frame field
   // int NumSmooth = 10;//CTX::instance()->mesh.smoothCrossField
   // std::cout << "NumSmooth = " << NumSmooth << std::endl;

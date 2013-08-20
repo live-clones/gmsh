@@ -131,6 +131,8 @@ struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
 struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
+    if (f1.getNumVertices() != f2.getNumVertices())
+      return f1.getNumVertices() <  f2.getNumVertices();
     for(int i = 0; i < f1.getNumVertices(); i++) {
       if(f1.getSortedVertex(i) < f2.getSortedVertex(i)) return true;
       if(f1.getSortedVertex(i) > f2.getSortedVertex(i)) return false;

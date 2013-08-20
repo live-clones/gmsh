@@ -727,12 +727,14 @@ int OCC_Internals::getGTagOfOCCSolidByNativePtr(GModel *model, TopoDS_Solid toFi
 	return 0;	
 }
 
+
 void OCC_Internals::buildGModel(GModel *model)
 {
   // building geom vertices
   int numv = model->getMaxElementaryNumber(0) + 1;
   for(int i = 1; i <= vmap.Extent(); i++){
     TopoDS_Vertex vertex = TopoDS::Vertex(vmap(i));
+
     if(!getOCCVertexByNativePtr(model, vertex)){
       model->add(new OCCVertex(model, numv, vertex));
       numv++;

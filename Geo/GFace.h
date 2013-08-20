@@ -17,6 +17,7 @@
 #include "SVector3.h"
 #include "Pair.h"
 #include "Numeric.h"
+#include "boundaryLayersData.h"
 
 class MElement;
 class MTriangle;
@@ -49,6 +50,7 @@ class GFace : public GEntity
   // replace edges (for gluing) for specific modelers, we have to
   // re-create internal data
   virtual void replaceEdgesInternal(std::list<GEdge*> &){}
+  BoundaryLayerColumns _columns;
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
@@ -332,6 +334,11 @@ class GFace : public GEntity
   void addTriangle(MTriangle *t){ triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q){ quadrangles.push_back(q); }
   void addPolygon(MPolygon *p){ polygons.push_back(p); }
+
+  // get the boundary layer columns
+  BoundaryLayerColumns *getColumns () {return &_columns;}
+
+
 };
 
 #endif

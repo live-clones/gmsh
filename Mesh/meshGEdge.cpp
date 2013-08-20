@@ -492,31 +492,6 @@ void meshGEdge::operator() (GEdge *ge)
     v0->z() = beg_p.z();
   }
 
-#if defined(HAVE_ANN)
-  if (blf && !blf->isEdgeBL(ge->tag()))
-    {
-      GVertex *g0 = ge->getBeginVertex();
-      GVertex *g1 = ge->getEndVertex();
-      BoundaryLayerColumns* _columns = ge->model()->getColumns();
-      MVertex * v0 = g0->mesh_vertices[0];
-      MVertex * v1 = g1->mesh_vertices[0];
-      std::vector<MVertex*> invert;
-      std::vector<SMetric3> _metrics;
-      for(unsigned int i = 0; i < mesh_vertices.size() ; i++)
-	{
-	  invert.push_back(mesh_vertices[mesh_vertices.size() - i - 1]);
-	  _metrics.push_back(SMetric3(1.0));
-	}
-      SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
-      t.normalize();
-      if (blf->isVertexBL(g0->tag())){
-	_columns->addColumn(t, v0, mesh_vertices,_metrics);
-      }
-      if (blf->isVertexBL(g1->tag())){
-	  _columns->addColumn(t*-1.0, v1,invert,_metrics);
-      }
-    }
-#endif
   ge->meshStatistics.status = GEdge::DONE;
 }
 

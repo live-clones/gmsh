@@ -1232,13 +1232,13 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
-      char name[245];
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-      _printTris (name, ActiveTris.begin(), ActiveTris.end(), DATA,true);
-    }
+    //    if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+    //      char name[245];
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+    //      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+    //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), DATA,true);
+    //    }
     /* if(ITER % 100== 0){
           char name[245];
           sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
@@ -1247,10 +1247,10 @@ void bowyerWatsonFrontal(GFace *gf,
 	  //          _printTris (name, ActiveTris, Us,Vs,false);
         }
     */
+    //    printf("active_tris.size = %d\n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
-    // printf("active_tris.size = %d\n",ActiveTris.size());
 
     if (!worst->isDeleted() && isActive(worst, LIMIT_, active_edge) &&
         worst->getRadius() > LIMIT_){
@@ -1285,7 +1285,9 @@ void bowyerWatsonFrontal(GFace *gf,
     if(fields->getBoundaryLayerField() > 0){
       Field *bl_field = fields->get(fields->getBoundaryLayerField());
       blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+      if (blf && !blf->iRecombine){
+	quadsToTriangles(gf,10000);
+      }
     }
   }
 #endif
@@ -1467,13 +1469,13 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
   int max_layers = quad ? 10000 : 4;
   while (1){
     ITERATION ++;
-    if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
-      char name[245];
-      sprintf(name,"delInfinite_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
-      sprintf(name,"delInfinite_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-      _printTris (name, ActiveTris.begin(),  ActiveTris.end(),DATA,true);
-    }
+    //    if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
+    //      char name[245];
+    //      sprintf(name,"delInfinite_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+    //      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
+    //      sprintf(name,"delInfinite_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+    //      _printTris (name, ActiveTris.begin(),  ActiveTris.end(),DATA,true);
+    //    }
 
     std::set<MTri3*,compareTri3Ptr> ActiveTrisNotInFront;
 

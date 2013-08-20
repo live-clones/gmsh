@@ -6,6 +6,7 @@
 #ifndef _MESH_GREGION_H_
 #define _MESH_GREGION_H_
 
+#include <list>
 #include <vector>
 #include <map>
 
@@ -49,6 +50,7 @@ class deMeshGRegion {
 };
 
 void MeshDelaunayVolume(std::vector<GRegion*> &delaunay);
+bool CreateAnEmptyVolumeMesh(GRegion *gr);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);
 void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces);

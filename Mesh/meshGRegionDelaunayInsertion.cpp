@@ -659,7 +659,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4*> &theRegion,
   while(!_stackounette.empty()){
     t = _stackounette.top();
     _stackounette.pop();
-    if (!t) Msg::Error("a tet is not connected by a boundary face");
+    if (!t) Msg::Fatal("a tet is not connected by a boundary face");
     if (!t->onWhat()) {
       theRegion.push_back(t);
       t->setOnWhat(bidon);
@@ -1141,7 +1141,7 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
 }
 
 
-void insertVerticesInRegion (GRegion *gr)
+void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
@@ -1152,6 +1152,7 @@ void insertVerticesInRegion (GRegion *gr)
   MTet4Factory myFactory(1600000);
   std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
+  
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
@@ -1183,32 +1184,40 @@ void insertVerticesInRegion (GRegion *gr)
   // classify the tets on the right region
   // Msg::Info("reclassifying %d tets", allTets.size());
 
-  fs_cont search;
-  buildFaceSearchStructure(gr->model(), search);
 
-  for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
-    if(!(*it)->onWhat()){
-      std::list<MTet4*> theRegion;
-      std::set<GFace *> faces_bound;
-      GRegion *bidon = (GRegion*)123;
-      double _t1 = Cpu();
-      Msg::Debug("start with a non classified tet");
-      non_recursive_classify(*it, theRegion, faces_bound, bidon, gr->model(), search);
-      double _t2 = Cpu();
-      Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
-                 theRegion.size(), faces_bound.size(), _t2 - _t1);
-      GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
-      if(myGRegion){ // a geometrical region associated to the list of faces has been found
-        Msg::Info("Found region %d", myGRegion->tag());
-        for(std::list<MTet4*>::iterator it2 = theRegion.begin();
-            it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
+  if (_classify) {    
+    fs_cont search;
+    buildFaceSearchStructure(gr->model(), search);
+    for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
+      if(!(*it)->onWhat()){
+	//	printf("I'm in coucou\n");
+	std::list<MTet4*> theRegion;
+	std::set<GFace *> faces_bound;
+	GRegion *bidon = (GRegion*)123;
+	double _t1 = Cpu();
+	Msg::Debug("start with a non classified tet");
+	non_recursive_classify(*it, theRegion, faces_bound, bidon, gr->model(), search);
+	double _t2 = Cpu();
+	Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
+		   theRegion.size(), faces_bound.size(), _t2 - _t1);
+	GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
+	if(myGRegion){ // a geometrical region associated to the list of faces has been found
+	  Msg::Info("Found region %d", myGRegion->tag());
+	  for(std::list<MTet4*>::iterator it2 = theRegion.begin();
+	      it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
+	}
+	else // the tets are in the void
+	  for(std::list<MTet4*>::iterator it2 = theRegion.begin();
+	      it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
       }
-      else // the tets are in the void
-        for(std::list<MTet4*>::iterator it2 = theRegion.begin();
-            it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
     }
+    search.clear();
   }
-  search.clear();
+  else {    
+    // FIXME ... too simple
+    for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it)
+      (*it)->setOnWhat(gr);
+  }
 
   for(MTet4Factory::iterator it = allTets.begin(); it!=allTets.end(); ++it){
     (*it)->setNeigh(0, 0);
@@ -1221,16 +1230,18 @@ void insertVerticesInRegion (GRegion *gr)
   createAllEmbeddedFaces (gr, allEmbeddedFaces);
   connectTets(allTets.begin(), allTets.end(),&allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
-
+  
   // here the classification should be done
-
-  int ITER = 0;
+  
+  int ITER = 0, REALCOUNT = 0;
   int NB_CORRECTION_OF_CAVITY = 0;
   int COUNT_MISS_1 = 0;
   int COUNT_MISS_2 = 0;
 
   double t1 = Cpu();
   while(1){
+    //    break;
+    if (ITER > maxVert)break;
     if(allTets.empty()){
       Msg::Error("No tetrahedra in region %d %d", gr->tag(), allTets.size());
       break;
@@ -1245,7 +1256,7 @@ void insertVerticesInRegion (GRegion *gr)
     else{
       if(ITER++ % 5000 == 0)
         Msg::Info("%d points created - Worst tet radius is %g (PTS removed %d %d)",
-                  vSizes.size(), worst->getRadius(), COUNT_MISS_1,COUNT_MISS_2);
+                 REALCOUNT, worst->getRadius(), COUNT_MISS_1,COUNT_MISS_2);
       if(worst->getRadius() < 1) break;
       double center[3];
       double uvw[3];
@@ -1320,15 +1331,22 @@ void insertVerticesInRegion (GRegion *gr)
 	    (*itc)->setDeleted(false);
           delete v;
         }
-        else
+        else{
+	  REALCOUNT++;
           v->onWhat()->mesh_vertices.push_back(v);
+	}
       }
       else{
-	//	printf("coucou 2 %d\n",ITER);
-	//	printf("point outside %12.5E %12.5E %12.5E %12.5E %12.5E\n",VV,uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
+	//	printf("coucou 2 % cavity size %d\n",ITER,cavity.size());
+	//	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+	//	  MTetrahedron *toto = (*itc)->tet();
+	//	  toto->xyz2uvw(center,uvw);
+	//	  printf("point outside %12.5E %12.5E %12.5E %12.5E\n",uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
+	//	}
         myFactory.changeTetRadius(allTets.begin(), 0.0);
 	COUNT_MISS_2++;
 	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)  (*itc)->setDeleted(false);
+	//	if (cavity.size() > 10)printTets ("cavity.pos", cavity, true);
       }
     }
 

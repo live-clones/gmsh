@@ -3516,6 +3516,7 @@ void recombineIntoQuads(GFace *gf,
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
+
   std::vector<MQuadrangle*> qds;
   for (unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];

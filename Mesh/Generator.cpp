@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <stdlib.h>
+#include <stack>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
@@ -575,8 +576,36 @@ static void Mesh2D(GModel *m)
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
                                  std::vector<std::vector<GRegion*> > &connected)
 {
-  // FIXME: need to split region vector into connected components here!
-  connected.push_back(delaunay);
+  const unsigned int nbVolumes = delaunay.size();
+  if (!nbVolumes)return;
+  while (delaunay.size()){
+    std::set<GRegion*> oneDomain;
+    std::stack<GRegion*> _stack;  
+    GRegion *r = delaunay[0];
+    _stack.push(r);  
+    while(!_stack.empty()){
+      r = _stack.top();
+      _stack.pop();
+      oneDomain.insert(r);
+      std::list<GFace*> faces = r->faces();
+      for (std::list<GFace*> :: iterator it = faces.begin(); it != faces.end() ; ++it){
+	GFace *gf = *it;
+	GRegion *other = gf->getRegion(0) == r ? gf->getRegion(1) : gf->getRegion(0);
+	if (other != 0 && oneDomain.find(other) == oneDomain.end())
+	  _stack.push (other);
+      }
+    }
+    std::vector<GRegion*> temp1,temp2;
+    for (unsigned int i=0;i<delaunay.size();i++){
+      r = delaunay[i];
+      if (oneDomain.find(r) == oneDomain.end())temp1.push_back(r);
+      else temp2.push_back(r);
+    }
+    connected.push_back(temp2);
+    delaunay=temp1;
+  }
+  Msg::Info("Delaunay Meshing %d volumes with %d connected components",
+	    nbVolumes,connected.size()); 
 }
 
 static void Mesh3D(GModel *m)
@@ -606,6 +635,7 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
+  // pragma OMP ICI ?? 
   for(unsigned int i = 0; i < connected.size(); i++){
     for(unsigned j=0;j<connected[i].size();j++){
       GRegion *gr = connected[i][j];
@@ -617,6 +647,7 @@ static void Mesh3D(GModel *m)
     }
   }
 
+  // pragma OMP ICI ?? 
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
 

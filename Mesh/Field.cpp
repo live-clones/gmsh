@@ -1670,11 +1670,24 @@ class AttractorField : public Field
           it != faces_id.end(); ++it) {
 	GFace *f = GModel::current()->getFaceByTag(*it);
 	if (f){
-	  SBoundingBox3d bb = f->bounds();
-	  SVector3 dd = bb.max() - bb.min();
-	  double maxDist = dd.norm() / n_nodes_by_edge ;
-	  f->fillPointCloud(maxDist, &points, &uvpoints);
-	  offset.push_back(points.size());
+	
+	  if (f->mesh_vertices.size()){
+	    for (unsigned int i=0;i<f->mesh_vertices.size();i++){
+	      MVertex *v = f->mesh_vertices[i];
+	      double uu,vv;
+	      v->getParameter(0,uu);
+	      v->getParameter(1,vv);
+	      points.push_back(SPoint3(v->x(),v->y(),v->z()));
+	      uvpoints.push_back(SPoint2(uu,vv));
+	    }
+	  }
+	  else {
+	    SBoundingBox3d bb = f->bounds();
+	    SVector3 dd = bb.max() - bb.min();
+	    double maxDist = dd.norm() / n_nodes_by_edge ;
+	    f->fillPointCloud(maxDist, &points, &uvpoints);
+	    offset.push_back(points.size());
+	  }
 	}
       }
 
@@ -1822,6 +1835,85 @@ BoundaryLayerField::BoundaryLayerField()
   options["thickness"] = new FieldOptionDouble
     (thickness, "Maximal thickness of the boundary layer");
 }
+
+void BoundaryLayerField::removeAttractors()
+{
+  for (std::list<AttractorField *>::iterator it =  _att_fields.begin();
+       it !=  _att_fields.end() ; ++it) delete *it;
+  _att_fields.clear();
+  update_needed = true;
+}
+
+void BoundaryLayerField::setupFor2d(int iF)
+{
+  if (1 || faces_id.size()){
+    /* preprocess data in the following way
+       remove GFaces from the attarctors (only used in 2D)
+       for edges and vertices
+     */
+    if ( !faces_id_saved.size()){
+      faces_id_saved = faces_id;
+      edges_id_saved = edges_id;
+      nodes_id_saved = nodes_id;
+    }
+    nodes_id.clear();
+    edges_id.clear();
+    faces_id.clear();
+
+    //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
+
+    ///  FIXME :
+    /// NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
+    /// THIS COULD BE PART OF THE INPUT
+    /// OR (better) CHANGE THE PHILOSOPHY
+
+    GFace *gf = GModel::current()->getFaceByTag(iF);
+    std::list<GEdge*> ed = gf->edges();
+    //    printf("face %d has %d edges\n",iF,ed.size());
+    for (std::list<GEdge*>::iterator it = ed.begin();
+	 it != ed.end() ; ++it){
+      bool isIn = false;
+      int iE = (*it)->tag();
+      bool found = std::find ( edges_id_saved.begin(),edges_id_saved.end(),iE ) != edges_id_saved.end();
+      //      printf("edges %d found %d\n",iE,found);
+      // this edge is a BL Edge      
+      if (found){
+	std::list<GFace*> fc = (*it)->faces();
+	// one only face --> 2D --> BL 
+	if (fc.size() == 1) isIn = true;
+	else {
+	  // more than one face and 
+	  std::list<GFace*>::iterator itf = fc.begin();
+	  bool found_this = std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF ) != faces_id_saved.end();
+	  if (!found_this)isIn = true;
+	  else {
+	    bool foundAll = true;
+	    for ( ; itf != fc.end() ; ++itf){
+	      int iF2 = (*itf)->tag();
+	      foundAll &= std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF2 ) != faces_id_saved.end();
+	    }
+	    if (foundAll)isIn = true;	    
+	  }
+	}
+      }
+      if (isIn){
+	edges_id.push_back(iE);
+	nodes_id.push_back ((*it)->getBeginVertex()->tag());
+	nodes_id.push_back ((*it)->getEndVertex()->tag());
+      }
+    }
+    printf("face %d %d BL Edges\n",iF,edges_id.size());
+    
+    removeAttractors();
+  }
+}
+
+void BoundaryLayerField::setupFor3d()
+{
+  faces_id = faces_id_saved;
+  removeAttractors();
+}
+
 
 double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge)
 {
