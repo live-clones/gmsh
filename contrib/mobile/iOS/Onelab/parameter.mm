@@ -56,7 +56,7 @@
     if(self)
     {
         label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:[NSString stringWithCString:(string.getLabel() != "")?string.getLabel().c_str():string.getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+        [label setText:(string.getLabel() != "")?[NSString stringWithCString:string.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
         name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         picker = [[UIPickerView alloc] init];
         picker.showsSelectionIndicator = YES;
@@ -138,7 +138,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:[NSString stringWithCString:(number.getLabel() != "")?number.getLabel().c_str():number.getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         picker = [[UIPickerView alloc] init];
         picker.showsSelectionIndicator = YES;
@@ -210,7 +210,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:[NSString stringWithCString:(number.getLabel() != "")?number.getLabel().c_str():number.getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         checkbox = [[UISwitch alloc] init];
         [checkbox setSelected:(number.getValue() == 1)];
@@ -270,7 +270,7 @@
         //TODO add step ?
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-        [label setText:[NSString stringWithFormat:@"%@ %f" ,[NSString stringWithCString:(number.getLabel() != "")?number.getLabel().c_str():number.getName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
+        [label setText:[NSString stringWithFormat:@"%@ %f" ,(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject], number.getValue()]];
     }
     return self;
 }
@@ -322,7 +322,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:[NSString stringWithCString:(number.getLabel() != "")?number.getLabel().c_str():number.getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         textbox = [[UITextField alloc] init];
         [textbox setBorderStyle:UITextBorderStyleRoundedRect];
@@ -346,6 +346,7 @@
     onelab::server::instance()->get(number,[name UTF8String]);
     if(number.size() < 1) return;
 	[textbox setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
+	[textbox reloadInputViews];
 }
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {

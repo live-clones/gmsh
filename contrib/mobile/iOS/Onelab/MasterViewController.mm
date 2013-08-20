@@ -97,6 +97,8 @@
                 NSMutableArray *section = [_sections objectAtIndex:j];
                 for(int k=0; k<[section count];k++)
                     if([[[section objectAtIndex: k] getName] isEqualToString:name]) {
+						parameter * p = [section objectAtIndex: k];
+						[p refresh];
                         found = true;
                         break;
                     }
@@ -131,8 +133,8 @@
                 NSMutableArray *section = [_sections objectAtIndex:j];
                 for(int k=0; k<[section count];k++)
                     if([[(parameter*)[section objectAtIndex: k] getName] isEqualToString:name]) {
-						parameterStringList * p = (parameterStringList *)[section objectAtIndex: k];
-						[p reload];
+						parameter * p = [section objectAtIndex: k];
+						[p refresh];
                         found = true;
                         break;
                     } // the parameters is already in the section
@@ -157,9 +159,9 @@
     // Release any retained subviews of the main view.
 }
 
-- (void)viewDidAppear:(BOOL)animated
+- (void)viewWillAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
+    [super viewWillAppear:animated];
     [self getAvailableParam];
     [self.tableView reloadData];
 }
@@ -171,7 +173,7 @@
 - (void)refreshParameters:(id)sender
 {
     [self getAvailableParam]; // Get the param
-    [self.tableView reloadData];
+	[self.tableView reloadData];
 }
 - (void)resetParameters:(id)sender
 {
@@ -180,7 +182,7 @@
     [_sectionstitle removeAllObjects];
     [self.tableView reloadData];
     [self getAvailableParam]; // Get the param
-    [self.tableView reloadData];
+	[self.tableView reloadData];
     onelab_cb("check");
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
@@ -235,12 +237,15 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // get the param with his name
+	static NSString *CellIdentifier = @"parameterCell";
+	if(indexPath.section >= _sections.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     NSMutableArray *sectionContent = [_sections objectAtIndex:[indexPath section]];
+	if(indexPath.row >= sectionContent.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     parameter *tmp = [sectionContent objectAtIndex:[indexPath row]];
     
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if(cell == nil)
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[[tmp getLabel] text]];
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     else
         return cell;
     [cell setUserInteractionEnabled:!([tmp isReadOnly])];
