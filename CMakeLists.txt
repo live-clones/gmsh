@@ -135,7 +135,7 @@ set(GMSH_API
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
-  contrib/HighOrderMeshOptimizer/OptHOMFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
+  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
   contrib/MathEx/mathex.h)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 

@@ -1608,6 +1608,13 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
+    sstream << " Edge length: "
+            << "min = " << ele->minEdge() << " "
+            << "max = " << ele->maxEdge();
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
     sstream << " Quality: "
             << "rho = " << ele->rhoShapeMeasure() << " "
             << "gamma = " << ele->gammaShapeMeasure() << " "
