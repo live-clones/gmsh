@@ -473,7 +473,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  else{
 	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
 	  }
-	  
+
 	  gf->mesh_vertices.push_back(v1b);
 	  numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
 	  delete v[j];
@@ -511,20 +511,20 @@ static void addOrRemove(const MFace &f,
 /*
   here, we have a list of elements that actually do not form a mesh
   --> a set boundary layer elements (prism, hexes, pyramids (and soon tets)
-  --> a set of tetrahedra that respect the external boundary of the BL mesh, 
+  --> a set of tetrahedra that respect the external boundary of the BL mesh,
   yet possiblty containing elements that are on the other side of the boundary
   and therefore overlapping those elements. We have to extract the good ones !
 
-  
+
 
 */
 
-bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr, 
+bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 						       std::vector<MTetrahedron*> &tets,
 						       std::vector<MHexahedron*> &hexes,
 						       std::vector<MPrism*> &prisms,
-						       std::vector<MPyramid*> &pyramids) 
-{  
+						       std::vector<MPyramid*> &pyramids)
+{
   std::set<MElement*> all;
   all.insert(hexes.begin(),hexes.end());
   all.insert(prisms.begin(),prisms.end());
@@ -540,18 +540,18 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 
   // create the graph face 2 elements for the region
   std::map<MFace,std::pair<MElement*,MElement*> ,Less_Face> myGraph;
-  
+
   for (std::set<MElement*>::iterator it = all.begin(); it != all.end(); ++it){
     MElement *t = *it;
     const int nbf = t->getNumFaces();
     for (int j=0;j<nbf;j++){
-      MFace f = t->getFace(j);      
+      MFace f = t->getFace(j);
       std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator itf = myGraph.find(f);
       if (itf == myGraph.end())myGraph.insert (std::make_pair (f, std::make_pair (t,(MElement*)0)));
       else {
 	// what to do ??????
-	// two tets and one prism --> the prism should be 
-	// geometrically on the other side of the 
+	// two tets and one prism --> the prism should be
+	// geometrically on the other side of the
 	if (itf->second.second) {
 	  MElement *prism=0, *t1=0, *t2=0;
 	  if (itf->second.second->getType () == TYPE_PRI || itf->second.second->getType () == TYPE_PYR) {
@@ -579,19 +579,19 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 	  }
 	  SVector3 n = f.normal();
 	  SPoint3 c = f.barycenter();
-	  MVertex *v_prism,*v_t1,*v_t2;
+	  MVertex *v_prism = 0, *v_t1 = 0, *v_t2 = 0;
 	  for (int i=0;i<4;i++){
-	    if (t1->getVertex(i) != f.getVertex(0) && 
-		t1->getVertex(i) != f.getVertex(1) && 
+	    if (t1->getVertex(i) != f.getVertex(0) &&
+		t1->getVertex(i) != f.getVertex(1) &&
 		t1->getVertex(i) != f.getVertex(2))v_t1 = t1->getVertex(i);
-	    if (t2->getVertex(i) != f.getVertex(0) && 
-		t2->getVertex(i) != f.getVertex(1) && 
+	    if (t2->getVertex(i) != f.getVertex(0) &&
+		t2->getVertex(i) != f.getVertex(1) &&
 		t2->getVertex(i) != f.getVertex(2))v_t2 = t2->getVertex(i);
 	  }
 	  for (int i=0;i<prism->getNumVertices();i++){
-	    if (prism->getVertex(i) != f.getVertex(0) && 
-		prism->getVertex(i) != f.getVertex(1) && 
-		prism->getVertex(i) != f.getVertex(2))v_prism = prism->getVertex(i);
+	    if (prism->getVertex(i) != f.getVertex(0) &&
+		prism->getVertex(i) != f.getVertex(1) &&
+		prism->getVertex(i) != f.getVertex(2)) v_prism = prism->getVertex(i);
 	  }
 	  SVector3 vf1 (v_t1->x() - c.x(),v_t1->y() - c.y(),v_t1->z() - c.z());
 	  SVector3 vf2 (v_t2->x() - c.x(),v_t2->y() - c.y(),v_t2->z() - c.z());
@@ -602,7 +602,7 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 	  //	  else if (dot (vf2,vfp) > 0){itf->second.first = prism;itf->second.second=t2;}
 	  else Msg::Fatal("Impossible Geom Config");
 	}
-	else itf->second.second = t;      
+	else itf->second.second = t;
       }
     }
   }
@@ -622,9 +622,9 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 						 f.getVertex(2),
 						 search);
       if (!gfound){
-	std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator 
+	std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator
 	  itf = myGraph.find(f);
-	MElement *t_neigh = itf->second.first == FIRST ?  
+	MElement *t_neigh = itf->second.first == FIRST ?
 	  itf->second.second :  itf->second.first;
 	if (connected.find(t_neigh) == connected.end())myStack.push(t_neigh);
       }
@@ -634,7 +634,7 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
       }
     }
   }
-  //  printf ("found a set of %d elements that are connected with %d bounding faces\n",connected.size(),faces_bound.size()); 
+  //  printf ("found a set of %d elements that are connected with %d bounding faces\n",connected.size(),faces_bound.size());
   GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
   //  printf("REGION %d %d\n",myGRegion->tag(),gr->tag());
   if (myGRegion == gr){
@@ -679,8 +679,6 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
   std::vector<MHexahedron*> blHexes;
   std::vector<MPyramid*> blPyrs;
   std::list<GFace*> faces = gr->faces();
-
-
 
   std::list<GFace*> embedded_faces = gr->embeddedFaces();
   faces.insert(faces.begin(), embedded_faces.begin(),embedded_faces.end());
@@ -734,7 +732,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     ++itf;
   }
 
-  std::set<MEdge,Less_Edge> edges; 
+  std::set<MEdge,Less_Edge> edges;
   {
     std::list<GEdge*> gedges = gr->edges();
     for (std::list<GEdge*>::iterator it = gedges.begin(); it != gedges.end() ; ++it){
@@ -783,10 +781,10 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
       // have to go from gf1 to gf2 to be aware of the sense!!!
       if (N1 == N2){
-	for (unsigned int i=0;i<N1-1;i++){
+	for (int i = 0; i < N1 - 1; i++){
 
 	  unsigned int i11=i, i12=i+1, i21=i,i22=i+1;
-	  
+
 	  if (onWedge1){
 	    //	    if (w1.isLeft(gfs1)){i11=i;i12=i+1;}
 	    //	    else if (w1.isRight(gfs1)){i11=N1-1-i;i12=N1-2-i;}
@@ -814,10 +812,10 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	      3 4 5 6  --> 4-1 -> 2 (4-1)
 	      6 7 8 0
 
-	      1 --> 0 ==> 
-	      
+	      1 --> 0 ==>
+
 	     */
-	    int K1=-1,K2=-1;
+	    int K1 = -1, K2 = -1;
 	    for (unsigned int s=0;s < c1._gf.size();s++){
 	      if (w2.isLeft(c1._gf[s]))K1 = s;
 	      if (w2.isRight(c1._gf[s]))K2 = s;
@@ -828,7 +826,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	    else if (K2+1 == K1){i11=K1*(N1-1)-i;i12=i11-1;}
 	    else if (K2 == 0 && K1 ==  c1._gf.size() - 1){i11=K1*(N1-1)+i;i12=i11+1;}
 	    else if (K1 == 0 && K2 ==  c1._gf.size() - 1){i11=(K2+1)*(N1-1)-i;i12=i11-1;}
-	    else Msg::Error("KROUPOUK 1 %d %d !",K1,K2);
+	    else Msg::Error("KROUPOUK 1 %d %d !", K1, K2);
 	    if (i12 == (c1._gf.size()) * (N1-1))i12=0;
 	    if (i11 == (c1._gf.size()) * (N1-1))i11=0;
 	  }
@@ -837,7 +835,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	    else if (w2.isRight(gfs1)){i21=N1-1-i;i22=N1-2-i;}
 	  }
 	  else {
-	    int K1,K2;
+	    int K1 = -1, K2 = -1;
 	    for (unsigned int s=0;s<c2._gf.size();s++){
 	      if (w1.isLeft(c2._gf[s]))K1 = s;
 	      if (w1.isRight(c2._gf[s]))K2 = s;
@@ -855,7 +853,9 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	  BoundaryLayerData c12 = _columns->getColumn(v1,i12);
 	  BoundaryLayerData c21 = _columns->getColumn(v2,i21);
 	  BoundaryLayerData c22 = _columns->getColumn(v2,i22);
-	  int N = std::min(c11._column.size(),std::min(c12._column.size(), std::min(c21._column.size(),c22._column.size())));
+	  int N = std::min(c11._column.size(),
+                           std::min(c12._column.size(),
+                                    std::min(c21._column.size(), c22._column.size())));
 	  for (int l=0;l < N ;++l){
 	    MVertex *v11,*v12,*v13,*v14;
 	    MVertex *v21,*v22,*v23,*v24;
@@ -884,7 +884,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 		      v24->x(),v24->y(),v24->z(),
 		      v23->x(),v23->y(),v23->z());
 	    }
-	    else {	      
+	    else {
 	      blHexes.push_back(new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24));
 	      fprintf(ff2,"SH (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2,2,2,2,2,2};\n",
 		      v11->x(),v11->y(),v11->z(),
@@ -896,13 +896,14 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 		      v23->x(),v23->y(),v23->z(),
 		      v24->x(),v24->y(),v24->z());
 	    }
-	  }	  
+	  }
 	}
       }
       else{
-	Msg::Error("cannot create 3D BL FAN %d %d -- %d %d %d %d",N1,N2,onWedge1,onWedge1,onCorner1,onCorner2);
+	Msg::Error("cannot create 3D BL FAN %d %d -- %d %d %d %d",
+                   N1,N2,onWedge1,onWedge1,onCorner1,onCorner2);
       }
-    }     
+    }
     ++ite;
   }
 
@@ -941,18 +942,18 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     else {
 
       // we have a quad face --> create a pyramid
-      
+
       MElement *e = it->second;
 
-      // compute the center of the face;      
+      // compute the center of the face;
       SPoint3 center (0.25*(it->first.getVertex(0)->x()+it->first.getVertex(1)->x()+it->first.getVertex(2)->x()+it->first.getVertex(3)->x()),
 		      0.25*(it->first.getVertex(0)->y()+it->first.getVertex(1)->y()+it->first.getVertex(2)->y()+it->first.getVertex(3)->y()),
 		      0.25*(it->first.getVertex(0)->z()+it->first.getVertex(1)->z()+it->first.getVertex(2)->z()+it->first.getVertex(3)->z()));
-      // compute the center of the opposite face;      
+      // compute the center of the opposite face;
       SPoint3 opposite (0,0,0);
       int counter=0;
       for (int i=0;i<e->getNumVertices();i++){
-	MVertex *vv = e->getVertex(i); 
+	MVertex *vv = e->getVertex(i);
 	bool found = false;
 	for (int j=0;j<4;j++){
 	  MVertex *ww = it->first.getVertex(j);
@@ -972,26 +973,26 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
       dir.normalize();
       const double eps = D*1.e-2;
       MVertex *newv = new MVertex (center.x() + eps * dir.x(),center.y() + eps * dir.y(), center.z() + eps * dir.z(), gr);
-      
+
       MPyramid *pyr = new MPyramid (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2),it->first.getVertex(3),newv);
       verts.insert(newv);
-      blPyrs.push_back(pyr);            
+      blPyrs.push_back(pyr);
 
       nf->triangles.push_back(new MTriangle (it->first.getVertex(0),it->first.getVertex(1),newv));
       nf->triangles.push_back(new MTriangle (it->first.getVertex(1),it->first.getVertex(2),newv));
       nf->triangles.push_back(new MTriangle (it->first.getVertex(2),it->first.getVertex(3),newv));
       nf->triangles.push_back(new MTriangle (it->first.getVertex(3),it->first.getVertex(0),newv));
-      
+
       fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
 	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
 	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
 	      newv->x(),newv->y(),newv->z());
-      
+
       fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
 	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
 	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
 	      newv->x(),newv->y(),newv->z());
-      
+
       fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
 	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
 	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
@@ -1000,7 +1001,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
 	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
 	      newv->x(),newv->y(),newv->z());
-      
+
       fprintf(ff,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3};\n",
 	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
 	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
@@ -1011,7 +1012,8 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
   fprintf(ff,"};\n");
   fclose(ff);
 
-  printf("discrete face with %d %d elems\n",nf->triangles.size(),nf->quadrangles.size());
+  printf("discrete face with %d %d elems\n", (int)nf->triangles.size(),
+         (int)nf->quadrangles.size());
   hop.push_back(nf);
 
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) delete gr->tetrahedra[i];
@@ -1019,7 +1021,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
   gr->set(hop);
   CreateAnEmptyVolumeMesh(gr);
-  printf("%d tets\n",gr->tetrahedra.size());
+  printf("%d tets\n", (int)gr->tetrahedra.size());
   deMeshGFace _kill;
   _kill (nf);
   delete nf;
@@ -1083,7 +1085,7 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr){
     return false;
   }
   printf("creating an empty volume mesh done\n");
-  TransferTetgenMesh(gr, in, out, numberedV);    
+  TransferTetgenMesh(gr, in, out, numberedV);
   return true;
 }
 
@@ -1211,7 +1213,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
       insertVerticesInRegion(gr,2000000000,!_BL);
     }
-  
+
   //emi test frame field
   // int NumSmooth = 10;//CTX::instance()->mesh.smoothCrossField
   // std::cout << "NumSmooth = " << NumSmooth << std::endl;

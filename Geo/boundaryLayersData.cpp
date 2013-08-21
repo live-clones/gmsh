@@ -33,6 +33,7 @@ const int FANSIZE__ = 4;
              +
 */
 
+/*
 static double solidAngle (SVector3 &ni, SVector3 &nj,
 			  SPoint3  &bi, SPoint3  &bj)
 {
@@ -43,6 +44,7 @@ static double solidAngle (SVector3 &ni, SVector3 &nj,
   double sign = dot (nj, bibj);
   return sign > 0 ? fabs (a) : -fabs(a);
 }
+*/
 
 SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
 {
@@ -132,7 +134,7 @@ const BoundaryLayerData & BoundaryLayerColumns::getColumn(MVertex *v, MFace f)
     BoundaryLayerFanWedge3d w = getWedge(v);
     if (w.isLeft(gf))return getColumn(v, 0);
     if (w.isRight(gf))return getColumn(v, N-1);
-    Msg::Error("Strange behavior for a wedge");      
+    Msg::Error("Strange behavior for a wedge");
   }
   if (isCorner (v)){
     GFace *gf = _inverse_classification[f];
@@ -179,7 +181,7 @@ faceColumn BoundaryLayerColumns::getColumns(GFace *gf, MVertex *v1, MVertex *v2 
       break;
     }
   }
-  
+
   return faceColumn(getColumn(v1,i1), getColumn(v2,i2), getColumn(v3,i3));
 }
 
@@ -278,10 +280,12 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
   return error2;
 }
 
-// FIXME
-static bool pointInFace (GFace *gf, double u, double v) {
+/*
+static bool pointInFace (GFace *gf, double u, double v)
+{
   return true;
 }
+*/
 
 static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
                                double _treshold, BoundaryLayerColumns *_columns,
@@ -299,7 +303,7 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
       // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
       double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
-      //      if (test) 
+      //      if (test)
       //      printf("angle %12.5E\n", 180*angle/M_PI);
       if (angle < _treshold /*&& angle > - _treshold*/){
 	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
@@ -307,7 +311,7 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
 	_dirs.push_back(x);
       }
       else if (angle >= _treshold){
-	
+
 	if (USEFANS__){
 	  int fanSize = FANSIZE__; //angle /  _treshold;
 	  // if the angle is greater than PI, than reverse the sense
@@ -340,7 +344,7 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
 	}
 	else {
 	  _dirs.push_back(N1[SIDE]);
-	  _dirs.push_back(N2[SIDE]);	  
+	  _dirs.push_back(N2[SIDE]);
 	}
       }
     }
@@ -362,7 +366,7 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
 //     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
 //       // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
 //       double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
-//       //      if (test) 
+//       //      if (test)
 //       //      printf("angle %12.5E\n", 180*angle/M_PI);
 //       if (angle < _treshold /*&& angle > - _treshold*/){
 // 	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
@@ -371,7 +375,7 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
 //       }
 //       else if (angle >= _treshold){
 // 	_dirs.push_back(N1[SIDE]);
-// 	_dirs.push_back(N2[SIDE]);	  
+// 	_dirs.push_back(N2[SIDE]);
 //       }
 //     }
 //   }
@@ -436,8 +440,8 @@ BoundaryLayerField* getBLField (GModel *gm) {
   return dynamic_cast<BoundaryLayerField*> (bl_field);
 }
 
-static bool isEdgeOfFaceBL (GFace *gf, 
-			    GEdge *ge, 
+static bool isEdgeOfFaceBL (GFace *gf,
+			    GEdge *ge,
 			    BoundaryLayerField *blf){
   if (blf->isEdgeBL (ge->tag()))return true;
   /*
@@ -454,19 +458,19 @@ static bool isEdgeOfFaceBL (GFace *gf,
   return false;
 }
 
-static void getEdgesData (GFace *gf, 
-			  BoundaryLayerField *blf, 
+static void getEdgesData (GFace *gf,
+			  BoundaryLayerField *blf,
 			  BoundaryLayerColumns *_columns,
 			  std::set<MVertex*> &_vertices,
 			  std::set<MEdge,Less_Edge> &allEdges,
 			  std::multimap<MVertex*,MVertex*> &tangents)
 {
-  // get all model edges 
+  // get all model edges
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
 
-  // iterate on model edges 
+  // iterate on model edges
   std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
     // check if this edge generates a boundary layer
@@ -481,7 +485,7 @@ static void getEdgesData (GFace *gf,
 	_vertices.insert(v2);
       }
     }
-    else {      
+    else {
       MVertex *v1 = (*ite)->lines[0]->getVertex(0);
       MVertex *v2 = (*ite)->lines[0]->getVertex(1);
       MVertex *v3 = (*ite)->lines[(*ite)->lines.size() - 1]->getVertex(1);
@@ -493,8 +497,8 @@ static void getEdgesData (GFace *gf,
   }
 }
 
-static void getNormals (GFace *gf, 
-			BoundaryLayerField *blf, 
+static void getNormals (GFace *gf,
+			BoundaryLayerField *blf,
 			BoundaryLayerColumns *_columns,
 			std::set<MEdge,Less_Edge> &allEdges)
 {
@@ -508,13 +512,13 @@ static void getNormals (GFace *gf,
     MVertex *v2 = gf->triangles[i]->getVertex(2);
     reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
     reparamMeshEdgeOnFace(v0, v2, gf, p0, p2);
-    
+
     MEdge me01(v0,v1);
     if (allEdges.find(me01) != allEdges.end()){
       SVector3 v01 = interiorNormal (p0,p1,p2);
       _columns->_normals.insert(std::make_pair(me01,v01));
     }
-    
+
     MEdge me02(v0,v2);
     if (allEdges.find(me02) != allEdges.end()){
       SVector3 v02 = interiorNormal (p0,p2,p1);
@@ -536,7 +540,7 @@ void addColumnAtTheEndOfTheBL (GEdge *ge,
 {
   //  printf("coucou %d\n",ge->tag());
   if (!blf->isEdgeBL(ge->tag()))
-    {      
+    {
       GVertex *g0 = ge->getBeginVertex();
       GVertex *g1 = ge->getEndVertex();
       //      printf("coucou 2 %d %d vs %d\n",g0->tag(),g1->tag(),gv->tag());
@@ -556,7 +560,7 @@ void addColumnAtTheEndOfTheBL (GEdge *ge,
       }
       else if (g1 == gv){
 	_columns->addColumn(t*-1.0, v1,invert,_metrics);
-      }      
+      }
     }
 }
 
@@ -639,7 +643,7 @@ bool buildAdditionalPoints2D (GFace *gf)
 	for (std::multimap<MVertex*,MVertex*>::iterator itm =
 	       tangents.lower_bound(*it);
 	     itm != tangents.upper_bound(*it); ++itm) Ts.push_back(itm->second);
-	// end of the BL --> let's add a column that correspond to the 
+	// end of the BL --> let's add a column that correspond to the
 	// model edge that lies after the end of teh BL
 	if (Ts.size() == 1){
 	  //	  printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
@@ -794,7 +798,7 @@ double angle_0_180 (SVector3 &n1, SVector3 &n2){
 
 void createBLPointsInDir (GRegion *gr,
 			  MVertex *current,
-			  BoundaryLayerField *blf, 
+			  BoundaryLayerField *blf,
 			  SVector3 & n,
 			  std::vector<MVertex*> &_column,
 			  std::vector<SMetric3> &_metrics)
@@ -814,11 +818,11 @@ void createBLPointsInDir (GRegion *gr,
 }
 
 
-static void createColumnsBetweenFaces (GRegion *gr, 
+static void createColumnsBetweenFaces (GRegion *gr,
 				       MVertex *myV,
-				       BoundaryLayerField *blf, 
-				       BoundaryLayerColumns *_columns, 
-				       std::set<GFace*> _gfaces, 
+				       BoundaryLayerField *blf,
+				       BoundaryLayerColumns *_columns,
+				       std::set<GFace*> _gfaces,
 				       std::multimap<GFace*,MTriangle*> & _faces,
 				       std::map<MFace,SVector3,Less_Face> &_normals,
 				       double _treshold)
@@ -827,15 +831,15 @@ static void createColumnsBetweenFaces (GRegion *gr,
   SPoint3 c[256];
   int count = 0;
   GFace *gfs[256];
-   
+
 
   // generate datas per face;
-  
+
   for( std::set<GFace*> ::iterator it = _gfaces.begin() ; it != _gfaces.end(); ++it){
     for (std::multimap<GFace*,MTriangle*>::iterator itm =
 	   _faces.lower_bound(*it);
 	 itm != _faces.upper_bound(*it); ++itm){
-      
+
       n[count] += _normals[itm->second->getFace(0)];
       c[count] = itm->second->getFace(0).barycenter();
     }
@@ -843,7 +847,7 @@ static void createColumnsBetweenFaces (GRegion *gr,
     n[count].normalize();
     count ++;
   }
-  
+
   // we throw a column per set of faces that have normals that are sufficiently close
 
   //  printf("vertex %d %d faces\n",myV->getNum(),count);
@@ -881,13 +885,14 @@ static void createColumnsBetweenFaces (GRegion *gr,
   }
 }
 
-static bool createWedgeBetweenTwoFaces (bool testOnly,
-					MVertex *myV,
-					GFace *gf1, GFace *gf2, 
-					std::multimap<GFace*,MTriangle*> & _faces,
-					std::map<MFace,SVector3,Less_Face> &_normals,
-					double _treshold,
-					std::vector<SVector3> &shoot)
+/*
+static bool createWedgeBetweenTwoFaces(bool testOnly,
+                                       MVertex *myV,
+                                       GFace *gf1, GFace *gf2,
+                                       std::multimap<GFace*,MTriangle*> & _faces,
+                                       std::map<MFace,SVector3,Less_Face> &_normals,
+                                       double _treshold,
+                                       std::vector<SVector3> &shoot)
 {
   SVector3 n1,n2;
   SPoint3 c1,c2;
@@ -912,12 +917,12 @@ static bool createWedgeBetweenTwoFaces (bool testOnly,
     if(testOnly)return true;
     int fanSize = FANSIZE__; //angle /  _treshold;
     for (int i=-1; i<=fanSize; i++){
-      
+
       double ti = (double)(i+1)/ (fanSize+1);
       double angle_t = ti * angle;
       double cosA = cos (angle_t);
       double cosAlpha = dot(n1,n2);
-      
+
       const double A = (1.- 2.*cosA*cosA) + cosAlpha*cosAlpha - 2 * cosAlpha*(1.-cosA*cosA);
       const double B = -2*(1.-cosA*cosA)*(1-cosAlpha);
       const double C = 1.-cosA*cosA;
@@ -933,16 +938,16 @@ static bool createWedgeBetweenTwoFaces (bool testOnly,
 	}
 	const double t1 = (-B+sqrt(DELTA))/(2.*A);
 	const double t2 = (-B-sqrt(DELTA))/(2.*A);
-	
+
 	SVector3 x1 (n1*(1.-t1) + n2 * t2);
 	SVector3 x2 (n1*(1.-t2) + n2 * t2);
 	double a1 = angle_0_180 (n1,x1);
 	double a2 = angle_0_180 (n1,x2);
-	if (fabs(a1 - angle_t) < fabs(a2 - angle_t))t = t1; 
+	if (fabs(a1 - angle_t) < fabs(a2 - angle_t))t = t1;
 	else t = t2;
       }
       SVector3 x (n1*(1.-t) + n2 * t);
-      x.normalize();	  
+      x.normalize();
       shoot.push_back(x);
     }
     return true;
@@ -953,19 +958,19 @@ static bool createWedgeBetweenTwoFaces (bool testOnly,
     n.normalize();
     shoot.push_back(n);
     return false;
-  }    
+  }
 }
+*/
 
-    
-BoundaryLayerColumns *  buildAdditionalPoints3D (GRegion *gr)
+BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 {
 #if !defined(HAVE_ANN)
   return 0;
 #else
   BoundaryLayerField *blf = getBLField (gr->model());
-  
+
   if (!blf)return 0;
-  
+
   blf->setupFor3d();
 
   double _treshold = blf->fan_angle * M_PI / 180 ;
@@ -988,7 +993,8 @@ BoundaryLayerColumns *  buildAdditionalPoints3D (GRegion *gr)
 	_columns->_inverse_classification [(*itf)->triangles[i]->getFace(0)] = *itf;
 	for(unsigned int j = 0; j< 3; j++){
 	  if ((*itf)->triangles[i]->getVertex(j)->onWhat()->dim() != 3){
-	    _columns->_non_manifold_faces.insert(std::make_pair((*itf)->triangles[i]->getVertex(j),(*itf)->triangles[i]));
+	    _columns->_non_manifold_faces.insert
+              (std::make_pair((*itf)->triangles[i]->getVertex(j),(*itf)->triangles[i]));
 	    _vertices.insert((*itf)->triangles[i]->getVertex(j));
 	    _normals [(*itf)->triangles[i]->getFace(0)] = SVector3(0,0,0);
 	  }
@@ -1050,14 +1056,14 @@ BoundaryLayerColumns *  buildAdditionalPoints3D (GRegion *gr)
       _faces.insert(std::make_pair(gf,itm->second));
       _allGFaces.insert(gf);
     }
-    
+
     bool onSymmetryPlane = 0;
     if ((*it)->onWhat()->dim() != 2){
       std::list<GFace*> faces =  (*it)->onWhat()->faces();
       if (faces.size() != _allGFaces.size()){
 	onSymmetryPlane = true;
       }
-    } 
+    }
 
     if (onSymmetryPlane){
       for ( std::list<GFace*>::iterator itf = faces.begin(); itf!= faces.end() ; ++itf){
@@ -1074,7 +1080,7 @@ BoundaryLayerColumns *  buildAdditionalPoints3D (GRegion *gr)
 	}
       }
     }
-    else 
+    else
       createColumnsBetweenFaces (gr,*it,blf,_columns,_allGFaces,_faces,_normals,_treshold);
 
   }

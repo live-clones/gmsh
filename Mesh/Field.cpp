@@ -1670,7 +1670,7 @@ class AttractorField : public Field
           it != faces_id.end(); ++it) {
 	GFace *f = GModel::current()->getFaceByTag(*it);
 	if (f){
-	
+
 	  if (f->mesh_vertices.size()){
 	    for (unsigned int i=0;i<f->mesh_vertices.size();i++){
 	      MVertex *v = f->mesh_vertices[i];
@@ -1876,13 +1876,13 @@ void BoundaryLayerField::setupFor2d(int iF)
       int iE = (*it)->tag();
       bool found = std::find ( edges_id_saved.begin(),edges_id_saved.end(),iE ) != edges_id_saved.end();
       //      printf("edges %d found %d\n",iE,found);
-      // this edge is a BL Edge      
+      // this edge is a BL Edge
       if (found){
 	std::list<GFace*> fc = (*it)->faces();
-	// one only face --> 2D --> BL 
+	// one only face --> 2D --> BL
 	if (fc.size() == 1) isIn = true;
 	else {
-	  // more than one face and 
+	  // more than one face and
 	  std::list<GFace*>::iterator itf = fc.begin();
 	  bool found_this = std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF ) != faces_id_saved.end();
 	  if (!found_this)isIn = true;
@@ -1892,7 +1892,7 @@ void BoundaryLayerField::setupFor2d(int iF)
 	      int iF2 = (*itf)->tag();
 	      foundAll &= std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF2 ) != faces_id_saved.end();
 	    }
-	    if (foundAll)isIn = true;	    
+	    if (foundAll)isIn = true;
 	  }
 	}
       }
@@ -1902,8 +1902,8 @@ void BoundaryLayerField::setupFor2d(int iF)
 	nodes_id.push_back ((*it)->getEndVertex()->tag());
       }
     }
-    printf("face %d %d BL Edges\n",iF,edges_id.size());
-    
+    printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
+
     removeAttractors();
   }
 }
