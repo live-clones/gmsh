@@ -1066,6 +1066,7 @@ void _relocateVertex(MVertex *ver,
   }
 }
 
+#if defined(HAVE_TETGEN)
 bool CreateAnEmptyVolumeMesh(GRegion *gr){
   printf("creating an empty volume mesh\n");
   splitQuadRecovery sqr;
@@ -1088,7 +1089,12 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr){
   TransferTetgenMesh(gr, in, out, numberedV);
   return true;
 }
-
+#else
+bool CreateAnEmptyVolumeMesh(GRegion *gr){
+  Msg::Error("You should compile with TETGEN in order to create an empty volume mesh");
+  return false;
+}
+#endif // HAVE_TETGEN#endif // HAVE_TETGEN#endif // HAVE_TETGEN
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {

@@ -230,6 +230,7 @@ class GFaceCompound : public GFace {
   GPoint intersectionWithCircle (const SVector3 &n1, const SVector3 &n2, const SVector3 &p,
 				 const double &d, double uv[2]) const { return GPoint(); }
   int allowPartition() const{ return 1; }
+  void deleteInternals(){}
 };
 
 #endif

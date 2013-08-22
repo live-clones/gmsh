@@ -165,7 +165,38 @@ class BoundaryLayerField : public Field {
   void setupFor3d();
   void removeAttractors();
 };
+#else
+class BoundaryLayerField : public Field {
+ public:
+  double hwall_n,hwall_t,ratio,hfar,thickness,fan_angle; 
+  double current_distance, tgt_aniso_ratio;
+  SPoint3 _closest_point;
+  int iRecombine, iIntersect;
+  //AttractorField *current_closest;
+  virtual bool isotropic () const {return false;}
+  virtual const char *getName(){return "";}
+  virtual std::string getDescription(){return "";}
+  BoundaryLayerField() : hwall_n(0.), hwall_t(0.), ratio(0.),
+	                 hfar(0.), thickness(0.), fan_angle(0.),
+			 current_distance(0.), tgt_aniso_ratio(0.),
+			 _closest_point(0.,0.,0.), iRecombine(0), iIntersect(0)
+                         //current_closest(NULL)
+  {
+    Msg::Error("You must compile with ANN to use BoundaryLayerField");
+  }
+  ~BoundaryLayerField() {}
+  virtual double operator() (double x, double y, double z, GEntity *ge=0){return 0.;}
+  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0){}
+  bool isFaceBL (int iF) const {return false;}
+  bool isEdgeBL (int iE) const {return false;}
+  bool isVertexBL (int iV) const {return false;}
+  void computeFor1dMesh(double x, double y, double z, SMetric3 &metr){return;}
+  void setupFor2d(int iF){return;}
+  void setupFor3d(){return;}
+  void removeAttractors(){return;}
+};
 #endif
+
 class FieldOptionString : public FieldOption
 {
  public:
