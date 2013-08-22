@@ -273,13 +273,6 @@ class GModel
   GVertex *getVertexByTag(int n) const;
   std::vector<int> getEdgesByStringTag(const std::string tag);
 
-  // for python, temporary solution while iterator are not binded
-  std::vector<GRegion*> bindingsGetRegions();
-  std::vector<GFace*> bindingsGetFaces();
-  std::vector<GEdge*> bindingsGetEdges();
-  std::vector<GVertex*> bindingsGetVertices();
-
-
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }

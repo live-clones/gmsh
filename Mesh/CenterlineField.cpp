@@ -369,7 +369,7 @@ Centerline::~Centerline()
 void Centerline::importFile(std::string fileName)
 {
   current = GModel::current();
-  std::vector<GFace*> currentFaces = current->bindingsGetFaces();
+  std::vector<GFace*> currentFaces(current->firstFace(), current->lastFace());
   for (unsigned int i = 0; i < currentFaces.size(); i++){
     GFace *gf = currentFaces[i];
      if (gf->geomType() == GEntity::DiscreteSurface){
@@ -395,7 +395,7 @@ void Centerline::importFile(std::string fileName)
   current->setVisibility(1);
 
   int maxN = 0.0;
-  std::vector<GEdge*> modEdges = mod->bindingsGetEdges();
+  std::vector<GEdge*> modEdges(mod->firstEdge(), mod->lastEdge());
   MVertex *vin = modEdges[0]->lines[0]->getVertex(0);
   ptin = SPoint3(vin->x(), vin->y(), vin->z());
   for (unsigned int i = 0; i < modEdges.size(); i++){

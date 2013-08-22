@@ -114,4 +114,26 @@ namespace std {
     }
     return elements;
   }
+
+  std::vector<GRegion*> bindingsGetRegions()
+  {
+    return std::vector<GRegion*> ($self->firstRegion(), $self->lastRegion());
+  }
+
+  std::vector<GFace*> bindingsGetFaces()
+  {
+    return std::vector<GFace*> ($self->firstFace(), $self->lastFace());
+  }
+
+  std::vector<GEdge*> bindingsGetEdges()
+  {
+    return std::vector<GEdge*> ($self->firstEdge(), $self->lastEdge());
+  }
+
+  std::vector<GVertex*> bindingsGetVertices()
+  {
+    return std::vector<GVertex*> ($self->firstVertex(), $self->lastVertex());
+  }
+
 }
+
