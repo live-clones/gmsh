@@ -984,6 +984,7 @@ static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
     cc->nbPointsTransfinite = c->nbPointsTransfinite;
     cc->typeTransfinite = c->typeTransfinite;
     cc->coeffTransfinite = c->coeffTransfinite;
+    cc->ReverseMesh = c->ReverseMesh;
   }
   cc->l = c->l;
   for(int i = 0; i < 4; i++)
@@ -1022,6 +1023,7 @@ static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
     ss->Method = s->Method;
     ss->Recombine = s->Recombine;
     ss->RecombineAngle = s->RecombineAngle;
+    ss->ReverseMesh = s->ReverseMesh;
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning("Only automatic transfinite surface specifications can be copied");
   }
