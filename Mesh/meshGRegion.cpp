@@ -354,7 +354,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // SHOULD be classified on the model face and get the right set of parametric
   // coordinates.
 
-  const unsigned int initialSize =  numberedV.size();
+  const int initialSize = (int)numberedV.size();
 
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
@@ -820,19 +820,19 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	      if (w2.isLeft(c1._gf[s]))K1 = s;
 	      if (w2.isRight(c1._gf[s]))K2 = s;
 	    }
-	    if (K1==-1)Msg::Error("K1 = -1");
-	    if (K2==-1)Msg::Error("K2 = -1");
-	    if (K1+1==K2){i11=K1*(N1-1)+i;i12=i11+1;}
-	    else if (K2+1 == K1){i11=K1*(N1-1)-i;i12=i11-1;}
-	    else if (K2 == 0 && K1 ==  c1._gf.size() - 1){i11=K1*(N1-1)+i;i12=i11+1;}
-	    else if (K1 == 0 && K2 ==  c1._gf.size() - 1){i11=(K2+1)*(N1-1)-i;i12=i11-1;}
+	    if (K1==-1) Msg::Error("K1 = -1");
+	    if (K2==-1) Msg::Error("K2 = -1");
+	    if (K1+1==K2){ i11=K1*(N1-1)+i;i12=i11+1; }
+	    else if (K2+1 == K1){ i11=K1*(N1-1)-i;i12=i11-1; }
+	    else if (K2 == 0 && K1 == (int)c1._gf.size() - 1){ i11=K1*(N1-1)+i;i12=i11+1; }
+	    else if (K1 == 0 && K2 == (int)c1._gf.size() - 1){ i11=(K2+1)*(N1-1)-i;i12=i11-1; }
 	    else Msg::Error("KROUPOUK 1 %d %d !", K1, K2);
 	    if (i12 == (c1._gf.size()) * (N1-1))i12=0;
 	    if (i11 == (c1._gf.size()) * (N1-1))i11=0;
 	  }
 	  if (onWedge2){
-	    if (w2.isLeft(gfs1)){i21=i;i22=i+1;}
-	    else if (w2.isRight(gfs1)){i21=N1-1-i;i22=N1-2-i;}
+	    if (w2.isLeft(gfs1)){ i21=i;i22=i+1; }
+	    else if (w2.isRight(gfs1)){ i21=N1-1-i;i22=N1-2-i; }
 	  }
 	  else {
 	    int K1 = -1, K2 = -1;
@@ -840,10 +840,10 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	      if (w1.isLeft(c2._gf[s]))K1 = s;
 	      if (w1.isRight(c2._gf[s]))K2 = s;
 	    }
-	    if (K1+1 == K2){i21=K1*(N1-1)+i;i22=i21+1;}
-	    else if (K2+1 == K1){i21=K1*(N1-1)-i;i22=i21-1;}
-	    else if (K2 == 0 && K1 ==  c2._gf.size()-1 ){i21=K1*(N1-1)+i;i22=i21+1;}
-	    else if (K1 == 0 && K2 ==  c2._gf.size()-1){i21=(K2+1)*(N1-1)-i;i22=i21-1;}
+	    if (K1+1 == K2){ i21=K1*(N1-1)+i;i22=i21+1; }
+	    else if (K2+1 == K1){ i21=K1*(N1-1)-i;i22=i21-1; }
+	    else if (K2 == 0 && K1 == (int)c2._gf.size()-1 ){ i21=K1*(N1-1)+i;i22=i21+1; }
+	    else if (K1 == 0 && K2 == (int)c2._gf.size()-1){ i21=(K2+1)*(N1-1)-i;i22=i21-1; }
 	    else Msg::Error("KROUPOUK 2 %d %d !",K1,K2);
 	    if (i22 == (c2._gf.size()) * (N1-1))i22=0;
 	    if (i21 == (c2._gf.size()) * (N1-1))i21=0;

@@ -40,7 +40,7 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
   if(!looksOk(tag, compound)) return;
 
   int N = _compound.size();
-  if(N == _orientation.size()){
+  if(N == (int)_orientation.size()){
     v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
     v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
     v0->addEdge(this);
@@ -71,9 +71,9 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
 
   orderEdges();
   int N = _compound.size();
-  if(N == _orientation.size()){
+  if(N == (int)_orientation.size()){
     v0 = _orientation[0] ? _compound[0]->getBeginVertex() : _compound[0]->getEndVertex();
-    v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() :  _compound[N-1]->getBeginVertex();
+    v1 = _orientation[N-1] ? _compound[N-1]->getEndVertex() : _compound[N-1]->getBeginVertex();
     v0->addEdge(this);
     v1->addEdge(this);
   }
