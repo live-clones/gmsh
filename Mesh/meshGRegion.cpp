@@ -385,12 +385,47 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 
   // TODO: re-create 1D mesh
-  /*for(int i = 0; i < out.numberofedges; i++){
-    MVertex *v[2];
-    v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
-    v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
-    //implement here the 1D mesh ...
+  //*************************************************
+  /*std::map<GEdge*,std::set<MVertex*> > edge_to_vertices;
+  std::map<GEdge*,std::set<MVertex*> >::iterator it;
+  
+  for(int i = 0; i < out.numberofedges; i++){
+	if(out.edgemarkerlist[i] > 0){
+      MVertex *v[2];
+      v[0] = numberedV[out.edgelist[i * 2 + 0] - 1];
+      v[1] = numberedV[out.edgelist[i * 2 + 1] - 1];
+    
+	  printf("%d\n",out.edgemarkerlist[i]);
+	  GEdge *ge = gr->model()->getEdgeByTag(out.edgemarkerlist[i]);
+	  printf("%d\n",ge->tag());
+	  MLine *l = new MLine(v[0], v[1]);
+	  ge->lines.push_back(l);
+	
+	  it = edge_to_vertices.find(ge);
+	  if(it==edge_to_vertices.end()){
+	    std::set<MVertex*> vertices;
+	    vertices.insert(v[0]);
+	    vertices.insert(v[1]);
+	    edge_to_vertices.insert(std::pair<GEdge*,std::set<MVertex*> >(ge,vertices));
+	  }
+	  else{
+	    it->second.insert(v[0]);
+	    it->second.insert(v[1]);
+	  }
+    }
+  }
+	
+  for(it = edge_to_vertices.begin(); it != edge_to_vertices.end(); it++){
+    GEdge *ge = it->first;
+	std::set<MVertex*> vertices;
+	vertices = it->second;
+	
+	std::set<MVertex*>::iterator it2;  
+	for(it2 = vertices.begin(); it2 != vertices.end(); it2++){  
+	  ge->mesh_vertices.push_back(*it2);
+	}
   }*/
+  //*************************************************
 
   bool needParam = (CTX::instance()->mesh.order > 1 &&
                     CTX::instance()->mesh.secondOrderExperimental);
