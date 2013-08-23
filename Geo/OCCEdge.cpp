@@ -110,13 +110,19 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
   }
 
 }
+
 GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
+  if(curve.IsNull()){
+    Msg::Error("OCC curve is null in closestPoint");
+    return GPoint(0, 0);
+  }
+
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnCurve proj(pnt, curve, s0, s1);
 
   if(!proj.NbPoints()){
-    Msg::Error("OCC Project Point on Curve FAIL");
+    Msg::Error("OCC ProjectPointOnCurve failed");
     return GPoint(0, 0);
   }
 
