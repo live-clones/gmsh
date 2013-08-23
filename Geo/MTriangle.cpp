@@ -207,7 +207,7 @@ int MTriangle6::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.numSubEdges; 
 static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {
-  n[0] = n[1] = n[2] = t->getFace(0).normal();
+  n[0] = n[1] = t->getFace(0).normal();
 
   if (num < numSubEdges){
     SPoint3 pnt1, pnt2;
