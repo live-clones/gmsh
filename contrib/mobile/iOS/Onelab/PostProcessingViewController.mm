@@ -39,6 +39,15 @@
         [_IntervalsType setDelegate:self];
         [_IntervalsType selectRow:_pview->getOptions()->intervalsType-1 inComponent:0 animated:YES];
         [_Intervals setText:[NSString stringWithFormat:@"%d",_pview->getOptions()->nbIso]];
+        UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
+        numberToolbar.barStyle = UIBarStyleBlackTranslucent;
+        numberToolbar.items = [NSArray arrayWithObjects:
+                               [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
+                               [[UIBarButtonItem alloc]initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithNumberPad)],
+                               nil];
+        [numberToolbar sizeToFit];
+        _Intervals.delegate = self;
+        _Intervals.inputAccessoryView = numberToolbar;
         [_RaiseZ setValue:_pview->getOptions()->raise[2]];
         [_RaiseZ addTarget:self action:@selector(slideRaiseZ:) forControlEvents:UIControlEventValueChanged];
     }
@@ -72,6 +81,22 @@
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(BOOL)textFieldShouldEndEditing:(UITextField *)textField
+{
+    _pview->getOptions()->nbIso = [textField.text integerValue];
+    _pview->setChanged(true);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+    return YES;
+}
+-(BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    return [_Intervals endEditing:YES];
+}
+-(void)doneWithNumberPad
+{
+    [_Intervals endEditing:YES];
 }
 
 - (void)viewDidUnload {

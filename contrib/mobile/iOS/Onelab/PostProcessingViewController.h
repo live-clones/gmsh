@@ -12,7 +12,7 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
 
-@interface PostProcessingViewController : UIViewController <UIPickerViewDataSource, UIPickerViewDelegate>
+@interface PostProcessingViewController : UIViewController <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
 {
 @private
     PView *_pview;
