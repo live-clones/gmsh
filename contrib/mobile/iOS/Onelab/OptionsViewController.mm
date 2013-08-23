@@ -14,6 +14,7 @@
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
+#include <gmsh/GmshDefines.h>
 
 @interface OptionsViewController ()
 
@@ -34,7 +35,8 @@
 {
     [super viewDidLoad];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshParameters:) name:@"refreshParameters" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"refreshParameters" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"resetParameters" object:nil];
 
     self.navigationItem.title = @"Options";
 
@@ -64,10 +66,23 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (void)refreshParameters:(id)sender
+- (void)refreshOptions:(id)sender
+{
+    [self performSelectorOnMainThread:@selector(refreshOptions) withObject:nil waitUntilDone:NO];
+}
+- (void)refreshOptions
 {
     NSInteger nrow = [self.tableView numberOfRowsInSection:1];
-    if(nrow < PView::list.size()-1)
+    if(PView::list.size() == 0)
+    {
+        NSMutableArray *array = [[NSMutableArray alloc] init];
+        for(NSInteger i = 0; i<nrow; i++)
+            [array addObject:[NSIndexPath indexPathForRow:i inSection:1]];
+        [self.tableView beginUpdates];
+        [self.tableView deleteRowsAtIndexPaths:[NSArray arrayWithArray:array] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView endUpdates];
+    }
+    else if(nrow < PView::list.size())
     {
         NSMutableArray *array = [[NSMutableArray alloc] init];
         for(NSInteger i = nrow; i<PView::list.size(); i++)
@@ -119,8 +134,10 @@
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if(cell == nil)
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"postproCell"];
-    else
-        return cell;
+    else {
+        cell = nil;
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"postproCell"];
+    }
     [cell setFrame:CGRectMake(cell.frame.origin.x, cell.frame.origin.x, tableView.frame.size.width, cell.frame.size.height)];
     switch (indexPath.section) {
         case 0:
@@ -139,14 +156,14 @@
                 [showHideOptions addTarget:self action:@selector(setShowGeomLines:) forControlEvents:UIControlEventValueChanged];
             }
             else if(indexPath.row == 2) {
-                [lblOptions setText:@"Show mesh lines"];
-                [showHideOptions setOn:(CTX::instance()->mesh.lines)];
-                [showHideOptions addTarget:self action:@selector(setShowMeshLines:) forControlEvents:UIControlEventValueChanged];
+                [lblOptions setText:@"Show mesh surface edges"];
+                [showHideOptions setOn:(CTX::instance()->mesh.surfacesEdges)];
+                [showHideOptions addTarget:self action:@selector(setShowMeshSurfacesEdges:) forControlEvents:UIControlEventValueChanged];
             }
             else if(indexPath.row == 3) {
-                [lblOptions setText:@"Show mesh edges"];
-                [showHideOptions setOn:(CTX::instance()->mesh.surfacesEdges || CTX::instance()->mesh.volumesEdges)];
-                [showHideOptions addTarget:self action:@selector(setShowMeshEdges:) forControlEvents:UIControlEventValueChanged];
+                [lblOptions setText:@"Show mesh volumes edges"];
+                [showHideOptions setOn:CTX::instance()->mesh.volumesEdges];
+                [showHideOptions addTarget:self action:@selector(setShowMeshVolumesEdges:) forControlEvents:UIControlEventValueChanged];
             }
             [cell addSubview:showHideOptions];
             [cell addSubview:lblOptions];
@@ -191,17 +208,16 @@
     CTX::instance()->geom.lines = sender.on;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
-- (void)setShowMeshEdges:(UISwitch*)sender
+- (void)setShowMeshVolumesEdges:(UISwitch*)sender
 {
-    CTX::instance()->mesh.surfacesEdges = sender.on;
     CTX::instance()->mesh.volumesEdges = sender.on;
-    CTX::instance()->mesh.changed = YES;
+    CTX::instance()->mesh.changed = ENT_VOLUME;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
-- (void)setShowMeshLines:(UISwitch*)sender
+- (void)setShowMeshSurfacesEdges:(UISwitch*)sender
 {
-    CTX::instance()->mesh.lines = sender.on;
-    CTX::instance()->mesh.changed = YES;
+    CTX::instance()->mesh.surfacesEdges = sender.on;
+    CTX::instance()->mesh.changed = ENT_SURFACE;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 -(IBAction)PViewVisible:(id)sender

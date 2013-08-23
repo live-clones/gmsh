@@ -355,6 +355,7 @@
     if(number.size() < 1) return YES;
     number[0].setValue([textField.text doubleValue]);
     onelab::server::instance()->set(number[0]);
+	[textField setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
     return YES;
 }
 -(BOOL)textFieldShouldReturn:(UITextField *)textField

@@ -128,11 +128,6 @@
 }
 - (void)refreshTableView
 {
-	if(!_lastRefresh) _lastRefresh = [NSDate date];
-	else {
-		if([_lastRefresh timeIntervalSinceNow] >= -1) return;
-		_lastRefresh = [NSDate date];
-	}
 	std::vector<onelab::number> number;
     onelab::server::instance()->get(number);
 
@@ -209,8 +204,16 @@
 }
 - (void)refreshParameters:(id)sender
 {
+	[self performSelectorOnMainThread:@selector(refreshParameters) withObject:nil waitUntilDone:NO];
+}
+- (void)refreshParameters
+{
+	if(!_lastRefresh) _lastRefresh = [NSDate date];
+	else {
+		if([_lastRefresh timeIntervalSinceNow] >= -1) return;
+		_lastRefresh = [NSDate date];
+	}
 	[self refreshTableView]; // Get the param
-	[self.tableView setNeedsDisplay];
 }
 - (void)resetParameters:(id)sender
 {
@@ -218,8 +221,8 @@
     [_sections removeAllObjects];
     [_sectionstitle removeAllObjects];
     [self.tableView reloadData];
-    [self refreshParameters:sender];
-    onelab_cb("check");
+	onelab_cb("check");
+    [self refreshTableView];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 
@@ -283,8 +286,10 @@
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if(cell == nil)
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-    else
-        return cell;
+    else {
+		cell = nil;
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+	}
 	[cell setSelectionStyle:UITableViewCellSelectionStyleNone];
     [cell setUserInteractionEnabled:!([tmp isReadOnly])];
     [tmp setLabelFrame:CGRectMake(20, 5, cell.frame.size.width - 40, cell.frame.size.height/2)];
