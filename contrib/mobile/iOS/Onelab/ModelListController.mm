@@ -101,6 +101,7 @@
 -(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict
 {
     currentElement = elementName;
+	//[currentElementValue release];
     currentElementValue = nil;
 }
 -(void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string

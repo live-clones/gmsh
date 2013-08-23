@@ -35,6 +35,7 @@ extern unsigned int getColorByEntity(GEntity *e);
 void drawMeshVertex(GVertex *e)
 {
     if(!CTX::instance()->mesh.points && !CTX::instance()->mesh.pointsNum) return;
+    if(!CTX::instance()->mesh.points) return;
 	std::vector<GLfloat> vertex;
 	std::vector<GLubyte> color;
 	for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){

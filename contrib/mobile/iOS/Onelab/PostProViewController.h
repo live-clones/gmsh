@@ -9,5 +9,10 @@
 #import <UIKit/UIKit.h>
 
 @interface PostProViewController : UITableViewController <UITextFieldDelegate>
-
+{
+@private
+    UIViewController *_prevViewController;
+    UISegmentedControl *control;
+}
+- (void)setPreviousViewController:(UIViewController*)prev;
 @end

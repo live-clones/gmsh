@@ -15,7 +15,6 @@
 class drawString
 {
 private:
-	bool _changed; // UNUSED ??
 	std::string _text; // Text to draw
 	float _color[4]; // Text color
 	int _size; // Text size in px

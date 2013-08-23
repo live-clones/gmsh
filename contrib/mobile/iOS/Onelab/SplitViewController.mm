@@ -33,12 +33,12 @@
             detailViewController = (DetailViewController *)v;
         }
     }
-    /*UINavigationController *left = [self.viewControllers objectAtIndex:0]; // left UINavigationController (Master)
+    UINavigationController *left = [self.viewControllers objectAtIndex:0]; // left UINavigationController (Master)
 	 for(UIViewController *v in left.viewControllers){
-	 if ([v isKindOfClass:[MasterViewController class]]) {
-	 masterViewController = (MasterViewController *)v;
+		 if ([v isKindOfClass:[MasterViewController class]]) {
+				masterViewController = (MasterViewController *)v;
+		 }
 	 }
-	 }*/
 	self.delegate = detailViewController;
 	[self setPresentsWithGesture:NO];
 }

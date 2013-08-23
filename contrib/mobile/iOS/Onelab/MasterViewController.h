@@ -16,9 +16,12 @@
     @private
     NSMutableArray *_sections;
     NSMutableArray *_sectionstitle;
+	NSDate *_lastRefresh;
     
     UIBarButtonItem *runButton;
     UIBarButtonItem *stopButton;
+	
+	UISegmentedControl *control;
 }
 
 @property (strong, nonatomic) DetailViewController *detailViewController;

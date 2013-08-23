@@ -69,18 +69,15 @@
     }
 	else
 	{
-		UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post processing" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
-		UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-		NSArray *btns = [[NSArray alloc] initWithObjects:model, postpro, more, nil];
-		[self.navigationItem setRightBarButtonItems:btns];
+		[self.navigationItem setRightBarButtonItem:model];
 	}
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
     if([sender numberOfTouches] != 2) return;
-    float mScale;
+    float mScale = scaleFactor;
     if (sender.state == UIGestureRecognizerStateBegan)
         mScale = scaleFactor;
     else if(sender.state == UIGestureRecognizerStateChanged)
@@ -89,8 +86,6 @@
         scaleFactor *= [sender scale];
         mScale = scaleFactor;
     }
-    else
-        mScale = 1.0f;
     mScale = MAX(0.1, mScale);
     glView->mContext->eventHandler(2,mScale);
     [glView drawView];
@@ -118,6 +113,7 @@
 - (IBAction)tap:(UITapGestureRecognizer *)sender
 {
     sender.numberOfTapsRequired = 2;
+	sender.numberOfTouchesRequired = 1;
     if(sender.state == UIGestureRecognizerStateEnded){
         scaleFactor = 1;
         glView->mContext->eventHandler(10);
@@ -147,25 +143,6 @@
 - (void) showSettings
 {
     [self performSegueWithIdentifier:@"showSettingsSegue" sender:self];
-}
-
-- (void) showPostpro
-{
-    if(PView::list.size() <= 0)
-    {
-        UIAlertView *alert;
-        alert = [[UIAlertView alloc] initWithTitle:@"Post proccessing" message:@"No post processing data" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
-        [alert show];
-        return;
-    }
-    [self performSegueWithIdentifier:@"showPostProSegue" sender:self];
-}
-
--(void)hidePostpro
-{
-    for(UIView *v in self.view.subviews)
-        if(v.tag == -1)
-            [v removeFromSuperview];
 }
 
 -(void) showAlert:(std::string)msg title:(std::string) title

@@ -38,6 +38,7 @@
 		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
 		9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
+		9CF34DE417C62FC500A3D5E3 /* PostProcessingViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CF34DE317C62FC500A3D5E3 /* PostProcessingViewController.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -90,6 +91,8 @@
 		9CEAECC617A91CD20014D229 /* ModelListController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelListController.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Onelab-Info.plist"; sourceTree = "<group>"; };
 		9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Onelab-Prefix.pch"; sourceTree = "<group>"; };
+		9CF34DE217C62FC500A3D5E3 /* PostProcessingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PostProcessingViewController.h; sourceTree = "<group>"; };
+		9CF34DE317C62FC500A3D5E3 /* PostProcessingViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PostProcessingViewController.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -181,6 +184,8 @@
 				9C9608531712C16400E1D4A0 /* DetailViewController.mm */,
 				9C1C10F817BA5E7D00BFD483 /* PostProViewController.h */,
 				9C1C10F917BA5E7D00BFD483 /* PostProViewController.mm */,
+				9CF34DE217C62FC500A3D5E3 /* PostProcessingViewController.h */,
+				9CF34DE317C62FC500A3D5E3 /* PostProcessingViewController.mm */,
 				9C9608721712C47200E1D4A0 /* EAGLView.h */,
 				9C9608731712C47200E1D4A0 /* EAGLView.mm */,
 				9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */,
@@ -282,6 +287,7 @@
 				9CC6EBB717BA0A38001CA21A /* drawGeom.cpp in Sources */,
 				9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */,
 				9C1C10FA17BA5E7D00BFD483 /* PostProViewController.mm in Sources */,
+				9CF34DE417C62FC500A3D5E3 /* PostProcessingViewController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
