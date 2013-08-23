@@ -93,6 +93,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.extrude = 0;
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.minimumMeshSegments = 1;
+  meshAttributes.reverseMesh = false;
 }
 
 void GEdge::addFace(GFace *e)
@@ -488,14 +489,14 @@ void GEdge::replaceEndingPoints(GVertex *replOfv0, GVertex *replOfv1)
 }
 
 // regions that bound this entity or that this entity bounds.
-std::list<GRegion*> GEdge::regions() const 
+std::list<GRegion*> GEdge::regions() const
 {
-  std::list<GFace*> _faces = faces(); 
+  std::list<GFace*> _faces = faces();
   std::list<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();
-    _r.insert (temp.begin(), temp.end());    
+    _r.insert (temp.begin(), temp.end());
   }
   std::list<GRegion*> ret;
   ret.insert (ret.begin(), _r.begin(), _r.end());
