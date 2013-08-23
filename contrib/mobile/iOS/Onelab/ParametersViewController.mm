@@ -34,7 +34,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshParameters:) name:@"refreshParameters" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetParameters:) name:@"resetParameters" object:nil];
 
-	self.navigationItem.title = @"Parameters";
+	self.navigationItem.title = @"Model";
 
     if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute){ // Only on iPhone/iPod
         runButton = [[UIBarButtonItem alloc] initWithTitle:@"Stop" style:UIBarButtonItemStyleBordered target:self action:@selector(stopRunning)];
@@ -46,14 +46,16 @@
         [runButton setTitle:@"Run"];
     }
 	runButton.possibleTitles = [NSSet setWithObjects:@"Run", @"Stop", nil];
-    self.navigationItem.leftItemsSupplementBackButton = YES; // Only for iPhone/iPod
-    self.navigationItem.leftBarButtonItem = runButton;
+	if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+		self.navigationItem.leftBarButtonItem = runButton;
+	else
+		self.navigationItem.rightBarButtonItem = runButton;
     
     _sections = [[NSMutableArray alloc] init];
     _sectionstitle = [[NSMutableArray alloc] init];
 	
 	[self.navigationController setToolbarHidden:NO];
-	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Parmeters", @"Views", nil]];
+	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model's Parmeters", @"Views Options", nil]];
 	control.segmentedControlStyle = UISegmentedControlStyleBar;
 	UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
@@ -76,7 +78,6 @@
 }
 - (void)addParameterNumber:(onelab::number)p atIndexPath:(NSIndexPath*)indexPath
 {
-	NSLog(@"Add %s at (%d,%d)", p.getName().c_str(), indexPath.section, indexPath.row);
 	NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
 	if(p.getChoices().size() && p.getChoices().size() == p.getValueLabels().size()) { // enumeration
         ParameterNumberList *param = [[ParameterNumberList alloc] initWithNumber:p];
@@ -226,6 +227,12 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 
+- (void)finishCompute
+{
+	[runButton setTitle:@"Run"];
+	[runButton setAction:@selector(runWithNewParameter:)];
+}
+
 - (void)runWithNewParameter:(UIBarButtonItem *)sender
 {
     dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -236,8 +243,7 @@
         self.navigationItem.rightBarButtonItem.enabled = NO;
         onelab_cb("compute");
         if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-            [sender setTitle:@"Run"];
-            [sender setAction:@selector(runWithNewParameter:)];
+			[self performSelectorOnMainThread:@selector(finishCompute) withObject:nil waitUntilDone:YES];
             self.navigationItem.rightBarButtonItem.enabled = YES;
         }
         appDelegate->compute = NO;
@@ -307,7 +313,7 @@
     else if([tmp isKindOfClass:[ParameterNumberCheckbox class]]) {
         ParameterNumberCheckbox *param = (ParameterNumberCheckbox *)tmp;
         [param setLabelFrame:CGRectMake(100, 5, cell.frame.size.width - 110, cell.frame.size.height)];
-        [param setFrame:CGRectMake(10, 5, cell.frame.size.width - 40, cell.frame.size.height)];
+        [param setFrame:CGRectMake(20, 5, cell.frame.size.width - 40, cell.frame.size.height)];
         [cell addSubview:[param getCheckbox]];
     }
     else if([tmp isKindOfClass:[ParameterNumberRange class]]) {

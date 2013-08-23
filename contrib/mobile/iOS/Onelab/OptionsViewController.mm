@@ -38,10 +38,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"refreshParameters" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"resetParameters" object:nil];
 
-    self.navigationItem.title = @"Options";
+    self.navigationItem.title = @"Views Options";
 
     [self.navigationController setToolbarHidden:NO];
-	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Parmeters", @"Views", nil]];
+	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model's Parmeters", @"Views Options", nil]];
 	control.segmentedControlStyle = UISegmentedControlStyleBar;
 	UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
@@ -192,7 +192,11 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if(indexPath.section != 1) return;
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
+    UIStoryboard *storyboard;
+    if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+        storyboard = [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
+    else
+        storyboard = [UIStoryboard storyboardWithName:@"iPhoneiPodStoryboard" bundle:nil];
     PostProcessingViewController *postPro = [storyboard instantiateViewControllerWithIdentifier:@"PostProcessingViewController"];
     [postPro setPView:PView::list[[tableView numberOfRowsInSection:1]-1- indexPath.row]];
     [self.navigationController pushViewController:postPro animated:YES];

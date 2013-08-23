@@ -33,10 +33,10 @@
             </objects>
             <point key="canvasLocation" x="-329" y="160"/>
         </scene>
-        <!--Detail View Controller-->
+        <!--Model View Controller - ONELAB-->
         <scene sceneID="ghQ-lt-1PF">
             <objects>
-                <viewController storyboardIdentifier="DetailViewController" id="NyB-7w-cP0" customClass="DetailViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ModelViewController" id="NyB-7w-cP0" customClass="ModelViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="zrj-Dd-WPc" customClass="EAGLView">
                         <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -47,11 +47,10 @@
                             <outletCollection property="gestureRecognizers" destination="qCm-Ub-mO2" appends="YES" id="yww-Ed-CcX"/>
                         </connections>
                     </view>
-                    <navigationItem key="navigationItem" id="WX3-lU-bHf"/>
+                    <navigationItem key="navigationItem" title="ONELAB" id="WX3-lU-bHf"/>
                     <connections>
                         <outlet property="glView" destination="zrj-Dd-WPc" id="sIP-YC-fg2"/>
                         <segue destination="0h7-h3-thM" kind="push" identifier="showSettingsSegue" id="cJz-7s-fgZ"/>
-                        <segue destination="tLo-wG-spu" kind="push" identifier="showPostProSegue" id="qtP-1F-3QF"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aSF-6U-E6q" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -83,10 +82,10 @@
             </objects>
             <point key="canvasLocation" x="-863" y="160"/>
         </scene>
-        <!--Master View Controller - Settings-->
+        <!--Parameters View Controller - Parameters-->
         <scene sceneID="WMF-B6-2e0">
             <objects>
-                <tableViewController id="0h7-h3-thM" customClass="MasterViewController" sceneMemberID="viewController">
+                <tableViewController id="0h7-h3-thM" customClass="ParametersViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="XKe-Ex-Vcl">
                         <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -107,18 +106,21 @@
                             <outlet property="delegate" destination="0h7-h3-thM" id="Jfg-cG-L0F"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Settings" id="FKO-Qr-UUm">
-                        <barButtonItem key="backBarButtonItem" title="ONELAB" id="SL3-OD-Ie0"/>
+                    <navigationItem key="navigationItem" title="Parameters" id="FKO-Qr-UUm">
+                        <barButtonItem key="backBarButtonItem" title="Model" id="SL3-OD-Ie0"/>
                     </navigationItem>
+                    <connections>
+                        <segue destination="tLo-wG-spu" kind="push" id="50g-yc-iQZ"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="l6Y-Ow-J7G" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="642" y="160"/>
+            <point key="canvasLocation" x="636" y="160"/>
         </scene>
-        <!--Post Pro View Controller - Post-processing-->
+        <!--Options View Controller - Options-->
         <scene sceneID="hN1-wg-Dof">
             <objects>
-                <tableViewController id="tLo-wG-spu" customClass="PostProViewController" sceneMemberID="viewController">
+                <tableViewController id="tLo-wG-spu" customClass="OptionsViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="AUf-bU-fWv">
                         <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -139,33 +141,121 @@
                             <outlet property="delegate" destination="tLo-wG-spu" id="XDV-ze-ULa"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Post-processing" id="qUi-6A-krJ"/>
+                    <navigationItem key="navigationItem" title="Options" id="qUi-6A-krJ"/>
+                    <connections>
+                        <segue destination="pfu-w8-zq5" kind="push" id="DuR-Aa-VLN"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="WwS-KQ-5Gs" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="642" y="882"/>
+            <point key="canvasLocation" x="1118" y="160"/>
+        </scene>
+        <!--Post Processing View Controller-->
+        <scene sceneID="nXH-mg-3hY">
+            <objects>
+                <viewController storyboardIdentifier="PostProcessingViewController" id="pfu-w8-zq5" customClass="PostProcessingViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Lh8-gQ-vBl">
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="PView Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="z3z-Xo-nQF">
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="36" id="Mei-3P-M3i"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <pickerView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="xW0-cN-kxL">
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="293" id="MRj-t2-NLl"/>
+                                    <constraint firstAttribute="height" constant="216" id="eIi-6g-osP"/>
+                                </constraints>
+                            </pickerView>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Intervals" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="elK-Av-NO2">
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="91" id="BzM-Ls-Hjm"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="rgB-dz-6XG">
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="Raise (Z)" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Bfu-t9-dAj">
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" minValue="-5" maxValue="5" translatesAutoresizingMaskIntoConstraints="NO" id="BC5-E7-rEF"/>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="z3z-Xo-nQF" firstAttribute="leading" secondItem="Lh8-gQ-vBl" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="435-s8-4Es"/>
+                            <constraint firstItem="BC5-E7-rEF" firstAttribute="leading" secondItem="Bfu-t9-dAj" secondAttribute="trailing" constant="8" symbolic="YES" type="default" id="6vr-r4-RiJ"/>
+                            <constraint firstItem="xW0-cN-kxL" firstAttribute="centerX" secondItem="z3z-Xo-nQF" secondAttribute="centerX" type="default" id="7xR-YV-WCT"/>
+                            <constraint firstItem="BC5-E7-rEF" firstAttribute="top" secondItem="Bfu-t9-dAj" secondAttribute="top" type="default" id="LeJ-T9-cOP"/>
+                            <constraint firstItem="xW0-cN-kxL" firstAttribute="top" secondItem="z3z-Xo-nQF" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="SBU-ke-wyb"/>
+                            <constraint firstItem="BC5-E7-rEF" firstAttribute="leading" secondItem="rgB-dz-6XG" secondAttribute="leading" type="default" id="SEG-ir-r8Z"/>
+                            <constraint firstItem="rgB-dz-6XG" firstAttribute="leading" secondItem="elK-Av-NO2" secondAttribute="trailing" constant="8" symbolic="YES" type="default" id="TWH-Dv-MuW"/>
+                            <constraint firstAttribute="trailing" secondItem="rgB-dz-6XG" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="VV3-tg-bCr"/>
+                            <constraint firstItem="elK-Av-NO2" firstAttribute="baseline" secondItem="rgB-dz-6XG" secondAttribute="baseline" type="default" id="Ves-uS-Wgp"/>
+                            <constraint firstItem="Bfu-t9-dAj" firstAttribute="leading" secondItem="Lh8-gQ-vBl" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="ao2-ou-LYp"/>
+                            <constraint firstItem="elK-Av-NO2" firstAttribute="leading" secondItem="Lh8-gQ-vBl" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="dHF-Hd-Edk"/>
+                            <constraint firstItem="z3z-Xo-nQF" firstAttribute="top" secondItem="Lh8-gQ-vBl" secondAttribute="top" constant="20" symbolic="YES" type="default" id="dhL-em-cgJ"/>
+                            <constraint firstItem="rgB-dz-6XG" firstAttribute="trailing" secondItem="z3z-Xo-nQF" secondAttribute="trailing" type="default" id="iWx-Qa-Nds"/>
+                            <constraint firstItem="Bfu-t9-dAj" firstAttribute="top" secondItem="elK-Av-NO2" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="pa9-yz-1vW"/>
+                            <constraint firstItem="rgB-dz-6XG" firstAttribute="top" secondItem="xW0-cN-kxL" secondAttribute="bottom" constant="8" symbolic="YES" type="default" id="xgH-ey-y52"/>
+                            <constraint firstAttribute="trailing" secondItem="BC5-E7-rEF" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="zuO-wq-2vN"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" id="d15-oM-VRg"/>
+                    <connections>
+                        <outlet property="Intervals" destination="rgB-dz-6XG" id="JH1-PI-Mc7"/>
+                        <outlet property="IntervalsType" destination="xW0-cN-kxL" id="GMk-2Z-uHR"/>
+                        <outlet property="Name" destination="z3z-Xo-nQF" id="aNu-Yc-mNc"/>
+                        <outlet property="RaiseZ" destination="BC5-E7-rEF" id="Wnp-mG-Z0a"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="p63-tL-CUK" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1596" y="160"/>
         </scene>
     </scenes>
     <classes>
-        <class className="DetailViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/DetailViewController.h"/>
+        <class className="EAGLView" superclassName="UIView">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/EAGLView.h"/>
+        </class>
+        <class className="ModelListController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelListController.h"/>
+        </class>
+        <class className="ModelViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelViewController.h"/>
             <relationships>
                 <relationship kind="action" name="pinch:" candidateClass="UIPinchGestureRecognizer"/>
                 <relationship kind="action" name="tap:" candidateClass="UITapGestureRecognizer"/>
                 <relationship kind="outlet" name="detailDescriptionLabel" candidateClass="UILabel"/>
             </relationships>
         </class>
-        <class className="EAGLView" superclassName="UIView">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/EAGLView.h"/>
+        <class className="NSLayoutConstraint" superclassName="NSObject">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/NSLayoutConstraint.h"/>
         </class>
-        <class className="MasterViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/MasterViewController.h"/>
+        <class className="OptionsViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/OptionsViewController.h"/>
         </class>
-        <class className="ModelListController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelListController.h"/>
+        <class className="ParametersViewController" superclassName="UITableViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/ParametersViewController.h"/>
         </class>
-        <class className="PostProViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/PostProViewController.h"/>
+        <class className="PostProcessingViewController" superclassName="UIViewController">
+            <source key="sourceIdentifier" type="project" relativePath="./Classes/PostProcessingViewController.h"/>
+            <relationships>
+                <relationship kind="outlet" name="Intervals" candidateClass="UITextField"/>
+                <relationship kind="outlet" name="IntervalsType" candidateClass="UIPickerView"/>
+                <relationship kind="outlet" name="Name" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="RaiseZ" candidateClass="UISlider"/>
+            </relationships>
         </class>
     </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">

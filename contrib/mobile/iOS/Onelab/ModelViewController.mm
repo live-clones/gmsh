@@ -58,31 +58,26 @@
     scaleFactor = 1.;
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
-    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-        UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
-        UIBarButtonItem *postpro = [[UIBarButtonItem alloc] initWithTitle:@"Post-pro" style:UIBarButtonItemStyleBordered target:self action:@selector(showPostpro)];
-        UIBarButtonItem *more = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showMore:)];
-        UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-        NSArray *btns = [[NSArray alloc] initWithObjects:settings, postpro, more, nil];
-        [self.navigationItem setLeftBarButtonItem:model];
-        [self.navigationItem setRightBarButtonItems:btns];
-    }
-	else
-	{
+    if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
 		[self.navigationItem setRightBarButtonItem:model];
 	}
+	else
+	{
+        UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
+        [self.navigationItem setRightBarButtonItem:settings];
+    }
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
-    if([sender numberOfTouches] != 2) return;
+    if([sender numberOfTouches] > 2) return;
     float mScale = scaleFactor;
     if (sender.state == UIGestureRecognizerStateBegan)
         mScale = scaleFactor;
     else if(sender.state == UIGestureRecognizerStateChanged)
         mScale = scaleFactor * [sender scale];
-    else if(sender.state == UIGestureRecognizerStateEnded){
+    else if(sender.state == UIGestureRecognizerStateEnded || sender.state == UIGestureRecognizerStateCancelled){
         scaleFactor *= [sender scale];
         mScale = scaleFactor;
     }
