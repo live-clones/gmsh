@@ -8,7 +8,7 @@
 
 #import "parameter.h"
 
-@implementation parameter
+@implementation Parameter
 -(id)init
 {
     self = [super init];
@@ -49,7 +49,7 @@
 }
 @end
 
-@implementation parameterStringList
+@implementation ParameterStringList
 -(id) initWithString:(onelab::string)string
 {
     self = [super init];
@@ -131,7 +131,7 @@
 }
 @end
 
-@implementation parameterNumberList
+@implementation ParameterNumberList
 -(id) initWithNumber:(onelab::number) number
 {
     self = [super init];
@@ -203,7 +203,7 @@
 }
 @end
 
-@implementation parameterNumberCheckbox
+@implementation ParameterNumberCheckbox
 -(id) initWithNumber:(onelab::number) number
 {
     self = [super init];
@@ -255,7 +255,7 @@
 }
 @end
 
-@implementation parameterNumberRange
+@implementation ParameterNumberRange
 -(id) initWithNumber:(onelab::number) number
 {
     self = [super init];
@@ -315,7 +315,7 @@
 }
 @end
 
-@implementation parameterNumberTextbox
+@implementation ParameterNumberTextbox
 -(id)initWithNumber:(onelab::number)number
 {
     self = [super init];

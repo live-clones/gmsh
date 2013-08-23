@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "EAGLView.h"
 
-@interface DetailViewController : UIViewController <UISplitViewControllerDelegate, UIActionSheetDelegate>
+@interface ModelViewController : UIViewController <UISplitViewControllerDelegate, UIActionSheetDelegate>
 {
     @private
     double scaleFactor;

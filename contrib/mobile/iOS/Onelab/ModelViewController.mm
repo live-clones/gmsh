@@ -7,17 +7,17 @@
 //
 #import <QuartzCore/QuartzCore.h>
 
-#import "DetailViewController.h"
+#import "ModelViewController.h"
 #import "iosGModel.h"
 
 #import "AppDelegate.h"
 
-@interface DetailViewController ()
+@interface ModelViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 - (void)configureView;
 @end
 
-@implementation DetailViewController
+@implementation ModelViewController
 
 #pragma mark - Managing the detail item
 @synthesize glView;

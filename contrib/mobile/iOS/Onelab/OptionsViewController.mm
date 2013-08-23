@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 Maxime Graulich. All rights reserved.
 //
 
-#import "PostProViewController.h"
-#import "MasterViewController.h"
+#import "OptionsViewController.h"
+#import "ParametersViewController.h"
 #import "PostProcessingViewController.h"
 
 #include <gmsh/Context.h>
@@ -15,11 +15,11 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
 
-@interface PostProViewController ()
+@interface OptionsViewController ()
 
 @end
 
-@implementation PostProViewController
+@implementation OptionsViewController
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -52,11 +52,6 @@
     [super viewWillAppear:animated];
 }
 
-- (void)setPreviousViewController:(UIViewController*)prev
-{
-    _prevViewController = prev;
-}
-
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
 	//[self.navigationController setViewControllers:[[NSArray alloc] initWithObjects:_prevViewController, nil] animated:NO];
@@ -77,7 +72,9 @@
         NSMutableArray *array = [[NSMutableArray alloc] init];
         for(NSInteger i = nrow; i<PView::list.size(); i++)
             [array addObject:[NSIndexPath indexPathForRow:i-nrow inSection:1]];
+        [self.tableView beginUpdates];
         [self.tableView insertRowsAtIndexPaths:[NSArray arrayWithArray:array] withRowAnimation:UITableViewRowAnimationAutomatic];
+        [self.tableView endUpdates];
     }
 }
 

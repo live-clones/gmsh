@@ -9,9 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <Gmsh/onelab.h>
 
-@class DetailViewController;
+@class ModelListController;
 
-@interface MasterViewController : UITableViewController
+@interface ParametersViewController : UITableViewController
 {
     @private
     NSMutableArray *_sections;
@@ -24,7 +24,7 @@
 	UISegmentedControl *control;
 }
 
-@property (strong, nonatomic) DetailViewController *detailViewController;
+@property (strong, nonatomic) ModelListController *modelListController;
 
 - (void)resetParameters:(id)sender;
 

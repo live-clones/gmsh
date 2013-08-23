@@ -7,15 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9C1C10FA17BA5E7D00BFD483 /* PostProViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* PostProViewController.mm */; };
+		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
 		9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645617A7C3DB00DEDAFC /* drawString.cpp */; };
 		9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.mm */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
 		9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083C1712C16300E1D4A0 /* Foundation.framework */; };
 		9C96083F1712C16300E1D4A0 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083E1712C16300E1D4A0 /* CoreGraphics.framework */; };
 		9C96084B1712C16400E1D4A0 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C96084A1712C16300E1D4A0 /* AppDelegate.mm */; };
-		9C9608511712C16400E1D4A0 /* MasterViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608501712C16400E1D4A0 /* MasterViewController.mm */; };
-		9C9608541712C16400E1D4A0 /* DetailViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608531712C16400E1D4A0 /* DetailViewController.mm */; };
+		9C9608511712C16400E1D4A0 /* ParametersViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608501712C16400E1D4A0 /* ParametersViewController.mm */; };
+		9C9608541712C16400E1D4A0 /* ModelViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608531712C16400E1D4A0 /* ModelViewController.mm */; };
 		9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608731712C47200E1D4A0 /* EAGLView.mm */; };
 		9C9608991712C7B600E1D4A0 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C9608981712C7B600E1D4A0 /* Accelerate.framework */; };
 		9C96089B1712C7BE00E1D4A0 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */; };
@@ -32,7 +32,7 @@
 		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
 		9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E01178AE6BE00A83B4B /* drawContext.cpp */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
-		9CE18C2017B27EDB009BA06E /* parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* parameter.mm */; };
+		9CE18C2017B27EDB009BA06E /* Parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* Parameter.mm */; };
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
 		9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */; };
 		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
@@ -42,8 +42,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		9C1C10F817BA5E7D00BFD483 /* PostProViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PostProViewController.h; sourceTree = "<group>"; };
-		9C1C10F917BA5E7D00BFD483 /* PostProViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PostProViewController.mm; sourceTree = "<group>"; };
+		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
+		9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OptionsViewController.mm; sourceTree = "<group>"; };
 		9C6A645617A7C3DB00DEDAFC /* drawString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawString.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9C6A645717A7C3DB00DEDAFC /* drawString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawString.h; sourceTree = "<group>"; usesTabs = 1; };
 		9C95B7F51726C88E00C0CCE2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
@@ -53,10 +53,10 @@
 		9C96083E1712C16300E1D4A0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		9C9608491712C16300E1D4A0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; usesTabs = 1; };
 		9C96084A1712C16300E1D4A0 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; usesTabs = 1; };
-		9C96084F1712C16400E1D4A0 /* MasterViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MasterViewController.h; sourceTree = "<group>"; usesTabs = 1; };
-		9C9608501712C16400E1D4A0 /* MasterViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MasterViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
-		9C9608521712C16400E1D4A0 /* DetailViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DetailViewController.h; sourceTree = "<group>"; usesTabs = 1; };
-		9C9608531712C16400E1D4A0 /* DetailViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = DetailViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
+		9C96084F1712C16400E1D4A0 /* ParametersViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ParametersViewController.h; sourceTree = "<group>"; usesTabs = 1; };
+		9C9608501712C16400E1D4A0 /* ParametersViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ParametersViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
+		9C9608521712C16400E1D4A0 /* ModelViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ModelViewController.h; sourceTree = "<group>"; usesTabs = 1; };
+		9C9608531712C16400E1D4A0 /* ModelViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ModelViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9C96085B1712C16400E1D4A0 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		9C9608721712C47200E1D4A0 /* EAGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLView.h; sourceTree = "<group>"; usesTabs = 1; };
 		9C9608731712C47200E1D4A0 /* EAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EAGLView.mm; sourceTree = "<group>"; usesTabs = 1; };
@@ -79,8 +79,8 @@
 		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
 		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
-		9CE18C1E17B27EDB009BA06E /* parameter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = parameter.h; sourceTree = "<group>"; usesTabs = 1; };
-		9CE18C1F17B27EDB009BA06E /* parameter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = parameter.mm; sourceTree = "<group>"; usesTabs = 1; };
+		9CE18C1E17B27EDB009BA06E /* Parameter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parameter.h; sourceTree = "<group>"; usesTabs = 1; };
+		9CE18C1F17B27EDB009BA06E /* Parameter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Parameter.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65517B0F39C00E5152F /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65617B0F39D00E5152F /* Utils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Utils.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65917B0FB9700E5152F /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
@@ -172,18 +172,18 @@
 				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE1A65517B0F39C00E5152F /* Utils.h */,
 				9CE1A65617B0F39D00E5152F /* Utils.mm */,
-				9CE18C1E17B27EDB009BA06E /* parameter.h */,
-				9CE18C1F17B27EDB009BA06E /* parameter.mm */,
+				9CE18C1E17B27EDB009BA06E /* Parameter.h */,
+				9CE18C1F17B27EDB009BA06E /* Parameter.mm */,
 				9CEAECC517A91CD20014D229 /* ModelListController.h */,
 				9CEAECC617A91CD20014D229 /* ModelListController.mm */,
 				9CEAE87B17AFD5BB00813524 /* SplitViewController.h */,
 				9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */,
-				9C96084F1712C16400E1D4A0 /* MasterViewController.h */,
-				9C9608501712C16400E1D4A0 /* MasterViewController.mm */,
-				9C9608521712C16400E1D4A0 /* DetailViewController.h */,
-				9C9608531712C16400E1D4A0 /* DetailViewController.mm */,
-				9C1C10F817BA5E7D00BFD483 /* PostProViewController.h */,
-				9C1C10F917BA5E7D00BFD483 /* PostProViewController.mm */,
+				9C96084F1712C16400E1D4A0 /* ParametersViewController.h */,
+				9C9608501712C16400E1D4A0 /* ParametersViewController.mm */,
+				9C9608521712C16400E1D4A0 /* ModelViewController.h */,
+				9C9608531712C16400E1D4A0 /* ModelViewController.mm */,
+				9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */,
+				9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */,
 				9CF34DE217C62FC500A3D5E3 /* PostProcessingViewController.h */,
 				9CF34DE317C62FC500A3D5E3 /* PostProcessingViewController.mm */,
 				9C9608721712C47200E1D4A0 /* EAGLView.h */,
@@ -273,8 +273,8 @@
 				9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */,
 				9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */,
 				9C96084B1712C16400E1D4A0 /* AppDelegate.mm in Sources */,
-				9C9608511712C16400E1D4A0 /* MasterViewController.mm in Sources */,
-				9C9608541712C16400E1D4A0 /* DetailViewController.mm in Sources */,
+				9C9608511712C16400E1D4A0 /* ParametersViewController.mm in Sources */,
+				9C9608541712C16400E1D4A0 /* ModelViewController.mm in Sources */,
 				9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */,
 				9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */,
 				9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */,
@@ -283,10 +283,10 @@
 				9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */,
 				9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */,
 				9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */,
-				9CE18C2017B27EDB009BA06E /* parameter.mm in Sources */,
+				9CE18C2017B27EDB009BA06E /* Parameter.mm in Sources */,
 				9CC6EBB717BA0A38001CA21A /* drawGeom.cpp in Sources */,
 				9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */,
-				9C1C10FA17BA5E7D00BFD483 /* PostProViewController.mm in Sources */,
+				9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */,
 				9CF34DE417C62FC500A3D5E3 /* PostProcessingViewController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

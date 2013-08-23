@@ -6,18 +6,18 @@
 //  Copyright (c) 2013 Maxime Graulich. All rights reserved.
 //
 
-#import "MasterViewController.h"
-#import "DetailViewController.h"
-#import "PostProViewController.h"
+#import "ParametersViewController.h"
+#import "ModelViewController.h"
+#import "OptionsViewController.h"
 #import "AppDelegate.h"
 #import "parameter.h"
 
-@interface MasterViewController () {
+@interface ParametersViewController () {
 
 }
 @end
 
-@implementation MasterViewController
+@implementation ParametersViewController
 
 - (void)awakeFromNib
 {
@@ -69,31 +69,30 @@
 
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
-	PostProViewController *postProViewController = [[PostProViewController alloc] init];
-	[postProViewController setPreviousViewController:self];
+	OptionsViewController *optionsViewController = [[OptionsViewController alloc] init];
 	//[self.navigationController setViewControllers:[[NSArray alloc] initWithObjects:postProViewController, nil] animated:NO];
-	[postProViewController.navigationItem setHidesBackButton:YES];
-	[self.navigationController pushViewController:postProViewController animated:YES];
+	[optionsViewController.navigationItem setHidesBackButton:YES];
+	[self.navigationController pushViewController:optionsViewController animated:YES];
 }
 - (void)addParameterNumber:(onelab::number)p atIndexPath:(NSIndexPath*)indexPath
 {
 	NSLog(@"Add %s at (%d,%d)", p.getName().c_str(), indexPath.section, indexPath.row);
 	NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
 	if(p.getChoices().size() && p.getChoices().size() == p.getValueLabels().size()) { // enumeration
-        parameterNumberList *param = [[parameterNumberList alloc] initWithNumber:p];
+        ParameterNumberList *param = [[ParameterNumberList alloc] initWithNumber:p];
         [section addObject:param];
     }
     else if(p.getChoices().size() == 2 && p.getChoices()[0] == 0 && p.getChoices()[1] == 1) { // check box
-        parameterNumberCheckbox *param = [[parameterNumberCheckbox alloc] initWithNumber:p];
+        ParameterNumberCheckbox *param = [[ParameterNumberCheckbox alloc] initWithNumber:p];
         [section addObject:param];
     }
     else if(p.getStep() == 0) { // text box
-        parameterNumberTextbox *param = [[parameterNumberTextbox alloc] initWithNumber:p];
+        ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
         [section addObject:param];
     }
     else
     {
-        parameterNumberRange *param = [[parameterNumberRange alloc] initWithNumber:p];
+        ParameterNumberRange *param = [[ParameterNumberRange alloc] initWithNumber:p];
         [section addObject:param];
     }
 	[self.tableView beginUpdates];
@@ -103,7 +102,7 @@
 - (void)addParameterString:(onelab::string)p atIndexPath:(NSIndexPath*)indexPath
 {
 	NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
-	parameterStringList *param = [[parameterStringList alloc] initWithString:p];
+	ParameterStringList *param = [[ParameterStringList alloc] initWithString:p];
     [section addObject:param];
 	[self.tableView beginUpdates];
 	[self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -149,7 +148,7 @@
 				NSMutableArray *section = [_sections objectAtIndex:iSection];
 				for(int iparameter = 0; iparameter<[section count]; iparameter++) {
 					if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
-						parameter * p = [section objectAtIndex: iparameter];
+						Parameter * p = [section objectAtIndex: iparameter];
 						[p refresh]; // just refresh the parameter
                         found = true;
                         break;
@@ -180,7 +179,7 @@
 				NSMutableArray *section = [_sections objectAtIndex:iSection];
 				for(int iparameter = 0; iparameter<[section count]; iparameter++) {
 					if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
-						parameter * p = [section objectAtIndex: iparameter];
+						Parameter * p = [section objectAtIndex: iparameter];
 						[p refresh]; // just refresh the parameter
                         found = true;
                         break;
@@ -279,7 +278,7 @@
 	if(indexPath.section >= _sections.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     NSMutableArray *sectionContent = [_sections objectAtIndex:[indexPath section]];
 	if(indexPath.row >= sectionContent.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-    parameter *tmp = [sectionContent objectAtIndex:[indexPath row]];
+    Parameter *tmp = [sectionContent objectAtIndex:[indexPath row]];
     
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if(cell == nil)
@@ -290,29 +289,29 @@
     [cell setUserInteractionEnabled:!([tmp isReadOnly])];
     [tmp setLabelFrame:CGRectMake(20, 5, cell.frame.size.width - 40, cell.frame.size.height/2)];
     [cell addSubview:[tmp getLabel]];
-    if([tmp isKindOfClass:[parameterStringList class]]) {
-        parameterStringList *param = (parameterStringList *)tmp;
+    if([tmp isKindOfClass:[ParameterStringList class]]) {
+        ParameterStringList *param = (ParameterStringList *)tmp;
         [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
         [cell addSubview:[param getList]];
     }
-    else if([tmp isKindOfClass:[parameterNumberList class]]) {
-        parameterNumberList *param = (parameterNumberList *)tmp;
+    else if([tmp isKindOfClass:[ParameterNumberList class]]) {
+        ParameterNumberList *param = (ParameterNumberList *)tmp;
         [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
         [cell addSubview:[param getList]];
     }
-    else if([tmp isKindOfClass:[parameterNumberCheckbox class]]) {
-        parameterNumberCheckbox *param = (parameterNumberCheckbox *)tmp;
+    else if([tmp isKindOfClass:[ParameterNumberCheckbox class]]) {
+        ParameterNumberCheckbox *param = (ParameterNumberCheckbox *)tmp;
         [param setLabelFrame:CGRectMake(100, 5, cell.frame.size.width - 110, cell.frame.size.height)];
         [param setFrame:CGRectMake(10, 5, cell.frame.size.width - 40, cell.frame.size.height)];
         [cell addSubview:[param getCheckbox]];
     }
-    else if([tmp isKindOfClass:[parameterNumberRange class]]) {
-        parameterNumberRange *param = (parameterNumberRange *)tmp;
+    else if([tmp isKindOfClass:[ParameterNumberRange class]]) {
+        ParameterNumberRange *param = (ParameterNumberRange *)tmp;
         [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, cell.frame.size.width - 40, cell.frame.size.height/2)];
         [cell addSubview:[param getSlider]];
     }
-    else if([tmp isKindOfClass:[parameterNumberTextbox class]]) {
-        parameterNumberTextbox *param = (parameterNumberTextbox *)tmp;
+    else if([tmp isKindOfClass:[ParameterNumberTextbox class]]) {
+        ParameterNumberTextbox *param = (ParameterNumberTextbox *)tmp;
         [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, cell.frame.size.width - 40, cell.frame.size.height/2)];
         [cell addSubview:[param getTextbox]];
     }
@@ -322,7 +321,7 @@
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    parameter *param = [[_sections objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+    Parameter *param = [[_sections objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
     return [[param class] getHeight];
 }
 

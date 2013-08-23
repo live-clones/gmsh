@@ -122,8 +122,8 @@
 {
     if ([[segue identifier] isEqualToString:@"showModelSegue"])
     {
-        DetailViewController *detailViewControler = [segue destinationViewController];
-        detailViewControler.initialModel = selectedModel;
+        ModelViewController *modelViewController = [segue destinationViewController];
+        modelViewController.initialModel = selectedModel;
     }
 }
 @end

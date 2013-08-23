@@ -8,12 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-#import "MasterViewController.h"
-#import "DetailViewController.h"
+#import "ParametersViewController.h"
+#import "ModelViewController.h"
 
 @interface SplitViewController : UISplitViewController{
-    DetailViewController *detailViewController;
-    MasterViewController *masterViewController;
+    ModelViewController *modelViewController;
+    ParametersViewController *parametersViewController;
 }
 
 @property (nonatomic, retain) NSString *initialModel;

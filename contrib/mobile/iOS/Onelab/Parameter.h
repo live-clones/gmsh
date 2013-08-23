@@ -11,7 +11,7 @@
 
 #import "drawContext.h"
 
-@interface parameter : NSObject
+@interface Parameter : NSObject
 {
     @protected
     NSString *name;
@@ -27,7 +27,7 @@
 -(void)refresh;
 @end
 
-@interface parameterStringList : parameter <UIPickerViewDataSource, UIPickerViewDelegate>
+@interface ParameterStringList : Parameter <UIPickerViewDataSource, UIPickerViewDelegate>
 {
     @protected
     UIPickerView *picker;
@@ -37,7 +37,7 @@
 @end
 
 
-@interface parameterNumberList : parameter <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
+@interface ParameterNumberList : Parameter <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
 {
     @protected
     UIPickerView *picker;
@@ -46,7 +46,7 @@
 -(UIPickerView *)getList;
 @end
 
-@interface parameterNumberCheckbox : parameter
+@interface ParameterNumberCheckbox : Parameter
 {
     @protected
     UISwitch *checkbox;
@@ -55,7 +55,7 @@
 -(UISwitch *)getCheckbox;
 @end
 
-@interface parameterNumberRange : parameter
+@interface ParameterNumberRange : Parameter
 {
     @protected
     UISlider *slider;
@@ -64,7 +64,7 @@
 -(UISlider *)getSlider;
 @end
 
-@interface parameterNumberTextbox : parameter <UITextFieldDelegate>
+@interface ParameterNumberTextbox : Parameter <UITextFieldDelegate>
 {
 @protected
     UITextField *textbox;
