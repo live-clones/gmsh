@@ -1157,9 +1157,15 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
 void MElement::writeINP(FILE *fp, int num)
 {
   setVolumePositive();
-  fprintf(fp, "%d", num);
-  for(int i = 0; i < getNumVertices(); i++)
-    fprintf(fp, ", %d", getVertexINP(i)->getIndex());
+  fprintf(fp, "%d, ", num);
+  int n = getNumVertices();
+  for(int i = 0; i < n; i++){
+    fprintf(fp, "%d", getVertexINP(i)->getIndex());
+    if(i != n - 1){
+      fprintf(fp, ", ");
+      if(i && !((i+2) % 16)) fprintf(fp, "\n");
+    }
+  }
   fprintf(fp, "\n");
 }
 
