@@ -34,11 +34,6 @@
 #include <fstream>
 #endif
 
-#if defined(__APPLE__)
-#define RUSAGE_SELF      0
-#define RUSAGE_CHILDREN -1
-#endif
-
 #include "GmshMessage.h"
 
 #if defined(WIN32) && !defined(__CYGWIN__)
