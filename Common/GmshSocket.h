@@ -205,7 +205,6 @@ class GmshSocket{
   {
     *swap = 0;
     if(_ReceiveData(type, sizeof(int)) > 0){
-      if(*type < 0) return 0;
       if(*type > 65535){
         // the data comes from a machine with different endianness and
         // we must swap the bytes
@@ -213,7 +212,6 @@ class GmshSocket{
         _SwapBytes((char*)type, sizeof(int), 1);
       }
       if(_ReceiveData(len, sizeof(int)) > 0){
-        if(*len < 0) return 0;
         if(*swap) _SwapBytes((char*)len, sizeof(int), 1);
         return 1;
       }
@@ -372,7 +370,7 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32) || defined(__CYGWIN__)
       if(tmpsock < 0)
 #else
-	if(tmpsock == (int)INVALID_SOCKET)
+      if(tmpsock == (int)INVALID_SOCKET)
 #endif
         throw "Couldn't create socket";
       // bind the socket to its name
