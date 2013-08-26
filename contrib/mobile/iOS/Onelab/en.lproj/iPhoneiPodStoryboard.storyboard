@@ -9,7 +9,7 @@
             <objects>
                 <tableViewController id="aNd-kg-MlN" customClass="ModelListController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="E1y-UA-Su2">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="20" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -38,10 +38,30 @@
             <objects>
                 <viewController storyboardIdentifier="ModelViewController" id="NyB-7w-cP0" customClass="ModelViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="zrj-Dd-WPc" customClass="EAGLView">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="20" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <button opaque="NO" alpha="0.75" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ljM-5L-gYy">
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="36" id="JPt-Jo-gk7"/>
+                                    <constraint firstAttribute="height" constant="20" id="L0B-yM-egf"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="12"/>
+                                <state key="normal" title="Run">
+                                    <color key="titleColor" red="0.19607843459999999" green="0.30980393290000002" blue="0.52156865600000002" alpha="1" colorSpace="calibratedRGB"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <state key="highlighted">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                            </button>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
+                        <constraints>
+                            <constraint firstItem="ljM-5L-gYy" firstAttribute="top" secondItem="zrj-Dd-WPc" secondAttribute="top" constant="20" symbolic="YES" type="default" id="1wx-mM-ycN"/>
+                            <constraint firstAttribute="trailing" secondItem="ljM-5L-gYy" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="Yxs-PL-axJ"/>
+                        </constraints>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="7R3-zZ-cpa" appends="YES" id="K8X-lL-YUb"/>
                             <outletCollection property="gestureRecognizers" destination="qCm-Ub-mO2" appends="YES" id="yww-Ed-CcX"/>
@@ -50,6 +70,7 @@
                     <navigationItem key="navigationItem" title="ONELAB" id="WX3-lU-bHf"/>
                     <connections>
                         <outlet property="glView" destination="zrj-Dd-WPc" id="sIP-YC-fg2"/>
+                        <outlet property="runStopButton" destination="ljM-5L-gYy" id="igr-iL-gpM"/>
                         <segue destination="0h7-h3-thM" kind="push" identifier="showSettingsSegue" id="cJz-7s-fgZ"/>
                     </connections>
                 </viewController>
@@ -71,7 +92,10 @@
         <scene sceneID="YFg-Co-Dc2">
             <objects>
                 <navigationController definesPresentationContext="YES" id="vAG-uz-hfU" sceneMemberID="viewController">
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="HV6-65-Zcg">
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="blackTranslucent"/>
+                    <nil key="simulatedBottomBarMetrics"/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="blackTranslucent" id="HV6-65-Zcg">
+                        <rect key="frame" x="0.0" y="0.0" width="0.0" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
@@ -87,7 +111,7 @@
             <objects>
                 <tableViewController id="0h7-h3-thM" customClass="ParametersViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="XKe-Ex-Vcl">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="20" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -122,7 +146,7 @@
             <objects>
                 <tableViewController id="tLo-wG-spu" customClass="OptionsViewController" sceneMemberID="viewController">
                     <tableView key="view" opaque="NO" clipsSubviews="YES" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="AUf-bU-fWv">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="20" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
@@ -155,7 +179,7 @@
             <objects>
                 <viewController storyboardIdentifier="PostProcessingViewController" id="pfu-w8-zq5" customClass="PostProcessingViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Lh8-gQ-vBl">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="20" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="PView Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="z3z-Xo-nQF">
@@ -237,6 +261,7 @@
                 <relationship kind="action" name="pinch:" candidateClass="UIPinchGestureRecognizer"/>
                 <relationship kind="action" name="tap:" candidateClass="UITapGestureRecognizer"/>
                 <relationship kind="outlet" name="detailDescriptionLabel" candidateClass="UILabel"/>
+                <relationship kind="outlet" name="runStopButton" candidateClass="UIButton"/>
             </relationships>
         </class>
         <class className="NSLayoutConstraint" superclassName="NSObject">
