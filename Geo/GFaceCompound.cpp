@@ -1969,7 +1969,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 
   //create new octree with new mesh elements
   if(!octNew){
-    printf("create new octrre \n");
+    //printf("create new octree \n");
     std::vector<MElement *> myElems;
     for (unsigned int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (unsigned int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
@@ -2005,7 +2005,7 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
-    printf("build bc kdtree \n");
+    //printf("build bc kdtree \n");
     int nbBCNodes  = myBCNodes.size();
     ANNpointArray uv_nodes = annAllocPts(nbBCNodes, 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
