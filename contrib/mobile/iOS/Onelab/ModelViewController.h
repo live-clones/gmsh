@@ -20,6 +20,7 @@
 
 @property (nonatomic, retain) EAGLView *glView;
 @property (strong, nonatomic) id detailItem;
+@property (weak, nonatomic) IBOutlet UIButton *runStopButton;
 
 @property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;
 

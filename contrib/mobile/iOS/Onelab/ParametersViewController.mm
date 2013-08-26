@@ -35,32 +35,21 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetParameters:) name:@"resetParameters" object:nil];
 
 	self.navigationItem.title = @"Model";
-
-    if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute){ // Only on iPhone/iPod
-        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Stop" style:UIBarButtonItemStyleBordered target:self action:@selector(stopRunning)];
-        [runButton setTitle:@"Stop"];
-        
-    }
-    else {
-        runButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(runWithNewParameter:)];
-        [runButton setTitle:@"Run"];
-    }
-	runButton.possibleTitles = [NSSet setWithObjects:@"Run", @"Stop", nil];
-	if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
-		self.navigationItem.leftBarButtonItem = runButton;
-	else
-		self.navigationItem.rightBarButtonItem = runButton;
     
     _sections = [[NSMutableArray alloc] init];
     _sectionstitle = [[NSMutableArray alloc] init];
 	
 	[self.navigationController setToolbarHidden:NO];
-	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model's Parmeters", @"Views Options", nil]];
+	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
 	control.segmentedControlStyle = UISegmentedControlStyleBar;
 	UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
 	self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];
 	[control addTarget:self action:@selector(indexDidChangeForSegmentedControl:) forControlEvents:UIControlEventValueChanged];
+	if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(backButtonPressed:)];
+    }
+	self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStyleBordered target:self action:@selector(resetParameters:)];
 }
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -69,11 +58,14 @@
 	[super viewWillAppear:animated];
 }
 
+-(void)backButtonPressed:(id)sender
+{
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
 	OptionsViewController *optionsViewController = [[OptionsViewController alloc] init];
-	//[self.navigationController setViewControllers:[[NSArray alloc] initWithObjects:postProViewController, nil] animated:NO];
-	[optionsViewController.navigationItem setHidesBackButton:YES];
 	[self.navigationController pushViewController:optionsViewController animated:YES];
 }
 - (void)addParameterNumber:(onelab::number)p atIndexPath:(NSIndexPath*)indexPath
@@ -218,6 +210,12 @@
 }
 - (void)resetParameters:(id)sender
 {
+	if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
+        UIAlertView *alert;
+        alert = [[UIAlertView alloc] initWithTitle:@"Can't reset model's parameters" message:@"The compute have to be finished before you can reset model's parameters." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+        [alert show];
+        return;
+    }
     onelab_cb("reset");
     [_sections removeAllObjects];
     [_sectionstitle removeAllObjects];
@@ -225,38 +223,6 @@
 	onelab_cb("check");
     [self refreshTableView];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
-}
-
-- (void)finishCompute
-{
-	[runButton setTitle:@"Run"];
-	[runButton setAction:@selector(runWithNewParameter:)];
-}
-
-- (void)runWithNewParameter:(UIBarButtonItem *)sender
-{
-    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-        appDelegate->compute = YES;
-        [sender setTitle:@"Stop"];
-		[sender setAction:@selector(stopRunning)];
-        self.navigationItem.rightBarButtonItem.enabled = NO;
-        onelab_cb("compute");
-        if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-			[self performSelectorOnMainThread:@selector(finishCompute) withObject:nil waitUntilDone:YES];
-            self.navigationItem.rightBarButtonItem.enabled = YES;
-        }
-        appDelegate->compute = NO;
-    });
-    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
-        [self.navigationController popViewControllerAnimated:YES];
-}
-
-- (void)stopRunning
-{
-    onelab_cb("stop");
-    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
-        [self.navigationController popViewControllerAnimated:YES];
 }
 
 #pragma mark - Table View

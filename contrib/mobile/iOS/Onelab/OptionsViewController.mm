@@ -9,6 +9,7 @@
 #import "OptionsViewController.h"
 #import "ParametersViewController.h"
 #import "PostProcessingViewController.h"
+#import "ModelViewController.h"
 
 #include <gmsh/Context.h>
 #include <gmsh/PView.h>
@@ -38,15 +39,17 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"refreshParameters" object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"resetParameters" object:nil];
 
-    self.navigationItem.title = @"Views Options";
+    self.navigationItem.title = @"Display";
 
     [self.navigationController setToolbarHidden:NO];
-	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model's Parmeters", @"Views Options", nil]];
+	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
 	control.segmentedControlStyle = UISegmentedControlStyleBar;
 	UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
 	self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];
 	[control addTarget:self action:@selector(indexDidChangeForSegmentedControl:) forControlEvents:UIControlEventValueChanged];
+    if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(backButtonPressed:)];
 }
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -54,9 +57,14 @@
     [super viewWillAppear:animated];
 }
 
+-(void)backButtonPressed:(id)sender
+{
+    for(UIViewController *v in [self.navigationController viewControllers])
+        if([v isKindOfClass:[ModelViewController class]]) [self.navigationController popToViewController:v animated:YES];
+}
+
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
-	//[self.navigationController setViewControllers:[[NSArray alloc] initWithObjects:_prevViewController, nil] animated:NO];
     [self.navigationController popViewControllerAnimated:YES];
 }
 

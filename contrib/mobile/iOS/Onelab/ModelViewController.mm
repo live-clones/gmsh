@@ -43,11 +43,21 @@
     }
 }
 
+-(void)viewWillAppear:(BOOL)animated
+{
+	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
+}
+
 -(void)viewDidAppear:(BOOL)animated
 {
-    if(self.initialModel != nil) [self.glView load:self.initialModel];
-	//[self.initialModel release];
-	self.initialModel = nil;
+	if(self.initialModel != nil){
+		UIAlertView* progressAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
+		[progressAlert show];
+		[self.glView load:self.initialModel];
+		//[self.initialModel release];
+		self.initialModel = nil;
+		[progressAlert dismissWithClickedButtonIndex:-1 animated:YES];
+	}
 }
 
 - (void)viewDidLoad
@@ -59,16 +69,48 @@
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Models list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
+		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
 		[self.navigationItem setRightBarButtonItem:model];
 	}
 	else
 	{
-        UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Settings" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
+        UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
         [self.navigationItem setRightBarButtonItem:settings];
     }
+	[_runStopButton addTarget:self action:@selector(compute) forControlEvents:UIControlEventTouchDown];
 }
 
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
+}
+
+- (void)compute
+{
+	[_runStopButton addTarget:self action:@selector(stop) forControlEvents:UIControlEventTouchDown];
+	[_runStopButton setTitle:@"Stop" forState:UIControlStateNormal];
+	dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+        appDelegate->compute = YES;
+        onelab_cb("compute");
+		[self performSelectorOnMainThread:@selector(didStopCompute:) withObject:nil waitUntilDone:YES];
+        appDelegate->compute = NO;
+    });
+}
+
+- (void)didStopCompute:(id)sender
+{
+	[self performSelectorOnMainThread:@selector(didStopCompute) withObject:nil waitUntilDone:NO];
+}
+- (void)didStopCompute
+{
+	[_runStopButton addTarget:self action:@selector(compute) forControlEvents:UIControlEventTouchDown];
+	[_runStopButton setTitle:@"Run" forState:UIControlStateNormal];
+}
+- (void)stop
+{
+	onelab_cb("stop");
+}
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
     if([sender numberOfTouches] > 2) return;
@@ -150,6 +192,7 @@
 - (void)viewDidUnload
 {
     [self setGlView:nil];
+	[self setRunStopButton:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
@@ -168,7 +211,7 @@
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
 {
-    barButtonItem.title = NSLocalizedString(@"Settings", @"Settings");
+    barButtonItem.title = NSLocalizedString(@"Parameters", @"Parameters");
 	[self.navigationItem setLeftBarButtonItem:barButtonItem];
     self.masterPopoverController = popoverController;
 }

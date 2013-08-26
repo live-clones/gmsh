@@ -666,7 +666,7 @@ int onelab_cb(std::string action)
 	} while(action == "compute" && (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") || onelabUtils::incrementLoop("1")));
     
 	locked = false;
-    
+
 	return redraw;
 }
 
