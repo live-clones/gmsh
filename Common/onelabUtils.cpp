@@ -147,6 +147,7 @@ namespace onelabUtils {
 
   bool incrementLoop(const std::string &level)
   {
+    const double eps = 1.e-15; // for roundoff
     // called at the end of the do{...} while(incrementLoops);
     bool recompute = false, loop = false;
     std::vector<onelab::number> numbers;
@@ -170,7 +171,7 @@ namespace onelabUtils {
 	  int j = numbers[i].getIndex() + 1;
 	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMax() != onelab::parameter::maxNumber() &&
-             val <= numbers[i].getMax()){
+             val <= numbers[i].getMax() * (1 + eps)){
             numbers[i].setValue(val);
 	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
@@ -185,7 +186,7 @@ namespace onelabUtils {
 	  int j = numbers[i].getIndex() + 1;
 	  double val = numbers[i].getValue() + numbers[i].getStep();
           if(numbers[i].getMin() != -onelab::parameter::maxNumber() &&
-             val >= numbers[i].getMin()){
+             val >= numbers[i].getMin() * (1 - eps)){
             numbers[i].setValue(val);
 	    numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
@@ -207,19 +208,19 @@ namespace onelabUtils {
 
   std::vector<double> getRange(onelab::number &p)
   {
+    const double eps = 1.e-15; // for roundoff
     std::vector<double> v;
-
     if(p.getChoices().size()){
       v = p.getChoices();
     }
     else if(p.getMin() != -onelab::parameter::maxNumber() &&
             p.getMax() != onelab::parameter::maxNumber()){
       if(p.getStep() > 0){
-        for(double d = p.getMin(); d <= p.getMax(); d += p.getStep())
+        for(double d = p.getMin(); d <= p.getMax() * (1 + eps); d += p.getStep())
           v.push_back(d);
       }
       else if(p.getStep() < 0){
-        for(double d = p.getMin(); d <= p.getMax(); d -= p.getStep())
+        for(double d = p.getMin(); d <= p.getMax() * (1 + eps); d -= p.getStep())
           v.push_back(d);
       }
     }
