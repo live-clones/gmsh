@@ -53,7 +53,7 @@ static bool locked = false;
 drawContext::drawContext()
 {
 	GmshInitialize();
-    GmshSetOption("General", "Terminal", 1.0);
+	GmshSetOption("General", "Terminal", 1.0);
 	onelabUtils::setFirstComputationFlag(false);
 	for(int i = 0; i < 3; i++){
 		_translate[i] = 0.;
@@ -565,14 +565,10 @@ void drawContext::drawView()
 	checkGlError("Draw axes");
 	this->drawPost();
 	checkGlError("Draw post-pro");
-	if(CTX::instance()->geom.draw){
-		this->drawGeom();
-		checkGlError("Draw geometry");
-	}
-	if(CTX::instance()->mesh.draw){
-		this->drawMesh();
-		checkGlError("Draw mesh");
-	}
+	this->drawGeom();
+	checkGlError("Draw geometry");
+	this->drawMesh();
+	checkGlError("Draw mesh");
 	this->drawScale();
 	checkGlError("Draw scales");
 }

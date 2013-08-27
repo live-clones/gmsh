@@ -58,11 +58,6 @@ public:
 	void drawPost();
 	void drawScale();
 	void useGradiant(bool gradiant=true) {_gradiant = gradiant;}
-	void showGeom(bool show=true) {CTX::instance()->geom.draw = show;}
-	void showMesh(bool show=true) {CTX::instance()->mesh.draw = show;}
-	void fillMesh(bool show=true) {_fillMesh = show;}
-	bool isShowedMesh(){return CTX::instance()->mesh.draw;}
-	bool isShowedGeom(){return CTX::instance()->geom.draw;}
 };
 
 #endif

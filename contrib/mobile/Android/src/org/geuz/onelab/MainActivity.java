@@ -8,11 +8,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -57,7 +57,8 @@ public class MainActivity extends Activity {
 	private ArrayList<String> errors;
 	private Dialog errorDialog;
 	private Gmsh gmsh;
-	private Button run, reset;
+	private Button reset;
+	private MenuItem runStopItem;
 	private UndragableViewPager pager;
 	private List<Parameter> params = new ArrayList<Parameter>();
 	private SeparatedListView paramListView;
@@ -66,9 +67,10 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	
-    	getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+       	getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+       	ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
     	errors = new ArrayList<String>();
     	LinearLayout layout = new LinearLayout(this);
     	loading = new ProgressDialog(this);
@@ -78,7 +80,7 @@ public class MainActivity extends Activity {
     	pager.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     	pager.setAdapter(new AdaptedPager());
     	pager.setOffscreenPageLimit(2);
-    	pager.setCurrentItem(0);
+    	pager.setCurrentItem(1);
     	layout.addView(pager);
     	dialogBuilder = new AlertDialog.Builder(this);
 
@@ -114,69 +116,62 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
-    	MenuItem listitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_list);
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT || screenInch() < 7)
-        {
-        	MenuItem paramitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_settings);
-        	paramitem.setIcon(R.drawable.ic_settings);
-        	paramitem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        }
-        MenuItem modelitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_model);
-        MenuItem postitem = menu.add(Menu.NONE, Menu.NONE, Menu.NONE, R.string.menu_postpro);
-        SubMenu viewitem = menu.addSubMenu(R.string.menu_view);
-        
-        
-        listitem.setIcon(R.drawable.ic_list);
-        modelitem.setIcon(R.drawable.ic_mesh);
-        listitem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        modelitem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        postitem.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-        
-        viewitem.add(R.string.menu_view_x);
-        viewitem.add(R.string.menu_view_y);
-        viewitem.add(R.string.menu_view_z);
-        viewitem.add(R.string.menu_view_scale);
-        viewitem.add(R.string.menu_view_translation);
+    	
+    	/*	Menu:
+    	 * 		< (Back to model list)
+    	 * 		Model (show the model, only on small screen)
+    	 * 		Parameters
+    	 * 			> Model (show the model's parameters)
+    	 * 			> Display (show display options)
+    	 * 		Run/Stop (Compute / stop)
+    	 */
+    	SubMenu parametersItems = menu.addSubMenu(R.string.menu_parameters);
+    	parametersItems.add(R.string.menu_parameters_model);
+    	parametersItems.add(R.string.menu_parameters_display);
+    	MenuItem parametersItem = parametersItems.getItem();
+    	parametersItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    	if(screenInch() < 7) {
+    		MenuItem modelItem = menu.add(R.string.menu_model);
+    		modelItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+    	}
+    	runStopItem = menu.add(R.string.menu_run);
+    	runStopItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-    	if(item.getTitle().equals(getString(R.string.menu_settings)))
+    	if(item.getTitle().equals(getString(R.string.menu_parameters_model))) {
     		pager.setCurrentItem(0, true);
-    	else if(item.getTitle().equals(getString(R.string.menu_list))) {
-    		if(this.compute)
+    		// TODO change fragment on pager 0
+    	}
+    	else if (item.getTitle().equals(getString(R.string.menu_parameters_display))) {
+    		pager.setCurrentItem(0, true);
+    		// TODO change fragment on pager 0
+    	}
+    	else if (item.getTitle().equals(getString(R.string.menu_model))) {
+    		pager.setCurrentItem(1, true);
+    	}
+    	else if(item.getTitle().equals(getString(R.string.menu_run))){
+    		pager.setCurrentItem(1, true);
+    		item.setTitle(R.string.menu_stop);
+    		if(compute) {
+    			loading.show();
+    		}
+    		else {
+    			new Run().execute();
+    			pager.setCurrentItem(1, true);
+    		}
+    	}
+    	else if(item.getTitle().equals(getString(R.string.menu_stop))){
+    		gmsh.onelabCB("stop");
+    	}
+		else if(item.getItemId() == android.R.id.home)
+		{
+			if(this.compute)
     			loading.show();
     		else
     			this.finish();
-    	}
-    	else if (item.getTitle().equals(getString(R.string.menu_model)))
-    		pager.setCurrentItem(1, true);
-    	else if(item.getTitle().equals(getString(R.string.menu_postpro))){
-    		dialogBuilder.setTitle("Post proccessing")
-    			.setView(postproView())
-				.setPositiveButton("Ok", null)
-				.show();
-    	}
-    	else if(item.getTitle().equals(getString(R.string.menu_view_x))){
-    		renderer.viewX();
-    		glView.requestRender();
-    	}
-		else if(item.getTitle().equals(getString(R.string.menu_view_y))){
-			renderer.viewY();
-			glView.requestRender();
 		}
-		else if(item.getTitle().equals(getString(R.string.menu_view_z))){
-			renderer.viewZ();
-			glView.requestRender();
-		}
-		/*else if(item.getTitle().equals(getString(R.string.menu_view_scale))){
-			glView.resetScale();
-			glView.requestRender();
-		}
-		else if(item.getTitle().equals(getString(R.string.menu_view_translation))){
-			renderer.translate(0, 0, 0);
-			glView.requestRender();
-		}*/ // TODO
     	return super.onMenuItemSelected(featureId, item);
     }
     
@@ -305,7 +300,7 @@ public class MainActivity extends Activity {
 		}
     }
     
-    private View postproView() {
+    /*private View postproView() {
     	ScrollView scroll = new ScrollView(this);
     	scroll.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
     	String[] PViews = gmsh.getPView();
@@ -412,26 +407,13 @@ public class MainActivity extends Activity {
     	}
     	scroll.addView(table);
     	return scroll;
-    }
+    }*/
     
     private View paramView(Context ctx) {
     	LinearLayout layout = new LinearLayout(this);
     	layout.setOrientation(LinearLayout.VERTICAL);
-    	run = new Button(ctx);
     	reset = new Button(ctx);
-    	run.setText("Run");
     	reset.setText("Reset");
-    	run.setOnClickListener(new OnClickListener() {
-    		public void onClick(View v) {
-	    		if(compute) {
-	    			loading.show();
-	    		}
-	    		else {
-	    			new Run().execute();
-	    			pager.setCurrentItem(1, true);
-	    		}
-    		}
-    	});
     	reset.setOnClickListener(new OnClickListener() {public void onClick(View v) {
     		if(gmsh.onelabCB("reset") == 1){
     			getAvailableParam();
@@ -439,33 +421,29 @@ public class MainActivity extends Activity {
 			}
 			pager.setCurrentItem(0, true);
 		}});
-    	LinearLayout onelabBtns = new LinearLayout(this);
-    	onelabBtns.setOrientation(LinearLayout.HORIZONTAL);
     	LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
     	lp.weight = 1;
-    	onelabBtns.addView(reset, lp);
-    	onelabBtns.addView(run, lp);
     	CheckBox showMesh = new CheckBox(ctx);
     	showMesh.setText("Show the mesh");
-    	showMesh.setChecked(gmsh.showMesh());
+    	showMesh.setChecked((gmsh.getDoubleOption("Mesh", "SurfaceEdges") > 0.));
     	showMesh.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				gmsh.showMesh(isChecked);
+				gmsh.setDoubleOption("Mesh", "SurfaceEdges", (isChecked)?1. : 0.);
 				glView.requestRender();
 			}
 		});
     	CheckBox showGeom = new CheckBox(ctx);
     	showGeom.setText("Show the geometry");
-    	showGeom.setChecked(gmsh.showGeom());
+    	showGeom.setChecked((gmsh.getDoubleOption("Geometry", "Lines") > 0.));
     	showGeom.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				gmsh.showGeom(isChecked);
+				gmsh.setDoubleOption("Geometry", "Lines", (isChecked)?1. : 0.);
 				glView.requestRender();
 			}
 		});
-    	paramListView = new SeparatedListView(ctx, new View[] {showMesh, showGeom, onelabBtns});
+    	paramListView = new SeparatedListView(ctx, new View[] {showMesh, showGeom, reset});
     	paramListView.setDividerHeight(0);
     	for(Parameter p : params)
     	{
@@ -491,12 +469,10 @@ public class MainActivity extends Activity {
     			
     			public void onClick(DialogInterface dialog, int which) {
     				gmsh.onelabCB("stop");
-    				run.setEnabled(false);
     			}
     		});
     		loading.setMessage("...");
     		loading.show();
-    		//run.setText("Show progress");
     		reset.setEnabled(false);
     		super.onPreExecute();
     	}
@@ -509,16 +485,12 @@ public class MainActivity extends Activity {
 
 		@Override
 		protected void onPostExecute(Integer[] result) {
-			Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-			if(!v.hasVibrator()) // TODO Do not commit this line !
-				v.vibrate(350);
+			//(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
+			runStopItem.setTitle(R.string.menu_run);
 			reset.setEnabled(true);
-			run.setEnabled(true);
-			//run.setText("Run"); // TODO this seems break the ViewPager
-			glView.requestRender();
-			super.onPostExecute(result);
 			loading.dismiss();
 			compute = false;
+			super.onPostExecute(result);
 		}
     	
     }

@@ -5,6 +5,7 @@
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
+#include <gmsh/Gmsh.h>
 #include <gmsh/GModel.h>
 #include <gmsh/onelab.h>
 #include <gmsh/onelabUtils.h>
@@ -149,22 +150,84 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_eventHandler
 {
 	((drawContext *)jptr)->eventHandler(jevent, jx, jy);
 }
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
-  (JNIEnv *env, jobject obj, jlong jptr, jstring jwhat, jboolean value)
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jstring v)
 {
-	const char*  what = env->GetStringUTFChars(jwhat, NULL);
-	if(strcmp(what, "mesh") == 0)
-		((drawContext *)jptr)->showMesh(value);
-	else if(strcmp(what, "geom") == 0)
-		((drawContext *)jptr)->showGeom(value);
+	const char* tmp;
+	tmp = env->GetStringUTFChars(v, NULL);
+	const std::string value(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(v, tmp);
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	std::string category(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(c, tmp);
+	GmshSetOption(category, name, value, 0);
 }
-JNIEXPORT jboolean JNICALL Java_org_geuz_onelab_Gmsh_isShow
-  (JNIEnv *env, jobject obj, jlong jptr, jstring jwhat)
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jdouble v)
 {
-	const char*  what = env->GetStringUTFChars(jwhat, NULL);
-	if(strcmp(what, "mesh") == 0) return ((drawContext *)jptr)->isShowedMesh();
-	else if(strcmp(what, "geom") == 0) return ((drawContext *)jptr)->isShowedGeom();
-	else return false;
+	const char* tmp;
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	const std::string category(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(c, tmp);
+	GmshSetOption(category, name, (double)v);
+}
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jint v)
+{
+	const char* tmp;
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	const std::string category(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(c, tmp);
+	GmshSetOption(category, name, (unsigned int)v);
+}
+JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getStringOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n)
+{
+	const char* tmp;
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	const std::string category(tmp, strlen(tmp));
+	std::string value;
+	GmshGetOption(category, name, value);
+	return env->NewStringUTF(value.c_str());
+	
+}
+JNIEXPORT jdouble JNICALL Java_org_geuz_onelab_Gmsh_getDoubleOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n)
+{
+	const char* tmp;
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	const std::string category(tmp, strlen(tmp));
+	double value;
+	GmshGetOption(category, name, value);
+	return value;
+}
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
+  (JNIEnv *env, jobject obj, jstring c, jstring n)
+{
+	const char* tmp;
+	tmp = env->GetStringUTFChars(n, NULL);
+	const std::string name(tmp, strlen(tmp));
+	env->ReleaseStringUTFChars(n, tmp);
+	tmp = env->GetStringUTFChars(c, NULL);
+	const std::string category(tmp, strlen(tmp));
+	unsigned int value;
+	GmshGetOption(category, name, value, 0);
+	return value;
 }
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
   (JNIEnv *env , jobject obj)

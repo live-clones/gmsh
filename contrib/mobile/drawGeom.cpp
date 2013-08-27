@@ -78,6 +78,8 @@ void drawGeomFace(GFace *f)
 }
 void drawContext::drawGeom()
 {
+	if(!CTX::instance()->geom.draw) return;
+
 	for(unsigned int i=0; i<GModel::list.size(); i++) {
 		GModel *m = GModel::list[i];
 		if(!m->getVisibility()) continue;

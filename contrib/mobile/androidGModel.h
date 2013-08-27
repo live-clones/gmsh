@@ -51,19 +51,51 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_eventHandler
 
 /*
  * Class:     org_geuz_onelab_Gmsh
- * Method:    setShow
- * Signature: (JLjava/lang/String;Z)V
+ * Method:    setStringOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setShow
-  (JNIEnv *, jobject, jlong, jstring, jboolean);
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
+  (JNIEnv *, jobject, jstring, jstring, jstring);
 
 /*
  * Class:     org_geuz_onelab_Gmsh
- * Method:    isShow
- * Signature: (JLjava/lang/String;)Z
+ * Method:    setDoubleOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;D)I
  */
-JNIEXPORT jboolean JNICALL Java_org_geuz_onelab_Gmsh_isShow
-  (JNIEnv *, jobject, jlong, jstring);
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
+  (JNIEnv *, jobject, jstring, jstring, jdouble);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    setIntegerOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;I)I
+ */
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
+  (JNIEnv *, jobject, jstring, jstring, jint);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    getStringOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getStringOption
+  (JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    getDoubleOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)D
+ */
+JNIEXPORT jdouble JNICALL Java_org_geuz_onelab_Gmsh_getDoubleOption
+  (JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    getIntegerOption
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
+  (JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     org_geuz_onelab_Gmsh

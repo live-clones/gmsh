@@ -18,11 +18,15 @@ public class Gmsh {
 	private native void initView(long ptr, int w, int h); // Called each time the GLView change
 	private native void drawView(long ptr); // Called each time the GLView request a render
 	private native void eventHandler(long ptr, int event, float x, float y);
-	private native void setShow(long ptr, String what, boolean show); // select what to show / hide
-	private native boolean isShow(long ptr, String what);
 	private native long getOnelabInstance(); // return the singleton of the onelab server
 	public native String[] getParams(); // return the parameters for onelab
 	public native int setParam(String type, String name, String value); // change a parameters
+	public native int setStringOption(String category, String name, String value);
+	public native int setDoubleOption(String category, String name, double value);
+	public native int setIntegerOption(String category, String name, int value);
+	public native String getStringOption(String category, String name);
+	public native double getDoubleOption(String category, String name);
+	public native int getIntegerOption(String category, String name);
 	public native String[] getPView(); // get a list of PViews
 	public native void setPView(int position, int intervalsType,int visible,int nbIso); // Change options for a PView
 	public native int onelabCB(String action); // Call onelab
@@ -76,22 +80,6 @@ public class Gmsh {
 	public void resetPosition()
 	{
 		this.eventHandler(ptr, 10, 0, 0);
-	}
-	public void showGeom(boolean show)
-	{
-		this.setShow(ptr, "geom", show);
-	}
-	public void showMesh(boolean show)
-	{
-		this.setShow(ptr, "mesh", show);
-	}
-	public boolean showMesh() 
-	{
-		return this.isShow(ptr, "mesh");
-	}
-	public boolean showGeom() 
-	{
-		return this.isShow(ptr, "geom");
 	}
 	public long getOnelab() {
 		return this.onelab;
