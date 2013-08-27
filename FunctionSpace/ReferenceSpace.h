@@ -13,10 +13,9 @@
    @interface ReferenceSpace
    @brief Base interface for all ReferenceSpace%s
 
-   This class represents the notion of Reference Space.@n
-   A Reference Space is the set of all the @em permutations
-   of the @em reference @em element of a @em particular
-   @em geometrical entity.@n
+   This class represents the notion of Reference Space.
+   A Reference Space is the set of all the permutations
+   of the reference element of a particular geometrical entity.
  */
 
 class ReferenceSpace{
@@ -32,6 +31,7 @@ class ReferenceSpace{
   size_t nVertex;
   std::vector<std::vector<size_t> > refEdgeNodeIdx;
   std::vector<std::vector<size_t> > refFaceNodeIdx;
+  std::vector<size_t>               parallelFaceId;
 
   // Permutation Tree //
   PermutationTree* pTree;
@@ -107,6 +107,9 @@ class ReferenceSpace{
   size_t findCorrespondingFace(std::vector<size_t>& face,
                                std::vector<size_t>& node);
 
+  static bool haveSameNode(std::vector<size_t> face0,
+                           std::vector<size_t> face1);
+
   static bool isFacePermutation(std::vector<size_t>& refNode,
                                 std::vector<size_t>& testNode);
 
@@ -115,9 +118,6 @@ class ReferenceSpace{
 
   std::vector<size_t> getReverseIndexPermutation(std::vector<size_t>& ref,
                                                  std::vector<size_t>& test);
-
-  static bool haveSameNode(std::vector<size_t> face0,
-                           std::vector<size_t> face1);
 
   size_t getPermutationIdx(const MElement& element) const;
 
@@ -148,8 +148,7 @@ class ReferenceSpace{
    **
 
    @fn ReferenceSpace::getNReferenceSpace
-   @returns Returns the number of permutation of this
-   ReferenceSpace
+   @returns Returns the number of permutation of this ReferenceSpace
    **
 
    @fn ReferenceSpace::getReferenceSpace
@@ -157,33 +156,29 @@ class ReferenceSpace{
    @returns Returns the a natural number defining
    the permutation of the given element
 
-   @note If no permutation is found (e.g. the given
-   element does not belong the @em same @em geometrical
+   If no permutation is found (e.g. the given
+   element does not belong the same geometrical
    entity as this ReferenceSpace) an Exception is thrown
    **
 
-   @fn ReferenceSpace::getAllEdge
-   @return Returns every Edge permutation of this ReferenceSpace
+   @fn ReferenceSpace::getEdgeNodeIndex
+   @return Returns every Edge Node Index permutation of this ReferenceSpace
 
-   @note
    @li The fisrt vector represents a particular permutation
    (see ReferenceSpace::getReferenceSpace())
-   @li The second vector represents a particular edge
-   (for a given permutation)
-   @li The last vector represents the Vertex @c IDs of
-   the given edge (in the @em geometrical reference space)
+   @li The second vector represents a particular edge (for a given permutation)
+   @li The last vector represents the Vertex IDs of
+   the given edge (in the geometrical reference space)
    **
 
-   @fn ReferenceSpace::getAllFace
-   @return Returns every Face permutation of this ReferenceSpace
+   @fn ReferenceSpace::getFaceNodeIndex
+   @return Returns every Face Node Index permutation of this ReferenceSpace
 
-   @note
    @li The fisrt vector represents a particular permutation
    (see ReferenceSpace::getReferenceSpace())
-   @li The second vector represents a particular face
-   (for a given permutation)
-   @li The last vector represents the Vertex @c IDs of
-   the given face (in the @em geometrical reference space)
+   @li The second vector represents a particular face (for a given permutation)
+   @li The last vector represents the Vertex IDs of
+   the given face (in the geometrical reference space)
    **
 
    @fn ReferenceSpace::toString
@@ -191,8 +186,7 @@ class ReferenceSpace{
    **
 
    @fn ReferenceSpace::toLatex
-   @return Returns a string (of a Latex file)
-   describing this ReferenceSpace
+   @return Returns a string (of a Latex file) describing this ReferenceSpace
  */
 
 //////////////////////

@@ -22,20 +22,20 @@
     @interface FunctionSpace
     @brief Common Interface of all Function Spaces
 
-    This is the @em common @em interface of
-    all Function Spaces.@n
+    This is the common interface of
+    all Function Spaces.
 
-    A FunctionSpace is defined on a @em support,
-    which is a collection of MElement%s (GroupOfElement).@n
+    A FunctionSpace is defined on a support,
+    which is a collection of MElement%s (GroupOfElement).
 
-    Those MElement%s @em must belong to the @em same Mesh.
+    Those MElement%s must belong to the same Mesh.
 
     A FunctionSpace is also responsible for the generation of all
-    the Dof%s and GroupOfDof%s related to its geometrical @em Support.
+    the Dof%s and GroupOfDof%s related to its geometrical Support.
 
     @todo
-    Allow Hybrid Mesh@n
-    Remove call to GroupOfElement:::orientAllElements()
+    Allow Hybrid Mesh
+    Remove call to GroupOfElement::orientAllElements()
 */
 
 class Mesh;
@@ -121,8 +121,8 @@ class FunctionSpace{
 
    @fn FunctionSpace::isScalar
    @return Returns:
-   @li @c true, if this FunstionSpace is scalar
-   @li @c flase, otherwise
+   @li true, if this FunstionSpace is scalar
+   @li flase, otherwise
    **
 
    @fn vector<Dof> FunctionSpace::getKeys(const MElement& element) const
@@ -146,20 +146,20 @@ class FunctionSpace{
    **
 
    @fn FunctionSpace::getAllDofs
-   @return Returns all the @em Dof%s associated to every Element%s
-   of this FunctionSpace @em support
+   @return Returns all the Dof%s associated to every Element%s
+   of this FunctionSpace support
    **
 
    @fn FunctionSpace::getAllGroups
-   @return Returns all the @em GroupOfDof%s associated to every Element%s
-   of this FunctionSpace @em support
+   @return Returns all the GroupOfDof%s associated to every Element%s
+   of this FunctionSpace support
    **
 
    @fn FunctionSpace::getGoDFromElement
    @param element An Element of the FunctionSpace Support
-   @return Returns the @em GroupOfDof%s associated to
-   the given @em Element
-   @note
+   @return Returns the GroupOfDof%s associated to
+   the given Element
+
    If the given Element is not in the FunctionSpace Support,
    an Exception is thrown
    **

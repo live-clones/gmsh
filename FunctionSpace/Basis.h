@@ -9,38 +9,37 @@
    @interface Basis
    @brief Common Interface of all Basis
 
-   This class is the @em common @em interface for all Basis.@n
+   This class is the common interface for all Basis.
 
-   A Basis is @em set of @em linearly @em independent Polynomial%s
-   (or Vector%s of Polynomial%s).@n
+   A Basis is set of linearly independent Polynomial%s
+   (or Vector%s of Polynomial%s).
 
-   @note
    The returned matrices are the result of the evaluation
-   of the basis functions (at @c N points).@n
+   of the basis functions (at N points).
 
-   The @c i-th row of these matrices is always refering to the
-   @c i-th function of the basis.@n
+   The i-th row of these matrices is always refering to the
+   i-th function of the basis.
 
    Depending on the nature of the returned value
-   (@em scalar or @em vector), the columns are organized
+   (scalar or vector), the columns are organized
    diferently.
 
-   For @em scalar values, we have:
-   @li The @c j-th column of the @c i-th row is
-   the evaluation of the @c i-th function at the @c j-th point
+   For scalar values, we have:
+   @li The j-th column of the i-th row is
+   the evaluation of the i-th function at the j-th point
 
-   For @em vectorial values, we have:
-   @li The @c j-th column of the @c i-th row is
-   the @em first @em coordinate of
-   the evaluation of the @c i-th function at the @c 3 @c x @c j-th point
+   For vectorial values, we have:
+   @li The j-th column of the i-th row is
+   the first coordinate of
+   the evaluation of the i-th function at the 3 x j-th point
 
-   @li The @c (@c j-th @c + @c 1 @c ) column of the @c i-th row is
-   the @em second @em coordinate of
-   the evaluation of the @c i-th function at the @c 3 @c x @c j-th point
+   @li The (j-th + 1) column of the i-th row is
+   the second coordinate of
+   the evaluation of the i-th function at the 3 x j-th point
 
-   @li The @c (@c j-th @c + @c 2 @c ) column of the @c i-th row is
-   the @em third @em coordinate of
-   the evaluation of the @c i-th function at the @c 3 @c x @c j-th point
+   @li The (j-th + 2) column of the i-th row is
+   the third coordinate of
+   the evaluation of the i-th function at the 3 x j-th point
  */
 
 class Basis{
@@ -134,32 +133,25 @@ class Basis{
 
    @fn Basis::isScalar
    @return Returns:
-   @li @c true, if this is a
-   @em scalar Basis
-   @li @c false, if this is a
-   @em vectorial Basis
+   @li true, if this is a scalar Basis
+   @li false, if this is a vectorial Basis
 
-   @note
-   Scalar basis are sets of
-   Polynomial%s@n
-   Vectorial basis are sets of
-   Vector%s of Polynomial%s
+   Scalar basis are sets of Polynomial%s, and
+   Vectorial basis are sets of Vector%s of Polynomial%s
    **
 
    @fn Basis::isLocal
    @return Returns:
-   @li @c true, if this is a
-   @em Local Basis
-   @li @c false, if this is a
-   @em Global Basis
+   @li true, if this is a Local Basis
+   @li false, if this is a Global Basis
    **
 
    @fn Basis::getOrder
-   @return Returns the @em polynomial @em order of the Basis
+   @return Returns the polynomial order of the Basis
    **
 
    @fn Basis::getType
-   @return Returns the @em type of the Basis:
+   @return Returns the type of the Basis:
    @li 0 for 0-form
    @li 1 for 1-form
    @li 2 for 2-form
@@ -167,118 +159,100 @@ class Basis{
    **
 
    @fn Basis::getDim
-   @return Returns the @em dimension
-   (@c 1D, @c 2D or @c 3D) of the Basis
+   @return Returns the dimension (1D, 2D or 3D) of the Basis
    **
 
    @fn Basis::getNVertexBased
-   @return Returns the number of @em Vertex
-   @em Based functions of this Basis
+   @return Returns the number of Vertex Based functions of this Basis
    **
 
    @fn Basis::getNEdgeBased
-   @return Returns the number of @em Edge
-   @em Based functions of this Basis
+   @return Returns the number of Edge Based functions of this Basis
    **
 
    @fn Basis::getNFaceBased
-   @return Returns the number of @em Face
-   @em Based functions of this Basis
+   @return Returns the number of Face Based functions of this Basis
    **
 
    @fn Basis::getNCellBased
-   @return Returns the number of @em Cell
-   @em Based functions of this Basis
+   @return Returns the number of Cell Based functions of this Basis
    **
 
    @fn Basis::getNFunction
    @return Returns the number of Polynomial%s
-   (or Vector%s of Polynomial%s) Functions
-   in this Basis
+   (or Vector%s of Polynomial%s) Functions in this Basis
    **
 
-   @fn Basis::getNOrientation
-   @return Returns the number of
-   @em orientation of this Basis
-   Reference Space
+   @fn Basis::getReferenceSpace
+   @return Returns the ReferenceSpace associated to this basis
    **
 
-   @fn Basis::getOrientation
+   @fn Basis::getFunctions(fullMatrix<double>&, const MElement&, double, double, double) const
+   @param retValues An allocated matrix
    @param element A MElement
-   @return Returns a number
-   (from 0 to Basis::getNOrientation() - 1)
-   charaterizing the @em orientation
-   of the given element
+   @param u A u coordinate in the reference space of this Basis
+   @param v A v coordinate in the reference space of this Basis
+   @param w A w coordinate in the reference space of this Basis
+   @return The given matrix is populated with the evaluation
+   of every basis function at the given coordinates,
+   and for the orientation of the given element
    **
 
-   @fn Basis::getFunctions(size_t, double, double, double) const
-   @param orientation A natural number defining the reference space @em orientation
-   @param u A @c u coordinate in the reference space of this Basis
-   @param v A @c v coordinate in the reference space of this Basis
-   @param w A @c w coordinate in the reference space of this Basis
-   @return Instanciates a new fullMatrix<double> with the @em evaluation
-   of every basis function at the given coordinates, and for the
-   given orientation
-
-   @warning
-   The Instanciated Matrix must be deleted by the @em calling function
-   **
-
-   @fn Basis::getFunctions(const MElement&, double, double, double) const
-   @param element A MElement
-   @param u A @c u coordinate in the reference space of this Basis
-   @param v A @c v coordinate in the reference space of this Basis
-   @param w A @c w coordinate in the reference space of this Basis
-   @return Same as Basis::getFunction(Basis::getOrientation(@c element),
-   @c u, @c u, @c w)
+   @fn Basis::getFunctions(fullMatrix<double>&, size_t, double, double, double) const
+   @param retValues An allocated matrix
+   @param orientation A integer
+   @param u A u coordinate in the reference space of this Basis
+   @param v A v coordinate in the reference space of this Basis
+   @param w A w coordinate in the reference space of this Basis
+   @return The given matrix is populated with the evaluation
+   of every basis function at the given coordinates,
+   and for the given orientation
    **
 
    @fn Basis::preEvaluateFunctions
    @param point A Matrix with points coordinate
-   (each line is a point and got 3 coordinates, @em i.e. 3 rows)
+   (each line is a point and got 3 coordinates, i.e. 3 rows)
    @return Pre Evaluates every basis function at the given points
    **
 
    @fn Basis::preEvaluateDerivatives
    @param point A Matrix with points coordinate
-   (each line is a point and got 3 coordinates, @em i.e. 3 rows)
-   @return Pre Evaluates every basis function @em derivative at the given points
+   (each line is a point and got 3 coordinates, i.e. 3 rows)
+   @return Pre Evaluates every basis function derivative at the given points
 
-   @note
-   @li For 0-Form it computes the @em gradient
-   @li For 1-Form it computes the @em curl
-   @li For 2-Form it computes the @em divergence
-   @li For 3-Form it computes the @em ???
-   @todo What is the derivative of a 3-Form
-   (does it exists -- discontinous field nope ?) ?
+   @li For 0-Form it computes the gradient
+   @li For 1-Form it computes the curl
+   @li For 2-Form it computes the divergence
    **
 
    @fn Basis::getPreEvaluatedFunctions(size_t) const
-   @param orientation A natural number defining the reference space @em orientation
+   @param orientation A natural number defining the reference space orientation
    @return Returns a Matrix with the PreEvaluated basis functions
-   (see Basis::preEvaluateFunctions()), with the given @em orientation
+   (see Basis::preEvaluateFunctions()), with the given orientation
 
-   @note
    If no PreEvaluation has been done before calling this function,
    an Exception is thrown
    **
 
    @fn Basis::getPreEvaluatedDerivatives(size_t) const
-   @param orientation A natural number defining the reference space @em orientation
-   @return Returns a Matrix with the PreEvaluated basis functions @em derivatives
-   (see Basis::preEvaluateDerivatives()), with the given @em orientation
+   @param orientation A natural number defining the reference space orientation
+   @return Returns a Matrix with the PreEvaluated basis functions derivatives
+   (see Basis::preEvaluateDerivatives()), with the given orientation
 
-   @note
    If no PreEvaluation of the gradient has been done before calling this function,
    an Exception is thrown
    **
 
    @fn Basis::getPreEvaluatedFunctions(const MElement&) const
-   @return Same as Basis::getPreEvaluatedFunctions(Basis::getOrientation(@c element))
+   @param element A MElement
+   @return Same as Basis::getPreEvaluatedFunctions,
+   but the orientation is computed with the given element
    **
 
    @fn Basis::getPreEvaluatedDerivatives(const MElement&) const
-   @return Same as Basis::getPreEvaluatedDerivatives(Basis::getOrientation(@c element))
+   @param element A MElement
+   @return Same as Basis::getPreEvaluatedFunctions,
+   but the orientation is computed with the given element
 */
 
 //////////////////////

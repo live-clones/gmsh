@@ -35,7 +35,7 @@ void ReferenceSpace::init(void){
                         listOfReverseNodeIndexPermutation);
 
   // Iterators //
-  list<size_t>::iterator refSpaceIt  = listOfTrueReferenceSpace.begin();
+  list<size_t>::iterator refSpaceIt = listOfTrueReferenceSpace.begin();
 
   // Reference Spaces Node Id //
   const size_t nRefSpace = listOfTrueReferenceSpace.size();
@@ -216,6 +216,27 @@ size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
     return -1;
 }
 
+bool ReferenceSpace::haveSameNode(vector<size_t> face0,
+                                  vector<size_t> face1){
+  // Check Sizes
+  const size_t size = face0.size();
+
+  if(size != face1.size())
+    return false;
+
+  // Sort both vectors
+  sort(face0.begin(), face0.end());
+  sort(face1.begin(), face1.end());
+
+  // Check if elements are the same and at same position
+  bool match = true;
+
+  for(size_t i = 0; i < size && match; i++)
+    match = (face0[i] == face1[i]);
+
+  return match;
+}
+
 bool ReferenceSpace::isFacePermutation(vector<size_t>& refNode,
                                        vector<size_t>& testNode){
   // Check Size
@@ -277,27 +298,6 @@ vector<size_t> ReferenceSpace::getReverseIndexPermutation(vector<size_t>& ref,
   }
 
   return idxVec;
-}
-
-bool ReferenceSpace::haveSameNode(vector<size_t> face0,
-                                  vector<size_t> face1){
-  // Check Sizes
-  const size_t size = face0.size();
-
-  if(size != face1.size())
-    return false;
-
-  // Sort both vectors
-  sort(face0.begin(), face0.end());
-  sort(face1.begin(), face1.end());
-
-  // Check if elements are the same and at same position
-  bool match = true;
-
-  for(size_t i = 0; i < size && match; i++)
-    match = (face0[i] == face1[i]);
-
-  return match;
 }
 
 void ReferenceSpace::getOrderedEdge(void){
@@ -740,6 +740,7 @@ string ReferenceSpace::toString(void) const{
     }
   }
 
+  //stream << endl << pTree->getNPermutation() << endl;
   stream << endl;
 
   return stream.str();

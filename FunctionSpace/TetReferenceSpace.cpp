@@ -29,6 +29,11 @@ TetReferenceSpace::TetReferenceSpace(void){
     refFaceNodeIdx[i][2] = MTetrahedron::faces_tetra(i, 2);
   }
 
+  parallelFaceId.resize(nFace);
+
+  for(size_t i = 0; i < nFace; i++)
+    parallelFaceId[i] = -1; // Face i has no parallel face
+
   // Init All //
   init();
 }

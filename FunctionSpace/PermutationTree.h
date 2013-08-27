@@ -6,6 +6,19 @@
 #include <list>
 #include <string>
 
+/**
+   @class PermutationTree
+   @brief A Permutation Tree
+
+   This class represents a permutation tree.
+   That is, given a sequence of length N,
+   this tree will hold all the possible permutations
+   of the N elements of the given sequence.
+
+   Every permuted sequence can be associated an ID and a tag.
+   By default all sequences are assigned the tag 0.
+ */
+
 class PermutationTree{
  private:
   // Tree node //
@@ -45,6 +58,8 @@ class PermutationTree{
   void   addTagToPermutation(size_t permutationId, size_t tag);
   size_t getTagFromPermutation(size_t permutationId);
 
+  //std::vector<size_t> getAllTags(void) const;
+
   std::string toString(void) const;
 
  private:
@@ -57,6 +72,57 @@ class PermutationTree{
                          const std::vector<size_t>& sequence,
                          size_t offset);
 };
+
+/**
+   @fn PermutationTree::PermutationTree
+   @param refSequence A vector of integers
+
+   Instanciates a new PermutationTree build on the given vector
+   **
+
+   @fn PermutationTree::~PermutationTree
+
+   Deletes this PermutationTree
+   **
+
+   @fn PermutationTree::getSequenceSize
+   @return Returns the size of the sequences
+   **
+
+   @fn PermutationTree::getNPermutation
+   @return Returns the number of permutation of the original sequence
+   (including the original sequence)
+   **
+
+   @fn PermutationTree::getPermutationId
+   @param sequence A sequence
+   @return Returns the ID of the given sequence
+   **
+
+   @fn PermutationTree::fillWithPermutation
+   @param permutationId A permuted sequence ID
+   @param vectorToFill An allocated vector of size
+   PermutationTree::getSequenceSize()
+
+   Populates the given vector with the permuted sequence of
+   the given ID
+   **
+
+   @fn PermutationTree::addTagToPermutation
+   @param permutationId A permuted sequence ID
+   @param tag An integer
+
+   Associates the given permutation with the given tag
+   **
+
+   @fn PermutationTree::getTagFromPermutation
+   @param permutationId A permuted sequence ID
+   @return Returns the tag of the given sequence
+   **
+
+   @fn PermutationTree::toString
+   @return Returns a string describing this PermutationTree
+ */
 
 //////////////////////
 // Inline Functions //

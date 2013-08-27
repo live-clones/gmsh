@@ -11,16 +11,13 @@
    @interface BasisLagrange
    @brief Interface for Lagrange Basis
 
-   This is an interface for Lagrange Basis.@n
+   This is an interface for Lagrange Basis.
 
-   These Local Scalar Basis allow a @em Coefficient Matrix,
-   and a Monomial Matrix, to be consulted.@n
+   These Local Scalar Basis allow a Coefficient Matrix,
+   and a Monomial Matrix, to be consulted.
 
    A vector from an Other Basis (set of Functions)
-   can also be projected into a Lagrange Basis.@n
-
-   @todo
-   Add a method to get lagrange Point in polynomialBasis
+   can also be projected into a Lagrange Basis.
 */
 
 class BasisLagrange: public BasisLocal{

@@ -225,7 +225,7 @@ BasisLagrange::getPreEvaluatedDerivatives(size_t orientation) const{
 
 vector<double> BasisLagrange::
 project(const MElement& element,
-        const vector<double>& coef,
+        const std::vector<double>& coef,
         const FunctionSpaceScalar& fSpace){
 
   // Init New Coefs //
@@ -264,7 +264,7 @@ project(const MElement& element,
 
 vector<fullVector<double> > BasisLagrange::
 project(const MElement& element,
-        const vector<double>& coef,
+        const std::vector<double>& coef,
         const FunctionSpaceVector& fSpace){
 
   // Init New Coefs //

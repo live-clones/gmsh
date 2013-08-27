@@ -16,6 +16,7 @@ LineReferenceSpace::LineReferenceSpace(void){
 
   // Face Definition //
   refFaceNodeIdx.clear(); // No Face in Line
+  parallelFaceId.clear(); // And no parallel Face
 
   init();
 }
