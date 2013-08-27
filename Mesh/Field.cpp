@@ -130,7 +130,8 @@ class StructuredField : public Field
   int n[3];
   double *data;
   bool error_status;
-  bool text_format;
+  bool text_format, outside_value_set;
+  double outside_value;
   std::string file_name;
  public:
   StructuredField()
@@ -142,6 +143,8 @@ class StructuredField : public Field
       (text_format, "True for ASCII input files, false for binary files (4 bite "
        "signed integers for n, double precision floating points for v, D and O)",
        &update_needed);
+    options["SetOutsideValue"] = new FieldOptionBool(outside_value_set, "True to use the \"OutsideValue\" option. If False, the last values of the grid are used.");
+    options["OutsideValue"] = new FieldOptionDouble(outside_value, "Value of the field outside the grid (only used if the \"SetOutsideValue\" option is true).");
     data = 0;
   }
   std::string getDescription()
@@ -221,6 +224,8 @@ class StructuredField : public Field
     for(int i = 0; i < 3; i++) {
       id[0][i] = (int)floor((xyz[i] - o[i]) / d[i]);
       id[1][i] = id[0][i] + 1;
+      if (outside_value_set && (id[0][i] < 0 || id[0][i] >= n[i] || id[1][i] < 0 || id[1][i] >= n[i]) ) 
+        return outside_value;
       id[0][i] = std::max(std::min(id[0][i], n[i] - 1), 0);
       id[1][i] = std::max(std::min(id[1][i], n[i] - 1), 0);
       xi[i] = (xyz[i] - (o[i] + id[0][i] * d[i])) / d[i];
