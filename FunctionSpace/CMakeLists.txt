@@ -14,7 +14,7 @@ set(SRC
   TriReferenceSpace.cpp
   QuadReferenceSpace.cpp
   TetReferenceSpace.cpp
-  HexReferenceSpace.cpp
+  #HexReferenceSpace.cpp
 
   ReferenceSpaceLagrange.cpp
   TriLagrangeReferenceSpace.cpp
