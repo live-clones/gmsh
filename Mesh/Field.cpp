@@ -224,7 +224,7 @@ class StructuredField : public Field
     for(int i = 0; i < 3; i++) {
       id[0][i] = (int)floor((xyz[i] - o[i]) / d[i]);
       id[1][i] = id[0][i] + 1;
-      if (outside_value_set && (id[0][i] < 0 || id[0][i] >= n[i] || id[1][i] < 0 || id[1][i] >= n[i]) ) 
+      if (outside_value_set && (id[0][i] < 0 || id[1][i] >= n[i]) && n[i] > 1) 
         return outside_value;
       id[0][i] = std::max(std::min(id[0][i], n[i] - 1), 0);
       id[1][i] = std::max(std::min(id[1][i], n[i] - 1), 0);
