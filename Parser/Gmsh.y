@@ -3944,6 +3944,10 @@ Constraints :
           yymsg(0, "Unknown surface %d", (int)$8);
       }
     }
+  | tPoint '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
+    {
+      Msg::Error("Point in Volume not implemented yet");
+    }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
       Msg::Error("Line in Volume not implemented yet");
