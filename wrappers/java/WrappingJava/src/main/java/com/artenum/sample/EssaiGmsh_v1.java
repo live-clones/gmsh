@@ -5,6 +5,7 @@ import org.geuz.gmsh.generated.EdgeVectorOfVector;
 import org.geuz.gmsh.generated.FaceVector;
 import org.geuz.gmsh.generated.FaceVectorOfVector;
 import org.geuz.gmsh.generated.GEdge;
+import org.geuz.gmsh.generated.GEntity;
 import org.geuz.gmsh.generated.GEntityVector;
 import org.geuz.gmsh.generated.GFace;
 import org.geuz.gmsh.generated.GModel;
@@ -23,9 +24,9 @@ import org.geuz.gmsh.generated.WrapGmsh;
 
 /**
  * This class is an example of use of Gmsh wrapping in Java.
- * 
+ *
  * @author benjamin jeanty-ruard
- * 
+ *
  */
 public class EssaiGmsh_v1 {
 
@@ -61,7 +62,7 @@ public class EssaiGmsh_v1 {
 
     /**
      * Shows methods used to access to different mesh elements.
-     * 
+     *
      * @param m
      *            is the GModel where the mesh is stored.
      */
@@ -204,7 +205,7 @@ public class EssaiGmsh_v1 {
 
     /**
      * This method export a geometry file, mesh it and export the generated mesh in gmsh file.
-     * 
+     *
      * @param m
      *            is the GModel where is stored the geometry and the mesh.
      */
@@ -221,7 +222,7 @@ public class EssaiGmsh_v1 {
 
     /**
      * Build a geometry and stores it in a GModel.
-     * 
+     *
      * @return a GModel which is a Gmsh object where is stored the geometry.
      */
     private static GModel buildGeometry() {
