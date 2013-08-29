@@ -42,7 +42,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
            it != g_slave->correspondingVertices.end(); it++){
 	MVertex *v1 = it->first;
 	MVertex *v2 = it->second;
-	fprintf(fp,"%d %d\n", v1->getNum(), v2->getNum());
+	fprintf(fp,"%d %d\n", v1->getIndex(), v2->getIndex());
       }
     }
   }
