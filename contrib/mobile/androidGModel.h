@@ -99,14 +99,6 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
 
 /*
  * Class:     org_geuz_onelab_Gmsh
- * Method:    getOnelabInstance
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
-  (JNIEnv *, jobject);
-
-/*
- * Class:     org_geuz_onelab_Gmsh
  * Method:    getParams
  * Signature: ()[Ljava/lang/String;
  */

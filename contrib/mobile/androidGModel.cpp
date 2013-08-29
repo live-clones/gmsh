@@ -17,7 +17,6 @@
 #include "androidGModel.h"
 #include "drawContext.h"
 
-onelab::server *getOnelab() {return onelab::server::instance();}
 extern "C"
 {
 static JavaVM *gJavaVM;
@@ -228,11 +227,6 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
 	unsigned int value;
 	GmshGetOption(category, name, value, 0);
 	return value;
-}
-JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_getOnelabInstance
-  (JNIEnv *env , jobject obj)
-{
-	return reinterpret_cast<jlong>(getOnelab());
 }
 
 JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams

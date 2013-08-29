@@ -1,8 +1,10 @@
 package org.geuz.onelab;
 
 import android.os.Handler;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class Gmsh {
+public class Gmsh implements Parcelable {
 	/** From C / C++ code **/
 	static {
 		System.loadLibrary("f2cblas");
@@ -18,7 +20,6 @@ public class Gmsh {
 	private native void initView(long ptr, int w, int h); // Called each time the GLView change
 	private native void drawView(long ptr); // Called each time the GLView request a render
 	private native void eventHandler(long ptr, int event, float x, float y);
-	private native long getOnelabInstance(); // return the singleton of the onelab server
 	public native String[] getParams(); // return the parameters for onelab
 	public native int setParam(String type, String name, String value); // change a parameters
 	public native int setStringOption(String category, String name, String value);
@@ -33,12 +34,10 @@ public class Gmsh {
 	
 	/** Java CLASS **/
 	private long ptr;
-	private long onelab;
 	private Handler handler;
 
 	public Gmsh(String name, Handler handler) {
 		ptr = this.init(name);
-		onelab = this.getOnelabInstance();
 		this.handler = handler;
 	}
 
@@ -81,19 +80,38 @@ public class Gmsh {
 	{
 		this.eventHandler(ptr, 10, 0, 0);
 	}
-	public long getOnelab() {
-		return this.onelab;
-	}
 	public void ShowPopup(String message) {
-		handler.obtainMessage(0, message).sendToTarget();
+		if(handler != null)
+			handler.obtainMessage(0, message).sendToTarget();
 	}
 	public void RequestRender() {
-		handler.obtainMessage(1).sendToTarget();
+		if(handler != null)
+			handler.obtainMessage(1).sendToTarget();
 	}
 	public void SetLoading(String message) {
-		handler.obtainMessage(2, message).sendToTarget();
+		if(handler != null)
+			handler.obtainMessage(2, message).sendToTarget();
 	}
 	public void SetLoading(int percent) {
-		handler.obtainMessage(3, percent, 100).sendToTarget();
+		if(handler != null)
+			handler.obtainMessage(3, percent, 100).sendToTarget();
 	}
+	// Parcelable methods/constructors
+	private Gmsh(Parcel in) {
+		this.ptr = in.readLong();
+	}
+	public int describeContents() {return 0;}
+	public void writeToParcel(Parcel out, int flags) {
+		out.writeLong(this.ptr);
+	}
+	public Parcelable.Creator<Gmsh> CREATOR = new Parcelable.Creator<Gmsh>() {
+
+		public Gmsh createFromParcel(Parcel source) {
+			return new Gmsh(source);
+		}
+
+		public Gmsh[] newArray(int size) {
+			return new Gmsh[size];
+		}
+	};
 }
