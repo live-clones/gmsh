@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,9 @@ public class SeparatedListView extends ListView{
 		adapter = new SeparatedListAdaptater();
 		this.setAdapter(adapter);
 	}
+	public SeparatedListView(Context context, AttributeSet attrs) {
+		this(context);
+	}
 	public SeparatedListView(Context context, View[] footer) {
 		super(context);
 		_context = context;
@@ -39,7 +43,9 @@ public class SeparatedListView extends ListView{
 		adapter.notifyDataSetChanged();
 		this.invalidateViews();
 	}
-	
+	public int itemsCountInSection(String header) {
+		return adapter.getCountForSection(header);
+	}
 	public void refresh()
 	{
 		adapter.notifyDataSetChanged();
@@ -102,7 +108,12 @@ public class SeparatedListView extends ListView{
 			for(Section s : sections) count += s.getItemsCount() + 1;
 			return count;
 		}
-
+		public int getCountForSection(String header) {
+			for(Section s : sections)
+				if(s.getName().equals(header))
+					return s.getItemsCount();
+			return 0;
+		}
 		//@Override
 		public Object getItem(int position) {
 			// UNUSED Auto-generated method stub

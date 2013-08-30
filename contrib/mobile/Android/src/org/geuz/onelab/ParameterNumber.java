@@ -2,6 +2,8 @@ package org.geuz.onelab;
 
 import java.util.ArrayList;
 
+import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
+
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -28,20 +30,20 @@ public class ParameterNumber extends Parameter{
 	private CheckBox _checkbox;
 	private EditText _edittext;
 	
-	public ParameterNumber(Context context, Gmsh gmsh, mGLSurfaceView glView, String name){
-		super(context, gmsh, glView, name);
+	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name){
+		super(context, gmsh, callback, name);
 	}
-	public ParameterNumber(Context context, Gmsh gmsh, mGLSurfaceView glView, String name,  double value, double min, double max, double step)
+	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name,  double value, double min, double max, double step)
 	{
-		this(context, gmsh, glView, name);
+		this(context, gmsh, callback, name);
 		_value = value;
 		_min = min;
 		_max = max;
 		_step = step;
 	}
-	public ParameterNumber(Context context, Gmsh gmsh, mGLSurfaceView glView, String name, boolean readOnly, double value, double min, double max, double step)
+	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name, boolean readOnly, double value, double min, double max, double step)
 	{
-		this(context, gmsh, glView, name, value, min, max, step);
+		this(context, gmsh, callback, name, value, min, max, step);
 		_readOnly = readOnly;
 	}
 	
@@ -185,8 +187,8 @@ public class ParameterNumber extends Parameter{
 					if(_listView != null) _listView.refresh();
 					setValue(_values.get(pos));
 					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
-					if(_gmsh.onelabCB("check") == 1 && _glView != null)
-						_glView.requestRender();
+					if(_gmsh.onelabCB("check") == 1 && _callback != null)
+						_callback.onRequestRender();
 				}
 
 			});
@@ -198,8 +200,8 @@ public class ParameterNumber extends Parameter{
 				
 				public void onStopTrackingTouch(SeekBar seekBar) {
 					_gmsh.setParam(getType(), getName(), String.valueOf(getValue())); // update parameter and the perform a check
-					if(_gmsh.onelabCB("check") == 1  && _glView != null)
-						_glView.requestRender();
+					if(_gmsh.onelabCB("check") == 1  && _callback != null)
+						_callback.onRequestRender();
 				}
 				
 				public void onStartTrackingTouch(SeekBar seekBar) {}

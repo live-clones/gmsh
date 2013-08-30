@@ -1,6 +1,8 @@
 package org.geuz.onelab;
 
 
+import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.widget.LinearLayout;
@@ -11,17 +13,17 @@ public class Parameter {
 	protected Context _context;
 	protected Gmsh _gmsh;
 	protected SeparatedListView _listView;
-	protected mGLSurfaceView _glView;
+	protected OnOptionRequestRender _callback;
 	protected String _name;
 	protected String _label;
 	protected boolean _readOnly;
 	protected boolean _changed;
 	protected TextView _title;
 
-	public Parameter(Context context, Gmsh gmsh, mGLSurfaceView glView, String name){
+	public Parameter(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name){
 		_context = context;
 		_gmsh = gmsh;
-		_glView = glView;
+		_callback = callback;
 		_readOnly = false;
 		_name = name;
 		_title = new TextView(context);
@@ -29,8 +31,8 @@ public class Parameter {
 		_title.setTextAppearance(context, android.R.style.TextAppearance_DeviceDefault_Medium);
 		_title.setTextColor(Color.DKGRAY);
 	}
-	public Parameter(Context context, Gmsh gmsh, mGLSurfaceView glView, String name, boolean readOnly){
-		this(context, gmsh, glView, name);
+	public Parameter(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name, boolean readOnly){
+		this(context, gmsh, callback, name);
 		_readOnly = readOnly;
 		_changed = false;
 	}

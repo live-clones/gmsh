@@ -2,6 +2,8 @@ package org.geuz.onelab;
 
 import java.util.ArrayList;
 
+import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
+
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,8 +25,8 @@ public class ParameterString extends Parameter{
 	private Spinner _spinner;
 	private EditText _edittext;
 	
-	public ParameterString(Context context, Gmsh gmsh, mGLSurfaceView glView, String name) {
-		super(context, gmsh, glView, name);
+	public ParameterString(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name) {
+		super(context, gmsh, callback, name);
 		_choices = new ArrayList<String>();
 		_choices.add("-"); // Default choice
 	}
@@ -109,8 +111,8 @@ public class ParameterString extends Parameter{
 						int pos, long id) {
 					setValue(pos);
 					_gmsh.setParam(getType(), getName(), String.valueOf(getValue()));
-					if(_gmsh.onelabCB("check") == 1 && _glView != null)
-						_glView.requestRender();
+					if(_gmsh.onelabCB("check") == 1 && _callback != null)
+						_callback.onRequestRender();
 					if(_listView != null) _listView.refresh();
 				}
 
