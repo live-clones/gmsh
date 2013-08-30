@@ -39,11 +39,15 @@ public class OptionsFragment extends Fragment{
 		_optionModelFragment = OptionsModelFragment.newInstance(_gmsh);
 		getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionModelFragment).commit();
 		_optionDisplayFragment = OptionsDisplayFragment.newInstance(_gmsh);
-		Button optionModel = (Button) rootView.findViewById(R.id.goto_options_model);
-		Button optionDisplay = (Button) rootView.findViewById(R.id.goto_options_display);
+		final Button optionModel = (Button) rootView.findViewById(R.id.goto_options_model);
+		final Button optionDisplay = (Button) rootView.findViewById(R.id.goto_options_display);
+		optionDisplay.setEnabled(true);
+		optionModel.setEnabled(false);
 		optionModel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
+				optionModel.setEnabled(false);
+				optionDisplay.setEnabled(true);
 				FragmentTransaction ft = getFragmentManager().beginTransaction();
 	            ft.replace(R.id.options_fragment, _optionModelFragment);
 	            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
@@ -53,6 +57,8 @@ public class OptionsFragment extends Fragment{
 		optionDisplay.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
+				optionDisplay.setEnabled(false);
+				optionModel.setEnabled(true);
 				FragmentTransaction ft = getFragmentManager().beginTransaction();
 	            ft.replace(R.id.options_fragment, _optionDisplayFragment);
 	            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
@@ -63,7 +69,7 @@ public class OptionsFragment extends Fragment{
 	}
 	
 	public void refresh() {
-		_optionDisplayFragment.refresh();
-		_optionModelFragment.refresh();
+		if(_optionDisplayFragment != null)_optionDisplayFragment.refresh();
+		if(_optionModelFragment != null)_optionModelFragment.refresh();
 	}
 }

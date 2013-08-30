@@ -168,7 +168,6 @@ void drawContext::buildRotationMatrix()
 
 void drawContext::OrthofFromGModel()
 {
-	if(locked) return;
 	SBoundingBox3d bb = GModel::current()->bounds();
 	double ratio = (double)(this->_width ? this->_width : 1.) / (double)(this->_height ? this->_height : 1.);
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;

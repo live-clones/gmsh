@@ -1,7 +1,12 @@
 package org.geuz.onelab;
 
+import java.util.ArrayList;
+
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -22,6 +27,8 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 	private MenuItem _runStopMenuItem, _switchFragmentMenuItem;
 	private ModelFragment _modelFragment;
 	private OptionsFragment _optionsFragment;
+	private ArrayList<String> _errors = new ArrayList<String>();
+	private Dialog _errorDialog;
 
 	public MainActivity() {
 	}
@@ -105,8 +112,18 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     	}
 		else if(item.getItemId() == android.R.id.home)
 		{
-			if(this._compute)
-    			;//TODO loading.show();
+			if(this._compute) {
+				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+    			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
+    			.setMessage("The compute have to be finished before you can select an other model.")
+    			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				})
+    			.show();
+    		}
     		else
     			this.finish();
 		}
@@ -140,7 +157,7 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     	
 		@Override
 		protected Integer[] doInBackground(Void... params) {
-				_gmsh.onelabCB("compute");
+			_gmsh.onelabCB("compute");
 			return new Integer[] {1};
 		}
 
@@ -148,7 +165,6 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 		protected void onPostExecute(Integer[] result) {
 			//(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
 			_runStopMenuItem.setTitle(R.string.menu_run);
-			//reset.setEnabled(true);
 			//loading.dismiss();
 			_compute = false;
 			super.onPostExecute(result);
@@ -158,13 +174,35 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 	public void onRequestRender() {
 		_modelFragment.requestRender();
 	}
+	private void showError(){
+    	if(_errors.size()>0){
+    		if(_errorDialog != null && _errorDialog.isShowing()) _errorDialog.dismiss();
+    		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+    		_errorDialog = dialogBuilder.setTitle("Gmsh/GetDP Error(s)")
+		    .setMessage(_errors.get(_errors.size()-1))
+		    .setNegativeButton("Stop", new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) {
+		        	_errors.clear();
+		        	_errorDialog.dismiss();
+		        }
+		     })
+		    .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) {
+		        	_errors.remove(_errors.size()-1);
+		        	_errorDialog.dismiss();
+		            showError();
+		        }
+		     })
+		     .show();
+    	}
+    }
 	private final Handler mainHandler = new Handler(){
     	public void handleMessage(android.os.Message msg) {
     		switch (msg.what) {
 			case 0: // we get a message from gmsh library
-				//String message =(String) msg.obj;
-				//errors.add(message);
-				//showError();
+				String message =(String) msg.obj;
+				_errors.add(message);
+				showError();
 				break;
 			case 1: // request render from gmsh library
 				if(_modelFragment != null) _modelFragment.requestRender();
