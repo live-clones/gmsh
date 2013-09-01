@@ -1300,8 +1300,12 @@ static void ColorVolume(int iv, unsigned int col)
   v->Color.mesh = v->Color.geom = col;
 }
 
-void ColorShape(int Type, int Num, unsigned int Color)
+void ColorShape(int Type, int Num, unsigned int Color, bool Recursive)
 {
+  Curve *c;
+  Surface *s;
+  Volume *V;
+
   switch (Type) {
   case MSH_POINT:
     break;
@@ -1315,24 +1319,24 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_DISCRETE:
-    ColorCurve(Num, Color);
+    if((c = FindCurve(abs(Num)))) c->SetColor(Color, Recursive);
     break;
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_DISCRETE:
-    ColorSurface(Num, Color);
+    if((s = FindSurface(abs(Num)))) s->SetColor(Color, Recursive);
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
-    ColorVolume(Num, Color);
+    if((V = FindVolume(abs(Num)))) V->SetColor(Color, Recursive);
     break;
   default:
     break;
   }
 }
 
-void VisibilityShape(int Type, int Num, int Mode)
+void VisibilityShape(int Type, int Num, int Mode, bool Recursive)
 {
   Vertex *v;
   Curve *c;
@@ -1343,9 +1347,9 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_POINT:
   case MSH_POINT_FROM_GMODEL:
     {
-      if((v = FindPoint(abs(Num)))) v->Visible = Mode;
+      if((v = FindPoint(abs(Num)))) v->SetVisible(Mode, Recursive);
       GVertex *gv = GModel::current()->getVertexByTag(abs(Num));
-      if(gv) gv->setVisibility(Mode);
+      if(gv) gv->setVisibility(Mode, Recursive);
     }
     break;
   case MSH_SEGM_LINE:
@@ -1361,9 +1365,9 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SEGM_COMPOUND:
   case MSH_SEGM_FROM_GMODEL:
     {
-      if((c = FindCurve(abs(Num)))) c->Visible = Mode;
+      if((c = FindCurve(abs(Num)))) c->SetVisible(Mode, Recursive);
       GEdge *ge = GModel::current()->getEdgeByTag(abs(Num));
-      if(ge) ge->setVisibility(Mode);
+      if(ge) ge->setVisibility(Mode, Recursive);
     }
     break;
   case MSH_SURF_TRIC:
@@ -1373,9 +1377,9 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_SURF_COMPOUND:
   case MSH_SURF_FROM_GMODEL:
     {
-      if((s = FindSurface(abs(Num)))) s->Visible = Mode;
+      if((s = FindSurface(abs(Num)))) s->SetVisible(Mode, Recursive);
       GFace *gf = GModel::current()->getFaceByTag(abs(Num));
-      if(gf) gf->setVisibility(Mode);
+      if(gf) gf->setVisibility(Mode, Recursive);
     }
     break;
   case MSH_VOLUME:
@@ -1383,9 +1387,9 @@ void VisibilityShape(int Type, int Num, int Mode)
   case MSH_VOLUME_COMPOUND:
   case MSH_VOLUME_FROM_GMODEL:
     {
-      if((V = FindVolume(abs(Num)))) V->Visible = Mode;
+      if((V = FindVolume(abs(Num)))) V->SetVisible(Mode, Recursive);
       GRegion *gr = GModel::current()->getRegionByTag(abs(Num));
-      if(gr) gr->setVisibility(Mode);
+      if(gr) gr->setVisibility(Mode, Recursive);
     }
     break;
   default:
@@ -1399,7 +1403,7 @@ static void vis_cur(void *a, void *b){ (*(Curve **)a)->Visible = vmode; }
 static void vis_sur(void *a, void *b){ (*(Surface **)a)->Visible = vmode; }
 static void vis_vol(void *a, void *b){ (*(Volume **)a)->Visible = vmode; }
 
-void VisibilityShape(char *str, int Type, int Mode)
+void VisibilityShape(char *str, int Type, int Mode, bool Recursive)
 {
   vmode = Mode;
 
@@ -1432,7 +1436,7 @@ void VisibilityShape(char *str, int Type, int Mode)
     }
   }
   else {
-    VisibilityShape(Type, atoi(str), Mode);
+    VisibilityShape(Type, atoi(str), Mode, Recursive);
   }
 }
 

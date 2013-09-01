@@ -192,6 +192,7 @@ Quad[tT]ri[sS]ngl       return tQuadTriSngl;
 
 Recombine               return tRecombine;
 Recomb[lL]aterals       return tRecombLaterals;
+Recursive               return tRecursive;
 Rotate                  return tRotate;
 Ruled                   return tRuled;
 Rand                    return tRand;

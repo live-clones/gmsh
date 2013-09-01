@@ -2231,7 +2231,7 @@ example, if a point is used as a control point of a curve),
 @code{Delete} has no effect (the line will have to be deleted before the
 point can).
 
-@item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Hide the entities listed in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
@@ -2240,7 +2240,7 @@ Hide the entity @var{char-expression}, if @code{General.VisibilityMode} is
 set to @code{0} or @code{1} (@var{char-expression} can for example be
 @code{"*"}).
 
-@item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Show the entities listed in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
@@ -2716,10 +2716,10 @@ right-hand side (master, with boundary edges specified between braces).
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
 
-@item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 
-@item Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Hides the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
@@ -2746,7 +2746,7 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file.
 
-@item Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 

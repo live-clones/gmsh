@@ -95,6 +95,10 @@ class Vertex {
                   -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
                   Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
   }
+  void SetVisible(int value, bool recursive)
+  {
+    Visible = value;
+  }
 };
 
 class DrawingColor{
@@ -133,6 +137,24 @@ class Curve{
   gmshSurface *geometry;
   std::vector<int> compound;
   int ReverseMesh;
+  void SetVisible(int value, bool recursive)
+  {
+    Visible = value;
+    if(recursive){
+      if(beg) beg->SetVisible(value, recursive);
+      if(end) end->SetVisible(value, recursive);
+      for(int i = 0; i < List_Nbr(Control_Points); i++){
+        Vertex *pV;
+        List_Read(Control_Points, i, &pV);
+        pV->SetVisible(value, recursive);
+      }
+    }
+  }
+  void SetColor(unsigned int value, bool recursive)
+  {
+    Color.type = 1;
+    Color.geom = Color.mesh = value;
+  }
 };
 
 class EdgeLoop{
@@ -169,6 +191,29 @@ class Surface{
   std::map<int,int> edgeCounterparts;
   std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
+  void SetVisible(int value, bool recursive)
+  {
+    Visible = value;
+    if(recursive){
+      for(int i = 0; i < List_Nbr(Generatrices); i++){
+        Curve *pC;
+        List_Read(Generatrices, i, &pC);
+        pC->SetVisible(value, recursive);
+      }
+    }
+  }
+  void SetColor(unsigned int value, bool recursive)
+  {
+    Color.type = 1;
+    Color.geom = Color.mesh = value;
+    if(recursive){
+      for(int i = 0; i < List_Nbr(Generatrices); i++){
+        Curve *pC;
+        List_Read(Generatrices, i, &pC);
+        pC->SetColor(value, recursive);
+      }
+    }
+  }
 };
 
 class SurfaceLoop{
@@ -193,6 +238,29 @@ class Volume {
   List_T *EmbeddedSurfaces;
   DrawingColor Color;
   std::vector<int> compound;
+  void SetVisible(int value, bool recursive)
+  {
+    Visible = value;
+    if(recursive){
+      for(int i = 0; i < List_Nbr(Surfaces); i++){
+        Surface *pS;
+        List_Read(Surfaces, i, &pS);
+        pS->SetVisible(value, recursive);
+      }
+    }
+  }
+  void SetColor(unsigned int value, bool recursive)
+  {
+    Color.type = 1;
+    Color.geom = Color.mesh = value;
+    if(recursive){
+      for(int i = 0; i < List_Nbr(Surfaces); i++){
+        Surface *pS;
+        List_Read(Surfaces, i, &pS);
+        pS->SetColor(value, recursive);
+      }
+    }
+  }
 };
 
 class PhysicalGroup{
@@ -287,9 +355,9 @@ void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
 void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
-void ColorShape(int Type, int Num, unsigned int Color);
-void VisibilityShape(int Type, int Num, int Mode);
-void VisibilityShape(char *str, int Type, int Mode);
+void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
+void VisibilityShape(int Type, int Num, int Mode, bool Recursive);
+void VisibilityShape(char *str, int Type, int Mode, bool Recursive);
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
                   double T0, double T1, double T2,
                   double A0, double A1, double A2,

@@ -116,7 +116,7 @@ struct doubleXstring{
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
-%token tUsing tPlugin tDegenerated
+%token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
@@ -2627,9 +2627,18 @@ Colorify :
       for(int i = 0; i < List_Nbr($4); i++){
 	Shape TheShape;
 	List_Read($4, i, &TheShape);
-	ColorShape(TheShape.Type, TheShape.Num, $2);
+	ColorShape(TheShape.Type, TheShape.Num, $2, false);
       }
       List_Delete($4);
+    }
+  | tRecursive tColor ColorExpr '{' ListOfShapes '}'
+    {
+      for(int i = 0; i < List_Nbr($5); i++){
+	Shape TheShape;
+	List_Read($5, i, &TheShape);
+	ColorShape(TheShape.Type, TheShape.Num, $3, true);
+      }
+      List_Delete($5);
     }
 ;
 
@@ -2639,13 +2648,13 @@ Visibility :
     tShow tBIGSTR tEND
     {
       for(int i = 0; i < 4; i++)
-	VisibilityShape($2, i, 1);
+	VisibilityShape($2, i, 1, false);
       Free($2);
     }
   | tHide tBIGSTR tEND
     {
       for(int i = 0; i < 4; i++)
-	VisibilityShape($2, i, 0);
+	VisibilityShape($2, i, 0, false);
       Free($2);
     }
   | tShow '{' ListOfShapes '}'
@@ -2653,18 +2662,36 @@ Visibility :
       for(int i = 0; i < List_Nbr($3); i++){
 	Shape TheShape;
 	List_Read($3, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 1);
+	VisibilityShape(TheShape.Type, TheShape.Num, 1, false);
       }
       List_Delete($3);
+    }
+  | tRecursive tShow '{' ListOfShapes '}'
+    {
+      for(int i = 0; i < List_Nbr($4); i++){
+	Shape TheShape;
+	List_Read($4, i, &TheShape);
+	VisibilityShape(TheShape.Type, TheShape.Num, 1, true);
+      }
+      List_Delete($4);
     }
   | tHide '{' ListOfShapes '}'
     {
       for(int i = 0; i < List_Nbr($3); i++){
 	Shape TheShape;
 	List_Read($3, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 0);
+	VisibilityShape(TheShape.Type, TheShape.Num, 0, false);
       }
       List_Delete($3);
+    }
+  | tRecursive tHide '{' ListOfShapes '}'
+    {
+      for(int i = 0; i < List_Nbr($4); i++){
+	Shape TheShape;
+	List_Read($4, i, &TheShape);
+	VisibilityShape(TheShape.Type, TheShape.Num, 0, true);
+      }
+      List_Delete($4);
     }
 ;
 
