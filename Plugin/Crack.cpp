@@ -17,6 +17,7 @@
 StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "Dimension", NULL, 1.},
   {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
+  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
 };
 
 extern "C"
@@ -33,9 +34,14 @@ std::string GMSH_CrackPlugin::getHelp() const
     "group `PhysicalGroup' of dimension `Dimension' (1 or 2). "
     "The plugin duplicates the vertices and the elements on "
     "the crack and stores them in a new discrete curve "
-    "(Dimension = 1) or surface (Dimension = 2). The "
+    "(`Dimension' = 1) or surface (`Dimension' = 2). The "
     "elements touching the crack on the negative side "
-    "are modified to use the newly generated vertices.";
+    "are modified to use the newly generated vertices."
+    "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
+    "vertices are duplicated and the crack will be left "
+    "open on that (part of the) boundary. Otherwise, the "
+    "lips of the crack are sealed, i.e., its vertices are "
+    "not duplicated.";
 }
 
 int GMSH_CrackPlugin::getNbOptions() const
@@ -69,6 +75,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 {
   int dim = (int)CrackOptions_Number[0].def;
   int physical = (int)CrackOptions_Number[1].def;
+  int open = (int)CrackOptions_Number[2].def;
 
   if(dim != 1 && dim != 2){
     Msg::Error("Crack dimension should be 1 or 2");
@@ -85,13 +92,23 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     return view;
   }
 
+  std::vector<GEntity*> openEntities;
+  if(open > 0){
+    openEntities = groups[dim - 1][open];
+    if(openEntities.empty()){
+      Msg::Error("Open boundary physical group %d (dimension %d) is empty",
+                 open, dim - 1);
+      return view;
+    }
+  }
+
   // get crack elements
   std::vector<MElement*> crackElements;
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
-  // get internal crack vertices
+  // get internal crack vertices and boundary vertices
   std::set<MVertex*> crackVertices, bndVertices;
   if(dim == 1){
     for(unsigned int i = 0; i < crackElements.size(); i++){
@@ -125,6 +142,18 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::set<EdgeData, Less_EdgeData>::iterator it = bnd.begin(); it != bnd.end(); it++)
       bndVertices.insert(it->data.begin(), it->data.end());
   }
+
+  // get (forced) open boundary vertices and remove them from boundary vertices
+  for(unsigned int i = 0; i < openEntities.size(); i++){
+    for(unsigned int j = 0; j < openEntities[i]->getNumMeshElements(); j++){
+      MElement *e = openEntities[i]->getMeshElement(j);
+      for(int k = 0; k < e->getNumVertices(); k++){
+        MVertex *v = e->getVertex(k);
+        bndVertices.erase(v);
+      }
+    }
+  }
+
   for(std::set<MVertex*>::iterator it = bndVertices.begin();
       it != bndVertices.end(); it++)
     crackVertices.erase(*it);
@@ -195,7 +224,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   GEntity *crackEntity = crackEdge ? (GEntity*)crackEdge : (GEntity*)crackFace;
   crackEntity->physicals.push_back(physical);
 
-  // duplicate crack vertices
+  // duplicate internal crack vertices
   std::map<MVertex*, MVertex*> vxv;
   for(std::set<MVertex*>::iterator it = crackVertices.begin();
       it != crackVertices.end(); it++){
