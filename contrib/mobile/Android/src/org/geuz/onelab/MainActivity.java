@@ -50,7 +50,6 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     		_gmsh.load(tmp);
     	}    		
     	else if(extras != null) {
-    		//extras.getInt("model");
     		//extras.getString("name");
     		String tmp = extras.getString("file");
     		_gmsh.load(tmp);

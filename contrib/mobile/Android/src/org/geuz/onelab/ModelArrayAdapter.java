@@ -30,17 +30,16 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-		LayoutInflater inflater = (LayoutInflater) parent.getContext()
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
+	public View getView(int position, View convertView, final ViewGroup parent) {
+		LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		final Model m = _models.get(position);
 		View rowView = inflater.inflate(R.layout.model, parent, false);
 		TextView title = (TextView) rowView.findViewById(R.id.title);
 		TextView description = (TextView) rowView.findViewById(R.id.description);
 		ImageView icon = (ImageView) rowView.findViewById(R.id.icon);
-		if(_models.get(position).getName() != null) title.setText(_models.get(position).getName());
-		if(_models.get(position).getSummary() != null) description.setText(_models.get(position).getSummary());
-		if(_models.get(position).getBitmap() != null) icon.setImageBitmap(_models.get(position).getBitmap());
+		if(m.getName() != null) title.setText(m.getName());
+		if(m.getSummary() != null) description.setText(m.getSummary());
+		if(m.getBitmap() != null) icon.setImageBitmap(m.getBitmap());
 		else icon.setImageResource(R.drawable.ic_launcher);
 		icon.setPadding(10, 10, 10, 10);
 		

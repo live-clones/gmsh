@@ -16,6 +16,7 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Xml;
@@ -25,7 +26,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.AdapterView.OnItemClickListener;
 
 public class ModelList extends Activity {
 	
@@ -58,16 +58,53 @@ public class ModelList extends Activity {
 		});
     	//TODO list.addFooterView(loadSD);
     	list.setAdapter(_modelArrayAdapter);
-    	list.setOnItemClickListener(new OnItemClickListener() {
+    	list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> parent, View view, int position,
 					long id) {
 				Model m = _modelArrayAdapter.getModel(position);
 				Intent intent = new Intent(ModelList.this, MainActivity.class);
-				intent.putExtra("model", position);
-				intent.putExtra("file", m.getFile());
+				intent.putExtra("file", m.getFile().toString());
 				intent.putExtra("name", m.getName());
 				startActivity(intent);
+			}
+		});
+    	list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+			public boolean onItemLongClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				final Model m = _modelArrayAdapter.getModel(position);
+				CharSequence[] actions;
+				if(m.getUrl() != null) {
+					actions = new CharSequence[2];
+					actions[0] = "Open this model";
+					actions[1] = "More informations";
+				}
+				else {
+					actions = new CharSequence[1];
+					actions[0] = "Open this model";
+				}
+				AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext());
+				builder.setTitle(m.getName());
+				builder.setItems(actions, new DialogInterface.OnClickListener() {
+				    public void onClick(DialogInterface dialog, int position) {
+				    	switch (position) {
+						case 1:
+							Intent browserIntent = new Intent(Intent.ACTION_VIEW, m.getUrl());
+							startActivity(browserIntent);
+							break;
+						default:
+							Intent intent = new Intent(ModelList.this, MainActivity.class);
+							intent.putExtra("file", m.getFile().toString());
+							intent.putExtra("name", m.getName());
+							startActivity(intent);
+							break;
+						}
+				    }
+				});
+				AlertDialog alert = builder.create();
+				alert.show();
+				return true;
 			}
 		});
     	layout.addView(list);
@@ -112,6 +149,7 @@ public class ModelList extends Activity {
 	    String summary = null;
 	    String file = null;
 	    String bitmap = null;
+	    String url = null;
 	    while (parser.next() != XmlPullParser.END_TAG) {
 	    	if (parser.getEventType() != XmlPullParser.START_TAG) continue;
 	    	String name = parser.getName();
@@ -140,12 +178,19 @@ public class ModelList extends Activity {
 	    			parser.nextTag();
 	    		}
 	    	}
+	    	else if(name.equals("url")) {
+	    		if (parser.next() == XmlPullParser.TEXT) {
+	    			url = parser.getText();
+	    			parser.nextTag();
+	    		}
+	    	}
 	    	else {
 	    		skipTag(parser);
 	    	}
 	    }
 	    Model newModel = new Model(title, summary, new File(dir+"/"+file));
 	    if(bitmap != null) newModel.setBitmap(new File(dir+"/"+bitmap));
+	    if(url != null) newModel.setUrl(Uri.parse(url));
 	    _modelArrayAdapter.add(newModel);
 	}
 	private void skipTag(XmlPullParser parser) throws XmlPullParserException, IOException {
