@@ -12,6 +12,7 @@ import android.app.FragmentTransaction;
 public class OptionsFragment extends Fragment{
 
 	private Gmsh _gmsh;
+	private int _viewN;
 	private OptionsDisplayFragment _optionDisplayFragment;
 	private OptionsModelFragment _optionModelFragment;
 	
@@ -30,6 +31,9 @@ public class OptionsFragment extends Fragment{
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		_gmsh = getArguments().getParcelable("Gmsh");
+		_viewN = 0;
+		if(savedInstanceState != null)
+			_viewN = savedInstanceState.getInt("viewN");
 	}
 	
 	@Override
@@ -37,12 +41,19 @@ public class OptionsFragment extends Fragment{
 			Bundle savedInstanceState) {
 		LinearLayout rootView = (LinearLayout)inflater.inflate(R.layout.fragment_options, container, false);
 		_optionModelFragment = OptionsModelFragment.newInstance(_gmsh);
-		getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionModelFragment).commit();
 		_optionDisplayFragment = OptionsDisplayFragment.newInstance(_gmsh);
 		final Button optionModel = (Button) rootView.findViewById(R.id.goto_options_model);
 		final Button optionDisplay = (Button) rootView.findViewById(R.id.goto_options_display);
-		optionDisplay.setEnabled(true);
-		optionModel.setEnabled(false);
+		if(_viewN == 0) {
+			optionDisplay.setEnabled(true);
+			optionModel.setEnabled(false);
+			getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionModelFragment).commit();
+		}
+		else {
+			optionDisplay.setEnabled(false);
+			optionModel.setEnabled(true);
+			getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionDisplayFragment).commit();
+		}
 		optionModel.setOnClickListener(new View.OnClickListener() {
 			
 			public void onClick(View v) {
@@ -52,6 +63,7 @@ public class OptionsFragment extends Fragment{
 	            ft.replace(R.id.options_fragment, _optionModelFragment);
 	            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
 	            ft.commit();
+	            _viewN = 0;
 			}
 		});
 		optionDisplay.setOnClickListener(new View.OnClickListener() {
@@ -63,9 +75,16 @@ public class OptionsFragment extends Fragment{
 	            ft.replace(R.id.options_fragment, _optionDisplayFragment);
 	            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
 	            ft.commit();
+	            _viewN = 1;
 			}
 		});
 		return rootView;
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putInt("viewN", _viewN);
 	}
 	
 	public void refresh() {

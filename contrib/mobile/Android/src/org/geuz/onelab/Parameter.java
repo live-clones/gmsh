@@ -54,7 +54,7 @@ public class Parameter {
 	public boolean isReadOnly() {return _readOnly;}
 	public String getLabel() {return _label;}
 	public int fromString(String s){
-		String[] infos = s.split("\n");
+		String[] infos = s.split(Character.toString((char)0x03));
 		int pos=0;
 		pos++;// version
 		pos++;// type

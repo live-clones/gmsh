@@ -52,7 +52,7 @@ public class OptionsModelFragment extends Fragment{
 		for(String s : tmp){ // for each parameters in ONEALB
 			boolean found = false;
 			for(Parameter p : params){ // for each parameters
-				if(s.split("\n")[2].equals(p.getName())){ // the parameter already exist, just refresh it
+				if(s.split(Character.toString((char)0x03))[2].equals(p.getName())){ // the parameter already exist, just refresh it
 					if(p.getType().equals("ParameterNumber"))
 						((ParameterNumber)p).fromString(s);
 					else if(p.getType().equals("ParameterString"))
@@ -63,14 +63,14 @@ public class OptionsModelFragment extends Fragment{
 			}
 			if(found) continue;
 			// add new parameter
-			if(s.split("\n")[1].equals("number")){
+			if(s.split(Character.toString((char)0x03))[1].equals("number")){
 				final ParameterNumber mParam = new ParameterNumber(_listView.getContext(), _gmsh, mCallback, "");
 				if(mParam.fromString(s) == -1) continue;
 				params.add(mParam);
 				if(_listView != null)
 					_listView.addItem(mParam.getName().split("/")[0].equals("Parameters")? mParam.getName().split("/")[0] + " > " + mParam.getName().split("/")[1]: mParam.getName().split("/")[0], mParam.getView());
 			}
-			else if(s.split("\n")[1].equals("string")){
+			else if(s.split("|")[1].equals("string")){
 				ParameterString mParam = new ParameterString(_listView.getContext(), _gmsh, mCallback, "");
 				if(mParam.fromString(s) != -1){
 					params.add(mParam);

@@ -1,6 +1,7 @@
 package org.geuz.onelab;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -64,7 +65,21 @@ public class SplashScreen extends Activity{
     		ZipInputStream zipStream = new ZipInputStream(new BufferedInputStream(getResources().openRawResource(R.raw.models)));
 			ZipEntry entry;
 		     while ((entry = zipStream.getNextEntry()) != null) {
-				FileOutputStream outputStream = openFileOutput(entry.getName(), Context.MODE_PRIVATE);
+		    	 String name = entry.getName();
+		    	 FileOutputStream outputStream;
+		    	 if(name.charAt(name.length()-1) == '/') {
+		    		 continue;
+		    	 }
+		    	 else if(name.lastIndexOf("/") > 0) {
+		    		 File document = this.getFilesDir();
+		    		 File currentDirectory = new File(document,name.substring(0, name.lastIndexOf("/")));
+		    		 currentDirectory.mkdir();
+		    		 File currentFile = new File(currentDirectory, name.substring(name.lastIndexOf("/")+1));
+		    		 outputStream = new FileOutputStream(currentFile);
+		    	 }
+		    	 else {
+		    		outputStream = openFileOutput(name, Context.MODE_PRIVATE);
+		    	 }
 				byte[] buffer = new byte[2048];
 				for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;i = zipStream.read(buffer, 0, buffer.length)) 
 					outputStream.write(buffer,0,i);

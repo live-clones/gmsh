@@ -75,7 +75,7 @@ public class ParameterString extends Parameter{
 	public int fromString(String s){
 		int pos = super.fromString(s);
 		if(pos <= 0) return -1; // error
-		String[] infos = s.split("\n");
+		String[] infos = s.split(Character.toString((char)0x03));
 		String value = infos[pos++];
 		setKind(infos[pos++]); // generic file 
 		if(_kind.equals("file"))

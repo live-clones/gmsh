@@ -1,8 +1,10 @@
 package org.geuz.onelab;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -17,6 +19,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Xml;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
@@ -34,7 +37,15 @@ public class ModelList extends Activity {
 		super.onCreate(savedInstanceState);
 		
 		this.modelList = new Models();
-		this.getModels();
+		try {
+			this.getModels();
+		} catch (XmlPullParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		LinearLayout layout = new LinearLayout(this);
     	layout.setOrientation(LinearLayout.VERTICAL);
@@ -56,11 +67,10 @@ public class ModelList extends Activity {
 			public void onItemClick(AdapterView<?> parent, View view, int position,
 					long id) {
 				int model = (position < modelList.size())? position : 0;
-				String path = getFilesDir() + "/" + modelList.getFile(model);
 				
 				Intent intent = new Intent(ModelList.this, MainActivity.class);
 				intent.putExtra("model", model);
-				intent.putExtra("file", path);
+				intent.putExtra("file", modelList.getFile(model));
 				intent.putExtra("name", modelList.getName(model));
 				startActivity(intent);
 			}
@@ -71,52 +81,82 @@ public class ModelList extends Activity {
 		layout.setBackgroundColor(Color.argb(255, 67, 67, 67));
 	}
 	
-	private void getModels()
+	private void getModels() throws XmlPullParserException, IOException
     {
-    	XmlResourceParser parser =  getResources().getXml(R.xml.models);
-    	int eventType;
-		try {
-			eventType = parser.getEventType();
-    	while (eventType != XmlPullParser.END_DOCUMENT) {
-            if(eventType == XmlPullParser.START_DOCUMENT){
-            	eventType = parser.next();
-            	continue;
-            }
-            else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("model")) {
-            	String title = "", file = "", summary = "";
-            	while(eventType != XmlPullParser.END_TAG || !parser.getName().equals("model"))
-            	{
-            		
-            		eventType = parser.next();
-            		if(eventType == XmlPullParser.START_TAG && parser.getName().equals("title")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				title = parser.getText();
-            		}
-            		else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("summary")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				summary = parser.getText();
-            		}
-            		else if(eventType == XmlPullParser.START_TAG && parser.getName().equals("file")){
-            			eventType = parser.next();
-            			if(eventType == XmlPullParser.TEXT)
-            				file = parser.getText();
-            		}
-            	}
-            	if(title.length() > 0) modelList.addModel(title, summary, file);
-            }
-            eventType = parser.next();
-           }
-		} catch (XmlPullParserException e) {
-			// TODO Error in XML file
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Error in XML file
-			e.printStackTrace();
+		File document = this.getFilesDir();
+		File files[] = document.listFiles();
+		for(int i=0; i<files.length; i++) {
+			if(files[i].isDirectory()) { // models are in directory
+				File xmlInfos = new File(files[i], "infos.xml");
+				if(!xmlInfos.isFile()) continue;
+				InputStream in = new FileInputStream(xmlInfos);
+				try {
+					XmlPullParser parser = Xml.newPullParser();
+					parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+					parser.setInput(in, null);
+					parser.nextTag();
+					parser.require(XmlPullParser.START_TAG, null, "models");
+					while (parser.next() != XmlPullParser.END_TAG) {
+						if (parser.getEventType() != XmlPullParser.START_TAG) continue;
+						String tagName = parser.getName();
+						if(tagName.equals("model"))
+							readModel(parser, files[i].toString());
+						else
+							skipTag(parser);
+					}
+				}
+				finally {
+					in.close();
+				}
+			}
 		}
-
     }
+	private void readModel(XmlPullParser parser, String dir) throws XmlPullParserException, IOException{
+		parser.require(XmlPullParser.START_TAG, null, "model");
+		String title = null;
+	    String summary = null;
+	    String file = null;
+	    while (parser.next() != XmlPullParser.END_TAG) {
+	    	if (parser.getEventType() != XmlPullParser.START_TAG) continue;
+	    	String name = parser.getName();
+	    	if(name.equals("title")) {
+	    		if (parser.next() == XmlPullParser.TEXT) {
+	    			title = parser.getText();
+	    			parser.nextTag();
+	    		}
+	    	}
+	    	else if(name.equals("summary")) {
+	    		if (parser.next() == XmlPullParser.TEXT) {
+	    			summary = parser.getText();
+	    			parser.nextTag();
+	    		}
+	    	}
+	    	else if(name.equals("file")) {
+	    		//String relType = parser.getAttributeValue(null, "type"); 
+	    		if (parser.next() == XmlPullParser.TEXT) {
+	    			file = parser.getText();
+	    			parser.nextTag();
+	    		}
+	    	}
+	    }
+	    modelList.addModel(title, summary, dir+"/"+file);
+	}
+	private void skipTag(XmlPullParser parser) throws XmlPullParserException, IOException {
+	    if (parser.getEventType() != XmlPullParser.START_TAG) {
+	        throw new IllegalStateException();
+	    }
+	    int depth = 1;
+	    while (depth != 0) {
+	        switch (parser.next()) {
+	        case XmlPullParser.END_TAG:
+	            depth--;
+	            break;
+	        case XmlPullParser.START_TAG:
+	            depth++;
+	            break;
+	        }
+	    }
+	 }
 	
 
     private class SDFileChooser{

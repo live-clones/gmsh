@@ -129,7 +129,7 @@ public class ParameterNumber extends Parameter{
 	public int fromString(String s){
 		int pos = super.fromString(s);
 		if(pos <= 0) return -1; // error
-		String[] infos = s.split("\n");
+		String[] infos = s.split(Character.toString((char)0x03));
 		String tmpVal = infos[pos++];
 		if(tmpVal.equals("Inf")) // TODO set value to max ???
 			_value = 1;

@@ -236,7 +236,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
 	std::vector<std::string> tmp =  onelab::server::instance()->toChar();
 	for(unsigned int i=0;i<tmp.size();i++)
 		for(unsigned int j=0; j<tmp[i].size();j++)
-			if(tmp[i][j] == '\0') tmp[i][j] = '\n';
+			if(tmp[i][j] == '\0') tmp[i][j] = 0x03;
 	jobjectArray params = env->NewObjectArray(tmp.size(), stringClass, 0);
 	for(int i=0; i<tmp.size();i++){
 		jstring s = env->NewStringUTF(tmp[i].c_str());
