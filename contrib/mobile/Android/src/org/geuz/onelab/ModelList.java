@@ -15,7 +15,6 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
@@ -30,20 +29,17 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class ModelList extends Activity {
 	
-	private Models modelList;
+	private ModelArrayAdapter _modelArrayAdapter;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		this.modelList = new Models();
+		_modelArrayAdapter = new ModelArrayAdapter(this);
 		try {
 			this.getModels();
 		} catch (XmlPullParserException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -60,18 +56,17 @@ public class ModelList extends Activity {
 				SDFileChooser f = new SDFileChooser();
 			}
 		});
-    	list.addFooterView(loadSD);
-    	list.setAdapter( new ModeleArrayAdapter(this, modelList));
+    	//TODO list.addFooterView(loadSD);
+    	list.setAdapter(_modelArrayAdapter);
     	list.setOnItemClickListener(new OnItemClickListener() {
 
 			public void onItemClick(AdapterView<?> parent, View view, int position,
 					long id) {
-				int model = (position < modelList.size())? position : 0;
-				
+				Model m = _modelArrayAdapter.getModel(position);
 				Intent intent = new Intent(ModelList.this, MainActivity.class);
-				intent.putExtra("model", model);
-				intent.putExtra("file", modelList.getFile(model));
-				intent.putExtra("name", modelList.getName(model));
+				intent.putExtra("model", position);
+				intent.putExtra("file", m.getFile());
+				intent.putExtra("name", m.getName());
 				startActivity(intent);
 			}
 		});
@@ -116,6 +111,7 @@ public class ModelList extends Activity {
 		String title = null;
 	    String summary = null;
 	    String file = null;
+	    String bitmap = null;
 	    while (parser.next() != XmlPullParser.END_TAG) {
 	    	if (parser.getEventType() != XmlPullParser.START_TAG) continue;
 	    	String name = parser.getName();
@@ -138,8 +134,19 @@ public class ModelList extends Activity {
 	    			parser.nextTag();
 	    		}
 	    	}
+	    	else if(name.equals("preview")) {
+	    		if (parser.next() == XmlPullParser.TEXT) {
+	    			bitmap = parser.getText();
+	    			parser.nextTag();
+	    		}
+	    	}
+	    	else {
+	    		skipTag(parser);
+	    	}
 	    }
-	    modelList.addModel(title, summary, dir+"/"+file);
+	    Model newModel = new Model(title, summary, new File(dir+"/"+file));
+	    if(bitmap != null) newModel.setBitmap(new File(dir+"/"+bitmap));
+	    _modelArrayAdapter.add(newModel);
 	}
 	private void skipTag(XmlPullParser parser) throws XmlPullParserException, IOException {
 	    if (parser.getEventType() != XmlPullParser.START_TAG) {
