@@ -6,15 +6,23 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:adjustViewBounds="true"
         android:contentDescription="icon"
-        android:src="@drawable/ic_launcher" />
+        android:layout_weight="25."
+        android:src="@drawable/ic_launcher"
+        android:paddingRight="10dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="10dp" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:layout_weight="70." >
 
         <TextView
             android:id="@+id/title"

@@ -41,7 +41,6 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
 		if(m.getSummary() != null) description.setText(m.getSummary());
 		if(m.getBitmap() != null) icon.setImageBitmap(m.getBitmap());
 		else icon.setImageResource(R.drawable.ic_launcher);
-		icon.setPadding(10, 10, 10, 10);
 		
 		return rowView;
 	}
