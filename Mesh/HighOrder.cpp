@@ -594,7 +594,7 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     case 0: return;
     case 1: return;
     case 2:
-      BasisFactory::getNodalBasis(MSH_TET_20)->points.print();
+      //BasisFactory::getNodalBasis(MSH_TET_20)->points.print();
       points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
     case 3: points = BasisFactory::getNodalBasis(MSH_TET_35)->points; break;
     case 4: points = BasisFactory::getNodalBasis(MSH_TET_56)->points; break;

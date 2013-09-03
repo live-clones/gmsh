@@ -356,15 +356,21 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 1 && _vs.size() + 4 == 4)  return MSH_TET_4;
     if(_order == 2 && _vs.size() + 4 == 10) return MSH_TET_10;
     if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20;
-    if(_order == 4 && _vs.size() + 4 == 34) return MSH_TET_34;
     if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35;
     if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56;
-    if(_order == 5 && _vs.size() + 4 == 52) return MSH_TET_52;
     if(_order == 6 && _vs.size() + 4 == 84) return MSH_TET_84;
     if(_order == 7 && _vs.size() + 4 == 120) return MSH_TET_120;
     if(_order == 8 && _vs.size() + 4 == 165) return MSH_TET_165;
     if(_order == 9 && _vs.size() + 4 == 220) return MSH_TET_220;
     if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286;
+    if(_order == 3 && _vs.size() + 4 == 16) return MSH_TET_16;
+    if(_order == 4 && _vs.size() + 4 == 22) return MSH_TET_22;
+    if(_order == 5 && _vs.size() + 4 == 28) return MSH_TET_28;
+    if(_order == 6 && _vs.size() + 4 == 34) return MSH_TET_34;
+    if(_order == 7 && _vs.size() + 4 == 40) return MSH_TET_40;
+    if(_order == 8 && _vs.size() + 4 == 46) return MSH_TET_46;
+    if(_order == 9 && _vs.size() + 4 == 52) return MSH_TET_52;
+    if(_order == 10 && _vs.size() + 4 == 58) return MSH_TET_58;
     return 0;
   }
   virtual void reverse()

@@ -111,14 +111,14 @@ const nodalBasis* MTetrahedron::getFunctionSpace(int o) const
     case 0: return BasisFactory::getNodalBasis(MSH_TET_1);
     case 1: return BasisFactory::getNodalBasis(MSH_TET_4);
     case 2: return BasisFactory::getNodalBasis(MSH_TET_10);
-    case 3: return BasisFactory::getNodalBasis(MSH_TET_20);
-    case 4: return BasisFactory::getNodalBasis(MSH_TET_34);
-    case 5: return BasisFactory::getNodalBasis(MSH_TET_52);
-    case 6: return BasisFactory::getNodalBasis(MSH_TET_74);
-    case 7: return BasisFactory::getNodalBasis(MSH_TET_100);
-    case 8: return BasisFactory::getNodalBasis(MSH_TET_130);
-    case 9: return BasisFactory::getNodalBasis(MSH_TET_164);
-    case 10: return BasisFactory::getNodalBasis(MSH_TET_202);
+    case 3: return BasisFactory::getNodalBasis(MSH_TET_16); // not just nv==0
+    case 4: return BasisFactory::getNodalBasis(MSH_TET_22);
+    case 5: return BasisFactory::getNodalBasis(MSH_TET_28);
+    case 6: return BasisFactory::getNodalBasis(MSH_TET_34);
+    case 7: return BasisFactory::getNodalBasis(MSH_TET_40);
+    case 8: return BasisFactory::getNodalBasis(MSH_TET_46);
+    case 9: return BasisFactory::getNodalBasis(MSH_TET_52);
+    case 10: return BasisFactory::getNodalBasis(MSH_TET_58);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }
@@ -151,9 +151,14 @@ const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
     switch (order) {
     case 1: return BasisFactory::getJacobianBasis(MSH_TET_4);
     case 2: return BasisFactory::getJacobianBasis(MSH_TET_10);
-    case 3: return BasisFactory::getJacobianBasis(MSH_TET_20);
-    case 4: return BasisFactory::getJacobianBasis(MSH_TET_34);
-    case 5: return BasisFactory::getJacobianBasis(MSH_TET_52);
+    case 3: return BasisFactory::getJacobianBasis(MSH_TET_16); // not just nv==0
+    case 4: return BasisFactory::getJacobianBasis(MSH_TET_22);
+    case 5: return BasisFactory::getJacobianBasis(MSH_TET_28);
+    case 6: return BasisFactory::getJacobianBasis(MSH_TET_34);
+    case 7: return BasisFactory::getJacobianBasis(MSH_TET_40);
+    case 8: return BasisFactory::getJacobianBasis(MSH_TET_46);
+    case 9: return BasisFactory::getJacobianBasis(MSH_TET_52);
+    case 10: return BasisFactory::getJacobianBasis(MSH_TET_58);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
     }
   }

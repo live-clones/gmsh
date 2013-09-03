@@ -44,13 +44,14 @@ int ElementType::ParentTypeFromTag(int tag)
       return TYPE_QUA;
     case(MSH_TET_4):    case(MSH_TET_10):
     case(MSH_TET_20):   case(MSH_TET_35):
-    case(MSH_TET_56):   case(MSH_TET_34):
-    case(MSH_TET_52):   case(MSH_TET_84):
+    case(MSH_TET_56):   case(MSH_TET_22):
+    case(MSH_TET_28):   case(MSH_TET_84):
     case(MSH_TET_120):  case(MSH_TET_165):
     case(MSH_TET_220):  case(MSH_TET_286):
-    case(MSH_TET_74):   case(MSH_TET_100):
-    case(MSH_TET_130):  case(MSH_TET_164):
-    case(MSH_TET_202):  case(MSH_TET_1):
+    case(MSH_TET_34):   case(MSH_TET_40):
+    case(MSH_TET_46):   case(MSH_TET_52):
+    case(MSH_TET_58):   case(MSH_TET_1):
+    case(MSH_TET_16):
       return TYPE_TET;
     case(MSH_PYR_5):    case(MSH_PYR_14):
     case(MSH_PYR_13):   case(MSH_PYR_30):
@@ -59,8 +60,8 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_PYR_285):  case(MSH_PYR_385):
     case(MSH_PYR_21):   case(MSH_PYR_29):
     case(MSH_PYR_37):   case(MSH_PYR_45):
-    case(MSH_PYR_53):  case(MSH_PYR_61):
-    case(MSH_PYR_69):  case(MSH_PYR_1):
+    case(MSH_PYR_53):   case(MSH_PYR_61):
+    case(MSH_PYR_69):   case(MSH_PYR_1):
       return TYPE_PYR;
     case(MSH_PRI_6):    case(MSH_PRI_18):
     case(MSH_PRI_15):   case(MSH_PRI_1):
@@ -69,8 +70,8 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_PRI_288):  case(MSH_PRI_405):
     case(MSH_PRI_550):  case(MSH_PRI_24):
     case(MSH_PRI_33):   case(MSH_PRI_42):
-    case(MSH_PRI_51):  case(MSH_PRI_60):
-    case(MSH_PRI_69):  case(MSH_PRI_78):
+    case(MSH_PRI_51):   case(MSH_PRI_60):
+    case(MSH_PRI_69):   case(MSH_PRI_78):
       return TYPE_PRI;
     case(MSH_HEX_8):    case(MSH_HEX_27):
     case(MSH_HEX_20):   case(MSH_HEX_1):
@@ -79,8 +80,8 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_HEX_512):  case(MSH_HEX_729):
     case(MSH_HEX_1000): case(MSH_HEX_32):
     case(MSH_HEX_44):   case(MSH_HEX_56):
-    case(MSH_HEX_68):  case(MSH_HEX_80):
-    case(MSH_HEX_92):  case(MSH_HEX_104):
+    case(MSH_HEX_68):   case(MSH_HEX_80):
+    case(MSH_HEX_92):   case(MSH_HEX_104):
       return TYPE_HEX;
     case(MSH_POLYG_):   case(MSH_POLYG_B):
       return TYPE_POLYG;
@@ -141,13 +142,14 @@ int ElementType::OrderFromTag(int tag)
   case MSH_TET_165 : return 8;
   case MSH_TET_220 : return 9;
   case MSH_TET_286 : return 10;
-  case MSH_TET_34  : return 4;
-  case MSH_TET_52  : return 5;
-  case MSH_TET_74  : return 6;
-  case MSH_TET_100 : return 7;
-  case MSH_TET_130 : return 8;
-  case MSH_TET_164 : return 9;
-  case MSH_TET_202 : return 10;
+  case MSH_TET_16  : return 3;
+  case MSH_TET_22  : return 4;
+  case MSH_TET_28  : return 5;
+  case MSH_TET_34  : return 6;
+  case MSH_TET_40  : return 7;
+  case MSH_TET_46  : return 8;
+  case MSH_TET_52  : return 9;
+  case MSH_TET_58  : return 10;
   case MSH_QUA_1   : return 0;
   case MSH_QUA_4   : return 1;
   case MSH_QUA_9   : return 2;
@@ -272,14 +274,14 @@ int ElementType::DimensionFromTag(int tag)
 
     case(MSH_TET_4):    case(MSH_TET_10):
     case(MSH_TET_20):   case(MSH_TET_35):
-    case(MSH_TET_56):   case(MSH_TET_34):
-    case(MSH_TET_52):   case(MSH_TET_84):
+    case(MSH_TET_56):   case(MSH_TET_22):
+    case(MSH_TET_28):   case(MSH_TET_84):
     case(MSH_TET_120):  case(MSH_TET_165):
     case(MSH_TET_220):  case(MSH_TET_286):
-    case(MSH_TET_74):   case(MSH_TET_100):
-    case(MSH_TET_130):  case(MSH_TET_164):
-    case(MSH_TET_202):  case(MSH_TET_1):
-    case(MSH_TET_SUB):
+    case(MSH_TET_34):   case(MSH_TET_40):
+    case(MSH_TET_46):   case(MSH_TET_52):
+    case(MSH_TET_58):   case(MSH_TET_1):
+    case(MSH_TET_16):   case(MSH_TET_SUB):
 
     case(MSH_PYR_5):    case(MSH_PYR_14):
     case(MSH_PYR_13):   case(MSH_PYR_30):
@@ -288,8 +290,8 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_PYR_285):  case(MSH_PYR_385):
     case(MSH_PYR_21):   case(MSH_PYR_29):
     case(MSH_PYR_37):   case(MSH_PYR_45):
-    case(MSH_PYR_53):  case(MSH_PYR_61):
-    case(MSH_PYR_69):  case(MSH_PYR_1):
+    case(MSH_PYR_53):   case(MSH_PYR_61):
+    case(MSH_PYR_69):   case(MSH_PYR_1):
 
     case(MSH_PRI_6):    case(MSH_PRI_18):
     case(MSH_PRI_15):   case(MSH_PRI_1):
@@ -298,8 +300,8 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_PRI_288):  case(MSH_PRI_405):
     case(MSH_PRI_550):  case(MSH_PRI_24):
     case(MSH_PRI_33):   case(MSH_PRI_42):
-    case(MSH_PRI_51):  case(MSH_PRI_60):
-    case(MSH_PRI_69):  case(MSH_PRI_78):
+    case(MSH_PRI_51):   case(MSH_PRI_60):
+    case(MSH_PRI_69):   case(MSH_PRI_78):
 
     case(MSH_HEX_8):    case(MSH_HEX_27):
     case(MSH_HEX_20):   case(MSH_HEX_1):
@@ -308,8 +310,8 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_HEX_512):  case(MSH_HEX_729):
     case(MSH_HEX_1000): case(MSH_HEX_32):
     case(MSH_HEX_44):   case(MSH_HEX_56):
-    case(MSH_HEX_68):  case(MSH_HEX_80):
-    case(MSH_HEX_92):  case(MSH_HEX_104):
+    case(MSH_HEX_68):   case(MSH_HEX_80):
+    case(MSH_HEX_92):   case(MSH_HEX_104):
 
     case(MSH_POLYH_):
       return 3;
@@ -392,25 +394,25 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_QUA_32  : case MSH_QUA_36I :
   case MSH_QUA_40  :
 
-  case MSH_TET_34  : case MSH_TET_52  :
-  case MSH_TET_74  : case MSH_TET_100 :
-  case MSH_TET_130 : case MSH_TET_164 :
-  case MSH_TET_202 :
+  case MSH_TET_22  : case MSH_TET_28  :
+  case MSH_TET_34  : case MSH_TET_40 :
+  case MSH_TET_46 :  case MSH_TET_52 :
+  case MSH_TET_58 :  case MSH_TET_16 :
 
   case MSH_PRI_15  : case MSH_PRI_24  :
   case MSH_PRI_33  : case MSH_PRI_42 :
-  case MSH_PRI_51 : case MSH_PRI_60 :
-  case MSH_PRI_69 : case MSH_PRI_78 :
+  case MSH_PRI_51 :  case MSH_PRI_60 :
+  case MSH_PRI_69 :  case MSH_PRI_78 :
 
   case MSH_HEX_20  : case MSH_HEX_32  :
   case MSH_HEX_44  : case MSH_HEX_56 :
-  case MSH_HEX_68 : case MSH_HEX_80 :
-  case MSH_HEX_92 : case MSH_HEX_104 :
+  case MSH_HEX_68 :  case MSH_HEX_80 :
+  case MSH_HEX_92 :  case MSH_HEX_104 :
 
   case MSH_PYR_13  : case MSH_PYR_21  :
   case MSH_PYR_29  : case MSH_PYR_37  :
-  case MSH_PYR_45 : case MSH_PYR_53 :
-  case MSH_PYR_61 : case MSH_PYR_69 :
+  case MSH_PYR_45 :  case MSH_PYR_53 :
+  case MSH_PYR_61 :  case MSH_PYR_69 :
 
     return 2; // Only Serendipity
 
@@ -478,14 +480,14 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 0 : return MSH_TET_1;
     case 1 : return MSH_TET_4;
     case 2 : return MSH_TET_10;
-    case 3 : return MSH_TET_20;
-    case 4 : return serendip ? MSH_TET_34 : MSH_TET_35;
-    case 5 : return serendip ? MSH_TET_52 : MSH_TET_56;
-    case 6 : return serendip ? MSH_TET_74 : MSH_TET_84;
-    case 7 : return serendip ? MSH_TET_100: MSH_TET_120;
-    case 8 : return serendip ? MSH_TET_130: MSH_TET_165;
-    case 9 : return serendip ? MSH_TET_164: MSH_TET_220;
-    case 10: return serendip ? MSH_TET_202: MSH_TET_286;
+    case 3 : return serendip ? MSH_TET_20 : MSH_TET_16;
+    case 4 : return serendip ? MSH_TET_22 : MSH_TET_35;
+    case 5 : return serendip ? MSH_TET_28 : MSH_TET_56;
+    case 6 : return serendip ? MSH_TET_34 : MSH_TET_84;
+    case 7 : return serendip ? MSH_TET_40: MSH_TET_120;
+    case 8 : return serendip ? MSH_TET_46: MSH_TET_165;
+    case 9 : return serendip ? MSH_TET_52: MSH_TET_220;
+    case 10: return serendip ? MSH_TET_58: MSH_TET_286;
     default : Msg::Error("terahedron order %i unknown", order); return 0;
     }
     break;

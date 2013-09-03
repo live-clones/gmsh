@@ -186,8 +186,8 @@ static const int msh2cgns[MSH_NUM_TYPE][2] = {
   {-1, MSH_NUM_TYPE+1},  // MSH_TET_20
   {-1, MSH_NUM_TYPE+1},  // MSH_TET_35
   {-1, MSH_NUM_TYPE+1},  // MSH_TET_56
-  {-1, MSH_NUM_TYPE+1},  // MSH_TET_34
-  {-1, MSH_NUM_TYPE+1}   // MSH_TET_52
+  {-1, MSH_NUM_TYPE+1},  // MSH_TET_22
+  {-1, MSH_NUM_TYPE+1}   // MSH_TET_28
 };
 
 //--This functor allows for sorting of the element types according to the

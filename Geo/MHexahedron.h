@@ -531,7 +531,7 @@ class MHexahedronN : public MHexahedron {
     if(_order == 9 && _vs.size() + 8 == 1000) return MSH_HEX_1000;
 
     if(_order == 2 && _vs.size() + 8 == 20)  return MSH_HEX_20;
-    if(_order == 3 && _vs.size() + 8 == 56 ) return MSH_HEX_32;
+    if(_order == 3 && _vs.size() + 8 == 32)  return MSH_HEX_32;
     if(_order == 4 && _vs.size() + 8 == 44)  return MSH_HEX_44;
     if(_order == 5 && _vs.size() + 8 == 56)  return MSH_HEX_56;
     if(_order == 6 && _vs.size() + 8 == 68)  return MSH_HEX_68;
