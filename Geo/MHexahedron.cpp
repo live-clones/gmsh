@@ -47,7 +47,7 @@ double MHexahedron::angleShapeMeasure()
      std::vector<MVertex*> vv;
      vv.push_back(getFace(i).getVertex(0));
      vv.push_back(getFace(i).getVertex(1));
-     vv.push_back(getFace(i).getVertex(2)); 
+     vv.push_back(getFace(i).getVertex(2));
      vv.push_back(getFace(i).getVertex(3));
      // MVertex *v0 = new MVertex(0, 0, 0); vv.push_back(v0);
      // MVertex *v1 = new MVertex(1., 0, 0);vv.push_back(v1);
@@ -63,7 +63,7 @@ double MHexahedron::angleShapeMeasure()
      //printf("angle max =%g min =%g \n", angleMax*180/M_PI, angleMin*180/M_PI);
    }
    zeta = 1.-std::max((angleMax-0.5*M_PI)/(0.5*M_PI),(0.5*M_PI-angleMin)/(0.5*M_PI));
-   return zeta; 
+   return zeta;
 #else
    return 1.;
 #endif
@@ -189,30 +189,12 @@ int MHexahedronN::getNumEdgesRep()
 {
   return 12 * CTX::instance()->mesh.numSubEdges;
 }
- 
-const nodalBasis* MHexahedron::getFunctionSpace(int o) const
+
+const nodalBasis* MHexahedron::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_HEX_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_HEX_8);
-    case 2: return BasisFactory::getNodalBasis(MSH_HEX_20);
-    case 3: return BasisFactory::getNodalBasis(MSH_HEX_32);
-    case 4: return BasisFactory::getNodalBasis(MSH_HEX_44);
-    case 5: return BasisFactory::getNodalBasis(MSH_HEX_56);
-    case 6: return BasisFactory::getNodalBasis(MSH_HEX_68);
-    case 7: return BasisFactory::getNodalBasis(MSH_HEX_80);
-    case 8: return BasisFactory::getNodalBasis(MSH_HEX_92);
-    case 9: return BasisFactory::getNodalBasis(MSH_HEX_104);
-    default: Msg::Error("Order %d hex function space not implemented", order); break;
-    }
-  }
-  else {
-    switch (order) {
+  switch (order) {
     case 0: return BasisFactory::getNodalBasis(MSH_HEX_1);
     case 1: return BasisFactory::getNodalBasis(MSH_HEX_8);
     case 2: return BasisFactory::getNodalBasis(MSH_HEX_27);
@@ -224,34 +206,15 @@ const nodalBasis* MHexahedron::getFunctionSpace(int o) const
     case 8: return BasisFactory::getNodalBasis(MSH_HEX_729);
     case 9: return BasisFactory::getNodalBasis(MSH_HEX_1000);
     default: Msg::Error("Order %d hex function space not implemented", order); break;
-    }
   }
-  return 0;
+  return NULL;
 }
 
-const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
+const JacobianBasis* MHexahedron::getJacobianFuncSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
-    case 0: return BasisFactory::getJacobianBasis(MSH_HEX_1);
-    case 1: return BasisFactory::getJacobianBasis(MSH_HEX_8);
-    case 2: return BasisFactory::getJacobianBasis(MSH_HEX_20);
-    case 3: return BasisFactory::getJacobianBasis(MSH_HEX_32);
-    case 4: return BasisFactory::getJacobianBasis(MSH_HEX_44);
-    case 5: return BasisFactory::getJacobianBasis(MSH_HEX_56);
-    case 6: return BasisFactory::getJacobianBasis(MSH_HEX_68);
-    case 7: return BasisFactory::getJacobianBasis(MSH_HEX_80);
-    case 8: return BasisFactory::getJacobianBasis(MSH_HEX_92);
-    case 9: return BasisFactory::getJacobianBasis(MSH_HEX_104);
-    default: Msg::Error("Order %d hex incomplete Jacobian function space not implemented", order); break;
-    }
-  }
-  else {
-    switch (order) {
+  switch (order) {
     case 0: return BasisFactory::getJacobianBasis(MSH_HEX_1);
     case 1: return BasisFactory::getJacobianBasis(MSH_HEX_8);
     case 2: return BasisFactory::getJacobianBasis(MSH_HEX_27);
@@ -263,9 +226,8 @@ const JacobianBasis* MHexahedron::getJacobianFuncSpace(int o) const
     case 8: return BasisFactory::getJacobianBasis(MSH_HEX_729);
     case 9: return BasisFactory::getJacobianBasis(MSH_HEX_1000);
     default: Msg::Error("Order %d hex Jacobian function space not implemented", order); break;
-    }
   }
-  return 0;
+  return NULL;
 }
 
 

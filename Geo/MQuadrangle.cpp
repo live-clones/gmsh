@@ -17,27 +17,10 @@
 
 #define SQU(a)      ((a)*(a))
 
-const nodalBasis* MQuadrangle::getFunctionSpace(int o) const
+const nodalBasis* MQuadrangle::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  int nf = getNumFaceVertices();
-
-  if ((nf == 0) && (o == -1)) {
-    switch (order) {
-      case 0: return BasisFactory::getNodalBasis(MSH_QUA_1);
-      case 1: return BasisFactory::getNodalBasis(MSH_QUA_4);
-      case 2: return BasisFactory::getNodalBasis(MSH_QUA_8);
-      case 3: return BasisFactory::getNodalBasis(MSH_QUA_12);
-      case 4: return BasisFactory::getNodalBasis(MSH_QUA_16I);
-      case 5: return BasisFactory::getNodalBasis(MSH_QUA_20);
-      case 6: return BasisFactory::getNodalBasis(MSH_QUA_24);
-      case 7: return BasisFactory::getNodalBasis(MSH_QUA_28);
-      case 8: return BasisFactory::getNodalBasis(MSH_QUA_32);
-      case 9: return BasisFactory::getNodalBasis(MSH_QUA_36I);
-      case 10: return BasisFactory::getNodalBasis(MSH_QUA_40);
-    }
-  }
   switch (order) {
     case 0: return BasisFactory::getNodalBasis(MSH_QUA_1);
     case 1: return BasisFactory::getNodalBasis(MSH_QUA_4);
@@ -52,29 +35,12 @@ const nodalBasis* MQuadrangle::getFunctionSpace(int o) const
     case 10: return BasisFactory::getNodalBasis(MSH_QUA_121);
     default: Msg::Error("Order %d quadrangle function space not implemented", order);
   }
-  return 0;
+  return NULL;
 }
 
-const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int o) const
+const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
-
-  int nf = getNumFaceVertices();
-
-  if ((nf == 0) && (o == -1)) {
-    switch (order) {
-      case 1: return BasisFactory::getJacobianBasis(MSH_QUA_4);
-      case 2: return BasisFactory::getJacobianBasis(MSH_QUA_8);
-      case 3: return BasisFactory::getJacobianBasis(MSH_QUA_12);
-      case 4: return BasisFactory::getJacobianBasis(MSH_QUA_16I);
-      case 5: return BasisFactory::getJacobianBasis(MSH_QUA_20);
-      case 6: return BasisFactory::getJacobianBasis(MSH_QUA_24);
-      case 7: return BasisFactory::getJacobianBasis(MSH_QUA_28);
-      case 8: return BasisFactory::getJacobianBasis(MSH_QUA_32);
-      case 9: return BasisFactory::getJacobianBasis(MSH_QUA_36I);
-      case 10: return BasisFactory::getJacobianBasis(MSH_QUA_40);
-    }
-  }
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
   switch (order) {
     case 1: return BasisFactory::getJacobianBasis(MSH_QUA_4);
     case 2: return BasisFactory::getJacobianBasis(MSH_QUA_9);
@@ -234,7 +200,7 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 double  MQuadrangle::etaShapeMeasure()
 {
   double AR = 1;//(minEdge()/maxEdge());
-  
+
   SVector3 v01 (_v[1]->x()-_v[0]->x(),_v[1]->y()-_v[0]->y(),_v[1]->z()-_v[0]->z());
   SVector3 v12 (_v[2]->x()-_v[1]->x(),_v[2]->y()-_v[1]->y(),_v[2]->z()-_v[1]->z());
   SVector3 v23 (_v[3]->x()-_v[2]->x(),_v[3]->y()-_v[2]->y(),_v[3]->z()-_v[2]->z());
@@ -268,12 +234,12 @@ double  MQuadrangle::etaShapeMeasure()
 }
 
 /// a shape measure for quadrangles
-/// assume (for now) 2D elements -- 
+/// assume (for now) 2D elements --
 ///  sf = (1 \pm xi) (1 \pm eta) / 4
 ///  dsf_xi  =  \pm (1 \pm  eta) / 4
-///             1 + eta , -(1+eta) , -(1-eta), 1-eta  
+///             1 + eta , -(1+eta) , -(1-eta), 1-eta
 ///  dsf_eta =  \pm (1 \pm  xi)  / 4
-///             1 + xi , 1 - xi ,  -(1-xi), -(1+xi)    
+///             1 + xi , 1 - xi ,  -(1-xi), -(1+xi)
 double MQuadrangle::gammaShapeMeasure(){
   return etaShapeMeasure();
 }
@@ -366,10 +332,10 @@ double MQuadrangle::getInnerRadius()
   }
   return R;
 #else // HAVE_LAPACK
-  // Default implementation. Not sure that the following give exactly 
+  // Default implementation. Not sure that the following give exactly
   // the same value as the HAVE_LAPACK case !
   // but same value for a square
-  
+
   // Mid-point of each edge of the quadrangle
   SPoint3 A(_v[0]->x()+_v[1]->x(),_v[0]->y()+_v[1]->y(),_v[0]->z()+_v[1]->z());
   SPoint3 B(_v[1]->x()+_v[2]->x(),_v[1]->y()+_v[2]->y(),_v[1]->z()+_v[2]->z());

@@ -33,29 +33,11 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPyrPts(pOrder);
 }
 
-const nodalBasis* MPyramid::getFunctionSpace(int o) const
+const nodalBasis* MPyramid::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
-    case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
-    case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
-    case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
-    case 3: return BasisFactory::getNodalBasis(MSH_PYR_21);
-    case 4: return BasisFactory::getNodalBasis(MSH_PYR_29);
-    case 5: return BasisFactory::getNodalBasis(MSH_PYR_37);
-    case 6: return BasisFactory::getNodalBasis(MSH_PYR_45);
-    case 7: return BasisFactory::getNodalBasis(MSH_PYR_53);
-    case 8: return BasisFactory::getNodalBasis(MSH_PYR_61);
-    case 9: return BasisFactory::getNodalBasis(MSH_PYR_69);
-    default: Msg::Error("Order %d pyramid function space not implemented", order);
-    }
-  }
-  else {
-    switch (order) {
+  switch (order) {
     case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
     case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
     case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
@@ -67,13 +49,13 @@ const nodalBasis* MPyramid::getFunctionSpace(int o) const
     case 8: return BasisFactory::getNodalBasis(MSH_PYR_285);
     case 9: return BasisFactory::getNodalBasis(MSH_PYR_385);
     default: Msg::Error("Order %d pyramid function space not implemented", order);
-    }
   }
-  return 0;
+  return NULL;
 }
 
 const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
 {
+  // FIXME add other order and see MPyramid::getFunctionSpace for 'design'
   int order = (o == -1) ? getPolynomialOrder() : o;
 
   switch (order) {

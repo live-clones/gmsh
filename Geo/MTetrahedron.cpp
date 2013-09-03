@@ -100,30 +100,11 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   sys3x3(mat, b, uvw, &det);
 }
 
-const nodalBasis* MTetrahedron::getFunctionSpace(int o) const
+const nodalBasis* MTetrahedron::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_TET_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_TET_4);
-    case 2: return BasisFactory::getNodalBasis(MSH_TET_10);
-    case 3: return BasisFactory::getNodalBasis(MSH_TET_16); // not just nv==0
-    case 4: return BasisFactory::getNodalBasis(MSH_TET_22);
-    case 5: return BasisFactory::getNodalBasis(MSH_TET_28);
-    case 6: return BasisFactory::getNodalBasis(MSH_TET_34);
-    case 7: return BasisFactory::getNodalBasis(MSH_TET_40);
-    case 8: return BasisFactory::getNodalBasis(MSH_TET_46);
-    case 9: return BasisFactory::getNodalBasis(MSH_TET_52);
-    case 10: return BasisFactory::getNodalBasis(MSH_TET_58);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-    }
-  }
-  else {
-    switch (order) {
+  switch (order) {
     case 0: return BasisFactory::getNodalBasis(MSH_TET_1);
     case 1: return BasisFactory::getNodalBasis(MSH_TET_4);
     case 2: return BasisFactory::getNodalBasis(MSH_TET_10);
@@ -136,34 +117,15 @@ const nodalBasis* MTetrahedron::getFunctionSpace(int o) const
     case 9: return BasisFactory::getNodalBasis(MSH_TET_220);
     case 10: return BasisFactory::getNodalBasis(MSH_TET_286);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-    }
   }
-  return 0;
+  return NULL;
 }
 
-const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
+const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
-    case 1: return BasisFactory::getJacobianBasis(MSH_TET_4);
-    case 2: return BasisFactory::getJacobianBasis(MSH_TET_10);
-    case 3: return BasisFactory::getJacobianBasis(MSH_TET_16); // not just nv==0
-    case 4: return BasisFactory::getJacobianBasis(MSH_TET_22);
-    case 5: return BasisFactory::getJacobianBasis(MSH_TET_28);
-    case 6: return BasisFactory::getJacobianBasis(MSH_TET_34);
-    case 7: return BasisFactory::getJacobianBasis(MSH_TET_40);
-    case 8: return BasisFactory::getJacobianBasis(MSH_TET_46);
-    case 9: return BasisFactory::getJacobianBasis(MSH_TET_52);
-    case 10: return BasisFactory::getJacobianBasis(MSH_TET_58);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-    }
-  }
-  else {
-    switch (order) {
+  switch (order) {
     case 1: return BasisFactory::getJacobianBasis(MSH_TET_4);
     case 2: return BasisFactory::getJacobianBasis(MSH_TET_10);
     case 3: return BasisFactory::getJacobianBasis(MSH_TET_20);
@@ -175,9 +137,8 @@ const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int o) const
     case 9: return BasisFactory::getJacobianBasis(MSH_TET_220);
     case 10: return BasisFactory::getJacobianBasis(MSH_TET_286);
     default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-    }
   }
-  return 0;
+  return NULL;
 }
 
 int MTetrahedron10::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.numSubEdges; }

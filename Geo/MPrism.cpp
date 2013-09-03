@@ -9,7 +9,7 @@
 #include "Context.h"
 
 int MPrism::getVolumeSign()
-{ 
+{
   double mat[3][3];
   mat[0][0] = _v[1]->x() - _v[0]->x();
   mat[0][1] = _v[2]->x() - _v[0]->x();
@@ -32,52 +32,44 @@ void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPriPts(pOrder);
 }
 
-const nodalBasis* MPrism::getFunctionSpace(int o) const
+const nodalBasis* MPrism::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
+  switch (order) {
     case 0: return BasisFactory::getNodalBasis(MSH_PRI_1);
     case 1: return BasisFactory::getNodalBasis(MSH_PRI_6);
     case 2: return BasisFactory::getNodalBasis(MSH_PRI_18);
+    case 3: return BasisFactory::getNodalBasis(MSH_PRI_40);
+    case 4: return BasisFactory::getNodalBasis(MSH_PRI_75);
+    case 5: return BasisFactory::getNodalBasis(MSH_PRI_126);
+    case 6: return BasisFactory::getNodalBasis(MSH_PRI_196);
+    case 7: return BasisFactory::getNodalBasis(MSH_PRI_288);
+    case 8: return BasisFactory::getNodalBasis(MSH_PRI_405);
+    case 9: return BasisFactory::getNodalBasis(MSH_PRI_550);
     default: Msg::Error("Order %d prism function space not implemented", order);
-    }
   }
-  else {
-    switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_PRI_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_PRI_6);
-    case 2: return BasisFactory::getNodalBasis(MSH_PRI_18);
-    default: Msg::Error("Order %d prism function space not implemented", order);
-    }
-  }
-  return 0;
+  return NULL;
 }
 
-const JacobianBasis* MPrism::getJacobianFuncSpace(int o) const
+const JacobianBasis* MPrism::getJacobianFuncSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  int nv = getNumVolumeVertices();
-  
-  if ((nv == 0) && (o == -1)) {
-    switch (order) {
+  switch (order) {
+    case 0: return BasisFactory::getJacobianBasis(MSH_PRI_1);
     case 1: return BasisFactory::getJacobianBasis(MSH_PRI_6);
     case 2: return BasisFactory::getJacobianBasis(MSH_PRI_18);
+    case 3: return BasisFactory::getJacobianBasis(MSH_PRI_40);
+    case 4: return BasisFactory::getJacobianBasis(MSH_PRI_75);
+    case 5: return BasisFactory::getJacobianBasis(MSH_PRI_126);
+    case 6: return BasisFactory::getJacobianBasis(MSH_PRI_196);
+    case 7: return BasisFactory::getJacobianBasis(MSH_PRI_288);
+    case 8: return BasisFactory::getJacobianBasis(MSH_PRI_405);
+    case 9: return BasisFactory::getJacobianBasis(MSH_PRI_550);
     default: Msg::Error("Order %d prism function space not implemented", order);
-    }
   }
-  else { 
-    switch (order) {
-    case 1: return BasisFactory::getJacobianBasis(MSH_PRI_6);
-    case 2: return BasisFactory::getJacobianBasis(MSH_PRI_18);
-    default: Msg::Error("Order %d prism function space not implemented", order);
-    }
-  }
-  return 0;
+  return NULL;
 }
 
 double MPrism::getInnerRadius()
@@ -123,7 +115,7 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
     }
     else {
       MVertex *v3 = _v[faces_prism(ithFace, 3)];
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && 
+      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
           v2 == face.getVertex(2) && v3 == face.getVertex(3)){
         sign = 1; rot = 0; return;
       }
@@ -135,7 +127,7 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
           v2 == face.getVertex(0) && v3 == face.getVertex(1)){
         sign = 1; rot = 2; return;
       }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) && 
+      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
           v2 == face.getVertex(1) && v3 == face.getVertex(2)){
         sign = 1; rot = 3; return;
       }
@@ -147,7 +139,7 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
           v2 == face.getVertex(3) && v3 == face.getVertex(2)){
         sign = -1; rot = 1; return;
       }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && 
+      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) &&
           v2 == face.getVertex(0) && v3 == face.getVertex(3)){
         sign = -1; rot = 2; return;
       }
@@ -156,7 +148,7 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
         sign = -1; rot = 3; return;
       }
     }
-      
+
   }
   Msg::Error("Could not get face information for prism %d", getNum());
 }
