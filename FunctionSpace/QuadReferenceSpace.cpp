@@ -27,9 +27,6 @@ QuadReferenceSpace::QuadReferenceSpace(void){
   refFaceNodeIdx[0][2] = 2;
   refFaceNodeIdx[0][3] = 3;
 
-  parallelFaceId.resize(1);
-  parallelFaceId[0] = -1;      // Face zero has no parallel face
-
   // Init All //
   init();
 }

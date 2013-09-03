@@ -58,7 +58,7 @@ class PermutationTree{
   void   addTagToPermutation(size_t permutationId, size_t tag);
   size_t getTagFromPermutation(size_t permutationId);
 
-  //std::vector<size_t> getAllTags(void) const;
+  std::vector<std::pair<size_t, size_t> > getAllTagsCount(void) const;
 
   std::string toString(void) const;
 
@@ -118,6 +118,14 @@ class PermutationTree{
    @fn PermutationTree::getTagFromPermutation
    @param permutationId A permuted sequence ID
    @return Returns the tag of the given sequence
+   **
+
+   @fn PermutationTree::getAllTagsCount
+   @return Returns a vector of pair such that:
+   @li The first entry is a tag
+   @li The second entry is the number of node having this tag
+
+   The returned vector has en entry for each possible tag
    **
 
    @fn PermutationTree::toString

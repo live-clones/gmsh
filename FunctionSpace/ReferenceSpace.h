@@ -20,6 +20,13 @@
 
 class ReferenceSpace{
  private:
+  class EdgeComparator{
+  public:
+    bool operator()(const std::vector<size_t>& a,
+                    const std::vector<size_t>& b);
+  };
+
+ private:
   typedef struct{
     bool                first;
     std::vector<size_t> second;
@@ -31,7 +38,6 @@ class ReferenceSpace{
   size_t nVertex;
   std::vector<std::vector<size_t> > refEdgeNodeIdx;
   std::vector<std::vector<size_t> > refFaceNodeIdx;
-  std::vector<size_t>               parallelFaceId;
 
   // Permutation Tree //
   PermutationTree* pTree;
@@ -101,23 +107,31 @@ class ReferenceSpace{
      std::list<std::vector<size_t> >& listOfRefNodeIndexPermutation,
      std::list<std::vector<size_t> >& listOfReverseNodeIndexPermutation);
 
-  triplet isCyclicPermutation(std::vector<size_t>& pTest,
-                              std::vector<size_t>& pRef);
+  triplet isCyclicPermutation(const std::vector<size_t>& pTest,
+                              const std::vector<size_t>& pRef) const;
 
-  size_t findCorrespondingFace(std::vector<size_t>& face,
-                               std::vector<size_t>& node);
+  size_t findCorrespondingFace(const std::vector<size_t>& face,
+                               const std::vector<size_t>& node) const;
 
-  static bool haveSameNode(std::vector<size_t> face0,
-                           std::vector<size_t> face1);
+  static bool haveSameNode(const std::vector<size_t>& face0,
+                           const std::vector<size_t>& face1);
 
-  static bool isFacePermutation(std::vector<size_t>& refNode,
-                                std::vector<size_t>& testNode);
+  static bool isFacePermutation(const std::vector<size_t>& refNode,
+                                const std::vector<size_t>& testNode);
 
-  std::vector<size_t> getRefIndexPermutation(std::vector<size_t>& ref,
-                                             std::vector<size_t>& test);
+  bool isSameEdge(const std::vector<size_t>& pTest,
+                  const std::vector<size_t>& pRef) const;
 
-  std::vector<size_t> getReverseIndexPermutation(std::vector<size_t>& ref,
-                                                 std::vector<size_t>& test);
+  static bool edgeComparator(const std::vector<size_t>& a,
+                             const std::vector<size_t>& b);
+
+  std::vector<size_t>
+    getRefIndexPermutation(const std::vector<size_t>& ref,
+                           const std::vector<size_t>& test) const;
+
+  std::vector<size_t>
+    getReverseIndexPermutation(const std::vector<size_t>& ref,
+                               const std::vector<size_t>& test) const;
 
   size_t getPermutationIdx(const MElement& element) const;
 
@@ -126,8 +140,8 @@ class ReferenceSpace{
                                    std::vector<size_t>& refSpaceNodeId,
                                    std::vector<size_t>& orderedEntityNodeIdx);
 
-  static void
-    correctQuadFaceNodeIdx(std::vector<size_t>& correctedQuadFaceNodeIdx);
+  void correctQuadFaceNodeIdx(size_t faceId,
+                              std::vector<size_t>& correctedQuadFaceNodeIdx);
 
   static bool sortPredicate(const std::pair<size_t, size_t>& a,
                             const std::pair<size_t, size_t>& b);

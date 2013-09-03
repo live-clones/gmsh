@@ -1,45 +1,46 @@
 #include <sstream>
-#include "TetReferenceSpace.h"
-#include "MTetrahedron.h"
+#include "HexReferenceSpace.h"
+#include "MHexahedron.h"
 
 using namespace std;
 
-TetReferenceSpace::TetReferenceSpace(void){
+HexReferenceSpace::HexReferenceSpace(void){
   // Vertex Definition //
-  nVertex = 4;
+  nVertex = 8;
 
   // Edge Definition //
-  const size_t nEdge = 6;
+  const size_t nEdge = 12;
   refEdgeNodeIdx.resize(nEdge);
 
   for(size_t i = 0; i < nEdge; i++){
     refEdgeNodeIdx[i].resize(2); // Two Nodes per Edge
-    refEdgeNodeIdx[i][0] = MTetrahedron::edges_tetra(i, 0);
-    refEdgeNodeIdx[i][1] = MTetrahedron::edges_tetra(i, 1);
+    refEdgeNodeIdx[i][0] = MHexahedron::edges_hexa(i, 0);
+    refEdgeNodeIdx[i][1] = MHexahedron::edges_hexa(i, 1);
   }
 
   // Face Definition //
-  size_t nFace = 4;
+  size_t nFace = 6;
   refFaceNodeIdx.resize(nFace);
 
   for(size_t i = 0; i < nFace; i++){
-    refFaceNodeIdx[i].resize(3);  // Three Nodes per Face
-    refFaceNodeIdx[i][0] = MTetrahedron::faces_tetra(i, 0);
-    refFaceNodeIdx[i][1] = MTetrahedron::faces_tetra(i, 1);
-    refFaceNodeIdx[i][2] = MTetrahedron::faces_tetra(i, 2);
+    refFaceNodeIdx[i].resize(4);  // Four Nodes per Face
+    refFaceNodeIdx[i][0] = MHexahedron::faces_hexa(i, 0);
+    refFaceNodeIdx[i][1] = MHexahedron::faces_hexa(i, 1);
+    refFaceNodeIdx[i][2] = MHexahedron::faces_hexa(i, 2);
+    refFaceNodeIdx[i][3] = MHexahedron::faces_hexa(i, 3);
   }
 
   // Init All //
   init();
 }
 
-TetReferenceSpace::~TetReferenceSpace(void){
+HexReferenceSpace::~HexReferenceSpace(void){
 }
 
-string TetReferenceSpace::toLatex(void) const{
-  const size_t nRefSpace = refSpaceNodeId.size();
+string HexReferenceSpace::toLatex(void) const{
+  //const size_t nRefSpace = refSpaceNodeId.size();
   stringstream stream;
-
+  /*
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl
@@ -82,6 +83,7 @@ string TetReferenceSpace::toLatex(void) const{
 
   stream << "\\end{longtable}" << endl
          << "\\end{document}"  << endl;
-
+  */
+  stream << "Not Implemented" << endl;
   return stream.str();
 }

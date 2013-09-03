@@ -1,3 +1,4 @@
+#include <map>
 #include <sstream>
 
 #include "Exception.h"
@@ -139,6 +140,29 @@ void PermutationTree::fillWithPermutation(size_t permutationId,
     i--;
     node = node->father;
   }
+}
+
+std::vector<std::pair<size_t, size_t> >
+PermutationTree::getAllTagsCount(void) const{
+  // Init Temp map
+  map<size_t, size_t> counter;
+
+  // Loop on leafs and populate map
+  const size_t nLeaf = leaf.size();
+  pair<map<size_t, size_t>::iterator, bool> inserted;
+
+  for(size_t i = 0; i < nLeaf; i++){
+    // Try insert new tag with counter to one
+    inserted = counter.insert(std::pair<size_t, size_t>(leaf[i]->tag, 1));
+
+    if(!inserted.second)
+      // If known tag -- add one to mapped value
+      inserted.first->second++;
+  }
+
+  // Serialize this map and return
+  std::vector<std::pair<size_t, size_t> > ret(counter.begin(), counter.end());
+  return ret;
 }
 
 string PermutationTree::toString(void) const{

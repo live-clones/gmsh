@@ -26,9 +26,6 @@ TriReferenceSpace::TriReferenceSpace(void){
   refFaceNodeIdx[0][1] = 1;
   refFaceNodeIdx[0][2] = 2;
 
-  parallelFaceId.resize(1);
-  parallelFaceId[0] = -1;      // Face zero has no parallel face
-
   // Init All //
   init();
 }

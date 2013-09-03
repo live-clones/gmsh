@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <sstream>
+#include <set>
 
 #include "Exception.h"
 #include "Numeric.h"
@@ -111,6 +112,7 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
     //   --> this Permutation is a new Reference Space
     if(!match.first){
       listOfTrueReferenceSpace.push_back(i);
+
       listOfRefNodeIndexPermutation.push_back(unPermutedIndex);
       listOfReverseNodeIndexPermutation.push_back(unPermutedIndex);
 
@@ -121,22 +123,24 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
     else{
       listOfRefNodeIndexPermutation.push_back(match.second);
       listOfReverseNodeIndexPermutation.push_back(match.third);
+
       pTree->addTagToPermutation(i, *it);
     }
   }
 }
 
 ReferenceSpace::triplet ReferenceSpace::
-isCyclicPermutation(vector<size_t>& pTest,
-                    vector<size_t>& pRef){
+isCyclicPermutation(const vector<size_t>& pTest,
+                    const vector<size_t>& pRef) const{
+
+  // Triplet to return
+  triplet tri;
 
   // If no Face, we have no Cyclic Permutation
   if(!refFaceNodeIdx.size()){
-    triplet tri = {
-      false,
-      vector<size_t>(0),
-      vector<size_t>(0)
-    };
+    tri.first  = false;
+    tri.second = vector<size_t>(0);
+    tri.third  = vector<size_t>(0);
 
     return tri;
   }
@@ -153,11 +157,9 @@ isCyclicPermutation(vector<size_t>& pTest,
 
   // If no corresponding face found, we have no Cyclic Permutation
   if(testFaceId == (size_t)(-1)){
-    triplet tri = {
-      false,
-      vector<size_t>(0),
-      vector<size_t>(0)
-    };
+    tri.first  = false;
+    tri.second = vector<size_t>(0);
+    tri.third  = vector<size_t>(0);
 
     return tri;
   }
@@ -169,18 +171,29 @@ isCyclicPermutation(vector<size_t>& pTest,
   for(size_t i = 0; i < nNodeInFaceTest; i++)
     testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
 
-  // Return Triplet
-  triplet tri = {
-    isFacePermutation(refNode, testNode),
-    getRefIndexPermutation(pRef, pTest),
-    getReverseIndexPermutation(pRef, pTest)
-  };
+  // Test if we have a face cyclic permutation
+  size_t isCyclic = isFacePermutation(refNode, testNode);
+
+  // Test ifwe have the same connectivity
+  bool isSameConnectivity = isSameEdge(pTest, pRef);
+
+  if(isCyclic && isSameConnectivity){
+    tri.first  = true;
+    tri.second = getRefIndexPermutation(pRef, pTest);
+    tri.third  = getReverseIndexPermutation(pRef, pTest);
+  }
+
+  else{
+    tri.first  = false;
+    tri.second = vector<size_t>(0);
+    tri.third  = vector<size_t>(0);
+  }
 
   return tri;
 }
 
-size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
-                                             vector<size_t>& node){
+size_t ReferenceSpace::findCorrespondingFace(const vector<size_t>& face,
+                                             const vector<size_t>& node) const{
   // Init Stuff //
   const size_t nFace    = refFaceNodeIdx.size();
   const size_t faceSize = face.size();
@@ -216,29 +229,33 @@ size_t ReferenceSpace::findCorrespondingFace(vector<size_t>& face,
     return -1;
 }
 
-bool ReferenceSpace::haveSameNode(vector<size_t> face0,
-                                  vector<size_t> face1){
+bool ReferenceSpace::haveSameNode(const vector<size_t>& face0,
+                                  const vector<size_t>& face1){
   // Check Sizes
   const size_t size = face0.size();
 
   if(size != face1.size())
     return false;
 
-  // Sort both vectors
-  sort(face0.begin(), face0.end());
-  sort(face1.begin(), face1.end());
+  // Copy vector
+  vector<size_t> cFace0(face0);
+  vector<size_t> cFace1(face1);
+
+  // Sort both copy vectors
+  sort(cFace0.begin(), cFace0.end());
+  sort(cFace1.begin(), cFace1.end());
 
   // Check if elements are the same and at same position
   bool match = true;
 
   for(size_t i = 0; i < size && match; i++)
-    match = (face0[i] == face1[i]);
+    match = (cFace0[i] == cFace1[i]);
 
   return match;
 }
 
-bool ReferenceSpace::isFacePermutation(vector<size_t>& refNode,
-                                       vector<size_t>& testNode){
+bool ReferenceSpace::isFacePermutation(const vector<size_t>& refNode,
+                                       const vector<size_t>& testNode){
   // Check Size
   const size_t size = refNode.size();
 
@@ -264,8 +281,64 @@ bool ReferenceSpace::isFacePermutation(vector<size_t>& refNode,
   return match;
 }
 
-vector<size_t> ReferenceSpace::getRefIndexPermutation(vector<size_t>& ref,
-                                                      vector<size_t>& test){
+bool ReferenceSpace::isSameEdge(const std::vector<size_t>& pTest,
+                                const std::vector<size_t>& pRef) const{
+  // Set of Reference Edges
+  const size_t nEdge = refEdgeNodeIdx.size();
+  std::set<std::vector<size_t>, EdgeComparator> refEdge;
+  std::vector<size_t> tmp(2);
+
+  for(size_t e = 0; e < nEdge; e++){
+    tmp[0] = pRef[refEdgeNodeIdx[e][0]];
+    tmp[1] = pRef[refEdgeNodeIdx[e][1]];
+    refEdge.insert(tmp);
+  }
+
+  // Compare Test Edges
+  bool match = true;
+  for(size_t e = 0; e < nEdge && match; e++){
+    tmp[0] = pTest[refEdgeNodeIdx[e][0]];
+    tmp[1] = pTest[refEdgeNodeIdx[e][1]];
+
+    match = (refEdge.find(tmp) != refEdge.end());
+  }
+
+  return match;
+}
+
+bool ReferenceSpace::EdgeComparator::operator()(const std::vector<size_t>& a,
+                                                const std::vector<size_t>& b){
+  size_t maxA, minA;
+  size_t maxB, minB;
+
+  if(a[0] < a[1]){
+    maxA = a[1];
+    minA = a[0];
+  }
+
+  else{
+    maxA = a[0];
+    minA = a[1];
+  }
+
+  if(b[0] < b[1]){
+    maxB = b[1];
+    minB = b[0];
+  }
+
+  else{
+    maxB = b[0];
+    minB = b[1];
+  }
+
+  return
+    ((minA != minB) && (minA < minB)) ||
+    ((minA == minB) && (maxA < maxB));
+}
+
+vector<size_t>
+ReferenceSpace::getRefIndexPermutation(const vector<size_t>& ref,
+                                       const vector<size_t>& test) const{
   const size_t size = ref.size();
   vector<size_t> idxVec(ref.size());
   size_t idx;
@@ -282,8 +355,9 @@ vector<size_t> ReferenceSpace::getRefIndexPermutation(vector<size_t>& ref,
   return idxVec;
 }
 
-vector<size_t> ReferenceSpace::getReverseIndexPermutation(vector<size_t>& ref,
-                                                          vector<size_t>& test){
+vector<size_t>
+ReferenceSpace::getReverseIndexPermutation(const vector<size_t>& ref,
+                                           const vector<size_t>& test) const{
   const size_t size = ref.size();
   vector<size_t> idxVec(ref.size());
   size_t idx;
@@ -361,7 +435,7 @@ void ReferenceSpace::getOrderedFace(void){
                                      refSpaceNodeId[s],
                                      orderedFaceNodeIdx[s][f]);
       if(nNodeInFace == 4)
-        correctQuadFaceNodeIdx(orderedFaceNodeIdx[s][f]);
+        correctQuadFaceNodeIdx(f, orderedFaceNodeIdx[s][f]);
     }
   }
 }
@@ -390,15 +464,28 @@ orderRefEntityForGivenRefSpace(vector<size_t>& refEntityNodeIdx,
 }
 
 void ReferenceSpace::
-correctQuadFaceNodeIdx(vector<size_t>& correctedQuadFaceNodeIdx){
-
+correctQuadFaceNodeIdx(size_t faceId,
+                       vector<size_t>& correctedQuadFaceNodeIdx){
   // Get :                       //
   // correctedQuadFaceNodeIdx[2] //
   // is *opposite* to            //
   // correctedQuadFaceNodeIdx[0] //
 
-  size_t opposite = (correctedQuadFaceNodeIdx[0] + 2) % 4;
+  // Get opposite Node //
+  // Find node correctedQuadFaceNodeIdx[0] in refFaceNodeId[faceId]
+  size_t refIdx = 0;
 
+  while((refIdx < 4)
+        &&
+        (refFaceNodeIdx[faceId][refIdx] != correctedQuadFaceNodeIdx[0])){
+
+    refIdx++;
+  }
+
+  // Get opposite Node
+  size_t opposite = refFaceNodeIdx[faceId][(refIdx + 2) % 4];
+
+  // If correction needed, do it //
   if(correctedQuadFaceNodeIdx[2] != opposite){
     // Find opposite node index
     size_t tmp;
@@ -693,11 +780,7 @@ string ReferenceSpace::toString(void) const{
   const size_t nFace     = refFaceNodeIdx.size();
   stringstream stream;
 
-  // Permutation Tree //
-  stream << "Permutation Tree:" << endl
-         << pTree->toString()   << endl;
-
-  // Reference Space //
+  // Reference Space Node IDs //
   stream << "Reference Space Node IDs:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
@@ -709,6 +792,7 @@ string ReferenceSpace::toString(void) const{
     stream << refSpaceNodeId[s][nVertex - 1] << "]" << endl;
   }
 
+  // Oriented Edges Node Index //
   stream << endl << "Ordered Edge Node Index:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
@@ -722,6 +806,7 @@ string ReferenceSpace::toString(void) const{
              << endl;
   }
 
+  // Oriented Faces Node Index //
   stream << endl << "Ordered Face Node Index:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
@@ -739,9 +824,6 @@ string ReferenceSpace::toString(void) const{
              << endl;
     }
   }
-
-  //stream << endl << pTree->getNPermutation() << endl;
-  stream << endl;
 
   return stream.str();
 }
