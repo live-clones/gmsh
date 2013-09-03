@@ -1080,7 +1080,7 @@ Character expressions are defined as:
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} , @var{char-expression} ) |
-  Str [ @var{char-expression} , @dots{} ] |
+  Str ( @var{char-expression} , @dots{} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
@@ -1100,7 +1100,9 @@ etc.) The various @w{@var{char-option}s} are listed in
 @ref{Options}. @code{GetEnvThe} gets the value of an environment
 variable from the operating system. @code{GetString} allows to ask the
 user for a value interactively. @code{StrReplace}'s arguments are: input
-string, old substring, new substring.
+string, old substring, new substring.@footnote{For compatibility with GetDP
+(@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
+@code{[]} in @code{Str} and @code{Sprintf}.}
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
