@@ -53,6 +53,8 @@ GNU General Public License for more details.
 #include <math.h>
 #include "QuadTriUtils.h"
 
+
+
 // The function that tests whether a 2D surface is a lateral of a valid QuadToTri 
 // region and whether there are conflicts. If surface is not part of valid QuadToTri region 
 // or if there are QuadToTri conflicts, return 0.  Note that RemoveDuplicateSurfaces() 
@@ -78,6 +80,6 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop);
 //       'GFace *to' is the top surface to mesh, 'from' is the source surface, 'pos' is a std::set  
 //       of vertex positions for the top surface.
 int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*, 
-                             MVertexLessThanLexicographic> &pos);
+                             MVertexLessThanLexicographic> &pos );
 
 #endif

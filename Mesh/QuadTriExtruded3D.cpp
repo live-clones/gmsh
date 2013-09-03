@@ -270,7 +270,10 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
                region->tag() );
     return false;
   }
-
+  
+  bool is_toroidal = IsInToroidalQuadToTri(reg_source);
+  GFace *root = findRootSourceFaceForFace(reg_source);
+  
   // Find a source surface. Then find a COPIED_ENTITY that is the top surface.
   // Then determine if all the laterals are either all quad or all triangle.
   // If shared laterals are all static (quad or non subdivide triangles),
@@ -278,15 +281,18 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
   // If any lateral is unstructured, error.
 
   bool foundTop = false, foundSource = false,
-                  foundNoStruct = false;
+                  foundNoStruct = false, foundRoot = false;
 
   std::list<GFace *> faces = region->faces();
   std::list<GFace *>::iterator it = faces.begin();
 
   (*allNonGlobalSharedLaterals) = true;
 
+  
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
+    if( (*it) == root )
+      foundRoot = true;
     if( (*it) == reg_source )
       foundSource = true;
     else if( face_tmp_ep && face_tmp_ep->geo.Mode ==
@@ -303,6 +309,7 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
       else if( top_source_tmp == reg_source &&
                !IsSurfaceALateralForRegion(region, *it) )
         foundTop = true;
+     
     }
     // This is a check to see if there are lateral surface triangles that need to be edged globally in subdivide operation
     else if( IsSurfaceALateralForRegion(region, *it) ){
@@ -317,11 +324,15 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
           (*allNonGlobalSharedLaterals) = false;
       }
     }
-    else
+    else if( !is_toroidal )
       foundNoStruct = true;
   }
 
 
+  // if didn't find the copied entity, maybe this is toroidal and the top has been replaced
+  if( is_toroidal && !foundTop && foundRoot && root != reg_source )
+    foundTop = true;
+  
   // test for errors
   bool detectConflict = false;
   if( !foundTop ){
@@ -2377,34 +2388,46 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
     return false;
   }
 
-  // Find a source surface, find a COPIED_ENTITY that is the top surface,
+  // Find a source surface, find a COPIED_ENTITY that is the top surface, or if toroidal, find what is now the top
 
-  bool foundSource = false, foundTop = false;
+  bool foundSource = false, foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
+  GFace *root_face = NULL;
   std::list<GFace *> faces = gr->faces();
   std::list<GFace *>::iterator it = faces.begin();
 
+  // top faces in toroidal quadtri need special treatment
+  bool is_toroidal = IsInToroidalQuadToTri(reg_source);
+  if( is_toroidal )
+    root_face = findRootSourceFaceForFace(reg_source);
+  
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
+    if( (*it) == root_face )
+      foundRoot = true;
     if( (*it) == reg_source )
       foundSource = true;
     else if( face_tmp_ep && face_tmp_ep->geo.Mode ==
-        COPIED_ENTITY ){
+	COPIED_ENTITY ){
       GFace *top_source_tmp = model->getFaceByTag(
-                              std::abs( face_tmp_ep->geo.Source ) );
+			      std::abs( face_tmp_ep->geo.Source ) );
       if( !top_source_tmp ){
-        Msg::Error("In QuadToTriGetRegionDiags(), could not find source face "
-                   "%d for copied surface %d of region %d.",
-                   std::abs( face_tmp_ep->geo.Source ),
-                   (*it)->tag(), gr->tag() );
+	Msg::Error("In QuadToTriGetRegionDiags(), could not find source face "
+		  "%d for copied surface %d of region %d.",
+		  std::abs( face_tmp_ep->geo.Source ),
+		  (*it)->tag(), gr->tag() );
       }
       else if( top_source_tmp == reg_source ){
-        foundTop = true;
-        reg_top = (*it);
+	foundTop = true;
+	reg_top = (*it);
       }
     }
   }
 
+  if( !foundTop && is_toroidal && foundRoot && root_face != reg_source ){
+    foundTop = true;
+    reg_top = root_face;
+  }
   if( !foundTop )
     Msg::Warning("In QuadToTriGetRegionDiags(), could not find top face "
                "for region %d.", gr->tag() );
@@ -2427,14 +2450,29 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
         IsSurfaceALateralForRegion(gr, *it) ){
 
       // take care of forbidden edges
-      for( unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
-        std::vector<MVertex*> v;
-        (*it)->quadrangles[i]->getVertices(v);
-        createForbidden(v, forbidden_edges );
+      // test whether this surface is a lateral bounded by two quadtri regions.
+      // if so, and the other is not already meshed, 
+      // then don't make these forbidden.  This is worked out in a 
+      // lateral remesh later
+      std::vector<GRegion *> adj_regions;
+      int numNeighbors = 0;
+      numNeighbors = GetNeighborRegionsOfFace((*it), adj_regions);
+      int ind_notcurrent = adj_regions[0] == gr ? 1 : 0;
+      if( !( numNeighbors == 2 && adj_regions[0]->meshAttributes.extrude && adj_regions[1]->meshAttributes.extrude &&
+	  adj_regions[0]->meshAttributes.extrude->mesh.ExtrudeMesh && adj_regions[1]->meshAttributes.extrude->mesh.ExtrudeMesh &&
+	  adj_regions[0]->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY  && adj_regions[1]->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY &&
+	  adj_regions[0]->meshAttributes.extrude->mesh.QuadToTri && adj_regions[1]->meshAttributes.extrude->mesh.QuadToTri  &&
+	  IsSurfaceALateralForRegion(adj_regions[ind_notcurrent], *it) &&
+	  !adj_regions[ind_notcurrent]->getNumMeshElements() ) ){
+	for( unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
+          std::vector<MVertex*> v;
+	  (*it)->quadrangles[i]->getVertices(v);
+	  createForbidden(v, forbidden_edges );
+	}
       }
-
-      // at this point, if there are no triangles or if there are quads, continue
-      if( !(*it)->triangles.size() || (*it)->quadrangles.size() )
+      
+      // at this point, if there are no triangles, continue
+      if( !(*it)->triangles.size() )
         continue;
 
       ExtrudeParams *face_ep_tmp = (*it)->meshAttributes.extrude;
@@ -2552,9 +2590,9 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
               else
                 createEdge( verts[diag.first+add], verts[diag.second-add], lat_tri_diags );
             }
-            else
-              Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal on unrecombined lateral surface %d.", (*it)->tag() );
-
+            else if( !(*it)->quadrangles.size() )
+              Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal in lateral surface %d.", (*it)->tag() );
+	  
             index_guess += 2;
              /*
 
@@ -2582,18 +2620,19 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
               else
                 createEdge( elemEdge_tmp.first, elemEdge_tmp.second, lat_tri_diags );
               */
-
+	  
           }
         }
       }
-    }
 
+    }
   }
-  // Insert diagonals of the COPIED top surface into quadToTri_edges;
+    
+  // Insert diagonals of the top surface into quadToTri_edges;
   unsigned int index_guess = reg_source->triangles.size();
-  if( reg_top->quadrangles.size() ){
+  if( reg_top->quadrangles.size() && !is_toroidal ){
     Msg::Error("In QuadToTriGetRegionDiags(), top surface of region "
-               "%d has quads.", gr->tag() );
+               "%d has quads in a non-toroidal QuadToTri extrusion.", gr->tag() );
     return false;
   }
 
@@ -2605,16 +2644,19 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
     std::vector<MVertex *> verts;
     get2DExtrudedVertices( elem, ep, j_top, k_top, pos, verts );
     if( verts.size() != 4 ) break;
-
-    // Find diagonal:
-    std::pair<int,int> diag(0,0);
-    diag = FindDiagonalEdgeIndices( verts, reg_top, false, index_guess );
-    if( diag.first || diag.second )
-      createEdge( verts[diag.first], verts[diag.second], quadToTri_edges );
+    if( !is_toroidal ){
+      // Find diagonal:
+      std::pair<int,int> diag(0,0);
+      diag = FindDiagonalEdgeIndices( verts, reg_top, false, index_guess );
+      if( diag.first || diag.second )
+	createEdge( verts[diag.first], verts[diag.second], quadToTri_edges );
+      else
+	  Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal on top surface %d, but should have.", reg_top->tag() );
+      index_guess += 2;
+    }
     else
-      Msg::Error("In QuadToTriGetRegionDiags(), failed to find a diagonal on top surface %d.", reg_top->tag() );
+      createForbidden(verts, forbidden_edges);
 
-    index_guess += 2;
   }
   return true;
 }
@@ -2623,7 +2665,7 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
 // For use in QuadToTriEdgeGenerator:  Controls BRUTE FORCE edging of elements with ALL vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
+static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_addverts,
                                                CategorizedSourceElements &cat_src_elems,
                                                std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                                std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
@@ -2672,8 +2714,8 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
   // can afford temporary copies since these sets should be relatively small for all cases.
   std::set<unsigned int> tri_tmp, quad_tmp;
   tri_tmp = cat_src_elems.three_bnd_pt_tri;
-  // if is_dbl, then don't track the quads
-  if( !is_dbl )
+  // if is_addverts, then don't track the quads
+  if( !is_addverts )
     quad_tmp = cat_src_elems.four_bnd_pt_quad;
 
   while( tri_tmp.size() || quad_tmp.size() ){
@@ -2869,7 +2911,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd( GRegion *gr, bool is_dbl,
 // For use in QuadToTriEdgeGenerator:  Does the edging of prisms with some but not all vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
+static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_addverts, CategorizedSourceElements &cat_src_elems,
                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
@@ -2996,7 +3038,7 @@ static int makeEdgesForOtherBndPrisms( GRegion *gr, bool is_dbl, CategorizedSour
 // For use in QuadToTriEdgeGenerator:  Does the edging of hexahedra with some but not all vertices
 // on a lateral boundary surface.
 // Added 04/08/2011
-static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
+static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_addverts, CategorizedSourceElements &cat_src_elems,
                                      std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                      std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                      std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
@@ -3320,7 +3362,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 // a pivot vertex of a hexahedral element that has ONE SOURCE vertex on a lateral boundary surface.
 // See inside function for a definition of the "pivot vertex."
 // Added 04/08/2011
- static int makeEdgesForElemsTouchPivotVert( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
+ static int makeEdgesForElemsTouchPivotVert( GRegion *gr, bool is_addverts, CategorizedSourceElements &cat_src_elems,
                                        std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                        std::set<std::pair<MVertex*, MVertex*> > &lat_tri_diags,
                                        std::set<std::pair<MVertex*, MVertex*> > &forbidden_edges,
@@ -3546,7 +3588,7 @@ static int makeEdgesForOtherBndHexa( GRegion *gr, bool is_dbl, CategorizedSource
 // For use in QuadToTriEdgeGenerator:  Does the lateral edging of internal elements in the top extrusion
 // layer by lowest vertex pointer value in TOP FACE.
 // Added 04/08/2011
-static int makeEdgesInternalTopLayer( GRegion *gr, bool is_dbl, CategorizedSourceElements &cat_src_elems,
+static int makeEdgesInternalTopLayer( GRegion *gr, bool is_addverts, CategorizedSourceElements &cat_src_elems,
                                       std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
@@ -3660,15 +3702,16 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     return 0;
   }
 
+  
   // number of extrusion layers
   int num_layers = 0;
   for( int p = 0; p < ep->mesh.NbLayer; p++ )
     num_layers += ep->mesh.NbElmLayer[p];
 
-  // is this a valid double layer extrusion?
-  bool is_dbl = false;
-  if( num_layers >= 2 && ( ep->mesh.QuadToTri == QUADTRI_DBL_1 || ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB ) )
-    is_dbl = true;
+  // is this a valid 'add internal vertex' extrusion?
+  bool is_addverts = false;
+  if( ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1 || ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1_RECOMB )
+    is_addverts = true;
 
 
   // now find and verify the source and the top of region
@@ -3680,20 +3723,32 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     return 0;
   }
 
+  // need for toroidal loop extrusions...top layer treated specially
+  bool is_toroidal = IsInToroidalQuadToTri(reg_source);
+  
+  
   std::list<GFace *> reg_faces = gr->faces();
   std::list<GFace *>::iterator itf = reg_faces.begin();
 
-  // find top surface of extrusion
+  // find top surface of extrusion and first root dependency of source
   GFace *reg_top = NULL;
+  GFace *root = findRootSourceFaceForFace(reg_source);
+  bool foundRoot = false;
   for( itf = reg_faces.begin(); itf != reg_faces.end(); itf++ ){
     ExtrudeParams *face_ep = (*itf)->meshAttributes.extrude;
     if( face_ep && face_ep->geo.Mode == COPIED_ENTITY &&
         reg_source == model->getFaceByTag( std::abs(face_ep->geo.Source) ) ){
       reg_top = (*itf);
-      break;
     }
+    if( (*itf) == root )
+      foundRoot = true;
+    if( reg_top && (foundRoot || !is_toroidal) )
+      break;
+    
   }
-
+  
+  if( is_toroidal && !reg_top && foundRoot && root != reg_source )
+    reg_top = root;
   if( !reg_top ){
     Msg::Error("In QuadToTriEdgeGenerator(), invalid top surface for region "
                "%d.", gr->tag() );
@@ -3755,9 +3810,9 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     }
   }*/
 
-  // if this is a double layer extrusion, don't need adjustable lateral edges, so
+  // if this is an' add internal vertex' extrusion, don't need adjustable lateral edges, so
   // put all lat_tri_diags into quadToTri_edges
-  if( is_dbl)
+  if( is_addverts)
     quadToTri_edges.insert(lat_tri_diags.begin(), lat_tri_diags.end());
 
   // If there are no lat_tri_diags and no quads, there is nothing  left to do
@@ -3765,14 +3820,14 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
     return 1;
 
 
-  // can return now if this is a double layer extrusion...nothing left to do
-  if( is_dbl )
+  // can return now if this is an 'add internal vertex' extrusion...nothing left to do
+  if( is_addverts )
     return 1;
 
 
   // BRUTE FORCE diagonalization of elements with all vertices on a lateral boundary of region:
   // This has to be done for all cases with such elements if
-  if( !makeEdgesForElemsWithAllVertsOnBnd( gr, is_dbl, cat_src_elems, quadToTri_edges,
+  if( !makeEdgesForElemsWithAllVertsOnBnd( gr, is_addverts, cat_src_elems, quadToTri_edges,
                                            lat_tri_diags, forbidden_edges, problems, pos ) ){
      Msg::Error("In QuadToTriEdgeGenerator(), failed to make edges for the elements in region %d "
                 "with all vertices on a lateral boundary", gr->tag() );
@@ -3783,7 +3838,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 
 
   // Extrude source triangles that are on the source boundary edges and find any diagonals
-  if( !makeEdgesForOtherBndPrisms( gr, is_dbl, cat_src_elems, quadToTri_edges,
+  if( !makeEdgesForOtherBndPrisms( gr, is_addverts, cat_src_elems, quadToTri_edges,
                                    lat_tri_diags, forbidden_edges, problems, pos ) ){
     Msg::Error("In QuadToTriEdgeGenerator(), failed to make edges for the prism extrusions in region %d with "
                "source triangles having some but not all vertices on the boundary", gr->tag() );
@@ -3799,7 +3854,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 
 
   // Edge creation for extruded quadrangles with some but not all vertices on a boundary.
-  if( !makeEdgesForOtherBndHexa( gr, is_dbl, cat_src_elems, quadToTri_edges,
+  if( !makeEdgesForOtherBndHexa( gr, is_addverts, cat_src_elems, quadToTri_edges,
                                  lat_tri_diags, forbidden_edges, problems, pos ) ){
     Msg::Error("In QuadToTriEdgeGenerator(), failed to make edges for the hexahedral extrusions in region %d with "
                "source quads having some but not all vertices on the boundary", gr->tag() );
@@ -3810,7 +3865,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
   // Find diagonals for elements touching a "pivot vertex" of a hexa element that has
   // a source quad with only one vertex on a lateral boundary (see inside makeEdgesForOtherBndHexa() and
   // makeEdgesForElemsTouchingPivotVert() for details of "pivot vertex".
-  if( !makeEdgesForElemsTouchPivotVert( gr, is_dbl, cat_src_elems, quadToTri_edges,
+  if( !makeEdgesForElemsTouchPivotVert( gr, is_addverts, cat_src_elems, quadToTri_edges,
                                         lat_tri_diags, forbidden_edges, pos ) ){
     Msg::Error("In QuadToTriEdgeGenerator(), failed to make edges for "
                "the elements in region %d touching a \'pivot vertex\' of a "
@@ -3820,7 +3875,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 
   // Mesh internal elements in the top layer (just add lateral diagonals for the
   // Do this by lowest pointer in top surface
-  if( !makeEdgesInternalTopLayer( gr, is_dbl, cat_src_elems, quadToTri_edges, pos ) ){
+  if( !is_toroidal && !makeEdgesInternalTopLayer( gr, is_addverts, cat_src_elems, quadToTri_edges, pos ) ){
     Msg::Error("In QuadToTriEdgeGenerator(), failed to make internal edges "
                "in top extrusion layer of region %d.", gr->tag() );
     return 0;
@@ -3857,14 +3912,19 @@ static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVe
   // If shared laterals are all static (quad or non subdivide triangles),
   // set the allStaticSharedLaterals argument to true.
   // If any lateral is unstructured, error.
-
-  bool foundTop = false;
+  
+  bool is_toroidal = IsInToroidalQuadToTri(reg_source);
+  GFace *root = findRootSourceFaceForFace(reg_source);
+  
+  bool foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
   std::list<GFace *> faces = gr->faces();
   std::list<GFace *>::iterator it = faces.begin();
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
+    if( (*it) == root )
+      foundRoot = true;
     if( face_tmp_ep && face_tmp_ep->geo.Mode ==
         COPIED_ENTITY ){
       GFace *top_source_tmp = model->getFaceByTag(
@@ -3882,6 +3942,10 @@ static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVe
     }
   }
 
+    // if didn't find the copied entity, maybe this is toroidal and the top has been replaced
+  if( is_toroidal && !foundTop && foundRoot && root != reg_source )
+    foundTop = true;
+
   if( !foundTop )
     Msg::Warning("In QuadToTriLateralRemesh(), could not find top face "
                  "for region %d.", gr->tag() );
@@ -3891,11 +3955,9 @@ static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVe
   // now loop through faces again, remeshing all laterals that need it.
   for( it = faces.begin(); it != faces.end(); it++ ){
     if( (*it) != reg_top && (*it) != reg_source &&
-        IsSurfaceALateralForRegion(gr, *it)
-        &&
-        (*it)->triangles.size() && !(*it)->quadrangles.size() ){
+        IsSurfaceALateralForRegion(gr, *it) ){
 
-      // *** JUST REMESH EVERY TRIANGLE SURFACE AGAIN TO BE SURE ***
+      // *** JUST REMESH EVERY SURFACE AGAIN TO BE SURE ***
 
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         delete (*it)->triangles[i];
@@ -3911,10 +3973,10 @@ static bool QuadToTriLateralRemesh( GRegion *gr, std::set<std::pair<MVertex*,MVe
 
 
 // Adds the face- or body-center vertices needed for some QuadToTri elements
-static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElements &c,
+static bool addBodyCenteredVertices( GRegion *to, CategorizedSourceElements &c,
                                            std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                            std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
-                                           bool is_dbl, unsigned int lat_tri_diags_size,
+                                           bool is_addverts, unsigned int lat_tri_diags_size,
                                            std::set<MVertex *, MVertexLessThanLexicographic> &pos )
 {
 
@@ -3927,42 +3989,31 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
   if( !from )
     return false;
 
-  // need these for double layer extrusion purposes
-  int j_second_from_top, k_second_from_top;
-  if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
-    j_second_from_top = ep->mesh.NbLayer-1;
-    k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-2;
-  }
-  else{
-    j_second_from_top = std::max(ep->mesh.NbLayer-2, 0);
-    k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-1;
-  }
-
   // find number of layers;
   unsigned int num_layer = 0;
   for( int p = 0; p < ep->mesh.NbLayer; p++ )
     num_layer += ep->mesh.NbElmLayer[p];
 
-  // If !is_dbl, make the body centered internal vertices for all "problem" elements
-  // If is_dbl, make face-centered verts where needed
-
   // create reserve capacity for the temp vector of new vertices:
   unsigned int cap_add = 0;
-  if( !is_dbl ){
+  if( !is_addverts ){
     std::map<MElement *, std::set< std::pair<unsigned int, unsigned int> > >::iterator itmap;
     for( itmap = problems.begin(); itmap != problems.end(); itmap++ )
       cap_add += itmap->second.size();
-    to->mesh_vertices.reserve(to->mesh_vertices.size()+cap_add);
   }
   else{
     unsigned int NbBndElems = c.four_bnd_pt_quad.size() + c.three_bnd_pt_tri.size() +
                               c.other_bnd_quad.size()   + c.other_bnd_tri.size();
     unsigned int NbSourceElems = from->triangles.size() + from->quadrangles.size();
-    cap_add = NbSourceElems + NbBndElems * ( num_layer-2 > 0 ? num_layer-2 : 0 );
+    if( findRootSourceFaceForFace(from) == from ) // if extruded back on the source in a ring
+      cap_add = NbBndElems * num_layer;
+    else
+      cap_add = NbSourceElems + NbBndElems * (num_layer-1);
   }
+  to->mesh_vertices.reserve(to->mesh_vertices.size()+cap_add);
 
-  // first the !is_dbl case
-  if( problems.size() && !is_dbl ){
+  // first the !is_addverts case
+  if( problems.size() && !is_addverts ){
     std::map<MElement *, std::set< std::pair<unsigned int, unsigned int> > >::iterator itmap;
     for( itmap = problems.begin(); itmap != problems.end(); itmap++ ){
       MElement *elem = itmap->first;
@@ -3977,10 +4028,10 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
     }
   }
 
-  if( !is_dbl )
+  if( !is_addverts )
     return 1;
 
-  // The rest of the function works for is_dbl, double layer quadToTri extrusion
+  // The rest of the function works for is_addverts
 
 
   //Holds the new vertices...put them in to->mesh_vertices only at the end
@@ -4034,7 +4085,7 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
           else if( edgeExists( verts3D[p+elem_size], verts3D[(p+1)%elem_size], quadToTri_edges ) )
             found_diags = true;
         }
-        // triangle extrusions don't need face centered verts if NO diags found
+        // triangle extrusions don't need body centered verts if NO diags found
         // or if not on lateral boundary
         if( !t && ( !found_diags || s==2 ) )
           continue;
@@ -4044,19 +4095,17 @@ static bool addFaceOrBodyCenteredVertices( GRegion *to, CategorizedSourceElement
           j_start = 0;
           k_start = 0;
         }
-        else{  // only non quads not extruded into degen hexa should execute this
-          j_start = j_second_from_top;
-          k_start = k_second_from_top;
+        else{  // only non-bnd quads or columns with no lateral diags and not extruded into degen hexa should execute this
+          j_start = ep->mesh.NbLayer-1;
+          k_start = ep->mesh.NbElmLayer[j_start]-1;
         }
-        std::vector<MVertex*> v_face;
+        std::vector<MVertex*> verts;
         for( int j = j_start; j < ep->mesh.NbLayer; j++ ){
-          int k_start_tmp = (j == j_start) ? k_start : 0;
-          int k_stop = (j == ep->mesh.NbLayer-1)
-                       ? ep->mesh.NbElmLayer[j]-1 : ep->mesh.NbElmLayer[j];
-          for( int k = k_start_tmp; k < k_stop; k++ ){
-            v_face.resize(0);
-            get2DExtrudedVertices( elem, ep, j, k+1, pos, v_face);
-            QtMakeCentroidVertex(v_face, &v_tmp, to, pos);
+          int k_stop = ep->mesh.NbElmLayer[j];
+	  for( int k = k_start; k < k_stop; k++ ){
+            verts.resize(0);
+            getExtrudedVertices(elem, ep, j, k, pos, verts);
+            QtMakeCentroidVertex(verts, &v_tmp, to, pos);
           }
         }
       }
@@ -4101,7 +4150,7 @@ static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<M
   std::vector<double> centroid = QtFindVertsCentroid(v);
   MVertex tmp(centroid[0], centroid[1], centroid[2], 0, -1);
 
-  // it's too dangerous to use the 'new' command in here even with face-centered vertices.
+  // it's too dangerous to use the 'new' command in here even with body-centered vertices.
 
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   itp = pos.find(&tmp);
@@ -4168,7 +4217,7 @@ static void MeshWithInternalVertex( GRegion *to, MElement *source, std::vector<M
 // Can pick top or bottom faces to have the vertex, or both, based on the top_flag and bottom_flag args.
 // created here in the code
 // Added 2010-04-05
-static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vector<MVertex *> v, std::vector<int> n1,
+/*static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vector<MVertex *> v, std::vector<int> n1,
                                         std::vector<int> n2, bool bottom_flag, bool top_flag,
                                         std::set<MVertex *, MVertexLessThanLexicographic> &pos )
 {
@@ -4307,6 +4356,8 @@ static void MeshWithFaceCenteredVertex( GRegion *to, MElement *source, std::vect
 
 }
 
+*/
+
 
 // Construct the elements that subdivide a prism (or degenerated prism)  in a QuadToTri interface;
 // Added 2010-01-24
@@ -4315,7 +4366,7 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool diag_search,
+                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_addverts, bool diag_search,
                               std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
   int dup[3];
@@ -4324,25 +4375,8 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
     if(v[i] == v[i + 3])
       dup[m++] = i;
 
-
-  ExtrudeParams *ep = to->meshAttributes.extrude;
-
-  // need these for double layer extrusion purposes
-  /*unsigned int j_second_from_top = 0, k_second_from_top = 0;
-  if( ep ){
-    if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
-      j_second_from_top = ep->mesh.NbLayer-1;
-      k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-2;
-    }
-    else{
-      j_second_from_top = std::max(ep->mesh.NbLayer-2, 0);
-      k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-1;
-    }
-  }*/
-
-
   bool is_problem = false;
-  if( !is_dbl ){
+  if( !is_addverts ){
     std::pair<unsigned int, unsigned int> jk_pair (j,k);
     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > >::iterator itprob;
     itprob = problems.find(source);
@@ -4385,19 +4419,14 @@ static inline void QuadToTriPriPyrTet(std::vector<MVertex*> &v, GRegion *to, int
     }
   }
 
-  // mesh double layer
-  // is this prism part of a QuadToTri Double Layer extrusion and does it need to be extruded as such?
-  if( is_dbl && bnd_elem && found_diags ){
-    if( j==0 && k==0 )
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 0, 1, pos );
-    else if( j >= ep->mesh.NbLayer-1 && k >= ep->mesh.NbElmLayer[ep->mesh.NbLayer-1]-1 )
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 0, pos );
-    else
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 1, pos );
+  // mesh with added internal body centered vertex
+  // is this prism part of a QuadToTri internal vertex extrusion and does it need to be extruded as such?
+  if( is_addverts && bnd_elem && found_diags ){
+    MeshWithInternalVertex( to, source, v, n1, n2, pos );
     return;
   }
 
-  // The rest are for single layer extrusions or degenerate prisms:
+  // The rest are for 'no new vertex' extrusions or degenerate prisms:
 
 
   // tetrahedron
@@ -4479,7 +4508,7 @@ static inline bool createTwoPtDegenHexElems( std::vector<MVertex*> &v, GRegion *
                                       std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
+                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_addverts, bool found_diags,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
@@ -4577,7 +4606,7 @@ static inline bool createOnePtDegenHexElems( std::vector<MVertex*> &v, GRegion *
                                       std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                       std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
+                                      unsigned int lat_tri_diags_size, bool bnd_elem, bool is_addverts, bool found_diags,
                                       std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
@@ -4818,7 +4847,7 @@ static inline bool createFullHexElems( std::vector<MVertex*> &v, GRegion *to, Ex
                                 std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                                 std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                                 std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                                unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool found_diags,
+                                unsigned int lat_tri_diags_size, bool bnd_elem, bool is_addverts, bool found_diags,
                                 std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
@@ -5216,7 +5245,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
                               std::set<std::pair<MVertex*, MVertex*> > &quadToTri_edges,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems,
                               std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > > &problems_new,
-                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_dbl, bool diag_search,
+                              unsigned int lat_tri_diags_size, bool bnd_elem, bool is_addverts, bool diag_search,
                               std::set<MVertex*, MVertexLessThanLexicographic> &pos )
 {
 
@@ -5229,7 +5258,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
   bool is_problem = false;
 
   // is element marked as needing internal vertex?
-  if( !is_dbl ){
+  if( !is_addverts ){
     std::pair<unsigned int, unsigned int> jk_pair (j,k);
     std::map<MElement*, std::set<std::pair<unsigned int, unsigned int> > >::iterator itprob;
     itprob = problems.find(source);
@@ -5241,20 +5270,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
 
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
-  // need these for double layer extrusion purposes
-  int j_second_from_top = 0, k_second_from_top = 0;
-  if( ep ){
-    if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
-      j_second_from_top = ep->mesh.NbLayer-1;
-      k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-2;
-    }
-    else{
-      j_second_from_top = std::max(ep->mesh.NbLayer-2, 0);
-      k_second_from_top = ep->mesh.NbElmLayer[j_second_from_top]-1;
-    }
-  }
-
-
+  
   // variables to hold of each faces's diagonal vertex nodes
   bool found_diags = false;
   std::vector<int> n1, n2;
@@ -5297,33 +5313,26 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
   }
 
 
-  // Divide by double layer extrusion method?
-  if( is_dbl && ( found_diags || j > j_second_from_top ||
-                  (j==j_second_from_top && k >= k_second_from_top) || m==1 ) ){
-    if( (j==0 && k==0) ||
-        (j==j_second_from_top && k==k_second_from_top && ( !bnd_elem || !found_diags ) && m != 1) )
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 0, 1, pos );
-    else if( j == ep->mesh.NbLayer-1 && k == ep->mesh.NbElmLayer[j]-1 )
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 0, pos );
-    else
-      MeshWithFaceCenteredVertex( to, source, v, n1, n2, 1, 1, pos );
+  // Divide by new internal vertex extrusion method?
+  if( is_addverts && ( found_diags || m==1 ) ){
+    MeshWithInternalVertex( to, source, v, n1, n2, pos );
     return;
   }
 
 
-  // The of the possibilites are for a single layer extrusion
+  // The of the possibilites are for a 'no new vertex' extrusion
 
   // PRISM
   else if( m == 2 && !is_problem ){
     if( createTwoPtDegenHexElems( v, to, ep, j, k, dup, source, n1, n2, quadToTri_edges, problems,
-                                  problems_new, lat_tri_diags_size, bnd_elem, is_dbl, found_diags, pos ) )
+                                  problems_new, lat_tri_diags_size, bnd_elem, is_addverts, found_diags, pos ) )
       return;
   }
 
   // DEGENERATE HEXAHEDRON
   else if( m == 1 && !is_problem ){
     if( createOnePtDegenHexElems( v, to, ep, j, k, dup, source, n1, n2, quadToTri_edges, problems,
-                                  problems_new, lat_tri_diags_size, bnd_elem, is_dbl, found_diags, pos ) )
+                                  problems_new, lat_tri_diags_size, bnd_elem, is_addverts, found_diags, pos ) )
       return;
   }
 
@@ -5331,7 +5340,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
   // FULL HEXAHEDRON
   else if( !is_problem ){
     if( createFullHexElems( v, to, ep, j, k, dup, source, n1, n2, quadToTri_edges, problems,
-                            problems_new, lat_tri_diags_size, bnd_elem, is_dbl, found_diags, pos ) )
+                            problems_new, lat_tri_diags_size, bnd_elem, is_addverts, found_diags, pos ) )
       return;
   }
 
@@ -5359,7 +5368,7 @@ static inline void QuadToTriHexPri(std::vector<MVertex*> &v, GRegion *to, int j,
 // in the element vectors in the region 'to'
 // *** STILL EXPERIMENTAL -- It *kind* of works to limit memory footprint of vectors.
 /*
-static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool is_dbl, unsigned int num_layers,
+static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool is_addverts, unsigned int num_layers,
                                               unsigned int lat_tri_diags_size, CategorizedSourceElements *c,
                                               std::map<MElement*, std::set<std::pair<unsigned int,
                                                        unsigned int> > > *problems )
@@ -5386,7 +5395,7 @@ static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool i
   // in case !ep->Recombine is ever allowed...
   if( !ep->mesh.Recombine )
     to->tetrahedra.reserve( num_layers*(3*num_tri + 6*num_quad + 8*num_prob_tri + 12*num_prob_quad) );
-  else if( !is_dbl ){
+  else if( !is_addverts ){
     //to->tetrahedra.reserve( (6*num_quad + 3*num_tri +2*lat_tri_diags_size + 8*num_prob_tri + 12*num_prob_quad) );
     to->prisms.reserve( num_tri*num_layers );
     to->hexahedra.reserve( num_quad*(num_layers-1) );
@@ -5403,7 +5412,7 @@ static void reserveQuadToTriCapacityForRegion( GRegion *to, GFace *from,  bool i
 */
 
 // displays for the user a list of the body centered vertices created for problem elements.
-static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
+static void listBodyCenteredVertices( GRegion *to, bool is_addverts,
                                       std::map<MElement *, std::set<std::pair<unsigned int,unsigned int> > > *problems,
                                       std::map<MElement *, std::set<std::pair<unsigned int,unsigned int> > > *problems_new,
                                       std::set<MVertex*, MVertexLessThanLexicographic> *pos )
@@ -5425,7 +5434,7 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
     for( itmap = problems_new->begin(); itmap!= problems_new->end(); itmap++ )
       (*problems)[itmap->first].insert( itmap->second.begin(), itmap->second.end() );
 
-    if( is_dbl ){
+    if( is_addverts ){
       it_begin = problems_new->begin();
       it_end = problems_new->end();
     }
@@ -5442,14 +5451,14 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
 
     if( int_verts_count ){
       if( int_verts_count == 1 )
-        Msg::Error("QuadToTri meshed %d element in region %d "
+        Msg::Warning("QuadToTri meshed %d element in region %d "
                    "with a body-centered internal vertex.",
                    int_verts_count, to->tag() );
       else
-        Msg::Error("QuadToTri meshed %d elements in region %d "
+        Msg::Warning("QuadToTri meshed %d elements in region %d "
                    "with body-centered internal vertices.",
                    int_verts_count, to->tag() );
-      Msg::Error("( Mesh *should* still conformal, but the user should be aware of these internal vertices. )" );
+      Msg::Warning("( Mesh *should* still conformal, but the user should be aware of these internal vertices. )" );
 
       unsigned int int_verts_count2 = 0;
 
@@ -5463,7 +5472,7 @@ static void listBodyCenteredVertices( GRegion *to, bool is_dbl,
             // find centroid
             std::vector<double> centroid = QtFindVertsCentroid(verts);
             int_verts_count2++;
-            Msg::Error("Internal Vertex %d at (x,y,z) = (%g, %g, %g).", int_verts_count2,
+            Msg::Warning("Internal Vertex %d at (x,y,z) = (%g, %g, %g).", int_verts_count2,
                        centroid[0], centroid[1], centroid[2] );
           }
         }
@@ -5501,14 +5510,14 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   for( int j = 0; j < ep->mesh.NbLayer; j++ )
     num_layers += ep->mesh.NbElmLayer[j];
 
-  // Is this a valid double layer extrusion?
-  bool is_dbl = false;
-  if( num_layers >= 2 && ( ep->mesh.QuadToTri == QUADTRI_DBL_1 || ep->mesh.QuadToTri == QUADTRI_DBL_1_RECOMB ) )
-    is_dbl = true;
+  // Is this a valid 'add internal vertex' extrusion?
+  bool is_addverts = false;
+  if( ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1 || ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1_RECOMB )
+    is_addverts = true;
 
   // Find where top divided layer starts
   /*int j_top_start = 0, k_top_start = 0;
-  if( is_dbl ){  // second from top
+  if( is_addverts ){  // second from top
     if( ep->mesh.NbElmLayer[ep->mesh.NbLayer-1] > 1 ){
       j_top_start = ep->mesh.NbLayer-1;
       k_top_start = ep->mesh.NbElmLayer[j_top_start]-2;
@@ -5541,7 +5550,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
 
 
   // Make the extra vertices needed for Some QuadToTri elements
-  if( !addFaceOrBodyCenteredVertices( to, cat_src_elems, quadToTri_edges, problems, is_dbl,
+  if( !addBodyCenteredVertices( to, cat_src_elems, quadToTri_edges, problems, is_addverts,
                                       lat_tri_diags_size, pos ) ){
     Msg::Error("QuadToTriCreateElements() could not add face or body vertices for QuadToTri region %d.", to->tag() );
     return false;
@@ -5549,7 +5558,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
 
   // reserve enough capacity for all possible elements, try to find combination of simplicity and memory efficiency.
   //  *** EXPERIMENTAL ***
-  //reserveQuadToTriCapacityForRegion( to, from, is_dbl, num_layers, lat_tri_diags_size, &cat_src_elems, &problems );
+  //reserveQuadToTriCapacityForRegion( to, from, is_addverts, num_layers, lat_tri_diags_size, &cat_src_elems, &problems );
 
   // create elements:
 
@@ -5584,7 +5593,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
           if( getExtrudedVertices(elem, ep, j, k, pos, verts) == 6 ){
             QuadToTriPriPyrTet( verts, to, j, k, elem, quadToTri_edges,
                                problems, problems_new, lat_tri_diags_size,
-                               bnd_elem, is_dbl, 1, pos );
+                               bnd_elem, is_addverts, 1, pos );
           }
         }
       }
@@ -5631,7 +5640,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
             if(getExtrudedVertices(elem, ep, j, k, pos, verts) == 8 ){
               QuadToTriHexPri(verts, to, j, k, elem, quadToTri_edges,
                               problems, problems_new, lat_tri_diags_size,
-                              bnd_elem, is_dbl, 1, pos);
+                              bnd_elem, is_addverts, 1, pos);
             }
           }
         }
@@ -5646,7 +5655,7 @@ bool QuadToTriCreateElements(GRegion *to,  CategorizedSourceElements &cat_src_el
   }
 
   // List for the user any elements with internal vertices:
-  listBodyCenteredVertices( to, is_dbl, &problems, &problems_new, &pos );
+  listBodyCenteredVertices( to, is_addverts, &problems, &problems_new, &pos );
 
 
   // Now revert any elements that have positive  volume.
@@ -5728,6 +5737,7 @@ int meshQuadToTriRegion( GRegion *gr, std::set<MVertex*, MVertexLessThanLexicogr
     std::set<std::pair<MVertex*, MVertex*> > lat_tri_diags;
     std::map<MElement*, std::set<std::pair<unsigned int,unsigned int> > > problems;
 
+    // first thing is first
     // data structure for boundary status-categorized source elements,
     // (member data containers defined in .h file)
     CategorizedSourceElements cat_src_elems( gr );

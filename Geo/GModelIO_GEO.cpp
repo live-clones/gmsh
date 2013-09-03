@@ -212,6 +212,22 @@ int GModel::importGEOInternals()
         f->meshAttributes.recombineAngle = s->RecombineAngle;
         f->meshAttributes.method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
+        // transfinite import Added by Trevor Strickler.  This helps when experimenting
+        // to create compounds from transfinite surfs. Not having it does not break
+        // anything Gmsh *officially* does right now, but maybe it was left out by mistake??? and could
+        // cause problems later?
+        f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
+        f->meshAttributes.corners.clear();
+        for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
+          Vertex *corn;
+          List_Read(s->TrsfPoints, i, &corn);
+          GVertex *gv = f->model()->getVertexByTag(corn->Num);
+          if(gv)
+            f->meshAttributes.corners.push_back(gv);
+          else
+            Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
+        }
+        
         add(f);
         if(s->EmbeddedCurves){
           for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){

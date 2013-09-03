@@ -337,6 +337,18 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
           _index, x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
+void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  if(dim == 2)
+    fprintf(fp, "%.16g %.16g %d\n", x() * scalingFactor, y() * scalingFactor,
+             _index - 1);
+  else
+    fprintf(fp, "%.16g %.16g %.16g %d\n", x() * scalingFactor, y() * scalingFactor,
+            z() * scalingFactor, _index - 1);
+}
+
 std::set<MVertex*, MVertexLessThanLexicographic>::iterator
 MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {

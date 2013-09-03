@@ -31,7 +31,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 ****************************************************************************************************/
-
+#include <stdlib.h>
 #include "QuadTriUtils.h"
 
 
@@ -58,6 +58,218 @@ ExtrusionElementMap::addExtrudedElemVector(MElement* source, std::vector<MElemen
   }
 
 }*/
+
+
+// By Geuzaine, Remacle...
+static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
+                        GFace *to)
+{
+  MTriangle* newTri = new MTriangle(v1, v2, v3);
+  to->triangles.push_back(newTri);
+}
+
+// this determines if a face is a non-lateral face in a structured toroidal volume extrusion with at 
+// least one QuadToTri region...
+int IsInToroidalQuadToTri(GFace *face)
+{
+   if( !face )
+     return false;
+   
+   GModel *model = face->model();
+   
+   bool is_toroidal = false, is_quadtri = false, is_noaddverts = false;
+   
+   // Find the root face first...then step back through extrusions as far as can find
+   // another structured region.  If there is a single quadtri region, and this is a torus that
+   // extrudes back onto the root source surface, then return true.
+   GFace *root_face = 0;
+   root_face = findRootSourceFaceForFace(face);
+   unsigned int numRegions = 0;
+   std::vector<GRegion*> adj_extruded_reg;
+   
+   //find the two regions adjacent to the root face. If this is a structured torus, then both regions
+   // should be structured extrusions and BOTH should have the same root face
+   std::set<GRegion *, GEntityLessThan>::iterator itreg;
+   for( itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++ ){
+      // save time
+      if( numRegions >= 2 )
+	break;
+
+      GRegion *region = (*itreg);
+
+      // is region in the current model's regions or is it deleted?
+      if( !FindVolume( ( region->tag() ) ) )
+	continue;
+
+      // does face belong to region and if so is it a structured extrusion?
+      std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+      if( std::find( region_faces.begin(), region_faces.end(), root_face ) !=
+	    region_faces.end() && region->meshAttributes.extrude && 
+	  region->meshAttributes.extrude->mesh.ExtrudeMesh &&
+	  region->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY ){
+	
+	adj_extruded_reg.push_back(region);
+	numRegions++;
+      }
+      else
+	continue;
+    }
+    // if there are two structured extruded regions adjacent to the root face,
+    // then find the one that is NOT extruded from the root directly.  Then follow this 
+    // face as far as possible back to the source.
+    
+    GRegion *last_region = 0;
+    GFace *last_reg_source = 0;
+    bool found_first = 0, found_last = 0;
+    if( numRegions == 2 ){
+      for( int ind = 0; ind <= 1; ind++ ){
+	ExtrudeParams *adj_ep = adj_extruded_reg[ind]->meshAttributes.extrude;
+	GFace *reg_source = 0;
+	
+	if( adj_ep && adj_ep->mesh.ExtrudeMesh ){
+	  reg_source = model->getFaceByTag(std::abs( adj_ep->geo.Source ) );
+          if( adj_ep->mesh.QuadToTri ){
+	    is_quadtri = true;
+	    if( adj_ep->mesh.QuadToTri == QUADTRI_NOVERTS_1 || 
+	        adj_ep->mesh.QuadToTri == QUADTRI_NOVERTS_1_RECOMB )
+	      is_noaddverts = true;
+	  }
+	}
+	if( reg_source ){
+	  if( reg_source != root_face ){
+	    last_region = adj_extruded_reg[ind];
+	    last_reg_source = reg_source;
+	    found_last = true;
+	  }
+	  else{
+	    found_first = true;
+	  }
+	}
+	else{
+	  Msg::Error("In IsInToroidalQuadToTri(), could not find source face of region %d",
+               adj_extruded_reg[ind]->tag() );
+	  return 0;
+	}
+      }
+    }
+
+    //walk back around to beginning if possible 
+    if( last_region && found_first && found_last ){
+      GFace *iter_face = last_reg_source;
+      GFace *iter_source_face = 0;
+      bool done = false;
+      unsigned int maxiter = model->getNumFaces() + 2;
+      unsigned int counter = 0;
+      while( !done && counter <= maxiter ){
+	counter++;
+	if( iter_face ){
+	  ExtrudeParams *iter_eps = iter_face->meshAttributes.extrude;
+	  if( iter_eps && iter_eps->mesh.ExtrudeMesh && 
+	      iter_eps->geo.Mode == COPIED_ENTITY ){
+	    if( iter_eps->mesh.QuadToTri )
+	      is_quadtri = true;
+	    iter_source_face = model->getFaceByTag(std::abs( iter_eps->geo.Source ));
+	    if( iter_source_face ){
+	      if( iter_source_face == root_face ){
+		is_toroidal = true;
+		done = true;
+	      }
+	      else
+		iter_face = iter_source_face;
+	    }
+	    else{
+	      Msg::Error("In IsInToroidalQuadToTri(), could not find source face of face %d",
+                          iter_face->tag() );
+	      return 0;
+	    }
+	  }
+	  else // if we found a source face not extruded as part of structured source (ie, not copied)
+	    return 0;
+	}
+	else{
+	  Msg::Error("In IsInToroidalQuadToTri(), could not find a face...");
+	  return 0;
+	}
+      }
+    }
+    
+    // now return
+    if( is_toroidal && is_quadtri ){
+      if( !is_noaddverts )
+        return 1;
+      else
+	return 2;
+    }
+    else
+      return 0;
+}
+
+// replace boundary quads in a source surface for toroidal quadtri extrusion
+void ReplaceBndQuadsInFace(GFace *face)
+{
+  ExtrudeParams *ep = face->meshAttributes.extrude;
+  bool is_struct = false;
+  if( (ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) ||
+      face->meshAttributes.method == MESH_TRANSFINITE  )
+    is_struct = true;
+  GFace *root_face = findRootSourceFaceForFace( face );
+  if( root_face == face ){
+    std::set<MVertex*, MVertexLessThanLexicographic> pos_src_edge;
+    QuadToTriInsertFaceEdgeVertices(face, pos_src_edge);
+    std::vector<MQuadrangle*> quads2; 
+    //loop through source quads, if on boundary, delete them
+    for(unsigned int i = 0; i < face->quadrangles.size(); i++){
+      std::vector<MVertex*> verts;
+      int num_verts = face->quadrangles[i]->getNumVertices();
+      bool on_edge = false;
+      
+      for( int j = 0; j < num_verts; j++ )
+	verts.push_back(face->quadrangles[i]->getVertex(j));
+      
+      for( int j = 0; j < num_verts; j++ ){
+	if( pos_src_edge.find( verts[j] ) != pos_src_edge.end() ){
+	  on_edge = true;
+	  break;
+	}
+      }
+      if( on_edge ){
+	delete face->quadrangles[i];
+	if( is_struct ){
+	  addTriangle( verts[0],verts[2], verts[3],face);
+	  addTriangle( verts[0],verts[1], verts[2],face);
+	}
+	else{
+	  // draw other diagonals to minimize difference in average edge length with diagonal length, in quadrature
+
+	  double mag_sq_ave = 0.0;
+	  for( int p = 0; p < 4; p++ ){
+	    int d_leg = verts[p]->distance(verts[(p+1)%4]);
+	    mag_sq_ave += d_leg*d_leg;
+	  }
+	  mag_sq_ave /= 4.0;
+
+	  double d1 = verts[0]->distance(verts[2]);
+	  double d2 = verts[1]->distance(verts[3]);
+
+	  if(fabs(d1*d1-mag_sq_ave) <= fabs(d2*d2-mag_sq_ave) ){
+	    addTriangle(verts[0],verts[1],verts[2],face);
+	    addTriangle(verts[0],verts[2],verts[3],face);
+	  }
+	  else{
+	    addTriangle(verts[1],verts[2],verts[3],face);
+	    addTriangle(verts[1],verts[3],verts[0],face);
+	  }
+	}
+      }
+      else
+	quads2.push_back(face->quadrangles[i]);
+    }
+    face->quadrangles.clear();
+    face->quadrangles = quads2;
+  }
+  
+}
+
 
 // Insert all vertices on a region's source edge, including corners,
 // into pos_src_edge set.
@@ -405,7 +617,8 @@ std::pair<int, int> FindDiagonalEdgeIndices( std::vector<MVertex*> verts,
   for( int s = 0; s < s_max; s++ ){
     if( s != 0 && !wrong_guess  ){
       wrong_guess = true;
-      Msg::Error("FindDiagonalEdgeIndices() encountered unexpected surface configuration.");
+      if( !face->quadrangles.size() )
+	Msg::Error("FindDiagonalEdgeIndices() encountered unexpected surface configuration.");
     }
     int v_count0 = 0,  v_count1 = 0;
     elem_tmp = (MElement*)(face->triangles[(s+index_guess)%s_max]);
@@ -432,7 +645,8 @@ std::pair<int, int> FindDiagonalEdgeIndices( std::vector<MVertex*> verts,
     }
   }
 
-  Msg::Error("In FindDiagonalEdge(), could not "
+  if( !face->quadrangles.size() )
+    Msg::Error("In FindDiagonalEdgeIndices(), could not "
              "find a diagonal on surface %d.",
              face->tag() );
   return std::pair<int,int>(0,0);
@@ -463,7 +677,6 @@ int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
     regions_count = 0;
 
   // pedantic search
-  std::vector<GRegion *> all_regions;
   std::set<GRegion *, GEntityLessThan>::iterator itreg;
   for( itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++ ){
     std::list<GFace *> reg_faces = (*itreg)->faces();
@@ -592,7 +805,6 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
 
   return 1; // if code executes here, passed all tests
 }
-
 
 // Function to determine if a face is a top surface for a region.  It returns 1
 // if the face is COPIED_ENTITY with source = region's source and if face belongs to region.

@@ -1014,6 +1014,8 @@ void GFaceCompound::getBoundingEdges()
   getUniqueEdges(_unique);
 
   l_edges.clear();
+  l_dirs.clear();    // added by Trevor Strickler 
+
 
   if(_U0.size()){
     // in case the bounding edges are explicitely given
@@ -1066,7 +1068,35 @@ void GFaceCompound::getBoundingEdges()
       }
     }
   }
+
+    // Added by Trevor Strickler (fill in the l_dirs)
+  std::list<GEdge*>::iterator it_loop;
+  std::list<std::list<GEdge*> >::iterator it_interior;
+  l_edges.clear();
+     
+  for( it_interior = _interior_loops.begin(); it_interior != _interior_loops.end(); it_interior++ ){
+    for( it_loop = it_interior->begin(); it_loop != it_interior->end(); it_loop++ ){
+      l_edges.push_back( (*it_loop) );
+      std::list<GEdge*>::iterator it_loop_next = it_loop;
+      it_loop_next++;
+      if( it_loop_next == it_interior->end() ) 
+        it_loop_next = it_interior->begin();
+      GVertex *vB = (*it_loop)->getBeginVertex();
+      GVertex *vE = (*it_loop)->getEndVertex();  
+      GVertex *vB_next = (*it_loop_next)->getBeginVertex();
+      GVertex *vE_next = (*it_loop_next)->getEndVertex();
+      if( vB == vB_next || vB == vE_next )
+        l_dirs.push_back(-1);
+      else if( vE == vB_next || vE == vE_next )
+        l_dirs.push_back(1);
+      else{
+       l_dirs.push_back(0);
+      }
+    }
+  }
+  
 }
+
 
 double GFaceCompound::getSizeH() const
 {
@@ -1134,6 +1164,49 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
     _unique.erase(it);
 
     bool found = false;
+/* Mod by Trevor Strickler: In the old implementation, the iterator 
+    itx was incremented twice per loop and _loops was not set up correctly.  
+    The While Loop below replaces the old for loop. 
+*/
+    for(int i = 0; i < 2; i++) {           
+      std::set<GEdge*>::iterator itx = _unique.begin();
+      while (itx != _unique.end() ){
+        GVertex *v1 = (*itx)->getBeginVertex();
+        GVertex *v2 = (*itx)->getEndVertex();
+        
+        std::set<GEdge*>::iterator itp = itx;
+        itx++;
+        
+        if(v1 == vE ){
+          _loop.push_back(*itp);
+          vE = v2;
+          i = -1;
+          _unique.erase(itp);
+        }
+        else if(v2 == vE){
+          _loop.push_back(*itp);
+          vE = v1;
+          i=-1;
+          _unique.erase(itp);
+        }
+      }
+      
+      if(vB == vE) {
+        found = true;
+        break;
+      }
+      
+      if(_unique.empty())  break;
+
+      // Mod by Trevor Strickler: had to wrap this in an if
+      //  or else it was executed when i == -1, which is not good.      
+      if( i != -1 ){
+        GVertex *temp = vB;
+        vB = vE;
+        vE = temp;
+      }
+    }
+    /* This is the old version of above nested loops before modified by Trevor Strickler
     for(int i = 0; i < 2; i++) {
       for(std::set<GEdge*>::iterator itx = _unique.begin();
           itx != _unique.end(); ++itx){
@@ -1170,7 +1243,7 @@ void GFaceCompound::computeALoop(std::set<GEdge*> &_unique, std::list<GEdge*> &l
       GVertex *temp = vB;
       vB = vE;
       vE = temp;
-    }
+    }*/
 
     if(found == true) break;
 

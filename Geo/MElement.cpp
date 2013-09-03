@@ -1169,6 +1169,16 @@ void MElement::writeINP(FILE *fp, int num)
   fprintf(fp, "\n");
 }
 
+void MElement::writeSU2(FILE *fp, int num)
+{
+  setVolumePositive();
+  fprintf(fp, "%d ", getTypeForVTK());
+  for(int i = 0; i < getNumVertices(); i++)
+    fprintf(fp, "%d ", getVertexVTK(i)->getIndex() - 1);
+  if(num >= 0) fprintf(fp, "%d\n", num);
+  else fprintf(fp, "\n");
+}
+
 int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){

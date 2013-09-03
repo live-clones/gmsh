@@ -16,15 +16,19 @@ struct xyzv {
   double x, y, z, *vals;
   int nbvals;
   int nboccurences;
+  double scaleValue;  // Added by Trevor Strickler for scaling last element layer in quadtri boundary layer to make better quality interfaces
+  int scale_numvals;
   static double eps;
   xyzv(double xx, double yy, double zz)
-    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0) {}
+    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0), scaleValue(1.0), scale_numvals(0) {}  // Trevor Strickler modified
   ~xyzv(){ if(vals) delete [] vals; }
   // these are needed for set<> operations since the default copy
   // constructor won't allocate *vals
   xyzv(const xyzv & other);
   xyzv & operator = (const xyzv &other);
   void update(int n, double *v);
+  void scale_update(double scale_val);  // Trevor Strickler
+
 };
 
 struct lessthanxyzv {
@@ -54,6 +58,8 @@ class smooth_data{
   smooth_data() {}
   void add(double x, double y, double z, int n, double *vals);
   bool get(double x, double y, double z, int n, double *vals);
+  void add_scale(double x, double y, double z, double scale_val);  // Trevor Strickler
+  bool get_scale(double x, double y, double z, double *scale_val); // Trevor Strickler
   void normalize();
   bool exportview(std::string filename);
 };

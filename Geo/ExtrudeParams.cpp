@@ -10,6 +10,14 @@
 smooth_data* ExtrudeParams::normals[2] = {0, 0};
 std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 
+// Added by Trevor Strickler to scale last layer size locally
+// If one section of the boundary layer index = 0 or 1  is not supposed to be
+// scaled...that section's normals will have scaleFactor = 1.0 (exactly  1.0 to all sig figs)
+// ...however, if that non-scaled
+// section borders a scaled section, the boundary normals will extrude consistently (an 
+// average of scaled and non-scaled heights).
+bool ExtrudeParams::calcLayerScaleFactor[2] = {0,0};  // Added by Trevor Strickler
+
 static void Projette(double p[3], double mat[3][3])
 {
   double X = p[0] * mat[0][0] + p[1] * mat[0][1] + p[2] * mat[0][2];
@@ -27,6 +35,8 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
   mesh.QuadToTri = NO_QUADTRI;
+  //added by Trevor Strickler 07/07/2013 (determines if a layer is scaled by source grid size (1) or not (0))...only meant for boundary layers
+  mesh.ScaleLast = false;
   mesh.ViewIndex = -1;
   mesh.BoundaryLayerIndex = 0;
 }
@@ -53,6 +63,22 @@ void ExtrudeParams::Extrude(int iLayer, int iElemLayer,
                             double &x, double &y, double &z)
 {
   double t = u(iLayer, iElemLayer);
+  // Trevor Strickler (this definitely relies on fixing lateral boundary extruded
+  // surfaces if mesh.ScaleLast is changed by ReplaceDuplicates.  This is done in BoundaryLayers.cpp right now.
+  if( geo.Type == BOUNDARY_LAYER && calcLayerScaleFactor[mesh.BoundaryLayerIndex]  && iLayer == mesh.NbLayer-1 &&
+      mesh.BoundaryLayerIndex >= 0 && mesh.BoundaryLayerIndex <= 1 && normals[mesh.BoundaryLayerIndex] ){
+    double scale = 1.0;
+    normals[mesh.BoundaryLayerIndex]->get_scale(x, y, z, &scale);
+    if( fabs(scale-1.0) <= xyzv::eps )
+      scale = 1.0;
+    else{
+      if( mesh.NbLayer == 1 )
+	t = t * scale;
+      else
+        t = (t-mesh.hLayer[mesh.NbLayer-2])*scale + mesh.hLayer[mesh.NbLayer-2];
+    }
+  }
+
   Extrude(t, x, y, z);
 }
 

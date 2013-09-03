@@ -187,6 +187,9 @@ PolarSphere             return tPolarSphere;
 Printf                  return tPrintf;
 Plugin                  return tPlugin;
 
+Quad[tT]ri[aA]dd[vV]erts        return tQuadTriAddVerts;
+Quad[tT]ri[nN]o[nN]ew[vV]erts   return tQuadTriNoNewVerts;
+
 Quad[tT]ri[dD]bl        return tQuadTriDbl;
 Quad[tT]ri[sS]ngl       return tQuadTriSngl;
 
@@ -200,6 +203,7 @@ RefineMesh              return tRefineMesh;
 Return                  return tReturn;
 Reverse                 return tReverse;
 
+ScaleLastLayer          return tScaleLast;
 Smoother                return tSmoother;
 SetOrder                return tSetOrder;
 Sqrt                    return tSqrt;

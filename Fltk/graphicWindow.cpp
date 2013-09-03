@@ -272,6 +272,8 @@ static int _save_inp(const char *name){ return unvinpFileDialog
     (name, "Abaqus INP Options", FORMAT_INP); }
 static int _save_celum(const char *name){ return genericMeshFileDialog
     (name, "CELUM Options", FORMAT_CELUM, false, false); }
+static int _save_su2(const char *name){ return genericMeshFileDialog
+    (name, "SU2 Options", FORMAT_SU2, false, false); }
 static int _save_med(const char *name){ return genericMeshFileDialog
     (name, "MED Options", FORMAT_MED, false, false); }
 static int _save_mesh(const char *name){ return genericMeshFileDialog
@@ -335,6 +337,7 @@ static int _save_auto(const char *name)
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
   case FORMAT_CELUM: return _save_celum(name);
+  case FORMAT_SU2  : return _save_su2(name);
   case FORMAT_P3D  : return _save_p3d(name);
   case FORMAT_IR3  : return _save_ir3(name);
   case FORMAT_STL  : return _save_stl(name);
@@ -392,6 +395,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
     {"Mesh - VTK" TT "*.vtk", _save_vtk},
     {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
+    {"Mesh - SU2" TT "*.su2", _save_su2},
     {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
 #if defined(HAVE_MED)
     {"Post-processing - MED" TT "*.rmed", _save_view_med},

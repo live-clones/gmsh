@@ -35,6 +35,7 @@ GNU General Public License for more details.
 #if !defined(_QUADTRIUTILS_H_)
 #define _QUADTRIUTILS_H_
 
+#include <stdlib.h>
 #include "ExtrudeParams.h"
 #include "Geo.h"
 #include "GEntity.h"
@@ -105,6 +106,13 @@ struct CategorizedSourceElements{
   // constructor
   CategorizedSourceElements( GRegion *gr );
 };
+
+// this determines if a face is a non-lateral face in a structured toroidal volume extrusion with at 
+// least one QuadToTri region...
+int IsInToroidalQuadToTri(GFace *face);
+
+// replace boundary quads in a source surface for toroidal quadtri extrusion
+void ReplaceBndQuadsInFace(GFace *face);
 
 
 // This is a member function for the element map in ExtrudeParams.

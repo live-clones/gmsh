@@ -120,8 +120,9 @@ struct doubleXstring{
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
-%token tLayers tHole tAlias tAliasWithOptions
-%token tQuadTriDbl tQuadTriSngl tRecombLaterals tTransfQuadTri
+%token tLayers tScaleLast tHole tAlias tAliasWithOptions
+%token tQuadTriAddVerts tQuadTriNoNewVerts tQuadTriSngl tQuadTriDbl
+%token tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
@@ -1846,6 +1847,8 @@ Shape :
         for(int i = 0; i < List_Nbr($7); i++){
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
 	}
+        // Added by Trevor Strickler
+	setSurfaceGeneratrices(s, (List_T*) 0 );
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
       List_Delete($7);
@@ -1873,6 +1876,9 @@ Shape :
             s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
 	  }
 	}
+        // Added by Trevor Strickler
+        setSurfaceGeneratrices(s, (List_T*) 0 );
+
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
       List_Delete($7);
@@ -3117,6 +3123,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                        ExtrudeParameters '}'
     {
@@ -3130,6 +3137,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                                                    ExtrudeParameters '}'
     {
@@ -3143,6 +3151,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                                                              ExtrudeParameters '}'
     {
@@ -3156,6 +3165,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                        ExtrudeParameters '}'
     {
@@ -3232,6 +3242,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -3244,6 +3255,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -3256,6 +3268,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -3268,6 +3281,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -3280,6 +3294,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -3292,6 +3307,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -3304,6 +3320,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -3316,6 +3333,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -3328,6 +3346,7 @@ Extrude :
     {
       extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
       extr.mesh.QuadToTri = NO_QUADTRI;
+      extr.mesh.ScaleLast = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -3404,25 +3423,47 @@ ExtrudeParameter :
       List_Delete($5);
       List_Delete($7);
     }
+//Added by Trevor Strickler 07/07/2013
+  | tScaleLast tEND
+    {
+      extr.mesh.ScaleLast = true;
+    }
+
   | tRecombine tEND
     {
       extr.mesh.Recombine = true;
     }
-  | tQuadTriDbl tEND
-    {
-      extr.mesh.QuadToTri = QUADTRI_DBL_1;
-    }
-  | tQuadTriDbl tRecombLaterals tEND
-    {
-      extr.mesh.QuadToTri = QUADTRI_DBL_1_RECOMB;
-    }
   | tQuadTriSngl tEND
     {
-      extr.mesh.QuadToTri = QUADTRI_SNGL_1;
+      yymsg(0, "Keyword 'QuadTriSngl' deprecated. Use 'QuadTriNoNewVerts' instead.");
     }
   | tQuadTriSngl tRecombLaterals tEND
     {
-      extr.mesh.QuadToTri = QUADTRI_SNGL_1_RECOMB;
+      yymsg(0, "Keyword 'QuadTriSngl' deprecated. Use 'QuadTriNoNewVerts' instead.");
+    }
+  | tQuadTriDbl tEND
+    {
+      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, which has no requirement for the number of extrusion layers and meshes with body-centered vertices.");
+    }
+  | tQuadTriDbl tRecombLaterals tEND
+    {
+      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, which has no requirement for the number of extrusion layers and meshes with body-centered vertices.");
+    }
+  | tQuadTriAddVerts tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_ADDVERTS_1;
+    }
+  | tQuadTriAddVerts tRecombLaterals tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_ADDVERTS_1_RECOMB;
+    }
+  | tQuadTriNoNewVerts tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_NOVERTS_1;
+    }
+  | tQuadTriNoNewVerts tRecombLaterals tEND
+    {
+      extr.mesh.QuadToTri = QUADTRI_NOVERTS_1_RECOMB;
     }
   | tHole '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
     {

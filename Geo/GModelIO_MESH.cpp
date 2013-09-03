@@ -328,9 +328,3 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   fclose(fp);
   return 1;
 }
-
-
-
-
-
-

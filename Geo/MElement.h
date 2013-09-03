@@ -343,6 +343,7 @@ class MElement
   virtual void writeDIFF(FILE *fp, int num, bool binary=false,
                          int physical_property=1);
   virtual void writeINP(FILE *fp, int num);
+  virtual void writeSU2(FILE *fp, int num);
 
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)

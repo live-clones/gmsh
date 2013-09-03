@@ -17,6 +17,8 @@ xyzv::xyzv(const xyzv &other)
   x = other.x;
   y = other.y;
   z = other.z;
+  scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
+  scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
   nbvals = other.nbvals;
   nboccurences = other.nboccurences;
   if(other.vals && other.nbvals) {
@@ -32,6 +34,8 @@ xyzv &xyzv::operator = (const xyzv &other)
     x = other.x;
     y = other.y;
     z = other.z;
+    scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
+    scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
     nbvals = other.nbvals;
     nboccurences = other.nboccurences;
     if(other.vals && other.nbvals) {
@@ -61,6 +65,21 @@ void xyzv::update(int n, double *v)
   nboccurences++;
 }
 
+// Added by Trevor Strickler
+void xyzv::scale_update(double scale_inp)
+{
+  if( fabs(1.0 - scale_inp) <= eps )
+    scale_inp = 1.0;
+  if( scale_inp != 1.0 || scaleValue != 1.0 ){
+    double x1 = (double)(scale_numvals) / (double)(scale_numvals + 1);
+    double x2 = 1.0 / (double)(scale_numvals + 1);
+    scaleValue = ( x1 * scaleValue + x2 * scale_inp);
+  }
+  if( fabs(1.0 - scaleValue) <= eps )
+    scaleValue = 1.0;
+  scale_numvals++;
+}
+
 void smooth_data::add(double x, double y, double z, int n, double *vals)
 {
   xyzv xyz(x, y, z);
@@ -77,6 +96,23 @@ void smooth_data::add(double x, double y, double z, int n, double *vals)
   }
 }
 
+//added by Trevor Strickler
+void smooth_data::add_scale(double x, double y, double z, double scale_val)
+{
+  xyzv xyz(x, y, z);
+  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
+  if(it == c.end()){
+    xyz.scale_update(scale_val);
+    c.insert(xyz); 
+  }
+  else {
+    // we can do this because we know that it will not destroy the set
+    // ordering
+    xyzv *p = (xyzv *) & (*it);
+    p->scale_update(scale_val);
+  }
+}
+
 bool smooth_data::get(double x, double y, double z, int n, double *vals)
 {
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
@@ -84,6 +120,16 @@ bool smooth_data::get(double x, double y, double z, int n, double *vals)
     return false;
   for(int k = 0; k < n; k++)
     vals[k] = it->vals[k];
+  return true;
+}
+
+//added by Trevor Strickler
+bool smooth_data::get_scale(double x, double y, double z, double *scale_val)
+{
+  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
+  if(it == c.end())
+    return false;
+  (*scale_val) = it->scaleValue;
   return true;
 }
 

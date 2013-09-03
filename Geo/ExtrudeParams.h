@@ -42,6 +42,8 @@ public :
     int NbLayer;
     std::vector<int> NbElmLayer;
     std::vector<double> hLayer;
+    //added by Trevor Strickler 07/07/2013 (determines if a layer is scaled by source grid size (1) or not (0))...only meant for boundary layers
+    bool ScaleLast;
     std::map<int, std::pair<double, std::vector<int> > > Holes;
     int ViewIndex, BoundaryLayerIndex;
   }mesh;
@@ -54,6 +56,13 @@ public :
   }geo;
 
   // for boundary layers
+  // Added by Trevor Strickler to scale last layer size locally
+  // If one section of the boundary layer index = 0 or 1  is not supposed to be
+  // scaled...that section's normals will have scaleFactor = 1.0 (exactly  1.0 to all sig figs)
+  // ...however, if that non-scaled
+  // section borders a scaled section, the boundary normals will extrude consistently (an
+  // average of scaled and non-scaled heights).
+  static bool calcLayerScaleFactor[2];  // Trevor Strickler, to give a global awareness of whether last layer scaling is to be used.
   static smooth_data *normals[2];
   static std::vector<SPoint3> normalsCoherence;
 };
