@@ -142,7 +142,7 @@ const nodalBasis* MTriangle::getFunctionSpace(int order) const
 
 const JacobianBasis* MTriangle::getJacobianFuncSpace(int order) const
 {
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
   switch (order) {
     case 1: return BasisFactory::getJacobianBasis(MSH_TRI_3);

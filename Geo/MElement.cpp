@@ -1447,7 +1447,6 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PRI_18:  return new MPrism18(v, num, part);
   case MSH_TET_20:  return new MTetrahedronN(v, 3, num, part);
   case MSH_TET_35:  return new MTetrahedronN(v, 4, num, part);
-  case MSH_TET_28:  return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_56:  return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_84:  return new MTetrahedronN(v, 6, num, part);
   case MSH_TET_120: return new MTetrahedronN(v, 7, num, part);
