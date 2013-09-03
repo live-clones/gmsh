@@ -43,13 +43,9 @@
     }
 }
 
--(void)viewWillAppear:(BOOL)animated
-{
-	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
-}
-
 -(void)viewDidAppear:(BOOL)animated
 {
+	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
 	if(self.initialModel != nil){
 		UIAlertView* progressAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
 		[progressAlert show];

@@ -94,6 +94,7 @@
 
 - (void)layoutSubviews
 {
+	[super layoutSubviews];
     [EAGLContext setCurrentContext:context];
     [self destroyFramebuffer];
     [self createFramebuffer];

@@ -45,7 +45,8 @@
 
 -(void)viewDidAppear:(BOOL)animated
 {
-	if(self.initialModel != nil) [modelViewController.glView load:self.initialModel];
+	modelViewController.initialModel = self.initialModel;
+	[super viewDidAppear:animated];
 }
 
 - (void)didReceiveMemoryWarning

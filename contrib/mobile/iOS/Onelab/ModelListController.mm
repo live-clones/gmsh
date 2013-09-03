@@ -10,13 +10,12 @@
 #import "ModelListController.h"
 
 #import "Utils.h"
+#import "Model.h"
 
 @implementation ModelListController
 -(void)viewDidLoad
 {
     models = [[NSMutableArray alloc] init];
-    modelsName = [[NSMutableArray alloc] init];
-    modelsDescription = [[NSMutableArray alloc] init];
     NSString *docsPath = [Utils getApplicationDocumentsDirectory];
     
     [Utils copyRes];
@@ -25,16 +24,10 @@
         NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];
         BOOL isDir = NO; [[NSFileManager defaultManager] fileExistsAtPath:docPath isDirectory:&isDir];
         if(isDir){
-            [models addObject:doc];
             NSString *infos = [NSString stringWithFormat:@"%@%@", docPath, @"infos.xml"];
             if([[NSFileManager defaultManager] fileExistsAtPath:infos]) {
+				currentDir = docPath;
                 [self parseInfosFile:infos];
-                if(models.count > modelsName.count)[modelsName addObject:@""];
-                if(models.count > modelsDescription.count)[modelsDescription addObject:@""];
-            }
-            else {
-                [modelsName addObject:@""];
-                [modelsDescription addObject:@""];
             }
         }
     }
@@ -54,13 +47,13 @@
     UITableViewCell *cell;
     if(indexPath.row >= [models count])
         return cell;
-    NSString *modelName = [models objectAtIndex:indexPath.row];
-    cell = [tableView dequeueReusableCellWithIdentifier:modelName];
+    Model *m = [models objectAtIndex:indexPath.row];
+    cell = [tableView dequeueReusableCellWithIdentifier:[m getName]];
     if(cell != nil) return cell;
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:modelName];
-    [cell.textLabel setText:(![[modelsName objectAtIndex:indexPath.row] isEqual:@""])? [modelsName objectAtIndex:indexPath.row] : [models objectAtIndex:indexPath.row]];
-    if(![[modelsDescription objectAtIndex:indexPath.row] isEqual:@""])
-        [cell.detailTextLabel setText:[modelsDescription objectAtIndex:indexPath.row]];
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:[m getName]];
+    [cell.textLabel setText:[m getName]];
+    if([m getSummary] != nil) [cell.detailTextLabel setText:[m getSummary]];
+	if([m getPreview] != nil) cell.imageView.image = [m getPreview];
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
 }
@@ -71,7 +64,7 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-    selectedModel = [NSString stringWithFormat:@"%@/%@/%@.geo",[Utils getApplicationDocumentsDirectory],[models objectAtIndex:indexPath.row], [models objectAtIndex:indexPath.row]];
+    selectedModel = [[models objectAtIndex:indexPath.row] getFile];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
         appDelegate.splitViewController.initialModel = selectedModel;
         [UIView transitionWithView:appDelegate.window
@@ -113,11 +106,34 @@
 }
 -(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
 {
-    if([elementName isEqual:@"name"] && models.count > modelsName.count) [modelsName addObject:currentElementValue];
-    else if([elementName isEqual:@"description"] && models.count > modelsDescription.count) [modelsDescription addObject:currentElementValue];
+    if([elementName isEqual:@"title"]) {
+		Model *m = [[Model alloc] initWithName:currentElementValue];
+		[models addObject:m];
+	}
+	else {
+		if(models.count < 1) return;
+		if([elementName isEqual:@"summary"]) {
+			Model *m = [models lastObject];
+			[m setSummary:currentElementValue];
+		}
+		else if([elementName isEqual:@"file"]) {
+			Model *m = [models lastObject];
+			[m setFile:[NSString stringWithFormat:@"%@%@", currentDir, currentElementValue]];
+		}
+		else if([elementName isEqual:@"url"]) {
+			Model *m = [models lastObject];
+			[m setUrl:currentElementValue];
+		}
+		else if([elementName isEqual:@"preview"]) {
+			Model *m = [models lastObject];
+			[m setPreview:[NSString stringWithFormat:@"%@%@", currentDir, currentElementValue]];
+		}
+
+	}
     //[currentElementValue release];
     currentElementValue = nil;
 }
+
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([[segue identifier] isEqualToString:@"showModelSegue"])

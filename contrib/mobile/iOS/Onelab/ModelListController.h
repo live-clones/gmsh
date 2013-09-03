@@ -13,9 +13,10 @@
 @interface ModelListController : UITableViewController <NSXMLParserDelegate>
 {
     @private
-    NSMutableArray *models, *modelsName, *modelsDescription;
+    NSMutableArray *models;
     NSString *currentElement;
     NSMutableString *currentElementValue;
+	NSString *currentDir;
     NSString *selectedModel;
 }
 @property (nonatomic, retain) EAGLView *glView;

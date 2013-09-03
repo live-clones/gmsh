@@ -104,6 +104,10 @@
     [self setIntervalsType:nil];
     [self setIntervals:nil];
     [self setRaiseZ:nil];
+    [self setRaiseZ:nil];
+    [self setIntervals:nil];
+    [self setIntervalsType:nil];
+    [self setName:nil];
     [super viewDidUnload];
 }
 @end
