@@ -15,9 +15,12 @@
 @implementation ModelListController
 -(void)viewDidLoad
 {
+	UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+	lpgr.minimumPressDuration = 1.0;
+	[self.tableView addGestureRecognizer:lpgr];
+	
     models = [[NSMutableArray alloc] init];
     NSString *docsPath = [Utils getApplicationDocumentsDirectory];
-    
     [Utils copyRes];
     NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
     for(NSString* doc in docs){
@@ -54,6 +57,11 @@
     [cell.textLabel setText:[m getName]];
     if([m getSummary] != nil) [cell.detailTextLabel setText:[m getSummary]];
 	if([m getPreview] != nil) cell.imageView.image = [m getPreview];
+	if([m getFile] == nil) {
+		cell.selectionStyle = UITableViewCellSelectionStyleNone;
+		cell.userInteractionEnabled = NO;
+		cell.textLabel.alpha = 0.75;
+	}
     cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return cell;
 }
@@ -78,6 +86,31 @@
         [self performSegueWithIdentifier:@"showModelSegue" sender:self];
     }
 }
+-(void)handleLongPress:(UILongPressGestureRecognizer *)sender
+{
+	CGPoint p = [sender locationInView:self.tableView];
+	if(sender.state == UIGestureRecognizerStateCancelled) return;
+    NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
+	if(indexPath == nil) return;
+	UIActionSheet *actionSheet;
+	if([[models objectAtIndex:indexPath.row] getUrl])
+	actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this models", @"More informations", nil];
+	else
+		actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this models", nil];
+	actionSheet.tag = indexPath.row;
+    [actionSheet showInView:self.view];
+}
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+	switch (buttonIndex) {
+		case 1:
+			[[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
+			break;
+		case 0:
+			[self tableView:self.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
+			break;
+	}
+}
+
 - (BOOL) parseInfosFile:(NSString *)file
 {
     NSData *xmlFile = [[NSFileManager defaultManager] contentsAtPath:file];
