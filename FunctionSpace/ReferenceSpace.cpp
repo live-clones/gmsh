@@ -48,6 +48,10 @@ void ReferenceSpace::init(void){
     pTree->fillWithPermutation(*refSpaceIt, refSpaceNodeId[i]);
   }
 
+  // Compress Tag, so that they refer to refSpaceNodeId indices
+  // insted of leafId of pTree.
+  pTree->compressTag();
+
   // ABC space to UVW space shape function index mapping //
   const size_t nPermutation = pTree->getNPermutation();
   ABCtoUVWIndex.resize(nPermutation);
@@ -784,7 +788,7 @@ string ReferenceSpace::toString(void) const{
   stream << "Reference Space Node IDs:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
-    stream << "  ** Reference Space #" << s + 1 << ": [";
+    stream << "  ** Reference Space #" << s << ": [";
 
     for(size_t v = 0; v < nVertex - 1; v++)
       stream << refSpaceNodeId[s][v] << ", ";
@@ -796,7 +800,7 @@ string ReferenceSpace::toString(void) const{
   stream << endl << "Ordered Edge Node Index:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
-    stream << "  ** Reference Space #" << s + 1 << ":"
+    stream << "  ** Reference Space #" << s << ":"
            << endl;
 
     for(size_t e = 0; e < nEdge; e++)
@@ -810,7 +814,7 @@ string ReferenceSpace::toString(void) const{
   stream << endl << "Ordered Face Node Index:" << endl;
 
   for(size_t s = 0; s < nRefSpace; s++){
-    stream << "  ** Reference Space #" << s + 1 << ":"
+    stream << "  ** Reference Space #" << s << ":"
            << endl;
 
     for(size_t f = 0; f < nFace; f++){

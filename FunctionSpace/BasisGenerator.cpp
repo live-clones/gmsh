@@ -145,9 +145,8 @@ BasisLocal* BasisGenerator::tetHierarchicalGen(size_t basisType,
 BasisLocal* BasisGenerator::hexHierarchicalGen(size_t basisType,
                                                size_t order){
   switch(basisType){
-    //case 0: return new HexNodeBasis(order);
+  case 0: return new HexNodeBasis(order);
     //case 1: return new HexEdgeBasis(order);
-  case 0: throw Exception("0-form not implemented on Hexs");
   case 1: throw Exception("1-form not implemented on Hexs");
   case 2: throw Exception("2-form not implemented on Hexs");
   case 3: throw Exception("3-form not implemented on Hexs");

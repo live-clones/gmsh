@@ -1,5 +1,4 @@
 #include <map>
-#include <sstream>
 
 #include "Exception.h"
 #include "PermutationTree.h"
@@ -24,6 +23,7 @@ PermutationTree::PermutationTree(const vector<size_t>& refSequence){
   root->tag    = -1;
 
   // Tree //
+  nextNodeId = 0;
   populate(root, listOfLeaf);
 
   // Leaf //
@@ -40,6 +40,10 @@ PermutationTree::~PermutationTree(void){
 
 void PermutationTree::populate(node_t* node,
                                list<node_t*>& listOfLeaf){
+  // Node Id //
+  node->nodeId = nextNodeId;
+  nextNodeId++;
+
   // Number of son //
   const size_t nSon = node->nxtChoice.size();
 
@@ -93,11 +97,6 @@ void PermutationTree::destroy(node_t* node){
   delete node;
 }
 
-
-size_t PermutationTree::getPermutationId(const vector<size_t>& sequence) const{
-  return getLeaf(root, sequence, 0)->leafId;
-}
-
 PermutationTree::node_t*
 PermutationTree::getLeaf(node_t* root,
                          const vector<size_t>& sequence,
@@ -142,6 +141,33 @@ void PermutationTree::fillWithPermutation(size_t permutationId,
   }
 }
 
+void PermutationTree::compressTag(void){
+  // Populate Tag map
+  const size_t nLeaf = leaf.size();
+  multimap<size_t, node_t*> tag;
+
+  for(size_t i = 0; i < nLeaf; i++)
+    tag.insert(pair<size_t, node_t*>(leaf[i]->tag, leaf[i]));
+
+  // Compress Tag
+  const multimap<size_t, node_t*>::iterator end = tag.end();
+  multimap<size_t, node_t*>::iterator it = tag.begin();
+
+  size_t currentTag = it->first;
+  size_t nextTag = 0;
+
+  for(; it != end; it++){
+    // If new old tag --> increase new tag by one
+    if(it->first != currentTag){
+      currentTag = it->first;
+      nextTag++;
+    }
+
+    // Apply same new tag
+    it->second->tag = nextTag;
+  }
+}
+
 std::vector<std::pair<size_t, size_t> >
 PermutationTree::getAllTagsCount(void) const{
   // Init Temp map
@@ -166,6 +192,20 @@ PermutationTree::getAllTagsCount(void) const{
 }
 
 string PermutationTree::toString(void) const{
+  stringstream stream;
+
+  // Number of Node //
+  stream << "nNode " << nextNodeId
+         << endl;
+
+  // Nodes (depth first travel) //
+  serial_t* tmp = new serial_t;
+  appendString(stream, root, tmp);
+  delete tmp;
+
+  return stream.str();
+
+  /*
   // Number of Permutation //
   const size_t max_t = -1;
   const size_t nPerm = leaf.size();
@@ -194,5 +234,70 @@ string PermutationTree::toString(void) const{
   }
 
   // Return //
+  return stream.str();
+  */
+}
+
+void PermutationTree::toSerial(node_t* node, serial_t* serial){
+  serial->myChoice   = node->myChoice;
+  serial->nNxtChoice = node->nxtChoice.size();
+  serial->nxtChoice.resize(serial->nNxtChoice);
+
+  for(size_t i = 0; i < serial->nNxtChoice; i++)
+    serial->nxtChoice[i] = node->nxtChoice[i];
+
+  if(!node->father)
+    serial->fatherId = (size_t)(-1);
+  else
+    serial->fatherId = node->father->nodeId;
+
+  serial->nSon = node->son.size();
+  serial->sonId.resize(serial->nSon);
+
+  for(size_t i = 0; i < serial->nSon; i++)
+    serial->sonId[i] = node->son[i]->nodeId;
+
+  serial->nodeId = node->nodeId;
+  serial->leafId = node->leafId;
+  serial->tag    = node->tag;
+}
+
+void PermutationTree::appendString(stringstream& stream,
+                                   node_t* node,
+                                   serial_t* tmp){
+  // Write this node //
+  toSerial(node, tmp);
+  stream << toString(tmp) << endl;
+
+  // Write Son //
+  const size_t nSon = node->son.size();
+
+  for(size_t i = 0; i < nSon; i++)
+    appendString(stream, node->son[i], tmp);
+}
+
+string PermutationTree::toString(serial_t* serial){
+  stringstream stream;
+
+  stream << "Node " << serial->nodeId
+         << " - "   << serial->leafId
+         << " - "   << serial->tag
+         << endl
+
+         << "MyChoice "  << serial->myChoice
+         << endl
+         << "NxtChoice " << serial->nNxtChoice;
+
+  for(size_t i = 0; i < serial->nNxtChoice; i++)
+    stream << " - " << serial->nxtChoice[i];
+
+  stream << endl
+         << "FatherId " << serial->fatherId
+         << endl
+         << "SonId " << serial->nSon;
+
+  for(size_t i = 0; i < serial->nNxtChoice; i++)
+    stream << " - " << serial->sonId[i];
+
   return stream.str();
 }
