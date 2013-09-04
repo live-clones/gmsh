@@ -90,10 +90,8 @@ int GModel::writeSU2(const std::string &name, bool saveAll, double scalingFactor
         it != groups[ndime - 1].end(); it++){
       std::vector<GEntity *> &entities = it->second;
       int n = 0;
-      for(unsigned int i = 0; i < entities.size(); i++){
-        for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-          n++;
-      }
+      for(unsigned int i = 0; i < entities.size(); i++)
+        n += entities[i]->getNumMeshElements();
       if(n){
         fprintf(fp, "MARKER_TAG= %s\n", physicalName(this, ndime - 1, it->first).c_str());
         fprintf(fp, "MARKER_ELEMS= %d\n", n);
