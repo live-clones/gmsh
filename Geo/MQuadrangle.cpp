@@ -21,40 +21,16 @@ const nodalBasis* MQuadrangle::getFunctionSpace(int order) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_QUA_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_QUA_4);
-    case 2: return BasisFactory::getNodalBasis(MSH_QUA_9);
-    case 3: return BasisFactory::getNodalBasis(MSH_QUA_16);
-    case 4: return BasisFactory::getNodalBasis(MSH_QUA_25);
-    case 5: return BasisFactory::getNodalBasis(MSH_QUA_36);
-    case 6: return BasisFactory::getNodalBasis(MSH_QUA_49);
-    case 7: return BasisFactory::getNodalBasis(MSH_QUA_64);
-    case 8: return BasisFactory::getNodalBasis(MSH_QUA_81);
-    case 9: return BasisFactory::getNodalBasis(MSH_QUA_100);
-    case 10: return BasisFactory::getNodalBasis(MSH_QUA_121);
-    default: Msg::Error("Order %d quadrangle function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_QUA, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
 const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  switch (order) {
-    case 1: return BasisFactory::getJacobianBasis(MSH_QUA_4);
-    case 2: return BasisFactory::getJacobianBasis(MSH_QUA_9);
-    case 3: return BasisFactory::getJacobianBasis(MSH_QUA_16);
-    case 4: return BasisFactory::getJacobianBasis(MSH_QUA_25);
-    case 5: return BasisFactory::getJacobianBasis(MSH_QUA_36);
-    case 6: return BasisFactory::getJacobianBasis(MSH_QUA_49);
-    case 7: return BasisFactory::getJacobianBasis(MSH_QUA_64);
-    case 8: return BasisFactory::getJacobianBasis(MSH_QUA_81);
-    case 9: return BasisFactory::getJacobianBasis(MSH_QUA_100);
-    case 10: return BasisFactory::getJacobianBasis(MSH_QUA_121);
-    default: Msg::Error("Order %d quadrangle function space not implemented", order);
-  }
-  return 0;
+
+  int tag = ElementType::getTag(TYPE_QUA, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
 int MQuadrangleN::getNumEdgesRep(){ return 4 * CTX::instance()->mesh.numSubEdges; }

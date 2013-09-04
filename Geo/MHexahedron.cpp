@@ -194,43 +194,17 @@ const nodalBasis* MHexahedron::getFunctionSpace(int order) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_HEX_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_HEX_8);
-    case 2: return BasisFactory::getNodalBasis(MSH_HEX_27);
-    case 3: return BasisFactory::getNodalBasis(MSH_HEX_64);
-    case 4: return BasisFactory::getNodalBasis(MSH_HEX_125);
-    case 5: return BasisFactory::getNodalBasis(MSH_HEX_216);
-    case 6: return BasisFactory::getNodalBasis(MSH_HEX_343);
-    case 7: return BasisFactory::getNodalBasis(MSH_HEX_512);
-    case 8: return BasisFactory::getNodalBasis(MSH_HEX_729);
-    case 9: return BasisFactory::getNodalBasis(MSH_HEX_1000);
-    default: Msg::Error("Order %d hex function space not implemented", order); break;
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_HEX, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
 const JacobianBasis* MHexahedron::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getJacobianBasis(MSH_HEX_1);
-    case 1: return BasisFactory::getJacobianBasis(MSH_HEX_8);
-    case 2: return BasisFactory::getJacobianBasis(MSH_HEX_27);
-    case 3: return BasisFactory::getJacobianBasis(MSH_HEX_64);
-    case 4: return BasisFactory::getJacobianBasis(MSH_HEX_125);
-    case 5: return BasisFactory::getJacobianBasis(MSH_HEX_216);
-    case 6: return BasisFactory::getJacobianBasis(MSH_HEX_343);
-    case 7: return BasisFactory::getJacobianBasis(MSH_HEX_512);
-    case 8: return BasisFactory::getJacobianBasis(MSH_HEX_729);
-    case 9: return BasisFactory::getJacobianBasis(MSH_HEX_1000);
-    default: Msg::Error("Order %d hex Jacobian function space not implemented", order); break;
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_HEX, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
-
-
 
 void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)

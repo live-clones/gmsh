@@ -37,20 +37,8 @@ const nodalBasis* MPyramid::getFunctionSpace(int order) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_PYR_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_PYR_5);
-    case 2: return BasisFactory::getNodalBasis(MSH_PYR_14);
-    case 3: return BasisFactory::getNodalBasis(MSH_PYR_30);
-    case 4: return BasisFactory::getNodalBasis(MSH_PYR_55);
-    case 5: return BasisFactory::getNodalBasis(MSH_PYR_91);
-    case 6: return BasisFactory::getNodalBasis(MSH_PYR_140);
-    case 7: return BasisFactory::getNodalBasis(MSH_PYR_204);
-    case 8: return BasisFactory::getNodalBasis(MSH_PYR_285);
-    case 9: return BasisFactory::getNodalBasis(MSH_PYR_385);
-    default: Msg::Error("Order %d pyramid function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_PYR, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
 const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const

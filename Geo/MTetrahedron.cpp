@@ -104,41 +104,16 @@ const nodalBasis* MTetrahedron::getFunctionSpace(int order) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_TET_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_TET_4);
-    case 2: return BasisFactory::getNodalBasis(MSH_TET_10);
-    case 3: return BasisFactory::getNodalBasis(MSH_TET_20);
-    case 4: return BasisFactory::getNodalBasis(MSH_TET_35);
-    case 5: return BasisFactory::getNodalBasis(MSH_TET_56);
-    case 6: return BasisFactory::getNodalBasis(MSH_TET_84);
-    case 7: return BasisFactory::getNodalBasis(MSH_TET_120);
-    case 8: return BasisFactory::getNodalBasis(MSH_TET_165);
-    case 9: return BasisFactory::getNodalBasis(MSH_TET_220);
-    case 10: return BasisFactory::getNodalBasis(MSH_TET_286);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_TET, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
 const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  switch (order) {
-    case 1: return BasisFactory::getJacobianBasis(MSH_TET_4);
-    case 2: return BasisFactory::getJacobianBasis(MSH_TET_10);
-    case 3: return BasisFactory::getJacobianBasis(MSH_TET_20);
-    case 4: return BasisFactory::getJacobianBasis(MSH_TET_35);
-    case 5: return BasisFactory::getJacobianBasis(MSH_TET_56);
-    case 6: return BasisFactory::getJacobianBasis(MSH_TET_84);
-    case 7: return BasisFactory::getJacobianBasis(MSH_TET_120);
-    case 8: return BasisFactory::getJacobianBasis(MSH_TET_165);
-    case 9: return BasisFactory::getJacobianBasis(MSH_TET_220);
-    case 10: return BasisFactory::getJacobianBasis(MSH_TET_286);
-    default: Msg::Error("Order %d tetrahedron function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_TET, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
 int MTetrahedron10::getNumEdgesRep(){ return 6 * CTX::instance()->mesh.numSubEdges; }

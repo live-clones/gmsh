@@ -238,7 +238,7 @@ class MElement
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int order=-1) const;
 
-  // return the gradient of of the nodal shape functions evaluated at
+  // return the gradient of the nodal shape functions evaluated at
   // point (u,v,w) in parametric coordinates (if order == -1, use the
   // polynomial order of the element)
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3],

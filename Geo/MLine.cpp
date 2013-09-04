@@ -11,45 +11,20 @@
 #include "Context.h"
 #include "qualityMeasures.h"
 
-const nodalBasis* MLine::getFunctionSpace(int o) const
+const nodalBasis* MLine::getFunctionSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
-  
-  switch (order) {
-  case 0: return BasisFactory::getNodalBasis(MSH_LIN_1);
-  case 1: return BasisFactory::getNodalBasis(MSH_LIN_2);
-  case 2: return BasisFactory::getNodalBasis(MSH_LIN_3);
-  case 3: return BasisFactory::getNodalBasis(MSH_LIN_4);
-  case 4: return BasisFactory::getNodalBasis(MSH_LIN_5);
-  case 5: return BasisFactory::getNodalBasis(MSH_LIN_6);
-  case 6: return BasisFactory::getNodalBasis(MSH_LIN_7);
-  case 7: return BasisFactory::getNodalBasis(MSH_LIN_8);
-  case 8: return BasisFactory::getNodalBasis(MSH_LIN_9);
-  case 9: return BasisFactory::getNodalBasis(MSH_LIN_10);
-  case 10: return BasisFactory::getNodalBasis(MSH_LIN_11);
-  default: Msg::Error("Order %d line function space not implemented", order);
-  }
-  return 0;
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
+
+  int tag = ElementType::getTag(TYPE_LIN, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
-const JacobianBasis* MLine::getJacobianFuncSpace(int o) const
+const JacobianBasis* MLine::getJacobianFuncSpace(int order) const
 {
-  int order = (o == -1) ? getPolynomialOrder() : o;
-  
-  switch (order) {
-  case 1: return BasisFactory::getJacobianBasis(MSH_LIN_2);
-  case 2: return BasisFactory::getJacobianBasis(MSH_LIN_3);
-  case 3: return BasisFactory::getJacobianBasis(MSH_LIN_4);
-  case 4: return BasisFactory::getJacobianBasis(MSH_LIN_5);
-  case 5: return BasisFactory::getJacobianBasis(MSH_LIN_6);
-  case 6: return BasisFactory::getJacobianBasis(MSH_LIN_7);
-  case 7: return BasisFactory::getJacobianBasis(MSH_LIN_8);
-  case 8: return BasisFactory::getJacobianBasis(MSH_LIN_9);
-  case 9: return BasisFactory::getJacobianBasis(MSH_LIN_10);
-  case 10: return BasisFactory::getJacobianBasis(MSH_LIN_11);
-  default: Msg::Error("Order %d line function space not implemented", order);
-  }
-  return 0;
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+
+  int tag = ElementType::getTag(TYPE_LIN, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
 void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
@@ -73,7 +48,7 @@ double MLine::getVolume()
   return getLength();
 }
 
-int MLine3::getNumEdgesRep() 
+int MLine3::getNumEdgesRep()
 {
   return  CTX::instance()->mesh.numSubEdges;
 }
@@ -90,7 +65,7 @@ void MLine3::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
 }
 
-int MLineN::getNumEdgesRep() 
+int MLineN::getNumEdgesRep()
 {
   return  CTX::instance()->mesh.numSubEdges;
 }

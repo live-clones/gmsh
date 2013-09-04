@@ -36,40 +36,16 @@ const nodalBasis* MPrism::getFunctionSpace(int order) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getNodalBasis(MSH_PRI_1);
-    case 1: return BasisFactory::getNodalBasis(MSH_PRI_6);
-    case 2: return BasisFactory::getNodalBasis(MSH_PRI_18);
-    case 3: return BasisFactory::getNodalBasis(MSH_PRI_40);
-    case 4: return BasisFactory::getNodalBasis(MSH_PRI_75);
-    case 5: return BasisFactory::getNodalBasis(MSH_PRI_126);
-    case 6: return BasisFactory::getNodalBasis(MSH_PRI_196);
-    case 7: return BasisFactory::getNodalBasis(MSH_PRI_288);
-    case 8: return BasisFactory::getNodalBasis(MSH_PRI_405);
-    case 9: return BasisFactory::getNodalBasis(MSH_PRI_550);
-    default: Msg::Error("Order %d prism function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_PRI, order);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
 }
 
 const JacobianBasis* MPrism::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  switch (order) {
-    case 0: return BasisFactory::getJacobianBasis(MSH_PRI_1);
-    case 1: return BasisFactory::getJacobianBasis(MSH_PRI_6);
-    case 2: return BasisFactory::getJacobianBasis(MSH_PRI_18);
-    case 3: return BasisFactory::getJacobianBasis(MSH_PRI_40);
-    case 4: return BasisFactory::getJacobianBasis(MSH_PRI_75);
-    case 5: return BasisFactory::getJacobianBasis(MSH_PRI_126);
-    case 6: return BasisFactory::getJacobianBasis(MSH_PRI_196);
-    case 7: return BasisFactory::getJacobianBasis(MSH_PRI_288);
-    case 8: return BasisFactory::getJacobianBasis(MSH_PRI_405);
-    case 9: return BasisFactory::getJacobianBasis(MSH_PRI_550);
-    default: Msg::Error("Order %d prism function space not implemented", order);
-  }
-  return NULL;
+  int tag = ElementType::getTag(TYPE_PRI, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
 double MPrism::getInnerRadius()
