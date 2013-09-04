@@ -104,7 +104,7 @@ public class Gmsh implements Parcelable {
 	public void writeToParcel(Parcel out, int flags) {
 		out.writeLong(this.ptr);
 	}
-	public Parcelable.Creator<Gmsh> CREATOR = new Parcelable.Creator<Gmsh>() {
+	public static Parcelable.Creator<Gmsh> CREATOR = new Parcelable.Creator<Gmsh>() {
 
 		public Gmsh createFromParcel(Parcel source) {
 			return new Gmsh(source);

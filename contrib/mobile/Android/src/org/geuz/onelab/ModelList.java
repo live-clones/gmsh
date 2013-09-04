@@ -188,6 +188,7 @@ public class ModelList extends Activity {
 	    		skipTag(parser);
 	    	}
 	    }
+	    if(title == null || file == null) return;
 	    Model newModel = new Model(title, summary, new File(dir+"/"+file));
 	    if(bitmap != null) newModel.setBitmap(new File(dir+"/"+bitmap));
 	    if(url != null) newModel.setUrl(Uri.parse(url));

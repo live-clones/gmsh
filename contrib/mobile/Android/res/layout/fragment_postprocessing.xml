@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="15dp" >
+    
+    <TextView
+        android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+        android:text="Intervals type" />
+	<Spinner
+	    android:id="@+id/intervals_type"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content" />
+	
+	<TextView
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+        android:text="Intervals" />
+	<EditText 
+	    android:id="@+id/intervals"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:inputType="number"
+	    android:digits="0123456789" />
+	
+	<TextView
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+        android:text="Raise (Z)" />
+	<SeekBar 
+	    android:id="@+id/raisez"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:max="1" />
+
+</LinearLayout>

@@ -1,13 +1,20 @@
 package org.geuz.onelab;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.AbsListView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 
 public class OptionsDisplayFragment extends Fragment{
 
@@ -33,7 +40,7 @@ public class OptionsDisplayFragment extends Fragment{
 	}
 	
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+	public View onCreateView(LayoutInflater inflater, final ViewGroup container,
 			Bundle savedInstanceState) {
 		_listView = (SeparatedListView)inflater.inflate(R.layout.fragment_options_display, container, false);
 		CheckBox showGeomPoints = new CheckBox(_listView.getContext());
@@ -90,7 +97,9 @@ public class OptionsDisplayFragment extends Fragment{
 		for(int i=_listView.itemsCountInSection("Result"); i < PViews.length;i++){
 			String[] infos = PViews[i].split("\n"); // name / IntervalsType (1=Iso 2=Continous 3=Discrete 4=Numeric)
 			final int myID = i;
+			LinearLayout layout = new LinearLayout(_listView.getContext());
         	CheckBox checkbox = new CheckBox(_listView.getContext());
+        	checkbox.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         	checkbox.setText(infos[0]);
         	checkbox.setChecked(infos[2].equals("1"));
         	checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -100,7 +109,21 @@ public class OptionsDisplayFragment extends Fragment{
 					mCallback.onRequestRender();
 				}
 			});
-			_listView.addItem("Result", checkbox);
+        	Button button = new Button(_listView.getContext());
+        	button.setText("More options");
+        	button.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View v) {
+					Intent intent = new Intent(getActivity(), PostProcessingActivity.class);
+				    intent.putExtra("Gmsh", (Parcelable)_gmsh);
+				    intent.putExtra("PView", myID);
+					startActivity(intent);
+				}
+			});
+        	button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        	button.setBackgroundColor(Color.TRANSPARENT);
+			layout.addView(checkbox);
+			layout.addView(button);
+			_listView.addItem("Result", layout);
 		}
 	}
 	
