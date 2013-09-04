@@ -69,6 +69,7 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
     	}
 	}
+	
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
@@ -164,7 +165,7 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 		protected void onPostExecute(Integer[] result) {
 			//(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
 			_runStopMenuItem.setTitle(R.string.menu_run);
-			//loading.dismiss();
+			if(_modelFragment != null) _modelFragment.hideProgress();
 			_compute = false;
 			super.onPostExecute(result);
 		}
@@ -208,8 +209,7 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 				if(_optionsFragment != null) _optionsFragment.refresh();
 				break;
 			case 2: // we get a message for loading
-				/*String loadingMessage =(String) msg.obj;
-				loading.setMessage(loadingMessage);*/
+				if(_modelFragment != null) _modelFragment.showProgress((String) msg.obj);
 				break;
 			case 3: // we get a progress for loading
 				//loading.setProgress(msg.arg1);

@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Color;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,7 +111,7 @@ public class OptionsDisplayFragment extends Fragment{
 				}
 			});
         	Button button = new Button(_listView.getContext());
-        	button.setText("More options");
+        	button.setText("More options >");
         	button.setOnClickListener(new View.OnClickListener() {
 				public void onClick(View v) {
 					Intent intent = new Intent(getActivity(), PostProcessingActivity.class);
@@ -121,6 +122,7 @@ public class OptionsDisplayFragment extends Fragment{
 			});
         	button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         	button.setBackgroundColor(Color.TRANSPARENT);
+        	button.setGravity(Gravity.RIGHT);
 			layout.addView(checkbox);
 			layout.addView(button);
 			_listView.addItem("Result", layout);
