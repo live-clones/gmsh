@@ -613,60 +613,6 @@ double MElement::integrate(double val[], int pOrder, int stride, int order)
   return sum;
 }
 
-static int getTriangleType (int order)
-{
-  switch(order) {
-  case 0 : return MSH_TRI_1;
-  case 1 : return MSH_TRI_3;
-  case 2 : return MSH_TRI_6;
-  case 3 : return MSH_TRI_10;
-  case 4 : return MSH_TRI_15;
-  case 5 : return MSH_TRI_21;
-  case 6 : return MSH_TRI_28;
-  case 7 : return MSH_TRI_36;
-  case 8 : return MSH_TRI_45;
-  case 9 : return MSH_TRI_55;
-  case 10 : return MSH_TRI_66;
-  default : Msg::Error("triangle order %i unknown", order); return 0;
-  }
-}
-
-static int getQuadType (int order)
-{
-  switch(order) {
-  case 0 : return MSH_QUA_1;
-  case 1 : return MSH_QUA_4;
-  case 2 : return MSH_QUA_9;
-  case 3 : return MSH_QUA_16;
-  case 4 : return MSH_QUA_25;
-  case 5 : return MSH_QUA_36;
-  case 6 : return MSH_QUA_49;
-  case 7 : return MSH_QUA_64;
-  case 8 : return MSH_QUA_81;
-  case 9 : return MSH_QUA_100;
-  case 10 : return MSH_QUA_121;
-  default : Msg::Error("quad order %i unknown", order); return 0;
-  }
-}
-
-static int getLineType (int order)
-{
-  switch(order) {
-  case 0 : return MSH_LIN_1;
-  case 1 : return MSH_LIN_2;
-  case 2 : return MSH_LIN_3;
-  case 3 : return MSH_LIN_4;
-  case 4 : return MSH_LIN_5;
-  case 5 : return MSH_LIN_6;
-  case 6 : return MSH_LIN_7;
-  case 7 : return MSH_LIN_8;
-  case 8 : return MSH_LIN_9;
-  case 9 : return MSH_LIN_10;
-  case 10 : return MSH_LIN_11;
-  default : Msg::Error("line order %i unknown", order); return 0;
-  }
-}
-
 double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
 {
   if(edge > getNumEdges() - 1){
@@ -677,7 +623,7 @@ double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
   std::vector<MVertex*> v;
   getEdgeVertices(edge, v);
   MElementFactory f;
-  int type = getLineType(getPolynomialOrder());
+  int type = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
   MElement* ee = f.create(type, v);
 
   double intv[3];
@@ -704,19 +650,21 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
   MElementFactory f;
   int type = 0;
   switch(getType()) {
-  case TYPE_TRI : type = getTriangleType(getPolynomialOrder()); break;
-  case TYPE_TET : type = getTriangleType(getPolynomialOrder()); break;
-  case TYPE_QUA : type = getQuadType(getPolynomialOrder());     break;
-  case TYPE_HEX : type = getQuadType(getPolynomialOrder());     break;
-  case TYPE_PYR :
-    if(face < 4) type = getTriangleType(getPolynomialOrder());
-    else type = getQuadType(getPolynomialOrder());
-    break;
-  case TYPE_PRI :
-    if(face < 2) type = getTriangleType(getPolynomialOrder());
-    else type = getQuadType(getPolynomialOrder());
-    break;
-  default: type = 0; break;
+    case TYPE_TRI :
+    case TYPE_TET :
+    case TYPE_QUA :
+    case TYPE_HEX :
+      type = ElementType::getTag(getType(), getPolynomialOrder());
+      break;
+    case TYPE_PYR :
+      if(face < 4) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      break;
+    case TYPE_PRI :
+      if(face < 2) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      break;
+    default: type = 0; break;
   }
   MElement* fe = f.create(type, v);
 
@@ -1421,22 +1369,25 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_LIN_C:   return new MLineChild(v, num, part, owner, parent);
   case MSH_TRI_3:   return new MTriangle(v, num, part);
   case MSH_TRI_6:   return new MTriangle6(v, num, part);
-  case MSH_TRI_9:   return new MTriangleN(v, 3, num, part);
   case MSH_TRI_10:  return new MTriangleN(v, 3, num, part);
-  case MSH_TRI_12:  return new MTriangleN(v, 4, num, part);
   case MSH_TRI_15:  return new MTriangleN(v, 4, num, part);
-  case MSH_TRI_15I: return new MTriangleN(v, 5, num, part);
   case MSH_TRI_21:  return new MTriangleN(v, 5, num, part);
   case MSH_TRI_28:  return new MTriangleN(v, 6, num, part);
   case MSH_TRI_36:  return new MTriangleN(v, 7, num, part);
   case MSH_TRI_45:  return new MTriangleN(v, 8, num, part);
   case MSH_TRI_55:  return new MTriangleN(v, 9, num, part);
   case MSH_TRI_66:  return new MTriangleN(v,10, num, part);
+  case MSH_TRI_9:   return new MTriangleN(v, 3, num, part);
+  case MSH_TRI_12:  return new MTriangleN(v, 4, num, part);
+  case MSH_TRI_15I: return new MTriangleN(v, 5, num, part);
+  case MSH_TRI_18:  return new MTriangleN(v, 6, num, part);
+  case MSH_TRI_21I: return new MTriangleN(v, 7, num, part);
+  case MSH_TRI_24:  return new MTriangleN(v, 8, num, part);
+  case MSH_TRI_27:  return new MTriangleN(v, 9, num, part);
+  case MSH_TRI_30:  return new MTriangleN(v,10, num, part);
   case MSH_TRI_B:   return new MTriangleBorder(v, num, part, d1, d2);
   case MSH_QUA_4:   return new MQuadrangle(v, num, part);
-  case MSH_QUA_8:   return new MQuadrangle8(v, num, part);
   case MSH_QUA_9:   return new MQuadrangle9(v, num, part);
-  case MSH_QUA_12:  return new MQuadrangleN(v, 3, num, part);
   case MSH_QUA_16:  return new MQuadrangleN(v, 3, num, part);
   case MSH_QUA_25:  return new MQuadrangleN(v, 4, num, part);
   case MSH_QUA_36:  return new MQuadrangleN(v, 5, num, part);
@@ -1445,6 +1396,15 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_QUA_81:  return new MQuadrangleN(v, 8, num, part);
   case MSH_QUA_100: return new MQuadrangleN(v, 9, num, part);
   case MSH_QUA_121: return new MQuadrangleN(v, 10, num, part);
+  case MSH_QUA_8:   return new MQuadrangle8(v, num, part);
+  case MSH_QUA_12:  return new MQuadrangleN(v, 3, num, part);
+  case MSH_QUA_16I: return new MQuadrangleN(v, 4, num, part);
+  case MSH_QUA_20:  return new MQuadrangleN(v, 5, num, part);
+  case MSH_QUA_24:  return new MQuadrangleN(v, 6, num, part);
+  case MSH_QUA_28:  return new MQuadrangleN(v, 7, num, part);
+  case MSH_QUA_32:  return new MQuadrangleN(v, 8, num, part);
+  case MSH_QUA_36I: return new MQuadrangleN(v, 9, num, part);
+  case MSH_QUA_40:  return new MQuadrangleN(v,10, num, part);
   case MSH_POLYG_:  return new MPolygon(v, num, part, owner, parent);
   case MSH_POLYG_B: return new MPolygonBorder(v, num, part, d1, d2);
   case MSH_TET_4:   return new MTetrahedron(v, num, part);

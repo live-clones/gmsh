@@ -462,44 +462,36 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
 static int getNewFacePoints(int numPrimaryFacePoints, int nPts, fullMatrix<double> &points)
 {
   int start = 0;
-  switch(numPrimaryFacePoints){
-  case 3:
-    switch (nPts){
-    case 0 : break;
-    case 1 : break;
-    case 2 : points = BasisFactory::getNodalBasis(MSH_TRI_10)->points; start = 9; break;
-    case 3 : points = BasisFactory::getNodalBasis(MSH_TRI_15)->points; start = 12; break;
-    case 4 : points = BasisFactory::getNodalBasis(MSH_TRI_21)->points; start = 15; break;
-    case 5 : points = BasisFactory::getNodalBasis(MSH_TRI_28)->points; start = 18; break;
-    case 6 : points = BasisFactory::getNodalBasis(MSH_TRI_36)->points; start = 21; break;
-    case 7 : points = BasisFactory::getNodalBasis(MSH_TRI_45)->points; start = 24; break;
-    case 8 : points = BasisFactory::getNodalBasis(MSH_TRI_55)->points; start = 27; break;
-    case 9 : points = BasisFactory::getNodalBasis(MSH_TRI_66)->points; start = 30; break;
-    default :
-      Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
+
+  int tag = 0;
+  switch(numPrimaryFacePoints) {
+    case 3:
+      if (nPts < 2) break;
+
+      tag = ElementType::getTag(TYPE_TRI, nPts+1);
+      if (!tag) {
+        Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
+        break;
+      }
+      points = BasisFactory::getNodalBasis(tag)->points;
+      start = 3 * (1 + nPts);
       break;
-    }
-    break;
-  case 4:
-    switch (nPts){
-    case 0 : break;
-    case 1 : points = BasisFactory::getNodalBasis(MSH_QUA_9)->points; break;
-    case 2 : points = BasisFactory::getNodalBasis(MSH_QUA_16)->points; break;
-    case 3 : points = BasisFactory::getNodalBasis(MSH_QUA_25)->points; break;
-    case 4 : points = BasisFactory::getNodalBasis(MSH_QUA_36)->points; break;
-    case 5 : points = BasisFactory::getNodalBasis(MSH_QUA_49)->points; break;
-    case 6 : points = BasisFactory::getNodalBasis(MSH_QUA_64)->points; break;
-    case 7 : points = BasisFactory::getNodalBasis(MSH_QUA_81)->points; break;
-    case 8 : points = BasisFactory::getNodalBasis(MSH_QUA_100)->points; break;
-    default :
-      Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
+
+    case 4:
+      if (nPts < 1) break;
+
+      tag = ElementType::getTag(TYPE_QUA, nPts+1);
+      if (!tag) {
+        Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
+        break;
+      }
+      points = BasisFactory::getNodalBasis(tag)->points;
+      start = 4 * (1 + nPts);
       break;
-    }
-    start = (nPts + 2) * (nPts + 2) - nPts * nPts;
-    break;
-  default:
-    Msg::Error("getFaceVertices not implemented for %d-node faces", numPrimaryFacePoints);
-    break;
+
+    default:
+      Msg::Error("getFaceVertices not implemented for %d-node faces", numPrimaryFacePoints);
+      break;
   }
   return start;
 }
