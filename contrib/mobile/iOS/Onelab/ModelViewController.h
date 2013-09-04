@@ -20,7 +20,9 @@
 
 @property (nonatomic, retain) EAGLView *glView;
 @property (strong, nonatomic) id detailItem;
-@property (weak, nonatomic) IBOutlet UIButton *runStopButton;
+@property (strong, nonatomic) IBOutlet UIButton *runStopButton;
+@property (weak, nonatomic) IBOutlet UILabel *progressLabel;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *progressIndicator;
 
 @property (weak, nonatomic) IBOutlet UILabel *detailDescriptionLabel;
 

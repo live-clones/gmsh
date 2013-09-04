@@ -46,6 +46,17 @@
                                     <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
                             </button>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="HN2-fw-mfe">
+                                <rect key="frame" x="47" y="707" width="636" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" style="gray" id="BfX-qT-0mL">
+                                <rect key="frame" x="20" y="708" width="20" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </activityIndicatorView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
@@ -58,6 +69,8 @@
                     <navigationItem key="navigationItem" title="ONELAB" id="53"/>
                     <connections>
                         <outlet property="glView" destination="26" id="i7d-I7-Zhz"/>
+                        <outlet property="progressIndicator" destination="BfX-qT-0mL" id="O9E-Bm-5zQ"/>
+                        <outlet property="progressLabel" destination="HN2-fw-mfe" id="s62-5y-B7S"/>
                         <outlet property="runStopButton" destination="RAk-ub-gte" id="OAy-FP-40z"/>
                     </connections>
                 </viewController>
@@ -293,38 +306,6 @@
             <point key="canvasLocation" x="336" y="340"/>
         </scene>
     </scenes>
-    <classes>
-        <class className="EAGLView" superclassName="UIView">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/EAGLView.h"/>
-        </class>
-        <class className="ModelListController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelListController.h"/>
-        </class>
-        <class className="ModelViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ModelViewController.h"/>
-            <relationships>
-                <relationship kind="action" name="pinch:" candidateClass="UIPinchGestureRecognizer"/>
-                <relationship kind="action" name="tap:" candidateClass="UITapGestureRecognizer"/>
-                <relationship kind="outlet" name="detailDescriptionLabel" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="runStopButton" candidateClass="UIButton"/>
-            </relationships>
-        </class>
-        <class className="ParametersViewController" superclassName="UITableViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/ParametersViewController.h"/>
-        </class>
-        <class className="PostProcessingViewController" superclassName="UIViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/PostProcessingViewController.h"/>
-            <relationships>
-                <relationship kind="outlet" name="Intervals" candidateClass="UITextField"/>
-                <relationship kind="outlet" name="IntervalsType" candidateClass="UIPickerView"/>
-                <relationship kind="outlet" name="Name" candidateClass="UILabel"/>
-                <relationship kind="outlet" name="RaiseZ" candidateClass="UISlider"/>
-            </relationships>
-        </class>
-        <class className="SplitViewController" superclassName="UISplitViewController">
-            <source key="sourceIdentifier" type="project" relativePath="./Classes/SplitViewController.h"/>
-        </class>
-    </classes>
     <simulatedMetricsContainer key="defaultSimulatedMetrics">
         <simulatedStatusBarMetrics key="statusBar" statusBarStyle="blackTranslucent"/>
         <simulatedOrientationMetrics key="orientation"/>

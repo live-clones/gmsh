@@ -46,6 +46,10 @@
 -(void)viewDidAppear:(BOOL)animated
 {
 	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
+	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
+	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
+	[_progressLabel setHidden:YES];
+	[_progressIndicator setHidden:YES];
 	if(self.initialModel != nil){
 		UIAlertView* progressAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
 		[progressAlert show];
@@ -79,12 +83,18 @@
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
+	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
+	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
 }
 
 - (void)compute
 {
 	[_runStopButton addTarget:self action:@selector(stop) forControlEvents:UIControlEventTouchDown];
 	[_runStopButton setTitle:@"Stop" forState:UIControlStateNormal];
+	[_progressLabel setText:@""];
+	[_progressLabel setHidden:NO];
+	[_progressIndicator setHidden:NO];
+	[_progressIndicator startAnimating];
 	dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
         appDelegate->compute = YES;
@@ -102,6 +112,9 @@
 {
 	[_runStopButton addTarget:self action:@selector(compute) forControlEvents:UIControlEventTouchDown];
 	[_runStopButton setTitle:@"Run" forState:UIControlStateNormal];
+	[_progressLabel setHidden:YES];
+	[_progressIndicator stopAnimating];
+	[_progressIndicator setHidden:YES];
 }
 - (void)stop
 {
@@ -189,6 +202,8 @@
 {
     [self setGlView:nil];
 	[self setRunStopButton:nil];
+    [self setProgressLabel:nil];
+	[self setProgressIndicator:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
@@ -261,8 +276,15 @@ void messageFromCpp (void *self, std::string level, std::string msg)
         [(__bridge id)self requestRender];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
+	else if(level == "Progress"){
+		[(__bridge id)self performSelectorOnMainThread:@selector(setProgress:) withObject:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]] waitUntilDone:YES];
+	}
     else if(level == "Error")
         [(__bridge id)self showAlert:msg title:level];
+}
+-(void)setProgress:(NSString *)progress
+{
+	[_progressLabel setText:progress];
 }
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
