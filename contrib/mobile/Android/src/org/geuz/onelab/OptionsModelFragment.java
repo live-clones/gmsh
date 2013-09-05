@@ -3,8 +3,6 @@ package org.geuz.onelab;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.geuz.onelab.OptionsFragment.OnOptionsChangedListener;
-
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;

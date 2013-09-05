@@ -1,25 +1,21 @@
 <resources>
 
     <string name="app_name">Onelab</string>
-    <string name="button_open_external_file">Open MSH file on external storage</string>
+    <string name="button_open_external_file">Open file from external storage</string>
     <string name="button_ok">OK</string>
     <string name="button_recalculate_param">Recalulate with new parameters</string>
-    <string name="dialog_title_choosefile">Choose a MSH file</string>
+    <string name="dialog_title_choosefile">Choose a file</string>
     <string name="error_nosdcard">No SDcard found on your device</string>
     <string name="title_parameter">Settings</string>
     <string name="title_activity_main">Onelab</string>
     <string name="error_nomshfile">No compatible files or directories in this folder</string>
-    <string name="menu_list">Load a model</string>
-    <string name="menu_settings">Settings</string>
     <string name="menu_model">Show the model</string>
-    <string name="menu_postpro">Post-processing</string>
-    <string name="menu_hidebar">Hide the top bar</string>
-    <string name="menu_showbar">Show the top bar</string>
-    <string name="menu_view">Change the view</string>
-    <string name="menu_view_x">Set X view</string>
-    <string name="menu_view_y">Set Y view</string>
-    <string name="menu_view_z">Set Z view</string>
-    <string name="menu_view_scale">Reset unit scale</string>
-    <string name="menu_view_translation">Center the model</string>
-
+    <string name="menu_parameters">Parameters</string>
+    <string name="menu_parameters_model">Model</string>
+    <string name="menu_parameters_display">Display</string>
+    <string name="menu_run">Run</string>
+    <string name="menu_stop">Stop</string>
+    <string name="postpro_intervalstype">Intervals type</string>
+    <string name="postpro_intervals">Intervals</string>
+	<string name="postpro_raizez">Raise (Z)</string>
 </resources>
