@@ -89,7 +89,7 @@ public class OptionsModelFragment extends Fragment{
 					});
 					params.add(mParam);
 					if(_listView != null)
-						_listView.addItem(mParam.getName().split("/")[0], mParam.getView());
+						_listView.addItem(mParam.getName().split("/")[0].equals("Parameters")? mParam.getName().split("/")[0] + " > " + mParam.getName().split("/")[1]: mParam.getName().split("/")[0], mParam.getView());
 				}
 			}
 		}

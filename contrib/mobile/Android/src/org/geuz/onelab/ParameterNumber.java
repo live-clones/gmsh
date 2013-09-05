@@ -48,13 +48,8 @@ public class ParameterNumber extends Parameter{
 	protected void update(){
 		super.update();
 		int nDecimal = String.valueOf(this.getStep()).length() - String.valueOf(this.getStep()).lastIndexOf('.') - 1; // hack for double round
-		if(_bar != null){
-			if(_label != null && !_label.equals(""))
-			_title.setText(_label + " (" + Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal) + ")");
-			else {
-				String tmp[] = _name.split("/");
-				_title.setText(tmp[tmp.length-1] + " (" + Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal) + ")");
-			}
+		if(_bar != null) {
+			_title.setText(getShortName() + " (" + Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal) + ")");
 			_bar.setProgress((int) ((_value-_min)/_step));
 			_bar.setMax((int) ((_max-_min)/_step));
 			_bar.setEnabled(!this.isReadOnly());
@@ -67,8 +62,7 @@ public class ParameterNumber extends Parameter{
 		}
 		else if(_checkbox != null)
 		{
-			if(_label != null) _checkbox.setText(_label);
-			else _checkbox.setText(_name);
+			_checkbox.setText(getShortName());
 			_checkbox.setChecked((_value == 0)? false : true);
 		}
 		else if(_edittext != null)

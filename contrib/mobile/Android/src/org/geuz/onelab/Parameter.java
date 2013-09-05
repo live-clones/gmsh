@@ -34,17 +34,26 @@ public class Parameter {
 	protected void update(){
 		if(_label != null && !_label.equals(""))
 			_title.setText(_label);
-		else {
-			String tmp[] = _name.split("/");
-			_title.setText(tmp[tmp.length-1]);
-		}
+		else
+			_title.setText(getShortName());
 		if(isReadOnly()) _title.setAlpha(0.423f);
 	}
 	
 	public void setName(String name) {_name = name;this.update();}
 	public void setReadOnly(boolean readOnly) {_readOnly = readOnly;this.update();}
-	public void setLabel(String label) {_label = label;this.update();}
-	public String getName() {return _name;}
+	public void setLabel(String label) {
+		_label = label;
+		this.update();
+	}
+	public String getName() { return _name;}
+	public String getShortName() {
+		if(_label != null && _label.length() > 0) return _label;
+		String[] splited = _name.split("/");
+		String name = splited[splited.length-1];
+		while(name.length() > 0 && name.charAt(0) >= '0' && name.charAt(0) <= '9')
+			name = name.substring(1);
+		return name;
+	}
 	public boolean isReadOnly() {return _readOnly;}
 	public String getLabel() {return _label;}
 	public int fromString(String s){
