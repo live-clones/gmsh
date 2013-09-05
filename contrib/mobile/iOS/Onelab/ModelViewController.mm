@@ -48,6 +48,7 @@
 	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
+	[_progressIndicator addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleProgressIndicatorTap:)]];
 	[_progressLabel setHidden:YES];
 	[_progressIndicator setHidden:YES];
 	if(self.initialModel != nil){
@@ -285,6 +286,10 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 -(void)setProgress:(NSString *)progress
 {
 	[_progressLabel setText:progress];
+}
+-(void)handleProgressIndicatorTap:(id)sender
+{
+	[_progressLabel setHidden:!_progressLabel.hidden];
 }
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
