@@ -46,7 +46,7 @@ Enable math expression parser (used by plugins and options) (default: ON)
 @item ENABLE_MED
 Enable MED mesh and post file formats (default: ON)
 @item ENABLE_MESH
-Enable mesh module (default: ON)
+Enable mesh module (required by GUI) (default: ON)
 @item ENABLE_METIS
 Enable Metis mesh partitioner (default: ON)
 @item ENABLE_MMG3D
@@ -82,7 +82,7 @@ Enable PETSc linear solvers (required for SLEPc) (default: ON)
 @item ENABLE_PLUGINS
 Enable post-processing plugins (default: ON)
 @item ENABLE_POST
-Enable post-processing module (default: ON)
+Enable post-processing module (required by GUI) (default: ON)
 @item ENABLE_POPPLER
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_QT
@@ -104,8 +104,8 @@ Enable Tetgen 3D initial mesh generator (default: ON)
 @item ENABLE_TETGEN_OLD
 Enable older version of Tetgen (default: OFF)
 @item ENABLE_VORO3D
-Enable Voro3D (experimental) (default: ON)
+Enable Voro3D (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA
-Enable generation of Java wrappers (default: OFF)
+Enable generation of Java wrappers (experimental) (default: OFF)
 @item ENABLE_WRAP_PYTHON
 Enable generation of Python wrappers (default: OFF)
