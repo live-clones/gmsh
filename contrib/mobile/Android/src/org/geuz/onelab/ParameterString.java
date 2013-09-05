@@ -2,8 +2,6 @@ package org.geuz.onelab;
 
 import java.util.ArrayList;
 
-import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
-
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,8 +23,8 @@ public class ParameterString extends Parameter{
 	private Spinner _spinner;
 	private EditText _edittext;
 	
-	public ParameterString(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name) {
-		super(context, gmsh, callback, name);
+	public ParameterString(Context context, Gmsh gmsh, String name) {
+		super(context, gmsh, name);
 		_choices = new ArrayList<String>();
 		_choices.add("-"); // Default choice
 	}
@@ -48,15 +46,24 @@ public class ParameterString extends Parameter{
 			_edittext.setText(_choices.get(0));
 	}
 	
-	public void setValue(int index) {if(index != _index)_changed = true;_index = index;this.update();}
+	public void setValue(int index) {
+		if(index == _index) return;
+		if(mListener != null) mListener.OnParameterChanged();
+		_changed = true;
+		_index = index;
+		this.update();
+	}
 	public void setValue(String value) {
 		int index = _choices.indexOf(value);
 		if(index < 0) { // the value is not in the list, add it
 			this.addChoices(value);
 			index = _choices.indexOf(value);
 		}
-		if(index != _index)_changed = true;
-		_index = index;this.update();
+		if(index == _index) return;
+		if(mListener != null) mListener.OnParameterChanged();
+		_changed = true;
+		_index = index;
+		this.update();
 	}
 	public void setKind(String kind) {_kind = kind;}
 	public void addChoices(String choice) {
@@ -73,6 +80,7 @@ public class ParameterString extends Parameter{
 	public int getIndex() {return _index;}
 	public ArrayList<String> getChoices() {return _choices;}
 	public int fromString(String s){
+		_choices.clear();
 		int pos = super.fromString(s);
 		if(pos <= 0) return -1; // error
 		String[] infos = s.split(Character.toString((char)0x03));
@@ -97,23 +105,15 @@ public class ParameterString extends Parameter{
 		if(_spinner != null){
 			paramLayout.addView(_spinner);
 			_spinner.setEnabled(!_readOnly);
-			_spinner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-				
-				public void onFocusChange(View v, boolean hasFocus) {
-					if(_listView != null) _listView.refresh();
-				}
-			});
 			_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
 				public void onNothingSelected(AdapterView<?> arg0) {}
 
 				public void onItemSelected(AdapterView<?> parent, View view,
 						int pos, long id) {
+					if(getValue() == getChoices().get(pos)) return;
 					setValue(pos);
 					_gmsh.setParam(getType(), getName(), String.valueOf(getValue()));
-					if(_gmsh.onelabCB("check") == 1 && _callback != null)
-						_callback.onRequestRender();
-					if(_listView != null) _listView.refresh();
 				}
 
 			});
@@ -136,9 +136,7 @@ public class ParameterString extends Parameter{
 			});
 			_edittext.addTextChangedListener(new TextWatcher() {
 				
-				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					if(_listView != null) _listView.refresh();
-				}
+				public void onTextChanged(CharSequence s, int start, int before, int count) { } // UNUSED Auto-generated method stub
 				
 				public void beforeTextChanged(CharSequence s, int start, int count,
 						int after) {} // UNUSED Auto-generated method stub
@@ -149,6 +147,11 @@ public class ParameterString extends Parameter{
 			});
 		}
 		return paramLayout;
+	}
+	private OnParameterChangedListener mListener;
+	public void setOnParameterChangedListener(OnParameterChangedListener listener) { mListener = listener;}
+	public interface OnParameterChangedListener {
+		void OnParameterChanged();
 	}
 	
 }

@@ -3,10 +3,12 @@ package org.geuz.onelab;
 import android.app.Fragment;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -15,6 +17,7 @@ public class ModelFragment extends Fragment{
 	Gmsh _gmsh;
 	mGLSurfaceView _glView;
 	TextView _progress;
+	LinearLayout _progressLayout;
 	
 	public static ModelFragment newInstance(Gmsh g) {
 		ModelFragment fragment = new ModelFragment();
@@ -45,23 +48,26 @@ public class ModelFragment extends Fragment{
 		_glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		_glView.requestRender();
 		glViewLayout.addView(_glView);
+		_progressLayout = new LinearLayout(container.getContext());
+		ProgressBar bar = new ProgressBar(container.getContext());
+		_progressLayout.addView(bar);
 		_progress = new TextView(container.getContext());
-		_progress.setAlpha(0);
+		_progressLayout.setAlpha(0);
+		_progressLayout.setGravity(Gravity.CENTER);
+		_progressLayout.addView(_progress);
 		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
 			    RelativeLayout.LayoutParams.WRAP_CONTENT, 
 			    RelativeLayout.LayoutParams.WRAP_CONTENT);
 		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-		_progress.setPadding(10, 0, 10, 10);
-		_progress.setLayoutParams(layoutParams);
-		glViewLayout.addView(_progress);
+		glViewLayout.addView(_progressLayout, layoutParams);
 		return rootView;
 	}
 	public void showProgress(String progress) {
-		_progress.setAlpha(1);
+		_progressLayout.setAlpha(1);
 		_progress.setText(progress);
 	}
 	public void hideProgress() {
-		_progress.setAlpha(0);
+		_progressLayout.setAlpha(0);
 		_progress.setText("");
 	}
 	public void requestRender() {

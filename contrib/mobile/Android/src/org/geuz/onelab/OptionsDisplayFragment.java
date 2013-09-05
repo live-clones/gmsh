@@ -2,7 +2,6 @@ package org.geuz.onelab;
 
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Color;
@@ -51,7 +50,7 @@ public class OptionsDisplayFragment extends Fragment{
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				_gmsh.setDoubleOption("Geometry", "Points", (isChecked)?1. : 0.);
-				mCallback.onRequestRender();
+				if(mListener != null) mListener.OnModelOptionsChanged();
 			}
 		});
 		_listView.addItem("Display", showGeomPoints);
@@ -62,7 +61,7 @@ public class OptionsDisplayFragment extends Fragment{
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				_gmsh.setDoubleOption("Geometry", "Lines", (isChecked)?1. : 0.);
-				mCallback.onRequestRender();
+				if(mListener != null) mListener.OnModelOptionsChanged();
 			}
 		});
 		_listView.addItem("Display", showGeomLines);
@@ -73,7 +72,7 @@ public class OptionsDisplayFragment extends Fragment{
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				_gmsh.setDoubleOption("Mesh", "SurfaceEdges", (isChecked)?1. : 0.);
-				mCallback.onRequestRender();
+				if(mListener != null) mListener.OnModelOptionsChanged();
 			}
 		});
     	_listView.addItem("Display", showMeshSurfaceEdges);
@@ -84,7 +83,7 @@ public class OptionsDisplayFragment extends Fragment{
 			
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				_gmsh.setDoubleOption("Mesh", "VolumeEdges", (isChecked)?1. : 0.);
-				mCallback.onRequestRender();
+				if(mListener != null) mListener.OnModelOptionsChanged();
 			}
 		});
     	_listView.addItem("Display", showMeshVolumesEdges);
@@ -107,7 +106,7 @@ public class OptionsDisplayFragment extends Fragment{
 				
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					_gmsh.setPView(myID, -1, (isChecked)? 1 : 0, -1);
-					mCallback.onRequestRender();
+					if(mListener != null) mListener.OnModelOptionsChanged();
 				}
 			});
         	Button button = new Button(_listView.getContext());
@@ -128,21 +127,10 @@ public class OptionsDisplayFragment extends Fragment{
 			_listView.addItem("Result", layout);
 		}
 	}
-	
-	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		try {
-            mCallback = (OnOptionRequestRender) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnHeadlineSelectedListener");
-        }
 
-	}
-	
-	private OnOptionRequestRender mCallback;
-	public interface OnOptionRequestRender {
-		public void onRequestRender();
+	private OnModelOptionsChangedListener mListener;
+	public void setOnModelOptionsChangedListener(OnModelOptionsChangedListener listener) { mListener = listener;}
+	public interface OnModelOptionsChangedListener {
+		void OnModelOptionsChanged();
 	}
 }

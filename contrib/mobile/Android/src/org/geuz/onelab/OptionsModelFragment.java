@@ -3,6 +3,8 @@ package org.geuz.onelab;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.geuz.onelab.OptionsFragment.OnOptionsChangedListener;
+
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -25,7 +27,6 @@ public class OptionsModelFragment extends Fragment{
 	public OptionsModelFragment() {
 		super();
 	}
-	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -45,6 +46,7 @@ public class OptionsModelFragment extends Fragment{
 	public void refresh() {
 		if(_gmsh == null) return;
 		this.getAvailableParam();
+		if(_listView != null) _listView.refresh();
 	}
 	
 	private void getAvailableParam(){
@@ -64,15 +66,29 @@ public class OptionsModelFragment extends Fragment{
 			if(found) continue;
 			// add new parameter
 			if(s.split(Character.toString((char)0x03))[1].equals("number")){
-				final ParameterNumber mParam = new ParameterNumber(_listView.getContext(), _gmsh, mCallback, "");
+				final ParameterNumber mParam = new ParameterNumber(_listView.getContext(), _gmsh, "");
 				if(mParam.fromString(s) == -1) continue;
+				mParam.setOnParameterChangedListener(new ParameterNumber.OnParameterChangedListener() {
+					
+					public void OnParameterChanged() {
+						if(_gmsh.onelabCB("check") > 0 && mListener != null) mListener.OnModelOptionsChanged();;
+						refresh();
+					}
+				});
 				params.add(mParam);
 				if(_listView != null)
 					_listView.addItem(mParam.getName().split("/")[0].equals("Parameters")? mParam.getName().split("/")[0] + " > " + mParam.getName().split("/")[1]: mParam.getName().split("/")[0], mParam.getView());
 			}
 			else if(s.split("|")[1].equals("string")){
-				ParameterString mParam = new ParameterString(_listView.getContext(), _gmsh, mCallback, "");
+				ParameterString mParam = new ParameterString(_listView.getContext(), _gmsh, "");
 				if(mParam.fromString(s) != -1){
+					mParam.setOnParameterChangedListener(new ParameterString.OnParameterChangedListener() {
+						
+						public void OnParameterChanged() {
+							if(_gmsh.onelabCB("check") > 0 && mListener != null) mListener.OnModelOptionsChanged();
+							refresh();
+						}
+					});
 					params.add(mParam);
 					if(_listView != null)
 						_listView.addItem(mParam.getName().split("/")[0], mParam.getView());
@@ -80,8 +96,9 @@ public class OptionsModelFragment extends Fragment{
 			}
 		}
     }
-	private OnOptionRequestRender mCallback;
-	public interface OnOptionRequestRender {
-		public void onRequestRender();
+	private OnModelOptionsChangedListener mListener;
+	public void setOnModelOptionsChangedListener(OnModelOptionsChangedListener listener) { mListener = listener;}
+	public interface OnModelOptionsChangedListener {
+		void OnModelOptionsChanged();
 	}
 }

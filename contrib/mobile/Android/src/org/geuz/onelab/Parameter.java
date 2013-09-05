@@ -1,8 +1,5 @@
 package org.geuz.onelab;
 
-
-import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
-
 import android.content.Context;
 import android.graphics.Color;
 import android.widget.LinearLayout;
@@ -12,18 +9,15 @@ import android.widget.TextView;
 public class Parameter {
 	protected Context _context;
 	protected Gmsh _gmsh;
-	protected SeparatedListView _listView;
-	protected OnOptionRequestRender _callback;
 	protected String _name;
 	protected String _label;
 	protected boolean _readOnly;
 	protected boolean _changed;
 	protected TextView _title;
 
-	public Parameter(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name){
+	public Parameter(Context context, Gmsh gmsh, String name){
 		_context = context;
 		_gmsh = gmsh;
-		_callback = callback;
 		_readOnly = false;
 		_name = name;
 		_title = new TextView(context);
@@ -31,8 +25,8 @@ public class Parameter {
 		_title.setTextAppearance(context, android.R.style.TextAppearance_DeviceDefault_Medium);
 		_title.setTextColor(Color.DKGRAY);
 	}
-	public Parameter(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name, boolean readOnly){
-		this(context, gmsh, callback, name);
+	public Parameter(Context context, Gmsh gmsh, String name, boolean readOnly){
+		this(context, gmsh, name);
 		_readOnly = readOnly;
 		_changed = false;
 	}
@@ -74,8 +68,6 @@ public class Parameter {
 	}
 	public boolean changed() { if(_changed){_changed=false; return true;}return _changed;}
 	public String getType(){return "Parameter";}
-	
-	public void setList(SeparatedListView list){ _listView = list;}
 	
 	public LinearLayout getView() {
 		LinearLayout paramLayout = new LinearLayout(_context);

@@ -52,7 +52,7 @@ public class OptionsPostProcessingFragment extends Fragment{
 		LinearLayout layout =  (LinearLayout)inflater.inflate(R.layout.fragment_postprocessing, container, false);
 		final Spinner intervalsType = (Spinner)layout.findViewById(R.id.intervals_type);
 		final EditText intervals = (EditText)layout.findViewById(R.id.intervals);
-		final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez);
+		final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez); // TODO
 		intervalsType.setEnabled(infos[2].equals("1"));
 		ArrayList<String> choices;
 		ArrayAdapter<String> adapter;

@@ -2,8 +2,6 @@ package org.geuz.onelab;
 
 import java.util.ArrayList;
 
-import org.geuz.onelab.OptionsModelFragment.OnOptionRequestRender;
-
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -30,20 +28,20 @@ public class ParameterNumber extends Parameter{
 	private CheckBox _checkbox;
 	private EditText _edittext;
 	
-	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name){
-		super(context, gmsh, callback, name);
+	public ParameterNumber(Context context, Gmsh gmsh, String name){
+		super(context, gmsh, name);
 	}
-	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name,  double value, double min, double max, double step)
+	public ParameterNumber(Context context, Gmsh gmsh, String name,  double value, double min, double max, double step)
 	{
-		this(context, gmsh, callback, name);
+		this(context, gmsh, name);
 		_value = value;
 		_min = min;
 		_max = max;
 		_step = step;
 	}
-	public ParameterNumber(Context context, Gmsh gmsh, OnOptionRequestRender callback, String name, boolean readOnly, double value, double min, double max, double step)
+	public ParameterNumber(Context context, Gmsh gmsh, String name, boolean readOnly, double value, double min, double max, double step)
 	{
-		this(context, gmsh, callback, name, value, min, max, step);
+		this(context, gmsh, name, value, min, max, step);
 		_readOnly = readOnly;
 	}
 	
@@ -84,8 +82,9 @@ public class ParameterNumber extends Parameter{
 			Log.w("ParameterNumber", "Incorect value "+value+" (max="+_max+" min="+_min+")");
 			return;
 		}
-		if(value != _value)
-			_changed = true;
+		if(value == _value) return;
+		if(mListener != null) mListener.OnParameterChanged();
+		_changed = true;
 		_value = value;
 		this.update();
 	}
@@ -142,9 +141,7 @@ public class ParameterNumber extends Parameter{
 		int nChoix = Integer.parseInt(infos[pos++]); // choices' size
 		double choices[] = new double[nChoix];
 		for(int i=0; i<nChoix; i++)
-			if(nChoix == 2)
 				choices[i] = Double.parseDouble(infos[pos++]); // choice
-			else pos++;
 		int nLabels = Integer.parseInt(infos[pos++]); // labels' size
 		if(nChoix == 2 && choices[0] == 0 && choices[1] == 1 && nLabels == 0) {
 			_checkbox = new CheckBox(_context);
@@ -172,23 +169,14 @@ public class ParameterNumber extends Parameter{
 		if(_spinner != null) {
 			paramLayout.addView(_spinner);
 			_spinner.setEnabled(!_readOnly);
-			_spinner.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-				
-				public void onFocusChange(View v, boolean hasFocus) {
-					if(_listView != null) _listView.refresh();
-				}
-			});
 			_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
 				public void onNothingSelected(AdapterView<?> arg0) {}
 
 				public void onItemSelected(AdapterView<?> parent, View view,
 						int pos, long id) {
-					if(_listView != null) _listView.refresh();
 					setValue(_values.get(pos));
 					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
-					if(_gmsh.onelabCB("check") == 1 && _callback != null)
-						_callback.onRequestRender();
 				}
 
 			});
@@ -200,14 +188,11 @@ public class ParameterNumber extends Parameter{
 				
 				public void onStopTrackingTouch(SeekBar seekBar) {
 					_gmsh.setParam(getType(), getName(), String.valueOf(getValue())); // update parameter and the perform a check
-					if(_gmsh.onelabCB("check") == 1  && _callback != null)
-						_callback.onRequestRender();
 				}
 				
 				public void onStartTrackingTouch(SeekBar seekBar) {}
 				
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					if(_listView != null) _listView.refresh();
 					setValue(getMin() + getStep()*(double)progress);
 				}
 			});
@@ -219,7 +204,6 @@ public class ParameterNumber extends Parameter{
 			_checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					if(_listView != null) _listView.refresh();
 					setValue((isChecked)? 1 : 0);
 					_gmsh.setParam(getType(), getName(), String.valueOf(_value));
 				}
@@ -247,7 +231,6 @@ public class ParameterNumber extends Parameter{
 			_edittext.addTextChangedListener(new TextWatcher() {
 				
 				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					if(_listView != null) _listView.refresh();
 					double value = 1;
 					try {
 						if(s.length() < 1) value = 1;
@@ -268,5 +251,10 @@ public class ParameterNumber extends Parameter{
 			});
 		}
 		return paramLayout;
+	}
+	private OnParameterChangedListener mListener;
+	public void setOnParameterChangedListener(OnParameterChangedListener listener) { mListener = listener;}
+	public interface OnParameterChangedListener {
+		void OnParameterChanged();
 	}
 }

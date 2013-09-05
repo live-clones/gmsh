@@ -20,7 +20,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 
-public class MainActivity extends Activity implements OptionsDisplayFragment.OnOptionRequestRender{
+public class MainActivity extends Activity{
 
 	private Gmsh _gmsh;
 	private boolean _compute, _twoPane;
@@ -68,6 +68,12 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     		_modelFragment = ModelFragment.newInstance(_gmsh);
     		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
     	}
+    	_optionsFragment.setOnOptionsChangedListener(new OptionsFragment.OnOptionsChangedListener() {
+			
+			public void OnOptionsChanged() {
+				_modelFragment.requestRender();
+			}
+		});
 	}
 	
 	@Override
@@ -136,22 +142,6 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
     	protected void onPreExecute() {
     		_compute = true;
     		_runStopMenuItem.setTitle(R.string.menu_stop);
-    		/*loading.setTitle("Please wait");
-        	loading.setButton(DialogInterface.BUTTON_NEUTRAL, "Hide", new DialogInterface.OnClickListener() {
-    			
-    			public void onClick(DialogInterface dialog, int which) {
-    				loading.dismiss();
-    			}
-    		});
-        	loading.setButton(DialogInterface.BUTTON_NEGATIVE, "Stop", new DialogInterface.OnClickListener() {
-    			
-    			public void onClick(DialogInterface dialog, int which) {
-    				gmsh.onelabCB("stop");
-    			}
-    		});
-    		loading.setMessage("...");
-    		loading.show();
-    		reset.setEnabled(false);*/
     		super.onPreExecute();
     	}
     	
@@ -171,22 +161,19 @@ public class MainActivity extends Activity implements OptionsDisplayFragment.OnO
 		}
     	
     }
-	public void onRequestRender() {
-		_modelFragment.requestRender();
-	}
 	private void showError(){
     	if(_errors.size()>0){
     		if(_errorDialog != null && _errorDialog.isShowing()) _errorDialog.dismiss();
     		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     		_errorDialog = dialogBuilder.setTitle("Gmsh/GetDP Error(s)")
 		    .setMessage(_errors.get(_errors.size()-1))
-		    .setNegativeButton("Stop", new DialogInterface.OnClickListener() {
+		    .setNegativeButton("Hide", new DialogInterface.OnClickListener() {
 		        public void onClick(DialogInterface dialog, int which) {
 		        	_errors.clear();
 		        	_errorDialog.dismiss();
 		        }
 		     })
-		    .setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+		    .setPositiveButton("Show more", new DialogInterface.OnClickListener() {
 		        public void onClick(DialogInterface dialog, int which) {
 		        	_errors.remove(_errors.size()-1);
 		        	_errorDialog.dismiss();
