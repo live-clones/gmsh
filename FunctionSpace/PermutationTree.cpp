@@ -1,4 +1,7 @@
 #include <map>
+#include <fstream>
+#include <sstream>
+#include <cstring>
 
 #include "Exception.h"
 #include "PermutationTree.h"
@@ -34,8 +37,45 @@ PermutationTree::PermutationTree(const vector<size_t>& refSequence){
     leaf[i]->leafId = i;
 }
 
-PermutationTree::~PermutationTree(void){
-  destroy(root);
+PermutationTree::PermutationTree(string path){
+  // Read file //
+  // Open Stream
+  ifstream input;
+  input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  input.open(path.c_str(), std::ifstream::binary);
+
+  // Alloc stream for header
+  char* stream = new char[3 * sizeof(size_t)];
+
+  // Read header
+  size_t uSize; // Unlink struct size
+  size_t nSize; // Total size for unlink struct
+
+  input.read(stream, 3 * sizeof(size_t));
+
+  memcpy(&uSize,        stream + 0 * sizeof(size_t), sizeof(size_t));
+  memcpy(&nextNodeId,   stream + 1 * sizeof(size_t), sizeof(size_t));
+  memcpy(&sequenceSize, stream + 2 * sizeof(size_t), sizeof(size_t));
+
+  // Alloc stream for unlink struct
+  delete[] stream;
+  nSize  = uSize * nextNodeId;
+  stream = new char[nSize];
+
+  // Read unlink struct & close
+  input.read(stream, nSize);
+  input.close();
+
+  // Unserialize unlink struct
+  vector<unlink_t> unlink(nextNodeId);
+  for(size_t i = 0; i < nextNodeId; i++)
+    unserialize(stream + (i * uSize), &unlink[i]);
+
+  // Free stream
+  delete[] stream;
+
+  // Regenerate Tree //
+  rebuild(unlink);
 }
 
 void PermutationTree::populate(node_t* node,
@@ -84,6 +124,95 @@ void PermutationTree::populate(node_t* node,
   // If I am a leaf, add me to listOfLeaf
   if(!nSon)
     listOfLeaf.push_back(node);
+}
+
+void PermutationTree::unserialize(char* stream, unlink_t* unlink){
+  // Some padding data //
+  const size_t nxtChoiceStart = 2 * sizeof(size_t);
+  const size_t fatherIdStart  = nxtChoiceStart + sequenceSize * sizeof(size_t);
+  const size_t sonStart       = fatherIdStart + 2 * sizeof(size_t);
+  const size_t otherIdStart   = sonStart + sequenceSize * sizeof(size_t);
+
+  // Next Choice //
+  memcpy(&unlink->myChoice,   stream + 0 * sizeof(size_t), sizeof(size_t));
+  memcpy(&unlink->nNxtChoice, stream + 1 * sizeof(size_t), sizeof(size_t));
+
+  unlink->nxtChoice.resize(unlink->nNxtChoice);
+  for(size_t i = 0; i < unlink->nNxtChoice; i++)
+    memcpy(&unlink->nxtChoice[i],
+           stream + nxtChoiceStart + i * sizeof(size_t), sizeof(size_t));
+
+  // Father and Son //
+  memcpy(&unlink->fatherId,
+         stream + fatherIdStart + 0 * sizeof(size_t), sizeof(size_t));
+
+  memcpy(&unlink->nSon,
+         stream + fatherIdStart + 1 * sizeof(size_t), sizeof(size_t));
+
+  unlink->sonId.resize(unlink->nSon);
+  for(size_t i = 0; i < unlink->nSon; i++)
+    memcpy(&unlink->sonId[i],
+           stream + sonStart + i * sizeof(size_t), sizeof(size_t));
+
+  // Node Id //
+  memcpy(&unlink->nodeId,
+         stream + otherIdStart + 0 * sizeof(size_t), sizeof(size_t));
+
+  // Leaf Id //
+  memcpy(&unlink->leafId,
+         stream + otherIdStart + 1 * sizeof(size_t), sizeof(size_t));
+
+  // Tag //
+  memcpy(&unlink->tag,
+         stream + otherIdStart + 2 * sizeof(size_t), sizeof(size_t));
+}
+
+void PermutationTree::rebuild(vector<unlink_t>& unlink){
+  // Almost linked nodes (node of node_t type but without connected nodes) //
+  vector<node_t*> node(nextNodeId);
+  for(size_t i = 0; i < nextNodeId; i++)
+    node[i] = copy(&unlink[i]);
+
+  // Root //
+  root = node[0];
+  for(size_t j = 0; j < root->son.size(); j++)
+    root->son[j] = node[unlink[0].sonId[j]];
+
+  // Link all other nodes & Gather leafs //
+  list<node_t*> listOfLeaf;
+
+  for(size_t i = 1; i < nextNodeId; i++){
+    node[i]->father = node[unlink[i].fatherId];
+
+    for(size_t j = 0; j < node[i]->son.size(); j++)
+      node[i]->son[j] = node[unlink[i].sonId[j]];
+
+    if(node[i]->leafId != (size_t)(-1))
+      listOfLeaf.push_back(node[i]);
+  }
+
+  // Get Leafs //
+  leaf.assign(listOfLeaf.begin(), listOfLeaf.end());
+}
+
+PermutationTree::node_t* PermutationTree::copy(unlink_t* unlink){
+  node_t* node = new node_t;
+
+  node->myChoice = unlink->myChoice;
+  node->nxtChoice.resize(unlink->nNxtChoice);
+
+  node->father = NULL;
+  node->son.resize(unlink->nSon);
+
+  node->nodeId = unlink->nodeId;
+  node->leafId = unlink->leafId;
+  node->tag    = unlink->tag;
+
+  return node;
+}
+
+PermutationTree::~PermutationTree(void){
+  destroy(root);
 }
 
 void PermutationTree::destroy(node_t* node){
@@ -192,20 +321,6 @@ PermutationTree::getAllTagsCount(void) const{
 }
 
 string PermutationTree::toString(void) const{
-  stringstream stream;
-
-  // Number of Node //
-  stream << "nNode " << nextNodeId
-         << endl;
-
-  // Nodes (depth first travel) //
-  serial_t* tmp = new serial_t;
-  appendString(stream, root, tmp);
-  delete tmp;
-
-  return stream.str();
-
-  /*
   // Number of Permutation //
   const size_t max_t = -1;
   const size_t nPerm = leaf.size();
@@ -235,69 +350,123 @@ string PermutationTree::toString(void) const{
 
   // Return //
   return stream.str();
-  */
 }
 
-void PermutationTree::toSerial(node_t* node, serial_t* serial){
-  serial->myChoice   = node->myChoice;
-  serial->nNxtChoice = node->nxtChoice.size();
-  serial->nxtChoice.resize(serial->nNxtChoice);
+void PermutationTree::serialize(string path) const{
+  // Enumerate Nodes //
+  list<node_t*> node;
+  enumerate(root, node);
 
-  for(size_t i = 0; i < serial->nNxtChoice; i++)
-    serial->nxtChoice[i] = node->nxtChoice[i];
+  // Serialize all nodes //
+  // Unlink root to get (fixed) size of unlink type
+  unlink_t tmp;
+  unlink(root, &tmp, sequenceSize);
+
+  // Get Sizes
+  const size_t hSize = headerSize();     // Header size
+  const size_t uSize = unlinkSize(&tmp); // Unlink struct size
+  const size_t nNode = node.size();      // Number of node/unlink struct
+  const size_t nSize = uSize * nNode;    // Total size for unlink struct
+
+  // Alloc byte stream
+  char* stream = new char[nSize + hSize];
+  for(size_t i = 0; i < nSize + hSize; i++)
+    stream[i] = 0;
+
+  // Write header
+  memcpy(stream + 0 * sizeof(size_t), &uSize,        sizeof(size_t));
+  memcpy(stream + 1 * sizeof(size_t), &nNode,        sizeof(size_t));
+  memcpy(stream + 2 * sizeof(size_t), &sequenceSize, sizeof(size_t));
+
+  // Write unlinked node
+  list<node_t*>::iterator it = node.begin();
+
+  for(size_t i = 0; i < nNode; i++, it++){
+    unlink(*it, &tmp, sequenceSize);
+    serialize(stream + hSize + (i * uSize), &tmp);
+  }
+
+  // Write byte stream
+  ofstream output;
+  output.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+  output.open(path.c_str(), std::ofstream::binary);
+  output.write(stream, nSize + hSize);
+  output.close();
+
+  // Free
+  delete[] stream;
+}
+
+void PermutationTree::enumerate(node_t* node, std::list<node_t*>& listOfNode){
+  // Add this node
+  listOfNode.push_back(node);
+
+  // Add son
+  const size_t nSon = node->son.size();
+  for(size_t i = 0; i < nSon; i++)
+    enumerate(node->son[i], listOfNode);
+}
+
+void PermutationTree::unlink(node_t* node, unlink_t* unlink, size_t maxSize){
+  unlink->myChoice   = node->myChoice;
+  unlink->nNxtChoice = node->nxtChoice.size();
+  unlink->nxtChoice.resize(maxSize); // Use fixed size -- easyer serialization
+
+  for(size_t i = 0; i < unlink->nNxtChoice; i++)
+    unlink->nxtChoice[i] = node->nxtChoice[i];
 
   if(!node->father)
-    serial->fatherId = (size_t)(-1);
+    unlink->fatherId = (size_t)(-1);
   else
-    serial->fatherId = node->father->nodeId;
+    unlink->fatherId = node->father->nodeId;
 
-  serial->nSon = node->son.size();
-  serial->sonId.resize(serial->nSon);
+  unlink->nSon = node->son.size();
+  unlink->sonId.resize(maxSize); // Use fixed size -- easyer serialization
 
-  for(size_t i = 0; i < serial->nSon; i++)
-    serial->sonId[i] = node->son[i]->nodeId;
+  for(size_t i = 0; i < unlink->nSon; i++)
+    unlink->sonId[i] = node->son[i]->nodeId;
 
-  serial->nodeId = node->nodeId;
-  serial->leafId = node->leafId;
-  serial->tag    = node->tag;
+  unlink->nodeId = node->nodeId;
+  unlink->leafId = node->leafId;
+  unlink->tag    = node->tag;
 }
 
-void PermutationTree::appendString(stringstream& stream,
-                                   node_t* node,
-                                   serial_t* tmp){
-  // Write this node //
-  toSerial(node, tmp);
-  stream << toString(tmp) << endl;
+void
+PermutationTree::serialize(char* stream, unlink_t* unlink) const{
+  // Some padding data //
+  const size_t nxtChoiceStart = 2 * sizeof(size_t);
+  const size_t fatherIdStart  = nxtChoiceStart + sequenceSize * sizeof(size_t);
+  const size_t sonStart       = fatherIdStart + 2 * sizeof(size_t);
+  const size_t otherIdStart   = sonStart + sequenceSize * sizeof(size_t);
 
-  // Write Son //
-  const size_t nSon = node->son.size();
+  // Next Choice //
+  memcpy(stream + 0 * sizeof(size_t), &unlink->myChoice,   sizeof(size_t));
+  memcpy(stream + 1 * sizeof(size_t), &unlink->nNxtChoice, sizeof(size_t));
 
-  for(size_t i = 0; i < nSon; i++)
-    appendString(stream, node->son[i], tmp);
-}
+  for(size_t i = 0; i < unlink->nNxtChoice; i++)
+    memcpy(stream + nxtChoiceStart + i * sizeof(size_t),
+           &unlink->nxtChoice[i], sizeof(size_t));
 
-string PermutationTree::toString(serial_t* serial){
-  stringstream stream;
+  // Father and Son //
+  memcpy(stream + fatherIdStart + 0 * sizeof(size_t),
+         &unlink->fatherId, sizeof(size_t));
 
-  stream << "Node " << serial->nodeId
-         << " - "   << serial->leafId
-         << " - "   << serial->tag
-         << endl
+  memcpy(stream + fatherIdStart + 1 * sizeof(size_t),
+         &unlink->nSon, sizeof(size_t));
 
-         << "MyChoice "  << serial->myChoice
-         << endl
-         << "NxtChoice " << serial->nNxtChoice;
+  for(size_t i = 0; i < unlink->nSon; i++)
+    memcpy(stream + sonStart + i * sizeof(size_t),
+           &unlink->sonId[i], sizeof(size_t));
 
-  for(size_t i = 0; i < serial->nNxtChoice; i++)
-    stream << " - " << serial->nxtChoice[i];
+  // Node Id //
+  memcpy(stream + otherIdStart + 0 * sizeof(size_t),
+         &unlink->nodeId, sizeof(size_t));
 
-  stream << endl
-         << "FatherId " << serial->fatherId
-         << endl
-         << "SonId " << serial->nSon;
+  // Leaf Id //
+  memcpy(stream + otherIdStart + 1 * sizeof(size_t),
+         &unlink->leafId, sizeof(size_t));
 
-  for(size_t i = 0; i < serial->nNxtChoice; i++)
-    stream << " - " << serial->sonId[i];
-
-  return stream.str();
+  // Tag //
+  memcpy(stream + otherIdStart + 2 * sizeof(size_t),
+         &unlink->tag, sizeof(size_t));
 }

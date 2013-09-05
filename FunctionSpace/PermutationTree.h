@@ -5,7 +5,6 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <sstream>
 
 /**
    @class PermutationTree
@@ -37,19 +36,19 @@ class PermutationTree{
 
  private:
   // Tree node for serialization //
-  typedef struct serial_s{
-    size_t               myChoice;
-    size_t               nNxtChoice;
-    std::vector<size_t>  nxtChoice;
+  typedef struct unlink_s{
+    size_t              myChoice;
+    size_t              nNxtChoice;
+    std::vector<size_t> nxtChoice;
 
-    size_t               fatherId;
-    size_t               nSon;
-    std::vector<size_t>  sonId;
+    size_t              fatherId;
+    size_t              nSon;
+    std::vector<size_t> sonId;
 
-    size_t               nodeId;
-    size_t               leafId;
-    size_t               tag;
-  } serial_t;
+    size_t              nodeId;
+    size_t              leafId;
+    size_t              tag;
+  } unlink_t;
 
  private:
   // Next Node Id & Total number of node //
@@ -66,6 +65,7 @@ class PermutationTree{
 
  public:
    PermutationTree(const std::vector<size_t>& refSequence);
+   PermutationTree(std::string path);
   ~PermutationTree(void);
 
   size_t getSequenceSize(void) const;
@@ -83,30 +83,42 @@ class PermutationTree{
   std::vector<std::pair<size_t, size_t> > getAllTagsCount(void) const;
 
   std::string toString(void) const;
+  void serialize(std::string path) const;
 
  private:
-  void populate(node_t* node,
-                std::list<node_t*>& listOfLeaf);
+  void populate(node_t* node, std::list<node_t*>& listOfLeaf);
+  void unserialize(char* stream, unlink_t* unlink);
+  void rebuild(std::vector<unlink_t>& unlink);
 
-  static void destroy(node_t* node);
+  static node_t* copy(unlink_t* unlink);
+  static void    destroy(node_t* node);
 
   static node_t* getLeaf(node_t* root,
                          const std::vector<size_t>& sequence,
                          size_t offset);
 
-  static void toSerial(node_t* node, serial_t* serial);
-  static void appendString(std::stringstream& stream,
-                           node_t* node,
-                           serial_t* tmp);
+  static void enumerate(node_t* node, std::list<node_t*>& listOfNode);
+  static void unlink(node_t* node, unlink_t* unlink, size_t maxSize);
+         void serialize(char* stream, unlink_t* unlink) const;
 
-  static std::string toString(serial_t* serial);
+  static size_t unlinkSize(unlink_t* unlink);
+  static size_t headerSize(void);
 };
 
 /**
-   @fn PermutationTree::PermutationTree
+   @fn PermutationTree::PermutationTree(const std::vector<size_t>& refSequence)
    @param refSequence A vector of integers
 
    Instanciates a new PermutationTree build on the given vector
+   **
+
+   @fn PermutationTree::PermutationTree(std::string path)
+   @param path A file path
+
+   Instanciates a new PermutationTree by loading the
+   serialized PermutationTree given in path
+
+   @see PermutationTree:serialize()
    **
 
    @fn PermutationTree::~PermutationTree
@@ -171,6 +183,13 @@ class PermutationTree{
 
    @fn PermutationTree::toString
    @return Returns a string describing this PermutationTree
+   **
+
+   @fn PermutationTree::serialize
+   @param path A file path
+
+   Serialize this PermutationTree into the given file path
+   **
  */
 
 //////////////////////
@@ -198,6 +217,16 @@ addTagToPermutation(size_t permutationId, size_t tag){
 inline size_t PermutationTree::
 getTagFromPermutation(size_t permutationId) const{
   return leaf[permutationId]->tag;
+}
+
+inline size_t
+PermutationTree::unlinkSize(unlink_t* unlink){
+  return (7 + unlink->nNxtChoice + unlink->nSon) * sizeof(size_t);
+}
+
+inline size_t
+PermutationTree::headerSize(void){
+  return 3 * sizeof(size_t);
 }
 
 #endif
