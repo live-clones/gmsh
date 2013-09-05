@@ -50,6 +50,11 @@ public class ModelFragment extends Fragment{
 		glViewLayout.addView(_glView);
 		_progressLayout = new LinearLayout(container.getContext());
 		ProgressBar bar = new ProgressBar(container.getContext());
+		bar.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				_progress.setAlpha((_progress.getAlpha() > 0)? 0 : 1);
+			}
+		});
 		_progressLayout.addView(bar);
 		_progress = new TextView(container.getContext());
 		_progressLayout.setAlpha(0);
