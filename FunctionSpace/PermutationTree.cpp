@@ -37,45 +37,34 @@ PermutationTree::PermutationTree(const vector<size_t>& refSequence){
     leaf[i]->leafId = i;
 }
 
-PermutationTree::PermutationTree(string path){
+PermutationTree::PermutationTree(const char* stream){
+  // Populate from stream
+  populateFromStream(stream);
+}
+
+PermutationTree::PermutationTree(const string& path){
   // Read file //
   // Open Stream
   ifstream input;
   input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
   input.open(path.c_str(), std::ifstream::binary);
 
-  // Alloc stream for header
-  char* stream = new char[3 * sizeof(size_t)];
+  // Get size of stream (go to stream end)
+  input.seekg(0, std::ifstream::end);
+  const size_t size = input.tellg();
 
-  // Read header
-  size_t uSize; // Unlink struct size
-  size_t nSize; // Total size for unlink struct
+  // Reset stream possition
+  input.seekg(0, std::ifstream::beg);
 
-  input.read(stream, 3 * sizeof(size_t));
+  // Alloc byte stream & Read file
+  char* stream = new char[size];
+  input.read(stream, size);
 
-  memcpy(&uSize,        stream + 0 * sizeof(size_t), sizeof(size_t));
-  memcpy(&nextNodeId,   stream + 1 * sizeof(size_t), sizeof(size_t));
-  memcpy(&sequenceSize, stream + 2 * sizeof(size_t), sizeof(size_t));
-
-  // Alloc stream for unlink struct
-  delete[] stream;
-  nSize  = uSize * nextNodeId;
-  stream = new char[nSize];
-
-  // Read unlink struct & close
-  input.read(stream, nSize);
-  input.close();
-
-  // Unserialize unlink struct
-  vector<unlink_t> unlink(nextNodeId);
-  for(size_t i = 0; i < nextNodeId; i++)
-    unserialize(stream + (i * uSize), &unlink[i]);
+  // Populate from stream
+  populateFromStream(stream);
 
   // Free stream
   delete[] stream;
-
-  // Regenerate Tree //
-  rebuild(unlink);
 }
 
 void PermutationTree::populate(node_t* node,
@@ -126,7 +115,27 @@ void PermutationTree::populate(node_t* node,
     listOfLeaf.push_back(node);
 }
 
-void PermutationTree::unserialize(char* stream, unlink_t* unlink){
+void PermutationTree::populateFromStream(const char* stream){
+  // Header Size
+  const size_t hSize = headerSize();
+
+  // Read header
+  size_t uSize; // Unlink struct size
+
+  memcpy(&uSize,        stream + 0 * sizeof(size_t), sizeof(size_t));
+  memcpy(&nextNodeId,   stream + 1 * sizeof(size_t), sizeof(size_t));
+  memcpy(&sequenceSize, stream + 2 * sizeof(size_t), sizeof(size_t));
+
+  // Unserialize unlink struct
+  vector<unlink_t> unlink(nextNodeId);
+  for(size_t i = 0; i < nextNodeId; i++)
+    unserialize(stream + hSize + (i * uSize), &unlink[i]);
+
+  // Regenerate Tree //
+  rebuild(unlink);
+}
+
+void PermutationTree::unserialize(const char* stream, unlink_t* unlink){
   // Some padding data //
   const size_t nxtChoiceStart = 2 * sizeof(size_t);
   const size_t fatherIdStart  = nxtChoiceStart + sequenceSize * sizeof(size_t);
@@ -352,7 +361,7 @@ string PermutationTree::toString(void) const{
   return stream.str();
 }
 
-void PermutationTree::serialize(string path) const{
+std::pair<size_t, char*> PermutationTree::serialize(void) const{
   // Enumerate Nodes //
   list<node_t*> node;
   enumerate(root, node);
@@ -367,18 +376,19 @@ void PermutationTree::serialize(string path) const{
   const size_t uSize = unlinkSize(&tmp); // Unlink struct size
   const size_t nNode = node.size();      // Number of node/unlink struct
   const size_t nSize = uSize * nNode;    // Total size for unlink struct
+  const size_t sSize = hSize + nSize;    // Stream size
 
-  // Alloc byte stream
-  char* stream = new char[nSize + hSize];
-  for(size_t i = 0; i < nSize + hSize; i++)
+  // Alloc byte Stream
+  char* stream = new char[sSize];
+  for(size_t i = 0; i < sSize; i++)
     stream[i] = 0;
 
-  // Write header
+  // Write header in Stream
   memcpy(stream + 0 * sizeof(size_t), &uSize,        sizeof(size_t));
   memcpy(stream + 1 * sizeof(size_t), &nNode,        sizeof(size_t));
   memcpy(stream + 2 * sizeof(size_t), &sequenceSize, sizeof(size_t));
 
-  // Write unlinked node
+  // Write unlinked node in Stream
   list<node_t*>::iterator it = node.begin();
 
   for(size_t i = 0; i < nNode; i++, it++){
@@ -386,15 +396,23 @@ void PermutationTree::serialize(string path) const{
     serialize(stream + hSize + (i * uSize), &tmp);
   }
 
+  // Return Stream & its size
+  return pair<size_t, char*>(sSize, stream);
+}
+
+void PermutationTree::serialize(const string& path) const{
+  // Serialize into byte Stream
+  std::pair<size_t, char*> stream  = serialize();
+
   // Write byte stream
   ofstream output;
   output.exceptions(std::ofstream::failbit | std::ofstream::badbit);
   output.open(path.c_str(), std::ofstream::binary);
-  output.write(stream, nSize + hSize);
+  output.write(stream.second, stream.first);
   output.close();
 
   // Free
-  delete[] stream;
+  delete[] stream.second;
 }
 
 void PermutationTree::enumerate(node_t* node, std::list<node_t*>& listOfNode){

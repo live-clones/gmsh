@@ -65,7 +65,8 @@ class PermutationTree{
 
  public:
    PermutationTree(const std::vector<size_t>& refSequence);
-   PermutationTree(std::string path);
+   PermutationTree(const char* stream);
+   PermutationTree(const std::string& path);
   ~PermutationTree(void);
 
   size_t getSequenceSize(void) const;
@@ -83,11 +84,13 @@ class PermutationTree{
   std::vector<std::pair<size_t, size_t> > getAllTagsCount(void) const;
 
   std::string toString(void) const;
-  void serialize(std::string path) const;
+  std::pair<size_t, char*> serialize(void) const;
+  void                     serialize(const std::string& path) const;
 
  private:
   void populate(node_t* node, std::list<node_t*>& listOfLeaf);
-  void unserialize(char* stream, unlink_t* unlink);
+  void populateFromStream(const char* stream);
+  void unserialize(const char* stream, unlink_t* unlink);
   void rebuild(std::vector<unlink_t>& unlink);
 
   static node_t* copy(unlink_t* unlink);
@@ -112,13 +115,20 @@ class PermutationTree{
    Instanciates a new PermutationTree build on the given vector
    **
 
+   @fn PermutationTree::PermutationTree(const char* stream)
+   @param stream A byte stream
+
+   Instanciates a new PermutationTree by loading the given byte stream
+
+   @see PermutationTree:serialize(char*)
+   **
+
    @fn PermutationTree::PermutationTree(std::string path)
    @param path A file path
 
-   Instanciates a new PermutationTree by loading the
-   serialized PermutationTree given in path
+   Instanciates a new PermutationTree by loading the file given in path
 
-   @see PermutationTree:serialize()
+   @see PermutationTree:serialize(const std::string&)
    **
 
    @fn PermutationTree::~PermutationTree
@@ -185,7 +195,16 @@ class PermutationTree{
    @return Returns a string describing this PermutationTree
    **
 
-   @fn PermutationTree::serialize
+   @fn PermutationTree::serialize(void)
+
+   Serialize this PermutationTree into a byte stream
+
+   @return Returns a pair such that:
+   @li The first entry is stream size
+   @li the second entry is a pointer to the allocated stream
+   **
+
+   @fn PermutationTree::serialize(const std::string&)
    @param path A file path
 
    Serialize this PermutationTree into the given file path
