@@ -7,6 +7,9 @@
 import onelab
 import math, os
 
+# import sys
+# sys.stderr = open('ErrorLog.txt', 'wt')
+
 def exportMsh(le1,le2):
    mshFile = open(onelab.path(__file__, "pend.msh"),'w')
    mshFile.write('$MeshFormat\n2.2 0 8\n$EndMeshFormat\n')
