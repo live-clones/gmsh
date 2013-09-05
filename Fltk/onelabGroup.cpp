@@ -1034,6 +1034,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->end();
 
   _computeWidths();
+  _widgetLabelRatio = 0.45;
 
   int BB2 = BB / 2 + 4;
 
@@ -1282,7 +1283,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
 {
   n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww /= 2;
+  ww *= _widgetLabelRatio;
 
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
@@ -1320,7 +1321,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   if(p.getChoices().size() == 2 &&
      p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
     n->labelsize(FL_NORMAL_SIZE + 2);
-    Fl_Check_Button *but = new Fl_Check_Button(1, 1, 2 * ww, 1);
+    Fl_Check_Button *but = new Fl_Check_Button(1, 1, ww / _widgetLabelRatio, 1);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
     but->value(p.getValue());
@@ -1475,7 +1476,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
     return but;
   }
 
-  ww /= 2;
+  ww *= _widgetLabelRatio;
   n->labelsize(FL_NORMAL_SIZE + 4);
 
   // non-editable value
@@ -1556,7 +1557,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
 {
   n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww /= 2;
+  ww *= _widgetLabelRatio;
 
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
@@ -1583,7 +1584,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n
 {
   n->labelsize(FL_NORMAL_SIZE + 4);
   int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww /= 2;
+  ww *= _widgetLabelRatio;
 
   // non-editable value
   if(1 || p.getReadOnly()){

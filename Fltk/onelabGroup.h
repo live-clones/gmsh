@@ -27,6 +27,7 @@ class onelabGroup : public Fl_Group{
   bool _stop;
   int _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
+  double _widgetLabelRatio;
   std::set<std::string> _manuallyClosed;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
