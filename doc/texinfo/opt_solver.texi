@@ -155,7 +155,7 @@ Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
 @item Solver.SocketName
-Base name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)@*
+Base name of socket (UNIX socket if the name does not contain a colon, TCP/IP otherwise, in the form 'host:baseport'; the actual name/port is constructed by appending the unique client id)@*
 Default value: @code{".gmshsock"}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1227,8 +1227,8 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Display value scales horizontally" },
 
   { F|O, "Link" , opt_post_link , 0. ,
-    "Link post-processing views (0=none, 1/2=changes in visible/all, "
-    "3/4=everything in visible/all)" },
+    "Post-processing view links (0=apply next option changes to selected views, "
+    "1=force same options for all selected views)" },
 
   { F,   "NbViews" , opt_post_nb_views , 0. ,
     "Current number of views merged (read-only)" },

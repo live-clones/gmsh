@@ -93,13 +93,15 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2). The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (Dimension = 1) or surface (Dimension = 2). The elements touching the crack on the negative side are modified to use the newly generated vertices.
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2). The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the negative side are modified to use the newly generated vertices.If `OpenBoundaryPhysicalGroup' is given (> 0), its vertices are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its vertices are not duplicated.
 Numeric options:
 @table @code
 @item Dimension
 Default value: @code{1}
 @item PhysicalGroup
 Default value: @code{1}
+@item OpenBoundaryPhysicalGroup
+Default value: @code{0}
 @end table
 
 @item Plugin(Curl)

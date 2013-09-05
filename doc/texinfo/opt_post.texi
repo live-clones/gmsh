@@ -35,7 +35,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.Link
-Link post-processing views (0=none, 1/2=changes in visible/all, 3/4=everything in visible/all)@*
+Post-processing view links (0=apply next option changes to selected views, 1=force same options for all selected views)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

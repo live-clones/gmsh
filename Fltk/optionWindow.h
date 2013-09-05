@@ -8,7 +8,7 @@
 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Value_Slider.H>
-#include <FL/Fl_Hold_Browser.H>
+#include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Check_Button.H>
@@ -28,7 +28,7 @@ extern Fl_Menu_Item menu_font_names[];
 class optionWindow{
  public:
   Fl_Window *win;
-  Fl_Hold_Browser *browser;
+  Fl_Multi_Browser *browser;
   Fl_Return_Button *redraw;
 
   struct{
@@ -89,7 +89,8 @@ class optionWindow{
  public:
   optionWindow(int deltaFontSize=0);
   gamepadWindow* gmpdoption ;
-  void showGroup(int num, bool showWindow=true);
+  void showGroup(int num, bool showWindow=true,
+                 bool allowMultipleSelections=false);
   void resetBrowser();
   void resetExternalViewList();
   void updateViewGroup(int index);

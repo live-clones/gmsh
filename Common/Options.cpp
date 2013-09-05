@@ -6182,13 +6182,11 @@ double opt_post_link(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->post.link = (int)val;
-    if(CTX::instance()->post.link < 0 || CTX::instance()->post.link > 4)
-      CTX::instance()->post.link = 0;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->post.choice[0]->value
-      (CTX::instance()->post.link);
+      (CTX::instance()->post.link ? 1 : 0);
   }
 #endif
   return CTX::instance()->post.link;
