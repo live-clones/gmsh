@@ -56,7 +56,7 @@
     if(self)
     {
         label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:(string.getLabel() != "")?[NSString stringWithCString:string.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
+        [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         picker = [[UIPickerView alloc] init];
         picker.showsSelectionIndicator = YES;
@@ -138,7 +138,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
+        [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         picker = [[UIPickerView alloc] init];
         picker.showsSelectionIndicator = YES;
@@ -210,7 +210,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
+        [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         checkbox = [[UISwitch alloc] init];
         [checkbox setSelected:(number.getValue() == 1)];
@@ -270,7 +270,7 @@
         //TODO add step ?
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-        [label setText:[NSString stringWithFormat:@"%@ %f" ,(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject], number.getValue()]];
+        [label setText:[NSString stringWithFormat:@"%@ %f" ,[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
     }
     return self;
 }
@@ -290,7 +290,7 @@
     if(number.size() < 1) return;
     number[0].setValue(sender.value);
     onelab::server::instance()->set(number[0]);
-    [label setText:[NSString stringWithFormat:@"%s %f" ,(number[0].getLabel() != "")?number[0].getLabel().c_str():number[0].getName().c_str(), number[0].getValue()]];
+    [label setText:[NSString stringWithFormat:@"%s %f" ,number[0].getShortName().c_str(), number[0].getValue()]];
     if(onelab_cb("check") == 1)
         [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
@@ -322,7 +322,7 @@
     if(self)
     {
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-        [label setText:(number.getLabel() != "")?[NSString stringWithCString:number.getLabel().c_str() encoding:[NSString defaultCStringEncoding]] : [[[NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]] componentsSeparatedByString:@"/"] lastObject]];
+        [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         textbox = [[UITextField alloc] init];
         [textbox setBorderStyle:UITextBorderStyleRoundedRect];
