@@ -6,6 +6,10 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -23,7 +27,7 @@ import android.view.WindowManager;
 public class MainActivity extends Activity{
 
 	private Gmsh _gmsh;
-	private boolean _compute, _twoPane;
+	private boolean _compute, _twoPane, _notify;
 	private MenuItem _runStopMenuItem, _switchFragmentMenuItem;
 	private ModelFragment _modelFragment;
 	private OptionsFragment _optionsFragment;
@@ -40,6 +44,7 @@ public class MainActivity extends Activity{
 		getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
 		setContentView(R.layout.main_activity_layout);
 		_gmsh = new Gmsh("", mainHandler);
+		_notify = false;
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#64000000")));
@@ -157,6 +162,7 @@ public class MainActivity extends Activity{
 			_runStopMenuItem.setTitle(R.string.menu_run);
 			if(_modelFragment != null) _modelFragment.hideProgress();
 			_compute = false;
+			if(_notify) notifyEndOfCompute();
 			super.onPostExecute(result);
 		}
     	
@@ -183,6 +189,34 @@ public class MainActivity extends Activity{
 		     .show();
     	}
     }
+	@Override
+	protected void onPause() {
+		super.onPause();
+		_notify = true;
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		_notify = false;
+	}
+	
+	private void notifyEndOfCompute() {
+		Intent intent = new Intent(this, MainActivity.class);
+	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+		Notification.Builder mBuilder =
+		        new Notification.Builder(this)
+		        .setSmallIcon(R.drawable.ic_launcher)
+		        .setContentIntent(pendingIntent)
+		        .setContentTitle("ONELAB")
+		        .setDefaults(Notification.DEFAULT_ALL)
+		        .setContentText("The compute is finished");
+		NotificationManager mNotificationManager =
+			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.notify(1337, mBuilder.getNotification());
+	}
+
 	private final Handler mainHandler = new Handler(){
     	public void handleMessage(android.os.Message msg) {
     		switch (msg.what) {
