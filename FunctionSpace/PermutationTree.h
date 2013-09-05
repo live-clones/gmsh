@@ -123,7 +123,7 @@ class PermutationTree{
    @see PermutationTree:serialize(char*)
    **
 
-   @fn PermutationTree::PermutationTree(std::string path)
+   @fn PermutationTree::PermutationTree(const std::string& path)
    @param path A file path
 
    Instanciates a new PermutationTree by loading the file given in path
@@ -195,7 +195,7 @@ class PermutationTree{
    @return Returns a string describing this PermutationTree
    **
 
-   @fn PermutationTree::serialize(void)
+   @fn PermutationTree::serialize(void) const
 
    Serialize this PermutationTree into a byte stream
 
@@ -204,7 +204,7 @@ class PermutationTree{
    @li the second entry is a pointer to the allocated stream
    **
 
-   @fn PermutationTree::serialize(const std::string&)
+   @fn PermutationTree::serialize(const std::string&) const
    @param path A file path
 
    Serialize this PermutationTree into the given file path

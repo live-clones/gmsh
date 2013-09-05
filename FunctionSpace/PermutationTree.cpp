@@ -8,7 +8,7 @@
 
 using namespace std;
 
-PermutationTree::PermutationTree(const vector<size_t>& refSequence){
+PermutationTree::PermutationTree(const std::vector<size_t>& refSequence){
   // Sequence size //
   sequenceSize = refSequence.size();
 
@@ -42,7 +42,7 @@ PermutationTree::PermutationTree(const char* stream){
   populateFromStream(stream);
 }
 
-PermutationTree::PermutationTree(const string& path){
+PermutationTree::PermutationTree(const std::string& path){
   // Read file //
   // Open Stream
   ifstream input;
@@ -68,7 +68,7 @@ PermutationTree::PermutationTree(const string& path){
 }
 
 void PermutationTree::populate(node_t* node,
-                               list<node_t*>& listOfLeaf){
+                               std::list<node_t*>& listOfLeaf){
   // Node Id //
   node->nodeId = nextNodeId;
   nextNodeId++;
@@ -176,7 +176,7 @@ void PermutationTree::unserialize(const char* stream, unlink_t* unlink){
          stream + otherIdStart + 2 * sizeof(size_t), sizeof(size_t));
 }
 
-void PermutationTree::rebuild(vector<unlink_t>& unlink){
+void PermutationTree::rebuild(std::vector<unlink_t>& unlink){
   // Almost linked nodes (node of node_t type but without connected nodes) //
   vector<node_t*> node(nextNodeId);
   for(size_t i = 0; i < nextNodeId; i++)
@@ -237,7 +237,7 @@ void PermutationTree::destroy(node_t* node){
 
 PermutationTree::node_t*
 PermutationTree::getLeaf(node_t* root,
-                         const vector<size_t>& sequence,
+                         const std::vector<size_t>& sequence,
                          size_t offset){
   // Number of son
   const size_t nSon = root->son.size();
@@ -262,8 +262,9 @@ PermutationTree::getLeaf(node_t* root,
   }
 }
 
-void PermutationTree::fillWithPermutation(size_t permutationId,
-                                          vector<size_t>& vectorToFill) const{
+void
+PermutationTree::fillWithPermutation(size_t permutationId,
+                                     std::vector<size_t>& vectorToFill) const{
   // Go from ith leaf to root                //
   // And fill vectorToFill from end to start //
 
@@ -400,7 +401,7 @@ std::pair<size_t, char*> PermutationTree::serialize(void) const{
   return pair<size_t, char*>(sSize, stream);
 }
 
-void PermutationTree::serialize(const string& path) const{
+void PermutationTree::serialize(const std::string& path) const{
   // Serialize into byte Stream
   std::pair<size_t, char*> stream  = serialize();
 

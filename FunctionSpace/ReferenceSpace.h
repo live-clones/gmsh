@@ -16,6 +16,8 @@
    This class represents the notion of Reference Space.
    A Reference Space is the set of all the permutations
    of the reference element of a particular geometrical entity.
+
+   @todo End ReferenceSpace DOC !!!
  */
 
 class ReferenceSpace{
@@ -56,6 +58,7 @@ class ReferenceSpace{
   std::vector<std::vector<std::vector<size_t> > > orderedFaceNodeIdx;
 
  public:
+  ReferenceSpace(const std::string& path);
   virtual ~ReferenceSpace(void);
 
   size_t getNReferenceSpace(void) const;
@@ -93,10 +96,14 @@ class ReferenceSpace{
   virtual std::string toString(void) const;
   virtual std::string toLatex(void) const;
 
+  std::pair<size_t, char*> serialize(void) const;
+  void                     serialize(const std::string& path) const;
+
  protected:
   ReferenceSpace(void);
 
   void init(void);
+  void init(const char* stream);
 
  private:
   void getOrderedEdge(void);
@@ -147,14 +154,34 @@ class ReferenceSpace{
                             const std::pair<size_t, size_t>& b);
 
   static void regularize(size_t dim, fullMatrix<double>& jac);
+
+  static std::pair<size_t, char*>
+    serialize(const std::vector<std::vector<size_t> >& source);
+
+  static std::pair<size_t, char*>
+    serialize(const std::vector<std::vector<std::vector<size_t> > >& source);
+
+  static size_t
+    unserialize(const char* stream,
+                std::vector<std::vector<size_t> >& dest);
+
+  static size_t
+    unserialize(const char* stream,
+                std::vector<std::vector<std::vector<size_t> > >& dest);
 };
 
 
 /**
    @internal
-   @fn ReferenceSpace::ReferenceSpace
+   @fn ReferenceSpace::ReferenceSpace(void)
    Instatiate a new ReferenceSpace
    @endinternal
+   **
+
+   @fn ReferenceSpace::ReferenceSpace(const std::string&)
+   @param path A file path
+
+   Instanciates a new ReferenceSpace by loading the file in the given path
    **
 
    @fn ReferenceSpace::~ReferenceSpace
@@ -201,6 +228,22 @@ class ReferenceSpace{
 
    @fn ReferenceSpace::toLatex
    @return Returns a string (of a Latex file) describing this ReferenceSpace
+   **
+
+   @fn ReferenceSpace::serialize(void) const
+
+   Serialize this ReferenceSpace into a byte stream
+
+   @return Returns a pair such that:
+   @li The first entry is the byte stream size
+   @li The second entry is a pointer the allocated byte stream
+   **
+
+   @fn ReferenceSpace::serialize(const std::string&) const
+   @param path A file path
+
+   Serialize this ReferenceSpace into the given file
+   **
  */
 
 //////////////////////

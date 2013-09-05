@@ -1,5 +1,7 @@
 #include <algorithm>
+#include <fstream>
 #include <sstream>
+#include <cstring>
 #include <set>
 
 #include "Exception.h"
@@ -11,6 +13,31 @@ using namespace std;
 ReferenceSpace::ReferenceSpace(void){
   // Defining Ref Edge and Face in //
   // Derived Class                 //
+}
+
+ReferenceSpace::ReferenceSpace(const std::string& path){
+  // Read file //
+  // Open Stream
+  ifstream input;
+  input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  input.open(path.c_str(), std::ifstream::binary);
+
+  // Get size of stream (go to stream end)
+  input.seekg(0, std::ifstream::end);
+  const size_t size = input.tellg();
+
+  // Reset stream possition
+  input.seekg(0, std::ifstream::beg);
+
+  // Alloc byte stream & Read file
+  char* stream = new char[size];
+  input.read(stream, size);
+
+  // Init from stream
+  init(stream);
+
+  // Free stream
+  delete[] stream;
 }
 
 ReferenceSpace::~ReferenceSpace(void){
@@ -66,6 +93,40 @@ void ReferenceSpace::init(void){
   // Ordered Edges & Faces Node Index//
   getOrderedEdge();
   getOrderedFace();
+}
+
+void ReferenceSpace::init(const char* stream){
+  // nVector
+  size_t offset = 0;
+
+  memcpy(&nVertex, stream + offset, sizeof(size_t));
+  offset += sizeof(size_t);
+
+  // Fef {Edge, Face} Node Idx
+  offset += unserialize(stream + offset, refEdgeNodeIdx);
+  offset += unserialize(stream + offset, refFaceNodeIdx);
+
+  // Permutation Tree
+  size_t tSize; // Tree Size
+
+  memcpy(&tSize, stream + offset, sizeof(size_t));
+  offset += sizeof(size_t);
+
+  pTree = new PermutationTree(stream + offset);
+  offset += tSize;
+
+  // RefSpace Node Id
+  offset += unserialize(stream + offset, refSpaceNodeId);
+
+  // Index mapping
+  offset += unserialize(stream + offset, ABCtoUVWIndex);
+  offset += unserialize(stream + offset, UVWtoABCIndex);
+
+  // Oredered {Edge, Face} Node Idx
+  offset += unserialize(stream + offset, orderedEdgeNodeIdx);
+  offset += unserialize(stream + offset, orderedFaceNodeIdx);
+
+  cout << offset << endl;
 }
 
 void ReferenceSpace::
@@ -843,4 +904,278 @@ string ReferenceSpace::toLatex(void) const{
          << "\\end{document}"          << endl;
 
   return stream.str();
+}
+
+std::pair<size_t, char*> ReferenceSpace::serialize(void) const{
+  // Serialize //
+  // refEdgeNodeIdx
+  pair<size_t, char*> sRefEdgeIdx = serialize(refEdgeNodeIdx);
+
+  // refFaceNodeIdx
+  pair<size_t, char*> sRefFaceIdx = serialize(refFaceNodeIdx);
+
+  // PermutationTree
+  pair<size_t, char*> sPTree = pTree->serialize();
+
+  // Reference Space
+  pair<size_t, char*> sRSpace = serialize(refSpaceNodeId);
+
+  // ABCtoUVW
+  pair<size_t, char*> sABCtoUVW = serialize(ABCtoUVWIndex);
+
+  // UVWtoUVW
+  pair<size_t, char*> sUVWtoABC = serialize(UVWtoABCIndex);
+
+  // orderedEdgeNodeIdx
+  pair<size_t, char*> sEdgeIdx = serialize(orderedEdgeNodeIdx);
+
+  // orderedEdgeNodeIdx
+  pair<size_t, char*> sFaceIdx = serialize(orderedFaceNodeIdx);
+
+  // Full Serialized Stream //
+  // Alloc (+ 1 * sizeof(size_t) for nVertex)
+  const size_t size = sizeof(size_t) + sRefEdgeIdx.first
+                                     + sRefFaceIdx.first
+                                     + sizeof(size_t) // pTree Size
+                                     + sPTree.first   // pTree
+                                     + sRSpace.first
+                                     + sABCtoUVW.first
+                                     + sUVWtoABC.first
+                                     + sEdgeIdx.first
+                                     + sFaceIdx.first;
+  char* stream = new char[size];
+
+  // Populate
+  size_t offset = 0;
+
+  memcpy(stream + offset, &nVertex, sizeof(size_t));
+  offset += sizeof(size_t);
+
+  memcpy(stream + offset, sRefEdgeIdx.second, sRefEdgeIdx.first);
+  offset += sRefEdgeIdx.first;
+
+  memcpy(stream + offset, sRefFaceIdx.second, sRefFaceIdx.first);
+  offset += sRefFaceIdx.first;
+
+  memcpy(stream + offset, &sPTree.first, sizeof(size_t)); // pTree size
+  offset += sizeof(size_t);
+
+  memcpy(stream + offset, sPTree.second, sPTree.first);   // pTree
+  offset += sPTree.first;
+
+  memcpy(stream + offset, sRSpace.second, sRSpace.first);
+  offset += sRSpace.first;
+
+  memcpy(stream + offset, sABCtoUVW.second, sABCtoUVW.first);
+  offset += sABCtoUVW.first;
+
+  memcpy(stream + offset, sUVWtoABC.second, sABCtoUVW.first);
+  offset += sABCtoUVW.first;
+
+  memcpy(stream + offset, sEdgeIdx.second, sEdgeIdx.first);
+  offset += sEdgeIdx.first;
+
+  memcpy(stream + offset, sFaceIdx.second, sFaceIdx.first);
+  offset += sFaceIdx.first;
+
+  // Free Temp
+  delete[] sRefEdgeIdx.second;
+  delete[] sRefFaceIdx.second;
+  delete[] sPTree.second;
+  delete[] sRSpace.second;
+  delete[] sABCtoUVW.second;
+  delete[] sUVWtoABC.second;
+  delete[] sEdgeIdx.second;
+  delete[] sFaceIdx.second;
+
+  // Return
+  return pair<size_t, char*>(size, stream);
+}
+
+void ReferenceSpace::serialize(const std::string& path) const{
+  // Serialize into byte Stream
+  std::pair<size_t, char*> stream  = serialize();
+
+  // Write byte stream
+  ofstream output;
+  output.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+  output.open(path.c_str(), std::ofstream::binary);
+  output.write(stream.second, stream.first);
+  output.close();
+
+  // Free
+  delete[] stream.second;
+}
+
+std::pair<size_t, char*> ReferenceSpace::
+serialize(const std::vector<std::vector<size_t> >& source){
+  // Vector & Stream size //
+  size_t nVector   = source.size();
+  size_t totalSize = sizeof(size_t); // Init to header size (nVector)
+
+  for(size_t i = 0; i < nVector; i++)
+    totalSize += (source[i].size() + 1) * sizeof(size_t);
+                                // + 1 for subvector size header
+
+  // Alloc Stream //
+  char* stream = new char[totalSize];
+
+  // Header (nVector) //
+  memcpy(stream, &nVector, sizeof(size_t));
+
+  // SubVectors //
+  size_t tmpSize;
+  size_t offset = sizeof(size_t);
+
+  for(size_t i = 0; i < nVector; i++){
+    // SubVector size
+    tmpSize = source[i].size();
+    memcpy(stream + offset, &tmpSize, sizeof(size_t));
+    offset += sizeof(size_t);
+
+    // SubVector stored values
+    for(size_t j = 0; j < tmpSize; j++){
+      memcpy(stream + offset, &source[i][j], sizeof(size_t));
+      offset += sizeof(size_t);
+    }
+  }
+
+  // Return //
+  return pair<size_t, char*>(totalSize, stream);
+}
+
+std::pair<size_t, char*> ReferenceSpace::
+serialize(const std::vector<std::vector<std::vector<size_t> > >& source){
+  // Vector & Stream size //
+  size_t nVector   = source.size();
+  size_t totalSize = sizeof(size_t); // Init to header size (nVector)
+
+  for(size_t i = 0; i < nVector; i++){
+    totalSize += sizeof(size_t); // Subvector size header
+
+    for(size_t j = 0; j < source[i].size(); j++)
+      totalSize += (source[i][j].size() + 1) * sizeof(size_t);
+                                     // + 1 for subsubvector size header
+  }
+
+  // Alloc Stream //
+  char* stream = new char[totalSize];
+
+  // Header (nVector) //
+  memcpy(stream, &nVector, sizeof(size_t));
+
+  // SubVectors //
+  size_t tmpSize;
+  size_t tmpSubSize;
+  size_t offset = sizeof(size_t);
+
+  for(size_t i = 0; i < nVector; i++){
+    // SubVector size
+    tmpSize = source[i].size();
+    memcpy(stream + offset, &tmpSize, sizeof(size_t));
+    offset += sizeof(size_t);
+
+    for(size_t j = 0; j < tmpSize; j++){
+      // SubSubVector size
+      tmpSubSize = source[i][j].size();
+      memcpy(stream + offset, &tmpSubSize, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      // SubSubVector stored values
+      for(size_t k = 0; k < tmpSubSize; k++){
+        memcpy(stream + offset, &source[i][j][k], sizeof(size_t));
+        offset += sizeof(size_t);
+      }
+    }
+  }
+
+  // Return //
+  return pair<size_t, char*>(totalSize, stream);
+}
+
+size_t ReferenceSpace::
+unserialize(const char* stream,
+            std::vector<std::vector<size_t> >& dest){
+  // Vector size //
+  size_t nVector;
+  size_t offset = 0;
+
+  memcpy(&nVector, stream + offset, sizeof(size_t));
+  offset += sizeof(size_t);
+
+  // Alloc Vector //
+  dest.resize(nVector);
+
+  // Populate //
+  size_t tmpSize;
+  size_t tmpVal;
+
+  for(size_t i = 0; i < nVector; i++){
+    // Subvector size
+    memcpy(&tmpSize, stream + offset, sizeof(size_t));
+    offset += sizeof(size_t);
+
+    // Alloc Subvector
+    dest[i].resize(tmpSize);
+
+    // Populate Subvector
+    for(size_t j = 0; j < tmpSize; j++){
+      memcpy(&tmpVal, stream + offset, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      dest[i][j] = tmpVal;
+    }
+  }
+
+  // Return size //
+  return offset;
+}
+
+size_t ReferenceSpace::
+    unserialize(const char* stream,
+                std::vector<std::vector<std::vector<size_t> > >& dest){
+  // Vector size //
+  size_t nVector;
+  size_t offset = 0;
+
+  memcpy(&nVector, stream + offset, sizeof(size_t));
+  offset += sizeof(size_t);
+
+  // Alloc Vector //
+  dest.resize(nVector);
+
+  // Populate //
+  size_t tmpSize;
+  size_t tmpSubSize;
+  size_t tmpVal;
+
+  for(size_t i = 0; i < nVector; i++){
+    // Subvector size
+    memcpy(&tmpSize, stream + offset, sizeof(size_t));
+    offset += sizeof(size_t);
+
+    // Alloc Subvector
+    dest[i].resize(tmpSize);
+
+    // Populate Subvector
+    for(size_t j = 0; j < tmpSize; j++){
+      // Subsubvector size
+      memcpy(&tmpSubSize, stream + offset, sizeof(size_t));
+      offset += sizeof(size_t);
+
+      // Alloc Subsubvector
+      dest[i][j].resize(tmpSubSize);
+
+      // Populate Subsubvector
+      for(size_t k = 0; k < tmpSubSize; k++){
+        memcpy(&tmpVal, stream + offset,sizeof(size_t));
+        offset += sizeof(size_t);
+
+        dest[i][j][k] = tmpVal; // AT LAST !! (-:
+      }
+    }
+  }
+
+  // Return size //
+  return offset;
 }
