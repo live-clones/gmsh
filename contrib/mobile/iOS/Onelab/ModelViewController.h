@@ -15,6 +15,7 @@
     double scaleFactor;
 	UIBarButtonItem *_runStopButton;
 	UIAlertView *_loadingAlert;
+	UIBackgroundTaskIdentifier _computeBackgroundTaskIdentifier;
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender;

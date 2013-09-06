@@ -101,26 +101,35 @@
 	[_progressLabel setHidden:NO];
 	[_progressIndicator setHidden:NO];
 	[_progressIndicator startAnimating];
-	dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+	dispatch_group_t group = dispatch_group_create();
+	dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		_computeBackgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+			[[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
+			_computeBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
+		}];
         AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
         appDelegate->compute = YES;
         onelab_cb("compute");
-		[self performSelectorOnMainThread:@selector(didStopCompute:) withObject:nil waitUntilDone:YES];
         appDelegate->compute = NO;
+		UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+		if (localNotif) {
+			localNotif.alertBody = @"Computation finished";
+			localNotif.alertAction = @"View";
+			localNotif.soundName = UILocalNotificationDefaultSoundName;
+			localNotif.applicationIconBadgeNumber = 1;
+			[[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+		}
+		[[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
+		_computeBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
     });
-}
-
-- (void)didStopCompute:(id)sender
-{
-	[self performSelectorOnMainThread:@selector(didStopCompute) withObject:nil waitUntilDone:NO];
-}
-- (void)didStopCompute
-{
-	[_runStopButton setAction:@selector(compute)];
-	[_runStopButton setTitle:@"Run"];
-	[_progressLabel setHidden:YES];
-	[_progressIndicator stopAnimating];
-	[_progressIndicator setHidden:YES];
+	
+	dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+		[_runStopButton setAction:@selector(compute)];
+		[_runStopButton setTitle:@"Run"];
+		[_progressLabel setHidden:YES];
+		[_progressIndicator stopAnimating];
+		[_progressIndicator setHidden:YES];
+	});
 }
 - (void)stop
 {
