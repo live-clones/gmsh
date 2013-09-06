@@ -867,6 +867,7 @@ MElement *GModel::getMeshElementByTag(int n)
 int GModel::getMeshElementIndex(MElement *e)
 {
   if(!e) return 0;
+  if(_elementIndexCache.empty()) return e->getNum();
   std::map<int, int>::iterator it = _elementIndexCache.find(e->getNum());
   if(it != _elementIndexCache.end()) return it->second;
   return e->getNum();
