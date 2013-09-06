@@ -36,10 +36,12 @@ static void change_completeness_cb(Fl_Widget *w, void *data)
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
   bool onlyVisible = (bool)o->butt[1]->value();
   if (!o->complete){
+    // BOF BOF BOF -- CG
     SetHighOrderComplete(GModel::current(), onlyVisible);
     o->complete = 1;
   }
   else if (o->complete){
+    // BOF BOF BOF -- CG
     SetHighOrderInComplete(GModel::current(), onlyVisible);
     o->complete = 0;
   }
@@ -61,6 +63,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   else
     SetOrderN(GModel::current(), order, linear, incomplete, onlyVisible);
 
+  /*
   distanceFromMeshToGeometry_t dist;
   computeDistanceFromMeshToGeometry (GModel::current(), dist);
   for (std::map<GEntity*, double> ::iterator it = dist.d2.begin();
@@ -68,6 +71,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
     printf("GEntity %d of dim %d : dist %12.5E\n",
            it->first->tag(), it->first->dim(), it->second);
   }
+  */
 
   CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
