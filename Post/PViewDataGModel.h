@@ -250,7 +250,8 @@ class PViewDataGModel : public PViewData {
                double time, int partition, int numComp, int numNodes,
                const std::string &interpolationScheme);
   virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
-                        bool savemesh=true, bool multipleView=false);
+                        bool savemesh=true, bool multipleView=false,
+                        int partitionNum=0, bool saveInterpolationMatrices=true);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
 };

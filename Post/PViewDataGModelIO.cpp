@@ -133,7 +133,8 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
 }
 
 bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool binary,
-                               bool savemesh, bool multipleView)
+                               bool savemesh, bool multipleView, int partitionNum,
+                               bool saveInterpolationMatrices)
 {
   if(_steps.empty()) return true;
 
@@ -181,7 +182,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
     }
   }
 
-  if(haveInterpolationMatrices()){
+  if(saveInterpolationMatrices && haveInterpolationMatrices()){
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
@@ -212,7 +213,10 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
         fprintf(fp, "$NodeData\n");
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
+        if(partitionNum)
+          fprintf(fp, "4\n%d\n%d\n%d\n%d\n", step, numComp, numEnt, partitionNum);
+        else
+          fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
           if(_steps[step]->getData(i)){
             MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
@@ -242,13 +246,16 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
           fprintf(fp, "$ElementNodeData\n");
         else
           fprintf(fp, "$ElementData\n");
-        if(haveInterpolationMatrices())
+        if(saveInterpolationMatrices && haveInterpolationMatrices())
           fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
         else
           fprintf(fp, "1\n\"%s\"\n", getName().c_str());
 
         fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-        fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
+        if(partitionNum)
+          fprintf(fp, "4\n%d\n%d\n%d\n%d\n", step, numComp, numEnt, partitionNum);
+        else
+          fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numEnt);
         for(int i = 0; i < _steps[step]->getNumData(); i++){
           if(_steps[step]->getData(i)){
             MElement *e = model->getMeshElementByTag(i);
