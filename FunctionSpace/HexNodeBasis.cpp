@@ -119,58 +119,50 @@ HexNodeBasis::HexNodeBasis(size_t order){
     basis[s][6] = new Polynomial(lagrange[6]);
     basis[s][7] = new Polynomial(lagrange[7]);
   }
-  /*
+
   // Edge Based //
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex;
 
-  for(int l = 1; l < order; l++){
-    for(int e = 0; e < 12; e++){
-      (*basis)[i] = new Polynomial(
-        legendre[l].compose(lifting[edge1[e]] - lifting[edge2[e]]) *
-        (*(*basis)[edge1[e]] + *(*basis)[edge2[e]]));
-
-      i++;
-    }
-  }
-
-
-  // Face Based (Preliminary) //
-  // Points definig Faces
-  const int face1[6] = {0, 3, 2, 1, 5, 4};
-  const int face2[6] = {1, 7, 6, 0, 6, 7};
-  const int face3[6] = {2, 6, 5, 4, 7, 3};
-  const int face4[6] = {3, 2, 1, 5, 4, 0};
-
-  // 'Xi' Functions
-  for(int f = 0; f < 6; f++)
-    xi[f]  = lifting[face1[f]] - lifting[face2[f]];
-
-  // 'Eta' Functions
-  for(int f = 0; f < 6; f++)
-    eta[f] = lifting[face1[f]] - lifting[face4[f]];
-
-  // 'Lambda' Functions
-  for(int f = 0; f < 6; f++)
-    lambda[f] =
-      *(*basis)[face1[f]] +
-      *(*basis)[face2[f]] +
-      *(*basis)[face3[f]] +
-      *(*basis)[face4[f]];
-
-
-  // Face Based //
-  for(int l1 = 1; l1 < order; l1++){
-    for(int l2 = 1; l2 < order; l2++){
-      for(int f = 0; f < 6; f++){
-        (*basis)[i] = new Polynomial(
-          legendre[l1].compose(xi[f])  *
-          legendre[l2].compose(eta[f]) *
-          lambda[f]);
+    for(size_t e = 0; e < 12; e++){
+      for(size_t l = 1; l < order; l++){
+        basis[s][i] =
+          new Polynomial(legendre[l].compose(lifting[edgeIdx[s][e][1]] -
+                                             lifting[edgeIdx[s][e][0]])
+                         *
+                         (lagrange[edgeIdx[s][e][0]] +
+                          lagrange[edgeIdx[s][e][1]]));
 
         i++;
       }
     }
   }
 
+  // Face Based //
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex + nEdge;
+
+    for(size_t f = 0; f < 6; f++){
+      for(size_t l1 = 1; l1 < order; l1++){
+        for(size_t l2 = 1; l2 < order; l2++){
+          Polynomial sum =
+            lagrange[faceIdx[s][f][0]] +
+            lagrange[faceIdx[s][f][1]] +
+            lagrange[faceIdx[s][f][2]] +
+            lagrange[faceIdx[s][f][3]];
+
+          basis[s][i] =
+            new Polynomial(legendre[l1].compose(lifting[faceIdx[s][f][0]] -
+                                                lifting[faceIdx[s][f][1]])  *
+
+                           legendre[l2].compose(lifting[faceIdx[s][f][0]] -
+                                                lifting[faceIdx[s][f][3]])  *
+                           sum);
+          i++;
+        }
+      }
+    }
+  }
 
   // Cell Based //
   Polynomial px = Polynomial(2, 1, 0, 0);
@@ -181,28 +173,50 @@ HexNodeBasis::HexNodeBasis(size_t order){
   py = py - Polynomial(1, 0, 0, 0);
   pz = pz - Polynomial(1, 0, 0, 0);
 
-  for(int l1 = 1; l1 < order; l1++){
-    for(int l2 = 1; l2 < order; l2++){
-      for(int l3 = 1; l3 < order; l3++){
-        (*basis)[i] =
-          new Polynomial(legendre[l1].compose(px) *
-                         legendre[l2].compose(py) *
-                         legendre[l3].compose(pz));
+  for(size_t s = 0; s < nRefSpace; s++){
+    size_t i = nVertex + nEdge + nFace;
 
-        i++;
+    for(size_t l1 = 1; l1 < order; l1++){
+      for(size_t l2 = 1; l2 < order; l2++){
+        for(size_t l3 = 1; l3 < order; l3++){
+          basis[s][i] =
+            new Polynomial(legendre[l1].compose(px) *
+                           legendre[l2].compose(py) *
+                           legendre[l3].compose(pz));
+
+          i++;
+        }
       }
     }
   }
 
+  // Mapping to Gmsh Quad //
+  // x = (u + 1) / 2
+  // y = (v + 1) / 2
+  //
+  // (x, y) = Zaglmayr Ref Quad
+  // (u, v) = Gmsh     Ref Quad
+
+  Polynomial  mapX(Polynomial(0.5, 1, 0, 0) +
+                   Polynomial(0.5, 0, 0, 0));
+
+  Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
+                   Polynomial(0.5, 0, 0, 0));
+
+  Polynomial  mapZ(Polynomial(0.5, 0, 0, 1) +
+                   Polynomial(0.5, 0, 0, 0));
+
+  for(size_t s = 0; s < nRefSpace; s++){
+    for(size_t i = 0; i < nFunction; i++){
+      Polynomial* tmp;
+      tmp = basis[s][i];
+      basis[s][i] = new Polynomial(tmp->compose(mapX, mapY, mapZ));
+      delete tmp;
+    }
+  }
 
   // Free Temporary Sapce //
   delete[] legendre;
-  delete[] lifting;
-
-  delete[] xi;
-  delete[] eta;
-  delete[] lambda;
-*/
 }
 
 HexNodeBasis::~HexNodeBasis(void){

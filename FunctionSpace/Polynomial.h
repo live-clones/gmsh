@@ -68,6 +68,9 @@ class Polynomial{
   Polynomial compose(const Polynomial& other) const;
   Polynomial compose(const Polynomial& otherA,
                      const Polynomial& otherB) const;
+  Polynomial compose(const Polynomial& otherA,
+                     const Polynomial& otherB,
+                     const Polynomial& otherC) const;
 
   void operator=(const Polynomial& other);
 
@@ -102,6 +105,10 @@ class Polynomial{
 
   static void compose(const monomial_t* src,
                       Polynomial compA, Polynomial compB,
+                      std::stack<monomial_t>* stk);
+
+  static void compose(const monomial_t* src,
+                      Polynomial compA, Polynomial compB, Polynomial compC,
                       std::stack<monomial_t>* stk);
 
   static Polynomial polynomialFromStack(std::stack<monomial_t>& stk);

@@ -289,6 +289,17 @@ Polynomial Polynomial::compose(const Polynomial& otherA,
   return polynomialFromStack(stk);
 }
 
+Polynomial Polynomial::compose(const Polynomial& otherA,
+                               const Polynomial& otherB,
+                               const Polynomial& otherC) const{
+  stack<monomial_t> stk;
+
+  for(int i = 0; i < nMon; i++)
+    compose(&mon[i], otherA, otherB, otherC, &stk);
+
+  return polynomialFromStack(stk);
+}
+
 void Polynomial::operator=(const Polynomial& other){
   if(mon)
     delete[] mon;
@@ -600,6 +611,26 @@ void Polynomial::compose(const Polynomial::monomial_t* src,
 
       stk->push(compA.mon[i]);
     }
+  }
+}
+
+void Polynomial::compose(const Polynomial::monomial_t* src,
+                         Polynomial compA, Polynomial compB, Polynomial compC,
+                         stack<Polynomial::monomial_t>* stk){
+
+  compA.power(src->power[0]);
+  compB.power(src->power[1]);
+  compC.power(src->power[2]);
+
+  compA.mul(compB);
+  compA.mul(compC);
+  compA.mul(src->coef);
+
+  const int size = compA.nMon;
+
+  for(int i = 0; i < size; i++){
+    if(compA.mon[i].coef != 0)
+      stk->push(compA.mon[i]);
   }
 }
 
