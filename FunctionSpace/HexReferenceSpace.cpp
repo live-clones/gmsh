@@ -1,10 +1,26 @@
 #include <sstream>
+
 #include "HexReferenceSpace.h"
 #include "MHexahedron.h"
 
 using namespace std;
 
 HexReferenceSpace::HexReferenceSpace(void){
+  // Look if a serialized HexReferenceSpace is present in root //
+  // If it does, load it                                       //
+  // If not, create it and serialize it for an other time      //
+
+  try{
+    init(string("hex.refSpace"));
+  }
+
+  catch(std::exception& exception){
+    initHex();
+    serialize("hex.refSpace");
+  }
+}
+
+void HexReferenceSpace::initHex(void){
   // Vertex Definition //
   nVertex = 8;
 

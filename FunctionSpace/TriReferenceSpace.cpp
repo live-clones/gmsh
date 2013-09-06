@@ -1,10 +1,26 @@
 #include <sstream>
+
 #include "TriReferenceSpace.h"
 #include "MTriangle.h"
 
 using namespace std;
 
 TriReferenceSpace::TriReferenceSpace(void){
+  // Look if a serialized TriReferenceSpace is present in root //
+  // If it does, load it                                       //
+  // If not, create it and serialize it for an other time      //
+
+  try{
+    init(string("tri.refSpace"));
+  }
+
+  catch(std::exception& exception){
+    initTri();
+    serialize("tri.refSpace");
+  }
+}
+
+void TriReferenceSpace::initTri(void){
   // Vertex Definition //
   nVertex = 3;
 

@@ -104,6 +104,7 @@ class ReferenceSpace{
 
   void init(void);
   void init(const char* stream);
+  void init(const std::string& path);
 
  private:
   void getOrderedEdge(void);

@@ -17,6 +17,9 @@ class HexReferenceSpace: public ReferenceSpace{
   virtual ~HexReferenceSpace(void);
 
   virtual std::string toLatex(void) const;
+
+ private:
+  void initHex(void);
 };
 
 /**

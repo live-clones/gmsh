@@ -16,28 +16,7 @@ ReferenceSpace::ReferenceSpace(void){
 }
 
 ReferenceSpace::ReferenceSpace(const std::string& path){
-  // Read file //
-  // Open Stream
-  ifstream input;
-  input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-  input.open(path.c_str(), std::ifstream::binary);
-
-  // Get size of stream (go to stream end)
-  input.seekg(0, std::ifstream::end);
-  const size_t size = input.tellg();
-
-  // Reset stream possition
-  input.seekg(0, std::ifstream::beg);
-
-  // Alloc byte stream & Read file
-  char* stream = new char[size];
-  input.read(stream, size);
-
-  // Init from stream
-  init(stream);
-
-  // Free stream
-  delete[] stream;
+  init(path);
 }
 
 ReferenceSpace::~ReferenceSpace(void){
@@ -113,6 +92,7 @@ void ReferenceSpace::init(const char* stream){
   offset += sizeof(size_t);
 
   pTree = new PermutationTree(stream + offset);
+  cout << pTree->toString() << endl;
   offset += tSize;
 
   // RefSpace Node Id
@@ -125,8 +105,31 @@ void ReferenceSpace::init(const char* stream){
   // Oredered {Edge, Face} Node Idx
   offset += unserialize(stream + offset, orderedEdgeNodeIdx);
   offset += unserialize(stream + offset, orderedFaceNodeIdx);
+}
 
-  cout << offset << endl;
+void ReferenceSpace::init(const std::string& path){
+  // Read file //
+  // Open Stream
+  ifstream input;
+  input.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  input.open(path.c_str(), std::ifstream::binary);
+
+  // Get size of stream (go to stream end)
+  input.seekg(0, std::ifstream::end);
+  const size_t size = input.tellg();
+
+  // Reset stream possition
+  input.seekg(0, std::ifstream::beg);
+
+  // Alloc byte stream & Read file
+  char* stream = new char[size];
+  input.read(stream, size);
+
+  // Init from stream
+  init(stream);
+
+  // Free stream
+  delete[] stream;
 }
 
 void ReferenceSpace::
