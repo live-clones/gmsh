@@ -1213,9 +1213,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         else {
           if(numNodesError != numNodes){
             numNodesError = numNodes;
-            Msg::Error("You should never draw views with > %d nodes per element: use"
-                       "'Adapt visualization grid' to view high-order datasets!",
-                       PVIEW_NMAX);
+            Msg::Warning("Fields with %d nodes per element cannot be displayed: "
+                         "either force the field type or select 'Adapt visualization "
+                         "grid' if the field is high-order", numNodes);
           }
           continue;
         }
@@ -1223,8 +1223,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if((numComp > 9 && !opt->forceNumComponents) || opt->forceNumComponents > 9){
         if(numCompError != numComp) {
           numCompError = numComp;
-          Msg::Error("You should never draw views with > 9 values per node: use"
-                     "'Adapt visualization grid' to view high-order datasets!");
+          Msg::Warning("Fields with %d components cannot be displayed: "
+                       "either force the field type or select 'Adapt visualization "
+                       "grid' if the field is high-order", numComp);
         }
         continue;
       }

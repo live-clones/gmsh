@@ -425,8 +425,8 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
     (numComp <= 1) ? 1 : (numComp <= 3) ? 3 : (numComp <= 9) ? 9 : numComp;
 
   if(numCompMsh > 9)
-    Msg::Warning("More than 9 components in field: you will probably want to force "
-                 "the field type to scalar, vector or tensor in the options");
+    Msg::Info("More than 9 components in field: you will probably want to force "
+              "the field type to scalar, vector or tensor in the options");
 
   // Warning! The ordering of the elements in the last two lists is
   // important: it should match the ordering of the MSH element types
