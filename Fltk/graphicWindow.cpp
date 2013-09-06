@@ -2239,6 +2239,14 @@ void quick_visibility_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0)) opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 4);
   }
+  else if(what == "view_range_default"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_range_type(i, GMSH_SET|GMSH_GUI, 1);
+  }
+  else if(what == "view_range_per_step"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_range_type(i, GMSH_SET|GMSH_GUI, 3);
+  }
   else if(what == "mesh_toggle"){
     static int value = 1;
     static int old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
@@ -2320,11 +2328,15 @@ void status_options_cb(Fl_Widget *w, void *data)
         FL_MENU_TOGGLE|FL_MENU_DIVIDER },
       { "View element outlines ", 0, quick_visibility_cb, (void*)"view_element_outlines",
         FL_MENU_TOGGLE },
-      { "View intervals", 0, 0, 0, FL_SUBMENU|FL_MENU_DIVIDER },
+      { "View intervals", 0, 0, 0, FL_SUBMENU },
          { "Iso-values", 0, quick_visibility_cb, (void*)"view_iso"},
          { "Continuous map", 0, quick_visibility_cb, (void*)"view_continous"},
          { "Filled iso-values", 0, quick_visibility_cb, (void*)"view_filled"},
          { "Numeric values", 0, quick_visibility_cb, (void*)"view_numeric"},
+         { 0 },
+      { "View range", 0, 0, 0, FL_SUBMENU|FL_MENU_DIVIDER },
+         { "Default", 0, quick_visibility_cb, (void*)"view_range_default"},
+         { "Per time step", 0, quick_visibility_cb, (void*)"view_range_per_step"},
          { 0 },
       { "Toggle mesh display", 0, quick_visibility_cb, (void*)"mesh_toggle" },
       { 0 }
@@ -2350,7 +2362,7 @@ void status_options_cb(Fl_Widget *w, void *data)
         break;
       }
     }
-    const Fl_Menu_Item *m = menu->popup(Fl::event_x(), Fl::event_y(), 0, &menu[18], 0);
+    const Fl_Menu_Item *m = menu->popup(Fl::event_x(), Fl::event_y(), 0, &menu[22], 0);
     if(m) m->do_callback(0, m->user_data());
     drawContext::global()->draw();
   }
