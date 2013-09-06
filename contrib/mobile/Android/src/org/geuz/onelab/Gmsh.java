@@ -29,7 +29,7 @@ public class Gmsh implements Parcelable {
 	public native double getDoubleOption(String category, String name);
 	public native int getIntegerOption(String category, String name);
 	public native String[] getPView(); // get a list of PViews
-	public native void setPView(int position, int intervalsType,int visible,int nbIso); // Change options for a PView
+	public native void setPView(int position, int intervalsType,int visible,int nbIso, float raisez); // Change options for a PView
 	public native int onelabCB(String action); // Call onelab
 	
 	/** Java CLASS **/

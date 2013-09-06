@@ -105,7 +105,7 @@ public class OptionsDisplayFragment extends Fragment{
         	checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					_gmsh.setPView(myID, -1, (isChecked)? 1 : 0, -1);
+					_gmsh.setPView(myID, -1, (isChecked)? 1 : 0, -1, -1);
 					if(mListener != null) mListener.OnModelOptionsChanged();
 				}
 			});

@@ -28,11 +28,11 @@
 	<TextView
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
-        android:text="@string/postpro_raizez" />
+        android:text="@string/postpro_raisez" />
 	<SeekBar 
 	    android:id="@+id/raisez"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
-	    android:max="1" />
+	    android:max="5" />
 
 </LinearLayout>

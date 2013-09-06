@@ -7,6 +7,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,11 +49,22 @@ public class OptionsPostProcessingFragment extends Fragment{
 			Bundle savedInstanceState) {
 		String[] PViews = _gmsh.getPView();
 		String[] infos = PViews[_pview].split("\n");
+		if(infos.length != 5){ Log.e("Gmsh", "Pview length is incorect"); return null;}
 		getActivity().getActionBar().setTitle(infos[0]);
 		LinearLayout layout =  (LinearLayout)inflater.inflate(R.layout.fragment_postprocessing, container, false);
 		final Spinner intervalsType = (Spinner)layout.findViewById(R.id.intervals_type);
 		final EditText intervals = (EditText)layout.findViewById(R.id.intervals);
-		final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez); // TODO
+		final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez);
+		raiseZ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			
+			public void onStopTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
+			public void onStartTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
+			public void onProgressChanged(SeekBar seekBar, int progress,
+					boolean fromUser) {
+				_gmsh.setPView(_pview, -1, -1, -1, progress);
+			}
+		});
+		raiseZ.setProgress(Integer.parseInt(infos[4]));
 		intervalsType.setEnabled(infos[2].equals("1"));
 		ArrayList<String> choices;
 		ArrayAdapter<String> adapter;
@@ -66,7 +78,7 @@ public class OptionsPostProcessingFragment extends Fragment{
 		intervalsType.setSelection(Integer.parseInt(infos[1])-1);
 		intervalsType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-				_gmsh.setPView(_pview, pos+1, -1, -1);
+				_gmsh.setPView(_pview, pos+1, -1, -1, -1);
 				//TODO glView.requestRender();
 				intervals.setEnabled(pos == 0 || pos == 2);
 			}
@@ -98,10 +110,9 @@ public class OptionsPostProcessingFragment extends Fragment{
 					nIso = 1;
 					intervals.setText("");
 				}
-				if(nIso > 1000) {_gmsh.setPView(_pview, -1, -1, 1000); intervals.setText("1000");}
-				else if(nIso > 0) _gmsh.setPView(_pview, -1, -1, nIso);
-				else _gmsh.setPView(_pview, -1, -1, 1);
-				//glView.requestRender();
+				if(nIso > 1000) {_gmsh.setPView(_pview, -1, -1, 1000, -1); intervals.setText("1000");}
+				else if(nIso > 0) _gmsh.setPView(_pview, -1, -1, nIso, -1);
+				else _gmsh.setPView(_pview, -1, -1, 1, -1);
 			}
 			
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub

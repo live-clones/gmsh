@@ -90,9 +90,10 @@ class mGLSurfaceView extends GLSurfaceView {
 
 		public boolean onScroll(MotionEvent e1, MotionEvent e2,
 				float distanceX, float distanceY) {
+			if(e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
 			_renderer.translateModel(e2.getX(), e2.getY());
 			requestRender();
-			return false;
+			return true;
 		}
 
 		public void onShowPress(MotionEvent e) {
@@ -112,7 +113,7 @@ class mGLSurfaceView extends GLSurfaceView {
 			scaleFactor = 1f;
 			_renderer.resetModelPosition();
 			requestRender();
-			return false;
+			return true;
 		}
 		public boolean onSingleTapConfirmed(MotionEvent e) {
 			// UNUSED Auto-generated method stub

@@ -124,10 +124,10 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
 /*
  * Class:     org_geuz_onelab_Gmsh
  * Method:    setPView
- * Signature: (IIII)V
+ * Signature: (IIIIF)V
  */
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
-  (JNIEnv *, jobject, jint, jint, jint, jint);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jfloat);
 
 /*
  * Class:     org_geuz_onelab_Gmsh

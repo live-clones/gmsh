@@ -49,8 +49,9 @@ public class MainActivity extends Activity{
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#64000000")));
 		Intent intent = getIntent();
-    	Bundle extras = intent.getExtras(); 
-    	if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
+    	Bundle extras = intent.getExtras();
+    	if(savedInstanceState != null);
+    	else if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		_gmsh.load(tmp);
     	}    		
@@ -82,13 +83,18 @@ public class MainActivity extends Activity{
 	}
 	
 	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+	}
+	
+	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
     	if(!_twoPane) {
     		_switchFragmentMenuItem = menu.add(R.string.menu_parameters);
     		_switchFragmentMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
     	}
-    	_runStopMenuItem = menu.add(R.string.menu_run);
+    	_runStopMenuItem = menu.add((_compute)?R.string.menu_stop:R.string.menu_run);
     	_runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         return true;
     }
@@ -201,6 +207,12 @@ public class MainActivity extends Activity{
 		_notify = false;
 	}
 	
+	@Override
+	protected void onStop() {
+		super.onStop();
+		_notify = true;
+	}
+	
 	private void notifyEndOfCompute() {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -211,6 +223,7 @@ public class MainActivity extends Activity{
 		        .setContentIntent(pendingIntent)
 		        .setContentTitle("ONELAB")
 		        .setDefaults(Notification.DEFAULT_ALL)
+		        .setAutoCancel(true)
 		        .setContentText("The compute is finished");
 		NotificationManager mNotificationManager =
 			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

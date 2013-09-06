@@ -275,7 +275,8 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
 		sstream	<< PView::list[i]->getData()->getName().c_str()
 			<< "\n" <<  PView::list[i]->getOptions()->intervalsType
 			<< "\n" << ((PView::list[i]->getOptions()->visible) ? 1 : 0)
-			<< "\n"  << PView::list[i]->getOptions()->nbIso;
+			<< "\n" << PView::list[i]->getOptions()->nbIso
+			<< "\n" << PView::list[i]->getOptions()->raise[2];
 		jstring s = env->NewStringUTF(sstream.str().c_str());
 		env->SetObjectArrayElement(jPView, i, s);
 		env->DeleteLocalRef(s);
@@ -284,11 +285,12 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
 }
 
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
-  (JNIEnv *env, jobject, jint pos, jint intervalsType, jint visible, jint nIntervals)
+  (JNIEnv *env, jobject, jint pos, jint intervalsType, jint visible, jint nIntervals, jfloat raisez)
 {
 	if(intervalsType > 0 && intervalsType < 4) PView::list[pos]->getOptions()->intervalsType = intervalsType;
 	if(visible >= 0) PView::list[pos]->getOptions()->visible = visible;
 	if(nIntervals > 0) PView::list[pos]->getOptions()->nbIso = nIntervals;
+	if(raisez>0) PView::list[pos]->getOptions()->raise[2] = raisez;
 	PView::list[pos]->setChanged(true);
 }
 
