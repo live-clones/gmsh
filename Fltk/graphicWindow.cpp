@@ -2186,27 +2186,60 @@ void status_xyz1p_cb(Fl_Widget *w, void *data)
   FlGui::instance()->manip->update();
 }
 
-void status_options_cb(Fl_Widget *w, void *data)
+void quick_visibility_cb(Fl_Widget *w, void *data)
 {
-  const char *str = (const char*)data;
-  if(!strcmp(str, "model")){ // model selection
-    modelChooser();
+  if(!data) return;
+  std::string what((const char*)data);
+  if(what == "axes"){
+    opt_general_axes(0, GMSH_SET|GMSH_GUI, !opt_general_axes(0, GMSH_GET, 0));
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_axes(i, GMSH_SET | GMSH_GUI, !opt_view_axes(i, GMSH_GET, 0));
   }
-  else if(!strcmp(str, "?")){ // display options
-    help_options_cb(0, 0);
-    FlGui::instance()->help->options->show();
+  if(what == "geometry_points")
+    opt_geometry_points(0, GMSH_SET|GMSH_GUI, !opt_geometry_points(0, GMSH_GET, 0));
+  else if(what == "geometry_lines")
+    opt_geometry_lines(0, GMSH_SET|GMSH_GUI, !opt_geometry_lines(0, GMSH_GET, 0));
+  else if(what == "geometry_surfaces")
+    opt_geometry_surfaces(0, GMSH_SET|GMSH_GUI, !opt_geometry_surfaces(0, GMSH_GET, 0));
+  else if(what == "geometry_volumes")
+    opt_geometry_volumes(0, GMSH_SET|GMSH_GUI, !opt_geometry_volumes(0, GMSH_GET, 0));
+  else if(what == "mesh_points")
+    opt_mesh_points(0, GMSH_SET|GMSH_GUI, !opt_mesh_points(0, GMSH_GET, 0));
+  else if(what == "mesh_lines")
+    opt_mesh_lines(0, GMSH_SET|GMSH_GUI, !opt_mesh_lines(0, GMSH_GET, 0));
+  else if(what == "mesh_surfaces_edges")
+    opt_mesh_surfaces_edges(0, GMSH_SET|GMSH_GUI, !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
+  else if(what == "mesh_surfaces_faces")
+    opt_mesh_surfaces_faces(0, GMSH_SET|GMSH_GUI, !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
+  else if(what == "mesh_volumes_edges")
+    opt_mesh_volumes_edges(0, GMSH_SET|GMSH_GUI, !opt_mesh_volumes_edges(0, GMSH_GET, 0));
+  else if(what == "mesh_volumes_faces")
+    opt_mesh_volumes_faces(0, GMSH_SET|GMSH_GUI, !opt_mesh_volumes_faces(0, GMSH_GET, 0));
+  else if(what == "view_element_outlines"){
+    int set = 0;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0) && (set = opt_view_show_element(i, GMSH_GET, 0))) break;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_show_element(i, GMSH_SET|GMSH_GUI, !set);
   }
-  else if(!strcmp(str, "p")){ // toggle projection mode
-    if(!Fl::event_state(FL_SHIFT)){
-      opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
-                               !opt_general_orthographic(0, GMSH_GET, 0));
-    }
-    else{
-      perspectiveEditor();
-    }
-    drawContext::global()->draw();
+  else if(what == "view_iso"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
   }
-  else if(!strcmp(str, "M")){ // toggle mesh display
+  else if(what == "view_continous"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 2);
+  }
+  else if(what == "view_filled"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
+  }
+  else if(what == "view_numeric"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0)) opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 4);
+  }
+  else if(what == "mesh_toggle"){
     static int value = 1;
     static int old_p = (int)opt_mesh_points(0, GMSH_GET, 0.);
     static int old_l = (int)opt_mesh_lines(0, GMSH_GET, 0.);
@@ -2240,6 +2273,85 @@ void status_options_cb(Fl_Widget *w, void *data)
       opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI, 0);
       opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI, 0);
     }
+  }
+}
+
+void status_options_cb(Fl_Widget *w, void *data)
+{
+  const char *str = (const char*)data;
+  if(!strcmp(str, "model")){ // model selection
+    modelChooser();
+  }
+  else if(!strcmp(str, "?")){ // display options
+    help_options_cb(0, 0);
+    FlGui::instance()->help->options->show();
+  }
+  else if(!strcmp(str, "p")){ // toggle projection mode
+    if(!Fl::event_state(FL_SHIFT))
+      opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
+                               !opt_general_orthographic(0, GMSH_GET, 0));
+    else
+      perspectiveEditor();
+    drawContext::global()->draw();
+  }
+  else if(!strcmp(str, "Q")){ // quick visibility menu
+    static Fl_Menu_Item menu[] = {
+      { "Axes", 0, quick_visibility_cb, (void*)"axes",
+        FL_MENU_TOGGLE|FL_MENU_DIVIDER },
+      { "Geometry points", 0, quick_visibility_cb, (void*)"geometry_points",
+        FL_MENU_TOGGLE },
+      { "Geometry lines", 0, quick_visibility_cb, (void*)"geometry_lines",
+        FL_MENU_TOGGLE },
+      { "Geometry surfaces", 0, quick_visibility_cb, (void*)"geometry_surfaces",
+        FL_MENU_TOGGLE },
+      { "Geometry volumes", 0, quick_visibility_cb, (void*)"geometry_volumes",
+        FL_MENU_TOGGLE|FL_MENU_DIVIDER },
+      { "Mesh vertices", 0, quick_visibility_cb, (void*)"mesh_points",
+        FL_MENU_TOGGLE },
+      { "Mesh lines", 0, quick_visibility_cb, (void*)"mesh_lines",
+        FL_MENU_TOGGLE },
+      { "Mesh surface edges", 0, quick_visibility_cb, (void*)"mesh_surfaces_edges",
+        FL_MENU_TOGGLE },
+      { "Mesh surface faces", 0, quick_visibility_cb, (void*)"mesh_surfaces_faces",
+        FL_MENU_TOGGLE },
+      { "Mesh volume edges", 0, quick_visibility_cb, (void*)"mesh_volumes_edges",
+        FL_MENU_TOGGLE },
+      { "Mesh volume faces", 0, quick_visibility_cb, (void*)"mesh_volumes_faces",
+        FL_MENU_TOGGLE|FL_MENU_DIVIDER },
+      { "View element outlines ", 0, quick_visibility_cb, (void*)"view_element_outlines",
+        FL_MENU_TOGGLE },
+      { "View intervals", 0, 0, 0, FL_SUBMENU|FL_MENU_DIVIDER },
+         { "Iso-values", 0, quick_visibility_cb, (void*)"view_iso"},
+         { "Continuous map", 0, quick_visibility_cb, (void*)"view_continous"},
+         { "Filled iso-values", 0, quick_visibility_cb, (void*)"view_filled"},
+         { "Numeric values", 0, quick_visibility_cb, (void*)"view_numeric"},
+         { 0 },
+      { "Toggle mesh display", 0, quick_visibility_cb, (void*)"mesh_toggle" },
+      { 0 }
+    };
+    if(opt_general_axes(0, GMSH_GET, 0)) menu[0].set(); else menu[0].clear();
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
+        menu[0].set();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[1].set(); else menu[1].clear();
+    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[2].set(); else menu[2].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[3].set(); else menu[3].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[4].set(); else menu[4].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[5].set(); else menu[5].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[6].set(); else menu[6].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[7].set(); else menu[7].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[8].set(); else menu[8].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[9].set(); else menu[9].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[10].set(); else menu[10].clear();
+    menu[11].clear();
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
+        menu[11].set();
+        break;
+      }
+    }
+    const Fl_Menu_Item *m = menu->popup(Fl::event_x(), Fl::event_y(), 0, &menu[18], 0);
+    if(m) m->do_callback(0, m->user_data());
     drawContext::global()->draw();
   }
   else if(!strcmp(str, "clscale")){
@@ -2590,9 +2702,9 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[8]->callback(status_options_cb, (void *)"p");
   _butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;
-  _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "M");
-  _butt[12]->callback(status_options_cb, (void *)"M");
-  _butt[12]->tooltip("Toggle mesh visibility (Alt+m)");
+  _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Q");
+  _butt[12]->callback(status_options_cb, (void *)"Q");
+  _butt[12]->tooltip("Quick visibility menu (Alt+m to toggle mesh display)");
   x += sw;
   _butt[13] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
   _butt[13]->callback(status_options_cb, (void *)"clscale");

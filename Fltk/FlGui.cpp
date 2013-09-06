@@ -683,7 +683,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    status_options_cb(0, (void *)"M");
+    quick_visibility_cb(0, (void *)"mesh_toggle");
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
