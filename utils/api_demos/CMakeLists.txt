@@ -14,8 +14,10 @@ project(api_demos CXX)
 add_subdirectory(../.. "${CMAKE_CURRENT_BINARY_DIR}/gmsh")
 
 include_directories(../../Common ../../Numeric ../../Geo ../../Mesh 
-   ../../Solver ../../Post ../../Plugin ../../Graphics ../../contrib/ANN/include
-   ../../contrib/DiscreteIntegration ${GMSH_EXTERNAL_INCLUDE_DIRS}
+   ../../Solver ../../Post ../../Plugin ../../Graphics 
+   ../../contrib/ANN/include ../../contrib/MathEx ../../contrib/kbipack
+   ../../contrib/DiscreteIntegration
+   ${GMSH_EXTERNAL_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}/gmsh/Common)
 
 if(APPLE)
@@ -37,13 +39,10 @@ add_executable(mainElasticity mainElasticity.cpp)
 target_link_libraries(mainElasticity shared)
 
 add_executable(mainGlut mainGlut.cpp)
-target_link_libraries(mainGlut lib ${GMSH_EXTERNAL_LIBRARIES} ${glut})
+target_link_libraries(mainGlut shared ${glut})
 
 add_executable(mainHomology mainHomology.cpp)
 target_link_libraries(mainHomology shared)
-
-add_executable(mainLevelset mainLevelset.cpp)
-target_link_libraries(mainLevelset shared)
 
 add_executable(mainOcc mainOcc.cpp)
 target_link_libraries(mainOcc shared)

@@ -1330,7 +1330,7 @@ bool GFace::fillPointCloud(double maxDist,
 	  SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
 	  GPoint gp(point(p));
 	  points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-	  if (uvpoints)uvpoints->push_back(p);
+	  if(uvpoints) uvpoints->push_back(p);
 	  if(normals) normals->push_back(normal(p));
 	}
       }
@@ -1348,8 +1348,8 @@ bool GFace::fillPointCloud(double maxDist,
 	double t2 = b2.low() + v * (b2.high() - b2.low());
 	GPoint gp = point(t1, t2);
 	points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-	if (uvpoints)uvpoints->push_back(SPoint2(t1,t2));
-	if(normals) normals->push_back(normal(SPoint2(t1,t2)));
+	if(uvpoints) uvpoints->push_back(SPoint2(t1, t2));
+	if(normals) normals->push_back(normal(SPoint2(t1, t2)));
       }
     }
   }

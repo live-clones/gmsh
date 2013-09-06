@@ -28,9 +28,10 @@ int main(int argc, char **argv)
   // (relative to subdomain).
   std::vector<int> domain;
   std::vector<int> subdomain;
+  std::vector<int> physicalIm;
 
   // initialize
-  Homology* homology = new Homology(m, domain, subdomain);
+  Homology* homology = new Homology(m, domain, subdomain, physicalIm);
 
   // find homology basis elements
   homology->findHomologyBasis();

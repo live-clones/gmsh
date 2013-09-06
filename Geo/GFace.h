@@ -263,7 +263,7 @@ class GFace : public GEntity
   // points are at most maxDist apart
   bool fillPointCloud(double maxDist,
 		      std::vector<SPoint3> *points,
-		      std::vector<SPoint2> *uvpoints,
+		      std::vector<SPoint2> *uvpoints=0,
                       std::vector<SVector3> *normals=0);
 
   // apply Lloyd's algorithm to the mesh
