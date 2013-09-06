@@ -156,7 +156,7 @@ double Polynomial::at
   return val;
 }
 
-fullVector<double> Polynomial::at(const vector<Polynomial>& P,
+fullVector<double> Polynomial::at(const std::vector<Polynomial>& P,
                                   double x,
                                   double y,
                                   double z){
@@ -572,9 +572,9 @@ void Polynomial::distribute(monomial_t* src, int size, const monomial_t* m){
   }
 }
 
-void Polynomial::compose(const Polynomial::monomial_t* src,
+void Polynomial::compose(const monomial_t* src,
                          Polynomial comp,
-                         stack<Polynomial::monomial_t>* stk){
+                         std::stack<monomial_t>* stk){
 
   comp.power(src->power[0]);
   comp.mul(src->coef);
@@ -592,9 +592,9 @@ void Polynomial::compose(const Polynomial::monomial_t* src,
   }
 }
 
-void Polynomial::compose(const Polynomial::monomial_t* src,
+void Polynomial::compose(const monomial_t* src,
                          Polynomial compA, Polynomial compB,
-                         stack<Polynomial::monomial_t>* stk){
+                         std::stack<monomial_t>* stk){
 
   compA.power(src->power[0]);
   compB.power(src->power[1]);
@@ -614,9 +614,9 @@ void Polynomial::compose(const Polynomial::monomial_t* src,
   }
 }
 
-void Polynomial::compose(const Polynomial::monomial_t* src,
+void Polynomial::compose(const monomial_t* src,
                          Polynomial compA, Polynomial compB, Polynomial compC,
-                         stack<Polynomial::monomial_t>* stk){
+                         std::stack<monomial_t>* stk){
 
   compA.power(src->power[0]);
   compB.power(src->power[1]);

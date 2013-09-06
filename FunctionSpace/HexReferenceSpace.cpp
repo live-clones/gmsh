@@ -54,52 +54,14 @@ HexReferenceSpace::~HexReferenceSpace(void){
 }
 
 string HexReferenceSpace::toLatex(void) const{
-  //const size_t nRefSpace = refSpaceNodeId.size();
   stringstream stream;
-  /*
-  stream << "\\documentclass{article}" << endl << endl
 
-         << "\\usepackage{longtable}"  << endl
-         << "\\usepackage{tikz}"       << endl
-         << "\\usetikzlibrary{arrows}" << endl << endl
+    stream << "\\documentclass{article}" << endl << endl
+         << "\\begin{document}"        << endl
 
-         << "\\begin{document}"                                   << endl
-         << "\\tikzstyle{vertex} = [circle, fill = black!25]"     << endl
-         << "\\tikzstyle{line}   = [draw, thick, black, -latex']" << endl
-         << endl
+         << "\texttt{toLatex} not implemented" << endl
 
-         << "\\begin{longtable}{ccc}" << endl << endl;
+         << "\\end{document}"          << endl;
 
-  for(size_t s = 0; s < nRefSpace; s++){
-    stream << "\\begin{tikzpicture}" << endl
-
-           << "\\node[vertex] (n0) at(0, 0) {$" << refSpaceNodeId[s][0] << "$};"
-           << endl
-           << "\\node[vertex] (n1) at(3, 0) {$" << refSpaceNodeId[s][1] << "$};"
-           << endl
-           << "\\node[vertex] (n2) at(0, 3) {$" << refSpaceNodeId[s][2] << "$};"
-           << endl
-           << "\\node[vertex] (n3) at(1, 1) {$" << refSpaceNodeId[s][3] << "$};"
-           << endl
-           << endl;
-
-    for(size_t e = 0; e < 6; e++)
-      stream << "\\path[line]"
-             << " (n" << orderedEdgeNodeIdx[s][e][0] << ")"
-             << " -- "
-             << " (n" << orderedEdgeNodeIdx[s][e][1] << ");"
-             << endl;
-
-    if((s + 1) % 3)
-      stream << "\\end{tikzpicture} & "        << endl << endl;
-
-    else
-      stream << "\\end{tikzpicture} \\\\ \\\\" << endl << endl;
-  }
-
-  stream << "\\end{longtable}" << endl
-         << "\\end{document}"  << endl;
-  */
-  stream << "Not Implemented" << endl;
   return stream.str();
 }

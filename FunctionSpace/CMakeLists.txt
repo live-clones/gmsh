@@ -15,6 +15,8 @@ set(SRC
   QuadReferenceSpace.cpp
   TetReferenceSpace.cpp
   HexReferenceSpace.cpp
+  PyrReferenceSpace.cpp
+  PriReferenceSpace.cpp
 
   Basis.cpp
   BasisLocal.cpp

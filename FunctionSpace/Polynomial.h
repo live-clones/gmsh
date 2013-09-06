@@ -8,10 +8,10 @@
 
 /**
    @class Polynomial
-   @brief Represents @c 3D polynomials
+   @brief Represents 3D polynomials
 
-   This class represents @c 3D polynomials.@n
-   A @c 3D polynomials uses monomials of '@c xyz' type.
+   This class represents 3D polynomials.
+   A 3D polynomials uses monomials of 'xyz' type.
  */
 
 // We suppose 3D Polynomial
@@ -122,34 +122,24 @@ class Polynomial{
 /**
    @fn Polynomial::Polynomial(double, int, int, int)
    @param coef The coeficient of the futur monomial
-   @param powerX The power of the '@c x' coordinate
-   of the futur monomial
-   @param powerY The power of the '@c y' coordinate
-   of the futur monomial
-   @param powerZ The power of the '@c z' coordinate
-   of the futur monomial
-   @return Returns a new Monomial with the given
-   parameters
-   @note
-   Note that Monomials are special case of Polynomial%s
+   @param powerX The power of the 'x' coordinate of the futur monomial
+   @param powerY The power of the 'y' coordinate of the futur monomial
+   @param powerZ The power of the 'z' coordinate of the futur monomial
+   @return Returns a new Monomial with the given parameters
+   (note that Monomials are special case of Polynomial%s)
    **
 
    @fn Polynomial::Polynomial(const Polynomial&)
    @param other A Polynomial
-   @return Returns a new Polynomial, which is
-   the @em copy of the given one
+   @return Returns a new Polynomial, which is the copy of the given one
    **
 
    @fn Polynomial::Polynomial(void)
-   @return Returns a new Polynomial, which is
-   @em empty
-   @warning
-   An @em empty Polynomial means: @em A @em Polynomial
-   @em with @em no @em monomials.@n
-   In particular, the empty Polynomial is @em not
-   the @em zero @em Polynomial.@n
-   Indeed, the @em zero @em Polynomial has one monomial,
-   @em @c 0.
+   @return Returns a new Polynomial, which is empty
+
+   An empty Polynomial means: a Polynomial with no monomials.
+   In particular, the empty Polynomial is not the zero Polynomial.
+   Indeed, the zero Polynomial has one monomial, 0.
    **
 
    @fn Polynomial::~Polynomial
@@ -157,48 +147,41 @@ class Polynomial{
    **
 
    @fn Polynomial::derivative
-   @param dim The dimention to use for the
-   derivation
-   @returns Derivates this Polynomial with
-   respect to the given dimention
-   @note
-   Dimention:
-   @li @c 0 is for the @c x coordinate
-   @li @c 1 is for the @c y coordinate
-   @li @c 2 is for the @c z coordinate
+   @param dim The dimention to use for the derivation
+   @returns Derivates this Polynomial with respect to the given dimention
+
+   Note that dimention:
+   @li 0 is for the x coordinate
+   @li 1 is for the y coordinate
+   @li 2 is for the z coordinate
    **
 
    @fn Polynomial::gradient
-   @return Returns a Vector with the gradient
-   of this Polynomial
+   @return Returns the gradient of this Polynomial
    **
 
    @fn Polynomial::curl
    @param p A vector of Polynomial%s
-   @return Returns the @em curl of the given
-   vector of Polynomial%s
+   @return Returns the curl of the given vector of Polynomial%s
    **
 
    @fn Polynomial::divergence
    @param p A vector of Polynomial%s
-   @return Returns the @em divergence of the given
-   vector of Polynomial%s
+   @return Returns the divergence of the given vector of Polynomial%s
    **
 
    @fn double Polynomial::operator()(double, double, double)
    @param x A value
    @param y A value
    @param z A value
-   @return Returns the @em evaluation of this
-   Polynomial at (@c x, @c y, @c z)
+   @return Returns the evaluation of this Polynomial at (x, y, z)
    **
 
    @fn double Polynomial::at(double, double, double) const
    @param x A value
    @param y A value
    @param z A value
-   @return Returns the @em evaluation of this
-   Polynomial at (@c x, @c y, @c z)
+   @return Returns the evaluation of this Polynomial at (x, y, z)
    **
 
    @fn fullVector<double> Polynomial::at(const std::vector<Polynomial>&, double, double, double)
@@ -206,99 +189,94 @@ class Polynomial{
    @param x A value
    @param y A value
    @param z A value
-   @return Returns a fullVector with the @em evaluation of
-   the given vector of Polynomial%s at (@c x, @c y, @c z)
+   @return Returns a fullVector with the evaluation of
+   the given vector of Polynomial%s at (x, y, z)
    **
 
    @fn Polynomial Polynomial::operator+(const Polynomial&) const
    @param other An other Polynomial
-   @return Returns a @em new Polynomial, which is the
-   @em sum of this Polynomial and the given one
+   @return Returns a new Polynomial,
+   which is the sum of this Polynomial and the given one
    **
 
    @fn Polynomial Polynomial::operator-(const Polynomial&) const
    @param other An other Polynomial
-   @return Returns a @em new Polynomial, which is the
-   @em difference of this Polynomial and the given one
+   @return Returns a new Polynomial,
+   which is the difference of this Polynomial and the given one
    **
 
    @fn Polynomial Polynomial::operator*(const Polynomial&) const
    @param other An other Polynomial
-   @return Returns a @em new Polynomial, which is the
-   @em product of this Polynomial and the given one
+   @return Returns a new Polynomial,
+   which is the product of this Polynomial and the given one
    **
 
    @fn Polynomial Polynomial::operator*(double) const
    @param alpha A value
-   @return Returns a @em new Polynomial,
-   which is this Polynomial @em multiplied by @c alpha
+   @return Returns a new Polynomial,
+   which is this Polynomial multiplied by alpha
    **
 
    @fn Polynomial::add
    @param other An other Polynomial
-   @return The given Polynomial is
-   @em added to this Polynomial
-   @note
-   The result of this operation is stored in
-   this Polynomial
+   @return The given Polynomial is added to this Polynomial
+
+   Note that the result of this operation is stored in this Polynomial
    **
 
    @fn Polynomial::sub
    @param other An other Polynomial
-   @return The given Polynomial is
-   @em substracted to this Polynomial
-   @note
-   The result of this operation is stored in
-   this Polynomial
+   @return The given Polynomial is substracted to this Polynomial
+
+   Note that the result of this operation is stored in this Polynomial
    **
 
    @fn void Polynomial::mul(const Polynomial&)
    @param other An other Polynomial
-   @return The given Polynomial is
-   @em multiplied with this Polynomial
-   @note
-   The result of this operation is stored in
-   this Polynomial
+   @return The given Polynomial is multiplied with this Polynomial
+
+   Note that the result of this operation is stored in this Polynomial
    **
 
    @fn void Polynomial::mul(double)
    @param alpha A value
-   @return This Polynomial is @em multiplied
-   by the given value
-   @note
-   The result of this operation is stored in
-   this Polynomial
+   @return This Polynomial is multiplied by the given value
+
+   Note that the result of this operation is stored in this Polynomial
    **
 
    @fn Polynomial::power
-   @param n A @em natural number
-   @return Takes this Polynomial to the power @c n
+   @param n A natural number
+   @return Takes this Polynomial to the power n
    **
 
    @fn Polynomial Polynomial::compose(const Polynomial&) const
-   @param other An other Polynomial,
-   called @c Q(x, @c y, @c z)
+   @param other An other Polynomial, called Q(x, y, z)
    @return
-   Let this Polynomial be @c P(x, @c y, @c z).@n
-   This method returns a @em new Polynomial,
-   representing @c P(Q(x, @c y, @c z), @c y, @c z)
+   Let this Polynomial be P(x, y, z). This method returns a new Polynomial,
+   representing P(Q(x, y, z), y, z)
    **
 
    @fn Polynomial Polynomial::compose(const Polynomial&, const Polynomial&) const
-   @param otherA An other Polynomial,
-   called @c Q(x, @c y, @c z)
-   @param otherB An other Polynomial,
-   called @c R(x, @c y, @c z)
+   @param otherA An other Polynomial, called Q(x, y, z)
+   @param otherB An other Polynomial, called R(x, y, z)
    @return
-   Let this Polynomial be @c P(x, @c y, @c z).@n
-   This method returns a @em new Polynomial, representing
-   @c P(Q(x, @c y, @c z), @c R(x, @c y, @c z), @c z)
+   Let this Polynomial be P(x, y, z). This method returns a new Polynomial,
+   representing P(Q(x, y, z), R(x, y, z), z)
+   **
+
+   @fn Polynomial Polynomial::compose(const Polynomial&, const Polynomial&, const Polynomial&) const
+   @param otherA An other Polynomial, called Q(x, y, z)
+   @param otherB An other Polynomial, called R(x, y, z)
+   @param otherC An other Polynomial, called S(x, y, z)
+   @return
+   Let this Polynomial be P(x, y, z). This method returns a new Polynomial,
+   representing P(Q(x, y, z), R(x, y, z), S(x, y, z))
    **
 
    @fn void Polynomial::operator=(const Polynomial&)
    @param other A Polynomial
-   @return Sets this Polynomial to a @em copy
-   of the given one
+   @return Sets this Polynomial to a copy of the given one
    **
 
    @fn Polynomial::toString
