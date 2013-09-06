@@ -601,7 +601,7 @@ size_t ReferenceSpace::getPermutationIdx(const MElement& element) const{
 void ReferenceSpace::mapFromABCtoUVW(const MElement& element,
                                      double a, double b, double c,
                                      double uvw[3]) const{
- // Get Index Permutation
+  // Get Index Permutation
   const size_t permutationIdx = getPermutationIdx(element);
 
   // UVW node coordinate

@@ -13,12 +13,43 @@
    @interface ReferenceSpace
    @brief Base interface for all ReferenceSpace%s
 
-   This class represents the notion of Reference Space.
-   A Reference Space is the set of all the permutations
-   of the reference element of a particular geometrical entity.
+   A Reference Space is the space where all the mesh elements
+   (of the same geomtrical family) will be mapped.
 
-   @todo End ReferenceSpace DOC !!!
- */
+   A given geomtrical family may have mutltiple reference spaces,
+   depending on how the egdes and faces are oriented.
+   These orientations depend on the global number of the mesh element vertices,
+   and the bigger/smaller relations that exist among them.
+
+   This class can generate, and orient, all the reference spaces
+   of a geomtrical family (see specialized classes).
+   It can alse compute the jacobian matrices for the mapping between spaces.
+
+   This class can handle three different types of reference spaces:
+   @li The XYZ space, which is the space of the physical (mesh) elements
+   @li The UVW space, which is the unoriented reference space of the mesh module
+   @li The ABC spaces, which are the set oriented reference spaces
+
+   Note that the UVW and ABC spaces are defined on the same domain.
+   The only difference is how the vertices are indexed (and oriented).
+   Actualy, the ABC spaces are constructed by orienting (that is reindexing)
+   the edges and faces of the UVW space.
+
+   Also note that a given mesh element can have only one orientation,
+   so it can be mapped on only one of the ABC spaces.
+   This class is able to find which ABC space corresponds to a mesh element.
+
+   The edges (or faces) are represended by the index of their vertices.
+   For a given edge (or face), this class is able to return these indexes,
+   so that the bigger/smaller relations between the indexed vertices is valid.
+   By valid, one need to understand: so that the bigger/smaller relations
+   are the same for every edge (or face) of every mesh element.
+   Or, one can say: such that the edges (or faces) are oriented.
+
+   Since an ABC space corresponds to an orientation, an ABC space corresponds
+   to a set of ordered edge (or face) node index. This class is able to give
+   these node index relations for all its ABC spaces.
+*/
 
 class ReferenceSpace{
  private:
@@ -190,37 +221,103 @@ class ReferenceSpace{
    **
 
    @fn ReferenceSpace::getNReferenceSpace
-   @returns Returns the number of permutation of this ReferenceSpace
+   @returns Returns the number of ABC reference spaces
    **
 
    @fn ReferenceSpace::getReferenceSpace
    @param element A MElement
-   @returns Returns the a natural number defining
-   the permutation of the given element
+   @returns Returns a natural number defining on which ABC space
+   the given element can be mapped
 
-   If no permutation is found (e.g. the given
-   element does not belong the same geometrical
-   entity as this ReferenceSpace) an Exception is thrown
+   If no space is found (e.g. the given element does not belong
+   the same geometrical entity as this ReferenceSpace) an Exception is thrown
    **
 
    @fn ReferenceSpace::getEdgeNodeIndex
-   @return Returns every Edge Node Index permutation of this ReferenceSpace
+   @return Returns every oriented edge node index of this ReferenceSpace
 
-   @li The fisrt vector represents a particular permutation
+   @li The first vector represents a particular ABC space
    (see ReferenceSpace::getReferenceSpace())
-   @li The second vector represents a particular edge (for a given permutation)
-   @li The last vector represents the Vertex IDs of
-   the given edge (in the geometrical reference space)
+   @li The second vector represents a particular edge (for the given ABC space)
+   @li The last vector represents the vertex indexes of the given edge
    **
 
    @fn ReferenceSpace::getFaceNodeIndex
-   @return Returns every Face Node Index permutation of this ReferenceSpace
+   @return Returns every oriented face node index of this ReferenceSpace
 
-   @li The fisrt vector represents a particular permutation
+   @li The first vector represents a particular ABC space
    (see ReferenceSpace::getReferenceSpace())
-   @li The second vector represents a particular face (for a given permutation)
-   @li The last vector represents the Vertex IDs of
-   the given face (in the geometrical reference space)
+   @li The second vector represents a particular face (for the given ABC space)
+   @li The last vector represents the vertex indexes of the given face
+   **
+
+   @fn ReferenceSpace::getNodeIndexFromABCtoUVW
+   @param element A MElement
+
+   We call ABC[i] the ID of the ith node in the ABC space of the given element.
+   We call UVW[i] the ID of the ith node in the UVW space of the given element.
+
+   @return Returns a vector, called map, such that: ABC[i] = UVW[map[i]]
+
+   Note that this is valid, since ABC spaces and UVW space are defined on the
+   same domain. The only difference between those spaces is the node indexing.
+   **
+
+   @fn ReferenceSpace::mapFromABCtoUVW
+   @param element A MElement
+   @param a The 'A' coordinate of a point in the ABC space of the given element
+   @param b The 'B' coordinate of a point in the ABC space of the given element
+   @param c The 'C' coordinate of a point in the ABC space of the given element
+   @param uvw A vector in the UVW space of the given element
+
+   Fills the given vector with the coordinates of the
+   (a, b, c) point in the UVW space
+   **
+
+   @fn ReferenceSpace::mapFromABCtoXYZ
+   @param element A MElement
+   @param a The 'A' coordinate of a point in the ABC space of the given element
+   @param b The 'B' coordinate of a point in the ABC space of the given element
+   @param c The 'C' coordinate of a point in the ABC space of the given element
+   @param xyz A vector in the XYZ space of the given element
+
+   Fills the given vector with the coordinates of the
+   (a, b, c) point in the XYZ space
+   **
+
+   @fn ReferenceSpace::mapFromUVWtoABC
+   @param element A MElement
+   @param u The 'U' coordinate of a point in the UVW space of the given element
+   @param v The 'V' coordinate of a point in the UVW space of the given element
+   @param w The 'W' coordinate of a point in the UVW space of the given element
+   @param abc A vector in the ABC space of the given element
+
+   Fills the given vector with the coordinates of the
+   (u, v, w) point in the ABC space
+   **
+
+   @fn ReferenceSpace::mapFromXYZtoABC
+   @param element A MElement
+   @param x The 'X' coordinate of a point in the XYZ space of the given element
+   @param y The 'Y' coordinate of a point in the XYZ space of the given element
+   @param z The 'Z' coordinate of a point in the XYZ space of the given element
+   @param abc A vector in the ABC space of the given element
+
+   Fills the given vector with the coordinates of the
+   (x, y, z) point in the ABC space
+   **
+
+   @fn ReferenceSpace::getJacobian
+   @param element A MElement
+   @param a The 'A' coordinate of a point in the ABC space of the given element
+   @param b The 'B' coordinate of a point in the ABC space of the given element
+   @param c The 'C' coordinate of a point in the ABC space of the given element
+   @param jac A 3 by 3 allocated fullMatrix
+
+   Fills the given matrix with the jacobian, evaluated at (a, b, c),
+   of the mapping between the ABC space and the XYZ space
+
+   @return Returns the determinant of the jacobian matrix
    **
 
    @fn ReferenceSpace::toString
