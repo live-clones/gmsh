@@ -191,11 +191,14 @@ void PermutationTree::rebuild(std::vector<unlink_t>& unlink){
   list<node_t*> listOfLeaf;
 
   for(size_t i = 1; i < nextNodeId; i++){
+    // Father
     node[i]->father = node[unlink[i].fatherId];
 
+    // Son
     for(size_t j = 0; j < node[i]->son.size(); j++)
       node[i]->son[j] = node[unlink[i].sonId[j]];
 
+    // Leaf (if it is actualy a leaf)
     if(node[i]->leafId != (size_t)(-1))
       listOfLeaf.push_back(node[i]);
   }
@@ -209,6 +212,9 @@ PermutationTree::node_t* PermutationTree::copy(unlink_t* unlink){
 
   node->myChoice = unlink->myChoice;
   node->nxtChoice.resize(unlink->nNxtChoice);
+
+  for(size_t i = 0; i < unlink->nNxtChoice; i++)
+    node->nxtChoice[i] = unlink->nxtChoice[i];
 
   node->father = NULL;
   node->son.resize(unlink->nSon);
