@@ -20,17 +20,11 @@ class QuadLagrangeBasis: public BasisLagrange{
   //!
   //! Returns a new QuadLagrangeBasis
   //! of the given Order
-  QuadLagrangeBasis(unsigned int order);
+  QuadLagrangeBasis(size_t order);
 
   //! Deletes this Basis
   //!
   virtual ~QuadLagrangeBasis(void);
-
- private:
-  //! @param order A natural number
-  //! @return Returns the @em tag of a @em Quadrangle of
-  //! the given order
-  static unsigned int getTag(unsigned int order);
 };
 
 #endif

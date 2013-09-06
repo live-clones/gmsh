@@ -1,9 +1,8 @@
-#include "Exception.h"
 #include "TetLagrangeBasis.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
-TetLagrangeBasis::TetLagrangeBasis(unsigned int order){
+TetLagrangeBasis::TetLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
   if(order == 0)
     order = 1;
@@ -21,26 +20,13 @@ TetLagrangeBasis::TetLagrangeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //
-  lBasis = new polynomialBasis(getTag(order));
+  lBasis = new polynomialBasis(ElementType::getTag(TYPE_TET, order, false));
 
   // Init Lagrange Point //
-  lPoint = new fullMatrix<double>
-    (gmshGeneratePointsTetrahedron(order, false));
+  lPoint = new fullMatrix<double>(gmshGeneratePointsTetrahedron(order, false));
 }
 
 TetLagrangeBasis::~TetLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-}
-
-unsigned int TetLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = ElementType::getTag(TYPE_TET, order, false);
-
-  if(tag)
-    return tag;
-
-  else
-    throw Exception
-      ("Can't instanciate an order %d Lagrangian Basis for a Tetrahedron",
-       order);
 }

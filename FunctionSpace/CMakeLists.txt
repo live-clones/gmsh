@@ -16,9 +16,6 @@ set(SRC
   TetReferenceSpace.cpp
   HexReferenceSpace.cpp
 
-  ReferenceSpaceLagrange.cpp
-  TriLagrangeReferenceSpace.cpp
-
   Basis.cpp
   BasisLocal.cpp
   BasisGenerator.cpp
@@ -49,6 +46,7 @@ set(SRC
 
   HexNodeBasis.cpp
   HexEdgeBasis.cpp
+  HexLagrangeBasis.cpp
 
   FunctionSpace.cpp
   FunctionSpaceScalar.cpp

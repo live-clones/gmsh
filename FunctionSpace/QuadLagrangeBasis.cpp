@@ -1,9 +1,8 @@
-#include "Exception.h"
 #include "QuadLagrangeBasis.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
-QuadLagrangeBasis::QuadLagrangeBasis(unsigned int order){
+QuadLagrangeBasis::QuadLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
   if(order == 0)
     order = 1;
@@ -21,26 +20,13 @@ QuadLagrangeBasis::QuadLagrangeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //
-  lBasis = new polynomialBasis(getTag(order));
+  lBasis = new polynomialBasis(ElementType::getTag(TYPE_QUA, order, false));
 
   // Init Lagrange Point //
-  lPoint = new fullMatrix<double>
-    (gmshGeneratePointsQuadrangle(order, false));
+  lPoint = new fullMatrix<double>(gmshGeneratePointsQuadrangle(order, false));
 }
 
 QuadLagrangeBasis::~QuadLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-}
-
-unsigned int QuadLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = ElementType::getTag(TYPE_QUA, order, false);
-
-  if(tag)
-    return tag;
-
-  else
-    throw Exception
-      ("Can't instanciate an order %d Lagrangian Basis for a Quadrangle",
-       order);
 }

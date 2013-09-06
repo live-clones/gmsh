@@ -1,9 +1,8 @@
-#include "Exception.h"
 #include "LineLagrangeBasis.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
-LineLagrangeBasis::LineLagrangeBasis(unsigned int order){
+LineLagrangeBasis::LineLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
   if(order == 0)
     order = 1;
@@ -21,26 +20,13 @@ LineLagrangeBasis::LineLagrangeBasis(unsigned int order){
   nFunction = nVertex + nEdge + nFace + nCell;
 
   // Init polynomialBasis //
-  lBasis = new polynomialBasis(getTag(order));
+  lBasis = new polynomialBasis(ElementType::getTag(TYPE_LIN, order, false));
 
   // Init Lagrange Point //
-  lPoint = new fullMatrix<double>
-    (gmshGeneratePointsLine(order));
+  lPoint = new fullMatrix<double>(gmshGeneratePointsLine(order));
 }
 
 LineLagrangeBasis::~LineLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-}
-
-unsigned int LineLagrangeBasis::getTag(unsigned int order){
-  unsigned int tag = ElementType::getTag(TYPE_LIN, order, false);
-
-  if(tag)
-    return tag;
-
-  else
-    throw Exception
-      ("Can't instanciate an order %d Lagrangian Basis for a Line",
-       order);
 }

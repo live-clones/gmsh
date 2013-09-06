@@ -20,17 +20,11 @@ class TetLagrangeBasis: public BasisLagrange{
   //!
   //! Returns a new TetLagrangeBasis
   //! of the given Order
-  TetLagrangeBasis(unsigned int order);
+  TetLagrangeBasis(size_t order);
 
   //! Deletes this Basis
   //!
   virtual ~TetLagrangeBasis(void);
-
- private:
-  //! @param order A natural number
-  //! @return Returns the @em tag of a @em Tetrahedron of
-  //! the given order
-  static unsigned int getTag(unsigned int order);
 };
 
 #endif

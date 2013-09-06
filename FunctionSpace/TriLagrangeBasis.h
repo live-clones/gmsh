@@ -20,17 +20,11 @@ class TriLagrangeBasis: public BasisLagrange{
   //!
   //! Returns a new TriLagrangeBasis
   //! of the given Order
-  TriLagrangeBasis(unsigned int order);
+  TriLagrangeBasis(size_t order);
 
   //! Deletes this Basis
   //!
   virtual ~TriLagrangeBasis(void);
-
- private:
-  //! @param order A natural number
-  //! @return Returns the @em tag of a @em Triangle of
-  //! the given order
-  static unsigned int getTag(unsigned int order);
 };
 
 #endif

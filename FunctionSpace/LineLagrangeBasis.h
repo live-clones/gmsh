@@ -20,17 +20,11 @@ class LineLagrangeBasis: public BasisLagrange{
   //!
   //! Returns a new LineLagrangeBasis
   //! of the given Order
-  LineLagrangeBasis(unsigned int order);
+  LineLagrangeBasis(size_t order);
 
   //! Deletes this Basis
   //!
   virtual ~LineLagrangeBasis(void);
-
- private:
-  //! @param order A natural number
-  //! @return Returns the @em tag of a @em Line of
-  //! the given order
-  static unsigned int getTag(unsigned int order);
 };
 
 #endif

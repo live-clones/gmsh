@@ -24,7 +24,7 @@
 
 #include "HexNodeBasis.h"
 #include "HexEdgeBasis.h"
-
+#include "HexLagrangeBasis.h"
 
 BasisGenerator::BasisGenerator(void){
 }
@@ -75,7 +75,7 @@ BasisLocal* BasisGenerator::generateLagrange(size_t elementType,
   case TYPE_TRI: return new TriLagrangeBasis(order);
   case TYPE_QUA: return new QuadLagrangeBasis(order);
   case TYPE_TET: return new TetLagrangeBasis(order);
-  case TYPE_HEX: throw Exception("Lagrange Basis on Hexs not Implemented");
+  case TYPE_HEX: return new HexLagrangeBasis(order);
 
   default: throw Exception("Unknown Element Type (%d) for Basis Generation",
                            elementType);
