@@ -92,7 +92,6 @@ void ReferenceSpace::init(const char* stream){
   offset += sizeof(size_t);
 
   pTree = new PermutationTree(stream + offset);
-  cout << pTree->toString() << endl;
   offset += tSize;
 
   // RefSpace Node Id
