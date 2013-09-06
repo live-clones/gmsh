@@ -116,7 +116,19 @@ public class SeparatedListView extends ListView{
 		}
 		//@Override
 		public Object getItem(int position) {
-			// UNUSED Auto-generated method stub
+			int section = -1,
+					lastPosition = -1;
+			while(lastPosition<position){
+				int itemsCount = sections.get(section+1).getItemsCount();
+				if(lastPosition+1 == position)// this is a section
+					return titles.get(section+1);
+				else if(lastPosition+1+itemsCount >= position){ // the view is in this section
+					if(section<0) return sections.get(section+1).getItem(position-1);
+					return sections.get(section+1).getItem(position-lastPosition-2);
+				}
+				lastPosition+= 1 + itemsCount;
+				section++;
+			}
 			return null;
 		}
 

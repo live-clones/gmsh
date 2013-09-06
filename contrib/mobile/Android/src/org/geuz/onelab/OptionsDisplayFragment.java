@@ -94,7 +94,18 @@ public class OptionsDisplayFragment extends Fragment{
 	public void refresh() {
 		if(_gmsh == null) return;
 		String[] PViews = _gmsh.getPView();
-		for(int i=_listView.itemsCountInSection("Result"); i < PViews.length;i++){
+		for(int i=0; i<_listView.itemsCountInSection("Result"); i++) {
+			View v = (View)_listView.getItemAtPosition(7+i);
+			if(!v.getClass().equals(LinearLayout.class)) continue;
+			for(int j=0; j<((LinearLayout)v).getChildCount(); j++) {
+				View sv = ((LinearLayout)v).getChildAt(j);
+				if(sv.getClass().equals(CheckBox.class)){
+					String[] infos = PViews[i].split("\n");
+					((CheckBox)sv).setChecked(infos[2].equals("1"));
+				}
+			}
+		}
+		for(int i=_listView.itemsCountInSection("Result"); i < PViews.length;i++) {
 			String[] infos = PViews[i].split("\n"); // name / IntervalsType (1=Iso 2=Continous 3=Discrete 4=Numeric)
 			final int myID = i;
 			LinearLayout layout = new LinearLayout(_listView.getContext());
@@ -117,6 +128,7 @@ public class OptionsDisplayFragment extends Fragment{
 				    intent.putExtra("Gmsh", (Parcelable)_gmsh);
 				    intent.putExtra("PView", myID);
 					startActivity(intent);
+					if(mListener != null) mListener.OnModelOptionsChanged();
 				}
 			});
         	button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

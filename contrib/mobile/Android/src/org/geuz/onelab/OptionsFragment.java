@@ -42,12 +42,16 @@ public class OptionsFragment extends Fragment{
 		LinearLayout rootView = (LinearLayout)inflater.inflate(R.layout.fragment_options, container, false);
 		_optionModelFragment = OptionsModelFragment.newInstance(_gmsh);
 		_optionModelFragment.setOnModelOptionsChangedListener(new OptionsModelFragment.OnModelOptionsChangedListener() {
-			
 			public void OnModelOptionsChanged() {
 				if(mListener != null) mListener.OnOptionsChanged();
 			}
 		});
 		_optionDisplayFragment = OptionsDisplayFragment.newInstance(_gmsh);
+		_optionDisplayFragment.setOnModelOptionsChangedListener(new OptionsDisplayFragment.OnModelOptionsChangedListener() {
+			public void OnModelOptionsChanged() {
+				if(mListener != null) mListener.OnOptionsChanged();
+			}
+		});
 		final Button optionModel = (Button) rootView.findViewById(R.id.goto_options_model);
 		final Button optionDisplay = (Button) rootView.findViewById(R.id.goto_options_display);
 		if(_viewN == 0) {
