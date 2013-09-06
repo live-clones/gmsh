@@ -13,6 +13,8 @@
 {
     @private
     double scaleFactor;
+	UIBarButtonItem *_runStopButton;
+	UIAlertView *_loadingAlert;
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender;
@@ -20,7 +22,6 @@
 
 @property (nonatomic, retain) EAGLView *glView;
 @property (strong, nonatomic) id detailItem;
-@property (strong, nonatomic) IBOutlet UIButton *runStopButton;
 @property (weak, nonatomic) IBOutlet UILabel *progressLabel;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *progressIndicator;
 

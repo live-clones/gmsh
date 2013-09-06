@@ -43,21 +43,27 @@
     }
 }
 
+-(void)viewWillAppear:(BOOL)animated
+{
+	if(self.initialModel != nil) {
+		_loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
+		[_loadingAlert show];
+	}
+}
+
 -(void)viewDidAppear:(BOOL)animated
 {
-	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
 	[_progressIndicator addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleProgressIndicatorTap:)]];
 	[_progressLabel setHidden:YES];
 	[_progressIndicator setHidden:YES];
+	[self.navigationController setToolbarHidden:YES animated:YES];
 	if(self.initialModel != nil){
-		UIAlertView* progressAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
-		[progressAlert show];
 		[self.glView load:self.initialModel];
 		//[self.initialModel release];
 		self.initialModel = nil;
-		[progressAlert dismissWithClickedButtonIndex:-1 animated:YES];
+		[_loadingAlert dismissWithClickedButtonIndex:-1 animated:YES];
 	}
 }
 
@@ -69,29 +75,28 @@
     scaleFactor = 1.;
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
+	_runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-		[self.navigationItem setRightBarButtonItem:model];
+		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, nil]];
 	}
 	else
 	{
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
-        [self.navigationItem setRightBarButtonItem:settings];
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, nil]];
     }
-	[_runStopButton addTarget:self action:@selector(compute) forControlEvents:UIControlEventTouchDown];
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-	_runStopButton.frame = CGRectMake(self.view.frame.size.width - _runStopButton.frame.size.width - 7, 50, _runStopButton.frame.size.width, _runStopButton.frame.size.height );
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
 }
 
 - (void)compute
 {
-	[_runStopButton addTarget:self action:@selector(stop) forControlEvents:UIControlEventTouchDown];
-	[_runStopButton setTitle:@"Stop" forState:UIControlStateNormal];
+	[_runStopButton setAction:@selector(stop)];
+	[_runStopButton setTitle:@"Stop"];
 	[_progressLabel setText:@""];
 	[_progressLabel setHidden:NO];
 	[_progressIndicator setHidden:NO];
@@ -111,8 +116,8 @@
 }
 - (void)didStopCompute
 {
-	[_runStopButton addTarget:self action:@selector(compute) forControlEvents:UIControlEventTouchDown];
-	[_runStopButton setTitle:@"Run" forState:UIControlStateNormal];
+	[_runStopButton setAction:@selector(compute)];
+	[_runStopButton setTitle:@"Run"];
 	[_progressLabel setHidden:YES];
 	[_progressIndicator stopAnimating];
 	[_progressIndicator setHidden:YES];
@@ -202,7 +207,6 @@
 - (void)viewDidUnload
 {
     [self setGlView:nil];
-	[self setRunStopButton:nil];
     [self setProgressLabel:nil];
 	[self setProgressIndicator:nil];
     [super viewDidUnload];

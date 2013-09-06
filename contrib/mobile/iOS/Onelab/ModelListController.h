@@ -10,7 +10,7 @@
 
 #import "EAGLView.h"
 
-@interface ModelListController : UITableViewController <NSXMLParserDelegate>
+@interface ModelListController : UITableViewController <NSXMLParserDelegate, UIActionSheetDelegate>
 {
     @private
     NSMutableArray *models;

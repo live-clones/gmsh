@@ -94,7 +94,7 @@
 	if(indexPath == nil) return;
 	UIActionSheet *actionSheet;
 	if([[models objectAtIndex:indexPath.row] getUrl])
-	actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this models", @"More informations", nil];
+	actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this models", @"More information", nil];
 	else
 		actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this models", nil];
 	actionSheet.tag = indexPath.row;
