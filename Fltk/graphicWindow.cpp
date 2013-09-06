@@ -2306,7 +2306,7 @@ void status_options_cb(Fl_Widget *w, void *data)
         FL_MENU_TOGGLE },
       { "Geometry volumes", 0, quick_visibility_cb, (void*)"geometry_volumes",
         FL_MENU_TOGGLE|FL_MENU_DIVIDER },
-      { "Mesh vertices", 0, quick_visibility_cb, (void*)"mesh_points",
+      { "Mesh nodes", 0, quick_visibility_cb, (void*)"mesh_points",
         FL_MENU_TOGGLE },
       { "Mesh lines", 0, quick_visibility_cb, (void*)"mesh_lines",
         FL_MENU_TOGGLE },
