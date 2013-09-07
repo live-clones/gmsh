@@ -2302,7 +2302,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       perspectiveEditor();
     drawContext::global()->draw();
   }
-  else if(!strcmp(str, "Q")){ // quick visibility menu
+  else if(!strcmp(str, "M")){ // quick visibility menu
     static Fl_Menu_Item menu[] = {
       { "Axes", 0, quick_visibility_cb, (void*)"axes",
         FL_MENU_TOGGLE|FL_MENU_DIVIDER },
@@ -2714,8 +2714,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[8]->callback(status_options_cb, (void *)"p");
   _butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;
-  _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Q");
-  _butt[12]->callback(status_options_cb, (void *)"Q");
+  _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "M");
+  _butt[12]->callback(status_options_cb, (void *)"M");
   _butt[12]->tooltip("Quick visibility menu (Alt+m to toggle mesh display)");
   x += sw;
   _butt[13] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
