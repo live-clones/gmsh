@@ -1034,7 +1034,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->end();
 
   _computeWidths();
-  _widgetLabelRatio = 0.45;
+  _widgetLabelRatio = 0.48;
 
   int BB2 = BB / 2 + 4;
 
