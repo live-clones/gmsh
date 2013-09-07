@@ -248,10 +248,11 @@ FlGui::FlGui(int argc, char **argv)
   // set default font size
   FL_NORMAL_SIZE = drawContext::global()->getFontSize();
 
-  // handle themes and tooltip font size
+  // handle themes and tooltip options
   if(CTX::instance()->guiTheme.size())
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
+  Fl_Tooltip::delay(0.5);
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
