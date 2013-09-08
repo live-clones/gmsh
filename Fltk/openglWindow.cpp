@@ -22,19 +22,21 @@
 #include "Trackball.h"
 #include "GamePad.h"
 
-// Navigator handler (read gamepad event if gamepad exists or question presence of gamepad)
+// Navigator handler (read gamepad event if gamepad exists or question presence
+// of gamepad)
 static void navigator_handler(void *data)
 {
   openglWindow* gl_win = (openglWindow*)data;
   if (CTX::instance()->gamepad && CTX::instance()->gamepad->active) {
     if (gl_win->Nautilus ==0){
-      gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,gl_win->getDrawContext());
+      gl_win->Nautilus = new Navigator(CTX::instance()->gamepad->frequency,
+                                       gl_win->getDrawContext());
     }
     gl_win->moveWithGamepad();
     Fl::add_timeout(CTX::instance()->gamepad->frequency, navigator_handler, data);
   }
   else{
-    if (gl_win->Nautilus){ delete      gl_win->Nautilus;  gl_win->Nautilus=0; }
+    if (gl_win->Nautilus){ delete gl_win->Nautilus; gl_win->Nautilus = 0; }
     Fl::add_timeout(3., navigator_handler, data);
   }
 }
@@ -255,8 +257,8 @@ void openglWindow::draw()
 		cam->up.x,cam->up.y,cam->up.z);
       _ctx->draw3d();
       _ctx->draw2d();
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus) Nautilus->drawIcons();
-     
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active && Nautilus)
+        Nautilus->drawIcons();
       _drawScreenMessage();
       _drawBorder();
     }
@@ -340,6 +342,11 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
+    if(Fl::event_clicks() == 1){ // double-click
+      status_options_cb(0, (void*)"quickvis");
+      Fl::event_clicks(-1);
+      return 1;
+    }
     _setLastHandled(this);
     take_focus(); // force keyboard focus when we click in the window
     _curr.set(_ctx, Fl::event_x(), Fl::event_y());

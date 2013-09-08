@@ -2302,7 +2302,8 @@ void status_options_cb(Fl_Widget *w, void *data)
       perspectiveEditor();
     drawContext::global()->draw();
   }
-  else if(!strcmp(str, "M")){ // quick visibility menu
+  else if(!strcmp(str, "quickvis") ||
+          !strcmp(str, "quickvis_toggle")){ // quick visibility menu
     static Fl_Menu_Item menu[] = {
       { "Axes", 0, quick_visibility_cb, (void*)"axes",
         FL_MENU_TOGGLE|FL_MENU_DIVIDER },
@@ -2362,8 +2363,16 @@ void status_options_cb(Fl_Widget *w, void *data)
         break;
       }
     }
-    const Fl_Menu_Item *m = menu->popup(Fl::event_x(), Fl::event_y(), 0, &menu[22], 0);
-    if(m) m->do_callback(0, m->user_data());
+    if(!strcmp(str, "quickvis_toggle")){
+      const Fl_Menu_Item *m = menu->popup(Fl::event_x(), Fl::event_y(), 0, &menu[22], 0);
+      if(m) m->do_callback(0, m->user_data());
+    }
+    else{
+      static Fl_Menu_Item *picked = &menu[22];
+      picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
+                                          picked ? picked : &menu[22], 0);
+      if(picked) picked->do_callback(0, picked->user_data());
+    }
     drawContext::global()->draw();
   }
   else if(!strcmp(str, "clscale")){
@@ -2715,7 +2724,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
   x += sw;
   _butt[12] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "M");
-  _butt[12]->callback(status_options_cb, (void *)"M");
+  _butt[12]->callback(status_options_cb, (void *)"quickvis_toggle");
   _butt[12]->tooltip("Quick visibility menu (Alt+m to toggle mesh display)");
   x += sw;
   _butt[13] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_clscale");
