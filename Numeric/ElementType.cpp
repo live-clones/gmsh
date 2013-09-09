@@ -91,7 +91,7 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_TRI_SUB):  case(MSH_TET_SUB):
       return TYPE_XFEM;
     default:
-      Msg::Error("Unknown type %i, assuming tetrahedron.", tag);
+      Msg::Error("Unknown element tag %i, assuming tetrahedron.", tag);
       return TYPE_TET;
   }
 }
@@ -225,7 +225,7 @@ int ElementType::OrderFromTag(int tag)
   case MSH_PYR_61 : return 8;
   case MSH_PYR_69 : return 9;
   default :
-    Msg::Error("Unknown element type %d: reverting to order 1",tag);
+    Msg::Error("Unknown element tag %d, assuming order 1.",tag);
     return 1;
   }
 
@@ -317,7 +317,7 @@ int ElementType::DimensionFromTag(int tag)
       return 3;
 
     default:
-      Msg::Error("Unknown type %i, assuming tetrahedron.", tag);
+      Msg::Error("Unknown element tag %i, assuming dimension 3.", tag);
       return 3;
   }
 }
@@ -417,7 +417,7 @@ int ElementType::SerendipityFromTag(int tag)
     return 2; // Only Serendipity
 
   default :
-    Msg::Error("Unknown element type %d: assuming not serendipity",tag);
+    Msg::Error("Unknown element tag %d, assuming not serendipity.",tag);
     return 0;
   }
 }
@@ -536,6 +536,6 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     default : Msg::Error("pyramid order %i unknown", order); return 0;
     }
     break;
-  default : Msg::Error("unknown element type %i", parentTag); return 0;
+  default : Msg::Error("unknown element type %i, returning 0", parentTag); return 0;
   }
 }
