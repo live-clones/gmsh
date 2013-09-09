@@ -43,7 +43,7 @@ public class OptionsModelFragment extends Fragment{
 	
 	public void refresh() {
 		if(_gmsh == null) return;
-		if(_listView != null){ _listView.clear(); params.clear();}
+		if(_listView != null){ _listView.clear(); params.clear();} // TODO temporary, remove must be implemented in listview
 		this.getAvailableParam();
 		if(_listView != null) _listView.refresh();
 	}

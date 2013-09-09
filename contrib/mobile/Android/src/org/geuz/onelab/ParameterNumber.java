@@ -1,5 +1,6 @@
 package org.geuz.onelab;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import android.content.Context;
@@ -47,11 +48,13 @@ public class ParameterNumber extends Parameter{
 	
 	protected void update(){
 		super.update();
-		int nDecimal = String.valueOf(this.getStep()).length() - String.valueOf(this.getStep()).lastIndexOf('.') - 1; // hack for double round
+		int nDecimal = String.valueOf(_min).length() - String.valueOf(_min).lastIndexOf('.') - 1; // hack for double round
 		if(_bar != null) {
-			_title.setText(getShortName() + " (" + Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal) + ")");
-			_bar.setProgress((int) ((_value-_min)/_step));
-			_bar.setMax((int) ((_max-_min)/_step));
+			DecimalFormat df = new DecimalFormat ( ) ;
+			df.setMaximumFractionDigits(nDecimal) ;
+			_title.setText(getShortName() + " (" + df.format(_value)+ ")");
+			_bar.setMax(100);
+			_bar.setProgress((int)(100*(_value-_min)/(_max-_min)));
 			_bar.setEnabled(!this.isReadOnly());
 		}
 		else if(_spinner != null)
@@ -79,7 +82,7 @@ public class ParameterNumber extends Parameter{
 		if(value == _value) return;
 		_value = value;
 		_changed = true;
-		if(mListener != null) mListener.OnParameterChanged();
+		//if(mListener != null) mListener.OnParameterChanged();
 	}
 	public void setMin(double min) {_min = min;this.update();}
 	public void setMax(double max) {_max = max;this.update();}
@@ -168,6 +171,7 @@ public class ParameterNumber extends Parameter{
 				public void onNothingSelected(AdapterView<?> arg0) {}
 				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
+					if(mListener != null) mListener.OnParameterChanged();
 				}
 			});
 		}
@@ -175,15 +179,18 @@ public class ParameterNumber extends Parameter{
 			paramLayout.addView(_bar);
 			_bar.setEnabled(!_readOnly);
 			_bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-				
 				public void onStopTrackingTouch(SeekBar seekBar) {
-					_gmsh.setParam(getType(), getName(), String.valueOf(getValue())); // update parameter and the perform a check
+					double value = getMin() + (getMax() - getMin())*seekBar.getProgress()/100;
+					value = (value >= _min)? value : _min;
+					_gmsh.setParam(getType(), getName(), String.valueOf(value));
+					if(mListener != null) mListener.OnParameterChanged();
+					
 				}
 				
 				public void onStartTrackingTouch(SeekBar seekBar) {}
 				
 				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					setValue(getMin() + getStep()*(double)progress);
+					
 				}
 			});
 		}
@@ -194,8 +201,8 @@ public class ParameterNumber extends Parameter{
 			_checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					setValue((isChecked)? 1 : 0);
-					_gmsh.setParam(getType(), getName(), String.valueOf(_value));
+					_gmsh.setParam(getType(), getName(), (isChecked)? "1" : "0");
+					if(mListener != null) mListener.OnParameterChanged();
 				}
 			});
 		}
@@ -208,8 +215,9 @@ public class ParameterNumber extends Parameter{
 					if(keyCode == KeyEvent.KEYCODE_ENTER){ // hide the keyboard
 						InputMethodManager imm = (InputMethodManager)_context.getSystemService(
 							      Context.INPUT_METHOD_SERVICE);
-							imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
-							_gmsh.setParam(getType(), getName(), String.valueOf(_value));
+						imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
+						_gmsh.setParam(getType(), getName(), String.valueOf(_value));
+						if(mListener != null) mListener.OnParameterChanged();
 						_edittext.clearFocus();
 						return true;
 					}
