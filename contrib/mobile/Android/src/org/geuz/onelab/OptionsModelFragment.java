@@ -43,6 +43,7 @@ public class OptionsModelFragment extends Fragment{
 	
 	public void refresh() {
 		if(_gmsh == null) return;
+		if(_listView != null){ _listView.clear(); params.clear();}
 		this.getAvailableParam();
 		if(_listView != null) _listView.refresh();
 	}
@@ -51,12 +52,18 @@ public class OptionsModelFragment extends Fragment{
     	String[] tmp = _gmsh.getParams();
 		for(String s : tmp){ // for each parameters in ONEALB
 			boolean found = false;
-			for(Parameter p : params){ // for each parameters
+			for(int i = 0; i<params.size(); i++){ // for each parameters
+				Parameter p = params.get(i);
 				if(s.split(Character.toString((char)0x03))[2].equals(p.getName())){ // the parameter already exist, just refresh it
-					if(p.getType().equals("ParameterNumber"))
-						((ParameterNumber)p).fromString(s);
-					else if(p.getType().equals("ParameterString"))
-						((ParameterString)p).fromString(s);
+					if(p.getType().equals("ParameterNumber")){
+						if(((ParameterNumber)p).fromString(s) == -1){
+							params.remove(i);
+						}
+					}
+					else if(p.getType().equals("ParameterString")){
+						if(((ParameterString)p).fromString(s) == -1)
+							params.remove(i);
+					}
 					found = true;
 					break;
 				}

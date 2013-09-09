@@ -2,7 +2,7 @@
     package="org.geuz.onelab"
     android:versionCode="1"
     android:versionName="1.0"
-    android:installLocation="preferExternal"
+    android:installLocation="auto"
     >
 
     <uses-feature android:glEsVersion="0x00010000" android:required="true"></uses-feature>
@@ -42,6 +42,13 @@
 				<data android:scheme="file"  android:host="*" android:pathPattern=".*\\.pro" android:mimeType="*/*"  />
 			</intent-filter>
         </activity>
+         <activity
+            android:name=".PostProcessingActivity"
+            android:label="@string/title_activity_main">
+        </activity>
+        <activity 
+            android:name=".OptionsActivity"
+            android:label="@string/title_activity_options"></activity>
     </application>
 
 </manifest>

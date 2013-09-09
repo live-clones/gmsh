@@ -255,13 +255,17 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
 	// Get the original param and then change the value
 	if(strcmp(type,"ParameterNumber") == 0){
 		std::vector<onelab::number> s;
-		if(onelab::server::instance()->get(s,  name)) s[0].setValue(atof(value));
-		onelab::server::instance()->set(s[0]);
+		if(onelab::server::instance()->get(s,  name)){
+			s[0].setValue(atof(value));
+			onelab::server::instance()->set(s[0]);
+		}
 	}
 	else if(strcmp(type,"ParameterString") == 0){
 		std::vector<onelab::string> s;
-		if(onelab::server::instance()->get(s,  name)) s[0].setValue(value);
-		onelab::server::instance()->set(s[0]);
+		if(onelab::server::instance()->get(s,  name)){
+			s[0].setValue(value);
+			onelab::server::instance()->set(s[0]);
+		}
 	}
 }
 

@@ -17,6 +17,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.app.FragmentTransaction;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -63,23 +64,18 @@ public class MainActivity extends Activity{
     	else
     		this.finish();
     	_twoPane = (findViewById(R.id.parameter_fragment) != null);
+    	_modelFragment = ModelFragment.newInstance(_gmsh);
+		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
     	if(_twoPane) {
     		_optionsFragment = OptionsFragment.newInstance(_gmsh);
     		getFragmentManager().beginTransaction().add(R.id.parameter_fragment, _optionsFragment).commit();
-    		_modelFragment = ModelFragment.newInstance(_gmsh);
-    		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
+    		_optionsFragment.setOnOptionsChangedListener(new OptionsFragment.OnOptionsChangedListener() {
+    			
+    			public void OnOptionsChanged() {
+    				_modelFragment.requestRender();
+    			}
+    		});
     	}
-    	else {
-    		_optionsFragment = OptionsFragment.newInstance(_gmsh);
-    		_modelFragment = ModelFragment.newInstance(_gmsh);
-    		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
-    	}
-    	_optionsFragment.setOnOptionsChangedListener(new OptionsFragment.OnOptionsChangedListener() {
-			
-			public void OnOptionsChanged() {
-				_modelFragment.requestRender();
-			}
-		});
 	}
 	
 	@Override
@@ -101,18 +97,10 @@ public class MainActivity extends Activity{
 	@Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
     	if (item.getTitle().equals(getString(R.string.menu_parameters))) {
-    		item.setTitle(R.string.menu_model);
-    		FragmentTransaction ft = getFragmentManager().beginTransaction();
-            ft.replace(R.id.model_fragment, _optionsFragment);
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            ft.commit();
-    	}
-    	else if (item.getTitle().equals(getString(R.string.menu_model))) {
-    		item.setTitle(R.string.menu_parameters);
-    		FragmentTransaction ft = getFragmentManager().beginTransaction();
-            ft.replace(R.id.model_fragment, _modelFragment);
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-            ft.commit();
+    		Intent intent = new Intent(this, OptionsActivity.class);
+		    intent.putExtra("Gmsh", (Parcelable)_gmsh);
+			startActivity(intent);
+			_modelFragment.requestRender();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_run))){
     		if(_switchFragmentMenuItem != null && _switchFragmentMenuItem.getTitle().equals(getString(R.string.menu_model))) {

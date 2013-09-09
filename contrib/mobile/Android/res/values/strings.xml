@@ -6,8 +6,8 @@
     <string name="button_recalculate_param">Recalulate with new parameters</string>
     <string name="dialog_title_choosefile">Choose a file</string>
     <string name="error_nosdcard">No SDcard found on your device</string>
-    <string name="title_parameter">Settings</string>
     <string name="title_activity_main">Onelab</string>
+    <string name="title_activity_options">Parameters</string>
     <string name="error_nomshfile">No compatible files or directories in this folder</string>
     <string name="menu_model">Show the model</string>
     <string name="menu_parameters">Parameters</string>
@@ -17,5 +17,5 @@
     <string name="menu_stop">Stop</string>
     <string name="postpro_intervalstype">Intervals type</string>
     <string name="postpro_intervals">Intervals</string>
-	<string name="postpro_raizez">Raise (Z)</string>
+	<string name="postpro_raisez">Raise (Z)</string>
 </resources>

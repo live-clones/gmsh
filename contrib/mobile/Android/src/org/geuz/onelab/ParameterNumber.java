@@ -77,10 +77,9 @@ public class ParameterNumber extends Parameter{
 			return;
 		}
 		if(value == _value) return;
-		if(mListener != null) mListener.OnParameterChanged();
-		_changed = true;
 		_value = value;
-		this.update();
+		_changed = true;
+		if(mListener != null) mListener.OnParameterChanged();
 	}
 	public void setMin(double min) {_min = min;this.update();}
 	public void setMax(double max) {_max = max;this.update();}
@@ -142,6 +141,8 @@ public class ParameterNumber extends Parameter{
 			this.update();
 			return pos;
 		}
+		if(_choices != null)_choices.clear();
+		if(_values != null) _values.clear();
 		for(int i=0; i<nLabels && nChoix == nLabels; i++)
 		{
 			double val = Double.parseDouble(infos[pos++]); // choice
@@ -164,15 +165,11 @@ public class ParameterNumber extends Parameter{
 			paramLayout.addView(_spinner);
 			_spinner.setEnabled(!_readOnly);
 			_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
 				public void onNothingSelected(AdapterView<?> arg0) {}
-
-				public void onItemSelected(AdapterView<?> parent, View view,
-						int pos, long id) {
+				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 					setValue(_values.get(pos));
 					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
 				}
-
 			});
 		}
 		else if(_bar != null) {

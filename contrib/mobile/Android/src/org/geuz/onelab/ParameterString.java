@@ -80,7 +80,6 @@ public class ParameterString extends Parameter{
 	public int getIndex() {return _index;}
 	public ArrayList<String> getChoices() {return _choices;}
 	public int fromString(String s){
-		_choices.clear();
 		int pos = super.fromString(s);
 		if(pos <= 0) return -1; // error
 		String[] infos = s.split(Character.toString((char)0x03));
@@ -91,6 +90,7 @@ public class ParameterString extends Parameter{
 		int nChoices = Integer.parseInt(infos[pos++]);
 		if(nChoices < 1 && _kind.equals("generic"))
 			_edittext = new EditText(_context);
+		if(_choices != null)_choices.clear();
 		for(int i=0;i<nChoices;i++) this.addChoices(infos[pos++]);
 		// ...
 		setValue(value);
