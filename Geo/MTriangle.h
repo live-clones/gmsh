@@ -321,17 +321,24 @@ class MTriangleN : public MTriangle {
   {
     if(_order == 1 && _vs.size() == 0) return MSH_TRI_3;
     if(_order == 2 && _vs.size() == 3) return MSH_TRI_6;
-    if(_order == 3 && _vs.size() == 6) return MSH_TRI_9;
     if(_order == 3 && _vs.size() == 7) return MSH_TRI_10;
-    if(_order == 4 && _vs.size() == 9) return MSH_TRI_12;
     if(_order == 4 && _vs.size() == 12) return MSH_TRI_15;
-    if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I;
     if(_order == 5 && _vs.size() == 18) return MSH_TRI_21;
     if(_order == 6 && _vs.size() == 25) return MSH_TRI_28;
     if(_order == 7 && _vs.size() == 33) return MSH_TRI_36;
     if(_order == 8 && _vs.size() == 42) return MSH_TRI_45;
     if(_order == 9 && _vs.size() == 52) return MSH_TRI_55;
     if(_order ==10 && _vs.size() == 63) return MSH_TRI_66;
+
+    if(_order == 3 && _vs.size() == 6) return MSH_TRI_9;
+    if(_order == 4 && _vs.size() == 9) return MSH_TRI_12;
+    if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I;
+    if(_order == 6 && _vs.size() == 15) return MSH_TRI_18;
+    if(_order == 7 && _vs.size() == 18) return MSH_TRI_21I;
+    if(_order == 8 && _vs.size() == 21) return MSH_TRI_24;
+    if(_order == 9 && _vs.size() == 24) return MSH_TRI_27;
+    if(_order ==10 && _vs.size() == 27) return MSH_TRI_30;
+    Msg::Error("no tag matches a p%d triangle with %d vertices", _order, 3+_vs.size());
     return 0;
   }
   virtual void reverse()

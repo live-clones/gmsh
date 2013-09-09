@@ -538,6 +538,8 @@ class MHexahedronN : public MHexahedron {
     if(_order == 7 && _vs.size() + 8 == 80)  return MSH_HEX_80;
     if(_order == 8 && _vs.size() + 8 == 92)  return MSH_HEX_92;
     if(_order == 9 && _vs.size() + 8 == 104) return MSH_HEX_104;
+
+    Msg::Error("no tag matches a p%d hexahedron with %d vertices", _order, 8+_vs.size());
     return 0;
   }
   virtual int getNumFacesRep();

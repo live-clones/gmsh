@@ -363,6 +363,7 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 8 && _vs.size() + 4 == 165) return MSH_TET_165;
     if(_order == 9 && _vs.size() + 4 == 220) return MSH_TET_220;
     if(_order == 10 && _vs.size() + 4 == 286) return MSH_TET_286;
+
     if(_order == 3 && _vs.size() + 4 == 16) return MSH_TET_16;
     if(_order == 4 && _vs.size() + 4 == 22) return MSH_TET_22;
     if(_order == 5 && _vs.size() + 4 == 28) return MSH_TET_28;
@@ -371,6 +372,7 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 8 && _vs.size() + 4 == 46) return MSH_TET_46;
     if(_order == 9 && _vs.size() + 4 == 52) return MSH_TET_52;
     if(_order == 10 && _vs.size() + 4 == 58) return MSH_TET_58;
+    Msg::Error("no tag matches a p%d tetrahedron with %d vertices", _order, 4+_vs.size());
     return 0;
   }
   virtual void reverse()
