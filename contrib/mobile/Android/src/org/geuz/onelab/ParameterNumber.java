@@ -167,7 +167,6 @@ public class ParameterNumber extends Parameter{
 			_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 				public void onNothingSelected(AdapterView<?> arg0) {}
 				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-					setValue(_values.get(pos));
 					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
 				}
 			});

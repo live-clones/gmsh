@@ -78,7 +78,7 @@ public class ModelList extends Activity {
 				if(m.getUrl() != null) {
 					actions = new CharSequence[2];
 					actions[0] = "Open this model";
-					actions[1] = "More informations";
+					actions[1] = "More information";
 				}
 				else {
 					actions = new CharSequence[1];

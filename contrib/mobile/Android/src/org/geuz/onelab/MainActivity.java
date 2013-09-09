@@ -99,7 +99,8 @@ public class MainActivity extends Activity{
     	if (item.getTitle().equals(getString(R.string.menu_parameters))) {
     		Intent intent = new Intent(this, OptionsActivity.class);
 		    intent.putExtra("Gmsh", (Parcelable)_gmsh);
-			startActivity(intent);
+		    intent.putExtra("Compute", _compute);
+			startActivityForResult(intent, 1);
 			_modelFragment.requestRender();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_run))){
@@ -134,6 +135,17 @@ public class MainActivity extends Activity{
 		}
     	return super.onMenuItemSelected(featureId, item);
     }
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+		case 1:
+			if(resultCode == RESULT_OK)
+				if(!_compute && data.getBooleanExtra("Compute", false)) new Run().execute();
+			break;
+		}
+	}
 	
 	private class Run extends AsyncTask<Void, Void, Integer[]> {
 

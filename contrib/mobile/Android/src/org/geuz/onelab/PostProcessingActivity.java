@@ -3,11 +3,13 @@ package org.geuz.onelab;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
 public class PostProcessingActivity extends Activity{
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_fragment);
 		Bundle extra = getIntent().getExtras();
 		int id = extra.getInt("PView", 0);
