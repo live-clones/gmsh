@@ -399,7 +399,7 @@ int mpegFileDialog(const char *name)
     dialog->v[0]->align(FL_ALIGN_RIGHT);
 
     dialog->v[1] = new Fl_Value_Input
-      (WB, y, BB / 2, BH, "Increment step"); y += BH;
+      (WB, y, BB / 2, BH, "Steps between frames"); y += BH;
     dialog->v[1]->minimum(1);
     dialog->v[1]->maximum(100);
     dialog->v[1]->step(1);
