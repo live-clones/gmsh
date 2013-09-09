@@ -1,37 +1,4 @@
-lc = 0.3;
-
-Mesh.RemeshParametrization=7;
-Mesh.RemeshAlgorithm=1;
-Mesh.Algorithm=6;
-
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthMin = lc;
-Mesh.CharacteristicLengthMax = lc;
-Mesh.LcIntegrationPrecision = 1.e-5;
-Mesh.MinimumCirclePoints = 50;
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
-
-Merge "InitialMeshFalcon.msh";
-
-CreateTopology;
-
-// Make all lines compound:
-ll[] = Line "*";
-For j In {0 : #ll[]-1}
-  Compound Line(1000+j) = ll[j];
-  Physical Line(1000+j) = (1000+j);
-EndFor
-
-// Make all surfaces compound and physical:
-ss[] = Surface "*";
-For i In {0 : #ss[]-1}
-  Compound Surface(i+100) = ss[i];
-  Physical Surface(i+1) = { i+100 };
-EndFor
-
-Mesh 2;
-Save "tmp.stl";
-Delete All;
+Include "param.geo";
 
 Merge "tmp.stl";
 
@@ -44,14 +11,14 @@ xmax = 3;
 ymin = -3.0;
 ymax = 6.0;
 
-Point(20001) = {xmin, ymin, z0};
-Point(20002) = {xmax, ymin, z0};
-Point(20003) = {xmax, ymax, z0};
-Point(20004) = {xmin, ymax, z0};
-Point(20005) = {xmin, ymin, zmax};
-Point(20006) = {xmax, ymin, zmax};
-Point(20007) = {xmax, ymax, zmax};
-Point(20008) = {xmin, ymax, zmax};
+Point(20001) = {xmin, ymin, z0, lc2};
+Point(20002) = {xmax, ymin, z0, lc2};
+Point(20003) = {xmax, ymax, z0, lc2};
+Point(20004) = {xmin, ymax, z0, lc2};
+Point(20005) = {xmin, ymin, zmax, lc2};
+Point(20006) = {xmax, ymin, zmax, lc2};
+Point(20007) = {xmax, ymax, zmax, lc2};
+Point(20008) = {xmin, ymax, zmax, lc2};
 
 Line(10) = {20001, 20002};
 Line(11) = {20002, 20003};

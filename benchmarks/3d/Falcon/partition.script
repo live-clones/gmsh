@@ -1,6 +1,8 @@
+Include "param.geo";
+
 Merge "falcon.msh";
 
-Plugin(SimplePartition).NumSlices = 16;
+Plugin(SimplePartition).NumSlices = NUM_SLICES;
 Plugin(SimplePartition).Run;
 
 Mesh.Binary=1;

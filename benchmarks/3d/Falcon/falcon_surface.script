@@ -1,0 +1,33 @@
+Include "param.geo";
+
+Mesh.RemeshParametrization=7;
+Mesh.RemeshAlgorithm=1;
+Mesh.Algorithm=6;
+
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthMin = lc;
+Mesh.CharacteristicLengthMax = lc;
+Mesh.LcIntegrationPrecision = 1.e-5;
+Mesh.MinimumCirclePoints = 50;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;
+
+Merge "InitialMeshFalcon.msh";
+
+CreateTopology;
+
+// Make all lines compound:
+ll[] = Line "*";
+For j In {0 : #ll[]-1}
+  Compound Line(1000+j) = ll[j];
+  Physical Line(1000+j) = (1000+j);
+EndFor
+
+// Make all surfaces compound and physical:
+ss[] = Surface "*";
+For i In {0 : #ss[]-1}
+  Compound Surface(i+100) = ss[i];
+  Physical Surface(i+1) = { i+100 };
+EndFor
+
+Mesh 2;
+Save "tmp.stl";
