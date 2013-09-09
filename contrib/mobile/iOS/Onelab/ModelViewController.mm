@@ -12,6 +12,15 @@
 
 #import "AppDelegate.h"
 
+
+@implementation UIErrorAlertView
+
+-(void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
+{
+	if(buttonIndex == 0) [super dismissWithClickedButtonIndex:buttonIndex animated:animated];
+}
+@end
+
 @interface ModelViewController ()
 @property (strong, nonatomic) UIPopoverController *masterPopoverController;
 - (void)configureView;
@@ -53,6 +62,10 @@
 
 -(void)viewDidAppear:(BOOL)animated
 {
+	if(!_loadingAlert && self.initialModel != nil) {
+		_loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
+		[_loadingAlert show];
+	}
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
 	[_progressIndicator addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleProgressIndicatorTap:)]];
@@ -64,6 +77,8 @@
 		//[self.initialModel release];
 		self.initialModel = nil;
 		[_loadingAlert dismissWithClickedButtonIndex:-1 animated:YES];
+		//[_loadingAlert release];
+		_loadingAlert = nil;
 	}
 }
 
@@ -73,6 +88,7 @@
 	// Do any additional setup after loading the view, typically from a nib.
     [self configureView];
     scaleFactor = 1.;
+	_errors = [[NSMutableArray alloc] init];
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
 	_runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
@@ -101,6 +117,7 @@
 	[_progressLabel setHidden:NO];
 	[_progressIndicator setHidden:NO];
 	[_progressIndicator startAnimating];
+	[[UIApplication sharedApplication] cancelAllLocalNotifications];
 	dispatch_group_t group = dispatch_group_create();
 	dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		_computeBackgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
@@ -129,6 +146,10 @@
 		[_progressLabel setHidden:YES];
 		[_progressIndicator stopAnimating];
 		[_progressIndicator setHidden:YES];
+		if(_errors.count > 0) {
+			_errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+			[_errorAlert show];
+		}
 	});
 }
 - (void)stop
@@ -206,13 +227,6 @@
     [self performSegueWithIdentifier:@"showSettingsSegue" sender:self];
 }
 
--(void) showAlert:(std::string)msg title:(std::string) title
-{
-    UIAlertView *alert;
-    alert = [[UIAlertView alloc] initWithTitle:[NSString stringWithCString:title.c_str() encoding:[NSString defaultCStringEncoding]] message:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]] delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
-    [alert show];
-}
-
 - (void)viewDidUnload
 {
     [self setGlView:nil];
@@ -232,6 +246,28 @@
     return YES;
 }
 
+#pragma mark - Alert view
+
+-(void)addError:(std::string)msg
+{
+	[_errors addObject:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]]];
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	if(buttonIndex == 0) [_errors removeAllObjects];
+	else [_errors removeLastObject];
+	if(_errors.count > 0) {
+		[_errorAlert setMessage:[_errors lastObject]];
+		[_errorAlert show];
+	}
+	else {
+		[_errorAlert dismissWithClickedButtonIndex:0 animated:YES];
+		//[_errorAlert release];
+		_errorAlert = nil;
+	}
+}
+
 #pragma mark - Split view
 
 - (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
@@ -247,42 +283,6 @@
     [self.navigationItem setLeftBarButtonItem:nil animated:YES];
     self.masterPopoverController = nil;
 }
-#pragma mark - actionsheet
-
--(void)showMore: (UIBarButtonItem*)sender
-{
-    UIActionSheet *popupMore = [[UIActionSheet alloc] initWithTitle:@"Other settings" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:
-                                (glView->mContext->isShowedMesh())?@"Hide mesh":@"Show mesh",
-                                (glView->mContext->isShowedGeom())?@"Hide geometry" :@"Show geometry",
-                                @"Set X view",
-                                @"Set Y view",
-                                @"Set Z view",
-                                nil];
-    [popupMore showInView:self.view];
-}
-
--(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-    NSString *text = [actionSheet buttonTitleAtIndex:buttonIndex];
-    if([text isEqualToString:@"Hide mesh"])
-        glView->mContext->showMesh(false);
-    else if([text isEqualToString:@"Show mesh"])
-        glView->mContext->showMesh();
-    else if([text isEqualToString:@"Hide geometry"])
-        glView->mContext->showGeom(false);
-    else if([text isEqualToString:@"Show geometry"])
-        glView->mContext->showGeom();
-    else if([text isEqualToString:@"Set X view"]){
-        glView->mContext->eventHandler(5);
-    }
-    else if([text isEqualToString:@"Set Y view"]){
-        glView->mContext->eventHandler(6);
-    }
-    else if([text isEqualToString:@"Set Z view"]){
-        glView->mContext->eventHandler(7);
-    }
-    [glView drawView];
-}
 
 void messageFromCpp (void *self, std::string level, std::string msg)
 {
@@ -294,7 +294,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 		[(__bridge id)self performSelectorOnMainThread:@selector(setProgress:) withObject:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]] waitUntilDone:YES];
 	}
     else if(level == "Error")
-        [(__bridge id)self showAlert:msg title:level];
+        [(__bridge id)self addError:msg];
 }
 -(void)setProgress:(NSString *)progress
 {
