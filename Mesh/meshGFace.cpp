@@ -203,8 +203,6 @@ static void copyMesh(GFace *source, GFace *target)
                          SVector3(mean_target.a,mean_target.b,mean_target.c));
     LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
 
-    // FIXME: this fails when the 2 planes have a common edge (= rotation axis)
-
     // LINE is the axis of rotation
     // let us compute the angle of rotation
     count = 0;
@@ -219,21 +217,23 @@ static void copyMesh(GFace *source, GFace *target)
       SPoint3 p_pt = LINE.orthogonalProjection(pt);
       SVector3 dist1 = ps - pt;
       SVector3 dist2 = p_ps - p_pt;
-      if (dist2.norm() > 1.e-8 * dist1.norm()){
-	rotation = false;
-      }
-      SVector3 t1 = ps - p_ps;
-      SVector3 t2 = pt - p_pt;
-      if (t1.norm() > 1.e-8 * dist1.norm()){
-	if (count == 0)
-          ANGLE = myAngle(t1, t2, LINE.t);
-	else {
-	  double ANGLE2 = myAngle(t1, t2, LINE.t);
-	  if (fabs (ANGLE2 - ANGLE) > 1.e-8){
-            rotation = false;
+      if (dist1.norm() > CTX::instance()->geom.tolerance){
+        if (dist2.norm() > 1.e-8 * dist1.norm()){
+          rotation = false;
+        }
+        SVector3 t1 = ps - p_ps;
+        SVector3 t2 = pt - p_pt;
+        if (t1.norm() > 1.e-8 * dist1.norm()){
+          if (count == 0)
+            ANGLE = myAngle(t1, t2, LINE.t);
+          else {
+            double ANGLE2 = myAngle(t1, t2, LINE.t);
+            if (fabs (ANGLE2 - ANGLE) > 1.e-8){
+              rotation = false;
+            }
           }
-	}
-	count++;
+          count++;
+        }
       }
     }
 
@@ -256,7 +256,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Only rotations or translations can be currently taken into account "
-                 "for peridic faces: face %d not meshed", target->tag());
+                 "for periodic faces: face %d not meshed", target->tag());
       return;
     }
   }
@@ -692,7 +692,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	 itf != _columns->endf() ; ++itf){
       MVertex *v = itf->first;
       int nbCol = _columns->getNbColumns(v);
-      
+
       for (int i=0;i<nbCol-1;i++){
 	const BoundaryLayerData & c1 = _columns->getColumn(v,i);
 	const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
