@@ -20,6 +20,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Xml;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
@@ -42,7 +44,7 @@ public class ModelList extends Activity {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		LinearLayout layout = new LinearLayout(this);
     	layout.setOrientation(LinearLayout.VERTICAL);
     	ListView list = new ListView(this);
@@ -111,6 +113,22 @@ public class ModelList extends Activity {
 		this.setContentView(layout);
 		layout.setPadding(15, 10, 10, 5);
 		layout.setBackgroundColor(Color.argb(255, 67, 67, 67));
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuItem loadFile = menu.add(R.string.button_open_external_file);
+		loadFile.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		if(item.getTitle().equals(getString(R.string.button_open_external_file))) {
+			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(this.getFilesDir()));
+			startActivity(browserIntent);
+		}
+		return super.onMenuItemSelected(featureId, item);
 	}
 	
 	private void getModels() throws XmlPullParserException, IOException

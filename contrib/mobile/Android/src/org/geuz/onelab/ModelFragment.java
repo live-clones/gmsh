@@ -1,6 +1,11 @@
 package org.geuz.onelab;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
 import android.app.Fragment;
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -77,5 +82,17 @@ public class ModelFragment extends Fragment{
 	}
 	public void requestRender() {
 		_glView.requestRender();
+	}
+	public void takeScreenshot(File out) {
+		Bitmap screenshot = _glView.getScreenshot();
+		try {
+			FileOutputStream f = new FileOutputStream(out);
+			screenshot.compress(Bitmap.CompressFormat.PNG, 85, f);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		finally {
+			_glView.setDrawingCacheEnabled(false);
+		}
 	}
 }

@@ -95,7 +95,7 @@ public class OptionsDisplayFragment extends Fragment{
 		if(_gmsh == null) return;
 		String[] PViews = _gmsh.getPView();
 		for(int i=0; i<_listView.itemsCountInSection("Result"); i++) {
-			View v = (View)_listView.getItemAtPosition(7+i);
+			View v = (View)_listView.getItemAtPosition(6+i);
 			if(!v.getClass().equals(LinearLayout.class)) continue;
 			for(int j=0; j<((LinearLayout)v).getChildCount(); j++) {
 				View sv = ((LinearLayout)v).getChildAt(j);

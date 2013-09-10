@@ -1,5 +1,6 @@
 package org.geuz.onelab;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import android.app.ActionBar;
@@ -14,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -92,6 +94,8 @@ public class MainActivity extends Activity{
     	}
     	_runStopMenuItem = menu.add((_compute)?R.string.menu_stop:R.string.menu_run);
     	_runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+    	MenuItem shareMenuItem = menu.add("Share ...");
+    	shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return true;
     }
 	@Override
@@ -115,6 +119,16 @@ public class MainActivity extends Activity{
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_stop))){
     		_gmsh.onelabCB("stop");
+    	}
+    	else if(item.getTitle().equals("Share ...")) {
+    		File file = new File(this.getExternalFilesDir(null), "onelab_screenshot.png");
+			file.setReadable(true, false);
+			_modelFragment.takeScreenshot(file);
+			Intent shareIntent = new Intent();
+			shareIntent.setAction(Intent.ACTION_SEND);
+			shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+			shareIntent.setType("image/jpeg");
+			startActivity(Intent.createChooser(shareIntent, "Share screenshot with ..."));
     	}
 		else if(item.getItemId() == android.R.id.home)
 		{

@@ -1,6 +1,7 @@
 package org.geuz.onelab;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.support.v4.view.MotionEventCompat;
 import android.view.GestureDetector;
@@ -124,5 +125,11 @@ class mGLSurfaceView extends GLSurfaceView {
 	public void resetScale(){
 		scaleFactor = 1f;
 		_renderer.scaleModel(scaleFactor);
-	}	
+	}
+	public Bitmap getScreenshot() {
+		_renderer.needScreenshot();
+		this.requestRender();
+		while(_renderer.getScreenshot() == null);
+		return _renderer.getScreenshot();
+	}
 }
