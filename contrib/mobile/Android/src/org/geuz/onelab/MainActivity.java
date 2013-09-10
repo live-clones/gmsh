@@ -1,7 +1,9 @@
 package org.geuz.onelab;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -121,21 +123,36 @@ public class MainActivity extends Activity{
     		_gmsh.onelabCB("stop");
     	}
     	else if(item.getTitle().equals("Share ...")) {
-    		File file = new File(this.getExternalFilesDir(null), "onelab_screenshot.png");
-			file.setReadable(true, false);
-			_modelFragment.takeScreenshot(file);
-			Intent shareIntent = new Intent();
-			shareIntent.setAction(Intent.ACTION_SEND);
-			shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-			shareIntent.setType("image/jpeg");
-			startActivity(Intent.createChooser(shareIntent, "Share screenshot with ..."));
+    		if(this._compute) {
+				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+    			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
+    			.setMessage("The computing have to be finished before you can take a screenshot.")
+    			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				})
+    			.show();
+    		}
+    		else {
+    			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss");
+    			File file = new File(this.getExternalFilesDir(null), "onelab-screenshot-"+dateFormat.format(new Date())+".png");
+    			file.setReadable(true, false);
+    			_modelFragment.takeScreenshot(file);
+    			Intent shareIntent = new Intent();
+    			shareIntent.setAction(Intent.ACTION_SEND);
+    			shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+    			shareIntent.setType("image/jpeg");
+    			startActivity(Intent.createChooser(shareIntent, "Share screenshot with"));
+    		}
     	}
 		else if(item.getItemId() == android.R.id.home)
 		{
 			if(this._compute) {
 				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
-    			.setMessage("The compute have to be finished before you can select an other model.")
+    			.setMessage("The computing have to be finished before you can select an other model.")
     			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 					
 					public void onClick(DialogInterface dialog, int which) {

@@ -54,7 +54,7 @@ public class GLESRender implements Renderer{
 
 	public void onSurfaceChanged(GL10 gl, int width, int height) {
 		mGModel.viewInit(width, height);
-		_width = width + 5;
+		_width = width;
 		_height = height;
 	}
 
