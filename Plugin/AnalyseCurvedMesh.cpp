@@ -23,6 +23,17 @@
 #include "FlGui.h"
 #endif
 
+namespace {
+  double sum(fullVector<double> &v)
+  {
+    double sum = .0;
+    for (int i = 0; i < v.size(); ++i) {
+      sum += v(i);
+    }
+    return sum;
+  }
+}
+
 //#define UNDEF_JAC_TAG -999
 //#define _ANALYSECURVEDMESH_BLAS_
 
@@ -73,15 +84,6 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "BezBreak = [0,JacBreak[ : if all Bezier coefficients are > 'BezBreak', "
     "the element is said to be valid\n\n"
     "Tolerance = R+ , << 1 : tolerance (relatively to J_min and J_max) used during the computation of J_min and J_max";
-}
-
-static double sum(fullVector<double> &v)
-{
-  double sum = .0;
-  for (int i = 0; i < v.size(); ++i) {
-    sum += v(i);
-  }
-  return sum;
 }
 
 // Execution

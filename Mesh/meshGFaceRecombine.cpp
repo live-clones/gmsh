@@ -56,104 +56,107 @@ Rec2DData *Rec2DData::_cur = NULL;
 double **Rec2DVertex::_qualVSnum = NULL;
 double **Rec2DVertex::_gains = NULL;
 
-#ifdef REC2D_DRAW
-static void __draw(double dt = .0)
-{
-  double time = Cpu();
-  Recombine2D::drawStateOrigin();
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-  while (Cpu()-time < dt)
-    FlGui::instance()->check();
-}
+namespace {
 
-static void __drawWait(double time, double dt)
-{
-  Recombine2D::drawStateOrigin();
-  CTX::instance()->mesh.changed = ENT_ALL;
-  drawContext::global()->draw();
-  while (Cpu()-time < dt)
-    FlGui::instance()->check();
-}
+#ifdef REC2D_DRAW
+  void __draw(double dt = .0)
+  {
+    double time = Cpu();
+    Recombine2D::drawStateOrigin();
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+    while (Cpu()-time < dt)
+      FlGui::instance()->check();
+  }
+
+  void __drawWait(double time, double dt)
+  {
+    Recombine2D::drawStateOrigin();
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+    while (Cpu()-time < dt)
+      FlGui::instance()->check();
+  }
 #endif
 
-static bool edgesAreInOrder(Rec2DEdge const*const*const edges, const int numEdges)
-{
-  Rec2DVertex **v, *v0, *v1;
-  v = new Rec2DVertex*[numEdges];
-  v0 = edges[0]->getVertex(0);
-  v1 = edges[0]->getVertex(1);
-  if (edges[1]->getVertex(0) == v0 || edges[1]->getVertex(1) == v0) {
-    v[0] = v0;
-    if (edges[1]->getVertex(0) == v0)
-      v[1] = edges[1]->getVertex(1);
-    else
-      v[1] = edges[1]->getVertex(0);
-  }
-  else if (edges[1]->getVertex(0) == v1 || edges[1]->getVertex(1) == v1) {
-    v[0] = v1;
-    if (edges[1]->getVertex(0) == v1)
-      v[1] = edges[1]->getVertex(1);
-    else
-      v[1] = edges[1]->getVertex(0);
-  }
-  else {
-    Msg::Error("edges not in order (1)");
-    for (int i = 0; i < numEdges; ++i) {
-      edges[i]->print();
+  bool edgesAreInOrder(Rec2DEdge const*const*const edges, const int numEdges)
+  {
+    Rec2DVertex **v, *v0, *v1;
+    v = new Rec2DVertex*[numEdges];
+    v0 = edges[0]->getVertex(0);
+    v1 = edges[0]->getVertex(1);
+    if (edges[1]->getVertex(0) == v0 || edges[1]->getVertex(1) == v0) {
+      v[0] = v0;
+      if (edges[1]->getVertex(0) == v0)
+        v[1] = edges[1]->getVertex(1);
+      else
+        v[1] = edges[1]->getVertex(0);
     }
-    return false;
-  }
-  for (int i = 2; i < numEdges; ++i) {
-    if (edges[i]->getVertex(0) == v[i-1])
-      v[i] = edges[i]->getVertex(1);
-    else if (edges[i]->getVertex(1) == v[i-1])
-      v[i] = edges[i]->getVertex(0);
+    else if (edges[1]->getVertex(0) == v1 || edges[1]->getVertex(1) == v1) {
+      v[0] = v1;
+      if (edges[1]->getVertex(0) == v1)
+        v[1] = edges[1]->getVertex(1);
+      else
+        v[1] = edges[1]->getVertex(0);
+    }
     else {
-      Msg::Error("edges not in order (2)");
+      Msg::Error("edges not in order (1)");
       for (int i = 0; i < numEdges; ++i) {
         edges[i]->print();
       }
       return false;
     }
-  }
-  if ((v[0] == v1 && v[numEdges-1] != v0) ||
-      (v[0] == v0 && v[numEdges-1] != v1)   ) {
-    Msg::Error("edges not in order (3)");
-    for (int i = 0; i < numEdges; ++i) {
-      edges[i]->print();
+    for (int i = 2; i < numEdges; ++i) {
+      if (edges[i]->getVertex(0) == v[i-1])
+        v[i] = edges[i]->getVertex(1);
+      else if (edges[i]->getVertex(1) == v[i-1])
+        v[i] = edges[i]->getVertex(0);
+      else {
+        Msg::Error("edges not in order (2)");
+        for (int i = 0; i < numEdges; ++i) {
+          edges[i]->print();
+        }
+        return false;
+      }
     }
-    return false;
+    if ((v[0] == v1 && v[numEdges-1] != v0) ||
+        (v[0] == v0 && v[numEdges-1] != v1)   ) {
+      Msg::Error("edges not in order (3)");
+      for (int i = 0; i < numEdges; ++i) {
+        edges[i]->print();
+      }
+      return false;
+    }
+     delete v;
+    return true;
   }
-   delete v;
-  return true;
-}
 
-static void __crash()
-{
-  Msg::Info(" ");
-  Recombine2D::drawStateOrigin();
-  int a[2];
-  int e = 0;
-  for (int i = 0; i < 10000000; ++i) e+=a[i];
-  Msg::Info("%d",e);
-}
+  void __crash()
+  {
+    Msg::Info(" ");
+    Recombine2D::drawStateOrigin();
+    int a[2];
+    int e = 0;
+    for (int i = 0; i < 10000000; ++i) e+=a[i];
+    Msg::Info("%d",e);
+  }
 
-//static void __wait(double dt = REC2D_WAIT_TM_3)
-//{
-//#ifdef REC2D_DRAW
-//  Msg::Info(" ");
-//  double time = Cpu();
-//  while (Cpu()-time < dt)
-//    FlGui::instance()->check();
-//#endif
-//}
-//
-static int otherParity(const int a)
-{
-  if (a % 2)
-    return a - 1;
-  return a + 1;
+  //void __wait(double dt = REC2D_WAIT_TM_3)
+  //{
+  //#ifdef REC2D_DRAW
+  //  Msg::Info(" ");
+  //  double time = Cpu();
+  //  while (Cpu()-time < dt)
+  //    FlGui::instance()->check();
+  //#endif
+  //}
+  //
+  int otherParity(const int a)
+  {
+    if (a % 2)
+      return a - 1;
+    return a + 1;
+  }
 }
 
 namespace std // overload of std::swap(..) for Rec2DData::Action class

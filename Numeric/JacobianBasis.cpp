@@ -13,6 +13,15 @@
 #include "BasisFactory.h"
 #include "Numeric.h"
 
+namespace {
+  inline double calcDet3D(double dxdX, double dydX, double dzdX,
+                          double dxdY, double dydY, double dzdY,
+                          double dxdZ, double dydZ, double dzdZ)
+  {
+    return dxdX*dydY*dzdZ + dxdY*dydZ*dzdX + dydX*dzdY*dxdZ
+         - dxdZ*dydY*dzdX - dxdY*dydX*dzdZ - dydZ*dzdY*dxdX;
+  }
+}
 
 JacobianBasis::JacobianBasis(int tag)
 {
@@ -165,14 +174,6 @@ double JacobianBasis::getPrimNormal2D(const fullMatrix<double> &nodesXYZ, fullMa
 
   return norm0;
 
-}
-
-static inline double calcDet3D(double dxdX, double dydX, double dzdX,
-                               double dxdY, double dydY, double dzdY,
-                               double dxdZ, double dydZ, double dzdZ)
-{
-  return dxdX*dydY*dzdZ + dxdY*dydZ*dzdX + dydX*dzdY*dxdZ
-       - dxdZ*dydY*dzdX - dxdY*dydX*dzdZ - dydZ*dzdY*dxdX;
 }
 
 // Returns absolute value of Jacobian of straight volume element at barycenter
