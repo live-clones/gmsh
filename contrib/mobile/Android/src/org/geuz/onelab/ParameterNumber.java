@@ -82,7 +82,8 @@ public class ParameterNumber extends Parameter{
 		if(value == _value) return;
 		_value = value;
 		_changed = true;
-		//if(mListener != null) mListener.OnParameterChanged();
+		_gmsh.setParam(getType(), getName(), String.valueOf(value));
+		if(mListener != null) mListener.OnParameterChanged();
 	}
 	public void setMin(double min) {_min = min;this.update();}
 	public void setMax(double max) {_max = max;this.update();}
@@ -170,8 +171,7 @@ public class ParameterNumber extends Parameter{
 			_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 				public void onNothingSelected(AdapterView<?> arg0) {}
 				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-					_gmsh.setParam(getType(), getName(), String.valueOf(_values.get(pos)));
-					if(mListener != null) mListener.OnParameterChanged();
+					setValue(_values.get(pos));
 				}
 			});
 		}
@@ -180,18 +180,12 @@ public class ParameterNumber extends Parameter{
 			_bar.setEnabled(!_readOnly);
 			_bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 				public void onStopTrackingTouch(SeekBar seekBar) {
-					double value = getMin() + (getMax() - getMin())*seekBar.getProgress()/100;
-					value = (value >= _min)? value : _min;
-					_gmsh.setParam(getType(), getName(), String.valueOf(value));
-					if(mListener != null) mListener.OnParameterChanged();
-					
+					setValue(getMin() + (getMax() - getMin())*seekBar.getProgress()/100);
 				}
 				
 				public void onStartTrackingTouch(SeekBar seekBar) {}
 				
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					
-				}
+				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
 			});
 		}
 		else if(_checkbox != null) {
@@ -201,8 +195,7 @@ public class ParameterNumber extends Parameter{
 			_checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 				
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-					_gmsh.setParam(getType(), getName(), (isChecked)? "1" : "0");
-					if(mListener != null) mListener.OnParameterChanged();
+					setValue((isChecked)? 1 : 0);
 				}
 			});
 		}
@@ -216,8 +209,7 @@ public class ParameterNumber extends Parameter{
 						InputMethodManager imm = (InputMethodManager)_context.getSystemService(
 							      Context.INPUT_METHOD_SERVICE);
 						imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
-						_gmsh.setParam(getType(), getName(), String.valueOf(_value));
-						if(mListener != null) mListener.OnParameterChanged();
+						setValue(_value);
 						_edittext.clearFocus();
 						return true;
 					}
@@ -229,18 +221,15 @@ public class ParameterNumber extends Parameter{
 			_edittext.addTextChangedListener(new TextWatcher() {
 				
 				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					double value = 1;
 					try {
-						if(s.length() < 1) value = 1;
-						else value = Double.parseDouble(s.toString());
+						if(s.length() < 1) _value = 1;
+						else _value = Double.parseDouble(s.toString());
 					}
 					catch(NumberFormatException e)
 					{
-						value = 1;
+						_value = 1;
 						//_edittext.setText("");
 					}
-					_value = value;
-					_changed = true;
 				}
 				
 				public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub

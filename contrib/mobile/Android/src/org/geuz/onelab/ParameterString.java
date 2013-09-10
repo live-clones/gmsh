@@ -48,10 +48,10 @@ public class ParameterString extends Parameter{
 	
 	public void setValue(int index) {
 		if(index == _index) return;
-		if(mListener != null) mListener.OnParameterChanged();
 		_changed = true;
 		_index = index;
-		this.update();
+		_gmsh.setParam(getType(), getName(), _choices.get(_index));
+		if(mListener != null) mListener.OnParameterChanged();
 	}
 	public void setValue(String value) {
 		int index = _choices.indexOf(value);
@@ -60,10 +60,10 @@ public class ParameterString extends Parameter{
 			index = _choices.indexOf(value);
 		}
 		if(index == _index) return;
-		if(mListener != null) mListener.OnParameterChanged();
 		_changed = true;
 		_index = index;
-		this.update();
+		_gmsh.setParam(getType(), getName(), value);
+		if(mListener != null) mListener.OnParameterChanged();
 	}
 	public void setKind(String kind) {_kind = kind;}
 	public void addChoices(String choice) {
@@ -109,11 +109,8 @@ public class ParameterString extends Parameter{
 
 				public void onNothingSelected(AdapterView<?> arg0) {}
 
-				public void onItemSelected(AdapterView<?> parent, View view,
-						int pos, long id) {
-					if(getValue() == getChoices().get(pos)) return;
+				public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
 					setValue(pos);
-					_gmsh.setParam(getType(), getName(), String.valueOf(getValue()));
 				}
 
 			});
@@ -136,10 +133,11 @@ public class ParameterString extends Parameter{
 			});
 			_edittext.addTextChangedListener(new TextWatcher() {
 				
-				public void onTextChanged(CharSequence s, int start, int before, int count) { } // UNUSED Auto-generated method stub
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+					_choices.clear(); _choices.add(s.toString());
+				}
 				
-				public void beforeTextChanged(CharSequence s, int start, int count,
-						int after) {} // UNUSED Auto-generated method stub
+				public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
 				
 				public void afterTextChanged(Editable s) {
 					_gmsh.setParam(getType(), getName(), _choices.get(0));

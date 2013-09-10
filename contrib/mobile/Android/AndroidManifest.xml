@@ -28,12 +28,11 @@
         </activity>
         <activity
             android:name=".ModelList"
-            android:label="@string/title_activity_main">
-        </activity>
+            android:label="@string/title_activity_main" />
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape" >
             <intent-filter>
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
@@ -44,11 +43,12 @@
         </activity>
          <activity
             android:name=".PostProcessingActivity"
-            android:label="@string/title_activity_main">
-        </activity>
+            android:label="@string/title_activity_main"
+            android:screenOrientation="landscape" />
         <activity 
             android:name=".OptionsActivity"
-            android:label="@string/title_activity_options"></activity>
+            android:label="@string/title_activity_options"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>
