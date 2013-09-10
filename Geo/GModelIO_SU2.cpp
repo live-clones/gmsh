@@ -62,13 +62,13 @@ int GModel::writeSU2(const std::string &name, bool saveAll, double scalingFactor
   if(ndime == 2){
     for(fiter it = firstFace(); it != lastFace(); it++)
       if(saveAll || (*it)->physicals.size())
-        for(int i = 0; i < (*it)->getNumMeshElements(); i++)
+        for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
   }
   else{
     for(riter it = firstRegion(); it != lastRegion(); it++)
       if(saveAll || (*it)->physicals.size())
-        for(int i = 0; i < (*it)->getNumMeshElements(); i++)
+        for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
           (*it)->getMeshElement(i)->writeSU2(fp, num++);
   }
 

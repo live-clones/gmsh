@@ -21,6 +21,6 @@ namespace ElementType
 
   // Give element tag from type, order & serendip
   int getTag(int parentTag, int order, bool serendip = false);
-};
+}
 
 #endif

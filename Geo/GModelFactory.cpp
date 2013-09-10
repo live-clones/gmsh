@@ -1141,7 +1141,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
 
         std::vector<int>  EdgeListMaster(NumberOfEdgesInFace1);
         std::vector<int>  EdgeListSlave(NumberOfEdgesInFace2);
-        int i1=0,i2=0;
+        int i1=0;//,i2=0;
 
         // ici il faut imbriquer la seconde boucle pour fournir des edges qui match slave/master
         for (TopExp_Explorer aEdgeExplorer1(aFace1,TopAbs_EDGE); aEdgeExplorer1.More();
@@ -1149,7 +1149,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
           TopoDS_Edge aEdge1 = TopoDS::Edge(aEdgeExplorer1.Current());
           int numEdgeMaster  = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge1);
           EdgeListMaster[i1] = numEdgeMaster;
-          i2=0;
+          //i2=0;
           for (TopExp_Explorer aEdgeExplorer2(aFace2,TopAbs_EDGE); aEdgeExplorer2.More();
                aEdgeExplorer2.Next()) {
             TopoDS_Edge aEdge2 = TopoDS::Edge(aEdgeExplorer2.Current());
