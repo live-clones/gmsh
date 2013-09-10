@@ -343,7 +343,7 @@ int openglWindow::handle(int event)
 
   case FL_PUSH:
     if(Fl::event_clicks() == 1){ // double-click
-      status_options_cb(0, (void*)"quickvis");
+      status_options_cb(0, (void*)"quick_access");
       Fl::event_clicks(-1);
       return 1;
     }

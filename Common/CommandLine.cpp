@@ -209,7 +209,6 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Alt+Shift+b",    "Hide/show mesh volume faces"));
   s.push_back(mp("Alt+Shift+d",    "Hide/show mesh surface faces"));
   s.push_back(mp("Alt+Shift+l",    "Hide/show mesh lines"));
-  s.push_back(mp("Alt+Shift+o",    "Adjust projection parameters"));
   s.push_back(mp("Alt+Shift+p",    "Hide/show mesh points"));
   s.push_back(mp("Alt+Shift+s",    "Hide/show mesh surface edges"));
   s.push_back(mp("Alt+Shift+v",    "Hide/show mesh volume edges"));

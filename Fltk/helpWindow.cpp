@@ -26,36 +26,71 @@ static const char *help_link(Fl_Widget *w, const char *uri)
   return 0;
 }
 
-static void numberOrStringChooser(const std::string &category, int index,
-                                  const std::string &name, bool num)
+struct opt_data{
+  std::string category;
+  int index;
+  std::string name;
+};
+
+static void interactive_cb(Fl_Widget* w, void* data)
+{
+  if(!data) return;
+  Fl_Value_Input *v = (Fl_Value_Input*)w;
+  opt_data *d = (opt_data*)data;
+  double val = v->value();
+  NumberOption(GMSH_SET|GMSH_GUI, d->category.c_str(), d->index,
+               d->name.c_str(), val);
+  drawContext::global()->draw();
+}
+
+double numberOrStringOptionChooser(const std::string &category, int index,
+                                   const std::string &name, bool isNumber,
+                                   bool isInteractive, double minimum,
+                                   double maximum, double step)
 {
   double valn = 0.;
   std::string vals = "";
-  if(num)
+  if(isNumber)
     NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
   else
     StringOption(GMSH_GET, category.c_str(), index, name.c_str(), vals);
-  int width = 3 * BB + 4 * WB, height = 2 * BH + 3 * WB;
+
+  int nn = (isInteractive ? 2 : 3);
+  int width = nn * BB + (nn + 1) * WB, height = 2 * BH + 3 * WB;
   Fl_Window *win = new paletteWindow(width, height, false,
-                                     num ? "Number Chooser" : "String Chooser");
+                                     isNumber ? "Number Chooser" : "String Chooser");
   win->set_modal();
   win->hotspot(win);
+  if(isInteractive) win->clear_border();
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
-  if(num){
+  if(isNumber){
     number = new Fl_Value_Input(WB, WB, width - 2 * WB, BH);
     number->value(valn);
+    if(isInteractive){
+      static opt_data d;
+      d.category = category;
+      d.index = index;
+      d.name = name;
+      number->minimum(minimum);
+      number->maximum(maximum);
+      number->step(step);
+      number->callback(interactive_cb, (void*)&d);
+      number->when(FL_WHEN_RELEASE);
+    }
   }
   else{
     string = new Fl_Input(WB, WB, width - 2 * WB, BH);
     string->value(vals.c_str());
   }
   Fl_Button *ok = new Fl_Return_Button
-    (width - 3 * BB - 3 * WB, 2 * WB + BH, BB, BH, "OK");
+    (width - nn * BB - nn * WB, 2 * WB + BH, BB, BH, "OK");
   Fl_Button *def = new Fl_Button
-    (width - 2 * BB - 2 * WB, 2 * WB + BH, BB, BH, "Default");
-  Fl_Button *cancel = new Fl_Button
-    (width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
+    (width - (nn - 1) * BB - (nn - 1) * WB, 2 * WB + BH, BB, BH, "Default");
+  Fl_Button *cancel = 0;
+  if(!isInteractive)
+    cancel = new Fl_Button
+      (width - BB - WB, 2 * WB + BH, BB, BH, "Cancel");
   win->end();
   win->show();
   if(number) number->take_focus();
@@ -72,7 +107,7 @@ static void numberOrStringChooser(const std::string &category, int index,
         break;
       }
       if(o == ok){
-        if(num){
+        if(isNumber){
           valn = number->value();
           NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index,
                        name.c_str(), valn);
@@ -86,10 +121,11 @@ static void numberOrStringChooser(const std::string &category, int index,
         break;
       }
       if(o == def){
-        if(num){
+        if(isNumber){
           NumberOption(GMSH_GET_DEFAULT, category.c_str(), index,
                        name.c_str(), valn);
           number->value(valn);
+          if(isInteractive) number->do_callback();
         }
         else{
           StringOption(GMSH_GET_DEFAULT, category.c_str(), index,
@@ -101,10 +137,11 @@ static void numberOrStringChooser(const std::string &category, int index,
     }
   }
   delete win;
+  return valn;
 }
 
-static void colorChooser(const std::string &category, int index,
-                         const std::string &name)
+static void colorOptionChooser(const std::string &category, int index,
+                               const std::string &name)
 {
   unsigned int col;
   ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), col);
@@ -130,11 +167,11 @@ static void editOption(const std::string &type, const std::string &cat,
   }
 
   if(type == "number")
-    numberOrStringChooser(category, index, name, true);
+    numberOrStringOptionChooser(category, index, name, true);
   else if(type == "string")
-    numberOrStringChooser(category, index, name, false);
+    numberOrStringOptionChooser(category, index, name, false);
   else if(type == "color")
-    colorChooser(category, index, name);
+    colorOptionChooser(category, index, name);
 }
 
 static void browser_cb(Fl_Widget *w, void *data)

@@ -624,7 +624,16 @@ static void post_options_ok_cb(Fl_Widget *w, void *data)
 
 void view_options_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->options->showGroup((intptr_t)data + 6);
+  int num = (intptr_t)data;
+  if(num < 0){ // automatic
+    int current = FlGui::instance()->options->view.index;
+    if(current >= 0 && current < (int)PView::list.size())
+      num = current;
+    else
+      num = 0;
+  }
+  if(num >= 0 && num < (int)PView::list.size())
+    FlGui::instance()->options->showGroup(num + 6);
 }
 
 static void view_options_timestep_cb(Fl_Widget *w, void *data)

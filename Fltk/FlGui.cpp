@@ -121,17 +121,6 @@ static void gmsh_back(Fl_Color c)
   gmsh_forward(c);
 }
 
-static void gmsh_ortho(Fl_Color c)
-{
-  fl_color(c);
-  bl; vv(-0.8,0.8); vv(0.3,0.8); vv(0.3,-0.3); vv(-0.8,-0.3); el;
-  bl; vv(-0.3,0.3); vv(0.8,0.3); vv(0.8,-0.8); vv(-0.3,-0.8); el;
-  fl_begin_line(); vv(-0.8,0.8); vv(-0.3,0.3); fl_end_line();
-  fl_begin_line(); vv(0.3,0.8); vv(0.8,0.3); fl_end_line();
-  fl_begin_line(); vv(0.3,-0.3); vv(0.8,-0.8); fl_end_line();
-  fl_begin_line(); vv(-0.8,-0.3); vv(-0.3,-0.8); fl_end_line();
-}
-
 static void gmsh_rotate(Fl_Color c)
 {
   fl_color(c);
@@ -146,13 +135,6 @@ static void gmsh_models(Fl_Color c)
   bl; vv(-0.8,-0.2); vv(0.8,-0.2); el;
   bl; vv(-0.8,0.3); vv(0.8,0.3); el;
   bl; vv(-0.8,0.8); vv(0.8,0.8); el;
-}
-
-static void gmsh_clscale(Fl_Color c)
-{
-  fl_color(c);
-  bl; vv(-0.8,0.8); vv(-0.1,0.8); vv(-0.8,0.1); el;
-  bl; vv(-0.2,0.2); vv(0.9,0.2); vv(-0.2,-0.9); el;
 }
 
 static void gmsh_gear(Fl_Color c)
@@ -263,10 +245,8 @@ FlGui::FlGui(int argc, char **argv)
   fl_add_symbol("gmsh_play", gmsh_play, 1);
   fl_add_symbol("gmsh_pause", gmsh_pause, 1);
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
-  fl_add_symbol("gmsh_ortho", gmsh_ortho, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
   fl_add_symbol("gmsh_models", gmsh_models, 1);
-  fl_add_symbol("gmsh_clscale", gmsh_clscale, 1);
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
@@ -541,12 +521,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    if(PView::list.size()){
-      if(options->view.index >= 0 && options->view.index < (int)PView::list.size())
-        options->showGroup(options->view.index + 6);
-      else
-        options->showGroup(6);
-    }
+    view_options_cb(0, (void*)-1);
     status = 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
@@ -611,8 +586,7 @@ int FlGui::testGlobalShortcuts(int event)
     status_xyz1p_cb(0, (void *)"z");
     status = 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'o') ||
-          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'o')) {
+  else if(Fl::test_shortcut(FL_ALT + 'o')) {
     status_options_cb(0, (void *)"p");
     status = 1;
   }
@@ -684,7 +658,7 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'm')) {
-    quick_visibility_cb(0, (void *)"mesh_toggle");
+    quick_access_cb(0, (void *)"mesh_toggle");
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
