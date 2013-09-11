@@ -42,6 +42,7 @@
   #include "meshGFaceOptimize.h"
 #endif
 #include <fstream>
+#include <vector>
 
 
 class Rec2DNode;
@@ -94,8 +95,9 @@ class Recombine2D {
     
     bool _checkIfNotAllQuad; // Check if action implies triangle isolation
     bool _avoidIfNotAllQuad; // Don't apply action if it implies triangle isolation
-    bool _revertIfNotAllQuad; // Be all quad at any price (can it be not unefficient ?)
+    bool _revertIfNotAllQuad; // Be all quad at any price (can it be not totally unefficient ?)
     bool _oneActionHavePriority; // Tracks and prioritises elements with 1 action
+    bool _noProblemIfObsolete; // For recombineSameAsHeuristic
     
     int _weightEdgeBase;
     int _weightEdgeQuad;
@@ -123,6 +125,7 @@ class Recombine2D {
     bool recombine();
     double recombine(int depth);
     void recombineSameAsBlossom(); // just to check blossomQual
+    void recombineSameAsHeuristic();
     //bool developTree();
     static void nextTreeActions(std::vector<Rec2DAction*>&,
                                 const std::vector<Rec2DElement*> &neighbours,
@@ -158,6 +161,7 @@ class Recombine2D {
     static inline bool avoidIfNotAllQuad() {return _cur->_avoidIfNotAllQuad;}
     static inline bool revertIfNotAllQuad() {return _cur->_revertIfNotAllQuad;}
     static inline bool priorityOfOneAction() {return _cur->_oneActionHavePriority;}
+    static inline bool canIsolateTriangle() {return _cur->_noProblemIfObsolete;}
     
     // Get/Set Weights
     static inline int getWeightEdgeBase() {return _cur->_weightEdgeBase;}
@@ -224,8 +228,8 @@ class Rec2DData {
         unsigned int position;
         Action(const Rec2DAction *ra, unsigned int pos)
           : action(ra), position(pos) {
-            static int a = -1;
-            if (++a < 1) Msg::Warning("FIXME: position is supefluous in this case (iterators are sufficient)");
+            static int a = 0;
+            if (++a == 1) Msg::Warning("FIXME: position is supefluous in this case (iterators are sufficient)");
           }
     };
     template<class T> friend void std::swap(T&, T&);
@@ -339,6 +343,7 @@ class Rec2DData {
     static void rmvHasOneAction(const Rec2DElement*);
     static bool hasHasOneAction(const Rec2DElement*);
     static int getNumOneAction();
+    static void getElementsOneAction(std::vector<Rec2DElement*> &vec);
     static Rec2DAction* getOneAction();
     static void getUniqueOneActions(std::vector<Rec2DAction*>&);
     
@@ -392,6 +397,9 @@ class Rec2DData {
     static inline int getNumElement() {return _cur->_elements.size();}
     
     // Miscellaneous
+    static void copyElements(std::vector<Rec2DElement*> &v) {
+      v = _cur->_elements;
+    }
 #ifdef REC2D_RECO_BLOS
     static Rec2DElement* getRElement(MElement*);
 #endif
@@ -1023,6 +1031,96 @@ class Rec2DElement {
 };
 
 //
+
+namespace Rec2DAlgo {
+  class Node;
+
+  void setParam(int horizon, int code);
+  void execute();
+
+  namespace data {
+    extern bool rdo_tree_search, rdo_one_search;
+    extern int _r_std_search;
+    /* 1 : all-search
+     * 2 : qall-search
+     * 3 : qfirst-search
+     * 4 : qlast-search
+     */
+    extern bool _rdo_best;
+
+    extern bool _pdo_tree_search, _pdo_one_search;
+    extern int _p_std_search;
+    /* 1 : all-search
+     * 2 : qall-search
+     * 3 : qfirst-search
+     * 4 : tall-search
+     * 5 : tfirst-search
+     * 6 : tlast-search
+     */
+    extern bool _pdo_best;
+
+    extern int _horizon;
+
+    extern Node *_initial;
+    extern Node *_current;
+
+    extern std::vector<Node*> sequence;
+  }
+
+  namespace func {
+    bool lookAhead(); // false if no lookahead tree
+    void chooseBestSequence();
+
+    // functions search
+    void searchForOne(std::vector<Rec2DElement*>&);
+    void searchForRootStd(std::vector<Rec2DElement*>&);
+    void searchForPlusStd(std::vector<Rec2DElement*>&);
+    void searchForAll(std::vector<Rec2DElement*>&);
+    void searchForQAll(std::vector<Rec2DElement*>&);
+    void searchForQFirst(std::vector<Rec2DElement*>&);
+    void searchForQLast(std::vector<Rec2DElement*>&);
+    void searchForTAll(std::vector<Rec2DElement*>&);
+    void searchForTFirst(std::vector<Rec2DElement*>&);
+    void searchForTLast(std::vector<Rec2DElement*>&);
+
+    Rec2DElement* random(std::vector<Rec2DElement*> &v);
+    Rec2DElement* best(std::vector<Rec2DElement*>&);
+
+    void insertUnique(std::vector<Rec2DElement*> &from,
+                      std::vector<Rec2DElement*> &to);
+  }
+
+  class Node {
+  private :
+    int _quality;
+    Rec2DAction *_ra;
+    Rec2DDataChange *_dataChange;
+    std::vector<Rec2DAction*> *_createdActions;
+    std::vector<Node*> _children;
+
+  public :
+    Node();
+    Node(Rec2DAction*);
+
+    Node* getChild() const {
+      if (_children.size() != 0) {
+        Msg::Error("Do not have only one child");
+        return NULL;
+      }
+      return _children[0];
+    }
+    Rec2DAction* getAction() const {return _ra;}
+    int numChildren() const {return _children.size();}
+    Node* getNodeBestSequence();
+    bool choose(Node*);
+    int getMaxLeafQual() const;
+
+    void branch_root();
+    void branch(int depth);
+    void goAhead(int depth);
+  };
+}
+
 class Rec2DNode {
   private :
     Rec2DNode *_father;
@@ -1110,8 +1208,8 @@ class Rec2DNode {
       _dataChange = Rec2DData::getNewDataChange();
       _ra->apply(_dataChange, _createdActions);
       _dataChange = NULL;
-      static int a = -1;
-      if (++a < 1) Msg::Warning("FIXME pas propre du tout");
+      static int a = 0;
+      if (++a == 1) Msg::Warning("FIXME pas propre du tout");
     }
     inline bool _isNotAllQuad() const {return _notAllQuad;}
 };

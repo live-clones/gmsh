@@ -14,9 +14,10 @@
 #include "MQuadrangle.h"
 #include "PView.h"
 #include "meshGFace.h"
+#include <algorithm>
 
 #define REC2D_WAIT_SELECTED .01
-#define REC2D_WAIT_BEST_SEQ .1
+#define REC2D_WAIT_BEST_SEQ .03
 #define REC2D_WAIT_TM_1 .001
 #define REC2D_WAIT_TM_2 .001
 #define REC2D_WAIT_TM_3 .001
@@ -141,16 +142,16 @@ namespace {
     Msg::Info("%d",e);
   }
 
-  //void __wait(double dt = REC2D_WAIT_TM_3)
-  //{
-  //#ifdef REC2D_DRAW
-  //  Msg::Info(" ");
-  //  double time = Cpu();
-  //  while (Cpu()-time < dt)
-  //    FlGui::instance()->check();
-  //#endif
-  //}
-  //
+  void __wait(double dt = REC2D_WAIT_TM_3)
+  {
+  #ifdef REC2D_DRAW
+    Msg::Info(" ");
+    double time = Cpu();
+    while (Cpu()-time < dt)
+      FlGui::instance()->check();
+  #endif
+  }
+
   int otherParity(const int a)
   {
     if (a % 2)
@@ -179,6 +180,7 @@ Recombine2D::Recombine2D(GFace *gf, bool col)
     _strategy(0), _horizon(0), _qualCriterion(NoCrit),
     _checkIfNotAllQuad(1), _avoidIfNotAllQuad(1),
     _revertIfNotAllQuad(0), _oneActionHavePriority(1),
+    _noProblemIfObsolete(0),
     _weightEdgeBase(2),
     _weightEdgeQuad(1),
     _weightAngleTri(1),
@@ -500,6 +502,54 @@ void Recombine2D::recombineSameAsBlossom() // check if quality ok
     Msg::Info("Not ok :-(...");
 }
 
+void Recombine2D::recombineSameAsHeuristic()
+{
+  double globtime = Cpu();
+  _noProblemIfObsolete = true;
+  recombineHeuristic(_gf, .0, 1.1, elist, t2n);
+  _lastRunTime = Cpu() - globtime;
+  _data->_quad = _gf->quadrangles;
+  Recombine2D::drawStateOrigin();
+  
+  std::map<int, Rec2DElement*> n2rel;
+  std::map<MElement*,int>::iterator it = t2n.begin(); 
+  for (; it != t2n.end(); ++it) {
+    n2rel[it->second] = Rec2DData::getRElement(it->first);
+  }
+  
+  int blosQual = 0;
+  for (int i = 0; i < _cur->elist[0]; ++i) {
+    Rec2DElement *tri1 = n2rel[_cur->elist[3*i+1]];
+    Rec2DElement *tri2 = n2rel[_cur->elist[3*i+2]];
+    blosQual += _cur->elist[3*i+3];
+    Rec2DAction *ra = new Rec2DTwoTri2Quad(tri1, tri2);
+    int realRew = (int) ra->getRealReward();
+    if (realRew > ra->getRealReward()+.3) --realRew;
+    if (realRew < ra->getRealReward()-.3) ++realRew;
+    if ((int) ra->getRealReward()+_cur->elist[3*i+3] != 100)
+      Msg::Info("%d(%d-%g) - %d (%d, %d) => blosQual %d",
+                    (int) ra->getRealReward(),
+                    realRew,
+                    ra->getRealReward(),
+                    _cur->elist[3*i+3],
+                    _cur->elist[3*i+2],
+                    _cur->elist[3*i+1],
+                    blosQual);
+    Rec2DDataChange *dc = Rec2DData::getNewDataChange();
+    std::vector<Rec2DAction*> *v = NULL;
+    ra->apply(dc, v);
+    drawStateOrigin();
+  }
+  
+  _noProblemIfObsolete = false;
+  Msg::Info("Recombine2D Blossom Quality %d => %d", Rec2DData::getBlosQual(), 100*_cur->elist[0]-Rec2DData::getBlosQual());
+  Msg::Info("vs Heuristic Blossom Quality %d", blosQual);
+  if (blosQual == 100*_cur->elist[0]-Rec2DData::getBlosQual())
+    Msg::Info("It is ok :-)");
+  else
+    Msg::Info("Not ok :-(...");
+}
+
 //bool Recombine2D::developTree()
 //{
 //  Rec2DNode root(NULL, NULL);
@@ -755,6 +805,8 @@ void Recombine2D::compareWithBlossom()
   recombineWithBlossom(_gf, .0, 1.1, elist, t2n);
   _data->_quad = _gf->quadrangles;
   Recombine2D::drawStateOrigin();
+  __wait(3);
+  drawState(.0,-1.1);
   setStrategy(3);
   int num = 2;
   double dx = .0, dy = .0, time = Cpu();
@@ -1220,6 +1272,15 @@ Rec2DAction* Rec2DData::getOneAction()
   if (_cur->_elementWithOneAction.size())
     return (*_cur->_elementWithOneAction.begin())->getAction(0);
   return NULL;
+}
+
+void Rec2DData::getElementsOneAction(std::vector<Rec2DElement*> &vec)
+{
+  vec.clear();
+  std::set<Rec2DElement*>::iterator it = _cur->_elementWithOneAction.begin();
+  while (it != _cur->_elementWithOneAction.end()) {
+    vec.push_back(*it);
+  }
 }
 
 void Rec2DData::getUniqueOneActions(std::vector<Rec2DAction*> &vec)
@@ -2390,7 +2451,7 @@ void Rec2DTwoTri2Quad::apply(Rec2DDataChange *rdc,
                              bool color) const
 {
   //I(( "applying Recombine |%d|%d|", _triangles[0]->getNum(), _triangles[1]->getNum() ));
-  if (isObsolete()) {
+  if (isObsolete() && !Recombine2D::canIsolateTriangle()) {
     printIdentity();
     int p[4];
     p[0] = _vertices[0]->getParity();
@@ -4811,6 +4872,475 @@ MQuadrangle* Rec2DElement::_createQuad() const
   return new MQuadrangle(v1, v2, v3, v4);
 }
 
+/**  Rec2DAlgo  **/
+/*****************/
+namespace Rec2DAlgo {
+void execute()
+{
+  using namespace data;
+
+  if (_initial || _current) {
+    Msg::Error("[Rec2DAlgo] Already have a sequence, cannot execute");
+    return;
+  }
+  _initial = new Node();
+  _current = _initial;
+
+  while (func::lookAhead()) {
+    func::chooseBestSequence();
+  }
+}
+
+void setParam(int horizon, int code)
+{
+  using namespace data;
+
+  char code_root = static_cast<char>(code);
+  char code_tree = static_cast<char>(code >> 8);
+
+  Msg::Info("%d -> %d & %d", code, code_root, code_tree);
+  /*IT IS SHIT !
+  int nr = 0; //3
+  int np = 0; //2
+  int n = nr * 8;
+  _horizon = horizon;
+  _r_std_search     = code % n % nr;
+  _rdo_best         = code % n / nr % 2;
+  _rdo_one_search   = code % n / nr / 2 % 2;
+  _rdo_tree_search  = code % n / nr / 4 % 2;
+  _p_std_search     = code / n % np;
+  _pdo_best         = code / n / np % 2;
+  _pdo_one_search   = code / n / np / 2 % 2;
+  _pdo_tree_search  = code / n / np / 4 % 2;*/
+
+  /*rand / / : 0,1,2
+   *best / / : 3,4,5
+   *rand v / : 6,7,8
+   *best v / : 9,10,11
+   *rand / v : 12,13,14
+   *best / v : 15,16,17
+   *rand v v : 18,19,20
+   *best v v : 21,22,23
+   *
+   *rand / / : 0->23 , 24->47
+   *best / / : 48->71 , 72->95
+   *rand v / : ..
+   *best v / : ..
+   *rand / v : ..
+   *best / v : ..
+   *rand v v : ..
+   *best v v : ..
+   */
+}
+
+namespace data {
+  bool rdo_tree_search = false;
+  bool rdo_one_search = false;
+  int _r_std_search = 0;
+  bool _rdo_best = false;
+  bool _pdo_tree_search = false;
+  bool _pdo_one_search = false;
+  int _p_std_search = 0;
+  bool _pdo_best = false;
+  int _horizon = 0;
+  Node *_current = NULL;
+  Node *_initial = NULL;
+  std::vector<Node*> sequence;
+}
+
+namespace func {
+  using namespace data;
+
+  bool lookAhead()
+  {
+    _current->goAhead(0);
+    return _current->numChildren();
+  }
+
+  void chooseBestSequence()
+  {
+    Node *next = _current->getNodeBestSequence();
+    if (_current->choose(next))
+      _current = next;
+    else
+      Msg::Fatal("Wrong child node in lookahead tree");
+  }
+
+  Rec2DElement* best(std::vector<Rec2DElement*> &available)
+  {
+    std::vector<Rec2DAction*> actions;
+    for (unsigned int i = 0; i < available.size(); ++i)
+      available[i]->getMoreUniqueActions(actions);
+
+    std::vector<Rec2DElement*> candidate;
+    (*std::max_element(actions.begin(), actions.end(), lessRec2DAction()))
+        ->getElements(candidate);
+
+    std::vector<Rec2DElement*> unionBest;
+    for (unsigned int i = 0; i < candidate.size(); ++i) {
+      for (unsigned int j = 0; j < available.size(); ++j) {
+        if (candidate[i] == available[j]) {
+          unionBest.push_back(candidate[i]);
+        }
+      }
+    }
+    return unionBest[rand() % unionBest.size()];
+  }
+
+  Rec2DElement* random(std::vector<Rec2DElement*> &v)
+  {
+    return v[rand() % v.size()];
+  }
+
+  void searchForOne(std::vector<Rec2DElement*> &triangles)
+  {
+    Rec2DData::getElementsOneAction(triangles);
+  }
+
+  void searchForRootStd(std::vector<Rec2DElement*> &triangles)
+  {
+    switch (_r_std_search) {
+    case 1:
+      searchForAll(triangles);
+      break;
+    case 2:
+      searchForQAll(triangles);
+      break;
+    case 3:
+      searchForQFirst(triangles);
+      break;
+    case 4:
+      searchForQLast(triangles);
+      break;
+    default:
+      Msg::Error("Wrong root standard search");
+    }
+  }
+
+  void searchForPlusStd(std::vector<Rec2DElement*> &triangles)
+  {
+    switch (_p_std_search) {
+    case 1:
+      searchForAll(triangles);
+      break;
+    case 2:
+      searchForQAll(triangles);
+      break;
+    case 3:
+      searchForQFirst(triangles);
+      break;
+    case 4:
+      searchForTAll(triangles);
+      break;
+    case 5:
+      searchForTFirst(triangles);
+      break;
+    case 6:
+      searchForTLast(triangles);
+      break;
+    default:
+      Msg::Error("Wrong plus standard search");
+    }
+  }
+
+  void searchForAll(std::vector<Rec2DElement*> &triangles)
+  {
+    Rec2DData::copyElements(triangles);
+  }
+
+  void searchForQAll(std::vector<Rec2DElement*> &triangles) {
+    searchForTAll(triangles);
+    Node *n = data::_initial;
+    while (n != data::_current) {
+      n = n->getChild();
+      std::vector<Rec2DElement*> elem;
+      n->getAction()->getNeighbElemWithActions(elem);
+      insertUnique(elem, triangles);
+    }
+  }
+
+  void searchForQFirst(std::vector<Rec2DElement*> &triangles) {
+    triangles.clear();
+    Node *n = data::_initial;
+    while (triangles.empty() && n != data::_current) {
+      n = n->getChild();
+      std::vector<Rec2DElement*> elem;
+      n->getAction()->getNeighbElemWithActions(triangles);
+    }
+    if (triangles.empty()) searchForTFirst(triangles);
+  }
+
+  void searchForQLast(std::vector<Rec2DElement*> &triangles) {
+    _current->getAction()->getNeighbElemWithActions(triangles);
+  }
+
+  void searchForTAll(std::vector<Rec2DElement*> &triangles) {
+    triangles.clear();
+    for (unsigned int i = 1; i < data::sequence.size(); ++i) {
+      std::vector<Rec2DElement*> elem;
+      data::sequence[i]->getAction()->getNeighbElemWithActions(elem);
+      insertUnique(elem, triangles);
+    }
+  }
+
+  void searchForTFirst(std::vector<Rec2DElement*> &triangles) {
+    triangles.clear();
+    int i = 1;
+    while (triangles.empty() && i < data::sequence.size()) {
+      data::sequence[i]->getAction()->getNeighbElemWithActions(triangles);
+    }
+  }
+
+  void searchForTLast(std::vector<Rec2DElement*> &triangles) {
+    data::sequence.back()->getAction()->getNeighbElemWithActions(triangles);
+  }
+
+  void insertUnique(std::vector<Rec2DElement*> &from,
+                    std::vector<Rec2DElement*> &to) {
+    for (unsigned int i = 0; i < from.size(); ++i) {
+      unsigned int j = 0;
+      while (j < to.size() && from[i] != to[j]) ++j;
+      if (j == to.size()) {
+        to.push_back(from[i]);
+      }
+    }
+  }
+}
+
+Node* Node::getNodeBestSequence()
+{
+  // return NULL if no children;
+  Node *bestNode = NULL;
+  int maxLeafQual = 0; // /!\ ok if quality criterion is >= 0
+
+  for (unsigned int i = 0; i < _children.size(); ++i) {
+    int qual = _children[i]->getMaxLeafQual();
+    if (qual > maxLeafQual) {
+      bestNode = _children[i];
+      maxLeafQual = qual;
+    }
+  }
+  return bestNode;
+}
+
+int Node::getMaxLeafQual() const
+{
+  if (_children.empty()) return _quality;
+
+  int maxLeafQual = 0; // /!\ ok if quality criterion is >= 0
+  for (unsigned int i = 0; i < _children.size(); ++i) {
+    maxLeafQual = std::max(maxLeafQual, _children[i]->getMaxLeafQual());
+  }
+  return 1;
+}
+
+bool Node::choose(Node *node)
+{
+  if (!node) return false;
+
+  for (unsigned int i = 0; i < _children.size(); ++i) {
+    if (_children[i] == node) {
+      _children[i] = NULL;
+      for (unsigned int j = 0; j < _children.size(); ++j) {
+        delete _children[j]; // sufficient ?
+      }
+      _children.clear();
+      _children.push_back(node);
+      return true;
+    }
+  }
+  return false;
+}
+
+Node::Node() : _ra(NULL), _dataChange(NULL), _createdActions(NULL)
+{
+  _quality = Rec2DData::getGlobalQuality();
+}
+
+Node::Node(Rec2DAction *action) : _ra(action), _dataChange(NULL),
+                                  _createdActions(NULL)
+{
+  _quality = Rec2DData::getGlobalQuality() + _ra->getRealReward();
+}
+
+void Node::goAhead(int depth)
+{
+  if (depth > data::_horizon - 1 || depth < 0) {
+    Msg::Fatal("the fuck..");
+  }
+
+  if (depth == 0) {
+    branch_root();
+    return;
+  }
+  // else
+  // 1) Make changes
+  // 2) branch on children
+  // 3) revert changes
+
+  _dataChange = Rec2DData::getNewDataChange();
+  _ra->apply(_dataChange, _createdActions);
+  if (_createdActions) {
+    for (unsigned int i = 0; i < _createdActions->size(); ++i)
+      (*_createdActions)[i]->addPointing();
+  }
+
+  branch(depth);
+
+  if (!Rec2DData::revertDataChange(_dataChange))
+    Msg::Error("Unreverted changes");
+  else
+    Recombine2D::incNumChange();
+  _dataChange = NULL;
+}
+
+void Node::branch_root()
+{
+  using namespace data;
+  using namespace func;
+  sequence.push_back(this);
+
+  // 1) search a set of triangles
+  int searchType = 0;
+  std::vector<Rec2DElement*> candidateTriangle;
+
+  while (candidateTriangle.empty()) {
+    switch (searchType) {
+    case 0:
+      if (rdo_tree_search) {
+        for (unsigned int i = 0; i < _children.size(); ++i)
+          _children[i]->goAhead(1);
+      }
+      else {
+        for (unsigned int i = 0; i < _children.size(); ++i)
+          delete _children[i]; //is it sufficient ?
+        _children.clear();
+      }
+
+    case 1:
+      if (rdo_one_search)
+        searchForOne(candidateTriangle);
+      break;
+
+    case 2:
+      searchForRootStd(candidateTriangle);
+      break;
+
+    case 3:
+      searchForAll(candidateTriangle);
+      break;
+
+    case 4:
+      Msg::Error("Think I should not be here");
+      // because searchForAll() fails only at the end
+      // and I think branch_root() is not called at the end
+      return;
+
+    default:
+      Msg::Fatal("No reason to be here");
+    }
+  }
+
+  // 2) take actions of the best or a random
+  Rec2DElement *rt;
+  if (_rdo_best)
+    rt = best(candidateTriangle);
+  else
+    rt = random(candidateTriangle);
+  std::vector<Rec2DAction*> actions;
+  rt->getActions(actions);
+
+  // 3) branch on the actions
+  for (unsigned int i = 0; i < actions.size(); ++i)
+    _children.push_back(new Node(actions[i]));
+
+  if (1 < _horizon) {
+    for (unsigned int i = 0; i < _children.size(); ++i)
+      _children[i]->goAhead(1);
+  }
+
+  if (sequence.back() != this)
+    Msg::Fatal("Aaargh");
+  sequence.pop_back();
+}
+
+void Node::branch(int depth)
+{
+  if (depth > data::_horizon || depth < 1) {
+    if (depth == 0) {
+      Msg::Error("branch() cannot be called for root, use branch_root()");
+      return;
+    }
+    Msg::Fatal("the fuck !");
+  }
+  using namespace data;
+  using namespace func;
+  sequence.push_back(this);
+
+  // 1) search a set of triangles
+  int searchType = 0;
+  std::vector<Rec2DElement*> candidateTriangle;
+
+  while (candidateTriangle.empty()) {
+    switch (searchType) {
+    case 0:
+      if (_pdo_tree_search) {
+        if (_children.size()) {
+          for (unsigned int i = 0; i < _children.size(); ++i)
+            _children[i]->goAhead(depth + 1);
+        }
+        else return;
+      }
+      else {
+        for (unsigned int i = 0; i < _children.size(); ++i)
+          delete _children[i]; //is it sufficient ?
+        _children.clear();
+      }
+
+    case 1:
+      if (_pdo_one_search)
+        searchForOne(candidateTriangle);
+      break;
+
+    case 2:
+      searchForPlusStd(candidateTriangle);
+      break;
+
+    case 3:
+      searchForAll(candidateTriangle);
+      break;
+
+    case 4:
+      return;
+
+    default:
+      Msg::Fatal("No reason to be here");
+    }
+  }
+
+  // 2) take actions of the best or a random
+  Rec2DElement *rt;
+  if (_pdo_best)
+    rt = best(candidateTriangle);
+  else
+    rt = random(candidateTriangle);
+  std::vector<Rec2DAction*> actions;
+  rt->getActions(actions);
+
+  // 3) branch on the actions
+  for (unsigned int i = 0; i < actions.size(); ++i)
+    _children.push_back(new Node(actions[i]));
+
+  if (depth + 1 < _horizon) {
+    for (unsigned int i = 0; i < _children.size(); ++i)
+      _children[i]->goAhead(depth + 1);
+  }
+
+  if (sequence.back() != this)
+    Msg::Fatal("Aaargh");
+  sequence.pop_back();
+}
+}
 
 /**  Rec2DNode  **/
 /*****************/
@@ -5065,7 +5595,7 @@ void Rec2DNode::printIdentity() const
 
 void Rec2DNode::printSequence() const
 {
-  static int denom = 3;
+  static int denom = 5;
   //_ra->color(183+72*(double)(_depth+2)/denom, 255*(1-(double)(_depth+2)/denom), 169*(1-(double)(_depth+2)/denom));
   _ra->color(255, 255*(1-(double)_depth/denom), 128*(1-(double)_depth/denom));
   if (_son[0]) _son[0]->printSequence();
@@ -5118,10 +5648,11 @@ void Rec2DNode::_makeDevelopments(int depth)
     _notAllQuad = true;
     if (!Recombine2D::revertIfNotAllQuad()) {
       // If not all quad, I can't tell which son is the best...
-      Rec2DNode *tmpNode = _son[i];
-      _son[i] = _son[k2];
+      Msg::Warning("I'm crazy and I don't know what I am doing Oo");
+      Rec2DNode *tmpNode = _son[0];
+      _son[0] = _son[k2];
       _son[k2] = tmpNode;
-      _bestSeqReward = _son[i]->_getBestSequenceReward();
+      _bestSeqReward = _son[0]->_getBestSequenceReward();
       ++k2;
     }
   }
