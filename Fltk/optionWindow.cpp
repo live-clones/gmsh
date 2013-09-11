@@ -3563,7 +3563,7 @@ void optionWindow::resetExternalViewList()
     view.choice[10]->add(str, 0, NULL);
     view.choice[11]->add(str, 0, NULL);
   }
-  if(view.index >= 0 && view.index < PView::list.size()){
+  if(view.index >= 0 && view.index < (int)PView::list.size()){
     opt_view_external_view(view.index, GMSH_GUI, 0);
     opt_view_gen_raise_view(view.index, GMSH_GUI, 0);
   }

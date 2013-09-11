@@ -2277,7 +2277,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
     drawContext::global()->draw();
-    double val;
+    double val = 0.;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
@@ -2299,7 +2299,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
     drawContext::global()->draw();
-    double val;
+    double val = 0.;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
@@ -2331,7 +2331,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 5);
     drawContext::global()->draw();
-    double val;
+    double val = 0.;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         double maxval = std::max(fabs(opt_view_min(i, GMSH_GET, 0)),
