@@ -4893,44 +4893,41 @@ void execute()
 
 void setParam(int horizon, int code)
 {
+  data::horizon = horizon;
+
   using namespace data;
 
-  char code_root = static_cast<char>(code);
-  char code_tree = static_cast<char>(code >> 8);
+  unsigned char code_root = static_cast<unsigned char>(code);
+  unsigned char code_tree = static_cast<unsigned char>(code >> 8);
 
-  Msg::Info("%d -> %d & %d", code, code_root, code_tree);
-  /*IT IS SHIT !
-  int nr = 0; //3
-  int np = 0; //2
-  int n = nr * 8;
-  _horizon = horizon;
-  _r_std_search     = code % n % nr;
-  _rdo_best         = code % n / nr % 2;
-  _rdo_one_search   = code % n / nr / 2 % 2;
-  _rdo_tree_search  = code % n / nr / 4 % 2;
-  _p_std_search     = code / n % np;
-  _pdo_best         = code / n / np % 2;
-  _pdo_one_search   = code / n / np / 2 % 2;
-  _pdo_tree_search  = code / n / np / 4 % 2;*/
+  root_tree_srch = code_root        % 2;
+  root_one_srch =  (code_root >> 1) % 2;
+  root_take_best = (code_root >> 2) % 2;
+  root_std_srch =  code_root >> 3;
+  plus_tree_srch = code_tree        % 2;
+  plus_one_srch =  (code_tree >> 1) % 2;
+  plus_take_best = (code_tree >> 2) % 2;
+  plus_std_srch =  code_tree>>3;
 
-  /*rand / / : 0,1,2
-   *best / / : 3,4,5
-   *rand v / : 6,7,8
-   *best v / : 9,10,11
-   *rand / v : 12,13,14
-   *best / v : 15,16,17
-   *rand v v : 18,19,20
-   *best v v : 21,22,23
-   *
-   *rand / / : 0->23 , 24->47
-   *best / / : 48->71 , 72->95
-   *rand v / : ..
-   *best v / : ..
-   *rand / v : ..
-   *best / v : ..
-   *rand v v : ..
-   *best v v : ..
-   */
+  if (root_std_srch > 4 || root_std_srch < 1) {
+    Msg::Error("Wrong root standard search, reverting to 1");
+    root_std_srch = 1;
+  }
+
+  if (plus_std_srch > 6 || plus_std_srch < 1) {
+    Msg::Error("Wrong plus standard search, reverting to 1");
+    plus_std_srch = 1;
+  }
+
+  Msg::Info("%d -> %d & %d => %d %d %d %d / %d %d %d %d", code, code_root, code_tree,
+                                              root_tree_srch,
+                                              root_one_srch,
+                                              root_take_best,
+                                              root_std_srch,
+                                              plus_tree_srch,
+                                              plus_one_srch,
+                                              plus_take_best,
+                                              plus_std_srch);
 }
 
 namespace data {
