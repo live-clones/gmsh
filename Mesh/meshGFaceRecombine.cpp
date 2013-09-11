@@ -4934,14 +4934,14 @@ void setParam(int horizon, int code)
 }
 
 namespace data {
-  bool rdo_tree_search = false;
+  bool root_tree_srch = false;
   bool root_one_srch = false;
+  bool root_take_best = false;
   int root_std_srch = 0;
-  bool _rdo_best = false;
   bool plus_tree_srch = false;
   bool plus_one_srch = false;
-  int plus_std_srch = 0;
   bool plus_take_best = false;
+  int plus_std_srch = 0;
   int horizon = 0;
   Node *current = NULL;
   Node *initial = NULL;
@@ -5207,7 +5207,7 @@ void Node::branch_root()
   while (candidateTriangle.empty()) {
     switch (searchType) {
     case 0:
-      if (rdo_tree_search) {
+      if (root_tree_srch) {
         for (unsigned int i = 0; i < _children.size(); ++i)
           _children[i]->goAhead(1);
       }
@@ -5243,7 +5243,7 @@ void Node::branch_root()
 
   // 2) take actions of the best or a random
   Rec2DElement *rt;
-  if (_rdo_best)
+  if (root_take_best)
     rt = best(candidateTriangle);
   else
     rt = random(candidateTriangle);
