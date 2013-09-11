@@ -137,7 +137,13 @@ double numberOrStringOptionChooser(const std::string &category, int index,
     }
   }
   delete win;
-  return valn;
+
+  if(isNumber){
+    NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), valn);
+    return valn;
+  }
+  else
+    return 0.;
 }
 
 static void colorOptionChooser(const std::string &category, int index,

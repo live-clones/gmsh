@@ -2273,6 +2273,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
         opt_view_normal_raise(i, GMSH_SET|GMSH_GUI, val);
   }
   else if(what == "view_iso"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
+    drawContext::global()->draw();
     double val;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
@@ -2282,10 +2286,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
       }
     }
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)){
+      if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 1);
-      }
   }
   else if(what == "view_continous"){
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -2293,6 +2295,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
         opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 2);
   }
   else if(what == "view_filled"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
+    drawContext::global()->draw();
     double val;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
@@ -2302,10 +2308,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
       }
     }
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)){
+      if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_nb_iso(i, GMSH_SET|GMSH_GUI, val);
-        opt_view_intervals_type(i, GMSH_SET|GMSH_GUI, 3);
-      }
   }
   else if(what == "view_numeric"){
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -2323,6 +2327,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
         opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 4);
   }
   else if(what == "view_displacement"){
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 5);
+    drawContext::global()->draw();
     double val;
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
@@ -2336,10 +2344,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
       }
     }
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0)){
+      if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_displacement_factor(i, GMSH_SET|GMSH_GUI, val);
-        opt_view_vector_type(i, GMSH_SET|GMSH_GUI, 5);
-      }
   }
   else if(what == "view_range_default"){
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -2819,7 +2825,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   x += sw;
   _butt[8] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "O");
   _butt[8]->callback(status_options_cb, (void *)"quick_access");
-  _butt[8]->tooltip("Quick option access (also available by double-clicking anywhere "
+  _butt[8]->tooltip("Open quick access menu (also available by double-clicking "
                      "in the graphic window)");
   x += sw;
   _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
