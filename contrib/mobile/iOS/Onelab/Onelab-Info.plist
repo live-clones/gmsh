@@ -40,14 +40,10 @@
 			<array>
 				<string>onelab</string>
 			</array>
-			<key>NSDocumentClass</key>
-			<string>Document</string>
+            <key>CFBundleTypeName</key>
+            <string>Onelab package</string>
 			<key>LSTypeIsPackage</key>
-			<true/>
-			<key>CFBundleTypeName</key>
-			<string>Onelab</string>
-			<key>LSHandlerRank</key>
-			<string>None</string>
+            <true/>
 		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key>

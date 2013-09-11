@@ -74,6 +74,7 @@
 	[self.navigationController setToolbarHidden:YES animated:YES];
 	if(self.initialModel != nil){
 		[self.glView load:self.initialModel];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
 		//[self.initialModel release];
 		self.initialModel = nil;
 		[_loadingAlert dismissWithClickedButtonIndex:-1 animated:YES];
@@ -156,7 +157,7 @@
 {
 	onelab_cb("stop");
 }
-- (IBAction)pinch:(UIPinchGestureRecognizer *)sender
+-(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
     if([sender numberOfTouches] > 2) return;
     float mScale = scaleFactor;

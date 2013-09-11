@@ -101,6 +101,12 @@
 	[self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
 	[self.tableView endUpdates];
 }
+- (void)removeParemeterNumber:(onelab::number)p atIndex:(NSIndexPath*)index
+{
+	[self.tableView beginUpdates];
+	[self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationAutomatic];
+	[self.tableView endUpdates];
+}
 - (void)addSection:(NSMutableArray*)s withTitle:(NSString*)t withParameterNumber:(onelab::number)p
 {
 	[_sections addObject:s];
@@ -137,7 +143,10 @@
 				for(int iparameter = 0; iparameter<[section count]; iparameter++) {
 					if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
 						Parameter * p = [section objectAtIndex: iparameter];
-						[p refresh]; // just refresh the parameter
+						if(number[i].getVisible())
+							[p refresh]; // just refresh the parameter
+						else
+							[self removeParemeterNumber:number[i] atIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
                         found = true;
                         break;
 					}

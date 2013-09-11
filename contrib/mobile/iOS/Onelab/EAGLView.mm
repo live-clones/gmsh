@@ -33,10 +33,10 @@
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         eaglLayer.opaque = YES;
         eaglLayer.drawableProperties =
-        [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
-         kEAGLDrawablePropertyRetainedBacking,
-         kEAGLColorFormatRGBA8,
-         kEAGLDrawablePropertyColorFormat, nil];
+			[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
+			 kEAGLDrawablePropertyRetainedBacking,
+			 kEAGLColorFormatRGBA8,
+			 kEAGLDrawablePropertyColorFormat, nil];
         context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
         if (!context || ![EAGLContext setCurrentContext:context]) {
             //[self release];
