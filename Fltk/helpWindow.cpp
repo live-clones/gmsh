@@ -45,6 +45,7 @@ static void interactive_cb(Fl_Widget* w, void* data)
 
 double numberOrStringOptionChooser(const std::string &category, int index,
                                    const std::string &name, bool isNumber,
+                                   const std::string &title,
                                    bool isInteractive, double minimum,
                                    double maximum, double step)
 {
@@ -57,11 +58,11 @@ double numberOrStringOptionChooser(const std::string &category, int index,
 
   int nn = (isInteractive ? 2 : 3);
   int width = nn * BB + (nn + 1) * WB, height = 2 * BH + 3 * WB;
-  Fl_Window *win = new paletteWindow(width, height, false,
-                                     isNumber ? "Number Chooser" : "String Chooser");
+  std::string t = title;
+  if(t.empty()) t = (isNumber ? "Number Chooser" : "String Chooser");
+  Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
   win->set_modal();
   win->hotspot(win);
-  if(isInteractive) win->clear_border();
   Fl_Value_Input *number = 0;
   Fl_Input *string = 0;
   if(isNumber){

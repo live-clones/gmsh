@@ -2210,7 +2210,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 0);
     drawContext::global()->draw();
     numberOrStringOptionChooser("General", 0, "ClipFactor",
-                                true, true, 0.1, 20., 0.1);
+                                true, "Factor", true, 0.1, 20., 0.1);
   }
   else if(what == "geometry_points")
     opt_geometry_points(0, GMSH_SET|GMSH_GUI,
@@ -2244,7 +2244,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
                            !opt_mesh_volumes_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "CharacteristicLengthFactor",
-                                true, true, 0.01, 100, 0.01);
+                                true, "Size Factor", true, 0.01, 100, 0.01);
   else if(what == "view_element_outlines"){
     int set = 0;
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -2264,7 +2264,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
         if(!maxval) maxval = 1.;
         double val2 = 2. * CTX::instance()->lc / maxval;
         val = numberOrStringOptionChooser("View", i, "NormalRaise",
-                                          true, true, -val2, val2, val2 / 200.);
+                                          true, "Raise", true, -val2, val2, val2 / 200.);
         break;
       }
     }
@@ -2281,7 +2281,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
-                                          true, true, 1, 100, 1);
+                                          true, "Intervals", true, 1, 100, 1);
         break;
       }
     }
@@ -2303,7 +2303,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(opt_view_visible(i, GMSH_GET, 0)){
         val = numberOrStringOptionChooser("View", i, "NbIso",
-                                          true, true, 1, 100, 1);
+                                          true, "Intervals", true, 1, 100, 1);
         break;
       }
     }
@@ -2339,7 +2339,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
         if(!maxval) maxval = 1.;
         double val3 = 2. * CTX::instance()->lc / maxval;
         val = numberOrStringOptionChooser("View", i, "DisplacementFactor",
-                                          true, true, 0, val3, val3 / 100.);
+                                          true, "Factor", true, 0, val3, val3 / 100.);
         break;
       }
     }
