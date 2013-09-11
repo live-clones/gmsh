@@ -15,10 +15,12 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Xml;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,17 +50,6 @@ public class ModelList extends Activity {
 		LinearLayout layout = new LinearLayout(this);
     	layout.setOrientation(LinearLayout.VERTICAL);
     	ListView list = new ListView(this);
-    	Button loadSD = new Button(this);
-    	loadSD.setText(R.string.button_open_external_file);
-    	loadSD.setLayoutParams(new ListView.LayoutParams(LayoutParams.MATCH_PARENT, ListView.LayoutParams.WRAP_CONTENT));
-    	loadSD.setOnClickListener(new View.OnClickListener() {
-			
-			public void onClick(View v) {
-				@SuppressWarnings("unused")
-				SDFileChooser f = new SDFileChooser();
-			}
-		});
-    	//TODO list.addFooterView(loadSD);
     	list.setAdapter(_modelArrayAdapter);
     	list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -125,10 +116,31 @@ public class ModelList extends Activity {
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		if(item.getTitle().equals(getString(R.string.button_open_external_file))) {
-			Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.fromFile(this.getFilesDir()));
-			startActivity(browserIntent);
+			Intent fileBrowserIntent = new Intent();
+			fileBrowserIntent.setAction(Intent.ACTION_GET_CONTENT);
+			fileBrowserIntent.setType("file/*");
+			startActivityForResult(fileBrowserIntent, 1);
 		}
 		return super.onMenuItemSelected(featureId, item);
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+		case 1:
+			Uri uri = data.getData();
+			String[] projection = { MediaStore.Images.Media.DATA };
+	        Cursor cursor = managedQuery(uri, projection, null, null, null);
+	        int column_index = cursor
+	                .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+	        cursor.moveToFirst();
+			Intent intent = new Intent(ModelList.this, MainActivity.class);
+			intent.putExtra("file", cursor.getString(column_index));
+			intent.putExtra("name", "None");
+			startActivity(intent);
+			break;
+		}
 	}
 	
 	private void getModels() throws XmlPullParserException, IOException
@@ -228,117 +240,4 @@ public class ModelList extends Activity {
 	        }
 	    }
 	 }
-	
-
-    private class SDFileChooser{
-    	File curentPath;
-    	FileDialog dialog;
-    	
-    	public SDFileChooser() {
-    		String state = Environment.getExternalStorageState();
-    		if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-    			curentPath = Environment.getExternalStorageDirectory();
-
-    			showList(getFile(curentPath));
-    		}
-    		else
-    			showMessage(R.string.error_nosdcard);
-    	}
-    	
-    	public void setPath(String newPath) {
-    		curentPath = new File(newPath);
-    		showList(getFile(curentPath));
-    		
-    	}
-    	public String getPath() {
-    		return curentPath.toString();
-    	}
-    	
-    	private void showList(String[] list) {
-    		if(!curentPath.toString().equals(Environment.getExternalStorageDirectory().toString())){
-    			String[] newList = new String[list.length + 1];
-    			for(int i=0;i<list.length;i++)
-    				newList[i+1] = list[i];
-    			newList[0] = "..";
-    			list = newList;
-    		}	
-    		if(list.length < 1){
-    			showMessage(R.string.error_nomshfile);
-    			return;
-    		}
-    		if(dialog != null) dialog.dismiss();
-    		dialog = new FileDialog(this, list);
-    		dialog.show(getFragmentManager(), "files");
-    	}
-    	
-    	private void showMessage(int msg) {
-    		dialog = new FileDialog(this, msg);
-    		dialog.show(getFragmentManager(), "msg");
-    	}
-    	
-    	private String[] getFile(File path) {
-    		return path.list(new FilenameFilter() {
-    			
-    			public boolean accept(File dir, String filename) {
-    				String ext = filename.substring(filename.lastIndexOf(".") + 1, filename.length());
-    				File curent = new File(dir.toString()+"/"+filename);
-    				if(curent.isHidden())
-    					return false;
-    				else if(curent.isDirectory())
-    					return true;
-    				else if(ext.equals("MSH") || ext.equals("msh") || ext.equals("geo") || ext.equals("GEO") || ext.equals("pro")  || ext.equals("PRO"))
-    					return true;
-    				else
-    					return false;
-    			}
-    		});
-    	}
-    	private class FileDialog extends DialogFragment {
-    		
-    		String[] list;
-    		int msg = -1;
-    		SDFileChooser parent;
-    		
-    		public FileDialog(SDFileChooser p, String[] l) {
-    			list = l;
-    			parent = p;
-    		}
-    		public FileDialog(SDFileChooser p, int m) {
-    			msg = m;
-    			parent = p;
-    		}
-    		
-    		@Override
-    		public Dialog onCreateDialog(Bundle savedInstanceState) {
-    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    			if(msg > 0) {
-    				builder.setMessage(R.string.error_nomshfile)
-    				.setPositiveButton(R.string.button_ok, null);
-    			}
-    			else {
-    				builder.setTitle(R.string.dialog_title_choosefile);
-	        		builder.setItems(list, new DialogInterface.OnClickListener() {
-						
-						public void onClick(DialogInterface dialog, int which) {
-							if(list[which].equals(".."))
-								parent.setPath(curentPath.getParentFile().toString());
-							else if( new File(parent.getPath() + "/" + list[which]).isDirectory())
-								parent.setPath(parent.getPath() + "/" + list[which]);
-							else {
-								String ext = list[which].substring(list[which].lastIndexOf(".") + 1, list[which].length());
-			    				if(ext.equals("MSH") || ext.equals("msh") || ext.equals("geo") || ext.equals("GEO") || ext.equals("pro")  || ext.equals("PRO")) {
-			    					Intent intent = new Intent(ModelList.this, MainActivity.class);
-			    					intent.putExtra("file", curentPath+"/"+getFile(curentPath)[which]);
-			    					startActivity(intent);
-			    				}
-							}
-						}
-					});
-    			}
-    			return builder.create();
-    		};
-    	}
-    	
-    }
-
 }

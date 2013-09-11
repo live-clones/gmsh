@@ -56,10 +56,10 @@ public class MainActivity extends Activity{
 		Intent intent = getIntent();
     	Bundle extras = intent.getExtras();
     	if(savedInstanceState != null);
-    	else if(intent != null && intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
+    	else if(intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		_gmsh.load(tmp);
-    	}    		
+    	}  		
     	else if(extras != null) {
     		//extras.getString("name");
     		String tmp = extras.getString("file");
