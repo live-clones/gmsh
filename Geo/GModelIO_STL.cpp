@@ -29,7 +29,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   char buffer[256];
   if(!fgets(buffer, sizeof(buffer), fp)){ fclose(fp); return 0; }
 
-  bool binary = strncmp(buffer, "solid", 5);
+  bool binary = strncmp(buffer, "solid", 5) && strncmp(buffer, "SOLID", 5);
 
   // ASCII STL
   if(!binary){
@@ -37,10 +37,12 @@ int GModel::readSTL(const std::string &name, double tolerance)
     while(!feof(fp)) {
       // "facet normal x y z" or "endsolid"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
-      if(!strncmp(buffer, "endsolid", 8)){
+      if(!strncmp(buffer, "endsolid", 8) ||
+         !strncmp(buffer, "ENDSOLID", 8)){
         // "solid"
         if(!fgets(buffer, sizeof(buffer), fp)) break;
-        if(!strncmp(buffer, "solid", 5)){
+        if(!strncmp(buffer, "solid", 5) ||
+           !strncmp(buffer, "SOLID", 5)){
           points.resize(points.size() + 1);
           // "facet normal x y z"
           if(!fgets(buffer, sizeof(buffer), fp)) break;
