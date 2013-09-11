@@ -2471,10 +2471,10 @@ void status_options_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
         menu[0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[5].set(); else menu[5].clear();
-    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[6].set(); else menu[6].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[7].set(); else menu[7].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[8].set(); else menu[8].clear();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[6].set(); else menu[6].clear();
+    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[7].set(); else menu[7].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[8].set(); else menu[8].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[9].set(); else menu[9].clear();
     if(opt_mesh_points(0, GMSH_GET, 0)) menu[11].set(); else menu[11].clear();
     if(opt_mesh_lines(0, GMSH_GET, 0)) menu[12].set(); else menu[12].clear();
     if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[13].set(); else menu[13].clear();
