@@ -170,11 +170,20 @@ void drawContext::OrthofFromGModel()
 {
 	SBoundingBox3d bb = GModel::current()->bounds();
 	double ratio = (double)(this->_width ? this->_width : 1.) / (double)(this->_height ? this->_height : 1.);
+	double bbRation = (bb.max().x() - bb.min().x()) / (bb.max().y() - bb.min().y());
 	double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
-	xmin = bb.min().x();
-	xmax = bb.max().x();
-	ymin = bb.min().x() / ratio;
-	ymax = bb.max().x() / ratio;
+	if(bbRation < 1) {
+		xmin = bb.min().y() * ratio + bb.max().x() + bb.min().x();
+		xmax = bb.max().y() * ratio + bb.max().x() + bb.min().x();
+		ymin = bb.min().y() + bb.max().y() + bb.min().y();
+		ymax = bb.max().y() + bb.max().y() + bb.min().y();
+	}
+	else {
+		xmin = bb.min().x() + bb.max().x() + bb.min().x();
+		xmax = bb.max().x() + bb.max().x() + bb.min().x();
+		ymin = bb.min().x() / ratio + bb.max().y() + bb.min().y();
+		ymax = bb.max().x() / ratio + bb.max().y() + bb.min().y();
+	}
 	xmax += (xmax - xmin) / 5.;
 	xmin -= (xmax - xmin) / 5.;
 	ymax += (ymax - ymin) / 5.;
