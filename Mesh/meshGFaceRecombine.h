@@ -1039,17 +1039,22 @@ namespace Rec2DAlgo {
   void execute();
 
   namespace data {
-    extern bool rdo_tree_search, rdo_one_search;
-    extern int _r_std_search;
+    extern int horizon;
+
+    extern bool root_tree_srch;
+    extern bool root_one_srch;
+    extern bool root_take_best;
+    extern int root_std_srch;
     /* 1 : all-search
      * 2 : qall-search
      * 3 : qfirst-search
      * 4 : qlast-search
      */
-    extern bool _rdo_best;
 
-    extern bool _pdo_tree_search, _pdo_one_search;
-    extern int _p_std_search;
+    extern bool plus_tree_srch;
+    extern bool plus_one_srch;
+    extern bool plus_take_best;
+    extern int plus_std_srch;
     /* 1 : all-search
      * 2 : qall-search
      * 3 : qfirst-search
@@ -1057,13 +1062,9 @@ namespace Rec2DAlgo {
      * 5 : tfirst-search
      * 6 : tlast-search
      */
-    extern bool _pdo_best;
 
-    extern int _horizon;
-
-    extern Node *_initial;
-    extern Node *_current;
-
+    extern Node *initial;
+    extern Node *current;
     extern std::vector<Node*> sequence;
   }
 

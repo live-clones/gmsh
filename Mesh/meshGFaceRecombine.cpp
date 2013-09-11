@@ -4879,12 +4879,12 @@ void execute()
 {
   using namespace data;
 
-  if (_initial || _current) {
+  if (initial || current) {
     Msg::Error("[Rec2DAlgo] Already have a sequence, cannot execute");
     return;
   }
-  _initial = new Node();
-  _current = _initial;
+  initial = new Node();
+  current = initial;
 
   while (func::lookAhead()) {
     func::chooseBestSequence();
@@ -4935,16 +4935,16 @@ void setParam(int horizon, int code)
 
 namespace data {
   bool rdo_tree_search = false;
-  bool rdo_one_search = false;
-  int _r_std_search = 0;
+  bool root_one_srch = false;
+  int root_std_srch = 0;
   bool _rdo_best = false;
-  bool _pdo_tree_search = false;
-  bool _pdo_one_search = false;
-  int _p_std_search = 0;
-  bool _pdo_best = false;
-  int _horizon = 0;
-  Node *_current = NULL;
-  Node *_initial = NULL;
+  bool plus_tree_srch = false;
+  bool plus_one_srch = false;
+  int plus_std_srch = 0;
+  bool plus_take_best = false;
+  int horizon = 0;
+  Node *current = NULL;
+  Node *initial = NULL;
   std::vector<Node*> sequence;
 }
 
@@ -4953,15 +4953,15 @@ namespace func {
 
   bool lookAhead()
   {
-    _current->goAhead(0);
-    return _current->numChildren();
+    current->goAhead(0);
+    return current->numChildren();
   }
 
   void chooseBestSequence()
   {
-    Node *next = _current->getNodeBestSequence();
-    if (_current->choose(next))
-      _current = next;
+    Node *next = current->getNodeBestSequence();
+    if (current->choose(next))
+      current = next;
     else
       Msg::Fatal("Wrong child node in lookahead tree");
   }
@@ -4999,7 +4999,7 @@ namespace func {
 
   void searchForRootStd(std::vector<Rec2DElement*> &triangles)
   {
-    switch (_r_std_search) {
+    switch (root_std_srch) {
     case 1:
       searchForAll(triangles);
       break;
@@ -5019,7 +5019,7 @@ namespace func {
 
   void searchForPlusStd(std::vector<Rec2DElement*> &triangles)
   {
-    switch (_p_std_search) {
+    switch (plus_std_srch) {
     case 1:
       searchForAll(triangles);
       break;
@@ -5050,8 +5050,8 @@ namespace func {
 
   void searchForQAll(std::vector<Rec2DElement*> &triangles) {
     searchForTAll(triangles);
-    Node *n = data::_initial;
-    while (n != data::_current) {
+    Node *n = data::initial;
+    while (n != data::current) {
       n = n->getChild();
       std::vector<Rec2DElement*> elem;
       n->getAction()->getNeighbElemWithActions(elem);
@@ -5061,8 +5061,8 @@ namespace func {
 
   void searchForQFirst(std::vector<Rec2DElement*> &triangles) {
     triangles.clear();
-    Node *n = data::_initial;
-    while (triangles.empty() && n != data::_current) {
+    Node *n = data::initial;
+    while (triangles.empty() && n != data::current) {
       n = n->getChild();
       std::vector<Rec2DElement*> elem;
       n->getAction()->getNeighbElemWithActions(triangles);
@@ -5071,7 +5071,7 @@ namespace func {
   }
 
   void searchForQLast(std::vector<Rec2DElement*> &triangles) {
-    _current->getAction()->getNeighbElemWithActions(triangles);
+    current->getAction()->getNeighbElemWithActions(triangles);
   }
 
   void searchForTAll(std::vector<Rec2DElement*> &triangles) {
@@ -5105,6 +5105,17 @@ namespace func {
       }
     }
   }
+}
+
+Node::Node() : _ra(NULL), _dataChange(NULL), _createdActions(NULL)
+{
+  _quality = Rec2DData::getGlobalQuality();
+}
+
+Node::Node(Rec2DAction *action) : _ra(action), _dataChange(NULL),
+                                  _createdActions(NULL)
+{
+  _quality = Rec2DData::getGlobalQuality() + _ra->getRealReward();
 }
 
 Node* Node::getNodeBestSequence()
@@ -5152,20 +5163,9 @@ bool Node::choose(Node *node)
   return false;
 }
 
-Node::Node() : _ra(NULL), _dataChange(NULL), _createdActions(NULL)
-{
-  _quality = Rec2DData::getGlobalQuality();
-}
-
-Node::Node(Rec2DAction *action) : _ra(action), _dataChange(NULL),
-                                  _createdActions(NULL)
-{
-  _quality = Rec2DData::getGlobalQuality() + _ra->getRealReward();
-}
-
 void Node::goAhead(int depth)
 {
-  if (depth > data::_horizon - 1 || depth < 0) {
+  if (depth > data::horizon - 1 || depth < 0) {
     Msg::Fatal("the fuck..");
   }
 
@@ -5218,7 +5218,7 @@ void Node::branch_root()
       }
 
     case 1:
-      if (rdo_one_search)
+      if (root_one_srch)
         searchForOne(candidateTriangle);
       break;
 
@@ -5254,7 +5254,7 @@ void Node::branch_root()
   for (unsigned int i = 0; i < actions.size(); ++i)
     _children.push_back(new Node(actions[i]));
 
-  if (1 < _horizon) {
+  if (1 < horizon) {
     for (unsigned int i = 0; i < _children.size(); ++i)
       _children[i]->goAhead(1);
   }
@@ -5266,7 +5266,7 @@ void Node::branch_root()
 
 void Node::branch(int depth)
 {
-  if (depth > data::_horizon || depth < 1) {
+  if (depth > data::horizon || depth < 1) {
     if (depth == 0) {
       Msg::Error("branch() cannot be called for root, use branch_root()");
       return;
@@ -5284,7 +5284,7 @@ void Node::branch(int depth)
   while (candidateTriangle.empty()) {
     switch (searchType) {
     case 0:
-      if (_pdo_tree_search) {
+      if (plus_tree_srch) {
         if (_children.size()) {
           for (unsigned int i = 0; i < _children.size(); ++i)
             _children[i]->goAhead(depth + 1);
@@ -5298,7 +5298,7 @@ void Node::branch(int depth)
       }
 
     case 1:
-      if (_pdo_one_search)
+      if (plus_one_srch)
         searchForOne(candidateTriangle);
       break;
 
@@ -5320,7 +5320,7 @@ void Node::branch(int depth)
 
   // 2) take actions of the best or a random
   Rec2DElement *rt;
-  if (_pdo_best)
+  if (plus_take_best)
     rt = best(candidateTriangle);
   else
     rt = random(candidateTriangle);
@@ -5331,7 +5331,7 @@ void Node::branch(int depth)
   for (unsigned int i = 0; i < actions.size(); ++i)
     _children.push_back(new Node(actions[i]));
 
-  if (depth + 1 < _horizon) {
+  if (depth + 1 < horizon) {
     for (unsigned int i = 0; i < _children.size(); ++i)
       _children[i]->goAhead(depth + 1);
   }
