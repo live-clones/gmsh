@@ -2244,7 +2244,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
                            !opt_mesh_volumes_faces(0, GMSH_GET, 0));
   else if(what == "mesh_size")
     numberOrStringOptionChooser("Mesh", 0, "CharacteristicLengthFactor",
-                                true, "Size Factor", true, 0.01, 100, 0.01);
+                                true, "Factor", true, 0.01, 100, 0.01);
   else if(what == "view_element_outlines"){
     int set = 0;
     for(unsigned int i = 0; i < PView::list.size(); i++)
