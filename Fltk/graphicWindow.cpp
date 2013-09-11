@@ -2830,15 +2830,15 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   x += sw;
   _butt[0] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "X");
   _butt[0]->callback(status_xyz1p_cb, (void *)"x");
-  _butt[0]->tooltip("Set +X or -X view (Alt+x or Alt+Shift+x)");
+  _butt[0]->tooltip("Set +X or -X (Shift) view (Alt+x or Alt+Shift+x)");
   x += sw;
   _butt[1] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Y");
   _butt[1]->callback(status_xyz1p_cb, (void *)"y");
-  _butt[1]->tooltip("Set +Y or -Y view (Alt+y or Alt+Shift+y)");
+  _butt[1]->tooltip("Set +Y or -Y (Shift) view (Alt+y or Alt+Shift+y)");
   x += sw;
   _butt[2] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "Z");
   _butt[2]->callback(status_xyz1p_cb, (void *)"z");
-  _butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
+  _butt[2]->tooltip("Set +Z or -Z (Shift) view (Alt+z or Alt+Shift+z)");
   x += sw;
   _butt[4] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_rotate");
   _butt[4]->callback(status_xyz1p_cb, (void *)"r");
