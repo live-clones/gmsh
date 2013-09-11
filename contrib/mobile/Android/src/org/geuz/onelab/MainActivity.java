@@ -96,7 +96,7 @@ public class MainActivity extends Activity{
     	}
     	_runStopMenuItem = menu.add((_compute)?R.string.menu_stop:R.string.menu_run);
     	_runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-    	MenuItem shareMenuItem = menu.add("Share ...");
+    	MenuItem shareMenuItem = menu.add(R.string.menu_share);
     	shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return true;
     }
@@ -110,19 +110,12 @@ public class MainActivity extends Activity{
 			_modelFragment.requestRender();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_run))){
-    		if(_switchFragmentMenuItem != null && _switchFragmentMenuItem.getTitle().equals(getString(R.string.menu_model))) {
-    			_switchFragmentMenuItem.setTitle(R.string.menu_parameters);
-        		FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ft.replace(R.id.model_fragment, _modelFragment);
-                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_CLOSE);
-                ft.commit();
-    		}
     		new Run().execute();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_stop))){
     		_gmsh.onelabCB("stop");
     	}
-    	else if(item.getTitle().equals("Share ...")) {
+    	else if(item.getTitle().equals(getString(R.string.menu_share))) {
     		if(this._compute) {
 				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
@@ -144,7 +137,7 @@ public class MainActivity extends Activity{
     			shareIntent.setAction(Intent.ACTION_SEND);
     			shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
     			shareIntent.setType("image/jpeg");
-    			startActivity(Intent.createChooser(shareIntent, "Share screenshot with"));
+    			startActivity(Intent.createChooser(shareIntent, getString(R.string.title_share)));
     		}
     	}
 		else if(item.getItemId() == android.R.id.home)
