@@ -779,7 +779,9 @@ double ReferenceSpace::getJacobian(const MElement& element,
   double det = element.getJacobian(uvw[0], uvw[1], uvw[2], jacUVWtoXYZ);
 
   // Product of the two Jacobians & Return //
-  jac.gemm(jacABCtoUVW, jacUVWtoXYZ, 1, 0);
+  // Do a naive gemm, so that we do not encounter nested threads
+  // (limitation of OpenBLAS)
+  jac.gemm_naive(jacABCtoUVW, jacUVWtoXYZ, 1, 0);
   return det;
 }
 
