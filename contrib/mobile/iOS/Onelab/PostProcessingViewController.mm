@@ -50,11 +50,21 @@
         [_RaiseZ setValue:_pview->getOptions()->raise[2]];
         [_RaiseZ addTarget:self action:@selector(slideRaiseZ:) forControlEvents:UIControlEventValueChanged];
         [_IntervalsStepper setStepValue:1];
+        [_IntervalsStepper setValue:_pview->getOptions()->nbIso];
+        [_IntervalsStepper setMaximumValue:1000];
+        [_IntervalsStepper setMinimumValue:1];
     }
 }
 -(void)viewDidAppear:(BOOL)animated
 {
     [_IntervalsType selectRow:_pview->getOptions()->intervalsType-1 inComponent:0 animated:YES];
+}
+- (IBAction)stepperValueChanged:(UIStepper *)sender
+{
+    [_Intervals setText:[NSString stringWithFormat:@"%.0f", [sender value]]];
+    _pview->getOptions()->nbIso = [sender value];
+    _pview->setChanged(true);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
@@ -89,6 +99,7 @@
 
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
+    [_IntervalsStepper setValue:_pview->getOptions()->nbIso];
     _pview->getOptions()->nbIso = [textField.text integerValue];
     _pview->setChanged(true);
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
@@ -105,9 +116,6 @@
 
 - (void)viewDidUnload {
     [self setName:nil];
-    [self setIntervalsType:nil];
-    [self setIntervals:nil];
-    [self setRaiseZ:nil];
     [self setRaiseZ:nil];
     [self setIntervals:nil];
     [self setIntervalsType:nil];
