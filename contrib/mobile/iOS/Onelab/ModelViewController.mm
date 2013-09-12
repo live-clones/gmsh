@@ -140,9 +140,10 @@
         onelab_cb("compute");
         appDelegate->compute = NO;
 		UILocalNotification *localNotif = [[UILocalNotification alloc] init];
-		if (localNotif) {
+		if ([UIApplication sharedApplication].applicationState == UIApplicationStateBackground && localNotif) {
 			localNotif.alertBody = @"Computation finished";
 			localNotif.alertAction = @"View";
+			localNotif.hasAction = true;
 			localNotif.soundName = UILocalNotificationDefaultSoundName;
 			localNotif.applicationIconBadgeNumber = 1;
 			[[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
@@ -152,6 +153,7 @@
     });
 	
 	dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+		[UIApplication sharedApplication].applicationIconBadgeNumber = -1;
 		[_runStopButton setAction:@selector(compute)];
 		[_runStopButton setTitle:@"Run"];
 		[_progressLabel setHidden:YES];
