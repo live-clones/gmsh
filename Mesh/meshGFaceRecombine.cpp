@@ -25,7 +25,7 @@
 #ifdef HAVE_FLTK
   #define REC2D_DRAW
   #ifdef REC2D_DRAW
-    //#define DRAW_ALL_SELECTED
+    #define DRAW_ALL_TIME_STEP
     #define DRAW_WHEN_SELECTED
     //#define DRAW_EVERY_CHANGE
     #define DRAW_BEST_SEQ
@@ -414,12 +414,43 @@ bool Recombine2D::recombine()
   return true;
 }
 
+bool Recombine2D::recombineNewAlgo(int horiz, int code)
+{
+  if (!_iamCurrent()) {
+    Msg::Warning("[Recombine2D] If I can't construct myself, I can't recombine :)");
+    return false;
+  }
+  if (!Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance dosen't exist. Have you called construct() ?");
+    return false;
+  }
+
+  I(("Recombining... #actions = %d, horizon = %d",
+            Rec2DData::getNumAction(), _horizon ));
+
+  if (horiz < 0 || code < 0) {
+    if (!Rec2DAlgo::paramOK()) return false;
+  }
+  else {
+    if (!Rec2DAlgo::setParam(horiz, code)) return false;
+  }
+
+  double globtime = Cpu();
+  Rec2DAlgo::execute();
+  _lastRunTime = Cpu() - globtime;
+
+  I(( "... done recombining, in %f seconds", _lastRunTime ));
+  return true;
+}
+
 double Recombine2D::recombine(int depth)
 {
   Msg::Info("Recombining with depth %d", depth);
   Rec2DData::clearChanges();
-#ifdef DRAW_ALL_SELECTED
+#ifdef DRAW_ALL_TIME_STEP
   double time = Cpu();
+  static int num = 20, i = 0;
+  static double dx = .0, dy = .0;
 #endif
 #ifdef DRAW_WHEN_SELECTED
     __draw(REC2D_WAIT_SELECTED);
@@ -429,7 +460,7 @@ double Recombine2D::recombine(int depth)
   
   while (currentNode) {
     I(("boucle recombine"));
-#ifdef DRAW_ALL_SELECTED
+#ifdef DRAW_ALL_TIME_STEP
     FlGui::instance()->check();
     if ( !((i+1) % ((int)std::sqrt(num)+1)) ) {
       dx = .0; dy -= 1.1;
@@ -567,18 +598,22 @@ void Recombine2D::recombineSameAsHeuristic()
 void Recombine2D::clearChanges() // revert to initial state
 {
   Rec2DData::clearChanges();
-  _cur->_gf->triangles = _cur->_data->_tri;
-  _cur->_gf->quadrangles = _cur->_data->_quad;
+  updateMesh();
 #ifdef REC2D_DRAW_WHEN_CLEARED
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
 #endif
 }
 
-void Recombine2D::saveMesh(std::string s)
+void Recombine2D::updateMesh()
 {
   _cur->_gf->triangles = _cur->_data->_tri;
   _cur->_gf->quadrangles = _cur->_data->_quad;
+}
+
+void Recombine2D::saveMesh(std::string s)
+{
+  updateMesh();
   CreateOutputFile(s, 1);
 }
 
@@ -869,8 +904,7 @@ void Recombine2D::drawStateOrigin()
 {
 #ifdef REC2D_DRAW
   //_cur->_data->_tri.clear();
-  _cur->_gf->triangles = _cur->_data->_tri;
-  _cur->_gf->quadrangles = _cur->_data->_quad;
+  _cur->updateMesh();
   CTX::instance()->mesh.changed = ENT_ALL;
   drawContext::global()->draw();
 #endif
@@ -1432,6 +1466,7 @@ void Rec2DData::clearChanges()
     delete _cur->_changes[i];
   }
   _cur->_changes.clear();
+  Rec2DAlgo::clear();
 }
 
 double Rec2DData::getGlobalQuality(Rec2DQualCrit crit)
@@ -4886,16 +4921,51 @@ void execute()
   initial = new Node();
   current = initial;
 
+#ifdef REC2D_DRAW
+  __draw(.0);
+#endif
+
   while (func::lookAhead()) {
     func::chooseBestSequence();
+
+#ifdef DRAW_WHEN_SELECTED
+    __draw(.0);
+#endif
   }
 }
 
-void setParam(int horizon, int code)
+void clear()
 {
-  data::horizon = horizon;
-
   using namespace data;
+
+  delete initial;
+  initial = current = NULL;
+  if (sequence.size()) {
+    Msg::Error("Don't think sequence can be of size %d", sequence.size());
+  }
+  sequence.clear();
+}
+
+bool paramOK()
+{
+  using namespace data;
+  bool ans = true;
+  if (root_std_srch > 4 || root_std_srch < 1) {
+    Msg::Error("Wrong root std search: %d (not in {1,..,4})", root_std_srch);
+    ans = false;
+  }
+  if (plus_std_srch > 6 || plus_std_srch < 1) {
+    Msg::Error("Wrong plus std search: %d (not in {1,..,6})", root_std_srch);
+    ans = false;
+  }
+  return ans;
+}
+
+bool setParam(int horiz, int code)
+{
+  using namespace data;
+
+  horizon = horiz;
 
   unsigned char code_root = static_cast<unsigned char>(code);
   unsigned char code_tree = static_cast<unsigned char>(code >> 8);
@@ -4909,25 +4979,7 @@ void setParam(int horizon, int code)
   plus_take_best = (code_tree >> 2) % 2;
   plus_std_srch =  code_tree>>3;
 
-  if (root_std_srch > 4 || root_std_srch < 1) {
-    Msg::Error("Wrong root standard search, reverting to 1");
-    root_std_srch = 1;
-  }
-
-  if (plus_std_srch > 6 || plus_std_srch < 1) {
-    Msg::Error("Wrong plus standard search, reverting to 1");
-    plus_std_srch = 1;
-  }
-
-  Msg::Info("%d -> %d & %d => %d %d %d %d / %d %d %d %d", code, code_root, code_tree,
-                                              root_tree_srch,
-                                              root_one_srch,
-                                              root_take_best,
-                                              root_std_srch,
-                                              plus_tree_srch,
-                                              plus_one_srch,
-                                              plus_take_best,
-                                              plus_std_srch);
+  return paramOK();
 }
 
 namespace data {
@@ -5042,7 +5094,34 @@ namespace func {
 
   void searchForAll(std::vector<Rec2DElement*> &triangles)
   {
-    Rec2DData::copyElements(triangles);
+    // either take all elements and remove those which cannot be recombined
+    // or take all possible actions and determine triangles that are touched
+
+    if (Rec2DData::getNumAction() > Rec2DData::getNumElement()) {
+      Rec2DData::copyElements(triangles);
+
+      unsigned int i = 0;
+      while (i < triangles.size()) {
+        if (triangles[i]->getNumActions()) ++i;
+        else {
+          triangles[i] = triangles.back();
+          triangles.pop_back();
+        }
+      }
+    }
+    else {
+      std::vector<Rec2DAction*> actions;
+      Rec2DData::copyActions(actions);
+
+      std::set<Rec2DElement*> elem;
+      for (unsigned int i = 0; i < actions.size(); ++i) {
+        for (int j = 0; j < actions[i]->getNumElement(); ++j) {
+          elem.insert(actions[i]->getElement(j));
+        }
+      }
+
+      triangles.assign(elem.begin(), elem.end());
+    }
   }
 
   void searchForQAll(std::vector<Rec2DElement*> &triangles) {
@@ -5068,7 +5147,8 @@ namespace func {
   }
 
   void searchForQLast(std::vector<Rec2DElement*> &triangles) {
-    current->getAction()->getNeighbElemWithActions(triangles);
+    if (current != initial)
+      current->getAction()->getNeighbElemWithActions(triangles);
   }
 
   void searchForTAll(std::vector<Rec2DElement*> &triangles) {
@@ -5085,6 +5165,7 @@ namespace func {
     int i = 1;
     while (triangles.empty() && i < data::sequence.size()) {
       data::sequence[i]->getAction()->getNeighbElemWithActions(triangles);
+      ++i;
     }
   }
 
@@ -5148,6 +5229,10 @@ bool Node::choose(Node *node)
 
   for (unsigned int i = 0; i < _children.size(); ++i) {
     if (_children[i] == node) {
+      if (!node->makeChanges()) {
+        Msg::Error("No changes");
+        return false;
+      }
       _children[i] = NULL;
       for (unsigned int j = 0; j < _children.size(); ++j) {
         delete _children[j]; // sufficient ?
@@ -5170,11 +5255,8 @@ void Node::goAhead(int depth)
     branch_root();
     return;
   }
-  // else
-  // 1) Make changes
-  // 2) branch on children
-  // 3) revert changes
 
+  // 1) Make changes
   _dataChange = Rec2DData::getNewDataChange();
   _ra->apply(_dataChange, _createdActions);
   if (_createdActions) {
@@ -5182,8 +5264,10 @@ void Node::goAhead(int depth)
       (*_createdActions)[i]->addPointing();
   }
 
+  // 2) branch on children
   branch(depth);
 
+  // 3) revert changes
   if (!Rec2DData::revertDataChange(_dataChange))
     Msg::Error("Unreverted changes");
   else
@@ -5228,14 +5312,15 @@ void Node::branch_root()
       break;
 
     case 4:
-      Msg::Error("Think I should not be here");
-      // because searchForAll() fails only at the end
-      // and I think branch_root() is not called at the end
+      // end of algorithm
+      if (sequence.back() != this) Msg::Fatal("Aaargh");
+      sequence.pop_back();
       return;
 
     default:
       Msg::Fatal("No reason to be here");
     }
+    ++searchType;
   }
 
   // 2) take actions of the best or a random
@@ -5256,8 +5341,10 @@ void Node::branch_root()
       _children[i]->goAhead(1);
   }
 
-  if (sequence.back() != this)
+  if (sequence.back() != this) {
+    I(("size sequence %d", sequence.size()));
     Msg::Fatal("Aaargh");
+  }
   sequence.pop_back();
 }
 
@@ -5286,7 +5373,11 @@ void Node::branch(int depth)
           for (unsigned int i = 0; i < _children.size(); ++i)
             _children[i]->goAhead(depth + 1);
         }
-        else return;
+        else {
+          if (sequence.back() != this) Msg::Fatal("Aaargh 1");
+          sequence.pop_back();
+          return;
+        }
       }
       else {
         for (unsigned int i = 0; i < _children.size(); ++i)
@@ -5308,11 +5399,14 @@ void Node::branch(int depth)
       break;
 
     case 4:
+      if (sequence.back() != this) Msg::Fatal("Aaargh 2");
+      sequence.pop_back();
       return;
 
     default:
       Msg::Fatal("No reason to be here");
     }
+    ++searchType;
   }
 
   // 2) take actions of the best or a random
@@ -5333,9 +5427,20 @@ void Node::branch(int depth)
       _children[i]->goAhead(depth + 1);
   }
 
-  if (sequence.back() != this)
-    Msg::Fatal("Aaargh");
+  if (sequence.back() != this) Msg::Fatal("Aaargh 3");
   sequence.pop_back();
+}
+
+bool Node::makeChanges()
+{
+  if (_dataChange || !_ra)
+    return false;
+
+  _dataChange = Rec2DData::getNewDataChange();
+  _ra->apply(_dataChange, _createdActions, Recombine2D::blossomRec());
+  Recombine2D::incNumChange();
+
+  return true;
 }
 }
 

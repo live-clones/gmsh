@@ -54,6 +54,9 @@ class Rec2DTwoTri2Quad;
 class Rec2DCollapse;
 class Rec2DData;
 class Rec2DDataChange;
+namespace Rec2DAlgo {
+  bool setParam(int horizon, int code);
+}
 
 struct lessRec2DAction {
   bool operator()(const Rec2DAction*, const Rec2DAction*) const;
@@ -123,6 +126,7 @@ class Recombine2D {
     
     // Recombination methods
     bool recombine();
+    bool recombineNewAlgo(int horiz = -1, int code = -1);
     double recombine(int depth);
     void recombineSameAsBlossom(); // just to check blossomQual
     void recombineSameAsHeuristic();
@@ -135,10 +139,14 @@ class Recombine2D {
     void clearChanges();
     
     // Save mesh & stats
+    void updateMesh();
     void saveMesh(std::string);
     void saveStats(std::fstream*);
     
     // Get/Set methods
+    inline void setParamNewAlgo(int horiz, int code) {
+      Rec2DAlgo::setParam(horiz, code);
+    }
     inline void setHorizon(int h) {_horizon = h;} //1
     inline void setStrategy(int s) {_strategy = s;} //0->6
     inline void setQualCriterion(Rec2DQualCrit c) {_qualCriterion = c;}
@@ -399,6 +407,12 @@ class Rec2DData {
     // Miscellaneous
     static void copyElements(std::vector<Rec2DElement*> &v) {
       v = _cur->_elements;
+    }
+    static void copyActions(std::vector<Rec2DAction*> &v) {
+      v.resize(_cur->_actions.size());
+      for (unsigned int i = 0; i < v.size(); ++i) {
+        v[i] = const_cast<Rec2DAction*>(_cur->_actions[i]->action);
+      }
     }
 #ifdef REC2D_RECO_BLOS
     static Rec2DElement* getRElement(MElement*);
@@ -1035,8 +1049,10 @@ class Rec2DElement {
 namespace Rec2DAlgo {
   class Node;
 
-  void setParam(int horizon, int code);
+  bool paramOK();
+  bool setParam(int horizon, int code);
   void execute();
+  void clear();
 
   namespace data {
     extern int horizon;
@@ -1104,8 +1120,8 @@ namespace Rec2DAlgo {
     Node(Rec2DAction*);
 
     Node* getChild() const {
-      if (_children.size() != 0) {
-        Msg::Error("Do not have only one child");
+      if (_children.size() != 1) {
+        Msg::Fatal("Have %d child(ren), not exactly one", _children.size());
         return NULL;
       }
       return _children[0];
@@ -1115,6 +1131,8 @@ namespace Rec2DAlgo {
     Node* getNodeBestSequence();
     bool choose(Node*);
     int getMaxLeafQual() const;
+
+    bool makeChanges();
 
     void branch_root();
     void branch(int depth);
