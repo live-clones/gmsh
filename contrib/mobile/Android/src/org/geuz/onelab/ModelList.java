@@ -121,6 +121,7 @@ public class ModelList extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+		if(resultCode == RESULT_CANCELED) return;
 		switch (requestCode) {
 		case 1:
 			Uri uri = data.getData();

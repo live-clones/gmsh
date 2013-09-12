@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Notification;
+import android.app.Notification.Builder;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -221,6 +222,7 @@ public class MainActivity extends Activity{
     }
 	@Override
 	protected void onPause() {
+		if(_compute) notifyComputing();
 		super.onPause();
 		_notify = true;
 	}
@@ -237,24 +239,41 @@ public class MainActivity extends Activity{
 	@Override
 	protected void onStop() {
 		super.onStop();
+		if(_compute) notifyComputing();
 		_notify = true;
+	}
+	
+	private void notifyComputing() {
+		Intent intent = new Intent(this, MainActivity.class);
+	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+	    Notification.Builder notifyBuilder = new Notification.Builder(this);
+		notifyBuilder.setContentTitle("ONELAB")
+			.setContentIntent(pendingIntent)
+		    .setContentText("Computing in progress")
+		    .setSmallIcon(R.drawable.ic_launcher)
+		    .setProgress(0, 0, true);
+		NotificationManager mNotificationManager =
+			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.notify(1337, notifyBuilder.getNotification());
 	}
 	
 	private void notifyEndOfCompute() {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-		Notification.Builder mBuilder =
+		Notification.Builder notifyBuilder =
 		        new Notification.Builder(this)
 		        .setSmallIcon(R.drawable.ic_launcher)
 		        .setContentIntent(pendingIntent)
 		        .setContentTitle("ONELAB")
 		        .setDefaults(Notification.DEFAULT_ALL)
 		        .setAutoCancel(true)
-		        .setContentText("The compute is finished");
+		        .setProgress(0, 0, false)
+		        .setContentText("The computing is finished");
 		NotificationManager mNotificationManager =
 			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.notify(1337, mBuilder.getNotification());
+		mNotificationManager.notify(1337, notifyBuilder.getNotification());
 	}
 
 	private final Handler mainHandler = new Handler(){
