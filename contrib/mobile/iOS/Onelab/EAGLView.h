@@ -35,4 +35,6 @@
 
 - (void)load:(NSString*) file;
 
+- (UIImage*) getGLScreenshot;
+
 @end

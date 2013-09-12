@@ -15,6 +15,10 @@
 @implementation ModelListController
 -(void)viewDidLoad
 {
+	UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+	[refreshControl addTarget:self action:@selector(refreshList) forControlEvents:UIControlEventValueChanged];
+	self.refreshControl = refreshControl;
+	
 	UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
 	lpgr.minimumPressDuration = 1.0;
 	[self.tableView addGestureRecognizer:lpgr];
@@ -23,7 +27,7 @@
     NSString *docsPath = [Utils getApplicationDocumentsDirectory];
     [Utils copyRes];
     NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
-    for(NSString* doc in docs){
+    for(NSString* doc in docs) {
         NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];
         BOOL isDir = NO; [[NSFileManager defaultManager] fileExistsAtPath:docPath isDirectory:&isDir];
         if(isDir){
@@ -34,6 +38,20 @@
             }
         }
     }
+}
+
+-(void)refreshList
+{
+	/*NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
+    for(NSString* doc in docs) {
+		NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];
+        BOOL isDir = NO; [[NSFileManager defaultManager] fileExistsAtPath:docPath isDirectory:&isDir];
+        if(isDir){
+			
+		}
+	}*/
+	[self.tableView reloadData];
+	[self.refreshControl endRefreshing];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView

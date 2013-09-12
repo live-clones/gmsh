@@ -6,9 +6,11 @@
 //  Copyright (c) 2013 Maxime Graulich. All rights reserved.
 //
 #import <QuartzCore/QuartzCore.h>
+#import <Social/Social.h>
 
 #import "ModelViewController.h"
 #import "iosGModel.h"
+#import "Utils.h"
 
 #import "AppDelegate.h"
 
@@ -93,14 +95,15 @@
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
 	_runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
+	UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, nil]];
+		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, share, nil]];
 	}
 	else
 	{
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
-        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, nil]];
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, share, nil]];
     }
 }
 
@@ -108,6 +111,13 @@
 {
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
+}
+
+-(void)share
+{
+	NSArray *dataToShare = @[[self.glView getGLScreenshot]];
+	UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:dataToShare applicationActivities:nil];
+	[self presentViewController:activityVC animated:YES completion:nil];
 }
 
 - (void)compute

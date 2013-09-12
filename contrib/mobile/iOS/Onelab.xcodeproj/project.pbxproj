@@ -27,6 +27,7 @@
 		9CC6EBB717BA0A38001CA21A /* drawGeom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC6EBB617BA0A38001CA21A /* drawGeom.cpp */; };
 		9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */; };
 		9CC85C021790286C00F241C4 /* files in Resources */ = {isa = PBXBuildFile; fileRef = 9CC85C011790286C00F241C4 /* files */; };
+		9CDCED2317D5C00500B39082 /* Model.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CDCED2217D5C00500B39082 /* Model.mm */; };
 		9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0D178AEB1600A83B4B /* GetDP.framework */; };
 		9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* Gmsh.framework */; };
 		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
@@ -35,6 +36,7 @@
 		9CE18C2017B27EDB009BA06E /* Parameter.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE18C1F17B27EDB009BA06E /* Parameter.mm */; };
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
 		9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */; };
+		9CE2773B17E197F50076E728 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE2773917E197DA0076E728 /* Social.framework */; };
 		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
 		9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
@@ -71,6 +73,8 @@
 		9CC6EBB617BA0A38001CA21A /* drawGeom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawGeom.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawMesh.cpp; sourceTree = "<group>"; };
 		9CC85C011790286C00F241C4 /* files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = files; sourceTree = "<group>"; };
+		9CDCED2117D5C00500B39082 /* Model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Model.h; sourceTree = "<group>"; };
+		9CDCED2217D5C00500B39082 /* Model.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Model.mm; sourceTree = "<group>"; };
 		9CE08E01178AE6BE00A83B4B /* drawContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawContext.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E02178AE6BE00A83B4B /* drawContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawContext.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E03178AE6BE00A83B4B /* movePosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = movePosition.h; sourceTree = "<group>"; usesTabs = 1; };
@@ -84,6 +88,7 @@
 		9CE1A65517B0F39C00E5152F /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65617B0F39D00E5152F /* Utils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Utils.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65917B0FB9700E5152F /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
+		9CE2773917E197DA0076E728 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
 		9CEAE86D17AF824B00813524 /* iosGModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosGModel.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAE87B17AFD5BB00813524 /* SplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitViewController.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SplitViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
@@ -106,6 +111,7 @@
 				9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */,
 				9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */,
 				9C96083F1712C16300E1D4A0 /* CoreGraphics.framework in Frameworks */,
+				9CE2773B17E197F50076E728 /* Social.framework in Frameworks */,
 				9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */,
 				9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */,
 				9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */,
@@ -137,6 +143,7 @@
 		9C9608391712C16300E1D4A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9CE2773917E197DA0076E728 /* Social.framework */,
 				9CE08E0D178AEB1600A83B4B /* GetDP.framework */,
 				9CE08E0E178AEB1600A83B4B /* Gmsh.framework */,
 				9CE08E0F178AEB1600A83B4B /* petsc.framework */,
@@ -172,6 +179,8 @@
 				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE1A65517B0F39C00E5152F /* Utils.h */,
 				9CE1A65617B0F39D00E5152F /* Utils.mm */,
+				9CDCED2117D5C00500B39082 /* Model.h */,
+				9CDCED2217D5C00500B39082 /* Model.mm */,
 				9CE18C1E17B27EDB009BA06E /* Parameter.h */,
 				9CE18C1F17B27EDB009BA06E /* Parameter.mm */,
 				9CEAECC517A91CD20014D229 /* ModelListController.h */,
@@ -288,6 +297,7 @@
 				9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */,
 				9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */,
 				9CF34DE417C62FC500A3D5E3 /* PostProcessingViewController.mm in Sources */,
+				9CDCED2317D5C00500B39082 /* Model.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -380,6 +390,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Onelab/frameworks\"",
@@ -401,6 +413,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../../getdp-iOS\"",

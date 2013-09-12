@@ -37,7 +37,6 @@
         [_Name setText:[NSString stringWithCString:_pview->getData()->getName().c_str() encoding:[NSString defaultCStringEncoding]]];
         [_IntervalsType setDataSource:self];
         [_IntervalsType setDelegate:self];
-        [_IntervalsType selectRow:_pview->getOptions()->intervalsType-1 inComponent:0 animated:YES];
         [_Intervals setText:[NSString stringWithFormat:@"%d",_pview->getOptions()->nbIso]];
         UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
         numberToolbar.barStyle = UIBarStyleBlackTranslucent;
@@ -50,7 +49,12 @@
         _Intervals.inputAccessoryView = numberToolbar;
         [_RaiseZ setValue:_pview->getOptions()->raise[2]];
         [_RaiseZ addTarget:self action:@selector(slideRaiseZ:) forControlEvents:UIControlEventValueChanged];
+        [_IntervalsStepper setStepValue:1];
     }
+}
+-(void)viewDidAppear:(BOOL)animated
+{
+    [_IntervalsType selectRow:_pview->getOptions()->intervalsType-1 inComponent:0 animated:YES];
 }
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
@@ -108,6 +112,7 @@
     [self setIntervals:nil];
     [self setIntervalsType:nil];
     [self setName:nil];
+    [self setIntervalsStepper:nil];
     [super viewDidUnload];
 }
 @end

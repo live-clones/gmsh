@@ -148,4 +148,38 @@
     }
 }
 
+- (UIImage*) getGLScreenshot
+{
+    NSInteger myDataLength = backingWidth * backingHeight * 4;
+
+    GLubyte *buffer = (GLubyte *) malloc(myDataLength);
+    glReadPixels(0, 0, backingWidth, backingHeight, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+    GLubyte *buffer2 = (GLubyte *) malloc(myDataLength);
+    for(int y = 0; y <backingHeight; y++)
+    {
+        for(int x = 0; x <backingWidth * 4; x++)
+        {
+            buffer2[(backingHeight - 1 - y) * backingWidth * 4 + x] = buffer[y * 4 * backingWidth + x];
+        }
+    }
+
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer2, myDataLength, NULL);
+
+    int bitsPerComponent = 8;
+    int bitsPerPixel = 32;
+    int bytesPerRow = 4 * backingWidth;
+    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrderDefault;
+    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
+
+    CGImageRef imageRef = CGImageCreate(backingWidth, backingHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+
+    return [UIImage imageWithCGImage:imageRef];
+}
+
+- (void)saveGLScreenshotToPhotosAlbum {
+    UIImageWriteToSavedPhotosAlbum([self getGLScreenshot], nil, nil, nil);
+}
+
 @end
