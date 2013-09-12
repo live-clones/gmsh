@@ -42,14 +42,19 @@
 
 -(void)refreshList
 {
-	/*NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
+	NSString *docsPath = [Utils getApplicationDocumentsDirectory];
+	NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
     for(NSString* doc in docs) {
 		NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];
         BOOL isDir = NO; [[NSFileManager defaultManager] fileExistsAtPath:docPath isDirectory:&isDir];
         if(isDir){
-			
+			NSString *infos = [NSString stringWithFormat:@"%@%@", docPath, @"infos.xml"];
+            if([[NSFileManager defaultManager] fileExistsAtPath:infos]) {
+				currentDir = docPath;
+                [self parseInfosFile:infos];
+            }
 		}
-	}*/
+	}
 	[self.tableView reloadData];
 	[self.refreshControl endRefreshing];
 }
@@ -158,6 +163,12 @@
 -(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
 {
     if([elementName isEqual:@"title"]) {
+		for(Model *mp in models) {
+			if([[mp getName] isEqual:currentElementValue]){
+				[parser abortParsing];
+				return;
+			}
+		}
 		Model *m = [[Model alloc] initWithName:currentElementValue];
 		[models addObject:m];
 	}
