@@ -1308,12 +1308,13 @@ Rec2DAction* Rec2DData::getOneAction()
   return NULL;
 }
 
-void Rec2DData::getElementsOneAction(std::vector<Rec2DElement*> &vec)
+void Rec2DData::getElementsOneAction(std::vector<Rec2DElement*> &v)
 {
-  vec.clear();
+  v.clear();
   std::set<Rec2DElement*>::iterator it = _cur->_elementWithOneAction.begin();
   while (it != _cur->_elementWithOneAction.end()) {
-    vec.push_back(*it);
+    v.push_back(*it);
+    ++it;
   }
 }
 
@@ -5288,9 +5289,12 @@ void Node::branch_root()
   while (candidateTriangle.empty()) {
     switch (searchType) {
     case 0:
-      if (root_tree_srch) {
+      if (horizon > 1 && root_tree_srch && current != initial) {
         for (unsigned int i = 0; i < _children.size(); ++i)
           _children[i]->goAhead(1);
+        if (sequence.back() != this) Msg::Fatal("Aaargh");
+        sequence.pop_back();
+        return;
       }
       else {
         for (unsigned int i = 0; i < _children.size(); ++i)
@@ -5368,16 +5372,15 @@ void Node::branch(int depth)
   while (candidateTriangle.empty()) {
     switch (searchType) {
     case 0:
-      if (plus_tree_srch) {
+      if (depth < horizon - 1 && plus_tree_srch && current != initial) {
         if (_children.size()) {
           for (unsigned int i = 0; i < _children.size(); ++i)
             _children[i]->goAhead(depth + 1);
         }
-        else {
-          if (sequence.back() != this) Msg::Fatal("Aaargh 1");
+        if (sequence.back() != this) Msg::Fatal("Aaargh 1");
           sequence.pop_back();
-          return;
-        }
+
+        return;
       }
       else {
         for (unsigned int i = 0; i < _children.size(); ++i)
