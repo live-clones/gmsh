@@ -216,10 +216,13 @@ void drawContext::initView(int w, int h)
 	this->OrthofFromGModel();
     
 	glClearColor(.83,.85,.98,1.);
+	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glDepthFunc(GL_LESS);
 }
 
-void drawArray(VertexArray *va, GLint type, bool colorArray)
+void drawArray(VertexArray *va, GLint type, bool useColorArray, bool useNormalArray)
 {
 	if(!va) return;
 	glEnable(GL_BLEND);
@@ -227,14 +230,15 @@ void drawArray(VertexArray *va, GLint type, bool colorArray)
 	glShadeModel(GL_SMOOTH);
 	glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glNormalPointer(GL_BYTE, 0, va->getNormalArray());
-	glEnableClientState(GL_NORMAL_ARRAY);
-	if(colorArray){
+	if(useNormalArray){
+		glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+		glEnableClientState(GL_NORMAL_ARRAY);
+	}
+	if(useColorArray){
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
 		glEnableClientState(GL_COLOR_ARRAY);
 	}
 	glDrawArrays(type, 0, va->getNumVertices());
-	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
@@ -346,9 +350,9 @@ void drawContext::drawPView(PView *p)
 	glPointSize((GLfloat)opt->pointSize);
 	glLineWidth((GLfloat)opt->lineWidth);
     
-	drawArray(p->va_points, GL_POINTS,true);
-	drawArray(p->va_lines, GL_LINES,true);
-	drawArray(p->va_triangles, GL_TRIANGLES,true);
+	drawArray(p->va_points, GL_POINTS, true);
+	drawArray(p->va_lines, GL_LINES, true);
+	drawArray(p->va_triangles, GL_TRIANGLES, true, true);
 
 	glLineWidth(1);
 	glPointSize(1);
@@ -571,14 +575,16 @@ void drawContext::drawView()
                    this->_bottom + (this->_top - this->_bottom)/15.0,
                     0, (this->_top - this->_bottom)/20.);
 	checkGlError("Draw axes");
-	this->drawPost();
-	checkGlError("Draw post-pro");
-	this->drawGeom();
-	checkGlError("Draw geometry");
+  glEnable(GL_DEPTH_TEST);
 	this->drawMesh();
 	checkGlError("Draw mesh");
+	this->drawGeom();
+	checkGlError("Draw geometry");
+	this->drawPost();
+	checkGlError("Draw post-pro");
 	this->drawScale();
 	checkGlError("Draw scales");
+  glDisable(GL_DEPTH_TEST);
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)

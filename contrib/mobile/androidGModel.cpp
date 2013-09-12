@@ -294,7 +294,7 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
 	if(intervalsType > 0 && intervalsType < 4) PView::list[pos]->getOptions()->intervalsType = intervalsType;
 	if(visible >= 0) PView::list[pos]->getOptions()->visible = visible;
 	if(nIntervals > 0) PView::list[pos]->getOptions()->nbIso = nIntervals;
-	if(raisez>0) PView::list[pos]->getOptions()->raise[2] = raisez;
+	if(raisez>=0) PView::list[pos]->getOptions()->raise[2] = raisez;
 	PView::list[pos]->setChanged(true);
 }
 

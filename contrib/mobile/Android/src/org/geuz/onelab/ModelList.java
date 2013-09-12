@@ -127,8 +127,7 @@ public class ModelList extends Activity {
 			Uri uri = data.getData();
 			String[] projection = { MediaStore.Images.Media.DATA };
 	        Cursor cursor = managedQuery(uri, projection, null, null, null);
-	        int column_index = cursor
-	                .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+	        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 	        cursor.moveToFirst();
 			Intent intent = new Intent(ModelList.this, MainActivity.class);
 			intent.putExtra("file", cursor.getString(column_index));

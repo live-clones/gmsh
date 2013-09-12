@@ -57,12 +57,9 @@ public class OptionsPostProcessingFragment extends Fragment{
 		final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez);
 		raiseZ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 			
-			public void onStopTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
+			public void onStopTrackingTouch(SeekBar seekBar) {_gmsh.setPView(_pview, -1, -1, -1, seekBar.getProgress());}
 			public void onStartTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
-			public void onProgressChanged(SeekBar seekBar, int progress,
-					boolean fromUser) {
-				_gmsh.setPView(_pview, -1, -1, -1, progress);
-			}
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { } // UNUSED Auto-generated method stub
 		});
 		raiseZ.setProgress(Integer.parseInt(infos[4]));
 		intervalsType.setEnabled(infos[2].equals("1"));
