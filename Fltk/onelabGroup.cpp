@@ -1130,12 +1130,9 @@ void onelabGroup::_addParameter(T &p)
   Fl_Widget *widget = _addParameterWidget(p, n, highlight, c);
   _treeWidgets.push_back(widget);
   widget->copy_label(p.getShortName().c_str());
-  if(p.getLabel().size()){
-    std::string help = p.getLabel();
-    if(p.getHelp().size())
-      help += ":\n" + p.getHelp();
-    widget->copy_tooltip(help.c_str());
-  }
+  std::string help = p.getLabel().size() ? p.getLabel() : p.getShortName();
+  if(p.getHelp().size()) help += ":\n" + p.getHelp();
+  widget->copy_tooltip(help.c_str());
   n->widget(widget);
   _tree->end();
 }
