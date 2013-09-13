@@ -59,6 +59,7 @@ class Metric{
 class Node{
  private:
   int layer;
+  int limit;
   double h;
   Metric m;
   SPoint3 point;
@@ -69,10 +70,12 @@ class Node{
   Node(SPoint3);
   ~Node();
   void set_layer(int);
+  void set_limit(int);
   void set_size(double);
   void set_metric(Metric);
   void set_point(SPoint3);
   int get_layer();
+  int get_limit();
   double get_size();
   Metric get_metric();
   SPoint3 get_point();
@@ -239,16 +242,23 @@ double Metric::get_m33(){
 
 /*********class Node*********/
 
-Node::Node(){}
+Node::Node(){
+  limit = -1;
+}
 
 Node::Node(SPoint3 new_point){
   point = new_point;
+  limit = -1;
 }
 
 Node::~Node(){}
 
 void Node::set_layer(int new_layer){
   layer = new_layer;
+}
+
+void Node::set_limit(int new_limit){
+  limit = new_limit;
 }
 
 void Node::set_size(double new_h){
@@ -265,6 +275,10 @@ void Node::set_point(SPoint3 new_point){
 
 int Node::get_layer(){
   return layer;
+}
+
+int Node::get_limit(){
+  return limit;
 }
 
 double Node::get_size(){
@@ -354,8 +368,8 @@ void Filler::treat_region(GRegion* gr){
   unsigned int i;
   int j;
   int count;
+  int limit;
   bool ok2;
-  bool val;
   double x,y,z;
   SPoint3 point;
   Node *node,*individual,*parent;
@@ -371,9 +385,10 @@ void Filler::treat_region(GRegion* gr){
   std::vector<MVertex*> boundary_vertices;
   std::set<MVertex*> temp;
   std::list<GFace*> faces;
-  std::set<MVertex*> retired;
+  std::map<MVertex*,int> limits;
   std::set<MVertex*>::iterator it;
   std::list<GFace*>::iterator it2;
+  std::map<MVertex*,int>::iterator it3;
   RTree<Node*,double,3,double> rtree;
   
   Frame_field::init_region(gr);
@@ -385,37 +400,47 @@ void Filler::treat_region(GRegion* gr){
   temp.clear();
   new_vertices.clear();
   faces.clear();
-  retired.clear();
+  limits.clear();
 
   faces = gr->faces();	
   for(it2=faces.begin();it2!=faces.end();it2++){
     gf = *it2;
-	val = code(gf->tag());
+	limit = code(gf->tag());
 	for(i=0;i<gf->getNumMeshElements();i++){
 	  element = gf->getMeshElement(i);
       for(j=0;j<element->getNumVertices();j++){
 	    vertex = element->getVertex(j);
-		if(val){
-		  retired.insert(vertex);
-		}
-		//temp.insert(vertex);
+		temp.insert(vertex);
+		limits.insert(std::pair<MVertex*,int>(vertex,limit));
 	  }
 	}
   }
 		
-  for(i=0;i<gr->getNumMeshElements();i++){
+  /*for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
     for(j=0;j<element->getNumVertices();j++){
       vertex = element->getVertex(j);
       temp.insert(vertex);
     }
-  }
+  }*/
 
   for(it=temp.begin();it!=temp.end();it++){
+    if((*it)->onWhat()->dim()==1){
+	  boundary_vertices.push_back(*it);
+	}
+  }
+	
+  for(it=temp.begin();it!=temp.end();it++){
+    if((*it)->onWhat()->dim()==2){
+	  boundary_vertices.push_back(*it);
+	}
+  }
+	
+  /*for(it=temp.begin();it!=temp.end();it++){
     if((*it)->onWhat()->dim()<3){
       boundary_vertices.push_back(*it);
     }
-  }
+  }*/
   //std::ofstream file("nodes.pos");
   //file << "View \"test\" {\n";	
 
@@ -427,10 +452,12 @@ void Filler::treat_region(GRegion* gr){
     node = new Node(SPoint3(x,y,z));
     compute_parameters(node,gr);
 	node->set_layer(0);
-    rtree.Insert(node->min,node->max,node);
-	if(retired.find(boundary_vertices[i])==retired.end()){
-      fifo.push(node);
-	}
+	
+	it3 = limits.find(boundary_vertices[i]);
+	node->set_limit(it3->second);
+	
+	rtree.Insert(node->min,node->max,node);
+	fifo.push(node);
     //print_node(node,file);
   }
   
@@ -439,7 +466,11 @@ void Filler::treat_region(GRegion* gr){
     parent = fifo.front();
 	fifo.pop();
 	garbage.push_back(parent);
-	
+	  
+	if(parent->get_limit()!=-1 && parent->get_layer()>=parent->get_limit()){
+	  continue;
+	}
+	  
 	spawns.clear();
 	spawns.resize(6);
 	  
@@ -460,6 +491,7 @@ void Filler::treat_region(GRegion* gr){
 	  if(inside_domain(octree,x,y,z)){
 		compute_parameters(individual,gr);
 		individual->set_layer(parent->get_layer()+1);
+		individual->set_limit(parent->get_limit());
 		
 		if(far_from_boundary(octree,individual)){
 		  wrapper.set_ok(1);
@@ -727,22 +759,25 @@ double Filler::improvement(GEntity* ge,MElementOctree* octree,SPoint3 point,doub
   return average;
 }
 
-bool Filler::code(int x){
-  bool val;
+int Filler::code(int tag){
+  int limit;
   std::string s;
   std::stringstream s2;
   
-  val = 0;
-  s2 << x;
+  limit = -1;
+  s2 << tag;
   s = s2.str();
 	
   if(s.length()>=5){
-    if(s.at(0)=='1' && s.at(1)=='2' && s.at(2)=='3' && s.at(3)=='4' && s.at(4)=='5'){
-	  val = 1;
+    if(s.at(0)=='1' && s.at(1)=='1' && s.at(2)=='1' && s.at(3)=='1' && s.at(4)=='1'){
+	  limit = 0;
+	}
+	else if(s.at(0)=='2' && s.at(1)=='2' && s.at(2)=='2' && s.at(3)=='2' && s.at(4)=='2'){
+	  limit = 1;
 	}
   }
   
-  return val;
+  return limit;
 }
 
 int Filler::get_nbr_new_vertices(){
@@ -779,29 +814,29 @@ void Filler::print_node(Node* node,std::ofstream& file){
   h = node->get_size();
   m = node->get_metric();
 
-  x1 = x + h*m.get_m11();
-  y1 = y + h*m.get_m21();
-  z1 = z + h*m.get_m31();
+  x1 = x + k1*h*m.get_m11();
+  y1 = y + k1*h*m.get_m21();
+  z1 = z + k1*h*m.get_m31();
 
-  x2 = x - h*m.get_m11();
-  y2 = y - h*m.get_m21();
-  z2 = z - h*m.get_m31();
+  x2 = x - k1*h*m.get_m11();
+  y2 = y - k1*h*m.get_m21();
+  z2 = z - k1*h*m.get_m31();
 
-  x3 = x + h*m.get_m12();
-  y3 = y + h*m.get_m22();
-  z3 = z + h*m.get_m32();
+  x3 = x + k1*h*m.get_m12();
+  y3 = y + k1*h*m.get_m22();
+  z3 = z + k1*h*m.get_m32();
 
-  x4 = x - h*m.get_m12();
-  y4 = y - h*m.get_m22();
-  z4 = z - h*m.get_m32();
+  x4 = x - k1*h*m.get_m12();
+  y4 = y - k1*h*m.get_m22();
+  z4 = z - k1*h*m.get_m32();
 
-  x5 = x + h*m.get_m13();
-  y5 = y + h*m.get_m23();
-  z5 = z + h*m.get_m33();
+  x5 = x + k1*h*m.get_m13();
+  y5 = y + k1*h*m.get_m23();
+  z5 = z + k1*h*m.get_m33();
 
-  x6 = x - h*m.get_m13();
-  y6 = y - h*m.get_m23();
-  z6 = z - h*m.get_m33();
+  x6 = x - k1*h*m.get_m13();
+  y6 = y - k1*h*m.get_m23();
+  z6 = z - k1*h*m.get_m33();
 
   print_segment(SPoint3(x,y,z),SPoint3(x1,y1,z1),file);
   print_segment(SPoint3(x,y,z),SPoint3(x2,y2,z2),file);

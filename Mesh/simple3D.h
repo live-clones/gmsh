@@ -26,7 +26,7 @@ class Filler{
   void compute_parameters(Node*,GEntity*);
   void create_spawns(GEntity*,MElementOctree*,Node*,std::vector<Node*>&);
   double improvement(GEntity*,MElementOctree*,SPoint3,double,SVector3);
-  bool code(int);
+  int code(int);
   void print_segment(SPoint3,SPoint3,std::ofstream&);
   void print_node(Node*,std::ofstream&);
  public:
