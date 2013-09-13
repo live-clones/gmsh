@@ -308,8 +308,12 @@ static void optimizeConnectedBlobs
     //std::ostringstream ossI1;
     //ossI1 << "initial_ITER_" << i << ".msh";
     //temp.mesh.writeMSH(ossI1.str().c_str());
-    int success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
-                                false, samples, p.itMax, p.optPassMax);
+    int success = -1;
+    if (temp.mesh.nPC() == 0)
+      Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
+    else
+      success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
+                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
     if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
       Msg::Info("Jacobian optimization succeed, starting svd optimization");
       success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,

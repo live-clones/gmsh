@@ -92,7 +92,7 @@ public:
 class ParamCoordParent : public ParamCoord
 {
 public:
-  int nCoord(MVertex* vert) { return vert->onWhat()->dim(); }
+  int nCoord(MVertex* vert) { return vert->onWhat()->haveParametrization() ? vert->onWhat()->dim() : 0; }
   virtual void exportParamCoord(MVertex *v, const SPoint3 &uvw);
   virtual SPoint3 getUvw(MVertex* vert);
   virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw);

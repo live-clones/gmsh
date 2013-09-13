@@ -68,8 +68,8 @@ static inline double compute_f1(double v, double barrier)
 }
 
 OptHOM::OptHOM(const std::set<MElement*> &els, std::set<MVertex*> & toFix,
-               bool fixBndNodes) :
-  mesh(els, toFix, fixBndNodes)
+               bool fixBndNodes, bool fastJacEval) :
+  mesh(els, toFix, fixBndNodes, fastJacEval)
 {
   _optimizeMetricMin = false;
 }

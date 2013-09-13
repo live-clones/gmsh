@@ -41,7 +41,7 @@
 class Mesh
 {
 public:
-  Mesh(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes);
+  Mesh(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes, bool fastJacEval);
 
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }
@@ -75,6 +75,8 @@ private:
   int _dim;
   // Total nb. of parametric coordinates
   int _nPC;
+  // Use fast Jacobian estimation?
+  bool _fastJacEval;
   // List of elements
   std::vector<MElement*> _el;
   // Normals to 2D elements for Jacobian regularization and scaling

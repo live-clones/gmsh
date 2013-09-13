@@ -35,7 +35,8 @@
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
 
-Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes)
+Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes, bool fastJacEval) :
+ _fastJacEval(fastJacEval)
 {
 
   _dim = (*els.begin())->getDim();
@@ -65,7 +66,7 @@ Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBn
       it != els.end(); ++it, ++iEl) {
     _el[iEl] = *it;
     const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
-    _nBezEl[iEl] = jac->getNumJacNodes();
+    _nBezEl[iEl] = _fastJacEval ? jac->getNumJacNodesFast() : jac->getNumJacNodes();
     _nNodEl[iEl] = jac->getNumMapNodes();
     for (int iVEl = 0; iVEl < jac->getNumMapNodes(); iVEl++) {
       MVertex *vert = _el[iEl]->getVertex(iVEl);
@@ -73,10 +74,12 @@ Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBn
       _el2V[iEl].push_back(iV);
       const int nPCV = _pc->nCoord(vert);
       bool isFV = false;
-      if (fixBndNodes)
-        isFV = (vert->onWhat()->dim() == _dim) && (toFix.find(vert) == toFix.end());
-      else
-        isFV = (vert->onWhat()->dim() >= 1) && (toFix.find(vert) == toFix.end());
+      if (nPCV > 0) {
+        if (fixBndNodes)
+          isFV = (vert->onWhat()->dim() == _dim) && (toFix.find(vert) == toFix.end());
+        else
+          isFV = (vert->onWhat()->dim() >= 1) && (toFix.find(vert) == toFix.end());
+      }
       if (isFV) {
         int iFV = addFreeVert(vert,iV,nPCV,toFix);
         _el2FV[iEl].push_back(iFV);
@@ -285,10 +288,9 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
                                  std::vector<double> &gSJ)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = jacBasis->getNumJacNodes();
-  const int &numMapNodes = jacBasis->getNumMapNodes();
-  fullMatrix<double> JDJ (numJacNodes,3*numMapNodes+1);
-  fullMatrix<double> BDB (numJacNodes,3*numMapNodes+1);
+  const int &numJacNodes = _nBezEl[iEl];
+  const int &numMapNodes = _nNodEl[iEl];
+  fullMatrix<double> JDJ(numJacNodes,3*numMapNodes+1), BDB(numJacNodes,3*numMapNodes+1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes,3), normals(_dim,3);
@@ -301,11 +303,17 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
 
   // Calculate Jacobian and gradients, scale if 3D (already scaled by
   // regularization normals in 2D)
-  jacBasis->getSignedJacAndGradients(nodesXYZ,_scaledNormEl[iEl],JDJ);
+  if (_fastJacEval)
+    jacBasis->getSignedJacAndGradientsFast(nodesXYZ,_scaledNormEl[iEl],JDJ);
+  else
+    jacBasis->getSignedJacAndGradients(nodesXYZ,_scaledNormEl[iEl],JDJ);
   if (_dim == 3) JDJ.scale(_invStraightJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
-  jacBasis->lag2Bez(JDJ,BDB);
+  if (_fastJacEval)
+    BDB = JDJ;
+  else
+    jacBasis->lag2Bez(JDJ,BDB);
 
   // Scaled jacobian
   for (int l = 0; l < numJacNodes; l++) sJ [l] = BDB (l,3*numMapNodes);
