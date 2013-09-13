@@ -22,98 +22,56 @@
 #include "linearSystemFull.h"
 #endif
 
-
-
 /****************class Frame_field****************/
 
 Frame_field::Frame_field(){}
 
 void Frame_field::init_region(GRegion* gr){
-  // Fill in a ANN tree with the bondary cross field of region gr
 #if defined(HAVE_ANN)
-  int index;
-  MVertex* vertex;
+  // Fill in a ANN tree with the boundary cross field of region gr
+  unsigned int i;
   GFace* gf;
   std::list<GFace*> faces;
-  STensor3 m(1.0);
-
+  std::list<GFace*>::iterator it;
+	
   Nearest_point::init_region(gr);
-
+	
   faces = gr->faces();
-
-  temp.clear();
+	
   field.clear();
-
-  for( std::list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){
+	
+  for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
-    init_face(gf);
+	init_face(gf);
   }
-
-  ANNpointArray duplicate = annAllocPts(temp.size(),3);
-
-  index = 0;
-  for(std::map<MVertex*,STensor3>::iterator it=temp.begin(); it != temp.end(); it++){
-    vertex = it->first;
-    m = it->second;
-    duplicate[index][0] = vertex->x();
-    duplicate[index][1] = vertex->y();
-    duplicate[index][2] = vertex->z();
-    field.push_back(std::pair<MVertex*,STensor3>(vertex,m));
-    index++;
+	
+  ANNpointArray duplicate = annAllocPts(field.size(),3);
+	
+  for(i=0;i<field.size();i++){
+    duplicate[i][0] = field[i].first.x();
+	duplicate[i][1] = field[i].first.y();
+	duplicate[i][2] = field[i].first.z();
   }
-
-  kd_tree = new ANNkd_tree(duplicate, temp.size(), 3);
+	
+  kd_tree = new ANNkd_tree(duplicate,field.size(),3);
 #endif
 }
 
 void Frame_field::init_face(GFace* gf){
-  // Fills the auxiliary std::map "temp" with a pair <vertex, STensor3>
+  // Fills the auxiliary std::map "field" with a pair <SPoint3, STensor3>
   // for each vertex of the face gf.
   unsigned int i;
-  int j;
-  bool ok;
-  double average_x,average_y;
-  SPoint2 point;
-  SVector3 v1,v2,v3;
-  MVertex* vertex;
-  MElement* element;
-  MElementOctree* octree;
+  SPoint3 point;
+  SVector3 v1;
+  SVector3 v2;
+  SVector3 v3;
   STensor3 m(1.0);
-
-  if(gf->geomType()==GEntity::CompoundSurface){
-    ((GFaceCompound*)gf)->deleteInternals();
-    ((GFaceCompound*)gf)->parametrize();
-  }
-  backgroundMesh::set(gf);
-  octree = backgroundMesh::current()->get_octree();
-
-  for(i=0;i<gf->getNumMeshElements();i++){
-    element = gf->getMeshElement(i);
-
-    average_x = 0.0;
-    average_y = 0.0;
-
-    for(j=0;j<element->getNumVertices();j++){
-      vertex = element->getVertex(j);
-      reparamMeshVertexOnFace(vertex,gf,point);
-      average_x = average_x + point.x();
-      average_y = average_y + point.y();
-    }
-
-    average_x = average_x/element->getNumVertices();
-    average_y = average_y/element->getNumVertices();
-
-    for(j=0;j<element->getNumVertices();j++){
-      vertex = element->getVertex(j);
-
-	  if(gf->geomType()==GEntity::CompoundSurface){
-	    ok = translate(gf,octree,vertex,SPoint2(average_x,average_y),v1,v2);
-	  }
-	  else{
-	    ok = improved_translate(gf,vertex,v1,v2);
-	  }
-
-      if(ok){
+	
+  for(i=0;i<gf->storage1.size();i++){
+    point = gf->storage1[i];
+	v1 = gf->storage2[i];
+	v2 = gf->storage3[i];
+		
 	v1.normalize();
 	v2.normalize();
 	v3 = crossprod(v1,v2);
@@ -127,119 +85,34 @@ void Frame_field::init_face(GFace* gf){
 	m.set_m13(v3.x());
 	m.set_m23(v3.y());
 	m.set_m33(v3.z());
-	temp.insert(std::pair<MVertex*,STensor3>(vertex,m));
-      }
-    }
+	field.push_back(std::pair<SPoint3,STensor3>(point,m));
   }
-}
-
-bool Frame_field::translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPoint2 corr,SVector3& v1,SVector3& v2){
-  bool ok;
-  double k;
-  double size;
-  double angle;
-  double delta_x;
-  double delta_y;
-  double x,y;
-  double x1,y1;
-  double x2,y2;
-  SPoint2 point;
-  GPoint gp1;
-  GPoint gp2;
-
-  ok = true;
-  k = 0.0001;
-  reparamMeshVertexOnFace(vertex,gf,point);
-  x = point.x();
-  y = point.y();
-  size = backgroundMesh::current()->operator()(x,y,0.0)*get_ratio(gf,corr);
-  angle = backgroundMesh::current()->getAngle(x,y,0.0);
-
-  delta_x = k*size*cos(angle);
-  delta_y = k*size*sin(angle);
-
-  x1 = x + delta_x;
-  y1 = y + delta_y;
-  x2 = x + delta_y;
-  y2 = y - delta_x;
-
-  if(!inside_domain(octree,x1,y1)){
-    x1 = x - delta_x;
-    y1 = y - delta_y;
-    if(!inside_domain(octree,x1,y1)) ok = false;
-  }
-  if(!inside_domain(octree,x2,y2)){
-    x2 = x - delta_y;
-    y2 = y + delta_x;
-    if(!inside_domain(octree,x2,y2)) ok = false;
-  }
-
-  ok = true; //?
-
-  if(ok){
-    gp1 = gf->point(x1,y1);
-    gp2 = gf->point(x2,y2);
-    v1 = SVector3(gp1.x()-vertex->x(),gp1.y()-vertex->y(),gp1.z()-vertex->z());
-    v2 = SVector3(gp2.x()-vertex->x(),gp2.y()-vertex->y(),gp2.z()-vertex->z());
-  }
-  else{
-    v1 = SVector3(1.0,0.0,0.0);
-    v2 = SVector3(0.0,1.0,0.0);
-  }
-  return ok;
-}
-
-bool Frame_field::improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& v2){
-  double x,y;
-  double angle;
-  SPoint2 point;
-  SVector3 s1,s2;
-  SVector3 normal;
-  SVector3 basis_u,basis_v;
-  Pair<SVector3,SVector3> derivatives;
-
-  reparamMeshVertexOnFace(vertex,gf,point);
-  x = point.x();
-  y = point.y();
-
-  angle = backgroundMesh::current()->getAngle(x,y,0.0);
-  derivatives = gf->firstDer(point);
-
-  s1 = derivatives.first();
-  s2 = derivatives.second();
-  normal = crossprod(s1,s2);
-
-  basis_u = s1;
-  basis_u.normalize();
-  basis_v = crossprod(normal,basis_u);
-  basis_v.normalize();
-
-  v1 = basis_u*cos(angle) + basis_v*sin(angle);
-  v2 = crossprod(v1,normal);
-
-  return 1;
 }
 
 STensor3 Frame_field::search(double x,double y,double z){
   // Determines the frame/cross at location (x,y,z)
-  int index=0;
+  int index = 0;
 #if defined(HAVE_ANN)
   ANNpoint query;
   ANNidxArray indices;
   ANNdistArray distances;
-
+	
+  if(field.size()==0){
+    return STensor3(1.0);
+  }
+	
   query = annAllocPt(3);
   query[0] = x;
   query[1] = y;
   query[2] = z;
-
+	
   indices = new ANNidx[1];
   distances = new ANNdist[1];
-
+	
   double e = 0.0;
   kd_tree->annkSearch(query,1,indices,distances,e);
   index = indices[0];
-
+	
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
@@ -256,119 +129,105 @@ STensor3 Frame_field::combine(double x,double y,double z){
   SVector3 vec1,vec2,vec3;
   SVector3 final1,final2;
   STensor3 m(1.0),m2(1.0);
-
+	
   m = search(x,y,z);
   m2 = m;
   ok = Nearest_point::search(x,y,z,vec);
-
+  vec.normalize();
+	
   if(ok){
     vec1 = SVector3(m.get_m11(),m.get_m21(),m.get_m31());
-    vec2 = SVector3(m.get_m12(),m.get_m22(),m.get_m32());
-    vec3 = SVector3(m.get_m13(),m.get_m23(),m.get_m33());
-
-    val1 = fabs(dot(vec,vec1));
-    val2 = fabs(dot(vec,vec2));
-    val3 = fabs(dot(vec,vec3));
-
-    if(val1<=val2 && val1<=val3){
-      other = vec1;
-    }
-    else if(val2<=val1 && val2<=val3){
+	vec2 = SVector3(m.get_m12(),m.get_m22(),m.get_m32());
+	vec3 = SVector3(m.get_m13(),m.get_m23(),m.get_m33());
+		
+	val1 = fabs(dot(vec,vec1));
+	val2 = fabs(dot(vec,vec2));
+	val3 = fabs(dot(vec,vec3));
+		
+	if(val1<=val2 && val1<=val3){
+	  other = vec1;
+	}
+	else if(val2<=val1 && val2<=val3){
 	  other = vec2;
-    }
-    else{
-      other = vec3;
-    }
-
-    final1 = crossprod(vec,other);
-    final1.normalize();
-    final2 = crossprod(vec,final1);
-
+	}
+	else{
+	  other = vec3;
+	}
+		
+	final1 = crossprod(vec,other);
+	final1.normalize();
+	final2 = crossprod(vec,final1);
+	final2.normalize();
+	
     m2.set_m11(vec.x());
-    m2.set_m21(vec.y());
-    m2.set_m31(vec.z());
-    m2.set_m12(final1.x());
-    m2.set_m22(final1.y());
-    m2.set_m32(final1.z());
-    m2.set_m13(final2.x());
-    m2.set_m23(final2.y());
-    m2.set_m33(final2.z());
+	m2.set_m21(vec.y());
+	m2.set_m31(vec.z());
+	m2.set_m12(final1.x());
+	m2.set_m22(final1.y());
+	m2.set_m32(final1.z());
+	m2.set_m13(final2.x());
+	m2.set_m23(final2.y());
+	m2.set_m33(final2.z());
   }
-
+	
   return m2;
 }
 
-bool Frame_field::inside_domain(MElementOctree* octree,double x,double y){
-  MElement* element;
-  element = (MElement*)octree->find(x,y,0.0,2,true);
-  if(element!=NULL) return 1;
-  else return 0;
-}
-
-double Frame_field::get_ratio(GFace* gf,SPoint2 point){
-  double val;
-  double uv[2];
-  double tab[3];
-
-  uv[0] = point.x();
-  uv[1] = point.y();
-  buildMetric(gf,uv,tab);
-  val = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
-  return val;
-}
-
-void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,double val1, double val2, std::ofstream& file){
+void Frame_field::print_segment(SPoint3 p1,SPoint3 p2,double val1,double val2,std::ofstream& file){
   file << "SL ("
   << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
   << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
-       << "{" << val1 << "," << val2 << "};\n";
+  << "{" << val1 << "," << val2 << "};\n";
 }
 
 void Frame_field::print_field1(){
   // Saves a file with the surface cross field contained in Frame_field.temp
   // Frame_field.temp is constructed by Frame_field::init_region
+  unsigned int i;
   double k;
-  SPoint3 p;
+  double color1;
+  double color2;
+  SPoint3 point;
   SPoint3 p1,p2,p3,p4,p5,p6;
-  MVertex* vertex;
-  std::map<MVertex*,STensor3>::iterator it;
   STensor3 m(1.0);
-
+	
   k = 0.05;
   std::ofstream file("frame1.pos");
   file << "View \"cross field\" {\n";
-
-  for(it=temp.begin();it!=temp.end();it++){
-    vertex = it->first;
-    m = it->second;
-
-    p = SPoint3(vertex->x(),vertex->y(),vertex->z());
-    p1 = SPoint3(vertex->x() + k*m.get_m11(),
-		 vertex->y() + k*m.get_m21(),
-		 vertex->z() + k*m.get_m31());
-    p2 = SPoint3(vertex->x() - k*m.get_m11(),
-		 vertex->y() - k*m.get_m21(),
-		 vertex->z() - k*m.get_m31());
-    p3 = SPoint3(vertex->x() + k*m.get_m12(),
-		 vertex->y() + k*m.get_m22(),
-		 vertex->z() + k*m.get_m32());
-    p4 = SPoint3(vertex->x() - k*m.get_m12(),
-		 vertex->y() - k*m.get_m22(),
-		 vertex->z() - k*m.get_m32());
-    p5 = SPoint3(vertex->x() + k*m.get_m13(),
-		 vertex->y() + k*m.get_m23(),
-		 vertex->z() + k*m.get_m33());
-    p6 = SPoint3(vertex->x() - k*m.get_m13(),
-		 vertex->y() - k*m.get_m23(),
-		 vertex->z() - k*m.get_m33());
-    double val1=10, val2=20;
-    print_segment(p,p1,val1,val2,file);
-    print_segment(p,p2,val1,val2,file);
-    print_segment(p,p3,val1,val2,file);
-    print_segment(p,p4,val1,val2,file);
-    print_segment(p,p5,val1,val2,file);
-    print_segment(p,p6,val1,val2,file);
+  color1 = 10.0;
+  color2 = 20.0;
+	
+  for(i=0;i<field.size();i++){
+    point = field[i].first;
+	m = field[i].second;
+		
+	p1 = SPoint3(point.x() + k*m.get_m11(),
+				 point.y() + k*m.get_m21(),
+				 point.z() + k*m.get_m31());
+	p2 = SPoint3(point.x() - k*m.get_m11(),
+				 point.y() - k*m.get_m21(),
+				 point.z() - k*m.get_m31());
+    p3 = SPoint3(point.x() + k*m.get_m12(),
+				 point.y() + k*m.get_m22(),
+				 point.z() + k*m.get_m32());
+	p4 = SPoint3(point.x() - k*m.get_m12(),
+				 point.y() - k*m.get_m22(),
+				 point.z() - k*m.get_m32());
+	p5 = SPoint3(point.x() + k*m.get_m13(),
+				 point.y() + k*m.get_m23(),
+				 point.z() + k*m.get_m33());
+	p6 = SPoint3(point.x() - k*m.get_m13(),
+				 point.y() - k*m.get_m23(),
+				 point.z() - k*m.get_m33());
+		
+	print_segment(point,p1,color1,color2,file);
+	print_segment(point,p2,color1,color2,file);
+	print_segment(point,p3,color1,color2,file);
+	print_segment(point,p4,color1,color2,file);
+	print_segment(point,p5,color1,color2,file);
+	print_segment(point,p6,color1,color2,file);
   }
+	
   file << "};\n";
 }
 
@@ -377,51 +236,57 @@ void Frame_field::print_field2(GRegion* gr){
   unsigned int i;
   int j;
   double k;
-  SPoint3 p;
+  double color1;
+  double color2;
+  SPoint3 point;
   SPoint3 p1,p2,p3,p4,p5,p6;
   MVertex* vertex;
   MElement* element;
   STensor3 m(1.0);
-
+	
   k = 0.05;
   std::ofstream file("frame2.pos");
   file << "View \"cross field\" {\n";
-
+  color1 = 10.0;
+  color2 = 20.0;
+	
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-    for(j=0;j<element->getNumVertices();j++){
-      vertex = element->getVertex(j);
-      if(vertex->onWhat()->dim()>2){
-	m = search(vertex->x(),vertex->y(),vertex->z());
-	p = SPoint3(vertex->x(),vertex->y(),vertex->z());
-	p1 = SPoint3(vertex->x() + k*m.get_m11(),
-		     vertex->y() + k*m.get_m21(),
-		     vertex->z() + k*m.get_m31());
-	p2 = SPoint3(vertex->x() - k*m.get_m11(),
-		     vertex->y() - k*m.get_m21(),
-		     vertex->z() - k*m.get_m31());
-	p3 = SPoint3(vertex->x() + k*m.get_m12(),
-		     vertex->y() + k*m.get_m22(),
-		     vertex->z() + k*m.get_m32());
-	p4 = SPoint3(vertex->x() - k*m.get_m12(),
-		     vertex->y() - k*m.get_m22(),
-		     vertex->z() - k*m.get_m32());
-	p5 = SPoint3(vertex->x() + k*m.get_m13(),
-		     vertex->y() + k*m.get_m23(),
-		     vertex->z() + k*m.get_m33());
-	p6 = SPoint3(vertex->x() - k*m.get_m13(),
-		     vertex->y() - k*m.get_m23(),
-		     vertex->z() - k*m.get_m33());
-	double val1=10, val2=20;
-	print_segment(p,p1,val1,val2,file);
-	print_segment(p,p2,val1,val2,file);
-	print_segment(p,p3,val1,val2,file);
-	print_segment(p,p4,val1,val2,file);
-	print_segment(p,p5,val1,val2,file);
-	print_segment(p,p6,val1,val2,file);
-      }
+	for(j=0;j<element->getNumVertices();j++){
+	  vertex = element->getVertex(j);
+	  if(vertex->onWhat()->dim()>2){
+	    point = SPoint3(vertex->x(),vertex->y(),vertex->z());
+		m = search(vertex->x(),vertex->y(),vertex->z());
+				
+		p1 = SPoint3(point.x() + k*m.get_m11(),
+					 point.y() + k*m.get_m21(),
+					 point.z() + k*m.get_m31());
+		p2 = SPoint3(point.x() - k*m.get_m11(),
+					 point.y() - k*m.get_m21(),
+					 point.z() - k*m.get_m31());
+		p3 = SPoint3(point.x() + k*m.get_m12(),
+					 point.y() + k*m.get_m22(),
+					 point.z() + k*m.get_m32());
+		p4 = SPoint3(point.x() - k*m.get_m12(),
+					 point.y() - k*m.get_m22(),
+					 point.z() - k*m.get_m32());
+		p5 = SPoint3(point.x() + k*m.get_m13(),
+					 point.y() + k*m.get_m23(),
+					 point.z() + k*m.get_m33());
+		p6 = SPoint3(point.x() - k*m.get_m13(),
+					 point.y() - k*m.get_m23(),
+					 point.z() - k*m.get_m33());
+				
+		print_segment(point,p1,color1,color2,file);
+		print_segment(point,p2,color1,color2,file);
+		print_segment(point,p3,color1,color2,file);
+		print_segment(point,p4,color1,color2,file);
+		print_segment(point,p5,color1,color2,file);
+	    print_segment(point,p6,color1,color2,file);
+	  }
     }
   }
+	
   file << "};\n";
 }
 
@@ -434,7 +299,6 @@ GRegion* Frame_field::test(){
 
 void Frame_field::clear(){
   Nearest_point::clear();
-  temp.clear();
   field.clear();
 #if defined(HAVE_ANN)
   delete kd_tree->thePoints();
@@ -1167,6 +1031,10 @@ void Size_field::init_region(GRegion* gr){
 
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
+	if(gf->geomType()==GEntity::CompoundSurface){
+	  ((GFaceCompound*)gf)->deleteInternals();
+	  ((GFaceCompound*)gf)->parametrize();
+	}
     backgroundMesh::set(gf);
 
     for(i=0;i<gf->getNumMeshElements();i++){
@@ -1412,6 +1280,7 @@ GRegion* Size_field::test(){
 }
 
 void Size_field::clear(){
+  backgroundMesh::unset();
   delete octree;
   boundary.clear();
 }
@@ -1719,8 +1588,7 @@ void Nearest_point::clear(){
 
 /****************static declarations****************/
 
-std::map<MVertex*,STensor3> Frame_field::temp;
-std::vector<std::pair<MVertex*,STensor3> > Frame_field::field;
+std::vector<std::pair<SPoint3,STensor3> > Frame_field::field;
 std::map<MVertex*, STensor3> Frame_field::crossField;
 std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
 std::map<MVertex*,std::set<MVertex*> > Frame_field::vertex_to_vertices;

@@ -25,8 +25,7 @@ struct lowerThan {
 
 class Frame_field{
  private:
-  static std::map<MVertex*, STensor3> temp;
-  static std::vector<std::pair<MVertex*, STensor3> > field;
+  static std::vector<std::pair<SPoint3,STensor3> > field;
   static std::map<MVertex*, STensor3> crossField;
   static std::map<MEdge, double, Less_Edge> crossDist;
   static std::vector<MVertex*> listVertices;
@@ -38,12 +37,8 @@ class Frame_field{
  public:
   static void init_region(GRegion*);
   static void init_face(GFace*);
-  static bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
-  static bool improved_translate(GFace*,MVertex*,SVector3&,SVector3&);
   static STensor3 search(double,double,double);
   static STensor3 combine(double,double,double);
-  static bool inside_domain(MElementOctree*,double,double);
-  static double get_ratio(GFace*,SPoint2);
   static void print_field1();
   static void print_field2(GRegion*);
   static void print_segment(SPoint3,SPoint3,double,double,std::ofstream&);
@@ -62,8 +57,7 @@ class Frame_field{
   static double smoothRegion(GRegion *gr, int n);
   static double smooth();
   static double findBarycenter(std::map<MVertex*, std::set<MVertex*> >::const_iterator iter, STensor3 &m0);
-  static void save(const std::vector<std::pair<SPoint3, STensor3> > data, 
-		   const std::string& filename);
+  static void save(const std::vector<std::pair<SPoint3, STensor3> > data, const std::string& filename);
   static void saveCrossField(const std::string& filename, double scale, bool full=true);
   static void continuousCrossField(GRegion *gr, GFace *gf);
   static void recur_connect_vert(FILE*fi, int count, MVertex *v,STensor3 &cross, std::multimap<MVertex*,MVertex*> &v2v,  std::set<MVertex*> &touched);

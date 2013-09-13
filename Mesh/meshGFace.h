@@ -9,6 +9,9 @@
 #include <vector>
 #include <set>
 #include <list>
+#include "SPoint2.h"
+#include "SVector3.h"
+#include "MElementOctree.h"
 
 class GEdge;
 class GFace;
@@ -59,5 +62,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool onlyInitialMesh,
 		   bool debug = true,
 		   std::list<GEdge*> *replacement_edges = 0);
+
+void directions_storage(GFace*);
+bool translate(GFace*,MElementOctree*,MVertex*,SPoint2,SVector3&,SVector3&);
+bool improved_translate(GFace*,MVertex*,SVector3&,SVector3&);
+bool inside_domain(MElementOctree*,double,double);
 
 #endif
