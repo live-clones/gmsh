@@ -499,7 +499,7 @@ static void Mesh2D(GModel *m)
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if (temp[K]->geomType()==GEntity::CompoundSurface ||
-                temp[K]->geomType()==GEntity::Plane) {
+                temp[K]->geomType()==GEntity::Plane || temp[K]->geomType()==GEntity::RuledSurface) {
               if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
                   !temp[K]->meshAttributes.extrude) {
                 smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
@@ -538,7 +538,7 @@ static void Mesh2D(GModel *m)
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if ((*it)->geomType()==GEntity::CompoundSurface ||
-                (*it)->geomType()==GEntity::Plane) {
+                (*it)->geomType()==GEntity::Plane || (*it)->geomType()==GEntity::RuledSurface) {
               if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
                   !(*it)->meshAttributes.extrude) {
                 smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
