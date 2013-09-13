@@ -418,6 +418,8 @@ smoothing::smoothing(int param1,int param2){
 }
 
 void smoothing::optimize_face(GFace* gf){
+  if(gf->getNumMeshElements()==0 || gf->getCompound()) return;
+	
   std::set<MVertex*> all;
 
   // get all the points of the face ...
@@ -590,6 +592,8 @@ void smoothing::optimize_face(GFace* gf){
 	
   free(initial_conditions);
   free(variables_scales);
+	
+  backgroundMesh::unset();
 }
 
 void smoothing::optimize_model(){
