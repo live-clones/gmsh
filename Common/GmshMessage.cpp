@@ -78,6 +78,24 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 #define vsnprintf _vsnprintf
 #endif
 
+static void addGmshPathToEnvironmentVar(const std::string &name)
+{
+  std::vector<std::string> split = SplitFileName(CTX::instance()->argv0);
+  std::string path;
+  char *tmp = getenv(name.c_str());
+  if(tmp){
+    path = tmp;
+#if defined(WIN32)
+    path += ";" + split[0];
+#else
+    path += ":" + split[0];
+#endif
+  }
+  else
+    path = split[0];
+  SetEnvironmentVar(name.c_str(), path.c_str());
+}
+
 void Msg::Init(int argc, char **argv)
 {
 #if defined(HAVE_MPI)
@@ -116,23 +134,10 @@ void Msg::Init(int argc, char **argv)
 
   if(argc && argv){
     CTX::instance()->argv0 = std::string(argv[0]);
-    std::vector<std::string> split = SplitFileName(CTX::instance()->argv0);
-
     // add the directory where the binary is installed to the path where Python
     // looks for modules
-    std::string path;
-    char *tmp = getenv("PYTHONPATH");
-    if(tmp){
-      path = tmp;
-#if defined(WIN32)
-      path += ";" + split[0];
-#else
-      path += ":" + split[0];
-#endif
-    }
-    else
-      path = split[0];
-    SetEnvironmentVar("PYTHONPATH", path.c_str());
+    addGmshPathToEnvironmentVar("PYTHONPATH");
+    addGmshPathToEnvironmentVar("PATH");
   }
 
   InitializeOnelab("Gmsh");
