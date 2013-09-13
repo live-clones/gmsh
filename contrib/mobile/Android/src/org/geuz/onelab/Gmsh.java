@@ -32,6 +32,8 @@ public class Gmsh implements Parcelable {
 	public native void setPView(int position, int intervalsType,int visible,int nbIso, float raisez); // Change options for a PView
 	public native int onelabCB(String action); // Call onelab
 	
+	public native void animationNext();
+	
 	/** Java CLASS **/
 	private long ptr;
 	private Handler handler;

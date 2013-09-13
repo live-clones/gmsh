@@ -4,6 +4,8 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -26,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 
 public class MainActivity extends Activity{
@@ -37,6 +40,7 @@ public class MainActivity extends Activity{
 	private OptionsFragment _optionsFragment;
 	private ArrayList<String> _errors = new ArrayList<String>();
 	private Dialog _errorDialog;
+	private Timer _animation;
 
 	public MainActivity() {
 	}
@@ -97,6 +101,8 @@ public class MainActivity extends Activity{
     	_runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
     	MenuItem shareMenuItem = menu.add(R.string.menu_share);
     	shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+    	MenuItem playPauseMenuItem = menu.add("Play animation");
+    	playPauseMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return true;
     }
 	@Override
@@ -139,8 +145,34 @@ public class MainActivity extends Activity{
     			startActivity(Intent.createChooser(shareIntent, getString(R.string.title_share)));
     		}
     	}
-		else if(item.getItemId() == android.R.id.home)
-		{
+    	else if(item.getTitle().equals("Play animation")) {
+    		if(this._compute) {
+				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+    			_errorDialog = dialogBuilder.setTitle("Can't start animation")
+    			.setMessage("The computing have to be finished before you can play animation.")
+    			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				})
+    			.show();
+    		}
+    		else {
+	    		item.setTitle("Stop animation");
+	    		_animation = new Timer();
+	    		_animation.schedule(new TimerTask() {
+	    			public void run()  {
+	    				_gmsh.animationNext();
+	    				_modelFragment.requestRender();
+	    			} }, 2000, 1);
+    		}
+    	}
+    	else if(item.getTitle().equals("Stop animation")) {
+    		item.setTitle("Play animation");
+    		_animation.cancel();
+    	}
+		else if(item.getItemId() == android.R.id.home) {
 			if(this._compute) {
 				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
@@ -200,22 +232,22 @@ public class MainActivity extends Activity{
     	if(_errors.size()>0){
     		if(_errorDialog != null && _errorDialog.isShowing()) _errorDialog.dismiss();
     		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-    		_errorDialog = dialogBuilder.setTitle("Gmsh/GetDP Error(s)")
+    		dialogBuilder.setTitle("Gmsh/GetDP Error(s)")
 		    .setMessage(_errors.get(_errors.size()-1))
 		    .setNegativeButton("Hide", new DialogInterface.OnClickListener() {
 		        public void onClick(DialogInterface dialog, int which) {
 		        	_errors.clear();
 		        	_errorDialog.dismiss();
 		        }
-		     })
-		    .setPositiveButton("Show more", new DialogInterface.OnClickListener() {
+		     });
+    		if(_errors.size()>1)dialogBuilder.setPositiveButton("Show more", new DialogInterface.OnClickListener() {
 		        public void onClick(DialogInterface dialog, int which) {
 		        	_errors.remove(_errors.size()-1);
 		        	_errorDialog.dismiss();
 		            showError();
 		        }
-		     })
-		     .show();
+		     });
+		     _errorDialog = dialogBuilder.show();
     	}
     }
 	@Override
@@ -241,6 +273,22 @@ public class MainActivity extends Activity{
 		_notify = true;
 	}
 	
+	@Override
+	public void onLowMemory() {
+		_gmsh.onelabCB("stop");
+		Toast.makeText(this, "Low memory !!! computing is going to stop", Toast.LENGTH_LONG).show();
+		super.onLowMemory();
+	}
+	
+	@Override
+	public void onTrimMemory(int level) {
+		if(level == Activity.TRIM_MEMORY_COMPLETE){
+			_gmsh.onelabCB("stop");
+			notifyInterruptComputing();
+		}
+		super.onTrimMemory(level);
+	}
+	
 	private void notifyComputing() {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -260,8 +308,7 @@ public class MainActivity extends Activity{
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-		Notification.Builder notifyBuilder =
-		        new Notification.Builder(this)
+		Notification.Builder notifyBuilder = new Notification.Builder(this)
 		        .setSmallIcon(R.drawable.ic_launcher)
 		        .setContentIntent(pendingIntent)
 		        .setContentTitle("ONELAB")
@@ -269,6 +316,23 @@ public class MainActivity extends Activity{
 		        .setAutoCancel(true)
 		        .setProgress(0, 0, false)
 		        .setContentText("The computing is finished");
+		NotificationManager mNotificationManager =
+			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.notify(1337, notifyBuilder.getNotification());
+	}
+	
+	private void notifyInterruptComputing() {
+		Intent intent = new Intent(this, MainActivity.class);
+	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+		Notification.Builder notifyBuilder = new Notification.Builder(this)
+		        .setSmallIcon(R.drawable.ic_launcher)
+		        .setContentIntent(pendingIntent)
+		        .setContentTitle("ONELAB")
+		        .setDefaults(Notification.DEFAULT_ALL)
+		        .setAutoCancel(true)
+		        .setProgress(0, 0, false)
+		        .setContentText("The computing had to stop because your device ran out of memory");
 		NotificationManager mNotificationManager =
 			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(1337, notifyBuilder.getNotification());

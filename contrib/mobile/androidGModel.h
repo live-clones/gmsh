@@ -137,6 +137,14 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
 JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
   (JNIEnv *, jobject, jstring);
 
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    animationNext
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationNext
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

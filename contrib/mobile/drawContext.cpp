@@ -680,4 +680,24 @@ int onelab_cb(std::string action)
 	return redraw;
 }
 
+void animation_next() {
+	for(unsigned int i = 0; i < PView::list.size(); i++){
+		PView * p = PView::list[i];
+		if(p->getOptions()->visible){
+			// skip empty steps
+			int step = (int)p->getOptions()->timeStep + 1;
+			int numSteps = (int)p->getData()->getNumTimeSteps();
+			for(int j = 0; j < numSteps; j++){
+				if(p->getData()->hasTimeStep(step)) break;
+				else step += 1;
+				if(step < 0) step = numSteps - 1;
+				if(step > numSteps - 1) step = 0;
+			}
+			Msg::Info("animation: step%d nextstep%d totalstep%d", p->getOptions()->timeStep, step, p->getData()->getNumTimeSteps());
+			p->getOptions()->timeStep = step;
+			p->setChanged(true);
+		}
+	}
+}
+
 // vim:set ts=2:

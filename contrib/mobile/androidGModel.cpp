@@ -304,4 +304,9 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
 	const char*  action = env->GetStringUTFChars(jaction, NULL);
 	return onelab_cb(action);
 }
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationNext
+  (JNIEnv *, jobject)
+{
+	animation_next();
+}
 }
