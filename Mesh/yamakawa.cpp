@@ -463,8 +463,8 @@ void Recombinator::pattern2(GRegion* gr){
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-	//for(index1=0;index1<4;index1++){
-	//index2 = (index1+1)%4;
+	//for(index1=0;index1<3;index1++){
+	//for(index2=index1+1;index2<4;index2++){
 	diagonal(element,index1,index2);
     two_others(index1,index2,index3,index4);
 
@@ -498,6 +498,7 @@ void Recombinator::pattern2(GRegion* gr){
         }
       }
     }
+	//}
 	//}
   }
 }
