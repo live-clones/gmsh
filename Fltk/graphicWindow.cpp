@@ -2410,98 +2410,6 @@ void status_options_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
   }
   else if(!strcmp(str, "quick_access")){ // quick access menu
-#if 0 // long menu
-    static Fl_Menu_Item menu[] = {
-      { "Axes", 0, quick_access_cb, (void*)"axes",
-        FL_MENU_TOGGLE },
-      { "Projection mode", 0, 0, 0, FL_SUBMENU },
-         { "Orthographic", 0, quick_access_cb, (void*)"orthographic"},
-         { "Perspective", 0, quick_access_cb, (void*)"perspective"},
-         { 0 },
-      { "All general options...", 0, quick_access_cb, (void*)"general",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Geometry points", 0, quick_access_cb, (void*)"geometry_points",
-        FL_MENU_TOGGLE },
-      { "Geometry lines", 0, quick_access_cb, (void*)"geometry_lines",
-        FL_MENU_TOGGLE },
-      { "Geometry surfaces", 0, quick_access_cb, (void*)"geometry_surfaces",
-        FL_MENU_TOGGLE },
-      { "Geometry volumes", 0, quick_access_cb, (void*)"geometry_volumes",
-        FL_MENU_TOGGLE },
-      { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "Mesh nodes", 0, quick_access_cb, (void*)"mesh_points",
-        FL_MENU_TOGGLE },
-      { "Mesh lines", 0, quick_access_cb, (void*)"mesh_lines",
-        FL_MENU_TOGGLE },
-      { "Mesh surface edges", 0, quick_access_cb, (void*)"mesh_surfaces_edges",
-        FL_MENU_TOGGLE },
-      { "Mesh surface faces", 0, quick_access_cb, (void*)"mesh_surfaces_faces",
-        FL_MENU_TOGGLE },
-      { "Mesh volume edges", 0, quick_access_cb, (void*)"mesh_volumes_edges",
-        FL_MENU_TOGGLE },
-      { "Mesh volume faces", 0, quick_access_cb, (void*)"mesh_volumes_faces",
-        FL_MENU_TOGGLE },
-      { "Toggle mesh display", 0, quick_access_cb, (void*)"mesh_toggle" },
-      { "Global mesh size factor", 0, quick_access_cb, (void*)"mesh_size" },
-      { "All mesh options...", 0, quick_access_cb, (void*)"mesh",
-        FL_MENU_DIVIDER, 0, FL_ITALIC },
-      { "View element outlines ", 0, quick_access_cb, (void*)"view_element_outlines",
-        FL_MENU_TOGGLE },
-      { "View normal raise", 0, quick_access_cb, (void*)"view_normal_raise" },
-      { "View intervals", 0, 0, 0, FL_SUBMENU },
-         { "Iso-values", 0, quick_access_cb, (void*)"view_iso"},
-         { "Continuous map", 0, quick_access_cb, (void*)"view_continous"},
-         { "Filled iso-values", 0, quick_access_cb, (void*)"view_filled"},
-         { "Numeric values", 0, quick_access_cb, (void*)"view_numeric"},
-         { 0 },
-      { "View vector display", 0, 0, 0, FL_SUBMENU },
-         { "Line", 0, quick_access_cb, (void*)"view_line"},
-         { "3D arrow", 0, quick_access_cb, (void*)"view_3d_arrow"},
-         { "Displacement", 0, quick_access_cb, (void*)"view_displacement"},
-         { 0 },
-      { "View range", 0, 0, 0, FL_SUBMENU },
-         { "Default", 0, quick_access_cb, (void*)"view_range_default"},
-         { "Per time step", 0, quick_access_cb, (void*)"view_range_per_step"},
-         { 0 },
-      { "All view options...", 0, quick_access_cb, (void*)"view",
-        0, 0, FL_ITALIC },
-      { 0 }
-    };
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[0].set(); else menu[0].clear();
-    for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[6].set(); else menu[6].clear();
-    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[7].set(); else menu[7].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[8].set(); else menu[8].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[9].set(); else menu[9].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[11].set(); else menu[11].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[12].set(); else menu[12].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[13].set(); else menu[13].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[14].set(); else menu[14].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[15].set(); else menu[15].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[16].set(); else menu[16].clear();
-    if(PView::list.empty()){
-      menu[19].flags = 0;
-      for(int i = 20; i < 38; i++) menu[i].hide();
-    }
-    else{
-      menu[19].flags = FL_MENU_DIVIDER;
-      for(int i = 20; i < 38; i++) menu[i].show();
-      menu[20].clear();
-      for(unsigned int i = 0; i < PView::list.size(); i++){
-        if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
-          menu[20].set();
-          break;
-        }
-      }
-    }
-    static Fl_Menu_Item *picked = &menu[17];
-    picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
-                                        (picked && picked->visible()) ? picked :
-                                        &menu[17], 0);
-#else // shorter menu
     static Fl_Menu_Item menu[] = {
       { "Axes", 0, quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
@@ -2596,7 +2504,6 @@ void status_options_cb(Fl_Widget *w, void *data)
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
                                         &menu[21], 0);
-#endif
     if(picked) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }

@@ -135,7 +135,8 @@ void Msg::Init(int argc, char **argv)
   if(argc && argv){
     CTX::instance()->argv0 = std::string(argv[0]);
     // add the directory where the binary is installed to the path where Python
-    // looks for modules
+    // looks for modules, and to the path for executables (this allows us to
+    // find the onelab.py module or subclients automatically)
     addGmshPathToEnvironmentVar("PYTHONPATH");
     addGmshPathToEnvironmentVar("PATH");
   }
