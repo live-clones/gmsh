@@ -338,9 +338,10 @@ class GFace : public GEntity
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () {return &_columns;}
 
-  std::vector<SPoint3> storage1; //directions storage
-  std::vector<SVector3> storage2; //directions storage
-  std::vector<SVector3> storage3; //directions storage
+  std::vector<SPoint3> storage1; //sizes and directions storage
+  std::vector<SVector3> storage2; //sizes and directions storage
+  std::vector<SVector3> storage3; //sizes and directions storage
+  std::vector<double> storage4; //sizes and directions storage
 };
 
 #endif

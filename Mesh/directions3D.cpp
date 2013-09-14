@@ -1013,60 +1013,88 @@ void Frame_field::save_energy(GRegion* gr, const std::string& filename){
 Size_field::Size_field(){}
 
 void Size_field::init_region(GRegion* gr){
-  size_t i;
+#if defined(HAVE_ANN)
+  unsigned int i;
   int j;
-  double local_size;
-  double average_x,average_y;
-  SPoint2 point;
+  int index;
+  double h;
+  double e;
+  SPoint3 point;
   MElement* element;
   MVertex* vertex;
   GFace* gf;
   GModel* model = GModel::current();
   std::list<GFace*> faces;
   std::list<GFace*>::iterator it;
-
+  ANNpoint query;
+  ANNidxArray indices;
+  ANNdistArray distances;
+		
   faces = gr->faces();
-
-  boundary.clear();
+	
+  field.clear();
 
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
-	if(gf->geomType()==GEntity::CompoundSurface){
-	  ((GFaceCompound*)gf)->deleteInternals();
-	  ((GFaceCompound*)gf)->parametrize();
+
+	for(i=0;i<gf->storage1.size();i++){
+	  point = gf->storage1[i];
+	  h = gf->storage4[i];
+
+	  field.push_back(std::pair<SPoint3,double>(point,h));
 	}
-    backgroundMesh::set(gf);
-
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
-
-      average_x = 0.0;
-      average_y = 0.0;
-
-      for(j=0;j<element->getNumVertices();j++){
-        vertex = element->getVertex(j);
-        reparamMeshVertexOnFace(vertex,gf,point);
-        average_x = average_x + point.x();
-        average_y = average_y + point.y();
-      }
-
-      average_x = average_x/element->getNumVertices();
-      average_y = average_y/element->getNumVertices();
-
-      for(j=0;j<element->getNumVertices();j++){
-        vertex = element->getVertex(j);
-        reparamMeshVertexOnFace(vertex,gf,point);
-        local_size = backgroundMesh::current()->operator()(point.x(),point.y(),0.0);
-        boundary.insert(std::pair<MVertex*,double>(vertex,local_size));
-      }
-    }
   }
 
+  ANNpointArray duplicate = annAllocPts(field.size(),3);
+	
+  for(i=0;i<field.size();i++){
+    duplicate[i][0] = field[i].first.x();
+	duplicate[i][1] = field[i].first.y();
+	duplicate[i][2] = field[i].first.z();
+  }
+	
+  kd_tree = new ANNkd_tree(duplicate,field.size(),3);
+
+  boundary.clear();
+	
+  query = annAllocPt(3);
+  indices = new ANNidx[1];
+  distances = new ANNdist[1];
+  
+  index = 0;
+  e = 0.0;
+	
+  for(it=faces.begin();it!=faces.end();it++){
+    gf = *it;
+    
+	for(i=0;i<gf->getNumMeshElements();i++){
+      element = gf->getMeshElement(i);  
+	
+	  for(j=0;j<element->getNumVertices();j++){
+	    vertex = element->getVertex(j);
+	  
+	    query[0] = vertex->x();
+	    query[1] = vertex->y();
+	    query[2] = vertex->z();
+	
+	    kd_tree->annkSearch(query,1,indices,distances,e);
+	    index = indices[0];
+	
+	    boundary.insert(std::pair<MVertex*,double>(vertex,field[index].second));
+	  }
+	}
+  }
+	
   octree = new MElementOctree(model);
+	
+  annDeallocPt(query);
+  delete[] indices;
+  delete[] distances;
+#endif
 }
 
 void Size_field::solve(GRegion* gr){
-  #if defined(HAVE_PETSC)
+#if defined(HAVE_PETSC)
   linearSystem<double>* system = 0;
   system = new linearSystemPETSc<double>;
 
@@ -1132,7 +1160,7 @@ void Size_field::solve(GRegion* gr){
   }
 
   delete system;
-  #endif
+#endif
 }
 
 double Size_field::search(double x,double y,double z){
@@ -1171,18 +1199,6 @@ double Size_field::search(double x,double y,double z){
     }
   }
 
-  return val;
-}
-
-double Size_field::get_ratio(GFace* gf,SPoint2 point){
-  double val;
-  double uv[2];
-  double tab[3];
-
-  uv[0] = point.x();
-  uv[1] = point.y();
-  buildMetric(gf,uv,tab);
-  val = 1.0/pow(tab[0]*tab[2]-tab[1]*tab[1],0.25);
   return val;
 }
 
@@ -1280,9 +1296,15 @@ GRegion* Size_field::test(){
 }
 
 void Size_field::clear(){
-  backgroundMesh::unset();
   delete octree;
+  field.clear();
   boundary.clear();
+#if defined(HAVE_ANN)
+  delete kd_tree->thePoints();
+  delete kd_tree;
+  annClose();
+#endif
+	
 }
 
 /****************class Nearest_point****************/
@@ -1552,7 +1574,7 @@ void Nearest_point::print_field(GRegion* gr){
 	  val = search(x,y,z,vec);
 	  if(val){
 	    print_segment(SPoint3(x+k*vec.x(),y+k*vec.y(),z+k*vec.z()),
-			  SPoint3(x-k*vec.x(),y-k*vec.y(),z-k*vec.z()),file);
+					  SPoint3(x-k*vec.x(),y-k*vec.y(),z-k*vec.z()),file);
 	  }
 	}
   }
@@ -1579,11 +1601,11 @@ GRegion* Nearest_point::test(){
 void Nearest_point::clear(){
   field.clear();
   vicinity.clear();
-  #if defined(HAVE_ANN)
+#if defined(HAVE_ANN)
   delete kd_tree->thePoints();
   delete kd_tree;
   annClose();
-  #endif
+#endif
 }
 
 /****************static declarations****************/
@@ -1599,8 +1621,12 @@ ANNkd_tree* Frame_field::kd_tree;
 ANNkd_tree* Frame_field::annTree;
 #endif
 
+std::vector<std::pair<SPoint3,double> > Size_field::field;
 std::map<MVertex*,double> Size_field::boundary;
 MElementOctree* Size_field::octree;
+#if defined(HAVE_ANN)
+ANNkd_tree* Size_field::kd_tree;
+#endif
 
 std::vector<SPoint3> Nearest_point::field;
 std::vector<MElement*> Nearest_point::vicinity;

@@ -2509,6 +2509,7 @@ void directions_storage(GFace* gf){
   int j;
   MVertex* vertex;
   MElement* element;
+  SPoint2 point;
   SVector3 v1;
   SVector3 v2;
   MElementOctree* octree;
@@ -2531,6 +2532,7 @@ void directions_storage(GFace* gf){
   gf->storage1.clear();
   gf->storage2.clear();
   gf->storage3.clear();
+  gf->storage4.clear();
 	
   for(it=vertices.begin();it!=vertices.end();it++){
     ok = 0;
@@ -2548,6 +2550,8 @@ void directions_storage(GFace* gf){
       gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
 	  gf->storage2.push_back(v1);
 	  gf->storage3.push_back(v2);
+	  reparamMeshVertexOnFace(*it,gf,point);
+	  gf->storage4.push_back(backgroundMesh::current()->operator()(point.x(),point.y(),0.0));
 	}  
   }
 	

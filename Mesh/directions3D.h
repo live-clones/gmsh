@@ -70,14 +70,17 @@ class Frame_field{
 
 class Size_field{
  private:
+  static std::vector<std::pair<SPoint3,double> > field;
   static std::map<MVertex*,double> boundary;
   static MElementOctree* octree;
+#if defined(HAVE_ANN)
+  static ANNkd_tree* kd_tree;
+#endif
   Size_field();
  public:
   static void init_region(GRegion*);
   static void solve(GRegion*);
   static double search(double,double,double);
-  static double get_ratio(GFace*,SPoint2);
   static void print_field(GRegion*);
   static GRegion* test();
   static void clear();
