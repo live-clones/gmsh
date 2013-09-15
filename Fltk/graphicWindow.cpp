@@ -2504,7 +2504,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
                                         &menu[21], 0);
-    if(picked) picked->do_callback(0, picked->user_data());
+    if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
   else if(!strcmp(str, "S")){ // mouse selection
