@@ -944,6 +944,7 @@ static void setClosed(const std::string &path, std::vector<T> &ps,
 
 static void setOpenedClosed(Fl_Tree_Item *item, int reason)
 {
+  return ;
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
   std::vector<onelab::region> regions;
@@ -1782,6 +1783,20 @@ bool onelabGroup::isBusy()
   std::string s(_butt[1]->label());
   if(s == "Run") return false;
   return true;
+}
+
+std::string onelabGroup::getPath(Fl_Tree_Item *item)
+{
+  if(!item){
+    Msg::Error("No item for path");
+    return "";
+  }
+  char path[1024];
+  if(_tree->item_pathname(path, sizeof(path), item)){
+    Msg::Error("Could not get path for item");
+    return "";
+  }
+  return std::string(path);
 }
 
 void onelabGroup::rebuildSolverList()
