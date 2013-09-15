@@ -944,7 +944,6 @@ static void setClosed(const std::string &path, std::vector<T> &ps,
 
 static void setOpenedClosed(Fl_Tree_Item *item, int reason)
 {
-  return ;
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
   std::vector<onelab::region> regions;
