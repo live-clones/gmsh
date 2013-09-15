@@ -976,6 +976,7 @@ static void onelab_tree_cb(Fl_Widget *w, void *data)
   setOpenedClosed(item, tree->callback_reason());
 }
 
+#if 0 // FIXME until the FLTK bug with widgets is solved
 static void onelab_subtree_cb(Fl_Widget *w, void *data)
 {
   Fl_Tree_Item *n = (Fl_Tree_Item*)data;
@@ -991,6 +992,7 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
   setOpenedClosed(n, reason);
   FlGui::instance()->onelab->redrawTree();
 }
+#endif
 
 void onelabGroup::_computeWidths()
 {
@@ -1659,11 +1661,19 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     if(n->has_children()){
       int ww = _baseWidth - (n->depth() + 1) * _indent;
       _tree->begin();
+#if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow
+      // the widget is badly positioned and overlaps the open icon, leading to
+      // a corrupted Fl_Tree_Item)
       Fl_Button *but = new Fl_Button(1, 1, ww, 1);
       but->box(FL_NO_BOX);
       but->clear_visible_focus();
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       but->callback(onelab_subtree_cb, (void*)n);
+#else
+      Fl_Box *but = new Fl_Box(1, 1, ww, 1);
+      //but->labelfont(FL_HELVETICA_ITALIC);
+      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+#endif
       _treeWidgets.push_back(but);
       onelab::string o(n->label());
       but->copy_label(o.getShortName().c_str());
