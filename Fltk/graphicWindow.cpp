@@ -2394,22 +2394,59 @@ void quick_access_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void model_switch_cb(Fl_Widget* w, void *data)
+{
+  int index = (intptr_t)data;
+  GModel::current(index);
+  SetBoundingBox();
+  for(unsigned int i = 0; i < GModel::list.size(); i++)
+    GModel::list[i]->setVisibility(0);
+  GModel::current()->setVisibility(1);
+  CTX::instance()->mesh.changed = ENT_ALL;
+  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
+  FlGui::instance()->resetVisibility();
+  drawContext::global()->draw();
+}
+
 void status_options_cb(Fl_Widget *w, void *data)
 {
-  const char *str = (const char*)data;
-  if(!strcmp(str, "model")){ // model selection
-    modelChooser();
+  if(!data) return;
+  std::string what((const char*)data);
+
+  if(what == "model"){ // model selection
+    std::vector<char*> tofree;
+    std::vector<Fl_Menu_Item> menu;
+    int selected = 0;
+    for(unsigned int i = 0; i < GModel::list.size(); i++){
+      char tmp[256];
+      sprintf(tmp, "Model [%d] <<%s>> ", i, GModel::list[i]->getName().c_str());
+      char *str = strdup(tmp);
+      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)i, FL_MENU_RADIO};
+      if(GModel::list[i] == GModel::current()){
+        selected = i;
+        menuItem.flags |= FL_MENU_VALUE;
+      }
+      menu.push_back(menuItem);
+      tofree.push_back(str);
+    }
+    Fl_Menu_Item it = {0};
+    menu.push_back(it);
+    Fl_Menu_Item *m = (Fl_Menu_Item*)(&menu[0])->popup(Fl::event_x(), Fl::event_y(),
+                                                       0, &menu[selected], 0);
+    if(m) m->do_callback(0);
+    for(unsigned int i = 0; i < tofree.size(); i++) free(tofree[i]);
+    drawContext::global()->draw();
   }
-  else if(!strcmp(str, "?")){ // display options
+  else if(what == "?"){ // display options
     help_options_cb(0, 0);
     FlGui::instance()->help->options->show();
   }
-  else if(!strcmp(str, "p")){ // toggle projection mode
+  else if(what == "p"){ // toggle projection mode
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI,
                              !opt_general_orthographic(0, GMSH_GET, 0));
     drawContext::global()->draw();
   }
-  else if(!strcmp(str, "quick_access")){ // quick access menu
+  else if(what == "quick_access"){ // quick access menu
     static Fl_Menu_Item menu[] = {
       { "Axes", 0, quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
@@ -2507,7 +2544,7 @@ void status_options_cb(Fl_Widget *w, void *data)
     if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
-  else if(!strcmp(str, "S")){ // mouse selection
+  else if(what == "S"){ // mouse selection
     if(CTX::instance()->mouseSelection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)

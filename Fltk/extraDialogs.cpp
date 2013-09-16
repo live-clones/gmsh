@@ -89,64 +89,6 @@ int arrowEditor(const char *title, double &a, double &b, double &c)
   return 0;
 }
 
-// Model chooser
-
-static void model_switch_cb(Fl_Widget* w, void *data)
-{
-  Fl_Select_Browser *b = (Fl_Select_Browser *)w;
-  if(b->value()){
-    GModel::current(b->value() - 1);
-    SetBoundingBox();
-    for(unsigned int i = 0; i < GModel::list.size(); i++)
-      GModel::list[i]->setVisibility(0);
-    GModel::current()->setVisibility(1);
-  }
-  if(w->window()) w->window()->hide();
-  CTX::instance()->mesh.changed = ENT_ALL;
-  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
-  FlGui::instance()->resetVisibility();
-  drawContext::global()->draw();
-}
-
-int modelChooser()
-{
-  struct _menu{
-    Fl_Menu_Window *window;
-    Fl_Hold_Browser *browser;
-    Fl_Check_Button *butt;
-  };
-  static _menu *menu = 0;
-
-  const int WW = 200;
-
-  if(!menu){
-    menu = new _menu;
-    menu->window = new Fl_Menu_Window(WW, 6 * BH);
-    if(CTX::instance()->nonModalWindows) menu->window->set_non_modal();
-    menu->window->border(0);
-    Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Select active model:");
-    l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-    menu->browser = new Fl_Hold_Browser(0, BH, WW, 5 * BH);
-    menu->browser->callback(model_switch_cb);
-    menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
-    menu->window->end();
-  }
-
-  menu->window->hotspot(menu->window);
-  menu->browser->clear();
-  for(unsigned int i = 0; i < GModel::list.size(); i++){
-    char tmp[256];
-    sprintf(tmp, "Model [%d] <<%s>>", i, GModel::list[i]->getName().c_str());
-    menu->browser->add(tmp);
-    if(GModel::list[i] == GModel::current()) menu->browser->value(i + 1);
-  }
-
-  if(menu->window->non_modal() && !menu->window->shown())
-    menu->window->show(); // fix ordering
-  menu->window->show();
-  return 0;
-}
-
 // Connection and pattern choosers
 
 class historyBrowser : public Fl_Hold_Browser {
