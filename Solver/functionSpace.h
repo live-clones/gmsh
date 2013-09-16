@@ -69,6 +69,7 @@ class FunctionSpaceBase
   virtual ~FunctionSpaceBase(){}
   virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
+  virtual FunctionSpaceBase* clone(const std::vector<int>& comp) const {return NULL;}
 };
 
 template<class T>
