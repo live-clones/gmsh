@@ -3,15 +3,24 @@ package org.geuz.onelab;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -19,10 +28,16 @@ import android.widget.TextView;
 
 public class ModelFragment extends Fragment{
 
-	Gmsh _gmsh;
-	mGLSurfaceView _glView;
-	TextView _progress;
-	LinearLayout _progressLayout;
+	private Gmsh _gmsh;
+	private mGLSurfaceView _glView;
+	private TextView _progress;
+	private LinearLayout _progressLayout;
+	private LinearLayout _controlBarLayout;
+	private GestureDetector _gestureListener;
+	private Timer _animation;
+	private Handler _hideDelay;
+	
+	final Runnable hideControlsRunnable = new Runnable() {public void run() {hideControlBar();}};
 	
 	public static ModelFragment newInstance(Gmsh g) {
 		ModelFragment fragment = new ModelFragment();
@@ -52,6 +67,50 @@ public class ModelFragment extends Fragment{
 		_glView.setRenderer(renderer);
 		_glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		_glView.requestRender();
+		_hideDelay = new Handler();
+		this.postDelay();
+		_gestureListener = new GestureDetector(getActivity(), new OnGestureListener() {
+			public boolean onSingleTapUp(MotionEvent e) {
+				if(View.VISIBLE == _controlBarLayout.getVisibility())
+					hideControlBar();
+				else
+					showControlBar();
+				return true;
+			}
+			
+			public void onShowPress(MotionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+					float distanceY) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+			
+			public void onLongPress(MotionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+					float velocityY) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+			
+			public boolean onDown(MotionEvent e) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+		});
+		_glView.setOnTouchListener(new View.OnTouchListener() {
+			
+			public boolean onTouch(View v, MotionEvent event) {
+				return _gestureListener.onTouchEvent(event);
+			}
+		});
 		glViewLayout.addView(_glView);
 		_progressLayout = new LinearLayout(container.getContext());
 		ProgressBar bar = new ProgressBar(container.getContext());
@@ -70,7 +129,73 @@ public class ModelFragment extends Fragment{
 			    RelativeLayout.LayoutParams.WRAP_CONTENT);
 		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		glViewLayout.addView(_progressLayout, layoutParams);
+		_controlBarLayout = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.control_bar, null);
+		ImageButton playPauseButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPlay);
+		playPauseButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				postDelay();
+				if(((ImageButton)v).getContentDescription().equals("play")) {
+					((ImageButton)v).setContentDescription("pause");
+					((ImageButton)v).setImageResource(android.R.drawable.ic_media_pause);
+		    		_animation = new Timer();
+		    		_animation.schedule(new TimerTask() {
+		    			public void run()  {
+		    				_gmsh.animationNext();
+		    				requestRender();
+		    			} }, 0, 500);
+				}
+				else {
+					((ImageButton)v).setContentDescription("play");
+					((ImageButton)v).setImageResource(android.R.drawable.ic_media_play);
+					_animation.cancel();
+				}
+			}
+		});
+		ImageButton nextButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlNext);
+		nextButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				postDelay();
+		    	_gmsh.animationNext();
+		    	requestRender();
+			}
+		});
+		ImageButton prevButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPrev);
+		prevButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				postDelay();
+		    	_gmsh.animationPrev();
+		    	requestRender();
+			}
+		});
+		layoutParams = new RelativeLayout.LayoutParams(
+			    RelativeLayout.LayoutParams.MATCH_PARENT, 
+			    RelativeLayout.LayoutParams.WRAP_CONTENT);
+		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+		glViewLayout.addView(_controlBarLayout, layoutParams);
 		return rootView;
+	}
+	public void postDelay(int delay) {
+		_hideDelay.removeCallbacks(hideControlsRunnable);
+		_hideDelay.postDelayed(hideControlsRunnable, delay);
+	}
+	public void postDelay() {
+		this.postDelay(6000);
+	}
+	public void showControlBar() {
+		if(getActivity() == null) return;
+		this.postDelay();
+		getActivity().getActionBar().show();
+		Animation bottomUp = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_in);
+		_controlBarLayout.setVisibility(View.VISIBLE);
+		_controlBarLayout.startAnimation(bottomUp);
+	}
+	public void hideControlBar() {
+		if(getActivity() == null) return;
+		_hideDelay.removeCallbacks(hideControlsRunnable);
+		getActivity().getActionBar().hide();
+		Animation bottomDown = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_out);
+		_controlBarLayout.startAnimation(bottomDown);
+		_controlBarLayout.setVisibility(View.INVISIBLE);
 	}
 	public void showProgress(String progress) {
 		_progressLayout.setAlpha(1);

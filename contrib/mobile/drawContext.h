@@ -22,6 +22,7 @@
 void drawArray(VertexArray *va, int type, bool useColorArray=false, bool useNormalArray=false);
 int onelab_cb(std::string);
 void animation_next();
+void animation_prev();
 
 class drawContext{
 private:

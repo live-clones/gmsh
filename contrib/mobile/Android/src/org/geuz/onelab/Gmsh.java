@@ -13,7 +13,6 @@ public class Gmsh implements Parcelable {
 		System.loadLibrary("Gmsh");
 		System.loadLibrary("GetDP");
 		System.loadLibrary("Onelab");
-        
     }
 	private native long init(String name); // Init Gmsh
 	private native void loadFile(long ptr, String name); // load a file(OpenProjet)
@@ -33,6 +32,7 @@ public class Gmsh implements Parcelable {
 	public native int onelabCB(String action); // Call onelab
 	
 	public native void animationNext();
+	public native void animationPrev();
 	
 	/** Java CLASS **/
 	private long ptr;

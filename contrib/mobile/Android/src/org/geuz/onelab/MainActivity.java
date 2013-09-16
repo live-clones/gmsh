@@ -4,8 +4,6 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -40,7 +38,6 @@ public class MainActivity extends Activity{
 	private OptionsFragment _optionsFragment;
 	private ArrayList<String> _errors = new ArrayList<String>();
 	private Dialog _errorDialog;
-	private Timer _animation;
 
 	public MainActivity() {
 	}
@@ -87,6 +84,7 @@ public class MainActivity extends Activity{
 	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		outState.putBoolean("Compute", _compute);
 		super.onSaveInstanceState(outState);
 	}
 	
@@ -101,10 +99,13 @@ public class MainActivity extends Activity{
     	_runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
     	MenuItem shareMenuItem = menu.add(R.string.menu_share);
     	shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-    	MenuItem playPauseMenuItem = menu.add("Play animation");
-    	playPauseMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return true;
     }
+	@Override
+	public boolean onMenuOpened(int featureId, Menu menu) {
+		_modelFragment.postDelay();
+		return super.onMenuOpened(featureId, menu);
+	}
 	@Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
     	if (item.getTitle().equals(getString(R.string.menu_parameters))) {
@@ -115,6 +116,7 @@ public class MainActivity extends Activity{
 			_modelFragment.requestRender();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_run))){
+    		if(_modelFragment != null) _modelFragment.hideControlBar();
     		new Run().execute();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_stop))){
@@ -144,33 +146,6 @@ public class MainActivity extends Activity{
     			shareIntent.setType("image/jpeg");
     			startActivity(Intent.createChooser(shareIntent, getString(R.string.title_share)));
     		}
-    	}
-    	else if(item.getTitle().equals("Play animation")) {
-    		if(this._compute) {
-				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-    			_errorDialog = dialogBuilder.setTitle("Can't start animation")
-    			.setMessage("The computing have to be finished before you can play animation.")
-    			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				})
-    			.show();
-    		}
-    		else {
-	    		item.setTitle("Stop animation");
-	    		_animation = new Timer();
-	    		_animation.schedule(new TimerTask() {
-	    			public void run()  {
-	    				_gmsh.animationNext();
-	    				_modelFragment.requestRender();
-	    			} }, 2000, 1);
-    		}
-    	}
-    	else if(item.getTitle().equals("Stop animation")) {
-    		item.setTitle("Play animation");
-    		_animation.cancel();
     	}
 		else if(item.getItemId() == android.R.id.home) {
 			if(this._compute) {
@@ -275,6 +250,7 @@ public class MainActivity extends Activity{
 	
 	@Override
 	public void onLowMemory() {
+		if(!_compute) return;
 		_gmsh.onelabCB("stop");
 		Toast.makeText(this, "Low memory !!! computing is going to stop", Toast.LENGTH_LONG).show();
 		super.onLowMemory();
@@ -282,9 +258,14 @@ public class MainActivity extends Activity{
 	
 	@Override
 	public void onTrimMemory(int level) {
+		if(!_compute) return;
 		if(level == Activity.TRIM_MEMORY_COMPLETE){
 			_gmsh.onelabCB("stop");
 			notifyInterruptComputing();
+			_notify = false;
+		}
+		else if(level == Activity.TRIM_MEMORY_COMPLETE) {
+			// TODO
 		}
 		super.onTrimMemory(level);
 	}

@@ -309,4 +309,9 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationNext
 {
 	animation_next();
 }
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
+  (JNIEnv *, jobject)
+{
+	animation_prev();
+}
 }
