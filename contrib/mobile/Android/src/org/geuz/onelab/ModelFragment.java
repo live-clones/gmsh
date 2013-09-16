@@ -33,7 +33,7 @@ public class ModelFragment extends Fragment{
 	private TextView _progress;
 	private LinearLayout _progressLayout;
 	private LinearLayout _controlBarLayout;
-	private GestureDetector _gestureListener;
+	private GestureDetector _gestureDetector;
 	private Timer _animation;
 	private Handler _hideDelay;
 	
@@ -69,46 +69,29 @@ public class ModelFragment extends Fragment{
 		_glView.requestRender();
 		_hideDelay = new Handler();
 		this.postDelay();
-		_gestureListener = new GestureDetector(getActivity(), new OnGestureListener() {
-			public boolean onSingleTapUp(MotionEvent e) {
+		_gestureDetector = new GestureDetector(getActivity(), new OnGestureListener() {
+			public boolean onSingleTapUp(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
+			public void onShowPress(MotionEvent e) {} // UNUSED Auto-generated method stub
+			public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) { return false; } // UNUSED Auto-generated method stub
+			public void onLongPress(MotionEvent e) {} // UNUSED Auto-generated method stub
+			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { return false; } // UNUSED Auto-generated method stub
+			public boolean onDown(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
+		});
+		_gestureDetector.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener() {
+			public boolean onSingleTapConfirmed(MotionEvent e) {
 				if(View.VISIBLE == _controlBarLayout.getVisibility())
 					hideControlBar();
 				else
 					showControlBar();
 				return true;
 			}
-			
-			public void onShowPress(MotionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
-					float distanceY) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-			
-			public void onLongPress(MotionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-					float velocityY) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-			
-			public boolean onDown(MotionEvent e) {
-				// TODO Auto-generated method stub
-				return false;
-			}
+			public boolean onDoubleTapEvent(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
+			public boolean onDoubleTap(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
 		});
 		_glView.setOnTouchListener(new View.OnTouchListener() {
 			
 			public boolean onTouch(View v, MotionEvent event) {
-				return _gestureListener.onTouchEvent(event);
+				return _gestureDetector.onTouchEvent(event);
 			}
 		});
 		glViewLayout.addView(_glView);
@@ -130,7 +113,9 @@ public class ModelFragment extends Fragment{
 		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		glViewLayout.addView(_progressLayout, layoutParams);
 		_controlBarLayout = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.control_bar, null);
-		ImageButton playPauseButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPlay);
+		final ImageButton prevButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPrev);
+		final ImageButton playPauseButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPlay);
+		final ImageButton nextButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlNext);
 		playPauseButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();
@@ -143,15 +128,18 @@ public class ModelFragment extends Fragment{
 		    				_gmsh.animationNext();
 		    				requestRender();
 		    			} }, 0, 500);
+		    		prevButton.setEnabled(false);
+		    		nextButton.setEnabled(false);
 				}
 				else {
 					((ImageButton)v).setContentDescription("play");
 					((ImageButton)v).setImageResource(android.R.drawable.ic_media_play);
 					_animation.cancel();
+					prevButton.setEnabled(true);
+		    		nextButton.setEnabled(true);
 				}
 			}
 		});
-		ImageButton nextButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlNext);
 		nextButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();
@@ -159,7 +147,6 @@ public class ModelFragment extends Fragment{
 		    	requestRender();
 			}
 		});
-		ImageButton prevButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPrev);
 		prevButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();

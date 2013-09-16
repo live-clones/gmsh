@@ -198,7 +198,7 @@ public class MainActivity extends Activity{
 			_runStopMenuItem.setTitle(R.string.menu_run);
 			if(_modelFragment != null) _modelFragment.hideProgress();
 			_compute = false;
-			if(_notify) notifyEndOfCompute();
+			if(_notify) notifyEndComputing();
 			super.onPostExecute(result);
 		}
     	
@@ -261,31 +261,39 @@ public class MainActivity extends Activity{
 		if(!_compute) return;
 		if(level == Activity.TRIM_MEMORY_COMPLETE){
 			_gmsh.onelabCB("stop");
-			notifyInterruptComputing();
+			notifyEndComputing("The computing had to stop because your device ran out of memory");
 			_notify = false;
 		}
 		else if(level == Activity.TRIM_MEMORY_COMPLETE) {
-			// TODO
+			notifyComputing("Computing in progress - low memory", true);
 		}
 		super.onTrimMemory(level);
 	}
 	
-	private void notifyComputing() {
+	private void notifyComputing(String msg, boolean alert) {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 	    Notification.Builder notifyBuilder = new Notification.Builder(this);
 		notifyBuilder.setContentTitle("ONELAB")
 			.setContentIntent(pendingIntent)
-		    .setContentText("Computing in progress")
+		    .setContentText(msg)
 		    .setSmallIcon(R.drawable.ic_launcher)
 		    .setProgress(0, 0, true);
-		NotificationManager mNotificationManager =
-			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		if(alert) notifyBuilder.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(1337, notifyBuilder.getNotification());
 	}
 	
-	private void notifyEndOfCompute() {
+	private void notifyComputing() {
+		notifyComputing("Computing in progress", false);
+	}
+	
+	private void notifyEndComputing() {
+		notifyEndComputing("The computing is finished");
+	}
+	
+	private void notifyEndComputing(String msg) {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
@@ -296,26 +304,8 @@ public class MainActivity extends Activity{
 		        .setDefaults(Notification.DEFAULT_ALL)
 		        .setAutoCancel(true)
 		        .setProgress(0, 0, false)
-		        .setContentText("The computing is finished");
-		NotificationManager mNotificationManager =
-			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.notify(1337, notifyBuilder.getNotification());
-	}
-	
-	private void notifyInterruptComputing() {
-		Intent intent = new Intent(this, MainActivity.class);
-	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-	    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-		Notification.Builder notifyBuilder = new Notification.Builder(this)
-		        .setSmallIcon(R.drawable.ic_launcher)
-		        .setContentIntent(pendingIntent)
-		        .setContentTitle("ONELAB")
-		        .setDefaults(Notification.DEFAULT_ALL)
-		        .setAutoCancel(true)
-		        .setProgress(0, 0, false)
-		        .setContentText("The computing had to stop because your device ran out of memory");
-		NotificationManager mNotificationManager =
-			    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		        .setContentText(msg);
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(1337, notifyBuilder.getNotification());
 	}
 

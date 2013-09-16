@@ -370,7 +370,7 @@ void drawContext::drawScale()
 		PView *p = PView::list[i];
 		PViewOptions *opt = p->getOptions();
 		if(!opt->visible) continue;
-    
+
 		double width = 6*(this->_right -this->_left) / 10.;
 		double height = (this->_top - this->_bottom) / 20.;
 		double box = width / (opt->nbIso ? opt->nbIso : 1);
@@ -462,6 +462,7 @@ void drawContext::drawScale()
 		glDisableClientState(GL_VERTEX_ARRAY);
 		free(vertex);
 		free(color);
+
 		char label[1024];
 		drawString *lbl = new drawString(p->getData()->getName().c_str(), 20);
 		lbl->draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
@@ -472,6 +473,7 @@ void drawContext::drawScale()
 			val->setText(label);
 			val->draw(xmin+i*width/2, ymin+height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
 		}
+    
 		nPview++;
 	}
 	glPopMatrix();
@@ -575,6 +577,8 @@ void drawContext::drawView()
                    this->_bottom + (this->_top - this->_bottom)/15.0,
                     0, (this->_top - this->_bottom)/20.);
 	checkGlError("Draw axes");
+	this->drawScale();
+	checkGlError("Draw scales");
   glEnable(GL_DEPTH_TEST);
 	this->drawMesh();
 	checkGlError("Draw mesh");
@@ -582,8 +586,6 @@ void drawContext::drawView()
 	checkGlError("Draw geometry");
 	this->drawPost();
 	checkGlError("Draw post-pro");
-	this->drawScale();
-	checkGlError("Draw scales");
   glDisable(GL_DEPTH_TEST);
 }
 
