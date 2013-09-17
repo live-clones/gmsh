@@ -573,12 +573,6 @@ void drawContext::drawView()
 	checkGlError("Initialize position");
 
 	//
-	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
-                   this->_bottom + (this->_top - this->_bottom)/15.0,
-                    0, (this->_top - this->_bottom)/20.);
-	checkGlError("Draw axes");
-	this->drawScale();
-	checkGlError("Draw scales");
   glEnable(GL_DEPTH_TEST);
 	this->drawMesh();
 	checkGlError("Draw mesh");
@@ -587,6 +581,12 @@ void drawContext::drawView()
 	this->drawPost();
 	checkGlError("Draw post-pro");
   glDisable(GL_DEPTH_TEST);
+	this->drawScale();
+	checkGlError("Draw scales");
+	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
+                   this->_bottom + (this->_top - this->_bottom)/15.0,
+                    0, (this->_top - this->_bottom)/20.);
+	checkGlError("Draw axes");
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)
