@@ -223,11 +223,11 @@ int PViewDataGModel::getNumTimeSteps()
   return _steps.size();
 }
 
-int PViewDataGModel::getFirstNonEmptyTimeStep()
+int PViewDataGModel::getFirstNonEmptyTimeStep(int start)
 {
-  for(unsigned int i = 0; i < _steps.size(); i++)
+  for(unsigned int i = start; i < _steps.size(); i++)
     if(_steps[i]->getNumData()) return i;
-  return 0;
+  return start;
 }
 
 double PViewDataGModel::getTime(int step)

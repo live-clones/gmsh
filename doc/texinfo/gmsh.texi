@@ -1641,6 +1641,11 @@ current file.
 @item Draw;
 Redraws the scene.
 
+@item DrawForceChanged;
+Same as @code{Draw}, but force the mesh and post-processing vertex
+arrays to be regenerated. Useful e.g. for creating animations with
+changing clipping planes, etc.
+
 @item BoundingBox;
 Recomputes the bounding box of the scene (which is normally computed only
 after new geometrical entities are added or after files are included or

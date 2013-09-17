@@ -110,7 +110,7 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tToday tCpu tMemory tSyncModel
+%token tBoundingBox tDraw tDrawForceChanged tToday tCpu tMemory tSyncModel
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -2867,6 +2867,14 @@ Command :
     {
 #if defined(HAVE_OPENGL)
       drawContext::global()->draw();
+#endif
+    }
+   | tDrawForceChanged tEND
+    {
+#if defined(HAVE_OPENGL)
+     CTX::instance()->mesh.changed = ENT_ALL;
+     for(unsigned int index = 0; index < PView::list.size(); index++)
+       PView::list[index]->setChanged(true);
 #endif
     }
    | tCreateTopology tEND

@@ -484,10 +484,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()){
-    // go directly to the first non-empty step
+    // go directly to the first non-empty step after the one that is requested
     for(unsigned int i = numViewsBefore; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI,
-                        PView::list[i]->getData()->getFirstNonEmptyTimeStep());
+                        PView::list[i]->getData()->getFirstNonEmptyTimeStep
+                        (opt_view_timestep(i, GMSH_GET, 0)));
     FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(), false);
   }
 #endif

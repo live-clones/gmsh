@@ -81,7 +81,7 @@ class PViewData {
 
   // get number of time steps in the data
   virtual int getNumTimeSteps() = 0;
-  virtual int getFirstNonEmptyTimeStep(){ return 0; }
+  virtual int getFirstNonEmptyTimeStep(int start=0){ return start; }
 
   // get the time value associated with the step-th time step
   virtual double getTime(int step){ return 0.; }
