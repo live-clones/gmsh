@@ -21,6 +21,7 @@ class discreteFace : public GFace {
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                                   double *curvMax, double *curvMin) const;
+  virtual bool haveParametrization() { return getCompound(); }
   GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, 
