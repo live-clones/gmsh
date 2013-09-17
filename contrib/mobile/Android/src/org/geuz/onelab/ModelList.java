@@ -10,6 +10,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class ModelList extends Activity {
 	
@@ -113,7 +115,12 @@ public class ModelList extends Activity {
 			Intent fileBrowserIntent = new Intent();
 			fileBrowserIntent.setAction(Intent.ACTION_GET_CONTENT);
 			fileBrowserIntent.setType("file/*");
-			startActivityForResult(fileBrowserIntent, 1);
+			try {
+				startActivityForResult(fileBrowserIntent, 1);
+			}
+			catch(ActivityNotFoundException e) {
+				Toast.makeText(this, "No application found on your device to open the files.", Toast.LENGTH_LONG).show();
+			}
 		}
 		return super.onMenuItemSelected(featureId, item);
 	}

@@ -264,7 +264,7 @@ public class MainActivity extends Activity{
 			notifyEndComputing("The computing had to stop because your device ran out of memory");
 			_notify = false;
 		}
-		else if(level == Activity.TRIM_MEMORY_COMPLETE) {
+		else if(level == Activity.TRIM_MEMORY_MODERATE) {
 			notifyComputing("Computing in progress - low memory", true);
 		}
 		super.onTrimMemory(level);

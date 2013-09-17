@@ -30,7 +30,7 @@ public class Gmsh implements Parcelable {
 	public native String[] getPView(); // get a list of PViews
 	public native void setPView(int position, int intervalsType,int visible,int nbIso, float raisez); // Change options for a PView
 	public native int onelabCB(String action); // Call onelab
-	
+
 	public native void animationNext();
 	public native void animationPrev();
 	

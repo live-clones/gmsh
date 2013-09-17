@@ -136,7 +136,7 @@ public class ModelFragment extends Fragment{
 					((ImageButton)v).setImageResource(android.R.drawable.ic_media_play);
 					_animation.cancel();
 					prevButton.setEnabled(true);
-		    		nextButton.setEnabled(true);
+					nextButton.setEnabled(true);
 				}
 			}
 		});
@@ -171,7 +171,7 @@ public class ModelFragment extends Fragment{
 	public void showControlBar() {
 		if(getActivity() == null) return;
 		this.postDelay();
-		getActivity().getActionBar().show();
+		//getActivity().getActionBar().show();
 		Animation bottomUp = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_in);
 		_controlBarLayout.setVisibility(View.VISIBLE);
 		_controlBarLayout.startAnimation(bottomUp);
@@ -179,7 +179,7 @@ public class ModelFragment extends Fragment{
 	public void hideControlBar() {
 		if(getActivity() == null) return;
 		_hideDelay.removeCallbacks(hideControlsRunnable);
-		getActivity().getActionBar().hide();
+		//getActivity().getActionBar().hide();
 		Animation bottomDown = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_out);
 		_controlBarLayout.startAnimation(bottomDown);
 		_controlBarLayout.setVisibility(View.INVISIBLE);

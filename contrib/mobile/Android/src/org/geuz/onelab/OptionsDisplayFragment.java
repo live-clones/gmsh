@@ -131,7 +131,7 @@ public class OptionsDisplayFragment extends Fragment{
 					if(mListener != null) mListener.OnModelOptionsChanged();
 				}
 			});
-        	button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        	button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         	button.setBackgroundColor(Color.TRANSPARENT);
         	button.setGravity(Gravity.RIGHT);
 			layout.addView(checkbox);
