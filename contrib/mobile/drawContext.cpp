@@ -694,6 +694,16 @@ int number_of_animation() {
 	return ret;
 }
 
+void set_animation(int step) {
+	for(unsigned int i = 0; i < PView::list.size(); i++){
+		PView * p = PView::list[i];
+		if(p->getOptions()->visible){
+			p->getOptions()->timeStep = step;
+			p->setChanged(true);
+		}
+	}	
+}
+
 int animation_next() {
 	int ret = 0;
 	for(unsigned int i = 0; i < PView::list.size(); i++){

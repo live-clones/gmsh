@@ -320,4 +320,9 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
 {
 	return animation_prev();
 }
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setAnimation
+  (JNIEnv *, jobject, jint animation)
+{
+	set_animation(animation);
+}
 }

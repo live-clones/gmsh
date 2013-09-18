@@ -24,6 +24,7 @@ int onelab_cb(std::string);
 int animation_next();
 int animation_prev();
 int number_of_animation();
+void set_animation(int step);
 
 class drawContext{
 private:

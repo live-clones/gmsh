@@ -35,7 +35,8 @@ public class Gmsh implements Parcelable {
 	public native int numberOfAnimation();
 	public native int animationNext();
 	public native int animationPrev();
-	
+	public native void setAnimation(int animation);
+
 	/** Java CLASS **/
 	private long ptr;
 	private Handler handler;
