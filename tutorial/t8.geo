@@ -87,7 +87,9 @@ For num In {1:3}
     General.RotationZ += 0.1;
 
     Sleep 0.01; // sleep for 0.01 second
-    Draw; // draw the scene
+    Draw; // draw the scene (one could use DrawForceChanged instead to force the
+          // reconstruction of the vertex arrays, e.g. if changing element
+          // clipping)
 
     If (num == 3)
       // The `Print' command saves the graphical window; the `Sprintf'
