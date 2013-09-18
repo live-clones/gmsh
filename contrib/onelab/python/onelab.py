@@ -178,8 +178,8 @@ class client :
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
       p.attributes={'Highlight':'AliceBlue'}
-    self._define_parameter(p)
-    return p.value
+    value = self._define_parameter(p)
+    return value
   
   def setNumber(self, name, **param):
     if not self.socket :
@@ -203,8 +203,6 @@ class client :
       p.fromchar(msg).modify(**param)
     elif t == self._GMSH_PARAMETER_NOT_FOUND : #create a new parameter
       p.modify(**param)
-    p.readOnly = 1
-    p.attributes={'Highlight':'AliceBlue'}   
     self._send(self._GMSH_PARAMETER, p.tochar())
 
   def addNumberChoice(self, name, value):
