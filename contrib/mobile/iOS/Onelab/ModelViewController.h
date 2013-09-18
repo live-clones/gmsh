@@ -18,16 +18,20 @@
 {
     @private
     double scaleFactor;
-	UIBarButtonItem *_runStopButton;
+	UIBarButtonItem *_runStopButton, *_playButton, *_stopButton;
 	UIAlertView *_loadingAlert;
 	UIErrorAlertView *_errorAlert;
 	NSMutableArray *_errors;
 	UIBackgroundTaskIdentifier _computeBackgroundTaskIdentifier;
+	NSTimer *_animation;
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender;
-- (IBAction)tap:(UITapGestureRecognizer *)sender;
+- (IBAction)singleTap:(UITapGestureRecognizer *)sender;
+- (IBAction)doubleTap:(UITapGestureRecognizer *)sender;
 
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTap;
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTap;
 @property (nonatomic, retain) EAGLView *glView;
 @property (strong, nonatomic) id detailItem;
 @property (weak, nonatomic) IBOutlet UILabel *progressLabel;

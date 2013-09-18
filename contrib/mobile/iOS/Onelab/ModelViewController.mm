@@ -9,6 +9,7 @@
 #import <Social/Social.h>
 
 #import "ModelViewController.h"
+#import "drawContext.h"
 #import "iosGModel.h"
 #import "Utils.h"
 
@@ -73,7 +74,7 @@
 	[_progressIndicator addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleProgressIndicatorTap:)]];
 	[_progressLabel setHidden:YES];
 	[_progressIndicator setHidden:YES];
-	[self.navigationController setToolbarHidden:YES animated:YES];
+	[self.navigationController setToolbarHidden:YES animated:NO];
 	if(self.initialModel != nil){
 		[self.glView load:self.initialModel];
 		[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
@@ -90,10 +91,12 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     [self configureView];
+	[_singleTap requireGestureRecognizerToFail:_doubleTap];
     scaleFactor = 1.;
 	_errors = [[NSMutableArray alloc] init];
     setObjCBridge((__bridge void*) self);
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
+
 	_runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
 	UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
@@ -105,12 +108,35 @@
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
         [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, share, nil]];
     }
+
+	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+	UIBarButtonItem *prevButton = [[UIBarButtonItem alloc ] initWithBarButtonSystemItem: UIBarButtonSystemItemRewind target:self action:@selector(prevAnimation)];
+	_stopButton = [[UIBarButtonItem alloc ] initWithBarButtonSystemItem: UIBarButtonSystemItemPause target:self action:@selector(stopAnimation:)];
+	[_stopButton setEnabled:NO];
+	_playButton = [[UIBarButtonItem alloc ] initWithBarButtonSystemItem: UIBarButtonSystemItemPlay target:self action:@selector(playAnimation:)];
+	UIBarButtonItem *nextButton = [[UIBarButtonItem alloc ] initWithBarButtonSystemItem: UIBarButtonSystemItemFastForward target:self action:@selector(nextAnimation)];
+	self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, prevButton, _stopButton, _playButton, nextButton, flexibleSpace, nil];
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
 	_progressLabel.frame = CGRectMake(50, self.view.frame.size.height - 25, _progressLabel.frame.size.width, _progressLabel.frame.size.height);
 	_progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25, _progressIndicator.frame.size.width, _progressIndicator.frame.size.height);
+}
+
+-(void)didReceiveMemoryWarning
+{
+	onelab_cb("stop");
+	UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+	if ([UIApplication sharedApplication].applicationState == UIApplicationStateBackground && localNotif) {
+		localNotif.alertBody = @"The computing had to stop because your device ran out of memory";
+		localNotif.alertAction = @"View";
+		localNotif.hasAction = true;
+		localNotif.soundName = UILocalNotificationDefaultSoundName;
+		localNotif.applicationIconBadgeNumber = 1;
+		[[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+	}
+	[[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
 }
 
 -(void)share
@@ -169,6 +195,21 @@
 {
 	onelab_cb("stop");
 }
+-(void)playAnimation:(UIBarButtonItem *)sender
+{
+	[_playButton setEnabled:NO];
+	[_stopButton setEnabled:YES];
+	_animation = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(nextAnimation) userInfo:nil repeats:YES];
+}
+-(void)stopAnimation:(UIBarButtonItem *)sender
+{
+	[_animation invalidate];
+	_animation = nil;
+	[_playButton setEnabled:YES];
+	[_stopButton setEnabled:NO];
+}
+-(void)nextAnimation { animation_next(); [self requestRender]; }
+-(void)prevAnimation { animation_prev(); [self requestRender]; }
 -(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
     if([sender numberOfTouches] > 2) return;
@@ -205,15 +246,14 @@
     glView->mContext->eventHandler(4, touchPoint.x, touchPoint.y);
 }
 
-- (IBAction)tap:(UITapGestureRecognizer *)sender
-{
-    sender.numberOfTapsRequired = 2;
-	sender.numberOfTouchesRequired = 1;
-    if(sender.state == UIGestureRecognizerStateEnded){
-        scaleFactor = 1;
-        glView->mContext->eventHandler(10);
-        [glView drawView];
-    }
+- (IBAction)singleTap:(UITapGestureRecognizer *)sender {
+	[self.navigationController setToolbarHidden:!self.navigationController.toolbarHidden animated:YES];
+}
+
+- (IBAction)doubleTap:(UITapGestureRecognizer *)sender {
+	scaleFactor = 1;
+	glView->mContext->eventHandler(10);
+	[glView drawView];
 }
 
 - (void) showModelsList
@@ -245,6 +285,8 @@
     [self setGlView:nil];
     [self setProgressLabel:nil];
 	[self setProgressIndicator:nil];
+	[self setSingleTap:nil];
+	[self setDoubleTap:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }

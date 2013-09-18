@@ -69,16 +69,23 @@
                     </view>
                     <navigationItem key="navigationItem" title="ONELAB" id="WX3-lU-bHf"/>
                     <connections>
+                        <outlet property="doubleTap" destination="mEQ-72-g58" id="xrl-dg-7EI"/>
                         <outlet property="glView" destination="zrj-Dd-WPc" id="sIP-YC-fg2"/>
                         <outlet property="progressIndicator" destination="Fuh-zG-zVR" id="ifr-7g-7Dv"/>
                         <outlet property="progressLabel" destination="yT7-IR-qUJ" id="onn-gw-Mnv"/>
+                        <outlet property="singleTap" destination="7R3-zZ-cpa" id="Xlw-Pp-Szf"/>
                         <segue destination="0h7-h3-thM" kind="push" identifier="showSettingsSegue" id="cJz-7s-fgZ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="aSF-6U-E6q" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <tapGestureRecognizer id="7R3-zZ-cpa">
                     <connections>
-                        <action selector="tap:" destination="NyB-7w-cP0" id="Jvc-pf-zod"/>
+                        <action selector="singleTap:" destination="NyB-7w-cP0" id="ywu-41-GBg"/>
+                    </connections>
+                </tapGestureRecognizer>
+                <tapGestureRecognizer numberOfTapsRequired="2" id="mEQ-72-g58">
+                    <connections>
+                        <action selector="doubleTap:" destination="NyB-7w-cP0" id="95f-15-F18"/>
                     </connections>
                 </tapGestureRecognizer>
                 <pinchGestureRecognizer id="qCm-Ub-mO2">
