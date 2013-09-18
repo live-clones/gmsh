@@ -4157,7 +4157,7 @@ void PostOp::statistics(GRegion* gr){
   printf("  percentage of tetrahedra : %.2f\n",vol4*100.0/vol);
   printf("Total number of elements : %d\n",gr->getNumMeshElements());
   printf("Total volume : %f\n",vol);
-  printf("Misc : %d %d %f\n",estimate1,estimate2,iterations/estimate2);
+  printf("Misc : %d %d %d\n",estimate1,estimate2,iterations);
 }
 
 void PostOp::build_tuples(GRegion* gr){
