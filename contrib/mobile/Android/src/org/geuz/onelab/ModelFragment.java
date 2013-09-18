@@ -24,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class ModelFragment extends Fragment{
@@ -36,9 +37,10 @@ public class ModelFragment extends Fragment{
 	private GestureDetector _gestureDetector;
 	private Timer _animation;
 	private Handler _hideDelay;
-	
+	private SeekBar _annimationStepper;
+
 	final Runnable hideControlsRunnable = new Runnable() {public void run() {hideControlBar();}};
-	
+
 	public static ModelFragment newInstance(Gmsh g) {
 		ModelFragment fragment = new ModelFragment();
 		Bundle bundle = new Bundle();
@@ -116,16 +118,19 @@ public class ModelFragment extends Fragment{
 		final ImageButton prevButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPrev);
 		final ImageButton playPauseButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPlay);
 		final ImageButton nextButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlNext);
+		_annimationStepper = (SeekBar)_controlBarLayout.findViewById(R.id.controlStepper);
+		_controlBarLayout.setEnabled(false);
 		playPauseButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();
 				if(((ImageButton)v).getContentDescription().equals("play")) {
 					((ImageButton)v).setContentDescription("pause");
 					((ImageButton)v).setImageResource(android.R.drawable.ic_media_pause);
+					_annimationStepper.setMax(_gmsh.numberOfAnimation());
 		    		_animation = new Timer();
 		    		_animation.schedule(new TimerTask() {
 		    			public void run()  {
-		    				_gmsh.animationNext();
+		    				_annimationStepper.setProgress(_gmsh.animationNext());
 		    				requestRender();
 		    			} }, 0, 500);
 		    		prevButton.setEnabled(false);
@@ -143,14 +148,14 @@ public class ModelFragment extends Fragment{
 		nextButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();
-		    	_gmsh.animationNext();
+				_annimationStepper.setProgress(_gmsh.animationNext());
 		    	requestRender();
 			}
 		});
 		prevButton.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				postDelay();
-		    	_gmsh.animationPrev();
+				_annimationStepper.setProgress(_gmsh.animationPrev());
 		    	requestRender();
 			}
 		});
@@ -169,9 +174,10 @@ public class ModelFragment extends Fragment{
 		this.postDelay(6000);
 	}
 	public void showControlBar() {
-		if(getActivity() == null) return;
+		if(getActivity() == null || ((MainActivity)getActivity()).isComputing() || !_gmsh.haveAnimation()) return;
+		_controlBarLayout.setEnabled(true);
+		_annimationStepper.setMax(_gmsh.numberOfAnimation());
 		this.postDelay();
-		//getActivity().getActionBar().show();
 		Animation bottomUp = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_in);
 		_controlBarLayout.setVisibility(View.VISIBLE);
 		_controlBarLayout.startAnimation(bottomUp);
@@ -179,10 +185,10 @@ public class ModelFragment extends Fragment{
 	public void hideControlBar() {
 		if(getActivity() == null) return;
 		_hideDelay.removeCallbacks(hideControlsRunnable);
-		//getActivity().getActionBar().hide();
 		Animation bottomDown = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_out);
 		_controlBarLayout.startAnimation(bottomDown);
 		_controlBarLayout.setVisibility(View.INVISIBLE);
+		
 	}
 	public void showProgress(String progress) {
 		_progressLayout.setAlpha(1);

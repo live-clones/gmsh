@@ -139,18 +139,26 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
 
 /*
  * Class:     org_geuz_onelab_Gmsh
- * Method:    animationNext
- * Signature: ()V
+ * Method:    numberOfAnimation
+ * Signature: ()I
  */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationNext
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_numberOfAnimation
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    animationNext
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationNext
   (JNIEnv *, jobject);
 
 /*
  * Class:     org_geuz_onelab_Gmsh
  * Method:    animationPrev
- * Signature: ()V
+ * Signature: ()I
  */
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus

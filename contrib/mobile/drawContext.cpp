@@ -682,41 +682,50 @@ int onelab_cb(std::string action)
 	return redraw;
 }
 
-void animation_next() {
+int number_of_animation() {
+	int ret = 0;
 	for(unsigned int i = 0; i < PView::list.size(); i++){
 		PView * p = PView::list[i];
 		if(p->getOptions()->visible){
-			// skip empty steps
-			int step = (int)p->getOptions()->timeStep + 1;
 			int numSteps = (int)p->getData()->getNumTimeSteps();
-			for(int j = 0; j < numSteps; j++){
-				if(p->getData()->hasTimeStep(step)) break;
-				else step += 1;
-				if(step < 0) step = numSteps - 1;
-				if(step > numSteps - 1) step = 0;
-			}
-			p->getOptions()->timeStep = step;
-			p->setChanged(true);
+			if(numSteps > ret) ret = numSteps;
 		}
 	}
+	return ret;
 }
-void animation_prev() {
+
+int animation_next() {
+	int ret = 0;
+	for(unsigned int i = 0; i < PView::list.size(); i++){
+		PView * p = PView::list[i];
+		if(p->getOptions()->visible){
+			int step = (int)p->getOptions()->timeStep + 1;
+			int numSteps = (int)p->getData()->getNumTimeSteps();
+			if(step < 0) step = numSteps - 1;
+			if(step > numSteps - 1) step = 0;
+			p->getOptions()->timeStep = step;
+			p->setChanged(true);
+			ret = step;
+		}
+	}
+	return ret;
+}
+int animation_prev() {
+	int ret = 0;
 	for(unsigned int i = 0; i < PView::list.size(); i++){
 		PView * p = PView::list[i];
 		if(p->getOptions()->visible){
 			// skip empty steps
 			int step = (int)p->getOptions()->timeStep - 1;
 			int numSteps = (int)p->getData()->getNumTimeSteps();
-			for(int j = 0; j < numSteps; j++){
-				if(p->getData()->hasTimeStep(step)) break;
-				else step -= 1;
-				if(step < 0) step = numSteps - 1;
-				if(step > numSteps - 1) step = 0;
-			}
+			if(step < 0) step = numSteps - 1;
+			if(step > numSteps - 1) step = 0;
 			p->getOptions()->timeStep = step;
 			p->setChanged(true);
+			ret = step;
 		}
 	}
+	return ret;
 }
 
 // vim:set ts=2:

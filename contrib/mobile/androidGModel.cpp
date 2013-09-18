@@ -304,14 +304,20 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
 	const char*  action = env->GetStringUTFChars(jaction, NULL);
 	return onelab_cb(action);
 }
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationNext
+
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_numberOfAnimation
   (JNIEnv *, jobject)
 {
-	animation_next();
+	return number_of_animation();
 }
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationNext
   (JNIEnv *, jobject)
 {
-	animation_prev();
+	return animation_next();
+}
+JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
+  (JNIEnv *, jobject)
+{
+	return animation_prev();
 }
 }

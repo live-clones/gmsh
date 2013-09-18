@@ -120,6 +120,7 @@ public class MainActivity extends Activity{
     		new Run().execute();
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_stop))){
+    		_runStopMenuItem.setEnabled(false);
     		_gmsh.onelabCB("stop");
     	}
     	else if(item.getTitle().equals(getString(R.string.menu_share))) {
@@ -196,6 +197,7 @@ public class MainActivity extends Activity{
 		protected void onPostExecute(Integer[] result) {
 			//(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
 			_runStopMenuItem.setTitle(R.string.menu_run);
+			_runStopMenuItem.setEnabled(true);
 			if(_modelFragment != null) _modelFragment.hideProgress();
 			_compute = false;
 			if(_notify) notifyEndComputing();
@@ -332,4 +334,6 @@ public class MainActivity extends Activity{
 			}
     	};
     };
+    
+    public boolean isComputing() {return _compute;}
 }
