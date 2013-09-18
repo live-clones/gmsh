@@ -276,7 +276,7 @@ class PostOp{
  private:
   int estimate1;
   int estimate2;
-  double iterations;
+  int iterations;
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MElement*> > vertex_to_tetrahedra;
   std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
