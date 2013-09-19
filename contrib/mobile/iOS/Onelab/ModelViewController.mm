@@ -247,7 +247,7 @@
 }
 
 - (IBAction)singleTap:(UITapGestureRecognizer *)sender {
-	[self.navigationController setToolbarHidden:!self.navigationController.toolbarHidden animated:YES];
+	[self.navigationController setToolbarHidden:(!(self.navigationController.toolbarHidden && !((AppDelegate *)[UIApplication sharedApplication].delegate)->compute && number_of_animation() > 0)) animated:YES];
 }
 
 - (IBAction)doubleTap:(UITapGestureRecognizer *)sender {

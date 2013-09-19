@@ -49,7 +49,7 @@ void drawMeshVertex(GVertex *e)
 				col = CTX::instance()->color.mesh.vertex;
 		}
         else
-            col = getColorByEntity(e);
+        col = getColorByEntity(e);
         color.push_back((GLubyte)CTX::instance()->unpackRed(col));
         color.push_back((GLubyte)CTX::instance()->unpackGreen(col));
         color.push_back((GLubyte)CTX::instance()->unpackBlue(col));
@@ -75,6 +75,7 @@ void drawMeshEdge(GEdge *e)
         else
             return;
     }
+    glLineWidth(CTX::instance()->mesh.lineWidth);
 	drawArray(e->va_lines, GL_LINES, true);
 }
 void drawMeshFace(GFace *f)

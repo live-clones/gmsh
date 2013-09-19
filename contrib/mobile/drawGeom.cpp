@@ -33,7 +33,7 @@ void drawGeomVertex(GVertex *v)
                (GLubyte)CTX::instance()->unpackBlue(col),
                (GLubyte)CTX::instance()->unpackAlpha(col));
 	const GLfloat p[] = {(GLfloat)v->x(), (GLfloat)v->y(), (GLfloat)v->z()};
-	glPointSize((GLfloat)(CTX::instance()->geom.pointSize>0)? 3:1);
+	glPointSize((GLfloat)CTX::instance()->geom.pointSize);
 	glVertexPointer(3, GL_FLOAT, 0, p);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glDrawArrays(GL_POINTS, 0, 1);
@@ -66,11 +66,14 @@ void drawGeomEdge(GEdge *e)
 		edge[i*3] = p.x(); edge[i*3+1] = p.y(); edge[i*3+2] = p.z();
 	}
 	// Then print the VA
+	glLineWidth((GLfloat)CTX::instance()->geom.lineWidth);
 	glVertexPointer(3, GL_FLOAT, 0, edge);
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnable(GL_LINE_SMOOTH);
 	glDrawArrays(GL_LINE_STRIP, 0, N);
+	glDisable(GL_LINE_SMOOTH);
 	glDisableClientState(GL_VERTEX_ARRAY);
-        free(edge);
+	free(edge);
 }
 void drawGeomFace(GFace *f)
 {
@@ -78,8 +81,6 @@ void drawGeomFace(GFace *f)
 }
 void drawContext::drawGeom()
 {
-	if(!CTX::instance()->geom.draw) return;
-
 	for(unsigned int i=0; i<GModel::list.size(); i++) {
 		GModel *m = GModel::list[i];
 		if(!m->getVisibility()) continue;
