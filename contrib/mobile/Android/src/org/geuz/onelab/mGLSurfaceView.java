@@ -3,7 +3,6 @@ package org.geuz.onelab;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
-import android.support.v4.view.MotionEventCompat;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -47,10 +46,10 @@ class mGLSurfaceView extends GLSurfaceView {
 		if(event.getPointerCount() >= 3){
 			scaleGesture.onTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0,0, 0));
 			
-			final float x = MotionEventCompat.getX(event, 1);
-	        final float y = MotionEventCompat.getY(event, 1);
+			final float x = event.getX(1);
+	        final float y = event.getY(1);
 	        
-	        int action = MotionEventCompat.getActionMasked(event);
+	        int action = event.getActionMasked();
 	        
 	        if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_1_DOWN){
 	        	_renderer.startInteraction(x,y);

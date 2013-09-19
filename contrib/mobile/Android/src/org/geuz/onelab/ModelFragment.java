@@ -70,7 +70,6 @@ public class ModelFragment extends Fragment{
 		_glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
 		_glView.requestRender();
 		_hideDelay = new Handler();
-		this.postDelay();
 		_gestureDetector = new GestureDetector(getActivity(), new OnGestureListener() {
 			public boolean onSingleTapUp(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
 			public void onShowPress(MotionEvent e) {} // UNUSED Auto-generated method stub
@@ -138,7 +137,7 @@ public class ModelFragment extends Fragment{
 				if(((ImageButton)v).getContentDescription().equals("play")) {
 					((ImageButton)v).setContentDescription("pause");
 					((ImageButton)v).setImageResource(android.R.drawable.ic_media_pause);
-					_animationStepper.setMax(_gmsh.numberOfAnimation());
+					_animationStepper.setMax(_gmsh.numberOfAnimation()-1);
 		    		_animation = new Timer();
 		    		_animation.schedule(new TimerTask() {
 		    			public void run()  {
@@ -176,6 +175,7 @@ public class ModelFragment extends Fragment{
 			    RelativeLayout.LayoutParams.WRAP_CONTENT);
 		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
 		glViewLayout.addView(_controlBarLayout, layoutParams);
+		this._controlBarLayout.setVisibility(View.INVISIBLE);
 		return rootView;
 	}
 	public void postDelay(int delay) {
@@ -195,7 +195,7 @@ public class ModelFragment extends Fragment{
 		_controlBarLayout.startAnimation(bottomUp);
 	}
 	public void hideControlBar() {
-		if(getActivity() == null) return;
+		if(getActivity() == null || View.INVISIBLE == _controlBarLayout.getVisibility()) return;
 		_hideDelay.removeCallbacks(hideControlsRunnable);
 		Animation bottomDown = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_out);
 		_controlBarLayout.startAnimation(bottomDown);
