@@ -118,14 +118,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	return JNI_VERSION_1_6;
 }
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
-  (JNIEnv *env, jobject obj, jstring jname)
+  (JNIEnv *env, jobject obj)
 {
 	if(gCallbackObject != NULL) env->DeleteGlobalRef(gCallbackObject);
 	gCallbackObject = env->NewGlobalRef(obj);
 	gJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
 	Msg::SetCallback(new MobileMessage());
-	
-	const char*  name = env->GetStringUTFChars(jname, NULL);
 	return reinterpret_cast<jlong>(new drawContext());
 }
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_loadFile

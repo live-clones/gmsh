@@ -14,7 +14,7 @@ public class Gmsh implements Parcelable {
 		System.loadLibrary("GetDP");
 		System.loadLibrary("Onelab");
     }
-	private native long init(String name); // Init Gmsh
+	private native long init(); // Init Gmsh
 	private native void loadFile(long ptr, String name); // load a file(OpenProjet)
 	private native void initView(long ptr, int w, int h); // Called each time the GLView change
 	private native void drawView(long ptr); // Called each time the GLView request a render
@@ -41,8 +41,8 @@ public class Gmsh implements Parcelable {
 	private long ptr;
 	private Handler handler;
 
-	public Gmsh(String name, Handler handler) {
-		ptr = this.init(name);
+	public Gmsh(Handler handler) {
+		ptr = this.init();
 		this.handler = handler;
 	}
 
