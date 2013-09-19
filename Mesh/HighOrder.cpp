@@ -585,9 +585,7 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     switch (nPts){
     case 0: return;
     case 1: return;
-    case 2:
-      //BasisFactory::getNodalBasis(MSH_TET_20)->points.print();
-      points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
+    case 2: points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
     case 3: points = BasisFactory::getNodalBasis(MSH_TET_35)->points; break;
     case 4: points = BasisFactory::getNodalBasis(MSH_TET_56)->points; break;
     case 5: points = BasisFactory::getNodalBasis(MSH_TET_84)->points; break;
@@ -599,7 +597,7 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;
     }
-    start = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;
+    start = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;  // = 4+6*(p-1)+4*(p-2)*(p-1)/2 = 4*(p+1)*(p+2)/2-6*(p-1)-2*4 = 2*p*p+2
     break;
   case TYPE_HEX :
     switch (nPts){
@@ -616,7 +614,24 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
       Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
       break;
     }
-    start = (nPts+2)*(nPts+2)*(nPts+2) - (nPts)*(nPts)*(nPts) ;
+    start = (nPts+2)*(nPts+2)*(nPts+2) - (nPts)*(nPts)*(nPts) ; // = 6*(p-1)*(p-1)+12*(p-1)+8 = 6*(p+1)*(p+1)-12*(p-1)-2*8 = 6*p*p+2
+    break;
+  case TYPE_PRI :
+    switch (nPts){
+    case 0: return;
+    case 1: return;
+    case 2: points = BasisFactory::getNodalBasis(MSH_PRI_40)->points; break;
+    case 3: points = BasisFactory::getNodalBasis(MSH_PRI_75)->points; break;
+    case 4: points = BasisFactory::getNodalBasis(MSH_PRI_126)->points; break;
+    case 5: points = BasisFactory::getNodalBasis(MSH_PRI_196)->points; break;
+    case 6: points = BasisFactory::getNodalBasis(MSH_PRI_288)->points; break;
+    case 7: points = BasisFactory::getNodalBasis(MSH_PRI_405)->points; break;
+    case 8: points = BasisFactory::getNodalBasis(MSH_PRI_550)->points; break;
+    default:
+      Msg::Error("getRegionVertices not implemented for order %i", nPts+1);
+      break;
+    }
+    start = 4*(nPts+1)*(nPts+1)+2;  // = 4*p*p+2 = 6+9*(p-1)+2*(p-2)*(p-1)/2+3*(p-1)*(p-1) = 2*(p+1)*(p+2)/2+3*(p+1)*(p+1)-9*(p-1)-2*6
     break;
   case TYPE_PYR:
     switch (nPts){
@@ -857,8 +872,9 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                           0, p->getPartition());
     }
     else{
-      Msg::Error("PrismN generation not implemented");
-      return 0;
+      return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                         p->getVertex(3), p->getVertex(4), p->getVertex(5),
+                         ve, nPts + 1, 0, p->getPartition());
     }
   }
   else{
@@ -871,8 +887,20 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                           0, p->getPartition());
     }
     else {
-      Msg::Error("PrismN generation not implemented");
-      return 0;
+      // create serendipity element to place internal vertices (we used to
+      // saturate face vertices also, but the corresponding function spaces do
+      // not exist anymore, and there is no theoretical justification for doing
+      // it either way)
+      MPrismN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                    p->getVertex(3), p->getVertex(4), p->getVertex(5),
+                    ve, nPts + 1, 0, p->getPartition());
+      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
+      ve.insert(ve.end(), vf.begin(), vf.end());
+      getRegionVertices(gr, &incpl, p, vr, linear, nPts);
+      ve.insert(ve.end(), vr.begin(), vr.end());
+      return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                         p->getVertex(3), p->getVertex(4), p->getVertex(5),
+                         ve, nPts + 1, 0, p->getPartition());
     }
   }
 }

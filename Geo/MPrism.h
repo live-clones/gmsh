@@ -385,4 +385,108 @@ class MPrism18 : public MPrism {
   }
 };
 
+/*
+ * MPrismN
+ */
+class MPrismN : public MPrism {
+ protected:
+  std::vector<MVertex *> _vs;
+  const char _order;
+ public :
+  MPrismN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+           MVertex *v5, const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+    : MPrism(v0, v1, v2, v3, v4, v5, num, part), _vs(v), _order(order)
+  {
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  MPrismN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
+    : MPrism(v, num, part), _order(order)
+  {
+    for (unsigned int i = 6; i < v.size(); i++) _vs.push_back(v[i]);
+    for (unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(2);
+  }
+  ~MPrismN(){}
+  virtual int getPolynomialOrder() const { return _order; }
+  virtual int getNumVertices() const { return 6+_vs.size(); }
+  virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num-6]; }
+  virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num-6]; }
+  virtual int getNumEdgeVertices() const { return 9*(_order-1); }
+  virtual int getNumFaceVertices() const { int n = _order-1; return n*((n-1)+3*n); }
+  virtual int getNumVolumeVertices() const { int n = _order-1; return _vs.size()-n*(9+(n-1)+3*n); }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
+  {
+    v.resize(_order+1);
+    MPrism::_getEdgeVertices(num, v);
+    const int n = _order-1;
+    for (int i=0; i<n; i++) v[2+i] = _vs[num*n+i];
+  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const;
+  virtual int getTypeForMSH() const {
+    switch (_order) {
+    case 0:
+      return MSH_PRI_1;
+    case 1:
+      return MSH_PRI_6;
+    case 2:
+      if (_vs.size() == 12) return MSH_PRI_18;
+      else if (_vs.size() == 9) return MSH_PRI_15;
+      break;
+    case 3:
+      if (_vs.size() == 34) return MSH_PRI_40;
+      else if (_vs.size() == 18) return MSH_PRI_24;
+      break;
+    case 4:
+      if (_vs.size() == 69) return MSH_PRI_75;
+      else if (_vs.size() == 27) return MSH_PRI_33;
+      break;
+    case 5:
+      if (_vs.size() == 120) return MSH_PRI_126;
+      else if (_vs.size() == 36) return MSH_PRI_42;
+      break;
+    case 6:
+      if (_vs.size() == 190) return MSH_PRI_196;
+      else if (_vs.size() == 45) return MSH_PRI_51;
+      break;
+    case 7:
+      if (_vs.size() == 282) return MSH_PRI_288;
+      else if (_vs.size() == 54) return MSH_PRI_60;
+      break;
+    case 8:
+      if (_vs.size() == 399) return MSH_PRI_405;
+      else if (_vs.size() == 63) return MSH_PRI_69;
+      break;
+    case 9:
+      if (_vs.size() == 544) return MSH_PRI_550;
+      else if (_vs.size() == 72) return MSH_PRI_78;
+      break;
+    }
+    Msg::Error("No tag matches a p%d prism with %d vertices", _order, 6+_vs.size());
+    return 0;
+  }
+  virtual const char *getStringForPOS() const {
+    switch (_order) {
+    case 0: return "SI0";
+    case 1: return "SI1";
+    case 2: return "SI2";
+    case 3: return "SI3";
+    case 4: return "SI4";
+    case 5: return "SI5";
+    case 6: return "SI6";
+    case 7: return "SI7";
+    case 8: return "SI8";
+    case 9: return "SI9";
+    }
+    return "";
+  }
+  virtual void getNode(int num, double &u, double &v, double &w) const
+  {
+    const fullMatrix<double> &p = getFunctionSpace()->points;
+    u = p(num,0); v = p(num,1); w = p(num,2);
+  }
+};
+
 #endif
