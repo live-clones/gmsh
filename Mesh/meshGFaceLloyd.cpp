@@ -382,7 +382,7 @@ void verification(alglib::real_1d_array& x,void* ptr){
   pointer = w->get_triangulator();
   num = pointer->numPoints;
   srand(time(NULL));
-  index = rand()%num;
+  index = rand()%(dimension/2);
   e = 0.0000001;
 	
   alglib::real_1d_array grad;
