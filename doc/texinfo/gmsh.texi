@@ -2613,6 +2613,8 @@ extruded and has the following syntax:
   Layers @{ @var{expression} @} | 
   Layers @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} | 
   Recombine; @dots{}
+  QuadTriNoNewVerts <RecombLaterals>; | 
+  QuadTriAddVerts <RecombLaterals>; ...
 @end group
 @end example
 
@@ -2639,6 +2641,57 @@ surface in @code{num[0]} and the id of the new volume in @code{num[1]}:
 num[] = Extrude @{0,0,1@} @{ Surface@{1@}; Layers@{10@}; @};
 @end example
 
+@code{QuadTriNoNewVerts} and @code{QuadTriAddVerts} allow to connect
+structured, extruded volumes containing quadrangle-faced elements to
+structured or unstructured tetrahedral volumes, by subdividing into
+triangles any quadrangles on boundary surfaces shared with tetrahedral
+volumes. (They have no effect for 1D or 2D extrusions.)
+@code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
+elements that touch these boundary triangles into pyramids, prisms, or
+tetrahedra as necessary, all WITHOUT adding new
+vertices. @code{QuadTriAddVerts} works in a simular way, but subdivides
+3D elements touching the boundary triangles by adding a new vertex
+inside each element at the vertex-based centroid. Either method results
+in a structured extrusion with an outer layer of subdivided elements
+that interface the inner, unmodified elements to the triangle-meshed
+region boundaries.
+
+In some rare cases, due to certain lateral boundary conditions, it may
+not be possible make a valid element subdivision with
+@code{QuadTriNoNewVerts} without adding additional vertices. In this
+case, an internal vertex is created at the vertex-based centroid of the
+element. The element is then divided using that vertex. When an internal
+vertex is created with @code{QuadTriNoNewVerts}, the user is alerted by
+a warning message sent for each instance; however, the mesh will still
+be valid and conformal.
+
+Both @code{QuadTriNoNewVerts} and @code{QuadTriAddVerts} can be used
+with the optional @code{RecombLaterals} keyword. By default, the QuadTri
+algorithms will mesh any free laterals as triangles, if
+possible. @code{RecombLaterals} forces any free laterals to remain as
+quadrangles, if possible. Lateral surfaces between two QuadTri regions
+will always be meshed as quadrangles.
+
+Note that the QuadTri algorithms will handle all potential meshing
+conflicts along the lateral surfaces of the extrusion.  In other words,
+QuadTri will not subdivide a lateral that must remain as quadrangles,
+nor will it leave a lateral as quadrangles if it @emph{must} be divided.
+The user should therefore feel free to mix different types of
+neighboring regions with a QuadTri meshed region; the mesh should work.
+However, be aware that the top surface of the QuadTri extrusion will
+always be meshed as triangles, unless it is extruded back onto the
+original source in a toroidal loop (a case which also works with
+QuadTri).
+
+@code{QuadTriNoNewVerts} and @code{QuadTriAddVerts} may be used
+interchangeably, but @code{QuadTriAddVerts} often gives better element
+quality.
+
+If the user wishes to interface a structured extrusion to a tetrahedral
+volume without modifying the original structured mesh, the user may
+create dedicated interface volumes around the structured geometry and
+apply a QuadTri algorithm to those volumes only.
+
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a rotation
 (@pxref{Extrusions}). The @var{layers} option is defined as above.
@@ -2648,11 +2701,23 @@ Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above.
 
-@item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > @}
+@item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > < ScaleLastLayer; > @}
 Extrudes a boundary layer from the specified surfaces. If no view is
 specified, the boundary layer is created using gouraud-shaped (smoothed)
 normal field. Specifying a boundary layer index allows to extrude
 several independent boundary layers (with independent normal smoothing).
+
+@code{ScaleLastLayer} scales the height of the last (top) layer of each
+normal's extrusion by the average length of the edges in all the source
+elements that contain the source vertex (actually, the average of the
+averages for each element--edges actually touching the source vertex are
+counted twice). This allows the height of the last layer to vary along
+with the size of the source elements in order to achieve better element
+quality. For example, in a boundary layer extruded with the Layers
+definition 'Layers{ {1,4,2}, {0.5, 0.6, 1.6} },' a source vertex
+adjacent to elements with an overall average edge length of 5.0 will
+extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
+
 
 @item Transfinite Line @{ @var{expression-list} @} | "*" = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D
@@ -2684,6 +2749,15 @@ contain the identification numbers of the six or eight points on the
 boundary of the volume that define the corners of the transfinite
 interpolation. If no identification numbers are given, the transfinite
 algorithm will try to find the corners automatically.
+
+@item TransfQuadTri @{ @var{expression-list} @} | "*";
+
+Applies the transfinite QuadTri algorithm on the @var{expression-list}
+list of volumes (@code{"*"} can be used to apply TransfQuadTri to all
+existing volumes).  A transfinite volume with any combination of
+recombined and un-recombined transfinite boundary surfaces is valid when
+meshed with @code{TransfQuadTri}. When applied to non-Transfinite
+volumes, TransfQuadTri has no effect on those volumes.
 
 @end ftable
 
@@ -4951,7 +5025,12 @@ image file.
 
 @item How can I save MPEG, AVI, ..., animations?
 
-Using a script. Have a look at @file{tutorial/t8.geo} or
+You can create simple MPEG animations by choosing MPEG as the format in
+`File->Save As': this allows you to loop over time steps or
+post-processing data sets. To create more complicated animations
+(flyovers, animated clipping or modification of meshes, etc.) or to use
+different output formats (AVI, MP4, etc.), you should write a
+script. Have a look at @file{tutorial/t8.geo} or
 @file{demos/anim.script} for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -5255,7 +5334,9 @@ Evaluate plugin.
 
 @item Is there a way to save animations?
 
-Yes, using scripts. Have a look at @file{tutorial/t8.geo} or
+You can save simple MPEG animations directly from the `File->Save As'
+menu. For more other formats or more complex animations, you should
+write a script. Have a look at @file{tutorial/t8.geo} or
 @file{demos/anim.script} for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?
