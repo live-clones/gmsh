@@ -96,15 +96,16 @@ void GEdge::resetMeshAttributes()
   meshAttributes.reverseMesh = false;
 }
 
-void GEdge::addFace(GFace *e)
+void GEdge::addFace(GFace *f)
 {
-  if (std::find(l_faces.begin(), l_faces.end(), e) == l_faces.end())
-    l_faces.push_back(e);
+  if(std::find(l_faces.begin(), l_faces.end(), f) == l_faces.end())
+    l_faces.push_back(f);
 }
 
-void GEdge::delFace(GFace *e)
+void GEdge::delFace(GFace *f)
 {
-  l_faces.erase(std::find(l_faces.begin(), l_faces.end(), e));
+  std::list<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
+  if(it != l_faces.end()) l_faces.erase(it);
 }
 
 SBoundingBox3d GEdge::bounds() const

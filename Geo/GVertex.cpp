@@ -37,12 +37,14 @@ void GVertex::setPosition(GPoint &p)
 
 void GVertex::addEdge(GEdge *e)
 {
-  l_edges.push_back(e);
+  if(std::find(l_edges.begin(), l_edges.end(), e) == l_edges.end())
+    l_edges.push_back(e);
 }
 
 void GVertex::delEdge(GEdge *e)
 {
-  l_edges.erase(std::find(l_edges.begin(), l_edges.end(), e));
+  std::list<GEdge*>::iterator it = std::find(l_edges.begin(), l_edges.end(), e);
+  if(it != l_edges.end()) l_edges.erase(it);
 }
 
 SPoint2 GVertex::reparamOnFace(const GFace *gf, int) const
@@ -94,13 +96,13 @@ bool GVertex::isOnSeam(const GFace *gf) const
 }
 
 // faces that bound this entity or that this entity bounds.
-std::list<GFace*> GVertex::faces() const 
+std::list<GFace*> GVertex::faces() const
 {
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   std::set<GFace*> _f;
   for ( ; it != l_edges.end() ; ++it){
     std::list<GFace*> temp = (*it)->faces();
-    _f.insert (temp.begin(), temp.end());    
+    _f.insert (temp.begin(), temp.end());
   }
   std::list<GFace*> ret;
   ret.insert (ret.begin(), _f.begin(), _f.end());
@@ -108,14 +110,14 @@ std::list<GFace*> GVertex::faces() const
 }
 
 // regions that bound this entity or that this entity bounds.
-std::list<GRegion*> GVertex::regions() const 
+std::list<GRegion*> GVertex::regions() const
 {
-  std::list<GFace*> _faces = faces(); 
+  std::list<GFace*> _faces = faces();
   std::list<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();
-    _r.insert (temp.begin(), temp.end());    
+    _r.insert (temp.begin(), temp.end());
   }
   std::list<GRegion*> ret;
   ret.insert (ret.begin(), _r.begin(), _r.end());
