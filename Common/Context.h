@@ -252,6 +252,8 @@ class CTX {
     int posElementary, posElement, posGamma, posEta, posRho, posDisto;
     int compositeWindows, deleteTmpFiles, background;
     int width, height;
+    double parameter, parameterFirst, parameterLast, parameterSteps;
+    std::string parameterCommand;
   } print;
   // color options
   struct{

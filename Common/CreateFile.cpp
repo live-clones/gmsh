@@ -10,6 +10,7 @@
 #include "StringUtils.h"
 #include "Context.h"
 #include "Options.h"
+#include "OpenFile.h"
 #include "OS.h"
 
 #if defined(HAVE_OPENGL)
@@ -207,6 +208,19 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   return buffer;
 }
 #endif
+
+static void change_print_parameter(int frame)
+{
+  double first = CTX::instance()->print.parameterFirst;
+  double last = CTX::instance()->print.parameterLast;
+  double steps = CTX::instance()->print.parameterSteps;
+  if(steps <= 0) steps = 1;
+  double step = (last - first) / steps;
+  double v = first + frame * step * CTX::instance()->post.animStep;
+  Msg::Info("Setting Print.Parameter = %g", v);
+  opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
+  ParseString(CTX::instance()->print.parameterCommand);
+}
 
 void CreateOutputFile(const std::string &fileName, int format, bool redraw)
 {
@@ -510,66 +524,93 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
 
 #if defined(HAVE_MPEG_ENCODE)
   case FORMAT_MPEG:
+  case FORMAT_MPEG_PREVIEW:
     {
       std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
-      FILE *fp = Fopen(parFileName.c_str(), "w");
-      if(!fp){
-        Msg::Error("Unable to open file '%s'", parFileName.c_str());
-        error = true;
-        break;
+      FILE *fp = 0;
+      if(format != FORMAT_MPEG_PREVIEW){
+        fp = Fopen(parFileName.c_str(), "w");
+        if(!fp){
+          Msg::Error("Unable to open file '%s'", parFileName.c_str());
+          error = true;
+          break;
+        }
       }
-      int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0), numSteps = 0;
-      for(int i = 0; i < numViews; i++){
-        if(opt_view_visible(i, GMSH_GET, 0))
-          numSteps = std::max(numSteps,
-                              (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
+
+      int numViews = (int)opt_post_nb_views(0, GMSH_GET, 0);
+      int numSteps = 0;
+      int cycle = CTX::instance()->post.animCycle;
+      if(cycle == 0){
+        for(int i = 0; i < numViews; i++){
+          if(opt_view_visible(i, GMSH_GET, 0))
+            numSteps = std::max(numSteps,
+                                (int)opt_view_nb_non_empty_timestep(i, GMSH_GET, 0));
+        }
       }
+      else if(cycle == 1){
+        numSteps = numViews;
+      }
+      else{
+        numSteps = CTX::instance()->print.parameterSteps;
+      }
+
       std::vector<std::string> frames;
-      for(int i = 0; i < (CTX::instance()->post.animCycle ? numViews : numSteps);
-          i += CTX::instance()->post.animStep){
+      for(int i = 0; i < numSteps; i += CTX::instance()->post.animStep){
         char tmp[256];
         sprintf(tmp, ".gmsh-%06d.ppm", (int)frames.size());
         frames.push_back(tmp);
       }
-      status_play_manual(!CTX::instance()->post.animCycle, 0, false);
+      if(cycle != 2)
+        status_play_manual(!cycle, 0, false);
+      else
+        change_print_parameter(0);
       for(unsigned int i = 0; i < frames.size(); i++){
-        CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
-        status_play_manual(!CTX::instance()->post.animCycle,
-                           CTX::instance()->post.animStep, false);
+        if(fp)
+          CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
+        if(cycle != 2)
+          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
+        else
+          change_print_parameter(i + 1);
+        if(!fp){
+          drawContext::global()->draw();
+          SleepInSeconds(CTX::instance()->post.animDelay);
+        }
       }
-      int repeat = (int)(CTX::instance()->post.animDelay * 24);
-      if(repeat < 1) repeat = 1;
-      std::string pattern("I");
-      // including P frames would lead to smaller files, but the quality
-      // degradation is perceptible:
-      // for(int i = 1; i < repeat; i++) pattern += "P";
-      fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
-              "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
-              "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
-              "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
-              "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
-              pattern.c_str(), repeat, name.c_str(),
-              CTX::instance()->homeDir.c_str());
-      for(unsigned int i = 0; i < frames.size(); i++){
-        fprintf(fp, "%s", frames[i].c_str());
-        if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
-        fprintf(fp, "\n");
-      }
-      fprintf(fp, "END_INPUT\n");
-      fclose(fp);
-      extern int mpeg_encode_main(int, char**);
-      char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
-      try{
-        mpeg_encode_main(2, args);
-      }
-      catch (const char *msg){
-        Msg::Error("%s", msg);
-        error = true;
-      }
-      if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
-        UnlinkFile(parFileName);
-        for(unsigned int i = 0; i < frames.size(); i++)
-          UnlinkFile(CTX::instance()->homeDir + frames[i]);
+      if(fp){
+        int repeat = (int)(CTX::instance()->post.animDelay * 24);
+        if(repeat < 1) repeat = 1;
+        std::string pattern("I");
+        // including P frames would lead to smaller files, but the quality
+        // degradation is perceptible:
+        // for(int i = 1; i < repeat; i++) pattern += "P";
+        fprintf(fp, "PATTERN %s\nBASE_FILE_FORMAT PPM\nGOP_SIZE %d\n"
+                "SLICES_PER_FRAME 1\nPIXEL FULL\nRANGE 10\n"
+                "PSEARCH_ALG EXHAUSTIVE\nBSEARCH_ALG CROSS2\n"
+                "IQSCALE 1\nPQSCALE 1\nBQSCALE 25\nREFERENCE_FRAME DECODED\n"
+                "OUTPUT %s\nINPUT_CONVERT *\nINPUT_DIR %s\nINPUT\n",
+                pattern.c_str(), repeat, name.c_str(),
+                CTX::instance()->homeDir.c_str());
+        for(unsigned int i = 0; i < frames.size(); i++){
+          fprintf(fp, "%s", frames[i].c_str());
+          if(repeat > 1) fprintf(fp, " [1-%d]", repeat);
+          fprintf(fp, "\n");
+        }
+        fprintf(fp, "END_INPUT\n");
+        fclose(fp);
+        extern int mpeg_encode_main(int, char**);
+        char *args[] = {(char*)"gmsh", (char*)parFileName.c_str()};
+        try{
+          mpeg_encode_main(2, args);
+        }
+        catch (const char *msg){
+          Msg::Error("%s", msg);
+          error = true;
+        }
+        if(opt_print_delete_tmp_files(0, GMSH_GET, 0)){
+          UnlinkFile(parFileName);
+          for(unsigned int i = 0; i < frames.size(); i++)
+            UnlinkFile(CTX::instance()->homeDir + frames[i]);
+        }
       }
     }
     break;

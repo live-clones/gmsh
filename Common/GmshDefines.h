@@ -49,6 +49,7 @@
 #define FORMAT_PLY2  40
 #define FORMAT_CELUM 41
 #define FORMAT_SU2   42
+#define FORMAT_MPEG_PREVIEW 43
 
 // Element types
 #define TYPE_PNT     1

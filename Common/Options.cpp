@@ -1868,6 +1868,13 @@ std::string opt_view_attributes(OPT_ARGS_STR)
 #endif
 }
 
+std::string opt_print_parameter_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.parameterCommand = val;
+  return CTX::instance()->print.parameterCommand;
+}
+
 // Numeric option routines
 
 double opt_general_initial_context(OPT_ARGS_NUM)
@@ -6213,8 +6220,12 @@ double opt_post_anim_delay(OPT_ARGS_NUM)
 
 double opt_post_anim_cycle(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX::instance()->post.animCycle = (int)val;
+    if(CTX::instance()->post.animCycle < 0 ||
+       CTX::instance()->post.animCycle > 2)
+      CTX::instance()->post.animCycle = 0;
+  }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->post.butt[0]->value
@@ -8617,6 +8628,34 @@ double opt_print_width(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->print.width = (int)val;
   return CTX::instance()->print.width;
+}
+
+double opt_print_parameter(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.parameter = val;
+  return CTX::instance()->print.parameter;
+}
+
+double opt_print_parameter_first(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.parameterFirst = val;
+  return CTX::instance()->print.parameterFirst;
+}
+
+double opt_print_parameter_last(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.parameterLast = val;
+  return CTX::instance()->print.parameterLast;
+}
+
+double opt_print_parameter_steps(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.parameterSteps = val;
+  return CTX::instance()->print.parameterSteps;
 }
 
 // Color option routines

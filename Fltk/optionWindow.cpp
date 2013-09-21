@@ -2689,7 +2689,7 @@ optionWindow::optionWindow(int deltaFontSize)
         solver.input[0]->callback(solver_options_ok_cb);
 
         solver.value[0] = new Fl_Value_Input
-          (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Timeout (in sec.)");
+          (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Timeout (in seconds)");
         solver.value[0]->align(FL_ALIGN_RIGHT);
         solver.value[0]->callback(solver_options_ok_cb);
 
@@ -2728,7 +2728,7 @@ optionWindow::optionWindow(int deltaFontSize)
       post.choice[0]->callback(post_options_ok_cb);
 
       post.value[0] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Frame duration (in sec.)");
+        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Frame duration (in seconds)");
       post.value[0]->minimum(0);
       post.value[0]->maximum(10);
       post.value[0]->step(0.01);

@@ -367,31 +367,59 @@ int mpegFileDialog(const char *name)
 {
   struct _mpegFileDialog{
     Fl_Window *window;
-    Fl_Round_Button *b[2];
+    Fl_Round_Button *b[3];
+    Fl_Group *param;
     Fl_Check_Button *c[3];
-    Fl_Value_Input *v[2];
-    Fl_Button *ok, *cancel;
+    Fl_Input *p;
+    Fl_Value_Input *v[5];
+    Fl_Group *buttons;
+    Fl_Button *ok, *preview, *cancel;
   };
   static _mpegFileDialog *dialog = NULL;
 
   if(!dialog){
     dialog = new _mpegFileDialog;
-    int h = 3 * WB + 8 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 4 * WB + 11 * BH, w = 3 * BB + 4 * WB, y = WB;
+    int ww = w - 2 * WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
     {
-      Fl_Group *o = new Fl_Group(WB, y, 2 * BB + WB, 2 * BH);
+      Fl_Group *o = new Fl_Group(WB, y, ww, 3 * BH);
       dialog->b[0] = new Fl_Round_Button
-        (WB, y, 2 * BB + WB, BH, "Cycle through time steps"); y += BH;
+        (WB, y, ww, BH, "Cycle through time steps"); y += BH;
       dialog->b[0]->type(FL_RADIO_BUTTON);
       dialog->b[1] = new Fl_Round_Button
-        (WB, y, 2 * BB + WB, BH, "Cycle through views"); y += BH;
+        (WB, y, ww, BH, "Cycle through views"); y += BH;
       dialog->b[1]->type(FL_RADIO_BUTTON);
+      dialog->b[2] = new Fl_Round_Button
+        (WB, y, ww, BH, "Loop over print parameter value"); y += BH;
+      dialog->b[2]->type(FL_RADIO_BUTTON);
       o->end();
     }
+
+    int ww2 = (2 * BB + WB) / 4;
+
+    dialog->param = new Fl_Group(WB, y, ww, 2 * BH);
+    dialog->p = new Fl_Input(WB, y, ww, BH); y += BH;
+    dialog->p->align(FL_ALIGN_RIGHT);
+
+
+    dialog->v[2] = new Fl_Value_Input(WB, y, ww2, BH);
+    dialog->v[3] = new Fl_Value_Input(WB + ww2, y, ww2, BH);
+    dialog->v[4] = new Fl_Value_Input(WB + 2 * ww2, y, 2 * BB + WB - 3 * ww2, BH,
+                                      "First / Last / Steps");
+    dialog->v[4]->align(FL_ALIGN_RIGHT);
+    dialog->v[4]->minimum(1);
+    dialog->v[4]->maximum(500);
+    dialog->v[4]->step(1);
+    y += BH;
+    dialog->param->end();
+
+    y += WB;
+
     dialog->v[0] = new Fl_Value_Input
-      (WB, y, BB / 2, BH, "Frame duration (in sec.)"); y += BH;
+      (WB, y, ww2, BH, "Frame duration (in seconds)"); y += BH;
     dialog->v[0]->minimum(1. / 24.);
     dialog->v[0]->maximum(2.);
     dialog->v[0]->step(1. / 24.);
@@ -399,37 +427,52 @@ int mpegFileDialog(const char *name)
     dialog->v[0]->align(FL_ALIGN_RIGHT);
 
     dialog->v[1] = new Fl_Value_Input
-      (WB, y, BB / 2, BH, "Steps between frames"); y += BH;
+      (WB, y, ww2, BH, "Steps between frames"); y += BH;
     dialog->v[1]->minimum(1);
     dialog->v[1]->maximum(100);
     dialog->v[1]->step(1);
     dialog->v[1]->align(FL_ALIGN_RIGHT);
 
     dialog->c[0] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Print background"); y += BH;
+      (WB, y, ww, BH, "Print background"); y += BH;
     dialog->c[0]->type(FL_TOGGLE_BUTTON);
 
     dialog->c[1] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Composite all window tiles"); y += BH;
+      (WB, y, ww, BH, "Composite all window tiles"); y += BH;
     dialog->c[1]->type(FL_TOGGLE_BUTTON);
 
     dialog->c[2] = new Fl_Check_Button
-      (WB, y, 2 * BB + WB, BH, "Delete temporary files"); y += BH;
+      (WB, y, ww, BH, "Delete temporary files"); y += BH;
     dialog->c[2]->type(FL_TOGGLE_BUTTON);
 
+    dialog->buttons = new Fl_Group(WB, y + WB, ww, BH);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->preview = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Preview");
+    dialog->cancel = new Fl_Button(3 * WB + 2 * BB, y + WB, BB, BH, "Cancel");
+    dialog->buttons->end();
+
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
-  dialog->b[0]->value(!CTX::instance()->post.animCycle);
-  dialog->b[1]->value(CTX::instance()->post.animCycle);
+  dialog->b[0]->value(CTX::instance()->post.animCycle == 0);
+  dialog->b[1]->value(CTX::instance()->post.animCycle == 1);
+  dialog->b[2]->value(CTX::instance()->post.animCycle == 2);
   dialog->v[0]->value(CTX::instance()->post.animDelay);
   dialog->v[1]->value(CTX::instance()->post.animStep);
   dialog->c[0]->value(CTX::instance()->print.background);
   dialog->c[1]->value(CTX::instance()->print.compositeWindows);
   dialog->c[2]->value(CTX::instance()->print.deleteTmpFiles);
+
+  dialog->p->value(CTX::instance()->print.parameterCommand.c_str());
+  if(dialog->b[2]->value())
+    dialog->param->activate();
+  else
+    dialog->param->deactivate();
+  dialog->v[2]->value(CTX::instance()->print.parameterFirst);
+  dialog->v[3]->value(CTX::instance()->print.parameterLast);
+  dialog->v[4]->value(CTX::instance()->print.parameterSteps);
+
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -437,16 +480,32 @@ int mpegFileDialog(const char *name)
     for (;;) {
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
-      if (o == dialog->ok) {
-        opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+      if (o == dialog->b[0] || o == dialog->b[1] || o == dialog->b[2]) {
+        if(dialog->b[2]->value())
+          dialog->param->activate();
+        else
+          dialog->param->deactivate();
+      }
+      if (o == dialog->ok || o == dialog->preview) {
+        opt_post_anim_cycle(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 2 :
+                            dialog->b[1]->value() ? 1 : 0);
+        opt_print_parameter_command(0, GMSH_SET | GMSH_GUI, dialog->p->value());
+        opt_print_parameter_first(0, GMSH_SET | GMSH_GUI, dialog->v[2]->value());
+        opt_print_parameter_last(0, GMSH_SET | GMSH_GUI, dialog->v[3]->value());
+        opt_print_parameter_steps(0, GMSH_SET | GMSH_GUI, dialog->v[4]->value());
         opt_post_anim_delay(0, GMSH_SET | GMSH_GUI, dialog->v[0]->value());
         opt_post_anim_step(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->c[0]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->c[1]->value());
         opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[2]->value());
-        CreateOutputFile(name, FORMAT_MPEG);
-        dialog->window->hide();
-        return 1;
+        int format = (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : FORMAT_MPEG;
+        dialog->buttons->deactivate();
+        CreateOutputFile(name, format);
+        dialog->buttons->activate();
+        if(o == dialog->ok){
+          dialog->window->hide();
+          return 1;
+        }
       }
       if (o == dialog->window || o == dialog->cancel){
         dialog->window->hide();

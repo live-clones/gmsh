@@ -266,6 +266,10 @@ StringXString ViewOptions_String[] = {
 } ;
 
 StringXString PrintOptions_String[] = {
+  { F|O, "ParameterCommand" , opt_print_parameter_command ,
+    "View.Clip=1; General.Clip0D=Print.Parameter;" ,
+    "Command parsed when the print parameter is changed" },
+
   { 0, 0 , 0 , "" , 0 }
 } ;
 
@@ -874,7 +878,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
   { F|O, "Bunin" , opt_mesh_bunin , 0. ,
-    "Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)" },
+    "Apply Bunin optimization on quad meshes (the parameter is the maximal size of "
+    "a cavity that may be remeshed)" },
   { F|O, "Lloyd" , opt_mesh_lloyd , 0. ,
     "Apply lloyd optimization on surface meshes" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
@@ -1517,6 +1522,15 @@ StringXNumber ViewOptions_Number[] = {
 } ;
 
 StringXNumber PrintOptions_Number[] = {
+  { F|O, "Parameter" , opt_print_parameter , 0. ,
+    "Current value of the print parameter" },
+  { F|O, "ParameterFirst" , opt_print_parameter_first , -1. ,
+    "First value of print parameter in loop" },
+  { F|O, "ParameterLast" , opt_print_parameter_last , 1. ,
+    "Last value of print parameter in loop" },
+  { F|O, "ParameterSteps" , opt_print_parameter_steps , 24 ,
+    "Number of steps in loop over print parameter" },
+
   { F|O, "Background" , opt_print_background , 0. ,
     "Print background?" },
 

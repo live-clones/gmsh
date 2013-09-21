@@ -4,6 +4,31 @@
 @c
 
 @ftable @code
+@item Print.ParameterCommand
+Command parsed when the print parameter is changed@*
+Default value: @code{"View.Clip=1; General.Clip0D=Print.Parameter;"}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.Parameter
+Current value of the print parameter@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.ParameterFirst
+First value of print parameter in loop@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.ParameterLast
+Last value of print parameter in loop@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.ParameterSteps
+Number of steps in loop over print parameter@*
+Default value: @code{24}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Background
 Print background?@*
 Default value: @code{0}@*

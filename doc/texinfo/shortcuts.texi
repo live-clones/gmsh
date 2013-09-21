@@ -134,8 +134,6 @@ Hide/show mesh volume faces
 Hide/show mesh surface faces
 @item Alt+Shift+l
 Hide/show mesh lines
-@item Alt+Shift+o
-Adjust projection parameters
 @item Alt+Shift+p
 Hide/show mesh points
 @item Alt+Shift+s
