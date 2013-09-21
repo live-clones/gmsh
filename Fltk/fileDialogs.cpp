@@ -383,7 +383,7 @@ int mpegFileDialog(const char *name)
     int ww = w - 2 * WB;
     dialog->window = new Fl_Double_Window(w, h, "MPEG Options");
     dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->window->set_modal();
+    dialog->window->set_non_modal();
     {
       Fl_Group *o = new Fl_Group(WB, y, ww, 3 * BH);
       dialog->b[0] = new Fl_Round_Button
