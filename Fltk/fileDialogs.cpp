@@ -420,9 +420,9 @@ int mpegFileDialog(const char *name)
 
     dialog->v[0] = new Fl_Value_Input
       (WB, y, ww2, BH, "Frame duration (in seconds)"); y += BH;
-    dialog->v[0]->minimum(1. / 24.);
+    dialog->v[0]->minimum(1. / 30.);
     dialog->v[0]->maximum(2.);
-    dialog->v[0]->step(1. / 24.);
+    dialog->v[0]->step(1. / 30.);
     dialog->v[0]->precision(3);
     dialog->v[0]->align(FL_ALIGN_RIGHT);
 

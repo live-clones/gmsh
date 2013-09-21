@@ -1528,7 +1528,7 @@ StringXNumber PrintOptions_Number[] = {
     "First value of print parameter in loop" },
   { F|O, "ParameterLast" , opt_print_parameter_last , 1. ,
     "Last value of print parameter in loop" },
-  { F|O, "ParameterSteps" , opt_print_parameter_steps , 24 ,
+  { F|O, "ParameterSteps" , opt_print_parameter_steps , 10. ,
     "Number of steps in loop over print parameter" },
 
   { F|O, "Background" , opt_print_background , 0. ,
