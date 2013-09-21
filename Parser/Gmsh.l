@@ -121,7 +121,7 @@ Delete                  return tDelete;
 Degenerated             return tDegenerated;
 Dilate                  return tDilate;
 Draw                    return tDraw;
-DrawForceChanged        return tDrawForceChanged;
+SetChanged              return tSetChanged;
 
 Exp                     return tExp;
 Ellipsis                return tEllipse;

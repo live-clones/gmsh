@@ -85,7 +85,7 @@
      tTextAttributes = 301,
      tBoundingBox = 302,
      tDraw = 303,
-     tDrawForceChanged = 304,
+     tSetChanged = 304,
      tToday = 305,
      tCpu = 306,
      tMemory = 307,
@@ -243,7 +243,7 @@
 #define tTextAttributes 301
 #define tBoundingBox 302
 #define tDraw 303
-#define tDrawForceChanged 304
+#define tSetChanged 304
 #define tToday 305
 #define tCpu 306
 #define tMemory 307

@@ -120,7 +120,7 @@
      tTextAttributes = 301,
      tBoundingBox = 302,
      tDraw = 303,
-     tDrawForceChanged = 304,
+     tSetChanged = 304,
      tToday = 305,
      tCpu = 306,
      tMemory = 307,
@@ -278,7 +278,7 @@
 #define tTextAttributes 301
 #define tBoundingBox 302
 #define tDraw 303
-#define tDrawForceChanged 304
+#define tSetChanged 304
 #define tToday 305
 #define tCpu 306
 #define tMemory 307
@@ -1198,8 +1198,8 @@ static const char *const yytname[] =
   "tTanh", "tFabs", "tFloor", "tCeil", "tFmod", "tModulo", "tHypot",
   "tList", "tPrintf", "tError", "tStr", "tSprintf", "tStrCat",
   "tStrPrefix", "tStrRelative", "tStrReplace", "tStrFind", "tStrCmp",
-  "tTextAttributes", "tBoundingBox", "tDraw", "tDrawForceChanged",
-  "tToday", "tCpu", "tMemory", "tSyncModel", "tCreateTopology",
+  "tTextAttributes", "tBoundingBox", "tDraw", "tSetChanged", "tToday",
+  "tCpu", "tMemory", "tSyncModel", "tCreateTopology",
   "tCreateTopologyNoHoles", "tDistanceFunction", "tDefineConstant",
   "tUndefineConstant", "tPoint", "tCircle", "tEllipse", "tLine", "tSphere",
   "tPolarSphere", "tSurface", "tSpline", "tVolume", "tCharacteristic",
