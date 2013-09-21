@@ -408,7 +408,7 @@ int mpegFileDialog(const char *name)
     dialog->v[2] = new Fl_Value_Input(WB, y, ww2, BH);
     dialog->v[3] = new Fl_Value_Input(WB + ww2, y, ww2, BH);
     dialog->v[4] = new Fl_Value_Input(WB + 2 * ww2, y, 2 * BB + WB - 3 * ww2, BH,
-                                      "First / Last / Steps");
+                                      "First / last / steps");
     dialog->v[4]->align(FL_ALIGN_RIGHT);
     dialog->v[4]->minimum(1);
     dialog->v[4]->maximum(500);
@@ -500,7 +500,7 @@ int mpegFileDialog(const char *name)
         opt_print_delete_tmp_files(0, GMSH_SET | GMSH_GUI, (int)dialog->c[2]->value());
         int format = (o == dialog->preview) ? FORMAT_MPEG_PREVIEW : FORMAT_MPEG;
         dialog->buttons->deactivate();
-        CreateOutputFile(name, format);
+        CreateOutputFile(name, format, o == dialog->ok);
         dialog->buttons->activate();
         if(o == dialog->ok){
           dialog->window->hide();

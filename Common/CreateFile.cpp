@@ -213,7 +213,7 @@ static void change_print_parameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
   double last = CTX::instance()->print.parameterLast;
-  double steps = CTX::instance()->print.parameterSteps;
+  double steps = CTX::instance()->print.parameterSteps - 1;
   if(steps <= 0) steps = 1;
   double step = (last - first) / steps;
   double v = first + frame * step * CTX::instance()->post.animStep;
@@ -562,22 +562,20 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
       }
       if(cycle != 2)
         status_play_manual(!cycle, 0, false);
-      else
-        change_print_parameter(0);
       for(unsigned int i = 0; i < frames.size(); i++){
+        if(cycle == 2)
+          change_print_parameter(i);
         if(fp)
           CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
-        if(cycle != 2)
-          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
-        else
-          change_print_parameter(i + 1);
-        if(!fp){
+        else{
           drawContext::global()->draw();
           SleepInSeconds(CTX::instance()->post.animDelay);
         }
+        if(cycle != 2)
+          status_play_manual(!cycle, CTX::instance()->post.animStep, false);
       }
       if(fp){
-        int repeat = (int)(CTX::instance()->post.animDelay * 24);
+        int repeat = (int)(CTX::instance()->post.animDelay * 30);
         if(repeat < 1) repeat = 1;
         std::string pattern("I");
         // including P frames would lead to smaller files, but the quality
