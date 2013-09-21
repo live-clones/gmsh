@@ -408,7 +408,7 @@ int mpegFileDialog(const char *name)
     dialog->v[2] = new Fl_Value_Input(WB, y, ww2, BH);
     dialog->v[3] = new Fl_Value_Input(WB + ww2, y, ww2, BH);
     dialog->v[4] = new Fl_Value_Input(WB + 2 * ww2, y, 2 * BB + WB - 3 * ww2, BH,
-                                      "First / last / steps");
+                                      "First / Last / Steps");
     dialog->v[4]->align(FL_ALIGN_RIGHT);
     dialog->v[4]->minimum(1);
     dialog->v[4]->maximum(500);
