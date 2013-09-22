@@ -2902,7 +2902,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   x += sw;
   _butt[10] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_back");
   _butt[10]->callback(status_stepbackward_cb);
-  _butt[10]->tooltip("Step backward");
+  _butt[10]->tooltip("Step backward (Left arrow)");
   _butt[10]->deactivate();
   x += sw;
   _butt[7] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_play");
@@ -2912,7 +2912,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   x += sw;
   _butt[11] = new Fl_Button(x, mh + glheight + mheight + 2, sw, sht, "@-1gmsh_forward");
   _butt[11]->callback(status_stepforward_cb);
-  _butt[11]->tooltip("Step forward");
+  _butt[11]->tooltip("Step forward (Right arrow)");
   _butt[11]->deactivate();
   x += sw;
 
