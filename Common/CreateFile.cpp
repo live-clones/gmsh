@@ -222,7 +222,7 @@ static void change_print_parameter(int frame)
   ParseString(CTX::instance()->print.parameterCommand);
 }
 
-void CreateOutputFile(const std::string &fileName, int format, bool redraw)
+void CreateOutputFile(const std::string &fileName, int format, bool status)
 {
   std::string name = fileName;
   if(name.empty()) name = GetDefaultFileName(format);
@@ -232,7 +232,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
   CTX::instance()->printing = 1;
   bool error = false;
 
-  if(redraw)
+  if(status)
     Msg::StatusBar(true, "Writing '%s'...", name.c_str());
 
   switch (format) {
@@ -625,10 +625,10 @@ void CreateOutputFile(const std::string &fileName, int format, bool redraw)
   CTX::instance()->print.fileFormat = oldFormat;
   CTX::instance()->printing = 0;
 
-  if(redraw && !error)
+  if(status && !error)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());
 
 #if defined(HAVE_OPENGL)
-  if(redraw) drawContext::global()->draw();
+  drawContext::global()->draw();
 #endif
 }

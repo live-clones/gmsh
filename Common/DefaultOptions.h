@@ -267,7 +267,8 @@ StringXString ViewOptions_String[] = {
 
 StringXString PrintOptions_String[] = {
   { F|O, "ParameterCommand" , opt_print_parameter_command ,
-    "View.Clip=1; General.Clip0D=Print.Parameter;" ,
+    "Mesh.Clip=1; View.Clip=1; General.ClipWholeElements=1; "
+    "General.Clip0D=Print.Parameter; SetChanged;" ,
     "Command parsed when the print parameter is changed" },
 
   { 0, 0 , 0 , "" , 0 }
