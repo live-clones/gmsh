@@ -222,7 +222,8 @@ static void change_print_parameter(int frame)
   ParseString(CTX::instance()->print.parameterCommand);
 }
 
-void CreateOutputFile(const std::string &fileName, int format, bool status)
+void CreateOutputFile(const std::string &fileName, int format,
+                      bool status, bool redraw)
 {
   std::string name = fileName;
   if(name.empty()) name = GetDefaultFileName(format);
@@ -238,7 +239,7 @@ void CreateOutputFile(const std::string &fileName, int format, bool status)
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(name, GuessFileFormatFromFileName(name), false);
+    CreateOutputFile(name, GuessFileFormatFromFileName(name), false, false);
     break;
 
   case FORMAT_OPT:
@@ -566,7 +567,8 @@ void CreateOutputFile(const std::string &fileName, int format, bool status)
         if(cycle == 2)
           change_print_parameter(i);
         if(fp)
-          CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM, false);
+          CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM,
+                           false, false);
         else{
           drawContext::global()->draw();
           SleepInSeconds(CTX::instance()->post.animDelay);
@@ -629,6 +631,6 @@ void CreateOutputFile(const std::string &fileName, int format, bool status)
     Msg::StatusBar(true, "Done writing '%s'", name.c_str());
 
 #if defined(HAVE_OPENGL)
-  drawContext::global()->draw();
+  if(redraw) drawContext::global()->draw();
 #endif
 }

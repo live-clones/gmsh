@@ -11,6 +11,7 @@
 int GetFileFormatFromExtension(const std::string &fileName);
 int GuessFileFormatFromFileName(const std::string &fileName);
 std::string GetDefaultFileName(int format);
-void CreateOutputFile(const std::string &fileName, int format, bool status=true);
+void CreateOutputFile(const std::string &fileName, int format,
+                      bool status=true, bool redraw=true);
 
 #endif
