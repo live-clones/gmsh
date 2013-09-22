@@ -1209,7 +1209,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     browser_type = new Fl_Choice
       (2 * WB, height - 2 * BH - 3 * WB, (width - 3 * WB) / 2, BH);
     browser_type->menu(browser_type_table);
-    browser_type->value(1);
+    browser_type->value(2); // physicals
 
     push[0] = new Fl_Button
       (width - 2 * CC - 3 * WB, height - 2 * BH - 3 * WB, CC, BH, "Delete");
