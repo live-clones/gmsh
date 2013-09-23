@@ -198,6 +198,7 @@ Recombine               return tRecombine;
 Recomb[lL]aterals       return tRecombLaterals;
 Recursive               return tRecursive;
 Rotate                  return tRotate;
+Round                   return tRound;
 Ruled                   return tRuled;
 Rand                    return tRand;
 RefineMesh              return tRefineMesh;

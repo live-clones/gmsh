@@ -1334,6 +1334,9 @@ see @code{Fmod( @var{expression}, @var{expression} )}.
 @item Rand ( @var{expression} )
 Random number between zero and @var{expression}.
 
+@item Round ( @var{expression} )
+Rounds @var{expression} to the nearest integer.
+
 @item Sqrt ( @var{expression} )
 Square root of @var{expression} (@var{expression} >= 0).
 
