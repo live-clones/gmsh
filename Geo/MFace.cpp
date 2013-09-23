@@ -10,10 +10,12 @@
 #include "Numeric.h"
 #include "Context.h"
 
+bool compare (MVertex* v0, MVertex* v1) {return v0->getNum() < v1->getNum();}
+
 void sortVertices(std::vector<MVertex*> v, std::vector<char> &si)
 {
   std::vector<MVertex*> sorted = v;
-  std::sort(sorted.begin(), sorted.end());
+  std::sort(sorted.begin(), sorted.end(), compare);
   for(unsigned int i = 0; i < sorted.size(); i++)
     si.push_back(std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
