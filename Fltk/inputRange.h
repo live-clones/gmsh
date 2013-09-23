@@ -11,20 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "inputValue.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/fl_ask.H>
-
-class inputValue : public Fl_Value_Input
-{
- public:
-  inputValue(int x, int y, int w, int h, const char *l=0) :
-    Fl_Value_Input(x, y, w, h, l) {}
-  virtual int format(char *buffer){ return sprintf(buffer, "%g", value()); }
-};
 
 class inputRange : public Fl_Group {
  private:
@@ -37,14 +29,6 @@ class inputRange : public Fl_Group {
   std::vector<double> _choices;
   std::string _range, _range_tooltip;
   bool _do_callback_on_values;
-  double _fixStep(double step)
-  {
-    // workaround annoying behaviour of Fl_Value_Input: if step is a nonzero
-    // integer, one can only enter integer values in the widget; se we force
-    // nonzero steps to be noninteger
-    if(step && step - floor(step) <= 0) step *= (1. - 1e-7);
-    return step;
-  }
   void _values2string()
   {
     std::ostringstream tmp;
@@ -57,7 +41,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_fixStep(_choices[1] - _choices[0]));
+        _input->step(_choices[1] - _choices[0]);
       }
       _step = 0.;
     }
@@ -74,7 +58,7 @@ class inputRange : public Fl_Group {
       }
       if(_step == 0.) _step = 1.;
       if(_step != 1.) tmp << " : " << _step;
-      _input->step(_fixStep(_step));
+      _input->step(_step);
       _choices.clear();
     }
     _range = tmp.str();
@@ -104,7 +88,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_fixStep(_choices[1] - _choices[0]));
+        _input->step(_choices[1] - _choices[0]);
       }
       _step = 0.;
     }
@@ -137,7 +121,7 @@ class inputRange : public Fl_Group {
         _step = atof(step.c_str());
       else
         _step = 1.;
-      _input->step(_fixStep(_step));
+      _input->step(_step);
       _choices.clear();
     }
   }
