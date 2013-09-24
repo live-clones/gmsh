@@ -10,7 +10,7 @@
 
 void inputValue::new_input_cb(Fl_Widget*, void* v)
 {
-  Fl_Value_Input& t = *(Fl_Value_Input*)v;
+  inputValue& t = *(inputValue*)v;
   double nv = strtod(t.input.value(), 0);
   if (nv != t.value() || t.when() & FL_WHEN_NOT_CHANGED) {
     t.set_value(nv);
