@@ -1064,11 +1064,17 @@ endif(WIN32 OR CYGWIN)
 
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
+check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
 if(WALL AND NOT MSVC)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
        Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp)
-  set_source_files_properties(${WALL_SRC} PROPERTIES COMPILE_FLAGS "-Wall")
+  if(WCAST)
+    set_source_files_properties(${WALL_SRC} PROPERTIES COMPILE_FLAGS 
+                                "-Wall -Wno-int-to-void-pointer-cast")
+  else(WCAST)
+    set_source_files_properties(${WALL_SRC} PROPERTIES COMPILE_FLAGS "-Wall")
+  endif(WCAST)
 endif(WALL AND NOT MSVC)
 
 # don't issue warnings for contributed libraries
