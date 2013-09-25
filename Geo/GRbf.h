@@ -39,8 +39,6 @@ class GRbf {
 
   int nbNodes; //initial nodes
   bool isLocal;
-  int nn;
-  int num_neighbours;
 
   int _inUV;
   double delta; //offset level set
@@ -51,7 +49,6 @@ class GRbf {
   SVector3 lastDXDU, lastDXDV;
   double lastX, lastY, lastZ, lastU, lastV;
 
-  int variableShapeParam;
   int radialFunctionIndex; // Index for the radial function used (0 - GA,1 - MQ, ... )
 
   std::set<MVertex *> myNodes; //Used mesh vertices for light rbf
@@ -122,7 +119,7 @@ class GRbf {
   void RbfLapSurface_global_projection2(const fullMatrix<double> &cntrs,
 		const fullMatrix<double> &normals,
 		fullMatrix<double> &Oper);
-	
+
   // Finds global surface differentiation matrix using the projection method
   void RbfLapSurface_global_projection(const fullMatrix<double> &cntrs,
 				       const fullMatrix<double> &normals,
@@ -168,7 +165,7 @@ class GRbf {
   //indices of the closest points
   bool UVStoXYZ(const double u_eval, const double v_eval,
                 double &XX, double &YY, double &ZZ,
-                SVector3 &dXdu, SVector3& dxdv, int num_neighbours=15);
+                SVector3 &dXdu, SVector3& dxdv, int num_neighbours=100);
 
   void solveHarmonicMap(fullMatrix<double> Oper, std::vector<MVertex*> ordered,
                         std::vector<double> coords, std::map<MVertex*, SPoint3> &rbf_param);

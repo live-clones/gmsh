@@ -712,7 +712,7 @@ double gLevelsetQuadric::operator()(double x, double y, double z) const
 
 gLevelsetShamrock::gLevelsetShamrock(double _xmid, double _ymid, double _zmid,
                                      double _a, double _b, int _c, int tag)
-  : gLevelsetPrimitive(tag), xmid(_xmid), ymid(_ymid), zmid(_zmid),
+  : gLevelsetPrimitive(tag), xmid(_xmid),
     a(_a), b(_b), c(_c)
 {
   // creating the iso-zero
@@ -722,7 +722,6 @@ gLevelsetShamrock::gLevelsetShamrock(double _xmid, double _ymid, double _zmid,
     r = a+b*sin(c*angle);
     iso_x.push_back(r*sin(angle)+xmid);
     iso_y.push_back(r*cos(angle)+xmid);
-
     angle += 2.*M_PI/1000.;
   }
 }
@@ -888,7 +887,7 @@ void gLevelsetMathEvalAll::hessian(double x, double y, double z,
 #if defined(HAVE_ANN)
 gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClose,
                                      int tag)
-  : gLevelsetPrimitive(tag), _gm(gm), _nbClose(nbClose)
+  : gLevelsetPrimitive(tag), _nbClose(nbClose)
 {
   std::map<int, std::vector<GEntity*> > groups [4];
   gm->getPhysicalGroups(groups);
@@ -958,7 +957,7 @@ double gLevelsetDistMesh::operator () (double x, double y, double z) const
   SPoint3 closest;
   for (std::set<MElement*>::iterator it = elements.begin();
        it != elements.end();++it){
-    double distance;
+    double distance = 0.;
     MVertex *v1 = (*it)->getVertex(0);
     MVertex *v2 = (*it)->getVertex(1);
     SPoint3 p1(v1->x(), v1->y(), v1->z());
@@ -972,8 +971,9 @@ double gLevelsetDistMesh::operator () (double x, double y, double z) const
       SPoint3 p3(v3->x(), v3->y(), v3->z());
       signedDistancePointTriangle(p1, p2, p3,SPoint3(x,y,z),distance,pt);
     }
-    else if  ((*it)->getDim() == 2){
-      Msg::Error("Cannot compute a dsitance to an entity of dim \n");
+    else{
+      Msg::Error("Cannot compute a dsitance to an entity of dimension %d",
+                 (*it)->getDim());
     }
     if (fabs(distance) < fabs(minDistance)){
       minDistance=distance;

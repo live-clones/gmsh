@@ -13,10 +13,8 @@
 #include "OS.h"
 #include <algorithm>
 
-
 meshMetric::meshMetric(GModel *gm)
 {
-
   hasAnalyticalMetric = false;
   _dim  = gm->getDim();
   std::map<MElement*, MElement*> newP;
@@ -42,12 +40,10 @@ meshMetric::meshMetric(GModel *gm)
   }
   _octree = new MElementOctree(_elements);
   buildVertexToElement (_elements,_adj);
-
 }
 
 meshMetric::meshMetric(std::vector<MElement*> elements)
 {
-
   hasAnalyticalMetric = false;
 
   _dim  = elements[0]->getDim();
@@ -68,22 +64,21 @@ void meshMetric::addMetric(int technique, simpleFunction<double> *fct,
                            std::vector<double> parameters)
 {
   needMetricUpdate = true;
-  
+
   int metricNumber = setOfMetrics.size();
   setOfFcts[metricNumber] = fct;
   setOfParameters[metricNumber] = parameters;
   setOfTechniques[metricNumber] = technique;
-  
-  if (fct->hasDerivatives()) hasAnalyticalMetric = true;
-  
-  computeMetric(metricNumber);
 
+  if (fct->hasDerivatives()) hasAnalyticalMetric = true;
+
+  computeMetric(metricNumber);
 }
 
 void meshMetric::updateMetrics()
 {
   if (!setOfMetrics.size()){
-    std::cout << " meshMetric::intersectMetrics: Can't intersect metrics, no metric registered ! " << std::endl;
+    Msg::Error("Can't intersect metrics, no metric registered");
     return;
   }
 
@@ -223,11 +218,12 @@ void meshMetric::computeValues()
     vals[ver]= (*_fct)(ver->x(),ver->y(),ver->z());
     it++;
   }
-  
+
 }
 
 // Determines set of vertices to use for least squares
-std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it, v2t_cont &adj)
+std::vector<MVertex*> getLSBlob(unsigned int minNbPt, v2t_cont::iterator it,
+                                v2t_cont &adj)
 {
 
   //  static const double RADFACT = 3;
@@ -310,7 +306,8 @@ void meshMetric::computeHessian()
     }
     double duNorm = sqrt(dudx*dudx+dudy*dudy+dudz*dudz);
     if (duNorm == 0. || _technique == meshMetric::HESSIAN ||
-        _technique == meshMetric::EIGENDIRECTIONS || _technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H) duNorm = 1.;
+        _technique == meshMetric::EIGENDIRECTIONS ||
+        _technique == meshMetric::EIGENDIRECTIONS_LINEARINTERP_H) duNorm = 1.;
     grads[ver] = SVector3(dudx/duNorm,dudy/duNorm,dudz/duNorm);
     hessians[ver](0,0) = d2udx2; hessians[ver](0,1) = d2udxy; hessians[ver](0,2) = d2udxz;
     hessians[ver](1,0) = d2udxy; hessians[ver](1,1) = d2udy2; hessians[ver](1,2) = d2udyz;
@@ -318,18 +315,19 @@ void meshMetric::computeHessian()
   }
 }
 
-void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
+void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,
+                                       SMetric3 &metric, double &size,
+                                       double x, double y, double z)
 {
-
   double signed_dist;
   SVector3 gr;
-  if(ver != NULL){
+  if(ver){
     signed_dist = vals[ver];
     gr = grads[ver];
     hessian = hessians[ver];
   }
-  else if (ver == NULL){
-    signed_dist = (*_fct)(x,y,z); 
+  else{
+    signed_dist = (*_fct)(x,y,z);
     _fct->gradient(x,y,z,gr(0),gr(1),gr(2));
     _fct->hessian(x,y,z, hessian(0,0),hessian(0,1),hessian(0,2),
 		  hessian(1,0),hessian(1,1),hessian(1,2),
@@ -366,10 +364,11 @@ void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,  SMetric
 
   size = std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3));
   metric = SMetric3(lambda1,lambda2,lambda3,t1,t2,t3);
-    
 }
 
-void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
+void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,
+                                      SMetric3 &metric, double &size,
+                                      double x, double y, double z)
 {
 
   SVector3 gr;
@@ -383,7 +382,7 @@ void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3
 		  hessian(1,0),hessian(1,1),hessian(1,2),
 		  hessian(2,0),hessian(2,1),hessian(2,2));
   }
- 
+
   double _epsilonP = 1.;
   double hminP = 1.e-12;
   double hmaxP = 1.e+12;
@@ -395,28 +394,29 @@ void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,  SMetric3
   double lambda1 = std::min(std::max(fabs(S(0))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
   double lambda2 = std::min(std::max(fabs(S(1))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP));
   double lambda3 = (_dim == 3) ? std::min(std::max(fabs(S(2))/_epsilonP,1./(hmaxP*hmaxP)),1./(hminP*hminP)) : 1.;
-  
+
   SVector3 t1 (V(0,0),V(1,0),V(2,0));
   SVector3 t2 (V(0,1),V(1,1),V(2,1));
   SVector3 t3  = (_dim == 3) ? SVector3(V(0,2),V(1,2),V(2,2)) : SVector3(0.,0.,1.);
-  
+
   size =  std::min(std::min(1/sqrt(lambda1),1/sqrt(lambda2)),1/sqrt(lambda3));
   metric = SMetric3(lambda1,lambda2,lambda3,t1,t2,t3);
- 
+
 }
 
-void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
+void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,
+                                   SMetric3 &metric, double &size,
+                                   double x, double y, double z)
 {
-  
   double signed_dist;
   SVector3 gr;
-  if(ver != NULL){
+  if(ver){
     signed_dist = vals[ver];
     gr = grads[ver];
     hessian = hessians[ver];
   }
-  else if (ver == NULL){
-    signed_dist = (*_fct)(x,y,z); 
+  else{
+    signed_dist = (*_fct)(x,y,z);
     _fct->gradient(x,y,z,gr(0),gr(1),gr(2));
     _fct->hessian(x,y,z, hessian(0,0),hessian(0,1),hessian(0,2),
 		  hessian(1,0),hessian(1,1),hessian(1,2),
@@ -464,26 +464,27 @@ void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,  SMetric3 &m
 
 }
 
-void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
+void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,
+                                       SMetric3 &metric, double &size,
+                                       double x, double y, double z)
 {
-  
   double signed_dist;
   SVector3 gVec;
-  if(ver != NULL){
+  if(ver){
     signed_dist = vals[ver];
     gVec = grads[ver];
     hessian = hessians[ver];
   }
-  else if (ver == NULL){
-    signed_dist = (*_fct)(x,y,z); 
+  else{
+    signed_dist = (*_fct)(x,y,z);
     _fct->gradient(x,y,z,gVec(0),gVec(1),gVec(2));
     _fct->hessian(x,y,z, hessian(0,0),hessian(0,1),hessian(0,2),
 		  hessian(1,0),hessian(1,1),hessian(1,2),
 		  hessian(2,0),hessian(2,1),hessian(2,2));
   }
-  
+
   double dist = fabs(signed_dist);
-  
+
   const double metric_value_hmax = 1./(hmax*hmax);
   const double gMag = gVec.norm(), invGMag = 1./gMag;
 
@@ -495,7 +496,7 @@ void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,  SMetric
       //const double h_dist = hmin + ((hmax-hmin)/_E)*dist;                                       // Characteristic element size in the normal direction - linear interp between hmin and hmax
       //lambda_n = 1./(h_dist*h_dist);
       double beta = CTX::instance()->mesh.smoothRatio;
-      double h_dista  = std::min( (hmin+(dist*log(beta))), hmax);                                    
+      double h_dista  = std::min( (hmin+(dist*log(beta))), hmax);
       lambda_n = 1./(h_dista*h_dista);
     }
     else if(_technique==meshMetric::EIGENDIRECTIONS){
@@ -559,21 +560,21 @@ void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,  SMetric
     metric = mymetric;
     size = hmax;
   }
-
 }
 
-void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,  SMetric3 &metric, double &size, double x, double y, double z)
+void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,
+                                           SMetric3 &metric, double &size,
+                                           double x, double y, double z)
 {
-
   double signed_dist;
   SVector3 gr;
-  if(ver != NULL){
+  if(ver){
     signed_dist = vals[ver];
     gr = grads[ver];
     hessian = hessians[ver];
   }
-  else if (ver == NULL){
-    signed_dist = (*_fct)(x,y,z); 
+  else{
+    signed_dist = (*_fct)(x,y,z);
     _fct->gradient(x,y,z,gr(0),gr(1),gr(2));
     _fct->hessian(x,y,z, hessian(0,0),hessian(0,1),hessian(0,2),
 		  hessian(1,0),hessian(1,1),hessian(1,2),
@@ -587,14 +588,12 @@ void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,  SMe
     if ((signed_dist >= 0) && (signed_dist < _E)) size = hmin + ((hmax-hmin)/_E)*dist;
     else if ((signed_dist < 0) && (signed_dist > _E_moins)) size = hmin - ((hmax-hmin)/_E_moins)*dist;
   }
-  
+
   double lambda = 1./size/size;
   metric(0,0) = lambda; metric(0,1) = 0.; metric(0,2) = 0.;
   metric(1,0) = 0.; metric(1,1) = lambda; metric(1,2) = 0.;
   metric(2,0) = 0.; metric(2,1) = 0.; metric(2,2) = (_dim == 3)? lambda : 1.;
-  
 }
-
 
 // this function scales the mesh metric in order
 // to reach a target number of elements
@@ -609,8 +608,8 @@ void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,  SMe
 //  where d is the dimension of the problem.
 // This means that the metric should be scaled by K^{2/d} where
 // K is N_target / N
-void meshMetric::scaleMetric( int nbElementsTarget,
-			      nodalMetricTensor &nmt )
+void meshMetric::scaleMetric(int nbElementsTarget,
+                             nodalMetricTensor &nmt)
 {
   // compute N
   double N = 0;
@@ -655,7 +654,6 @@ void meshMetric::scaleMetric( int nbElementsTarget,
 
 void meshMetric::computeMetric(int metricNumber)
 {
-
   _fct = setOfFcts[metricNumber];
   std::vector<double>  parameters = setOfParameters[metricNumber];
   int technique = setOfTechniques[metricNumber];
@@ -688,11 +686,10 @@ void meshMetric::computeMetric(int metricNumber)
 
     setOfSizes[metricNumber].insert(std::make_pair(ver,size));
     setOfMetrics[metricNumber].insert(std::make_pair(ver,metric));
-    
-  }
-    
-  if( _technique ==  HESSIAN)  scaleMetric(_epsilon, setOfMetrics[metricNumber]);
 
+  }
+
+  if( _technique ==  HESSIAN)  scaleMetric(_epsilon, setOfMetrics[metricNumber]);
 }
 
 double meshMetric::operator() (double x, double y, double z, GEntity *ge)
@@ -741,7 +738,7 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
     throw;
   }
   metr = SMetric3(1.e-22);
-  
+
   //RECOMPUTE MESH METRIC AT XYZ
   if (hasAnalyticalMetric){
     int nbMetrics = setOfMetrics.size();
@@ -763,7 +760,7 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
 	newSetOfMetrics[iMetric] = metric;
       }
       else{
-	//find other metrics here 
+	//find other metrics here
 	SMetric3 metric;
 	SPoint3 xyz(x,y,z), uvw;
 	double initialTol = MElement::getTolerance();
@@ -827,23 +824,23 @@ void meshMetric::operator() (double x, double y, double z, SMetric3 &metr, GEnti
     }
   }
 
-
 }
 
-double meshMetric::getLaplacian (MVertex *v) {
+double meshMetric::getLaplacian (MVertex *v)
+{
   MVertex *vNew = _vertexMap[v->getNum()];
   std::map<MVertex*, SMetric3 >::const_iterator it = hessians.find(vNew);
   SMetric3 h = it->second;
   return h(0,0)+h(1,1)+h(2,2);
 }
 
-SVector3 meshMetric::getGradient (MVertex *v) {
+SVector3 meshMetric::getGradient (MVertex *v)
+{
   MVertex *vNew = _vertexMap[v->getNum()];
   std::map<MVertex*,SVector3>::const_iterator it = grads.find(vNew);
   SVector3 gr = it->second;
   return gr;
 }
-
 
 /*void meshMetric::curvatureContributionToMetric (){
   std::map<MVertex*,SMetric3>::iterator it = _nodalMetrics.begin();

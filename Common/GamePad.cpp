@@ -59,9 +59,10 @@
 #include <unistd.h>
 #endif
 
-GamePad::GamePad() : active(false), frequency(.01), gamepad_fd(0)
+GamePad::GamePad() : active(false), frequency(.01)
 {
 #if defined(WIN32)
+  gamepad_fd = 0;
   for (int i = JOYSTICKID1 ; i < JOYSTICKID2 ; i++)  {
     if(JOYERR_NOERROR == joyGetDevCaps(i, &caps, sizeof(JOYCAPS)) ) {
       /*

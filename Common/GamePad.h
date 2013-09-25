@@ -40,17 +40,16 @@ class GamePad {
   int button_map[10];
   int axe_map[8];
  private:
-  int axe_min[8];
-  int axe_max[8];
-  int gamepad_fd;
   char name[256];
 #if defined(WIN32)
+  int gamepad_fd;
   JOYCAPS caps;
   JOYINFOEX infoex;
   JOYINFO info;
   int axes;
   int buttons;
 #elif defined(HAVE_LINUX_JOYSTICK)
+  int gamepad_fd;
   js_event event;
   __u32 version;
   __u8 axes;

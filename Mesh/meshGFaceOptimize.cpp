@@ -2351,6 +2351,10 @@ int _edgeSwapQuadsForBetterQuality(GFace *gf, double eps, std::set<MEdge,Less_Ed
           q1B = new MQuadrangle (v11,v12,v21,v1);
           q2B = new MQuadrangle (v21,v12,v2,v22);
         }
+        else{
+          Msg::Error("Something wrong in edgeSwapQuads opti");
+          return 0;
+        }
         double worst_quality_A = std::min(myShapeMeasure(q1A),myShapeMeasure(q2A));
         double worst_quality_B = std::min(myShapeMeasure(q1B),myShapeMeasure(q2B));
 

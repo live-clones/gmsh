@@ -87,7 +87,7 @@ static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes)
 GRbf::GRbf(double sizeBox, int variableEps, int rbfFun,
            std::map<MVertex*, SVector3> _normals,
            std::set<MVertex *> allNodes, std::vector<MVertex*> bcNodes, bool _isLocal)
-  :  isLocal(_isLocal), _inUV(0), sBox(sizeBox), variableShapeParam(variableEps),
+  :  isLocal(_isLocal), _inUV(0), sBox(sizeBox),
      radialFunctionIndex (rbfFun)
 
 {
@@ -1206,7 +1206,7 @@ bool GRbf::UVStoXYZ(const double  u_eval, const double v_eval,
     return true;
   }
 
-  num_neighbours = std::min(100, nbNodes);
+  num_neighbours = std::min(num_neighbours, nbNodes);
   fullMatrix<double> u_vec(num_neighbours,3), xyz_local(num_neighbours,3);
   fullMatrix<double> u_vec_eval(1, 3), nodes_eval(1,3), xu(1,3), xv(1,3);
   u_vec_eval(0,0) = u_eval;

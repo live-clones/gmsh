@@ -313,9 +313,9 @@ public:
 // Rountable (2008)(177–194)
 class gLevelsetShamrock: public gLevelsetPrimitive
 {
-  double xmid, ymid, zmid,a,b;
+  double xmid, a, b;
   int c;
-  std::vector<double> iso_x,iso_y;
+  std::vector<double> iso_x, iso_y;
 public:
   gLevelsetShamrock(double xmid, double ymid, double zmid, double a, double b,
                     int c=3, int tag=1);
@@ -368,7 +368,6 @@ public:
 #if defined(HAVE_ANN)
 class gLevelsetDistMesh: public gLevelsetPrimitive
 {
-  GModel * _gm;
   const int _nbClose;
   std::vector<GEntity*> _entities;
   std::vector<MVertex*> _vertices;
