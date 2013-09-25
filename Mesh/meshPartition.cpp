@@ -391,7 +391,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         int metisOptions[5];
 		std::vector<float> ubvec(options.ncon);
 //        float ubvec[options.ncon];
-        int edgeCut;
+        int edgeCut = 0;
         const int iSec = 0;
         switch(options.algorithm) {
         case 1:  // Recursive
