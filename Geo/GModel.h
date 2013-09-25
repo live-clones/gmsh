@@ -501,7 +501,7 @@ class GModel
                                              int dir=1, int view=-1);
   GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
 
-  void addRuledFaces(std::vector<std::vector<GEdge *> > edges);
+  std::vector<GFace *> addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
   GFace *add2Drect(double x0, double y0, double dx, double dy);

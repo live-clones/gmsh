@@ -2663,10 +2663,12 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
   return 0;
 }
 
-void GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges)
+std::vector<GFace *> GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges)
 {
+  std::vector<GFace *> faces;
   if(_factory)
-    _factory->addRuledFaces(this, edges);
+    faces = _factory->addRuledFaces(this, edges);
+  return faces;
 }
 
 GFace* GModel::addFace (std::vector<GEdge *> edges,
@@ -2677,13 +2679,15 @@ GFace* GModel::addFace (std::vector<GEdge *> edges,
   return 0;
 }
 
-GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges){
+GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges)
+{
   if(_factory)
     return _factory->addPlanarFace(this, edges);
   return 0;
 }
 
-GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces){
+GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces)
+{
   if(_factory)
     return _factory->addVolume(this, faces);
   return 0;
@@ -2718,7 +2722,8 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
   return 0;
 }
 
-std::vector<GEntity*> GModel::extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers, int dir, int view)
+std::vector<GEntity*> GModel::extrudeBoundaryLayer(GEntity *e, int nbLayers,
+                                                   double hLayers, int dir, int view)
 {
   if(_factory)
     return _factory->extrudeBoundaryLayer(this, e, nbLayers,hLayers, dir, view);

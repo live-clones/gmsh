@@ -1411,7 +1411,7 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
 }
 
 std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
-					      std::vector< std::vector<GEdge *> > wires)
+                                               std::vector< std::vector<GEdge *> > wires)
 {
   std::vector<GFace*> faces;
   Standard_Boolean anIsSolid = Standard_False;
