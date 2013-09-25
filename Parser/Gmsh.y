@@ -136,6 +136,7 @@ struct doubleXstring{
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <c> StringIndex String__Index
 %type <l> RecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble Enumeration
@@ -617,7 +618,7 @@ Affectation :
 
   | tUndefineConstant '[' UndefineConstants ']' tEND
 
-  | tSTRING NumericAffectation ListOfDouble tEND
+  | String__Index NumericAffectation ListOfDouble tEND
     {
       if(!gmsh_yysymbols.count($1) && $2 && List_Nbr($3) == 1){
         yymsg(0, "Unknown variable '%s'", $1);
@@ -873,7 +874,7 @@ Affectation :
       List_Delete($8);
     }
 
-  | tSTRING NumericIncrement tEND
+  | String__Index NumericIncrement tEND
     {
       if(!gmsh_yysymbols.count($1))
 	yymsg(0, "Unknown variable '%s'", $1);
@@ -904,7 +905,7 @@ Affectation :
       }
       Free($1);
     }
-  | tSTRING tAFFECT StringExpr tEND
+  | String__Index tAFFECT StringExpr tEND
     {
       gmsh_yystringsymbols[$1] = std::string($3);
       Free($1);
@@ -1182,7 +1183,7 @@ Comma : /* none */ | ',' ;
 
 DefineConstants :
     /* none */
-  | DefineConstants Comma tSTRING
+  | DefineConstants Comma String__Index
     {
       std::string key($3);
       std::vector<double> val(1, 0.);
@@ -1193,7 +1194,7 @@ DefineConstants :
       }
       Free($3);
     }
-  | DefineConstants Comma tSTRING tAFFECT FExpr
+  | DefineConstants Comma String__Index tAFFECT FExpr
     {
       std::string key($3);
       std::vector<double> val(1, $5);
@@ -1204,7 +1205,7 @@ DefineConstants :
       }
       Free($3);
     }
-  | DefineConstants Comma tSTRING tAFFECT '{' FExpr
+  | DefineConstants Comma String__Index tAFFECT '{' FExpr
     { floatOptions.clear(); charOptions.clear(); }
     FloatParameterOptions '}'
     {
@@ -1216,7 +1217,7 @@ DefineConstants :
       }
       Free($3);
     }
-  | DefineConstants Comma tSTRING tAFFECT StringExpr
+  | DefineConstants Comma String__Index tAFFECT StringExpr
     {
       std::string key($3), val($5);
       floatOptions.clear(); charOptions.clear();
@@ -1227,7 +1228,7 @@ DefineConstants :
       Free($3);
       Free($5);
     }
-  | DefineConstants Comma tSTRING tAFFECT '{' StringExpr
+  | DefineConstants Comma String__Index tAFFECT '{' StringExpr
     { floatOptions.clear(); charOptions.clear(); }
       CharParameterOptions '}'
     {
@@ -4346,7 +4347,7 @@ FExpr_Single :
 
   // Variables
 
-  | tSTRING
+  | String__Index
     {
       if(!gmsh_yysymbols.count($1)){
 	yymsg(0, "Unknown variable '%s'", $1);
@@ -4364,28 +4365,6 @@ FExpr_Single :
       Free($1);
     }
 
-  // for compatibility with GetDP (we should generalize it so
-  // that we can create variables with this syntax, use them
-  // recursively, etc., but I don't have time to do it now)
-  | tSTRING '~' '{' FExpr '}'
-    {
-      char tmpstring[1024];
-      sprintf(tmpstring, "%s_%d", $1, (int)$4) ;
-      if(!gmsh_yysymbols.count(tmpstring)){
-	yymsg(0, "Unknown variable '%s'", tmpstring);
-	$$ = 0.;
-      }
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[tmpstring]);
-        if(s.value.empty()){
-          yymsg(0, "Uninitialized variable '%s'", tmpstring);
-          $$ = 0.;
-        }
-        else
-          $$ = s.value[0];
-      }
-      Free($1);
-    }
   | tSTRING '[' FExpr ']'
     {
       int index = (int)$3;
@@ -4416,7 +4395,7 @@ FExpr_Single :
       }
       Free($2);
     }
-  | tSTRING NumericIncrement
+  | String__Index NumericIncrement
     {
       if(!gmsh_yysymbols.count($1)){
 	yymsg(0, "Unknown variable '%s'", $1);
@@ -5012,7 +4991,7 @@ StringExprVar :
     {
       $$ = $1;
     }
-  | tSTRING
+  | String__Index
     {
       if(!gmsh_yystringsymbols.count($1)){
 	yymsg(0, "Unknown string variable '%s'", $1);
@@ -5211,6 +5190,38 @@ RecursiveListOfStringExprVar :
     }
   | RecursiveListOfStringExprVar ',' StringExprVar
     { List_Add($$, &($3)); }
+ ;
+
+StringIndex :
+
+    tSTRING '~' '{' FExpr '}'
+    {
+      char tmpstr[256];
+      sprintf(tmpstr, "_%d", (int)$4);
+      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr)+1)*sizeof(char));
+      strcpy($$, $1); strcat($$, tmpstr);
+      Free($1);
+    }
+
+  | StringIndex '~' '{' FExpr '}'
+    {
+      char tmpstr[256];
+      sprintf(tmpstr, "_%d", (int)$4);
+      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr)+1)*sizeof(char)) ;
+      strcpy($$, $1) ; strcat($$, tmpstr) ;
+      Free($1);
+    }
+
+ ;
+
+String__Index :
+
+    tSTRING
+    { $$ = $1; }
+
+  | StringIndex
+    { $$ = $1; }
+
  ;
 
 %%

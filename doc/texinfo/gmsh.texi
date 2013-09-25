@@ -969,6 +969,7 @@ parsing of the script file:
 @var{expression}:
   @var{real} |
   @var{string} |
+  @var{string} ~ @{ @var{expression} @}
   @var{string} [ @var{expression} ] |
   # @var{string} [ ] |
   ( @var{expression} ) |
@@ -985,19 +986,37 @@ parsing of the script file:
 @end example
 
 Such @w{@var{expression}s} are used in most of Gmsh's scripting
-commands.  The third and fourth cases in this definition permit to
-extract one item from a list (see below) and get the size of a list,
-respectively. The operators @var{operator-unary-left},
-@var{operator-unary-right}, @var{operator-binary},
-@var{operator-ternary-left} and @var{operator-ternary-right} are defined
-in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
-see @ref{Built-in functions}. The various @w{@var{real-option}s} are
-listed in @ref{Options}. @code{StrFind} searches the first
-@var{char-expression} for any occurrence of the second
-@var{char-expression}. @code{StrCmp} compares the two strings (returns
-an integer greater than, equal to, or less than 0, according as the
-first string is greater than, equal to, or less than the second string).
-@code{TextAttributes} creates attributes for text strings.
+commands. When @code{~@{@var{expression-cst}@}} is appended to a string
+@var{string}, the result is a new string formed by the concatenation of
+@var{string}, @code{_} (an underscore) and the value of the
+@var{expression-cst}. This is most useful in loops (@pxref{Loops and
+conditionals}), where it permits to define unique strings
+automatically. For example,
+@example
+For i In @{1:3@}
+  x~@{i@} = i;
+EndFor
+@end example
+is the same as
+@example
+x_1 = 1;
+x_2 = 2;
+x_3 = 3;
+@end example
+
+The brackets @code{[]} permit to extract one item from a list and to get
+the size of a list, respectively. The operators
+@var{operator-unary-left}, @var{operator-unary-right},
+@var{operator-binary}, @var{operator-ternary-left} and
+@var{operator-ternary-right} are defined in @ref{Operators}. For the
+definition of @w{@var{built-in-function}s}, see @ref{Built-in
+functions}. The various @w{@var{real-option}s} are listed in
+@ref{Options}. @code{StrFind} searches the first @var{char-expression}
+for any occurrence of the second @var{char-expression}. @code{StrCmp}
+compares the two strings (returns an integer greater than, equal to, or
+less than 0, according as the first string is greater than, equal to, or
+less than the second string).  @code{TextAttributes} creates attributes
+for text strings.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
