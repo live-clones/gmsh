@@ -1356,9 +1356,21 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF} 
             DESTINATION ${GMSH_LIB})
     # install these DLLs until we figure out how to link them in statically
-    find_program(GCC_DLL libgcc_s_sjlj-1.dll)
-    find_program(GFORTRAN_DLL libgfortran-3.dll)
-    find_program(STDC_DLL libstdc++-6.dll)
+    # nb (using mingw-w64) :
+    #   stc++ can be linked statically with -static-libstdc++
+    #   gfortran with -Wl,-Bstatic -lgfortran  (-static-libgfortran does not work for c++ linker)
+    #   unfortunately -static-libgcc causes link error here (multiple definition of ...)
+    # find_program does not work in cross-compilation mode -> ask the compiler instead
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgfortran-3.dll OUTPUT_VARIABLE GFORTRAN_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(HAVE_64BIT_SIZE_T)
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else(HAVE_64BIT_SIZE_T)
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_sjlj-1.dll OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif(HAVE_64BIT_SIZE_T)
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++-6.dll OUTPUT_VARIABLE STDC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    get_filename_component(STD_DLL ${STDC_DLL} ABSOLUTE)
+    get_filename_component(GFORTRAN_DLL ${GFORTRAN_DLL} ABSOLUTE)
+    get_filename_component(GCC_DLL ${GCC_DLL} ABSOLUTE)
     if(GCC_DLL AND GFORTRAN_DLL AND STDC_DLL)
       message(STATUS "Will install extra DLLs for Windows")
       install(FILES ${GCC_DLL} ${GFORTRAN_DLL} ${STDC_DLL} DESTINATION ${GMSH_LIB})
