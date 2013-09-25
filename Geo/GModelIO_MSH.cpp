@@ -213,7 +213,7 @@ int GModel::readMSH(const std::string &name)
         }
         else{
           if(!binary){
-            if(fscanf(fp, "%d", &entity) != 1){ fclose(fp); return 0; }
+            if(fscanf(fp, "%d", &dim) != 1){ fclose(fp); return 0; }
           }
           else{
             if(fread(&dim, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
