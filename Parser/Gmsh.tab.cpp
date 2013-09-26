@@ -9475,7 +9475,7 @@ yyreduce:
 
   case 350:
 #line 4301 "Gmsh.y"
-    { (yyval.d) = round((yyvsp[(3) - (4)].d));    ;}
+    { (yyval.d) = floor((yyvsp[(3) - (4)].d) + 0.5); ;}
     break;
 
   case 351:
@@ -9585,7 +9585,7 @@ yyreduce:
 
   case 372:
 #line 4325 "Gmsh.y"
-    { (yyval.d) = round((yyvsp[(3) - (4)].d));    ;}
+    { (yyval.d) = floor((yyvsp[(3) - (4)].d) + 0.5);    ;}
     break;
 
   case 373:

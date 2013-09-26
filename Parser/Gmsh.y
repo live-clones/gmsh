@@ -4298,7 +4298,7 @@ FExpr :
   | tFabs   '(' FExpr ')'            { $$ = fabs($3);     }
   | tFloor  '(' FExpr ')'            { $$ = floor($3);    }
   | tCeil   '(' FExpr ')'            { $$ = ceil($3);     }
-  | tRound  '(' FExpr ')'            { $$ = round($3);    }
+  | tRound  '(' FExpr ')'            { $$ = floor($3 + 0.5); }
   | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
   | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3 * $3 + $5 * $5); }
@@ -4322,7 +4322,7 @@ FExpr :
   | tFabs   '[' FExpr ']'            { $$ = fabs($3);     }
   | tFloor  '[' FExpr ']'            { $$ = floor($3);    }
   | tCeil   '[' FExpr ']'            { $$ = ceil($3);     }
-  | tRound  '[' FExpr ']'            { $$ = round($3);    }
+  | tRound  '[' FExpr ']'            { $$ = floor($3 + 0.5);    }
   | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
   | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
   | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3 * $3 + $5 * $5); }
