@@ -2736,7 +2736,7 @@ averages for each element--edges actually touching the source vertex are
 counted twice). This allows the height of the last layer to vary along
 with the size of the source elements in order to achieve better element
 quality. For example, in a boundary layer extruded with the Layers
-definition 'Layers{ {1,4,2}, {0.5, 0.6, 1.6} },' a source vertex
+definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source vertex
 adjacent to elements with an overall average edge length of 5.0 will
 extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
 
