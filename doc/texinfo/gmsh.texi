@@ -3384,6 +3384,13 @@ assumed to be defined before elements.
 
 The format is defined as follows:
 
+@c For MSH3:
+@c $Nodes
+@c node_num x y z entity_id < dimension parameter ... >
+@c If entity_id == 0, no dimension and no parameters are given (there's no parametric info)
+@c If entity_id != 0, the next integer is the dimension of the entity (==
+@c the number of parameters that follow), followed by the parameters.
+
 @example
 $MeshFormat
 @var{version-number} @var{file-type} @var{data-size}
