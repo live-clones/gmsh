@@ -59,8 +59,11 @@ double distMaxStraight(MElement *el)
   }
   for (int i = nV1; i < nV; ++i) {
     double f[256];
-    lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1),
-                 lagrange->points(i, 2), f);
+    double u = 0., v = 0., w = 0.;
+    if(lagrange->points.size2() > 0) u = lagrange->points(i, 0);
+    if(lagrange->points.size2() > 1) v = lagrange->points(i, 1);
+    if(lagrange->points.size2() > 2) w = lagrange->points(i, 2);
+    lagrange1->f(u, v, w, f);
     for (int j = 0; j < nV1; ++j)
       sxyz[i] += sxyz[j] * f[j];
   }
@@ -164,7 +167,7 @@ static std::set<MElement*> getSurroundingBlob
 {
 
   const SPoint3 p = el->barycenter_infty();
-  const double limDist = distMaxStraight(el)*distFactor;
+  const double limDist = distMaxStraight(el) * distFactor;
 
   std::set<MElement*> blob;
   std::list<MElement*> currentLayer, lastLayer;
@@ -378,7 +381,7 @@ static std::set<MElement*> getSurroundingBlob3D
    const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
    const double distFactor)
 {
-  const double limDist = distMaxStraight(el)*distFactor;
+  const double limDist = distMaxStraight(el) * distFactor;
 
   std::set<MElement*> blob;
   std::list<MElement*> currentLayer, lastLayer;

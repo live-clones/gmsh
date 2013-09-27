@@ -23,8 +23,8 @@ namespace {
   {
     if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
       Msg::Fatal("Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
-           monomial.size1(),point.size1(),
-           monomial.size2(),point.size2() );
+           monomial.size1(), point.size1(),
+           monomial.size2(), point.size2() );
       return fullMatrix<double>(1, 1);
     }
 
@@ -140,11 +140,13 @@ void polynomialBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf)
 {
   double p[1256];
   sf.resize (coord.size1(), coefficients.size1());
-  for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
-    evaluateMonomials(coord(iPoint,0), coord(iPoint,1), coord.size2() > 2 ? coord(iPoint,2) : 0, p);
+  for (int iPoint = 0; iPoint < coord.size1(); iPoint++) {
+    evaluateMonomials(coord(iPoint, 0), coord(iPoint, 1),
+                      coord.size2() > 2 ? coord(iPoint, 2) : 0, p);
     for (int i = 0; i < coefficients.size1(); i++) {
       sf(iPoint,i) = 0.;
-      for (int j = 0; j < coefficients.size2(); j++) sf(iPoint,i) += coefficients(i, j) * p[j];
+      for (int j = 0; j < coefficients.size2(); j++)
+        sf(iPoint,i) += coefficients(i, j) * p[j];
     }
   }
 }
@@ -155,7 +157,8 @@ void polynomialBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &df
   dfm.resize (coefficients.size1(), coord.size1() * 3, false);
   int dimCoord = coord.size2();
   for (int iPoint=0; iPoint< coord.size1(); iPoint++) {
-    df(coord(iPoint,0), dimCoord > 1 ? coord(iPoint, 1) : 0., dimCoord > 2 ? coord(iPoint, 2) : 0., dfv);
+    df(coord(iPoint, 0), dimCoord > 1 ? coord(iPoint, 1) : 0.,
+       dimCoord > 2 ? coord(iPoint, 2) : 0., dfv);
     for (int i = 0; i < coefficients.size1(); i++) {
       dfm(i, iPoint * 3 + 0) = dfv[i][0];
       dfm(i, iPoint * 3 + 1) = dfv[i][1];
@@ -332,7 +335,8 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 2) // second derivative !=0
           third[i][0][0][0] += coefficients(i, j) *
-            pow_int(u, (monomials(j, 0) - 3))*monomials(j, 0) * (monomials(j, 0) - 1) *(monomials(j, 0) - 2) *
+            pow_int(u, (monomials(j, 0) - 3))*monomials(j, 0) *
+            (monomials(j, 0) - 1) *(monomials(j, 0) - 2) *
             pow_int(v, monomials(j, 1));
         if ((monomials(j, 0) > 1) && (monomials(j, 1) > 0))
           third[i][0][0][1] += coefficients(i, j) *
@@ -345,7 +349,8 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
         if (monomials(j, 1) > 2)
           third[i][1][1][1] += coefficients(i, j) *
             pow_int(u, monomials(j, 0)) *
-            pow_int(v, monomials(j, 1) - 3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2);
+            pow_int(v, monomials(j, 1) - 3) * monomials(j, 1) *
+            (monomials(j, 1) - 1) * (monomials(j, 1) - 2);
       }
       third[i][0][1][0] = third[i][0][0][1];
       third[i][1][0][0] = third[i][0][0][1];
@@ -362,7 +367,8 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
       for(int j = 0; j < coefficients.size2(); j++){
         if (monomials(j, 0) > 2) // second derivative !=0
           third[i][0][0][0] += coefficients(i, j) *
-            pow_int(u, (monomials(j, 0) - 3)) *monomials(j, 0) * (monomials(j, 0) - 1)*(monomials(j, 0) - 2) *
+            pow_int(u, (monomials(j, 0) - 3)) *monomials(j, 0) *
+            (monomials(j, 0) - 1) * (monomials(j, 0) - 2) *
             pow_int(v, monomials(j, 1))*
             pow_int(w, monomials(j, 2));
 
@@ -398,7 +404,8 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
         if ((monomials(j, 1) > 2))
           third[i][1][1][1] += coefficients(i, j) *
             pow_int(u, monomials(j, 0)) *
-            pow_int(v, monomials(j, 1)-3) * monomials(j, 1) * (monomials(j, 1) - 1)*(monomials(j, 1) - 2)*
+            pow_int(v, monomials(j, 1)-3) * monomials(j, 1) *
+            (monomials(j, 1) - 1) * (monomials(j, 1) - 2)*
             pow_int(w, monomials(j, 2));
 
         if ((monomials(j, 1) > 1) && (monomials(j, 2) > 0))
@@ -417,9 +424,8 @@ void polynomialBasis::dddf(double u, double v, double w, double third[][3][3][3]
           third[i][2][2][2] += coefficients(i, j) *
             pow_int(u, monomials(j, 0)) *
             pow_int(v, monomials(j, 1))*
-            pow_int(w, monomials(j, 2) - 3) * monomials(j, 2) * (monomials(j, 2) - 1)*(monomials(j, 2) - 2);
-
-
+            pow_int(w, monomials(j, 2) - 3) * monomials(j, 2) *
+            (monomials(j, 2) - 1) * (monomials(j, 2) - 2);
       }
       third[i][0][1][0] = third[i][0][0][1];
       third[i][1][0][0] = third[i][0][0][1];
