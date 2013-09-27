@@ -1,8 +1,11 @@
-2.8.2 (July 16, 2013): improved high order tools interface; minor bug fixes.
+2.8.3 (Sep 27, 2013): new quick access menu and multiple view selection in GUI;
+enhanced animation creation; many small enhancements and bug fixes.
 
-2.8.1 (July 11, 2013): improved compound surfaces and transfinite arrangements.
+2.8.2 (Jul 16, 2013): improved high order tools interface; minor bug fixes.
 
-2.8.0 (July 8, 2013): improved Delaunay point insertion; fixed mesh orientation
+2.8.1 (Jul 11, 2013): improved compound surfaces and transfinite arrangements.
+
+2.8.0 (Jul 8, 2013): improved Delaunay point insertion; fixed mesh orientation
 of plane surfaces; fixed mesh size prescribed at embedded points; improved
 display of vectors at COG; new experimental text string display engines;
 improved fullscreen mode; access time/step in transformations; new experimental
@@ -12,11 +15,11 @@ compilation and bug fixes.
 2.7.1 (May 11, 2013): improved Delaunay point insertion; updated onelab; better
 Abaqus and UNV export; small bug and compilation fixes.
 
-2.7.0 (March 9, 2013): new single-window GUI, with dynamically customizable
+2.7.0 (Mar 9, 2013): new single-window GUI, with dynamically customizable
 widget tree; faster STEP/BRep import; arbitrary size image export; faster 2D
 Delaunay/Frontal algorithms; full option viewer/editor; many bug fixes.
 
-2.6.1 (July 15, 2012): minor improvements and bug fixes.
+2.6.1 (Jul 15, 2012): minor improvements and bug fixes.
 
 2.6.0 (Jun 19, 2012): new quadrilateral meshing algorithms (Blossom and
 DelQuad); new solver module based on ONELAB project (requires FLTK 1.3); new
