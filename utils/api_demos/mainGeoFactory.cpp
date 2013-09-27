@@ -7,6 +7,8 @@ int main(int argc, char **argv)
   GmshInitialize(argc, argv);
   GModel *m = new GModel();
 
+  m->setFactory("Gmsh");
+
   GVertex *v1 = m->addVertex(0, 0, 0, 0.1);
   GVertex *v2 = m->addVertex(1, 0, 0, 0.1);
   GVertex *v3 = m->addVertex(1, 1, 0, 0.1);
