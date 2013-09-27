@@ -35,8 +35,9 @@
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
 
-Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes, bool fastJacEval) :
- _fastJacEval(fastJacEval)
+Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+           bool fixBndNodes, bool fastJacEval) :
+  _fastJacEval(fastJacEval)
 {
 
   _dim = (*els.begin())->getDim();
@@ -117,7 +118,6 @@ Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBn
 
 void Mesh::calcScaledNormalEl2D(int iEl)
 {
-
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
   fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(),3);
