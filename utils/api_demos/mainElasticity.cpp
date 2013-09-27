@@ -28,7 +28,7 @@ void InitializeOnelab(std::string sockName, std::string modelName) {
   ps[0].setValue(modelName);
   loader->set(ps[0]);
 }
-/*
+
 void AddOnelabNumberChoice(std::string name, double val, std::string help)
 {
   std::vector<double> choices;

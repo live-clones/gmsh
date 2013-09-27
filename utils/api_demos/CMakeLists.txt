@@ -53,3 +53,6 @@ target_link_libraries(mainPost shared)
 add_executable(mainSimple mainSimple.cpp)
 target_link_libraries(mainSimple shared)
 
+add_executable(mainGeoFactory mainGeoFactory.cpp)
+target_link_libraries(mainGeoFactory shared)
+
