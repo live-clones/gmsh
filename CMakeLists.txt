@@ -1240,6 +1240,7 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
   endif(HAVE_64BIT_SIZE_T)
   if(ENABLE_BUILD_DYNAMIC)
+    set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
     set_target_properties(gmsh PROPERTIES 
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
     set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
@@ -1355,32 +1356,35 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # install .def file
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF} 
             DESTINATION ${GMSH_LIB})
-    # install these DLLs until we figure out how to link them in statically
-    # NB (using mingw-w64):
-    #   stc++ can be linked statically with -static-libstdc++
-    #   gfortran with -Wl,-Bstatic -lgfortran  (-static-libgfortran does not work 
-    #     for c++ linker)
-    #   unfortunately -static-libgcc causes link error here (multiple definition 
-    #     of ...)
-    # Also, find_program does not work in cross-compilation mode -> ask the compiler instead
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgfortran-3.dll 
-                    OUTPUT_VARIABLE GFORTRAN_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+    # install these DLLs until we figure out how to link them in statically (libstc++ and
+    # libgcc should be linkable statically with -static-libstdc++ and -static-libgcc but with
+    # current mingw64 toolchain it does not work). Also, when cross-compilating find_program
+    # does not work -> ask the compiler instead
     if(HAVE_64BIT_SIZE_T)
-      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll
-                      OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     else(HAVE_64BIT_SIZE_T)
-      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_sjlj-1.dll
-                      OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      find_program(GCC_DLL libgcc_s_seh-1.dll)
     endif(HAVE_64BIT_SIZE_T)
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++-6.dll
-                    OUTPUT_VARIABLE STDC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
-    get_filename_component(STD_DLL ${STDC_DLL} ABSOLUTE)
-    get_filename_component(GFORTRAN_DLL ${GFORTRAN_DLL} ABSOLUTE)
-    get_filename_component(GCC_DLL ${GCC_DLL} ABSOLUTE)
-    if(GCC_DLL AND GFORTRAN_DLL AND STDC_DLL)
+    find_program(STDC_DLL libstdc++-6.dll)
+    if(NOT GCC_DLL)
+      if(HAVE_64BIT_SIZE_T)
+        execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll
+                        OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      else(HAVE_64BIT_SIZE_T)
+        execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_sjlj-1.dll
+                        OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif(HAVE_64BIT_SIZE_T)
+      get_filename_component(GCC_DLL ${GCC_DLL} ABSOLUTE)
+    endif(NOT GCC_DLL)
+    if(NOT STDC_DLL)
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++-6.dll
+                      OUTPUT_VARIABLE STDC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      get_filename_component(STD_DLL ${STDC_DLL} ABSOLUTE)
+    endif(NOT STDC_DLL)
+    if(GCC_DLL AND STDC_DLL)
       message(STATUS "Will install extra DLLs for Windows")
-      install(FILES ${GCC_DLL} ${GFORTRAN_DLL} ${STDC_DLL} DESTINATION ${GMSH_LIB})
-    endif(GCC_DLL AND GFORTRAN_DLL AND STDC_DLL)
+      install(FILES ${GCC_DLL} ${STDC_DLL} DESTINATION ${GMSH_LIB})
+    endif(GCC_DLL AND STDC_DLL)
   else(WIN32 AND NOT MSVC OR CYGWIN)
     install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
   endif(WIN32 AND NOT MSVC OR CYGWIN)
