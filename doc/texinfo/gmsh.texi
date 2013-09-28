@@ -5056,9 +5056,9 @@ image file.
 
 You can create simple MPEG animations by choosing MPEG as the format in
 `File->Save As': this allows you to loop over time steps or
-post-processing data sets. To create more complicated animations
-(flyovers, animated clipping or modification of meshes, etc.) or to use
-different output formats (AVI, MP4, etc.), you should write a
+post-processing data sets, or to change parameters according to
+@code{Print.Parameter}. To create fully customized animations or to use
+different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @file{tutorial/t8.geo} or
 @file{demos/anim.script} for some examples.
 
@@ -5184,7 +5184,7 @@ hexahedra instead of tetrahedra.
 
 @item Does Gmsh automatically couple unstructured tetrahedral meshes and structured hexahedral meshed using pyramids?
 
-No. We need your help to implement this.
+Only in simple geometrical cases. We need your help to improve this.
 
 @item Can I explicitly assign region numbers to extruded layers?
 
@@ -5364,9 +5364,8 @@ Evaluate plugin.
 @item Is there a way to save animations?
 
 You can save simple MPEG animations directly from the `File->Save As'
-menu. For more other formats or more complex animations, you should
-write a script. Have a look at @file{tutorial/t8.geo} or
-@file{demos/anim.script} for some examples.
+menu. For other formats you should write a script. Have a look at
+@file{tutorial/t8.geo} or @file{demos/anim.script} for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?
 
