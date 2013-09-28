@@ -1360,11 +1360,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # libgcc should be linkable statically with -static-libstdc++ and -static-libgcc but with
     # current mingw64 toolchain it does not work). Also, when cross-compilating find_program
     # does not work -> ask the compiler instead
-    if(HAVE_64BIT_SIZE_T)
-      find_program(GCC_DLL libgcc_s_sjlj-1.dll)
-    else(HAVE_64BIT_SIZE_T)
-      find_program(GCC_DLL libgcc_s_seh-1.dll)
-    endif(HAVE_64BIT_SIZE_T)
+    find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     find_program(STDC_DLL libstdc++-6.dll)
     if(NOT GCC_DLL)
       if(HAVE_64BIT_SIZE_T)
