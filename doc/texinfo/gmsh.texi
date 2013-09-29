@@ -986,10 +986,10 @@ parsing of the script file:
 @end example
 
 Such @w{@var{expression}s} are used in most of Gmsh's scripting
-commands. When @code{~@{@var{expression-cst}@}} is appended to a string
+commands. When @code{~@{@var{expression}@}} is appended to a string
 @var{string}, the result is a new string formed by the concatenation of
 @var{string}, @code{_} (an underscore) and the value of the
-@var{expression-cst}. This is most useful in loops (@pxref{Loops and
+@var{expression}. This is most useful in loops (@pxref{Loops and
 conditionals}), where it permits to define unique strings
 automatically. For example,
 @example
