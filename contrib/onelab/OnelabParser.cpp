@@ -591,7 +591,7 @@ void localSolverClient::parse_sentence(std::string line) {
       	  strings[0].setNeverChanged(true);
       	}
 	else
-	  std::string val=resolveGetVal(arguments[0]);
+	  val=resolveGetVal(arguments[0]);
 	strings[0].setValue(val);
       }
       // choices list is reset
