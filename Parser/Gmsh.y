@@ -120,7 +120,7 @@ struct doubleXstring{
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
-%token tLayers tScaleLast tHole tAlias tAliasWithOptions
+%token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts tQuadTriSngl tQuadTriDbl
 %token tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
@@ -308,6 +308,8 @@ View :
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], false);
+        else
+	  yymsg(0, "Unknown view %d", index);
       }
 #endif
       Free($2);
@@ -319,6 +321,23 @@ View :
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], true);
+        else
+	  yymsg(0, "Unknown view %d", index);
+      }
+#endif
+      Free($2);
+    }
+  | tCopyOptions tSTRING '[' FExpr ',' FExpr ']' tEND
+    {
+#if defined(HAVE_POST)
+      if(!strcmp($2, "View")){
+	int index = (int)$4, index2 = (int)$6;
+	if(index >= 0 && index < (int)PView::list.size() &&
+           index2 >= 0 && index2 < (int)PView::list.size()){
+          PView::list[index2]->setOptions(PView::list[index]->getOptions());
+        }
+        else
+	  yymsg(0, "Unknown view %d or %d", index, index2);
       }
 #endif
       Free($2);

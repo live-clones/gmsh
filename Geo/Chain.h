@@ -528,7 +528,6 @@ int Chain<C>::addToModel(GModel* m, bool post,
     opt->visible = 0;
     if(opt->tangents == 0) opt->tangents = size;
     if(opt->normals == 0) opt->normals = size;
-    view->setOptions(opt);
     updateFltk();
   }
 #endif

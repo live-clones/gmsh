@@ -99,6 +99,7 @@ BoundingBox             return tBoundingBox;
 
 Ceil                    return tCeil;
 Circle                  return tCircle;
+CopyOptions             return tCopyOptions;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
 Combine                 return tCombine;

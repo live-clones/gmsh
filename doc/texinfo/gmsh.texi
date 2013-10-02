@@ -3039,6 +3039,10 @@ just merge the file containing the post-processing view multiple times.
 Creates an alias of the @var{expression}-th post-processing view and copies
 all the options of the @var{expression}-th view to the new aliased view.
 
+@item CopyOptions View[@var{expression}, @var{expression}];
+Copy all the options from the first @var{expression}-th post-processing
+view to the second one.
+
 @item Combine ElementsByViewName;
 Combines all the post-processing views having the same name into new views.
 The combination is done ``spatially'', i.e., simply by appending the
