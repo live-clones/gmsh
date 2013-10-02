@@ -185,9 +185,10 @@ void PView::deleteVertexArrays()
 
 void PView::setOptions(PViewOptions *val)
 {
+  // deep copy options
   if(val)
-    _options = val;
-  else if(_options) // deep copy options from reference view
+    *_options = *val;
+  else if(_options)
     *_options = *PViewOptions::reference();
 }
 
