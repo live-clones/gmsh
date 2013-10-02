@@ -500,6 +500,8 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
                             faceContainer &faceVertices, edgeContainer &edgeVertices,
                             bool linear, int nPts = 1)
 {
+  // FIXME: MFace returned by getFace are of order 1
+  // Thus new face vertices are not positioned according to new edge vertices
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
     faceContainer::iterator fIter = faceVertices.find(face);
@@ -824,23 +826,26 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
     }
   }
   else{
+    // create serendipity element to place internal vertices (we used to
+    // saturate face vertices also, but the corresponding function spaces do
+    // not exist anymore, and there is no theoretical justification for doing
+    // it either way)
     if(nPts == 1){
+      MHexahedron20 incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
+                          h->getVertex(3), h->getVertex(4), h->getVertex(5),
+                          h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
+                          ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
+                          ve[11], 0, h->getPartition());
       getFaceVertices(gr, h, vf, faceVertices, edgeVertices, linear, nPts);
-      SPoint3 pc = h->barycenter();
-      MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-      gr->mesh_vertices.push_back(v);
+      getRegionVertices(gr, &incpl, h, vr, linear, nPts);
       return new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                                h->getVertex(3), h->getVertex(4), h->getVertex(5),
                                h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
                                ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-                               ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v,
+                               ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], vr[0],
                                0, h->getPartition());
     }
     else {
-      // create serendipity element to place internal vertices (we used to
-      // saturate face vertices also, but the corresponding function spaces do
-      // not exist anymore, and there is no theoretical justification for doing
-      // it either way)
       MHexahedronN incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                          h->getVertex(3), h->getVertex(4), h->getVertex(5),
                          h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0,
