@@ -286,7 +286,7 @@ fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
         }
       }
 
-      if (order > 2) {
+      if (!serendip && order > 2) {
         fullMatrix<double> dudv = gmshGenerateMonomialsTriangle(order - 3);
         dudv.add(1);
 
@@ -311,7 +311,7 @@ fullMatrix<double> gmshGenerateMonomialsTetrahedron(int order, bool serendip)
           }
         }
 
-        if (!serendip && order > 3) {
+        if (order > 3) {
           fullMatrix<double> inner = gmshGenerateMonomialsTetrahedron(order - 4);
           inner.add(1);
           monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
