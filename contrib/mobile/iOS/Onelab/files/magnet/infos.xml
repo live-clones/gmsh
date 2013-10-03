@@ -1,5 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<info>
-	<name>Magnet</name>
-	<description>Simple magnet example</description>
-<info>
+<?xml version="1.0" encoding="utf-8"?>
+
+<models>
+	<model>
+		<title>Magnet</title>
+		<summary>Simple magnet example.</summary>
+		<file type="pro">magnet.pro</file>
+	</model>
+</models>

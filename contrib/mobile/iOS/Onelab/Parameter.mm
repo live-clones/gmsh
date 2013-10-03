@@ -213,7 +213,7 @@
         [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
         checkbox = [[UISwitch alloc] init];
-        [checkbox setSelected:(number.getValue() == 1)];
+        [checkbox setOn:(number.getValue() == 1)];
         [checkbox addTarget:self action:@selector(valueChange:) forControlEvents:UIControlEventValueChanged];
     }
     return self;
