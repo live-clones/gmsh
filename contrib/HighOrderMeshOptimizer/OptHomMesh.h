@@ -41,7 +41,8 @@
 class Mesh
 {
 public:
-  Mesh(const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes, bool fastJacEval);
+  Mesh(const std::map<MElement*,GEntity*> &element2entity,
+       const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes, bool fastJacEval);
 
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }
@@ -67,6 +68,7 @@ public:
   void getUvw(double *it);
   void updateMesh(const double *it);
   void distSqToStraight(std::vector<double> &dSq);
+  void elSizeSq(std::vector<double> &sSq);
 
   void updateGEntityPositions();
   void writeMSH(const char *filename);
@@ -109,7 +111,7 @@ private:
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV,
                   std::set<MVertex*> &toFix);
-  void calcScaledNormalEl2D(int iEl);
+  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
   static inline int indJB2DBase(int nNod, int l, int i, int j)
   {
     return (l*nNod+i)*nNod+j;

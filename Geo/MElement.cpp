@@ -112,7 +112,7 @@ double MElement::rhoShapeMeasure()
     return 0.;
 }
 
-void MElement::scaledJacRange(double &jmin, double &jmax)
+void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge)
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
@@ -122,6 +122,27 @@ void MElement::scaledJacRange(double &jmin, double &jmax)
   getNodesCoord(nodesXYZ);
   fullVector<double> SJi(numJacNodes), Bi(numJacNodes);
   jac->getScaledJacobian(nodesXYZ,SJi);
+  if (ge && (ge->dim() == 2) && ge->haveParametrization()) {  // If parametrized surface entity provided...
+    SVector3 geoNorm(0.,0.,0.);                               // ... correct Jacobian sign with geometrical normal
+    for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
+      MVertex *vert = getVertex(i);
+      GEntity *vge = vert->onWhat();
+      if (vert->onWhat() == ge) {
+        double u, v;
+        vert->getParameter(0,u);
+        vert->getParameter(1,v);
+        geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+      }
+    }
+    if (geoNorm.normSq() == 0.) {   // If no vertex on surface or average is zero, take normal at barycenter
+      SPoint2 param = ((GFace*)ge)->parFromPoint(barycenter(true),false);
+      geoNorm = ((GFace*)ge)->normal(param);
+    }
+    fullMatrix<double> elNorm(1,3);
+    jac->getPrimNormal2D(nodesXYZ,elNorm);
+    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+    if (scal < 0.) SJi.scale(-1.);
+  }
   jac->lag2Bez(SJi,Bi);
   jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());

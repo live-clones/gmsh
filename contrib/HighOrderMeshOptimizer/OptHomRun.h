@@ -53,6 +53,7 @@ struct OptHomParameters {
   int maxAdaptBlob; // Max. nb. of blob adaptation interations
   int adaptBlobLayerFact; // Growth factor in number of layers for blob adaptation
   double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
+  bool optPrimSurfMesh; // Enable optimisation of p1 surface meshes
 
   // OUTPUT ------>
   int SUCCESS ; // 0 --> success , 1 --> Not converged
@@ -63,7 +64,7 @@ struct OptHomParameters {
     : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weightFixed(1.e6),
       weightFree (1.e2), nbLayers (6) , dim(3) , itMax(300), onlyVisible(true),
       distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
-      adaptBlobLayerFact(2.), adaptBlobDistFact(2.)
+      adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false)
   {
   }
 };

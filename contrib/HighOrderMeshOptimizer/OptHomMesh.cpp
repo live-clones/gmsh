@@ -35,7 +35,8 @@
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
 
-Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
+           const std::set<MElement*> &els, std::set<MVertex*> &toFix,
            bool fixBndNodes, bool fastJacEval) :
   _fastJacEval(fastJacEval)
 {
@@ -105,7 +106,7 @@ Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix,
   // Jacobians of 3D elements
   if (_dim == 2) {
     _scaledNormEl.resize(nEl());
-    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
   }
   else {
     _invStraightJac.resize(nEl(),1.);
@@ -116,24 +117,41 @@ Mesh::Mesh(const std::set<MElement*> &els, std::set<MVertex*> &toFix,
 
 }
 
-void Mesh::calcScaledNormalEl2D(int iEl)
+void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
 {
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
   fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(),3);
+  SVector3 geoNorm(0.,0.,0.);
+  std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
+  GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
+  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
     primNodesXYZ(i,0) = _xyz[iV].x();
     primNodesXYZ(i,1) = _xyz[iV].y();
     primNodesXYZ(i,2) = _xyz[iV].z();
+    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
+      double u, v;
+      _vert[iV]->getParameter(0,u);
+      _vert[iV]->getParameter(1,v);
+      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+    }
+  }
+  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
+    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
+    geoNorm = ((GFace*)ge)->normal(param);
   }
 
-  _scaledNormEl[iEl].resize(1,3);
-  const double norm = jac->getPrimNormal2D(primNodesXYZ,_scaledNormEl[iEl]);
-
-  _scaledNormEl[iEl](0,0) /= norm;         // Re-scaling normal here is faster than an
-  _scaledNormEl[iEl](0,1) /= norm;         // extra scaling operation on the Jacobian
-  _scaledNormEl[iEl](0,2) /= norm;
+  fullMatrix<double> &elNorm = _scaledNormEl[iEl];
+  elNorm.resize(1,3);
+  const double norm = jac->getPrimNormal2D(primNodesXYZ,elNorm);
+  double factor = 1./norm;
+  if (hasGeoNorm) {
+    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+    if (scal < 0.) factor = -factor;
+  }
+  elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
 
 }
 
@@ -217,6 +235,14 @@ void Mesh::distSqToStraight(std::vector<double> &dSq)
   for (int iV = 0; iV < nVert(); iV++) {
     SPoint3 d = _xyz[iV]-sxyz[iV];
     dSq[iV] = d[0]*d[0]+d[1]*d[1]+d[2]*d[2];
+  }
+}
+
+void Mesh::elSizeSq(std::vector<double> &sSq)
+{
+  for (int iEl = 0; iEl < nEl(); iEl++) {
+    const double s = _el[iEl]->getOuterRadius();
+    sSq[iEl] = s*s;
   }
 }
 

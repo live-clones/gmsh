@@ -67,9 +67,10 @@ static inline double compute_f1(double v, double barrier)
   // else return powP*pow(v-1.,powP-1.);
 }
 
-OptHOM::OptHOM(const std::set<MElement*> &els, std::set<MVertex*> & toFix,
+OptHOM::OptHOM(const std::map<MElement*,GEntity*> &element2entity,
+               const std::set<MElement*> &els, std::set<MVertex*> & toFix,
                bool fixBndNodes, bool fastJacEval) :
-  mesh(els, toFix, fixBndNodes, fastJacEval)
+  mesh(element2entity, els, toFix, fixBndNodes, fastJacEval)
 {
   _optimizeMetricMin = false;
 }
@@ -318,7 +319,13 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min,
   std::vector<double> dSq(mesh.nVert());
   mesh.distSqToStraight(dSq);
   const double maxDSq = *max_element(dSq.begin(),dSq.end());
-  invLengthScaleSq = 1./maxDSq;  // Length scale for non-dimensional distance
+  if (maxDSq < 1.e-10) {                                        // Length scale for non-dim. distance
+    std::vector<double> sSq(mesh.nEl());
+    mesh.elSizeSq(sSq);
+    const double maxSSq = *max_element(sSq.begin(),sSq.end());
+    invLengthScaleSq = 1./maxSSq;
+  }
+  else invLengthScaleSq = 1./maxDSq;
 
   // Set initial guess
   alglib::real_1d_array x;

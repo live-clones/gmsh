@@ -151,6 +151,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.maxAdaptBlob = o->value[9]->value();
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
+    p.optPrimSurfMesh = false;
     HighOrderMeshOptimizer(GModel::current(), p);
     break;
   }

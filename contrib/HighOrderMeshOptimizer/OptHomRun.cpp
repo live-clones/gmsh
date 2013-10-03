@@ -163,11 +163,13 @@ static std::set<MVertex *> getAllBndVertices
 static std::set<MElement*> getSurroundingBlob
    (MElement *el, int depth,
     const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-    const double distFactor, int forceDepth = 0)
+    const double distFactor, int forceDepth, bool optPrimSurfMesh)
 {
 
-  const SPoint3 p = el->barycenter_infty();
-  const double limDist = distMaxStraight(el) * distFactor;
+  const SPoint3 p = el->barycenter();
+  const double dist = distMaxStraight(el);
+  const double limDist = ((optPrimSurfMesh && (dist < 1.e-10)) ?
+                          el->getOuterRadius() : dist) * distFactor;
 
   std::set<MElement*> blob;
   std::list<MElement*> currentLayer, lastLayer;
@@ -220,10 +222,18 @@ static void calcVertex2Elements(int dim, GEntity *entity,
   }
 }
 
+static void calcElement2Entity(GEntity *entity, std::map<MElement*,GEntity*> &element2entity)
+{
+  for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
+    MElement *element = entity->getMeshElement(i);
+    element2entity.insert(std::pair<MElement*,GEntity*>(element,entity));
+  }
+}
+
 static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedBlobs
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
    const std::set<MElement*> &badElements, int depth, const double distFactor,
-   bool weakMerge = false)
+   bool weakMerge, bool optPrimSurfMesh)
 {
 
   Msg::Info("Starting blob generation from %i bad elements...", badElements.size());
@@ -232,9 +242,11 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   Msg::Info("Constructing %i primary blobs", badElements.size());
   std::vector<std::set<MElement*> > primBlobs;
   primBlobs.reserve(badElements.size());
-  for (std::set<MElement*>::const_iterator it = badElements.begin();
-       it != badElements.end(); ++it)
-    primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements, distFactor));
+  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
+    const int minLayers = ((*it)->getDim() == 3) ? 1 : 0;
+    primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements,
+                                distFactor, minLayers, optPrimSurfMesh));
+  }
 
   // Compute blob connectivity
   Msg::Info("Computing blob connectivity...");
@@ -292,6 +304,7 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 
 static void optimizeConnectedBlobs
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+   const std::map<MElement*,GEntity*> &element2entity,
    std::set<MElement*> &badasses,
    OptHomParameters &p, int samples, bool weakMerge = false)
 {
@@ -300,14 +313,15 @@ static void optimizeConnectedBlobs
   p.maxJac = -1.e100;
 
   std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize =
-      getConnectedBlobs(vertex2elements, badasses, p.nbLayers, p.distanceFactor, weakMerge);
+                          getConnectedBlobs(vertex2elements, badasses, p.nbLayers,
+                                    p.distanceFactor, weakMerge, p.optPrimSurfMesh);
 
   //#pragma omp parallel for schedule(dynamic, 1)
   for (int i = 0; i < toOptimize.size(); ++i) {
     Msg::Info("Optimizing a blob %i/%i composed of %4d elements", i+1,
               toOptimize.size(), toOptimize[i].first.size());
     fflush(stdout);
-    OptHOM temp(toOptimize[i].first, toOptimize[i].second, p.fixBndNodes);
+    OptHOM temp(element2entity, toOptimize[i].first, toOptimize[i].second, p.fixBndNodes);
     //std::ostringstream ossI1;
     //ossI1 << "initial_ITER_" << i << ".msh";
     //temp.mesh.writeMSH(ossI1.str().c_str());
@@ -460,6 +474,7 @@ static bool detectNewBrokenElement(std::set<MElement*> &layer,
 
 static void optimizeOneByOne
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+   const std::map<MElement*,GEntity*> &element2entity,
    std::set<MElement*> badElts, OptHomParameters &p, int samples)
 {
   p.SUCCESS = 1;
@@ -484,60 +499,84 @@ static void optimizeOneByOne
 
     for (int iterBlob=0; iterBlob<p.maxAdaptBlob; iterBlob++) {
 
-      OptHOM *opt;
+//      OptHOM *opt;
+//
+//      // First step: small blob with unsafe optimization (only 1st-order
+//      // bnd. vertices fixed)
+//      std::set<MElement*> toOptimizePrim = getSurroundingBlob
+//        (worstEl, nbLayers, vertex2elements, distanceFactor, 0);
+//      std::set<MVertex*> toFix1 = getPrimBndVertices(toOptimizePrim, vertex2elements);
+//      std::set<MElement*> toOptimize1;
+//      std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
+//                          badElts.begin(),badElts.end(), // Do not optimize badElts
+//                          std::inserter(toOptimize1, toOptimize1.end()));
+//      Msg::Info("Optimizing primary blob %i (max. %i remaining) composed of"
+//                " %4d elements", iBadEl, badElts.size(), toOptimize1.size());
+//      fflush(stdout);
+//      opt = new OptHOM(toOptimize1, toFix1, p.fixBndNodes);
+//      //std::ostringstream ossI1;
+//      //ossI1 << "initial_primary_" << iter << ".msh";
+//      //opt->mesh.writeMSH(ossI1.str().c_str());
+//      success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
+//                              false, samples, p.itMax, p.optPassMax);
+//
+//      // Second step: add external layer, check it and optimize it safely (all
+//      // bnd. vertices fixed) if new broken element
+//      if (success > 0) {
+//        opt->mesh.updateGEntityPositions();
+//        std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
+//        if (detectNewBrokenElement(layer, badElts, p)) {
+//          delete opt;
+//          std::set<MVertex*> toFix2 = getAllBndVertices(toOptimizePrim, vertex2elements);
+//          std::set<MElement*> toOptimize2;
+//          std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
+//                              badElts.begin(),badElts.end(),
+//                              std::inserter(toOptimize2, toOptimize2.end()));
+//          Msg::Info("Optimizing corrective blob %i (max. %i remaining) "
+//                    "composed of %4d elements", iBadEl, badElts.size(),
+//                    toOptimize2.size());
+//          fflush(stdout);
+//          opt = new OptHOM(toOptimize2, toFix2, p.fixBndNodes);
+//          //std::ostringstream ossI1;
+//          //ossI1 << "initial_corrective_" << iter << ".msh";
+//          //opt->mesh.writeMSH(ossI1.str().c_str());
+//          success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
+//                                  p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
+//          if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
+//            Msg::Info("Jacobian optimization succeed, starting svd optimization");
+//            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
+//                                    p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
+//          }
+//        }
+//        else {
+//          Msg::Info("Primary blob %i did not break new elements, "
+//                    "no correction needed", iBadEl);
+//          fflush(stdout);
+//        }
+//      }
 
-      // First step: small blob with unsafe optimization (only 1st-order
-      // bnd. vertices fixed)
       std::set<MElement*> toOptimizePrim = getSurroundingBlob
-        (worstEl, nbLayers, vertex2elements, distanceFactor, 0);
-      std::set<MVertex*> toFix1 = getPrimBndVertices(toOptimizePrim, vertex2elements);
-      std::set<MElement*> toOptimize1;
+        (worstEl, nbLayers, vertex2elements, distanceFactor, 1, p.optPrimSurfMesh);
+//    std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
+      std::set<MVertex*> toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
+      std::set<MElement*> toOptimize;
       std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
-                          badElts.begin(),badElts.end(), // Do not optimize badElts
-                          std::inserter(toOptimize1, toOptimize1.end()));
-      Msg::Info("Optimizing primary blob %i (max. %i remaining) composed of"
-                " %4d elements", iBadEl, badElts.size(), toOptimize1.size());
+                          badElts.begin(),badElts.end(),
+                          std::inserter(toOptimize, toOptimize.end()));
+      Msg::Info("Optimizing blob %i (max. %i remaining) "
+                "composed of %4d elements", iBadEl, badElts.size(),
+                toOptimize.size());
       fflush(stdout);
-      opt = new OptHOM(toOptimize1, toFix1, p.fixBndNodes);
+      OptHOM *opt = new OptHOM(element2entity, toOptimize, toFix, p.fixBndNodes);
       //std::ostringstream ossI1;
-      //ossI1 << "initial_primary_" << iter << ".msh";
+      //ossI1 << "initial_corrective_" << iter << ".msh";
       //opt->mesh.writeMSH(ossI1.str().c_str());
-      success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
-                              false, samples, p.itMax, p.optPassMax);
-
-      // Second step: add external layer, check it and optimize it safely (all
-      // bnd. vertices fixed) if new broken element
-      if (success > 0) {
-        opt->mesh.updateGEntityPositions();
-        std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
-        if (detectNewBrokenElement(layer, badElts, p)) {
-          delete opt;
-          std::set<MVertex*> toFix2 = getAllBndVertices(toOptimizePrim, vertex2elements);
-          std::set<MElement*> toOptimize2;
-          std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
-                              badElts.begin(),badElts.end(),
-                              std::inserter(toOptimize2, toOptimize2.end()));
-          Msg::Info("Optimizing corrective blob %i (max. %i remaining) "
-                    "composed of %4d elements", iBadEl, badElts.size(),
-                    toOptimize2.size());
-          fflush(stdout);
-          opt = new OptHOM(toOptimize2, toFix2, p.fixBndNodes);
-          //std::ostringstream ossI1;
-          //ossI1 << "initial_corrective_" << iter << ".msh";
-          //opt->mesh.writeMSH(ossI1.str().c_str());
-          success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
-                                  p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
-          if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
-            Msg::Info("Jacobian optimization succeed, starting svd optimization");
-            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
-                                    p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
-          }
-        }
-        else {
-          Msg::Info("Primary blob %i did not break new elements, "
-                    "no correction needed", iBadEl);
-          fflush(stdout);
-        }
+      success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
+                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
+      if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
+        Msg::Info("Jacobian optimization succeed, starting svd optimization");
+        success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
+                                p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
       }
 
       // Measure min and max Jac., update mesh
@@ -558,11 +597,11 @@ static void optimizeOneByOne
         nbLayers *= p.adaptBlobLayerFact;
         Msg::Info("Blob %i failed (adapt #%i), adapting with increased size",
                   iBadEl, iterBlob);
-        if (iterBlob == p.maxAdaptBlob-1) {
+//        if (iterBlob == p.maxAdaptBlob-1) {
           std::ostringstream ossI2;
           ossI2 << "final_" << iBadEl << ".msh";
           opt->mesh.writeMSH(ossI2.str().c_str());
-        }
+//        }
       }
       else break;
     }
@@ -589,18 +628,20 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   gm->getEntities(entities);
 
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
+  std::map<MElement*,GEntity*> element2entity;
   std::set<MElement*> badasses;
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
-    calcVertex2Elements(p.dim,entity,vertex2elements); // Compute vert. -> elt. connectivity
+    calcVertex2Elements(p.dim,entity,vertex2elements);
+    if (p.optPrimSurfMesh) calcElement2Entity(entity,element2entity);
     for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
       if (el->getDim() == p.dim) {
-        el->scaledJacRange(jmin, jmax);
+        el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
         if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
         if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
       }
@@ -608,11 +649,11 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   }
 
   if (p.strategy == 0)
-    optimizeConnectedBlobs(vertex2elements, badasses, p, samples, false);
+    optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);
   else if (p.strategy == 2)
-    optimizeConnectedBlobs(vertex2elements, badasses, p, samples, true);
+    optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, true);
   else
-    optimizeOneByOne(vertex2elements, badasses, p, samples);
+    optimizeOneByOne(vertex2elements, element2entity, badasses, p, samples);
 
   if (p.SUCCESS == 1)
     Msg::Info("Optimization succeeded");
