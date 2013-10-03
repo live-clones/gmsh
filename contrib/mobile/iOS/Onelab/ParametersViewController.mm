@@ -277,13 +277,13 @@
     [cell addSubview:[tmp getLabel]];
     if([tmp isKindOfClass:[ParameterStringList class]]) {
         ParameterStringList *param = (ParameterStringList *)tmp;
-        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
-        [cell addSubview:[param getList]];
+        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, cell.frame.size.height/2)];
+        [cell addSubview:[param getUIView]];
     }
     else if([tmp isKindOfClass:[ParameterNumberList class]]) {
         ParameterNumberList *param = (ParameterNumberList *)tmp;
-        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, 162)];
-        [cell addSubview:[param getList]];
+        [param setFrame:CGRectMake(20, 35, cell.frame.size.width - 40, cell.frame.size.height/2)];
+        [cell addSubview:[param getUIView]];
     }
     else if([tmp isKindOfClass:[ParameterNumberCheckbox class]]) {
         ParameterNumberCheckbox *param = (ParameterNumberCheckbox *)tmp;

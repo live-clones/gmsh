@@ -58,65 +58,47 @@
         label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
         [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
-        picker = [[UIPickerView alloc] init];
-        picker.showsSelectionIndicator = YES;
-        [picker setDataSource:self];
-        [picker setDelegate:self];
-		bool valueInChoices = true;
-        for(int row=0;row<string.getChoices().size();row++){
-            if(string.getValue() == string.getChoices()[row]) {
-				[picker selectRow:row inComponent:0 animated:NO];
-				valueInChoices = false;
-			}
-		}
-		if(valueInChoices) [picker selectRow:string.getChoices().size() inComponent:0 animated:YES];
+        button = [UIButton buttonWithType:UIButtonTypeSystem];
+		[button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
+        [button setTitle:[NSString stringWithFormat:@"%s", string.getValue().c_str()] forState:UIControlStateNormal];
     }
     return self;
 }
--(void)refresh
+-(void)selectValue
 {
-	[picker reloadAllComponents];
-}
--(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
-{
-    return 1;
-}
--(NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
-{
-    std::vector<onelab::string> string;
-    onelab::server::instance()->get(string,[name UTF8String]);
-    if(string.size() < 1) return 0;
-	bool valueInChoices = true;
-	for(int row=0;row<string[0].getChoices().size();row++) if(string[0].getValue() == string[0].getChoices()[row])valueInChoices=false;
-	if(valueInChoices) return string[0].getChoices().size()+1;
-    return string[0].getChoices().size();
-}
--(NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
-{
-    std::vector<onelab::string> string;
-    onelab::server::instance()->get(string,[name UTF8String]);
-    if(string.size() < 1) return @"NULL";
-	if(row >= string[0].getChoices().size()) return [NSString stringWithCString:string[0].getValue().c_str() encoding:[NSString defaultCStringEncoding]];
-    return [NSString stringWithCString:string[0].getChoices()[row].c_str() encoding:[NSString defaultCStringEncoding]];
-}
--(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
-{
-    std::vector<onelab::string> string;
+	std::vector<onelab::string> string;
     onelab::server::instance()->get(string,[name UTF8String]);
     if(string.size() < 1) return;
-    std::string selected = string[0].getChoices()[row];
+	UIActionSheet *popupSelectValue = [[UIActionSheet alloc] initWithTitle:[NSString stringWithFormat:@"%s", string[0].getLabel().c_str()] delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
+	std::vector<std::string> choices = string[0].getChoices();
+	for(int i=0;i<choices.size();i++)
+		[popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", choices[i].c_str()]];
+	[popupSelectValue showInView:button];
+}
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	std::vector<onelab::string> string;
+    onelab::server::instance()->get(string,[name UTF8String]);
+    if(string.size() < 1) return;
+    std::string selected = string[0].getChoices()[buttonIndex];
     string[0].setValue(selected);
     onelab::server::instance()->set(string[0]);
     if(onelab_cb("check") == 1)
         [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+-(void)refresh
+{
+	std::vector<onelab::string> string;
+    onelab::server::instance()->get(string,[name UTF8String]);
+	[button setTitle:[NSString stringWithFormat:@"%s", string[0].getValue().c_str()] forState:UIControlStateNormal];
+}
 -(void)setFrame:(CGRect)frame
 {
-    [picker setFrame:frame];
+    [button setFrame:frame];
 }
--(UIPickerView *)getList
+-(UIButton *)getUIView
 {
-    return picker;
+    return button;
 }
 -(bool)isReadOnly
 {
@@ -127,7 +109,7 @@
 }
 +(double)getHeight
 {
-    return 210.0f;
+    return 60.f;
 }
 @end
 
@@ -140,55 +122,48 @@
         label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
         [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
         name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
-        picker = [[UIPickerView alloc] init];
-        picker.showsSelectionIndicator = YES;
-        [picker setDataSource:self];
-        [picker setDelegate:self];
-        for(int row=0;row<number.getChoices().size();row++)
-            if(number.getValue() == number.getChoices()[row])[picker selectRow:row inComponent:0 animated:NO];
+		button = [UIButton buttonWithType:UIButtonTypeSystem];
+		[button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
+        [button setTitle:[NSString stringWithFormat:@"%s", number.getValueLabel(number.getValue()).c_str()] forState:UIControlStateNormal];
     }
     return self;
 }
--(void)refresh
+-(void)selectValue
 {
-	[picker reloadAllComponents];
-}
--(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
-{
-    return 1;
-}
--(NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
-{
-    std::vector<onelab::number> number;
-    onelab::server::instance()->get(number,[name UTF8String]);
-    if(number.size() < 1) return 0;
-    return number[0].getChoices().size();
-}
--(NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
-{
-    std::vector<onelab::number> number;
-    onelab::server::instance()->get(number,[name UTF8String]);
-    if(number.size() < 1) return @"NULL";
-    return [NSString stringWithCString:number[0].getValueLabel(number[0].getChoices()[row]).c_str() encoding:[NSString defaultCStringEncoding]];
-}
--(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
-{
-    std::vector<onelab::number> number;
+	std::vector<onelab::number> number;
     onelab::server::instance()->get(number,[name UTF8String]);
     if(number.size() < 1) return;
-    double selected = number[0].getChoices()[row];
-    number[0].setValue(selected);
-    onelab::server::instance()->set(number[0]);
-    if(onelab_cb("check") == 1)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+	UIActionSheet *popupSelectValue = [[UIActionSheet alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getLabel().c_str()] delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
+	std::vector<double> choices = number[0].getChoices();
+	for(int i=0;i<choices.size();i++)
+		[popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(choices[i]).c_str()]];
+	[popupSelectValue showInView:button];
+}
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	std::vector<onelab::number> number;
+	onelab::server::instance()->get(number,[name UTF8String]);
+	if(number.size() < 1) return;
+	double selected = number[0].getChoices()[buttonIndex];
+	number[0].setValue(selected);
+	onelab::server::instance()->set(number[0]);
+	[button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
+	if(onelab_cb("check") == 1)
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+}
+-(void)refresh
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+	[button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
 }
 -(void)setFrame:(CGRect)frame
 {
-    [picker setFrame:frame];
+    [button setFrame:frame];
 }
--(UIPickerView *)getList
+-(UIButton *)getUIView
 {
-    return picker;
+	return button;
 }
 -(bool)isReadOnly
 {
@@ -199,7 +174,7 @@
 }
 +(double)getHeight
 {
-    return 210.0f;
+    return 60.f;
 }
 @end
 

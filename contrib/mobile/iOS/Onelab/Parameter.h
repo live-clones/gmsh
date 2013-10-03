@@ -27,23 +27,23 @@
 -(void)refresh;
 @end
 
-@interface ParameterStringList : Parameter <UIPickerViewDataSource, UIPickerViewDelegate>
+@interface ParameterStringList : Parameter <UIActionSheetDelegate>
 {
     @protected
-    UIPickerView *picker;
+    UIButton *button;
 }
 -(id)initWithString:(onelab::string)string;
--(UIPickerView *)getList;
+-(UIPickerView *)getUIView;
 @end
 
 
-@interface ParameterNumberList : Parameter <UIPickerViewDataSource, UIPickerViewDelegate, UITextFieldDelegate>
+@interface ParameterNumberList : Parameter <UIActionSheetDelegate>
 {
     @protected
-    UIPickerView *picker;
+	UIButton *button;
 }
 -(id)initWithNumber:(onelab::number)number;
--(UIPickerView *)getList;
+-(UITextField *)getUIView;
 @end
 
 @interface ParameterNumberCheckbox : Parameter

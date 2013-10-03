@@ -17,7 +17,7 @@
     NSMutableArray *_sections;
     NSMutableArray *_sectionstitle;
 	NSDate *_lastRefresh;
-    
+
     UIBarButtonItem *runButton;
     UIBarButtonItem *stopButton;
 	
