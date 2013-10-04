@@ -808,7 +808,7 @@ void GenerateMesh(GModel *m, int ask)
       p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;
       p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
       p.dim = GModel::current()->getDim();
-      //p.optPrimSurfMesh = true;
+      p.optPrimSurfMesh = CTX::instance()->mesh.hoOptPrimSurfMesh;
       HighOrderMeshOptimizer(GModel::current(), p);
     }
 #else

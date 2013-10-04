@@ -980,6 +980,8 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum threshold for high order element optimization"},
   { F|O, "HighOrderThresholdMax", opt_mesh_ho_threshold_max, 2.0,
     "Maximum threshold for high order element optimization"},
+  { F|O, "HighOrderOptPrimSurfMesh", opt_mesh_ho_opt_prim_surf_mesh, 0,
+    "Try to fix flipped surface mesh elements in high-order optimizer"},
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },

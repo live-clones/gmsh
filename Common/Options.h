@@ -453,6 +453,7 @@ double opt_mesh_ho_nlayers(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_min(OPT_ARGS_NUM);
 double opt_mesh_ho_threshold_max(OPT_ARGS_NUM);
 double opt_mesh_ho_poisson(OPT_ARGS_NUM);
+double opt_mesh_ho_opt_prim_surf_mesh(OPT_ARGS_NUM);
 double opt_mesh_second_order_experimental(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);

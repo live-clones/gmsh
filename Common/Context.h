@@ -42,7 +42,7 @@ struct contextMeshOptions {
   int order, secondOrderLinear, secondOrderIncomplete;
   int secondOrderExperimental, meshOnlyVisible;
   int minCircPoints, minCurvPoints;
-  int hoOptimize, hoNLayers;
+  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
   int smoothNormals, reverseAllNormals, zoneDefinition, clip;
