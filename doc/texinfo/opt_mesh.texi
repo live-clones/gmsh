@@ -244,6 +244,11 @@ Maximum threshold for high order element optimization@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderOptPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.LabelSampling
 Label sampling rate (display one label every `LabelSampling' elements)@*
 Default value: @code{1}@*

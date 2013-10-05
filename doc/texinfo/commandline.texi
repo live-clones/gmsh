@@ -8,7 +8,7 @@
  Geometry options:
 @ftable @code
 @item -0
-Output unrolled geometry, then exit
+Output model, then exit
 @item -tol float
 Set geometrical tolerance
 @item -match

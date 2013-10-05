@@ -6,7 +6,7 @@
 @ftable @code
 @item Print.ParameterCommand
 Command parsed when the print parameter is changed@*
-Default value: @code{"View.Clip=1; General.Clip0D=Print.Parameter;"}@*
+Default value: @code{"Mesh.Clip=1; View.Clip=1; General.ClipWholeElements=1; General.Clip0D=Print.Parameter; SetChanged;"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Parameter
@@ -26,7 +26,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Print.ParameterSteps
 Number of steps in loop over print parameter@*
-Default value: @code{24}@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Background

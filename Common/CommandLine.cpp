@@ -53,7 +53,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
   s.push_back(mp("Geometry options:", ""));
-  s.push_back(mp("-0",                 "Output unrolled geometry, then exit"));
+  s.push_back(mp("-0",                 "Output model, then exit"));
   s.push_back(mp("-tol float",         "Set geometrical tolerance"));
   s.push_back(mp("-match",             "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
