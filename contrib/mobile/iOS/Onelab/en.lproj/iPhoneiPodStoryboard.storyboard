@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="4510" systemVersion="12E55" targetRuntime="iOS.CocoaTouch" variant="6xAndEarlier" propertyAccessControl="none" useAutolayout="YES" initialViewController="vAG-uz-hfU">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="2.0" toolsVersion="4510" systemVersion="12F37" targetRuntime="iOS.CocoaTouch" variant="6xAndEarlier" propertyAccessControl="none" useAutolayout="YES" initialViewController="vAG-uz-hfU">
     <dependencies>
         <deployment defaultVersion="1536" identifier="iOS"/>
         <development version="4600" identifier="xcode"/>
@@ -69,6 +69,7 @@
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="7R3-zZ-cpa" appends="YES" id="K8X-lL-YUb"/>
                             <outletCollection property="gestureRecognizers" destination="qCm-Ub-mO2" appends="YES" id="yww-Ed-CcX"/>
+                            <outletCollection property="gestureRecognizers" destination="mEQ-72-g58" appends="YES" id="ft8-8t-WzA"/>
                         </connections>
                     </view>
                     <navigationItem key="navigationItem" title="ONELAB" id="WX3-lU-bHf"/>
