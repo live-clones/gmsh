@@ -511,9 +511,9 @@ class MHexahedronN : public MHexahedron {
     for (int i = 0; i < 4; i++){
       for (int j = 0; j < _order - 1; j++) v[count++] = _vs[(_order-1)*f[num][i]+j];
     }
-    for (int i = 0; i < (_order + 1) * (_order + 1); i++){
-      int N = _order - 1;
-      int start = 8 + 12 * N + num * (_order - 1) * (_order - 1);
+    int N = _order - 1;
+    int start = 8 + 12 * N + num * (_order - 1) * (_order - 1);
+    for (int i = 0; i < (_order - 1) * (_order - 1); i++){
       v[count++] = _vs[start + i];
     }
   }

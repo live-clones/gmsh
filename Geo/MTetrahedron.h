@@ -128,7 +128,7 @@ class MTetrahedron : public MElement {
   virtual double getInnerRadius();
   virtual double getCircumRadius();
   virtual double etaShapeMeasure();
-  void xyz2uvw(double xyz[3], double uvw[3]) const;
+  virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w) const
@@ -273,6 +273,10 @@ class MTetrahedron10 : public MTetrahedron {
   {
     num < 4 ? MTetrahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
+  void xyz2uvw(double xyz[3], double uvw[3]) const
+  {
+    return MElement::xyz2uvw(xyz,uvw);
+  }
 };
 
 /* tet order 3 FIXME: check the plot
@@ -392,6 +396,10 @@ class MTetrahedronN : public MTetrahedron {
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MTetrahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
+  }
+  void xyz2uvw(double xyz[3], double uvw[3]) const
+  {
+    return MElement::xyz2uvw(xyz,uvw);
   }
 };
 
