@@ -574,7 +574,7 @@ namespace netgen
       cout << "Edges           : " << nnre << " (" << nre << ")" << endl;
       cout << "Vertices        : " << nnrv << " (" << nrv << ")" << endl;
       cout << endl;
-      cout << "Totol surface area : " << newsurfacecont << " (" << surfacecont << ")" << endl;
+      cout << "Total surface area : " << newsurfacecont << " (" << surfacecont << ")" << endl;
       cout << endl;
    }
 
