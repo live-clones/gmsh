@@ -242,12 +242,11 @@ if(ENABLE_BLAS_LAPACK)
     set(LAPACK_LIBRARIES ${BLAS_LAPACK_LIBRARIES})
   else(BLAS_LAPACK_LIBRARIES)
     if(MSVC)
-      # on Windows with Visual C++ try really hard to find blas/lapack
-      # *without* requiring a Fortran compiler: 1) try to find the Intel
-      # MKL libs using the standard search path; if not found 2) try to
-      # get the reference blas/lapack libs (useful for users with no
-      # Fortran compiler and no MKL license, who can just download our
-      # precompiled "gmsh-dep" package)
+      # on Windows with Visual C++ try really hard to find blas/lapack *without*
+      # requiring a Fortran compiler: 1) try to find the Intel MKL libs using
+      # the standard search path; if not found 2) try to get the reference
+      # blas/lapack libs (useful for users with no Fortran compiler and no MKL
+      # license, who can just download our precompiled "gmsh-dep" package)
       if(HAVE_64BIT_SIZE_T)
         set(MKL_PATH em64t/lib)
         set(MKL_LIBS_REQUIRED libguide40 mkl_intel_lp64 mkl_intel_thread mkl_core)
@@ -285,9 +284,8 @@ if(ENABLE_BLAS_LAPACK)
         set_config_option(HAVE_BLAS "Blas(IntelMKL)")
         set_config_option(HAVE_LAPACK "Lapack(IntelMKL)")
       else(LAPACK_LIBRARIES)
-        # on Linux also try to find ATLAS without a Fortran compiler,
-        # because cmake ships with a buggy FindBLAS e.g. on Ubuntu Lucid
-        # Lynx
+        # on Linux also try to find ATLAS without a Fortran compiler, because
+        # cmake ships with a buggy FindBLAS e.g. on Ubuntu Lucid Lynx
         set(ATLAS_LIBS_REQUIRED lapack f77blas cblas atlas)
         find_all_libraries(LAPACK_LIBRARIES ATLAS_LIBS_REQUIRED "" "")
         if(LAPACK_LIBRARIES)
@@ -331,8 +329,8 @@ if(ENABLE_BLAS_LAPACK)
       endif(LAPACK_LIB)
     endif(ENABLE_BUILD_ANDROID)
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      # if we haven't found blas and lapack without using the standard
-      # cmake tests, do it (this requires a working Fortran compiler)
+      # if we haven't found blas and lapack without using the standard cmake
+      # tests, do it (this requires a working Fortran compiler)
       enable_language(Fortran)
       find_package(BLAS)
       if(BLAS_FOUND)
@@ -390,8 +388,8 @@ if(ENABLE_PARSER)
 endif(ENABLE_PARSER)
 
 if(ENABLE_FLTK)
-  # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy
-  # on Unix, where e.g. xft and xinerama options are not dealt with)
+  # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
+  # where e.g. xft and xinerama options are not dealt with)
   find_program(FLTK_CONFIG_SCRIPT fltk-config)
   if(FLTK_CONFIG_SCRIPT)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
@@ -1112,10 +1110,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
 
-# process cmake environment variables so we can append them to the -I
-# include commands. This is not recommended (we should only use the
-# cache variables) but it is very convenient: otherwise we have to
-# remember providing the -D... options to cmake for each new build.
+# process cmake environment variables so we can append them to the -I include
+# commands. This is not recommended (we should only use the cache variables) but
+# it is very convenient: otherwise we have to remember providing the
+# -D... options to cmake for each new build.
 set(ENV_CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
 set(ENV_CMAKE_INCLUDE_PATH $ENV{CMAKE_INCLUDE_PATH})
 if(UNIX)
@@ -1269,8 +1267,8 @@ if(BISON AND FLEX)
 endif(BISON AND FLEX)
 
 if(UNIX)
-  # cannot use cmake's file search functions here (they would only
-  # find files existing at configuration time)
+  # cannot use cmake's file search functions here (they would only find files
+  # existing at configuration time)
   add_custom_target(purge 
                     COMMAND rm -f `find . -name *~ -o -name *~~`
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -1357,10 +1355,11 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # install .def file
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF} 
             DESTINATION ${GMSH_LIB})
-    # install these DLLs until we figure out how to link them in statically (libstc++ and
-    # libgcc should be linkable statically with -static-libstdc++ and -static-libgcc but with
-    # current mingw64 toolchain it does not work). Also, when cross-compilating find_program
-    # does not work -> ask the compiler instead
+    # install these DLLs until we figure out how to link them in statically
+    # (libstc++ and libgcc should be linkable statically with -static-libstdc++
+    # and -static-libgcc but with current mingw64 toolchain it does not
+    # work). Also, when cross-compilating find_program does not work -> ask the
+    # compiler instead
     find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     find_program(STDC_DLL libstdc++-6.dll)
     if(NOT GCC_DLL)
@@ -1506,10 +1505,9 @@ set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$"
     "/contrib/3M/")
 
 if(UNIX)
-  # make sure we remove previous installs before doing the next one
-  # (on Mac for example "make package; make package_source" would lead
-  # to huge file lists getting generated due to the 'Applications'
-  # symlink in the bundle)
+  # make sure we remove previous installs before doing the next one (on Mac for
+  # example "make package; make package_source" would lead to huge file lists
+  # getting generated due to the 'Applications' symlink in the bundle)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif(UNIX)
 
