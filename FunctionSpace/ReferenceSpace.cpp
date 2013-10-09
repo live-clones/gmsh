@@ -549,6 +549,9 @@ correctQuadFaceNodeIdx(size_t faceId,
     refIdx++;
   }
 
+  if(refIdx == 4)
+    throw Exception("Error in correctQuadFaceNodeIdx: vertex 0 not found");
+
   // Get opposite Node
   size_t opposite = refFaceNodeIdx[faceId][(refIdx + 2) % 4];
 
@@ -604,7 +607,7 @@ void ReferenceSpace::mapFromABCtoUVW(const MElement& element,
   // Get Index Permutation
   const size_t permutationIdx = getPermutationIdx(element);
 
-  // UVW node coordinate
+  // UVW node coordinate in ABC
   double** uvwNode = new double*[nVertex];
 
   for(size_t i = 0; i < nVertex; i++)
@@ -614,13 +617,13 @@ void ReferenceSpace::mapFromABCtoUVW(const MElement& element,
     element.getNode(i,
                     uvwNode[UVWtoABCIndex[permutationIdx][i]][0],
                     uvwNode[UVWtoABCIndex[permutationIdx][i]][1],
-                    uvwNode[UVWtoABCIndex[permutationIdx][0]][2]);
+                    uvwNode[UVWtoABCIndex[permutationIdx][i]][2]);
 
   // ABC (order 1) grad shape functions
   double* phiABC = new double[nVertex];
   element.getShapeFunctions(a, b, c, phiABC, 1);
 
-  // Map From UVW to UVW //
+  // Map From ABC to UVW //
   uvw[0] = 0;
   for(size_t i = 0; i < nVertex; i++)
     uvw[0] += uvwNode[i][0] * phiABC[i];
@@ -661,34 +664,37 @@ void ReferenceSpace::mapFromABCtoXYZ(const MElement& element,
 void ReferenceSpace::mapFromUVWtoABC(const MElement& element,
                                      double u, double v, double w,
                                      double abc[3]) const{
-   // ABC node coordinate
+  // Element Permutation Index
+  const size_t permutationIdx = getPermutationIdx(element);
+
+  // ABC node coordinate in UVW
   double** abcNode = new double*[nVertex];
 
   for(size_t i = 0; i < nVertex; i++)
     abcNode[i] = new double[3];
 
   for(size_t i = 0; i < nVertex; i++)
-    element.getNode(i, abcNode[i][0], abcNode[i][1], abcNode[i][2]);
+    element.getNode(i,
+                    abcNode[ABCtoUVWIndex[permutationIdx][i]][0],
+                    abcNode[ABCtoUVWIndex[permutationIdx][i]][1],
+                    abcNode[ABCtoUVWIndex[permutationIdx][i]][2]);
 
   // UVW (order 1) shape functions
   double* phiUVW = new double[nVertex];
   element.getShapeFunctions(u, v, w, phiUVW, 1);
 
-  // Element Permutation Index
-  const size_t permutationIdx = getPermutationIdx(element);
-
   // Map From UVW to ABC
   abc[0] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[0] += abcNode[i][0] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[0] += abcNode[i][0] * phiUVW[i];
 
   abc[1] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[1] += abcNode[i][1] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[1] += abcNode[i][1] * phiUVW[i];
 
   abc[2] = 0;
   for(size_t i = 0; i < nVertex; i++)
-    abc[2] += abcNode[i][2] * phiUVW[ABCtoUVWIndex[permutationIdx][i]];
+    abc[2] += abcNode[i][2] * phiUVW[i];
 
   // Free
   delete[] phiUVW;
