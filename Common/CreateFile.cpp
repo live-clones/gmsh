@@ -209,7 +209,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
-static void change_print_parameter(int frame)
+void change_print_parameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
   double last = CTX::instance()->print.parameterLast;

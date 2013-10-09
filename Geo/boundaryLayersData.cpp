@@ -14,8 +14,18 @@
 #include "MPrism.h"
 #include "MEdge.h"
 #include "boundaryLayersData.h"
-#include "Field.h"
 #include "OS.h"
+
+#if !defined(HAVE_MESH) || !defined(HAVE_ANN)
+
+BoundaryLayerField* getBLField(GModel *gm){ return 0; }
+bool buildAdditionalPoints2D (GFace *gf ) { return false; }
+BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) { return 0; }
+void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]) {}
+
+#else
+
+#include "Field.h"
 
 const int FANSIZE__ = 4;
 
@@ -46,7 +56,7 @@ static double solidAngle (SVector3 &ni, SVector3 &nj,
 }
 */
 
-SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
+SVector3 interiorNormal(SPoint2 p1, SPoint2 p2, SPoint2 p3)
 {
   SVector3 ez (0,0,1);
   SVector3 d (p1.x()-p2.x(),p1.y()-p2.y(),0);
@@ -57,8 +67,8 @@ SVector3 interiorNormal (SPoint2 p1, SPoint2 p2, SPoint2 p3)
   return n*(-1.);
 }
 
-double computeAngle (GFace *gf, const MEdge &e1, const MEdge &e2,
-                     SVector3 &n1, SVector3 &n2)
+double computeAngle(GFace *gf, const MEdge &e1, const MEdge &e2,
+                    SVector3 &n1, SVector3 &n2)
 {
   double cosa = dot(n1,n2);
   SPoint2 p0,p1,p2;
@@ -152,7 +162,8 @@ const BoundaryLayerData & BoundaryLayerColumns::getColumn(MVertex *v, MFace f)
 }
 
 
-faceColumn BoundaryLayerColumns::getColumns(GFace *gf, MVertex *v1, MVertex *v2 , MVertex *v3, int side)
+faceColumn BoundaryLayerColumns::getColumns(GFace *gf, MVertex *v1, MVertex *v2,
+                                            MVertex *v3, int side)
 {
   //  printf("%d %d %d for vertex face %d\n",getNbColumns(v1),getNbColumns(v3),getNbColumns(v3),
   //	 gf->tag());
@@ -287,9 +298,9 @@ static bool pointInFace (GFace *gf, double u, double v)
 }
 */
 
-static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
-                               double _treshold, BoundaryLayerColumns *_columns,
-                               std::vector<SVector3> &_dirs, bool test = false)
+static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
+                              double _treshold, BoundaryLayerColumns *_columns,
+                              std::vector<SVector3> &_dirs, bool test = false)
 {
   std::vector<SVector3> N1,N2;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
@@ -381,10 +392,10 @@ static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2
 //   }
 // }
 
-static void treat3Connections (GFace *gf, MVertex *_myVert, MEdge &e1,
-                               MEdge &e2, MEdge &e3, double _treshold,
-                               BoundaryLayerColumns *_columns,
-                               std::vector<SVector3> &_dirs)
+static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1,
+                              MEdge &e2, MEdge &e3, double _treshold,
+                              BoundaryLayerColumns *_columns,
+                              std::vector<SVector3> &_dirs)
 {
   std::vector<SVector3> N1,N2,N3;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
@@ -431,7 +442,8 @@ static void treat3Connections (GFace *gf, MVertex *_myVert, MEdge &e1,
   _dirs.push_back(x2);
 }
 
-BoundaryLayerField* getBLField (GModel *gm) {
+BoundaryLayerField *getBLField(GModel *gm)
+{
   FieldManager *fields = gm->getFields();
   if(fields->getBoundaryLayerField() <= 0){
     return 0;
@@ -440,9 +452,8 @@ BoundaryLayerField* getBLField (GModel *gm) {
   return dynamic_cast<BoundaryLayerField*> (bl_field);
 }
 
-static bool isEdgeOfFaceBL (GFace *gf,
-			    GEdge *ge,
-			    BoundaryLayerField *blf){
+static bool isEdgeOfFaceBL(GFace *gf, GEdge *ge, BoundaryLayerField *blf)
+{
   if (blf->isEdgeBL (ge->tag()))return true;
   /*
   std::list<GFace*> faces = ge->faces();
@@ -458,12 +469,12 @@ static bool isEdgeOfFaceBL (GFace *gf,
   return false;
 }
 
-static void getEdgesData (GFace *gf,
-			  BoundaryLayerField *blf,
-			  BoundaryLayerColumns *_columns,
-			  std::set<MVertex*> &_vertices,
-			  std::set<MEdge,Less_Edge> &allEdges,
-			  std::multimap<MVertex*,MVertex*> &tangents)
+static void getEdgesData(GFace *gf,
+                         BoundaryLayerField *blf,
+                         BoundaryLayerColumns *_columns,
+                         std::set<MVertex*> &_vertices,
+                         std::set<MEdge,Less_Edge> &allEdges,
+                         std::multimap<MVertex*,MVertex*> &tangents)
 {
   // get all model edges
   std::list<GEdge*> edges = gf->edges();
@@ -497,10 +508,10 @@ static void getEdgesData (GFace *gf,
   }
 }
 
-static void getNormals (GFace *gf,
-			BoundaryLayerField *blf,
-			BoundaryLayerColumns *_columns,
-			std::set<MEdge,Less_Edge> &allEdges)
+static void getNormals(GFace *gf,
+                       BoundaryLayerField *blf,
+                       BoundaryLayerColumns *_columns,
+                       std::set<MEdge,Less_Edge> &allEdges)
 {
   // assume that the initial mesh has been created i.e. that there exist
   // triangles inside the domain. Triangles are used to define
@@ -533,50 +544,44 @@ static void getNormals (GFace *gf,
   }
 }
 
-void addColumnAtTheEndOfTheBL (GEdge *ge,
-			       GVertex *gv,
-			       BoundaryLayerColumns* _columns,
-			       BoundaryLayerField *blf)
+static void addColumnAtTheEndOfTheBL(GEdge *ge,
+                                     GVertex *gv,
+                                     BoundaryLayerColumns* _columns,
+                                     BoundaryLayerField *blf)
 {
   //  printf("coucou %d\n",ge->tag());
-  if (!blf->isEdgeBL(ge->tag()))
-    {
-      GVertex *g0 = ge->getBeginVertex();
-      GVertex *g1 = ge->getEndVertex();
-      //      printf("coucou 2 %d %d vs %d\n",g0->tag(),g1->tag(),gv->tag());
-      MVertex * v0 = g0->mesh_vertices[0];
-      MVertex * v1 = g1->mesh_vertices[0];
-      std::vector<MVertex*> invert;
-      std::vector<SMetric3> _metrics;
-      for(unsigned int i = 0; i < ge->mesh_vertices.size() ; i++)
-	{
-	  invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
-	  _metrics.push_back(SMetric3(1.0));
-	}
-      SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
-      t.normalize();
-      if (g0 == gv){
-	_columns->addColumn(t, v0, ge->mesh_vertices,_metrics);
-      }
-      else if (g1 == gv){
-	_columns->addColumn(t*-1.0, v1,invert,_metrics);
-      }
+  if (!blf->isEdgeBL(ge->tag())){
+    GVertex *g0 = ge->getBeginVertex();
+    GVertex *g1 = ge->getEndVertex();
+    //      printf("coucou 2 %d %d vs %d\n",g0->tag(),g1->tag(),gv->tag());
+    MVertex * v0 = g0->mesh_vertices[0];
+    MVertex * v1 = g1->mesh_vertices[0];
+    std::vector<MVertex*> invert;
+    std::vector<SMetric3> _metrics;
+    for(unsigned int i = 0; i < ge->mesh_vertices.size() ; i++){
+      invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
+      _metrics.push_back(SMetric3(1.0));
     }
+    SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
+    t.normalize();
+    if (g0 == gv){
+      _columns->addColumn(t, v0, ge->mesh_vertices,_metrics);
+    }
+    else if (g1 == gv){
+      _columns->addColumn(t*-1.0, v1,invert,_metrics);
+    }
+  }
 }
 
-
-bool buildAdditionalPoints2D (GFace *gf)
+bool buildAdditionalPoints2D(GFace *gf)
 {
-#if !defined(HAVE_ANN) || !defined(HAVE_MESH)
-  return false;
-#else
   BoundaryLayerColumns *_columns = gf->getColumns();
 
   _columns->_normals.clear();
   _columns->_non_manifold_edges.clear();
   _columns->_data.clear();
 
-  //// GET THE FIELD THAT DEFINES THE DISTANCE FUNCTION
+  // GET THE FIELD THAT DEFINES THE DISTANCE FUNCTION
   BoundaryLayerField *blf = getBLField (gf->model());
 
   if (!blf)return false;
@@ -784,24 +789,22 @@ bool buildAdditionalPoints2D (GFace *gf)
   // END OF DEBUG STUFF
 
   return 1;
-#endif
 }
 
-double angle_0_180 (SVector3 &n1, SVector3 &n2){
+static double angle_0_180(SVector3 &n1, SVector3 &n2)
+{
   double cosa = dot(n1,n2)/(n1.norm()*n2.norm());
-  //  printf("NORMS = %12.5E %12.5E cosa = %22.15E a = %22.15E\n",n1.norm(),n2.norm(),cosa, acos(cosa));
-  if (cosa > 1.)cosa = 1.0;
-  if (cosa < -1.)cosa = -1.0;
+  if (cosa > 1.) cosa = 1.0;
+  if (cosa < -1.) cosa = -1.0;
   return acos(cosa);
 }
 
-
-void createBLPointsInDir (GRegion *gr,
-			  MVertex *current,
-			  BoundaryLayerField *blf,
-			  SVector3 & n,
-			  std::vector<MVertex*> &_column,
-			  std::vector<SMetric3> &_metrics)
+static void createBLPointsInDir(GRegion *gr,
+                                MVertex *current,
+                                BoundaryLayerField *blf,
+                                SVector3 & n,
+                                std::vector<MVertex*> &_column,
+                                std::vector<SMetric3> &_metrics)
 {
   SVector3 basis (current->x(),current->y(),current->z());
   double H = blf->hwall_n;
@@ -817,15 +820,14 @@ void createBLPointsInDir (GRegion *gr,
   }
 }
 
-
-static void createColumnsBetweenFaces (GRegion *gr,
-				       MVertex *myV,
-				       BoundaryLayerField *blf,
-				       BoundaryLayerColumns *_columns,
-				       std::set<GFace*> _gfaces,
-				       std::multimap<GFace*,MTriangle*> & _faces,
-				       std::map<MFace,SVector3,Less_Face> &_normals,
-				       double _treshold)
+static void createColumnsBetweenFaces(GRegion *gr,
+                                      MVertex *myV,
+                                      BoundaryLayerField *blf,
+                                      BoundaryLayerColumns *_columns,
+                                      std::set<GFace*> _gfaces,
+                                      std::multimap<GFace*,MTriangle*> & _faces,
+                                      std::map<MFace,SVector3,Less_Face> &_normals,
+                                      double _treshold)
 {
   SVector3 n[256];
   SPoint3 c[256];
@@ -964,9 +966,6 @@ static bool createWedgeBetweenTwoFaces(bool testOnly,
 
 BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 {
-#if !defined(HAVE_ANN)
-  return 0;
-#else
   BoundaryLayerField *blf = getBLField (gr->model());
 
   if (!blf)return 0;
@@ -1105,6 +1104,6 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
   // END OF DEBUG STUFF
 
   return _columns;
-#endif
-  return 0;
 }
+
+#endif

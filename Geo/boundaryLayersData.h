@@ -13,14 +13,12 @@
 #include <map>
 #include <set>
 
-class Field;
 class GFace;
 class GRegion;
 class MTriangle;
 class BoundaryLayerField;
 
 const int USEFANS__ = 1;
-
 
 struct BoundaryLayerData
 {
@@ -98,12 +96,12 @@ struct edgeColumn {
 
 struct faceColumn {
   const BoundaryLayerData &_c1, &_c2, &_c3, &_c4;
-  faceColumn(const BoundaryLayerData &c1, 
-	     const BoundaryLayerData &c2, 
+  faceColumn(const BoundaryLayerData &c1,
+	     const BoundaryLayerData &c2,
 	     const BoundaryLayerData &c3)
   : _c1(c1), _c2(c2), _c3(c3), _c4(c3){}
-  faceColumn(const BoundaryLayerData &c1, 
-	     const BoundaryLayerData &c2, 
+  faceColumn(const BoundaryLayerData &c1,
+	     const BoundaryLayerData &c2,
 	     const BoundaryLayerData &c4,
 	     const BoundaryLayerData &c3)
   : _c1(c1), _c2(c2), _c3(c3), _c4(c4){}
@@ -210,9 +208,10 @@ public:
   void filterPoints();
 };
 
+BoundaryLayerField* getBLField(GModel *gm);
 bool buildAdditionalPoints2D (GFace *gf ) ;
 BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) ;
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
-BoundaryLayerField* getBLField (GModel *gm);
+
 
 #endif

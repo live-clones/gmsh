@@ -15,7 +15,10 @@
 #include "Context.h"
 #include "MTriangle.h"
 #include "VertexArray.h"
+
+#if defined(HAVE_MESH)
 #include "Field.h"
+#endif
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
@@ -375,6 +378,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
   stl_vertices.clear();
   stl_triangles.clear();
 
+#if defined(HAVE_MESH)
   if (!triangles.size()){
     contextMeshOptions _temp = CTX::instance()->mesh;
     FieldManager *fields = model()->getFields();
@@ -392,6 +396,7 @@ bool gmshFace::buildSTLTriangulation(bool force)
     CTX::instance()->mesh = _temp;
     fields->setBackgroundField(fields->get(BGM));
   }
+#endif
 
   std::map<MVertex*,int> _v;
   int COUNT =0;
