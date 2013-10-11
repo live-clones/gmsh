@@ -9,7 +9,9 @@ Line(3) = {2,1};
 Line(4) = {1,4};
 Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};
-Extrude {0,0.0,1} {
+tmp[] = Extrude {0,0.0,1} {
   Surface{6};
-}
-Show "*";
+};
+Physical Volume(1) = tmp[1];
+
+
