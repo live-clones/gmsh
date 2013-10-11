@@ -185,6 +185,20 @@ class MHexahedron : public MElement {
     };
     return f[face][vert];
   }
+  static int faces2edge_hexa(const int face, const int edge)
+  {
+    // return -iedge - 1 if edge is inverted
+    //         iedge + 1 otherwise
+    static const int e[6][4] = {
+      {2, -6,  -4,  -1},
+      {1,  5,  -9,  -3},
+      {3, 10,  -8,  -2},
+      {4,  7, -11,  -5},
+      {6,  8, -12,  -7},
+      {9, 11,  12, -10}
+    };
+    return e[face][edge];
+  }
 };
 
 /*
@@ -499,40 +513,24 @@ class MHexahedronN : public MHexahedron {
   {
     v.resize((_order+1)*(_order+1));
     MHexahedron::_getFaceVertices(num, v);
-//    static const int f[6][4] = {
-//      {0, 3, 2, 1},
-//      {0, 1, 5, 4},
-//      {0, 4, 7, 3},
-//      {1, 2, 6, 5},
-//      {2, 3, 7, 6},
-//      {4, 5, 6, 7}
-//    };
-    // this is the local edge number indexed from 1. A minus sign is used to indicate that the nodes of the edge must be inverted in order to obtain a MQuandrangleN
-    static const int f[6][4] = {
-      {2,-6,-4,-1},
-      {1,5,-9,-3},
-      {3,10,-8,-2},
-      {4,7,-11,-5},
-      {6,8,-12,-7},
-      {9,11,12,-10}
-    };
-    int count = 4;
-    for (int i = 0; i < 4; i++){
-      if(f[num][i]>0)
+
+    int count = 3;
+    int n = _order-1;
+    for (int i = 0; i < 4; i++) {
+      if(faces2edge_hexa(num, i) > 0)
       {
-        int edge_num = f[num][i]-1;      
-        for (int j = 0; j < _order - 1; j++) v[count++] = _vs[(_order-1)*edge_num+j];
+        int edge_num = faces2edge_hexa(num, i) - 1;
+        for (int j = 0; j < n; j++) v[++count] = _vs[n*edge_num + j];
       }
       else
       {
-        int edge_num = -f[num][i]-1;
-        for (int j = _order-2; j > - 1; j--) v[count++] = _vs[(_order-1)*edge_num+j];
+        int edge_num = -faces2edge_hexa(num, i) - 1;
+        for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
       }
     }
-    int N = _order - 1;
-    int start = 12 * N + num * (_order - 1) * (_order - 1);// -8 as _vs has not the 8 first order nodes
-    for (int i = 0; i < (_order - 1) * (_order - 1); i++){
-      v[count++] = _vs[start + i];
+    int start = 12 * n + num * n*n;
+    for (int i = 0; i < n*n; i++){
+      v[++count] = _vs[start + i];
     }
   }
   virtual int getTypeForMSH() const

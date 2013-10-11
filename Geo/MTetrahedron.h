@@ -176,6 +176,18 @@ class MTetrahedron : public MElement {
     };
     return f[face][vert];
   }
+  static int faces2edge_tetra(const int face, const int vert)
+  {
+    // return -iedge - 1 if edge is inverted
+    //         iedge + 1 otherwise
+    static const int e[4][3] = {
+      {-3, -2, -1},
+      { 1, -6,  4},
+      {-4,  5,  3},
+      { 6,  2, -5}
+    };
+    return e[face][vert];
+  }
 };
 
 /*
@@ -334,12 +346,27 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize(3 + 3 * (_order - 1) + (_order-1) * (_order - 2) /2);
+    v.resize((_order+1) * (_order+2) / 2);
     MTetrahedron::_getFaceVertices(num, v);
-    int j = 3;
-    int nbV = (_order - 1) * (_order - 2) / 2;
-    const int ie = (num+1)*nbV;
-    for(int i = num*nbV; i != ie; ++i) v[j++] = _vs[i];
+
+    int count = 2;
+    int n = _order-1;
+    for (int i = 0; i < 3; i++) {
+      if(faces2edge_tetra(num, i) > 0)
+      {
+        int edge_num = faces2edge_tetra(num, i) - 1;
+        for (int j = 0; j < n; j++) v[++count] = _vs[n*edge_num + j];
+      }
+      else
+      {
+        int edge_num = -faces2edge_tetra(num, i) - 1;
+        for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
+      }
+    }
+    int start = 6 * n + num * (n-1)*n/2;
+    for (int i = 0; i < (n-1)*n/2; i++){
+      v[++count] = _vs[start + i];
+    }
   }
   virtual int getNumVolumeVertices() const
   {
