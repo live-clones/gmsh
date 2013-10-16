@@ -1363,13 +1363,12 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     find_program(GCC_DLL libgcc_s_sjlj-1.dll)
     find_program(STDC_DLL libstdc++-6.dll)
     if(NOT GCC_DLL)
-      if(HAVE_64BIT_SIZE_T)
-        execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll
-                        OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
-      else(HAVE_64BIT_SIZE_T)
+      execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_seh-1.dll
+                      OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if (NOT EXISTS "${GCC_DLL}")
         execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgcc_s_sjlj-1.dll
                         OUTPUT_VARIABLE GCC_DLL OUTPUT_STRIP_TRAILING_WHITESPACE)
-      endif(HAVE_64BIT_SIZE_T)
+      endif(NOT EXISTS "${GCC_DLL}")
       get_filename_component(GCC_DLL ${GCC_DLL} ABSOLUTE)
     endif(NOT GCC_DLL)
     if(NOT STDC_DLL)
