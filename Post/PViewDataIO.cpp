@@ -179,8 +179,8 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
 }
 
 bool PViewData::writeMSH(const std::string &fileName, double version, bool binary,
-                         bool savemesh, bool multipleView, int partitionNum,
-                         bool saveInterpolationMatrices)
+                         bool saveMesh, bool multipleView, int partitionNum,
+                         bool saveInterpolationMatrices, bool forceNodeData)
 {
   Msg::Error("MSH export not implemented for this view type");
   return false;

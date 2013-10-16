@@ -519,6 +519,7 @@ double opt_post_combine_remove_orig(OPT_ARGS_NUM);
 double opt_post_plugins(OPT_ARGS_NUM);
 double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_file_format(OPT_ARGS_NUM);
+double opt_post_force_node_data(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);
 double opt_view_nb_non_empty_timestep(OPT_ARGS_NUM);
 double opt_view_timestep(OPT_ARGS_NUM);

@@ -450,9 +450,21 @@ static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
   }
 }
 
+class nodeData{
+public:
+  int nbnod;
+  int nod;
+  double *data;
+  nodeData()
+    : nbnod(0), nod(0), data(0) {}
+  nodeData(int _nbnod, int _nod, double *_data)
+    : nbnod(_nbnod), nod(_nod), data(_data) {}
+};
+
 static void createElements(std::vector<double> &list, int nbelm, int nbnod,
                            MVertexPositionSet &pos, std::vector<MElement*> &elements,
-                           double eps, int type)
+                           double eps, int type,
+                           std::map<MVertex*, nodeData> *vertexData)
 {
   if(!nbelm) return;
   int t = 0;
@@ -519,16 +531,20 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
     std::vector<MVertex*> verts(nbnod);
-    for(int j = 0; j < nbnod; j++)
+    for(int j = 0; j < nbnod; j++){
       verts[j] = pos.find(x[j], y[j], z[j], eps);
+      if(vertexData)
+        (*vertexData)[verts[j]] = nodeData(nbnod, j, &list[i + 3 * nbnod]);
+    }
     MElement *e = factory.create(t, verts);
     elements.push_back(e);
   }
 }
 
 bool PViewDataList::writeMSH(const std::string &fileName, double version, bool binary,
-                             bool savemesh, bool multipleView,
-                             int partitionNum, bool saveInterpolationMatrices)
+                             bool saveMesh, bool multipleView,
+                             int partitionNum, bool saveInterpolationMatrices,
+                             bool forceNodeData)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -557,39 +573,45 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
   }
   MVertexPositionSet pos(vertices);
 
+  std::map<MVertex *, nodeData> vertexData;
+
   for(int i = 0; i < 24; i++){
     std::vector<double> *list = 0;
     int *numEle = 0, numComp, numNodes;
     int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    createElements(*list, *numEle, numNodes, pos, elements, eps, typ);
+    createElements(*list, *numEle, numNodes, pos, elements, eps, typ,
+                   forceNodeData ? &vertexData : 0);
   }
 
-  int num = 0;
+  int globalNumNodes = 0;
   for(unsigned int i = 0; i < vertices.size(); i++)
     if(vertices[i]->getIndex() < 0)
-      vertices[i]->setIndex(++num);
+      vertices[i]->setIndex(++globalNumNodes);
 
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
-  fprintf(fp, "$Nodes\n");
-  fprintf(fp, "%d\n", num);
-  for(unsigned int i = 0; i < vertices.size(); i++){
-    MVertex *v = vertices[i];
-    if(v->getIndex() > 0)
-      fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(), v->z());
-  }
-  fprintf(fp, "$EndNodes\n");
 
-  fprintf(fp, "$Elements\n");
-  fprintf(fp, "%d\n", (int)elements.size());
-  for(unsigned int i = 0; i < elements.size(); i++){
-    if(version > 2.2)
-      Msg::Warning("Unable to write file in version '%g': using version 2.2",
-                   version);
-    elements[i]->writeMSH2(fp, 2.2, false, i + 1);
-  }
-  fprintf(fp, "$EndElements\n");
+  if(saveMesh){
+    fprintf(fp, "$Nodes\n");
+    fprintf(fp, "%d\n", globalNumNodes);
+    for(unsigned int i = 0; i < vertices.size(); i++){
+      MVertex *v = vertices[i];
+      if(v->getIndex() > 0)
+        fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(), v->z());
+    }
+    fprintf(fp, "$EndNodes\n");
 
-  if(saveInterpolationMatrices && haveInterpolationMatrices()){
+    fprintf(fp, "$Elements\n");
+    fprintf(fp, "%d\n", (int)elements.size());
+    for(unsigned int i = 0; i < elements.size(); i++){
+      if(version > 2.2)
+        Msg::Warning("Unable to write file in version '%g': using version 2.2",
+                     version);
+      elements[i]->writeMSH2(fp, 2.2, false, i + 1);
+    }
+    fprintf(fp, "$EndElements\n");
+  }
+
+  if(saveInterpolationMatrices && haveInterpolationMatrices() && !forceNodeData){
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
@@ -612,37 +634,61 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
   }
 
   for(int ts = 0; ts < NbTimeStep; ts++){
-    fprintf(fp, "$ElementNodeData\n");
-    if(saveInterpolationMatrices && haveInterpolationMatrices())
+    if(forceNodeData)
+      fprintf(fp, "$NodeData\n");
+    else
+      fprintf(fp, "$ElementNodeData\n");
+    if(saveInterpolationMatrices && haveInterpolationMatrices() && !forceNodeData)
       fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
     else
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
     fprintf(fp, "1\n%.16g\n", getTime(ts));
+    int size = forceNodeData ? globalNumNodes : (int)elements.size();
     if(partitionNum)
-      fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, (int)elements.size(),
+      fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, size,
               partitionNum);
     else
-      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, (int)elements.size());
-    num = 0;
-    for(int i = 0; i < 24; i++){
-      std::vector<double> *list = 0;
-      int *numEle = 0, numComp, numNodes;
-      int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-      if(*numEle){
-        int mult = numNodes;
-        if(_interpolation.count(typ))
-          mult = _interpolation[typ][0]->size1();
-        int nb = list->size() / *numEle;
-        for(unsigned int i = 0; i < list->size(); i += nb){
-          double *v = &(*list)[i + 3 * numNodes];
-          fprintf(fp, "%d %d", ++num, mult);
-          for(int j = 0; j < numComponents * mult; j++)
-            fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);
+
+    if(forceNodeData){
+      for(unsigned int i = 0; i < vertices.size(); i++){
+        MVertex *v = vertices[i];
+        if(v->getIndex() > 0){
+          fprintf(fp, "%d", v->getIndex());
+          int nbnod = vertexData[v].nbnod;
+          int nod = vertexData[v].nod;
+          double *d = vertexData[v].data;
+          for(int j = 0; j < numComponents; j++)
+            fprintf(fp, " %.16g",
+                    d[numComponents * nbnod * ts + numComponents * nod + j]);
           fprintf(fp, "\n");
         }
       }
+      fprintf(fp, "$EndNodeData\n");
     }
-    fprintf(fp, "$EndElementNodeData\n");
+    else{
+      int num = 0;
+      for(int i = 0; i < 24; i++){
+        std::vector<double> *list = 0;
+        int *numEle = 0, numComp, numNodes;
+        int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
+        if(*numEle){
+          int mult = numNodes;
+          if(_interpolation.count(typ))
+            mult = _interpolation[typ][0]->size1();
+          int nb = list->size() / *numEle;
+          for(unsigned int i = 0; i < list->size(); i += nb){
+            double *v = &(*list)[i + 3 * numNodes];
+            fprintf(fp, "%d %d", ++num, mult);
+            for(int j = 0; j < numComponents * mult; j++)
+              fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+            fprintf(fp, "\n");
+          }
+        }
+      }
+      fprintf(fp, "$EndElementNodeData\n");
+    }
+
   }
 
   fclose(fp);

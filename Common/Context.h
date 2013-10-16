@@ -229,7 +229,7 @@ class CTX {
   struct{
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
-    int fileFormat, plugins;
+    int fileFormat, plugins, forceNodeData;
     double animDelay;
   }post;
   // solver options

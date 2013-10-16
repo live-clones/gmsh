@@ -128,7 +128,8 @@ class PViewDataList : public PViewData {
                 bool append=false);
   virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
                         bool savemesh=true, bool multipleView=false,
-                        int partitionNum=0, bool saveInterpolationMatrices=true);
+                        int partitionNum=0, bool saveInterpolationMatrices=true,
+                        bool forceNodeData=false);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
 };

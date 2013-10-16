@@ -6293,6 +6293,13 @@ double opt_post_file_format(OPT_ARGS_NUM)
   return CTX::instance()->post.fileFormat;
 }
 
+double opt_post_force_node_data(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.forceNodeData = (int)val;
+  return CTX::instance()->post.forceNodeData;
+}
+
 double opt_view_nb_timestep(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)

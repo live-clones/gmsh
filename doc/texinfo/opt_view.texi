@@ -216,7 +216,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.CenterGlyphs
 Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Clip

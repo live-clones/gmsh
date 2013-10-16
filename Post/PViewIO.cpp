@@ -295,7 +295,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
   case 3: ret = _data->writeSTL(fileName); break;
   case 4: ret = _data->writeTXT(fileName); break;
   case 5: ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                                CTX::instance()->mesh.binary); break;
+                                CTX::instance()->mesh.binary, true, false,
+                                0, true, CTX::instance()->post.forceNodeData); break;
   case 6: ret = _data->writeMED(fileName); break;
   case 10:
     {
@@ -306,7 +307,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
         ret = _data->writeSTL(fileName);
       else if(ext == ".msh")
         ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                              CTX::instance()->mesh.binary);
+                              CTX::instance()->mesh.binary, true, false,
+                              0, true, CTX::instance()->post.forceNodeData);
       else if(ext == ".med")
         ret = _data->writeMED(fileName);
       else
