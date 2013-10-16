@@ -39,7 +39,7 @@ class SuperEl
 {
 public:
 
-  SuperEl(MElement *badEl, double dist, int type, const std::vector<MVertex*> &baseVert,
+  SuperEl(int order, double dist, int type, const std::vector<MVertex*> &baseVert,
           const std::vector<SVector3> &normals);
   ~SuperEl() { _superVert.clear(); delete _superEl, _superEl0; }
 
@@ -63,11 +63,11 @@ private:
   std::vector<MVertex*> _superVert;
   MElement *_superEl, *_superEl0;
 
-  void createSuperElQuad(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
+  void createSuperElQuad(int order, double dist, const std::vector<MVertex*> &baseVert,
                          const SVector3 &n0, const SVector3 &n1);
-  void createSuperElPrism(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
+  void createSuperElPrism(int order, double dist, const std::vector<MVertex*> &baseVert,
                           const SVector3 &n0, const SVector3 &n1, const SVector3 &n2);
-  void createSuperElHex(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
+  void createSuperElHex(int order, double dist, const std::vector<MVertex*> &baseVert,
                         const SVector3 &n0, const SVector3 &n1, const SVector3 &n2, const SVector3 &n3);
 
 

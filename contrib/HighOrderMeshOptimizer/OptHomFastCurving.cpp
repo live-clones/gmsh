@@ -173,7 +173,7 @@ SVector3 getNormalEdge(MVertex *vert, const SVector3 &n,
 
 // Detect whether edge/face is curved, and give normal
 bool isCurvedAndNormal(int type, int order, const std::vector<MVertex*> &faceVert,
-                       const SPoint3 pBar, SVector3 &normal, double &maxDist) {
+                       SVector3 &normal, double &maxDist) {
 
 //  static const double eps = 1.e-10;
   static const double eps = 1.e-6;
@@ -192,23 +192,21 @@ bool isCurvedAndNormal(int type, int order, const std::vector<MVertex*> &faceVer
       sxyz[i] += sxyz[j] * f[j];
   }
 
-  // Compute (non-oriented) unit normal to straight edge/face and its scale [length]
+  // Compute unit normal to straight edge/face and its scale [length]
   double scale;
   const SPoint3 &p0 = sxyz[0], &p1 = sxyz[1];
   if (type == TYPE_LIN) {
-    normal = SVector3(p0.y()-p1.y(),p1.x()-p0.x(),0.);
+//    normal = SVector3(p0.y()-p1.y(),p1.x()-p0.x(),0.);
+    normal = SVector3(p1.y()-p0.y(),p0.x()-p1.x(),0.);
     scale = normal.normalize();
   }
   else {
     const SPoint3 &p2 = sxyz[2];
     SVector3 p01(p0,p1), p02(p0,p2);
-    normal = crossprod(p01,p02);
+//    normal = crossprod(p01,p02);
+    normal = crossprod(p02,p01);
     scale = sqrt(normal.normalize());
   }
-
-  // Orient normal with help of pBar
-  SVector3 p0C(p0,pBar);
-  if (dot(normal,p0C) < 0.) normal *= -1.;                                      // Make straight normal in-going
 
   // Calc max. normal dist. from straight to HO points
   maxDist = 0.;
@@ -221,67 +219,6 @@ bool isCurvedAndNormal(int type, int order, const std::vector<MVertex*> &faceVer
 //            << ", v2 is " << faceVert[2]->getNum() << ", maxDist = " << maxDist
 //            << ", scale = " << scale << ", test = " << (maxDist > eps*scale) << "\n";
   return (maxDist > eps*scale);
-
-}
-
-
-
-bool getCurvedFace(MElement* badEl,
-                   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-                   std::vector<MVertex*> &baseVert, std::vector<SVector3> &normals,
-                   int &baseType, double &baseMaxDist) {
-
-  bool found = false;
-  const int dim = badEl->getDim();
-  const int order = badEl->getPolynomialOrder();
-  const int numFaces = (dim == 2) ? badEl->getNumEdges() : badEl->getNumFaces();
-
-  for (int iFace=0; iFace<numFaces; iFace++) {            // Loop on edges/faces
-
-    // Get face info (type, vertices)
-    std::vector<MVertex*> bv;                             // Vertices of edge/face
-    int numPrimVert, type;
-    if (dim == 2) {
-      badEl->getEdgeVertices(iFace,bv);
-      type = TYPE_LIN;
-      numPrimVert = 2;
-    }
-    else {
-      badEl->getFaceVertices(iFace,bv);
-      MFace face = badEl->getFace(iFace);
-      numPrimVert = face.getNumVertices();
-      type = (numPrimVert == 3) ? TYPE_TRI : TYPE_QUA;
-    }
-
-    // Skip face if at least 1 vertex not on boundary
-    bool inDom = false;
-    for (int iV=0; iV<bv.size(); ++iV)
-      if (bv[iV]->onWhat()->dim() == dim) inDom = true;
-    if (inDom) continue;
-
-    //    std::cout << "DBGTT: Checking edge/face " << iFace << " in el. " << badEl->getNum() << ": "
-//              << numPrimVert << " vert., type " << type << "\n";
-    // If face curved, mark it and compute normals to its primary vertices
-    SVector3 n;                                                           // Normal to straight edge/face
-    double maxDist;                                                       // TOFIX: Max. normal. dist. to straight in curved face
-    const SPoint3 pBar = badEl->barycenter(true);                         // Bary. of el. to help orienting normal
-    if (isCurvedAndNormal(type,order,bv,pBar,n,maxDist)) {                // Check whether edge/face is curved and compute straight normal
-//      std::cout << "DBGTT: Curved edge/face in el. " << badEl->getNum() << "\n";
-      if (found) {                                                        // If more than 1 curved edge/face in bad el., drop it
-        std::cout << "DBGTT: More than 1 curved edge/face detected in el. " << badEl->getNum() << "\n";
-        return false;
-      }
-      for (int iV=0; iV<numPrimVert; iV++)                                // Compute normals to prim. vert. of edge/face
-        normals.push_back(getNormalEdge(bv[iV],n,vertex2elements));
-      baseVert = bv;
-      baseType = type;
-      baseMaxDist = maxDist;
-      found = true;
-    }
-
-  }
-
-  return found;
 
 }
 
@@ -343,27 +280,34 @@ std::set<MElement*> getSuperElBlob(MElement *el, const std::map<MVertex*,
 
 
 
-void curveMesh(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-               std::set<MElement*> &badElements, FastCurvingParameters &p, int samples)
+void curveMeshFromFaces(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
+                        std::set<MElement*> &faceElements, FastCurvingParameters &p)
 {
 
-  const int nbBadElts = badElements.size();
-  std::vector<MElement*> badElts;
+  const int nbFaceElts = faceElements.size();
+  std::vector<MElement*> faceElts;
   std::vector<SuperEl*> superElts;
-  badElts.reserve(nbBadElts);
-  superElts.reserve(nbBadElts);
+  faceElts.reserve(nbFaceElts);
+  superElts.reserve(nbFaceElts);
 
   std::ofstream of("dum.pos");
   of << "View \" \"{\n";
 
-  for (std::set<MElement*>::const_iterator itBE = badElements.begin(); itBE != badElements.end(); ++itBE) {
-    std::vector<MVertex*> faceBE;
-    std::vector<SVector3> normalsBE;
-    int typeBE;
-    double maxDistBE;
-    if (getCurvedFace(*itBE,vertex2elements,faceBE,normalsBE,typeBE,maxDistBE)) {
-      badElts.push_back(*itBE);
-      superElts.push_back(new SuperEl(*itBE,maxDistBE*p.distanceFactor,typeBE,faceBE,normalsBE));
+  for (std::set<MElement*>::const_iterator itFE = faceElements.begin(); itFE != faceElements.end(); ++itFE) {
+    const int dim = (*itFE)->getDim();
+    const int order = (*itFE)->getPolynomialOrder();
+    const int numPrimVert = (*itFE)->getNumPrimaryVertices();
+    const int type = (*itFE)->getType();
+    std::vector<MVertex*> faceVert;
+    (*itFE)->getVertices(faceVert);
+    double maxDist;
+    SVector3 faceNormal;
+    if (isCurvedAndNormal(type,order,faceVert,faceNormal,maxDist)) {
+      std::vector<SVector3> baseNormal;
+      for (int iV=0; iV<numPrimVert; iV++)                                // Compute normals to prim. vert. of edge/face
+        baseNormal.push_back(getNormalEdge(faceVert[iV],faceNormal,vertex2elements));
+      faceElts.push_back(*itFE);
+      superElts.push_back(new SuperEl(order,maxDist*p.distanceFactor,type,faceVert,baseNormal));
       of << superElts.back()->printPOS();
     }
   }
@@ -372,12 +316,12 @@ void curveMesh(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
   of.close();
 
   std::set<MVertex*> movedVert;
-  for (int iBE=0; iBE<badElts.size(); ++iBE) {
-    std::set<MElement*> blob = getSuperElBlob(badElts[iBE], vertex2elements, superElts[iBE]);
-//    std::cout << "DBGTT: Blob of bad el. " << badElts[iBE]->getNum() << " contains elts.";
+  for (int iFE=0; iFE<faceElts.size(); ++iFE) {
+    std::set<MElement*> blob = getSuperElBlob(faceElts[iFE], vertex2elements, superElts[iFE]);
+//    std::cout << "DBGTT: Blob of bad el. " << faceElts[iBE]->getNum() << " contains elts.";
 //    for (std::set<MElement*>::iterator itE = blob.begin(); itE != blob.end(); ++itE) std::cout << " " << (*itE)->getNum();
 //    std::cout << "\n";
-    makeStraight(badElts[iBE],movedVert);                                             // Make bad. el. straight
+//    makeStraight(faceElts[iFE],movedVert);                                             // Make bad. el. straight
     for (std::set<MElement*>::iterator itE = blob.begin(); itE != blob.end(); ++itE) {
       makeStraight(*itE,movedVert);
       for (int i = 0; i < (*itE)->getNumVertices(); ++i) {                            // For each vert. of each el. in blob
@@ -385,14 +329,14 @@ void curveMesh(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
         MVertex* vert = (*itE)->getVertex(i);
         if (movedVert.find(vert) == movedVert.end()) {                                // If vert. not already moved
           double xyzS[3] = {vert->x(), vert->y(), vert->z()}, xyzC[3];
-          if (superElts[iBE]->straightToCurved(xyzS,xyzC)) {
+          if (superElts[iFE]->straightToCurved(xyzS,xyzC)) {
 //            std::cout << "DBGTT: moving vertex " << vert->getNum() << " from (" << xyzS[0] << "," << xyzS[1] << "," << xyzS[2] << ") to (" << xyzC[0] << "," << xyzC[1] << "," << xyzC[2] << ")\n";
             vert->setXYZ(xyzC[0],xyzC[1],xyzC[2]);
             movedVert.insert(vert);
           }
-//          else std::cout << "DBGTT: Failed to move vertex " << vert->getNum() << " with bad. el " << badElts[iBE]->getNum() << "\n";
+//          else std::cout << "DBGTT: Failed to move vertex " << vert->getNum() << " with bad. el " << faceElts[iBE]->getNum() << "\n";
         }
-//        else std::cout << "DBGTT: Already moved vertex " << vert->getNum() << " with bad. el " << badElts[iBE]->getNum() << "\n";
+//        else std::cout << "DBGTT: Already moved vertex " << vert->getNum() << " with bad. el " << faceElts[iBE]->getNum() << "\n";
       }
     }
   }
@@ -410,36 +354,27 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
 
   double t1 = Cpu();
 
-  int samples = 30;
-
-  double tf1 = Cpu();
-
   Msg::StatusBar(true, "Optimizing high order mesh...");
   std::vector<GEntity*> entities;
   gm->getEntities(entities);
+  const int bndDim = p.dim-1;
 
+  // Compute vert. -> elt. connectivity
+  Msg::Info("Computing connectivity...");
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
-  std::set<MElement*> badasses;
+  for (int iEnt = 0; iEnt < entities.size(); ++iEnt)
+    calcVertex2Elements(p.dim,entities[iEnt],vertex2elements);
+
+  // Loop over geometric entities
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
-    if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
-    Msg::Info("Computing connectivity and bad elements for entity %d...",
-              entity->tag());
-    calcVertex2Elements(p.dim,entity,vertex2elements); // Compute vert. -> elt. connectivity
-//    std::cout << "DBGTT: num. el. = " << entity->getNumMeshElements() << "\n";
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
-      double jmin, jmax;
-      MElement *el = entity->getMeshElement(iEl);
-      if (el->getDim() == p.dim) {
-        el->scaledJacRange(jmin, jmax);
-//        std::cout << "El. " << iEl << ", jmin = " << jmin << ", jmax = " << jmax << "\n";
-//        Msg::Info("El %i, jmin = %g, jmax = %g\n",iEl,jmin,jmax);
-        if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
-      }
-    }
+    if (entity->dim() != bndDim || (p.onlyVisible && !entity->getVisibility())) continue;
+    Msg::Info("Curving elements for entity %d...",entity->tag());
+    std::set<MElement*> faceElements;
+    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++)
+      faceElements.insert(entity->getMeshElement(iEl));
+    curveMeshFromFaces(vertex2elements, faceElements, p);
   }
-
-  curveMesh(vertex2elements, badasses, p, samples);
 
   double t2 = Cpu();
 

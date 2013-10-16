@@ -105,12 +105,12 @@ private:
   std::vector<int> _nBezEl, _nNodEl;
   // Index of parametric coord. for an el.
   std::vector<std::vector<int> > _indPCEl;
-
-  ParamCoord *_pc;
+  // Parametrization for a free vertex
+  std::vector<ParamCoord*> _paramFV;
 
   int addVert(MVertex* vert);
   int addFreeVert(MVertex* vert, const int iV, const int nPCV,
-                  std::set<MVertex*> &toFix);
+                  ParamCoord *param, std::set<MVertex*> &toFix);
   void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
   static inline int indJB2DBase(int nNod, int l, int i, int j)
   {
@@ -140,7 +140,7 @@ void Mesh::gradDistSq(int iFV, std::vector<double> &gDSq)
 {
   SPoint3 gXyz = (_xyz[_fv2V[iFV]]-_ixyz[_fv2V[iFV]])*2.;
   SPoint3 gUvw;
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],gXyz,gUvw);
+  _paramFV[iFV]->gXyz2gUvw(_uvw[iFV],gXyz,gUvw);
 
   gDSq[0] = gUvw[0];
   if (_nPCFV[iFV] >= 2) gDSq[1] = gUvw[1];

@@ -33,18 +33,16 @@
 class ParamCoord
 {
 public:
-  virtual void exportParamCoord(MVertex *v, const SPoint3 &uvw) {};
-  // Number of parametric coordinates for vertex
-  virtual int nCoord(MVertex* vert) = 0;
+  // Set param. coord. of MVertex if applicable
+  virtual void exportParamCoord(const SPoint3 &uvw) {}
   // Get parametric coordinates of vertex
-  virtual SPoint3 getUvw(MVertex* vert) = 0;
+  virtual SPoint3 getUvw(MVertex* v) = 0;
   // Calculate physical coordinates from parametric coordinates of vertex
-  virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw) = 0;
+  virtual SPoint3 uvw2Xyz(const SPoint3 &uvw) = 0;
   // Calculate derivatives w.r.t parametric coordinates
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                         const SPoint3 &gXyz, SPoint3 &gUvw) = 0;
+  virtual void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw) = 0;
   // Calculate derivatives w.r.t parametric coordinates
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
+  virtual void gXyz2gUvw(const SPoint3 &uvw,
                          const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw) = 0;
   virtual ~ParamCoord() {}
 };
@@ -52,13 +50,11 @@ public:
 class ParamCoordPhys3D : public ParamCoord
 {
 public:
-  int nCoord(MVertex* vert) { return 3; }
-  virtual SPoint3 getUvw(MVertex* vert) { return vert->point(); }
-  virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw) { return uvw; }
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const SPoint3 &gXyz,
+  SPoint3 getUvw(MVertex* v) { return v->point(); }
+  SPoint3 uvw2Xyz(const SPoint3 &uvw) { return uvw; }
+  void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz,
                          SPoint3 &gUvw){ gUvw = gXyz; }
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                         const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
+  void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
   {
     std::vector<SPoint3>::iterator itUvw=gUvw.begin();
     for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin(); itXyz != gXyz.end();
@@ -72,13 +68,10 @@ public:
 class ParamCoordPhys2D : public ParamCoord
 {
 public:
-  int nCoord(MVertex* vert) { return 2; }
-  virtual SPoint3 getUvw(MVertex* vert) { return vert->point(); }
-  virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw) { return uvw; }
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const SPoint3 &gXyz,
-                         SPoint3 &gUvw) { gUvw = gXyz; }
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                         const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
+  SPoint3 getUvw(MVertex* v) { return v->point(); }
+  SPoint3 uvw2Xyz(const SPoint3 &uvw) { return uvw; }
+  void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw) { gUvw = gXyz; }
+  void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
   {
     std::vector<SPoint3>::iterator itUvw=gUvw.begin();
     for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin(); itXyz != gXyz.end();
@@ -92,14 +85,37 @@ public:
 class ParamCoordParent : public ParamCoord
 {
 public:
-  int nCoord(MVertex* vert) { return vert->onWhat()->haveParametrization() ? vert->onWhat()->dim() : 0; }
-  virtual void exportParamCoord(MVertex *v, const SPoint3 &uvw);
-  virtual SPoint3 getUvw(MVertex* vert);
-  virtual SPoint3 uvw2Xyz(MVertex* vert, const SPoint3 &uvw);
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw, const SPoint3 &gXyz,
-                         SPoint3 &gUvw);
-  virtual void gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                         const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw);
+  ParamCoordParent(MVertex* v) : _vert(v) {}
+  void exportParamCoord(const SPoint3 &uvw) {
+    for (int d = 0; d < _vert->onWhat()->dim(); ++d) _vert->setParameter(d, uvw[d]);
+  }
+  SPoint3 getUvw(MVertex* v);
+  SPoint3 uvw2Xyz(const SPoint3 &uvw);
+  void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw);
+  void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw);
+protected:
+  MVertex *_vert;
+};
+
+class ParamCoordLocalLine : public ParamCoord
+{
+public:
+  ParamCoordLocalLine(MVertex* v);
+  SPoint3 getUvw(MVertex* v) { return SPoint3(0.,0.,0.); }
+  SPoint3 uvw2Xyz(const SPoint3 &uvw) { return SPoint3(uvw[0]*dir[0],uvw[0]*dir[1],uvw[0]*dir[2]); }
+  void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw) {
+    gUvw[0] = gXyz.x()*dir[0] + gXyz.y()*dir[1] + gXyz.z()*dir[2];
+  }
+  void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw) {
+    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
+    for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin();
+         itXyz != gXyz.end(); itXyz++) {
+      (*itUvw)[0] = itXyz->x()*dir[0] + itXyz->y()*dir[1] + itXyz->z()*dir[2];
+      itUvw++;
+    }
+  }
+protected:
+  SVector3 dir;
 };
 
 #endif

@@ -43,16 +43,6 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
 
   _dim = (*els.begin())->getDim();
 
-  if (fixBndNodes) {
-    if (_dim == 2) _pc = new ParamCoordPhys2D;
-    else _pc = new ParamCoordPhys3D;
-    Msg::Debug("METHOD: Fixing boundary nodes and using physical coordinates");
-  }
-  else {
-    _pc = new ParamCoordParent;
-    Msg::Debug("METHOD: Freeing boundary nodes and using parent parametric coordinates");
-  }
-
   // Initialize elements, vertices, free vertices and element->vertices
   // connectivity
   const int nElements = els.size();
@@ -64,6 +54,7 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
   _nNodEl.resize(nElements);
   _indPCEl.resize(nElements);
   int iEl = 0;
+  bool nonGeoMove = false;
   for(std::set<MElement*>::const_iterator it = els.begin();
       it != els.end(); ++it, ++iEl) {
     _el[iEl] = *it;
@@ -72,31 +63,36 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
     _nNodEl[iEl] = jac->getNumMapNodes();
     for (int iVEl = 0; iVEl < jac->getNumMapNodes(); iVEl++) {
       MVertex *vert = _el[iEl]->getVertex(iVEl);
+      GEntity *ge = vert->onWhat();
+      const int vDim = ge->dim();
+      const bool hasParam = ge->haveParametrization();
       int iV = addVert(vert);
       _el2V[iEl].push_back(iV);
-      const int nPCV = _pc->nCoord(vert);
-      bool isFV = false;
-      if (nPCV > 0) {
-        if (fixBndNodes)
-          isFV = (vert->onWhat()->dim() == _dim) && (toFix.find(vert) == toFix.end());
-        else
-          isFV = (vert->onWhat()->dim() >= 1) && (toFix.find(vert) == toFix.end());
-      }
-      if (isFV) {
-        int iFV = addFreeVert(vert,iV,nPCV,toFix);
+      if ((vDim > 0) && (toFix.find(vert) == toFix.end()) && (!fixBndNodes || vDim == _dim)) {   // Free vertex?
+        ParamCoord *param;
+        if (vDim == 3) param = new ParamCoordPhys3D();
+        else if (hasParam) param = new ParamCoordParent(vert);
+        else {
+          if (vDim == 2) param = new ParamCoordPhys2D();                          //todo: make 2d local surf. param
+          else param = new ParamCoordLocalLine(vert);
+          nonGeoMove = true;
+        }
+        int iFV = addFreeVert(vert,iV,vDim,param,toFix);
         _el2FV[iEl].push_back(iFV);
-        for (int i=_startPCFV[iFV]; i<_startPCFV[iFV]+nPCV; i++)
-          _indPCEl[iEl].push_back(i);
+        for (int i=_startPCFV[iFV]; i<_startPCFV[iFV]+vDim; i++) _indPCEl[iEl].push_back(i);
       }
       else _el2FV[iEl].push_back(-1);
     }
   }
 
+  if (nonGeoMove) Msg::Info("WARNING: Some vertices will be moved along local lines "
+                            "or planes, they may not remain on the exact geometry");
+
   // Initial coordinates
   _ixyz.resize(nVert());
   for (int iV = 0; iV < nVert(); iV++) _ixyz[iV] = _vert[iV]->point();
   _iuvw.resize(nFV());
-  for (int iFV = 0; iFV < nFV(); iFV++) _iuvw[iFV] = _pc->getUvw(_freeVert[iFV]);
+  for (int iFV = 0; iFV < nFV(); iFV++) _iuvw[iFV] = _paramFV[iFV]->getUvw(_freeVert[iFV]);
 
   // Set current coordinates
   _xyz = _ixyz;
@@ -167,7 +163,7 @@ int Mesh::addVert(MVertex* vert)
 }
 
 int Mesh::addFreeVert(MVertex* vert, const int iV, const int nPCV,
-                      std::set<MVertex*> &toFix)
+                      ParamCoord *param, std::set<MVertex*> &toFix)
 {
   std::vector<MVertex*>::iterator itVert = find(_freeVert.begin(),
                                                 _freeVert.end(),vert);
@@ -175,6 +171,7 @@ int Mesh::addFreeVert(MVertex* vert, const int iV, const int nPCV,
     const int iStart = (_startPCFV.size() == 0)? 0 : _startPCFV.back()+_nPCFV.back();
     const bool forcedV = (vert->onWhat()->dim() < 2) || (toFix.find(vert) != toFix.end());
     _freeVert.push_back(vert);
+    _paramFV.push_back(param);
     _fv2V.push_back(iV);
     _startPCFV.push_back(iStart);
     _nPCFV.push_back(nPCV);
@@ -205,7 +202,7 @@ void Mesh::updateMesh(const double *it)
     uvwV[0] = *it; it++;
     if (_nPCFV[iFV] >= 2) { uvwV[1] = *it; it++; }
     if (_nPCFV[iFV] == 3) { uvwV[2] = *it; it++; }
-    _xyz[iV] = _pc->uvw2Xyz(_freeVert[iFV],uvwV);
+    _xyz[iV] = _paramFV[iFV]->uvw2Xyz(uvwV);
   }
 
 }
@@ -251,7 +248,7 @@ void Mesh::updateGEntityPositions()
   for (int iV = 0; iV < nVert(); iV++)
     _vert[iV]->setXYZ(_xyz[iV].x(),_xyz[iV].y(),_xyz[iV].z());
   for (int iFV = 0; iFV < nFV(); iFV++)
-    _pc->exportParamCoord(_freeVert[iFV], _uvw[iFV]);
+    _paramFV[iFV]->exportParamCoord(_uvw[iFV]);
 }
 
 void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda,
@@ -299,7 +296,7 @@ void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda,
         gXyzV [l] = SPoint3(gradLambdaB(l,i+0*numMapNodes),
                             gradLambdaB(l,i+1*numMapNodes),/*BDB(l,i+2*nbNod)*/ 0.);
       }
-      _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
+      _paramFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
       for (int l = 0; l < numJacNodes; l++) {
         gradLambda[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
         if (_nPCFV[iFVi] >= 2) gradLambda[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
@@ -354,7 +351,7 @@ void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
       for (int l = 0; l < numJacNodes; l++)
         gXyzV [l] = SPoint3(BDB(l,i+0*numMapNodes), BDB(l,i+1*numMapNodes),
                             BDB(l,i+2*numMapNodes));
-      _pc->gXyz2gUvw(_freeVert[iFVi],_uvw[iFVi],gXyzV,gUvwV);
+      _paramFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
       for (int l = 0; l < numJacNodes; l++) {
         gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
         if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
@@ -371,9 +368,9 @@ void Mesh::pcScale(int iFV, std::vector<double> &scale)
   // Calc. derivative of x, y & z w.r.t. parametric coordinates
   const SPoint3 dX(1.,0.,0.), dY(0.,1.,0.), dZ(0.,0.,1.);
   SPoint3 gX, gY, gZ;
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dX,gX);
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dY,gY);
-  _pc->gXyz2gUvw(_freeVert[iFV],_uvw[iFV],dZ,gZ);
+  _paramFV[iFV]->gXyz2gUvw(_uvw[iFV],dX,gX);
+  _paramFV[iFV]->gXyz2gUvw(_uvw[iFV],dY,gY);
+  _paramFV[iFV]->gXyz2gUvw(_uvw[iFV],dZ,gZ);
 
   // Scale = inverse norm. of vector (dx/du, dy/du, dz/du)
   scale[0] = 1./sqrt(gX[0]*gX[0]+gY[0]*gY[0]+gZ[0]*gZ[0]);

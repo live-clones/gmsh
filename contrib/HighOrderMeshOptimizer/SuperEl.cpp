@@ -38,20 +38,20 @@
 
 
 
-SuperEl::SuperEl(MElement *badEl, double dist, int type, const std::vector<MVertex*> &baseVert,
+SuperEl::SuperEl(int order, double dist, int type, const std::vector<MVertex*> &baseVert,
                  const std::vector<SVector3> &normals) {
 
 //  std::cout << "DBGTT: badEl = " << badEl->getNum() << ", _superEl = " << _superEl << std::endl;
 
   switch (type) {
     case TYPE_LIN:
-      createSuperElQuad(badEl, dist, baseVert, normals[0], normals[1]);
+      createSuperElQuad(order, dist, baseVert, normals[0], normals[1]);
       break;
     case TYPE_TRI:
-      createSuperElPrism(badEl, dist, baseVert, normals[0], normals[1], normals[2]);
+      createSuperElPrism(order, dist, baseVert, normals[0], normals[1], normals[2]);
       break;
     case TYPE_QUA:
-      createSuperElHex(badEl, dist, baseVert, normals[0], normals[1], normals[2], normals[3]);
+      createSuperElHex(order, dist, baseVert, normals[0], normals[1], normals[2], normals[3]);
       break;
     default:
       std::cout << "ERROR: SuperEl not implemented for element of type " << type << std::endl;
@@ -65,12 +65,12 @@ SuperEl::SuperEl(MElement *badEl, double dist, int type, const std::vector<MVert
 
 
 
-void SuperEl::createSuperElQuad(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
+void SuperEl::createSuperElQuad(int order, double dist, const std::vector<MVertex*> &baseVert,
                                   const SVector3 &n0, const SVector3 &n1) {
 
 
   if (baseVert.empty()) {
-    std::cout << "ERROR: Base edge not given for SuperEl linked to bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Base edge not given for SuperEl\n";
     _superEl = 0;
     return;
   }
@@ -90,8 +90,7 @@ void SuperEl::createSuperElQuad(MElement *badEl, double dist, const std::vector<
 
   // Get basis functions
   MQuadrangle quad1(v0,v1,v2,v3);
-  const int p = badEl->getPolynomialOrder();
-  const nodalBasis *quadBasis = quad1.getFunctionSpace(p);
+  const nodalBasis *quadBasis = quad1.getFunctionSpace(order);
   const int Nv = quadBasis->getNumShapeFunctions();
 
   // Store/create all vertices for super-element
@@ -100,8 +99,8 @@ void SuperEl::createSuperElQuad(MElement *badEl, double dist, const std::vector<
   _superVert[1] = v1;
   _superVert[2] = v2;
   _superVert[3] = v3;
-  for (int i=2; i<p+1; ++i) _superVert[2+i] = new MVertex(*baseVert[i]);  // HO vertices on base edge
-  for (int i=3+p; i<Nv; ++i) {                                            // Additional HO vertices
+  for (int i=2; i<order+1; ++i) _superVert[2+i] = new MVertex(*baseVert[i]);  // HO vertices on base edge
+  for (int i=3+order; i<Nv; ++i) {                                            // Additional HO vertices
     SPoint3 p;
     quad1.pnt(quadBasis->points(i,0),quadBasis->points(i,1),0.,p);
     _superVert[i] = new MVertex(p.x(),p.y(),0.);
@@ -109,7 +108,7 @@ void SuperEl::createSuperElQuad(MElement *badEl, double dist, const std::vector<
 //                << "," << _superVert[i]->y()<< "," << _superVert[i]->z() << ")" << std::endl;
   }
 
-  _superEl = new MQuadrangleN(_superVert,p);
+  _superEl = new MQuadrangleN(_superVert,order);
   _superEl0 = new MQuadrangle(_superVert[0],_superVert[1],_superVert[2],_superVert[3]);
 //  std::cout << "Created SuperEl at address " << _superEl << std::endl;
 
@@ -117,14 +116,13 @@ void SuperEl::createSuperElQuad(MElement *badEl, double dist, const std::vector<
 
 
 
-void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
-                                  const SVector3 &n0, const SVector3 &n1, const SVector3 &n2) {
+void SuperEl::createSuperElPrism(int order, double dist, const std::vector<MVertex*> &baseVert,
+                                 const SVector3 &n0, const SVector3 &n1, const SVector3 &n2) {
 
 
   if (baseVert.empty()) {
-    std::cout << "ERROR: Base edge not given for SuperEl linked to bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Base edge not given for SuperEl\n";
     _superEl = 0;
-    _superEl0 = 0;
     return;
   }
 
@@ -141,12 +139,11 @@ void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector
 
   // Get basis functions
   MPrism prism1(v0,v1,v2,v3,v4,v5);
-  const int p = badEl->getPolynomialOrder();
-  const nodalBasis *prismBasis = prism1.getFunctionSpace(p);
+  const nodalBasis *prismBasis = prism1.getFunctionSpace(order);
   const int Nv = prismBasis->getNumShapeFunctions();                        // Number of vertices in HO prism
 
   // Store/create all vertices for super-element
-  if (p == 2) {
+  if (order == 2) {
     _superVert.resize(18);
     _superVert[0] = v0;                                                     // First-order vertices
     _superVert[1] = v1;
@@ -167,7 +164,7 @@ void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector
     _superEl = new MPrism18(_superVert);
   }
   else {
-    std::cout << "ERROR: Prismatic superEl. of order " << p << " not supported for bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Prismatic superEl. of order " << order << " not supported\n";
     _superEl = 0;
     _superEl0 = 0;
     return;
@@ -180,14 +177,13 @@ void SuperEl::createSuperElPrism(MElement *badEl, double dist, const std::vector
 
 
 
-void SuperEl::createSuperElHex(MElement *badEl, double dist, const std::vector<MVertex*> &baseVert,
+void SuperEl::createSuperElHex(int order, double dist, const std::vector<MVertex*> &baseVert,
                                const SVector3 &n0, const SVector3 &n1, const SVector3 &n2, const SVector3 &n3) {
 
 
   if (baseVert.empty()) {
-    std::cout << "ERROR: Base edge not given for SuperEl linked to bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Base edge not given for SuperEl\n";
     _superEl = 0;
-    _superEl0 = 0;
     return;
   }
 
@@ -207,12 +203,11 @@ void SuperEl::createSuperElHex(MElement *badEl, double dist, const std::vector<M
 
   // Get basis functions
   MHexahedron *hex1 = new MHexahedron(v0,v1,v2,v3,v4,v5,v6,v7);
-  const int p = badEl->getPolynomialOrder();
-  const nodalBasis *prismBasis = hex1->getFunctionSpace(p);
+  const nodalBasis *prismBasis = hex1->getFunctionSpace(order);
   const int Nv = prismBasis->getNumShapeFunctions();                         // Number of vertices in HO hex
 
   // Store/create all vertices for super-element
-  if (p == 2) {
+  if (order == 2) {
     _superVert.resize(27);
     _superVert[0] = v0;                                                      // First-order vertices
     _superVert[1] = v1;
@@ -237,7 +232,7 @@ void SuperEl::createSuperElHex(MElement *badEl, double dist, const std::vector<M
     _superEl = new MHexahedron27(_superVert);
   }
   else {
-    std::cout << "ERROR: Hex. superEl. of order " << p << " not supported for bad. el. " << badEl->getNum() << "\n";
+    std::cout << "ERROR: Hex. superEl. of order " << order << " not supported\n";
     _superEl = 0;
     _superEl0 = 0;
     return;

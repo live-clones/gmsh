@@ -28,9 +28,11 @@
 // Contributor(s): Thomas Toulorge, Jonathan Lambrechts
 
 #include <iostream>
+#include <algorithm>
 #include "GFace.h"
 #include "GEdge.h"
 #include "MVertex.h"
+#include "MLine.h"
 #include "ParamCoord.h"
 #include "GmshMessage.h"
 
@@ -44,81 +46,53 @@ SPoint3 ParamCoordParent::getUvw(MVertex* vert)
   switch (ge->dim()) {
   case 1: {
     SPoint3 p(0.,0.,0.);
-    reparamMeshVertexOnEdge(vert,static_cast<GEdge*>(ge),p[0]);
+    reparamMeshVertexOnEdge(vert,static_cast<GEdge*>(ge),p[0]);     // Overkill if vert. well classified and parametrized
     return p;
     break;
   }
   case 2: {
     SPoint2 p;
-    reparamMeshVertexOnFace(vert,static_cast<GFace*>(ge),p);
+    reparamMeshVertexOnFace(vert,static_cast<GFace*>(ge),p);      // Overkill if vert. well classified and parametrized
     return SPoint3(p[0],p[1],0.);
     break;
   }
-  case 3: {
-    return vert->point();
-    break;
-  }
   }
 }
 
-SPoint3 ParamCoordParent::uvw2Xyz(MVertex* vert, const SPoint3 &uvw)
+SPoint3 ParamCoordParent::uvw2Xyz(const SPoint3 &uvw)
 {
-  GEntity *ge = vert->onWhat();
-
-  switch (ge->dim()) {
-  case 1: {
-    GPoint gp = static_cast<GEdge*>(ge)->point(uvw[0]);
-    return SPoint3(gp.x(),gp.y(),gp.z());
-    break;
-  }
-  case 2: {
-    GPoint gp = static_cast<GFace*>(ge)->point(uvw[0],uvw[1]);
-    return SPoint3(gp.x(),gp.y(),gp.z());
-    break;
-  }
-  case 3: {
-    return uvw;
-    break;
-  }
-  }
+  GEntity *ge = _vert->onWhat();
+  GPoint gp = (ge->dim() == 1) ? static_cast<GEdge*>(ge)->point(uvw[0]) :
+                                 static_cast<GFace*>(ge)->point(uvw[0],uvw[1]);
+  return SPoint3(gp.x(),gp.y(),gp.z());
 }
 
-void ParamCoordParent::gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                                 const SPoint3 &gXyz, SPoint3 &gUvw)
+void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw)
 {
-  GEntity *ge = vert->onWhat();
 
-  switch (ge->dim()) {
-  case 1: {
+  GEntity *ge = _vert->onWhat();
+
+  if (ge->dim() == 1) {
     SVector3 der = static_cast<GEdge*>(ge)->firstDer(uvw[0]);
     gUvw[0] = gXyz.x() * der.x() + gXyz.y() * der.y() + gXyz.z() * der.z();
-    break;
   }
-  case 2: {
+  else {
     Pair<SVector3,SVector3> der = static_cast<GFace*>(ge)->firstDer(SPoint2(uvw[0],uvw[1]));
     gUvw[0] = gXyz.x() * der.first().x() + gXyz.y() * der.first().y() +
       gXyz.z() * der.first().z();
     gUvw[1] = gXyz.x() * der.second().x() + gXyz.y() * der.second().y() +
       gXyz.z() * der.second().z();
-    break;
-  }
-  case 3: {
-    gUvw = gXyz;
-    break;
-  }
   }
 
 }
 
-void ParamCoordParent::gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
-                                 const std::vector<SPoint3> &gXyz,
-                                 std::vector<SPoint3> &gUvw)
+void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw,
+                                 const std::vector<SPoint3> &gXyz, std::vector<SPoint3> &gUvw)
 {
 
-  GEntity *ge = vert->onWhat();
+  GEntity *ge = _vert->onWhat();
 
-  switch (ge->dim()) {
-  case 1: {
+  if (ge->dim() == 1) {
     SVector3 der = static_cast<GEdge*>(ge)->firstDer(uvw[0]);
     std::vector<SPoint3>::iterator itUvw = gUvw.begin();
     for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin();
@@ -126,9 +100,8 @@ void ParamCoordParent::gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
       (*itUvw)[0] = itXyz->x() * der.x() + itXyz->y() * der.y() + itXyz->z() * der.z();
       itUvw++;
     }
-    break;
   }
-  case 2: {
+  else {
     Pair<SVector3,SVector3> der = static_cast<GFace*>(ge)->firstDer
       (SPoint2(uvw[0],uvw[1]));
     std::vector<SPoint3>::iterator itUvw=gUvw.begin();
@@ -140,24 +113,25 @@ void ParamCoordParent::gXyz2gUvw(MVertex* vert, const SPoint3 &uvw,
         itXyz->z() * der.second().z();
       itUvw++;
     }
-    break;
-  }
-  case 3: {
-    std::vector<SPoint3>::iterator itUvw=gUvw.begin();
-    for (std::vector<SPoint3>::const_iterator itXyz=gXyz.begin();
-         itXyz != gXyz.end(); itXyz++) {
-      *itUvw = *itXyz;
-      itUvw++;
-    }
-    break;
-  }
   }
 
 }
 
-void ParamCoordParent::exportParamCoord(MVertex *v, const SPoint3 &uvw)
+ParamCoordLocalLine::ParamCoordLocalLine(MVertex* v) : dir(0.)
 {
-  for (int d = 0; d < v->onWhat()->dim(); ++d) {
-    v->setParameter(d, uvw[d]);
+
+  GEdge *ge = static_cast<GEdge*>(v->onWhat());
+
+  for (std::vector<MLine*>::iterator it = ge->lines.begin(); it != ge->lines.end(); it++) {
+    std::vector<MVertex*> lVerts;
+    (*it)->getVertices(lVerts);
+    if (std::find(lVerts.begin(),lVerts.end(),v) == lVerts.end()) {
+      SVector3 tan(lVerts[0]->point(),lVerts[1]->point());
+      tan.normalize();
+      dir += tan;
+    }
   }
+
+  dir.normalize();
+
 }
