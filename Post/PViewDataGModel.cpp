@@ -647,6 +647,9 @@ void PViewDataGModel::smooth()
     _steps2.push_back(new stepData<double>(m, numComp, _steps[step]->getFileName(),
                                            _steps[step]->getFileIndex(),
                                            _steps[step]->getTime()));
+    _steps2.back()->fillEntities();
+    _steps2.back()->computeBoundingBox();
+
     std::map<int, int> nodeConnect;
     for(int ent = 0; ent < getNumEntities(step); ent++){
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
