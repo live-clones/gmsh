@@ -279,23 +279,10 @@ class MTriangleN : public MTriangle {
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual int getNumFaceVertices() const
   {
-    if(_order == 3 && _vs.size() == 6) return 0;
-    if(_order == 3 && _vs.size() == 7) return 1;
-    if(_order == 4 && _vs.size() == 9) return 0;
-    if(_order == 4 && _vs.size() == 12) return 3;
-    if(_order == 5 && _vs.size() == 12) return 0;
-    if(_order == 5  && _vs.size() == 18) return 6;
-    if(_order == 6  && _vs.size() == 25) return 10;
-    if(_order == 7  && _vs.size() == 33) return 12;
-    if(_order == 8  && _vs.size() == 42) return 15;
-    if(_order == 9  && _vs.size() == 52) return 21;
-    if(_order == 10 && _vs.size() == 63) return 28;
-    if(_order == 6  && _vs.size() == 15) return 0;
-    if(_order == 7  && _vs.size() == 18) return 0;
-    if(_order == 8  && _vs.size() == 21) return 0;
-    if(_order == 9  && _vs.size() == 24) return 0;
-    if(_order == 10  && _vs.size() == 27) return 0;
-    return 0;
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return  (_order - 1) * (_order - 2) / 2;
   }
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const { MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }

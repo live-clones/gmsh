@@ -334,7 +334,10 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getNumEdgeVertices() const { return 6 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    return 4 * ((_order - 1) * (_order - 2)) / 2;
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return  4 * ((_order - 1) * (_order - 2)) / 2;
   }
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
@@ -370,16 +373,10 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual int getNumVolumeVertices() const
   {
-    switch(getTypeForMSH()){
-    case MSH_TET_35 : return 1;
-    case MSH_TET_56 : return 4;
-    case MSH_TET_84 : return 10;
-    case MSH_TET_120 : return 20;
-    case MSH_TET_165 : return 35;
-    case MSH_TET_220 : return 56;
-    case MSH_TET_286 : return 84;
-    default : return 0;
-    }
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return  ((_order - 1) * (_order - 2) * (_order - 3)) / 6;
   }
   virtual int getTypeForMSH() const
   {

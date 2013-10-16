@@ -411,8 +411,20 @@ class MPrismN : public MPrism {
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num-6]; }
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num-6]; }
   virtual int getNumEdgeVertices() const { return 9*(_order-1); }
-  virtual int getNumFaceVertices() const { int n = _order-1; return n*((n-1)+3*n); }
-  virtual int getNumVolumeVertices() const { int n = _order-1; return _vs.size()-n*(9+(n-1)+3*n); }
+  virtual int getNumFaceVertices() const
+  {
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      int n = _order-1; return (n-1 + 3*n) * n;
+  }
+  virtual int getNumVolumeVertices() const
+  {
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      int n = _order-1; return n * (n * (n+1) / 2);
+  }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -433,35 +445,35 @@ class MPrismN : public MPrism {
       return MSH_PRI_6;
     case 2:
       if (_vs.size() == 12) return MSH_PRI_18;
-      else if (_vs.size() == 9) return MSH_PRI_15;
+      if (_vs.size() == 9) return MSH_PRI_15;
       break;
     case 3:
       if (_vs.size() == 34) return MSH_PRI_40;
-      else if (_vs.size() == 18) return MSH_PRI_24;
+      if (_vs.size() == 18) return MSH_PRI_24;
       break;
     case 4:
       if (_vs.size() == 69) return MSH_PRI_75;
-      else if (_vs.size() == 27) return MSH_PRI_33;
+      if (_vs.size() == 27) return MSH_PRI_33;
       break;
     case 5:
       if (_vs.size() == 120) return MSH_PRI_126;
-      else if (_vs.size() == 36) return MSH_PRI_42;
+      if (_vs.size() == 36) return MSH_PRI_42;
       break;
     case 6:
       if (_vs.size() == 190) return MSH_PRI_196;
-      else if (_vs.size() == 45) return MSH_PRI_51;
+      if (_vs.size() == 45) return MSH_PRI_51;
       break;
     case 7:
       if (_vs.size() == 282) return MSH_PRI_288;
-      else if (_vs.size() == 54) return MSH_PRI_60;
+      if (_vs.size() == 54) return MSH_PRI_60;
       break;
     case 8:
       if (_vs.size() == 399) return MSH_PRI_405;
-      else if (_vs.size() == 63) return MSH_PRI_69;
+      if (_vs.size() == 63) return MSH_PRI_69;
       break;
     case 9:
       if (_vs.size() == 544) return MSH_PRI_550;
-      else if (_vs.size() == 72) return MSH_PRI_78;
+      if (_vs.size() == 72) return MSH_PRI_78;
       break;
     }
     Msg::Error("No tag matches a p%d prism with %d vertices", _order, 6+_vs.size());

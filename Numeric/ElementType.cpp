@@ -322,6 +322,9 @@ int ElementType::DimensionFromTag(int tag)
   }
 }
 
+// Gives > 0 if element tag is in Serendipity Family.
+// Gives < 2 if element tag is in 'Normal' Family.
+// 1 is for element that is either Serendipity or not !
 int ElementType::SerendipityFromTag(int tag)
 {
   switch (tag) {

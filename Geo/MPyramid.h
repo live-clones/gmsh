@@ -251,7 +251,10 @@ class MPyramidN : public MPyramid {
   virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    return (_order-1)*(_order-1) + 4 * ((_order - 1) * (_order - 2)) / 2;
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return (_order-1)*(_order-1) + 4 * ((_order - 1) * (_order - 2)) / 2;
   }
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
@@ -279,16 +282,10 @@ class MPyramidN : public MPyramid {
   }
   virtual int getNumVolumeVertices() const
   {
-    switch(getTypeForMSH()){
-    case MSH_PYR_30 : return 1;
-    case MSH_PYR_55 : return 5;
-    case MSH_PYR_91 : return 14;
-    case MSH_PYR_140 : return 30;
-    case MSH_PYR_204 : return 55;
-    case MSH_PYR_285 : return 91;
-    case MSH_PYR_385 : return 140;
-    default : return 0;
-    }
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return (_order-2) * ((_order-2)+1) * (2*(_order-2)+1) / 6;
   }
   virtual int getTypeForMSH() const
   {

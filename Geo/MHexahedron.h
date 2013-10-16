@@ -484,22 +484,19 @@ class MHexahedronN : public MHexahedron {
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
 
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
-  virtual int getNumFaceVertices() const { return 6 * (_order - 1)*(_order - 1); }
+  virtual int getNumFaceVertices() const
+  {
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+      return 0;
+    else
+      return 6 * (_order - 1)*(_order - 1);
+  }
   virtual int getNumVolumeVertices() const
   {
-    switch(getTypeForMSH()){
-    case MSH_HEX_27 :
-    case MSH_HEX_64 :
-    case MSH_HEX_125 :
-    case MSH_HEX_216 :
-    case MSH_HEX_343 :
-    case MSH_HEX_512 :
-    case MSH_HEX_729 :
-    case MSH_HEX_1000 :
-      return (_order - 1) * (_order - 1) * (_order - 1);
-    default:
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
       return 0;
-    }
+    else
+      return (_order - 1) * (_order - 1) * (_order - 1);
   }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
