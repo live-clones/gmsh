@@ -1294,7 +1294,7 @@ StringXNumber ViewOptions_Number[] = {
     "Draw the `N minus b'-dimensional boundary of the element (N=element "
     "dimension, b=option value)" },
 
-  { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0,
+  { F|O, "CenterGlyphs" , opt_view_center_glyphs , 1,
     "Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)" },
   { F,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
