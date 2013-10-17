@@ -416,14 +416,14 @@ class MPrismN : public MPrism {
     if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
       return 0;
     else
-      int n = _order-1; return (n-1 + 3*n) * n;
+      {int n = _order-1; return (n-1 + 3*n) * n;}
   }
   virtual int getNumVolumeVertices() const
   {
     if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
       return 0;
     else
-      int n = _order-1; return n * (n * (n+1) / 2);
+      {int n = _order-1; return n * (n * (n+1) / 2);}
   }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
