@@ -508,10 +508,16 @@ class MHexahedronN : public MHexahedron {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize((_order+1)*(_order+1));
-    MHexahedron::_getFaceVertices(num, v);
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+      v.resize(4 * _order);
+    }
+    else {
+      v.resize((_order+1) * (_order+1));
+    }
 
+    MHexahedron::_getFaceVertices(num, v);
     int count = 3;
+
     int n = _order-1;
     for (int i = 0; i < 4; i++) {
       if(faces2edge_hexa(num, i) > 0)
@@ -525,9 +531,12 @@ class MHexahedronN : public MHexahedron {
         for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
       }
     }
-    int start = 12 * n + num * n*n;
-    for (int i = 0; i < n*n; i++){
-      v[++count] = _vs[start + i];
+
+    if (v.size() > count + 1) {
+      int start = 12 * n + num * n*n;
+      for (int i = 0; i < n*n; i++){
+        v[++count] = _vs[start + i];
+      }
     }
   }
   virtual int getTypeForMSH() const

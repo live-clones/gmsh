@@ -349,10 +349,16 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize((_order+1) * (_order+2) / 2);
-    MTetrahedron::_getFaceVertices(num, v);
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+      v.resize(3 * _order);
+    }
+    else {
+      v.resize((_order+1) * (_order+2) / 2);
+    }
 
+    MTetrahedron::_getFaceVertices(num, v);
     int count = 2;
+
     int n = _order-1;
     for (int i = 0; i < 3; i++) {
       if(faces2edge_tetra(num, i) > 0)
@@ -366,9 +372,12 @@ class MTetrahedronN : public MTetrahedron {
         for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
       }
     }
-    int start = 6 * n + num * (n-1)*n/2;
-    for (int i = 0; i < (n-1)*n/2; i++){
-      v[++count] = _vs[start + i];
+
+    if (v.size() > count + 1) {
+      int start = 6 * n + num * (n-1)*n/2;
+      for (int i = 0; i < (n-1)*n/2; i++){
+        v[++count] = _vs[start + i];
+      }
     }
   }
   virtual int getNumVolumeVertices() const

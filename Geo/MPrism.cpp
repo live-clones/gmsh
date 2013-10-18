@@ -479,7 +479,7 @@ void _addFaceNodes(int num, int order, const std::vector<MVertex*> &vs,
 // To be tested
 void MPrismN::getFaceVertices(const int num, std::vector<MVertex*> &v) const
 {
-
+  // FIXME serendipity case
   static const int edge[5][4] = {
       {1, 3, 0, -1},
       {6, 8, 7, -1},

@@ -266,15 +266,25 @@ class MPyramidN : public MPyramid {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
+    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+      num == 4 ? v.resize(4 * _order)
+               : v.resize(3 * _order);
+    }
+    else {
+      num == 4 ? v.resize((_order+1) * (_order+1))
+               : v.resize((_order+1) * (_order+2) / 2);
+    }
+
+    // FIXME continue fix serendipity
+
     int j = 3;
     if (num == 4) {
       j = 4;
-      v.resize(_order * _order);
     }
-    else {
-      v.resize(3 + 3 * (_order - 1) + (_order-1) * (_order - 2) /2);
-    }
+
     MPyramid::_getFaceVertices(num, v);
+    //int count = num == 4 ? 3 : 2;
+
     int nbVQ =  (_order-1)*(_order-1);
     int nbVT = (_order - 1) * (_order - 2) / 2;
     const int ie = (num == 4) ? 4*nbVT + nbVQ : (num+1)*nbVT;
