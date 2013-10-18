@@ -73,7 +73,7 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
         if (vDim == 3) param = new ParamCoordPhys3D();
         else if (hasParam) param = new ParamCoordParent(vert);
         else {
-          if (vDim == 2) param = new ParamCoordPhys2D();                          //todo: make 2d local surf. param
+          if (vDim == 2) param = new ParamCoordLocalSurf(vert);
           else param = new ParamCoordLocalLine(vert);
           nonGeoMove = true;
         }

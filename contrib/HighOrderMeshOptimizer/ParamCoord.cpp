@@ -117,21 +117,106 @@ void ParamCoordParent::gXyz2gUvw(const SPoint3 &uvw,
 
 }
 
-ParamCoordLocalLine::ParamCoordLocalLine(MVertex* v) : dir(0.)
-{
+namespace {
 
-  GEdge *ge = static_cast<GEdge*>(v->onWhat());
+SVector3 getLineElTangent(MElement *el, int iNode) {
 
-  for (std::vector<MLine*>::iterator it = ge->lines.begin(); it != ge->lines.end(); it++) {
-    std::vector<MVertex*> lVerts;
-    (*it)->getVertices(lVerts);
-    if (std::find(lVerts.begin(),lVerts.end(),v) == lVerts.end()) {
-      SVector3 tan(lVerts[0]->point(),lVerts[1]->point());
-      tan.normalize();
-      dir += tan;
-    }
+  double gsf[1256][3], u, v, w;
+  el->getNode(iNode,u,v,w);
+//  el->getGradShapeFunctions(u,v,w,gsf);
+  el->getGradShapeFunctions(u,v,w,gsf,1);
+
+  SVector3 dxyzdu(0.);
+//  int nSF = el->getNumShapeFunctions()();
+  int nSF = el->getNumPrimaryVertices();
+  for (int j=0; j<nSF; j++) {
+    const SPoint3 p = el->getVertex(j)->point();
+    dxyzdu(0) += gsf[j][0]*p.x();
+    dxyzdu(1) += gsf[j][0]*p.y();
+    dxyzdu(2) += gsf[j][0]*p.z();
+  }
+  dxyzdu.normalize();
+
+  return dxyzdu;
+
+}
+
+SVector3 getSurfElNormal(MElement *el, int iNode) {
+
+  double gsf[1256][3], u, v, w;
+  el->getNode(iNode,u,v,w);
+//  el->getGradShapeFunctions(u,v,w,gsf);
+  el->getGradShapeFunctions(u,v,w,gsf,1);
+
+  SVector3 dxyzdu(0.), dxyzdv(0.);
+//  int nSF = el->getNumShapeFunctions()();
+  int nSF = el->getNumPrimaryVertices();
+  for (int j=0; j<nSF; j++) {
+    const SPoint3 p = el->getVertex(j)->point();
+    dxyzdu(0) += gsf[j][0]*p.x();
+    dxyzdu(1) += gsf[j][0]*p.y();
+    dxyzdu(2) += gsf[j][0]*p.z();
+    dxyzdv(0) += gsf[j][1]*p.x();
+    dxyzdv(1) += gsf[j][1]*p.y();
+    dxyzdv(2) += gsf[j][1]*p.z();
   }
 
+  SVector3 normal = crossprod(dxyzdu,dxyzdv);
+  normal.normalize();
+  return normal;
+
+}
+
+}
+
+ParamCoordLocalLine::ParamCoordLocalLine(MVertex* v) :
+    dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
+{
+
+  GEntity *ge = v->onWhat();
+  const unsigned nEl = ge->getNumMeshElements();
+
+  for (unsigned iEl = 0; iEl < nEl; iEl++) {
+    MElement *el = ge->getMeshElement(iEl);
+    std::vector<MVertex*> lVerts;
+    el->getVertices(lVerts);
+    std::vector<MVertex*>::iterator itV = std::find(lVerts.begin(),lVerts.end(),v);
+    if (itV != lVerts.end()) {
+      const int iNode = std::distance(lVerts.begin(),itV);
+      dir += getLineElTangent(el,iNode);
+    }
+  }
   dir.normalize();
+
+}
+
+ParamCoordLocalSurf::ParamCoordLocalSurf(MVertex* v) : x0(v->x()), y0(v->y()), z0(v->z())
+{
+
+  GEntity *ge = v->onWhat();
+  const unsigned nEl = ge->getNumMeshElements();
+
+  SVector3 n(0.);
+  for (unsigned iEl = 0; iEl < nEl; iEl++) {
+    MElement *el = ge->getMeshElement(iEl);
+    std::vector<MVertex*> lVerts;
+    el->getVertices(lVerts);
+    std::vector<MVertex*>::iterator itV = std::find(lVerts.begin(),lVerts.end(),v);
+    if (itV != lVerts.end()) {
+      const int iNode = std::distance(lVerts.begin(),itV);
+      n += getSurfElNormal(el,iNode);
+    }
+  }
+  n.normalize();
+
+  if (fabs(fabs(dot(n,SVector3(1.,0.,0.)))-1.) < 1.e-10) {    // If normal is x-axis, take y- and z- axis as dir.
+    dir0 = SVector3(0.,1.,0.);
+    dir1 = SVector3(0.,0.,1.);
+  }
+  else {
+    dir0 = SVector3(1.-n.x()*n.x(),-n.x()*n.y(),-n.x()*n.z());  // 1st dir. = (normalized) proj. of e_x in plane
+    dir0.normalize();
+    dir1 = crossprod(dir0,n);
+  }
 
 }
