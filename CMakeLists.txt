@@ -237,6 +237,7 @@ endif(SIZEOF_VOID_P EQUAL 8)
 
 if(ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
+    # use libs as specified in the BLAS_LAPACK_LIBRARIES variable
     set_config_option(HAVE_BLAS "Blas(Custom)")
     set_config_option(HAVE_LAPACK "Lapack(Custom)")
     set(LAPACK_LIBRARIES ${BLAS_LAPACK_LIBRARIES})
@@ -316,6 +317,7 @@ if(ENABLE_BLAS_LAPACK)
       set_config_option(HAVE_BLAS "Blas(VecLib)")
       set_config_option(HAVE_LAPACK "Lapack(VecLib)")
     endif(MSVC)
+
     if(ENABLE_BUILD_ANDROID)
       find_library(BLAS_LIB f2cblas PATH_SUFFIXES lib)
       find_library(LAPACK_LIB f2clapack PATH_SUFFIXES lib)
@@ -328,9 +330,24 @@ if(ENABLE_BLAS_LAPACK)
         set_config_option(HAVE_LAPACK "Lapack")
       endif(LAPACK_LIB)
     endif(ENABLE_BUILD_ANDROID)
+
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      # if we haven't found blas and lapack without using the standard cmake
-      # tests, do it (this requires a working Fortran compiler)
+      # if we haven't found blas and lapack check for OpenBlas
+      set(OPENBLAS_LIBS_REQUIRED openblas)
+      find_all_libraries(LAPACK_LIBRARIES OPENBLAS_LIBS_REQUIRED "" "")
+      if(LAPACK_LIBRARIES)
+        set_config_option(HAVE_BLAS "Blas(OpenBlas)")
+        set_config_option(HAVE_LAPACK "Lapack(OpenBlas)")
+        find_library(GFORTRAN_LIB gfortran)
+        if(GFORTRAN_LIB)
+          list(APPEND LAPACK_LIBRARIES ${GFORTRAN_LIB})
+        endif(GFORTRAN_LIB)
+      endif(LAPACK_LIBRARIES)  
+    endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+
+    if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+      # if we still haven't found blas and lapack, use the standard cmake tests,
+      # which require a working Fortran compiler
       enable_language(Fortran)
       find_package(BLAS)
       if(BLAS_FOUND)
@@ -352,10 +369,12 @@ if(ENABLE_BLAS_LAPACK)
         endif(CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
       endif(BLAS_FOUND)
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
       message(STATUS "Warning: Could not find Blas or Lapack: most meshing algorithms "
               "will not be functional")
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+
   endif(BLAS_LAPACK_LIBRARIES)
 endif(ENABLE_BLAS_LAPACK)
 
