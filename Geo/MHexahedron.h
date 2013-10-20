@@ -520,19 +520,17 @@ class MHexahedronN : public MHexahedron {
 
     int n = _order-1;
     for (int i = 0; i < 4; i++) {
-      if(faces2edge_hexa(num, i) > 0)
-      {
+      if(faces2edge_hexa(num, i) > 0){
         int edge_num = faces2edge_hexa(num, i) - 1;
         for (int j = 0; j < n; j++) v[++count] = _vs[n*edge_num + j];
       }
-      else
-      {
+      else{
         int edge_num = -faces2edge_hexa(num, i) - 1;
         for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
       }
     }
 
-    if (v.size() > count + 1) {
+    if ((int)v.size() > count + 1) {
       int start = 12 * n + num * n*n;
       for (int i = 0; i < n*n; i++){
         v[++count] = _vs[start + i];

@@ -359,21 +359,19 @@ class MTetrahedronN : public MTetrahedron {
     MTetrahedron::_getFaceVertices(num, v);
     int count = 2;
 
-    int n = _order-1;
+    int n = _order - 1;
     for (int i = 0; i < 3; i++) {
-      if(faces2edge_tetra(num, i) > 0)
-      {
+      if(faces2edge_tetra(num, i) > 0){
         int edge_num = faces2edge_tetra(num, i) - 1;
         for (int j = 0; j < n; j++) v[++count] = _vs[n*edge_num + j];
       }
-      else
-      {
+      else{
         int edge_num = -faces2edge_tetra(num, i) - 1;
         for (int j = n-1; j >= 0; j--) v[++count] = _vs[n*edge_num + j];
       }
     }
 
-    if (v.size() > count + 1) {
+    if ((int)v.size() > count + 1) {
       int start = 6 * n + num * (n-1)*n/2;
       for (int i = 0; i < (n-1)*n/2; i++){
         v[++count] = _vs[start + i];
@@ -385,7 +383,7 @@ class MTetrahedronN : public MTetrahedron {
     if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
       return 0;
     else
-      return  ((_order - 1) * (_order - 2) * (_order - 3)) / 6;
+      return ((_order - 1) * (_order - 2) * (_order - 3)) / 6;
   }
   virtual int getTypeForMSH() const
   {
