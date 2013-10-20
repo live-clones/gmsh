@@ -592,6 +592,14 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
     break;
   case ElementNodeData:
   case GaussPointData:
+    if(_steps[step]->getMult(e->getNum()) < nod + 1){
+      nod = 0;
+      static bool first = true;
+      if(first){
+        Msg::Warning("Some elements in ElementNodeData have less values than number of nodes");
+        first = false;
+      }
+    }
     val = _steps[step]->getData(e->getNum())[_steps[step]->getNumComponents() * nod + comp];
     break;
   case ElementData:
@@ -613,6 +621,14 @@ void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, do
     break;
   case ElementNodeData:
   case GaussPointData:
+    if(_steps[step]->getMult(e->getNum()) < nod + 1){
+      nod = 0;
+      static bool first = true;
+      if(first){
+        Msg::Warning("Some elements in ElementNodeData have less values than number of nodes");
+        first = false;
+      }
+    }
     _steps[step]->getData(e->getNum())[_steps[step]->getNumComponents() * nod + comp] = val;
     break;
   case ElementData:
