@@ -494,6 +494,10 @@ class MPrismN : public MPrism {
     }
     return "";
   }
+  virtual void reverse()
+  {
+    Msg::Error("Reverse not implemented yet for MPrismN");
+  }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     const fullMatrix<double> &p = getFunctionSpace()->points;
