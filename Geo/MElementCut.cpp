@@ -712,8 +712,8 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
       MVertex *v1 = me.getVertex(1);
       MVertex *v0N = vertexMap[v0->getNum()];
       MVertex *v1N = vertexMap[v1->getNum()];
-      double val0 = verticesLs(iLs, v0->getIndex()) - eps;
-      double val1 = verticesLs(iLs, v1->getIndex()) - eps;
+      double val0 = (verticesLs(iLs, v0->getIndex()) > eps) ? 1 : -1;
+      double val1 = (verticesLs(iLs, v1->getIndex()) > eps) ? 1 : -1;
       if(val0 * val1 > 0.0 && val0 < 0.0) {
         getPhysicalTag(-1, gePhysicals, newPhysTags[1]);
         int c = elements[1].count(gLsTag);
@@ -744,9 +744,9 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
     for(int k = 0; k < e->getNumFaces(); k++){
       MFace mf = e->getFace(k);
       bool sameSign = true;
-      double val0 = verticesLs(iLs, mf.getVertex(0)->getIndex()) - eps;
+      double val0 = (verticesLs(iLs, mf.getVertex(0)->getIndex()) > eps) ? 1 : -1;
       for (int j = 1; j < mf.getNumVertices(); j++){
-        double valj = verticesLs(iLs, mf.getVertex(j)->getIndex()) - eps;
+        double valj = (verticesLs(iLs, mf.getVertex(j)->getIndex()) > eps) ? 1 : -1;
         if (val0*valj < 0.0){ sameSign = false; break;}
       }
       if(sameSign && val0 < 0.0) {
@@ -1609,7 +1609,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(std::map<int, std::vector<MElement*> >::iterator it = elements[i].begin();
         it != elements[i].end(); it++){
       printf(" elementary : %d\n",it->first);
-      for(int j = 0; j < it->second.size(); j++){
+      for(unsigned int j = 0; j < it->second.size(); j++){
         MElement *e = it->second[j];
         printf("element %d",e->getNum());
         if(e->getParent()) printf(" par=%d (%d)",e->getParent()->getNum(),e->ownsParent());
@@ -1629,6 +1629,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
 
   for(newVerticesContainer::iterator it = newVertices.begin();
       it != newVertices.end(); ++it){
+    if((*it)->getNum() <= gm->getMaxVertexNumber())
+      (*it)->forceNum(cutGM->getMaxVertexNumber() + 1);
     vertexMap[(*it)->getNum()] = *it;
   }
 
