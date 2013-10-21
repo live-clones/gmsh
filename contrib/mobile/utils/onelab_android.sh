@@ -63,8 +63,6 @@ checkError $? "make Android project fail (Onelab)"
 echo -e "\033[1m[+] Build Android application (java)\033[0m"
 cd Onelab/
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi
-cp $ANDROID_SDK/extras/android/support/v4/android-support-v4.jar libs/
-checkError $? "Copy android support v4 fail (Android)"
 target=1
 count=0
 while read line; do

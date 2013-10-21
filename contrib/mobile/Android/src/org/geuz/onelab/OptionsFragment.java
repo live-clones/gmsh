@@ -57,12 +57,12 @@ public class OptionsFragment extends Fragment{
 		if(_viewN == 0) {
 			optionDisplay.setEnabled(true);
 			optionModel.setEnabled(false);
-			getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionModelFragment).commit();
+			getFragmentManager().beginTransaction().replace(R.id.options_fragment, _optionModelFragment).commit();
 		}
 		else {
 			optionDisplay.setEnabled(false);
 			optionModel.setEnabled(true);
-			getFragmentManager().beginTransaction().add(R.id.options_fragment, _optionDisplayFragment).commit();
+			getFragmentManager().beginTransaction().replace(R.id.options_fragment, _optionDisplayFragment).commit();
 		}
 		optionModel.setOnClickListener(new View.OnClickListener() {
 			

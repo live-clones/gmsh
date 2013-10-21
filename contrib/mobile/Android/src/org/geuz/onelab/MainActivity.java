@@ -15,6 +15,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
@@ -61,7 +63,8 @@ public class MainActivity extends Activity{
     		_gmsh.load(tmp);
     	}  		
     	else if(extras != null) {
-    		//extras.getString("name");
+    		String name = extras.getString("name");
+    		this.getActionBar().setTitle(name);
     		String tmp = extras.getString("file");
     		_gmsh.load(tmp);
     	}
@@ -69,10 +72,10 @@ public class MainActivity extends Activity{
     		this.finish();
     	_twoPane = (findViewById(R.id.parameter_fragment) != null);
     	_modelFragment = ModelFragment.newInstance(_gmsh);
-		getFragmentManager().beginTransaction().add(R.id.model_fragment, _modelFragment).commit();
+		getFragmentManager().beginTransaction().replace(R.id.model_fragment, _modelFragment).commit();
     	if(_twoPane) {
     		_optionsFragment = OptionsFragment.newInstance(_gmsh);
-    		getFragmentManager().beginTransaction().add(R.id.parameter_fragment, _optionsFragment).commit();
+    		getFragmentManager().beginTransaction().replace(R.id.parameter_fragment, _optionsFragment).commit();
     		_optionsFragment.setOnOptionsChangedListener(new OptionsFragment.OnOptionsChangedListener() {
     			
     			public void OnOptionsChanged() {
@@ -177,6 +180,14 @@ public class MainActivity extends Activity{
 			break;
 		}
 	}
+	
+	public String getRealPathFromURI(Uri contentUri) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
 	
 	private class Run extends AsyncTask<Void, Void, Integer[]> {
 

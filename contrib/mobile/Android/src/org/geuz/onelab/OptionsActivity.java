@@ -22,7 +22,7 @@ public class OptionsActivity extends Activity {
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 		getActionBar().setTitle(R.string.title_activity_options);
 		OptionsFragment optionsFragment = OptionsFragment.newInstance(gmsh);
-		getFragmentManager().beginTransaction().add(R.id.model_fragment, optionsFragment).commit();
+		getFragmentManager().beginTransaction().replace(R.id.model_fragment, optionsFragment).commit();
 	}
 	
 	@Override
