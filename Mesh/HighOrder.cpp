@@ -625,7 +625,7 @@ static void getFaceAndInteriorVertices(GRegion *gr, MElement *incomplete, MEleme
   case TYPE_PRI :
     switch (nPts){
     case 0: return;
-    case 1: return;
+    case 1: points = BasisFactory::getNodalBasis(MSH_PRI_18)->points; break;
     case 2: points = BasisFactory::getNodalBasis(MSH_PRI_40)->points; break;
     case 3: points = BasisFactory::getNodalBasis(MSH_PRI_75)->points; break;
     case 4: points = BasisFactory::getNodalBasis(MSH_PRI_126)->points; break;
