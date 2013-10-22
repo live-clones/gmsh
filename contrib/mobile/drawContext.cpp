@@ -49,6 +49,7 @@
 #include "Trackball.h"
 
 static bool locked = false;
+static bool onelabStop = false;
 
 drawContext::drawContext()
 {
@@ -610,6 +611,7 @@ int onelab_cb(std::string action)
 		o.setVisible(false);
 		o.setNeverChanged(true);
 		onelab::server::instance()->set(o);
+		onelabStop = true;
 		return 0;
 	}
 	if(locked) return -1;
@@ -675,7 +677,7 @@ int onelab_cb(std::string action)
 			args.push_back("GetDP");
 			GetDP(args, onelab::server::instance());
 		}
-	} while(action == "compute" && (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") || onelabUtils::incrementLoop("1")));
+	} while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") || onelabUtils::incrementLoop("2") || onelabUtils::incrementLoop("1")));
     
 	locked = false;
 
