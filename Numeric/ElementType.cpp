@@ -341,7 +341,7 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_QUA_1   : case MSH_QUA_4   :
 
   case MSH_TET_1   : case MSH_TET_4   :
-  case MSH_TET_10  : case MSH_TET_20  :
+  case MSH_TET_10  : 
 
   case MSH_PRI_1   : case MSH_PRI_6   :
 
@@ -363,10 +363,10 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_QUA_81  : case MSH_QUA_100 :
   case MSH_QUA_121 :
 
-  case MSH_TET_35  : case MSH_TET_56  :
-  case MSH_TET_84  : case MSH_TET_120 :
-  case MSH_TET_165 : case MSH_TET_220 :
-  case MSH_TET_286 :
+  case MSH_TET_20  : case MSH_TET_35  : 
+  case MSH_TET_56  : case MSH_TET_84  : 
+  case MSH_TET_120 : case MSH_TET_165 : 
+  case MSH_TET_220 : case MSH_TET_286 :
 
   case MSH_PRI_18  : case MSH_PRI_40  :
   case MSH_PRI_75  : case MSH_PRI_126 :
