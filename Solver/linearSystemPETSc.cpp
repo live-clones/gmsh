@@ -70,6 +70,8 @@ template<>
 void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(int row,
                                                       const fullMatrix<double> &val)
 {
+  if (!_entriesPreAllocated)
+    preAllocateEntries();
   int blockSize;
   _try(MatGetBlockSize(_a, &blockSize));
   for (int ii = 0; ii < blockSize; ii++) {
