@@ -56,6 +56,14 @@ class Rec2DData;
 class Rec2DDataChange;
 namespace Rec2DAlgo {
   bool setParam(int horizon, int code);
+  void clear();
+  namespace func {
+    Rec2DAction* getBestNAction();
+    Rec2DAction* getRandomNAction();
+    Rec2DAction* getBestOAction();
+    Rec2DAction* getRandomOAction();
+  }
+  class Node;
 }
 
 struct lessRec2DAction {
@@ -113,11 +121,15 @@ class Recombine2D {
     
 #ifdef REC2D_RECO_BLOS
     bool _recombineWithBlossom;
+    bool _saveBlossomMesh;
     int *elist;
     std::map<MElement*, int> t2n;
 #endif
     
   public :
+
+    static double t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+
     Recombine2D(GFace*, bool collapses);
     ~Recombine2D();
     
@@ -130,6 +142,7 @@ class Recombine2D {
     double recombine(int depth);
     void recombineSameAsBlossom(); // just to check blossomQual
     void recombineSameAsHeuristic();
+    void recombineGreedy(bool constrained = false);
     //bool developTree();
     static void nextTreeActions(std::vector<Rec2DAction*>&,
                                 const std::vector<Rec2DElement*> &neighbours,
@@ -157,6 +170,7 @@ class Recombine2D {
     static inline void incNumChange() {++_cur->_numChange;}
     static inline Rec2DQualCrit getQualCrit() {return _cur->_qualCriterion;}
     static inline void setNewTreeNode(Rec2DNode *rn) {_cur->_curNode = rn;}
+    static inline double getTimeLastRun() {return _cur->_lastRunTime;}
     
     // What is asked ?
     static inline bool dynamicTree() {return _cur->_strategy == 6;}
@@ -262,6 +276,21 @@ class Rec2DData {
     std::vector<Rec2DVertex*> _vertices;
     std::vector<Rec2DElement*> _elements;
     std::vector<Action*> _actions;
+
+    // Addition for new algo
+    std::set<Rec2DAction*, gterRec2DAction> _sortedActions; // if blossom !
+    friend class Rec2DAlgo::Node;
+    friend void Rec2DAlgo::clear();
+    friend Rec2DAction* Rec2DAlgo::func::getBestNAction();
+    friend Rec2DAction* Rec2DAlgo::func::getRandomNAction();
+    // TODO: presently managed by Rec2DAlgo... should be managed by Rec2DAction::apply()
+    std::vector<Rec2DAction*> _NActions;
+    std::set<Rec2DAction*, gterRec2DAction> _sortedNActions; // if blossom !
+    friend Rec2DAction* Rec2DAlgo::func::getBestOAction();
+    friend Rec2DAction* Rec2DAlgo::func::getRandomOAction();
+    std::vector<Rec2DAction*> _OActions;
+    std::set<Rec2DAction*, gterRec2DAction> _sortedOActions; // if blossom !
+
     
     // Store changes (so can revert)
     std::vector<Rec2DDataChange*> _changes;
@@ -347,8 +376,8 @@ class Rec2DData {
     static void rmvHasZeroAction(const Rec2DElement*);
     static bool hasHasZeroAction(const Rec2DElement*);
     static int getNumZeroAction();
-    static void addHasOneAction(const Rec2DElement*);
-    static void rmvHasOneAction(const Rec2DElement*);
+    static void addHasOneAction(const Rec2DElement*, Rec2DAction*);
+    static void rmvHasOneAction(const Rec2DElement*, Rec2DAction*);
     static bool hasHasOneAction(const Rec2DElement*);
     static int getNumOneAction();
     static void getElementsOneAction(std::vector<Rec2DElement*> &vec);
@@ -414,6 +443,8 @@ class Rec2DData {
         v[i] = const_cast<Rec2DAction*>(_cur->_actions[i]->action);
       }
     }
+    static int getNumNActions() {return _cur->_sortedNActions.size();}
+
 #ifdef REC2D_RECO_BLOS
     static Rec2DElement* getRElement(MElement*);
 #endif
@@ -464,6 +495,8 @@ class Rec2DChange {
                 const std::vector<Rec2DAction*>&,
                 Rec2DChangeType                  ); // swap edge1 to edge2 (action)
     
+    void getHiddenActions(std::set<Rec2DAction*>&);
+
     void revert();
 };
 
@@ -498,8 +531,11 @@ class Rec2DDataChange {
     inline void saveParity(const std::vector<Rec2DVertex*> &verts) {
       _changes.push_back(new Rec2DChange(verts, SavePar));
     }
+
     void checkObsoleteActions(Rec2DVertex*const*, int size);
     
+    void getHiddenActions(std::set<Rec2DAction*>&);
+
     void revert();
     
     void setAction(const Rec2DAction *action) {_ra = (Rec2DAction*)action;}
@@ -515,6 +551,7 @@ class Rec2DAction {
     
     friend void Rec2DData::add(const Rec2DAction*);
     friend void Rec2DData::rmv(const Rec2DAction*);
+    friend bool Rec2DData::has(const Rec2DAction *ra);
     template<class T> friend void std::swap(T&, T&);
     
   public :
@@ -554,6 +591,7 @@ class Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*>&) const = 0;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const = 0;
     virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const = 0;
+    virtual void getTouchedActions(std::vector<Rec2DAction*>&) const = 0;
     
     // Get Vertex methods
     virtual Rec2DVertex* getVertex(int) const = 0;
@@ -625,6 +663,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual void getElements(std::vector<Rec2DElement*>&) const;
     virtual void getNeighbourElements(std::vector<Rec2DElement*>&) const;
     virtual void getNeighbElemWithActions(std::vector<Rec2DElement*>&) const;
+    virtual void getTouchedActions(std::vector<Rec2DAction*>&) const;
     
     // Get Vertex methods
     virtual inline Rec2DVertex* getVertex(int i) const {return _vertices[i];} //-
@@ -688,6 +727,7 @@ class Rec2DCollapse : public Rec2DAction {
     }
     virtual void getNeighbourElements(std::vector<Rec2DElement*> &) const;
     virtual void getNeighbElemWithActions(std::vector<Rec2DElement*> &) const;
+    virtual void getTouchedActions(std::vector<Rec2DAction*>&) const {}
     
     // Get Vertex methods
     virtual inline Rec2DVertex* getVertex(int i) const {
@@ -990,6 +1030,7 @@ class Rec2DElement {
     inline Rec2DAction* getAction(int i) const {return _actions[i];}
     inline void getActions(std::vector<Rec2DAction*> &v) const {v = _actions;};
     void getMoreUniqueActions(std::vector<Rec2DAction*>&) const;
+    void getMoreUniqueActions(std::set<Rec2DAction*, gterRec2DAction>&) const;
     
     // Swap
     void swap(Rec2DEdge*, Rec2DEdge*);
@@ -1051,11 +1092,14 @@ namespace Rec2DAlgo {
 
   bool paramOK();
   bool setParam(int horizon, int code);
+  void getParam(int &horizon, int &code);
+  void computeAllParam(std::vector<int> &, bool restricted = true);
   void execute();
   void clear();
 
   namespace data {
     extern int horizon;
+    extern int codeParam;
 
     extern bool root_tree_srch;
     extern bool root_one_srch;
@@ -1081,6 +1125,7 @@ namespace Rec2DAlgo {
 
     extern Node *initial;
     extern Node *current;
+    extern Node *quadOk;
     extern std::vector<Node*> sequence;
   }
 
@@ -1091,7 +1136,7 @@ namespace Rec2DAlgo {
     // functions search
     void searchForOne(std::vector<Rec2DElement*>&);
     void searchForRootStd(std::vector<Rec2DElement*>&);
-    void searchForPlusStd(std::vector<Rec2DElement*>&);
+    void searchForPlusStd(std::vector<Rec2DElement*>&, int depth);
     void searchForAll(std::vector<Rec2DElement*>&);
     void searchForQAll(std::vector<Rec2DElement*>&);
     void searchForQFirst(std::vector<Rec2DElement*>&);
@@ -1103,8 +1148,15 @@ namespace Rec2DAlgo {
     Rec2DElement* random(std::vector<Rec2DElement*> &v);
     Rec2DElement* best(std::vector<Rec2DElement*>&);
 
-    void insertUnique(std::vector<Rec2DElement*> &from,
+    /*void insertUnique(std::vector<Rec2DElement*> &from,
                       std::vector<Rec2DElement*> &to);
+    void removeCommon(std::vector<Rec2DElement*> &from,
+                      std::vector<Rec2DElement*> &to);*/
+
+    Rec2DAction* getBestNAction();
+    Rec2DAction* getRandomNAction();
+    Rec2DAction* getBestOAction();
+    Rec2DAction* getRandomOAction();
   }
 
   class Node {
@@ -1118,6 +1170,7 @@ namespace Rec2DAlgo {
   public :
     Node();
     Node(Rec2DAction*);
+    ~Node();
 
     Node* getChild() const {
       if (_children.size() != 1) {
@@ -1130,9 +1183,13 @@ namespace Rec2DAlgo {
     int numChildren() const {return _children.size();}
     Node* getNodeBestSequence();
     bool choose(Node*);
+    void updateNActions(Node*);
     int getMaxLeafQual() const;
+    inline int getQual() const {return _quality;} //ft
+    inline int getReward() const {return _ra->getRealReward();} //ft
 
     bool makeChanges();
+    void colourBestSequence(int depth);
 
     void branch_root();
     void branch(int depth);
