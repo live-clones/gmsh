@@ -313,7 +313,7 @@ if(ENABLE_BLAS_LAPACK)
       set_config_option(HAVE_LAPACK "Lapack(SunPerf)")
     elseif(APPLE)
       # on Mac we also know that blas and lapack are available
-      set(LAPACK_LIBRARIES "-framework vecLib")
+      set(LAPACK_LIBRARIES "-llapack -lblas")
       set_config_option(HAVE_BLAS "Blas(VecLib)")
       set_config_option(HAVE_LAPACK "Lapack(VecLib)")
     endif(MSVC)
