@@ -819,13 +819,11 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "rec")) {
         i++;
-        if(argv[i]) {
-          CTX::instance()->mesh.doRecombinationTest = 1;
-          CTX::instance()->mesh.recTestName = argv[i];
-          i++;
-        }
-        else
-          Msg::Fatal("Missing file name for recomb");
+        if (argc - i < 3) Msg::Fatal("pas assez argument");
+        CTX::instance()->mesh.doRecombinationTest = 1;
+        CTX::instance()->mesh.recTestName = argv[i]; i++;
+        CTX::instance()->mesh.nProc = atoi(argv[i]); i++;
+        CTX::instance()->mesh.nbProc = atoi(argv[i]); i++;
       }
       else if(!strcmp(argv[i] + 1, "beg")) {
         i++;

@@ -36,6 +36,7 @@ struct contextMeshOptions {
   //-- for recombination test (amaury) --
     int doRecombinationTest, recombinationTestStart;
     int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
+    int nProc, nbProc;
     std::string recTestName;
   //-------------------------------------
   int remeshParam, remeshAlgo;
