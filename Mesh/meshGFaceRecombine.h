@@ -1134,11 +1134,11 @@ namespace Rec2DAlgo {
     void chooseBestSequence();
 
     // functions search
-    void searchForOne(std::vector<Rec2DElement*>&);
+    void searchForOne(std::vector<Rec2DElement*>&, bool takeBest);
     void searchForRootStd(std::vector<Rec2DElement*>&);
     void searchForPlusStd(std::vector<Rec2DElement*>&, int depth);
-    void searchForAll(std::vector<Rec2DElement*>&);
-    void searchForQAll(std::vector<Rec2DElement*>&);
+    void searchForAll(std::vector<Rec2DElement*>&, bool takeBest);
+    void searchForQAll(std::vector<Rec2DElement*>&, bool takeBest);
     void searchForQFirst(std::vector<Rec2DElement*>&);
     void searchForQLast(std::vector<Rec2DElement*>&);
     void searchForTAll(std::vector<Rec2DElement*>&);

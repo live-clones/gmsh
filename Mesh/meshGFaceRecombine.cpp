@@ -5178,9 +5178,26 @@ namespace func {
     return v[rand() % v.size()];
   }
 
-  void searchForOne(std::vector<Rec2DElement*> &triangles)
+  void searchForOne(std::vector<Rec2DElement*> &triangles, bool takeBest)
   {
-    Rec2DData::getElementsOneAction(triangles);
+    Rec2DAction *ra;
+    if (takeBest)
+      ra = getBestOAction();
+    else
+      ra = getRandomOAction();
+    if (ra) {
+      if (ra->getElement(0)->getNumActions() == 1) {
+        triangles.push_back(ra->getElement(0));
+      }
+      else if (ra->getElement(1)->getNumActions() == 1) {
+        triangles.push_back(ra->getElement(1));
+      }
+      else {
+        Msg::Error(" it was not a one action :( %d %d",
+                   ra->getElement(0)->getNumActions(),
+                   ra->getElement(1)->getNumActions());
+      }
+    }
   }
 
   void searchForRootStd(std::vector<Rec2DElement*> &triangles)
@@ -5188,41 +5205,12 @@ namespace func {
     switch (root_std_srch) {
     case 1:
     {
-      // Optimization 1 : take directly random or best
-      //searchForAll(triangles);
-      triangles.clear();
-      Rec2DAction *ra;
-      if (root_take_best)
-        ra = (Rec2DAction*)Rec2DData::getBestAction();
-      else
-        ra = (Rec2DAction*)Rec2DData::getRandomAction();
-      if (ra) triangles.push_back(ra->getElement(rand() % 2));
+      searchForAll(triangles, root_take_best);
       return;
     }
     case 2:
     {
-      // Optimization 3 : take directly random or best
-      //searchForQAll(triangles);
-      triangles.clear();
-      Rec2DAction *ra;
-      if (root_take_best)
-        ra = getBestNAction();
-      else
-        ra = getRandomNAction();
-
-      if (!ra) return;
-
-      for (int i = 0; i < 2; ++i) {
-        std::vector<Rec2DElement*> elem;
-        ra->getElement(i)->getMoreNeighbours(elem);
-        for (unsigned int j = 0; j < elem.size(); ++j) {
-          if (elem[j]->isQuad()) {
-            triangles.push_back(ra->getElement(i));
-            return;
-          }
-        }
-      }
-      Msg::Fatal("Didn't get a action neighbour to a quad");
+      searchForQAll(triangles, root_take_best);
       return;
     }
     case 3:
@@ -5241,48 +5229,15 @@ namespace func {
     switch (plus_std_srch) {
     case 1:
     {
-      // Optimization 1 : take directly random or best
-      //searchForAll(triangles);
-      triangles.clear();
-      Rec2DAction *ra;
-      if (plus_take_best)
-        ra = (Rec2DAction*)Rec2DData::getBestAction();
-      else
-        ra = (Rec2DAction*)Rec2DData::getRandomAction();
-      if (ra) triangles.push_back(ra->getElement(rand() % 2));
+      searchForAll(triangles, plus_take_best);
       return;
     }
     case 2:
     {
-      if (depth > Rec2DData::getNumNActions()/3) {
+      if (depth > Rec2DData::getNumNActions()/3)
         searchForTAll(triangles);
-        return;
-      }
-
-      // Optimization 3 : take directly random or best
-      //searchForQAll(triangles);
-      triangles.clear();
-      Rec2DAction *ra;
-      if (plus_take_best)
-        ra = getBestNAction();
       else
-        ra = getRandomNAction();
-
-      if (!ra) {
-        return;
-      }
-
-      for (int i = 0; i < 2; ++i) {
-        std::vector<Rec2DElement*> elem;
-        ra->getElement(i)->getMoreNeighbours(elem);
-        for (unsigned int j = 0; j < elem.size(); ++j) {
-          if (elem[j]->isQuad()) {
-            triangles.push_back(ra->getElement(i));
-            return;
-          }
-        }
-      }
-      Msg::Fatal("Didn't get a action neighbour to a quad");
+        searchForQAll(triangles, plus_take_best);
       return;
     }
     case 3:
@@ -5302,51 +5257,38 @@ namespace func {
     }
   }
 
-  void searchForAll(std::vector<Rec2DElement*> &triangles)
+  void searchForAll(std::vector<Rec2DElement*> &triangles, bool takeBest)
   {
-    // either take all elements and remove those which cannot be recombined
-    // or take all possible actions and determine triangles that are touched
+    Rec2DAction *ra;
+    if (takeBest)
+      ra = (Rec2DAction*)Rec2DData::getBestAction();
+    else
+      ra = (Rec2DAction*)Rec2DData::getRandomAction();
 
-    if (Rec2DData::getNumAction() > Rec2DData::getNumElement()) {
-      Rec2DData::copyElements(triangles);
-
-      unsigned int i = 0;
-      while (i < triangles.size()) {
-        if (triangles[i]->getNumActions()) ++i;
-        else {
-          triangles[i] = triangles.back();
-          triangles.pop_back();
-        }
-      }
-    }
-    else {
-      std::vector<Rec2DAction*> actions;
-      Rec2DData::copyActions(actions);
-
-      std::set<Rec2DElement*> elem;
-      for (unsigned int i = 0; i < actions.size(); ++i) {
-        for (int j = 0; j < actions[i]->getNumElement(); ++j) {
-          elem.insert(actions[i]->getElement(j));
-        }
-      }
-
-      triangles.assign(elem.begin(), elem.end());
-    }
+    if (ra) triangles.push_back(ra->getElement(rand() % 2));
   }
 
-  void searchForQAll(std::vector<Rec2DElement*> &triangles)
+  void searchForQAll(std::vector<Rec2DElement*> &triangles, bool takeBest)
   {
-    searchForTAll(triangles);
-    std::set<Rec2DElement*> set;
-    set.insert(triangles.begin(), triangles.end());
-    Node *n = data::initial;
-    while (n != data::current) {
-      n = n->getChild();
+    Rec2DAction *ra;
+    if (takeBest)
+      ra = getBestNAction();
+    else
+      ra = getRandomNAction();
+
+    if (!ra) return;
+
+    for (int i = 0; i < 2; ++i) {
       std::vector<Rec2DElement*> elem;
-      n->getAction()->getNeighbElemWithActions(elem);
-      set.insert(elem.begin(), elem.end());
+      ra->getElement(i)->getMoreNeighbours(elem);
+      for (unsigned int j = 0; j < elem.size(); ++j) {
+        if (elem[j]->isQuad()) {
+          triangles.push_back(ra->getElement(i));
+          return;
+        }
+      }
     }
-    triangles.assign(set.begin(), set.end());
+    Msg::Fatal("Didn't get a action neighbour to a quad");
   }
 
   void searchForQFirst(std::vector<Rec2DElement*> &triangles)
@@ -5648,26 +5590,7 @@ void Node::branch_root()
       }
 
     case 1:
-      if (root_one_srch) {
-        // Optimization 4 : take directly one actions
-        //searchForOne(candidateTriangle);
-        Rec2DAction *ra;
-        if (root_take_best)
-          ra = getBestOAction();
-        else
-          ra = getRandomOAction();
-        if (ra) {
-          if (ra->getElement(0)->getNumActions() == 1) {
-            candidateTriangle.push_back(ra->getElement(0));
-          }
-          else if (ra->getElement(1)->getNumActions() == 1) {
-            candidateTriangle.push_back(ra->getElement(1));
-          }
-          else {
-            Msg::Error(" it was not a one action :( %d %d", ra->getElement(0)->getNumActions(), ra->getElement(1)->getNumActions());
-          }
-        }
-      }
+      if (root_one_srch) searchForOne(candidateTriangle, root_take_best);
       break;
 
     case 2:
@@ -5675,15 +5598,8 @@ void Node::branch_root()
       break;
 
     case 3:
-      // Optimization 1 : take directly random or best
-      //searchForAll(candidateTriangle);
-      Rec2DAction *ra;
-      if (root_take_best)
-        ra = (Rec2DAction*)Rec2DData::getBestAction();
-      else
-        ra = (Rec2DAction*)Rec2DData::getRandomAction();
+      searchForAll(candidateTriangle, root_take_best);
 
-      if (ra) candidateTriangle.push_back(ra->getElement(rand() % 2));
       break;
 
     case 4:
@@ -5765,26 +5681,7 @@ void Node::branch(int depth)
       }
 
     case 1:
-      if (plus_one_srch) {
-        // Optimization 4 : take directly one actions
-        //searchForOne(candidateTriangle);
-        Rec2DAction *ra;
-        if (plus_take_best)
-          ra = getBestOAction();
-        else
-          ra = getRandomOAction();
-        if (ra) {
-          if (ra->getElement(0)->getNumActions() == 1) {
-            candidateTriangle.push_back(ra->getElement(0));
-          }
-          else if (ra->getElement(1)->getNumActions() == 1) {
-            candidateTriangle.push_back(ra->getElement(1));
-          }
-          else {
-            Msg::Error(" it was not a one aciton :(");
-          }
-        }
-      }
+      if (plus_one_srch) searchForOne(candidateTriangle, plus_take_best);
       break;
 
     case 2:
@@ -5792,14 +5689,7 @@ void Node::branch(int depth)
       break;
 
     case 3:
-      // Optimization 1 : take directly random or best
-      //searchForAll(candidateTriangle);
-      Rec2DAction *ra;
-      if (plus_take_best)
-        ra = (Rec2DAction*)Rec2DData::getBestAction();
-      else
-        ra = (Rec2DAction*)Rec2DData::getRandomAction();
-      if (ra) candidateTriangle.push_back(ra->getElement(rand() % 2));
+      searchForAll(candidateTriangle, plus_take_best);
       break;
 
     case 4:
