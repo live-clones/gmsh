@@ -11,6 +11,15 @@ set(WITH_TEST TRUE)      # run the tests?
 set(WITH_COVERAGE FALSE) # check code coverage?
 set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 
+# Before you can configure Gmsh on cygwin with the mingw compilers, you need to
+# fix cmake 2.8.9's FindOpenGL.cmake module, by replacing if(WIN32 OR CYGWIN) by
+# if(WIN32) on line 49
+#
+# With mingw gcc 4.7 (we currently use gcc 4.5 on ace36), you should 
+#  1) add -DCMAKE_RC_COMPILER=/usr/bin/i686-w64-mingw32-windres.exe
+#  2) remove -mno-cygwin from FLTK's configure script: gcc 4.7 does not accept
+#     it anymore 
+
 #################################################################################
 set(CTEST_BUILD_NAME "Win32")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
