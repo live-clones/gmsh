@@ -1172,6 +1172,7 @@ bool rtree_callback(blPoint_rtree *neighbour,void* point){
   return true;
 }
 
+#if defined(HAVE_RTREE)
 bool inExclusionZone_filter (MVertex* p,
 			     std::map <MVertex*, MVertex*> &v2v,
 			     RTree< blPoint_rtree *,double,3,double> &rtree){
@@ -1190,7 +1191,7 @@ bool inExclusionZone_filter (MVertex* p,
 
   return w._tooclose;
 }
-
+#endif
 
 
 void BoundaryLayerColumns::filterPoints(GEntity *ge, double factor)
@@ -1288,7 +1289,9 @@ void BoundaryLayerColumns::filterPoints(GEntity *ge, double factor)
       }
     }
   }
+}
 #else
+{
   Msg::Warning ("Boundary Layer Points cannot be filtered without compiling gmsh with the rtree library");
 #endif
 }
