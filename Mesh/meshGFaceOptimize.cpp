@@ -359,6 +359,63 @@ double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,bidimMeshData & d
   return 0.5 * fabs (v12[0] * v13[1] - v12[1] * v13[0]);
 }
 
+int _removeThreeTrianglesNodes(GFace *gf)
+{
+  v2t_cont adj;
+  buildVertexToElement(gf->triangles,adj);
+  v2t_cont :: iterator it = adj.begin();
+  int n=0;
+  std::set<MElement*> touched;
+  while (it != adj.end()) {
+    bool skip = false;
+    if(it->second.size() == 3 && it->first->onWhat()->dim() == 2) {
+      const std::vector<MElement*> &lt = it->second;
+      std::set<MVertex*> vs;
+      for(int i = 0; i < 3; i++) {
+        if(touched.find(lt[i])!=touched.end() || lt[i]->getNumVertices()!=3){
+          skip=true;
+          break;
+        }
+        for(int j = 0; j < 3; j++) {
+          if(lt[i]->getVertex(j) == it->first) {	    
+            vs.insert(lt[i]->getVertex((j+1)%3));
+            vs.insert(lt[i]->getVertex((j+2)%3));
+            break;
+          }
+        }
+      }
+      if(skip){
+        it++;
+        continue;
+      }
+      std::set<MVertex*>::iterator itt = vs.begin();
+      MVertex *v1 = *itt; ++itt;
+      MVertex *v2 = *itt; ++itt;
+      MVertex *v3 = *itt;
+      MTriangle *newt = new MTriangle(v1,v2,v3);
+      n++;
+      gf->triangles.push_back(newt);
+      for(int i=0;i<3;i++) {
+	touched.insert(lt[i]);
+      }
+    }
+    it++;
+  }
+  std::vector<MTriangle*> triangles2;
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    if(touched.find(gf->triangles[i]) == touched.end()){
+      triangles2.push_back(gf->triangles[i]);
+    }
+    else {
+      delete gf->triangles[i];
+    }
+  }
+  gf->triangles = triangles2;
+  Msg::Debug("%i three-triangles vertices removed",n);
+  return n;
+}
+
+
 int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
 {
   v2t_cont adj;
@@ -369,7 +426,7 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
   while (it != adj.end()) {
     bool skip = false;
     double surfaceRef = 0;
-    if(it->second.size() == 4) {
+    if(it->second.size() == 4 && it->first->onWhat()->dim() == 2) {
       const std::vector<MElement*> &lt = it->second;
       MVertex* edges[4][2];
       for(int i = 0; i < 4; i++) {
@@ -463,10 +520,18 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
   return n;
 }
 
+
+
 void removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
 {
   while(_removeFourTrianglesNodes(gf,replace_by_quads));
 }
+
+void removeThreeTrianglesNodes(GFace *gf)
+{
+  while(_removeThreeTrianglesNodes(gf));
+}
+
 
 /*
 
@@ -2131,10 +2196,6 @@ static int _relocateVertexOpti(GFace *gf, MVertex *ver,
 void _relocateVertex(GFace *gf, MVertex *ver,
                      const std::vector<MElement*> &lt)
 {
-  double R;
-  SPoint3 c;
-  bool isSphere = gf->isSphere(R, c);
-
   if(ver->onWhat()->dim() != 2) return;
   MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
   if(fv && fv->bl_data) return;
@@ -2142,51 +2203,60 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   double initu,initv;
   ver->getParameter(0, initu);
   ver->getParameter(1, initv);
-  double cu = 0, cv = 0;
-  double XX=0,YY=0,ZZ=0;
-  double pu[4], pv[4];
-  double fact  = 0.0;
-  for(unsigned int i = 0; i < lt.size(); i++){
-    parametricCoordinates(lt[i], gf, pu, pv, ver);
-    double XCG=0,YCG=0,ZCG=0;
-    for (int j=0;j<lt[i]->getNumVertices();j++){
-      XCG += lt[i]->getVertex(j)->x();
-      YCG += lt[i]->getVertex(j)->y();
-      ZCG += lt[i]->getVertex(j)->z();
-    }
-    XX += XCG;
-    YY += YCG;
-    ZZ += ZCG;
 
-    //    double D = 1./sqrt((XCG-ver->x())*(XCG-ver->x()) +
-    //                    (YCG-ver->y())*(YCG-ver->y()) +
-    //                    (ZCG-ver->z())*(ZCG-ver->z()) );
-    double D = 1.0;
-    for (int j=0;j<lt[i]->getNumVertices();j++){
-      cu += pu[j]*D;
-      cv += pv[j]*D;
-    }
-    fact += lt[i]->getNumVertices() * D;
-  }
-  SPoint2 newp ;
-  if(fact != 0.0){
-    SPoint2 before(initu,initv);
-    SPoint2 after(cu / fact,cv / fact);
-    if (isSphere){
-      GPoint gp = gf->closestPoint(SPoint3(XX/fact, YY/fact, ZZ/fact), after);
-      after = SPoint2(gp.u(),gp.v());
-    }
-    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,after);
-    if (success){
-      ver->setParameter(0, after.x());
-      ver->setParameter(1, after.y());
-      GPoint pt = gf->point(after);
-      if(pt.succeeded()){
-        ver->x() = pt.x();
-        ver->y() = pt.y();
-        ver->z() = pt.z();
+  // compute the vertices connected to that one
+  std::map<MVertex*,SPoint2> pts;
+  for(unsigned int i = 0; i < lt.size(); i++){
+    for (int j=0;j<lt[i]->getNumEdges();j++){
+      MEdge e = lt[i]->getEdge(j);
+      SPoint2 param0, param1;
+      if (e.getVertex(0) == ver){
+	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);      
+	pts[e.getVertex(1)] = param1;
+      }
+      else if (e.getVertex(1) == ver){
+	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);      
+	pts[e.getVertex(0)] = param0;
       }
     }
+  }
+
+  SPoint2 before(initu,initv);
+  double metric[3];
+  SPoint2 after(0,0);
+  double COUNT = 0.0;
+  //  printf("weights :");
+  for(std::map<MVertex*,SPoint2>::iterator it = pts.begin(); it != pts.end() ; ++it) {
+    SPoint2  adj = it->second;
+    SVector3 d (adj.x()-before.x(),adj.y()-before.y(),0.0);
+    d.normalize();
+    buildMetric (gf,adj,metric);
+    const double F = sqrt(metric[0]*d.x()*d.x() +
+			  2*metric[1]*d.x()*d.y() +
+			  metric[2]*d.y()*d.y());
+    //    printf("%g ",F);
+    after += adj*F;
+    COUNT += F;
+    //    //    double RATIO = lt[i]->getVolume()/pow(metric[0]*metric[2]-metric[1]*metric[1],0.5);
+  }
+  //  printf("\n");
+  after *= (1.0/COUNT);
+  double FACTOR = 1.0;
+  const int MAXITER = 5;
+  for (int ITER = 0;ITER < MAXITER; ITER ++){
+    SPoint2 trial = after * FACTOR + before * (1.-FACTOR);
+    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,trial);
+    if (success){
+      ver->setParameter(0, trial.x());
+      ver->setParameter(1, trial.y());
+      GPoint pt = gf->point(trial);
+      if(pt.succeeded()){
+	ver->x() = pt.x();
+	ver->y() = pt.y();
+	ver->z() = pt.z();
+      }
+    }
+    FACTOR /= 1.4;
   }
 }
 
@@ -2651,6 +2721,20 @@ int postProcessExtraEdges (GFace *gf, std::vector<std::pair<MElement*,MElement*>
   return 0;
 }
 
+bool edgeSwapDelProj (MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
+  MTriangle t1(v1,v2,v3);
+  MTriangle t2(v2,v1,v4);
+
+  SVector3 n1 = t1.getFace(0).normal();
+  SVector3 n2 = t2.getFace(0).normal();
+  if (dot(n1,n2) <= 0) {
+    //    printf("OLA !!!\n");
+    return true;
+  }
+  return false;
+}
+
+
 bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
               std::vector<MTri3*> &newTris, const swapCriterion &cr, bidimMeshData & data)
 {
@@ -2668,22 +2752,26 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   swapquad sq (v1, v2, v3, v4);
   if(configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
+  
+  if (edgeSwapDelProj(v3,v4,v2,v1))return false;
 
-  const double volumeRef = surfaceTriangleUV(v1, v2, v3, data) +
-    surfaceTriangleUV(v1, v2, v4, data);
+  //  const double volumeRef = surfaceTriangleUV(v1, v2, v3, data) +
+  //    surfaceTriangleUV(v1, v2, v4, data);
 
   MTriangle *t1b = new MTriangle(v2, v3, v4);
   MTriangle *t2b = new MTriangle(v4, v3, v1);
-  const double v1b = surfaceTriangleUV(v2, v3, v4, data);
-  const double v2b = surfaceTriangleUV(v4, v3, v1, data);
-  const double volume = v1b + v2b;
-  if(fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) ||
-      v1b < 1.e-8 * (volume + volumeRef) ||
-      v2b < 1.e-8 * (volume + volumeRef)){
-    delete t1b;
-    delete t2b;
-    return false;
-  }
+
+
+  //  const double v1b = surfaceTriangleUV(v2, v3, v4, data);
+  //  const double v2b = surfaceTriangleUV(v4, v3, v1, data);
+  //  const double volume = v1b + v2b;
+  //  if(fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) ||
+  //      v1b < 1.e-8 * (volume + volumeRef) ||
+  //      v2b < 1.e-8 * (volume + volumeRef)){
+  //    delete t1b;
+  //    delete t2b;
+  //    return false;
+  //  }
 
   switch(cr){
   case SWCR_QUAL:
@@ -2692,11 +2780,14 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
                                             qmTriangle(t2->tri(), QMTRI_RHO));
       const double triQuality = std::min(qmTriangle(t1b, QMTRI_RHO),
                                          qmTriangle(t2b, QMTRI_RHO));
-      if(triQuality < triQualityRef){
-        delete t1b;
-        delete t2b;
-        return false;
+      if (!edgeSwapDelProj(v1,v2,v3,v4)){
+	if(triQuality < triQualityRef){	  
+	  delete t1b;
+	  delete t2b;
+	  return false;
+	}
       }
+      //      printf("coucou\n");
       break;
     }
   case SWCR_DEL:
@@ -2884,9 +2975,8 @@ bool buildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
   }
 }
 
-// split one triangle into 3 triangles then apply edge swop (or not)
-// will do better (faster) soon, just to test
-void _triangleSplit (GFace *gf, MElement *t, bool swop = false)
+// split one triangle into 3 triangles 
+void _triangleSplit (GFace *gf, MElement *t)
 {
   MVertex *v1 = t->getVertex(0);
   MVertex *v2 = t->getVertex(1);

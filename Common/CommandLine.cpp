@@ -792,8 +792,6 @@ void GetOptions(int argc, char *argv[])
             CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL_QUAD;
           else if(!strncmp(argv[i], "pack", 4))
             CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
-          else if(!strncmp(argv[i], "ruppert", 7))
-            CTX::instance()->mesh.algo2d = ALGO_2D_RUPPERT;
           else if(!strncmp(argv[i], "front2d", 7) || !strncmp(argv[i], "frontal", 7))
             CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
           else if(!strncmp(argv[i], "bamg",4))

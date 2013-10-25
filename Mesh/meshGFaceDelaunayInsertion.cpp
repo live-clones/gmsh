@@ -42,6 +42,30 @@ static bool isBoundary(MTri3 *t, double limit_, int &active)
   return false;
 }
 */
+
+struct equivalentTriangle {
+  MTri3 *_t;
+  MVertex *_v[3];
+  equivalentTriangle (MTri3 *t,  std::map<MVertex* , MVertex*>* equivalence)
+    :_t(t) {
+    for (int i=0;i<3;i++){
+      MVertex *v = t->tri()->getVertex(i);
+      std::map<MVertex* , MVertex*>::iterator it = equivalence->find(v);
+      if (it == equivalence->end())_v[i] = v;
+      else _v[i] = it->second;
+    }
+    std::sort (_v,_v+3);
+  }
+  bool operator < (const equivalentTriangle &other) const{
+    for (int i=0;i<3;i++){
+      if (other._v[i] > _v[i])return true;
+      if (other._v[i] < _v[i])return false;
+    }
+    return false;
+  }
+};
+
+
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData & data, bool param=true)
 {
@@ -227,6 +251,7 @@ void buildMetric(GFace *gf, double *uv, double *metric)
   metric[0] = dot(der.first(), der.first());
   metric[1] = dot(der.second(), der.first());
   metric[2] = dot(der.second(), der.second());
+ 			     
 }
 
 // m 3x3
@@ -460,6 +485,102 @@ void connectTriangles(std::set<MTri3*, compareTri3Ptr> &l)
   connectTris(l.begin(), l.end());
 }
 
+int inCircumCircleTangentPlane(MTriangle *t,
+			       SPoint3 &p, SVector3 &t1, SVector3 &t2)
+{
+  double p1[2],p2[2],p3[2], pp[2] = {0,0};
+  MVertex *v1 = t->getVertex(0);
+  MVertex *v2 = t->getVertex(1);
+  MVertex *v3 = t->getVertex(2);
+  SVector3 pmx1 (v1->x()-p.x(),v1->y()-p.y(),v1->z()-p.z());
+  p1[0] = dot(pmx1,t1);p1[1] = dot(pmx1,t2);
+  SVector3 pmx2 (v2->x()-p.x(),v2->y()-p.y(),v2->z()-p.z());
+  p2[0] = dot(pmx2,t1);p2[1] = dot(pmx2,t2);
+  SVector3 pmx3 (v3->x()-p.x(),v3->y()-p.y(),v3->z()-p.z());
+  p3[0] = dot(pmx3,t1);p3[1] = dot(pmx3,t2);  
+  double result = robustPredicates::incircle(p1, p2, p3, pp) *
+    robustPredicates::orient2d(p1, p2, p3);
+  return (result > 0) ? 1 : 0;
+}
+
+
+void recurFindCavityTangentPlane(std::list<edgeXface> &shell, 
+				 std::list<MTri3*> &cavity,
+				 MTri3 *t,  
+				 SPoint3 &p, SVector3 &t1, SVector3 &t2)
+{
+  t->setDeleted(true);
+  cavity.push_back(t);
+
+  for (int i = 0; i < 3; i++){
+    MTri3 *neigh =  t->getNeigh(i) ;
+    if (!neigh)
+      shell.push_back(edgeXface(t, i));
+    else if (!neigh->isDeleted()){
+      int circ =  inCircumCircleTangentPlane(neigh->tri(), p, t1, t2);
+      if (circ)
+        recurFindCavityTangentPlane(shell, cavity, neigh, p, t1, t2);
+      else
+        shell.push_back(edgeXface(t, i));
+    }
+  }
+}
+
+///*********************
+/// T E S T : project the cavity on the tangent plane in case of bad mapping
+
+static void computeTangentPlane (GFace *gf, double center[2], SPoint3 &p, SVector3 &t1, SVector3 &t2)
+{
+  GPoint gp = gf->point(SPoint2(center[0],center[1]));
+  p = SPoint3(gp.x(),gp.y(),gp.z());
+  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(center[0], center[1]));
+  SVector3 n = crossprod(der.first(),der.second());
+  t1 = der.first();
+  t2 = crossprod(n,der.first());
+  t1.normalize();
+  t2.normalize();
+  //  printf("%g %g %g :: %g %g %g\n",t1.x(),t1.y(),t1.z(),t2.x(),t2.y(),t2.z());
+}
+
+bool findCavityTangentPlane(GFace *gf, double *center,
+			    std::list<edgeXface> &shell, 
+			    std::list<MTri3*> &cavity,
+			    MTri3 *t)
+{
+  return false;
+  SPoint3 p; SVector3 t1,t2;
+  computeTangentPlane (gf,center, p,t1,t2);    
+  SVector3 N = crossprod(t2,t1);
+  N.normalize();
+  const double d = -(N.x()*p.x()+N.y()*p.y()+N.z()*p.z());
+  recurFindCavityTangentPlane(shell, cavity, t, p, t1, t2);
+  //  double AMIN = 1;
+  double DMAX = 0.0;
+  for (std::list<MTri3*>::iterator i=cavity.begin();i!=cavity.end();i++){
+    t = *i;
+    SPoint3 b = t->tri()->getFace(0).barycenter();    
+    //    SVector3 n = t->tri()->getFace(0).normal();    
+    //    double a = fabs(dot(N,n));
+    double dist = fabs(N.x()*b.x()+N.y()*b.y()+N.z()*b.z() + d);
+    DMAX = std::max(DMAX,dist);
+    //    AMIN = std::min(a,AMIN);
+    //    printf("%g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),n.x(),n.y(),n.z());
+  }
+  if (DMAX > 30 || cavity.size() < 2){
+    printf("%d elements in the cavity DMAX %g\n",cavity.size(),DMAX);
+    for (std::list<MTri3*>::iterator i=cavity.begin();i!=cavity.end();i++){
+      t = *i;
+      t->setDeleted(false);
+    }
+    cavity.clear();
+    shell.clear();
+    return false;
+  }
+  return true;
+}
+
+
+
 void recurFindCavity(std::list<edgeXface> &shell, std::list<MTri3*> &cavity,
                      double *v, double *param, MTri3 *t,  bidimMeshData & data)
 {
@@ -585,7 +706,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 		    double *metric,
 		    MTri3 **oneNewTriangle)
 {
-  if (shell.size() <= 3 || shell.size() != cavity.size() + 2) return false;
+  if (shell.size() != cavity.size() + 2) return false;
 
   std::list<MTri3*> new_cavity;
 
@@ -773,15 +894,20 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
   return 0;
 }
 
-//double __DT1;
 
-static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it,
-                         double center[2], double metric[3], bidimMeshData & data,
+
+///*********************
+
+static bool insertAPoint(GFace *gf, 
+			 std::set<MTri3*,compareTri3Ptr>::iterator it,
+                         double center[2], 
+			 double metric[3], 
+			 bidimMeshData & data,
                          std::set<MTri3*,compareTri3Ptr> &AllTris,
                          std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0,
-                         MTri3 *worst = 0,  MTri3 **oneNewTriangle = 0)
+                         MTri3 *worst = 0,  
+			 MTri3 **oneNewTriangle = 0)
 {
-
   if (worst){
     it = AllTris.find(worst);
     if (worst != *it){
@@ -796,11 +922,11 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   std::list<MTri3*> cavity;
   double uv[2];
 
+  // TEST
   // if the point is able to break the bad triangle "worst"
   if (inCircumCircleAniso(gf, worst->tri(), center, metric, data)){
-    //      double t1 = Cpu();
-    recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
-    //      __DT1 += Cpu() - t1 ;
+    if (!findCavityTangentPlane(gf,center,shell, cavity, worst))
+      recurFindCavityAniso(gf, shell, cavity, metric, center, worst, data);
     for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
       if (invMapUV((*itc)->tri(), center, data, uv, 1.e-8)) {
 	ptin = *itc;
@@ -808,13 +934,14 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
       }
     }
   }
-  // else look for it
-  else {
-    //      printf("cocuou\n");
+  else {    
     ptin = search4Triangle (worst, center, data, AllTris,uv, oneNewTriangle ? true : false);
-      if (ptin) {
+    //    printf("what's this %g %g\n",center[0],center[1]);
+
+    if (ptin) {
+      if (!findCavityTangentPlane(gf,center,shell, cavity, ptin))
 	recurFindCavityAniso(gf, shell, cavity, metric, center, ptin, data);
-      }
+    }
   }
 
   if (ptin) {
@@ -870,54 +997,37 @@ static bool insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
   }
 }
 
-void gmshRuppert(GFace *gf,  double minqual, int MAXPNT,
-		 std::map<MVertex* , MVertex*>* equivalence,
-		 std::map<MVertex*, SPoint2> * parametricCoordinates){
-  MTri3::radiusNorm =3;
-
-  std::set<MTri3*,compareTri3Ptr> AllTris;
-  bidimMeshData DATA(equivalence,parametricCoordinates);
-
-  buildMeshGenerationDataStructures(gf, AllTris, DATA);
-
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
-
-  if(AllTris.empty()){
-    Msg::Error("No triangles in initial mesh");
-    return;
-  }
-
-  int NBDELETED = 0;
-  while (1){
-    MTri3 *worst = *AllTris.begin();
-    if (worst->isDeleted()){
-      delete worst->tri();
-      delete worst;
-      AllTris.erase(AllTris.begin());
-      NBDELETED ++;
-    }
-    else{
-      double center[2],metric[3],r2;
-      //      printf("%12.5E\n",worst->getRadius() );
-      if (1./worst->getRadius() > minqual || (int) DATA.vSizes.size() > MAXPNT) break;
-      circUV(worst->tri(), DATA, center, gf);
-      MTriangle *base = worst->tri();
-      int index0 = DATA.getIndex( base->getVertex(0) );
-      int index1 = DATA.getIndex( base->getVertex(1) );
-      int index2 = DATA.getIndex( base->getVertex(2) );
-      double pa[2] = {(DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2])/ 3.,
-                      (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2])/ 3.};
-      buildMetric(gf, pa,  metric);
-      circumCenterMetric(worst->tri(), metric, DATA, center, r2);
-      insertAPoint(gf, AllTris.begin(), center, metric, DATA, AllTris);
+bool computeEquivalentTriangles (std::set<MTri3*,compareTri3Ptr> &AllTris,
+				 std::map<MVertex* , MVertex*>* equivalence) {
+  std::vector<MTri3*> WTF;
+  if (!equivalence)return false;
+  std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
+  std::set<equivalentTriangle> eqTs;  
+  int COUNT = 0;
+  for ( ; it!=AllTris.end();++it){
+    if (!(*it)->isDeleted()){
+      COUNT++;
+      equivalentTriangle et ((*it),equivalence);
+      std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
+      if (iteq == eqTs.end())eqTs.insert(et);
+      else {
+	WTF.push_back(iteq->_t);
+	WTF.push_back(*it);
+      }
     }
   }
-  MTri3::radiusNorm =2;
-  transferDataStructure(gf, AllTris, DATA);
+  
+  if (WTF.size()){
+    for (int i=0;i<WTF.size();i++){
+      std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.find(WTF[i]);
+      AllTris.erase(it);
+      WTF[i]->forceRadius(100);
+      AllTris.insert(WTF[i]);
+    }
+    return true;
+  }
+  return false;
 }
-
 
 void bowyerWatson(GFace *gf, int MAXPNT,
 		  std::map<MVertex* , MVertex*>* equivalence,
@@ -937,7 +1047,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
     Msg::Error("No triangles in initial mesh");
     return;
   }
-
+  
   int ITER = 0;
   int NBDELETED = 0;
   //  double DT1 = 0 , DT2=0, DT3=0;
@@ -963,8 +1073,12 @@ void bowyerWatson(GFace *gf, int MAXPNT,
                    DATA.vSizes.size(), worst->getRadius());
 	//	printf("%d %d %d\n",vSizes.size(), AllTris.size(),NBDELETED);
       }
+      //  VERIFY STOP !!!
+      if (worst->getRadius() < 0.5 * sqrt(2.0) || (int) DATA.vSizes.size() > MAXPNT) {
+	break;
+      }
+
       double center[2],metric[3],r2;
-      if (worst->getRadius() < 0.5 * sqrt(2.0) || (int) DATA.vSizes.size() > MAXPNT) break;
       circUV(worst->tri(), DATA, center, gf);
       MTriangle *base = worst->tri();
       int index0 = DATA.getIndex( base->getVertex(0) );
@@ -972,14 +1086,15 @@ void bowyerWatson(GFace *gf, int MAXPNT,
       int index2 = DATA.getIndex( base->getVertex(2) );
       double pa[2] = {(DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2])/ 3.,
                       (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2])/ 3.};
+
       buildMetric(gf, pa,  metric);
       circumCenterMetric(worst->tri(), metric, DATA, center, r2);
       //      DT2 += (Cpu() - t2) ;
       //      double t3 = Cpu() ;
       insertAPoint(gf, AllTris.begin(), center, metric, DATA, AllTris);
-      //      DT3 += (Cpu() - t3) ;
     }
   }
+  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
   //  printf("%12.5E \n",__DT2);
 #if defined(HAVE_ANN)
@@ -994,6 +1109,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   }
 #endif
   transferDataStructure(gf, AllTris, DATA);
+  removeThreeTrianglesNodes(gf);
 }
 
 /*
@@ -1206,8 +1322,8 @@ void optimalPointFrontalB (GFace *gf,
 }
 
 void bowyerWatsonFrontal(GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates)
+			 std::map<MVertex* , MVertex*>* equivalence,
+			 std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
@@ -1232,13 +1348,13 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    //    if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
-    //      char name[245];
-    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-    //      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
-    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-    //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), DATA,true);
-    //    }
+    if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+      char name[245];
+      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
+      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+      _printTris (name, ActiveTris.begin(), ActiveTris.end(), DATA,true);
+    }
     /* if(ITER % 100== 0){
           char name[245];
           sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
@@ -1276,7 +1392,9 @@ void bowyerWatsonFrontal(GFace *gf,
   // _printTris (name, AllTris, Us, Vs,false);
   // sprintf(name,"frontal%d-param.pos", gf->tag());
   // _printTris (name, AllTris, Us, Vs,true);
+  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   transferDataStructure(gf, AllTris, DATA);
+  removeThreeTrianglesNodes(gf);
   // in case of boundary layer meshing
 #if defined(HAVE_ANN)
   {
@@ -1411,7 +1529,7 @@ void buildBackGroundMesh (GFace *gf,
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     //  Do a background mesh
-    gmshRuppert(gf,0.3,4000, equivalence,parametricCoordinates);
+    bowyerWatson(gf,4000, equivalence,parametricCoordinates);
     //  Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM
@@ -1612,7 +1730,7 @@ void bowyerWatsonParallelograms(GFace *gf,
       //      buildMetric(gf, newPoint, metrics[i], metric);
       buildMetric(gf, newPoint, metric);
 
-      bool success = insertAPoint( gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
+      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
       if (!success) oneNewTriangle = 0;
 	//      if (!success)printf("success %d %d\n",success,AllTris.size());
       i++;

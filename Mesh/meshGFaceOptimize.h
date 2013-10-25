@@ -75,6 +75,7 @@ int edgeSwapPass(GFace *gf,
                  std::set<MTri3*, compareTri3Ptr> &allTris, 
                  const swapCriterion &cr, bidimMeshData &DATA);
 void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
+void removeThreeTrianglesNodes(GFace *gf);
 void buildMeshGenerationDataStructures(GFace *gf, 
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
 				       bidimMeshData & data);

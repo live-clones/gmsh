@@ -205,7 +205,7 @@ public:
     static BoundaryLayerData error;
     return error;
   }
-  void filterPoints();
+  void filterPoints(GEntity *ge, double factor);
 };
 
 BoundaryLayerField* getBLField(GModel *gm);

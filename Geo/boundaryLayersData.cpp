@@ -15,6 +15,11 @@
 #include "MEdge.h"
 #include "boundaryLayersData.h"
 #include "OS.h"
+#include "BackgroundMesh.h"
+
+#if defined(HAVE_RTREE)
+#include "rtree.h"
+#endif
 
 #if !defined(HAVE_MESH) || !defined(HAVE_ANN)
 
@@ -777,6 +782,8 @@ bool buildAdditionalPoints2D(GFace *gf)
   }
   // DEBUG STUFF
 
+  _columns->filterPoints(gf,0.21);
+
   char name[256];
   sprintf(name,"points_face_%d.pos",gf->tag());
   FILE *f = Fopen (name,"w");
@@ -1087,9 +1094,9 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 	}
       }
     }
-    else
+    else {
       createColumnsBetweenFaces (gr,*it,blf,_columns,_allGFaces,_faces,_normals,_treshold);
-
+    }
   }
 
   // DEBUG STUFF
@@ -1114,4 +1121,175 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
   return _columns;
 }
 
+struct blPoint_wrapper 
+{
+  bool _tooclose;
+  MVertex *_v; 
+  std::map<MVertex*,MVertex*> &_v2v;
+  blPoint_wrapper (MVertex *v, std::map<MVertex*,MVertex*> &v2v)
+    : _tooclose(false), _v(v), _v2v(v2v) {}
+};
+
+struct blPoint_rtree 
+{
+  MVertex *_v;  
+  double _size;
+  blPoint_rtree (MVertex *v, double size) :
+    _v(v), _size(size) {}
+  bool inExclusionZone (MVertex *v){
+    double d = _v->distance(v);
+    //printf("d = %12.5E\n",d);
+    if (d <= _size) return true;
+    return false;
+  }
+  void minmax (double min[3], double max[3]){
+    min[0] = _v->x() - _size; 
+    min[1] = _v->y() - _size; 
+    min[2] = _v->z() - _size; 
+    max[0] = _v->x() + _size; 
+    max[1] = _v->y() + _size; 
+    max[2] = _v->z() + _size; 
+  }
+};
+
+
+bool rtree_callback(blPoint_rtree *neighbour,void* point){
+  blPoint_wrapper *w = static_cast<blPoint_wrapper*>(point);
+  
+  const MVertex *from_1 = w->_v2v[neighbour->_v];
+  const MVertex *from_2 = w->_v2v[w->_v];
+
+  //  printf("%p %p\n",from_1,from_2);
+
+  if (from_1 == from_2) {
+    return true;
+  }
+
+  if (neighbour->inExclusionZone(w->_v)){
+    w->_tooclose = true;
+    return false;
+  }
+  return true;
+}
+
+bool inExclusionZone_filter (MVertex* p,
+			     std::map <MVertex*, MVertex*> &v2v,
+			     RTree< blPoint_rtree *,double,3,double> &rtree){
+  // should assert that the point is inside the domain
+  {
+    double u, v;
+    p->getParameter(0,u);
+    p->getParameter(1,v);
+    if (!backgroundMesh::current()->inDomain(u,v,0)) return true;
+  }
+
+  blPoint_wrapper w (p,v2v);
+  double _min[3] = {p->x()-1.e-1, p->y()-1.e-1,p->z()-1.e-1};
+  double _max[3] = {p->x()+1.e-1, p->y()+1.e-1,p->z()+1.e-1};
+  rtree.Search(_min,_max,rtree_callback,&w);
+
+  return w._tooclose;
+}
+
+
+
+void BoundaryLayerColumns::filterPoints(GEntity *ge, double factor)
+#if defined(HAVE_RTREE)
+{
+  //  return;
+  //  compute the element sizes
+  std::map<MVertex*,double> sizes;
+  if (ge->dim() == 2){
+    backgroundMesh::set((GFace *)ge);
+    std::list<GEdge*> edges = ge->edges();
+    std::list<GEdge*>::iterator it = edges.begin();
+    for ( ; it != edges.end() ; ++it){
+      GEdge *ged = *it;
+      for (unsigned int i=0;i<ged->lines.size();i++){
+	MLine *e = ged->lines[i];
+	MVertex *v0 = e->getVertex(0);
+	MVertex *v1 = e->getVertex(1);
+	double d = v0->distance(v1);
+	std::map<MVertex*,double>::iterator it0 = sizes.find(v0);
+	if (it0 == sizes.end()) sizes[v0] = d;
+	else it0->second = std::max(d, it0->second);
+	std::map<MVertex*,double>::iterator it1 = sizes.find(v1);
+	if (it1 == sizes.end()) sizes[v1] = d;
+	else it1->second = std::max(d, it1->second);
+      }
+    }
+  }
+  else    {
+    Msg::Fatal("code ce truc JF !");
+  }
+
+  // a RTREE data structure that enables to verify if
+  // points are too close 
+  RTree<blPoint_rtree*,double,3,double> rtree;
+  // stores the info "where the new vertex comes form"
+  std::map <MVertex*, MVertex*> v2v;
+
+  // compute maximum column size
+  // initialize the RTREE with points on the boundary
+  unsigned int MAXCOLSIZE = 0;
+  BoundaryLayerColumns::iter it = _data.begin();
+  for ( ; it != _data.end() ; ++it) {
+    BoundaryLayerData & d = it->second;    
+    MAXCOLSIZE = MAXCOLSIZE > d._column.size() ? MAXCOLSIZE : d._column.size();
+    MVertex * v = it->first;
+    double largeMeshSize = factor*sizes[v];
+    blPoint_rtree *p = new blPoint_rtree(v,largeMeshSize);
+    double _min[3],_max[3];
+    p->minmax (_min,_max);
+    rtree.Insert(_min,_max,p);	    
+    v2v[v] = v;
+    for (unsigned int k = 0 ; k < d._column.size() ; k++) 
+      v2v[d._column[k]] = v;
+  }
+  
+  // go layer by layer
+  for (unsigned int LAYER = 0 ; LAYER < MAXCOLSIZE ; LAYER++){
+    // store accepted points that will be inserted in the rtree
+    // afterwards
+    std::set<MVertex*> accepted;
+    it = _data.begin();
+    for ( ; it != _data.end() ; ++it) {
+      MVertex * v = it->first;
+      double largeMeshSize = sizes[v];
+      BoundaryLayerData & d = it->second;
+      // take the point if the number of layers is 
+      // large enough
+      if (d._column.size() > LAYER){
+	// check if the vertex in the column at position LAYER
+	// isn't too close to another vertex
+	MVertex *toCheck = d._column[LAYER];
+	if (LAYER){
+	  double DD = toCheck->distance ( d._column[LAYER-1] );
+	  // do not allow to have elements that are stretched the 
+	  // other way around !
+	  if (DD > largeMeshSize) largeMeshSize *= 100;
+	  largeMeshSize = std::max (largeMeshSize, DD);
+	}
+	largeMeshSize *= factor;
+	bool exclude = inExclusionZone_filter (toCheck,v2v,rtree);	
+	if (!exclude){
+	  v2v [toCheck] = v;
+	  blPoint_rtree *p = new blPoint_rtree(toCheck,largeMeshSize);
+	  double _min[3],_max[3];
+	  p->minmax (_min,_max);
+	  rtree.Insert(_min,_max,p);
+	}
+	else {
+	  std::vector<MVertex*> newColumn;
+	  for (unsigned int k = 0 ; k < LAYER ; k++) newColumn.push_back(d._column[k]);
+	  for (unsigned int k = LAYER ; k < d._column.size() ; k++) delete  d._column[k];
+	  d._column = newColumn;
+	}
+      }
+    }
+  }
+#else
+  Msg::Warning ("Boundary Layer Points cannot be filtered without compiling gmsh with the rtree library");
+#endif
+}
 #endif
