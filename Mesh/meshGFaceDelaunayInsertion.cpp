@@ -43,29 +43,6 @@ static bool isBoundary(MTri3 *t, double limit_, int &active)
 }
 */
 
-struct equivalentTriangle {
-  MTri3 *_t;
-  MVertex *_v[3];
-  equivalentTriangle (MTri3 *t,  std::map<MVertex* , MVertex*>* equivalence)
-    :_t(t) {
-    for (int i=0;i<3;i++){
-      MVertex *v = t->tri()->getVertex(i);
-      std::map<MVertex* , MVertex*>::iterator it = equivalence->find(v);
-      if (it == equivalence->end())_v[i] = v;
-      else _v[i] = it->second;
-    }
-    std::sort (_v,_v+3);
-  }
-  bool operator < (const equivalentTriangle &other) const{
-    for (int i=0;i<3;i++){
-      if (other._v[i] > _v[i])return true;
-      if (other._v[i] < _v[i])return false;
-    }
-    return false;
-  }
-};
-
-
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData & data, bool param=true)
 {
@@ -995,38 +972,6 @@ static bool insertAPoint(GFace *gf,
     AllTris.insert(worst);
     return false;
   }
-}
-
-bool computeEquivalentTriangles (std::set<MTri3*,compareTri3Ptr> &AllTris,
-				 std::map<MVertex* , MVertex*>* equivalence) {
-  std::vector<MTri3*> WTF;
-  if (!equivalence)return false;
-  std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
-  std::set<equivalentTriangle> eqTs;  
-  int COUNT = 0;
-  for ( ; it!=AllTris.end();++it){
-    if (!(*it)->isDeleted()){
-      COUNT++;
-      equivalentTriangle et ((*it),equivalence);
-      std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
-      if (iteq == eqTs.end())eqTs.insert(et);
-      else {
-	WTF.push_back(iteq->_t);
-	WTF.push_back(*it);
-      }
-    }
-  }
-  
-  if (WTF.size()){
-    for (int i=0;i<WTF.size();i++){
-      std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.find(WTF[i]);
-      AllTris.erase(it);
-      WTF[i]->forceRadius(100);
-      AllTris.insert(WTF[i]);
-    }
-    return true;
-  }
-  return false;
 }
 
 void bowyerWatson(GFace *gf, int MAXPNT,

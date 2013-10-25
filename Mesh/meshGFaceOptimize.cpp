@@ -194,6 +194,79 @@ void buildMeshGenerationDataStructures(GFace *gf,
   connectTriangles(AllTris);
 }
 
+void computeEquivalences(GFace *gf, bidimMeshData & data){
+  if (data.equivalence){
+    std::vector<MTriangle*> newT;
+    for (unsigned int i=0;i<gf->triangles.size();i++){
+      MTriangle *t = gf->triangles[i];
+      MVertex *v[3];
+      for (int j=0;j<3;j++){
+	v[j] = t->getVertex(j);
+	std::map<MVertex* , MVertex*>::iterator it =  data.equivalence->find(v[j]);
+	if (it != data.equivalence->end()){
+	  v[j] = it->second;
+	}
+      }
+      if (v[0] != v[1] && v[0] != v[2] && v[2] != v[1])newT.push_back(new MTriangle (v[0],v[1],v[2]));
+      delete t;
+    }
+    gf->triangles = newT;
+  }
+}
+
+struct equivalentTriangle {
+  MTriangle *_t;
+  MVertex *_v[3];
+  equivalentTriangle (MTriangle *t,  std::map<MVertex* , MVertex*>* equivalence)
+    :_t(t) {
+    for (int i=0;i<3;i++){
+      MVertex *v = t->getVertex(i);
+      std::map<MVertex* , MVertex*>::iterator it = equivalence->find(v);
+      if (it == equivalence->end())_v[i] = v;
+      else _v[i] = it->second;
+    }
+    std::sort (_v,_v+3);
+  }
+  bool operator < (const equivalentTriangle &other) const{
+    for (int i=0;i<3;i++){
+      if (other._v[i] > _v[i])return true;
+      if (other._v[i] < _v[i])return false;
+    }
+    return false;
+  }
+};
+
+bool computeEquivalentTriangles (GFace *gf,
+				 std::map<MVertex* , MVertex*>* equivalence) {
+  if (!equivalence)return false;
+  std::vector<MTriangle*> WTF;
+  if (!equivalence)return false;
+  std::set<equivalentTriangle> eqTs;  
+  for (int i=0;i<gf->triangles.size();i++){
+    equivalentTriangle et (gf->triangles[i],equivalence);
+    std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
+    if (iteq == eqTs.end())eqTs.insert(et);
+    else {
+      WTF.push_back(iteq->_t);
+      WTF.push_back(gf->triangles[i]);
+    }
+  }
+  
+  if (WTF.size()){
+    printf("%d triangles are equivament\n",WTF.size());
+    for (int i=0;i<WTF.size();i++){
+    }
+    return true;
+  }
+  return false;
+}
+
+
+int splitEquivalentTriangles(GFace *gf, bidimMeshData & data){
+  computeEquivalentTriangles (gf,data.equivalence);  
+}
+
+
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData & data)
 {
   while (1) {
@@ -234,32 +307,10 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
       if(pp < 0) t->reverse();
     }
   }
+  splitEquivalentTriangles(gf, data);
   computeEquivalences(gf, data);
 }
 
-void computeEquivalences(GFace *gf, bidimMeshData & data){
-  if (data.equivalence){
-    std::vector<MTriangle*> newT;
-    for (unsigned int i=0;i<gf->triangles.size();i++){
-      MTriangle *t = gf->triangles[i];
-      MVertex *v[3];
-      for (int j=0;j<3;j++){
-	v[j] = t->getVertex(j);
-	std::map<MVertex* , MVertex*>::iterator it =  data.equivalence->find(v[j]);
-	if (it != data.equivalence->end()){
-	  v[j] = it->second;
-	}
-      }
-      newT.push_back(new MTriangle (v[0],v[1],v[2]));
-      delete t;
-    }
-    gf->triangles = newT;
-  }
-}
-
-int splitEquivalentTriangles(GFace *gf, bidimMeshData & data){
-  
-}
 
 
 void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj)
