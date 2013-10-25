@@ -138,9 +138,10 @@ set(GMSH_API
   contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
   contrib/MathEx/mathex.h)
 
-if(NOT PARENT_DIRECTORY STREQUAL "")
+get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
+if(IAMCHILD)
   set(GMSH_API ${GMSH_API} PARENT_SCOPE)
-endif(NOT PARENT_DIRECTORY STREQUAL "")
+endif(IAMCHILD)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
