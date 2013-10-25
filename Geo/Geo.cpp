@@ -2093,9 +2093,9 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
 // Added by Trevor Strickler for extruding unique compound surface edges
 static List_T* GetCompoundUniqueEdges(Surface *ps)
 {
-
   // Two parts:
-  // Part 1: create map of keys with values abs(c->Num) that map to integer counts of abs(c->num) in compound
+  // Part 1: create map of keys with values abs(c->Num) that map to integer
+  //   counts of abs(c->num) in compound
   // Part 2: Make the unique list
 
   std::vector<int> comp_surfs = ps->compound;
@@ -2198,6 +2198,9 @@ static List_T* GetOrderedUniqueEdges( Surface *s )
   // these into the gmsh geometry system.
   // Have to get list of surface numbers
   int numgen = List_Nbr(unique);
+
+  if(!numgen) return 0;
+
   List_T *gen_nums = List_Create(numgen, 1, sizeof(int));
 
   for( int i = 0; i < numgen; i++ ){
