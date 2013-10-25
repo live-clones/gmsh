@@ -1195,8 +1195,8 @@ bool inExclusionZone_filter (MVertex* p,
 
 
 void BoundaryLayerColumns::filterPoints(GEntity *ge, double factor)
-#if defined(HAVE_RTREE)
 {
+#if defined(HAVE_RTREE)
   //  return;
   //  compute the element sizes
   std::map<MVertex*,double> sizes;
@@ -1261,37 +1261,35 @@ void BoundaryLayerColumns::filterPoints(GEntity *ge, double factor)
       // take the point if the number of layers is 
       // large enough
       if (d._column.size() > LAYER){
-	// check if the vertex in the column at position LAYER
-	// isn't too close to another vertex
-	MVertex *toCheck = d._column[LAYER];
-	if (LAYER){
-	  double DD = toCheck->distance ( d._column[LAYER-1] );
-	  // do not allow to have elements that are stretched the 
-	  // other way around !
-	  if (DD > largeMeshSize) largeMeshSize *= 100;
-	  largeMeshSize = std::max (largeMeshSize, DD);
-	}
-	largeMeshSize *= factor;
-	bool exclude = inExclusionZone_filter (toCheck,v2v,rtree);	
-	if (!exclude){
-	  v2v [toCheck] = v;
-	  blPoint_rtree *p = new blPoint_rtree(toCheck,largeMeshSize);
-	  double _min[3],_max[3];
-	  p->minmax (_min,_max);
-	  rtree.Insert(_min,_max,p);
-	}
-	else {
-	  std::vector<MVertex*> newColumn;
-	  for (unsigned int k = 0 ; k < LAYER ; k++) newColumn.push_back(d._column[k]);
-	  for (unsigned int k = LAYER ; k < d._column.size() ; k++) delete  d._column[k];
-	  d._column = newColumn;
-	}
+        // check if the vertex in the column at position LAYER
+        // isn't too close to another vertex
+        MVertex *toCheck = d._column[LAYER];
+        if (LAYER){
+          double DD = toCheck->distance ( d._column[LAYER-1] );
+          // do not allow to have elements that are stretched the
+          // other way around !
+          if (DD > largeMeshSize) largeMeshSize *= 100;
+          largeMeshSize = std::max (largeMeshSize, DD);
+        }
+        largeMeshSize *= factor;
+        bool exclude = inExclusionZone_filter (toCheck,v2v,rtree);
+        if (!exclude){
+          v2v [toCheck] = v;
+          blPoint_rtree *p = new blPoint_rtree(toCheck,largeMeshSize);
+          double _min[3],_max[3];
+          p->minmax (_min,_max);
+          rtree.Insert(_min,_max,p);
+        }
+        else {
+          std::vector<MVertex*> newColumn;
+          for (unsigned int k = 0 ; k < LAYER ; k++) newColumn.push_back(d._column[k]);
+          for (unsigned int k = LAYER ; k < d._column.size() ; k++) delete  d._column[k];
+          d._column = newColumn;
+        }
       }
     }
   }
-}
 #else
-{
   Msg::Warning ("Boundary Layer Points cannot be filtered without compiling gmsh with the rtree library");
 #endif
 }
