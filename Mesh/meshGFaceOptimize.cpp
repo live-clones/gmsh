@@ -234,7 +234,10 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
       if(pp < 0) t->reverse();
     }
   }
+  computeEquivalences(gf, data);
+}
 
+void computeEquivalences(GFace *gf, bidimMeshData & data){
   if (data.equivalence){
     std::vector<MTriangle*> newT;
     for (unsigned int i=0;i<gf->triangles.size();i++){
@@ -252,9 +255,12 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
     }
     gf->triangles = newT;
   }
-
-
 }
+
+int splitEquivalentTriangles(GFace *gf, bidimMeshData & data){
+  
+}
+
 
 void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj)
 {

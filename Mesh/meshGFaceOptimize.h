@@ -80,6 +80,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
 				       bidimMeshData & data);
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData &DATA);
+void computeEquivalences(GFace *gf,bidimMeshData &DATA);
 void recombineIntoQuads(GFace *gf, 
                         bool topologicalOpti   = true, 
                         bool nodeRepositioning = true);
