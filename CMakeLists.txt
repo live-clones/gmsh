@@ -136,7 +136,11 @@ set(GMSH_API
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
   contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
-  contrib/MathEx/mathex.h PARENT_SCOPE)
+  contrib/MathEx/mathex.h)
+
+if(PARENT_DIRECTORY)
+  set(GMSH_API ${GMSH_API} PARENT_SCOPE)
+endif(PARENT_DIRECTORY)
 
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
