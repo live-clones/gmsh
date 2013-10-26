@@ -194,7 +194,8 @@ void buildMeshGenerationDataStructures(GFace *gf,
   connectTriangles(AllTris);
 }
 
-void computeEquivalences(GFace *gf, bidimMeshData & data){
+void computeEquivalences(GFace *gf, bidimMeshData & data)
+{
   if (data.equivalence){
     std::vector<MTriangle*> newT;
     for (unsigned int i=0;i<gf->triangles.size();i++){
@@ -207,7 +208,8 @@ void computeEquivalences(GFace *gf, bidimMeshData & data){
 	  v[j] = it->second;
 	}
       }
-      if (v[0] != v[1] && v[0] != v[2] && v[2] != v[1])newT.push_back(new MTriangle (v[0],v[1],v[2]));
+      if (v[0] != v[1] && v[0] != v[2] && v[2] != v[1])
+        newT.push_back(new MTriangle (v[0],v[1],v[2]));
       delete t;
     }
     gf->triangles = newT;
@@ -237,12 +239,13 @@ struct equivalentTriangle {
 };
 
 bool computeEquivalentTriangles (GFace *gf,
-				 std::map<MVertex* , MVertex*>* equivalence) {
+				 std::map<MVertex* , MVertex*>* equivalence)
+{
   if (!equivalence)return false;
   std::vector<MTriangle*> WTF;
   if (!equivalence)return false;
-  std::set<equivalentTriangle> eqTs;  
-  for (int i=0;i<gf->triangles.size();i++){
+  std::set<equivalentTriangle> eqTs;
+  for (unsigned int i = 0; i < gf->triangles.size(); i++){
     equivalentTriangle et (gf->triangles[i],equivalence);
     std::set<equivalentTriangle>::iterator iteq = eqTs.find(et);
     if (iteq == eqTs.end())eqTs.insert(et);
@@ -251,10 +254,10 @@ bool computeEquivalentTriangles (GFace *gf,
       WTF.push_back(gf->triangles[i]);
     }
   }
-  
+
   if (WTF.size()){
-    printf("%d triangles are equivament\n",WTF.size());
-    for (int i=0;i<WTF.size();i++){
+    Msg::Info("%d triangles are equivalent", WTF.size());
+    for (unsigned int i=0;i<WTF.size();i++){
     }
     return true;
   }
@@ -262,12 +265,14 @@ bool computeEquivalentTriangles (GFace *gf,
 }
 
 
-int splitEquivalentTriangles(GFace *gf, bidimMeshData & data){
-  computeEquivalentTriangles (gf,data.equivalence);  
+void splitEquivalentTriangles(GFace *gf, bidimMeshData & data)
+{
+  computeEquivalentTriangles (gf,data.equivalence);
 }
 
 
-void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData & data)
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
+                           bidimMeshData & data)
 {
   while (1) {
     if(AllTris.begin() == AllTris.end()) break;
@@ -434,7 +439,7 @@ int _removeThreeTrianglesNodes(GFace *gf)
           break;
         }
         for(int j = 0; j < 3; j++) {
-          if(lt[i]->getVertex(j) == it->first) {	    
+          if(lt[i]->getVertex(j) == it->first) {
             vs.insert(lt[i]->getVertex((j+1)%3));
             vs.insert(lt[i]->getVertex((j+2)%3));
             break;
@@ -2268,11 +2273,11 @@ void _relocateVertex(GFace *gf, MVertex *ver,
       MEdge e = lt[i]->getEdge(j);
       SPoint2 param0, param1;
       if (e.getVertex(0) == ver){
-	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);      
+	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);
 	pts[e.getVertex(1)] = param1;
       }
       else if (e.getVertex(1) == ver){
-	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);      
+	reparamMeshEdgeOnFace(e.getVertex(0), e.getVertex(1), gf, param0, param1);
 	pts[e.getVertex(0)] = param0;
       }
     }
@@ -2809,7 +2814,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   swapquad sq (v1, v2, v3, v4);
   if(configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
-  
+
   if (edgeSwapDelProj(v3,v4,v2,v1))return false;
 
   //  const double volumeRef = surfaceTriangleUV(v1, v2, v3, data) +
@@ -2838,7 +2843,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       const double triQuality = std::min(qmTriangle(t1b, QMTRI_RHO),
                                          qmTriangle(t2b, QMTRI_RHO));
       if (!edgeSwapDelProj(v1,v2,v3,v4)){
-	if(triQuality < triQualityRef){	  
+	if(triQuality < triQualityRef){
 	  delete t1b;
 	  delete t2b;
 	  return false;
@@ -3032,7 +3037,7 @@ bool buildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
   }
 }
 
-// split one triangle into 3 triangles 
+// split one triangle into 3 triangles
 void _triangleSplit (GFace *gf, MElement *t)
 {
   MVertex *v1 = t->getVertex(0);

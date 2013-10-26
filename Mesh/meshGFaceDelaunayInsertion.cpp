@@ -228,7 +228,7 @@ void buildMetric(GFace *gf, double *uv, double *metric)
   metric[0] = dot(der.first(), der.first());
   metric[1] = dot(der.second(), der.first());
   metric[2] = dot(der.second(), der.second());
- 			     
+
 }
 
 // m 3x3
@@ -474,16 +474,16 @@ int inCircumCircleTangentPlane(MTriangle *t,
   SVector3 pmx2 (v2->x()-p.x(),v2->y()-p.y(),v2->z()-p.z());
   p2[0] = dot(pmx2,t1);p2[1] = dot(pmx2,t2);
   SVector3 pmx3 (v3->x()-p.x(),v3->y()-p.y(),v3->z()-p.z());
-  p3[0] = dot(pmx3,t1);p3[1] = dot(pmx3,t2);  
+  p3[0] = dot(pmx3,t1);p3[1] = dot(pmx3,t2);
   double result = robustPredicates::incircle(p1, p2, p3, pp) *
     robustPredicates::orient2d(p1, p2, p3);
   return (result > 0) ? 1 : 0;
 }
 
 
-void recurFindCavityTangentPlane(std::list<edgeXface> &shell, 
+void recurFindCavityTangentPlane(std::list<edgeXface> &shell,
 				 std::list<MTri3*> &cavity,
-				 MTri3 *t,  
+				 MTri3 *t,
 				 SPoint3 &p, SVector3 &t1, SVector3 &t2)
 {
   t->setDeleted(true);
@@ -520,13 +520,13 @@ static void computeTangentPlane (GFace *gf, double center[2], SPoint3 &p, SVecto
 }
 
 bool findCavityTangentPlane(GFace *gf, double *center,
-			    std::list<edgeXface> &shell, 
+			    std::list<edgeXface> &shell,
 			    std::list<MTri3*> &cavity,
 			    MTri3 *t)
 {
   return false;
   SPoint3 p; SVector3 t1,t2;
-  computeTangentPlane (gf,center, p,t1,t2);    
+  computeTangentPlane (gf,center, p,t1,t2);
   SVector3 N = crossprod(t2,t1);
   N.normalize();
   const double d = -(N.x()*p.x()+N.y()*p.y()+N.z()*p.z());
@@ -535,8 +535,8 @@ bool findCavityTangentPlane(GFace *gf, double *center,
   double DMAX = 0.0;
   for (std::list<MTri3*>::iterator i=cavity.begin();i!=cavity.end();i++){
     t = *i;
-    SPoint3 b = t->tri()->getFace(0).barycenter();    
-    //    SVector3 n = t->tri()->getFace(0).normal();    
+    SPoint3 b = t->tri()->getFace(0).barycenter();
+    //    SVector3 n = t->tri()->getFace(0).normal();
     //    double a = fabs(dot(N,n));
     double dist = fabs(N.x()*b.x()+N.y()*b.y()+N.z()*b.z() + d);
     DMAX = std::max(DMAX,dist);
@@ -544,7 +544,7 @@ bool findCavityTangentPlane(GFace *gf, double *center,
     //    printf("%g %g %g -- %g %g %g\n",N.x(),N.y(),N.z(),n.x(),n.y(),n.z());
   }
   if (DMAX > 30 || cavity.size() < 2){
-    printf("%d elements in the cavity DMAX %g\n",cavity.size(),DMAX);
+    //printf("%d elements in the cavity DMAX %g\n",cavity.size(),DMAX);
     for (std::list<MTri3*>::iterator i=cavity.begin();i!=cavity.end();i++){
       t = *i;
       t->setDeleted(false);
@@ -875,14 +875,14 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
 
 ///*********************
 
-static bool insertAPoint(GFace *gf, 
+static bool insertAPoint(GFace *gf,
 			 std::set<MTri3*,compareTri3Ptr>::iterator it,
-                         double center[2], 
-			 double metric[3], 
+                         double center[2],
+			 double metric[3],
 			 bidimMeshData & data,
                          std::set<MTri3*,compareTri3Ptr> &AllTris,
                          std::set<MTri3*,compareTri3Ptr> *ActiveTris = 0,
-                         MTri3 *worst = 0,  
+                         MTri3 *worst = 0,
 			 MTri3 **oneNewTriangle = 0)
 {
   if (worst){
@@ -911,7 +911,7 @@ static bool insertAPoint(GFace *gf,
       }
     }
   }
-  else {    
+  else {
     ptin = search4Triangle (worst, center, data, AllTris,uv, oneNewTriangle ? true : false);
     //    printf("what's this %g %g\n",center[0],center[1]);
 
@@ -992,7 +992,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
     Msg::Error("No triangles in initial mesh");
     return;
   }
-  
+
   int ITER = 0;
   int NBDELETED = 0;
   //  double DT1 = 0 , DT2=0, DT3=0;
