@@ -58,6 +58,7 @@ opt(MMG3D "Enable MMG3D 3D anisotropic mesh refinement" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
 opt(MPI "Enable MPI (mostly for parser and solver - mesh generation is sequential)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
+opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(OCC "Enable Open CASCADE geometrical models" ${DEFAULT})
@@ -124,8 +125,8 @@ set(GMSH_API
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h
-    Solver/groupOfElements.h Solver/linearSystemPETSc.h
+    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
+    Solver/groupOfElements.h Solver/linearSystemPETSc.h Solver/linearSystemMUMPS.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
   Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h
@@ -836,6 +837,20 @@ if(HAVE_SOLVER)
       message(STATUS "Warning: Disabling Taucs (requires METIS)")
     endif(HAVE_METIS)
   endif(ENABLE_TAUCS)
+
+  if(ENABLE_MUMPS)
+    find_library(DMUMPS_LIB dmumps PATH_SUFFIXES lib)
+    find_library(ZMUMPS_LIB zmumps PATH_SUFFIXES lib)
+    find_path(DMUMPS_INC "dmumps_c.h" PATH_SUFFIXES src include)
+    find_path(ZMUMPS_INC "zmumps_c.h" PATH_SUFFIXES src include)
+    if(DMUMPS_LIB AND DMUMPS_INC AND ZMUMPS_LIB AND ZMUMPS_INC)
+        set_config_option(HAVE_MUMPS "MUMPS")
+        list(APPEND EXTERNAL_LIBRARIES ${DMUMPS_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${DMUMPS_INC})
+        list(APPEND EXTERNAL_LIBRARIES ${ZMUMPS_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${ZMUMPS_INC})
+      endif(DMUMPS_LIB AND DMUMPS_INC AND ZMUMPS_LIB AND ZMUMPS_INC)
+  endif(ENABLE_MUMPS)
 
   if(ENABLE_PETSC)
     if(PETSC_DIR)

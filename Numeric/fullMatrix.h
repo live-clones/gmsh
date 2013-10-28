@@ -745,6 +745,15 @@ class fullMatrix
     printf("};\n");
   }
 
+  void binarySave (FILE *f) const
+  {
+    fwrite (_data, sizeof(scalar), _r*_c, f);
+  }
+  void binaryLoad (FILE *f)
+  {
+    if(fread (_data, sizeof(scalar), _r*_c, f) != (size_t)_r) return;
+  }
+
   // specific functions for dgshell
   void mult_naiveBlock(const fullMatrix<scalar> &b, const int ncol, const int fcol,
                        const int alpha, const int beta, fullVector<scalar> &c,
