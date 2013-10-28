@@ -175,6 +175,9 @@ class MElement
   virtual double maxEdge();
   virtual double minEdge();
 
+  // Max. distance between curved and straight element among all high-order nodes
+  double maxDistToStraight();
+
   // get the quality measures
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }

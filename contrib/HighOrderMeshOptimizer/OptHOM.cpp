@@ -316,7 +316,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min,
   // Set weights & length scale for non-dimensionalization
   lambda = weightFixed;
   lambda2 = weightFree;
-  std::vector<double> dSq(mesh.nVert());
+  std::vector<double> dSq(mesh.nEl());
   mesh.distSqToStraight(dSq);
   const double maxDSq = *max_element(dSq.begin(),dSq.end());
   if (maxDSq < 1.e-10) {                                        // Length scale for non-dim. distance

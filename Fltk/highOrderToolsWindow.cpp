@@ -343,11 +343,11 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[5] = new Fl_Value_Input
     (x, y, IW/2, BH);
   value[5]->align(FL_ALIGN_RIGHT);
-  value[5]->value(1.e+5);
+  value[5]->value(1000.);
   value[6] = new Fl_Value_Input
     (x+IW/2,y, IW/2, BH, "W fixed / W free");
   value[6]->align(FL_ALIGN_RIGHT);
-  value[6]->value(1.e+2);
+  value[6]->value(1.);
 
   y += BH;
   value[3] = new Fl_Value_Input

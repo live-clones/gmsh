@@ -61,8 +61,8 @@ struct OptHomParameters {
   double CPU; // Time for optimization
 
   OptHomParameters ()
-    : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weightFixed(1.e6),
-      weightFree (1.e2), nbLayers (6) , dim(3) , itMax(300), onlyVisible(true),
+    : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weightFixed(1000.),
+      weightFree (1.), nbLayers (6) , dim(3) , itMax(300), onlyVisible(true),
       distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
       adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false)
   {

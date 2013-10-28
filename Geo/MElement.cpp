@@ -112,6 +112,29 @@ double MElement::rhoShapeMeasure()
     return 0.;
 }
 
+double MElement::maxDistToStraight()
+{
+  const nodalBasis *lagBasis = getFunctionSpace();
+  const fullMatrix<double> &uvw = lagBasis->points;
+  const int &nV = uvw.size1();
+  const int &dim = uvw.size2();
+  const nodalBasis *lagBasis1 = getFunctionSpace(1);
+  const int &nV1 = lagBasis1->points.size1();
+  SPoint3 xyz1[nV1];
+  for (int iV = 0; iV < nV1; ++iV) xyz1[iV] = getVertex(iV)->point();
+  double maxdx = 0.;
+  for (int iV = nV1; iV < nV; ++iV) {
+    double f[256];
+    lagBasis1->f(uvw(iV, 0), (dim > 1) ? uvw(iV, 1) : 0., (dim > 2) ? uvw(iV, 2) : 0., f);
+    SPoint3 xyzS(0.,0.,0.);
+    for (int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF]*f[iSF];
+    SVector3 vec(xyzS,getVertex(iV)->point());
+    double dx = vec.norm();
+    if (dx > maxdx) maxdx = dx;
+  }
+  return maxdx;
+}
+
 void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge)
 {
   jmin = jmax = 1.0;

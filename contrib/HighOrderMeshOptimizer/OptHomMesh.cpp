@@ -207,31 +207,10 @@ void Mesh::updateMesh(const double *it)
 
 }
 
-void Mesh::distSqToStraight(std::vector<double> &dSq)
-{
-  std::vector<SPoint3> sxyz(nVert());
+void Mesh::distSqToStraight(std::vector<double> &dSq) {
   for (int iEl = 0; iEl < nEl(); iEl++) {
-    MElement *el = _el[iEl];
-    const polynomialBasis *lagrange = (polynomialBasis*)el->getFunctionSpace();
-    const polynomialBasis *lagrange1 = (polynomialBasis*)el->getFunctionSpace(1);
-    int nV = lagrange->points.size1();
-    int nV1 = lagrange1->points.size1();
-    for (int i = 0; i < nV1; ++i) {
-      sxyz[_el2V[iEl][i]] = _vert[_el2V[iEl][i]]->point();
-    }
-    int dim = lagrange->points.size2();
-    for (int i = nV1; i < nV; ++i) {
-      double f[256];
-      lagrange1->f(lagrange->points(i, 0), dim > 1 ? lagrange->points(i, 1) : 0.,
-                   dim > 2 ? lagrange->points(i, 2) : 0., f);
-      for (int j = 0; j < nV1; ++j)
-        sxyz[_el2V[iEl][i]] += sxyz[_el2V[iEl][j]] * f[j];
-    }
-  }
-
-  for (int iV = 0; iV < nVert(); iV++) {
-    SPoint3 d = _xyz[iV]-sxyz[iV];
-    dSq[iV] = d[0]*d[0]+d[1]*d[1]+d[2]*d[2];
+    const double d = _el[iEl]->maxDistToStraight();
+    dSq[iEl] = d*d;
   }
 }
 
