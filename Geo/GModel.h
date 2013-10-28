@@ -325,7 +325,7 @@ class GModel
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"
-  std::string getPhysicalName(int dim, int num);
+  std::string getPhysicalName(int dim, int num) const;
 
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found

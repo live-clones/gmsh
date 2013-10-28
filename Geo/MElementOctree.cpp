@@ -187,7 +187,7 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
   return e;
 }
 
-MElement *MElementOctree::find(double x, double y, double z, int dim, bool strict)
+MElement *MElementOctree::find(double x, double y, double z, int dim, bool strict) const
 {
   double P[3] = {x, y, z};
   MElement *e = (MElement*)Octree_Search(P, _octree);
