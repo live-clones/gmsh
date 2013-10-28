@@ -23,7 +23,7 @@ class JacobianBasis {
 
   int numJacNodes, numPrimJacNodes;
   int numMapNodes, numPrimMapNodes;
-  static const int numJacNodesFast = 1;
+  int numJacNodesFast;
 
   void getSignedJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                 const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,

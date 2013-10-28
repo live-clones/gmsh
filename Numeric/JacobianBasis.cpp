@@ -124,16 +124,12 @@ JacobianBasis::JacobianBasis(int tag)
   delete[] barDPsi;
 
   // Compute "fast" Jacobian evaluation matrices (at 1st order nodes + barycenter)
-//  numJacNodesFast = numPrimMapNodes+1;
-//  fullMatrix<double> lagPointsFast(numJacNodesFast,3);                                  // Sampling points
-//  lagPointsFast.copy(primMapBasis->points,0,numPrimMapNodes,0,3,0,0);                   // 1st order nodes
-//  lagPointsFast(numPrimMapNodes,0) = barycenter[0];                                     // Last point = barycenter
-//  lagPointsFast(numPrimMapNodes,1) = barycenter[1];
-//  lagPointsFast(numPrimMapNodes,2) = barycenter[2];
+  numJacNodesFast = numPrimMapNodes+1;
   fullMatrix<double> lagPointsFast(numJacNodesFast,3);                                  // Sampling points
-  lagPointsFast(0,0) = barycenter[0];                                     // Last point = barycenter
-  lagPointsFast(0,1) = barycenter[1];
-  lagPointsFast(0,2) = barycenter[2];
+  lagPointsFast.copy(primMapBasis->points,0,numPrimMapNodes,0,3,0,0);                   // 1st order nodes
+  lagPointsFast(numPrimMapNodes,0) = barycenter[0];                                     // Last point = barycenter
+  lagPointsFast(numPrimMapNodes,1) = barycenter[1];
+  lagPointsFast(numPrimMapNodes,2) = barycenter[2];
 
   fullMatrix<double> allDPsiFast;
   mapBasis->df(lagPointsFast, allDPsiFast);
