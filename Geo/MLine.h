@@ -49,8 +49,8 @@ class MLine : public MElement {
   }
   virtual int getNumEdges(){ return 1; }
   virtual MEdge getEdge(int num) const{ return MEdge(_v[0], _v[1]); }
-  virtual int getNumEdgesRep(){ return 1; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 1; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     _getEdgeRep(_v[0], _v[1], x, y, z, n);
   }
@@ -61,8 +61,8 @@ class MLine : public MElement {
   }
   virtual int getNumFaces(){ return 0; }
   virtual MFace getFace(int num){ return MFace(); }
-  virtual int getNumFacesRep(){ return 0; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getNumFacesRep(bool curved){ return 0; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getType() const { return TYPE_LIN; }
   virtual int getTypeForMSH() const { return MSH_LIN_2; }
   virtual int getTypeForUNV() const { return 21; } // linear beam
@@ -133,8 +133,8 @@ class MLine3 : public MLine {
   }
   virtual MVertex *getVertexINP(int num){ return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
@@ -182,8 +182,8 @@ class MLineN : public MLine {
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual int getNumEdgeVertices() const { return _vs.size(); }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2 + _vs.size());

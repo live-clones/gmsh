@@ -67,8 +67,8 @@ class MTetrahedron : public MElement {
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
-  virtual int getNumEdgesRep(){ return 6; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 6; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[6] = {0, 0, 0, 1, 2, 3};
     MEdge e(getEdge(num));
@@ -87,8 +87,8 @@ class MTetrahedron : public MElement {
                  _v[faces_tetra(num, 2)]);
   }
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
-  virtual int getNumFacesRep(){ return 4; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved){ return 4; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     MFace f(getFace(num));
     _getFaceRep(f.getVertex(0), f.getVertex(1), f.getVertex(2), x, y, z, n);
@@ -243,10 +243,10 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertexDIFF(int num){ return getVertexBDF(num); }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 6; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumEdgesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumFacesRep();
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
@@ -420,10 +420,10 @@ class MTetrahedronN : public MTetrahedron {
       inv[i] = _vs[reverseIndices[i + 4] - 4];
     _vs = inv;
   }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumEdgesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumFacesRep();
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MTetrahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);

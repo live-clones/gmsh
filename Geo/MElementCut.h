@@ -72,8 +72,8 @@ class MPolyhedron : public MElement {
   }
   virtual int getNumEdges() { return _edges.size(); }
   virtual MEdge getEdge(int num) const{ return _edges[num]; }
-  virtual int getNumEdgesRep() { return _edges.size(); }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved) { return _edges.size(); }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     MEdge e(getEdge(num));
     for(unsigned int i = 0; i < _faces.size(); i++)
@@ -89,8 +89,8 @@ class MPolyhedron : public MElement {
   }
   virtual int getNumFaces() { return _faces.size(); }
   virtual MFace getFace(int num) { return _faces[num]; }
-  virtual int getNumFacesRep() { return _faces.size(); }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved) { return _faces.size(); }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     _getFaceRep(_faces[num].getVertex(0), _faces[num].getVertex(1),
                 _faces[num].getVertex(2), x, y, z, n);
@@ -229,8 +229,8 @@ class MPolygon : public MElement {
   }
   virtual int getNumEdges() { return _edges.size(); }
   virtual MEdge getEdge(int num) const{ return _edges[num]; }
-  virtual int getNumEdgesRep() { return getNumEdges(); }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
@@ -243,8 +243,8 @@ class MPolygon : public MElement {
   }
   virtual int getNumFaces() { return 1; }
   virtual MFace getFace(int num) { return MFace(_vertices); }
-  virtual int getNumFacesRep() { return _parts.size(); }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved) { return _parts.size(); }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     _getFaceRep(_parts[num]->getVertex(0), _parts[num]->getVertex(1),
                 _parts[num]->getVertex(2), x, y, z, n);

@@ -48,36 +48,42 @@ double MLine::getVolume()
   return getLength();
 }
 
-int MLine3::getNumEdgesRep()
+int MLine3::getNumEdgesRep(bool curved)
 {
-  return  CTX::instance()->mesh.numSubEdges;
+  return curved ? CTX::instance()->mesh.numSubEdges : 1;
 }
 
-void MLine3::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MLine3::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  int numSubEdges = CTX::instance()->mesh.numSubEdges;
-  SPoint3 pnt1, pnt2;
-  pnt(-1. + 2 * (double)num / numSubEdges, 0., 0., pnt1);
-  pnt(-1. + 2 * (double)(num + 1) / numSubEdges, 0., 0, pnt2);
-  x[0] = pnt1.x(); x[1] = pnt2.x();
-  y[0] = pnt1.y(); y[1] = pnt2.y();
-  z[0] = pnt1.z(); z[1] = pnt2.z();
-  n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
+  if (curved) {
+    int numSubEdges = CTX::instance()->mesh.numSubEdges;
+    SPoint3 pnt1, pnt2;
+    pnt(-1. + 2 * (double)num / numSubEdges, 0., 0., pnt1);
+    pnt(-1. + 2 * (double)(num + 1) / numSubEdges, 0., 0, pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
+  }
+  else MLine::getEdgeRep(false, num, x, y, z, n);
 }
 
-int MLineN::getNumEdgesRep()
+int MLineN::getNumEdgesRep(bool curved)
 {
-  return  CTX::instance()->mesh.numSubEdges;
+  return curved ? CTX::instance()->mesh.numSubEdges : 1;
 }
 
-void MLineN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MLineN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  int numSubEdges = CTX::instance()->mesh.numSubEdges;
-  SPoint3 pnt1, pnt2;
-  pnt(-1. + 2 * (double)num / numSubEdges, 0., 0., pnt1);
-  pnt(-1. + 2 * (double)(num + 1) / numSubEdges, 0., 0, pnt2);
-  x[0] = pnt1.x(); x[1] = pnt2.x();
-  y[0] = pnt1.y(); y[1] = pnt2.y();
-  z[0] = pnt1.z(); z[1] = pnt2.z();
-  n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
+  if (curved) {
+    int numSubEdges = CTX::instance()->mesh.numSubEdges;
+    SPoint3 pnt1, pnt2;
+    pnt(-1. + 2 * (double)num / numSubEdges, 0., 0., pnt1);
+    pnt(-1. + 2 * (double)(num + 1) / numSubEdges, 0., 0, pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
+  }
+  else MLine::getEdgeRep(false, num, x, y, z, n);
 }

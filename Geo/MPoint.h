@@ -35,12 +35,12 @@ class MPoint : public MElement {
   virtual void setVertex(int num,  MVertex *v){ _v[0] = v; }
   virtual int getNumEdges(){ return 0; }
   virtual MEdge getEdge(int num) const{ return MEdge(); }
-  virtual int getNumEdgesRep(){ return 0; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getNumEdgesRep(bool curved){ return 0; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getNumFaces(){ return 0; }
   virtual MFace getFace(int num){ return MFace(); }
-  virtual int getNumFacesRep(){ return 0; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getNumFacesRep(bool curved){ return 0; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getType() const { return TYPE_PNT; }
   virtual int getTypeForMSH() const { return MSH_PNT; }
   virtual int getTypeForVTK() const { return 1; }

@@ -19,6 +19,8 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 
+static const double curvedRepTol = 1.e-5;
+
 unsigned int getColorByEntity(GEntity *e)
 {
   if(e->getSelection()){ // selection
@@ -161,12 +163,14 @@ static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
+    const bool curved = (ele->getPolynomialOrder() > 1) &&
+                        (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
-    for(int j = 0; j < ele->getNumFacesRep(); j++){
+    for(int j = 0; j < ele->getNumFacesRep(curved); j++){
       double x[3], y[3], z[3];
       SVector3 n[3];
-      ele->getFaceRep(j, x, y, z, n);
+      ele->getFaceRep(curved, j, x, y, z, n);
       for(int k = 0; k < 3; k++){
         if(CTX::instance()->mesh.explode != 1.){
           x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
@@ -191,15 +195,18 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
 
+    const bool curved = (ele->getPolynomialOrder() > 1) &&
+                        (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
+
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
 
     if(edges){
       bool unique = e->dim() > 1 && !CTX::instance()->pickElements;
-      for(int j = 0; j < ele->getNumEdgesRep(); j++){
+      for(int j = 0; j < ele->getNumEdgesRep(curved); j++){
         double x[2], y[2], z[2];
         SVector3 n[2];
-        ele->getEdgeRep(j, x, y, z, n);
+        ele->getEdgeRep(curved, j, x, y, z, n);
         if(CTX::instance()->mesh.explode != 1.){
           for(int k = 0; k < 2; k++){
             x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);
@@ -217,10 +224,10 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     if(faces){
       bool unique = e->dim() > 2 && !CTX::instance()->pickElements;
       bool skin = e->dim() > 2 && CTX::instance()->mesh.drawSkinOnly;
-      for(int j = 0; j < ele->getNumFacesRep(); j++){
+      for(int j = 0; j < ele->getNumFacesRep(curved); j++){
         double x[3], y[3], z[3];
         SVector3 n[3];
-        ele->getFaceRep(j, x, y, z, n);
+        ele->getFaceRep(curved, j, x, y, z, n);
         if(CTX::instance()->mesh.explode != 1.){
           for(int k = 0; k < 3; k++){
             x[k] = pc[0] + CTX::instance()->mesh.explode * (x[k] - pc[0]);

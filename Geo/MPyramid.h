@@ -76,8 +76,8 @@ class MPyramid : public MElement {
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
   }
-  virtual int getNumEdgesRep(){ return 8; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 8; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[8] = {0, 1, 1, 2, 0, 3, 2, 3};
     MEdge e(getEdge(num));
@@ -98,8 +98,8 @@ class MPyramid : public MElement {
     else
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
-  virtual int getNumFacesRep(){ return 6; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved){ return 6; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[6][3] = {
       {0, 1, 4},
@@ -333,10 +333,10 @@ class MPyramidN : public MPyramid {
     Msg::Error("Reverse not implemented yet for MPyramidN");
 
   }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumEdgesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumFacesRep();
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 5 ? MPyramid::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);

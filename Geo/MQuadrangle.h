@@ -82,8 +82,8 @@ class MQuadrangle : public MElement {
     }
     Msg::Error("Could not get edge information for quadranglee %d", getNum());
   }
-  virtual int getNumEdgesRep(){ return 4; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 4; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
@@ -95,8 +95,8 @@ class MQuadrangle : public MElement {
   }
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
-  virtual int getNumFacesRep(){ return 2; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved){ return 2; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[2][3] = {
       {0, 1, 2}, {0, 2, 3}
@@ -212,16 +212,16 @@ class MQuadrangle8 : public MQuadrangle {
     return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 4; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MQuadrangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(8);
@@ -295,16 +295,16 @@ class MQuadrangle9 : public MQuadrangle {
   }
   virtual int getNumEdgeVertices() const { return 4; }
   virtual int getNumFaceVertices() const { return 1; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MQuadrangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(9);
@@ -381,9 +381,9 @@ class MQuadrangleN : public MQuadrangle {
       return  (_order - 1) * (_order - 1);
   }
   virtual int getNumEdgeVertices() const { return 4 * (_order - 1); }
-  virtual int getNumEdgesRep();
-  virtual int getNumFacesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(_order + 1);
@@ -393,7 +393,7 @@ class MQuadrangleN : public MQuadrangle {
     for(int i = num * (_order-1); i != ie; ++i)
       v[j++] = _vs[i];
   }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(4 + _vs.size());

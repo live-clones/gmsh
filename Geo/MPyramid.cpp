@@ -58,42 +58,49 @@ const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
 
 MPyramidN::~MPyramidN() {}
 
-int MPyramidN::getNumEdgesRep(){ return 8 * CTX::instance()->mesh.numSubEdges; }
+int MPyramidN::getNumEdgesRep(bool curved) {
+  return curved ? 8 * CTX::instance()->mesh.numSubEdges : 8;
+}
 
-void MPyramidN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MPyramidN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  int numSubEdges = CTX::instance()->mesh.numSubEdges;
-  static double pp[5][3] = {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{0,0,1}};
-  static int ed [8][2] = {{0,1},{0,3},{0,4},{1,2},{1,4},{2,3},{2,4},{3,4}};
-  int iEdge = num / numSubEdges;
-  int iSubEdge = num % numSubEdges;
+  if (curved) {
+    int numSubEdges = CTX::instance()->mesh.numSubEdges;
+    static double pp[5][3] = {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{0,0,1}};
+    static int ed [8][2] = {{0,1},{0,3},{0,4},{1,2},{1,4},{2,3},{2,4},{3,4}};
+    int iEdge = num / numSubEdges;
+    int iSubEdge = num % numSubEdges;
 
-  int iVertex1 = ed [iEdge][0];
-  int iVertex2 = ed [iEdge][1];
-  double t1 = (double) iSubEdge / (double) numSubEdges;
-  double u1 = pp[iVertex1][0] * (1.-t1) + pp[iVertex2][0] * t1;
-  double v1 = pp[iVertex1][1] * (1.-t1) + pp[iVertex2][1] * t1;
-  double w1 = pp[iVertex1][2] * (1.-t1) + pp[iVertex2][2] * t1;
+    int iVertex1 = ed [iEdge][0];
+    int iVertex2 = ed [iEdge][1];
+    double t1 = (double) iSubEdge / (double) numSubEdges;
+    double u1 = pp[iVertex1][0] * (1.-t1) + pp[iVertex2][0] * t1;
+    double v1 = pp[iVertex1][1] * (1.-t1) + pp[iVertex2][1] * t1;
+    double w1 = pp[iVertex1][2] * (1.-t1) + pp[iVertex2][2] * t1;
 
-  double t2 = (double) (iSubEdge+1) / (double) numSubEdges;
-  double u2 = pp[iVertex1][0] * (1.-t2) + pp[iVertex2][0] * t2;
-  double v2 = pp[iVertex1][1] * (1.-t2) + pp[iVertex2][1] * t2;
-  double w2 = pp[iVertex1][2] * (1.-t2) + pp[iVertex2][2] * t2;
+    double t2 = (double) (iSubEdge+1) / (double) numSubEdges;
+    double u2 = pp[iVertex1][0] * (1.-t2) + pp[iVertex2][0] * t2;
+    double v2 = pp[iVertex1][1] * (1.-t2) + pp[iVertex2][1] * t2;
+    double w2 = pp[iVertex1][2] * (1.-t2) + pp[iVertex2][2] * t2;
 
-  SPoint3 pnt1, pnt2;
-  pnt(u1,v1,w1,pnt1);
-  pnt(u2,v2,w2,pnt2);
-  x[0] = pnt1.x(); x[1] = pnt2.x();
-  y[0] = pnt1.y(); y[1] = pnt2.y();
-  z[0] = pnt1.z(); z[1] = pnt2.z();
+    SPoint3 pnt1, pnt2;
+    pnt(u1,v1,w1,pnt1);
+    pnt(u2,v2,w2,pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
 
-  // not great, but better than nothing
-  static const int f[8] = {0, 1, 0, 2, 2, 3, 2, 3};
-  n[0] = n[1] = getFace(f[iEdge]).normal();
+    // not great, but better than nothing
+    static const int f[8] = {0, 1, 0, 2, 2, 3, 2, 3};
+    n[0] = n[1] = getFace(f[iEdge]).normal();
+  }
+  else MPyramid::getEdgeRep(false, num, x, y, z, n);
 }
 
 
-int MPyramidN::getNumFacesRep(){ return 6 * SQU(CTX::instance()->mesh.numSubEdges); }
+int MPyramidN::getNumFacesRep(bool curved) {
+  return curved ? 6 * SQU(CTX::instance()->mesh.numSubEdges) : 6;
+}
 
 static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -331,7 +338,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
   }
 }
 
-void MPyramidN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MPyramidN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MPyramid::getFaceRep(false, num, x, y, z, n);
 }

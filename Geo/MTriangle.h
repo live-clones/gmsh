@@ -86,8 +86,8 @@ class MTriangle : public MElement {
     }
     Msg::Error("Could not get edge information for triangle %d", getNum());
   }
-  virtual int getNumEdgesRep(){ return 3; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 3; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
@@ -102,8 +102,8 @@ class MTriangle : public MElement {
   {
     return MFace(_v[0], _v[1], _v[2]);
   }
-  virtual int getNumFacesRep(){ return 1; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved){ return 1; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
   }
@@ -202,16 +202,16 @@ class MTriangle6 : public MTriangle {
   }
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const{ MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MTriangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(6);
@@ -286,9 +286,9 @@ class MTriangleN : public MTriangle {
   }
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const { MElement::xyz2uvw(xyz, uvw); }
   virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }
-  virtual int getNumEdgesRep();
-  virtual int getNumFacesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(_order + 1);
@@ -297,7 +297,7 @@ class MTriangleN : public MTriangle {
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order-1); i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3 + _vs.size());

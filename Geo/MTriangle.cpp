@@ -132,8 +132,13 @@ const JacobianBasis* MTriangle::getJacobianFuncSpace(int order) const
   return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
-int MTriangleN::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.numSubEdges; }
-int MTriangle6::getNumEdgesRep(){ return 3 * CTX::instance()->mesh.numSubEdges; }
+int MTriangleN::getNumEdgesRep(bool curved) {
+  return curved ? 3 * CTX::instance()->mesh.numSubEdges : 3;
+}
+
+int MTriangle6::getNumEdgesRep(bool curved) {
+  return curved ? 3 * CTX::instance()->mesh.numSubEdges : 3;
+}
 
 static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -170,18 +175,24 @@ static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z
   }
 }
 
-void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangleN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MTriangle::getEdgeRep(false, num, x, y, z, n);
 }
 
-void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangle6::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MTriangle::getEdgeRep(false, num, x, y, z, n);
 }
 
-int MTriangle6::getNumFacesRep(){ return SQU(CTX::instance()->mesh.numSubEdges); }
-int MTriangleN::getNumFacesRep(){ return SQU(CTX::instance()->mesh.numSubEdges); }
+int MTriangle6::getNumFacesRep(bool curved) {
+  return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
+}
+int MTriangleN::getNumFacesRep(bool curved) {
+  return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
+}
 
 static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
@@ -246,13 +257,15 @@ static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
 }
 
-void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangleN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MTriangle::getFaceRep(false, num, x, y, z, n);
 }
-void MTriangle6::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangle6::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
 {
-  _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MTriangle::getFaceRep(false, num, x, y, z, n);
 }
 
 void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)

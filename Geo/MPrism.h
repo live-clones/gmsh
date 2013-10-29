@@ -71,8 +71,8 @@ class MPrism : public MElement {
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
-  virtual int getNumEdgesRep(){ return 9; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumEdgesRep(bool curved){ return 9; }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
     MEdge e(getEdge(num));
@@ -97,8 +97,8 @@ class MPrism : public MElement {
                    _v[faces_prism(num, 2)],
                    _v[faces_prism(num, 3)]);
   }
-  virtual int getNumFacesRep(){ return 8; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+  virtual int getNumFacesRep(bool curved){ return 8; }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
     static const int f[8][3] = {
       {0, 2, 1},
@@ -241,16 +241,16 @@ class MPrism15 : public MPrism {
   }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 6 : 8);
@@ -335,16 +335,16 @@ class MPrism18 : public MPrism {
   virtual const MVertex *getVertex(int num) const{ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumFaceVertices() const { return 3; }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 6 : 9);
@@ -425,8 +425,8 @@ class MPrismN : public MPrism {
     else
       {int n = _order-1; return n * (n * (n+1) / 2);}
   }
-  virtual int getNumEdgesRep();
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep(bool curved);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(_order+1);
@@ -434,8 +434,8 @@ class MPrismN : public MPrism {
     const int n = _order-1;
     for (int i=0; i<n; i++) v[2+i] = _vs[num*n+i];
   }
-  virtual int getNumFacesRep();
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const;
   virtual int getTypeForMSH() const {
     switch (_order) {
