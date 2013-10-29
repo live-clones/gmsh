@@ -2305,14 +2305,16 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   after *= (1.0/COUNT);
   double FACTOR = 1.0;
   const int MAXITER = 5;
+  SPoint2 actual = before;
   for (int ITER = 0;ITER < MAXITER; ITER ++){
     SPoint2 trial = after * FACTOR + before * (1.-FACTOR);
-    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,before,trial);
+    bool success = _isItAGoodIdeaToMoveThatVertex (gf,  lt, ver,actual,trial);
     if (success){
-      ver->setParameter(0, trial.x());
-      ver->setParameter(1, trial.y());
       GPoint pt = gf->point(trial);
       if(pt.succeeded()){
+	actual = trial;
+	ver->setParameter(0, trial.x());
+	ver->setParameter(1, trial.y());
 	ver->x() = pt.x();
 	ver->y() = pt.y();
 	ver->z() = pt.z();
