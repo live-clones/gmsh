@@ -375,6 +375,7 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
       if((*it)->isSeam(gf)) {
         Range<double> range = (*it)->parBounds(0);
+	//	printf("%d %d %d\n",gv->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag());
         if (gv == (*it)->getBeginVertex()){
           params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
           params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
@@ -383,7 +384,7 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
           params.push_back((*it)->reparamOnFace(gf, range.high(),-1));
           params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
         }
-        else{
+        if (gv != (*it)->getBeginVertex() && gv != (*it)->getEndVertex()){
           Msg::Warning("Strange!");
         }
         seam = true;
