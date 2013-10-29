@@ -492,11 +492,17 @@ void GetOptions(int argc, char *argv[])
         int j;
         int radical;
         double max;
+        double xMax;
+        double yMax;
+        double zMax;
         std::vector<double> properties;
         if(argv[i]){
           std::ifstream file(argv[i++]);
           file >> max;
           file >> radical;
+          file >> xMax;
+          file >> yMax;
+          file >> zMax;
           properties.clear();
           properties.resize(4*max);
           for(j=0;j<max;j++){
@@ -506,10 +512,10 @@ void GetOptions(int argc, char *argv[])
             file >> properties[4*j+3];
           }
           voroMetal3D vm1;
-          vm1.execute(properties,radical,0.1);
+          vm1.execute(properties,radical,0.1,xMax,yMax,zMax);
           GModel::current()->load("MicrostructurePolycrystal3D.geo");
           voroMetal3D vm2;
-          vm2.correspondance(0.00001);
+          vm2.correspondance(0.00001,xMax,yMax,zMax);
         }
       }
 #endif

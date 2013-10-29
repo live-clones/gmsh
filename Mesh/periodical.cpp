@@ -105,10 +105,13 @@ void voroMetal3D::execute(GRegion* gr,double h){
     radii.push_back(1.0);
   }
 
-  execute(vertices2,radii,0,h);
+  double xMax = 1.0;
+  double yMax = 1.0;
+  double zMax = 1.0;
+  execute(vertices2,radii,0,h,xMax,yMax,zMax);
 }
 
-void voroMetal3D::execute(std::vector<double>& properties,int radical,double h){
+void voroMetal3D::execute(std::vector<double>& properties,int radical,double h, double xMax, double yMax, double zMax){
   unsigned int i;
   std::vector<SPoint3> vertices;
   std::vector<double> radii;
@@ -121,10 +124,10 @@ void voroMetal3D::execute(std::vector<double>& properties,int radical,double h){
     radii.push_back(properties[4*i+3]);
   }
 
-  execute(vertices,radii,radical,h);
+  execute(vertices,radii,radical,h,xMax,yMax,zMax);
 }
 
-void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& radii,int radical,double h){
+void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& radii,int radical,double h, double xMax, double yMax, double zMax){
 #if defined(HAVE_VORO3D)
   unsigned int i;
   unsigned int j;
@@ -173,7 +176,10 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
 
   delta = 0.2*(max_x - min_x);
   min_x=min_y=min_z = 0;
-  max_x=max_y=max_z = 1;
+//  max_x=max_y=max_z = 1;
+  max_x = xMax;
+  max_y = yMax;
+  max_z = zMax;
   delta = 0;
 
   container contA(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
@@ -444,7 +450,7 @@ void voroMetal3D::print_geo_face_loop(int index,std::vector<int>& indices,std::o
   file << "};\n";
 }
 
-void voroMetal3D::correspondance(double e){
+void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax){
   unsigned int i;
   unsigned int j;
   int count;
@@ -555,7 +561,7 @@ void voroMetal3D::correspondance(double e){
       delta_y = fabs(p2.y()-p1.y());
       delta_z = fabs(p2.z()-p1.z());
 
-      flag = correspondance(delta_x,delta_y,delta_z,e,val);
+      flag = correspondance(delta_x,delta_y,delta_z,e,val,xMax,yMax,zMax);
 
       if(flag){
         it5 = markings.find(faces[i]);
@@ -748,11 +754,11 @@ void voroMetal3D::correspondance(double e){
         v3 = (*it8)->getBeginVertex();
         v4 = (*it8)->getEndVertex();
 
-        correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e,categories[i],flag1);
-        correspondance(fabs(v4->x()-v2->x()),fabs(v4->y()-v2->y()),fabs(v4->z()-v2->z()),e,categories[i],flag2);
+        correspondance(fabs(v3->x()-v1->x()),fabs(v3->y()-v1->y()),fabs(v3->z()-v1->z()),e,categories[i],flag1,xMax,yMax,zMax);
+        correspondance(fabs(v4->x()-v2->x()),fabs(v4->y()-v2->y()),fabs(v4->z()-v2->z()),e,categories[i],flag2,xMax,yMax,zMax);
 
-        correspondance(fabs(v4->x()-v1->x()),fabs(v4->y()-v1->y()),fabs(v4->z()-v1->z()),e,categories[i],flag3);
-        correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e,categories[i],flag4);
+        correspondance(fabs(v4->x()-v1->x()),fabs(v4->y()-v1->y()),fabs(v4->z()-v1->z()),e,categories[i],flag3,xMax,yMax,zMax);
+        correspondance(fabs(v3->x()-v2->x()),fabs(v3->y()-v2->y()),fabs(v3->z()-v2->z()),e,categories[i],flag4,xMax,yMax,zMax);
 
         if(flag1 && flag2){
           if(phase==1){
@@ -832,39 +838,39 @@ void voroMetal3D::correspondance(double e){
   file4 << "};\n";
 }
 
-bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int& val){
+bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int& val,double xMax,double yMax,double zMax){
   bool flag;
 
   flag = 0;
   val = 1000;
 
-  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
+  if(equal(delta_x,xMax,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
     flag = 1;
     val = 1;
   }
-  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+  if(equal(delta_x,0.0,e) && equal(delta_y,yMax,e) && equal(delta_z,0.0,e)){
     flag = 1;
     val = 2;
   }
-  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+  if(equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,zMax,e)){
     flag = 1;
     val = 3;
   }
 
-  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+  if(equal(delta_x,xMax,e) && equal(delta_y,yMax,e) && equal(delta_z,0.0,e)){
     flag = 1;
     val = 4;
   }
-  if(equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+  if(equal(delta_x,0.0,e) && equal(delta_y,yMax,e) && equal(delta_z,zMax,e)){
     flag = 1;
     val = 5;
   }
-  if(equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+  if(equal(delta_x,xMax,e) && equal(delta_y,0.0,e) && equal(delta_z,zMax,e)){
     flag = 1;
     val = 6;
   }
 
-  if(equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+  if(equal(delta_x,xMax,e) && equal(delta_y,yMax,e) && equal(delta_z,zMax,e)){
     flag = 1;
     val = 7;
   }
@@ -872,30 +878,30 @@ bool voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,do
   return flag;
 }
 
-void voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int val,bool& flag){
+void voroMetal3D::correspondance(double delta_x,double delta_y,double delta_z,double e,int val,bool& flag,double xMax,double yMax,double zMax){
   flag = 0;
 
-  if(val==1 && equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
+  if(val==1 && equal(delta_x,xMax,e) && equal(delta_y,0.0,e) && equal(delta_z,0.0,e)){
     flag = 1;
   }
-  if(val==2 && equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
+  if(val==2 && equal(delta_x,0.0,e) && equal(delta_y,yMax,e) && equal(delta_z,0.0,e)){
     flag = 1;
   }
-  if(val==3 && equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
-    flag = 1;
-  }
-
-  if(val==4 && equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,0.0,e)){
-    flag = 1;
-  }
-  if(val==5 && equal(delta_x,0.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
-    flag = 1;
-  }
-  if(val==6 && equal(delta_x,1.0,e) && equal(delta_y,0.0,e) && equal(delta_z,1.0,e)){
+  if(val==3 && equal(delta_x,0.0,e) && equal(delta_y,0.0,e) && equal(delta_z,zMax,e)){
     flag = 1;
   }
 
-  if(val==7 && equal(delta_x,1.0,e) && equal(delta_y,1.0,e) && equal(delta_z,1.0,e)){
+  if(val==4 && equal(delta_x,xMax,e) && equal(delta_y,yMax,e) && equal(delta_z,0.0,e)){
+    flag = 1;
+  }
+  if(val==5 && equal(delta_x,0.0,e) && equal(delta_y,yMax,e) && equal(delta_z,zMax,e)){
+    flag = 1;
+  }
+  if(val==6 && equal(delta_x,xMax,e) && equal(delta_y,0.0,e) && equal(delta_z,zMax,e)){
+    flag = 1;
+  }
+
+  if(val==7 && equal(delta_x,xMax,e) && equal(delta_y,yMax,e) && equal(delta_z,zMax,e)){
     flag = 1;
   }
 }
