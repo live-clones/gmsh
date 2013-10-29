@@ -120,7 +120,7 @@ double MElement::maxDistToStraight()
   const int &dim = uvw.size2();
   const nodalBasis *lagBasis1 = getFunctionSpace(1);
   const int &nV1 = lagBasis1->points.size1();
-  SPoint3 xyz1[nV1];
+  std::vector<SPoint3> xyz1(nV1);
   for (int iV = 0; iV < nV1; ++iV) xyz1[iV] = getVertex(iV)->point();
   double maxdx = 0.;
   for (int iV = nV1; iV < nV; ++iV) {
