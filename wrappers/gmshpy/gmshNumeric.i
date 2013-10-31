@@ -3,6 +3,7 @@
 
 %include std_string.i
 %include std_vector.i
+%import "gmshtypemaps.i"
 
 %{
   #include "GmshConfig.h"

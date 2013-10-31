@@ -2,6 +2,7 @@
 %module gmshMesh
 %include std_string.i
 %include std_list.i
+%import "gmshtypemaps.i"
 
 %{
   #include "GmshConfig.h"

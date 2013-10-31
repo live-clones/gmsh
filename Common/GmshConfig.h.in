@@ -39,6 +39,7 @@
 #cmakedefine HAVE_MUMPS
 #cmakedefine HAVE_NATIVE_FILE_CHOOSER
 #cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NUMPY
 #cmakedefine HAVE_NO_INTPTR_T
 #cmakedefine HAVE_NO_SOCKLEN_T
 #cmakedefine HAVE_NO_STDINT_H
