@@ -98,7 +98,6 @@ int ElementType::ParentTypeFromTag(int tag)
 
 int ElementType::OrderFromTag(int tag)
 {
-
   switch (tag) {
   case MSH_PNT     : return 0;
   case MSH_LIN_1   : return 0;
@@ -228,7 +227,6 @@ int ElementType::OrderFromTag(int tag)
     Msg::Error("Unknown element tag %d, assuming order 1.",tag);
     return 1;
   }
-
 }
 
 int ElementType::DimensionFromTag(int tag)
