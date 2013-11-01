@@ -229,8 +229,6 @@ bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
         for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
           double x, y, z;
           int tag = getNode(step, ent, ele, nod, x, y, z);
-          if(tag) continue; // node has already been modified
-          tagNode(step, ent, ele, nod, 1);
           for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){
             if(i < (int)vec[step].size()){
               setValue(step, ent, ele, nod, comp, vec[step][i++]);
