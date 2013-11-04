@@ -208,6 +208,8 @@ extern "C" {
   void F77NAME(dgesv)(int *N, int *nrhs, double *A, int *lda, int *ipiv,
                       double *b, int *ldb, int *info);
   void F77NAME(dgetrf)(int *M, int *N, double *A, int *lda, int *ipiv, int *info);
+  void F77NAME(dgetrs)(char *trans, int *N, int *nrhs, double *A, int *lda, int *ipiv,
+                       double *b, int *ldb, int *info);
   void F77NAME(dgetri)(int *M, double *A, int *lda, int *ipiv, double *work,
                        int *lwork, int *info);
   void F77NAME(dgesvd)(const char* jobu, const char *jobvt, int *M, int *N,
@@ -284,10 +286,29 @@ bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<doubl
   F77NAME(dgesv)(&N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
   delete [] ipiv;
   if(info == 0) return true;
-  //  if(info > 0)
-  //    Msg::Error("U(%d,%d)=0 in LU decomposition", info, info);
-  //  else
-  //    Msg::Error("Wrong %d-th argument in LU decomposition", -info);
+  return false;
+}
+
+template<>
+bool fullMatrix<double>::luFactor()
+{
+  int M = size1(), N = size2(), lda = size1(), info;
+  int *ipiv = new int[std::min(M, N)];
+  F77NAME(dgetrf)(&M, &N, _data, &lda, ipiv, &info);
+  delete [] ipiv;
+  if(info == 0) return true;
+  return false;
+}
+
+template<>
+bool fullMatrix<double>::luSubstitute(const fullVector<double> &rhs, fullVector<double> &result)
+{
+  int N = size1(), nrhs=1, lda = N, ldb = N, info;
+  int *ipiv = new int[N];
+  for(int i = 0; i < N; i++) result(i) = rhs(i);
+  F77NAME(dgetrs)("N", &N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
+  delete [] ipiv;
+  if(info == 0) return true;
   return false;
 }
 

@@ -681,7 +681,23 @@ class fullMatrix
   bool luSolve(const fullVector<scalar> &rhs, fullVector<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
+    Msg::Error("LU factorization and substitution requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+ bool luFactor()
+#if !defined(HAVE_LAPACK)
+  {
     Msg::Error("LU factorization requires LAPACK");
+    return false;
+  }
+#endif
+  ;
+ bool luSubstitute(const fullVector<double> &rhs, fullVector<double> &result)
+#if !defined(HAVE_LAPACK)
+  {
+    Msg::Error("LU substitution requires LAPACK");
     return false;
   }
 #endif
