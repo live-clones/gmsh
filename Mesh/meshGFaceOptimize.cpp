@@ -2809,6 +2809,11 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MVertex *v2 = t1->tri()->getVertex((iLocalEdge) % 3);
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
   MVertex *v4 = 0;
+
+  std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(v1,v2));
+  if (it != data.internalEdges.end())return false;
+
+
   for(int i = 0; i < 3; i++)
     if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
