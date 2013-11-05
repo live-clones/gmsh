@@ -290,24 +290,22 @@ bool fullMatrix<double>::luSolve(const fullVector<double> &rhs, fullVector<doubl
 }
 
 template<>
-bool fullMatrix<double>::luFactor()
+bool fullMatrix<double>::luFactor(fullVector<int> &ipiv)
 {
   int M = size1(), N = size2(), lda = size1(), info;
-  int *ipiv = new int[std::min(M, N)];
-  F77NAME(dgetrf)(&M, &N, _data, &lda, ipiv, &info);
-  delete [] ipiv;
+  ipiv.resize(std::min(M, N));
+  F77NAME(dgetrf)(&M, &N, _data, &lda, &ipiv(0), &info);
   if(info == 0) return true;
   return false;
 }
 
 template<>
-bool fullMatrix<double>::luSubstitute(const fullVector<double> &rhs, fullVector<double> &result)
+bool fullMatrix<double>::luSubstitute(const fullVector<double> &rhs, fullVector<int> &ipiv, fullVector<double> &result)
 {
   int N = size1(), nrhs=1, lda = N, ldb = N, info;
-  int *ipiv = new int[N];
+  char trans = 'N';
   for(int i = 0; i < N; i++) result(i) = rhs(i);
-  F77NAME(dgetrs)("N", &N, &nrhs, _data, &lda, ipiv, result._data, &ldb, &info);
-  delete [] ipiv;
+  F77NAME(dgetrs)(&trans, &N, &nrhs, _data, &lda, &ipiv(0), result._data, &ldb, &info);
   if(info == 0) return true;
   return false;
 }

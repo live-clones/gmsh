@@ -686,7 +686,7 @@ class fullMatrix
   }
 #endif
   ;
- bool luFactor()
+ bool luFactor(fullVector<int> &ipiv)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU factorization requires LAPACK");
@@ -694,7 +694,7 @@ class fullMatrix
   }
 #endif
   ;
- bool luSubstitute(const fullVector<double> &rhs, fullVector<double> &result)
+ bool luSubstitute(const fullVector<scalar> &rhs, fullVector<int> &ipiv, fullVector<scalar> &result)
 #if !defined(HAVE_LAPACK)
   {
     Msg::Error("LU substitution requires LAPACK");
