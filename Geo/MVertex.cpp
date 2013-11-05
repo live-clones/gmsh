@@ -421,7 +421,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
     param1 = p1[0];
     param2 = p2[0];
   }
-  else{    
+  else if(p1.size() >= 1 && p2.size() >= 1){
     int imin = 0;
     int jmin = 0;
     {
@@ -466,10 +466,13 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
     param1 = p1[jmin];
     param2 = p2[imin];
   }
+  else{
+    // brute force!
+    param1 = gf->parFromPoint(SPoint3(v1->x(), v1->y(), v1->z()));
+    param2 = gf->parFromPoint(SPoint3(v2->x(), v2->y(), v2->z()));
+  }
   return true;
 }
-
-
 
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
