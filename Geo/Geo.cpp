@@ -1019,7 +1019,7 @@ static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
 static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
 {
    // Trevor Strickler modified
-   if( s->Typ == MSH_SURF_COMPOUND )
+   if(s->Typ == MSH_SURF_COMPOUND)
      ss->Typ = MSH_SURF_REGL;
    else
      ss->Typ = s->Typ;
@@ -2091,7 +2091,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
 }
 
 // Added by Trevor Strickler for extruding unique compound surface edges
-static List_T* GetCompoundUniqueEdges(Surface *ps)
+static List_T *GetCompoundUniqueEdges(Surface *ps)
 {
   // Two parts:
   // Part 1: create map of keys with values abs(c->Num) that map to integer
@@ -2184,12 +2184,13 @@ static List_T* GetCompoundUniqueEdges(Surface *ps)
 
 
 // Added by Trevor Strickler
-// This function returns a pointer to an allocated List_T type that
-// contains an ordered list of unique edges for a compound surface.
-// The edges are grouped into loops if there is more than one loop.
-// The order is in order around a loop.
-// Only one problem: Sometimes holes can be selected as the first loop,
-// though this should not create many real problems on a copied top surface.
+
+// This function returns a pointer to an allocated List_T type that contains an
+// ordered list of unique edges for a compound surface.  The edges are grouped
+// into loops if there is more than one loop.  The order is in order around a
+// loop.
+// Only one problem: Sometimes holes can be selected as the first loop, though
+// this should not create many real problems on a copied top surface.
 static List_T* GetOrderedUniqueEdges( Surface *s )
 {
   List_T* unique = GetCompoundUniqueEdges(s);
@@ -2341,7 +2342,6 @@ static void MaxNumSurface(void *a, void *b)
 }
 
 
-// Modified by Trevor Strickler
 static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
 {
   // FIXME: This routine is in fact logically wrong (the compareTwoPoints
@@ -2370,10 +2370,9 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     else {
       Tree_Suppress(GModel::current()->getGEOInternals()->Points, &v);
       Tree_Insert(points2delete, &v);
-      // Trevor Strickler
-      if(v_report){
+      if(v_report){ // keep track of changes
         std::map<int, int>::iterator m_it = v_report->find(v->Num);
-        if( m_it != v_report->end() ){
+        if(m_it != v_report->end()){
 	  Vertex **v_rep = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v);
 	  m_it->second = (*v_rep)->Num;
         }
@@ -2484,9 +2483,7 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   Tree_Delete(allNonDuplicatedPoints);
 }
 
-//Modified by Trevor Strickler
 static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
-
 {
   Curve *c, *c2, **pc, **pc2;
   Surface *s;
@@ -2519,15 +2516,15 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c2);
         Tree_Insert(curves2delete, &c);
         Tree_Insert(curves2delete, &c2);
-	// Trevor Strickler
-	if(c_report){
+
+	if(c_report){ // keep track of changes
 	  std::map<int, int>::iterator m_it = c_report->find(c->Num);
-	  if( m_it != c_report->end() ){
+	  if(m_it != c_report->end()){
 	    Curve **c_rep = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c);
 	    m_it->second = (*c_rep)->Num;
 	  }
 	  m_it = c_report->find(c2->Num);
-	  if( m_it != c_report->end() ){
+	  if(m_it != c_report->end()){
 	    Curve **c_rep_neg = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2);
 	    m_it->second = (*c_rep_neg)->Num;
 	  }
@@ -2623,7 +2620,6 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   Tree_Delete(allNonDuplicatedCurves);
 }
 
-// Modified By Trevor Strickler
 static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
 {
   Surface *s, *s2, **ps, **ps2;
@@ -2645,10 +2641,10 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
       else {
         Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &s);
         Tree_Insert(surfaces2delete, &s);
-      // Trevor Strickler
-	if(s_report){
+
+	if(s_report){ // keep track of changes
 	  std::map<int, int>::iterator m_it = (*s_report).find(s->Num);
-	  if( m_it != s_report->end() ){
+	  if(m_it != s_report->end()){
 	    Surface **s_rep = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s);
 	    m_it->second = (*s_rep)->Num;
 	  }
@@ -2741,19 +2737,16 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   Tree_Delete(allNonDuplicatedSurfaces);
 }
 
-// Trevor Strickler added argument to return select changed shape nums
-// this is needed to set chapeau correctly in situations where chapeau gets replaced!
-// report has a default argument of zero.
 static void ReplaceAllDuplicates(std::vector<std::map<int, int> > &report)
 {
-  std::map<int, int>  *vertex_report = 0;
-  std::map<int, int>  *curve_report = 0;
-  std::map<int, int>  *surface_report = 0;
-  if( report.size() >=1 && report[0].size() )
+  std::map<int, int> *vertex_report = 0;
+  std::map<int, int> *curve_report = 0;
+  std::map<int, int> *surface_report = 0;
+  if(report.size() >=1 && report[0].size())
     vertex_report = &(report[0]);
-  if( report.size() >=2 && report[1].size() )
+  if(report.size() >=2 && report[1].size())
     curve_report = &(report[1]);
-  if( report.size() >= 3 && report[2].size() )
+  if(report.size() >= 3 && report[2].size())
     surface_report = &(report[2]);
 
   ReplaceDuplicatePoints(vertex_report);
@@ -2761,16 +2754,12 @@ static void ReplaceAllDuplicates(std::vector<std::map<int, int> > &report)
   ReplaceDuplicateSurfaces(surface_report);
 }
 
-
-// overloaded ReplaceAllDuplicates to keep old functionality with no danger of
-// default pointer argument = 0
 void ReplaceAllDuplicates()
 {
   std::vector<std::map<int,int> > report;
   report.clear();
   ReplaceAllDuplicates(report);
 }
-
 
 // Extrusion routines
 
@@ -2950,9 +2939,6 @@ int Extrude_ProtudePoint(int type, int ip,
     }
     c->end = chapeau;
     break;
-//  case ANALYTICAL:
-//
-//    break;
   default:
     Msg::Error("Unknown extrusion type");
     return pv->Num;
@@ -2967,17 +2953,20 @@ int Extrude_ProtudePoint(int type, int ip,
   List_Reset(ListOfTransformedPoints);
 
   int chap_num = chapeau->Num;
+  int body_num = c->Num;
 
   if(CTX::instance()->geom.autoCoherence && final){
-    // Trevor Strickler added to fix replaced Chapeau
     std::vector<std::map<int, int> > report(3);
-    report[0][chapeau->Num] = chap_num;
+    report[0][chap_num] = chap_num;
+    report[1][body_num] = body_num;
     ReplaceAllDuplicates(report);
-    std::map<int, int>::iterator m_it = (report[0]).find(chap_num);
-    if( m_it != (report[0]).end() )
-      chap_num = (report[0])[chap_num];
+    std::map<int, int>::iterator m_it = report[0].find(chap_num);
+    if(m_it != report[0].end())
+      chap_num = report[0][chap_num];
     else
       chap_num = 0;
+    if(report[1][body_num] != body_num)
+      *pc = *prc = NULL;
   }
   return chap_num;
 }
@@ -3148,17 +3137,20 @@ int Extrude_ProtudeCurve(int type, int ic,
   *ps = s;
 
   int chap_num = chapeau->Num;
+  int body_num = s->Num;
 
   if(CTX::instance()->geom.autoCoherence && final){
-    // Trevor Strickler added to fix replaced Chapeau
     std::vector<std::map<int, int> > report(3);
-    (report[1])[chap_num] = chap_num;
+    report[1][chap_num] = chap_num;
+    report[2][body_num] = body_num;
     ReplaceAllDuplicates(report);
-    std::map<int, int>::iterator m_it = (report[1]).find(chap_num);
-    if( m_it != (report[1]).end() )
-      chap_num = (report[1])[chap_num];
+    std::map<int, int>::iterator m_it = report[1].find(chap_num);
+    if(m_it != report[1].end())
+      chap_num = report[1][chap_num];
     else
       chap_num = 0;
+    if(report[2][body_num] != body_num)
+      *ps = NULL;
   }
 
   return chap_num;
@@ -3350,13 +3342,12 @@ int Extrude_ProtudeSurface(int type, int is,
   int chap_num = chapeau->Num;
 
   if(CTX::instance()->geom.autoCoherence){
-    // Trevor Strickler added to fix replaced Chapeau
     std::vector<std::map<int, int> > report(3);
-    (report[2])[chap_num] = chap_num;
+    report[2][chap_num] = chap_num;
     ReplaceAllDuplicates(report);
     std::map<int, int>::iterator m_it = (report[2]).find(chap_num);
-    if( m_it != (report[2]).end() )
-      chap_num = (report[2])[chap_num];
+    if(m_it != report[2].end())
+      chap_num = report[2][chap_num];
     else
       chap_num = 0;
   }
@@ -3461,9 +3452,8 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SURF_DISCRETE:
     case MSH_SURF_COMPOUND:
       {
-        // if statement by Trevor Strickler
-        if( shape.Type == MSH_SURF_COMPOUND ){
-          if( !(e && e->mesh.ExtrudeMesh) ){
+        if(shape.Type == MSH_SURF_COMPOUND){
+          if(!(e && e->mesh.ExtrudeMesh)){
             Msg::Error("Impossible to extrude compound entity %d without also extruding mesh!",
                        abs(shape.Num) );
             break;
@@ -3886,7 +3876,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
   s->Generatrices = List_Create(4, 4, sizeof(Curve *));
   List_Delete(s->GeneratricesByTag);
   s->GeneratricesByTag = List_Create(4, 4, sizeof(int));
-  //trevor strickler
+
   if(s->Typ == MSH_SURF_COMPOUND){
     s->Generatrices = GetOrderedUniqueEdges(s);
     if(!List_Nbr(s->Generatrices)){
@@ -3894,6 +3884,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
       return;
     }
   }
+
   for(int i = 0; i < nbLoop; i++) {
     int iLoop;
     List_Read(loops, i, &iLoop);
