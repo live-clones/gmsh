@@ -658,6 +658,7 @@ if(ENABLE_MPI)
      list(APPEND EXTERNAL_INCLUDES ${MPI_INCLUDE_DIR})
      list(APPEND EXTERNAL_LIBRARIES ${MPI_LIBRARIES})
      include(CMakeForceCompiler)
+     # Warning: this actually requires cmake >= 2.8.5
      cmake_force_c_compiler(${MPI_C_COMPILER} "MPI C Compiler")
      cmake_force_cxx_compiler(${MPI_CXX_COMPILER} "MPI C++ Compiler")
    endif(MPI_FOUND)
