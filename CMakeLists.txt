@@ -873,6 +873,9 @@ if(HAVE_SOLVER)
            PETSC_VARIABLES NEWLINE_CONSUME)
       # find include directories
       list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
+      if(NOT HAVE_MPI) # necessary for PETSC >= 3.4
+        list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include/mpiuni)
+      endif(NOT HAVE_MPI)
       list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
       string(REGEX MATCH "PACKAGES_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
              ${PETSC_VARIABLES})
