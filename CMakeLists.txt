@@ -869,19 +869,25 @@ if(HAVE_SOLVER)
       # old-style PETSc installations (using PETSC_DIR and PETSC_ARCH)
       message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
       message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
+      # find includes by parsing the petscvariables file
       file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables 
            PETSC_VARIABLES NEWLINE_CONSUME)
-      # find include directories
-      list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
-      #if(NOT HAVE_MPI) # necessary for PETSC >= 3.4
-      #  list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include/mpiuni)
-      #endif(NOT HAVE_MPI)
-      list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
-      string(REGEX MATCH "PACKAGES_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
+      # try to find PETSC_CC_INCLUDES for PETSc >= 3.4
+      string(REGEX MATCH "PETSC_CC_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
              ${PETSC_VARIABLES})
       if(PETSC_PACKAGES_INCLUDES)
+        string(REPLACE "PETSC_CC_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
+               ${PETSC_PACKAGES_INCLUDES})
+      else(PETSC_PACKAGES_INCLUDES)
+        # try to find PETSC_PACKAGES_INCLUDES in older versions
+        list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/include)
+        list(APPEND EXTERNAL_INCLUDES ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/include)
+        string(REGEX MATCH "PACKAGES_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
+               ${PETSC_VARIABLES})
         string(REPLACE "PACKAGES_INCLUDES = " "" PETSC_PACKAGES_INCLUDES
                ${PETSC_PACKAGES_INCLUDES})
+      endif(PETSC_PACKAGES_INCLUDES)
+      if(PETSC_PACKAGES_INCLUDES)
         if(PETSC_PACKAGES_INCLUDES)
           string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
           string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
