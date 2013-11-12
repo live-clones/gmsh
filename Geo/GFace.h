@@ -81,6 +81,12 @@ class GFace : public GEntity
   // get number of regions
   int numRegions() const { int num=0; if(r1) num++; if(r2) num++; return num; }
 
+  std::list<GRegion*> regions() const { 
+    std::list<GRegion*>r ; 
+    for (int i=0;i<numRegions();i++)r.push_back(getRegion(i)); 
+    return r;
+  }
+
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
   void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
