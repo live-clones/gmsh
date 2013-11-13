@@ -2583,6 +2583,18 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         End_Curve(*pc2);
       }
     }
+    // replace embedded curves
+    if (s->EmbeddedCurves){
+      for(int j = 0; j < List_Nbr(s->EmbeddedCurves); j++) {
+        pc = (Curve **)List_Pointer(s->EmbeddedCurves, j);
+        if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
+          Msg::Error("Weird curve %d in Coherence", (*pc)->Num);
+        else {
+          List_Write(s->EmbeddedCurves, j, pc2);
+          End_Curve(*pc2);
+        }
+      }
+    }
     // replace extrusion sources
     if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY){
       c2 = FindCurve(std::abs(s->Extrude->geo.Source), curves2delete);
@@ -3692,6 +3704,22 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
         j += List_Nbr(shapes) - 1;
       }
     }
+    if (s->EmbeddedCurves){
+      for(int j = 0; j < List_Nbr(s->EmbeddedCurves); j++) {
+        Curve *surface_curve;
+        List_Read(s->EmbeddedCurves, j, &surface_curve);
+        if(surface_curve->Num == c->Num){
+          List_Remove(s->EmbeddedCurves, j);
+          List_Insert_In_List(shapes, j, s->EmbeddedCurves);
+          j += List_Nbr(shapes) - 1;
+        }
+        else if(surface_curve->Num == -c->Num){
+          List_Remove(s->EmbeddedCurves, j);
+          List_Insert_In_List(rshapes, j, s->EmbeddedCurves);
+          j += List_Nbr(shapes) - 1;
+        }
+      }
+    }
   }
   List_Delete(Surfs);
   DeleteShape(c->Typ, c->Num);
@@ -3839,17 +3867,183 @@ void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
 
 void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 {
+  double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
   if (!s->EmbeddedCurves)
     s->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
-  int nbCurves = List_Nbr(curves);
-  for(int i = 0; i < nbCurves; i++) {
+  for(int i = 0; i < curves->n; i++) {
     double iCurve;
     List_Read(curves, i, &iCurve);
-    Curve *c = FindCurve((int)iCurve);
-    if(c)
-      List_Add(s->EmbeddedCurves, &c);
-    else
+    Curve *cToAddInSurf = FindCurve((int)iCurve);
+    
+    if(!cToAddInSurf){
       Msg::Error("Unknown curve %d", (int)iCurve);
+      continue;
+    }
+    
+    if (cToAddInSurf->Typ != MSH_SEGM_LINE){
+      // compute intersections only avalaible for straight lines
+      List_Add(s->EmbeddedCurves, &cToAddInSurf);
+      continue;
+    }
+    
+    if(!cToAddInSurf->Control_Points)
+      continue;
+    
+    for(int j = 0; j < s->EmbeddedCurves->n + s->Generatrices->n; j++) {
+      Curve *cDejaInSurf;
+      if (j < s->EmbeddedCurves->n)
+        List_Read(s->EmbeddedCurves, j, &cDejaInSurf);
+      else
+        List_Read(s->Generatrices, j-s->EmbeddedCurves->n, &cDejaInSurf);
+      if (cDejaInSurf->Typ != MSH_SEGM_LINE)
+        // compute intersections only avalaible for straight lines
+        continue;
+      
+      if(!cDejaInSurf->Control_Points)
+        continue;
+      
+      // compute intersection between pair of control points of cDejaInSurf and pair of control points of cToAddInSurf
+      Vertex *v1;
+      Vertex *v2;
+      for(int k = 0; k < cDejaInSurf->Control_Points->n-1; k++) {
+        List_Read (cDejaInSurf->Control_Points, k, &v1);
+        List_Read (cDejaInSurf->Control_Points, k+1, &v2);
+        
+        SPoint3 p1 = SPoint3(v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
+        SPoint3 p2 = SPoint3(v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
+        
+        // to take into account geometrical tolerance
+        SVector3 sv = SVector3( p1, p2);
+        sv = sv.unit()*eps;
+        SPoint3 p3 = p1 - sv.point();
+        SPoint3 p4 = p2 + sv.point();
+        
+        Vertex *w1;
+        Vertex *w2;
+        for(int l = 0; l < cToAddInSurf->Control_Points->n-1; l++) {
+          List_Read (cToAddInSurf->Control_Points, l, &w1);
+          List_Read (cToAddInSurf->Control_Points, l+1, &w2);
+          
+          SPoint3 q1 = SPoint3(w1->Pos.X, w1->Pos.Y, w1->Pos.Z);
+          SPoint3 q2 = SPoint3(w2->Pos.X, w2->Pos.Y, w2->Pos.Z);
+          
+          // to take into account geometrical tolerance
+          SVector3 sw = SVector3( q1, q2);
+          sw = sw.unit()*eps;
+          SPoint3 q3 = q1 - sw.point();
+          SPoint3 q4 = q2 + sw.point();
+          
+          double x[2];
+          int inters = intersection_segments(p3,p4,q3,q4,x);
+          
+          if (inters && x[0] != 0. && x[1] != 0. && x[0] != 1. && x[1] != 1.){
+            SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x() , (1.-x[0])*p3.y() + x[0]*p4.y() , 0);
+            // case to treat
+            bool createPoint = false, mergePoint = false, splitcToAddInSurf = false, splitcDejaInSurf = false;
+            Vertex *v, *w;
+            {
+              double pp1 = p.distance( p1 );
+              double pp2 = p.distance( p2 );
+              double pp;
+              if (pp1 <= pp2){
+                pp = pp1;
+                v = v1;
+              }
+              else{
+                pp = pp2;
+                v = v2;
+              }
+              double pq1 = p.distance( q1 );
+              double pq2 = p.distance( q2 );
+              double pq;
+              if (pq1 <= pq2){
+                pq = pq1;
+                w = w1;
+              }
+              else{
+                pq = pq2;
+                w = w2;
+              }
+              if (pq < eps and pp < eps)
+                mergePoint = true;
+              else if (pq >= eps and pp < eps)
+                splitcToAddInSurf = true;
+              else if (pq < eps and pp >= eps)
+                splitcDejaInSurf = true;
+              else{
+                createPoint = true;
+                splitcToAddInSurf = true;
+                splitcDejaInSurf = true;
+              }
+            }
+            if (mergePoint){
+              if (v != w){
+                Msg::Debug("merge points %d, %d between embedded edges", v->Num, w->Num);
+                Tree_Suppress(GModel::current()->getGEOInternals()->Points, &w);
+                List_T *Curves = Tree2List(GModel::current()->getGEOInternals()->Curves);
+                for(int i = 0; i < List_Nbr(Curves); i++){
+                  Curve *c;
+                  List_Read(Curves, i, &c);
+                  if (c->beg == w)
+                    c->beg = v;
+                  if (c->end == w)
+                    c->end = v;
+                  for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
+                    if(!compareVertex(List_Pointer(c->Control_Points, j), &w)){
+                      List_Write(c->Control_Points, j, &v);
+                    }
+                  }
+                }
+                DeletePoint(w->Num);
+                List_Delete(Curves);
+              }
+            }
+            if (splitcToAddInSurf || splitcDejaInSurf){
+              Msg::Debug("Intersect point between embedded edges at pos : (%g,%g)",p.x(), p.y());
+              Vertex *v3;
+              if (createPoint){
+                v3 = Create_Vertex(NEWPOINT(), p.x(), p.y(), p.z(), MAX_LC, 1.0);
+                Tree_Insert(GModel::current()->getGEOInternals()->Points, &v3);
+              }
+              else if (splitcDejaInSurf)
+                v3 = w;
+              else if (splitcToAddInSurf)
+                v3 = v;
+              List_T *temp = List_Create(1, 1, sizeof(int));
+              List_Add(temp, v3->Num);
+              if (splitcDejaInSurf){
+                List_Put (cDejaInSurf->Control_Points, k+1, &v3);
+                List_T *shapes = List_Create(2, 1, sizeof(Shape*));
+                SplitCurve(cDejaInSurf->Num, temp, shapes);
+                // getting back cDejaInSurf because it was deleted by SplitCurve
+                if (j < s->EmbeddedCurves->n)
+                  List_Read(s->EmbeddedCurves, j, &cDejaInSurf);
+                else
+                  List_Read(s->Generatrices, j-s->EmbeddedCurves->n, &cDejaInSurf);
+                List_Delete(shapes);
+              }
+              if (splitcToAddInSurf){
+                List_Put (cToAddInSurf->Control_Points, l+1, &v3);
+                List_T *shapes = List_Create(2, 1, sizeof(Shape*));
+                SplitCurve(cToAddInSurf->Num, temp, shapes);
+                // replacing c with the first shape
+                List_Read (shapes, 0, &cToAddInSurf);
+                double d = (double)cToAddInSurf->Num;
+                List_Write(curves, i, &d);
+                // inserting the second shape in curves
+                Curve *c2;
+                List_Read (shapes, 1, &c2);
+                double d2 = (double)c2->Num;
+                List_Put (curves, i+1, &d2);
+                List_Delete(shapes);
+              }
+              List_Delete(temp);
+            }
+          }
+        }
+      }
+    }
+    List_Add(s->EmbeddedCurves, &cToAddInSurf);
   }
 }
 

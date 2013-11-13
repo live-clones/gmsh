@@ -514,7 +514,7 @@ GEdge *OCCFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   else{
     gp_Pnt p1(start->x(),start->y(),start->z());
     gp_Pnt p2(end->x(),end->y(),end->z());
-    TopoDS_Edge occEdge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
+    occEdge = BRepBuilderAPI_MakeEdge(p1, p2).Edge();
   }
   return gm->_occ_internals->addEdgeToModel(gm,occEdge);
 }

@@ -85,7 +85,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       List_Read(s->EmbeddedCurves, i, &c);
       GEdge *e = m->getEdgeByTag(abs(c->Num));
       if(e)
-        embedded_edges.push_back(e);
+        addEmbeddedEdge(e);
       else
         Msg::Error("Unknown curve %d", c->Num);
     }
