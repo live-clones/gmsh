@@ -3968,11 +3968,11 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
                 pq = pq2;
                 w = w2;
               }
-              if (pq < eps and pp < eps)
+              if (pq < eps && pp < eps)
                 mergePoint = true;
-              else if (pq >= eps and pp < eps)
+              else if (pq >= eps && pp < eps)
                 splitcToAddInSurf = true;
-              else if (pq < eps and pp >= eps)
+              else if (pq < eps && pp >= eps)
                 splitcDejaInSurf = true;
               else{
                 createPoint = true;
