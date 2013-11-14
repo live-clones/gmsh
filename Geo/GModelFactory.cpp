@@ -496,7 +496,13 @@ GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double 
   BRepBuilderAPI_MakeVertex mkVertex(aPnt);
   TopoDS_Vertex occv = mkVertex.Vertex();
 
-  return gm->_occ_internals->addVertexToModel(gm, occv);
+  GVertex *vertex = gm->_occ_internals->addVertexToModel(gm, occv);
+
+  lc *= CTX::instance()->geom.scalingFactor;
+  if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
+  vertex->setPrescribedMeshSizeAtVertex(lc);
+
+  return vertex;
 }
 
 GEdge *OCCFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
