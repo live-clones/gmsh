@@ -1488,7 +1488,7 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   mean_plane meanPlane;
   computeMeanPlaneSimple(points, meanPlane);
 
-  gp_Pln aPlane (meanPlane.a,meanPlane.b,meanPlane.c,meanPlane.d);
+  gp_Pln aPlane (meanPlane.a, meanPlane.b, meanPlane.c, -meanPlane.d);
   BRepBuilderAPI_MakeFace aGenerator (aPlane);
 
   for (unsigned i = 0; i < wires.size() ;i++) {
@@ -1509,7 +1509,6 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   TopoDS_Shape aResult = aGenerator.Shape();
 
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
-
 }
 
 GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)
