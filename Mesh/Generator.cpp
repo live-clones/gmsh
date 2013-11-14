@@ -428,7 +428,7 @@ static void PrintMesh2dStatistics(GModel *m)
   }
 
   for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){
-      if((*it)->geomType() != GEntity::DiscreteSurface){
+    if((*it)->geomType() != GEntity::DiscreteSurface){
       worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
       best = std::max((*it)->meshStatistics.best_element_shape, best);
       avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;

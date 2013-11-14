@@ -3870,26 +3870,27 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
   double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
   if (!s->EmbeddedCurves)
     s->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
-  for(int i = 0; i < curves->n; i++) {
+
+  for(int i = 0; i < List_Nbr(curves); i++) {
     double iCurve;
     List_Read(curves, i, &iCurve);
     Curve *cToAddInSurf = FindCurve((int)iCurve);
-    
+
     if(!cToAddInSurf){
       Msg::Error("Unknown curve %d", (int)iCurve);
       continue;
     }
-    
+
     if (cToAddInSurf->Typ != MSH_SEGM_LINE){
       // compute intersections only avalaible for straight lines
       List_Add(s->EmbeddedCurves, &cToAddInSurf);
       continue;
     }
-    
+
     if(!cToAddInSurf->Control_Points)
       continue;
-    
-    for(int j = 0; j < s->EmbeddedCurves->n + s->Generatrices->n; j++) {
+
+    for(int j = 0; j < List_Nbr(s->EmbeddedCurves) + List_Nbr(s->Generatrices); j++) {
       Curve *cDejaInSurf;
       if (j < s->EmbeddedCurves->n)
         List_Read(s->EmbeddedCurves, j, &cDejaInSurf);
@@ -3898,52 +3899,55 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
       if (cDejaInSurf->Typ != MSH_SEGM_LINE)
         // compute intersections only avalaible for straight lines
         continue;
-      
+
       if(!cDejaInSurf->Control_Points)
         continue;
-      
-      // compute intersection between pair of control points of cDejaInSurf and pair of control points of cToAddInSurf
+
+      // compute intersection between pair of control points of cDejaInSurf and
+      // pair of control points of cToAddInSurf
       Vertex *v1;
       Vertex *v2;
       for(int k = 0; k < cDejaInSurf->Control_Points->n-1; k++) {
-        List_Read (cDejaInSurf->Control_Points, k, &v1);
-        List_Read (cDejaInSurf->Control_Points, k+1, &v2);
-        
+        List_Read(cDejaInSurf->Control_Points, k, &v1);
+        List_Read(cDejaInSurf->Control_Points, k+1, &v2);
+
         SPoint3 p1 = SPoint3(v1->Pos.X, v1->Pos.Y, v1->Pos.Z);
         SPoint3 p2 = SPoint3(v2->Pos.X, v2->Pos.Y, v2->Pos.Z);
-        
+
         // to take into account geometrical tolerance
         SVector3 sv = SVector3( p1, p2);
         sv = sv.unit()*eps;
         SPoint3 p3 = p1 - sv.point();
         SPoint3 p4 = p2 + sv.point();
-        
+
         Vertex *w1;
         Vertex *w2;
-        for(int l = 0; l < cToAddInSurf->Control_Points->n-1; l++) {
-          List_Read (cToAddInSurf->Control_Points, l, &w1);
-          List_Read (cToAddInSurf->Control_Points, l+1, &w2);
-          
+        for(int l = 0; l < List_Nbr(cToAddInSurf->Control_Points) - 1; l++) {
+          List_Read(cToAddInSurf->Control_Points, l, &w1);
+          List_Read(cToAddInSurf->Control_Points, l+1, &w2);
+
           SPoint3 q1 = SPoint3(w1->Pos.X, w1->Pos.Y, w1->Pos.Z);
           SPoint3 q2 = SPoint3(w2->Pos.X, w2->Pos.Y, w2->Pos.Z);
-          
+
           // to take into account geometrical tolerance
           SVector3 sw = SVector3( q1, q2);
           sw = sw.unit()*eps;
           SPoint3 q3 = q1 - sw.point();
           SPoint3 q4 = q2 + sw.point();
-          
+
           double x[2];
-          int inters = intersection_segments(p3,p4,q3,q4,x);
-          
+          int inters = intersection_segments(p3, p4, q3, q4, x);
+
           if (inters && x[0] != 0. && x[1] != 0. && x[0] != 1. && x[1] != 1.){
-            SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x() , (1.-x[0])*p3.y() + x[0]*p4.y() , 0);
+            SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x() ,
+                                 (1.-x[0])*p3.y() + x[0]*p4.y() , 0);
             // case to treat
-            bool createPoint = false, mergePoint = false, splitcToAddInSurf = false, splitcDejaInSurf = false;
+            bool createPoint = false, mergePoint = false;
+            bool splitcToAddInSurf = false, splitcDejaInSurf = false;
             Vertex *v, *w;
             {
-              double pp1 = p.distance( p1 );
-              double pp2 = p.distance( p2 );
+              double pp1 = p.distance(p1);
+              double pp2 = p.distance(p2);
               double pp;
               if (pp1 <= pp2){
                 pp = pp1;
@@ -3953,8 +3957,8 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
                 pp = pp2;
                 v = v2;
               }
-              double pq1 = p.distance( q1 );
-              double pq2 = p.distance( q2 );
+              double pq1 = p.distance(q1);
+              double pq2 = p.distance(q2);
               double pq;
               if (pq1 <= pq2){
                 pq = pq1;
@@ -3999,7 +4003,8 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
               }
             }
             if (splitcToAddInSurf || splitcDejaInSurf){
-              Msg::Debug("Intersect point between embedded edges at pos : (%g,%g)",p.x(), p.y());
+              Msg::Debug("Intersect point between embedded edges at pos : (%g,%g)",
+                         p.x(), p.y());
               Vertex *v3;
               if (createPoint){
                 v3 = Create_Vertex(NEWPOINT(), p.x(), p.y(), p.z(), MAX_LC, 1.0);
@@ -4007,7 +4012,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
               }
               else if (splitcDejaInSurf)
                 v3 = w;
-              else if (splitcToAddInSurf)
+              else
                 v3 = v;
               List_T *temp = List_Create(1, 1, sizeof(int));
               List_Add(temp, v3->Num);
