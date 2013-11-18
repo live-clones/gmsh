@@ -1,3 +1,4 @@
+%include "GmshConfig.h"
 %fragment("fullMatrixConversionInit", "init") {
   %#ifdef HAVE_NUMPY
   import_array();
@@ -157,11 +158,10 @@
   if (newMatrix$argnum && $1) delete $1;
 }
 
-%#include "GmshConfig.h"
-%#ifdef HAVE_NUMPY
+#ifdef HAVE_NUMPY
 %typemap(out, fragment="fullMatrixConversion") fullMatrix<double> {
   $result = fullMatrix2PyArray($1);
 }
-%#endif
+#endif
 
 
