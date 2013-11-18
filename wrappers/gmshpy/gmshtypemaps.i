@@ -15,12 +15,17 @@
   %#endif
   %#endif
   fullMatrix<double> *pySequenceToFullMatrixDouble(PyObject *o) {
-    fullMatrix<double> *fm;
+    fullMatrix<double> *fm = NULL;
     if (!PySequence_Check(o))
       return NULL;
     long int nRow = PySequence_Length(o);
     for (int i = 0; i < PySequence_Length(o); ++i) {
       PyObject *l = PySequence_GetItem(o, i);
+      if (!PySequence_Check(l)){
+        if (fm != NULL)
+          delete fm;
+        return NULL;
+      }
       long int nCol = PySequence_Length(l);
       if (i == 0)
         fm = new fullMatrix<double>(nRow, nCol);
@@ -80,6 +85,30 @@
     %#endif
     return NULL;
   }
+
+  %#ifdef HAVE_NUMPY
+  static void deleteCapsuleArray(PyObject *capsule)
+  {
+    delete [](double*)PyCapsule_GetPointer(capsule, NULL);
+  }
+  PyObject *fullMatrix2PyArray(fullMatrix<double> &fm)
+  {
+    npy_intp dims[2] = {fm.size1(), fm.size2()};
+    double *data = &fm.operator()(0, 0);
+    /*PyObject *array = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, NULL, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    // copy data
+    memcpy((void*)PyArray_DATA(array), data, dims[0] * dims[1] * sizeof(double));*/
+    // do not copy data
+    PyObject *array = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, (void*)data, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    PyArray_UpdateFlags((PyArrayObject*)array, NPY_ARRAY_ALIGNED);
+    if (fm.getOwnData()) {
+      fm.setOwnData(false);
+      PyObject *capsule = PyCapsule_New((void*) data, NULL, deleteCapsuleArray);
+      PyArray_SetBaseObject((PyArrayObject*)array, capsule);
+    }
+    return array;
+  }
+  %#endif
 }
 
 %typemap(in, fragment="fullMatrixConversion") const fullMatrix<double> &(PyObject *tmpObject = NULL, bool newMatrix = false){
@@ -127,3 +156,12 @@
 %typemap(freearg) fullMatrix<double> *{
   if (newMatrix$argnum && $1) delete $1;
 }
+
+%#include "GmshConfig.h"
+%#ifdef HAVE_NUMPY
+%typemap(out, fragment="fullMatrixConversion") fullMatrix<double> {
+  $result = fullMatrix2PyArray($1);
+}
+%#endif
+
+
