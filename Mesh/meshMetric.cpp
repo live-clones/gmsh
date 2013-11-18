@@ -285,7 +285,7 @@ void meshMetric::computeHessian()
       }
       b(i) = vals[vv[i]];
     }
-    ATA.gemmWithAtranspose(A,A,1.,0.);
+    ATA.gemm(A,A,1.,0., true, false);
     A.multWithATranspose(b,1.,0.,ATb);
     ATA.luSolve(ATb,coeffs);
     const double &x = ver->x(), &y = ver->y(), &z = ver->z();

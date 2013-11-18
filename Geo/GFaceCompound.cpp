@@ -2360,7 +2360,7 @@ void GFaceCompound::computeHessianMapping() const
       by(i) = vv[i]->y();
       bz(i) = vv[i]->z();
     }
-    ATAx.gemmWithAtranspose(A,A,1.,0.);
+    ATAx.gemm(A,A,1.,0., true, false);
     ATAy = ATAx; ATAz = ATAx;
     A.multWithATranspose(bx,1.,0.,ATbx);
     A.multWithATranspose(by,1.,0.,ATby);

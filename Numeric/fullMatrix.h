@@ -595,10 +595,10 @@ class fullMatrix
     add(temp);
   }
   void gemm(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
-            scalar alpha=1., scalar beta=1.)
+            scalar alpha=1., scalar beta=1., bool transposeA = false, bool transposeB = false)
 #if !defined(HAVE_BLAS)
   {
-    gemm_naive(a,b,alpha,beta);
+    gemm_naive(transposeA ? a.transpose() : a, transposeB ? b.transpose() : b, alpha, beta);
   }
 #endif
   ;
@@ -809,15 +809,7 @@ class fullMatrix
      _data[cind+i] = x(i);
   }
 
-  void gemmWithAtranspose(const fullMatrix<scalar> &a, const fullMatrix<scalar> &b,
-            scalar alpha=1., scalar beta=1.)
-#if !defined(HAVE_BLAS)
-  {
-    Msg::Error("gemmWithAtranspose is only available with blas. If blas is not "
-               "installed please transpose a before used gemm_naive");
-  }
-#endif
-  ;
-
+  bool getOwnData() {return _own_data;};
+  void setOwnData(bool ownData) {_own_data = ownData;};
 };
 #endif
