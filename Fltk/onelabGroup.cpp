@@ -447,6 +447,7 @@ bool gmshLocalNetworkClient::run()
     // spawned subclients) and check if data is available for one of them
     bool stop = false, haveData = false;
     gmshLocalNetworkClient *c = 0;
+    std::vector<gmshLocalNetworkClient*> toDelete;
     for(int i = 0; i < getNumClients(); i++){
       c = getClient(i);
       if(c->getPid() < 0){
@@ -455,9 +456,8 @@ bool gmshLocalNetworkClient::run()
           break;
         }
         else{
-          // this subclient is not active anymore: shut down its server, delete
-          // the server and the client, and go to the next client
-          Msg::Debug("Deleting subclient `%s'", c->getName().c_str());
+          // this subclient is not active anymore: shut down and delete its
+          // server and mark the client for deletion
           GmshServer *s = c->getGmshServer();
           c->setGmshServer(0);
           c->setFather(0);
@@ -465,8 +465,7 @@ bool gmshLocalNetworkClient::run()
             s->Shutdown();
             delete s;
           }
-          removeClient(c);
-          delete c;
+          toDelete.push_back(c);
           continue;
         }
       }
@@ -491,6 +490,11 @@ bool gmshLocalNetworkClient::run()
         }
       }
     }
+    for(unsigned int i = 0; i < toDelete.size(); i++){
+      removeClient(toDelete[i]);
+      delete toDelete[i];
+    }
+
     // break the while(1) if the master client has stopped or if we encountered
     // a problem
     if(stop) break;
@@ -504,9 +508,7 @@ bool gmshLocalNetworkClient::run()
   }
 
   // we are done running the (master) client: delete the servers and the
-  // subclients, if any. The servers are not deleted upon GMSH_STOP in
-  // receiveMessage() to make sure we always delete them, even when the
-  // disconnect was not clean.
+  // subclients, if any remain (they should have been deleted already).
   std::vector<gmshLocalNetworkClient*> toDelete;
   for(int i = 0; i < getNumClients(); i++){
     gmshLocalNetworkClient *c = getClient(i);
