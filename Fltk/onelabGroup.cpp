@@ -454,7 +454,19 @@ bool gmshLocalNetworkClient::run()
           stop = true;
           break;
         }
-        else{ // this subclient is not active anymore: pass to the next client
+        else{
+          // this subclient is not active anymore: shut down its server, delete
+          // the server and the client, and go to the next client
+          Msg::Debug("Deleting subclient `%s'", c->getName().c_str());
+          GmshServer *s = c->getGmshServer();
+          c->setGmshServer(0);
+          c->setFather(0);
+          if(s){
+            s->Shutdown();
+            delete s;
+          }
+          removeClient(c);
+          delete c;
           continue;
         }
       }
