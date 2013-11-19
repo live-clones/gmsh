@@ -87,8 +87,8 @@ enum Rec2DQualCrit {
   VertQuality = 1,
   VertEdgeQuality = 2
 };
-//
 
+//
 class Recombine2D {
   private :
     GFace *_gf;
@@ -243,18 +243,19 @@ class Recombine2D {
 
 //
 class Rec2DData {
-  private :
+  public :
     class Action {
       public :
         const Rec2DAction *action;
         unsigned int position;
         Action(const Rec2DAction *ra, unsigned int pos)
           : action(ra), position(pos) {
-            static int a = 0;
-            if (++a == 1) Msg::Warning("FIXME: position is supefluous in this case (iterators are sufficient)");
-          }
+          static int a = 0;
+          if (++a == 1) Msg::Warning("FIXME: position is supefluous in this case (iterators are sufficient)");
+        }
+        void update();
     };
-    template<class T> friend void std::swap(T&, T&);
+    //template<class T> friend void std::swap(T&, T&);
     struct gterAction {
       bool operator()(const Action*, const Action*) const;
     };
@@ -513,9 +514,16 @@ class Rec2DDataChange {
     inline void hide(Rec2DEdge *re) {_changes.push_back(new Rec2DChange(re, 1));}
     inline void hide(Rec2DVertex *rv) {_changes.push_back(new Rec2DChange(rv, 1));} 
     inline void hide(Rec2DElement *rel) {_changes.push_back(new Rec2DChange(rel, 1));}
-    inline void hide(Rec2DAction *ra) {_changes.push_back(new Rec2DChange(ra, 1));}
-    inline void hide(std::vector<Rec2DAction*> &vect) {_changes.push_back(new Rec2DChange(vect, 1));}
-    
+    std::vector<Rec2DAction*> hiddenActions;
+    inline void hide(Rec2DAction *ra) {
+      _changes.push_back(new Rec2DChange(ra, 1));
+      hiddenActions.push_back(ra);
+    }
+    inline void hide(std::vector<Rec2DAction*> &vect) {
+      _changes.push_back(new Rec2DChange(vect, 1));
+      hiddenActions.insert(hiddenActions.end(), vect.begin(), vect.end());
+    }
+
     inline void append(Rec2DElement *rel) {_changes.push_back(new Rec2DChange(rel));}
     inline void append(Rec2DAction *ra) {_changes.push_back(new Rec2DChange(ra));}
     
@@ -552,7 +560,7 @@ class Rec2DAction {
     friend void Rec2DData::add(const Rec2DAction*);
     friend void Rec2DData::rmv(const Rec2DAction*);
     friend bool Rec2DData::has(const Rec2DAction *ra);
-    template<class T> friend void std::swap(T&, T&);
+    friend void Rec2DData::Action::update();
     
   public :
     Rec2DAction();
@@ -612,6 +620,7 @@ class Rec2DAction {
     virtual Rec2DAction* getInfant() const = 0;
     virtual MElement* createMElement(double shiftx, double shifty) = 0;
     virtual void color(int, int, int) const = 0;
+    virtual void getIncompatible(std::vector<Rec2DAction*>&) = 0;
     //
     static void removeDuplicate(std::vector<Rec2DAction*>&);
     
@@ -683,6 +692,7 @@ class Rec2DTwoTri2Quad : public Rec2DAction {
     virtual inline Rec2DAction* getInfant() const {return (Rec2DAction*)_col;}
     virtual MElement* createMElement(double shiftx, double shifty);
     virtual void color(int, int, int) const;
+    virtual void getIncompatible(std::vector<Rec2DAction*>&);
     
   private :
     virtual void _computeGlobQual();
@@ -751,6 +761,7 @@ class Rec2DCollapse : public Rec2DAction {
     virtual inline Rec2DAction* getInfant() const {return NULL;}
     virtual inline MElement* createMElement(double shiftx, double shifty) {return NULL;}
     virtual inline void color(int c1, int c2, int c3) const {_rec->color(c1, c2, c3);}
+    virtual void getIncompatible(std::vector<Rec2DAction*>&) {Msg::Fatal("not implemented");};
     
   private :
     virtual void _computeGlobQual();
@@ -1086,7 +1097,6 @@ class Rec2DElement {
 };
 
 //
-
 namespace Rec2DAlgo {
   class Node;
 
@@ -1157,6 +1167,29 @@ namespace Rec2DAlgo {
     Rec2DAction* getRandomNAction();
     Rec2DAction* getBestOAction();
     Rec2DAction* getRandomOAction();
+
+    // For cliques
+    typedef std::pair< Rec2DAction*, std::vector<Rec2DAction*> > Ra2Incomp;
+    class CompareIncomp
+    {
+      public:
+      bool operator()(const Ra2Incomp *x, const Ra2Incomp *y) const
+      {
+        return x->second.size() > y->second.size();
+        // action with less incompatible action on top of the heap
+      }
+    };
+    void subsetIncompatibilities(const std::vector<Ra2Incomp*> &complete,
+                                 const std::vector<Rec2DAction*> &subAction,
+                                       std::vector<Ra2Incomp*> &subset);
+    void removeLinkIncompatibilities(std::vector<Ra2Incomp*>&,
+                                     const Rec2DAction*, const Rec2DAction*);
+    void findMaximalClique(std::vector<Rec2DAction*>&);
+    void findMaximumClique(std::vector<Ra2Incomp*>&);
+    void relativeComplement(const std::vector<Rec2DAction*>&,
+                                  std::vector<Rec2DAction*>&);
+    void intersection(const std::vector<Rec2DAction*>&,
+                            std::vector<Rec2DAction*>&);
   }
 
   class Node {
