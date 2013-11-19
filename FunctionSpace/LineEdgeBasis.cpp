@@ -24,27 +24,21 @@ LineEdgeBasis::LineEdgeBasis(size_t order){
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
-  // Alloc Temporary Space //
+  // Legendre Polynomial //
   const size_t orderPlus = order + 1;
   Polynomial* intLegendre = new Polynomial[orderPlus];
 
-  vector<Polynomial> first(3);
-  first[0] = Polynomial(-0.5, 0, 0, 0);
-  first[1] = Polynomial( 0  , 0, 0, 0);
-  first[2] = Polynomial( 0  , 0, 0, 0);
-
-  vector<Polynomial> second(3);
-  second[0] = Polynomial(+0.5, 0, 0, 0);
-  second[1] = Polynomial( 0  , 0, 0, 0);
-  second[2] = Polynomial( 0  , 0, 0, 0);
-
-  const Polynomial x[2] = {
-    Polynomial(-1, 1, 0, 0),
-    Polynomial(+1, 1, 0, 0)
-  };
-
-  // Legendre Polynomial //
   Legendre::integrated(intLegendre, orderPlus);
+
+  // Lagrange Polynomial //
+  const Polynomial lagrange[2] =
+    {
+      Polynomial(Polynomial(0.5, 0, 0, 0) -
+                 Polynomial(0.5, 1, 0, 0)),
+
+      Polynomial(Polynomial(0.5, 0, 0, 0) +
+                 Polynomial(0.5, 1, 0, 0)),
+    };
 
   // Basis //
   basis = new vector<Polynomial>**[nRefSpace];
@@ -52,19 +46,38 @@ LineEdgeBasis::LineEdgeBasis(size_t order){
   for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
-  // Edge Based (Nedelec) //
-  basis[0][0] = new vector<Polynomial>(first);
-  basis[1][0] = new vector<Polynomial>(second);
-
-  // Edge Based (High Order) //
+  // Edge Based //
   for(size_t s = 0; s < nRefSpace; s++){
-    size_t i = 1;
+    size_t i = 0;
 
-    for(size_t l = 1; l < orderPlus; l++){
-      basis[s][i] =
-        new vector<Polynomial>((intLegendre[l].compose
-                                (x[edgeIdx[s][0][0]])).gradient());
+    for(size_t l = 0; l < orderPlus; l++){
+      // Nedelec
+      if(l == 0){
+        vector<Polynomial> tmp1 = lagrange[edgeIdx[s][0][1]].gradient();
+        vector<Polynomial> tmp2 = lagrange[edgeIdx[s][0][0]].gradient();
 
+        tmp1[0].mul(lagrange[edgeIdx[s][0][0]]);
+        tmp1[1].mul(lagrange[edgeIdx[s][0][0]]);
+        tmp1[2].mul(lagrange[edgeIdx[s][0][0]]);
+
+        tmp2[0].mul(lagrange[edgeIdx[s][0][1]]);
+        tmp2[1].mul(lagrange[edgeIdx[s][0][1]]);
+        tmp2[2].mul(lagrange[edgeIdx[s][0][1]]);
+
+        tmp2[0].sub(tmp1[0]);
+        tmp2[1].sub(tmp1[1]);
+        tmp2[2].sub(tmp1[2]);
+
+        basis[s][i] = new vector<Polynomial>(tmp2);
+      }
+
+      // High Order
+      else{
+        basis[s][i] =
+          new vector<Polynomial>
+          ((intLegendre[l].compose(lagrange[edgeIdx[s][0][0]] -
+                                   lagrange[edgeIdx[s][0][1]]).gradient()));
+      }
       i++;
     }
   }

@@ -1,4 +1,5 @@
 #include "TriLagrangeBasis.h"
+#include "TriReferenceSpace.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
@@ -24,9 +25,14 @@ TriLagrangeBasis::TriLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsTriangle(order, false));
+
+  // Reference Space //
+  refSpace  = new TriReferenceSpace;
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 TriLagrangeBasis::~TriLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }

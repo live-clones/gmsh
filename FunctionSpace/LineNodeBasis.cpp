@@ -24,16 +24,19 @@ LineNodeBasis::LineNodeBasis(size_t order){
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
 
-  // Alloc Temporary Space //
-  Polynomial* intLegendre = new Polynomial[order];
-
-  const Polynomial x[2] = {
-    Polynomial(+1, 1, 0, 0),
-    Polynomial(-1, 1, 0, 0)
-  };
-
   // Legendre Polynomial //
+  Polynomial* intLegendre = new Polynomial[order];
   Legendre::integrated(intLegendre, order);
+
+  // Lagrange Polynomial //
+  const Polynomial lagrange[2] =
+    {
+      Polynomial(Polynomial(0.5, 0, 0, 0) -
+                 Polynomial(0.5, 1, 0, 0)),
+
+      Polynomial(Polynomial(0.5, 0, 0, 0) +
+                 Polynomial(0.5, 1, 0, 0)),
+    };
 
   // Basis //
   basis = new Polynomial**[nRefSpace];
@@ -41,15 +44,10 @@ LineNodeBasis::LineNodeBasis(size_t order){
   for(size_t s = 0; s < nRefSpace; s++)
     basis[s] = new Polynomial*[nFunction];
 
-  // Vertex Based (Lagrange) //
+  // Vertex Based //
   for(size_t s = 0; s < nRefSpace; s++){
-    basis[s][0] =
-      new Polynomial(Polynomial(0.5, 0, 0, 0) -
-                     Polynomial(0.5, 1, 0, 0));
-
-    basis[s][1] =
-      new Polynomial(Polynomial(0.5, 0, 0, 0) +
-                     Polynomial(0.5, 1, 0, 0));
+    basis[s][0] = new Polynomial(lagrange[0]);
+    basis[s][1] = new Polynomial(lagrange[1]);
   }
 
   // Edge Based //
@@ -58,7 +56,8 @@ LineNodeBasis::LineNodeBasis(size_t order){
 
     for(size_t l = 1; l < order; l++){
       basis[s][i] =
-        new Polynomial(intLegendre[l].compose(x[edgeIdx[s][0][0]]));
+        new Polynomial(intLegendre[l].compose(lagrange[edgeIdx[s][0][1]] -
+                                              lagrange[edgeIdx[s][0][0]]));
 
       i++;
     }

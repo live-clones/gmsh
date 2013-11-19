@@ -202,7 +202,7 @@ isCyclicPermutation(const vector<size_t>& pTest,
 
   // Triplet to return
   triplet tri;
-
+  /*
   // If no Face, we have no Cyclic Permutation
   if(!refFaceNodeIdx.size()){
     tri.first  = false;
@@ -240,11 +240,11 @@ isCyclicPermutation(const vector<size_t>& pTest,
 
   // Test if we have a face cyclic permutation
   size_t isCyclic = isFacePermutation(refNode, testNode);
-
-  // Test ifwe have the same connectivity
+  */
+  // Test if we have the same connectivity
   bool isSameConnectivity = isSameEdge(pTest, pRef);
 
-  if(isCyclic && isSameConnectivity){
+  if(isSameConnectivity){
     tri.first  = true;
     tri.second = getRefIndexPermutation(pRef, pTest);
     tri.third  = getReverseIndexPermutation(pRef, pTest);
@@ -258,7 +258,7 @@ isCyclicPermutation(const vector<size_t>& pTest,
 
   return tri;
 }
-
+/*
 size_t ReferenceSpace::findCorrespondingFace(const vector<size_t>& face,
                                              const vector<size_t>& node) const{
   // Init Stuff //
@@ -347,7 +347,7 @@ bool ReferenceSpace::isFacePermutation(const vector<size_t>& refNode,
 
   return match;
 }
-
+*/
 bool ReferenceSpace::isSameEdge(const std::vector<size_t>& pTest,
                                 const std::vector<size_t>& pRef) const{
   // Set of Reference Edges

@@ -1,4 +1,5 @@
 #include "QuadLagrangeBasis.h"
+#include "QuadReferenceSpace.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
@@ -24,9 +25,14 @@ QuadLagrangeBasis::QuadLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsQuadrangle(order, false));
+
+  // Reference Space //
+  refSpace  = new QuadReferenceSpace;
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 QuadLagrangeBasis::~QuadLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }

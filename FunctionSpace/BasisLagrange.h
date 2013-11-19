@@ -75,6 +75,10 @@ class BasisLagrange: public BasisLocal{
 
  protected:
   BasisLagrange(void);
+
+ private:
+  void permutation(size_t orientation,
+                   fullMatrix<double>& function) const;
 };
 
 

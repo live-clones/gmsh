@@ -1,4 +1,5 @@
 #include "TetLagrangeBasis.h"
+#include "TetReferenceSpace.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
@@ -24,9 +25,14 @@ TetLagrangeBasis::TetLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsTetrahedron(order, false));
+
+  // Reference Space //
+  refSpace  = new TetReferenceSpace;
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 TetLagrangeBasis::~TetLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }

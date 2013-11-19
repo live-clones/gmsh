@@ -1,4 +1,5 @@
 #include "LineLagrangeBasis.h"
+#include "LineReferenceSpace.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
@@ -24,9 +25,14 @@ LineLagrangeBasis::LineLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsLine(order));
+
+  // Reference Space //
+  refSpace  = new LineReferenceSpace;
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 LineLagrangeBasis::~LineLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }

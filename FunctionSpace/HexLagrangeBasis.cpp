@@ -1,4 +1,5 @@
 #include "HexLagrangeBasis.h"
+#include "HexReferenceSpace.h"
 #include "pointsGenerators.h"
 #include "ElementType.h"
 
@@ -24,9 +25,14 @@ HexLagrangeBasis::HexLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsHexahedron(order, false));
+
+  // Reference Space //
+  refSpace  = new HexReferenceSpace;
+  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 HexLagrangeBasis::~HexLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
+  delete refSpace;
 }
