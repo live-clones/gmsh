@@ -339,7 +339,7 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_QUA_1   : case MSH_QUA_4   :
 
   case MSH_TET_1   : case MSH_TET_4   :
-  case MSH_TET_10  : 
+  case MSH_TET_10  :
 
   case MSH_PRI_1   : case MSH_PRI_6   :
 
@@ -361,9 +361,9 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_QUA_81  : case MSH_QUA_100 :
   case MSH_QUA_121 :
 
-  case MSH_TET_20  : case MSH_TET_35  : 
-  case MSH_TET_56  : case MSH_TET_84  : 
-  case MSH_TET_120 : case MSH_TET_165 : 
+  case MSH_TET_20  : case MSH_TET_35  :
+  case MSH_TET_56  : case MSH_TET_84  :
+  case MSH_TET_120 : case MSH_TET_165 :
   case MSH_TET_220 : case MSH_TET_286 :
 
   case MSH_PRI_18  : case MSH_PRI_40  :
@@ -481,7 +481,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     case 0 : return MSH_TET_1;
     case 1 : return MSH_TET_4;
     case 2 : return MSH_TET_10;
-    case 3 : return serendip ? MSH_TET_20 : MSH_TET_16;
+    case 3 : return serendip ? MSH_TET_16 : MSH_TET_20;
     case 4 : return serendip ? MSH_TET_22 : MSH_TET_35;
     case 5 : return serendip ? MSH_TET_28 : MSH_TET_56;
     case 6 : return serendip ? MSH_TET_34 : MSH_TET_84;
