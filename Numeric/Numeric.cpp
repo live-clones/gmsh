@@ -911,7 +911,7 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
       d = sign * std::min(fabs(d), p.distance(p3));
     }
    }
-  
+
 }
 void signedDistancesPointsTriangle(std::vector<double> &distances,
                                    std::vector<SPoint3> &closePts,
@@ -1350,9 +1350,8 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
   res[0] = V(0, min);
   res[1] = V(1, min);
   res[2] = V(2, min);
+  norme(res);
 
-  double xxx = norme(res);
-  res[3] /= xxx;
   double ex[3], t1[3], t2[3];
 
   ex[0] = ex[1] = ex[2] = 0.0;
@@ -1380,7 +1379,7 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
   meanPlane.a = res[0];
   meanPlane.b = res[1];
   meanPlane.c = res[2];
-  meanPlane.d = res[3];//BUG HERE
+  meanPlane.d = res[3];
 
   meanPlane.x = meanPlane.y = meanPlane.z = 0.;
   if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
