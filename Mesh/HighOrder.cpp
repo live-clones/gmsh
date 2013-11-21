@@ -344,7 +344,11 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
             }
           }
           else{
-            v = new MVertex(X, Y, Z, gf);
+            GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+            if(gp.succeeded())
+              v = new MVertex(gp.x(), gp.y(), gp.z(), gf);
+            else
+              v = new MVertex(X, Y, Z, gf);
           }
         }
         // should be expensive -> induces a new search each time
