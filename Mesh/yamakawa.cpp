@@ -4141,7 +4141,8 @@ void PostOp::statistics(GRegion* gr){
       vol = vol + element->getVolume();
     }
     else{
-      vol = vol + workaround(element);
+      //vol = vol + workaround(element);
+	  vol = vol + element->getVolume();
     }
   }
 
