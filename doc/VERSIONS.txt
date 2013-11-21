@@ -1,4 +1,5 @@
-2.8.4 (Nov 21, 2013): reproductible 2D meshes; small improvements and bug fixes.
+2.8.4 (): better reproductibility of 2D meshes; small improvements and bug
+fixes.
 
 2.8.3 (Sep 27, 2013): new quick access menu and multiple view selection in GUI;
 enhanced animation creation; many small enhancements and bug fixes.
