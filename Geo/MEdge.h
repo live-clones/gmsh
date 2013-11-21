@@ -25,7 +25,7 @@ class MEdge {
   MEdge(MVertex *v0, MVertex *v1)
   {
     _v[0] = v0; _v[1] = v1;
-    if(_v[1] < _v[0]) {
+    if(_v[1]->getNum() < _v[0]->getNum()) {
       _si[0] = 1;
       _si[1] = 0;
     }
@@ -41,13 +41,13 @@ class MEdge {
   inline MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
   SVector3 scaledTangent() const
   {
-    return SVector3(_v[1]->x() - _v[0]->x(), 
+    return SVector3(_v[1]->x() - _v[0]->x(),
                     _v[1]->y() - _v[0]->y(),
                     _v[1]->z() - _v[0]->z());
   }
   SVector3 tangent() const
   {
-    SVector3 t(_v[1]->x() - _v[0]->x(), 
+    SVector3 t(_v[1]->x() - _v[0]->x(),
                _v[1]->y() - _v[0]->y(),
                _v[1]->z() - _v[0]->z());
     t.normalize();
@@ -55,12 +55,12 @@ class MEdge {
   }
   double length() const
   {
-    SVector3 t(_v[1]->x() - _v[0]->x(), 
+    SVector3 t(_v[1]->x() - _v[0]->x(),
                _v[1]->y() - _v[0]->y(),
                _v[1]->z() - _v[0]->z());
     return t.norm();
   }
-  SVector3 normal() const 
+  SVector3 normal() const
   {
     // this computes one of the normals to the edge
     SVector3 t = tangent(), ex(0., 0., 0.);
@@ -98,7 +98,7 @@ inline bool operator!=(const MEdge &e1, const MEdge &e2)
   return (e1.getMinVertex() != e2.getMinVertex() ||
           e1.getMaxVertex() != e2.getMaxVertex());
 }
-  
+
 struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
@@ -109,12 +109,11 @@ struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
 struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
-    if(e1.getMinVertex() < e2.getMinVertex()) return true;
-    if(e1.getMinVertex() > e2.getMinVertex()) return false;
-    if(e1.getMaxVertex() < e2.getMaxVertex()) return true;
+    if(e1.getMinVertex()->getNum() < e2.getMinVertex()->getNum()) return true;
+    if(e1.getMinVertex()->getNum() > e2.getMinVertex()->getNum()) return false;
+    if(e1.getMaxVertex()->getNum() < e2.getMaxVertex()->getNum()) return true;
     return false;
   }
-
 };
 
 #endif

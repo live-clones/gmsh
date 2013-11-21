@@ -13,12 +13,9 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "STensor3.h"
 
-
-
 class GFace;
 class GVertex;
 class MVertex;
-
 
 class edge_angle {
  public :
@@ -28,10 +25,10 @@ class edge_angle {
   bool operator < (const edge_angle &other) const
   {
     return other.angle < angle;
-  }  
+  }
 };
 
-typedef std::map<MVertex*, std::vector<MElement*> > v2t_cont;
+typedef std::map<MVertex*, std::vector<MElement*>, MVertexLessThanNum > v2t_cont;
 typedef std::map<MEdge, std::pair<MElement*, MElement*>, Less_Edge> e2t_cont;
 
 template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj){
@@ -51,6 +48,7 @@ template <class T> void buildVertexToElement(std::vector<T*> &eles, v2t_cont &ad
     }
   }
 }
+
 template <class T> void buildEdgeToElement(std::vector<T*> &eles, e2t_cont &adj);
 
 void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
@@ -71,18 +69,18 @@ void edgeSwappingLawson(GFace *gf);
 enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
 enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
 
-int edgeSwapPass(GFace *gf, 
-                 std::set<MTri3*, compareTri3Ptr> &allTris, 
+int edgeSwapPass(GFace *gf,
+                 std::set<MTri3*, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &DATA);
 void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 void removeThreeTrianglesNodes(GFace *gf);
-void buildMeshGenerationDataStructures(GFace *gf, 
+void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
 				       bidimMeshData & data);
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,bidimMeshData &DATA);
 void computeEquivalences(GFace *gf,bidimMeshData &DATA);
-void recombineIntoQuads(GFace *gf, 
-                        bool topologicalOpti   = true, 
+void recombineIntoQuads(GFace *gf,
+                        bool topologicalOpti   = true,
                         bool nodeRepositioning = true);
 
 //used for meshGFaceRecombine development
@@ -120,7 +118,7 @@ struct swapquad{
     std::sort(v, v + 4);
   }
 };
-      
+
 struct RecombineTriangle
 {
   MElement *t1, *t2;
@@ -132,14 +130,14 @@ struct RecombineTriangle
   {
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);
-    
+
     if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
     else if(t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
     else if(t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
     if(t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
     else if(t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
     else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
-    
+
     MQuadrangle q (n1,n3,n2,n4);
     angle = q.etaShapeMeasure();
 
@@ -162,21 +160,21 @@ struct RecombineTriangle
 /******************class Temporary******************/
 /***************************************************/
 
-class Temporary{ 	 	 
- private : 	 	 
-  static double w1,w2,w3; 	 	 
-  static std::vector<SVector3> gradients; 	 	 
-  void read_data(std::string); 	 	 
-  static SVector3 compute_normal(MElement*); 	 	 
-  static SVector3 compute_other_vector(MElement*); 	 	 
-  static SVector3 compute_gradient(MElement*); 	 	 
- public : 	 	 
-  Temporary(); 	 	 
-  ~Temporary(); 	 	 
-  void quadrilaterize(std::string,double,double,double); 	 	 
-  static double compute_total_cost(double,double); 	 	 
-  static void select_weights(double,double,double); 	 	 
-  static double compute_alignment(const MEdge&,MElement*,MElement*); 	 	 
+class Temporary{
+ private :
+  static double w1,w2,w3;
+  static std::vector<SVector3> gradients;
+  void read_data(std::string);
+  static SVector3 compute_normal(MElement*);
+  static SVector3 compute_other_vector(MElement*);
+  static SVector3 compute_gradient(MElement*);
+ public :
+  Temporary();
+  ~Temporary();
+  void quadrilaterize(std::string,double,double,double);
+  static double compute_total_cost(double,double);
+  static void select_weights(double,double,double);
+  static double compute_alignment(const MEdge&,MElement*,MElement*);
 };
 
 /***************************************************/
@@ -184,4 +182,3 @@ class Temporary{
 /***************************************************/
 
 #endif
-
