@@ -513,7 +513,9 @@ void Filler::treat_region(GRegion* gr){
 	  if(!ok2) delete individual;
 	}
 	
-	//printf("%d\n",count);
+	if(count%100==0){
+	  printf("%d\n",count);
+	}
 	count++;
   }
   
