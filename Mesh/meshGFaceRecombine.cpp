@@ -2888,11 +2888,8 @@ void Rec2DTwoTri2Quad::color(int a, int b, int c) const
 #endif
 }
 
-
 void Rec2DTwoTri2Quad::getIncompatible(std::vector<Rec2DAction*> &vect)
 {
-  Msg::Info("Entering getIncompatible...");
-  Msg::Info("> I'm %d, my incompatible are:", this);
   vect.clear();
   Rec2DDataChange *rdc = new Rec2DDataChange();
   std::vector<Rec2DAction*> *v = NULL;
@@ -2902,9 +2899,8 @@ void Rec2DTwoTri2Quad::getIncompatible(std::vector<Rec2DAction*> &vect)
     if (vect[i] == this) {
       vect[i] = vect.back();
       vect.pop_back();
-      for (unsigned int i = 0; i < vect.size(); ++i) {
-        Msg::Info(" %d", vect[i]);
-      }
+      rdc->revert();
+      delete rdc;
       return;
     }
   }
@@ -3510,7 +3506,7 @@ Rec2DEdge::Rec2DEdge(Rec2DVertex *rv0, Rec2DVertex *rv1)
                                 + 2*Recombine2D::getWeightEdgeQuad()),
   _lastUpdate(-1), _pos(-1)
 {
-  _computeQual();
+  _qual = -999999999; // FIXME // _computeQual();
   reveal();
 }
 
@@ -5105,7 +5101,7 @@ bool setParam(int horiz, int code)
   // plus_std_srch =  code_tree>>3;
   // for try_Clique
   plus_std_srch =  (code_tree>>3) % 7;
-  try_Clique = code_tree>>3 > 6;
+  try_clique = code_tree>>3 > 6;
 
   return paramOK();
 }
@@ -5165,7 +5161,7 @@ namespace data {
   Node *quadOk = NULL;
   std::vector<Node*> sequence;
 
-  bool try_Clique = false;
+  bool try_clique = false;
 }
 
 namespace func {
@@ -5452,6 +5448,8 @@ namespace func {
         intersection(incompI, otherIncompatible);
     }
 
+    if (otherIncompatible.empty()) return;
+
     // Compute incompatibilities & Search a maximum
     // clique among those other actions:
     std::vector<Ra2Incomp*> incompatibilities;
@@ -5464,81 +5462,84 @@ namespace func {
     }
 
     findMaximumClique(incompatibilities);
-    //actions.insert(actions.end(), incompatibilities.begin(), incompatibilities.end());
 
     for (unsigned int i = 0; i < incompatibilities.size(); ++i) {
+      actions.push_back(incompatibilities[i]->first);
       delete incompatibilities[i];
     }
   }
   
   void findMaximumClique(std::vector<Ra2Incomp*> &truc)
   {
-    if (truc.size() <= 2) {
-      if (truc.size() == 2 && (truc[0]->second.size() != 1 || truc[1]->second.size() != 1))
-        Msg::Error("error here");
-      if (truc.size() == 1 && truc[0]->second.size() != 0)
-        Msg::Error("error2 here");
+    if (truc.empty()) {
+      Msg::Error("error2 here");
       return;
     }
 
     std::vector<Ra2Incomp*> candidate, ans;
     Ra2Incomp *remember;
 
-    while (truc.size()) {
-      std::make_heap(truc.begin(), truc.end(), CompareIncomp());
+    std::make_heap(truc.begin(), truc.end(), CompareIncomp());
 
-      while (truc.front()->second.size() + 1 < ans.size()) {
+    while (truc.size()) {
+
+      // remove all actions that can not lead to better clique than ans
+      while (truc.size() && truc.front()->second.size() < ans.size()) {
         while (truc.front()->second.size()) {
           removeLinkIncompatibilities(truc, truc.front()->first,
                                             truc.front()->second.front());
         }
         std::pop_heap(truc.begin(), truc.end(), CompareIncomp());
+        delete truc.back();
         truc.pop_back();
         std::make_heap(truc.begin(), truc.end(), CompareIncomp());
       }
+      if (truc.empty()) break;
 
-      // take action A with less incompatible and one action B that is
-      // incompatible with A. Then compute common incompatibles
-      std::vector<Rec2DAction*> actions = truc.front()->second;
-      unsigned i = 0;
-      while (i < truc.size()) {
-        if (truc[i]->first == truc.front()->second.front()) {
-          remember = truc[i];
-          intersection(truc[i]->second, actions);
-          break;
-        }
-        ++i;
-      }
-      if (i == truc.size()) Msg::Error("error3 here");
-
-      // create incompatibilities vector & findMaximumClique
-      subsetIncompatibilities(truc, actions, candidate);
-      findMaximumClique(candidate);
-
-      // copy candidate if better
-      if (candidate.size() + 2 > ans.size()) {
-        actions.clear();
-        actions.push_back(truc.front()->first);
-        actions.push_back(truc.front()->second.front());
-        for (unsigned int i = 0; i < candidate.size(); ++i) {
-          actions.push_back(candidate[i]->first);
-        }
+      if (truc[0]->second.empty()) {
+        std::vector<Rec2DAction*> actions(1, truc.front()->first);
         subsetIncompatibilities(truc, actions, ans);
       }
+      else {
+        // take action A which has the least incompatible
+        // and action B which is the first incompatible with A.
+        // Then find common incompatibles
+        std::vector<Rec2DAction*> actions = truc.front()->second; // A
+        unsigned i = 0;
+        while (i < truc.size()) {
+          if (truc[i]->first == truc.front()->second.front()) {
+            remember = truc[i];
+            intersection(truc[i]->second, actions); // B
+            break;
+          }
+          ++i;
+        }
+        if (i == truc.size()) Msg::Error("error3 here");
 
-      // remove incomp link between A & B and start again
-      removeLinkIncompatibilities(truc, truc.front()->first,
-                                        truc.front()->second.front());
+        // create incompatibilities vector & findMaximumClique
+        subsetIncompatibilities(truc, actions, candidate);
+        if (candidate.size()) findMaximumClique(candidate);
+
+        // copy candidate if better
+        if (candidate.size() + 2 > ans.size()) {
+          actions.clear();
+          actions.push_back(truc.front()->first); // A
+          actions.push_back(truc.front()->second.front()); // B
+          for (unsigned int i = 0; i < candidate.size(); ++i) {
+            actions.push_back(candidate[i]->first);
+          }
+          subsetIncompatibilities(truc, actions, ans);
+        }
+
+        // remove incomp link between A & B and start again
+        removeLinkIncompatibilities(truc, truc.front()->first,
+                                          truc.front()->second.front());
+        std::make_heap(truc.begin(), truc.end(), CompareIncomp());
+      }
     }
 
-    for (unsigned int i = 0; i < candidate.size(); ++i) {
-      delete candidate[i];
-    }
-    candidate.clear();
-
-    for (unsigned int i = 0; i < truc.size(); ++i) {
-      delete truc[i];
-    }
+    for (unsigned int i = 0; i < candidate.size(); ++i) delete candidate[i];
+    for (unsigned int i = 0; i < truc.size(); ++i) delete truc[i];
     truc = ans;
   }
 
@@ -5569,10 +5570,11 @@ namespace func {
   void removeLinkIncompatibilities(std::vector<Ra2Incomp*> &set,
                                    const Rec2DAction *a, const Rec2DAction *b)
   {
+    if (a == NULL || b == NULL) Msg::Error("gneeeeeeeeeeeee");
     bool aOK = false, bOK = false;
-    const Rec2DAction *other = NULL;
     unsigned int i = 0;
     while (i < set.size()) {
+      const Rec2DAction *other = NULL;
       if (set[i]->first == a) {
         aOK = true;
         other = b;
@@ -5587,14 +5589,14 @@ namespace func {
           if (set[i]->second[j] == other) {
             set[i]->second[j] = set[i]->second.back();
             set[i]->second.pop_back();
+            --j;
             break;
           }
-          ++i;
+          ++j;
         }
         if (j == set[i]->second.size()) Msg::Error("error7 here");
-        if (aOK && bOK) return;
-        other = NULL;
       }
+      if (aOK && bOK) return;
       ++i;
     }
     Msg::Error("error6 here");
@@ -5603,15 +5605,6 @@ namespace func {
   void relativeComplement(const std::vector<Rec2DAction*> &vA,
                                 std::vector<Rec2DAction*> &vB)
   {
-    Msg::Info("Entering relativeComplement...");
-    Msg::Info("> vA");
-    for (unsigned int j = 0; j < vA.size(); ++j) {
-      Msg::Info("   %d", vA[j]);
-    }
-    Msg::Info("> vB");
-    for (unsigned int j = 0; j < vB.size(); ++j) {
-      Msg::Info("   %d", vB[j]);
-    }
     unsigned int i = 0;
     while (i < vB.size()) {
       for (unsigned int j = 0; j < vA.size(); ++j) {
@@ -5619,35 +5612,21 @@ namespace func {
           vB[i] = vB.back();
           vB.pop_back();
           --i;
-          continue;
+          break;
         }
       }
       ++i;
-    }
-    Msg::Info("Returning...");
-    Msg::Info("> vB");
-    for (unsigned int j = 0; j < vB.size(); ++j) {
-      Msg::Info("   %d", vB[j]);
     }
   }
 
   void intersection(const std::vector<Rec2DAction*> &vA,
                           std::vector<Rec2DAction*> &vB)
   {
-    Msg::Info("Entering intersection...");
-    Msg::Info("> vA");
-    for (unsigned int j = 0; j < vA.size(); ++j) {
-      Msg::Info("   %d", vA[j]);
-    }
-    Msg::Info("> vB");
-    for (unsigned int j = 0; j < vB.size(); ++j) {
-      Msg::Info("   %d", vB[j]);
-    }
     unsigned int i = 0;
     while (i < vB.size()) {
       unsigned int j = 0;
       while (j < vA.size()) {
-        if (vB[i] == vA[j]) continue;
+        if (vB[i] == vA[j]) break;
         ++j;
       }
       if (j == vA.size()) {
@@ -5656,37 +5635,7 @@ namespace func {
       }
       else ++i;
     }
-    Msg::Info("Returning...");
-    Msg::Info("> vB");
-    for (unsigned int j = 0; j < vB.size(); ++j) {
-      Msg::Info("   %d", vB[j]);
-    }
   }
-
-  /*void insertUnique(std::vector<Rec2DElement*> &from,
-                    std::vector<Rec2DElement*> &to)
-  {
-    for (unsigned int i = 0; i < from.size(); ++i) {
-      unsigned int j = 0;
-      while (j < to.size() && from[i] != to[j]) ++j;
-      if (j == to.size()) {
-        to.push_back(from[i]);
-      }
-    }
-  }
-
-  void removeCommon(std::vector<Rec2DAction*> &from,
-                    std::vector<Rec2DAction*> &to)
-  {
-    for (unsigned int i = 0; i < from.size(); ++i) {
-      unsigned int j = 0;
-      while (j < to.size() && from[i] != to[j]) ++j;
-      if (j < to.size()) {
-        to[j] = to.back();
-        to.pop_back();
-      }
-    }
-  }*/
 }
 
 Node::Node() : _ra(NULL), _dataChange(NULL), _createdActions(NULL)
@@ -5885,7 +5834,7 @@ void Node::branch_root()
   rt->getActions(actions);
 
   // 2b) Find maximum clique if asked
-  if (try_Clique) {
+  if (try_clique) {
     int num = actions.size();
     findMaximalClique(actions);
     static int more = 0, same = 0;
@@ -5987,14 +5936,14 @@ void Node::branch(int depth)
   rt->getActions(actions);
 
   // 2b) Find maximum clique if asked
-  if (try_Clique) {
+  if (try_clique) {
     int num = actions.size();
     findMaximalClique(actions);
     static int more = 0, same = 0;
     if (actions.size() > num) ++more;
     else if (actions.size() == num) ++same;
     else Msg::Fatal("You've got to be kidding me. -_-");
-    Msg::Info("same - more : %d - %d", same, more);
+    //Msg::Info("same - more : %d - %d", same, more);
   }
 
   // 3) branch on the actions

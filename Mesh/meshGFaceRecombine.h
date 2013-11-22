@@ -1137,6 +1137,8 @@ namespace Rec2DAlgo {
     extern Node *current;
     extern Node *quadOk;
     extern std::vector<Node*> sequence;
+
+    extern bool try_clique;
   }
 
   namespace func {
