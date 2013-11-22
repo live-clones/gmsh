@@ -13,6 +13,8 @@
   %#include <numpy/arrayobject.h>
   %#if NPY_API_VERSION < 0x00000007
   %#define NPY_ARRAY_FARRAY NPY_FARRAY
+  %#define NPY_ARRAY_F_CONTIGUOUS NPY_F_CONTIGUOUS
+  %#define PyArray_SetBaseObject(a, b) PyArray_BASE(a) = b
   %#endif
   %#endif
   fullMatrix<double> *pySequenceToFullMatrixDouble(PyObject *o) {
