@@ -802,7 +802,7 @@ void GenerateMesh(GModel *m, int ask)
     if(CTX::instance()->mesh.hoOptimize < 0){
       ElasticAnalogy(GModel::current(), CTX::instance()->mesh.hoThresholdMin, false);
     }
-    else{
+    else{      
       OptHomParameters p;
       p.nbLayers = CTX::instance()->mesh.hoNLayers;
       p.BARRIER_MIN = CTX::instance()->mesh.hoThresholdMin;

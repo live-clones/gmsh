@@ -20,6 +20,7 @@
 #include "Geo.h"
 #include "GmshDefines.h"
 
+
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
   int num =  gm->getMaxElementaryNumber(0) + 1;
@@ -481,6 +482,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
 #include <TopoDS_Wire.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopTools_ListOfShape.hxx>
+#include <GeomAPI_PointsToBSpline.hxx>
 #include "OCC_Connect.h"
 #if defined(HAVE_SALOME)
 #include "Partition_Spliter.hxx"
@@ -581,18 +583,33 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
   TColgp_Array1OfPnt ctrlPoints(1, nbControlPoints + 2);
   int index = 1;
   ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
+
+  //  printf("%d %d %d %d\n",points.size(),points[0].size(),points[1].size(),points[2].size());
   for (int i = 0; i < nbControlPoints; i++) {
+    //    printf("%g %g %g\n",points[i][0],points[i][1],points[i][2]);
     gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
     ctrlPoints.SetValue(index++, aP);
   }
   ctrlPoints.SetValue(index++, gp_Pnt(end->x(), end->y(), end->z()));
   if (type == BEZIER) {
+    if (nbControlPoints >= 20)Msg::Fatal("OCC Bezier Curves have a maximum degree of 20");
     Handle(Geom_BezierCurve) Bez = new Geom_BezierCurve(ctrlPoints);
     if (occv1 && occv2)
       occEdge = BRepBuilderAPI_MakeEdge(Bez,occv1->getShape(),occv2->getShape()).Edge();
     else
       occEdge = BRepBuilderAPI_MakeEdge(Bez).Edge();
   }
+  else if (type == BSPLINE) {
+
+    Handle(Geom_BSplineCurve) Bez = GeomAPI_PointsToBSpline(ctrlPoints).Curve(); 
+
+    if (occv1 && occv2)
+      occEdge = BRepBuilderAPI_MakeEdge(Bez,occv1->getShape(),occv2->getShape()).Edge();
+    else
+      occEdge = BRepBuilderAPI_MakeEdge(Bez).Edge();
+  }
+
+
   return gm->_occ_internals->addEdgeToModel(gm, occEdge);
 }
 

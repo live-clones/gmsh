@@ -452,17 +452,6 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 	}
       }
     }
-    /*
-    if (p1.size() == 8 ||p2.size() == 8){
-      for (int i=0;i<p1.size();i++){
-	printf("p1[%d] = %g %g\n",i,p1[i].x(),p1[i].y());
-      }
-      for (int i=0;i<p2.size();i++){
-	printf("p2[%d] = %g %g\n",i,p2[i].x(),p2[i].y());
-      }
-      printf("%d %d\n",imin,jmin);
-    }
-    */
     param1 = p1[jmin];
     param2 = p2[imin];
   }

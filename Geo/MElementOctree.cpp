@@ -9,7 +9,7 @@
 #include "Octree.h"
 #include "Context.h"
 
-static void MElementBB(void *a, double *min, double *max)
+void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = (MElement*)a;
   MVertex *v = e->getVertex(0);
@@ -47,7 +47,7 @@ static void MElementCentroid(void *a, double *x)
   x[2] *= oc;
 }
 
-static int MElementInEle(void *a, double *x)
+int MElementInEle(void *a, double *x)
 {
   MElement *e = (MElement*)a;
   double uvw[3];

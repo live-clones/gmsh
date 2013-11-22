@@ -967,7 +967,6 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
     GPoint pnt = point(initialGuess[0], initialGuess[1]);
     SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
     double dist = queryPoint.distance(spnt);
-    printf("dist = %12.5E\n",dist);
   }
 
   // FILE *F = Fopen ("hop.pos","w");

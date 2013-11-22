@@ -4,6 +4,7 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(SRC
+  filterElements.cpp
   Generator.cpp
     meshGEdge.cpp 
       meshGEdgeExtruded.cpp

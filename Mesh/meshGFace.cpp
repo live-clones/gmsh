@@ -44,6 +44,7 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
+#include "filterElements.h"
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
@@ -593,45 +594,10 @@ static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & be
   else bedges.erase(it);
 }
 
-void filterOverlappingElements(int dim, std::vector<MElement*> &e,
-                               std::vector<MElement*> &eout,
-                               std::vector<MElement*> &einter)
-{
-  eout.clear();
-  MElementOctree octree (e);
-  for (unsigned int i = 0; i < e.size(); ++i){
-    MElement *el = e[i];
-    bool intersection = false;
-    for (int j=0;j<el->getNumVertices();++j){
-      MVertex *v = el->getVertex(j);
-      std::vector<MElement *> inters = octree.findAll(v->x(), v->y(), v->z(), dim);
-      std::vector<MElement *> inters2;
-      for (unsigned int k = 0; k < inters.size(); k++){
-	bool found = false;
-	for (int l = 0; l < inters[k]->getNumVertices(); l++){
-	  if (inters[k]->getVertex(l) == v)found = true;
-	}
-	if (!found)inters2.push_back(inters[k]);
-      }
-      if (inters2.size() >= 1 ){
-	intersection = true;
-      }
-    }
-    if (intersection){
-      //      printf("intersection found\n");
-      einter.push_back(el);
-    }
-    else {
-      eout.push_back(el);
-    }
-  }
-}
-
 void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
   if (!buildAdditionalPoints2D (gf))return;
   BoundaryLayerColumns* _columns = gf->getColumns();
-
 
   std::set<MEdge,Less_Edge> bedges;
 
@@ -650,8 +616,8 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
       MEdge dv(v1,v2);
       addOrRemove(v1,v2,bedges);
-
       for (unsigned int SIDE = 0 ; SIDE < _columns->_normals.count(dv); SIDE ++){
+	std::vector<MElement*> myCol;
 	edgeColumn ec =  _columns->getColumns(v1, v2, SIDE);
 	const BoundaryLayerData & c1 = ec._c1;
 	const BoundaryLayerData & c2 = ec._c2;
@@ -672,7 +638,10 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 
 	  //avoid convergent errors
 	  if (dv2.length() < 0.03 * dv.length())break;
-	  blQuads.push_back(new MQuadrangle(v11,v21,v22,v12));
+	  MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
+	  myCol.push_back(qq);
+	  qq->setPartition(l);
+	  blQuads.push_back(qq);
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
 		  v12->x(),v12->y(),v12->z(),
@@ -680,7 +649,8 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 		  v21->x(),v21->y(),v21->z());
 	}
 	//	int M = std::max(c1._column.size(),c2._column.size());
-
+	for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+	_columns->_elemColumns[myCol[0]] = myCol;
       }
    }
     ++ite;
@@ -692,6 +662,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
       MVertex *v = itf->first;
       int nbCol = _columns->getNbColumns(v);
 
+      std::vector<MElement*> myCol;
       for (int i=0;i<nbCol-1;i++){
 	const BoundaryLayerData & c1 = _columns->getColumn(v,i);
 	const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
@@ -709,7 +680,10 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	    v12 = c2._column[l-1];
 	  }
 	  if (v11 != v12){
-	    blQuads.push_back(new MQuadrangle(v11,v12,v22,v21));
+	    MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
+	    myCol.push_back(qq);
+	    qq->setPartition(l);
+	    blQuads.push_back(qq);
 	    fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		    v11->x(),v11->y(),v11->z(),
 		    v12->x(),v12->y(),v12->z(),
@@ -717,7 +691,10 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 		    v21->x(),v21->y(),v21->z());
 	  }
 	  else {
-	    blTris.push_back(new MTriangle(v,v22,v21));
+	    MTriangle *qq = new MTriangle(v,v22,v21);
+	    myCol.push_back(qq);
+	    qq->setPartition(l);
+	    blTris.push_back(qq);
 	    fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		    v->x(),v->y(),v->z(),
 		    v22->x(),v22->y(),v22->z(),
@@ -725,19 +702,16 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  }
 	}
       }
+      for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+      _columns->_elemColumns[myCol[0]] = myCol;      
     }
   }
 
   fprintf(ff2,"};\n");
   fclose(ff2);
 
-  std::vector<MElement*> els,newels,oldels;
-  for (unsigned int i = 0; i < blQuads.size();i++) els.push_back(blQuads[i]);
-  filterOverlappingElements (2,els,newels,oldels);
-  blQuads.clear();
-  for (unsigned int i = 0; i < newels.size(); i++)
-    blQuads.push_back((MQuadrangle*)newels[i]);
-  for (unsigned int i = 0; i < oldels.size(); i++) delete oldels[i];
+  
+  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);

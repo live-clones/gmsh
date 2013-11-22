@@ -10,6 +10,7 @@
 #include "MQuadrangle.h"
 #include "STensor3.h"
 #include "GEntity.h"
+#include "MFace.h"
 #include <list>
 #include <set>
 #include <map>
@@ -127,7 +128,8 @@ class compareTri3Ptr
   {
     if(a->getRadius() > b->getRadius()) return true;
     if(a->getRadius() < b->getRadius()) return false;
-    return a<b;
+    Less_Face lf;
+    return lf(a->tri()->getFace(0), b->tri()->getFace(0));
   }
 };
 
@@ -159,11 +161,12 @@ struct edgeXface
   {
     v[0] = t1->tri()->getVertex(iFac == 0 ? 2 : iFac-1);
     v[1] = t1->tri()->getVertex(iFac);
-    if(v[0]->getNum()  > v[1]->getNum()){
-      MVertex *tmp = v[0];
-      v[0] = v[1];
-      v[1] = tmp;
-    }
+    if (v[0]->getNum() > v[1]->getNum())
+      {
+	MVertex *tmp = v[0];
+	v[0] = v[1];
+	v[1] = tmp;
+      }
   }
   inline bool operator < ( const edgeXface &other) const
   {
@@ -174,8 +177,7 @@ struct edgeXface
   }
   inline bool operator == ( const edgeXface &other) const
   {
-    if(v[0]->getNum() == other.v[0]->getNum() &&
-       v[1]->getNum() == other.v[1]->getNum()) return true;
+    if(v[0]->getNum() == other.v[0]->getNum() && v[1]->getNum() == other.v[1]->getNum()) return true;
     return false;
   }
 };

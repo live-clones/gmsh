@@ -1,4 +1,4 @@
-lc=1;
+lc=1000;
 Point(1) = {0, 0, 0,lc*.1};
 Point(2) = {0, 10, 0,lc};
 Point(3) = {10, 10, 0,lc};
@@ -10,6 +10,9 @@ Line(4) = {1, 2};
 
 Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
+
+Physical Line("wall")={1,2,3,4};
+Physical Surface("air")={10};
 
 //----------------------
 
@@ -24,4 +27,4 @@ Plane Surface(10) = {5};
 
 
 
-Recombine Surface {10};
+//Recombine Surface {10};

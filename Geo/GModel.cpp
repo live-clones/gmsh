@@ -2652,6 +2652,15 @@ GEdge *GModel::addBezier(GVertex *start, GVertex *end,
   return 0;
 }
 
+GEdge *GModel::addBSpline(GVertex *start, GVertex *end,
+			  std::vector<std::vector<double> > points)
+{
+  if(_factory)
+    return _factory->addSpline(this, GModelFactory::BSPLINE, start, end,
+                               points);
+  return 0;
+}
+
 GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
                         std::vector<std::vector<double> > points,
                         std::vector<double> knots,

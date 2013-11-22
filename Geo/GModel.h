@@ -489,6 +489,7 @@ class GModel
   GEdge *addCircleArcCenter(GVertex *start, GVertex *center, GVertex *end);
   GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
   GEdge *addBezier(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
+  GEdge *addBSpline(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
   GEdge *addNURBS(GVertex *start, GVertex *end,
 		  std::vector<std::vector<double> > points,
 		  std::vector<double> knots,

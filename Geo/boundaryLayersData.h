@@ -45,49 +45,6 @@ struct BoundaryLayerFan
   BoundaryLayerFan(MEdge e1, MEdge e2 , bool s = true)
     : _e1(e1),_e2(e2) , sense (s){}
 };
-
-// wedge between 2 sets of continuous faces
-struct BoundaryLayerFanWedge3d
-{
-  std::vector<GFace*> _gf1, _gf2;
-  BoundaryLayerFanWedge3d(GFace *gf1=0, GFace *gf2=0)
-  {
-    if(gf1)_gf1.push_back(gf1);
-    if(gf2)_gf2.push_back(gf2);
-  }
-  BoundaryLayerFanWedge3d(std::vector<GFace*> &gf1,
-			  std::vector<GFace*> &gf2):_gf1(gf1),_gf2(gf2)
-  {
-  }
-  bool isLeft (const GFace *gf) const {
-    for (unsigned int i=0;i<_gf1.size();i++)if (_gf1[i] == gf)return true;
-    return false;
-  }
-  bool isRight (const GFace *gf) const{
-    for (unsigned int i=0;i<_gf2.size();i++)if (_gf2[i] == gf)return true;
-    return false;
-  }
-  bool isLeft (const std::vector<GFace *> &gf) const {
-    for (unsigned int i=0;i<gf.size();i++)if (isLeft(gf[i]))return true;
-    return false;
-  }
-  bool isRight (const std::vector<GFace *> &gf) const {
-    for (unsigned int i=0;i<gf.size();i++)if (isRight(gf[i]))return true;
-    return false;
-  }
-
-};
-
-struct BoundaryLayerFanCorner3d
-{
-  int _fanSize;
-  std::vector<GFace *> _gf;
-  BoundaryLayerFanCorner3d() : _fanSize(0){}
-  BoundaryLayerFanCorner3d(int fanSize ,std::vector<GFace *> &gf)
-  : _fanSize(fanSize), _gf(gf){}
-};
-
-
 struct edgeColumn {
   const BoundaryLayerData &_c1, &_c2;
   edgeColumn(const BoundaryLayerData &c1, const BoundaryLayerData &c2)
@@ -111,9 +68,11 @@ struct faceColumn {
 class BoundaryLayerColumns
 {
   std::map<MVertex*, BoundaryLayerFan> _fans;
-  std::map<MVertex*, BoundaryLayerFanWedge3d> _wedges;
-  std::map<MVertex*, BoundaryLayerFanCorner3d> _corners;
 public:
+  // Element columns
+  std::map<MElement*,MElement*> _toFirst;
+  std::map<MElement*,std::vector<MElement*> > _elemColumns;  
+
   std::map<MFace, GFace*, Less_Face> _inverse_classification;
   std::multimap<MVertex*, BoundaryLayerData>  _data;
   size_t size () const {return _data.size();}
@@ -145,34 +104,14 @@ public:
   {
     _fans.insert(std::make_pair(v,BoundaryLayerFan(e1,e2,s)));
   }
-  inline void addWedge(MVertex *v, GFace *gf1, GFace *gf2)
-  {
-    _wedges.insert(std::make_pair(v,BoundaryLayerFanWedge3d(gf1,gf2)));
-  }
-  inline void addWedge(MVertex *v, std::vector<GFace *>&gf1, std::vector<GFace *> &gf2)
-  {
-    _wedges.insert(std::make_pair(v,BoundaryLayerFanWedge3d(gf1,gf2)));
-  }
-  inline void addCorner(MVertex *v, int fanSize, std::vector<GFace *> &gfs)
-  {
-    _corners.insert(std::make_pair(v,BoundaryLayerFanCorner3d(fanSize, gfs)));
-  }
-  inline bool isCorner (MVertex* v) const{
-    return _corners.find(v) != _corners.end();
-  }
-  inline bool isOnWedge (MVertex* v) const{
-    return _wedges.find(v) != _wedges.end();
-  }
 
-  inline BoundaryLayerFanWedge3d getWedge (MVertex* v) {
-    std::map<MVertex*, BoundaryLayerFanWedge3d>::iterator it = _wedges.find(v);
-    return it->second;
+  inline const BoundaryLayerFan *getFan(MVertex *v) const{
+    std::map<MVertex*,BoundaryLayerFan>::const_iterator it = _fans.find(v);
+     if (it != _fans.end()){
+       return &it->second;
+     }
+     return 0;
   }
-  inline BoundaryLayerFanCorner3d getCorner (MVertex* v) {
-    std::map<MVertex*, BoundaryLayerFanCorner3d>::iterator it = _corners.find(v);
-    return it->second;
-  }
-
 
   const BoundaryLayerData &getColumn(MVertex *v, MFace f);
 
@@ -205,13 +144,11 @@ public:
     static BoundaryLayerData error;
     return error;
   }
-  void filterPoints(GEntity *ge, double factor);
 };
 
 BoundaryLayerField* getBLField(GModel *gm);
 bool buildAdditionalPoints2D (GFace *gf ) ;
 BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) ;
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
-
 
 #endif

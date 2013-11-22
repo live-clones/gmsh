@@ -33,6 +33,7 @@
 #include "Levy3D.h"
 #include "directions3D.h"
 #include "discreteFace.h"
+#include "filterElements.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -667,6 +668,108 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 }
 
 
+static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2, 
+		     int indicesVert1 [], int indicesVert2 [])
+{
+  int N1 = _columns->getNbColumns(v1) ;
+  int N2 = _columns->getNbColumns(v2) ;  
+  int fanSize = 4;
+  int NW1 = 0;
+  int NW2 = 0;
+  for (int i=0;i<N1;i++){
+    const BoundaryLayerData & c1 = _columns->getColumn(v1,i);
+    if (c1._joint.size())NW1++;
+  }
+  for (int i=0;i<N2;i++){
+    const BoundaryLayerData & c2 = _columns->getColumn(v2,i);
+    if (c2._joint.size())NW2++;
+  }
+
+
+  
+
+  std::map<int,int> one2two;
+  for (int i=0;i<NW1;i++){
+    const BoundaryLayerData & c1 = _columns->getColumn(v1,i);
+    for (int j=0;j<NW2;j++){
+      const BoundaryLayerData & c2 = _columns->getColumn(v2,j);
+      for (unsigned int k=0;k<c2._joint.size();k++){
+	if (std::find(c1._joint.begin(),c1._joint.end(),c2._joint[k]) !=
+	    c1._joint.end()) {
+	  one2two[i] = j;
+	}
+      }
+    }
+  }
+
+  //  printf("%d %d %d %d \n",N1,N2,NW1,NW2);
+  //  for (std::map<int,int>::iterator it = one2two.begin(); it != one2two.end(); it++){
+  //    printf("one2two[%d] = %d\n",it->first,it->second);
+  //  }
+  if (one2two.size() != 2)return 0;
+
+  int vert1Start,vert1End;
+  int vert2Start,vert2End;
+  std::map<int,int>::iterator it = one2two.begin();
+  vert1Start = it->first;
+  vert2Start = it->second;
+  ++it;
+  vert1End   = it->first;
+  vert2End   = it->second;
+
+
+  int INDEX1, count = 0;
+  for (int i=0;i<NW1;i++){
+    for (int j=i+1;j<NW1;j++){
+      if ((vert1Start == i && vert1End == j) ||
+	  (vert1Start == j && vert1End == i))
+	{
+	  INDEX1 = count;
+	}
+      count++;
+    }
+  }
+  int INDEX2;
+  count = 0;
+  for (int i=0;i<NW2;i++){
+    for (int j=i+1;j<NW2;j++){
+      if ((vert2Start == i && vert2End == j) ||
+	  (vert2Start == i && vert2End == j))
+	{
+	  INDEX2 = count;
+	}
+      count++;
+    }
+  }
+  
+  int indexVert1Start = NW1 + fanSize * ( 0 + INDEX1);
+  int indexVert1End   = NW1 + fanSize * ( 1 + INDEX1);
+
+  int indexVert2Start = NW2 + fanSize * ( 0 + INDEX2);
+  int indexVert2End   = NW2 + fanSize * ( 1 + INDEX2);
+
+  indicesVert1[0]         = vert1Start;
+  int k=1;
+  for (int i=indexVert1Start;i< indexVert1End;++i)indicesVert1[k++] = i;
+  indicesVert1[fanSize+1] = vert1End;
+  
+  indicesVert2[0]         = vert2Start;
+  k = 1;
+  if (indexVert2End > indexVert2Start){
+    for (int i=indexVert2Start;i< indexVert2End;++i)indicesVert2[k++] = i;
+  }
+  else {
+    for (int i=indexVert2Start-1;i<= indexVert2End;--i)indicesVert2[k++] = i;
+  }
+  indicesVert2[fanSize+1] = vert2End;
+
+  
+  //  printf("%d %d %d %d %d %d %d %d\n",vert1Start,vert1End,vert2Start,vert2End,indexVert1Start,indexVert1End,indexVert2Start,indexVert2End);
+  //  return 0;
+
+  return fanSize  + 2;      
+} 
+
 static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
   if (getBLField(gr->model())) insertVerticesInRegion(gr,-1);
@@ -681,8 +784,6 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
   std::list<GFace*> embedded_faces = gr->embeddedFaces();
   faces.insert(faces.begin(), embedded_faces.begin(),embedded_faces.end());
-  FILE *ff2 = fopen ("tato3D.pos","w");
-  fprintf(ff2,"View \" \"{\n");
   std::set<MVertex*> verts;
 
   std::list<GFace*>::iterator itf = faces.begin();
@@ -700,6 +801,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	const BoundaryLayerData & c3 = fc._c3;
 	int N = std::min(c1._column.size(),std::min(c2._column.size(),c3._column.size()));
 	//	printf("%d Layers\n",N);
+	std::vector<MElement*> myCol;
 	for (int l=0;l < N ;++l){
 	  MVertex *v11,*v12,*v13,*v21,*v22,*v23;
 	  v21 = c1._column[l];
@@ -716,15 +818,15 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	    v13 = c3._column[l-1];
 	  }
 	  //	  printf("coucoucouc %p %p %p %p %p %p\n",v11,v12,v13,v21,v22,v23);
-	  blPrisms.push_back(new MPrism(v11,v12,v13,v21,v22,v23));
-	  fprintf(ff2,"SI (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1,1,1};\n",
-		  v11->x(),v11->y(),v11->z(),
-		  v12->x(),v12->y(),v12->z(),
-		  v13->x(),v13->y(),v13->z(),
-		  v21->x(),v21->y(),v21->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v23->x(),v23->y(),v23->z());
-	  //	  printf("done %d\n",l);
+	  MPrism *prism = new MPrism(v11,v12,v13,v21,v22,v23);
+	  // store the layer the element belongs
+	  prism->setPartition(l+1);
+	  blPrisms.push_back(prism);
+	  myCol.push_back(prism);
+	}
+	if (!myCol.empty()){
+	  for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+	  _columns->_elemColumns[myCol[0]] = myCol;      
 	}
       }
     }
@@ -748,167 +850,77 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     MEdge e = *ite;
     MVertex *v1 = e.getVertex(0);
     MVertex *v2 = e.getVertex(1);
-    bool onWedge1 = _columns->isOnWedge(v1);
-    bool onWedge2 = _columns->isOnWedge(v2);
-    bool onCorner1 = _columns->isCorner(v1);
-    bool onCorner2 = _columns->isCorner(v2);
-    if ((onWedge1 || onCorner1) && (onWedge2 || onCorner2)){
-      int N1=0,N2=0;
-      std::vector<GFace *>gfs1,gfs2;
-      BoundaryLayerFanWedge3d w1,w2;
-      BoundaryLayerFanCorner3d c1,c2;
-      if (onWedge1) {
-	N1 = _columns->getNbColumns(v1);
-	w1 = _columns->getWedge(v1);
-	gfs1 = w1._gf1;
-	gfs2 = w1._gf2;
-      }
-      else {
-	c1 = _columns->getCorner(v1);
-	N1 = c1._fanSize;
-      }
-      if (onWedge2) {
-	N2 = _columns->getNbColumns(v2);
-	w2 = _columns->getWedge(v2);
-	gfs1 = w2._gf1;
-	gfs2 = w2._gf2;
-      }
-      else {
-	c2 = _columns->getCorner(v2);
-	N2 = c2._fanSize;
-      }
+    int indices1[256];
+    int indices2[256];
+    int NbW = getWedge (_columns, v1, v2, indices1,indices2); 
+    for (int i=0;i<NbW-1;i++){
+      int i11 = indices1[i];
+      int i12 = indices1[i+1];
+      int i21 = indices2[i];
+      int i22 = indices2[i+1];
+      BoundaryLayerData c11 = _columns->getColumn(v1,i11);
+      BoundaryLayerData c12 = _columns->getColumn(v1,i12);
+      BoundaryLayerData c21 = _columns->getColumn(v2,i21);
+      BoundaryLayerData c22 = _columns->getColumn(v2,i22);
+      int N = std::min(c11._column.size(),
+		       std::min(c12._column.size(),
+				std::min(c21._column.size(), c22._column.size())));
+      std::vector<MElement*> myCol;
+      for (int l=0;l < N ;++l){
+	MVertex *v11,*v12,*v13,*v14;
+	MVertex *v21,*v22,*v23,*v24;
+	v21 = c11._column[l];
+	v22 = c12._column[l];
+	v23 = c22._column[l];
+	v24 = c21._column[l];
+	if (l == 0){
+	  v11 = v12 = v1;
+	  v13 = v14 = v2;
+	}
+	else {
+	  v11 = c11._column[l-1];
+	  v12 = c12._column[l-1];
+	  v13 = c22._column[l-1];
+	  v14 = c21._column[l-1];
+	}
+	
+	if (l == 0){
+	  MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
+	  // store the layer the element belongs
+	  prism->setPartition(l+1);
+	  myCol.push_back(prism);
 
-      // have to go from gf1 to gf2 to be aware of the sense!!!
-      if (N1 == N2){
-	for (int i = 0; i < N1 - 1; i++){
-
-	  unsigned int i11=i, i12=i+1, i21=i,i22=i+1;
-
-	  if (onWedge1){
-	    //	    if (w1.isLeft(gfs1)){i11=i;i12=i+1;}
-	    //	    else if (w1.isRight(gfs1)){i11=N1-1-i;i12=N1-2-i;}
-	    //	    printf("%d %d %d\n",w1.isLeft(gfs1),gfs1[0] == w1._gf1[0],gfs1.size());
-	    //	    printf("%d %d %d\n",w1.isRight(gfs1),gfs1[0] == w1._gf2[0],gfs1.size());
-	    if (gfs1[0] == w1._gf1[0]){i11=i;i12=i+1;}
-	    else if (gfs1[0] == w1._gf2[0]){i11=N1-1-i;i12=N1-2-i;}
-	  }
-	  else {
-	    /*
-
-
-
-                             | 0 --> column 0
-                             |
-                             |    fan with N1 columns
-                 gf.size     |
-	         ----------  + ---------- 1 --> column N1-1
-                             |
-                             |
-                             |
-                             | 2 --> column 2*(N1-1)
-
-	      0 1 2 3  --> 0 -> 4-1
-	      3 4 5 6  --> 4-1 -> 2 (4-1)
-	      6 7 8 0
-
-	      1 --> 0 ==>
-
-	     */
-	    int K1 = -1, K2 = -1;
-	    for (unsigned int s=0;s < c1._gf.size();s++){
-	      if (w2.isLeft(c1._gf[s]))K1 = s;
-	      if (w2.isRight(c1._gf[s]))K2 = s;
-	    }
-	    if (K1==-1) Msg::Error("K1 = -1");
-	    if (K2==-1) Msg::Error("K2 = -1");
-	    if (K1+1==K2){ i11=K1*(N1-1)+i;i12=i11+1; }
-	    else if (K2+1 == K1){ i11=K1*(N1-1)-i;i12=i11-1; }
-	    else if (K2 == 0 && K1 == (int)c1._gf.size() - 1){ i11=K1*(N1-1)+i;i12=i11+1; }
-	    else if (K1 == 0 && K2 == (int)c1._gf.size() - 1){ i11=(K2+1)*(N1-1)-i;i12=i11-1; }
-	    else Msg::Error("KROUPOUK 1 %d %d !", K1, K2);
-	    if (i12 == (c1._gf.size()) * (N1-1))i12=0;
-	    if (i11 == (c1._gf.size()) * (N1-1))i11=0;
-	  }
-	  if (onWedge2){
-	    if (w2.isLeft(gfs1)){ i21=i;i22=i+1; }
-	    else if (w2.isRight(gfs1)){ i21=N1-1-i;i22=N1-2-i; }
-	  }
-	  else {
-	    int K1 = -1, K2 = -1;
-	    for (unsigned int s=0;s<c2._gf.size();s++){
-	      if (w1.isLeft(c2._gf[s]))K1 = s;
-	      if (w1.isRight(c2._gf[s]))K2 = s;
-	    }
-	    if (K1+1 == K2){ i21=K1*(N1-1)+i;i22=i21+1; }
-	    else if (K2+1 == K1){ i21=K1*(N1-1)-i;i22=i21-1; }
-	    else if (K2 == 0 && K1 == (int)c2._gf.size()-1 ){ i21=K1*(N1-1)+i;i22=i21+1; }
-	    else if (K1 == 0 && K2 == (int)c2._gf.size()-1){ i21=(K2+1)*(N1-1)-i;i22=i21-1; }
-	    else Msg::Error("KROUPOUK 2 %d %d !",K1,K2);
-	    if (i22 == (c2._gf.size()) * (N1-1))i22=0;
-	    if (i21 == (c2._gf.size()) * (N1-1))i21=0;
-	  }
-
-	  BoundaryLayerData c11 = _columns->getColumn(v1,i11);
-	  BoundaryLayerData c12 = _columns->getColumn(v1,i12);
-	  BoundaryLayerData c21 = _columns->getColumn(v2,i21);
-	  BoundaryLayerData c22 = _columns->getColumn(v2,i22);
-	  int N = std::min(c11._column.size(),
-                           std::min(c12._column.size(),
-                                    std::min(c21._column.size(), c22._column.size())));
-	  for (int l=0;l < N ;++l){
-	    MVertex *v11,*v12,*v13,*v14;
-	    MVertex *v21,*v22,*v23,*v24;
-	    v21 = c11._column[l];
-	    v22 = c12._column[l];
-	    v23 = c22._column[l];
-	    v24 = c21._column[l];
-	    if (l == 0){
-	      v11 = v12 = v1;
-	      v13 = v14 = v2;
-	    }
-	    else {
-	      v11 = c11._column[l-1];
-	      v12 = c12._column[l-1];
-	      v13 = c22._column[l-1];
-	      v14 = c21._column[l-1];
-	    }
-
-	    if (l == 0){
-	      blPrisms.push_back(new MPrism(v12,v21,v22,v13,v24,v23));
-	      fprintf(ff2,"SI (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3,3,3};\n",
-		      v12->x(),v12->y(),v12->z(),
-		      v21->x(),v21->y(),v21->z(),
-		      v22->x(),v22->y(),v22->z(),
-		      v13->x(),v13->y(),v13->z(),
-		      v24->x(),v24->y(),v24->z(),
-		      v23->x(),v23->y(),v23->z());
-	    }
-	    else {
-	      blHexes.push_back(new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24));
-	      fprintf(ff2,"SH (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2,2,2,2,2,2};\n",
-		      v11->x(),v11->y(),v11->z(),
-		      v12->x(),v12->y(),v12->z(),
-		      v13->x(),v13->y(),v13->z(),
-		      v14->x(),v14->y(),v14->z(),
-		      v21->x(),v21->y(),v21->z(),
-		      v22->x(),v22->y(),v22->z(),
-		      v23->x(),v23->y(),v23->z(),
-		      v24->x(),v24->y(),v24->z());
-	    }
-	  }
+	  blPrisms.push_back(prism);
+	}
+	else {
+	  MHexahedron *hex = new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24);
+	  // store the layer the element belongs
+	  myCol.push_back(hex);
+	  hex->setPartition(l+1);
+	  blHexes.push_back(hex);
 	}
       }
-      else{
-	Msg::Error("cannot create 3D BL FAN %d %d -- %d %d %d %d",
-                   N1,N2,onWedge1,onWedge1,onCorner1,onCorner2);
+      if (!myCol.empty()){
+	for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+	_columns->_elemColumns[myCol[0]] = myCol;            
       }
     }
     ++ite;
   }
 
-  fprintf(ff2,"};\n");
-  fclose(ff2);
-
+  filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
+  {
+    FILE *ff2 = fopen ("tato3D.pos","w");
+    fprintf(ff2,"View \" \"{\n");
+    for (unsigned int i = 0; i < blPrisms.size();i++){
+      blPrisms[i]->writePOS(ff2,1,0,0,0,0,0);
+    }
+    for (unsigned int i = 0; i < blHexes.size();i++){
+      blHexes[i]->writePOS(ff2,1,0,0,0,0,0);
+    }
+    fprintf(ff2,"};\n");
+    fclose(ff2);
+  }
 
   for (unsigned int i = 0; i < blPrisms.size();i++){
     for (unsigned int j=0;j<5;j++)

@@ -93,18 +93,20 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     pnt.Coord(u, v);
 
     // sometimes OCC miserably fails ...
-    GPoint p1 = point(epar);
-    GPoint p2 = face->point(u, v);
-    const double dx = p1.x()-p2.x();
-    const double dy = p1.y()-p2.y();
-    const double dz = p1.z()-p2.z();
-    if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc){
-      Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
-		   tag(), face->tag(), epar);
-      Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
-		   face->tag(), u, v, p2.x(), p2.y(), p2.z());
-      Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
-		   tag(), epar, p1.x(), p1.y(), p1.z());
+    if (0){
+      GPoint p1 = point(epar);
+      GPoint p2 = face->point(u, v);
+      const double dx = p1.x()-p2.x();
+      const double dy = p1.y()-p2.y();
+      const double dz = p1.z()-p2.z();
+      if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-2 * CTX::instance()->lc){
+	Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
+		     tag(), face->tag(), epar);
+	Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
+		     face->tag(), u, v, p2.x(), p2.y(), p2.z());
+	Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
+		     tag(), epar, p1.x(), p1.y(), p1.z());
+      }
     }
     return SPoint2(u, v);
   }

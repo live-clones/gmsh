@@ -224,9 +224,30 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
       bool reparamOK = true;
       if(!linear){
         reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
-        if(reparamOK)
-          computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2,
-                                       US, VS);
+        if(reparamOK) {
+	  if (nPts >= 30)computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2,
+						     US, VS);
+	  else {
+	    US[0]      =  p0[0];
+	    VS[0]      =  p0[1];
+	    US[nPts+1] =  p1[0]; 
+	    VS[nPts+1] =  p1[1];
+	    for(int j = 0; j < nPts; j++){
+	      const double t = (double)(j + 1) / (nPts + 1);
+	      SPoint3 pc = edge.interpolate(t);
+	      SPoint2 guess = p0 * (1.-t) + p1 * t;
+	      GPoint gp = gf->closestPoint(pc, guess);
+	      if(gp.succeeded()){
+		US[j+1] = gp.u();
+		VS[j+1] = gp.v();
+	      }
+	      else{
+		US[j+1] = guess.x();
+		VS[j+1] = guess.y();
+	      }
+	    }
+	  }
+	}
       }
       std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){

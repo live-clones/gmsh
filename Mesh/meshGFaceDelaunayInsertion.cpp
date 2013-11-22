@@ -1054,7 +1054,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   }
 #endif
   transferDataStructure(gf, AllTris, DATA);
-  removeThreeTrianglesNodes(gf);
+  //  removeThreeTrianglesNodes(gf);
 }
 
 /*
@@ -1332,14 +1332,18 @@ void bowyerWatsonFrontal(GFace *gf,
     */
   }
 
-  // char name[245];
-  // sprintf(name,"frontal%d-real.pos", gf->tag());
-  // _printTris (name, AllTris, Us, Vs,false);
-  // sprintf(name,"frontal%d-param.pos", gf->tag());
-  // _printTris (name, AllTris, Us, Vs,true);
+
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
+  /*
+  char name[245];
+  sprintf(name,"frontal%d-real.pos", gf->tag());
+  _printTris (name, AllTris.begin(), AllTris.end(), DATA,false);
+  sprintf(name,"frontal%d-param.pos", gf->tag());
+  _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
+  */
   transferDataStructure(gf, AllTris, DATA);
-  removeThreeTrianglesNodes(gf);
+  //  removeThreeTrianglesNodes(gf);
+
   // in case of boundary layer meshing
 #if defined(HAVE_ANN)
   {
