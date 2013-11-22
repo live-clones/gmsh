@@ -33,7 +33,7 @@
 #include "Levy3D.h"
 #include "directions3D.h"
 #include "discreteFace.h"
-#include "filterElements.h"
+//#include "filterElements.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -668,11 +668,11 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
 }
 
 
-static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2, 
+static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
 		     int indicesVert1 [], int indicesVert2 [])
 {
   int N1 = _columns->getNbColumns(v1) ;
-  int N2 = _columns->getNbColumns(v2) ;  
+  int N2 = _columns->getNbColumns(v2) ;
   int fanSize = 4;
   int NW1 = 0;
   int NW2 = 0;
@@ -686,7 +686,7 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   }
 
 
-  
+
 
   std::map<int,int> one2two;
   for (int i=0;i<NW1;i++){
@@ -741,7 +741,7 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
       count++;
     }
   }
-  
+
   int indexVert1Start = NW1 + fanSize * ( 0 + INDEX1);
   int indexVert1End   = NW1 + fanSize * ( 1 + INDEX1);
 
@@ -752,7 +752,7 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   int k=1;
   for (int i=indexVert1Start;i< indexVert1End;++i)indicesVert1[k++] = i;
   indicesVert1[fanSize+1] = vert1End;
-  
+
   indicesVert2[0]         = vert2Start;
   k = 1;
   if (indexVert2End > indexVert2Start){
@@ -763,12 +763,12 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   }
   indicesVert2[fanSize+1] = vert2End;
 
-  
+
   //  printf("%d %d %d %d %d %d %d %d\n",vert1Start,vert1End,vert2Start,vert2End,indexVert1Start,indexVert1End,indexVert2Start,indexVert2End);
   //  return 0;
 
-  return fanSize  + 2;      
-} 
+  return fanSize  + 2;
+}
 
 static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
@@ -826,7 +826,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	}
 	if (!myCol.empty()){
 	  for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-	  _columns->_elemColumns[myCol[0]] = myCol;      
+	  _columns->_elemColumns[myCol[0]] = myCol;
 	}
       }
     }
@@ -852,7 +852,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     MVertex *v2 = e.getVertex(1);
     int indices1[256];
     int indices2[256];
-    int NbW = getWedge (_columns, v1, v2, indices1,indices2); 
+    int NbW = getWedge (_columns, v1, v2, indices1,indices2);
     for (int i=0;i<NbW-1;i++){
       int i11 = indices1[i];
       int i12 = indices1[i+1];
@@ -883,7 +883,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	  v13 = c22._column[l-1];
 	  v14 = c21._column[l-1];
 	}
-	
+
 	if (l == 0){
 	  MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
 	  // store the layer the element belongs
@@ -902,13 +902,13 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
       }
       if (!myCol.empty()){
 	for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-	_columns->_elemColumns[myCol[0]] = myCol;            
+	_columns->_elemColumns[myCol[0]] = myCol;
       }
     }
     ++ite;
   }
 
-  filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
+  //filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
   {
     FILE *ff2 = fopen ("tato3D.pos","w");
     fprintf(ff2,"View \" \"{\n");

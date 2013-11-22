@@ -44,7 +44,7 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
-#include "filterElements.h"
+//#include "filterElements.h"
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
@@ -703,15 +703,14 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	}
       }
       for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-      _columns->_elemColumns[myCol[0]] = myCol;      
+      _columns->_elemColumns[myCol[0]] = myCol;
     }
   }
 
   fprintf(ff2,"};\n");
   fclose(ff2);
 
-  
-  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
+  //filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);
@@ -765,6 +764,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool debug,
 		   std::list<GEdge*> *replacement_edges)
 {
+  //onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*> recoverMap;
