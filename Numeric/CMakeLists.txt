@@ -27,8 +27,7 @@ set(SRC
     GaussQuadraturePyr.cpp
     GaussLegendreSimplex.cpp
   GaussJacobi1D.cpp
-  geodesics.cpp
-  robustPredicates.cpp
+ robustPredicates.cpp
   mathEvaluator.cpp
   Iso.cpp
 )
