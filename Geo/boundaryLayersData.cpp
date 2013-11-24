@@ -824,12 +824,12 @@ static bool createWedgeBetweenTwoFaces(MVertex *myV,
   double angle = angle_0_180 (n1,n2);
   int fanSize = FANSIZE__; //angle /  _treshold;
   for (int i=-1; i<=fanSize; i++){
-    
+
     double ti = (double)(i+1)/ (fanSize+1);
     double angle_t = ti * angle;
     double cosA = cos (angle_t);
     double cosAlpha = dot(n1,n2);
-    
+
     const double A = (1.- 2.*cosA*cosA) + cosAlpha*cosAlpha - 2 * cosAlpha*(1.-cosA*cosA);
     const double B = -2*(1.-cosA*cosA)*(1-cosAlpha);
     const double C = 1.-cosA*cosA;
@@ -845,7 +845,7 @@ static bool createWedgeBetweenTwoFaces(MVertex *myV,
       }
       const double t1 = (-B+sqrt(DELTA))/(2.*A);
       const double t2 = (-B-sqrt(DELTA))/(2.*A);
-      
+
       SVector3 x1 (n1*(1.-t1) + n2 * t2);
       SVector3 x2 (n1*(1.-t2) + n2 * t2);
       double a1 = angle_0_180 (n1,x1);
@@ -862,7 +862,7 @@ static bool createWedgeBetweenTwoFaces(MVertex *myV,
 
 void computeAllGEdgesThatAreCreatingFans (GRegion *gr, std::vector<GEdge*> &fans)
 {
-  
+
 }
 
 
@@ -940,7 +940,7 @@ static void createColumnsBetweenFaces(GRegion *gr,
       for (unsigned int J = I+1 ; J < joints.size() ; J++){
 	const BoundaryLayerData & c1 = _columns->getColumn(myV, J);
 	std::vector<SVector3> shoot;
-	createWedgeBetweenTwoFaces(myV,c0._n,c1._n,shoot); 
+	createWedgeBetweenTwoFaces(myV,c0._n,c1._n,shoot);
 	for (unsigned int i=1;i<shoot.size()-1;i++){
 	  std::vector<MVertex*> _column;
 	  std::vector<SMetric3> _metrics;
@@ -1072,16 +1072,16 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 	}
 	else if (N > 1){
 	  if (_allGFaces.size() != 2){
-	    Msg::Fatal("cannot solve such a strange stuff in the BL");	   
-	  }	  
+	    Msg::Fatal("cannot solve such a strange stuff in the BL");
+	  }
 	  //	  printf("%d columns\n",N);
-	  std::set<GFace*>::iterator itff = _allGFaces.begin(); 
+	  std::set<GFace*>::iterator itff = _allGFaces.begin();
 	  GFace *g1 = *itff ; ++itff; GFace *g2 = *itff;
 	  int sense = 1;
 	  std::vector<GFace*> _joint;
 
 	  const BoundaryLayerFan *fan = _face_columns->getFan(*it);
-	  
+
 	  if (fan){
 	    MVertex *v11 = fan->_e1.getVertex(0);
 	    MVertex *v12 = fan->_e1.getVertex(1);
@@ -1093,16 +1093,16 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 		//		printf("COUCOU %d %d %d\n",fan->sense,std::find(l1.begin(),l1.end(),ge1) != l1.end(),std::find(l2.begin(),l2.end(),ge1) != l2.end());
 		if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
 		else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-		else printf("strange1 %d %d \n");
+		//else printf("strange1 %d %d \n");
 	      }
 	      else Msg::Error("Cannot choose between directions in a BL (dim = %d)",v12->onWhat()->dim());
 	    }
 	    else {
 	      if (v11->onWhat()->dim() == 1){
-		GEdge *ge1 = (GEdge*)v11->onWhat();			      
+		GEdge *ge1 = (GEdge*)v11->onWhat();
 		if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
 		else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-		else printf("strange2 %d %d \n");
+		//else printf("strange2 %d %d \n");
 	      }
 	      else Msg::Error("Cannot choose between directions in a BL");
 	    }
@@ -1110,13 +1110,13 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 	  else{
 	    Msg::Error("No fan on the outgoing BL");
 	  }
-	  _joint.push_back(g1);	  
+	  _joint.push_back(g1);
 	  const BoundaryLayerData & c0 = _face_columns->getColumn(*it,sense==1 ? 0 : N-1);
 	  _columns->addColumn(c0._n,*it, c0._column, c0._metrics,_joint);
 	  _joint.clear();
 	  _joint.push_back(g2);
 	  const BoundaryLayerData & cN = _face_columns->getColumn(*it,sense==1 ? N-1 : 0);
-	  _columns->addColumn(cN._n,*it, cN._column, cN._metrics,_joint);	  
+	  _columns->addColumn(cN._n,*it, cN._column, cN._metrics,_joint);
 	  //	  printf("%g %g %g --> %g %g %g\n",c0._n.x(),c0._n.y(),c0._n.z(),cN._n.x(),cN._n.y(),cN._n.z());
 	  if (sense==1){
 	    for (int k=1;k<N-1;k++){
