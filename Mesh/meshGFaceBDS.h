@@ -8,6 +8,7 @@
 
 #include <map>
 #include <list>
+#include "BDS.h"
 
 class GFace;
 class GModel;
@@ -22,7 +23,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                    const bool computeNodalSizeField,
                    std::map<MVertex*, BDS_Point*> *recoverMapInv=0);
 void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
-                         std::map<BDS_Point*, MVertex*> *recoverMap=0);
+		     std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap=0);
 void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
 void collapseSmallEdges(GModel &gm);
 BDS_Mesh *gmsh2BDS(std::list<GFace*> &l);

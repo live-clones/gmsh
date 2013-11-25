@@ -543,7 +543,7 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
   return true;
 }
 
-void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*> &recoverMap)
+void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*, PointLessThan> &recoverMap)
 {
   {
     std::set<BDS_Point*,PointLessThan>::iterator itp = m->points.begin();
@@ -767,7 +767,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   //onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
-  std::map<BDS_Point*, MVertex*> recoverMap;
+  std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
   std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
   std::list<int> dir = gf->edgeOrientations();
@@ -1110,7 +1110,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		 edgesToRecover.size());
       for(int i = 0; i < doc.numPoints; i++){
 	BDS_Point *pp = (BDS_Point*)doc.points[i].data;
-	std::map<BDS_Point*, MVertex*>::iterator itv = recoverMap.find(pp);
+	std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itv = recoverMap.find(pp);
 	if(itv != recoverMap.end()){
 	  MVertex *here = itv->second;
 	  GEntity *ge = here->onWhat();
@@ -1349,7 +1349,7 @@ static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
                                            std::vector<BDS_Point*> &result,
                                            SBoundingBox3d &bbox, BDS_Mesh *m,
-                                           std::map<BDS_Point*, MVertex*> &recoverMap,
+                                           std::map<BDS_Point*, MVertex*,PointLessThan> &recoverMap,
                                            int &count, int countTot, double tol,
                                            bool seam_the_first = false)
 {
@@ -1362,7 +1362,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
 
   const int MYDEBUG = false;
 
-  std::map<BDS_Point*, MVertex*> recoverMapLocal;
+  std::map<BDS_Point*, MVertex*,PointLessThan> recoverMapLocal;
 
   result.clear();
   count = 0;
@@ -1505,7 +1505,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
       // It has not worked : either tolerance is wrong or the first seam edge
       // has to be taken with the other parametric coordinates (because it is
       // only present once in the closure of the domain).
-      for(std::map<BDS_Point*, MVertex*>::iterator it = recoverMapLocal.begin();
+      for(std::map<BDS_Point*, MVertex*,PointLessThan>::iterator it = recoverMapLocal.begin();
           it != recoverMapLocal.end(); ++it){
         m->del_point(it->first);
       }
@@ -1600,7 +1600,7 @@ static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
 
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
-  std::map<BDS_Point*, MVertex*> recoverMap;
+  std::map<BDS_Point*, MVertex*, PointLessThan> recoverMap;
 
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
@@ -1661,7 +1661,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if(nbPointsTotal == 3){
     MVertex *vv[3];
     int i = 0;
-    for(std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
+    for(std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
 	it != recoverMap.end(); it++){
       vv[i++] = it->second;
     }
@@ -1891,7 +1891,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   std::map<MVertex*, SPoint2> parametricCoordinates;
   if(algoDelaunay2D(gf)){
     std::map<MVertex*, BDS_Point*> invertMap;
-    std::map<BDS_Point*, MVertex*>::iterator it = recoverMap.begin();
+    std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
     while(it != recoverMap.end()){
       // we have twice vertex MVertex with 2 different coordinates
       MVertex *mv1 = it->second;
