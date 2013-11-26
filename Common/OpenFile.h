@@ -10,9 +10,10 @@
 
 int ParseFile(const std::string &fileName, bool close, bool warnIfMissing=false);
 void ParseString(const std::string &str);
-void OpenProject(const std::string &filename);
+void OpenProject(const std::string &filename, bool setWindowTitle=true);
 void OpenProjectMacFinder(const char *fileName);
-int MergeFile(const std::string &fileName, bool warnIfMissing=false);
+int MergeFile(const std::string &fileName, bool warnIfMissing=false,
+              bool setWindowTitle=true);
 int MergePostProcessingFile(const std::string &fileName, bool showLastStep=false,
                             bool hideNewViews=false, bool warnIfMissing=false);
 void ClearProject();

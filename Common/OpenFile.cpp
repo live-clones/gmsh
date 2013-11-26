@@ -262,7 +262,7 @@ static int defineSolver(const std::string &name)
   return NUM_SOLVERS - 1;
 }
 
-int MergeFile(const std::string &fileName, bool warnIfMissing)
+int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTitle)
 {
   if(GModel::current()->getName() == ""){
     GModel::current()->setFileName(fileName);
@@ -270,7 +270,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
   }
 
 #if defined(HAVE_FLTK)
-  if(FlGui::available())
+  if(FlGui::available() && setWindowTitle)
     FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 #endif
 
@@ -303,7 +303,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
         Msg::Error("Failed to uncompress `%s': check directory permissions",
                    fileName.c_str());
       GModel::current()->setFileName(noExt);
-      return MergeFile(noExt);
+      return MergeFile(noExt, true, setWindowTitle);
     }
   }
 
@@ -497,8 +497,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing)
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
   Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());
-  CTX::instance()->fileread=true;
-   // merge the associated option file if there is one
+
+  CTX::instance()->fileread = true;
+
+  // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");
 
@@ -620,7 +622,7 @@ void ClearProject()
   Msg::ResetErrorCounter();
 }
 
-void OpenProject(const std::string &fileName)
+void OpenProject(const std::string &fileName, bool setWindowTitle)
 {
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");
@@ -657,7 +659,7 @@ void OpenProject(const std::string &fileName)
   ResetTemporaryBoundingBox();
 
   // merge the file
-  if(MergeFile(fileName)) {
+  if(MergeFile(fileName, true, setWindowTitle)) {
     if(fileName != CTX::instance()->recentFiles.front())
       CTX::instance()->recentFiles.insert
         (CTX::instance()->recentFiles.begin(), fileName);

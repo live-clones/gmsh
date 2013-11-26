@@ -317,7 +317,7 @@ namespace onelabUtils {
         // name has changed
         modelName = GModel::current()->getName();
         redraw = true;
-        OpenProject(GModel::current()->getFileName());
+        OpenProject(GModel::current()->getFileName(), false);
       }
     }
     else if(action == "compute"){
@@ -327,7 +327,7 @@ namespace onelabUtils {
         // have been modified or if the model name has changed
         modelName = GModel::current()->getName();
         redraw = true;
-        OpenProject(GModel::current()->getFileName());
+        OpenProject(GModel::current()->getFileName(), false);
         if(getFirstComputationFlag() && !StatFile(mshFileName)){
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date",
                     mshFileName.c_str());
