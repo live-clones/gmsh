@@ -303,7 +303,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
         Msg::Error("Failed to uncompress `%s': check directory permissions",
                    fileName.c_str());
       GModel::current()->setFileName(noExt);
-      return MergeFile(noExt, true, setWindowTitle);
+      return MergeFile(noExt, false, setWindowTitle);
     }
   }
 
@@ -659,7 +659,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
   ResetTemporaryBoundingBox();
 
   // merge the file
-  if(MergeFile(fileName, true, setWindowTitle)) {
+  if(MergeFile(fileName, false, setWindowTitle)) {
     if(fileName != CTX::instance()->recentFiles.front())
       CTX::instance()->recentFiles.insert
         (CTX::instance()->recentFiles.begin(), fileName);
