@@ -140,6 +140,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
   int face_number;
   int last;
   int mem;
+  int number;
   double x,y,z;
   double x1,y1,z1;
   double x2,y2,z2;
@@ -157,6 +158,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
   std::vector<int> temp;
   std::vector<int> temp2;
   std::vector<double> areas;
+  std::map<int,int> table;
   geo_cell obj;
 
   min_x = 1000000000.0;
@@ -194,6 +196,8 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
     }
   }
 
+  number = 0;	
+	
   c_loop_all loopA(contA);
   c_loop_all loopB(contB);
 
@@ -206,7 +210,9 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
-	  printf("%d\n",loopA.pid());
+	  printf("%d %d (%f,%f,%f)\n",loopA.pid()+1,number+1,x,y,z);
+	  table.insert(std::pair<int,int>(loopA.pid(),number));
+	  number++;
     }while(loopA.inc());
   }
   else{
@@ -218,10 +224,18 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
-	  printf("%d\n",loopB.pid());
+	  printf("%d %d (%f,%f,%f)\n",loopB.pid()+1,number+1,x,y,z);
+	  table.insert(std::pair<int,int>(loopB.pid(),number));
+	  number++;
     }while(loopB.inc());
   }
 
+  std::ofstream file6("table.txt");
+	
+  for(i=0;i<vertices.size();i++){
+    file6 << i+1 << " " << table[i]+1 << "\n";
+  }	
+	
   initialize_counter();
 
   min_area = 1000000000.0;
