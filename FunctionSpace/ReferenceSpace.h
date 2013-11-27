@@ -148,7 +148,7 @@ class ReferenceSpace{
 
   triplet isCyclicPermutation(const std::vector<size_t>& pTest,
                               const std::vector<size_t>& pRef) const;
-  /*
+
   size_t findCorrespondingFace(const std::vector<size_t>& face,
                                const std::vector<size_t>& node) const;
 
@@ -157,7 +157,7 @@ class ReferenceSpace{
 
   static bool isFacePermutation(const std::vector<size_t>& refNode,
                                 const std::vector<size_t>& testNode);
-  */
+
   bool isSameEdge(const std::vector<size_t>& pTest,
                   const std::vector<size_t>& pRef) const;
 

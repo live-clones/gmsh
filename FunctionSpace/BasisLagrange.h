@@ -66,7 +66,7 @@ class BasisLagrange: public BasisLocal{
             const std::vector<double>& coef,
             const FunctionSpaceScalar& fSpace);
 
-  std::vector<fullVector<double> >
+  std::vector<double>
     project(const MElement& element,
             const std::vector<double>& coef,
             const FunctionSpaceVector& fSpace);
@@ -114,11 +114,20 @@ class BasisLagrange: public BasisLocal{
 
    @fn BasisLagrange::project(const MElement&, const std::vector<double>&, const FunctionSpaceVector&)
    @param element A MElement
-   @param coef A vector of coefficient associated
-   to the given Element
-   @param fSpace The (vectorial) Function Space
-   of the given Coefficients
+   @param coef A vector of coefficient associated to the given Element
+   @param fSpace The (vectorial) Function Space of the given Coefficients
    @return Projects the given Coefficients in this BasisLagrange
+
+   The returned vector has a size three times bigger than coef,
+   since we need three coefficients with a Lagrange basis,
+   when we project a vectorial basis on it (one per direction).
+
+   The Lagranges coefficients corresponding to the ith entry of coef
+   are located, in the returned vector, at the index i * 3,
+   with the following padding:
+   @li index i * 3 + 0 is the projected coefficient for direction x
+   @li index i * 3 + 1 is the projected coefficient for direction y
+   @li index i * 3 + 2 is the projected coefficient for direction z
  */
 
 //////////////////////

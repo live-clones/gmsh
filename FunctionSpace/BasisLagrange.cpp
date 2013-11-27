@@ -153,14 +153,17 @@ project(const MElement& element,
   return newCoef;
 }
 
-vector<fullVector<double> > BasisLagrange::
+std::vector<double> BasisLagrange::
 project(const MElement& element,
         const std::vector<double>& coef,
         const FunctionSpaceVector& fSpace){
 
   // Init New Coefs //
   const size_t size = lPoint->size1();
-  vector<fullVector<double> > newCoef(size);
+  const size_t dim  = lPoint->size2();
+
+  vector<double>     newCoef(size * 3);
+  fullVector<double> tmp(3);
 
   // Interpolation at Lagrange Points //
   for(size_t i = 0; i < size; i++){
@@ -181,9 +184,12 @@ project(const MElement& element,
     else
       uvw(2) = 0;
 
-    newCoef[i] = fSpace.interpolateInRefSpace(element,
-                                              coef,
-                                              uvw);
+    tmp = fSpace.interpolateInRefSpace(element,
+                                       coef,
+                                       uvw);
+    newCoef[i * 3 + 0] = tmp(0);
+    newCoef[i * 3 + 1] = tmp(1);
+    newCoef[i * 3 + 2] = tmp(2);
   }
 
   // Return ;
