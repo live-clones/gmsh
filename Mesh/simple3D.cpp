@@ -425,6 +425,12 @@ void Filler::treat_region(GRegion* gr){
   }*/
 
   for(it=temp.begin();it!=temp.end();it++){
+    if((*it)->onWhat()->dim()==0){
+	  boundary_vertices.push_back(*it);
+	}
+  }
+	
+  for(it=temp.begin();it!=temp.end();it++){
     if((*it)->onWhat()->dim()==1){
 	  boundary_vertices.push_back(*it);
 	}
