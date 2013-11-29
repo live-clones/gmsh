@@ -20,9 +20,10 @@
 // Specialisation of fullVector/Matrix operations using BLAS and LAPACK
 
 #if defined(HAVE_BLAS)
-
 extern "C" {
   void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
+  void F77NAME(dcopy)(int *n, double *a, int *inca, double *b, int *incb);
+  void F77NAME(zcopy)(int *n, std::complex<double> *a, int *inca, std::complex<double> *b, int *incb);
   void F77NAME(dgemm)(const char *transa, const char *transb, int *m, int *n, int *k,
                       double *alpha, double *a, int *lda,
                       double *b, int *ldb, double *beta,
@@ -48,6 +49,40 @@ void fullVector<double>::axpy(const fullVector<double> &x,double alpha)
 {
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
+}
+
+template<>
+void fullVector<double>::setAll(const fullVector<double> &m)
+{
+  int stride = 1;
+  F77NAME(dcopy)(&_r, m._data, &stride, _data, &stride);
+}
+
+template<>
+void fullVector<std::complex<double> >::setAll(const fullVector<std::complex<double> > &m)
+{
+  int stride = 1;
+  F77NAME(zcopy)(&_r, m._data, &stride, _data, &stride);
+}
+
+template<>
+void fullMatrix<double>::setAll(const fullMatrix<double> &m)
+{
+  if (_r != m._r || _c != m._c )
+    Msg::Fatal("fullMatrix size does not match");
+  int N = _r * _c;
+  int stride = 1;
+  F77NAME(dcopy)(&N, m._data, &stride, _data, &stride);
+}
+
+template<>
+void fullMatrix<std::complex<double> >::setAll(const fullMatrix<std::complex<double > > &m)
+{
+  if (_r != m._r || _c != m._c )
+    Msg::Fatal("fullMatrix size does not match");
+  int N = _r * _c;
+  int stride = 1;
+  F77NAME(zcopy)(&N, m._data, &stride, _data, &stride);
 }
 
 template<>

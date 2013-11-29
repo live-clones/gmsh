@@ -277,10 +277,13 @@ class fullVector
 
      m.size() must be greater or equal to @f$ N @f$.
   */
-  inline void setAll(const fullVector<scalar> &m)
+  void setAll(const fullVector<scalar> &m)
+#if !defined(HAVE_BLAS)
   {
     for(int i = 0; i < _r; i++) _data[i] = m._data[i];
   }
+#endif
+  ;
 
   /**
      @param other A fullVector.
@@ -404,11 +407,12 @@ class fullMatrix
     _own_data = false;
     _data = original._data + c_start * _r;
   }
-  fullMatrix(int r, int c) : _r(r), _c(c)
+  fullMatrix(int r, int c, bool init0 = true) : _r(r), _c(c)
   {
     _data = new scalar[_r * _c];
     _own_data = true;
-    setAll(scalar(0.));
+    if (init0)
+      setAll(scalar(0.));
   }
   fullMatrix(int r, int c, double *data)
     : _r(r), _c(c), _data(data), _own_data(false)
@@ -476,6 +480,10 @@ class fullMatrix
     return false; // no reallocation
   }
   void reshape(int nbRows, int nbColumns){
+    if (nbRows == -1 && nbColumns != -1)
+      nbRows = _r * _c / nbColumns;
+    if (nbRows != -1 && nbColumns == -1)
+      nbColumns = _r * _c / nbRows;
     if (nbRows*nbColumns != size1()*size2())
       Msg::Error("Invalid reshape, total number of entries must be equal");
     _r = nbRows;
@@ -606,12 +614,15 @@ class fullMatrix
   {
     for(int i = 0; i < _r * _c; i++) _data[i] = m;
   }
-  inline void setAll(const fullMatrix<scalar> &m)
+  void setAll(const fullMatrix<scalar> &m)
+#if !defined(HAVE_BLAS)
   {
     if (_r != m._r || _c != m._c )
       Msg::Fatal("fullMatrix size does not match");
     for(int i = 0; i < _r * _c; i++) _data[i] = m._data[i];
   }
+#endif
+  ;
   void scale(const double s)
 #if !defined(HAVE_BLAS)
   {
