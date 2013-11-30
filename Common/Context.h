@@ -240,7 +240,7 @@ class CTX {
     std::string socketName;
     std::string name[NUM_SOLVERS], executable[NUM_SOLVERS], remoteLogin[NUM_SOLVERS];
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
-    int autoHideNewViews, autoShowLastStep, autoCheck;
+    int autoHideNewViews, autoShowLastStep, autoCheck, showInvisibleParameters;
   }solver;
   // print options
   struct{

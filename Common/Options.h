@@ -509,6 +509,7 @@ double opt_solver_auto_mesh(OPT_ARGS_NUM);
 double opt_solver_auto_merge_file(OPT_ARGS_NUM);
 double opt_solver_auto_hide_new_views(OPT_ARGS_NUM);
 double opt_solver_auto_show_last_step(OPT_ARGS_NUM);
+double opt_solver_show_invisible_parameters(OPT_ARGS_NUM);
 double opt_post_horizontal_scales(OPT_ARGS_NUM);
 double opt_post_link(OPT_ARGS_NUM);
 double opt_post_smooth(OPT_ARGS_NUM);

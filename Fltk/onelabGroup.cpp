@@ -875,6 +875,10 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     CTX::instance()->solver.autoHideNewViews = val;
   else if(what == "step")
     CTX::instance()->solver.autoShowLastStep = val;
+  else if(what == "invisible"){
+    CTX::instance()->solver.showInvisibleParameters = val;
+    FlGui::instance()->onelab->rebuildTree(true);
+  }
 }
 
 static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
@@ -1088,7 +1092,9 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
              FL_MENU_TOGGLE);
   _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
              FL_MENU_TOGGLE);
-  _gear->add("_Always show last step", 0, onelab_option_cb, (void*)"step",
+  _gear->add("Always show last step", 0, onelab_option_cb, (void*)"step",
+             FL_MENU_TOGGLE);
+  _gear->add("_Show hidden parameters", 0, onelab_option_cb, (void*)"invisible",
              FL_MENU_TOGGLE);
 
   _gearOptionsEnd = _gear->menu()->size();
@@ -1638,7 +1644,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(!numbers[i].getVisible()) continue;
+    if(!numbers[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     if(numbers[i].getAttribute("Closed") == "1")
       closed.insert(numbers[i].getPath());
     _addParameter(numbers[i]);
@@ -1647,7 +1654,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
-    if(!strings[i].getVisible()) continue;
+    if(!strings[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
     _addParameter(strings[i]);
@@ -1656,7 +1664,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::vector<onelab::region> regions;
   onelab::server::instance()->get(regions);
   for(unsigned int i = 0; i < regions.size(); i++){
-    if(!regions[i].getVisible()) continue;
+    if(!regions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     if(regions[i].getAttribute("Closed") == "1")
       closed.insert(regions[i].getPath());
     _addParameter(regions[i]);
@@ -1665,7 +1674,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::vector<onelab::function> functions;
   onelab::server::instance()->get(functions);
   for(unsigned int i = 0; i < functions.size(); i++){
-    if(!functions[i].getVisible()) continue;
+    if(!functions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     if(functions[i].getAttribute("Closed") == "1")
       closed.insert(functions[i].getPath());
     _addParameter(functions[i]);
@@ -1826,14 +1836,15 @@ void onelabGroup::rebuildSolverList()
 {
   // update gear menu
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
-  int values[7] = {CTX::instance()->solver.autoSaveDatabase,
+  int values[8] = {CTX::instance()->solver.autoSaveDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
                    CTX::instance()->solver.autoCheck,
                    CTX::instance()->solver.autoMesh,
                    CTX::instance()->solver.autoMergeFile,
                    CTX::instance()->solver.autoHideNewViews,
-                   CTX::instance()->solver.autoShowLastStep};
-  for(int i = 0; i < 7; i++){
+                   CTX::instance()->solver.autoShowLastStep,
+                   CTX::instance()->solver.showInvisibleParameters};
+  for(int i = 0; i < 8; i++){
     int idx = _gearOptionsStart - 1 + i;
     if(values[i])
       menu[idx].set();

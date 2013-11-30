@@ -1209,6 +1209,9 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "Plugins" , opt_solver_plugins , 0. ,
     "Enable default solver plugins?" },
 
+  { F|O, "ShowInvisibleParameters" , opt_solver_show_invisible_parameters , 0. ,
+    "Show all parameters, even those marked invisible" },
+
   { F|O, "Timeout" , opt_solver_timeout , 5. ,
     "Time (in seconds) before closing the socket if no connection is happening" },
 

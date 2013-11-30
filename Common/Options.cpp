@@ -6180,6 +6180,13 @@ double opt_solver_auto_show_last_step(OPT_ARGS_NUM)
   return CTX::instance()->solver.autoShowLastStep;
 }
 
+double opt_solver_show_invisible_parameters(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.showInvisibleParameters = (int)val;
+  return CTX::instance()->solver.showInvisibleParameters;
+}
+
 double opt_post_horizontal_scales(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
