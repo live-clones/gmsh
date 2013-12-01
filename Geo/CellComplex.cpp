@@ -370,7 +370,7 @@ int CellComplex::reduction(int dim, int omit,
       }
 
       if(getSize(dim) == 0 || getSize(dim-1) == 0) break;
-      cit++;
+      if(cit != lastCell(dim)) cit++;
     }
   }
   _reduced = true;
