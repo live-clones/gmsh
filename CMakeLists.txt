@@ -1626,10 +1626,9 @@ endif(ENABLE_WRAP_JAVA)
 include(CPack)
 
 include(CTest)
-# we will need some common testing framwork to make actual tests
-file(GLOB_RECURSE TESTFILES tutorial/x*.geo)
+file(GLOB_RECURSE TESTFILES tutorial/*.geo)
 foreach(TESTFILE ${TESTFILES})
-  add_test(${TESTFILE} gmsh ${TESTFILE})
+  add_test(${TESTFILE} gmsh ${TESTFILE} -3 -o /tmp/tmp.msh)
 endforeach()
 
 message(STATUS "")
