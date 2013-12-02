@@ -1628,7 +1628,7 @@ include(CPack)
 include(CTest)
 file(GLOB_RECURSE TESTFILES tutorial/*.geo)
 foreach(TESTFILE ${TESTFILES})
-  add_test(${TESTFILE} gmsh ${TESTFILE} -3 -o /tmp/tmp.msh)
+  add_test(${TESTFILE} ./gmsh ${TESTFILE} -3 -o ./tmp.msh)
 endforeach()
 
 message(STATUS "")
