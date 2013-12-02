@@ -109,7 +109,7 @@ STensor3 Frame_field::search(double x,double y,double z){
   ANNidxArray indices;
   ANNdistArray distances;
 	
-  if(field.size()==0){
+  if(field.size()<=1){
     return STensor3(1.0);
   }
 	
@@ -133,7 +133,7 @@ STensor3 Frame_field::search(double x,double y,double z){
   delete[] distances;
 #endif
   
-  if(fabs(distance2-distance1)<e2){
+  if(fabs(sqrt(distance2)-sqrt(distance1))<e2){
     if(labels[index2]<labels[index1]){
 	  return field[index2].second;
 	}
