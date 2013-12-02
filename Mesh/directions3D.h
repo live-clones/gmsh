@@ -26,6 +26,7 @@ struct lowerThan {
 class Frame_field{
  private:
   static std::vector<std::pair<SPoint3,STensor3> > field;
+  static std::vector<int> labels;
   static std::map<MVertex*, STensor3> crossField;
   static std::map<MEdge, double, Less_Edge> crossDist;
   static std::vector<MVertex*> listVertices;

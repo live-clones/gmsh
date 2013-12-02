@@ -39,6 +39,7 @@ void Frame_field::init_region(GRegion* gr){
   faces = gr->faces();
 	
   field.clear();
+  labels.clear();
 	
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
@@ -86,12 +87,23 @@ void Frame_field::init_face(GFace* gf){
 	m.set_m23(v3.y());
 	m.set_m33(v3.z());
 	field.push_back(std::pair<SPoint3,STensor3>(point,m));
+	labels.push_back(gf->tag());
   }
 }
 
 STensor3 Frame_field::search(double x,double y,double z){
   // Determines the frame/cross at location (x,y,z)
-  int index = 0;
+  int index1;
+  int index2;
+  double distance1;
+  double distance2;
+  double e2;
+	
+  index1 = 0;
+  index2 = 0;
+  distance1 = 1000000.0;
+  distance2 = 1000000.0;
+  e2 = 0.000001;
 #if defined(HAVE_ANN)
   ANNpoint query;
   ANNidxArray indices;
@@ -106,18 +118,32 @@ STensor3 Frame_field::search(double x,double y,double z){
   query[1] = y;
   query[2] = z;
 	
-  indices = new ANNidx[1];
-  distances = new ANNdist[1];
+  indices = new ANNidx[2];
+  distances = new ANNdist[2];
 	
   double e = 0.0;
-  kd_tree->annkSearch(query,1,indices,distances,e);
-  index = indices[0];
+  kd_tree->annkSearch(query,2,indices,distances,e);
+  index1 = indices[0];
+  index2 = indices[1];
+  distance1 = distances[0];
+  distance2 = distances[1];
 	
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
 #endif
-  return field[index].second;
+  
+  if(fabs(distance2-distance1)<e2){
+    if(labels[index2]<labels[index1]){
+	  return field[index2].second;
+	}
+	else{
+	  return field[index1].second;
+	}
+  }
+  else{
+    return field[index1].second;
+  }
 }
 
 STensor3 Frame_field::combine(double x,double y,double z){
@@ -300,6 +326,7 @@ GRegion* Frame_field::test(){
 void Frame_field::clear(){
   Nearest_point::clear();
   field.clear();
+  labels.clear();
 #if defined(HAVE_ANN)
   delete kd_tree->thePoints();
   delete kd_tree;
@@ -1611,6 +1638,7 @@ void Nearest_point::clear(){
 /****************static declarations****************/
 
 std::vector<std::pair<SPoint3,STensor3> > Frame_field::field;
+std::vector<int> Frame_field::labels;
 std::map<MVertex*, STensor3> Frame_field::crossField;
 std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
 std::map<MVertex*,std::set<MVertex*> > Frame_field::vertex_to_vertices;
