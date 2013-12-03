@@ -3,12 +3,12 @@ Mesh.Algorithm = 8;
 
 unit = 1.0e-02 ;
 
-DefineConstant[ H = {4.5 * unit, Min 1 *unit, Max 8.5 *unit, Step 1*unit, Path "Parameters/Geometry",
-                     ShortHelp "Beam Height"} ] ;
-DefineConstant[ L = {20 * unit, Min 10 *unit, Max 200 *unit, Step 1*unit, Path "Parameters/Geometry",
-                     ShortHelp "Beam Width"} ] ;
-DefineConstant[ lc = {2 * unit, Min .1 *unit, Max 10 *unit, Step .1*unit, Path "Parameters/Geometry",
-                     ShortHelp "Mesh Size"} ] ;
+DefineConstant[ H = {4.5 * unit, Min 1 *unit, Max 8.5 *unit, Step 1*unit,
+    Name "Parameters/Geometry/Beam Height"} ] ;
+DefineConstant[ L = {20 * unit, Min 10 *unit, Max 200 *unit, Step 1*unit,
+    Name "Parameters/Geometry/Beam Width"} ] ;
+DefineConstant[ lc = {2 * unit, Min .1 *unit, Max 10 *unit, Step .1*unit,
+    Name "Parameters/Geometry/Mesh Size"} ] ;
 
 Point(1) = {0, 0, 0, lc};
 Point(2) = {H, 0, 0, lc};

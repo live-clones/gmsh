@@ -880,7 +880,17 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
 
-  std::string name = _getParameterName(key, copt);
+  std::string name;
+  if(copt.count("Name"))
+    name = copt["Name"][0];
+
+  if(name.empty()){
+    if(copt.size() || fopt.size())
+      Msg::Error("From now on you need to use the `Name' attribute to create a "
+                 "Onelab parameter: `Name \"%s\"'",
+                 _getParameterName(key, copt).c_str());
+    return;
+  }
 
   std::vector<onelab::number> ps;
   _onelabClient->get(ps, name);
@@ -975,7 +985,17 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 #if defined(HAVE_ONELAB)
   if(!_onelabClient || val.empty()) return;
 
-  std::string name = _getParameterName(key, copt);
+  std::string name;
+  if(copt.count("Name"))
+    name = copt["Name"][0];
+
+  if(name.empty()){
+    if(copt.size() || fopt.size())
+      Msg::Error("From now on you need to use the `Name' attribute to create a "
+                 "Onelab parameter: `Name \"%s\"'",
+                 _getParameterName(key, copt).c_str());
+    return;
+  }
 
   std::vector<onelab::string> ps;
   _onelabClient->get(ps, name);

@@ -5,7 +5,9 @@ pntG[]+=newp; Point(newp) = {rB2, 0., 0., pS1}; // aligned with the stator
 circ[] = Extrude {{0, 0, 1}, {0, 0, 0}, A0} { Point{pntG[0]}; };
 pntG[]+=circ[0];
 lineMBstator[]=circ[1];
+
 Transfinite Line{lineMBstator[0]} = NbrDivMB+1 ;
+
 
 //Filling the gap for the whole 2*Pi
 For k In {1:NbrPolesTot-1}
@@ -111,7 +113,7 @@ Line Loop(newll) = { cSlot[0], linesslot0[],
                      cSlot[1], linesslot1[],
                      cSlot[2], linesslot2[],
                      cSlot[3], linS[3], -cirS[0], -linS[2]};
-sstator[0]=news; Plane Surface(sstator[0]) = {newll-1};
+sstator[0]=news; Plane Surface(sstator[0]) = -{newll-1};
 
 // -------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------
@@ -129,10 +131,10 @@ If(SymmetryFactor<8)
     auxlink[] = auxlink_[];
   EndIf
 
-  For k In {1:NbrPoles-1}
+  For k In {1:NbrPolesInModel-1}
     cirS[] += Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Line{cirS[{0}]};} };
   EndFor
-  For k In {1:NbrPoles-1}
+  For k In {1:NbrPolesInModel-1}
     sstator[]+= Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{sstator[0]};} };
     sairgapS[]+= Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{sairgapS[0]};} };
     sairslot[]+= Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{sairslot[{0:2}]};} };

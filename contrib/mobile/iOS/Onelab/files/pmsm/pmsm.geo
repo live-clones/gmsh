@@ -1,9 +1,11 @@
 Include "pmsm_data.geo";
 
-Mesh.Algorithm = 1;
-Geometry.CopyMeshingMethod = 1;
+Mesh.Algorithm = 6; // 2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)
 
-Mesh.CharacteristicLengthFactor = 1.5 ;
+Geometry.CopyMeshingMethod = 1;
+//Mesh.CharacteristicLengthFactor = 0.5 ;
+
+fact_trans = Mesh.CharacteristicLengthFactor ;
 
 
 // Mesh characteristic lengths
@@ -15,7 +17,7 @@ pS1=(rS7-rS1)/7.*s;
 pS2=(rS7-rS1)/12.*s;
 pS3=(rS6-rS3)/10.*s;
 
-NbrDivMB = 2*Ceil[2*Pi*rRext/8/pR1]; //1/8 Moving band
+NbrDivMB = 2*Ceil[2*Pi*rRext/8/pR1/fact_trans] ; //1/8 Moving band
 
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
@@ -29,7 +31,7 @@ Include "pmsm_stator.geo";
 
 
 // For nice visualisation...
-Mesh.Light = 0 ;
+//Mesh.Light = 0 ;
 //Mesh.SurfaceFaces = 1; Mesh.SurfaceEdges=0;
 
 Hide { Point{ Point '*' }; }
@@ -39,13 +41,12 @@ Show { Line{ nicepos_rotor[], nicepos_stator[] }; }
 Physical Line(NICEPOS) = { nicepos_rotor[], nicepos_stator[] };
 
 //For post-processing...
-View[0].Light = 0;
+//View[0].Light = 0;
 View[0].NbIso = 25; // Number of intervals
 View[0].IntervalsType = 1;
 
 DefineConstant[ Flag_AddInfo = {0, Choices{0,1},
-                               Label "Add info about phases and axis",
-                               Path "Input/1"} ];
+    Name "Input/02Add info about phases and axis"} ];
 
 For i In {PostProcessing.NbViews-1 : 0 : -1}
   If(StrFind(View[i].Attributes, "tmp"))
@@ -55,7 +56,7 @@ EndFor
 
 If(Flag_AddInfo)
   rr = 1.25 * rS3 ;
-  For k In {0:NbrPoles-1}
+  For k In {0:NbrPolesInModel-1}
     xa[] += rr*Cos(1*Pi/24+k*Pi/4) ; ya[] += rr*Sin(1*Pi/24+k*Pi/4) ;
     xb[] += rr*Cos(3*Pi/24+k*Pi/4) ; yb[] += rr*Sin(3*Pi/24+k*Pi/4) ;
     xc[] += rr*Cos(5*Pi/24+k*Pi/4) ; yc[] += rr*Sin(5*Pi/24+k*Pi/4) ;

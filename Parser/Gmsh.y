@@ -1206,9 +1206,7 @@ DefineConstants :
     {
       std::string key($3);
       std::vector<double> val(1, 0.);
-      floatOptions.clear(); charOptions.clear();
       if(!gmsh_yysymbols.count(key)){
-        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
@@ -1217,9 +1215,7 @@ DefineConstants :
     {
       std::string key($3);
       std::vector<double> val(1, $5);
-      floatOptions.clear(); charOptions.clear();
       if(!gmsh_yysymbols.count(key)){
-        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
@@ -1239,9 +1235,7 @@ DefineConstants :
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {
       std::string key($3), val($5);
-      floatOptions.clear(); charOptions.clear();
       if(!gmsh_yystringsymbols.count(key)){
-        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yystringsymbols[key] = val;
       }
       Free($3);
@@ -5071,6 +5065,15 @@ StringExpr :
       Free($5);
     }
   | tStrCat '(' StringExprVar ',' StringExprVar ')'
+    {
+      $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
+      strcpy($$, $3);
+      strcat($$, $5);
+      Free($3);
+      Free($5);
+    }
+  // for compatibility with GetDP
+  | tStrCat '[' StringExprVar ',' StringExprVar ']'
     {
       $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
       strcpy($$, $3);

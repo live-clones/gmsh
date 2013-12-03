@@ -1,7 +1,6 @@
 
-DefineConstant[ refine = {0.1, 
-                          Path "Parameters/Geometry",
-                          Label "Refinement at corner"} ] ;
+DefineConstant[ refine = {0.1,
+    Name "Parameters/Geometry/Refinement at corner"} ] ;
 
 lc = 0.1;
 

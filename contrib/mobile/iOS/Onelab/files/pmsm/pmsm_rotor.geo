@@ -14,10 +14,11 @@ For k In {0:#pntR[]-2}
  linR0[]+=newl; Line(newl) = {pntR[k], pntR[k+1]};
 EndFor
 
-Transfinite Line{linR0[0]} = Ceil[(rR2-rR1)/pR1] ;
-Transfinite Line{linR0[1]} = Ceil[(rR4-rR2)/pR1] ;
-Transfinite Line{linR0[2]} = Ceil[(rR5-rR4)/pR1] ;
-Transfinite Line{linR0[3]} = Ceil[(rB1-rR5)/pR1] ;
+Transfinite Line{linR0[0]} = Ceil[(rR2-rR1)/pR1/fact_trans] ;
+Transfinite Line{linR0[1]} = Ceil[(rR4-rR2)/pR1/fact_trans] ;
+Transfinite Line{linR0[2]} = Ceil[(rR5-rR4)/pR1/fact_trans] ;
+Transfinite Line{linR0[3]} = Ceil[(rB1-rR5)/pR1/fact_trans] ;
+
 
 For k In {0:#linR0[]-1}
  linR1[] += Rotate {{0, 0, 1}, {0, 0, 0}, A0+A1} { Duplicata{Line{linR0[k]};} };
@@ -67,9 +68,9 @@ smagnet[0]=news; Plane Surface(smagnet[0]) = {newll-1};
 
 nn = #cirR[]-1 ;
 Line Loop(newll) = {cirR[{nn-5}], linR2[1], -cirR[{nn-3}], -linR0[2]};
-sairrotor[]+=news; Plane Surface(news) = {newll-1};
+sairrotor[]+=news; Plane Surface(news) = -{newll-1};
 Line Loop(newll) = {cirR[{nn-4}], linR1[2], -cirR[{nn-1}], -linR3[1]};
-sairrotor[]+=news; Plane Surface(news) = {newll-1};
+sairrotor[]+=news; Plane Surface(news) = -{newll-1};
 
 Line Loop(newll) = {linR0[3], cirR[nn], -linR1[3], -cirR[{nn-1:nn-3:-1}]};
 sairrotormb[]+=news; Plane Surface(news) = {newll-1};
@@ -98,10 +99,10 @@ If(SymmetryFactor<8)
     linR1[] = linR1_[];
   EndIf
 
-  For k In {1:NbrPoles-1}
+  For k In {1:NbrPolesInModel-1}
     surfint[] += Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Line{surfint[{0:2}]};} };
   EndFor
-  For k In {1:NbrPoles-1}
+  For k In {1:NbrPolesInModel-1}
     srotor[] += Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{srotor[0]};} };
     smagnet[]+= Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{smagnet[0]};} };
     sairrotor[]  += Rotate {{0, 0, 1}, {0, 0, 0}, k*Pi/4} { Duplicata{ Surface{sairrotor[{0,1}]};} };
@@ -118,7 +119,7 @@ Physical Surface(ROTOR_FE)     = {srotor[]};     // Rotor
 Physical Surface(ROTOR_AIR)    = {sairrotor[]};  // AirRotor
 Physical Surface(ROTOR_AIRGAP) = {sairrotormb[]};// AirRotor for possible torque computation with Maxwell stress tensor
 
-NN = (Flag_Symmetry)?NbrPoles:NbrPolesTot;
+NN = (Flag_Symmetry)?NbrPolesInModel:NbrPolesTot;
 For k In {0:NN-1}
   Physical Surface(ROTOR_MAGNET+k) = {smagnet[k]}; // Magnets
 EndFor

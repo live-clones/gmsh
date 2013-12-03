@@ -1,20 +1,22 @@
 Group {
   // Input groups:
-  DefineGroup[ Domain_M = {{}, Label "Permanent magnets",
-                           Path "Regions/0Sources"},
-               Domain_S = {{}, Label "Inductor (imposed j_s)",
-                           Path "Regions/0Sources"},
-               Domain_Inf = {{}, Label "Infinite domain (spherical shell)",
-                             Path "Regions/0Special regions", Closed "1"},
-               Domain_Mag = {{}, Label "Passive magnetic regions",
-                             Path "Regions/Other regions"},
-               Dirichlet_phi_0 = {{}, Label "h_t = 0", Closed "1",
-                                  Path "Regions/0Boundary conditions"},
-               Dirichlet_a_0 = {{}, Label "b_n = 0",
-                                Path "Regions/0Boundary conditions"} ];
+  DefineGroup[
+    Domain_M = {{},
+      Name "Regions/0Sources/Permanent magnets"},
+    Domain_S = {{},
+      Name "Regions/0Sources/Inductor (imposed j_s)"},
+    Domain_Inf = {{},
+      Name "Regions/0Special regions/Infinite domain (spherical shell)",
+      Closed "1"},
+    Domain_Mag = {{},
+      Name "Regions/Other regions/Passive magnetic regions"},
+    Dirichlet_phi_0 = {{},
+      Name "Regions/0Boundary conditions/h_t = 0", Closed "1"},
+    Dirichlet_a_0 = {{},
+      Name "Regions/0Boundary conditions/b_n = 0"} ];
 
   DefineGroup[ Domain = {{Domain_Mag, Domain_M, Domain_S, Domain_Inf},
-                         Label "Computational domain", Path "Regions", Visible 0} ];
+      Name "Regions/Computational domain", Visible 0} ];
 }
 
 Function{
@@ -116,6 +118,7 @@ PostProcessing {
       { Name b   ; Value { Local { [ - mu[] * {d phi} ] ; In Domain ; Jacobian JVol ; }
                            Local { [ - mu[] * hc[] ]    ; In Domain_M ; Jacobian JVol ; } } }
       { Name h   ; Value { Local { [ - {d phi} ]        ; In Domain ; Jacobian JVol ; } } }
+      { Name hc  ; Value { Local { [ hc[] ]             ; In Domain_M ; Jacobian JVol ; } } }
       { Name phi ; Value { Local { [ {phi} ]            ; In Domain ; Jacobian JVol ; } } }
     }
   }
@@ -126,6 +129,7 @@ PostOperation {
     Operation {
       Print[ b, OnElementsOf Domain, File "MagSta_phi_b.pos" ] ;
       Print[ h, OnElementsOf Domain, File "MagSta_phi_h.pos" ] ;
+      Print[ hc, OnElementsOf Domain, File "MagSta_a_hc.pos" ] ;
       Print[ phi, OnElementsOf Domain, File "MagSta_phi_phi.pos" ] ;
     }
   }
@@ -189,11 +193,12 @@ Resolution {
 PostProcessing {
   { Name MagSta_a ; NameOfFormulation MagSta_a ;
     Quantity {
-      { Name a ; Value { Local { [ CompZ[{a}] ]   ; In Domain ; Jacobian JVol ; } } }
+      { Name az ; Value { Local { [ CompZ[{a}] ]   ; In Domain ; Jacobian JVol ; } } }
       { Name b ; Value { Local { [ {d a} ]        ; In Domain ; Jacobian JVol ; } } }
       { Name a ; Value { Local { [ {a} ]          ; In Domain ; Jacobian JVol ; } } }
       { Name h ; Value { Local { [ nu[] * {d a} ] ; In Domain ; Jacobian JVol ; }
                          Local { [ hc[] ]         ; In Domain_M ; Jacobian JVol ; } } }
+      { Name hc  ; Value { Local { [ hc[] ]       ; In Domain_M ; Jacobian JVol ; } } }
     }
   }
 }
@@ -203,6 +208,7 @@ PostOperation {
     Operation {
       Print[ b, OnElementsOf Domain, File "MagSta_a_b.pos" ] ;
       Print[ h, OnElementsOf Domain, File "MagSta_a_h.pos" ] ;
+      Print[ hc, OnElementsOf Domain, File "MagSta_a_hc.pos" ] ;
       Print[ a, OnElementsOf Domain, File "MagSta_a_a.pos" ] ;
     }
   }

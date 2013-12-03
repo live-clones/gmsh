@@ -1706,8 +1706,9 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     }
   }
 
-  for(std::set<std::string>::iterator it = closed.begin(); it != closed.end(); it++)
+  for(std::set<std::string>::iterator it = closed.begin(); it != closed.end(); it++){
     if(it->size()) _tree->close(it->c_str(), 0);
+  }
 
   _tree->redraw();
 

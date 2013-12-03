@@ -1,24 +1,19 @@
 Include "magnet_data.pro";
 
 DefineConstant[ h = {0.14, Min 0.1, Max 0.2, Step 0.01,
-                     Path "Parameters/Geometry",
-                     Label "Core height (m)"} ] ;
+    Name "Parameters/Geometry/Core height (m)"} ] ;
 
 DefineConstant[ l = {0.14, Min 0.05, Max 0.2, Step 0.01,
-                     Path "Parameters/Geometry",
-                     Label "Core width (m)"} ] ;
+    Name "Parameters/Geometry/Core width (m)"} ] ;
 
 DefineConstant[ d = {0.03, Min 0.01, Max 0.05, Step 0.002,
-                     Path "Parameters/Geometry",
-                     Label "Core thickness (m)"} ] ;
+    Name "Parameters/Geometry/Core thickness (m)"} ] ;
 
 DefineConstant[ e = {5e-3, Min 5e-4, Max d, Step 1e-3,
-                     Path "Parameters/Geometry",
-                     Label "Air gap (m)", Highlight "LightYellow"} ] ;
+    Name "Parameters/Geometry/Air gap (m)", Highlight "LightYellow"} ] ;
 
 DefineConstant[ ha = {0.03, Min 0.01, Max 0.1, Step 0.01,
-                     Path "Parameters/Geometry",
-                     Label "Magnet height (m)"} ] ;
+    Name "Parameters/Geometry/Magnet height (m)"} ] ;
 
 lc0 = d / 5 ;
 lc1 = e / 2 ;
