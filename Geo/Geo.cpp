@@ -4079,7 +4079,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
   if(s->Typ == MSH_SURF_COMPOUND){
     s->Generatrices = GetOrderedUniqueEdges(s);
     if(!List_Nbr(s->Generatrices)){
-      Msg::Error("Could not make generatrices list for compound surface %d.",s->Num);
+      Msg::Warning("Could not make generatrices list for compound surface %d", s->Num);
       return;
     }
   }
