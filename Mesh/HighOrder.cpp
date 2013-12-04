@@ -159,11 +159,13 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
             if(relax < 1.e-2)
               break;
           }
-          if(relax < 1.e-2)
+          if(relax < 1.e-2){
             Msg::Warning
               ("Failed to compute equidistant parameters (relax = %g, value = %g) "
                "for edge %d-%d parametrized with %g %g on GEdge %d linear %d",
                relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag(), linear);
+            reparamOK = false;
+          }
         }
         else{
           Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
@@ -230,7 +232,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 	  else {
 	    US[0]      =  p0[0];
 	    VS[0]      =  p0[1];
-	    US[nPts+1] =  p1[0]; 
+	    US[nPts+1] =  p1[0];
 	    VS[nPts+1] =  p1[1];
 	    for(int j = 0; j < nPts; j++){
 	      const double t = (double)(j + 1) / (nPts + 1);
