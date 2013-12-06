@@ -22,7 +22,8 @@
     @interface FunctionSpace
     @brief Common Interface of all Function Spaces
 
-    This is the common interface of all Function Spaces.
+    This is the common interface of
+    all Function Spaces.
 
     A FunctionSpace is defined on a support,
     which is a collection of MElement%s (GroupOfElement).
@@ -67,8 +68,9 @@ class FunctionSpace{
  public:
   virtual ~FunctionSpace(void);
 
-  const Basis& getBasis(const MElement& element) const;
-  const Basis& getBasis(size_t i) const;
+  const std::vector<const Basis*>& getBasis(const MElement& element) const;
+  const Basis&                     getBasis(size_t i) const;
+  size_t                           getNBasis(void) const;
 
   GroupOfElement& getSupport(void) const;
   bool            isScalar(void) const;
@@ -112,12 +114,9 @@ class FunctionSpace{
    Deletes this FunctionSpace
    **
 
-   @fn FunctionSpace::getBasis
-   @param element A MElement
-   @return Returns the Basis associated to the given MElement
-
    @fn FunctionSpace::getSupport
-   @return Returns the support of this FunctionSpace
+   @return Returns the support of this
+   FunctionSpace
    **
 
    @fn FunctionSpace::isScalar
@@ -158,14 +157,16 @@ class FunctionSpace{
 
    @fn FunctionSpace::getGoDFromElement
    @param element An Element of the FunctionSpace Support
-   @return Returns the GroupOfDof%s associated to the given Element
+   @return Returns the GroupOfDof%s associated to
+   the given Element
 
    If the given Element is not in the FunctionSpace Support,
    an Exception is thrown
    **
 
    @fn FunctionSpace::dofNumber
-   @return Returns the number of Dof%s given by FunctionSpace::getAllDofs()
+   @return Returns the number of Dof%s
+   given by FunctionSpace::getAllDofs()
    **
 
    @fn FunctionSpace::groupNumber
@@ -173,5 +174,47 @@ class FunctionSpace{
    given by FunctionSpace::getAllGroups()
    **
 */
+
+
+//////////////////////
+// Inline Functions //
+//////////////////////
+
+inline const std::vector<const Basis*>&
+FunctionSpace::getBasis(const MElement& element) const{
+  return *basis;
+}
+
+inline const Basis& FunctionSpace::getBasis(size_t i) const{
+  return *(*basis)[i];
+}
+
+inline size_t FunctionSpace::getNBasis(void) const{
+  return nBasis;
+}
+
+inline GroupOfElement& FunctionSpace::getSupport(void) const{
+  return *goe;
+}
+
+inline bool FunctionSpace::isScalar(void) const{
+  return scalar;
+}
+
+inline size_t FunctionSpace::dofNumber(void) const{
+  return dof->size();
+}
+
+inline size_t FunctionSpace::groupNumber(void) const{
+  return group->size();
+}
+
+inline const std::vector<Dof> FunctionSpace::getAllDofs(void) const{
+  return std::vector<Dof>(dof->begin(), dof->end());
+}
+
+inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
+  return *group;
+}
 
 #endif

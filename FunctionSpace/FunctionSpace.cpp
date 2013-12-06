@@ -144,23 +144,6 @@ void FunctionSpace::insertDof(Dof& d,
   }
 }
 */
-
-const Basis& FunctionSpace::getBasis(const MElement& element) const{
-  return *(*basis)[0];
-}
-
-const Basis& FunctionSpace::getBasis(size_t i) const{
-  return *(*basis)[0];
-}
-
-GroupOfElement& FunctionSpace::getSupport(void) const{
-  return *goe;
-}
-
-bool FunctionSpace::isScalar(void) const{
-  return scalar;
-}
-
 vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
@@ -179,7 +162,8 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 
   // New Element
   MElementFactory factory;
-  int lowOrderTag = ElementType::getTag(elem.getType(), 1, false);
+  int parentTag   = ElementType::ParentTypeFromTag(elem.getTypeForMSH());
+  int lowOrderTag = ElementType::getTag(parentTag, 1, false);
 
   MElement* permElement = factory.create(lowOrderTag, vertex);
 
@@ -242,14 +226,6 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   return myDof;
 }
 
-const vector<Dof> FunctionSpace::getAllDofs(void) const{
-  return vector<Dof>(dof->begin(), dof->end());
-}
-
-const vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
-  return *group;
-}
-
 const GroupOfDof& FunctionSpace::
 getGoDFromElement(const MElement& element) const{
 
@@ -263,12 +239,4 @@ getGoDFromElement(const MElement& element) const{
 
   else
     return *(it->second);
-}
-
-size_t FunctionSpace::dofNumber(void) const{
-  return dof->size();
-}
-
-size_t FunctionSpace::groupNumber(void) const{
-  return group->size();
 }
