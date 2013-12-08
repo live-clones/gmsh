@@ -7,9 +7,6 @@
 import onelab
 import math, os
 
-# import sys
-# sys.stderr = open('ErrorLog.txt', 'wt')
-
 def exportMsh(le1,le2):
    mshFile = open(onelab.path(__file__, "pend.msh"),'w')
    mshFile.write('$MeshFormat\n2.2 0 8\n$EndMeshFormat\n')
@@ -32,23 +29,23 @@ def exportIter(iter,t,x1,y1,x2,y2):
    mshFile.write('\t3\n\t1 0 0 0\n\t2 %f %f 0\n\t3 %f %f 0\n$EndNodeData\n' %(x1,y1,x2,y2))
    mshFile.close()
 
-OL = onelab.client()
+c = onelab.client()
 
 g = 9.8	# acceleration of gravity
 m = 0.3 # mass of pendulum balls
 
-l = OL.defineNumber('Geom/Length', value=1.0, label='Arm length [m]')
-time = OL.defineNumber('Dyna/time', value=0.0, label='time [s]')
-dt = OL.defineNumber('Dyna/dt', value=0.001, label='time step [s]')
-tmax = OL.defineNumber('Dyna/tmax', value=20, label='max time [s]')
-refresh = OL.defineNumber('Dyna/refresh', value=0.05, label='refresh interval [s]')
-theta0 = OL.defineNumber('Init/theta', value=10, label='Initial theta angle [deg]', 
+l = c.defineNumber('Geom/arm length [m]', value=1.0)
+time = c.defineNumber('Dyna/time [s]', value=0.0)
+dt = c.defineNumber('Dyna/time step [s]', value=0.001)
+tmax = c.defineNumber('Dyna/max time [s]', value=20)
+refresh = c.defineNumber('Dyna/refresh interval [s]', value=0.05)
+theta0 = c.defineNumber('Init/initial theta angle [deg]', value=10, 
                          attributes={'Highlight':'Pink'})
-phi0 = OL.defineNumber('Init/phi', value=180, label='Initial phi angle [deg]',
+phi0 = c.defineNumber('Init/initial phi angle [deg]', value=180,
                        attributes={'Highlight':'Pink'})
 
 # we're done if we are in the "check" phase
-if OL.action == 'check' :
+if c.action == 'check' :
    exit(0)
 
 l1 = l;
@@ -97,46 +94,27 @@ while (time < tmax):
 
    if refr >= refresh:
       refr = 0
-      OL.setNumber(OL.name + '/Progress', value=time, min=0, max=tmax, visible=0)
-      OL.setNumber('Dyna/time', value=time)
-      OL.setNumber('Solu/phi', value=phi)
-      OL.addNumberChoice('Solu/phi', phi)
-      OL.setNumber('Solu/theta', value=theta)
-      OL.addNumberChoice('Solu/theta', theta)
-      OL.setNumber('Solu/phi_dot', value=phi_dot)
-      OL.addNumberChoice('Solu/phi_dot', phi_dot)
-      OL.setNumber('Solu/theta_dot', value=theta_dot)
-      OL.addNumberChoice('Solu/theta_dot', theta_dot)
+      c.setNumber(c.name + '/Progress', value=time, min=0, max=tmax, visible=0)
+      c.setNumber('Dyna/time [s]', value=time)
+      c.setNumber('Solu/phi', value=phi)
+      c.addNumberChoice('Solu/phi', phi)
+      c.setNumber('Solu/theta', value=theta)
+      c.addNumberChoice('Solu/theta', theta)
+      c.setNumber('Solu/phi dot', value=phi_dot)
+      c.addNumberChoice('Solu/phi dot', phi_dot)
+      c.setNumber('Solu/theta dot', value=theta_dot)
+      c.addNumberChoice('Solu/theta dot', theta_dot)
 
       # ask Gmsh to refresh
-      OL.setString('Gmsh/Action', value='refresh')
+      c.setString('Gmsh/Action', value='refresh')
 
       # stop if we are asked to (by Gmsh)
-      if(OL.getString(OL.name + '/Action') == 'stop'):
+      if(c.getString(c.name + '/Action') == 'stop'):
          break;
 
       exportMsh(l1, l2)
       exportIter(iter, time, x1, y1+l1, x2, y2+l1+l2)
-      OL.mergeFile(onelab.path(__file__, 'pend.msh'))
+      c.mergeFile(onelab.path(__file__, 'pend.msh'))
       iter += 1
 
-OL.setNumber(OL.name + '/Progress', value=0)
-
-# comment the following lines out if you do not have gnuplot on your system
-# OL.preProcess(onelab.path(__file__,'pend.plt.ol'))
-# os.system('gnuplot pend.plt')
-
-# run a subclient
-# OL.run('subclient', './sub.py','')
-
-# A = OL.defineNumber('A', value=10)
-# B = OL.defineNumber('Group/B', value=0, min = -10, max = 10, step = 1)
-# C = OL.defineNumber('Group/C', value=2, choices = [0, 1, 2, 3], 
-#                     attributes={'Highlight':'Pink'})
-# D = OL.defineNumber('Group/D', value=3, labels = {0:'zero', 1:'un', 2:'deux', 
-#                     3:'trois'}, attributes={'Highlight':'Blue'})
-
-# UTF-8 is allowed everywhere (should be prefixed by 'u' in python 2, not 
-# required in python 3)
-# Omega = OL.getString(u'Ω', u'∫(∂φ/∂α)³dx', help=u'ask someone@universe.org',
-#                      choices = ['oui', 'non', u'peut-être'])
+c.setNumber(c.name + '/Progress', value=0)

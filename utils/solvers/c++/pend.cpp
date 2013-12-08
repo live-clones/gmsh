@@ -40,13 +40,12 @@ void exportIter(int iter, double t, double x1, double y1, double x2, double y2)
 }
 
 double defineNumber(onelab::client *c, const std::string &name, double value,
-                    const std::string &label,
                     const std::map<std::string, std::string> &attributes)
 {
   std::vector<onelab::number> ns;
   c->get(ns, name);
   if(ns.empty()){ // define new parameter
-    onelab::number n(name, value, label);
+    onelab::number n(name, value);
     if(attributes.size()) n.setAttributes(attributes);
     c->set(n);
     return value;
@@ -101,14 +100,14 @@ int main(int argc, char **argv)
 
   std::map<std::string, std::string> attr;
 
-  double l = defineNumber(c, "Geom/Length", 1.0, "Arm length [m]", attr);
-  double time = defineNumber(c, "Dyna/time", 0., "time [s]", attr);
-  double dt = defineNumber(c, "Dyna/dt", 0.001, "time step [s]", attr);
-  double tmax = defineNumber(c, "Dyna/tmax", 20, "max time [s]", attr);
-  double refresh = defineNumber(c, "Dyna/refresh", 0.05, "refresh interval [s]", attr);
+  double l = defineNumber(c, "Geom/arm length [m]", 1.0, attr);
+  double time = defineNumber(c, "Dyna/time [s]", 0., attr);
+  double dt = defineNumber(c, "Dyna/time step [s]", 0.001, attr);
+  double tmax = defineNumber(c, "Dyna/max time [s]", 20, attr);
+  double refresh = defineNumber(c, "Dyna/refresh interval [s]", 0.05, attr);
   attr["Highlight"] = "Pink";
-  double theta0 = defineNumber(c, "Init/theta", 10, "Initial theta angle [deg]", attr);
-  double phi0 = defineNumber(c, "Init/phi", 180, "Initial phi angle [deg]", attr);
+  double theta0 = defineNumber(c, "Init/initial theta angle [deg]", 10, attr);
+  double phi0 = defineNumber(c, "Init/initial phi angle [deg]", 180, attr);
 
   // we're done if we are not in the compute phase
   if(action != "compute"){
@@ -163,15 +162,15 @@ int main(int argc, char **argv)
     if(refr >= refresh){
       refr = 0;
       setNumber(c, name + "/Progress", time, 0, tmax, false);
-      setNumber(c, "Dyna/time", time);
+      setNumber(c, "Dyna/time [s]", time);
       setNumber(c, "Solu/phi", phi);
       addNumberChoice(c, "Solu/phi", phi);
       setNumber(c, "Solu/theta",  theta);
       addNumberChoice(c, "Solu/theta", theta);
-      setNumber(c, "Solu/phi_dot", phi_dot);
-      addNumberChoice(c, "Solu/phi_dot", phi_dot);
-      setNumber(c, "Solu/theta_dot", theta_dot);
-      addNumberChoice(c, "Solu/theta_dot", theta_dot);
+      setNumber(c, "Solu/phi dot", phi_dot);
+      addNumberChoice(c, "Solu/phi dot", phi_dot);
+      setNumber(c, "Solu/theta dot", theta_dot);
+      addNumberChoice(c, "Solu/theta dot", theta_dot);
 
       // ask Gmsh to refresh
       onelab::string s("Gmsh/Action", "refresh");
