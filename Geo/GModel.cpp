@@ -538,6 +538,19 @@ int GModel::mesh(int dimension)
 #endif
 }
 
+bool GModel::setAllVolumesPositive()
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  bool ok = true;
+  for(std::set<GRegion*,GEntityLessThan>::iterator itReg=regions.begin();
+                                          itReg != regions.end(); ++itReg) {
+    int nbEl = (*itReg)->getNumMeshElements();
+    for (int iEl=0; iEl<nbEl; ++iEl) ok = ok && (*itReg)->getMeshElement(iEl)->setVolumePositive();
+  }
+  return ok;
+}
+
 int GModel::adaptMesh(std::vector<int> technique,
                       std::vector<simpleFunction<double>* > f,
                       std::vector<std::vector<double> > parameters,

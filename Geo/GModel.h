@@ -455,6 +455,9 @@ class GModel
 		std::vector<std::vector<double> > parameters,
 		int niter, bool meshAll=false);
 
+  // Ensure that the Jacobian of all volume elements is positive
+  bool setAllVolumesPositive();
+
   // make the mesh a high order mesh at order N
   // linear is 1 if the high order points are not placed on the geometry of the model
   // incomplete is 1 if incomplete basis are used

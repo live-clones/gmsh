@@ -737,9 +737,6 @@ void MElement::writeMSH(FILE *fp, bool binary, int entity,
   int type = getTypeForMSH();
   if(!type) return;
 
-  // if necessary, change the ordering of the vertices to get positive volume
-  setVolumePositive();
-
   std::vector<int> verts;
   getVerticesIdForMSH(verts);
 
@@ -785,9 +782,6 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
 
   if(!type) return;
 
-  // if necessary, change the ordering of the vertices to get positive
-  // volume
-  setVolumePositive();
   int n = getNumVerticesForMSH();
   int par = (parentNum) ? 1 : 0;
   int dom = (dom1Num) ? 2 : 0;
@@ -887,7 +881,6 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   const char *str = getStringForPOS();
   if(!str) return;
 
-  setVolumePositive();
   int n = getNumVertices();
   fprintf(fp, "%s(", str);
   for(int i = 0; i < n; i++){
@@ -993,7 +986,6 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 
 void MElement::writePLY2(FILE *fp)
 {
-  setVolumePositive();
   fprintf(fp, "3 ");
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, " %d", getVertex(i)->getIndex() - 1);
@@ -1002,7 +994,6 @@ void MElement::writePLY2(FILE *fp)
 
 void MElement::writeVRML(FILE *fp)
 {
-  setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
@@ -1011,8 +1002,6 @@ void MElement::writeVRML(FILE *fp)
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
   if(!getTypeForVTK()) return;
-
-  setVolumePositive();
 
   int n = getNumVertices();
   if(binary){
@@ -1037,7 +1026,6 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   int type = getTypeForUNV();
   if(!type) return;
 
-  setVolumePositive();
   int n = getNumVertices();
   int physical_property = elementary;
   int material_property = abs(physical);
@@ -1063,7 +1051,6 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
                          int physical)
 {
-  setVolumePositive();
   for(int i = 0; i < getNumVertices(); i++)
     if (getTypeForMSH() == MSH_TET_10 && i == 8)
       fprintf(fp, " %d", getVertex(9)->getIndex());
@@ -1079,8 +1066,6 @@ void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
   int numVert = getNumVertices();
-  bool ok = setVolumePositive();
-  if(getDim() == 3 && !ok) Msg::Error("Element %d has zero volume", num);
   fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition :
           (elementTagType == 2) ? physical : elementary, numVert);
   for(int i = 0; i < numVert; i++)
@@ -1094,7 +1079,6 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary
   const char *str = getStringForBDF();
   if(!str) return;
 
-  setVolumePositive();
   int n = getNumVertices();
   const char *cont[4] = {"E", "F", "G", "H"};
   int ncont = 0;
@@ -1135,8 +1119,6 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
   const char *str = getStringForDIFF();
   if(!str) return;
 
-  setVolumePositive();
-
   int n = getNumVertices();
   if(binary){
     // TODO
@@ -1151,7 +1133,6 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
 
 void MElement::writeINP(FILE *fp, int num)
 {
-  setVolumePositive();
   fprintf(fp, "%d, ", num);
   int n = getNumVertices();
   for(int i = 0; i < n; i++){
@@ -1166,7 +1147,6 @@ void MElement::writeINP(FILE *fp, int num)
 
 void MElement::writeSU2(FILE *fp, int num)
 {
-  setVolumePositive();
   fprintf(fp, "%d ", getTypeForVTK());
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d ", getVertexVTK(i)->getIndex() - 1);
