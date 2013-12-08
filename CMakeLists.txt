@@ -495,6 +495,8 @@ if(ENABLE_ONELAB)
     include_directories(contrib/onelab)
     set_config_option(HAVE_ONELAB_METAMODEL "OneLabMetamodel")
   endif(ENABLE_ONELAB_METAMODEL)
+  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif(ENABLE_ONELAB)
 
 if(ENABLE_BUILD_IOS)
