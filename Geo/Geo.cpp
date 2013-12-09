@@ -3652,6 +3652,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   bool first_periodic = true;
   bool last_periodic = false;
   List_T *new_list = List_Create(1, List_Nbr(c->Control_Points) / 10, sizeof(int));
+  List_T *num_shapes = List_Create(2, 1, sizeof(int));
   Vertex *pv;
   for (int i = 0; i < List_Nbr(c->Control_Points); i++){
     List_Read(c->Control_Points, i, &pv);
@@ -3662,6 +3663,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
       if(!(is_periodic&&first_periodic)){
         Curve *cnew = _create_splitted_curve(c, new_list);
         List_Add(shapes, &cnew);
+        List_Add(num_shapes, &cnew->Num);
       }
       first_periodic = false;
       List_Reset(new_list);
@@ -3675,6 +3677,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   if(List_Nbr(new_list) > 1){
     Curve *cnew = _create_splitted_curve(c, new_list);
     List_Add(shapes, &cnew);
+    List_Add(num_shapes, &cnew->Num);
   }
   // replace original curve by the new curves in all surfaces (and for
   // the opposite curve)
@@ -3722,9 +3725,28 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
     }
   }
   List_Delete(Surfs);
+  
+  // replace original curve by the new curves in physical groups
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
+      (GModel::current()->getGEOInternals()->PhysicalGroups, i);
+    if(p->Typ == MSH_PHYSICAL_LINE){
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        if (num == c->Num){
+          List_Remove(p->Entities, j);
+          List_Insert_In_List(num_shapes, j, p->Entities);
+          j += List_Nbr(num_shapes) - 1;
+        }
+      }
+    }
+  }
+  
   DeleteShape(c->Typ, c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
+  List_Delete(num_shapes);
   return true;
 }
 
