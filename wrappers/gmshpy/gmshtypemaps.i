@@ -91,10 +91,17 @@
   }
 
   %#ifdef HAVE_NUMPY
+  %#if PY_MAJOR_VERSION==2 && PY_MINOR_VERSION==6
+  static void deleteCapsuleArray(void *capsule)
+  {
+    delete [](double*)(capsule);
+  }
+  %#else
   static void deleteCapsuleArray(PyObject *capsule)
   {
     delete [](double*)PyCapsule_GetPointer(capsule, NULL);
   }
+  %#endif
   PyObject *fullMatrix2PyArray(fullMatrix<double> &fm)
   {
     npy_intp dims[2] = {fm.size1(), fm.size2()};
@@ -107,7 +114,11 @@
     PyArray_UpdateFlags((PyArrayObject*)array, NPY_ARRAY_ALIGNED);
     if (fm.getOwnData()) {
       fm.setOwnData(false);
+      %#if PY_MAJOR_VERSION==2 && PY_MINOR_VERSION==6
+      PyObject *capsule = PyCObject_FromVoidPtr((void*)data, deleteCapsuleArray);
+      %#else
       PyObject *capsule = PyCapsule_New((void*) data, NULL, deleteCapsuleArray);
+      %#endif
       PyArray_SetBaseObject((PyArrayObject*)array, capsule);
     }
     return array;
