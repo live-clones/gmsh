@@ -222,12 +222,13 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
           if(otherData){
             if(octree){
+              int qn = forceInterpolation ? numNodes : 0;
               if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
-                                       0, numNodes, &x[0], &y[0], &z[0]))
+                                       0, qn, &x[0], &y[0], &z[0]))
                 if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
-                                         0, numNodes, &x[0], &y[0], &z[0]))
+                                         0, qn, &x[0], &y[0], &z[0]))
                   octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
-                                       0, numNodes, &x[0], &y[0], &z[0]);
+                                       0, qn, &x[0], &y[0], &z[0]);
             }
             else
               for(int comp = 0; comp < otherNumComp; comp++)
