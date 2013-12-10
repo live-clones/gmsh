@@ -36,23 +36,30 @@ class OctreePost
   OctreePost(PView *v);
   OctreePost(PViewData *data);
   ~OctreePost();
-  // search for the value of the View at point x, y, z. Values are
-  // interpolated using standard first order shape functions in the
-  // post element. If several time steps are present, they are all
-  // interpolated unless time step is set to a different value than
-  // -1.
+  // search for the value of the View at point x, y, z. Values are interpolated
+  // using standard first order shape functions in the post element. If several
+  // time steps are present, they are all interpolated unless time step is set
+  // to a different value than -1. If qn is given, n node coordinates stored in
+  // qx/y/z are used to select which element is used to interpolate (if the
+  // query returned more than one)
   bool searchScalar(double x, double y, double z, double *values,
-                    int step=-1, double *size=0);
+                    int step=-1, double *size=0,
+                    int qn=0, double *qx=0, double *qy=0, double *qz=0);
   bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2);
+                           int step=-1, double *size=0, double tol=1.e-2,
+                           int qn=0, double *qx=0, double *qy=0, double *qz=0);
   bool searchVector(double x, double y, double z, double *values,
-                    int step=-1, double *size=0);
+                    int step=-1, double *size=0,
+                    int qn=0, double *qx=0, double *qy=0, double *qz=0);
   bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2);
+                           int step=-1, double *size=0, double tol=1.e-2,
+                           int qn=0, double *qx=0, double *qy=0, double *qz=0);
   bool searchTensor(double x, double y, double z, double *values,
-                    int step=-1, double *size=0);
+                    int step=-1, double *size=0,
+                    int qn=0, double *qx=0, double *qy=0, double *qz=0);
   bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step=-1, double *size=0, double tol=1.e-2);
+                           int step=-1, double *size=0, double tol=1.e-2,
+                           int qn=0, double *qx=0, double *qy=0, double *qz=0);
 };
 
 #endif

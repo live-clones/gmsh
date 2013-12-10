@@ -364,6 +364,63 @@ void OctreePost::_create(PViewData *data)
   }
 }
 
+static void *getElement(double P[3], Octree *octree, int nbNod,
+                        int qn, double *qx, double *qy, double *qz)
+{
+  if(qn && qx && qy && qz){
+    std::vector<void*> v;
+    Octree_SearchAll(P, octree, &v);
+    if(nbNod == qn){
+      // try to use the value from the same geometrical element as the one
+      // provided in qx/y/z
+      double eps = CTX::instance()->geom.tolerance;
+      for(unsigned int i = 0; i < v.size(); i++){
+        double *X = (double*)v[i], *Y = &X[qn], *Z = &X[2 * qn];
+        bool ok = true;
+        for(int j = 0; j < qn; j++){
+          ok &= (fabs(X[j] - qx[j]) < eps &&
+                 fabs(Y[j] - qy[j]) < eps &&
+                 fabs(Z[j] - qz[j]) < eps);
+        }
+        if(ok) return v[i];
+      }
+    }
+    if(v.size()) return v[0];
+  }
+  else{
+    return Octree_Search(P, octree);
+  }
+  return 0;
+}
+
+static MElement *getElement(double P[3], GModel *m,
+                            int qn, double *qx, double *qy, double *qz)
+{
+  SPoint3 pt(P);
+  if(qn && qx && qy && qz){
+    // try to use the value from the same geometrical element as the one
+    // provided in qx/y/z
+    double eps = CTX::instance()->geom.tolerance;
+    std::vector<MElement*> elements = m->getMeshElementsByCoord(pt);
+    for(unsigned int i = 0; i < elements.size(); i++){
+      if(qn == elements[i]->getNumVertices()){
+        bool ok = true;
+        for(int j = 0; j < qn; j++){
+          MVertex *v = elements[i]->getVertex(j);
+          ok &= (fabs(v->x() - qx[j]) < eps &&
+                 fabs(v->y() - qy[j]) < eps &&
+                 fabs(v->z() - qz[j]) < eps);
+        }
+      }
+    }
+    if(elements.size()) return elements[0];
+  }
+  else{
+    return m->getMeshElementByCoord(pt);
+  }
+  return 0;
+}
+
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
                            double P[3], int step, double *values,
                            double *elementSize)
@@ -439,7 +496,8 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
 }
 
 bool OctreePost::searchScalar(double x, double y, double z, double *values,
-                              int step, double *size)
+                              int step, double *size,
+                              int qn, double *qx, double *qy, double *qz)
 {
   double P[3] = {x, y, z};
 
@@ -455,20 +513,28 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     values[0] = 0.0;
 
   if(_theViewDataList){
-    if(_getValue(Octree_Search(P, _SS), 3, 4, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SH), 3, 8, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SI), 3, 6, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SY), 3, 5, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _ST), 2, 3, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SQ), 2, 4, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SL), 1, 2, 1, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _SPP), 0, 1, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SS, 4, qn, qx, qy, qz),
+                 3, 4, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SH, 8, qn, qx, qy, qz),
+                 3, 8, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SI, 6, qn, qx, qy, qz),
+                 3, 6, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SY, 5, qn, qx, qy, qz),
+                 3, 5, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _ST, 3, qn, qx, qy, qz),
+                 2, 3, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SQ, 4, qn, qx, qy, qz),
+                 2, 4, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SL, 2, qn, qx, qy, qz),
+                 1, 2, 1, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _SPP, 1, qn, qx, qy, qz),
+                 0, 1, 1, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m){
-      SPoint3 pt(P);
-      if(_getValue(m->getMeshElementByCoord(pt), 1, P, step, values, size)) return true;
+      if(_getValue(getElement(P, m, qn, qx, qy, qz),
+                   1, P, step, values, size)) return true;
     }
   }
 
@@ -476,15 +542,16 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
 }
 
 bool OctreePost::searchScalarWithTol(double x, double y, double z, double *values,
-                                     int step, double *size, double tol)
+                                     int step, double *size, double tol,
+                                     int qn, double *qx, double *qy, double *qz)
 {
-  bool a = searchScalar(x, y, z, values, step, size);
+  bool a = searchScalar(x, y, z, values, step, size, qn, qx, qy, qz);
   if(!a && tol != 0.){
     double oldtol1 = element::getTolerance();
     double oldtol2 = MElement::getTolerance();
     element::setTolerance(tol);
     MElement::setTolerance(tol);
-    a = searchScalar(x, y, z, values, step, size);
+    a = searchScalar(x, y, z, values, step, size, qn, qx, qy, qz);
     element::setTolerance(oldtol1);
     MElement::setTolerance(oldtol2);
   }
@@ -492,7 +559,8 @@ bool OctreePost::searchScalarWithTol(double x, double y, double z, double *value
 }
 
 bool OctreePost::searchVector(double x, double y, double z, double *values,
-                              int step, double *size)
+                              int step, double *size,
+                              int qn, double *qx, double *qy, double *qz)
 {
   double P[3] = {x, y, z};
 
@@ -508,20 +576,28 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
       values[i] = 0.0;
 
   if(_theViewDataList){
-    if(_getValue(Octree_Search(P, _VS), 3, 4, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VH), 3, 8, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VI), 3, 6, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VY), 3, 5, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VT), 2, 3, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VQ), 2, 4, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VL), 1, 2, 3, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _VPP), 0, 1, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VS, 4, qn, qx, qy, qz),
+                 3, 4, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VH, 8, qn, qx, qy, qz),
+                 3, 8, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VI, 6, qn, qx, qy, qz),
+                 3, 6, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VY, 5, qn, qx, qy, qz),
+                 3, 5, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VT, 3, qn, qx, qy, qz),
+                 2, 3, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VQ, 4, qn, qx, qy, qz),
+                 2, 4, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VL, 2, qn, qx, qy, qz),
+                 1, 2, 3, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _VPP, 1, qn, qx, qy, qz),
+                 0, 1, 3, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m){
-      SPoint3 pt(P);
-      if(_getValue(m->getMeshElementByCoord(pt), 3, P, step, values, size)) return true;
+      if(_getValue(getElement(P, m, qn, qx, qy, qz),
+                   3, P, step, values, size)) return true;
     }
   }
 
@@ -529,15 +605,16 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
 }
 
 bool OctreePost::searchVectorWithTol(double x, double y, double z, double *values,
-                                     int step, double *size, double tol)
+                                     int step, double *size, double tol,
+                                     int qn, double *qx, double *qy, double *qz)
 {
-  bool a = searchVector(x, y, z, values, step, size);
+  bool a = searchVector(x, y, z, values, step, size, qn, qx, qy, qz);
   if(!a && tol != 0.){
     double oldtol1 = element::getTolerance();
     double oldtol2 = MElement::getTolerance();
     element::setTolerance(tol);
     MElement::setTolerance(tol);
-    a = searchVector(x, y, z, values, step, size);
+    a = searchVector(x, y, z, values, step, size, qn, qx, qy, qz);
     element::setTolerance(oldtol1);
     MElement::setTolerance(oldtol2);
   }
@@ -545,7 +622,8 @@ bool OctreePost::searchVectorWithTol(double x, double y, double z, double *value
 }
 
 bool OctreePost::searchTensor(double x, double y, double z, double *values,
-                              int step, double *size)
+                              int step, double *size,
+                              int qn, double *qx, double *qy, double *qz)
 {
   double P[3] = {x, y, z};
 
@@ -561,20 +639,28 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
       values[i] = 0.0;
 
   if(_theViewDataList){
-    if(_getValue(Octree_Search(P, _TS), 3, 4, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TH), 3, 8, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TI), 3, 6, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TY), 3, 5, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TT), 2, 3, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TQ), 2, 4, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TL), 1, 2, 9, P, step, values, size)) return true;
-    if(_getValue(Octree_Search(P, _TPP), 0, 1, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TS, 4, qn, qx, qy, qz),
+                 3, 4, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TH, 8, qn, qx, qy, qz),
+                 3, 8, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TI, 6, qn, qx, qy, qz),
+                 3, 6, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TY, 5, qn, qx, qy, qz),
+                 3, 5, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TT, 3, qn, qx, qy, qz),
+                 2, 3, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TQ, 4, qn, qx, qy, qz),
+                 2, 4, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TL, 2, qn, qx, qy, qz),
+                 1, 2, 9, P, step, values, size)) return true;
+    if(_getValue(getElement(P, _TPP, 1, qn, qx, qy, qz),
+                 0, 1, 9, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
     GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m){
-      SPoint3 pt(P);
-      if(_getValue(m->getMeshElementByCoord(pt), 9, P, step, values, size)) return true;
+      if(_getValue(getElement(P, m, qn, qx, qy, qz),
+                   9, P, step, values, size)) return true;
     }
   }
 
@@ -582,15 +668,16 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
 }
 
 bool OctreePost::searchTensorWithTol(double x, double y, double z, double *values,
-                                     int step, double *size, double tol)
+                                     int step, double *size, double tol,
+                                     int qn, double *qx, double *qy, double *qz)
 {
-  bool a = searchTensor(x, y, z, values, step, size);
+  bool a = searchTensor(x, y, z, values, step, size, qn, qx, qy, qz);
   if(!a && tol != 0.){
     double oldtol1 = element::getTolerance();
     double oldtol2 = MElement::getTolerance();
     element::setTolerance(tol);
     MElement::setTolerance(tol);
-    a = searchTensor(x, y, z, values, step, size);
+    a = searchTensor(x, y, z, values, step, size, qn, qx, qy, qz);
     element::setTolerance(oldtol1);
     MElement::setTolerance(oldtol2);
   }
