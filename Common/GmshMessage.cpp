@@ -887,7 +887,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(name.empty()){
     if(copt.size() || fopt.size())
       Msg::Error("From now on you need to use the `Name' attribute to create a "
-                 "Onelab parameter: `Name \"%s\"'",
+                 "OneLab parameter: `Name \"%s\"'",
                  _getParameterName(key, copt).c_str());
     return;
   }
@@ -992,7 +992,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(name.empty()){
     if(copt.size() || fopt.size())
       Msg::Error("From now on you need to use the `Name' attribute to create a "
-                 "Onelab parameter: `Name \"%s\"'",
+                 "OneLab parameter: `Name \"%s\"'",
                  _getParameterName(key, copt).c_str());
     return;
   }

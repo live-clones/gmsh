@@ -287,7 +287,6 @@ void drawContext::draw3d()
   drawPost();
 }
 
-
 void drawContext::draw2d()
 {
   glDisable(GL_DEPTH_TEST);
@@ -313,8 +312,6 @@ void drawContext::draw2d()
 
   if(CTX::instance()->smallAxes)
     drawSmallAxes();
-
-
 }
 
 void drawContext::drawBackgroundGradient()
