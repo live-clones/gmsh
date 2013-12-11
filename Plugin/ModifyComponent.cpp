@@ -131,7 +131,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     otherTimeStep = 0;
   }
 
-  const char *names[] = 
+  const char *names[] =
     {"x", "y", "z", "Time", "TimeStep",
      "v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
      "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
@@ -171,26 +171,32 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
         if(data1->skipElement(step, ent, ele)) continue;
         int numComp = data1->getNumComponents(step, ent, ele);
         int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
-          double x, y, z;
-          int tag = data1->getNode(step, ent, ele, nod, x, y, z);
-          if(tag) continue; // node has already been modified
+        int numNodes = data1->getNumNodes(step, ent, ele);
+        std::vector<int> tag(numNodes);
+        std::vector<double> x(numNodes), y(numNodes), z(numNodes);
+        for(int nod = 0; nod < numNodes; nod++)
+          tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+        for(int nod = 0; nod < numNodes; nod++){
+          if(tag[nod]) continue; // node has already been modified
           std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
           std::vector<double> w(std::max(9, numComp2), 0.);
           if(octree){
-            if(!octree->searchScalar(x, y, z, &w[0], step2))
-              if(!octree->searchVector(x, y, z, &w[0], step2))
-                octree->searchTensor(x, y, z, &w[0], step2);
+            int qn = forceInterpolation ? numNodes : 0;
+            if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
+                                     0, qn, &x[0], &y[0], &z[0]))
+              if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
+                                       0, qn, &x[0], &y[0], &z[0]))
+                octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
+                                     0, qn, &x[0], &y[0], &z[0]);
           }
           else
             for(int comp = 0; comp < numComp2; comp++)
               data2->getValue(step2, ent, ele, nod, comp, w[comp]);
-          
           for(int comp = 0; comp < numComp; comp++){
             if(component >= 0 && component != comp) continue;
-            values[0] = x; values[1] = y; values[2] = z;
+            values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
             values[3] = time; values[4] = step;
             values[5] = v[comp];
             for(int i = 0; i < 9; i++) values[6 + i] = v[i];
