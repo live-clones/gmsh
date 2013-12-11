@@ -205,6 +205,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
       int otherNumComp = (!otherData || octree) ? 9 :
         otherData->getNumComponents(timeBeg, ent, ele);
       std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
+      std::vector<double> v(std::max(9, numComp), 0.);
       std::vector<double> w(std::max(9, otherNumComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
@@ -216,10 +217,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
 	if(!data1->hasTimeStep(step)) continue;
         int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
         for(int nod = 0; nod < numNodes; nod++){
-          std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
-          values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
           if(otherData){
             if(octree){
               int qn = forceInterpolation ? numNodes : 0;
@@ -234,6 +233,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
               for(int comp = 0; comp < otherNumComp; comp++)
                 otherData->getValue(step2, ent, ele, nod, comp, w[comp]);
           }
+          values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
           for(int i = 0; i < 9; i++) values[3 + i] = v[i];
           for(int i = 0; i < 9; i++) values[12 + i] = w[i];
           if(f.eval(values, res))
