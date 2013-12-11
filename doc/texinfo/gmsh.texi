@@ -3777,7 +3777,7 @@ Here is a pseudo C code to write @var{nodes-binary}:
 for(i = 0; i < number_of_nodes; i++)@{
   fwrite(&num_i, sizeof(int), 1, file);
   double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
-  fwrite(&xyz, sizeof(double), 3, file);
+  fwrite(xyz, sizeof(double), 3, file);
 @}
 @end example
 
@@ -3794,7 +3794,7 @@ per element (same as @var{number-of-tags} in the ASCII format).
 Here is a pseudo C code to write @var{element-header-binary}:
 @example
 int header[3] = @{elm_type, num_elm_follow, num_tags@};
-fwrite(&header, sizeof(int), 2, file);
+fwrite(header, sizeof(int), 3, file);
 @end example
 
 @item @var{elements-binary}
