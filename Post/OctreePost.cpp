@@ -411,6 +411,7 @@ static MElement *getElement(double P[3], GModel *m,
                  fabs(v->y() - qy[j]) < eps &&
                  fabs(v->z() - qz[j]) < eps);
         }
+        if(ok) return elements[i];
       }
     }
     if(elements.size()) return elements[0];
