@@ -240,6 +240,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	}
 	switch(type){
 	case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+	// first order elements
 	case 3: elements[1][1].push_back(new MLine(cells[i])); break;
 	case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
 	case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
@@ -247,6 +248,12 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
 	case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
 	case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
+	// second order elements
+	case 21: elements[1][1].push_back(new MLine(cells[i])); break;
+	case 22: elements[2][1].push_back(new MTriangle(cells[i])); break;
+	case 23: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+	case 24: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
+	case 25: elements[5][1].push_back(new MHexahedron(cells[i])); break;
 	default:
 	  Msg::Error("Unknown type of cell %d", type);
 	  break;
