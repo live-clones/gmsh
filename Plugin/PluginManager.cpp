@@ -58,6 +58,7 @@
 #include "Scal2Vec.h"
 #include "CutMesh.h"
 #include "NewView.h"
+#include "FaultZone.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -248,6 +249,8 @@ void PluginManager::registerDefaultPlugins()
                       ("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Crack", GMSH_RegisterCrackPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("FaultZone", GMSH_RegisterFaultZonePlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));

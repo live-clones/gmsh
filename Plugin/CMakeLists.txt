@@ -32,6 +32,7 @@ set(SRC
   CutMesh.cpp
   NewView.cpp
   SimplePartition.cpp Crack.cpp
+  FaultZone.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
