@@ -476,8 +476,8 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
   double norm = vectPoint.normalize();
   assert(norm);
   
+  std::vector < int > heav;
   if (_nodeByHeavNode.find( mVert ) != _nodeByHeavNode.end()){// if it is a pure heaviside node
-    std::vector < int > heav(1, 0);
     SVector3 vectNorm = _vectNormByFissure[_fissureByHeavNode[mVert]];
     double lsn = dot(vectPoint, vectNorm);
     if (lsn == 0){
@@ -486,24 +486,24 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
       SVector3 vectTan = _vectsTanByTipNode[mVert];
       assert(dot(vectPoint, vectTan) > 0);
     }
-    heav[0] = sign(lsn);
-    return heav;
+    heav.push_back(sign(lsn));
   }
   else if (_nodesByJunctionNode.find( mVert ) != _nodesByJunctionNode.end()){ // if it is a junction node
     std::vector < GEdge* > fissures = _fissuresByJunctionNode[mVert];
     unsigned int size = fissures.size();
-    
-    std::vector < int > heav(size, 0);
     for (unsigned int i=0; i < size; i++){
       SVector3 vectNorm = _vectNormByFissure[fissures[i]];
       double lsn = dot(vectPoint, vectNorm);
       if (fabs(lsn) > 1e-12) // tolerance seem to be ok
-        heav[i] = sign(lsn);
+        heav.push_back(sign(lsn));
+      else
+        heav.push_back(0);
     }
-    return heav;
   }
   else// if it is not a heaviside node
     assert(false);
+  
+  return heav;
 }
 
 //================================================================================
@@ -540,7 +540,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std
         continue;
       
       SPoint3 bary = mElem->barycenter();
-      std::vector <MVertex*> mVerts(8, NULL);
+      MVertex* mVerts[8];
       
       // retriving MVertices to create the new MElement
       for(int j = 0; j < mElem->getNumVertices(); j++){

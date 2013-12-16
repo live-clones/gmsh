@@ -93,10 +93,10 @@ inline bool compareHeav(const std::vector< int > heav1, const std::vector< int >
  */
 //=============================================================================
 inline int findMatchingHeav(const std::vector< std::vector < int > >& heavFunc, const std::vector< int >& heav){
-  for (unsigned int i=0; i < heavFunc.size();i++){
-    if(compareHeav(heavFunc[i], heav))
-      return i;
-  }
-  assert(false);
+  unsigned int i=0;
+  for (; i < heavFunc.size();i++)
+    if(compareHeav(heavFunc[i], heav)) break;
+  assert(i<heavFunc.size());
+  return i;
 }
 #endif
