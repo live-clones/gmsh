@@ -60,6 +60,10 @@ class GRegion : public GEntity {
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;
 
+  // vertices that bound the region
+  virtual std::list<GVertex*> vertices() const;
+
+
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
 

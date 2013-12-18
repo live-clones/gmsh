@@ -33,7 +33,7 @@
 #include "Levy3D.h"
 #include "directions3D.h"
 #include "discreteFace.h"
-//#include "filterElements.h"
+#include "filterElements.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
@@ -850,65 +850,67 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     MEdge e = *ite;
     MVertex *v1 = e.getVertex(0);
     MVertex *v2 = e.getVertex(1);
-    int indices1[256];
-    int indices2[256];
-    int NbW = getWedge (_columns, v1, v2, indices1,indices2);
-    for (int i=0;i<NbW-1;i++){
-      int i11 = indices1[i];
-      int i12 = indices1[i+1];
-      int i21 = indices2[i];
-      int i22 = indices2[i+1];
-      BoundaryLayerData c11 = _columns->getColumn(v1,i11);
-      BoundaryLayerData c12 = _columns->getColumn(v1,i12);
-      BoundaryLayerData c21 = _columns->getColumn(v2,i21);
-      BoundaryLayerData c22 = _columns->getColumn(v2,i22);
-      int N = std::min(c11._column.size(),
-		       std::min(c12._column.size(),
-				std::min(c21._column.size(), c22._column.size())));
-      std::vector<MElement*> myCol;
-      for (int l=0;l < N ;++l){
-	MVertex *v11,*v12,*v13,*v14;
-	MVertex *v21,*v22,*v23,*v24;
-	v21 = c11._column[l];
-	v22 = c12._column[l];
-	v23 = c22._column[l];
-	v24 = c21._column[l];
-	if (l == 0){
-	  v11 = v12 = v1;
-	  v13 = v14 = v2;
+    if (v1 != v2){
+      int indices1[256];
+      int indices2[256];
+      int NbW = getWedge (_columns, v1, v2, indices1,indices2);
+      for (int i=0;i<NbW-1;i++){
+	int i11 = indices1[i];
+	int i12 = indices1[i+1];
+	int i21 = indices2[i];
+	int i22 = indices2[i+1];
+	BoundaryLayerData c11 = _columns->getColumn(v1,i11);
+	BoundaryLayerData c12 = _columns->getColumn(v1,i12);
+	BoundaryLayerData c21 = _columns->getColumn(v2,i21);
+	BoundaryLayerData c22 = _columns->getColumn(v2,i22);
+	int N = std::min(c11._column.size(),
+			 std::min(c12._column.size(),
+				  std::min(c21._column.size(), c22._column.size())));
+	std::vector<MElement*> myCol;
+	for (int l=0;l < N ;++l){
+	  MVertex *v11,*v12,*v13,*v14;
+	  MVertex *v21,*v22,*v23,*v24;
+	  v21 = c11._column[l];
+	  v22 = c12._column[l];
+	  v23 = c22._column[l];
+	  v24 = c21._column[l];
+	  if (l == 0){
+	    v11 = v12 = v1;
+	    v13 = v14 = v2;
+	  }
+	  else {
+	    v11 = c11._column[l-1];
+	    v12 = c12._column[l-1];
+	    v13 = c22._column[l-1];
+	    v14 = c21._column[l-1];
+	  }
+	  
+	  if (l == 0){
+	    MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
+	    // store the layer the element belongs
+	    prism->setPartition(l+1);
+	    myCol.push_back(prism);
+	    
+	    blPrisms.push_back(prism);
+	  }
+	  else {
+	    MHexahedron *hex = new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24);
+	    // store the layer the element belongs
+	    myCol.push_back(hex);
+	    hex->setPartition(l+1);
+	    blHexes.push_back(hex);
+	  }
 	}
-	else {
-	  v11 = c11._column[l-1];
-	  v12 = c12._column[l-1];
-	  v13 = c22._column[l-1];
-	  v14 = c21._column[l-1];
+	if (!myCol.empty()){
+	  for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+	  _columns->_elemColumns[myCol[0]] = myCol;
 	}
-
-	if (l == 0){
-	  MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
-	  // store the layer the element belongs
-	  prism->setPartition(l+1);
-	  myCol.push_back(prism);
-
-	  blPrisms.push_back(prism);
-	}
-	else {
-	  MHexahedron *hex = new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24);
-	  // store the layer the element belongs
-	  myCol.push_back(hex);
-	  hex->setPartition(l+1);
-	  blHexes.push_back(hex);
-	}
-      }
-      if (!myCol.empty()){
-	for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-	_columns->_elemColumns[myCol[0]] = myCol;
       }
     }
     ++ite;
   }
 
-  //filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
+  //  filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
   {
     FILE *ff2 = fopen ("tato3D.pos","w");
     fprintf(ff2,"View \" \"{\n");

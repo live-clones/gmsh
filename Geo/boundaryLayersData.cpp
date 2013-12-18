@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <stack>
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -295,8 +296,8 @@ static bool pointInFace (GFace *gf, double u, double v)
 */
 
 static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
-                              double _treshold, BoundaryLayerColumns *_columns,
-                              std::vector<SVector3> &_dirs, bool test = false)
+                              BoundaryLayerColumns *_columns,
+                              std::vector<SVector3> &_dirs, bool fan)
 {
   std::vector<SVector3> N1,N2;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
@@ -305,22 +306,19 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
 	 _columns->_normals.lower_bound(e2);
        itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-  if (test) printf("%d %d\n", (int)N1.size(), (int)N2.size());
   if (N1.size() == N2.size()){
     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
       // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
-      double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
-      //      if (test)
-      //      printf("angle %12.5E\n", 180*angle/M_PI);
-      if (angle < _treshold /*&& angle > - _treshold*/){
+      //      double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
+      if (!fan){
 	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
 	x.normalize();
 	_dirs.push_back(x);
       }
-      else if (angle >= _treshold){
+      else if (fan){
 
 	if (USEFANS__){
-	  int fanSize = FANSIZE__; //angle /  _treshold;
+	  int fanSize = FANSIZE__;
 	  // if the angle is greater than PI, than reverse the sense
 	  double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
 	  double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
@@ -357,39 +355,9 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
     }
   }
 }
-// static void treat2Connections (GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
-//                                double _treshold, BoundaryLayerColumns *_columns,
-//                                std::vector<SVector3> &_dirs, bool test = false)
-// {
-//   std::vector<SVector3> N1,N2;
-//   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-// 	 _columns->_normals.lower_bound(e1);
-//        itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-//   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-// 	 _columns->_normals.lower_bound(e2);
-//        itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
-//   if (test) printf("%d %d\n", (int)N1.size(), (int)N2.size());
-//   if (N1.size() == N2.size()){
-//     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
-//       // IF THE ANGLE IS GREATER THAN THRESHOLD, ADD DIRECTIONS !!
-//       double angle = computeAngle (gf,e1,e2,N1[SIDE],N2[SIDE]);
-//       //      if (test)
-//       //      printf("angle %12.5E\n", 180*angle/M_PI);
-//       if (angle < _treshold /*&& angle > - _treshold*/){
-// 	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
-// 	x.normalize();
-// 	_dirs.push_back(x);
-//       }
-//       else if (angle >= _treshold){
-// 	_dirs.push_back(N1[SIDE]);
-// 	_dirs.push_back(N2[SIDE]);
-//       }
-//     }
-//   }
-// }
 
 static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1,
-                              MEdge &e2, MEdge &e3, double _treshold,
+                              MEdge &e2, MEdge &e3,
                               BoundaryLayerColumns *_columns,
                               std::vector<SVector3> &_dirs)
 {
@@ -584,8 +552,6 @@ bool buildAdditionalPoints2D(GFace *gf)
 
   blf->setupFor2d(gf->tag());
 
-  double _treshold = blf->fan_angle * M_PI / 180 ;
-
   std::set<MVertex*> _vertices;
   std::set<MEdge,Less_Edge> allEdges;
   std::multimap<MVertex*,MVertex*> tangents;
@@ -608,6 +574,8 @@ bool buildAdditionalPoints2D(GFace *gf)
     // get all vertices that are connected  to that
     // vertex among all boundary layer vertices !
 
+    bool fan = (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
+
     for (std::multimap<MVertex*,MVertex*>::iterator itm =
            _columns->_non_manifold_edges.lower_bound(*it);
          itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
@@ -618,13 +586,13 @@ bool buildAdditionalPoints2D(GFace *gf)
       MEdge e1 (*it,_connections[0]);
       MEdge e2 (*it,_connections[1]);
       MEdge e3 (*it,_connections[2]);
-      treat3Connections (gf, *it,e1,e2,e3, _treshold, _columns, _dirs);
+      treat3Connections (gf, *it,e1,e2,e3, _columns, _dirs);
     }
     // STANDARD CASE, one vertex connected to two neighboring vertices
     else if (_connections.size() == 2){
       MEdge e1 (*it,_connections[0]);
       MEdge e2 (*it,_connections[1]);
-      treat2Connections (gf, *it,e1,e2, _treshold, _columns, _dirs);
+      treat2Connections (gf, *it,e1,e2, _columns, _dirs, fan);
     }
     else if (_connections.size() == 1){
       MEdge e1 (*it,_connections[0]);
@@ -666,7 +634,7 @@ bool buildAdditionalPoints2D(GFace *gf)
 	SPoint2 p0,p1;
 	reparamMeshEdgeOnFace(*it,_connections[0], gf, p0, p1);
 
-	int fanSize = FANSIZE__;//M_PI /  _treshold;
+	int fanSize = FANSIZE__;
 	double alpha1 = atan2(N1[0].y(),N1[0].x());
 	double alpha2 = atan2(N1[1].y(),N1[1].x());
 	double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
@@ -822,7 +790,7 @@ static bool createWedgeBetweenTwoFaces(MVertex *myV,
                                        std::vector<SVector3> &shoot)
 {
   double angle = angle_0_180 (n1,n2);
-  int fanSize = FANSIZE__; //angle /  _treshold;
+  int fanSize = FANSIZE__;
   for (int i=-1; i<=fanSize; i++){
 
     double ti = (double)(i+1)/ (fanSize+1);
@@ -860,29 +828,160 @@ static bool createWedgeBetweenTwoFaces(MVertex *myV,
   return true;
 }
 
-void computeAllGEdgesThatAreCreatingFans (GRegion *gr, std::vector<GEdge*> &fans)
-{
 
+
+/*
+  a "fanned" edge is one that opens a fan of element between the 2 faces 
+  it connects in the volume.
+
+  fan start (end) 
+    --> at a symmetry plane or at an inflow/outflow bdry. This implies
+    that the fan has a trace on this boundary
+    --> at a corner where at least 3 incident model edges are "fanned"
+
+  fan can also be doing a closed loop
+
+  when looking at a model vertex, one can then have
+     --> At least 3 fanned edges : this is a corner
+     --> Two fanned edges : this is the passage of a fan
+     --> A model vertex that has one single incident fanned edge is forbidden
+
+  The algo that allows to build the topology of fans
+
+     1) Compute fanned edges : use threshold angle between adjacent faces as 
+     user parameter
+     2) If one model vertex is connected to one single fanned edge
+          -) If the model vertex is in the symmetry plane --> OK
+          -) If the number of incident edges is 2 --> add the second one as a fan
+	  -) If more that 1 other edge is not fanned --> ask the user to choose
+	  -) Repeat 2) until everything is OK
+     3) Create sets of model faces that are NOT connected by fans and therefore that
+     are considered as equivalent
+*/
+
+// return the edges connected to a vertex for this volume
+
+struct fanTopology {
+  std::set<GVertex*> corners;
+  std::set<GVertex*> endings;
+  std::set<GEdge*> fans;
+  std::vector< std::set<GFace *> > groups;
+  bool isFan (GEdge* ge) const {return fans.find(ge) != fans.end();}
+  int getGroupNum (GFace *gf) const 
+  {
+    for (unsigned int i=0; i< groups.size(); i++){
+      if (std::find(groups[i].begin(),groups[i].end(),gf) != groups[i].end())return i;
+    }
+    return -1;
+  }
+  fanTopology (GRegion * gr, const std::set<GEdge*> &detectedFans, const std::set<GVertex*> &sym, BoundaryLayerField *blf );
+};
+
+static std::list<GEdge*> edges (GVertex* gv, GRegion* gr) {
+  std::list<GEdge*> er  = gr->edges();
+  std::list<GEdge*> ev  = gv->edges();
+  std::list<GEdge*> e  ;
+
+  for (std::list<GEdge*>::iterator ite = ev.begin() ; ite !=ev.end() ; ite++){
+    if (std::find (er.begin(), er.end(), *ite) != er.end())e.push_back(*ite);
+  }
+  return e;
+}
+
+static GFace *otherSideOfEdge (GRegion * gr, GFace *gf, GEdge *ge)
+{
+  std::list<GFace*> fe = ge->faces();
+  std::list<GFace*> fr = gr->faces();
+  for (std::list<GFace*>::iterator it = fe.begin(); it != fe.end(); ++it){
+    if ((*it) != gf && std::find(fr.begin(), fr.end(), *it) != fr.end())
+      return *it;
+  }
+  //  printf("ouille autre cote de face %d par arerte %d dans region %d foireux\n",gf->tag(),ge->tag(),gr->tag()); 
+  return 0;
+}
+
+fanTopology :: fanTopology (GRegion * gr, const std::set<GEdge*> &detectedFans, const std::set<GVertex*> &sym, BoundaryLayerField *blf )
+{
+  fans = detectedFans;
+  endings = sym;
+  std::list<GVertex*> vs = gr->vertices();
+  while (1){
+    unsigned int nb = fans.size();
+    for (std::list<GVertex*>::iterator it  = vs.begin() ; it != vs.end(); it++){
+      GVertex *gv = *it;
+      std::list<GEdge*> e = edges (gv, gr);
+      std::list<GEdge*> fe ;
+      for (std::list<GEdge*>::iterator ite = e.begin() ; ite !=e.end() ; ite++)
+	if (isFan(*ite))fe.push_back(*ite);
+      if (fe.size() == 1){
+	if (endings.find(gv) != endings.end()) continue;
+	else if (e.size() == 2)fans.insert(e.begin(), e.end());
+	else Msg::Fatal("Ensure that it is possible to find closed loops in BL fans !");
+      }
+    }
+    if (nb == fans.size())break;
+  }
+
+  for (std::list<GVertex*>::iterator it  = vs.begin() ; it != vs.end(); it++){
+    GVertex *gv = *it;
+    std::list<GEdge*> e = edges (gv, gr);
+    std::list<GEdge*> fe ;
+    for (std::list<GEdge*>::iterator ite = e.begin() ; ite !=e.end() ; ite++)
+      if (isFan(*ite))fe.push_back(*ite);
+    //    printf("%d fans connected to vert %d\n",fe.size(),gv->tag(), e.size());
+    if (fe.size() > 2)corners.insert(gv);    
+  }
+  
+  std::list<GFace*> fs = gr->faces();
+
+  while (!fs.empty()) {
+    GFace *gf = *fs.begin();
+    std::set<GFace *> groupOfFaces;
+    groupOfFaces.insert(gf);
+    std::stack<GFace*> _stack;
+    _stack.push(gf);
+    //    printf("pushing %d\n",gf->tag());
+    while(!_stack.empty()){
+      gf = _stack.top();
+      _stack.pop();
+      std::list<GEdge*> ed = gf->edges();
+      for (std::list<GEdge*>::iterator ite = ed.begin() ; ite !=ed.end() ; ite++){
+	if (!isFan(*ite) && !blf->isEdgeBLSaved((*ite)->tag())){
+	  GFace *otherSide = otherSideOfEdge (gr,gf,*ite);
+	  if (otherSide && groupOfFaces.find(otherSide) == groupOfFaces.end()){
+	    groupOfFaces.insert(otherSide);
+	    _stack.push(otherSide);
+	    //	    printf("pushing %d through %d\n",otherSide->tag(),(*ite)->tag());
+	  }
+	}
+      }
+    }
+    groups.push_back(groupOfFaces);
+    std::list<GFace*> fsb;
+    for (std::list<GFace*>::iterator it = fs.begin() ; it != fs.end() ; it++){
+      if (groupOfFaces.find(*it) == groupOfFaces.end())fsb.push_back(*it);
+    }
+    fs = fsb;
+  }
 }
 
 
-static void createColumnsBetweenFaces(GRegion *gr,
-                                      MVertex *myV,
-                                      BoundaryLayerField *blf,
-                                      BoundaryLayerColumns *_columns,
-                                      std::set<GFace*> _gfaces,
-                                      std::multimap<GFace*,MTriangle*> & _faces,
-                                      std::map<MFace,SVector3,Less_Face> &_normals,
-                                      double _treshold)
+static int createColumnsBetweenFaces(GRegion *gr,
+				     MVertex *myV,
+				     BoundaryLayerField *blf,
+				     BoundaryLayerColumns *_columns,
+				     std::set<GFace*> &_gfaces,
+				     std::multimap<GFace*,MTriangle*> & _faces,
+				     std::map<MFace,SVector3,Less_Face> &_normals,
+				     fanTopology &ft)
 {
   SVector3 n[256];
   SPoint3 c[256];
   int count = 0;
   GFace *gfs[256];
 
-
-  // generate datas per face;
-
+  // we compute normals per face using the surface mesh (we could try to use the
+  // model but I doubt it'd be better, especially if the mesh is coarse 
   for( std::set<GFace*> ::iterator it = _gfaces.begin() ; it != _gfaces.end(); ++it){
     for (std::multimap<GFace*,MTriangle*>::iterator itm =
 	   _faces.lower_bound(*it);
@@ -896,43 +995,46 @@ static void createColumnsBetweenFaces(GRegion *gr,
     count ++;
   }
 
-  // we throw a column per set of faces that have normals that are sufficiently close
+  // the topology of the fans is known
+  // we look over all faces and look in which 
+  // group it lies in
 
-  //  printf("vertex %d %d faces\n",myV->getNum(),count);
-
-  std::set<int> done;
   std::vector< std::vector<GFace*> > joints;
-  for (int i=0;i<count;i++){
-    if (done.find(i) == done.end()){
-      SVector3 n1 = n[i];
-      SPoint3 c1 = c[i];
-      SVector3 avg = n1;
-      std::vector<GFace*> joint;
-      joint.push_back(gfs[i]);
-      for (int j=i;j<count;j++){
-	if (done.find(j) == done.end()){
-	  SVector3 n2 = n[j];
-	  SPoint3 c2 = c[j];
-	  double angle = angle_0_180 (n1,n2);
-	  double sign = dot((n1-n2),(c1-c2));
-	  if (!(angle > _treshold && sign > 0)){
-	    joint.push_back(gfs[j]);
-	    avg += n2;
-	    done.insert(j);
-	  }
-	}
-      }
-      if (joint.size()){
-	std::vector<MVertex*> _column;
-	std::vector<SMetric3> _metrics;
-	joints.push_back(joint);
-	avg.normalize();
-	createBLPointsInDir (gr,myV,blf,avg,_column,_metrics);
-	_columns->addColumn(avg,myV,  _column, _metrics, joint);
-      }
-      //      printf("adding one column for %d fqaces\n",joint.size());
-    }
+  
+  std::multimap<int, GFace*> lGroup;
+  std::map<GFace*, int> inv;
+  std::set<int> gs;
+  for (int i=0;i<count;i++) {
+    inv[gfs[i]] = i;
+    int iGroup = ft.getGroupNum (gfs[i]);
+    gs.insert(iGroup);
+    lGroup.insert(std::make_pair(iGroup,gfs[i]));
   }
+
+
+  for (std::set<int>::iterator it = gs.begin(); it != gs.end() ; ++it){
+    std::pair<std::multimap<int, GFace*>::iterator, std::multimap<int, GFace*>::iterator> range = lGroup.equal_range(*it);
+    std::vector<GFace*> joint;
+    for (std::multimap<int, GFace*>::iterator itm =  range.first ; itm !=  range.second ; itm++)
+      joint.push_back(itm->second);
+    joints.push_back(joint);
+    SVector3 avg (0,0,0);
+    for (unsigned int i=0;i<joint.size(); i++){
+      avg += n[inv[joint[i]]];
+    }
+    std::vector<MVertex*> _column;
+    std::vector<SMetric3> _metrics;
+    avg.normalize();
+    createBLPointsInDir (gr,myV,blf,avg,_column,_metrics);
+    _columns->addColumn(avg,myV,  _column, _metrics, joint);      
+  }
+
+  //  // DEBUG STUFF
+  //  if (myV->onWhat()->dim() == 0 && myV->onWhat()->tag() == 6){
+  //    printf("%d %d\n",gs.size(),joints.size());
+  //  }
+
+
   // create wedges
   if (joints.size() > 1){
     for (unsigned int I = 0     ; I < joints.size() ; I++){
@@ -954,9 +1056,110 @@ static void createColumnsBetweenFaces(GRegion *gr,
   // in the average direction
   if (joints.size() > 2){
   }
+  
+  return joints.size(); 
 }
 
+static int createColumnsOnSymmetryPlane(MVertex *myV,
+					BoundaryLayerColumns *_columns,
+					std::set<GFace*> &_allGFaces,
+					std::list<GFace*> &faces, 
+					fanTopology &ft)
+{
+  // get all model faces for that vertex that have boundary layer columns attached
+  for ( std::list<GFace*>::iterator itf = faces.begin(); itf!= faces.end() ; ++itf){
+    BoundaryLayerColumns* _face_columns = (*itf)->getColumns();
+    int N = _face_columns->getNbColumns(myV);
+    if (N == 1){
+      std::vector<GFace*> _joint;
+      _joint.insert(_joint.begin(),_allGFaces.begin(),_allGFaces.end());
+      const BoundaryLayerData & c = _face_columns->getColumn(myV,0);
+      _columns->addColumn(c._n,myV, c._column, c._metrics, _joint);
+    }
+    else if (N > 1){
+      if (_allGFaces.size() != 2){
+	Msg::Fatal("cannot solve such a strange stuff in the BL");
+      }
+      //	  printf("%d columns\n",N);
+      std::set<GFace*>::iterator itff = _allGFaces.begin();
+      GFace *g1 = *itff ; ++itff; GFace *g2 = *itff;
+      int sense = 1;
+      std::vector<GFace*> _joint;
+      
+      const BoundaryLayerFan *fan = _face_columns->getFan(myV);
+      
+      if (fan){
+	MVertex *v11 = fan->_e1.getVertex(0);
+	MVertex *v12 = fan->_e1.getVertex(1);
+	std::list<GEdge*> l1 = g1->edges();
+	std::list<GEdge*> l2 = g2->edges();
+	if (v11 == myV){
+	  if (v12->onWhat()->dim() == 1){
+	    GEdge *ge1 = (GEdge*)v12->onWhat();
+	    //		printf("COUCOU %d %d %d\n",fan->sense,std::find(l1.begin(),l1.end(),ge1) != l1.end(),std::find(l2.begin(),l2.end(),ge1) != l2.end());
+	    if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
+	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
+	    //else printf("strange1 %d %d \n");
+	  }
+	  else Msg::Error("Cannot choose between directions in a BL (dim = %d)",v12->onWhat()->dim());
+	}
+	else {
+	  if (v11->onWhat()->dim() == 1){
+	    GEdge *ge1 = (GEdge*)v11->onWhat();
+	    if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
+	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
+	    //else printf("strange2 %d %d \n");
+	  }
+	  else Msg::Error("Cannot choose between directions in a BL");
+	}
+      }
+      else{
+	Msg::Error("No fan on the outgoing BL");
+      }
+      _joint.push_back(g1);
+      const BoundaryLayerData & c0 = _face_columns->getColumn(myV,sense==1 ? 0 : N-1);
+      _columns->addColumn(c0._n,myV, c0._column, c0._metrics,_joint);
+      _joint.clear();
+      _joint.push_back(g2);
+      const BoundaryLayerData & cN = _face_columns->getColumn(myV,sense==1 ? N-1 : 0);
+      _columns->addColumn(cN._n,myV, cN._column, cN._metrics,_joint);
+      if (sense==1){
+	for (int k=1;k<N-1;k++){
+	  const BoundaryLayerData & c = _face_columns->getColumn(myV,k);
+	  _columns->addColumn(c._n,myV, c._column, c._metrics);
+	}
+      }
+      else {
+	for (int k=N-2;k>0;k--){
+	  const BoundaryLayerData & c = _face_columns->getColumn(myV,k);
+	  _columns->addColumn(c._n,myV, c._column, c._metrics);
+	}
+      }
+    }
+  }
+}
 
+static bool preprocessVertex (MVertex *v, 
+			      std::map<MTriangle*,GFace*> &_gfaces,
+			      BoundaryLayerColumns * _columns,
+			      std::list<GFace*> &faces, 
+			      std::multimap<GFace*,MTriangle*> &_faces,
+			      std::set<GFace*> &_allGFaces){
+  faces =  v->onWhat()->faces();
+  for (std::multimap<MVertex*,MTriangle*>::iterator itm =
+	 _columns->_non_manifold_faces.lower_bound(v);
+       itm != _columns->_non_manifold_faces.upper_bound(v); ++itm){
+    GFace *gf = _gfaces[itm->second];
+    _faces.insert(std::make_pair(gf,itm->second));
+    _allGFaces.insert(gf);
+  }
+  
+  bool onSymmetryPlane = false;
+  if (v->onWhat()->dim() != 2)
+    if (faces.size() != _allGFaces.size())
+      onSymmetryPlane = true;
+  return onSymmetryPlane;
+}
 
 BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 {
@@ -965,8 +1168,6 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
   if (!blf)return 0;
 
   blf->setupFor3d();
-
-  double _treshold = blf->fan_angle * M_PI / 180 ;
 
   BoundaryLayerColumns * _columns = new BoundaryLayerColumns;
 
@@ -979,17 +1180,17 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
   // filter vertices : belong to BL and are classified on FACES
   while(itf != faces.end()){
     if (blf->isFaceBL((*itf)->tag())){
-      //      printf("FACE %d is a boundary layer face %d triangles\n",(*itf)->tag(),
-      //             (int)(*itf)->triangles.size());
+      //            printf("FACE %d is a boundary layer face %d triangles\n",(*itf)->tag(),
+      //                   (int)(*itf)->triangles.size());
       for(unsigned int i = 0; i< (*itf)->triangles.size(); i++){
 	_gfaces[(*itf)->triangles[i]] = *itf;
 	_columns->_inverse_classification [(*itf)->triangles[i]->getFace(0)] = *itf;
+	_normals [(*itf)->triangles[i]->getFace(0)] = SVector3(0,0,0);
 	for(unsigned int j = 0; j< 3; j++){
 	  if ((*itf)->triangles[i]->getVertex(j)->onWhat()->dim() != 3){
 	    _columns->_non_manifold_faces.insert
               (std::make_pair((*itf)->triangles[i]->getVertex(j),(*itf)->triangles[i]));
 	    _vertices.insert((*itf)->triangles[i]->getVertex(j));
-	    _normals [(*itf)->triangles[i]->getFace(0)] = SVector3(0,0,0);
 	  }
 	}
       }
@@ -1032,111 +1233,50 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
     }
   }
 
-  // for all boundry points
+  // look for all the wedges  
+  std::set<GEdge*> fans;
+  std::set<GVertex*> fanNodes;
   for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
-    std::vector<MTriangle*> _connections;
-    std::vector<SVector3> _dirs, _allDirs;
-    std::list<GFace*> faces =  (*it)->onWhat()->faces();
-
+    std::list<GFace*> faces; 
     std::multimap<GFace*,MTriangle*> _faces;
     std::set<GFace*> _allGFaces;
-    for (std::multimap<MVertex*,MTriangle*>::iterator itm =
-           _columns->_non_manifold_faces.lower_bound(*it);
-         itm != _columns->_non_manifold_faces.upper_bound(*it); ++itm){
-      _connections.push_back (itm->second);
-      _allDirs.push_back (_normals[itm->second->getFace(0)]);
-      GFace *gf = _gfaces[itm->second];
-      _faces.insert(std::make_pair(gf,itm->second));
-      _allGFaces.insert(gf);
-    }
-
-    bool onSymmetryPlane = 0;
-    if ((*it)->onWhat()->dim() != 2){
-      std::list<GFace*> faces =  (*it)->onWhat()->faces();
-      if (faces.size() != _allGFaces.size()){
-	onSymmetryPlane = true;
+    preprocessVertex (*it, _gfaces, _columns, faces, _faces, _allGFaces);
+    if ((*it)->onWhat()->dim() == 0){
+      GVertex *gv = static_cast<GVertex*>((*it)->onWhat());
+      if (gv && blf->isFanNode(gv->tag())){
+	fanNodes.insert(gv);
       }
     }
+    else if ((*it)->onWhat()->dim() == 1){
+      GEdge *ge = static_cast<GEdge*>((*it)->onWhat());
+      if (ge && blf->isFan(ge->tag())){
+	fans.insert(ge);
+      }
+    }
+  }
 
-    // we have a 3D boundary layer that connects a 2D boundary layer
-    // this is the tricky case
+  //  printf("STARTING ANALYSIS OF TOPOLOGY (%d fan nodes %d fan edges\n",fanNodes.size(),fans.size());
+
+  fanTopology ft (gr, fans, fanNodes, blf);
+
+  Msg::Info("BL Topology for region %d : %d FANS %d CORNERS %d GROUPS %d ENDINGS",
+	    gr->tag(),ft.fans.size(),ft.corners.size(),ft.groups.size(),ft.endings.size());
+
+  // for all boundry points
+  for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
+    std::list<GFace*> faces; 
+    std::multimap<GFace*,MTriangle*> _faces;
+    std::set<GFace*> _allGFaces;
+    bool onSymmetryPlane = preprocessVertex (*it, _gfaces, _columns, faces, _faces, _allGFaces);
+    
     if (onSymmetryPlane){
-      for ( std::list<GFace*>::iterator itf = faces.begin(); itf!= faces.end() ; ++itf){
-	BoundaryLayerColumns* _face_columns = (*itf)->getColumns();
-	int N = _face_columns->getNbColumns(*it);
-	if (N == 1){
-	  std::vector<GFace*> _joint;
-	  _joint.insert(_joint.begin(),_allGFaces.begin(),_allGFaces.end());
-	  const BoundaryLayerData & c = _face_columns->getColumn(*it,0);
-	  _columns->addColumn(c._n,*it, c._column, c._metrics, _joint);
-	}
-	else if (N > 1){
-	  if (_allGFaces.size() != 2){
-	    Msg::Fatal("cannot solve such a strange stuff in the BL");
-	  }
-	  //	  printf("%d columns\n",N);
-	  std::set<GFace*>::iterator itff = _allGFaces.begin();
-	  GFace *g1 = *itff ; ++itff; GFace *g2 = *itff;
-	  int sense = 1;
-	  std::vector<GFace*> _joint;
-
-	  const BoundaryLayerFan *fan = _face_columns->getFan(*it);
-
-	  if (fan){
-	    MVertex *v11 = fan->_e1.getVertex(0);
-	    MVertex *v12 = fan->_e1.getVertex(1);
-	    std::list<GEdge*> l1 = g1->edges();
-	    std::list<GEdge*> l2 = g2->edges();
-	    if (v11 == *it){
-	      if (v12->onWhat()->dim() == 1){
-		GEdge *ge1 = (GEdge*)v12->onWhat();
-		//		printf("COUCOU %d %d %d\n",fan->sense,std::find(l1.begin(),l1.end(),ge1) != l1.end(),std::find(l2.begin(),l2.end(),ge1) != l2.end());
-		if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
-		else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-		//else printf("strange1 %d %d \n");
-	      }
-	      else Msg::Error("Cannot choose between directions in a BL (dim = %d)",v12->onWhat()->dim());
-	    }
-	    else {
-	      if (v11->onWhat()->dim() == 1){
-		GEdge *ge1 = (GEdge*)v11->onWhat();
-		if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
-		else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-		//else printf("strange2 %d %d \n");
-	      }
-	      else Msg::Error("Cannot choose between directions in a BL");
-	    }
-	  }
-	  else{
-	    Msg::Error("No fan on the outgoing BL");
-	  }
-	  _joint.push_back(g1);
-	  const BoundaryLayerData & c0 = _face_columns->getColumn(*it,sense==1 ? 0 : N-1);
-	  _columns->addColumn(c0._n,*it, c0._column, c0._metrics,_joint);
-	  _joint.clear();
-	  _joint.push_back(g2);
-	  const BoundaryLayerData & cN = _face_columns->getColumn(*it,sense==1 ? N-1 : 0);
-	  _columns->addColumn(cN._n,*it, cN._column, cN._metrics,_joint);
-	  //	  printf("%g %g %g --> %g %g %g\n",c0._n.x(),c0._n.y(),c0._n.z(),cN._n.x(),cN._n.y(),cN._n.z());
-	  if (sense==1){
-	    for (int k=1;k<N-1;k++){
-	      const BoundaryLayerData & c = _face_columns->getColumn(*it,k);
-	      _columns->addColumn(c._n,*it, c._column, c._metrics);
-	      //	      printf("%g %g %g \n",c._n.x(),c._n.y(),c._n.z());
-	    }
-	  }
-	  else {
-	    for (int k=N-2;k>0;k--){
-	      const BoundaryLayerData & c = _face_columns->getColumn(*it,k);
-	      _columns->addColumn(c._n,*it, c._column, c._metrics);
-	      //	      printf("%g %g %g \n",c._n.x(),c._n.y(),c._n.z());
-	    }
-	  }
-	}
-      }
+      // we have a 3D boundary layer that connects a 2D boundary layer
+      // this is the tricky case
+      createColumnsOnSymmetryPlane(*it,_columns, _allGFaces, faces, ft);
     }
     else {
-      createColumnsBetweenFaces (gr,*it,blf,_columns,_allGFaces,_faces,_normals,_treshold);
+      // internal columns (inside the volume)
+      createColumnsBetweenFaces (gr,*it,blf,_columns,_allGFaces,_faces,_normals,ft);
     }
   }
 

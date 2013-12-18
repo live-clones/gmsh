@@ -367,6 +367,16 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
     double uv[2];
     circumCenterMetricXYZ(pa, pb, pc, *metric, center, uv, circum_radius);
   }
+
+  if (gf){
+    BoundaryLayerColumns* _columns = gf->getColumns();
+    if (_columns){
+      if (_columns->_toFirst.find(t) != _columns->_toFirst.end()){
+	circum_radius = 0;
+      }
+    }
+  }
+
 }
 
 int MTri3::inCircumCircle(const double *p) const

@@ -396,3 +396,17 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   }
   return volume;
 }
+
+
+std::list<GVertex*> GRegion :: vertices() const {
+
+  std::set<GVertex*> v;
+  for (std::list<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
+    const GFace *gf = *it;
+    std::list<GVertex*> vs = gf->vertices();
+    v.insert(vs.begin(), vs.end());
+  }
+  std::list<GVertex*> res;
+  res.insert(res.begin(), v.begin(), v.end());
+  return res;
+}

@@ -44,7 +44,7 @@
 #include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
-//#include "filterElements.h"
+#include "filterElements.h"
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
@@ -656,61 +656,59 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
     ++ite;
   }
 
-  if (USEFANS__){
-    for (BoundaryLayerColumns::iterf itf = _columns->beginf();
-	 itf != _columns->endf() ; ++itf){
-      MVertex *v = itf->first;
-      int nbCol = _columns->getNbColumns(v);
-
-      std::vector<MElement*> myCol;
-      for (int i=0;i<nbCol-1;i++){
-	const BoundaryLayerData & c1 = _columns->getColumn(v,i);
-	const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
-	int N = std::min(c1._column.size(),c2._column.size());
-	for (int l=0;l < N ;++l){
-	  MVertex *v11,*v12,*v21,*v22;
-	  v21 = c1._column[l];
-	  v22 = c2._column[l];
-	  if (l == 0){
-	    v11 = v;
-	    v12 = v;
+  for (BoundaryLayerColumns::iterf itf = _columns->beginf();
+       itf != _columns->endf() ; ++itf){
+    MVertex *v = itf->first;
+    int nbCol = _columns->getNbColumns(v);
+    
+    std::vector<MElement*> myCol;
+    for (int i=0;i<nbCol-1;i++){
+      const BoundaryLayerData & c1 = _columns->getColumn(v,i);
+      const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
+      int N = std::min(c1._column.size(),c2._column.size());
+      for (int l=0;l < N ;++l){
+	MVertex *v11,*v12,*v21,*v22;
+	v21 = c1._column[l];
+	v22 = c2._column[l];
+	if (l == 0){
+	  v11 = v;
+	  v12 = v;
 	  }
-	  else {
-	    v11 = c1._column[l-1];
-	    v12 = c2._column[l-1];
-	  }
-	  if (v11 != v12){
-	    MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
-	    myCol.push_back(qq);
-	    qq->setPartition(l);
-	    blQuads.push_back(qq);
-	    fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		    v11->x(),v11->y(),v11->z(),
-		    v12->x(),v12->y(),v12->z(),
-		    v22->x(),v22->y(),v22->z(),
-		    v21->x(),v21->y(),v21->z());
-	  }
-	  else {
-	    MTriangle *qq = new MTriangle(v,v22,v21);
-	    myCol.push_back(qq);
-	    qq->setPartition(l);
-	    blTris.push_back(qq);
-	    fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		    v->x(),v->y(),v->z(),
-		    v22->x(),v22->y(),v22->z(),
-		    v21->x(),v21->y(),v21->z());
-	  }
+	else {
+	  v11 = c1._column[l-1];
+	  v12 = c2._column[l-1];
+	}
+	if (v11 != v12){
+	  MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
+	  myCol.push_back(qq);
+	  qq->setPartition(l);
+	  blQuads.push_back(qq);
+	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		  v11->x(),v11->y(),v11->z(),
+		  v12->x(),v12->y(),v12->z(),
+		  v22->x(),v22->y(),v22->z(),
+		  v21->x(),v21->y(),v21->z());
+	}
+	else {
+	  MTriangle *qq = new MTriangle(v,v22,v21);
+	  myCol.push_back(qq);
+	  qq->setPartition(l);
+	  blTris.push_back(qq);
+	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+		  v->x(),v->y(),v->z(),
+		  v22->x(),v22->y(),v22->z(),
+		  v21->x(),v21->y(),v21->z());
 	}
       }
-      for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-      _columns->_elemColumns[myCol[0]] = myCol;
     }
+    for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+    _columns->_elemColumns[myCol[0]] = myCol;
   }
 
   fprintf(ff2,"};\n");
   fclose(ff2);
 
-  //filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
+  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);

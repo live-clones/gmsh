@@ -75,7 +75,7 @@ bool rtree_callback(MElement *e1,void* pe2){
     }
   }
 
-  return false;
+  //  return false;
 
   fullMatrix<double> pts1,pts2;
   fullVector<double> weights;

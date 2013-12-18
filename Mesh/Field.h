@@ -141,7 +141,7 @@ class BoundaryLayerField : public Field {
  private:
   std::list<AttractorField *> _att_fields;
   std::list<int> nodes_id, edges_id, faces_id;
-  std::list<int> faces_id_saved, edges_id_saved, nodes_id_saved;
+  std::list<int> faces_id_saved, edges_id_saved, nodes_id_saved, fans_id, fan_nodes_id;
   void operator() (AttractorField *cc, double dist, double x, double y, double z,
                    SMetric3 &metr, GEntity *ge);
  public:
@@ -159,6 +159,9 @@ class BoundaryLayerField : public Field {
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
   bool isFaceBL (int iF) const {return std::find(faces_id.begin(),faces_id.end(),iF) != faces_id.end();}
   bool isEdgeBL (int iE) const {return std::find(edges_id.begin(),edges_id.end(),iE) != edges_id.end();}
+  bool isEdgeBLSaved (int iE) const {return std::find(edges_id_saved.begin(),edges_id_saved.end(),iE) != edges_id_saved.end();}
+  bool isFan (int iE) const {return std::find(fans_id.begin(),fans_id.end(),iE) != fans_id.end();}
+  bool isFanNode (int iV) const {return std::find(fan_nodes_id.begin(),fan_nodes_id.end(),iV) != fan_nodes_id.end();}
   bool isVertexBL (int iV) const {return std::find(nodes_id.begin(),nodes_id.end(),iV) != nodes_id.end();}
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor2d(int iF);
@@ -168,7 +171,7 @@ class BoundaryLayerField : public Field {
 #else
 class BoundaryLayerField : public Field {
  public:
-  double hwall_n,hwall_t,ratio,hfar,thickness,fan_angle; 
+  double hwall_n,hwall_t,ratio,hfar,thickness;//,fan_angle; 
   double current_distance, tgt_aniso_ratio;
   SPoint3 _closest_point;
   int iRecombine, iIntersect;
@@ -189,6 +192,7 @@ class BoundaryLayerField : public Field {
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0){}
   bool isFaceBL (int iF) const {return false;}
   bool isEdgeBL (int iE) const {return false;}
+  bool isFan (int iE) const {return false;}
   bool isVertexBL (int iV) const {return false;}
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr){return;}
   void setupFor2d(int iF){return;}

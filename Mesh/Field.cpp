@@ -1809,7 +1809,7 @@ BoundaryLayerField::BoundaryLayerField()
   hfar = 1;
   ratio = 1.1;
   thickness = 1.e-2;
-  fan_angle = 30;
+  //  fan_angle = 30;
   tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
@@ -1821,14 +1821,20 @@ BoundaryLayerField::BoundaryLayerField()
   options["FacesList"] = new FieldOptionList
     (faces_id, "Indices of faces in the geometric model for which a boundary "
      "layer is needed", &update_needed);
+  options["FansList"] = new FieldOptionList
+    (fans_id, "Indices of edges in the geometric model for which a fan "
+     "is created", &update_needed);
+  options["FanNodesList"] = new FieldOptionList
+    (fan_nodes_id, "Indices of vertices in the geometric model for which a fan "
+     "is created", &update_needed);
   options["Quads"] = new FieldOptionInt
     (iRecombine, "Generate recombined elements in the boundary layer");
   options["IntersectMetrics"] = new FieldOptionInt
     (iIntersect, "Intersect metrics of all faces");
   options["hwall_n"] = new FieldOptionDouble
     (hwall_n, "Mesh Size Normal to the The Wall");
-  options["fan_angle"] = new FieldOptionDouble
-    (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
+  //  options["fan_angle"] = new FieldOptionDouble
+  //    (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
   options["AnisoMax"] = new FieldOptionDouble
     (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary layer");
   options["hwall_t"] = new FieldOptionDouble
