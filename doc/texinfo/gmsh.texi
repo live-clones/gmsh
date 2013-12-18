@@ -1718,6 +1718,11 @@ geometry.
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Performs adaptive mesh generation. Documentation not yet available.
 
+@item RelocateMesh Point | Line | Surface @{ @var{expression-list} @} | "*";
+Relocates the mesh vertices on the given entities using the parametric
+coordinates stored in the vertices. Useful for creating perturbation of
+meshes e.g. for sensitivity analyzes.
+
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
 
@@ -2840,7 +2845,7 @@ quadrangle and a right angle (a value of 0 would only accept quadrangles
 with right angles; a value of 90 would allow degenerate quadrangles;
 default value is 45).
 
-@item Reverse Line | Surface @{ @var{expression-list} @} ;
+@item Reverse Line | Surface @{ @var{expression-list} @} | "*" ;
 Reverses the mesh of the given line(s) or surface(s).
 
 @item Save @var{char-expression};

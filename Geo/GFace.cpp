@@ -1466,3 +1466,19 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
     }
   }
 }
+
+void GFace::relocateMeshVertices()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+    MVertex *v = mesh_vertices[i];
+    double u0 = 0., u1 = 0.;
+    if(v->getParameter(0, u0) && v->getParameter(1, u1)){
+      GPoint p = point(u0, u1);
+      v->x() = p.x();
+      v->y() = p.y();
+      v->z() = p.z();
+    }
+  }
+}
+
+

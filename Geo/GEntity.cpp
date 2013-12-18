@@ -122,3 +122,4 @@ int GEntity::meshMaster() const
     return gMaster->meshMaster() * ((_meshMaster > 0) ? 1 : -1);
   }
 }
+

@@ -115,6 +115,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
+%token tRelocateMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
@@ -4137,8 +4138,71 @@ Constraints :
               ge->meshAttributes.reverseMesh = 1;
             }
             else
-              yymsg(1, "Unknown surface %d", (int)d);
+              yymsg(1, "Unknown line %d", (int)d);
           }
+        }
+        List_Delete($3);
+      }
+    }
+  | tRelocateMesh tPoint ListOfDoubleOrAll tEND
+    {
+      if(!$3){
+        for(GModel::viter it = GModel::current()->firstVertex();
+            it != GModel::current()->lastVertex(); it++)
+          (*it)->relocateMeshVertices();
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          GVertex *gv = GModel::current()->getVertexByTag((int)d);
+          if(gv){
+            gv->relocateMeshVertices();
+          }
+          else
+            yymsg(1, "Unknown point %d", (int)d);
+        }
+        List_Delete($3);
+      }
+    }
+  | tRelocateMesh tLine ListOfDoubleOrAll tEND
+    {
+      if(!$3){
+        for(GModel::eiter it = GModel::current()->firstEdge();
+            it != GModel::current()->lastEdge(); it++)
+          (*it)->relocateMeshVertices();
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          GEdge *ge = GModel::current()->getEdgeByTag((int)d);
+          if(ge){
+            ge->relocateMeshVertices();
+          }
+          else
+            yymsg(1, "Unknown line %d", (int)d);
+        }
+        List_Delete($3);
+      }
+    }
+  | tRelocateMesh tSurface ListOfDoubleOrAll tEND
+    {
+      if(!$3){
+        for(GModel::fiter it = GModel::current()->firstFace();
+            it != GModel::current()->lastFace(); it++)
+          (*it)->relocateMeshVertices();
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          GFace *gf = GModel::current()->getFaceByTag((int)d);
+          if(gf){
+            gf->relocateMeshVertices();
+          }
+          else
+            yymsg(1, "Unknown surface %d", (int)d);
         }
         List_Delete($3);
       }

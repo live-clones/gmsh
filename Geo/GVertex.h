@@ -21,7 +21,7 @@ class MElement;
 class MPoint;
 
 // A model vertex.
-class GVertex : public GEntity 
+class GVertex : public GEntity
 {
  protected:
   std::list<GEdge*> l_edges;
@@ -84,6 +84,9 @@ class GVertex : public GEntity
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
+
+  // relocate mesh vertex using GVertex coordinates
+  void relocateMeshVertices();
 
   std::vector<MPoint*> points;
 

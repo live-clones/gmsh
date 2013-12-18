@@ -315,8 +315,11 @@ class GEntity {
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 
-  //add a MeshVertex
+  // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
+
+  // relocate mesh vertices using their parametric coordinates
+  virtual void relocateMeshVertices(){}
 
   // clean downcasts
   GVertex *cast2Vertex();

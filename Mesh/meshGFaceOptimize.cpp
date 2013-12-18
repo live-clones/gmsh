@@ -2262,9 +2262,9 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   MFaceVertex *fv = dynamic_cast<MFaceVertex*>(ver);
   if(fv && fv->bl_data) return;
 
-  double initu,initv;
-  ver->getParameter(0, initu);
-  ver->getParameter(1, initv);
+  double initu, initv;
+  if(!ver->getParameter(0, initu) && !ver->getParameter(1, initv))
+    return;
 
   // compute the vertices connected to that one
   std::map<MVertex*,SPoint2> pts;

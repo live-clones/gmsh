@@ -123,3 +123,13 @@ std::list<GRegion*> GVertex::regions() const
   ret.insert (ret.begin(), _r.begin(), _r.end());
   return ret;
 }
+
+void GVertex::relocateMeshVertices()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+    MVertex *v = mesh_vertices[i];
+    v->x() = x();
+    v->y() = y();
+    v->z() = z();
+  }
+}

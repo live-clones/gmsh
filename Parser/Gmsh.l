@@ -203,6 +203,7 @@ Round                   return tRound;
 Ruled                   return tRuled;
 Rand                    return tRand;
 RefineMesh              return tRefineMesh;
+RelocateMesh            return tRelocateMesh;
 Return                  return tReturn;
 Reverse                 return tReverse;
 

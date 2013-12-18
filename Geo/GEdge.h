@@ -184,6 +184,9 @@ class GEdge : public GEntity {
   // gluing
   void replaceEndingPoints(GVertex *, GVertex *);
 
+  // relocate mesh vertices using parametric coordinates
+  void relocateMeshVertices();
+
   struct {
     char method;
     double coeffTransfinite;
