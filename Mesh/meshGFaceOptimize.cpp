@@ -187,7 +187,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     double lc = 0.3333333333 * (data.vSizes[data.getIndex(gf->triangles[i]->getVertex(0))] +
                                 data.vSizes[data.getIndex(gf->triangles[i]->getVertex(1))] +
-                                data.vSizes[data.getIndex(gf->triangles[i]->getVertex(2))]);    
+                                data.vSizes[data.getIndex(gf->triangles[i]->getVertex(2))]);
     AllTris.insert(new MTri3(gf->triangles[i], lc, 0, &data, gf));
   }
   gf->triangles.clear();
@@ -2263,8 +2263,8 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   if(fv && fv->bl_data) return;
 
   double initu, initv;
-  if(!ver->getParameter(0, initu) && !ver->getParameter(1, initv))
-    return;
+  ver->getParameter(0, initu);
+  ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
   std::map<MVertex*,SPoint2> pts;
