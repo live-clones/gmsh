@@ -223,7 +223,8 @@ int GModel::readMSH(const std::string &name)
           case 0:
             {
               GVertex *gv = getVertexByTag(entity);
-              if(gv) gv->deleteMesh();
+              // FIXME -- cannot call this: it destroys _vertexMapCache
+              //if(gv) gv->deleteMesh();
               vertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
             }
             break;
