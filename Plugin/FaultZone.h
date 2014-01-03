@@ -57,6 +57,7 @@ class GMSH_FaultZoneMesher{
   std::set < MElement* > _connectedElements;
   typedef std::set<MElement*>::iterator elementsIt;
   static const SVector3 vectZ;
+  static const double tolerance;
   
   std::map < MVertex* , SVector3 > _vectsTanByTipNode;
   std::map < MVertex*, MVertex* > _nodeByHeavNode;

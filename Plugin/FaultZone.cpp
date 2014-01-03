@@ -296,6 +296,12 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
  */
 const SVector3 GMSH_FaultZoneMesher::vectZ = SVector3(0,0,1);
 
+//================================================================================
+/*!
+ * \brief tolerance
+ */
+const double GMSH_FaultZoneMesher::tolerance = 1.e-12;
+
 
 //================================================================================
 /*!
@@ -399,8 +405,8 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
       bool under = false;
       for (unsigned int j=0; j<i; j++){
         double lsn = -dot(vectsNor[i], vectsTan[j]);
-        upper = (upper || lsn > 0);
-        under = (under || lsn < 0);
+        upper = (upper || lsn > tolerance);
+        under = (under || lsn < -tolerance);
       }
       if (!under) heav[i] = 1;
       if (under && !upper) heav[i] = -1;
@@ -408,8 +414,9 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
       // compute the heaviside functions of the precedent fissures for a point located on fissure i
       for (unsigned int j=0; j < i;j++){
         double lsn = -dot(vectsNor[j], vectsTan[i]);
-        if (lsn == 0){
+        if (fabs(lsn) < tolerance){
           lsn = dot(vectsNor[j], vectsNor[i])*heav[i];
+          assert(fabs(lsn) > tolerance || heav[i] == 0);
         }
         heav[j] = sign(lsn);
       }
@@ -480,11 +487,12 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
   if (_nodeByHeavNode.find( mVert ) != _nodeByHeavNode.end()){// if it is a pure heaviside node
     SVector3 vectNorm = _vectNormByFissure[_fissureByHeavNode[mVert]];
     double lsn = dot(vectPoint, vectNorm);
-    if (lsn == 0){
+    if (fabs(lsn) < tolerance){
       // verify the point is outside the fissure
       assert(_vectsTanByTipNode.find( mVert ) != _vectsTanByTipNode.end());
       SVector3 vectTan = _vectsTanByTipNode[mVert];
       assert(dot(vectPoint, vectTan) > 0);
+      lsn = 0;
     }
     heav.push_back(sign(lsn));
   }
@@ -494,7 +502,7 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
     for (unsigned int i=0; i < size; i++){
       SVector3 vectNorm = _vectNormByFissure[fissures[i]];
       double lsn = dot(vectPoint, vectNorm);
-      if (fabs(lsn) > 1e-12) // tolerance seem to be ok
+      if (fabs(lsn) > tolerance) // tolerance seems to be ok
         heav.push_back(sign(lsn));
       else
         heav.push_back(0);
@@ -512,7 +520,7 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
  * a corresponding face element is created, based on the nodes of the edge element.
  * additionnal nodes are picked in the _nodeJointByHeavOrJunctionNode,
  * _nodeByHeavNode and _nodesByJunctionNode maps. In case of _nodesByJunctionNode,
- * the _heavFuncByJunctionNode map is used to determinate the corresponding node.
+ * the _heavFuncByJunctionNode map is used to found the corresponding node.
  * 
  * this function also replace physical edges containning the embedded edges by
  * new corresponding physical faces
@@ -542,10 +550,16 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std
       SPoint3 bary = mElem->barycenter();
       MVertex* mVerts[8];
       
+      // check orientation
+      SVector3 nor = _vectNormByFissure[gEdge];
+      SVector3 tan = mElem->getEdge(0).tangent();
+      int changeOri = (dot(crossprod(nor, tan), vectZ) > 0);
+      if (changeOri) Msg::Warning("Reverting local numbering node for element %d to set outgoing normal for its corresponding joint element",mElem->getNum());
       // retriving MVertices to create the new MElement
-      for(int j = 0; j < mElem->getNumVertices(); j++){
-        MVertex *mVert = mElem->getVertex(j);
+      for(int i = 0; i < mElem->getNumVertices(); i++){
+        MVertex *mVert = mElem->getVertex(i);
         
+        int j = (changeOri && i<2)?!i:i;
         if (j<2) // adding intern node
           mVerts[_numNodeJoint[j]] = _nodeJointByHeavOrJunctionNode[mVert];
         
