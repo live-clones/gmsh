@@ -298,6 +298,65 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
   return true;
 }
 
+void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
+{
+  for(int idxtype = 0; idxtype < 24; idxtype++){
+    int nbe = N[idxtype];
+    if(!nbe) continue;
+    std::vector<double> *list = V[idxtype];
+    int nc = 0, nn = 0;
+    switch(idxtype){
+    case 0 : nc = 1; nn = 1; break; // SP
+    case 1 : nc = 3; nn = 1; break; // VP
+    case 2 : nc = 9; nn = 1; break; // TP
+    case 3 : nc = 1; nn = 2; break; // SL
+    case 4 : nc = 3; nn = 2; break; // VL
+    case 5 : nc = 9; nn = 2; break; // TL
+    case 6 : nc = 1; nn = 3; break; // ST
+    case 7 : nc = 3; nn = 3; break; // VT
+    case 8 : nc = 9; nn = 3; break; // TT
+    case 9 : nc = 1; nn = 4; break; // SQ
+    case 10: nc = 3; nn = 4; break; // VQ
+    case 11: nc = 9; nn = 4; break; // TQ
+    case 12: nc = 1; nn = 4; break; // SS
+    case 13: nc = 3; nn = 4; break; // VS
+    case 14: nc = 9; nn = 4; break; // TS
+    case 15: nc = 1; nn = 8; break; // SH
+    case 16: nc = 3; nn = 8; break; // VH
+    case 17: nc = 9; nn = 8; break; // TH
+    case 18: nc = 1; nn = 6; break; // SI
+    case 19: nc = 3; nn = 6; break; // VI
+    case 20: nc = 9; nn = 6; break; // TI
+    case 21: nc = 1; nn = 5; break; // SY
+    case 22: nc = 3; nn = 5; break; // VY
+    case 23: nc = 9; nn = 5; break; // TY
+    }
+    int stride = list->size() / nbe;
+    int numSteps = (stride - 1) / nc / nn;
+    for(int step = 0; step < numSteps; step++){
+      printf("creating step %d\n", step);
+      _steps.push_back(new stepData<double>(GModel::current(), nc));
+      _steps[step]->fillEntities();
+      _steps[step]->computeBoundingBox();
+      _steps[step]->setTime(step);
+      _steps[step]->resizeData(nbe);
+      for(unsigned int j = 0; j < list->size(); j += stride){
+        double *tmp = &(*list)[j];
+        int num = (int)tmp[0];
+        printf("importing ele %d\n", num);
+        double *d  = _steps[step]->getData(num, true, nn);
+        for(int k = 0; k < nc * nn; k++){
+          d[k] = tmp[1 + nc * nn * step + k];
+          printf("   val[%d]=%g\n", k, d[k]);
+        }
+      }
+    }
+  }
+
+  finalize();
+}
+
+
 #if defined(HAVE_MED)
 
 extern "C" {

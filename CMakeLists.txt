@@ -129,7 +129,7 @@ set(GMSH_API
     Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
     Solver/groupOfElements.h Solver/linearSystemPETSc.h Solver/linearSystemMUMPS.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
-  Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
+  Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 

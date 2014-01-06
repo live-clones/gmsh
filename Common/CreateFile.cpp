@@ -6,6 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "PView.h"
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -634,3 +635,4 @@ void CreateOutputFile(const std::string &fileName, int format,
   if(redraw) drawContext::global()->draw();
 #endif
 }
+
