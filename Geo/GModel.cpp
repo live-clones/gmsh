@@ -540,13 +540,11 @@ int GModel::mesh(int dimension)
 
 bool GModel::setAllVolumesPositive()
 {
-  std::vector<GEntity*> entities;
-  getEntities(entities);
   bool ok = true;
-  for(std::set<GRegion*,GEntityLessThan>::iterator itReg=regions.begin();
-                                          itReg != regions.end(); ++itReg) {
-    int nbEl = (*itReg)->getNumMeshElements();
-    for (int iEl=0; iEl<nbEl; ++iEl) ok = ok && (*itReg)->getMeshElement(iEl)->setVolumePositive();
+  for(riter it = regions.begin(); it != regions.end(); ++it) {
+    int nbEl = (*it)->getNumMeshElements();
+    for (int iEl = 0; iEl < nbEl; ++iEl)
+      ok = (ok && (*it)->getMeshElement(iEl)->setVolumePositive());
   }
   return ok;
 }
