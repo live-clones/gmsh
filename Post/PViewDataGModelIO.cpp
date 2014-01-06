@@ -334,7 +334,6 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
     int stride = list->size() / nbe;
     int numSteps = (stride - 1) / nc / nn;
     for(int step = 0; step < numSteps; step++){
-      printf("creating step %d\n", step);
       _steps.push_back(new stepData<double>(GModel::current(), nc));
       _steps[step]->fillEntities();
       _steps[step]->computeBoundingBox();
@@ -343,11 +342,9 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
       for(unsigned int j = 0; j < list->size(); j += stride){
         double *tmp = &(*list)[j];
         int num = (int)tmp[0];
-        printf("importing ele %d\n", num);
         double *d  = _steps[step]->getData(num, true, nn);
         for(int k = 0; k < nc * nn; k++){
           d[k] = tmp[1 + nc * nn * step + k];
-          printf("   val[%d]=%g\n", k, d[k]);
         }
       }
     }
@@ -355,7 +352,6 @@ void PViewDataGModel::importLists(int N[24], std::vector<double> *V[24])
 
   finalize();
 }
-
 
 #if defined(HAVE_MED)
 
