@@ -132,14 +132,20 @@ void List_Write(List_T * liste, int index, void *data)
   }
 }
 
-void List_Put(List_T *liste, int index, void *data)
+void List_Put(List_T * liste, int index, void *data)
 {
-  liste->n += 1;
-  List_Realloc(liste, liste->n);
-  for(int j = 0; j < liste->n -1 - index; j++)
-    memcpy(List_Pointer_Fast(liste, liste->n - j - 1), List_Pointer_Fast(liste, liste->n - 1 - j - 1),
-           liste->size);
-  memcpy(&liste->array[index * liste->size], data, liste->size);
+  if(index < 0)
+    Msg::Error("Wrong list index (put)");
+  else {
+    if(index >= liste->n) {
+      liste->n = index + 1;
+      List_Realloc(liste, liste->n);
+      List_Write(liste, index, data);
+    }
+    else {
+      List_Write(liste, index, data);
+    }
+  }
 }
 
 void List_Pop(List_T * liste)
