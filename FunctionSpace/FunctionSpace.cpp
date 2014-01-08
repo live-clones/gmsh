@@ -144,43 +144,28 @@ void FunctionSpace::insertDof(Dof& d,
   }
 }
 */
-vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
+
+vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
-  // Create New Element With Permuted Vertices //
-  // Permutation
-  const vector<size_t>& vPerm =
-    (*this->basis)[0]->getReferenceSpace().getNodeIndexFromABCtoUVW(elem);
-
-  // Permuted Vertices
+  // Vertex, Edge & Face //
   const size_t nVertex = element.getNumPrimaryVertices();
+  const size_t nEdge   = element.getNumEdges();
+  const size_t nFace   = element.getNumFaces();
+
   vector<MVertex*> vertex(nVertex);
+  vector<MEdge>    edge(nEdge);
+  vector<MFace>    face(nFace);
 
   for(size_t i = 0; i < nVertex; i++)
-    vertex[i] = element.getVertex(vPerm[i]);
-
-  // New Element
-  MElementFactory factory;
-  int parentTag   = ElementType::ParentTypeFromTag(elem.getTypeForMSH());
-  int lowOrderTag = ElementType::getTag(parentTag, 1, false);
-
-  MElement* permElement = factory.create(lowOrderTag, vertex);
-
-  // Edge & Face from Permuted Element //
-  const size_t nEdge = permElement->getNumEdges();
-  const size_t nFace = permElement->getNumFaces();
-
-  vector<MEdge> edge(nEdge);
-  vector<MFace> face(nFace);
+    vertex[i] = element.getVertex(i);
 
   for(size_t i = 0; i < nEdge; i++)
-    edge[i] = permElement->getEdge(i);
+    edge[i] = element.getEdge(i);
 
   for(size_t i = 0; i < nFace; i++)
-    face[i] = permElement->getFace(i);
-
-  delete permElement;
+    face[i] = element.getFace(i);
 
   // Create Dof //
   size_t nDof =
@@ -225,6 +210,56 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
 
   return myDof;
 }
+
+vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
+  // Const_Cast //
+  MElement& element = const_cast<MElement&>(elem);
+
+  // Create New Element With Permuted Vertices //
+  // Permutation
+  const vector<size_t>& vPerm =
+    (*this->basis)[0]->getReferenceSpace().getNodeIndexFromABCtoUVW(elem);
+
+  // Permuted Vertices
+  const size_t nVertex = element.getNumPrimaryVertices();
+  vector<MVertex*> vertex(nVertex);
+
+  for(size_t i = 0; i < nVertex; i++)
+    vertex[i] = element.getVertex(vPerm[i]);
+
+  // New Element
+  MElementFactory factory;
+  int parentTag   = ElementType::ParentTypeFromTag(elem.getTypeForMSH());
+  int lowOrderTag = ElementType::getTag(parentTag, 1, false);
+
+  MElement* permElement = factory.create(lowOrderTag, vertex);
+
+  // Get Dofs from permuted Element //
+  vector<Dof> myDofs = getUnorderedKeys(*permElement);
+
+  // Free and Return //
+  delete permElement;
+  return myDofs;
+}
+
+void FunctionSpace::getKeys(const GroupOfElement& goe,
+                            std::set<Dof>& dof) const{
+  // Get Elements //
+  const vector<const MElement*>& element = goe.getAll();
+  const size_t nElement = element.size();
+
+  // Loop on Elements //
+  for(size_t e = 0; e < nElement; e++){
+    // Get my Dofs
+    vector<Dof>  myDof = getUnorderedKeys(*element[e]);
+    const size_t nDof  = myDof.size();
+
+    // Add my Dofs
+    for(size_t d = 0; d < nDof; d++)
+      dof.insert(myDof[d]);
+  }
+}
+
 
 const GroupOfDof& FunctionSpace::
 getGoDFromElement(const MElement& element) const{

@@ -75,12 +75,15 @@ class FunctionSpace{
   GroupOfElement& getSupport(void) const;
   bool            isScalar(void) const;
 
+  std::vector<Dof> getUnorderedKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MVertex& vertex) const;
   std::vector<Dof> getKeys(const MEdge& edge) const;
   std::vector<Dof> getKeys(const MFace& face) const;
 
-  const std::vector<Dof>          getAllDofs(void) const;
+  void getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
+
+  const std::set<Dof>&            getAllDofs(void) const;
   const std::vector<GroupOfDof*>& getAllGroups(void) const;
 
   const GroupOfDof& getGoDFromElement(const MElement& element) const;
@@ -209,8 +212,8 @@ inline size_t FunctionSpace::groupNumber(void) const{
   return group->size();
 }
 
-inline const std::vector<Dof> FunctionSpace::getAllDofs(void) const{
-  return std::vector<Dof>(dof->begin(), dof->end());
+inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
+  return *dof;
 }
 
 inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
