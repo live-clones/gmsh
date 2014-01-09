@@ -15,7 +15,6 @@ class GFace;
 class MVertex;
 class MElement;
 
-
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterFaultZonePlugin();
@@ -30,7 +29,7 @@ class GMSH_FaultZonePlugin : public GMSH_PostPlugin{
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString *getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);
   PView* execute(PView*);
 };
 
@@ -58,16 +57,16 @@ class GMSH_FaultZoneMesher{
   typedef std::set<MElement*>::iterator elementsIt;
   static const SVector3 vectZ;
   static const double tolerance;
-  
+
   std::map < MVertex* , SVector3 > _vectsTanByTipNode;
   std::map < MVertex*, MVertex* > _nodeByHeavNode;
   std::map < MVertex*, MVertex* > _nodeJointByHeavOrJunctionNode;
   std::map < MVertex*, std::vector < MVertex*> > _nodesByJunctionNode;
-  
+
   std::map < MVertex*, std::vector <std::vector< int > > > _heavFuncByJunctionNode;
-  
+
   std::vector < int > HeavisideFunc(MVertex* mVert, SPoint3& sPoint);
-  
+
   static const int _numNodeHeavInf[3];
   static const int _numNodeHeavSup[3];
   static const int _numNodeJoint[2];
@@ -81,7 +80,7 @@ class GMSH_FaultZoneMesher{
 inline bool compareHeav(const std::vector< int > heav1, const std::vector< int > heav2){
   assert(heav1.size() >= heav2.size());
   for (unsigned int i=0; i< heav2.size(); i++){
-    if (heav1[i] != 0 and heav1[i] != heav2[i] and heav2[i] != 0){
+    if (heav1[i] != 0 && heav1[i] != heav2[i] && heav2[i] != 0){
       return false;
     }
   }
@@ -93,11 +92,13 @@ inline bool compareHeav(const std::vector< int > heav1, const std::vector< int >
  * \brief Find the matching heaviside function heav, in the vector heavFunc
  */
 //=============================================================================
-inline int findMatchingHeav(const std::vector< std::vector < int > >& heavFunc, const std::vector< int >& heav){
+inline int findMatchingHeav(const std::vector< std::vector < int > >& heavFunc,
+                            const std::vector< int >& heav){
   unsigned int i=0;
   for (; i < heavFunc.size();i++)
     if(compareHeav(heavFunc[i], heav)) break;
   assert(i<heavFunc.size());
   return i;
 }
+
 #endif
