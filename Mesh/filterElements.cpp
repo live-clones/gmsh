@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -10,6 +15,7 @@
 #include "MQuadrangle.h"
 #include "MPrism.h"
 #include "MHexahedron.h"
+
 #if defined(HAVE_RTREE)
 #include "rtree.h"
 void MElementBB(void *a, double *min, double *max);
@@ -18,7 +24,7 @@ int MElementInEle(void *a, double *x);
 struct MElement_Wrapper
 {
   bool _overlap;
-  MElement *_e; 
+  MElement *_e;
   std::vector<MElement*> _notOverlap;
   MElement_Wrapper (MElement *e, std::vector<MElement*> notOverlap)
     : _overlap(false), _e(e), _notOverlap(notOverlap)
@@ -35,14 +41,15 @@ static bool inBB (double *mi, double *ma, double *x){
   if (x[1] > ma[1])return false;
   if (x[2] > ma[2])return false;
   return true;
-} 
+}
 
-bool rtree_callback(MElement *e1,void* pe2){
+bool rtree_callback(MElement *e1,void* pe2)
+{
   MElement_Wrapper *wrapper = static_cast<MElement_Wrapper*>(pe2);
   MElement *e2 = wrapper->_e;
 
-  if (std::binary_search(wrapper->_notOverlap.begin(),wrapper->_notOverlap.end(),e1))return true;  
-  
+  if (std::binary_search(wrapper->_notOverlap.begin(),wrapper->_notOverlap.end(),e1))
+    return true;
 
   for (int i=0;i<e1->getNumVertices();i++){
     for (int j=0;j<e2->getNumVertices();j++){
@@ -58,7 +65,7 @@ bool rtree_callback(MElement *e1,void* pe2){
     if (inBB (min2,max2,xyz)){
       if (MElementInEle(e2,xyz)){
 	wrapper->_overlap = true;
-	return false;      
+	return false;
       }
     }
   }
@@ -70,7 +77,7 @@ bool rtree_callback(MElement *e1,void* pe2){
     if (inBB(min1,max1,xyz)){
       if (MElementInEle(e1,xyz)){
 	wrapper->_overlap = true;
-	return false;      
+	return false;
       }
     }
   }
@@ -92,7 +99,7 @@ bool rtree_callback(MElement *e1,void* pe2){
     if (inBB(min2,max2,xyz)){
       if (MElementInEle(e2,xyz)){
 	wrapper->_overlap = true;
-	return false;      
+	return false;
       }
     }
   }
@@ -105,7 +112,7 @@ bool rtree_callback(MElement *e1,void* pe2){
     if (inBB(min1,max1,xyz)){
       if (MElementInEle(e1,xyz)){
 	wrapper->_overlap = true;
-	return false;      
+	return false;
       }
     }
   }
@@ -141,7 +148,7 @@ void filterColumns(std::vector<MElement*> &elem,
     for (unsigned int i=MAX;i<c.size();i++){
       /// FIXME !!!
       //      delete c[i];
-    }    
+    }
   }
   printf("%d --> %d\n",elem.size(),toKeep.size());
   elem = toKeep;
@@ -153,7 +160,7 @@ void filterOverlappingElements (std::vector<MTriangle*> &blTris,
 				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
 				std::map<MElement*,MElement*> &_toFirst)
 {
-  std::vector<MElement*> vvv; 
+  std::vector<MElement*> vvv;
   vvv.insert(vvv.begin(),blTris.begin(),blTris.end());
   vvv.insert(vvv.begin(),blQuads.begin(),blQuads.end());
   Less_Partition lp;
@@ -174,7 +181,7 @@ void filterOverlappingElements (std::vector<MPrism*> &blPrisms,
 				std::map<MElement*,MElement*> &_toFirst)
 {
   printf("filtering !!\n");
-  std::vector<MElement*> vvv; 
+  std::vector<MElement*> vvv;
   vvv.insert(vvv.begin(),blPrisms.begin(),blPrisms.end());
   vvv.insert(vvv.begin(),blHexes.begin(),blHexes.end());
   Less_Partition lp;
@@ -187,7 +194,7 @@ void filterOverlappingElements (std::vector<MPrism*> &blPrisms,
     if (vvv[i]->getType() == TYPE_PRI)blPrisms.push_back((MPrism*)vvv[i]);
     else if (vvv[i]->getType() == TYPE_HEX)blHexes.push_back((MHexahedron*)vvv[i]);
   }
-}  
+}
 
 
 void filterOverlappingElements (std::vector<MElement*> &els,
@@ -209,15 +216,34 @@ void filterOverlappingElements (std::vector<MElement*> &els,
     else {
       rtree.Insert(_min,_max,e);
       newEls.push_back(e);
-    }	    
+    }
   }
   els = newEls;
 }
+
 #else
+
+void filterOverlappingElements (std::vector<MTriangle*> &blTris,
+				std::vector<MQuadrangle*>&blQuads,
+				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
+				std::map<MElement*,MElement*> &_toFirst)
+{
+  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
+}
+
+void filterOverlappingElements (std::vector<MPrism*> &blPrisms,
+				std::vector<MHexahedron*>&blHexes,
+				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
+				std::map<MElement*,MElement*> &_toFirst)
+{
+  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
+}
+
 void filterOverlappingElements (std::vector<MElement*> &els,
 				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
 				std::map<MElement*,MElement*> &_toFirst )
 {
-  Msg::Error("full boundary layer capabilities are only available whilst compiling GMSH together with a RTREE library");
+  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
 }
+
 #endif
