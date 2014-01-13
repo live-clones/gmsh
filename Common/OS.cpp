@@ -17,6 +17,14 @@
 #include "GmshConfig.h"
 #include "StringUtils.h"
 
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif
+
+#if defined(__linux__)
+#include <sys/sysinfo.h>
+#endif
+
 #if !defined(WIN32) || defined(__CYGWIN__)
 #include <unistd.h>
 #include <sys/time.h>
@@ -260,6 +268,28 @@ double Cpu()
   double s = 0.;
   GetResources(&s, &mem);
   return s;
+}
+
+double TotalRam()
+{
+  double ram = 0;
+#if defined(__APPLE__)
+  int name[] = {CTL_HW, HW_MEMSIZE};
+  int64_t value;
+  size_t len = sizeof(value);
+  if(sysctl(name, 2, &value, &len, NULL, 0) != -1)
+    ram = value / (1024 * 1024);
+#elif defined (WIN32)
+  MEMORYSTATUSEX status;
+  status.dwLength = sizeof(status);
+  GlobalMemoryStatusEx(&status);
+  ram = status.ullTotalPhys  / ((double)1024 * 1024);
+#elif defined(__linux__)
+  struct sysinfo infos;
+  if(sysinfo(&infos) != -1)
+    ram = infos.totalram * (unsigned long)infos.mem_unit / ((double)1024 * 1024);
+#endif
+  return ram;
 }
 
 long GetMemoryUsage()

@@ -15,6 +15,7 @@ double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();
+double TotalRam();
 long GetMemoryUsage();
 int GetProcessId();
 std::string GetHostName();
