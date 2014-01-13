@@ -6,6 +6,19 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>${PRODUCT_NAME}</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>onelab</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Onelab package</string>
+			<key>LSTypeIsPackage</key>
+			<true/>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIcons</key>
@@ -14,6 +27,24 @@
 		<dict>
 			<key>CFBundleIconFiles</key>
 			<array>
+				<string>icon_app_iphone_retina</string>
+				<string>icon_app_ipad_61</string>
+				<string>ic_launcher.png</string>
+				<string>ic_launcher_retina.png</string>
+			</array>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>icon_app_ipad</string>
+				<string>icon_app_iphone_61</string>
+				<string>icon_app_ipad_retina</string>
+				<string>icon_app_iphone_retina</string>
+				<string>icon_app_ipad_61</string>
 				<string>ic_launcher.png</string>
 				<string>ic_launcher_retina.png</string>
 			</array>
@@ -33,21 +64,12 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>onelab</string>
-			</array>
-            <key>CFBundleTypeName</key>
-            <string>Onelab package</string>
-			<key>LSTypeIsPackage</key>
-            <true/>
-		</dict>
-	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string></string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UIMainStoryboardFile</key>
@@ -71,10 +93,6 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string></string>
 	</array>
 </dict>
 </plist>
