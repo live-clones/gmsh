@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #if !defined(BUILD_ANDROID)
 #define BUILD_IOS 1
 #endif
