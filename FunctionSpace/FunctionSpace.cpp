@@ -232,7 +232,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   int parentTag   = ElementType::ParentTypeFromTag(elem.getTypeForMSH());
   int lowOrderTag = ElementType::getTag(parentTag, 1, false);
 
-  MElement* permElement = factory.create(lowOrderTag, vertex);
+  MElement* permElement = factory.create(lowOrderTag, vertex, element.getNum());
 
   // Get Dofs from permuted Element //
   vector<Dof> myDofs = getUnorderedKeys(*permElement);
