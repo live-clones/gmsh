@@ -221,7 +221,7 @@ void axis_to_quat(double a[3], double phi, double q[4])
 static double
 tb_project_to_sphere(double r, double x, double y)
 {
-  double d, t, z;
+  double d, z;
 
   d = sqrt(x*x + y*y);
 

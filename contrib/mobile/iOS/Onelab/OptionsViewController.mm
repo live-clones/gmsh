@@ -43,7 +43,6 @@
 
     [self.navigationController setToolbarHidden:NO];
 	control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
-	control.segmentedControlStyle = UISegmentedControlStyleBar;
 	UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
 	self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];

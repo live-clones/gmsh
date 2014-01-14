@@ -369,7 +369,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
     lbl.font = [UIFont systemFontOfSize:textsize];
     [lbl setText:[NSString stringWithCString:text  encoding:[NSString defaultCStringEncoding]]];
     [lbl setBackgroundColor:[UIColor clearColor]];
-    CGSize lblSize = [[lbl text] sizeWithFont:[lbl font]];
+    CGSize lblSize = [[lbl text] sizeWithAttributes:@{NSFontAttributeName:[lbl font]}];
     *realWidth = lblSize.width;
     int i;
     for(i=2;i<*realWidth;i*=2); *width = i;
