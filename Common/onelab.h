@@ -1065,6 +1065,8 @@ namespace onelab{
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
+    // number of subclients
+    int _numSubClients;
     template <class T> bool _set(const T &p)
     {
       if(!_gmshClient) return false;
@@ -1135,9 +1137,36 @@ namespace onelab{
       }
       return true;
     }
+    void _waitOnSubClients()
+    {
+      if(!_gmshClient) return;
+      while(_numSubClients > 0){
+        int ret = _gmshClient->Select(500, 0);
+        if(!ret){
+          _gmshClient->Info("Timout: aborting wait on subclients");
+          return;
+        }
+        else if(ret < 0){
+          _gmshClient->Error("Error on select: aborting wait on subclients");
+          return;
+        }
+        int type, length, swap;
+        if(!_gmshClient->ReceiveHeader(&type, &length, &swap)){
+          _gmshClient->Error("Did not receive message header: aborting wait on subclients");
+          return;
+        }
+        std::string msg(length, ' ');
+        if(!_gmshClient->ReceiveMessage(length, &msg[0])){
+          _gmshClient->Error("Did not receive message body: aborting wait on subclients");
+          return;
+        }
+        if(type == GmshSocket::GMSH_STOP)
+          _numSubClients -= 1;
+      }
+    }
   public:
     remoteNetworkClient(const std::string &name, const std::string &serverAddress)
-      : client(name), _serverAddress(serverAddress)
+      : client(name), _serverAddress(serverAddress), _numSubClients(0)
     {
       _gmshClient = new GmshClient();
       if(_gmshClient->Connect(_serverAddress.c_str()) < 0){
@@ -1202,6 +1231,17 @@ namespace onelab{
     void sendParseStringRequest(const std::string &msg)
     {
       if(_gmshClient) _gmshClient->ParseString(msg.c_str());
+    }
+    void runSubClient(const std::string &name, const std::string &command)
+    {
+      if(!_gmshClient){
+        system(command.c_str());
+        return;
+      }
+      std::string msg = name + parameter::charSep() + command;
+      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
+      _numSubClients += 1;
+      _waitOnSubClients();
     }
   };
 

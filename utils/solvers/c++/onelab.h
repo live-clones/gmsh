@@ -46,13 +46,12 @@ namespace onelab{
     // the name of the parameter, including its '/'-separated path in the
     // parameter hierarchy. Parameters or subpaths can start with numbers to
     // force their relative ordering (such numbers are automatically hidden in
-    // the interface).
+    // the interface). All strings in onelab are supposed to be UTF8-encoded.
     std::string _name;
     // the parameter label: if provided it serves as a better way to display the
-    // parameter in the interface (richer encoding (UTF? HTML?) might be used in
-    // the future)
+    // parameter in the interface
     std::string _label;
-    // a help string (richer encoding (UTF? HTML?) might be used in the future)
+    // a help string
     std::string _help;
     // clients that use this parameter
     std::set<std::string> _clients;
@@ -233,11 +232,9 @@ namespace onelab{
       name = getNextToken(msg, first);
     }
     static bool fromFile(std::vector<std::string> &msg,
-                         const std::string &fileName)
+                         FILE *fp)
     {
       msg.clear();
-      FILE *fp = fopen(fileName.c_str(), "rb");
-      if(!fp) return false;
       char tmp[1000];
       if(!fgets(tmp, sizeof(tmp), fp)) return false; // first line is comment
       while(!feof(fp)){
@@ -249,15 +246,12 @@ namespace onelab{
           msg.back() += fgetc(fp);
         if(!fgets(tmp, sizeof(tmp), fp)) break; // end of line
       }
-      fclose(fp);
       return true;
     }
     static bool toFile(const std::vector<std::string> &msg,
-                       const std::string &fileName,
+                       FILE *fp,
                        const std::string &creator)
     {
-      FILE *fp = fopen(fileName.c_str(), "wb");
-      if(!fp) return false;
       time_t now;
       time(&now);
       fprintf(fp, "OneLab database created by %s on %s",
@@ -268,7 +262,6 @@ namespace onelab{
           fputc(msg[i][j], fp);
         fputc('\n', fp);
       }
-      fclose(fp);
       return true;
     }
   };
@@ -797,8 +790,10 @@ namespace onelab{
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++)
-        if(client.empty() || (*it)->hasClient(client))
-          s.push_back((*it)->toChar());
+        if(client.empty() || (*it)->hasClient(client)){
+	  if((*it)->getAttribute("NotInDb") != "True")
+	    s.push_back((*it)->toChar());
+	}
       return s;
     }
     // unserialize the parameter space
@@ -901,14 +896,14 @@ namespace onelab{
       }
       return true;
     }
-    bool toFile(const std::string &fileName)
+    bool toFile(FILE *fp)
     {
-      return parameter::toFile(toChar(), fileName, getName());
+      return parameter::toFile(toChar(), fp, getName());
     }
-    bool fromFile(const std::string &fileName)
+    bool fromFile(FILE *fp)
     {
       std::vector<std::string> msg;
-      if(parameter::fromFile(msg, fileName)) return fromChar(msg);
+      if(parameter::fromFile(msg, fp)) return fromChar(msg);
       return false;
     }
   };
@@ -933,6 +928,7 @@ namespace onelab{
       if(!_server) _server = new server(address);
       return _server;
     }
+    static void setInstance(server *s) { _server = s; }
     void clear(const std::string &name="", const std::string &client="")
     {
       _parameterSpace.clear(name, client);
@@ -974,14 +970,14 @@ namespace onelab{
     {
       return _parameterSpace.fromChar(msg, client);
     }
-    bool toFile(const std::string &fileName, const std::string &client="")
+    bool toFile(FILE *fp, const std::string &client="")
     {
-      return parameter::toFile(toChar(client), fileName, "onelab server");
+      return parameter::toFile(toChar(client), fp, "onelab server");
     }
-    bool fromFile(const std::string &fileName, const std::string &client="")
+    bool fromFile(FILE *fp, const std::string &client="")
     {
       std::vector<std::string> msg;
-      if(parameter::fromFile(msg, fileName)) return fromChar(msg, client);
+      if(parameter::fromFile(msg, fp)) return fromChar(msg, client);
       return false;
     }
   };
@@ -1069,6 +1065,8 @@ namespace onelab{
     std::string _serverAddress;
     // underlying GmshClient
     GmshClient *_gmshClient;
+    // number of subclients
+    int _numSubClients;
     template <class T> bool _set(const T &p)
     {
       if(!_gmshClient) return false;
@@ -1139,9 +1137,36 @@ namespace onelab{
       }
       return true;
     }
+    void _waitOnSubClients()
+    {
+      if(!_gmshClient) return;
+      while(_numSubClients > 0){
+        int ret = _gmshClient->Select(500, 0);
+        if(!ret){
+          _gmshClient->Info("Timout: aborting wait on subclients");
+          return;
+        }
+        else if(ret < 0){
+          _gmshClient->Error("Error on select: aborting wait on subclients");
+          return;
+        }
+        int type, length, swap;
+        if(!_gmshClient->ReceiveHeader(&type, &length, &swap)){
+          _gmshClient->Error("Did not receive message header: aborting wait on subclients");
+          return;
+        }
+        std::string msg(length, ' ');
+        if(!_gmshClient->ReceiveMessage(length, &msg[0])){
+          _gmshClient->Error("Did not receive message body: aborting wait on subclients");
+          return;
+        }
+        if(type == GmshSocket::GMSH_STOP)
+          _numSubClients -= 1;
+      }
+    }
   public:
     remoteNetworkClient(const std::string &name, const std::string &serverAddress)
-      : client(name), _serverAddress(serverAddress)
+      : client(name), _serverAddress(serverAddress), _numSubClients(0)
     {
       _gmshClient = new GmshClient();
       if(_gmshClient->Connect(_serverAddress.c_str()) < 0){
@@ -1206,6 +1231,17 @@ namespace onelab{
     void sendParseStringRequest(const std::string &msg)
     {
       if(_gmshClient) _gmshClient->ParseString(msg.c_str());
+    }
+    void runSubClient(const std::string &name, const std::string &command)
+    {
+      if(!_gmshClient){
+        system(command.c_str());
+        return;
+      }
+      std::string msg = name + parameter::charSep() + command;
+      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
+      _numSubClients += 1;
+      _waitOnSubClients();
     }
   };
 
