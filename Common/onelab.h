@@ -1180,6 +1180,7 @@ namespace onelab{
     virtual ~remoteNetworkClient()
     {
       if(_gmshClient){
+        _waitOnSubClients();
         _gmshClient->Stop();
         _gmshClient->Disconnect();
         delete _gmshClient;
