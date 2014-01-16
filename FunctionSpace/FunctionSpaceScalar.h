@@ -31,10 +31,19 @@ class FunctionSpaceScalar : public FunctionSpace{
                           const std::vector<double>& coef,
                           const fullVector<double>& uvw) const;
 
+  fullVector<double>
+    interpolateDerivative(const MElement& element,
+                          const std::vector<double>& coef,
+                          const fullVector<double>& xyz) const;
+
  private:
   double interpolateInABC(const MElement& element,
                           const std::vector<double>& coef,
                           double abc[3]) const;
+  fullVector<double>
+    interpolateDerivativeInABC(const MElement& element,
+                               const std::vector<double>& coef,
+                               double abc[3]) const;
 };
 
 
@@ -120,6 +129,20 @@ interpolateInRefSpace(const MElement& element,
                                                    abc);
   // Interpolate in ABC //
   return interpolateInABC(element, coef, abc);
+}
+
+inline fullVector<double> FunctionSpaceScalar::
+interpolateDerivative(const MElement& element,
+                      const std::vector<double>& coef,
+                      const fullVector<double>& xyz) const{
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  (*basis)[0]->getReferenceSpace().mapFromXYZtoABC(element,
+                                                   xyz(0), xyz(1), xyz(2),
+                                                   abc);
+  // Interpolate in ABC //
+  return interpolateDerivativeInABC(element, coef, abc);
 }
 
 #endif

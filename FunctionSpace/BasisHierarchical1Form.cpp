@@ -84,6 +84,12 @@ getFunctions(fullMatrix<double>& retValues,
   }
 }
 
+void BasisHierarchical1Form::getDerivative(fullMatrix<double>& retValues,
+                                           const MElement& element,
+                                           double u, double v, double w) const{
+  throw Exception("Not Implemented");
+}
+
 void BasisHierarchical1Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
   // Delete if older //

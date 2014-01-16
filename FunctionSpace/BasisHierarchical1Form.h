@@ -38,6 +38,10 @@ class BasisHierarchical1Form: public BasisLocal{
                             size_t orientation,
                             double u, double v, double w) const;
 
+  virtual void getDerivative(fullMatrix<double>& retValues,
+                             const MElement& element,
+                             double u, double v, double w) const;
+
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const;
   virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const;
 

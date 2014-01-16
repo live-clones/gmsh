@@ -93,6 +93,10 @@ class Basis{
                             size_t orientation,
                             double u, double v, double w) const = 0;
 
+  virtual void getDerivative(fullMatrix<double>& retValues,
+                             const MElement& element,
+                             double u, double v, double w) const = 0;
+
   // Precompute Functions //
   virtual void preEvaluateFunctions(const fullMatrix<double>& point) const = 0;
   virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const = 0;

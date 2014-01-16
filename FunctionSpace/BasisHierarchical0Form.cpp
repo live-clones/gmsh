@@ -72,6 +72,24 @@ getFunctions(fullMatrix<double>& retValues,
     retValues(i, 0) = basis[orientation][i]->at(u, v, w);
 }
 
+void BasisHierarchical0Form::getDerivative(fullMatrix<double>& retValues,
+                                           const MElement& element,
+                                           double u, double v, double w) const{
+  // Get Grad //
+  if(!hasGrad)
+    getGrad();
+
+  // Define Orientation //
+  const size_t orientation = refSpace->getReferenceSpace(element);
+
+  // Fill Matrix //
+  for(size_t i = 0; i < nFunction; i++){
+    retValues(i, 0) = grad[orientation][i]->at(0).at(u, v, w);
+    retValues(i, 1) = grad[orientation][i]->at(1).at(u, v, w);
+    retValues(i, 2) = grad[orientation][i]->at(2).at(u, v, w);
+  }
+}
+
 void BasisHierarchical0Form::
 preEvaluateFunctions(const fullMatrix<double>& point) const{
   // Delete if older //
