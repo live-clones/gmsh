@@ -37,7 +37,7 @@ def file_exist(filename):
   except IOError:
     return False
 
-def path(ref,inp):
+def path(ref, inp):
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
      return inp # do nothing, inp is an absolute path
   else: # append inp to the path of the reference file
@@ -52,7 +52,8 @@ class _parameter() :
   ]
   _members = {
     'string' : _membersbase + [
-      ('value', 'string',''), ('kind', 'string', 'generic'), ('choices', ('list', 'string'), [])
+      ('value', 'string',''), ('kind', 'string', 'generic'), 
+      ('choices', ('list', 'string'), [])
     ],
     'number' : _membersbase + [
       ('value', 'float',0),
@@ -151,7 +152,7 @@ class client :
       self._createSocket()
       self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
-  def _define_parameter(self, param) :
+  def _defineParameter(self, param) :
     if not self.socket :
       return param.value
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
@@ -170,7 +171,7 @@ class client :
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
       p.attributes={'Highlight':'AliceBlue'}
-    value = self._define_parameter(p)
+    value = self._defineParameter(p)
     return value
 
   def defineString(self, name, **param):
@@ -178,7 +179,7 @@ class client :
     if 'value' not in param : #make the parameter readOnly
       p.readOnly = 1
       p.attributes={'Highlight':'AliceBlue'}
-    value = self._define_parameter(p)
+    value = self._defineParameter(p)
     return value
   
   def setNumber(self, name, **param):
@@ -217,7 +218,7 @@ class client :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
 
-  def _get_parameter(self, param, warn_if_not_found=True) :
+  def _getParameter(self, param, warn_if_not_found=True) :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
@@ -229,12 +230,12 @@ class client :
 
   def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
-    self._get_parameter(param, warn_if_not_found)
+    self._getParameter(param, warn_if_not_found)
     return param.value
 
   def getString(self, name, warn_if_not_found=True):
     param = _parameter('string', name=name)
-    self._get_parameter(param, warn_if_not_found)
+    self._getParameter(param, warn_if_not_found)
     return param.value
 
   def show(self, name) :
@@ -313,15 +314,15 @@ class client :
       s = addr.split(':')
       self.socket.connect((s[0], int(s[1])))
 
-  def _wait_on_subclients(self):
+  def _waitOnSubClients(self):
     if not self.socket :
       return
-    while self.NumSubClients > 0:
+    while self._numSubClients > 0:
       (t, msg) = self._receive() 
       if t == self._GMSH_STOP :
-        self.NumSubClients -= 1
+        self._numSubClients -= 1
 
-  def run(self, name, command, arguments=''):
+  def runSubClient(self, name, command, arguments=''):
     # create command line
     if self.action == "check":
       cmd = command
@@ -331,14 +332,17 @@ class client :
       return os.system(cmd);
     msg = [name, cmd]
     self._send(self._GMSH_CONNECT, '\0'.join(msg))
-    self.NumSubClients +=1
-    self._wait_on_subclients() # makes the subclient blocking
+    self._numSubClients +=1
+    self._waitOnSubClients() # makes the subclient blocking
+
+  def run(self, name, command, arguments=''):
+    self.runSubClient(name, command, arguments)
 
   def __init__(self):
     self.socket = None
     self.name = ""
     self.addr = ""
-    self.NumSubClients = 0
+    self._numSubClients = 0
     for i, v in enumerate(sys.argv) :
       if v == '-onelab':
         self.name = sys.argv[i + 1]
@@ -353,7 +357,7 @@ class client :
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
     if self.socket :
-      self._wait_on_subclients()
+      self._waitOnSubClients()
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
       self.socket = None
