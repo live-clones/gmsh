@@ -224,7 +224,7 @@ class StructuredField : public Field
     for(int i = 0; i < 3; i++) {
       id[0][i] = (int)floor((xyz[i] - o[i]) / d[i]);
       id[1][i] = id[0][i] + 1;
-      if (outside_value_set && (id[0][i] < 0 || id[1][i] >= n[i]) && n[i] > 1) 
+      if (outside_value_set && (id[0][i] < 0 || id[1][i] >= n[i]) && n[i] > 1)
         return outside_value;
       id[0][i] = std::max(std::min(id[0][i], n[i] - 1), 0);
       id[1][i] = std::max(std::min(id[1][i], n[i] - 1), 0);
@@ -1227,7 +1227,7 @@ class PostViewField : public Field
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 1.))
+    if(!octree->searchScalarWithTol(x, y, z, &l, 0, 0, 0.05))
       Msg::Info("No scalar element found containing point (%g,%g,%g)", x, y, z);
     if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;
@@ -1241,13 +1241,13 @@ class PostViewField : public Field
       octree = new OctreePost(v);
       update_needed = false;
     }
-    double l[9];
+    double l[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
-    if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 1.)){
+    if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 0.05))
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
-      return;
-    }
+    if(l <= 0 && crop_negative_values)
+      for(int i = 0; i < 9; i++) l[i] = MAX_LC;
     metr(0, 0) = l[0];
     metr(0, 1) = l[1];
     metr(0, 2) = l[2];
