@@ -27,7 +27,7 @@ Please report all bugs and problems to the public mailing list
 <gmsh@geuz.org>.
 """
 
-import socket, struct, os, sys
+import socket, struct, os, sys, subprocess
 _VERSION = '1.05'
 
 def file_exist(filename):
@@ -37,11 +37,21 @@ def file_exist(filename):
   except IOError:
     return False
 
-def path(ref, inp):
+def path(ref,inp=''):
+  # ref is reference directory name
+  # inp is an optional file or directory name
+  dirname = os.path.dirname(ref)
+  if not inp: 
+    if dirname:
+      return dirname
+    else :
+      return '.'
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
      return inp # do nothing, inp is an absolute path
-  else: # append inp to the path of the reference file
-     return os.path.dirname(ref) + os.sep + inp
+  if dirname: 
+    return dirname + os.sep + inp # append inp to the path of the reference file
+  else:
+    return inp
 
 class _parameter() :
   _membersbase = [
@@ -143,6 +153,8 @@ class client :
     return t, msg
 
   def _send(self, t, msg) :
+    if not self.socket :
+      return
     m = msg.encode('utf-8')
     try:
       if self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m)) == 0 :
@@ -249,35 +261,29 @@ class client :
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(name))
 
-  def openGeometry(self, filename) :
-    if not self.socket or not filename :
-      return
-    #if self.action == 'compute' and self.getString('Gmsh/MergedGeo', False) == filename :
-    if self.getString('Gmsh/MergedGeo', False) == filename :
-      return
-    else :
-      self.setString('Gmsh/MergedGeo', value=filename)
-#    if filename[0] != '/' :
-#      filename = os.getcwd() + "/" + filename
-    self._send(self._GMSH_MERGE_FILE, filename)
-
-  def mesh(self, filename) :
-    if not self.socket :
-      return
-    if filename[0] != '/' :
-      filename = os.getcwd() + "/" + filename
-    self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + '";')
-
   def sendCommand(self, command) :
     if not self.socket :
       return
     self._send(self._GMSH_PARSE_STRING, command)
     
   def mergeFile(self, filename) :
-    if not self.socket :
+    if not self.socket or not filename :
       return
     self._send(self._GMSH_MERGE_FILE, filename)
 
+  def reloadGeometry(self, filename) :
+    if not self.socket or not filename :
+      return
+    if os.path.splitext(filename)[1] == '.geo' :
+      self._send(self._GMSH_PARSE_STRING, "Delete All;")
+      self._send(self._GMSH_MERGE_FILE, filename)
+
+  def mesh(self, filename) :
+    if not self.socket or not filename :
+      return
+    self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + ' ;')
+    self._send(self._GMSH_MERGE_FILE, filename)
+    
   def sendInfo(self, msg) :
     if not self.socket :
       print (msg)
@@ -303,7 +309,7 @@ class client :
     (t, msg) = self._receive() 
     if t == self._GMSH_OLPARSE :
       print (msg)
-        
+
   def _createSocket(self) :
     addr = self.addr
     if '/' in addr or '\\' in addr or ':' not in addr :
@@ -364,3 +370,61 @@ class client :
     
   def __del__(self):
     self.finalize()
+
+  def call(self, cmdline, remote='', rundir='', logfile=''):
+    cwd = None
+    if not remote :
+      argv = cmdline.rsplit(' ')
+      if rundir :
+        cwd = rundir
+    else :
+      argv=['ssh', remote , "cd %s ; %s" %(rundir,cmdline) ]
+
+    if logfile:
+      call = subprocess.Popen(argv, bufsize=1, cwd=cwd,
+                              stdout=open(logfile,"w"),
+                              stderr=subprocess.PIPE)
+    else:
+      call = subprocess.Popen(argv, bufsize=1, cwd=cwd,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE)
+      for line in iter(call.stdout.readline, b''):
+        print(line.rstrip())
+    result = call.wait()
+    if result == 0 :
+      self._send(self._GMSH_INFO, 'call \"' + ''.join(argv) + '\"')
+    else :
+      self._send(self._GMSH_ERROR, 'call failed !!\n' + call.stderr.read().encode('utf-8'))
+      
+  def upload(self, here, there, remote='') :
+    if not here or not there :
+      return
+    if remote :
+      argv=['rsync','-e','ssh','-auv', here, remote + ':' + there]
+    else :
+      argv=['cp','-f', here, there]
+  
+    call = subprocess.Popen(argv, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    result = call.wait()
+    if result == 0 :
+      self._send(self._GMSH_INFO, 'upload: ' + ' '.join(argv))
+    else :
+      print call.stderr.read()
+      ## self._send(self._GMSH_ERROR, 'upload failed !!\n' + call.stderr.read().encode('utf-8'))
+
+  def download(self, here, there, remote='') :
+    if not here or not there :
+      return
+    if remote :
+      argv=['rsync','-e','ssh','-auv', remote + ':' + there, here]
+    else :
+      argv=['cp','-f', there, here]
+
+    call = subprocess.Popen(argv, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    result = call.wait()
+    if result == 0 :
+      self._send(self._GMSH_INFO, 'download: ' + ' '.join(argv))
+    else :
+      print call.stderr.read()
+      ##self._send(self._GMSH_ERROR, 'download failed !!\n' + call.stderr.read().encode('utf-8'))
+      
