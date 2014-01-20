@@ -154,6 +154,13 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   const size_t nEdge   = element.getNumEdges();
   const size_t nFace   = element.getNumFaces();
 
+  // Number of cells //
+  size_t nCell;
+  if(element.getDim() == 3) // Need to be 3D to have one Cell
+    nCell = 1;
+  else
+    nCell = 0;
+
   vector<MVertex*> vertex(nVertex);
   vector<MEdge>    edge(nEdge);
   vector<MFace>    face(nFace);
@@ -172,7 +179,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
     fPerVertex * nVertex +
     fPerEdge   * nEdge   +
     fPerFace   * nFace   +
-    fPerCell;
+    fPerCell   * nCell;
 
   vector<Dof> myDof(nDof);
 
@@ -203,9 +210,11 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   }
 
   // Add Cell Based Dof //
-  for(size_t j = 0; j < fPerCell; j++){
-    myDof[it].setDof(mesh->getGlobalId(element), j);
-    it++;
+  for(size_t i = 0; i < nCell; i++){
+    for(size_t j = 0; j < fPerCell; j++){
+      myDof[it].setDof(mesh->getGlobalId(element), j);
+      it++;
+    }
   }
 
   return myDof;
