@@ -79,8 +79,8 @@ TetNodeBasis::TetNodeBasis(size_t order){
       for(size_t l = 1; l < order; l++){
         basis[s][i] =
           new Polynomial(intLegendre[l].compose
-                         (lagrange[edgeIdx[s][e][0]] -
-                          lagrange[edgeIdx[s][e][1]]
+                         (lagrange[edgeIdx[s][e][1]] -
+                          lagrange[edgeIdx[s][e][0]]
                           ,
                           lagrange[edgeIdx[s][e][0]] +
                           lagrange[edgeIdx[s][e][1]]));
@@ -88,9 +88,6 @@ TetNodeBasis::TetNodeBasis(size_t order){
       }
     }
   }
-
-  // Face Based //
-  // TO CHECK: Are Triangles face matching tets ?
 
   for(size_t s = 0; s < nRefSpace; s++){
     size_t i = nVertex + nEdge;
@@ -105,8 +102,8 @@ TetNodeBasis::TetNodeBasis(size_t order){
 
           basis[s][i] =
             new Polynomial(intLegendre[l1].compose
-                           (lagrange[faceIdx[s][f][0]] -
-                            lagrange[faceIdx[s][f][1]]
+                           (lagrange[faceIdx[s][f][1]] -
+                            lagrange[faceIdx[s][f][0]]
                             ,
                             lagrange[faceIdx[s][f][0]] +
                             lagrange[faceIdx[s][f][1]])
