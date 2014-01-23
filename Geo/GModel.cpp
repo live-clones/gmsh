@@ -541,11 +541,10 @@ int GModel::mesh(int dimension)
 bool GModel::setAllVolumesPositive()
 {
   bool ok = true;
-  for(riter it = regions.begin(); it != regions.end(); ++it) {
-    int nbEl = (*it)->getNumMeshElements();
-    for (int iEl = 0; iEl < nbEl; ++iEl)
-      ok = (ok && (*it)->getMeshElement(iEl)->setVolumePositive());
-  }
+  for(riter it = regions.begin(); it != regions.end(); ++it)
+    for (int i = 0; i < (*it)->getNumMeshElements(); ++i)
+      if(!(*it)->getMeshElement(i)->setVolumePositive())
+        ok = false;
   return ok;
 }
 
