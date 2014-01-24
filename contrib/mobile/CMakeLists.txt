@@ -59,9 +59,8 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   add_custom_target(xcodeProject
     cd ${CMAKE_CURRENT_SOURCE_DIR}/utils/ && ${CMAKE_CURRENT_SOURCE_DIR}/utils/make_icon_ios.sh
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Default-568h@2x.png ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Default-568h@2x.png
-    COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawContext.cpp ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/drawContext.h ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
@@ -82,7 +81,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_FRAMEWORK}/petsc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
   )
   copy_headers(${GETDP_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/)
-  copy_headers(${GMSH_FRAMEWORK}/Headers/gmsh/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/)
+  copy_headers(${GMSH_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/)
   copy_headers(${PETSC_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/)
 
   message(STATUS "")

@@ -18,7 +18,6 @@
 		9C92862D180D217B00AAABD4 /* icon_app_iphone_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928626180D217A00AAABD4 /* icon_app_iphone_61.png */; };
 		9C92862E180D217B00AAABD4 /* icon_app_iphone_retina_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928627180D217A00AAABD4 /* icon_app_iphone_retina_61.png */; };
 		9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */; };
-		9C928633180D297C00AAABD4 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928632180D297C00AAABD4 /* Default-568h@2x.png */; };
 		9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.mm */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
 		9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083C1712C16300E1D4A0 /* Foundation.framework */; };
@@ -304,7 +303,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
-				9C928633180D297C00AAABD4 /* Default-568h@2x.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				9C92862D180D217B00AAABD4 /* icon_app_iphone_61.png in Resources */,
 				9C92862A180D217B00AAABD4 /* icon_app_ipad_retina_61.png in Resources */,

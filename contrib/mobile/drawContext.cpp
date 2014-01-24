@@ -378,8 +378,8 @@ void drawContext::drawScale()
 		double xmin = this->_left + (this->_right - this->_left -width)/2.;
 		double ymin = this->_bottom + height + 2*height*nPview;
     
-		GLfloat *vertex = (GLfloat *)malloc(opt->nbIso*3*4*sizeof(GLfloat));
-		GLubyte *color = (GLubyte *)malloc(opt->nbIso*4*4*sizeof(GLubyte));
+		std::vector<GLfloat> vertex(opt->nbIso*3*4);
+		std::vector<GLubyte> color(opt->nbIso*4*4);
 		for(int i = 0; i < opt->nbIso; i++){
 			if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric)
 			{
@@ -451,9 +451,9 @@ void drawContext::drawScale()
 			}
 		}
 	
-		glVertexPointer(3, GL_FLOAT, 0, vertex);
+		glVertexPointer(3, GL_FLOAT, 0, &vertex[0]);
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, &color[0]);
 		glEnableClientState(GL_COLOR_ARRAY);
 		if(opt->intervalsType == PViewOptions::Discrete || opt->intervalsType == PViewOptions::Numeric || opt->intervalsType == PViewOptions::Continuous)
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, opt->nbIso*4);
@@ -461,20 +461,17 @@ void drawContext::drawScale()
 			glDrawArrays(GL_LINES, 0, opt->nbIso*4);
 		glDisableClientState(GL_COLOR_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
-		free(vertex);
-		free(color);
 
 		char label[1024];
-		drawString *lbl = new drawString(p->getData()->getName().c_str(), 20);
-		lbl->draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
-		drawString *val = new drawString(p->getData()->getName().c_str(), 14);
+		drawString lbl(p->getData()->getName().c_str(), 20);
+		lbl.draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+		drawString val(p->getData()->getName().c_str(), 14);
 		for(int i = 0; i < 3; i++) {
 			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
 			sprintf(label, opt->format.c_str(), v);
-			val->setText(label);
-			val->draw(xmin+i*width/2, ymin+height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+			val.setText(label);
+			val.draw(xmin+i*width/2, ymin+height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
 		}
-    
 		nPview++;
 	}
 	glPopMatrix();
@@ -522,12 +519,12 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
 	glDrawArrays(GL_LINES, 0, 6);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
-	drawString *x = new drawString("X", 16,colors);
-	x->draw(x0+h, y0, z0, _width/(_right-_left), _height/(_top-_bottom));
-	drawString *y = new drawString("Y", 16,colors+8);
-	y->draw(x0, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom));
-	drawString *z = new drawString("Z", 16,colors+16);
-	z->draw(x0, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom));
+	drawString x ("X", 16,colors);
+	x.draw(x0+h, y0, z0, _width/(_right-_left), _height/(_top-_bottom));
+	drawString y("Y", 16,colors+8);
+	y.draw(x0, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom));
+	drawString z("Z", 16,colors+16);
+	z.draw(x0, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom));
 	glPopMatrix();
 	glLineWidth(1);
 }

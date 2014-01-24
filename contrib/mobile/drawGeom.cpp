@@ -59,8 +59,7 @@ void drawGeomEdge(GEdge *e)
 	double t_max = t_bounds.high();
 
 	// Create a VA for this edge
-	GLfloat *edge = (GLfloat *) malloc(N*3*sizeof(GLfloat));
-		
+        std::vector<GLfloat> edge(N*3);
 	for(unsigned int i=0; i < N; i++) {
 		double t = t_min + (double)i / (double)(N-1) * (t_max - t_min);
 		GPoint p = e->point(t);
@@ -68,13 +67,12 @@ void drawGeomEdge(GEdge *e)
 	}
 	// Then print the VA
 	glLineWidth((GLfloat)CTX::instance()->geom.lineWidth);
-	glVertexPointer(3, GL_FLOAT, 0, edge);
+	glVertexPointer(3, GL_FLOAT, 0, &edge[0]);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnable(GL_LINE_SMOOTH);
 	glDrawArrays(GL_LINE_STRIP, 0, N);
 	glDisable(GL_LINE_SMOOTH);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	free(edge);
 }
 void drawGeomFace(GFace *f)
 {
