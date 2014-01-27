@@ -409,7 +409,7 @@ class client :
     if result == 0 :
       self._send(self._GMSH_INFO, 'upload: ' + ' '.join(argv))
     else :
-      print call.stderr.read()
+      print(call.stderr.read())
       ## self._send(self._GMSH_ERROR, 'upload failed !!\n' + call.stderr.read().encode('utf-8'))
 
   def download(self, here, there, remote='') :
@@ -425,6 +425,6 @@ class client :
     if result == 0 :
       self._send(self._GMSH_INFO, 'download: ' + ' '.join(argv))
     else :
-      print call.stderr.read()
+      print(call.stderr.read())
       ##self._send(self._GMSH_ERROR, 'download failed !!\n' + call.stderr.read().encode('utf-8'))
       
