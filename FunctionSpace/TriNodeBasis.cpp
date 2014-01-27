@@ -1,24 +1,16 @@
-#include "TriNodeBasis.h"
-#include "TriReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "TriNodeBasis.h"
 
 using namespace std;
 
 TriNodeBasis::TriNodeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new TriReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
-  const vector<vector<vector<size_t> > >&
-    faceIdx = refSpace->getFaceNodeIndex();
-
   // Set BasisTwo Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_TRI;
   dim  = 2;
 
   nVertex   = 3;
@@ -26,6 +18,15 @@ TriNodeBasis::TriNodeBasis(size_t order){
   nFace     =     (order - 1) * (order - 2) / 2;
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
+
+  const vector<vector<vector<size_t> > >&
+    faceIdx = ReferenceSpaceManager::getFaceNodeIndex(type);
 
   // Legendre Polynomial //
   const int orderMinus = order - 1;
@@ -49,20 +50,20 @@ TriNodeBasis::TriNodeBasis(size_t order){
     };
 
   // Basis //
-  basis = new Polynomial**[nRefSpace];
+  basis = new Polynomial**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
     basis[s][2] = new Polynomial(lagrange[2]);
   }
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex;
 
     for(size_t e = 0; e < 3; e++){
@@ -85,7 +86,7 @@ TriNodeBasis::TriNodeBasis(size_t order){
   //     have only ONE face: the face '0'
   const int orderMinusTwo = order - 2;
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex + nEdge;
 
     for(int l1 = 1; l1 < orderMinus; l1++){
@@ -115,11 +116,10 @@ TriNodeBasis::TriNodeBasis(size_t order){
 }
 
 TriNodeBasis::~TriNodeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

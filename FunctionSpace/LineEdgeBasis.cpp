@@ -1,21 +1,16 @@
-#include "LineEdgeBasis.h"
-#include "LineReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "LineEdgeBasis.h"
 
 using namespace std;
 
 LineEdgeBasis::LineEdgeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new LineReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 1;
+  type = TYPE_LIN;
   dim  = 1;
 
   nVertex   = 0;
@@ -23,6 +18,12 @@ LineEdgeBasis::LineEdgeBasis(size_t order){
   nFace     = 0;
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
 
   // Legendre Polynomial //
   const size_t orderPlus = order + 1;
@@ -41,13 +42,13 @@ LineEdgeBasis::LineEdgeBasis(size_t order){
     };
 
   // Basis //
-  basis = new vector<Polynomial>**[nRefSpace];
+  basis = new vector<Polynomial>**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = 0;
 
     for(size_t l = 0; l < orderPlus; l++){
@@ -87,11 +88,10 @@ LineEdgeBasis::LineEdgeBasis(size_t order){
 }
 
 LineEdgeBasis::~LineEdgeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

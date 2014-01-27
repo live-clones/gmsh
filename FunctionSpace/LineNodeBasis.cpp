@@ -1,21 +1,16 @@
-#include "LineNodeBasis.h"
-#include "LineReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "LineNodeBasis.h"
 
 using namespace std;
 
 LineNodeBasis::LineNodeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new LineReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_LIN;
   dim  = 1;
 
   nVertex   = 2;
@@ -23,6 +18,12 @@ LineNodeBasis::LineNodeBasis(size_t order){
   nFace     = 0;
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
 
   // Legendre Polynomial //
   Polynomial* intLegendre = new Polynomial[order];
@@ -39,19 +40,19 @@ LineNodeBasis::LineNodeBasis(size_t order){
     };
 
   // Basis //
-  basis = new Polynomial**[nRefSpace];
+  basis = new Polynomial**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
   }
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex;
 
     for(size_t l = 1; l < order; l++){
@@ -68,11 +69,10 @@ LineNodeBasis::LineNodeBasis(size_t order){
 }
 
 LineNodeBasis::~LineNodeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

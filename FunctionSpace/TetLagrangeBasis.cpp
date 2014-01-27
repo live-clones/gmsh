@@ -1,7 +1,8 @@
-#include "TetLagrangeBasis.h"
-#include "TetReferenceSpace.h"
-#include "pointsGenerators.h"
 #include "ElementType.h"
+#include "GmshDefines.h"
+#include "pointsGenerators.h"
+
+#include "TetLagrangeBasis.h"
 
 TetLagrangeBasis::TetLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
@@ -11,7 +12,7 @@ TetLagrangeBasis::TetLagrangeBasis(size_t order){
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_TET;
   dim  = 3;
 
   nVertex   = 4;
@@ -25,14 +26,9 @@ TetLagrangeBasis::TetLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsTetrahedron(order, false));
-
-  // Reference Space //
-  refSpace  = new TetReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 TetLagrangeBasis::~TetLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-  delete refSpace;
 }

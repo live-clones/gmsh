@@ -18,6 +18,8 @@ set(SRC
   PyrReferenceSpace.cpp
   PriReferenceSpace.cpp
 
+  ReferenceSpaceManager.cpp
+
   Basis.cpp
   BasisLocal.cpp
   BasisGenerator.cpp

@@ -1,9 +1,11 @@
+#include "ReferenceSpaceManager.h"
 #include "BasisLagrange.h"
 
 using namespace std;
 
 BasisLagrange::BasisLagrange(void){
   scalar = true;
+  form   = 0;
 
   preEvaluated     = false;
   preEvaluatedGrad = false;
@@ -38,7 +40,7 @@ getFunctions(fullMatrix<double>& retValues,
   retValues = tmp.transpose();
 
   // Permute retValues, accordingly to ReferenceSpace
-  permutation(refSpace->getReferenceSpace(element), retValues);
+  permutation(ReferenceSpaceManager::getOrientation(element), retValues);
 }
 
 void BasisLagrange::

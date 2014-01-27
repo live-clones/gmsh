@@ -1,20 +1,15 @@
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
 #include "TetNedelecBasis.h"
-#include "TetReferenceSpace.h"
 
 using namespace std;
 
 TetNedelecBasis::TetNedelecBasis(void){
-  // Reference Space //
-  refSpace  = new TetReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
   // Set Basis Type //
   this->order = 0;
 
-  type = 1;
+  type = TYPE_TET;
   dim  = 3;
 
   nVertex   = 0;
@@ -22,6 +17,12 @@ TetNedelecBasis::TetNedelecBasis(void){
   nFace     = 0;
   nCell     = 0;
   nFunction = 6;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
 
   // Lagrange Polynomial //
   const Polynomial lagrange[4] =
@@ -40,13 +41,13 @@ TetNedelecBasis::TetNedelecBasis(void){
 
 
   // Basis //
-  basis = new vector<Polynomial>**[nRefSpace];
+  basis = new vector<Polynomial>**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based (Nedelec) //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     for(size_t e = 0; e < 6; e++){
       vector<Polynomial> tmp1 = lagrange[edgeIdx[s][e][1]].gradient();
       vector<Polynomial> tmp2 = lagrange[edgeIdx[s][e][0]].gradient();
@@ -69,11 +70,10 @@ TetNedelecBasis::TetNedelecBasis(void){
 }
 
 TetNedelecBasis::~TetNedelecBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

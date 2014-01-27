@@ -2,6 +2,7 @@
 #define _FUNCTIONSPACEVECTOR_H_
 
 #include "fullMatrix.h"
+#include "FunctionSpaceScalar.h"
 #include "FunctionSpace.h"
 
 /**
@@ -103,9 +104,8 @@ interpolate(const MElement& element,
 
   // Get ABC Space coordinate //
   double abc[3];
-  (*basis)[0]->getReferenceSpace().mapFromXYZtoABC(element,
-                                                   xyz(0), xyz(1), xyz(2),
-                                                   abc);
+  ReferenceSpaceManager::mapFromXYZtoABC(element, xyz(0), xyz(1), xyz(2), abc);
+
   // Interpolate in ABC //
   return interpolateInABC(element, coef, abc);
 }
@@ -117,9 +117,8 @@ interpolateInRefSpace(const MElement& element,
 
   // Get ABC Space coordinate //
   double abc[3];
-  (*basis)[0]->getReferenceSpace().mapFromUVWtoABC(element,
-                                                   uvw(0), uvw(1), uvw(2),
-                                                   abc);
+  ReferenceSpaceManager::mapFromUVWtoABC(element, uvw(0), uvw(1), uvw(2), abc);
+
   // Interpolate in ABC //
   return interpolateInABC(element, coef, abc);
 }

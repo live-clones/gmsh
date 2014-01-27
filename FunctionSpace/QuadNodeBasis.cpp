@@ -1,24 +1,16 @@
-#include "QuadNodeBasis.h"
-#include "QuadReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "QuadNodeBasis.h"
 
 using namespace std;
 
 QuadNodeBasis::QuadNodeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new QuadReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
-  const vector<vector<vector<size_t> > >&
-    faceIdx = refSpace->getFaceNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_QUA;
   dim  = 2;
 
   nVertex   = 4;
@@ -26,6 +18,15 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
   nFace     =     (order - 1) * (order - 1);
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
+
+  const vector<vector<vector<size_t> > >&
+    faceIdx = ReferenceSpaceManager::getFaceNodeIndex(type);
 
   // Legendre Polynomial //
   Polynomial* legendre = new Polynomial[order];
@@ -63,13 +64,13 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
     };
 
   // Basis //
-  basis = new Polynomial**[nRefSpace];
+  basis = new Polynomial**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
     basis[s][2] = new Polynomial(lagrange[2]);
@@ -77,7 +78,7 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
   }
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex;
 
     for(size_t e = 0; e < 4; e++){
@@ -100,7 +101,7 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
   //     where f = 0, because triangles
   //     have only ONE face: the face '0'
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex + nEdge;
 
     for(size_t l1 = 1; l1 < order; l1++){
@@ -131,7 +132,7 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
   Polynomial  mapY(Polynomial(0.5, 0, 1, 0) +
                    Polynomial(0.5, 0, 0, 0));
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     for(size_t i = 0; i < nFunction; i++){
       Polynomial* tmp;
       tmp = basis[s][i];
@@ -145,11 +146,10 @@ QuadNodeBasis::QuadNodeBasis(size_t order){
 }
 
 QuadNodeBasis::~QuadNodeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

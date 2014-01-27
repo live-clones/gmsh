@@ -3,7 +3,6 @@
 
 #include <string>
 #include "MElement.h"
-#include "ReferenceSpace.h"
 
 /**
    @interface Basis
@@ -20,38 +19,32 @@
    The i-th row of these matrices is always refering to the
    i-th function of the basis.
 
-   Depending on the nature of the returned value
-   (scalar or vector), the columns are organized
-   diferently.
+   Depending on the nature of the returned value (scalar or vector),
+   the columns are organized diferently.
 
    For scalar values, we have:
    @li The j-th column of the i-th row is
    the evaluation of the i-th function at the j-th point
 
    For vectorial values, we have:
-   @li The j-th column of the i-th row is
-   the first coordinate of
+   @li The j-th column of the i-th row is the first coordinate of
    the evaluation of the i-th function at the 3 x j-th point
 
-   @li The (j-th + 1) column of the i-th row is
-   the second coordinate of
+   @li The (j-th + 1) column of the i-th row is the second coordinate of
    the evaluation of the i-th function at the 3 x j-th point
 
-   @li The (j-th + 2) column of the i-th row is
-   the third coordinate of
+   @li The (j-th + 2) column of the i-th row is the third coordinate of
    the evaluation of the i-th function at the 3 x j-th point
  */
 
 class Basis{
  protected:
-  ReferenceSpace* refSpace;
-  size_t         nRefSpace;
-
   bool scalar;
   bool local;
 
   size_t order;
   size_t type;
+  size_t form;
   size_t dim;
 
   size_t nVertex;
@@ -72,6 +65,7 @@ class Basis{
   // Type of Basis //
   size_t getOrder(void) const;
   size_t getType(void) const;
+  size_t getForm(void) const;
   size_t getDim(void) const;
 
   // Number of Functions //
@@ -80,9 +74,6 @@ class Basis{
   size_t getNFaceBased(void) const;
   size_t getNCellBased(void) const;
   size_t getNFunction(void) const;
-
-  // Reference Element //
-  const ReferenceSpace& getReferenceSpace(void) const;
 
   // Direct Access to Evaluated Functions //
   virtual void getFunctions(fullMatrix<double>& retValues,
@@ -98,8 +89,10 @@ class Basis{
                              double u, double v, double w) const = 0;
 
   // Precompute Functions //
-  virtual void preEvaluateFunctions(const fullMatrix<double>& point) const = 0;
-  virtual void preEvaluateDerivatives(const fullMatrix<double>& point) const = 0;
+  virtual
+    void preEvaluateFunctions(const fullMatrix<double>& point) const = 0;
+  virtual
+    void preEvaluateDerivatives(const fullMatrix<double>& point) const = 0;
 
   // Access to Precomputed Functions //
   virtual const fullMatrix<double>&
@@ -140,8 +133,8 @@ class Basis{
    @li true, if this is a scalar Basis
    @li false, if this is a vectorial Basis
 
-   Scalar basis are sets of Polynomial%s, and
-   Vectorial basis are sets of Vector%s of Polynomial%s
+   Scalar basis are sets of Polynomial%s,
+   and Vectorial basis are sets of Vector%s of Polynomial%s
    **
 
    @fn Basis::isLocal
@@ -155,7 +148,19 @@ class Basis{
    **
 
    @fn Basis::getType
-   @return Returns the type of the Basis:
+   @return Returns the type of the Basis (coherent with gmsh element types):
+   @li 1 for Points
+   @li 2 for Lines
+   @li 3 for Triangles
+   @li 4 for Quadrangles
+   @li 5 for Tetrahedra
+   @li 6 for Pyramids
+   @li 7 for Prisms
+   @li 8 for Hexahedra
+   **
+
+   @fn Basis::getForm
+   @return Returns the diferential form of the Basis:
    @li 0 for 0-form
    @li 1 for 1-form
    @li 2 for 2-form
@@ -187,10 +192,6 @@ class Basis{
    (or Vector%s of Polynomial%s) Functions in this Basis
    **
 
-   @fn Basis::getReferenceSpace
-   @return Returns the ReferenceSpace associated to this basis
-   **
-
    @fn Basis::getFunctions(fullMatrix<double>&, const MElement&, double, double, double) const
    @param retValues An allocated matrix
    @param element A MElement
@@ -211,6 +212,17 @@ class Basis{
    @return The given matrix is populated with the evaluation
    of every basis function at the given coordinates,
    and for the given orientation
+   **
+
+   @fn Basis::getDerivative(fullMatrix<double>&, const MElement&, double, double, double) const
+   @param retValues An allocated matrix
+   @param element A MElement
+   @param u A u coordinate in the reference space of this Basis
+   @param v A v coordinate in the reference space of this Basis
+   @param w A w coordinate in the reference space of this Basis
+   @return The given matrix is populated with the evaluation
+   of the derivative of every basis function at the given coordinates,
+   and for the orientation of the given element
    **
 
    @fn Basis::preEvaluateFunctions
@@ -243,8 +255,8 @@ class Basis{
    @return Returns a Matrix with the PreEvaluated basis functions derivatives
    (see Basis::preEvaluateDerivatives()), with the given orientation
 
-   If no PreEvaluation of the gradient has been done before calling this function,
-   an Exception is thrown
+   If no PreEvaluation of the gradient has been done
+   before calling this function, an Exception is thrown
    **
 
    @fn Basis::getPreEvaluatedFunctions(const MElement&) const
@@ -279,6 +291,10 @@ inline size_t Basis::getType(void) const{
   return type;
 }
 
+inline size_t Basis::getForm(void) const{
+  return form;
+}
+
 inline size_t Basis::getDim(void) const{
   return dim;
 }
@@ -301,10 +317,6 @@ inline size_t Basis::getNCellBased(void) const{
 
 inline size_t Basis::getNFunction(void) const{
   return nFunction;
-}
-
-inline const ReferenceSpace& Basis::getReferenceSpace(void) const{
-  return *refSpace;
 }
 
 #endif

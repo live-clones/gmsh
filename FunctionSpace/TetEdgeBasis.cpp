@@ -1,24 +1,16 @@
-#include "TetEdgeBasis.h"
-#include "TetReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "TetEdgeBasis.h"
 
 using namespace std;
 
 TetEdgeBasis::TetEdgeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new TetReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
-  const vector<vector<vector<size_t> > >&
-    faceIdx = refSpace->getFaceNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 1;
+  type = TYPE_TET;
   dim  = 3;
 
   nVertex   = 0;
@@ -26,6 +18,15 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
   nFace     = 4 * (order + 1) * (order - 1);
   nCell     =     (order + 1) * (order - 1) * (order - 2) / 2;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
+
+  const vector<vector<vector<size_t> > >&
+    faceIdx = ReferenceSpaceManager::getFaceNodeIndex(type);
 
   // Alloc Temporary Space //
   const int orderPlus     = order + 1;
@@ -58,13 +59,13 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
 
 
   // Basis //
-  basis = new vector<Polynomial>**[nRefSpace];
+  basis = new vector<Polynomial>**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = 0;
 
     for(int e = 0; e < 6; e++){
@@ -107,7 +108,7 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
   // Face Based //
   // TO CHECK: Are Triangles face matching tets ?
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nEdge;
 
     for(int f = 0; f < 4; f++){
@@ -199,7 +200,7 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
   // Cell Based //
   const Polynomial one(1, 0, 0, 0);
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nEdge + nFace;
 
     for(int l1 = 1; l1 < orderMinus; l1++){
@@ -324,11 +325,10 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
 }
 
 TetEdgeBasis::~TetEdgeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

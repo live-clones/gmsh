@@ -18,9 +18,7 @@ interpolateInABC(const MElement& element,
 
   // Get Jacobian //
   fullMatrix<double> invJac(3, 3);
-  (*basis)[0]->getReferenceSpace().getJacobian(element,
-                                               abc[0], abc[1], abc[2],
-                                               invJac);
+  ReferenceSpaceManager::getJacobian(element, abc[0], abc[1], abc[2], invJac);
   invJac.invertInPlace();
 
   // Get Basis Functions //

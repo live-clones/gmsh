@@ -1,20 +1,15 @@
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
 #include "TriNedelecBasis.h"
-#include "TriReferenceSpace.h"
 
 using namespace std;
 
 TriNedelecBasis::TriNedelecBasis(void){
-  // Reference Space //
-  refSpace  = new TriReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
   // Set Basis Type //
   order = 0;
 
-  type = 1;
+  type = TYPE_TRI;
   dim  = 2;
 
   nVertex   = 0;
@@ -22,6 +17,12 @@ TriNedelecBasis::TriNedelecBasis(void){
   nFace     = 0;
   nCell     = 0;
   nFunction = 3;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
 
   // Lagrange //
   const Polynomial lagrange[3] =
@@ -36,13 +37,13 @@ TriNedelecBasis::TriNedelecBasis(void){
     };
 
   // Basis //
-  basis = new vector<Polynomial>**[nRefSpace];
+  basis = new vector<Polynomial>**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based (Nedelec) //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     for(size_t e = 0; e < 3; e++){
       vector<Polynomial> tmp1 = lagrange[edgeIdx[s][e][1]].gradient();
       vector<Polynomial> tmp2 = lagrange[edgeIdx[s][e][0]].gradient();
@@ -65,11 +66,10 @@ TriNedelecBasis::TriNedelecBasis(void){
 }
 
 TriNedelecBasis::~TriNedelecBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

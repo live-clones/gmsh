@@ -1,7 +1,8 @@
-#include "LineLagrangeBasis.h"
-#include "LineReferenceSpace.h"
-#include "pointsGenerators.h"
 #include "ElementType.h"
+#include "GmshDefines.h"
+#include "pointsGenerators.h"
+
+#include "LineLagrangeBasis.h"
 
 LineLagrangeBasis::LineLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
@@ -11,7 +12,7 @@ LineLagrangeBasis::LineLagrangeBasis(size_t order){
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_LIN;
   dim  = 1;
 
   nVertex   = 2;
@@ -25,14 +26,9 @@ LineLagrangeBasis::LineLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsLine(order));
-
-  // Reference Space //
-  refSpace  = new LineReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 LineLagrangeBasis::~LineLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-  delete refSpace;
 }

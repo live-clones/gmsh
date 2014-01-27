@@ -1,24 +1,16 @@
-#include "HexNodeBasis.h"
-#include "HexReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "HexNodeBasis.h"
 
 using namespace std;
 
 HexNodeBasis::HexNodeBasis(size_t order){
-   // Reference Space //
-  refSpace  = new HexReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
-  const vector<vector<vector<size_t> > >&
-    faceIdx = refSpace->getFaceNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_HEX;
   dim  = 3;
 
   nVertex   =  8;
@@ -26,6 +18,15 @@ HexNodeBasis::HexNodeBasis(size_t order){
   nFace     =  6 * (order - 1) * (order - 1);
   nCell     =      (order - 1) * (order - 1) * (order - 1);
   nFunction = nVertex + nEdge + nFace + nCell;
+
+   // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
+
+  const vector<vector<vector<size_t> > >&
+    faceIdx = ReferenceSpaceManager::getFaceNodeIndex(type);
 
   // Legendre Polynomial //
   Polynomial* legendre = new Polynomial[order];
@@ -103,13 +104,13 @@ HexNodeBasis::HexNodeBasis(size_t order){
     };
 
   // Basis //
-  basis = new Polynomial**[nRefSpace];
+  basis = new Polynomial**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new Polynomial*[nFunction];
 
   // Vertex Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     basis[s][0] = new Polynomial(lagrange[0]);
     basis[s][1] = new Polynomial(lagrange[1]);
     basis[s][2] = new Polynomial(lagrange[2]);
@@ -121,7 +122,7 @@ HexNodeBasis::HexNodeBasis(size_t order){
   }
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex;
 
     for(size_t e = 0; e < 12; e++){
@@ -139,7 +140,7 @@ HexNodeBasis::HexNodeBasis(size_t order){
   }
 
   // Face Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex + nEdge;
 
     for(size_t f = 0; f < 6; f++){
@@ -173,7 +174,7 @@ HexNodeBasis::HexNodeBasis(size_t order){
   py = py - Polynomial(1, 0, 0, 0);
   pz = pz - Polynomial(1, 0, 0, 0);
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nVertex + nEdge + nFace;
 
     for(size_t l1 = 1; l1 < order; l1++){
@@ -206,7 +207,7 @@ HexNodeBasis::HexNodeBasis(size_t order){
   Polynomial  mapZ(Polynomial(0.5, 0, 0, 1) +
                    Polynomial(0.5, 0, 0, 0));
 
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     for(size_t i = 0; i < nFunction; i++){
       Polynomial* tmp;
       tmp = basis[s][i];
@@ -220,11 +221,10 @@ HexNodeBasis::HexNodeBasis(size_t order){
 }
 
 HexNodeBasis::~HexNodeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

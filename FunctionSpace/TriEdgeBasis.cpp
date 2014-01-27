@@ -1,24 +1,16 @@
-#include "TriEdgeBasis.h"
-#include "TriReferenceSpace.h"
 #include "Legendre.h"
+#include "GmshDefines.h"
+#include "ReferenceSpaceManager.h"
+
+#include "TriEdgeBasis.h"
 
 using namespace std;
 
 TriEdgeBasis::TriEdgeBasis(size_t order){
-  // Reference Space //
-  refSpace  = new TriReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
-
-  const vector<vector<vector<size_t> > >&
-    edgeIdx = refSpace->getEdgeNodeIndex();
-
-  const vector<vector<vector<size_t> > >&
-    faceIdx = refSpace->getFaceNodeIndex();
-
   // Set Basis Type //
   this->order = order;
 
-  type = 1;
+  type = TYPE_TRI;
   dim  = 2;
 
   nVertex   = 0;
@@ -26,6 +18,15 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
   nFace     = ((order - 1) * order + order - 1);
   nCell     = 0;
   nFunction = nVertex + nEdge + nFace + nCell;
+
+  // Reference Space //
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
+
+  const vector<vector<vector<size_t> > >&
+    edgeIdx = ReferenceSpaceManager::getEdgeNodeIndex(type);
+
+  const vector<vector<vector<size_t> > >&
+    faceIdx = ReferenceSpaceManager::getFaceNodeIndex(type);
 
   // Alloc Some Space //
   const int orderPlus  = order + 1;
@@ -51,13 +52,13 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
     };
 
   // Basis //
-  basis = new vector<Polynomial>**[nRefSpace];
+  basis = new vector<Polynomial>**[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     basis[s] = new vector<Polynomial>*[nFunction];
 
   // Edge Based //
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = 0;
 
     for(int e = 0; e < 3; e++){
@@ -106,19 +107,19 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
   // TO CHECK: Are Triangles face matching tets ?
 
   // Alloc Temp
-  Polynomial** u               = new Polynomial*[nRefSpace];
-  Polynomial** v               = new Polynomial*[nRefSpace];
-  Polynomial*  p               = new Polynomial[nRefSpace];
-  vector<Polynomial>** subGrad = new vector<Polynomial>*[nRefSpace];
+  Polynomial** u               = new Polynomial*[nOrientation];
+  Polynomial** v               = new Polynomial*[nOrientation];
+  Polynomial*  p               = new Polynomial[nOrientation];
+  vector<Polynomial>** subGrad = new vector<Polynomial>*[nOrientation];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     u[s] = new Polynomial[orderPlus];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     v[s] = new Polynomial[orderPlus];
 
   // Preliminaries
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     p[s] = lagrange[faceIdx[s][0][2]] * 2 - Polynomial(1, 0, 0, 0);
 
     // Polynomial u(x) & v(x)
@@ -153,7 +154,7 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
   }
 
   // Face Basis
-  for(size_t s = 0; s < nRefSpace; s++){
+  for(size_t s = 0; s < nOrientation; s++){
     size_t i = nEdge;
 
     // Type 1
@@ -219,13 +220,13 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
   }
 
   // Free Temporary Sapce //
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     delete[] u[s];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     delete[] v[s];
 
-  for(size_t s = 0; s < nRefSpace; s++)
+  for(size_t s = 0; s < nOrientation; s++)
     delete subGrad[s];
 
   delete[] legendre;
@@ -237,11 +238,10 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
 }
 
 TriEdgeBasis::~TriEdgeBasis(void){
-  // ReferenceSpace //
-  delete refSpace;
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(type);
 
   // Basis //
-  for(size_t i = 0; i < nRefSpace; i++){
+  for(size_t i = 0; i < nOrientation; i++){
     for(size_t j = 0; j < nFunction; j++)
       delete basis[i][j];
 

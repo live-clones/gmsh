@@ -1,7 +1,7 @@
-#include "QuadLagrangeBasis.h"
-#include "QuadReferenceSpace.h"
-#include "pointsGenerators.h"
 #include "ElementType.h"
+#include "GmshDefines.h"
+#include "pointsGenerators.h"
+#include "QuadLagrangeBasis.h"
 
 QuadLagrangeBasis::QuadLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
@@ -11,7 +11,7 @@ QuadLagrangeBasis::QuadLagrangeBasis(size_t order){
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_QUA;
   dim  = 2;
 
   nVertex   = 4;
@@ -25,14 +25,9 @@ QuadLagrangeBasis::QuadLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsQuadrangle(order, false));
-
-  // Reference Space //
-  refSpace  = new QuadReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 QuadLagrangeBasis::~QuadLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-  delete refSpace;
 }

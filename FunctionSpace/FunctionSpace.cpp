@@ -1,8 +1,11 @@
 #include <sstream>
-#include "FunctionSpace.h"
+
+#include "ReferenceSpaceManager.h"
 #include "BasisGenerator.h"
 #include "ElementType.h"
 #include "Exception.h"
+
+#include "FunctionSpace.h"
 
 using namespace std;
 
@@ -35,9 +38,6 @@ FunctionSpace::~FunctionSpace(void){
   // Element To GoD //
   if(eToGod)
     delete eToGod;
-
-  // Unorient GroupOfElement //
-  goe->unoriented();
 }
 
 void FunctionSpace::build(GroupOfElement& goe,
@@ -46,9 +46,6 @@ void FunctionSpace::build(GroupOfElement& goe,
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
-
-  // Orient All Elements //
-  goe.orientAllElements(basis); // NOT SEXY: TO BE REMOVED
 
   // Get Geo Data (WARNING HOMOGENE MESH REQUIRED)//
   const MElement& element = goe.get(0);
@@ -227,7 +224,7 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   // Create New Element With Permuted Vertices //
   // Permutation
   const vector<size_t>& vPerm =
-    (*this->basis)[0]->getReferenceSpace().getNodeIndexFromABCtoUVW(elem);
+    ReferenceSpaceManager::getNodeIndexFromABCtoUVW(elem);
 
   // Permuted Vertices
   const size_t nVertex = element.getNumPrimaryVertices();

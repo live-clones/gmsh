@@ -1,7 +1,8 @@
-#include "HexLagrangeBasis.h"
-#include "HexReferenceSpace.h"
-#include "pointsGenerators.h"
 #include "ElementType.h"
+#include "GmshDefines.h"
+#include "pointsGenerators.h"
+
+#include "HexLagrangeBasis.h"
 
 HexLagrangeBasis::HexLagrangeBasis(size_t order){
   // If order 0 (Nedelec): use order 1
@@ -11,7 +12,7 @@ HexLagrangeBasis::HexLagrangeBasis(size_t order){
   // Set Basis Type //
   this->order = order;
 
-  type = 0;
+  type = TYPE_HEX;
   dim  = 3;
 
   nVertex   =  8;
@@ -25,14 +26,9 @@ HexLagrangeBasis::HexLagrangeBasis(size_t order){
 
   // Init Lagrange Point //
   lPoint = new fullMatrix<double>(gmshGeneratePointsHexahedron(order, false));
-
-  // Reference Space //
-  refSpace  = new HexReferenceSpace;
-  nRefSpace = getReferenceSpace().getNReferenceSpace();
 }
 
 HexLagrangeBasis::~HexLagrangeBasis(void){
   delete lBasis;
   delete lPoint;
-  delete refSpace;
 }

@@ -92,8 +92,8 @@ class ReferenceSpace{
   ReferenceSpace(const std::string& path);
   virtual ~ReferenceSpace(void);
 
-  size_t getNReferenceSpace(void) const;
-  size_t getReferenceSpace(const MElement& element) const;
+  size_t getNOrientation(void) const;
+  size_t getOrientation(const MElement& element) const;
 
   const std::vector<std::vector<std::vector<size_t> > >&
     getEdgeNodeIndex(void) const;
@@ -348,8 +348,13 @@ class ReferenceSpace{
 // Inline Functions //
 //////////////////////
 
-inline size_t ReferenceSpace::getNReferenceSpace(void) const{
+inline size_t ReferenceSpace::getNOrientation(void) const{
   return refSpaceNodeId.size();
+}
+
+inline
+size_t ReferenceSpace::getOrientation(const MElement& element) const{
+  return pTree->getTagFromPermutation(getPermutationIdx(element));
 }
 
 inline
@@ -368,11 +373,6 @@ inline
 const std::vector<size_t>&
 ReferenceSpace::getNodeIndexFromABCtoUVW(const MElement& element) const{
   return ABCtoUVWIndex[getPermutationIdx(element)];
-}
-
-inline
-size_t ReferenceSpace::getReferenceSpace(const MElement& element) const{
-  return pTree->getTagFromPermutation(getPermutationIdx(element));
 }
 
 inline
