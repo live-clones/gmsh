@@ -5250,6 +5250,13 @@ double opt_mesh_file_format(OPT_ARGS_NUM)
   return CTX::instance()->mesh.fileFormat;
 }
 
+double opt_mesh_newton_convergence_test_xyz(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.NewtonConvergenceTestXYZ = (int)val;
+  return CTX::instance()->mesh.NewtonConvergenceTestXYZ;
+}
+
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

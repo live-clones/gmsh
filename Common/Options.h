@@ -415,6 +415,7 @@ double opt_mesh_light(OPT_ARGS_NUM);
 double opt_mesh_light_lines(OPT_ARGS_NUM);
 double opt_mesh_light_two_side(OPT_ARGS_NUM);
 double opt_mesh_file_format(OPT_ARGS_NUM);
+double opt_mesh_newton_convergence_test_xyz(OPT_ARGS_NUM);
 double opt_mesh_msh_file_version(OPT_ARGS_NUM);
 double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM);
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM);

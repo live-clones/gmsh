@@ -877,11 +877,22 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       if(iter < MaxIter && err <= tol &&
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
-        if (onSurface && err2 > 1.e-4 * CTX::instance()->lc)
+
+        if (onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
+            !CTX::instance()->mesh.NewtonConvergenceTestXYZ){
           Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT "
                        "xyz error = %g in point (%e,%e,%e) on surface %d",
                        i, j, err, iter, err2, X, Y, Z, tag());
-        return;
+        }
+
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
+           CTX::instance()->mesh.NewtonConvergenceTestXYZ){
+          // not converged in XYZ coordinates
+        }
+        else{
+          return;
+        }
+
       }
     }
   }
