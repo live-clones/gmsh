@@ -1217,7 +1217,7 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
   minJGlob = 1.0;
   double minGGlob = 1.0;
   double avg = 0.0;
-  int count = 0, nbfair=0;
+  int count = 0, nbfair = 0;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
@@ -1248,12 +1248,12 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
   }
   if(!count) return;
   if (minJGlob > 0)
-    Msg::Info("%s : Worst Face Distorsion Mapping %g Gamma %g Nb elem. (0<d<0.2) = %d",
-              cc, minJGlob, minGGlob,nbfair );
+    Msg::Info("%s: worst distortion = %g (%d elements in ]0, 0.2]); worst gamma = %g",
+              cc, minJGlob, nbfair, minGGlob);
   else
-    Msg::Warning("%s : Worst Face Distorsion Mapping %g (%d negative jacobians) "
-                 "Worst Gamma %g Avg Smoothness %g", cc, minJGlob, bad.size(),
-                 minGGlob, avg / (count ? count : 1));
+    Msg::Warning("%s: worst distortion = %g (avg = %g, %d elements with jac. < 0); "
+                 "worst gamma = %g", cc, minJGlob, avg / (count ? count : 1),
+                 bad.size(), minGGlob);
 }
 
 void checkHighOrderTetrahedron(const char* cc, GModel *m,
@@ -1262,7 +1262,7 @@ void checkHighOrderTetrahedron(const char* cc, GModel *m,
   bad.clear();
   minJGlob = 1.0;
   double avg = 0.0;
-  int count = 0, nbfair=0;
+  int count = 0, nbfair = 0;
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++){
       MTetrahedron *t = (*it)->tetrahedra[i];
@@ -1274,14 +1274,13 @@ void checkHighOrderTetrahedron(const char* cc, GModel *m,
     }
   }
   if(!count) return;
-  if (minJGlob < 0)
-    Msg::Warning("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
-                 "Avg Smoothness %g", cc, minJGlob, bad.size(),
-                 avg / (count ? count : 1));
+
+  if (minJGlob > 0)
+    Msg::Info("%s: worst distortion = %g (%d elements in ]0, 0.2])",
+              cc, minJGlob, nbfair);
   else
-    Msg::Info("%s : Worst Tetrahedron Smoothness %g (%d negative jacobians) "
-                 "Avg Smoothness %g", cc, minJGlob, bad.size(),
-                 avg / (count ? count : 1));
+    Msg::Warning("%s: worst distortion = %g (avg = %g, %d elements with jac. < 0)",
+                 cc, minJGlob, avg / (count ? count : 1), bad.size());
 }
 
 void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
