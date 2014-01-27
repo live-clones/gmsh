@@ -22,8 +22,7 @@
     @interface FunctionSpace
     @brief Common Interface of all Function Spaces
 
-    This is the common interface of
-    all Function Spaces.
+    This is the common interface of all Function Spaces.
 
     A FunctionSpace is defined on a support,
     which is a collection of MElement%s (GroupOfElement).
