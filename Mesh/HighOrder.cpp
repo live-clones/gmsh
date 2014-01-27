@@ -1230,9 +1230,7 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
       if (disto < 0) bad.push_back(t);
       else if (disto < 0.2) nbfair++;
     }
-    /* FIXME THIS IS WRONG (crashes in distoShapeMesure -- see comment in
-       bez2LagPoints in JacobianBasis.cpp)
-
+    /*
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
       MQuadrangle *t = (*it)->quadrangles[i];
       double disto_ = t->distoShapeMeasure();
