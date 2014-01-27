@@ -265,13 +265,18 @@ void OptHOM::OptimPass(alglib::real_1d_array &x,
   if (OPTMETHOD == 1) {
     alglib::mincgstate state;
     alglib::mincgreport rep;
-    mincgcreate(x, state);
-    mincgsetscale(state,scale);
-    mincgsetprecscale(state);
-    mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
-    mincgsetxrep(state, true);
-    alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    mincgresults(state, x, rep);
+    try{
+      mincgcreate(x, state);
+      mincgsetscale(state,scale);
+      mincgsetprecscale(state);
+      mincgsetcond(state, EPSG, EPSF, EPSX, itMax);
+      mincgsetxrep(state, true);
+      alglib::mincgoptimize(state, evalObjGradFunc, printProgressFunc, this);
+      mincgresults(state, x, rep);
+    }
+    catch(alglib::ap_error e){
+      Msg::Error("%s", e.msg.c_str());
+    }
     iterationscount = rep.iterationscount;
     nfev = rep.nfev;
     terminationtype = rep.terminationtype;
@@ -279,13 +284,18 @@ void OptHOM::OptimPass(alglib::real_1d_array &x,
   else {
     alglib::minlbfgsstate state;
     alglib::minlbfgsreport rep;
-    minlbfgscreate(3, x, state);
-    minlbfgssetscale(state,scale);
-    minlbfgssetprecscale(state);
-    minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
-    minlbfgssetxrep(state, true);
-    alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
-    minlbfgsresults(state, x, rep);
+    try{
+      minlbfgscreate(3, x, state);
+      minlbfgssetscale(state,scale);
+      minlbfgssetprecscale(state);
+      minlbfgssetcond(state, EPSG, EPSF, EPSX, itMax);
+      minlbfgssetxrep(state, true);
+      alglib::minlbfgsoptimize(state, evalObjGradFunc, printProgressFunc, this);
+      minlbfgsresults(state, x, rep);
+    }
+    catch(alglib::ap_error e){
+      Msg::Error("%s", e.msg.c_str());
+    }
     iterationscount = rep.iterationscount;
     nfev = rep.nfev;
     terminationtype = rep.terminationtype;
