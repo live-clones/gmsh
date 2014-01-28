@@ -10,10 +10,6 @@
 using namespace std;
 
 FunctionSpace::FunctionSpace(void){
-  // No Dof //
-  dof    = NULL;
-  group  = NULL;
-  eToGod = NULL;
 }
 
 FunctionSpace::~FunctionSpace(void){
@@ -21,23 +17,6 @@ FunctionSpace::~FunctionSpace(void){
   //   (FunctionSpace is not responsible for
   //    'true' Basis Deletion)
   delete basis;
-
-  // Dof //
-  if(dof)
-    delete dof;
-
-  // Group //
-  if(group){
-    size_t nElement = group->size();
-
-    for(size_t i = 0; i < nElement; i++)
-      delete (*group)[i];
-    delete group;
-  }
-
-  // Element To GoD //
-  if(eToGod)
-    delete eToGod;
 }
 
 void FunctionSpace::build(GroupOfElement& goe,
@@ -88,11 +67,7 @@ void FunctionSpace::buildDof(void){
   const vector<const MElement*>& element = goe->getAll();
 
   // Init Struct //
-  dof      = new set<Dof>;
-  group    = new vector<GroupOfDof*>(nElement);
-  eToGod   = new map<const MElement*,
-                     const GroupOfDof*,
-                     ElementComparator>;
+  group.resize(nElement);
 
   // Create Dofs //
   for(size_t i = 0; i < nElement; i++){
@@ -100,47 +75,18 @@ void FunctionSpace::buildDof(void){
     vector<Dof> myDof = getKeys(*(element[i]));
     size_t nDof       = myDof.size();
 
-    // Add Dof
+    // Add Dofs
     for(size_t j = 0; j < nDof; j++)
-      dof->insert(myDof[j]);
-    //vector<Dof> trueDof(nDof);
+      dof.insert(myDof[j]);
 
-    //for(size_t j = 0; j < nDof; j++)
-    //insertDof(myDof[j], trueDof, j);
-
-    // Create new GroupOfDof
-    GroupOfDof* god = new GroupOfDof(*(element[i]), myDof);
-    (*group)[i]     = god;
+    // Save vectorCreate new GroupOfDof
+    group[i] = myDof;
 
     // Map GOD
-    eToGod->insert(pair<const MElement*, const GroupOfDof*>
-                   (element[i], god));
+    eToGod.insert
+      (pair<const MElement*, const vector<Dof>*>(element[i], &group[i]));
   }
 }
-/*
-void FunctionSpace::insertDof(Dof& d,
-                              vector<const Dof*>& trueDof,
-                              size_t index){
-  // Copy 'd'
-  const Dof* tmp = new Dof(d);
-
-  // Try to insert Dof //
-  pair<set<const Dof*, DofComparator>::iterator, bool> p
-    = dof->insert(tmp);
-
-  // If insertion is OK (Dof 'd' didn't exist) //
-  //   --> Add new Dof in GoD
-  if(p.second)
-    trueDof[index] = tmp;
-
-  // If insertion failed (Dof 'd' already exists) //
-  //   --> delete 'tmp' and add existing Dof in GoD
-  else{
-    delete tmp;
-    trueDof[index] = *(p.first);
-  }
-}
-*/
 
 vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Const_Cast //
@@ -266,14 +212,14 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
   }
 }
 
-
-const GroupOfDof& FunctionSpace::
+const std::vector<Dof>& FunctionSpace::
 getGoDFromElement(const MElement& element) const{
 
-  const map<const MElement*, const GroupOfDof*, ElementComparator>::iterator
-    it = eToGod->find(&element);
+  const map<const MElement*,
+            const std::vector<Dof>*,
+            ElementComparator>::const_iterator it = eToGod.find(&element);
 
-  if(it == eToGod->end())
+  if(it == eToGod.end())
     throw
       Exception("Their is no GroupOfDof associated with the given MElement: %d",
                 element.getNum());

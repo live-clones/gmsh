@@ -8,7 +8,6 @@
 
 #include "Comparators.h"
 #include "Dof.h"
-#include "GroupOfDof.h"
 
 #include "Mesh.h"
 #include "GroupOfElement.h"
@@ -58,11 +57,11 @@ class FunctionSpace{
   bool scalar;
 
   // Dofs //
-  std::set<Dof>*            dof;
-  std::vector<GroupOfDof*>* group;
+  std::set<Dof>                  dof;
+  std::vector<std::vector<Dof> > group;
   std::map<
     const MElement*,
-    const GroupOfDof*, ElementComparator>* eToGod;
+    const std::vector<Dof>*, ElementComparator> eToGod;
 
  public:
   virtual ~FunctionSpace(void);
@@ -82,26 +81,16 @@ class FunctionSpace{
 
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
 
-  const std::set<Dof>&            getAllDofs(void) const;
-  const std::vector<GroupOfDof*>& getAllGroups(void) const;
+  const std::set<Dof>&                  getAllDofs(void)   const;
+  const std::vector<std::vector<Dof> >& getAllGroups(void) const;
 
-  const GroupOfDof& getGoDFromElement(const MElement& element) const;
-
-  size_t dofNumber(void) const;
-  size_t groupNumber(void) const;
+  const std::vector<Dof>& getGoDFromElement(const MElement& element) const;
 
  protected:
-  // Init
   FunctionSpace(void);
 
-  void build(GroupOfElement& goe,
-             const Basis& basis);
-
-  // Dof
+  void build(GroupOfElement& goe, const Basis& basis);
   void buildDof(void);
-  void insertDof(Dof& d,
-                 std::vector<const Dof*>& trueDof,
-                 size_t index);
 };
 
 
@@ -203,20 +192,13 @@ inline bool FunctionSpace::isScalar(void) const{
   return scalar;
 }
 
-inline size_t FunctionSpace::dofNumber(void) const{
-  return dof->size();
-}
-
-inline size_t FunctionSpace::groupNumber(void) const{
-  return group->size();
-}
-
 inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
-  return *dof;
+  return dof;
 }
 
-inline const std::vector<GroupOfDof*>& FunctionSpace::getAllGroups(void) const{
-  return *group;
+inline const std::vector<std::vector<Dof> >&
+FunctionSpace::getAllGroups(void) const{
+  return group;
 }
 
 #endif
