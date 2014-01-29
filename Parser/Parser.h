@@ -29,5 +29,6 @@ extern int gmsh_yyviewindex;
 extern std::string gmsh_yyname;
 extern int gmsh_yyerrorstate;
 extern std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
+extern std::map<std::string, std::string> gmsh_yystringsymbols;
 
 #endif

@@ -595,6 +595,7 @@ void ClearProject()
 #endif
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
+  gmsh_yystringsymbols.clear();
 #endif
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
@@ -638,11 +639,15 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
     GModel::current()->destroy();
     GModel::current()->getGEOInternals()->destroy();
     // don't clear the parser variables if we just launched gmsh with the
-    // -string command line option
+    // -string, -setstring or -setnumber command line options
 #if defined(HAVE_PARSER)
     std::string c = Msg::GetCommandLineArgs();
-    if(c.find("-string") == std::string::npos)
+    if(c.find("-string") == std::string::npos &&
+       c.find("-setstring") == std::string::npos &&
+       c.find("-setnumber") == std::string::npos){
       gmsh_yysymbols.clear();
+      gmsh_yystringsymbols.clear();
+    }
 #endif
   }
   else{
@@ -650,6 +655,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
     // variables and add a new model
 #if defined(HAVE_PARSER)
     gmsh_yysymbols.clear();
+    gmsh_yystringsymbols.clear();
 #endif
     new GModel();
     GModel::current(GModel::list.size() - 1);

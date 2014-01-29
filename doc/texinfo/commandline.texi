@@ -126,7 +126,11 @@ Set verbosity level
 @item -nopopup
 Don't popup dialog windows in scripts
 @item -string "string"
-Parse option string at startup
+Parse command string at startup
+@item -setnumber name value
+Set constant number name=value
+@item -setstring name value
+Set constant string name=value
 @item -option file
 Parse option file at startup
 @item -convert files

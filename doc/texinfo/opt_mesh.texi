@@ -209,6 +209,11 @@ Allow transfinite contraints to be modified for Blossom or by global mesh size f
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.NewtonConvergenceTestXYZ
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Format
 Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med, 40=ply2)@*
 Default value: @code{10}@*

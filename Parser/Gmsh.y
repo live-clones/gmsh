@@ -56,9 +56,9 @@ std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
 std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
+std::map<std::string, std::string> gmsh_yystringsymbols;
 
 // Static parser variables (accessible only in this file)
-static std::map<std::string, std::string> gmsh_yystringsymbols;
 #if defined(HAVE_POST)
 static PViewDataList *ViewData;
 #endif

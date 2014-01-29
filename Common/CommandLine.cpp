@@ -36,6 +36,10 @@
 #include "periodical.h"
 #endif
 
+#if defined(HAVE_PARSER)
+#include "Parser.h"
+#endif
+
 int GetGmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
 int GetGmshMinorVersion(){ return GMSH_MINOR_VERSION; }
 int GetGmshPatchVersion(){ return GMSH_PATCH_VERSION; }
@@ -123,7 +127,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-watch pattern",     "Pattern of files to merge as they become available"));
   s.push_back(mp("-v int",             "Set verbosity level"));
   s.push_back(mp("-nopopup",           "Don't popup dialog windows in scripts"));
-  s.push_back(mp("-string \"string\"", "Parse option string at startup"));
+  s.push_back(mp("-string \"string\"", "Parse command string at startup"));
+  s.push_back(mp("-setnumber name value", "Set constant number name=value"));
+  s.push_back(mp("-setstring name value", "Set constant string name=value"));
   s.push_back(mp("-option file",       "Parse option file at startup"));
   s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
   s.push_back(mp("-version",           "Show version number"));
@@ -542,6 +548,27 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing string");
       }
+#if defined(HAVE_PARSER)
+      else if(!strcmp(argv[i] + 1, "setstring")) {
+        i++;
+	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
+          gmsh_yystringsymbols[argv[i]] = argv[i + 1];
+          i += 2;
+	}
+        else
+          Msg::Fatal("Missing name and/or value for string definition");
+      }
+      else if (!strcmp(argv[i]+1, "setnumber")) {
+        i++;
+	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
+          std::vector<double> val(1, atof(argv[i + 1]));
+          gmsh_yysymbols[argv[i]].value = val;
+          i += 2;
+	}
+        else
+          Msg::Error("Missing name and/or value for number definition");
+      }
+#endif
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i])

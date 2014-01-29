@@ -204,6 +204,11 @@ Enable default solver plugins?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.ShowInvisibleParameters
+Show all parameters, even those marked invisible@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.Timeout
 Time (in seconds) before closing the socket if no connection is happening@*
 Default value: @code{5}@*

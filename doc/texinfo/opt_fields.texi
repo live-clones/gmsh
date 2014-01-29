@@ -92,6 +92,14 @@ default value: @code{@{@}}
 Indices of faces in the geometric model for which a boundary layer is needed@*
 type: list@*
 default value: @code{@{@}}
+@item FanNodesList
+Indices of vertices in the geometric model for which a fan is created@*
+type: list@*
+default value: @code{@{@}}
+@item FansList
+Indices of edges in the geometric model for which a fan is created@*
+type: list@*
+default value: @code{@{@}}
 @item IntersectMetrics
 Intersect metrics of all faces@*
 type: integer@*
@@ -104,10 +112,6 @@ default value: @code{@{@}}
 Generate recombined elements in the boundary layer@*
 type: integer@*
 default value: @code{0}
-@item fan_angle
-Threshold angle for creating a mesh fan in the boundary layer@*
-type: float@*
-default value: @code{30}
 @item hfar
 Element size far from the wall@*
 type: float@*
@@ -347,7 +351,7 @@ default value: @code{1}
 @item Z2
 Z coordinate of endpoint 2@*
 type: float@*
-default value: @code{5.98152627002258e-154}
+default value: @code{2.26338226046034e+146}
 @end table
 
 @item Gradient
