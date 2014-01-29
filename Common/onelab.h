@@ -1137,7 +1137,8 @@ namespace onelab{
       }
       return true;
     }
-    void _waitOnSubClients()
+  public:
+    void waitOnSubClients()
     {
       if(!_gmshClient) return;
       while(_numSubClients > 0){
@@ -1180,7 +1181,7 @@ namespace onelab{
     virtual ~remoteNetworkClient()
     {
       if(_gmshClient){
-        _waitOnSubClients();
+        waitOnSubClients();
         _gmshClient->Stop();
         _gmshClient->Disconnect();
         delete _gmshClient;
@@ -1233,7 +1234,7 @@ namespace onelab{
     {
       if(_gmshClient) _gmshClient->ParseString(msg.c_str());
     }
-    void runSubClient(const std::string &name, const std::string &command)
+    void runNonBlockingSubClient(const std::string &name, const std::string &command)
     {
       if(!_gmshClient){
         system(command.c_str());
@@ -1242,7 +1243,11 @@ namespace onelab{
       std::string msg = name + parameter::charSep() + command;
       _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
       _numSubClients += 1;
-      _waitOnSubClients();
+    }
+    void runSubClient(const std::string &name, const std::string &command)
+    {
+      runNonBlockingSubClient(name, command);
+      waitOnSubClients();
     }
   };
 
