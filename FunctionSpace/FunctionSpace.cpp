@@ -13,10 +13,8 @@ FunctionSpace::FunctionSpace(void){
 }
 
 FunctionSpace::~FunctionSpace(void){
-  // Delete Vector of Basis //
-  //   (FunctionSpace is not responsible for
-  //    'true' Basis Deletion)
-  delete basis;
+  // Delete Vector of Basis
+  //   (FunctionSpace is not responsible for 'true' Basis Deletion)
 }
 
 void FunctionSpace::build(GroupOfElement& goe,
@@ -36,26 +34,30 @@ void FunctionSpace::build(GroupOfElement& goe,
   int nFace   = myElement.getNumFaces();
 
   // Init Struct //
-  this->nBasis      = 1;
-  this->basis       = new vector<const Basis*>(nBasis);
-  (*this->basis)[0] = &basis;
+  this->basis.resize(1);
+  this->basis[0] = &basis;
 
   // Number of *Per* Entity functions //
-  fPerVertex = (*this->basis)[0]->getNVertexBased() / nVertex;
-  // NB: fPreVertex = 0 *or* 1
+  // Init
+  fPerVertex.resize(1);
+  fPerEdge.resize(1);
+  fPerFace.resize(1);
+  fPerCell.resize(1);
+
+  // Populate
+  fPerVertex[0] = this->basis[0]->getNVertexBased() / nVertex;
 
   if(nEdge)
-    fPerEdge = (*this->basis)[0]->getNEdgeBased() / nEdge;
+    fPerEdge[0] = this->basis[0]->getNEdgeBased() / nEdge;
   else
-    fPerEdge = 0;
+    fPerEdge[0] = 0;
 
   if(nFace)
-    fPerFace = (*this->basis)[0]->getNFaceBased() / nFace;
+    fPerFace[0] = this->basis[0]->getNFaceBased() / nFace;
   else
-    fPerFace = 0;
+    fPerFace[0] = 0;
 
-  fPerCell = (*this->basis)[0]->getNCellBased();
-  // We always got 1 cell
+  fPerCell[0] = this->basis[0]->getNCellBased();
 
   // Build Dof //
   buildDof();
@@ -79,12 +81,8 @@ void FunctionSpace::buildDof(void){
     for(size_t j = 0; j < nDof; j++)
       dof.insert(myDof[j]);
 
-    // Save vectorCreate new GroupOfDof
+    // Save vector
     group[i] = myDof;
-
-    // Map GOD
-    eToGod.insert
-      (pair<const MElement*, const vector<Dof>*>(element[i], &group[i]));
   }
 }
 
@@ -119,10 +117,10 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
 
   // Create Dof //
   size_t nDof =
-    fPerVertex * nVertex +
-    fPerEdge   * nEdge   +
-    fPerFace   * nFace   +
-    fPerCell   * nCell;
+    fPerVertex[0] * nVertex +
+    fPerEdge[0]   * nEdge   +
+    fPerFace[0]   * nFace   +
+    fPerCell[0]   * nCell;
 
   vector<Dof> myDof(nDof);
 
@@ -130,7 +128,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
 
   // Add Vertex Based Dof //
   for(size_t i = 0; i < nVertex; i++){
-    for(size_t j = 0; j < fPerVertex; j++){
+    for(size_t j = 0; j < fPerVertex[0]; j++){
       myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
       it++;
     }
@@ -138,7 +136,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
 
   // Add Edge Based Dof //
   for(size_t i = 0; i < nEdge; i++){
-    for(size_t j = 0; j < fPerEdge; j++){
+    for(size_t j = 0; j < fPerEdge[0]; j++){
       myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
       it++;
     }
@@ -146,7 +144,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
 
   // Add Face Based Dof //
   for(size_t i = 0; i < nFace; i++){
-    for(size_t j = 0; j < fPerFace; j++){
+    for(size_t j = 0; j < fPerFace[0]; j++){
       myDof[it].setDof(mesh->getGlobalId(face[i]), j);
       it++;
     }
@@ -154,7 +152,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
 
   // Add Cell Based Dof //
   for(size_t i = 0; i < nCell; i++){
-    for(size_t j = 0; j < fPerCell; j++){
+    for(size_t j = 0; j < fPerCell[0]; j++){
       myDof[it].setDof(mesh->getGlobalId(element), j);
       it++;
     }
@@ -210,20 +208,4 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
     for(size_t d = 0; d < nDof; d++)
       dof.insert(myDof[d]);
   }
-}
-
-const std::vector<Dof>& FunctionSpace::
-getGoDFromElement(const MElement& element) const{
-
-  const map<const MElement*,
-            const std::vector<Dof>*,
-            ElementComparator>::const_iterator it = eToGod.find(&element);
-
-  if(it == eToGod.end())
-    throw
-      Exception("Their is no GroupOfDof associated with the given MElement: %d",
-                element.getNum());
-
-  else
-    return *(it->second);
 }

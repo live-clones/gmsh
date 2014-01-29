@@ -17,10 +17,10 @@ interpolateInABC(const MElement& element,
                  double abc[3]) const{
 
   // Get Basis Functions //
-  const size_t nFun = (*basis)[0]->getNFunction();
+  const size_t nFun = basis[0]->getNFunction();
   fullMatrix<double> fun(nFun, 1);
 
-  (*basis)[0]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
+  basis[0]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
   // Interpolate (in Reference Place) //
   double val = 0;
@@ -42,10 +42,10 @@ interpolateDerivativeInABC(const MElement& element,
   invJac.invertInPlace();
 
   // Get Basis Functions //
-  const size_t nFun = (*basis)[0]->getNFunction();
+  const size_t nFun = basis[0]->getNFunction();
   fullMatrix<double> fun(nFun, 3);
 
-  (*basis)[0]->getDerivative(fun, element, abc[0], abc[1], abc[2]);
+  basis[0]->getDerivative(fun, element, abc[0], abc[1], abc[2]);
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);

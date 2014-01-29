@@ -4,18 +4,11 @@
 #include <map>
 #include <vector>
 
-#include "Basis.h"
-
-#include "Comparators.h"
 #include "Dof.h"
-
 #include "Mesh.h"
-#include "GroupOfElement.h"
-
+#include "Basis.h"
 #include "MElement.h"
-#include "MVertex.h"
-#include "MEdge.h"
-#include "MFace.h"
+#include "GroupOfElement.h"
 
 /**
     @interface FunctionSpace
@@ -29,11 +22,10 @@
     Those MElement%s must belong to the same Mesh.
 
     A FunctionSpace is also responsible for the generation of all
-    the Dof%s and GroupOfDof%s related to its geometrical Support.
+    the Dof%s related to its geometrical Support.
 
     @todo
     Allow Hybrid Mesh
-    Remove call to GroupOfElement::orientAllElements()
 */
 
 class Mesh;
@@ -46,12 +38,11 @@ class FunctionSpace{
   GroupOfElement* goe;
 
   // Basis //
-  std::vector<const Basis*>* basis;
-  size_t nBasis;
-  size_t fPerVertex;
-  size_t fPerEdge;
-  size_t fPerFace;
-  size_t fPerCell;
+  std::vector<const Basis*> basis;
+  std::vector<size_t>       fPerVertex;
+  std::vector<size_t>       fPerEdge;
+  std::vector<size_t>       fPerFace;
+  std::vector<size_t>       fPerCell;
 
   // Scalar Field ? //
   bool scalar;
@@ -59,32 +50,23 @@ class FunctionSpace{
   // Dofs //
   std::set<Dof>                  dof;
   std::vector<std::vector<Dof> > group;
-  std::map<
-    const MElement*,
-    const std::vector<Dof>*, ElementComparator> eToGod;
 
  public:
   virtual ~FunctionSpace(void);
 
   const std::vector<const Basis*>& getBasis(const MElement& element) const;
   const Basis&                     getBasis(size_t i) const;
-  size_t                           getNBasis(void) const;
 
   GroupOfElement& getSupport(void) const;
   bool            isScalar(void) const;
 
   std::vector<Dof> getUnorderedKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MElement& element) const;
-  std::vector<Dof> getKeys(const MVertex& vertex) const;
-  std::vector<Dof> getKeys(const MEdge& edge) const;
-  std::vector<Dof> getKeys(const MFace& face) const;
 
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
 
   const std::set<Dof>&                  getAllDofs(void)   const;
   const std::vector<std::vector<Dof> >& getAllGroups(void) const;
-
-  const std::vector<Dof>& getGoDFromElement(const MElement& element) const;
 
  protected:
   FunctionSpace(void);
@@ -142,28 +124,8 @@ class FunctionSpace{
    **
 
    @fn FunctionSpace::getAllGroups
-   @return Returns all the GroupOfDof%s associated to every Element%s
+   @return Returns all the Dof%s associated to every Element%s
    of this FunctionSpace support
-   **
-
-   @fn FunctionSpace::getGoDFromElement
-   @param element An Element of the FunctionSpace Support
-   @return Returns the GroupOfDof%s associated to
-   the given Element
-
-   If the given Element is not in the FunctionSpace Support,
-   an Exception is thrown
-   **
-
-   @fn FunctionSpace::dofNumber
-   @return Returns the number of Dof%s
-   given by FunctionSpace::getAllDofs()
-   **
-
-   @fn FunctionSpace::groupNumber
-   @return Returns the number of GroupOfDof%s
-   given by FunctionSpace::getAllGroups()
-   **
 */
 
 
@@ -173,15 +135,11 @@ class FunctionSpace{
 
 inline const std::vector<const Basis*>&
 FunctionSpace::getBasis(const MElement& element) const{
-  return *basis;
+  return basis;
 }
 
 inline const Basis& FunctionSpace::getBasis(size_t i) const{
-  return *(*basis)[i];
-}
-
-inline size_t FunctionSpace::getNBasis(void) const{
-  return nBasis;
+  return *basis[i];
 }
 
 inline GroupOfElement& FunctionSpace::getSupport(void) const{
