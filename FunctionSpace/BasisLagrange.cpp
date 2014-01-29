@@ -1,5 +1,6 @@
 #include "ReferenceSpaceManager.h"
 #include "BasisLagrange.h"
+#include "Exception.h"
 
 using namespace std;
 
