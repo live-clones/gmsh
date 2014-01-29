@@ -320,7 +320,7 @@ class client :
       s = addr.split(':')
       self.socket.connect((s[0], int(s[1])))
 
-  def _waitOnSubClients(self):
+  def waitOnSubClients(self):
     if not self.socket :
       return
     while self._numSubClients > 0:
@@ -328,7 +328,7 @@ class client :
       if t == self._GMSH_STOP :
         self._numSubClients -= 1
 
-  def runSubClient(self, name, command, arguments=''):
+  def runNonBlockingSubClient(self, name, command, arguments=''):
     # create command line
     if self.action == "check":
       cmd = command
@@ -339,7 +339,10 @@ class client :
     msg = [name, cmd]
     self._send(self._GMSH_CONNECT, '\0'.join(msg))
     self._numSubClients +=1
-    self._waitOnSubClients() # makes the subclient blocking
+
+  def runSubClient(self, name, command, arguments=''):
+    self.runNonBlockingSubClient(name, command, arguments)
+    self.waitOnSubClients() # makes the subclient blocking
 
   def run(self, name, command, arguments=''):
     self.runSubClient(name, command, arguments)
@@ -363,7 +366,7 @@ class client :
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
     if self.socket :
-      self._waitOnSubClients()
+      self.waitOnSubClients()
       self._send(self._GMSH_STOP, 'Goodbye!')
       self.socket.close()
       self.socket = None
