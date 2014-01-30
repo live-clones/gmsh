@@ -12,9 +12,6 @@
    This class is a @em Vectorial FunctionSpaces.@n
 
    A FunctionSpaceVector can be @em interpolated.
-
-   @todo
-   Allow interpolation with multiple basis
 */
 
 

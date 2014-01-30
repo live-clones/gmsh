@@ -23,9 +23,6 @@
 
     A FunctionSpace is also responsible for the generation of all
     the Dof%s related to its geometrical Support.
-
-    @todo
-    Allow Hybrid Mesh
 */
 
 class Mesh;
@@ -33,16 +30,22 @@ class GroupOfElement;
 
 class FunctionSpace{
  protected:
+  // Number of possible geomtrical topologies //
+  static const size_t nGeoType;
+
+ protected:
   // Geometry //
   const Mesh*     mesh;
   GroupOfElement* goe;
 
   // Basis //
+  bool self;
   std::vector<const Basis*> basis;
-  std::vector<size_t>       fPerVertex;
-  std::vector<size_t>       fPerEdge;
-  std::vector<size_t>       fPerFace;
-  std::vector<size_t>       fPerCell;
+
+  size_t fPerVertex;
+  size_t fPerEdge;
+  size_t fPerFace;
+  size_t fPerCell;
 
   // Scalar Field ? //
   bool scalar;
@@ -72,6 +75,8 @@ class FunctionSpace{
   FunctionSpace(void);
 
   void build(GroupOfElement& goe, const Basis& basis);
+  void build(GroupOfElement& goe,
+             size_t order, size_t form, std::string family);
   void buildDof(void);
 };
 

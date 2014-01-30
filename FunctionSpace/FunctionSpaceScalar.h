@@ -11,15 +11,14 @@
    This class is a @em Scalar FunctionSpaces.@n
 
    A FunctionSpaceScalar can be @em interpolated.
-
-   @todo
-   Allow interpolation with multiple basis
 */
 
 
 class FunctionSpaceScalar : public FunctionSpace{
  public:
   FunctionSpaceScalar(GroupOfElement& goe, const Basis& basis);
+  FunctionSpaceScalar(GroupOfElement& goe, size_t order);
+
   virtual ~FunctionSpaceScalar(void);
 
   double
