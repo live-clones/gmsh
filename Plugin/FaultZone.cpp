@@ -44,7 +44,7 @@ std::string GMSH_FaultZonePlugin::getHelp() const
          "Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster."
          "\n\n"
          "`SurfaceTag' must be an existing plane surface containing embedded lines. "
-         "Embedded lines must have been added to the surface via the command Line {} In Surface {}. "
+         "Embedded lines must have been added to the surface via the command Line In Surface. "
          "The surface must be meshed with quadratic incomplete elements."
          "\n\n"
          "`Thickness' is the thichness of the flat quadrangles. "
@@ -84,23 +84,23 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
   int tag = (int)FaultZoneOptions_Number[0].def;
   double eps = (double)FaultZoneOptions_Number[1].def;
   std::string prefix = FaultZoneOptions_String[0].def;
-  
+
   // controls
-  
+
   GModel *gModel = GModel::current();
-  
+
   GFace *gFace = gModel->getFaceByTag(tag);
-  
+
   if (!gFace){
     Msg::Error("Face %d does not exist or was not meshed",tag);
     return view;
   }
-  
+
   if (!gFace->embeddedEdges().size()){
     Msg::Error("No line to treat in this surface");
     return view;
   }
-  
+
   std::list< GEdge* > embeddedEdges = gFace->embeddedEdges();
   std::list<GEdge*>::const_iterator itl;
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl)
@@ -110,14 +110,14 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
     Msg::Error("The plugin FaultZone may have been already run for this surface. Reload your geometry");
     return view;
   }
-  
+
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl)
     if ((*itl)->geomType() != GEntity::Line) break;
   if (itl != embeddedEdges.end()){
     Msg::Error("All the embedded edges must be straight lines");
     return view;
   }
-  
+
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl){
     Curve* c = FindCurve((*itl)->tag());
     if (c && List_Nbr(c->Control_Points) > 2) break;
@@ -126,7 +126,7 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
     Msg::Error("The embedded edges must not contain control points");
     return view;
   }
-  
+
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl){
     GEdge* gEdge = *itl;
     unsigned int i = 0;
@@ -138,26 +138,26 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
     Msg::Error("The mesh must be order 2");
     return view;
   }
-  
+
   // end of controls
-  
+
   GMSH_FaultZoneMesher faultZoneMesher;
-  
+
   faultZoneMesher.RetriveFissuresInfos(gFace);
-  
+
   faultZoneMesher.DuplicateNodes();
-  
+
   faultZoneMesher.ComputeHeavisideFunction();
 
   faultZoneMesher.CreateJointElements(gModel, gFace, prefix);
-  
+
   faultZoneMesher.ModifyElementsConnectivity(gFace);
-  
+
   if (eps)
     faultZoneMesher.ModifyJointNodePosition(eps/2);
-  
+
   CTX::instance()->mesh.changed = ENT_ALL;
-  
+
   return view;
 }
 
@@ -174,10 +174,10 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
  */
 //================================================================================
 void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
-  
+
   std::list< GEdge* > embeddedEdges = gFace->embeddedEdges();
   std::list< GEdge* > edges = gFace->edges();
-  
+
   // set with all the MVertex of the fissures
   std::set < MVertex* > allFissuresVertices;
   for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl){
@@ -188,8 +188,8 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
     allFissuresVertices.insert(gEdge->getBeginVertex()->getMeshVertex(0));
     allFissuresVertices.insert(gEdge->getEndVertex()->getMeshVertex(0));
   }
-  
-  // set with all quadratic MVertex of the fissures connected to the surface  
+
+  // set with all quadratic MVertex of the fissures connected to the surface
   std::set < MVertex* > allConnectedQuadraticVertices;
   // fill _connectedElements
   for(unsigned int i = 0; i < gFace->getNumMeshElements(); i++){
@@ -218,27 +218,27 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
       }
     }
   }
-  
+
   for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl){
     GEdge *gEdge = *itl;
     if (gEdge->length() == 0)// nothing to do if there is no element
       continue;
-    
+
     MVertex *mVertexBegin = gEdge->getBeginVertex()->getMeshVertex(0);
     MVertex *mVertexEnd = gEdge->getEndVertex()->getMeshVertex(0);
-    
+
     SPoint3 pointBegin = gEdge->getBeginVertex()->xyz();
     SPoint3 pointEnd = gEdge->getEndVertex()->xyz();
-    
+
     SVector3 vectTanBegin = SVector3(pointEnd, pointBegin);
     SVector3 vectTanEnd = SVector3(pointBegin, pointEnd);
     SVector3 vectNorm  = crossprod(vectZ , vectTanEnd);
-    
+
     vectTanBegin.normalize();
     vectTanEnd.normalize();
     double norm = vectNorm.normalize();
     assert(norm);
-    
+
     // fill _jointElements and _fissureByHeavNode
     for(unsigned int i = 0; i < gEdge->getNumMeshElements(); i++){
       MElement *mElem = gEdge->getMeshElement(i);
@@ -251,29 +251,29 @@ void GMSH_FaultZoneMesher::RetriveFissuresInfos(GFace* gFace){
           break;
         }
       }
-      
+
       if (its != _jointElements.end()){
         Msg::Warning("Element edge %d appears in a second GEntity", mElem->getNum());
         continue;
       }
-      
+
       // the MElements are considered connected if the quadratic node is connected
       std::set < MVertex* >::iterator its2 = allConnectedQuadraticVertices.find( mElem->getVertex(2) );
       if (its2 == allConnectedQuadraticVertices.end()){
         Msg::Warning("Element edge %d seams to be not connected, it will be ignored", mElem->getNum());
         continue;
       }
-      
+
       _jointElements.insert(mElem);
       for(int j = 0; j < mElem->getNumVertices(); j++){
         MVertex *mVert = mElem->getVertex(j);
         _fissureByHeavNode[mVert] = gEdge;
       }
     }
-    
+
     // fill _vectNormByFissure
     _vectNormByFissure[gEdge] = vectNorm;
-    
+
     // fill _fissuresByJunctionNode and _vectsTanByJunctionNode
     std::map < MVertex* , GEdge* >::iterator itm = _fissureByHeavNode.find(mVertexBegin);
     if (itm != _fissureByHeavNode.end()){
@@ -311,18 +311,18 @@ const double GMSH_FaultZoneMesher::tolerance = 1.e-12;
  *     _nodeByHeavNode;
  *     _nodeJointByHeavOrJunctionNode;
  *     _nodesByJunctionNode;
- * 
+ *
  * The new nodes are not yet associated to a GEntity. The association
  * will be done in the CreateJointElements function.
  */
 //================================================================================
 void GMSH_FaultZoneMesher::DuplicateNodes(){
-  
+
   // fill _nodeJointByHeavOrJunctionNode and _nodesByJunctionNode
   for(std::map<MVertex*,std::vector<GEdge*> >::iterator itm=_fissuresByJunctionNode.begin();itm != _fissuresByJunctionNode.end();){
     MVertex *mVert = itm->first;
     std::vector < GEdge* > fissures = itm->second;
-    
+
     unsigned int nbFiss = fissures.size();
     if (nbFiss == 1){ // if only one fissure, the node will be treated in _fissureByHeavNode
       _fissureByHeavNode[mVert] = fissures.front();
@@ -344,7 +344,7 @@ void GMSH_FaultZoneMesher::DuplicateNodes(){
       itm++;
     }
   }
-  
+
   // fill _nodeJointByHeavOrJunctionNode and _nodeByHeavNode
   for(std::map<MVertex*,GEdge*>::iterator itm=_fissureByHeavNode.begin();itm != _fissureByHeavNode.end(); itm++){
     MVertex *mVert = itm->first;
@@ -358,7 +358,7 @@ void GMSH_FaultZoneMesher::DuplicateNodes(){
     mVertHeav = new MVertex(mVert->x(), mVert->y(), mVert->z());
     _nodeByHeavNode[mVert] = mVertHeav;
   }
-  
+
 }
 
 //================================================================================
@@ -366,7 +366,7 @@ void GMSH_FaultZoneMesher::DuplicateNodes(){
  * \brief compute Heaviside function for junction nodes
  * this function fills in the following maps :
  *     _heavFuncByJunctionNode;
- * 
+ *
  * The _heavFuncByJunctionNode map is used to determinate from which
  * domain the junction nodes contained in _nodesByJunctionNode are
  * associated. A domain is characterised by the Heaviside values of
@@ -376,7 +376,7 @@ void GMSH_FaultZoneMesher::DuplicateNodes(){
  */
 //================================================================================
 void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
-  
+
   for (std::map<MVertex*,std::vector<GEdge*> >::iterator itm = _fissuresByJunctionNode.begin(); itm != _fissuresByJunctionNode.end(); itm++){
     MVertex *mVert = itm->first;
     std::vector < GEdge* > fissures = itm->second;
@@ -384,17 +384,17 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
     assert(size >= 2);
     std::vector < SVector3 > vectsTan = _vectsTanByJunctionNode[mVert];
     assert(vectsTan.size() == size);
-    
+
     std::vector < SVector3 > vectsNor;
     for (std::vector<GEdge*>::iterator itl = fissures.begin(); itl != fissures.end(); itl++){
       vectsNor.push_back(_vectNormByFissure[*itl]);
     }
     assert(vectsNor.size() == size);
     std::vector < std::vector< int> > heavFunc;
-    
+
     for (unsigned int i=0; i < size; i++){
       std::vector < int > heav(size, 0);
-      
+
       if (i == 0){
         heavFunc.insert(heavFunc.begin(), heav);
         continue;
@@ -410,7 +410,7 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
       }
       if (!under) heav[i] = 1;
       if (under && !upper) heav[i] = -1;
-      
+
       // compute the heaviside functions of the precedent fissures for a point located on fissure i
       for (unsigned int j=0; j < i;j++){
         double lsn = -dot(vectsNor[j], vectsTan[i]);
@@ -420,7 +420,7 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
         }
         heav[j] = sign(lsn);
       }
-      
+
       if (heav[i] != 0){
         // add the new domain on the side where the precedent fissure are
         //
@@ -478,11 +478,11 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
  */
 //================================================================================
 std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3& sPoint){
-  
+
   SVector3 vectPoint = SVector3(mVert->point(), sPoint);
   double norm = vectPoint.normalize();
   assert(norm);
-  
+
   std::vector < int > heav;
   if (_nodeByHeavNode.find( mVert ) != _nodeByHeavNode.end()){// if it is a pure heaviside node
     SVector3 vectNorm = _vectNormByFissure[_fissureByHeavNode[mVert]];
@@ -510,7 +510,7 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
   }
   else// if it is not a heaviside node
     assert(false);
-  
+
   return heav;
 }
 
@@ -521,35 +521,35 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
  * additionnal nodes are picked in the _nodeJointByHeavOrJunctionNode,
  * _nodeByHeavNode and _nodesByJunctionNode maps. In case of _nodesByJunctionNode,
  * the _heavFuncByJunctionNode map is used to found the corresponding node.
- * 
+ *
  * this function also replace physical edges containning the embedded edges by
  * new corresponding physical faces
  */
  //================================================================================
 void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std::string prefix){
-  
+
   std::list< GEdge * > embeddedEdges = gFace->embeddedEdges();
   std::map < int , int > discreteFaceEntityByEmbeddedEdgeEntity;
   for(std::list<GEdge*>::const_iterator itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl){
     GEdge *gEdge = *itl;
     if (gEdge->length() == 0)// nothing to do if there is no element
       continue;
-    
+
     // creation of a new GFace
     GFace *jointFace = new discreteFace(gModel, gModel->getMaxElementaryNumber(2) + 1);
     discreteFaceEntityByEmbeddedEdgeEntity[gEdge->tag()] = jointFace->tag();
     gModel->add(jointFace);
-    
+
     // for each MElement in the GEdge, a new MElement is created and inserted in GFace
     for(unsigned int i = 0; i < gEdge->getNumMeshElements(); i++){
       MElement *mElem = gEdge->getMeshElement(i);
       elementsIt its = _jointElements.find(mElem);
       if (its == _jointElements.end())
         continue;
-      
+
       SPoint3 bary = mElem->barycenter();
       MVertex* mVerts[8];
-      
+
       // check orientation
       SVector3 nor = _vectNormByFissure[gEdge];
       SVector3 tan = mElem->getEdge(0).tangent();
@@ -558,11 +558,11 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std
       // retriving MVertices to create the new MElement
       for(int i = 0; i < mElem->getNumVertices(); i++){
         MVertex *mVert = mElem->getVertex(i);
-        
+
         int j = (changeOri && i<2)?!i:i;
         if (j<2) // adding intern node
           mVerts[_numNodeJoint[j]] = _nodeJointByHeavOrJunctionNode[mVert];
-        
+
         if (_nodeByHeavNode.find( mVert ) != _nodeByHeavNode.end()){
           // adding upper and under nodes
           mVerts[_numNodeHeavInf[j]] = mVert;
@@ -578,18 +578,18 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std
           assert (heavFunc.size() == size);
           std::vector < MVertex*> nodes = _nodesByJunctionNode[mVert];
           assert (nodes.size() == size);
-          
+
           unsigned int k;
           for (k=0; k < size; k++){
             if (fissures[k]->tag() == gEdge->tag())
               break;
           }
           assert(k < size);
-          
+
           // adding under node
           heav[k] = -1;
           mVerts[_numNodeHeavInf[j]] = nodes[findMatchingHeav(heavFunc, heav)];
-          
+
           // adding upper node
           heav[k] =  1;
           mVerts[_numNodeHeavSup[j]] = nodes[findMatchingHeav(heavFunc, heav)];
@@ -613,7 +613,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace, std
     gEdge->setVisibility(0);
     gEdge->setLength(0);
   }
-  
+
   // replace physical edges by physical surfaces
   for(int i = 0; i < List_Nbr(gModel->getGEOInternals()->PhysicalGroups); i++){
     PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
@@ -674,7 +674,7 @@ const int GMSH_FaultZoneMesher::_numNodeJoint[2]   = {7, 5};
  */
  //================================================================================
 void GMSH_FaultZoneMesher::ModifyElementsConnectivity(GFace* gFace){
-    
+
   // modif connectivity in _connectedElements
   for(elementsIt its = _connectedElements.begin();its != _connectedElements.end(); ++its){
     MElement *mElem = *its;
@@ -685,7 +685,7 @@ void GMSH_FaultZoneMesher::ModifyElementsConnectivity(GFace* gFace){
       MVertex *mVert = mVerts[j];
       if (_nodeByHeavNode.find( mVert ) == _nodeByHeavNode.end() && _nodesByJunctionNode.find( mVert ) == _nodesByJunctionNode.end())
         continue;
-      
+
       std::vector < int > heav = HeavisideFunc(mVert, bary);
       unsigned int size = heav.size();
       if (size == 1){ // if it is a pure heaviside node
@@ -714,7 +714,7 @@ void GMSH_FaultZoneMesher::ModifyElementsConnectivity(GFace* gFace){
  */
 //================================================================================
 void GMSH_FaultZoneMesher::ModifyJointNodePosition(double eps){
-  
+
   // for pure heaviside nodes
   for (std::map<MVertex*,MVertex*>::iterator itm = _nodeByHeavNode.begin(); itm != _nodeByHeavNode.end(); itm++){
     // under side
@@ -730,7 +730,7 @@ void GMSH_FaultZoneMesher::ModifyJointNodePosition(double eps){
     mVert->y() += vectNorm.y();
     mVert->z() += vectNorm.z();
   }
-  
+
   // for junction nodes
   std::map < MVertex*, std::set < MElement* > > connectedElementsByJunctionNode;
   for (std::map<MVertex*,std::vector<MVertex*> >::iterator itm = _nodesByJunctionNode.begin(); itm != _nodesByJunctionNode.end(); itm++){
@@ -740,7 +740,7 @@ void GMSH_FaultZoneMesher::ModifyJointNodePosition(double eps){
       connectedElementsByJunctionNode[nodes[i]] = mElements;
     }
   }
-  
+
   std::map<MVertex*,std::set<MElement*> >::iterator itm;
   for(elementsIt its = _connectedElements.begin();its != _connectedElements.end(); ++its){
     MElement *mElem = *its;
@@ -753,11 +753,11 @@ void GMSH_FaultZoneMesher::ModifyJointNodePosition(double eps){
       }
     }
   }
-  
+
   for (itm = connectedElementsByJunctionNode.begin(); itm != connectedElementsByJunctionNode.end(); itm++){
     MVertex *mVert = itm->first;
     SPoint3 point = mVert->point();
-    
+
     std::set < MElement* > mElements = itm->second;
     assert(mElements.size() > 0);
     SVector3 vect = SVector3(0,0,0);
