@@ -20,9 +20,7 @@ FunctionSpace::~FunctionSpace(void){
       delete basis[i];
 }
 
-void FunctionSpace::build(GroupOfElement& goe,
-                          size_t order, size_t form, string family){
-
+void FunctionSpace::build(GroupOfElement& goe, string family){
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());

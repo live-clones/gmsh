@@ -2,14 +2,20 @@
 #include "FunctionSpaceVector.h"
 
 FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe, size_t order){
-  scalar = false;
-  build(goe, order, 1, "hierarchical");
+  this->scalar = false;
+  this->form   = 1;
+  this->order  = order;
+
+  build(goe, "hierarchical");
 }
 
 FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe, size_t order,
                                          std::string family){
-  scalar = false;
-  build(goe, order, 1, family);
+  this->scalar = false;
+  this->form   = 1;
+  this->order  = order;
+
+  build(goe, family);
 }
 
 FunctionSpaceVector::~FunctionSpaceVector(void){
@@ -26,14 +32,12 @@ interpolateInABC(const MElement& element,
   ReferenceSpaceManager::getJacobian(element, abc[0], abc[1], abc[2], invJac);
   invJac.invertInPlace();
 
-  // Element Type //
-  const int eType = element.getType();
-
   // Get Basis Functions //
-  const size_t nFun = basis[eType]->getNFunction();
+  const Basis& basis = getBasis(element);
+  const size_t nFun  = basis.getNFunction();
   fullMatrix<double> fun(nFun, 3);
 
-  basis[eType]->getFunctions(fun, element, abc[0], abc[1], abc[2]);
+  basis.getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);

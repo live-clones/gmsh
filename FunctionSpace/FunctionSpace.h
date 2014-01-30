@@ -46,8 +46,10 @@ class FunctionSpace{
   size_t fPerFace;
   size_t fPerCell;
 
-  // Scalar Field ? //
-  bool scalar;
+  // Differential From & Order //
+  bool   scalar;
+  size_t form;
+  size_t order;
 
   // Dofs //
   std::set<Dof>                  dof;
@@ -56,11 +58,14 @@ class FunctionSpace{
  public:
   virtual ~FunctionSpace(void);
 
-  const std::vector<const Basis*>& getBasis(const MElement& element) const;
-  const Basis&                     getBasis(size_t i) const;
+  const Basis& getBasis(const MElement& element) const;
+  const Basis& getBasis(size_t i) const;
 
   GroupOfElement& getSupport(void) const;
-  bool            isScalar(void) const;
+
+  bool   isScalar(void) const;
+  size_t getForm(void)  const;
+  size_t getOrder(void) const;
 
   std::vector<Dof> getUnorderedKeys(const MElement& element) const;
   std::vector<Dof> getKeys(const MElement& element) const;
@@ -72,8 +77,8 @@ class FunctionSpace{
 
  protected:
   FunctionSpace(void);
-  void build(GroupOfElement& goe,
-             size_t order, size_t form, std::string family);
+
+  void build(GroupOfElement& goe, std::string family);
   void buildDof(void);
 };
 
@@ -135,9 +140,8 @@ class FunctionSpace{
 // Inline Functions //
 //////////////////////
 
-inline const std::vector<const Basis*>&
-FunctionSpace::getBasis(const MElement& element) const{
-  return basis;
+inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
+  return *basis[element.getType()];
 }
 
 inline const Basis& FunctionSpace::getBasis(size_t i) const{
@@ -150,6 +154,14 @@ inline GroupOfElement& FunctionSpace::getSupport(void) const{
 
 inline bool FunctionSpace::isScalar(void) const{
   return scalar;
+}
+
+inline size_t FunctionSpace::getForm(void) const{
+  return form;
+}
+
+inline size_t FunctionSpace::getOrder(void) const{
+  return order;
 }
 
 inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
