@@ -39,7 +39,6 @@ class FunctionSpace{
   GroupOfElement* goe;
 
   // Basis //
-  bool self;
   std::vector<const Basis*> basis;
 
   size_t fPerVertex;
@@ -73,8 +72,6 @@ class FunctionSpace{
 
  protected:
   FunctionSpace(void);
-
-  void build(GroupOfElement& goe, const Basis& basis);
   void build(GroupOfElement& goe,
              size_t order, size_t form, std::string family);
   void buildDof(void);

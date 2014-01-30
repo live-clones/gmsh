@@ -1,15 +1,15 @@
 #include "Mapper.h"
 #include "FunctionSpaceScalar.h"
 
-FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe,
-                                         const Basis& basis){
-  scalar = true;
-  build(goe, basis);
-}
-
 FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe, size_t order){
   scalar = true;
   build(goe, order, 0, "hierarchical");
+}
+
+FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe, size_t order,
+                                         std::string family){
+  scalar = true;
+  build(goe, order, 0, family);
 }
 
 FunctionSpaceScalar::~FunctionSpaceScalar(void){

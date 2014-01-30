@@ -1,10 +1,15 @@
 #include "Mapper.h"
 #include "FunctionSpaceVector.h"
 
-FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe,
-                                         const Basis& basis){
+FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe, size_t order){
   scalar = false;
-  build(goe, basis);
+  build(goe, order, 1, "hierarchical");
+}
+
+FunctionSpaceVector::FunctionSpaceVector(GroupOfElement& goe, size_t order,
+                                         std::string family){
+  scalar = false;
+  build(goe, order, 1, family);
 }
 
 FunctionSpaceVector::~FunctionSpaceVector(void){

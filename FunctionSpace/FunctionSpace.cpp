@@ -15,64 +15,9 @@ FunctionSpace::FunctionSpace(void){
 }
 
 FunctionSpace::~FunctionSpace(void){
-  if(self)
-    for(size_t i = 0; i < nGeoType; i++)
-      if(basis[i])
-        delete basis[i];
-}
-
-void FunctionSpace::build(GroupOfElement& goe,
-                          const Basis& basis){
-
-  // Save GroupOfElement & Mesh //
-  this->goe  = &goe;
-  this->mesh = &(goe.getMesh());
-
-  // Check if homogene GoE and get geo type //
-  const vector<size_t>& gType = goe.getTypeStats();
-  const size_t nGType = gType.size();
-  size_t eType = (size_t)(-1);
-
-  for(size_t i = 0; i < nGType; i++)
-    if((eType == (size_t)(-1)) && (gType[i] != 0))
-      eType = i;
-    else if((eType != (size_t)(-1)) && (gType[i] != 0))
-      throw Exception("FunctionSpace needs a uniform mesh");
-
-  // Check if basis is matching type //
-  if(eType != basis.getType())
-    throw Exception("FunctionSpace: Basis is not matching type");
-
-  // Alloc Bases and save given Basis //
-  this->self = false;
-  this->basis.resize(nGeoType, NULL);
-  this->basis[eType] = &basis;
-
-  // Get Number of Function per Entity //
-  // Same for all basis since we have a uniform order
-  MElement& myElement = const_cast<MElement&>(goe.get(0));
-
-  int nVertex = myElement.getNumPrimaryVertices();
-  int nEdge   = myElement.getNumEdges();
-  int nFace   = myElement.getNumFaces();
-
-  // Number of *Per* Entity functions //
-  fPerVertex = this->basis[eType]->getNVertexBased() / nVertex;
-
-  if(nEdge)
-    fPerEdge = this->basis[eType]->getNEdgeBased() / nEdge;
-  else
-    fPerEdge = 0;
-
-  if(nFace)
-    fPerFace = this->basis[eType]->getNFaceBased() / nFace;
-  else
-    fPerFace = 0;
-
-  fPerCell = this->basis[eType]->getNCellBased();
-
-  // Build Dof //
-  buildDof();
+  for(size_t i = 0; i < nGeoType; i++)
+    if(basis[i])
+      delete basis[i];
 }
 
 void FunctionSpace::build(GroupOfElement& goe,
@@ -83,7 +28,6 @@ void FunctionSpace::build(GroupOfElement& goe,
   this->mesh = &(goe.getMesh());
 
   // Alloc Basis Vector for all possible geomtrical types //
-  self = true;
   basis.resize(nGeoType, NULL);
 
   // Generate Bases //
