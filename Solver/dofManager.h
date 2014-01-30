@@ -249,6 +249,18 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
+  
+  virtual inline void getFixedDof(Dof key, dataVec& val) const{
+	typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
+	if (it != fixed.end()) {
+      val =  it->second;
+    }
+	else{
+	  Msg::Error("getFixedDof: Dof is not fixed");
+	  return;
+	}
+    
+  };
 
   virtual inline void getDofValue(Dof key,  dataVec &val) const
   {
