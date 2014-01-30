@@ -420,7 +420,7 @@ Default value: @code{-1}
 @item Plugin(FaultZone)
 Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to flat quadrangles. Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster.
 
-`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line {} In Surface {}. The surface must be meshed with quadratic incomplete elements.
+`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.
 
 `Thickness' is the thichness of the flat quadrangles. Set a value different to zero can be helpfull to check the connectivity. 
 
