@@ -250,7 +250,7 @@ class dofManager : public dofManagerBase{
     return false;
   }
   
-  virtual inline void getFixedDof(Dof key, dataVec& val) const{
+  virtual inline void getFixedDofValue(Dof key, dataVec& val) const{
 	typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
 	if (it != fixed.end()) {
       val =  it->second;
