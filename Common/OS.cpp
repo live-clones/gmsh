@@ -352,19 +352,14 @@ int CreateDirectory(const std::string &dirName)
 
 void CreatePath(const std::string &fullPath)
 {
-    size_t lastp = fullPath.find_last_of('/'); //TODO ?? win ==> backslash ??
-    if(lastp == std::string::npos) return;
-    std::string dirname = std::string(fullPath, 0, lastp);
-    size_t cur = 0;
-    while(cur != std::string::npos) {
-      cur = dirname.find("/", cur + 1);
-      CreateDirectory( dirname.substr(0,cur) );
-/*#if defined(WIN32) && !defined(__CYGWIN__)
-      mkdir(dirname.substr(0,cur).c_str());
-#else
-      mkdir(dirname.substr(0,cur).c_str(),S_IRWXG|S_IRWXU);
-#endif*/
-    }
+  size_t lastp = fullPath.find_last_of('/'); // TODO: handle backslash for win?
+  if(lastp == std::string::npos) return;
+  std::string dirname = std::string(fullPath, 0, lastp);
+  size_t cur = 0;
+  while(cur != std::string::npos) {
+    cur = dirname.find("/", cur + 1);
+    CreateDirectory(dirname.substr(0, cur));
+  }
 }
 
 int KillProcess(int pid)
