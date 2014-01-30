@@ -144,6 +144,14 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   for(int i = 0; i < doc.numTriangles; i++){
+    int a = doc.triangles[i].a;
+    int b = doc.triangles[i].b;
+    int c = doc.triangles[i].c;
+    int n = doc.numPoints;
+    if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n){
+      Msg::Warning("Skipping bad triangle %d", i);
+      continue;
+    }
     PointData *p[3];
     p[0] = (PointData*)doc.points[doc.triangles[i].a].data;
     p[1] = (PointData*)doc.points[doc.triangles[i].b].data;

@@ -594,7 +594,7 @@ static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & be
   else bedges.erase(it);
 }
 
-void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
+static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 {
   if (!buildAdditionalPoints2D (gf))return;
   BoundaryLayerColumns* _columns = gf->getColumns();
@@ -660,7 +660,7 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
        itf != _columns->endf() ; ++itf){
     MVertex *v = itf->first;
     int nbCol = _columns->getNbColumns(v);
-    
+
     std::vector<MElement*> myCol;
     for (int i=0;i<nbCol-1;i++){
       const BoundaryLayerData & c1 = _columns->getColumn(v,i);
@@ -753,6 +753,160 @@ void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 }
 
+static bool inside_domain(MElementOctree* octree,double x,double y)
+{
+  MElement* element;
+  element = (MElement*)octree->find(x,y,0.0,2,true);
+  if(element!=NULL) return 1;
+  else return 0;
+}
+
+static bool translate(GFace* gf,MElementOctree* octree,MVertex* vertex,
+                      SPoint2 corr,SVector3& v1,SVector3& v2)
+{
+  bool ok;
+  double k;
+  double size;
+  double angle;
+  double delta_x;
+  double delta_y;
+  double x,y;
+  double x1,y1;
+  double x2,y2;
+  SPoint2 point;
+  GPoint gp1;
+  GPoint gp2;
+
+  ok = true;
+  k = 0.0001;
+  reparamMeshVertexOnFace(vertex,gf,point);
+  x = point.x();
+  y = point.y();
+  size = backgroundMesh::current()->operator()(x,y,0.0)/**get_ratio(gf,corr)*/;
+  angle = backgroundMesh::current()->getAngle(x,y,0.0);
+
+  delta_x = k*size*cos(angle);
+  delta_y = k*size*sin(angle);
+
+  x1 = x + delta_x;
+  y1 = y + delta_y;
+  x2 = x + delta_y;
+  y2 = y - delta_x;
+
+  if(!inside_domain(octree,x1,y1)){
+    x1 = x - delta_x;
+    y1 = y - delta_y;
+    if(!inside_domain(octree,x1,y1)) ok = false;
+  }
+  if(!inside_domain(octree,x2,y2)){
+    x2 = x - delta_y;
+    y2 = y + delta_x;
+    if(!inside_domain(octree,x2,y2)) ok = false;
+  }
+
+  ok = true; //?
+
+  if(ok){
+    gp1 = gf->point(x1,y1);
+    gp2 = gf->point(x2,y2);
+    v1 = SVector3(gp1.x()-vertex->x(),gp1.y()-vertex->y(),gp1.z()-vertex->z());
+    v2 = SVector3(gp2.x()-vertex->x(),gp2.y()-vertex->y(),gp2.z()-vertex->z());
+  }
+  else{
+    v1 = SVector3(1.0,0.0,0.0);
+    v2 = SVector3(0.0,1.0,0.0);
+  }
+  return ok;
+}
+
+static bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& v2)
+{
+  double x,y;
+  double angle;
+  SPoint2 point;
+  SVector3 s1,s2;
+  SVector3 normal;
+  SVector3 basis_u,basis_v;
+  Pair<SVector3,SVector3> derivatives;
+
+  reparamMeshVertexOnFace(vertex,gf,point);
+  x = point.x();
+  y = point.y();
+
+  angle = backgroundMesh::current()->getAngle(x,y,0.0);
+  derivatives = gf->firstDer(point);
+
+  s1 = derivatives.first();
+  s2 = derivatives.second();
+  normal = crossprod(s1,s2);
+
+  basis_u = s1;
+  basis_u.normalize();
+  basis_v = crossprod(normal,basis_u);
+  basis_v.normalize();
+
+  v1 = basis_u*cos(angle) + basis_v*sin(angle);
+  v2 = crossprod(v1,normal);
+  v2.normalize();
+
+  return 1;
+}
+
+static void directions_storage(GFace* gf)
+{
+  bool ok;
+  unsigned int i;
+  int j;
+  MVertex* vertex;
+  MElement* element;
+  SPoint2 point;
+  SVector3 v1;
+  SVector3 v2;
+  MElementOctree* octree;
+  std::set<MVertex*> vertices;
+  std::set<MVertex*>::iterator it;
+
+  vertices.clear();
+
+  for(i=0;i<gf->getNumMeshElements();i++){
+    element = gf->getMeshElement(i);
+    for(j=0;j<element->getNumVertices();j++){
+      vertex = element->getVertex(j);
+      vertices.insert(vertex);
+    }
+  }
+
+  backgroundMesh::set(gf);
+  octree = backgroundMesh::current()->get_octree();
+
+  gf->storage1.clear();
+  gf->storage2.clear();
+  gf->storage3.clear();
+  gf->storage4.clear();
+
+  for(it=vertices.begin();it!=vertices.end();it++){
+    ok = 0;
+
+    if(!gf->getCompound()){
+      if(gf->geomType()==GEntity::CompoundSurface){
+        ok = translate(gf,octree,*it,SPoint2(0.0,0.0),v1,v2);
+      }
+      else{
+        ok = improved_translate(gf,*it,v1,v2);
+      }
+    }
+
+    if(ok){
+      gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
+      gf->storage2.push_back(v1);
+      gf->storage3.push_back(v2);
+      reparamMeshVertexOnFace(*it,gf,point);
+      gf->storage4.push_back(backgroundMesh::current()->operator()(point.x(),point.y(),0.0));
+    }
+  }
+
+  backgroundMesh::unset();
+}
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
@@ -926,6 +1080,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
 
     for(int i = 0; i < doc.numTriangles; i++) {
+      int a = doc.triangles[i].a;
+      int b = doc.triangles[i].b;
+      int c = doc.triangles[i].c;
+      int n = doc.numPoints;
+      if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n){
+        Msg::Warning("Skipping bad triangle %d", i);
+        continue;
+      }
       BDS_Point *p1 = (BDS_Point*)doc.points[doc.triangles[i].a].data;
       BDS_Point *p2 = (BDS_Point*)doc.points[doc.triangles[i].b].data;
       BDS_Point *p3 = (BDS_Point*)doc.points[doc.triangles[i].c].data;
@@ -1725,6 +1887,14 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     doc.MakeMeshWithPoints();
 
     for(int i = 0; i < doc.numTriangles; i++){
+      int a = doc.triangles[i].a;
+      int b = doc.triangles[i].b;
+      int c = doc.triangles[i].c;
+      int n = doc.numPoints;
+      if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n){
+        Msg::Warning("Skipping bad triangle %d", i);
+        continue;
+      }
       BDS_Point *p1 = (BDS_Point*)doc.points[doc.triangles[i].a].data;
       BDS_Point *p2 = (BDS_Point*)doc.points[doc.triangles[i].b].data;
       BDS_Point *p3 = (BDS_Point*)doc.points[doc.triangles[i].c].data;
@@ -2467,154 +2637,4 @@ void orientMeshGFace::operator()(GFace *gf)
   if(gf->meshAttributes.reverseMesh)
     for(unsigned int k = 0; k < gf->getNumMeshElements(); k++)
       gf->getMeshElement(k)->reverse();
-}
-
-void directions_storage(GFace* gf){
-  bool ok;
-  unsigned int i;
-  int j;
-  MVertex* vertex;
-  MElement* element;
-  SPoint2 point;
-  SVector3 v1;
-  SVector3 v2;
-  MElementOctree* octree;
-  std::set<MVertex*> vertices;
-  std::set<MVertex*>::iterator it;
-
-  vertices.clear();
-
-  for(i=0;i<gf->getNumMeshElements();i++){
-    element = gf->getMeshElement(i);
-	for(j=0;j<element->getNumVertices();j++){
-	  vertex = element->getVertex(j);
-	  vertices.insert(vertex);
-	}
-  }
-
-  backgroundMesh::set(gf);
-  octree = backgroundMesh::current()->get_octree();
-
-  gf->storage1.clear();
-  gf->storage2.clear();
-  gf->storage3.clear();
-  gf->storage4.clear();
-
-  for(it=vertices.begin();it!=vertices.end();it++){
-    ok = 0;
-
-	if(!gf->getCompound()){
-      if(gf->geomType()==GEntity::CompoundSurface){
-	    ok = translate(gf,octree,*it,SPoint2(0.0,0.0),v1,v2);
-	  }
-	  else{
-	    ok = improved_translate(gf,*it,v1,v2);
-	  }
-	}
-
-	if(ok){
-      gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
-	  gf->storage2.push_back(v1);
-	  gf->storage3.push_back(v2);
-	  reparamMeshVertexOnFace(*it,gf,point);
-	  gf->storage4.push_back(backgroundMesh::current()->operator()(point.x(),point.y(),0.0));
-	}
-  }
-
-  backgroundMesh::unset();
-}
-
-bool translate(GFace* gf,MElementOctree* octree,MVertex* vertex,SPoint2 corr,SVector3& v1,SVector3& v2){
-  bool ok;
-  double k;
-  double size;
-  double angle;
-  double delta_x;
-  double delta_y;
-  double x,y;
-  double x1,y1;
-  double x2,y2;
-  SPoint2 point;
-  GPoint gp1;
-  GPoint gp2;
-
-  ok = true;
-  k = 0.0001;
-  reparamMeshVertexOnFace(vertex,gf,point);
-  x = point.x();
-  y = point.y();
-  size = backgroundMesh::current()->operator()(x,y,0.0)/**get_ratio(gf,corr)*/;
-  angle = backgroundMesh::current()->getAngle(x,y,0.0);
-
-  delta_x = k*size*cos(angle);
-  delta_y = k*size*sin(angle);
-
-  x1 = x + delta_x;
-  y1 = y + delta_y;
-  x2 = x + delta_y;
-  y2 = y - delta_x;
-
-  if(!inside_domain(octree,x1,y1)){
-    x1 = x - delta_x;
-	y1 = y - delta_y;
-    if(!inside_domain(octree,x1,y1)) ok = false;
-  }
-  if(!inside_domain(octree,x2,y2)){
-    x2 = x - delta_y;
-	y2 = y + delta_x;
-	if(!inside_domain(octree,x2,y2)) ok = false;
-  }
-
-  ok = true; //?
-
-  if(ok){
-    gp1 = gf->point(x1,y1);
-	gp2 = gf->point(x2,y2);
-	v1 = SVector3(gp1.x()-vertex->x(),gp1.y()-vertex->y(),gp1.z()-vertex->z());
-	v2 = SVector3(gp2.x()-vertex->x(),gp2.y()-vertex->y(),gp2.z()-vertex->z());
-  }
-  else{
-    v1 = SVector3(1.0,0.0,0.0);
-	v2 = SVector3(0.0,1.0,0.0);
-  }
-  return ok;
-}
-
-bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& v2){
-  double x,y;
-  double angle;
-  SPoint2 point;
-  SVector3 s1,s2;
-  SVector3 normal;
-  SVector3 basis_u,basis_v;
-  Pair<SVector3,SVector3> derivatives;
-
-  reparamMeshVertexOnFace(vertex,gf,point);
-  x = point.x();
-  y = point.y();
-
-  angle = backgroundMesh::current()->getAngle(x,y,0.0);
-  derivatives = gf->firstDer(point);
-
-  s1 = derivatives.first();
-  s2 = derivatives.second();
-  normal = crossprod(s1,s2);
-
-  basis_u = s1;
-  basis_u.normalize();
-  basis_v = crossprod(normal,basis_u);
-  basis_v.normalize();
-
-  v1 = basis_u*cos(angle) + basis_v*sin(angle);
-  v2 = crossprod(v1,normal);
-  v2.normalize();
-
-  return 1;
-}
-
-bool inside_domain(MElementOctree* octree,double x,double y){
-  MElement* element;
-  element = (MElement*)octree->find(x,y,0.0,2,true);
-  if(element!=NULL) return 1;
-  else return 0;
 }
