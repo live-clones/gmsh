@@ -124,7 +124,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   // get lc
   SBoundingBox3d bbox;
   for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
-  double lc = norm(SVector3(bbox.max(), bbox.min()));
+  double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
 
   // build a point record structure for the divide and conquer algorithm
   DocRecord doc(points.size());
