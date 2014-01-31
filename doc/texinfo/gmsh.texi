@@ -1791,8 +1791,9 @@ Surface} or @code{Ruled Surface} commands, or by extruding lines), and
 finally volumes (using the @code{Volume} command or by extruding
 surfaces).
 
-These geometrical entities are called ``elementary'' in Gmsh's jargon, and
-are assigned identification numbers when they are created:
+These geometrical entities are called ``elementary'' in Gmsh's jargon,
+and are assigned identification numbers (stricly positive) when they are
+created:
 
 @enumerate
 @item each elementary point must possess a unique identification number;
@@ -1805,7 +1806,8 @@ are assigned identification numbers when they are created:
 ways, for example using the @code{Translate}, @code{Rotate},
 @code{Scale} or @code{Symmetry} commands. They can be deleted with the
 @code{Delete} command, provided that no higher-dimension entity
-references them.
+references them. Zero or negative identification numbers are reserved by
+the system for special uses: do not use them in your scripts.
 
 Groups of elementary geometrical entities can also be defined and
 are called ``physical'' entities. These physical entities cannot be modified
