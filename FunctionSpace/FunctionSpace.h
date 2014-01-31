@@ -32,11 +32,12 @@ class FunctionSpace{
  protected:
   // Number of possible geomtrical topologies //
   static const size_t nGeoType;
+  static bool once;
 
  protected:
   // Geometry //
   const Mesh*     mesh;
-  GroupOfElement* goe;
+  const GroupOfElement* goe;
 
   // Basis //
   std::vector<const Basis*> basis;
@@ -61,7 +62,7 @@ class FunctionSpace{
   const Basis& getBasis(const MElement& element) const;
   const Basis& getBasis(size_t i) const;
 
-  GroupOfElement& getSupport(void) const;
+  const GroupOfElement& getSupport(void) const;
 
   bool   isScalar(void) const;
   size_t getForm(void)  const;
@@ -78,7 +79,7 @@ class FunctionSpace{
  protected:
   FunctionSpace(void);
 
-  void build(GroupOfElement& goe, std::string family);
+  void build(const GroupOfElement& goe, std::string family);
   void buildDof(void);
 };
 
@@ -148,7 +149,7 @@ inline const Basis& FunctionSpace::getBasis(size_t i) const{
   return *basis[i];
 }
 
-inline GroupOfElement& FunctionSpace::getSupport(void) const{
+inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
 }
 

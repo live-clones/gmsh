@@ -17,8 +17,9 @@
 
 class FunctionSpaceVector : public FunctionSpace{
  public:
-  FunctionSpaceVector(GroupOfElement& goe, size_t order);
-  FunctionSpaceVector(GroupOfElement& goe, size_t order, std::string family);
+  FunctionSpaceVector(const GroupOfElement& goe, size_t order);
+  FunctionSpaceVector(const GroupOfElement& goe, size_t order,
+                      std::string family);
 
   virtual ~FunctionSpaceVector(void);
 

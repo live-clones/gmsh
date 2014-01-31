@@ -1,7 +1,8 @@
 #include "Mapper.h"
 #include "FunctionSpaceScalar.h"
 
-FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe, size_t order){
+FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
+                                         size_t order){
   this->scalar = true;
   this->form   = 0;
   this->order  = order;
@@ -9,8 +10,8 @@ FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe, size_t order){
   build(goe, "hierarchical");
 }
 
-FunctionSpaceScalar::FunctionSpaceScalar(GroupOfElement& goe, size_t order,
-                                         std::string family){
+FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
+                                         size_t order, std::string family){
   this->scalar = true;
   this->form   = 0;
   this->order  = order;

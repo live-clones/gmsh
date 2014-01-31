@@ -16,8 +16,9 @@
 
 class FunctionSpaceScalar : public FunctionSpace{
  public:
-  FunctionSpaceScalar(GroupOfElement& goe, size_t order);
-  FunctionSpaceScalar(GroupOfElement& goe, size_t order, std::string family);
+  FunctionSpaceScalar(const GroupOfElement& goe, size_t order);
+  FunctionSpaceScalar(const GroupOfElement& goe, size_t order,
+                      std::string family);
 
   virtual ~FunctionSpaceScalar(void);
 

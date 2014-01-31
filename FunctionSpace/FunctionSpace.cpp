@@ -10,6 +10,7 @@
 using namespace std;
 
 const size_t FunctionSpace::nGeoType = 9;
+bool FunctionSpace::once = false;
 
 FunctionSpace::FunctionSpace(void){
 }
@@ -20,7 +21,14 @@ FunctionSpace::~FunctionSpace(void){
       delete basis[i];
 }
 
-void FunctionSpace::build(GroupOfElement& goe, string family){
+void FunctionSpace::build(const GroupOfElement& goe, string family){
+  /*
+  if(once)
+    throw Exception("FS Once");
+
+  else
+    once = true;
+  */
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
