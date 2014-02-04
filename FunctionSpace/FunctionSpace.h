@@ -42,10 +42,10 @@ class FunctionSpace{
   // Basis //
   std::vector<const Basis*> basis;
 
-  size_t fPerVertex;
-  size_t fPerEdge;
-  size_t fPerFace;
-  size_t fPerCell;
+  std::vector<size_t> fPerVertex;
+  std::vector<size_t> fPerEdge;
+  std::vector<size_t> fPerFace;
+  std::vector<size_t> fPerCell;
 
   // Differential From & Order //
   bool   scalar;
@@ -72,6 +72,8 @@ class FunctionSpace{
   std::vector<Dof> getKeys(const MElement& element) const;
 
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
+  void getKeys(const GroupOfElement& goe,
+               std::vector<std::vector<Dof> >& dof) const;
 
   const std::set<Dof>&                  getAllDofs(void)   const;
   const std::vector<std::vector<Dof> >& getAllGroups(void) const;

@@ -92,6 +92,10 @@ class ReferenceSpace{
   ReferenceSpace(const std::string& path);
   virtual ~ReferenceSpace(void);
 
+  size_t getNVertex(void) const;
+  size_t getNEdge(void)   const;
+  size_t getNFace(void)   const;
+
   size_t getNOrientation(void) const;
   size_t getOrientation(const MElement& element) const;
 
@@ -347,6 +351,18 @@ class ReferenceSpace{
 //////////////////////
 // Inline Functions //
 //////////////////////
+
+inline size_t ReferenceSpace::getNVertex(void) const{
+  return nVertex;
+}
+
+inline size_t ReferenceSpace::getNEdge(void) const{
+  return refEdgeNodeIdx.size();
+}
+
+inline size_t ReferenceSpace::getNFace(void) const{
+  return refFaceNodeIdx.size();
+}
 
 inline size_t ReferenceSpace::getNOrientation(void) const{
   return refSpaceNodeId.size();

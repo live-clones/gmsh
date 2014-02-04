@@ -30,6 +30,10 @@ class ReferenceSpaceManager{
   static void clear(void);
   static const ReferenceSpace& getReferenceSpace(int elementType);
 
+  static size_t getNVertex(int elementType);
+  static size_t getNEdge(int elementType);
+  static size_t getNFace(int elementType);
+
   static size_t getNOrientation(int elementType);
   static size_t getOrientation(const MElement& element);
 
@@ -64,6 +68,27 @@ class ReferenceSpaceManager{
 ////////////////////
 // Inline Methods //
 ////////////////////
+
+inline size_t ReferenceSpaceManager::getNVertex(int elementType){
+  if(!refSpace[elementType])
+    init(elementType);
+
+  return refSpace[elementType]->getNVertex();
+}
+
+inline size_t ReferenceSpaceManager::getNEdge(int elementType){
+  if(!refSpace[elementType])
+    init(elementType);
+
+  return refSpace[elementType]->getNEdge();
+}
+
+inline size_t ReferenceSpaceManager::getNFace(int elementType){
+  if(!refSpace[elementType])
+    init(elementType);
+
+  return refSpace[elementType]->getNFace();
+}
 
 inline
 const ReferenceSpace& ReferenceSpaceManager::getReferenceSpace(int elementType){

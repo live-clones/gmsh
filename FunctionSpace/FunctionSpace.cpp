@@ -37,7 +37,6 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
   basis.resize(nGeoType, NULL);
 
   // Generate Bases //
-  const vector<const MElement*>& element = goe.getAll();
 
   // Get geomtrical type statistics
   const vector<size_t>& geoTypeStat = goe.getTypeStats();
@@ -49,27 +48,39 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
       basis[i] = BasisGenerator::generate(i, form, order, family);
 
   // Get Number of Function per Entity //
-  // Same for all basis since we have a uniform order
-  MElement& myElement = const_cast<MElement&>(*element[0]);
+  fPerVertex.resize(nGeoType);
+  fPerEdge.resize(nGeoType);
+  fPerFace.resize(nGeoType);
+  fPerCell.resize(nGeoType);
 
-  int nVertex = myElement.getNumPrimaryVertices();
-  int nEdge   = myElement.getNumEdges();
-  int nFace   = myElement.getNumFaces();
-  int type    = myElement.getType();
+  for(size_t i = 0; i < nGeoType; i++){
+    if(geoTypeStat[i]){
+      int nVertex = ReferenceSpaceManager::getNVertex(i);
+      int nEdge   = ReferenceSpaceManager::getNEdge(i);
+      int nFace   = ReferenceSpaceManager::getNFace(i);
 
-  fPerVertex = basis[type]->getNVertexBased() / nVertex;
+      fPerVertex[i] = basis[i]->getNVertexBased() / nVertex;
 
-  if(nEdge)
-    fPerEdge = this->basis[type]->getNEdgeBased() / nEdge;
-  else
-    fPerEdge = 0;
+      if(nEdge)
+        fPerEdge[i] = this->basis[i]->getNEdgeBased() / nEdge;
+      else
+        fPerEdge[i] = 0;
 
-  if(nFace)
-    fPerFace = this->basis[type]->getNFaceBased() / nFace;
-  else
-    fPerFace = 0;
+      if(nFace)
+        fPerFace[i] = this->basis[i]->getNFaceBased() / nFace;
+      else
+        fPerFace[i] = 0;
 
-  fPerCell = this->basis[type]->getNCellBased();
+      fPerCell[i] = this->basis[i]->getNCellBased();
+    }
+
+    else{
+      fPerVertex[i] = 0;
+      fPerEdge[i]   = 0;
+      fPerFace[i]   = 0;
+      fPerCell[i]   = 0;
+    }
+  }
 
   // Build Dof //
   buildDof();
@@ -107,13 +118,6 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   const size_t nEdge   = element.getNumEdges();
   const size_t nFace   = element.getNumFaces();
 
-  // Number of cells //
-  size_t nCell;
-  if(element.getDim() == 3) // Need to be 3D to have one Cell
-    nCell = 1;
-  else
-    nCell = 0;
-
   vector<MVertex*> vertex(nVertex);
   vector<MEdge>    edge(nEdge);
   vector<MFace>    face(nFace);
@@ -128,11 +132,17 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
     face[i] = element.getFace(i);
 
   // Create Dof //
+  const size_t type       = element.getType();
+  const size_t fPerVertex = this->fPerVertex[type];
+  const size_t fPerEdge   = this->fPerEdge[type];
+  const size_t fPerFace   = this->fPerFace[type];
+  const size_t fPerCell   = this->fPerCell[type];
+
   size_t nDof =
     fPerVertex * nVertex +
     fPerEdge   * nEdge   +
     fPerFace   * nFace   +
-    fPerCell   * nCell;
+    fPerCell;
 
   vector<Dof> myDof(nDof);
 
@@ -163,11 +173,9 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   }
 
   // Add Cell Based Dof //
-  for(size_t i = 0; i < nCell; i++){
-    for(size_t j = 0; j < fPerCell; j++){
-      myDof[it].setDof(mesh->getGlobalId(element), j);
-      it++;
-    }
+  for(size_t j = 0; j < fPerCell; j++){
+    myDof[it].setDof(mesh->getGlobalId(element), j);
+    it++;
   }
 
   return myDof;
@@ -220,4 +228,18 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
     for(size_t d = 0; d < nDof; d++)
       dof.insert(myDof[d]);
   }
+}
+
+void FunctionSpace::getKeys(const GroupOfElement& goe,
+                            std::vector<std::vector<Dof> >& dof) const{
+  // Get Elements //
+  const size_t nElement = goe.getNumber();
+  const vector<const MElement*>& element = goe.getAll();
+
+  // Init Struct //
+  dof.resize(nElement);
+
+  // Create Dofs //
+  for(size_t i = 0; i < nElement; i++)
+    dof[i] = getKeys(*(element[i]));
 }
