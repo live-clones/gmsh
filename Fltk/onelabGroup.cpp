@@ -113,7 +113,8 @@ class onelabGmshServer : public GmshServer{
   {
     std::string sockname;
     std::ostringstream tmp;
-    if(!strstr(CTX::instance()->solver.socketName.c_str(), ":")){
+    const char *port = strstr(CTX::instance()->solver.socketName.c_str(), ":");
+    if(!port){
       // Unix socket
       tmp << CTX::instance()->homeDir << CTX::instance()->solver.socketName
           << _client->getId();
@@ -124,7 +125,9 @@ class onelabGmshServer : public GmshServer{
       if(CTX::instance()->solver.socketName.size() &&
          CTX::instance()->solver.socketName[0] == ':')
         tmp << GetHostName(); // prepend hostname if only the port number is given
-      tmp << CTX::instance()->solver.socketName << _client->getId();
+      tmp << CTX::instance()->solver.socketName;
+      if(atoi(port + 1)) // nonzero port is given - append client id
+        tmp << _client->getId();
       sockname = tmp.str();
     }
 
