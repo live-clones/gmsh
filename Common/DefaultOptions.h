@@ -191,7 +191,7 @@ StringXString SolverOptions_String[] = {
 
   { F|O, "SocketName" , opt_solver_socket_name ,
 #if defined(WIN32) && !defined(__CYGWIN__)
-    "127.0.0.1:4412" , // use TCP/IP sockets by default on Windows
+    "127.0.0.1:0" , // use TCP/IP sockets by default on Windows
 #else
     ".gmshsock" , // otherwise use Unix sockets by default
 #endif
