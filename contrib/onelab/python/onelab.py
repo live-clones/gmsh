@@ -360,8 +360,11 @@ class client :
         self._send(self._GMSH_START, str(os.getpid()))
     self.action = self.getString(self.name + '/Action')
     self.setNumber('IsPyMetamodel',value=1,visible=0)
-    if self.action == "initialize": exit(0)
-
+    self.sendInfo("Performing OneLab '" + self.action + "'")
+    if self.action == "initialize": 
+      self.finalize()
+      exit(0)
+      
   def finalize(self):
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
