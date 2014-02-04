@@ -197,7 +197,8 @@ StringXString SolverOptions_String[] = {
 #endif
     "Base name of socket (UNIX socket if the name does not contain a colon, TCP/IP "
     "otherwise, in the form 'host:baseport'; the actual name/port is constructed "
-    "by appending the unique client id)"},
+    "by appending the unique client id. If baseport is 0, the port is chosen "
+    "automatically (recommended))"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;

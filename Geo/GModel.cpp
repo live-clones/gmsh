@@ -542,7 +542,7 @@ bool GModel::setAllVolumesPositive()
 {
   bool ok = true;
   for(riter it = regions.begin(); it != regions.end(); ++it)
-    for (int i = 0; i < (*it)->getNumMeshElements(); ++i)
+    for (unsigned int i = 0; i < (*it)->getNumMeshElements(); ++i)
       if(!(*it)->getMeshElement(i)->setVolumePositive())
         ok = false;
   return ok;

@@ -718,7 +718,7 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   vert2End   = it->second;
 
 
-  int INDEX1, count = 0;
+  int INDEX1 = 0, count = 0;
   for (int i=0;i<NW1;i++){
     for (int j=i+1;j<NW1;j++){
       if ((vert1Start == i && vert1End == j) ||
@@ -729,7 +729,7 @@ static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
       count++;
     }
   }
-  int INDEX2;
+  int INDEX2 = 0;
   count = 0;
   for (int i=0;i<NW2;i++){
     for (int j=i+1;j<NW2;j++){
@@ -884,13 +884,13 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	    v13 = c22._column[l-1];
 	    v14 = c21._column[l-1];
 	  }
-	  
+
 	  if (l == 0){
 	    MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
 	    // store the layer the element belongs
 	    prism->setPartition(l+1);
 	    myCol.push_back(prism);
-	    
+
 	    blPrisms.push_back(prism);
 	  }
 	  else {
