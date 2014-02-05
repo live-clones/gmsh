@@ -32,7 +32,6 @@ class FunctionSpace{
  protected:
   // Number of possible geomtrical topologies //
   static const size_t nGeoType;
-  static bool once;
 
  protected:
   // Geometry //
