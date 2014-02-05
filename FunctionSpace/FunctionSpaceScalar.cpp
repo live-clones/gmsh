@@ -1,8 +1,14 @@
 #include "Mapper.h"
+#include "Exception.h"
 #include "FunctionSpaceScalar.h"
 
 FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
                                          size_t order){
+  if(order == 0)
+    throw Exception("%s: %s",
+                    "FunctionSpaceScalar",
+                    "Cannot have a order 0 scalar function space");
+
   this->scalar = true;
   this->form   = 0;
   this->order  = order;
@@ -12,6 +18,10 @@ FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
 
 FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
                                          size_t order, std::string family){
+  if(order == 0)
+    throw Exception("%s: %s",
+                    "FunctionSpaceScalar",
+                    "Cannot have a order 0 scalar function space");
   this->scalar = true;
   this->form   = 0;
   this->order  = order;
