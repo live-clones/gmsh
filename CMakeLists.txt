@@ -843,7 +843,7 @@ if(HAVE_SOLVER)
   endif(ENABLE_TAUCS)
 
   if(ENABLE_MUMPS)
-    set(MUMPS_LIBS_REQUIRED mumps_common metis pord smumps dmumps cmumps zmumps)
+    set(MUMPS_LIBS_REQUIRED smumps dmumps cmumps zmumps mumps_common pord metis)
     if(NOT ENABLE_MPI)
       list(APPEND MUMPS_LIBS_REQUIRED mpiseq)
     endif(NOT ENABLE_MPI)
