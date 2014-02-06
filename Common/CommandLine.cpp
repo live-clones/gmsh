@@ -94,7 +94,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-mpass int",         "Do several passes on the mesh for complex backround fields"));
+  s.push_back(mp("-mpass int",         "Do several passes on the mesh for complex background fields"));
   s.push_back(mp("-ignorePartBound",   "Ignore partitions boundaries"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
