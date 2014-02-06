@@ -106,12 +106,16 @@ class linearSystemGmm : public linearSystem<scalar> {
   void setGmres(int n){ _gmres = n; }
   virtual int systemSolve()
   {
+#if defined(HAVE_MUMPS)
+    gmm::MUMPS_solve(*_a, *_x, *_b);
+#else
     //gmm::ilutp_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 25, 0.);
     gmm::ildltt_precond<gmm::row_matrix<gmm::wsvector<scalar> > > P(*_a, 30, 1.e-10);
     gmm::iteration iter(_prec);
     iter.set_noisy(_noisy);
     if(_gmres) gmm::gmres(*_a, *_x, *_b, P, 100, iter);
     else gmm::cg(*_a, *_x, *_b, P, iter);
+#endif
     return 1;
   }
 };
