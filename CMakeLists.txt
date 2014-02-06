@@ -843,13 +843,13 @@ if(HAVE_SOLVER)
   endif(ENABLE_TAUCS)
 
   if(ENABLE_MUMPS)
-    find_library(DMUMPS_LIB smumps PATH_SUFFIXES lib)
+    find_library(SMUMPS_LIB smumps PATH_SUFFIXES lib)
     find_library(DMUMPS_LIB dmumps PATH_SUFFIXES lib)
-    find_library(ZMUMPS_LIB cmumps PATH_SUFFIXES lib)
+    find_library(CMUMPS_LIB cmumps PATH_SUFFIXES lib)
     find_library(ZMUMPS_LIB zmumps PATH_SUFFIXES lib)
-    find_path(DMUMPS_INC "smumps_c.h" PATH_SUFFIXES src include)
+    find_path(SMUMPS_INC "smumps_c.h" PATH_SUFFIXES src include)
     find_path(DMUMPS_INC "dmumps_c.h" PATH_SUFFIXES src include)
-    find_path(ZMUMPS_INC "cmumps_c.h" PATH_SUFFIXES src include)
+    find_path(CMUMPS_INC "cmumps_c.h" PATH_SUFFIXES src include)
     find_path(ZMUMPS_INC "zmumps_c.h" PATH_SUFFIXES src include)
     if(SMUMPS_LIB AND SMUMPS_INC AND 
        DMUMPS_LIB AND DMUMPS_INC AND
@@ -861,7 +861,10 @@ if(HAVE_SOLVER)
         list(APPEND EXTERNAL_INCLUDES ${DMUMPS_INC})
         list(APPEND EXTERNAL_LIBRARIES ${ZMUMPS_LIB})
         list(APPEND EXTERNAL_INCLUDES ${ZMUMPS_INC})
-    endif(DMUMPS_LIB AND DMUMPS_INC AND ZMUMPS_LIB AND ZMUMPS_INC)
+    endif(SMUMPS_LIB AND SMUMPS_INC AND 
+          DMUMPS_LIB AND DMUMPS_INC AND
+          CMUMPS_LIB AND CMUMPS_INC AND
+          ZMUMPS_LIB AND ZMUMPS_INC)
   endif(ENABLE_MUMPS)
 
   if(ENABLE_PETSC)
