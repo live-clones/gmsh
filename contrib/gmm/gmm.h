@@ -46,7 +46,7 @@
 
 #include "gmm_lapack_interface.h"
 #include "gmm_superlu_interface.h"
-
+#include "gmm_MUMPS_interface.h"
 
 #include "gmm_domain_decomp.h"
 
