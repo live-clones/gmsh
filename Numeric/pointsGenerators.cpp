@@ -193,5 +193,3 @@ fullMatrix<double> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPo
   }
   return monomials;
 }
-
-/*
