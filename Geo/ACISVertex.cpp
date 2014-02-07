@@ -33,7 +33,7 @@ void ACISVertex::setPosition(GPoint &p)
 
 SPoint2 ACISVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  // FIXME there is definitively a fastest way to do it and this is wring for seams è!!!
+  // FIXME there is definitively a fastest way to do it and this is wring for seams!
   return gf->parFromPoint(SPoint3(x(),y(),z()));
 }
 
