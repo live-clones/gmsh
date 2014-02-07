@@ -1,4 +1,4 @@
-// OneLab - Copyright (C) 2011-2013 ULg-UCL
+// OneLab - Copyright (C) 2011-2014 ULg-UCL
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
