@@ -10,8 +10,11 @@
 using namespace std;
 
 const size_t FunctionSpace::nGeoType = 9;
+size_t FunctionSpace::nxtOffset = 0;
 
 FunctionSpace::FunctionSpace(void){
+  offset     = nxtOffset;
+  nxtOffset += 21;
 }
 
 FunctionSpace::~FunctionSpace(void){
@@ -143,7 +146,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Add Vertex Based Dof //
   for(size_t i = 0; i < nVertex; i++){
     for(size_t j = 0; j < fPerVertex; j++){
-      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j);
+      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j + offset);
       it++;
     }
   }
@@ -151,7 +154,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Add Edge Based Dof //
   for(size_t i = 0; i < nEdge; i++){
     for(size_t j = 0; j < fPerEdge; j++){
-      myDof[it].setDof(mesh->getGlobalId(edge[i]), j);
+      myDof[it].setDof(mesh->getGlobalId(edge[i]), j + offset);
       it++;
     }
   }
@@ -159,14 +162,14 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Add Face Based Dof //
   for(size_t i = 0; i < nFace; i++){
     for(size_t j = 0; j < fPerFace; j++){
-      myDof[it].setDof(mesh->getGlobalId(face[i]), j);
+      myDof[it].setDof(mesh->getGlobalId(face[i]), j + offset);
       it++;
     }
   }
 
   // Add Cell Based Dof //
   for(size_t j = 0; j < fPerCell; j++){
-    myDof[it].setDof(mesh->getGlobalId(element), j);
+    myDof[it].setDof(mesh->getGlobalId(element), j + offset);
     it++;
   }
 

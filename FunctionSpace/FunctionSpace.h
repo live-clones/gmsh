@@ -32,8 +32,12 @@ class FunctionSpace{
  protected:
   // Number of possible geomtrical topologies //
   static const size_t nGeoType;
+  static size_t nxtOffset;
 
  protected:
+  // Offset //
+  size_t offset;
+
   // Geometry //
   const Mesh*     mesh;
   const GroupOfElement* goe;
