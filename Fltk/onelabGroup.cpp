@@ -1948,7 +1948,10 @@ void solver_cb(Fl_Widget *w, void *data)
 
   if(CTX::instance()->solver.autoSaveDatabase){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
-    if(!StatFile(db)) loadDb(db);
+    if(!StatFile(db)){
+      loadDb(db);
+      CTX::instance()->launchSolverAtStartup = -1;
+    }
   }
 
   if(FlGui::instance()->onelab->isBusy())
