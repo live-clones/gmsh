@@ -183,4 +183,29 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
 }
 
+
+void eigenSolver::normalize_mode(){
+	Msg::Info("Normalize all eigenvectors");
+  for (unsigned int i=0; i<_eigenVectors.size(); i++){
+		double norm = 0.;
+    for (unsigned int j=0; j<_eigenVectors[i].size(); j++){
+			std::complex<double> val = _eigenVectors[i][j];
+      double normval = std::abs(val);
+      if (normval >norm) 
+				norm = normval;
+    };
+    
+	  
+    if (norm == 0) {
+			Msg::Error("zero eigenvector");
+      return;
+		};
+    	
+ 		for (unsigned int j=0; j<_eigenVectors[i].size(); j++){
+    	_eigenVectors[i][j] /= norm;
+    };
+
+  };  
+};
+
 #endif

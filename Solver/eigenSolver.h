@@ -41,6 +41,8 @@ class eigenSolver{
   {
     return _eigenVectors[num][com];
   };
+  int getNumberEigenvectors() {return _eigenVectors.size();};
+  void normalize_mode();
 };
 
 #else
@@ -65,6 +67,8 @@ class eigenSolver{
   std::vector<std::complex<double> > &getEigenVector(int num){ return _dummy; }
   void clear(){}
   std::complex<double> getEigenVectorComp(int num, int com) { return 0.; }
+	int getNumberEigenvectors() {return 0;};
+	void normalize_mode() {};
 };
 
 #endif
