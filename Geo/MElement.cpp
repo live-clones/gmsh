@@ -309,6 +309,13 @@ std::string MElement::getInfoString()
   return std::string(tmp);
 }
 
+const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
+{
+  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
+  int tag = ElementType::getTag(getType(), order, serendip);
+  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
+}
+
 static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3][3])
 {
   double dJ = 0;

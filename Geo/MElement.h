@@ -225,7 +225,7 @@ class MElement
   virtual std::string getInfoString();
 
   // get the function space for the element
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const { return 0; }
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
 
   // get the function space for the jacobian of the element
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const { return 0; }

@@ -17,9 +17,9 @@ MSubTetrahedron::~MSubTetrahedron()
   if(_base) delete _base;
 }
 
-const nodalBasis* MSubTetrahedron::getFunctionSpace(int order) const
+const nodalBasis* MSubTetrahedron::getFunctionSpace(int order, bool serendip) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return _orig->getFunctionSpace(order, serendip);
   return 0;
 }
 
@@ -209,9 +209,9 @@ MSubTriangle::~MSubTriangle()
   if(_base) delete _base;
 }
 
-const nodalBasis* MSubTriangle::getFunctionSpace(int order) const
+const nodalBasis* MSubTriangle::getFunctionSpace(int order, bool serendip) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return _orig->getFunctionSpace(order, serendip);
   return 0;
 }
 
@@ -447,9 +447,9 @@ MSubLine::~MSubLine()
   if(_base) delete _base;
 }
 
-const nodalBasis* MSubLine::getFunctionSpace(int order) const
+const nodalBasis* MSubLine::getFunctionSpace(int order, bool serendip) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return _orig->getFunctionSpace(order, serendip);
   return 0;
 }
 
@@ -676,9 +676,9 @@ MSubPoint::~MSubPoint()
   if(_base) delete _base;
 }
 
-const nodalBasis* MSubPoint::getFunctionSpace(int order) const
+const nodalBasis* MSubPoint::getFunctionSpace(int order, bool serendip) const
 {
-  if(_orig) return _orig->getFunctionSpace(order);
+  if(_orig) return _orig->getFunctionSpace(order, serendip);
   return 0;
 }
 

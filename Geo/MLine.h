@@ -74,7 +74,6 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w) const
   {

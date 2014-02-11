@@ -61,10 +61,6 @@ class MPoint : public MElement {
   {
     s[0][0] = s[0][1] = s[0][2] = 0.;
   }
-  virtual const nodalBasis* getFunctionSpace(int o) const
-  {
-    return BasisFactory::getNodalBasis(MSH_PNT);
-  }
   virtual const JacobianBasis* getJacobianFuncSpace(int o) const
   {
     return BasisFactory::getJacobianBasis(MSH_PNT);

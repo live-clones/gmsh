@@ -117,7 +117,6 @@ class MQuadrangle : public MElement {
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual const char *getStringForINP() const { return "CPS4"/*"C2D4"*/; }
-  virtual const nodalBasis* getFunctionSpace(int o=-1) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

@@ -121,9 +121,9 @@ class MPolyhedron : public MElement {
       vol += _parts[i]->getVolume();
     return vol;
   }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const
   {
-    return (_orig ? _orig->getFunctionSpace(order) : 0);
+    return (_orig ? _orig->getFunctionSpace(order, serendip) : 0);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
   {
@@ -271,9 +271,9 @@ class MPolygon : public MElement {
   virtual int getNumChildren() const { return _parts.size(); }
   virtual MElement *getChild(int i) const { return _parts[i]; }
   virtual bool ownsParent() const { return _owner; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const
   {
-    return (_orig ? _orig->getFunctionSpace(order) : 0);
+    return (_orig ? _orig->getFunctionSpace(order, serendip) : 0);
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const
   {
@@ -341,9 +341,9 @@ class MLineChild : public MLine {
       delete _orig;
   }
   virtual int getTypeForMSH() const { return MSH_LIN_C; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const
   {
-    if(_orig) return _orig->getFunctionSpace(order);
+    if(_orig) return _orig->getFunctionSpace(order, serendip);
     return 0;
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const

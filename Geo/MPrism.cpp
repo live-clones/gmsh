@@ -32,14 +32,6 @@ void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPriPts(pOrder);
 }
 
-const nodalBasis* MPrism::getFunctionSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_PRI, order);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
-}
-
 const JacobianBasis* MPrism::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());

@@ -116,14 +116,6 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   uvw[2] = 0.;
 }
 
-const nodalBasis* MTriangle::getFunctionSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_TRI, order);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
-}
-
 const JacobianBasis* MTriangle::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());

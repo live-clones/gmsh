@@ -193,14 +193,6 @@ int MHexahedronN::getNumEdgesRep(bool curved)
   return curved ? 12 * CTX::instance()->mesh.numSubEdges : 12;
 }
 
-const nodalBasis* MHexahedron::getFunctionSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_HEX, order);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
-}
-
 const JacobianBasis* MHexahedron::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());

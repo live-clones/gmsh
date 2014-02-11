@@ -33,14 +33,6 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPyrPts(pOrder);
 }
 
-const nodalBasis* MPyramid::getFunctionSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_PYR, order);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
-}
-
 const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
 {
   // FIXME add other order and see MPyramid::getFunctionSpace for 'design'

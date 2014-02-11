@@ -11,14 +11,6 @@
 #include "Context.h"
 #include "qualityMeasures.h"
 
-const nodalBasis* MLine::getFunctionSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_LIN, order);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
-}
-
 const JacobianBasis* MLine::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());

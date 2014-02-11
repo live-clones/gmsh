@@ -41,7 +41,7 @@ class MSubTetrahedron : public MTetrahedron
   ~MSubTetrahedron();
 
   virtual int getTypeForMSH() const { return MSH_TET_SUB; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   // the parametric coordinates are the coordinates in the local parent element
   virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1) const;
@@ -99,7 +99,7 @@ class MSubTriangle : public MTriangle
   ~MSubTriangle();
 
   virtual int getTypeForMSH() const { return MSH_TRI_SUB; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   // the parametric coordinates are the coordinates in the local parent element
   virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1) const;
@@ -157,7 +157,7 @@ class MSubLine : public MLine
   ~MSubLine();
 
   virtual int getTypeForMSH() const { return MSH_LIN_SUB; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   // the parametric coordinates are the coordinates in the local parent element
   virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1) const;
@@ -215,7 +215,7 @@ class MSubPoint : public MPoint
   ~MSubPoint();
 
   virtual int getTypeForMSH() const { return MSH_PNT_SUB; }
-  virtual const nodalBasis* getFunctionSpace(int order=-1) const;
+  virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
   virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
   // the parametric coordinates are the coordinates in the local parent element
   virtual void getShapeFunctions(double u, double v, double w, double s[], int order=-1) const;
