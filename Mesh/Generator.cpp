@@ -671,6 +671,9 @@ static void Mesh3D(GModel *m)
     }
   }
 
+  // Ensure that all volume Jacobians are positive
+  m->setAllVolumesPositive();
+
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
@@ -683,6 +686,9 @@ void OptimizeMeshNetgen(GModel *m)
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
 
+  // Ensure that all volume Jacobians are positive
+  m->setAllVolumesPositive();
+
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
@@ -693,6 +699,9 @@ void OptimizeMesh(GModel *m)
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
+
+  // Ensure that all volume Jacobians are positive
+  m->setAllVolumesPositive();
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
@@ -781,8 +790,6 @@ void GenerateMesh(GModel *m, int ask)
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
     }
   }
-
-  m->setAllVolumesPositive();
 
   // Subdivide into quads or hexas
   if(m->getMeshStatus() == 2 && CTX::instance()->mesh.algoSubdivide == 1)
