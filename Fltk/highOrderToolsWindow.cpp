@@ -148,7 +148,6 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.onlyVisible = onlyVisible;
     // change dim if no 3D elements are there
     p.dim = GModel::current()->getDim() == 3 ? ( NE ? 3 : 2 ) :  GModel::current()->getDim();
-    printf("%d %d\n",NE,p.dim);
     p.itMax = (int) o->value[3]->value();
     p.optPassMax = (int) o->value[4]->value();
     p.weightFixed =  o->value[5]->value();

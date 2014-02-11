@@ -90,12 +90,12 @@ void SuperEl::createSuperElQuad(int order, double dist, const std::vector<MVerte
 
   // Get basis functions
   MQuadrangle quad1(v0,v1,v2,v3);
-  const nodalBasis *quadBasis = quad1.getFunctionSpace(order);
+  const nodalBasis *quadBasis = quad1.getFunctionSpace(order,true);           // Get HO serendip nodal basis
   const int Nv = quadBasis->getNumShapeFunctions();
 
   // Store/create all vertices for super-element
   _superVert.resize(Nv);
-  _superVert[0] = v0;                                                     // First-order vertices
+  _superVert[0] = v0;                                                         // First-order vertices
   _superVert[1] = v1;
   _superVert[2] = v2;
   _superVert[3] = v3;
@@ -139,7 +139,7 @@ void SuperEl::createSuperElPrism(int order, double dist, const std::vector<MVert
 
   // Get basis functions
   MPrism prism1(v0,v1,v2,v3,v4,v5);
-  const nodalBasis *prismBasis = prism1.getFunctionSpace(order);
+  const nodalBasis *prismBasis = prism1.getFunctionSpace(order,true);       // Get HO serendip nodal basis
   const int Nv = prismBasis->getNumShapeFunctions();                        // Number of vertices in HO prism
 
   // Store/create all vertices for super-element
@@ -154,14 +154,14 @@ void SuperEl::createSuperElPrism(int order, double dist, const std::vector<MVert
     _superVert[6] = new MVertex(*baseVert[3]);                              // HO vertices on base face
     _superVert[9] = new MVertex(*baseVert[4]);
     _superVert[7] = new MVertex(*baseVert[5]);
-    const int indAddVerts[9] = {8,10,11,12,13,14,15,16,17};                 // Additional HO vertices
+    const int indAddVerts[6] = {8,10,11,12,13,14};                          // Additional HO vertices
     SPoint3 p;
-    for (int i=0; i<9; ++i) {
+    for (int i=0; i<6; ++i) {
       const int &ind = indAddVerts[i];
       prism1.pnt(prismBasis->points(ind,0),prismBasis->points(ind,1),prismBasis->points(ind,2),p);
       _superVert[ind] = new MVertex(p.x(),p.y(),p.z());
     }
-    _superEl = new MPrism18(_superVert);
+    _superEl = new MPrism15(_superVert);
   }
   else {
     std::cout << "ERROR: Prismatic superEl. of order " << order << " not supported\n";
@@ -203,7 +203,7 @@ void SuperEl::createSuperElHex(int order, double dist, const std::vector<MVertex
 
   // Get basis functions
   MHexahedron *hex1 = new MHexahedron(v0,v1,v2,v3,v4,v5,v6,v7);
-  const nodalBasis *prismBasis = hex1->getFunctionSpace(order);
+  const nodalBasis *prismBasis = hex1->getFunctionSpace(order,true);         // Get HO serendip nodal basis
   const int Nv = prismBasis->getNumShapeFunctions();                         // Number of vertices in HO hex
 
   // Store/create all vertices for super-element
@@ -222,14 +222,14 @@ void SuperEl::createSuperElHex(int order, double dist, const std::vector<MVertex
     _superVert[13] = new MVertex(*baseVert[6]);                               // HO vertices on base face
     _superVert[9] = new MVertex(*baseVert[7]);
     _superVert[20] = new MVertex(*baseVert[8]);
-    const int indAddVerts[14] = {10,12,14,15,16,17,18,19,21,22,23,24,25,26};  // Additional HO vertices
+    const int indAddVerts[8] = {10,12,14,15,16,17,18,19};                     // Additional HO vertices
     SPoint3 p;
-    for (int i=0; i<14; ++i) {
+    for (int i=0; i<8; ++i) {
       const int &ind = indAddVerts[i];
       hex1->pnt(prismBasis->points(ind,0),prismBasis->points(ind,1),prismBasis->points(ind,2),p);
       _superVert[ind] = new MVertex(p.x(),p.y(),p.z());
     }
-    _superEl = new MHexahedron27(_superVert);
+    _superEl = new MHexahedron20(_superVert);
   }
   else {
     std::cout << "ERROR: Hex. superEl. of order " << order << " not supported\n";

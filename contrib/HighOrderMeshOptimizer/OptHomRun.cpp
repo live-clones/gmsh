@@ -154,8 +154,8 @@ static std::set<MElement*> getSurroundingBlob
           ((*it)->getVertex(i))->second;
         for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
              itN != neighbours.end(); ++itN){
-          if ((d < forceDepth) || (p.distance((*itN)->barycenter_infty()) < limDist)){
-            // Assume that if an el is too far, its neighbours are too far as wella
+          if ((d < forceDepth) || (p.distance((*itN)->barycenter()) < limDist)){
+            // Assume that if an el is too far, its neighbours are too far as well
             if (blob.insert(*itN).second) currentLayer.push_back(*itN);
           }
         }
@@ -383,7 +383,7 @@ static std::set<MElement*> getSurroundingBlob3D
         for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
              itN != neighbours.end(); ++itN) {
           // Check distance from all seed points
-          SPoint3 pt = (*itN)->barycenter_infty();
+          SPoint3 pt = (*itN)->barycenter();
           bool nearSeed = false;
           for (std::list<SPoint3>::const_iterator itS = seedPts.begin();
                itS != seedPts.end(); ++itS)
