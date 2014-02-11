@@ -18,6 +18,7 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "HilbertCurve.h"
 
 int MTet4::radiusNorm = 2;
 static double LIMIT_ = 1;
@@ -330,15 +331,6 @@ void nonrecurFindCavity(std::list<faceXtet> & shell,
                      MVertex *v ,
                      MTet4 *t)
 {
-  // Msg::Info("tet %d %d %d %d",t->tet()->getVertex(0)->getNum(),
-  //     t->tet()->getVertex(1)->getNum(),
-  //     t->tet()->getVertex(2)->getNum(),
-  //     t->tet()->getVertex(3)->getNum());
-
-  // invariant : this one has to be inserted in the cavity
-  // consider this tet deleted
-  // remove its reference to its neighbors
-
   std::stack<MTet4*> _stack;
   _stack.push(t);
   while(!_stack.empty()){
@@ -1612,3 +1604,152 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
   MTet4::radiusNorm = 2;
   LIMIT_ = 1;
 }
+
+
+///// do a 3D delaunay mesh assuming a set of vertices
+
+static void initialCube (std::vector<MVertex*> &v,
+			 MVertex *box[8],
+			 std::vector<MTet4*> &t){
+  SBoundingBox3d bbox ;
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];
+    bbox += SPoint3(pv->x(),pv->y(),pv->z());    
+  }
+  bbox *= 1.3;
+  box[0] = new MVertex (bbox.min().x(),bbox.min().y(),bbox.min().z());
+  box[1] = new MVertex (bbox.max().x(),bbox.min().y(),bbox.min().z());
+  box[2] = new MVertex (bbox.max().x(),bbox.max().y(),bbox.min().z());
+  box[3] = new MVertex (bbox.min().x(),bbox.max().y(),bbox.min().z());
+  box[4] = new MVertex (bbox.min().x(),bbox.min().y(),bbox.max().z());
+  box[5] = new MVertex (bbox.max().x(),bbox.min().y(),bbox.max().z());
+  box[6] = new MVertex (bbox.max().x(),bbox.max().y(),bbox.max().z());
+  box[7] = new MVertex (bbox.min().x(),bbox.max().y(),bbox.max().z());
+  std::vector<MTetrahedron*> t_box;
+  MTetrahedron *t0 = new MTetrahedron (box[2],box[7],box[3],box[1]);
+  MTetrahedron *t1 = new MTetrahedron (box[0],box[7],box[1],box[3]);
+  MTetrahedron *t2 = new MTetrahedron (box[6],box[1],box[7],box[2]);
+  MTetrahedron *t3 = new MTetrahedron (box[0],box[1],box[7],box[4]);
+  MTetrahedron *t4 = new MTetrahedron (box[1],box[4],box[5],box[7]);
+  MTetrahedron *t5 = new MTetrahedron (box[1],box[7],box[5],box[6]);
+  t.push_back(new MTet4(t0,0.0));
+  t.push_back(new MTet4(t1,0.0));
+  t.push_back(new MTet4(t2,0.0));
+  t.push_back(new MTet4(t3,0.0));
+  t.push_back(new MTet4(t4,0.0));
+  t.push_back(new MTet4(t5,0.0));
+  connectTets(t);
+}
+
+int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
+                            double P[3], double N[3], double);
+
+static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size) {
+  if (t->inCircumSphere(v)) return t;
+  int ITER = 0;
+  SPoint3 p2 (v->x(),v->y(),v->z());
+  while (1){
+    SPoint3 p1 = t->tet()->barycenter();
+    int found = -1;
+    for (int i = 0; i < 4; i++){
+      MTet4 *neigh = t->getNeigh(i);
+      if (neigh){
+	faceXtet fxt (t, i);
+	double X[3] = {fxt.v[0]->x(),fxt.v[1]->x(),fxt.v[2]->x()};
+	double Y[3] = {fxt.v[0]->y(),fxt.v[1]->y(),fxt.v[2]->y()};
+	double Z[3] = {fxt.v[0]->z(),fxt.v[1]->z(),fxt.v[2]->z()};
+	//	printf("%d %d\n",i,intersect_line_triangle(X,Y,Z,p1,p2-p1));
+	if (intersect_line_triangle(X,Y,Z,p1,p1-p2, 1.e-12) > 0) {
+	  found = i;
+	  break;
+	}
+      }
+    }
+    if (found < 0){
+      return 0;      
+    }
+    t = t->getNeigh(found);
+    if (t->inCircumSphere(v)) {
+      //      printf("FOUND\n");
+      return t;
+    }
+    if (ITER++ > _size) break;
+  }
+  return 0;
+}
+
+
+MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH){
+  // last inserted is used as starting point
+  // we know it is not deleted
+  MTet4 *start = t[t.size() - 1];
+  start = search4Tet (start,v,(int)t.size());
+  if (start)return start;
+  NB_GLOBAL_SEARCH++;
+  for (size_t i = 0;i<t.size();i++){
+    if (!t[i]->isDeleted() && t[i]->inCircumSphere(v))return t[i];
+  }  
+  return 0;
+}
+
+bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
+  for (size_t i = 0;i<4;i++)
+    for (size_t j = 0;j<8;j++)
+      if (t->getVertex(i) == box[j])return true;
+  return false;
+}
+
+void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result)
+{
+  std::vector<MTet4*> t;
+  MVertex *box[8];
+  initialCube (v,box,t);
+
+  int NB_GLOBAL_SEARCH = 0;
+  SortHilbert(v);
+  clock_t t1 = clock();
+
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];    
+    MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH);
+    std::list<faceXtet> shell;
+    std::list<MTet4*> cavity;
+    recurFindCavity(shell, cavity, pv, found);
+    std::vector<MTet4*> extended_cavity;
+    std::list<faceXtet>::iterator it = shell.begin();
+    while (it != shell.end()){
+      MTetrahedron *tr = new MTetrahedron(it->getVertex(0), 
+					  it->getVertex(1), 
+					  it->getVertex(2), pv);
+      MTet4 *t4 = new MTet4(tr, 0.0);
+      t.push_back(t4);
+      extended_cavity.push_back(t4);
+      MTet4 *otherSide = it->t1->getNeigh(it->i1);
+      if (otherSide)
+	extended_cavity.push_back(otherSide);
+      ++it;
+    }
+    //    printf("connecting %i tets\n",extended_cavity.size());
+    connectTets_vector(extended_cavity.begin(),extended_cavity.end());
+  }
+
+  clock_t t2 = clock();
+  printf("%d global searches among %d CPU = %g\n",NB_GLOBAL_SEARCH,v.size(),(double)(t2-t1)/CLOCKS_PER_SEC);
+
+
+  //  FILE *f = fopen ("tet.pos","w");
+  //  fprintf(f,"View \"\"{\n");
+  for (size_t i = 0;i<t.size();i++){
+    if (t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
+    else {
+      result.push_back(t[i]->tet());
+      //      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
+    }
+    delete t[i];
+  }
+  //  fprintf(f,"};\n");
+  //  fclose(f);
+}
+
+
+
