@@ -1397,11 +1397,10 @@ void deMeshGRegion::operator() (GRegion *gr)
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
-                            double P[3], double N[3])
+                            double P[3], double N[3], double eps_prec)
 {
   double mat[3][3], det;
   double b[3], res[3];
-  const double eps_prec = 1.e-9;
 
   mat[0][0] = X[1] - X[0];
   mat[0][1] = X[2] - X[0];
@@ -1491,7 +1490,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
                              t_b->getVertex(2)->y()};
             double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
                              t_b->getVertex(2)->z()};
-            int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N);
+            int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }
         }

@@ -1144,7 +1144,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   MTet4Factory myFactory(1600000);
   std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
-  
+
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
@@ -1177,7 +1177,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   // Msg::Info("reclassifying %d tets", allTets.size());
 
 
-  if (_classify) {    
+  if (_classify) {
     fs_cont search;
     buildFaceSearchStructure(gr->model(), search);
     for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
@@ -1205,7 +1205,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
     }
     search.clear();
   }
-  else {    
+  else {
     // FIXME ... too simple
     for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it)
       (*it)->setOnWhat(gr);
@@ -1222,9 +1222,9 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   createAllEmbeddedFaces (gr, allEmbeddedFaces);
   connectTets(allTets.begin(), allTets.end(),&allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
-  
+
   // here the classification should be done
-  
+
   int ITER = 0, REALCOUNT = 0;
   int NB_CORRECTION_OF_CAVITY = 0;
   int COUNT_MISS_1 = 0;
@@ -1614,7 +1614,7 @@ static void initialCube (std::vector<MVertex*> &v,
   SBoundingBox3d bbox ;
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
-    bbox += SPoint3(pv->x(),pv->y(),pv->z());    
+    bbox += SPoint3(pv->x(),pv->y(),pv->z());
   }
   bbox *= 1.3;
   box[0] = new MVertex (bbox.min().x(),bbox.min().y(),bbox.min().z());
@@ -1666,7 +1666,7 @@ static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size) {
       }
     }
     if (found < 0){
-      return 0;      
+      return 0;
     }
     t = t->getNeigh(found);
     if (t->inCircumSphere(v)) {
@@ -1688,7 +1688,7 @@ MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH
   NB_GLOBAL_SEARCH++;
   for (size_t i = 0;i<t.size();i++){
     if (!t[i]->isDeleted() && t[i]->inCircumSphere(v))return t[i];
-  }  
+  }
   return 0;
 }
 
@@ -1710,16 +1710,17 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   clock_t t1 = clock();
 
   for (size_t i=0;i<v.size();i++){
-    MVertex *pv = v[i];    
+    MVertex *pv = v[i];
     MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH);
+    if(!found) continue;
     std::list<faceXtet> shell;
     std::list<MTet4*> cavity;
     recurFindCavity(shell, cavity, pv, found);
     std::vector<MTet4*> extended_cavity;
     std::list<faceXtet>::iterator it = shell.begin();
     while (it != shell.end()){
-      MTetrahedron *tr = new MTetrahedron(it->getVertex(0), 
-					  it->getVertex(1), 
+      MTetrahedron *tr = new MTetrahedron(it->getVertex(0),
+					  it->getVertex(1),
 					  it->getVertex(2), pv);
       MTet4 *t4 = new MTet4(tr, 0.0);
       t.push_back(t4);
