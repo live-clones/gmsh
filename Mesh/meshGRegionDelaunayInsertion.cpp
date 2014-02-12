@@ -1707,7 +1707,7 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
 
   int NB_GLOBAL_SEARCH = 0;
   SortHilbert(v);
-  clock_t t1 = clock();
+  double t1 = Cpu();
 
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
@@ -1734,8 +1734,8 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
     connectTets_vector(extended_cavity.begin(),extended_cavity.end());
   }
 
-  clock_t t2 = clock();
-  printf("%d global searches among %d CPU = %g\n",NB_GLOBAL_SEARCH,v.size(),(double)(t2-t1)/CLOCKS_PER_SEC);
+  double t2 = Cpu();
+  printf("%d global searches among %d CPU = %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1);
 
 
   //  FILE *f = fopen ("tet.pos","w");
