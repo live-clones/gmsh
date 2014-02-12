@@ -1861,7 +1861,7 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   }
 
   double t2 = Cpu();
-  printf("%d global searches among %d CPU = %g AVG LOCAL SEARCHES %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1,(double)AVG_ITER/v.size());
+  printf("%d global searches among %d CPU = %g AVG LOCAL SEARCHES %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1,1.+(double)AVG_ITER/v.size());
   printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
 
   
