@@ -124,6 +124,7 @@ class MTet4
   inline void setQuality(const double &q){ circum_radius = q; } 
   inline MTetrahedron *tet() const { return base; }
   inline MTetrahedron *&tet() { return base; }
+  inline void setTet(MTetrahedron *t) { base=t; }
   inline void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
   inline MTet4 *getNeigh(int iN) const { return neigh[iN]; }
   int inCircumSphere(const double *p) const; 

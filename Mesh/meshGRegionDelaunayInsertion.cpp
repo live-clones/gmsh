@@ -67,18 +67,27 @@ int MTet4::inCircumSphere(const double *p) const
 static int faces[4][3] = {{0,1,2}, {0,2,3}, {0,3,1}, {1,3,2}};
 
 struct faceXtet{
-  MVertex *v[3];
+  MVertex *v[3],*unsorted[3];
   MTet4 *t1;
   int i1;
-  faceXtet(MTet4 *_t, int iFac) : t1(_t), i1(iFac)
+  faceXtet(MTet4 *_t=0, int iFac=0) : t1(_t), i1(iFac)
   {
-    v[0] = t1->tet()->getVertex(faces[iFac][0]);
-    v[1] = t1->tet()->getVertex(faces[iFac][1]);
-    v[2] = t1->tet()->getVertex(faces[iFac][2]);
-    std::sort(v, v + 3);
+    MVertex *v0 = t1->tet()->getVertex(faces[iFac][0]);
+    MVertex *v1 = t1->tet()->getVertex(faces[iFac][1]);
+    MVertex *v2 = t1->tet()->getVertex(faces[iFac][2]);
+
+    unsorted[0] = v0;
+    unsorted[1] = v1;
+    unsorted[2] = v2;
+    
+    v[0] = std::min(std::min(v0,v1),v2);
+    v[2] = std::max(std::max(v0,v1),v2);
+    v[1] = (v0 != v[0] && v0 != v[2]) ? v0 : (v1 != v[0] && v1 != v[2]) ? v1 : v2;
+    //
+    //    std::sort(v, v + 3);
   }
 
-  inline MVertex * getVertex (int i) const { return t1->tet()->getVertex(faces[i1][i]);}
+  inline MVertex * getVertex (int i) const { return unsorted[i];}
 
  inline bool operator < (const faceXtet & other) const
   {
@@ -107,6 +116,32 @@ struct faceXtet{
     return o < 0;
   }
 };
+
+void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
+{
+  conn.clear();
+  unsigned int k = 0;
+  for (unsigned int i=0;i<t.size();i++){
+    if (!t[i]->isDeleted()){
+      for (int j = 0; j < 4; j++){
+	conn.push_back(faceXtet(t[i], j));
+      }
+    }
+  }
+  if (!conn.size())return;
+  std::sort(conn.begin(), conn.end());
+  
+  for (unsigned int i=0;i<conn.size()-1;i++){
+    faceXtet &f1  = conn[i];
+    faceXtet &f2  = conn[i+1];
+    if (f1 == f2 && f1.t1 != f2.t1){
+      f1.t1->setNeigh(f1.i1, f2.t1);
+      f2.t1->setNeigh(f2.i1, f1.t1);
+      ++i;
+    }
+  }
+}
+
 
 template <class ITER>
 void connectTets_vector(ITER beg, ITER end)
@@ -296,19 +331,8 @@ void recurFindCavity(std::list<faceXtet> & shell,
                      MVertex *v ,
                      MTet4 *t)
 {
-  // Msg::Info("tet %d %d %d %d",t->tet()->getVertex(0)->getNum(),
-  //     t->tet()->getVertex(1)->getNum(),
-  //     t->tet()->getVertex(2)->getNum(),
-  //     t->tet()->getVertex(3)->getNum());
-
-  // invariant : this one has to be inserted in the cavity
-  // consider this tet deleted
-  // remove its reference to its neighbors
   t->setDeleted(true);
-  // the cavity that has to be removed
-  // because it violates delaunay criterion
   cavity.push_back(t);
-
   for (int i = 0; i < 4; i++){
     MTet4 *neigh = t->getNeigh(i) ;
     faceXtet fxt (t, i);
@@ -323,8 +347,31 @@ void recurFindCavity(std::list<faceXtet> & shell,
       }
     }
   }
-  //  printf("cavity size %d\n",cavity.size());
 }
+
+void recurFindCavity(std::vector<faceXtet> & shell,
+                     std::vector<MTet4*> & cavity,
+                     MVertex *v ,
+                     MTet4 *t)
+{
+  t->setDeleted(true);
+  cavity.push_back(t);
+  for (int i = 0; i < 4; i++){
+    MTet4 *neigh = t->getNeigh(i) ;
+    faceXtet fxt (t, i);
+    if (!neigh)
+      shell.push_back(fxt);
+    else  if (!neigh->isDeleted()){
+      int circ = neigh->inCircumSphere(v);
+      if (circ && (neigh->onWhat() == t->onWhat()))
+        recurFindCavity(shell, cavity, v, neigh);
+      else{
+        shell.push_back(fxt);
+      }
+    }
+  }
+}
+
 
 void nonrecurFindCavity(std::list<faceXtet> & shell,
                      std::list<MTet4*> & cavity,
@@ -1659,7 +1706,7 @@ static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size) {
 	double Y[3] = {fxt.v[0]->y(),fxt.v[1]->y(),fxt.v[2]->y()};
 	double Z[3] = {fxt.v[0]->z(),fxt.v[1]->z(),fxt.v[2]->z()};
 	//	printf("%d %d\n",i,intersect_line_triangle(X,Y,Z,p1,p2-p1));
-	if (intersect_line_triangle(X,Y,Z,p1,p1-p2, 1.e-12) > 0) {
+	if (intersect_line_triangle(X,Y,Z,p1,p1-p2, -1.e-8) > 0) {
 	  found = i;
 	  break;
 	}
@@ -1682,9 +1729,14 @@ static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size) {
 MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH){
   // last inserted is used as starting point
   // we know it is not deleted
-  MTet4 *start = t[t.size() - 1];
+  unsigned int k = t.size() - 1;
+  while(t[k]->isDeleted()){
+    k--;
+  }
+  MTet4 *start = t[k];
   start = search4Tet (start,v,(int)t.size());
   if (start)return start;
+  printf("Global Search has to be done\n");
   NB_GLOBAL_SEARCH++;
   for (size_t i = 0;i<t.size();i++){
     if (!t[i]->isDeleted() && t[i]->inCircumSphere(v))return t[i];
@@ -1702,55 +1754,90 @@ bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
 void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result)
 {
   std::vector<MTet4*> t;
+  t.reserve (v.size()*7);
+  std::vector<faceXtet> conn;
+  std::vector<faceXtet> shell;
+  std::vector<MTet4*> cavity;
   MVertex *box[8];
   initialCube (v,box,t);
 
   int NB_GLOBAL_SEARCH = 0;
   SortHilbert(v);
   double t1 = Cpu();
-
+  
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
+
+    //    if (i%10000 == 0)printf("PT(%7d)\n",i);
+
     MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH);
-    if(!found) continue;
-    std::list<faceXtet> shell;
-    std::list<MTet4*> cavity;
+    if(!found) {
+      printf("argh\n");
+      continue;
+    }
+    shell.clear();
+    cavity.clear();
     recurFindCavity(shell, cavity, pv, found);
+
     std::vector<MTet4*> extended_cavity;
-    std::list<faceXtet>::iterator it = shell.begin();
-    while (it != shell.end()){
-      MTetrahedron *tr = new MTetrahedron(it->getVertex(0),
-					  it->getVertex(1),
-					  it->getVertex(2), pv);
-      MTet4 *t4 = new MTet4(tr, 0.0);
-      t.push_back(t4);
+    for (unsigned int count = 0; count < shell.size(); count++){
+      const faceXtet &fxt = shell[count];
+      MTetrahedron *tr;
+      MTet4 *t4;
+      MVertex *v0 = fxt.getVertex(0);
+      MVertex *v1 = fxt.getVertex(1);
+      MVertex *v2 = fxt.getVertex(2);
+      MTet4 *otherSide = fxt.t1->getNeigh(fxt.i1);
+      if (count < cavity.size()){
+	t4 = cavity[count];
+	tr = t4->tet() ;
+	tr->setVertex(0,v0);
+	tr->setVertex(1,v1);
+	tr->setVertex(2,v2);
+	tr->setVertex(3,pv);	
+      }
+      else{
+	tr = new MTetrahedron(v0,v1,v2,pv);
+	t4 = new MTet4(tr, 0.0);
+	t.push_back(t4);
+      }
       extended_cavity.push_back(t4);
-      MTet4 *otherSide = it->t1->getNeigh(it->i1);
       if (otherSide)
 	extended_cavity.push_back(otherSide);
-      ++it;
     }
+    // reuse memory --> reinitialize MTet4s
+    for (unsigned int k=0;k<cavity.size();k++){
+      cavity[k]->setDeleted(false);
+      for (unsigned int l=0;l<4;l++){
+	cavity[k]->setNeigh(l,0);
+      }
+    }
+
     //    printf("connecting %i tets\n",extended_cavity.size());
-    connectTets_vector(extended_cavity.begin(),extended_cavity.end());
+    connectTets_vector2(extended_cavity,conn);
+    //    printf("done\n");
+     //connectTets_vector(extended_cavity.begin(),extended_cavity.end());
   }
 
   double t2 = Cpu();
   printf("%d global searches among %d CPU = %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1);
+  printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
 
-
-  //  FILE *f = fopen ("tet.pos","w");
-  //  fprintf(f,"View \"\"{\n");
+  
+  //      FILE *f = fopen ("tet.pos","w");
+  //      fprintf(f,"View \"\"{\n");
   for (size_t i = 0;i<t.size();i++){
-    if (t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
+    if (t[i]->tet() && t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
     else {
       result.push_back(t[i]->tet());
-      //      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
+      //                  t[i]->tet()->writePOS (f, false,false,true,false,false,false);
     }
     delete t[i];
   }
-  //  fprintf(f,"};\n");
-  //  fclose(f);
+  
+  for (int i=0;i<8;i++)delete box[i];
+  
+  //      fprintf(f,"};\n");
+  //      fclose(f);
 }
-
-
 
