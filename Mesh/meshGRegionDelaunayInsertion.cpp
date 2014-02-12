@@ -1688,45 +1688,83 @@ static void initialCube (std::vector<MVertex*> &v,
   connectTets(t);
 }
 
+int straddling_segment_intersects_triangle(SPoint3 &p1,SPoint3 &p2,
+					   SPoint3 &q1,SPoint3 &q2,
+					   SPoint3 &q3) 
+{
+  double s1 = robustPredicates::orient3d(p1, p2, q2, q3);
+  double s2 = robustPredicates::orient3d(p1, p2, q3, q1);
+  double s3 = robustPredicates::orient3d(p1, p2, q1, q2);
+
+  double s4 = robustPredicates::orient3d(q1, q2, q3, p1);
+  double s5 = robustPredicates::orient3d(q3, q2, q1, p2);
+
+  return (s1*s2 >= 0.0 && s2 * s3 >= 0.0 && s4*s5 >= 0) ;
+}
+
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
                             double P[3], double N[3], double);
 
-static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size) {
+static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size,int & ITER) {
   if (t->inCircumSphere(v)) return t;
-  int ITER = 0;
   SPoint3 p2 (v->x(),v->y(),v->z());
+  std::set<MTet4*> path;
   while (1){
+    path.insert(t);
+    //    path.push_back(t);
+    //    if (t->isDeleted()){
+    //      printf("on tourne en rond\n");
+    //    }
+    //    t->setDeleted(true);
     SPoint3 p1 = t->tet()->barycenter();
     int found = -1;
+    int nbIntersect = 0;
+    MTet4 *neighOK = 0;
     for (int i = 0; i < 4; i++){
       MTet4 *neigh = t->getNeigh(i);
-      if (neigh){
+      if (neigh && path.find(neigh) == path.end()){
+	neighOK = neigh;
 	faceXtet fxt (t, i);
-	double X[3] = {fxt.v[0]->x(),fxt.v[1]->x(),fxt.v[2]->x()};
-	double Y[3] = {fxt.v[0]->y(),fxt.v[1]->y(),fxt.v[2]->y()};
-	double Z[3] = {fxt.v[0]->z(),fxt.v[1]->z(),fxt.v[2]->z()};
-	//	printf("%d %d\n",i,intersect_line_triangle(X,Y,Z,p1,p2-p1));
-	if (intersect_line_triangle(X,Y,Z,p1,p1-p2, -1.e-8) > 0) {
+	//	double X[3] = {fxt.v[0]->x(),fxt.v[1]->x(),fxt.v[2]->x()};
+	//	double Y[3] = {fxt.v[0]->y(),fxt.v[1]->y(),fxt.v[2]->y()};
+	//	double Z[3] = {fxt.v[0]->z(),fxt.v[1]->z(),fxt.v[2]->z()};
+
+	SPoint3 q1(fxt.v[0]->x(),fxt.v[0]->y(),fxt.v[0]->z());
+	SPoint3 q2(fxt.v[1]->x(),fxt.v[1]->y(),fxt.v[1]->z());
+	SPoint3 q3(fxt.v[2]->x(),fxt.v[2]->y(),fxt.v[2]->z());
+	
+	//	printf("%d %d\n",intersect_line_triangle(X,Y,Z,p1,p2-p1,0.0) > 0,straddling_segment_intersects_triangle (p1,p2,q1,q2,q3));
+
+	if ( straddling_segment_intersects_triangle (p1,p2,q1,q2,q3)){
+	  //	if (intersect_line_triangle(X,Y,Z,p1,p1-p2, 0.0) > 0) {
 	  found = i;
-	  break;
+	  nbIntersect++;
+	  //break;
 	}
       }
     }
+    //    if (nbIntersect != 1){
+    //      printf("quite unusual %d intersections volume %12.5E\n",nbIntersect,t->getVolume());
+    //
+    //    }
     if (found < 0){
-      return 0;
+      if (neighOK)t = neighOK;
+      else return 0;
     }
-    t = t->getNeigh(found);
+    else{
+      t = t->getNeigh(found);
+    }
     if (t->inCircumSphere(v)) {
-      //      printf("FOUND\n");
       return t;
     }
-    if (ITER++ > _size) break;
+    if (ITER++ > .5*_size) {
+      break;
+    }
   }
   return 0;
 }
 
-
-MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH){
+MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH, int &ITER){
   // last inserted is used as starting point
   // we know it is not deleted
   unsigned int k = t.size() - 1;
@@ -1734,7 +1772,7 @@ MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH
     k--;
   }
   MTet4 *start = t[k];
-  start = search4Tet (start,v,(int)t.size());
+  start = search4Tet (start,v,(int)t.size(),ITER);
   if (start)return start;
   printf("Global Search has to be done\n");
   NB_GLOBAL_SEARCH++;
@@ -1762,6 +1800,7 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   initialCube (v,box,t);
 
   int NB_GLOBAL_SEARCH = 0;
+  int AVG_ITER = 0;
   SortHilbert(v);
   double t1 = Cpu();
   
@@ -1769,8 +1808,10 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
     MVertex *pv = v[i];
 
     //    if (i%10000 == 0)printf("PT(%7d)\n",i);
-
-    MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH);
+    int NITER = 0;
+    MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
+    //    printf("NITER = %d\n",NITER);
+    AVG_ITER += NITER;
     if(!found) {
       printf("argh\n");
       continue;
@@ -1820,24 +1861,24 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   }
 
   double t2 = Cpu();
-  printf("%d global searches among %d CPU = %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1);
+  printf("%d global searches among %d CPU = %g AVG LOCAL SEARCHES %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1,(double)AVG_ITER/v.size());
   printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
 
   
-  //      FILE *f = fopen ("tet.pos","w");
-  //      fprintf(f,"View \"\"{\n");
+  FILE *f = fopen ("tet.pos","w");
+  fprintf(f,"View \"\"{\n");
   for (size_t i = 0;i<t.size();i++){
-    if (t[i]->tet() && t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
+    if (t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
     else {
       result.push_back(t[i]->tet());
-      //                  t[i]->tet()->writePOS (f, false,false,true,false,false,false);
+      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
     }
     delete t[i];
   }
   
   for (int i=0;i<8;i++)delete box[i];
   
-  //      fprintf(f,"};\n");
-  //      fclose(f);
+  fprintf(f,"};\n");
+  fclose(f);
 }
 
