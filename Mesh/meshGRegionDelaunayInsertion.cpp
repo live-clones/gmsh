@@ -120,7 +120,7 @@ struct faceXtet{
 void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
 {
   conn.clear();
-  unsigned int k = 0;
+  //  unsigned int k = 0;
   for (unsigned int i=0;i<t.size();i++){
     if (!t[i]->isDeleted()){
       for (int j = 0; j < 4; j++){
@@ -1861,24 +1861,24 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   }
 
   double t2 = Cpu();
-  printf("%d global searches among %d CPU = %g AVG LOCAL SEARCHES %g\n",NB_GLOBAL_SEARCH,v.size(), t2-t1,1.+(double)AVG_ITER/v.size());
-  printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
+  Msg::Info("Delaunay 3D done for %d points : CPU = %g, %d global searches, AVG walk size %g",v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+(double)AVG_ITER/v.size());
+  //  printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
 
   
-  FILE *f = fopen ("tet.pos","w");
-  fprintf(f,"View \"\"{\n");
+  //FILE *f = fopen ("tet.pos","w");
+  //  fprintf(f,"View \"\"{\n");
   for (size_t i = 0;i<t.size();i++){
     if (t[i]->isDeleted() || tetOnBox (t[i]->tet(),box)) delete t[i]->tet();
     else {
       result.push_back(t[i]->tet());
-      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
+      //      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
     }
     delete t[i];
   }
   
   for (int i=0;i<8;i++)delete box[i];
   
-  fprintf(f,"};\n");
-  fclose(f);
+  //  fprintf(f,"};\n");
+  //  fclose(f);
 }
 
