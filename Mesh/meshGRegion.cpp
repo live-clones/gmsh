@@ -1309,8 +1309,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   }
   gr->set(allFaces);
 
-  meshGRegionBoundaryRecovery init;
-  init.reconstructmesh(gr);
+  meshGRegionBoundaryRecovery *init = new meshGRegionBoundaryRecovery();
+  init->reconstructmesh(gr);
+  delete init;
 
   // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();

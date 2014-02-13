@@ -13965,6 +13965,135 @@ void meshGRegionBoundaryRecovery::optimizemesh()
 ////                                                                       ////
 //// optimize_cxx /////////////////////////////////////////////////////////////
 
+void meshGRegionBoundaryRecovery::printtet(triface* tface)
+{
+  triface tmpface, prtface;
+  shellface *shells;
+  point tmppt;
+  face checksh;
+  int facecount;
+
+  printf("Tetra x%lx ver %i loc %i:", (uintptr_t)(tface->tet),
+	 tface->ver, tface->ver & 3);
+  if (infected(*tface)) {
+    printf(" (infected)");
+  }
+  if (marktested(*tface)) {
+    printf(" (marked)");
+  }
+  if (marktest2ed(*tface)) {
+    printf(" (qued)");
+  }
+  if (elemcounter(*tface) != 0) {
+    printf(" c(%d)", elemcounter(*tface));
+  }
+  printf("\n");
+
+  tmpface = *tface;
+  facecount = 0;
+  while(facecount < 4) {
+    tmpface.ver = facecount;
+    fsym(tmpface, prtface);
+    if (prtface.tet != NULL) {
+      printf("    [%i] x%lx  ver(%i)", facecount, 
+             (uintptr_t) (prtface.tet), prtface.ver);
+      if((point) prtface.tet[7] == dummypoint) {
+        printf(" (Outer space).");
+      }
+      
+    } else {
+      printf("    [%i] NULL!", facecount);
+    }
+    // Check if this face is marked.
+    if (facemarked(tmpface)) {
+      printf(" (marked)");
+    }
+    if ((tface->ver & 3) == facecount) {
+      printf(" (*)");  // It is the current face.
+    }
+    printf("\n");
+    facecount ++;
+  }
+
+  tmppt = org(*tface);
+  if(tmppt == (point) NULL) {
+    printf("    Org [%i] NULL\n", orgpivot[tface->ver] - 4);
+  } else {
+    printf("    Org [%i] x%lx (%.12g,%.12g,%.12g) %d\n", 
+           orgpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           tmppt[1], tmppt[2], pointmark(tmppt));
+  }
+  tmppt = dest(*tface);
+  if(tmppt == (point) NULL) {
+    printf("    Dest[%i] NULL\n", destpivot[tface->ver] - 4);
+  } else {
+    printf("    Dest[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
+           destpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           tmppt[1], tmppt[2], pointmark(tmppt));
+  }
+  tmppt = apex(*tface);
+  if(tmppt == (point) NULL) {
+    printf("    Apex[%i] NULL\n", apexpivot[tface->ver] - 4);
+  } else {
+    printf("    Apex[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
+           apexpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           tmppt[1], tmppt[2], pointmark(tmppt));
+  }
+  tmppt = oppo(*tface);
+  if(tmppt == (point) NULL) {
+    printf("    Oppo[%i] NULL\n", oppopivot[tface->ver] - 4);
+  } else {
+    printf("    Oppo[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
+           oppopivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           tmppt[1], tmppt[2], pointmark(tmppt));
+  }
+
+  if (checksubsegflag) {
+    if (tface->tet[8] != NULL) {
+      shells = (shellface *) tface->tet[8];
+      for (facecount = 0; facecount < 6; facecount++) {
+        sdecode(shells[facecount], checksh);
+        if (checksh.sh != NULL) {
+          printf("      [%d] x%lx %d.", facecount, (uintptr_t) checksh.sh,
+                 checksh.shver);
+        } else {
+          printf("      [%d] NULL.", facecount);
+        }
+        if (ver2edge[tface->ver] == facecount) {
+          printf(" (*)");  // It is the current edge.
+        }
+        printf("\n");
+      }
+    }
+  }
+  if (checksubfaceflag) {
+    if (tface->tet[9] != NULL) {
+      shells = (shellface *) tface->tet[9];
+      for (facecount = 0; facecount < 4; facecount++) {
+        sdecode(shells[facecount], checksh);
+        if (checksh.sh != NULL) {
+          printf("      [%d] x%lx %d.", facecount, (uintptr_t) checksh.sh,
+                 checksh.shver);
+        } else {
+          printf("      [%d] NULL.", facecount);
+        }
+        if ((tface->ver & 3) == facecount) {
+          printf(" (*)");  // It is the current face.
+        }
+        printf("\n");
+      }
+    }
+  }
+}
+
+// Only print the vertices of the tet.
+void meshGRegionBoundaryRecovery::ptetv(triface* t)
+{
+  printf("  tet x%lx (%d, %d, %d, %d) %d\n", (uintptr_t) t->tet,
+          pointmark(org(*t)), pointmark(dest(*t)), pointmark(apex(*t)), 
+          pointmark(oppo(*t)), t->ver);
+}
+
 void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
 {
   FILE *outfile;
@@ -14088,6 +14217,153 @@ void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
   fprintf(outfile, "\nEnd\n");
   fclose(outfile);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//                                                                           //
+// checkmesh()    Test the mesh for topological consistency.                 //
+//                                                                           //
+// If 'topoflag' is set, only check the topological connection of the mesh,  //
+// i.e., do not report degenerated or inverted elements.                     //
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+int meshGRegionBoundaryRecovery::checkmesh(int topoflag)
+{
+  triface tetloop, neightet, symtet;
+  point pa, pb, pc, pd;
+  REAL ori;
+  int horrors, i;
+
+  if (!b->quiet) {
+    printf("  Checking consistency of mesh...\n");
+  }
+
+  horrors = 0;
+  tetloop.ver = 0;
+  // Run through the list of tetrahedra, checking each one.
+  tetrahedrons->traversalinit();
+  tetloop.tet = alltetrahedrontraverse();
+  while (tetloop.tet != (tetrahedron *) NULL) {
+    // Check all four faces of the tetrahedron.
+    for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
+      pa = org(tetloop);
+      pb = dest(tetloop);
+      pc = apex(tetloop);
+      pd = oppo(tetloop);
+      if (tetloop.ver == 0) {  // Only test for inversion once.
+        if (!ishulltet(tetloop)) {  // Only do test if it is not a hull tet.
+          if (!topoflag) {
+            ori = orient3d(pa, pb, pc, pd);
+            if (ori >= 0.0) {
+              printf("  !! !! %s ", ori > 0.0 ? "Inverted" : "Degenerated");
+              printf("  (%d, %d, %d, %d) (ori = %.17g)\n", pointmark(pa),
+                     pointmark(pb), pointmark(pc), pointmark(pd), ori);
+              horrors++;
+            }
+          }
+        }
+        if (infected(tetloop)) { 
+          // This may be a bug. Report it.
+          printf("  !! (%d, %d, %d, %d) is infected.\n", pointmark(pa),
+                 pointmark(pb), pointmark(pc), pointmark(pd));
+          horrors++;
+        }
+        if (marktested(tetloop)) {
+          // This may be a bug. Report it.
+          printf("  !! (%d, %d, %d, %d) is marked.\n", pointmark(pa),
+                 pointmark(pb), pointmark(pc), pointmark(pd));
+          horrors++;
+        }
+      }
+      if (tetloop.tet[tetloop.ver] == NULL) {
+        printf("  !! !! No neighbor at face (%d, %d, %d).\n", pointmark(pa),
+               pointmark(pb), pointmark(pc));
+        horrors++;
+      } else {
+        // Find the neighboring tetrahedron on this face.
+        fsym(tetloop, neightet);
+        if (neightet.tet != NULL) {
+          // Check that the tetrahedron's neighbor knows it's a neighbor.
+          fsym(neightet, symtet);
+          if ((tetloop.tet != symtet.tet) || (tetloop.ver != symtet.ver)) {
+            printf("  !! !! Asymmetric tetra-tetra bond:\n");
+            if (tetloop.tet == symtet.tet) {
+              printf("   (Right tetrahedron, wrong orientation)\n");
+            }
+            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
+                   pointmark(pb), pointmark(pc), pointmark(pd));
+            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
+                   pointmark(dest(neightet)), pointmark(apex(neightet)),
+                   pointmark(oppo(neightet)));
+            horrors++;
+          }
+          // Check if they have the same edge (the bond() operation).
+          if ((org(neightet) != pb) || (dest(neightet) != pa)) {
+            printf("  !! !! Wrong edge-edge bond:\n");
+            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
+                   pointmark(pb), pointmark(pc), pointmark(pd));
+            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
+                   pointmark(dest(neightet)), pointmark(apex(neightet)),
+                   pointmark(oppo(neightet)));
+            horrors++;
+          }
+          // Check if they have the same apex.
+          if (apex(neightet) != pc) {
+            printf("  !! !! Wrong face-face bond:\n");
+            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
+                   pointmark(pb), pointmark(pc), pointmark(pd));
+            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
+                   pointmark(dest(neightet)), pointmark(apex(neightet)),
+                   pointmark(oppo(neightet)));
+            horrors++;
+          }
+          // Check if they have the same opposite.
+          if (oppo(neightet) == pd) {
+            printf("  !! !! Two identical tetra:\n");
+            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
+                   pointmark(pb), pointmark(pc), pointmark(pd));
+            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
+                   pointmark(dest(neightet)), pointmark(apex(neightet)),
+                   pointmark(oppo(neightet)));
+            horrors++;
+          }
+        } else {
+          printf("  !! !! Tet-face has no neighbor (%d, %d, %d) - %d:\n",
+                 pointmark(pa), pointmark(pb), pointmark(pc), pointmark(pd));
+          horrors++;
+        }
+      }
+      if (facemarked(tetloop)) {
+        // This may be a bug. Report it.
+        printf("  !! tetface (%d, %d, %d) %d is marked.\n", pointmark(pa),
+               pointmark(pb), pointmark(pc), pointmark(pd));
+      }
+    }
+    // Check the six edges of this tet.
+    for (i = 0; i < 6; i++) {
+      tetloop.ver = edge2ver[i];
+      if (edgemarked(tetloop)) {
+        // This may be a bug. Report it.
+        printf("  !! tetedge (%d, %d) %d, %d is marked.\n", 
+               pointmark(org(tetloop)), pointmark(dest(tetloop)), 
+               pointmark(apex(tetloop)), pointmark(oppo(tetloop)));
+      }
+    }
+    tetloop.tet = alltetrahedrontraverse();
+  }
+  if (horrors == 0) {
+    if (!b->quiet) {
+      printf("  In my studied opinion, the mesh appears to be consistent.\n");
+    }
+  } else {
+    printf("  !! !! !! !! %d %s witnessed.\n", horrors, 
+           horrors > 1 ? "abnormity" : "abnormities");
+  }
+
+  return horrors;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 void meshGRegionBoundaryRecovery::unifysubfaces(face *f1, face *f2)
 {
@@ -14676,7 +14952,7 @@ if (1) {
     }
 
   // Index the vertices.
-  for (unsigned int i = 0; i < _vertices.size(); i++){
+  for (unsigned int i = 0; i < _vertices.size(); i++) {
 	_vertices[i]->setIndex(i);
   }
 
@@ -14991,6 +15267,64 @@ if (1) {
     // Remove hanging nodes.
     jettisonnodes();
   }
+
+  long tetnumber, facenumber;
+
+  printf("\nStatistics:\n\n");
+  printf("  Input points: %ld\n", _vertices.size());
+  //if (b->refine) {
+  //  printf("  Input tetrahedra: %d\n", in->numberoftetrahedra);
+  //}
+  if (b->plc) {
+    printf("  Input facets: %ld\n", f_list.size());
+    printf("  Input segments: %ld\n", e_list.size());
+    //printf("  Input holes: %d\n", in->numberofholes);
+    //printf("  Input regions: %d\n", in->numberofregions);
+  }
+
+  tetnumber = tetrahedrons->items - hullsize;
+  facenumber = (tetnumber * 4l + hullsize) / 2l;
+
+  if (b->weighted) { // -w option
+    printf("\n  Mesh points: %ld\n", points->items - nonregularcount);
+  } else {
+    printf("\n  Mesh points: %ld\n", points->items);
+  }
+  printf("  Mesh tetrahedra: %ld\n", tetnumber);
+  printf("  Mesh faces: %ld\n", facenumber);
+  if (meshedges > 0l) {
+    printf("  Mesh edges: %ld\n", meshedges);
+  } else {
+    if (!nonconvex) {
+      long vsize = points->items - dupverts - unuverts;
+      if (b->weighted) vsize -= nonregularcount;
+      meshedges = vsize + facenumber - tetnumber - 1;
+      printf("  Mesh edges: %ld\n", meshedges);
+    }
+  }
+
+  if (b->plc || b->refine) {
+    printf("  Mesh faces on facets: %ld\n", subfaces->items);
+    printf("  Mesh edges on segments: %ld\n", subsegs->items);
+    if (st_volref_count > 0l) {
+      printf("  Steiner points inside domain: %ld\n", st_volref_count);
+    }
+    if (st_facref_count > 0l) {
+      printf("  Steiner points on facets:  %ld\n", st_facref_count);
+    }
+    if (st_segref_count > 0l) {
+      printf("  Steiner points on segments:  %ld\n", st_segref_count);
+    }
+  } else {
+    printf("  Convex hull faces: %ld\n", hullsize);
+    if (meshhulledges > 0l) {
+      printf("  Convex hull edges: %ld\n", meshhulledges);
+    }
+  }
+  if (b->weighted) { // -w option
+    printf("  Skipped non-regular points: %ld\n", nonregularcount);
+  }
+  printf("\n");
 
   // Debug
   //outmesh2medit("dump");

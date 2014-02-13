@@ -867,7 +867,12 @@ class meshGRegionBoundaryRecovery {
     }
   }
 
+  // Debug functions
+  void printtet(triface*);
+  void ptetv(triface*);
   void outmesh2medit(const char* mfilename);
+  int checkmesh(int topoflag);
+
   void unifysubfaces(face *f1, face *f2);
   void unifysegments();
   void jettisonnodes();
