@@ -1781,6 +1781,13 @@ bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
   return false;
 }
 
+
+void sanityCheck1(MTet4 *t)
+{
+}
+
+
+
  void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result, bool removeBox)
 {
   std::vector<MTet4*> t;
@@ -1853,10 +1860,10 @@ bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
     if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
     
     // reuse memory --> reinitialize MTet4s
-    for (unsigned int k=0;k<cavity.size();k++){
+    for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
       cavity[k]->setDeleted(false);
       for (unsigned int l=0;l<4;l++){
-	cavity[k]->setNeigh(l,0);
+    	cavity[k]->setNeigh(l,0);
       }
     }
     //    T = Cpu();
