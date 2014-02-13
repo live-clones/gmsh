@@ -7,8 +7,8 @@
    @class LineLagrangeBasis
    @brief Lagrange Basis for Lines
 
-   This class can instantiate a @em Lagrange @em Basis
-   for a Line and for a given Order.@n
+   This class can instantiate a Lagrange Basis
+   for a Line and for a given order.
 
    It uses
    <a href="http://geuz.org/gmsh/">gmsh</a> Basis.
@@ -18,8 +18,7 @@ class LineLagrangeBasis: public BasisLagrange{
  public:
   //! @param order A natural number
   //!
-  //! Returns a new LineLagrangeBasis
-  //! of the given Order
+  //! Returns a new LineLagrangeBasis of the given order
   LineLagrangeBasis(size_t order);
 
   //! Deletes this Basis

@@ -5,9 +5,9 @@
 
 /**
    @interface BasisLocal
-   @brief Common Interface of all Local Basis
+   @brief Common interface of all local Basis
 
-   This class is the @em common @em interface for all Local Basis.
+   This class is the common interface for all local Basis.
  */
 
 class BasisLocal: public Basis{

@@ -7,8 +7,7 @@
    @class QuadNedelecBasis
    @brief Nedelec Basis for Quads
 
-   This class can instantiate a Nedelec Basis
-   for Quadrangles.@n
+   This class can instantiate a Nedelec Basis for Quadrangles.
 */
 
 class QuadNedelecBasis: public BasisHierarchical1Form{

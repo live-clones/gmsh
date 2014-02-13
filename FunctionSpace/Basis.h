@@ -172,19 +172,19 @@ class Basis{
    **
 
    @fn Basis::getNVertexBased
-   @return Returns the number of Vertex Based functions of this Basis
+   @return Returns the number of Vertex based functions of this Basis
    **
 
    @fn Basis::getNEdgeBased
-   @return Returns the number of Edge Based functions of this Basis
+   @return Returns the number of Edge based functions of this Basis
    **
 
    @fn Basis::getNFaceBased
-   @return Returns the number of Face Based functions of this Basis
+   @return Returns the number of Face based functions of this Basis
    **
 
    @fn Basis::getNCellBased
-   @return Returns the number of Cell Based functions of this Basis
+   @return Returns the number of Cell based functions of this Basis
    **
 
    @fn Basis::getNFunction
@@ -198,9 +198,9 @@ class Basis{
    @param u A u coordinate in the reference space of this Basis
    @param v A v coordinate in the reference space of this Basis
    @param w A w coordinate in the reference space of this Basis
-   @return The given matrix is populated with the evaluation
-   of every basis function at the given coordinates,
-   and for the orientation of the given element
+
+   The given matrix is populated with the evaluation of every basis function
+   at the given coordinates, and for the orientation of the given element
    **
 
    @fn Basis::getFunctions(fullMatrix<double>&, size_t, double, double, double) const
@@ -209,9 +209,9 @@ class Basis{
    @param u A u coordinate in the reference space of this Basis
    @param v A v coordinate in the reference space of this Basis
    @param w A w coordinate in the reference space of this Basis
-   @return The given matrix is populated with the evaluation
-   of every basis function at the given coordinates,
-   and for the given orientation
+
+   The given matrix is populated with the evaluation of every basis function
+   at the given coordinates, and for the given orientation
    **
 
    @fn Basis::getDerivative(fullMatrix<double>&, const MElement&, double, double, double) const
@@ -220,21 +220,24 @@ class Basis{
    @param u A u coordinate in the reference space of this Basis
    @param v A v coordinate in the reference space of this Basis
    @param w A w coordinate in the reference space of this Basis
-   @return The given matrix is populated with the evaluation
-   of the derivative of every basis function at the given coordinates,
+
+   The given matrix is populated with the evaluation of the derivative
+   of every basis function at the given coordinates,
    and for the orientation of the given element
    **
 
    @fn Basis::preEvaluateFunctions
    @param point A Matrix with points coordinate
    (each line is a point and got 3 coordinates, i.e. 3 rows)
-   @return Pre Evaluates every basis function at the given points
+
+   Pre Evaluates every basis function at the given points
    **
 
    @fn Basis::preEvaluateDerivatives
    @param point A Matrix with points coordinate
    (each line is a point and got 3 coordinates, i.e. 3 rows)
-   @return Pre Evaluates every basis function derivative at the given points
+
+   Pre Evaluates every basis function derivative at the given points
 
    @li For 0-Form it computes the gradient
    @li For 1-Form it computes the curl
@@ -269,6 +272,10 @@ class Basis{
    @param element A MElement
    @return Same as Basis::getPreEvaluatedFunctions,
    but the orientation is computed with the given element
+   **
+
+   @fn Basis::toString
+   @return Returns a string describing this Basis
 */
 
 //////////////////////

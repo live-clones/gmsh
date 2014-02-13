@@ -224,14 +224,14 @@ class ReferenceSpace{
    Deletes this ReferenceSpace
    **
 
-   @fn ReferenceSpace::getNReferenceSpace
-   @returns Returns the number of ABC reference spaces
+   @fn ReferenceSpace::getNOrientation
+   @returns Returns the number of orientations
    **
 
-   @fn ReferenceSpace::getReferenceSpace
+   @fn ReferenceSpace::getOrientation
    @param element A MElement
-   @returns Returns a natural number defining on which ABC space
-   the given element can be mapped
+   @returns
+   Returns a natural number defining the orientation of the given element
 
    If no space is found (e.g. the given element does not belong
    the same geometrical entity as this ReferenceSpace) an Exception is thrown

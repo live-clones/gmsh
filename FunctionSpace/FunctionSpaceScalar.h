@@ -6,11 +6,11 @@
 
 /**
    @class FunctionSpaceScalar
-   @brief A Scalar FunctionSpaces
+   @brief A scalar FunctionSpace
 
-   This class is a @em Scalar FunctionSpaces.@n
+   This class is a scalar FunctionSpaces.
 
-   A FunctionSpaceScalar can be @em interpolated.
+   A FunctionSpaceScalar can be interpolated.
 */
 
 
@@ -49,12 +49,27 @@ class FunctionSpaceScalar : public FunctionSpace{
 
 
 /**
-   @fn FunctionSpaceScalar::FunctionSpaceScalar
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t)
    @param goe A GroupOfElement
-   @em of @em the @em same @em geomtrical @em type
-   @param basis A Basis (with a meaning on @c goe)
-   Instanciates a new FunctionSpaceScalar with the
-   given Basis on the given GroupOfElement
+   @param order A natural number
+   Instanciates a new FunctionSpaceScalar
+   on the given GroupOfElement and with the given order
+
+   The instanciated FunctionSpace will use a hierarchical Basis
+   **
+
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t,std::string)
+   @param goe A GroupOfElement
+   @param order A natural number
+   @param family A stringr
+   Instanciates a new FunctionSpaceScalar
+   on the given GroupOfElement and with the given order
+
+   The instanciated FunctionSpace will use the requested Basis family:
+   @li If family is equal to 'lagrange' a Lagrange Basis will be used
+   @li If family is equal to 'hierarchical' a hierarchical Basis will be used
+
+   @see See BasisGenerator::generate()
    **
 
    @fn FunctionSpaceScalar::~FunctionSpaceScalar
@@ -64,39 +79,34 @@ class FunctionSpaceScalar : public FunctionSpace{
    @fn FunctionSpaceScalar::interpolate
    @param element The MElement to interpolate on
    @param coef The coefficients of the interpolation
-   @param xyz The coordinate
-   (of point @em inside the given @c element)
-   of the interpolation in the @em Physical Space
+   @param xyz The coordinate (of a point inside the given element)
+   of the interpolation in the @em physical space
 
    @return Returns the (scalar) interpolated value
 
-   @warning
    If the given coordinate are not in the given
-   @c element @em Bad @em Things may happend
-
-   @todo
-   If the given coordinate are not in the given
-   @c element @em Bad @em Things may happend
-   ---> check
+   element @em Bad @em Things may happend
    **
 
    @fn FunctionSpaceScalar::interpolateInRefSpace
    @param element The MElement to interpolate on
    @param coef The coefficients of the interpolation
-   @param uvw The coordinate
-   (of point @em inside the given @c element)
-   of the interpolation in the @em Reference Space
+   @param uvw The coordinate (of a point inside the given element)
+   of the interpolation in the @em reference space
 
    @return Returns the (scalar) interpolated value
 
-   @warning
    If the given coordinate are not in the given
-   @c element @em Bad @em Things may happend
+   element @em Bad @em Things may happend
 
-   @todo
-   If the given coordinate are not in the given
-   @c element @em Bad @em Things may happend
-   ---> check
+   @fn FunctionSpaceScalar::interpolateDerivative
+   @param element The MElement to interpolate on
+   @param coef The coefficients of the interpolation
+   @param xyz The coordinate (of a point inside the given element)
+   of the interpolation in the @em physical space
+
+   Same as FunctionSpaceScalar::interpolate(element, coef, xyz),
+   but this method iterpolates the derivative.
 */
 
 

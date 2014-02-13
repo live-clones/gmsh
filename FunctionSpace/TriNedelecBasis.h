@@ -7,8 +7,7 @@
    @class TriNedelecBasis
    @brief Nedelec Basis for Triangles
 
-   This class can instantiate a Nedelec Basis
-   for Triangles.@n
+   This class can instantiate a Nedelec Basis for Triangles.
 */
 
 class TriNedelecBasis: public BasisHierarchical1Form{

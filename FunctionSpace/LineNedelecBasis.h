@@ -7,8 +7,7 @@
    @class LineNedelecBasis
    @brief Nedelec Basis for Lines
 
-   This class can instantiate a Nedelec Basis
-   for Lines.@n
+   This class can instantiate a Nedelec Basis for Lines
 */
 
 class LineNedelecBasis: public BasisHierarchical1Form{

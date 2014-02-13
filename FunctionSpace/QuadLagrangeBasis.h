@@ -7,8 +7,8 @@
    @class QuadLagrangeBasis
    @brief Lagrange Basis for Quadrangles
 
-   This class can instantiate a @em Lagrange @em Basis
-   for a Quadrangle and for a given Order.@n
+   This class can instantiate a Lagrange Basis
+   for a Quadrangle and for a given order.
 
    It uses
    <a href="http://geuz.org/gmsh/">gmsh</a> Basis.
@@ -18,8 +18,7 @@ class QuadLagrangeBasis: public BasisLagrange{
  public:
   //! @param order A natural number
   //!
-  //! Returns a new QuadLagrangeBasis
-  //! of the given Order
+  //! Returns a new QuadLagrangeBasis of the given order
   QuadLagrangeBasis(size_t order);
 
   //! Deletes this Basis

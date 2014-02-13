@@ -13,7 +13,7 @@
 
 /**
    @class ReferenceSpaceManager
-   @biref A way to handel ReferenceSpace%s
+   @brief A way to handel ReferenceSpace%s
 
    This class implements class method to handel and access ReferenceSpace%s
  */

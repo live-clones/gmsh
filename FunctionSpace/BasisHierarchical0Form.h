@@ -6,9 +6,9 @@
 
 /**
    @interface BasisHierarchical0Form
-   @brief Interface for Hierarchical 0-Form Local Basis
+   @brief Interface for hierarchical 0-form local Basis
 
-   This is an interface for Hierarchical 0-Form Local Basis.@n
+   This is an interface for hierarchical 0-form local Basis.@n
 */
 
 class BasisHierarchical0Form: public BasisLocal{
@@ -57,7 +57,7 @@ class BasisHierarchical0Form: public BasisLocal{
   virtual const fullMatrix<double>&
     getPreEvaluatedDerivatives(size_t orientation) const;
 
-  std::string toString(void) const;
+  virtual std::string toString(void) const;
 
  protected:
   BasisHierarchical0Form(void);
@@ -69,19 +69,12 @@ class BasisHierarchical0Form: public BasisLocal{
 /**
    @internal
    @fn BasisHierarchical0Form::BasisHierarchical0Form
-
    Instanciates an new BasisHierarchical0Form
    @endinternal
    **
 
    @fn BasisHierarchical0Form::~BasisHierarchical0Form
-
    Deletes this BasisHierarchical0Form
-   **
-
-   @fn BasisHierarchical0Form::toString
-   @return Returns a string describing this
-   BasisHierarchical0Form
  */
 
 #endif

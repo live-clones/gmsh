@@ -155,8 +155,7 @@ class PermutationTree{
    @param vectorToFill An allocated vector of size
    PermutationTree::getSequenceSize()
 
-   Populates the given vector with the permuted sequence of
-   the given ID
+   Populates the given vector with the permuted sequence of the given ID
    **
 
    @fn PermutationTree::addTagToPermutation
@@ -208,7 +207,6 @@ class PermutationTree{
    @param path A file path
 
    Serialize this PermutationTree into the given file path
-   **
  */
 
 //////////////////////

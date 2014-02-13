@@ -5,19 +5,16 @@
 
 /**
    @class Legendre
-   @brief Generators for legendre Polynomial%s
+   @brief Generators for Legendre Polynomial%s
 
-   This class handles the generation of legendre
-   Polynomial%s of many types:
-   @li Classical legendre (Legendre::legendre)
-   @li Integrated legendre (Legendre::integrated)
-   @li Scaled legendre (Legendre::scaled)
-   @li Integrated Scaled legendre (Legendre::intScaled)
+   This class handles the generation of Legendre Polynomial%s of many types:
+   @li Classical Legendre (Legendre::legendre)
+   @li Integrated Legendre (Legendre::integrated)
+   @li Scaled Legendre (Legendre::scaled)
+   @li Integrated Scaled Legendre (Legendre::intScaled)
 
-   @note
-   It is @em not @em requiered to instantiate a Legendre class.@n
-   Indeed, all its methods are @em static.@n
-   Each method is actualy a @em specific Polynomial @em generator.
+   It is not requiered to instantiate a Legendre class.
+   Indeed, all its methods are static.
  */
 
 class Legendre{
@@ -47,32 +44,39 @@ class Legendre{
 
 /**
    @fn void Legendre::legendre(Polynomial*, int)
-   @param polynomial An @em allocated array (of size @c 'order' @c + @c 1)
+   @param polynomial An allocated array (of size 'order' + 1)
    for storing the requested legendre Polynomial%s
-   @param order The @em maximal order of the requested Polynomial%s
-   @return Stores in @c 'polynomial' all the @em classical legendre Polynomial%s
-   of order [@c 0, @c 'order']
+   @param order The maximal order of the requested Polynomial%s
+
+   Stores in 'polynomial' all the classical legendre Polynomial%s
+   of order [0, 'order']
+   **
 
    @fn void Legendre::integrated(Polynomial*, int)
-   @param polynomial An @em allocated array (of size @c 'order')
+   @param polynomial An allocated array (of size 'order')
    for storing the requested legendre Polynomial%s
-   @param order The @em maximal order of the requested Polynomial%s
-   @return Stores in @c 'polynomial' all the @em integrated legendre Polynomial%s
-   of order [@c 1, @c 'order']
+   @param order The maximal order of the requested Polynomial%s
+
+   Stores in 'polynomial' all the integrated legendre Polynomial%s
+   of order [1, 'order']
+   **
 
    @fn void Legendre::scaled(Polynomial*, int)
-   @param polynomial An @em allocated array (of size @c 'order' @c + @c 1)
+   @param polynomial An allocated array (of size 'order' + 1)
    for storing the requested legendre Polynomial%s
-   @param order The @em maximal order of the requested Polynomial%s
-   @return Stores in @c 'polynomial' all the @em scaled legendre Polynomial%s
-   of order [@c 0, @c 'order']
+   @param order The maximal order of the requested Polynomial%s
+
+   Stores in 'polynomial' all the scaled legendre Polynomial%s
+   of order [0, 'order']
+   **
 
    @fn void Legendre::intScaled(Polynomial*, int)
-   @param polynomial An @em allocated array (of size @c 'order')
+   @param polynomial An allocated array (of size 'order')
    for storing the requested legendre Polynomial%s
-   @param order The @em maximal order of the requested Polynomial%s
-   @return Stores in @c 'polynomial' all the @em scaled @em integrated
-   legendre Polynomial%s of order [@c 1, @c 'order']
+   @param order The maximal order of the requested Polynomial%s
+
+   Stores in 'polynomial' all the scaled integrated legendre Polynomial%s
+   of order [1, 'order']
  */
 
 #endif

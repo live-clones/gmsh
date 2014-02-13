@@ -13,11 +13,10 @@
 
    This is an interface for Lagrange Basis.
 
-   These Local Scalar Basis allow a Coefficient Matrix,
-   and a Monomial Matrix, to be consulted.
+   These local scalar Basis allow a coefficient matrix and a monomial matrix
+   to be consulted.
 
-   A vector from an Other Basis (set of Functions)
-   can also be projected into a Lagrange Basis.
+   Coefficients from an other Basis can be projected into a Lagrange Basis.
 */
 
 class BasisLagrange: public BasisLocal{
@@ -89,13 +88,11 @@ class BasisLagrange: public BasisLocal{
 /**
    @internal
    @fn BasisLagrange::BasisLagrange
-
    Instanciates an new BasisLagrange
    @endinternal
    **
 
    @fn BasisLagrange::~BasisLagrange
-
    Deletes this BasisLagrange
    **
 
@@ -109,18 +106,18 @@ class BasisLagrange: public BasisLocal{
 
    @fn BasisLagrange::project(const MElement&, const std::vector<double>&, const FunctionSpaceScalar&)
    @param element A MElement
-   @param coef A vector of coefficient associated
-   to the given Element
-   @param fSpace The (scalar) Function Space
-   of the given Coefficients
-   @return Projects the given Coefficients in this BasisLagrange
+   @param coef A vector of coefficient associated to the given element
+   @param fSpace The (scalar) FunctionSpace of the given coefficients
+   @return Returns a vector with the projection of the given coefficients
+   in this BasisLagrange
    **
 
    @fn BasisLagrange::project(const MElement&, const std::vector<double>&, const FunctionSpaceVector&)
    @param element A MElement
-   @param coef A vector of coefficient associated to the given Element
-   @param fSpace The (vectorial) Function Space of the given Coefficients
-   @return Projects the given Coefficients in this BasisLagrange
+   @param coef A vector of coefficient associated to the given element
+   @param fSpace The (vectorial) FunctionSpace of the given coefficients
+   @return Returns a vector with the projection of the given coefficients
+   in this BasisLagrange
 
    The returned vector has a size three times bigger than coef,
    since we need three coefficients with a Lagrange basis,
