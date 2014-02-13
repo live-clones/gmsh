@@ -1277,7 +1277,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 }
 
 // uncomment this to test the new code
-//#define NEW_CODE
+#define NEW_CODE
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {

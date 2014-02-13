@@ -98,7 +98,7 @@ class meshGRegionOptions {
  // Initialize all variables.
   meshGRegionOptions()
   {
-    plc = 1;
+    plc = 1;   // -p
     psc = 0;
     refine = 0;
     quality = 0;
@@ -106,7 +106,7 @@ class meshGRegionOptions {
     coarsen = 0;
     metric = 0;
     weighted = 0;
-    brio_hilbert = 1;
+    brio_hilbert = 1; // -Y
     incrflip = 0;
     flipinsert = 0;
     varvolume = 0;
@@ -114,10 +114,10 @@ class meshGRegionOptions {
     noexact = 0;
     nostaticfilter = 0;
     insertaddpoints = 0;
-    regionattrib = 0;
+    regionattrib = 1; // -A
     conforming = 0;
     diagnose = 0;
-    convex = 0;
+    convex = 1;  // -c
     zeroindex = 0;
     facesout = 0;
     edgesout = 0;
@@ -685,6 +685,15 @@ class meshGRegionBoundaryRecovery {
   int  insertpoint(point, triface*, face*, face*, insertvertexflags*);
   void insertpoint_abort(face*, insertvertexflags*);
 
+  // Point sorting.
+  int  transgc[8][3][8], tsb1mod3[8];
+  void hilbert_init(int n);
+  int  hilbert_split(point* vertexarray, int arraysize, int gc0, int gc1,
+                     REAL, REAL, REAL, REAL, REAL, REAL);
+  void hilbert_sort3(point* vertexarray, int arraysize, int e, int d,
+                     REAL, REAL, REAL, REAL, REAL, REAL, int depth);
+  void brio_multiscale_sort(point*,int,int threshold,REAL ratio,int* depth);
+
   // Point location.
   unsigned long randomnation(unsigned int choices);
   void randomsample(point searchpt, triface *searchtet);
@@ -692,6 +701,11 @@ class meshGRegionBoundaryRecovery {
 
   // Incremental flips.
   void flippush(badface*&, triface*);
+  int  incrementalflip(point newpt, int, flipconstraints *fc);
+
+  // Incremental Delaunay construction.
+  void initialdelaunay(point pa, point pb, point pc, point pd);
+  void incrementaldelaunay(clock_t&);
 
   // Surface meshing.
   void flipshpush(face*);
