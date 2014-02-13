@@ -175,7 +175,7 @@ class MTet4
 void connectTets(std::list<MTet4*> &);
 void connectTets(std::vector<MTet4*> &);
 // IN --> Vertices ----  OUT --> Tets
-void delaunayMeshIn3D(std::vector<MVertex*> &, std::vector<MTetrahedron*> &);
+void delaunayMeshIn3D(std::vector<MVertex*> &, std::vector<MTetrahedron*> &, bool removeBox = true);
 void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000, bool _classify = true);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 GRegion *getRegionFromBoundingFaces(GModel *model,
