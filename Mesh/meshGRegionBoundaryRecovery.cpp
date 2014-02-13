@@ -6641,7 +6641,7 @@ void meshGRegionBoundaryRecovery::hilbert_init(int n)
     for (d = 0; d < n; d++) {
       // Calculate the end point (f).
       f = e ^ (1 << d);  // Toggle the d-th bit of 'e'.
-      // travel_bit = 2**p, the bit we want to travel. 
+      // travel_bit = 2**p, the bit we want to travel.
       travel_bit = e ^ f;
       for (i = 0; i < N; i++) {
         // // Rotate gc[i] left by (p + 1) % n bits.
@@ -6674,7 +6674,7 @@ void meshGRegionBoundaryRecovery::hilbert_init(int n)
 ///////////////////////////////////////////////////////////////////////////////
 
 int meshGRegionBoundaryRecovery::hilbert_split(point* vertexarray,int arraysize,int gc0,int gc1,
-                              REAL bxmin, REAL bxmax, REAL bymin, REAL bymax, 
+                              REAL bxmin, REAL bxmax, REAL bymin, REAL bymax,
                               REAL bzmin, REAL bzmax)
 {
   point swapvert;
@@ -6683,9 +6683,9 @@ int meshGRegionBoundaryRecovery::hilbert_split(point* vertexarray,int arraysize,
   int i, j;
 
 
-  // Find the current splitting axis. 'axis' is a value 0, or 1, or 2, which 
+  // Find the current splitting axis. 'axis' is a value 0, or 1, or 2, which
   //   correspoding to x-, or y- or z-axis.
-  axis = (gc0 ^ gc1) >> 1; 
+  axis = (gc0 ^ gc1) >> 1;
 
   // Calulate the split position along the axis.
   if (axis == 0) {
@@ -6709,7 +6709,7 @@ int meshGRegionBoundaryRecovery::hilbert_split(point* vertexarray,int arraysize,
   // Partition the vertices into left- and right-arrays.
   if (d > 0) {
     do {
-      for (; i < arraysize; i++) {      
+      for (; i < arraysize; i++) {
         if (vertexarray[i][axis] >= split) break;
       }
       for (; j >= 0; j--) {
@@ -6725,7 +6725,7 @@ int meshGRegionBoundaryRecovery::hilbert_split(point* vertexarray,int arraysize,
     } while (true);
   } else {
     do {
-      for (; i < arraysize; i++) {      
+      for (; i < arraysize; i++) {
         if (vertexarray[i][axis] <= split) break;
       }
       for (; j >= 0; j--) {
@@ -6744,8 +6744,8 @@ int meshGRegionBoundaryRecovery::hilbert_split(point* vertexarray,int arraysize,
   return i;
 }
 
-void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysize, int e, int d, 
-                               REAL bxmin, REAL bxmax, REAL bymin, REAL bymax, 
+void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysize, int e, int d,
+                               REAL bxmin, REAL bxmax, REAL bymin, REAL bymax,
                                REAL bzmin, REAL bzmax, int depth)
 {
   REAL x1, x2, y1, y2, z1, z2;
@@ -6756,27 +6756,27 @@ void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysiz
   p[8] = arraysize;
 
   // Sort the points according to the 1st order Hilbert curve in 3d.
-  p[4] = hilbert_split(vertexarray, p[8], transgc[e][d][3], transgc[e][d][4], 
+  p[4] = hilbert_split(vertexarray, p[8], transgc[e][d][3], transgc[e][d][4],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax);
-  p[2] = hilbert_split(vertexarray, p[4], transgc[e][d][1], transgc[e][d][2], 
+  p[2] = hilbert_split(vertexarray, p[4], transgc[e][d][1], transgc[e][d][2],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax);
-  p[1] = hilbert_split(vertexarray, p[2], transgc[e][d][0], transgc[e][d][1], 
+  p[1] = hilbert_split(vertexarray, p[2], transgc[e][d][0], transgc[e][d][1],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax);
-  p[3] = hilbert_split(&(vertexarray[p[2]]), p[4] - p[2], 
-                       transgc[e][d][2], transgc[e][d][3], 
+  p[3] = hilbert_split(&(vertexarray[p[2]]), p[4] - p[2],
+                       transgc[e][d][2], transgc[e][d][3],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax) + p[2];
-  p[6] = hilbert_split(&(vertexarray[p[4]]), p[8] - p[4], 
-                       transgc[e][d][5], transgc[e][d][6], 
+  p[6] = hilbert_split(&(vertexarray[p[4]]), p[8] - p[4],
+                       transgc[e][d][5], transgc[e][d][6],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax) + p[4];
-  p[5] = hilbert_split(&(vertexarray[p[4]]), p[6] - p[4], 
-                       transgc[e][d][4], transgc[e][d][5], 
+  p[5] = hilbert_split(&(vertexarray[p[4]]), p[6] - p[4],
+                       transgc[e][d][4], transgc[e][d][5],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax) + p[4];
-  p[7] = hilbert_split(&(vertexarray[p[6]]), p[8] - p[6], 
-                       transgc[e][d][6], transgc[e][d][7], 
+  p[7] = hilbert_split(&(vertexarray[p[6]]), p[8] - p[6],
+                       transgc[e][d][6], transgc[e][d][7],
                        bxmin, bxmax, bymin, bymax, bzmin, bzmax) + p[6];
 
   if (b->hilbert_order > 0) {
-    // A maximum order is prescribed. 
+    // A maximum order is prescribed.
     if ((depth + 1) == b->hilbert_order) {
       // The maximum prescribed order is reached.
       return;
@@ -6796,7 +6796,7 @@ void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysiz
         e_w = 0;
       } else {
         //   calculate e(w) = gc(2 * floor((w - 1) / 2)).
-        k = 2 * ((w - 1) / 2); 
+        k = 2 * ((w - 1) / 2);
         e_w = k ^ (k >> 1); // = gc(k).
       }
       k = e_w;
@@ -6832,7 +6832,7 @@ void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysiz
         z1 = bzmin;
         z2 = 0.5 * (bzmin + bzmax);
       }
-      hilbert_sort3(&(vertexarray[p[w]]), p[w+1] - p[w], ei, di, 
+      hilbert_sort3(&(vertexarray[p[w]]), p[w+1] - p[w], ei, di,
                     x1, x2, y1, y2, z1, z2, depth+1);
     } // if (p[w+1] - p[w] > 1)
   } // w
@@ -6844,7 +6844,7 @@ void meshGRegionBoundaryRecovery::hilbert_sort3(point* vertexarray, int arraysiz
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-void meshGRegionBoundaryRecovery::brio_multiscale_sort(point* vertexarray, int arraysize, 
+void meshGRegionBoundaryRecovery::brio_multiscale_sort(point* vertexarray, int arraysize,
                                       int threshold, REAL ratio, int *depth)
 {
   int middle;
@@ -6949,12 +6949,12 @@ void meshGRegionBoundaryRecovery::randomsample(point searchpt,triface *searchtet
 
   // Select "good" candidate using k random samples, taking the closest one.
   //   The number of random samples taken is proportional to the fourth root
-  //   of the number of tetrahedra in the mesh. 
+  //   of the number of tetrahedra in the mesh.
   while (samples * samples * samples * samples < tetrahedrons->items) {
     samples++;
   }
   // Find how much blocks in current tet pool.
-  tetblocks = (tetrahedrons->maxitems + b->tetrahedraperblock - 1) 
+  tetblocks = (tetrahedrons->maxitems + b->tetrahedraperblock - 1)
             / b->tetrahedraperblock;
   // Find the average samples per block. Each block at least have 1 sample.
   samplesperblock = 1 + (samples / tetblocks);
@@ -7016,7 +7016,7 @@ void meshGRegionBoundaryRecovery::randomsample(point searchpt,triface *searchtet
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::locate(point searchpt, 
+enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::locate(point searchpt,
                                                  triface* searchtet)
 {
   point torg, tdest, tapex, toppo;
@@ -7043,7 +7043,7 @@ enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::loca
     torg = org(*searchtet);
     tdest = dest(*searchtet);
     tapex = apex(*searchtet);
-    ori = orient3d(torg, tdest, tapex, searchpt); 
+    ori = orient3d(torg, tdest, tapex, searchpt);
     if (ori < 0.0) break;
   }
   assert(searchtet->ver != 4);
@@ -7052,7 +7052,7 @@ enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::loca
   while (true) {
 
     toppo = oppo(*searchtet);
-    
+
     // Check if the vertex is we seek.
     if (toppo == searchpt) {
       // Adjust the origin of searchtet to be searchpt.
@@ -7063,7 +7063,7 @@ enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::loca
     }
 
     // We enter from one of serarchtet's faces, which face do we exit?
-    oriorg = orient3d(tdest, tapex, toppo, searchpt); 
+    oriorg = orient3d(tdest, tapex, toppo, searchpt);
     oridest = orient3d(tapex, torg, toppo, searchpt);
     oriapex = orient3d(torg, tdest, toppo, searchpt);
 
@@ -7168,7 +7168,7 @@ enum meshGRegionBoundaryRecovery::locateresult meshGRegionBoundaryRecovery::loca
         }
       }
     }
-    
+
     // Move to the selected face.
     if (nextmove == ORGMOVE) {
       enextesymself(*searchtet);
@@ -7253,12 +7253,12 @@ void meshGRegionBoundaryRecovery::initialdelaunay(point pa, point pb, point pc, 
   esym(firsttet, worktet);
   bond(worktet, tetopc); // ab
   enextesym(firsttet, worktet);
-  bond(worktet, tetopa); // bc 
+  bond(worktet, tetopa); // bc
   eprevesym(firsttet, worktet);
   bond(worktet, tetopb); // ca
 
   // Connect hull tetrahedra together (at six edges of firsttet).
-  esym(tetopc, worktet); 
+  esym(tetopc, worktet);
   esym(tetopd, worktet1);
   bond(worktet, worktet1); // ab
   esym(tetopa, worktet);
@@ -13995,12 +13995,12 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
     tmpface.ver = facecount;
     fsym(tmpface, prtface);
     if (prtface.tet != NULL) {
-      printf("    [%i] x%lx  ver(%i)", facecount, 
+      printf("    [%i] x%lx  ver(%i)", facecount,
              (uintptr_t) (prtface.tet), prtface.ver);
       if((point) prtface.tet[7] == dummypoint) {
         printf(" (Outer space).");
       }
-      
+
     } else {
       printf("    [%i] NULL!", facecount);
     }
@@ -14019,8 +14019,8 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
   if(tmppt == (point) NULL) {
     printf("    Org [%i] NULL\n", orgpivot[tface->ver] - 4);
   } else {
-    printf("    Org [%i] x%lx (%.12g,%.12g,%.12g) %d\n", 
-           orgpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+    printf("    Org [%i] x%lx (%.12g,%.12g,%.12g) %d\n",
+           orgpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
            tmppt[1], tmppt[2], pointmark(tmppt));
   }
   tmppt = dest(*tface);
@@ -14028,7 +14028,7 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
     printf("    Dest[%i] NULL\n", destpivot[tface->ver] - 4);
   } else {
     printf("    Dest[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           destpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           destpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
            tmppt[1], tmppt[2], pointmark(tmppt));
   }
   tmppt = apex(*tface);
@@ -14036,7 +14036,7 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
     printf("    Apex[%i] NULL\n", apexpivot[tface->ver] - 4);
   } else {
     printf("    Apex[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           apexpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           apexpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
            tmppt[1], tmppt[2], pointmark(tmppt));
   }
   tmppt = oppo(*tface);
@@ -14044,7 +14044,7 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
     printf("    Oppo[%i] NULL\n", oppopivot[tface->ver] - 4);
   } else {
     printf("    Oppo[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           oppopivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0], 
+           oppopivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
            tmppt[1], tmppt[2], pointmark(tmppt));
   }
 
@@ -14090,7 +14090,7 @@ void meshGRegionBoundaryRecovery::printtet(triface* tface)
 void meshGRegionBoundaryRecovery::ptetv(triface* t)
 {
   printf("  tet x%lx (%d, %d, %d, %d) %d\n", (uintptr_t) t->tet,
-          pointmark(org(*t)), pointmark(dest(*t)), pointmark(apex(*t)), 
+          pointmark(org(*t)), pointmark(dest(*t)), pointmark(apex(*t)),
           pointmark(oppo(*t)), t->ver);
 }
 
@@ -14262,7 +14262,7 @@ int meshGRegionBoundaryRecovery::checkmesh(int topoflag)
             }
           }
         }
-        if (infected(tetloop)) { 
+        if (infected(tetloop)) {
           // This may be a bug. Report it.
           printf("  !! (%d, %d, %d, %d) is infected.\n", pointmark(pa),
                  pointmark(pb), pointmark(pc), pointmark(pd));
@@ -14344,8 +14344,8 @@ int meshGRegionBoundaryRecovery::checkmesh(int topoflag)
       tetloop.ver = edge2ver[i];
       if (edgemarked(tetloop)) {
         // This may be a bug. Report it.
-        printf("  !! tetedge (%d, %d) %d, %d is marked.\n", 
-               pointmark(org(tetloop)), pointmark(dest(tetloop)), 
+        printf("  !! tetedge (%d, %d) %d, %d is marked.\n",
+               pointmark(org(tetloop)), pointmark(dest(tetloop)),
                pointmark(apex(tetloop)), pointmark(oppo(tetloop)));
       }
     }
@@ -14356,7 +14356,7 @@ int meshGRegionBoundaryRecovery::checkmesh(int topoflag)
       printf("  In my studied opinion, the mesh appears to be consistent.\n");
     }
   } else {
-    printf("  !! !! !! !! %d %s witnessed.\n", horrors, 
+    printf("  !! !! !! !! %d %s witnessed.\n", horrors,
            horrors > 1 ? "abnormity" : "abnormities");
   }
 
@@ -14913,7 +14913,7 @@ if (1) {
   }
 
   hullsize = tetrahedrons->items - hullsize;
-  
+
   delete [] ver2tetarray;
   tets.clear(); // Release all memory in this vector.
 } else {
@@ -14921,7 +14921,7 @@ if (1) {
   point *permutarray, swapvertex;
   REAL v1[3], v2[3], n[3];
   REAL bboxsize, bboxsize2, bboxsize3, ori;
-  int randindex; 
+  int randindex;
   int ngroup = 0;
   int i, j;
 
@@ -14934,7 +14934,7 @@ if (1) {
   points->traversalinit();
 
     if (b->verbose) {
-      printf("  Permuting vertices.\n"); 
+      printf("  Permuting vertices.\n");
     }
     srand(_vertices.size());
     for (i = 0; i < _vertices.size(); i++) {
@@ -14944,10 +14944,10 @@ if (1) {
     }
     if (b->brio_hilbert) { // -b option
       if (b->verbose) {
-        printf("  Sorting vertices.\n"); 
+        printf("  Sorting vertices.\n");
       }
       hilbert_init(3);
-      brio_multiscale_sort(permutarray, _vertices.size(), b->brio_threshold, 
+      brio_multiscale_sort(permutarray, _vertices.size(), b->brio_threshold,
                            b->brio_ratio, &ngroup);
     }
 
@@ -14979,7 +14979,7 @@ if (1) {
   }
 
   // Make sure the third vertex is not collinear with the first two.
-  // Acknowledgement:  Thanks Jan Pomplun for his correction by using 
+  // Acknowledgement:  Thanks Jan Pomplun for his correction by using
   //   epsilon^2 and epsilon^3 (instead of epsilon). 2013-08-15.
   i = 2;
   for (j = 0; j < 3; j++) {
@@ -14987,7 +14987,7 @@ if (1) {
     v2[j] = permutarray[i][j] - permutarray[0][j];
   }
   cross(v1, v2, n);
-  while ((sqrt(norm2(n[0], n[1], n[2])) / bboxsize2) < 
+  while ((sqrt(norm2(n[0], n[1], n[2])) / bboxsize2) <
          (b->epsilon * b->epsilon)) {
     i++;
     if (i == _vertices.size() - 1) {
@@ -15009,7 +15009,7 @@ if (1) {
 
   // Make sure the fourth vertex is not coplanar with the first three.
   i = 3;
-  ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2], 
+  ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2],
                      permutarray[i]);
   while ((fabs(ori) / bboxsize3) < (b->epsilon * b->epsilon * b->epsilon)) {
     i++;
@@ -15018,7 +15018,7 @@ if (1) {
              b->epsilon);
       throw 10;
     }
-    ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2], 
+    ori = orient3dfast(permutarray[0], permutarray[1], permutarray[2],
                        permutarray[i]);
   }
   if (i > 3) {
@@ -15096,7 +15096,7 @@ if (1) {
                  pointmark(permutarray[i]), pointmark(swapvertex));
           printf("  Avoid creating a very short edge (len = %g) (< %g).\n",
                  permutarray[i][3], b->minedgelength);
-          printf("  You may try a smaller tolerance (-T) (current is %g)\n", 
+          printf("  You may try a smaller tolerance (-T) (current is %g)\n",
                  b->epsilon);
           printf("  or use the option -M0/1 to avoid such replacement.\n");
         }
@@ -15408,7 +15408,7 @@ if (1) {
           _gr->mesh_vertices.push_back(v);
           _vertices.push_back(v);
         } else {
-          MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2]);
+          MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
           v->setIndex(pointmark(pointloop));
           _gr->mesh_vertices.push_back(v);
           _vertices.push_back(v);
