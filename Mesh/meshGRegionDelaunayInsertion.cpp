@@ -1795,7 +1795,6 @@ bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
 
  void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result, bool removeBox)
 {
-  removeBox = false;
   std::vector<MTet4*> t;
   t.reserve (v.size()*7);
   std::vector<faceXtet> conn;
