@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 #include "meshGRegionBoundaryRecovery.h"
 #include "robustPredicates.h"
 #include "GFace.h"
