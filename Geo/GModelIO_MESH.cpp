@@ -254,7 +254,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   }
 
   if(numEdges){
-    if(CTX::instance()->mesh.order == 2)
+    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
       fprintf(fp, " EdgesP2\n");
     else
       fprintf(fp, " Edges\n");
@@ -269,7 +269,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
     }
   }
   if(numTriangles){
-    if(CTX::instance()->mesh.order == 2)
+    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
       fprintf(fp, " TrianglesP2\n");
     else
       fprintf(fp, " Triangles\n");
@@ -297,7 +297,7 @@ int GModel::writeMESH(const std::string &name, int elementTagType,
   }
   if(numTetrahedra){
     if(CTX::instance()->mesh.order == 2)
-      fprintf(fp, " TetrahedraP2\n");
+      fprintf(fp, " TetrahedraP2\n"); // FIXME (check getPolynomialOrder())
     else
       fprintf(fp, " Tetrahedra\n");
     fprintf(fp, " %d\n", numTetrahedra);
