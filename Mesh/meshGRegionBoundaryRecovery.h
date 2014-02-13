@@ -84,16 +84,16 @@ class meshGRegionOptions {
   int hilbert_limit;
   int brio_threshold;
   REAL brio_ratio;
-  REAL facet_ang_tol; 
+  REAL facet_ang_tol;
   REAL maxvolume;
-  REAL minratio; 
+  REAL minratio;
   REAL mindihedral;
   REAL optmaxdihedral;
-  REAL optminsmtdihed; 
+  REAL optminsmtdihed;
   REAL optminslidihed;
   REAL epsilon;
   REAL minedgelength;
-  REAL coarsen_percent; 
+  REAL coarsen_percent;
 
  // Initialize all variables.
   meshGRegionOptions()
@@ -162,7 +162,7 @@ class meshGRegionOptions {
     facet_ang_tol = 179.9;
     maxvolume = -1.0;
     minratio = 2.0;
-    mindihedral = 0.0; // 5.0; 
+    mindihedral = 0.0; // 5.0;
     optmaxdihedral = 179.0;
     optminsmtdihed = 179.999;
     optminslidihed = 179.999;
@@ -251,15 +251,15 @@ class meshGRegionBoundaryRecovery {
     void dealloc(void*);
     void traversalinit();
     void *traverse();
-  }; 
+  };
 
   class badface {
   public:
-    triface tt; 
+    triface tt;
     face ss;
     REAL key, cent[6];  // circumcenter or cos(dihedral angles) at 6 edges.
     point forg, fdest, fapex, foppo, noppo;
-    badface *nextitem; 
+    badface *nextitem;
     badface() : key(0), forg(0), fdest(0), fapex(0), foppo(0), noppo(0),
       nextitem(0) {}
   };
@@ -319,7 +319,7 @@ class meshGRegionBoundaryRecovery {
     point remvert; // A vertex to be removed.
 
     flipconstraints() {
-      enqflag = 0; 
+      enqflag = 0;
       chkencflag = 0;
       unflip = 0;
       collectnewtets = 0;
@@ -341,7 +341,7 @@ class meshGRegionBoundaryRecovery {
   public:
     // The one of goals of optimization.
     int max_min_volume;      // Maximize the minimum volume.
-	int min_max_aspectratio; // Minimize the maximum aspect ratio. 
+	int min_max_aspectratio; // Minimize the maximum aspect ratio.
     int min_max_dihedangle;  // Minimize the maximum dihedral angle.
     // The initial and improved value.
     REAL initval, imprval;
@@ -364,10 +364,10 @@ class meshGRegionBoundaryRecovery {
 
   // Labels
   enum verttype {UNUSEDVERTEX, DUPLICATEDVERTEX, RIDGEVERTEX, ACUTEVERTEX,
-                 FACETVERTEX, VOLVERTEX, FREESEGVERTEX, FREEFACETVERTEX, 
-                 FREEVOLVERTEX, NREGULARVERTEX, DEADVERTEX}; 
+                 FACETVERTEX, VOLVERTEX, FREESEGVERTEX, FREEFACETVERTEX,
+                 FREEVOLVERTEX, NREGULARVERTEX, DEADVERTEX};
   enum interresult {DISJOINT, INTERSECT, SHAREVERT, SHAREEDGE, SHAREFACE,
-                    TOUCHEDGE, TOUCHFACE, ACROSSVERT, ACROSSEDGE, ACROSSFACE, 
+                    TOUCHEDGE, TOUCHFACE, ACROSSVERT, ACROSSEDGE, ACROSSFACE,
                     COLLISIONFACE, ACROSSSEG, ACROSSSUB};
   enum locateresult {UNKNOWN, OUTSIDE, INTETRAHEDRON, ONFACE, ONEDGE, ONVERTEX,
                      ENCVERTEX, ENCSEGMENT, ENCSUBFACE, NEARVERTEX, NONREGULAR,
@@ -383,7 +383,7 @@ class meshGRegionBoundaryRecovery {
 
   memorypool *flippool;
   arraypool *unflipqueue;
-  badface *flipstack; 
+  badface *flipstack;
 
   memorypool *badtetrahedrons, *badsubfacs, *badsubsegs;
 
@@ -407,7 +407,7 @@ class meshGRegionBoundaryRecovery {
 
   // Various variables.
   int numpointattrib;
-  int numelemattrib; 
+  int numelemattrib;
   int sizeoftensor;
   int pointmtrindex;
   int pointparamindex;
@@ -415,32 +415,32 @@ class meshGRegionBoundaryRecovery {
   int pointmarkindex;
   int pointinsradiusindex;
   int elemattribindex;
-  int volumeboundindex; 
+  int volumeboundindex;
   int elemmarkerindex;
   int shmarkindex;
   int areaboundindex;
-  int checksubsegflag; 
-  int checksubfaceflag; 
-  int checkconstraints; 
+  int checksubsegflag;
+  int checksubfaceflag;
+  int checkconstraints;
   int nonconvex;
-  int autofliplinklevel; 
+  int autofliplinklevel;
   int useinsertradius;
   long samples;
   unsigned long randomseed;
   REAL cosmaxdihed, cosmindihed;
   REAL cossmtdihed;
   REAL cosslidihed;
-  REAL minfaceang, minfacetdihed; 
-  REAL tetprism_vol_sum; 
+  REAL minfaceang, minfacetdihed;
+  REAL tetprism_vol_sum;
   REAL longest;
   REAL xmax, xmin, ymax, ymin, zmax, zmin;
 
   // Counters.
-  long insegments; 
+  long insegments;
   long hullsize;
-  long meshedges; 
-  long meshhulledges; 
-  long steinerleft; 
+  long meshedges;
+  long meshhulledges;
+  long steinerleft;
   long dupverts;
   long unuverts;
   long nonregularcount;
@@ -454,7 +454,7 @@ class meshGRegionBoundaryRecovery {
   // Fast lookup tables for mesh manipulation primitives.
   static int bondtbl[12][12], fsymtbl[12][12];
   static int esymtbl[12], enexttbl[12], eprevtbl[12];
-  static int enextesymtbl[12], eprevesymtbl[12]; 
+  static int enextesymtbl[12], eprevesymtbl[12];
   static int eorgoppotbl[12], edestoppotbl[12];
   static int facepivot1[12], facepivot2[12][12];
   static int orgpivot[12], destpivot[12], apexpivot[12], oppopivot[12];
@@ -526,7 +526,7 @@ class meshGRegionBoundaryRecovery {
   inline void decreaseelemcounter(triface& t);
   inline bool ishulltet(triface& t);
   inline bool isdeadtet(triface& t);
- 
+
   // Primitives for subfaces and subsegments.
   inline void sdecode(shellface sptr, face& s);
   inline shellface sencode(face& s);
@@ -627,7 +627,7 @@ class meshGRegionBoundaryRecovery {
   inline point farsorg(face& seg);
   inline point farsdest(face& seg);
 
-  // Memory managment 
+  // Memory managment
   void tetrahedrondealloc(tetrahedron*);
   tetrahedron *tetrahedrontraverse();
   tetrahedron *alltetrahedrontraverse();
@@ -711,7 +711,7 @@ class meshGRegionBoundaryRecovery {
   int removefacebyflips(triface*, flipconstraints*);
   int recoveredgebyflips(point, point, triface*, int fullsearch);
   int add_steinerpt_in_schoenhardtpoly(triface*, int, int chkencflag);
-  int add_steinerpt_in_segment(face*, int searchlevel); 
+  int add_steinerpt_in_segment(face*, int searchlevel);
   int addsteiner4recoversegment(face*, int);
   int recoversegments(arraypool*, int fullsearch, int steinerflag);
   int recoverfacebyflips(point, point, point, face*, triface*);
@@ -744,7 +744,7 @@ class meshGRegionBoundaryRecovery {
     in = new meshGRegionInputs();
     b = new meshGRegionOptions();
     bgm = NULL;
-  
+
     tetrahedrons = subfaces = subsegs = points = NULL;
     badtetrahedrons = badsubfacs = badsubsegs = NULL;
     tet2segpool = tet2subpool = NULL;
@@ -783,7 +783,7 @@ class meshGRegionBoundaryRecovery {
     minfaceang = minfacetdihed = PI;
     tetprism_vol_sum = 0.0;
     longest = 0.0;
-    xmax = xmin = ymax = ymin = zmax = zmin = 0.0; 
+    xmax = xmin = ymax = ymin = zmax = zmin = 0.0;
 
     insegments = 0l;
     hullsize = 0l;
@@ -804,7 +804,7 @@ class meshGRegionBoundaryRecovery {
   {
     delete in;
     delete b;
-  
+
     if (points != (memorypool *) NULL) {
       delete points;
       delete [] dummypoint;
@@ -860,9 +860,6 @@ class meshGRegionBoundaryRecovery {
   void reconstructmesh(GRegion *_gr);
 };
 
-void terminateBoundaryRecovery(void *, int exitcode)
-{
-  throw exitcode;
-}
+void terminateBoundaryRecovery(void *, int exitcode);
 
 #endif

@@ -36,12 +36,12 @@
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline meshGRegionBoundaryRecovery::tetrahedron 
+inline meshGRegionBoundaryRecovery::tetrahedron
   meshGRegionBoundaryRecovery::encode(triface& t) {
   return (tetrahedron) ((uintptr_t) (t).tet | (uintptr_t) (t).ver);
 }
 
-inline meshGRegionBoundaryRecovery::tetrahedron 
+inline meshGRegionBoundaryRecovery::tetrahedron
   meshGRegionBoundaryRecovery::encode2(tetrahedron* ptr, int ver) {
   return (tetrahedron) ((uintptr_t) (ptr) | (uintptr_t) (ver));
 }
@@ -144,22 +144,22 @@ inline void meshGRegionBoundaryRecovery::fnext(triface& t1, triface& t2) {
   (t).ver = facepivot2[t1ver][(t).ver]
 
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::org(triface& t) {
   return (point) (t).tet[orgpivot[(t).ver]];
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery:: dest(triface& t) {
   return (point) (t).tet[destpivot[(t).ver]];
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::apex(triface& t) {
   return (point) (t).tet[apexpivot[(t).ver]];
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::oppo(triface& t) {
   return (point) (t).tet[oppopivot[(t).ver]];
 }
@@ -186,13 +186,13 @@ inline void meshGRegionBoundaryRecovery::setoppo(triface& t, point p) {
   (t).tet[apexpivot[(t).ver]] = (tetrahedron) (tapex); \
   (t).tet[oppopivot[(t).ver]] = (tetrahedron) (toppo)
 
-inline REAL meshGRegionBoundaryRecovery::elemattribute(tetrahedron* ptr, 
+inline REAL meshGRegionBoundaryRecovery::elemattribute(tetrahedron* ptr,
   int attnum) {
   return ((REAL *) (ptr))[elemattribindex + attnum];
 }
 
-inline void meshGRegionBoundaryRecovery::setelemattribute(tetrahedron* ptr, 
-  int attnum, 
+inline void meshGRegionBoundaryRecovery::setelemattribute(tetrahedron* ptr,
+  int attnum,
   REAL value) {
   ((REAL *) (ptr))[elemattribindex + attnum] = value;
 }
@@ -201,7 +201,7 @@ inline REAL meshGRegionBoundaryRecovery::volumebound(tetrahedron* ptr) {
   return ((REAL *) (ptr))[volumeboundindex];
 }
 
-inline void meshGRegionBoundaryRecovery::setvolumebound(tetrahedron* ptr, 
+inline void meshGRegionBoundaryRecovery::setvolumebound(tetrahedron* ptr,
   REAL value) {
   ((REAL *) (ptr))[volumeboundindex] = value;
 }
@@ -211,7 +211,7 @@ inline int meshGRegionBoundaryRecovery::elemindex(tetrahedron* ptr) {
   return iptr[0];
 }
 
-inline void meshGRegionBoundaryRecovery::setelemindex(tetrahedron* ptr, 
+inline void meshGRegionBoundaryRecovery::setelemindex(tetrahedron* ptr,
   int value) {
   int *iptr = (int *) &(ptr[10]);
   iptr[0] = value;
@@ -221,7 +221,7 @@ inline int meshGRegionBoundaryRecovery::elemmarker(tetrahedron* ptr) {
   return ((int *) (ptr))[elemmarkerindex];
 }
 
-inline void meshGRegionBoundaryRecovery::setelemmarker(tetrahedron* ptr, 
+inline void meshGRegionBoundaryRecovery::setelemmarker(tetrahedron* ptr,
   int value) {
   ((int *) (ptr))[elemmarkerindex] = value;
 }
@@ -245,7 +245,7 @@ inline void meshGRegionBoundaryRecovery::marktest(triface& t) {
 inline void meshGRegionBoundaryRecovery::unmarktest(triface& t) {
   ((int *) (t.tet))[elemmarkerindex] &= ~2;
 }
-    
+
 inline bool meshGRegionBoundaryRecovery::marktested(triface& t) {
   return (((int *) (t.tet))[elemmarkerindex] & 2) != 0;
 }
@@ -271,7 +271,7 @@ inline void meshGRegionBoundaryRecovery::unmarkedge(triface& t) {
 }
 
 inline bool meshGRegionBoundaryRecovery::edgemarked(triface& t) {
-  return (((int *) (t.tet))[elemmarkerindex] & 
+  return (((int *) (t.tet))[elemmarkerindex] &
            (int) (64 << ver2edge[(t).ver])) != 0;
 }
 
@@ -328,12 +328,12 @@ inline void meshGRegionBoundaryRecovery::sdecode(shellface sptr, face& s) {
   s.sh = (shellface *) ((uintptr_t) (sptr) ^ (uintptr_t) (s.shver));
 }
 
-inline meshGRegionBoundaryRecovery::shellface 
+inline meshGRegionBoundaryRecovery::shellface
   meshGRegionBoundaryRecovery::sencode(face& s) {
   return (shellface) ((uintptr_t) s.sh | (uintptr_t) s.shver);
 }
 
-inline meshGRegionBoundaryRecovery::shellface 
+inline meshGRegionBoundaryRecovery::shellface
   meshGRegionBoundaryRecovery::sencode2(shellface *sh, int shver) {
   return (shellface) ((uintptr_t) sh | (uintptr_t) shver);
 }
@@ -361,17 +361,17 @@ inline void meshGRegionBoundaryRecovery::spivotself(face& s) {
   sdecode(sptr, s);
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::sorg(face& s) {
   return (point) s.sh[sorgpivot[s.shver]];
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::sdest(face& s) {
   return (point) s.sh[sdestpivot[s.shver]];
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::sapex(face& s) {
   return (point) s.sh[sapexpivot[s.shver]];
 }
@@ -438,12 +438,12 @@ inline void meshGRegionBoundaryRecovery::setshellmark(face& s, int value) {
 }
 
 inline void meshGRegionBoundaryRecovery::sinfect(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *) ((s).sh))[shmarkindex+1] | (int) 1);
 }
 
 inline void meshGRegionBoundaryRecovery::suninfect(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *) ((s).sh))[shmarkindex+1] & ~(int) 1);
 }
 
@@ -452,12 +452,12 @@ inline bool meshGRegionBoundaryRecovery::sinfected(face& s) {
 }
 
 inline void meshGRegionBoundaryRecovery::smarktest(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 2);
 }
 
 inline void meshGRegionBoundaryRecovery::sunmarktest(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)2);
 }
 
@@ -466,12 +466,12 @@ inline bool meshGRegionBoundaryRecovery::smarktested(face& s) {
 }
 
 inline void meshGRegionBoundaryRecovery::smarktest2(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 4);
 }
 
 inline void meshGRegionBoundaryRecovery::sunmarktest2(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)4);
 }
 
@@ -480,12 +480,12 @@ inline bool meshGRegionBoundaryRecovery::smarktest2ed(face& s) {
 }
 
 inline void meshGRegionBoundaryRecovery::smarktest3(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 8);
 }
 
 inline void meshGRegionBoundaryRecovery::sunmarktest3(face& s) {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)8);
 }
 
@@ -517,10 +517,10 @@ inline void meshGRegionBoundaryRecovery::tsbond(triface& t, face& s) {
     }
   }
   // Bond t <== s.
-  ((shellface *) (t).tet[9])[(t).ver & 3] = 
+  ((shellface *) (t).tet[9])[(t).ver & 3] =
     sencode2((s).sh, tsbondtbl[t.ver][s.shver]);
   // Bond s <== t.
-  s.sh[9 + ((s).shver & 1)] = 
+  s.sh[9 + ((s).shver & 1)] =
     (shellface) encode2((t).tet, stbondtbl[t.ver][s.shver]);
 }
 
@@ -602,7 +602,7 @@ inline void meshGRegionBoundaryRecovery::tssbond1(triface& t, face& s) {
       ((shellface *) (t).tet[8])[i] = NULL;
     }
   }
-  ((shellface *) (t).tet[8])[ver2edge[(t).ver]] = sencode((s)); 
+  ((shellface *) (t).tet[8])[ver2edge[(t).ver]] = sencode((s));
 }
 
 inline void meshGRegionBoundaryRecovery::sstbond1(face& s, triface& t) {
@@ -640,8 +640,8 @@ inline void meshGRegionBoundaryRecovery::sstpivot1(face& s, triface& t) {
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline int meshGRegionBoundaryRecovery::pointmark(point pt) { 
-  return ((int *) (pt))[pointmarkindex]; 
+inline int meshGRegionBoundaryRecovery::pointmark(point pt) {
+  return ((int *) (pt))[pointmarkindex];
 }
 
 inline void meshGRegionBoundaryRecovery::setpointmark(point pt, int value) {
@@ -649,19 +649,19 @@ inline void meshGRegionBoundaryRecovery::setpointmark(point pt, int value) {
 }
 
 
-inline enum meshGRegionBoundaryRecovery::verttype 
+inline enum meshGRegionBoundaryRecovery::verttype
   meshGRegionBoundaryRecovery::pointtype(point pt) {
   return (enum verttype) (((int *) (pt))[pointmarkindex + 1] >> (int) 8);
 }
 
-inline void meshGRegionBoundaryRecovery::setpointtype(point pt, 
+inline void meshGRegionBoundaryRecovery::setpointtype(point pt,
   enum verttype value) {
-  ((int *) (pt))[pointmarkindex + 1] = 
+  ((int *) (pt))[pointmarkindex + 1] =
     ((int) value << 8) + (((int *) (pt))[pointmarkindex + 1] & (int) 255);
 }
 
-inline int meshGRegionBoundaryRecovery::pointgeomtag(point pt) { 
-  return ((int *) (pt))[pointmarkindex + 2]; 
+inline int meshGRegionBoundaryRecovery::pointgeomtag(point pt) {
+  return ((int *) (pt))[pointmarkindex + 2];
 }
 
 inline void meshGRegionBoundaryRecovery::setpointgeomtag(point pt, int value) {
@@ -672,7 +672,7 @@ inline REAL meshGRegionBoundaryRecovery::pointgeomuv(point pt, int i) {
   return pt[pointparamindex + i];
 }
 
-inline void meshGRegionBoundaryRecovery::setpointgeomuv(point pt, int i, 
+inline void meshGRegionBoundaryRecovery::setpointgeomuv(point pt, int i,
   REAL value) {
   pt[pointparamindex + i] = value;
 }
@@ -725,17 +725,17 @@ inline bool meshGRegionBoundaryRecovery::pmarktest3ed(point pt) {
   return (((int *) (pt))[pointmarkindex + 1] & (int) 8) != 0;
 }
 
-inline meshGRegionBoundaryRecovery::tetrahedron 
+inline meshGRegionBoundaryRecovery::tetrahedron
   meshGRegionBoundaryRecovery::point2tet(point pt) {
   return ((tetrahedron *) (pt))[point2simindex];
 }
 
-inline void meshGRegionBoundaryRecovery::setpoint2tet(point pt, 
+inline void meshGRegionBoundaryRecovery::setpoint2tet(point pt,
   tetrahedron value) {
   ((tetrahedron *) (pt))[point2simindex] = value;
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::point2ppt(point pt) {
   return (point) ((tetrahedron *) (pt))[point2simindex + 1];
 }
@@ -744,28 +744,28 @@ inline void meshGRegionBoundaryRecovery::setpoint2ppt(point pt, point value) {
   ((tetrahedron *) (pt))[point2simindex + 1] = (tetrahedron) value;
 }
 
-inline meshGRegionBoundaryRecovery::shellface 
+inline meshGRegionBoundaryRecovery::shellface
   meshGRegionBoundaryRecovery::point2sh(point pt) {
   return (shellface) ((tetrahedron *) (pt))[point2simindex + 2];
 }
 
-inline void meshGRegionBoundaryRecovery::setpoint2sh(point pt, 
+inline void meshGRegionBoundaryRecovery::setpoint2sh(point pt,
   shellface value) {
   ((tetrahedron *) (pt))[point2simindex + 2] = (tetrahedron) value;
 }
 
 
-inline meshGRegionBoundaryRecovery::tetrahedron 
+inline meshGRegionBoundaryRecovery::tetrahedron
   meshGRegionBoundaryRecovery::point2bgmtet(point pt) {
   return ((tetrahedron *) (pt))[point2simindex + 3];
 }
 
-inline void meshGRegionBoundaryRecovery::setpoint2bgmtet(point pt, 
+inline void meshGRegionBoundaryRecovery::setpoint2bgmtet(point pt,
   tetrahedron value) {
   ((tetrahedron *) (pt))[point2simindex + 3] = value;
 }
 
-inline void meshGRegionBoundaryRecovery::setpointinsradius(point pt, 
+inline void meshGRegionBoundaryRecovery::setpointinsradius(point pt,
   REAL value) {
   pt[pointmtrindex + sizeoftensor - 1] = value;
 }
@@ -779,7 +779,7 @@ inline bool meshGRegionBoundaryRecovery::issteinerpoint(point pt) {
         || (pointtype(pt) == FREEVOLVERTEX);
 }
 
-inline void meshGRegionBoundaryRecovery::point2tetorg(point pa, 
+inline void meshGRegionBoundaryRecovery::point2tetorg(point pa,
   triface& searchtet) {
   decode(point2tet(pa), searchtet);
   if ((point) searchtet.tet[4] == pa) {
@@ -799,49 +799,49 @@ inline void meshGRegionBoundaryRecovery::point2shorg(point pa, face& searchsh){
   if ((point) searchsh.sh[3] == pa) {
     searchsh.shver = 0;
   } else if ((point) searchsh.sh[4] == pa) {
-    searchsh.shver = (searchsh.sh[5] != NULL ? 2 : 1); 
+    searchsh.shver = (searchsh.sh[5] != NULL ? 2 : 1);
   } else {
     //assert((point) searchsh.sh[5] == pa); // SELF_CHECK
     searchsh.shver = 4;
   }
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::farsorg(face& s) {
   face travesh, neighsh;
   travesh = s;
   while (1) {
     senext2(travesh, neighsh);
-    spivotself(neighsh); 
+    spivotself(neighsh);
     if (neighsh.sh == NULL) break;
     if (sorg(neighsh) != sorg(travesh)) sesymself(neighsh);
-    senext2(neighsh, travesh); 
+    senext2(neighsh, travesh);
   }
   return sorg(travesh);
 }
 
-inline meshGRegionBoundaryRecovery::point 
+inline meshGRegionBoundaryRecovery::point
   meshGRegionBoundaryRecovery::farsdest(face& s) {
   face travesh, neighsh;
   travesh = s;
   while (1) {
     senext(travesh, neighsh);
-    spivotself(neighsh); 
+    spivotself(neighsh);
     if (neighsh.sh == NULL) break;
     if (sdest(neighsh) != sdest(travesh)) sesymself(neighsh);
-    senext(neighsh, travesh); 
+    senext(neighsh, travesh);
   }
   return sdest(travesh);
 }
 
 // dot() returns the dot product: v1 dot v2.
-inline REAL meshGRegionBoundaryRecovery::dot(REAL* v1, REAL* v2) 
+inline REAL meshGRegionBoundaryRecovery::dot(REAL* v1, REAL* v2)
 {
   return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 // cross() computes the cross product: n = v1 cross v2.
-inline void meshGRegionBoundaryRecovery::cross(REAL* v1, REAL* v2, REAL* n) 
+inline void meshGRegionBoundaryRecovery::cross(REAL* v1, REAL* v2, REAL* n)
 {
   n[0] =   v1[1] * v2[2] - v2[1] * v1[2];
   n[1] = -(v1[0] * v2[2] - v2[0] * v1[2]);
@@ -880,20 +880,20 @@ int meshGRegionBoundaryRecovery::stbondtbl[12][6] = {{0,},};
 int meshGRegionBoundaryRecovery::tspivottbl[12][6] = {{0,},};
 int meshGRegionBoundaryRecovery::stpivottbl[12][6] = {{0,},};
 
-int meshGRegionBoundaryRecovery::esymtbl[12] = 
+int meshGRegionBoundaryRecovery::esymtbl[12] =
   {9, 6, 11, 4, 3, 7, 1, 5, 10, 0, 8, 2};
-int meshGRegionBoundaryRecovery:: orgpivot[12] = 
+int meshGRegionBoundaryRecovery:: orgpivot[12] =
   {7, 7, 5, 5, 6, 4, 4, 6, 5, 6, 7, 4};
-int meshGRegionBoundaryRecovery::destpivot[12] = 
+int meshGRegionBoundaryRecovery::destpivot[12] =
   {6, 4, 4, 6, 5, 6, 7, 4, 7, 7, 5, 5};
-int meshGRegionBoundaryRecovery::apexpivot[12] = 
+int meshGRegionBoundaryRecovery::apexpivot[12] =
   {5, 6, 7, 4, 7, 7, 5, 5, 6, 4, 4, 6};
 int meshGRegionBoundaryRecovery::oppopivot[12] =
   {4, 5, 6, 7, 4, 5, 6, 7, 4, 5, 6, 7};
-int meshGRegionBoundaryRecovery::ver2edge[12] = 
+int meshGRegionBoundaryRecovery::ver2edge[12] =
   {0, 1, 2, 3, 3, 5, 1, 5, 4, 0, 4, 2};
 int meshGRegionBoundaryRecovery::edge2ver[ 6] = {0, 1, 2, 3, 8, 5};
-int meshGRegionBoundaryRecovery::epivot[12] = 
+int meshGRegionBoundaryRecovery::epivot[12] =
   {4, 5, 2, 11, 4, 5, 2, 11, 4, 5, 2, 11};
 int meshGRegionBoundaryRecovery::snextpivot[6] = {2, 5, 4, 1, 0, 3};
 int meshGRegionBoundaryRecovery::sorgpivot [6] = {3, 4, 4, 5, 5, 3};
@@ -981,7 +981,7 @@ void meshGRegionBoundaryRecovery::arraypool::restart()
   objects = 0l;
 }
 
-void meshGRegionBoundaryRecovery::arraypool::poolinit(int sizeofobject, 
+void meshGRegionBoundaryRecovery::arraypool::poolinit(int sizeofobject,
   int log2objperblk)
 {
   // Each object must be at least one byte long.
@@ -1002,7 +1002,7 @@ void meshGRegionBoundaryRecovery::arraypool::poolinit(int sizeofobject,
   restart();
 }
 
-meshGRegionBoundaryRecovery::arraypool::arraypool(int sizeofobject, 
+meshGRegionBoundaryRecovery::arraypool::arraypool(int sizeofobject,
   int log2objperblk)
 {
   poolinit(sizeofobject, log2objperblk);
@@ -1147,7 +1147,7 @@ meshGRegionBoundaryRecovery::memorypool::memorypool()
   pathitemsleft = 0;
 }
 
-meshGRegionBoundaryRecovery::memorypool::memorypool(int bytecount, 
+meshGRegionBoundaryRecovery::memorypool::memorypool(int bytecount,
   int itemcount, int wsize, int alignment)
 {
   poolinit(bytecount, itemcount, wsize, alignment);
@@ -1185,9 +1185,9 @@ void meshGRegionBoundaryRecovery::memorypool::poolinit(int bytecount,
 
   // Allocate a block of items.  Space for `itemsperblock' items and one
   //   pointer (to point to the next block) are allocated, as well as space
-  //   to ensure alignment of the items. 
+  //   to ensure alignment of the items.
   firstblock = (void **) malloc(itemsperblock * itembytes + sizeof(void *)
-                                + alignbytes); 
+                                + alignbytes);
   if (firstblock == (void **) NULL) {
     terminateBoundaryRecovery(NULL, 1);
   }
@@ -1223,7 +1223,7 @@ void* meshGRegionBoundaryRecovery::memorypool::alloc()
   void **newblock;
   uintptr_t alignptr;
 
-  // First check the linked list of dead items.  If the list is not 
+  // First check the linked list of dead items.  If the list is not
   //   empty, allocate an item from the list rather than a fresh one.
   if (deaditemstack != (void *) NULL) {
     newitem = deaditemstack;                     // Take first item in list.
@@ -1234,7 +1234,7 @@ void* meshGRegionBoundaryRecovery::memorypool::alloc()
       // Check if another block must be allocated.
       if (*nowblock == (void *) NULL) {
         // Allocate a new block of items, pointed to by the previous block.
-        newblock = (void **) malloc(itemsperblock * itembytes + sizeof(void *) 
+        newblock = (void **) malloc(itemsperblock * itembytes + sizeof(void *)
                                     + alignbytes);
         if (newblock == (void **) NULL) {
           terminateBoundaryRecovery(NULL, 1);
@@ -1339,7 +1339,7 @@ void meshGRegionBoundaryRecovery::makeindex2pointmap(point*& idx2verlist)
   }
 }
 
-void meshGRegionBoundaryRecovery::makepoint2submap(memorypool* pool, 
+void meshGRegionBoundaryRecovery::makepoint2submap(memorypool* pool,
   int*& idx2faclist, face*& facperverlist)
 {
   face shloop;
@@ -1416,7 +1416,7 @@ void meshGRegionBoundaryRecovery::makepoint2submap(memorypool* pool,
   idx2faclist[0] = 0;
 }
 
-void meshGRegionBoundaryRecovery::tetrahedrondealloc(tetrahedron 
+void meshGRegionBoundaryRecovery::tetrahedrondealloc(tetrahedron
   *dyingtetrahedron)
 {
   // Set tetrahedron's vertices to NULL. This makes it possible to detect
@@ -1434,7 +1434,7 @@ void meshGRegionBoundaryRecovery::tetrahedrondealloc(tetrahedron
   tetrahedrons->dealloc((void *) dyingtetrahedron);
 }
 
-meshGRegionBoundaryRecovery::tetrahedron* 
+meshGRegionBoundaryRecovery::tetrahedron*
   meshGRegionBoundaryRecovery::tetrahedrontraverse()
 {
   tetrahedron *newtetrahedron;
@@ -1449,7 +1449,7 @@ meshGRegionBoundaryRecovery::tetrahedron*
   return newtetrahedron;
 }
 
-meshGRegionBoundaryRecovery::tetrahedron* 
+meshGRegionBoundaryRecovery::tetrahedron*
   meshGRegionBoundaryRecovery::alltetrahedrontraverse()
 {
   tetrahedron *newtetrahedron;
@@ -1463,7 +1463,7 @@ meshGRegionBoundaryRecovery::tetrahedron*
   return newtetrahedron;
 }
 
-void meshGRegionBoundaryRecovery::shellfacedealloc(memorypool *pool, 
+void meshGRegionBoundaryRecovery::shellfacedealloc(memorypool *pool,
   shellface *dyingsh)
 {
   // Set shellface's vertices to NULL. This makes it possible to detect dead
@@ -1521,8 +1521,8 @@ void meshGRegionBoundaryRecovery::maketetrahedron(triface *newtet)
   newtet->tet[6] = NULL;
   newtet->tet[7] = NULL;
   // No attached segments and subfaces yet.
-  newtet->tet[8] = NULL; 
-  newtet->tet[9] = NULL; 
+  newtet->tet[8] = NULL;
+  newtet->tet[9] = NULL;
   // Initialize the marker (clear all flags).
   setelemmarker(newtet->tet, 0);
   for (int i = 0; i < numelemattrib; i++) {
@@ -1570,7 +1570,7 @@ void meshGRegionBoundaryRecovery::makeshellface(memorypool *pool, face *newface)
   newface->shver = 0;
 }
 
-void meshGRegionBoundaryRecovery::makepoint(point* pnewpoint, 
+void meshGRegionBoundaryRecovery::makepoint(point* pnewpoint,
   enum verttype vtype)
 {
   int i;
@@ -1598,7 +1598,7 @@ void meshGRegionBoundaryRecovery::makepoint(point* pnewpoint,
   setpointmark(*pnewpoint, (int) (points->items) - (!in->firstnumber));
   // Clear all flags.
   ((int *) (*pnewpoint))[pointmarkindex + 1] = 0;
-  // Initialize (set) the point type. 
+  // Initialize (set) the point type.
   setpointtype(*pnewpoint, vtype);
 }
 
@@ -1622,7 +1622,7 @@ void meshGRegionBoundaryRecovery::initializepools()
     }
   }
 
-  // The index within each point at which its metric tensor is found. 
+  // The index within each point at which its metric tensor is found.
   // Each vertex has three coordinates.
   if (b->psc) {
     // '-s' option (PSC), the u,v coordinates are provided.
@@ -1697,19 +1697,19 @@ void meshGRegionBoundaryRecovery::initializepools()
   setpointmark(dummypoint, -1); // The unique marker for dummypoint.
   // Clear all flags.
   ((int *) (dummypoint))[pointmarkindex + 1] = 0;
-  // Initialize (set) the point type. 
+  // Initialize (set) the point type.
   setpointtype(dummypoint, UNUSEDVERTEX); // Does not matter.
 
-  elesize = 12 * sizeof(tetrahedron); 
+  elesize = 12 * sizeof(tetrahedron);
 
   // The index to find the element markers. An integer containing varies
-  //   flags and element counter. 
+  //   flags and element counter.
   assert(sizeof(int) <= sizeof(tetrahedron));
   assert((sizeof(tetrahedron) % sizeof(int)) == 0);
   elemmarkerindex = (elesize - sizeof(tetrahedron)) / sizeof(int);
 
   // The index within each element at which its attributes are found, where
-  //   the index is measured in REALs. 
+  //   the index is measured in REALs.
   elemattribindex = (elesize + sizeof(REAL) - 1) / sizeof(REAL);
   // The index within each element at which the maximum volume bound is
   //   found, where the index is measured in REALs.
@@ -1742,7 +1742,7 @@ void meshGRegionBoundaryRecovery::initializepools()
     areaboundindex = (shsize + sizeof(REAL) - 1) / sizeof(REAL);
     // If -q switch is in use, increase the number of bytes occupied by
     //   a subface for saving maximum area bound.
-    if (checkconstraints) { 
+    if (checkconstraints) {
       shsize = (areaboundindex + 1) * sizeof(REAL);
     } else {
       shsize = areaboundindex * sizeof(REAL);
@@ -1774,10 +1774,10 @@ void meshGRegionBoundaryRecovery::initializepools()
     subsegs = new memorypool(shsize, b->shellfaceperblock, sizeof(void *), 8);
 
     // Initialize the pool for tet-subseg connections.
-    tet2segpool = new memorypool(6 * sizeof(shellface), b->shellfaceperblock, 
+    tet2segpool = new memorypool(6 * sizeof(shellface), b->shellfaceperblock,
                                  sizeof(void *), 0);
     // Initialize the pool for tet-subface connections.
-    tet2subpool = new memorypool(4 * sizeof(shellface), b->shellfaceperblock, 
+    tet2subpool = new memorypool(4 * sizeof(shellface), b->shellfaceperblock,
                                  sizeof(void *), 0);
 
     // Initialize arraypools for segment & facet recovery.
@@ -1817,7 +1817,7 @@ void meshGRegionBoundaryRecovery::initializepools()
 
 REAL meshGRegionBoundaryRecovery::PI = 3.14159265358979323846264338327950288419716939937510582;
 
-REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc, 
+REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc,
   REAL* pd, REAL* pe)
 {
   REAL sign;
@@ -1838,7 +1838,7 @@ REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc,
   pt[2] = pc;
   pt[3] = pd;
   pt[4] = pe;
-  
+
   // Sort the five points such that their indices are in the increasing
   //   order. An optimized bubble sort algorithm is used, i.e., it has
   //   the worst case O(n^2) runtime, but it is usually much faster.
@@ -1862,7 +1862,7 @@ REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc,
     if ((swaps % 2) != 0) oriA = -oriA;
     return oriA;
   }
-  
+
   oriB = -orient3d(pt[0], pt[2], pt[3], pt[4]);
   assert(oriB != 0.0); // SELF_CHECK
   // Flip the sign if there are odd number of swaps.
@@ -1870,8 +1870,8 @@ REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc,
   return oriB;
 }
 
-REAL orient4dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe, 
-              REAL aheight, REAL bheight, REAL cheight, REAL dheight, 
+REAL orient4dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
+              REAL aheight, REAL bheight, REAL cheight, REAL dheight,
               REAL eheight)
 {
  REAL aex, bex, cex, dex;
@@ -1935,7 +1935,7 @@ REAL orient4dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
 
 #define SWAP2(a0, a1, tmp) (tmp) = (a0); (a0) = (a1); (a1) = (tmp)
 
-int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C, 
+int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
   point P, point Q, point R, int level, int *types, int *pos)
 {
   point U[3], V[3];  // The permuted vectors of points.
@@ -1974,7 +1974,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
     }
   }
 
-  // Test A's, B's, and C's orientations wrt plane PQR. 
+  // Test A's, B's, and C's orientations wrt plane PQR.
   sA = orient3d(P, Q, R, A);
   sB = orient3d(P, Q, R, B);
   sC = orient3d(P, Q, R, C);
@@ -1983,7 +1983,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
   if (sA < 0) {
     if (sB < 0) {
       if (sC < 0) { // (---).
-        return 0; 
+        return 0;
       } else {
         if (sC > 0) { // (--+).
           // All points are in the right positions.
@@ -2000,7 +2000,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
           z1 = 1;
         }
       }
-    } else { 
+    } else {
       if (sB > 0) {
         if (sC < 0) { // (-+-).
           SETVECTOR3(U, C, A, B);  // PT = ST
@@ -2042,7 +2042,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
             SETVECTOR3(V, Q, P, R);  // PL = SL
             SETVECTOR3(pu, 1, 2, 0);
             SETVECTOR3(pv, 1, 0, 2);
-            z1 = 3; 
+            z1 = 3;
           }
         }
       }
@@ -2071,7 +2071,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
             z1 = 2;
           }
         }
-      } else { 
+      } else {
         if (sB > 0) {
           if (sC < 0) { // (++-).
             SETVECTOR3(U, A, B, C);  // I3
@@ -2081,13 +2081,13 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
             z1 = 0;
           } else {
             if (sC > 0) { // (+++).
-              return 0; 
+              return 0;
             } else { // (++0).
               SETVECTOR3(U, A, B, C);  // I3
               SETVECTOR3(V, Q, P, R);  // PL = SL
               SETVECTOR3(pu, 0, 1, 2);
               SETVECTOR3(pv, 1, 0, 2);
-              z1 = 1; 
+              z1 = 1;
             }
           }
         } else { // (+0#)
@@ -2109,12 +2109,12 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
               SETVECTOR3(V, P, Q, R);  // I2
               SETVECTOR3(pu, 1, 2, 0);
               SETVECTOR3(pv, 0, 1, 2);
-              z1 = 3; 
+              z1 = 3;
             }
           }
         }
       }
-    } else { 
+    } else {
       if (sB < 0) {
         if (sC < 0) { // (0--).
           SETVECTOR3(U, B, C, A);  // PT = ST x ST
@@ -2134,10 +2134,10 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
             SETVECTOR3(V, Q, P, R);  // PL = SL
             SETVECTOR3(pu, 2, 0, 1);
             SETVECTOR3(pv, 1, 0, 2);
-            z1 = 3; 
+            z1 = 3;
           }
         }
-      } else { 
+      } else {
         if (sB > 0) {
           if (sC < 0) { // (0+-).
             SETVECTOR3(U, A, B, C);  // I3
@@ -2157,7 +2157,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
               SETVECTOR3(V, P, Q, R);  // I2
               SETVECTOR3(pu, 2, 0, 1);
               SETVECTOR3(pv, 0, 1, 2);
-              z1 = 3; 
+              z1 = 3;
             }
           }
         } else { // (00#)
@@ -2166,14 +2166,14 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
             SETVECTOR3(V, Q, P, R);  // PL = SL
             SETVECTOR3(pu, 0, 1, 2);
             SETVECTOR3(pv, 1, 0, 2);
-            z1 = 3; 
+            z1 = 3;
           } else {
             if (sC > 0) { // (00+).
               SETVECTOR3(U, A, B, C);  // I3
               SETVECTOR3(V, P, Q, R);  // I2
               SETVECTOR3(pu, 0, 1, 2);
               SETVECTOR3(pv, 0, 1, 2);
-              z1 = 3; 
+              z1 = 3;
             } else { // (000)
               // Not possible unless ABC is degenerate.
               // Avoiding compiler warnings.
@@ -2232,7 +2232,7 @@ int meshGRegionBoundaryRecovery::tri_edge_2d(point A, point B, point C,
 
   s3 = orient3d(U[0], U[2], R, V[0]);  // A, C, R, P
   s4 = orient3d(U[1], U[2], R, V[1]);  // B, C, R, Q
-      
+
   if (z1 == 0) {  // (tritri-03)
     if (s1 < 0) {
       if (s3 > 0) {
@@ -2758,7 +2758,7 @@ int meshGRegionBoundaryRecovery::tri_edge_tail(point A,point B,point C,point P,
   return 2;
 }
 
-int meshGRegionBoundaryRecovery::tri_edge_test(point A, point B, point C, 
+int meshGRegionBoundaryRecovery::tri_edge_test(point A, point B, point C,
   point P, point Q, point R, int level, int *types, int *pos)
 {
   REAL sP, sQ;
@@ -2770,7 +2770,7 @@ int meshGRegionBoundaryRecovery::tri_edge_test(point A, point B, point C,
   return tri_edge_tail(A, B, C, P, Q, R, sP, sQ, level, types, pos);
 }
 
-bool meshGRegionBoundaryRecovery::lu_decmp(REAL lu[4][4], int n, int* ps, 
+bool meshGRegionBoundaryRecovery::lu_decmp(REAL lu[4][4], int n, int* ps,
   REAL* d, int N)
 {
   REAL scales[4];
@@ -2829,7 +2829,7 @@ bool meshGRegionBoundaryRecovery::lu_decmp(REAL lu[4][4], int n, int* ps,
   return lu[ps[n + N - 1]][n + N - 1] != 0.0;
 }
 
-void meshGRegionBoundaryRecovery::lu_solve(REAL lu[4][4], int n, int* ps, 
+void meshGRegionBoundaryRecovery::lu_solve(REAL lu[4][4], int n, int* ps,
   REAL* b, int N)
 {
   int i, j;
@@ -2856,7 +2856,7 @@ void meshGRegionBoundaryRecovery::lu_solve(REAL lu[4][4], int n, int* ps,
   for (i = N; i < n + N; i++) b[i] = X[i];
 }
 
-REAL meshGRegionBoundaryRecovery::incircle3d(point pa, point pb, point pc, 
+REAL meshGRegionBoundaryRecovery::incircle3d(point pa, point pb, point pc,
   point pd)
 {
   REAL area2[2], n1[3], n2[3], c[3];
@@ -2891,7 +2891,7 @@ REAL meshGRegionBoundaryRecovery::incircle3d(point pa, point pb, point pc,
   return sign;
 }
 
-void meshGRegionBoundaryRecovery::facenormal(point pa, point pb, point pc, 
+void meshGRegionBoundaryRecovery::facenormal(point pa, point pb, point pc,
   REAL *n, int pivot, REAL* lav)
 {
   REAL v1[3], v2[3], v3[3], *pv1, *pv2;
@@ -2943,7 +2943,7 @@ void meshGRegionBoundaryRecovery::facenormal(point pa, point pb, point pc,
   n[2] = -n[2];
 }
 
-REAL meshGRegionBoundaryRecovery::orient3dfast(REAL *pa, REAL *pb, REAL *pc, 
+REAL meshGRegionBoundaryRecovery::orient3dfast(REAL *pa, REAL *pb, REAL *pc,
   REAL *pd)
 {
   REAL adx, bdx, cdx;
@@ -2965,7 +2965,7 @@ REAL meshGRegionBoundaryRecovery::orient3dfast(REAL *pa, REAL *pb, REAL *pc,
        + cdx * (ady * bdz - adz * bdy);
 }
 
-bool meshGRegionBoundaryRecovery::tetalldihedral(point pa, point pb, point pc, 
+bool meshGRegionBoundaryRecovery::tetalldihedral(point pa, point pb, point pc,
   point pd, REAL* cosdd, REAL* cosmaxd, REAL* cosmind)
 {
   REAL N[4][3], vol, cosd, len;
@@ -3053,7 +3053,7 @@ bool meshGRegionBoundaryRecovery::tetalldihedral(point pa, point pb, point pc,
   return true;
 }
 
-void meshGRegionBoundaryRecovery::tetallnormal(point pa, point pb, point pc, 
+void meshGRegionBoundaryRecovery::tetallnormal(point pa, point pb, point pc,
   point pd, REAL N[4][3], REAL* volume)
 {
   REAL A[4][4], rhs[4], D;
@@ -3087,14 +3087,14 @@ void meshGRegionBoundaryRecovery::tetallnormal(point pa, point pb, point pc,
   }
 }
 
-REAL meshGRegionBoundaryRecovery::tetaspectratio(point pa, point pb, point pc, 
+REAL meshGRegionBoundaryRecovery::tetaspectratio(point pa, point pb, point pc,
   point pd)
 {
   REAL vda[3], vdb[3], vdc[3];
   REAL N[4][3], A[4][4], rhs[4], D;
   REAL H[4], volume, radius2, minheightinv;
   int indx[4];
-  int i, j; 
+  int i, j;
 
   // Set the matrix A = [vda, vdb, vdc]^T.
   for (i = 0; i < 3; i++) A[0][i] = vda[i] = pa[i] - pd[i];
@@ -3145,7 +3145,7 @@ REAL meshGRegionBoundaryRecovery::tetaspectratio(point pa, point pb, point pc,
   return sqrt(radius2) * minheightinv;
 }
 
-bool meshGRegionBoundaryRecovery::circumsphere(REAL* pa, REAL* pb, REAL* pc, 
+bool meshGRegionBoundaryRecovery::circumsphere(REAL* pa, REAL* pb, REAL* pc,
   REAL* pd, REAL* cent, REAL* radius)
 {
   REAL A[4][4], rhs[4], D;
@@ -3160,7 +3160,7 @@ bool meshGRegionBoundaryRecovery::circumsphere(REAL* pa, REAL* pb, REAL* pc,
   A[1][2] = pc[2] - pa[2];
   if (pd != NULL) {
     A[2][0] = pd[0] - pa[0];
-    A[2][1] = pd[1] - pa[1]; 
+    A[2][1] = pd[1] - pa[1];
     A[2][2] = pd[2] - pa[2];
   } else {
     cross(A[0], A[1], A[2]);
@@ -3180,7 +3180,7 @@ bool meshGRegionBoundaryRecovery::circumsphere(REAL* pa, REAL* pb, REAL* pc,
   if (!lu_decmp(A, 3, indx, &D, 0)) {
     if (radius != (REAL *) NULL) *radius = 0.0;
     return false;
-  }    
+  }
   lu_solve(A, 3, indx, rhs, 0);
   if (cent != (REAL *) NULL) {
     cent[0] = pa[0] + rhs[0];
@@ -3193,7 +3193,7 @@ bool meshGRegionBoundaryRecovery::circumsphere(REAL* pa, REAL* pb, REAL* pc,
   return true;
 }
 
-void meshGRegionBoundaryRecovery::planelineint(REAL* pa, REAL* pb, REAL* pc, 
+void meshGRegionBoundaryRecovery::planelineint(REAL* pa, REAL* pb, REAL* pc,
   REAL* e1, REAL* e2, REAL* ip, REAL* u)
 {
   REAL n[3], det, det1;
@@ -3216,7 +3216,7 @@ void meshGRegionBoundaryRecovery::planelineint(REAL* pa, REAL* pb, REAL* pc,
   }
 }
 
-int meshGRegionBoundaryRecovery::linelineint(REAL* A, REAL* B, REAL* C, 
+int meshGRegionBoundaryRecovery::linelineint(REAL* A, REAL* B, REAL* C,
   REAL* D, REAL* P, REAL* Q, REAL* tp, REAL* tq)
 {
   REAL vab[3], vcd[3], vca[3];
@@ -3254,7 +3254,7 @@ int meshGRegionBoundaryRecovery::linelineint(REAL* A, REAL* B, REAL* C,
   return 1;
 }
 
-REAL meshGRegionBoundaryRecovery::tetprismvol(REAL* p0, REAL* p1, REAL* p2, 
+REAL meshGRegionBoundaryRecovery::tetprismvol(REAL* p0, REAL* p1, REAL* p2,
   REAL* p3)
 {
   REAL *p4, *p5, *p6, *p7;
@@ -3281,7 +3281,7 @@ REAL meshGRegionBoundaryRecovery::tetprismvol(REAL* p0, REAL* p1, REAL* p2,
   return fabs(vol[0]) + fabs(vol[1]) + fabs(vol[2]) + fabs(vol[3]);
 }
 
-void meshGRegionBoundaryRecovery::calculateabovepoint4(point pa, point pb, 
+void meshGRegionBoundaryRecovery::calculateabovepoint4(point pa, point pb,
   point pc, point pd)
 {
   REAL n1[3], n2[3], *norm;
@@ -3485,10 +3485,10 @@ void meshGRegionBoundaryRecovery::flip23(triface* fliptets, int hullflag, flipco
 
   if (checksubsegflag) {
     // Bond subsegments if there are.
-    // Each new tet has 5 edges to be checked (except the edge [e,d]). 
+    // Each new tet has 5 edges to be checked (except the edge [e,d]).
     face checkseg;
     // The middle three: [a,b], [b,c], [c,a].
-    for (i = 0; i < 3; i++) {      
+    for (i = 0; i < 3; i++) {
       if (issubseg(topcastets[i])) {
         tsspivot1(topcastets[i], checkseg);
         eorgoppo(fliptets[i], newface);
@@ -3501,7 +3501,7 @@ void meshGRegionBoundaryRecovery::flip23(triface* fliptets, int hullflag, flipco
     }
     // The top three: [d,a], [d,b], [d,c]. Two tets per edge.
     for (i = 0; i < 3; i++) {
-      eprev(topcastets[i], casface);      
+      eprev(topcastets[i], casface);
       if (issubseg(casface)) {
         tsspivot1(casface, checkseg);
         enext(fliptets[i], newface);
@@ -3538,7 +3538,7 @@ void meshGRegionBoundaryRecovery::flip23(triface* fliptets, int hullflag, flipco
   if (checksubfaceflag) {
     // Bond 6 subfaces if there are.
     face checksh;
-    for (i = 0; i < 3; i++) {      
+    for (i = 0; i < 3; i++) {
       if (issubface(topcastets[i])) {
         tspivot(topcastets[i], checksh);
         eorgoppo(fliptets[i], newface);
@@ -3579,7 +3579,7 @@ void meshGRegionBoundaryRecovery::flip23(triface* fliptets, int hullflag, flipco
   if (hullflag > 0) {
     if (dummyflag != 0) {
       // Restore the original position of the points (for flipnm()).
-      if (dummyflag == -1) { 
+      if (dummyflag == -1) {
         // Reverse the edge.
         for (i = 0; i < 3; i++) {
           esymself(fliptets[i]);
@@ -3608,7 +3608,7 @@ void meshGRegionBoundaryRecovery::flip23(triface* fliptets, int hullflag, flipco
   }
 
   if (fc->enqflag > 0) {
-    // Queue faces which may be locally non-Delaunay.  
+    // Queue faces which may be locally non-Delaunay.
     for (i = 0; i < 3; i++) {
       eprevesym(fliptets[i], newface);
       flippush(flipstack, &newface);
@@ -3628,13 +3628,13 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
 {
   triface topcastets[3], botcastets[3];
   triface newface, casface;
-  face flipshs[3]; 
-  face checkseg; 
+  face flipshs[3];
+  face checkseg;
   point pa, pb, pc, pd, pe;
   REAL attrib, volume;
   int dummyflag = 0;  // Rangle = {-1, 0, 1, 2}
   int spivot = -1, scount = 0; // for flip22()
-  int t1ver; 
+  int t1ver;
   int i, j;
 
   if (hullflag > 0) {
@@ -3651,7 +3651,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
       dummyflag = -1; // e is dummypoint.
     } else {
       // Check if a or b is the 'dummypoint'.
-      if (apex(fliptets[0]) == dummypoint) { 
+      if (apex(fliptets[0]) == dummypoint) {
         dummyflag = 1;  // a is dummypoint.
         newface = fliptets[0];
         fliptets[0] = fliptets[1];
@@ -3734,7 +3734,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
       // There are two subfaces involved in this flip. The three tets are
       //   separated into two different regions, one may be exterior. The
       //   first region has two tets, and the second region has only one.
-      //   The two created tets must be in the same region as the first region. 
+      //   The two created tets must be in the same region as the first region.
       //   The element attributes and volume constraint must be set correctly.
       //assert(spivot != -1);
       // The tet fliptets[spivot] is in the first region.
@@ -3824,7 +3824,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
 
   if (checksubsegflag) {
     // Bond 9 segments to new (flipped) tets.
-    for (i = 0; i < 3; i++) { // edges a->b, b->c, c->a.      
+    for (i = 0; i < 3; i++) { // edges a->b, b->c, c->a.
       if (issubseg(topcastets[i])) {
         tsspivot1(topcastets[i], checkseg);
         tssbond1(fliptets[0], checkseg);
@@ -3841,8 +3841,8 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
     // The three top edges.
     for (i = 0; i < 3; i++) { // edges b->d, c->d, a->d.
       esym(fliptets[0], newface);
-      eprevself(newface); 
-      enext(topcastets[i], casface);      
+      eprevself(newface);
+      enext(topcastets[i], casface);
       if (issubseg(casface)) {
         tsspivot1(casface, checkseg);
         tssbond1(newface, checkseg);
@@ -3856,7 +3856,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
     // The three bot edges.
     for (i = 0; i < 3; i++) { // edges b<-e, c<-e, a<-e.
       esym(fliptets[1], newface);
-      enextself(newface); 
+      enextself(newface);
       eprev(botcastets[i], casface);
       if (issubseg(casface)) {
         tsspivot1(casface, checkseg);
@@ -3876,7 +3876,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
     for (i = 0; i < 3; i++) { // At edges [b,a], [c,b], [a,c]
       if (issubface(topcastets[i])) {
         tspivot(topcastets[i], checksh);
-        esym(fliptets[0], newface); 
+        esym(fliptets[0], newface);
         sesymself(checksh);
         tsbond(newface, checksh);
         if (fc->chkencflag & 2) {
@@ -3889,7 +3889,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
     for (i = 0; i < 3; i++) { // At edges [a,b], [b,c], [c,a]
       if (issubface(botcastets[i])) {
         tspivot(botcastets[i], checksh);
-        esym(fliptets[1], newface); 
+        esym(fliptets[1], newface);
         sesymself(checksh);
         tsbond(newface, checksh);
         if (fc->chkencflag & 2) {
@@ -3927,7 +3927,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
         tsbond(topcastets[0], flipfaces[0]);
       } else {
         // An invalid 2-to-2 flip. Report a bug.
-        terminateBoundaryRecovery(this, 2); 
+        terminateBoundaryRecovery(this, 2);
       }
       // Connect the bot subface to the bottom tets.
       esymself(botcastets[0]);
@@ -3941,7 +3941,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
         tsbond(botcastets[0], flipfaces[1]);
       } else {
         // An invalid 2-to-2 flip. Report a bug.
-        terminateBoundaryRecovery(this, 2);  
+        terminateBoundaryRecovery(this, 2);
       }
     } // if (scount > 0)
   } // if (checksubfaceflag)
@@ -3979,7 +3979,7 @@ void meshGRegionBoundaryRecovery::flip32(triface* fliptets, int hullflag, flipco
       }
     }
   }
-  
+
   if (fc->enqflag > 0) {
     // Queue faces which may be locally non-Delaunay.
     // pa = org(fliptets[0]); // 'a' may be a new vertex.
@@ -4012,7 +4012,7 @@ void meshGRegionBoundaryRecovery::flip41(triface* fliptets, int hullflag, flipco
   point pa, pb, pc, pd, pp;
   int dummyflag = 0; // in {0, 1, 2, 3, 4}
   int spivot = -1, scount = 0;
-  int t1ver; 
+  int t1ver;
   int i;
 
   pa =  org(fliptets[3]);
@@ -4242,10 +4242,10 @@ void meshGRegionBoundaryRecovery::flip41(triface* fliptets, int hullflag, flipco
       // Perform a 3-to-1 flip in surface triangulation.
       // Depending on the value of 'spivot', the three subfaces are:
       //   - 0: [a,b,p], [b,d,p], [d,a,p]
-      //   - 1: [b,c,p], [c,d,p], [d,b,p] 
-      //   - 2: [c,a,p], [a,d,p], [d,c,p] 
+      //   - 1: [b,c,p], [c,d,p], [d,b,p]
+      //   - 2: [c,a,p], [a,d,p], [d,c,p]
       //   - 3: [a,b,p], [b,c,p], [c,a,p]
-      // Adjust the three subfaces such that their origins are p, i.e., 
+      // Adjust the three subfaces such that their origins are p, i.e.,
       //   - 3: [p,a,b], [p,b,c], [p,c,a]. (Required by the flip31()).
       for (i = 0; i < 3; i++) {
         senext2self(flipshs[i]);
@@ -4315,7 +4315,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
   pb = dest(abtets[0]);
 
   if (n > 3) {
-    // Try to reduce the size of the Star(ab) by flipping a face in it. 
+    // Try to reduce the size of the Star(ab) by flipping a face in it.
     reflexlinkedgecount = 0;
 
     for (i = 0; i < n; i++) {
@@ -4331,7 +4331,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         continue;
       }
 
-      pc = apex(abtets[i]); 
+      pc = apex(abtets[i]);
       pd = apex(abtets[(i + 1) % n]);
       pe = apex(abtets[(i - 1 + n) % n]);
       if ((pd == dummypoint) || (pe == dummypoint)) {
@@ -4340,7 +4340,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
 
 
       // Decide whether [a,b,c] is flippable or not.
-      reducflag = 0; 
+      reducflag = 0;
 
       hullflag = (pc == dummypoint); // pc may be dummypoint.
       hulledgeflag = 0;
@@ -4374,7 +4374,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         if (n == 4) {
           // Let the vertex opposite to 'c' is 'f'.
           // A 4-to-4 flip is possible if the two tets [d,e,f,a] and [e,d,f,b]
-          //   are valid tets. 
+          //   are valid tets.
           // Note: When the mesh is not convex, it is possible that [a,b] is
           //   locally non-convex (at hull faces [a,b,e] and [b,a,d]).
           //   In this case, an edge flip [a,b] to [e,d] is still possible.
@@ -4397,7 +4397,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         if (nonconvex && hulledgeflag) {
           // We will create a hull edge [e,d]. Make sure it does not exist.
           if (getedge(pe, pd, &spintet)) {
-            // The 2-to-3 flip is not a topological valid flip. 
+            // The 2-to-3 flip is not a topological valid flip.
             reducflag = 0;
           }
         }
@@ -4419,23 +4419,23 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
 
           // Shrink the array 'abtets', maintain the original order.
           //   Two tets 'abtets[i-1] ([a,b,e,c])' and 'abtets[i] ([a,b,c,d])'
-          //   are flipped, i.e., they do not in Star(ab) anymore. 
+          //   are flipped, i.e., they do not in Star(ab) anymore.
           //   'fliptets[0]' ([e,d,a,b]) is in Star(ab), it is saved in
-          //   'abtets[i-1]' (adjust it to be [a,b,e,d]), see below: 
-          // 
+          //   'abtets[i-1]' (adjust it to be [a,b,e,d]), see below:
+          //
           //            before                   after
-          //     [0] |___________|        [0] |___________| 
+          //     [0] |___________|        [0] |___________|
           //     ... |___________|        ... |___________|
           //   [i-1] |_[a,b,e,c]_|      [i-1] |_[a,b,e,d]_|
           //     [i] |_[a,b,c,d]_| -->    [i] |_[a,b,d,#]_|
           //   [i+1] |_[a,b,d,#]_|      [i+1] |_[a,b,#,*]_|
           //     ... |___________|        ... |___________|
-          //   [n-2] |___________|      [n-2] |___________| 
+          //   [n-2] |___________|      [n-2] |___________|
           //   [n-1] |___________|      [n-1] |_[i]_2-t-3_|
           //
           edestoppoself(fliptets[0]); // [a,b,e,d]
           // Increase the counter of this new tet (it is in Star(ab)).
-          increaseelemcounter(fliptets[0]); 
+          increaseelemcounter(fliptets[0]);
           abtets[(i - 1 + n) % n] = fliptets[0];
           for (j = i; j < n - 1; j++) {
             abtets[j] = abtets[j + 1];  // Upshift
@@ -4472,10 +4472,10 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
           } else { // if (nn > 2)
             // The edge is not flipped.
             if (fc->unflip || (ori == 0)) {
-              // Undo the previous 2-to-3 flip, i.e., do a 3-to-2 flip to 
+              // Undo the previous 2-to-3 flip, i.e., do a 3-to-2 flip to
               //   transform [e,d] => [a,b,c].
               // 'ori == 0' means that the previous flip created a degenerated
-              //   tet. It must be removed. 
+              //   tet. It must be removed.
               // Remember that 'abtets[i-1]' is [a,b,e,d]. We can use it to
               //   find another two tets [e,d,b,c] and [e,d,c,a].
               fliptets[0] = abtets[(i-1 + (n-1)) % (n-1)]; // [a,b,e,d]
@@ -4483,7 +4483,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
               fnext(fliptets[0], fliptets[1]); // [1] is [e,d,b,c]
               fnext(fliptets[1], fliptets[2]); // [2] is [e,d,c,a]
               assert(apex(fliptets[0]) == oppo(fliptets[2])); // SELF_CHECK
-              // Restore the two original tets in Star(ab). 
+              // Restore the two original tets in Star(ab).
               flip32(fliptets, hullflag, fc);
               // Marktest the two restored tets in Star(ab).
               for (j = 0; j < 2; j++) {
@@ -4493,8 +4493,8 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
               for (j = n - 2; j>= i; j--) {
                 abtets[j + 1] = abtets[j];  // Downshift
               }
-              // Insert the two new tets 'fliptets[0]' [a,b,c,d] and 
-              //  'fliptets[1]' [b,a,c,e] into the (i-1)-th and i-th entries, 
+              // Insert the two new tets 'fliptets[0]' [a,b,c,d] and
+              //  'fliptets[1]' [b,a,c,e] into the (i-1)-th and i-th entries,
               //  respectively.
               esym(fliptets[1], abtets[(i - 1 + n) % n]); // [a,b,e,c]
               abtets[i] = fliptets[0]; // [a,b,c,d]
@@ -4509,18 +4509,18 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
           if (!fc->unflip) {
             // The flips are not reversed. The current Star(ab) can not be
             //   further reduced. Return its current size (# of tets).
-            return nn; 
+            return nn;
           }
-          // unflip is set. 
+          // unflip is set.
           // Continue the search for flips.
         }
       } // if (reducflag)
     } // i
 
-    // The Star(ab) is not reduced. 
+    // The Star(ab) is not reduced.
     if (reflexlinkedgecount > 0) {
       // There are reflex edges in the Link(ab).
-      if (((b->fliplinklevel < 0) && (level < autofliplinklevel)) || 
+      if (((b->fliplinklevel < 0) && (level < autofliplinklevel)) ||
           ((b->fliplinklevel >= 0) && (level < b->fliplinklevel))) {
         // Try to reduce the Star(ab) by flipping a reflex edge in Link(ab).
         for (i = 0; i < n; i++) {
@@ -4570,7 +4570,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
                 tsspivot1(flipedge, checkseg);
                 if (!sinfected(checkseg)) {
                   // Queue this segment in list.
-                  sinfect(checkseg);                
+                  sinfect(checkseg);
                   caveencseglist->newindex((void **) &paryseg);
                   *paryseg = checkseg;
                 }
@@ -4580,14 +4580,14 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
           }
 
           // Try to flip the selected edge ([c,b] or [a,c]).
-          esymself(flipedge); 
+          esymself(flipedge);
           // Count the number of tets at the edge.
           n1 = 0;
           j = 0; // Sum of the star counters.
           spintet = flipedge;
           while (1) {
             n1++;
-            j += (elemcounter(spintet)); 
+            j += (elemcounter(spintet));
             fnextself(spintet);
             if (spintet.tet == flipedge.tet) break;
           }
@@ -4597,7 +4597,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             continue; // Do not flip this edge.
           }
           // Only two tets can be marktested.
-          assert(j == 2); 
+          assert(j == 2);
 
           if ((b->flipstarsize > 0) && (n1 > b->flipstarsize)) {
             // The star size exceeds the given limit.
@@ -4612,7 +4612,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
           while (1) {
             tmpabtets[j] = spintet;
             // Increase the star counter of this tet.
-            increaseelemcounter(tmpabtets[j]); 
+            increaseelemcounter(tmpabtets[j]);
             j++;
             fnextself(spintet);
             if (spintet.tet == flipedge.tet) break;
@@ -4651,7 +4651,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             // Use the 1st and 2nd bit to save 'edgepivot' (1 or 2).
             abtets[n - 1].ver |= edgepivot;
             // Use the 6th bit to signal this n1-to-m1 flip.
-            abtets[n - 1].ver |= (1 << 5); 
+            abtets[n - 1].ver |= (1 << 5);
             // The poisition [i] of this flip is saved from 7th to 19th bit.
             abtets[n - 1].ver |= (i << 6);
             // The size of the star 'n1' is saved from 20th bit.
@@ -4665,7 +4665,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             // Continue to flip the edge [a,b].
             nn = flipnm(abtets, n - 1, level, abedgepivot, fc);
 
-            if (nn == 2) { 
+            if (nn == 2) {
               // The edge has been flipped.
               return nn;
             } else { // if (nn > 2) {
@@ -4673,11 +4673,11 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
               if (fc->unflip) {
                 // Recover the flipped edge ([c,b] or [a,c]).
                 assert(nn == (n - 1));
-                // The sequence of flips are saved in 'tmpabtets'. 
+                // The sequence of flips are saved in 'tmpabtets'.
                 // abtets[(i-1) % (n-1)] is [a,b,e,d], i.e., the tet created by
                 //   the flipping of edge [c,b] or [a,c].It must still exist in
                 //   Star(ab). It is the start tet to recover the flipped edge.
-                if (edgepivot == 1) { 
+                if (edgepivot == 1) {
                   // The flip edge is [c,b].
                   tmpabtets[0] = abtets[((i-1)+(n-1))%(n-1)]; // [a,b,e,d]
                   eprevself(tmpabtets[0]);
@@ -4736,9 +4736,9 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             if (!fc->unflip) {
               // The flips are not reversed. The current Star(ab) can not be
               //   further reduced. Return its size (# of tets).
-              return nn; 
+              return nn;
             }
-            // unflip is set. 
+            // unflip is set.
             // Continue the search for flips.
           } else {
             // The selected edge is not flipped.
@@ -4762,8 +4762,8 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
     } // if (reflexlinkedgecount > 0)
   } else {
     // Check if a 3-to-2 flip is possible.
-    // Let the three apexes be c, d,and e. Hull tets may be involved. If so, 
-    //   we rearrange them such that the vertex e is dummypoint. 
+    // Let the three apexes be c, d,and e. Hull tets may be involved. If so,
+    //   we rearrange them such that the vertex e is dummypoint.
     hullflag = 0;
 
     if (apex(abtets[0]) == dummypoint) {
@@ -4789,7 +4789,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
 
     if (hullflag == 0) {
       // Make sure that no inverted tet will be created, i.e. the new tets
-      //   [d,c,e,a] and [c,d,e,b] must be valid tets. 
+      //   [d,c,e,a] and [c,d,e,b] must be valid tets.
       ori = orient3d(pd, pc, pe, pa);
       if (ori < 0) {
         ori = orient3d(pc, pd, pe, pb);
@@ -4803,7 +4803,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
       //   Note: [a,b] may even be a non-convex hull edge.
       if (!nonconvex) {
         //  The mesh is convex, only do flip if it is a coplanar hull edge.
-        ori = orient3d(pa, pb, pc, pd); 
+        ori = orient3d(pa, pb, pc, pd);
         if (ori == 0) {
           reducflag = 1;
         }
@@ -4818,7 +4818,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         // Search an interior vertex which is an apex of edge [c,d].
         //   In principle, it can be arbitrary interior vertex.  To avoid
         //   numerical issue, we choose the vertex which belongs to a tet
-        //   't' at edge [c,d] and 't' has the biggest volume.  
+        //   't' at edge [c,d] and 't' has the biggest volume.
         fliptets[0] = abtets[hullflag % 3]; // [a,b,c,d].
         eorgoppoself(fliptets[0]);  // [d,c,b,a]
         spintet = fliptets[0];
@@ -4835,12 +4835,12 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             }
           }
         }
-        if (searchpt != NULL) { 
+        if (searchpt != NULL) {
           // Now valid the configuration.
           ori1 = orient3d(pd, pc, searchpt, pa);
           ori2 = orient3d(pd, pc, searchpt, pb);
           if (ori1 * ori2 >= 0.0) {
-            reducflag = 0; // Not valid. 
+            reducflag = 0; // Not valid.
           } else {
             ori1 = orient3d(pa, pb, searchpt, pc);
             ori2 = orient3d(pa, pb, searchpt, pd);
@@ -4859,8 +4859,8 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
       // A 3-to-2 flip is possible.
       if (checksubfaceflag) {
         // This edge (must not be a segment) can be flipped ONLY IF it belongs
-        //   to either 0 or 2 subfaces.  In the latter case, a 2-to-2 flip in 
-        //   the surface mesh will be automatically performed within the 
+        //   to either 0 or 2 subfaces.  In the latter case, a 2-to-2 flip in
+        //   the surface mesh will be automatically performed within the
         //   3-to-2 flip.
         nn = 0;
         edgepivot = -1; // Re-use it.
@@ -4873,10 +4873,10 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         }
         assert(nn < 3);
         if (nn == 1) {
-          // Found only 1 subface containing this edge. This can happen in 
-          //   the boundary recovery phase. The neighbor subface is not yet 
+          // Found only 1 subface containing this edge. This can happen in
+          //   the boundary recovery phase. The neighbor subface is not yet
           //   recovered. This edge should not be flipped at this moment.
-          rejflag = 1; 
+          rejflag = 1;
         } else if (nn == 2) {
           // Found two subfaces. A 2-to-2 flip is possible. Validate it.
           // Below we check if the two faces [p,q,a] and [p,q,b] are subfaces.
@@ -4895,8 +4895,8 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
         // Here we must exchange 'a' and 'b'. Since in the check... function,
         //   we assume the following point sequence, 'a,b,c,d,e', where
         //   the face [a,b,c] will be flipped and the edge [e,d] will be
-        //   created. The two new tets are [a,b,c,d] and [b,a,c,e]. 
-        rejflag = checkflipeligibility(2, pc, pd, pe, pb, pa, level, 
+        //   created. The two new tets are [a,b,c,d] and [b,a,c,e].
+        rejflag = checkflipeligibility(2, pc, pd, pe, pb, pa, level,
                                        abedgepivot, fc);
       }
       if (!rejflag) {
@@ -4912,7 +4912,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
               flip23(abtets, hullflag, fc);
               // Increase the element counter -- They are in cavity.
               for (j = 0; j < 3; j++) {
-                increaseelemcounter(abtets[j]); 
+                increaseelemcounter(abtets[j]);
               }
               return 3;
             }
@@ -4932,7 +4932,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
             cavetetlist->newindex((void **) &parytet);
             if (abedgepivot == 1) { // [c,b]
               *parytet = abtets[1];
-            } else { 
+            } else {
               assert(abedgepivot == 2); // [a,c]
               *parytet = abtets[0];
             }
@@ -4947,7 +4947,7 @@ int meshGRegionBoundaryRecovery::flipnm(triface* abtets, int n, int level, int a
   return n;
 }
 
-int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn, 
+int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
   int abedgepivot, flipconstraints* fc)
 {
   triface fliptets[3], flipface;
@@ -4975,10 +4975,10 @@ int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
           cavetetlist->objects -= 1;
         }
       }
-    } 
+    }
     // The initial size of Star(ab) is 3.
     nn++;
-  } 
+  }
 
   // Walk through the performed flips.
   for (i = nn; i < n; i++) {
@@ -5010,7 +5010,7 @@ int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
         for (j = i - 1; j >= t; j--) {
           abtets[j + 1] = abtets[j];  // Downshift
         }
-        // The tet abtets[(t-1)%i] is deleted. Insert the two new tets 
+        // The tet abtets[(t-1)%i] is deleted. Insert the two new tets
         //   'fliptets[0]' [a,b,c,d] and 'fliptets[1]' [b,a,c,e] into
         //   the (t-1)-th and t-th entries, respectively.
         esym(fliptets[1], abtets[((t-1) + (i+1)) % (i+1)]); // [a,b,e,c]
@@ -5019,23 +5019,23 @@ int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
           // Pop up two (flipped) tets from the stack.
           cavetetlist->objects -= 2;
         }
-      } 
+      }
     } else if (fliptype == 2) {
       tmpabtets = (triface *) (abtets[i].tet);
       n1 = ((abtets[i].ver >> 19) & 8191); // \sum_{i=0^12}{2^i} = 8191
-      edgepivot = (abtets[i].ver & 3); 
+      edgepivot = (abtets[i].ver & 3);
       t = ((abtets[i].ver >> 6) & 8191);
       assert(t <= i);
-      if (fc->unflip) {        
+      if (fc->unflip) {
         if (b->verbose > 2) {
-          printf("      Recover a %d-to-m flip at e[%d] of f[%d].\n", n1, 
+          printf("      Recover a %d-to-m flip at e[%d] of f[%d].\n", n1,
                  edgepivot, t);
         }
         // Recover the flipped edge ([c,b] or [a,c]).
         // abtets[(t - 1 + i) % i] is [a,b,e,d], i.e., the tet created by
         //   the flipping of edge [c,b] or [a,c]. It must still exist in
         //   Star(ab). Use it to recover the flipped edge.
-        if (edgepivot == 1) { 
+        if (edgepivot == 1) {
           // The flip edge is [c,b].
           tmpabtets[0] = abtets[(t - 1 + i) % i]; // [a,b,e,d]
           eprevself(tmpabtets[0]);
@@ -5082,7 +5082,7 @@ int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
         // Insert the two recovered tets into Star(ab).
         abtets[((t-1) + (i+1)) % (i+1)] = fliptets[0];
         abtets[t] = fliptets[1];
-      } 
+      }
       else {
         // Only free the spaces.
         flipnm_post(tmpabtets, n1, 2, edgepivot, fc);
@@ -5097,7 +5097,7 @@ int meshGRegionBoundaryRecovery::flipnm_post(triface* abtets, int n, int nn,
   return 1;
 }
 
-int meshGRegionBoundaryRecovery::insertpoint(point insertpt, 
+int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
   triface *searchtet, face *splitsh, face *splitseg, insertvertexflags *ivf)
 {
   arraypool *swaplist;
@@ -5127,12 +5127,12 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       if (!b->weighted) {
         randomsample(insertpt, searchtet);
       } else {
-        // Weighted DT. There may exist dangling vertex. 
+        // Weighted DT. There may exist dangling vertex.
         *searchtet = recenttet;
       }
     }
     // Locate the point.
-    loc = locate(insertpt, searchtet); 
+    loc = locate(insertpt, searchtet);
   }
 
   ivf->iloc = (int) loc; // The return value.
@@ -5191,7 +5191,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
     flip26count++;
     // Add six adjacent boundary tets into list.
     j = (searchtet->ver & 3); // The current face number.
-    for (i = 1; i < 4; i++) { 
+    for (i = 1; i < 4; i++) {
       decode(searchtet->tet[(j + i) % 4], neightet);
       neightet.ver = epivot[neightet.ver];
       cavebdrylist->newindex((void **) &parytet);
@@ -5212,7 +5212,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
     caveoldtetlist->newindex((void **) &parytet);
     *parytet = *searchtet;
 
-    if (ivf->splitbdflag) { 
+    if (ivf->splitbdflag) {
       if ((splitsh != NULL) && (splitsh->sh != NULL)) {
         // Create the initial sub-cavity sC(p).
         smarktest(*splitsh);
@@ -5296,17 +5296,17 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
   } else if (loc == ONVERTEX) {
     // The point already exist. Do nothing and return.
     return 0;
-  } 
+  }
 
   /*
   if (ivf->assignmeshsize) {
     // Assign mesh size for the new point.
     if (bgm != NULL) {
-      // Interpolate the mesh size from the background mesh. 
+      // Interpolate the mesh size from the background mesh.
       bgm->decode(point2bgmtet(org(*searchtet)), neightet);
       int bgmloc = (int) bgm->scoutpoint(insertpt, &neightet, 0);
       if (bgmloc != (int) OUTSIDE) {
-        insertpt[pointmtrindex] =  
+        insertpt[pointmtrindex] =
           bgm->getpointmeshsize(insertpt, &neightet, bgmloc);
         setpoint2bgmtet(insertpt, bgm->encode(neightet));
       }
@@ -5326,7 +5326,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       cavetet = (triface *) fastlookup(cavetetlist, i);
       // The tet may be tested and included in the (enlarged) cavity.
       if (!infected(*cavetet)) {
-        // Check for two possible cases for this tet: 
+        // Check for two possible cases for this tet:
         //   (1) It is a cavity tet, or
         //   (2) it is a cavity boundary face.
         enqflag = false;
@@ -5347,11 +5347,11 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
             enqflag = (sign < 0.0);
           } else {
             if (!nonconvex) {
-              // Test if this hull face is visible by the new point. 
-              ori = orient3d(pts[4], pts[5], pts[6], insertpt); 
+              // Test if this hull face is visible by the new point.
+              ori = orient3d(pts[4], pts[5], pts[6], insertpt);
               if (ori < 0) {
-                // A visible hull face. 
-                //if (!nonconvex) { 
+                // A visible hull face.
+                //if (!nonconvex) {
                 // Include it in the cavity. The convex hull will be enlarged.
                 enqflag = true; // (ori < 0.0);
 		        //}
@@ -5368,14 +5368,14 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
                     if (b->weighted) {
                       /*
                       sign = orient4d_s(pts[4],pts[5],pts[6],pts[7], insertpt,
-                                        pts[4][3], pts[5][3], pts[6][3], 
+                                        pts[4][3], pts[5][3], pts[6][3],
                                         pts[7][3], insertpt[3]);
                       */
                     } else {
                       sign = insphere_s(pts[4],pts[5],pts[6],pts[7], insertpt);
                     }
                     enqflag = (sign < 0.0);
-                  } 
+                  }
                 } else {
                   // The adjacent tet is non-Delaunay. The hull face is non-
                   //   Delaunay as well. Include it in the cavity.
@@ -5397,14 +5397,14 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
                   if (b->weighted) {
                     /*
                     sign = orient4d_s(pts[4],pts[5],pts[6],pts[7], insertpt,
-                                      pts[4][3], pts[5][3], pts[6][3], 
+                                      pts[4][3], pts[5][3], pts[6][3],
                                       pts[7][3], insertpt[3]);
                     */
                   } else {
                     sign = insphere_s(pts[4],pts[5],pts[6],pts[7], insertpt);
                   }
                   enqflag = (sign < 0.0);
-                } 
+                }
               } else {
                 // The adjacent tet is non-Delaunay. The hull face is non-
                 //   Delaunay as well. Include it in the cavity.
@@ -5427,7 +5427,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
           caveoldtetlist->newindex((void **) &parytet);
           *parytet = *cavetet;
         } else {
-          // Found a boundary face of the cavity. 
+          // Found a boundary face of the cavity.
           cavetet->ver = epivot[cavetet->ver];
           cavebdrylist->newindex((void **) &parytet);
           *parytet = *cavetet;
@@ -5468,7 +5468,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       face *paryseg1;
       for (i = 0; i < cavetetseglist->objects; i++) {
         paryseg1 = (face *) fastlookup(cavetetseglist, i);
-        if (checkseg4encroach((point) paryseg1->sh[3], (point) paryseg1->sh[4], 
+        if (checkseg4encroach((point) paryseg1->sh[3], (point) paryseg1->sh[4],
                               insertpt)) {
           encseglist->newindex((void **) &paryseg);
           *paryseg = *paryseg1;
@@ -5514,7 +5514,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       // Reject this point if it encroaches upon any subface.
       for (i = 0; i < cavetetshlist->objects; i++) {
         parysh = (face *) fastlookup(cavetetshlist, i);
-        if (checkfac4encroach((point) parysh->sh[3], (point) parysh->sh[4], 
+        if (checkfac4encroach((point) parysh->sh[3], (point) parysh->sh[4],
                               (point) parysh->sh[5], insertpt, cent, &rd)) {
           encshlist->newindex((void **) &bface);
           bface->ss = *parysh;
@@ -5539,8 +5539,8 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
     return 0;
   }
 
-  if (ivf->splitbdflag) { 
-    // The new point locates in surface mesh. Update the sC(p). 
+  if (ivf->splitbdflag) {
+    // The new point locates in surface mesh. Update the sC(p).
     // We have already 'smarktested' the subfaces which directly intersect
     //   with p in 'caveshlist'. From them, we 'smarktest' their neighboring
     //   subfaces which are included in C(p). Do not across a segment.
@@ -5557,7 +5557,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
             if (infected(neightet)) {
               fsymself(neightet);
               if (infected(neightet)) {
-                // This subface is inside C(p). 
+                // This subface is inside C(p).
                 // Check if its diametrical circumsphere encloses 'p'.
                 //   The purpose of this check is to avoid forming invalid
                 //   subcavity in surface mesh.
@@ -5583,9 +5583,9 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
 
     if (ivf->respectbdflag) {
       // The initial cavity may include subfaces which are not on the facets
-      //   being splitting. Find them and make them as boundary of C(p). 
+      //   being splitting. Find them and make them as boundary of C(p).
       // Comment: We have already 'smarktested' the subfaces in sC(p). They
-      //   are completely inside C(p). 
+      //   are completely inside C(p).
       for (i = 0; i < cavetetshlist->objects; i++) {
         parysh = (face *) fastlookup(cavetetshlist, i);
         stpivot(*parysh, neightet);
@@ -5628,7 +5628,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
                   *parytet = neineitet;
                   enextself(neightet);
                 }
-              } // if (ori >= 0) 
+              } // if (ori >= 0)
             }
           }
         }
@@ -5683,7 +5683,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
             }
             neightet = spintet;
             if (b->verbose > 3) {
-               printf("        Cut tet (%d, %d, %d, %d)\n", 
+               printf("        Cut tet (%d, %d, %d, %d)\n",
                       pointmark(org(neightet)), pointmark(dest(neightet)),
                       pointmark(apex(neightet)), pointmark(oppo(neightet)));
             }
@@ -5712,16 +5712,16 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       // 'cavetet' is an exterior tet adjacent to the cavity.
       // Check if its neighbor is inside C(p).
       fsym(*cavetet, neightet);
-      if (infected(neightet)) {        
+      if (infected(neightet)) {
         if (apex(*cavetet) != dummypoint) {
           // It is a cavity boundary face. Check its visibility.
           if (oppo(neightet) != dummypoint) {
             ori = orient3d(org(*cavetet), dest(*cavetet), apex(*cavetet),
-                           insertpt); 
+                           insertpt);
             enqflag = (ori > 0);
             // Comment: if ori == 0 (coplanar case), we also cut the tet.
           } else {
-            // It is a hull face. And its adjacent tet (at inside of the 
+            // It is a hull face. And its adjacent tet (at inside of the
             //   domain) has been cut from the cavity. Cut it as well.
             //assert(nonconvex);
             enqflag = false;
@@ -5732,7 +5732,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
         if (enqflag) {
           // This face is valid, save it.
           cavetetlist->newindex((void **) &parytet);
-          *parytet = *cavetet; 
+          *parytet = *cavetet;
         } else {
           uninfect(neightet);
           unmarktest(neightet);
@@ -5793,7 +5793,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
         return 0;
       }
 
-      if (ivf->splitbdflag) { 
+      if (ivf->splitbdflag) {
         int cutshcount = 0;
         // Update the sub-cavity sC(p).
         for (i = 0; i < caveshlist->objects; i++) {
@@ -5866,7 +5866,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
   } // if (ivf->validflag)
 
   if (ivf->refineflag) {
-    // The new point is inserted by Delaunay refinement, i.e., it is the 
+    // The new point is inserted by Delaunay refinement, i.e., it is the
     //   circumcenter of a tetrahedron, or a subface, or a segment.
     //   Do not insert this point if the tetrahedron, or subface, or segment
     //   is not inside the final cavity.
@@ -5893,7 +5893,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       for (i = 0; i < 4; i++) {
         cavetetvertlist->newindex((void **) &parypt);
         *parypt = pts[i];
-      } 
+      }
     } else if (loc == ONFACE) {
       pts = (point *) &(searchtet->tet[4]);
       for (i = 0; i < 3; i++) {
@@ -5934,7 +5934,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       rd = distance(*parypt, insertpt);
       // Is the point very close to an existing point?
       if (rd < b->minedgelength) {
-        pts = parypt; 
+        pts = parypt;
         loc = NEARVERTEX;
         break;
       }
@@ -5942,7 +5942,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
         // Is the point encroaches upon an existing point?
         if (rd < (0.5 * (*parypt)[pointmtrindex])) {
           pts = parypt;
-          loc = ENCVERTEX; 
+          loc = ENCVERTEX;
           break;
         }
       }
@@ -5961,7 +5961,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
                    pointmark(insertpt), pointmark(*pts));
             printf("  Creating a very short edge (len = %g) (< %g).\n",
                    rd, b->minedgelength);
-            printf("  You may try a smaller tolerance (-T) (current is %g)\n", 
+            printf("  You may try a smaller tolerance (-T) (current is %g)\n",
                    b->epsilon);
             printf("  to avoid this warning.\n");
           }
@@ -6018,7 +6018,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
           ivf->smlen = len;
           ivf->parentpt = *parypt;
         }
-      } 
+      }
     }
   }
 
@@ -6093,7 +6093,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
             assert(0); // Not possible.
           }
         }
-      } else { 
+      } else {
         // assert(smarktested(*paryseg));
         // Flag it as an interior segment. Do not queue it, since it will
         //   be deleted after the segment splitting.
@@ -6164,7 +6164,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       setoppo(newtet, insertpt);
     } else {
       // Create a new hull tet.
-      hullsize++; 
+      hullsize++;
       maketetrahedron(&newtet);
       setorg(newtet, org(neightet));
       setdest(newtet, dest(neightet));
@@ -6218,7 +6218,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
         esymself(newneitet);
         assert(newneitet.tet[newneitet.ver & 3] == NULL);
         bond(neightet, newneitet);
-        if (ivf->lawson > 1) { 
+        if (ivf->lawson > 1) {
           cavetetlist->newindex((void **) &parytet);
           *parytet = neightet;
         }
@@ -6277,7 +6277,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
         spivot(*parysh, checksh); // The new subface [a, b, p].
         // Do not recover a deleted new face (degenerated).
         if (checksh.sh[3] != NULL) {
-          // Note that the old subface still connects to adjacent old tets 
+          // Note that the old subface still connects to adjacent old tets
           //   of C(p), which still connect to the tets outside C(p).
           stpivot(*parysh, neightet);
           assert(infected(neightet));
@@ -6313,7 +6313,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       }
       // There should be no missing interior subfaces in C(p).
       assert(caveencshlist->objects == 0l);
-    } else { 
+    } else {
       // The Boundary recovery phase.
       // Put all new subfaces into stack for recovery.
       for (i = 0; i < caveshbdlist->objects; i++) {
@@ -6376,7 +6376,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
       // There should be no interior segment in C(p).
       assert(caveencseglist->objects == 0l);
     } else {
-      // The Boundary Recovery Phase.  
+      // The Boundary Recovery Phase.
       // Queue missing segments in C(p) for recovery.
       if (splitseg != NULL) {
         // Queue two new subsegments in C(p) for recovery.
@@ -6386,7 +6386,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
           //sstdissolve1(checkseg); // It has not been connected yet.
           s = randomnation(subsegstack->objects + 1);
           subsegstack->newindex((void **) &paryseg);
-          *paryseg = * (face *) fastlookup(subsegstack, s); 
+          *paryseg = * (face *) fastlookup(subsegstack, s);
           paryseg = (face *) fastlookup(subsegstack, s);
           *paryseg = checkseg;
         }
@@ -6400,7 +6400,7 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
           sstdissolve1(checkseg); // Detach connections to old tets.
           s = randomnation(subsegstack->objects + 1);
           subsegstack->newindex((void **) &paryseg);
-          *paryseg = * (face *) fastlookup(subsegstack, s); 
+          *paryseg = * (face *) fastlookup(subsegstack, s);
           paryseg = (face *) fastlookup(subsegstack, s);
           *paryseg = checkseg;
         }
@@ -6547,11 +6547,11 @@ int meshGRegionBoundaryRecovery::insertpoint(point insertpt,
     cavetetshlist->restart();
     caveencshlist->restart();
   }
-  
+
   if (b->weighted || ivf->validflag) {
     cavetetvertlist->restart();
   }
-  
+
   if (((splitsh != NULL) && (splitsh->sh != NULL)) ||
       ((splitseg != NULL) && (splitseg->sh != NULL))) {
     caveshlist->restart();
@@ -6575,14 +6575,14 @@ void meshGRegionBoundaryRecovery::insertpoint_abort(face *splitseg, insertvertex
   }
   for (i = 0; i < cavebdrylist->objects; i++) {
     cavetet = (triface *) fastlookup(cavebdrylist, i);
-    unmarktest(*cavetet); 
+    unmarktest(*cavetet);
   }
   cavetetlist->restart();
   cavebdrylist->restart();
   caveoldtetlist->restart();
   cavetetseglist->restart();
   cavetetshlist->restart();
-  if (ivf->splitbdflag) { 
+  if (ivf->splitbdflag) {
     if ((splitseg != NULL) && (splitseg->sh != NULL)) {
       sunmarktest(*splitseg);
     }
@@ -6673,12 +6673,12 @@ void meshGRegionBoundaryRecovery::randomsample(point searchpt,
 
   // Select "good" candidate using k random samples, taking the closest one.
   //   The number of random samples taken is proportional to the fourth root
-  //   of the number of tetrahedra in the mesh. 
+  //   of the number of tetrahedra in the mesh.
   while (samples * samples * samples * samples < tetrahedrons->items) {
     samples++;
   }
   // Find how much blocks in current tet pool.
-  tetblocks = (tetrahedrons->maxitems + b->tetrahedraperblock - 1) 
+  tetblocks = (tetrahedrons->maxitems + b->tetrahedraperblock - 1)
             / b->tetrahedraperblock;
   // Find the average samples per block. Each block at least have 1 sample.
   samplesperblock = 1 + (samples / tetblocks);
@@ -6718,7 +6718,7 @@ void meshGRegionBoundaryRecovery::randomsample(point searchpt,
   }
 }
 
-enum meshGRegionBoundaryRecovery::locateresult 
+enum meshGRegionBoundaryRecovery::locateresult
   meshGRegionBoundaryRecovery::locate(point searchpt, triface* searchtet)
 {
   point torg, tdest, tapex, toppo;
@@ -6745,7 +6745,7 @@ enum meshGRegionBoundaryRecovery::locateresult
     torg = org(*searchtet);
     tdest = dest(*searchtet);
     tapex = apex(*searchtet);
-    ori = orient3d(torg, tdest, tapex, searchpt); 
+    ori = orient3d(torg, tdest, tapex, searchpt);
     if (ori < 0.0) break;
   }
   assert(searchtet->ver != 4);
@@ -6754,7 +6754,7 @@ enum meshGRegionBoundaryRecovery::locateresult
   while (true) {
 
     toppo = oppo(*searchtet);
-    
+
     // Check if the vertex is we seek.
     if (toppo == searchpt) {
       // Adjust the origin of searchtet to be searchpt.
@@ -6765,7 +6765,7 @@ enum meshGRegionBoundaryRecovery::locateresult
     }
 
     // We enter from one of serarchtet's faces, which face do we exit?
-    oriorg = orient3d(tdest, tapex, toppo, searchpt); 
+    oriorg = orient3d(tdest, tapex, toppo, searchpt);
     oridest = orient3d(tapex, torg, toppo, searchpt);
     oriapex = orient3d(torg, tdest, toppo, searchpt);
 
@@ -6870,7 +6870,7 @@ enum meshGRegionBoundaryRecovery::locateresult
         }
       }
     }
-    
+
     // Move to the selected face.
     if (nextmove == ORGMOVE) {
       enextesymself(*searchtet);
@@ -6928,7 +6928,7 @@ void meshGRegionBoundaryRecovery::flipshpush(face* flipedge)
   flipstack = newflipface;
 }
 
-void meshGRegionBoundaryRecovery::flip22(face* flipfaces, int flipflag, 
+void meshGRegionBoundaryRecovery::flip22(face* flipfaces, int flipflag,
   int chkencflag)
 {
   face bdedges[4], outfaces[4], infaces[4];
@@ -7174,7 +7174,7 @@ long meshGRegionBoundaryRecovery::lawsonflip()
   return flipcount;
 }
 
-int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh, 
+int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
   face *splitseg, int iloc, int bowywat, int rflag)
 {
   face cavesh, neighsh, *parysh;
@@ -7251,7 +7251,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
     // An above point of the facet is set in 'dummypoint' to replace
     // orient2d tests by orient3d tests.
     // Imagine that the current edge a->b (in 'searchsh') is horizontal in a
-    //   plane, and a->b is directed from left to right, p lies above a->b.  
+    //   plane, and a->b is directed from left to right, p lies above a->b.
     //   Find the right-most edge of the triangulation which is visible by p.
     neighsh = *searchsh;
     while (1) {
@@ -7276,7 +7276,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
     pb = sdest(*searchsh);
     while (1) {
       // Create a new subface on top of the (visible) edge.
-      makeshellface(subfaces, &newsh); 
+      makeshellface(subfaces, &newsh);
       setshvertices(newsh, pb, pa, insertpt);
       setshellmark(newsh, shellmark(*searchsh));
       if (checkconstraints) {
@@ -7342,7 +7342,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
                 // Check if this subface is connected to adjacent tet(s).
                 if (!isshtet(neighsh)) {
                   // Check if the subface is non-Delaunay wrt. the new pt.
-                  sign = incircle3d(sorg(neighsh), sdest(neighsh), 
+                  sign = incircle3d(sorg(neighsh), sdest(neighsh),
                                     sapex(neighsh), insertpt);
                 } else {
                   // It is connected to an adjacent tet. A boundary edge.
@@ -7396,7 +7396,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
     pa = sorg(*parysh);
     pb = sdest(*parysh);
     // Create a new subface.
-    makeshellface(subfaces, &newsh); 
+    makeshellface(subfaces, &newsh);
     setshvertices(newsh, pa, pb, insertpt);
     setshellmark(newsh, shellmark(*parysh));
     if (checkconstraints) {
@@ -7535,9 +7535,9 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
           // Connect adjacent faces at two other edges of cavesh and neighsh.
           //   As a result, the two degenerated new faces are squeezed from the
           //   new triangulation of the cavity. Note that the squeezed faces
-          //   still hold the adjacent informations which will be used in 
-          //   re-connecting subsegments (if they exist). 
-          for (j = 0; j < 2; j++) { 
+          //   still hold the adjacent informations which will be used in
+          //   re-connecting subsegments (if they exist).
+          for (j = 0; j < 2; j++) {
             senextself(cavesh);
             senextself(neighsh);
             spivot(cavesh, newsh);
@@ -7546,7 +7546,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
           }
         } else {
           // There is only one subface containing this edge [a,b]. Squeeze the
-          //   degenerated new face [a,b,c] by disconnecting it from its two 
+          //   degenerated new face [a,b,c] by disconnecting it from its two
           //   adjacent subfaces at edges [b,c] and [c,a]. Note that the face
           //   [a,b,c] still hold the connection to them.
           for (j = 0; j < 2; j++) {
@@ -7567,7 +7567,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
       if (loc != INSTAR) { // if (bowywat < 3) {
         smarktest(*splitseg); // Mark it as being processed.
       }
-      
+
       aseg = *splitseg;
       pa = sorg(*splitseg);
       pb = sdest(*splitseg);
@@ -7610,8 +7610,8 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
 
       // Connect subsegs [a, p] and [p, b] to adjacent new subfaces.
       // Although the degenerated new faces have been squeezed. They still
-      //   hold the connections to the actual new faces. 
-      for (i = 0; i < cavesegshlist->objects; i++) {        
+      //   hold the connections to the actual new faces.
+      for (i = 0; i < cavesegshlist->objects; i++) {
         parysh = (face *) fastlookup(cavesegshlist, i);
         spivot(*parysh, neighsh);
         // neighsh is a degenerated new face.
@@ -7638,7 +7638,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
       if (pointtype(pb) == FREESEGVERTEX) {
         setpoint2sh(pb, sencode(bseg));
       }
-    } // if ((splitseg != NULL) && (splitseg->sh != NULL)) 
+    } // if ((splitseg != NULL) && (splitseg->sh != NULL))
 
     // Delete all degenerated new faces.
     for (i = 0; i < cavesegshlist->objects; i++) {
@@ -7664,7 +7664,7 @@ int meshGRegionBoundaryRecovery::sinsertvertex(point insertpt, face *searchsh,
   return (int) loc;
 }
 
-int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh, 
+int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
   face* parentseg, int lawson)
 {
   face flipfaces[4], spinsh, *parysh;
@@ -7687,7 +7687,7 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
     pa = sorg(prevseg);
     pb = sdest(*parentseg);
     if (b->verbose > 2) {
-      printf("      Remove vertex %d from segment [%d, %d].\n", 
+      printf("      Remove vertex %d from segment [%d, %d].\n",
              pointmark(delpt), pointmark(pa), pointmark(pb));
     }
     makeshellface(subsegs, &abseg);
@@ -7746,7 +7746,7 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
       if (sorg(startsh) != delpt) {
         sesymself(startsh);
         assert(sorg(startsh) == delpt);
-      }      
+      }
       // startsh is [p, b, #1], find the subface [a, p, #2].
       neighsh = startsh;
       while (1) {
@@ -7847,7 +7847,7 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
       continue;
     }
 
-    while (1) {      
+    while (1) {
       // Initialize the flip edge list. Re-use 'caveshlist'.
       spinsh = *parentsh; // [p, b, #]
       while (1) {
@@ -7868,7 +7868,7 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
           flipfaces[i] = *parysh;
         }
         flip31(flipfaces, lawson);
-        for (i = 0; i < 3; i++) { 
+        for (i = 0; i < 3; i++) {
           shellfacedealloc(subfaces, flipfaces[i].sh);
         }
         caveshlist->restart();
@@ -7884,7 +7884,7 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
         parysh = (face *) fastlookup(caveshlist, i);
         flipfaces[0] = *parysh;
         spivot(flipfaces[0], flipfaces[1]);
-        if (sorg(flipfaces[0]) != sdest(flipfaces[1])) 
+        if (sorg(flipfaces[0]) != sdest(flipfaces[1]))
           sesymself(flipfaces[1]);
         // Skip this edge if it belongs to a faked subface.
         if (!smarktested(flipfaces[0]) && !smarktested(flipfaces[1])) {
@@ -7948,8 +7948,8 @@ int meshGRegionBoundaryRecovery::sremovevertex(point delpt, face* parentsh,
   return 0;
 }
 
-enum meshGRegionBoundaryRecovery::locateresult 
-  meshGRegionBoundaryRecovery::slocate(point searchpt, face* searchsh, 
+enum meshGRegionBoundaryRecovery::locateresult
+  meshGRegionBoundaryRecovery::slocate(point searchpt, face* searchsh,
   int aflag, int cflag, int rflag)
 {
   face neighsh;
@@ -8029,7 +8029,7 @@ enum meshGRegionBoundaryRecovery::locateresult
             loc = ONEDGE;
             break;
           } else { // (00)
-            // p is coincident with vertex c. 
+            // p is coincident with vertex c.
             senext2self(*searchsh);
             return ONVERTEX;
           }
@@ -8111,7 +8111,7 @@ enum meshGRegionBoundaryRecovery::locateresult
     if (area_abp == 0) {
       if (area_bcp == 0) {
         assert(area_cap != 0);
-        senextself(*searchsh); 
+        senextself(*searchsh);
         loc = ONVERTEX; // p is close to b.
       } else {
         if (area_cap == 0) {
@@ -8122,7 +8122,7 @@ enum meshGRegionBoundaryRecovery::locateresult
       }
     } else if (area_bcp == 0) {
       if (area_cap == 0) {
-        senext2self(*searchsh); 
+        senext2self(*searchsh);
         loc = ONVERTEX; // p is close to c.
       } else {
         senextself(*searchsh);
@@ -8147,7 +8147,7 @@ enum meshGRegionBoundaryRecovery::locateresult
 ////                                                                       ////
 ////                                                                       ////
 
-enum meshGRegionBoundaryRecovery::interresult 
+enum meshGRegionBoundaryRecovery::interresult
   meshGRegionBoundaryRecovery::finddirection(triface* searchtet, point endpt)
 {
   triface neightet;
@@ -8170,7 +8170,7 @@ enum meshGRegionBoundaryRecovery::interresult
     } else if ((point) searchtet->tet[6] == pa) {
       searchtet->ver = 7;
     } else {
-      assert((point) searchtet->tet[7] == pa); 
+      assert((point) searchtet->tet[7] == pa);
       searchtet->ver = 0;
     }
   }
@@ -8211,18 +8211,18 @@ enum meshGRegionBoundaryRecovery::interresult
     //   and d lies above the horizon.  The search point 'endpt' may lie
     //   above or below the horizon.  We test the orientations of 'endpt'
     //   with respect to three planes: abc (horizon), bad (right plane),
-    //   and acd (left plane). 
+    //   and acd (left plane).
     hori = orient3d(pa, pb, pc, endpt);
     rori = orient3d(pb, pa, pd, endpt);
     lori = orient3d(pa, pc, pd, endpt);
 
     // Now decide the tet to move.  It is possible there are more than one
-    //   tets are viable moves. Is so, randomly choose one. 
+    //   tets are viable moves. Is so, randomly choose one.
     if (hori > 0) {
       if (rori > 0) {
         if (lori > 0) {
           // Any of the three neighbors is a viable move.
-          s = randomnation(3); 
+          s = randomnation(3);
           if (s == 0) {
             nextmove = HMOVE;
           } else if (s == 1) {
@@ -8232,7 +8232,7 @@ enum meshGRegionBoundaryRecovery::interresult
           }
         } else {
           // Two tets, below horizon and below right, are viable.
-          //s = randomnation(2); 
+          //s = randomnation(2);
           if (randomnation(2)) {
             nextmove = HMOVE;
           } else {
@@ -8242,7 +8242,7 @@ enum meshGRegionBoundaryRecovery::interresult
       } else {
         if (lori > 0) {
           // Two tets, below horizon and below left, are viable.
-          //s = randomnation(2); 
+          //s = randomnation(2);
           if (randomnation(2)) {
             nextmove = HMOVE;
           } else {
@@ -8257,7 +8257,7 @@ enum meshGRegionBoundaryRecovery::interresult
       if (rori > 0) {
         if (lori > 0) {
           // Two tets, below right and below left, are viable.
-          //s = randomnation(2); 
+          //s = randomnation(2);
           if (randomnation(2)) {
             nextmove = RMOVE;
           } else {
@@ -8320,14 +8320,14 @@ enum meshGRegionBoundaryRecovery::interresult
       fsymself(*searchtet);
       enextself(*searchtet);
     }
-    assert(org(*searchtet) == pa); 
+    assert(org(*searchtet) == pa);
     pb = dest(*searchtet);
     pc = apex(*searchtet);
 
   } // while (1)
 }
 
-int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa, 
+int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
   point pb, point pc, point pd, point pe, int level, int edgepivot,
   flipconstraints* fc)
 {
@@ -8348,7 +8348,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
       for (i = 0; i < 3 && !rejflag; i++) {
         if (tmppts[i] != dummypoint) {
           // Test if the face [e,d,#] intersects the edge.
-          intflag = tri_edge_test(pe, pd, tmppts[i], fc->seg[0], fc->seg[1], 
+          intflag = tri_edge_test(pe, pd, tmppts[i], fc->seg[0], fc->seg[1],
                                   NULL, 1, types, poss);
           if (intflag == 2) {
             // They intersect at a single point.
@@ -8360,7 +8360,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
               if (poss[0] == 0) {
                 // The interior of [e,d] intersect the segment.
                 // Since [e,d] is the newly created edge. Reject this flip.
-                rejflag = 1; 
+                rejflag = 1;
               }
             }
           } else if (intflag == 4) {
@@ -8380,7 +8380,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
       // A 3-to-2 flip: [e,d,a], [e,d,b], [e,d,c] => [a,b,c]
       if (pc != dummypoint) {
         // Check if the new face [a,b,c] intersect the edge in its interior.
-        intflag = tri_edge_test(pa, pb, pc, fc->seg[0], fc->seg[1], NULL, 
+        intflag = tri_edge_test(pa, pb, pc, fc->seg[0], fc->seg[1], NULL,
                                 1, types, poss);
         if (intflag == 2) {
           // They intersect at a single point.
@@ -8390,10 +8390,10 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
             rejflag = 1; // Do not flip.
           }
         } else if (intflag == 4) {
-          // [a,b,c] is coplanar with the edge. 
+          // [a,b,c] is coplanar with the edge.
           dir = (enum interresult) types[0];
           if (dir == ACROSSEDGE) {
-            // The boundary of [a,b,c] intersect the segment.            
+            // The boundary of [a,b,c] intersect the segment.
             rejflag = 1; // Do not flip.
           }
         }
@@ -8406,7 +8406,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
     if (fliptype == 1) {
       // A 2-to-3 flip.
       // Test if the new edge [e,d] intersects the face.
-      intflag = tri_edge_test(fc->fac[0], fc->fac[1], fc->fac[2], pe, pd, 
+      intflag = tri_edge_test(fc->fac[0], fc->fac[1], fc->fac[2], pe, pd,
                               NULL, 1, types, poss);
       if (intflag == 2) {
         // They intersect at a single point.
@@ -8415,7 +8415,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
           rejflag = 1;
         } else if (dir == ACROSSEDGE) {
           rejflag = 1;
-        } 
+        }
       } else if (intflag == 4) {
         // The edge [e,d] is coplanar with the face.
         // There may be two intersections.
@@ -8461,7 +8461,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
         } else {
           // Record the largest new angle.
           if (cosmaxd < fc->cosdihed_out) {
-            fc->cosdihed_out = cosmaxd; 
+            fc->cosdihed_out = cosmaxd;
           }
           // Get the largest dihedral angle of [e,d,c,a].
           tetalldihedral(pe, pd, pc, pa, NULL, &cosmaxd, NULL);
@@ -8472,7 +8472,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
           } else {
             // Record the largest new angle.
             if (cosmaxd < fc->cosdihed_out) {
-              fc->cosdihed_out = cosmaxd; 
+              fc->cosdihed_out = cosmaxd;
             }
           }
         }
@@ -8493,7 +8493,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
           } else {
             // Record the largest new angle.
             if (cosmaxd < fc->cosdihed_out) {
-              fc->cosdihed_out = cosmaxd; 
+              fc->cosdihed_out = cosmaxd;
             }
             // Get the largest dihedral angle of [b,a,c,e].
             tetalldihedral(pb, pa, pc, pe, NULL, &cosmaxd, NULL);
@@ -8504,7 +8504,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
             } else {
               // Record the largest new angle.
               if (cosmaxd < fc->cosdihed_out) {
-                fc->cosdihed_out = cosmaxd; 
+                fc->cosdihed_out = cosmaxd;
               }
             }
           }
@@ -8523,7 +8523,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
             } else {
               // Record the largest new angle.
               if (cosmaxd < fc->cosdihed_out) {
-                fc->cosdihed_out = cosmaxd; 
+                fc->cosdihed_out = cosmaxd;
               }
             }
           }
@@ -8540,7 +8540,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
             } else {
               // Record the largest new angle.
               if (cosmaxd < fc->cosdihed_out) {
-                fc->cosdihed_out = cosmaxd; 
+                fc->cosdihed_out = cosmaxd;
               }
             }
           }
@@ -8555,7 +8555,7 @@ int meshGRegionBoundaryRecovery::checkflipeligibility(int fliptype, point pa,
 int meshGRegionBoundaryRecovery::removeedgebyflips(triface *flipedge, flipconstraints* fc)
 {
   triface *abtets, spintet;
-  int t1ver; 
+  int t1ver;
   int n, nn, i;
 
 
@@ -8567,7 +8567,7 @@ int meshGRegionBoundaryRecovery::removeedgebyflips(triface *flipedge, flipconstr
         tsspivot1(*flipedge, checkseg);
         if (!sinfected(checkseg)) {
           // Queue this segment in list.
-          sinfect(checkseg);                
+          sinfect(checkseg);
           caveencseglist->newindex((void **) &paryseg);
           *paryseg = checkseg;
         }
@@ -8598,7 +8598,7 @@ int meshGRegionBoundaryRecovery::removeedgebyflips(triface *flipedge, flipconstr
   i = 0;
   while (1) {
     abtets[i] = spintet;
-    setelemcounter(abtets[i], 1); 
+    setelemcounter(abtets[i], 1);
     i++;
     fnextself(spintet);
     if (spintet.tet == flipedge->tet) break;
@@ -8627,7 +8627,7 @@ int meshGRegionBoundaryRecovery::removeedgebyflips(triface *flipedge, flipconstr
 
   delete [] abtets;
 
-  return nn; 
+  return nn;
 }
 
 int meshGRegionBoundaryRecovery::removefacebyflips(triface *flipface, flipconstraints* fc)
@@ -8684,7 +8684,7 @@ int meshGRegionBoundaryRecovery::removefacebyflips(triface *flipface, flipconstr
   return 0;
 }
 
-int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt, 
+int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
   point endpt, triface* searchtet, int fullsearch)
 {
   flipconstraints fc;
@@ -8704,11 +8704,11 @@ int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
       if (dest(*searchtet) == endpt) {
         return 1; // Edge is recovered.
       } else {
-        terminateBoundaryRecovery(this, 3); // // It may be a PLC problem. 
+        terminateBoundaryRecovery(this, 3); // // It may be a PLC problem.
       }
     }
 
-    // The edge is missing. 
+    // The edge is missing.
 
     // Try to flip the first intersecting face/edge.
     enextesymself(*searchtet); // Go to the opposite face.
@@ -8736,7 +8736,7 @@ int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
       enum interresult dir1;
       int types[2], poss[4], pos = 0;
       int success = 0;
-      int t1ver; 
+      int t1ver;
       int i, j;
 
       // Loop through the sequence of intersecting faces/edges from
@@ -8776,7 +8776,7 @@ int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
         } else {
           assert(dir == ACROSSEDGE);
           while (1) { // Loop I-I-I
-            // Check the two opposite faces (of the edge) in 'searchtet'.  
+            // Check the two opposite faces (of the edge) in 'searchtet'.
             for (i = 0; i < 2; i++) {
               if (i == 0) {
                 enextesym(*searchtet, neightet);
@@ -8836,7 +8836,7 @@ int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
         if (dir == ACROSSFACE) {
           if (removefacebyflips(searchtet, &fc)) {
             success = 1;
-            break; // Loop I-I 
+            break; // Loop I-I
           }
         } else if (dir == ACROSSEDGE) {
           if (removeedgebyflips(searchtet, &fc) == 2) {
@@ -8886,7 +8886,7 @@ int meshGRegionBoundaryRecovery::recoveredgebyflips(point startpt,
           }
           if (searchtet->tet == NULL) {
             success = 0; // This face/edge has been destroyed.
-            break; // Loop I-I 
+            break; // Loop I-I
           }
         }
       } // while (1) // Loop I-I
@@ -8928,7 +8928,7 @@ int meshGRegionBoundaryRecovery::
   //   of 'abtets', and it maxmizes the min volume.
 
   // initialize the list of 2n boundary faces.
-  for (i = 0; i < n; i++) {    
+  for (i = 0; i < n; i++) {
     edestoppo(abtets[i], worktet); // [p_i,p_i+1,a]
     cavetetlist->newindex((void **) &parytet);
     *parytet = worktet;
@@ -8964,7 +8964,7 @@ int meshGRegionBoundaryRecovery::
       if (maxminvol < minvol) {
         maxminvol = minvol;
         maxidx = it;
-      } 
+      }
     }
   } // it
 
@@ -8991,7 +8991,7 @@ int meshGRegionBoundaryRecovery::
   // Point smooth options.
   opm.max_min_volume = 1;
   opm.numofsearchdirs = 20;
-  opm.searchstep = 0.001;  
+  opm.searchstep = 0.001;
   opm.maxiter = 100; // Limit the maximum iterations.
   opm.initval = 0.0; // Initial volume is zero.
 
@@ -9000,13 +9000,13 @@ int meshGRegionBoundaryRecovery::
 
   if (success) {
     while (opm.smthiter == 100) {
-      // It was relocated and the prescribed maximum iteration reached. 
+      // It was relocated and the prescribed maximum iteration reached.
       // Try to increase the search stepsize.
       opm.searchstep *= 10.0;
       //opm.maxiter = 100; // Limit the maximum iterations.
       opm.initval = opm.imprval;
       opm.smthiter = 0; // Init.
-      smoothpoint(smtpt, cavetetlist, 1, &opm);  
+      smoothpoint(smtpt, cavetetlist, 1, &opm);
     }
   } // if (success)
 
@@ -9034,7 +9034,7 @@ int meshGRegionBoundaryRecovery::
   worktet = abtets[0]; // No need point location.
   ivf.iloc = (int) INSTAR;
   ivf.chkencflag = chkencflag;
-  ivf.assignmeshsize = b->metric; 
+  ivf.assignmeshsize = b->metric;
   if (ivf.assignmeshsize) {
     // Search the tet containing 'steinerpt' for size interpolation.
     locate(steinerpt, &(abtets[0]));
@@ -9045,17 +9045,17 @@ int meshGRegionBoundaryRecovery::
   // Note that T is convex (nonconvex = 0).
   if (insertpoint(steinerpt, &worktet, NULL, NULL, &ivf)) {
     // The vertex has been inserted.
-    st_volref_count++; 
+    st_volref_count++;
     if (steinerleft > 0) steinerleft--;
     return 1;
   } else {
-    // Not inserted. 
+    // Not inserted.
     pointdealloc(steinerpt);
     return 0;
   }
 }
 
-int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg, 
+int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
   int searchlevel)
 {
   triface searchtet;
@@ -9107,7 +9107,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
     pd = sdest(*paryseg);
     tp = tq = 0;
     if (linelineint(startpt, endpt, pc, pd, P, Q, &tp, &tq)) {
-      // Does the shortest edge lie between the two segments? 
+      // Does the shortest edge lie between the two segments?
       // Round tp and tq.
       if ((tp > 0) && (tq < 1)) {
         if (tp < 0.5) {
@@ -9116,7 +9116,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
           if ((1.0 - tp) < (b->epsilon * 1e+3)) tp = 1.0;
         }
       }
-      if ((tp <= 0) || (tp >= 1)) continue; 
+      if ((tp <= 0) || (tp >= 1)) continue;
       if ((tq > 0) && (tq < 1)) {
         if (tq < 0.5) {
           if (tq < (b->epsilon * 1e+3)) tq = 0.0;
@@ -9147,7 +9147,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
   b->fliplinklevel = bak_fliplinklevel;
 
   if (split == 0) {
-    // Found no crossing segment. 
+    // Found no crossing segment.
     return 0;
   }
 
@@ -9200,7 +9200,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
   ivf.splitbdflag = 0;
   ivf.validflag = 1;
   ivf.respectbdflag = 1;
-  ivf.assignmeshsize = b->metric; 
+  ivf.assignmeshsize = b->metric;
 
   if (!insertpoint(steinerpt, &searchtet, &splitsh, &splitseg, &ivf)) {
     pointdealloc(steinerpt);
@@ -9216,7 +9216,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
   } else { // b->addsteiner_algo == 2
     // Queue the segment for recovery.
     subsegstack->newindex((void **) &paryseg);
-    *paryseg = *misseg; 
+    *paryseg = *misseg;
     st_volref_count++;
   }
   if (steinerleft > 0) steinerleft--;
@@ -9224,7 +9224,7 @@ int meshGRegionBoundaryRecovery::add_steinerpt_in_segment(face* misseg,
   return 1;
 }
 
-int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg, 
+int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
   int splitsegflag)
 {
   triface *abtets, searchtet, spintet;
@@ -9249,11 +9249,11 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
   // Try to recover the edge by adding Steiner points.
   point2tetorg(startpt, searchtet);
   dir = finddirection(&searchtet, endpt);
-  enextself(searchtet); 
+  enextself(searchtet);
   //assert(apex(searchtet) == startpt);
 
   if (dir == ACROSSFACE) {
-    // The segment is crossing at least 3 faces. Find the common edge of 
+    // The segment is crossing at least 3 faces. Find the common edge of
     //   the first 3 crossing faces.
     esymself(searchtet);
     fsym(searchtet, spintet);
@@ -9269,7 +9269,7 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
       eprevself(searchtet);
     }
     assert(i < 3);
-    esymself(searchtet);        
+    esymself(searchtet);
   } else {
     assert(dir == ACROSSEDGE);
     // PLC check.
@@ -9279,11 +9279,11 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
       printf("Found two segments intersect each other.\n");
       pa = farsorg(*misseg);
       pb = farsdest(*misseg);
-      printf("  1st: [%d,%d] %d.\n", pointmark(pa), pointmark(pb), 
+      printf("  1st: [%d,%d] %d.\n", pointmark(pa), pointmark(pb),
              shellmark(*misseg));
       pa = farsorg(checkseg);
       pb = farsdest(checkseg);
-      printf("  2nd: [%d,%d] %d.\n", pointmark(pa), pointmark(pb), 
+      printf("  2nd: [%d,%d] %d.\n", pointmark(pa), pointmark(pb),
              shellmark(checkseg));
       terminateBoundaryRecovery(this, 3);
     }
@@ -9324,8 +9324,8 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
       if (n > 4) {
         // In this case, 'abtets' is separated by the plane (containing the
         //   two intersecting edges) into two parts, P1 and P2, where P1
-        //   consists of 'endi' tets: abtets[0], abtets[1], ..., 
-        //   abtets[endi-1], and P2 consists of 'n - endi' tets: 
+        //   consists of 'endi' tets: abtets[0], abtets[1], ...,
+        //   abtets[endi-1], and P2 consists of 'n - endi' tets:
         //   abtets[endi], abtets[endi+1], abtets[n-1].
         if (endi > 2) { // P1
           // There are at least 3 tets in the first part.
@@ -9341,8 +9341,8 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
         }
       } else {
         // In this case, a 4-to-4 flip should be re-cover the edge [c,d].
-        //   However, there will be invalid tets (either zero or negtive 
-        //   volume). Otherwise, [c,d] should already be recovered by the 
+        //   However, there will be invalid tets (either zero or negtive
+        //   volume). Otherwise, [c,d] should already be recovered by the
         //   recoveredge() function.
         terminateBoundaryRecovery(this, 2); // Report a bug.
       }
@@ -9365,7 +9365,7 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
   }
 
   if (b->verbose > 2) {
-    printf("      Splitting segment (%d, %d)\n", pointmark(startpt), 
+    printf("      Splitting segment (%d, %d)\n", pointmark(startpt),
            pointmark(endpt));
   }
   steinerpt = NULL;
@@ -9404,7 +9404,7 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
     ivf.splitbdflag = 0;
     ivf.validflag = 1;
     ivf.respectbdflag = 1;
-    ivf.assignmeshsize = b->metric; 
+    ivf.assignmeshsize = b->metric;
     if (!insertpoint(steinerpt, &searchtet, &splitsh, misseg, &ivf)) {
       assert(0);
     }
@@ -9421,7 +9421,7 @@ int meshGRegionBoundaryRecovery::addsteiner4recoversegment(face* misseg,
   return 1;
 }
 
-int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist, 
+int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist,
   int fullsearch, int steinerflag)
 {
   triface searchtet, spintet;
@@ -9429,7 +9429,7 @@ int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist,
   point startpt, endpt;
   int success;
   int t1ver;
-  long bak_inpoly_count = st_volref_count; 
+  long bak_inpoly_count = st_volref_count;
   long bak_segref_count = st_segref_count;
 
   if (b->verbose > 1) {
@@ -9456,7 +9456,7 @@ int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist,
     endpt = sdest(sseg);
 
     if (b->verbose > 2) {
-      printf("      Recover segment (%d, %d).\n", pointmark(startpt), 
+      printf("      Recover segment (%d, %d).\n", pointmark(startpt),
              pointmark(endpt));
     }
 
@@ -9514,11 +9514,11 @@ int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist,
     if (b->verbose > 1) {
       // Report the number of added Steiner points.
       if (st_volref_count > bak_inpoly_count) {
-        printf("    Add %ld Steiner points in volume.\n", 
+        printf("    Add %ld Steiner points in volume.\n",
                st_volref_count - bak_inpoly_count);
       }
       if (st_segref_count > bak_segref_count) {
-        printf("    Add %ld Steiner points in segments.\n", 
+        printf("    Add %ld Steiner points in segments.\n",
                st_segref_count - bak_segref_count);
       }
     }
@@ -9527,7 +9527,7 @@ int meshGRegionBoundaryRecovery::recoversegments(arraypool *misseglist,
   return 0;
 }
 
-int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb, 
+int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb,
   point pc, face *searchsh, triface* searchtet)
 {
   triface spintet, flipedge;
@@ -9536,7 +9536,7 @@ int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb,
   flipconstraints fc;
   int types[2], poss[4], intflag;
   int success, success1;
-  int t1ver; 
+  int t1ver;
   int i, j;
 
 
@@ -9597,9 +9597,9 @@ int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb,
                       printf("Found a segment and a subface intersect.\n");
                       pd = farsorg(checkseg);
                       pe = farsdest(checkseg);
-                      printf("  1st: [%d, %d] %d.\n",  pointmark(pd), 
-                             pointmark(pe), shellmark(checkseg)); 
-                      printf("  2nd: [%d,%d,%d] %d\n", pointmark(pa), 
+                      printf("  1st: [%d, %d] %d.\n",  pointmark(pd),
+                             pointmark(pe), shellmark(checkseg));
+                      printf("  2nd: [%d,%d,%d] %d\n", pointmark(pa),
                         pointmark(pb), pointmark(pc), shellmark(*searchsh));
 	                }
                     terminateBoundaryRecovery(this, 3);
@@ -9653,11 +9653,11 @@ int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb,
                     // We can return this function.
                     searchsh->sh = NULL; // It has been split.
                     success1 = 0;
-                    success = 1; 
+                    success = 1;
                   } else {
                     // It should be a PLC problem.
                     if (pointtype(touchpt) == FREESEGVERTEX) {
-                      // A segment and a subface intersect. 
+                      // A segment and a subface intersect.
                     } else if (pointtype(touchpt) == FREEFACETVERTEX) {
                       // Two facets self-intersect.
                     }
@@ -9684,7 +9684,7 @@ int meshGRegionBoundaryRecovery::recoverfacebyflips(point pa, point pb,
   return success;
 }
 
-int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist, 
+int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
   int steinerflag)
 {
   triface searchtet, neightet, spintet;
@@ -9725,7 +9725,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
 
     // The three edges of the face need to be existed first.
     for (i = 0; i < 3; i++) {
-      sspivot(searchsh, bdsegs[i]);   
+      sspivot(searchsh, bdsegs[i]);
       if (bdsegs[i].sh != NULL) {
         // The segment must exist.
         sstpivot1(bdsegs[i], searchtet);
@@ -9742,7 +9742,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
         dir = finddirection(&searchtet, endpt);
         if (dir == ACROSSVERT) {
           if (dest(searchtet) == endpt) {
-            success = 1;  
+            success = 1;
           } else {
             //assert(0); // A PLC problem.
             terminateBoundaryRecovery(this, 3);
@@ -9780,7 +9780,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
           // An edge of this subface is missing. Can't recover this subface.
           // Delete any temporary segment that has been created.
           for (j = (i - 1); j >= 0; j--) {
-            if (smarktest2ed(bdsegs[j])) { 
+            if (smarktest2ed(bdsegs[j])) {
               spivot(bdsegs[j], neineish);
               assert(neineish.sh != NULL);
               //if (neineish.sh != NULL) {
@@ -9823,7 +9823,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
             ivf.lawson = 0;
             ivf.rejflag = 0;
             ivf.chkencflag = 0;
-            ivf.sloc = (int) ONEDGE;            
+            ivf.sloc = (int) ONEDGE;
             ivf.sbowywat = 1; // Allow flips in facet.
             ivf.splitbdflag = 0;
             ivf.validflag = 1;
@@ -9856,7 +9856,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
 
       // Delete any temporary segment that has been created.
       for (j = 0; j < 3; j++) {
-        if (smarktest2ed(bdsegs[j])) { 
+        if (smarktest2ed(bdsegs[j])) {
           spivot(bdsegs[j], neineish);
           assert(neineish.sh != NULL);
           //if (neineish.sh != NULL) {
@@ -9909,12 +9909,12 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
           ivf.lawson = 0;
           ivf.rejflag = 0;
           ivf.chkencflag = 0;
-          ivf.sloc = (int) ONFACE;          
+          ivf.sloc = (int) ONFACE;
           ivf.sbowywat = 1; // Allow flips in facet.
           ivf.splitbdflag = 0;
           ivf.validflag = 1;
           ivf.respectbdflag = 1;
-          ivf.assignmeshsize = b->metric; 
+          ivf.assignmeshsize = b->metric;
           if (!insertpoint(steinerpt, &searchtet, &searchsh, NULL, &ivf)) {
             assert(0);
           }
@@ -9928,7 +9928,7 @@ int meshGRegionBoundaryRecovery::recoversubfaces(arraypool *misshlist,
         } // if (steinerflag)
       }
     } else {
-      success = 0;      
+      success = 0;
     }
 
     if (!success) {
@@ -9984,7 +9984,7 @@ int meshGRegionBoundaryRecovery::getvertexstar(int fullstar, point searchpt,
         shlist->newindex((void **) &parysh);
         *parysh = checksh;
       }
-    } 
+    }
     if (!fullstar) {
       collectflag = 0;
     }
@@ -10161,7 +10161,7 @@ int meshGRegionBoundaryRecovery::getedge(point e1, point e2, triface *tedge)
     for (j = 0; (j < 2) && !done; j++) {
       enextself(searchtet);
       fnext(searchtet, neightet);
-      if (!infected(neightet)) {        
+      if (!infected(neightet)) {
         esymself(neightet);
         pt = apex(neightet);
         if (pt == e2) {
@@ -10175,7 +10175,7 @@ int meshGRegionBoundaryRecovery::getedge(point e1, point e2, triface *tedge)
         }
       }
     } // j
-  } // i 
+  } // i
 
   // Uninfect the list of visited tets.
   for (i = 0; i < tetlist->objects; i++) {
@@ -10187,7 +10187,7 @@ int meshGRegionBoundaryRecovery::getedge(point e1, point e2, triface *tedge)
   return done;
 }
 
-int meshGRegionBoundaryRecovery::reduceedgesatvertex(point startpt, 
+int meshGRegionBoundaryRecovery::reduceedgesatvertex(point startpt,
   arraypool* endptlist)
 {
   triface searchtet;
@@ -10368,9 +10368,9 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
         // This case has been checked below.
       } else if (i == 4) {
         // There are 4 tets sharing at [p,lpt]. There must be 4 tets sharing
-        //   at [p,rpt].  There must be a face [p, lpt, rpt].  
+        //   at [p,rpt].  There must be a face [p, lpt, rpt].
         if (apex(neightet) == rpt) {
-          // The edge (segment) has been already recovered!  
+          // The edge (segment) has been already recovered!
           // Check if a 6-to-2 flip is possible (to remove 'p').
           // Let 'searchtet' be [p,d,a,b]
           esym(neightet, searchtet);
@@ -10426,10 +10426,10 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
       // assert(0); DEBUG IT
     }
     //removeflag = 1;
-  } 
+  }
 
   if (!removeflag) {
-    if (vt == FREESEGVERTEX) { 
+    if (vt == FREESEGVERTEX) {
       // Check is it possible to recover the edge [lpt,rpt].
       // The condition to check is:  Whether each tet containing 'leftseg' is
       //   adjacent to a tet containing 'rightseg'.
@@ -10501,7 +10501,7 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
             if (spintet.tet == searchtet.tet) break;
           }
           // The Steiner point has been shifted into the volume.
-          setpointtype(steinerpt, FREEVOLVERTEX);          
+          setpointtype(steinerpt, FREEVOLVERTEX);
           st_segref_count--;
           st_volref_count++;
           return 1;
@@ -10641,7 +10641,7 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
     assert(n >= 3);
     // Collect the 2n tets containing 'p'.
     fliptets = new triface[2 * n];
-    fliptets[0] = searchtet; // [p,b,p_0,p_1] 
+    fliptets[0] = searchtet; // [p,b,p_0,p_1]
     for (i = 0; i < (n - 1); i++) {
       fnext(fliptets[i], fliptets[i+1]); // [p,d,p_i,p_i+1].
     }
@@ -10653,12 +10653,12 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
       fnext(fliptets[i], fliptets[i+1]); // [e,p,p_i,p_i+1].
     }
     // Remove p by a 2n-to-n flip, it is a sequence of n flips:
-    // - Do a 2-to-3 flip on 
-    //     [p_0,p_1,p,d] and 
+    // - Do a 2-to-3 flip on
+    //     [p_0,p_1,p,d] and
     //     [p,p_1,p_0,e].
-    //   This produces: 
-    //     [e,d,p_0,p_1], 
-    //     [e,d,p_1,p] (degenerated), and 
+    //   This produces:
+    //     [e,d,p_0,p_1],
+    //     [e,d,p_1,p] (degenerated), and
     //     [e,d,p,p_0] (degenerated).
     wrktets[0] = fliptets[0]; // [p,d,p_0,p_1]
     eprevself(wrktets[0]);    // [p_0,p,d,p_1]
@@ -10675,17 +10675,17 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
     // Save the new tet [e,d,p_0,p_1].
     fliptets[0] = wrktets[0];
     // - Repeat from i = 1 to n-2: (n - 2) flips
-    //   - Do a 3-to-2 flip on 
-    //       [p,p_i,d,e], 
-    //       [p,p_i,e,p_i+1], and 
-    //       [p,p_i,p_i+1,d]. 
-    //     This produces: 
+    //   - Do a 3-to-2 flip on
+    //       [p,p_i,d,e],
+    //       [p,p_i,e,p_i+1], and
+    //       [p,p_i,p_i+1,d].
+    //     This produces:
     //       [d,e,p_i+1,p_i], and
     //       [e,d,p_i+1,p] (degenerated).
     for (i = 1; i < (n - 1); i++) {
       wrktets[0] = wrktets[1]; // [e,d,p_i,p] (degenerated).
       enextself(wrktets[0]);   // [d,p_i,e,p] (...)
-      esymself(wrktets[0]);    // [p_i,d,p,e] (...) 
+      esymself(wrktets[0]);    // [p_i,d,p,e] (...)
       eprevself(wrktets[0]);   // [p,p_i,d,e] (degenerated) [0].
       wrktets[1] = fliptets[n+i];  // [e,p,p_i,p_i+1]
       enextself(wrktets[1]);       // [p,p_i,e,p_i+1] [1]
@@ -10698,13 +10698,13 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
       fliptets[i] = wrktets[0]; // [d,e,p_i+1,p_i] // FOR DEBUG ONLY
       esymself(fliptets[i]);    // [e,d,p_i,p_i+1] // FOR DEBUG ONLY
     }
-    // - Do a 4-to-1 flip on 
+    // - Do a 4-to-1 flip on
     //     [p,p_0,e,d],     [d,e,p_0,p],
-    //     [p,p_0,d,p_n-1], [e,p_n-1,p_0,p], 
+    //     [p,p_0,d,p_n-1], [e,p_n-1,p_0,p],
     //     [p,p_0,p_n-1,e], [p_0,p_n-1,d,p], and
-    //     [e,d,p_n-1,p]. 
-    //   This produces 
-    //     [e,d,p_n-1,p_0] and 
+    //     [e,d,p_n-1,p].
+    //   This produces
+    //     [e,d,p_n-1,p_0] and
     //     deletes p.
     wrktets[3] = wrktets[1];  // [e,d,p_n-1,p] (degenerated) [3]
     wrktets[0] = fliptets[n]; // [e,d,p,p_0] (degenerated)
@@ -10738,7 +10738,7 @@ int meshGRegionBoundaryRecovery::removevertexbyflips(point steinerpt)
     spivot(rightseg, parentsh); // 'rightseg' has p as its origin.
     sremovevertex(steinerpt, &parentsh, &rightseg, slawson);
 
-    // The original segment is returned in 'rightseg'. 
+    // The original segment is returned in 'rightseg'.
     rightseg.shver = 0;
     assert(sorg(rightseg) == lpt);
     assert(sdest(rightseg) == rpt);
@@ -10853,7 +10853,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
     while (1) {
       cavesegshlist->newindex((void **) &parysh);
       *parysh = spinsh;
-      // Orient the face consistently. 
+      // Orient the face consistently.
       if (sorg(*parysh)!= sorg(parentsh)) sesymself(*parysh);
       spivotself(spinsh);
       if (spinsh.sh == NULL) break;
@@ -10893,7 +10893,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
   point *newsteiners = new point[n];
   for (i = 0; i < n; i++) newsteiners[i] = NULL;
 
-  // Search for each sector an interior vertex. 
+  // Search for each sector an interior vertex.
   for (i = 0; i < cavesegshlist->objects; i++) {
     parysh = (face *) fastlookup(cavesegshlist, i);
     stpivot(*parysh, searchtet);
@@ -10941,7 +10941,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
       pb = dest(*parytet);
       pc = apex(*parytet);
       // Test if the ray startpt->v2 lies in the cone: where 'steinerpt'
-      //   is the apex, and three sides are defined by the triangle 
+      //   is the apex, and three sides are defined by the triangle
       //   [pa, pb, pc].
       ori = orient3d(steinerpt, pa, pb, v2);
       if (ori >= 0) {
@@ -11009,7 +11009,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
               candpt[2] = samplept[2];
               minvol = smallvol;
             } else {
-              // No improvement of smallest volume. 
+              // No improvement of smallest volume.
               // Since we are searching along the line [startpt, steinerpy],
               // The smallest volume can only be decreased later.
               break;
@@ -11017,7 +11017,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
           }
         }
       } // j
-      if (minvol > 0) break; 
+      if (minvol > 0) break;
       samplesize *= 10;
       it++;
     } // while (it < 3)
@@ -11057,7 +11057,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
 
   if (vt == FREESEGVERTEX) {
     // Detach 'leftseg' and 'rightseg' from their adjacent tets.
-    //   These two subsegments will be deleted. 
+    //   These two subsegments will be deleted.
     sstpivot1(leftseg, neightet);
     spintet = neightet;
     while (1) {
@@ -11092,7 +11092,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
       } // j
       // Point to a parent tet.
       parytet = (triface *) fastlookup(cavetetlist, 0);
-      setpoint2tet(newsteiners[i], (tetrahedron) (parytet->tet)); 
+      setpoint2tet(newsteiners[i], (tetrahedron) (parytet->tet));
       st_volref_count++;
       if (steinerleft > 0) steinerleft--;
     }
@@ -11113,7 +11113,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
   } // i
   cavesegshlist->restart();
 
-  if (vt == FREESEGVERTEX) { 
+  if (vt == FREESEGVERTEX) {
     spivot(rightseg, parentsh); // 'rightseg' has p as its origin.
     splitseg = &rightseg;
   } else {
@@ -11128,12 +11128,12 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
   sremovevertex(steinerpt, &parentsh, splitseg, slawson);
 
   if (vt == FREESEGVERTEX) {
-    // The original segment is returned in 'rightseg'. 
+    // The original segment is returned in 'rightseg'.
     rightseg.shver = 0;
   }
 
   // For each new subface, create two new tets at each side of it.
-  //   Both of the two new tets have its opposite be dummypoint. 
+  //   Both of the two new tets have its opposite be dummypoint.
   for (i = 0; i < caveshbdlist->objects; i++) {
     parysh = (face *) fastlookup(caveshbdlist, i);
     sinfect(*parysh); // Mark it for connecting new tets.
@@ -11169,7 +11169,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
       sesymself(neighsh);
       stpivot(neighsh, neightet);
       tssbond1(neightet, rightseg);
-      sstbond1(rightseg, neightet); 
+      sstbond1(rightseg, neightet);
       // Connecting two adjacent tets at this segment.
       esymself(newtet);
       esymself(neightet);
@@ -11207,7 +11207,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
             stpivot(neighsh, neightet);
             if (sinfected(neighsh)) {
               esymself(neightet);
-              assert(neightet.tet[neightet.ver & 3] == NULL);          
+              assert(neightet.tet[neightet.ver & 3] == NULL);
             } else {
               // Search for an open face at this edge.
               spintet = neightet;
@@ -11243,7 +11243,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
           pc = apex(newface);
           if (apex(neightet) == steinerpt) {
             // Exterior case. The 'neightet' is a hull tet which contain
-            //   'steinerpt'. It will be deleted after 'steinerpt' is removed. 
+            //   'steinerpt'. It will be deleted after 'steinerpt' is removed.
             assert(pc == dummypoint);
             caveoldtetlist->newindex((void **) &parytet);
             *parytet = neightet;
@@ -11256,7 +11256,7 @@ int meshGRegionBoundaryRecovery::suppressbdrysteinerpoint(point steinerpt)
                 setapex(newface, apex(neightet));
                 // A hull tet has turned into an interior tet.
                 hullsize--; // Must update the hullsize.
-              } 
+              }
             }
           }
           bond(newface, neightet);
@@ -11349,7 +11349,7 @@ int meshGRegionBoundaryRecovery::suppresssteinerpoints()
     parypt = (point *) fastlookup(subvertstack, i);
     rempt = *parypt;
     if (pointtype(rempt) != UNUSEDVERTEX) {
-      if ((pointtype(rempt) == FREESEGVERTEX) || 
+      if ((pointtype(rempt) == FREESEGVERTEX) ||
           (pointtype(rempt) == FREEFACETVERTEX)) {
         if (suppressbdrysteinerpoint(rempt)) {
           suppcount++;
@@ -11424,7 +11424,7 @@ int meshGRegionBoundaryRecovery::suppresssteinerpoints()
               if (j == 0) {
                 opm.initval = ori;
               } else {
-                if (opm.initval > ori) opm.initval = ori; 
+                if (opm.initval > ori) opm.initval = ori;
               }
             }
             if (smoothpoint(rempt, cavetetlist, 1, &opm)) {
@@ -11470,7 +11470,7 @@ int meshGRegionBoundaryRecovery::suppresssteinerpoints()
 
     if (b->verbose) {
       if (smtcount > 0) {
-        printf("  Smoothed %d Steiner points.\n", smtcount); 
+        printf("  Smoothed %d Steiner points.\n", smtcount);
       }
     }
   } // -Y2
@@ -11524,7 +11524,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
 
   // The init number of missing segments.
   ms = subsegs->items;
-  nit = 0; 
+  nit = 0;
   if (b->fliplinklevel < 0) {
     autofliplinklevel = 1; // Init value.
   }
@@ -11564,7 +11564,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
   } // while (1)
 
   if (b->verbose) {
-    printf("  %ld (%ld) segments are recovered (missing).\n", 
+    printf("  %ld (%ld) segments are recovered (missing).\n",
            subsegs->items - misseglist->objects, misseglist->objects);
   }
 
@@ -11588,7 +11588,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
       }
     }
     if (b->verbose) {
-      printf("  %ld (%ld) segments are recovered (missing).\n", 
+      printf("  %ld (%ld) segments are recovered (missing).\n",
              subsegs->items - misseglist->objects, misseglist->objects);
     }
   }
@@ -11633,7 +11633,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
     if (b->verbose) {
       printf("  Added %ld Steiner points in segments.\n", st_segref_count);
       if (st_volref_count > bak_inpoly_count) {
-        printf("  Added another %ld Steiner points in volume.\n", 
+        printf("  Added another %ld Steiner points in volume.\n",
                st_volref_count - bak_inpoly_count);
       }
     }
@@ -11658,13 +11658,13 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
     if (b->verbose) {
       if (st_segref_count < bak_segref_count) {
         if (bak_volref_count < st_volref_count) {
-          printf("  Suppressed %ld Steiner points in segments.\n", 
+          printf("  Suppressed %ld Steiner points in segments.\n",
                  st_volref_count - bak_volref_count);
         }
         if ((st_segref_count + (st_volref_count - bak_volref_count)) <
             bak_segref_count) {
-          printf("  Removed %ld Steiner points in segments.\n", 
-                 bak_segref_count - 
+          printf("  Removed %ld Steiner points in segments.\n",
+                 bak_segref_count -
                    (st_segref_count + (st_volref_count - bak_volref_count)));
         }
       }
@@ -11696,7 +11696,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
   }
 
   ms = subfaces->items;
-  nit = 0; 
+  nit = 0;
   b->fliplinklevel = -1; // Init.
   if (b->fliplinklevel < 0) {
     autofliplinklevel = 1; // Init value.
@@ -11736,7 +11736,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
   } // while (1)
 
   if (b->verbose) {
-    printf("  %ld (%ld) subfaces are recovered (missing).\n", 
+    printf("  %ld (%ld) subfaces are recovered (missing).\n",
            subfaces->items - misshlist->objects, misshlist->objects);
   }
 
@@ -11771,7 +11771,7 @@ void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
     }
     if (b->verbose) {
       if (st_facref_count < bak_facref_count) {
-        printf("  Removed %ld Steiner points in facets.\n", 
+        printf("  Removed %ld Steiner points in facets.\n",
                bak_facref_count - st_facref_count);
       }
     }
@@ -11858,7 +11858,7 @@ void meshGRegionBoundaryRecovery::carveholes()
     j = (parytet->ver & 3); // j is the current face number.
     // Check the other three adjacent tets.
     for (k = 1; k < 4; k++) {
-      decode(parytet->tet[(j + k) % 4], neightet); 
+      decode(parytet->tet[(j + k) % 4], neightet);
       // neightet may be a hull tet.
       if (!infected(neightet)) {
         // Is neightet protected by a subface.
@@ -11914,7 +11914,7 @@ void meshGRegionBoundaryRecovery::carveholes()
       }
       if (b->nobisect && (b->nobisect_param > 0)) { // -Y1
         // Queue it if it is a Steiner point.
-        //if (pointmark(ptloop) > 
+        //if (pointmark(ptloop) >
         //      (in->numberofpoints - (in->firstnumber ? 0 : 1))) {
         if (issteinerpoint(ptloop)) {
           subvertstack->newindex((void **) &parypt);
@@ -11965,7 +11965,7 @@ void meshGRegionBoundaryRecovery::carveholes()
           setpoint2tet(pb, (tetrahedron) tetloop.tet);
           setpoint2tet(pc, (tetrahedron) tetloop.tet);
           // Save the exterior tet at this hull face. It still holds pointer
-          //   to the adjacent interior tet. Use it to connect new hull tets. 
+          //   to the adjacent interior tet. Use it to connect new hull tets.
           newhullfacearray->newindex((void **) &parytet1);
           parytet1->tet = parytet->tet;
           parytet1->ver = j;
@@ -11994,7 +11994,7 @@ void meshGRegionBoundaryRecovery::carveholes()
             // An interior tet. Get the new hull tet.
             fsymself(neightet);
             esymself(neightet);
-          } 
+          }
           // Bond them together.
           bond(casface, neightet);
         }
@@ -12020,7 +12020,7 @@ void meshGRegionBoundaryRecovery::carveholes()
           }
         }
         // Dissolve this subface from face links.
-        for (j = 0; j < 3; j++) {         
+        for (j = 0; j < 3; j++) {
           spivot(*parysh, casingout);
           sspivot(*parysh, checkseg);
           if (casingout.sh != NULL) {
@@ -12078,7 +12078,7 @@ void meshGRegionBoundaryRecovery::carveholes()
         decode(point2tet(*parypt), neightet);
         if (infected(neightet)) {
           // Found an exterior vertex.
-          //if (pointmark(*parypt) > 
+          //if (pointmark(*parypt) >
           //      (in->numberofpoints - (in->firstnumber ? 0 : 1))) {
           if (issteinerpoint(*parypt)) {
             // A Steiner point.
@@ -12102,13 +12102,13 @@ void meshGRegionBoundaryRecovery::carveholes()
         if (unuverts > delvertcount) {
           if (delsteinercount > 0l) {
             if (unuverts > (delvertcount + delsteinercount)) {
-              printf("  Removed %ld exterior input vertices.\n", 
+              printf("  Removed %ld exterior input vertices.\n",
                      unuverts - delvertcount - delsteinercount);
             }
-            printf("  Removed %ld exterior Steiner vertices.\n", 
+            printf("  Removed %ld exterior Steiner vertices.\n",
                    delsteinercount);
           } else {
-            printf("  Removed %ld exterior input vertices.\n", 
+            printf("  Removed %ld exterior input vertices.\n",
                    unuverts - delvertcount);
           }
         }
@@ -12173,7 +12173,7 @@ void meshGRegionBoundaryRecovery::carveholes()
     }
     REAL volume;
     int attr, maxattr = 0; // Choose a small number here.
-    int attrnum = numelemattrib - 1; 
+    int attrnum = numelemattrib - 1;
     // Comment: The element region marker is at the end of the list of
     //   the element attributes.
     int regioncount = 0;
@@ -12323,7 +12323,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
               if (sorg(checksh) != sdest(casingout)) sesymself(casingout);
               stpivot(casingout, neightet);
               if (neightet.tet == fliptets[0].tet) {
-                // Found a hull sliver 'neightet'. Let it be [e,d,a,b], where 
+                // Found a hull sliver 'neightet'. Let it be [e,d,a,b], where
                 //   [e,d,a] and [d,e,b] are hull faces.
                 edestoppo(neightet, hulltet); // [a,b,e,d]
                 fsymself(hulltet); // [b,a,e,#]
@@ -12375,7 +12375,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
       }
 
       // Test whether the face is locally Delaunay or not.
-      pts = (point *) fliptets[1].tet; 
+      pts = (point *) fliptets[1].tet;
       sign = insphere_s(pts[4], pts[5], pts[6], pts[7], oppo(fliptets[0]));
 
       if (sign < 0) {
@@ -12394,7 +12394,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
 
         if (ori > 0) {
           // A 2-to-3 flip is found.
-          //   [0] [a,b,c,d], 
+          //   [0] [a,b,c,d],
           //   [1] [b,a,c,e]. no dummypoint.
           flip23(fliptets, 0, fc);
           flipcount++;
@@ -12412,14 +12412,14 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
             // Do not flip if it is a segment.
             if (issubseg(fliptets[0])) continue;
           }
-          // Check if there are three or four tets sharing at this edge.        
+          // Check if there are three or four tets sharing at this edge.
           esymself(fliptets[0]); // [b,a,d,c]
           for (i = 0; i < 3; i++) {
             fnext(fliptets[i], fliptets[i+1]);
           }
           if (fliptets[3].tet == fliptets[0].tet) {
             // A 3-to-2 flip is found. (No hull tet.)
-            flip32(fliptets, 0, fc); 
+            flip32(fliptets, 0, fc);
             flipcount++;
             if (fc->remove_ndelaunay_edge) {
               // Update the volume (must be decreased).
@@ -12436,7 +12436,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
               if (nonconvex) {
                 if (apex(fliptets[3]) == dummypoint) {
                   // This edge is locally non-convex on the hull.
-                  // It can be removed by a 4-to-4 flip.                  
+                  // It can be removed by a 4-to-4 flip.
                   ori = 0;
                 }
               } // if (nonconvex)
@@ -12447,7 +12447,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
                 //   [1] [b,a,c,e]
                 //   [2] [b,a,e,f] (f may be dummypoint)
                 //   [3] [b,a,f,d]
-                esymself(fliptets[0]); // [a,b,c,d] 
+                esymself(fliptets[0]); // [a,b,c,d]
                 // A 2-to-3 flip replaces face [a,b,c] by edge [e,d].
                 //   This creates a degenerate tet [e,d,a,b] (tmpfliptets[0]).
                 //   It will be removed by the followed 3-to-2 flip.
@@ -12497,14 +12497,14 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
 
     assert(flippool->items == 0l);
     // Return if no unflippable faces left.
-    if (unflipqueue->objects == 0l) break; 
+    if (unflipqueue->objects == 0l) break;
     // Return if no flip has been performed.
     if (flipcount == 0l) break;
 
     // Try to flip the unflippable faces.
     for (i = 0; i < unflipqueue->objects; i++) {
       bface = (badface *) fastlookup(unflipqueue, i);
-      if (!isdeadtet(bface->tt) && 
+      if (!isdeadtet(bface->tt) &&
           (org(bface->tt) == bface->forg) &&
           (dest(bface->tt) == bface->fdest) &&
           (apex(bface->tt) == bface->fapex)) {
@@ -12560,7 +12560,7 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
     tetloop.tet = tetrahedrontraverse();
   }
 
-  // Calulate a relatively lower bound for small improvement. 
+  // Calulate a relatively lower bound for small improvement.
   //   Used to avoid rounding error in volume calculation.
   fc.bak_tetprism_vol = tetprism_vol_sum * b->epsilon * 1e-3;
 
@@ -12599,7 +12599,7 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
 
   flipqueue = new arraypool(sizeof(badface), 10);
   nextflipqueue = new arraypool(sizeof(badface), 10);
-  
+
   // Swap the two flip queues.
   swapqueue = flipqueue;
   flipqueue = unflipqueue;
@@ -12649,7 +12649,7 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
           // Unable to remove this edge. Save it.
           nextflipqueue->newindex((void **) &parybface);
           *parybface = *bface;
-          // Normally, it should be zero. 
+          // Normally, it should be zero.
           //assert(fc.tetprism_vol_sum == 0.0);
           // However, due to rounding errors, a tiny value may appear.
           fc.tetprism_vol_sum = 0.0;
@@ -12693,11 +12693,11 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
   delete nextflipqueue;
 }
 
-int meshGRegionBoundaryRecovery::gettetrahedron(point pa, point pb, point pc, 
+int meshGRegionBoundaryRecovery::gettetrahedron(point pa, point pb, point pc,
   point pd, triface *searchtet)
 {
   triface spintet;
-  int t1ver; 
+  int t1ver;
 
   if (getedge(pa, pb, searchtet)) {
     spintet = *searchtet;
@@ -12746,7 +12746,7 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
   int bakmaxflipstarsize = b->flipstarsize;
 
   // Set flip edge options.
-  autofliplinklevel = 1; 
+  autofliplinklevel = 1;
   b->fliplinklevel = -1;
   b->flipstarsize = 10; // b->optmaxflipstarsize;
 
@@ -12782,7 +12782,7 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
             // The dihedral angles are permuted.
             // Here we simply re-compute them. Slow!!.
             ppt = (point *) & (bface->tt.tet[4]);
-            tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent, 
+            tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent,
                            &bface->key, NULL);
             bface->forg = ppt[0];
             bface->fdest = ppt[1];
@@ -12793,7 +12793,7 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
           if (bface->key == 0) {
             // Re-comput the quality values. Due to smoothing operations.
             ppt = (point *) & (bface->tt.tet[4]);
-            tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent, 
+            tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent,
                            &bface->key, NULL);
           }
           cosdd = bface->cent;
@@ -12816,11 +12816,11 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
                       ppt = (point *) & (parytet->tet[4]);
                       // Do not test a hull tet.
                       if (ppt[3] != dummypoint) {
-                        tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], ncosdd, 
+                        tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], ncosdd,
                                        &maxdd, NULL);
                         if (maxdd < cosmaxdihed) {
                           // There are bad dihedral angles in this tet.
-                          nextflipqueue->newindex((void **) &parybface); 
+                          nextflipqueue->newindex((void **) &parybface);
                           parybface->tt.tet = parytet->tet;
                           parybface->tt.ver = 11;
                           parybface->forg = ppt[0];
@@ -12832,7 +12832,7 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
                             parybface->cent[n] = ncosdd[n];
                           }
                         }
-                      } // if (ppt[3] != dummypoint) 
+                      } // if (ppt[3] != dummypoint)
                     }
                   } // j
                 } // if (fc.cosdihed_out < cosmaxdihed)
@@ -12840,9 +12840,9 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
                 remcount++;
               }
             }
-          } // i          
+          } // i
           if (!remflag) {
-            // An unremoved bad tet. Queue it again. 
+            // An unremoved bad tet. Queue it again.
             unflipqueue->newindex((void **) &parybface);
             *parybface = *bface;
           }
@@ -12888,7 +12888,7 @@ long meshGRegionBoundaryRecovery::improvequalitybyflips()
   return totalremcount;
 }
 
-int meshGRegionBoundaryRecovery::smoothpoint(point smtpt, 
+int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
   arraypool *linkfacelist, int ccw, optparameters *opm)
 {
   triface *parytet, *parytet1, swaptet;
@@ -12935,7 +12935,7 @@ int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
         fcent[j] = (pa[j] + pb[j] + pc[j]) / 3.0;
       }
       for (j = 0; j < 3; j++) {
-        nextpt[j] = startpt[j] + opm->searchstep * (fcent[j] - startpt[j]); 
+        nextpt[j] = startpt[j] + opm->searchstep * (fcent[j] - startpt[j]);
       }
       // Calculate the largest minimum function value for the new location.
       for (j = 0; j < linkfacelist->objects; j++) {
@@ -12950,7 +12950,7 @@ int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
         pc = apex(*parytet);
         ori = orient3d(pa, pb, pc, nextpt);
         if (ori < 0.0) {
-          // Calcuate the objective function value. 
+          // Calcuate the objective function value.
           if (opm->max_min_volume) {
             //val = -ori;
             val = - orient3dfast(pa, pb, pc, nextpt);
@@ -12959,17 +12959,17 @@ int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
           } else if (opm->min_max_dihedangle) {
             tetalldihedral(pa, pb, pc, nextpt, NULL, &maxcosd, NULL);
             if (maxcosd < -1) maxcosd = -1.0; // Rounding.
-            val = maxcosd + 1.0; // Make it be positive. 
+            val = maxcosd + 1.0; // Make it be positive.
           } else {
             // Unknown objective function.
             val = 0.0;
-          }  
+          }
         } else { // ori >= 0.0;
-          // An invalid new tet. 
+          // An invalid new tet.
           // This may happen if the mesh contains inverted elements.
           if (opm->max_min_volume) {
             //val = -ori;
-            val = - orient3dfast(pa, pb, pc, nextpt);    
+            val = - orient3dfast(pa, pb, pc, nextpt);
           } else {
             // Discard this point.
             break; // j
@@ -13006,7 +13006,7 @@ int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
     if (diff > 0.0) {
       // Is the function value improved effectively?
       if (opm->max_min_volume) {
-        //if ((diff / oldval) < b->epsilon) diff = 0.0;  
+        //if ((diff / oldval) < b->epsilon) diff = 0.0;
       } else if (opm->min_max_aspectratio) {
         if ((diff / oldval) < 1e-3) diff = 0.0;
       } else if (opm->min_max_dihedangle) {
@@ -13035,7 +13035,7 @@ int meshGRegionBoundaryRecovery::smoothpoint(point smtpt,
 
   if (iter > 0) {
     // The point has been smoothed.
-    opm->smthiter = iter; // Remember the number of iterations. 
+    opm->smthiter = iter; // Remember the number of iterations.
     // The point has been smoothed. Update it to its new position.
     for (i = 0; i < 3; i++) smtpt[i] = startpt[i];
   }
@@ -13074,7 +13074,7 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
              iter, flipqueue->objects);
     }
 
-    for (k = 0; k < flipqueue->objects; k++) {      
+    for (k = 0; k < flipqueue->objects; k++) {
       bface  = (badface *) fastlookup(flipqueue, k);
       if (gettetrahedron(bface->forg, bface->fdest, bface->fapex,
                          bface->foppo, &bface->tt)) {
@@ -13083,12 +13083,12 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
           // Here we simply re-compute the quality. Since other smoothing
           //   operation may have moved the vertices of this tet.
           ppt = (point *) & (bface->tt.tet[4]);
-          tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent, 
+          tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent,
                          &bface->key, NULL);
           if (bface->key < cossmtdihed) { // if (maxdd < cosslidihed) {
             // It is a sliver. Try to smooth its vertices.
             smtflag = 0;
-            opm->initval = bface->key + 1.0; 
+            opm->initval = bface->key + 1.0;
             for (i = 0; (i < 4) && !smtflag; i++) {
               if (pointtype(ppt[i]) == FREEVOLVERTEX) {
                 getvertexstar(1, ppt[i], cavetetlist, NULL, NULL);
@@ -13113,7 +13113,7 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
                         // Evaluate its quality.
                         // Re-use ppt, bface->key, bface->cent.
                         ppt = (point *) & (parytet->tet[4]);
-                        tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], 
+                        tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3],
                                        bface->cent, &bface->key, NULL);
                         if (bface->key < cossmtdihed) {
                           // A new sliver. Queue it.
@@ -13124,7 +13124,7 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
                           parybface->fdest = ppt[1];
                           parybface->fapex = ppt[2];
                           parybface->foppo = ppt[3];
-                          parybface->tt.ver = 11; 
+                          parybface->tt.ver = 11;
                           parybface->key = 0.0;
                         }
                       }
@@ -13165,7 +13165,7 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
     totalsmtcount += smtcount;
 
     if (smtcount == 0l) {
-      // No point has been smoothed. 
+      // No point has been smoothed.
       break;
     } else {
       iter++;
@@ -13185,7 +13185,7 @@ long meshGRegionBoundaryRecovery::improvequalitybysmoothing(optparameters *opm)
   return totalsmtcount;
 }
 
-int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd, 
+int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd,
   int chkencflag)
 {
   triface *abtets;
@@ -13198,19 +13198,19 @@ int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd,
   int t1ver;
   int n, i;
 
-  // 'slitet' is [c,d,a,b], where [c,d] has a big dihedral angle. 
+  // 'slitet' is [c,d,a,b], where [c,d] has a big dihedral angle.
   // Go to the opposite edge [a,b].
   edestoppo(*slitet, searchtet); // [a,b,c,d].
 
   // Do not split a segment.
   if (issubseg(searchtet)) {
-    return 0; 
+    return 0;
   }
 
   // Count the number of tets shared at [a,b].
   // Do not split it if it is a hull edge.
   spintet = searchtet;
-  n = 0; 
+  n = 0;
   while (1) {
     if (ishulltet(spintet)) break;
     n++;
@@ -13231,7 +13231,7 @@ int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd,
   }
 
   // Initialize the list of 2n boundary faces.
-  for (i = 0; i < n; i++) {    
+  for (i = 0; i < n; i++) {
     eprev(abtets[i], searchtet);
     esymself(searchtet); // [a,p_i,p_i+1].
     cavetetlist->newindex((void **) &parytet);
@@ -13253,20 +13253,20 @@ int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd,
   opm.min_max_dihedangle = 1;
   opm.initval = cosd + 1.0; // Initial volume is zero.
   opm.numofsearchdirs = 20;
-  opm.searchstep = 0.001;  
+  opm.searchstep = 0.001;
   opm.maxiter = 100; // Limit the maximum iterations.
 
   success = smoothpoint(smtpt, cavetetlist, 1, &opm);
 
   if (success) {
     while (opm.smthiter == opm.maxiter) {
-      // It was relocated and the prescribed maximum iteration reached. 
+      // It was relocated and the prescribed maximum iteration reached.
       // Try to increase the search stepsize.
       opm.searchstep *= 10.0;
       //opm.maxiter = 100; // Limit the maximum iterations.
       opm.initval = opm.imprval;
       opm.smthiter = 0; // Init.
-      smoothpoint(smtpt, cavetetlist, 1, &opm);  
+      smoothpoint(smtpt, cavetetlist, 1, &opm);
     }
   } // if (success)
 
@@ -13298,12 +13298,12 @@ int meshGRegionBoundaryRecovery::splitsliver(triface *slitet, REAL cosd,
 
   ivf.iloc = (int) INSTAR;
   ivf.chkencflag = chkencflag;
-  ivf.assignmeshsize = b->metric; 
+  ivf.assignmeshsize = b->metric;
 
 
   if (insertpoint(steinerpt, &searchtet, NULL, NULL, &ivf)) {
     // The vertex has been inserted.
-    st_volref_count++; 
+    st_volref_count++;
     if (steinerleft > 0) steinerleft--;
     return 1;
   } else {
@@ -13343,7 +13343,7 @@ long meshGRegionBoundaryRecovery::removeslivers(int chkencflag)
              iter, flipqueue->objects);
     }
 
-    for (k = 0; (k < flipqueue->objects) && (steinerleft != 0); k++) {      
+    for (k = 0; (k < flipqueue->objects) && (steinerleft != 0); k++) {
       bface  = (badface *) fastlookup(flipqueue, k);
       if (gettetrahedron(bface->forg, bface->fdest, bface->fapex,
                          bface->foppo, &bface->tt)) {
@@ -13351,15 +13351,15 @@ long meshGRegionBoundaryRecovery::removeslivers(int chkencflag)
           // Here we need to re-compute the quality. Since other smoothing
           //   operation may have moved the vertices of this tet.
           ppt = (point *) & (bface->tt.tet[4]);
-          tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent, 
+          tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], bface->cent,
                          &bface->key, NULL);
         }
-        if (bface->key < cosslidihed) { 
+        if (bface->key < cosslidihed) {
           // It is a sliver. Try to split it.
           slitet.tet = bface->tt.tet;
           //cosdd = bface->cent;
           for (j = 0; j < 6; j++) {
-            if (bface->cent[j] < cosslidihed) { 
+            if (bface->cent[j] < cosslidihed) {
               // Found a large dihedral angle.
               slitet.ver = edge2ver[j]; // Go to the edge.
               if (splitsliver(&slitet, bface->cent[j], chkencflag)) {
@@ -13375,7 +13375,7 @@ long meshGRegionBoundaryRecovery::removeslivers(int chkencflag)
             while (parytet != NULL) {
               unmarktest2(*parytet);
               ppt = (point *) & (parytet->tet[4]);
-              tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], cosdd, 
+              tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], cosdd,
                              &maxcosd, NULL);
               if (maxcosd < cosslidihed) {
                 // A new sliver. Queue it.
@@ -13411,7 +13411,7 @@ long meshGRegionBoundaryRecovery::removeslivers(int chkencflag)
     totalsptcount += sptcount;
 
     if (sptcount == 0l) {
-      // No point has been smoothed. 
+      // No point has been smoothed.
       break;
     } else {
       iter++;
@@ -13465,7 +13465,7 @@ void meshGRegionBoundaryRecovery::optimizemesh()
   cossmtdihed = cos(b->optminsmtdihed / 180.0 * PI);
   cosslidihed = cos(b->optminslidihed / 180.0 * PI);
 
-  int attrnum = numelemattrib - 1; 
+  int attrnum = numelemattrib - 1;
 
   // Put all bad tetrahedra into array.
   tetrahedrons->traversalinit();
@@ -13482,7 +13482,7 @@ void meshGRegionBoundaryRecovery::optimizemesh()
     tetalldihedral(ppt[0], ppt[1], ppt[2], ppt[3], ncosdd, &maxdd, NULL);
     if (maxdd < cosmaxdihed) {
       // There are bad dihedral angles in this tet.
-      unflipqueue->newindex((void **) &parybface); 
+      unflipqueue->newindex((void **) &parybface);
       parybface->tt.tet = checktet.tet;
       parybface->tt.ver = 11;
       parybface->forg = ppt[0];
@@ -13499,7 +13499,7 @@ void meshGRegionBoundaryRecovery::optimizemesh()
 
   totalremcount = improvequalitybyflips();
 
-  if ((unflipqueue->objects > 0l) && 
+  if ((unflipqueue->objects > 0l) &&
       ((b->optscheme & 2) || (b->optscheme & 4))) {
     // The pool is only used by removeslivers().
     badtetrahedrons = new memorypool(sizeof(triface), b->tetrahedraperblock,
@@ -13508,7 +13508,7 @@ void meshGRegionBoundaryRecovery::optimizemesh()
     // Smoothing options.
     opm.min_max_dihedangle = 1;
     opm.numofsearchdirs = 10;
-    // opm.searchstep = 0.001;  
+    // opm.searchstep = 0.001;
     opm.maxiter = 30; // Limit the maximum iterations.
     //opm.checkencflag = 4; // Queue affected tets after smoothing.
     chkencflag = 4; // Queue affected tets after splitting a sliver.
@@ -13643,7 +13643,7 @@ void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
   while (tface.tet != (tetrahedron *) NULL) {
     for (tface.ver = 0; tface.ver < 4; tface.ver ++) {
       fsym(tface, tsymface);
-      if (ishulltet(tsymface) || 
+      if (ishulltet(tsymface) ||
           (elemindex(tface.tet) < elemindex(tsymface.tet))) {
         p1 = org (tface);
         p2 = dest(tface);
@@ -13680,7 +13680,7 @@ void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
     p3 = (point) tetptr[6];
     p4 = (point) tetptr[7];
     fprintf(outfile, "%5d  %5d  %5d  %5d",
-            pointmark(p1)+shift, pointmark(p2)+shift, 
+            pointmark(p1)+shift, pointmark(p2)+shift,
             pointmark(p3)+shift, pointmark(p4)+shift);
     if (numelemattrib > 0) {
       fprintf(outfile, "  %.17g", elemattribute(tetptr, 0));
@@ -13712,14 +13712,14 @@ void meshGRegionBoundaryRecovery::unifysubfaces(face *f1, face *f2)
 
   if (pc != pd) {
     printf("Found two facets intersect each other.\n");
-    printf("  1st: [%d, %d, %d] #%d\n", 
+    printf("  1st: [%d, %d, %d] #%d\n",
 	       pointmark(pa), pointmark(pb), pointmark(pc), shellmark(*f1));
     printf("  2nd: [%d, %d, %d] #%d\n",
 	       pointmark(pa), pointmark(pb), pointmark(pd), shellmark(*f2));
     terminateBoundaryRecovery(this, 3);
   } else {
     printf("Found two duplicated facets.\n");
-    printf("  1st: [%d, %d, %d] #%d\n", 
+    printf("  1st: [%d, %d, %d] #%d\n",
 	       pointmark(pa), pointmark(pb), pointmark(pc), shellmark(*f1));
     printf("  2nd: [%d, %d, %d] #%d\n",
 	       pointmark(pa), pointmark(pb), pointmark(pd), shellmark(*f2));
@@ -13780,14 +13780,14 @@ void meshGRegionBoundaryRecovery::unifysegments()
           if (ori1 > 0) {
             // apex(f2) is below f1.
             if (ori2 > 0) {
-              // apex(f) is below f1 (see Fig.1). 
+              // apex(f) is below f1 (see Fig.1).
               ori3 = orient3d(torg, tdest, sapex(f2->ss), sapex(sface));
               if (ori3 > 0) {
                 // apex(f) is below f2, insert it.
-                break; 
+                break;
               } else if (ori3 < 0) {
                 // apex(f) is above f2, continue.
-              } else { // ori3 == 0; 
+              } else { // ori3 == 0;
                 // f is coplanar and codirection with f2.
                 unifysubfaces(&(f2->ss), &sface);
                 break;
@@ -13800,7 +13800,7 @@ void meshGRegionBoundaryRecovery::unifysegments()
               ori3 = orient3d(torg, tdest, sapex(f2->ss), sapex(sface));
               if (ori3 > 0) {
                 // apex(f) is below f2, insert it.
-                break; 
+                break;
               } else {
                 // f is coplanar and codirection with f1.
                 unifysubfaces(&(f1->ss), &sface);
@@ -13845,7 +13845,7 @@ void meshGRegionBoundaryRecovery::unifysegments()
               break;
             } else { // ori2 == 0.
               // apex(f) is coplanar with f1 (see Fig. 8).
-              // f is either codirection with f1 or is codirection with f2. 
+              // f is either codirection with f1 or is codirection with f2.
               facenormal(torg, tdest, sapex(f1->ss), n1, 1, NULL);
               facenormal(torg, tdest, sapex(sface), n2, 1, NULL);
               if (dot(n1, n2) > 0) {
@@ -13956,7 +13956,7 @@ void meshGRegionBoundaryRecovery::jettisonnodes()
   oldidx = newidx = 0; // in->firstnumber;
   remcount = 0;
   while (pointloop != (point) NULL) {
-    jetflag = (pointtype(pointloop) == DUPLICATEDVERTEX) || 
+    jetflag = (pointtype(pointloop) == DUPLICATEDVERTEX) ||
       (pointtype(pointloop) == UNUSEDVERTEX);
     if (jetflag) {
       // It is a duplicated or unused point, delete it.
@@ -14079,7 +14079,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     b->minedgelength = longest * b->epsilon;
   }
 
-  // Create a map from indices to vertices. 
+  // Create a map from indices to vertices.
   makeindex2pointmap(idx2verlist);
   // 'idx2verlist' has length 'in->numberofpoints + 1'.
   if (in->firstnumber == 1) {
@@ -14175,7 +14175,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
           tptr = checktet.tet[8 + checktet.ver];
           if (bondflag == 3) {
             // All three faces at d in 'checktet' have been connected.
-            // It can be removed from the link.            
+            // It can be removed from the link.
             prevchktet.tet[8 + prevchktet.ver] = tptr;
           } else {
             // Bakup the previous tet in the link.
@@ -14191,7 +14191,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   recenttet = tetloop;
 
   // Create hull tets, create the point-to-tet map, and clean up the
-  //   temporary spaces used in each tet. 
+  //   temporary spaces used in each tet.
   hullsize = tetrahedrons->items;
 
   tetrahedrons->traversalinit();
@@ -14239,7 +14239,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   if (!b->quiet) {
     printf("Creating surface mesh ...\n");
   }
-  face newsh; 
+  face newsh;
   face newseg;
 
   std::list<GFace*> f_list = _gr->faces();
@@ -14261,12 +14261,12 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       for (j = 0; j < 3; j++) {
         makeshellface(subsegs, &newseg);
         setshvertices(newseg, sorg(newsh), sdest(newsh), NULL);
-        // Set the default segment marker '-1'. 
+        // Set the default segment marker '-1'.
         setshellmark(newseg, -1);
         ssbond(newsh, newseg);
         senextself(newsh);
       }
-	} // i	
+	} // i
   } // it
 
   // Connecting triangles, removing redundant segments.
@@ -14287,8 +14287,8 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   std::list<GEdge*> e_list = _gr->edges();
 
   // Process the set of PSC edges.
-  // Remeber that all segments have default marker '-1'.  
-  for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end(); 
+  // Remeber that all segments have default marker '-1'.
+  for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
        ++it) {
     GEdge *ge = *it;
     for (i = 0; i < ge->lines.size(); i++) {
@@ -14342,7 +14342,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
           if (((ppt[0] == p[0]) && (ppt[1] == p[1])) ||
               ((ppt[0] == p[1]) && (ppt[1] == p[0]))) {
             // Found!
-            newseg = segloop; 
+            newseg = segloop;
             break;
           }
           segloop.sh = shellfacetraverse(subsegs);
@@ -14360,7 +14360,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   delete [] idx2shlist;
 
   if (b->verbose) {
-    printf("  %ld (%ld) subfaces (segments).\n", subfaces->items, 
+    printf("  %ld (%ld) subfaces (segments).\n", subfaces->items,
            subsegs->items);
   }
 
@@ -14373,7 +14373,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   ////////////////////////////////////////////////////////
   // Boundary recovery.
   clock_t t_tmp;
-  
+
   recoverboundary(t_tmp);
 
   carveholes();
@@ -14411,14 +14411,14 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     while (pointloop != (point) NULL) {
       if (issteinerpoint(pointloop)) {
         // Check if this Steiner point locates on boundary.
-        if (pointtype(pointloop) == FREESEGVERTEX) {          
+        if (pointtype(pointloop) == FREESEGVERTEX) {
           sdecode(point2sh(pointloop), parentseg);
           assert(parentseg.sh != NULL);
           l_edges.insert(shellmark(parentseg));
           // Get the GEdge containing this vertex.
           GEdge *ge = NULL;
           int etag = shellmark(parentseg);
-          for (std::list<GEdge*>::iterator it = e_list.begin(); 
+          for (std::list<GEdge*>::iterator it = e_list.begin();
                it != e_list.end(); ++it) {
             if ((*it)->tag() == etag) {
               ge = *it;
@@ -14426,7 +14426,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
             }
           }
           assert(ge != NULL);
-          MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1], 
+          MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
                                        pointloop[2], ge, 0);
           double uu = 0;
           reparamMeshVertexOnEdge(v, ge, uu);
@@ -14451,7 +14451,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
           // Get the GFace containing this vertex.
           GFace *gf = NULL;
           int ftag = shellmark(parentsh);
-          for (std::list<GFace*>::iterator it = f_list.begin(); 
+          for (std::list<GFace*>::iterator it = f_list.begin();
                it != f_list.end(); ++it) {
             if ((*it)->tag() == ftag) {
               gf = *it;
@@ -14459,7 +14459,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
             }
           }
           assert(gf != NULL);
-          MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1], 
+          MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
                                        pointloop[2], gf, 0, 0);
           SPoint2 param;
           reparamMeshVertexOnFace(v, gf, param);
@@ -14487,7 +14487,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       // Find the GFace with tag = *it.
       GEdge *ge = NULL;
       int etag = *it;
-      for (std::list<GEdge*>::iterator eit = e_list.begin(); 
+      for (std::list<GEdge*>::iterator eit = e_list.begin();
            eit != e_list.end(); ++eit) {
         if ((*eit)->tag() == etag) {
           ge = (*eit);
@@ -14526,7 +14526,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       // Find the GFace with tag = *it.
       GFace *gf = NULL;
       int ftag = *it;
-      for (std::list<GFace*>::iterator fit = f_list.begin(); 
+      for (std::list<GFace*>::iterator fit = f_list.begin();
            fit != f_list.end(); ++fit) {
         if ((*fit)->tag() == ftag) {
           gf = (*fit);
@@ -14578,4 +14578,9 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     _gr->tetrahedra.push_back(t);
     tetloop.tet = tetrahedrontraverse();
   }
+}
+
+void terminateBoundaryRecovery(void *, int exitcode)
+{
+  throw exitcode;
 }

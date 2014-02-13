@@ -11,6 +11,7 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "boundaryLayersData.h"
+#include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -278,7 +279,9 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
 }
 
 #if defined(HAVE_TETGEN)
+
 #include "tetgen.h"
+
 void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numberedV,
                           splitQuadRecovery &sqr)
 {
@@ -496,6 +499,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     gr->tetrahedra.push_back(t);
   }
 }
+
 #endif
 
 static void addOrRemove(const MFace &f,
@@ -667,9 +671,8 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
   return true;
 }
 
-
-static int getWedge (BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
-		     int indicesVert1 [], int indicesVert2 [])
+static int getWedge(BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
+                    int indicesVert1 [], int indicesVert2 [])
 {
   int N1 = _columns->getNbColumns(v1) ;
   int N2 = _columns->getNbColumns(v2) ;
@@ -1045,7 +1048,8 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
   gr->model()->writeMSH("BL_start.msh");
 
-  AssociateElementsToModelRegionWithBoundaryLayers (gr, gr->tetrahedra , blHexes, blPrisms, blPyrs);
+  AssociateElementsToModelRegionWithBoundaryLayers(gr, gr->tetrahedra, blHexes,
+                                                   blPrisms, blPyrs);
 
   gr->model()->writeMSH("BL_start2.msh");
 
@@ -1080,7 +1084,8 @@ void _relocateVertex(MVertex *ver,
 }
 
 #if defined(HAVE_TETGEN)
-bool CreateAnEmptyVolumeMesh(GRegion *gr){
+bool CreateAnEmptyVolumeMesh(GRegion *gr)
+{
   printf("creating an empty volume mesh\n");
   splitQuadRecovery sqr;
   tetgenio in, out;
@@ -1102,14 +1107,18 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr){
   TransferTetgenMesh(gr, in, out, numberedV);
   return true;
 }
+
 #else
-bool CreateAnEmptyVolumeMesh(GRegion *gr){
+
+bool CreateAnEmptyVolumeMesh(GRegion *gr)
+{
   Msg::Error("You should compile with TETGEN in order to create an empty volume mesh");
   return false;
 }
-#endif // HAVE_TETGEN#endif // HAVE_TETGEN#endif // HAVE_TETGEN
 
-void MeshDelaunayVolume(std::vector<GRegion*> &regions)
+#endif
+
+void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
 
@@ -1265,6 +1274,69 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
    }
  }
 #endif
+}
+
+// uncomment this to test the new code
+//#define NEW_CODE
+
+void MeshDelaunayVolume(std::vector<GRegion*> &regions)
+{
+  if(regions.empty()) return;
+
+#if !defined(NEW_CODE) && defined(HAVE_TETGEN)
+  MeshDelaunayVolumeTetgen(regions);
+  return;
+#endif
+
+  for(unsigned int i = 0; i < regions.size(); i++)
+    Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
+
+  // put all the faces in the same model
+  GRegion *gr = regions[0];
+  std::list<GFace*> faces = gr->faces();
+
+  std::set<GFace*> allFacesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GFace*> f = regions[i]->faces();
+    allFacesSet.insert(f.begin(), f.end());
+    f = regions[i]->embeddedFaces();
+    allFacesSet.insert(f.begin(), f.end());
+  }
+  std::list<GFace*> allFaces;
+  for(std::set<GFace*>::iterator it = allFacesSet.begin();
+      it != allFacesSet.end(); it++){
+    allFaces.push_back(*it);
+  }
+  gr->set(allFaces);
+
+  meshGRegionBoundaryRecovery init;
+  init.reconstructmesh(gr);
+
+  // sort triangles in all model faces in order to be able to search in vectors
+  std::list<GFace*>::iterator itf =  allFaces.begin();
+  while(itf != allFaces.end()){
+    compareMTriangleLexicographic cmp;
+    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
+    ++itf;
+  }
+
+  // restore the initial set of faces
+  gr->set(faces);
+
+  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
+
+  // now do insertion of points
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
+    bowyerWatsonFrontalLayers(gr, false);
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
+    bowyerWatsonFrontalLayers(gr, true);
+  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
+    refineMeshMMG(gr);
+  }
+  else if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
+    insertVerticesInRegion(gr,2000000000,!_BL);
+  }
+
 }
 
 #if defined(HAVE_NETGEN)
