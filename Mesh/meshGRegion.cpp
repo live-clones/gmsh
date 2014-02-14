@@ -1621,20 +1621,18 @@ void meshGRegion::operator() (GRegion *gr)
 
   std::list<GFace*> faces = gr->faces();
 
-  // REMOVE SANITY CHECK FOR DELAUNAY : PYRAMIDS AVAILABLE
-  // sanity check
-
+  // sanity check for frontal algo
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
     for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       if((*it)->quadrangles.size()){
-	Msg::Error("Cannot tetrahedralize volume with quadrangles on boundary");
+	Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
 	return;
       }
     }
   }
 
   // replace discreteFaces by their compounds
-  if( 1 || gr->geomType() == GEntity::CompoundVolume){
+  {
     std::set<GFace*> mySet;
     std::list<GFace*>::iterator it = faces.begin();
     while(it != faces.end()){
@@ -1648,8 +1646,6 @@ void meshGRegion::operator() (GRegion *gr)
     faces.insert(faces.begin(), mySet.begin(), mySet.end());
     gr->set(faces);
   }
-
-  std::list<GFace*> myface = gr->faces();
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_FRONTAL){
     delaunay.push_back(gr);
