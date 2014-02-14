@@ -304,7 +304,7 @@ class GModel
   void deletePhysicalGroup(int dim, int num);
 
   // return the highest number associated with a physical entity of a
-  // given dimension
+  // given dimension (or highest for all dimenions if dim < 0)
   int getMaxPhysicalNumber(int dim);
 
   // elementary/physical name iterator
@@ -371,10 +371,10 @@ class GModel
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
-	
+
 	// get a mesh vertex by coordinate, using the vertex cache
 	MVertex *getMeshVertexByCoordinates(double x, double y, double z, double tol);
-	
+
   // get all the mesh vertices associated with the physical group
   // of dimension "dim" and id number "num"
   void getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &);

@@ -430,7 +430,7 @@ int GModel::getMaxPhysicalNumber(int dim)
   getEntities(entities);
   int num = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    if(entities[i]->dim() == dim)
+    if(dim < 0 || entities[i]->dim() == dim)
       for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
         num = std::max(num, std::abs(entities[i]->physicals[j]));
   return num;
@@ -839,7 +839,7 @@ MVertex* GModel::getMeshVertexByCoordinates(double x, double y, double z, double
             entities[i]->mesh_vertices[j];
     }
   }
-	
+
 	for (int i=1; i< _vertexVectorCache.size(); i++){
 		MVertex* v = _vertexVectorCache[i];
 		double l = sqrt((v->x() -x)*(v->x()-x)+ (v->y()-y)*(v->y()-y)+ (v->z()-z)*(v->z()-z));
@@ -856,7 +856,7 @@ MVertex* GModel::getMeshVertexByCoordinates(double x, double y, double z, double
 	_vertexVectorCache.push_back(v);
 	_vertexMapCache[v->getNum()] = v;
 
-	return v;  
+	return v;
 };
 
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &v)

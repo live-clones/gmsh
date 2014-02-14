@@ -442,7 +442,9 @@ int GModel::readMED(const std::string &name, int meshIndex)
           char tmp[MED_TAILLE_LNOM + 1];
           strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
           tmp[MED_TAILLE_LNOM] = '\0';
-          int pnum = setPhysicalName(tmp, ge->dim());
+          // don't use same physical number across dimensions, as e.g. getdp
+          // does not support this
+          int pnum = setPhysicalName(tmp, ge->dim(), getMaxPhysicalNumber(-1) + 1);
           if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
              ge->physicals.end())
             ge->physicals.push_back(pnum);
