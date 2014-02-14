@@ -265,11 +265,20 @@ std::list<GEdge*> GRegion::edges() const
   std::list<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
     std::list<GEdge*> e2;
+
     e2 = (*it)->edges();
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
-      if(std::find(e.begin(), e.end(), *it2) == e.end())
-        e.push_back(*it2);
+      GEdge *edge = *it2;
+
+      // FIXME: we need to fix the compound design and decide what to do; same
+      // thing for faces() (either store or compute the entities, either use
+      // original or compound entities, etc.)
+      if(edge->getCompound())
+        edge = (GEdge*)edge->getCompound();
+
+      if(std::find(e.begin(), e.end(), edge) == e.end())
+        e.push_back(edge);
       ++it2;
     }
     ++it;
