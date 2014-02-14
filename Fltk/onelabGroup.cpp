@@ -675,6 +675,41 @@ static void loadDb(const std::string &name)
     Msg::Error("Could not load database '%s'", name.c_str());
 }
 
+static void resetDb(bool runGmshClient)
+{
+  // clear everything except command line and model name setup (maybe we
+  // should just re-run initialize?)
+  Msg::Info("Resetting database");
+  std::vector<onelab::number> useCommandLines, guessModelNames;
+  std::vector<onelab::string> fileExtensions;
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    onelab::client *c = it->second;
+    std::vector<onelab::number> ps;
+    c->get(ps, c->getName() + "/UseCommandLine");
+    if(ps.size()) useCommandLines.push_back(ps[0]);
+    c->get(ps, c->getName() + "/GuessModelName");
+    if(ps.size()) guessModelNames.push_back(ps[0]);
+    std::vector<onelab::string> ps2;
+    c->get(ps2, c->getName() + "/FileExtension");
+    if(ps2.size()) fileExtensions.push_back(ps2[0]);
+  }
+
+  // clear the db
+  onelab::server::instance()->clear();
+
+  if(runGmshClient && onelab::server::instance()->findClient("Gmsh") !=
+     onelab::server::instance()->lastClient())
+    onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
+
+  for(unsigned int i = 0; i < useCommandLines.size(); i++)
+    onelab::server::instance()->set(useCommandLines[i]);
+  for(unsigned int i = 0; i < guessModelNames.size(); i++)
+    onelab::server::instance()->set(guessModelNames[i]);
+  for(unsigned int i = 0; i < fileExtensions.size(); i++)
+    onelab::server::instance()->set(fileExtensions[i]);
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -750,32 +785,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "reset"){
-    // clear everything except command line and model name setup (maybe we
-    // should just re-run initialize?)
-    std::vector<onelab::number> useCommandLines, guessModelNames;
-    std::vector<onelab::string> fileExtensions;
-    for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-      onelab::client *c = it->second;
-      std::vector<onelab::number> ps;
-      c->get(ps, c->getName() + "/UseCommandLine");
-      if(ps.size()) useCommandLines.push_back(ps[0]);
-      c->get(ps, c->getName() + "/GuessModelName");
-      if(ps.size()) guessModelNames.push_back(ps[0]);
-      std::vector<onelab::string> ps2;
-      c->get(ps2, c->getName() + "/FileExtension");
-      if(ps2.size()) fileExtensions.push_back(ps2[0]);
-    }
-    onelab::server::instance()->clear();
-    if(onelab::server::instance()->findClient("Gmsh") !=
-       onelab::server::instance()->lastClient())
-      onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh);
-    for(unsigned int i = 0; i < useCommandLines.size(); i++)
-      onelab::server::instance()->set(useCommandLines[i]);
-    for(unsigned int i = 0; i < guessModelNames.size(); i++)
-      onelab::server::instance()->set(guessModelNames[i]);
-    for(unsigned int i = 0; i < fileExtensions.size(); i++)
-      onelab::server::instance()->set(fileExtensions[i]);
+    resetDb(true);
     action = "check";
   }
 
@@ -1221,6 +1231,11 @@ static void setGmshOption(onelab::number &n)
 {
   std::string opt = n.getAttribute("GmshOption");
   if(opt.empty()) return;
+  if(opt == "ResetDatabase"){ // special option to reset the onelab db
+    resetDb(false);
+    FlGui::instance()->rebuildTree(false);
+    return;
+  }
   std::string::size_type dot = opt.find('.');
   if(dot == std::string::npos) return;
   GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
@@ -1237,8 +1252,8 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
     Fl_Check_Button *o = (Fl_Check_Button*)w;
     onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
-    onelab::server::instance()->set(numbers[0]);
     setGmshOption(numbers[0]);
+    onelab::server::instance()->set(numbers[0]);
     autoCheck(old, numbers[0]);
   }
 }
@@ -1254,8 +1269,8 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
     std::vector<double> choices = numbers[0].getChoices();
     onelab::number old = numbers[0];
     if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
-    onelab::server::instance()->set(numbers[0]);
     setGmshOption(numbers[0]);
+    onelab::server::instance()->set(numbers[0]);
     autoCheck(old, numbers[0]);
   }
 }
@@ -1279,8 +1294,8 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     o->doCallbackOnValues(true);
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
-    onelab::server::instance()->set(numbers[0]);
     setGmshOption(numbers[0]);
+    onelab::server::instance()->set(numbers[0]);
     updateGraphs();
     autoCheck(old, numbers[0]);
   }
