@@ -656,7 +656,7 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
   }
 }
 
-bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
+bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax, double tolx)
 {
   const int MAXIT = 10;
@@ -667,7 +667,7 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
   fullVector<double> f(N), feps(N), dx(N);
 
   for (int iter = 0; iter < MAXIT; iter++){
-    func(x, f, data);
+    if(!func(x, f, data)) return false;
 
     bool isZero = false;
     for (int k=0; k<N; k++) {
@@ -681,10 +681,9 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
-      func(x, feps, data);
+      if(!func(x, feps, data)) return false;
       for (int i = 0; i < N; i++){
         J(i, j) = (feps(i) - f(i)) / h;
-	//	printf("J(%d,%d) = %12.5E \n",i,j,J(i,j));
       }
       x(j) -= h;
     }
@@ -700,7 +699,6 @@ bool newton_fd(void (*func)(fullVector<double> &, fullVector<double> &, void *),
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
 
-    //    printf("dx = %12.5E\n",dx.norm());
     if(dx.norm() < tolx) return true;
   }
   return false;

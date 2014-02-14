@@ -3517,7 +3517,7 @@ struct PointSurface{
   Surface *s;
 };
 
-static void projectPS(fullVector<double> &x, fullVector<double> &res, void *data)
+static bool projectPS(fullVector<double> &x, fullVector<double> &res, void *data)
 {
   PointSurface *ps = (PointSurface*)data;
   Vertex c = InterpolateSurface(ps->s, x(0), x(1), 0, 0);
@@ -3531,6 +3531,7 @@ static void projectPS(fullVector<double> &x, fullVector<double> &res, void *data
     (c.Pos.X - ps->p->Pos.X) * dv.Pos.X +
     (c.Pos.Y - ps->p->Pos.Y) * dv.Pos.Y +
     (c.Pos.Z - ps->p->Pos.Z) * dv.Pos.Z;
+  return true;
 }
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
@@ -3725,7 +3726,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
     }
   }
   List_Delete(Surfs);
-  
+
   // replace original curve by the new curves in physical groups
   for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
     PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
@@ -3742,7 +3743,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
       }
     }
   }
-  
+
   DeleteShape(c->Typ, c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
@@ -3757,7 +3758,7 @@ struct CurveSurface{
   Surface *s;
 };
 
-static void intersectCS(fullVector<double> &uvt, fullVector<double> &res, void *data)
+static bool intersectCS(fullVector<double> &uvt, fullVector<double> &res, void *data)
 {
   CurveSurface *cs = (CurveSurface*)data;
   Vertex vs = InterpolateSurface(cs->s, uvt(0), uvt(1), 0, 0);
@@ -3765,6 +3766,7 @@ static void intersectCS(fullVector<double> &uvt, fullVector<double> &res, void *
   res(0) = vs.Pos.X - vc.Pos.X;
   res(1) = vs.Pos.Y - vc.Pos.Y;
   res(2) = vs.Pos.Z - vc.Pos.Z;
+  return true;
 }
 
 
