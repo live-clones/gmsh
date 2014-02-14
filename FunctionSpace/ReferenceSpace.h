@@ -16,28 +16,33 @@
    A Reference Space is the space where all the mesh elements
    (of the same geomtrical family) will be mapped.
 
-   A given geomtrical family may have mutltiple reference spaces,
-   depending on how the egdes and faces are oriented.
+   A given geomtrical family has one reference space.
+   Howerver, this reference space can be @em oriented in multiple ways.
    These orientations depend on the global number of the mesh element vertices,
    and the bigger/smaller relations that exist among them.
 
-   This class can generate, and orient, all the reference spaces
-   of a geomtrical family (see specialized classes).
-   It can alse compute the jacobian matrices for the mapping between spaces.
+   This class can orient the reference space of a geomtrical family
+   (see specialized classes).
+   It can also compute the jacobian matrices for the mapping
+   between the physcial and reference spaces,
+   @em by @em taking @em orientation @em into @em acount.
 
    This class can handle three different types of reference spaces:
    @li The XYZ space, which is the space of the physical (mesh) elements
-   @li The UVW space, which is the unoriented reference space of the mesh module
-   @li The ABC spaces, which are the set oriented reference spaces
+   @li The UVW space, which is the @em unoriented reference space (mesh module)
+   @li The ABC spaces, which are the set @em oriented UVW spaces
 
-   Note that the UVW and ABC spaces are defined on the same domain.
-   The only difference is how the vertices are indexed (and oriented).
+   Note that the UVW and ABC spaces are defined on the same domain
+   (the one of UVW).
+   The only difference is how the vertices are indexed
+   (@em i.e. the orientation).
    Actualy, the ABC spaces are constructed by orienting (that is reindexing)
    the edges and faces of the UVW space.
 
    Also note that a given mesh element can have only one orientation,
    so it can be mapped on only one of the ABC spaces.
-   This class is able to find which ABC space corresponds to a mesh element.
+   This class is able to find which ABC space (orientation)
+   corresponds to a mesh element.
 
    The edges (or faces) are represended by the index of their vertices.
    For a given edge (or face), this class is able to return these indexes,
@@ -224,24 +229,38 @@ class ReferenceSpace{
    Deletes this ReferenceSpace
    **
 
+   @fn ReferenceSpace::getNVertex
+   @return Returns the number of topological vertices of this ReferenceSpace
+   **
+
+   @fn ReferenceSpace::getNEdge
+   @return Returns the number of topological edges of this ReferenceSpace
+   **
+
+   @fn ReferenceSpace::getNFace
+   @return Returns the number of topological faces of this ReferenceSpace
+   **
+
    @fn ReferenceSpace::getNOrientation
-   @returns Returns the number of orientations
+   @returns Returns the number of orientations for this ReferenceSpace
+   (that is the number of ABC spaces for this UVW space)
    **
 
    @fn ReferenceSpace::getOrientation
    @param element A MElement
    @returns
-   Returns a natural number defining the orientation of the given element
+   Returns a natural number defining the orientation (that its ABC space)
+   of the given element
 
-   If no space is found (e.g. the given element does not belong
-   the same geometrical entity as this ReferenceSpace) an Exception is thrown
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::getEdgeNodeIndex
    @return Returns every oriented edge node index of this ReferenceSpace
 
    @li The first vector represents a particular ABC space
-   (see ReferenceSpace::getReferenceSpace())
+   (see ReferenceSpace::getOrientation())
    @li The second vector represents a particular edge (for the given ABC space)
    @li The last vector represents the vertex indexes of the given edge
    **
@@ -250,7 +269,7 @@ class ReferenceSpace{
    @return Returns every oriented face node index of this ReferenceSpace
 
    @li The first vector represents a particular ABC space
-   (see ReferenceSpace::getReferenceSpace())
+   (see ReferenceSpace::getOrientation())
    @li The second vector represents a particular face (for the given ABC space)
    @li The last vector represents the vertex indexes of the given face
    **
@@ -265,6 +284,9 @@ class ReferenceSpace{
 
    Note that this is valid, since ABC spaces and UVW space are defined on the
    same domain. The only difference between those spaces is the node indexing.
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::mapFromABCtoUVW
@@ -276,6 +298,9 @@ class ReferenceSpace{
 
    Fills the given vector with the coordinates of the
    (a, b, c) point in the UVW space
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::mapFromABCtoXYZ
@@ -287,6 +312,9 @@ class ReferenceSpace{
 
    Fills the given vector with the coordinates of the
    (a, b, c) point in the XYZ space
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::mapFromUVWtoABC
@@ -298,6 +326,9 @@ class ReferenceSpace{
 
    Fills the given vector with the coordinates of the
    (u, v, w) point in the ABC space
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::mapFromXYZtoABC
@@ -309,6 +340,9 @@ class ReferenceSpace{
 
    Fills the given vector with the coordinates of the
    (x, y, z) point in the ABC space
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::getJacobian
@@ -322,6 +356,9 @@ class ReferenceSpace{
    of the mapping between the ABC space and the XYZ space
 
    @return Returns the determinant of the jacobian matrix
+
+   If the given element does not belong to the same geometrical entity
+   as this ReferenceSpace an Exception is thrown
    **
 
    @fn ReferenceSpace::toString
@@ -345,7 +382,6 @@ class ReferenceSpace{
    @param path A file path
 
    Serialize this ReferenceSpace into the given file
-   **
  */
 
 //////////////////////
