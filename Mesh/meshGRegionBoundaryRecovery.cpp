@@ -13965,133 +13965,89 @@ void meshGRegionBoundaryRecovery::optimizemesh()
 ////                                                                       ////
 //// optimize_cxx /////////////////////////////////////////////////////////////
 
-void meshGRegionBoundaryRecovery::printtet(triface* tface)
+// Dump the input surface mesh.
+// 'mfilename' is a filename without suffix.
+void meshGRegionBoundaryRecovery::outsurfacemesh(const char* mfilename)
 {
-  triface tmpface, prtface;
-  shellface *shells;
-  point tmppt;
-  face checksh;
-  int facecount;
+  FILE *outfile = NULL;
+  char sfilename[256];
+  int firstindex;
 
-  printf("Tetra x%lx ver %i loc %i:", (uintptr_t)(tface->tet),
-	 tface->ver, tface->ver & 3);
-  if (infected(*tface)) {
-    printf(" (infected)");
+  point pointloop;
+  int pointnumber;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".node");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
   }
-  if (marktested(*tface)) {
-    printf(" (marked)");
+  fprintf(outfile, "%ld  3  0  0\n", points->items);
+  // Determine the first index (0 or 1).
+  firstindex = b->zeroindex ? 0 : in->firstnumber;
+  points->traversalinit();
+  pointloop = pointtraverse();
+  pointnumber = firstindex; // in->firstnumber;
+  while (pointloop != (point) NULL) {
+    // Point number, x, y and z coordinates.
+    fprintf(outfile, "%4d    %.17g  %.17g  %.17g", pointnumber,
+            pointloop[0], pointloop[1], pointloop[2]);
+    fprintf(outfile, "\n");
+    pointloop = pointtraverse();
+    pointnumber++; 
   }
-  if (marktest2ed(*tface)) {
-    printf(" (qued)");
-  }
-  if (elemcounter(*tface) != 0) {
-    printf(" c(%d)", elemcounter(*tface));
-  }
-  printf("\n");
+  fclose(outfile);
 
-  tmpface = *tface;
-  facecount = 0;
-  while(facecount < 4) {
-    tmpface.ver = facecount;
-    fsym(tmpface, prtface);
-    if (prtface.tet != NULL) {
-      printf("    [%i] x%lx  ver(%i)", facecount,
-             (uintptr_t) (prtface.tet), prtface.ver);
-      if((point) prtface.tet[7] == dummypoint) {
-        printf(" (Outer space).");
-      }
+  face faceloop;
+  point torg, tdest, tapex;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".smesh");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
+  }
+  int shift = 0; // Default no shiftment.
+  if ((in->firstnumber == 1) && (firstindex == 0)) {
+    shift = 1; // Shift the output indices by 1.
+  }
+  fprintf(outfile, "0 3 0 0\n", subfaces->items);
+  fprintf(outfile, "%ld  1\n", subfaces->items);
+  subfaces->traversalinit();
+  faceloop.sh = shellfacetraverse(subfaces);
+  while (faceloop.sh != (shellface *) NULL) {
+    torg = sorg(faceloop);
+    tdest = sdest(faceloop);
+    tapex = sapex(faceloop);
+    fprintf(outfile, "3   %4d  %4d  %4d  %d\n",
+            pointmark(torg) - shift, pointmark(tdest) - shift,
+            pointmark(tapex) - shift, shellmark(faceloop));
+    faceloop.sh = shellfacetraverse(subfaces);
+  }
+  fprintf(outfile, "0\n");
+  fprintf(outfile, "0\n");
+  fclose(outfile);
 
-    } else {
-      printf("    [%i] NULL!", facecount);
-    }
-    // Check if this face is marked.
-    if (facemarked(tmpface)) {
-      printf(" (marked)");
-    }
-    if ((tface->ver & 3) == facecount) {
-      printf(" (*)");  // It is the current face.
-    }
-    printf("\n");
-    facecount ++;
+  face edgeloop;
+  int edgenumber;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".edge");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
   }
-
-  tmppt = org(*tface);
-  if(tmppt == (point) NULL) {
-    printf("    Org [%i] NULL\n", orgpivot[tface->ver] - 4);
-  } else {
-    printf("    Org [%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           orgpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
-           tmppt[1], tmppt[2], pointmark(tmppt));
+  fprintf(outfile, "%ld  1\n", subsegs->items);
+  subsegs->traversalinit();
+  edgeloop.sh = shellfacetraverse(subsegs);
+  edgenumber = firstindex; // in->firstnumber;
+  while (edgeloop.sh != (shellface *) NULL) {
+    torg = sorg(edgeloop);
+    tdest = sdest(edgeloop);
+    fprintf(outfile, "%5d   %4d  %4d  %d\n", edgenumber,
+            pointmark(torg) - shift, pointmark(tdest) - shift,
+            shellmark(edgeloop));
+    edgenumber++;
+    edgeloop.sh = shellfacetraverse(subsegs);
   }
-  tmppt = dest(*tface);
-  if(tmppt == (point) NULL) {
-    printf("    Dest[%i] NULL\n", destpivot[tface->ver] - 4);
-  } else {
-    printf("    Dest[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           destpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
-           tmppt[1], tmppt[2], pointmark(tmppt));
-  }
-  tmppt = apex(*tface);
-  if(tmppt == (point) NULL) {
-    printf("    Apex[%i] NULL\n", apexpivot[tface->ver] - 4);
-  } else {
-    printf("    Apex[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           apexpivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
-           tmppt[1], tmppt[2], pointmark(tmppt));
-  }
-  tmppt = oppo(*tface);
-  if(tmppt == (point) NULL) {
-    printf("    Oppo[%i] NULL\n", oppopivot[tface->ver] - 4);
-  } else {
-    printf("    Oppo[%i] x%lx (%.12g,%.12g,%.12g) %d\n",
-           oppopivot[tface->ver] - 4, (uintptr_t)(tmppt), tmppt[0],
-           tmppt[1], tmppt[2], pointmark(tmppt));
-  }
-
-  if (checksubsegflag) {
-    if (tface->tet[8] != NULL) {
-      shells = (shellface *) tface->tet[8];
-      for (facecount = 0; facecount < 6; facecount++) {
-        sdecode(shells[facecount], checksh);
-        if (checksh.sh != NULL) {
-          printf("      [%d] x%lx %d.", facecount, (uintptr_t) checksh.sh,
-                 checksh.shver);
-        } else {
-          printf("      [%d] NULL.", facecount);
-        }
-        if (ver2edge[tface->ver] == facecount) {
-          printf(" (*)");  // It is the current edge.
-        }
-        printf("\n");
-      }
-    }
-  }
-  if (checksubfaceflag) {
-    if (tface->tet[9] != NULL) {
-      shells = (shellface *) tface->tet[9];
-      for (facecount = 0; facecount < 4; facecount++) {
-        sdecode(shells[facecount], checksh);
-        if (checksh.sh != NULL) {
-          printf("      [%d] x%lx %d.", facecount, (uintptr_t) checksh.sh,
-                 checksh.shver);
-        } else {
-          printf("      [%d] NULL.", facecount);
-        }
-        if ((tface->ver & 3) == facecount) {
-          printf(" (*)");  // It is the current face.
-        }
-        printf("\n");
-      }
-    }
-  }
-}
-
-// Only print the vertices of the tet.
-void meshGRegionBoundaryRecovery::ptetv(triface* t)
-{
-  printf("  tet x%lx (%d, %d, %d, %d) %d\n", (uintptr_t) t->tet,
-          pointmark(org(*t)), pointmark(dest(*t)), pointmark(apex(*t)),
-          pointmark(oppo(*t)), t->ver);
+  fclose(outfile);
 }
 
 void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
@@ -14219,149 +14175,8 @@ void meshGRegionBoundaryRecovery::outmesh2medit(const char* mfilename)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//                                                                           //
-// checkmesh()    Test the mesh for topological consistency.                 //
-//                                                                           //
-// If 'topoflag' is set, only check the topological connection of the mesh,  //
-// i.e., do not report degenerated or inverted elements.                     //
-//                                                                           //
-///////////////////////////////////////////////////////////////////////////////
 
-int meshGRegionBoundaryRecovery::checkmesh(int topoflag)
-{
-  triface tetloop, neightet, symtet;
-  point pa, pb, pc, pd;
-  REAL ori;
-  int horrors, i;
 
-  if (!b->quiet) {
-    printf("  Checking consistency of mesh...\n");
-  }
-
-  horrors = 0;
-  tetloop.ver = 0;
-  // Run through the list of tetrahedra, checking each one.
-  tetrahedrons->traversalinit();
-  tetloop.tet = alltetrahedrontraverse();
-  while (tetloop.tet != (tetrahedron *) NULL) {
-    // Check all four faces of the tetrahedron.
-    for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
-      pa = org(tetloop);
-      pb = dest(tetloop);
-      pc = apex(tetloop);
-      pd = oppo(tetloop);
-      if (tetloop.ver == 0) {  // Only test for inversion once.
-        if (!ishulltet(tetloop)) {  // Only do test if it is not a hull tet.
-          if (!topoflag) {
-            ori = orient3d(pa, pb, pc, pd);
-            if (ori >= 0.0) {
-              printf("  !! !! %s ", ori > 0.0 ? "Inverted" : "Degenerated");
-              printf("  (%d, %d, %d, %d) (ori = %.17g)\n", pointmark(pa),
-                     pointmark(pb), pointmark(pc), pointmark(pd), ori);
-              horrors++;
-            }
-          }
-        }
-        if (infected(tetloop)) {
-          // This may be a bug. Report it.
-          printf("  !! (%d, %d, %d, %d) is infected.\n", pointmark(pa),
-                 pointmark(pb), pointmark(pc), pointmark(pd));
-          horrors++;
-        }
-        if (marktested(tetloop)) {
-          // This may be a bug. Report it.
-          printf("  !! (%d, %d, %d, %d) is marked.\n", pointmark(pa),
-                 pointmark(pb), pointmark(pc), pointmark(pd));
-          horrors++;
-        }
-      }
-      if (tetloop.tet[tetloop.ver] == NULL) {
-        printf("  !! !! No neighbor at face (%d, %d, %d).\n", pointmark(pa),
-               pointmark(pb), pointmark(pc));
-        horrors++;
-      } else {
-        // Find the neighboring tetrahedron on this face.
-        fsym(tetloop, neightet);
-        if (neightet.tet != NULL) {
-          // Check that the tetrahedron's neighbor knows it's a neighbor.
-          fsym(neightet, symtet);
-          if ((tetloop.tet != symtet.tet) || (tetloop.ver != symtet.ver)) {
-            printf("  !! !! Asymmetric tetra-tetra bond:\n");
-            if (tetloop.tet == symtet.tet) {
-              printf("   (Right tetrahedron, wrong orientation)\n");
-            }
-            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
-                   pointmark(pb), pointmark(pc), pointmark(pd));
-            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
-                   pointmark(dest(neightet)), pointmark(apex(neightet)),
-                   pointmark(oppo(neightet)));
-            horrors++;
-          }
-          // Check if they have the same edge (the bond() operation).
-          if ((org(neightet) != pb) || (dest(neightet) != pa)) {
-            printf("  !! !! Wrong edge-edge bond:\n");
-            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
-                   pointmark(pb), pointmark(pc), pointmark(pd));
-            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
-                   pointmark(dest(neightet)), pointmark(apex(neightet)),
-                   pointmark(oppo(neightet)));
-            horrors++;
-          }
-          // Check if they have the same apex.
-          if (apex(neightet) != pc) {
-            printf("  !! !! Wrong face-face bond:\n");
-            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
-                   pointmark(pb), pointmark(pc), pointmark(pd));
-            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
-                   pointmark(dest(neightet)), pointmark(apex(neightet)),
-                   pointmark(oppo(neightet)));
-            horrors++;
-          }
-          // Check if they have the same opposite.
-          if (oppo(neightet) == pd) {
-            printf("  !! !! Two identical tetra:\n");
-            printf("    First:  (%d, %d, %d, %d)\n", pointmark(pa),
-                   pointmark(pb), pointmark(pc), pointmark(pd));
-            printf("    Second: (%d, %d, %d, %d)\n", pointmark(org(neightet)),
-                   pointmark(dest(neightet)), pointmark(apex(neightet)),
-                   pointmark(oppo(neightet)));
-            horrors++;
-          }
-        } else {
-          printf("  !! !! Tet-face has no neighbor (%d, %d, %d) - %d:\n",
-                 pointmark(pa), pointmark(pb), pointmark(pc), pointmark(pd));
-          horrors++;
-        }
-      }
-      if (facemarked(tetloop)) {
-        // This may be a bug. Report it.
-        printf("  !! tetface (%d, %d, %d) %d is marked.\n", pointmark(pa),
-               pointmark(pb), pointmark(pc), pointmark(pd));
-      }
-    }
-    // Check the six edges of this tet.
-    for (i = 0; i < 6; i++) {
-      tetloop.ver = edge2ver[i];
-      if (edgemarked(tetloop)) {
-        // This may be a bug. Report it.
-        printf("  !! tetedge (%d, %d) %d, %d is marked.\n",
-               pointmark(org(tetloop)), pointmark(dest(tetloop)),
-               pointmark(apex(tetloop)), pointmark(oppo(tetloop)));
-      }
-    }
-    tetloop.tet = alltetrahedrontraverse();
-  }
-  if (horrors == 0) {
-    if (!b->quiet) {
-      printf("  In my studied opinion, the mesh appears to be consistent.\n");
-    }
-  } else {
-    printf("  !! !! !! !! %d %s witnessed.\n", horrors,
-           horrors > 1 ? "abnormity" : "abnormities");
-  }
-
-  return horrors;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -15244,6 +15059,11 @@ if (1) {
 
   // The total number of iunput segments.
   insegments = subsegs->items;
+
+  if (0) {
+    outsurfacemesh("dump");
+  }
+
 } // meshsurface()
 
   delete [] idx2verlist;
