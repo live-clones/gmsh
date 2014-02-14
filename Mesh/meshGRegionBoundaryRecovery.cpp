@@ -14686,7 +14686,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 
   std::vector<MTetrahedron*> tets;
 
-if (0) {
+if (1) {
   // Generate the DT.
   delaunayMeshIn3D(_vertices, tets, false);
 }
@@ -14743,7 +14743,7 @@ if (0) {
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
   }
 
-if (0) {
+if (1) {
   // Index the vertices.
   for (unsigned int i = 0; i < _vertices.size(); i++){
 	_vertices[i]->setIndex(i);
