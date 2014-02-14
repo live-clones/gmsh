@@ -14686,7 +14686,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 
   std::vector<MTetrahedron*> tets;
 
-if (1) {
+if (0) {
   // Generate the DT.
   delaunayMeshIn3D(_vertices, tets, false);
 }
@@ -14743,7 +14743,7 @@ if (1) {
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
   }
 
-if (1) {
+if (0) {
   // Index the vertices.
   for (unsigned int i = 0; i < _vertices.size(); i++){
 	_vertices[i]->setIndex(i);
@@ -14978,9 +14978,6 @@ if (1) {
     permutarray[1] = swapvertex;
   }
 
-  // Make sure the third vertex is not collinear with the first two.
-  // Acknowledgement:  Thanks Jan Pomplun for his correction by using
-  //   epsilon^2 and epsilon^3 (instead of epsilon). 2013-08-15.
   i = 2;
   for (j = 0; j < 3; j++) {
     v1[j] = permutarray[1][j] - permutarray[0][j];
@@ -15173,6 +15170,10 @@ if (1) {
         p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
         setpointtype(p[j], RIDGEVERTEX);
       }
+      if (p[0] == p[1]) {
+        // This is a potential problem in surface mesh.
+        continue; // Skip this edge.
+      }
       // Find a face contains the edge p[0], p[1].
       newseg.sh = NULL;
       searchsh.sh = NULL;
@@ -15355,7 +15356,8 @@ if (1) {
           assert(parentseg.sh != NULL);
           l_edges.insert(shellmark(parentseg));
           // Get the GEdge containing this vertex.
-          GEdge *ge = NULL;
+          GEdge *ge = NULL; 
+          GFace *gf = NULL;
           int etag = shellmark(parentseg);
           for (std::list<GEdge*>::iterator it = e_list.begin();
                it != e_list.end(); ++it) {
@@ -15364,14 +15366,42 @@ if (1) {
               break;
             }
           }
-          assert(ge != NULL);
-          MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
-                                       pointloop[2], ge, 0);
-          double uu = 0;
-          reparamMeshVertexOnEdge(v, ge, uu);
-          v->setParameter(0, uu);
+          if (ge != NULL) {
+            MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
+                                         pointloop[2], ge, 0);
+            double uu = 0;
+            if (reparamMeshVertexOnEdge(v, ge, uu)) {
+              v->setParameter(0, uu);
+            }
+            v->setIndex(pointmark(pointloop));
+            _gr->mesh_vertices.push_back(v);
+            _vertices.push_back(v);
+          }
           spivot(parentseg, parentsh);
           if (parentsh.sh != NULL) {
+            if (ge == NULL) {
+              // We treat this vertex a facet vertex.
+              int ftag = shellmark(parentsh);
+              for (std::list<GFace*>::iterator it = f_list.begin();
+                   it != f_list.end(); ++it) {
+                if ((*it)->tag() == ftag) {
+                  gf = *it;
+                  break;
+                }
+              }
+              if (gf != NULL) {
+                MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
+                                       pointloop[2], gf, 0, 0);
+                SPoint2 param;
+                if (reparamMeshVertexOnFace(v, gf, param)) {
+                  v->setParameter(0, param.x());
+                  v->setParameter(1, param.y());
+                }
+                v->setIndex(pointmark(pointloop));
+                _gr->mesh_vertices.push_back(v);
+                _vertices.push_back(v);
+              }
+            }
             // Record all the GFaces' tag at this segment.
             spinsh = parentsh;
             while (1) {
@@ -15380,9 +15410,13 @@ if (1) {
               if (spinsh.sh == parentsh.sh) break;
             }
           }
-          v->setIndex(pointmark(pointloop));
-          _gr->mesh_vertices.push_back(v);
-          _vertices.push_back(v);
+          if ((ge == NULL) && (gf == NULL)) {
+            // Create an interior mesh vertex.
+            MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
+            v->setIndex(pointmark(pointloop));
+            _gr->mesh_vertices.push_back(v);
+            _vertices.push_back(v);
+          }
         } else if (pointtype(pointloop) == FREEFACETVERTEX) {
           sdecode(point2sh(pointloop), parentsh);
           assert(parentsh.sh != NULL);
@@ -15397,16 +15431,24 @@ if (1) {
               break;
             }
           }
-          assert(gf != NULL);
-          MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                       pointloop[2], gf, 0, 0);
-          SPoint2 param;
-          reparamMeshVertexOnFace(v, gf, param);
-          v->setParameter(0, param.x());
-          v->setParameter(1, param.y());
-          v->setIndex(pointmark(pointloop));
-          _gr->mesh_vertices.push_back(v);
-          _vertices.push_back(v);
+          if (gf != NULL) {
+            MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
+                                         pointloop[2], gf, 0, 0);
+            SPoint2 param;
+            if (reparamMeshVertexOnFace(v, gf, param)) {
+              v->setParameter(0, param.x());
+              v->setParameter(1, param.y());
+            }
+            v->setIndex(pointmark(pointloop));
+            _gr->mesh_vertices.push_back(v);
+            _vertices.push_back(v);
+          } else {
+            // Create a mesh vertex.
+            MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
+            v->setIndex(pointmark(pointloop));
+            _gr->mesh_vertices.push_back(v);
+            _vertices.push_back(v);
+          }
         } else {
           MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
           v->setIndex(pointmark(pointloop));
