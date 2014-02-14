@@ -137,6 +137,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
     std::vector<MTetrahedron*> tetrahedra2;
     for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
       MTetrahedron *t = gr->tetrahedra[i];
+      // FIXME: we should choose the template to maximize the quality
       if(t->getNumVertices() == 10){
         tetrahedra2.push_back
           (new MTetrahedron(t->getVertex(0), t->getVertex(4), t->getVertex(7), t->getVertex(6)));
@@ -191,6 +192,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
     }
     delete h;
   }
+
   if(splitIntoHexas){
     for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
       MTetrahedron *t = gr->tetrahedra[i];
@@ -385,8 +387,6 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
-
-
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
