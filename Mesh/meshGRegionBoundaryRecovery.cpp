@@ -14009,7 +14009,7 @@ void meshGRegionBoundaryRecovery::outsurfacemesh(const char* mfilename)
   if ((in->firstnumber == 1) && (firstindex == 0)) {
     shift = 1; // Shift the output indices by 1.
   }
-  fprintf(outfile, "0 3 0 0\n", subfaces->items);
+  fprintf(outfile, "0 3 0 0\n");
   fprintf(outfile, "%ld  1\n", subfaces->items);
   subfaces->traversalinit();
   faceloop.sh = shellfacetraverse(subfaces);
