@@ -776,8 +776,8 @@ static int getWedge(BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
 static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 {
   if (getBLField(gr->model())) insertVerticesInRegion(gr,-1);
-  BoundaryLayerColumns* _columns = buildAdditionalPoints3D (gr);
-  if (!_columns)return false;
+  if (!buildAdditionalPoints3D (gr)) return false;
+  BoundaryLayerColumns* _columns = gr->getColumns();
   std::map<MFace,MElement*,Less_Face> bfaces;
 
   std::vector<MPrism*> blPrisms;

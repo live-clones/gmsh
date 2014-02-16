@@ -1161,15 +1161,15 @@ static bool preprocessVertex (MVertex *v,
   return onSymmetryPlane;
 }
 
-BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
+bool buildAdditionalPoints3D(GRegion *gr)
 {
   BoundaryLayerField *blf = getBLField (gr->model());
 
-  if (!blf)return 0;
+  if (!blf) return false;
 
   blf->setupFor3d();
 
-  BoundaryLayerColumns * _columns = new BoundaryLayerColumns;
+  BoundaryLayerColumns *_columns = gr->getColumns();
 
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator itf = faces.begin();
@@ -1299,7 +1299,7 @@ BoundaryLayerColumns *buildAdditionalPoints3D(GRegion *gr)
 
   // END OF DEBUG STUFF
 
-  return _columns;
+  return true;
 }
 
 #endif

@@ -158,10 +158,6 @@ class GModel
   std::set<int> meshPartitions;
   int partitionSize[2];
 
-  // boundary layer columns i.e. list of vertices that form columns
-  // in boundary layers
-  BoundaryLayerColumns _columns;
-
  public:
   GModel(std::string name="");
   virtual ~GModel();

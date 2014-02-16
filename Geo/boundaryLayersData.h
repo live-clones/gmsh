@@ -148,7 +148,7 @@ public:
 
 BoundaryLayerField* getBLField(GModel *gm);
 bool buildAdditionalPoints2D (GFace *gf ) ;
-BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) ;
+bool buildAdditionalPoints3D (GRegion *gr) ;
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
 
 #endif
