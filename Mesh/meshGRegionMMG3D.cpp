@@ -124,6 +124,8 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
 
     MVertex *v = *it;
     double U = 0, V = 0;
+    if (!v->onWhat()) continue;
+
     if (v->onWhat()->dim() == 1){
       v->getParameter(0,U);
     }
@@ -131,6 +133,7 @@ static void gmsh2MMG(GRegion *gr, MMG_pMesh mmg, MMG_pSol sol,
       v->getParameter(0,U);
       v->getParameter(1,V);
     }
+
     //double lc = BGM_MeshSize(v->onWhat(), U,V,v->x(), v->y(), v->z());
     SMetric3 m = BGM_MeshMetric(v->onWhat(), U,V,v->x(), v->y(), v->z());
 
