@@ -341,7 +341,7 @@
 void messageFromCpp (void *self, std::string level, std::string msg)
 {
     if(level == "RequestRender"){
-        [(__bridge id)self requestRender];
+		[(__bridge id)self performSelectorOnMainThread:@selector(requestRender) withObject:nil waitUntilDone:YES];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
 	else if(level == "Progress"){
