@@ -82,6 +82,7 @@
             break;
         case 3:
         {
+			rotate = true;
             mContext->eventHandler(3,position.x,position.y);
         }
             break;
@@ -174,7 +175,8 @@
     CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
 
     CGImageRef imageRef = CGImageCreate(backingWidth, backingHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
-
+	free(buffer);
+	free(buffer2);
     return [UIImage imageWithCGImage:imageRef];
 }
 

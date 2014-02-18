@@ -25,7 +25,6 @@
 	
     models = [[NSMutableArray alloc] init];
     NSString *docsPath = [Utils getApplicationDocumentsDirectory];
-    [Utils copyRes];
     NSArray *docs = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:docsPath error:NULL];
     for(NSString* doc in docs) {
         NSString *docPath = [NSString stringWithFormat:@"%@/%@/", docsPath, doc];

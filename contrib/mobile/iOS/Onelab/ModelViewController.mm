@@ -57,7 +57,8 @@
 
 -(void)viewWillAppear:(BOOL)animated
 {
-	if(self.initialModel != nil) {
+	//if(self.initialModel != nil) {
+	if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]) {
 		_loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
 		[_loadingAlert show];
 	}
@@ -156,7 +157,8 @@
 	[_progressIndicator startAnimating];
 	[[UIApplication sharedApplication] cancelAllLocalNotifications];
 	dispatch_group_t group = dispatch_group_create();
-	dispatch_group_async(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+	dispatch_queue_t queue = dispatch_queue_create("org.geuz.onelab", NULL);
+	dispatch_group_async(group, queue, ^{
 		_computeBackgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
 			[[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
 			_computeBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
@@ -178,7 +180,7 @@
 		_computeBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
     });
 	
-	dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+	dispatch_group_notify(group, queue, ^{
 		[UIApplication sharedApplication].applicationIconBadgeNumber = -1;
 		[_runStopButton setAction:@selector(compute)];
 		[_runStopButton setTitle:@"Run"];
@@ -212,18 +214,19 @@
 -(void)prevAnimation { animation_prev(); [self requestRender]; }
 -(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
-    if([sender numberOfTouches] > 2) return;
-    float mScale = scaleFactor;
-    if (sender.state == UIGestureRecognizerStateBegan)
-        mScale = scaleFactor;
-    else if(sender.state == UIGestureRecognizerStateChanged)
-        mScale = scaleFactor * [sender scale];
-    else if(sender.state == UIGestureRecognizerStateEnded || sender.state == UIGestureRecognizerStateCancelled){
-        scaleFactor *= [sender scale];
-        mScale = scaleFactor;
-    }
-    mScale = MAX(0.1, mScale);
-    glView->mContext->eventHandler(2,mScale);
+    if(!glView->rotate && [sender numberOfTouches] == 2) {
+		float mScale = scaleFactor;
+		if (sender.state == UIGestureRecognizerStateBegan)
+			mScale = scaleFactor;
+		else if(sender.state == UIGestureRecognizerStateChanged)
+			mScale = scaleFactor * [sender scale];
+		else if(sender.state == UIGestureRecognizerStateEnded || sender.state == UIGestureRecognizerStateCancelled){
+			scaleFactor *= [sender scale];
+			mScale = scaleFactor;
+		}
+		mScale = MAX(0.1, mScale);
+		glView->mContext->eventHandler(2,mScale);
+	}
     [glView drawView];
 }
 
@@ -244,6 +247,7 @@
     UITouch *touch = [[event allTouches] anyObject];
     CGPoint touchPoint = [touch locationInView:self.view];
     glView->mContext->eventHandler(4, touchPoint.x, touchPoint.y);
+	glView->rotate = false;
 }
 
 - (IBAction)singleTap:(UITapGestureRecognizer *)sender {
@@ -313,13 +317,8 @@
 	if(buttonIndex == 0) [_errors removeAllObjects];
 	else [_errors removeLastObject];
 	if(_errors.count > 0) {
-		[_errorAlert setMessage:[_errors lastObject]];
+		//[_errorAlert setMessage:[_errors lastObject]];
 		[_errorAlert show];
-	}
-	else {
-		[_errorAlert dismissWithClickedButtonIndex:0 animated:YES];
-		//[_errorAlert release];
-		_errorAlert = nil;
 	}
 }
 
@@ -371,10 +370,13 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
     [lbl setBackgroundColor:[UIColor clearColor]];
     CGSize lblSize = [[lbl text] sizeWithAttributes:@{NSFontAttributeName:[lbl font]}];
     *realWidth = lblSize.width;
-    int i;
-    for(i=2;i<*realWidth;i*=2); *width = i;
+	int i=2;
+	while(i<*realWidth) i*=2;
+	*width = i;
     *height = lblSize.height;
-    for(i=2;i<*height;i*=2); *height = i;
+	i=2;
+	while(i<*height) i*=2;
+    *height = i;
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(*width, *height), NO, 0.0);
     [lbl.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIImage *img = UIGraphicsGetImageFromCurrentImageContext();

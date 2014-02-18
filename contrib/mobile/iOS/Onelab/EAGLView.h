@@ -29,6 +29,7 @@
 @public
 	/* our GModel drawing class */
     drawContext *mContext;
+	BOOL rotate;
 }
 
 - (void)drawView;

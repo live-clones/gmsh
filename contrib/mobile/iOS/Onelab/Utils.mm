@@ -24,11 +24,11 @@
     NSString *docPath = [paths objectAtIndex:0]; //Get the docs directory
     
     NSArray *resContents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resPath error:NULL];
-    
+    //[[NSFileManager defaultManager] removeItemAtPath:[docPath stringByAppendingString:@"/"] error:nil];
     for (NSString* obj in resContents){
         NSError* error;
         if (![[NSFileManager defaultManager] copyItemAtPath:[resPath stringByAppendingPathComponent:obj] toPath:[docPath stringByAppendingPathComponent:obj] error:&error])
-            NSLog(@"Error: %@", error);;
+            NSLog(@"Error: %@", error);
     }
 }
 

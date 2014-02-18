@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "ModelListController.h"
+#import "Utils.h"
 
 @implementation AppDelegate
 
@@ -20,6 +21,12 @@
         self.splitViewController = [storyboard instantiateViewControllerWithIdentifier:@"SplitViewController"];
     }
     compute = false;
+	if (![[NSUserDefaults standardUserDefaults] boolForKey:@"HasLaunchedOnce"])
+    {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasLaunchedOnce"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        [Utils copyRes];
+    }
     return YES;
 }
 							
