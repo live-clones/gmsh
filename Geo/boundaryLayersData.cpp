@@ -22,7 +22,7 @@
 
 BoundaryLayerField* getBLField(GModel *gm){ return 0; }
 bool buildAdditionalPoints2D (GFace *gf ) { return false; }
-BoundaryLayerColumns * buildAdditionalPoints3D (GRegion *gr) { return 0; }
+bool buildAdditionalPoints3D (GRegion *gr) { return false; }
 void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]) {}
 faceColumn BoundaryLayerColumns::getColumns(GFace *gf, MVertex *v1, MVertex *v2,
                                             MVertex *v3, int side)
@@ -33,6 +33,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
 {
   return edgeColumn(BoundaryLayerData(),BoundaryLayerData());
 }
+
 #else
 
 #include "Field.h"
