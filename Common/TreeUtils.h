@@ -16,6 +16,7 @@ typedef struct {
 
 Tree_T *Tree_Create(int size, int (*fcmp)(const void *a, const void *b));
 void    Tree_Delete(Tree_T *Tree);
+void    Tree_Delete(Tree_T *Tree, void (*freefn)(void * ) );
 void   *Tree_Add(Tree_T *tree, void *data);
 int     Tree_Nbr(Tree_T *Tree);
 int     Tree_Insert(Tree_T *Tree, void *data);

@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include "GmshMessage.h"
+#include "MallocUtils.h"
 #include "GModel.h"
 #include "TreeUtils.h"
 #include "ListUtils.h"
@@ -17,6 +18,13 @@ typedef struct{
   int n;
   List_T *l;
 }lnk;
+
+
+static void freeLink(void * link)
+{
+  List_Delete(((lnk*) link)->l); 
+  Free(link); 
+}
 
 static int complink(const void *a, const void *b)
 {
@@ -193,7 +201,7 @@ int allEdgesLinked(int ed, List_T *edges)
     orientAndSortEdges(edges, links);
   }
 
-  Tree_Delete(links);
+  Tree_Delete(links, freeLink);
   Tree_Delete(points);
 
   return found;
@@ -305,7 +313,7 @@ int allFacesLinked(int fac, List_T *faces)
     // necessary...
   }
 
-  Tree_Delete(links);
+  Tree_Delete(links,freeLink);
   Tree_Delete(edges);
 
   return found;

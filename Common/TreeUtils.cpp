@@ -27,6 +27,13 @@ void Tree_Delete(Tree_T * tree)
   Free(tree);
 }
 
+void Tree_Delete(Tree_T * tree, void (*freefn) (void * ))
+{
+  if(!tree) return;
+  avl_free_table(tree->root, freefn, 0);
+  Free(tree);
+}
+
 void *Tree_Add(Tree_T * tree, void *data)
 {
   if(!tree) return 0;
