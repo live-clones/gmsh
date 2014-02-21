@@ -1876,63 +1876,53 @@ REAL meshGRegionBoundaryRecovery::insphere_s(REAL* pa, REAL* pb, REAL* pc,
   return oriB;
 }
 
-REAL orient4dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
-              REAL aheight, REAL bheight, REAL cheight, REAL dheight,
-              REAL eheight)
+inline REAL orient4dfast(REAL* pa, REAL* pb, REAL* pc, REAL* pd, REAL* pe,
+			 REAL aheight, REAL bheight, REAL cheight,
+			 REAL dheight, REAL eheight)
 {
- REAL aex, bex, cex, dex;
- REAL aey, bey, cey, dey;
- REAL aez, bez, cez, dez;
- REAL aexbey, bexaey, bexcey, cexbey, cexdey, dexcey, dexaey, aexdey;
- REAL aexcey, cexaey, bexdey, dexbey;
- REAL aeheight, beheight, ceheight, deheight;
- REAL ab, bc, cd, da, ac, bd;
- REAL abc, bcd, cda, dab;
- REAL det;
+ const REAL aex = pa[0] - pe[0];
+ const REAL bex = pb[0] - pe[0];
+ const REAL cex = pc[0] - pe[0];
+ const REAL dex = pd[0] - pe[0];
+ const REAL aey = pa[1] - pe[1];
+ const REAL bey = pb[1] - pe[1];
+ const REAL cey = pc[1] - pe[1];
+ const REAL dey = pd[1] - pe[1];
+ const REAL aez = pa[2] - pe[2];
+ const REAL bez = pb[2] - pe[2];
+ const REAL cez = pc[2] - pe[2];
+ const REAL dez = pd[2] - pe[2];
+ const REAL aeheight = aheight - eheight;
+ const REAL beheight = bheight - eheight;
+ const REAL ceheight = cheight - eheight;
+ const REAL deheight = dheight - eheight;
 
- aex = pa[0] - pe[0];
- bex = pb[0] - pe[0];
- cex = pc[0] - pe[0];
- dex = pd[0] - pe[0];
- aey = pa[1] - pe[1];
- bey = pb[1] - pe[1];
- cey = pc[1] - pe[1];
- dey = pd[1] - pe[1];
- aez = pa[2] - pe[2];
- bez = pb[2] - pe[2];
- cez = pc[2] - pe[2];
- dez = pd[2] - pe[2];
- aeheight = aheight - eheight;
- beheight = bheight - eheight;
- ceheight = cheight - eheight;
- deheight = dheight - eheight;
+ const REAL aexbey = aex * bey;
+ const REAL bexaey = bex * aey;
+ const REAL ab = aexbey - bexaey;
+ const REAL bexcey = bex * cey;
+ const REAL cexbey = cex * bey;
+ const REAL bc = bexcey - cexbey;
+ const REAL cexdey = cex * dey;
+ const REAL dexcey = dex * cey;
+ const REAL cd = cexdey - dexcey;
+ const REAL dexaey = dex * aey;
+ const REAL aexdey = aex * dey;
+ const REAL da = dexaey - aexdey;
 
- aexbey = aex * bey;
- bexaey = bex * aey;
- ab = aexbey - bexaey;
- bexcey = bex * cey;
- cexbey = cex * bey;
- bc = bexcey - cexbey;
- cexdey = cex * dey;
- dexcey = dex * cey;
- cd = cexdey - dexcey;
- dexaey = dex * aey;
- aexdey = aex * dey;
- da = dexaey - aexdey;
+ const REAL aexcey = aex * cey;
+ const REAL cexaey = cex * aey;
+ const REAL ac = aexcey - cexaey;
+ const REAL bexdey = bex * dey;
+ const REAL dexbey = dex * bey;
+ const REAL bd = bexdey - dexbey;
 
- aexcey = aex * cey;
- cexaey = cex * aey;
- ac = aexcey - cexaey;
- bexdey = bex * dey;
- dexbey = dex * bey;
- bd = bexdey - dexbey;
+ const REAL abc = aez * bc - bez * ac + cez * ab;
+ const REAL bcd = bez * cd - cez * bd + dez * bc;
+ const REAL cda = cez * da + dez * ac + aez * cd;
+ const REAL dab = dez * ab + aez * bd + bez * da;
 
- abc = aez * bc - bez * ac + cez * ab;
- bcd = bez * cd - cez * bd + dez * bc;
- cda = cez * da + dez * ac + aez * cd;
- dab = dez * ab + aez * bd + bez * da;
-
- det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
+ const REAL det = (deheight * abc - ceheight * dab) + (beheight * cda - aeheight * bcd);
 
  return det;
 }
