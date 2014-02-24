@@ -456,19 +456,19 @@ bool insertVertexB(std::list<faceXtet> &shell,
   while (it != shell.end()){
     MTetrahedron *tr = new MTetrahedron(it->getVertex(0), it->getVertex(1), it->getVertex(2), v);
 
-    //    double lc = .25 * (vSizes[tr->getVertex(0)->getIndex()] +
-    //		       vSizes[tr->getVertex(1)->getIndex()] +
-    //		       vSizes[tr->getVertex(2)->getIndex()] +
-    //		       vSizes[tr->getVertex(3)->getIndex()]);
-    //    double lcBGM = .25 * (vSizesBGM[tr->getVertex(0)->getIndex()] +
-    //			  vSizesBGM[tr->getVertex(1)->getIndex()] +
-    //			  vSizesBGM[tr->getVertex(2)->getIndex()] +
-    //			  vSizesBGM[tr->getVertex(3)->getIndex()]);
-    //    double LL = std::min(lc, lcBGM);
+        double lc = .25 * (vSizes[tr->getVertex(0)->getIndex()] +
+    		       vSizes[tr->getVertex(1)->getIndex()] +
+    		       vSizes[tr->getVertex(2)->getIndex()] +
+    		       vSizes[tr->getVertex(3)->getIndex()]);
+        double lcBGM = .25 * (vSizesBGM[tr->getVertex(0)->getIndex()] +
+    			  vSizesBGM[tr->getVertex(1)->getIndex()] +
+    			  vSizesBGM[tr->getVertex(2)->getIndex()] +
+    			  vSizesBGM[tr->getVertex(3)->getIndex()]);
+        double LL = std::min(lc, lcBGM);
 
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM);
     t4->setOnWhat(t->onWhat());
-    /*
+    
     double d1 = sqrt((it->v[0]->x() - v->x()) * (it->v[0]->x() - v->x()) +
                      (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
                      (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
@@ -479,8 +479,8 @@ bool insertVertexB(std::list<faceXtet> &shell,
                      (it->v[2]->y() - v->y()) * (it->v[2]->y() - v->y()) +
                      (it->v[2]->z() - v->z()) * (it->v[2]->z() - v->z()));
 
-    if (d1 < LL * .25 || d2 < LL * .25 || d3 < LL * .25) onePointIsTooClose = true;
-    */
+    if (d1 < LL * .05 || d2 < LL * .05 || d3 < LL * .05) onePointIsTooClose = true;
+    
     newTets[k++] = t4;
     // all new tets are pushed front in order to ba able to destroy
     // them if the cavity is not star shaped around the new vertex.
@@ -919,6 +919,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 //template <class CONTAINER, class DATA>
 void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
 {
+  
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -973,6 +974,7 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
   int nbESwap = 0, nbFSwap = 0, nbReloc = 0;
 
   while (1){
+    //    printf("coucou\n");
     std::vector<MTet4*> newTets;
     for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
@@ -987,20 +989,30 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
         }
       }
     }
+    //    printf("coucou\n");
 
     illegals.clear();
     for (int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
 
+    //   printf("coucou\n");
     for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
+	for (int i=0;i<4;i++)
+	  for (int j=i+1;j<4;j++)
+	    if ((*it)->tet()->getVertex(i) == (*it)->tet()->getVertex(j))
+	      printf("argh\n");
+
         double qq = (*it)->getQuality();
-        if (qq < qMin)
+        if (qq < qMin){
+	  //	  printf("cacze\n");
           for (int i = 0; i < 6; i++){
+	    //	    printf("%d\n",i);
             if (edgeSwap(newTets, *it, i, qm)) {
               nbESwap++;
               break;
             }
           }
+	}
         if (!(*it)->isDeleted()){
           if (qq < sliverLimit) illegals.push_back(*it);
           for (int i = 0; i < nbRanges; i++){
@@ -1011,6 +1023,7 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
         }
       }
     }
+    //    printf("coucou\n");
 
     if (0 && !newTets.size()){
       int nbSlivers = 0;
@@ -1028,6 +1041,7 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
       break;
     }
 
+    //    printf("coucou\n");
     // add all the new tets in the container
     for(unsigned int i = 0; i < newTets.size(); i++){
       if(!newTets[i]->isDeleted()){
@@ -1038,6 +1052,7 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
         delete newTets[i];
       }
     }
+    //    printf("coucou\n");
 
     // relocate vertices
     for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
@@ -1050,6 +1065,7 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
       }
     }
 
+    //    printf("coucou\n");
     double totalVolumeb = 0.0;
     double worst = 1.0;
     double avg = 0;
@@ -1064,16 +1080,17 @@ void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
         totalVolumeb += vol;
       }
     }
+    //    printf("coucou\n");
     double t2 = Cpu();
     Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
               nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
   }
 
   if (illegals.size()){
-    Msg::Info("Opti : %d illegal tets are still in the mesh", illegals.size());
+    Msg::Info("Opti : %d ill-shaped tets are still in the mesh", illegals.size());
   }
   else{
-    Msg::Info("Opti : no illegal tets in the mesh ;-)");
+    Msg::Info("Opti : no ill-shaped tets in the mesh ;-)");
   }
 
   for (int i = 0; i < nbRanges; i++){

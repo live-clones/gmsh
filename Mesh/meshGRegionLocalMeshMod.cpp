@@ -60,16 +60,19 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
   *v1 = t->tet()->getVertex(edges[iLocalEdge][0]);
   *v2 = t->tet()->getVertex(edges[iLocalEdge][1]);
 
+  // the 5 - i th edge contains the other 2 points of the tet
   MVertex *lastinring = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
   ring.push_back(lastinring);
   cavity.push_back(t);
 
-  // a change here for hybrid meshes
-
-  //int ITER = 0;
   while (1){
     MVertex *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
     MVertex *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
+    //    printf("edge %d %d tet %d %d %d %d\n",(*v1)->getNum(),(*v2)->getNum(),
+    //	   t->tet()->getVertex(0)->getNum(),
+    //	   t->tet()->getVertex(1)->getNum(),
+    //	   t->tet()->getVertex(2)->getNum(),
+    //	   t->tet()->getVertex(3)->getNum());
     int K = ov1 == lastinring ? 1 : 0;
     lastinring = ov1 == lastinring ? ov2 : ov1;
     // look in the 2 faces sharing this edge the one that has vertex
@@ -104,7 +107,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
       return false;
     }
     // FIXME when hybrid mesh, this loops for ever
-    //    if (cavity.size() > 10)return false;
+    if (cavity.size() > 1000)return false;
     //    printf("%d %d\n",ITER++, cavity.size());
   }
   computeNeighboringTetsOfACavity (cavity,outside);
@@ -214,7 +217,9 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   std::vector<MVertex*> ring;
   MVertex *v1, *v2;
 
+  //  printf("a\n");
   bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
+  //  printf("b\n");
 
   if (!closed) return false;
 
