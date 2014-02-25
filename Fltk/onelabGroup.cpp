@@ -1161,14 +1161,21 @@ void onelabGroup::_addParameter(T &p)
   Fl_Color c;
   if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
-  Fl_Widget *widget = _addParameterWidget(p, n, highlight, c);
-  _treeWidgets.push_back(widget);
+  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  ww *= _widgetLabelRatio; // FIXME CHANGE THIS
+  int hh = n->labelsize() + 4;
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  Fl_Widget *widget = _addParameterWidget(p, ww, hh, n, highlight, c);
+  grp->end();
+  //grp->resizable(0);
+  _treeWidgets.push_back(grp);
   widget->copy_label(p.getShortName().c_str());
   std::string help = p.getLabel().size() ? p.getLabel() : p.getShortName();
   if(p.getHelp().size()) help += ":\n" + p.getHelp();
   widget->copy_tooltip(help.c_str());
-  n->widget(widget);
+  n->widget(grp);
   _tree->end();
 }
 
@@ -1177,18 +1184,22 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
   Fl_Tree_Item *n = _tree->add(path.c_str());
   _tree->begin();
   int ww = _baseWidth - (n->depth() + 1) * _indent;
-  Fl_Button *but = new Fl_Button(1, 1, ww, 1);
+  int hh = n->labelsize() + 4;
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  Fl_Button *but = new Fl_Button(1, 1, ww, hh);
   but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   but->callback(callback, data);
   but->box(FL_FLAT_BOX);
   but->color(_tree->color());
   but->selection_color(_tree->color());
-  _treeWidgets.push_back(but);
+  grp->end();
+  //grp->resizable(0);
+  _treeWidgets.push_back(grp);
   std::string label = path;
   std::string::size_type last = path.find_last_of('/');
   if(last != std::string::npos) label = path.substr(last + 1);
   but->copy_label(label.c_str());
-  n->widget(but);
+  n->widget(grp);
   _tree->end();
 }
 
@@ -1198,10 +1209,14 @@ void onelabGroup::_addSolverMenu(int num)
   path << "0Modules/Solver/Solver" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int hh = n->labelsize() + 4;
   _tree->begin();
-  solverButton *but = new solverButton(1, 1, ww, 1, num, _tree->color());
-  _treeWidgets.push_back(but);
-  n->widget(but);
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  solverButton *but = new solverButton(1, 1, ww, hh, num, _tree->color());
+  grp->end();
+  //grp->resizable(0);
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
   _tree->end();
 }
 
@@ -1211,10 +1226,14 @@ void onelabGroup::_addViewMenu(int num)
   path << "0Modules/Post-processing/View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int hh = n->labelsize() + 4;
   _tree->begin();
-  viewButton *but = new viewButton(1, 1, ww, 1, num, _tree->color());
-  _treeWidgets.push_back(but);
-  n->widget(but);
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  viewButton *but = new viewButton(1, 1, ww, hh, num, _tree->color());
+  grp->end();
+  //grp->resizable(0);
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
   _tree->end();
 }
 
@@ -1223,7 +1242,10 @@ viewButton *onelabGroup::getViewButton(int num)
   char tmp[256];
   sprintf(tmp, "0Modules/Post-processing/View%d", num);
   Fl_Tree_Item *n = _tree->find_item(tmp);
-  if(n) return (viewButton*)n->widget();
+  if(n){
+    Fl_Group *grp = (Fl_Group*)n->widget();
+    return (viewButton*)grp->child(0);
+  }
   return 0;
 }
 
@@ -1315,20 +1337,16 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
   }
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
-                                            bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
+                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 4);
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww *= _widgetLabelRatio;
-
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
 
   // enumeration (display choices as value labels, not numbers)
   if(p.getChoices().size() &&
      p.getChoices().size() == p.getValueLabels().size()){
-    Fl_Choice *but = new Fl_Choice(1, 1, ww, 1);
+    Fl_Choice *but = new Fl_Choice(1, 1, ww, hh);
     std::vector<Fl_Menu_Item> menu;
     std::map<double, std::string> labels(p.getValueLabels());
     for(std::map<double, std::string>::iterator it = labels.begin();
@@ -1358,7 +1376,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   if(p.getChoices().size() == 2 &&
      p.getChoices()[0] == 0 && p.getChoices()[1] == 1){
     n->labelsize(FL_NORMAL_SIZE + 2);
-    Fl_Check_Button *but = new Fl_Check_Button(1, 1, ww / _widgetLabelRatio, 1);
+    Fl_Check_Button *but = new Fl_Check_Button(1, 1, ww / _widgetLabelRatio, hh);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
     but->value(p.getValue());
@@ -1370,7 +1388,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
 
   // non-editable value
   if(p.getReadOnly()){
-    outputRange *but = new outputRange(1, 1, ww, 1);
+    outputRange *but = new outputRange(1, 1, ww, hh);
     but->callback(onelab_number_output_range_cb, (void*)path);
     but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
@@ -1380,7 +1398,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, Fl_Tree_Item *n,
   }
 
   // general number input
-  inputRange *but = new inputRange(1, 1, ww, 1, onelab::parameter::maxNumber(),
+  inputRange *but = new inputRange(1, 1, ww, hh, onelab::parameter::maxNumber(),
                                    p.getAttribute("ReadOnlyRange") == "1");
   but->value(p.getValue());
   but->minimum(p.getMin());
@@ -1493,17 +1511,15 @@ static void multiple_selection_menu_cb(Fl_Widget *w, void *data)
   but->do_callback();
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
-                                            bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
+                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
-
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
 
   // macro button
   if(p.getAttribute("Macro") == "Gmsh"){
-    Fl_Button *but = new Fl_Button(1, 1, ww, 1);
+    Fl_Button *but = new Fl_Button(1, 1, ww / _widgetLabelRatio, hh);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
     but->selection_color(_tree->color());
@@ -1513,12 +1529,9 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
     return but;
   }
 
-  ww *= _widgetLabelRatio;
-  n->labelsize(FL_NORMAL_SIZE + 4);
-
   // non-editable value
   if(p.getReadOnly()){
-    Fl_Output *but = new Fl_Output(1, 1, ww, 1);
+    Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value(p.getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
@@ -1527,7 +1540,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
 
   // simple string (no menu)
   if(p.getChoices().empty() && p.getKind() != "file"){
-    Fl_Input *but = new Fl_Input(1, 1, ww, 1);
+    Fl_Input *but = new Fl_Input(1, 1, ww, hh);
     but->value(p.getValue().c_str());
     but->callback(onelab_string_input_cb, (void*)path);
     but->when(FL_WHEN_ENTER_KEY);
@@ -1537,7 +1550,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, Fl_Tree_Item *n,
   }
 
   // general string input
-  Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, ww, 1);
+  Fl_Input_Choice *but = new Fl_Input_Choice(1, 1, ww, hh);
   std::string multipleSelection = p.getAttribute("MultipleSelection");
   if(multipleSelection.size())
     but->menubutton()->callback(multiple_selection_menu_cb, but);
@@ -1589,26 +1602,22 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
   }
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
-                                            bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
+                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 4);
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww *= _widgetLabelRatio;
-
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
 
   // non-editable value
   if(p.getReadOnly()){
-    inputRegion *but = new inputRegion(1, 1, ww, 1, true);
+    inputRegion *but = new inputRegion(1, 1, ww, hh, true);
     but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
     return but;
   }
 
-  inputRegion *but = new inputRegion(1, 1, ww, 1, false);
+  inputRegion *but = new inputRegion(1, 1, ww, hh, false);
   but->value(p.getValue());
   but->align(FL_ALIGN_RIGHT);
   but->callback(onelab_region_input_cb, (void*)path);
@@ -1616,16 +1625,12 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, Fl_Tree_Item *n,
   return but;
 }
 
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, Fl_Tree_Item *n,
-                                            bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
+                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
-  n->labelsize(FL_NORMAL_SIZE + 4);
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww *= _widgetLabelRatio;
-
   // non-editable value
   if(1 || p.getReadOnly()){
-    Fl_Output *but = new Fl_Output(1, 1, ww, 1);
+    Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value("TODO function");
     but->align(FL_ALIGN_RIGHT);
     if(highlight) but->color(c);
@@ -1702,17 +1707,18 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
     if(n->has_children()){
       int ww = _baseWidth - (n->depth() + 1) * _indent;
+      int hh = n->labelsize() + 4;
       _tree->begin();
 #if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow
       // the widget is badly positioned and overlaps the open icon, leading to
       // a corrupted Fl_Tree_Item)
-      Fl_Button *but = new Fl_Button(1, 1, ww, 1);
+      Fl_Button *but = new Fl_Button(1, 1, ww, hh);
       but->box(FL_NO_BOX);
       but->clear_visible_focus();
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       but->callback(onelab_subtree_cb, (void*)n);
 #else
-      Fl_Box *but = new Fl_Box(1, 1, ww, 1);
+      Fl_Box *but = new Fl_Box(1, 1, ww, hh);
       //but->labelfont(FL_HELVETICA_ITALIC);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 #endif

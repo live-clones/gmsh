@@ -598,7 +598,6 @@ static void _rebuild_tree_browser(bool force)
     std::string elementary = model.str() + "Elementary entities/";
     n = FlGui::instance()->visibility->tree->add(elementary.c_str());
     n->close();
-
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       _add_region(*it, FlGui::instance()->visibility->tree, elementary);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
