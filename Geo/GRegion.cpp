@@ -14,8 +14,9 @@
 #include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
+#include "boundaryLayersData.h"
 
-GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
+GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag), _columns(0)
 {
   resetMeshAttributes();
 }
@@ -27,7 +28,7 @@ GRegion::~GRegion()
     (*it)->delRegion(this);
     ++it;
   }
-
+  if (_columns)delete _columns;
   deleteMesh();
 }
 
