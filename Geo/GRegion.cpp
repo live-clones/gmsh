@@ -16,7 +16,7 @@
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
 
-GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag), _columns(0)
+GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {
   resetMeshAttributes();
 }
@@ -28,7 +28,6 @@ GRegion::~GRegion()
     (*it)->delRegion(this);
     ++it;
   }
-  if (_columns)delete _columns;
   deleteMesh();
 }
 
@@ -407,9 +406,8 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   return volume;
 }
 
-
-std::list<GVertex*> GRegion :: vertices() const {
-
+std::list<GVertex*> GRegion::vertices() const
+{
   std::set<GVertex*> v;
   for (std::list<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
     const GFace *gf = *it;
