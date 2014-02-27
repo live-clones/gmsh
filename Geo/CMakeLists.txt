@@ -11,6 +11,7 @@ set(SRC
     GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp
   GRegionCompound.cpp GRbf.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
+    gmshEdgeDiscretize.cpp
    gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
     discreteEdge.cpp discreteFace.cpp discreteRegion.cpp

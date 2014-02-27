@@ -29,6 +29,7 @@ class gmshEdge : public GEdge {
   virtual void resetMeshAttributes();
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual void writeGEO(FILE *fp);
+  void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
 };
 
 #endif

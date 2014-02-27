@@ -58,6 +58,7 @@ namespace std {
   %template(DoubleVector) std::vector<double, std::allocator<double> >;
   %template(DoubleVectorVector) std::vector<std::vector<double, std::allocator<double> > >;
   %template(StringVector) std::vector<std::string, std::allocator<std::string> >;
+  %template(SPoint3Vector) std::vector<SPoint3, std::allocator<SPoint3> >;
 }
 
 %include "GmshConfig.h"
@@ -72,6 +73,8 @@ namespace std {
 %include "GPoint.h"  
 %include "GEntity.h"
 %include "GVertex.h"
+%apply std::vector<double> &OUTPUT{std::vector<double> &ts}
+%apply std::vector<SPoint3> &OUTPUT{std::vector<SPoint3> &dpts}
 %include "GEdge.h"
 %include "GFace.h"
 %include "GRegion.h"
