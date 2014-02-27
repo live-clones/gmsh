@@ -471,6 +471,7 @@ static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
   std::ostringstream vertex;
   vertex << path << "Point " << gv->tag() << "/";
   Fl_Tree_Item *n = tree->add(vertex.str().c_str());
+  if(!n) return;
   if(gv->getVisibility()) n->select(1);
   n->user_data((void*)gv);
   n->close();
@@ -481,6 +482,7 @@ static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
   std::ostringstream edge;
   edge << path << "Line " << ge->tag() << "/";
   Fl_Tree_Item *n = tree->add(edge.str().c_str());
+  if(!n) return;
   if(ge->getVisibility()) n->select(1);
   n->user_data((void*)ge);
   n->close();
@@ -495,6 +497,7 @@ static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
   std::ostringstream face;
   face << path << "Surface " << gf->tag() << "/";
   Fl_Tree_Item *n = tree->add(face.str().c_str());
+  if(!n) return;
   if(gf->getVisibility()) n->select(1);
   n->user_data((void*)gf);
   n->close();
@@ -508,6 +511,7 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
   std::ostringstream region;
   region << path << "Volume " << gr->tag() << "/";
   Fl_Tree_Item *n = tree->add(region.str().c_str());
+  if(!n) return;
   if(gr->getVisibility()) n->select(1);
   n->user_data((void*)gr);
   n->close();
@@ -532,28 +536,28 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
   case 3:
     group << "Physical Volume " << num << name << "/";
     n = tree->add(group.str().c_str());
-    n->close();
+    if(n) n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
       _add_region((GRegion*)ge[i], tree, group.str());
     break;
   case 2:
     group << "Physical Surface " << num << name << "/";
     n = tree->add(group.str().c_str());
-    n->close();
+    if(n) n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
       _add_face((GFace*)ge[i], tree, group.str());
     break;
   case 1:
     group << "Physical Line " << num << name << "/";
     n = tree->add(group.str().c_str());
-    n->close();
+    if(n) n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
       _add_edge((GEdge*)ge[i], tree, group.str());
     break;
   case 0:
     group << "Physical Point " << num << name << "/";
     n = tree->add(group.str().c_str());
-    n->close();
+    if(n) n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
       _add_vertex((GVertex*)ge[i], tree, group.str());
     break;
@@ -592,12 +596,14 @@ static void _rebuild_tree_browser(bool force)
 
     Fl_Tree_Item *n;
     n = FlGui::instance()->visibility->tree->add(model.str().c_str());
-    if(m->getVisibility()) n->select(1);
-    n->close();
+    if(n){
+      if(m->getVisibility()) n->select(1);
+      n->close();
+    }
 
     std::string elementary = model.str() + "Elementary entities/";
     n = FlGui::instance()->visibility->tree->add(elementary.c_str());
-    n->close();
+    if(n) n->close();
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       _add_region(*it, FlGui::instance()->visibility->tree, elementary);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
@@ -609,7 +615,7 @@ static void _rebuild_tree_browser(bool force)
 
     std::string physical = model.str() + "Physical groups/";
     n = FlGui::instance()->visibility->tree->add(physical.c_str());
-    n->close();
+    if(n) n->close();
 
     std::map<int, std::vector<GEntity*> > groups[4];
     m->getPhysicalGroups(groups);
