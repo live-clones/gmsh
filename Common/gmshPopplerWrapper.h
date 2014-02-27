@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#ifndef  _GMSHPOPPLERWRAPPER_PDF_H_
+#ifndef _GMSHPOPPLERWRAPPER_PDF_H_
 #define _GMSHPOPPLERWRAPPER_PDF_H_
 
 #include "GmshConfig.h"
@@ -34,16 +34,16 @@ private:
 
 public:
   static gmshPopplerWrapper *instance();
-  static int load_from_file (const std::string &file_name,
-			     const std::string &owner_password=std::string(),
-			     const std::string &user_password=std::string());
-  static int width() {return _w;}
-  static int height() {return _h;}
-  static void setCurrentPageUp () {_current_page++;}
-  static void setCurrentPageDown () {if(_current_page > 0) _current_page--;}
+  static bool hasFile(){ return _current_doc ? true : false; }
+  static int loadFromFile(const std::string &file_name,
+                          const std::string &owner_password=std::string(),
+                          const std::string &user_password=std::string());
+  static int width() { return _w; }
+  static int height() { return _h; }
+  static void setCurrentPageUp () { _current_page++; }
+  static void setCurrentPageDown () { if(_current_page > 0) _current_page--; }
 #if defined(HAVE_OPENGL)
-  static GLuint getTextureForPage(double xres,
-				  double yres) ;
+  static GLuint getTextureForPage(double xres, double yres);
 #endif
 };
 

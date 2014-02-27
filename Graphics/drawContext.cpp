@@ -17,6 +17,7 @@
 #include "PView.h"
 #include "PViewOptions.h"
 #include "VertexArray.h"
+#include "StringUtils.h"
 #include "gl2ps.h"
 
 #if defined(HAVE_FLTK)
@@ -28,7 +29,6 @@
 #if defined(HAVE_POPPLER)
 #include "gmshPopplerWrapper.h"
 #endif
-
 
 drawContextGlobal *drawContext::_global = 0;
 
@@ -353,86 +353,84 @@ void drawContext::drawBackgroundGradient()
     }
     glEnd();
   }
-#if defined(HAVE_POPPLER)
-  else if(CTX::instance()->bgGradient == 4){ // PDF @ background
-    // FIXME: this should move to drawBackgroundImage below!
-    GLuint texture = gmshPopplerWrapper::getTextureForPage(800,600);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D,texture);
-    glBegin(GL_QUADS);
-    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
-
-    int dw =viewport[2] - viewport[0];
-    int dh =viewport[3] - viewport[1];
-
-    int dw_im = gmshPopplerWrapper::width();
-    int dh_im = gmshPopplerWrapper::height();
-
-    // conserve aspect ratio : dw / dh = dw_im / dh_im
-    //    dw = dh * dw_im / dh_im;
-    dh = dw * dh_im / dw_im;
-
-    glTexCoord2f(1.0f,1.0f);glVertex2i(viewport[2],    viewport[3]-dh);
-    glTexCoord2f(1.0f,0.0f);glVertex2i(viewport[2],    viewport[3]);
-    glTexCoord2f(0.0f,0.0f);glVertex2i(viewport[2]-dw, viewport[3]);
-    glTexCoord2f(0.0f,1.0f);glVertex2i(viewport[2]-dw, viewport[3]-dh);
-    glEnd();
-  }
-#endif
-
 }
 
 void drawContext::drawBackgroundImage()
 {
-#if defined(HAVE_FLTK)
   if(CTX::instance()->bgImageFileName.empty()) return;
 
-  if(_bgImage.empty()){
-    int idot = CTX::instance()->bgImageFileName.find_last_of('.');
-    std::string ext;
-    if(idot > 0 && idot < (int)CTX::instance()->bgImageFileName.size())
-      ext = CTX::instance()->bgImageFileName.substr(idot + 1);
-    Fl_RGB_Image *img = 0;
-    if(ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")
-      img = new Fl_JPEG_Image(CTX::instance()->bgImageFileName.c_str());
-    else if(ext == "png" || ext == "PNG")
-      img = new Fl_PNG_Image(CTX::instance()->bgImageFileName.c_str());
-    if(img && img->d() >= 3){
-      const unsigned char *data = img->array;
-      for(int j = img->h() - 1; j >= 0; j--) {
-        for(int i = 0; i < img->w(); i++) {
-          int idx = j * img->w() * img->d() + i * img->d();
-          _bgImage.push_back((GLfloat)data[idx] / 255.F);
-          _bgImage.push_back((GLfloat)data[idx + 1] / 255.F);
-          _bgImage.push_back((GLfloat)data[idx + 2] / 255.F);
-        }
-      }
-      _bgImageSize[0] = img->w();
-      _bgImageSize[1] = img->h();
-    }
-    if(!_bgImageSize[0] || !_bgImageSize[1]){
-      Msg::Error("Could not load valid background image");
-      // make sure we don't try to load it again
-      for(int i = 0; i < 3; i++) _bgImage.push_back(0);
-      _bgImageSize[0] = _bgImageSize[1] = 1;
-    }
-    if(img) delete img;
-  }
+  std::string name = CTX::instance()->bgImageFileName;
+  std::string ext = SplitFileName(CTX::instance()->bgImageFileName)[2];
 
-  double x = CTX::instance()->bgImagePosition[0];
-  double y = CTX::instance()->bgImagePosition[1];
-  int c = fix2dCoordinates(&x, &y);
-  if(c & 1) x -= _bgImageSize[0] / 2.;
-  if(c & 2) y -= _bgImageSize[1] / 2.;
-  if(x < viewport[0]) x = viewport[0];
-  if(y < viewport[1]) y = viewport[1];
-  glRasterPos2d(x, y);
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glDrawPixels(_bgImageSize[0], _bgImageSize[1], GL_RGB, GL_FLOAT,
-               (void*)&_bgImage[0]);
-  gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
-                  (void*)&_bgImage[0]);
+  if(ext == ".pdf" || ext == ".PDF"){
+#if defined(HAVE_POPPLER)
+    if(!gmshPopplerWrapper::instance()->hasFile()){
+      if(!gmshPopplerWrapper::instance()->loadFromFile(name)){
+        Msg::Error("Could not load PDF file '%s'", name.c_str());
+        CTX::instance()->bgImageFileName.clear();
+      }
+    }
+    GLuint texture = gmshPopplerWrapper::getTextureForPage(800,600);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBegin(GL_QUADS);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
+    int dw = viewport[2] - viewport[0];
+    int dh = viewport[3] - viewport[1];
+    int dw_im = gmshPopplerWrapper::width();
+    int dh_im = gmshPopplerWrapper::height();
+    // conserve aspect ratio : dw / dh = dw_im / dh_im
+    //    dw = dh * dw_im / dh_im;
+    dh = dw * dh_im / dw_im;
+    glTexCoord2f(1.0f, 1.0f); glVertex2i(viewport[2],    viewport[3]-dh);
+    glTexCoord2f(1.0f, 0.0f); glVertex2i(viewport[2],    viewport[3]);
+    glTexCoord2f(0.0f, 0.0f); glVertex2i(viewport[2]-dw, viewport[3]);
+    glTexCoord2f(0.0f, 1.0f); glVertex2i(viewport[2]-dw, viewport[3]-dh);
+    glEnd();
+  }
+#endif
+  else{
+#if defined(HAVE_FLTK)
+    if(_bgImage.empty()){
+      Fl_RGB_Image *img = 0;
+      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
+        img = new Fl_JPEG_Image(name.c_str());
+      else if(ext == ".png" || ext == ".PNG")
+        img = new Fl_PNG_Image(name.c_str());
+      if(img && img->d() >= 3){
+        const unsigned char *data = img->array;
+        for(int j = img->h() - 1; j >= 0; j--) {
+          for(int i = 0; i < img->w(); i++) {
+            int idx = j * img->w() * img->d() + i * img->d();
+            _bgImage.push_back((GLfloat)data[idx] / 255.F);
+            _bgImage.push_back((GLfloat)data[idx + 1] / 255.F);
+            _bgImage.push_back((GLfloat)data[idx + 2] / 255.F);
+          }
+        }
+        _bgImageSize[0] = img->w();
+        _bgImageSize[1] = img->h();
+      }
+      if(img) delete img;
+      if(!_bgImageSize[0] || !_bgImageSize[1]){
+        Msg::Error("Could not load background image '%s'", name.c_str());
+        CTX::instance()->bgImageFileName.clear();
+      }
+    }
+    double x = CTX::instance()->bgImagePosition[0];
+    double y = CTX::instance()->bgImagePosition[1];
+    int c = fix2dCoordinates(&x, &y);
+    if(c & 1) x -= _bgImageSize[0] / 2.;
+    if(c & 2) y -= _bgImageSize[1] / 2.;
+    if(x < viewport[0]) x = viewport[0];
+    if(y < viewport[1]) y = viewport[1];
+    glRasterPos2d(x, y);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glDrawPixels(_bgImageSize[0], _bgImageSize[1], GL_RGB, GL_FLOAT,
+                 (void*)&_bgImage[0]);
+    gl2psDrawPixels(_bgImageSize[0], _bgImageSize[1], 0, 0, GL_RGB, GL_FLOAT,
+                    (void*)&_bgImage[0]);
+  }
 #endif
 }
 

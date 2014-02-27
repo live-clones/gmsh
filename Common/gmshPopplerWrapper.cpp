@@ -14,23 +14,25 @@
 gmshPopplerWrapper *gmshPopplerWrapper::_instance = 0;
 poppler::document  *gmshPopplerWrapper::_current_doc = 0;
 #if defined(HAVE_OPENGL)
-std::map<int,GLuint> gmshPopplerWrapper::_pages2textures;
+std::map<int, GLuint> gmshPopplerWrapper::_pages2textures;
 int gmshPopplerWrapper::_w = -1;
 int gmshPopplerWrapper::_h = -1;
 int gmshPopplerWrapper::_current_page = 0;
 #endif
 
-gmshPopplerWrapper *gmshPopplerWrapper::instance() {
-  if (!_instance)_instance = new gmshPopplerWrapper;
+gmshPopplerWrapper *gmshPopplerWrapper::instance()
+{
+  if(!_instance) _instance = new gmshPopplerWrapper;
   return _instance;
 }
 
-int gmshPopplerWrapper::load_from_file (const std::string &file_name,
-					const std::string &owner_password,
-					const std::string &user_password){
+int gmshPopplerWrapper::loadFromFile(const std::string &file_name,
+                                     const std::string &owner_password,
+                                     const std::string &user_password)
+{
   if (_current_doc) delete _current_doc;
-  _current_doc = poppler::document::load_from_file (file_name,owner_password,
-						    user_password);
+  _current_doc = poppler::document::load_from_file(file_name, owner_password,
+                                                   user_password);
   if (!_current_doc) return 0;
   Msg::Info("PDF File has been loaded in the Wrapper");
   //  createBitmap(1,72.,72.,-1,-1,-1,-1);
@@ -39,11 +41,12 @@ int gmshPopplerWrapper::load_from_file (const std::string &file_name,
 
 #if defined(HAVE_OPENGL)
 GLuint gmshPopplerWrapper::getTextureForPage(double xres,
-					     double yres) {
+					     double yres)
+{
   int iPage = _current_page;
   std::map<int,GLuint>::iterator it = _pages2textures.find(iPage);
   if (it != _pages2textures.end())return it->second;
-  if (!_current_doc)return 0;
+  if (!_current_doc) return 0;
   poppler::page *_current_page = _current_doc->create_page (iPage);
   poppler::page_renderer pr;
   poppler::image im =  pr.render_page (_current_page,xres,yres,-1,-1,-1);
@@ -63,6 +66,4 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
 }
 #endif
 
-
 #endif
-

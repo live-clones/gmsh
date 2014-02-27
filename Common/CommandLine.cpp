@@ -125,6 +125,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-pid",               "Print process id on stdout"));
   s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
   s.push_back(mp("-watch pattern",     "Pattern of files to merge as they become available"));
+  s.push_back(mp("-bg file",           "Load background (image or PDF) file"));
   s.push_back(mp("-v int",             "Set verbosity level"));
   s.push_back(mp("-nopopup",           "Don't popup dialog windows in scripts"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
@@ -905,6 +906,13 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "listen")) {
         CTX::instance()->solver.listen = 1;
         i++;
+      }
+      else if(!strcmp(argv[i] + 1, "bg")){
+        i++;
+        if(argv[i])
+          CTX::instance()->bgImageFileName = argv[i++];
+        else
+          Msg::Fatal("Missing filename");
       }
       else if(!strcmp(argv[i] + 1, "version") || !strcmp(argv[i] + 1, "-version")) {
         fprintf(stderr, "%s\n", GMSH_VERSION);
