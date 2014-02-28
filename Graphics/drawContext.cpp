@@ -387,8 +387,8 @@ void drawContext::drawBackgroundImage()
     glTexCoord2f(0.0f, 0.0f); glVertex2i(viewport[2]-dw, viewport[3]);
     glTexCoord2f(0.0f, 1.0f); glVertex2i(viewport[2]-dw, viewport[3]-dh);
     glEnd();
-  }
 #endif
+  }
   else{
 #if defined(HAVE_FLTK)
     if(_bgImage.empty()){
