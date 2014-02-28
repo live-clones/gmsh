@@ -62,30 +62,27 @@ class FunctionSpace{
  public:
   virtual ~FunctionSpace(void);
 
-  const Basis& getBasis(const MElement& element) const;
-  const Basis& getBasis(size_t i) const;
-
-  const GroupOfElement& getSupport(void) const;
-
   bool   isScalar(void) const;
   size_t getForm(void)  const;
   size_t getOrder(void) const;
 
-  std::vector<Dof> getUnorderedKeys(const MElement& element) const;
+  const Basis&          getBasis(const MElement& element) const;
+  const Basis&          getBasis(size_t eType)            const;
+  const GroupOfElement& getSupport(void)                  const;
+  const std::set<Dof>&  getAllDofs(void)                  const;
+
   std::vector<Dof> getKeys(const MElement& element) const;
-
-  void getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
-  void getKeys(const GroupOfElement& goe,
-               std::vector<std::vector<Dof> >& dof) const;
-
-  const std::set<Dof>&                  getAllDofs(void)   const;
-  const std::vector<std::vector<Dof> >& getAllGroups(void) const;
+  void             getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
+  void             getKeys(const GroupOfElement& goe,
+                           std::vector<std::vector<Dof> >& dof) const;
 
  protected:
   FunctionSpace(void);
 
   void build(const GroupOfElement& goe, std::string family);
   void buildDof(void);
+
+  std::vector<Dof> getUnorderedKeys(const MElement& element) const;
 };
 
 
@@ -100,63 +97,63 @@ class FunctionSpace{
    Deletes this FunctionSpace
    **
 
-   @fn FunctionSpace::getSupport
-   @return Returns the support of this
-   FunctionSpace
-   **
-
    @fn FunctionSpace::isScalar
    @return Returns:
    @li true, if this FunstionSpace is scalar
    @li flase, otherwise
    **
 
-   @fn vector<Dof> FunctionSpace::getKeys(const MElement& element) const
+   @fn FunctionSpace::getForm
+   @return Returns this FunctionSpace differential form (0, 1, 2 or 3)
+   **
+
+   @fn FunctionSpace::getOrder
+   @return Returns this FunctionSpace order
+   **
+
+   @fn FunctionSpace::getBasis(const MElement& element) const
+   @param element A MElement
+   @return Returns the Basis associated to the given element
+   **
+
+   @fn FunctionSpace::getBasis(size_t eType) const
+   @param eType A geomtrical element type tag
+   @return Returns the Basis associated to the given geomtrical element type tag
+   **
+
+   @fn FunctionSpace::getSupport
+   @return Returns the support of this FunctionSpace
+   **
+
+   @fn FunctionSpace::getAllDofs
+   @return Returns the set of all the Dof%s associated to this FunctionSpace
+   **
+
+   @fn std::vector<Dof> FunctionSpace::getKeys(const MElement&) const
    @param element A MElement
    @return Returns all the Dof%s associated to the given MElement
    **
 
-   @fn vector<Dof> FunctionSpace::getKeys(const MVertex& vertex) const
-   @param vertex A MVertex
-   @return Returns all the Dof%s associated to the given MVertex
+   @fn void FunctionSpace::getKeys(const GroupOfElement&, std::set<Dof>&) const
+   @param goe A GroupOfElement
+   @param dof A set of Dof%s
+
+   Populates the given set with the Dof%s associated to the MElement%s
+   of the given GroupOfElement
    **
 
-   @fn vector<Dof> FunctionSpace::getKeys(const MEdge& edge) const
-   @param edge A MEdge
-   @return Returns all the Dof%s associated to the given MEdge
-   **
+   @fn void FunctionSpace::getKeys(const GroupOfElement&, std::vector<std::vector<Dof> >&) const
+   @param goe A GroupOfElement
+   @param dof A vector of vector of Dof%s
 
-   @fn vector<Dof> FunctionSpace::getKeys(const MFace& face) const
-   @param face A MFace
-   @return Returns all the Dof%s associated to the given MFace
-   **
-
-   @fn FunctionSpace::getAllDofs
-   @return Returns all the Dof%s associated to every Element%s
-   of this FunctionSpace support
-   **
-
-   @fn FunctionSpace::getAllGroups
-   @return Returns all the Dof%s associated to every Element%s
-   of this FunctionSpace support
+   Populates the given vector such that:
+   dof[i][j] is the jth Dof of the ith element of the given GroupOfElement
 */
 
 
 //////////////////////
 // Inline Functions //
 //////////////////////
-
-inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
-  return *basis[element.getType()];
-}
-
-inline const Basis& FunctionSpace::getBasis(size_t i) const{
-  return *basis[i];
-}
-
-inline const GroupOfElement& FunctionSpace::getSupport(void) const{
-  return *goe;
-}
 
 inline bool FunctionSpace::isScalar(void) const{
   return scalar;
@@ -170,13 +167,20 @@ inline size_t FunctionSpace::getOrder(void) const{
   return order;
 }
 
-inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
-  return dof;
+inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
+  return *basis[element.getType()];
 }
 
-inline const std::vector<std::vector<Dof> >&
-FunctionSpace::getAllGroups(void) const{
-  return group;
+inline const Basis& FunctionSpace::getBasis(size_t eType) const{
+  return *basis[eType];
+}
+
+inline const GroupOfElement& FunctionSpace::getSupport(void) const{
+  return *goe;
+}
+
+inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
+  return dof;
 }
 
 #endif

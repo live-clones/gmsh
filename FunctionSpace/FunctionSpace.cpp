@@ -86,9 +86,6 @@ void FunctionSpace::buildDof(void){
   const size_t nElement = goe->getNumber();
   const vector<const MElement*>& element = goe->getAll();
 
-  // Init Struct //
-  group.resize(nElement);
-
   // Create Dofs //
   for(size_t i = 0; i < nElement; i++){
     // Get Dof for this Element
@@ -98,9 +95,6 @@ void FunctionSpace::buildDof(void){
     // Add Dofs
     for(size_t j = 0; j < nDof; j++)
       dof.insert(myDof[j]);
-
-    // Save vector
-    group[i] = myDof;
   }
 }
 
