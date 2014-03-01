@@ -30,6 +30,7 @@ set(SRC
   GaussJacobi1D.cpp
   HilbertCurve.cpp
  robustPredicates.cpp
+ decasteljau.cpp
   mathEvaluator.cpp
   Iso.cpp
 )

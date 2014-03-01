@@ -83,6 +83,7 @@ namespace std {
 %include "discreteEdge.h"
 %include "discreteVertex.h"
 %include "discreteRegion.h"
+%include "SPoint3.h"
 %include "MElement.h"
 %include "MVertex.h"
 %include "MTriangle.h"
@@ -94,7 +95,6 @@ namespace std {
 %include "MFace.h"
 %include "MPoint.h"
 %include "SVector3.h"
-%include "SPoint3.h"
 %include "SPoint2.h"
 %include "SBoundingBox3d.h"
 %include "Curvature.h"
@@ -141,3 +141,10 @@ namespace std {
 
 }
 
+%extend MElement {
+  SPoint3 pnt(double xi0, double xi1, double xi2) {
+    SPoint3 p;
+    $self->pnt(xi0, xi1, xi2, p);
+    return p;
+  }
+}

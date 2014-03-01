@@ -10,6 +10,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "qualityMeasures.h"
+#include "decasteljau.h"
 
 const JacobianBasis* MLine::getJacobianFuncSpace(int order) const
 {
@@ -78,4 +79,63 @@ void MLineN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, S
     n[0] = n[1] = MEdge(_v[0], _v[1]).normal();
   }
   else MLine::getEdgeRep(false, num, x, y, z, n);
+}
+
+void MLine::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
+{
+  ts.clear();
+  ts.push_back(-1);
+  ts.push_back(1);
+  dpts.clear();
+  dpts.push_back(getVertex(0)->point());
+  dpts.push_back(getVertex(1)->point());
+}
+
+void MLine3::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
+{
+  SPoint3 p0 = getVertex(0)->point();
+  SPoint3 p2 = getVertex(1)->point();
+  SPoint3 p1 = getVertex(2)->point() * 2 - (p0  + p2) * 0.5;
+  decasteljau(tol, p0, p1, p2, dpts, ts);
+  for (size_t i = 0; i < ts.size(); ++i)
+    ts[i] = -1 + 2 * ts[i];
+}
+
+void MLineN::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
+{
+  int order = getPolynomialOrder();
+  if (order == 3) {
+    SPoint3 p0 = getVertex(0)->point();
+    SPoint3 p3 = getVertex(1)->point();
+    SPoint3 p1 = p0 * (-5./6) + p3 * (1./3) + getVertex(2)->point() * 3. - getVertex(3)->point() * 1.5;
+    SPoint3 p2 = p0 * (1./3) + p3 * (-5./6) - getVertex(2)->point() * 1.5 + getVertex(3)->point() * 3.;
+    decasteljau(tol, p0, p1, p2, p3, dpts, ts);
+    for (size_t i = 0; i < ts.size(); ++i)
+      ts[i] = -1 + 2 * ts[i];
+    return;
+  }
+  fullMatrix<double> lagNodes(order + 1, 3), bezNodes( order + 1, 3);
+  for (int i = 0; i < order + 1; ++i) {
+    MVertex *v = getVertex(i);
+    lagNodes(i, 0) = v->x();
+    lagNodes(i, 1) = v->y();
+    lagNodes(i, 2) = v->z();
+  }
+  const bezierBasis *bez = BasisFactory::getBezierBasis(TYPE_LIN, order);
+  bez->matrixLag2Bez.mult(lagNodes, bezNodes);
+  std::vector<SPoint3> pts(bezNodes.size1());
+  pts[0][0] = bezNodes(0, 0);
+  pts[0][1] = bezNodes(0, 1);
+  pts[0][2] = bezNodes(0, 2);
+  pts[order][0] = bezNodes(1, 0);
+  pts[order][1] = bezNodes(1, 1);
+  pts[order][2] = bezNodes(1, 2);
+  for (int i = 0; i < order - 1; ++i) {
+    pts[i + 1][0] = bezNodes(i + 2, 0);
+    pts[i + 1][1] = bezNodes(i + 2, 1);
+    pts[i + 1][2] = bezNodes(i + 2, 2);
+  }
+  decasteljau(tol, pts, dpts, ts);
+    for (size_t i = 0; i < ts.size(); ++i)
+      ts[i] = -1 + 2 * ts[i];
 }

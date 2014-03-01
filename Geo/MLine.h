@@ -96,6 +96,7 @@ class MLine : public MElement {
     return SPoint3(0, 0, 0);
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
 };
 
 /*
@@ -149,6 +150,7 @@ class MLine3 : public MLine {
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
 };
 
 /*
@@ -208,6 +210,7 @@ class MLineN : public MLine {
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
 };
 
 struct compareMLinePtr {

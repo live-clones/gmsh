@@ -12,6 +12,7 @@
 #include "GeoInterpolation.h"
 #include "GmshMessage.h"
 #include "Context.h"
+#include "decasteljau.h"
 
 gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   : GEdge(m, edge->Num, v1, v2), c(edge)
@@ -405,4 +406,128 @@ void gmshEdge::writeGEO(FILE *fp)
 
   if(meshAttributes.reverseMesh)
     fprintf(fp, "Reverse Line {%d};\n", tag());
+}
+
+static inline SPoint3 curveGetPoint(Curve *c, int i)
+{
+  Vertex *v;
+  List_Read(c->Control_Points, i , &v);
+  return SPoint3(v->Pos.X, v->Pos.Y, v->Pos.Z);
+}
+
+void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts, std::vector<double> &ts)
+{
+  switch(c->Typ) {
+    case MSH_SEGM_LINE :
+      {
+        int NPt = List_Nbr(c->Control_Points);
+        pts.resize(NPt);
+        ts.resize(NPt);
+        for (int i = 0; i < NPt; ++i) {
+          pts[i]= curveGetPoint(c, i);
+          ts[i] = i / (double) (NPt - 1);
+        }
+        return;
+      }
+    case MSH_SEGM_BEZIER :
+      {
+        int NbCurves = (List_Nbr(c->Control_Points) - 1) / 3;
+        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+          double t1 = (iCurve) / (double)(NbCurves);
+          double t2 = (iCurve+1) / (double)(NbCurves);
+          SPoint3 pt[4];
+          for(int i = 0; i < 4; i++) {
+            pt[i] = curveGetPoint(c, iCurve * 3 + i);
+          }
+          std::vector<double> lts;
+          std::vector<SPoint3> lpts;
+          decasteljau(tol, pt[0], pt[1], pt[2], pt[3], lpts, lts);
+          for (size_t i = (iCurve == 0 ? 0 : 1); i < lpts.size(); ++i) {
+            pts.push_back(lpts[i]);
+            ts.push_back(t1 + lts[i] * (t2 - t1));
+          }
+        }
+        break;
+      }
+    case MSH_SEGM_BSPLN:
+      {
+        bool periodic = (c->end == c->beg);
+        int NbControlPoints = List_Nbr(c->Control_Points);
+        int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+        SPoint3 pt[4];
+        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+          double t1 = (iCurve) / (double)(NbCurves);
+          double t2 = (iCurve+1) / (double)(NbCurves);
+          for(int i = 0; i < 4; i++) {
+            int k;
+            if (periodic) {
+              k = (iCurve - 1 + i) % (NbControlPoints - 1);
+              if (k < 0)
+                k += NbControlPoints - 1;
+            }
+            else {
+              k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints -1));
+            }
+            pt[i] = curveGetPoint(c, k);
+          }
+          SPoint3 bpt[4] = {
+            (pt[0] + pt[1] * 4 + pt[2]) * (1./6.),
+            (pt[1] * 2 + pt[2]) * (1./3.),
+            (pt[1] + pt[2] * 2) * (1./3.),
+            (pt[1] + pt[2] * 4 + pt[3]) * (1./6.)
+          };
+          std::vector<double> lts;
+          std::vector<SPoint3> lpts;
+          decasteljau(tol, bpt[0], bpt[1], bpt[2], bpt[3], lpts, lts);
+          for (size_t i = (iCurve == 0 ? 0 : 1); i < lpts.size(); ++i) {
+            pts.push_back(lpts[i]);
+            ts.push_back(t1 + lts[i] * (t2 - t1));
+          }
+        }
+        break;
+      }
+    case MSH_SEGM_SPLN:
+      {
+        int NbCurves = List_Nbr(c->Control_Points) - 1;
+        SPoint3 pt[4];
+        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+          double t1 = (iCurve) / (double)(NbCurves);
+          double t2 = (iCurve+1) / (double)(NbCurves);
+          pt[1] = curveGetPoint(c, iCurve);
+          pt[2] = curveGetPoint(c, iCurve + 1);
+          if(iCurve == 0) {
+            if(c->beg == c->end)
+              pt[0] = curveGetPoint(c, NbCurves - 1);
+            else
+              pt[0] = SPoint3(pt[1] * 2 - pt[2]);
+          }
+          else
+            pt[0] = curveGetPoint(c, iCurve - 1);
+          if(iCurve == NbCurves - 1) {
+            if(c->beg == c->end)
+              pt[3] = curveGetPoint(c, 1);
+            else
+              pt[3] = SPoint3(2 * pt[2] - pt[1]);
+          }
+          else
+            pt[3] = curveGetPoint(c, iCurve + 2);
+          SPoint3 bpt[4] = {
+            pt[1],
+            (pt[1] * 6 + pt[2] - pt[0]) * (1./6.),
+            (pt[2] * 6 - pt[3] + pt[1]) * (1./6.),
+            pt[2]
+          };
+          std::vector<double> lts;
+          std::vector<SPoint3> lpts;
+          decasteljau(tol, bpt[0], bpt[1], bpt[2], bpt[3], lpts, lts);
+          for (size_t i = (iCurve == 0 ? 0 : 1); i < lpts.size(); ++i) {
+            pts.push_back(lpts[i]);
+            ts.push_back(t1 + lts[i] * (t2 - t1));
+          }
+        }
+        break;
+      }
+    default :
+      Msg::Fatal("not implemented");
+  }
 }
