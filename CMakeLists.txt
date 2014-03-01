@@ -1240,8 +1240,9 @@ else(HAVE_FLTK)
   set(LINK_LIBRARIES ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
 endif(HAVE_FLTK)
 
-# try to use static gfortran on static Linux builds
+# Linux-specific linking
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  # try to use static gfortran on static Linux builds
   if(NOT ENABLE_BUILD_DYNAMIC)
     find_library(GFORTRAN_STATIC libgfortran.a)
     if(GFORTRAN_STATIC)
@@ -1253,6 +1254,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
       set(LINK_LIBRARIES ${LINK_LIBRARIES2})
     endif(GFORTRAN_STATIC)
   endif(NOT ENABLE_BUILD_DYNAMIC)
+  if(HAVE_OCC)
+    find_library(RT_LIB rt)
+    if(RT_LIB)
+      list(APPEND LINK_LIBRARIES ${RT_LIB})
+    endif(RT_LIB)
+  endif(HAVE_OCC)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # we could specify include dirs more selectively, but this is simpler
