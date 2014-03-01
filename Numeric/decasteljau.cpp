@@ -27,7 +27,7 @@ class discreteList {
   }
 };
 
-static double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0, const SPoint3 &s1)
+double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0, const SPoint3 &s1)
 {
   SVector3 d(s1 - s0);
   SVector3 d0(p - s0);
