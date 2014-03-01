@@ -321,7 +321,7 @@ void Msg::Warning(const char *fmt, ...)
 {
   _warningCount++;
 
-  if(_commRank || _verbosity < 2) return;
+  if(_verbosity < 2) return;
 
   char str[5000];
   va_list args;
@@ -347,14 +347,17 @@ void Msg::Warning(const char *fmt, ...)
     if(!streamIsFile(stderr) && streamIsVT100(stderr)){
       c0 = "\33[35m"; c1 = "\33[0m";  // magenta
     }
-    fprintf(stderr, "%sWarning : %s%s\n", c0, str, c1);
+    if(_commSize > 1)
+      fprintf(stderr, "%sWarning : [rank %3d] %s%s\n", c0, _commRank, str, c1);
+    else
+      fprintf(stderr, "%sWarning : %s%s\n", c0, str, c1);
     fflush(stderr);
   }
 }
 
 void Msg::Info(const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 4) return;
+  if(_verbosity < 4) return;
 
   char str[5000];
   va_list args;
@@ -379,7 +382,10 @@ void Msg::Info(const char *fmt, ...)
 #endif
 
   if(CTX::instance()->terminal){
-    fprintf(stdout, "Info    : %s\n", str);
+    if(_commSize > 1)
+      fprintf(stdout, "Info    : [rank %3d] %s\n", _commRank, str);
+    else
+      fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
 }
@@ -390,7 +396,7 @@ void Msg::RequestRender()
 
 void Msg::Direct(const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 3) return;
+  if(_verbosity < 3) return;
 
   char str[5000];
   va_list args;
@@ -419,14 +425,17 @@ void Msg::Direct(const char *fmt, ...)
     if(!streamIsFile(stdout) && streamIsVT100(stdout)){
       c0 = "\33[34m"; c1 = "\33[0m";  // blue
     }
-    fprintf(stdout, "%s%s%s\n", c0, str, c1);
+    if(_commSize > 1)
+      fprintf(stdout, "%s[rank %3d] %s%s\n", c0, _commRank, str, c1);
+    else
+      fprintf(stdout, "%s%s%s\n", c0, str, c1);
     fflush(stdout);
   }
 }
 
 void Msg::StatusBar(bool log, const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 4) return;
+  if(_verbosity < 4) return;
 
   char str[5000];
   va_list args;
@@ -455,7 +464,10 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 #endif
 
   if(log && CTX::instance()->terminal){
-    fprintf(stdout, "Info    : %s\n", str);
+    if(_commSize > 1)
+      fprintf(stdout, "Info    : [rank %3d] %s\n", _commRank, str);
+    else
+      fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
 }
