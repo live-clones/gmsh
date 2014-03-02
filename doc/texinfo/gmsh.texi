@@ -2856,6 +2856,9 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file.
 
+@item CreateDir @var{char-expression};
+Create the directory @var{char-expression}.
+
 @item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
