@@ -7444,7 +7444,7 @@ yyreduce:
 	GModel::current()->setName((yyvsp[(2) - (3)].c));
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "CreateDir")){
-	CreateDirectory(std::string((yyvsp[(2) - (3)].c)));
+	CreateSingleDir(std::string((yyvsp[(2) - (3)].c)));
       }
       else{
 	yymsg(0, "Unknown command '%s'", (yyvsp[(1) - (3)].c));

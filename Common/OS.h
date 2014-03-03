@@ -22,7 +22,7 @@ std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);
 int KillProcess(int pid);
-int CreateDirectory(const std::string &dirName);
+int CreateSingleDir(const std::string &dirName);
 void CreatePath(const std::string &fullPath);
 int SystemCall(const std::string &command, bool blocking=false);
 std::string GetCurrentWorkdir();

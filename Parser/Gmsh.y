@@ -2764,7 +2764,7 @@ Command :
 	GModel::current()->setName($2);
       }
       else if(!strcmp($1, "CreateDir")){
-	CreateDirectory(std::string($2));
+	CreateSingleDir(std::string($2));
       }
       else{
 	yymsg(0, "Unknown command '%s'", $1);
