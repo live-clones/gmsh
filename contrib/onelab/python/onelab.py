@@ -250,6 +250,16 @@ class client :
     self._getParameter(param, warn_if_not_found)
     return param.value
 
+  def getNumberChoices(self, name, warn_if_not_found=True):
+    param = _parameter('number', name=name)
+    self._getParameter(param, warn_if_not_found)
+    return param.choices
+
+  def getStringChoices(self, name, warn_if_not_found=True):
+    param = _parameter('string', name=name)
+    self._getParameter(param, warn_if_not_found)
+    return param.choices
+
   def show(self, name) :
     if not self.socket :
       return
@@ -398,7 +408,7 @@ class client :
         print(line.rstrip())
     result = call.wait()
     if result == 0 :
-      self._send(self._GMSH_INFO, 'call \"' + ''.join(argv) + '\"')
+      self._send(self._GMSH_INFO, 'call \"' + ' '.join(argv) + '\"')
     else :
       self._send(self._GMSH_ERROR, 'call failed !!\n' + call.stderr.read().encode('utf-8'))
       
@@ -434,3 +444,21 @@ class client :
       print(call.stderr.read())
       ##self._send(self._GMSH_ERROR, 'download failed !!\n' + call.stderr.read().encode('utf-8'))
       
+  def solutionFiles(self, list) :
+    self.defineNumber('0Metamodel/9Use restored solution', value=0, choices=[0,1])
+    self.defineString('0Metamodel/9Tag', value='')
+    if list :
+      if self.getNumber('0Metamodel/9Use restored solution') :
+        return self.getStringChoices('0Metamodel/9Solution files')  
+      else :
+        self.setString('0Metamodel/9Solution files', value=list[0],
+                       choices=list, readOnly=1)      
+    return list
+
+  def restoreSolution(self) :
+    return self.getNumber('0Metamodel/9Use restored solution')
+
+  def outputFiles(self, list) :
+    if list :
+      self.setString(self.name+'/9Output files', value=list[0],
+                     choices=list, visible=0)
