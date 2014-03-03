@@ -517,3 +517,55 @@ void GEdge::relocateMeshVertices()
     }
   }
 }
+
+typedef struct {
+  SPoint3 p;
+  double t;
+  int next;
+} sortedPoint;
+
+static double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0, const SPoint3 &s1)
+{
+  SVector3 d(s1 - s0);
+  SVector3 d0(p - s0);
+  SVector3 d1(p - s1);
+  double dn2 = crossprod(d, d0).normSq();
+  double dt2 = std::max(0., std::max(-dot(d, d0), dot(d, d1)));
+  dt2 *= dt2;
+  return (dt2 + dn2) / d.normSq();
+}
+
+static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts, int pos0)
+{
+  const int pos1 = upts[pos0].next;
+  const SPoint3 & p0 = upts[pos0].p;
+  const double t0 = upts[pos0].t;
+  const SPoint3 & p1 = upts[pos1].p;
+  const double t1 = upts[pos1].t;
+  const double tmid = 0.5 * (t0 + t1);
+  const SPoint3 pmid(edge->position(tmid));
+  const double d2 = sqDistPointSegment(pmid, p0, p1);
+  if (d2 < tol * tol)
+    return;
+  upts.push_back((sortedPoint){pmid, tmid, pos1});
+  const int posmid = upts.size() - 1;
+  upts[pos0].next = posmid;
+  _discretize(tol, edge, upts, pos0);
+  _discretize(tol, edge, upts, posmid);
+}
+
+void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
+{
+  std::vector<sortedPoint> upts;
+  upts.push_back((sortedPoint){getBeginVertex()->xyz(), 0., 1});
+  upts.push_back((sortedPoint){getEndVertex()->xyz(), 1., -1});
+  _discretize(tol, this, upts, 0);
+  dpts.clear();
+  dpts.reserve(upts.size());
+  ts.clear();
+  ts.reserve(upts.size());
+  for (int p = 0; p != -1; p = upts[p].next) {
+    dpts.push_back(upts[p].p);
+    ts.push_back(upts[p].t);
+  }
+}

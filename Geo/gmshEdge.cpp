@@ -528,6 +528,6 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts, std::vector<dou
         break;
       }
     default :
-      Msg::Fatal("not implemented");
+      GEdge::discretize(tol, pts, ts);
   }
 }

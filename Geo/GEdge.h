@@ -209,7 +209,7 @@ class GEdge : public GEntity {
   void addLine(MLine *line){ lines.push_back(line); }
 
   bool computeDistanceFromMeshToGeometry (double &d2, double &dmax);
-  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts) {Msg::Fatal("not implemented");}
+  virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
 };
 
 #endif
