@@ -603,6 +603,7 @@ static std::string timeStamp()
   time(&now);
   tm *t = localtime(&now);
   char stamp[32];
+  // stamp.size() is always 20
   sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
           1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
   return std::string(stamp);
@@ -623,7 +624,13 @@ static void saveDb(const std::string &fileName)
 
 static void archiveOutputFiles(const std::string &fileName)
 {
-  std::string stamp = timeStamp();
+  std::string stamp;
+  std::vector<onelab::string> ps;
+  onelab::server::instance()->get(ps,"0Metamodel/9Tag");
+  if(ps.size())
+    stamp.assign(ps[0].getValue()+timeStamp());
+  else
+    stamp.assign(timeStamp());
 
   // add time stamp in all output files in the db, and rename them on disk
   std::vector<onelab::string> strings;
@@ -658,8 +665,36 @@ static void archiveOutputFiles(const std::string &fileName)
     CreateSingleDir(split[0] + "archive/");
     saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
   }
-
+ 
   FlGui::instance()->rebuildTree(true);
+}
+
+static void archiveSolutionFiles(const std::string &fileName)
+{
+  // extract tag from dbName
+  std::vector<std::string> split = SplitFileName(fileName);
+  std::string tag = split[1].substr(6); // cut off 'onelab'
+
+  // add tag to all solution files in the db, and rename them on disk
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings,"0Metamodel/9Solution files");
+  if(strings.size()){
+    std::vector<std::string> names = strings[0].getChoices();
+    if(names.size()){
+      for(unsigned int j = 0; j < names.size(); j++){
+	std::vector<std::string> split = SplitFileName(names[j]);
+	std::string old = names[j];
+	CreateSingleDir(split[0] + "archive/");
+	names[j] = split[0] + "archive/" + split[1] + tag + split[2];
+	Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
+	rename(old.c_str(), names[j].c_str());
+      }
+      strings[0].setValue(names[0]);
+      strings[0].setChoices(names);
+      onelab::server::instance()->set(strings[0]);
+      FlGui::instance()->rebuildTree(true);
+    }
+  }
 }
 
 static void loadDb(const std::string &name)
@@ -752,21 +787,21 @@ void onelab_cb(Fl_Widget *w, void *data)
       Msg::Direct("%s", db[i].c_str());
     }
 
+    std::string fileName = "onelab.db";
+    // add tag if any
     std::vector<onelab::string> ps;
-    onelab::server::instance()->get(ps,"TAGSIMU");
-    std::string dbName, s;
-    if(ps.size())
-      dbName.assign("onelab" + ps[0].getValue() + ".db");
-    else
-      dbName = "onelab.db";
-    s.assign(SplitFileName(GModel::current()->getFileName())[0] + dbName);
+    onelab::server::instance()->get(ps,"0Metamodel/9Tag");
+    if(ps.size()){
+      fileName.assign("onelab" + ps[0].getValue() + ".db");
+      ps[0].setValue("");
+      onelab::server::instance()->set(ps[0]);
+    }
+
+    std::string s;
+    s.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
     if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str())){
+      archiveSolutionFiles(fileChooserGetName(1));
       saveDb(fileChooserGetName(1));
-      if(ps.size()){
-      	ps[0].setValue("");
-      	onelab::server::instance()->set(ps[0]);
-      	FlGui::instance()->rebuildTree(true);
-      }
     }
 
     return;
@@ -781,6 +816,14 @@ void onelab_cb(Fl_Widget *w, void *data)
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
       loadDb(fileChooserGetName(1));
+
+    // switch to "restore" mode" (use archived solution files)
+    std::vector<onelab::number> pn;
+    onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
+    if(pn.size()){
+      pn[0].setValue(1);
+      onelab::server::instance()->set(pn[0]);
+    }
     action = "check";
   }
 
