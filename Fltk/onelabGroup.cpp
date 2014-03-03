@@ -639,7 +639,7 @@ static void archiveOutputFiles(const std::string &fileName)
         if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
            split[1][n-9] != '_'){
           std::string old = names[j];
-          CreateDirectory(split[0] + "archive/");
+          CreateSingleDir(split[0] + "archive/");
           names[j] = split[0] + "archive/" + split[1] + stamp + split[2];
           Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
           rename(old.c_str(), names[j].c_str());
@@ -655,7 +655,7 @@ static void archiveOutputFiles(const std::string &fileName)
   // save stamped db
   {
     std::vector<std::string> split = SplitFileName(fileName);
-    CreateDirectory(split[0] + "archive/");
+    CreateSingleDir(split[0] + "archive/");
     saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
   }
 
