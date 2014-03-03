@@ -329,12 +329,19 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "BackgroundGradient" , opt_general_background_gradient , 1. ,
     "Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)" },
-  { F|O, "BackgroundImagePositionX" , opt_general_background_image_position0 , 1.e5 ,
-    "X position (in pixels) of background image (< 0: measure from right edge; "
+  { F|O, "BackgroundImage3D" , opt_general_background_image_3d , 0 ,
+    "Create background image in the 3D model (units = model units) or as "
+    "2D background (units = pixels)" },
+  { F|O, "BackgroundImagePositionX" , opt_general_background_image_position0 , 0 ,
+    "X position of background image (for 2D background: < 0: measure from right edge; "
     ">= 1e5: centered)" },
-  { F|O, "BackgroundImagePositionY" , opt_general_background_image_position1 , 1.e5 ,
-    "Y position (in pixels) of background image (< 0: measure from bottom edge; "
+  { F|O, "BackgroundImagePositionY" , opt_general_background_image_position1 , 0 ,
+    "Y position of background image (for 2D background: < 0: measure from bottom edge; "
     ">= 1e5: centered)" },
+  { F|O, "BackgroundImageWidth" , opt_general_background_image_size0 , -1. ,
+    "Width of background image (0: actual width; -1: fullscreen)" },
+  { F|O, "BackgroundImageHeight" , opt_general_background_image_size1 , -1 ,
+    "Height of background image (0: actual width; -1: fullscreen)" },
 
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },

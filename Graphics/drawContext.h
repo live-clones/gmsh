@@ -110,8 +110,7 @@ class drawContext {
   GLuint _displayLists;
   std::set<GModel*> _hiddenModels;
   std::set<PView*> _hiddenViews;
-  std::vector<GLfloat> _bgImage;
-  int _bgImageSize[2];
+  GLuint _bgImageTexture, _bgImageW, _bgImageH;
  public:
   Camera camera;
   double r[3]; // current Euler angles (in degrees!)
@@ -201,7 +200,7 @@ class drawContext {
   void drawMesh();
   void drawPost();
   void drawBackgroundGradient();
-  void drawBackgroundImage();
+  void drawBackgroundImage(bool moving);
   void drawText2d();
   void drawGraph2d();
   void drawAxis(double xmin, double ymin, double zmin,

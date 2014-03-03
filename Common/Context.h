@@ -180,7 +180,8 @@ class CTX {
   int bgGradient;
   // draw background image?
   std::string bgImageFileName;
-  double bgImagePosition[2];
+  double bgImagePosition[2], bgImageSize[2];
+  int bgImage3d;
   // fltk font size (and delta for palette windows)
   int fontSize, deltaFontSize;
   // font name, FLTK enum and size for opengl graphics

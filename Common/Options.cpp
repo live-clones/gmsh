@@ -3224,6 +3224,27 @@ double opt_general_background_image_position1(OPT_ARGS_NUM)
   return CTX::instance()->bgImagePosition[1];
 }
 
+double opt_general_background_image_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImageSize[0] = val;
+  return CTX::instance()->bgImageSize[0];
+}
+
+double opt_general_background_image_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImageSize[1] = val;
+  return CTX::instance()->bgImageSize[1];
+}
+
+double opt_general_background_image_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImage3d = (int)val;
+  return CTX::instance()->bgImage3d;
+}
+
 double opt_general_trackball(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

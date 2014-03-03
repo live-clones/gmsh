@@ -45,11 +45,11 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
 {
   int iPage = _current_page;
   std::map<int,GLuint>::iterator it = _pages2textures.find(iPage);
-  if (it != _pages2textures.end())return it->second;
+  if (it != _pages2textures.end()) return it->second;
   if (!_current_doc) return 0;
-  poppler::page *_current_page = _current_doc->create_page (iPage);
+  poppler::page *_current_page = _current_doc->create_page(iPage);
   poppler::page_renderer pr;
-  poppler::image im =  pr.render_page (_current_page,xres,yres,-1,-1,-1);
+  poppler::image im = pr.render_page(_current_page, xres, yres, -1, -1, -1);
   _w = im.width();
   _h = im.height();
   //  im.save("page.png","png");
@@ -59,9 +59,8 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   _pages2textures[iPage] = texture;
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im.width(),im.height(), 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE,im.const_data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im.width(), im.height(), 0,
+	       GL_RGBA, GL_UNSIGNED_BYTE, im.const_data());
   return texture;
 }
 #endif

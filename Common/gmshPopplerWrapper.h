@@ -27,7 +27,7 @@ private:
   static int _current_page;
   static poppler::document *_current_doc;
   static gmshPopplerWrapper *_instance;
-  static int _w,_h;
+  static int _w, _h;
 #if defined(HAVE_OPENGL)
   static std::map<int,GLuint> _pages2textures; // map pages to textures
 #endif
