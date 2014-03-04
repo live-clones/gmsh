@@ -95,21 +95,21 @@ class drawContextFltkCairo::queueString {
     glScalef (2.0f / winw, 2.0f /  winh, 1.0f);
     glTranslatef (-winw / 2.0f, -winh / 2.0f, 0.0f);
     //write the texture on screen
-    glEnable (GL_TEXTURE_RECTANGLE_ARB);
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
-    glDisable (GL_DEPTH_TEST);
-    glEnable (GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glGenTextures (1, &textureId);
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA,
-                  cairo_image_surface_get_width(surface),
-                  cairo_image_surface_get_height(surface), 0,
-                  GL_ALPHA, GL_UNSIGNED_BYTE, cairo_image_surface_get_data(surface));
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textureId);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA,
+                 cairo_image_surface_get_width(surface),
+                 cairo_image_surface_get_height(surface), 0,
+                 GL_ALPHA, GL_UNSIGNED_BYTE, cairo_image_surface_get_data(surface));
     //glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
     //printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     pos = 0;
     for(std::vector<element>::iterator it = _elements.begin(); it != _elements.end();  ++it) {

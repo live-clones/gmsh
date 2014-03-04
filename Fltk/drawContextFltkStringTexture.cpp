@@ -13,7 +13,7 @@
 #endif
 
 class drawContextFltkStringTexture::queueString {
-  public :
+ public :
   typedef struct {
     std::string text;
     GLfloat x, y, z;
@@ -23,17 +23,16 @@ class drawContextFltkStringTexture::queueString {
     int height;
   } element;
 
-  private:
+ private:
   std::vector<element> _elements;
   int _totalWidth, _maxHeight;
 
-  public:
+ public:
   queueString()
   {
     _totalWidth = 0;
     _maxHeight = 0;
   }
-
   void append(const element &elem)
   {
     if (_totalWidth + elem.width > 1000)
@@ -42,7 +41,6 @@ class drawContextFltkStringTexture::queueString {
     _totalWidth += elem.width;
     _maxHeight = std::max(_maxHeight, elem.height);
   }
-
   void flush()
   {
     //1000 should be _totalWidth but it does not work
@@ -68,28 +66,28 @@ class drawContextFltkStringTexture::queueString {
     //setup matrices
     GLint matrixMode;
     GLuint textureId;
-    glGetIntegerv (GL_MATRIX_MODE, &matrixMode);
-    glMatrixMode (GL_PROJECTION);
+    glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+    glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity ();
-    glMatrixMode (GL_MODELVIEW);
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity ();
     float winw = Fl_Window::current()->w();
     float winh = Fl_Window::current()->h();
-    glScalef (2.0f / winw, 2.0f /  winh, 1.0f);
-    glTranslatef (-winw / 2.0f, -winh / 2.0f, 0.0f);
+    glScalef(2.0f / winw, 2.0f /  winh, 1.0f);
+    glTranslatef(-winw / 2.0f, -winh / 2.0f, 0.0f);
     //write the texture on screen
-    glEnable (GL_TEXTURE_RECTANGLE_ARB);
+    glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
-    glDisable (GL_DEPTH_TEST);
-    glEnable (GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glGenTextures (1, &textureId);
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, textureId);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0,
-                  GL_ALPHA, GL_UNSIGNED_BYTE, data);
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, textureId);
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_ALPHA, w, h, 0,
+                 GL_ALPHA, GL_UNSIGNED_BYTE, data);
     //glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_SRC0_ALPHA);
     //printf("error %i %s\n", __LINE__, gluErrorString(glGetError()));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -100,7 +98,6 @@ class drawContextFltkStringTexture::queueString {
       glColor4f(it->r, it->g, it->b, it->alpha);
       int Lx = it->width;
       int Ly = it->height;
-
       glBegin (GL_QUADS);
       glTexCoord2f(pos, 0);
       glVertex2f(0.0f, Ly);
@@ -110,7 +107,7 @@ class drawContextFltkStringTexture::queueString {
       glVertex2f(Lx, 0.0f);
       glTexCoord2f(pos, Ly);
       glVertex2f(0.0f, 0.0f);
-      glEnd ();
+      glEnd();
       pos += Lx;
       glTranslatef(-it->x, -it->y, -it->z);
     }
@@ -122,7 +119,7 @@ class drawContextFltkStringTexture::queueString {
     glPopMatrix(); // GL_MODELVIEW
     glMatrixMode (GL_PROJECTION);
     glPopMatrix();
-    glMatrixMode (matrixMode);
+    glMatrixMode(matrixMode);
     _elements.clear();
     _maxHeight = 0;
     _totalWidth = 0;
@@ -162,4 +159,3 @@ void drawContextFltkStringTexture::setFont(int fontid, int fontsize)
   _currentFontId = fontid;
   _currentFontSize = fontsize;
 }
-

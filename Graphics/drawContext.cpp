@@ -21,6 +21,7 @@
 #include "gl2ps.h"
 
 #if defined(HAVE_FLTK)
+#include <FL/Fl.h>
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/gl.h>
@@ -380,7 +381,7 @@ void drawContext::drawBackgroundImage(bool threeD)
         return;
       }
     }
-    _bgImageTexture = gmshPopplerWrapper::getTextureForPage(800, 600);
+    _bgImageTexture = gmshPopplerWrapper::getTextureForPage(1024, 1024);
     _bgImageW = gmshPopplerWrapper::width();
     _bgImageH = gmshPopplerWrapper::height();
 #endif
@@ -394,15 +395,18 @@ void drawContext::drawBackgroundImage(bool threeD)
       else if(ext == ".png" || ext == ".PNG")
         img = new Fl_PNG_Image(name.c_str());
       if(img){
+        Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(1024, 1024);
         glGenTextures(1, &_bgImageTexture);
         glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w(), img->h(), 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, img->array);
-        _bgImageW = img->w();
-        _bgImageH = img->h();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
+                     (img2->d() == 4) ? GL_RGBA : GL_RGB,
+                     GL_UNSIGNED_BYTE, img2->array);
+        _bgImageW = img2->w();
+        _bgImageH = img2->h();
         delete img;
+        delete img2;
       }
       else{
         Msg::Error("Could not load background image '%s'", name.c_str());

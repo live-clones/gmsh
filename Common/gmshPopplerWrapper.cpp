@@ -52,7 +52,7 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   poppler::image im = pr.render_page(_current_page, xres, yres, -1, -1, -1);
   _w = im.width();
   _h = im.height();
-  //  im.save("page.png","png");
+  // im.save("page.png","png");
   GLuint texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
