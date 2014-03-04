@@ -21,7 +21,7 @@
 #include "gl2ps.h"
 
 #if defined(HAVE_FLTK)
-#include <FL/Fl.h>
+#include <FL/Fl.H>
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/gl.h>
