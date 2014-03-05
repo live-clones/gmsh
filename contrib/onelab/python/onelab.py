@@ -267,7 +267,7 @@ class client :
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      print (msg)
+      print (msg.replace('\0','|'))
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(name))
 
@@ -370,6 +370,8 @@ class client :
         self._send(self._GMSH_START, str(os.getpid()))
     self.action = self.getString(self.name + '/Action')
     self.setNumber('IsPyMetamodel',value=1,visible=0)
+    self.defineNumber('0Metamodel/Loop',value=0,visible=0)
+    self.loop = bool(self.getNumber('0Metamodel/Loop'))
     self.sendInfo("Performing OneLab '" + self.action + "'")
     if self.action == "initialize": 
       self.finalize()
