@@ -576,6 +576,14 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("2")) ret = true;
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
+  //Update Onelab db flag indicating whether or not in a loop
+  std::vector<onelab::number> pn;
+  onelab::server::instance()->get(pn,"0Metamodel/Loop");
+  if(pn.size()){
+    pn[0].setValue(ret?1:0);
+    onelab::server::instance()->set(pn[0]);
+  }
+
   if(FlGui::available() && onelab::server::instance()->getChanged())
     FlGui::instance()->rebuildTree(false);
 
