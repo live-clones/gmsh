@@ -549,7 +549,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
   // hide everything except the onelab X-Y graphs
   if(hideNewViews){
     for(unsigned int i = 0; i < PView::list.size(); i++){
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
         PView::list[i]->getOptions()->visible = 0;
     }
   }
@@ -557,7 +557,7 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(unsigned int i = 0; i < n; i++){
-      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "OneLab")
+      if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
         PView::list[i]->getOptions()->visible = 0;
     }
   }

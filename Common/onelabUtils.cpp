@@ -234,7 +234,7 @@ namespace onelabUtils {
     PView *view = 0;
 
     for(unsigned int i = 0; i < PView::list.size(); i++){
-      if(PView::list[i]->getData()->getFileName() == "OneLab" + graphNum){
+      if(PView::list[i]->getData()->getFileName() == "ONELAB" + graphNum){
         view = PView::list[i];
         break;
       }
@@ -273,7 +273,7 @@ namespace onelabUtils {
       }
       else{
         view = new PView(xName, yName, x, y);
-        view->getData()->setFileName("OneLab" + graphNum);
+        view->getData()->setFileName("ONELAB" + graphNum);
         view->getOptions()->intervalsType = PViewOptions::Discrete;
         view->getOptions()->autoPosition = num / 2 + 2;
       }

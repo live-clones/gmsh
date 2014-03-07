@@ -798,7 +798,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
     if(ps.size()){
-      //Info("Performing OneLab '%s'", ps[0].getValue().c_str());
+      //Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
     }
   }
@@ -899,7 +899,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(name.empty()){
     if(copt.size() || fopt.size())
       Msg::Error("From now on you need to use the `Name' attribute to create a "
-                 "OneLab parameter: `Name \"%s\"'",
+                 "ONELAB parameter: `Name \"%s\"'",
                  _getParameterName(key, copt).c_str());
     return;
   }
@@ -1004,7 +1004,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(name.empty()){
     if(copt.size() || fopt.size())
       Msg::Error("From now on you need to use the `Name' attribute to create a "
-                 "OneLab parameter: `Name \"%s\"'",
+                 "ONELAB parameter: `Name \"%s\"'",
                  _getParameterName(key, copt).c_str());
     return;
   }

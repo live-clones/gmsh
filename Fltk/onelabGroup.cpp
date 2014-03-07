@@ -50,9 +50,9 @@ typedef unsigned long intptr_t;
 #include "metamodel.h"
 #endif
 
-// This file contains the Gmsh/FLTK specific parts of the OneLab
+// This file contains the Gmsh/FLTK specific parts of the ONELAB
 // interface. You'll need to reimplement this if you plan to build a different
-// OneLab server.
+// ONELAB server.
 
 class onelabGmshServer : public GmshServer{
  private:
@@ -209,7 +209,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string version, ptype, name;
       onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
-        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+        Msg::Error("ONELAB version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
       else if(ptype == "number"){
@@ -243,7 +243,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         onelab::function p; p.fromChar(message); set(p);
       }
       else
-        Msg::Error("Unknown OneLab parameter type: %s", ptype.c_str());
+        Msg::Error("Unknown ONELAB parameter type: %s", ptype.c_str());
     }
     break;
   case GmshSocket::GMSH_PARAMETER_QUERY:
@@ -251,7 +251,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string version, ptype, name, reply;
       onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
-        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+        Msg::Error("ONELAB version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
       else if(ptype == "number"){
@@ -271,7 +271,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         if(par.size() == 1) reply = par[0].toChar();
       }
       else
-        Msg::Error("Unknown OneLab parameter type in query: %s", ptype.c_str());
+        Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
 
       if(reply.size()){
         getGmshServer()->SendMessage
@@ -290,7 +290,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::vector<std::string> replies;
       onelab::parameter::getInfoFromChar(message, version, ptype, name);
       if(onelab::parameter::version() != version){
-        Msg::Error("OneLab version mismatch (server: %s / client: %s)",
+        Msg::Error("ONELAB version mismatch (server: %s / client: %s)",
                    onelab::parameter::version().c_str(), version.c_str());
       }
       else if(ptype == "number"){
@@ -314,12 +314,12 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
             it != functions.end(); it++) replies.push_back((*it).toChar());
       }
       else
-        Msg::Error("Unknown OneLab parameter type in query: %s", ptype.c_str());
+        Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
 
       for(unsigned int i = 0; i < replies.size(); i++)
         getGmshServer()->SendMessage
           (GmshSocket::GMSH_PARAMETER_QUERY_ALL, replies[i].size(), &replies[i][0]);
-      reply = "Sent all OneLab " + ptype + "s";
+      reply = "Sent all ONELAB " + ptype + "s";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_PARAMETER_QUERY_END, reply.size(), &reply[0]);
     }
@@ -673,7 +673,7 @@ static void archiveOutputFiles(const std::string &fileName)
     CreateSingleDir(split[0] + "archive/");
     saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
   }
- 
+
   FlGui::instance()->rebuildTree(true);
 }
 
@@ -788,7 +788,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "save"){
     std::vector<std::string> db = onelab::server::instance()->toChar();
-    Msg::Direct("OneLab database:");
+    Msg::Direct("ONELAB database:");
     for(unsigned int i = 0; i < db.size(); i++){
       for(unsigned int j = 0; j < db[i].size(); j++)
         if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';

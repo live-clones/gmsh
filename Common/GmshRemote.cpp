@@ -294,7 +294,7 @@ int GmshRemote()
 
 int GmshRemote()
 {
-  Msg::Error("GmshRemote requires Post and OneLab modules");
+  Msg::Error("GmshRemote requires Post and ONELAB modules");
   return 0;
 }
 
