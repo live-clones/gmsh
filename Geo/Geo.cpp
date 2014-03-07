@@ -3963,8 +3963,9 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
           int inters = intersection_segments(p3, p4, q3, q4, x);
 
           if (inters && x[0] != 0. && x[1] != 0. && x[0] != 1. && x[1] != 1.){
-            SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x() ,
-                                 (1.-x[0])*p3.y() + x[0]*p4.y() , 0);
+            SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x(),
+                                 (1.-x[0])*p3.y() + x[0]*p4.y(),
+                                 (1.-x[0])*p3.z() + x[0]*p4.z());
             // case to treat
             bool createPoint = false, mergePoint = false;
             bool splitcToAddInSurf = false, splitcDejaInSurf = false;
