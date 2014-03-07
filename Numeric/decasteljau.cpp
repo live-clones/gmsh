@@ -10,7 +10,8 @@ typedef struct {
 
 static int sortedPointInsert(const SPoint3 &p, const double t, std::vector<sortedPoint> &pts, int pos)
 {
-  pts.push_back((sortedPoint) {p, t, pts[pos].next});
+  sortedPoint pnt = {p, t, pts[pos].next};
+  pts.push_back(pnt);
   int newp = pts.size() - 1;
   pts[pos].next = newp;
   return newp;
@@ -55,8 +56,10 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
 void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
-  discrete.push_back((sortedPoint) {p0, 0., 1});
-  discrete.push_back((sortedPoint) {p2, 1., -1});
+  sortedPoint pnt1 = {p0, 0., 1};
+  discrete.push_back(pnt1);
+  sortedPoint pnt2 = {p2, 1., -1};
+  discrete.push_back(pnt2);
   decasteljau(tol, discrete, 0, p0, p1, p2, 0., 1);
   sortedPointToVector(discrete, pts, ts);
 }
@@ -80,8 +83,10 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
 void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p3, std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
-  discrete.push_back((sortedPoint) {p0, 0., 1});
-  discrete.push_back((sortedPoint) {p3, 1., -1});
+  sortedPoint pnt1 = {p0, 0., 1};
+  discrete.push_back(pnt1);
+  sortedPoint pnt2 = {p3, 1., -1};
+  discrete.push_back(pnt2);
   decasteljau(tol, discrete, 0, p0, p1, p2, p3, 0., 1);
   sortedPointToVector(discrete, pts, ts);
 }
@@ -110,8 +115,10 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
 void decasteljau(double tol, const std::vector<SPoint3> &controlPoints, std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
-  discrete.push_back((sortedPoint) {controlPoints[0], 0., 1});
-  discrete.push_back((sortedPoint) {controlPoints.back(), 1., -1});
+  sortedPoint pnt1 = {controlPoints[0], 0., 1};
+  discrete.push_back(pnt1);
+  sortedPoint pnt2 = {controlPoints.back(), 1., -1};
+  discrete.push_back(pnt2);
   decasteljau(tol, discrete, 0, controlPoints, 0., 1);
   sortedPointToVector(discrete, pts, ts);
 }

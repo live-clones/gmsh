@@ -547,7 +547,8 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
   const double d2 = sqDistPointSegment(pmid, p0, p1);
   if (d2 < tol * tol)
     return;
-  upts.push_back((sortedPoint){pmid, tmid, pos1});
+  sortedPoint pnt = {pmid, tmid, pos1};
+  upts.push_back(pnt);
   const int posmid = upts.size() - 1;
   upts[pos0].next = posmid;
   _discretize(tol, edge, upts, pos0);
@@ -557,8 +558,10 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
-  upts.push_back((sortedPoint){getBeginVertex()->xyz(), 0., 1});
-  upts.push_back((sortedPoint){getEndVertex()->xyz(), 1., -1});
+  sortedPoint pnt1 = {getBeginVertex()->xyz(), 0., 1};
+  upts.push_back(pnt1);
+  sortedPoint pnt2 = {getEndVertex()->xyz(), 1., -1};
+  upts.push_back(pnt2);
   _discretize(tol, this, upts, 0);
   dpts.clear();
   dpts.reserve(upts.size());
