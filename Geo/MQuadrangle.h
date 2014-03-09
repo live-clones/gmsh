@@ -315,6 +315,7 @@ class MQuadrangle9 : public MQuadrangle {
     v[8] = _vs[4];
   }
   virtual int getTypeForMSH() const { return MSH_QUA_9; }
+  virtual int getTypeForVTK() const { return 28; }
   virtual const char *getStringForPOS() const { return "SQ2"; }
   virtual const char *getStringForDIFF() const { return "ElmB9n2D"; }
   virtual void reverse()
@@ -423,6 +424,12 @@ class MQuadrangleN : public MQuadrangle {
     if(_order==10 && _vs.size() + 4 == 40) return MSH_QUA_40;
     Msg::Error("no tag matches a p%d quadrangle with %d vertices", _order, 4+_vs.size());
     return 0;
+  }
+  virtual int getTypeForVTK() const 
+  { 
+    if(_order== 2 && _vs.size() + 4 == 9) return 28;
+    if(_order== 2 && _vs.size() + 4 == 8)  return 23;
+    return MQuadrangle::getTypeForVTK();
   }
   virtual void reverse()
   {

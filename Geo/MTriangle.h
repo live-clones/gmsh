@@ -327,6 +327,7 @@ class MTriangleN : public MTriangle {
     Msg::Error("no tag matches a p%d triangle with %d vertices", _order, 3+_vs.size());
     return 0;
   }
+  virtual int getTypeForVTK() const { return (_order==2) ? 22 : MTriangle::getTypeForVTK(); }
   virtual void reverse()
   {
     MVertex *tmp;

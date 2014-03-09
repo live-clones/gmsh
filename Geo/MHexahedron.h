@@ -404,6 +404,7 @@ class MHexahedron27 : public MHexahedron {
     v[8] = _vs[12+num];
   }
   virtual int getTypeForMSH() const { return MSH_HEX_27; }
+  virtual int getTypeForVTK() const { return 29; }
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual void reverse()
