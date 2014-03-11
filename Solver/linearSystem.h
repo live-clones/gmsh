@@ -18,6 +18,7 @@ class linearSystemBase {
   virtual ~linearSystemBase(){}
   virtual bool isAllocated() const = 0;
   virtual void allocate(int nbRows) = 0;
+  virtual void preAllocateEntries(){};
   virtual void clear() = 0;
   virtual void zeroMatrix() = 0;
   virtual void zeroRightHandSide() = 0;
