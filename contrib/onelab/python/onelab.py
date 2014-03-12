@@ -194,6 +194,11 @@ class client :
     value = self._defineParameter(p)
     return value
   
+  def clear(self, name) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARAMETER_CLEAR, str(name))
+
   def setNumber(self, name, **param):
     if not self.socket :
       return
