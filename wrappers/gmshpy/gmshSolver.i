@@ -38,5 +38,6 @@
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
 %template(linearSystemPETScBlockDouble) linearSystemPETSc<fullMatrix<double> >;
 #endif
+%template(vectorComplexDouble) std::vector<std::complex<double> >;
 %include "eigenSolver.h"
 #endif
