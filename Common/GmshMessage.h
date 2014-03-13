@@ -45,6 +45,8 @@ class Msg {
   static GmshClient *_client;
   // communication with onelab server
   static onelab::client *_onelabClient;
+  // internal onelab status for Gmsh parser
+  static std::string _gmshOnelabAction;
   // executable name
   static std::string _execName;
  public:
@@ -100,6 +102,8 @@ class Msg {
   static bool UseOnelab();
   static void SetOnelabNumber(std::string name, double val, bool visible);
   static void SetOnelabString(std::string name, std::string val, bool visible);
+  static void SetGmshOnelabAction(std::string action){ _gmshOnelabAction = action; }
+  static std::string GetGmshOnelabAction(){ return _gmshOnelabAction; }
   static void ExchangeOnelabParameter(const std::string &key,
                                       std::vector<double> &val,
                                       std::map<std::string, std::vector<double> > &fopt,

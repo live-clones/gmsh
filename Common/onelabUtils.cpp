@@ -301,6 +301,8 @@ namespace onelabUtils {
     onelab::client *c = it->second;
     std::string mshFileName = onelabUtils::getMshFileName(c);
 
+    Msg::SetGmshOnelabAction(action);
+
     static std::string modelName = GModel::current()->getName();
 
     if(action == "initialize"){
@@ -348,6 +350,8 @@ namespace onelabUtils {
       setFirstComputationFlag(false);
       onelab::server::instance()->setChanged(false, "Gmsh");
     }
+
+    Msg::SetGmshOnelabAction("");
 
     return redraw;
   }

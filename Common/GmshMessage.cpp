@@ -61,6 +61,7 @@ std::string Msg::_execName;
 onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
 #endif
+std::string Msg::_gmshOnelabAction = "";
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
