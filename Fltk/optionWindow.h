@@ -22,7 +22,7 @@
 #include "colorbarWindow.h"
 #include "gamepadWindow.h"
 
-#define NUM_FONTS 14
+#define NUM_FONTS 15
 extern Fl_Menu_Item menu_font_names[];
 
 class optionWindow{

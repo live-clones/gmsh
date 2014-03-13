@@ -130,6 +130,7 @@ Fl_Menu_Item menu_font_names[] = {
   {"Courier-BoldOblique",   0, 0, (void*)FL_COURIER_BOLD_ITALIC},
   {"Symbol",                0, 0, (void*)FL_SYMBOL},
   {"ZapfDingbats",          0, 0, (void*)FL_ZAPF_DINGBATS},
+  {"Screen",                0, 0, (void*)FL_SCREEN},
   {0}
 };
 
