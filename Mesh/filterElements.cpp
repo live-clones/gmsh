@@ -150,7 +150,7 @@ void filterColumns(std::vector<MElement*> &elem,
       //      delete c[i];
     }
   }
-  printf("%d --> %d\n",elem.size(),toKeep.size());
+  printf("%lu --> %lu\n",elem.size(),toKeep.size());
   elem = toKeep;
 }
 

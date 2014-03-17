@@ -60,6 +60,7 @@
 // Printing routines
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
 static inline ostream &operator <<(ostream &o,const TopAbs_ShapeEnum &A)
 {
     switch(A) {
@@ -86,12 +87,14 @@ static inline ostream &operator <<(ostream &o,const TopAbs_State &A)
     default: return o << "Unknown";
     }
 }
+*/
 
 static inline ostream &operator <<(ostream &o,const gp_Pnt &p)
 {
   return o << "(" << p.Coord(1) << "," << p.Coord(2) << "," << p.Coord(3) << ")";
 }
 
+/*
 static inline ostream &operator <<(ostream &o,const TopOpeBRep_P2Dstatus &A)
 {
     switch(A) {
@@ -103,6 +106,7 @@ static inline ostream &operator <<(ostream &o,const TopOpeBRep_P2Dstatus &A)
     default: return o << "Unknown";
     }
 }
+*/
 
 template <typename T>
 static inline std::ostream &operator<<(std::ostream &out, std::set<T> const &a)
