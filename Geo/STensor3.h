@@ -339,6 +339,15 @@ class STensor3 {
           val = fabs(_val[i]);
     return val;
   };
+  double norm2()const{
+    double sqr = 0;
+    for (int i=0; i<3; i++){
+      for (int j =0; j<3; j++){
+	sqr += this->operator()(i,j)*this->operator()(i,j);
+      }
+    }
+    return sqrt(sqr);
+  }
 };
 
 // tensor product
