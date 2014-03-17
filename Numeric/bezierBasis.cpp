@@ -247,6 +247,10 @@ namespace {
       return subPoints;
     }
 
+    Msg::Error("Subpoints for pyramid p>1 not implemented !");
+    return std::vector< fullMatrix<double> >();
+
+    /*
     std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> ref, prox;
 
@@ -296,6 +300,7 @@ namespace {
     }
 
     return subPoints;
+    */
   }
 
   // Matrices generation
@@ -378,18 +383,18 @@ namespace {
       for (int j = 0; j < ndofs; j++) {
         bez2Lag(i, j) =
             nChoosek(order, exponent(j, 2))
-            * pow(point(i, 2), exponent(j, 2)) //FIXME use pow_int
-            * pow(1. - point(i, 2), order - exponent(j, 2));
-
+            * pow_int(point(i, 2), exponent(j, 2))
+            * pow_int(1. - point(i, 2), order - exponent(j, 2));
+  
         double p = order + 2 - exponent(j, 2);
         double denom = 1. - point(i, 2);
         bez2Lag(i, j) *=
               nChoosek(p, exponent(j, 0))
             * nChoosek(p, exponent(j, 1))
-            * pow(point(i, 0) / denom, exponent(j, 0))
-            * pow(point(i, 1) / denom, exponent(j, 1))
-            * pow(1. - point(i, 0) / denom, p - exponent(j, 0))
-            * pow(1. - point(i, 1) / denom, p - exponent(j, 1));
+            * pow_int(point(i, 0) / denom, exponent(j, 0))
+            * pow_int(point(i, 1) / denom, exponent(j, 1))
+            * pow_int(1. - point(i, 0) / denom, p - exponent(j, 0))
+            * pow_int(1. - point(i, 1) / denom, p - exponent(j, 1));
       }
     }
     return bez2Lag;
@@ -458,16 +463,23 @@ void bezierBasis::_construct(int parentType, int p)
     dim = 3;
     numLagCoeff = 8;
     exponents = JacobianBasis::generateJacMonomialsPyramid(order);
-    subPoints = generateSubPointsPyr(order);
-
-    numDivisions = static_cast<int>(subPoints.size());
+    if (order < 2) {
+      subPoints = generateSubPointsPyr(order);
+      numDivisions = static_cast<int>(subPoints.size());
+    }
+    else {
+      numDivisions = 8;
+      static int a = 0;
+      if (++a == 1) Msg::Warning("Subdivision not available for pyramid p>1");
+    }
 
     fullMatrix<double> bezierPoints = exponents;
     bezierPoints.scale(1. / (order + 2));
 
     matrixBez2Lag = generateBez2LagMatrixPyramid(exponents, bezierPoints, order);
     matrixBez2Lag.invert(matrixLag2Bez);
-    subDivisor = generateSubDivisorPyramid(exponents, subPoints, matrixLag2Bez, order);
+    if (order < 2)
+      subDivisor = generateSubDivisorPyramid(exponents, subPoints, matrixLag2Bez, order);
     return;
   }
 

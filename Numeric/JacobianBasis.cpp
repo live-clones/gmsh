@@ -27,8 +27,8 @@ JacobianBasis::JacobianBasis(int tag)
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
   const int order = ElementType::OrderFromTag(tag);
-  const int jacobianOrder =  JacobianBasis::jacobianOrder(parentType, order);
-  const int primJacobianOrder =  JacobianBasis::jacobianOrder(parentType, 1);
+  const int jacobianOrder = JacobianBasis::jacobianOrder(parentType, order);
+  const int primJacobianOrder = JacobianBasis::jacobianOrder(parentType, 1);
 
   fullMatrix<double> lagPoints;                                  // Sampling points
 
@@ -728,7 +728,8 @@ fullMatrix<double> JacobianBasis::generateJacPointsPyramid(int order)
   return points;
 }
 
-int JacobianBasis::jacobianOrder(int parentType, int order) {
+int JacobianBasis::jacobianOrder(int parentType, int order)
+{
   switch (parentType) {
     case TYPE_PNT : return 0;
     case TYPE_LIN : return order - 1;
@@ -744,4 +745,15 @@ int JacobianBasis::jacobianOrder(int parentType, int order) {
       Msg::Error("Unknown element type %d, return order 0", parentType);
       return 0;
   }
+}
+
+
+void JacobianBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
+                                          fullMatrix<double> *dxyzdX,
+                                          fullMatrix<double> *dxyzdY,
+                                          fullMatrix<double> *dxyzdZ) const
+{
+  if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
+  if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
+  if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
 }

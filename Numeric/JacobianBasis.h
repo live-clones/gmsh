@@ -14,8 +14,6 @@
 
 class JacobianBasis {
  private:
-  const bezierBasis *bezier;
-
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY, primGradShapeBarycenterZ;
@@ -41,6 +39,8 @@ class JacobianBasis {
                                        fullMatrix<double> &JDJ) const;
 
  public :
+  const bezierBasis *bezier;
+
   JacobianBasis(int tag);
 
   // Get methods
@@ -106,6 +106,12 @@ class JacobianBasis {
   }
 
   // Jacobian basis order and pyramidal basis
+  void getGradientsFromNodes(const fullMatrix<double> &nodes,
+                             fullMatrix<double> *dxyzdX,
+                             fullMatrix<double> *dxyzdY,
+                             fullMatrix<double> *dxyzdZ) const;
+
+  //
   static int jacobianOrder(int parentType, int order);
   static fullMatrix<double> generateJacMonomialsPyramid(int order);
   static fullMatrix<double> generateJacPointsPyramid(int order);
