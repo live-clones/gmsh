@@ -12,9 +12,10 @@
 #include "legendrePolynomials.h"
 
 
-// Basis functios for pyramidal elements
-// cf. M. Bergot, G. Cohen, M. Durufle, HIGHER-ORDER FINITE ELEMENTS FOR HYBRID MESHES USING NEW
-// NODAL PYRAMIDAL ELEMENTS, J. Sci. Comput. 42, 3 (2010) 345-381", DOI: 10.1007/s10915-009-9334-9
+// Basis functios for pyramidal elements: cf. M. Bergot, G. Cohen, M. Durufle,
+// HIGHER-ORDER FINITE ELEMENTS FOR HYBRID MESHES USING NEW NODAL PYRAMIDAL
+// ELEMENTS, J. Sci. Comput. 42, 3 (2010) 345-381", DOI:
+// 10.1007/s10915-009-9334-9
 
 class BergotBasis {
  public:

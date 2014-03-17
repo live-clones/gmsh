@@ -1,18 +1,23 @@
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include "discreteFrechetDistance.h"
 #include "fullMatrix.h"
 
 static double distance (const SPoint3 &p1, const SPoint3 &p2){
   return p1.distance(p2);
-} 
+}
 
 static double c(int i, int j,
 		fullMatrix<double> &CA,
-		const std::vector<SPoint3> &P, 
-		const std::vector<SPoint3> &Q) 
+		const std::vector<SPoint3> &P,
+		const std::vector<SPoint3> &Q)
 {
   double CAij;
   if (CA(i,j)>-1){
-    CAij =  CA(i,j);
+    CAij = CA(i,j);
   }
   else if (i==0 && j==0){
     CA(i,j) = distance(P[0],Q[0]);     // update the CA permanent
@@ -33,11 +38,12 @@ static double c(int i, int j,
   }
   else{
     CA(i,j) = 1.e22;
+    CAij = CA(i,j);
   }
   return CAij;
 }
 
-double discreteFrechetDistance (const std::vector<SPoint3> &P, 
+double discreteFrechetDistance (const std::vector<SPoint3> &P,
 				const std::vector<SPoint3> &Q){
   const int sP = P.size();
   const int sQ = Q.size();

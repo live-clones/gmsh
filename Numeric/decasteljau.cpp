@@ -1,3 +1,10 @@
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by J. Lambrechts
+
 #include "decasteljau.h"
 #include "SPoint3.h"
 #include "SVector3.h"
@@ -8,7 +15,8 @@ typedef struct {
   int next;
 } sortedPoint;
 
-static int sortedPointInsert(const SPoint3 &p, const double t, std::vector<sortedPoint> &pts, int pos)
+static int sortedPointInsert(const SPoint3 &p, const double t,
+                             std::vector<sortedPoint> &pts, int pos)
 {
   sortedPoint pnt = {p, t, pts[pos].next};
   pts.push_back(pnt);
@@ -17,7 +25,8 @@ static int sortedPointInsert(const SPoint3 &p, const double t, std::vector<sorte
   return newp;
 }
 
-static void sortedPointToVector(const std::vector<sortedPoint> &spts, std::vector<SPoint3> &pts, std::vector<double> &ts)
+static void sortedPointToVector(const std::vector<sortedPoint> &spts,
+                                std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   pts.clear();
   pts.reserve(spts.size());
@@ -40,7 +49,9 @@ double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0, const SPoint3 &s1
   return (dt2 + dn2) / d.normSq();
 }
 
-static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, double t0, double t2)
+static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
+                        const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                        double t0, double t2)
 {
   if(sqDistPointSegment(p1, p0, p2) < tol * tol)
     return;
@@ -53,7 +64,8 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
   decasteljau(tol, discrete, newpos, p012, p12, p2, t012, t2);
 }
 
-void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, std::vector<SPoint3> &pts, std::vector<double> &ts)
+void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                 std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
   sortedPoint pnt1 = {p0, 0., 1};
@@ -64,7 +76,9 @@ void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3
   sortedPointToVector(discrete, pts, ts);
 }
 
-static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p3, double t0, double t3)
+static void decasteljau(double tol, std::vector<sortedPoint> &discrete,
+                        int pos, const SPoint3 &p0, const SPoint3 &p1,
+                        const SPoint3 &p2, const SPoint3 &p3, double t0, double t3)
 {
   if (std::max(sqDistPointSegment(p1, p0, p3), sqDistPointSegment(p2, p0, p3)) < tol * tol)
     return;
@@ -80,7 +94,8 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
   decasteljau(tol, discrete, newpos, p0123, p123, p23, p3, t0123, t3);
 }
 
-void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p3, std::vector<SPoint3> &pts, std::vector<double> &ts)
+void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                 const SPoint3 &p3, std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
   sortedPoint pnt1 = {p0, 0., 1};
@@ -91,7 +106,8 @@ void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3
   sortedPointToVector(discrete, pts, ts);
 }
 
-static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos, const std::vector<SPoint3> &pts, double t0, double te)
+static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
+                        const std::vector<SPoint3> &pts, double t0, double te)
 {
   int order = pts.size() - 1;
   double dmax2 = 0;
@@ -112,7 +128,8 @@ static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
   decasteljau(tol, discrete, newpos, sub1, tmid, te);
 }
 
-void decasteljau(double tol, const std::vector<SPoint3> &controlPoints, std::vector<SPoint3> &pts, std::vector<double> &ts)
+void decasteljau(double tol, const std::vector<SPoint3> &controlPoints,
+                 std::vector<SPoint3> &pts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> discrete;
   sortedPoint pnt1 = {controlPoints[0], 0., 1};

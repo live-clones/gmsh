@@ -1263,7 +1263,7 @@ void onelabGroup::_addSolverMenu(int num)
   int hh = n->labelsize() + 4;
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  solverButton *but = new solverButton(1, 1, ww, hh, num, _tree->color());
+  new solverButton(1, 1, ww, hh, num, _tree->color());
   grp->end();
   //grp->resizable(0);
   _treeWidgets.push_back(grp);
@@ -1280,7 +1280,7 @@ void onelabGroup::_addViewMenu(int num)
   int hh = n->labelsize() + 4;
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  viewButton *but = new viewButton(1, 1, ww, hh, num, _tree->color());
+  new viewButton(1, 1, ww, hh, num, _tree->color());
   grp->end();
   //grp->resizable(0);
   _treeWidgets.push_back(grp);

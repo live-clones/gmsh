@@ -61,7 +61,7 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
 
   ExtrudeParams *ep = face->meshAttributes.extrude;
 
-  if( !ep || !ep->mesh.ExtrudeMesh || !ep->geo.Mode == EXTRUDED_ENTITY ){
+  if( !ep || !ep->mesh.ExtrudeMesh || !(ep->geo.Mode == EXTRUDED_ENTITY) ){
     Msg::Error("In IsValidQuadToTriLateral(), face %d is not a structured extrusion.",
                face->tag() );
     return 0;
@@ -213,7 +213,7 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
 // there are QuadToTri conflicts, return 0.
 // if the surface turns out to be the source of a toroidal loop extrusion (which will then
 // NOT have geo.Mode == COPIED_ENTITY), return 2 (this will require special meshing considerations).
-// Note that RemoveDuplicateSurfaces() makes this DIFFICULT. 
+// Note that RemoveDuplicateSurfaces() makes this DIFFICULT.
 // Also, the type of QuadToTri interface is placed into the
 // pointer argument quadToTri. .
 // Added 2010-12-09.
@@ -223,12 +223,12 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
   (*detectQuadToTriTop) = false;
 
   int is_toroidal_quadtri = 0;
-  
+
   GModel *model = face->model();
 
   // First thing is first: determine if this is a toroidal quadtri extrusion.  if so, can skip the  rest
-  
-  
+
+
   // It seems the member pointers to neighboring regions for extruded top faces are not set.
   // For now, have to loop through
   // ALL the regions to see if the presently considered face belongs to the region.
@@ -236,12 +236,12 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
   // whether the face is a top face of the region (including whether the region is even extruded).
   // After that information is determined, function can test for QuadToTri neighbor conflicts.
 
-  
 
-  
+
+
   // first determine if this is toroidal quadtotri
   is_toroidal_quadtri = IsInToroidalQuadToTri(face);
-  
+
   if( is_toroidal_quadtri )
     (*detectQuadToTriTop) = true;
   else{
@@ -289,9 +289,9 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 	if( region->meshAttributes.extrude->mesh.QuadToTri )
 	  (*detectQuadToTriTop) = true;
       }
-	      
+
     }
- 
+
     // MAIN test of whether this is even a quadToTri extrusion lateral
     // the only return 0 path that is NOT an error
     if( !(*detectQuadToTriTop) )
@@ -346,7 +346,7 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 
   }  // end of else that executes if NOT toroidal extrusion
 
-  
+
   // this is technically redundant...but if changes are made, it's good to keep this here at the end for safety
   if( !(*detectQuadToTriTop) )
     return 0;
@@ -357,7 +357,7 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
   { return 2;} // for toroidal extrusion
   else
     return 3;
-    
+
 }
 
 
@@ -474,13 +474,13 @@ int MeshQuadToTriTopSurface( GFace *from, GFace *to, std::set<MVertex*,
 		"extrude information for top face %d.", to->tag() );
     return 0;
   }
-  
+
   // is this a quadtri extrusion with added vertices?
   bool is_addverts = false;
   if( ep && (ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1 || ep->mesh.QuadToTri == QUADTRI_ADDVERTS_1_RECOMB) )
     is_addverts = true;
 
-  // execute this section if 
+  // execute this section if
   // IF this is a 'no new vertices' quadToTri, mesh the surfaces according to this modified
   // least point value method: if a 3 boundary point quad, draw diagonals from middle corner toward
   // interior.  If a a 2- or 1- point boundary quad, draw toward lowest pointer number NOT on boundary.

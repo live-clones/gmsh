@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#ifndef _CURVATUREL_H_
+#ifndef _CURVATURE_H_
 #define _CURVATURE_H_
 
 #include "GModel.h"
@@ -58,7 +58,7 @@ private:
     bool _isMapInitialized;
 
     //Model and list of selected entities with give physical tag:
-    GModel* _model;    
+    GModel* _model;
     GFaceList _EntityArray;
 
     //Averaged vertex normals
@@ -181,7 +181,7 @@ public:
   typedef enum {RUSIN=1,RBF=2, SIMPLE=3} typeOfCurvature;
   static Curvature& getInstance();
   static bool valueAlreadyComputed();
-  
+
   inline void setGModel(GModel* model)
   {
     _model = model;
@@ -193,7 +193,7 @@ public:
   //void retrievePhysicalSurfaces(const std::string & face_tag);
 
   void computeCurvature(GModel* model, typeOfCurvature typ);
-  
+
   /// The following function implements algorithm from:
   /// Implementation of an Algorithm for Approximating the Curvature Tensor
   /// on a Triangular Surface Mesh in the Vish Environment
@@ -228,6 +228,5 @@ public:
 
 
 };
-
 
 #endif

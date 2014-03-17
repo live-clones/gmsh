@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #ifndef _STREAM_LINES_H_
-#define _STREAM_LINES_H
+#define _STREAM_LINES_H_
 
 #include "Plugin.h"
 
@@ -26,7 +26,7 @@ class GMSH_StreamLinesPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 
   static int getNbU();

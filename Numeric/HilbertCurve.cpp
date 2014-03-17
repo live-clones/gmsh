@@ -1,11 +1,15 @@
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include "SBoundingBox3d.h"
 #include "MVertex.h"
-
 
 struct HilbertSort
 {
 // The code for generating table transgc
-// from: http://graphics.stanford.edu/~seander/bithacks.html.    
+// from: http://graphics.stanford.edu/~seander/bithacks.html.
   int transgc[8][3][8];
   int tsb1mod3[8];
   int maxDepth;
@@ -14,21 +18,22 @@ struct HilbertSort
   void ComputeGrayCode(int n);
   int Split(MVertex** vertices,
 	    int arraysize,int GrayCode0,int GrayCode1,
-	    double BoundingBoxXmin, double BoundingBoxXmax, 
-	    double BoundingBoxYmin, double BoundingBoxYmax, 
+	    double BoundingBoxXmin, double BoundingBoxXmax,
+	    double BoundingBoxYmin, double BoundingBoxYmax,
 	    double BoundingBoxZmin, double BoundingBoxZmax);
-  void Sort(MVertex** vertices, int arraysize, int e, int d, 
-	   double BoundingBoxXmin, double BoundingBoxXmax, double BoundingBoxYmin, double BoundingBoxYmax, 
+  void Sort(MVertex** vertices, int arraysize, int e, int d,
+	   double BoundingBoxXmin, double BoundingBoxXmax,
+            double BoundingBoxYmin, double BoundingBoxYmax,
 	   double BoundingBoxZmin, double BoundingBoxZmax, int depth);
   HilbertSort (int m = 0, int l=1) : maxDepth(m),Limit(l)
   {
     ComputeGrayCode(3);
   }
-  void MultiscaleSortHilbert(MVertex** vertices, int arraysize, 
+  void MultiscaleSortHilbert(MVertex** vertices, int arraysize,
 			     int threshold, double ratio, int *depth)
   {
     int middle;
-    
+
     middle = 0;
     if (arraysize >= threshold) {
       (*depth)++;
@@ -40,12 +45,11 @@ struct HilbertSort
 	  bbox.min().y(),bbox.max().y(),
 	  bbox.min().z(),bbox.max().z(),0);
   }
-  
   void Apply (std::vector<MVertex*> &v)
   {
     for (size_t i=0;i<v.size();i++){
       MVertex *pv = v[i];
-      bbox += SPoint3(pv->x(),pv->y(),pv->z());    
+      bbox += SPoint3(pv->x(),pv->y(),pv->z());
     }
     bbox *= 1.01;
     MVertex**pv = &v[0];
@@ -53,7 +57,6 @@ struct HilbertSort
     MultiscaleSortHilbert(pv, v.size(), 128, 0.125,&depth);
   }
 };
-
 
 void HilbertSort::ComputeGrayCode(int n)
 {
@@ -74,7 +77,7 @@ void HilbertSort::ComputeGrayCode(int n)
     for (d = 0; d < n; d++) {
       // Calculate the end point (f).
       f = e ^ (1 << d);  // Toggle the d-th bit of 'e'.
-      // travel_bit = 2**p, the bit we want to travel. 
+      // travel_bit = 2**p, the bit we want to travel.
       travel_bit = e ^ f;
       for (i = 0; i < N; i++) {
         // // Rotate gc[i] left by (p + 1) % n bits.
@@ -103,7 +106,8 @@ void HilbertSort::ComputeGrayCode(int n)
 
 int HilbertSort::Split(MVertex** vertices,
 		       int arraysize,int GrayCode0,int GrayCode1,
-		       double BoundingBoxXmin, double BoundingBoxXmax, double BoundingBoxYmin, double BoundingBoxYmax, 
+		       double BoundingBoxXmin, double BoundingBoxXmax,
+                       double BoundingBoxYmin, double BoundingBoxYmax,
 		       double BoundingBoxZmin, double BoundingBoxZmax)
 {
   MVertex* swapvert;
@@ -111,10 +115,9 @@ int HilbertSort::Split(MVertex** vertices,
   double split;
   int i, j;
 
-
-  // Find the current splitting axis. 'axis' is a value 0, or 1, or 2, which 
+  // Find the current splitting axis. 'axis' is a value 0, or 1, or 2, which
   //   correspoding to x-, or y- or z-axis.
-  axis = (GrayCode0 ^ GrayCode1) >> 1; 
+  axis = (GrayCode0 ^ GrayCode1) >> 1;
 
   // Calulate the split position along the axis.
   if (axis == 0) {
@@ -138,7 +141,7 @@ int HilbertSort::Split(MVertex** vertices,
   // Partition the vertices into left- and right-arrays.
   if (d > 0) {
     do {
-      for (; i < arraysize; i++) {      
+      for (; i < arraysize; i++) {
         if (vertices[i]->point()[axis] >= split) break;
       }
       for (; j >= 0; j--) {
@@ -154,7 +157,7 @@ int HilbertSort::Split(MVertex** vertices,
     } while (true);
   } else {
     do {
-      for (; i < arraysize; i++) {      
+      for (; i < arraysize; i++) {
         if (vertices[i]->point()[axis] <= split) break;
       }
       for (; j >= 0; j--) {
@@ -175,8 +178,9 @@ int HilbertSort::Split(MVertex** vertices,
 
 // The sorting code is inspired by Tetgen 1.5
 
-void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d, 
-		       double BoundingBoxXmin, double BoundingBoxXmax, double BoundingBoxYmin, double BoundingBoxYmax, 
+void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
+		       double BoundingBoxXmin, double BoundingBoxXmax,
+                       double BoundingBoxYmin, double BoundingBoxYmax,
 		       double BoundingBoxZmin, double BoundingBoxZmax, int depth)
 {
   double x1, x2, y1, y2, z1, z2;
@@ -186,24 +190,31 @@ void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
   p[0] = 0;
   p[8] = arraysize;
 
-  p[4] = Split(vertices, p[8], transgc[e][d][3], transgc[e][d][4], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
-  p[2] = Split(vertices, p[4], transgc[e][d][1], transgc[e][d][2], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
-  p[1] = Split(vertices, p[2], transgc[e][d][0], transgc[e][d][1], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
-  p[3] = Split(&(vertices[p[2]]), p[4] - p[2], 
-	       transgc[e][d][2], transgc[e][d][3], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[2];
-  p[6] = Split(&(vertices[p[4]]), p[8] - p[4], 
-	       transgc[e][d][5], transgc[e][d][6], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[4];
-  p[5] = Split(&(vertices[p[4]]), p[6] - p[4], 
-	       transgc[e][d][4], transgc[e][d][5], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[4];
-  p[7] = Split(&(vertices[p[6]]), p[8] - p[6], 
-	       transgc[e][d][6], transgc[e][d][7], 
-	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin, BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[6];
+  p[4] = Split(vertices, p[8], transgc[e][d][3], transgc[e][d][4],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
+  p[2] = Split(vertices, p[4], transgc[e][d][1], transgc[e][d][2],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
+  p[1] = Split(vertices, p[2], transgc[e][d][0], transgc[e][d][1],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax);
+  p[3] = Split(&(vertices[p[2]]), p[4] - p[2],
+	       transgc[e][d][2], transgc[e][d][3],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[2];
+  p[6] = Split(&(vertices[p[4]]), p[8] - p[4],
+	       transgc[e][d][5], transgc[e][d][6],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[4];
+  p[5] = Split(&(vertices[p[4]]), p[6] - p[4],
+	       transgc[e][d][4], transgc[e][d][5],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[4];
+  p[7] = Split(&(vertices[p[6]]), p[8] - p[6],
+	       transgc[e][d][6], transgc[e][d][7],
+	       BoundingBoxXmin, BoundingBoxXmax, BoundingBoxYmin,
+               BoundingBoxYmax, BoundingBoxZmin, BoundingBoxZmax) + p[6];
 
   if (maxDepth > 0) {
     if ((depth + 1) == maxDepth) {
@@ -217,8 +228,8 @@ void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
       if (w == 0) {
         e_w = 0;
       } else {
-        k = 2 * ((w - 1) / 2); 
-        e_w = k ^ (k >> 1); 
+        k = 2 * ((w - 1) / 2);
+        e_w = k ^ (k >> 1);
       }
       k = e_w;
       e_w = ((k << (d+1)) & mask) | ((k >> (n-d-1)) & mask);
@@ -250,15 +261,14 @@ void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
         z1 = BoundingBoxZmin;
         z2 = 0.5 * (BoundingBoxZmin + BoundingBoxZmax);
       }
-      Sort(&(vertices[p[w]]), p[w+1] - p[w], ei, di, 
+      Sort(&(vertices[p[w]]), p[w+1] - p[w], ei, di,
                     x1, x2, y1, y2, z1, z2, depth+1);
-    } 
-  } 
+    }
+  }
 }
 
-
-
-void SortHilbert (std::vector<MVertex*>& v){
+void SortHilbert (std::vector<MVertex*>& v)
+{
   HilbertSort h;
   h.Apply(v);
 }

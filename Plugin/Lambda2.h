@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #ifndef _LAMBDA2_H_
-#define _LAMBDA2_H
+#define _LAMBDA2_H_
 
 #include "Plugin.h"
 
@@ -25,7 +25,7 @@ class GMSH_Lambda2Plugin : public GMSH_PostPlugin
   std::string getHelp() const;
   std::string getAuthor() const { return "E. Marchandise"; }
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber* getOption(int iopt);
   PView *execute(PView *);
 };
 
