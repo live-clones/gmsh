@@ -30,7 +30,7 @@ class GroupOfElement;
 
 class FunctionSpace{
  protected:
-  // Number of possible geomtrical topologies //
+  // Number of possible geomtrical topologies & Dof Type offset //
   static const size_t nGeoType;
   static size_t nxtOffset;
 
@@ -79,8 +79,9 @@ class FunctionSpace{
  protected:
   FunctionSpace(void);
 
-  void build(const GroupOfElement& goe, std::string family);
-  void buildDof(void);
+  void   build(const GroupOfElement& goe, std::string family);
+  void   buildDof(void);
+  size_t findMaxType(void);
 
   std::vector<Dof> getUnorderedKeys(const MElement& element) const;
 };

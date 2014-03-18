@@ -13,8 +13,6 @@ const size_t FunctionSpace::nGeoType = 9;
 size_t FunctionSpace::nxtOffset = 0;
 
 FunctionSpace::FunctionSpace(void){
-  offset     = nxtOffset;
-  nxtOffset += 21;
 }
 
 FunctionSpace::~FunctionSpace(void){
@@ -24,6 +22,9 @@ FunctionSpace::~FunctionSpace(void){
 }
 
 void FunctionSpace::build(const GroupOfElement& goe, string family){
+  // Save Dof type offset //
+  offset = nxtOffset;
+
   // Save GroupOfElement & Mesh //
   this->goe  = &goe;
   this->mesh = &(goe.getMesh());
@@ -79,6 +80,10 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
 
   // Build Dof //
   buildDof();
+
+  // Find next next offset //
+  size_t maxType = findMaxType();
+  nxtOffset += maxType + 1;
 }
 
 void FunctionSpace::buildDof(void){
@@ -96,6 +101,22 @@ void FunctionSpace::buildDof(void){
     for(size_t j = 0; j < nDof; j++)
       dof.insert(myDof[j]);
   }
+}
+
+size_t FunctionSpace::findMaxType(void){
+  // Maximum type //
+  size_t maxType = 0;
+
+  // Iterate for dof //
+  const set<Dof>::iterator end = dof.end();
+        set<Dof>::iterator it  = dof.begin();
+
+  for(; it != end; it++)
+    // If this type is bigger, it becomes the new 'maxType'
+    if(it->getType() > maxType)
+      maxType = it->getType();
+
+  return maxType;
 }
 
 vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
