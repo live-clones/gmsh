@@ -1504,11 +1504,11 @@ add_custom_target(getHeaders
   COMMAND ${CMAKE_COMMAND} -E remove_directory Headers
   COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  foreach(FILE ${GMSH_API})
-    add_custom_command(TARGET getHeaders POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-  endforeach(FILE)
+foreach(FILE ${GMSH_API})
+  add_custom_command(TARGET getHeaders POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+                    ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endforeach(FILE)
 
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)

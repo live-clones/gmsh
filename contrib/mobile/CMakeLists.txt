@@ -11,7 +11,7 @@ else(APPLE)
 endif(APPLE)
 
 # FIXME: loop over all becnmarks and add those who provide info.xml
-set(MODELS machines inductor relay transfo_simple acoustic_scattering)
+set(MODELS machines inductor relay acoustic_scattering)
 foreach(FILE ${MODELS})
   find_path(DIR benchmarks/${FILE})
   if(FILE)
@@ -70,9 +70,6 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     cd ${CMAKE_CURRENT_SOURCE_DIR}/utils/ && ${CMAKE_CURRENT_SOURCE_DIR}/utils/make_icon_ios.sh
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/files
-    foreach(DIR ${BENCHMARKS})
-      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/
-    endforeach(DIR)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
@@ -94,6 +91,11 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_FRAMEWORK}/Gmsh ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/
     COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_FRAMEWORK}/petsc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
   )
+  foreach(DIR ${BENCHMARKS})
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/)
+  endforeach(DIR)
+
   copy_headers(${GETDP_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/)
   copy_headers(${GMSH_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/)
   copy_headers(${PETSC_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/)
