@@ -108,7 +108,7 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
     _invStraightJac.resize(nEl(),1.);
     double dumJac[3][3];
     for (int iEl = 0; iEl < nEl(); iEl++)
-      _invStraightJac[iEl] = 1. / _el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac);
+      _invStraightJac[iEl] = 1. / fabs(_el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac));
   }
 
 }
