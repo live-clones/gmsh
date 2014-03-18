@@ -182,16 +182,20 @@
 	
 	dispatch_group_notify(group, queue, ^{
 		[UIApplication sharedApplication].applicationIconBadgeNumber = -1;
-		[_runStopButton setAction:@selector(compute)];
-		[_runStopButton setTitle:@"Run"];
-		[_progressLabel setHidden:YES];
-		[_progressIndicator stopAnimating];
-		[_progressIndicator setHidden:YES];
-		if(_errors.count > 0) {
-			_errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
-			[_errorAlert show];
-		}
+		[self performSelectorOnMainThread:@selector(stopGUI) withObject:nil waitUntilDone:YES];
 	});
+}
+-(void)stopGUI
+{
+	[_runStopButton setAction:@selector(compute)];
+	[_runStopButton setTitle:@"Run"];
+	[_progressLabel setHidden:YES];
+	[_progressIndicator stopAnimating];
+	[_progressIndicator setHidden:YES];
+	if(_errors.count > 0) {
+		_errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+		[_errorAlert show];
+	}
 }
 - (void)stop
 {
