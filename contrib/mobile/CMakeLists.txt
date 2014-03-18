@@ -10,6 +10,16 @@ else(APPLE)
   option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
 endif(APPLE)
 
+# FIXME: loop over all becnmarks and add those who provide info.xml
+set(MODELS machines inductor relay transfo_simple acoustic_scattering)
+foreach(FILE ${MODELS})
+  find_path(DIR benchmarks/${FILE})
+  if(FILE)
+    message(STATUS "Found benchmark ${DIR}/benchmarks/${FILE}")
+    list(APPEND BENCHMARKS ${DIR}/benchmarks/${FILE})
+  endif(FILE)
+endforeach(FILE)
+
 macro(set_config_option VARNAME STRING)
   set(${VARNAME} TRUE)
   list(APPEND CONFIG_OPTIONS ${STRING})
@@ -35,7 +45,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   find_path(GETDP_FRAMEWORK GetDP.framework)
   if(GETDP_FRAMEWORK)
     set(GETDP_FRAMEWORK ${GETDP_FRAMEWORK}/GetDP.framework)
-    message(STATUS "Found " ${GETDP_FRAMEWORK})
+    message(STATUS "Found framework " ${GETDP_FRAMEWORK})
   else(GETDP_FRAMEWORK)
     message(SEND_ERROR "Could not find GetDP.framework")
   endif(GETDP_FRAMEWORK)
@@ -43,7 +53,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   find_path(GMSH_FRAMEWORK Gmsh.framework)
   if(GMSH_FRAMEWORK)
     set(GMSH_FRAMEWORK ${GMSH_FRAMEWORK}/Gmsh.framework)
-    message(STATUS "Found " ${GMSH_FRAMEWORK})
+    message(STATUS "Found framework " ${GMSH_FRAMEWORK})
   else(GMSH_FRAMEWORK)
     message(SEND_ERROR "Could not find Gmsh.framework")
   endif(GMSH_FRAMEWORK)
@@ -51,7 +61,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   find_path(PETSC_FRAMEWORK petsc.framework)
   if(PETSC_FRAMEWORK)
     set(PETSC_FRAMEWORK ${PETSC_FRAMEWORK}/petsc.framework)
-    message(STATUS "Found " ${PETSC_FRAMEWORK})
+    message(STATUS "Found framework " ${PETSC_FRAMEWORK})
   else(PETSC_FRAMEWORK)
     message(SEND_ERROR "Could not find petsc.framework")
   endif(PETSC_FRAMEWORK)
@@ -59,6 +69,10 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   add_custom_target(xcodeProject
     cd ${CMAKE_CURRENT_SOURCE_DIR}/utils/ && ${CMAKE_CURRENT_SOURCE_DIR}/utils/make_icon_ios.sh
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/files
+    foreach(DIR ${BENCHMARKS})
+      COMMAND ${CMAKE_COMMAND} -E copy_directory ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/
+    endforeach(DIR)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
