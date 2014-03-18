@@ -11,7 +11,7 @@ else(APPLE)
 endif(APPLE)
 
 # find all benchmarks who provide infos.xml
-find_path(BENCHMARKSDIR benchmarks/${FILE})
+find_path(BENCHMARKSDIR benchmarks/)
 file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks/*)
 foreach(SUBDIR ${BENCHMARKSDIR})
   if(IS_DIRECTORY ${SUBDIR})
