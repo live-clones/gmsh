@@ -372,11 +372,12 @@ void drawContext::drawScale()
 		PViewOptions *opt = p->getOptions();
 		if(!opt->visible) continue;
 
-		double width = 6*(this->_right -this->_left) / 10.;
-		double height = (this->_top - this->_bottom) / 20.;
+		double width = (this->_right -this->_left) / 2.;
+		double height = (this->_top - this->_bottom) / 10.;
+		double dh = height / 5;
 		double box = width / (opt->nbIso ? opt->nbIso : 1);
 		double xmin = this->_left + (this->_right - this->_left -width)/2.;
-		double ymin = this->_bottom + height + 2*height*nPview;
+		double ymin = this->_bottom + 0.8 * height + height * nPview;
     
 		std::vector<GLfloat> vertex(opt->nbIso*3*4);
 		std::vector<GLubyte> color(opt->nbIso*4*4);
@@ -392,13 +393,13 @@ void drawContext::drawScale()
 				vertex[i*3*4+1] = ymin;
 				vertex[i*3*4+2] = 0.;
 				vertex[i*3*4+3] = xmin + i * box;
-				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+4] = ymin + dh;
 				vertex[i*3*4+5] = 0.;
 				vertex[i*3*4+6] = xmin + (i + 1) * box;
 				vertex[i*3*4+7] = ymin;
 				vertex[i*3*4+8] = 0.;
 				vertex[i*3*4+9] = xmin + (i + 1) * box;
-				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+10] = ymin + dh;
 				vertex[i*3*4+11] = 0.;
 			}
 			else if(opt->intervalsType == PViewOptions::Continuous)
@@ -414,7 +415,7 @@ void drawContext::drawScale()
 				vertex[i*3*4+1] = ymin;
 				vertex[i*3*4+2] = 0.;
 				vertex[i*3*4+3] = xmin + i * box;
-				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+4] = ymin + dh;
 				vertex[i*3*4+5] = 0.;
 				double v2 = opt->tmpMin + (i + 1) * dv;
 				unsigned int col2 = opt->getColor(v2, opt->tmpMin, opt->tmpMax, true);
@@ -426,7 +427,7 @@ void drawContext::drawScale()
 				vertex[i*3*4+7] = ymin;
 				vertex[i*3*4+8] = 0.;
 				vertex[i*3*4+9] = xmin + (i + 1) * box;
-				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+10] = ymin + dh;
 				vertex[i*3*4+11] = 0.;
 			}
 			else
@@ -440,13 +441,13 @@ void drawContext::drawScale()
 				vertex[i*3*4+1] = ymin;
 				vertex[i*3*4+2] = 0.;
 				vertex[i*3*4+3] = xmin + i * box;
-				vertex[i*3*4+4] = ymin + height;
+				vertex[i*3*4+4] = ymin + dh;
 				vertex[i*3*4+5] = 0.;
 				vertex[i*3*4+6] = xmin + (i + 1) * box;
 				vertex[i*3*4+7] = ymin;
 				vertex[i*3*4+8] = 0.;
 				vertex[i*3*4+9] = xmin + (i + 1) * box;
-				vertex[i*3*4+10] = ymin + height;
+				vertex[i*3*4+10] = ymin + dh;
 				vertex[i*3*4+11] = 0.;
 			}
 		}
@@ -462,15 +463,16 @@ void drawContext::drawScale()
 		glDisableClientState(GL_COLOR_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		char label[1024];
 		drawString lbl(p->getData()->getName().c_str(), 20);
-		lbl.draw(xmin+width/2, ymin-height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+		lbl.draw(xmin+width/2, ymin+ 2.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
+
 		drawString val(p->getData()->getName().c_str(), 14);
 		for(int i = 0; i < 3; i++) {
 			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
+			char label[1024];
 			sprintf(label, opt->format.c_str(), v);
 			val.setText(label);
-			val.draw(xmin+i*width/2, ymin+height/2, 0., _width/(_right-_left), _height/(_top-_bottom));
+			val.draw(xmin+i*width/2, ymin+ 1.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
 		}
 		nPview++;
 	}
@@ -505,12 +507,12 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
 		(GLfloat)x0, (GLfloat)y0, (GLfloat)(z0+h),
 	};
   GLfloat colors[] = {
-		1., 0, 0, 1.,
-		1., 0, 0, 1.,
-		0, 0, 1., 1.,
-		0, 0, 1., 1.,
-		0, 1., 0, 1.,
-		0, 1., 0, 1.,
+		0., 0, 0, 1.,
+		0., 0, 0, 1.,
+		0, 0, 0., 1.,
+		0, 0, 0., 1.,
+		0, 0., 0, 1.,
+		0, 0., 0, 1.,
 	};
 	glVertexPointer(3, GL_FLOAT, 0, axes);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -519,12 +521,13 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
 	glDrawArrays(GL_LINES, 0, 6);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
-	drawString x ("X", 16,colors);
-	x.draw(x0+h, y0, z0, _width/(_right-_left), _height/(_top-_bottom));
-	drawString y("Y", 16,colors+8);
-	y.draw(x0, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom));
-	drawString z("Z", 16,colors+16);
-	z.draw(x0, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom));
+	double dx = h/10;
+	drawString x ("X", 14,colors);
+	x.draw(x0+h+dx, y0, z0, _width/(_right-_left), _height/(_top-_bottom), false);
+	drawString y("Y", 14,colors+8);
+	y.draw(x0+dx, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom), false);
+	drawString z("Z", 14,colors+16);
+	z.draw(x0+dx, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom), false);
 	glPopMatrix();
 	glLineWidth(1);
 }
@@ -583,7 +586,7 @@ void drawContext::drawView()
 	checkGlError("Draw scales");
 	this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
                    this->_bottom + (this->_top - this->_bottom)/15.0,
-                    0, (this->_top - this->_bottom)/20.);
+                    0, (this->_top - this->_bottom)/25.);
 	checkGlError("Draw axes");
 }
 

@@ -20,12 +20,13 @@ http://onelab.info/wiki/Mobile
 
 In short, if all the frameworks are installed in ./frameworks:
 
-
-cd ../build/
+cd ./build
 cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks;$HOME/src/getdp" ..
 make xcodeProject 
 open Onelab/Onelab.xcodeproj 
 
-
-
+cd ./build_simulator
+cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
+make xcodeProject 
+open Onelab/Onelab.xcodeproj 
 
