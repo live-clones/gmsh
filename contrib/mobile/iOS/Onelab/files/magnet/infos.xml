@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-
-<models>
-	<model>
-		<title>Magnet</title>
-		<summary>Simple magnet example.</summary>
-		<file type="pro">magnet.pro</file>
-	</model>
-</models>
