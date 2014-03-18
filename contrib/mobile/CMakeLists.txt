@@ -10,15 +10,18 @@ else(APPLE)
   option(ENABLE_BUILD_ANDROID "Build library for Android NDK (ARMv7)" ON)
 endif(APPLE)
 
-# FIXME: loop over all becnmarks and add those who provide info.xml
-set(MODELS machines inductor relay acoustic_scattering)
-foreach(FILE ${MODELS})
-  find_path(DIR benchmarks/${FILE})
-  if(FILE)
-    message(STATUS "Found benchmark ${DIR}/benchmarks/${FILE}")
-    list(APPEND BENCHMARKS ${DIR}/benchmarks/${FILE})
-  endif(FILE)
-endforeach(FILE)
+# find all benchmarks who provide infos.xml
+find_path(BENCHMARKSDIR benchmarks/${FILE})
+file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks/*)
+foreach(SUBDIR ${BENCHMARKSDIR})
+  if(IS_DIRECTORY ${SUBDIR})
+    file(GLOB INFOSFILE ${SUBDIR}/infos.xml)
+    if(INFOSFILE)
+      message(STATUS "Found benchmark ${SUBDIR}")
+      list(APPEND BENCHMARKS ${SUBDIR})
+    endif()
+  endif()
+endforeach()
 
 macro(set_config_option VARNAME STRING)
   set(${VARNAME} TRUE)
@@ -69,7 +72,6 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   add_custom_target(xcodeProject
     cd ${CMAKE_CURRENT_SOURCE_DIR}/utils/ && ${CMAKE_CURRENT_SOURCE_DIR}/utils/make_icon_ios.sh
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/files
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
@@ -92,8 +94,9 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_FRAMEWORK}/petsc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
   )
   foreach(DIR ${BENCHMARKS})
+    get_filename_component(DIRNAME ${DIR} NAME)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/)
+                    ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/${DIRNAME})
   endforeach(DIR)
 
   copy_headers(${GETDP_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/)
