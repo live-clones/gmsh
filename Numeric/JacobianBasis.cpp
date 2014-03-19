@@ -605,6 +605,17 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
 
 }
 
+void JacobianBasis::interpolate(const fullVector<double> &jacobian,
+                                const fullMatrix<double> &uvw,
+                                fullMatrix<double> &result) const
+{
+  fullMatrix<double> bezM(jacobian.size(), 1);
+  fullVector<double> bez;
+  bez.setAsProxy(bezM, 0);
+  lag2Bez(jacobian, bez);
+  bezier->interpolate(bezM, uvw, result);
+}
+
 fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
 {
   int nbMonomials = (order+3)*((order+3)+1)*(2*(order+3)+1)/6 - 5;

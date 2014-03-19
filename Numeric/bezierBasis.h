@@ -17,8 +17,9 @@ class bezierBasis {
  private :
   // the 'numLagCoeff' first exponents are related to 'Lagrangian' values
   int numLagCoeff;
-  int dim, order;
+  int dim, type, order;
   int numDivisions;
+  fullMatrix<double> _exponents;
 
  public :
   fullMatrix<double> matrixLag2Bez;
@@ -38,6 +39,14 @@ class bezierBasis {
   inline int getOrder() const {return order;}
   inline int getNumLagCoeff() const {return numLagCoeff;}
   inline int getNumDivision() const {return numDivisions;}
+
+  // Interpolation of n functions on N points :
+  // coeffs(numCoeff, n) and uvw(N, dim)
+  // => result(N, n)
+  void interpolate(const fullMatrix<double> &coeffs,
+                   const fullMatrix<double> &uvw,
+                   fullMatrix<double> &result,
+                   bool bezCoord = false) const;
 
  private :
   void _construct(int parendtType, int order);

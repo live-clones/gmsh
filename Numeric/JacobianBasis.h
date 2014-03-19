@@ -72,21 +72,21 @@ class JacobianBasis {
   inline void getSignedJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
     getSignedJacobianGeneral(numJacNodes,gradShapeMatX,gradShapeMatY,gradShapeMatZ,nodesXYZ,jacobian);
   }
-  inline void getSignedJacobianFast(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
-    getSignedJacobianGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,gradShapeMatZFast,nodesXYZ,jacobian);
-  }
   inline void getSignedJacobian(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                                 const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const {
     getSignedJacobianGeneral(numJacNodes,gradShapeMatX,gradShapeMatY,
                              gradShapeMatZ,nodesX,nodesY,nodesZ,jacobian);
   }
+  inline void getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
+    getScaledJacobianGeneral(numJacNodes,gradShapeMatX,gradShapeMatY,gradShapeMatZ,nodesXYZ,jacobian);
+  }
+  inline void getSignedJacobianFast(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
+    getSignedJacobianGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,gradShapeMatZFast,nodesXYZ,jacobian);
+  }
   inline void getSignedJacobianFast(const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                                     const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const {
     getSignedJacobianGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,
                              gradShapeMatZFast,nodesX,nodesY,nodesZ,jacobian);
-  }
-  inline void getScaledJacobian(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
-    getScaledJacobianGeneral(numJacNodes,gradShapeMatX,gradShapeMatY,gradShapeMatZ,nodesXYZ,jacobian);
   }
   inline void getScaledJacobianFast(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
     getScaledJacobianGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,gradShapeMatZFast,nodesXYZ,jacobian);
@@ -104,6 +104,10 @@ class JacobianBasis {
   inline void subdivideBezierCoeff(const fullVector<double> &bez, fullVector<double> &result) const {
     bezier->subDivisor.mult(bez,result);
   }
+  //
+  void interpolate(const fullVector<double> &jacobian,
+                   const fullMatrix<double> &uvw,
+                   fullMatrix<double> &result) const;
 
   // Jacobian basis order and pyramidal basis
   void getGradientsFromNodes(const fullMatrix<double> &nodes,

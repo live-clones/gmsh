@@ -16,6 +16,7 @@ set(SRC
 	legendrePolynomials.cpp
     bezierBasis.cpp
     JacobianBasis.cpp
+    MetricBasis.cpp
     pointsGenerators.cpp
   ElementType.cpp
   GaussIntegration.cpp
