@@ -6,7 +6,7 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3742"/>
     </dependencies>
     <scenes>
-        <!--Model List Controller - Models list-->
+        <!--Model List Controller - Model list-->
         <scene sceneID="Y4S-jQ-WHz">
             <objects>
                 <tableViewController id="aNd-kg-MlN" customClass="ModelListController" sceneMemberID="viewController">
@@ -26,7 +26,7 @@
                             </tableViewCell>
                         </prototypes>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Models list" id="l1y-cb-Mvd"/>
+                    <navigationItem key="navigationItem" title="Model list" id="l1y-cb-Mvd"/>
                     <connections>
                         <segue destination="NyB-7w-cP0" kind="push" identifier="showModelSegue" id="urr-vz-3XW"/>
                     </connections>

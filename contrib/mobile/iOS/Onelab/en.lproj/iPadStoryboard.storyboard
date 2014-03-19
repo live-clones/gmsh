@@ -201,7 +201,7 @@
             </objects>
             <point key="canvasLocation" x="-879" y="-806"/>
         </scene>
-        <!--Model List Controller - Models list-->
+        <!--Model List Controller - Model list-->
         <scene sceneID="af3-vl-hzw">
             <objects>
                 <tableViewController id="dVI-Oo-Sq4" customClass="ModelListController" sceneMemberID="viewController">
@@ -220,7 +220,7 @@
                             </tableViewCell>
                         </prototypes>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Models list" id="sdX-f6-lSz"/>
+                    <navigationItem key="navigationItem" title="Model list" id="sdX-f6-lSz"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zLU-RU-aDe" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
