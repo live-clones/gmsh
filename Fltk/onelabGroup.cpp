@@ -1691,6 +1691,9 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
+  // FIXME: testing this for Amandine
+  deleteWidgets = false;
+
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
 
   _computeWidths();
