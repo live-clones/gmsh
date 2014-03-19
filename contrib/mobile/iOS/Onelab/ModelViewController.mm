@@ -102,12 +102,12 @@
 	UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
-		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, share, nil]];
+		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, /*share,*/ nil]];
 	}
 	else
 	{
         UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStyleBordered target:self action:@selector(showSettings)];
-        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, share, nil]];
+        [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, /*share,*/ nil]];
     }
 
 	UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
