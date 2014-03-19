@@ -3,8 +3,20 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include <sstream>
 #include "GmshConfig.h"
+
+#if defined(HAVE_MPI)
+#include <mpi.h>
+#define MPI_GMSH_COMPUTE_VIEW  1
+#define MPI_GMSH_DATA_READY    2
+#define MPI_GMSH_VARRAY        3
+#define MPI_GMSH_VARRAY_LEN    4
+#define MPI_GMSH_SHUTDOWN      5
+#define MPI_GMSH_PARSE_STRING  6
+#define MPI_GMSH_MERGE_FILE    7
+#endif
+
+#include <sstream>
 #include "GmshMessage.h"
 
 #if defined(HAVE_ONELAB) && defined(HAVE_POST)
@@ -18,17 +30,6 @@
 #include "PViewOptions.h"
 #include "PViewData.h"
 #include "PViewDataRemote.h"
-
-#if defined(HAVE_MPI)
-#include <mpi.h>
-#define MPI_GMSH_COMPUTE_VIEW  1
-#define MPI_GMSH_DATA_READY    2
-#define MPI_GMSH_VARRAY        3
-#define MPI_GMSH_VARRAY_LEN    4
-#define MPI_GMSH_SHUTDOWN      5
-#define MPI_GMSH_PARSE_STRING  6
-#define MPI_GMSH_MERGE_FILE    7
-#endif
 
 static void computeAndSendVertexArrays(GmshClient *client, bool compute=true)
 {

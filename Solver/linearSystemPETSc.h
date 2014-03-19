@@ -39,7 +39,9 @@
 #include "linearSystem.h"
 #include "sparsityPattern.h"
 #include "fullMatrix.h"
+#include <string.h>
 #include <vector>
+
 #if defined(HAVE_PETSC)
 
 #ifndef SWIG

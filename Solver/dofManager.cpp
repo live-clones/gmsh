@@ -3,12 +3,13 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include <dofManager.h>
 #include "GmshConfig.h"
 
 #ifdef HAVE_MPI
 #include "mpi.h"
 #endif
+
+#include <dofManager.h>
 
 template<>
 void dofManager<double>::scatterSolution()

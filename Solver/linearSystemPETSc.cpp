@@ -4,13 +4,14 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
+#include <string.h>
+
 #if defined(HAVE_PETSC)
 #include "petsc.h"
 #include "linearSystemPETSc.h"
 #include "fullMatrix.h"
 #include <stdlib.h>
 #include "GmshMessage.h"
-
 #include "linearSystemPETSc.hpp"
 
 template class linearSystemPETSc<double>;

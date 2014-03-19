@@ -3,13 +3,18 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
+
+#if defined(HAVE_MPI)
+#include <mpi.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
-#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GmshSocket.h"
 #include "Gmsh.h"
@@ -22,10 +27,6 @@
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
-#endif
-
-#if defined(HAVE_MPI)
-#include <mpi.h>
 #endif
 
 #if defined(HAVE_PETSC)
