@@ -318,12 +318,16 @@
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-	if(buttonIndex == 0) [_errors removeAllObjects];
-	else [_errors removeLastObject];
-	if(_errors.count > 0) {
-		//[_errorAlert setMessage:[_errors lastObject]];
-		[_errorAlert show];
+	if(buttonIndex == 0) {
+		[_errors removeAllObjects];
+		return;
 	}
+	else [_errors removeLastObject];
+	if(_errors.count > 1)
+		_errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+	else
+		_errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles: nil];
+	[_errorAlert show];
 }
 
 #pragma mark - Split view
