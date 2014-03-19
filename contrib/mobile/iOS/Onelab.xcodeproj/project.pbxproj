@@ -11,12 +11,8 @@
 		9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.dylib */; };
 		9C2C3A20187FDF9900E87F78 /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */; };
 		9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645617A7C3DB00DEDAFC /* drawString.cpp */; };
-		9C928629180D217B00AAABD4 /* icon_app_ipad_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928622180D217A00AAABD4 /* icon_app_ipad_61.png */; };
-		9C92862A180D217B00AAABD4 /* icon_app_ipad_retina_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928623180D217A00AAABD4 /* icon_app_ipad_retina_61.png */; };
 		9C92862B180D217B00AAABD4 /* icon_app_ipad_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */; };
 		9C92862C180D217B00AAABD4 /* icon_app_ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928625180D217A00AAABD4 /* icon_app_ipad.png */; };
-		9C92862D180D217B00AAABD4 /* icon_app_iphone_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928626180D217A00AAABD4 /* icon_app_iphone_61.png */; };
-		9C92862E180D217B00AAABD4 /* icon_app_iphone_retina_61.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928627180D217A00AAABD4 /* icon_app_iphone_retina_61.png */; };
 		9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */; };
 		9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.mm */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
@@ -57,14 +53,9 @@
 		9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.dylib"; path = "usr/lib/libstdc++.dylib"; sourceTree = SDKROOT; };
 		9C6A645617A7C3DB00DEDAFC /* drawString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawString.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9C6A645717A7C3DB00DEDAFC /* drawString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawString.h; sourceTree = "<group>"; usesTabs = 1; };
-		9C928622180D217A00AAABD4 /* icon_app_ipad_61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad_61.png; sourceTree = "<group>"; };
-		9C928623180D217A00AAABD4 /* icon_app_ipad_retina_61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad_retina_61.png; sourceTree = "<group>"; };
 		9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad_retina.png; sourceTree = "<group>"; };
 		9C928625180D217A00AAABD4 /* icon_app_ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad.png; sourceTree = "<group>"; };
-		9C928626180D217A00AAABD4 /* icon_app_iphone_61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_iphone_61.png; sourceTree = "<group>"; };
-		9C928627180D217A00AAABD4 /* icon_app_iphone_retina_61.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_iphone_retina_61.png; sourceTree = "<group>"; };
 		9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_iphone_retina.png; sourceTree = "<group>"; };
-		9C928632180D297C00AAABD4 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		9C95B7F51726C88E00C0CCE2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		9C9608361712C16300E1D4A0 /* Onelab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Onelab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C96083A1712C16300E1D4A0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -141,12 +132,8 @@
 		9C928621180D216500AAABD4 /* icons */ = {
 			isa = PBXGroup;
 			children = (
-				9C928622180D217A00AAABD4 /* icon_app_ipad_61.png */,
-				9C928623180D217A00AAABD4 /* icon_app_ipad_retina_61.png */,
 				9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */,
 				9C928625180D217A00AAABD4 /* icon_app_ipad.png */,
-				9C928626180D217A00AAABD4 /* icon_app_iphone_61.png */,
-				9C928627180D217A00AAABD4 /* icon_app_iphone_retina_61.png */,
 				9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */,
 			);
 			name = icons;
@@ -155,7 +142,6 @@
 		9C96082B1712C16300E1D4A0 = {
 			isa = PBXGroup;
 			children = (
-				9C928632180D297C00AAABD4 /* Default-568h@2x.png */,
 				9C9608401712C16300E1D4A0 /* Onelab */,
 				9C9608391712C16300E1D4A0 /* Frameworks */,
 				9C9608371712C16300E1D4A0 /* Products */,
@@ -304,14 +290,10 @@
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
-				9C92862D180D217B00AAABD4 /* icon_app_iphone_61.png in Resources */,
-				9C92862A180D217B00AAABD4 /* icon_app_ipad_retina_61.png in Resources */,
 				9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */,
 				9C92862C180D217B00AAABD4 /* icon_app_ipad.png in Resources */,
 				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
-				9C928629180D217B00AAABD4 /* icon_app_ipad_61.png in Resources */,
 				9C92862B180D217B00AAABD4 /* icon_app_ipad_retina.png in Resources */,
-				9C92862E180D217B00AAABD4 /* icon_app_iphone_retina_61.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
