@@ -32,7 +32,7 @@ class GradientBasis {
 
 class JacobianBasis {
  private:
-  GradientBasis *_gradBasis;
+  const GradientBasis *_gradBasis;
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY, primGradShapeBarycenterZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
