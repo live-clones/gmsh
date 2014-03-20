@@ -340,7 +340,7 @@ double MetricCoefficient::getBoundRmin(double tol)
   /*compute RminBez
   if RminLag-RminBez < tol : return RminBez
   return subdivide*/
-
+  return RminLag;
 }
 
 int MetricCoefficient::metricOrder(int tag)
