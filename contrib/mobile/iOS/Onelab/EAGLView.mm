@@ -28,9 +28,24 @@
 //The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
 - (id)initWithCoder:(NSCoder*)coder
 {
+	int w = 320;
+	int h = 480;
+	
+	float ver = [[[UIDevice currentDevice] systemVersion] floatValue];
+	// You can't detect screen resolutions in pre 3.2 devices, but they are all 320x480
+	if (ver >= 3.2f)
+	{
+		UIScreen* mainscr = [UIScreen mainScreen];
+		w = mainscr.currentMode.size.width;
+		h = mainscr.currentMode.size.height;
+	}
     if ((self = [super initWithCoder:coder])) {
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+		if ((w == 640 && h == 960) || (h == 1536 && w == 2048)) { // Retina display detected
+			self.contentScaleFactor = 2.0;
+			eaglLayer.contentsScale=2;
+		}
         eaglLayer.opaque = YES;
         eaglLayer.drawableProperties =
 			[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
