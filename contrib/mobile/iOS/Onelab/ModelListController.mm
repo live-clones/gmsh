@@ -54,6 +54,12 @@
             }
 		}
 	}
+	for (int i=0;i<[models count]; i++) {
+		if(![[NSFileManager defaultManager] fileExistsAtPath:[models[i] getFile]]) {
+			[models removeObject:models[i]];
+			i--;
+		}
+	}
 	[self.tableView reloadData];
 	[self.refreshControl endRefreshing];
 }
