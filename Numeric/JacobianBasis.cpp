@@ -25,7 +25,6 @@ namespace {
 
 GradientBasis::GradientBasis(int tag, int order)
 {
-  _bezier = BasisFactory::getBezierBasis(ElementType::ParentTypeFromTag(tag), order);
   const int type = ElementType::ParentTypeFromTag(tag);
 
   fullMatrix<double> samplingPoints;
@@ -57,7 +56,7 @@ GradientBasis::GradientBasis(int tag, int order)
       //samplingPoints = JacobianBasis::generateJacPointsPyramid(order);
       break;
     default :
-      Msg::Error("Unknown Jacobian function space for element type %d", type);
+      Msg::Error("Unknown Jacobian function space for element tag %d", tag);
       return;
   }
   const int numSampPnts = samplingPoints.size1();
@@ -125,7 +124,7 @@ JacobianBasis::JacobianBasis(int tag)
       lagPoints = generateJacPointsPyramid(jacobianOrder);
       break;
     default :
-      Msg::Error("Unknown Jacobian function space for element type %d", parentType);
+      Msg::Error("Unknown Jacobian function space for element tag %d", tag);
       return;
   }
   numJacNodes = lagPoints.size1();
@@ -134,7 +133,7 @@ JacobianBasis::JacobianBasis(int tag)
   bezier = BasisFactory::getBezierBasis(parentType, jacobianOrder);
 
   // Store shape function gradients of mapping at Jacobian nodes
-  _gradBasis = new GradientBasis(tag, jacobianOrder);
+  _gradBasis = BasisFactory::getGradientBasis(tag, jacobianOrder);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   int primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
@@ -626,8 +625,8 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
   for (int l = 0; l < numJacNodes; l++) {
     double jac[2][2] = {{0., 0.}, {0., 0.}};
     for (int i = 0; i < numMapNodes; i++) {
-      const double &dPhidX = _gradBasis->getgradShapeMatX(l,i);
-      const double &dPhidY = _gradBasis->getgradShapeMatY(l,i);
+      const double &dPhidX = _gradBasis->gradShapeMatX(l,i);
+      const double &dPhidY = _gradBasis->gradShapeMatY(l,i);
       const double dpsidx = dPhidX * invJaci[0][0] + dPhidY * invJaci[1][0];
       const double dpsidy = dPhidX * invJaci[0][1] + dPhidY * invJaci[1][1];
       jac[0][0] += nodesXYZ(i,0) * dpsidx;

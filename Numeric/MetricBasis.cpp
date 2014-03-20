@@ -12,9 +12,11 @@
 MetricCoefficient::MetricCoefficient(MElement *el) : _element(el)
 {
   const int tag = el->getTypeForMSH();
+  const int type = ElementType::ParentTypeFromTag(tag);
   const int metricOrder = MetricCoefficient::metricOrder(tag);
   _jacobian = BasisFactory::getJacobianBasis(tag);
   _gradients = BasisFactory::getGradientBasis(tag, metricOrder);
+  _bezier = BasisFactory::getBezierBasis(type, metricOrder);
 
   int nSampPnts = _gradients->getNumSamplingPoints();
   int nMapping = _gradients->getNumMapNodes();
@@ -143,7 +145,7 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
     return;
   }
 
-  int order = _gradients->getBezierBasis()->getOrder();
+  int order = _bezier->getOrder();
 
   int dimSimplex;
   fullMatrix<double> exponents;
@@ -277,6 +279,69 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
   }
 }
 
+double MetricCoefficient::getBoundRmin(double tol)
+{
+  fullMatrix<double> nodes(_element->getNumShapeFunctions(),3);
+  fullVector<double> jac(_jacobian->getNumJacNodes());
+  _element->getNodesCoord(nodes);
+  _jacobian->getSignedJacobian(nodes, jac);
+
+  if(jac.size() != _coefficientsBez.size1())
+    Msg::Fatal("not same size, jac %d, coeff %d", jac.size(), _coefficientsBez.size1());
+
+  // compute RminLag
+  double RminLag = 1.;
+  const double factor1 = std::sqrt(6) / 3;
+  const double factor2 = std::sqrt(6) * 3;
+
+  for (int i = 0; i < _bezier->getNumLagCoeff(); ++i) {
+    double q = _coefficientsBez(i, 0);
+    double tmp = pow_int(_coefficientsBez(i, 1), 2);
+    tmp += pow_int(_coefficientsBez(i, 2), 2);
+    tmp += pow_int(_coefficientsBez(i, 3), 2);
+    tmp += 2 * pow_int(_coefficientsBez(i, 4), 2);
+    tmp += 2 * pow_int(_coefficientsBez(i, 5), 2);
+    tmp += 2 * pow_int(_coefficientsBez(i, 6), 2);
+    tmp = tmp*factor1;
+    if (tmp < 1e-3 * q) {
+      tmp = (q - tmp) / (q + tmp);
+      RminLag = std::min(RminLag, tmp);
+    }
+    else {
+      double phi = jac(i)*jac(i);
+      phi -= q * q * q;
+      phi += .5 * q * tmp * tmp;
+      phi /= tmp * tmp * tmp;
+      phi *= factor2;
+      if (phi >  1.1 || phi < -1.1) Msg::Warning("phi %g", phi);
+      if (phi >  1) phi =  1;
+      if (phi < -1) phi = -1;
+      phi = std::acos(phi)/3;
+      tmp = (q + tmp * std::cos(phi + 2*M_PI/3)) / (q + tmp * std::cos(phi));
+      RminLag = std::min(RminLag, tmp);
+    }
+  }
+
+  // compute RminBez
+  /*double RminBez = 1.;
+  double minq = minq();
+  double minp = minp();
+  double maxq = maxq();
+  double maxp = maxp();
+  if (minq < 1e-3 * maxp) {
+    double tmp = (minq - maxp) / (minq + maxp);
+    RminLag = std::min(RminBez, tmp);
+  }
+  else {
+
+  }*/
+
+
+  /*compute RminBez
+  if RminLag-RminBez < tol : return RminBez
+  return subdivide*/
+
+}
 
 int MetricCoefficient::metricOrder(int tag)
 {
@@ -355,5 +420,5 @@ void MetricCoefficient::_computeBezCoeff()
 {
   _coefficientsBez.resize(_coefficientsLag.size1(),
                           _coefficientsLag.size2());
-  _gradients->lag2Bez(_coefficientsLag, _coefficientsBez);
+  _bezier->matrixLag2Bez.mult(_coefficientsLag, _coefficientsBez);
 }

@@ -16,30 +16,17 @@ class GradientBasis {
  public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
 
- private:
-  const bezierBasis *_bezier;
-
  public :
 
   GradientBasis(int tag, int order);
 
   int getNumSamplingPoints() const {return gradShapeMatX.size1();}
   int getNumMapNodes() const {return gradShapeMatX.size2();}
-  const bezierBasis* getBezierBasis() const {return _bezier;}
 
   void getGradientsFromNodes(const fullMatrix<double> &nodes,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
                              fullMatrix<double> *dxyzdZ) const;
-  inline double getgradShapeMatX(int i, int j) const {return gradShapeMatX(i, j);}
-  inline double getgradShapeMatY(int i, int j) const {return gradShapeMatY(i, j);}
-  inline double getgradShapeMatZ(int i, int j) const {return gradShapeMatZ(i, j);}
-  inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
-    _bezier->matrixLag2Bez.mult(jac,bez);
-  }
-  inline void lag2Bez(const fullMatrix<double> &jac, fullMatrix<double> &bez) const {
-    _bezier->matrixLag2Bez.mult(jac,bez);
-  }
 };
 
 

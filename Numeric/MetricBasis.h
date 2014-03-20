@@ -15,6 +15,7 @@ class MetricCoefficient {
   MElement *_element;
   const JacobianBasis *_jacobian;
   const GradientBasis *_gradients;
+  const bezierBasis *_bezier;
   fullMatrix<double> _coefficientsLag, _coefficientsBez;
 
  public:
@@ -22,7 +23,7 @@ class MetricCoefficient {
 
   void getCoefficients(fullMatrix<double>&, bool bezier = true);
   void interpolate(const double *uvw, double *minmaxQ);
-  void getBoundRmin(double tol);
+  double getBoundRmin(double tol);
 
   static int metricOrder(int tag);
 
