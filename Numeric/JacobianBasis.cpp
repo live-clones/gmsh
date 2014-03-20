@@ -23,6 +23,73 @@ namespace {
   }
 }
 
+GradientBasis::GradientBasis(int tag, int order)
+{
+  _bezier = BasisFactory::getBezierBasis(ElementType::ParentTypeFromTag(tag), order);
+  const int type = ElementType::ParentTypeFromTag(tag);
+
+  fullMatrix<double> samplingPoints;
+
+  switch (type) {
+    case TYPE_PNT :
+      samplingPoints = gmshGeneratePointsLine(0);
+      break;
+    case TYPE_LIN :
+      samplingPoints = gmshGeneratePointsLine(order);
+      break;
+    case TYPE_TRI :
+      samplingPoints = gmshGeneratePointsTriangle(order,false);
+      break;
+    case TYPE_QUA :
+      samplingPoints = gmshGeneratePointsQuadrangle(order,false);
+      break;
+    case TYPE_TET :
+      samplingPoints = gmshGeneratePointsTetrahedron(order,false);
+      break;
+    case TYPE_PRI :
+      samplingPoints = gmshGeneratePointsPrism(order,false);
+      break;
+    case TYPE_HEX :
+      samplingPoints = gmshGeneratePointsHexahedron(order,false);
+      break;
+    case TYPE_PYR :
+      Msg::Error("not sure if pyramidal metric space = jacobian space");
+      //samplingPoints = JacobianBasis::generateJacPointsPyramid(order);
+      break;
+    default :
+      Msg::Error("Unknown Jacobian function space for element type %d", type);
+      return;
+  }
+  const int numSampPnts = samplingPoints.size1();
+
+  // Store shape function gradients of mapping at Jacobian nodes
+  fullMatrix<double> allDPsi;
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
+  mapBasis->df(samplingPoints, allDPsi);
+  const int numMapNodes = allDPsi.size1();
+
+  gradShapeMatX.resize(numSampPnts, numMapNodes);
+  gradShapeMatY.resize(numSampPnts, numMapNodes);
+  gradShapeMatZ.resize(numSampPnts, numMapNodes);
+  for (int i=0; i<numSampPnts; i++) {
+    for (int j=0; j<numMapNodes; j++) {
+      gradShapeMatX(i, j) = allDPsi(j, 3*i);
+      gradShapeMatY(i, j) = allDPsi(j, 3*i+1);
+      gradShapeMatZ(i, j) = allDPsi(j, 3*i+2);
+    }
+  }
+}
+
+void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
+                                          fullMatrix<double> *dxyzdX,
+                                          fullMatrix<double> *dxyzdY,
+                                          fullMatrix<double> *dxyzdZ) const
+{
+  if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
+  if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
+  if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
+}
+
 JacobianBasis::JacobianBasis(int tag)
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
@@ -58,7 +125,7 @@ JacobianBasis::JacobianBasis(int tag)
       lagPoints = generateJacPointsPyramid(jacobianOrder);
       break;
     default :
-      Msg::Error("Unknown Jacobian function space for element type %d", tag);
+      Msg::Error("Unknown Jacobian function space for element type %d", parentType);
       return;
   }
   numJacNodes = lagPoints.size1();
@@ -67,22 +134,7 @@ JacobianBasis::JacobianBasis(int tag)
   bezier = BasisFactory::getBezierBasis(parentType, jacobianOrder);
 
   // Store shape function gradients of mapping at Jacobian nodes
-  fullMatrix<double> allDPsi;
-  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
-
-  mapBasis->df(lagPoints, allDPsi);
-  numMapNodes = allDPsi.size1();
-
-  gradShapeMatX.resize(numJacNodes, numMapNodes);
-  gradShapeMatY.resize(numJacNodes, numMapNodes);
-  gradShapeMatZ.resize(numJacNodes, numMapNodes);
-  for (int i=0; i<numJacNodes; i++) {
-    for (int j=0; j<numMapNodes; j++) {
-      gradShapeMatX(i, j) = allDPsi(j, 3*i);
-      gradShapeMatY(i, j) = allDPsi(j, 3*i+1);
-      gradShapeMatZ(i, j) = allDPsi(j, 3*i+2);
-    }
-  }
+  _gradBasis = new GradientBasis(tag, jacobianOrder);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   int primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
@@ -133,7 +185,9 @@ JacobianBasis::JacobianBasis(int tag)
   lagPointsFast(numPrimMapNodes,2) = barycenter[2];
 
   fullMatrix<double> allDPsiFast;
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
   mapBasis->df(lagPointsFast, allDPsiFast);
+  numMapNodes = mapBasis->getNumShapeFunctions();
 
   gradShapeMatXFast.resize(numJacNodesFast, numMapNodes);
   gradShapeMatYFast.resize(numJacNodesFast, numMapNodes);
@@ -572,8 +626,8 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
   for (int l = 0; l < numJacNodes; l++) {
     double jac[2][2] = {{0., 0.}, {0., 0.}};
     for (int i = 0; i < numMapNodes; i++) {
-      const double &dPhidX = gradShapeMatX(l,i);
-      const double &dPhidY = gradShapeMatY(l,i);
+      const double &dPhidX = _gradBasis->getgradShapeMatX(l,i);
+      const double &dPhidY = _gradBasis->getgradShapeMatY(l,i);
       const double dpsidx = dPhidX * invJaci[0][0] + dPhidY * invJaci[1][0];
       const double dpsidy = dPhidX * invJaci[0][1] + dPhidY * invJaci[1][1];
       jac[0][0] += nodesXYZ(i,0) * dpsidx;
@@ -596,8 +650,8 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
     const double aetaxi  = ayx * invJaci[0][0] + ayy * invJaci[0][1];
     const double axieta  = axx * invJaci[1][0] + axy * invJaci[1][1];
     for (int i = 0; i < numMapNodes; i++) {
-      const double &dPhidX = gradShapeMatX(l,i);
-      const double &dPhidY = gradShapeMatY(l,i);
+      const double &dPhidX = _gradBasis->gradShapeMatX(l,i);
+      const double &dPhidY = _gradBasis->gradShapeMatY(l,i);
       gradLambdaJ(l, i + 0 * numMapNodes) = axixi * dPhidX + axieta * dPhidY;
       gradLambdaJ(l, i + 1 * numMapNodes) = aetaxi * dPhidX + aetaeta * dPhidY;
     }
@@ -759,12 +813,3 @@ int JacobianBasis::jacobianOrder(int parentType, int order)
 }
 
 
-void JacobianBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
-                                          fullMatrix<double> *dxyzdX,
-                                          fullMatrix<double> *dxyzdY,
-                                          fullMatrix<double> *dxyzdZ) const
-{
-  if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
-  if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
-  if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
-}

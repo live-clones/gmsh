@@ -14,13 +14,17 @@ class MetricCoefficient {
  private:
   MElement *_element;
   const JacobianBasis *_jacobian;
+  const GradientBasis *_gradients;
   fullMatrix<double> _coefficientsLag, _coefficientsBez;
 
  public:
   MetricCoefficient(MElement*);
+
   void getCoefficients(fullMatrix<double>&, bool bezier = true);
   void interpolate(const double *uvw, double *minmaxQ);
-  void getBound(double tol);
+  void getBoundRmin(double tol);
+
+  static int metricOrder(int tag);
 
  private:
   void _computeBezCoeff();

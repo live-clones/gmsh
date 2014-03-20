@@ -11,10 +11,13 @@
 
 MetricCoefficient::MetricCoefficient(MElement *el) : _element(el)
 {
-  _jacobian = BasisFactory::getJacobianBasis(el->getTypeForMSH());
+  const int tag = el->getTypeForMSH();
+  const int metricOrder = MetricCoefficient::metricOrder(tag);
+  _jacobian = BasisFactory::getJacobianBasis(tag);
+  _gradients = BasisFactory::getGradientBasis(tag, metricOrder);
 
-  int nJac = _jacobian->getNumJacNodes();
-  int nMapping = _jacobian->getNumMapNodes();
+  int nSampPnts = _gradients->getNumSamplingPoints();
+  int nMapping = _gradients->getNumMapNodes();
   fullMatrix<double> nodesXYZ(nMapping, 3);
   el->getNodesCoord(nodesXYZ);
 
@@ -36,11 +39,11 @@ MetricCoefficient::MetricCoefficient(MElement *el) : _element(el)
 
   case 3 :
   {
-    fullMatrix<double> dxyzdX(nJac,3), dxyzdY(nJac,3), dxyzdZ(nJac,3);
-    _jacobian->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, &dxyzdZ);
+    fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
+    _gradients->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, &dxyzdZ);
 
-    _coefficientsLag.resize(nJac, 7);
-    for (int i = 0; i < nJac; i++) {
+    _coefficientsLag.resize(nSampPnts, 7);
+    for (int i = 0; i < nSampPnts; i++) {
       const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
       const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
       const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
@@ -140,7 +143,7 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
     return;
   }
 
-  int order = _jacobian->bezier->getOrder();
+  int order = _gradients->getBezierBasis()->getOrder();
 
   int dimSimplex;
   fullMatrix<double> exponents;
@@ -241,7 +244,7 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
     else {
       double phi;
       {
-        fullMatrix<double> nodes(_jacobian->getNumMapNodes(),3);
+        fullMatrix<double> nodes(_element->getNumShapeFunctions(),3);
         _element->getNodesCoord(nodes);
         fullVector<double> jac(_jacobian->getNumJacNodes());
         _jacobian->getSignedJacobian(nodes, jac);
@@ -259,6 +262,8 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
       phi += .5*terms[0]*tmp*tmp;
       phi /= tmp*tmp*tmp;
       phi *= 3*std::sqrt(6);
+      if (phi >  1) phi =  1;
+      if (phi < -1) phi = -1;
       phi = std::acos(phi)/3;
       minmaxQ[0] = terms[0] + factor * tmp * std::cos(phi + 2*M_PI/3);
       minmaxQ[1] = terms[0] + factor * tmp * std::cos(phi);
@@ -269,6 +274,27 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
   default:
     Msg::Error("Wrong number of functions for metric: %d",
                _coefficientsLag.size2());
+  }
+}
+
+
+int MetricCoefficient::metricOrder(int tag)
+{
+  const int parentType = ElementType::ParentTypeFromTag(tag);
+  const int order = ElementType::OrderFromTag(tag);
+
+  switch (parentType) {
+    case TYPE_PNT : return 0;
+    case TYPE_LIN : return order;
+    case TYPE_TRI :
+    case TYPE_TET : return 2*order-2;
+    case TYPE_QUA :
+    case TYPE_PRI :
+    case TYPE_HEX :
+    case TYPE_PYR : return 2*order;
+    default :
+      Msg::Error("Unknown element type %d, return order 0", parentType);
+      return 0;
   }
 }
 
@@ -329,5 +355,5 @@ void MetricCoefficient::_computeBezCoeff()
 {
   _coefficientsBez.resize(_coefficientsLag.size1(),
                           _coefficientsLag.size2());
-  _jacobian->lag2Bez(_coefficientsLag, _coefficientsBez);
+  _gradients->lag2Bez(_coefficientsLag, _coefficientsBez);
 }

@@ -14,6 +14,7 @@
 std::map<int, nodalBasis*> BasisFactory::fs;
 std::map<int, JacobianBasis*> BasisFactory::js;
 BasisFactory::Cont_bezierBasis BasisFactory::bs;
+BasisFactory::Cont_gradBasis BasisFactory::gs;
 
 const nodalBasis* BasisFactory::getNodalBasis(int tag)
 {
@@ -69,14 +70,27 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
   return J;
 }
 
+const GradientBasis* BasisFactory::getGradientBasis(int tag, int order)
+{
+  std::pair<int, int> key(tag, order);
+  Cont_gradBasis::const_iterator it = gs.find(key);
+  if (it != gs.end())
+    return it->second;
+
+  GradientBasis* G = new GradientBasis(tag, order);
+  gs.insert(std::make_pair(key, G));
+  return G;
+}
+
 const bezierBasis* BasisFactory::getBezierBasis(int parentType, int order)
 {
-  Cont_bezierBasis::iterator it = bs.find(std::make_pair(parentType, order));
+  std::pair<int, int> key(parentType, order);
+  Cont_bezierBasis::iterator it = bs.find(key);
   if (it != bs.end())
     return it->second;
 
   bezierBasis* B = new bezierBasis(parentType, order);
-  bs.insert(std::make_pair(std::make_pair(parentType, order), B));
+  bs.insert(std::make_pair(key, B));
   return B;
 }
 
