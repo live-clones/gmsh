@@ -2,7 +2,7 @@ iOS:
 
 Version: 1.0.0
 
-SKU: org.geuz.Onelab
+SKU: 20140320
 
 Description:
 
@@ -25,8 +25,9 @@ cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks;$HOME/src/ge
 make xcodeProject 
 open Onelab/Onelab.xcodeproj 
 
+In short, if all the frameworks are installed in ./frameworks_simulator:
+
 cd ./build_simulator
 cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
 make xcodeProject 
 open Onelab/Onelab.xcodeproj 
-

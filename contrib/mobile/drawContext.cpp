@@ -371,7 +371,8 @@ void drawContext::drawScale()
 		PView *p = PView::list[i];
 		PViewOptions *opt = p->getOptions();
 		if(!opt->visible) continue;
-
+		PViewData *data = p->getData();
+		
 		double width = (this->_right -this->_left) / 2.;
 		double height = (this->_top - this->_bottom) / 10.;
 		double dh = height / 5;
@@ -463,13 +464,26 @@ void drawContext::drawScale()
 		glDisableClientState(GL_COLOR_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		drawString lbl(p->getData()->getName().c_str(), 20);
+		char label[1024];
+		int nt = data->getNumTimeSteps();
+		if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
+			char tmp[256];
+			sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
+			sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
+		}
+		else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
+			sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep,
+					data->getNumTimeSteps() - 1);
+		}
+		else{
+			sprintf(label, "%s", data->getName().c_str());
+		}
+		drawString lbl(label, 20);
 		lbl.draw(xmin+width/2, ymin+ 2.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
 
-		drawString val(p->getData()->getName().c_str(), 14);
+		drawString val(data->getName().c_str(), 14);
 		for(int i = 0; i < 3; i++) {
 			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
-			char label[1024];
 			sprintf(label, opt->format.c_str(), v);
 			val.setText(label);
 			val.draw(xmin+i*width/2, ymin+ 1.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
