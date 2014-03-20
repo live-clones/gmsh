@@ -600,7 +600,8 @@ static void updateGraphs()
     redraw = redraw || ret;
   }
   if(redraw){
-    FlGui::instance()->updateViews(true, true);
+    // don't delete the widgets, as this is called in widget callbacks
+    FlGui::instance()->updateViews(true, false);
     drawContext::global()->draw();
   }
 }
@@ -1691,9 +1692,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
-  // FIXME: testing this for Amandine
-  deleteWidgets = false;
-
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
 
   _computeWidths();
