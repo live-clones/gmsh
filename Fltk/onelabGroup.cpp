@@ -762,7 +762,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh"){
     updateGraphs();
-    FlGui::instance()->rebuildTree(true);
+    FlGui::instance()->rebuildTree(false); // for Amandine
     return;
   }
 
