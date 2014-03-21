@@ -85,22 +85,11 @@
     NSUInteger ntouch = [[event allTouches] count];
     UITouch* touch = [touches anyObject];
     CGPoint position = [touch locationInView:self];
-    switch(ntouch)
-    {
-        case 1:
-        {
-            mContext->eventHandler(1,position.x,position.y);
-        }
-            break;
-        case 3:
-        {
-			rotate = true;
-            mContext->eventHandler(3,position.x,position.y);
-        }
-            break;
-        default:
-            return ;
-    }
+	if(ntouch != 1) return;
+	if(rotate)
+		mContext->eventHandler(3,position.x,position.y);
+	else
+		mContext->eventHandler(1,position.x,position.y);
     
     [self drawView];
 }

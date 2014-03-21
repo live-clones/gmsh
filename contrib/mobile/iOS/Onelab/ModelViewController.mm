@@ -99,7 +99,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
 
 	_runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
-	UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
+	//UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
     if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
 		UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
 		[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, /*share,*/ nil]];
@@ -218,7 +218,7 @@
 -(void)prevAnimation { animation_prev(); [self requestRender]; }
 -(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
-    if(!glView->rotate && [sender numberOfTouches] <= 2) {
+    if(!glView->rotate && [sender numberOfTouches] != 1) {
 		float mScale = scaleFactor;
 		if (sender.state == UIGestureRecognizerStateBegan)
 			mScale = scaleFactor;
@@ -254,7 +254,6 @@
     UITouch *touch = [[event allTouches] anyObject];
     CGPoint touchPoint = [touch locationInView:self.view];
     glView->mContext->eventHandler(4, touchPoint.x, touchPoint.y);
-	glView->rotate = false;
 }
 
 - (IBAction)singleTap:(UITapGestureRecognizer *)sender {
@@ -411,5 +410,12 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
     for (int byteIndex = 0 ; byteIndex < *width * *height * 4 ; byteIndex+=4)
         *(*map+byteIndex/4) = rawData[byteIndex + 3];
     free(rawData);
+}
+- (IBAction)startRotation:(UIButton *)sender {
+	glView->rotate = !glView->rotate;
+	if(glView->rotate)
+		[sender setImage:[UIImage imageNamed:@"icon_translate.png"] forState:UIControlStateNormal];
+	else
+		[sender setImage:[UIImage imageNamed:@"icon_rotate.png"] forState:UIControlStateNormal];
 }
 @end

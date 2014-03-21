@@ -37,6 +37,14 @@
             }
         }
     }
+	
+	UIBarButtonItem *about = [[UIBarButtonItem alloc] initWithTitle:@"About" style:UIBarButtonItemStyleBordered target:self action:@selector(showAbout)];
+	[self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: about, nil]];
+}
+
+-(void)showAbout
+{
+	[self performSegueWithIdentifier:@"showAboutSegue" sender:self];
 }
 
 -(void)refreshList

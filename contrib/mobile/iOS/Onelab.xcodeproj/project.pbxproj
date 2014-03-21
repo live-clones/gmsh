@@ -27,6 +27,9 @@
 		9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */; };
 		9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */; };
 		9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9C9608AA1712EF0900E1D4A0 /* iPadStoryboard.storyboard */; };
+		9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9618DB2D8700110882 /* icon_rotate.png */; };
+		9CB1CD9B18DC36AC00110882 /* AboutViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9A18DC36AC00110882 /* AboutViewController.mm */; };
+		9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */ = {isa = PBXBuildFile; fileRef = 9CB1CD9C18DC57DE00110882 /* icon_translate.png */; };
 		9CC6EBB717BA0A38001CA21A /* drawGeom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC6EBB617BA0A38001CA21A /* drawGeom.cpp */; };
 		9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */; };
 		9CC85C021790286C00F241C4 /* files in Resources */ = {isa = PBXBuildFile; fileRef = 9CC85C011790286C00F241C4 /* files */; };
@@ -76,6 +79,10 @@
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; usesTabs = 1; };
 		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPadStoryboard.storyboard; sourceTree = "<group>"; };
 		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; usesTabs = 1; };
+		9CB1CD9618DB2D8700110882 /* icon_rotate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_rotate.png; sourceTree = "<group>"; };
+		9CB1CD9918DC36AC00110882 /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
+		9CB1CD9A18DC36AC00110882 /* AboutViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AboutViewController.mm; sourceTree = "<group>"; };
+		9CB1CD9C18DC57DE00110882 /* icon_translate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_translate.png; sourceTree = "<group>"; };
 		9CC6EBB617BA0A38001CA21A /* drawGeom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawGeom.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawMesh.cpp; sourceTree = "<group>"; };
 		9CC85C011790286C00F241C4 /* files */ = {isa = PBXFileReference; lastKnownFileType = folder; path = files; sourceTree = "<group>"; };
@@ -132,6 +139,8 @@
 		9C928621180D216500AAABD4 /* icons */ = {
 			isa = PBXGroup;
 			children = (
+				9CB1CD9C18DC57DE00110882 /* icon_translate.png */,
+				9CB1CD9618DB2D8700110882 /* icon_rotate.png */,
 				9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */,
 				9C928625180D217A00AAABD4 /* icon_app_ipad.png */,
 				9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */,
@@ -204,6 +213,8 @@
 				9CE18C1F17B27EDB009BA06E /* Parameter.mm */,
 				9CEAECC517A91CD20014D229 /* ModelListController.h */,
 				9CEAECC617A91CD20014D229 /* ModelListController.mm */,
+				9CB1CD9918DC36AC00110882 /* AboutViewController.h */,
+				9CB1CD9A18DC36AC00110882 /* AboutViewController.mm */,
 				9CEAE87B17AFD5BB00813524 /* SplitViewController.h */,
 				9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */,
 				9C96084F1712C16400E1D4A0 /* ParametersViewController.h */,
@@ -289,7 +300,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
+				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
+				9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */,
 				9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */,
 				9C92862C180D217B00AAABD4 /* icon_app_ipad.png in Resources */,
 				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
@@ -310,6 +323,7 @@
 				9C9608511712C16400E1D4A0 /* ParametersViewController.mm in Sources */,
 				9C9608541712C16400E1D4A0 /* ModelViewController.mm in Sources */,
 				9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */,
+				9CB1CD9B18DC36AC00110882 /* AboutViewController.mm in Sources */,
 				9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */,
 				9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */,
 				9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */,

@@ -41,4 +41,6 @@
 
 @property (nonatomic, retain) NSString *initialModel;
 
+- (IBAction)startRotation:(UIButton *)sender;
+
 @end
