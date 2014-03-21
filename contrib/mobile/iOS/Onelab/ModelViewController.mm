@@ -218,7 +218,7 @@
 -(void)prevAnimation { animation_prev(); [self requestRender]; }
 -(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
-    if(!glView->rotate && [sender numberOfTouches] != 1) {
+    if([sender numberOfTouches] != 1) {
 		float mScale = scaleFactor;
 		if (sender.state == UIGestureRecognizerStateBegan)
 			mScale = scaleFactor;
