@@ -262,7 +262,8 @@ static int defineSolver(const std::string &name)
   return NUM_SOLVERS - 1;
 }
 
-int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTitle)
+int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTitle,
+              bool setBoundingBox)
 {
   if(GModel::current()->getName() == ""){
     GModel::current()->setFileName(fileName);
@@ -470,7 +471,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   }
 
   ComputeMaxEntityNum();
-  SetBoundingBox();
+  if(setBoundingBox) SetBoundingBox();
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 
@@ -542,7 +543,8 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
     GModel *m = new GModel();
     GModel::setCurrent(m);
   }
-  int ret = MergeFile(fileName, warnIfMissing);
+  int ret = MergeFile(fileName, warnIfMissing, true,
+                      old->bounds().empty() ? true : false);
   GModel::setCurrent(old);
   old->setVisibility(1);
 
