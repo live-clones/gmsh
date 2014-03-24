@@ -1507,7 +1507,7 @@ void GModel::checkMeshCoherence(double tolerance)
     int num = 0;
     for(unsigned int i = 0; i < vertices.size(); i++)
       if(!vertices[i]->getIndex()){
-        Msg::Info("Duplicate vertex at (%.16g,%.16g,%.16g)",
+        Msg::Info("Duplicate vertex %d at (%.16g,%.16g,%.16g)", vertices[i]->getNum(),
                   vertices[i]->x(), vertices[i]->y(), vertices[i]->z());
         num++;
       }
