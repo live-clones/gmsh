@@ -180,6 +180,15 @@
             break;
         case 1:
         {
+            NSArray *rows = [tableView indexPathsForVisibleRows];
+            for(NSIndexPath *mIndexpath in rows)
+                if(![mIndexpath isEqual:indexPath]){
+                    UITableViewCell *tmp = [tableView cellForRowAtIndexPath:indexPath];
+                    for(UIView *tmpv in tmp.subviews)for(UIView *v in tmpv.subviews)
+                        if([v isKindOfClass:[UISwitch class]])
+                            [(UISwitch *)v setOn:PView::list[v.tag]->getOptions()->visible];
+                }
+            
             [cell setSelectionStyle:UITableViewCellSelectionStyleGray];
             int i = PView::list.size() - 1 - indexPath.row;
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
