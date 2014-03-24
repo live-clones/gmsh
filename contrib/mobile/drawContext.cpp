@@ -192,9 +192,8 @@ void drawContext::OrthofFromGModel()
 	ymin -= (ymax - ymin) / 5.;
 	
 	// clipping
-	double zmax = std::max(fabs(bb.min().z()), fabs(bb.max().z()));
-	double clip = zmax  * 5.;
-	clip = 1.;
+	double zmax = std::max(std::max(std::max(fabs(bb.min().z()), fabs(bb.max().z())), std::max(fabs(bb.min().x()), fabs(bb.max().x()))), std::max(fabs(bb.min().y()), fabs(bb.max().y())));
+	double clip = zmax * 1.5;
 
 	GLint matrixMode;
 	glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
@@ -204,6 +203,7 @@ void drawContext::OrthofFromGModel()
 	this->_right = (xmin != 0 || xmax != 0)? xmax : ratio;
 	this->_top = (xmin != 0 || xmax != 0)? ymax : 1.0;
 	this->_bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
+	this->_far = -clip;
 	glOrthof(this->_left, this->_right, this->_bottom, this->_top, -clip, clip);
     
 	glMatrixMode(matrixMode);
@@ -559,10 +559,10 @@ void drawContext::drawView()
 		glPushMatrix();
 		glLoadIdentity();
 		const GLfloat squareVertices[] = {
-			(GLfloat)this->_top,	(GLfloat)this->_left, -5.,
-			(GLfloat)this->_top,	(GLfloat)this->_right, -5.,
-			(GLfloat)this->_bottom,	(GLfloat)this->_left, -5.,
-			(GLfloat)this->_bottom,	(GLfloat)this->_right, -5.,
+			(GLfloat)this->_top,	(GLfloat)this->_left, 2*this->_far,
+			(GLfloat)this->_top,	(GLfloat)this->_right, 2*this->_far,
+			(GLfloat)this->_bottom,	(GLfloat)this->_left, 2*this->_far,
+			(GLfloat)this->_bottom,	(GLfloat)this->_right, 2*this->_far,
 		};
 		const GLubyte squareColors[] = {
 			255, 255, 255, 255,

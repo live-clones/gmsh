@@ -34,7 +34,7 @@ private:
 	double _quaternion[4]; // current quaternion used for rotation
 	movePosition _start, _previous, _current; // store informations about user interactions
 	int _width, _height; // size of OpenGL context in pixel
-	float _left, _right, _top, _bottom; // value of "border"
+	float _left, _right, _top, _bottom, _far; // value of "border"
 	float _fontFactor;
 	bool _gradiant, // show the background gradiant
 	_fillMesh; // fill the Mesh
