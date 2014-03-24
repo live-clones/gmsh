@@ -35,6 +35,7 @@ private:
 	movePosition _start, _previous, _current; // store informations about user interactions
 	int _width, _height; // size of OpenGL context in pixel
 	float _left, _right, _top, _bottom; // value of "border"
+	float _fontFactor;
 	bool _gradiant, // show the background gradiant
 	_fillMesh; // fill the Mesh
     
@@ -43,7 +44,7 @@ private:
 	void drawVectorArray(PViewOptions *opt, VertexArray *va);
     
 public:
-	drawContext();
+	drawContext(bool isRetina=false);
 	~drawContext(){}
 	void load(std::string filename);
 	void eventHandler(int event, float x=0, float y=0);

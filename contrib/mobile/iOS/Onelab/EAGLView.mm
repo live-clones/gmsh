@@ -54,7 +54,7 @@
             //[self release];
             return nil;
         }
-        mContext = new drawContext();
+        mContext = new drawContext(eaglLayer.contentsScale==2);
     }
     rendering = NO;
     return self;

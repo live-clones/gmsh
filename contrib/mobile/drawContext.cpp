@@ -51,7 +51,7 @@
 static bool locked = false;
 static bool onelabStop = false;
 
-drawContext::drawContext()
+drawContext::drawContext(bool isRetina)
 {
 	GmshInitialize();
 	GmshSetOption("General", "Terminal", 1.0);
@@ -64,6 +64,7 @@ drawContext::drawContext()
     
 	_fillMesh = false;
 	_gradiant = true;
+	_fontFactor = (isRetina)?2:1;
 }
 
 static void checkGlError(const char* op) {
@@ -478,10 +479,10 @@ void drawContext::drawScale()
 		else{
 			sprintf(label, "%s", data->getName().c_str());
 		}
-		drawString lbl(label, 20);
+		drawString lbl(label, 20*_fontFactor);
 		lbl.draw(xmin+width/2, ymin+ 2.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
 
-		drawString val(data->getName().c_str(), 14);
+		drawString val(data->getName().c_str(), 14*_fontFactor);
 		for(int i = 0; i < 3; i++) {
 			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
 			sprintf(label, opt->format.c_str(), v);
@@ -536,11 +537,11 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_COLOR_ARRAY);
 	double dx = h/10;
-	drawString x ("X", 14,colors);
+	drawString x ("X", 14*_fontFactor,colors);
 	x.draw(x0+h+dx, y0, z0, _width/(_right-_left), _height/(_top-_bottom), false);
-	drawString y("Y", 14,colors+8);
+	drawString y("Y", 14*_fontFactor,colors+8);
 	y.draw(x0+dx, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom), false);
-	drawString z("Z", 14,colors+16);
+	drawString z("Z", 14*_fontFactor,colors+16);
 	z.draw(x0+dx, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom), false);
 	glPopMatrix();
 	glLineWidth(1);

@@ -5,5 +5,5 @@ mkdir -p ios.iconset
 convert -scale 152 ../../../utils/icons/gmsh_mobile_master.png ios.iconset/icon_app_ipad_retina.png
 convert -scale 76 ../../../utils/icons/gmsh_mobile_master.png ios.iconset/icon_app_ipad.png
 
-# App icons (iPhone)
+# App icon (iPhone)
 convert -scale 120 ../../../utils/icons/gmsh_mobile_master.png ios.iconset/icon_app_iphone_retina.png

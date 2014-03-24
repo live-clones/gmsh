@@ -56,10 +56,10 @@ void drawString::draw(float x, float y, float z, float w, float h, bool center)
 	if(center)
 		x-=(float)_realWidth/w/2;
 	GLfloat vertex[] = {
-		 x, y, z, // bottom left
-		 x, y+(float)_height/h, z, // top left
-		 x+(float)_width/w, y, z, // bottom right
-		 x+(float)_width/w, y+(float)_height/h, z, // top right
+		 x, y-_height/h+_size/h, z, // bottom left
+		 x, y+(float)_height/h-_height/h+_size/h, z, // top left
+		 x+(float)_width/w, y-_height/h+_size/h, z, // bottom right
+		 x+(float)_width/w, y+(float)_height/h-_height/h+_size/h, z, // top right
 	};
 	GLfloat texture[] = {
 		0.0f, 1.0f, // top left
