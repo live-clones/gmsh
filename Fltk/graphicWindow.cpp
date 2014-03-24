@@ -3116,6 +3116,8 @@ void graphicWindow::showMenu()
     int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
+    // FIXME: this is necessary until resizing a 0-sized group works in fltk
+    _onelab->rebuildTree(true);
   }
 }
 
