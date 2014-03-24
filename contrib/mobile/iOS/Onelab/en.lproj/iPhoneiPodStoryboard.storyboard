@@ -56,11 +56,11 @@
                                 </constraints>
                             </activityIndicatorView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="l9e-j0-zky">
-                                <rect key="frame" x="270" y="464" width="30" height="30"/>
+                                <rect key="frame" x="265" y="20" width="35" height="35"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="30" id="NdA-3S-xkw"/>
-                                    <constraint firstAttribute="width" constant="30" id="hcG-Wv-rkt"/>
+                                    <constraint firstAttribute="height" constant="35" id="Yly-BC-ONY"/>
+                                    <constraint firstAttribute="width" constant="35" id="qM8-jS-QaS"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" pointSize="18"/>
                                 <state key="normal" title=" " image="icon_rotate.png">
@@ -75,13 +75,13 @@
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="yT7-IR-qUJ" firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" type="default" id="AP1-zU-goA"/>
+                            <constraint firstAttribute="trailing" secondItem="l9e-j0-zky" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="CYS-GB-Mu7"/>
                             <constraint firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" constant="20" symbolic="YES" type="default" id="J47-7T-QdC"/>
-                            <constraint firstItem="l9e-j0-zky" firstAttribute="top" secondItem="Fuh-zG-zVR" secondAttribute="top" type="default" id="Wag-TJ-vx5"/>
-                            <constraint firstAttribute="trailing" secondItem="yT7-IR-qUJ" secondAttribute="trailing" constant="20" symbolic="YES" type="default" id="g9K-qJ-W8Q"/>
+                            <constraint firstItem="l9e-j0-zky" firstAttribute="top" secondItem="zrj-Dd-WPc" secondAttribute="top" constant="20" symbolic="YES" type="default" id="hvt-wC-4BN"/>
                             <constraint firstItem="l9e-j0-zky" firstAttribute="trailing" secondItem="yT7-IR-qUJ" secondAttribute="trailing" type="default" id="il1-8K-evV"/>
                             <constraint firstItem="yT7-IR-qUJ" firstAttribute="leading" secondItem="Fuh-zG-zVR" secondAttribute="trailing" constant="8" symbolic="YES" type="default" id="oc4-6x-CF7"/>
+                            <constraint firstItem="Fuh-zG-zVR" firstAttribute="top" secondItem="yT7-IR-qUJ" secondAttribute="top" type="default" id="qEd-Tx-ibj"/>
                             <constraint firstItem="Fuh-zG-zVR" firstAttribute="leading" secondItem="zrj-Dd-WPc" secondAttribute="leading" constant="20" symbolic="YES" type="default" id="qfh-y2-BuW"/>
-                            <constraint firstItem="l9e-j0-zky" firstAttribute="top" secondItem="yT7-IR-qUJ" secondAttribute="top" type="default" id="wy0-ch-fl3"/>
                         </constraints>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="7R3-zZ-cpa" appends="YES" id="K8X-lL-YUb"/>
