@@ -56,7 +56,10 @@ int GModel::readMESH(const std::string &name)
     if(buffer[0] != '#'){ // skip comments and empty lines
       str[0]='\0';
       sscanf(buffer, "%s", str);
-      if(!strcmp(str, "Dimension")){
+      if(!strncmp(buffer, "Dimension 3", 11)){
+        // alternative single-line 'Dimension' field used by CGAL
+      }
+      else if(!strcmp(str, "Dimension")){
         if(!fgets(buffer, sizeof(buffer), fp)) break;
       }
       else if(!strcmp(str, "Vertices")){
