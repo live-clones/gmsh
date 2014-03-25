@@ -29,6 +29,7 @@ class onelabGroup : public Fl_Group{
   int _minWindowWidth, _minWindowHeight;
   double _widgetLabelRatio;
   std::set<std::string> _manuallyClosed;
+  bool _enableTreeWidgetResize;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
   Fl_Widget *_addParameterWidget(onelab::number &p, int ww, int hh,
@@ -48,6 +49,7 @@ class onelabGroup : public Fl_Group{
   onelabGroup(int x, int y, int w, int h, const char *l=0);
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
+  void enableTreeWidgetResize(bool value){ _enableTreeWidgetResize = value; }
   void redrawTree(){ _tree->redraw(); }
   void openTreeItem(const std::string &name);
   void setButtonVisibility();

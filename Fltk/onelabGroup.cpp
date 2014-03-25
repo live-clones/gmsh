@@ -1093,7 +1093,7 @@ static unsigned char gear_bits[] = {
 #endif
 
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
-  : Fl_Group(x,y,w,h,l), _stop(false)
+  : Fl_Group(x,y,w,h,l), _stop(false), _enableTreeWidgetResize(false)
 {
   int col = FL_BACKGROUND2_COLOR;
   color(col);
@@ -1221,7 +1221,7 @@ void onelabGroup::_addParameter(T &p)
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Widget *widget = _addParameterWidget(p, ww, hh, n, highlight, c);
   grp->end();
-  //grp->resizable(0);
+  if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
   widget->copy_label(p.getShortName().c_str());
   std::string help = p.getLabel().size() ? p.getLabel() : p.getShortName();
@@ -1245,7 +1245,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
   but->color(_tree->color());
   but->selection_color(_tree->color());
   grp->end();
-  //grp->resizable(0);
+  if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
   std::string label = path;
   std::string::size_type last = path.find_last_of('/');
@@ -1266,7 +1266,7 @@ void onelabGroup::_addSolverMenu(int num)
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new solverButton(1, 1, ww, hh, num, _tree->color());
   grp->end();
-  //grp->resizable(0);
+  if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
   n->widget(grp);
   _tree->end();
@@ -1283,7 +1283,7 @@ void onelabGroup::_addViewMenu(int num)
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   new viewButton(1, 1, ww, hh, num, _tree->color());
   grp->end();
-  //grp->resizable(0);
+  if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
   n->widget(grp);
   _tree->end();

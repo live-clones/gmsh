@@ -2741,6 +2741,14 @@ static void message_browser_cb(Fl_Widget *w, void *data)
     g->copySelectedMessagesToClipboard();
 }
 
+static void tile_cb(Fl_Widget *w, void *data)
+{
+  if(Fl::event() == FL_RELEASE){
+    // rebuild the tree when we relase the mouse after resizing
+    FlGui::instance()->rebuildTree(true);
+  }
+}
+
 // This dummy box class permits to define a box widget that will not eat the
 // FL_ENTER/FL_LEAVE events (the box widget in fltk > 1.1 does that, so that
 // gl->handle() was not called when the mouse moved)
@@ -2993,11 +3001,13 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   if(main && !detachedMenu){
     _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
+    _onelab->enableTreeWidgetResize(false);
   }
   else{
     _onelab = 0;
   }
 
+  _tile->callback(tile_cb);
   _tile->end();
 
   // resize the tiles to match the prescribed sizes
@@ -3019,6 +3029,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _menuwin->callback(file_quit_cb);
     _menuwin->box(GMSH_WINDOW_BOX);
     _onelab = new onelabGroup(0, 0, _menuwin->w(), _menuwin->h());
+    _onelab->enableTreeWidgetResize(true);
     _menuwin->position(CTX::instance()->menuPosition[0],
                        CTX::instance()->menuPosition[1]);
     _menuwin->resizable(_onelab);
@@ -3075,6 +3086,9 @@ void graphicWindow::detachMenu()
   _menuwin->size_range(_onelab->getMinWindowWidth(), _onelab->getMinWindowHeight());
   _menuwin->end();
   _menuwin->show();
+
+  _onelab->enableTreeWidgetResize(true);
+  _onelab->rebuildTree(true);
 }
 
 void graphicWindow::attachMenu()
@@ -3099,6 +3113,9 @@ void graphicWindow::attachMenu()
   _tile->add(_onelab);
   _onelab->resize(_tile->x(), _tile->y(), w, _tile->h());
   _tile->redraw();
+
+  _onelab->enableTreeWidgetResize(false);
+  _onelab->rebuildTree(true);
 }
 
 void graphicWindow::attachDetachMenu()
@@ -3116,7 +3133,7 @@ void graphicWindow::showMenu()
     int maxw = _win->w();
     if(width > maxw) width = maxw / 2;
     setMenuWidth(width);
-    // FIXME: this is necessary until resizing a 0-sized group works in fltk
+    // necessary until resizing of 0-sized groups works
     _onelab->rebuildTree(true);
   }
 }
