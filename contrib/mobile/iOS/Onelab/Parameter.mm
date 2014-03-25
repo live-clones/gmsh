@@ -39,10 +39,14 @@
 {
     [label setFrame:frame];
 }
--(bool)isReadOnly
+-(void)editValue
 {
-    return NO;
+	if(onelab_cb("check") == 1){
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+		[[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
+	}
 }
+-(bool) isReadOnly {return NO;}
 +(double)getHeight
 {
     return 60.0f;
@@ -83,8 +87,7 @@
     std::string selected = string[0].getChoices()[buttonIndex];
     string[0].setValue(selected);
     onelab::server::instance()->set(string[0]);
-    if(onelab_cb("check") == 1)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+	[super editValue];
 }
 -(void)refresh
 {
@@ -148,8 +151,7 @@
 	number[0].setValue(selected);
 	onelab::server::instance()->set(number[0]);
 	[button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
-	if(onelab_cb("check") == 1)
-		[[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+	[super editValue];
 }
 -(void)refresh
 {
@@ -206,8 +208,7 @@
     if(number.size() < 1) return;
     number[0].setValue(([sender isOn])? 1 : 0);
     onelab::server::instance()->set(number[0]);
-    if(onelab_cb("check") == 1)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+    [super editValue];
 }
 -(void)setFrame:(CGRect)frame
 {
@@ -256,8 +257,7 @@
     number[0].setValue(sender.value);
     onelab::server::instance()->set(number[0]);
     [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
-    if(onelab_cb("check") == 1)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+    [super editValue];
 }
 -(void)refresh
 {
@@ -316,8 +316,7 @@
     number[0].setValue(sender.value);
     onelab::server::instance()->set(number[0]);
     [label setText:[NSString stringWithFormat:@"%s %f" ,number[0].getShortName().c_str(), number[0].getValue()]];
-    if(onelab_cb("check") == 1)
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+    [super editValue];
 }
 -(void)setFrame:(CGRect)frame
 {
@@ -381,6 +380,7 @@
     number[0].setValue([textField.text doubleValue]);
     onelab::server::instance()->set(number[0]);
 	[textField setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
+	[super editValue];
     return YES;
 }
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
