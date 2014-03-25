@@ -211,6 +211,24 @@
             </objects>
             <point key="canvasLocation" x="-879" y="-806"/>
         </scene>
+        <!--About View Controller-->
+        <scene sceneID="JzC-rN-mWe">
+            <objects>
+                <viewController id="VJs-Jj-MrK" customClass="AboutViewController" sceneMemberID="viewController">
+                    <webView key="view" contentMode="scaleToFill" id="5gX-R5-60b">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    </webView>
+                    <navigationItem key="navigationItem" id="Jgu-H8-Skt"/>
+                    <connections>
+                        <outlet property="aboutView" destination="5gX-R5-60b" id="C4Z-WU-Ydg"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="aMz-Ds-IMq" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-879" y="77"/>
+        </scene>
         <!--Model List Controller - Model list-->
         <scene sceneID="af3-vl-hzw">
             <objects>
@@ -231,6 +249,9 @@
                         </prototypes>
                     </tableView>
                     <navigationItem key="navigationItem" title="Model list" id="sdX-f6-lSz"/>
+                    <connections>
+                        <segue destination="VJs-Jj-MrK" kind="push" identifier="showAboutSegue" id="s46-1w-abC"/>
+                    </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="zLU-RU-aDe" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

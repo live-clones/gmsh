@@ -29,6 +29,7 @@
                     <navigationItem key="navigationItem" title="Models" id="l1y-cb-Mvd"/>
                     <connections>
                         <segue destination="NyB-7w-cP0" kind="push" identifier="showModelSegue" id="urr-vz-3XW"/>
+                        <segue destination="uZG-Bw-GZA" kind="push" identifier="showAboutSegue" id="Ctu-pA-E38"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="5qi-J8-Zn2" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -117,6 +118,24 @@
                 </pinchGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="156" y="160"/>
+        </scene>
+        <!--About View Controller-->
+        <scene sceneID="3Qf-fF-DaH">
+            <objects>
+                <viewController id="uZG-Bw-GZA" customClass="AboutViewController" sceneMemberID="viewController">
+                    <webView key="view" contentMode="scaleToFill" id="EMj-bY-w8n">
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    </webView>
+                    <navigationItem key="navigationItem" id="0mC-fS-N0z"/>
+                    <connections>
+                        <outlet property="aboutView" destination="EMj-bY-w8n" id="YZf-1O-mOo"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="RFr-BW-Q0P" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="166" y="926"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="YFg-Co-Dc2">
