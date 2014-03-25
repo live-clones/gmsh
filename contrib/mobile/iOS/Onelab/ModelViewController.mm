@@ -149,6 +149,7 @@
 
 - (void)compute
 {
+	[_errors removeAllObjects];
 	[_runStopButton setAction:@selector(stop)];
 	[_runStopButton setTitle:@"Stop"];
 	[_progressLabel setText:@""];

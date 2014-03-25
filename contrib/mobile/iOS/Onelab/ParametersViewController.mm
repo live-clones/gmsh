@@ -146,10 +146,7 @@
 				for(int iparameter = 0; iparameter<[section count]; iparameter++) {
 					if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
 						Parameter * p = [section objectAtIndex: iparameter];
-						//if(number[i].getVisible())
 						[p refresh]; // just refresh the parameter
-						//else
-						//	[self removeParemeterNumber:number[i] atIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
                         found = true;
                         break;
 					}
