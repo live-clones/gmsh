@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
+		9C273C1518E1DF320071EC3F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C273C1418E1DF320071EC3F /* Default-568h@2x.png */; };
 		9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.dylib */; };
 		9C2C3A20187FDF9900E87F78 /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */; };
 		9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645617A7C3DB00DEDAFC /* drawString.cpp */; };
@@ -52,6 +53,7 @@
 /* Begin PBXFileReference section */
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
 		9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OptionsViewController.mm; sourceTree = "<group>"; };
+		9C273C1418E1DF320071EC3F /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-568h@2x.png"; path = "../Default-568h@2x.png"; sourceTree = "<group>"; };
 		9C2C3A1D187FDF9200E87F78 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.dylib"; path = "usr/lib/libstdc++.dylib"; sourceTree = SDKROOT; };
 		9C6A645617A7C3DB00DEDAFC /* drawString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawString.cpp; sourceTree = "<group>"; usesTabs = 1; };
@@ -239,6 +241,7 @@
 				9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */,
 				9C95B7F51726C88E00C0CCE2 /* main.mm */,
 				9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */,
+				9C273C1418E1DF320071EC3F /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -301,6 +304,7 @@
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
 				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
+				9C273C1518E1DF320071EC3F /* Default-568h@2x.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */,
 				9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */,
