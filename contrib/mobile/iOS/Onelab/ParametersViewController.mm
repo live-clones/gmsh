@@ -82,6 +82,10 @@
         ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
         [section addObject:param];
     }
+	else if(p.getStep() == 1) { // stepper
+		ParameterNumberStepper *param = [[ParameterNumberStepper alloc] initWithNumber:p];
+        [section addObject:param];
+	}
     else
     {
         ParameterNumberRange *param = [[ParameterNumberRange alloc] initWithNumber:p];
@@ -289,6 +293,11 @@
         [param setLabelFrame:CGRectMake(100, 5, cell.frame.size.width - 110, cell.frame.size.height)];
         [param setFrame:CGRectMake(20, 5, cell.frame.size.width - 40, cell.frame.size.height)];
         [cell addSubview:[param getCheckbox]];
+    }
+	else if([tmp isKindOfClass:[ParameterNumberStepper class]]) {
+        ParameterNumberStepper *param = (ParameterNumberStepper *)tmp;
+        [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, cell.frame.size.width - 40, cell.frame.size.height/2)];
+        [cell addSubview:[param getStepper]];
     }
     else if([tmp isKindOfClass:[ParameterNumberRange class]]) {
         ParameterNumberRange *param = (ParameterNumberRange *)tmp;

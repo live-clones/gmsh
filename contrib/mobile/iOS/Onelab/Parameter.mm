@@ -230,6 +230,56 @@
 }
 @end
 
+@implementation ParameterNumberStepper
+-(id) initWithNumber:(onelab::number) number
+{
+    self = [super init];
+    if(self)
+	{
+		name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+		label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
+		stepper = [[UIStepper alloc] init];
+		[stepper setValue:number.getValue()];
+		[stepper setStepValue:1];
+		[stepper setMaximumValue:number.getMax()];
+		[stepper setMinimumValue:number.getMin()];
+		[stepper addTarget:self action:@selector(stepperValueChanged:) forControlEvents:UIControlEventValueChanged];
+		[label setText:[NSString stringWithFormat:@"%s %d" ,number.getShortName().c_str(), (int)number.getValue()]];
+	}
+	return self;
+}
+-(void)stepperValueChanged:(UIStepper *)sender
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+    if(number.size() < 1) return;
+    number[0].setValue(sender.value);
+    onelab::server::instance()->set(number[0]);
+    [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
+    if(onelab_cb("check") == 1)
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+}
+-(void)refresh
+{
+	std::vector<onelab::number> number;
+    onelab::server::instance()->get(number,[name UTF8String]);
+    if(number.size() < 1) return;
+	[stepper setValue:number[0].getValue()];
+}
+-(void)setFrame:(CGRect)frame
+{
+    [stepper setFrame:frame];
+}
+-(UIStepper *)getStepper
+{
+	return stepper;
+}
++(double)getHeight
+{
+    return 60.0f;
+}
+@end
+
 @implementation ParameterNumberRange
 -(id) initWithNumber:(onelab::number) number
 {

@@ -55,6 +55,15 @@
 -(UISwitch *)getCheckbox;
 @end
 
+@interface ParameterNumberStepper : Parameter
+{
+	@protected
+	UIStepper *stepper;
+}
+-(id)initWithNumber:(onelab::number)number;
+-(UIStepper *)getStepper;
+@end
+
 @interface ParameterNumberRange : Parameter
 {
     @protected
