@@ -104,7 +104,7 @@
 	[self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
 	[self.tableView endUpdates];
 }
-- (void)removeParemeterNumber:(onelab::number)p atIndex:(NSIndexPath*)index
+- (void)removeParemeterNumberAtIndex:(NSIndexPath*)index
 {
 	[self.tableView beginUpdates];
 	[self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationAutomatic];
@@ -133,7 +133,7 @@
 	std::vector<onelab::number> number;
     onelab::server::instance()->get(number);
 
-	//
+	// check for new/updated parameters (number)
 	for(int i=0;i<number.size();i++) {
 		if(!number[i].getVisible()) continue; // Do not add invisible parameter
 		NSString *name=[NSString stringWithCString:number[i].getName().c_str() encoding:[NSString defaultCStringEncoding]];
@@ -146,10 +146,10 @@
 				for(int iparameter = 0; iparameter<[section count]; iparameter++) {
 					if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
 						Parameter * p = [section objectAtIndex: iparameter];
-						if(number[i].getVisible())
-							[p refresh]; // just refresh the parameter
-						else
-							[self removeParemeterNumber:number[i] atIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
+						//if(number[i].getVisible())
+						[p refresh]; // just refresh the parameter
+						//else
+						//	[self removeParemeterNumber:number[i] atIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
                         found = true;
                         break;
 					}
@@ -164,10 +164,11 @@
 		NSMutableArray *newSection = [[NSMutableArray alloc] init];
 		[self addSection:newSection withTitle:sectiontitle withParameterNumber:number[0]];
 	}
+	
 	std::vector<onelab::string> string;
     onelab::server::instance()->get(string);
 	
-	//
+	// check for new/updated parameters (string)
 	for(int i=0;i<string.size();i++) {
 		if(!string[i].getVisible() || string[i].getKind() == "file") continue; // Do not add invisible parameter
 		NSString *name=[NSString stringWithCString:string[i].getName().c_str() encoding:[NSString defaultCStringEncoding]];
@@ -194,6 +195,22 @@
 		// The section have to be create
 		NSMutableArray *newSection = [[NSMutableArray alloc] init];
 		[self addSection:newSection withTitle:sectiontitle withParameterString:string[0]];
+	}
+	
+	// check for hidden/deleted parameters
+	for(int iSection=0; iSection<[_sectionstitle count]; iSection++) {
+		NSMutableArray *section = [_sections objectAtIndex:iSection];
+		for(int iparameter = 0; iparameter<[section count]; iparameter++) {
+			Parameter * p = [section objectAtIndex: iparameter];
+			std::vector<onelab::number> number;
+			onelab::server::instance()->get(number,[[p getName] UTF8String]);
+			std::vector<onelab::string> string;
+			onelab::server::instance()->get(string,[[p getName] UTF8String]);
+			if((number.size() < 1 && string.size() < 1) || (number.size() > 0 && !number[0].getVisible()) || (string.size() > 0 && !string[0].getVisible())){
+				[section removeObjectAtIndex:iparameter];
+				[self removeParemeterNumberAtIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
+			}
+		}
 	}
 }
 
