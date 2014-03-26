@@ -47,6 +47,7 @@ class onelabGroup : public Fl_Group{
   void _addGmshMenus();
  public:
   onelabGroup(int x, int y, int w, int h, const char *l=0);
+  void updateGearMenu();
   void rebuildSolverList();
   void rebuildTree(bool deleteWidgets);
   void enableTreeWidgetResize(bool value){ _enableTreeWidgetResize = value; }

@@ -762,7 +762,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh"){
     updateGraphs();
-    FlGui::instance()->rebuildTree(false); // for Amandine
+    FlGui::instance()->rebuildTree(true);
     return;
   }
 
@@ -1909,9 +1909,8 @@ std::string onelabGroup::getPath(Fl_Tree_Item *item)
   return std::string(path);
 }
 
-void onelabGroup::rebuildSolverList()
+void onelabGroup::updateGearMenu()
 {
-  // update gear menu
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
   int values[8] = {CTX::instance()->solver.autoSaveDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
@@ -1928,8 +1927,12 @@ void onelabGroup::rebuildSolverList()
     else
       menu[idx].clear();
   }
+}
 
-  // update Gmsh solver menu
+void onelabGroup::rebuildSolverList()
+{
+  updateGearMenu();
+
   std::vector<std::string> names, exes, hosts;
   for(int i = 0; i < NUM_SOLVERS; i++){
     if(opt_solver_name(i, GMSH_GET, "").size()){
@@ -2038,6 +2041,7 @@ void solver_cb(Fl_Widget *w, void *data)
       onelab_cb(0, (void*)"check");
     else
       onelab_cb(0, (void*)"refresh");
+    FlGui::instance()->onelab->updateGearMenu();
   }
 
   CTX::instance()->launchSolverAtStartup = -1;
