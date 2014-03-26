@@ -82,8 +82,11 @@ void drawContext::load(std::string filename)
 	
 	// open the file with Gmsh
 	GmshOpenProject(filename);
+	
+	// reset openGL view
+	this->eventHandler(10);
     
-	// run getdp witout parameter
+	// run getdp without parameter
 	onelab_cb("check");
     
 	// to allow the first run
