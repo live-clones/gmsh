@@ -159,7 +159,7 @@
 		if(found) continue; // the parameter is in the tableView
 		// The section have to be create
 		NSMutableArray *newSection = [[NSMutableArray alloc] init];
-		[self addSection:newSection withTitle:sectiontitle withParameterNumber:number[0]];
+		[self addSection:newSection withTitle:sectiontitle withParameterNumber:number[i]];
 	}
 	
 	std::vector<onelab::string> string;
@@ -191,7 +191,7 @@
 		if(found) continue; // the parameter is in the tableView
 		// The section have to be create
 		NSMutableArray *newSection = [[NSMutableArray alloc] init];
-		[self addSection:newSection withTitle:sectiontitle withParameterString:string[0]];
+		[self addSection:newSection withTitle:sectiontitle withParameterString:string[i]];
 	}
 	
 	// check for hidden/deleted parameters
