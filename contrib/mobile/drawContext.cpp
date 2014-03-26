@@ -487,7 +487,7 @@ void drawContext::drawScale()
 			double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
 			sprintf(label, opt->format.c_str(), v);
 			val.setText(label);
-			val.draw(xmin+i*width/2, ymin+ 1.5*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
+			val.draw(xmin+i*width/2, ymin+ 1.1*dh, 0., _width/(_right-_left), _height/(_top-_bottom));
 		}
 		nPview++;
 	}
