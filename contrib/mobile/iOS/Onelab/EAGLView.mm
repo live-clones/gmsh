@@ -39,7 +39,7 @@
 			w = mainscr.currentMode.size.width;
 			h = mainscr.currentMode.size.height;
 		}
-		if ((w == 640 && h == 960) || (h == 1536 && w == 2048)) { // Retina display (iPhone or iPad/iPad mini)
+		if ((w == 640 && h == 960) || (h == 1136 && w == 640) || (h == 1536 && w == 2048)) { // Retina display (iPhone or iPhone 4-inch or iPad/iPad mini)
 			self.contentScaleFactor = 2.0;
 			eaglLayer.contentsScale=2;
 		}
