@@ -11,9 +11,6 @@
 			<key>CFBundleIconFiles</key>
 			<array>
 				<string>icon_app_iphone_retina</string>
-				<string>icon_app_ipad_61</string>
-				<string>ic_launcher.png</string>
-				<string>ic_launcher_retina.png</string>
 			</array>
 		</dict>
 	</dict>
@@ -24,12 +21,8 @@
 			<key>CFBundleIconFiles</key>
 			<array>
 				<string>icon_app_ipad</string>
-				<string>icon_app_iphone_61</string>
 				<string>icon_app_ipad_retina</string>
 				<string>icon_app_iphone_retina</string>
-				<string>icon_app_ipad_61</string>
-				<string>ic_launcher.png</string>
-				<string>ic_launcher_retina.png</string>
 			</array>
 		</dict>
 	</dict>
@@ -42,17 +35,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<string>1.0.0</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string></string>
-	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UIMainStoryboardFile</key>
@@ -61,7 +50,7 @@
 	<string>iPadStoryboard</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>opengles-1</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

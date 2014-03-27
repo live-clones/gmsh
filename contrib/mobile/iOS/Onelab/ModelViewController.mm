@@ -304,7 +304,8 @@
 
 - (void)requestRender
 {
-    [glView drawView];
+	if([[UIApplication sharedApplication] applicationState] == UIApplicationStateActive)
+		[glView drawView];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
