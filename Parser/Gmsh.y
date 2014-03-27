@@ -2764,7 +2764,8 @@ Command :
 	GModel::current()->setName($2);
       }
       else if(!strcmp($1, "CreateDir")){
-	CreateSingleDir(std::string($2));
+        std::string tmp = FixRelativePath(gmsh_yyname, $2);
+	CreateSingleDir(tmp);
       }
       else{
 	yymsg(0, "Unknown command '%s'", $1);
