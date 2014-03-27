@@ -81,9 +81,8 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
   // Build Dof //
   buildDof();
 
-  // Find next next offset //
-  size_t maxType = findMaxType();
-  nxtOffset += maxType + 1;
+  // Find next offset //
+  nxtOffset = findMaxType() + 1;
 }
 
 void FunctionSpace::buildDof(void){
