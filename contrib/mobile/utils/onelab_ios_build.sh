@@ -1,15 +1,12 @@
 #/usr/bin/env bash
 
-#gmsh_svn=""
-#getdp_svn=""
-#frameworks_dir=""
-gmsh_svn="/Users/maxime/Documents/gmsh-svn"
-getdp_svn="/Users/maxime/Documents/getdp-svn"
-frameworks_dir="/tmp"
+gmsh_svn="/Users/geuzaine/src/gmsh/"
+getdp_svn="/Users/geuzaine/src/getdp/"
+frameworks_dir="/Users/geuzaine/src/gmsh/contrib/mobile/frameworks/"
 
 petsc_framework="$frameworks_dir/petsc.framework"
 
-cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DENABLE_BUILD_IOS=1 -GXcode"
+cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -GXcode"
 
 build_cmd="xcodebuild -verbose -target lib -configuration Release"
 header_cmd="xcodebuild -verbose -target getHeaders -configuration Release"
