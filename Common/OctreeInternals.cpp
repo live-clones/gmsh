@@ -391,7 +391,7 @@ void *searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_g
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
-    Msg::Error("The point is not in the domain");
+    Msg::Debug("The point is not in the domain");
     return NULL;
   }
 
