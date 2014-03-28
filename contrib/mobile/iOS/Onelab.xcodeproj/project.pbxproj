@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
+		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
 		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
 		9C273C1F18E33A2F0071EC3F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C273C1E18E33A2F0071EC3F /* Default-568h@2x.png */; };
 		9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.dylib */; };
@@ -23,7 +25,6 @@
 		9C9608511712C16400E1D4A0 /* ParametersViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608501712C16400E1D4A0 /* ParametersViewController.mm */; };
 		9C9608541712C16400E1D4A0 /* ModelViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608531712C16400E1D4A0 /* ModelViewController.mm */; };
 		9C9608741712C47200E1D4A0 /* EAGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C9608731712C47200E1D4A0 /* EAGLView.mm */; };
-		9C9608991712C7B600E1D4A0 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C9608981712C7B600E1D4A0 /* Accelerate.framework */; };
 		9C96089B1712C7BE00E1D4A0 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */; };
 		9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */; };
 		9C96089F1712C8EB00E1D4A0 /* emulatorFix.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */; };
@@ -51,6 +52,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks/libf2cblas.a; sourceTree = "<group>"; };
+		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks/libf2clapack.a; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
 		9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OptionsViewController.mm; sourceTree = "<group>"; };
 		9C273C1E18E33A2F0071EC3F /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
@@ -75,7 +78,6 @@
 		9C96085B1712C16400E1D4A0 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		9C9608721712C47200E1D4A0 /* EAGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLView.h; sourceTree = "<group>"; usesTabs = 1; };
 		9C9608731712C47200E1D4A0 /* EAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EAGLView.mm; sourceTree = "<group>"; usesTabs = 1; };
-		9C9608981712C7B600E1D4A0 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; usesTabs = 1; };
@@ -120,11 +122,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */,
+				2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */,
 				9C2C3A20187FDF9900E87F78 /* libstdc++.dylib in Frameworks */,
 				9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */,
 				9C96089D1712C7F600E1D4A0 /* QuartzCore.framework in Frameworks */,
 				9C96089B1712C7BE00E1D4A0 /* OpenGLES.framework in Frameworks */,
-				9C9608991712C7B600E1D4A0 /* Accelerate.framework in Frameworks */,
 				9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */,
 				9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */,
 				9C96083F1712C16300E1D4A0 /* CoreGraphics.framework in Frameworks */,
@@ -170,6 +173,8 @@
 		9C9608391712C16300E1D4A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2988FF1C18E59558001435B6 /* libf2cblas.a */,
+				2988FF1D18E59558001435B6 /* libf2clapack.a */,
 				9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */,
 				9C2C3A1D187FDF9200E87F78 /* libc++.dylib */,
 				9CE2773917E197DA0076E728 /* Social.framework */,
@@ -178,7 +183,6 @@
 				9CE08E0F178AEB1600A83B4B /* petsc.framework */,
 				9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */,
 				9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */,
-				9C9608981712C7B600E1D4A0 /* Accelerate.framework */,
 				9C96083A1712C16300E1D4A0 /* UIKit.framework */,
 				9C96083C1712C16300E1D4A0 /* Foundation.framework */,
 				9C96083E1712C16300E1D4A0 /* CoreGraphics.framework */,
@@ -456,7 +460,10 @@
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/geuzaine/src/gmsh/contrib/mobile/frameworks,
+				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -483,7 +490,10 @@
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/geuzaine/src/gmsh/contrib/mobile/frameworks,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
