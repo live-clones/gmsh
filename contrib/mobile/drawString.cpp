@@ -18,17 +18,17 @@ drawString::drawString(std::string text, int size, float color[4])
 {
   _size = size;
   if(color == NULL)
-    this->setColor(0.0f, 0.0f, 0.0f, 1.0f);
+    setColor(0.0f, 0.0f, 0.0f, 1.0f);
   else
-    this->setColor(color);
-  this->setText(text);
+    setColor(color);
+  setText(text);
 }
 
 void drawString::setText(std::string text)
 {
-  this->_text = text;
-  getBitmapFromString(this->_text.c_str(), _size, &this->_map,
-                      &this->_height, &this->_width, &this->_realWidth);
+  _text = text;
+  getBitmapFromString(_text.c_str(), _size, &_map,
+                      &_height, &_width, &_realWidth);
 }
 
 void drawString::setColor(float color[4])

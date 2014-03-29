@@ -89,7 +89,7 @@ void drawContext::load(std::string filename)
   OpenProject(filename);
 
   // reset openGL view
-  this->eventHandler(10);
+  eventHandler(10);
 
   // run onelab clients to populate the database
   onelab_cb("check");
@@ -101,36 +101,36 @@ void drawContext::load(std::string filename)
 
 void drawContext::eventHandler(int event, float x, float y)
 {
-  this->_current.set(this->_scale, this->_translate, this->_right, this->_left,
-                     this->_bottom, this->_top, this->_width, this->_height, x, y);
+  _current.set(_scale, _translate, _right, _left,
+               _bottom, _top, _width, _height, x, y);
   double xx[3] = {1.,0.,0.};
   double yy[3] = {0.,1.,0.};
   double q[4];
   switch(event){
   case 0: // finger(s) press the screen
     // in this case x and y represent the start point
-    this->_start.set(this->_scale, this->_translate, this->_right, this->_left,
-                     this->_bottom, this->_top, this->_width, this->_height, x, y);
-    this->_previous.set(this->_scale, this->_translate, this->_right, this->_left,
-                        this->_bottom, this->_top, this->_width, this->_height, x, y);
+    _start.set(_scale, _translate, _right, _left,
+               _bottom, _top, _width, _height, x, y);
+    _previous.set(_scale, _translate, _right, _left,
+                  _bottom, _top, _width, _height, x, y);
     break;
   case 1: // finger move (translate)
     // in this case x and y represent the current point
-    _translate[0] += (this->_current.wnr[0] - this->_previous.wnr[0]);
-    _translate[1] += (this->_current.wnr[1] - this->_previous.wnr[1]);
+    _translate[0] += (_current.wnr[0] - _previous.wnr[0]);
+    _translate[1] += (_current.wnr[1] - _previous.wnr[1]);
     _translate[2] = 0.;
     break;
   case 2: // fingers move (scale)
     // in this case we don't care about previous and current position, x
     // represent the scale
-    this->_scale[0] = this->_scale[1] = this->_scale[2] = x;
-    this->_start.recenter(this->_scale, this->_translate);
+    _scale[0] = _scale[1] = _scale[2] = x;
+    _start.recenter(_scale, _translate);
     break;
   case 3: // fingers move (rotate)
-    this->addQuaternion((2. * this->_previous.win[0] - this->_width) / this->_width,
-                        (this->_height - 2. * this->_previous.win[1]) / this->_height,
-                        (2. * this->_current.win[0] - this->_width) / this->_width,
-                        (this->_height - 2. * this->_current.win[1]) / this->_height);
+    addQuaternion((2. * _previous.win[0] - _width) / _width,
+                  (_height - 2. * _previous.win[1]) / _height,
+                  (2. * _current.win[0] - _width) / _width,
+                  (_height - 2. * _current.win[1]) / _height);
     break;
   case 4: // release the finger(s)
     // Do nothing ?
@@ -154,23 +154,23 @@ void drawContext::eventHandler(int event, float x, float y)
     }
     break;
   }
-  this->_previous.set(this->_scale, this->_translate, this->_right, this->_left,
-                      this->_bottom, this->_top, this->_width, this->_height, x, y);
+  _previous.set(_scale, _translate, _right, _left,
+                _bottom, _top, _width, _height, x, y);
 }
 
 void drawContext::setQuaternion(double q0, double q1, double q2, double q3)
 {
-  this->_quaternion[0] = q0;
-  this->_quaternion[1] = q1;
-  this->_quaternion[2] = q2;
-  this->_quaternion[3] = q3;
+  _quaternion[0] = q0;
+  _quaternion[1] = q1;
+  _quaternion[2] = q2;
+  _quaternion[3] = q3;
 }
 
 void drawContext::addQuaternion(double p1x, double p1y, double p2x, double p2y)
 {
   double quat[4];
   trackball(quat, p1x, p1y, p2x, p2y);
-  add_quats(quat, this->_quaternion, this->_quaternion);
+  add_quats(quat, _quaternion, _quaternion);
 }
 
 void drawContext::buildRotationMatrix()
@@ -183,8 +183,8 @@ void drawContext::buildRotationMatrix()
 void drawContext::OrthofFromGModel()
 {
   SBoundingBox3d bb = GModel::current()->bounds();
-  double ratio = (double)(this->_width ? this->_width : 1.) /
-    (double)(this->_height ? this->_height : 1.);
+  double ratio = (double)(_width ? _width : 1.) /
+    (double)(_height ? _height : 1.);
   double bbRation = (bb.max().x() - bb.min().x()) / (bb.max().y() - bb.min().y());
   double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
   if(bbRation < 1) {
@@ -214,23 +214,23 @@ void drawContext::OrthofFromGModel()
   glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  this->_left = (xmin != 0 || xmax != 0)? xmin : -ratio;
-  this->_right = (xmin != 0 || xmax != 0)? xmax : ratio;
-  this->_top = (xmin != 0 || xmax != 0)? ymax : 1.0;
-  this->_bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
-  this->_far = -clip;
-  glOrthof(this->_left, this->_right, this->_bottom, this->_top, -clip, clip);
+  _left = (xmin != 0 || xmax != 0)? xmin : -ratio;
+  _right = (xmin != 0 || xmax != 0)? xmax : ratio;
+  _top = (xmin != 0 || xmax != 0)? ymax : 1.0;
+  _bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
+  _far = -clip;
+  glOrthof(_left, _right, _bottom, _top, -clip, clip);
 
   glMatrixMode(matrixMode);
 }
 
 void drawContext::initView(int w, int h)
 {
-  this->_height = h;
-  this->_width = w;
+  _height = h;
+  _width = w;
   glViewport(0, 0, w, h);
 
-  this->OrthofFromGModel();
+  OrthofFromGModel();
 
   glClearColor(.83,.85,.98,1.);
   glDepthMask(GL_TRUE);
@@ -351,7 +351,7 @@ void drawContext::drawVectorArray(PViewOptions *opt, VertexArray *va)
       GLubyte *color = (GLubyte *)va->getColorArray(4 * i);
       glColor4ub(*(color), *(color+1), *(color+2), *(color+3));
       if(fabs(dx) > 1. || fabs(dy) > 1. || fabs(dz) > 1.){
-        double d = (this->_right - this->_left) / this->_width / _scale[0];
+        double d = (_right - _left) / _width / _scale[0];
         dx *= d; dy *= d; dz *= d;
         double x = s[0], y = s[1], z = s[2];
         drawVector(x,y,z,dx,dy,dz);
@@ -390,12 +390,12 @@ void drawContext::drawScale()
     if(!opt->visible) continue;
     PViewData *data = p->getData();
 
-    double width = (this->_right -this->_left) / 2.;
-    double height = (this->_top - this->_bottom) / 10.;
+    double width = (_right -_left) / 2.;
+    double height = (_top - _bottom) / 10.;
     double dh = height / 5;
     double box = width / (opt->nbIso ? opt->nbIso : 1);
-    double xmin = this->_left + (this->_right - this->_left -width)/2.;
-    double ymin = this->_bottom + 0.8 * height + height * nPview;
+    double xmin = _left + (_right - _left -width)/2.;
+    double ymin = _bottom + 0.8 * height + height * nPview;
 
     std::vector<GLfloat> vertex(opt->nbIso*3*4);
     std::vector<GLubyte> color(opt->nbIso*4*4);
@@ -575,7 +575,7 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
 
 void drawContext::drawView()
 {
-  this->OrthofFromGModel();
+  OrthofFromGModel();
 
   glMatrixMode(GL_MODELVIEW);
   // fill the background
@@ -584,10 +584,10 @@ void drawContext::drawView()
     glPushMatrix();
     glLoadIdentity();
     const GLfloat squareVertices[] = {
-      (GLfloat)this->_top,	(GLfloat)this->_left, 2*this->_far,
-      (GLfloat)this->_top,	(GLfloat)this->_right, 2*this->_far,
-      (GLfloat)this->_bottom,	(GLfloat)this->_left, 2*this->_far,
-      (GLfloat)this->_bottom,	(GLfloat)this->_right, 2*this->_far,
+      (GLfloat)_top,	(GLfloat)_left, 2*_far,
+      (GLfloat)_top,	(GLfloat)_right, 2*_far,
+      (GLfloat)_bottom,	(GLfloat)_left, 2*_far,
+      (GLfloat)_bottom,	(GLfloat)_right, 2*_far,
     };
     const GLubyte squareColors[] = {
       255, 255, 255, 255,
@@ -609,23 +609,23 @@ void drawContext::drawView()
   glLoadIdentity();
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
-  this->buildRotationMatrix();
+  buildRotationMatrix();
   glMultMatrixf(_rotatef);
   checkGlError("Initialize position");
   //
   glEnable(GL_DEPTH_TEST);
-  this->drawMesh();
+  drawMesh();
   checkGlError("Draw mesh");
-  this->drawGeom();
+  drawGeom();
   checkGlError("Draw geometry");
-  this->drawPost();
+  drawPost();
   checkGlError("Draw post-pro");
   glDisable(GL_DEPTH_TEST);
-  this->drawScale();
+  drawScale();
   checkGlError("Draw scales");
-  this->drawAxes(this->_right - (this->_top - this->_bottom)/15.0,
-                 this->_bottom + (this->_top - this->_bottom)/15.0,
-                 0, (this->_top - this->_bottom)/25.);
+  drawAxes(_right - (_top - _bottom)/15.0,
+           _bottom + (_top - _bottom)/15.0,
+           0, (_top - _bottom)/25.);
   checkGlError("Draw axes");
 }
 
@@ -787,5 +787,3 @@ int animation_prev()
   }
   return ret;
 }
-
-// vim:set ts=2:

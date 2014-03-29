@@ -37,8 +37,8 @@ private:
   int _width, _height; // size of OpenGL context in pixel
   float _left, _right, _top, _bottom, _far; // value of "border"
   float _fontFactor;
-  bool _gradiant, // show the background gradiant
-    _fillMesh; // fill the Mesh
+  bool _gradiant; // show the background gradiant
+  bool _fillMesh; // fill the Mesh
 
   void OrthofFromGModel(void);
   void drawPView(PView *p);
@@ -51,10 +51,10 @@ public:
   void setQuaternion(double q0, double q1, double q2, double q3);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);
   void buildRotationMatrix();
-  void setTranslate(int i, float t) {if(i>=0 && i<3) this->_translate[i] = t;}
-  float getTranslate(int i) {if(i>=0 && i<3) return this->_translate[i]; return 0;}
-  void setScale(int i, float s) {if(i>=0 && i<3) this->_scale[i] = s;}
-  float getScale(int i) {if(i>=0 && i<3) return this->_scale[i]; return 0;}
+  void setTranslate(int i, float t) {if(i>=0 && i<3) _translate[i] = t;}
+  float getTranslate(int i) {if(i>=0 && i<3) return _translate[i]; return 0;}
+  void setScale(int i, float s) {if(i>=0 && i<3) _scale[i] = s;}
+  float getScale(int i) {if(i>=0 && i<3) return _scale[i]; return 0;}
   void initView(int w, int h);
   void drawView();
   void drawAxes(float x0=0., float y0=0., float z0=0., float h=0.5);
