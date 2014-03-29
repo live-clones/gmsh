@@ -3,10 +3,12 @@ Onelab for iOS and Android devices.
 
 Version: 1.0.0
 
-Description:
+== iOS ==
 
-Onelab (http://onelab.info) is a finite element package based on the open source
-mesh generator Gmsh (http://gmsh.info) and the solver GetDP
+= Apple AppStore description =
+
+Onelab/Mobile (http://onelab.info) is a finite element package based on the open
+source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
 (http://getdp.info). It can be used to simulate a wide variety of multi-physic
 problems: electromagnetics, thermics, mechanics...
 
@@ -14,22 +16,22 @@ Onelab comes packaged with a selection of ready-to-use examples. New models can
 be added through iTunes file sharing: see http://onelab.info/wiki/Mobile for
 more information.
 
-=====
+= iOS build instructions =
 
-Building the app for the iOS simulator:
+See http://onelab.info/wiki/Mobile
 
-* Put all dependencies (Gmsh, GetDP, PETSc, BLAS/LAPACK framworks) in ./frameworks
-* cd ./build
-* cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks;$HOME/src/getdp" ..
-* make xcodeProject 
-* open Onelab/Onelab.xcodeproj 
+Quick guide if all the dependencies (GetDP, Gmsh, PETSc, BLAS, LAPACK
+frameworks) are already installed in ./frameworks_simulator:
 
-Building the app for the iOS device:
-
-In short, if all the frameworks are installed in ./frameworks_simulator:
-
-* Put all dependencies (Gmsh, GetDP, PETSc, BLAS/LAPACK framworks) in ./frameworks_simulator
 * cd ./build_simulator
 * cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
 * make xcodeProject 
 * open Onelab/Onelab.xcodeproj 
+
+== Android ==
+
+= Google Play store description =
+
+= Android build instructions =
+
+See http://onelab.info/wiki/Mobile
