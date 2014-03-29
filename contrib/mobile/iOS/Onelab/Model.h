@@ -1,11 +1,3 @@
-//
-//  Model.h
-//  Onelab
-//
-//  Created by Maxime Graulich on 03/09/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
 
 @interface Model : NSObject

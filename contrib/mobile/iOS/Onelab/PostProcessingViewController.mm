@@ -1,11 +1,3 @@
-//
-//  PostProcessingViewController.m
-//  Onelab
-//
-//  Created by Maxime Graulich on 22/08/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import "PostProcessingViewController.h"
 
 @interface PostProcessingViewController ()

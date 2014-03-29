@@ -1,11 +1,3 @@
-//
-//  PostProcessingViewController.h
-//  Onelab
-//
-//  Created by Maxime Graulich on 22/08/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import <UIKit/UIKit.h>
 
 #include <gmsh/PView.h>

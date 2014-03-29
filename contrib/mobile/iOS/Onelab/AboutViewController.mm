@@ -1,17 +1,8 @@
-//
-//  AboutViewController.m
-//  Onelab
-//
-//  Created by Maxime Graulich on 21/03/14.
-//  Copyright (c) 2014 Maxime Graulich. All rights reserved.
-//
-
 #import "AboutViewController.h"
 #import "Gmsh/GmshVersion.h"
 #import "Gmsh/GmshConfig.h"
 #import "GetDP/GetDPVersion.h"
 #import "GetDP/GetDPConfig.h"
-
 
 @interface AboutViewController ()
 

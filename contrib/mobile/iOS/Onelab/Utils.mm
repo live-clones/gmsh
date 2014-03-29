@@ -1,11 +1,3 @@
-//
-//  Utils.m
-//  Onelab
-//
-//  Created by Maxime Graulich on 06/08/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import "Utils.h"
 
 @implementation Utils

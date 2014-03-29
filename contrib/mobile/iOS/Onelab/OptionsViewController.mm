@@ -1,11 +1,3 @@
-//
-//  PostProViewController.m
-//  Onelab
-//
-//  Created by Maxime Graulich on 13/08/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import "OptionsViewController.h"
 #import "ParametersViewController.h"
 #import "PostProcessingViewController.h"

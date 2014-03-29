@@ -1,11 +1,3 @@
-//
-//  parameter.m
-//  Onelab
-//
-//  Created by Maxime Graulich on 07/08/13.
-//  Copyright (c) 2013 Maxime Graulich. All rights reserved.
-//
-
 #import "parameter.h"
 
 @implementation Parameter

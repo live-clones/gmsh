@@ -3,6 +3,8 @@ Onelab for iOS and Android devices.
 
 Version: 1.0.0
 
+Copyright (C) 2014 Maxime Graulich and Christophe Geuzaine, University of Liege
+
 == iOS ==
 
 = Apple AppStore description =
