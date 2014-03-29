@@ -1,3 +1,6 @@
+#ifndef _MOVE_POSITION_H_
+#define _MOVE_POSITION_H_
+
 class movePosition {
  public:
   float win[3]; // window coordinates
@@ -18,7 +21,8 @@ class movePosition {
       t[i] = instance.t[i];
     }
   }
-  void set(float scale[3], float translate[3], float vxmax, float vxmin, float vymin, float vymax, int width, int height, int x, int y)
+  void set(float scale[3], float translate[3], float vxmax, float vxmin,
+           float vymin, float vymax, int width, int height, int x, int y)
   {
     for(int i = 0; i < 3; i++){
       s[i] = scale[i];
@@ -43,3 +47,4 @@ class movePosition {
   }
 };
 
+#endif
