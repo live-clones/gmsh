@@ -1,33 +1,35 @@
-iOS:
+This directory contains the source code for Onelab/Mobile, the mobile version of
+Onelab for iOS and Android devices.
 
 Version: 1.0.0
 
-SKU: 20140320
-
 Description:
 
-Onelab (http://onelab.info) is a finite element package based on the open source mesh generator Gmsh (http://gmsh.info) and the solver GetDP (http://getdp.info). It can be used to simulate a wide variety of multi-physic problems: electromagnetics, thermics, mechanics...
+Onelab (http://onelab.info) is a finite element package based on the open source
+mesh generator Gmsh (http://gmsh.info) and the solver GetDP
+(http://getdp.info). It can be used to simulate a wide variety of multi-physic
+problems: electromagnetics, thermics, mechanics...
 
-Onelab comes packaged with a selection of ready-to-use examples. New models can be added through iTunes file sharing: see http://onelab.info/wiki/Mobile for more information.
-
-
+Onelab comes packaged with a selection of ready-to-use examples. New models can
+be added through iTunes file sharing: see http://onelab.info/wiki/Mobile for
+more information.
 
 =====
 
-How to build the mobile version for iOS:
+Building the app for the iOS simulator:
 
-http://onelab.info/wiki/Mobile
+* Put all dependencies (Gmsh, GetDP, PETSc, BLAS/LAPACK framworks) in ./frameworks
+* cd ./build
+* cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks;$HOME/src/getdp" ..
+* make xcodeProject 
+* open Onelab/Onelab.xcodeproj 
 
-In short, if all the frameworks are installed in ./frameworks:
-
-cd ./build
-cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks;$HOME/src/getdp" ..
-make xcodeProject 
-open Onelab/Onelab.xcodeproj 
+Building the app for the iOS device:
 
 In short, if all the frameworks are installed in ./frameworks_simulator:
 
-cd ./build_simulator
-cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
-make xcodeProject 
-open Onelab/Onelab.xcodeproj 
+* Put all dependencies (Gmsh, GetDP, PETSc, BLAS/LAPACK framworks) in ./frameworks_simulator
+* cd ./build_simulator
+* cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
+* make xcodeProject 
+* open Onelab/Onelab.xcodeproj 
