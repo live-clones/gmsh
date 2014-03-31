@@ -62,11 +62,11 @@ drawContext::drawContext(bool isRetina)
     _translate[i] = 0.;
     _scale[i] = 1.;
   }
-  setQuaternion(0., 0., 0., 1.);
+	setQuaternion(0., 0., 0., 1.);
 
   _fillMesh = false;
   _gradiant = true;
-  _fontFactor = isRetina ? 2 : 1;
+  _fontFactor = isRetina ? 1.5 : 1;
 }
 
 static void checkGlError(const char* op)
@@ -116,7 +116,7 @@ void drawContext::eventHandler(int event, float x, float y)
     break;
   case 1: // finger move (translate)
     // in this case x and y represent the current point
-    _translate[0] += (_current.wnr[0] - _previous.wnr[0]);
+		_translate[0] += (_current.wnr[0] - _previous.wnr[0]);
     _translate[1] += (_current.wnr[1] - _previous.wnr[1]);
     _translate[2] = 0.;
     break;
@@ -183,50 +183,50 @@ void drawContext::buildRotationMatrix()
 void drawContext::OrthofFromGModel()
 {
 #if 1 // new version
-  double Va = (double)_height / (double)_width;
-  double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
-    (CTX::instance()->max[0] - CTX::instance()->min[0]);
-  double vxmin, vxmax, vymin, vymax;
-  if(Va > Wa) {
-    vxmin = CTX::instance()->min[0];
-    vxmax = CTX::instance()->max[0];
-    vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] -
-                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
-    vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] +
-                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
-  }
-  else {
-    vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] -
-                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
-    vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] +
-                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
-    vymin = CTX::instance()->min[1];
-    vymax = CTX::instance()->max[1];
-  }
-  double fact = CTX::instance()->displayBorderFactor;
-  double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
-  vxmin -= xborder;
-  vxmax += xborder;
-  vymin -= yborder;
-  vymax += yborder;
-
-  // set up the near and far clipping planes so that the box is large enough to
+	double Va = (double)_height / (double)_width;
+	double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
+							(CTX::instance()->max[0] - CTX::instance()->min[0]);
+	double vxmin, vxmax, vymin, vymax;
+	if(Va > Wa) {
+		vxmin = CTX::instance()->min[0];
+		vxmax = CTX::instance()->max[0];
+		vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] -
+									Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+	  vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] +
+									Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+	}
+	else {
+		vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] -
+									 (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+		vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] +
+									 (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+		vymin = CTX::instance()->min[1];
+		vymax = CTX::instance()->max[1];
+	}
+	double fact = CTX::instance()->displayBorderFactor;
+	double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
+	vxmin -= xborder;
+	vxmax += xborder;
+	vymin -= yborder;
+	vymax += yborder;
+	
+	// set up the near and far clipping planes so that the box is large enough to
   // manipulate the model and zoom, but not too big (otherwise the z-buffer
   // resolution e.g. with Mesa can become insufficient)
   double zmax = std::max(fabs(CTX::instance()->min[2]),
-                         fabs(CTX::instance()->max[2]));
+												 fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
-  double clip_near = -zmax * _scale[2] * CTX::instance()->clipFactor;
-  double clip_far = -clip_near;
+	double clip_near = -zmax * _scale[2] * CTX::instance()->clipFactor;
+	double clip_far = -clip_near;
 
-  GLint matrixMode;
+	GLint matrixMode;
   glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrthof(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
   glMatrixMode(matrixMode);
 
-  _left = vxmin;
+	_left = vxmin;
   _right = vxmax;
   _top = vymax;
   _bottom = vymin;
@@ -554,16 +554,16 @@ void drawContext::drawScale()
     else{
       sprintf(label, "%s", data->getName().c_str());
     }
-    drawString lbl(label, 20*_fontFactor);
-    lbl.draw(xmin+width/2, ymin+ 2.5*dh, 0.,
+    drawString lbl(label, 20 * _fontFactor);
+    lbl.draw(xmin + width / 2, ymin + 2.75 * dh, 0.,
              _width/(_right-_left), _height/(_top-_bottom));
 
-    drawString val(data->getName().c_str(), 14*_fontFactor);
+    drawString val(data->getName().c_str(), 15 * _fontFactor);
     for(int i = 0; i < 3; i++) {
       double v = opt->getScaleValue(i, 3, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       val.setText(label);
-      val.draw(xmin+i*width/2, ymin+ 1.1*dh, 0.,
+      val.draw(xmin + i * width/ 2, ymin + 1.5 * dh, 0.,
                _width/(_right-_left), _height/(_top-_bottom));
     }
     nPview++;
@@ -613,13 +613,13 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
   glDrawArrays(GL_LINES, 0, 6);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-  double dx = h/10;
-  drawString x ("X", 14*_fontFactor,colors);
-  x.draw(x0+h+dx, y0, z0, _width/(_right-_left), _height/(_top-_bottom), false);
-  drawString y("Y", 14*_fontFactor,colors+8);
-  y.draw(x0+dx, y0+h, z0, _width/(_right-_left), _height/(_top-_bottom), false);
-  drawString z("Z", 14*_fontFactor,colors+16);
-  z.draw(x0+dx, y0, z0+h, _width/(_right-_left), _height/(_top-_bottom), false);
+  double dx = h / 10;
+  drawString x("X", 15 * _fontFactor, colors);
+  x.draw(x0+h+dx, y0+dx, z0+dx, _width/(_right-_left), _height/(_top-_bottom), false);
+  drawString y("Y", 15 * _fontFactor, colors+8);
+  y.draw(x0+dx, y0+h+dx, z0+dx, _width/(_right-_left), _height/(_top-_bottom), false);
+  drawString z("Z", 15 * _fontFactor, colors+16);
+  z.draw(x0+dx, y0+dx, z0+h+dx, _width/(_right-_left), _height/(_top-_bottom), false);
   glPopMatrix();
   glLineWidth(1);
 }
@@ -629,7 +629,6 @@ void drawContext::drawView()
   OrthofFromGModel();
 
   glMatrixMode(GL_MODELVIEW);
-
   // fill the background
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(_gradiant){
@@ -657,11 +656,12 @@ void drawContext::drawView()
     glPopMatrix();
   }
   checkGlError("Draw background");
-
+  
   glLoadIdentity();
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
-  if(CTX::instance()->rotationCenterCg)
+
+	if(CTX::instance()->rotationCenterCg)
     glTranslatef(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
                  CTX::instance()->cg[2]);
@@ -669,8 +669,10 @@ void drawContext::drawView()
     glTranslatef(CTX::instance()->rotationCenter[0],
                  CTX::instance()->rotationCenter[1],
                  CTX::instance()->rotationCenter[2]);
-  buildRotationMatrix();
+
+	buildRotationMatrix();
   glMultMatrixf(_rotatef);
+
   if(CTX::instance()->rotationCenterCg)
     glTranslatef(-CTX::instance()->cg[0],
                  -CTX::instance()->cg[1],
@@ -679,15 +681,14 @@ void drawContext::drawView()
     glTranslatef(-CTX::instance()->rotationCenter[0],
                  -CTX::instance()->rotationCenter[1],
                  -CTX::instance()->rotationCenter[2]);
-  checkGlError("Initialize position");
+
+	checkGlError("Initialize position");
 
   glEnable(GL_DEPTH_TEST);
   drawMesh();
   checkGlError("Draw mesh");
-
   drawGeom();
   checkGlError("Draw geometry");
-
   drawPost();
   checkGlError("Draw post-pro");
   glDisable(GL_DEPTH_TEST);
