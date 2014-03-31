@@ -182,6 +182,57 @@ void drawContext::buildRotationMatrix()
 
 void drawContext::OrthofFromGModel()
 {
+#if 1 // new version
+  double Va = (double)_height / (double)_width;
+  double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
+    (CTX::instance()->max[0] - CTX::instance()->min[0]);
+  double vxmin, vxmax, vymin, vymax;
+  if(Va > Wa) {
+    vxmin = CTX::instance()->min[0];
+    vxmax = CTX::instance()->max[0];
+    vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] -
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+    vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] +
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+  }
+  else {
+    vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] -
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] +
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vymin = CTX::instance()->min[1];
+    vymax = CTX::instance()->max[1];
+  }
+  double fact = CTX::instance()->displayBorderFactor;
+  double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
+  vxmin -= xborder;
+  vxmax += xborder;
+  vymin -= yborder;
+  vymax += yborder;
+
+  // set up the near and far clipping planes so that the box is large enough to
+  // manipulate the model and zoom, but not too big (otherwise the z-buffer
+  // resolution e.g. with Mesa can become insufficient)
+  double zmax = std::max(fabs(CTX::instance()->min[2]),
+                         fabs(CTX::instance()->max[2]));
+  if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
+  double clip_near = -zmax * _scale[2] * CTX::instance()->clipFactor;
+  double clip_far = -clip_near;
+
+  GLint matrixMode;
+  glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrthof(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
+  glMatrixMode(matrixMode);
+
+  _left = vxmin;
+  _right = vxmax;
+  _top = vymax;
+  _bottom = vymin;
+  _far = clip_far;
+
+#else
   SBoundingBox3d bb = GModel::current()->bounds();
   double ratio = (double)(_width ? _width : 1.) /
     (double)(_height ? _height : 1.);
@@ -220,8 +271,8 @@ void drawContext::OrthofFromGModel()
   _bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
   _far = -clip;
   glOrthof(_left, _right, _bottom, _top, -clip, clip);
-
   glMatrixMode(matrixMode);
+#endif
 }
 
 void drawContext::initView(int w, int h)
@@ -232,7 +283,7 @@ void drawContext::initView(int w, int h)
 
   OrthofFromGModel();
 
-  glClearColor(.83,.85,.98,1.);
+  glClearColor(.83, .85, .98, 1.);
   glDepthMask(GL_TRUE);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -578,6 +629,7 @@ void drawContext::drawView()
   OrthofFromGModel();
 
   glMatrixMode(GL_MODELVIEW);
+
   // fill the background
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(_gradiant){
@@ -605,19 +657,37 @@ void drawContext::drawView()
     glPopMatrix();
   }
   checkGlError("Draw background");
-  //
+
   glLoadIdentity();
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
+  if(CTX::instance()->rotationCenterCg)
+    glTranslatef(CTX::instance()->cg[0],
+                 CTX::instance()->cg[1],
+                 CTX::instance()->cg[2]);
+  else
+    glTranslatef(CTX::instance()->rotationCenter[0],
+                 CTX::instance()->rotationCenter[1],
+                 CTX::instance()->rotationCenter[2]);
   buildRotationMatrix();
   glMultMatrixf(_rotatef);
+  if(CTX::instance()->rotationCenterCg)
+    glTranslatef(-CTX::instance()->cg[0],
+                 -CTX::instance()->cg[1],
+                 -CTX::instance()->cg[2]);
+  else
+    glTranslatef(-CTX::instance()->rotationCenter[0],
+                 -CTX::instance()->rotationCenter[1],
+                 -CTX::instance()->rotationCenter[2]);
   checkGlError("Initialize position");
-  //
+
   glEnable(GL_DEPTH_TEST);
   drawMesh();
   checkGlError("Draw mesh");
+
   drawGeom();
   checkGlError("Draw geometry");
+
   drawPost();
   checkGlError("Draw post-pro");
   glDisable(GL_DEPTH_TEST);
