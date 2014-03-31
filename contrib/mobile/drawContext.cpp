@@ -183,50 +183,50 @@ void drawContext::buildRotationMatrix()
 void drawContext::OrthofFromGModel()
 {
 #if 1 // new version
-	double Va = (double)_height / (double)_width;
-	double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
-							(CTX::instance()->max[0] - CTX::instance()->min[0]);
-	double vxmin, vxmax, vymin, vymax;
-	if(Va > Wa) {
-		vxmin = CTX::instance()->min[0];
-		vxmax = CTX::instance()->max[0];
-		vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] -
-									Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
-	  vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] +
-									Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
-	}
-	else {
-		vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] -
-									 (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
-		vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] +
-									 (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
-		vymin = CTX::instance()->min[1];
-		vymax = CTX::instance()->max[1];
-	}
-	double fact = CTX::instance()->displayBorderFactor;
-	double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
-	vxmin -= xborder;
-	vxmax += xborder;
-	vymin -= yborder;
-	vymax += yborder;
-	
-	// set up the near and far clipping planes so that the box is large enough to
+  double Va = (double)_height / (double)_width;
+  double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
+    (CTX::instance()->max[0] - CTX::instance()->min[0]);
+  double vxmin, vxmax, vymin, vymax;
+  if(Va > Wa) {
+    vxmin = CTX::instance()->min[0];
+    vxmax = CTX::instance()->max[0];
+    vymin = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] -
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+    vymax = 0.5 * (CTX::instance()->min[1] + CTX::instance()->max[1] +
+                   Va * (CTX::instance()->max[0] - CTX::instance()->min[0]));
+  }
+  else {
+    vxmin = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] -
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vxmax = 0.5 * (CTX::instance()->min[0] + CTX::instance()->max[0] +
+                   (CTX::instance()->max[1] - CTX::instance()->min[1]) / Va);
+    vymin = CTX::instance()->min[1];
+    vymax = CTX::instance()->max[1];
+  }
+  double fact = CTX::instance()->displayBorderFactor;
+  double xborder = fact * (vxmax - vxmin), yborder = fact * (vymax - vymin);
+  vxmin -= xborder;
+  vxmax += xborder;
+  vymin -= yborder;
+  vymax += yborder;
+
+  // set up the near and far clipping planes so that the box is large enough to
   // manipulate the model and zoom, but not too big (otherwise the z-buffer
   // resolution e.g. with Mesa can become insufficient)
   double zmax = std::max(fabs(CTX::instance()->min[2]),
-												 fabs(CTX::instance()->max[2]));
+                         fabs(CTX::instance()->max[2]));
   if(zmax < CTX::instance()->lc) zmax = CTX::instance()->lc;
-	double clip_near = -zmax * _scale[2] * CTX::instance()->clipFactor;
-	double clip_far = -clip_near;
+  double clip_near = -zmax * _scale[2] * CTX::instance()->clipFactor;
+  double clip_far = -clip_near;
 
-	GLint matrixMode;
+  GLint matrixMode;
   glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrthof(vxmin, vxmax, vymin, vymax, clip_near, clip_far);
   glMatrixMode(matrixMode);
 
-	_left = vxmin;
+  _left = vxmin;
   _right = vxmax;
   _top = vymax;
   _bottom = vymin;
@@ -656,7 +656,7 @@ void drawContext::drawView()
     glPopMatrix();
   }
   checkGlError("Draw background");
-  
+
   glLoadIdentity();
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
