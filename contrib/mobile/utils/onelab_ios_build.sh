@@ -45,6 +45,8 @@ function build_getdp {
   if [ ! -d "$getdp_svn/build_ios_$1" ]; then
     mkdir $getdp_svn/build_ios_$1
     cd $getdp_svn/build_ios_$1
+    export PETSC_DIR=
+    export PETSC_ARCH=
     cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ../
     check
     cd -
