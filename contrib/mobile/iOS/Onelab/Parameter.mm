@@ -287,7 +287,7 @@
         //TODO add step ?
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
         [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-        [label setText:[NSString stringWithFormat:@"%@ %f" ,[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
+        [label setText:[NSString stringWithFormat:@"%@ %g" ,[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
     }
     return self;
 }
@@ -307,7 +307,7 @@
     if(number.size() < 1) return;
     number[0].setValue(sender.value);
     onelab::server::instance()->set(number[0]);
-    [label setText:[NSString stringWithFormat:@"%s %f" ,number[0].getShortName().c_str(), number[0].getValue()]];
+    [label setText:[NSString stringWithFormat:@"%s %g" ,number[0].getShortName().c_str(), number[0].getValue()]];
     [super editValue];
 }
 -(void)setFrame:(CGRect)frame
@@ -343,7 +343,7 @@
         textbox = [[UITextField alloc] init];
         [textbox setBorderStyle:UITextBorderStyleRoundedRect];
         [textbox setKeyboardType:UIKeyboardTypeNumberPad];
-        [textbox setText:[NSString stringWithFormat:@"%f", number.getValue()]];
+        [textbox setText:[NSString stringWithFormat:@"%g", number.getValue()]];
         [textbox setDelegate:self];
         UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
         numberToolbar.barStyle = UIBarStyleBlackTranslucent;
@@ -361,7 +361,7 @@
 	std::vector<onelab::number> number;
     onelab::server::instance()->get(number,[name UTF8String]);
     if(number.size() < 1) return;
-	[textbox setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
+	[textbox setText:[NSString stringWithFormat:@"%g", number[0].getValue()]];
 	[textbox reloadInputViews];
 }
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
@@ -371,7 +371,7 @@
     if(number.size() < 1) return YES;
     number[0].setValue([textField.text doubleValue]);
     onelab::server::instance()->set(number[0]);
-	[textField setText:[NSString stringWithFormat:@"%f", number[0].getValue()]];
+	[textField setText:[NSString stringWithFormat:@"%g", number[0].getValue()]];
 	[super editValue];
     return YES;
 }
