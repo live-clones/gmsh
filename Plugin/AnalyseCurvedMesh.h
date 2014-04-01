@@ -25,7 +25,6 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     
     int _numAnalysedEl;
     int _numInvalid, _numValid, _numUncertain;
-    double _min_Javg, _max_Javg, _avg_Javg;
     double _min_pJmin, _avg_pJmin;
     double _min_ratioJ, _avg_ratioJ;
     
@@ -51,34 +50,6 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
     void computeMinMax(MElement *const *, int numEl, std::map<int, std::vector<double> > *data = 0);
     int subDivision(const JacobianBasis *, const fullVector<double>&, int depth);
     void hideValid_ShowInvalid(std::vector<MElement*> &invalids);
-};
-
-class BezierJacobian;
-struct lessMinB {
-  bool operator()(BezierJacobian*, BezierJacobian*) const;
-};
-struct lessMaxB {
-  bool operator()(BezierJacobian*, BezierJacobian*) const;
-};
-
-class BezierJacobian
-{
-private:
-  fullVector<double> _jacBez;
-  double _minJ, _maxJ, _minB, _maxB; //Extremum of Jac at corners and of bezier values
-  int _depthSub;
-  const JacobianBasis *_jfs;
-  
-public:
-  BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
-  void subDivisions(fullVector<double> &vect) const
-    {_jfs->subdivideBezierCoeff(_jacBez, vect);}
-  
-  inline int depth() const {return _depthSub;}
-  inline double minJ() const {return _minJ;}
-  inline double maxJ() const {return _maxJ;}
-  inline double minB() const {return _minB;}
-  inline double maxB() const {return _maxB;}
 };
 
 #endif

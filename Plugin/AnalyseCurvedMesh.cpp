@@ -24,15 +24,36 @@
 #endif
 
 namespace {
-  double sum(fullVector<double> &v)
-  {
-    double sum = .0;
-    for (int i = 0; i < v.size(); ++i) {
-      sum += v(i);
-    }
-    return sum;
-  }
-}
+
+class BezierJacobian;
+struct lessMinB {
+  bool operator()(BezierJacobian*, BezierJacobian*) const;
+};
+struct lessMaxB {
+  bool operator()(BezierJacobian*, BezierJacobian*) const;
+};
+
+class BezierJacobian
+{
+private:
+  fullVector<double> _jacBez;
+  double _minJ, _maxJ, _minB, _maxB; //Extremum of Jac at corners and of bezier values
+  int _depthSub;
+  const JacobianBasis *_jfs;
+
+public:
+  BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
+  void subDivisions(fullVector<double> &vect) const
+    {_jfs->subdivideBezierCoeff(_jacBez, vect);}
+
+  inline int depth() const {return _depthSub;}
+  inline double minJ() const {return _minJ;}
+  inline double maxJ() const {return _maxJ;}
+  inline double minB() const {return _minB;}
+  inline double maxB() const {return _maxB;}
+};
+
+} // namespace
 
 //#define UNDEF_JAC_TAG -999
 //#define _ANALYSECURVEDMESH_BLAS_
@@ -141,8 +162,6 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
       break;
 
     case 2 :
-      Msg::Warning("2D elements must be in a z=cst plane ! If they aren't, results won't be correct.");
-
       for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
         GFace *f = *it;
 
@@ -159,7 +178,6 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
         GFace *f = *it;
         unsigned int numType[3] = {0, 0, 0};
         f->getNumMeshElements(numType);
-
         for (int type = 0; type < 3; type++) {
           MElement *const *el = f->getStartElementType(type);
           checkValidity(el, numType[type], invalids);
@@ -169,7 +187,6 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
       break;
 
     case 1 :
-      Msg::Warning("1D elements must be on a y=cst & z=cst line ! If they aren't, results won't be correct.");
       for (GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++) {
         GEdge *e = *it;
         unsigned int numElement = e->getNumMeshElements();
@@ -224,23 +241,20 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
   if (numEl < 1)
     return;
 
-  const JacobianBasis *jfs = el[0]->getJacobianFuncSpace(-1);
-  const JacobianBasis *jfs1 = el[0]->getJacobianFuncSpace(1);
-  if (!jfs || !jfs1) {
+  const JacobianBasis *jfs = el[0]->getJacobianFuncSpace();
+  if (!jfs) {
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
-  const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
-  const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
+  const int numSamplingPt = jfs->getNumJacNodes();
+  const int numMapNodes = jfs->getNumMapNodes();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
   fullMatrix<double> jacBezB(numSamplingPt, numEl);
-  fullMatrix<double> jac1B(numSamplingPt1, numEl);
-  fullVector<double> jacBez, jacobian, jac1;
+  fullVector<double> jacBez, jacobian;
 
   fullMatrix<double> nodesX(numMapNodes, numEl), nodesY(numMapNodes, numEl), nodesZ(numMapNodes, numEl);
-  fullMatrix<double> nodesX1(numMapNodes, numEl), nodesY1(numMapNodes, numEl), nodesZ1(numMapNodes, numEl);
   for (int k = 0; k < numEl; ++k)
     for (int i = 0; i < numMapNodes; ++i)
     {
@@ -248,20 +262,13 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
       nodesX(i,k) = v->x();
       nodesY(i,k) = v->y();
       nodesZ(i,k) = v->z();
-      if (i < numMapNodes1) {
-        nodesX1(i,k) = nodesX(i,k);
-        nodesY1(i,k) = nodesY(i,k);
-        nodesZ1(i,k) = nodesZ(i,k);
-      }
     }
 
-  jfs->getSignedJacobian(nodesX, nodesY, nodesZ, jacobianB);
-  jfs1->getSignedJacobian(nodesX1, nodesY1, nodesZ1, jac1B);
+  jfs->getScaledJacobian(nodesX, nodesY, nodesZ, jacobianB);
   jfs->lag2Bez(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> jac1(numSamplingPt1);
 #endif
 
   for (int k = 0; k < numEl; ++k) {
@@ -269,25 +276,14 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
 #ifdef _ANALYSECURVEDMESH_BLAS_
     jacBez.setAsProxy(jacBezB, k);
     jacobian.setAsProxy(jacobianB, k);
-    jac1.setAsProxy(jac1B, k);
 #else
-    fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMapNodes1,3);
+    fullMatrix<double> nodesXYZ(numMapNodes,3);
     el[k]->getNodesCoord(nodesXYZ);
-    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,3,0,0);
-    jfs->getSignedJacobian(nodesXYZ,jacobian);
-    jfs1->getSignedJacobian(nodesXYZ1,jac1);
+    jfs->getScaledJacobian(nodesXYZ,jacobian);
 #endif
 
-    // AmJ : avgJ is not the average Jac for quad, prism or hex
-    double avgJ = sum(jac1) / jac1.size();
-    if (avgJ < 0) {
-      jacBez.scale(-1);
-      jacobian.scale(-1);
-      avgJ *= -1;
-    }
-
     int i;
-    for (i = 0; i < numSamplingPt && jacobian(i) > _jacBreak * avgJ; ++i);
+    for (i = 0; i < numSamplingPt && jacobian(i) > _jacBreak; ++i);
     if (i < numSamplingPt) {
       invalids.push_back(el[k]);
       ++_numInvalid;
@@ -304,7 +300,7 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(MElement *const*el,
     jfs->lag2Bez(jacobian, jacBez);
 #endif
 
-    for (i = 0; i < jacBez.size() && jacBez(i) > _bezBreak * avgJ; ++i);
+    for (i = 0; i < jacBez.size() && jacBez(i) > _bezBreak; ++i);
     if (i >= jacBez.size()) {
       ++_numValid;
       continue;
@@ -386,7 +382,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(std::map<int, std::vector<doubl
   _numInvalid = 0;
   _numValid = 0;
   _numUncertain = 0;
-  _min_Javg = .0, _max_Javg = .0, _avg_Javg = .0;
   _min_pJmin = .0, _avg_pJmin = .0;
   _min_ratioJ = .0, _avg_ratioJ = .0;
 
@@ -406,7 +401,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(std::map<int, std::vector<doubl
       break;
 
     case 2 :
-      Msg::Warning("2D elements must be in a z=cst plane ! If they aren't, results won't be correct.");
       for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
         GFace *f = *it;
         unsigned int numType[3] = {0, 0, 0};
@@ -421,7 +415,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(std::map<int, std::vector<doubl
       break;
 
     case 1 :
-      Msg::Warning("1D elements must be on a y=cst & z=cst line ! If they aren't, results won't be correct.");
       for (GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++) {
         GEdge *e = *it;
         unsigned int numElement = e->getNumMeshElements();
@@ -435,7 +428,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(std::map<int, std::vector<doubl
       Msg::Error("I can't analyse any element.");
       return;
   }
-  Msg::Info("Extrema of J_avg : %g, %g (avg: %g)", _min_Javg, _max_Javg, _avg_Javg/_numAnalysedEl);
   Msg::Info("Minimum of min(~distortion) : %g", _min_pJmin);
   Msg::Info("Average of min(~distortion) : %g", _avg_pJmin / _numAnalysedEl);
   Msg::Info("Minimum of min(J) / max(J) : %g", _min_ratioJ);
@@ -447,24 +439,21 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
   if (numEl < 1)
     return;
 
-  const JacobianBasis *jfs = el[0]->getJacobianFuncSpace(-1);
-  const JacobianBasis *jfs1 = el[0]->getJacobianFuncSpace(1);
-  if (!jfs || !jfs1) {
+  const JacobianBasis *jfs = el[0]->getJacobianFuncSpace();
+  if (!jfs) {
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
 
-  const int numSamplingPt = jfs->getNumJacNodes(), numSamplingPt1 = jfs1->getNumJacNodes();
-  const int numMapNodes = jfs->getNumMapNodes(), numMapNodes1 = jfs1->getNumMapNodes();
+  const int numSamplingPt = jfs->getNumJacNodes();
+  const int numMapNodes = jfs->getNumMapNodes();
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
   fullMatrix<double> jacobianB(numSamplingPt, numEl);
   fullMatrix<double> jacBezB(numSamplingPt, numEl);
-  fullMatrix<double> jac1B(numSamplingPt1, numEl);
   fullVector<double> jacBez, jacobian, jac1;
 
   fullMatrix<double> nodesX(numMapNodes, numEl), nodesY(numMapNodes, numEl), nodesZ(numMapNodes, numEl);
-  fullMatrix<double> nodesX1(numMapNodes1, numEl), nodesY1(numMapNodes1, numEl), nodesZ1(numMapNodes1, numEl);
   for (int k = 0; k < numEl; ++k)
     for (int i = 0; i < numMapNodes; ++i)
     {
@@ -472,25 +461,16 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
       nodesX(i,k) = v->x();
       nodesY(i,k) = v->y();
       nodesZ(i,k) = v->z();
-      if (i < numMapNodes1) {
-        nodesX1(i,k) = nodesX(i,k);
-        nodesY1(i,k) = nodesY(i,k);
-        nodesZ1(i,k) = nodesZ(i,k);
-      }
     }
 
-  jfs->getSignedJacobian(nodesX, nodesY, nodesZ, jacobianB);
-  jfs1->getSignedJacobian(nodesX, nodesY, nodesZ, jac1B);
+  jfs->getScaledJacobian(nodesX, nodesY, nodesZ, jacobianB);
   jfs->lag2Bez(jacobianB, jacBezB);
 #else
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> jac1(numSamplingPt1);
 #endif
   fullVector<double> subJacBez(jfs->getNumSubNodes());
 
-  _min_Javg = 1.7e308;
-  _max_Javg = -1.7e308;
   _min_pJmin = 1.7e308;
   _min_ratioJ = 1.7e308;
 
@@ -502,23 +482,12 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
 #ifdef _ANALYSECURVEDMESH_BLAS_
     jacBez.setAsProxy(jacBezB, k);
     jacobian.setAsProxy(jacobianB, k);
-    jac1.setAsProxy(jac1B, k);
 #else
-    fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZ1(numMapNodes1,3);
+    fullMatrix<double> nodesXYZ(numMapNodes,3);
     el[k]->getNodesCoord(nodesXYZ);
-    nodesXYZ1.copy(nodesXYZ,0,numMapNodes1,0,3,0,0);
-    jfs->getSignedJacobian(nodesXYZ,jacobian);
-    jfs1->getSignedJacobian(nodesXYZ1,jac1);
+    jfs->getScaledJacobian(nodesXYZ,jacobian);
     jfs->lag2Bez(jacobian, jacBez);
 #endif
-
-    // AmJ : avgJ is not the average Jac for quad, prism or hex
-    double avgJ = sum(jac1) / jac1.size();
-    if (avgJ < 0) {
-      jacBez.scale(-1);
-      jacobian.scale(-1);
-      avgJ *= -1;
-    }
 
     double minJ, maxJ = minJ = jacobian(0);
 
@@ -527,18 +496,12 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
       if (jacobian(i) > maxJ) maxJ = jacobian(i);
     }
 
-    double minB, maxB = minB = jacBez(0);//, avgJ = .0;
+    double minB, maxB = minB = jacBez(0);
 
     for (int i = 1; i < numSamplingPt; ++i) {
       if (jacBez(i) < minB) minB = jacBez(i);
       if (jacBez(i) > maxB) maxB = jacBez(i);
-      //avgJ += jacBez(i);
     }
-    //avgJ /= numSamplingPt;
-
-    _avg_Javg += avgJ;
-    _min_Javg = std::min(_min_Javg, avgJ);
-    _max_Javg = std::max(_max_Javg, avgJ);
 
     if (_maxDepth > 1 &&
         (minJ - minB > _tol * (std::abs(minJ) + std::abs(minB)) / 2 ||
@@ -618,18 +581,18 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
         delete bj;
       }
     }
-    fwrite << minB/avgJ << " " << minB/maxB << "\r";
+    fwrite << minB << " " << minB/maxB << "\r";
 
     if (data){
       if (1-minB <= _tol * minJ && maxB-1 <= _tol * maxB)
         (*data)[el[k]->getNum()].push_back(1.);
-      else if (1-minB/avgJ <= 1e-8)
+      else if (1-minB <= 1e-8)
         (*data)[el[k]->getNum()].push_back(1.);
       else
-        (*data)[el[k]->getNum()].push_back(minB/avgJ);
+        (*data)[el[k]->getNum()].push_back(minB);
     }
-    _min_pJmin = std::min(_min_pJmin, minB/avgJ);
-    _avg_pJmin += minB/avgJ;
+    _min_pJmin = std::min(_min_pJmin, minB);
+    _avg_pJmin += minB;
     _min_ratioJ = std::min(_min_ratioJ, minB/maxB);
     _avg_ratioJ += minB/maxB;
   }

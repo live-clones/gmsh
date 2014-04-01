@@ -277,27 +277,33 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ) const
 
 }
 
-namespace {
-
-// Calculate (signed) Jacobian for one element, given the gradients of the shape functions
-// and vectors for regularization of line and surface Jacobians in 3D.
-inline void computeSignedJacobian(int dim, int numJacNodes, const fullMatrix<double> &gradShapeMatX,
-                                  const fullMatrix<double> &gradShapeMatY, const fullMatrix<double> &gradShapeMatZ,
-                                  const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
-                                  fullVector<double> &jacobian)
+// Calculate (signed, possibly scaled) Jacobian for one element, with normal vectors to straight element
+// for regularization. Evaluation points depend on the given matrices for shape function gradients.
+template<bool scaling>
+inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                              const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                              const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
+
+  const int dim = bezier->getDim();
 
   switch (dim) {
 
     case 0 : {
-      for (int i = 0; i < numJacNodes; i++) jacobian(i) = 1.;
+      for (int i = 0; i < nJacNodes; i++) jacobian(i) = 1.;
       break;
     }
 
     case 1 : {
-      fullMatrix<double> dxyzdX(numJacNodes,3);
-      gradShapeMatX.mult(nodesXYZ, dxyzdX);
-      for (int i = 0; i < numJacNodes; i++) {
+      fullMatrix<double> normals(2,3);
+      const double invScale = getPrimNormals1D(nodesXYZ,normals);
+      if (scaling) {
+        const double scale = 1./invScale;
+        normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;            // Faster to scale 1 normal than afterwards
+      }
+      fullMatrix<double> dxyzdX(nJacNodes,3);
+      gSMatX.mult(nodesXYZ, dxyzdX);
+      for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = normals(0,0), &dydY = normals(0,1), &dzdY = normals(0,2);
         const double &dxdZ = normals(1,0), &dydZ = normals(1,1), &dzdZ = normals(1,2);
@@ -307,29 +313,40 @@ inline void computeSignedJacobian(int dim, int numJacNodes, const fullMatrix<dou
     }
 
     case 2 : {
-      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3);
-      gradShapeMatX.mult(nodesXYZ, dxyzdX);
-      gradShapeMatY.mult(nodesXYZ, dxyzdY);
-      for (int i = 0; i < numJacNodes; i++) {
+      fullMatrix<double> normal(1,3);
+      const double invScale = getPrimNormal2D(nodesXYZ,normal);
+      if (scaling) {
+        const double scale = 1./invScale;
+        normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;               // Faster to scale normal than afterwards
+      }
+      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
+      gSMatX.mult(nodesXYZ, dxyzdX);
+      gSMatY.mult(nodesXYZ, dxyzdY);
+      for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = normals(0,0), &dydZ = normals(0,1), &dzdZ = normals(0,2);
+        const double &dxdZ = normal(0,0), &dydZ = normal(0,1), &dzdZ = normal(0,2);
         jacobian(i) = calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ);
       }
       break;
     }
 
     case 3 : {
-      fullMatrix<double> dxyzdX(numJacNodes,3), dxyzdY(numJacNodes,3), dxyzdZ(numJacNodes,3);
-      gradShapeMatX.mult(nodesXYZ, dxyzdX);
-      gradShapeMatY.mult(nodesXYZ, dxyzdY);
-      gradShapeMatZ.mult(nodesXYZ, dxyzdZ);
-      for (int i = 0; i < numJacNodes; i++) {
+      fullMatrix<double> dum;
+      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3), dxyzdZ(nJacNodes,3);
+      gSMatX.mult(nodesXYZ, dxyzdX);
+      gSMatY.mult(nodesXYZ, dxyzdY);
+      gSMatZ.mult(nodesXYZ, dxyzdZ);
+      for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
         const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
         jacobian(i) = calcDet3D(dxdX,dydX,dzdX,dxdY,dydY,dzdY,dxdZ,dydZ,dzdZ);
       }
+      if (scaling) {
+        const double scale = 1./getPrimJac3D(nodesXYZ);
+        jacobian.scale(scale);
+      }
       break;
     }
 
@@ -337,91 +354,32 @@ inline void computeSignedJacobian(int dim, int numJacNodes, const fullMatrix<dou
 
 }
 
-} // namespace
-
-// Calculate (signed) Jacobian for one element, with normal vectors to straight element for regularization.
-// Evaluation points depend on the given matrices for shape function gradients.
+// Calculate signed Jacobian for one element, with normal vectors to straight element for
+// regularization. Evaluation points depend on the given matrices for shape function gradients.
 void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                              const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                              const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
-
-  const int dim = bezier->getDim();
-
-  switch (dim) {
-
-    case 1 : {
-      fullMatrix<double> normals(2,3);
-      getPrimNormals1D(nodesXYZ,normals);
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,normals,jacobian);
-      break;
-    }
-
-    case 2 : {
-      fullMatrix<double> normal(1,3);
-      getPrimNormal2D(nodesXYZ,normal);
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,normal,jacobian);
-      break;
-    }
-
-    case 0 :
-    case 3 : {
-      fullMatrix<double> dum;
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,dum,jacobian);
-      break;
-    }
-
-  }
-
+  getJacobianGeneral<false>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesXYZ, jacobian);
 }
 
-// Calculate scaled (signed) Jacobian for one element, with normal vectors to straight element for regularization
-// and scaling. Evaluation points depend on the given matrices for shape function gradients.
+// Calculate (signed) scaled Jacobian for one element, with normal vectors to straight element
+// for regularization. Evaluation points depend on the given matrices for shape function gradients.
 void JacobianBasis::getScaledJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                              const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                              const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
-
-  const int dim = bezier->getDim();
-
-  switch (dim) {
-
-    case 1 : {
-      fullMatrix<double> normals(2,3);
-      const double scale = 1./getPrimNormals1D(nodesXYZ,normals);
-      normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;  // Faster to scale 1 normal than afterwards
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,normals,jacobian);
-      break;
-    }
-
-    case 2 : {
-      fullMatrix<double> normal(1,3);
-      const double scale = 1./getPrimNormal2D(nodesXYZ,normal);
-      normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;     // Faster to scale normal than afterwards
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,normal,jacobian);
-      break;
-    }
-
-    case 0 :
-    case 3 : {
-      fullMatrix<double> dum;
-      const double scale = 1./getPrimJac3D(nodesXYZ);
-      computeSignedJacobian(dim,nJacNodes,gSMatX,gSMatY,gSMatZ,nodesXYZ,dum,jacobian);
-      jacobian.scale(scale);
-      break;
-    }
-
-  }
-
+  getJacobianGeneral<true>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesXYZ, jacobian);
 }
 
-// Calculate (signed) Jacobian for several elements.
-// Evaluation points depend on the given matrices for shape function gradients.
+// Calculate (signed, possibly scaled) Jacobian for several elements, with normal vectors to straight
+// elements for regularization. Evaluation points depend on the given matrices for shape function gradients.
 // TODO: Optimize and test 1D & 2D
-void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                                             const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                                             const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
-                                             const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
+template<bool scaling>
+inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                              const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                              const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+                                              const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
 {
 
   switch (bezier->getDim()) {
@@ -438,14 +396,18 @@ void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<dou
       fullMatrix<double> dxdX(nJacNodes,numEl), dydX(nJacNodes,numEl), dzdX(nJacNodes,numEl);
       gSMatX.mult(nodesX, dxdX); gSMatX.mult(nodesY, dydX); gSMatX.mult(nodesZ, dzdX);
       for (int iEl = 0; iEl < numEl; iEl++) {
-        fullMatrix<double> nodesXYZ(numPrimJacNodes,3);
-        for (int i = 0; i < numPrimJacNodes; i++) {
+        fullMatrix<double> nodesXYZ(numPrimMapNodes,3);
+        for (int i = 0; i < numPrimMapNodes; i++) {
           nodesXYZ(i,0) = nodesX(i,iEl);
           nodesXYZ(i,1) = nodesY(i,iEl);
           nodesXYZ(i,2) = nodesZ(i,iEl);
         }
         fullMatrix<double> normals(2,3);
-        getPrimNormals1D(nodesXYZ,normals);
+        const double invScale = getPrimNormals1D(nodesXYZ,normals);
+        if (scaling) {
+          const double scale = 1./invScale;
+          normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;                // Faster to scale 1 normal than afterwards
+        }
         const double &dxdY = normals(0,0), &dydY = normals(0,1), &dzdY = normals(0,2);
         const double &dxdZ = normals(1,0), &dydZ = normals(1,1), &dzdZ = normals(1,2);
         for (int i = 0; i < nJacNodes; i++)
@@ -463,14 +425,18 @@ void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<dou
       gSMatX.mult(nodesX, dxdX); gSMatX.mult(nodesY, dydX); gSMatX.mult(nodesZ, dzdX);
       gSMatY.mult(nodesX, dxdY); gSMatY.mult(nodesY, dydY); gSMatY.mult(nodesZ, dzdY);
       for (int iEl = 0; iEl < numEl; iEl++) {
-        fullMatrix<double> nodesXYZ(numPrimJacNodes,3);
-        for (int i = 0; i < numPrimJacNodes; i++) {
+        fullMatrix<double> nodesXYZ(numPrimMapNodes,3);
+        for (int i = 0; i < numPrimMapNodes; i++) {
           nodesXYZ(i,0) = nodesX(i,iEl);
           nodesXYZ(i,1) = nodesY(i,iEl);
           nodesXYZ(i,2) = nodesZ(i,iEl);
         }
         fullMatrix<double> normal(1,3);
-        getPrimNormal2D(nodesXYZ,normal);
+        const double invScale = getPrimNormal2D(nodesXYZ,normal);
+        if (scaling) {
+          const double scale = 1./invScale;
+          normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;                   // Faster to scale normal than afterwards
+        }
         const double &dxdZ = normal(0,0), &dydZ = normal(0,1), &dzdZ = normal(0,2);
         for (int i = 0; i < nJacNodes; i++)
           jacobian(i,iEl) = calcDet3D(dxdX(i,iEl),dydX(i,iEl),dzdX(i,iEl),
@@ -488,16 +454,47 @@ void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<dou
       gSMatX.mult(nodesX, dxdX); gSMatX.mult(nodesY, dydX); gSMatX.mult(nodesZ, dzdX);
       gSMatY.mult(nodesX, dxdY); gSMatY.mult(nodesY, dydY); gSMatY.mult(nodesZ, dzdY);
       gSMatZ.mult(nodesX, dxdZ); gSMatZ.mult(nodesY, dydZ); gSMatZ.mult(nodesZ, dzdZ);
-      for (int iEl = 0; iEl < numEl; iEl++)
+      for (int iEl = 0; iEl < numEl; iEl++) {
         for (int i = 0; i < nJacNodes; i++)
           jacobian(i,iEl) = calcDet3D(dxdX(i,iEl),dydX(i,iEl),dzdX(i,iEl),
                                       dxdY(i,iEl),dydY(i,iEl),dzdY(i,iEl),
                                       dxdZ(i,iEl),dydZ(i,iEl),dzdZ(i,iEl));
+        if (scaling) {
+          fullMatrix<double> nodesXYZ(numPrimMapNodes,3);
+          for (int i = 0; i < numPrimMapNodes; i++) {
+            nodesXYZ(i,0) = nodesX(i,iEl);
+            nodesXYZ(i,1) = nodesY(i,iEl);
+            nodesXYZ(i,2) = nodesZ(i,iEl);
+          }
+          const double scale = 1./getPrimJac3D(nodesXYZ);
+          for (int i = 0; i < nJacNodes; i++) jacobian(i,iEl) *= scale;
+        }
+      }
       break;
     }
 
   }
 
+}
+
+// Calculate signed Jacobian for several elements, with normal vectors to straight elements for
+// regularization. Evaluation points depend on the given matrices for shape function gradients.
+void JacobianBasis::getSignedJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                             const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                             const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+                                             const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
+{
+  getJacobianGeneral<false>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesX, nodesY, nodesZ, jacobian);
+}
+
+// Calculate (signed) scaled Jacobian for several elements, with normal vectors to straight elements
+// for regularization. Evaluation points depend on the given matrices for shape function gradients.
+void JacobianBasis::getScaledJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                             const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                             const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
+                                             const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
+{
+  getJacobianGeneral<true>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesX, nodesY, nodesZ, jacobian);
 }
 
 // Calculate (signed) Jacobian and its gradients for one element, with normal vectors to straight element
