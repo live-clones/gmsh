@@ -34,7 +34,11 @@ class Model {
 		return _url;
 	}
 	public void setBitmap(File f) {
-		_bitmap = BitmapFactory.decodeFile(f.toString());
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = false;
+		options.inPreferredConfig = Bitmap.Config.RGB_565;
+		options.inDither = true;
+		_bitmap = BitmapFactory.decodeFile(f.toString(),options);
 	}
 	public void setUrl(Uri url) {
 		_url = url;

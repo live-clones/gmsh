@@ -72,6 +72,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   add_custom_target(xcodeProject
     cd ${CMAKE_CURRENT_SOURCE_DIR}/utils/ && ${CMAKE_CURRENT_SOURCE_DIR}/utils/make_icon_ios.sh
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/utils/ios.iconset/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/iOS/Onelab.xcodeproj/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab.xcodeproj/
@@ -169,7 +170,23 @@ if(ENABLE_BUILD_ANDROID)
       COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
-  )
+    )
+    foreach(DIR ${BENCHMARKS})
+      get_filename_component(DIRNAME ${DIR} NAME)
+      add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
+                      ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
+    endforeach(DIR)
+    find_path(ZIP_COMMAND zip)
+    add_custom_command(TARGET androidProject POST_BUILD COMMAND pushd ${CMAKE_CURRENT_BINARY_DIR}/models/ && ${ZIP_COMMAND} -r
+                     ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip * && popd)
+
+  message(STATUS "")
+  message(STATUS "ONELAB for Android successfully configured:")
+  message(STATUS " * Run `make androidProject' to create the project")
+  message(STATUS " * Then update android project with 'android update project --name Onelab --path Onelab --target [id] --subprojects'")
+  message(STATUS " * Finally you can build the app with ant 'ant debug'")
+  message(STATUS "")
+ 
   else(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
     message(STATUS "Cannot make Android project without PETSc or without BLAS or without LAPACK or without \"Onelab library\"")
   endif(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
