@@ -80,13 +80,16 @@ void drawContext::load(std::string filename)
   if(locked) return;
 
   // delete all models and post-processing views
-  ClearProject();
+  GmshClearProject();
 
   // reset onelab database
   onelab::server::instance()->clear();
 
+  // restore default options
+  GmshRestoreDefaultOptions();
+
   // open the file with Gmsh
-  OpenProject(filename);
+  GmshOpenProject(filename);
 
   // reset openGL view
   eventHandler(10);

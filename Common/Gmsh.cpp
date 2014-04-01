@@ -139,9 +139,22 @@ int GmshGetOption(const std::string &category, const std::string &name,
   return ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
 }
 
+int GmshRestoreDefaultOptions()
+{
+  ReInitOptions(0);
+  InitOptionsGUI(0);
+  return 1;
+}
+
 int GmshOpenProject(const std::string &fileName)
 {
   OpenProject(fileName);
+  return 1;
+}
+
+int GmshClearProject()
+{
+  ClearProject();
   return 1;
 }
 
