@@ -835,7 +835,7 @@ void OCC_Connect::MergeVertices(TopoDS_Shape &shape1,TopoDS_Shape &shape2) const
 {
     TopTools_IndexedMapOfShape imap, omap;
     TopExp::MapShapes(shape1,TopAbs_VERTEX,imap);
-    TopExp::MapShapes(shape2,TopAbs_VERTEX,imap);
+    TopExp::MapShapes(shape2,TopAbs_VERTEX,omap);
     BRepTools_ReShape replacer;
     for(int i=0;i<imap.Extent();i++) {
         for(int j=0;j<omap.Extent();j++) {
@@ -879,7 +879,7 @@ void OCC_Connect::MergeEdges(TopoDS_Shape &shape1, TopoDS_Shape &shape2) const
 {
     TopTools_IndexedMapOfShape imap, omap;
     TopExp::MapShapes(shape1,TopAbs_EDGE,imap);
-    TopExp::MapShapes(shape2,TopAbs_EDGE,imap);
+    TopExp::MapShapes(shape2,TopAbs_EDGE,omap);
     BRepTools_ReShape replacer;
     for(int i=0;i<imap.Extent();i++) {
         for(int j=0;j<omap.Extent();j++) {
