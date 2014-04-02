@@ -93,6 +93,13 @@ void drawMeshFace(GFace *f)
   drawArray(f->va_lines, GL_LINES, true);
 }
 
+void drawMeshRegion(GRegion *r)
+{
+  if(!r->getVisibility()) return;
+
+  drawArray(r->va_lines, GL_LINES, true);
+}
+
 void drawContext::drawMesh()
 {
   if(!CTX::instance()->mesh.draw) return;
@@ -119,6 +126,8 @@ void drawContext::drawMesh()
       std::for_each(m->firstEdge(), m->lastEdge(), drawMeshEdge);
     if(status >= 2)
       std::for_each(m->firstFace(), m->lastFace(), drawMeshFace);
+    if(status >= 3)
+      std::for_each(m->firstRegion(), m->lastRegion(), drawMeshRegion);
   }
   CTX::instance()->mesh.changed = 0;
 }
