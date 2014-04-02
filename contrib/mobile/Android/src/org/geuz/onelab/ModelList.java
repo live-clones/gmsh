@@ -104,6 +104,8 @@ public class ModelList extends Activity {
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuItem about = menu.add("About");
+		about.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 		MenuItem loadFile = menu.add(R.string.button_open_file);
 		loadFile.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 		return super.onCreateOptionsMenu(menu);
@@ -121,6 +123,10 @@ public class ModelList extends Activity {
 			catch(ActivityNotFoundException e) {
 				Toast.makeText(this, "No application found on your device to open the files.", Toast.LENGTH_LONG).show();
 			}
+		}
+		else if(item.getTitle().equals("About")) {
+			Intent intent = new Intent(ModelList.this, AboutActivity.class);
+			startActivity(intent);
 		}
 		return super.onMenuItemSelected(featureId, item);
 	}

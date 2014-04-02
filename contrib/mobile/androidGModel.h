@@ -169,6 +169,22 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_animationPrev
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setAnimation
   (JNIEnv *, jobject, jint);
 
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    getAboutGmsh
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGmsh
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_geuz_onelab_Gmsh
+ * Method:    getAboutGetDP
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGetDP
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif

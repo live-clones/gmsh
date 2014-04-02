@@ -30,6 +30,9 @@
             android:name=".ModelList"
             android:label="@string/title_activity_main" />
         <activity
+            android:name=".AboutActivity"
+            android:label="@string/title_activity_about" />
+        <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             >

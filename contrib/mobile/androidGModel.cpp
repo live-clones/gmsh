@@ -6,6 +6,8 @@
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 #include <gmsh/Gmsh.h>
+#include <gmsh/GmshConfig.h>
+#include <gmsh/GmshVersion.h>
 #include <gmsh/GModel.h>
 #include <gmsh/onelab.h>
 #include <gmsh/onelabUtils.h>
@@ -13,6 +15,9 @@
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
 #include <gmsh/PViewOptions.h>
+
+#include <getdp/GetDPConfig.h>
+#include <getdp/GetDPVersion.h>
 
 #include "androidGModel.h"
 #include "drawContext.h"
@@ -325,5 +330,47 @@ extern "C" {
   (JNIEnv *, jobject, jint animation)
   {
     set_animation(animation);
+  }
+  JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGmsh
+  (JNIEnv *env, jclass c)
+  {
+    std::ostringstream sstream;
+    sstream << "<center><h3>Gmsh</h3><br>version " << GMSH_VERSION
+            << "<p>Copyright (C) 1997-2014"
+            << "<br>Christophe Geuzaine and Jean-Francois Remacle"
+            << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
+            << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
+            << "information</a>"
+            << "<p>Please send all questions and bug reports to "
+            << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
+            << "<ul>"
+            << "<li><i>Build OS:</i> " << GMSH_OS
+            << "<li><i>Build date:</i> " << GMSH_DATE
+            << "<li><i>Build options:</i>" << GMSH_CONFIG_OPTIONS
+            << "</ul>"
+            << "<center>Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
+            << "for more information</center>";
+    return env->NewStringUTF(sstream.str().c_str());
+  }
+  JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGetDP
+  (JNIEnv *env, jclass c)
+  {
+    std::ostringstream sstream;
+    sstream << "<center><h3>GetDP</h3><br>version " << GETDP_VERSION
+            << "<p>Copyright (C) 1997-2014"
+            << "<br>Christophe Geuzaine and Patrick Dular, University of Li&egrave;ge"
+            << "<p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> "
+            << "and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing "
+            << "information</a>"
+            << "<p>Please send all questions and bug reports to "
+            << "<a href=\"mailto:getdp@geuz.org\">getdp@geuz.org</a></center>"
+            << "<ul>"
+            << "<li><i>Build OS:</i> " << GETDP_OS
+            << "<li><i>Build date:</i> " << GETDP_DATE
+            << "<li><i>Build options:</i>" << GETDP_CONFIG_OPTIONS
+            << "</ul>"
+            << "<center>Visit <a href=\"http://geuz.org/getdp/\">http://geuz.org/getdp/</a> "
+            << "for more information</center>";
+    return env->NewStringUTF(sstream.str().c_str());
   }
 }
