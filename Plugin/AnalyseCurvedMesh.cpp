@@ -474,9 +474,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
   _min_pJmin = 1.7e308;
   _min_ratioJ = 1.7e308;
 
-  std::ofstream fwrite("minDisto.txt");
-  fwrite << numEl << "\r";
-
   for (int k = 0; k < numEl; ++k) {
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
@@ -581,7 +578,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
         delete bj;
       }
     }
-    fwrite << minB << " " << minB/maxB << "\r";
 
     if (data){
       if (1-minB <= _tol * minJ && maxB-1 <= _tol * maxB)
