@@ -3,12 +3,15 @@ package org.geuz.onelab;
 import java.lang.String;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.view.MenuItem;
 import android.webkit.WebView;
 
 public class AboutActivity extends Activity{
 
 	protected void onCreate(android.os.Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
 		WebView webview = new WebView(this);
 		String aboutGmsh = Gmsh.getAboutGmsh();
 		String aboutGetDP = Gmsh.getAboutGetDP();
@@ -24,5 +27,13 @@ public class AboutActivity extends Activity{
 		webview.loadDataWithBaseURL("", aboutOnelab + aboutGmsh + aboutGetDP, "text/html", "UTF-8", "");
 		setContentView(webview);
 	}
-
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		if(item.getItemId() == android.R.id.home) {
+			Intent returnIntent = new Intent();
+			this.setResult(RESULT_CANCELED, returnIntent);
+			this.finish();
+		}
+		return super.onMenuItemSelected(featureId, item);
+	}
 }
