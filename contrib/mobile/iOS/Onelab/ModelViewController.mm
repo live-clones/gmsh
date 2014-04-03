@@ -123,7 +123,7 @@
 	onelab_cb("stop");
 	UILocalNotification *localNotif = [[UILocalNotification alloc] init];
 	if ([UIApplication sharedApplication].applicationState == UIApplicationStateBackground && localNotif) {
-		localNotif.alertBody = @"The computing had to stop because your device ran out of memory";
+		localNotif.alertBody = @"The computation had to stop because your device ran out of memory";
 		localNotif.alertAction = @"View";
 		localNotif.hasAction = true;
 		localNotif.soundName = UILocalNotificationDefaultSoundName;
@@ -163,7 +163,7 @@
         appDelegate->compute = NO;
 		UILocalNotification *localNotif = [[UILocalNotification alloc] init];
 		if ([UIApplication sharedApplication].applicationState == UIApplicationStateBackground && localNotif) {
-			localNotif.alertBody = @"Computation finished";
+			localNotif.alertBody = @"Computation done!";
 			localNotif.alertAction = @"View";
 			localNotif.hasAction = true;
 			localNotif.soundName = UILocalNotificationDefaultSoundName;
@@ -264,7 +264,7 @@
 {
     if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
         UIAlertView *alert;
-        alert = [[UIAlertView alloc] initWithTitle:@"Can't show the models list" message:@"The compute have to be finished before you can select an other model." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+        alert = [[UIAlertView alloc] initWithTitle:@"Can't show the model list" message:@"The computation has to complete before you can select another model." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
         [alert show];
         return;
     }
