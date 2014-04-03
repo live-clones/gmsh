@@ -483,7 +483,7 @@ void CreateOutputFile(const std::string &fileName, int format,
           glLoadMatrixd(modelview);
         }
         else{
-          buffer.fill(CTX::instance()->batch);
+          drawContext::global()->drawCurrentOpenglWindow(true);
         }
         res = gl2psEndPage();
       }
@@ -513,10 +513,9 @@ void CreateOutputFile(const std::string &fileName, int format,
         gl2psBeginPage(base.c_str(), "Gmsh", viewport,
                        GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL,
                        0, 0, 0, buffsize, fp, base.c_str());
-        PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
         int oldtext = CTX::instance()->print.text;
         CTX::instance()->print.text = 1;
-        buffer.fill(CTX::instance()->batch);
+        drawContext::global()->drawCurrentOpenglWindow(true);
         CTX::instance()->print.text = oldtext;
         res = gl2psEndPage();
       }
