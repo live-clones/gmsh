@@ -335,42 +335,28 @@ extern "C" {
   (JNIEnv *env, jclass c)
   {
     std::ostringstream sstream;
-    sstream << "<center><h3>Gmsh</h3><br>version " << GMSH_VERSION
-            << "<p>Copyright (C) 1997-2014"
-            << "<br>Christophe Geuzaine and Jean-Francois Remacle"
+    sstream << "<center><h3>Gmsh</h3>"
+            << "Version " << GMSH_VERSION << " "
+            << "(<i>Build date:</i> " << GMSH_DATE << ")"
+            << "<p>Copyright (C) 1997-2014 Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle</p>"
             << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
-            << "information</a>"
-            << "<p>Please send all questions and bug reports to "
-            << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
-            << "<ul>"
-            << "<li><i>Build OS:</i> " << GMSH_OS
-            << "<li><i>Build date:</i> " << GMSH_DATE
-            << "<li><i>Build options:</i>" << GMSH_CONFIG_OPTIONS
-            << "</ul>"
-            << "<center>Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
-            << "for more information</center>";
+            << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing information</a></p>"
+            << "<p><i>Build options:</i> " << GMSH_CONFIG_OPTIONS << "</p>"
+            << "<p>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> for more information</p></center>";
     return env->NewStringUTF(sstream.str().c_str());
   }
   JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getAboutGetDP
   (JNIEnv *env, jclass c)
   {
     std::ostringstream sstream;
-    sstream << "<center><h3>GetDP</h3><br>version " << GETDP_VERSION
-            << "<p>Copyright (C) 1997-2014"
-            << "<br>Christophe Geuzaine and Patrick Dular, University of Li&egrave;ge"
+    sstream << "<center><h3>GetDP</h3>"
+            << "Version " << GETDP_VERSION << " "
+            << "(<i>Build date:</i> " << GETDP_DATE << ")"
+            << "<p>Copyright (C) 1997-2014 Patrick Dular and Christophe Geuzaine, University of Li&egrave;ge</p>"
             << "<p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing "
-            << "information</a>"
-            << "<p>Please send all questions and bug reports to "
-            << "<a href=\"mailto:getdp@geuz.org\">getdp@geuz.org</a></center>"
-            << "<ul>"
-            << "<li><i>Build OS:</i> " << GETDP_OS
-            << "<li><i>Build date:</i> " << GETDP_DATE
-            << "<li><i>Build options:</i>" << GETDP_CONFIG_OPTIONS
-            << "</ul>"
-            << "<center>Visit <a href=\"http://geuz.org/getdp/\">http://geuz.org/getdp/</a> "
-            << "for more information</center>";
+            << "and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing information</a></p>"
+            << "<p><i>Build options:</i> " << GETDP_CONFIG_OPTIONS << "</p>"
+            << "<p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for more information</p></center>";
     return env->NewStringUTF(sstream.str().c_str());
   }
 }

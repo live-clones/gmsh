@@ -22,8 +22,9 @@ public class AboutActivity extends Activity{
 		catch (android.content.pm.PackageManager.NameNotFoundException e) {
 			aboutOnelab += "Version ?.?.?";
 		}
-		aboutOnelab += "<p>Copyright (C) 2014<br>Maxime Graulich and Christophe Geuzaine, University of Li&egrave;ge</p>";
+		aboutOnelab += "<p>Copyright (C) 2014 Christophe Geuzaine and Maxime Graulich, University of Li&egrave;ge</p>";
 		aboutOnelab += "<p>Visit <a href=\"http://onelab.info/\">http://onelab.info/</a> for more information</p>";
+		aboutOnelab += "<p>This version of Onelab/Mobile contains:</p>";
 		webview.loadDataWithBaseURL("", aboutOnelab + aboutGmsh + aboutGetDP, "text/html", "UTF-8", "");
 		setContentView(webview);
 	}
