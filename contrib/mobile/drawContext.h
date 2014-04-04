@@ -44,7 +44,7 @@ private:
   void drawPView(PView *p);
   void drawVectorArray(PViewOptions *opt, VertexArray *va);
 public:
-  drawContext(bool isRetina=false);
+  drawContext(float fontFactor=1.);
   ~drawContext(){}
   void load(std::string filename);
   void eventHandler(int event, float x=0, float y=0);

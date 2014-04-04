@@ -50,7 +50,7 @@ public class MainActivity extends Activity{
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
 		setContentView(R.layout.main_activity_layout);
-		_gmsh = new Gmsh(mainHandler);
+		_gmsh = new Gmsh(mainHandler, getResources().getDisplayMetrics().density);
 		_notify = false;
 		ActionBar actionBar = getActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);

@@ -126,13 +126,13 @@ extern "C" {
     return JNI_VERSION_1_6;
   }
   JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
-  (JNIEnv *env, jobject obj)
+  (JNIEnv *env, jobject obj, jfloat fontFactor)
   {
     if(gCallbackObject != NULL) env->DeleteGlobalRef(gCallbackObject);
     gCallbackObject = env->NewGlobalRef(obj);
     gJavaVM->GetEnv((void**)&env, JNI_VERSION_1_6);
     Msg::SetCallback(new MobileMessage());
-    return reinterpret_cast<jlong>(new drawContext());
+    return reinterpret_cast<jlong>(new drawContext(fontFactor));
   }
   JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_loadFile
   (JNIEnv *env, jobject obj, jlong jptr, jstring jname)

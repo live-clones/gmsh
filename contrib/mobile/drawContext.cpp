@@ -53,7 +53,7 @@
 static bool locked = false;
 static bool onelabStop = false;
 
-drawContext::drawContext(bool isRetina)
+drawContext::drawContext(float fontFactor)
 {
   GmshInitialize();
   GmshSetOption("General", "Terminal", 1.0);
@@ -66,7 +66,7 @@ drawContext::drawContext(bool isRetina)
 
   _fillMesh = false;
   _gradiant = true;
-  _fontFactor = isRetina ? 1.5 : 1;
+  _fontFactor = fontFactor;
 }
 
 static void checkGlError(const char* op)

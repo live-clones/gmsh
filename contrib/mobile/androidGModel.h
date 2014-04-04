@@ -12,10 +12,10 @@ extern "C" {
 /*
  * Class:     org_geuz_onelab_Gmsh
  * Method:    init
- * Signature: (Ljava/lang/String;)J
+ * Signature: (F)J
  */
 JNIEXPORT jlong JNICALL Java_org_geuz_onelab_Gmsh_init
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jfloat);
 
 /*
  * Class:     org_geuz_onelab_Gmsh
