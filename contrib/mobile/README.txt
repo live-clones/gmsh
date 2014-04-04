@@ -1,16 +1,16 @@
 This directory contains the source code for Onelab/Mobile, the mobile version of
 Onelab for iOS and Android devices.
 
-Version: 1.0.0
+Version: 1.0.2
 
-Copyright (C) 2014 Maxime Graulich and Christophe Geuzaine, University of Liege
+Copyright (C) 2014 Christophe Geuzaine and Maxime Graulich, University of Liege
 
 == iOS ==
 
 = Apple AppStore description =
 
-Onelab/Mobile (http://onelab.info) is a finite element package based on the open
-source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
+Onelab (http://onelab.info) is a finite element package based on the open source
+mesh generator Gmsh (http://gmsh.info) and the solver GetDP
 (http://getdp.info). It can be used to simulate a wide variety of multi-physic
 problems: electromagnetics, thermics, mechanics...
 
