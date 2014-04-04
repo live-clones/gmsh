@@ -96,6 +96,25 @@ public class ModelFragment extends Fragment{
 			}
 		});
 		glViewLayout.addView(_glView);
+		RelativeLayout topRightLayout = new RelativeLayout(container.getContext());
+		ImageButton rotationButton = new ImageButton(container.getContext());
+		rotationButton.setBackgroundResource(R.drawable.icon_rotate);
+		rotationButton.setLayoutParams(new LinearLayout.LayoutParams(50, 50));
+		rotationButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				boolean rotate = !_glView.getRotate();
+				((ImageButton)v).setBackgroundResource((rotate)?R.drawable.icon_translate:R.drawable.icon_rotate);
+				_glView.setRotate(rotate);
+			}
+		});
+		topRightLayout.addView(rotationButton);
+		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+			    RelativeLayout.LayoutParams.WRAP_CONTENT, 
+			    RelativeLayout.LayoutParams.WRAP_CONTENT);
+		layoutParams.setMargins(0, 100, 10, 0);
+		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+		glViewLayout.addView(topRightLayout, layoutParams);
 		_progressLayout = new LinearLayout(container.getContext());
 		ProgressBar bar = new ProgressBar(container.getContext());
 		bar.setOnClickListener(new View.OnClickListener() {
@@ -108,7 +127,7 @@ public class ModelFragment extends Fragment{
 		_progressLayout.setAlpha(0);
 		_progressLayout.setGravity(Gravity.CENTER);
 		_progressLayout.addView(_progress);
-		RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+		layoutParams = new RelativeLayout.LayoutParams(
 			    RelativeLayout.LayoutParams.WRAP_CONTENT, 
 			    RelativeLayout.LayoutParams.WRAP_CONTENT);
 		layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);

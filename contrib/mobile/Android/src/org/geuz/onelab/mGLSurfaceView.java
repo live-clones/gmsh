@@ -15,6 +15,8 @@ class mGLSurfaceView extends GLSurfaceView {
 	private GestureDetector gesture;
 	private ScaleGestureDetector scaleGesture;
 	private GLESRender _renderer;
+	private boolean _rotate;
+
 	public mGLSurfaceView(Context context, GLESRender renderer) {
 		super(context);
 		_renderer = renderer;
@@ -43,32 +45,8 @@ class mGLSurfaceView extends GLSurfaceView {
 		
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if(event.getPointerCount() >= 3){
-			scaleGesture.onTouchEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0,0, 0));
-			
-			final float x = event.getX(1);
-	        final float y = event.getY(1);
-	        
-	        int action = event.getActionMasked();
-	        
-	        if(action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_1_DOWN){
-	        	_renderer.startInteraction(x,y);
-	        }
-	        else if(action == MotionEvent.ACTION_MOVE){
-	        	_renderer.rotateModel(x, y);
-	        	requestRender();
-	        }
-	        else if(action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_1_UP){
-	        	_renderer.endInteraction(x, y);
-	        }
-
-			return true;
-		}
-		else {
-			scaleGesture.onTouchEvent(event);
-			return gesture.onTouchEvent(event);
-		}
-		
+		scaleGesture.onTouchEvent(event);
+		return gesture.onTouchEvent(event);
 	}
 	
 	private class GestureListener implements OnGestureListener, OnDoubleTapListener{
@@ -91,7 +69,10 @@ class mGLSurfaceView extends GLSurfaceView {
 		public boolean onScroll(MotionEvent e1, MotionEvent e2,
 				float distanceX, float distanceY) {
 			if(e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
-			_renderer.translateModel(e2.getX(), e2.getY());
+			if(_rotate)
+				_renderer.rotateModel(e2.getX(), e2.getY());
+			else
+				_renderer.translateModel(e2.getX(), e2.getY());
 			requestRender();
 			return true;
 		}
@@ -121,6 +102,8 @@ class mGLSurfaceView extends GLSurfaceView {
 		}
 		
 	}
+	public boolean getRotate() {return _rotate;}
+	public void setRotate(boolean r) {_rotate = r;}
 	public void resetScale(){
 		scaleFactor = 1f;
 		_renderer.scaleModel(scaleFactor);
