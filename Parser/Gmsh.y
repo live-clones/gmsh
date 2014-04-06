@@ -80,6 +80,11 @@ static std::map<std::string, std::vector<std::string> > charOptions;
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
+void assignVariable(const std::string &name, int index, int assignType,
+                    double value);
+void assignVariables(const std::string &name, List_T *indices, int assignType,
+                     List_T *values);
+ void incrementVariable(const std::string &name, int index, double value);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
@@ -635,10 +640,9 @@ NumericIncrement :
 Affectation :
 
   // Variables
+
     tDefineConstant '[' DefineConstants ']' tEND
-
   | tUndefineConstant '[' UndefineConstants ']' tEND
-
   | String__Index NumericAffectation ListOfDouble tEND
     {
       if(!gmsh_yysymbols.count($1) && $2 && List_Nbr($3) == 1){
@@ -699,7 +703,6 @@ Affectation :
       Free($1);
       List_Delete($3);
     }
-
   // This variant can be used to force the variable type to "list"
   | tSTRING '[' ']' NumericAffectation ListOfDouble tEND
     {
@@ -730,171 +733,43 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
-      int index = (int)$3;
-      if(!gmsh_yysymbols.count($1)){
-	if(!$5){
-          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-          s.list = true;
-	  s.value.resize(index + 1, 0.);
-	  s.value[index] = $6;
-	}
-	else
-	  yymsg(0, "Unknown variable '%s'", $1);
-      }
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if(s.list){
-          if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
-          switch($5){
-          case 0 : s.value[index] = $6; break;
-          case 1 : s.value[index] += $6; break;
-          case 2 : s.value[index] -= $6; break;
-          case 3 : s.value[index] *= $6; break;
-          case 4 :
-            if($6) s.value[index] /= $6;
-            else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, $6);
-            break;
-          }
-        }
-        else
-          yymsg(0, "Variable '%s' is not a list", $1);
-      }
+      assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-
-  // for compatibility with GetDP
+  | StringIndex '[' FExpr ']' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
+      Free($1);
+    }
   | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
     {
-      int index = (int)$3;
-      if(!gmsh_yysymbols.count($1)){
-	if(!$5){
-          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-          s.list = true;
-	  s.value.resize(index + 1, 0.);
-	  s.value[index] = $6;
-	}
-	else
-	  yymsg(0, "Unknown variable '%s'", $1);
-      }
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if(s.list){
-          if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
-          switch($5){
-          case 0 : s.value[index] = $6; break;
-          case 1 : s.value[index] += $6; break;
-          case 2 : s.value[index] -= $6; break;
-          case 3 : s.value[index] *= $6; break;
-          case 4 :
-            if($6) s.value[index] /= $6;
-            else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, $6);
-            break;
-          }
-        }
-        else
-          yymsg(0, "Variable '%s' is not a list", $1);
-      }
+      assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
     {
-      if(List_Nbr($4) != List_Nbr($8)){
-	yymsg(0, "Incompatible array dimensions in affectation");
-      }
-      else{
-	if(!gmsh_yysymbols.count($1)){
-	  if(!$7){
-            gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-            s.list = true;
-	    for(int i = 0; i < List_Nbr($4); i++){
-	      int index = (int)(*(double*)List_Pointer($4, i));
-	      s.value.resize(index + 1, 0.);
-	      s.value[index] = *(double*)List_Pointer($8, i);
-	    }
-	  }
-	  else
-	    yymsg(0, "Unknown variable '%s'", $1);
-	}
-	else{
-          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-          if(s.list){
-            for(int i = 0; i < List_Nbr($4); i++){
-              int index = (int)(*(double*)List_Pointer($4, i));
-              double d = *(double*)List_Pointer($8, i);
-              if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
-              switch($7){
-              case 0 : s.value[index] = d; break;
-              case 1 : s.value[index] += d; break;
-              case 2 : s.value[index] -= d; break;
-              case 3 : s.value[index] *= d; break;
-              case 4 :
-                if($8) s.value[index] /= d;
-                else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, d);
-                break;
-              }
-            }
-          }
-          else
-            yymsg(0, "Variable '%s' is not a list", $1);
-        }
-      }
+      assignVariables($1, $4, $7, $8);
       Free($1);
       List_Delete($4);
       List_Delete($8);
     }
-
   // for compatibility with GetDP
   | tSTRING '(' '{' RecursiveListOfDouble '}' ')' NumericAffectation ListOfDouble tEND
     {
-      if(List_Nbr($4) != List_Nbr($8)){
-	yymsg(0, "Incompatible array dimensions in affectation");
-      }
-      else{
-	if(!gmsh_yysymbols.count($1)){
-	  if(!$7){
-            gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-            s.list = true;
-	    for(int i = 0; i < List_Nbr($4); i++){
-	      int index = (int)(*(double*)List_Pointer($4, i));
-	      s.value.resize(index + 1, 0.);
-	      s.value[index] = *(double*)List_Pointer($8, i);
-	    }
-	  }
-	  else
-	    yymsg(0, "Unknown variable '%s'", $1);
-	}
-	else{
-          gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-          if(s.list){
-            for(int i = 0; i < List_Nbr($4); i++){
-              int index = (int)(*(double*)List_Pointer($4, i));
-              double d = *(double*)List_Pointer($8, i);
-              if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
-              switch($7){
-              case 0 : s.value[index] = d; break;
-              case 1 : s.value[index] += d; break;
-              case 2 : s.value[index] -= d; break;
-              case 3 : s.value[index] *= d; break;
-              case 4 :
-                if($8) s.value[index] /= d;
-                else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, index, d);
-                break;
-              }
-            }
-          }
-          else
-            yymsg(0, "Variable '%s' is not a list", $1);
-        }
-      }
+      assignVariables($1, $4, $7, $8);
       Free($1);
       List_Delete($4);
       List_Delete($8);
     }
-
+  | StringIndex '(' '{' RecursiveListOfDouble '}' ')' NumericAffectation ListOfDouble tEND
+    {
+      assignVariables($1, $4, $7, $8);
+      Free($1);
+      List_Delete($4);
+      List_Delete($8);
+    }
   | String__Index NumericIncrement tEND
     {
       if(!gmsh_yysymbols.count($1))
@@ -912,18 +787,12 @@ Affectation :
     }
   | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
-      if(!gmsh_yysymbols.count($1))
-	yymsg(0, "Unknown variable '%s'", $1);
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if(s.list){
-          int index = (int)$3;
-          if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
-          s.value[index] += $5;
-        }
-        else
-          yymsg(0, "Variable '%s' is not a list", $1);
-      }
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
       Free($1);
     }
   | String__Index tAFFECT StringExpr tEND
@@ -1624,7 +1493,8 @@ Shape :
       $$.Type = MSH_SEGM_BEZIER;
       $$.Num = num;
     }
-  | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tNurbsKnots ListOfDouble tNurbsOrder FExpr tEND
+  | tNurbs  '(' FExpr ')' tAFFECT ListOfDouble tNurbsKnots ListOfDouble
+      tNurbsOrder FExpr tEND
     {
       int num = (int)$3;
       if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
@@ -3455,12 +3325,11 @@ ExtrudeParameter :
       List_Delete($5);
       List_Delete($7);
     }
-//Added by Trevor Strickler 07/07/2013
+  //Added by Trevor Strickler 07/07/2013
   | tScaleLast tEND
     {
       extr.mesh.ScaleLast = true;
     }
-
   | tRecombine tEND
     {
       extr.mesh.Recombine = true;
@@ -3475,11 +3344,15 @@ ExtrudeParameter :
     }
   | tQuadTriDbl tEND
     {
-      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, which has no requirement for the number of extrusion layers and meshes with body-centered vertices.");
+      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, "
+            "which has no requirement for the number of extrusion layers and meshes "
+            "with body-centered vertices.");
     }
   | tQuadTriDbl tRecombLaterals tEND
     {
-      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, which has no requirement for the number of extrusion layers and meshes with body-centered vertices.");
+      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, "
+            "which has no requirement for the number of extrusion layers and meshes "
+            "with body-centered vertices.");
     }
   | tQuadTriAddVerts tEND
     {
@@ -4469,12 +4342,30 @@ FExpr_Single :
       }
       Free($1);
     }
+  | StringIndex '[' FExpr ']'
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+    }
   | tExists '(' String__Index ')'
     {
       $$ = gmsh_yysymbols.count($3);
       Free($3);
     }
-  | '#' tSTRING '[' ']'
+  | '#' String__Index '[' ']'
     {
       if(!gmsh_yysymbols.count($2)){
 	yymsg(0, "Unknown variable '%s'", $2);
@@ -4504,6 +4395,24 @@ FExpr_Single :
       Free($1);
     }
   | tSTRING '[' FExpr ']' NumericIncrement
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = (s.value[index] += $5);
+      }
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']' NumericIncrement
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -5331,6 +5240,100 @@ String__Index :
  ;
 
 %%
+
+void assignVariable(const std::string &name, int index, int assignType,
+                    double value)
+{
+  if(!gmsh_yysymbols.count(name)){
+    if(!assignType){
+      gmsh_yysymbol &s(gmsh_yysymbols[name]);
+      s.list = true;
+      s.value.resize(index + 1, 0.);
+      s.value[index] = value;
+    }
+    else
+      yymsg(0, "Unknown variable '%s'", name.c_str());
+  }
+  else{
+    gmsh_yysymbol &s(gmsh_yysymbols[name]);
+    if(s.list){
+      if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
+      switch(assignType){
+      case 0 : s.value[index] = value; break;
+      case 1 : s.value[index] += value; break;
+      case 2 : s.value[index] -= value; break;
+      case 3 : s.value[index] *= value; break;
+      case 4 :
+        if(value) s.value[index] /= value;
+        else yymsg(0, "Division by zero in '%s[%d] /= %g'",
+                   name.c_str(), index, value);
+        break;
+      }
+    }
+    else
+      yymsg(0, "Variable '%s' is not a list", name.c_str());
+  }
+}
+
+void assignVariables(const std::string &name, List_T *indices, int assignType,
+                     List_T *values)
+{
+  if(List_Nbr(indices) != List_Nbr(values)){
+    yymsg(0, "Incompatible array dimensions in affectation");
+  }
+  else{
+    if(!gmsh_yysymbols.count(name)){
+      if(!assignType){
+        gmsh_yysymbol &s(gmsh_yysymbols[name]);
+        s.list = true;
+        for(int i = 0; i < List_Nbr(indices); i++){
+          int index = (int)(*(double*)List_Pointer(indices, i));
+          s.value.resize(index + 1, 0.);
+          s.value[index] = *(double*)List_Pointer(values, i);
+        }
+      }
+      else
+        yymsg(0, "Unknown variable '%s'", name.c_str());
+    }
+    else{
+      gmsh_yysymbol &s(gmsh_yysymbols[name]);
+      if(s.list){
+        for(int i = 0; i < List_Nbr(indices); i++){
+          int index = (int)(*(double*)List_Pointer(indices, i));
+          double d = *(double*)List_Pointer(values, i);
+          if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
+          switch(assignType){
+          case 0 : s.value[index] = d; break;
+          case 1 : s.value[index] += d; break;
+          case 2 : s.value[index] -= d; break;
+          case 3 : s.value[index] *= d; break;
+          case 4 :
+            if(d) s.value[index] /= d;
+            else yymsg(0, "Division by zero in '%s[%d] /= %g'", name.c_str(), index, d);
+            break;
+          }
+        }
+      }
+      else
+        yymsg(0, "Variable '%s' is not a list", name.c_str());
+    }
+  }
+}
+
+void incrementVariable(const std::string &name, int index, double value)
+{
+  if(!gmsh_yysymbols.count(name))
+    yymsg(0, "Unknown variable '%s'", name.c_str());
+  else{
+    gmsh_yysymbol &s(gmsh_yysymbols[name]);
+    if(s.list){
+      if((int)s.value.size() < index + 1) s.value.resize(index + 1, 0.);
+      s.value[index] += value;
+    }
+    else
+      yymsg(0, "Variable '%s' is not a list", name.c_str());
+  }
+}
 
 int PrintListOfDouble(char *format, List_T *list, char *buffer)
 {
