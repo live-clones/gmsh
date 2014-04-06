@@ -138,6 +138,7 @@ Exists                  return tExists;
 
 Fabs                    return tFabs;
 Field                   return tField;
+FileExists              return tFileExists;
 Floor                   return tFloor;
 Fmod                    return tFmod;
 For                     return tFor;

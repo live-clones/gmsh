@@ -184,22 +184,23 @@
      tBetti = 400,
      tSetOrder = 401,
      tExists = 402,
-     tGMSH_MAJOR_VERSION = 403,
-     tGMSH_MINOR_VERSION = 404,
-     tGMSH_PATCH_VERSION = 405,
-     tAFFECTDIVIDE = 406,
-     tAFFECTTIMES = 407,
-     tAFFECTMINUS = 408,
-     tAFFECTPLUS = 409,
-     tOR = 410,
-     tAND = 411,
-     tNOTEQUAL = 412,
-     tEQUAL = 413,
-     tGREATEROREQUAL = 414,
-     tLESSOREQUAL = 415,
-     UNARYPREC = 416,
-     tMINUSMINUS = 417,
-     tPLUSPLUS = 418
+     tFileExists = 403,
+     tGMSH_MAJOR_VERSION = 404,
+     tGMSH_MINOR_VERSION = 405,
+     tGMSH_PATCH_VERSION = 406,
+     tAFFECTDIVIDE = 407,
+     tAFFECTTIMES = 408,
+     tAFFECTMINUS = 409,
+     tAFFECTPLUS = 410,
+     tOR = 411,
+     tAND = 412,
+     tNOTEQUAL = 413,
+     tEQUAL = 414,
+     tGREATEROREQUAL = 415,
+     tLESSOREQUAL = 416,
+     UNARYPREC = 417,
+     tMINUSMINUS = 418,
+     tPLUSPLUS = 419
    };
 #endif
 /* Tokens.  */
@@ -348,22 +349,23 @@
 #define tBetti 400
 #define tSetOrder 401
 #define tExists 402
-#define tGMSH_MAJOR_VERSION 403
-#define tGMSH_MINOR_VERSION 404
-#define tGMSH_PATCH_VERSION 405
-#define tAFFECTDIVIDE 406
-#define tAFFECTTIMES 407
-#define tAFFECTMINUS 408
-#define tAFFECTPLUS 409
-#define tOR 410
-#define tAND 411
-#define tNOTEQUAL 412
-#define tEQUAL 413
-#define tGREATEROREQUAL 414
-#define tLESSOREQUAL 415
-#define UNARYPREC 416
-#define tMINUSMINUS 417
-#define tPLUSPLUS 418
+#define tFileExists 403
+#define tGMSH_MAJOR_VERSION 404
+#define tGMSH_MINOR_VERSION 405
+#define tGMSH_PATCH_VERSION 406
+#define tAFFECTDIVIDE 407
+#define tAFFECTTIMES 408
+#define tAFFECTMINUS 409
+#define tAFFECTPLUS 410
+#define tOR 411
+#define tAND 412
+#define tNOTEQUAL 413
+#define tEQUAL 414
+#define tGREATEROREQUAL 415
+#define tLESSOREQUAL 416
+#define UNARYPREC 417
+#define tMINUSMINUS 418
+#define tPLUSPLUS 419
 
 
 
@@ -381,7 +383,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 385 "Gmsh.tab.hpp"
+#line 387 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -983,6 +983,7 @@ parsing of the script file:
   StrCmp(@var{char-expression}, @var{char-expression}) |
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
   Exists(@var{string}) | Exists(@var{string}~@{ @var{expression} @}) |
+  FileExists(@var{char-expression}) |
   GetValue("@var{string}", @var{expression})
 @end example
 
@@ -1018,7 +1019,8 @@ compares the two strings (returns an integer greater than, equal to, or
 less than 0, according as the first string is greater than, equal to, or
 less than the second string).  @code{TextAttributes} creates attributes
 for text strings. @code{Exists} checks if a variable with the given name
-exists (i.e., has been defined previously).
+exists (i.e., has been defined previously), and @code{FileExists} checks
+if the file with the given name exists.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter

@@ -134,7 +134,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
-%token tHomology tCohomology tBetti tSetOrder tExists
+%token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single
@@ -4363,6 +4363,12 @@ FExpr_Single :
   | tExists '(' String__Index ')'
     {
       $$ = gmsh_yysymbols.count($3);
+      Free($3);
+    }
+  | tFileExists '(' StringExpr ')'
+    {
+      std::string tmp = FixRelativePath(gmsh_yyname, $3);
+      $$ = !StatFile(tmp);
       Free($3);
     }
   | '#' String__Index '[' ']'
