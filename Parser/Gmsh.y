@@ -110,7 +110,8 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tOnelabAction tCpu tMemory tSyncModel
+%token tBoundingBox tDraw tSetChanged tToday tOnelabAction tSyncModel
+%token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
@@ -128,7 +129,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
-%token tHomology tCohomology tBetti tSetOrder
+%token tHomology tCohomology tBetti tSetOrder tExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single
@@ -4429,6 +4430,7 @@ FExpr_Single :
   | tGMSH_PATCH_VERSION { $$ = GetGmshPatchVersion(); }
   | tCpu { $$ = Cpu(); }
   | tMemory { $$ = GetMemoryUsage()/1024./1024.; }
+  | tTotalMemory { $$ = TotalRam(); }
 
   // Variables
 
@@ -4449,7 +4451,6 @@ FExpr_Single :
       }
       Free($1);
     }
-
   | tSTRING '[' FExpr ']'
     {
       int index = (int)$3;
@@ -4467,6 +4468,11 @@ FExpr_Single :
           $$ = s.value[index];
       }
       Free($1);
+    }
+  | tExists '(' String__Index ')'
+    {
+      $$ = gmsh_yysymbols.count($3);
+      Free($3);
     }
   | '#' tSTRING '[' ']'
     {

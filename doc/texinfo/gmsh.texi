@@ -982,6 +982,7 @@ parsing of the script file:
   StrFind(@var{char-expression}, @var{char-expression}) |
   StrCmp(@var{char-expression}, @var{char-expression}) |
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
+  Exists(@var{string}) | Exists(@var{string}~@{ @var{expression} @}) |
   GetValue("@var{string}", @var{expression})
 @end example
 
@@ -1004,8 +1005,8 @@ x_2 = 2;
 x_3 = 3;
 @end example
 
-The brackets @code{[]} permit to extract one item from a list and to get
-the size of a list, respectively. The operators
+The brackets @code{[]} permit to extract one item from a list. The
+@code{#} permits to get the size of a list. The operators
 @var{operator-unary-left}, @var{operator-unary-right},
 @var{operator-binary}, @var{operator-ternary-left} and
 @var{operator-ternary-right} are defined in @ref{Operators}. For the
@@ -1016,7 +1017,8 @@ for any occurrence of the second @var{char-expression}. @code{StrCmp}
 compares the two strings (returns an integer greater than, equal to, or
 less than 0, according as the first string is greater than, equal to, or
 less than the second string).  @code{TextAttributes} creates attributes
-for text strings.
+for text strings. @code{Exists} checks if a variable with the given name
+exists (i.e., has been defined previously).
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
@@ -1515,6 +1517,9 @@ Returns the current CPU time (in seconds).
 
 @item Memory
 Returns the current memory usage (in Mb).
+
+@item TotalMemory
+Returns the total memory available (in Mb).
 
 @item newp
 Returns the next available point number. As explained in @ref{Geometry

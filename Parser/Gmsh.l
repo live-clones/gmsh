@@ -134,6 +134,7 @@ EndIf                   return tEndIf;
 Euclidian               return tEuclidian;
 Error                   return tError;
 Exit                    return tExit;
+Exists                  return tExists;
 
 Fabs                    return tFabs;
 Field                   return tField;
@@ -240,6 +241,7 @@ Translate               return tTranslate;
 Tanh                    return tTanh;
 Tan                     return tTan;
 Today                   return tToday;
+TotalMemory             return tTotalMemory;
 
 UndefineConstant        return tUndefineConstant;
 Using                   return tUsing;
