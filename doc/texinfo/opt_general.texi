@@ -254,14 +254,29 @@ Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BackgroundImage3D
+Create background image in the 3D model (units = model units) or as 2D background (units = pixels)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.BackgroundImagePositionX
-X position (in pixels) of background image (< 0: measure from right edge; >= 1e5: centered)@*
-Default value: @code{100000}@*
+X position of background image (for 2D background: < 0: measure from right edge; >= 1e5: centered)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImagePositionY
-Y position (in pixels) of background image (< 0: measure from bottom edge; >= 1e5: centered)@*
-Default value: @code{100000}@*
+Y position of background image (for 2D background: < 0: measure from bottom edge; >= 1e5: centered)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.BackgroundImageWidth
+Width of background image (0: actual width; -1: fullscreen)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.BackgroundImageHeight
+Height of background image (0: actual width; -1: fullscreen)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Camera

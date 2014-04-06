@@ -71,7 +71,7 @@ Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
 @item -mpass int
-Do several passes on the mesh for complex backround fields
+Do several passes on the mesh for complex background fields
 @item -ignorePartBound
 Ignore partitions boundaries
 @end ftable
@@ -121,6 +121,8 @@ Print process id on stdout
 Always listen to incoming connection requests
 @item -watch pattern
 Pattern of files to merge as they become available
+@item -bg file
+Load background (image or PDF) file
 @item -v int
 Set verbosity level
 @item -nopopup

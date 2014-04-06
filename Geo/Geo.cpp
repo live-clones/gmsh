@@ -958,6 +958,9 @@ static void CopyVertex(Vertex *v, Vertex *vv)
   vv->Pos.X = v->Pos.X;
   vv->Pos.Y = v->Pos.Y;
   vv->Pos.Z = v->Pos.Z;
+  if(CTX::instance()->geom.copyDisplayAttributes){
+    vv->Visible = v->Visible;
+  }
 }
 
 static Vertex *DuplicateVertex(Vertex *v)
@@ -976,15 +979,19 @@ static int compareAbsCurve(const void *a, const void *b)
   return abs(q->Num) - abs(w->Num);
 }
 
-static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
+static void CopyCurve(Curve *c, Curve *cc)
 {
   cc->Typ = c->Typ;
-  if(copyMeshingMethod){
+  if(CTX::instance()->geom.copyMeshingMethod){
     cc->Method = c->Method;
     cc->nbPointsTransfinite = c->nbPointsTransfinite;
     cc->typeTransfinite = c->typeTransfinite;
     cc->coeffTransfinite = c->coeffTransfinite;
     cc->ReverseMesh = c->ReverseMesh;
+  }
+  if(CTX::instance()->geom.copyDisplayAttributes){
+    cc->Visible = c->Visible;
+    cc->Color = c->Color;
   }
   cc->l = c->l;
   for(int i = 0; i < 4; i++)
@@ -999,10 +1006,10 @@ static void CopyCurve(Curve *c, Curve *cc, bool copyMeshingMethod)
   End_Curve(cc);
 }
 
-static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
+static Curve *DuplicateCurve(Curve *c)
 {
   Curve *pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
-  CopyCurve(c, pc, copyMeshingMethod);
+  CopyCurve(c, pc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
     Vertex *v;
@@ -1016,20 +1023,24 @@ static Curve *DuplicateCurve(Curve *c, bool copyMeshingMethod)
   return pc;
 }
 
-static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
+static void CopySurface(Surface *s, Surface *ss)
 {
-   // Trevor Strickler modified
-   if(s->Typ == MSH_SURF_COMPOUND)
-     ss->Typ = MSH_SURF_REGL;
-   else
-     ss->Typ = s->Typ;
-   if(copyMeshingMethod){
+  // Trevor Strickler modified
+  if(s->Typ == MSH_SURF_COMPOUND)
+    ss->Typ = MSH_SURF_REGL;
+  else
+    ss->Typ = s->Typ;
+  if(CTX::instance()->geom.copyMeshingMethod){
     ss->Method = s->Method;
     ss->Recombine = s->Recombine;
     ss->RecombineAngle = s->RecombineAngle;
     ss->ReverseMesh = s->ReverseMesh;
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning("Only automatic transfinite surface specifications can be copied");
+  }
+  if(CTX::instance()->geom.copyDisplayAttributes){
+    ss->Visible = s->Visible;
+    ss->Color = s->Color;
   }
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices) + 1, 1, sizeof(Curve *));
   ss->GeneratricesByTag = List_Create(List_Nbr(s->GeneratricesByTag) + 1, 1, sizeof(int));
@@ -1039,44 +1050,48 @@ static void CopySurface(Surface *s, Surface *ss, bool copyMeshingMethod)
   End_Surface(ss);
 }
 
-static Surface *DuplicateSurface(Surface *s, bool copyMeshingMethod)
+static Surface *DuplicateSurface(Surface *s)
 {
   Surface *ps = Create_Surface(NEWSURFACE(), 0);
-  CopySurface(s, ps, copyMeshingMethod);
+  CopySurface(s, ps);
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
     Curve *c;
     List_Read(ps->Generatrices, i, &c);
-    Curve *newc = DuplicateCurve(c, copyMeshingMethod);
+    Curve *newc = DuplicateCurve(c);
     List_Write(ps->Generatrices, i, &newc);
   }
   return ps;
 }
 
-static void CopyVolume(Volume *v, Volume *vv, bool copyMeshingMethod)
+static void CopyVolume(Volume *v, Volume *vv)
 {
   vv->Typ = v->Typ;
-  if(copyMeshingMethod){
+  if(CTX::instance()->geom.copyMeshingMethod){
     vv->Method = v->Method;
     vv->QuadTri = v->QuadTri;
     vv->Recombine3D = v->Recombine3D;
     if(List_Nbr(v->TrsfPoints))
       Msg::Warning("Only automatic transfinite volume specifications can be copied");
   }
+  if(CTX::instance()->geom.copyDisplayAttributes){
+    vv->Visible = v->Visible;
+    vv->Color = v->Color;
+  }
   List_Copy(v->Surfaces, vv->Surfaces);
   List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
   List_Copy(v->SurfacesByTag, vv->SurfacesByTag);
 }
 
-static Volume *DuplicateVolume(Volume *v, bool copyMeshingMethod)
+static Volume *DuplicateVolume(Volume *v)
 {
   Volume *pv = Create_Volume(NEWVOLUME(), 0);
-  CopyVolume(v, pv, copyMeshingMethod);
+  CopyVolume(v, pv);
   Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &pv);
   for(int i = 0; i < List_Nbr(pv->Surfaces); i++) {
     Surface *s;
     List_Read(pv->Surfaces, i, &s);
-    Surface *news = DuplicateSurface(s, copyMeshingMethod);
+    Surface *news = DuplicateSurface(s);
     List_Write(pv->Surfaces, i, &news);
   }
   return pv;
@@ -1111,7 +1126,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown curve %d", Num);
       return;
     }
-    newc = DuplicateCurve(c, CTX::instance()->geom.copyMeshingMethod);
+    newc = DuplicateCurve(c);
     *New = newc->Num;
     break;
   case MSH_SURF_TRIC:
@@ -1121,7 +1136,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown surface %d", Num);
       return;
     }
-    news = DuplicateSurface(s, CTX::instance()->geom.copyMeshingMethod);
+    news = DuplicateSurface(s);
     *New = news->Num;
     break;
   case MSH_VOLUME:
@@ -1129,7 +1144,7 @@ void CopyShape(int Type, int Num, int *New)
       Msg::Error("Unknown volume %d", Num);
       return;
     }
-    newvol = DuplicateVolume(vol, CTX::instance()->geom.copyMeshingMethod);
+    newvol = DuplicateVolume(vol);
     *New = newvol->Num;
     break;
   default:
@@ -3011,7 +3026,7 @@ int Extrude_ProtudeCurve(int type, int ic,
 
   Msg::Debug("Extrude Curve %d", ic);
 
-  chapeau = DuplicateCurve(pc, false);
+  chapeau = DuplicateCurve(pc);
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -3190,7 +3205,7 @@ int Extrude_ProtudeSurface(int type, int is,
 
   Msg::Debug("Extrude Surface %d", is);
 
-  chapeau = DuplicateSurface(ps, false);
+  chapeau = DuplicateSurface(ps);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info

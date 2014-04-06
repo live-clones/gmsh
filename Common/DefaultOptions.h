@@ -739,6 +739,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "CopyMeshingMethod" , opt_geometry_copy_meshing_method, 0. ,
     "Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?" },
+  { F|O, "CopyDisplayAttributes" , opt_geometry_copy_display_attributes, 0. ,
+    "Copy display attributes (visibiliy, color) when duplicating geometrical entities?" },
 
   { F|O, "ExactExtrusion" , opt_geometry_exact_extrusion, 1. ,
     "Use exact extrusion formula in interpolations (set to 0 to allow "

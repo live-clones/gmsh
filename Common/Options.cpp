@@ -4554,6 +4554,13 @@ double opt_geometry_copy_meshing_method(OPT_ARGS_NUM)
   return CTX::instance()->geom.copyMeshingMethod;
 }
 
+double opt_geometry_copy_display_attributes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.copyDisplayAttributes = (int)val;
+  return CTX::instance()->geom.copyDisplayAttributes;
+}
+
 double opt_geometry_exact_extrusion(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
