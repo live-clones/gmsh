@@ -85,6 +85,12 @@ std::string gmshEdge::getAdditionalInfoString()
       sstream << v->Num;
     }
     sstream << "}";
+
+    if(meshAttributes.method == MESH_TRANSFINITE)
+      sstream << " transfinite";
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+
     return sstream.str();
   }
   else
