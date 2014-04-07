@@ -52,8 +52,7 @@ GradientBasis::GradientBasis(int tag, int order)
       samplingPoints = gmshGeneratePointsHexahedron(order,false);
       break;
     case TYPE_PYR :
-      Msg::Error("not sure if pyramidal metric space = jacobian space");
-      //samplingPoints = JacobianBasis::generateJacPointsPyramid(order);
+      samplingPoints = JacobianBasis::generateJacPointsPyramid(order);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element tag %d", tag);
@@ -198,7 +197,6 @@ JacobianBasis::JacobianBasis(int tag)
       gradShapeMatZFast(i, j) = allDPsiFast(j, 3*i+2);
     }
   }
-
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)

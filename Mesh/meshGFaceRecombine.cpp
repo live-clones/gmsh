@@ -228,7 +228,7 @@ Recombine2D::~Recombine2D()
 bool Recombine2D::construct()
 {
   if (!_iamCurrent()) {
-    Msg::Warning("[Recombine2D] I can't construct u_u");
+    Msg::Warning("[Recombine2D] I can't construct...");
     return false;
   }
   if (Rec2DData::hasInstance()) {
@@ -4204,7 +4204,7 @@ double Rec2DVertex::getGainRecomb(/*Rec2DQualCrit crit,*/
                  static_cast<int>(_elements.size())-1/*, crit*/)
          - getQual(/*crit*/);
          
-  //FIX vérifier que c''est bien ce qui est demandé ! (renvoie bien ce que veux apply, compute reward, ...)
+  //FIX verifier que c'est bien ce qui est demande ! (renvoie bien ce que veux apply, compute reward, ...)
 }
 
 void Rec2DVertex::/*vertQual_*/addEdgeQual(double val, int num)
