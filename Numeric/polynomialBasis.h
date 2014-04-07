@@ -79,6 +79,7 @@ class polynomialBasis : public nodalBasis
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
 
+  polynomialBasis() {};
   polynomialBasis(int tag);
   ~polynomialBasis();
 

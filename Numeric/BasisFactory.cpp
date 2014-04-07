@@ -5,6 +5,7 @@
 
 #include "GmshDefines.h"
 #include "GmshMessage.h"
+#include "miniBasis.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
@@ -25,25 +26,29 @@ const nodalBasis* BasisFactory::getNodalBasis(int tag)
   }
   // Get the parent type to see which kind of basis
   // we want to create
-  int parentType = ElementType::ParentTypeFromTag(tag);
   nodalBasis* F = NULL;
-
-  switch(parentType) {
-    case(TYPE_PNT):
-    case(TYPE_LIN):
-    case(TYPE_TRI):
-    case(TYPE_QUA):
-    case(TYPE_PRI):
-    case(TYPE_TET):
-    case(TYPE_HEX):
-      F = new polynomialBasis(tag);
-      break;
-    case(TYPE_PYR):
-      F = new pyramidalBasis(tag);
-      break;
-    default:
-      Msg::Error("Unknown type of element %d (in BasisFactory)", tag);
-      return NULL;
+  if (tag == MSH_TRI_MINI) {
+    F = new miniBasis();
+  }
+  else {
+    int parentType = ElementType::ParentTypeFromTag(tag);
+    switch(parentType) {
+      case(TYPE_PNT):
+      case(TYPE_LIN):
+      case(TYPE_TRI):
+      case(TYPE_QUA):
+      case(TYPE_PRI):
+      case(TYPE_TET):
+      case(TYPE_HEX):
+        F = new polynomialBasis(tag);
+        break;
+      case(TYPE_PYR):
+        F = new pyramidalBasis(tag);
+        break;
+      default:
+        Msg::Error("Unknown type of element %d (in BasisFactory)", tag);
+        return NULL;
+    }
   }
 
   std::pair<std::map<int, nodalBasis*>::const_iterator, bool> inserted;

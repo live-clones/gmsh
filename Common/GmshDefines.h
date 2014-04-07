@@ -209,8 +209,9 @@
 #define MSH_TRI_SUB 135
 #define MSH_TET_SUB 136
 #define MSH_TET_16  137
+#define MSH_TRI_MINI 138
 
-#define MSH_NUM_TYPE 137
+#define MSH_NUM_TYPE 138
 
 // Geometric entities
 #define ENT_NONE     0

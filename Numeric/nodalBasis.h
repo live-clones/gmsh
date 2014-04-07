@@ -15,6 +15,7 @@ class nodalBasis {
   bool serendip;
   fullMatrix<double> points;
 
+  nodalBasis() {};
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
 
