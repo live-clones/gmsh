@@ -475,6 +475,14 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
   _min_ratioJ = 1.7e308;
 
   for (int k = 0; k < numEl; ++k) {
+    if (el[k]->getType() == TYPE_PYR && el[k]->getPolynomialOrder() > 1) {
+      static int i = 0;
+      if (++i == 1) {
+        Msg::Error("High-order pyramids skipped (subdivision not implemented).");
+        Msg::Error("Subdivision will come soon :) (before may 2014)");
+      }
+      continue;
+    }
 
 #ifdef _ANALYSECURVEDMESH_BLAS_
     jacBez.setAsProxy(jacBezB, k);
@@ -573,6 +581,7 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
       }
 
       while (pqMax.size() > 0) {
+        break;
         bj = pqMax.top();
         pqMax.pop();
         delete bj;
