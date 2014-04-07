@@ -162,6 +162,7 @@ if(ENABLE_BUILD_ANDROID)
   if(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
     add_custom_target(androidProject
       COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
       COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
       COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
@@ -177,7 +178,7 @@ if(ENABLE_BUILD_ANDROID)
                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
     endforeach(DIR)
     find_program(ZIP_COMMAND zip)
-    add_custom_command(TARGET androidProject POST_BUILD COMMAND pushd ${CMAKE_CURRENT_BINARY_DIR}/models/ && ${ZIP_COMMAND} -r
+    add_custom_command(TARGET androidProject POST_BUILD COMMAND pushd ${CMAKE_CURRENT_BINARY_DIR}/models/ && zip -r
                      ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip * && popd)
 
   message(STATUS "")

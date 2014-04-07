@@ -1,9 +1,11 @@
+#ifndef NDEBUG
 #include <android/log.h>
-#include <dlfcn.h>
-
 #define  LOG_TAG    "Gmsh"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+#endif
+
+#include <dlfcn.h>
 
 #include <gmsh/Gmsh.h>
 #include <gmsh/GmshConfig.h>
@@ -36,7 +38,9 @@ public:
   void operator()(std::string level, std::string message)
   {
     if(level == "Error"){
+#ifndef NDEBUG
       LOGE("Error:\t%s", message.c_str());
+#endif
       JNIEnv *env;
       if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK ||
          !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
@@ -72,7 +76,9 @@ public:
       requestRender();
       return;
     }
+#ifndef NDEBUG
     LOGI("%s:\t%s", level.c_str(), message.c_str());
+#endif
   }
 };
 
