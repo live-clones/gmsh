@@ -302,6 +302,8 @@ static int _save_pdf(const char *name){ return gl2psFileDialog
     (name, "PDF Options", FORMAT_PDF); }
 static int _save_png(const char *name){ return genericBitmapFileDialog
     (name, "PNG Options", FORMAT_PNG); }
+static int _save_pgf(const char *name){ return pgfBitmapFileDialog
+    (name, "PGF Options", FORMAT_PGF); }
 static int _save_ps(const char *name){ return gl2psFileDialog
     (name, "PS Options", FORMAT_PS); }
 static int _save_ppm(const char *name){ return genericBitmapFileDialog
@@ -350,6 +352,7 @@ static int _save_auto(const char *name)
   case FORMAT_TEX  : return _save_tex(name);
   case FORMAT_PDF  : return _save_pdf(name);
   case FORMAT_PNG  : return _save_png(name);
+  case FORMAT_PGF  : return _save_pgf(name);
   case FORMAT_PS   : return _save_ps(name);
   case FORMAT_PPM  : return _save_ppm(name);
   case FORMAT_SVG  : return _save_svg(name);
@@ -411,6 +414,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Image - PDF" TT "*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
     {"Image - PNG" TT "*.png", _save_png},
+    {"Image - PGF" TT "*.pgf", _save_pgf},
 #endif
     {"Image - PostScript" TT "*.ps", _save_ps},
     {"Image - PPM" TT "*.ppm", _save_ppm},
