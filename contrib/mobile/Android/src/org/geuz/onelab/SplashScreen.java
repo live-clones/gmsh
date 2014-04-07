@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
 public class SplashScreen extends Activity{
 	private static final int SPLASHTIME = 1000; // duration for the splash screen in milliseconds
@@ -83,7 +82,6 @@ public class SplashScreen extends Activity{
 				byte[] buffer = new byte[2048];
 				for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;i = zipStream.read(buffer, 0, buffer.length)) 
 					outputStream.write(buffer,0,i);
-				Log.d("Load files", "Add " + entry.getName() + " from the zip file");
 		     }
 		     zipStream.close();
 		} catch (IOException e1) {

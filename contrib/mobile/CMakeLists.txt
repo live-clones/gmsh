@@ -176,7 +176,7 @@ if(ENABLE_BUILD_ANDROID)
       add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
     endforeach(DIR)
-    find_path(ZIP_COMMAND zip)
+    find_program(ZIP_COMMAND zip)
     add_custom_command(TARGET androidProject POST_BUILD COMMAND pushd ${CMAKE_CURRENT_BINARY_DIR}/models/ && ${ZIP_COMMAND} -r
                      ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip * && popd)
 

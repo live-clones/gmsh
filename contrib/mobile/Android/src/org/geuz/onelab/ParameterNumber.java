@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -76,7 +75,7 @@ public class ParameterNumber extends Parameter{
 	
 	public void setValue(double value) {
 		if(value < _min || value > _max) {
-			Log.w("ParameterNumber", "Incorect value "+value+" (max="+_max+" min="+_min+")");
+			//Log.w("ParameterNumber", "Incorect value "+value+" (max="+_max+" min="+_min+")");
 			return;
 		}
 		if(value == _value) return;

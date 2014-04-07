@@ -7,7 +7,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,7 +48,6 @@ public class OptionsPostProcessingFragment extends Fragment{
 			Bundle savedInstanceState) {
 		String[] PViews = _gmsh.getPView();
 		String[] infos = PViews[_pview].split("\n");
-		if(infos.length != 5){ Log.e("Gmsh", "Pview length is incorect"); return null;}
 		getActivity().getActionBar().setTitle(infos[0]);
 		LinearLayout layout =  (LinearLayout)inflater.inflate(R.layout.fragment_postprocessing, container, false);
 		final Spinner intervalsType = (Spinner)layout.findViewById(R.id.intervals_type);

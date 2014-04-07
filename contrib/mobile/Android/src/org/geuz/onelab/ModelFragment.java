@@ -46,8 +46,8 @@ public class ModelFragment extends Fragment{
 		Bundle bundle = new Bundle();
 		bundle.putParcelable("Gmsh", g);
 		fragment.setArguments(bundle);
-        return fragment;
-    }
+		return fragment;
+	}
 	
 	public ModelFragment() {
 	}
