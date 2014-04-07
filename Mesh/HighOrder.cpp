@@ -125,9 +125,8 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
 // --------- Creation of high-order edge vertices -----------
 
-static bool getEdgeVerticesonGeo(GEdge *ge, const MEdge &edge, std::vector<MVertex*> &ve, int nPts = 1)
+static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1, std::vector<MVertex*> &ve, int nPts = 1)
 {
-    MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
     double u0 = 0., u1 = 0., US[100];
     bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
     if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
@@ -170,9 +169,8 @@ static bool getEdgeVerticesonGeo(GEdge *ge, const MEdge &edge, std::vector<MVert
     return true;
 }
 
-static bool getEdgeVerticesonGeo(GFace *gf, const MEdge &edge, std::vector<MVertex*> &ve, int nPts = 1)
+static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1, std::vector<MVertex*> &ve, int nPts = 1)
 {
-      MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       SPoint2 p0, p1;
       double US[100], VS[100];
       bool reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
@@ -186,7 +184,9 @@ static bool getEdgeVerticesonGeo(GFace *gf, const MEdge &edge, std::vector<MVert
           VS[nPts+1] =  p1[1];
           for(int j = 0; j < nPts; j++){
             const double t = (double)(j + 1) / (nPts + 1);
-            SPoint3 pc = edge.interpolate(t);
+            SPoint3 pc(t*v1->x()+(1.-t)*v0->x(),
+                       t*v1->y()+(1.-t)*v0->y(),
+                       t*v1->z()+(1.-t)*v0->z());
             SPoint2 guess = p0 * (1.-t) + p1 * t;
             GPoint gp = gf->closestPoint(pc, guess);
             if(gp.succeeded()){
@@ -213,15 +213,29 @@ static bool getEdgeVerticesonGeo(GFace *gf, const MEdge &edge, std::vector<MVert
       return true;
 }
 
-static void interpVerticesInExistingEdge(GEntity *ge, const MEdge &edge,
+static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
                                          std::vector<MVertex*> &veEdge, int nPts)
 {
-  for(int j = 0; j < nPts; j++) {
-    const double t = (double)(j + 1)/(nPts + 1);
-    SPoint3 pc = edge.interpolate(t);
-    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+  fullMatrix<double> points;
+  points = edgeEl->getFunctionSpace(nPts+1)->points;
+  for(int k = 2; k < nPts+2; k++) {
+    SPoint3 pos;
+    edgeEl->pnt(points(k, 0), 0., 0., pos);
+    MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), ge);
     veEdge.push_back(v);
   }
+}
+
+inline static bool getMinMaxVert(MVertex *v0, MVertex *v1, MVertex *&vMin, MVertex *&vMax)
+{
+  const bool increasing = (v0->getNum() < v1->getNum());
+  if (increasing) {
+    vMin = v0; vMax = v1;
+  }
+  else {
+    vMin = v1; vMax = v0;
+  }
+  return increasing;
 }
 
 // Get new interior vertices for a 1D element
@@ -233,14 +247,18 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
      ge->geomType() == GEntity::BoundaryLayerCurve)
     linear = true;
 
-  MEdge edge = ele->getEdge(0);
-  std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
+  std::vector<MVertex*> veOld;
+  ele->getVertices(veOld);
+  MVertex *vMin, *vMax;
+  const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
+  std::pair<MVertex*, MVertex*> p(vMin, vMax);
   std::vector<MVertex*> veEdge;
-  bool gotVertOnGeo = linear ? false : getEdgeVerticesonGeo(ge, edge, veEdge, nPts);    // Get vertices on geometry if asked
+  bool gotVertOnGeo = linear ? false :
+                      getEdgeVerticesonGeo(ge, veOld[0], veOld[1], veEdge, nPts);       // Get vertices on geometry if asked
   if (!gotVertOnGeo)                                                                    // If not on geometry, create from mesh interpolation
-    interpVerticesInExistingEdge(ge, edge, veEdge, nPts);
+    interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
   newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-  if(edge.getVertex(0) == edge.getMinVertex())                                          // Add newly created vertices to list
+  if(increasing)                                          // Add newly created vertices to list
     edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
   else
     edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -257,21 +275,27 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    MEdge edge = ele->getEdge(i);
-    std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
+    std::vector<MVertex*> veOld;
+    ele->getEdgeVertices(i,veOld);
+    MVertex *vMin, *vMax;
+    const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
+    std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
     if(edgeVertices.count(p)) {                                                             // Vertices already exist
-      if(edge.getVertex(0) == edge.getMinVertex())
+      if(increasing)
         veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
       else
         veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else {                                                                                  // Vertices do not exist, create them
-      bool gotVertOnGeo = linear ? false : getEdgeVerticesonGeo(gf, edge, veEdge, nPts);    // Get vertices on geometry if asked
-      if (!gotVertOnGeo)                                                                    // If not on geometry, create from mesh interpolation
-        interpVerticesInExistingEdge(gf, edge, veEdge, nPts);
+      bool gotVertOnGeo = linear ? false :
+                          getEdgeVerticesonGeo(gf, veOld[0], veOld[1], veEdge, nPts);       // Get vertices on geometry if asked
+      if (!gotVertOnGeo) {                                                                   // If not on geometry, create from mesh interpolation
+        const MLineN edgeEl(veOld, ele->getPolynomialOrder());
+        interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
+      }
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-      if(edge.getVertex(0) == edge.getMinVertex())                                          // Add newly created vertices to list
+      if(increasing)                                                                        // Add newly created vertices to list
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
       else
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -286,19 +310,23 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
                             bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    MEdge edge = ele->getEdge(i);
-    std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
+    std::vector<MVertex*> veOld;
+    ele->getEdgeVertices(i,veOld);
+    MVertex *vMin, *vMax;
+    const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
+    std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
     if(edgeVertices.count(p)) {                                                             // Vertices already exist
-      if(edge.getVertex(0) == edge.getMinVertex())
+      if(increasing)
         veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
       else
         veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else {                                                                                  // Vertices do not exist, create them
-      interpVerticesInExistingEdge(gr, edge, veEdge, nPts);
+      const MLineN edgeEl(veOld, ele->getPolynomialOrder());
+      interpVerticesInExistingEdge(gr, &edgeEl, veEdge, nPts);
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-      if(edge.getVertex(0) == edge.getMinVertex())                                          // Add newly created vertices to list
+      if(increasing)                                                                        // Add newly created vertices to list
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
       else
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -413,43 +441,6 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
   }
 }
 
-static int getNewFacePointsInFace(int numPrimaryFacePoints, int nPts, fullMatrix<double> &points)
-{
-  int start = 0;
-
-  int tag = 0;
-  switch(numPrimaryFacePoints) {
-    case 3:
-      if (nPts < 2) break;
-
-      tag = ElementType::getTag(TYPE_TRI, nPts+1);
-      if (!tag) {
-        Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
-        break;
-      }
-      points = BasisFactory::getNodalBasis(tag)->points;
-      start = 3 * (1 + nPts);
-      break;
-
-    case 4:
-      if (nPts < 1) break;
-
-      tag = ElementType::getTag(TYPE_QUA, nPts+1);
-      if (!tag) {
-        Msg::Error("getFaceVertices not implemented for order %i", nPts +1);
-        break;
-      }
-      points = BasisFactory::getNodalBasis(tag)->points;
-      start = 4 * (1 + nPts);
-      break;
-
-    default:
-      Msg::Error("getFaceVertices not implemented for %d-node faces", numPrimaryFacePoints);
-      break;
-  }
-  return start;
-}
-
 static int getNewFacePointsInVolume(MElement *incomplete, int nPts, fullMatrix<double> &points)
 {
 
@@ -531,15 +522,16 @@ static int getNewFacePointsInVolume(MElement *incomplete, int nPts, fullMatrix<d
   return startFace;
 }
 
-static void getFaceVerticesOnGeo(GFace *gf, MElement *incomplete, const MFace &face,
-                            std::vector<MVertex*> &vf, int nPts = 1)
+static void getFaceVerticesOnGeo(GFace *gf, MElement *incomplete, const MElement *faceEl,
+                                 std::vector<MVertex*> &vf, int nPts = 1)
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
   for(int k = 0; k < incomplete->getNumVertices(); k++)
     reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
   fullMatrix<double> points;
-  int start = getNewFacePointsInFace(face.getNumVertices(), nPts, points);
+  int start = (faceEl->getType() == 3) ? 3 * (1 + nPts) : 4 * (1 + nPts);
+  points = faceEl->getFunctionSpace(nPts+1)->points;
   for(int k = start; k < points.size1(); k++) {
     MVertex *v;
     const double t1 = points(k, 0);
@@ -581,28 +573,20 @@ static void getFaceVerticesOnGeo(GFace *gf, MElement *incomplete, const MFace &f
   }
 }
 
-static void interpVerticesInExistingFace(GEntity *ge, const MFace &face,
+static void interpVerticesInExistingFace(GEntity *ge, const MElement *faceEl,
                                          std::vector<MVertex*> &veFace, int nPts)
 {
   fullMatrix<double> points;
-  int start = getNewFacePointsInFace(face.getNumVertices(), nPts, points);
-  for(int k = start; k < points.size1(); k++){
-    const double t1 = points(k, 0);
-    const double t2 = points(k, 1);
-    SPoint3 pc = face.interpolate(t1, t2);
-    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+  int start = (faceEl->getType() == 3) ? 3 * (1 + nPts) : 4 * (1 + nPts);
+  points = faceEl->getFunctionSpace(nPts+1)->points;
+  for (int k = start; k < points.size1(); k++) {
+    double t1 = points(k, 0);
+    double t2 = points(k, 1);
+    SPoint3 pos;
+    faceEl->pnt(t1, t2, 0, pos);
+    MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), ge);
     veFace.push_back(v);
   }
-//  MElement *interpEl = getStraightInterpEl(face);
-//  for (int k = start; k < points.size1(); k++) {
-//    double t1 = points(k, 0);
-//    double t2 = points(k, 1);
-//    SPoint3 pos;
-//    interpEl->pnt(t1, t2, 0, pos);
-//    MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), gf);
-//    vf.push_back(v);
-//  }
-//  delete interpEl;
 }
 
 
@@ -636,9 +620,9 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
   MFace face = ele->getFace(0);
   std::vector<MVertex*> veFace;
   if (!linear)                                                                      // Get vertices on geometry if asked...
-    getFaceVerticesOnGeo(gf, incomplete, face, veFace, nPts);
+    getFaceVerticesOnGeo(gf, incomplete, ele, veFace, nPts);
   else                                                                              // ... otherwise, create from mesh interpolation
-    interpVerticesInExistingFace(gf, face, veFace, nPts);
+    interpVerticesInExistingFace(gf, ele, veFace, nPts);
   newHOVert.insert(newHOVert.end(), veFace.begin(), veFace.end());
   faceVertices[face].insert(faceVertices[face].end(), veFace.begin(), veFace.end());
   vf.insert(vf.end(), veFace.begin(), veFace.end());
@@ -673,8 +657,17 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
       veFace.assign(vtcs.begin(), vtcs.end());
     }
     else {                                                                                // Vertices do not exist, create them by interpolation
-      if (linear)                                                                         // Interpolate on existing mesh
-        interpVerticesInExistingFace(gr, face, veFace, nPts);
+      if (linear) {                                                                       // Interpolate on existing mesh
+        std::vector<MVertex*> vfOld;
+        ele->getFaceVertices(i,vfOld);
+        MElement *faceEl;
+        if (face.getNumVertices() == 3)
+          faceEl = new MTriangleN(vfOld, ele->getPolynomialOrder());
+        else
+          faceEl = new MQuadrangleN(vfOld, ele->getPolynomialOrder());
+        interpVerticesInExistingFace(gr, faceEl, veFace, nPts);
+        delete faceEl;
+      }
       else {
         if (incomplete) {                                                                 // Interpolate in incomplete 3D element if given
           for(int k = index; k < index + numVert; k++){
@@ -730,7 +723,15 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
 //              veFace.push_back(v);
 //            }
 //          }
-          interpVerticesInExistingFace(gr, face, veFace, nPts);
+          std::vector<MVertex*> vfOld;
+          ele->getFaceVertices(i,vfOld);
+          MElement *faceEl;
+          if (face.getNumVertices() == 3)
+            faceEl = new MTriangleN(vfOld, nPts+1);
+          else
+            faceEl = new MQuadrangleN(vfOld, nPts+1);
+          interpVerticesInExistingFace(gr, faceEl, veFace, nPts);
+          delete faceEl;
         }
       }
       newHOVert.insert(newHOVert.end(), veFace.begin(), veFace.end());
@@ -833,13 +834,14 @@ static void getVolumeVertices(GRegion *gr, MElement *incomplete, MElement *ele,
 {
   fullMatrix<double> points;
   int startInter = getNewVolumePoints(incomplete, nPts, points);
+  const MElement *interpEl = linear ? ele : incomplete;
   for(int k = startInter; k < points.size1(); k++){
     MVertex *v;
     const double t1 = points(k, 0);
     const double t2 = points(k, 1);
     const double t3 = points(k, 2);
     SPoint3 pos;
-    incomplete->pnt(t1, t2, t3, pos);
+    interpEl->pnt(t1, t2, t3, pos);
     v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
     newHOVert.push_back(v);
     vr.push_back(v);
