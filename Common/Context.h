@@ -256,6 +256,7 @@ class CTX {
     int compositeWindows, deleteTmpFiles, background;
     int width, height;
     double parameter, parameterFirst, parameterLast, parameterSteps;
+    int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;
   } print;
   // color options
