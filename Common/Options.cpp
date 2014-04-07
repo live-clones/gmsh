@@ -8644,6 +8644,25 @@ double opt_print_background(OPT_ARGS_NUM)
   return CTX::instance()->print.background;
 }
 
+double opt_print_pgf_two_dim(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.pgfTwoDim= (int)val;
+  return CTX::instance()->print.pgfTwoDim;
+}
+double opt_print_pgf_export_axis(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.pgfExportAxis= (int)val;
+  return CTX::instance()->print.pgfExportAxis;
+}
+double opt_print_pgf_horiz_bar(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.pgfHorizBar = (int)val;
+  return CTX::instance()->print.pgfHorizBar;
+}
+
 double opt_print_text(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
