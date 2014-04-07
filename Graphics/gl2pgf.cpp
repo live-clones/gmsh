@@ -142,7 +142,8 @@ static int assemblePostAxis(const int num, const int intType, std::string &ret)
   ret.append("\tcolorbar,\n\tcolormap name=gmshcolormap,\n");
   if (horizontal) {
     ret.append("\tcolorbar horizontal,\n");
-  } else {
+  }
+  else {
     ret.append("\tcolorbar right, %% or left...\n");
   }
   if (intType == 3){  // sampled
