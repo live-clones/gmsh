@@ -6,7 +6,6 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "PView.h"
 #include "GmshDefines.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -27,6 +26,7 @@
 #include "gl2png.h"
 #include "gl2ppm.h"
 #include "gl2yuv.h"
+#include "gl2pgf.h"
 #endif
 
 int GetFileFormatFromExtension(const std::string &ext)
@@ -61,6 +61,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".mpg")  return FORMAT_MPEG;
   else if(ext == ".mpeg") return FORMAT_MPEG;
   else if(ext == ".png")  return FORMAT_PNG;
+  else if(ext == ".pgf")  return FORMAT_PGF;
   else if(ext == ".ps")   return FORMAT_PS;
   else if(ext == ".eps")  return FORMAT_EPS;
   else if(ext == ".pdf")  return FORMAT_PDF;
@@ -112,6 +113,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_JPEG: name += ".jpg"; break;
   case FORMAT_MPEG: name += ".mpg"; break;
   case FORMAT_PNG:  name += ".png"; break;
+  case FORMAT_PGF:  name += ".todo"; break;
   case FORMAT_PS:   name += ".ps"; break;
   case FORMAT_EPS:  name += ".eps"; break;
   case FORMAT_PDF:  name += ".pdf"; break;
@@ -523,6 +525,16 @@ void CreateOutputFile(const std::string &fileName, int format,
     }
     break;
 
+  case FORMAT_PGF:
+    {
+      if(!FlGui::available()) break;
+      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+      print_pgf(name, buffer, ctx->r, ctx->viewport, ctx->proj, ctx->model);
+      delete buffer;
+    }
+    break;
+
 #if defined(HAVE_MPEG_ENCODE)
   case FORMAT_MPEG:
   case FORMAT_MPEG_PREVIEW:
@@ -634,4 +646,3 @@ void CreateOutputFile(const std::string &fileName, int format,
   if(redraw) drawContext::global()->draw();
 #endif
 }
-

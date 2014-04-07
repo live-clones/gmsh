@@ -21,6 +21,7 @@ set(SRC
   gl2png.cpp
   gl2ppm.cpp
   gl2yuv.cpp
+  gl2pgf.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
