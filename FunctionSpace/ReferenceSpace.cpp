@@ -244,8 +244,8 @@ isCyclicPermutation(const vector<size_t>& pTest,
   // Test if we have the same connectivity
   bool isSameConnectivity = isSameEdge(pTest, pRef);
 
-  if(isCyclic && isSameConnectivity){
-  //if(isSameConnectivity){
+  //if(isCyclic && isSameConnectivity){
+  if(isSameConnectivity){
     tri.first  = true;
     tri.second = getRefIndexPermutation(pRef, pTest);
     tri.third  = getReverseIndexPermutation(pRef, pTest);
@@ -779,17 +779,25 @@ double ReferenceSpace::getJacobian(const MElement& element,
   double uvw[3];
   mapFromABCtoUVW(element, a, b, c, uvw);
 
-  // UVW to XYZ Jacobian + Determinant                      //
-  //  NB: Volume is not modified when we go from ABC to UVW //
-  //       --> Determinant unchanged                        //
+  // UVW to XYZ Jacobian //
   fullMatrix<double> jacUVWtoXYZ(3, 3);
-  double det = element.getJacobian(uvw[0], uvw[1], uvw[2], jacUVWtoXYZ);
+  element.getJacobian(uvw[0], uvw[1], uvw[2], jacUVWtoXYZ);
 
   // Product of the two Jacobians & Return //
   // Do a naive gemm, so that we do not encounter nested threads
   // (limitation of OpenBLAS)
   jac.gemm_naive(jacABCtoUVW, jacUVWtoXYZ, 1, 0);
-  return det;
+
+  // New Jacobian determinant (same as jacUVWtoXYZ with maybe a SIGN CHANGE) //
+  //   ---> Has to be recomputed!
+  return
+   jac(0, 0) * jac(1, 1) * jac(2, 2) +
+   jac(0, 1) * jac(1, 2) * jac(2, 0) +
+   jac(0, 2) * jac(1, 0) * jac(2, 1) -
+
+   jac(0, 2) * jac(1, 1) * jac(2, 0) -
+   jac(0, 1) * jac(1, 0) * jac(2, 2) -
+   jac(0, 0) * jac(1, 2) * jac(2, 1);
 }
 
 void ReferenceSpace::regularize(size_t dim, fullMatrix<double>& jac){

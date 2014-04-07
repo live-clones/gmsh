@@ -92,7 +92,30 @@ getFunctions(fullMatrix<double>& retValues,
 void BasisHierarchical1Form::getDerivative(fullMatrix<double>& retValues,
                                            const MElement& element,
                                            double u, double v, double w) const{
-  throw Exception("Not Implemented");
+
+  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(getType());
+
+  // Build Curl //
+  if(!hasCurl)
+    getCurl();
+
+  // Delete if older //
+  if(preEvaluatedCurl){
+    for(size_t i = 0; i < nOrientation; i++)
+      delete preEvaluatedCurlFunction[i];
+
+    delete[] preEvaluatedCurlFunction;
+  }
+
+  // Define Orientation //
+  const size_t orientation = ReferenceSpaceManager::getOrientation(element);
+
+  // Fill Matrix //
+  for(size_t i = 0; i < nFunction; i++){
+    retValues(i, 0) = curl[orientation][i]->at(0).at(u, v, w);
+    retValues(i, 1) = curl[orientation][i]->at(1).at(u, v, w);
+    retValues(i, 2) = curl[orientation][i]->at(2).at(u, v, w);
+  }
 }
 
 void BasisHierarchical1Form::

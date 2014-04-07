@@ -33,11 +33,25 @@ class FunctionSpaceVector : public FunctionSpace{
                           const std::vector<double>& coef,
                           const fullVector<double>& uvw) const;
 
+  fullVector<double>
+    interpolateDerivative(const MElement& element,
+                          const std::vector<double>& coef,
+                          const fullVector<double>& xyz) const;
+
+  fullVector<double>
+    interpolateDerivativeInRefSpace(const MElement& element,
+                                    const std::vector<double>& coef,
+                                    const fullVector<double>& uvw) const;
  private:
   fullVector<double>
     interpolateInABC(const MElement& element,
                      const std::vector<double>& coef,
                      double abc[3]) const;
+
+  fullVector<double>
+    interpolateDerivativeInABC(const MElement& element,
+                               const std::vector<double>& coef,
+                               double abc[3]) const;
 };
 
 
@@ -91,6 +105,26 @@ class FunctionSpaceVector : public FunctionSpace{
 
    If the given coordinate are not in the given
    element @em Bad @em Things may happend
+   **
+
+   @fn FunctionSpaceVector::interpolateDerivative
+   @param element The MElement to interpolate on
+   @param coef The coefficients of the interpolation
+   @param xyz The coordinate (of a point inside the given element)
+   of the interpolation in the @em physical space
+
+   Same as FunctionSpaceVector::interpolate(element, coef, xyz),
+   but this method iterpolates the derivative.
+   **
+
+   @fn FunctionSpaceVector::interpolateDerivativeInRefSpace
+   @param element The MElement to interpolate on
+   @param coef The coefficients of the interpolation
+   @param uvw The coordinate (of a point inside the given element)
+   of the interpolation in the @em reference space
+
+   Same as FunctionSpaceVector::interpolateInRefSpace(element, coef, uvw),
+   but this method iterpolates the derivative.
 */
 
 
@@ -122,6 +156,32 @@ interpolateInRefSpace(const MElement& element,
 
   // Interpolate in ABC //
   return interpolateInABC(element, coef, abc);
+}
+
+inline fullVector<double> FunctionSpaceVector::
+interpolateDerivative(const MElement& element,
+                      const std::vector<double>& coef,
+                      const fullVector<double>& xyz) const{
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  ReferenceSpaceManager::mapFromXYZtoABC(element, xyz(0), xyz(1), xyz(2), abc);
+
+  // Interpolate in ABC //
+  return interpolateDerivativeInABC(element, coef, abc);
+}
+
+inline fullVector<double> FunctionSpaceVector::
+interpolateDerivativeInRefSpace(const MElement& element,
+                                const std::vector<double>& coef,
+                                const fullVector<double>& uvw) const{
+
+  // Get ABC Space coordinate //
+  double abc[3];
+  ReferenceSpaceManager::mapFromUVWtoABC(element, uvw(0), uvw(1), uvw(2), abc);
+
+  // Interpolate in ABC //
+  return interpolateDerivativeInABC(element, coef, abc);
 }
 
 #endif

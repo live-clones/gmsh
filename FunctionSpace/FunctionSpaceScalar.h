@@ -98,6 +98,7 @@ class FunctionSpaceScalar : public FunctionSpace{
 
    If the given coordinate are not in the given
    element @em Bad @em Things may happend
+   **
 
    @fn FunctionSpaceScalar::interpolateDerivative
    @param element The MElement to interpolate on
