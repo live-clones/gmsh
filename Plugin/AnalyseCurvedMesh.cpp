@@ -581,7 +581,6 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinMax(MElement *const*el, int numEl, 
       }
 
       while (pqMax.size() > 0) {
-        break;
         bj = pqMax.top();
         pqMax.pop();
         delete bj;
