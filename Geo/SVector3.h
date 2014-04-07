@@ -30,9 +30,9 @@ class SVector3 {
   inline double z(void) const { return P.z(); }
   inline double norm() const { return sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
   inline double normSq() const{ return (P[0] * P[0] + P[1] * P[1] + P[2] * P[2]); }
-  // Beware that " w = v.normalize() " produces the vector 
+  // Beware that " w = v.normalize() " produces the vector
   // w = (v.norm(), v.norm(), v.norm()), which is NOT a unit vector!
-  // Use " w = v.unit() " to affect to "w" the unit vector parallel to "v". 
+  // Use " w = v.unit() " to affect to "w" the unit vector parallel to "v".
   double normalize(){
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
@@ -75,6 +75,20 @@ class SVector3 {
 
   // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance and a direction
   SPoint3 point() const{return P;}
+  int getMaxValue(double& val) const{
+    if ((P[0] >=P[1]) && (P[0]>=P[2])){
+      val = P[0];
+      return 0;
+    }
+    else if ((P[1] >=P[0]) && (P[1]>=P[2])){
+      val = P[1];
+      return 1;
+    }
+    else {
+      val = P[2];
+      return 2;
+    }
+  }
 
 };
 
@@ -95,7 +109,7 @@ inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
 inline double angle (const SVector3 &a, const SVector3 &b){
   double cosTheta = dot(a,b);
   double sinTheta = norm(crossprod(a,b));
-  return atan2 (sinTheta,cosTheta);  
+  return atan2 (sinTheta,cosTheta);
 }
 
 
@@ -146,7 +160,7 @@ inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
        Msg::Error("Problem with computing orthoBasis");
        Msg::Exit(1);
    }
-   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n", 
+   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n",
    // 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],  dir2[0], dir2[1], dir2[2] );
    // printf("0x1 =%g 1x2=%g 2x1=%g \n", dot(dir, dir1), dot(dir1,dir2), dot(dir2,dir));
    dir1.normalize();
@@ -166,12 +180,12 @@ inline void buildOrthoBasis(SVector3 &normal, SVector3 &tangent, SVector3 &binor
   //build a binormal from tangent and normal:
   binormal = crossprod(tangent, normal);
   double t1 = binormal.normalize();
-  
+
   //and correct the tangent from the binormal and the normal.
   tangent = crossprod(normal, binormal);
   double t2 = tangent.normalize();
-  
-  if (t1 == 0.0 || t2 == 0.0) 
+
+  if (t1 == 0.0 || t2 == 0.0)
     buildOrthoBasis_naive(normal, tangent, binormal);
 
 }
@@ -186,12 +200,12 @@ inline void buildOrthoBasis2(SVector3 &normal, SVector3 &tangent, SVector3 &bino
   //build a binormal from tangent and normal:
   binormal = crossprod(tangent, normal);
   double t1 = binormal.normalize();
-  
+
   //and correct the tangent from the binormal and the normal.
   tangent = crossprod(normal, binormal);
   double t2 = tangent.normalize();
-  
-  if (t1 == 0.0 || t2 == 0.0) 
+
+  if (t1 == 0.0 || t2 == 0.0)
     buildOrthoBasis_naive(normal, tangent, binormal);
 
 }
