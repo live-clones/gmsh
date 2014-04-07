@@ -7,6 +7,8 @@
 #include <string.h>
 #include "GModel.h"
 #include "OS.h"
+#include "IO.h"
+
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -17,7 +19,7 @@
 
 int GModel::readUNV(const std::string &name)
 {
-  FILE *fp = Fopen(name.c_str(), "r");
+  gmshFILE fp = gmshopen(name.c_str(), "r");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
@@ -29,21 +31,21 @@ int GModel::readUNV(const std::string &name)
 
   _vertexMapCache.clear();
 
-  while(!feof(fp)) {
-    if(!fgets(buffer, sizeof(buffer), fp)) break;
+  while(!gmsheof(fp)) {
+    if(!gmshgets(buffer, sizeof(buffer), fp)) break;
     if(!strncmp(buffer, "    -1", 6)){
-      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!gmshgets(buffer, sizeof(buffer), fp)) break;
       if(!strncmp(buffer, "    -1", 6))
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!gmshgets(buffer, sizeof(buffer), fp)) break;
       int record = 0;
       sscanf(buffer, "%d", &record);
       if(record == 2411){ // nodes
         Msg::Info("Reading nodes");
-        while(fgets(buffer, sizeof(buffer), fp)){
+        while(gmshgets(buffer, sizeof(buffer), fp)){
           if(!strncmp(buffer, "    -1", 6)) break;
           int num, dum;
           if(sscanf(buffer, "%d %d %d %d", &num, &dum, &dum, &dum) != 4) break;
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          if(!gmshgets(buffer, sizeof(buffer), fp)) break;
           double x, y, z;
           for(unsigned int i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
@@ -54,7 +56,7 @@ int GModel::readUNV(const std::string &name)
       else if(record == 2412){ // elements
         Msg::Info("Reading elements");
         std::map<int, int> warn;
-        while(fgets(buffer, sizeof(buffer), fp)){
+        while(gmshgets(buffer, sizeof(buffer), fp)){
           if(strlen(buffer) < 3) continue; // possible line ending after last fscanf
           if(!strncmp(buffer, "    -1", 6)) break;
           int num, type, elementary, physical, color, numNodes;
@@ -82,7 +84,7 @@ int GModel::readUNV(const std::string &name)
           case 11: case 21: case 22: case 31:
           case 23: case 24: case 32:
             // beam elements
-            if(!fgets(buffer, sizeof(buffer), fp)) break;
+            if(!gmshgets(buffer, sizeof(buffer), fp)) break;
             int dum;
             if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
             break;
@@ -90,11 +92,14 @@ int GModel::readUNV(const std::string &name)
           std::vector<MVertex*> vertices(numNodes);
           for(int i = 0; i < numNodes; i++){
             int n;
-            if(!fscanf(fp, "%d", &n)){ fclose(fp); return 0; }
+            if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; } 
+            if(strlen(buffer) < 10)
+                if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; } 
+            if(!sscanf(buffer, "%d", &n)){ gmshclose(fp); return 0; }
             vertices[i] = getMeshVertexByTag(n);
             if(!vertices[i]){
               Msg::Error("Wrong vertex index %d", n);
-              fclose(fp);
+              gmshclose(fp);
               return 0;
             }
           }
@@ -189,7 +194,7 @@ int GModel::readUNV(const std::string &name)
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
 
-  fclose(fp);
+  gmshclose(fp);
   return 1;
 }
 

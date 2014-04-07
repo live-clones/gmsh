@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "IO.h"
+
 int gmsh_yyparse();
 int gmsh_yylex();
 void gmsh_yyflush();
@@ -22,7 +24,7 @@ class gmsh_yysymbol{
 };
 
 // global parser variables that need to be exported
-extern FILE *gmsh_yyin;
+extern gmshFILE gmsh_yyin;
 extern int gmsh_yylineno;
 extern char *gmsh_yytext;
 extern int gmsh_yyviewindex;
@@ -30,5 +32,7 @@ extern std::string gmsh_yyname;
 extern int gmsh_yyerrorstate;
 extern std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
 extern std::map<std::string, std::string> gmsh_yystringsymbols;
+
+void PrintParserSymbols(bool help, std::vector<std::string> &vec);
 
 #endif

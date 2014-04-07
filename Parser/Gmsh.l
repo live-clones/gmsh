@@ -8,20 +8,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
+#include "IO.h"
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
 void   skipcomments(void);
 void   skipline(void);
 
+#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_ZLIB)
+#define YY_INPUT(buf,result,max_size)                                   \
+     {                                                                  \
+       int c = '*', n;                                                  \
+       for ( n = 0; n < max_size &&                                     \
+               (c = gzgetc( yyin )) != EOF && c != '\n'; ++n )          \
+         buf[n] = (char) c;                                             \
+       if ( c == '\n' ){                                                \
+         buf[n++] = (char) c;                                           \
+         yylineno++;                                                    \
+       }                                                                \
+       if ( c == EOF )  {                                               \
+         int ernum;                                                     \
+         const char *msg=gzerror(yyin,&ernum);                          \
+         if (ernum)                                                     \
+            Msg::Fatal("Input in flex scanner failed");                 \
+       }                                                                \
+       result = n;                                                      \
+     }
+#else
 #define YY_INPUT(buf,result,max_size)					\
      {									\
        int c = '*', n;							\
        for ( n = 0; n < max_size &&					\
-	       (c = getc( yyin )) != EOF && c != '\n'; ++n )		\
+	       (c = fgetc( yyin )) != EOF && c != '\n'; ++n )		\
 	 buf[n] = (char) c;						\
        if ( c == '\n' ){						\
 	 buf[n++] = (char) c;						\
@@ -30,7 +52,8 @@ void   skipline(void);
        if ( c == EOF && ferror( yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\
        result = n;							\
-     }									\
+     }
+#endif
 
 #if defined(WIN32)
 #define isatty(arg) -1
@@ -270,7 +293,7 @@ void skipcomments(void)
 
   while (1) {
     while ((c = yyinput()) != '*'){
-      if(feof(yyin)){
+      if(gmsheof(yyin)){
 	Msg::Error("End of file in commented region");
         return;
       }
@@ -290,7 +313,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(feof(yyin)){
+    if(gmsheof(yyin)){
       Msg::Error("End of file in string");
       break;
     }
@@ -315,7 +338,7 @@ void skipline()
 {
   int c;
   while ((c = yyinput()) != '\n'){
-    if(feof(yyin)) return;
+    if(gmsheof(yyin)) return;
   }
 }
 
@@ -337,7 +360,7 @@ void skip_until(const char *skip, const char *until)
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(feof(yyin)){
+      if(gmsheof(yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
       }
@@ -352,7 +375,7 @@ void skip_until(const char *skip, const char *until)
     }
     for(i=1; i<l; i++){
       chars[i] = yyinput();
-      if(feof(yyin)){
+      if(gmsheof(yyin)){
 	l = i;
 	break;
       }

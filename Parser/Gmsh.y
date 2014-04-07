@@ -4,6 +4,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <sstream>
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -70,7 +71,7 @@ static int curPhysDim = 0;
 static gmshSurface *myGmshSurface = 0;
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
-static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
+static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static const char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
@@ -84,8 +85,9 @@ void assignVariable(const std::string &name, int index, int assignType,
                     double value);
 void assignVariables(const std::string &name, List_T *indices, int assignType,
                      List_T *values);
- void incrementVariable(const std::string &name, int index, double value);
+void incrementVariable(const std::string &name, int index, double value);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
+void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
 struct doubleXstring{
@@ -2858,7 +2860,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
-      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($3 > $5)
 	skip_until("For", "EndFor");
@@ -2875,7 +2877,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7;
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
-      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
 	skip_until("For", "EndFor");
@@ -2896,7 +2898,7 @@ Loop :
       s.list = false;
       s.value.resize(1);
       s.value[0] = $5;
-      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($5 > $7)
 	skip_until("For", "EndFor");
@@ -2917,7 +2919,7 @@ Loop :
       s.list = false;
       s.value.resize(1);
       s.value[0] = $5;
-      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
 	skip_until("For", "EndFor");
@@ -2956,7 +2958,7 @@ Loop :
 	double x0 = LoopControlVariablesTab[ImbricatedLoop - 1][0];
 	double x1 = LoopControlVariablesTab[ImbricatedLoop - 1][1];
         if((step > 0. && x0 <= x1) || (step < 0. && x0 >= x1)){
-	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
+	  gmshsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
 	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop - 1];
 	}
 	else
@@ -5389,6 +5391,42 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   if(j != (int)strlen(format))
     return -1;
   return 0;
+}
+
+void PrintParserSymbols(bool help, std::vector<std::string> &vec)
+{
+  if(help){
+    vec.push_back("//");
+    vec.push_back("// Numbers");
+    vec.push_back("//");
+  }
+  for(std::map<std::string, gmsh_yysymbol>::iterator it = gmsh_yysymbols.begin();
+      it != gmsh_yysymbols.end(); it++){
+    gmsh_yysymbol s(it->second);
+    std::ostringstream sstream;
+    sstream << it->first;
+    if(s.list){
+      sstream << "[] = {";
+      for(unsigned int i = 0; i < s.value.size(); i++){
+        if(i) sstream << ", ";
+        sstream << s.value[i];
+      }
+      sstream << "}";
+    }
+    else
+      sstream << " = " << s.value[0];
+    sstream << ";";
+    vec.push_back(sstream.str());
+  }
+  if(help){
+    vec.push_back("//");
+    vec.push_back("// Strings");
+    vec.push_back("//");
+  }
+  for(std::map<std::string, std::string>::iterator it = gmsh_yystringsymbols.begin();
+      it != gmsh_yystringsymbols.end(); it++){
+    vec.push_back(it->first + " = \"" + it->second + "\";");
+  }
 }
 
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)

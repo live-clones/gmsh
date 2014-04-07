@@ -10,7 +10,7 @@ class mystack;
 class mymap;
 
 #include <string>
-#include <stdio.h>
+#include "IO.h"
 
 // Singleton, one function manager for all parsers. 
 
@@ -22,9 +22,9 @@ class FunctionManager
   static FunctionManager *instance;
  public :
   static FunctionManager* Instance();
-  int createFunction(char *name, FILE *f, std::string &filename, int lineno);
-  int enterFunction(char *name, FILE **f, std::string &filename, int &lineno) const;
-  int leaveFunction(FILE **f, std::string &filename, int &lineno);
+  int createFunction(char *name, gmshFILE f, std::string &filename, int lineno);
+  int enterFunction(char *name, gmshFILE *f, std::string &filename, int &lineno) const;
+  int leaveFunction(gmshFILE *f, std::string &filename, int &lineno);
 };
 
 #endif

@@ -26,10 +26,18 @@
 
 void add_infile(std::string text, std::string fileName, bool forceDestroy)
 {
+  std::vector<std::string> split = SplitFileName(fileName);
+  std::string noExt = split[0] + split[1], ext = split[2];
+#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
+  bool compressed = false;
+  if(ext == ".gz"){
+    ext = SplitFileName(noExt)[2];
+    compressed = true;
+  }
+#endif
   // make sure we don't add stuff in a non-geo file
   if(!CTX::instance()->expertMode) {
-    std::vector<std::string> split = SplitFileName(fileName);
-    if(split[2].size() && split[2] != ".geo" && split[2] != ".GEO"){
+    if(ext.size() && ext != ".geo" && ext != ".GEO" ){
       std::ostringstream sstream;
       sstream <<
         "A scripting command is going to be appended to a non-`.geo' file. Are\n"
@@ -68,19 +76,19 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
 
 #if defined(HAVE_PARSER)
   std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
-  FILE *gmsh_yyin_old = gmsh_yyin;
-  if(!(gmsh_yyin = Fopen(tmpFileName.c_str(), "w"))) {
+  gmshFILE gmsh_yyin_old = gmsh_yyin;
+  FILE *tmp_file;
+  if(!(tmp_file = Fopen(tmpFileName.c_str(), "w"))) {
     Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
-    gmsh_yyin = gmsh_yyin_old;
     return;
   }
-  fprintf(gmsh_yyin, "%s\n", text.c_str());
-  fclose(gmsh_yyin);
-  gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
-  while(!feof(gmsh_yyin)) {
+  fprintf(tmp_file, "%s\n", text.c_str());
+  fclose(tmp_file);
+  gmsh_yyin = gmshopen(tmpFileName.c_str(), "r");
+  while(!gmsheof(gmsh_yyin)) {
     gmsh_yyparse();
   }
-  fclose(gmsh_yyin);
+  gmshclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
   if(forceDestroy){
@@ -91,6 +99,28 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
   GModel::current()->importGEOInternals();
   CTX::instance()->mesh.changed = ENT_ALL;
 
+  // here we have to be explicit otherwise we append compressed stuff to ascii
+  // file!
+#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
+  if(compressed){
+    gmshFILE fp = gmshopen(fileName.c_str(), "a");
+    if(!fp) {
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
+      return;
+    }
+    gmshprintf(fp, "%s\n", text.c_str());
+    gmshclose(fp);
+  }
+  else{
+    FILE *fp = Fopen(fileName.c_str(), "a");
+    if(!fp) {
+      Msg::Error("Unable to open file '%s'", fileName.c_str());
+      return;
+    }
+    fprintf(fp, "%s\n", text.c_str());
+    fclose(fp);
+  }
+#else
   FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
@@ -98,6 +128,8 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
   }
   fprintf(fp, "%s\n", text.c_str());
   fclose(fp);
+#endif
+
 #else
   Msg::Error("GEO file creation not available without Gmsh parser");
 #endif

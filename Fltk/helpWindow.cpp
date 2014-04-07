@@ -17,6 +17,7 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Options.h"
+#include "Parser.h"
 #include "Context.h"
 #include "drawContext.h"
 
@@ -243,6 +244,7 @@ void help_options_cb(Fl_Widget *w, void *data)
   std::transform(search.begin(), search.end(), search.begin(), ::tolower);
 
   PrintOptions(0, GMSH_FULLRC, diff, help, 0, &s0);
+  PrintParserSymbols(help, s0);
   FlGui::instance()->help->browser->clear();
   for(unsigned int i = 0; i < s0.size(); i++){
     std::string::size_type sep = s0[i].rfind('\0');

@@ -7,6 +7,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "IO.h"
 #include "Options.h"
 #include "Geo.h"
 #include "GModel.h"
@@ -173,7 +174,7 @@ static void ComputeMaxEntityNum()
              GModel::current()->getMaxElementaryNumber(3));
 }
 
-static std::vector<FILE*> openedFiles;
+static std::vector<gmshFILE> openedFiles;
 
 int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 {
@@ -184,8 +185,8 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
-  FILE *fp;
-  if(!(fp = Fopen(fileName.c_str(), "rb"))){
+  gmshFILE fp;
+  if(!(fp = gmshopen(fileName.c_str(), "rb"))){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
     return 0;
@@ -196,7 +197,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 #endif
 
   std::string old_yyname = gmsh_yyname;
-  FILE *old_yyin = gmsh_yyin;
+  gmshFILE old_yyin = gmsh_yyin;
   int old_yyerrorstate = gmsh_yyerrorstate;
   int old_yylineno = gmsh_yylineno;
   int old_yyviewindex = gmsh_yyviewindex;
@@ -207,7 +208,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   gmsh_yylineno = 1;
   gmsh_yyviewindex = 0;
 
-  while(!feof(gmsh_yyin)){
+  while(!gmsheof(gmsh_yyin)){
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20){
       if(gmsh_yyerrorstate != 999) // 999 is a volontary exit
@@ -219,7 +220,7 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
   if(close){
     gmsh_yyflush();
-    fclose(gmsh_yyin);
+    gmshclose(gmsh_yyin);
   }
   else{
     openedFiles.push_back(gmsh_yyin);
@@ -238,6 +239,21 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
 
   return 1;
 #endif
+}
+
+static bool doSystemUncompress(std::string fileName, std::string noExt)
+{
+  std::ostringstream sstream;
+  sstream << "File '"<< fileName << "' is in gzip format.\n\n"
+          << "Do you want to uncompress it?";
+  if(Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Uncompress")){
+    if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt, true))
+      Msg::Warning("Potentially failed to uncompress `%s': check directory permissions",
+                   fileName.c_str());
+    GModel::current()->setFileName(noExt);
+    return true;
+  }
+  return false;
 }
 
 void ParseString(const std::string &str)
@@ -277,7 +293,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
 
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
-  FILE *fp = Fopen(fileName.c_str(), "rb");
+  gmshFILE fp = gmshopen(fileName.c_str(), "rb");
   if(!fp){
     if(warnIfMissing)
       Msg::Warning("Unable to open file '%s'", fileName.c_str());
@@ -285,8 +301,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   }
 
   char header[256];
-  if(!fgets(header, sizeof(header), fp)){ fclose(fp); return 0; }
-  fclose(fp);
+  if(!gmshgets(header, sizeof(header), fp)){ gmshclose(fp); return 0; }
+  gmshclose(fp);
 
   Msg::StatusBar(true, "Reading '%s'...", fileName.c_str());
 
@@ -294,18 +310,18 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   std::string noExt = split[0] + split[1], ext = split[2];
 
   if(ext == ".gz") {
-    // the real solution would be to rewrite all our I/O functions in
-    // terms of gzFile, but until then, this is better than nothing
-    std::ostringstream sstream;
-    sstream << "File '"<< fileName << "' is in gzip format.\n\n"
-            << "Do you want to uncompress it?";
-    if(Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Uncompress")){
-      if(SystemCall(std::string("gunzip -c ") + fileName + " > " + noExt, true))
-        Msg::Error("Failed to uncompress `%s': check directory permissions",
-                   fileName.c_str());
-      GModel::current()->setFileName(noExt);
-      return MergeFile(noExt, false, setWindowTitle);
+#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
+    std::vector<std::string> subsplit = SplitFileName(noExt);
+    ext = subsplit[2];
+    if(ext != ".geo" && ext != ".GEO" &&
+       ext != ".unv" && ext != ".UNV"){
+      if(doSystemUncompress(fileName, noExt))
+        return MergeFile(noExt, false, setWindowTitle);
     }
+#else
+    if(doSystemUncompress(fileName, noExt))
+      return MergeFile(noExt, false, setWindowTitle);
+#endif
   }
 
   // force reading msh file even if wrong extension if the header
@@ -597,7 +613,7 @@ void ClearProject()
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()){
     for(unsigned int i = 0; i < openedFiles.size(); i++)
-      fclose(openedFiles[i]);
+      gmshclose(openedFiles[i]);
     openedFiles.clear();
   }
   Msg::Info("Done clearing all models and views");
@@ -674,7 +690,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()){
     for(unsigned int i = 0; i < openedFiles.size(); i++)
-      fclose(openedFiles[i]);
+      gmshclose(openedFiles[i]);
     openedFiles.clear();
   }
 
