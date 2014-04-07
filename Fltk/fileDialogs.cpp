@@ -5,6 +5,7 @@
 //
 // Contributor(s):
 //   Stephen Guzik
+//   Sebastian Eiser
 //
 
 #include <limits>
@@ -297,6 +298,86 @@ int genericBitmapFileDialog(const char *name, const char *title, int format)
         opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
         opt_print_background(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
         opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
+        opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
+        opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
+        CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// pgf dialog
+
+int pgfBitmapFileDialog(const char *name, const char *title, int format)
+{
+  struct _pgfBitmapFileDialog{
+    Fl_Window *window;
+    Fl_Value_Slider *s[2];
+    Fl_Check_Button *b[3];
+    Fl_Value_Input *v[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _pgfBitmapFileDialog *dialog = NULL;
+
+  if(!dialog){
+    dialog = new _pgfBitmapFileDialog;
+    int h = 3 * WB + 5 * BH, w = 2 * BB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->b[0] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Flat graphics"); y += BH;
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Export axis (for entire fig)"); y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->b[2] = new Fl_Check_Button
+      (WB, y, 2 * BB + WB, BH, "Horizontal colorbar"); y += BH;
+    dialog->b[2]->type(FL_TOGGLE_BUTTON);
+    dialog->v[0] = new Fl_Value_Input
+      (WB, y, BB / 2, BH);
+    dialog->v[0]->minimum(-1);
+    dialog->v[0]->maximum(5000);
+    dialog->v[0]->step(1);
+    dialog->v[1] = new Fl_Value_Input
+      (WB + BB / 2, y, BB - BB / 2, BH, "Dimensions"); y += BH;
+    dialog->v[1]->minimum(-1);
+    dialog->v[1]->maximum(5000);
+    dialog->v[1]->step(1);
+    dialog->v[1]->align(FL_ALIGN_RIGHT);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->window->label(title);
+  dialog->b[0]->value(CTX::instance()->print.pgfTwoDim);
+  dialog->b[1]->value(CTX::instance()->print.pgfExportAxis);
+  dialog->b[2]->value(CTX::instance()->print.pgfHorizBar);
+  dialog->v[0]->value(CTX::instance()->print.width);
+  dialog->v[1]->value(CTX::instance()->print.height);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+        opt_print_text(0, GMSH_SET | GMSH_GUI, 0); // never print any text
+        opt_print_pgf_two_dim(0, GMSH_SET | GMSH_GUI, (int)dialog->b[0]->value());
+        opt_print_background(0, GMSH_SET | GMSH_GUI, 0); // never print background
+        opt_print_pgf_export_axis(0, GMSH_SET | GMSH_GUI, (int)dialog->b[1]->value());
+        opt_print_pgf_horiz_bar(0, GMSH_SET | GMSH_GUI, (int)dialog->b[2]->value());
+        opt_print_composite_windows(0, GMSH_SET | GMSH_GUI, 0); // never do compositing print
         opt_print_width(0, GMSH_SET | GMSH_GUI, (int)dialog->v[0]->value());
         opt_print_height(0, GMSH_SET | GMSH_GUI, (int)dialog->v[1]->value());
         CreateOutputFile(name, format);

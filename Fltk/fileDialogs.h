@@ -25,6 +25,7 @@ int mpegFileDialog(const char *filename);
 int gifFileDialog(const char *filename);
 int geoFileDialog(const char *filename);
 int genericBitmapFileDialog(const char *filename, const char *title, int format);
+int pgfBitmapFileDialog(const char *filename, const char *title, int format);
 int genericMeshFileDialog(const char *filename, const char *title, int format,
                           bool binary_support, bool element_tag_support);
 int posFileDialog(const char *name);
