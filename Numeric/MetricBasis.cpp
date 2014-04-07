@@ -3,11 +3,22 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "GmshConfig.h"
 #include "MetricBasis.h"
-//#include "GmshDefines.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
 #include <cmath>
+
+#if defined(HAVE_SCIP)
+#include <scip/scip.h>
+#include <soplex.h>
+
+void MaFonctionScip()
+{
+  SCIP *scip;
+  SCIPcreate(&scip);
+}
+#endif
 
 MetricCoefficient::MetricCoefficient(MElement *el) : _element(el)
 {
