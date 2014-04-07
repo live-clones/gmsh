@@ -1558,6 +1558,15 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "CompositeWindows" , opt_print_composite_windows , 0. ,
     "Composite all window tiles in the same output image (for bitmap output only)" },
 
+  { F|O, "PgfTwoDim" , opt_print_pgf_two_dim , 1. ,
+    "Output PGF format for two dimensions. Mostly irrelevant if `PgfExportAxis=0`. Default `1` (yes)." },
+
+  { F|O, "PgfExportAxis" , opt_print_pgf_export_axis , 0. ,
+    "Include axis in export pgf code (not in the png). Default `0` (no)." },
+
+  { F|O, "PgfHorizontalBar" , opt_print_pgf_horiz_bar , 0. ,
+    "Use a horizontal color bar in the pgf output. Default `0` (no)." },
+
   { F|O, "DeleteTemporaryFiles" , opt_print_delete_tmp_files , 1. ,
     "Delete temporary files used during printing" },
 
