@@ -9,7 +9,8 @@
 #include <string>
 #include "PixelBuffer.h"
 
-int print_pgf(const std::string &name, PixelBuffer *buffer, double *eulerAngles,
+int print_pgf(const std::string &name, const int num, const int cnt, 
+              PixelBuffer *buffer, double *eulerAngles,
               int *viewport, double *proj, double *model);
 
 #endif

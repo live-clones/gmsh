@@ -528,10 +528,29 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_PGF:
     {
       if(!FlGui::available()) break;
+      // fill pixel buffer without colorbar and axes
+      int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
+      int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);
+      opt_general_axes(0, GMSH_SET, 0);
+      opt_general_small_axes(0, GMSH_SET, 0);
+      int num = -1; // id of the post view
+      int cnt = 0; // no of scales/colorbars active
+      for(unsigned int i = 0; i < opt_post_nb_views(0,GMSH_GET,0); i++) {
+        if(opt_view_visible(i, GMSH_GET, 0)) {
+          if (opt_view_show_scale(i, GMSH_GET, 0)) {
+            opt_view_show_scale(i, GMSH_SET, 0);
+            num = i; cnt++;
+          }
+        }
+      }
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
       drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-      print_pgf(name, buffer, ctx->r, ctx->viewport, ctx->proj, ctx->model);
+      print_pgf(name, num, cnt, buffer, ctx->r, ctx->viewport, ctx->proj, ctx->model);
       delete buffer;
+      // restore view
+      if(restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);
+      if(restoreSmallAxis) opt_general_small_axes(0, GMSH_SET | GMSH_GUI, 1);
+      if(cnt > 0) opt_view_show_scale(num, GMSH_SET, 1);
     }
     break;
 

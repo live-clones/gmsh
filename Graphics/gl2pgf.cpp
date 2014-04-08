@@ -171,7 +171,7 @@ static int getMinMaxOfAxis(const int num, double result[8][3])
     fprintf(stderr,"x=(%f,%f), y=(%f,%f), z=(%f,%f)\n",
             xmin, xmax, ymin, ymax, zmin, zmax);
   }
-  else if (!(int) opt_view_axes_auto_position(num, GMSH_GET,0) && num >= 0) {
+  else if (num >= 0 && !(int) opt_view_axes_auto_position(num, GMSH_GET,0) ) {
     // needs to get manual axes set
     xmin = opt_view_axes_xmin(num, GMSH_GET, 0);
     xmax = opt_view_axes_xmax(num, GMSH_GET, 0);
@@ -237,13 +237,13 @@ static int assemble2d(const int num, const int exportAxis, std::string &axisstr,
     if (zlab.empty())
       zlab = "z";
 
-    printf("Euler two dim: 0:%f, 1:%f, 2:%f\n",
+    fprintf(stderr,"Euler two dim: 0:%f, 1:%f, 2:%f\n",
            eulerAngles[0], eulerAngles[1], eulerAngles[2]);
     int r0 = (int) (eulerAngles[0]+0.5);
     int r1 = (int) (eulerAngles[1]+0.5);
     int r2 = (int) (eulerAngles[2]+0.5);
     if (r0 % 90 != 0 || r1 % 90 != 0 || r2 % 90 !=0) {
-      printf("Euler two dim: 0:%d, 1:%d, 2:%d\n", r0, r1, r2);
+      fprintf(stderr,"Euler two dim: 0:%d, 1:%d, 2:%d\n", r0, r1, r2);
       Msg::Error("Please select a plane view (X, Y, Z)");
       return 1;
     }
@@ -344,8 +344,8 @@ static int assemble2d(const int num, const int exportAxis, std::string &axisstr,
     if (factor != 1) {
       char tmp[265];
       sprintf(tmp, "The pgf output has been rescaled in order to please "
-              "the X number precision/range. Rescaling your results by "
-              "a ftor %g", factor);
+              "the TeX number precision/range. Rescaling your results by "
+              "a factor %g", factor);
       Msg::Warning(tmp);
       // sprintf(tmp, "$\\times 10^{%d}$},",(int)(log10(factor)+0.5));
       // std::string repl = tmp;
@@ -359,6 +359,8 @@ static int assemble2d(const int num, const int exportAxis, std::string &axisstr,
       std::size_t foundx = axisstr.rfind("},", foundy);
       if (foundx!=std::string::npos)
         axisstr.insert(foundx,suffix);
+      else
+        return 4;
     }
     // axis options
     axisstr.append("\tenlargelimits=false, %% tight axis, use xmin=<val>, ");
@@ -434,6 +436,7 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
 
   bool  reorder = false;
   double minlen = 0.;
+  std::string suffix;
   for (unsigned int j=0; j < 8; j++) {
     // project the 8 axis end points to pixel coordinates,
     // accept if they are in the screen range.
@@ -453,10 +456,22 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
       // respecting TeXs range limts (1e-4 relative precision)
       minlen = norm3(axPts[j]);
       //fprintf(stderr,"j=%d, vec length %f:\n", j, minlen);
-      if(minlen < 1e-5) factor=1e6;
-      else if(minlen < 0.01) factor=1e3;
-      else if(minlen > 1e6) factor=1e-6;
-      else if(minlen > 1000) factor=1e-3;
+      if(minlen < 1e-5) {
+        factor=1e6;
+        suffix.assign("/$\\mu$m");
+      }
+      else if(minlen < 0.01) {
+        factor=1e3;
+        suffix.assign("/mm");
+      }
+      else if(minlen > 1e6) {
+        factor=1e-6;
+        suffix.assign("/Mm");
+      }
+      else if(minlen > 1000) {
+        factor=1e-3;
+        suffix.assign("/Km");
+      }
     }
     if (j == 1 && acceptableAnchors.size() == 2) {
       // precaution: if the first two coordinates are accepted, a
@@ -471,9 +486,40 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
 
   if (acceptableAnchors.size() < 4) {
     Msg::Error("Unable to calculate anchors for pgf output. "
-               "Make sure the entire scene is visible or adjust the axes min/max values "
-               "to fit inside your screen");
+               "Make sure the entire scene is visible or adjust "
+               "the axes min/max values to fit inside your screen.");
     return 2;
+  }
+  if (factor != 1) {
+    char tmp[265];
+    sprintf(tmp, "The pgf output has been rescaled in order to please "
+            "the TeX number precision/range. Rescaling your results by "
+            "a factor %g", factor);
+    Msg::Warning(tmp);
+    // replace three labels
+    if (exportAxis) {
+      // xlabel={x<>}, %%
+      // ylabel={y<>},
+      // zlabel={z<>},
+      // zlabel style={rotate=-90},
+      std::size_t foundrot = axisstr.rfind("},");
+      std::size_t foundz = axisstr.rfind("},", foundrot-1);
+      if (foundz!=std::string::npos)
+        axisstr.insert(foundz,suffix);
+      else
+        return 4;
+      std::size_t foundy = axisstr.rfind("},",foundz);
+      if (foundy!=std::string::npos)
+        axisstr.insert(foundy,suffix);
+      else
+        return 4;
+
+      std::size_t foundx = axisstr.rfind("},", foundy);
+      if (foundx!=std::string::npos)
+        axisstr.insert(foundx,suffix);
+      else
+        return 4;
+    }
   }
 
   char tmp[265];
@@ -505,27 +551,13 @@ static int assemble3d(const int num, const int exportAxis, std::string &axisstr,
   return 0;
 }
 
-int print_pgf(const std::string &name, PixelBuffer *buffer, double *eulerAngles,
+int print_pgf(const std::string &name, const int num, const int cnt, 
+              PixelBuffer *buffer, double *eulerAngles,
               int *viewport, double *proj, double *model)
 {
   int ypix = buffer->getHeight();
   int xpix = buffer->getWidth();
 
-  // write png (disable colorbar and axes)
-  int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
-  int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);
-  opt_general_axes(0, GMSH_SET, 0);
-  opt_general_small_axes(0, GMSH_SET, 0);
-  int num = -1; // id of the post view
-  int cnt = 0; // no of scales/colorbars active
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
-    if(opt_view_visible(i, GMSH_GET, 0)) {
-      if (opt_view_show_scale(i, GMSH_GET, 0)) {
-        opt_view_show_scale(i, GMSH_SET, 0); // deactivate for png output
-        num = i; cnt++;
-      }
-    }
-  }
   std::string base = SplitFileName(name)[1];
   std::string path = SplitFileName(name)[0];
   std::string pngfilen = path + base + ".png";
@@ -538,9 +570,6 @@ int print_pgf(const std::string &name, PixelBuffer *buffer, double *eulerAngles,
   }
   create_png(fp, buffer, 100);
   fclose(fp);
-  if (restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);
-  if (restoreSmallAxis) opt_general_small_axes(0, GMSH_SET | GMSH_GUI, 1);
-  opt_view_show_scale(num, GMSH_SET, 1);
 
   // write pgf
   int twoDim = (int)opt_print_pgf_two_dim(0, GMSH_GET, 0);
