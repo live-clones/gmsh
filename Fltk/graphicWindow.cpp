@@ -1992,7 +1992,7 @@ static Fl_Menu_Item bar_table[] = {
   {"&Help", 0, 0, 0, FL_SUBMENU},
     {"On&line Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"&Keyboard and Mouse Usage",  FL_CTRL+'h', (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
-    {"&Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?", 0},
+    {"&Current Options and Workspace", 0, (Fl_Callback *)status_options_cb, (void*)"?", 0},
     {"&Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0, FL_MENU_DIVIDER},
     {"&About Gmsh",           0, (Fl_Callback *)help_about_cb, 0},
     {0},
@@ -2056,7 +2056,7 @@ static Fl_Menu_Item sysbar_table[] = {
   {"Help", 0, 0, 0, FL_SUBMENU},
     {"Online Documentation", 0, (Fl_Callback *)help_online_cb, 0, FL_MENU_DIVIDER},
     {"Keyboard and Mouse Usage",        0, (Fl_Callback *)help_basic_cb, 0, FL_MENU_DIVIDER},
-    {"Current Options",      0, (Fl_Callback *)status_options_cb, (void*)"?"},
+    {"Current Options and Workspace", 0, (Fl_Callback *)status_options_cb, (void*)"?"},
     {"Restore all Options to Default Settings", 0, (Fl_Callback *)options_restore_defaults_cb, 0},
     {0},
   {0}

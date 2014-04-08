@@ -371,25 +371,25 @@ helpWindow::helpWindow()
 
     options = new paletteWindow
       (width, height, CTX::instance()->nonModalWindows ? true : false,
-       "Current Options");
+       "Current Options and Worskspace");
     options->box(GMSH_WINDOW_BOX);
 
     int BW = (width - 4 * WB) / 3;
 
     modified = new Fl_Check_Button
-      (WB, WB, BW, BH, "Show modified");
+      (WB, WB, BW, BH, "Only show modified");
     modified->type(FL_TOGGLE_BUTTON);
     modified->callback(help_options_cb);
-    modified->tooltip("Show options with values different from defaults");
+    modified->tooltip("Show only values different from defaults");
 
     showhelp = new Fl_Check_Button
       (2 * WB + BW, WB, BW, BH, "Show help");
     showhelp->type(FL_TOGGLE_BUTTON);
     showhelp->callback(help_options_cb);
-    showhelp->tooltip("Show help string for each option");
+    showhelp->tooltip("Show help strings");
 
     Fl_Group* o = new Fl_Group(3 * WB + 2 * BW, WB, BW, BH);
-    o->tooltip("Filter options");
+    o->tooltip("Filter values");
     o->box(FL_DOWN_BOX);
     o->color(FL_BACKGROUND2_COLOR);
     search = new Fl_Input
@@ -407,12 +407,12 @@ helpWindow::helpWindow()
     browser->textsize(FL_NORMAL_SIZE - 2);
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
-    browser->tooltip("Double-click to edit option");
+    browser->tooltip("Double-click to edit value");
 
     options->resizable(browser);
     options->position(Fl::x() + Fl::w()/2 - width / 2,
                       Fl::y() + Fl::h()/2 - height / 2);
-    options->size_range(about->w(), about->h());
+    options->size_range(width, height);
     options->end();
   }
 
