@@ -21,7 +21,7 @@
 #include <sys/sysctl.h>
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(BUILD_ANDROID)
 #include <sys/sysinfo.h>
 #endif
 
@@ -284,6 +284,8 @@ double TotalRam()
   status.dwLength = sizeof(status);
   GlobalMemoryStatusEx(&status);
   ram = status.ullTotalPhys  / ((double)1024 * 1024);
+#elif defined(BUILD_ANDROID)
+  ram = 1024;
 #elif defined(__linux__)
   struct sysinfo infos;
   if(sysinfo(&infos) != -1)
