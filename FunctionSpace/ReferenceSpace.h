@@ -150,22 +150,13 @@ class ReferenceSpace{
   void getOrderedEdge(void);
   void getOrderedFace(void);
 
-  void findCyclicPermutation
+  void findConnectivity
     (std::list<size_t>&               listOfTrueReferenceSpace,
      std::list<std::vector<size_t> >& listOfRefNodeIndexPermutation,
      std::list<std::vector<size_t> >& listOfReverseNodeIndexPermutation);
 
-  triplet isCyclicPermutation(const std::vector<size_t>& pTest,
-                              const std::vector<size_t>& pRef) const;
-
-  size_t findCorrespondingFace(const std::vector<size_t>& face,
-                               const std::vector<size_t>& node) const;
-
-  static bool haveSameNode(const std::vector<size_t>& face0,
-                           const std::vector<size_t>& face1);
-
-  static bool isFacePermutation(const std::vector<size_t>& refNode,
-                                const std::vector<size_t>& testNode);
+  triplet isSameConnectivity(const std::vector<size_t>& pTest,
+                             const std::vector<size_t>& pRef) const;
 
   bool isSameEdge(const std::vector<size_t>& pTest,
                   const std::vector<size_t>& pRef) const;

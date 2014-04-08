@@ -32,14 +32,14 @@ void ReferenceSpace::init(void){
 
   pTree = new PermutationTree(vertexSeq);
 
-  // Cyclic Permutation //
+  // Connectivity //
   list<size_t>          listOfTrueReferenceSpace;
   list<vector<size_t> > listOfRefNodeIndexPermutation;
   list<vector<size_t> > listOfReverseNodeIndexPermutation;
 
-  findCyclicPermutation(listOfTrueReferenceSpace,
-                        listOfRefNodeIndexPermutation,
-                        listOfReverseNodeIndexPermutation);
+  findConnectivity(listOfTrueReferenceSpace,
+                   listOfRefNodeIndexPermutation,
+                   listOfReverseNodeIndexPermutation);
 
   // Iterators //
   list<size_t>::iterator refSpaceIt = listOfTrueReferenceSpace.begin();
@@ -132,9 +132,10 @@ void ReferenceSpace::init(const std::string& path){
 }
 
 void ReferenceSpace::
-findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
-                      list<vector<size_t> >& listOfRefNodeIndexPermutation,
-                      list<vector<size_t> >& listOfReverseNodeIndexPermutation){
+findConnectivity(list<size_t>&          listOfTrueReferenceSpace,
+                 list<vector<size_t> >& listOfRefNodeIndexPermutation,
+                 list<vector<size_t> >& listOfReverseNodeIndexPermutation){
+
   // Alloc Some Data //
   const size_t nPerm = pTree->getNPermutation();
 
@@ -151,7 +152,7 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
   for(size_t i = 0; i < nVertex; i++)
     unPermutedIndex[i] = i;
 
-  // Find Cyclic Permutation //
+  // Find Connectivity //
   for(size_t i = 0; i < nPerm; i++){
     // No match
     match.first = false;
@@ -167,8 +168,8 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
       // Take Reference Space 'it'
       pTree->fillWithPermutation(*it, pRef);
 
-      // Look if it matches
-      match = isCyclicPermutation(pTest, pRef);
+      // Look if it matches (do pTest and pRef have the same connectivity ?)
+      match = isSameConnectivity(pTest, pRef);
 
       // If not, go to next Reference Space
       if(!match.first)
@@ -186,7 +187,7 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
       pTree->addTagToPermutation(i, i);
     }
 
-    // If a ReferenceSpace is found, and the index permutations
+    // If a ReferenceSpace is found, add the index permutations
     else{
       listOfRefNodeIndexPermutation.push_back(match.second);
       listOfReverseNodeIndexPermutation.push_back(match.third);
@@ -197,55 +198,16 @@ findCyclicPermutation(list<size_t>&          listOfTrueReferenceSpace,
 }
 
 ReferenceSpace::triplet ReferenceSpace::
-isCyclicPermutation(const vector<size_t>& pTest,
-                    const vector<size_t>& pRef) const{
+isSameConnectivity(const vector<size_t>& pTest,
+                   const vector<size_t>& pRef) const{
 
   // Triplet to return
   triplet tri;
 
-  // If no Face, we have no Cyclic Permutation
-  if(!refFaceNodeIdx.size()){
-    tri.first  = false;
-    tri.second = vector<size_t>(0);
-    tri.third  = vector<size_t>(0);
+  // Test if we have the same connectivity (i.e. the same edges)
+  bool haveSameEdge = isSameEdge(pTest, pRef);
 
-    return tri;
-  }
-
-  // Node IDs of Reference Space first Face
-  const size_t   nNodeInFaceZero = refFaceNodeIdx[0].size();
-  vector<size_t> refNode(nNodeInFaceZero);
-
-  for(size_t i = 0; i < nNodeInFaceZero; i++)
-    refNode[i] = pRef[refFaceNodeIdx[0][i]];
-
-  // Corresponding Face in Test Permutation
-  size_t testFaceId = findCorrespondingFace(refNode, pTest);
-
-  // If no corresponding face found, we have no Cyclic Permutation
-  if(testFaceId == (size_t)(-1)){
-    tri.first  = false;
-    tri.second = vector<size_t>(0);
-    tri.third  = vector<size_t>(0);
-
-    return tri;
-  }
-
-  // Node IDs of Test Permutation correspnding Face
-  const size_t   nNodeInFaceTest = refFaceNodeIdx[testFaceId].size();
-  vector<size_t> testNode(nNodeInFaceTest);
-
-  for(size_t i = 0; i < nNodeInFaceTest; i++)
-    testNode[i] = pTest[refFaceNodeIdx[testFaceId][i]];
-
-  // Test if we have a face cyclic permutation
-  size_t isCyclic = isFacePermutation(refNode, testNode);
-
-  // Test if we have the same connectivity
-  bool isSameConnectivity = isSameEdge(pTest, pRef);
-
-  //if(isCyclic && isSameConnectivity){
-  if(isSameConnectivity){
+  if(haveSameEdge){
     tri.first  = true;
     tri.second = getRefIndexPermutation(pRef, pTest);
     tri.third  = getReverseIndexPermutation(pRef, pTest);
@@ -258,95 +220,6 @@ isCyclicPermutation(const vector<size_t>& pTest,
   }
 
   return tri;
-}
-
-size_t ReferenceSpace::findCorrespondingFace(const vector<size_t>& face,
-                                             const vector<size_t>& node) const{
-  // Init Stuff //
-  const size_t nFace    = refFaceNodeIdx.size();
-  const size_t faceSize = face.size();
-  bool match = false;
-  size_t f = 0;
-
-  vector<size_t> testFace(faceSize);
-  size_t         nNodeInFace;
-
-  // Test All Face until match
-  while(!match && f < nFace){
-    nNodeInFace = refFaceNodeIdx[f].size();
-
-    if(nNodeInFace == faceSize){
-      // Get face f nodes
-      for(size_t i = 0; i < faceSize; i++)
-        testFace[i] = node[refFaceNodeIdx[f][i]];
-
-      // Look if match
-      match = haveSameNode(testFace, face);
-    }
-
-    if(!match)
-      f++;
-  }
-
-  // If a valid face is found return it
-  if(f < nFace)
-    return f;
-
-  // Else return (size_t)(-1)
-  else
-    return -1;
-}
-
-bool ReferenceSpace::haveSameNode(const vector<size_t>& face0,
-                                  const vector<size_t>& face1){
-  // Check Sizes
-  const size_t size = face0.size();
-
-  if(size != face1.size())
-    return false;
-
-  // Copy vector
-  vector<size_t> cFace0(face0);
-  vector<size_t> cFace1(face1);
-
-  // Sort both copy vectors
-  sort(cFace0.begin(), cFace0.end());
-  sort(cFace1.begin(), cFace1.end());
-
-  // Check if elements are the same and at same position
-  bool match = true;
-
-  for(size_t i = 0; i < size && match; i++)
-    match = (cFace0[i] == cFace1[i]);
-
-  return match;
-}
-
-bool ReferenceSpace::isFacePermutation(const vector<size_t>& refNode,
-                                       const vector<size_t>& testNode){
-  // Check Size
-  const size_t size = refNode.size();
-
-  if(size != testNode.size())
-    return false;
-
-  // Find refNode[0] in testNode
-  size_t offset = 0;
-
-  while(refNode[0] != testNode[offset] && offset < size)
-    offset++;
-
-  // If refNode[0] not found in testNode, there is no face permutation
-  if(offset == size)
-    return false;
-
-  // Check refNode[i] and testNode[(i + offset) % size]
-  bool match = true;
-
-  for(size_t i = 0; i < size && match; i++)
-    match = (refNode[i] == testNode[(i + offset) % size]);
-
-  return match;
 }
 
 bool ReferenceSpace::isSameEdge(const std::vector<size_t>& pTest,
