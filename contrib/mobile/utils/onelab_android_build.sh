@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-#android_ndk="/opt/android-ndk/"
-android_sdk="/opt/android-sdk/"
+android_ndk="/home/geuzaine/android-ndk-r8b/"
+android_sdk="/home/geuzaine/android-sdk/"
 
-gmsh_svn="/home/maxime/Stage/gmsh"
-getdp_svn="/home/maxime/Stage/getdp"
-petsc_lib="/home/maxime/Stage/petsc"
+gmsh_svn="/home/geuzaine/src/gmsh"
+getdp_svn="/home/geuzaine/src/getdp"
+petsc_lib="/home/geuzaine/petsc"
 
 cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/Android.cmake -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
 cmake_thread=6
@@ -24,7 +24,11 @@ if [ ! -f "$petsc_lib/libpetsc.so" ] || [ ! -f "$petsc_lib/libf2clapack.so" ] ||
 	exit 1
 fi
 
+export ANDROID_NDK=$android_ndk 
+
 # Gmsh
+cd $gmsh_svn
+svn up
 if [ ! -d "$gmsh_svn/build_android" ] || [ ! -f "$gmsh_svn/build_android/CMakeCache.txt" ]; then
   mkdir $gmsh_svn/build_android
   cd $gmsh_svn/build_android
@@ -38,10 +42,12 @@ make getHeaders
 check
 
 # GetDP
+cd $getdp_svn
+svn up
 if [ ! -d "$getdp_svn/build_android" ] || [ ! -f "$getdp_svn/build_android/CMakeCache.txt" ]; then
   mkdir $getdp_svn/build_android
   cd $getdp_svn/build_android
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" ..
+  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
   check
 fi
 cd $getdp_svn/build_android
@@ -81,7 +87,7 @@ while read line; do
         target_api=$(echo $line | awk '{print $3}')
         read line # Revision
         read line # Skins
-        if [ $target_api -gt 14 ]; then
+        if [ $target_api -ge 14 ]; then
                 $android_sdk/tools/android update project --name Onelab --path . --target $target
 		check
                 ant release

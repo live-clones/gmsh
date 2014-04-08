@@ -178,8 +178,8 @@ if(ENABLE_BUILD_ANDROID)
                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
     endforeach(DIR)
     find_program(ZIP_COMMAND zip)
-    add_custom_command(TARGET androidProject POST_BUILD COMMAND pushd ${CMAKE_CURRENT_BINARY_DIR}/models/ && zip -r
-                     ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip * && popd)
+    add_custom_command(TARGET androidProject POST_BUILD COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/models/ && zip -r
+                     ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip * --exclude=*.svn*)
 
   message(STATUS "")
   message(STATUS "ONELAB for Android successfully configured:")
