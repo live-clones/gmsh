@@ -14,6 +14,7 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
+#include "Parser.h"
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
@@ -219,6 +220,10 @@ int GmshBatch()
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
+    std::vector<std::string> s;
+    PrintParserSymbols(0, s);
+    for(unsigned int i = 0; i < s.size(); i++)
+      Msg::Direct("%s", s[i].c_str());
   }
   else if(CTX::instance()->batch == -1){
     CreateOutputFile(CTX::instance()->outputFileName,
