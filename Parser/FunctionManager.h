@@ -10,14 +10,14 @@ class mystack;
 class mymap;
 
 #include <string>
-#include "IO.h"
+#include "GmshIO.h"
 
-// Singleton, one function manager for all parsers. 
+// Singleton, one function manager for all parsers.
 
 class FunctionManager
 {
   mymap *functions;
-  mystack *calls;  
+  mystack *calls;
   FunctionManager ();
   static FunctionManager *instance;
  public :

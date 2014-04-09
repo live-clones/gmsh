@@ -9,7 +9,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include "GmshIO.h"
 
 int gmsh_yyparse();
