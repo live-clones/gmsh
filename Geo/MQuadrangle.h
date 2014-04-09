@@ -425,8 +425,8 @@ class MQuadrangleN : public MQuadrangle {
     Msg::Error("no tag matches a p%d quadrangle with %d vertices", _order, 4+_vs.size());
     return 0;
   }
-  virtual int getTypeForVTK() const 
-  { 
+  virtual int getTypeForVTK() const
+  {
     if(_order== 2 && _vs.size() + 4 == 9) return 28;
     if(_order== 2 && _vs.size() + 4 == 8)  return 23;
     return MQuadrangle::getTypeForVTK();
@@ -485,7 +485,7 @@ struct compareMQuadrangleLexicographic
     if(_v1[1] > _v2[1]) return false;
     if(_v1[2] < _v2[2]) return true;
     if(_v1[2] > _v2[2]) return false;
-    if(_v1[3] < _v1[3]) return true;
+    if(_v1[3] < _v2[3]) return true;
     return false;
   }
 };
