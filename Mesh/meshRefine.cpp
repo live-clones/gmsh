@@ -388,6 +388,9 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
 
+  // Check all 3D elements for negative volume and reverse if needed
+  m->setAllVolumesPositive();
+
   double t2 = Cpu();
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }
