@@ -11,6 +11,7 @@
 #include "GModel.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
+#include "MVertexPositionSet.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -2355,15 +2356,128 @@ static void MaxNumSurface(void *a, void *b)
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, s->Num);
 }
 
+static void ReplaceDuplicatePointsNew()
+{
+  Msg::Info("New Coherence required...");
+
+  double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
+
+  // Create unique points
+  std::map<MVertex*, Vertex*> v2V;
+  std::vector<MVertex*> all;
+  List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    Vertex *V;
+    List_Read(tmp, i, &V);
+    MVertex *v = new MVertex(V->Pos.X, V->Pos.Y, V->Pos.Z);
+    all.push_back(v);
+    v2V[v] = V;
+  }
+  List_Delete(tmp);
+  MVertexPositionSet pos(all);
+
+  // touch unique points
+  tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    Vertex *V;
+    List_Read(tmp, i, &V);
+    pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol);
+  }
+  List_Delete(tmp);
+
+  // Replace old points in curves
+  tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    Curve *c;
+    List_Read(tmp, i, &c);
+    // replace begin/end points
+    c->beg = v2V[pos.find(c->beg->Pos.X, c->beg->Pos.Y, c->beg->Pos.Z, tol)];
+    c->end = v2V[pos.find(c->end->Pos.X, c->end->Pos.Y, c->end->Pos.Z, tol)];
+    // replace control points
+    for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
+      Vertex *V;
+      List_Read(c->Control_Points, j, &V);
+      List_Write(c->Control_Points, j,
+                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+    }
+    // replace extrusion sources
+    if(c->Extrude && c->Extrude->geo.Mode == EXTRUDED_ENTITY){
+      Vertex *V = FindPoint(std::abs(c->Extrude->geo.Source));
+      if(V) c->Extrude->geo.Source =
+              v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]->Num;
+    }
+  }
+  List_Delete(tmp);
+
+  // Replace old points in surfaces
+  tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    Surface *s;
+    List_Read(tmp, i, &s);
+    // replace transfinite corners
+    for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
+      Vertex *V;
+      List_Read(s->TrsfPoints, j, &V);
+      List_Write(s->TrsfPoints, j,
+                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+    }
+  }
+  List_Delete(tmp);
+
+  // Replace old points in volumes
+  tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    Volume *vol;
+    List_Read(tmp, i, &vol);
+    // replace transfinite corners
+    for(int j = 0; j < List_Nbr(vol->TrsfPoints); j++){
+      Vertex *V;
+      List_Read(vol->TrsfPoints, j, &V);
+      List_Write(vol->TrsfPoints, j,
+                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+    }
+  }
+  List_Delete(tmp);
+
+  // Replace old points in physical groups
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p;
+    List_Read(GModel::current()->getGEOInternals()->PhysicalGroups, i, &p);
+    if(p->Typ == MSH_PHYSICAL_POINT){
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        Vertex *V = FindPoint(std::abs(num));
+        if(V) List_Write(p->Entities, j,
+                         &(v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]->Num));
+      }
+    }
+  }
+
+  int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
+  for(unsigned int i = 0; i < all.size(); i++){
+    if(all[i]->getIndex() == 0){
+      Vertex *V = v2V[all[i]];
+      Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
+      Free_Vertex(&V, NULL);
+    }
+    delete all[i];
+  }
+  int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
+  Msg::Info("Done new Coherence (removed %d additional points)", end - start);
+}
 
 static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
 {
-  // FIXME: This routine is in fact logically wrong (the compareTwoPoints
-  // function used in the avl tree is not a appropriate comparison
-  // function). The fix is simple (use a multi dimensional tree, e.g.,
-  // MVertexPositionSet), but fixing the routine would break backward
-  // compatibility with old .geo files. This will be fixed in the new abstract
-  // GModel CAD creation routines.
+  // This routine is logically wrong: the compareTwoPoints() function used in
+  // the avl tree is not an appropriate comparison function. Fixing the routine
+  // is easy (we need to a multi-dimensional tree), but it would break backward
+  // compatibility with old .geo files (the point ids after "Coherence" would
+  // change, as which point gets removed is implementation-dependent).
+  //
+  // Instead, we still use this routine, but call the new one if an error is
+  // detected.
+
   Vertex *v, *v2, **pv, **pv2;
   Curve *c;
   Surface *s;
@@ -2372,7 +2486,6 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   Tree_T *allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), compareTwoPoints);
 
   // Create unique points
-
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
 
   List_T *All = Tree2List(GModel::current()->getGEOInternals()->Points);
@@ -2396,7 +2509,6 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   List_Delete(All);
 
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
-
   if(start == end) {
     Tree_Delete(points2delete);
     Tree_Delete(allNonDuplicatedPoints);
@@ -2410,28 +2522,33 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     Tree_Action(GModel::current()->getGEOInternals()->Points, MaxNumPoint);
   }
 
+  bool success = true;
+
   // Replace old points in curves
   All = Tree2List(GModel::current()->getGEOInternals()->Curves);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     // replace begin/end points
     if(!Tree_Query(allNonDuplicatedPoints, &c->beg)){
-      Msg::Error("Could not replace point %d in Coherence", c->beg->Num);
-      Tree_Add(GModel::current()->getGEOInternals()->Points, &c->beg);
+      Msg::Debug("Could not replace point %d in old Coherence", c->beg->Num);
+      Tree_Insert(GModel::current()->getGEOInternals()->Points, &c->beg);
       Tree_Suppress(points2delete, &c->beg);
+      success = false;
     }
     if(!Tree_Query(allNonDuplicatedPoints, &c->end)){
-      Msg::Error("Could not replace point %d in Coherence", c->end->Num);
-      Tree_Add(GModel::current()->getGEOInternals()->Points, &c->end);
+      Msg::Debug("Could not replace point %d in old Coherence", c->end->Num);
+      Tree_Insert(GModel::current()->getGEOInternals()->Points, &c->end);
       Tree_Suppress(points2delete, &c->end);
+      success = false;
     }
     // replace control points
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       pv = (Vertex **)List_Pointer(c->Control_Points, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
-        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
-        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Msg::Debug("Could not replace point %d in old Coherence", (*pv)->Num);
+        Tree_Insert(GModel::current()->getGEOInternals()->Points, pv);
         Tree_Suppress(points2delete, pv);
+        success = false;
       }
       else
         List_Write(c->Control_Points, j, pv2);
@@ -2441,9 +2558,10 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
       v2 = FindPoint(std::abs(c->Extrude->geo.Source), points2delete);
       if(v2){
         if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2))){
-          Msg::Error("Could not replace point %d in Coherence", v2->Num);
-          Tree_Add(GModel::current()->getGEOInternals()->Points, &v2);
+          Msg::Debug("Could not replace point %d in old Coherence", v2->Num);
+          Tree_Insert(GModel::current()->getGEOInternals()->Points, &v2);
           Tree_Suppress(points2delete, &v2);
+          success = false;
         }
         else
           c->Extrude->geo.Source = (*pv2)->Num;
@@ -2453,7 +2571,6 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   List_Delete(All);
 
   // Replace old points in surfaces
-
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
@@ -2461,9 +2578,10 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
-        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
-        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Msg::Debug("Could not replace point %d in old Coherence", (*pv)->Num);
+        Tree_Insert(GModel::current()->getGEOInternals()->Points, pv);
         Tree_Suppress(points2delete, pv);
+        success = false;
       }
       else
         List_Write(s->TrsfPoints, j, pv2);
@@ -2472,7 +2590,6 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   List_Delete(All);
 
   // Replace old points in volumes
-
   All = Tree2List(GModel::current()->getGEOInternals()->Volumes);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
@@ -2480,9 +2597,10 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     for(int j = 0; j < List_Nbr(vol->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
-        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
-        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Msg::Debug("Could not replace point %d in old Coherence", (*pv)->Num);
+        Tree_Insert(GModel::current()->getGEOInternals()->Points, pv);
         Tree_Suppress(points2delete, pv);
+        success = false;
       }
       else
         List_Write(vol->TrsfPoints, j, pv2);
@@ -2501,9 +2619,10 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
         v2 = FindPoint(std::abs(num), points2delete);
         if(v2){
           if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2))){
-            Msg::Error("Could not replace point %d in Coherence", v2->Num);
-            Tree_Add(GModel::current()->getGEOInternals()->Points, &v2);
+            Msg::Debug("Could not replace point %d in old Coherence", v2->Num);
+            Tree_Insert(GModel::current()->getGEOInternals()->Points, &v2);
             Tree_Suppress(points2delete, &v2);
+            success = false;
           }
           else
             List_Write(p->Entities, j, &(*pv2)->Num);
@@ -2515,6 +2634,8 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   Tree_Action(points2delete, Free_Vertex);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
+
+  if(!success) ReplaceDuplicatePointsNew();
 }
 
 static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
@@ -2525,7 +2646,6 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   Tree_T *allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
 
   // Create unique curves
-
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
   List_T *All = Tree2List(GModel::current()->getGEOInternals()->Curves);
@@ -2588,7 +2708,6 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   }
 
   // Replace old curves in curves
-
   All = Tree2List(GModel::current()->getGEOInternals()->Curves);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
@@ -2606,7 +2725,6 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   List_Delete(All);
 
   // Replace old curves in surfaces
-
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
@@ -2678,7 +2796,6 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   Tree_T *allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), compareTwoSurfaces);
 
   // Create unique surfaces
-
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
   List_T *All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
@@ -2721,7 +2838,6 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   }
 
   // Replace old surfaces in surfaces
-
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
@@ -2739,7 +2855,6 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   List_Delete(All);
 
   // Replace old surfaces in volumes
-
   All = Tree2List(GModel::current()->getGEOInternals()->Volumes);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
