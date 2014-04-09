@@ -543,7 +543,8 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
   return true;
 }
 
-void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*, PointLessThan> &recoverMap)
+void BDS2GMSH(BDS_Mesh *m, GFace *gf,
+              std::map<BDS_Point*, MVertex*, PointLessThan> &recoverMap)
 {
   {
     std::set<BDS_Point*,PointLessThan>::iterator itp = m->points.begin();
@@ -584,7 +585,6 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf, std::map<BDS_Point*, MVertex*, PointLessTh
     }
   }
 }
-
 
 static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges)
 {
@@ -933,7 +933,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // build a set with all points of the boundaries
-  std::set<MVertex*> all_vertices;
+  std::set<MVertex*> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
     if((*ite)->isSeam(gf)) return false;
@@ -943,11 +943,25 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 	MVertex *v2 = (*ite)->lines[i]->getVertex(1);
         all_vertices.insert(v1);
         all_vertices.insert(v2);
+        if(boundary.find(v1) == boundary.end())
+          boundary.insert(v1);
+        else
+          boundary.erase(v1);
+        if(boundary.find(v2) == boundary.end())
+          boundary.insert(v2);
+        else
+          boundary.erase(v2);
       }
     }
     else
       Msg::Info("Degenerated mesh on edge %d", (*ite)->tag());
     ++ite;
+  }
+
+  if(boundary.size()){
+    Msg::Error("The 1D mesh seems not to be forming a closed loop");
+    gf->meshStatistics.status = GFace::FAILED;
+    return false;
   }
 
   std::list<GEdge*> emb_edges = gf->embeddedEdges();
@@ -980,7 +994,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   if(all_vertices.size() < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
-                 "Only %d Mesh Vertices on The Contours",
+                 "Only %d mesh vertices on the contours",
                  gf->tag(), all_vertices.size());
     gf->meshStatistics.status = GFace::DONE;
     return true;
@@ -1802,7 +1816,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       }
       if(!ok){
         gf->meshStatistics.status = GFace::FAILED;
-        Msg::Error("The 1D Mesh seems not to be forming a closed loop");
+        Msg::Error("The 1D mesh seems not to be forming a closed loop");
         delete m;
         return false;
       }
