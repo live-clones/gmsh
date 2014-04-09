@@ -2411,20 +2411,28 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   }
 
   // Replace old points in curves
-
   All = Tree2List(GModel::current()->getGEOInternals()->Curves);
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     // replace begin/end points
-    if(!Tree_Query(allNonDuplicatedPoints, &c->beg))
-      Msg::Error("Weird point %d in Coherence", c->beg->Num);
-    if(!Tree_Query(allNonDuplicatedPoints, &c->end))
-      Msg::Error("Weird point %d in Coherence", c->end->Num);
+    if(!Tree_Query(allNonDuplicatedPoints, &c->beg)){
+      Msg::Error("Could not replace point %d in Coherence", c->beg->Num);
+      Tree_Add(GModel::current()->getGEOInternals()->Points, &c->beg);
+      Tree_Suppress(points2delete, &c->beg);
+    }
+    if(!Tree_Query(allNonDuplicatedPoints, &c->end)){
+      Msg::Error("Could not replace point %d in Coherence", c->end->Num);
+      Tree_Add(GModel::current()->getGEOInternals()->Points, &c->end);
+      Tree_Suppress(points2delete, &c->end);
+    }
     // replace control points
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       pv = (Vertex **)List_Pointer(c->Control_Points, j);
-      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
+        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
+        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Tree_Suppress(points2delete, pv);
+      }
       else
         List_Write(c->Control_Points, j, pv2);
     }
@@ -2432,8 +2440,11 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     if(c->Extrude && c->Extrude->geo.Mode == EXTRUDED_ENTITY){
       v2 = FindPoint(std::abs(c->Extrude->geo.Source), points2delete);
       if(v2){
-        if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2)))
-          Msg::Error("Weird point %d in Coherence", v2->Num);
+        if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2))){
+          Msg::Error("Could not replace point %d in Coherence", v2->Num);
+          Tree_Add(GModel::current()->getGEOInternals()->Points, &v2);
+          Tree_Suppress(points2delete, &v2);
+        }
         else
           c->Extrude->geo.Source = (*pv2)->Num;
       }
@@ -2449,8 +2460,11 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     // replace transfinite corners
     for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
-      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
+        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
+        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Tree_Suppress(points2delete, pv);
+      }
       else
         List_Write(s->TrsfPoints, j, pv2);
     }
@@ -2465,8 +2479,11 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     // replace transfinite corners
     for(int j = 0; j < List_Nbr(vol->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
-      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv))){
+        Msg::Error("Could not replace point %d in Coherence", (*pv)->Num);
+        Tree_Add(GModel::current()->getGEOInternals()->Points, pv);
+        Tree_Suppress(points2delete, pv);
+      }
       else
         List_Write(vol->TrsfPoints, j, pv2);
     }
@@ -2483,8 +2500,11 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
         List_Read(p->Entities, j, &num);
         v2 = FindPoint(std::abs(num), points2delete);
         if(v2){
-          if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2)))
-            Msg::Error("Weird point %d in Coherence", v2->Num);
+          if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v2))){
+            Msg::Error("Could not replace point %d in Coherence", v2->Num);
+            Tree_Add(GModel::current()->getGEOInternals()->Points, &v2);
+            Tree_Suppress(points2delete, &v2);
+          }
           else
             List_Write(p->Entities, j, &(*pv2)->Num);
         }
@@ -2577,7 +2597,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       c2 = FindCurve(std::abs(c->Extrude->geo.Source), curves2delete);
       if(c2){
         if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-          Msg::Error("Weird curve %d in Coherence", c2->Num);
+          Msg::Error("Could not replace curve %d in Coherence", c2->Num);
         else
           c->Extrude->geo.Source = (*pc2)->Num;
       }
@@ -2594,7 +2614,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
       pc = (Curve **)List_Pointer(s->Generatrices, j);
       if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
-        Msg::Error("Weird curve %d in Coherence", (*pc)->Num);
+        Msg::Error("Could not replace curve %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
         // arghhh: check compareTwoCurves!
@@ -2606,7 +2626,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       for(int j = 0; j < List_Nbr(s->EmbeddedCurves); j++) {
         pc = (Curve **)List_Pointer(s->EmbeddedCurves, j);
         if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
-          Msg::Error("Weird curve %d in Coherence", (*pc)->Num);
+          Msg::Error("Could not replace curve %d in Coherence", (*pc)->Num);
         else {
           List_Write(s->EmbeddedCurves, j, pc2);
           End_Curve(*pc2);
@@ -2618,7 +2638,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       c2 = FindCurve(std::abs(s->Extrude->geo.Source), curves2delete);
       if(c2){
         if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-          Msg::Error("Weird curve %d in Coherence", c2->Num);
+          Msg::Error("Could not replace curve %d in Coherence", c2->Num);
         else
           s->Extrude->geo.Source = (*pc2)->Num;
       }
@@ -2637,7 +2657,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         c2 = FindCurve(std::abs(num), curves2delete);
         if(c2){
           if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-            Msg::Error("Weird curve %d in Coherence", c2->Num);
+            Msg::Error("Could not replace curve %d in Coherence", c2->Num);
           else
             List_Write(p->Entities, j, &(*pc2)->Num);
         }
@@ -2710,7 +2730,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
       s2 = FindSurface(std::abs(s->Extrude->geo.Source), surfaces2delete);
       if(s2){
         if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-          Msg::Error("Weird surface %d in Coherence", s2->Num);
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
         else
           s->Extrude->geo.Source = (*ps2)->Num;
       }
@@ -2727,7 +2747,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
     for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
       ps = (Surface **)List_Pointer(vol->Surfaces, j);
       if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, ps)))
-        Msg::Error("Weird surface %d in Coherence", (*ps)->Num);
+        Msg::Error("Could not replace surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
     }
@@ -2736,7 +2756,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
       s2 = FindSurface(std::abs(vol->Extrude->geo.Source), surfaces2delete);
       if(s2){
         if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-          Msg::Error("Weird surface %d in Coherence", s2->Num);
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
         else
           vol->Extrude->geo.Source = (*ps2)->Num;
       }
@@ -2755,7 +2775,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
         s2 = FindSurface(std::abs(num), surfaces2delete);
         if(s2){
           if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-            Msg::Error("Weird surface %d in Coherence", s2->Num);
+            Msg::Error("Could not replace surface %d in Coherence", s2->Num);
           else
             List_Write(p->Entities, j, &(*ps2)->Num);
         }
