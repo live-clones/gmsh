@@ -7,7 +7,7 @@
 #include <string.h>
 #include "GModel.h"
 #include "OS.h"
-#include "IO.h"
+#include "GmshIO.h"
 
 #include "MLine.h"
 #include "MTriangle.h"
@@ -92,9 +92,9 @@ int GModel::readUNV(const std::string &name)
           std::vector<MVertex*> vertices(numNodes);
           for(int i = 0; i < numNodes; i++){
             int n;
-            if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; } 
+            if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; }
             if(strlen(buffer) < 10)
-                if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; } 
+                if(!gmshgets(buffer, 11, fp)){ gmshclose(fp); return 0; }
             if(!sscanf(buffer, "%d", &n)){ gmshclose(fp); return 0; }
             vertices[i] = getMeshVertexByTag(n);
             if(!vertices[i]){

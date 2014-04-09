@@ -12,7 +12,7 @@
 #include "GmshMessage.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
-#include "IO.h"
+#include "GmshIO.h"
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);

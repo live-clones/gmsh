@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "IO.h"
+#include "GmshIO.h"
 
 int gmsh_yyparse();
 int gmsh_yylex();
