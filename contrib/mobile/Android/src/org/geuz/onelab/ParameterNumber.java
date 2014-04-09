@@ -27,6 +27,7 @@ public class ParameterNumber extends Parameter{
 	private Spinner _spinner;
 	private CheckBox _checkbox;
 	private EditText _edittext;
+	private Stepper _stepper;
 	
 	public ParameterNumber(Context context, Gmsh gmsh, String name){
 		super(context, gmsh, name);
@@ -70,6 +71,12 @@ public class ParameterNumber extends Parameter{
 		else if(_edittext != null)
 		{
 			_edittext.setText(""+Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal));
+		}
+		else if(_stepper != null)
+		{
+			_stepper.setMaximum((int)Math.round(_max));
+			_stepper.setMinimum((int)Math.round(_min));
+			_stepper.setValue((int)Math.round(_value));
 		}
 	}
 	
@@ -154,6 +161,8 @@ public class ParameterNumber extends Parameter{
 		// ...
 		if(nLabels < 1 && _step == 0)
 			_edittext = new EditText(_context);
+		else if(_step == 1)
+			_stepper = new Stepper(_context);
 		else if(nLabels < 1)
 			_bar = new SeekBar(_context);
 		this.update();
@@ -234,6 +243,14 @@ public class ParameterNumber extends Parameter{
 				public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
 				public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
 
+			});
+		}
+		else if(_stepper != null) {
+			paramLayout.addView(_stepper);
+			_stepper.setOnValueChangedListener(new Stepper.OnValueChangedListener() {
+				public void onValueChanged() {
+					setValue(_stepper.getValue());
+				}
 			});
 		}
 		return paramLayout;
