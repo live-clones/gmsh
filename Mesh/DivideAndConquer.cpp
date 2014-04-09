@@ -535,6 +535,7 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
 {
   if (!_adjacencies){
     Msg::Error("No adjacencies were created");
+    return;
   }
   const int n = _adjacencies[pt].t_length;
   for(int j = 0; j < n; j++) {
