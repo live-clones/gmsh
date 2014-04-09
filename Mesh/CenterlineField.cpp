@@ -296,21 +296,18 @@ static void cutTriangle(MTriangle *tri,
 Centerline::Centerline(std::string fileName): kdtree(0), kdtreeR(0)
 {
   recombine = (CTX::instance()->mesh.recombineAll) || (CTX::instance()->mesh.recombine3DAll);
-
-  printf("centerline filename =%s \n", fileName.c_str());
-  importFile(fileName);
-  buildKdTree();
   nbPoints = 25;
   hLayer = 0.3;
   hSecondLayer = 0.3;
   nbElemLayer = 3;
   nbElemSecondLayer = 0;
-
-  update_needed = false;
   is_cut = 0;
   is_closed = 0;
   is_extruded = 0;
 
+  importFile(fileName);
+  buildKdTree();
+  update_needed = false;
 }
 
 Centerline::Centerline(): kdtree(0), kdtreeR(0)

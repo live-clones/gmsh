@@ -1803,7 +1803,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       if(!ok){
         gf->meshStatistics.status = GFace::FAILED;
         Msg::Error("The 1D Mesh seems not to be forming a closed loop");
-        m->scalingU = m->scalingV = 1.0;
+        delete m;
         return false;
       }
       nbPointsTotal += nbPointsLocal;
@@ -1816,6 +1816,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
                  "Only %d Mesh Vertices on The Contours",
                  gf->tag(), nbPointsTotal);
     gf->meshStatistics.status = GFace::DONE;
+    delete m;
     return true;
   }
   if(nbPointsTotal == 3){
@@ -1827,6 +1828,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     gf->triangles.push_back(new MTriangle(vv[0], vv[1], vv[2]));
     gf->meshStatistics.status = GFace::DONE;
+    delete m;
     return true;
   }
 
@@ -1927,6 +1929,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         Msg::Error("Impossible to recover the edge %d %d", edgeLoop_BDS[j]->iD,
                    edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
         gf->meshStatistics.status = GFace::FAILED;
+        delete m;
         return false;
       }
       else e->g = &CLASS_E;

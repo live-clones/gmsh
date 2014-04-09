@@ -1668,6 +1668,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     }
   }
 
+  delete mapping;
   delete lsys;
 }
 

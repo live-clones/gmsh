@@ -392,6 +392,7 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary, bool pars
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)){
         Msg::Error("Write error");
+        fclose(fp);
         return false;
       }
     }

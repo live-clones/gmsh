@@ -193,11 +193,11 @@ int MeshTransfiniteSurface(GFace *gf)
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])){
-      N[iCorner++] = i;
       if(iCorner > 4){
         Msg::Error("Surface %d transfinite parameters are incoherent", gf->tag());
         return 0;
       }
+      N[iCorner++] = i;
     }
     SPoint2 param;
     reparamMeshVertexOnFace(v, gf, param);

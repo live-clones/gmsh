@@ -79,7 +79,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	  int numNodes = data1->getNumNodes(step, ent, ele);
 	  int dim = data1->getDimension(step, ent, ele);
           if((dimension>0) && (dim!=dimension)) continue;
-	  double x[8], y[8], z[8], val[8 * 3];
+	  double x[8], y[8], z[8], val[8 * 3] = {0.};
 	  for(int nod = 0; nod < numNodes; nod++){
 	    data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
 	    for(int comp = 0; comp < numComp; comp++)

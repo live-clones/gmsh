@@ -52,6 +52,10 @@ class PointData {
     v = new MVertex(x, y, z);
     val.resize(numVal);
   }
+  ~PointData()
+  {
+    delete v;
+  }
 };
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
@@ -156,8 +160,6 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 
   for(unsigned int i = 0; i < tets.size(); i++)
     delete tets[i];
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    delete vertices[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     data2->Time.push_back(data1->getTime(i));

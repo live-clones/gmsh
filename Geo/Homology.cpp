@@ -472,8 +472,7 @@ std::vector<int> Homology::_addToModel(int dim, bool co, bool post, int physical
 
 void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
 {
-  //std::vector<int> physicals;
-  if(!_homologyComputed[dim])
+  if(dim > -1 && !_homologyComputed[dim])
     Msg::Warning("%d-Homology is not computed", dim);
   if(dim == -1) {
     for(int j = 0; j < 4; j++) {
@@ -487,7 +486,7 @@ void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) cons
 
 void Homology::addCochainsToModel(int dim, bool post, int physicalNumRequest) const
 {
-  if(!_cohomologyComputed[dim])
+  if(dim > -1 && !_cohomologyComputed[dim])
     Msg::Warning("%d-Cohomology is not computed", dim);
   if(dim == -1) {
     for(int j = 0; j < 4; j++) {

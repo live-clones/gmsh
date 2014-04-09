@@ -2114,39 +2114,38 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
   // Part 2: Make the unique list
 
   std::vector<int> comp_surfs = ps->compound;
-  if( comp_surfs.size() == 0 || ps->Typ != MSH_SURF_COMPOUND ){
+  if(comp_surfs.size() == 0 || ps->Typ != MSH_SURF_COMPOUND){
     Msg::Error("Surface %d is not compound", ps->Num);
-    return (List_T*)(0);
+    return 0;
   }
 
   int num_surfs = comp_surfs.size();
-  List_T *bnd_c= List_Create(4, 1, sizeof(Curve*));
+  List_T *bnd_c = List_Create(4, 1, sizeof(Curve*));
 
   std::map<int, unsigned int> count_map;
 
   for( int i = 0; i < num_surfs; i++ ){
     Surface *s = FindSurface(std::abs(comp_surfs[i]));
-    if( !s ){
+    if(!s){
       Msg::Error("Unknown surface %d", std::abs(comp_surfs[i]) );
-      return (List_T*)(0);
+      List_Delete(bnd_c);
+      return 0;
     }
     int num_in_surf = List_Nbr(s->Generatrices);
     for( int m = 0; m < num_in_surf; m++ ){
       Curve *c=0;
       List_Read(s->Generatrices, m, &c);
-
-      if( !c ){
+      if(!c){
         Msg::Error("Unknown curve");
-        return (List_T*)(0);
+        List_Delete(bnd_c);
+        return 0;
       }
-
-      if( !FindCurve(-c->Num)  ) {
+      if(!FindCurve(-c->Num)) {
         Msg::Error("Unknown curve %d", -c->Num );
-        return (List_T*)(0);
+        List_Delete(bnd_c);
+        return 0;
       }
-
       int abs_Num = std::abs(c->Num) ;
-
       if( count_map.find( abs_Num ) == count_map.end() )
         count_map[ abs_Num ] = 1;
       else
@@ -2156,7 +2155,7 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
 
   // Now, create the list of uniques.  Exclude any repeats of abs(c->num) of
   //   course.
-  for( int i = 0; i < num_surfs; i++ ){
+  for(int i = 0; i < num_surfs; i++){
     Surface *s = FindSurface(std::abs(comp_surfs[i]));
     int num_in_surf = List_Nbr(s->Generatrices);
     for( int m = 0; m < num_in_surf; m++ ){
@@ -2166,7 +2165,8 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
       if( itmap != count_map.end() ){
         if( itmap->second == 1 ){
           List_Add(bnd_c, &c);
-	  // for duplicates  -- if coherence on, do not need. if coherence off, should not try to find them
+	  // for duplicates -- if coherence on, do not need. if coherence off,
+	  // should not try to find them
           /*bool unique_flag = true;
           std::map<int, unsigned int>::iterator itmap2 = count_map.begin();
 
@@ -2188,8 +2188,9 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
       }
       else{ // if not found the curve in the count_map
         Msg::Error("A problem in finding unique curves in extrusion of compound surface %d",
-                   std::abs(ps->Num) );
-        return (List_T*)(0);
+                   std::abs(ps->Num));
+        List_Delete(bnd_c);
+        return 0;
       }
     }
   }
@@ -2223,10 +2224,10 @@ static List_T* GetOrderedUniqueEdges( Surface *s )
     Curve *ctemp = 0;
     List_Read(unique, i, &ctemp);
     if( !ctemp ){
-      Msg::Error("No such curve.");
+      Msg::Error("No such curve");
+      List_Delete(gen_nums);
       return 0;
     }
-
     List_Add(gen_nums, &(ctemp->Num));
   }
 
@@ -2235,21 +2236,19 @@ static List_T* GetOrderedUniqueEdges( Surface *s )
   // put sorted list of curve pointers back into compnd_gen and generatrices
   List_Reset(unique);
   for( int i = 0; i < List_Nbr(gen_nums); i++ ){
-
     Curve *ctemp = 0;
     int j;
     List_Read(gen_nums, i, &j);
     if( !(ctemp = FindCurve(j)) ){
-      Msg::Error("No such curve %d.", j);
+      Msg::Error("No such curve %d", j);
+      List_Delete(gen_nums);
       return 0;
     }
     List_Add(unique, &ctemp);
   }
 
   List_Delete(gen_nums);
-
   return unique;
-
 }
 
 // Duplicate removal
@@ -2518,6 +2517,9 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         if(!(c2 = FindCurve(-c->Num))) {
           Msg::Error("Unknown curve %d", -c->Num);
           List_Delete(All);
+          Tree_Action(curves2delete, Free_Curve);
+          Tree_Delete(curves2delete);
+          Tree_Delete(allNonDuplicatedCurves);
           return;
         }
         Tree_Insert(allNonDuplicatedCurves, &c2);
@@ -2552,6 +2554,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
   if(start == end) {
+    Tree_Action(curves2delete, Free_Curve);
     Tree_Delete(curves2delete);
     Tree_Delete(allNonDuplicatedCurves);
     return;
@@ -2684,6 +2687,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
   if(start == end) {
+    Tree_Action(surfaces2delete, Free_Surface);
     Tree_Delete(surfaces2delete);
     Tree_Delete(allNonDuplicatedSurfaces);
     return;
@@ -3840,6 +3844,7 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
       if(c->Typ == MSH_SEGM_DISCRETE){
         Msg::Debug("Aborting line loop sort for discrete edge: hope you know "
 		   "what you're doing ;-)");
+        List_Delete(temp);
         return;
       }
     }

@@ -113,6 +113,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
         if(data1->skipElement(step, ent, ele)) continue;
         int numNodes = data1->getNumNodes(step, ent, ele);
+        if(numNodes < 2) continue;
         double x[8], y[8], z[8], n[3] = {0., 0., 0.};
         int tag[8];
         for(int nod = 0; nod < numNodes; nod++)

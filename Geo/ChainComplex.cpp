@@ -391,7 +391,6 @@ void ChainComplex::computeHomology(bool dual)
   return;
 }
 
-
 void ChainComplex::matrixTest()
 {
   const int rows = 3;
@@ -401,11 +400,11 @@ void ChainComplex::matrixTest()
   for(int i = 1; i<=rows*cols; i++) elems[i-1] = i;
 
   gmp_matrix* matrix = create_gmp_matrix_int(rows, cols, elems);
-
   gmp_matrix* copymatrix = copy_gmp_matrix(matrix, 3, 2, 3, 5);
-
   printMatrix(matrix);
   printMatrix(copymatrix);
+  destroy_gmp_matrix(matrix);
+  destroy_gmp_matrix(copymatrix);
 }
 
 std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
@@ -453,8 +452,9 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
 
   chain.clear();
   if(dim < 0 || dim > 4) return;
-  if(basisMatrix == NULL
-     || (int)gmp_matrix_cols(basisMatrix) < num) return;
+  if(basisMatrix == NULL || (int)gmp_matrix_cols(basisMatrix) < num){
+    return;
+  }
 
   int elemi;
   long int elemli;
@@ -920,7 +920,11 @@ gmp_matrix* HomologySequence::createIncMap(gmp_matrix* domBasis,
       if(mpz_cmp_si(remainder, 0) == 0){
         gmp_matrix_set_elem(result, i, j, LB);
       }
-      else return NULL;
+      else{
+        destroy_gmp_normal_form(normalForm);
+        destroy_gmp_matrix(LB);
+        return NULL;
+      }
     }
   }
 

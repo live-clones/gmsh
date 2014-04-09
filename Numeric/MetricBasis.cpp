@@ -282,12 +282,14 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
       minmaxQ[1] = terms[0] + factor * tmp * std::cos(phi);
     }
   }
-    break;
+  break;
 
   default:
     Msg::Error("Wrong number of functions for metric: %d",
                _coefficientsLag.size2());
   }
+
+  delete [] terms;
 }
 
 double MetricCoefficient::getBoundRmin(double tol)
@@ -394,7 +396,7 @@ void MetricCoefficient::_interpolateBezierPyramid(const double *uvw, double *min
       }
     }
   }
-  double terms[7];
+  double terms[7] = {0,0,0,0,0,0,0};
   for (int t = 0; t < _coefficientsBez.size2(); ++t) {
     terms[t] = 0;
     for (int j = 0; j < numCoeff; j++) {

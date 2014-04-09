@@ -244,6 +244,8 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     }
   }
 
+  if(octree) delete octree;
+
   if(timeStep < 0){
     for(int i = firstNonEmptyStep; i < data1->getNumTimeSteps(); i++) {
       if(!data1->hasTimeStep(i)) continue;

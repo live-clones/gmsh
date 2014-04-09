@@ -418,6 +418,8 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       itv->second = dist;
     }
 
+    delete dofView;
+
     printView(_entities, _distance_map);
 
 #endif

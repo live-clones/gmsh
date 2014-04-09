@@ -391,6 +391,9 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
     }
   }
 
+  List_Delete(list_out);
+  List_Delete(tmp);
+
   return extrudedEntities;
 
   // //return the new created entity
@@ -601,7 +604,7 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
   }
   else if (type == BSPLINE) {
 
-    Handle(Geom_BSplineCurve) Bez = GeomAPI_PointsToBSpline(ctrlPoints).Curve(); 
+    Handle(Geom_BSplineCurve) Bez = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
 
     if (occv1 && occv2)
       occEdge = BRepBuilderAPI_MakeEdge(Bez,occv1->getShape(),occv2->getShape()).Edge();

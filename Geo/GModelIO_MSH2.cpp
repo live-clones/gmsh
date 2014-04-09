@@ -487,6 +487,8 @@ int GModel::_readMSH2(const std::string &name)
               Msg::Error("Domain element %d not found for element %d", dom2, num);
 #endif
 	  }
+          delete [] indices;
+
           if (CTX::instance()->mesh.ignorePartBound && elementary<0) continue;
           MElement *e = createElementMSH2(this, num, type, physical, elementary,
                                           partition, vertices, elements, physicals,
@@ -502,7 +504,6 @@ int GModel::_readMSH2(const std::string &name)
             _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
             Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
-          delete [] indices;
         }
       }
       else{
@@ -540,6 +541,7 @@ int GModel::_readMSH2(const std::string &name)
             }
             else{
               if(!getVertices(numVertices, indices, vertexMap, vertices)){
+                delete [] data;
                 fclose(fp);
                 return 0;
               }

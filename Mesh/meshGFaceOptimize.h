@@ -130,6 +130,8 @@ struct RecombineTriangle
   {
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);
+    n3 = 0;
+    n4 = 0;
 
     if(t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
     else if(t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);

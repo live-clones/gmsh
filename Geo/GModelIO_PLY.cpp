@@ -70,7 +70,7 @@ int GModel::readPLY(const std::string &name)
   char buffer[256], str[256], str2[256], str3[256];
   std::string s1;
   int elementary = getMaxElementaryNumber(-1) + 1;
-  int nbv, nbf;
+  int nbv = 0, nbf = 0;
   int nbprop = 0;
   int nbView = 0;
   std::vector<std::string> propName;

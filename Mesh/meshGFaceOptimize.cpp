@@ -1521,8 +1521,6 @@ struct  quadBlob {
            v0      v01        v1
                a1       a3
 
-
-
      */
     else if (ncorners == 5){
       printBlob(iter,5);
@@ -2830,7 +2828,6 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MTriangle *t1b = new MTriangle(v2, v3, v4);
   MTriangle *t2b = new MTriangle(v4, v3, v1);
 
-
   //  const double v1b = surfaceTriangleUV(v2, v3, v4, data);
   //  const double v2b = surfaceTriangleUV(v4, v3, v1, data);
   //  const double volume = v1b + v2b;
@@ -2856,7 +2853,6 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 	  return false;
 	}
       }
-      //      printf("coucou\n");
       break;
     }
   case SWCR_DEL:

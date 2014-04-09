@@ -1040,8 +1040,8 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
   printf("%d tets\n", (int)gr->tetrahedra.size());
   deMeshGFace _kill;
   _kill (nf);
-  delete nf;
   gr->model()->remove(nf);
+  delete nf;
 
   gr->set(faces);
   gr->mesh_vertices.insert(gr->mesh_vertices.begin(),verts.begin(),verts.end());

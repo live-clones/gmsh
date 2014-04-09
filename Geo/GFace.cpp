@@ -1473,9 +1473,9 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 	hmin += hlayer;
       }
       fprintf(f,"};\n");
-      fclose(f);
     }
   }
+  fclose(f);
 }
 
 void GFace::relocateMeshVertices()

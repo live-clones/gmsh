@@ -28,6 +28,7 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
   FILE *fps = Fopen(names.c_str(), "w");
   if(!fps){
     Msg::Error("Unable to open file '%s'", names.c_str());
+    fclose(fpf);
     return 0;
   }
 

@@ -34,6 +34,7 @@ int GModel::writeSU2(const std::string &name, bool saveAll, double scalingFactor
   int ndime = getDim();
   if(ndime != 2 && ndime != 3){
     Msg::Error("SU2 mesh output valid only for 2D or 3D models (not %dD)", ndime);
+    fclose(fp);
     return 0;
   }
 

@@ -9,8 +9,6 @@
 #include <vector>
 #include <algorithm>
 #include "fullMatrix.h"
-
-// FIXME: should not introduce dependencies to Geo/ code in Numeric!
 #include "SPoint2.h"
 #include "simpleFunction.h"
 #include "Octree.h"
@@ -32,7 +30,10 @@ struct PointRecord {
   int flag; //0:to be kept, 1:to be removed
   int identificator;
   std::vector<void*> vicinity;
-  PointRecord() : adjacent(0), data (0) {}
+  PointRecord() : adjacent(0), data(0), flag(0), identificator(0)
+  {
+    where.v = where.h = 0.;
+  }
 };
 
 struct _CDLIST{
@@ -92,9 +93,9 @@ class DocRecord{
   int numTriangles;     // number of triangles
   Triangle *triangles;  // 2D results
   DocRecord(int n);
-  double &x(int i){ return points[i].where.h; } 
-  double &y(int i){ return points[i].where.v; } 
-  void*  &data(int i){ return points[i].data; } 
+  double &x(int i){ return points[i].where.h; }
+  double &y(int i){ return points[i].where.v; }
+  void*  &data(int i){ return points[i].data; }
   void setPoints(fullMatrix<double> *p);
   ~DocRecord();
   void MakeMeshWithPoints();
@@ -105,7 +106,7 @@ class DocRecord{
   void printMedialAxis(Octree *_octree, std::string, GFace *gf=NULL, GEdge *ge=NULL);
   double Lloyd (int);
   void voronoiCell (PointNumero pt, std::vector<SPoint2> &pts) const;
- 
+
   std::set<std::pair<void*,void*> > boundaryEdges;
 
   void addBoundaryEdge(void* p1,void* p2)
@@ -118,11 +119,11 @@ class DocRecord{
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    std::set<std::pair<void*,void*> >::iterator it = 
+    std::set<std::pair<void*,void*> >::iterator it =
       boundaryEdges.find(std::make_pair(a,b));
     return it != boundaryEdges.end();
-  } 	
- 
+  }
+
   void recur_tag_triangles(int, std::set<int>&, std::map<std::pair<void*,void*>,
                            std::pair<int,int> >&);
   std::set<int> tagInterior(double,double);
@@ -134,9 +135,9 @@ class DocRecord{
   bool remove_point(int);
   void remove_all();
   void add_point(double,double,GFace*);
-	
+
   std::set<std::pair<void*,void*> > mesh_edges;
-	
+
   void add_edge(void* p1,void* p2)
   {
     void *a = (p1 < p2) ? p1 : p2;
@@ -147,27 +148,27 @@ class DocRecord{
   {
     void *a = (p1 < p2) ? p1 : p2;
     void *b = (p1 > p2) ? p1 : p2;
-    std::set<std::pair<void*,void*> >::iterator it = 
+    std::set<std::pair<void*,void*> >::iterator it =
       mesh_edges.find(std::make_pair(a,b));
     return it != mesh_edges.end();
-  } 	
-	
+  }
+
   void build_edges();
   void clear_edges();
-  bool delaunay_conformity(GFace*);		
-	
+  bool delaunay_conformity(GFace*);
+
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
 };
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts,
                            const double &angle,
-                           double &xc, 
-                           double &yc, 
-                           double &inertia, 
+                           double &xc,
+                           double &yc,
+                           double &inertia,
 			   double &area);
 void centroidOfPolygon(SPoint2 &pc,
                        std::vector<SPoint2> &pts,
-                       double &xc, 
+                       double &xc,
                        double &yc,
                        double &inertia,
 		       double &areaCell,

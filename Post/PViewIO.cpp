@@ -21,8 +21,8 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
   }
 
   char str[256] = "XXX";
-  double version;
-  int format, size, index = -1;
+  double version = -1.;
+  int format = -1, size = -1, index = -1;
 
   while(1) {
 
@@ -38,16 +38,19 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
 
       if(!fscanf(fp, "%lf %d %d\n", &version, &format, &size)){
         Msg::Error("Read error");
+        fclose(fp);
         return false;
       }
       if(version < 1.0) {
         Msg::Error("Post-processing file too old (ver. %g < 1.0)", version);
+        fclose(fp);
         return false;
       }
       if(size == sizeof(double))
         Msg::Debug("Data is in double precision format (size==%d)", size);
       else {
         Msg::Error("Unknown data size (%d) in post-processing file", size);
+        fclose(fp);
         return false;
       }
 
@@ -59,6 +62,7 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
         if(!d->readPOS(fp, version, format ? true : false)){
           Msg::Error("Could not read data in list format");
           delete d;
+          fclose(fp);
           return false;
         }
         else{
@@ -78,7 +82,6 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
   }
 
   fclose(fp);
-
   return true;
 }
 

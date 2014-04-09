@@ -47,7 +47,7 @@ int adaptiveHexahedron::numEdges = 12;
 
 template <class T>
 static void cleanElement()
-{  
+{
   for(typename std::list<T*>::iterator it = T::all.begin(); it != T::all.end(); ++it)
     delete *it;
   T::all.clear();
@@ -123,7 +123,7 @@ void adaptiveLine::recurCreate(adaptiveLine *e, int maxlevel, int level)
   adaptiveVertex *p1 = e->p[0];
   adaptiveVertex *p2 = e->p[1];
   adaptiveVertex *p12 = adaptiveVertex::add
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
      allVertices);
   adaptiveLine *e1 = new adaptiveLine(p1, p12);
   recurCreate(e1, maxlevel, level);
@@ -201,13 +201,13 @@ void adaptiveTriangle::recurCreate(adaptiveTriangle *t, int maxlevel, int level)
   adaptiveVertex *p2 = t->p[1];
   adaptiveVertex *p3 = t->p[2];
   adaptiveVertex *p12 = adaptiveVertex::add
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
      allVertices);
   adaptiveVertex *p13 = adaptiveVertex::add
-    ((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, (p1->z + p3->z) * 0.5, 
+    ((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, (p1->z + p3->z) * 0.5,
      allVertices);
   adaptiveVertex *p23 = adaptiveVertex::add
-    ((p3->x + p2->x) * 0.5, (p3->y + p2->y) * 0.5, (p3->z + p2->z) * 0.5, 
+    ((p3->x + p2->x) * 0.5, (p3->y + p2->y) * 0.5, (p3->z + p2->z) * 0.5,
      allVertices);
   adaptiveTriangle *t1 = new adaptiveTriangle(p1, p12, p13);
   recurCreate(t1, maxlevel, level);
@@ -315,19 +315,19 @@ void adaptiveQuadrangle::recurCreate(adaptiveQuadrangle *q, int maxlevel, int le
   adaptiveVertex *p3 = q->p[2];
   adaptiveVertex *p4 = q->p[3];
   adaptiveVertex *p12 = adaptiveVertex::add
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
      allVertices);
   adaptiveVertex *p23 = adaptiveVertex::add
-    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5, 
+    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5,
      allVertices);
   adaptiveVertex *p34 = adaptiveVertex::add
-    ((p3->x + p4->x) * 0.5, (p3->y + p4->y) * 0.5, (p3->z + p4->z) * 0.5, 
+    ((p3->x + p4->x) * 0.5, (p3->y + p4->y) * 0.5, (p3->z + p4->z) * 0.5,
      allVertices);
   adaptiveVertex *p14 = adaptiveVertex::add
-    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5, 
+    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5,
      allVertices);
   adaptiveVertex *pc = adaptiveVertex::add
-    ((p1->x + p2->x + p3->x + p4->x) * 0.25, (p1->y + p2->y + p3->y + p4->y) * 0.25, 
+    ((p1->x + p2->x + p3->x + p4->x) * 0.25, (p1->y + p2->y + p3->y + p4->y) * 0.25,
      (p1->z + p2->z + p3->z + p4->z) * 0.25, allVertices);
   adaptiveQuadrangle *q1 = new adaptiveQuadrangle(p1, p12, pc, p14);
   recurCreate(q1, maxlevel, level);
@@ -441,7 +441,7 @@ void adaptiveTetrahedron::recurCreate(adaptiveTetrahedron *t, int maxlevel, int 
     ((p0->x + p3->x) * 0.5, (p0->y + p3->y) * 0.5, (p0->z + p3->z) * 0.5,
      allVertices);
   adaptiveVertex *pe3 = adaptiveVertex::add
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
      allVertices);
   adaptiveVertex *pe4 = adaptiveVertex::add
     ((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, (p1->z + p3->z) * 0.5,
@@ -578,7 +578,7 @@ void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int le
   adaptiveVertex *p6 = h->p[6];
   adaptiveVertex *p7 = h->p[7];
   adaptiveVertex *p01 = adaptiveVertex::add
-    ((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5, (p0->z + p1->z) * 0.5, 
+    ((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5, (p0->z + p1->z) * 0.5,
      allVertices);
   adaptiveVertex *p12 = adaptiveVertex::add
     ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
@@ -614,19 +614,19 @@ void adaptiveHexahedron::recurCreate(adaptiveHexahedron *h, int maxlevel, int le
     ((p7->x + p3->x) * 0.5, (p7->y + p3->y) * 0.5, (p7->z + p3->z) * 0.5,
      allVertices);
   adaptiveVertex *p0145 = adaptiveVertex::add
-    ((p45->x + p01->x) * 0.5, (p45->y + p01->y) * 0.5,(p45->z + p01->z) * 0.5, 
+    ((p45->x + p01->x) * 0.5, (p45->y + p01->y) * 0.5,(p45->z + p01->z) * 0.5,
      allVertices);
   adaptiveVertex *p1256 = adaptiveVertex::add
-    ((p12->x + p56->x) * 0.5, (p12->y + p56->y) * 0.5, (p12->z + p56->z) * 0.5, 
+    ((p12->x + p56->x) * 0.5, (p12->y + p56->y) * 0.5, (p12->z + p56->z) * 0.5,
      allVertices);
   adaptiveVertex *p2367 = adaptiveVertex::add
-    ((p23->x + p67->x) * 0.5, (p23->y + p67->y) * 0.5, (p23->z + p67->z) * 0.5, 
+    ((p23->x + p67->x) * 0.5, (p23->y + p67->y) * 0.5, (p23->z + p67->z) * 0.5,
      allVertices);
   adaptiveVertex *p0347 = adaptiveVertex::add
     ((p03->x + p47->x) * 0.5, (p03->y + p47->y) * 0.5, (p03->z + p47->z) * 0.5,
      allVertices);
   adaptiveVertex *p4756 = adaptiveVertex::add
-    ((p47->x + p56->x) * 0.5, (p47->y + p56->y) * 0.5, (p47->z + p56->z) * 0.5, 
+    ((p47->x + p56->x) * 0.5, (p47->y + p56->y) * 0.5, (p47->z + p56->z) * 0.5,
      allVertices);
   adaptiveVertex *p0312 = adaptiveVertex::add
     ((p03->x + p12->x) * 0.5, (p03->y + p12->y) * 0.5, (p03->z + p12->z) * 0.5,
@@ -773,40 +773,40 @@ void adaptivePrism::recurCreate(adaptivePrism *p, int maxlevel, int level)
   adaptiveVertex *p5 = p->p[4];
   adaptiveVertex *p6 = p->p[5];
   adaptiveVertex *p14 = adaptiveVertex::add
-    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5, 
+    ((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, (p1->z + p4->z) * 0.5,
      allVertices);
   adaptiveVertex *p25 = adaptiveVertex::add
-    ((p2->x + p5->x) * 0.5, (p2->y + p5->y) * 0.5, (p2->z + p5->z) * 0.5, 
+    ((p2->x + p5->x) * 0.5, (p2->y + p5->y) * 0.5, (p2->z + p5->z) * 0.5,
      allVertices);
   adaptiveVertex *p36 = adaptiveVertex::add
-    ((p3->x + p6->x) * 0.5, (p3->y + p6->y) * 0.5, (p3->z + p6->z) * 0.5, 
+    ((p3->x + p6->x) * 0.5, (p3->y + p6->y) * 0.5, (p3->z + p6->z) * 0.5,
      allVertices);
   adaptiveVertex *p12 = adaptiveVertex::add
-    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5, 
+    ((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, (p1->z + p2->z) * 0.5,
      allVertices);
   adaptiveVertex *p23 = adaptiveVertex::add
-    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5, 
+    ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5,
      allVertices);
   adaptiveVertex *p31 = adaptiveVertex::add
-    ((p3->x + p1->x) * 0.5, (p3->y + p1->y) * 0.5, (p3->z + p1->z) * 0.5, 
+    ((p3->x + p1->x) * 0.5, (p3->y + p1->y) * 0.5, (p3->z + p1->z) * 0.5,
      allVertices);
   adaptiveVertex *p1425 = adaptiveVertex::add
-    ((p14->x + p25->x) * 0.5, (p14->y + p25->y) * 0.5, (p14->z + p25->z) * 0.5, 
+    ((p14->x + p25->x) * 0.5, (p14->y + p25->y) * 0.5, (p14->z + p25->z) * 0.5,
      allVertices);
   adaptiveVertex *p2536 = adaptiveVertex::add
-    ((p25->x + p36->x) * 0.5, (p25->y + p36->y) * 0.5, (p25->z + p36->z) * 0.5, 
+    ((p25->x + p36->x) * 0.5, (p25->y + p36->y) * 0.5, (p25->z + p36->z) * 0.5,
      allVertices);
   adaptiveVertex *p3614 = adaptiveVertex::add
-    ((p36->x + p14->x) * 0.5, (p36->y + p14->y) * 0.5, (p36->z + p14->z) * 0.5, 
+    ((p36->x + p14->x) * 0.5, (p36->y + p14->y) * 0.5, (p36->z + p14->z) * 0.5,
      allVertices);
   adaptiveVertex *p45 = adaptiveVertex::add
-    ((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5, (p4->z + p5->z) * 0.5, 
+    ((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5, (p4->z + p5->z) * 0.5,
      allVertices);
   adaptiveVertex *p56 = adaptiveVertex::add
-    ((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5, (p5->z + p6->z) * 0.5, 
+    ((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5, (p5->z + p6->z) * 0.5,
      allVertices);
   adaptiveVertex *p64 = adaptiveVertex::add
-    ((p6->x + p4->x) * 0.5, (p6->y + p4->y) * 0.5, (p6->z + p4->z) * 0.5, 
+    ((p6->x + p4->x) * 0.5, (p6->y + p4->y) * 0.5, (p6->z + p4->z) * 0.5,
      allVertices);
   p->e[0] = new adaptivePrism(p1, p12, p31, p14, p1425, p3614);
   recurCreate(p->e[0], maxlevel, level);
@@ -916,24 +916,24 @@ void adaptiveElements<T>::init(int level)
   T::create(level);
   int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
-  
+
   if(_interpolVal) delete _interpolVal;
   _interpolVal = new fullMatrix<double>(T::allVertices.size(), numVals);
-  
+
   if(_interpolGeom) delete _interpolGeom;
   _interpolGeom = new fullMatrix<double>(T::allVertices.size(), numNodes);
-  
+
   fullVector<double> sfv(numVals), *tmpv = 0;
   fullVector<double> sfg(numNodes), *tmpg = 0;
   if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());
   if(_eexpsGeom) tmpg = new fullVector<double>(_eexpsGeom->size1());
 
   int i = 0;
-  for(std::set<adaptiveVertex>::iterator it = T::allVertices.begin(); 
+  for(std::set<adaptiveVertex>::iterator it = T::allVertices.begin();
       it != T::allVertices.end(); ++it) {
 
     if(_coeffsVal && _eexpsVal)
-      computeShapeFunctions(_coeffsVal, _eexpsVal, 
+      computeShapeFunctions(_coeffsVal, _eexpsVal,
                             it->x, it->y, it->z, &sfv, tmpv);
     else
       T::GSF(it->x, it->y, it->z, sfv);
@@ -941,7 +941,7 @@ void adaptiveElements<T>::init(int level)
       (*_interpolVal)(i, j) = sfv(j);
 
     if(_coeffsGeom && _eexpsGeom)
-      computeShapeFunctions(_coeffsGeom, _eexpsGeom, 
+      computeShapeFunctions(_coeffsGeom, _eexpsGeom,
                             it->x, it->y, it->z, &sfg, tmpg);
     else
       T::GSF(it->x, it->y, it->z, sfg);
@@ -961,10 +961,10 @@ void adaptiveElements<T>::init(int level)
 }
 
 template <class T>
-void adaptiveElements<T>::adapt(double tol, int numComp, 
+void adaptiveElements<T>::adapt(double tol, int numComp,
                                 std::vector<PCoords> &coords,
-                                std::vector<PValues> &values, 
-                                double &minVal, double &maxVal, 
+                                std::vector<PValues> &values,
+                                double &minVal, double &maxVal,
                                 GMSH_PostPlugin *plug,
                                 bool onlyComputeMinMax)
 {
@@ -972,17 +972,17 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     Msg::Error("Can only adapt scalar or vector data");
     return;
   }
-  
+
   int numVertices = T::allVertices.size();
 
   if(!numVertices){
     Msg::Error("No adapted vertices to interpolate");
     return;
   }
-  
+
   int numVals = _coeffsVal ? _coeffsVal->size1() : T::numNodes;
   if(numVals != (int)values.size()){
-    Msg::Error("Wrong number of values in adaptation %d != %i", 
+    Msg::Error("Wrong number of values in adaptation %d != %i",
                numVals, values.size());
     return;
   }
@@ -990,7 +990,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
 #ifdef TIMER
   double t1 = GetTimeInSeconds();
 #endif
-  
+
   fullVector<double> val(numVals), res(numVertices);
   if(numComp == 1){
     for(int i = 0; i < numVals; i++)
@@ -1003,14 +1003,14 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   }
   _interpolVal->mult(val, res);
 
-  //minVal = VAL_INF;  
-  //maxVal = -VAL_INF;  
+  //minVal = VAL_INF;
+  //maxVal = -VAL_INF;
   for(int i = 0; i < numVertices; i++){
     minVal = std::min(minVal, res(i));
     maxVal = std::max(maxVal, res(i));
   }
   if(onlyComputeMinMax) return;
-  
+
   fullMatrix<double> *resxyz = 0;
   if(numComp == 3){
     fullMatrix<double> valxyz(numVals, 3);
@@ -1022,14 +1022,15 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     }
     _interpolVal->mult(valxyz, *resxyz);
   }
-  
+
   int numNodes = _coeffsGeom ? _coeffsGeom->size1() : T::numNodes;
   if(numNodes != (int)coords.size()){
-    Msg::Error("Wrong number of nodes in adaptation %d != %i", 
+    Msg::Error("Wrong number of nodes in adaptation %d != %i",
                numNodes, coords.size());
+    if(resxyz) delete resxyz;
     return;
   }
-  
+
   fullMatrix<double> xyz(numNodes, 3), XYZ(numVertices, 3);
   for(int i = 0; i < numNodes; i++){
     xyz(i, 0) = coords[i].c[0];
@@ -1059,22 +1060,22 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     p->Z = XYZ(i, 2);
     i++;
   }
-  
+
   if(resxyz) delete resxyz;
-  
-  for(typename std::list<T*>::iterator it = T::all.begin(); 
+
+  for(typename std::list<T*>::iterator it = T::all.begin();
       it != T::all.end(); it++)
     (*it)->visible = false;
-  
+
   if(!plug || tol != 0.){
     double avg = fabs(maxVal - minVal);
     if(tol < 0) avg = 1.; // force visibility to the smallest subdivision
     T::error(avg, tol);
   }
-  
+
   if(plug)
     plug->assignSpecificVisibility();
-  
+
   coords.clear();
   values.clear();
   for(typename std::list<T*>::iterator it = T::all.begin();
@@ -1093,23 +1094,23 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
 }
 
 template <class T>
-void adaptiveElements<T>::addInView(double tol, int step, 
-                                    PViewData *in, PViewDataList *out, 
+void adaptiveElements<T>::addInView(double tol, int step,
+                                    PViewData *in, PViewDataList *out,
                                     GMSH_PostPlugin *plug)
 {
   int numComp = in->getNumComponents(0, 0, 0);
   if(numComp != 1 && numComp != 3) return;
-  
+
   int numEle = 0, *outNb = 0;
   std::vector<double> *outList = 0;
   switch(T::numEdges){
-  case 0: 
-    numEle = in->getNumPoints(); 
+  case 0:
+    numEle = in->getNumPoints();
     outNb = (numComp == 1) ? &out->NbSP : &out->NbVP;
     outList = (numComp == 1) ? &out->SP : &out->VP;
     break;
-  case 1: 
-    numEle = in->getNumLines(); 
+  case 1:
+    numEle = in->getNumLines();
     outNb = (numComp == 1) ? &out->NbSL : &out->NbVL;
     outList = (numComp == 1) ? &out->SL : &out->VL;
     break;
@@ -1128,22 +1129,22 @@ void adaptiveElements<T>::addInView(double tol, int step,
     outNb = (numComp == 1) ? &out->NbSS : &out->NbVS;
     outList = (numComp == 1) ? &out->SS : &out->VS;
     break;
-  case 9: 
+  case 9:
     numEle = in->getNumPrisms();
     outNb = (numComp == 1) ? &out->NbSI : &out->NbVI;
     outList = (numComp == 1) ? &out->SI : &out->VI;
     break;
-  case 12: 
+  case 12:
     numEle = in->getNumHexahedra();
     outNb = (numComp == 1) ? &out->NbSH : &out->NbVH;
     outList = (numComp == 1) ? &out->SH : &out->VH;
     break;
   }
   if(!numEle) return;
-  
+
   outList->clear();
   *outNb = 0;
-  
+
   for(int ent = 0; ent < in->getNumEntities(step); ent++){
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++){
       if(in->skipElement(step, ent, ele) ||
@@ -1167,20 +1168,20 @@ void adaptiveElements<T>::addInView(double tol, int step,
       else if(numComp == 3){
         for(int i = 0; i < numVal / 3; i++){
           double vx, vy, vz;
-          in->getValue(step, ent, ele, 3 * i, vx); 
-          in->getValue(step, ent, ele, 3 * i + 1, vy); 
-          in->getValue(step, ent, ele, 3 * i + 2, vz); 
+          in->getValue(step, ent, ele, 3 * i, vx);
+          in->getValue(step, ent, ele, 3 * i + 1, vy);
+          in->getValue(step, ent, ele, 3 * i + 2, vz);
           values.push_back(PValues(vx, vy, vz));
         }
       }
       adapt(tol, numComp, coords, values, out->Min, out->Max, plug);
       *outNb += coords.size() / T::numNodes;
       for(unsigned int i = 0; i < coords.size() / T::numNodes; i++){
-        for(int k = 0; k < T::numNodes; ++k) 
+        for(int k = 0; k < T::numNodes; ++k)
           outList->push_back(coords[T::numNodes * i + k].c[0]);
-        for(int k = 0; k < T::numNodes; ++k) 
+        for(int k = 0; k < T::numNodes; ++k)
           outList->push_back(coords[T::numNodes * i + k].c[1]);
-        for(int k = 0; k < T::numNodes; ++k) 
+        for(int k = 0; k < T::numNodes; ++k)
           outList->push_back(coords[T::numNodes * i + k].c[2]);
         for(int k = 0; k < T::numNodes; ++k)
           for(int l = 0; l < numComp; ++l)
@@ -1191,8 +1192,8 @@ void adaptiveElements<T>::addInView(double tol, int step,
 }
 
 adaptiveData::adaptiveData(PViewData *data)
-  : _step(-1), _level(-1), _tol(-1.), _inData(data), 
-    _points(0), _lines(0), _triangles(0), _quadrangles(0), 
+  : _step(-1), _level(-1), _tol(-1.), _inData(data),
+    _points(0), _lines(0), _triangles(0), _quadrangles(0),
     _tetrahedra(0), _hexahedra(0), _prisms(0)
 {
   _outData = new PViewDataList(true);
@@ -1243,7 +1244,7 @@ adaptiveData::~adaptiveData()
 double adaptiveData::timerInit = 0.;
 double adaptiveData::timerAdapt = 0.;
 
-void adaptiveData::changeResolution(int step, int level, double tol, 
+void adaptiveData::changeResolution(int step, int level, double tol,
                                     GMSH_PostPlugin *plug)
 {
   timerInit = timerAdapt = 0.;
@@ -1271,7 +1272,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
   _step = step;
   _level = level;
   _tol = tol;
-  
+
 #ifdef TIMER
   printf("init time = %g\n", timerInit);
   printf("adapt time = %g\n", timerAdapt);
