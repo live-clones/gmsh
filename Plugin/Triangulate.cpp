@@ -138,7 +138,12 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   }
 
   // triangulate
-  doc.MakeMeshWithPoints();
+  try{
+    doc.MakeMeshWithPoints();
+  }
+  catch(const char *err){
+    Msg::Error("%s", err);
+  }
 
   // create output (using unperturbed data)
   PView *v2 = new PView();

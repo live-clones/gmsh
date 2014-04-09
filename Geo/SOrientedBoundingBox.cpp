@@ -314,13 +314,13 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     center[0] = (vmaxs(0)+vmins(0))/2.0;
     center[1] = (vmaxs(1)+vmins(1))/2.0;
     center[2] = (vmaxs(2)+vmins(2))/2.0;
-    
+
     return(new SOrientedBoundingBox(center, sizes[0], sizes[1], sizes[2],
                                     Axis1, Axis2, Axis3));
   }
 
-
-  // We take the smallest component, then project the data on the plane defined by the other twos
+  // We take the smallest component, then project the data on the plane defined
+  // by the other twos
 
   int smallest_comp = 0;
   if (sizes[0] <= sizes[1] && sizes[0] <= sizes[2])
@@ -334,9 +334,11 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   // We just ignore the coordinate corresponding to smallest_comp.
   std::vector<SPoint2*> points;
   for (int i = 0; i < num_vertices; i++) {
-    SPoint2* p = new SPoint2(projected(smallest_comp==0?1:0,i), projected(smallest_comp==2?1:2,i));
+    SPoint2* p = new SPoint2(projected(smallest_comp==0?1:0,i),
+                             projected(smallest_comp==2?1:2,i));
     bool keep = true;
-    for (std::vector<SPoint2*>::iterator point = points.begin();point != points.end();point++) {
+    for (std::vector<SPoint2*>::iterator point = points.begin();
+         point != points.end();point++) {
       if ( fabs((*p)[0] -(**point)[0]) < 10e-10 && fabs((*p)[1] -(**point)[1]) < 10e-10 ) {
         keep = false;
         break;
@@ -354,12 +356,19 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   record.numPoints = points.size();
   srand((unsigned)time(0));
   for (unsigned int i = 0; i < points.size(); i++) {
-    record.points[i].where.h = points[i]->x()+(10e-6)*sizes[smallest_comp==0?1:0]*(-0.5+((double)rand())/RAND_MAX);
-    record.points[i].where.v = points[i]->y()+(10e-6)*sizes[smallest_comp==2?1:0]*(-0.5+((double)rand())/RAND_MAX);
+    record.points[i].where.h = points[i]->x()+
+      (10e-6)*sizes[smallest_comp==0?1:0]*(-0.5+((double)rand())/RAND_MAX);
+    record.points[i].where.v = points[i]->y()+
+      (10e-6)*sizes[smallest_comp==2?1:0]*(-0.5+((double)rand())/RAND_MAX);
     record.points[i].adjacent = NULL;
   }
 
-  record.MakeMeshWithPoints();
+  try{
+    record.MakeMeshWithPoints();
+  }
+  catch(const char *err){
+    Msg::Error("%s", err);
+  }
 
   std::vector<Segment> convex_hull;
   for (int i = 0; i < record.numTriangles; i++) {
@@ -373,8 +382,10 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 
     for (int j = 0; j < 3; j++) {
       bool okay = true;
-      for (std::vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
-        if ( ((*seg).from == segs[j].from && (*seg).from == segs[j].to) ||  ((*seg).from == segs[j].to && (*seg).from == segs[j].from)) {
+      for (std::vector<Segment>::iterator seg = convex_hull.begin();
+           seg != convex_hull.end(); seg++) {
+        if ( ((*seg).from == segs[j].from && (*seg).from == segs[j].to) ||
+             ((*seg).from == segs[j].to && (*seg).from == segs[j].from)) {
           convex_hull.erase(seg);
           okay = false;
           break;
@@ -401,7 +412,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
   least_rectangle.size->at(0) = -1;
   least_rectangle.size->at(1) = 1;
 
-  for (std::vector<Segment>::iterator seg = convex_hull.begin(); seg != convex_hull.end(); seg++) {
+  for (std::vector<Segment>::iterator seg = convex_hull.begin();
+       seg != convex_hull.end(); seg++) {
 
     fullVector<double> segment(2);
     //segment(0) = record.points[(*seg).from].where.h - record.points[(*seg).to].where.h;
@@ -457,7 +469,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     rotation_inv.mult(axis2,axis_rot2);
 //*/
 
-    if ((least_rectangle.area() == -1) || (max_x-min_x)*(max_y-min_y) < least_rectangle.area()) {
+    if ((least_rectangle.area() == -1) ||
+        (max_x-min_x)*(max_y-min_y) < least_rectangle.area()) {
 
       least_rectangle.size->at(0) = max_x-min_x;
       least_rectangle.size->at(1) = max_y-min_y;
@@ -499,8 +512,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     raw_data[2][2+i] = least_rectangle.axisY->at(0)*left_eigv(i,smallest_comp==0?1:0) +
                        least_rectangle.axisY->at(1)*left_eigv(i,smallest_comp==2?1:2);
   }
-  //  Msg::Info("Test 1 : %f %f",least_rectangle.center->at(0),least_rectangle.center->at(1));
-//  Msg::Info("Test 2 : %f %f",least_rectangle.axisY->at(0),least_rectangle.axisY->at(1));
+  // Msg::Info("Test 1 : %f %f",least_rectangle.center->at(0),least_rectangle.center->at(1));
+  // Msg::Info("Test 2 : %f %f",least_rectangle.axisY->at(0),least_rectangle.axisY->at(1));
 
   int tri[3];
 
@@ -558,7 +571,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
     aux2(i) = left_eigv(i,smallest_comp==0?1:0);
     aux3(i) = left_eigv(i,smallest_comp==2?1:2);
   }
-  center = aux1*center_pca + aux2*least_rectangle.center->at(0) + aux3*least_rectangle.center->at(1);
+  center = aux1*center_pca + aux2*least_rectangle.center->at(0) +
+    aux3*least_rectangle.center->at(1);
   //center[1] = -center[1];
 
   /*
@@ -578,7 +592,8 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 #endif
 }
 
-double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundingBox& obb2)
+double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1,
+                                     SOrientedBoundingBox& obb2)
 {
   // "center term"
   double center_term = norm(obb1.getCenter() - obb2.getCenter());
@@ -587,7 +602,8 @@ double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundi
   double size_term = 0.0;
   for (int i = 0; i < 3; i++) {
     if ((obb1.getSize())(i) + (obb2.getSize())(i) != 0) {
-      size_term += fabs((obb1.getSize())(i) - (obb2.getSize())(i)) / ((obb1.getSize())(i) + (obb2.getSize())(i));
+      size_term += fabs((obb1.getSize())(i) - (obb2.getSize())(i)) /
+        ((obb1.getSize())(i) + (obb2.getSize())(i));
     }
   }
 
@@ -598,5 +614,4 @@ double SOrientedBoundingBox::compare(SOrientedBoundingBox& obb1, SOrientedBoundi
   }
 
   return (center_term + size_term + orientation_term);
-
 }

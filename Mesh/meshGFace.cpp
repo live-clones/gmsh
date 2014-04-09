@@ -1090,7 +1090,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     //   -) It contains triangles outside the domain (the first edge
     //      loop is the outer one)
     Msg::Debug("Meshing of the convex hull (%d points)", points.size());
-    doc.MakeMeshWithPoints();
+    try{
+      doc.MakeMeshWithPoints();
+    }
+    catch(const char *err){
+      Msg::Error("%s", err);
+    }
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
 
     for(int i = 0; i < doc.numTriangles; i++) {
@@ -1900,7 +1905,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     //   -) It contains triangles outside the domain (the first edge
     //      loop is the outer one)
     Msg::Debug("Meshing of the convex hull (%d points)", nbPointsTotal);
-    doc.MakeMeshWithPoints();
+
+    try{
+      doc.MakeMeshWithPoints();
+    }
+    catch(const char *err){
+      Msg::Error("%s", err);
+    }
 
     for(int i = 0; i < doc.numTriangles; i++){
       int a = doc.triangles[i].a;
