@@ -7,7 +7,7 @@
 #include <string.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "IO.h"
+#include "GmshIO.h"
 #include "Options.h"
 #include "Geo.h"
 #include "GModel.h"
