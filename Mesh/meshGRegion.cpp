@@ -688,9 +688,6 @@ static int getWedge(BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
     if (c2._joint.size())NW2++;
   }
 
-
-
-
   std::map<int,int> one2two;
   for (int i=0;i<NW1;i++){
     const BoundaryLayerData & c1 = _columns->getColumn(v1,i);
@@ -737,7 +734,7 @@ static int getWedge(BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   for (int i=0;i<NW2;i++){
     for (int j=i+1;j<NW2;j++){
       if ((vert2Start == i && vert2End == j) ||
-	  (vert2Start == i && vert2End == j))
+	  (vert2Start == j && vert2End == i))
 	{
 	  INDEX2 = count;
 	}
