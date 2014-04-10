@@ -10,14 +10,6 @@
 #include <cmath>
 #include <queue>
 #include "OS.h"
-#if defined(HAVE_SCIP)
-#include "scip/scip.h"
-#include "scip/scipdefplugins.h"
-#include "soplex/soplex.h"
-#include <sstream>
-#include "scip/cons.h"
-#include "scip/struct_scip.h"
-#endif
 
 namespace {
   double cubicCardanoRoot(double p, double q)
@@ -122,7 +114,6 @@ void MetricCoefficient::_fillInequalities(int metricOrder)
   Msg::Info("ncoeff %d", ncoeff);
   int countP3 = 0, countJ2 = 0;
   double tol = .99;
-  double tol2 = .001;
   for (int i = 0; i < ncoeff; i++) {
     for (int j = i; j < ncoeff; j++) {
       double A = 1, B = 1;
@@ -251,19 +242,15 @@ void MetricCoefficient::_fillInequalities(int metricOrder)
     }
   }
 
-  int ret = _lightenInequalities(tol, tol2, countJ2, countP3);
-  if (ret) {
-    Msg::Warning("Heavy Inequalities (error %d)", ret);
-  }
+  _lightenInequalities(tol, countJ2, countP3);
 
   Msg::Info("A : %d / %d", v.size(), ncoeff*(ncoeff+1)/2);
   Msg::Info("J2 : %d / %d", countJ2, njac*(njac+1)/2);
   Msg::Info("P3 : %d / %d", countP3, ncoeff*(ncoeff+1)*(ncoeff+2)/6);
 }
 
-int MetricCoefficient::_lightenInequalities(double tol, double tol2, int &countj, int &countp)
+void MetricCoefficient::_lightenInequalities(double tol, int &countj, int &countp)
 {
-#ifndef BEFORE
   std::map<int, std::vector<IneqData> >::iterator it, itbeg[3], itend[3];
 
   int cnt[3] = {0,0,0};
@@ -293,206 +280,6 @@ int MetricCoefficient::_lightenInequalities(double tol, double tol2, int &countj
   }
   countj -= cnt[0];
   countp -= cnt[1];
-  return 0;
-
-#else
-  std::map<int, std::vector<IneqData> >::iterator itJ, itP;
-  itJ = _ineqJ2.begin();
-  itP = _ineqP3.begin();
-
-  while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
-    double verif = 0;
-    for (unsigned int i = 0; i < itJ->second.size(); ++i) {
-      verif += itJ->second[i].val;
-    }
-    if (verif < 1. - 1e-7 || verif > 1. + 1e-7) Msg::Warning("verif J %g", verif);
-    verif = 0;
-    for (unsigned int i = 0; i < itP->second.size(); ++i) {
-      verif += itP->second[i].val;
-    }
-    if (verif < 1.-1e-7 || verif > 1.+1e-7) Msg::Warning("verif P %g", verif);
-    // TODO : remove
-
-    std::sort(itJ->second.begin(), itJ->second.end(), gterIneq());
-    std::sort(itP->second.begin(), itP->second.end(), gterIneq());
-
-    bool print = false;
-    if (true || itJ->second.back().val < tol && itP->second.back().val < tol) {
-      print = true;
-      Msg::Info(" ");
-      //Msg::Info("sizes %d %d", itJ->second.size(), itP->second.size());
-      Msg::Info("JJ-before-JJJJJJJJJJJJJJJJJJJ");
-      for (unsigned int i = 0; i < itJ->second.size(); ++i) {
-        Msg::Info("%g", itJ->second[i].val / tol);
-      }
-      Msg::Info("PP-before-PPPPPPPPPPPPPPPPPPP");
-      for (unsigned int i = 0; i < itP->second.size(); ++i) {
-        Msg::Info("%g", itP->second[i].val / tol);
-      }
-    }
-
-#if defined(HAVE_SCIP)
-    SCIP* scip;
-    SCIP_CALL(SCIPcreate(&scip));
-    SCIP_CALL(SCIPincludeDefaultPlugins(scip));
-    //SCIP_CALL(SCIPsetMessagehdlr(NULL, NULL));
-    SCIP_CALL(SCIPcreateProb(scip, "inequalities", NULL, NULL,
-                             NULL, NULL, NULL, NULL, NULL));
-    SCIP_CALL(SCIPsetObjsense(scip, SCIP_OBJSENSE_MAXIMIZE));
-
-    int nj = itJ->second.size();
-    int np = itP->second.size();
-
-    SCIP_VAR** varj = new SCIP_VAR*[nj];
-    SCIP_VAR** varp = new SCIP_VAR*[np];
-    double* cj = new double[nj];
-    double* cp = new double[np];
-
-    for (int i = 0; i < nj; ++i) {
-      std::ostringstream namebuf;
-      namebuf.str("");
-      namebuf << "j" << i;
-
-      SCIP_CALL(SCIPcreateVar(scip, &varj[i], namebuf.str().c_str(), .0, 1.,
-                              1., SCIP_VARTYPE_BINARY, TRUE, FALSE,
-                              NULL, NULL, NULL, NULL, NULL));
-      SCIP_CALL(SCIPaddVar(scip, varj[i]));
-      cj[i] = itJ->second[i].val;
-    }
-    for (int i = 0; i < np; ++i) {
-      std::ostringstream namebuf;
-      namebuf.str("");
-      namebuf << "p" << i;
-
-      SCIP_CALL(SCIPcreateVar(scip, &varp[i], namebuf.str().c_str(), .0, 1.,
-                              1., SCIP_VARTYPE_BINARY, TRUE, FALSE,
-                              NULL, NULL, NULL, NULL, NULL));
-      SCIP_CALL(SCIPaddVar(scip, varp[i]));
-      cp[i] = itP->second[i].val;
-    }
-
-    SCIP_CONS* cons[3];
-      for (int i = 0; i < nj; ++i) {
-        Msg::Info("+cj%d (%g)", i, cj[i]);
-      }
-
-        Msg::Info("<= tol %g", tol);
-    SCIP_CALL(SCIPcreateConsLinear(scip, &cons[0], "bound J",
-                                   nj, varj, cj, .0, tol, TRUE,
-                                   TRUE, TRUE, TRUE, TRUE, FALSE,
-                                   FALSE, FALSE, FALSE, FALSE));
-    SCIPconsPrint(cons[0], scip->set, NULL, NULL);
-    SCIP_CALL(SCIPcreateConsLinear(scip, &cons[1], "bound P",
-                                   np, varp, cp, .0, tol, TRUE,
-                                   TRUE, TRUE, TRUE, TRUE, FALSE,
-                                   FALSE, FALSE, FALSE, FALSE));
-    SCIP_CALL(SCIPcreateConsLinear(scip, &cons[2], "difference",
-                                   nj, varj, cj, -tol2, tol2, TRUE,
-                                   TRUE, TRUE, TRUE, TRUE, FALSE,
-                                   FALSE, FALSE, FALSE, FALSE));
-    for (int i = 0; i < np; ++i) {
-      //SCIP_CALL(SCIPaddCoefLinear(scip, cons[2], varp[i], -cp[i]));
-    }
-
-    SCIP_CALL(SCIPsolve(scip));
-    SCIPconsPrint(cons[0], scip->set, NULL, NULL);
-    SCIP_SOL* sol = SCIPgetBestSol(scip);
-    if (!sol) {
-      Msg::Error("Scip did not find a solution");
-    }
-    else {
-      int ind = 0;
-      for (int i = 0; i < nj; ++i) {
-        Msg::Info("j%d = %g", i, SCIPgetSolVal(scip, sol, varj[i]));
-        if (SCIPgetSolVal(scip, sol, varj[i]) > .5) {
-          itJ->second[ind] = itJ->second.back();
-          itJ->second.pop_back();
-        }
-        else ++ind;
-      }
-      ind = 0;
-      for (int i = 0; i < np; ++i) {
-        if (SCIPgetSolVal(scip, sol, varp[i]) > .5) {
-          itP->second[ind] = itP->second.back();
-          itP->second.pop_back();
-        }
-        else ++ind;
-      }
-    }
-
-    for (int i = 0; i < nj; ++i)
-      SCIP_CALL(SCIPreleaseVar(scip, &varj[i]));
-    for (int i = 0; i < np; ++i)
-      SCIP_CALL(SCIPreleaseVar(scip, &varp[i]));
-    //SCIP_CALL(SCIPreleaseCons(scip, &cons[0]));
-    //SCIP_CALL(SCIPreleaseCons(scip, &cons[1]));
-    //SCIP_CALL(SCIPreleaseCons(scip, &cons[2]));
-    SCIP_CALL(SCIPfree(&scip));
-    delete[] varj;
-    delete[] varp;
-    delete[] cj;
-    delete[] cp;
-
-#else
-
-    double rmvedJ = 0, rmvedP = 0;
-    bool changed = true;
-
-    while (changed) {
-      changed = false;
-      double potentialJ = rmvedJ, potentialP = rmvedP;
-      int j = itJ->second.size();
-      int p = itP->second.size();
-      bool found = false;
-
-      while (j > 1 && !found && potentialJ <= tol) {
-        double tmp = itP->second[p-1].val;
-        //if (potentialP - potentialJ > -tol2) found = true;
-        while (potentialP + tmp <= tol && potentialP + tmp - potentialJ <= tol2) {
-          potentialP += tmp;
-          --p;
-          if (p < 1) Msg::Fatal("me");
-          tmp = itP->second[p-1].val;
-          if (potentialP - potentialJ >= -tol2) found = true;
-        }
-        if (!found) {
-          potentialJ += itJ->second[j-1].val;
-          --j;
-          if (j < 1) Msg::Fatal("ma");
-          potentialP = rmvedP;
-          p = itP->second.size();
-        }
-      }
-      if (found) {
-        rmvedJ = potentialJ, rmvedP = potentialP;
-        //countJ2 -= itJ->second.size() - j;
-        //countP3 -= itP->second.size() - p; // TODO
-        itJ->second.erase(itJ->second.begin() + j, itJ->second.end());
-        //Msg::Info("%d %d", p, itP->second.size());
-        itP->second.erase(itP->second.begin() + p, itP->second.end());
-        changed = true;
-      }
-    }
-#endif
-
-
-    if (print) {
-      //Msg::Info("sizes %d %d", itJ->second.size(), itP->second.size());
-      Msg::Info("JJ-after-JJJJJJJJJJJJJJJJJJJ");
-      for (unsigned int i = 0; i < itJ->second.size(); ++i) {
-        Msg::Info("%g", itJ->second[i].val / tol);
-      }
-      Msg::Info("PP-after-PPPPPPPPPPPPPPPPPPP");
-      for (unsigned int i = 0; i < itP->second.size(); ++i) {
-        Msg::Info("%g", itP->second[i].val / tol);
-      }
-    }
-
-    ++itJ;
-    ++itP;
-  }
-  return 0;
-#endif
 }
 
 void MetricCoefficient::getCoefficients(fullMatrix<double> &coeff, bool bezier)
@@ -1168,44 +955,6 @@ double MetricCoefficient::_maxq(const fullMatrix<double> &coeff) const
     if (ans < coeff(i, 0)) ans = coeff(i, 0);
   }
   return ans;
-}
-
-void MetricCoefficient::_minMaxA(
-    const fullMatrix<double> &coeff, double &min, double &max) const
-{
-  int i = _inequations(0, 0);
-  int j = _inequations(0, 1);
-
-  // TODO : si coeff(0, m) < 0
-
-  min = max = 0;
-  for (int l = 1; l < 7; ++l) {
-    min += coeff(i, l) * coeff(j, l);
-  }
-  min /= coeff(i, 0) * coeff(j, 0);
-  // TODO : si coeff(0, i|j) == 0
-  max = min;
-
-  for (int k = 1; k < _inequations.size1(); ++k) {
-    double tmp = 0;
-    i = _inequations(k, 0);
-    j = _inequations(k, 1);
-    for (int l = 1; l < 7; ++l) {
-      tmp += coeff(i, l) * coeff(j, l);
-    }
-    tmp /= coeff(i, 0) * coeff(j, 0);
-    min = std::min(tmp, min);
-    max = std::max(tmp, max);
-  }
-
-  if (min < 0)
-    Msg::Fatal("minA ne devrait pas etre negatif");
-
-  min = std::sqrt(min);
-  max = std::sqrt(max);
-  double tmp = min;
-  min = 1./max;
-  max = 1./tmp;
 }
 
 void MetricCoefficient::_minMaxA2(

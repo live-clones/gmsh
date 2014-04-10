@@ -72,7 +72,7 @@ private:
  private:
   void _computeBezCoeff();
   void _fillInequalities(int order);
-  int _lightenInequalities(double, double, int&, int&); //TODO change
+  void _lightenInequalities(double, int&, int&); //TODO change
   void _interpolateBezierPyramid(const double *uvw, double *minmaxQ);
   void _computeRmin1(fullMatrix<double>&, fullVector<double>&,
                     double &RminLag, double &RminBez, int) const;
@@ -83,7 +83,6 @@ private:
   double _minq(const fullMatrix<double>&) const;
   double _maxp(const fullMatrix<double>&) const;
   double _maxq(const fullMatrix<double>&) const;
-  void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
   void _minMaxA2(const fullMatrix<double>&, double &min, double &max) const;
   void _minMaxJacobianSqr(const fullVector<double>&, double &min, double &max) const;
   void _minJ2P3(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
