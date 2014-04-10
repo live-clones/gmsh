@@ -54,9 +54,7 @@ private:
   const GradientBasis *_gradients;
   const bezierBasis *_bezier;
   fullMatrix<double> _coefficientsLag, _coefficientsBez;
-  fullMatrix<double> _inequations;
-  std::vector<std::map<std::pair<int, int>, double> > _ineq2; //TODO : pas top
-  std::map<int, std::vector<IneqData> > _ineqJ2, _ineqP3;
+  std::map<int, std::vector<IneqData> > _ineqJ2, _ineqP3, _ineqA;
   int __maxdepth, __numSubdivision;
   std::vector<int> __numSub;
 
@@ -72,7 +70,7 @@ private:
  private:
   void _computeBezCoeff();
   void _fillInequalities(int order);
-  void _lightenInequalities(double, int&, int&); //TODO change
+  void _lightenInequalities(double, int&, int&, int&); //TODO change
   void _interpolateBezierPyramid(const double *uvw, double *minmaxQ);
   void _computeRmin1(fullMatrix<double>&, fullVector<double>&,
                     double &RminLag, double &RminBez, int) const;

@@ -14,14 +14,26 @@
 namespace {
   double cubicCardanoRoot(double p, double q)
   {
-    double sq = std::sqrt(q*q/4 + p*p*p/27);
-    return std::pow(-q/2+sq, 1/3.) + std::pow(-q/2-sq, 1/3.);
+    double A = q*q/4 + p*p*p/27;
+    if (A > 0) {
+      double sq = std::sqrt(A);
+      return std::pow(-q/2+sq, 1/3.) + std::pow(-q/2-sq, 1/3.);
+    }
+    else {
+      double module = std::sqrt(-p*p*p/27);
+      double ang = std::acos(-q/2/module);
+      return 2 * std::pow(module, 1/3.) * std::cos(ang/3);
+    }
   }
 
   int nChoosek(int n, int k)
   {
     if (n < k || k < 0) {
       Msg::Error("Wrong argument for combination. n %d k %d", n, k);
+      int a[2];
+      int e = 0;
+      for (int i = 0; i < 10000000; ++i) e+=a[i];
+      Msg::Info("%d",e);
       return 1;
     }
 
@@ -105,162 +117,153 @@ MetricCoefficient::MetricCoefficient(MElement *el) : _element(el)
 
 void MetricCoefficient::_fillInequalities(int metricOrder)
 {
-  std::map<int, int> result2vect;
-  std::vector<std::pair<int,int> > v;
   int dimSimplex = _bezier->_dimSimplex;
   int dim = _bezier->getDim();
-  fullMatrix<double> exp = _bezier->_exponents;
+  fullMatrix<int> exp(_bezier->_exponents.size1(), _bezier->_exponents.size2());
+  for (int i = 0; i < _bezier->_exponents.size1(); ++i) {
+    for (int j = 0; j < _bezier->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_bezier->_exponents(i, j) + .5);
+    }
+  }
   int ncoeff = _coefficientsLag.size1();
-  Msg::Info("ncoeff %d", ncoeff);
-  int countP3 = 0, countJ2 = 0;
-  double tol = .99;
+
+  int countP3 = 0, countJ2 = 0, countA = 0;
+  double tol = .1;
   for (int i = 0; i < ncoeff; i++) {
     for (int j = i; j < ncoeff; j++) {
-      double A = 1, B = 1;
+      double num = 1, den = 1;
       {
         int compl1 = metricOrder;
         int compl2 = metricOrder;
-        int compl3 = 2*metricOrder;
+        int compltot = 2*metricOrder;
         for (int k = 0; k < dimSimplex; k++) {
-          A *= nChoosek(compl1, (int) exp(i, k))
-               * nChoosek(compl2, (int) exp(j, k));
-          B *= nChoosek(compl3, (int) exp(i, k) + (int) exp(j, k));
-          compl1 -= (int) exp(i, k);
-          compl2 -= (int) exp(j, k);
-          compl3 -= (int) exp(i, k) + (int) exp(j, k);
+          num *= nChoosek(compl1, exp(i, k))
+               * nChoosek(compl2, exp(j, k));
+          den *= nChoosek(compltot, exp(i, k) + exp(j, k));
+          compl1 -= exp(i, k);
+          compl2 -= exp(j, k);
+          compltot -= exp(i, k) + exp(j, k);
         }
-      }
-      for (int k = dimSimplex; k < dim; k++) {
-        A *= nChoosek(metricOrder, (int) exp(i, k))
-             * nChoosek(metricOrder, (int) exp(j, k));
-        B *= nChoosek(2*metricOrder, (int) exp(i, k) + (int) exp(j, k));
+        for (int k = dimSimplex; k < dim; k++) {
+          num *= nChoosek(metricOrder, exp(i, k))
+               * nChoosek(metricOrder, exp(j, k));
+          den *= nChoosek(2*metricOrder, exp(i, k) + exp(j, k));
+        }
       }
 
-      if (i != j) A *= 2;
+      if (i != j) num *= 2;
 
-      if (A > tol*B) {
-        v.push_back(std::make_pair(i, j));
-        int ind;
-        int hash = 0;
-        for (int k = 0; k < dim; k++) {
-          hash += (int) (exp(i, k)+exp(j, k)) * pow_int(2*metricOrder+1, k);
-        }
-        std::map<int, int>::iterator it;
-        if ((it = result2vect.find(hash)) != result2vect.end()) {
-          ind = it->second;
-        }
-        else {
-          ind = _ineq2.size();
-          _ineq2.push_back(std::map<std::pair<int, int>, double>());
-          result2vect[hash] = ind;
-        }
-        _ineq2[ind][std::make_pair(i, j)] = A/B;
+      ++countA;
+      int hash = 0;
+      for (int l = 0; l < dim; l++) {
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*metricOrder+1, l);
       }
+      _ineqA[hash].push_back(IneqData(num/den, i, j));
+
       for (int k = j; k < ncoeff; ++k) {
-        double A = 1, B = 1;
+        double num = 1, den = 1;
         {
           int compl1 = metricOrder;
           int compl2 = metricOrder;
           int compl3 = metricOrder;
           int compltot = 3*metricOrder;
           for (int l = 0; l < dimSimplex; l++) {
-            A *= nChoosek(compl1, (int) exp(i, l))
-                 * nChoosek(compl2, (int) exp(j, l))
-                 * nChoosek(compl3, (int) exp(k, l));
-            B *= nChoosek(compltot, (int) exp(i, l) + (int) exp(j, l) + (int) exp(k, l));
-            compl1 -= (int) exp(i, l);
-            compl2 -= (int) exp(j, l);
-            compl3 -= (int) exp(k, l);
-            compltot -= (int) exp(i, l) + (int) exp(j, l) + (int) exp(k, l);
+            num *= nChoosek(compl1, exp(i, l))
+                 * nChoosek(compl2, exp(j, l))
+                 * nChoosek(compl3, exp(k, l));
+            den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
+            compl1 -= exp(i, l);
+            compl2 -= exp(j, l);
+            compl3 -= exp(k, l);
+            compltot -= exp(i, l) + exp(j, l) + exp(k, l);
           }
-        }
-        for (int l = dimSimplex; l < dim; l++) {
-          A *= nChoosek(metricOrder, (int) exp(i, l))
-               * nChoosek(metricOrder, (int) exp(j, l))
-               * nChoosek(metricOrder, (int) exp(k, l));
-          B *= nChoosek(3*metricOrder, (int) exp(i, l) + (int) exp(j, l) + (int) exp(k, l));
+          for (int l = dimSimplex; l < dim; l++) {
+            num *= nChoosek(metricOrder, exp(i, l))
+                 * nChoosek(metricOrder, exp(j, l))
+                 * nChoosek(metricOrder, exp(k, l));
+            den *= nChoosek(3*metricOrder, exp(i, l) + exp(j, l) + exp(k, l));
+          }
         }
 
         if (i == j) {
-          if (j != k) A *= 3;
+          if (j != k) num *= 3;
         }
         else {
-          if (j == k || i == k) A *= 3;
-          else A *= 6;
+          if (j == k || i == k) num *= 3;
+          else num *= 6;
         }
 
         ++countP3;
         int hash = 0;
         for (int l = 0; l < dim; l++) {
-          hash += (int) (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*metricOrder+1, l);
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*metricOrder+1, l);
         }
-        _ineqP3[hash].push_back(IneqData(A/B, i, j, k));
-        //Msg::Info(" %d", _ineqP3[hash].back().k);
+        _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
       }
     }
   }
-  _inequations.resize(v.size(), 2);
-  exp = _jacobian->bezier->_exponents;
-  for (unsigned int k = 0; k < v.size(); ++k) {
-    //Msg::Info("%d %d", v[k].first, v[k].second);
-    _inequations(k, 0) = v[k].first;
-    _inequations(k, 1) = v[k].second;
-  }
 
+  exp.resize(_jacobian->bezier->_exponents.size1(),
+             _jacobian->bezier->_exponents.size2());
+  for (int i = 0; i < _jacobian->bezier->_exponents.size1(); ++i) {
+    for (int j = 0; j < _jacobian->bezier->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_jacobian->bezier->_exponents(i, j) + .5);
+    }
+  }
   int njac = _jacobian->getNumJacNodes();
   for (int i = 0; i < njac; i++) {
     for (int j = i; j < njac; j++) {
       int order = metricOrder/2*3;
-      double A = 1, B = 1;
+      double num = 1, den = 1;
       {
         int compl1 = order;
         int compl2 = order;
         int compltot = 2*order;
         for (int k = 0; k < dimSimplex; k++) {
-          A *= nChoosek(compl1, (int) exp(i, k))
-               * nChoosek(compl2, (int) exp(j, k));
-          B *= nChoosek(compltot, (int) exp(i, k) + (int) exp(j, k));
-          compl1 -= (int) exp(i, k);
-          compl2 -= (int) exp(j, k);
-          compltot -= (int) exp(i, k) + (int) exp(j, k);
+          num *= nChoosek(compl1, exp(i, k))
+               * nChoosek(compl2, exp(j, k));
+          den *= nChoosek(compltot, exp(i, k) + exp(j, k));
+          compl1 -= exp(i, k);
+          compl2 -= exp(j, k);
+          compltot -= exp(i, k) + exp(j, k);
         }
       }
       for (int k = dimSimplex; k < dim; k++) {
-        A *= nChoosek(order, (int) exp(i, k))
-             * nChoosek(order, (int) exp(j, k));
-        B *= nChoosek(2*order, (int) exp(i, k) + (int) exp(j, k));
+        num *= nChoosek(order, exp(i, k))
+             * nChoosek(order, exp(j, k));
+        den *= nChoosek(2*order, exp(i, k) + exp(j, k));
       }
 
-      if (i != j) A *= 2;
+      if (i != j) num *= 2;
 
       ++countJ2;
       int hash = 0;
       for (int k = 0; k < dim; k++) {
-        hash += (int) (exp(i, k)+exp(j, k)) * pow_int(2*order+1, k);
+        hash += (exp(i, k)+exp(j, k)) * pow_int(2*order+1, k);
       }
-      _ineqJ2[hash].push_back(IneqData(A/B, i, j));
+      _ineqJ2[hash].push_back(IneqData(num/den, i, j));
     }
   }
 
-  _lightenInequalities(tol, countJ2, countP3);
+  _lightenInequalities(tol, countJ2, countP3, countA);
 
-  Msg::Info("A : %d / %d", v.size(), ncoeff*(ncoeff+1)/2);
+  Msg::Info("A : %d / %d", countA, ncoeff*(ncoeff+1)/2);
   Msg::Info("J2 : %d / %d", countJ2, njac*(njac+1)/2);
   Msg::Info("P3 : %d / %d", countP3, ncoeff*(ncoeff+1)*(ncoeff+2)/6);
 }
 
-void MetricCoefficient::_lightenInequalities(double tol, int &countj, int &countp)
+void MetricCoefficient::_lightenInequalities(double tol, int &countj, int &countp, int &counta)
 {
   std::map<int, std::vector<IneqData> >::iterator it, itbeg[3], itend[3];
 
   int cnt[3] = {0,0,0};
   itbeg[0] = _ineqJ2.begin();
   itbeg[1] = _ineqP3.begin();
-  //itbeg[2] = _ineqJ2.begin();
+  itbeg[2] = _ineqA.begin();
   itend[0] = _ineqJ2.end();
   itend[1] = _ineqP3.end();
-  //itend[2] = _ineqJ2.end();
-  for (int k = 0; k < 2; ++k) {
+  itend[2] = _ineqA.end();
+  for (int k = 0; k < 3; ++k) {
     it = itbeg[k];
     while (it != itend[k]) {
       std::sort(it->second.begin(), it->second.end(), gterIneq());
@@ -280,6 +283,7 @@ void MetricCoefficient::_lightenInequalities(double tol, int &countj, int &count
   }
   countj -= cnt[0];
   countp -= cnt[1];
+  counta -= cnt[2];
 }
 
 void MetricCoefficient::getCoefficients(fullMatrix<double> &coeff, bool bezier)
@@ -846,9 +850,6 @@ double MetricCoefficient::_subdivideForRmin(
     ++((MetricCoefficient*)this)->__numSub[depth];
     ((MetricCoefficient*)this)->__maxdepth = std::max(__maxdepth, depth+1);
 
-    if (depth == 0) {
-      Msg::Info("Begin 1");
-    }
     for (int i = 0; i < numSub; ++i) {
       coeff = new fullMatrix<double>(numMetPnts, numCoeff);
       coeff->copy(*subcoeffs, i * numMetPnts, numMetPnts, 0, numCoeff, 0, 0);
@@ -864,9 +865,6 @@ double MetricCoefficient::_subdivideForRmin(
       MetricData *metData = new MetricData(coeff, jac, minBez, depth+1);
       subdomains.push(metData);
       vect.push_back(metData);
-    }
-    if (depth == 0) {
-      Msg::Info("End 1");
     }
     trash.push_back(subjac);
     delete subcoeffs;
@@ -962,27 +960,24 @@ void MetricCoefficient::_minMaxA2(
 {
   min = 1e10;
   max = 0;
-  std::map<std::pair<int, int>, double>::const_iterator it;
-
-  for (unsigned int k = 0; k < _ineq2.size(); ++k) {
-    double tmpNum = 0;
-    double tmpDen = 0;
-    //Msg::Info("%d/%d: %d", k, _ineq2.size(), _ineq2[k].size());
-    //Msg::Info(" ");
-    for (it = _ineq2[k].begin(); it != _ineq2[k].end(); ++it) {
-      const int i = it->first.first;
-      const int j = it->first.second;
-      double tmp2 = 0;
+  std::map<int, std::vector<IneqData> >::const_iterator it = _ineqA.begin();
+  while (it != _ineqA.end()) {
+    double num = 0;
+    double den = 0;
+    for (unsigned int k = 0; k < it->second.size(); ++k) {
+      const int i = it->second[k].i;
+      const int j = it->second[k].j;
+      double tmp = 0;
       for (int l = 1; l < 7; ++l) {
-        tmp2 += coeff(i, l) * coeff(j, l);
+        tmp += coeff(i, l) * coeff(j, l);
       }
-      tmpNum += it->second * tmp2;
-      tmpDen += it->second * coeff(i, 0) * coeff(j, 0);
+      den += it->second[k].val * tmp;
+      num += it->second[k].val * coeff(i, 0) * coeff(j, 0);
+      double val = num/den;
+      min = std::min(val, min);
+      max = std::max(val, max);
     }
-    double val = tmpNum/tmpDen;
-    //Msg::Info("%g/%g = %g", tmpNum, tmpDen, val);
-    min = std::min(val, min);
-    max = std::max(val, max);
+    ++it;
   }
 
   if (min < 0)
@@ -990,9 +985,6 @@ void MetricCoefficient::_minMaxA2(
 
   min = std::sqrt(min);
   max = std::sqrt(max);
-  double tmp = min;
-  min = 1./max;
-  max = 1./tmp;
 }
 
 void MetricCoefficient::_minMaxJacobianSqr(
