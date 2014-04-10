@@ -36,12 +36,12 @@ i = 0 ;
 
 For(1:4)
 
-  i+=1 ; 
+  i+=1 ;
 
   Rotate {{0.0,0.0,1.0},{0.0,0.0,0.0}, i*r} {
     Duplicata {
-      Line{1}; Line{2}; Line{3}; 
-      Line{4}; Line{5}; Line{6}; 
+      Line{1}; Line{2}; Line{3};
+      Line{4}; Line{5}; Line{6};
       Point{10};
     }
   }
@@ -82,17 +82,17 @@ Plane Surface(49) = {48,46};
 ones[]={1,1,1,1,1,1,1,1,1,1};
 ep[]={0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 0.9, 0.95, 0.99, 1};
 For i In {0:4}
-  ep2[i]=2*ep[i]; 
+  ep2[i]=2*ep[i];
 EndFor
 
-Recombine Surface {47,49,91};
+Recombine Surface {47,49};
 
-Extrude {0,0,0.2}{ 
-  Surface{47,49}; Layers{ ones[], ep[] }; Recombine; 
+Extrude {0,0,0.2}{
+  Surface{47,49}; Layers{ ones[], ep[] }; Recombine;
 }
 Extrude {0,0,0.2}{
-  Surface{91}; Layers{ ones[{0:4}], ep2[] }; Recombine; 
+  Surface{91}; Layers{ ones[{0:4}], ep2[] }; Recombine;
 }
 Extrude {0,0,-0.2}{
-  Surface{47}; Layers{ ones[{0:4}], ep2[] }; Recombine; 
+  Surface{47}; Layers{ ones[{0:4}], ep2[] }; Recombine;
 }
