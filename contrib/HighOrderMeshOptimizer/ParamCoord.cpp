@@ -57,6 +57,7 @@ SPoint3 ParamCoordParent::getUvw(MVertex* vert)
     break;
   }
   }
+  return SPoint3(0.,0.,0.);
 }
 
 SPoint3 ParamCoordParent::uvw2Xyz(const SPoint3 &uvw)
