@@ -14,7 +14,9 @@
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
+#if defined(HAVE_PARSER)
 #include "Parser.h"
+#endif
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
@@ -220,10 +222,12 @@ int GmshBatch()
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
+#if defined(HAVE_PARSER)
     std::vector<std::string> s;
     PrintParserSymbols(0, s);
     for(unsigned int i = 0; i < s.size(); i++)
       Msg::Direct("%s", s[i].c_str());
+#endif
   }
   else if(CTX::instance()->batch == -1){
     CreateOutputFile(CTX::instance()->outputFileName,
