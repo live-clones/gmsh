@@ -31,6 +31,53 @@ class MVertexLessThanParam{
   }
 };
 
+// Set BM data on vertex
+static void setBLData(MVertex *v)
+{
+  switch (v->onWhat()->dim()) {
+    case 1: {
+      MEdgeVertex *ve = dynamic_cast<MEdgeVertex*>(v);
+      if (ve) ve->bl_data = new MVertexBoundaryLayerData();
+      break;
+    }
+    case 2: {
+      MFaceVertex *vf = dynamic_cast<MFaceVertex*>(v);
+      if (vf) vf->bl_data = new MVertexBoundaryLayerData();
+      break;
+    }
+  }
+}
+
+// If all low-order nodes in are marked as BL, then mark high-order nodes as BL (only works in 2D)
+static bool setBLData(MElement *el)
+{
+  // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
+  for(int i=0; i<el->getNumPrimaryVertices(); i++) {
+    MVertex *v = el->getVertex(i);
+    bool isBL = false;
+    switch (v->onWhat()->dim()) {
+      case 0:
+        isBL = true;
+        break;
+      case 1: {
+        MEdgeVertex *ve = dynamic_cast<MEdgeVertex*>(v);
+        if (ve && ve->bl_data) isBL = true;
+        break;
+      }
+      case 2: {
+        MFaceVertex *vf = dynamic_cast<MFaceVertex*>(v);
+        if (vf && vf->bl_data) isBL = true;
+        break;
+      }
+    }
+    if (!isBL) return false;
+  }
+  // Mark high-order nodes as BL nodes (only works in 2D)
+  for(int i=el->getNumPrimaryVertices(); i<el->getNumVertices(); i++)
+    setBLData(el->getVertex(i));
+  return true;
+}
+
 static void Subdivide(GEdge *ge)
 {
   std::vector<MLine*> lines2;
@@ -39,6 +86,7 @@ static void Subdivide(GEdge *ge)
     if(l->getNumVertices() == 3){
       lines2.push_back(new MLine(l->getVertex(0), l->getVertex(2)));
       lines2.push_back(new MLine(l->getVertex(2), l->getVertex(1)));
+      setBLData(l);
     }
     delete l;
   }
@@ -69,6 +117,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
           (new MTriangle(t->getVertex(3), t->getVertex(1), t->getVertex(4)));
         triangles2.push_back
           (new MTriangle(t->getVertex(5), t->getVertex(4), t->getVertex(2)));
+        setBLData(t);
       }
       delete t;
     }
@@ -87,6 +136,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
         (new MQuadrangle(q->getVertex(8), q->getVertex(5), q->getVertex(2), q->getVertex(6)));
       quadrangles2.push_back
         (new MQuadrangle(q->getVertex(7), q->getVertex(8), q->getVertex(6), q->getVertex(3)));
+      setBLData(q);
     }
     delete q;
   }
@@ -119,6 +169,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
           (new MQuadrangle(t->getVertex(3), t->getVertex(1), t->getVertex(4), newv));
         quadrangles2.push_back
           (new MQuadrangle(t->getVertex(5), newv,t->getVertex(4), t->getVertex(2)));
+        if (setBLData(t)) setBLData(newv);
         delete t;
       }
     }
@@ -155,6 +206,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
           (new MTetrahedron(t->getVertex(7), t->getVertex(8), t->getVertex(5), t->getVertex(6)));
         tetrahedra2.push_back
           (new MTetrahedron(t->getVertex(4), t->getVertex(7), t->getVertex(5), t->getVertex(6)));
+        setBLData(t);
       }
       delete t;
     }
@@ -189,6 +241,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
       hexahedra2.push_back
         (new MHexahedron(h->getVertex(26), h->getVertex(23), h->getVertex(14), h->getVertex(24),
                          h->getVertex(25), h->getVertex(18), h->getVertex(6), h->getVertex(19)));
+      setBLData(h);
     }
     delete h;
   }
@@ -226,6 +279,10 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
         hexahedra2.push_back
           (new MHexahedron(t->getVertex(3),  t->getVertex(9), newv[1], t->getVertex(7),
                            t->getVertex(8), newv[3], newv[4], newv[2]));
+        if (setBLData(t)) {
+          setBLData(newv[0]); setBLData(newv[1]);
+          setBLData(newv[2]); setBLData(newv[3]); setBLData(newv[4]);
+        }
         delete t;
       }
     }
@@ -269,6 +326,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
         hexahedra2.push_back
           (new MHexahedron(p->getVertex(11), p->getVertex(16), newv[2], p->getVertex(17),
                            p->getVertex(5), p->getVertex(13), newv[1], p->getVertex(14)));
+        if (setBLData(p)) {
+          setBLData(newv[0]); setBLData(newv[1]); setBLData(newv[2]);
+        }
       }
     }
     gr->prisms.clear();
@@ -304,6 +364,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
       prisms2.push_back
         (new MPrism(p->getVertex(17), p->getVertex(16), p->getVertex(15),
                     p->getVertex(14), p->getVertex(13), p->getVertex(12)));
+      setBLData(p);
     }
     delete p;
   }
@@ -353,6 +414,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
         ((new MTetrahedron(p->getVertex(12), p->getVertex(10), p->getVertex(11), p->getVertex(13))));
       gr->tetrahedra.push_back
         ((new MTetrahedron(p->getVertex(7), p->getVertex(6), p->getVertex(12), p->getVertex(13))));
+      setBLData(p);
     }
     delete p;
   }
