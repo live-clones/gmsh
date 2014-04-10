@@ -135,12 +135,14 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   }
   return p;
 }
+
 // Bezier
 static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 {
   int NbCurves = (List_Nbr(Curve->Control_Points) - 1) / 3;
   int iCurve = (int)floor(u * (double)NbCurves);
-  if(iCurve == NbCurves) iCurve -= 1; // u = 1
+  if(iCurve >= NbCurves) iCurve = NbCurves - 1; // u = 1
+  if(iCurve <= 0) iCurve = 0;
   double t1 = (double)(iCurve) / (double)(NbCurves);
   double t2 = (double)(iCurve+1) / (double)(NbCurves);
   double t = (u - t1) / (t2 - t1);
