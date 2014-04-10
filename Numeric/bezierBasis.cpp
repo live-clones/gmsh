@@ -551,59 +551,58 @@ void bezierBasis::_construct(int parentType, int p)
     return;
   }
 
-  int dimSimplex;
   switch (parentType) {
     case TYPE_PNT :
       dim = 0;
       numLagCoeff = 1;
-      dimSimplex = 0;
+      _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsLine(0);
       subPoints.push_back(gmshGeneratePointsLine(0));
       break;
     case TYPE_LIN : {
       dim = 1;
-      numLagCoeff = 2;
-      dimSimplex = 0;
+      numLagCoeff = order == 0 ? 1 : 2;
+      _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsLine(order);
       subPoints = generateSubPointsLine(order);
       break;
     }
     case TYPE_TRI : {
       dim = 2;
-      numLagCoeff = 3;
-      dimSimplex = 2;
+      numLagCoeff = order == 0 ? 1 : 3;
+      _dimSimplex = 2;
       _exponents = gmshGenerateMonomialsTriangle(order);
       subPoints = generateSubPointsTriangle(order);
       break;
     }
     case TYPE_QUA : {
       dim = 2;
-      numLagCoeff = 4;
-      dimSimplex = 0;
+      numLagCoeff = order == 0 ? 1 : 4;
+      _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsQuadrangle(order);
       subPoints = generateSubPointsQuad(order);
       break;
     }
     case TYPE_TET : {
       dim = 3;
-      numLagCoeff = 4;
-      dimSimplex = 3;
+      numLagCoeff = order == 0 ? 1 : 4;
+      _dimSimplex = 3;
       _exponents = gmshGenerateMonomialsTetrahedron(order);
       subPoints = generateSubPointsTetrahedron(order);
       break;
     }
     case TYPE_PRI : {
       dim = 3;
-      numLagCoeff = 6;
-      dimSimplex = 2;
+      numLagCoeff = order == 0 ? 1 : 6;
+      _dimSimplex = 2;
       _exponents = gmshGenerateMonomialsPrism(order);
       subPoints = generateSubPointsPrism(order);
       break;
     }
     case TYPE_HEX : {
       dim = 3;
-      numLagCoeff = 8;
-      dimSimplex = 0;
+      numLagCoeff = order == 0 ? 1 : 8;
+      _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsHexahedron(order);
       subPoints = generateSubPointsHex(order);
       break;
@@ -614,7 +613,7 @@ void bezierBasis::_construct(int parentType, int p)
       dim = 3;
       order = 0;
       numLagCoeff = 4;
-      dimSimplex = 3;
+      _dimSimplex = 3;
       _exponents = gmshGenerateMonomialsTetrahedron(order);
       subPoints = generateSubPointsTetrahedron(order);
       break;
@@ -625,7 +624,7 @@ void bezierBasis::_construct(int parentType, int p)
   fullMatrix<double> bezierPoints = _exponents;
   bezierPoints.scale(1./order);
 
-  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, dimSimplex);
+  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
-  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order, dimSimplex);
+  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order, _dimSimplex);
 }

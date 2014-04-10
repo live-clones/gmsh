@@ -44,7 +44,7 @@ class JacobianBasis {
  public :
   const bezierBasis *bezier;
 
-  JacobianBasis(int tag);
+  JacobianBasis(int tag, int jacOrder = -1);
 
   // Get methods
   inline int getNumJacNodes() const { return numJacNodes; }

@@ -19,6 +19,8 @@ class bezierBasis {
   int numLagCoeff;
   int dim, type, order;
   int numDivisions;
+ public:
+  int _dimSimplex;
   fullMatrix<double> _exponents;
 
  public :

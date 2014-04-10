@@ -88,11 +88,15 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
   if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
 }
 
-JacobianBasis::JacobianBasis(int tag)
+JacobianBasis::JacobianBasis(int tag, int jacOrder)
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
   const int order = ElementType::OrderFromTag(tag);
-  const int jacobianOrder = JacobianBasis::jacobianOrder(parentType, order);
+  int jacobianOrder;
+  if (jacOrder < 0)
+    jacobianOrder = JacobianBasis::jacobianOrder(parentType, order);
+  else
+    jacobianOrder = jacOrder;
   const int primJacobianOrder = JacobianBasis::jacobianOrder(parentType, 1);
 
   fullMatrix<double> lagPoints;                                  // Sampling points
