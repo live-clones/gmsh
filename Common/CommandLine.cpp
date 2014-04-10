@@ -185,6 +185,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp(cc + "r",         "Rename project file"));
   s.push_back(mp(cc + "s",         "Save file as"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
+  s.push_back(mp("Shift+" + cc + "h", "Show current options and workspace window"));
   s.push_back(mp("Shift+" + cc + "j", "Save options as default"));
   s.push_back(mp("Shift+" + cc + "m", "Show manipulator window"));
   s.push_back(mp("Shift+" + cc + "n", "Show option window"));

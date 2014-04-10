@@ -245,26 +245,29 @@ void help_options_cb(Fl_Widget *w, void *data)
 
   PrintOptions(0, GMSH_FULLRC, diff, help, 0, &s0);
   PrintParserSymbols(help, s0);
+
+  int top = FlGui::instance()->help->browser->topline();
   FlGui::instance()->help->browser->clear();
   for(unsigned int i = 0; i < s0.size(); i++){
     std::string::size_type sep = s0[i].rfind('\0');
-    void *data = 0;
+    void *d = 0;
     if(sep != std::string::npos){
       std::string tmp = s0[i].substr(sep + 1);
-      if(tmp == "number") data = (void*)"number";
-      else if(tmp == "string") data = (void*)"string";
-      else if(tmp == "color") data = (void*)"color";
+      if(tmp == "number") d = (void*)"number";
+      else if(tmp == "string") d = (void*)"string";
+      else if(tmp == "color") d = (void*)"color";
     }
     if(search.empty()){
-      FlGui::instance()->help->browser->add(s0[i].c_str(), data);
+      FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
     else{
       std::string tmp(s0[i]);
       std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
       if(tmp.find(search) != std::string::npos)
-        FlGui::instance()->help->browser->add(s0[i].c_str(), data);
+        FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
   }
+  FlGui::instance()->help->browser->topline(top);
 }
 
 helpWindow::helpWindow()

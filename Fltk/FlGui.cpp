@@ -779,6 +779,8 @@ void FlGui::resetVisibility()
 {
   if(visibility->win->shown())
     visibility_cb(NULL, NULL);
+  if(help->options->shown())
+    help_options_cb(NULL, NULL);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
