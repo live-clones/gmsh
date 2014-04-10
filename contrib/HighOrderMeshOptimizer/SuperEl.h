@@ -33,15 +33,13 @@
 #include <string>
 #include "MElement.h"
 
-
-
 class SuperEl
 {
 public:
 
   SuperEl(int order, double dist, int type, const std::vector<MVertex*> &baseVert,
           const std::vector<SVector3> &normals);
-  ~SuperEl() { _superVert.clear(); delete _superEl, _superEl0; }
+  ~SuperEl() { _superVert.clear(); delete _superEl; delete _superEl0; }
 
   bool isOK() const { return _superEl; }
   bool isPointIn(const SPoint3 p) const;
