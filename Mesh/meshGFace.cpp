@@ -1389,8 +1389,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     Msg::Debug("Delaunizing the initial mesh");
     delaunayizeBDS(gf, *m, nb_swap);
   }
-  gf->triangles.clear();
-  gf->quadrangles.clear();
+  //gf->triangles.clear();
+  //gf->quadrangles.clear();
+  gf->deleteMesh();
 
   Msg::Debug("Starting to add internal points");
   // start mesh generation

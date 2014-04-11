@@ -792,7 +792,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
     //    _printTris("new_cavity.pos", new_cavity.begin(), new_cavity.end(), Us, Vs, false);
     //    _printTris("newTris.pos", &newTris[0], newTris+shell.size(), Us, Vs, false);
     //    _printTris("allTris.pos", allTets.begin(),allTets.end(), Us, Vs, false);
-    for (unsigned int i = 0; i < shell.size(); i++) delete newTris[i];
+    for (unsigned int i = 0; i < shell.size(); i++) {delete newTris[i]->tri(), delete newTris[i];}
     delete [] newTris;
     //    throw;
     //    double t2 = Cpu();
