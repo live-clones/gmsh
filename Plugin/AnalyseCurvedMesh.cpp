@@ -164,18 +164,6 @@ void GMSH_AnalyseCurvedMeshPlugin::checkValidity(int toDo)
     case 2 :
       for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
         GFace *f = *it;
-
-        unsigned int numType[3] = {0, 0, 0};
-        f->getNumMeshElements(numType);
-
-        for (int type = 0; type < 3; type++) {
-          MElement *const *el = f->getStartElementType(type);
-          for (unsigned int jo = 0; jo < numType[type]; jo++)
-            el[jo]->setVolumePositive();
-        }
-      }
-      for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
-        GFace *f = *it;
         unsigned int numType[3] = {0, 0, 0};
         f->getNumMeshElements(numType);
         for (int type = 0; type < 3; type++) {
