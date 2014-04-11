@@ -4684,6 +4684,23 @@ repository, go in the gmsh directory and type:
 svn commit
 @end example
 
+@item
+If you want to remove part of the tree from being downloaded, you can
+change its ``ambiant'' depth to ``empty''. For example, if you don't
+want to upate the ``projects'' subdirectory (as well as its
+subdirectories), type:
+
+@example
+cd projects
+svn update --set-depth empty
+@end example
+
+To later restore the projects for recursive updating, type:
+@example
+cd projects
+svn update --set-depth infinity
+@end example
+
 @end enumerate
 
 Once you have the source code, you need to run CMake to configure your
