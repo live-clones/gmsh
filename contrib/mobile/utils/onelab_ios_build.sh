@@ -26,12 +26,10 @@ function build_gmsh {
   fi
   if [ ! -d "$gmsh_svn/build_ios_$1" ]; then
     mkdir $gmsh_svn/build_ios_$1
-    cd $gmsh_svn/build_ios_$1
-    cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DCMAKE_OSX_ARCHITECTURES="$1" ../
-    check
-    cd -
   fi
   cd $gmsh_svn/build_ios_$1
+  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DCMAKE_OSX_ARCHITECTURES="$1" ..
+  check
   $build_cmd
   check
   $header_cmd
@@ -44,14 +42,12 @@ function build_getdp {
   fi
   if [ ! -d "$getdp_svn/build_ios_$1" ]; then
     mkdir $getdp_svn/build_ios_$1
-    cd $getdp_svn/build_ios_$1
-    export PETSC_DIR=
-    export PETSC_ARCH=
-    cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ../
-    check
-    cd -
   fi
   cd $getdp_svn/build_ios_$1
+  export PETSC_DIR=
+  export PETSC_ARCH=
+  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ..
+  check
   $build_cmd
   check
   $header_cmd
