@@ -72,6 +72,8 @@ Rename project file
 Save file as
 @item Shift+Ctrl+c
 Show clipping plane window
+@item Shift+Ctrl+h
+Show current options and workspace window
 @item Shift+Ctrl+j
 Save options as default
 @item Shift+Ctrl+m

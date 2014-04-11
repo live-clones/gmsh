@@ -2358,11 +2358,11 @@ static void MaxNumSurface(void *a, void *b)
 
 static void ReplaceDuplicatePointsNew()
 {
-  Msg::Info("New Coherence required...");
+  Msg::Info("New Coherence...");
 
   double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
-  // Create unique points
+  // create kdtree
   std::map<MVertex*, Vertex*> v2V;
   std::vector<MVertex*> all;
   List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
@@ -2376,7 +2376,7 @@ static void ReplaceDuplicatePointsNew()
   List_Delete(tmp);
   MVertexPositionSet pos(all);
 
-  // touch unique points
+  // touch all points
   tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Vertex *V;
@@ -2385,7 +2385,7 @@ static void ReplaceDuplicatePointsNew()
   }
   List_Delete(tmp);
 
-  // Replace old points in curves
+  // replace points in curves
   tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Curve *c;
@@ -2409,7 +2409,7 @@ static void ReplaceDuplicatePointsNew()
   }
   List_Delete(tmp);
 
-  // Replace old points in surfaces
+  // replace points in surfaces
   tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Surface *s;
@@ -2424,7 +2424,7 @@ static void ReplaceDuplicatePointsNew()
   }
   List_Delete(tmp);
 
-  // Replace old points in volumes
+  // replace points in volumes
   tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Volume *vol;
@@ -2439,7 +2439,7 @@ static void ReplaceDuplicatePointsNew()
   }
   List_Delete(tmp);
 
-  // Replace old points in physical groups
+  // replace points in physical groups
   for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(GModel::current()->getGEOInternals()->PhysicalGroups, i, &p);
