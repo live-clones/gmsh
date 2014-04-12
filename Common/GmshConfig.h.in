@@ -59,7 +59,6 @@
 #cmakedefine HAVE_QT
 #cmakedefine HAVE_RTREE
 #cmakedefine HAVE_SALOME
-#cmakedefine HAVE_SCIP
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER

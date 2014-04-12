@@ -3,7 +3,6 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include "GmshConfig.h"
 #include "MetricBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
