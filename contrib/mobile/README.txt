@@ -37,4 +37,4 @@ https://itunes.apple.com/us/app/onelab/id845930897
 
 Google Play link:
 
-Coming soon!
+https://play.google.com/store/apps/details?id=org.geuz.onelab
