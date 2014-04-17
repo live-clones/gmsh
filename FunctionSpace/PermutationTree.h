@@ -5,6 +5,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <sstream>
 
 /**
    @class PermutationTree
@@ -84,6 +85,8 @@ class PermutationTree{
   std::vector<std::pair<size_t, size_t> > getAllTagsCount(void) const;
 
   std::string toString(void) const;
+  std::string toLatex(void) const;
+
   std::pair<size_t, char*> serialize(void) const;
   void                     serialize(const std::string& path) const;
 
@@ -99,6 +102,8 @@ class PermutationTree{
   static node_t* getLeaf(node_t* root,
                          const std::vector<size_t>& sequence,
                          size_t offset);
+
+  void deepFirstStream(node_t* node, std::stringstream& stream) const;
 
   static void enumerate(node_t* node, std::list<node_t*>& listOfNode);
   static void unlink(node_t* node, unlink_t* unlink, size_t maxSize);
@@ -192,6 +197,10 @@ class PermutationTree{
 
    @fn PermutationTree::toString
    @return Returns a string describing this PermutationTree
+   **
+
+   @fn PermutationTree::toLatex
+   @return Returns a string (of a Latex file) describing this PermutationTree
    **
 
    @fn PermutationTree::serialize(void) const
