@@ -1391,24 +1391,28 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
   //gf->triangles.clear();
   //gf->quadrangles.clear();
-  gf->deleteMesh();
+
+  // only delete the mesh data stored in the base GFace class (calling
+  // gf->deleteMesh() would also destroy e.g. the data in a compound face, which
+  // we should not do)
+  gf->GFace::deleteMesh();
 
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
-       // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-       //   backgroundMesh::unset();
-       //   buildBackGroundMesh (gf);
-       // }
+    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //   backgroundMesh::unset();
+    //   buildBackGroundMesh (gf);
+    // }
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, true,
                   &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
     refineMeshBDS(gf, *m, CTX::instance()->mesh.refineSteps, false,
                 &recoverMapInv);
     optimizeMeshBDS(gf, *m, 2);
-       // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-       //   backgroundMesh::unset();
-       // }
+    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //   backgroundMesh::unset();
+    // }
   }
 
   /*
@@ -1426,7 +1430,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   BDS2GMSH(m, gf, recoverMap);
 
   bool infty = false;
-  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD || gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+  if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
     infty = true;
   if (!onlyInitialMesh) {
     if (infty)
