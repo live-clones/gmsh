@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by Hang Si
 
 #include <stdio.h>
 #include <math.h>
@@ -13983,7 +13985,7 @@ void meshGRegionBoundaryRecovery::outsurfacemesh(const char* mfilename)
             pointloop[0], pointloop[1], pointloop[2]);
     fprintf(outfile, "\n");
     pointloop = pointtraverse();
-    pointnumber++; 
+    pointnumber++;
   }
   fclose(outfile);
 
@@ -15166,7 +15168,7 @@ if (1) {
           assert(parentseg.sh != NULL);
           l_edges.insert(shellmark(parentseg));
           // Get the GEdge containing this vertex.
-          GEdge *ge = NULL; 
+          GEdge *ge = NULL;
           GFace *gf = NULL;
           int etag = shellmark(parentseg);
           for (std::list<GEdge*>::iterator it = e_list.begin();
