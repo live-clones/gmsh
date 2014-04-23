@@ -1,6 +1,9 @@
-#include "OnelabClients.h"
+
 #include <algorithm>
 #include "mathex.h"
+
+#include "OnelabClients.h"
+
 
 // reserved keywords for the onelab parser
 
@@ -125,6 +128,7 @@ void MetaModel::saveCommandLines(){
     OLMsg::Error("The file <%s> cannot be opened",fileName.c_str());
   outfile.close();
 }
+
 
 int enclosed(const std::string &in, std::vector<std::string> &arguments,
 	     size_t &end){

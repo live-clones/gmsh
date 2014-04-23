@@ -114,9 +114,13 @@ class _parameter() :
     return self
 
   def modify(self, **param) :
+    ## updates the parameter with the content of param, attributes are merged
     for i in _parameter._members[self.type] :
       if i[0] in param :
-        setattr(self, i[0], param[i[0]]) #NB: no else statement => update
+        if i[0] == 'attributes' :
+          self.attributes.update(param['attributes'])
+        else :
+          setattr(self, i[0], param[i[0]])
 
 
 class client :
@@ -164,41 +168,30 @@ class client :
       self._createSocket()
       self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
-  def _defineParameter(self, param) :
+  def _defineParameter(self, p) :
     if not self.socket :
-      return param.value
-    self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
+      return p.value
+    self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      self._send(self._GMSH_PARAMETER_UPDATE, param.tochar()) #enrich a previous decl.
-      return param.fromchar(msg).value # use value from server
+      self._send(self._GMSH_PARAMETER_UPDATE, p.tochar())
+      return p.fromchar(msg).value
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
-      self._send(self._GMSH_PARAMETER, param.tochar()) #declaration
-      return param.value
-    
+      self._send(self._GMSH_PARAMETER, p.tochar())
+      return p.value
+        
   def defineNumber(self, name, **param):
     if 'labels' in param :
       param["choices"] = param["labels"].keys()
     p = _parameter('number', name=name, **param)
-    if 'value' not in param : #make the parameter readOnly
-      p.readOnly = 1
-      p.attributes={'Highlight':'AliceBlue'}
     value = self._defineParameter(p)
     return value
 
   def defineString(self, name, **param):
     p = _parameter('string', name=name, **param)
-    if 'value' not in param : #make the parameter readOnly
-      p.readOnly = 1
-      p.attributes={'Highlight':'AliceBlue'}
     value = self._defineParameter(p)
     return value
   
-  def clear(self, name) :
-    if not self.socket :
-      return
-    self._send(self._GMSH_PARAMETER_CLEAR, str(name))
-
   def setNumber(self, name, **param):
     if not self.socket :
       return
@@ -223,6 +216,11 @@ class client :
       p.modify(**param)
     self._send(self._GMSH_PARAMETER, p.tochar())
 
+  def clear(self, name) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARAMETER_CLEAR, str(name))
+    
   def addNumberChoice(self, name, value):
     if not self.socket :
       return
@@ -230,7 +228,11 @@ class client :
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      p.fromchar(msg).choices.append(value)
+      p.fromchar(msg).value = value
+      if self.loop :
+        p.choices.append(value)
+      else :
+        p.choices = ()
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
@@ -323,7 +325,10 @@ class client :
     self._send(self._GMSH_OLPARSE, filename)
     (t, msg) = self._receive() 
     if t == self._GMSH_OLPARSE :
-      print (msg)
+      print(msg)
+      if msg == "changed" :
+          return True
+    return False
 
   def _createSocket(self) :
     addr = self.addr
@@ -373,10 +378,12 @@ class client :
         self.addr = sys.argv[i + 2]
         self._createSocket()
         self._send(self._GMSH_START, str(os.getpid()))
-    self.action = self.getString(self.name + '/Action')
+    self.action = "compute" # default (subclients have no client.Action defined)
+    self.action = self.getString(self.name + '/Action', False)
     self.setNumber('IsPyMetamodel',value=1,visible=0)
     self.defineNumber('0Metamodel/Loop',value=0,visible=0)
-    self.loop = bool(self.getNumber('0Metamodel/Loop'))
+    self.loop = self.getNumber('0Metamodel/Loop')
+    self.batch = self.getNumber('0Metamodel/Batch')
     self.sendInfo("Performing OneLab '" + self.action + "'")
     if self.action == "initialize": 
       self.finalize()
@@ -469,3 +476,14 @@ class client :
     if list :
       self.setString(self.name+'/9Output files', value=list[0],
                      choices=list, visible=0)
+
+# tool to extract the (i, j)th element in an array file
+from rlcompleter import readline
+def extract(filename,i,j):
+    input = open(filename,'r')
+    all_lines = input.readlines()
+    input.close()
+    if i == -1:
+        i = len(all_lines) # last line
+    items = all_lines[i-1].split()
+    return float(items[j-1])

@@ -394,17 +394,17 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   case GmshSocket::GMSH_OLPARSE:
     {
 #if defined(HAVE_ONELAB_METAMODEL)
-      localSolverClient *c = new InterfacedClient("OLParser","","");
       std::vector<std::string> split = SplitOLFileName(message);
       std::string ofileName = split[0] + split[1] ;
       std::ofstream outfile(ofileName.c_str());
+      localSolverClient *c = new InterfacedClient(split[1],"","");
       if (outfile.is_open())
         c->convert_onefile(message, outfile);
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
 
-      std::string reply = "done"; // reply is dummy
+      std::string reply = onelab::server::instance()->getChanged(c->getName()) ? "changed" : "unchanged";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
 
@@ -576,7 +576,7 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("2")) ret = true;
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
-  //Update Onelab db flag indicating whether or not in a loop
+  //Update Onelab db parameter indicating whether or not in a loop
   std::vector<onelab::number> pn;
   onelab::server::instance()->get(pn,"0Metamodel/Loop");
   if(pn.size()){
@@ -893,6 +893,10 @@ void onelab_cb(Fl_Widget *w, void *data)
           FlGui::instance()->onelab->checkForErrors(c->getName());
         }
         if(FlGui::instance()->onelab->stop()) break;
+      }
+      // After computing, all parameters are set unchanged
+      if(action == "compute"){
+          onelab::server::instance()->setChanged(false);
       }
     }
 

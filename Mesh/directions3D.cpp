@@ -455,7 +455,7 @@ int Frame_field::findAnnIndex(SPoint3 p){
 }
 
 void Frame_field::initFace(GFace* gf){
-  // align crosses of gf with the normal (average on neighbour elements)
+  // align crosses of "gf" with the normal (average on neighbour elements)
   // at all vertices of the GFace gf
   build_vertex_to_elements(gf);
   for(std::map<MVertex*, std::set<MElement*> >::const_iterator it
@@ -489,7 +489,7 @@ void Frame_field::initFace(GFace* gf){
 
   std::cout << "Nodes in face = " << vertex_to_elements.size() << std::endl;
 
-  // compute cumulative cross-data vertices x elements for the whole contour of gf
+  // compute cumulative cross-data "vertices x elements" for the whole contour of gf
   std::list<GEdge*> edges = gf->edges();
   vertex_to_elements.clear();
   //Replace edges by their compounds
@@ -767,6 +767,8 @@ void Frame_field::save(const std::vector<std::pair<SPoint3, STensor3> > data,
   file << "};\n";
   file.close();
 }
+
+// BARYCENTRIC End
 
 void Frame_field::recur_connect_vert(FILE *fi, int count,
 				     MVertex *v,
@@ -1629,8 +1631,8 @@ void Nearest_point::clear(){
   field.clear();
   vicinity.clear();
 #if defined(HAVE_ANN)
-  delete kd_tree->thePoints();
-  delete kd_tree;
+   delete kd_tree->thePoints();
+   delete kd_tree;
   annClose();
 #endif
 }

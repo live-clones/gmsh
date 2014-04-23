@@ -285,8 +285,9 @@ Qtn cross3D::rotationToOnSurf(const cross3D &y) const{
 
   Qtn R1 = Qtn(axis, th1);
   xx.rotate(R1);
-  if(fabs(angle(xx.getFrst(), yy.getFrst())) > 1e-8){
-    std::cout << "This should not happen: not aligned "<< std::endl; 
+  double temp = fabs(angle(xx.getFrst(), yy.getFrst()));
+  if( (temp > 1e-8) && (temp < M_PI - 1e-8)){
+    std::cout << "This should not happen: not aligned= " << temp << std::endl; 
     exit(1);
   }
   

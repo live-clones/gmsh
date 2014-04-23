@@ -439,13 +439,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     int num = defineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
+    Msg::SetOnelabNumber("0Metamodel/Batch", CTX::instance()->batch, false);
     return 1;
-  }
-#endif
-#if defined(HAVE_ONELAB_METAMODEL) && defined(HAVE_FLTK)
-  else if(ext == ".ol"){
-    // FIXME: this is a hack -- think about a better way
-    status = metamodel_cb(fileName);
   }
 #endif
   else {

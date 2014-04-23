@@ -14,7 +14,7 @@ B = OL.defineNumber('Group/B', value=0, min = -10, max = 10, step = 1)
 C = OL.defineNumber('Group/C', value=2, choices = [0, 1, 2, 3], attributes={'Highlight':'Pink'})
 D = OL.defineNumber('Group/D', value=3, labels = {0:'zero', 1:'un', 2:'deux', 3:'trois'}, attributes={'Highlight':'Blue'})
 
-OL.openGeometry(modelName + '.geo')
+OL.reloadGeometry(modelName + '.geo')
 OL.preProcess(modelName + '.txt.ol')
 
 if OL.action == 'compute' :
