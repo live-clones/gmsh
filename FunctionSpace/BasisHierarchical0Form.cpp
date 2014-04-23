@@ -82,20 +82,9 @@ getFunctions(fullMatrix<double>& retValues,
 void BasisHierarchical0Form::getDerivative(fullMatrix<double>& retValues,
                                            const MElement& element,
                                            double u, double v, double w) const{
-
-  const size_t nOrientation = ReferenceSpaceManager::getNOrientation(getType());
-
   // Get Grad //
   if(!hasGrad)
     getGrad();
-
-  // Delete if older //
-  if(preEvaluatedGrad){
-    for(size_t i = 0; i < nOrientation; i++)
-      delete preEvaluatedGradFunction[i];
-
-    delete[] preEvaluatedGradFunction;
-  }
 
   // Define Orientation //
   const size_t orientation = ReferenceSpaceManager::getOrientation(element);
