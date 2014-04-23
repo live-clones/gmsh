@@ -849,6 +849,7 @@ namespace onelab{
     virtual void sendError(const std::string &msg){ std::cerr << msg << std::endl; }
     virtual void sendProgress(const std::string &msg){ std::cout << msg << std::endl; }
     virtual void sendMergeFileRequest(const std::string &msg){}
+    virtual void sendOpenProjectRequest(const std::string &msg){}
     virtual void sendParseStringRequest(const std::string &msg){}
     virtual void sendVertexArray(const std::string &msg){}
     virtual bool clear(const std::string &name) = 0;
@@ -1229,6 +1230,10 @@ namespace onelab{
     void sendMergeFileRequest(const std::string &msg)
     {
       if(_gmshClient) _gmshClient->MergeFile(msg.c_str());
+    }
+    void sendOpenProjectRequest(const std::string &msg)
+    {
+      if(_gmshClient) _gmshClient->OpenProject(msg.c_str());
     }
     void sendParseStringRequest(const std::string &msg)
     {

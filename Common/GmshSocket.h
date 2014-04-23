@@ -85,6 +85,7 @@ class GmshSocket{
     GMSH_SPEED_TEST          = 30,
     GMSH_PARAMETER_CLEAR     = 31,
     GMSH_PARAMETER_UPDATE    = 32,
+    GMSH_OPEN_PROJECT        = 33,
     GMSH_OPTION_1            = 100,
     GMSH_OPTION_2            = 101,
     GMSH_OPTION_3            = 102,
@@ -193,6 +194,7 @@ class GmshSocket{
   void Error(const char *str){ SendString(GMSH_ERROR, str); }
   void Progress(const char *str){ SendString(GMSH_PROGRESS, str); }
   void MergeFile(const char *str){ SendString(GMSH_MERGE_FILE, str); }
+  void OpenProject(const char *str){ SendString(GMSH_OPEN_PROJECT, str); }
   void ParseString(const char *str){ SendString(GMSH_PARSE_STRING, str); }
   void SpeedTest(const char *str){ SendString(GMSH_SPEED_TEST, str); }
   void Option(int num, const char *str)

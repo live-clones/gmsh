@@ -139,6 +139,17 @@ class client :
   _GMSH_PARAMETER_NOT_FOUND = 29
   _GMSH_PARAMETER_CLEAR = 31
   _GMSH_PARAMETER_UPDATE = 32
+  _GMSH_OPEN_PROJECT = 33
+
+  def _createSocket(self) :
+    addr = self.addr
+    if '/' in addr or '\\' in addr or ':' not in addr :
+      self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+      self.socket.connect(addr)
+    else :
+      self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      s = addr.split(':')
+      self.socket.connect((s[0], int(s[1])))
 
   def _receive(self) :
     def buffered_receive(l) :
@@ -180,6 +191,16 @@ class client :
       self._send(self._GMSH_PARAMETER, p.tochar())
       return p.value
         
+  def _getParameter(self, param, warn_if_not_found=True) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
+    (t, msg) = self._receive() 
+    if t == self._GMSH_PARAMETER :
+      param.fromchar(msg)
+    elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
+      print ('Unknown parameter %s' %(param.name))
+
   def defineNumber(self, name, **param):
     if 'labels' in param :
       param["choices"] = param["labels"].keys()
@@ -237,16 +258,6 @@ class client :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
 
-  def _getParameter(self, param, warn_if_not_found=True) :
-    if not self.socket :
-      return
-    self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
-    (t, msg) = self._receive() 
-    if t == self._GMSH_PARAMETER :
-      param.fromchar(msg)
-    elif t == self._GMSH_PARAMETER_NOT_FOUND and warn_if_not_found :
-      print ('Unknown parameter %s' %(param.name))
-
   def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
     self._getParameter(param, warn_if_not_found)
@@ -287,6 +298,11 @@ class client :
     if not self.socket or not filename :
       return
     self._send(self._GMSH_MERGE_FILE, filename)
+
+  def openProject(self, filename) :
+    if not self.socket or not filename :
+      return
+    self._send(self._GMSH_OPEN_PROJECT, filename)
 
   def reloadGeometry(self, filename) :
     if not self.socket or not filename :
@@ -330,16 +346,6 @@ class client :
           return True
     return False
 
-  def _createSocket(self) :
-    addr = self.addr
-    if '/' in addr or '\\' in addr or ':' not in addr :
-      self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-      self.socket.connect(addr)
-    else :
-      self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      s = addr.split(':')
-      self.socket.connect((s[0], int(s[1])))
-
   def waitOnSubClients(self):
     if not self.socket :
       return
@@ -349,7 +355,6 @@ class client :
         self._numSubClients -= 1
 
   def runNonBlockingSubClient(self, name, command, arguments=''):
-    # create command line
     if self.action == "check":
       cmd = command
     else:
@@ -440,7 +445,6 @@ class client :
       self._send(self._GMSH_INFO, 'upload: ' + ' '.join(argv))
     else :
       print(call.stderr.read())
-      ## self._send(self._GMSH_ERROR, 'upload failed !!\n' + call.stderr.read().encode('utf-8'))
 
   def download(self, here, there, remote='') :
     if not here or not there :
@@ -456,7 +460,6 @@ class client :
       self._send(self._GMSH_INFO, 'download: ' + ' '.join(argv))
     else :
       print(call.stderr.read())
-      ##self._send(self._GMSH_ERROR, 'download failed !!\n' + call.stderr.read().encode('utf-8'))
       
   def solutionFiles(self, list) :
     self.defineNumber('0Metamodel/9Use restored solution', value=0, choices=[0,1])

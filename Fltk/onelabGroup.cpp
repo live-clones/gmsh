@@ -351,6 +351,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
     }
     break;
+  case GmshSocket::GMSH_OPEN_PROJECT:
+    OpenProject(message);
+    drawContext::global()->draw();
+    break;
   case GmshSocket::GMSH_PARSE_STRING:
     ParseString(message);
     drawContext::global()->draw();
