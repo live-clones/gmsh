@@ -1,3 +1,5 @@
+2.8.5: small improvements and bug fixes (stability, error handling, Coherence).
+
 2.8.4 (Feb 7, 2014): better reproductibility of 2D meshes; new mandatory 'Name'
 attribute to define onelab variables in DefineConstant[] & co; small
 improvements and bug fixes.

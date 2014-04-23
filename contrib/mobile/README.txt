@@ -13,8 +13,7 @@ LAPACK frameworks) are already installed in ./frameworks_simulator:
 
 mkdir build
 cd build
-cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;\
-                           $HOME/src/getdp" ..
+cmake -DCMAKE_PREFIX_PATH="$HOME/src/gmsh/contrib/mobile/frameworks_simulator;$HOME/src/getdp" ..
 make xcodeProject 
 open Onelab/Onelab.xcodeproj
 
