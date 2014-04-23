@@ -894,9 +894,9 @@ void onelab_cb(Fl_Widget *w, void *data)
         }
         if(FlGui::instance()->onelab->stop()) break;
       }
-      // After computing, all parameters are set unchanged
+      // after computing, all parameters are set unchanged
       if(action == "compute"){
-          onelab::server::instance()->setChanged(false);
+        onelab::server::instance()->setChanged(false);
       }
     }
 
@@ -1305,7 +1305,8 @@ viewButton *onelabGroup::getViewButton(int num)
   return 0;
 }
 
-static void setGmshOption(onelab::number &n)
+template <class T>
+static void setGmshOption(T &n)
 {
   std::string opt = n.getAttribute("GmshOption");
   if(opt.empty()) return;
@@ -1480,6 +1481,7 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
     std::string tmp = FixRelativePath(GModel::current()->getFileName(),
                                       strings[0].getValue());
     MergeFile(tmp);
+    setGmshOption(strings[0]);
     autoCheck(strings[0], strings[0], true);
     drawContext::global()->draw();
   }
@@ -1495,6 +1497,7 @@ static void onelab_string_input_cb(Fl_Widget *w, void *data)
     Fl_Input *o = (Fl_Input*)w;
     onelab::string old = strings[0];
     strings[0].setValue(o->value());
+    setGmshOption(strings[0]);
     onelab::server::instance()->set(strings[0]);
     autoCheck(old, strings[0]);
   }
@@ -1521,6 +1524,7 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
     }
     if(choices.size())
       strings[0].setAttribute("MultipleSelection", choices);
+    setGmshOption(strings[0]);
     onelab::server::instance()->set(strings[0]);
     autoCheck(old, strings[0]);
   }
