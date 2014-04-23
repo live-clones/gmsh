@@ -22,7 +22,8 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 //
-// Please report all bugs and problems to the public mailing list <gmsh@geuz.org>.
+// Please report all bugs and problems to the public mailing list
+// <gmsh@geuz.org>.
 
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_
@@ -80,6 +81,7 @@ class GmshSocket{
     GMSH_SPEED_TEST          = 30,
     GMSH_PARAMETER_CLEAR     = 31,
     GMSH_PARAMETER_UPDATE    = 32,
+    GMSH_OPEN_PROJECT        = 33,
     GMSH_OPTION_1            = 100,
     GMSH_OPTION_2            = 101,
     GMSH_OPTION_3            = 102,
@@ -188,6 +190,7 @@ class GmshSocket{
   void Error(const char *str){ SendString(GMSH_ERROR, str); }
   void Progress(const char *str){ SendString(GMSH_PROGRESS, str); }
   void MergeFile(const char *str){ SendString(GMSH_MERGE_FILE, str); }
+  void OpenProject(const char *str){ SendString(GMSH_OPEN_PROJECT, str); }
   void ParseString(const char *str){ SendString(GMSH_PARSE_STRING, str); }
   void SpeedTest(const char *str){ SendString(GMSH_SPEED_TEST, str); }
   void Option(int num, const char *str)
@@ -200,7 +203,6 @@ class GmshSocket{
   {
     *swap = 0;
     if(_ReceiveData(type, sizeof(int)) > 0){
-      if(*type < 0) return 0;
       if(*type > 65535){
         // the data comes from a machine with different endianness and
         // we must swap the bytes
@@ -208,7 +210,6 @@ class GmshSocket{
         _SwapBytes((char*)type, sizeof(int), 1);
       }
       if(_ReceiveData(len, sizeof(int)) > 0){
-        if(*len < 0) return 0;
         if(*swap) _SwapBytes((char*)len, sizeof(int), 1);
         return 1;
       }
@@ -367,7 +368,7 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32) || defined(__CYGWIN__)
       if(tmpsock < 0)
 #else
-	if(tmpsock == (int)INVALID_SOCKET)
+      if(tmpsock == (int)INVALID_SOCKET)
 #endif
         throw "Couldn't create socket";
       // bind the socket to its name
