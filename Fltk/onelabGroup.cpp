@@ -402,8 +402,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string ofileName = split[0] + split[1] ;
       std::ofstream outfile(ofileName.c_str());
       localSolverClient *c = new InterfacedClient(split[1],"","");
-      if (outfile.is_open())
+      if (outfile.is_open()) {
+        Msg::Info("Preprocess file <%s>",ofileName.c_str());
         c->convert_onefile(message, outfile);
+      }
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
@@ -414,6 +416,13 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 
       delete c;
 #endif
+    }
+    break;
+  case GmshSocket::GMSH_CLIENT_CHANGED:
+    {
+      std::string reply = onelab::server::instance()->getChanged(message) ? "changed" : "unchanged";
+      getGmshServer()->SendMessage
+        (GmshSocket::GMSH_CLIENT_CHANGED, reply.size(), &reply[0]);
     }
     break;
   default:
@@ -580,13 +589,10 @@ static bool incrementLoops()
   else if(onelabUtils::incrementLoop("2")) ret = true;
   else if(onelabUtils::incrementLoop("1")) ret = true;
 
-  //Update Onelab db parameter indicating whether or not in a loop
-  std::vector<onelab::number> pn;
-  onelab::server::instance()->get(pn,"0Metamodel/Loop");
-  if(pn.size()){
-    pn[0].setValue(ret?1:0);
-    onelab::server::instance()->set(pn[0]);
-  }
+  //Define ONELAB parameter indicating whether or not in a loop
+  onelab::number n("0Metamodel/Loop",ret?1:0);
+  n.setVisible(false);
+  onelab::server::instance()->set(n);
 
   if(FlGui::available() && onelab::server::instance()->getChanged())
     FlGui::instance()->rebuildTree(false);
@@ -801,7 +807,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
     std::string fileName = "onelab.db";
-    // add tag if any
+    // add user defined tag, if any 
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps,"0Metamodel/9Tag");
     if(ps.size()){
@@ -851,17 +857,16 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute") initializeLoops();
 
-  // check whether we are running a metamodel (.ol or .py)
-  std::vector<onelab::number> n;
-  onelab::server::instance()->get(n, "IsMetamodel");
-  bool isMetamodel = (n.size() && n[0].getValue());
-  onelab::server::instance()->get(n, "IsPyMetamodel");
-  bool isPyMetamodel = (n.size() && n[0].getValue());
+  // check whether we are running a metamodel (.py)
+  std::vector<onelab::number> pn;
+  onelab::server::instance()->get(pn, "IsPyMetamodel");
+  bool isPyMetamodel = (pn.size() && pn[0].getValue());
+
 
   do{ // enter loop
 
     // if the client is a not a metamodel, run Gmsh
-    if(!isMetamodel && !isPyMetamodel){
+    if(!isPyMetamodel){
       if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
         drawContext::global()->draw();
     }
@@ -870,38 +875,28 @@ void onelab_cb(Fl_Widget *w, void *data)
       FlGui::instance()->onelab->checkForErrors("Gmsh");
     if(FlGui::instance()->onelab->stop()) break;
 
-    if(isMetamodel){
-#if defined(HAVE_ONELAB_METAMODEL)
-      if(metamodel(action)){
-        OpenProject(GModel::current()->getFileName());
-        drawContext::global()->draw();
-      }
-#endif
-    }
-    else{
-      // iterate over all other clients (there should normally only be one)
-      for(onelab::server::citer it = onelab::server::instance()->firstClient();
-          it != onelab::server::instance()->lastClient(); it++){
-        onelab::client *c = it->second;
-        if(c->getName() == "Gmsh" || // local Gmsh client
-           c->getName() == "Listen" || // unknown client connecting through "-listen"
-           c->getName() == "GmshRemote") // distant post-processing Gmsh client
-          continue;
-        if(action != "initialize") onelabUtils::guessModelName(c);
-        onelab::string o(c->getName() + "/Action", action);
-        o.setVisible(false);
-        o.setNeverChanged(true);
-        onelab::server::instance()->set(o);
-        c->run();
-        if(action == "compute"){
-          FlGui::instance()->onelab->checkForErrors(c->getName());
-        }
-        if(FlGui::instance()->onelab->stop()) break;
-      }
-      // after computing, all parameters are set unchanged
+    // iterate over all other clients (there should normally only be one)
+    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+	it != onelab::server::instance()->lastClient(); it++){
+      onelab::client *c = it->second;
+      if(c->getName() == "Gmsh" || // local Gmsh client
+	 c->getName() == "Listen" || // unknown client connecting through "-listen"
+	 c->getName() == "GmshRemote") // distant post-processing Gmsh client
+	continue;
+      if(action != "initialize") onelabUtils::guessModelName(c);
+      onelab::string o(c->getName() + "/Action", action);
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      onelab::server::instance()->set(o);
+      c->run();
       if(action == "compute"){
-        onelab::server::instance()->setChanged(false);
+	FlGui::instance()->onelab->checkForErrors(c->getName());
       }
+      if(FlGui::instance()->onelab->stop()) break;
+    }
+    // after computing, all parameters are set unchanged
+    if(action == "compute"){
+      onelab::server::instance()->setChanged(false);
     }
 
     if(action != "initialize"){
@@ -2071,6 +2066,10 @@ void solver_batch_cb(Fl_Widget *w, void *data)
     return;
   }
 
+  onelab::number n("0Metamodel/Batch", CTX::instance()->batch);
+  n.setVisible(false);
+  onelab::server::instance()->set(n);
+
   // create client
   onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, exe, host);
   c->setIndex(num);
@@ -2118,6 +2117,7 @@ void flgui_wait_cb(double time)
   FlGui::instance()->wait(time);
 }
 
+/*
 int metamodel_cb(const std::string &name, const std::string &action)
 {
 #if defined(HAVE_ONELAB_METAMODEL)
@@ -2153,3 +2153,4 @@ int metamodel_cb(const std::string &name, const std::string &action)
   return 0;
 #endif
 }
+*/

@@ -439,7 +439,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     int num = defineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
-    Msg::SetOnelabNumber("0Metamodel/Batch", CTX::instance()->batch, false);
+    //Msg::SetOnelabNumber("0Metamodel/Batch", CTX::instance()->batch, false);
     return 1;
   }
 #endif

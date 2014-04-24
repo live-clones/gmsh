@@ -140,6 +140,7 @@ class client :
   _GMSH_PARAMETER_CLEAR = 31
   _GMSH_PARAMETER_UPDATE = 32
   _GMSH_OPEN_PROJECT = 33
+  _GMSH_CLIENT_CHANGED = 34
 
   def _createSocket(self) :
     addr = self.addr
@@ -279,7 +280,7 @@ class client :
     return param.choices
 
   def show(self, name) :
-    if not self.socket :
+    if not self.socket or not name:
       return
     param = _parameter('number', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
@@ -287,7 +288,13 @@ class client :
     if t == self._GMSH_PARAMETER :
       print (msg.replace('\0','|'))
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
-      print ('Unknown parameter %s' %(name))
+      param = _parameter('string', name=name)
+      self._send(self._GMSH_PARAMETER_QUERY, param.tochar())
+      (t, msg) = self._receive() 
+      if t == self._GMSH_PARAMETER :
+        print (msg.replace('\0','|'))
+      elif t == self._GMSH_PARAMETER_NOT_FOUND :
+        print('Unknown parameter %s' %(name))
 
   def sendCommand(self, command) :
     if not self.socket :
@@ -341,11 +348,21 @@ class client :
     self._send(self._GMSH_OLPARSE, filename)
     (t, msg) = self._receive() 
     if t == self._GMSH_OLPARSE :
-      print(msg)
       if msg == "changed" :
           return True
     return False
 
+  def isChanged(self, clientname) :
+    if not self.socket :
+      return
+    self._send(self._GMSH_CLIENT_CHANGED, clientname)
+    (t, msg) = self._receive() 
+    if t == self._GMSH_CLIENT_CHANGED :
+      if msg == "changed" :
+          return True
+    return False
+
+    
   def waitOnSubClients(self):
     if not self.socket :
       return
@@ -386,9 +403,9 @@ class client :
     self.action = "compute" # default (subclients have no client.Action defined)
     self.action = self.getString(self.name + '/Action', False)
     self.setNumber('IsPyMetamodel',value=1,visible=0)
-    self.defineNumber('0Metamodel/Loop',value=0,visible=0)
-    self.loop = self.getNumber('0Metamodel/Loop')
-    self.batch = self.getNumber('0Metamodel/Batch')
+    #self.defineNumber('0Metamodel/Loop',value=0,visible=0)
+    self.loop = self.getNumber('0Metamodel/Loop', warn_if_not_found=False)
+    self.batch = self.getNumber('0Metamodel/Batch', warn_if_not_found=False)
     self.sendInfo("Performing OneLab '" + self.action + "'")
     if self.action == "initialize": 
       self.finalize()

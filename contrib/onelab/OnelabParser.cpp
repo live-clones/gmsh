@@ -1439,7 +1439,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
 void localSolverClient::convert_onefile(std::string fileName, std::ofstream &outfile) {
   std::ifstream infile(fileName.c_str());
   if (infile.is_open()){
-    OLMsg::Info("Convert file <%s>",fileName.c_str());
+    //OLMsg::Info("Convert file <%s>",fileName.c_str());
     while ( infile.good() ) {
       std::string line;
       getline (infile,line);

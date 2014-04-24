@@ -86,6 +86,7 @@ class GmshSocket{
     GMSH_PARAMETER_CLEAR     = 31,
     GMSH_PARAMETER_UPDATE    = 32,
     GMSH_OPEN_PROJECT        = 33,
+    GMSH_CLIENT_CHANGED      = 34,
     GMSH_OPTION_1            = 100,
     GMSH_OPTION_2            = 101,
     GMSH_OPTION_3            = 102,
