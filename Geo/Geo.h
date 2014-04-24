@@ -392,6 +392,7 @@ int Extrude_ProtudeSurface(int type, int is,
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();
+void ReplaceAllDuplicatesNew(double tol = -1.);
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
 

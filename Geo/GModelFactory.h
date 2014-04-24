@@ -217,6 +217,8 @@ class GModelFactory {
     Msg::Error("setPhysicalNumToEntitiesInBox not implemented yet");
   }
 
+  virtual void healGeometry(GModel *gm, double tolerance = -1.) = 0;
+
 };
 
 class GeoFactory : public GModelFactory {
@@ -230,6 +232,7 @@ class GeoFactory : public GModelFactory {
   std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges);
   std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers,
                                              double hLayers, int dir, int view);
+  void healGeometry(GModel *gm, double tolerance = -1.);
 };
 
 #if defined(HAVE_OCC)
@@ -288,6 +291,7 @@ class OCCFactory : public GModelFactory {
                                      std::vector<double> p1, std::vector<double> p2);
 
   void fillet(GModel *gm, std::vector<int> edges, double radius);
+  void healGeometry(GModel *gm, double tolerance = -1.);
 };
 
 #endif
@@ -301,6 +305,7 @@ class SGEOMFactory : public GModelFactory {
   GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
+  void healGeometry(GModel *gm, double tolerance = -1.);
 };
 
 #endif

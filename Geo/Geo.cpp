@@ -2356,11 +2356,11 @@ static void MaxNumSurface(void *a, void *b)
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, s->Num);
 }
 
-static void ReplaceDuplicatePointsNew()
+static void ReplaceDuplicatePointsNew(double tol = -1.)
 {
   Msg::Info("New Coherence...");
-
-  double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
+  if (tol < 0) 
+    tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
   // create kdtree
   std::map<MVertex*, Vertex*> v2V;
@@ -2925,6 +2925,15 @@ void ReplaceAllDuplicates()
   std::vector<std::map<int,int> > report;
   report.clear();
   ReplaceAllDuplicates(report);
+}
+
+void ReplaceAllDuplicatesNew(double tol)
+{
+  if (tol < 0) 
+    tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
+  ReplaceDuplicatePointsNew(tol);
+  ReplaceDuplicateCurves(NULL);
+  ReplaceDuplicateSurfaces(NULL);
 }
 
 // Extrusion routines

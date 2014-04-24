@@ -2840,6 +2840,11 @@ GEntity *GModel::addCone(std::vector<double> p1, std::vector<double> p2,
   return 0;
 }
 
+void GModel::healGeometry(double tolerance)
+{
+  if(_factory) _factory->healGeometry(this, tolerance);
+}
+
 GModel *GModel::computeBooleanUnion(GModel *tool, int createNewModel)
 {
   if(_factory)

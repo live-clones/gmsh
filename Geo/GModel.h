@@ -524,6 +524,9 @@ class GModel
   GEntity *addCone(std::vector<double> p1, std::vector<double> p2, double radius1,
                    double radius2);
 
+  // heal geometry using the factory
+  void healGeometry(double tolerance = -1);
+
   // boolean operators acting on 2 models
   GModel *computeBooleanUnion(GModel *tool, int createNewModel=0);
   GModel *computeBooleanIntersection(GModel *tool, int createNewModel=0);
