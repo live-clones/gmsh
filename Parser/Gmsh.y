@@ -121,6 +121,7 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
+%token tDefineNumber tDefineString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh
@@ -145,6 +146,7 @@ struct doubleXstring{
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <c> LP RP
 %type <c> StringIndex String__Index
 %type <l> RecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
@@ -639,6 +641,12 @@ NumericIncrement :
   | tMINUSMINUS    { $$ = -1; }
 ;
 
+// these are for either compatibility with getdp syntax (square brackets instead
+// of parentheses)
+
+LP : '(' { $$ = (char*)"("; } | '[' { $$ = (char*)"["; } ;
+RP : ')' { $$ = (char*)")"; } | ']' { $$ = (char*)"]"; } ;
+
 Affectation :
 
   // Variables
@@ -740,25 +748,17 @@ Affectation :
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | StringIndex '[' FExpr ']' NumericAffectation FExpr tEND
-    {
-      assignVariable($1, (int)$3, $5, $6);
-      Free($1);
-    }
   | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
     {
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
+  | StringIndex '[' FExpr ']' NumericAffectation FExpr tEND
     {
-      assignVariables($1, $4, $7, $8);
+      assignVariable($1, (int)$3, $5, $6);
       Free($1);
-      List_Delete($4);
-      List_Delete($8);
     }
-  // for compatibility with GetDP
-  | tSTRING '(' '{' RecursiveListOfDouble '}' ')' NumericAffectation ListOfDouble tEND
+  | tSTRING LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
     {
       assignVariables($1, $4, $7, $8);
       Free($1);
@@ -4216,14 +4216,14 @@ Homology :
 //  G E N E R A L
 
 FExpr :
-    FExpr_Single                     { $$ = $1;           }
-  | '(' FExpr ')'                    { $$ = $2;           }
-  | '-' FExpr %prec UNARYPREC        { $$ = -$2;          }
-  | '+' FExpr %prec UNARYPREC        { $$ = $2;           }
-  | '!' FExpr                        { $$ = !$2;          }
-  | FExpr '-' FExpr                  { $$ = $1 - $3;      }
-  | FExpr '+' FExpr                  { $$ = $1 + $3;      }
-  | FExpr '*' FExpr                  { $$ = $1 * $3;      }
+    FExpr_Single                  { $$ = $1;           }
+  | '(' FExpr ')'                 { $$ = $2;           }
+  | '-' FExpr %prec UNARYPREC     { $$ = -$2;          }
+  | '+' FExpr %prec UNARYPREC     { $$ = $2;           }
+  | '!' FExpr                     { $$ = !$2;          }
+  | FExpr '-' FExpr               { $$ = $1 - $3;      }
+  | FExpr '+' FExpr               { $$ = $1 + $3;      }
+  | FExpr '*' FExpr               { $$ = $1 * $3;      }
   | FExpr '/' FExpr
     {
       if(!$3)
@@ -4231,63 +4231,39 @@ FExpr :
       else
 	$$ = $1 / $3;
     }
-  | FExpr '%' FExpr                  { $$ = (int)$1 % (int)$3;  }
-  | FExpr '^' FExpr                  { $$ = pow($1, $3);  }
-  | FExpr '<' FExpr                  { $$ = $1 < $3;      }
-  | FExpr '>' FExpr                  { $$ = $1 > $3;      }
-  | FExpr tLESSOREQUAL FExpr         { $$ = $1 <= $3;     }
-  | FExpr tGREATEROREQUAL FExpr      { $$ = $1 >= $3;     }
-  | FExpr tEQUAL FExpr               { $$ = $1 == $3;     }
-  | FExpr tNOTEQUAL FExpr            { $$ = $1 != $3;     }
-  | FExpr tAND FExpr                 { $$ = $1 && $3;     }
-  | FExpr tOR FExpr                  { $$ = $1 || $3;     }
-  | FExpr '?' FExpr tDOTS FExpr      { $$ = $1 ? $3 : $5; }
-  | tExp    '(' FExpr ')'            { $$ = exp($3);      }
-  | tLog    '(' FExpr ')'            { $$ = log($3);      }
-  | tLog10  '(' FExpr ')'            { $$ = log10($3);    }
-  | tSqrt   '(' FExpr ')'            { $$ = sqrt($3);     }
-  | tSin    '(' FExpr ')'            { $$ = sin($3);      }
-  | tAsin   '(' FExpr ')'            { $$ = asin($3);     }
-  | tCos    '(' FExpr ')'            { $$ = cos($3);      }
-  | tAcos   '(' FExpr ')'            { $$ = acos($3);     }
-  | tTan    '(' FExpr ')'            { $$ = tan($3);      }
-  | tAtan   '(' FExpr ')'            { $$ = atan($3);     }
-  | tAtan2  '(' FExpr ',' FExpr ')'  { $$ = atan2($3, $5);}
-  | tSinh   '(' FExpr ')'            { $$ = sinh($3);     }
-  | tCosh   '(' FExpr ')'            { $$ = cosh($3);     }
-  | tTanh   '(' FExpr ')'            { $$ = tanh($3);     }
-  | tFabs   '(' FExpr ')'            { $$ = fabs($3);     }
-  | tFloor  '(' FExpr ')'            { $$ = floor($3);    }
-  | tCeil   '(' FExpr ')'            { $$ = ceil($3);     }
-  | tRound  '(' FExpr ')'            { $$ = floor($3 + 0.5); }
-  | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
-  | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
-  | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3 * $3 + $5 * $5); }
-  | tRand   '(' FExpr ')'            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
-
-  // for compatibility with GetDP
-  | tExp    '[' FExpr ']'            { $$ = exp($3);      }
-  | tLog    '[' FExpr ']'            { $$ = log($3);      }
-  | tLog10  '[' FExpr ']'            { $$ = log10($3);    }
-  | tSqrt   '[' FExpr ']'            { $$ = sqrt($3);     }
-  | tSin    '[' FExpr ']'            { $$ = sin($3);      }
-  | tAsin   '[' FExpr ']'            { $$ = asin($3);     }
-  | tCos    '[' FExpr ']'            { $$ = cos($3);      }
-  | tAcos   '[' FExpr ']'            { $$ = acos($3);     }
-  | tTan    '[' FExpr ']'            { $$ = tan($3);      }
-  | tAtan   '[' FExpr ']'            { $$ = atan($3);     }
-  | tAtan2  '[' FExpr ',' FExpr ']'  { $$ = atan2($3, $5);}
-  | tSinh   '[' FExpr ']'            { $$ = sinh($3);     }
-  | tCosh   '[' FExpr ']'            { $$ = cosh($3);     }
-  | tTanh   '[' FExpr ']'            { $$ = tanh($3);     }
-  | tFabs   '[' FExpr ']'            { $$ = fabs($3);     }
-  | tFloor  '[' FExpr ']'            { $$ = floor($3);    }
-  | tCeil   '[' FExpr ']'            { $$ = ceil($3);     }
-  | tRound  '[' FExpr ']'            { $$ = floor($3 + 0.5);    }
-  | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
-  | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
-  | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3 * $3 + $5 * $5); }
-  | tRand   '[' FExpr ']'            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
+  | FExpr '%' FExpr                { $$ = (int)$1 % (int)$3;  }
+  | FExpr '^' FExpr                { $$ = pow($1, $3);  }
+  | FExpr '<' FExpr                { $$ = $1 < $3;      }
+  | FExpr '>' FExpr                { $$ = $1 > $3;      }
+  | FExpr tLESSOREQUAL FExpr       { $$ = $1 <= $3;     }
+  | FExpr tGREATEROREQUAL FExpr    { $$ = $1 >= $3;     }
+  | FExpr tEQUAL FExpr             { $$ = $1 == $3;     }
+  | FExpr tNOTEQUAL FExpr          { $$ = $1 != $3;     }
+  | FExpr tAND FExpr               { $$ = $1 && $3;     }
+  | FExpr tOR FExpr                { $$ = $1 || $3;     }
+  | FExpr '?' FExpr tDOTS FExpr    { $$ = $1 ? $3 : $5; }
+  | tExp    LP FExpr RP            { $$ = exp($3);      }
+  | tLog    LP FExpr RP            { $$ = log($3);      }
+  | tLog10  LP FExpr RP            { $$ = log10($3);    }
+  | tSqrt   LP FExpr RP            { $$ = sqrt($3);     }
+  | tSin    LP FExpr RP            { $$ = sin($3);      }
+  | tAsin   LP FExpr RP            { $$ = asin($3);     }
+  | tCos    LP FExpr RP            { $$ = cos($3);      }
+  | tAcos   LP FExpr RP            { $$ = acos($3);     }
+  | tTan    LP FExpr RP            { $$ = tan($3);      }
+  | tAtan   LP FExpr RP            { $$ = atan($3);     }
+  | tAtan2  LP FExpr ',' FExpr RP  { $$ = atan2($3, $5);}
+  | tSinh   LP FExpr RP            { $$ = sinh($3);     }
+  | tCosh   LP FExpr RP            { $$ = cosh($3);     }
+  | tTanh   LP FExpr RP            { $$ = tanh($3);     }
+  | tFabs   LP FExpr RP            { $$ = fabs($3);     }
+  | tFloor  LP FExpr RP            { $$ = floor($3);    }
+  | tCeil   LP FExpr RP            { $$ = ceil($3);     }
+  | tRound  LP FExpr RP            { $$ = floor($3 + 0.5); }
+  | tFmod   LP FExpr ',' FExpr RP  { $$ = fmod($3, $5); }
+  | tModulo LP FExpr ',' FExpr RP  { $$ = fmod($3, $5); }
+  | tHypot  LP FExpr ',' FExpr RP  { $$ = sqrt($3 * $3 + $5 * $5); }
+  | tRand   LP FExpr RP            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
 ;
 
 // FIXME: add +=, -=, *= et /=
@@ -4309,6 +4285,14 @@ FExpr_Single :
 
   // Variables
 
+  | tDefineNumber LP FExpr
+    { floatOptions.clear(); charOptions.clear(); }
+    FloatParameterOptions RP
+    {
+      std::vector<double> val(1, $3);
+      Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
+      $$ = val[0];
+    }
   | String__Index
     {
       if(!gmsh_yysymbols.count($1)){
@@ -4829,20 +4813,7 @@ FExpr_Multi :
       }
       List_Delete($1);
     }
-  | tSTRING '[' ']'
-    {
-      $$ = List_Create(2, 1, sizeof(double));
-      if(!gmsh_yysymbols.count($1))
-	yymsg(0, "Unknown variable '%s'", $1);
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-	for(unsigned int i = 0; i < s.value.size(); i++)
-	  List_Add($$, &s.value[i]);
-      }
-      Free($1);
-    }
-  // for compatibility with GetDP
-  | tSTRING '(' ')'
+  | tSTRING LP RP
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
@@ -4866,26 +4837,7 @@ FExpr_Multi :
       }
       Free($3);
     }
-  | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      $$ = List_Create(2, 1, sizeof(double));
-      if(!gmsh_yysymbols.count($1))
-	yymsg(0, "Unknown variable '%s'", $1);
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-	for(int i = 0; i < List_Nbr($4); i++){
-	  int index = (int)(*(double*)List_Pointer_Fast($4, i));
-	  if((int)s.value.size() < index + 1)
-	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
-	  else
-	    List_Add($$, &s.value[index]);
-	}
-      }
-      Free($1);
-      List_Delete($4);
-    }
-  // for compatibility with GetDP
-  | tSTRING '(' '{' RecursiveListOfDouble '}' ')'
+  | tSTRING LP '{' RecursiveListOfDouble '}' RP
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
@@ -5065,16 +5017,7 @@ StringExpr :
       Free($3);
       Free($5);
     }
-  | tStrCat '(' StringExprVar ',' StringExprVar ')'
-    {
-      $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
-      strcpy($$, $3);
-      strcat($$, $5);
-      Free($3);
-      Free($5);
-    }
-  // for compatibility with GetDP
-  | tStrCat '[' StringExprVar ',' StringExprVar ']'
+  | tStrCat LP StringExprVar ',' StringExprVar RP
     {
       $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
       strcpy($$, $3);
@@ -5122,7 +5065,7 @@ StringExpr :
       Free($5);
       Free($7);
     }
-  | tStr '(' RecursiveListOfStringExprVar ')'
+  | tStr LP RecursiveListOfStringExprVar RP
     {
       int size = 0;
       for(int i = 0; i < List_Nbr($3); i++)
@@ -5138,33 +5081,11 @@ StringExpr :
       }
       List_Delete($3);
     }
-  // for compatibility with GetDP
-  | tStr '[' RecursiveListOfStringExprVar ']'
-    {
-      int size = 0;
-      for(int i = 0; i < List_Nbr($3); i++)
-        size += strlen(*(char**)List_Pointer($3, i)) + 1;
-      $$ = (char*)Malloc(size * sizeof(char));
-      $$[0] = '\0';
-      for(int i = 0; i < List_Nbr($3); i++){
-        char *s;
-        List_Read($3, i, &s);
-        strcat($$, s);
-        Free(s);
-        if(i != List_Nbr($3) - 1) strcat($$, "\n");
-      }
-      List_Delete($3);
-    }
-  | tSprintf '(' StringExprVar ')'
+  | tSprintf LP StringExprVar RP
     {
       $$ = $3;
     }
-  // for compatibility with GetDP
-  | tSprintf '[' StringExprVar ']'
-    {
-      $$ = $3;
-    }
-  | tSprintf '(' StringExprVar ',' RecursiveListOfDouble ')'
+  | tSprintf LP StringExprVar ',' RecursiveListOfDouble RP
     {
       char tmpstring[5000];
       int i = PrintListOfDouble($3, $5, tmpstring);
@@ -5183,25 +5104,15 @@ StringExpr :
       }
       List_Delete($5);
     }
-  // for compatibility with GetDP
-  | tSprintf '[' StringExprVar ',' RecursiveListOfDouble ']'
+  | tDefineString LP StringExpr
+    { floatOptions.clear(); charOptions.clear(); }
+    CharParameterOptions RP
     {
-      char tmpstring[5000];
-      int i = PrintListOfDouble($3, $5, tmpstring);
-      if(i < 0){
-	yymsg(0, "Too few arguments in Sprintf");
-	$$ = $3;
-      }
-      else if(i > 0){
-	yymsg(0, "%d extra argument%s in Sprintf", i, (i > 1) ? "s" : "");
-	$$ = $3;
-      }
-      else{
-	$$ = (char*)Malloc((strlen(tmpstring) + 1) * sizeof(char));
-	strcpy($$, tmpstring);
-	Free($3);
-      }
-      List_Delete($5);
+      std::string val($3);
+      Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
+      $$ = (char*)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($3);
     }
 ;
 

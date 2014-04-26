@@ -984,7 +984,8 @@ parsing of the script file:
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
   Exists(@var{string}) | Exists(@var{string}~@{ @var{expression} @}) |
   FileExists(@var{char-expression}) |
-  GetValue("@var{string}", @var{expression})
+  DefineNumber(@var{expression}, @var{onelab-options})
+  GetValue("@var{string}", @var{expression}) |
 @end example
 
 Such @w{@var{expression}s} are used in most of Gmsh's scripting
@@ -1021,6 +1022,12 @@ less than the second string).  @code{TextAttributes} creates attributes
 for text strings. @code{Exists} checks if a variable with the given name
 exists (i.e., has been defined previously), and @code{FileExists} checks
 if the file with the given name exists.
+
+@code{DefineNumber} allows to define a ONELAB variable in-line. The
+@var{expression} given as the first argument is the default value; this
+is followed by the various ONELAB options. See
+@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
+information.
 
 The last case in the definition allows to ask the user for a value
 interactively. For example, inserting @code{GetValue("Value of parameter
@@ -1110,6 +1117,7 @@ Character expressions are defined as:
   GetEnv ( @var{char-expression} ) |
   GetString ( @var{char-expression} , @var{char-expression} ) | 
   StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} ) 
+  DefineString(@var{char-expression}, @var{onelab-options})
 @end example
 
 @noindent @code{StrPrefix} and @code{StrRelative} permit to take the
@@ -1126,6 +1134,12 @@ user for a value interactively. @code{StrReplace}'s arguments are: input
 string, old substring, new substring.@footnote{For compatibility with GetDP
 (@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
 @code{[]} in @code{Str} and @code{Sprintf}.}
+
+@code{DefineString} allows to define a ONELAB variable in-line. The
+@var{char-expression} given as the first argument is the default value; this
+is followed by the various ONELAB options. See
+@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
+information.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
@@ -1613,6 +1627,16 @@ Divides and affects, item per item, the right hand side
 @item @var{string} = @var{char-expression};
 Creates a new character expression identifier @code{@var{string}} with a
 given @var{char-expression}.
+
+@item DefineConstant[ @var{string} = @var{expression}|@var{char-expression} <, ...>];
+Creates a new expression identifier @var{string}, with value
+@var{expression}, only if has not been defined before.
+
+@item DefineConstant[ @var{string} = @{ @var{expression}|@var{char-expression}, @var{onelab-options} @} <, ...>];
+Same as the previous case, except that the variable is also exchanged
+with the ONELAB database if it has not been defined before. See
+@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
+information.
 
 @item @var{real-option} = @var{expression};
 Affects @var{expression} to a real option.

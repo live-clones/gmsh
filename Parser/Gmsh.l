@@ -141,6 +141,8 @@ CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 Cpu                     return tCpu;
 
 DefineConstant          return tDefineConstant;
+DefineNumber            return tDefineNumber;
+DefineString            return tDefineString;
 Delete                  return tDelete;
 Degenerated             return tDegenerated;
 Dilate                  return tDilate;
