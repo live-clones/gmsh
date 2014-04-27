@@ -209,7 +209,7 @@ int GmshBatch()
 
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergeFile(CTX::instance()->bgmFileName);
+    MergePostProcessingFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
       GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
     else
@@ -327,7 +327,7 @@ int GmshFLTK(int argc, char **argv)
 
   // read background mesh if any
   if(!CTX::instance()->bgmFileName.empty()) {
-    MergeFile(CTX::instance()->bgmFileName);
+    MergePostProcessingFile(CTX::instance()->bgmFileName);
     if(PView::list.size())
       GModel::current()->getFields()->setBackgroundMesh(PView::list.size() - 1);
     else
