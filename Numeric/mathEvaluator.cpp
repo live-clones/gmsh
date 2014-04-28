@@ -33,7 +33,7 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
   if(error){
     for(unsigned int i = 0; i < _expressions.size(); i++)
       delete(_expressions[i]);
-    expressions.clear();
+    _expressions.clear();
   }
 }
 
@@ -46,12 +46,12 @@ mathEvaluator::~mathEvaluator()
 bool mathEvaluator::eval(std::vector<double> &values, std::vector<double> &res)
 {
   if(values.size() != _variables.size()){
-    Msg::Error("Given %d values for %d variables", values.size(), _variables.size());
+    Msg::Error("Given %d value(s) for %d variable(s)", values.size(), _variables.size());
     return false;
   }
 
   if(res.size() != _expressions.size()){
-    Msg::Error("Given %d results for %d expressions", res.size(), _expressions.size());
+    Msg::Error("Given %d result(s) for %d expression(s)", res.size(), _expressions.size());
     return false;
   }
 
