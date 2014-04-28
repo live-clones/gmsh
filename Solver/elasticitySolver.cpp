@@ -149,7 +149,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
   FILE *f = Fopen(fn.c_str(), "r");
   char what[256];
   while(!feof(f)){
-    if(fscanf(f, "%s", what) != 1) return;
+    if(fscanf(f, "%s", what) != 1){
+      fclose(f);
+      return;
+    }
     if(what[0]=='#'){
       /*
       char *line=NULL;
