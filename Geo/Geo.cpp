@@ -3501,7 +3501,7 @@ int Extrude_ProtudeSurface(int type, int is,
     break;
   default:
     Msg::Error("Unknown extrusion type");
-    return ps->Num;
+    break;
   }
 
   // this is done only for backward compatibility with the old
@@ -3531,7 +3531,6 @@ int Extrude_ProtudeSurface(int type, int is,
   }
 
   List_Reset(ListOfTransformedPoints);
-
 
   return chap_num;
 }
